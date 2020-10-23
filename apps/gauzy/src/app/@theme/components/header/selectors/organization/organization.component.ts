@@ -34,11 +34,10 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
 	}
 
 	private async loadOrganizations(): Promise<void> {
+		const tenantId = this.store.user.tenantId;
 		const { items = [] } = await this.userOrganizationService.getAll(
 			['organization'],
-			{
-				userId: this.store.userId
-			}
+			{ userId: this.store.userId, tenantId }
 		);
 
 		this.organizations = items.map((userOrg) => userOrg.organization);

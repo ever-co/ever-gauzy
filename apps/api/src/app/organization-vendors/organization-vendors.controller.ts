@@ -16,9 +16,10 @@ import { OrganizationVendorsService } from './organization-vendors.service';
 import { OrganizationVendor } from './organization-vendors.entity';
 import { IPagination } from '../core';
 import { AuthGuard } from '@nestjs/passport';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('OrganizationVendors')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class OrganizationVendorsController extends CrudController<
 	OrganizationVendor

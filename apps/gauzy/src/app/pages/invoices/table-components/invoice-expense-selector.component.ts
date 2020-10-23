@@ -21,7 +21,8 @@ import { ExpensesService } from '../../../@core/services/expenses.service';
 	`,
 	styles: []
 })
-export class InvoiceExpensesSelectorComponent extends DefaultEditor
+export class InvoiceExpensesSelectorComponent
+	extends DefaultEditor
 	implements OnInit, OnDestroy {
 	expense: IExpense;
 	expenses: IExpense[];
@@ -43,11 +44,11 @@ export class InvoiceExpensesSelectorComponent extends DefaultEditor
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (organization) => {
 				if (organization) {
+					const { id: organizationId, tenantId } = organization;
 					const expenses = await this.expensesService.getAll([], {
 						typeOfExpense: 'Billable to Contact',
-						organization: {
-							id: organization.id
-						}
+						organizationId,
+						tenantId
 					});
 					this.expenses = expenses.items;
 					const expense = this.expenses.find(

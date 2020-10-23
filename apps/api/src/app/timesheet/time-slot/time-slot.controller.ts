@@ -17,9 +17,10 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { IGetTimeSlotInput } from '@gauzy/models';
 import { FindOneOptions } from 'typeorm';
+import { TenantPermissionGuard } from '../../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('TimeSlot')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller('time-slot')
 export class TimeSlotController extends CrudController<TimeSlot> {
 	constructor(private readonly timeSlotService: TimeSlotService) {

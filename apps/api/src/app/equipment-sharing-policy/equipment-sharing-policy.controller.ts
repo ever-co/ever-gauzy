@@ -17,9 +17,10 @@ import { IEquipmentSharingPolicy } from '@gauzy/models';
 import { EquipmentSharingPolicy } from './equipment-sharing-policy.entity';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { EquipmentSharingPolicyService } from './equipment-sharing-policy.service';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('EquipmentSharingPolicy')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class EquipmentSharingPolicyController extends CrudController<
 	EquipmentSharingPolicy

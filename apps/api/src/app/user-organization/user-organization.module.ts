@@ -11,6 +11,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { SharedModule } from '../shared';
 import { Role } from '../role/role.entity';
 import { RoleService } from '../role/role.service';
+import { TenantModule } from '../tenant/tenant.module';
 @Module({
 	imports: [
 		forwardRef(() =>
@@ -22,7 +23,8 @@ import { RoleService } from '../role/role.service';
 			])
 		),
 		SharedModule,
-		CqrsModule
+		CqrsModule,
+		TenantModule
 	],
 	controllers: [UserOrganizationController],
 	providers: [

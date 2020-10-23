@@ -25,9 +25,10 @@ import { Permissions } from '../shared/decorators/permissions';
 import { ProductDeleteCommand } from './commands';
 import { DeleteResult } from 'typeorm';
 import { ParseJsonPipe } from '../shared';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('Product')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class ProductController extends CrudController<Product> {
 	constructor(

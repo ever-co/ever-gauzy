@@ -13,9 +13,10 @@ import { ActivityService } from './activity.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { IGetActivitiesInput, IBulkActivitiesInput } from '@gauzy/models';
+import { TenantPermissionGuard } from '../../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('Activity')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller('activity')
 export class ActivityController extends CrudController<Activity> {
 	constructor(private readonly activityService: ActivityService) {

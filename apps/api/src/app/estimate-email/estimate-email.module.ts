@@ -7,10 +7,12 @@ import { EstimateEmailService } from './estimate-email.service';
 import { Organization } from '../organization/organization.entity';
 import { Invoice } from '../invoice/invoice.entity';
 import { EstimateEmail } from './estimate-email.entity';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([User, EstimateEmail, Invoice, Organization])
+		TypeOrmModule.forFeature([User, EstimateEmail, Invoice, Organization]),
+		TenantModule
 	],
 	controllers: [EstimateEmailController],
 	providers: [EstimateEmailService, UserService],

@@ -4,9 +4,10 @@ import { CrudController } from '../core';
 import { Skill } from './skill.entity';
 import { SkillService } from './skill.service';
 import { AuthGuard } from '@nestjs/passport';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('Skills')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class SkillController extends CrudController<Skill> {
 	constructor(private readonly skillService: SkillService) {

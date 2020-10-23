@@ -11,6 +11,7 @@ import { OrganizationService } from '../organization/organization.service';
 import { EmployeeService } from '../employee/employee.service';
 import { EmployeeModule } from '../employee/employee.module';
 import { OrganizationModule } from '../organization/organization.module';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
@@ -18,7 +19,8 @@ import { OrganizationModule } from '../organization/organization.module';
 		EmailModule,
 		EmployeeModule,
 		OrganizationModule,
-		CqrsModule
+		CqrsModule,
+		TenantModule
 	],
 	controllers: [EmployeeAppointmentController],
 	providers: [

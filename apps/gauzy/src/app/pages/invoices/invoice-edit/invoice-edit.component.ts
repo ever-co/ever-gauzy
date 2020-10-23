@@ -511,10 +511,8 @@ export class InvoiceEditComponent
 			case InvoiceTypeEnum.BY_EXPENSES:
 				const expenses = await this.expensesService.getAll([], {
 					typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,
-					organization: {
-						id: organizationId,
-						tenantId: tenantId
-					}
+					organizationId,
+					tenantId
 				});
 
 				this.expenses = expenses.items;

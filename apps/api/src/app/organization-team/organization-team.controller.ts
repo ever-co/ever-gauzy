@@ -20,9 +20,10 @@ import {
 } from '@gauzy/models';
 import { OrganizationTeam } from './organization-team.entity';
 import { AuthGuard } from '@nestjs/passport';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('OrganizationTeam')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class OrganizationTeamController extends CrudController<
 	OrganizationTeam

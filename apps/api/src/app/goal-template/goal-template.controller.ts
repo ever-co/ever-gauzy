@@ -12,9 +12,10 @@ import { AuthGuard } from '@nestjs/passport';
 import { GoalTemplateService } from './goal-template.service';
 import { CrudController } from '../core';
 import { GoalTemplate } from './goal-template.entity';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('GoalTemplates')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class GoalTemplateController extends CrudController<GoalTemplate> {
 	constructor(private readonly goalTemplateService: GoalTemplateService) {

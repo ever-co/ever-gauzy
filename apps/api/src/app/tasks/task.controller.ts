@@ -22,9 +22,10 @@ import { Permissions } from '../shared/decorators/permissions';
 import { PermissionsEnum, IGetTaskByEmployeeOptions } from '@gauzy/models';
 import { EmployeeService } from '../employee/employee.service';
 import { RequestContext } from '../core/context';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('Tasks')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class TaskController extends CrudController<Task> {
 	constructor(

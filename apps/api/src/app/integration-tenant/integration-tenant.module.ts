@@ -14,6 +14,7 @@ import { UserModule } from '../user/user.module';
 import { RolePermissionsModule } from '../role-permissions/role-permissions.module';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CommandHandlers } from './commands/handlers';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
@@ -26,7 +27,8 @@ import { CommandHandlers } from './commands/handlers';
 		RoleModule,
 		UserModule,
 		RolePermissionsModule,
-		CqrsModule
+		CqrsModule,
+		TenantModule
 	],
 	exports: [
 		IntegrationTenantService,

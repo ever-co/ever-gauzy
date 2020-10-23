@@ -11,6 +11,7 @@ import { CommandHandlers } from './commands/handlers';
 import { CqrsModule } from '@nestjs/cqrs';
 import { UserService } from '../user/user.service';
 import { User } from '../user/user.entity';
+import { TenantModule } from '../tenant/tenant.module';
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([CandidatePersonalQualities, User]),
@@ -18,7 +19,8 @@ import { User } from '../user/user.entity';
 		RoleModule,
 		RolePermissionsModule,
 		AuthModule,
-		CqrsModule
+		CqrsModule,
+		TenantModule
 	],
 	providers: [
 		CandidatePersonalQualitiesService,

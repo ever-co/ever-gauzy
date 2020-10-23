@@ -15,9 +15,10 @@ import { CandidateSourceService } from './candidate-source.service';
 import { AuthGuard } from '@nestjs/passport';
 import { IPagination } from '../core';
 import { ICandidateSource } from '@gauzy/models';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('CandidateSource')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class CandidateSourceController extends CrudController<CandidateSource> {
 	constructor(

@@ -22,6 +22,7 @@ import { OrganizationCreateCommand } from './commands';
 import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
 import { AuthGuard } from '@nestjs/passport';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('Organization')
 @Controller()
@@ -43,7 +44,7 @@ export class OrganizationController extends CrudController<Organization> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(AuthGuard('jwt'), PermissionGuard)
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	@Get()
 	async findAllOrganizations(
@@ -118,7 +119,7 @@ export class OrganizationController extends CrudController<Organization> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
-	@UseGuards(AuthGuard('jwt'), PermissionGuard)
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Post()
 	async create(

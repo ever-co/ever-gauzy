@@ -93,6 +93,8 @@ export class TenantPermissionGuard implements CanActivate {
 					}
 				}
 			}
+
+			console.log(isAuthorized, 'isAuthorized');
 		}
 
 		//Super admin and admin has allowed to access request
@@ -117,8 +119,8 @@ export class TenantPermissionGuard implements CanActivate {
 		}
 		if (!isAuthorized) {
 			console.log(
-				'Unauthorized access blocked. UserId:',
-				id,
+				'Unauthorized access blocked. TenantId:',
+				currentTenantId,
 				' Permissions Checked:',
 				permissions
 			);

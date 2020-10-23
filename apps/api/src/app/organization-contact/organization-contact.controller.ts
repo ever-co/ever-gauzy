@@ -20,8 +20,10 @@ import { OrganizationContactService } from './organization-contact.service';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import { AuthGuard } from '@nestjs/passport';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('OrganizationContact')
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class OrganizationContactController extends CrudController<
 	OrganizationContact
@@ -45,7 +47,6 @@ export class OrganizationContactController extends CrudController<
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(AuthGuard('jwt'))
 	@Get('employee/:id')
 	async findByEmployee(
 		@Param('id') id: string
@@ -65,7 +66,6 @@ export class OrganizationContactController extends CrudController<
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(AuthGuard('jwt'))
 	@Get()
 	async findAllEmployees(
 		@Query('data') data: string
@@ -95,7 +95,6 @@ export class OrganizationContactController extends CrudController<
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Put('employee')
-	@UseGuards(AuthGuard('jwt'))
 	async updateEmployee(
 		@Body() entity: IEditEntityByMemberInput
 	): Promise<any> {

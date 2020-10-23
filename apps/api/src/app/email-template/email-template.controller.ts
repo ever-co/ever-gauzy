@@ -23,9 +23,10 @@ import {
 } from './queries';
 import { EmailTemplateSaveCommand } from './commands';
 import { AuthGuard } from '@nestjs/passport';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('EmailTemplate')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class EmailTemplateController extends CrudController<EmailTemplate> {
 	constructor(

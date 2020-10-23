@@ -23,9 +23,10 @@ import { ParseJsonPipe } from '../shared';
 import { CommandBus } from '@nestjs/cqrs';
 import { FeedbackUpdateCommand } from './commands/candidate-feedbacks.update.command';
 import { FeedbackDeleteCommand } from './commands/candidate-feedbacks.delete.command';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('CandidateFeedback')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class CandidateFeedbacksController extends CrudController<
 	CandidateFeedback

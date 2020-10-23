@@ -44,6 +44,7 @@ import { OrganizationContact } from '../organization-contact/organization-contac
 import { Request } from 'express';
 import { I18nLang } from 'nestjs-i18n';
 import { InviteAcceptOrganizationContactCommand } from './commands/invite.accept-organization-contact.command';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('Invite')
 @Controller()
@@ -64,7 +65,7 @@ export class InviteController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
-	@UseGuards(AuthGuard('jwt'), PermissionGuard)
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('/emails')
 	async createManyWithEmailsId(
@@ -113,7 +114,7 @@ export class InviteController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(AuthGuard('jwt'), PermissionGuard)
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 	@Permissions(
 		PermissionsEnum.ORG_INVITE_VIEW,
 		PermissionsEnum.ORG_INVITE_EDIT
@@ -206,7 +207,7 @@ export class InviteController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(AuthGuard('jwt'), PermissionGuard)
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('resend')
 	async resendInvite(
@@ -225,7 +226,7 @@ export class InviteController {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(AuthGuard('jwt'), PermissionGuard)
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Delete(':id')
 	async delete(@Param('id') id: string, ...options: any[]): Promise<any> {
@@ -253,7 +254,7 @@ export class InviteController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(AuthGuard('jwt'), PermissionGuard)
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Put('organization-contact/:id')
 	async inviteOrganizationContact(

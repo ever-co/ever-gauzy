@@ -7,7 +7,7 @@ import {
 	ManyToMany
 } from 'typeorm';
 import { IPayment, CurrenciesEnum, PaymentMethodEnum } from '@gauzy/models';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsEnum,
 	IsString,

@@ -23,6 +23,7 @@ import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
 import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 import { EmployeeRecurringExpenseCreateCommand } from './commands/employee-recurring-expense.create.command';
 import { EmployeeRecurringExpenseDeleteCommand } from './commands/employee-recurring-expense.delete.command';
 import { EmployeeRecurringExpenseEditCommand } from './commands/employee-recurring-expense.edit.command';
@@ -32,7 +33,7 @@ import { EmployeeRecurringExpenseByMonthQuery } from './queries/employee-recurri
 import { EmployeeRecurringExpenseStartDateUpdateTypeQuery } from './queries/employee-recurring-expense.update-type.query';
 
 @ApiTags('EmployeeRecurringExpense')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class EmployeeRecurringExpenseController extends CrudController<
 	EmployeeRecurringExpense

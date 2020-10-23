@@ -18,9 +18,10 @@ import { AuthGuard } from '@nestjs/passport';
 import { DeepPartial } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { EmployeeAwardService } from './employee-award.service';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('EmployeeAward')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class EmployeeAwardController extends CrudController<EmployeeAward> {
 	constructor(private readonly employeeAwardService: EmployeeAwardService) {

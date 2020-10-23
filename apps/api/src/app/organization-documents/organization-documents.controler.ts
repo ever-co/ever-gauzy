@@ -4,9 +4,10 @@ import { CrudController, IPagination } from '../core';
 import { OrganizationDocuments } from './organization-documents.entity';
 import { OrganizationDocumentsService } from './organization-documents.service';
 import { AuthGuard } from '@nestjs/passport';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('OrganizationDocuments')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class OrganizationDocumentsController extends CrudController<
 	OrganizationDocuments

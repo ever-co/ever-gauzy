@@ -6,9 +6,10 @@ import { Controller, UseGuards, Get, Query } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { IInvoiceItem } from '@gauzy/models';
 import { ParseJsonPipe } from '../shared';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('InvoiceItem')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class InvoiceItemController extends CrudController<InvoiceItem> {
 	constructor(private invoiceItemService: InvoiceItemService) {

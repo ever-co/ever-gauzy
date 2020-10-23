@@ -7,6 +7,7 @@ import { Organization } from '../organization/organization.entity';
 import { OrganizationService } from '../organization/organization.service';
 import { Role } from '../role/role.entity';
 import { RoleService } from '../role/role.service';
+import { TenantModule } from '../tenant/tenant.module';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
 import { OrganizationTeamController } from './organization-team.controller';
@@ -22,7 +23,8 @@ import { OrganizationTeamService } from './organization-team.service';
 			Role,
 			Organization
 		]),
-		OrganizationTeamEmployeeModule
+		OrganizationTeamEmployeeModule,
+		TenantModule
 	],
 	controllers: [OrganizationTeamController],
 	providers: [

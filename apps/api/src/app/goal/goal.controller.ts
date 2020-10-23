@@ -16,9 +16,10 @@ import { GoalService } from './goal.service';
 import { Goal } from './goal.entity';
 import { CrudController } from '../core';
 import { AuthGuard } from '@nestjs/passport';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('Goals')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class GoalController extends CrudController<Goal> {
 	constructor(private readonly goalService: GoalService) {

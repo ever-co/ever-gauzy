@@ -36,7 +36,10 @@ export class PipelineFormComponent implements OnInit {
 			: (this.isActive = isActive);
 
 		this.usersOrganizationsService
-			.getAll(['organization'], { userId })
+			.getAll(['organization'], {
+				userId,
+				tenantId: this.pipeline.tenantId
+			})
 			.then(({ items }) => (this.userOrganizations = items));
 		this.form = this.fb.group({
 			organizationId: [

@@ -10,12 +10,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Candidate } from './candidate.entity';
 import { UserOrganizationModule } from '../user-organization/user-organization.module';
 import { CommandHandlers } from './commands/handlers';
+import { TenantModule } from '../tenant/tenant.module';
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([Candidate, User]),
 		EmailModule,
 		CqrsModule,
-		UserOrganizationModule
+		UserOrganizationModule,
+		TenantModule
 	],
 	controllers: [CandidateController],
 	providers: [

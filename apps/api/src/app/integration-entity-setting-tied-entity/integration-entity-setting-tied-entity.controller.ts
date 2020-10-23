@@ -12,9 +12,10 @@ import { IntegrationEntitySettingTiedEntity } from './integration-entity-setting
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IntegrationEntitySettingTiedEntityService } from './integration-entity-setting-tied-entity.service';
 import { AuthGuard } from '@nestjs/passport';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('IntegrationsEntitySetting')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class IntegrationEntitySettingTiedEntityController extends CrudController<
 	IntegrationEntitySettingTiedEntity

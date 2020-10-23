@@ -25,9 +25,10 @@ import {
 	IEmployeeAppointmentCreateInput,
 	IEmployeeAppointmentUpdateInput
 } from '@gauzy/models';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('EmployeeAppointment')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class EmployeeAppointmentController extends CrudController<
 	EmployeeAppointment

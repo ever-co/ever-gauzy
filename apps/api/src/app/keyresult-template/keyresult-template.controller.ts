@@ -11,9 +11,10 @@ import { CrudController } from '../core';
 import { KeyResultTemplate } from './keyresult-template.entity';
 import { KeyresultTemplateService } from './keyresult-template.service';
 import { AuthGuard } from '@nestjs/passport';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('keyResultTemplate')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class KeyresultTemplateController extends CrudController<
 	KeyResultTemplate

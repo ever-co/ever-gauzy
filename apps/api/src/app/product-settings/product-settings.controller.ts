@@ -4,9 +4,10 @@ import { Controller, UseGuards } from '@nestjs/common';
 import { ProductVariantSettings } from './product-settings.entity';
 import { ProductVariantSettingService } from './product-settings.service';
 import { AuthGuard } from '@nestjs/passport';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('ProductVariantPrice')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class ProductVariantSettingsController extends CrudController<
 	ProductVariantSettings

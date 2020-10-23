@@ -15,9 +15,10 @@ import { TagService } from './tag.service';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { PermissionsEnum } from '@gauzy/models';
 import { Permissions } from '../shared/decorators/permissions';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('Tags')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class TagController extends CrudController<Tag> {
 	constructor(private readonly tagService: TagService) {

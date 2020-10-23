@@ -23,9 +23,10 @@ import { Product } from '../product/product.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { DeleteResult } from 'typeorm';
 import { IVariantCreateInput } from '@gauzy/models';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('ProductVariant')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class ProductVariantController extends CrudController<ProductVariant> {
 	constructor(
