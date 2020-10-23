@@ -11,21 +11,30 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="mb-3">
-			<button (click)="save(true)" nbButton status="success" class="mr-2">
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-				>{{ 'BUTTONS.ADD' | translate }}
-			</button>
+			<ng-template ngxPermissionsOnly="REQUEST_APPROVAL_EDIT">
+				<button
+					(click)="save(true)"
+					nbButton
+					status="success"
+					class="mr-2"
+				>
+					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+					>{{ 'BUTTONS.ADD' | translate }}
+				</button>
+			</ng-template>
 			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
-			<button
-				class="float-right"
-				nbButton
-				status="primary"
-				(click)="manageAppropvalPolicy()"
-			>
-				{{ 'APPROVAL_REQUEST_PAGE.APPROVAL_POLICY' | translate }}
-			</button>
+			<ng-template ngxPermissionsOnly="APPROVALS_POLICY_VIEW">
+				<button
+					class="float-right"
+					nbButton
+					status="primary"
+					(click)="manageAppropvalPolicy()"
+				>
+					{{ 'APPROVAL_REQUEST_PAGE.APPROVAL_POLICY' | translate }}
+				</button>
+			</ng-template>
 		</div>
 
 		<ng2-smart-table
@@ -34,7 +43,7 @@
 			(userRowSelect)="selectRequestApproval($event)"
 			[settings]="settingsSmartTable"
 			[source]="smartTableSource"
-			style="cursor: pointer;"
+			style="cursor: pointer"
 			#requestApprovalTable
 		>
 		</ng2-smart-table>
@@ -68,7 +77,7 @@
 						'Refused'
 					}}</span>
 				</div>
-				<div class="info-line" style="height: 56px;">
+				<div class="info-line" style="height: 56px">
 					<span class="info-meta">Action</span>
 					<div *ngIf="x.status === 1">
 						<button
@@ -111,17 +120,19 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<button
-		(click)="save(false, selectedItem)"
-		nbButton
-		status="info"
-		class="mr-2"
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-		{{ 'BUTTONS.EDIT' | translate }}
-	</button>
+	<ng-template ngxPermissionsOnly="REQUEST_APPROVAL_EDIT">
+		<button
+			(click)="save(false, selectedItem)"
+			nbButton
+			status="info"
+			class="mr-2"
+			[disabled]="!selectedItem && disableButton"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+	</ng-template>
 	<button
 		(click)="delete(selectedItem)"
 		nbButton

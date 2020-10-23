@@ -11,7 +11,7 @@ import {
 	RolesEnum
 } from '@gauzy/models';
 import { ExtractJwt } from 'passport-jwt';
-import { verify } from 'jsonwebtoken';
+import { JsonWebTokenError, verify } from 'jsonwebtoken';
 import { environment as env } from '@env-api/environment';
 
 export class RequestContext {
@@ -187,14 +187,22 @@ export class RequestContext {
 	static hasRoles(findRoles: RolesEnum[], throwError?: boolean): boolean {
 		const requestContext = RequestContext.currentRequestContext();
 		if (requestContext) {
-			const token = this.currentToken();
-			if (token) {
-				const { role } = verify(token, env.JWT_SECRET) as {
-					id: string;
-					role: RolesEnum;
-				};
+			try {
+				const token = this.currentToken();
+				if (token) {
+					const { role } = verify(token, env.JWT_SECRET) as {
+						id: string;
+						role: RolesEnum;
+					};
 
-				return role ? findRoles.includes(role) : false;
+					return role ? findRoles.includes(role) : false;
+				}
+			} catch (error) {
+				if (error instanceof JsonWebTokenError) {
+					return false;
+				} else {
+					throw error;
+				}
 			}
 		}
 

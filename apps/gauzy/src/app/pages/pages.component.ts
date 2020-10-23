@@ -5,10 +5,10 @@ import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
-import { AuthService } from '../@core/services/auth.service';
 import { Store } from '../@core/services/store.service';
 import { SelectorService } from '../@core/utils/selector.service';
 import { EmployeesService } from '../@core/services';
+import { NgxPermissionsService } from 'ngx-permissions';
 
 interface GaMenuItem extends NbMenuItem {
 	data: {
@@ -717,21 +717,24 @@ export class PagesComponent implements OnInit, OnDestroy {
 	menu: NbMenuItem[] = this.MENU_ITEMS;
 
 	constructor(
-		private authService: AuthService,
 		private employeeService: EmployeesService,
 		public translate: TranslateService,
 		private store: Store,
 		private selectorService: SelectorService,
-		private router: Router
+		private router: Router,
+		private permissionsService: NgxPermissionsService
 	) {}
 
 	async ngOnInit() {
-		await this.checkForEmployee();
 		this._applyTranslationOnSmartTable();
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((org) => {
+			.pipe(
+				filter((organization) => !!organization),
+				takeUntil(this._ngDestroy$)
+			)
+			.subscribe(async (org) => {
 				this._selectedOrganization = org;
+				await this.checkForEmployee();
 				this.loadItems(
 					this.selectorService.showSelectors(this.router.url)
 						.showOrganizationShortcuts
@@ -739,8 +742,15 @@ export class PagesComponent implements OnInit, OnDestroy {
 			});
 
 		this.store.userRolePermissions$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
+			.pipe(
+				filter((permissions) => permissions.length > 0),
+				takeUntil(this._ngDestroy$)
+			)
+			.subscribe((data) => {
+				const permissions = data.map(
+					(permisson) => permisson.permission
+				);
+				this.permissionsService.loadPermissions(permissions);
 				this.loadItems(
 					this.selectorService.showSelectors(this.router.url)
 						.showOrganizationShortcuts
@@ -798,7 +808,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 
 	async checkForEmployee() {
 		this.isEmployee = (
-			await this.employeeService.getEmployeeByUserId(this.store.userId)
+			await this.employeeService.getEmployeeByUserId(
+				this.store.userId,
+				[]
+			)
 		).success;
 	}
 

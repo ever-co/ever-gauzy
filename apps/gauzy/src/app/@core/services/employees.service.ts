@@ -55,12 +55,13 @@ export class EmployeesService {
 		forMonth: Date,
 		withUser: boolean
 	): Promise<{ items: IEmployee[]; total: number }> {
-		const data = JSON.stringify({
+		const query = {
 			organizationId,
 			tenantId,
 			forMonth,
 			withUser
-		});
+		};
+		const data = JSON.stringify({ findInput: query });
 		return this.http
 			.get<{ items: IEmployee[]; total: number }>(
 				`/api/employee/working`,

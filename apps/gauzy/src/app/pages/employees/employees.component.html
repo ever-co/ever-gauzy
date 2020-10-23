@@ -4,21 +4,25 @@
 			<h4>
 				{{ 'EMPLOYEES_PAGE.HEADER' | translate }} {{ organizationName }}
 			</h4>
-
 			<div class="header-selector-wrapper">
-				<div style="margin-right: 9px;">
-					<button
-						*ngIf="
-							organizationInvitesAllowed &&
-							hasInviteViewOrEditPermission &&
-							hasEditPermission
-						"
-						nbButton
-						status="primary"
-						(click)="manageInvites()"
-					>
-						{{ 'BUTTONS.MANAGE_INVITES' | translate }}
-					</button>
+				<div style="margin-right: 9px">
+					<ng-template ngxPermissionsOnly="ORG_EMPLOYEES_EDIT">
+						<ng-template
+							[ngxPermissionsOnly]="[
+								'ORG_INVITE_VIEW',
+								'ORG_INVITE_EDIT'
+							]"
+						>
+							<button
+								*ngIf="organizationInvitesAllowed"
+								nbButton
+								status="primary"
+								(click)="manageInvites()"
+							>
+								{{ 'BUTTONS.MANAGE_INVITES' | translate }}
+							</button>
+						</ng-template>
+					</ng-template>
 				</div>
 				<div>
 					<ga-layout-selector
@@ -29,55 +33,60 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="mb-3" *ngIf="hasEditPermission">
-			<button
-				nbButton
-				*ngIf="organizationInvitesAllowed && hasInviteEditPermission"
-				status="primary"
-				(click)="invite()"
-				class="mr-2"
-			>
-				<nb-icon class="mr-1" icon="email-outline"></nb-icon
-				>{{ 'BUTTONS.INVITE' | translate }}
-			</button>
+		<ng-template ngxPermissionsOnly="ORG_EMPLOYEES_EDIT">
+			<div class="mb-3">
+				<ng-template ngxPermissionsOnly="ORG_INVITE_EDIT">
+					<button
+						nbButton
+						*ngIf="organizationInvitesAllowed"
+						status="primary"
+						(click)="invite()"
+						class="mr-2"
+					>
+						<nb-icon class="mr-1" icon="email-outline"></nb-icon
+						>{{ 'BUTTONS.INVITE' | translate }}
+					</button>
+				</ng-template>
 
-			<button nbButton status="success" (click)="add()" class="mr-2">
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-				>{{ 'BUTTONS.ADD' | translate }}
-			</button>
+				<button nbButton status="success" (click)="add()" class="mr-2">
+					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+					>{{ 'BUTTONS.ADD' | translate }}
+				</button>
 
-			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
-				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
-			</ng-container>
+				<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+					<ng-container
+						*ngTemplateOutlet="actionButtons"
+					></ng-container>
+				</ng-container>
 
-			<nb-checkbox
-				(checkedChange)="changeIncludeDeleted($event)"
-				status="danger"
-				class="float-right py-auto"
-				>{{
-					'FORM.CHECKBOXES.INCLUDE_DELETED' | translate
-				}}</nb-checkbox
-			>
-		</div>
-		<div
-			class="mb-3"
-			*ngIf="!hasEditPermission && hasEditExpensePermission"
-		>
-			<button
-				nbButton
-				[disabled]="!selectedEmployee"
-				(click)="edit()"
-				status="info"
-				class="mr-2"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-				>{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-		</div>
+				<nb-checkbox
+					(checkedChange)="changeIncludeDeleted($event)"
+					status="danger"
+					class="float-right py-auto"
+					>{{
+						'FORM.CHECKBOXES.INCLUDE_DELETED' | translate
+					}}</nb-checkbox
+				>
+			</div>
+		</ng-template>
+		<ng-template [ngxPermissionsOnly]="'ORG_EXPENSES_EDIT'">
+			<div class="mb-3" *ngIf="!hasEditPermission">
+				<button
+					nbButton
+					[disabled]="!selectedEmployee"
+					(click)="edit()"
+					status="info"
+					class="mr-2"
+				>
+					<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+					>{{ 'BUTTONS.EDIT' | translate }}
+				</button>
+			</div>
+		</ng-template>
 
 		<ng2-smart-table
 			class="employees-table"
-			style="cursor: pointer;"
+			style="cursor: pointer"
 			[settings]="settingsSmartTable"
 			*ngIf="dataLayoutStyle === 'TABLE'"
 			[source]="sourceSmartTable"
@@ -113,7 +122,7 @@
 					>
 					<span class="info-value">{{ x.bonus }}</span>
 				</div>
-				<div class="info-line" style="height: 62px;">
+				<div class="info-line" style="height: 62px">
 					<span class="info-meta">Work Status</span>
 					<div class="text-center d-block" *ngIf="x.workStatus">
 						<div class="badge-danger">

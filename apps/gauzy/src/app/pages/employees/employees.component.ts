@@ -9,13 +9,13 @@ import {
 	InvitationTypeEnum,
 	PermissionsEnum,
 	ComponentLayoutStyleEnum,
-	IOrganization
+	IOrganization,
+	EmployeeViewModel
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
-import { Subject } from 'rxjs';
-import { debounceTime, filter, first, takeUntil } from 'rxjs/operators';
+import { debounceTime, filter, first } from 'rxjs/operators';
 import { EmployeesService } from '../../@core/services/employees.service';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { Store } from '../../@core/services/store.service';
@@ -31,15 +31,9 @@ import { EmployeeWorkStatusComponent } from './table-components/employee-work-st
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
-
-interface EmployeeViewModel {
-	fullName: string;
-	email: string;
-	bonus?: number;
-	endWork?: any;
-	id: string;
-}
-
+import { NgxPermissionsService } from 'ngx-permissions';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './employees.component.html',
 	styleUrls: ['./employees.component.scss']
@@ -57,7 +51,6 @@ export class EmployeesComponent
 	viewComponentName: ComponentEnum;
 	disableButton = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	private _ngDestroy$ = new Subject<void>();
 	incomeStatistics: number[];
 	expenseStatistics: number[];
 	profitStatistics: number[];
@@ -77,9 +70,6 @@ export class EmployeesComponent
 	includeDeleted = false;
 	loading = true;
 	hasEditPermission = false;
-	hasEditExpensePermission = false;
-	hasInviteEditPermission = false;
-	hasInviteViewOrEditPermission = false;
 	organizationInvitesAllowed = false;
 	month;
 	year;
@@ -94,7 +84,8 @@ export class EmployeesComponent
 		private toastrService: NbToastrService,
 		private route: ActivatedRoute,
 		private translate: TranslateService,
-		private errorHandler: ErrorHandlingService
+		private errorHandler: ErrorHandlingService,
+		private permissionsService: NgxPermissionsService
 	) {
 		super(translate);
 		this.setView();
@@ -102,25 +93,21 @@ export class EmployeesComponent
 
 	async ngOnInit() {
 		this.store.userRolePermissions$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((permissions) => permissions.length > 0),
+				untilDestroyed(this)
+			)
 			.subscribe(() => {
 				this.hasEditPermission = this.store.hasPermission(
 					PermissionsEnum.ORG_EMPLOYEES_EDIT
 				);
-				this.hasInviteEditPermission = this.store.hasPermission(
-					PermissionsEnum.ORG_INVITE_EDIT
-				);
-				this.hasInviteViewOrEditPermission =
-					this.store.hasPermission(PermissionsEnum.ORG_INVITE_VIEW) ||
-					this.hasInviteEditPermission;
-
-				this.hasEditExpensePermission = this.store.hasPermission(
-					PermissionsEnum.ORG_EXPENSES_EDIT
-				);
 			});
 
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((organization) => {
 				if (organization) {
 					this.selectedOrganization = organization;
@@ -138,7 +125,7 @@ export class EmployeesComponent
 			.pipe(
 				filter((params) => !!params),
 				debounceTime(1000),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe((params) => {
 				if (params.get('openAddDialog') === 'true') {
@@ -146,7 +133,7 @@ export class EmployeesComponent
 				}
 			});
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
@@ -158,7 +145,7 @@ export class EmployeesComponent
 		this.viewComponentName = ComponentEnum.EMPLOYEES;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
@@ -244,7 +231,7 @@ export class EmployeesComponent
 						this.getTranslation('FORM.DELETE_CONFIRMATION.EMPLOYEE')
 				}
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
@@ -339,10 +326,9 @@ export class EmployeesComponent
 	private async loadPage() {
 		this.selectedEmployee = null;
 
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const { items } = await this.employeesService
-			.getAll(['user', 'tags'], {
-				organization: { id: this.selectedOrganizationId }
-			})
+			.getAll(['user', 'tags'], { organizationId, tenantId })
 			.pipe(first())
 			.toPromise();
 		const { name } = this.store.selectedOrganization;
@@ -391,7 +377,6 @@ export class EmployeesComponent
 		}
 
 		this.organizationName = name;
-
 		this.loading = false;
 	}
 
@@ -461,15 +446,10 @@ export class EmployeesComponent
 	}
 
 	private _applyTranslationOnSmartTable() {
-		this.translate.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this._loadSmartTableSettings();
-			});
+		this.translate.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
+			this._loadSmartTableSettings();
+		});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

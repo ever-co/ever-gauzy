@@ -13,10 +13,12 @@
 
 	<nb-card-body>
 		<div class="mb-3">
-			<button (click)="save()" nbButton status="success" class="mr-2">
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-				>{{ 'BUTTONS.ADD' | translate }}
-			</button>
+			<ng-template ngxPermissionsOnly="APPROVALS_POLICY_EDIT">
+				<button (click)="save()" nbButton status="success" class="mr-2">
+					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+					>{{ 'BUTTONS.ADD' | translate }}
+				</button>
+			</ng-template>
 			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
@@ -27,7 +29,7 @@
 			(userRowSelect)="selectApprovalPolicy($event)"
 			[settings]="settingsSmartTable"
 			[source]="smartTableSource"
-			style="cursor: pointer;"
+			style="cursor: pointer"
 			*ngIf="dataLayoutStyle === 'TABLE'"
 			#approvalPolicyTable
 		>
@@ -45,17 +47,19 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<button
-		(click)="save(selectedItem)"
-		nbButton
-		status="info"
-		class="mr-2"
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-		{{ 'BUTTONS.EDIT' | translate }}
-	</button>
+	<ng-template ngxPermissionsOnly="APPROVALS_POLICY_EDIT">
+		<button
+			(click)="save(selectedItem)"
+			nbButton
+			status="info"
+			class="mr-2"
+			[disabled]="!selectedItem && disableButton"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+	</ng-template>
 	<button
 		(click)="delete(selectedItem)"
 		nbButton

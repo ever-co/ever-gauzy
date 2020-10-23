@@ -124,3 +124,17 @@ export interface IEmployeeLevelFindInput {
 	organizationId?: string;
 	tenantId: string;
 }
+export interface EmployeeViewModel {
+	fullName: string;
+	email: string;
+	bonus?: number;
+	endWork?: any;
+	id: string;
+	imageUrl?: string;
+	averageIncome?: number;
+	averageExpenses?: number;
+	averageBonus?: number;
+	workStatus?: string;
+	startedWorkOn?: string;
+	isActive?: boolean;
+}

@@ -20,6 +20,7 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { PermissionsEnum, IInvoice, LanguagesEnum } from '@gauzy/models';
 import { ParseJsonPipe } from '../shared';
 import { I18nLang } from 'nestjs-i18n';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('Invoice')
 @Controller()
@@ -28,28 +29,27 @@ export class InvoiceController extends CrudController<Invoice> {
 		super(invoiceService);
 	}
 
-	@UseGuards(AuthGuard('jwt'), PermissionGuard)
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get()
 	async findAllInvoices(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IInvoice>> {
 		const { relations = [], findInput = null } = data;
-
 		return this.invoiceService.findAll({
 			where: findInput,
 			relations
 		});
 	}
 
-	@UseGuards(AuthGuard('jwt'), PermissionGuard)
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get('highest')
 	async findHighestInvoiceNumber(): Promise<IPagination<IInvoice>> {
 		return this.invoiceService.getHighestInvoiceNumber();
 	}
 
-	@UseGuards(AuthGuard('jwt'), PermissionGuard)
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get(':id')
 	async findByIdWithRelations(
@@ -64,7 +64,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	}
 
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(AuthGuard('jwt'), PermissionGuard)
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Put(':id')
 	async updateInvoice(
@@ -89,7 +89,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	}
 
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(AuthGuard('jwt'), PermissionGuard)
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 	@Put('email/:email')
 	async emailInvoice(
 		@Param('email') email: string,
