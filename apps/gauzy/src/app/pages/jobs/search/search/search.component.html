@@ -1,0 +1,163 @@
+<nb-card class="jobs-page">
+	<nb-card-header class="header">
+		<h4>{{ 'JOBS.JOB_SEARCH' | translate }}</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="job-fitlers py-3">
+			<div class="row">
+				<div class="col-sm-3 col-lg-2 search-box">
+					<input
+						type="text"
+						class="w-100"
+						[placeholder]="'JOBS.JOB_SEARCH' | translate"
+						nbInput
+						[(ngModel)]="jobRequest.keyword"
+					/>
+				</div>
+				<div class="col-sm-3 col-lg-2 source-box">
+					<nb-select
+						placeholder="Source"
+						class="w-100"
+						[(ngModel)]="jobRequest.spurce"
+					>
+						<nb-option value="upwork">Upwork</nb-option>
+					</nb-select>
+				</div>
+				<div class="col-sm-3 col-lg-2 source-box">
+					<nb-select
+						placeholder="Job Type"
+						class="w-100"
+						[(ngModel)]="jobRequest.jobType"
+					>
+						<nb-option value="hourly">Hourly</nb-option>
+						<nb-option value="fix-price">Fix Price</nb-option>
+					</nb-select>
+				</div>
+				<div class="col-sm-3 col-lg-2 source-box">
+					<nb-select
+						placeholder="Budget"
+						class="w-100"
+						[(ngModel)]="jobRequest.budget"
+					>
+						<nb-option [value]="[0, 100]">
+							Less than $100</nb-option
+						>
+						<nb-option [value]="[100, 500]">$100 - $500</nb-option>
+						<nb-option [value]="[500, 1000]">$500 - $1K</nb-option>
+						<nb-option [value]="[1000, 5000]">$1K - $5K</nb-option>
+						<nb-option [value]="[5000, 0]">$5K+</nb-option>
+					</nb-select>
+				</div>
+			</div>
+		</div>
+		<div
+			class="row-table"
+			[nbSpinner]="loading"
+			nbSpinnerSize="giant"
+			nbSpinnerStatus="primary"
+		>
+			<div
+				class="row border-bottom border-top py-3 font-weight-bold align-items-center"
+			>
+				<div class="col employee-name">
+					{{ 'JOBS.EMPLOYEE' | translate }}
+				</div>
+				<div class="col">{{ 'JOBS.EMPLOYEE' | translate }}</div>
+				<div class="col">{{ 'JOBS.TITLE' | translate }}</div>
+				<div class="col">{{ 'JOBS.DESCRIPTION' | translate }}</div>
+				<div class="col">{{ 'JOBS.CREATED_DATE' | translate }}</div>
+				<div class="col">{{ 'JOBS.STATUS' | translate }}</div>
+				<div class="col action">{{ 'JOBS.ACTION' | translate }}</div>
+			</div>
+			<ng-template [ngIf]="jobs?.length > 0" [ngIfElse]="notFound">
+				<div
+					class="row border-bottom py-3 align-items-center"
+					*ngFor="let job of jobs"
+				>
+					<div class="col employee-name">
+						<div class="name-container">
+							<ngx-avatar
+								[name]="job?.employee?.user?.name"
+								[src]="job?.employee?.user?.imageUrl"
+							>
+							</ngx-avatar>
+						</div>
+					</div>
+					<div class="col">{{ job?.jobPost?.title }}</div>
+					<div class="col">{{ job?.jobPost?.description }}</div>
+					<div class="col">
+						{{ job?.jobPost?.jobDateCreated | amDateFormat: 'LL' }}
+					</div>
+					<div class="col">
+						{{ job?.jobPost?.jobStatus | titlecase }}
+					</div>
+					<div class="col action">
+						<div class="action-button">
+							<button
+								outline
+								nbButton
+								[nbPopover]="templateRef"
+								nbPopoverPlacement="bottom"
+							>
+								{{ 'JOBS.ACTION' | translate }}
+							</button>
+
+							<ng-template #templateRef>
+								<div class="menu-item">
+									<button
+										class="m-1"
+										(click)="redirectToView(job)"
+										nbButton
+										ghost
+										size="small"
+									>
+										{{ 'JOBS.VIEW' | translate }}
+									</button>
+								</div>
+								<div class="menu-item" *ngIf="!job?.isApplied">
+									<button
+										class="m-1"
+										(click)="redirectToView(job)"
+										nbButton
+										ghost
+										size="small"
+									>
+										{{ 'JOBS.APPLY' | translate }}
+									</button>
+								</div>
+								<div class="menu-item" *ngIf="job?.isApplied">
+									<button
+										class="m-1"
+										nbButton
+										ghost
+										size="small"
+									>
+										{{ 'JOBS.APPLIED' | translate }}
+									</button>
+								</div>
+								<div class="menu-item">
+									<button
+										class="m-1"
+										(click)="redirectToView(job)"
+										nbButton
+										ghost
+										size="small"
+									>
+										{{ 'JOBS.HIDE' | translate }}
+									</button>
+								</div>
+							</ng-template>
+						</div>
+					</div>
+				</div>
+			</ng-template>
+			<ng-template #notFound>
+				<div class="row font-weight-bold py-3 align-items-center">
+					<div class="col text-center">
+						{{ 'JOBS.NO_JOBS' | translate }}
+					</div>
+				</div>
+			</ng-template>
+		</div>
+	</nb-card-body>
+</nb-card>
