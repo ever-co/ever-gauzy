@@ -568,6 +568,9 @@
 		"ESTIMATES_RECEIVED": "Estimates Received",
 		"ESTIMATES": "Estimates",
 		"MY_TASKS": "My Tasks",
+		"JOBS": "Jobs",
+		"JOBS_SEARCH": "Search",
+		"JOBS_MACTHING": "Matching",
 		"TEAM_TASKS": "Team's Tasks",
 		"ACTIVITY": "Activity",
 		"TIMESHEETS": "Timesheets",
@@ -1600,6 +1603,20 @@
 		"ESTIMATE_HOURS": "Hours",
 		"ESTIMATE_MINUTES": "Mins",
 		"TASKS_STATUS": "עבודה"
+	},
+	"JOBS": {
+		"EMPLOYEE": "עובד",
+		"TITLE": "Title",
+		"DESCRIPTION": "Description",
+		"CREATED_DATE": "Created Date",
+		"STATUS": "עבודה",
+		"ACTION": "Action",
+		"APPLY": "Apply",
+		"APPLIED": "Applied",
+		"VIEW": "View",
+		"HIDE": "Hide",
+		"NO_JOBS": "No Jobs",
+		"JOB_SEARCH": "Job Search"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Sprint added",
