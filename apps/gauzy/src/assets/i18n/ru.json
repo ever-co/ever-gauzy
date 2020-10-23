@@ -568,6 +568,9 @@
 		"ESTIMATES_RECEIVED": "Полученные оценки",
 		"ESTIMATES": "Оценки",
 		"MY_TASKS": "Мои задачи",
+		"JOBS": "Задания",
+		"JOBS_SEARCH": "Искать",
+		"JOBS_MACTHING": "Соответствие",
 		"TEAM_TASKS": "Задачи команды",
 		"ACTIVITY": "Активность",
 		"TIMESHEETS": "Сроки",
@@ -1600,6 +1603,20 @@
 		"ESTIMATE_HOURS": "Часы",
 		"ESTIMATE_MINUTES": "Минс",
 		"TASKS_STATUS": "Статус"
+	},
+	"JOBS": {
+		"EMPLOYEE": "Сотрудник",
+		"TITLE": "Заголовок",
+		"DESCRIPTION": "Описание",
+		"CREATED_DATE": "Дата создания",
+		"STATUS": "Статус",
+		"ACTION": "Действие",
+		"APPLY": "Применить",
+		"APPLIED": "Применяется",
+		"VIEW": "Вид",
+		"HIDE": "Скрыть",
+		"NO_JOBS": "Нет заданий",
+		"JOB_SEARCH": "Поиск Вакансии"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Спринт добавлен",
