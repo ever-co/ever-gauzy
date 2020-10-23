@@ -98,7 +98,6 @@ export class EmployeesComponent
 				untilDestroyed(this)
 			)
 			.subscribe(() => {
-				console.log(this.permissionsService);
 				this.hasEditPermission = this.store.hasPermission(
 					PermissionsEnum.ORG_EMPLOYEES_EDIT
 				);

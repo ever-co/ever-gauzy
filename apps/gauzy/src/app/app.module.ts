@@ -53,6 +53,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { ColorPickerService } from 'ngx-color-picker';
 import { EstimateEmailModule } from './auth/estimate-email/estimate-email.module';
 import * as moment from 'moment';
+import { TenantInterceptor } from './@core/tenant.interceptor';
 
 export const cloudinary = {
 	Cloudinary: CloudinaryCore
@@ -129,6 +130,11 @@ if (environment.SENTRY_DNS && environment.production) {
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: LanguageInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: TenantInterceptor,
 			multi: true
 		},
 		ServerConnectionService,
