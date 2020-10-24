@@ -5,7 +5,7 @@
 	<nb-card-body>
 		<div class="job-filters py-3">
 			<div class="row">
-				<div class="col-sm-4">
+				<div class="col-sm-6">
 					<div class="row">
 						<div class="col form-group m-0">
 							<input
@@ -73,6 +73,24 @@
 									<nb-option
 										*ngFor="
 											let type of JobPostTypeEnum
+												| keyvalue
+										"
+										[value]="type.value"
+										>{{ type.value | titlecase }}
+									</nb-option>
+								</nb-select>
+							</div>
+							<div class="col-sm-6 form-group">
+								<label class="d-block">Job Status</label>
+								<nb-select
+									(selectedChange)="applyFilter()"
+									placeholder="Job Type"
+									class="w-100"
+									[(ngModel)]="jobRequest.jobStatus"
+								>
+									<nb-option
+										*ngFor="
+											let type of JobPostStatusEnum
 												| keyvalue
 										"
 										[value]="type.value"
