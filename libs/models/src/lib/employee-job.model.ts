@@ -3,8 +3,8 @@ import { IEmployee } from './employee.model';
 export interface IGetEmployeeJobPostInput {
 	employeeIds?: string[];
 	search?: string;
-	take?: number;
-	skip?: number;
+	page?: number;
+	limit?: number;
 	budget?: [number, number];
 	jobStatus?: JobPostStatusEnum[];
 	jobSource?: JobPostSourceEnum[];
