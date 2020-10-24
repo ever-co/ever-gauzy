@@ -1,11 +1,12 @@
 import {
+	IJobPost,
 	JobPostSourceEnum,
 	JobPostStatusEnum,
 	JobPostTypeEnum
 } from '@gauzy/models';
 import { Model } from '../core/entities/base';
 
-export class JobPost extends Model {
+export class JobPost extends Model implements IJobPost {
 	jobPostId: string;
 	id?: string;
 	providerCode: string;

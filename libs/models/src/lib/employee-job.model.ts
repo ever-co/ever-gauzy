@@ -1,6 +1,6 @@
 import { IEmployee } from './employee.model';
 
-export interface GetEmployeeJobPostInput {
+export interface IGetEmployeeJobPostInput {
 	employeeIds?: string[];
 	search?: string;
 	take?: number;
@@ -11,16 +11,16 @@ export interface GetEmployeeJobPostInput {
 	jobType?: JobPostTypeEnum[];
 }
 
-export interface EmployeeJobPost {
+export interface IEmployeeJobPost {
 	employeeId: string;
 	employee: IEmployee;
 	jobPostId: string;
 	isApplied?: boolean;
 	appliedDate?: string;
-	jobPost: JobPost;
+	jobPost: IJobPost;
 }
 
-export class JobPost {
+export interface IJobPost {
 	jobPostId: string;
 	id?: string;
 	providerCode: string;
@@ -59,10 +59,11 @@ export enum JobPostSourceEnum {
 
 export enum JobPostStatusEnum {
 	OPEN = 'Open',
-	CLOSED = 'Colosed'
+	APPLIED = 'Applied',
+	CLOSED = 'Closed'
 }
 
 export enum JobPostTypeEnum {
 	HOURLY = 'Hourly',
-	FIX_PRICE = 'Fix Price'
+	FIX_PRICE = 'Fixed Price'
 }

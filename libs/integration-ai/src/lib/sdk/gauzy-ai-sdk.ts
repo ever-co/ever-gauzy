@@ -1265,15 +1265,35 @@ export type EmployeeJobPostsQuery = { __typename?: 'Query' } & {
 			{ __typename?: 'EmployeeJobPostEdge' } & {
 				node: { __typename?: 'EmployeeJobPost' } & Pick<
 					EmployeeJobPost,
-					'id'
+					'id' | 'isApplied' | 'appliedDate'
 				> & {
 						employee: { __typename?: 'Employee' } & Pick<
 							Employee,
-							'name'
+							'externalEmployeeId'
 						>;
 						jobPost: { __typename?: 'JobPost' } & Pick<
 							JobPost,
-							'title'
+							| 'id'
+							| 'providerCode'
+							| 'providerJobId'
+							| 'title'
+							| 'description'
+							| 'jobDateCreated'
+							| 'jobStatus'
+							| 'jobType'
+							| 'url'
+							| 'budget'
+							| 'duration'
+							| 'workload'
+							| 'skills'
+							| 'category'
+							| 'subcategory'
+							| 'country'
+							| 'clientFeedback'
+							| 'clientReviewsCount'
+							| 'clientJobsPosted'
+							| 'clientPastHires'
+							| 'clientPaymentVerificationStatus'
 						>;
 					};
 			}
@@ -1337,6 +1357,26 @@ export const EmployeeJobPostsDocument: DocumentNode<
 															name: {
 																kind: 'Name',
 																value:
+																	'isApplied'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
+																	'appliedDate'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
 																	'employee'
 															},
 															arguments: [],
@@ -1352,7 +1392,7 @@ export const EmployeeJobPostsDocument: DocumentNode<
 																			kind:
 																				'Name',
 																			value:
-																				'name'
+																				'externalEmployeeId'
 																		},
 																		arguments: [],
 																		directives: []
@@ -1379,7 +1419,247 @@ export const EmployeeJobPostsDocument: DocumentNode<
 																			kind:
 																				'Name',
 																			value:
+																				'id'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'providerCode'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'providerJobId'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
 																				'title'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'description'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'jobDateCreated'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'jobStatus'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'jobType'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'url'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'budget'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'duration'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'workload'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'skills'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'category'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'subcategory'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'country'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'clientFeedback'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'clientReviewsCount'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'clientJobsPosted'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'clientPastHires'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'clientPaymentVerificationStatus'
 																		},
 																		arguments: [],
 																		directives: []

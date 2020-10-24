@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {
-	EmployeeJobPost,
-	GetEmployeeJobPostInput,
+	IEmployeeJobPost,
+	IGetEmployeeJobPostInput,
 	JobPostSourceEnum,
 	JobPostTypeEnum
 } from '@gauzy/models';
@@ -19,12 +19,12 @@ import { debounceTime } from 'rxjs/operators';
 export class SearchComponent implements OnInit {
 	loading = false;
 	isOpenAdvancedFilter = false;
-	jobs: EmployeeJobPost[] = [];
+	jobs: IEmployeeJobPost[] = [];
 
 	JobPostSourceEnum = JobPostSourceEnum;
 	JobPostTypeEnum = JobPostTypeEnum;
 
-	jobRequest: GetEmployeeJobPostInput = {
+	jobRequest: IGetEmployeeJobPostInput = {
 		take: 10,
 		skip: 0,
 		employeeIds: [],

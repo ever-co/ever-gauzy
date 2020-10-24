@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { IPagination } from '../core';
-import { EmployeeJobPost } from './employee-job.entity';
 import { getRandomEmployeeJobPosts } from './employee-job.seed';
 import fetch from 'cross-fetch';
 
@@ -17,7 +16,13 @@ import {
 import { Employee } from '../employee/employee.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { GetEmployeeJobPostInput } from '@gauzy/models';
+import {
+	IEmployeeJobPost,
+	IGetEmployeeJobPostInput,
+	IJobPost
+} from '@gauzy/models';
+import { EmployeeJobPost } from './employee-job.entity';
+import { JobPost } from './jobPost.entity';
 
 @Injectable()
 export class EmployeeJobPostService {
@@ -27,8 +32,8 @@ export class EmployeeJobPostService {
 	) {}
 
 	public async findAll(
-		data: GetEmployeeJobPostInput
-	): Promise<IPagination<EmployeeJobPost>> {
+		data: IGetEmployeeJobPostInput
+	): Promise<IPagination<IEmployeeJobPost>> {
 		let jobs;
 
 		// TODO: we should check here if we have Gauzy AI endpoint in the tenant settings.
@@ -58,11 +63,33 @@ export class EmployeeJobPostService {
 							edges {
 								node {
 									id
+									isApplied
+									appliedDate
 									employee {
-										name
+										externalEmployeeId
 									}
 									jobPost {
+										id
+										providerCode
+										providerJobId
 										title
+										description
+										jobDateCreated
+										jobStatus
+										jobType
+										url
+										budget
+										duration
+										workload
+										skills
+										category
+										subcategory
+										country
+										clientFeedback
+										clientReviewsCount
+										clientJobsPosted
+										clientPastHires
+										clientPaymentVerificationStatus
 									}
 								}
 							}
@@ -71,7 +98,27 @@ export class EmployeeJobPostService {
 				`
 			});
 
-			jobs = result.data.employeeJobPosts.edges;
+			const jobsResponse = result.data.employeeJobPosts.edges;
+
+			// TODO: let's load here all employees from given tenant who active
+			const employees = await this.employeeRepository.find();
+
+			jobs = await Promise.all(
+				jobsResponse.map(async (jo) => {
+					const j = jo.node;
+					const job = new EmployeeJobPost();
+					job.employeeId = j.employee.externalEmployeeId;
+					job.isApplied = j.isApplied;
+					job.appliedDate = j.appliedDate;
+					// TODO: here should be code to find one employee by j.employee.externalEmployeeId.
+					// But because that values come for now as null, we just use first employee for now
+					job.employee = employees[0];
+					(job.jobPostId = j.jobPost.id),
+						(job.jobPost = <JobPost>j.jobPost);
+
+					return job;
+				})
+			);
 
 			// TODO: this jobs contains tons of GraphQL related fields. We should convert all that into Gauzy EmployeeJobPost and JobPost entities!
 			// I.e. here should be mapping, we don't want to return result of GraphQL query here as is!

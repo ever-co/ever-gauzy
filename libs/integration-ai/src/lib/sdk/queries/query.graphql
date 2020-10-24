@@ -3,11 +3,33 @@ query employeeJobPosts {
 		edges {
 			node {
 				id
+				isApplied
+				appliedDate
 				employee {
-					name
+					externalEmployeeId
 				}
 				jobPost {
+					id
+					providerCode
+					providerJobId
 					title
+					description
+					jobDateCreated
+					jobStatus
+					jobType
+					url
+					budget
+					duration
+					workload
+					skills
+					category
+					subcategory
+					country
+					clientFeedback
+					clientReviewsCount
+					clientJobsPosted
+					clientPastHires
+					clientPaymentVerificationStatus
 				}
 			}
 		}
