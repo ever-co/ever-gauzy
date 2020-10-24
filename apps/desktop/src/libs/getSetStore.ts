@@ -48,10 +48,17 @@ export const LocalStore = {
 					timer: {
 						updatePeriode: 1 // [1, 5, 10]
 					},
-					SCREENSHOTS_ENGINE_METHOD: 'ElectronDesktopCapturer'
+					SCREENSHOTS_ENGINE_METHOD: 'ElectronDesktopCapturer',
+					screenshotNotification: true
 				};
 				store.set({
 					appSetting: defaultAppSetting
+				});
+			} else {
+				config.screenshotNotification =
+					config.screenshotNotification || true;
+				store.set({
+					appSetting: config
 				});
 			}
 		} catch (error) {

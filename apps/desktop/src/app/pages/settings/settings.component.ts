@@ -40,6 +40,7 @@ export class SettingsComponent implements OnInit {
 	appSetting = null;
 	periodeOption = [1, 5, 10];
 	selectedPeriod = null;
+	screenshotNotification = null;
 	constructor(private electronService: ElectronService) {
 		this.electronService.ipcRenderer.on('app_setting', (event, arg) => {
 			const { setting } = arg;
@@ -47,6 +48,7 @@ export class SettingsComponent implements OnInit {
 			this.selectMonitorOption({
 				value: setting.monitor.captured
 			});
+			this.screenshotNotification = setting.screenshotNotification;
 			this.selectPeriod(setting.timer.updatePeriode);
 			this.selectProjectElement.nativeElement.focus();
 			const el: HTMLElement = this.selectProjectElement
@@ -86,8 +88,11 @@ export class SettingsComponent implements OnInit {
 	}
 
 	selectPeriod(value) {
-		console.log('change minute', value);
 		this.selectedPeriod = value;
 		this.updateSetting({ updatePeriode: value }, 'timer');
+	}
+
+	toggleNotificationChange(value) {
+		this.updateSetting(value, 'screenshotNotification');
 	}
 }

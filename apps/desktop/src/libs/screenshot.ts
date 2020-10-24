@@ -75,50 +75,52 @@ const uploadScreenShot = async (
 		'YYYYMMDDHHmmss'
 	)}-${name}.png`;
 	writeScreenshotLocally(img, fileName);
-	showCapturedToRenderer(
-		NotificationWindow,
-		path.join(app.getPath('userData'), `/public/temp/${fileName}`),
-		quitApp
-	);
+	const appSetting = LocalStore.getStore('appSetting');
+	if (show && appSetting && appSetting.screenshotNotification) {
+		showCapturedToRenderer(
+			NotificationWindow,
+			path.join(app.getPath('userData'), `/public/temp/${fileName}`),
+			quitApp
+		);
+	}
 	showCapture(
 		timeTrackerWindow,
 		path.join(app.getPath('userData'), `/public/temp/${fileName}`)
 	);
-	if (show)
-		try {
-			const appInfo = LocalStore.beforeRequestParams();
-			const form = new Form();
-			const bufferImg = Buffer.isBuffer(img) ? img : Buffer.from(img);
-			form.append('file', bufferImg, {
-				contentType: 'image/png',
-				filename: fileName
-			});
-			form.append('timeSlotId', timeSlotId);
-			form.append('tenantId', appInfo.tenantId);
-			form.append('organizationId', appInfo.organizationId);
-			const response = await fetch(
-				`${appInfo.apiHost}/api/timesheet/screenshot`,
-				{
-					method: 'POST',
-					body: form,
-					headers: {
-						Authorization: `Bearer ${appInfo.token}`
-					}
+	try {
+		const appInfo = LocalStore.beforeRequestParams();
+		const form = new Form();
+		const bufferImg = Buffer.isBuffer(img) ? img : Buffer.from(img);
+		form.append('file', bufferImg, {
+			contentType: 'image/png',
+			filename: fileName
+		});
+		form.append('timeSlotId', timeSlotId);
+		form.append('tenantId', appInfo.tenantId);
+		form.append('organizationId', appInfo.organizationId);
+		const response = await fetch(
+			`${appInfo.apiHost}/api/timesheet/screenshot`,
+			{
+				method: 'POST',
+				body: form,
+				headers: {
+					Authorization: `Bearer ${appInfo.token}`
 				}
-			);
-			console.log('upload success');
-			const res = await response.json();
-			setTimeout(() => {
-				removeScreenshotLocally(fileName);
-			}, 4000);
-			return res;
-		} catch (e) {
-			console.log('upload screenshot error', e.message);
-			setTimeout(() => {
-				removeScreenshotLocally(fileName);
-			}, 4000);
-			// write file on local directory if upload got error
-		}
+			}
+		);
+		console.log('upload success');
+		const res = await response.json();
+		setTimeout(() => {
+			removeScreenshotLocally(fileName);
+		}, 4000);
+		return res;
+	} catch (e) {
+		console.log('upload screenshot error', e.message);
+		setTimeout(() => {
+			removeScreenshotLocally(fileName);
+		}, 4000);
+		// write file on local directory if upload got error
+	}
 };
 
 const writeScreenshotLocally = (img, fileName) => {
@@ -184,7 +186,7 @@ const showCapturedToRenderer = (NotificationWindow, thumbUrl, quitApp) => {
 	// preparing window screenshot
 	const screenCaptureWindow = {
 		width: 350,
-		height: 230,
+		height: 200,
 		frame: false,
 		webPreferences: {
 			nodeIntegration: true,
@@ -209,7 +211,8 @@ const showCapturedToRenderer = (NotificationWindow, thumbUrl, quitApp) => {
 	setTimeout(() => {
 		NotificationWindow.show();
 		NotificationWindow.webContents.send('show_popup_screen_capture', {
-			imgUrl: thumbUrl
+			imgUrl: thumbUrl,
+			note: LocalStore.beforeRequestParams().note
 		});
 	}, 1000);
 	setTimeout(() => {
