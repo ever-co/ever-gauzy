@@ -1615,8 +1615,9 @@
 		"APPLIED": "Applied",
 		"VIEW": "View",
 		"HIDE": "Hide",
-		"NO_JOBS": "No Jobs",
-		"JOB_SEARCH": "Job Search"
+		"NO_JOBS": "No Jobs found",
+		"JOB_SEARCH": "Job Search",
+		"LOAD_MORE": "Load More"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Sprint added",
