@@ -13,7 +13,7 @@ export class TenantPermissionGuard implements CanActivate {
 	) {}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
-		const { id, tenantId: currentTenantId } = RequestContext.currentUser();
+		const { tenantId: currentTenantId } = RequestContext.currentUser();
 		const request: any = context.switchToHttp().getRequest();
 		const method: any = request.method;
 
