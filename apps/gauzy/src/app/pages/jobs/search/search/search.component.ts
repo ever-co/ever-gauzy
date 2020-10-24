@@ -9,13 +9,12 @@ import {
 } from '@gauzy/models';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { JobService } from 'apps/gauzy/src/app/@core/services/job.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { StatusBadgeComponent } from 'apps/gauzy/src/app/@shared/status-badge/status-badge.component';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import * as moment from 'moment';
-import { LocalDataSource, ServerDataSource } from 'ng2-smart-table';
+import { ServerDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 
@@ -93,7 +92,6 @@ export class SearchComponent
 
 	constructor(
 		private http: HttpClient,
-		private jobService: JobService,
 		private store: Store,
 		public translateService: TranslateService
 	) {
@@ -105,22 +103,16 @@ export class SearchComponent
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(() => {
 				// this.smartTableSource.refresh();
-				const filters = [];
-				for (const key in this.jobRequest) {
-					if (
-						Object.prototype.hasOwnProperty.call(
-							this.jobRequest,
-							key
-						)
-					) {
-						const value = this.jobRequest[key];
-						filters.push({
-							field: key,
-							search: value
-						});
-					}
-				}
-				this.smartTableSource.setFilter(filters);
+				this.smartTableSource.setFilter(
+					[
+						{
+							field: 'custom',
+							search: JSON.stringify(this.jobRequest)
+						}
+					],
+					true,
+					false
+				);
 				this.loadSmartTable();
 				this._applyTranslationOnSmartTable();
 			});
