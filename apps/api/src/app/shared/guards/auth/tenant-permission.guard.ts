@@ -13,7 +13,7 @@ export class TenantPermissionGuard implements CanActivate {
 	) {}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
-		const { id, tenantId: currentTenantId } = RequestContext.currentUser();
+		const { tenantId: currentTenantId } = RequestContext.currentUser();
 		const request: any = context.switchToHttp().getRequest();
 		const method: any = request.method;
 
@@ -93,6 +93,8 @@ export class TenantPermissionGuard implements CanActivate {
 					}
 				}
 			}
+
+			console.log(isAuthorized, 'isAuthorized');
 		}
 
 		//enabled AllowSuperAdminRole from .env file
@@ -122,8 +124,8 @@ export class TenantPermissionGuard implements CanActivate {
 		}
 		if (!isAuthorized) {
 			console.log(
-				'Unauthorized access blocked. UserId:',
-				id,
+				'Unauthorized access blocked. TenantId:',
+				currentTenantId,
 				' Permissions Checked:',
 				permissions
 			);

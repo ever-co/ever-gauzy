@@ -20,9 +20,10 @@ import { AvailabilitySlotsCreateCommand } from './commands/availability-slots.cr
 import { AvailabilitySlot } from './availability-slots.entity';
 import { AvailabilitySlotsService } from './availability-slots.service';
 import { AvailabilitySlotsBulkCreateCommand } from './commands/availability-slots.bulk.create.command';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('AvailabilitySlots')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class AvailabilitySlotsController extends CrudController<
 	AvailabilitySlot

@@ -7,6 +7,7 @@ import { RoleModule } from '../role/role.module';
 import { UserModule } from '../user/user.module';
 import { RolePermissionsModule } from '../role-permissions/role-permissions.module';
 import { AuthModule } from '../auth/auth.module';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
@@ -14,7 +15,8 @@ import { AuthModule } from '../auth/auth.module';
 		UserModule,
 		RoleModule,
 		RolePermissionsModule,
-		AuthModule
+		AuthModule,
+		TenantModule
 	],
 	providers: [CandidateSkillService],
 	controllers: [CandidateSkillController],

@@ -27,9 +27,10 @@ import { CommandBus } from '@nestjs/cqrs';
 import { CandidateCreateCommand, CandidateBulkCreateCommand } from './commands';
 import { I18nLang } from 'nestjs-i18n';
 import { ParseJsonPipe } from '../shared';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('Candidate')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class CandidateController extends CrudController<Candidate> {
 	constructor(

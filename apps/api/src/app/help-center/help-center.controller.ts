@@ -21,9 +21,10 @@ import { ParseJsonPipe } from '../shared';
 import { CommandBus } from '@nestjs/cqrs';
 import { KnowledgeBaseBulkDeleteCommand } from './commands';
 import { HelpCenterUpdateCommand } from './commands/help-center.bulk.command';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('KnowledgeBase')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class HelpCenterController extends CrudController<HelpCenter> {
 	constructor(

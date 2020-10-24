@@ -1,11 +1,10 @@
 import { DefaultEditor } from 'ng2-smart-table';
 import { OnInit, OnDestroy, Component } from '@angular/core';
 import { IExpense } from '@gauzy/models';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 import { Store } from '../../../@core/services/store.service';
 import { ExpensesService } from '../../../@core/services/expenses.service';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	template: `
 		<nb-select
@@ -21,11 +20,11 @@ import { ExpensesService } from '../../../@core/services/expenses.service';
 	`,
 	styles: []
 })
-export class InvoiceExpensesSelectorComponent extends DefaultEditor
+export class InvoiceExpensesSelectorComponent
+	extends DefaultEditor
 	implements OnInit, OnDestroy {
 	expense: IExpense;
 	expenses: IExpense[];
-	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
 		private store: Store,
@@ -40,14 +39,15 @@ export class InvoiceExpensesSelectorComponent extends DefaultEditor
 
 	private async _loadExpenses() {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(async (organization) => {
 				if (organization) {
+					const tenantId = this.store.user.tenantId;
+					const { id: organizationId } = organization;
 					const expenses = await this.expensesService.getAll([], {
 						typeOfExpense: 'Billable to Contact',
-						organization: {
-							id: organization.id
-						}
+						organizationId,
+						tenantId
 					});
 					this.expenses = expenses.items;
 					const expense = this.expenses.find(

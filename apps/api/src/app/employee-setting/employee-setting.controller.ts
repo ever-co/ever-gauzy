@@ -5,9 +5,10 @@ import { EmployeeSetting } from './employee-setting.entity';
 import { CrudController } from '../core/crud/crud.controller';
 import { IPagination } from '../core';
 import { AuthGuard } from '@nestjs/passport';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('EmployeeSetting')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class EmployeeSettingController extends CrudController<EmployeeSetting> {
 	constructor(

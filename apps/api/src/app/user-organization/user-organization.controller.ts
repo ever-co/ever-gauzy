@@ -20,9 +20,11 @@ import { Not } from 'typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { UserOrganizationDeleteCommand } from './commands/user-organization.delete.command';
 import { I18nLang } from 'nestjs-i18n';
+import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('UserOrganization')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class UserOrganizationController extends CrudController<
 	IUserOrganization
@@ -46,9 +48,9 @@ export class UserOrganizationController extends CrudController<
 	})
 	@Get()
 	async findAllEmployees(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<UserOrganization>> {
-		const { relations, findInput } = JSON.parse(data);
+		const { relations, findInput } = data;
 		return this.userOrganizationService.findAll({
 			where: findInput,
 			relations

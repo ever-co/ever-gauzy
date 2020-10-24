@@ -29,9 +29,10 @@ import {
 	CandidateInterviewersInterviewBulkDeleteCommand,
 	CandidateInterviewersBulkCreateCommand
 } from './commands';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('CandidateInterviewer')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class CandidateInterviewersController extends CrudController<
 	CandidateInterviewers

@@ -120,7 +120,10 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 		} else {
 			const {
 				items: userOrg
-			} = await this.usersOrganizationsService.getAll([], { userId: id });
+			} = await this.usersOrganizationsService.getAll([], {
+				userId: id,
+				tenantId: this.user.tenantId
+			});
 			const org = await this.organizationsService
 				.getById(userOrg[0].organizationId)
 				.pipe(first())

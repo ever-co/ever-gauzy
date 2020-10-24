@@ -19,9 +19,10 @@ import { ICandidateInterviewCreateInput, PermissionsEnum } from '@gauzy/models';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import { ParseJsonPipe } from '../shared';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('CandidateInterview')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class CandidateInterviewController extends CrudController<
 	CandidateInterview

@@ -20,6 +20,7 @@ import { OrganizationRecurringExpense } from '../organization-recurring-expense/
 import { ExpenseService } from '../expense/expense.service';
 import { EmployeeStatisticsService } from '../employee-statistics';
 import { OrganizationRecurringExpenseService } from '../organization-recurring-expense/organization-recurring-expense.service';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
@@ -32,7 +33,8 @@ import { OrganizationRecurringExpenseService } from '../organization-recurring-e
 			EmployeeRecurringExpense,
 			OrganizationRecurringExpense
 		]),
-		CqrsModule
+		CqrsModule,
+		TenantModule
 	],
 	controllers: [IncomeController],
 	providers: [

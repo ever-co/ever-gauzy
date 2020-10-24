@@ -18,9 +18,10 @@ import { AuthGuard } from '@nestjs/passport';
 import { RoleGuard } from '../shared/guards/auth/role.guard';
 import { Roles } from '../shared/decorators/roles';
 import { RolesEnum } from '@gauzy/models';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('CandidateSkill')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class CandidateSkillController extends CrudController<CandidateSkill> {
 	constructor(private readonly candidateSkillService: CandidateSkillService) {

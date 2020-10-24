@@ -13,9 +13,10 @@ import {
 } from '@nestjs/common';
 import { EquipmentService } from './equipment.service';
 import { AuthGuard } from '@nestjs/passport';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('Equipment')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class EquipmentController extends CrudController<Equipment> {
 	constructor(private equipmentService: EquipmentService) {

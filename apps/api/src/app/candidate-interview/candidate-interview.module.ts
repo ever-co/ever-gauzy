@@ -5,9 +5,13 @@ import { CandidateInterviewController } from './candidate-interview.controller';
 import { CandidateInterview } from './candidate-interview.entity';
 import { UserService } from '../user/user.service';
 import { User } from '../user/user.entity';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([CandidateInterview, User])],
+	imports: [
+		TypeOrmModule.forFeature([CandidateInterview, User]),
+		TenantModule
+	],
 	providers: [CandidateInterviewService, UserService],
 	controllers: [CandidateInterviewController],
 	exports: [CandidateInterviewService]

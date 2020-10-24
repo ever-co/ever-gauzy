@@ -20,9 +20,10 @@ import { OrganizationProject } from '../organization-projects/organization-proje
 import { IOrganizationSprintUpdateInput } from '@gauzy/models';
 import { OrganizationSprintUpdateCommand } from './commands/organization-sprint.update.command';
 import { CommandBus } from '@nestjs/cqrs';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('OrganizationSprint')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class OrganizationSprintController extends CrudController<
 	OrganizationSprint

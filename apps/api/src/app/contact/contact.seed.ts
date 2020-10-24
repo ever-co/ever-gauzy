@@ -2,11 +2,13 @@ import { Connection } from 'typeorm';
 import { Contact } from './contact.entity';
 import * as faker from 'faker';
 import { Organization } from '../organization/organization.entity';
+import { Tenant } from '../tenant/tenant.entity';
 
 export const createRandomContacts = async (
 	connection: Connection,
-	noOfRandomContacts: number,
-	organizations: Organization[]
+	tenant: Tenant,
+	organizations: Organization[],
+	noOfRandomContacts: number
 ): Promise<Contact[]> => {
 	const contacts: Contact[] = [];
 	for (let i = 0; i < noOfRandomContacts; i++) {
@@ -19,8 +21,8 @@ export const createRandomContacts = async (
 			contact.city = faker.address.city();
 			contact.country = faker.address.country();
 			contact.name = contact.firstName + ' ' + contact.lastName;
-			// contact.organization = organization;
-			// contact.tenant = organization.tenant;
+			contact.organization = organization;
+			contact.tenant = tenant;
 			contacts.push(contact);
 		});
 	}

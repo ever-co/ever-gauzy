@@ -23,9 +23,10 @@ import {
 } from './commands';
 import { CommandBus } from '@nestjs/cqrs';
 import { ParseJsonPipe } from '../shared';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('CandidatePersonalQuality')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class CandidatePersonalQualitiesController extends CrudController<
 	CandidatePersonalQualities

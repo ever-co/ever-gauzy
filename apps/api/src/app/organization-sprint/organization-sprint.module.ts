@@ -8,12 +8,16 @@ import { Task } from '../tasks/task.entity';
 import { CqrsModule } from '@nestjs/cqrs';
 import { UserService } from '../user/user.service';
 import { CommandHandlers } from './commands/handlers';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([OrganizationSprint,User,Task]),
-    CqrsModule],
+	imports: [
+		TypeOrmModule.forFeature([OrganizationSprint, User, Task]),
+		CqrsModule,
+		TenantModule
+	],
 	controllers: [OrganizationSprintController],
-	providers: [OrganizationSprintService,UserService, ...CommandHandlers],
+	providers: [OrganizationSprintService, UserService, ...CommandHandlers],
 	exports: [OrganizationSprintService]
 })
 export class OrganizationSprintModule {}

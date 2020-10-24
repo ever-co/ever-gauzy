@@ -21,9 +21,10 @@ import {
 	ArticleAuthorsBulkCreateCommand,
 	KnowledgeBaseArticleBulkDeleteCommand
 } from './commands';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('KnowledgeBaseAuthor')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class HelpCenterAuthorController extends CrudController<
 	HelpCenterAuthor

@@ -6,9 +6,10 @@ import { Email } from './email.entity';
 import { EmailService } from './email.service';
 import { IPagination } from '../core';
 import { ParseJsonPipe } from '../shared';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('Email')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class EmailController extends CrudController<Email> {
 	constructor(private readonly emailService: EmailService) {

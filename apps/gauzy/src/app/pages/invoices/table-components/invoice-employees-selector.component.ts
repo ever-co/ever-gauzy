@@ -4,7 +4,6 @@ import { EmployeesService } from '../../../@core/services';
 import { DefaultEditor } from 'ng2-smart-table';
 import { Store } from '../../../@core/services/store.service';
 import { filter } from 'rxjs/operators';
-import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -35,7 +34,6 @@ export class InvoiceEmployeesSelectorComponent
 	implements OnInit, OnDestroy {
 	employee: IEmployee;
 	employees: IEmployee[];
-	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
 		readonly employeeService: EmployeesService,
@@ -56,9 +54,10 @@ export class InvoiceEmployeesSelectorComponent
 			)
 			.subscribe(async (organization) => {
 				if (organization) {
+					const tenantId = this.store.user.tenantId;
 					const { id: organizationId } = organization;
 					this.employeeService
-						.getAll(['user'], { organizationId })
+						.getAll(['user'], { organizationId, tenantId })
 						.pipe(untilDestroyed(this))
 						.subscribe((employees) => {
 							const filteredEmployees = employees.items;
@@ -78,8 +77,5 @@ export class InvoiceEmployeesSelectorComponent
 		this.cell.newValue = $event.id;
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

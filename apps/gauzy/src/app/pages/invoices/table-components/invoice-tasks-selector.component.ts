@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
-import { ITask } from '@gauzy/models';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { IOrganization, ITask } from '@gauzy/models';
 import { Observable } from 'rxjs';
 import { DefaultEditor } from 'ng2-smart-table';
 import { TasksStoreService } from '../../../@core/services/tasks-store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Store } from '../../../@core/services/store.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	template: `
@@ -22,16 +23,21 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 })
 export class InvoiceTasksSelectorComponent
 	extends DefaultEditor
-	implements OnInit {
+	implements OnInit, OnDestroy {
 	tasks: ITask[] = [];
 	task: ITask;
 	observableTasks: Observable<ITask[]> = this.tasksStore.tasks$;
+	organization: IOrganization;
 
-	constructor(private tasksStore: TasksStoreService) {
+	constructor(
+		private tasksStore: TasksStoreService,
+		private storeService: Store
+	) {
 		super();
 	}
 
 	ngOnInit() {
+		this.organization = this.storeService.selectedOrganization;
 		this.observableTasks.pipe(untilDestroyed(this)).subscribe((data) => {
 			this.tasks = data;
 			const task = this.tasks.find((t) => t.id === this.cell.newValue);
@@ -41,10 +47,12 @@ export class InvoiceTasksSelectorComponent
 	}
 
 	private async _loadTasks() {
-		this.tasksStore.fetchTasks();
+		this.tasksStore.fetchTasks(this.organization);
 	}
 
 	selectTask($event) {
 		this.cell.newValue = $event.id;
 	}
+
+	ngOnDestroy() {}
 }

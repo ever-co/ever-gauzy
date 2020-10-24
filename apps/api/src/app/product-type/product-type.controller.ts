@@ -16,9 +16,10 @@ import { ProductTypeService } from './product-type.service';
 import { AuthGuard } from '@nestjs/passport';
 import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
 import { LanguagesEnum, IProductTypeTranslatable } from '@gauzy/models';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('ProductTypes')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class ProductTypeController extends CrudController<ProductType> {
 	constructor(private readonly productTypesService: ProductTypeService) {

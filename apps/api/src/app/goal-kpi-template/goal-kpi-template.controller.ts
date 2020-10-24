@@ -11,9 +11,10 @@ import { AuthGuard } from '@nestjs/passport';
 import { CrudController } from '../core';
 import { GoalKPITemplate } from './goal-kpi-template.entity';
 import { GoalKpiTemplateService } from './goal-kpi-template.service';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('GoalKpiTemplate')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class GoalKpiTemplateController extends CrudController<GoalKPITemplate> {
 	constructor(

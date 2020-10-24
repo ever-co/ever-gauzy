@@ -57,7 +57,6 @@ export class InvoiceController extends CrudController<Invoice> {
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IInvoice> {
 		const { relations = [] } = data;
-
 		return this.invoiceService.findOne(id, {
 			relations
 		});

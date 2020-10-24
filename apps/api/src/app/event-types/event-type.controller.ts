@@ -20,9 +20,10 @@ import { EventTypeCreateCommand } from './commands/event-type.create.command';
 import { EventType } from './event-type.entity';
 import { EventTypeService } from './event-type.service';
 import { ParseJsonPipe } from '../shared';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('EventType')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class EventTypeController extends CrudController<EventType> {
 	constructor(

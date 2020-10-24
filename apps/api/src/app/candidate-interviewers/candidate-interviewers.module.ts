@@ -7,10 +7,12 @@ import { CandidateInterviewersService } from './candidate-interviewers.service';
 import { CandidateInterviewersController } from './candidate-interviewers.controller';
 import { CommandHandlers } from './commands/handlers';
 import { CqrsModule } from '@nestjs/cqrs';
+import { TenantModule } from '../tenant/tenant.module';
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([CandidateInterviewers, User]),
-		CqrsModule
+		CqrsModule,
+		TenantModule
 	],
 	providers: [CandidateInterviewersService, UserService, ...CommandHandlers],
 	controllers: [CandidateInterviewersController],

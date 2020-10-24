@@ -33,6 +33,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { UserCreateCommand } from './commands';
 import { IUserCreateInput, IUserUpdateInput } from '@gauzy/models';
 import { AuthGuard } from '@nestjs/passport';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('User')
 @ApiBearerAuth()
@@ -133,6 +134,7 @@ export class UserController extends CrudController<User> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(PermissionGuard)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
@@ -144,7 +146,7 @@ export class UserController extends CrudController<User> {
 	}
 
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	@Put(':id')
 	async update(

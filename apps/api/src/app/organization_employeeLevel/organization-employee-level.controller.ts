@@ -12,9 +12,10 @@ import { CrudController, IPagination } from '../core';
 import { EmployeeLevel } from './organization-employee-level.entity';
 import { EmployeeLevelService } from './organization-employee-level.service';
 import { AuthGuard } from '@nestjs/passport';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('OrganizationEmployeeLevel')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class EmployeeLevelController extends CrudController<EmployeeLevel> {
 	constructor(private employeeLevelService: EmployeeLevelService) {

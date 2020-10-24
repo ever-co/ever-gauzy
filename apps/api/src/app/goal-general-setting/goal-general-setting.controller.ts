@@ -16,9 +16,10 @@ import { CrudController } from '../core';
 import { GoalGeneralSetting } from './goal-general-setting.entity';
 import { GoalGeneralSettingService } from './goal-general-setting.service';
 import { Goal } from '../goal/goal.entity';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('GoalGeneralSetting')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class GoalGeneralSettingController extends CrudController<
 	GoalGeneralSetting

@@ -21,6 +21,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 import { OrganizationRecurringExpenseCreateCommand } from './commands/organization-recurring-expense.create.command';
 import { OrganizationRecurringExpenseDeleteCommand } from './commands/organization-recurring-expense.delete.command';
 import { OrganizationRecurringExpenseEditCommand } from './commands/organization-recurring-expense.edit.command';
@@ -31,7 +32,7 @@ import { OrganizationRecurringExpenseFindSplitExpenseQuery } from './queries/org
 import { OrganizationRecurringExpenseStartDateUpdateTypeQuery } from './queries/organization-recurring-expense.update-type.query';
 
 @ApiTags('OrganizationRecurringExpense')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class OrganizationRecurringExpenseController extends CrudController<
 	OrganizationRecurringExpense

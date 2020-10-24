@@ -89,10 +89,11 @@ export class InvoicesReceivedComponent
 
 	async getInvoices() {
 		try {
-			const organization = this.organization;
+			const { id: organizationId, tenantId } = this.organization;
 			const invoices = await this.invoicesService.getAll(['payments'], {
-				sentTo: organization.id,
-				isEstimate: this.isEstimate
+				sentTo: organizationId,
+				isEstimate: this.isEstimate,
+				tenantId
 			});
 			this.loading = false;
 			this.invoices = invoices.items;

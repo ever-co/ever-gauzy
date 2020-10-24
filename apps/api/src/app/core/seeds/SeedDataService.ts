@@ -492,8 +492,9 @@ export class SeedDataService {
 			'Contacts',
 			createRandomContacts(
 				this.connection,
-				noOfRandomContacts,
-				this.organizations
+				this.tenant,
+				this.organizations,
+				noOfRandomContacts
 			)
 		);
 

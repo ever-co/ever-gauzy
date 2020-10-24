@@ -11,6 +11,7 @@ import { Employee } from '../employee/employee.entity';
 import { EmployeeService } from '../employee/employee.service';
 import { RoleService } from '../role/role.service';
 import { Role } from '../role/role.entity';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
@@ -20,7 +21,8 @@ import { Role } from '../role/role.entity';
 			User,
 			Employee,
 			Role
-		])
+		]),
+		TenantModule
 	],
 	controllers: [TaskController],
 	providers: [

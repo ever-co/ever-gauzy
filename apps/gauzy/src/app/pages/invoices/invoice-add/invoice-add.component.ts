@@ -130,11 +130,9 @@ export class InvoiceAddComponent
 		this.initializeForm();
 		this.form.get('currency').disable();
 		this.loading = false;
-
 		this.observableTasks.pipe(untilDestroyed(this)).subscribe((data) => {
 			this.tasks = data;
 		});
-
 		this.selectedLanguage = this.translateService.currentLang;
 		this.translateService.onLangChange
 			.pipe(untilDestroyed(this))
@@ -702,7 +700,7 @@ export class InvoiceAddComponent
 
 					const { id: organizationId, tenantId } = organization;
 					this.employeeService
-						.getAll(['user'], { organizationId })
+						.getAll(['user'], { organizationId, tenantId })
 						.pipe(untilDestroyed(this))
 						.subscribe(({ items }) => {
 							this.employees = items;
@@ -732,19 +730,15 @@ export class InvoiceAddComponent
 
 					const products = await this.productService.getAll(
 						[],
-						{
-							organizationId: organization.id
-						},
+						{ organizationId, tenantId },
 						this.selectedLanguage
 					);
 					this.products = products.items;
 
 					const expenses = await this.expensesService.getAll([], {
 						typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,
-						organization: {
-							id: organization.id,
-							tenantId: organization.tenantId
-						}
+						organizationId,
+						tenantId
 					});
 					this.expenses = expenses.items;
 
@@ -797,12 +791,12 @@ export class InvoiceAddComponent
 		let fakeQuantity = 5;
 
 		if (generateUninvoiced) {
+			const { id: organizationId, tenantId } = this.organization;
 			const expenses = await this.expensesService.getAll([], {
 				typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,
 				status: ExpenseStatusesEnum.UNINVOICED,
-				organization: {
-					id: this.organization.id
-				}
+				organizationId,
+				tenantId
 			});
 			this.selectedExpenses = expenses.items;
 		}
@@ -1149,9 +1143,11 @@ export class InvoiceAddComponent
 	}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
 	}
 	selectedTagsEvent(currentTagSelection: ITag[]) {
 		this.tags = currentTagSelection;

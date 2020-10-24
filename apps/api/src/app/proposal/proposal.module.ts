@@ -7,9 +7,13 @@ import { Employee } from '../employee/employee.entity';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
 import { CommandHandlers } from './commands/handlers';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([User, Proposal, Employee])],
+	imports: [
+		TypeOrmModule.forFeature([User, Proposal, Employee]),
+		TenantModule
+	],
 	controllers: [ProposalController],
 	providers: [ProposalService, UserService, ...CommandHandlers],
 	exports: [ProposalService, UserService]
