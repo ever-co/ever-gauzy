@@ -41,7 +41,7 @@ export class EmployeeJobPostService {
 		// In production it should just return null if Gauzy AI not configured
 
 		// TODO: replace true with check of .env setting for GauzyAIGraphQLEndpoint
-		if (true) {
+		if (false) {
 			// TODO: move all below into @gauzy/integration-ai lib as separate service there.
 			// But only that part related to GraphQL call of Gauzy AI API, not other logic.
 
