@@ -4,7 +4,7 @@ import { RequestContext } from '../../../core/context';
 import { RequestMethodEnum, RolesEnum } from '@gauzy/models';
 import { TenantService } from '../../../tenant/tenant.service';
 import { isJSON } from 'class-validator';
-
+import { environment as env } from '@env-api/environment';
 @Injectable()
 export class TenantPermissionGuard implements CanActivate {
 	constructor(
@@ -95,11 +95,16 @@ export class TenantPermissionGuard implements CanActivate {
 			}
 		}
 
-		//Super admin and admin has allowed to access request
-		const isSuperAdmin = RequestContext.hasRoles([RolesEnum.SUPER_ADMIN]);
-		if (isSuperAdmin === true) {
-			isAuthorized = isSuperAdmin;
-			return isAuthorized;
+		//enabled AllowSuperAdminRole from .env file
+		if (env.allowSuperAdminRole === true) {
+			//Super admin and admin has allowed to access request
+			const isSuperAdmin = RequestContext.hasRoles([
+				RolesEnum.SUPER_ADMIN
+			]);
+			if (isSuperAdmin === true) {
+				isAuthorized = isSuperAdmin;
+				return isAuthorized;
+			}
 		}
 
 		//Check tenant permissions

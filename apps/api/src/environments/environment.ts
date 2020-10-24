@@ -155,5 +155,7 @@ export const environment: IEnvironment = {
 	},
 
 	isElectron: process.env.IS_ELECTRON === 'true' ? true : false,
-	gauzyUserPath: process.env.GAUZY_USER_PATH
+	gauzyUserPath: process.env.GAUZY_USER_PATH,
+	allowSuperAdminRole:
+		process.env.AllowSuperAdminRole === 'false' ? false : true
 };

@@ -25,9 +25,9 @@ export const createDefaultSuperAdminUsers = async (
 	const superAdmins: User[] = [];
 	let superAdminUser: User;
 
-	const superAdminRole = roles.filter(
+	const superAdminRole = roles.find(
 		(role) => role.name === RolesEnum.SUPER_ADMIN
-	)[0];
+	);
 	const defaultSuperAdmins = [
 		{
 			email: 'admin@ever.co',
@@ -60,9 +60,9 @@ export const createRandomSuperAdminUsers = async (
 	tenants: Tenant[],
 	noOfSuperAdmins: number = 1
 ): Promise<Map<Tenant, User[]>> => {
-	const superAdminRole = roles.filter(
+	const superAdminRole = roles.find(
 		(role) => role.name === RolesEnum.SUPER_ADMIN
-	)[0];
+	);
 
 	const tenantSuperAdminsMap: Map<Tenant, User[]> = new Map();
 
@@ -96,13 +96,11 @@ export const createDefaultUsers = async (
 	defaultEmployeeUsers: User[];
 	defaultCandidateUsers: User[];
 }> => {
-	const employeeRole = roles.filter(
-		(role) => role.name === RolesEnum.EMPLOYEE
-	)[0];
+	const employeeRole = roles.find((role) => role.name === RolesEnum.EMPLOYEE);
 
-	const candidateRole = roles.filter(
+	const candidateRole = roles.find(
 		(role) => role.name === RolesEnum.CANDIDATE
-	)[0];
+	);
 
 	const _adminUsers: Promise<User[]> = seedAdminUsers(roles, tenant);
 
@@ -150,27 +148,21 @@ export const createRandomUsers = async (
 	dataEntriesPerOrganization: number,
 	viewerPerOrganization: number
 ): Promise<Map<Tenant, ISeedUsers>> => {
-	const adminRole = roles.filter((role) => role.name === RolesEnum.ADMIN)[0];
+	const adminRole = roles.find((role) => role.name === RolesEnum.ADMIN);
 
-	const employeeRole = roles.filter(
-		(role) => role.name === RolesEnum.EMPLOYEE
-	)[0];
+	const employeeRole = roles.find((role) => role.name === RolesEnum.EMPLOYEE);
 
-	const candidateRole = roles.filter(
+	const candidateRole = roles.find(
 		(role) => role.name === RolesEnum.CANDIDATE
-	)[0];
+	);
 
-	const managerRole = roles.filter(
-		(role) => role.name === RolesEnum.MANAGER
-	)[0];
+	const managerRole = roles.find((role) => role.name === RolesEnum.MANAGER);
 
-	const dataEntryRole = roles.filter(
+	const dataEntryRole = roles.find(
 		(role) => role.name === RolesEnum.DATA_ENTRY
-	)[0];
+	);
 
-	const viewerRole = roles.filter(
-		(role) => role.name === RolesEnum.VIEWER
-	)[0];
+	const viewerRole = roles.find((role) => role.name === RolesEnum.VIEWER);
 
 	const randomTenantUsers: Map<Tenant, ISeedUsers> = new Map();
 
@@ -253,7 +245,7 @@ const seedAdminUsers = async (
 	const admins: Promise<User>[] = [];
 	let adminUser: Promise<User>;
 
-	const adminRole = roles.filter((role) => role.name === RolesEnum.ADMIN)[0];
+	const adminRole = roles.find((role) => role.name === RolesEnum.ADMIN);
 	const defaultAdmins = [
 		{
 			email: 'local.admin@ever.co',
