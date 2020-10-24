@@ -36,7 +36,10 @@ export class OrganizationPermissionGuard implements CanActivate {
 				employeeId: string;
 			};
 
-			if (role === RolesEnum.ADMIN || role === RolesEnum.SUPER_ADMIN) {
+			if (
+				env.allowSuperAdminRole === true &&
+				role === RolesEnum.SUPER_ADMIN
+			) {
 				return true;
 			}
 

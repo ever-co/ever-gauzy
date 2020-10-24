@@ -1,3 +1,4 @@
+export * from './lib/core.model';
 export * from './lib/help-center-menu.model';
 export * from './lib/help-center-article.model';
 export * from './lib/user.model';

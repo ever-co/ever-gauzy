@@ -70,4 +70,5 @@ export interface IEnvironment {
 	upworkConfig?: IUpworkConfig;
 	isElectron?: boolean;
 	gauzyUserPath?: string;
+	allowSuperAdminRole?: boolean;
 }

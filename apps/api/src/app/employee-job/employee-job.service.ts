@@ -14,13 +14,21 @@ import {
 	InMemoryCache,
 	gql
 } from '@apollo/client/core';
+import { Employee } from '../employee/employee.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { GetEmployeeJobPostInput } from '@gauzy/models';
 
 @Injectable()
 export class EmployeeJobPostService {
-	public async findAll({
-		where,
-		relations
-	}): Promise<IPagination<EmployeeJobPost>> {
+	constructor(
+		@InjectRepository(Employee)
+		private readonly employeeRepository: Repository<Employee>
+	) {}
+
+	public async findAll(
+		data: GetEmployeeJobPostInput
+	): Promise<IPagination<EmployeeJobPost>> {
 		let jobs;
 
 		// TODO: we should check here if we have Gauzy AI endpoint in the tenant settings.
@@ -68,10 +76,11 @@ export class EmployeeJobPostService {
 			// TODO: this jobs contains tons of GraphQL related fields. We should convert all that into Gauzy EmployeeJobPost and JobPost entities!
 			// I.e. here should be mapping, we don't want to return result of GraphQL query here as is!
 		} else {
-			jobs = await getRandomEmployeeJobPosts();
+			const employees = await this.employeeRepository.find({
+				relations: ['user']
+			});
+			jobs = await getRandomEmployeeJobPosts(employees, data.take);
 		}
-
-		console.log(JSON.stringify(jobs));
 
 		return {
 			items: jobs,
