@@ -231,14 +231,14 @@ export class PagesComponent implements OnInit, OnDestroy {
 		},
 		{
 			title: 'Jobs',
-			icon: 'browser-outline',
+			icon: 'briefcase-outline',
 			link: '/pages/jobs',
 			data: {
 				translationKey: 'MENU.JOBS'
 			},
 			children: [
 				{
-					title: 'Search',
+					title: 'Browse',
 					icon: 'list-outline',
 					link: '/pages/jobs/search',
 					data: {
@@ -246,11 +246,11 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
-					title: 'Macthing',
+					title: 'Matching',
 					icon: 'person-outline',
 					link: '/pages/jobs/matching',
 					data: {
-						translationKey: 'MENU.JOBS_MACTHING'
+						translationKey: 'MENU.JOBS_MATCHING'
 					}
 				}
 			]
