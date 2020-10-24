@@ -60,7 +60,7 @@ export class TagController extends CrudController<Tag> {
 	async getAllTagsByTenantLevel(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<any> {
-		const { relations, findInput } = JSON.parse(data);
+		const { relations, findInput } = data;
 		return this.tagService.findTagsByTenantLevel(relations, findInput);
 	}
 
