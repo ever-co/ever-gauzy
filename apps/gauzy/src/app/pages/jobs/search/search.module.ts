@@ -6,6 +6,7 @@ import { SearchComponent } from './search/search.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../../@shared/shared.module';
 import {
+	NbButtonModule,
 	NbCardModule,
 	NbIconModule,
 	NbInputModule,
@@ -15,6 +16,7 @@ import {
 } from '@nebular/theme';
 import { MomentModule } from 'ngx-moment';
 import { FormsModule } from '@angular/forms';
+import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-multi-select/employee-multi-select.module';
 
 @NgModule({
 	declarations: [SearchComponent],
@@ -30,7 +32,9 @@ import { FormsModule } from '@angular/forms';
 		NbCardModule,
 		NbInputModule,
 		FormsModule,
-		NbSelectModule
+		NbSelectModule,
+		NbButtonModule,
+		EmployeeMultiSelectModule
 	]
 })
 export class SearchModule {}

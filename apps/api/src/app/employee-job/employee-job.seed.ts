@@ -1,32 +1,42 @@
 import { EmployeeJobPost } from './employee-job.entity';
 import { JobPost } from './jobPost.entity';
 import * as faker from 'faker';
+import {
+	IEmployee,
+	JobPostSourceEnum,
+	JobPostStatusEnum,
+	JobPostTypeEnum
+} from '@gauzy/models';
 
 export const getRandomEmployeeJobPosts = async (
-	employeeId: string = null
+	employees?: IEmployee[],
+	limit = 10
 ): Promise<EmployeeJobPost[]> => {
 	const employeesJobs: EmployeeJobPost[] = [];
 
-	for (let i = 0; i < 10; i++) {
-		const jobPostEmployee = new EmployeeJobPost();
+	for (let i = 0; i < limit; i++) {
+		const employee = faker.random.arrayElement(employees);
+		const jobPostEmployee = new EmployeeJobPost({
+			employeeId: employee ? employee.id : null,
+			employee: employee
+		});
 
-		if (employeeId) {
-			jobPostEmployee.employeeId = employeeId;
-			// TODO: jobPostEmployee.employee = ... load here from DB
-		}
-
-		// TODO: select randomly one of existed employees here from current organizationId / tenantId if employeeId parameter is null
-		// jobPostEmployee.employee = ...
-		// jobPostEmployee.employeeId = ...
-
-		const job = new JobPost();
-		job.country = faker.address.country();
-		job.category = faker.name.jobTitle();
-		job.title = faker.name.jobDescriptor();
-		job.description = faker.lorem.sentences(3);
+		const job = new JobPost({
+			country: faker.address.country(),
+			category: faker.name.jobTitle(),
+			title: faker.lorem.sentence(),
+			description: faker.lorem.sentences(3),
+			jobDateCreated: faker.date.past(0.1),
+			jobStatus: faker.random.arrayElement(
+				Object.values(JobPostStatusEnum)
+			),
+			jobSource: faker.random.arrayElement(
+				Object.values(JobPostSourceEnum)
+			),
+			jobType: faker.random.arrayElement(Object.values(JobPostTypeEnum))
+		});
 
 		jobPostEmployee.jobPost = job;
-
 		employeesJobs.push(jobPostEmployee);
 	}
 

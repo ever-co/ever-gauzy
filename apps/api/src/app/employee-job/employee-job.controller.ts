@@ -4,6 +4,7 @@ import { EmployeeJobPostService } from './employee-job.service';
 import { EmployeeJobPost } from './employee-job.entity';
 import { IPagination } from '../core';
 import { AuthGuard } from '@nestjs/passport';
+import { GetEmployeeJobPostInput } from '@gauzy/models';
 
 @ApiTags('EmployeeJobPost')
 @UseGuards(AuthGuard('jwt'))
@@ -25,17 +26,12 @@ export class EmployeeJobPostController {
 	})
 	@Get()
 	async findAllEmployeesJobs(
-		@Query('data') data: string
+		@Query() data: GetEmployeeJobPostInput
 	): Promise<IPagination<EmployeeJobPost>> {
-		const { relations, findInput } = JSON.parse(data);
-
 		// detect here what organization selected and what employee (optional) and query only for relevant jobs
 		// const organizationId = ...
 		// const employeeId = ... (note: can be not set, so we get all jobs)
 
-		return this.employeeJobPostService.findAll({
-			where: findInput,
-			relations
-		});
+		return this.employeeJobPostService.findAll(data);
 	}
 }
