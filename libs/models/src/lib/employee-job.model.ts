@@ -1,10 +1,16 @@
 import { IEmployee } from './employee.model';
 
 export interface IGetEmployeeJobPostInput {
-	employeeIds?: string[];
-	search?: string;
 	page?: number;
+	order?: 'ASC' | 'DESC';
+	orderBy?: string;
 	limit?: number;
+	filters: IGetEmployeeJobPostFilters;
+}
+
+export interface IGetEmployeeJobPostFilters {
+	search?: string;
+	employeeIds?: string[];
 	budget?: [number, number];
 	jobStatus?: JobPostStatusEnum[];
 	jobSource?: JobPostSourceEnum[];
@@ -54,7 +60,8 @@ export interface IJobPost {
 }
 
 export enum JobPostSourceEnum {
-	UPWORK = 'Upwork'
+	UPWORK = 'Upwork',
+	WEB = 'WEB'
 }
 
 export enum JobPostStatusEnum {

@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import {
 	IEmployeeJobPost,
-	IGetEmployeeJobPostInput,
+	IGetEmployeeJobPostFilters,
 	JobPostSourceEnum,
 	JobPostStatusEnum,
 	JobPostTypeEnum
@@ -30,10 +30,10 @@ export class SearchComponent
 	loading = false;
 	settingsSmartTable: any = {
 		editable: false,
-		pager: {
-			display: true,
-			perPage: 10
-		},
+		// pager: {
+		// 	display: true,
+		// 	perPage: 10
+		// },
 		actions: {
 			columnTitle: 'Actions',
 			add: false,
@@ -68,11 +68,13 @@ export class SearchComponent
 
 	JobPostSourceEnum = JobPostSourceEnum;
 	JobPostTypeEnum = JobPostTypeEnum;
+	JobPostStatusEnum = JobPostStatusEnum;
 
-	jobRequest: IGetEmployeeJobPostInput = {
+	jobRequest: IGetEmployeeJobPostFilters = {
 		employeeIds: [],
 		jobSource: [],
 		jobType: [],
+		jobStatus: [JobPostStatusEnum.OPEN],
 		budget: null
 	};
 
@@ -84,7 +86,7 @@ export class SearchComponent
 		sortFieldKey: 'orderBy',
 		sortDirKey: 'order',
 		filterFieldKey: 'filters',
-		totalKey: 'count',
+		totalKey: 'total',
 		dataKey: 'items',
 		pagerPageKey: 'page',
 		pagerLimitKey: 'limit'
