@@ -2,7 +2,6 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { IOrganization, IProduct } from '@gauzy/models';
 import { Store } from '../../../@core/services/store.service';
 import { filter } from 'rxjs/operators';
-import { Subject } from 'rxjs';
 import { ProductService } from '../../../@core/services/product.service';
 import { DefaultEditor } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,7 +27,6 @@ export class InvoiceProductsSelectorComponent
 	implements OnInit, OnDestroy {
 	product: IProduct;
 	products: IProduct[];
-	private _ngDestroy$ = new Subject<void>();
 	selectedLanguage: string;
 	organization: IOrganization;
 
@@ -56,9 +54,10 @@ export class InvoiceProductsSelectorComponent
 	private async _loadProducts() {
 		if (this.organization) {
 			const organizationId = this.organization.id;
+			const tenantId = this.store.user.tenantId;
 			const products = await this.productService.getAll(
 				[],
-				{ organizationId },
+				{ organizationId, tenantId },
 				this.selectedLanguage
 			);
 			this.products = products.items;
@@ -73,8 +72,5 @@ export class InvoiceProductsSelectorComponent
 		this.cell.newValue = $event.id;
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

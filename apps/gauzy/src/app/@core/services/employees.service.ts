@@ -76,12 +76,12 @@ export class EmployeesService {
 	getEmployeeByUserId(
 		userId: string,
 		relations?: string[],
-		useTenant?: boolean
+		findInput?: IEmployeeFindInput
 	): Promise<{
 		success: boolean;
 		result: IEmployee;
 	}> {
-		const data = JSON.stringify({ relations, useTenant });
+		const data = JSON.stringify({ relations, findInput });
 		return this.http
 			.get<{
 				success: boolean;

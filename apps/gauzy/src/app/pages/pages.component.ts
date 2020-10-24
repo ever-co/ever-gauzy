@@ -807,10 +807,12 @@ export class PagesComponent implements OnInit, OnDestroy {
 	}
 
 	async checkForEmployee() {
+		const { tenantId } = this.store.user;
 		this.isEmployee = (
 			await this.employeeService.getEmployeeByUserId(
 				this.store.userId,
-				[]
+				[],
+				{ tenantId }
 			)
 		).success;
 	}

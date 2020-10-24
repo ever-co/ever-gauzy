@@ -16,6 +16,7 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { PermissionsEnum } from '@gauzy/models';
 import { Permissions } from '../shared/decorators/permissions';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
 
 @ApiTags('Tags')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -38,29 +39,36 @@ export class TagController extends CrudController<Tag> {
 	}
 
 	@Get()
-	async getAllTags(@Query('data') data: string): Promise<IPagination<Tag>> {
-		const { relations, findInput } = JSON.parse(data);
-		return this.tagService.findAll({ where: findInput, relations });
+	async getAllTags(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<Tag>> {
+		const { relations, findInput } = data;
+		return this.tagService.findAll({
+			where: findInput,
+			relations
+		});
 	}
 
 	@Get('getByOrgId')
-	async getAllTagsByOrgLevel(@Query('data') data: any): Promise<any> {
-		const { relations, organizationId, tenantId } = JSON.parse(data);
-		return this.tagService.findTagsByOrgLevel(
-			relations,
-			organizationId,
-			tenantId
-		);
+	async getAllTagsByOrgLevel(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<any> {
+		const { relations, findInput } = data;
+		return this.tagService.findTagsByOrgLevel(relations, findInput);
 	}
 	@Get('getByTenantId')
-	async getAllTagsByTenantLevel(@Query('data') data: any): Promise<any> {
-		const { relations, tenantId } = JSON.parse(data);
-		return this.tagService.findTagsByTenantLevel(relations, tenantId);
+	async getAllTagsByTenantLevel(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<any> {
+		const { relations, findInput } = JSON.parse(data);
+		return this.tagService.findTagsByTenantLevel(relations, findInput);
 	}
 
 	@Get(`getTagsWithCount`)
-	async getTagUsageCount(@Query('data') data: any): Promise<any> {
-		const { orgId } = JSON.parse(data);
+	async getTagUsageCount(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<any> {
+		const { orgId } = data;
 		return this.tagService.getTagUsageCount(orgId);
 	}
 }

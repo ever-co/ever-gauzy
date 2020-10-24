@@ -52,12 +52,8 @@ export class TagsService {
 			.toPromise();
 	}
 
-	getAllTagsByOrgLevel(
-		organizationId: any,
-		tenantId,
-		relations?: string[]
-	): Promise<any> {
-		const data = JSON.stringify({ relations, organizationId, tenantId });
+	getAllTagsByOrgLevel(findInput: ITag, relations?: string[]): Promise<any> {
+		const data = JSON.stringify({ relations, findInput });
 		return this.http
 			.get<any>(`/api/tags/getByOrgId/`, {
 				params: { data }
@@ -66,8 +62,11 @@ export class TagsService {
 			.toPromise();
 	}
 
-	getAllTagsByTenantLevel(tenantId: any, relations?: string[]): Promise<any> {
-		const data = JSON.stringify({ relations, tenantId });
+	getAllTagsByTenantLevel(
+		findInput: ITag,
+		relations?: string[]
+	): Promise<any> {
+		const data = JSON.stringify({ relations, findInput });
 		return this.http
 			.get<any>(`/api/tags/getByTenantId/`, {
 				params: { data }

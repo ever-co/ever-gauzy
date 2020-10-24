@@ -147,6 +147,9 @@ export class InvoiceEditComponent
 				this.organization = organization;
 				await this.loadData();
 			});
+		this.observableTasks.pipe(untilDestroyed(this)).subscribe((data) => {
+			this.tasks = data;
+		});
 	}
 
 	async loadData() {
@@ -465,6 +468,10 @@ export class InvoiceEditComponent
 		}
 	}
 
+	private _loadTasks() {
+		this.tasksStore.fetchTasks(this.organization);
+	}
+
 	private async _loadOrganizationData() {
 		if (!this.organization) {
 			return;
@@ -489,20 +496,13 @@ export class InvoiceEditComponent
 				break;
 
 			case InvoiceTypeEnum.BY_TASK_HOURS:
-				this.tasksStore.fetchTasks();
-				this.observableTasks
-					.pipe(untilDestroyed(this))
-					.subscribe((data) => {
-						this.tasks = data;
-					});
+				this._loadTasks();
 				break;
 
 			case InvoiceTypeEnum.BY_PRODUCTS:
 				const products = await this.productService.getAll(
 					[],
-					{
-						organizationId: this.organization.id
-					},
+					{ organizationId, tenantId },
 					this.selectedLanguage
 				);
 				this.products = products.items;

@@ -3,6 +3,7 @@ import { Tag } from './tag.entity';
 import { CrudService } from '../core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ITag } from '@gauzy/models';
 
 @Injectable()
 export class TagService extends CrudService<Tag> {
@@ -24,10 +25,10 @@ export class TagService extends CrudService<Tag> {
 	}
 
 	async findTagsByOrgLevel(
-		relations: any,
-		organizationId: any,
-		tenantId: string
+		relations: string[],
+		findInput: ITag
 	): Promise<any> {
+		const { organizationId, tenantId } = findInput;
 		const allTags = await this.tagRepository.find({
 			where: [
 				{
@@ -40,12 +41,16 @@ export class TagService extends CrudService<Tag> {
 		});
 		return allTags;
 	}
-	async findTagsByTenantLevel(relations: any, tenantId: any): Promise<any> {
+	async findTagsByTenantLevel(
+		relations: string[],
+		findInput: ITag
+	): Promise<any> {
+		const { organizationId, tenantId } = findInput;
 		const allTags = await this.tagRepository.find({
 			where: [
 				{
+					organizationId,
 					tenantId,
-					organizationId: null,
 					isSystem: false
 				}
 			],

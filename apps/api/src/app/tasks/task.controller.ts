@@ -23,6 +23,7 @@ import { PermissionsEnum, IGetTaskByEmployeeOptions } from '@gauzy/models';
 import { EmployeeService } from '../employee/employee.service';
 import { RequestContext } from '../core/context';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe } from '../shared';
 
 @ApiTags('Tasks')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -47,10 +48,10 @@ export class TaskController extends CrudController<Task> {
 	})
 	@Get()
 	async findAllTasks(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Task>> {
 		const tenantId = RequestContext.currentTenantId();
-		const { relations, findInput } = JSON.parse(data);
+		const { relations, findInput } = data;
 		if (!findInput.hasOwnProperty('tenantId')) {
 			findInput['tenantId'] = tenantId;
 		}
@@ -94,9 +95,9 @@ export class TaskController extends CrudController<Task> {
 	})
 	@Get('team')
 	async findTeamTasks(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Task>> {
-		const { employeeId } = JSON.parse(data);
+		const { employeeId } = data;
 		return this.taskService.findTeamTasks(employeeId);
 	}
 

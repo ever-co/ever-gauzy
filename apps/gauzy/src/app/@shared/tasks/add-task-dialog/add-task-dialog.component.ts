@@ -60,7 +60,6 @@ export class AddTaskDialogComponent
 		public dialogRef: NbDialogRef<AddTaskDialogComponent>,
 		private fb: FormBuilder,
 		private store: Store,
-		private _organizationsStore: Store,
 		private organizationProjectsService: OrganizationProjectsService,
 		readonly translateService: TranslateService,
 		private readonly toastrService: NbToastrService,
@@ -73,6 +72,9 @@ export class AddTaskDialogComponent
 	}
 
 	ngOnInit() {
+		this.organizationId = this.store.selectedOrganization.id;
+		this.tenantId = this.store.user.tenantId;
+
 		this.loadProjects();
 		this.loadEmployees();
 		this.loadTeams();
@@ -83,20 +85,10 @@ export class AddTaskDialogComponent
 	}
 
 	private async loadProjects() {
-		const organizationId = this._organizationsStore.selectedOrganization.id;
-		const tenantId = this._organizationsStore.selectedOrganization.tenantId;
-
-		this.organizationId = organizationId;
-		this.tenantId = tenantId;
-
 		const { items } = await this.organizationProjectsService.getAll(
 			['organization'],
-			{
-				organizationId,
-				tenantId
-			}
+			{ organizationId: this.organizationId, tenantId: this.tenantId }
 		);
-
 		if (items) this.projects = items;
 	}
 
@@ -144,7 +136,7 @@ export class AddTaskDialogComponent
 
 	addNewProject = (name: string): Promise<IOrganizationProject> => {
 		this.organizationId = this.store.selectedOrganization.id;
-		this.tenantId = this.store.selectedOrganization.tenantId;
+		this.tenantId = this.store.user.tenantId;
 		try {
 			this.toastrService.primary(
 				this.getTranslation(
@@ -217,15 +209,13 @@ export class AddTaskDialogComponent
 	}
 
 	private async loadEmployees() {
-		const organizationId = this._organizationsStore.selectedOrganization.id;
-		const tenantId = this._organizationsStore.selectedOrganization.tenantId;
-		if (!organizationId || !tenantId) {
+		if (!this.organizationId) {
 			return;
 		}
-
 		const { items } = await this.employeesService
 			.getAll(['user'], {
-				organization: { id: organizationId, tenantId }
+				organizationId: this.organizationId,
+				tenantId: this.tenantId
 			})
 			.pipe(first())
 			.toPromise();
@@ -238,15 +228,14 @@ export class AddTaskDialogComponent
 	}
 
 	async loadTeams() {
-		const organizationId = this._organizationsStore.selectedOrganization.id;
-		if (!organizationId) {
+		if (!this.organizationId) {
 			return;
 		}
-		this.teams = (
-			await this.organizationTeamsService.getAll(['members'])
-		).items.filter((org) => {
-			return org.organizationId === organizationId;
-		});
+		const { items } = await this.organizationTeamsService.getAll(
+			['members'],
+			{ organizationId: this.organizationId, tenantId: this.tenantId }
+		);
+		if (items) this.teams = items;
 	}
 
 	onParticipantsChange(participants: string) {

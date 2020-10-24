@@ -1,11 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { IOrganizationProject } from '@gauzy/models';
 import { Store } from '../../../@core/services/store.service';
-import { takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { DefaultEditor } from 'ng2-smart-table';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	template: `
 		<nb-select
@@ -21,11 +21,11 @@ import { DefaultEditor } from 'ng2-smart-table';
 	`,
 	styles: []
 })
-export class InvoiceProjectsSelectorComponent extends DefaultEditor
+export class InvoiceProjectsSelectorComponent
+	extends DefaultEditor
 	implements OnInit, OnDestroy {
 	project: IOrganizationProject;
 	projects: IOrganizationProject[];
-	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
 		private store: Store,
@@ -40,12 +40,17 @@ export class InvoiceProjectsSelectorComponent extends DefaultEditor
 
 	private async _loadProjects() {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe(async (organization) => {
 				if (organization) {
+					const tenantId = this.store.user.tenantId;
+					const { id: organizationId } = organization;
 					const projects = await this.organizationProjectsService.getAll(
 						[],
-						{ organizationId: organization.id }
+						{ organizationId, tenantId }
 					);
 					this.projects = projects.items;
 					const project = this.projects.find(
@@ -60,8 +65,5 @@ export class InvoiceProjectsSelectorComponent extends DefaultEditor
 		this.cell.newValue = $event.id;
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

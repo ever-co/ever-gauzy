@@ -130,11 +130,9 @@ export class InvoiceAddComponent
 		this.initializeForm();
 		this.form.get('currency').disable();
 		this.loading = false;
-
 		this.observableTasks.pipe(untilDestroyed(this)).subscribe((data) => {
 			this.tasks = data;
 		});
-
 		this.selectedLanguage = this.translateService.currentLang;
 		this.translateService.onLangChange
 			.pipe(untilDestroyed(this))

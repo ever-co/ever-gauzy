@@ -3,7 +3,6 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { IOrganization, ITask, TaskListTypeEnum } from '@gauzy/models';
 import { map, tap } from 'rxjs/operators';
 import { TasksService } from './tasks.service';
-import { Store } from './store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 @UntilDestroy()
 @Injectable({
@@ -24,15 +23,7 @@ export class TasksStoreService {
 		return this._tasks$.getValue();
 	}
 
-	constructor(
-		private _taskService: TasksService,
-		private _organizationsStore: Store
-	) {
-		if (!this.tasks.length) {
-			const organization = this._organizationsStore.selectedOrganization;
-			this.fetchTasks(organization);
-		}
-	}
+	constructor(private _taskService: TasksService) {}
 
 	fetchTasks(organization?: IOrganization) {
 		const findObj = {};

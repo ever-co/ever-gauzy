@@ -270,12 +270,17 @@ export class InvoicesComponent
 		});
 
 		for (const item of this.selectedInvoice.invoiceItems) {
+			const tenantId = this.store.user.tenantId;
+			const organizationId = this.organization.id;
+
 			const itemToAdd = {
 				description: item.description,
 				price: item.price,
 				quantity: item.quantity,
 				totalValue: item.totalValue,
-				invoiceId: createdInvoice.id
+				invoiceId: createdInvoice.id,
+				tenantId,
+				organizationId
 			};
 			switch (this.selectedInvoice.invoiceType) {
 				case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
@@ -850,9 +855,10 @@ export class InvoicesComponent
 
 	async onChangeTab(event) {
 		if (event.tabId === 'search') {
-			const organizationId = this.organization.id;
+			const { id: organizationId, tenantId } = this.organization;
 			const res = await this.organizationContactService.getAll([], {
-				organizationId
+				organizationId,
+				tenantId
 			});
 
 			if (res) {

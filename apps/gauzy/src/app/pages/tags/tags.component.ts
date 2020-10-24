@@ -20,7 +20,8 @@ import { RouterEvent, NavigationEnd, Router } from '@angular/router';
 	templateUrl: './tags.component.html',
 	styleUrls: ['./tags.component.scss']
 })
-export class TagsComponent extends TranslationBaseComponent
+export class TagsComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	loading = false;
@@ -207,13 +208,13 @@ export class TagsComponent extends TranslationBaseComponent
 		this.allTags = [];
 		this.filterOptions = [{ property: 'all', displayName: 'All' }];
 		if (this.selectedOrganization) {
+			const { id: organizationId, tenantId } = this.selectedOrganization;
 			const tagsByOrgLevel = await this.tagsService.getAllTagsByOrgLevel(
-				this.selectedOrganization.id,
-				this.selectedOrganization.tenantId,
+				{ organizationId, tenantId },
 				['organization']
 			);
 			const tagsByTenantLevel = await this.tagsService.getAllTagsByTenantLevel(
-				this.selectedOrganization.tenantId,
+				{ tenantId },
 				['tenant']
 			);
 			const orgId = this.selectedOrganization.id;
