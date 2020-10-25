@@ -18,10 +18,15 @@ export interface UpworkJobMatchingCriterions {
 	fixPrice?: boolean;
 }
 
-export interface MatchingCriterions extends UpworkJobMatchingCriterions {}
+export interface MatchingCriterions
+	extends EmployeeUpworkJobsSearchCriterion,
+		JobPresetUpworkJobSearchCriterion {}
 
 export interface JobPreset extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
+	employees?: Partial<IEmployee>[];
+	employeeCriterion?: EmployeeUpworkJobsSearchCriterion[];
+	jobPresetCriterion?: JobPresetUpworkJobSearchCriterion[];
 }
 
 export interface GetJobPresetInput {
@@ -49,6 +54,8 @@ export interface JobPresetUpworkJobSearchCriterion
 	occupationId?: string;
 	categoryId?: string;
 	keyword?: string;
+	hourly?: boolean;
+	fixPrice?: boolean;
 }
 
 export interface EmployeeUpworkJobsSearchCriterion
@@ -60,4 +67,6 @@ export interface EmployeeUpworkJobsSearchCriterion
 	occupationId?: string;
 	categoryId?: string;
 	keyword?: string;
+	hourly?: boolean;
+	fixPrice?: boolean;
 }

@@ -28,7 +28,7 @@ export class JobPreset extends TenantOrganizationBase implements IJobPreset {
 		cascade: true
 	})
 	@JoinTable({
-		name: 'time_slot_time_logs'
+		name: 'employee_job_preset'
 	})
 	employees?: Employee[];
 

@@ -21,18 +21,30 @@ export class JobPresetUpworkJobSearchCriterion
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
-	@Column()
+	@Column({ nullable: true })
 	occupationId?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
-	@Column()
+	@Column({ nullable: true })
 	categoryId?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
-	@Column()
+	@Column({ nullable: true })
 	keyword?: string;
+
+	@ApiProperty({ type: Boolean })
+	@IsString()
+	@IsNotEmpty()
+	@Column({ default: false })
+	hourly?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsString()
+	@IsNotEmpty()
+	@Column({ default: false })
+	fixPrice?: boolean;
 }

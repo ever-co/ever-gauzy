@@ -19,6 +19,7 @@ import { MomentModule } from 'ngx-moment';
 import { SharedModule } from '../../../@shared/shared.module';
 import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { DialogsModule } from '../../../@shared/dialogs';
 
 @NgModule({
 	declarations: [MatchingComponent],
@@ -39,7 +40,8 @@ import { NgSelectModule } from '@ng-select/ng-select';
 		NbButtonModule,
 		EmployeeMultiSelectModule,
 		NgSelectModule,
-		NbCheckboxModule
+		NbCheckboxModule,
+		DialogsModule
 	]
 })
 export class MatchingModule {}

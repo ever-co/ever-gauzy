@@ -6,7 +6,7 @@ import { TenantOrganizationBase } from '../core/entities/tenant-organization-bas
 import { JobPreset } from './job-preset.entity';
 import { Employee } from '../employee/employee.entity';
 
-@Entity('job_preset_upwork_job_search_criterion')
+@Entity('employee_upwork_job_search_criterion')
 export class EmployeeUpworkJobsSearchCriterion
 	extends TenantOrganizationBase
 	implements IEmployeeUpworkJobsSearchCriterion {
@@ -31,18 +31,30 @@ export class EmployeeUpworkJobsSearchCriterion
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
-	@Column()
+	@Column({ nullable: true })
 	occupationId?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
-	@Column()
+	@Column({ nullable: true })
 	categoryId?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
-	@Column()
+	@Column({ nullable: true })
 	keyword?: string;
+
+	@ApiProperty({ type: Boolean })
+	@IsString()
+	@IsNotEmpty()
+	@Column({ default: false })
+	hourly?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsString()
+	@IsNotEmpty()
+	@Column({ default: false })
+	fixPrice?: boolean;
 }

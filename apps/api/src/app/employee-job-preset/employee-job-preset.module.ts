@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Employee } from '../employee/employee.entity';
 import { Handlers } from './commands/handlers';
 import { EmployeeJobPresetController } from './employee-job-preset.controller';
 import { EmployeeUpworkJobsSearchCriterion } from './employee-upwork-jobs-search-criterion.entity';
@@ -13,7 +14,8 @@ import { JobPresetService } from './job-preset.service';
 		TypeOrmModule.forFeature([
 			JobPreset,
 			JobPresetUpworkJobSearchCriterion,
-			EmployeeUpworkJobsSearchCriterion
+			EmployeeUpworkJobsSearchCriterion,
+			Employee
 		]),
 		CqrsModule
 	],

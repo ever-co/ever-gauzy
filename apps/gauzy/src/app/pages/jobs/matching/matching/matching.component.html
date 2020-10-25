@@ -1,4 +1,4 @@
-<nb-card class="jobs-page">
+<nb-card class="jobs-preset-card">
 	<nb-card-header class="header">
 		<h4>
 			{{
@@ -10,11 +10,13 @@
 		<div class="row">
 			<div class="col-sm-6">
 				<div class="form-group row">
-					<label class="col-sm-4">Source</label>
+					<label class="col-sm-4">{{
+						'JOB_MATCHING.SOURCE' | translate
+					}}</label>
 					<nb-select
-						placeholder="Source"
+						[placeholder]="'JOB_MATCHING.SOURCE' | translate"
 						class="w-100 col-sm-8"
-						formControlName="jobSource"
+						[(ngModel)]="criterionForm.jobSource"
 					>
 						<nb-option
 							*ngFor="let source of JobPostSourceEnum | keyvalue"
@@ -26,106 +28,172 @@
 				</div>
 
 				<div class="row form-group">
-					<label class="d-block col-sm-4">Preset</label>
-					<nb-select
-						placeholder="Source"
-						class="w-100 col-sm-8"
-						formControlName="jobSource"
-					>
-						<nb-option
-							*ngFor="let preset of presets"
-							[value]="preset.value"
-						>
-							{{ preset.value | titlecase }}</nb-option
-						>
-					</nb-select>
+					<label class="d-block col-sm-4">{{
+						'JOB_MATCHING.PRESET' | translate
+					}}</label>
+					<div class="w-100 col-sm-8">
+						<div class="row">
+							<div class="col">
+								<ng-select
+									class="w-100"
+									[addTag]="addPreset"
+									(change)="onPresetSelected($event)"
+									[clearable]="true"
+									[items]="jobPresets"
+									[(ngModel)]="criterionForm.jobPresetId"
+									[placeholder]="
+										'JOB_MATCHING.PRESET' | translate
+									"
+									bindValue="id"
+									bindLabel="name"
+								>
+								</ng-select>
+							</div>
+							<div class="col-auto">
+								<button
+									nbButton
+									status="primary"
+									(click)="saveJobPreset()"
+								>
+									<nb-icon icon="save-outline"></nb-icon>
+									{{ 'JOB_MATCHING.SAVE' | translate }}
+								</button>
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
 
-		<div class="row align-items-center my-3">
-			<h6 class="col m-0">Criterions</h6>
+		<div class="row align-items-center my-3" *ngIf="jobPreset">
+			<h6 class="col m-0">{{ 'JOB_MATCHING.CRITERIONS' | translate }}</h6>
 			<div class="col-auto">
-				<button nbButton status="primary" (click)="addEditCriterion()">
-					<nb-icon icon="plus-outline"></nb-icon>Add New
+				<button nbButton status="primary" (click)="addNewCriterion()">
+					<nb-icon icon="plus-outline"></nb-icon>
+					{{ 'JOB_MATCHING.ADD_NEW_CRITERIONS' | translate }}
 				</button>
 			</div>
 		</div>
 		<div
-			class="criterions-list"
+			class="criterions-list card my-3 p-4"
 			*ngFor="let criterion of criterions; let index = index"
 		>
-			<form #form (ngSubmit)="addEditCriterion(criterion)">
+			<form #form (ngSubmit)="saveCriterion(criterion)">
 				<div class="row">
 					<div class="col-auto">
 						<h6>{{ index + 1 }}</h6>
 					</div>
 					<div class="col-sm">
-						<div class="form-group">
-							<label class="d-block">Keywords</label>
-							<ng-select
-								[addTag]="createNewKeyword"
-								[(ngModel)]="criterion.keywords"
-								[clearable]="true"
-								[items]="keywords"
-								placeholder="Select Keywords"
+						<div class="form-group row">
+							<label class="d-block col-sm-2">
+								{{ 'JOB_MATCHING.KEYWORDS' | translate }}</label
 							>
-							</ng-select>
+							<div class="col-sm-6">
+								<input
+									nbInput
+									class="w-100"
+									name="keyword"
+									[(ngModel)]="criterion.keyword"
+									[placeholder]="
+										'JOB_MATCHING.KEYWORDS' | translate
+									"
+								/>
+							</div>
 						</div>
-						<div class="form-group">
-							<label class="d-block">Categories</label>
-							<ng-select
-								[addTag]="createNewCategories"
-								[(ngModel)]="criterion.categories"
-								[clearable]="true"
-								[items]="categories"
-								placeholder="Select Categories"
+						<div class="form-group row">
+							<label class="d-block col-sm-2">
+								{{
+									'JOB_MATCHING.CATEGORIES' | translate
+								}}</label
 							>
-							</ng-select>
+
+							<div class="col-sm-6">
+								<ng-select
+									name="categoryId"
+									[addTag]="createNewCategories"
+									[(ngModel)]="criterion.categoryId"
+									[clearable]="true"
+									[items]="categories"
+									[placeholder]="
+										'JOB_MATCHING.CATEGORIES' | translate
+									"
+								>
+								</ng-select>
+							</div>
 						</div>
-						<div class="form-group">
-							<label class="d-block">Occupations</label>
-							<ng-select
-								[addTag]="createNewOccupations"
-								[(ngModel)]="criterion.occupations"
-								[clearable]="true"
-								[items]="occupations"
-								placeholder="Select Occupations"
+						<div class="form-group row">
+							<label class="d-block col-sm-2">
+								{{
+									'JOB_MATCHING.OCCUPATIONS' | translate
+								}}</label
 							>
-							</ng-select>
+
+							<div class="col-sm-6">
+								<ng-select
+									name="occupationId"
+									[addTag]="createNewOccupations"
+									[(ngModel)]="criterion.occupationId"
+									[clearable]="true"
+									[items]="occupations"
+									[placeholder]="
+										'JOB_MATCHING.OCCUPATIONS' | translate
+									"
+								>
+								</ng-select>
+							</div>
 						</div>
 
 						<div class="row">
+							<label class="d-block col-sm-2"></label>
 							<div class="col-sm">
 								<div class="row">
-									<div class="col-sm-4">
+									<div class="col-sm-3">
 										<nb-checkbox
+											name="fixPrice"
 											[(ngModel)]="criterion.fixPrice"
-											>Fix Price</nb-checkbox
+										>
+											{{
+												'JOB_MATCHING.FIX_PRICE'
+													| translate
+											}}</nb-checkbox
 										>
 									</div>
-									<div class="col-sm-4">
+									<div class="col-sm-3">
 										<nb-checkbox
+											name="hourly"
 											[(ngModel)]="criterion.hourly"
-											>Hourly</nb-checkbox
-										>
+											>{{
+												'JOB_MATCHING.HOURLY'
+													| translate
+											}}
+										</nb-checkbox>
 									</div>
 								</div>
 							</div>
 
 							<div class="col-auto">
-								<button type="submit" nbButton status="success">
-									<nb-icon icon="trash-save"></nb-icon>
-									Save
+								<button
+									type="submit"
+									class="mr-1"
+									nbButton
+									status="success"
+								>
+									<nb-icon icon="save-outline"></nb-icon>
+									{{ 'JOB_MATCHING.SAVE' | translate }}
 								</button>
 								<button
 									nbButton
 									status="danger"
 									type="button"
-									(click)="deleteCriterions(criterion)"
+									ngxConfirmDialog
+									message="Are you sure that, you want to delete criterion"
+									*ngIf="criterion.id"
+									(confirm)="
+										deleteCriterions(index, criterion)
+									"
 								>
 									<nb-icon icon="trash-outline"></nb-icon>
-									Delete
+									{{ 'JOB_MATCHING.DELETE' | translate }}
 								</button>
 							</div>
 						</div>
