@@ -115,6 +115,9 @@ import { InvoiceEstimateHistory } from '../invoice-estimate-history/invoice-esti
 import { GoalKPITemplate } from '../goal-kpi-template/goal-kpi-template.entity';
 import { TenantSetting } from '../tenant/tenant-setting/tenant-setting.entity';
 import { FileStorageModule } from './file-storage';
+import { EmployeeUpworkJobsSearchCriterion } from '../employee-job-preset/employee-upwork-jobs-search-criterion.entity';
+import { JobPresetUpworkJobSearchCriterion } from '../employee-job-preset/job-preset-upwork-job-search-criterion.entity';
+import { JobPreset } from '../employee-job-preset/job-preset.entity';
 
 const entities = [
 	Invite,
@@ -223,7 +226,10 @@ const entities = [
 	EstimateEmail,
 	Contact,
 	OrganizationSprint,
-	EmployeeAward
+	EmployeeAward,
+	JobPreset,
+	JobPresetUpworkJobSearchCriterion,
+	EmployeeUpworkJobsSearchCriterion
 ];
 
 @Module({

@@ -3,7 +3,7 @@ import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
 import {
 	JobMatchings,
 	JobPostSourceEnum,
-	MatchingCriterias
+	MatchingCriterions
 } from '@gauzy/models';
 
 @Component({
@@ -13,48 +13,29 @@ import {
 })
 export class MatchingComponent implements OnInit {
 	presets: any[];
-	form: FormGroup;
+	criterionForm: FormGroup;
 	JobPostSourceEnum = JobPostSourceEnum;
 	keywords: string[] = [];
 	categories: string[] = [];
 	occupations: string[] = [];
+	criterions: MatchingCriterions[] = [];
 
-	constructor(private formBulder: FormBuilder) {}
+	constructor(private formBuilder: FormBuilder) {}
 
-	ngOnInit(): void {
-		this.initForm();
-	}
+	ngOnInit(): void {}
 
 	initForm(values: JobMatchings = {}): void {
-		let i = 0;
-
-		this.form = this.formBulder.group({
+		this.formBuilder.group({
 			employeeId: [values.employeeId || null],
 			jobSource: [values.jobSource || null],
-			criterias: this.formBulder.array([])
+			criterions: this.formBuilder.array([])
 		});
-
-		do {
-			const criteria =
-				values && values.criterias ? values.criterias[i] : {};
-			this.addNewCriterias(criteria);
-			i++;
-		} while (values && values.criterias && values.criterias.length < i);
 	}
 
-	addNewCriterias(criteria: MatchingCriterias = {}) {
-		const form = this.formBulder.group({
-			keywords: [criteria.keywords],
-			categories: [criteria.categories],
-			occupations: [criteria.occupations],
-			hourly: [criteria.hourly],
-			fixPrice: [criteria.fixPrice]
-		});
-		this.criterias.push(form);
-	}
+	addEditCriterion(criterion?: MatchingCriterions) {}
 
-	deleteCriteria(index) {
-		this.criterias.removeAt(index);
+	deleteCriterions(index) {
+		this.criterions.splice(index, 0);
 	}
 
 	createNewKeyword(title) {
@@ -67,9 +48,5 @@ export class MatchingComponent implements OnInit {
 
 	createNewOccupations(title) {
 		this.occupations.push(title);
-	}
-
-	get criterias() {
-		return this.form.get('criterias') as FormArray;
 	}
 }

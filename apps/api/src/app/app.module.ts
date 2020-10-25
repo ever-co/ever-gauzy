@@ -117,6 +117,7 @@ import { EmployeeAwardModule } from './employee-award/employee-award.module';
 import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice-estimate-history.module';
 import { GoalKpiTemplateModule } from './goal-kpi-template/goal-kpi-template.module';
 import { TenantSettingModule } from './tenant/tenant-setting/tenant-setting.module';
+import { EmployeeJobPresetModule } from './employee-job-preset/employee-job-preset.module';
 
 @Module({
 	imports: [
@@ -197,6 +198,10 @@ import { TenantSettingModule } from './tenant/tenant-setting/tenant-setting.modu
 					},
 					{ path: '/equipment', module: EquipmentModule },
 					{ path: '/employee-level', module: EmployeeLevelModule },
+					{
+						path: '/job-preset',
+						module: EmployeeJobPresetModule
+					},
 					{
 						path: '/employee-job',
 						module: EmployeeJobPostModule
@@ -520,6 +525,7 @@ import { TenantSettingModule } from './tenant/tenant-setting/tenant-setting.modu
 		ExportAllModule,
 		ImportAllModule,
 		EmployeeSettingModule,
+		EmployeeJobPresetModule,
 		EmployeeJobPostModule,
 		EmployeeStatisticsModule,
 		EmployeeAppointmentModule,

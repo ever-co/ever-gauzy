@@ -7,22 +7,13 @@
 		</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<form [formGroup]="form">
-			<div class="row">
-				<div class="form-group col-sm-4">
-					<ga-employee-multi-select
-						[multiple]="false"
-						label="Emplyee"
-						formControlName="employeeId"
-					>
-					</ga-employee-multi-select>
-				</div>
-
-				<div class="form-group col-sm-4">
-					<label class="d-block">Source</label>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group row">
+					<label class="col-sm-4">Source</label>
 					<nb-select
 						placeholder="Source"
-						class="w-100"
+						class="w-100 col-sm-8"
 						formControlName="jobSource"
 					>
 						<nb-option
@@ -34,11 +25,11 @@
 					</nb-select>
 				</div>
 
-				<div class="form-group col-sm-4">
-					<label class="d-block">Preset</label>
+				<div class="row form-group">
+					<label class="d-block col-sm-4">Preset</label>
 					<nb-select
 						placeholder="Source"
-						class="w-100"
+						class="w-100 col-sm-8"
 						formControlName="jobSource"
 					>
 						<nb-option
@@ -50,109 +41,97 @@
 					</nb-select>
 				</div>
 			</div>
+		</div>
 
-			<div class="row align-items-center my-3">
-				<h6 class="col m-0">Criterias</h6>
-				<div class="col-auto">
-					<button
-						nbButton
-						status="primary"
-						(click)="addNewCriterias()"
-					>
-						<nb-icon icon="plus-outline"></nb-icon>Add New
-					</button>
-				</div>
+		<div class="row align-items-center my-3">
+			<h6 class="col m-0">Criterions</h6>
+			<div class="col-auto">
+				<button nbButton status="primary" (click)="addEditCriterion()">
+					<nb-icon icon="plus-outline"></nb-icon>Add New
+				</button>
 			</div>
-			<div formArrayName="criterias">
-				<div
-					class="card my-3 p-4"
-					*ngFor="let item of criterias.controls; let index = index"
-					[formGroupName]="index"
-				>
-					<div class="row">
-						<div class="col-auto">
-							<h6>{{ index + 1 }}</h6>
+		</div>
+		<div
+			class="criterions-list"
+			*ngFor="let criterion of criterions; let index = index"
+		>
+			<form #form (ngSubmit)="addEditCriterion(criterion)">
+				<div class="row">
+					<div class="col-auto">
+						<h6>{{ index + 1 }}</h6>
+					</div>
+					<div class="col-sm">
+						<div class="form-group">
+							<label class="d-block">Keywords</label>
+							<ng-select
+								[addTag]="createNewKeyword"
+								[(ngModel)]="criterion.keywords"
+								[clearable]="true"
+								[items]="keywords"
+								placeholder="Select Keywords"
+							>
+							</ng-select>
 						</div>
-						<div class="col-sm">
-							<div class="form-group">
-								<label class="d-block">Keywords</label>
-								<ng-select
-									[addTag]="createNewKeyword"
-									formControlName="keywords"
-									[clearable]="true"
-									[items]="keywords"
-									placeholder="Select Keywords"
-								>
-								</ng-select>
-							</div>
-							<div class="form-group">
-								<label class="d-block">Categories</label>
-								<ng-select
-									[addTag]="createNewCategories"
-									formControlName="categories"
-									[clearable]="true"
-									[items]="categories"
-									placeholder="Select Categories"
-								>
-								</ng-select>
-							</div>
-							<div class="form-group">
-								<label class="d-block">Occupations</label>
-								<ng-select
-									[addTag]="createNewOccupations"
-									formControlName="occupations"
-									[clearable]="true"
-									[items]="occupations"
-									placeholder="Select Occupations"
-								>
-								</ng-select>
-							</div>
+						<div class="form-group">
+							<label class="d-block">Categories</label>
+							<ng-select
+								[addTag]="createNewCategories"
+								[(ngModel)]="criterion.categories"
+								[clearable]="true"
+								[items]="categories"
+								placeholder="Select Categories"
+							>
+							</ng-select>
+						</div>
+						<div class="form-group">
+							<label class="d-block">Occupations</label>
+							<ng-select
+								[addTag]="createNewOccupations"
+								[(ngModel)]="criterion.occupations"
+								[clearable]="true"
+								[items]="occupations"
+								placeholder="Select Occupations"
+							>
+							</ng-select>
+						</div>
 
-							<div class="row">
-								<div class="col-sm">
-									<div class="row">
-										<div class="col-sm-4">
-											<nb-checkbox
-												formControlName="fixPrice"
-												>Fix Price</nb-checkbox
-											>
-										</div>
-										<div class="col-sm-4">
-											<nb-checkbox
-												formControlName="hourly"
-												>Hourly</nb-checkbox
-											>
-										</div>
+						<div class="row">
+							<div class="col-sm">
+								<div class="row">
+									<div class="col-sm-4">
+										<nb-checkbox
+											[(ngModel)]="criterion.fixPrice"
+											>Fix Price</nb-checkbox
+										>
+									</div>
+									<div class="col-sm-4">
+										<nb-checkbox
+											[(ngModel)]="criterion.hourly"
+											>Hourly</nb-checkbox
+										>
 									</div>
 								</div>
+							</div>
 
-								<div class="col-auto">
-									<button
-										nbButton
-										status="danger"
-										*ngIf="criterias.controls.length > 1"
-										(click)="deleteCriteria(index)"
-									>
-										<nb-icon icon="trash-outline"></nb-icon>
-										Delete
-									</button>
-								</div>
+							<div class="col-auto">
+								<button type="submit" nbButton status="success">
+									<nb-icon icon="trash-save"></nb-icon>
+									Save
+								</button>
+								<button
+									nbButton
+									status="danger"
+									type="button"
+									(click)="deleteCriterions(criterion)"
+								>
+									<nb-icon icon="trash-outline"></nb-icon>
+									Delete
+								</button>
 							</div>
 						</div>
 					</div>
 				</div>
-			</div>
-			<div class="row align-items-center my-3">
-				<div class="ml-auto col-auto">
-					<button
-						nbButton
-						status="primary"
-						(click)="addNewCriterias()"
-					>
-						<nb-icon icon="plus-outline"></nb-icon>Add New
-					</button>
-				</div>
-			</div>
-		</form>
+			</form>
+		</div>
 	</nb-card-body>
 </nb-card>
