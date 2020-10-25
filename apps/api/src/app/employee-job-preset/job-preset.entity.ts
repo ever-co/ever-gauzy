@@ -4,7 +4,6 @@ import {
 	Index,
 	JoinTable,
 	ManyToMany,
-	ManyToOne,
 	OneToMany
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
