@@ -3,16 +3,9 @@
 		<h4>{{ 'JOBS.JOB_SEARCH' | translate }}</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="job-fitlers py-3">
+		<div class="job-filters py-3">
 			<div class="row">
-				<div class="col-sm-4">
-					<ga-employee-multi-select
-						[label]="false"
-						(selectedChange)="applayFilter()"
-						[(ngModel)]="jobRequest.employeeIds"
-					></ga-employee-multi-select>
-				</div>
-				<div class="ml-auto col-sm-4">
+				<div class="col-sm-6">
 					<div class="row">
 						<div class="col form-group m-0">
 							<input
@@ -21,7 +14,7 @@
 								[placeholder]="'JOBS.JOB_SEARCH' | translate"
 								nbInput
 								[(ngModel)]="jobRequest.search"
-								(input)="applayFilter()"
+								(input)="applyFilter()"
 							/>
 						</div>
 						<div class="col-auto">
@@ -50,7 +43,7 @@
 							<div class="col-sm-6 form-group">
 								<label class="d-block">Source</label>
 								<nb-select
-									(selectedChange)="applayFilter()"
+									(selectedChange)="applyFilter()"
 									placeholder="Source"
 									class="w-100"
 									multiple
@@ -71,7 +64,7 @@
 							<div class="col-sm-6 form-group">
 								<label class="d-block">Job type</label>
 								<nb-select
-									(selectedChange)="applayFilter()"
+									(selectedChange)="applyFilter()"
 									placeholder="Job Type"
 									class="w-100"
 									multiple
@@ -88,9 +81,27 @@
 								</nb-select>
 							</div>
 							<div class="col-sm-6 form-group">
+								<label class="d-block">Job Status</label>
+								<nb-select
+									(selectedChange)="applyFilter()"
+									placeholder="Job Type"
+									class="w-100"
+									[(ngModel)]="jobRequest.jobStatus"
+								>
+									<nb-option
+										*ngFor="
+											let type of JobPostStatusEnum
+												| keyvalue
+										"
+										[value]="type.value"
+										>{{ type.value | titlecase }}
+									</nb-option>
+								</nb-select>
+							</div>
+							<div class="col-sm-6 form-group">
 								<label class="d-block">Budget</label>
 								<nb-select
-									(selectedChange)="applayFilter()"
+									(selectedChange)="applyFilter()"
 									placeholder="Budget"
 									class="w-100"
 									multiple
@@ -118,7 +129,14 @@
 				</nb-card>
 			</div>
 		</div>
-		<div
+
+		<ng2-smart-table
+			[settings]="settingsSmartTable"
+			(custom)="onCustom($event)"
+			[source]="smartTableSource"
+		></ng2-smart-table>
+
+		<!-- <div
 			class="row-table"
 			[nbSpinner]="loading"
 			nbSpinnerSize="giant"
@@ -238,6 +256,6 @@
 					</div>
 				</div>
 			</ng-template>
-		</div>
+		</div> -->
 	</nb-card-body>
 </nb-card>

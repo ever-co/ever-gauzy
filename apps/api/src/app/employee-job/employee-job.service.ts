@@ -120,18 +120,23 @@ export class EmployeeJobPostService {
 				})
 			);
 
+			return {
+				items: jobs,
+				total: jobs.length
+			};
+
 			// TODO: this jobs contains tons of GraphQL related fields. We should convert all that into Gauzy EmployeeJobPost and JobPost entities!
 			// I.e. here should be mapping, we don't want to return result of GraphQL query here as is!
 		} else {
 			const employees = await this.employeeRepository.find({
 				relations: ['user']
 			});
-			jobs = await getRandomEmployeeJobPosts(employees, data.take);
+			jobs = await getRandomEmployeeJobPosts(employees);
 		}
 
 		return {
 			items: jobs,
-			total: jobs.length
+			total: 50
 		};
 	}
 }

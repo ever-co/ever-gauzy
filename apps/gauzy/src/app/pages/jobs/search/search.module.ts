@@ -17,6 +17,8 @@ import {
 import { MomentModule } from 'ngx-moment';
 import { FormsModule } from '@angular/forms';
 import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-multi-select/employee-multi-select.module';
+import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { StatusBadgeModule } from '../../../@shared/status-badge/status-badge.module';
 
 @NgModule({
 	declarations: [SearchComponent],
@@ -34,7 +36,9 @@ import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-mu
 		FormsModule,
 		NbSelectModule,
 		NbButtonModule,
-		EmployeeMultiSelectModule
+		EmployeeMultiSelectModule,
+		Ng2SmartTableModule,
+		StatusBadgeModule
 	]
 })
 export class SearchModule {}
