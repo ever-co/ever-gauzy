@@ -1613,11 +1613,28 @@
 		"ACTION": "Action",
 		"APPLY": "Apply",
 		"APPLIED": "Applied",
+		"STATUS_CLOSED": "Closed",
+		"STATUS_OPEN": "Open",
+		"STATUS_APPLIED": "Applied",
 		"VIEW": "View",
 		"HIDE": "Hide",
 		"NO_JOBS": "No Jobs found",
 		"JOB_SEARCH": "Job Search",
 		"LOAD_MORE": "Load More"
+	},
+	"JOB_MATCHING": {
+		"CONFIGURE_EMPLOYEES_TO_JOBS_MATCHING": "Configure Employees to Jobs Matching",
+		"SOURCE": "Source",
+		"PRESET": "Preset",
+		"KEYWORDS": "Keywords",
+		"CATEGORIES": "Categories",
+		"OCCUPATIONS": "Occupations",
+		"ADD_NEW_CRITERIONS": "Add New",
+		"FIX_PRICE": "Fix Price",
+		"HOURLY": "Hourly",
+		"SAVE": "לשמור",
+		"DELETE": "מחק",
+		"CRITERIONS": "Criterions"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Sprint added",
