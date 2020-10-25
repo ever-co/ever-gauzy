@@ -160,6 +160,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				};
 			}
 		);
+
+		this.electronService.ipcRenderer.on('get_user_detail', (event, arg) => {
+			this.timeTrackerService.getUserDetail(arg).then((res) => {
+				event.sender.send('user_detail', res);
+			});
+		});
 	}
 
 	ngOnInit(): void {
