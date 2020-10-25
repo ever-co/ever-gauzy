@@ -67,7 +67,7 @@ export default class AppMenu {
 					// 	label: 'DevTool',
 					// 	enabled: true,
 					// 	click() {
-					// 		timeTrackerWindow.webContents.toggleDevTools();
+					// 		settingsWindow.webContents.toggleDevTools();
 					// 	}
 					// }
 				]

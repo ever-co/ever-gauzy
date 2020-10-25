@@ -1,19 +1,40 @@
 <nb-layout>
 	<nb-layout-column class="top-bottom-space">
-        <nb-card>
-            <nb-card-body>
-                <div class="row" style="margin: auto;">
-                    <div class="col-12" style="text-align: center;">
-                        <p>Screen Capture</p>
-                    </div>
-                    <div class="col-12">
-                        <img 
-                            class="screen-capture-img"
-                            [src]="screenCaptureUrl"
-                        >
-                    </div>
-                </div>
-            </nb-card-body>
-        </nb-card>
-    </nb-layout-column>
+		<nb-card>
+			<nb-card-body>
+				<div class="row" style="margin: auto">
+					<div class="col-1">
+						<div class="row">
+							<div class="col-12">
+								<img
+									class="icon-logo"
+									src="./assets/icons/icon_16x16.png"
+								/>
+							</div>
+						</div>
+					</div>
+					<div class="col-10">
+						<div class="row">
+							<div class="col-12" style="text-align: left">
+								<p class="margin-p">
+									<span class="title-window"
+										>Screen Capture</span
+									>
+								</p>
+								<p class="margin-p">
+									<span>{{ note }}</span>
+								</p>
+							</div>
+							<div class="col-12">
+								<img
+									class="screen-capture-img"
+									[src]="screenCaptureUrl"
+								/>
+							</div>
+						</div>
+					</div>
+				</div>
+			</nb-card-body>
+		</nb-card>
+	</nb-layout-column>
 </nb-layout>

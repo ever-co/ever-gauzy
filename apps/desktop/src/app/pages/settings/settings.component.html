@@ -77,6 +77,19 @@
 					</div>
 				</div>
 			</div>
+			<div class="col-12">
+				<nb-card>
+					<nb-card-body>
+						<nb-toggle
+							[(ngModel)]="screenshotNotification"
+							(ngModelChange)="toggleNotificationChange($event)"
+							status="basic"
+							>Show desktop notification on screen
+							capture</nb-toggle
+						>
+					</nb-card-body>
+				</nb-card>
+			</div>
 		</div>
 		<div class="row" *ngIf="selectedMenu === 'Timer'">
 			<div class="col-12">
