@@ -1613,11 +1613,28 @@
 		"ACTION": "Действие",
 		"APPLY": "Применить",
 		"APPLIED": "Применяется",
+		"STATUS_CLOSED": "Закрыто",
+		"STATUS_OPEN": "Открыть",
+		"STATUS_APPLIED": "Применяется",
 		"VIEW": "Вид",
 		"HIDE": "Скрыть",
 		"NO_JOBS": "Работы не найдены",
 		"JOB_SEARCH": "Поиск Вакансии",
 		"LOAD_MORE": "Загрузить больше"
+	},
+	"JOB_MATCHING": {
+		"CONFIGURE_EMPLOYEES_TO_JOBS_MATCHING": "Настройка соответствия заданий сотрудникам",
+		"SOURCE": "Источник",
+		"PRESET": "Preset",
+		"KEYWORDS": "Ключевые слова",
+		"CATEGORIES": "Категории",
+		"OCCUPATIONS": "Занятия",
+		"ADD_NEW_CRITERIONS": "Добавить новый",
+		"FIX_PRICE": "Фиксированная цена",
+		"HOURLY": "Почасовой",
+		"SAVE": "Сохранить",
+		"DELETE": "Удалить",
+		"CRITERIONS": "Критерии"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Спринт добавлен",
