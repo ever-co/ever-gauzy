@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import {
+	EmployeePresetInput,
 	GetJobPresetCriterionInput,
 	GetJobPresetInput,
 	JobPostSourceEnum,
@@ -51,7 +52,19 @@ export class MatchingComponent implements OnInit {
 			.subscribe((employee) => {
 				setTimeout(async () => {
 					this.selectedEmployee = employee;
-					this.updateCriterions();
+					if (this.selectedEmployee && this.selectedEmployee.id) {
+						const preset = await this.getEmployeePreset();
+						this.criterionForm = {
+							jobSource: JobPostSourceEnum.UPWORK,
+							jobPresetId: preset ? preset.id : null
+						};
+					} else {
+						this.criterionForm = {
+							jobSource: JobPostSourceEnum.UPWORK,
+							jobPresetId: null
+						};
+					}
+					this.updateCriterionsData();
 				});
 			});
 	}
@@ -64,6 +77,19 @@ export class MatchingComponent implements OnInit {
 		this.jobPresetService.getJobPresets(request).then((jobPresets) => {
 			this.jobPresets = jobPresets;
 		});
+	}
+
+	getEmployeePreset() {
+		return this.jobPresetService
+			.getEmployeePresets(this.selectedEmployee.id)
+			.then((jobPresets) => {
+				if (jobPresets.length > 0) {
+					this.jobPreset = jobPresets[0];
+				} else {
+					this.jobPreset = null;
+				}
+				return this.jobPreset;
+			});
 	}
 
 	addPreset(name?: string) {
@@ -80,10 +106,26 @@ export class MatchingComponent implements OnInit {
 
 	async onPresetSelected(jobPreset: JobPreset) {
 		this.jobPreset = jobPreset;
-		this.updateCriterions();
+		this.updateEmployeePreset();
+		await this.updateCriterionsData();
 	}
 
-	async updateCriterions() {
+	onSourceSelected() {
+		this.updateEmployeePreset();
+	}
+
+	updateEmployeePreset() {
+		if (this.selectedEmployee && this.selectedEmployee.id) {
+			const request: EmployeePresetInput = {
+				source: this.criterionForm.jobSource,
+				jobPresetIds: [this.criterionForm.jobPresetId],
+				employeeId: this.selectedEmployee.id
+			};
+			this.jobPresetService.saveEmployeePreset(request);
+		}
+	}
+
+	async updateCriterionsData() {
 		try {
 			if (this.jobPreset) {
 				const id = this.jobPreset.id;
@@ -106,6 +148,8 @@ export class MatchingComponent implements OnInit {
 				} else {
 					this.criterions = this.jobPreset.jobPresetCriterion;
 				}
+			} else {
+				this.criterions = [];
 			}
 		} catch (error) {
 			this.criterions = [];
@@ -120,18 +164,43 @@ export class MatchingComponent implements OnInit {
 		this.criterions.push(criterion);
 	}
 
-	saveJobPreset(criterion?: MatchingCriterions) {
-		const request: JobPreset = _.omit(this.jobPreset, 'employeeCriterion');
-		request.jobPresetCriterion = this.jobPreset.employeeCriterion.map(
-			(employeeCriterion): JobPresetUpworkJobSearchCriterion => {
-				return _.omit(employeeCriterion, 'employeeId', 'id');
+	saveJobPreset() {
+		if (this.jobPreset) {
+			const request: JobPreset = _.omit(
+				this.jobPreset,
+				'employeeCriterion'
+			);
+			if (
+				this.jobPreset.employeeCriterion &&
+				this.jobPreset.employeeCriterion.length > 0
+			) {
+				request.jobPresetCriterion = this.jobPreset.employeeCriterion.map(
+					(employeeCriterion): JobPresetUpworkJobSearchCriterion => {
+						return _.omit(
+							employeeCriterion,
+							'employeeId',
+							'id',
+							'jobPresetId'
+						);
+					}
+				);
+				request.jobPresetCriterion = request.jobPresetCriterion.filter(
+					(employeeCriterion) => {
+						const values = Object.values(employeeCriterion);
+						return values.length > 0;
+					}
+				);
 			}
-		);
-		this.jobPresetService.createJobPreset(request).then((jobPreset) => {
-			this.jobPresets = this.jobPresets.concat([jobPreset]);
-		});
-
-		this.criterions.push(criterion);
+			this.jobPresetService.createJobPreset(request).then((jobPreset) => {
+				this.jobPresets = this.jobPresets.map((oldJobPreset) => {
+					if (oldJobPreset.id === jobPreset.id) {
+						return jobPreset;
+					} else {
+						return oldJobPreset;
+					}
+				});
+			});
+		}
 	}
 
 	saveCriterion(criterion?: MatchingCriterions) {
@@ -141,7 +210,6 @@ export class MatchingComponent implements OnInit {
 		this.jobPresetService
 			.createJobPresetCriterion(this.jobPreset.id, criterion)
 			.then((newCreation) => {
-				console.log({ newCreation });
 				const index = this.criterions.indexOf(criterion);
 				this.criterions[index] = newCreation;
 				this.toastrService.success('Criterion successfully saved');

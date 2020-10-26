@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { JobPreset } from './job-preset.entity';
 import {
+	EmployeePresetInput,
 	GetJobPresetCriterionInput,
 	GetJobPresetInput,
 	MatchingCriterions
@@ -13,14 +14,15 @@ import { EmployeeUpworkJobsSearchCriterion } from './employee-upwork-jobs-search
 import { CommandBus } from '@nestjs/cqrs';
 import { CreateJobPresetCommand } from './commands/create-job-preset.command';
 import { Employee } from '../employee/employee.entity';
-import { RequestContext } from '../core/context';
+import { SavePresetCriterionCommand } from './commands/save-preset-criterion.command';
+import { SaveEmployeePresetCommand } from './commands/save-employee-preset.command';
 
 @Injectable()
 export class JobPresetService extends CrudService<JobPreset> {
 	constructor(
 		private readonly commandBus: CommandBus,
 		@InjectRepository(JobPreset)
-		private readonly JobPresetRepository: Repository<JobPreset>,
+		private readonly jobPresetRepository: Repository<JobPreset>,
 		@InjectRepository(JobPresetUpworkJobSearchCriterion)
 		private readonly jobPresetUpworkJobSearchCriterionRepository: Repository<
 			JobPresetUpworkJobSearchCriterion
@@ -32,11 +34,11 @@ export class JobPresetService extends CrudService<JobPreset> {
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>
 	) {
-		super(JobPresetRepository);
+		super(jobPresetRepository);
 	}
 
 	public async getAll(request?: GetJobPresetInput) {
-		const data = await this.JobPresetRepository.find({
+		const data = await this.jobPresetRepository.find({
 			join: {
 				alias: 'job_preset',
 				leftJoin: {
@@ -69,29 +71,22 @@ export class JobPresetService extends CrudService<JobPreset> {
 	}
 
 	public async get(id: string, request?: GetJobPresetCriterionInput) {
-		const data = await this.JobPresetRepository.findOne(id, {
-			join: {
-				alias: 'job_preset',
-				leftJoin: {
-					employees: 'job_preset.employees'
-				}
-			},
-			relations: [
-				'jobPresetCriterion',
-				...(request.employeeId ? ['employeeCriterion'] : [])
-			],
-			where: (qb: SelectQueryBuilder<JobPreset>) => {
-				qb.where('true = true');
+		const query = this.jobPresetRepository.createQueryBuilder();
+		query.leftJoinAndSelect(
+			`${query.alias}.jobPresetCriterion`,
+			'jobPresetCriterion'
+		);
+		if (request.employeeId) {
+			query.leftJoinAndSelect(
+				`${query.alias}.employeeCriterion`,
+				'employeeCriterion',
+				'employeeCriterion.employeeId = :employeeId',
+				{ employeeId: request.employeeId }
+			);
+		}
+		query.andWhere(`${query.alias}.id = :id`, { id });
 
-				if (request.employeeId) {
-					qb.andWhere('"employees"."id" = :employeeId', {
-						employeeId: request.employeeId
-					});
-				}
-			}
-		});
-
-		return data;
+		return query.getOne();
 	}
 
 	public getJobPresetCriterion(presetId: string) {
@@ -116,29 +111,18 @@ export class JobPresetService extends CrudService<JobPreset> {
 	}
 
 	async saveCriterion(request: MatchingCriterions) {
-		if (!request.organizationId) {
-			const user = RequestContext.currentUser();
-			const employee = await this.employeeRepository.findOne(
-				user.employeeId
-			);
-			request.organizationId = employee.organizationId;
-		}
-		request.tenantId = RequestContext.currentTenantId();
+		return this.commandBus.execute(new SavePresetCriterionCommand(request));
+	}
 
-		if (request.employeeId) {
-			const creation = new EmployeeUpworkJobsSearchCriterion(request);
-			await this.employeeUpworkJobsSearchCriterionRepository.save(
-				creation
-			);
-			return creation;
-		} else {
-			const creation = new JobPresetUpworkJobSearchCriterion(request);
-			console.log(creation);
-			await this.jobPresetUpworkJobSearchCriterionRepository.save(
-				creation
-			);
-			return creation;
-		}
+	async getEmployeePreset(employeeId: string) {
+		const employee = await this.employeeRepository.findOne(employeeId, {
+			relations: ['jobPresets']
+		});
+		return employee.jobPresets;
+	}
+
+	async saveEmployeePreset(request: EmployeePresetInput) {
+		return this.commandBus.execute(new SaveEmployeePresetCommand(request));
 	}
 
 	deleteCriterion(creationId: string, request: any) {

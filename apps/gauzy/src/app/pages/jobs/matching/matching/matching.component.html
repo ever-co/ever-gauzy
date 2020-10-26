@@ -16,6 +16,7 @@
 					<nb-select
 						[placeholder]="'JOB_MATCHING.SOURCE' | translate"
 						class="w-100 col-sm-8"
+						(selectedChange)="onSourceSelected()"
 						[(ngModel)]="criterionForm.jobSource"
 					>
 						<nb-option
@@ -50,14 +51,28 @@
 								</ng-select>
 							</div>
 							<div class="col-auto">
-								<button
-									nbButton
-									status="primary"
-									(click)="saveJobPreset()"
-								>
-									<nb-icon icon="save-outline"></nb-icon>
-									{{ 'JOB_MATCHING.SAVE' | translate }}
-								</button>
+								<ng-template [ngIf]="jobPreset">
+									<button
+										*ngIf="selectedEmployee?.id"
+										nbButton
+										status="primary"
+										ngxConfirmDialog
+										message="Criterions will save for job preset. Are you sure you want to save?"
+										(confirm)="saveJobPreset()"
+									>
+										<nb-icon icon="save-outline"></nb-icon>
+										{{ 'JOB_MATCHING.SAVE' | translate }}
+									</button>
+									<button
+										*ngIf="!selectedEmployee?.id"
+										nbButton
+										status="primary"
+										(click)="saveJobPreset()"
+									>
+										<nb-icon icon="save-outline"></nb-icon>
+										{{ 'JOB_MATCHING.SAVE' | translate }}
+									</button>
+								</ng-template>
 							</div>
 						</div>
 					</div>
