@@ -1,4 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { JobPostSourceEnum } from './employee-job.model';
 import { IEmployee } from './employee.model';
 
 export interface IEmployeeJobMatching {}
@@ -27,6 +28,12 @@ export interface JobPreset extends IBasePerTenantAndOrganizationEntityModel {
 	employees?: Partial<IEmployee>[];
 	employeeCriterion?: EmployeeUpworkJobsSearchCriterion[];
 	jobPresetCriterion?: JobPresetUpworkJobSearchCriterion[];
+}
+
+export interface EmployeePresetInput {
+	jobPresetIds?: string[];
+	source?: JobPostSourceEnum;
+	employeeId?: string;
 }
 
 export interface GetJobPresetInput {

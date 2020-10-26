@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
+	EmployeePresetInput,
 	GetJobPresetInput,
+	JobPostSourceEnum,
 	JobPreset,
 	MatchingCriterions
 } from '@gauzy/models';
@@ -29,9 +31,20 @@ export class JobPresetService {
 			.toPromise();
 	}
 
+	getEmployeePresets(id: string) {
+		return this.http
+			.get<JobPreset[]>(`/api/job-preset/employee/${id}`)
+			.toPromise();
+	}
 	createJobPreset(request?: JobPreset) {
 		return this.http
 			.post<JobPreset>(`/api/job-preset`, request)
+			.toPromise();
+	}
+
+	saveEmployeePreset(arg: EmployeePresetInput) {
+		return this.http
+			.post<JobPreset>(`/api/job-preset/employee`, arg)
 			.toPromise();
 	}
 

@@ -12,6 +12,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import {
+	EmployeePresetInput,
 	GetJobPresetCriterionInput,
 	GetJobPresetInput,
 	MatchingCriterions
@@ -54,7 +55,7 @@ export class EmployeeJobPresetController {
 	})
 	@Get(':id')
 	async get(
-		@Param() presetId: string,
+		@Param('id') presetId: string,
 		@Query() request: GetJobPresetCriterionInput
 	) {
 		return this.jobPresetService.get(presetId, request);
@@ -72,10 +73,40 @@ export class EmployeeJobPresetController {
 	})
 	@Post(':id/criterion')
 	async saveUpdate(
-		@Param() jobPresetId: string,
+		@Param('id') jobPresetId: string,
 		@Body() request: MatchingCriterions
 	) {
 		return this.jobPresetService.saveCriterion({ ...request, jobPresetId });
+	}
+
+	@ApiOperation({ summary: 'Save Employee preset' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found employee job preset',
+		type: JobPreset
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('employee/:id')
+	async getEmployeePreset(@Param('id') employeeId: string) {
+		return this.jobPresetService.getEmployeePreset(employeeId);
+	}
+
+	@ApiOperation({ summary: 'Save Employee preset' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found employee job preset',
+		type: JobPreset
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Post('employee')
+	async saveEmployeePreset(@Body() request: EmployeePresetInput) {
+		return this.jobPresetService.saveEmployeePreset(request);
 	}
 
 	@ApiOperation({ summary: 'Find all employee job posts' })
@@ -103,10 +134,8 @@ export class EmployeeJobPresetController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get('employee')
-	async getJobPresetCriterion(
-		@Query() { presetId }: GetJobPresetCriterionInput
-	) {
+	@Get(':id/criterion')
+	async getJobPresetCriterion(@Param('id') presetId: string) {
 		return this.jobPresetService.getJobPresetCriterion(presetId);
 	}
 

@@ -1,7 +1,10 @@
 import { Column, Entity, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { EmployeeUpworkJobsSearchCriterion as IEmployeeUpworkJobsSearchCriterion } from '@gauzy/models';
+import {
+	EmployeeUpworkJobsSearchCriterion as IEmployeeUpworkJobsSearchCriterion,
+	JobPostSourceEnum
+} from '@gauzy/models';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 import { JobPreset } from './job-preset.entity';
 import { Employee } from '../employee/employee.entity';
