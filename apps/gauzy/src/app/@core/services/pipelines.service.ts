@@ -19,10 +19,27 @@ export class PipelinesService extends Service<
 		super({ http, basePath: '/api/pipelines' });
 	}
 
-	public findDeals(id: string): Promise<{ items: IDeal[]; total: number }> {
+	getAll(
+		relations?: string[],
+		findInput?: IPipelineFindInput
+	): Promise<{ items: IPipeline[] }> {
+		const data = JSON.stringify({ relations, findInput });
+		return this.http
+			.get<{ items: IPipeline[]; total: number }>(`${this.basePath}`, {
+				params: { data }
+			})
+			.toPromise();
+	}
+
+	public findDeals(
+		id: string,
+		findInput?: IPipelineFindInput
+	): Promise<{ items: IDeal[]; total: number }> {
+		const data = JSON.stringify({ findInput });
 		return this.http
 			.get<{ items: IDeal[]; total: number }>(
-				`${this.basePath}/${id}/deals`
+				`${this.basePath}/${id}/deals`,
+				{ params: { data } }
 			)
 			.toPromise();
 	}

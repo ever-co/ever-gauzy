@@ -1,10 +1,5 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import {
-	debounceTime,
-	filter,
-	takeUntil,
-	withLatestFrom
-} from 'rxjs/operators';
+import { debounceTime, filter, withLatestFrom } from 'rxjs/operators';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import {
@@ -12,10 +7,10 @@ import {
 	PermissionsEnum,
 	ITag,
 	ComponentLayoutStyleEnum,
-	IOrganization
+	IOrganization,
+	IRolePermission
 } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
-import { Subject } from 'rxjs';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { ProposalsService } from '../../@core/services/proposals.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,6 +23,7 @@ import { NotesWithTagsComponent } from '../../@shared/table-components/notes-wit
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { NgxPermissionsService } from 'ngx-permissions';
 
 export interface ProposalViewModel {
 	tags?: ITag[];
@@ -58,7 +54,8 @@ export class ProposalsComponent
 		private toastrService: NbToastrService,
 		private dialogService: NbDialogService,
 		private errorHandler: ErrorHandlingService,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private readonly permissionsService: NgxPermissionsService
 	) {
 		super(translateService);
 		this.setView();
@@ -82,26 +79,27 @@ export class ProposalsComponent
 	countAccepted = 0;
 	showTable: boolean;
 	loading = false;
-	hasEditPermission = false;
 	disableButton = true;
-	private _selectedOrganizationId: string;
-	private _ngDestroy$ = new Subject<void>();
 	selectedOrganization: IOrganization;
 
 	ngOnInit() {
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
-
 		this.store.userRolePermissions$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this.hasEditPermission = this.store.hasPermission(
-					PermissionsEnum.ORG_PROPOSALS_EDIT
+			.pipe(
+				filter(
+					(permissions: IRolePermission[]) => permissions.length > 0
+				),
+				untilDestroyed(this)
+			)
+			.subscribe((data) => {
+				const permissions = data.map(
+					(permisson) => permisson.permission
 				);
+				this.permissionsService.loadPermissions(permissions);
 			});
-
 		this.store.selectedDate$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((date) => {
 				this.selectedDate = date;
 				if (this.selectedOrganization) {
@@ -144,7 +142,7 @@ export class ProposalsComponent
 			});
 
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
@@ -156,7 +154,7 @@ export class ProposalsComponent
 		this.viewComponentName = ComponentEnum.PROPOSALS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
@@ -198,7 +196,7 @@ export class ProposalsComponent
 					recordType: 'Proposal'
 				}
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
@@ -234,15 +232,14 @@ export class ProposalsComponent
 					recordType: 'status'
 				}
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
+						const { tenantId } = this.store.user;
 						await this.proposalsService.update(
 							this.selectedProposal.id,
-							{
-								status: 'ACCEPTED'
-							}
+							{ status: 'ACCEPTED', tenantId }
 						);
 						// TODO translate
 						this.toastrService.primary(
@@ -273,15 +270,14 @@ export class ProposalsComponent
 					recordType: 'status'
 				}
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
+						const { tenantId } = this.store.user;
 						await this.proposalsService.update(
 							this.selectedProposal.id,
-							{
-								status: 'SENT'
-							}
+							{ status: 'SENT', tenantId }
 						);
 
 						this.toastrService.primary(
@@ -383,7 +379,8 @@ export class ProposalsComponent
 		this.disableButton = true;
 
 		let items: IProposal[];
-		const { id: organizationId, tenantId } = this.selectedOrganization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.selectedOrganization;
 		if (this.selectedEmployeeId) {
 			const response = await this.proposalsService.getAll(
 				['employee', 'organization', 'tags'],
@@ -479,14 +476,14 @@ export class ProposalsComponent
 	}
 
 	private _applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSettingsSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loadSettingsSmartTable();
+			});
 	}
 
 	ngOnDestroy() {
 		delete this.smartTableSettings['columns']['author'];
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
 	}
 }

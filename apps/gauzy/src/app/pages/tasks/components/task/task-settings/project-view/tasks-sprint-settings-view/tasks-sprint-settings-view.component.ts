@@ -11,7 +11,7 @@ import {
 } from '@gauzy/models';
 import { SprintStoreService } from '../../../../../../../@core/services/organization-sprint-store.service';
 import { ItemActionType } from '../../../../../../../@shared/components/editable-grid/gauzy-editable-grid.component';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { Store } from '../../../../../../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -49,6 +49,7 @@ export class TasksSprintSettingsViewComponent implements OnInit, OnDestroy {
 				tap(() =>
 					this.store.fetchSprints({
 						organizationId: this.organization.id,
+						tenantId: this.storeSerive.user.tenantId,
 						projectId: this.project.id
 					})
 				),
@@ -69,6 +70,7 @@ export class TasksSprintSettingsViewComponent implements OnInit, OnDestroy {
 				const createSprintInput: IOrganizationSprint = {
 					...data,
 					organizationId: this.project.organizationId,
+					tenantId: this.storeSerive.user.tenantId,
 					projectId: this.project.id
 				};
 				this.store

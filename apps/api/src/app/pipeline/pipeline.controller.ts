@@ -42,8 +42,7 @@ export class PipelineController extends CrudController<Pipeline> {
 	public async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Pipeline>> {
-		const { relations = [], filter: where = null } = data;
-
+		const { relations = [], findInput: where = null } = data;
 		return this.pipelineService.findAll({
 			relations,
 			where

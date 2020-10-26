@@ -245,7 +245,7 @@ export class IncomeComponent
 								? result.employee.id
 								: null,
 							organizationId: this.store.selectedOrganization.id,
-							tenantId: this.store.selectedOrganization.id,
+							tenantId: this.store.user.tenantId,
 							notes: result.notes,
 							currency: result.currency,
 							isBonus: result.isBonus,
@@ -398,12 +398,11 @@ export class IncomeComponent
 		let findObj;
 		this.showTable = false;
 		this.selectedIncome = null;
-
+		const { tenantId } = this.store.user;
 		if (orgId) {
 			findObj = {
 				organization: {
-					id: orgId,
-					tenantId: this._selectedOrganization.tenantId
+					id: orgId
 				}
 			};
 			this.smartTableSettings['columns']['employeeName'] = {
@@ -425,11 +424,10 @@ export class IncomeComponent
 			};
 			delete this.smartTableSettings['columns']['employee'];
 		}
-
 		try {
 			const { items } = await this.incomeService.getAll(
 				['employee', 'employee.user', 'tags', 'organization'],
-				findObj,
+				Object.assign({}, findObj, { tenantId }),
 				this.selectedDate
 			);
 			const incomeVM: IIncome[] = items.map((i) => {

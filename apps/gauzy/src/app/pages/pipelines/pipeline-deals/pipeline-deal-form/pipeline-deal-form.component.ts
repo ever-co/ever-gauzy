@@ -1,14 +1,15 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { takeUntil } from 'rxjs/operators';
+import { filter, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { IPipeline, IContact } from '@gauzy/models';
 import { PipelinesService } from '../../../../@core/services/pipelines.service';
 import { DealsService } from '../../../../@core/services/deals.service';
 import { AppStore, Store } from '../../../../@core/services/store.service';
-import { OrganizationContactService } from 'apps/gauzy/src/app/@core/services/organization-contact.service';
-
+import { OrganizationContactService } from '../../../../@core/services/organization-contact.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './pipeline-deal-form.component.html',
 	selector: 'ga-pipeline-deals-form',
@@ -22,12 +23,13 @@ export class PipelineDealFormComponent implements OnInit, OnDestroy {
 	probabilities = [0, 1, 2, 3, 4, 5];
 	selectedProbability: number;
 	mode: 'CREATE' | 'EDIT' = 'CREATE';
-	id: string;
+	dealId: string;
+	pipelineId: string;
 
 	private readonly $akitaPreUpdate: AppStore['akitaPreUpdate'];
 	private _ngDestroy$ = new Subject<void>();
-	private _selectedOrganizationId: string;
-	private _selectedOrganizationTenantId: string;
+	private organizationId: string;
+	private tenantId: string;
 
 	constructor(
 		private router: Router,
@@ -53,6 +55,44 @@ export class PipelineDealFormComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit() {
+		this._initializeForm();
+		this.activatedRoute.params
+			.pipe(
+				filter((params) => !!params),
+				untilDestroyed(this)
+			)
+			.subscribe(async ({ pipelineId, dealId }) => {
+				this.form.disable();
+				if (pipelineId) {
+					this.pipelineId = pipelineId;
+					this.mode = 'EDIT';
+				}
+				if (dealId) {
+					this.dealId = dealId;
+				}
+				this.form.enable();
+			});
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
+			.subscribe(async (org) => {
+				this.organizationId = org.id;
+				this.tenantId = this.store.user.tenantId;
+
+				await this.getOrganizationContact();
+
+				if (this.pipelineId) {
+					await this.getPipelines();
+				}
+				if (this.dealId) {
+					await this.getDeal();
+				}
+			});
+	}
+
+	private _initializeForm() {
 		this.form = this.fb.group({
 			createdByUserId: [null, Validators.required],
 			stageId: [null, Validators.required],
@@ -60,73 +100,62 @@ export class PipelineDealFormComponent implements OnInit, OnDestroy {
 			clientId: [null],
 			probability: [null]
 		});
-
 		this.form.patchValue({
 			createdByUserId: this.appStore.getValue().user?.id
 		});
+	}
 
-		this.activatedRoute.params.subscribe(async ({ pipelineId, dealId }) => {
-			this.form.disable();
+	async getPipelines() {
+		const { tenantId } = this;
+		await this.pipelinesService
+			.getAll(['stages'], {
+				id: this.pipelineId,
+				tenantId
+			})
+			.then(({ items: [value] }) => (this.pipeline = value));
 
-			if (pipelineId) {
-				this.mode = 'EDIT';
-				await this.pipelinesService
-					.find(['stages'], {
-						id: pipelineId
-					})
-					.then(({ items: [value] }) => (this.pipeline = value));
+		this.form.patchValue({ stageId: this.pipeline.stages[0]?.id });
+	}
 
-				this.form.patchValue({ stageId: this.pipeline.stages[0]?.id });
-			}
-
-			if (dealId) {
-				this.id = dealId;
-				await this.dealsService
-					.find(dealId)
-					.then(({ title, stageId, createdBy, probability }) => {
-						this.form.patchValue({
-							title,
-							stageId,
-							createdBy,
-							probability
-						});
-						this.selectedProbability = probability;
-					});
-			}
-
-			this.form.enable();
-		});
-
-		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((org) => {
-				this._selectedOrganizationId = org.id;
-				this._selectedOrganizationTenantId = org.tenantId;
+	async getDeal() {
+		const { tenantId } = this;
+		await this.dealsService
+			.getOne(this.dealId, { tenantId })
+			.then(({ title, stageId, createdBy, probability }) => {
+				this.form.patchValue({
+					title,
+					stageId,
+					createdBy,
+					probability
+				});
+				this.selectedProbability = probability;
 			});
+	}
 
-		this.clientsService
+	async getOrganizationContact() {
+		await this.clientsService
 			.getAll([], {
-				organizationId: this._selectedOrganizationId,
-				tenantId: this._selectedOrganizationTenantId
+				organizationId: this.organizationId,
+				tenantId: this.tenantId
 			})
 			.then((res) => (this.clients = res.items));
 	}
 
 	public async onSubmit(): Promise<void> {
 		const {
-			id,
+			dealId,
 			activatedRoute: relativeTo,
 			form: { value }
 		} = this;
 
 		this.form.disable();
-		await (this.id
+		await (this.dealId
 			? this.dealsService.update(
-					this.id,
+					this.dealId,
 					Object.assign(
 						{
-							organizationId: this._selectedOrganizationId,
-							tenantId: this._selectedOrganizationTenantId
+							organizationId: this.organizationId,
+							tenantId: this.tenantId
 						},
 						value
 					)
@@ -134,15 +163,15 @@ export class PipelineDealFormComponent implements OnInit, OnDestroy {
 			: this.dealsService.create(
 					Object.assign(
 						{
-							organizationId: this._selectedOrganizationId,
-							tenantId: this._selectedOrganizationTenantId
+							organizationId: this.organizationId,
+							tenantId: this.tenantId
 						},
 						value
 					)
 			  )
 		)
 			.then(() =>
-				this.router.navigate([id ? '../..' : '..'], { relativeTo })
+				this.router.navigate([dealId ? '../..' : '..'], { relativeTo })
 			)
 			.catch(() => this.form.enable());
 	}

@@ -46,6 +46,7 @@ export class TeamTaskDialogComponent
 	selectedTeams: string[];
 	selectedTask: ITask;
 	organizationId: string;
+	tenantId: string;
 	tags: ITag[] = [];
 	@Input() task: Partial<ITask> = {};
 
@@ -64,6 +65,9 @@ export class TeamTaskDialogComponent
 	}
 
 	ngOnInit() {
+		this.tenantId = this.store.user.tenantId;
+		this.organizationId = this._organizationsStore.selectedOrganization.id;
+
 		this.loadProjects();
 		this.loadTeams();
 		this.initializeForm(
@@ -72,9 +76,10 @@ export class TeamTaskDialogComponent
 	}
 
 	private async loadProjects() {
-		const organizationId = this._organizationsStore.selectedOrganization.id;
+		const { organizationId, tenantId } = this;
 		const { items } = await this.organizationProjectsService.getAll([], {
-			organizationId
+			organizationId,
+			tenantId
 		});
 
 		if (items) this.projects = items;
@@ -126,7 +131,7 @@ export class TeamTaskDialogComponent
 	}
 
 	addNewProject = (name: string): Promise<IOrganizationProject> => {
-		this.organizationId = this.store.selectedOrganization.id;
+		const { organizationId, tenantId } = this;
 		try {
 			this.toastrService.primary(
 				this.getTranslation(
@@ -139,7 +144,8 @@ export class TeamTaskDialogComponent
 			);
 			return this.organizationProjectsService.create({
 				name,
-				organizationId: this.organizationId
+				organizationId,
+				tenantId
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -164,15 +170,16 @@ export class TeamTaskDialogComponent
 	}
 
 	async loadTeams() {
-		const organizationId = this._organizationsStore.selectedOrganization.id;
+		const { organizationId, tenantId } = this;
 		if (!organizationId) {
 			return;
 		}
 		this.teams = (
-			await this.organizationTeamsService.getMyTeams(['members'])
-		).items.filter((org) => {
-			return org.organizationId === organizationId;
-		});
+			await this.organizationTeamsService.getMyTeams(['members'], {
+				organizationId,
+				tenantId
+			})
+		).items;
 	}
 
 	onTeamsSelected(teamsSelection: string[]) {

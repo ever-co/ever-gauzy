@@ -154,12 +154,12 @@ export class InvoiceEditComponent
 
 	async loadData() {
 		this.loading = true;
-		const invoice = await this.invoicesService.getById(this.invoiceId, [
-			'invoiceItems',
-			'tags',
-			'toContact',
-			'fromOrganization'
-		]);
+		const { tenantId } = this.store.user;
+		const invoice = await this.invoicesService.getById(
+			this.invoiceId,
+			['invoiceItems', 'tags', 'toContact', 'fromOrganization'],
+			{ tenantId }
+		);
 		this.loading = false;
 		this.invoice = invoice;
 		this.invoiceItems = invoice.invoiceItems;
@@ -556,10 +556,12 @@ export class InvoiceEditComponent
 				);
 				return;
 			}
-			const { id: organizationId, tenantId } = this.organization;
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
 			const invoice = await this.invoicesService.getAll([], {
 				invoiceNumber: invoiceData.invoiceNumber,
-				organizationId
+				organizationId,
+				tenantId
 			});
 
 			if (
@@ -718,10 +720,12 @@ export class InvoiceEditComponent
 				);
 				return;
 			}
-			const { id: organizationId, tenantId } = this.organization;
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
 			const invoiceExists = await this.invoicesService.getAll([], {
 				invoiceNumber: invoiceData.invoiceNumber,
-				organizationId
+				organizationId,
+				tenantId
 			});
 
 			if (

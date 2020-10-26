@@ -33,22 +33,27 @@
 			</div>
 		</nb-card>
 
-		<div class="mb-3" *ngIf="hasEditPermission">
-			<button nbButton status="success" (click)="add()" class="mr-2">
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
-				{{ 'BUTTONS.REGISTER' | translate }}
-			</button>
-			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
-				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
-			</ng-container>
-		</div>
+		<ng-template ngxPermissionsOnly="ORG_PROPOSALS_EDIT">
+			<div class="mb-3">
+				<button nbButton status="success" (click)="add()" class="mr-2">
+					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+					{{ 'BUTTONS.REGISTER' | translate }}
+				</button>
+				<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+					<ng-container
+						*ngTemplateOutlet="actionButtons"
+					></ng-container>
+				</ng-container>
+			</div>
+		</ng-template>
+
 		<ng2-smart-table
 			*ngIf="canShowTable() && dataLayoutStyle === 'TABLE'"
 			class="income-table"
 			[settings]="smartTableSettings"
 			[source]="smartTableSource"
 			(userRowSelect)="selectProposal($event)"
-			style="cursor: pointer;"
+			style="cursor: pointer"
 			#proposalsTable
 		>
 		</ng2-smart-table>

@@ -468,6 +468,7 @@ export class ExpensesComponent
 		let findObj;
 		this.showTable = false;
 		this.selectedExpense = null;
+		const { tenantId } = this.store.user;
 
 		if (orgId) {
 			findObj = {
@@ -500,7 +501,7 @@ export class ExpensesComponent
 		try {
 			const { items } = await this.expenseService.getAll(
 				['employee', 'employee.user', 'category', 'vendor', 'tags'],
-				findObj,
+				Object.assign({}, findObj, { tenantId }),
 				this.selectedDate
 			);
 

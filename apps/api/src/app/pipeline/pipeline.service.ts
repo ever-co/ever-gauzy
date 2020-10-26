@@ -15,6 +15,7 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 import { Injectable } from '@nestjs/common';
 import { Deal } from '../deal/deal.entity';
 import { User } from '../user/user.entity';
+import { RequestContext } from '../core/context';
 
 @Injectable()
 export class PipelineService extends CrudService<Pipeline> {
@@ -30,10 +31,12 @@ export class PipelineService extends CrudService<Pipeline> {
 	}
 
 	public async findDeals(pipelineId: string) {
+		const tenantId = RequestContext.currentTenantId();
 		const items: Deal[] = await this.dealRepository
 			.createQueryBuilder('deal')
 			.leftJoin('deal.stage', 'pipeline_stage')
 			.where('pipeline_stage.pipelineId = :pipelineId', { pipelineId })
+			.andWhere('pipeline_stage.tenantId = :tenantId', { tenantId })
 			.groupBy('pipeline_stage.id')
 			// FIX: error: column "deal.id" must appear in the GROUP BY clause or be used in an aggregate function
 			.addGroupBy('deal.id')

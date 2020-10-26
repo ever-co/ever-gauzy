@@ -11,18 +11,19 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="btn-container mb-3">
-			<button
-				*ngIf="CAN_EDIT_SALES_PIPELINES"
-				(click)="createPipeline()"
-				style="cursor: pointer;"
-				status="success"
-				type="button"
-				class="mr-2"
-				nbButton
-			>
-				<nb-icon icon="plus-circle-outline" pack="eva"></nb-icon>
-				<span [innerHTML]="'BUTTONS.ADD' | translate"></span>
-			</button>
+			<ng-template ngxPermissionsOnly="EDIT_SALES_PIPELINES">
+				<button
+					(click)="createPipeline()"
+					style="cursor: pointer"
+					status="success"
+					type="button"
+					class="mr-2"
+					nbButton
+				>
+					<nb-icon icon="plus-circle-outline" pack="eva"></nb-icon>
+					<span [innerHTML]="'BUTTONS.ADD' | translate"></span>
+				</button>
+			</ng-template>
 
 			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
@@ -42,7 +43,7 @@
 			(rowSelect)="pipeline = $event.data"
 			[settings]="smartTableSettings"
 			[source]="pipelines"
-			style="cursor: pointer;"
+			style="cursor: pointer"
 		></ng2-smart-table>
 		<ga-card-grid
 			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
@@ -54,32 +55,34 @@
 </nb-card>
 
 <ng-template #actionButtons let-buttonSize="buttonSize">
-	<button
-		*ngIf="CAN_EDIT_SALES_PIPELINES && pipeline"
-		[size]="buttonSize || 'medium'"
-		(click)="editPipeline()"
-		style="cursor: pointer;"
-		status="info"
-		type="button"
-		class="mr-2"
-		nbButton
-	>
-		<nb-icon icon="edit-outline" pack="eva"></nb-icon>
-		<span [innerHTML]="'BUTTONS.EDIT' | translate"></span>
-	</button>
-	<button
-		*ngIf="CAN_EDIT_SALES_PIPELINES && pipeline"
-		[size]="buttonSize || 'medium'"
-		(click)="deletePipeline()"
-		style="cursor: pointer;"
-		status="danger"
-		type="button"
-		class="mr-2"
-		nbButton
-	>
-		<nb-icon icon="trash-2-outline" pack="eva"></nb-icon>
-		<span [innerHTML]="'BUTTONS.DELETE' | translate"></span>
-	</button>
+	<ng-template ngxPermissionsOnly="EDIT_SALES_PIPELINES">
+		<button
+			*ngIf="pipeline"
+			[size]="buttonSize || 'medium'"
+			(click)="editPipeline()"
+			style="cursor: pointer"
+			status="info"
+			type="button"
+			class="mr-2"
+			nbButton
+		>
+			<nb-icon icon="edit-outline" pack="eva"></nb-icon>
+			<span [innerHTML]="'BUTTONS.EDIT' | translate"></span>
+		</button>
+		<button
+			*ngIf="pipeline"
+			[size]="buttonSize || 'medium'"
+			(click)="deletePipeline()"
+			style="cursor: pointer"
+			status="danger"
+			type="button"
+			class="mr-2"
+			nbButton
+		>
+			<nb-icon icon="trash-2-outline" pack="eva"></nb-icon>
+			<span [innerHTML]="'BUTTONS.DELETE' | translate"></span>
+		</button>
+	</ng-template>
 	<a
 		[routerLink]="['./', pipeline.id, 'deals']"
 		*ngIf="pipeline"

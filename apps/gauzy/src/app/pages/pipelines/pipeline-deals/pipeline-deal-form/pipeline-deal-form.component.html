@@ -1,10 +1,10 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()">
 	<nb-card>
-		<nb-card-header style="display: flex;">
+		<nb-card-header style="display: flex">
 			<ngx-back-navigation></ngx-back-navigation>
 			<h4>
 				{{
-					(id
+					(dealId
 						? 'PIPELINE_DEAL_EDIT_PAGE.HEADER'
 						: 'PIPELINE_DEAL_CREATE_PAGE.HEADER'
 					) | translate: pipeline
@@ -45,9 +45,7 @@
 
 			<nb-form-field>
 				<div class="form-group">
-					<label class="label" for="client">
-						Select Client
-					</label>
+					<label class="label" for="client"> Select Client </label>
 					<nb-select
 						formControlName="clientId"
 						placeholder="Clients"
@@ -85,14 +83,17 @@
 				nbButton
 				type="submit"
 				[disabled]="form.invalid || form.disabled"
-				[status]="id ? 'info' : 'primary'"
+				[status]="dealId ? 'info' : 'primary'"
 			>
 				<nb-icon
 					pack="eva"
-					[icon]="id ? 'edit-outline' : 'plus-circle-outline'"
+					[icon]="dealId ? 'edit-outline' : 'plus-circle-outline'"
 				></nb-icon>
 				<span>
-					{{ (id ? 'BUTTONS.UPDATE' : 'BUTTONS.CREATE') | translate }}
+					{{
+						(dealId ? 'BUTTONS.UPDATE' : 'BUTTONS.CREATE')
+							| translate
+					}}
 				</span>
 			</button>
 			<button

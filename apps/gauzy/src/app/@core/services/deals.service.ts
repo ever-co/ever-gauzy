@@ -12,4 +12,24 @@ export class DealsService extends Service<
 	public constructor(protected http: HttpClient) {
 		super({ http, basePath: '/api/deals' });
 	}
+
+	getAll(findInput?: IDealFindInput, relations?: string[]): Promise<IDeal[]> {
+		const data = JSON.stringify({ relations, findInput });
+		return this.http
+			.get<IDeal[]>(`${this.basePath}`, { params: { data } })
+			.pipe()
+			.toPromise();
+	}
+
+	getOne(
+		id: string,
+		findInput?: IDealFindInput,
+		relations?: string[]
+	): Promise<IDeal> {
+		const data = JSON.stringify({ relations, findInput });
+		return this.http
+			.get<IDeal>(`${this.basePath}/${id}`, { params: { data } })
+			.pipe()
+			.toPromise();
+	}
 }

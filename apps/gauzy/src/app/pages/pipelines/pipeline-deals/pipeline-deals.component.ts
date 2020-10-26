@@ -15,18 +15,19 @@ import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-
 import { DealsService } from '../../../@core/services/deals.service';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { Store } from '../../../@core/services/store.service';
-import { takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs/internal/Subject';
+import { filter } from 'rxjs/operators';
 import { PipelineDealCreatedByComponent } from '../table-components/pipeline-deal-created-by/pipeline-deal-created-by';
 import { PipelineDealExcerptComponent } from '../table-components/pipeline-deal-excerpt/pipeline-deal-excerpt.component';
 import { PipelineDealProbabilityComponent } from '../table-components/pipeline-deal-probability/pipeline-deal-probability.component';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-pipeline-deals',
 	templateUrl: './pipeline-deals.component.html',
 	styleUrls: ['./pipeline-deals.component.scss']
 })
-export class PipelineDealsComponent extends TranslationBaseComponent
+export class PipelineDealsComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	deals = new LocalDataSource([] as IDeal[]);
 	dealsData: IDeal[];
@@ -38,8 +39,6 @@ export class PipelineDealsComponent extends TranslationBaseComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 
 	private _selectedOrganizationId: string;
-	private _ngDestroy$ = new Subject<void>();
-
 	readonly smartTableSettings = {
 		actions: false,
 		noDataMessage: '-',
@@ -84,7 +83,14 @@ export class PipelineDealsComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
-		this.updateViewData();
+		this.store.user$
+			.pipe(
+				filter((user) => !!user),
+				untilDestroyed(this)
+			)
+			.subscribe((user) => {
+				this.updateViewData();
+			});
 
 		this.smartTableSettings.noDataMessage = this.getTranslation(
 			'SM_TABLE.NO_RESULT'
@@ -100,7 +106,7 @@ export class PipelineDealsComponent extends TranslationBaseComponent
 		);
 
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
@@ -112,7 +118,7 @@ export class PipelineDealsComponent extends TranslationBaseComponent
 		this.viewComponentName = ComponentEnum.PIPELINE_DEALS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
@@ -153,18 +159,20 @@ export class PipelineDealsComponent extends TranslationBaseComponent
 
 	private updateViewData(): void {
 		this.activatedRoute.params
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(async ({ pipelineId }) => {
+				const { tenantId } = this.store.user;
 				await this.pipelinesService
-					.find(['stages'], {
-						id: pipelineId
+					.getAll(['stages'], {
+						id: pipelineId,
+						tenantId
 					})
 					.then(({ items: [value] }) => (this.pipeline = value));
 
 				this._checkOrganization();
 
 				await this.pipelinesService
-					.findDeals(pipelineId)
+					.findDeals(pipelineId, { tenantId })
 					.then(({ items }) => {
 						items.forEach((deal) => {
 							deal.stage = this.pipeline.stages.find(
@@ -180,10 +188,12 @@ export class PipelineDealsComponent extends TranslationBaseComponent
 
 	private _checkOrganization() {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((org) => {
 				this._selectedOrganizationId = org.id;
-
 				if (
 					this.pipeline?.organizationId !==
 					this._selectedOrganizationId
@@ -193,8 +203,5 @@ export class PipelineDealsComponent extends TranslationBaseComponent
 			});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

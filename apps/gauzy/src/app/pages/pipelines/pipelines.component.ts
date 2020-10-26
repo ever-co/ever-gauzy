@@ -1,22 +1,23 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
-	PermissionsEnum,
 	IPipeline,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	IRolePermission
 } from '@gauzy/models';
-import { AppStore, Store } from '../../@core/services/store.service';
+import { Store } from '../../@core/services/store.service';
 import { PipelinesService } from '../../@core/services/pipelines.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
-import { first } from 'rxjs/operators';
+import { filter, first } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { RouterEvent, NavigationEnd, Router } from '@angular/router';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { NgxPermissionsService } from 'ngx-permissions';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -66,50 +67,46 @@ export class PipelinesComponent
 	organizationId: string;
 	tenantId: string;
 	name: string;
-	CAN_EDIT_SALES_PIPELINES = false;
-	private readonly $akitaPreUpdate: AppStore['akitaPreUpdate'];
 
 	constructor(
 		private pipelinesService: PipelinesService,
 		private nbToastrService: NbToastrService,
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService,
-		private appStore: AppStore,
 		private store: Store,
-		private router: Router
+		private router: Router,
+		private readonly permissionsService: NgxPermissionsService
 	) {
 		super(translateService);
-		this.$akitaPreUpdate = appStore.akitaPreUpdate;
-		appStore.akitaPreUpdate = (previous, next) => {
-			if (previous.selectedOrganization !== next.selectedOrganization) {
-				this.organizationId = next.selectedOrganization?.id;
-				this.tenantId = next.selectedOrganization?.tenantId;
-				// noinspection JSIgnoredPromiseFromCall
-				this.updatePipelines();
-			}
-
-			return this.$akitaPreUpdate(previous, next);
-		};
 		this.setView();
 	}
 
 	ngOnInit() {
 		this.store.userRolePermissions$
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.CAN_EDIT_SALES_PIPELINES = this.store.hasPermission(
-					PermissionsEnum.EDIT_SALES_PIPELINES
+			.pipe(
+				filter(
+					(permissions: IRolePermission[]) => permissions.length > 0
+				),
+				untilDestroyed(this)
+			)
+			.subscribe((data) => {
+				const permissions = data.map(
+					(permisson) => permisson.permission
 				);
+				this.permissionsService.loadPermissions(permissions);
 			});
-
-		if (!this.organizationId) {
-			setTimeout(async () => {
-				this.organizationId = this.store.selectedOrganization?.id;
-				this.tenantId = this.store.selectedOrganization?.tenantId;
-				await this.updatePipelines();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
+			.subscribe(async (organization) => {
+				if (organization) {
+					this.organizationId = organization.id;
+					this.tenantId = this.store.user.tenantId;
+					await this.updatePipelines();
+				}
 			});
-		}
-
 		this.router.events
 			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
@@ -135,7 +132,7 @@ export class PipelinesComponent
 		tenantId = tenantId || void 0;
 
 		await this.pipelinesService
-			.find(['stages'], { organizationId, tenantId })
+			.getAll(['stages'], { organizationId, tenantId })
 			.then(({ items }) => {
 				this.pipelineData = items;
 				this.pipelines.load(items);
@@ -209,7 +206,6 @@ export class PipelinesComponent
 	}
 
 	ngOnDestroy(): void {
-		this.appStore.akitaPreUpdate = this.$akitaPreUpdate;
 		clearTimeout();
 	}
 }
