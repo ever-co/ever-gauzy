@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { filter, takeUntil } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { IPipeline, IContact } from '@gauzy/models';
 import { PipelinesService } from '../../../../@core/services/pipelines.service';

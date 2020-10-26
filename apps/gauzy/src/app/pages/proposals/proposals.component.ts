@@ -4,7 +4,6 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import {
 	IProposal,
-	PermissionsEnum,
 	ITag,
 	ComponentLayoutStyleEnum,
 	IOrganization,
