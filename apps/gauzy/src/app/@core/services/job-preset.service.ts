@@ -3,7 +3,6 @@ import { HttpClient } from '@angular/common/http';
 import {
 	EmployeePresetInput,
 	GetJobPresetInput,
-	JobPostSourceEnum,
 	JobPreset,
 	MatchingCriterions
 } from '@gauzy/models';

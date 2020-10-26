@@ -106,7 +106,7 @@ export class MatchingComponent implements OnInit {
 
 	async onPresetSelected(jobPreset: JobPreset) {
 		this.jobPreset = jobPreset;
-		await this.updateEmployeePreset();
+		this.updateEmployeePreset();
 		await this.updateCriterionsData();
 	}
 
@@ -187,7 +187,7 @@ export class MatchingComponent implements OnInit {
 				request.jobPresetCriterion = request.jobPresetCriterion.filter(
 					(employeeCriterion) => {
 						const values = Object.values(employeeCriterion);
-						return employeeCriterion && values.length > 0;
+						return values.length > 0;
 					}
 				);
 			}
