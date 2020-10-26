@@ -56,7 +56,7 @@ export class InvoiceAddComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
-	loading = true;
+	loading: boolean;
 	form: FormGroup;
 	invoice?: IInvoice;
 	createdInvoice: IInvoice;
@@ -128,8 +128,6 @@ export class InvoiceAddComponent
 		}
 		this._loadOrganizationData();
 		this.initializeForm();
-		this.form.get('currency').disable();
-		this.loading = false;
 		this.observableTasks.pipe(untilDestroyed(this)).subscribe((data) => {
 			this.tasks = data;
 		});
@@ -142,7 +140,6 @@ export class InvoiceAddComponent
 	}
 
 	initializeForm() {
-		this.createInvoiceNumber();
 		this.form = this.fb.group({
 			invoiceDate: [new Date(), Validators.required],
 			invoiceNumber: [
@@ -150,7 +147,7 @@ export class InvoiceAddComponent
 				Validators.compose([Validators.required, Validators.min(1)])
 			],
 			dueDate: [this.getNextMonth(), Validators.required],
-			currency: ['', Validators.required],
+			currency: [{ value: '', disabled: true }, Validators.required],
 			discountValue: [
 				0,
 				Validators.compose([Validators.required, Validators.min(0)])
@@ -416,9 +413,10 @@ export class InvoiceAddComponent
 				);
 				return;
 			}
-
+			const { tenantId } = this.store.user;
 			const invoice = await this.invoicesService.getAll([], {
-				invoiceNumber: invoiceData.invoiceNumber
+				invoiceNumber: invoiceData.invoiceNumber,
+				tenantId
 			});
 
 			if (invoice.items.length) {
@@ -430,7 +428,7 @@ export class InvoiceAddComponent
 				);
 				return;
 			}
-			const { id: organizationId, tenantId } = this.organization;
+			const { id: organizationId } = this.organization;
 			const createdInvoice = await this.invoicesService.add({
 				invoiceNumber: invoiceData.invoiceNumber,
 				invoiceDate: invoiceData.invoiceDate,
@@ -501,7 +499,7 @@ export class InvoiceAddComponent
 				userId: this.store.userId,
 				organization: this.organization,
 				organizationId: this.organization.id,
-				tenantId: this.organization.tenantId
+				tenantId
 			});
 
 			if (this.isEstimate) {
@@ -526,6 +524,10 @@ export class InvoiceAddComponent
 	}
 
 	async sendToContact() {
+		if (!this.organization) {
+			return;
+		}
+		const { tenantId } = this.store.user;
 		if (this.form.value.organizationContact.id) {
 			await this.addInvoice(
 				'Sent',
@@ -541,7 +543,7 @@ export class InvoiceAddComponent
 				userId: this.store.userId,
 				organization: this.organization,
 				organizationId: this.organization.id,
-				tenantId: this.organization.tenantId
+				tenantId
 			});
 		} else {
 			this.toastrService.danger(
@@ -675,7 +677,10 @@ export class InvoiceAddComponent
 	}
 
 	private async createInvoiceNumber() {
-		const invoiceNumber = await this.invoicesService.getHighestInvoiceNumber();
+		const { tenantId } = this.store.user;
+		const invoiceNumber = await this.invoicesService.getHighestInvoiceNumber(
+			tenantId
+		);
 		if (invoiceNumber['max']) {
 			this.formInvoiceNumber = +invoiceNumber['max'] + 1;
 		} else {
@@ -697,8 +702,9 @@ export class InvoiceAddComponent
 				if (organization) {
 					this.organization = organization;
 					this.discountAfterTax = organization.discountAfterTax;
+					const { id: organizationId } = organization;
+					const { tenantId } = this.store.user;
 
-					const { id: organizationId, tenantId } = organization;
 					this.employeeService
 						.getAll(['user'], { organizationId, tenantId })
 						.pipe(untilDestroyed(this))
@@ -742,6 +748,7 @@ export class InvoiceAddComponent
 					});
 					this.expenses = expenses.items;
 
+					this.createInvoiceNumber();
 					this._loadTasks();
 				}
 			});
@@ -791,7 +798,8 @@ export class InvoiceAddComponent
 		let fakeQuantity = 5;
 
 		if (generateUninvoiced) {
-			const { id: organizationId, tenantId } = this.organization;
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
 			const expenses = await this.expensesService.getAll([], {
 				typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,
 				status: ExpenseStatusesEnum.UNINVOICED,
@@ -1112,6 +1120,7 @@ export class InvoiceAddComponent
 	addNewOrganizationContact = (
 		name: string
 	): Promise<IOrganizationContact> => {
+		const { tenantId } = this.store.user;
 		this.organizationId = this.store.selectedOrganization.id;
 		try {
 			this.toastrService.primary(
@@ -1127,7 +1136,7 @@ export class InvoiceAddComponent
 				name,
 				contactType: ContactType.CLIENT,
 				organizationId: this.organizationId,
-				tenantId: this.organization.tenantId
+				tenantId
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);

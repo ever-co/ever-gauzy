@@ -7,6 +7,7 @@ import {
 	IEditEntityByMemberInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
+import { toParams } from '@gauzy/utils';
 
 @Injectable({
 	providedIn: 'root'
@@ -35,9 +36,11 @@ export class OrganizationContactService {
 			.toPromise();
 	}
 
-	getById(id: string) {
+	getById(id: string, tenantId: string) {
 		return this.http
-			.get<IOrganizationContact>(`/api/organization-contact/${id}`)
+			.get<IOrganizationContact>(`/api/organization-contact/${id}`, {
+				params: toParams({ tenantId })
+			})
 			.pipe(first())
 			.toPromise();
 	}

@@ -11,6 +11,7 @@ import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { NbDialogService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { first } from 'rxjs/operators';
+import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	templateUrl: './stage-form.component.html',
@@ -30,7 +31,8 @@ export class StageFormComponent implements OnInit {
 	constructor(
 		private readonly controlContainer: ControlContainer,
 		private dialogService: NbDialogService,
-		private fb: FormBuilder
+		private fb: FormBuilder,
+		private store: Store
 	) {}
 
 	ngOnInit(): void {
@@ -55,6 +57,8 @@ export class StageFormComponent implements OnInit {
 		}: Omit<IPipelineStageUpdateInput, 'pipelineId'> = {} as any
 	): void {
 		const { pipelineId } = this;
+		const tenantId = this.store.user.tenantId;
+		const organizationId = this.store.selectedOrganization.id;
 
 		this.control.push(
 			this.fb.group({
@@ -63,7 +67,9 @@ export class StageFormComponent implements OnInit {
 					: {}),
 				...(id ? { id: [id, Validators.required] } : {}),
 				name: [name, Validators.required],
-				description: [description]
+				description: [description],
+				tenantId,
+				organizationId
 			})
 		);
 	}

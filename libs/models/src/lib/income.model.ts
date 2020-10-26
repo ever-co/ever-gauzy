@@ -46,6 +46,7 @@ export interface IIncomeUpdateInput {
 export interface IIncomeFindInput {
 	employee?: IEmployeeFindInput;
 	organization?: IOrganizationFindInput;
+	tenantId?: string;
 	amount?: number;
 	isBonus?: boolean;
 	clientId?: string;

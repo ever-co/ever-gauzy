@@ -1,5 +1,9 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { IPipelineCreateInput, IUserOrganization } from '@gauzy/models';
+import {
+	IOrganization,
+	IPipelineCreateInput,
+	IUserOrganization
+} from '@gauzy/models';
 import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
 import { Store } from '../../../@core/services/store.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -18,6 +22,7 @@ export class PipelineFormComponent implements OnInit {
 	form: FormGroup;
 	icon: string;
 	isActive: boolean;
+	organization: IOrganization;
 
 	constructor(
 		public dialogRef: NbDialogRef<PipelineFormComponent['pipeline']>,

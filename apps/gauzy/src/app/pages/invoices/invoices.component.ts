@@ -242,7 +242,10 @@ export class InvoicesComponent
 				data: selectedItem
 			});
 		}
-		const invoiceNumber = await this.invoicesService.getHighestInvoiceNumber();
+		const { tenantId } = this.store.user;
+		const invoiceNumber = await this.invoicesService.getHighestInvoiceNumber(
+			tenantId
+		);
 		const createdInvoice = await this.invoicesService.add({
 			invoiceNumber: +invoiceNumber['max'] + 1,
 			invoiceDate: this.selectedInvoice.invoiceDate,
@@ -262,7 +265,7 @@ export class InvoicesComponent
 			organizationContactName: this.selectedInvoice.toContact?.name,
 			fromOrganization: this.organization,
 			organizationId: this.selectedInvoice.organizationId,
-			tenantId: this.selectedInvoice.tenantId,
+			tenantId,
 			invoiceType: this.selectedInvoice.invoiceType,
 			tags: this.selectedInvoice.tags,
 			isEstimate: this.isEstimate,
@@ -270,9 +273,7 @@ export class InvoicesComponent
 		});
 
 		for (const item of this.selectedInvoice.invoiceItems) {
-			const tenantId = this.store.user.tenantId;
 			const organizationId = this.organization.id;
-
 			const itemToAdd = {
 				description: item.description,
 				price: item.price,
@@ -311,7 +312,7 @@ export class InvoicesComponent
 			userId: this.store.userId,
 			organization: this.organization,
 			organizationId: this.organization.id,
-			tenantId: this.organization.tenantId
+			tenantId
 		});
 
 		if (this.isEstimate) {
@@ -368,6 +369,7 @@ export class InvoicesComponent
 				.onClose.subscribe(async () => {
 					await this.loadSettings();
 				});
+			this._clearItem();
 		} else {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.SEND.NOT_LINKED'),
@@ -401,6 +403,7 @@ export class InvoicesComponent
 			this.getTranslation('INVOICES_PAGE.ESTIMATES.ESTIMATE_CONVERT'),
 			this.getTranslation('TOASTR.TITLE.SUCCESS')
 		);
+		this._clearItem();
 		await this.loadSettings();
 	}
 
@@ -428,8 +431,8 @@ export class InvoicesComponent
 				await this.invoiceEstimateHistoryService.delete(history.id);
 			}
 
+			this._clearItem();
 			this.loadSettings();
-
 			if (this.isEstimate) {
 				this.toastrService.primary(
 					this.getTranslation(
@@ -471,6 +474,7 @@ export class InvoicesComponent
 				}
 			})
 			.onClose.subscribe(async () => {
+				this._clearItem();
 				await this.loadSettings();
 			});
 	}
@@ -481,6 +485,7 @@ export class InvoicesComponent
 			.subscribe(async (org) => {
 				if (org) {
 					try {
+						const { tenantId } = this.store.user;
 						const { items } = await this.invoicesService.getAll(
 							[
 								'invoiceItems',
@@ -492,7 +497,7 @@ export class InvoicesComponent
 							],
 							{
 								organizationId: org.id,
-								tenantId: org.tenantId,
+								tenantId,
 								isEstimate: this.isEstimate
 							}
 						);
@@ -535,7 +540,7 @@ export class InvoicesComponent
 							['invoice', 'user', 'organization'],
 							{
 								organizationId: this.organization.id,
-								tenantId: this.organization.tenantId
+								tenantId
 							}
 						);
 						this.histories = histories.items;
@@ -829,6 +834,7 @@ export class InvoicesComponent
 			...this.selectedInvoice,
 			status: $event
 		});
+		this._clearItem();
 	}
 
 	selectColumn($event) {
@@ -865,6 +871,13 @@ export class InvoicesComponent
 				this.organizationContacts = res.items;
 			}
 		}
+	}
+
+	private _clearItem() {
+		this.selectInvoice({
+			isSelected: false,
+			data: null
+		});
 	}
 
 	ngOnDestroy() {

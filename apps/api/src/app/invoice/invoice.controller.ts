@@ -88,7 +88,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	}
 
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
+	@UseGuards(AuthGuard('jwt'))
 	@Put('email/:email')
 	async emailInvoice(
 		@Param('email') email: string,

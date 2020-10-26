@@ -33,9 +33,9 @@ export interface IGetTaskByEmployeeOptions {
 	where?: IGetTaskOptions;
 }
 
-export interface IGetSprintsOptions {
+export interface IGetSprintsOptions
+	extends IBasePerTenantAndOrganizationEntityModel {
 	projectId?: string;
-	organizationId?: string;
 }
 
 export enum TaskStatusEnum {

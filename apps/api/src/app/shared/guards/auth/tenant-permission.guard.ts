@@ -15,7 +15,8 @@ export class TenantPermissionGuard implements CanActivate {
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		const { tenantId: currentTenantId } = RequestContext.currentUser();
 		const request: any = context.switchToHttp().getRequest();
-		const method: any = request.method;
+		const method: RequestMethodEnum = request.method;
+		const query: any = request.query;
 
 		let isAuthorized = false;
 		if (!currentTenantId) {
@@ -27,54 +28,71 @@ export class TenantPermissionGuard implements CanActivate {
 			'tenant-id'
 		];
 		const rawHeaders = context.switchToHttp().getRequest().rawHeaders;
-		if (headerTenantId && rawHeaders.includes('Tenant-ID')) {
+		if (
+			headerTenantId &&
+			(rawHeaders.includes('tenant-id') ||
+				rawHeaders.includes('Tenant-ID'))
+		) {
 			isAuthorized = currentTenantId === headerTenantId;
 			//if tenantId not matched reject request
 			if (!isAuthorized) {
 				return false;
 			}
 		} else {
-			//if request to get data using another tenantId then reject request.
-			if (RequestMethodEnum.GET === method) {
-				if (request.query.hasOwnProperty('data')) {
-					const query: any = request.query.data;
-					const isJson = isJSON(query);
+			// if request to get/delete data using another tenantId then reject request.
+			const httpMethods = [
+				RequestMethodEnum.GET,
+				RequestMethodEnum.DELETE
+			];
+			if (httpMethods.includes(method)) {
+				if ('tenantId' in query) {
+					const queryTenantId = query['tenantId'];
+					isAuthorized = currentTenantId === queryTenantId;
+					//if tenantId not matched reject request
+					if (!isAuthorized) {
+						return false;
+					}
+				} else if (query.hasOwnProperty('data')) {
+					const data: any = query.data;
+					const isJson = isJSON(data);
 					if (isJson) {
 						try {
-							const parse = JSON.parse(query);
+							const parse = JSON.parse(data);
 							//Match provided tenantId with logged in tenantId
 							if (
 								'findInput' in parse &&
 								'tenantId' in parse['findInput']
 							) {
-								const findTenantId =
+								const queryTenantId =
 									parse['findInput']['tenantId'];
-								isAuthorized = currentTenantId === findTenantId;
+								isAuthorized =
+									currentTenantId === queryTenantId;
 								//if tenantId not matched reject request
 								if (!isAuthorized) {
 									return false;
 								}
+							} else {
+								//if tenantId not found in query params
+								return false;
 							}
 						} catch (e) {
 							console.log('Json Parser Error:', e);
 							return isAuthorized;
 						}
 					}
-				}
-
-				if ('tenantId' in request.query) {
-					const findTenantId = request.query['tenantId'];
-					isAuthorized = currentTenantId === findTenantId;
-					//if tenantId not matched reject request
-					if (!isAuthorized) {
-						return false;
-					}
+				} else {
+					//if tenantId not found in query params
+					return false;
 				}
 			}
 
 			// if request to save/update data using another tenantId then reject request.
-			const payload = [RequestMethodEnum.POST, RequestMethodEnum.PUT];
-			if (payload.includes(method)) {
+			const payloadMethods = [
+				RequestMethodEnum.POST,
+				RequestMethodEnum.PUT,
+				RequestMethodEnum.PATCH
+			];
+			if (payloadMethods.includes(method)) {
 				const body: any = request.body;
 				if ('tenantId' in body) {
 					const bodyTenantId = body['tenantId'];
