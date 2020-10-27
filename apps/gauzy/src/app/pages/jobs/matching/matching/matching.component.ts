@@ -3,13 +3,18 @@ import {
 	EmployeePresetInput,
 	GetJobPresetCriterionInput,
 	GetJobPresetInput,
+	IOrganization,
 	JobPostSourceEnum,
 	JobPreset,
 	JobPresetUpworkJobSearchCriterion,
+	JobSearchCategory,
+	JobSearchOccupation,
 	MatchingCriterions
 } from '@gauzy/models';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { JobPresetService } from 'apps/gauzy/src/app/@core/services/job-preset.service';
+import { JobSearchCategoryService } from 'apps/gauzy/src/app/@core/services/job-search-category.service';
+import { JobSearchOccupationService } from 'apps/gauzy/src/app/@core/services/job-search-occupation.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
@@ -29,14 +34,17 @@ export class MatchingComponent implements OnInit {
 		jobPresetId: null
 	};
 	JobPostSourceEnum = JobPostSourceEnum;
-	categories: string[] = [];
-	occupations: string[] = [];
+	categories: JobSearchCategory[] = [];
+	occupations: JobSearchOccupation[] = [];
 	criterions: MatchingCriterions[] = [];
 	jobPreset: JobPreset;
 	selectedEmployee: SelectedEmployee;
+	selectedOrganization: IOrganization;
 
 	constructor(
 		private jobPresetService: JobPresetService,
+		private jobSearchOccupationService: JobSearchOccupationService,
+		private jobSearchCategoryService: JobSearchCategoryService,
 		private toastrService: ToastrService,
 		private store: Store
 	) {
@@ -44,7 +52,42 @@ export class MatchingComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
-		this.getJobPresets();
+		this.store.selectedOrganization$
+			.pipe(untilDestroyed(this))
+			.pipe(debounceTime(500))
+			.subscribe((organization) => {
+				setTimeout(async () => {
+					this.selectedOrganization = organization;
+					console.log(this.selectedOrganization);
+					if (this.selectedOrganization) {
+						this.getJobPresets();
+						this.getCategories();
+						this.getOccupations();
+					}
+				});
+			});
+
+		this.store.selectedEmployee$
+			.pipe(untilDestroyed(this))
+			.pipe(debounceTime(500))
+			.subscribe((employee) => {
+				setTimeout(async () => {
+					this.selectedEmployee = employee;
+					if (this.selectedEmployee && this.selectedEmployee.id) {
+						const preset = await this.getEmployeePreset();
+						this.criterionForm = {
+							jobSource: JobPostSourceEnum.UPWORK,
+							jobPresetId: preset ? preset.id : null
+						};
+					} else {
+						this.criterionForm = {
+							jobSource: JobPostSourceEnum.UPWORK,
+							jobPresetId: null
+						};
+					}
+					this.updateCriterionsData();
+				});
+			});
 
 		this.store.selectedEmployee$
 			.pipe(untilDestroyed(this))
@@ -70,7 +113,9 @@ export class MatchingComponent implements OnInit {
 	}
 
 	getJobPresets() {
-		const request: GetJobPresetInput = {};
+		const request: GetJobPresetInput = {
+			organizationId: this.selectedOrganization.id
+		};
 		if (this.selectedEmployee && this.selectedEmployee.id) {
 			request.employeeId = this.selectedEmployee.id;
 		}
@@ -94,6 +139,7 @@ export class MatchingComponent implements OnInit {
 
 	addPreset(name?: string) {
 		const request: JobPreset = {
+			organizationId: this.selectedOrganization.id,
 			name
 		};
 		if (this.selectedEmployee && this.selectedEmployee.id) {
@@ -133,6 +179,7 @@ export class MatchingComponent implements OnInit {
 				if (this.selectedEmployee && this.selectedEmployee.id) {
 					request.employeeId = this.selectedEmployee.id;
 				}
+
 				await this.jobPresetService
 					.getJobPreset(id, request)
 					.then((jobPresets) => {
@@ -142,11 +189,11 @@ export class MatchingComponent implements OnInit {
 
 				if (this.selectedEmployee && this.selectedEmployee.id) {
 					this.criterions =
-						this.jobPreset.employeeCriterion.length > 0
-							? this.jobPreset.employeeCriterion
-							: this.jobPreset.jobPresetCriterion;
+						this.jobPreset.employeeCriterions.length > 0
+							? this.jobPreset.employeeCriterions
+							: this.jobPreset.jobPresetCriterions;
 				} else {
-					this.criterions = this.jobPreset.jobPresetCriterion;
+					this.criterions = this.jobPreset.jobPresetCriterions;
 				}
 			} else {
 				this.criterions = [];
@@ -171,10 +218,10 @@ export class MatchingComponent implements OnInit {
 				'employeeCriterion'
 			);
 			if (
-				this.jobPreset.employeeCriterion &&
-				this.jobPreset.employeeCriterion.length > 0
+				this.jobPreset.employeeCriterions &&
+				this.jobPreset.employeeCriterions.length > 0
 			) {
-				request.jobPresetCriterion = this.jobPreset.employeeCriterion.map(
+				request.jobPresetCriterions = this.jobPreset.employeeCriterions.map(
 					(employeeCriterion): JobPresetUpworkJobSearchCriterion => {
 						return _.omit(
 							employeeCriterion,
@@ -184,7 +231,7 @@ export class MatchingComponent implements OnInit {
 						);
 					}
 				);
-				request.jobPresetCriterion = request.jobPresetCriterion.filter(
+				request.jobPresetCriterions = request.jobPresetCriterions.filter(
 					(employeeCriterion) => {
 						const values = Object.values(employeeCriterion);
 						return values.length > 0;
@@ -238,11 +285,48 @@ export class MatchingComponent implements OnInit {
 			});
 	}
 
-	createNewCategories(title) {
-		this.categories.push(title);
+	getCategories() {
+		this.jobSearchCategoryService
+			.getAll({
+				jobSource: this.criterionForm.jobSource
+			})
+			.then((categories) => {
+				this.categories = categories.items;
+			});
 	}
 
-	createNewOccupations(title) {
-		this.occupations.push(title);
+	getOccupations() {
+		this.jobSearchOccupationService
+			.getAll({
+				jobSource: this.criterionForm.jobSource
+			})
+			.then((occupations) => {
+				this.occupations = occupations.items;
+			});
 	}
+
+	createNewCategories = (title) => {
+		this.jobSearchCategoryService
+			.create({
+				name: title,
+				organizationId: this.selectedOrganization.id,
+				jobSource: this.criterionForm.jobSource
+			})
+			.then((category) => {
+				this.categories = this.categories.concat([category]);
+				console.log(this.categories);
+			});
+	};
+
+	createNewOccupations = (title) => {
+		this.jobSearchOccupationService
+			.create({
+				name: title,
+				organizationId: this.selectedOrganization.id,
+				jobSource: this.criterionForm.jobSource
+			})
+			.then((occupation) => {
+				this.occupations = this.occupations.concat([occupation]);
+			});
+	};
 }

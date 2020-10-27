@@ -8,6 +8,12 @@ import { EmployeeUpworkJobsSearchCriterion } from './employee-upwork-jobs-search
 import { JobPresetUpworkJobSearchCriterion } from './job-preset-upwork-job-search-criterion.entity';
 import { JobPreset } from './job-preset.entity';
 import { JobPresetService } from './job-preset.service';
+import { JobSearchCategoryController } from './job-search-category/job-search-category.controller';
+import { JobSearchCategory } from './job-search-category/job-search-category.entity';
+import { JobSearchCategoryService } from './job-search-category/job-search-category.service';
+import { JobSearchOccupationController } from './job-search-occupation/job-search-occupation.controller';
+import { JobSearchOccupation } from './job-search-occupation/job-search-occupation.entity';
+import { JobSearchOccupationService } from './job-search-occupation/job-search-occupation.service';
 
 @Module({
 	imports: [
@@ -15,12 +21,27 @@ import { JobPresetService } from './job-preset.service';
 			JobPreset,
 			JobPresetUpworkJobSearchCriterion,
 			EmployeeUpworkJobsSearchCriterion,
+			JobSearchOccupation,
+			JobSearchCategory,
 			Employee
 		]),
 		CqrsModule
 	],
-	controllers: [EmployeeJobPresetController],
-	providers: [...Handlers, JobPresetService],
-	exports: [JobPresetService]
+	controllers: [
+		JobSearchOccupationController,
+		JobSearchCategoryController,
+		EmployeeJobPresetController
+	],
+	providers: [
+		...Handlers,
+		JobPresetService,
+		JobSearchCategoryService,
+		JobSearchOccupationService
+	],
+	exports: [
+		JobPresetService,
+		JobSearchCategoryService,
+		JobSearchOccupationService
+	]
 })
 export class EmployeeJobPresetModule {}

@@ -118,6 +118,8 @@ import { FileStorageModule } from './file-storage';
 import { EmployeeUpworkJobsSearchCriterion } from '../employee-job-preset/employee-upwork-jobs-search-criterion.entity';
 import { JobPresetUpworkJobSearchCriterion } from '../employee-job-preset/job-preset-upwork-job-search-criterion.entity';
 import { JobPreset } from '../employee-job-preset/job-preset.entity';
+import { JobSearchOccupation } from '../employee-job-preset/job-search-occupation/job-search-occupation.entity';
+import { JobSearchCategory } from '../employee-job-preset/job-search-category/job-search-category.entity';
 
 const entities = [
 	Invite,
@@ -229,7 +231,9 @@ const entities = [
 	EmployeeAward,
 	JobPreset,
 	JobPresetUpworkJobSearchCriterion,
-	EmployeeUpworkJobsSearchCriterion
+	EmployeeUpworkJobsSearchCriterion,
+	JobSearchOccupation,
+	JobSearchCategory
 ];
 
 @Module({

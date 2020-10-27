@@ -106,6 +106,8 @@ import { TenantSetting } from '../../tenant/tenant-setting/tenant-setting.entity
 import { JobPreset } from '../../employee-job-preset/job-preset.entity';
 import { EmployeeUpworkJobsSearchCriterion } from '../../employee-job-preset/employee-upwork-jobs-search-criterion.entity';
 import { JobPresetUpworkJobSearchCriterion } from '../../employee-job-preset/job-preset-upwork-job-search-criterion.entity';
+import { JobSearchCategory } from '../../employee-job-preset/job-search-category/job-search-category.entity';
+import { JobSearchOccupation } from '../../employee-job-preset/job-search-occupation/job-search-occupation.entity';
 
 export const allEntities = [
 	AppointmentEmployee,
@@ -215,5 +217,7 @@ export const allEntities = [
 	UserOrganization,
 	JobPreset,
 	JobPresetUpworkJobSearchCriterion,
-	EmployeeUpworkJobsSearchCriterion
+	EmployeeUpworkJobsSearchCriterion,
+	JobSearchOccupation,
+	JobSearchCategory
 ];

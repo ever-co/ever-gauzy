@@ -45,7 +45,7 @@ export class JobPresetService extends CrudService<JobPreset> {
 					employees: 'job_preset.employees'
 				}
 			},
-			relations: ['jobPresetCriterion'],
+			relations: ['jobPresetCriterions'],
 			order: {
 				name: 'ASC'
 			},
@@ -56,14 +56,20 @@ export class JobPresetService extends CrudService<JobPreset> {
 					});
 				}
 				if (request.organizationId) {
-					qb.andWhere('"organizationId" = :organizationId', {
-						organizationId: request.organizationId
-					});
+					qb.andWhere(
+						`${qb.alias}."organizationId" = :organizationId`,
+						{
+							organizationId: request.organizationId
+						}
+					);
 				}
 				if (request.employeeId) {
-					qb.andWhere('"employees"."id" = :employeeId', {
-						employeeId: request.employeeId
-					});
+					qb.andWhere(
+						`${qb.alias}."."employees"."id" = :employeeId`,
+						{
+							employeeId: request.employeeId
+						}
+					);
 				}
 			}
 		});
@@ -73,14 +79,14 @@ export class JobPresetService extends CrudService<JobPreset> {
 	public async get(id: string, request?: GetJobPresetCriterionInput) {
 		const query = this.jobPresetRepository.createQueryBuilder();
 		query.leftJoinAndSelect(
-			`${query.alias}.jobPresetCriterion`,
-			'jobPresetCriterion'
+			`${query.alias}.jobPresetCriterions`,
+			'jobPresetCriterions'
 		);
 		if (request.employeeId) {
 			query.leftJoinAndSelect(
-				`${query.alias}.employeeCriterion`,
-				'employeeCriterion',
-				'employeeCriterion.employeeId = :employeeId',
+				`${query.alias}.employeeCriterions`,
+				'employeeCriterions',
+				'employeeCriterions.employeeId = :employeeId',
 				{ employeeId: request.employeeId }
 			);
 		}

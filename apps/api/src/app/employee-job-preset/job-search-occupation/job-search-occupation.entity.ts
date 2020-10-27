@@ -8,14 +8,18 @@ import {
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { JobPreset as IJobPreset } from '@gauzy/models';
-import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
-import { Employee } from '../employee/employee.entity';
-import { JobPresetUpworkJobSearchCriterion } from './job-preset-upwork-job-search-criterion.entity';
-import { EmployeeUpworkJobsSearchCriterion } from './employee-upwork-jobs-search-criterion.entity';
+import {
+	JobPostSourceEnum,
+	JobSearchOccupation as IJobSearchOccupation
+} from '@gauzy/models';
+import { TenantOrganizationBase } from '../../core/entities/tenant-organization-base';
+import { JobPresetUpworkJobSearchCriterion } from '../job-preset-upwork-job-search-criterion.entity';
+import { EmployeeUpworkJobsSearchCriterion } from '../employee-upwork-jobs-search-criterion.entity';
 
-@Entity('job_preset')
-export class JobPreset extends TenantOrganizationBase implements IJobPreset {
+@Entity('job_search_occupation')
+export class JobSearchOccupation
+	extends TenantOrganizationBase
+	implements IJobSearchOccupation {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -23,13 +27,12 @@ export class JobPreset extends TenantOrganizationBase implements IJobPreset {
 	@Column()
 	name?: string;
 
-	@ManyToMany(() => Employee, (employee) => employee.jobPresets, {
-		cascade: true
-	})
-	@JoinTable({
-		name: 'employee_job_preset'
-	})
-	employees?: Employee[];
+	@ApiProperty({ type: String })
+	@IsString()
+	@IsNotEmpty()
+	@Index()
+	@Column({ type: 'text', default: JobPostSourceEnum.UPWORK })
+	jobSource?: JobPostSourceEnum;
 
 	@OneToMany(
 		() => EmployeeUpworkJobsSearchCriterion,
