@@ -88,6 +88,8 @@ export * from './lib/invoice-estimate-history.model';
 export * from './lib/file-provider';
 export * from './lib/employee-job.model';
 export * from './lib/job-matching.model';
+export * from './lib/job-search-category.model';
+export * from './lib/job-search-occupation.model';
 
 export { IRole, RolesEnum } from './lib/role.model';
 export { IBaseEntityModel as BaseEntityModel } from './lib/base-entity.model';

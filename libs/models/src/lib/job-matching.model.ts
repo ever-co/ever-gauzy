@@ -1,6 +1,8 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { JobPostSourceEnum } from './employee-job.model';
 import { IEmployee } from './employee.model';
+import { JobSearchCategory } from './job-search-category.model';
+import { JobSearchOccupation } from './job-search-occupation.model';
 
 export interface IEmployeeJobMatching {}
 
@@ -26,8 +28,8 @@ export interface MatchingCriterions
 export interface JobPreset extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	employees?: Partial<IEmployee>[];
-	employeeCriterion?: EmployeeUpworkJobsSearchCriterion[];
-	jobPresetCriterion?: JobPresetUpworkJobSearchCriterion[];
+	employeeCriterions?: EmployeeUpworkJobsSearchCriterion[];
+	jobPresetCriterions?: JobPresetUpworkJobSearchCriterion[];
 }
 
 export interface EmployeePresetInput {
@@ -58,8 +60,10 @@ export interface JobPresetUpworkJobSearchCriterion
 	extends IBasePerTenantAndOrganizationEntityModel {
 	jobPresetId?: string;
 	jobPreset?: JobPreset;
-	occupationId?: string;
-	categoryId?: string;
+	jobSearchOccupationId?: string;
+	jobSearchOccupation?: JobSearchOccupation;
+	jobSearchCategoryId?: string;
+	jobSearchCategory?: JobSearchCategory;
 	keyword?: string;
 	hourly?: boolean;
 	fixPrice?: boolean;
@@ -71,8 +75,10 @@ export interface EmployeeUpworkJobsSearchCriterion
 	jobPreset?: JobPreset;
 	employeeId?: string;
 	employee?: IEmployee;
-	occupationId?: string;
-	categoryId?: string;
+	jobSearchOccupationId?: string;
+	jobSearchOccupation?: JobSearchOccupation;
+	jobSearchCategoryId?: string;
+	jobSearchCategory?: JobSearchCategory;
 	keyword?: string;
 	hourly?: boolean;
 	fixPrice?: boolean;

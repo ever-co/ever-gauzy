@@ -126,12 +126,14 @@
 								<ng-select
 									name="categoryId"
 									[addTag]="createNewCategories"
-									[(ngModel)]="criterion.categoryId"
+									[(ngModel)]="criterion.jobSearchCategoryId"
 									[clearable]="true"
 									[items]="categories"
 									[placeholder]="
 										'JOB_MATCHING.CATEGORIES' | translate
 									"
+									bindValue="id"
+									bindLabel="name"
 								>
 								</ng-select>
 							</div>
@@ -147,12 +149,16 @@
 								<ng-select
 									name="occupationId"
 									[addTag]="createNewOccupations"
-									[(ngModel)]="criterion.occupationId"
+									[(ngModel)]="
+										criterion.jobSearchOccupationId
+									"
 									[clearable]="true"
 									[items]="occupations"
 									[placeholder]="
 										'JOB_MATCHING.OCCUPATIONS' | translate
 									"
+									bindValue="id"
+									bindLabel="name"
 								>
 								</ng-select>
 							</div>

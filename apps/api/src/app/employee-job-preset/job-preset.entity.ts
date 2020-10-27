@@ -39,7 +39,7 @@ export class JobPreset extends TenantOrganizationBase implements IJobPreset {
 			onDelete: 'CASCADE'
 		}
 	)
-	employeeCriterion?: EmployeeUpworkJobsSearchCriterion[];
+	employeeCriterions?: EmployeeUpworkJobsSearchCriterion[];
 
 	@OneToMany(
 		() => JobPresetUpworkJobSearchCriterion,
@@ -49,5 +49,5 @@ export class JobPreset extends TenantOrganizationBase implements IJobPreset {
 			onDelete: 'CASCADE'
 		}
 	)
-	jobPresetCriterion?: JobPresetUpworkJobSearchCriterion[];
+	jobPresetCriterions?: JobPresetUpworkJobSearchCriterion[];
 }

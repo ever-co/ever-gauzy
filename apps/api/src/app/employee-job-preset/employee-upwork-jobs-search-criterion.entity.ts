@@ -5,6 +5,8 @@ import { EmployeeUpworkJobsSearchCriterion as IEmployeeUpworkJobsSearchCriterion
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 import { JobPreset } from './job-preset.entity';
 import { Employee } from '../employee/employee.entity';
+import { JobSearchOccupation } from './job-search-occupation/job-search-occupation.entity';
+import { JobSearchCategory } from './job-search-category/job-search-category.entity';
 
 @Entity('employee_upwork_job_search_criterion')
 export class EmployeeUpworkJobsSearchCriterion
@@ -16,7 +18,7 @@ export class EmployeeUpworkJobsSearchCriterion
 	@Column()
 	jobPresetId?: string;
 
-	@ManyToOne(() => JobPreset, (jobPreset) => jobPreset.id)
+	@ManyToOne(() => JobPreset, (jobPreset) => jobPreset.employeeCriterions)
 	jobPreset?: JobPreset;
 
 	@ApiProperty({ type: String })
@@ -32,13 +34,25 @@ export class EmployeeUpworkJobsSearchCriterion
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
-	occupationId?: string;
+	jobSearchOccupationId?: string;
+
+	@ManyToOne(
+		() => JobSearchOccupation,
+		(jobSearchOccupation) => jobSearchOccupation.employeeCriterions
+	)
+	jobSearchOccupation?: JobSearchOccupation;
 
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
-	categoryId?: string;
+	jobSearchCategoryId?: string;
+
+	@ManyToOne(
+		() => JobSearchCategory,
+		(jobSearchCategory) => jobSearchCategory.employeeCriterions
+	)
+	jobSearchCategory?: JobSearchCategory;
 
 	@ApiProperty({ type: String })
 	@IsString()

@@ -103,6 +103,11 @@ import { IntegrationMap } from '../../integration-map/integration-map.entity';
 import { EmployeeAward } from '../../employee-award/employee-award.entity';
 import { GoalKPITemplate } from '../../goal-kpi-template/goal-kpi-template.entity';
 import { TenantSetting } from '../../tenant/tenant-setting/tenant-setting.entity';
+import { JobPreset } from '../../employee-job-preset/job-preset.entity';
+import { EmployeeUpworkJobsSearchCriterion } from '../../employee-job-preset/employee-upwork-jobs-search-criterion.entity';
+import { JobPresetUpworkJobSearchCriterion } from '../../employee-job-preset/job-preset-upwork-job-search-criterion.entity';
+import { JobSearchCategory } from '../../employee-job-preset/job-search-category/job-search-category.entity';
+import { JobSearchOccupation } from '../../employee-job-preset/job-search-occupation/job-search-occupation.entity';
 
 export const allEntities = [
 	AppointmentEmployee,
@@ -209,5 +214,10 @@ export const allEntities = [
 	TimeSlotMinute,
 	Timesheet,
 	User,
-	UserOrganization
+	UserOrganization,
+	JobPreset,
+	JobPresetUpworkJobSearchCriterion,
+	EmployeeUpworkJobsSearchCriterion,
+	JobSearchOccupation,
+	JobSearchCategory
 ];

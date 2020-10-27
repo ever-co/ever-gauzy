@@ -36,13 +36,13 @@ export class CreateJobPresetHandler
 
 		const jobPreset = new JobPreset(input);
 
-		delete jobPreset.jobPresetCriterion;
+		delete jobPreset.jobPresetCriterions;
 		await this.jobPresetRepository.save(jobPreset);
 
 		let jobPresetCriterion: JobPresetUpworkJobSearchCriterion[] = [];
 
-		if (input.jobPresetCriterion && input.jobPresetCriterion.length > 0) {
-			jobPresetCriterion = input.jobPresetCriterion.map(
+		if (input.jobPresetCriterions && input.jobPresetCriterions.length > 0) {
+			jobPresetCriterion = input.jobPresetCriterions.map(
 				(criterion) =>
 					new JobPresetUpworkJobSearchCriterion({
 						...criterion,
@@ -51,10 +51,10 @@ export class CreateJobPresetHandler
 			);
 
 			const found = await this.jobPresetRepository.findOne(jobPreset.id, {
-				relations: ['jobPresetCriterion']
+				relations: ['jobPresetCriterions']
 			});
 			const jobPresetCriterionIds = _.pluck(
-				found.jobPresetCriterion,
+				found.jobPresetCriterions,
 				'id'
 			);
 			await this.jobPresetUpworkJobSearchCriterionRepository.delete({
