@@ -10,6 +10,7 @@ import {
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { AvatarComponent } from 'apps/gauzy/src/app/@shared/components/avatar/avatar.component';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { StatusBadgeComponent } from 'apps/gauzy/src/app/@shared/status-badge/status-badge.component';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
@@ -155,14 +156,25 @@ export class SearchComponent
 					? {
 							employeeIds: {
 								title: this.getTranslation('JOBS.EMPLOYEE'),
-								type: 'text',
+
 								filter: false,
 								width: '15%',
+								type: 'custom',
+								renderComponent: AvatarComponent,
 								valuePrepareFunction: (
 									cell,
 									row: IEmployeeJobPost
 								) => {
-									return row.employee.user.name;
+									return {
+										name:
+											row.employee && row.employee.user
+												? row.employee.user.name
+												: null,
+										src:
+											row.employee && row.employee.user
+												? row.employee.user.imageUrl
+												: null
+									};
 								}
 							}
 					  }
