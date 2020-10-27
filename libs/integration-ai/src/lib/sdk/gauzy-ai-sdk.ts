@@ -346,16 +346,19 @@ export type EmployeeCountAggregate = {
 	isActive?: Maybe<Scalars['Int']>;
 	isArchived?: Maybe<Scalars['Int']>;
 	id?: Maybe<Scalars['Int']>;
+	externalEmployeeId?: Maybe<Scalars['Int']>;
 };
 
 export type EmployeeMinAggregate = {
 	__typename?: 'EmployeeMinAggregate';
 	id?: Maybe<Scalars['ID']>;
+	externalEmployeeId?: Maybe<Scalars['String']>;
 };
 
 export type EmployeeMaxAggregate = {
 	__typename?: 'EmployeeMaxAggregate';
 	id?: Maybe<Scalars['ID']>;
+	externalEmployeeId?: Maybe<Scalars['String']>;
 };
 
 export type EmployeeAggregateResponse = {
@@ -558,6 +561,24 @@ export type EmployeeFilter = {
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 	id?: Maybe<IdFilterComparison>;
+	externalEmployeeId?: Maybe<StringFieldComparison>;
+};
+
+export type StringFieldComparison = {
+	is?: Maybe<Scalars['Boolean']>;
+	isNot?: Maybe<Scalars['Boolean']>;
+	eq?: Maybe<Scalars['String']>;
+	neq?: Maybe<Scalars['String']>;
+	gt?: Maybe<Scalars['String']>;
+	gte?: Maybe<Scalars['String']>;
+	lt?: Maybe<Scalars['String']>;
+	lte?: Maybe<Scalars['String']>;
+	like?: Maybe<Scalars['String']>;
+	notLike?: Maybe<Scalars['String']>;
+	iLike?: Maybe<Scalars['String']>;
+	notILike?: Maybe<Scalars['String']>;
+	in?: Maybe<Array<Scalars['String']>>;
+	notIn?: Maybe<Array<Scalars['String']>>;
 };
 
 export type EmployeeSort = {
@@ -569,7 +590,8 @@ export type EmployeeSort = {
 export enum EmployeeSortFields {
 	IsActive = 'isActive',
 	IsArchived = 'isArchived',
-	Id = 'id'
+	Id = 'id',
+	ExternalEmployeeId = 'externalEmployeeId'
 }
 
 export type EmployeeAggregateFilter = {
@@ -578,6 +600,7 @@ export type EmployeeAggregateFilter = {
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 	id?: Maybe<IdFilterComparison>;
+	externalEmployeeId?: Maybe<StringFieldComparison>;
 };
 
 export type EmployeeJobPostFilter = {
@@ -970,6 +993,7 @@ export type EmployeeDeleteFilter = {
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 	id?: Maybe<IdFilterComparison>;
+	externalEmployeeId?: Maybe<StringFieldComparison>;
 };
 
 export type UpdateOneEmployeeInput = {
@@ -1001,6 +1025,7 @@ export type EmployeeUpdateFilter = {
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 	id?: Maybe<IdFilterComparison>;
+	externalEmployeeId?: Maybe<StringFieldComparison>;
 };
 
 export type CreateOneEmployeeInput = {
@@ -1221,6 +1246,7 @@ export type EmployeeSubscriptionFilter = {
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 	id?: Maybe<IdFilterComparison>;
+	externalEmployeeId?: Maybe<StringFieldComparison>;
 };
 
 export type UpdateOneEmployeeSubscriptionFilterInput = {
@@ -1296,6 +1322,21 @@ export type EmployeeJobPostsQuery = { __typename?: 'Query' } & {
 							| 'clientPaymentVerificationStatus'
 						>;
 					};
+			}
+		>;
+	};
+};
+
+export type EmployeeQueryVariables = Exact<{ [key: string]: never }>;
+
+export type EmployeeQuery = { __typename?: 'Query' } & {
+	employees: { __typename?: 'EmployeeConnection' } & {
+		edges: Array<
+			{ __typename?: 'EmployeeEdge' } & {
+				node: { __typename?: 'Employee' } & Pick<
+					Employee,
+					'id' | 'externalEmployeeId' | 'firstName' | 'lastName'
+				>;
 			}
 		>;
 	};
@@ -1666,6 +1707,101 @@ export const EmployeeJobPostsDocument: DocumentNode<
 																	}
 																]
 															}
+														}
+													]
+												}
+											}
+										]
+									}
+								}
+							]
+						}
+					}
+				]
+			}
+		}
+	]
+};
+export const EmployeeDocument: DocumentNode<
+	EmployeeQuery,
+	EmployeeQueryVariables
+> = {
+	kind: 'Document',
+	definitions: [
+		{
+			kind: 'OperationDefinition',
+			operation: 'query',
+			name: { kind: 'Name', value: 'employee' },
+			variableDefinitions: [],
+			directives: [],
+			selectionSet: {
+				kind: 'SelectionSet',
+				selections: [
+					{
+						kind: 'Field',
+						name: { kind: 'Name', value: 'employees' },
+						arguments: [],
+						directives: [],
+						selectionSet: {
+							kind: 'SelectionSet',
+							selections: [
+								{
+									kind: 'Field',
+									name: { kind: 'Name', value: 'edges' },
+									arguments: [],
+									directives: [],
+									selectionSet: {
+										kind: 'SelectionSet',
+										selections: [
+											{
+												kind: 'Field',
+												name: {
+													kind: 'Name',
+													value: 'node'
+												},
+												arguments: [],
+												directives: [],
+												selectionSet: {
+													kind: 'SelectionSet',
+													selections: [
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value: 'id'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
+																	'externalEmployeeId'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
+																	'firstName'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
+																	'lastName'
+															},
+															arguments: [],
+															directives: []
 														}
 													]
 												}

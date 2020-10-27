@@ -390,14 +390,17 @@ type EmployeeCountAggregate {
 	isActive: Int
 	isArchived: Int
 	id: Int
+	externalEmployeeId: Int
 }
 
 type EmployeeMinAggregate {
 	id: ID
+	externalEmployeeId: String
 }
 
 type EmployeeMaxAggregate {
 	id: ID
+	externalEmployeeId: String
 }
 
 type EmployeeAggregateResponse {
@@ -655,6 +658,24 @@ input EmployeeFilter {
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 	id: IDFilterComparison
+	externalEmployeeId: StringFieldComparison
+}
+
+input StringFieldComparison {
+	is: Boolean
+	isNot: Boolean
+	eq: String
+	neq: String
+	gt: String
+	gte: String
+	lt: String
+	lte: String
+	like: String
+	notLike: String
+	iLike: String
+	notILike: String
+	in: [String!]
+	notIn: [String!]
 }
 
 input EmployeeSort {
@@ -667,6 +688,7 @@ enum EmployeeSortFields {
 	isActive
 	isArchived
 	id
+	externalEmployeeId
 }
 
 input EmployeeAggregateFilter {
@@ -675,6 +697,7 @@ input EmployeeAggregateFilter {
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 	id: IDFilterComparison
+	externalEmployeeId: StringFieldComparison
 }
 
 input EmployeeJobPostFilter {
@@ -1007,6 +1030,7 @@ input EmployeeDeleteFilter {
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 	id: IDFilterComparison
+	externalEmployeeId: StringFieldComparison
 }
 
 input UpdateOneEmployeeInput {
@@ -1048,6 +1072,7 @@ input EmployeeUpdateFilter {
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 	id: IDFilterComparison
+	externalEmployeeId: StringFieldComparison
 }
 
 input CreateOneEmployeeInput {
@@ -1276,6 +1301,7 @@ input EmployeeSubscriptionFilter {
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 	id: IDFilterComparison
+	externalEmployeeId: StringFieldComparison
 }
 
 input UpdateOneEmployeeSubscriptionFilterInput {

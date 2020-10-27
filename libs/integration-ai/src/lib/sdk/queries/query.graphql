@@ -35,3 +35,16 @@ query employeeJobPosts {
 		}
 	}
 }
+
+query employee {
+	employees {
+		edges {
+			node {
+				id
+				externalEmployeeId
+				firstName
+				lastName
+			}
+		}
+	}
+}
