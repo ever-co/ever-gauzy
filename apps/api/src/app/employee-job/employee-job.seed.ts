@@ -3,15 +3,18 @@ import { JobPost } from './jobPost.entity';
 import * as faker from 'faker';
 import {
 	IEmployee,
+	IEmployeeJobPost,
 	JobPostSourceEnum,
 	JobPostStatusEnum,
 	JobPostTypeEnum
 } from '@gauzy/models';
+import { IPagination } from '../core';
 
 export const getRandomEmployeeJobPosts = async (
 	employees?: IEmployee[],
+	page = 0,
 	limit = 10
-): Promise<EmployeeJobPost[]> => {
+): Promise<IPagination<IEmployeeJobPost>> => {
 	const employeesJobs: EmployeeJobPost[] = [];
 
 	for (let i = 0; i < limit; i++) {
@@ -40,5 +43,8 @@ export const getRandomEmployeeJobPosts = async (
 		employeesJobs.push(jobPostEmployee);
 	}
 
-	return employeesJobs;
+	return {
+		items: employeesJobs,
+		total: 100
+	};
 };
