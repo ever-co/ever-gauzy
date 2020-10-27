@@ -4,21 +4,11 @@ import { IEmployee } from './employee.model';
 import { JobSearchCategory } from './job-search-category.model';
 import { JobSearchOccupation } from './job-search-occupation.model';
 
-export interface IEmployeeJobMatching {}
-
 export interface JobMatchings {
 	employeeId?: string;
 	jobSource?: string;
 	preset?: string;
 	criterions?: MatchingCriterions[];
-}
-
-export interface UpworkJobMatchingCriterions {
-	keywords?: string[];
-	categories?: string[];
-	occupations?: string[];
-	hourly?: boolean;
-	fixPrice?: boolean;
 }
 
 export interface MatchingCriterions
@@ -43,6 +33,7 @@ export interface GetJobPresetInput {
 	organizationId?: string;
 	employeeId?: string;
 }
+
 export interface EmployeeJobPreset
 	extends IBasePerTenantAndOrganizationEntityModel {
 	jobPresetId?: string;
@@ -60,26 +51,37 @@ export interface JobPresetUpworkJobSearchCriterion
 	extends IBasePerTenantAndOrganizationEntityModel {
 	jobPresetId?: string;
 	jobPreset?: JobPreset;
-	jobSearchOccupationId?: string;
-	jobSearchOccupation?: JobSearchOccupation;
-	jobSearchCategoryId?: string;
-	jobSearchCategory?: JobSearchCategory;
+	jobSearchOccupationId?: string; // TODO: rename to occupationId
+	jobSearchOccupation?: JobSearchOccupation; // TODO: rename to occupation
+	jobSearchCategoryId?: string; // TODO: rename to categoryId
+	jobSearchCategory?: JobSearchCategory; // TODO: rename to category
 	keyword?: string;
-	hourly?: boolean;
-	fixPrice?: boolean;
+	hourly?: boolean; // TODO: replace with jobType
+	fixPrice?: boolean; // TODO: replace with jobType
 }
 
 export interface EmployeeUpworkJobsSearchCriterion
 	extends IBasePerTenantAndOrganizationEntityModel {
-	jobPresetId?: string;
-	jobPreset?: JobPreset;
 	employeeId?: string;
 	employee?: IEmployee;
-	jobSearchOccupationId?: string;
-	jobSearchOccupation?: JobSearchOccupation;
-	jobSearchCategoryId?: string;
-	jobSearchCategory?: JobSearchCategory;
+	jobPresetId?: string;
+	jobPreset?: JobPreset;
+	jobSearchOccupationId?: string; // TODO: rename to occupationId
+	jobSearchOccupation?: JobSearchOccupation; // TODO: rename to occupation
+	jobSearchCategoryId?: string; // TODO: rename to categoryId
+	jobSearchCategory?: JobSearchCategory; // TODO: rename to category
 	keyword?: string;
-	hourly?: boolean;
-	fixPrice?: boolean;
+	hourly?: boolean; // TODO: replace with jobType
+	fixPrice?: boolean; // TODO: replace with jobType
+}
+
+// Below entities are used in Sync with Gauzy AI
+
+export interface IEmployeeUpworkJobsSearchCriterion {
+	category?: string;
+	categoryId?: string;
+	occupation?: string;
+	occupationId?: string;
+	jobType: string;
+	keyword: string;
 }

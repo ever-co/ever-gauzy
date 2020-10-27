@@ -18,6 +18,7 @@ import {
 	InMemoryCache,
 	gql
 } from '@apollo/client/core';
+import { IEmployee, IEmployeeUpworkJobsSearchCriterion } from '@gauzy/models';
 
 @Injectable()
 export class GauzyAIService {
@@ -35,11 +36,37 @@ export class GauzyAIService {
 		});
 	}
 
+	// Chetan: Call this on each "Save" operation for matching for employee.
+	// Both when Preset saved for given employee and when any criteria saved for given employee (new criteria or changes in criteria)
+	// You should pass `employee` entity for which anything on Matching page was changes
+	// IMPORTANT: You should ALWAYS pass ALL criteria defined for given employee on Matching page, not only new or changed!
+	// Best way to call this method, is to reload from Gauzy DB all criteria for given employee before call this method.
+	// DO NOT USE DATA YOU PASS FROM UI!
+	// INSTEAD CALL THIS METHOD FROM YOUR CQRS COMMAND HANDLERS when you detect that anything related to matching changes
+	// But as explained above, you must reload criteria from DB, not use anything you have in the local variables
+	// (because it might not be full data, but this method requires all data to be synced to Gauzy AI, even if such data was previously already synced)
+	// How this method will work internally:
+	// - it will call sync for employee first and if no such employee exists in Gauzy AI, it will create new. If exists, it will update employee properties, e.g. lastName
+	// - next, it will remove all criteria for employee in Gauzy AI and create new records again for criterions.
+	// I.e. no update will be done, it will be full replacement
+	// The reason it's acceptable is because such data changes rarely for given employee, so it's totally fine to recreate it
+	// NOTE: I assume you will need to call this method from multiple different CQRS command handlers!
+	public async syncGauzyEmployeeJobSearchCriteria(
+		employee: IEmployee,
+		criteria: IEmployeeUpworkJobsSearchCriterion[]
+	): Promise<boolean> {
+		// TODO: RUSLAN will call syncEmployee()
+
+		// TODO: RUSLAN will sync criteria for employee to Gauzy AI
+
+		return true;
+	}
+
 	/** Sync Employee between Gauzy and Gauzy AI
 	 *  Creates new Employee in Gauzy AI if it's not yet exists there yet (it try to find by externalEmployeeId field value)
 	 *  Update existed Gauzy AI Employee record with new data from Gauzy DB
 	 */
-	public async syncEmployee(employee: Employee): Promise<boolean> {
+	private async syncEmployee(employee: Employee): Promise<boolean> {
 		// TODO: replace <any> with <EmployeeQuery>
 
 		const employeesQuery: DocumentNode<EmployeeQuery> = gql`
