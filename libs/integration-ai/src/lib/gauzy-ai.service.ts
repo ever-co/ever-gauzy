@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
 	Employee,
 	EmployeeJobPostsDocument,
@@ -15,41 +15,98 @@ import {
 	HttpLink,
 	InMemoryCache,
 	DefaultOptions,
+	NetworkStatus,
 	gql
 } from '@apollo/client/core';
 import { EmployeeUpworkJobsSearchCriterion, IEmployee } from '@gauzy/models';
 
 @Injectable()
 export class GauzyAIService {
+	private readonly _logger = new Logger(GauzyAIService.name);
 	private _client: ApolloClient<NormalizedCacheObject>;
 
 	constructor() {
-		// For now, we disable Apollo client caching for all GraphQL queries and mutations
-		const defaultOptions: DefaultOptions = {
-			watchQuery: {
-				fetchPolicy: 'no-cache',
-				errorPolicy: 'ignore'
-			},
-			query: {
-				fetchPolicy: 'no-cache',
-				errorPolicy: 'all'
-			},
-			mutate: {
-				fetchPolicy: 'no-cache',
-				errorPolicy: 'all'
-			}
-		};
+		try {
+			// TODO: read from constructor injected parameter (e.g. config service)
+			const gauzyAIGraphQLEndpoint =
+				process.env.GAUZY_AI_GRAPHQL_ENDPOINT;
 
-		this._client = new ApolloClient({
-			typeDefs: EmployeeJobPostsDocument,
-			link: new HttpLink({
-				// TODO: use endpoint from .env. We probably should inject settings into constructor for this.
-				uri: 'http://localhost:3005/graphql',
-				fetch
-			}),
-			cache: new InMemoryCache(),
-			defaultOptions
-		});
+			if (gauzyAIGraphQLEndpoint) {
+				this._logger.log(
+					'Gauzy AI Endpoint configured in the environment'
+				);
+
+				// For now, we disable Apollo client caching for all GraphQL queries and mutations
+				const defaultOptions: DefaultOptions = {
+					watchQuery: {
+						fetchPolicy: 'no-cache',
+						errorPolicy: 'ignore'
+					},
+					query: {
+						fetchPolicy: 'no-cache',
+						errorPolicy: 'all'
+					},
+					mutate: {
+						fetchPolicy: 'no-cache',
+						errorPolicy: 'all'
+					}
+				};
+
+				this._client = new ApolloClient({
+					typeDefs: EmployeeJobPostsDocument,
+					link: new HttpLink({
+						// TODO: use endpoint from .env. We probably should inject settings into constructor for this.
+						uri: gauzyAIGraphQLEndpoint,
+						fetch
+					}),
+					cache: new InMemoryCache(),
+					defaultOptions
+				});
+
+				const testConnectionQuery = async () => {
+					try {
+						const employeesQuery: DocumentNode<EmployeeQuery> = gql`
+							query employee {
+								employees {
+									edges {
+										node {
+											id
+										}
+									}
+									totalCount
+								}
+							}
+						`;
+
+						const employeesQueryResult: ApolloQueryResult<EmployeeQuery> = await this._client.query<
+							EmployeeQuery
+						>({
+							query: employeesQuery
+						});
+
+						if (
+							employeesQueryResult.networkStatus ===
+							NetworkStatus.error
+						) {
+							this._client = null;
+						}
+					} catch (err) {
+						this._logger.error(err);
+						this._client = null;
+					}
+				};
+
+				testConnectionQuery();
+			} else {
+				this._logger.warn(
+					'Gauzy AI Endpoint not configured in the environment'
+				);
+				this._client = null;
+			}
+		} catch (err) {
+			this._logger.error(err);
+			this._client = null;
+		}
 	}
 
 	// We call this on each "Save" operation for matching for employee.
@@ -71,6 +128,10 @@ export class GauzyAIService {
 		employee: IEmployee,
 		criteria: EmployeeUpworkJobsSearchCriterion[]
 	): Promise<boolean> {
+		if (this._client == null) {
+			return false;
+		}
+
 		const gauzyAIEmployee: Employee = await this.syncEmployee({
 			externalEmployeeId: employee.id,
 			isActive: employee.isActive,
@@ -266,53 +327,62 @@ export class GauzyAIService {
 	public async getEmployeesJobPosts(): Promise<
 		ApolloQueryResult<EmployeeJobPostsQuery>
 	> {
-		// TODO: use Query saved in SDK, not hard-code it here. Note: we may add much more fields to that query as we need more info!
-		const employeesQuery: DocumentNode<EmployeeJobPostsQuery> = gql`
-			query employeeJobPosts {
-				employeeJobPosts {
-					edges {
-						node {
-							id
-							isApplied
-							appliedDate
-							employee {
-								externalEmployeeId
-							}
-							jobPost {
+		if (this._client == null) {
+			return null;
+		}
+
+		try {
+			// TODO: use Query saved in SDK, not hard-code it here. Note: we may add much more fields to that query as we need more info!
+			const employeesQuery: DocumentNode<EmployeeJobPostsQuery> = gql`
+				query employeeJobPosts {
+					employeeJobPosts {
+						edges {
+							node {
 								id
-								providerCode
-								providerJobId
-								title
-								description
-								jobDateCreated
-								jobStatus
-								jobType
-								url
-								budget
-								duration
-								workload
-								skills
-								category
-								subcategory
-								country
-								clientFeedback
-								clientReviewsCount
-								clientJobsPosted
-								clientPastHires
-								clientPaymentVerificationStatus
+								isApplied
+								appliedDate
+								employee {
+									externalEmployeeId
+								}
+								jobPost {
+									id
+									providerCode
+									providerJobId
+									title
+									description
+									jobDateCreated
+									jobStatus
+									jobType
+									url
+									budget
+									duration
+									workload
+									skills
+									category
+									subcategory
+									country
+									clientFeedback
+									clientReviewsCount
+									clientJobsPosted
+									clientPastHires
+									clientPaymentVerificationStatus
+								}
 							}
 						}
 					}
 				}
-			}
-		`;
+			`;
 
-		const result: ApolloQueryResult<EmployeeJobPostsQuery> = await this._client.query<
-			EmployeeJobPostsQuery
-		>({
-			query: employeesQuery
-		});
+			const result: ApolloQueryResult<EmployeeJobPostsQuery> = await this._client.query<
+				EmployeeJobPostsQuery
+			>({
+				query: employeesQuery
+			});
 
-		return result;
+			return result;
+		} catch (err) {
+			this._logger.error(err);
+			return null;
+		}
 	}
 }

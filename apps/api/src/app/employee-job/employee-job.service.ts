@@ -1,3 +1,4 @@
+import { environment as env } from '@env-api/environment';
 import { Injectable } from '@nestjs/common';
 import { IPagination } from '../core';
 import { getRandomEmployeeJobPosts } from './employee-job.seed';
@@ -70,53 +71,70 @@ export class EmployeeJobPostService {
 
 		let jobs: IPagination<IEmployeeJobPost>;
 
-		// TODO: we should check here if we have Gauzy AI endpoint in the tenant settings.
-		// If we don't have, we should use Random Seeds. Only if it's development environment, not in production!!!
-		// In production it should just return null if Gauzy AI not configured
-
-		// TODO: replace true with check of .env setting for GauzyAIGraphQLEndpoint
-		if (false) {
+		if (env.gauzyAIGraphQLEndpoint) {
 			const result = await this.gauzyAIService.getEmployeesJobPosts();
 
-			const jobsResponse = result.data.employeeJobPosts.edges;
+			if (result === null) {
+				if (env.production) {
+					// OK, so for some reason connection go Gauzy AI failed, we can't get jobs ...
+					jobs = {
+						items: [],
+						total: 0
+					};
+				} else {
+					// In development, even if connection failed, we want to show fake jobs in UI
+					jobs = await getRandomEmployeeJobPosts(
+						employees,
+						data.page,
+						data.limit
+					);
+				}
+			} else {
+				const jobsResponse = result.data.employeeJobPosts.edges;
 
-			const jobsConverted = await Promise.all(
-				jobsResponse.map(async (jo) => {
-					// TODO: here should be code to find one employee by j.employee.externalEmployeeId.
-					// But because that values come for now as null, we just use first employee for now
-					const employee = employees[0];
+				const jobsConverted = await Promise.all(
+					jobsResponse.map(async (jo) => {
+						// TODO: here should be code to find one employee by j.employee.externalEmployeeId.
+						// But because that values come for now as null, we just use first employee for now
+						const employee = employees[0];
 
-					const j = jo.node;
-					const job = new EmployeeJobPost();
+						const j = jo.node;
+						const job = new EmployeeJobPost();
 
-					job.employee = employee;
-					job.employeeId = employee.id;
+						job.employee = employee;
+						job.employeeId = employee.id;
 
-					job.isApplied = j.isApplied;
-					job.appliedDate = j.appliedDate;
+						job.isApplied = j.isApplied;
+						job.appliedDate = j.appliedDate;
 
-					job.jobPostId = j.jobPost.id;
-					job.jobPost = <JobPost>j.jobPost;
+						job.jobPostId = j.jobPost.id;
+						job.jobPost = <JobPost>j.jobPost;
 
-					return job;
-				})
-			);
+						return job;
+					})
+				);
 
-			// TODO: filter jobsConverted using data.page and data.limit
+				// TODO: filter jobsConverted using data.page and data.limit
 
-			jobs = {
-				items: jobsConverted,
-				total: jobsConverted.length
-			};
-
-			// TODO: this jobs contains tons of GraphQL related fields. We should convert all that into Gauzy EmployeeJobPost and JobPost entities!
-			// I.e. here should be mapping, we don't want to return result of GraphQL query here as is!
+				jobs = {
+					items: jobsConverted,
+					total: jobsConverted.length
+				};
+			}
 		} else {
-			jobs = await getRandomEmployeeJobPosts(
-				employees,
-				data.page,
-				data.limit
-			);
+			// If it's production, we should return empty here because we don't want fake jobs in production
+			if (env.production === false) {
+				jobs = await getRandomEmployeeJobPosts(
+					employees,
+					data.page,
+					data.limit
+				);
+			} else {
+				jobs = {
+					items: [],
+					total: 0
+				};
+			}
 		}
 
 		return jobs;
