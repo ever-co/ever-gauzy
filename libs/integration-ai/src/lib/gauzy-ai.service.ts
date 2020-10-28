@@ -18,7 +18,7 @@ import {
 	InMemoryCache,
 	gql
 } from '@apollo/client/core';
-import { IEmployee, IEmployeeUpworkJobsSearchCriterion } from '@gauzy/models';
+import { EmployeeUpworkJobsSearchCriterion, IEmployee } from '@gauzy/models';
 
 @Injectable()
 export class GauzyAIService {
@@ -53,7 +53,7 @@ export class GauzyAIService {
 	// NOTE: I assume you will need to call this method from multiple different CQRS command handlers!
 	public async syncGauzyEmployeeJobSearchCriteria(
 		employee: IEmployee,
-		criteria: IEmployeeUpworkJobsSearchCriterion[]
+		criteria: EmployeeUpworkJobsSearchCriterion[]
 	): Promise<boolean> {
 		// TODO: RUSLAN will call syncEmployee()
 

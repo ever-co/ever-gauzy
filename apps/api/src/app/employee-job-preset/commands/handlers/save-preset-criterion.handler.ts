@@ -1,4 +1,8 @@
-import { MatchingCriterions } from '@gauzy/models';
+import { GauzyAIService } from '@gauzy/integration-ai';
+import {
+	IEmployeeUpworkJobsSearchCriterion,
+	MatchingCriterions
+} from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -21,7 +25,8 @@ export class SavePresetCriterionHandler
 		@InjectRepository(JobPresetUpworkJobSearchCriterion)
 		private readonly jobPresetUpworkJobSearchCriterionRepository: Repository<
 			JobPresetUpworkJobSearchCriterion
-		>
+		>,
+		private gauzyAIService: GauzyAIService
 	) {}
 
 	public async execute(
@@ -37,19 +42,70 @@ export class SavePresetCriterionHandler
 			input.organizationId = employee.organizationId;
 		}
 		input.tenantId = RequestContext.currentTenantId();
-
+		let creation: any;
 		if (input.employeeId) {
-			const creation = new EmployeeUpworkJobsSearchCriterion(input);
-			await this.employeeUpworkJobsSearchCriterionRepository.save(
-				creation
+			const criteriaCounts = await this.employeeUpworkJobsSearchCriterionRepository.count(
+				{
+					employeeId: input.employeeId,
+					jobPresetId: input.jobPresetId
+				}
+			);
+
+			creation = new EmployeeUpworkJobsSearchCriterion(input);
+
+			if (criteriaCounts === 0) {
+				let jobCreation = await this.jobPresetUpworkJobSearchCriterionRepository.find(
+					{
+						jobPresetId: input.jobPresetId
+					}
+				);
+				let found = false;
+				jobCreation = jobCreation.map((item) => {
+					if (creation && creation.id === item.id) {
+						item = creation;
+						found = true;
+					}
+					return new EmployeeUpworkJobsSearchCriterion({
+						...item,
+						employeeId: input.employeeId
+					});
+				});
+				if (!found) {
+					jobCreation.push(creation);
+				}
+
+				console.log(jobCreation);
+
+				await this.employeeUpworkJobsSearchCriterionRepository.save(
+					jobCreation
+				);
+			} else {
+				await this.employeeUpworkJobsSearchCriterionRepository.save(
+					creation
+				);
+			}
+
+			const employee = await this.employeeRepository.findOne(
+				input.employeeId
+			);
+			const criteria = await this.employeeUpworkJobsSearchCriterionRepository.find(
+				{
+					employeeId: input.employeeId,
+					jobPresetId: input.jobPresetId
+				}
+			);
+
+			this.gauzyAIService.syncGauzyEmployeeJobSearchCriteria(
+				employee,
+				criteria
 			);
 			return creation;
 		} else {
-			const creation = new JobPresetUpworkJobSearchCriterion(input);
+			creation = new JobPresetUpworkJobSearchCriterion(input);
 			await this.jobPresetUpworkJobSearchCriterionRepository.save(
 				creation
 			);
-			return creation;
 		}
+		return creation;
 	}
 }
