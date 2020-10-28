@@ -77,11 +77,11 @@ export interface EmployeeUpworkJobsSearchCriterion
 
 // Below entities are used in Sync with Gauzy AI
 
-export interface IEmployeeUpworkJobsSearchCriterion {
-	category?: string;
-	categoryId?: string;
-	occupation?: string;
-	occupationId?: string;
-	jobType: string;
-	keyword: string;
-}
+// export interface IEmployeeUpworkJobsSearchCriterion {
+// 	category?: string;
+// 	categoryId?: string;
+// 	occupation?: string;
+// 	occupationId?: string;
+// 	jobType: string;
+// 	keyword: string;
+// }
