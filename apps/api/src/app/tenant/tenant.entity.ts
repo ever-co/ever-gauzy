@@ -20,6 +20,7 @@ export class Tenant extends Base implements ITenant {
 	@JoinColumn()
 	organizations?: IOrganization[];
 
+	@ApiProperty({ type: RolePermissions })
 	@OneToMany(
 		(type) => RolePermissions,
 		(rolePermission) => rolePermission.tenant

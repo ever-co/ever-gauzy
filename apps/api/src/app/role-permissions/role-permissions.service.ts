@@ -4,7 +4,7 @@ import { Repository, FindConditions, UpdateResult } from 'typeorm';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { RolePermissions } from './role-permissions.entity';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { RolesEnum, ITenant } from '@gauzy/models';
+import { RolesEnum, ITenant, IRole, IRolePermission } from '@gauzy/models';
 import { Role } from '../role/role.entity';
 import { defaultRolePermissions } from './role-permissions.seed';
 
@@ -14,9 +14,9 @@ export class RolePermissionsService extends TenantAwareCrudService<
 > {
 	constructor(
 		@InjectRepository(RolePermissions)
-		private readonly RolePermissionsRepository: Repository<RolePermissions>
+		private readonly rolePermissionsRepository: Repository<RolePermissions>
 	) {
-		super(RolePermissionsRepository);
+		super(rolePermissionsRepository);
 	}
 
 	public async update(
@@ -59,5 +59,40 @@ export class RolePermissionsService extends TenantAwareCrudService<
 			rolePermission.tenant = tenant;
 			this.create(rolePermission);
 		});
+	}
+
+	public async updateRolesAndPermissions(
+		tenants: ITenant[],
+		roles: IRole[]
+	): Promise<IRolePermission[]> {
+		if (!tenants.length) {
+			return;
+		}
+
+		const rolesPermissions: IRolePermission[] = [];
+		for await (const tenant of tenants) {
+			for await (const role of roles) {
+				const defaultPermissions = defaultRolePermissions.find(
+					(defaultRole) => role.name === defaultRole.role
+				);
+				if (
+					defaultPermissions &&
+					defaultPermissions['defaultEnabledPermissions']
+				) {
+					const { defaultEnabledPermissions } = defaultPermissions;
+					defaultEnabledPermissions.forEach((p) => {
+						const rolePermission = new RolePermissions();
+						rolePermission.roleId = role.id;
+						rolePermission.permission = p;
+						rolePermission.enabled = true;
+						rolePermission.tenant = tenant;
+						rolesPermissions.push(rolePermission);
+					});
+				}
+			}
+		}
+
+		await this.rolePermissionsRepository.save(rolesPermissions);
+		return rolesPermissions;
 	}
 }

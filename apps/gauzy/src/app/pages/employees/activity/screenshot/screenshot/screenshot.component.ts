@@ -7,7 +7,7 @@ import {
 	IScreenshotMap
 } from '@gauzy/models';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, filter } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
 import { toUTC, toLocal } from '@gauzy/utils';
@@ -46,7 +46,10 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((organization: IOrganization) => {
 				this.organization = organization;
 				this.updateLogs$.next();
@@ -69,9 +72,11 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 		if (!this.organization) {
 			return;
 		}
+		if (!this.request) {
+			return;
+		}
 
-		const { employeeIds, startDate, endDate } = this.request;
-
+		const { employeeIds = [], startDate, endDate } = this.request;
 		const request: IGetTimeSlotInput = {
 			organizationId: this.organization.id,
 			tenantId: this.organization.tenantId,
