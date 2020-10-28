@@ -11,8 +11,17 @@ type UpworkJobsSearchCriterion {
 	occupationId: String
 	jobType: String!
 	keyword: String!
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean!
+	isArchived: Boolean!
 	employee: Employee!
 }
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
 
 type Employee {
 	id: ID
@@ -21,6 +30,10 @@ type Employee {
 	lastName: String
 	name: String
 	jobType: String
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean!
+	isArchived: Boolean!
 	upworkJobSearchCriteria(
 		"""
 		Limit or page results.
@@ -60,14 +73,9 @@ input OffsetPaging {
 input UpworkJobsSearchCriterionFilter {
 	and: [UpworkJobsSearchCriterionFilter!]
 	or: [UpworkJobsSearchCriterionFilter!]
+	id: IDFilterComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
-	id: IDFilterComparison
-}
-
-input BooleanFieldComparison {
-	is: Boolean
-	isNot: Boolean
 }
 
 input IDFilterComparison {
@@ -87,6 +95,11 @@ input IDFilterComparison {
 	notIn: [ID!]
 }
 
+input BooleanFieldComparison {
+	is: Boolean
+	isNot: Boolean
+}
+
 input UpworkJobsSearchCriterionSort {
 	field: UpworkJobsSearchCriterionSortFields!
 	direction: SortDirection!
@@ -94,9 +107,9 @@ input UpworkJobsSearchCriterionSort {
 }
 
 enum UpworkJobsSearchCriterionSortFields {
+	id
 	isActive
 	isArchived
-	id
 }
 
 """
@@ -118,9 +131,9 @@ enum SortNulls {
 input UpworkJobsSearchCriterionAggregateFilter {
 	and: [UpworkJobsSearchCriterionAggregateFilter!]
 	or: [UpworkJobsSearchCriterionAggregateFilter!]
+	id: IDFilterComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
-	id: IDFilterComparison
 }
 
 type JobPost {
@@ -151,12 +164,11 @@ type JobPost {
 	searchOccupationId: String
 	searchJobType: String
 	searchKeyword: String
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean!
+	isArchived: Boolean!
 }
-
-"""
-A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
-"""
-scalar DateTime
 
 type EmployeeJobPost {
 	id: ID
@@ -164,6 +176,10 @@ type EmployeeJobPost {
 	jobPostId: String!
 	isApplied: Boolean
 	appliedDate: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean!
+	isArchived: Boolean!
 	jobPost: JobPost!
 	employee: Employee!
 }
@@ -203,6 +219,10 @@ type JobPostDeleteResponse {
 	searchOccupationId: String
 	searchJobType: String
 	searchKeyword: String
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
 }
 
 type UpdateManyResponse {
@@ -269,9 +289,9 @@ type JobPostConnection {
 }
 
 type JobPostCountAggregate {
+	id: Int
 	isActive: Int
 	isArchived: Int
-	id: Int
 }
 
 type JobPostMinAggregate {
@@ -297,6 +317,10 @@ type UpworkJobsSearchCriterionDeleteResponse {
 	occupationId: String
 	jobType: String
 	keyword: String
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
 }
 
 type UpworkJobsSearchCriterionEdge {
@@ -329,9 +353,9 @@ type UpworkJobsSearchCriterionConnection {
 }
 
 type UpworkJobsSearchCriterionCountAggregate {
+	id: Int
 	isActive: Int
 	isArchived: Int
-	id: Int
 }
 
 type UpworkJobsSearchCriterionMinAggregate {
@@ -355,6 +379,10 @@ type EmployeeDeleteResponse {
 	lastName: String
 	name: String
 	jobType: String
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
 }
 
 type EmployeeEdge {
@@ -387,20 +415,23 @@ type EmployeeConnection {
 }
 
 type EmployeeCountAggregate {
-	isActive: Int
-	isArchived: Int
 	id: Int
 	externalEmployeeId: Int
+	jobType: Int
+	isActive: Int
+	isArchived: Int
 }
 
 type EmployeeMinAggregate {
 	id: ID
 	externalEmployeeId: String
+	jobType: String
 }
 
 type EmployeeMaxAggregate {
 	id: ID
 	externalEmployeeId: String
+	jobType: String
 }
 
 type EmployeeAggregateResponse {
@@ -410,9 +441,9 @@ type EmployeeAggregateResponse {
 }
 
 type EmployeeUpworkJobSearchCriteriaCountAggregate {
+	id: Int
 	isActive: Int
 	isArchived: Int
-	id: Int
 }
 
 type EmployeeUpworkJobSearchCriteriaMinAggregate {
@@ -435,6 +466,10 @@ type EmployeeJobPostDeleteResponse {
 	jobPostId: String
 	isApplied: Boolean
 	appliedDate: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
 }
 
 type EmployeeJobPostEdge {
@@ -467,10 +502,10 @@ type EmployeeJobPostConnection {
 }
 
 type EmployeeJobPostCountAggregate {
-	isActive: Int
-	isArchived: Int
 	id: Int
 	isApplied: Int
+	isActive: Int
+	isArchived: Int
 }
 
 type EmployeeJobPostMinAggregate {
@@ -627,9 +662,9 @@ input CursorPaging {
 input JobPostFilter {
 	and: [JobPostFilter!]
 	or: [JobPostFilter!]
+	id: IDFilterComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
-	id: IDFilterComparison
 }
 
 input JobPostSort {
@@ -639,26 +674,27 @@ input JobPostSort {
 }
 
 enum JobPostSortFields {
+	id
 	isActive
 	isArchived
-	id
 }
 
 input JobPostAggregateFilter {
 	and: [JobPostAggregateFilter!]
 	or: [JobPostAggregateFilter!]
+	id: IDFilterComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
-	id: IDFilterComparison
 }
 
 input EmployeeFilter {
 	and: [EmployeeFilter!]
 	or: [EmployeeFilter!]
-	isActive: BooleanFieldComparison
-	isArchived: BooleanFieldComparison
 	id: IDFilterComparison
 	externalEmployeeId: StringFieldComparison
+	jobType: StringFieldComparison
+	isActive: BooleanFieldComparison
+	isArchived: BooleanFieldComparison
 }
 
 input StringFieldComparison {
@@ -685,28 +721,30 @@ input EmployeeSort {
 }
 
 enum EmployeeSortFields {
-	isActive
-	isArchived
 	id
 	externalEmployeeId
+	jobType
+	isActive
+	isArchived
 }
 
 input EmployeeAggregateFilter {
 	and: [EmployeeAggregateFilter!]
 	or: [EmployeeAggregateFilter!]
-	isActive: BooleanFieldComparison
-	isArchived: BooleanFieldComparison
 	id: IDFilterComparison
 	externalEmployeeId: StringFieldComparison
+	jobType: StringFieldComparison
+	isActive: BooleanFieldComparison
+	isArchived: BooleanFieldComparison
 }
 
 input EmployeeJobPostFilter {
 	and: [EmployeeJobPostFilter!]
 	or: [EmployeeJobPostFilter!]
-	isActive: BooleanFieldComparison
-	isArchived: BooleanFieldComparison
 	id: IDFilterComparison
 	isApplied: BooleanFieldComparison
+	isActive: BooleanFieldComparison
+	isArchived: BooleanFieldComparison
 }
 
 input EmployeeJobPostSort {
@@ -716,19 +754,19 @@ input EmployeeJobPostSort {
 }
 
 enum EmployeeJobPostSortFields {
-	isActive
-	isArchived
 	id
 	isApplied
+	isActive
+	isArchived
 }
 
 input EmployeeJobPostAggregateFilter {
 	and: [EmployeeJobPostAggregateFilter!]
 	or: [EmployeeJobPostAggregateFilter!]
-	isActive: BooleanFieldComparison
-	isArchived: BooleanFieldComparison
 	id: IDFilterComparison
 	isApplied: BooleanFieldComparison
+	isActive: BooleanFieldComparison
+	isArchived: BooleanFieldComparison
 }
 
 type Mutation {
@@ -811,9 +849,9 @@ input DeleteManyJobPostsInput {
 input JobPostDeleteFilter {
 	and: [JobPostDeleteFilter!]
 	or: [JobPostDeleteFilter!]
+	id: IDFilterComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
-	id: IDFilterComparison
 }
 
 input UpdateOneJobPostInput {
@@ -856,6 +894,10 @@ input UpdateJobPost {
 	searchOccupationId: String
 	searchJobType: String
 	searchKeyword: String
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
 }
 
 input UpdateManyJobPostsInput {
@@ -873,9 +915,9 @@ input UpdateManyJobPostsInput {
 input JobPostUpdateFilter {
 	and: [JobPostUpdateFilter!]
 	or: [JobPostUpdateFilter!]
+	id: IDFilterComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
-	id: IDFilterComparison
 }
 
 input CreateOneJobPostInput {
@@ -913,6 +955,10 @@ input CreateJobPost {
 	searchOccupationId: String
 	searchJobType: String
 	searchKeyword: String
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
 }
 
 input CreateManyJobPostsInput {
@@ -932,9 +978,9 @@ input DeleteManyUpworkJobsSearchCriteriaInput {
 input UpworkJobsSearchCriterionDeleteFilter {
 	and: [UpworkJobsSearchCriterionDeleteFilter!]
 	or: [UpworkJobsSearchCriterionDeleteFilter!]
+	id: IDFilterComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
-	id: IDFilterComparison
 }
 
 input UpdateOneUpworkJobsSearchCriterionInput {
@@ -958,6 +1004,10 @@ input UpdateUpworkJobsSearchCriterion {
 	occupationId: String
 	jobType: String
 	keyword: String
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
 }
 
 input UpdateManyUpworkJobsSearchCriteriaInput {
@@ -975,9 +1025,9 @@ input UpdateManyUpworkJobsSearchCriteriaInput {
 input UpworkJobsSearchCriterionUpdateFilter {
 	and: [UpworkJobsSearchCriterionUpdateFilter!]
 	or: [UpworkJobsSearchCriterionUpdateFilter!]
+	id: IDFilterComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
-	id: IDFilterComparison
 }
 
 input CreateOneUpworkJobsSearchCriterionInput {
@@ -996,6 +1046,10 @@ input CreateUpworkJobsSearchCriterion {
 	occupationId: String
 	jobType: String
 	keyword: String
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
 }
 
 input CreateManyUpworkJobsSearchCriteriaInput {
@@ -1027,10 +1081,11 @@ input DeleteManyEmployeesInput {
 input EmployeeDeleteFilter {
 	and: [EmployeeDeleteFilter!]
 	or: [EmployeeDeleteFilter!]
-	isActive: BooleanFieldComparison
-	isArchived: BooleanFieldComparison
 	id: IDFilterComparison
 	externalEmployeeId: StringFieldComparison
+	jobType: StringFieldComparison
+	isActive: BooleanFieldComparison
+	isArchived: BooleanFieldComparison
 }
 
 input UpdateOneEmployeeInput {
@@ -1052,6 +1107,10 @@ input UpdateEmployee {
 	lastName: String
 	name: String
 	jobType: String
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
 }
 
 input UpdateManyEmployeesInput {
@@ -1069,10 +1128,11 @@ input UpdateManyEmployeesInput {
 input EmployeeUpdateFilter {
 	and: [EmployeeUpdateFilter!]
 	or: [EmployeeUpdateFilter!]
-	isActive: BooleanFieldComparison
-	isArchived: BooleanFieldComparison
 	id: IDFilterComparison
 	externalEmployeeId: StringFieldComparison
+	jobType: StringFieldComparison
+	isActive: BooleanFieldComparison
+	isArchived: BooleanFieldComparison
 }
 
 input CreateOneEmployeeInput {
@@ -1089,6 +1149,10 @@ input CreateEmployee {
 	lastName: String
 	name: String
 	jobType: String
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
 }
 
 input CreateManyEmployeesInput {
@@ -1120,10 +1184,10 @@ input DeleteManyEmployeeJobPostsInput {
 input EmployeeJobPostDeleteFilter {
 	and: [EmployeeJobPostDeleteFilter!]
 	or: [EmployeeJobPostDeleteFilter!]
-	isActive: BooleanFieldComparison
-	isArchived: BooleanFieldComparison
 	id: IDFilterComparison
 	isApplied: BooleanFieldComparison
+	isActive: BooleanFieldComparison
+	isArchived: BooleanFieldComparison
 }
 
 input UpdateOneEmployeeJobPostInput {
@@ -1144,6 +1208,10 @@ input UpdateEmployeeJobPost {
 	jobPostId: String
 	isApplied: Boolean
 	appliedDate: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
 }
 
 input UpdateManyEmployeeJobPostsInput {
@@ -1161,10 +1229,10 @@ input UpdateManyEmployeeJobPostsInput {
 input EmployeeJobPostUpdateFilter {
 	and: [EmployeeJobPostUpdateFilter!]
 	or: [EmployeeJobPostUpdateFilter!]
-	isActive: BooleanFieldComparison
-	isArchived: BooleanFieldComparison
 	id: IDFilterComparison
 	isApplied: BooleanFieldComparison
+	isActive: BooleanFieldComparison
+	isArchived: BooleanFieldComparison
 }
 
 input CreateOneEmployeeJobPostInput {
@@ -1180,6 +1248,10 @@ input CreateEmployeeJobPost {
 	jobPostId: String
 	isApplied: Boolean
 	appliedDate: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
 }
 
 input CreateManyEmployeeJobPostsInput {
@@ -1240,9 +1312,9 @@ input DeleteOneJobPostSubscriptionFilterInput {
 input JobPostSubscriptionFilter {
 	and: [JobPostSubscriptionFilter!]
 	or: [JobPostSubscriptionFilter!]
+	id: IDFilterComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
-	id: IDFilterComparison
 }
 
 input UpdateOneJobPostSubscriptionFilterInput {
@@ -1269,9 +1341,9 @@ input DeleteOneUpworkJobsSearchCriterionSubscriptionFilterInput {
 input UpworkJobsSearchCriterionSubscriptionFilter {
 	and: [UpworkJobsSearchCriterionSubscriptionFilter!]
 	or: [UpworkJobsSearchCriterionSubscriptionFilter!]
+	id: IDFilterComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
-	id: IDFilterComparison
 }
 
 input UpdateOneUpworkJobsSearchCriterionSubscriptionFilterInput {
@@ -1298,10 +1370,11 @@ input DeleteOneEmployeeSubscriptionFilterInput {
 input EmployeeSubscriptionFilter {
 	and: [EmployeeSubscriptionFilter!]
 	or: [EmployeeSubscriptionFilter!]
-	isActive: BooleanFieldComparison
-	isArchived: BooleanFieldComparison
 	id: IDFilterComparison
 	externalEmployeeId: StringFieldComparison
+	jobType: StringFieldComparison
+	isActive: BooleanFieldComparison
+	isArchived: BooleanFieldComparison
 }
 
 input UpdateOneEmployeeSubscriptionFilterInput {
@@ -1328,10 +1401,10 @@ input DeleteOneEmployeeJobPostSubscriptionFilterInput {
 input EmployeeJobPostSubscriptionFilter {
 	and: [EmployeeJobPostSubscriptionFilter!]
 	or: [EmployeeJobPostSubscriptionFilter!]
-	isActive: BooleanFieldComparison
-	isArchived: BooleanFieldComparison
 	id: IDFilterComparison
 	isApplied: BooleanFieldComparison
+	isActive: BooleanFieldComparison
+	isArchived: BooleanFieldComparison
 }
 
 input UpdateOneEmployeeJobPostSubscriptionFilterInput {

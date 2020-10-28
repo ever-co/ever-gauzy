@@ -37,4 +37,9 @@ export class JobPost extends Model implements IJobPost {
 	searchOccupationId?: string;
 	searchJobType?: string;
 	searchKeyword?: string;
+
+	createdAt?: string;
+	updatedAt?: string;
+	isActive: boolean;
+	isArchived: boolean;
 }

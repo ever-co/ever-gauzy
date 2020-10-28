@@ -5,7 +5,12 @@ import { GauzyAIService } from '@gauzy/integration-ai';
 import { Employee } from '../employee/employee.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IEmployeeJobPost, IGetEmployeeJobPostInput } from '@gauzy/models';
+import {
+	IEmployeeJobPost,
+	IGetEmployeeJobPostInput,
+	IUpdateEmployeeJobPostAppliedResult,
+	JobPostSourceEnum
+} from '@gauzy/models';
 import { EmployeeJobPost } from './employee-job.entity';
 import { JobPost } from './jobPost.entity';
 
@@ -17,6 +22,45 @@ export class EmployeeJobPostService {
 		private readonly gauzyAIService: GauzyAIService
 	) {}
 
+	/**
+	 * Updates job visibility
+	 * @param hide Should job be hidden or visible. This will set isActive field to false in Gauzy AI
+	 * @param employeeId If employeeId set, job will be set not active only for that specific employee (using EmployeeJobPost record update in Gauzy AI)
+	 * If employeeId is not set, job will be set not active for all employees (using JobPost record update in Gauzy AI)
+	 * @param providerCode e.g. 'upwork'
+	 * @param providerJobId Unique job id in the provider, e.g. in Upwork
+	 */
+	public async updateVisibility(
+		hide: boolean = true,
+		employeeId: string | undefined,
+		providerCode: string,
+		providerJobId: string
+	): Promise<boolean> {
+		return true;
+	}
+
+	/**
+	 * Updates if Employee Applied to a job
+	 * @param applied This will set isApplied and appliedDate fields in Gauzy AI
+	 * @param employeeId Employee who applied for a job
+	 * @param providerCode e.g. 'upwork'
+	 * @param providerJobId Unique job id in the provider, e.g. in Upwork
+	 */
+	public async updateApplied(
+		applied: boolean = true,
+		employeeId: string,
+		providerCode: string,
+		providerJobId: string
+	): Promise<IUpdateEmployeeJobPostAppliedResult> {
+		return {
+			isRedirectRequired: true
+		};
+	}
+
+	/**
+	 * Find all available Jobs matched to Gauzy Employees
+	 * @param data
+	 */
 	public async findAll(
 		data: IGetEmployeeJobPostInput
 	): Promise<IPagination<IEmployeeJobPost>> {

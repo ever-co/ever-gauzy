@@ -10,4 +10,8 @@ export class EmployeeJobPost extends Model implements IEmployeeJobPost {
 	isApplied?: boolean;
 	appliedDate?: string;
 	jobPost: JobPost;
+	createdAt?: string;
+	updatedAt?: string;
+	isActive: boolean;
+	isArchived: boolean;
 }

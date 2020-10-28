@@ -24,13 +24,17 @@ export interface IEmployeeJobPost {
 	isApplied?: boolean;
 	appliedDate?: string;
 	jobPost: IJobPost;
+	createdAt?: string;
+	updatedAt?: string;
+	isActive: boolean;
+	isArchived: boolean;
 }
 
 export interface IJobPost {
 	jobPostId: string;
 	id?: string;
-	providerCode: string;
-	providerJobId: string;
+	providerCode: string; // same as jobSource field, but as a string, e.g. 'upwork'
+	providerJobId: string; // unique ID of job in the source (e.g. in Upwork)
 	title: string;
 	description: string;
 	jobDateCreated?: string;
@@ -57,6 +61,11 @@ export interface IJobPost {
 	searchOccupationId?: string;
 	searchJobType?: string;
 	searchKeyword?: string;
+
+	createdAt?: string;
+	updatedAt?: string;
+	isActive: boolean;
+	isArchived: boolean;
 }
 
 export enum JobPostSourceEnum {
@@ -73,4 +82,8 @@ export enum JobPostStatusEnum {
 export enum JobPostTypeEnum {
 	HOURLY = 'Hourly',
 	FIX_PRICE = 'Fixed Price'
+}
+
+export interface IUpdateEmployeeJobPostAppliedResult {
+	isRedirectRequired: boolean;
 }

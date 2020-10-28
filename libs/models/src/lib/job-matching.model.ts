@@ -74,14 +74,3 @@ export interface EmployeeUpworkJobsSearchCriterion
 	hourly?: boolean; // TODO: replace with jobType
 	fixPrice?: boolean; // TODO: replace with jobType
 }
-
-// Below entities are used in Sync with Gauzy AI
-
-// export interface IEmployeeUpworkJobsSearchCriterion {
-// 	category?: string;
-// 	categoryId?: string;
-// 	occupation?: string;
-// 	occupationId?: string;
-// 	jobType: string;
-// 	keyword: string;
-// }
