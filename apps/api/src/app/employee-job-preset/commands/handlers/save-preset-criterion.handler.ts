@@ -1,8 +1,5 @@
 import { GauzyAIService } from '@gauzy/integration-ai';
-import {
-	IEmployeeUpworkJobsSearchCriterion,
-	MatchingCriterions
-} from '@gauzy/models';
+import { MatchingCriterions } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
