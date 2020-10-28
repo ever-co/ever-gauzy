@@ -118,13 +118,20 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				}
 			});
 
-		this.store.user$.pipe(untilDestroyed(this)).subscribe((user) => {
-			this.user = user;
-			this.isEmployee = !!user && !!user.employeeId;
+		this.store.user$
+			.pipe(
+				filter((user) => !!user),
+				untilDestroyed(this)
+			)
+			.subscribe((user) => {
+				this.user = user;
+				this.isEmployee = !!user && !!user.employeeId;
 
-			//check timer status for employee
-			this._checkTimerStatus();
-		});
+				//check timer status for employee
+				if (this.isEmployee) {
+					this._checkTimerStatus();
+				}
+			});
 
 		this.themeService
 			.onThemeChange()
