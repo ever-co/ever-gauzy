@@ -23,7 +23,7 @@ export const editButtonVisible = () => {
 };
 
 export const clickEditButton = () => {
-	clickButtonByIndex(EditUserPage.editButtonCss, 4);
+	clickButtonByIndex(EditUserPage.editButtonCss, 0);
 };
 
 export const orgTabButtonVisible = () => {

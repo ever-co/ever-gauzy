@@ -46,7 +46,6 @@ describe('Organization tags test', () => {
 		organizationTagsUserPage.tagsTableDataVisible();
 		organizationTagsUserPage.selectTableRow(0);
 		organizationTagsUserPage.selectTableRow(0);
-		organizationTagsUserPage.selectTableRow(0);
 		organizationTagsUserPage.editTagButtonVisible();
 		organizationTagsUserPage.clickEditTagButton();
 		organizationTagsUserPage.enterTagNameData(
@@ -64,7 +63,6 @@ describe('Organization tags test', () => {
 	});
 	it('Should be able to delete tag', () => {
 		organizationTagsUserPage.tagsTableDataVisible();
-		organizationTagsUserPage.selectTableRow(0);
 		organizationTagsUserPage.selectTableRow(0);
 		organizationTagsUserPage.selectTableRow(0);
 		organizationTagsUserPage.deleteTagButtonVisible();
