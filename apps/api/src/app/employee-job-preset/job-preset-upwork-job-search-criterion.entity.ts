@@ -24,25 +24,25 @@ export class JobPresetUpworkJobSearchCriterion
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
-	jobSearchOccupationId?: string;
+	occupationId?: string;
 
 	@ManyToOne(
 		() => JobSearchOccupation,
-		(jobSearchOccupation) => jobSearchOccupation.jobPresetCriterions
+		(occupation) => occupation.jobPresetCriterions
 	)
-	jobSearchOccupation?: JobSearchOccupation;
+	occupation?: JobSearchOccupation;
 
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
-	jobSearchCategoryId?: string;
+	categoryId?: string;
 
 	@ManyToOne(
 		() => JobSearchCategory,
-		(jobSearchCategory) => jobSearchCategory.jobPresetCriterions
+		(category) => category.jobPresetCriterions
 	)
-	jobSearchCategory?: JobSearchCategory;
+	category?: JobSearchCategory;
 
 	@ApiProperty({ type: String })
 	@IsString()

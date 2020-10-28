@@ -1,15 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import {
-	EmployeePresetInput,
-	GetJobPresetCriterionInput,
-	GetJobPresetInput,
+	IEmployeePresetInput,
+	IGetJobPresetCriterionInput,
+	IGetJobPresetInput,
 	IOrganization,
 	JobPostSourceEnum,
-	JobPreset,
-	JobPresetUpworkJobSearchCriterion,
-	JobSearchCategory,
-	JobSearchOccupation,
-	MatchingCriterions
+	IJobPreset,
+	IJobPresetUpworkJobSearchCriterion,
+	IJobSearchCategory,
+	IJobSearchOccupation,
+	IMatchingCriterions,
+	IEmployee,
+	JobPostTypeEnum
 } from '@gauzy/models';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { JobPresetService } from 'apps/gauzy/src/app/@core/services/job-preset.service';
@@ -28,16 +30,17 @@ import * as _ from 'underscore';
 	styleUrls: ['./matching.component.scss']
 })
 export class MatchingComponent implements OnInit {
-	jobPresets: JobPreset[];
+	jobPresets: IJobPreset[];
 	criterionForm = {
 		jobSource: JobPostSourceEnum.UPWORK,
 		jobPresetId: null
 	};
 	JobPostSourceEnum = JobPostSourceEnum;
-	categories: JobSearchCategory[] = [];
-	occupations: JobSearchOccupation[] = [];
-	criterions: MatchingCriterions[] = [];
-	jobPreset: JobPreset;
+	JobPostTypeEnum = JobPostTypeEnum;
+	categories: IJobSearchCategory[] = [];
+	occupations: IJobSearchOccupation[] = [];
+	criterions: IMatchingCriterions[] = [];
+	jobPreset: IJobPreset;
 	selectedEmployee: SelectedEmployee;
 	selectedOrganization: IOrganization;
 
@@ -58,7 +61,6 @@ export class MatchingComponent implements OnInit {
 			.subscribe((organization) => {
 				setTimeout(async () => {
 					this.selectedOrganization = organization;
-					console.log(this.selectedOrganization);
 					if (this.selectedOrganization) {
 						this.getJobPresets();
 						this.getCategories();
@@ -113,7 +115,7 @@ export class MatchingComponent implements OnInit {
 	}
 
 	getJobPresets() {
-		const request: GetJobPresetInput = {
+		const request: IGetJobPresetInput = {
 			organizationId: this.selectedOrganization.id
 		};
 		if (this.selectedEmployee && this.selectedEmployee.id) {
@@ -138,7 +140,7 @@ export class MatchingComponent implements OnInit {
 	}
 
 	addPreset(name?: string) {
-		const request: JobPreset = {
+		const request: IJobPreset = {
 			organizationId: this.selectedOrganization.id,
 			name
 		};
@@ -150,7 +152,7 @@ export class MatchingComponent implements OnInit {
 		});
 	}
 
-	async onPresetSelected(jobPreset: JobPreset) {
+	async onPresetSelected(jobPreset: IJobPreset) {
 		this.jobPreset = jobPreset;
 		this.updateEmployeePreset();
 		await this.updateCriterionsData();
@@ -162,7 +164,7 @@ export class MatchingComponent implements OnInit {
 
 	updateEmployeePreset() {
 		if (this.selectedEmployee && this.selectedEmployee.id) {
-			const request: EmployeePresetInput = {
+			const request: IEmployeePresetInput = {
 				source: this.criterionForm.jobSource,
 				jobPresetIds: [this.criterionForm.jobPresetId],
 				employeeId: this.selectedEmployee.id
@@ -175,7 +177,7 @@ export class MatchingComponent implements OnInit {
 		try {
 			if (this.jobPreset) {
 				const id = this.jobPreset.id;
-				const request: GetJobPresetCriterionInput = {};
+				const request: IGetJobPresetCriterionInput = {};
 				if (this.selectedEmployee && this.selectedEmployee.id) {
 					request.employeeId = this.selectedEmployee.id;
 				}
@@ -207,13 +209,13 @@ export class MatchingComponent implements OnInit {
 		}
 	}
 
-	addNewCriterion(criterion: MatchingCriterions = {}) {
+	addNewCriterion(criterion: IMatchingCriterions = {}) {
 		this.criterions.push(criterion);
 	}
 
 	saveJobPreset() {
 		if (this.jobPreset) {
-			const request: JobPreset = _.omit(
+			const request: IJobPreset = _.omit(
 				this.jobPreset,
 				'employeeCriterion'
 			);
@@ -222,7 +224,7 @@ export class MatchingComponent implements OnInit {
 				this.jobPreset.employeeCriterions.length > 0
 			) {
 				request.jobPresetCriterions = this.jobPreset.employeeCriterions.map(
-					(employeeCriterion): JobPresetUpworkJobSearchCriterion => {
+					(employeeCriterion): IJobPresetUpworkJobSearchCriterion => {
 						return _.omit(
 							employeeCriterion,
 							'employeeId',
@@ -250,7 +252,7 @@ export class MatchingComponent implements OnInit {
 		}
 	}
 
-	saveCriterion(criterion?: MatchingCriterions) {
+	saveCriterion(criterion?: IMatchingCriterions) {
 		if (this.selectedEmployee && this.selectedEmployee.id) {
 			criterion.employeeId = this.selectedEmployee.id;
 		}
@@ -268,7 +270,7 @@ export class MatchingComponent implements OnInit {
 			});
 	}
 
-	deleteCriterions(index, criterion: MatchingCriterions) {
+	deleteCriterions(index, criterion: IMatchingCriterions) {
 		this.jobPresetService
 			.deleteJobPresetCriterion(criterion.id)
 			.then(() => {

@@ -1,76 +1,74 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { JobPostSourceEnum } from './employee-job.model';
+import { JobPostSourceEnum, JobPostTypeEnum } from './employee-job.model';
 import { IEmployee } from './employee.model';
-import { JobSearchCategory } from './job-search-category.model';
-import { JobSearchOccupation } from './job-search-occupation.model';
+import { IJobSearchCategory } from './job-search-category.model';
+import { IJobSearchOccupation } from './job-search-occupation.model';
 
-export interface JobMatchings {
+export interface IJobMatchings {
 	employeeId?: string;
 	jobSource?: string;
 	preset?: string;
-	criterions?: MatchingCriterions[];
+	criterions?: IMatchingCriterions[];
 }
 
-export interface MatchingCriterions
-	extends EmployeeUpworkJobsSearchCriterion,
-		JobPresetUpworkJobSearchCriterion {}
+export interface IMatchingCriterions
+	extends IEmployeeUpworkJobsSearchCriterion,
+		IJobPresetUpworkJobSearchCriterion {}
 
-export interface JobPreset extends IBasePerTenantAndOrganizationEntityModel {
+export interface IJobPreset extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	employees?: Partial<IEmployee>[];
-	employeeCriterions?: EmployeeUpworkJobsSearchCriterion[];
-	jobPresetCriterions?: JobPresetUpworkJobSearchCriterion[];
+	employeeCriterions?: IEmployeeUpworkJobsSearchCriterion[];
+	jobPresetCriterions?: IJobPresetUpworkJobSearchCriterion[];
 }
 
-export interface EmployeePresetInput {
+export interface IEmployeePresetInput {
 	jobPresetIds?: string[];
 	source?: JobPostSourceEnum;
 	employeeId?: string;
 }
 
-export interface GetJobPresetInput {
+export interface IGetJobPresetInput {
 	search?: string;
 	organizationId?: string;
 	employeeId?: string;
 }
 
-export interface EmployeeJobPreset
+export interface IEmployeeJobPreset
 	extends IBasePerTenantAndOrganizationEntityModel {
 	jobPresetId?: string;
-	jobPreset?: JobPreset;
+	jobPreset?: IJobPreset;
 	employeeId?: string;
 	employee?: IEmployee;
 }
 
-export interface GetJobPresetCriterionInput {
+export interface IGetJobPresetCriterionInput {
 	presetId?: string;
 	employeeId?: string;
 }
 
-export interface JobPresetUpworkJobSearchCriterion
+export interface IJobPresetUpworkJobSearchCriterion
 	extends IBasePerTenantAndOrganizationEntityModel {
 	jobPresetId?: string;
-	jobPreset?: JobPreset;
-	jobSearchOccupationId?: string; // TODO: rename to occupationId
-	jobSearchOccupation?: JobSearchOccupation; // TODO: rename to occupation
-	jobSearchCategoryId?: string; // TODO: rename to categoryId
-	jobSearchCategory?: JobSearchCategory; // TODO: rename to category
+	jobPreset?: IJobPreset;
+	occupationId?: string;
+	occupation?: IJobSearchOccupation;
+	categoryId?: string;
+	category?: IJobSearchCategory;
 	keyword?: string;
-	hourly?: boolean; // TODO: replace with jobType
-	fixPrice?: boolean; // TODO: replace with jobType
+	jobType?: JobPostTypeEnum;
 }
 
-export interface EmployeeUpworkJobsSearchCriterion
+export interface IEmployeeUpworkJobsSearchCriterion
 	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
 	employee?: IEmployee;
 	jobPresetId?: string;
-	jobPreset?: JobPreset;
-	jobSearchOccupationId?: string; // TODO: rename to occupationId
-	jobSearchOccupation?: JobSearchOccupation; // TODO: rename to occupation
-	jobSearchCategoryId?: string; // TODO: rename to categoryId
-	jobSearchCategory?: JobSearchCategory; // TODO: rename to category
+	jobPreset?: IJobPreset;
+	occupationId?: string;
+	occupation?: IJobSearchOccupation;
+	categoryId?: string;
+	category?: IJobSearchCategory;
 	keyword?: string;
-	hourly?: boolean; // TODO: replace with jobType
-	fixPrice?: boolean; // TODO: replace with jobType
+	jobType?: JobPostTypeEnum;
 }
