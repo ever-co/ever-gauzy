@@ -126,7 +126,7 @@
 								<ng-select
 									name="categoryId"
 									[addTag]="createNewCategories"
-									[(ngModel)]="criterion.jobSearchCategoryId"
+									[(ngModel)]="criterion.categoryId"
 									[clearable]="true"
 									[items]="categories"
 									[placeholder]="
@@ -149,9 +149,7 @@
 								<ng-select
 									name="occupationId"
 									[addTag]="createNewOccupations"
-									[(ngModel)]="
-										criterion.jobSearchOccupationId
-									"
+									[(ngModel)]="criterion.occupationId"
 									[clearable]="true"
 									[items]="occupations"
 									[placeholder]="
@@ -167,29 +165,20 @@
 						<div class="row">
 							<label class="d-block col-sm-2"></label>
 							<div class="col-sm">
-								<div class="row">
-									<div class="col-sm-3">
-										<nb-checkbox
-											name="fixPrice"
-											[(ngModel)]="criterion.fixPrice"
-										>
-											{{
-												'JOB_MATCHING.FIX_PRICE'
-													| translate
-											}}</nb-checkbox
-										>
-									</div>
-									<div class="col-sm-3">
-										<nb-checkbox
-											name="hourly"
-											[(ngModel)]="criterion.hourly"
-											>{{
-												'JOB_MATCHING.HOURLY'
-													| translate
-											}}
-										</nb-checkbox>
-									</div>
-								</div>
+								<nb-radio-group
+									name="jobType"
+									[(ngModel)]="criterion.jobType"
+								>
+									<nb-radio
+										*ngFor="
+											let type of JobPostTypeEnum
+												| keyvalue
+										"
+										[value]="type.value"
+									>
+										{{ type.key | titlecase }}
+									</nb-radio>
+								</nb-radio-group>
 							</div>
 
 							<div class="col-auto">

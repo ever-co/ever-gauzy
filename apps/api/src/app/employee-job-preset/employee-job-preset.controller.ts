@@ -12,10 +12,11 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import {
-	EmployeePresetInput,
-	GetJobPresetCriterionInput,
-	GetJobPresetInput,
-	MatchingCriterions
+	IEmployeePresetInput,
+	IGetJobPresetCriterionInput,
+	IGetJobPresetInput,
+	IJobPreset,
+	IMatchingCriterions
 } from '@gauzy/models';
 import { JobPresetService } from './job-preset.service';
 import { JobPreset } from './job-preset.entity';
@@ -39,7 +40,7 @@ export class EmployeeJobPresetController {
 		description: 'Record not found'
 	})
 	@Get()
-	async getAll(@Query() data: GetJobPresetInput) {
+	async getAll(@Query() data: IGetJobPresetInput) {
 		return this.jobPresetService.getAll(data);
 	}
 
@@ -56,7 +57,7 @@ export class EmployeeJobPresetController {
 	@Get(':id')
 	async get(
 		@Param('id') presetId: string,
-		@Query() request: GetJobPresetCriterionInput
+		@Query() request: IGetJobPresetCriterionInput
 	) {
 		return this.jobPresetService.get(presetId, request);
 	}
@@ -74,7 +75,7 @@ export class EmployeeJobPresetController {
 	@Post(':id/criterion')
 	async saveUpdate(
 		@Param('id') jobPresetId: string,
-		@Body() request: MatchingCriterions
+		@Body() request: IMatchingCriterions
 	) {
 		return this.jobPresetService.saveCriterion({ ...request, jobPresetId });
 	}
@@ -105,7 +106,7 @@ export class EmployeeJobPresetController {
 		description: 'Record not found'
 	})
 	@Post('employee')
-	async saveEmployeePreset(@Body() request: EmployeePresetInput) {
+	async saveEmployeePreset(@Body() request: IEmployeePresetInput) {
 		return this.jobPresetService.saveEmployeePreset(request);
 	}
 
@@ -151,7 +152,7 @@ export class EmployeeJobPresetController {
 	})
 	@Get('employee')
 	async getJobPresetEmployeeCriterion(
-		@Query() { employeeId, presetId }: GetJobPresetCriterionInput
+		@Query() { employeeId, presetId }: IGetJobPresetCriterionInput
 	) {
 		return this.jobPresetService.getJobPresetEmployeeCriterion(
 			presetId,
@@ -170,7 +171,7 @@ export class EmployeeJobPresetController {
 		description: 'Record not found'
 	})
 	@Post()
-	async createJobPreset(@Body() request: JobPreset) {
+	async createJobPreset(@Body() request: IJobPreset) {
 		return this.jobPresetService.createJobPreset(request);
 	}
 }

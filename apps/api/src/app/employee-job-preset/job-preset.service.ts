@@ -3,10 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { JobPreset } from './job-preset.entity';
 import {
-	EmployeePresetInput,
-	GetJobPresetCriterionInput,
-	GetJobPresetInput,
-	MatchingCriterions
+	IEmployeePresetInput,
+	IGetJobPresetCriterionInput,
+	IGetJobPresetInput,
+	IJobPreset,
+	IMatchingCriterions
 } from '@gauzy/models';
 import { CrudService } from '../core/crud/crud.service';
 import { JobPresetUpworkJobSearchCriterion } from './job-preset-upwork-job-search-criterion.entity';
@@ -37,7 +38,7 @@ export class JobPresetService extends CrudService<JobPreset> {
 		super(jobPresetRepository);
 	}
 
-	public async getAll(request?: GetJobPresetInput) {
+	public async getAll(request?: IGetJobPresetInput) {
 		const data = await this.jobPresetRepository.find({
 			join: {
 				alias: 'job_preset',
@@ -49,7 +50,7 @@ export class JobPresetService extends CrudService<JobPreset> {
 			order: {
 				name: 'ASC'
 			},
-			where: (qb: SelectQueryBuilder<JobPreset>) => {
+			where: (qb: SelectQueryBuilder<IJobPreset>) => {
 				if (request.search) {
 					qb.andWhere('name LIKE :search', {
 						search: request.search
@@ -76,7 +77,7 @@ export class JobPresetService extends CrudService<JobPreset> {
 		return data;
 	}
 
-	public async get(id: string, request?: GetJobPresetCriterionInput) {
+	public async get(id: string, request?: IGetJobPresetCriterionInput) {
 		const query = this.jobPresetRepository.createQueryBuilder();
 		query.leftJoinAndSelect(
 			`${query.alias}.jobPresetCriterions`,
@@ -112,11 +113,11 @@ export class JobPresetService extends CrudService<JobPreset> {
 		});
 	}
 
-	public async createJobPreset(request?: JobPreset) {
+	public async createJobPreset(request?: IJobPreset) {
 		return this.commandBus.execute(new CreateJobPresetCommand(request));
 	}
 
-	async saveCriterion(request: MatchingCriterions) {
+	async saveCriterion(request: IMatchingCriterions) {
 		return this.commandBus.execute(new SavePresetCriterionCommand(request));
 	}
 
@@ -127,7 +128,7 @@ export class JobPresetService extends CrudService<JobPreset> {
 		return employee.jobPresets;
 	}
 
-	async saveEmployeePreset(request: EmployeePresetInput) {
+	async saveEmployeePreset(request: IEmployeePresetInput) {
 		return this.commandBus.execute(new SaveEmployeePresetCommand(request));
 	}
 

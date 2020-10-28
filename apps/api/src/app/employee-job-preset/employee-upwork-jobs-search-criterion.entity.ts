@@ -1,7 +1,13 @@
 import { Column, Entity, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { EmployeeUpworkJobsSearchCriterion as IEmployeeUpworkJobsSearchCriterion } from '@gauzy/models';
+import {
+	IEmployee,
+	IEmployeeUpworkJobsSearchCriterion,
+	IJobPreset,
+	IJobSearchCategory,
+	IJobSearchOccupation
+} from '@gauzy/models';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 import { JobPreset } from './job-preset.entity';
 import { Employee } from '../employee/employee.entity';
@@ -19,7 +25,7 @@ export class EmployeeUpworkJobsSearchCriterion
 	jobPresetId?: string;
 
 	@ManyToOne(() => JobPreset, (jobPreset) => jobPreset.employeeCriterions)
-	jobPreset?: JobPreset;
+	jobPreset?: IJobPreset;
 
 	@ApiProperty({ type: String })
 	@IsString()
@@ -28,31 +34,31 @@ export class EmployeeUpworkJobsSearchCriterion
 	employeeId?: string;
 
 	@ManyToOne(() => Employee, (employee) => employee.id)
-	employee?: Employee;
+	employee?: IEmployee;
 
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
-	jobSearchOccupationId?: string;
+	occupationId?: string;
 
 	@ManyToOne(
 		() => JobSearchOccupation,
-		(jobSearchOccupation) => jobSearchOccupation.employeeCriterions
+		(occupation) => occupation.employeeCriterions
 	)
-	jobSearchOccupation?: JobSearchOccupation;
+	occupation?: IJobSearchOccupation;
 
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
-	jobSearchCategoryId?: string;
+	categoryId?: string;
 
 	@ManyToOne(
 		() => JobSearchCategory,
-		(jobSearchCategory) => jobSearchCategory.employeeCriterions
+		(category) => category.employeeCriterions
 	)
-	jobSearchCategory?: JobSearchCategory;
+	category?: IJobSearchCategory;
 
 	@ApiProperty({ type: String })
 	@IsString()

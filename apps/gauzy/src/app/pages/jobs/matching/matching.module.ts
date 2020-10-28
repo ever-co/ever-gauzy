@@ -12,7 +12,8 @@ import {
 	NbInputModule,
 	NbSelectModule,
 	NbButtonModule,
-	NbCheckboxModule
+	NbCheckboxModule,
+	NbRadioModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { MomentModule } from 'ngx-moment';
@@ -41,7 +42,8 @@ import { DialogsModule } from '../../../@shared/dialogs';
 		EmployeeMultiSelectModule,
 		NgSelectModule,
 		NbCheckboxModule,
-		DialogsModule
+		DialogsModule,
+		NbRadioModule
 	]
 })
 export class MatchingModule {}

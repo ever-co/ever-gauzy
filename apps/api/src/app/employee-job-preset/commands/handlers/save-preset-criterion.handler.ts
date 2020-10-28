@@ -1,5 +1,5 @@
 import { GauzyAIService } from '@gauzy/integration-ai';
-import { MatchingCriterions } from '@gauzy/models';
+import { IMatchingCriterions } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -28,7 +28,7 @@ export class SavePresetCriterionHandler
 
 	public async execute(
 		command: SavePresetCriterionCommand
-	): Promise<MatchingCriterions> {
+	): Promise<IMatchingCriterions> {
 		const { input } = command;
 
 		if (!input.organizationId) {
@@ -70,9 +70,6 @@ export class SavePresetCriterionHandler
 				if (!found) {
 					jobCreation.push(creation);
 				}
-
-				console.log(jobCreation);
-
 				await this.employeeUpworkJobsSearchCriterionRepository.save(
 					jobCreation
 				);
