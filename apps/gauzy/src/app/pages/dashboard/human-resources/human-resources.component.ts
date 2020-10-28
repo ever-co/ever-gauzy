@@ -7,21 +7,21 @@ import {
 	IOrganization
 } from '@gauzy/models';
 import { NbDialogService } from '@nebular/theme';
-import { Subject } from 'rxjs';
-import { debounceTime, filter, takeUntil } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { EmployeeStatisticsService } from '../../../@core/services/employee-statistics.service';
 import { Store } from '../../../@core/services/store.service';
 import { ProfitHistoryComponent } from '../../../@shared/dashboard/profit-history/profit-history.component';
 import { RecordsHistoryComponent } from '../../../@shared/dashboard/records-history/records-history.component';
 import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-human-resources',
 	templateUrl: './human-resources.component.html',
 	styleUrls: ['./human-resources.component.scss']
 })
 export class HumanResourcesComponent implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
-	loading = true;
+	loading: boolean;
 
 	selectedDate: Date;
 	selectedEmployee: SelectedEmployee;
@@ -54,17 +54,15 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	) {}
 
 	async ngOnInit() {
+		this.loading = true;
 		this.store.selectedEmployee$
 			.pipe(
 				filter((employee) => !!employee),
 				debounceTime(200),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe((employee) => {
-				this.defaultCurrency = null;
-				if (employee) {
-					this.selectedEmployee = employee;
-				}
+				this.selectedEmployee = employee;
 				if (this.selectedDate) {
 					this._loadEmployeeStatistics();
 				}
@@ -72,7 +70,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 		this.store.selectedDate$
 			.pipe(
 				filter((date) => !!date),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe((date) => {
 				this.selectedDate = date;
@@ -83,7 +81,8 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
-				takeUntil(this._ngDestroy$)
+				tap(() => (this.defaultCurrency = null)),
+				untilDestroyed(this)
 			)
 			.subscribe((organization) => {
 				this.selectedOrganization = organization;
@@ -94,15 +93,13 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 					this.defaultCurrency = this.selectedOrganization.currency;
 				}
 			});
-
 		this.store.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((employee) => {
 				if (!employee || !employee.id) {
 					this.navigateToAccounting();
 				}
 			});
-
 		this.loading = false;
 	}
 
@@ -207,8 +204,5 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 		]);
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

@@ -121,4 +121,7 @@
 		class="header-selector organization-selector"
 	></ga-organization-selector>
 </div>
-<ngx-time-tracker></ngx-time-tracker>
+
+<ng-template [ngIf]="user?.employee?.id">
+	<ngx-time-tracker></ngx-time-tracker>
+</ng-template>

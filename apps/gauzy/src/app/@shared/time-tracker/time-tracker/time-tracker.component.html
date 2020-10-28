@@ -131,14 +131,14 @@
 
 		<div class="form-group">
 			<label>{{ 'TIMER_TRACKER.SELECT_CLIENT' | translate }}</label>
-			<gauzy-contact-selector
+			<ga-contact-selector
 				name="organizationContactId"
 				[employeeId]="employeeId"
 				[disabled]="running"
 				[(ngModel)]="organizationContactId"
 				#clientInput="ngModel"
 				[required]="organization?.requireClient"
-			></gauzy-contact-selector>
+			></ga-contact-selector>
 			<div
 				*ngIf="clientInput.invalid && form.submitted"
 				class="invalid-feedback d-block"
@@ -148,7 +148,6 @@
 				</div>
 			</div>
 		</div>
-
 		<div class="form-group">
 			<label>{{ 'TIMER_TRACKER.SELECT_PROJECT' | translate }}</label>
 			<ga-project-selector

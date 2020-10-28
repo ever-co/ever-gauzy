@@ -16,6 +16,7 @@ import { TimesheetService } from '../../timesheet/timesheet.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { filter } from 'rxjs/operators';
+import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -42,7 +43,8 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 		private timesheetService: TimesheetService,
 		private toastrService: ToastrService,
 		private ngxPermissionsService: NgxPermissionsService,
-		private store: Store
+		private store: Store,
+		private _errorHandlingService: ErrorHandlingService
 	) {}
 
 	public get isBillable(): boolean {
@@ -183,7 +185,19 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 			this.form.resetForm();
 			return;
 		}
-		this.timeTrackerService.toggle();
+		this.timeTrackerService
+			.toggle()
+			.then((success) => {
+				console.log(success);
+			})
+			.catch((error) => {
+				if (this.timeTrackerService.interval) {
+					this.timeTrackerService.turnOffTimer();
+				} else {
+					this.timeTrackerService.turnOnTimer();
+				}
+				this._errorHandlingService.handleError(error);
+			});
 	}
 
 	addTime() {

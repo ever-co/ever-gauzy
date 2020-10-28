@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions } from 'typeorm';
+import { Repository } from 'typeorm';
 import { OrganizationProject } from './organization-projects.entity';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { IOrganizationProjectsFindInput } from '@gauzy/models';
+import { RequestContext } from '../core/context';
 
 @Injectable()
 export class OrganizationProjectsService extends TenantAwareCrudService<
@@ -19,16 +21,33 @@ export class OrganizationProjectsService extends TenantAwareCrudService<
 
 	async findByEmployee(
 		id: string,
-		filter?: FindManyOptions<OrganizationProject>
+		findInput?: IOrganizationProjectsFindInput
 	): Promise<any> {
-		const query = this.organizationProjectsRepository
-			.createQueryBuilder('organization_project')
-			.leftJoin('organization_project.members', 'member');
-		if (filter && filter.where) {
-			query.where(filter.where);
+		const tenantId = RequestContext.currentTenantId();
+		const query = this.organizationProjectsRepository.createQueryBuilder(
+			'organization_project'
+		);
+		query
+			.leftJoin('organization_project.members', 'member')
+			.where('member.id = :id', { id })
+			.andWhere(`${query.alias}.tenantId = :tenantId`, {
+				tenantId
+			});
+		if (findInput && findInput['organizationId']) {
+			const { organizationId } = findInput;
+			query.andWhere(`${query.alias}.organizationId = :organizationId`, {
+				organizationId
+			});
 		}
-		query.andWhere('member.id = :id', { id });
-
+		if (findInput && findInput['organizationContactId']) {
+			const { organizationContactId } = findInput;
+			query.andWhere(
+				`${query.alias}.organizationContactId = :organizationContactId`,
+				{
+					organizationContactId
+				}
+			);
+		}
 		return await query.getMany();
 	}
 

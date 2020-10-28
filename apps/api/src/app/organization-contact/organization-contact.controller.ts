@@ -21,6 +21,7 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import { AuthGuard } from '@nestjs/passport';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
 
 @ApiTags('OrganizationContact')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -49,9 +50,10 @@ export class OrganizationContactController extends CrudController<
 	})
 	@Get('employee/:id')
 	async findByEmployee(
-		@Param('id') id: string
+		@Param('id') id: string,
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<OrganizationContact>> {
-		return this.organizationContactService.findByEmployee(id);
+		return this.organizationContactService.findByEmployee(id, data);
 	}
 
 	@ApiOperation({

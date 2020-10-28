@@ -18,7 +18,8 @@ import { Subject } from 'rxjs';
 	selector: 'ga-edit-employee-departments',
 	templateUrl: './edit-employee-projects.component.html'
 })
-export class EditEmployeeProjectsComponent extends TranslationBaseComponent
+export class EditEmployeeProjectsComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	organizationProjects: IOrganizationProject[] = [];
 	employeeProjects: IOrganizationProject[] = [];
@@ -98,8 +99,11 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent
 		if (!this.organization) {
 			return;
 		}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 		this.employeeProjects = await this.organizationProjectsService.getAllByEmployee(
-			this.selectedEmployee.id
+			this.selectedEmployee.id,
+			{ organizationId, tenantId }
 		);
 	}
 
@@ -107,7 +111,8 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent
 		if (!this.organization) {
 			return;
 		}
-		const { id: organizationId, tenantId } = this.organization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 		const { items = [] } = await this.organizationProjectsService.getAll(
 			[],
 			{

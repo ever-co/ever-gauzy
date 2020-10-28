@@ -27,10 +27,17 @@ export class OrganizationContactService {
 			.toPromise();
 	}
 
-	getAllByEmployee(id: string): Promise<IOrganizationContact[]> {
+	getAllByEmployee(
+		id: string,
+		findInput?: IOrganizationContactFindInput
+	): Promise<IOrganizationContact[]> {
+		const data = JSON.stringify({ findInput });
 		return this.http
 			.get<IOrganizationContact[]>(
-				`/api/organization-contact/employee/${id}`
+				`/api/organization-contact/employee/${id}`,
+				{
+					params: toParams({ data })
+				}
 			)
 			.pipe(first())
 			.toPromise();
@@ -54,9 +61,7 @@ export class OrganizationContactService {
 		return this.http
 			.get<{ items: IOrganizationContact[]; total: number }>(
 				`/api/organization-contact`,
-				{
-					params: { data }
-				}
+				{ params: toParams({ data }) }
 			)
 			.pipe(first())
 			.toPromise();

@@ -59,14 +59,14 @@ export class TagService extends CrudService<Tag> {
 		return allTags;
 	}
 
-	async getTagUsageCount(orgId: any): Promise<any> {
+	async getTagUsageCount(organizationId: any): Promise<any> {
 		const allTagsInOrg = await this.tagRepository
 			.createQueryBuilder('tag')
 			.select('*')
 			.where('tag.organization = :organizationId', {
-				organizationId: orgId
+				organizationId
 			})
-			.where('tag.isSystem = :action', {
+			.andWhere('tag.isSystem = :action', {
 				action: false
 			})
 			.getRawMany();
@@ -106,7 +106,7 @@ export class TagService extends CrudService<Tag> {
 			.leftJoinAndSelect('tag.product', 'product')
 			.leftJoinAndSelect('tag.payment', 'payment')
 			.where('tag.id IN (:...id)', { id: allTagsIds })
-			.where('tag.isSystem = :action', { action: false })
+			.andWhere('tag.isSystem = :action', { action: false })
 			.getMany();
 
 		let tagWithCounter = {};
