@@ -25,7 +25,7 @@ import { EmployeesService } from '../../../@core/services/employees.service';
 import { Options, ChangeContext } from 'ng5-slider';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { TimesheetFilterService } from '../timesheet-filter.service';
-import { debounceTime, take } from 'rxjs/operators';
+import { debounceTime, filter, take } from 'rxjs/operators';
 import { isEmpty } from '@gauzy/utils';
 
 @UntilDestroy({ checkProperties: true })
@@ -117,8 +117,7 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.selectedDate = this.today;
 		this.updateLogs$
-			.pipe(untilDestroyed(this))
-			.pipe(debounceTime(400))
+			.pipe(untilDestroyed(this), debounceTime(400))
 			.subscribe(() => {
 				this.hasFilterApplies = this.hasFilter();
 				Object.keys(this.filters).forEach((key) =>
@@ -141,7 +140,10 @@ export class FiltersComponent implements OnInit, OnDestroy {
 			});
 
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((organization: IOrganization) => {
 				if (organization) {
 					this.organization = organization;
@@ -149,12 +151,20 @@ export class FiltersComponent implements OnInit, OnDestroy {
 				}
 			});
 
-		this.store.user$.pipe(untilDestroyed(this)).subscribe((user: IUser) => {
-			// if (user && this.employeeIds && this.employeeIds.length === 0) {
-			if (user && (!this.employeeIds || this.employeeIds.length === 0)) {
-				this.employeeIds = [user.employeeId];
-			}
-		});
+		this.store.user$
+			.pipe(
+				filter((user) => !!user),
+				untilDestroyed(this)
+			)
+			.subscribe((user: IUser) => {
+				// if (user && this.employeeIds && this.employeeIds.length === 0) {
+				if (
+					user &&
+					(!this.employeeIds || this.employeeIds.length === 0)
+				) {
+					this.employeeIds = [user.employeeId];
+				}
+			});
 
 		this.ngxPermissionsService.permissions$
 			.pipe(untilDestroyed(this))

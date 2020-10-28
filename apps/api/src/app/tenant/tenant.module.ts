@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
 import { RolePermissionsModule } from '../role-permissions/role-permissions.module';
@@ -14,10 +15,11 @@ import { TenantService } from './tenant.service';
 		AuthModule,
 		UserModule,
 		RoleModule,
-		RolePermissionsModule
+		RolePermissionsModule,
+		CqrsModule
 	],
 	controllers: [TenantController],
 	providers: [TenantService],
-	exports: [TenantService]
+	exports: [TenantService, RolePermissionsModule]
 })
 export class TenantModule {}

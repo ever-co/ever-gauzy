@@ -4,6 +4,7 @@ import { Role } from './role.entity';
 import { RoleService } from './role.service';
 import { RoleController } from './role.controller';
 import { TenantModule } from '../tenant/tenant.module';
+import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
@@ -11,7 +12,7 @@ import { TenantModule } from '../tenant/tenant.module';
 		forwardRef(() => TenantModule)
 	],
 	controllers: [RoleController],
-	providers: [RoleService],
+	providers: [RoleService, ...CommandHandlers],
 	exports: [RoleService]
 })
 export class RoleModule {}
