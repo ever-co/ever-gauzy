@@ -4,7 +4,7 @@ import {
 	IOrganizationProject,
 	PermissionsEnum
 } from '@gauzy/models';
-import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
+import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -84,20 +84,18 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 					PermissionsEnum.ORG_PROJECT_EDIT
 				);
 			});
-
 		this.loadProjects$
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(async () => {
+				const { tenantId } = this.store.user;
+				const { id: organizationId } = this.organization;
 				if (this.employeeId) {
 					this.projects = await this.organizationProjects.getAllByEmployee(
 						this.employeeId,
 						{
 							organizationContactId: this.organizationContactId,
 							...(this.organizationId
-								? {
-										organizationId: this.organizationId,
-										tenantId: this.organization.tenantId
-								  }
+								? { organizationId, tenantId }
 								: {})
 						}
 					);
@@ -107,23 +105,21 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 					} = await this.organizationProjects.getAll([], {
 						organizationContactId: this.organizationContactId,
 						...(this.organizationId
-							? {
-									organizationId: this.organizationId,
-									tenantId: this.organization.tenantId
-							  }
+							? { organizationId, tenantId }
 							: {})
 					});
 					this.projects = items;
 				}
 			});
-
-		this.store.selectedOrganization$.subscribe((organization) => {
-			if (organization) {
-				this.organization = organization;
-				this.organizationId = organization.id;
-				this.loadProjects$.next();
-			}
-		});
+		this.store.selectedOrganization$
+			.pipe(untilDestroyed(this))
+			.subscribe((organization) => {
+				if (organization) {
+					this.organization = organization;
+					this.organizationId = organization.id;
+					this.loadProjects$.next();
+				}
+			});
 	}
 
 	writeValue(value: string | string[]) {

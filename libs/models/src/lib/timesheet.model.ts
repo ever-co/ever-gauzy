@@ -40,7 +40,8 @@ export interface ITimesheetCreateInput
 	status?: string;
 }
 
-export interface ITimeSheetFindInput {
+export interface ITimeSheetFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId: string;
 	approvedById?: string;
 	employee: IEmployeeFindInput;
@@ -231,7 +232,8 @@ export interface IDailyActivity {
 	childItems?: IDailyActivity[];
 }
 
-export interface ICreateActivityInput {
+export interface ICreateActivityInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
 	projectId?: string;
 	duration?: number;
@@ -299,8 +301,8 @@ export interface TimerState {
 	timerConfig: ITimerToggleInput;
 }
 
-export interface ITimerToggleInput {
-	organizationId?: string;
+export interface ITimerToggleInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	projectId?: string;
 	taskId?: string;
 	organizationContactId?: string;
@@ -312,7 +314,8 @@ export interface ITimerToggleInput {
 	manualTimeSlot?: boolean;
 }
 
-export interface IManualTimeInput {
+export interface IManualTimeInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 	employeeId?: string;
 	projectId?: string;
@@ -331,12 +334,12 @@ export interface IGetTimeLogInput extends ITimeLogFilters {
 	timesheetId?: string;
 }
 
-export interface IGetTimeLogConflictInput {
+export interface IGetTimeLogConflictInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	ignoreId?: string | string[];
 	startDate: string | Date;
 	endDate: string | Date;
 	employeeId: string;
-	organizationId?: string;
 	relations?: string[];
 }
 
@@ -350,9 +353,9 @@ export interface IGetActivitiesInput extends ITimeLogFilters, IPaginationInput {
 	titles?: string[];
 }
 
-export interface IBulkActivitiesInput {
+export interface IBulkActivitiesInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId: string;
-	organizationId?: string;
 	projectId?: string;
 	activities: IActivity[];
 }

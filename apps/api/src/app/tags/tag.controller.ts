@@ -68,7 +68,7 @@ export class TagController extends CrudController<Tag> {
 	async getTagUsageCount(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<any> {
-		const { orgId } = data;
-		return this.tagService.getTagUsageCount(orgId);
+		const { organizationId } = data;
+		return this.tagService.getTagUsageCount(organizationId);
 	}
 }

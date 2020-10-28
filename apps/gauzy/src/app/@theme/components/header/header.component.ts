@@ -56,12 +56,9 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	createContextMenu: NbMenuItem[];
 	supportContextMenu: NbMenuItem[];
 	showExtraActions = false;
-
 	actions = {
 		START_TIMER: 'START_TIMER'
 	};
-
-	private _selectedOrganizationId: string;
 	timerDuration: string;
 
 	constructor(
@@ -111,10 +108,12 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			});
 
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((org) => {
 				if (org) {
-					this._selectedOrganizationId = org.id;
 					this.loadItems();
 				}
 			});
@@ -122,6 +121,9 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		this.store.user$.pipe(untilDestroyed(this)).subscribe((user) => {
 			this.user = user;
 			this.isEmployee = !!user && !!user.employeeId;
+
+			//check timer status for employee
+			this._checkTimerStatus();
 		});
 
 		this.themeService
@@ -347,6 +349,13 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			this.supportContextMenu = [];
 			this.loadItems();
 		});
+	}
+
+	private _checkTimerStatus() {
+		const { employee, tenantId } = this.user;
+		if (employee && employee.id) {
+			this.timeTrackerService.checkTimerStatus(tenantId);
+		}
 	}
 
 	ngOnDestroy() {}

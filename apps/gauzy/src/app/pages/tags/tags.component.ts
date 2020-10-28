@@ -217,9 +217,10 @@ export class TagsComponent
 				{ tenantId },
 				['tenant']
 			);
-			const orgId = this.selectedOrganization.id;
 			if (tagsByOrgLevel.length) {
-				const result = await this.tagsService.getTagUsageCount(orgId);
+				const result = await this.tagsService.getTagUsageCount(
+					organizationId
+				);
 				this.allTags = result.concat(tagsByTenantLevel);
 				this.allTags.map((t) => !t.counter && (t.counter = 0));
 				this._generateUniqueTags(this.allTags);

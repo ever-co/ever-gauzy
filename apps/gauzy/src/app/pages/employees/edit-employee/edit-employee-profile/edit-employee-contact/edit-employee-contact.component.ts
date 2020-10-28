@@ -18,7 +18,8 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 	selector: 'ga-edit-employee-departments',
 	templateUrl: './edit-employee-contact.component.html'
 })
-export class EditEmployeeContactComponent extends TranslationBaseComponent
+export class EditEmployeeContactComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
@@ -98,8 +99,11 @@ export class EditEmployeeContactComponent extends TranslationBaseComponent
 		if (!this.organization) {
 			return;
 		}
+		const { tenantId } = this.store.user;
+		const organizationId = this.organization.id;
 		this.employeeContact = await this.organizationContactService.getAllByEmployee(
-			this.selectedEmployee.id
+			this.selectedEmployee.id,
+			{ organizationId, tenantId }
 		);
 	}
 

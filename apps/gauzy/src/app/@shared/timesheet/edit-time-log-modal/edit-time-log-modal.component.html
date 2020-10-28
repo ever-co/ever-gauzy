@@ -134,12 +134,12 @@
 
 			<div class="form-group">
 				<label>{{ 'TIMER_TRACKER.SELECT_CLIENT' | translate }}</label>
-				<gauzy-contact-selector
+				<ga-contact-selector
 					[employeeId]="form.get('employeeId')?.value"
 					name="organizationContactId"
 					formControlName="organizationContactId"
 					[required]="organization?.requireClient"
-				></gauzy-contact-selector>
+				></ga-contact-selector>
 				<div
 					*ngIf="
 						form.get('organizationContactId')?.invalid &&

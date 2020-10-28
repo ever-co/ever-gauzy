@@ -26,6 +26,7 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import { AuthGuard } from '@nestjs/passport';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
 
 @ApiTags('OrganizationProjects')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -54,9 +55,11 @@ export class OrganizationProjectsController extends CrudController<
 	})
 	@Get('employee/:id')
 	async findByEmployee(
-		@Param('id') id: string
+		@Param('id') id: string,
+		@Query('data', ParseJsonPipe) data?: any
 	): Promise<IPagination<OrganizationProject>> {
-		return this.organizationProjectsService.findByEmployee(id);
+		const { findInput = null } = data;
+		return this.organizationProjectsService.findByEmployee(id, findInput);
 	}
 
 	@ApiOperation({
@@ -73,10 +76,10 @@ export class OrganizationProjectsController extends CrudController<
 	})
 	@Get()
 	async findAllEmployees(
-		@Query('data') data: string,
+		@Query('data', ParseJsonPipe) data: any,
 		@Request() req
 	): Promise<IPagination<OrganizationProject>> {
-		const { relations, findInput } = JSON.parse(data);
+		const { relations, findInput } = data;
 		return this.organizationProjectsService.findAll({
 			where: findInput,
 			relations
@@ -133,7 +136,6 @@ export class OrganizationProjectsController extends CrudController<
 		@Param('id') id: string,
 		@Body() entity: { taskViewMode: TaskListTypeEnum }
 	): Promise<any> {
-		console.log(entity);
 		return this.organizationProjectsService.updateTaskViewMode(
 			id,
 			entity.taskViewMode

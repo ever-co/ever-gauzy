@@ -39,12 +39,12 @@ export class OrganizationProjectsService {
 
 	getAllByEmployee(
 		id: string,
-		findInput: IOrganizationProjectsFindInput = {}
+		findInput?: IOrganizationProjectsFindInput
 	): Promise<IOrganizationProject[]> {
-		const data = toParams({ findInput });
+		const data = JSON.stringify({ findInput });
 		return this.http
 			.get<IOrganizationProject[]>(`${this.API_URL}/employee/${id}`, {
-				params: data
+				params: toParams({ data })
 			})
 			.pipe(first())
 			.toPromise();
@@ -55,12 +55,11 @@ export class OrganizationProjectsService {
 		findInput?: IOrganizationProjectsFindInput
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
-
 		return this.http
 			.get<{ items: IOrganizationProject[]; total: number }>(
 				`${this.API_URL}`,
 				{
-					params: { data }
+					params: toParams({ data })
 				}
 			)
 			.pipe(first())
