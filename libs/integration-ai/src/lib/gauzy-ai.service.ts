@@ -18,7 +18,7 @@ import {
 	NetworkStatus,
 	gql
 } from '@apollo/client/core';
-import { EmployeeUpworkJobsSearchCriterion, IEmployee } from '@gauzy/models';
+import { IEmployeeUpworkJobsSearchCriterion, IEmployee } from '@gauzy/models';
 
 @Injectable()
 export class GauzyAIService {
@@ -126,7 +126,7 @@ export class GauzyAIService {
 	// NOTE: will need to call this method from multiple different CQRS command handlers!
 	public async syncGauzyEmployeeJobSearchCriteria(
 		employee: IEmployee,
-		criteria: EmployeeUpworkJobsSearchCriterion[]
+		criteria: IEmployeeUpworkJobsSearchCriterion[]
 	): Promise<boolean> {
 		if (this._client == null) {
 			return false;
@@ -183,7 +183,7 @@ export class GauzyAIService {
 
 		const gauzyAICriteria: UpworkJobsSearchCriterion[] = [];
 
-		criteria.forEach((criterion: EmployeeUpworkJobsSearchCriterion) => {
+		criteria.forEach((criterion: IEmployeeUpworkJobsSearchCriterion) => {
 			gauzyAICriteria.push({
 				employee: undefined,
 				employeeId: gauzyAIEmployee.id,
@@ -191,10 +191,10 @@ export class GauzyAIService {
 				isArchived: false,
 				jobType: 'hourly', // TODO: criterion.jobType
 				keyword: criterion.keyword,
-				category: criterion.jobSearchCategory?.name,
-				categoryId: criterion.jobSearchCategoryId,
-				occupation: criterion.jobSearchOccupation?.name,
-				occupationId: criterion.jobSearchOccupationId
+				category: criterion.category?.name,
+				categoryId: criterion.categoryId,
+				occupation: criterion.occupation?.name,
+				occupationId: criterion.occupationId
 			});
 		});
 

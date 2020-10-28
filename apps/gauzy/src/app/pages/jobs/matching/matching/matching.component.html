@@ -51,9 +51,11 @@
 								</ng-select>
 							</div>
 							<div class="col-auto">
-								<ng-template [ngIf]="jobPreset">
+								<ng-template
+									[ngIf]="criterionForm?.jobPresetId"
+								>
 									<button
-										*ngIf="selectedEmployee?.id"
+										*ngIf="selectedEmployeeId"
 										nbButton
 										status="primary"
 										ngxConfirmDialog
@@ -64,7 +66,7 @@
 										{{ 'JOB_MATCHING.SAVE' | translate }}
 									</button>
 									<button
-										*ngIf="!selectedEmployee?.id"
+										*ngIf="!selectedEmployeeId"
 										nbButton
 										status="primary"
 										(click)="saveJobPreset()"
@@ -80,7 +82,10 @@
 			</div>
 		</div>
 
-		<div class="row align-items-center my-3" *ngIf="jobPreset">
+		<div
+			class="row align-items-center my-3"
+			*ngIf="selectedEmployeeId || criterionForm?.jobPresetId"
+		>
 			<h6 class="col m-0">{{ 'JOB_MATCHING.CRITERIONS' | translate }}</h6>
 			<div class="col-auto">
 				<button nbButton status="primary" (click)="addNewCriterion()">
@@ -167,6 +172,7 @@
 							<div class="col-sm">
 								<nb-radio-group
 									name="jobType"
+									class="d-flex"
 									[(ngModel)]="criterion.jobType"
 								>
 									<nb-radio

@@ -2,6 +2,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Employee } from '../../../employee/employee.entity';
+import { EmployeeUpworkJobsSearchCriterion } from '../../employee-upwork-jobs-search-criterion.entity';
 import { JobPreset } from '../../job-preset.entity';
 import { SaveEmployeePresetCommand } from '../save-employee-preset.command';
 
@@ -10,7 +11,11 @@ export class SaveEmployeePresetHandler
 	implements ICommandHandler<SaveEmployeePresetCommand> {
 	constructor(
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>
+		private readonly employeeRepository: Repository<Employee>,
+		@InjectRepository(EmployeeUpworkJobsSearchCriterion)
+		private readonly employeeUpworkJobsSearchCriterionRepository: Repository<
+			EmployeeUpworkJobsSearchCriterion
+		>
 	) {}
 
 	public async execute(
@@ -28,6 +33,10 @@ export class SaveEmployeePresetHandler
 		const jobPreset = input.jobPresetIds.map((id) => new JobPreset({ id }));
 		employee.jobPresets = jobPreset;
 		this.employeeRepository.save(employee);
+
+		await this.employeeUpworkJobsSearchCriterionRepository.delete({
+			employeeId: input.employeeId
+		});
 
 		return employee.jobPresets;
 	}

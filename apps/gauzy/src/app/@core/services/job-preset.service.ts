@@ -30,11 +30,23 @@ export class JobPresetService {
 			.toPromise();
 	}
 
-	getEmployeePresets(id: string) {
+	getEmployeeCriterions(employeeId: string, request?: IGetJobPresetInput) {
 		return this.http
-			.get<IJobPreset[]>(`/api/job-preset/employee/${id}`)
+			.get<IMatchingCriterions[]>(
+				`/api/job-preset/employee/${employeeId}/criterion`,
+				{
+					params: request ? toParams(request) : {}
+				}
+			)
 			.toPromise();
 	}
+
+	getEmployeePresets(employeeId: string) {
+		return this.http
+			.get<IJobPreset[]>(`/api/job-preset/employee/${employeeId}`)
+			.toPromise();
+	}
+
 	createJobPreset(request?: IJobPreset) {
 		return this.http
 			.post<IJobPreset>(`/api/job-preset`, request)
@@ -54,6 +66,18 @@ export class JobPresetService {
 		return this.http
 			.post<IJobPreset>(
 				`/api/job-preset/${jobPresetId}/criterion`,
+				criterion
+			)
+			.toPromise();
+	}
+
+	createEmployeeCriterion(
+		employeeId: string,
+		criterion: IMatchingCriterions
+	) {
+		return this.http
+			.post<IMatchingCriterions>(
+				`/api/job-preset/employee/${employeeId}/criterion`,
 				criterion
 			)
 			.toPromise();

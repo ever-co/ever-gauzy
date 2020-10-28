@@ -15,6 +15,11 @@ export interface IMatchingCriterions
 	extends IEmployeeUpworkJobsSearchCriterion,
 		IJobPresetUpworkJobSearchCriterion {}
 
+export interface IGetMatchingCriterions {
+	jobPresetId?: string;
+	employeeId?: string;
+}
+
 export interface IJobPreset extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	employees?: Partial<IEmployee>[];
