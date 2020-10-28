@@ -10,7 +10,6 @@ import {
 	IJobSearchCategory,
 	IJobSearchOccupation,
 	IMatchingCriterions,
-	IEmployee,
 	JobPostTypeEnum
 } from '@gauzy/models';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -41,7 +40,7 @@ export class MatchingComponent implements OnInit {
 	occupations: IJobSearchOccupation[] = [];
 	criterions: IMatchingCriterions[] = [];
 	jobPreset: IJobPreset;
-	selectedEmployee: SelectedEmployee;
+	selectedEmployeeId: string;
 	selectedOrganization: IOrganization;
 
 	constructor(
@@ -74,36 +73,15 @@ export class MatchingComponent implements OnInit {
 			.pipe(debounceTime(500))
 			.subscribe((employee) => {
 				setTimeout(async () => {
-					this.selectedEmployee = employee;
-					if (this.selectedEmployee && this.selectedEmployee.id) {
+					if (employee && employee.id) {
+						this.selectedEmployeeId = employee.id;
 						const preset = await this.getEmployeePreset();
 						this.criterionForm = {
 							jobSource: JobPostSourceEnum.UPWORK,
 							jobPresetId: preset ? preset.id : null
 						};
 					} else {
-						this.criterionForm = {
-							jobSource: JobPostSourceEnum.UPWORK,
-							jobPresetId: null
-						};
-					}
-					this.updateCriterionsData();
-				});
-			});
-
-		this.store.selectedEmployee$
-			.pipe(untilDestroyed(this))
-			.pipe(debounceTime(500))
-			.subscribe((employee) => {
-				setTimeout(async () => {
-					this.selectedEmployee = employee;
-					if (this.selectedEmployee && this.selectedEmployee.id) {
-						const preset = await this.getEmployeePreset();
-						this.criterionForm = {
-							jobSource: JobPostSourceEnum.UPWORK,
-							jobPresetId: preset ? preset.id : null
-						};
-					} else {
+						this.selectedEmployeeId = null;
 						this.criterionForm = {
 							jobSource: JobPostSourceEnum.UPWORK,
 							jobPresetId: null
@@ -118,8 +96,8 @@ export class MatchingComponent implements OnInit {
 		const request: IGetJobPresetInput = {
 			organizationId: this.selectedOrganization.id
 		};
-		if (this.selectedEmployee && this.selectedEmployee.id) {
-			request.employeeId = this.selectedEmployee.id;
+		if (this.selectedEmployeeId) {
+			request.employeeId = this.selectedEmployeeId;
 		}
 		this.jobPresetService.getJobPresets(request).then((jobPresets) => {
 			this.jobPresets = jobPresets;
@@ -128,7 +106,7 @@ export class MatchingComponent implements OnInit {
 
 	getEmployeePreset() {
 		return this.jobPresetService
-			.getEmployeePresets(this.selectedEmployee.id)
+			.getEmployeePresets(this.selectedEmployeeId)
 			.then((jobPresets) => {
 				if (jobPresets.length > 0) {
 					this.jobPreset = jobPresets[0];
@@ -144,8 +122,8 @@ export class MatchingComponent implements OnInit {
 			organizationId: this.selectedOrganization.id,
 			name
 		};
-		if (this.selectedEmployee && this.selectedEmployee.id) {
-			request.employees = [{ id: this.selectedEmployee.id }];
+		if (this.selectedEmployeeId) {
+			request.employees = [{ id: this.selectedEmployeeId }];
 		}
 		this.jobPresetService.createJobPreset(request).then((jobPreset) => {
 			this.jobPresets = this.jobPresets.concat([jobPreset]);
@@ -163,11 +141,13 @@ export class MatchingComponent implements OnInit {
 	}
 
 	updateEmployeePreset() {
-		if (this.selectedEmployee && this.selectedEmployee.id) {
+		if (this.selectedEmployeeId) {
 			const request: IEmployeePresetInput = {
 				source: this.criterionForm.jobSource,
-				jobPresetIds: [this.criterionForm.jobPresetId],
-				employeeId: this.selectedEmployee.id
+				jobPresetIds: this.criterionForm.jobPresetId
+					? [this.criterionForm.jobPresetId]
+					: [],
+				employeeId: this.selectedEmployeeId
 			};
 			this.jobPresetService.saveEmployeePreset(request);
 		}
@@ -178,25 +158,30 @@ export class MatchingComponent implements OnInit {
 			if (this.jobPreset) {
 				const id = this.jobPreset.id;
 				const request: IGetJobPresetCriterionInput = {};
-				if (this.selectedEmployee && this.selectedEmployee.id) {
-					request.employeeId = this.selectedEmployee.id;
+				if (this.selectedEmployeeId) {
+					request.employeeId = this.selectedEmployeeId;
 				}
 
 				await this.jobPresetService
 					.getJobPreset(id, request)
 					.then((jobPresets) => {
 						this.jobPreset = jobPresets;
+						if (this.selectedEmployeeId) {
+							this.criterions =
+								this.jobPreset.employeeCriterions.length > 0
+									? this.jobPreset.employeeCriterions
+									: this.jobPreset.jobPresetCriterions;
+						} else {
+							this.criterions = this.jobPreset.jobPresetCriterions;
+						}
 						return jobPresets;
 					});
-
-				if (this.selectedEmployee && this.selectedEmployee.id) {
-					this.criterions =
-						this.jobPreset.employeeCriterions.length > 0
-							? this.jobPreset.employeeCriterions
-							: this.jobPreset.jobPresetCriterions;
-				} else {
-					this.criterions = this.jobPreset.jobPresetCriterions;
-				}
+			} else if (this.selectedEmployeeId) {
+				await this.jobPresetService
+					.getEmployeeCriterions(this.selectedEmployeeId)
+					.then((criterions) => {
+						this.criterions = criterions;
+					});
 			} else {
 				this.criterions = [];
 			}
@@ -253,21 +238,33 @@ export class MatchingComponent implements OnInit {
 	}
 
 	saveCriterion(criterion?: IMatchingCriterions) {
-		if (this.selectedEmployee && this.selectedEmployee.id) {
-			criterion.employeeId = this.selectedEmployee.id;
+		if (this.selectedEmployeeId) {
+			this.jobPresetService
+				.createEmployeeCriterion(this.selectedEmployeeId, criterion)
+				.then((newCreation) => {
+					const index = this.criterions.indexOf(criterion);
+					this.criterions[index] = newCreation;
+					this.toastrService.success('Criterion successfully saved');
+				})
+				.catch(() => {
+					this.toastrService.error(
+						'Error while saving criterion, Please try aging'
+					);
+				});
+		} else {
+			this.jobPresetService
+				.createJobPresetCriterion(this.jobPreset.id, criterion)
+				.then((newCreation) => {
+					const index = this.criterions.indexOf(criterion);
+					this.criterions[index] = newCreation;
+					this.toastrService.success('Criterion successfully saved');
+				})
+				.catch(() => {
+					this.toastrService.error(
+						'Error while saving criterion, Please try aging'
+					);
+				});
 		}
-		this.jobPresetService
-			.createJobPresetCriterion(this.jobPreset.id, criterion)
-			.then((newCreation) => {
-				const index = this.criterions.indexOf(criterion);
-				this.criterions[index] = newCreation;
-				this.toastrService.success('Criterion successfully saved');
-			})
-			.catch(() => {
-				this.toastrService.error(
-					'Error while saving criterion, Please try aging'
-				);
-			});
 	}
 
 	deleteCriterions(index, criterion: IMatchingCriterions) {

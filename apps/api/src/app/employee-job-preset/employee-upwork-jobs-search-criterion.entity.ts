@@ -21,7 +21,7 @@ export class EmployeeUpworkJobsSearchCriterion
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
-	@Column()
+	@Column({ nullable: true })
 	jobPresetId?: string;
 
 	@ManyToOne(() => JobPreset, (jobPreset) => jobPreset.employeeCriterions)

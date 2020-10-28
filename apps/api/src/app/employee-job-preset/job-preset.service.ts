@@ -6,6 +6,7 @@ import {
 	IEmployeePresetInput,
 	IGetJobPresetCriterionInput,
 	IGetJobPresetInput,
+	IGetMatchingCriterions,
 	IJobPreset,
 	IMatchingCriterions
 } from '@gauzy/models';
@@ -17,6 +18,7 @@ import { CreateJobPresetCommand } from './commands/create-job-preset.command';
 import { Employee } from '../employee/employee.entity';
 import { SavePresetCriterionCommand } from './commands/save-preset-criterion.command';
 import { SaveEmployeePresetCommand } from './commands/save-employee-preset.command';
+import { SaveEmployeeCriterionCommand } from './commands/save-employee-criterion.command';
 
 @Injectable()
 export class JobPresetService extends CrudService<JobPreset> {
@@ -104,11 +106,11 @@ export class JobPresetService extends CrudService<JobPreset> {
 		});
 	}
 
-	public getJobPresetEmployeeCriterion(presetId: string, employeeId: string) {
+	public getEmployeeCriterion(input: IGetMatchingCriterions) {
 		return this.employeeUpworkJobsSearchCriterionRepository.find({
 			where: {
-				presetId: presetId,
-				employeeId: employeeId
+				...(input.jobPresetId ? { presetId: input.jobPresetId } : {}),
+				employeeId: input.employeeId
 			}
 		});
 	}
@@ -117,8 +119,14 @@ export class JobPresetService extends CrudService<JobPreset> {
 		return this.commandBus.execute(new CreateJobPresetCommand(request));
 	}
 
-	async saveCriterion(request: IMatchingCriterions) {
+	async saveJobPresetCriterion(request: IMatchingCriterions) {
 		return this.commandBus.execute(new SavePresetCriterionCommand(request));
+	}
+
+	async saveEmployeeCriterion(request: IMatchingCriterions) {
+		return this.commandBus.execute(
+			new SaveEmployeeCriterionCommand(request)
+		);
 	}
 
 	async getEmployeePreset(employeeId: string) {
