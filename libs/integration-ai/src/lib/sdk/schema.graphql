@@ -74,6 +74,8 @@ input UpworkJobsSearchCriterionFilter {
 	and: [UpworkJobsSearchCriterionFilter!]
 	or: [UpworkJobsSearchCriterionFilter!]
 	id: IDFilterComparison
+	employeeId: StringFieldComparison
+	jobType: StringFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -95,6 +97,23 @@ input IDFilterComparison {
 	notIn: [ID!]
 }
 
+input StringFieldComparison {
+	is: Boolean
+	isNot: Boolean
+	eq: String
+	neq: String
+	gt: String
+	gte: String
+	lt: String
+	lte: String
+	like: String
+	notLike: String
+	iLike: String
+	notILike: String
+	in: [String!]
+	notIn: [String!]
+}
+
 input BooleanFieldComparison {
 	is: Boolean
 	isNot: Boolean
@@ -108,6 +127,8 @@ input UpworkJobsSearchCriterionSort {
 
 enum UpworkJobsSearchCriterionSortFields {
 	id
+	employeeId
+	jobType
 	isActive
 	isArchived
 }
@@ -132,6 +153,8 @@ input UpworkJobsSearchCriterionAggregateFilter {
 	and: [UpworkJobsSearchCriterionAggregateFilter!]
 	or: [UpworkJobsSearchCriterionAggregateFilter!]
 	id: IDFilterComparison
+	employeeId: StringFieldComparison
+	jobType: StringFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -290,16 +313,31 @@ type JobPostConnection {
 
 type JobPostCountAggregate {
 	id: Int
+	providerCode: Int
+	providerJobId: Int
+	jobStatus: Int
+	jobType: Int
+	country: Int
 	isActive: Int
 	isArchived: Int
 }
 
 type JobPostMinAggregate {
 	id: ID
+	providerCode: String
+	providerJobId: String
+	jobStatus: String
+	jobType: String
+	country: String
 }
 
 type JobPostMaxAggregate {
 	id: ID
+	providerCode: String
+	providerJobId: String
+	jobStatus: String
+	jobType: String
+	country: String
 }
 
 type JobPostAggregateResponse {
@@ -354,16 +392,22 @@ type UpworkJobsSearchCriterionConnection {
 
 type UpworkJobsSearchCriterionCountAggregate {
 	id: Int
+	employeeId: Int
+	jobType: Int
 	isActive: Int
 	isArchived: Int
 }
 
 type UpworkJobsSearchCriterionMinAggregate {
 	id: ID
+	employeeId: String
+	jobType: String
 }
 
 type UpworkJobsSearchCriterionMaxAggregate {
 	id: ID
+	employeeId: String
+	jobType: String
 }
 
 type UpworkJobsSearchCriterionAggregateResponse {
@@ -442,16 +486,22 @@ type EmployeeAggregateResponse {
 
 type EmployeeUpworkJobSearchCriteriaCountAggregate {
 	id: Int
+	employeeId: Int
+	jobType: Int
 	isActive: Int
 	isArchived: Int
 }
 
 type EmployeeUpworkJobSearchCriteriaMinAggregate {
 	id: ID
+	employeeId: String
+	jobType: String
 }
 
 type EmployeeUpworkJobSearchCriteriaMaxAggregate {
 	id: ID
+	employeeId: String
+	jobType: String
 }
 
 type EmployeeUpworkJobSearchCriteriaAggregateResponse {
@@ -503,6 +553,8 @@ type EmployeeJobPostConnection {
 
 type EmployeeJobPostCountAggregate {
 	id: Int
+	employeeId: Int
+	jobPostId: Int
 	isApplied: Int
 	isActive: Int
 	isArchived: Int
@@ -510,10 +562,14 @@ type EmployeeJobPostCountAggregate {
 
 type EmployeeJobPostMinAggregate {
 	id: ID
+	employeeId: String
+	jobPostId: String
 }
 
 type EmployeeJobPostMaxAggregate {
 	id: ID
+	employeeId: String
+	jobPostId: String
 }
 
 type EmployeeJobPostAggregateResponse {
@@ -663,6 +719,11 @@ input JobPostFilter {
 	and: [JobPostFilter!]
 	or: [JobPostFilter!]
 	id: IDFilterComparison
+	providerCode: StringFieldComparison
+	providerJobId: StringFieldComparison
+	jobStatus: StringFieldComparison
+	jobType: StringFieldComparison
+	country: StringFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -675,6 +736,11 @@ input JobPostSort {
 
 enum JobPostSortFields {
 	id
+	providerCode
+	providerJobId
+	jobStatus
+	jobType
+	country
 	isActive
 	isArchived
 }
@@ -683,6 +749,11 @@ input JobPostAggregateFilter {
 	and: [JobPostAggregateFilter!]
 	or: [JobPostAggregateFilter!]
 	id: IDFilterComparison
+	providerCode: StringFieldComparison
+	providerJobId: StringFieldComparison
+	jobStatus: StringFieldComparison
+	jobType: StringFieldComparison
+	country: StringFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -695,23 +766,6 @@ input EmployeeFilter {
 	jobType: StringFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
-}
-
-input StringFieldComparison {
-	is: Boolean
-	isNot: Boolean
-	eq: String
-	neq: String
-	gt: String
-	gte: String
-	lt: String
-	lte: String
-	like: String
-	notLike: String
-	iLike: String
-	notILike: String
-	in: [String!]
-	notIn: [String!]
 }
 
 input EmployeeSort {
@@ -742,6 +796,8 @@ input EmployeeJobPostFilter {
 	and: [EmployeeJobPostFilter!]
 	or: [EmployeeJobPostFilter!]
 	id: IDFilterComparison
+	employeeId: StringFieldComparison
+	jobPostId: StringFieldComparison
 	isApplied: BooleanFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
@@ -755,6 +811,8 @@ input EmployeeJobPostSort {
 
 enum EmployeeJobPostSortFields {
 	id
+	employeeId
+	jobPostId
 	isApplied
 	isActive
 	isArchived
@@ -764,6 +822,8 @@ input EmployeeJobPostAggregateFilter {
 	and: [EmployeeJobPostAggregateFilter!]
 	or: [EmployeeJobPostAggregateFilter!]
 	id: IDFilterComparison
+	employeeId: StringFieldComparison
+	jobPostId: StringFieldComparison
 	isApplied: BooleanFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
@@ -850,6 +910,11 @@ input JobPostDeleteFilter {
 	and: [JobPostDeleteFilter!]
 	or: [JobPostDeleteFilter!]
 	id: IDFilterComparison
+	providerCode: StringFieldComparison
+	providerJobId: StringFieldComparison
+	jobStatus: StringFieldComparison
+	jobType: StringFieldComparison
+	country: StringFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -916,6 +981,11 @@ input JobPostUpdateFilter {
 	and: [JobPostUpdateFilter!]
 	or: [JobPostUpdateFilter!]
 	id: IDFilterComparison
+	providerCode: StringFieldComparison
+	providerJobId: StringFieldComparison
+	jobStatus: StringFieldComparison
+	jobType: StringFieldComparison
+	country: StringFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -979,6 +1049,8 @@ input UpworkJobsSearchCriterionDeleteFilter {
 	and: [UpworkJobsSearchCriterionDeleteFilter!]
 	or: [UpworkJobsSearchCriterionDeleteFilter!]
 	id: IDFilterComparison
+	employeeId: StringFieldComparison
+	jobType: StringFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -1026,6 +1098,8 @@ input UpworkJobsSearchCriterionUpdateFilter {
 	and: [UpworkJobsSearchCriterionUpdateFilter!]
 	or: [UpworkJobsSearchCriterionUpdateFilter!]
 	id: IDFilterComparison
+	employeeId: StringFieldComparison
+	jobType: StringFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -1185,6 +1259,8 @@ input EmployeeJobPostDeleteFilter {
 	and: [EmployeeJobPostDeleteFilter!]
 	or: [EmployeeJobPostDeleteFilter!]
 	id: IDFilterComparison
+	employeeId: StringFieldComparison
+	jobPostId: StringFieldComparison
 	isApplied: BooleanFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
@@ -1230,6 +1306,8 @@ input EmployeeJobPostUpdateFilter {
 	and: [EmployeeJobPostUpdateFilter!]
 	or: [EmployeeJobPostUpdateFilter!]
 	id: IDFilterComparison
+	employeeId: StringFieldComparison
+	jobPostId: StringFieldComparison
 	isApplied: BooleanFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
@@ -1313,6 +1391,11 @@ input JobPostSubscriptionFilter {
 	and: [JobPostSubscriptionFilter!]
 	or: [JobPostSubscriptionFilter!]
 	id: IDFilterComparison
+	providerCode: StringFieldComparison
+	providerJobId: StringFieldComparison
+	jobStatus: StringFieldComparison
+	jobType: StringFieldComparison
+	country: StringFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -1342,6 +1425,8 @@ input UpworkJobsSearchCriterionSubscriptionFilter {
 	and: [UpworkJobsSearchCriterionSubscriptionFilter!]
 	or: [UpworkJobsSearchCriterionSubscriptionFilter!]
 	id: IDFilterComparison
+	employeeId: StringFieldComparison
+	jobType: StringFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -1402,6 +1487,8 @@ input EmployeeJobPostSubscriptionFilter {
 	and: [EmployeeJobPostSubscriptionFilter!]
 	or: [EmployeeJobPostSubscriptionFilter!]
 	id: IDFilterComparison
+	employeeId: StringFieldComparison
+	jobPostId: StringFieldComparison
 	isApplied: BooleanFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison

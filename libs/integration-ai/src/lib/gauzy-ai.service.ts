@@ -1,11 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import {
-	CreateOneEmployeeInput,
 	Employee,
 	EmployeeJobPostsDocument,
 	EmployeeJobPostsQuery,
 	EmployeeQuery,
-	UpdateOneEmployeeInput,
 	UpworkJobsSearchCriterion
 } from './sdk/gauzy-ai-sdk';
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
@@ -16,6 +14,7 @@ import {
 	NormalizedCacheObject,
 	HttpLink,
 	InMemoryCache,
+	DefaultOptions,
 	gql
 } from '@apollo/client/core';
 import { EmployeeUpworkJobsSearchCriterion, IEmployee } from '@gauzy/models';
@@ -25,6 +24,22 @@ export class GauzyAIService {
 	private _client: ApolloClient<NormalizedCacheObject>;
 
 	constructor() {
+		// For now, we disable Apollo client caching for all GraphQL queries and mutations
+		const defaultOptions: DefaultOptions = {
+			watchQuery: {
+				fetchPolicy: 'no-cache',
+				errorPolicy: 'ignore'
+			},
+			query: {
+				fetchPolicy: 'no-cache',
+				errorPolicy: 'all'
+			},
+			mutate: {
+				fetchPolicy: 'no-cache',
+				errorPolicy: 'all'
+			}
+		};
+
 		this._client = new ApolloClient({
 			typeDefs: EmployeeJobPostsDocument,
 			link: new HttpLink({
@@ -32,7 +47,8 @@ export class GauzyAIService {
 				uri: 'http://localhost:3005/graphql',
 				fetch
 			}),
-			cache: new InMemoryCache()
+			cache: new InMemoryCache(),
+			defaultOptions
 		});
 	}
 
@@ -55,9 +71,96 @@ export class GauzyAIService {
 		employee: IEmployee,
 		criteria: EmployeeUpworkJobsSearchCriterion[]
 	): Promise<boolean> {
-		// TODO: RUSLAN will call syncEmployee()
+		const gauzyAIEmployee: Employee = await this.syncEmployee({
+			externalEmployeeId: employee.id,
+			isActive: employee.isActive,
+			isArchived: false,
+			upworkJobSearchCriteria: undefined,
+			upworkJobSearchCriteriaAggregate: undefined,
+			firstName: employee.user.firstName,
+			lastName: employee.user.lastName
+		});
 
-		// TODO: RUSLAN will sync criteria for employee to Gauzy AI
+		console.log(`Synced Employee ${JSON.stringify(gauzyAIEmployee)}`);
+
+		// let's delete all criteria for Employee
+
+		const deleteAllCriteriaMutation: DocumentNode<any> = gql`
+			mutation deleteManyUpworkJobsSearchCriteria(
+				$input: DeleteManyUpworkJobsSearchCriteriaInput!
+			) {
+				deleteManyUpworkJobsSearchCriteria(input: $input) {
+					deletedCount
+				}
+			}
+		`;
+
+		const deleteMutationResult = await this._client.mutate({
+			mutation: deleteAllCriteriaMutation,
+			variables: {
+				input: {
+					filter: {
+						isActive: {
+							is: true
+						},
+						employeeId: {
+							eq: gauzyAIEmployee.id
+						}
+					}
+				}
+			}
+		});
+
+		console.log(
+			`Delete Existed Criterions count: ${JSON.stringify(
+				deleteMutationResult.data.deleteManyUpworkJobsSearchCriteria
+					.deletedCount
+			)}`
+		);
+
+		// now let's create new criteria in Gauzy AI based on Gauzy criterions data
+
+		const gauzyAICriteria: UpworkJobsSearchCriterion[] = [];
+
+		criteria.forEach((criterion: EmployeeUpworkJobsSearchCriterion) => {
+			gauzyAICriteria.push({
+				employee: undefined,
+				employeeId: gauzyAIEmployee.id,
+				isActive: true,
+				isArchived: false,
+				jobType: 'hourly', // TODO: criterion.jobType
+				keyword: criterion.keyword,
+				category: criterion.jobSearchCategory?.name,
+				categoryId: criterion.jobSearchCategoryId,
+				occupation: criterion.jobSearchOccupation?.name,
+				occupationId: criterion.jobSearchOccupationId
+			});
+		});
+
+		const createCriteriaMutation: DocumentNode<any> = gql`
+			mutation createManyUpworkJobsSearchCriteria(
+				$input: CreateManyUpworkJobsSearchCriteriaInput!
+			) {
+				createManyUpworkJobsSearchCriteria(input: $input) {
+					id
+				}
+			}
+		`;
+
+		const createNewCriteriaResult = await this._client.mutate({
+			mutation: createCriteriaMutation,
+			variables: {
+				input: {
+					upworkJobsSearchCriteria: gauzyAICriteria
+				}
+			}
+		});
+
+		console.log(
+			`Create New Criteria result: ${JSON.stringify(
+				createNewCriteriaResult.data.createManyUpworkJobsSearchCriteria
+			)}`
+		);
 
 		return true;
 	}
@@ -66,7 +169,7 @@ export class GauzyAIService {
 	 *  Creates new Employee in Gauzy AI if it's not yet exists there yet (it try to find by externalEmployeeId field value)
 	 *  Update existed Gauzy AI Employee record with new data from Gauzy DB
 	 */
-	private async syncEmployee(employee: Employee): Promise<boolean> {
+	private async syncEmployee(employee: Employee): Promise<Employee> {
 		// TODO: replace <any> with <EmployeeQuery>
 
 		const employeesQuery: DocumentNode<EmployeeQuery> = gql`
@@ -105,9 +208,10 @@ export class GauzyAIService {
 		);
 
 		if (!isAlreadyCreated) {
-			const createEmployeeMutation: DocumentNode<CreateOneEmployeeInput> = gql`
+			const createEmployeeMutation: DocumentNode<any> = gql`
 				mutation createOneEmployee($input: CreateOneEmployeeInput!) {
 					createOneEmployee(input: $input) {
+						id
 						externalEmployeeId
 						firstName
 						lastName
@@ -115,7 +219,7 @@ export class GauzyAIService {
 				}
 			`;
 
-			await this._client.mutate({
+			const newEmployee = await this._client.mutate({
 				mutation: createEmployeeMutation,
 				variables: {
 					input: {
@@ -123,15 +227,19 @@ export class GauzyAIService {
 					}
 				}
 			});
+
+			return newEmployee.data.createOneEmployee;
 		} else {
 			// update record of employee
 
 			const id = employeesResponse[0].node.id;
 
-			const updateEmployeeMutation: DocumentNode<UpdateOneEmployeeInput> = gql`
+			const updateEmployeeMutation: DocumentNode<any> = gql`
 				mutation updateOneEmployee($input: UpdateOneEmployeeInput!) {
 					updateOneEmployee(input: $input) {
 						id
+						isActive
+						isArchived
 						firstName
 						lastName
 					}
@@ -147,9 +255,9 @@ export class GauzyAIService {
 					}
 				}
 			});
-		}
 
-		return true;
+			return <Employee>employeesResponse[0].node;
+		}
 	}
 
 	/**
@@ -158,31 +266,6 @@ export class GauzyAIService {
 	public async getEmployeesJobPosts(): Promise<
 		ApolloQueryResult<EmployeeJobPostsQuery>
 	> {
-		/*
-		const employeeGauzyId = 'po333';
-
-		const criteria: UpworkJobsSearchCriterion[] = [
-			{
-				keyword: 'yo',
-				employeeId: employeeGauzyId,
-				jobType: 'hourly',
-				category: 'cat',
-				categoryId: 'cat_id',
-				occupation: 'occ',
-				occupationId: 'occ_id',
-				employee: undefined
-			}
-		];
-
-		await this.syncEmployee({
-			firstName: 'yo66666',
-			lastName: 'yo',
-			externalEmployeeId: employeeGauzyId,
-			upworkJobSearchCriteria: undefined,
-			upworkJobSearchCriteriaAggregate: undefined
-		});
-		*/
-
 		// TODO: use Query saved in SDK, not hard-code it here. Note: we may add much more fields to that query as we need more info!
 		const employeesQuery: DocumentNode<EmployeeJobPostsQuery> = gql`
 			query employeeJobPosts {

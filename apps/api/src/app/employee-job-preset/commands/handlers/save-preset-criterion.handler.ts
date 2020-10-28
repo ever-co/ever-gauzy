@@ -83,7 +83,8 @@ export class SavePresetCriterionHandler
 			}
 
 			const employee = await this.employeeRepository.findOne(
-				input.employeeId
+				input.employeeId,
+				{ relations: ['user'] }
 			);
 			const criteria = await this.employeeUpworkJobsSearchCriterionRepository.find(
 				{

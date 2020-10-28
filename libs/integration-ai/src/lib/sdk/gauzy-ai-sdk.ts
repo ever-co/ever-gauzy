@@ -70,6 +70,8 @@ export type UpworkJobsSearchCriterionFilter = {
 	and?: Maybe<Array<UpworkJobsSearchCriterionFilter>>;
 	or?: Maybe<Array<UpworkJobsSearchCriterionFilter>>;
 	id?: Maybe<IdFilterComparison>;
+	employeeId?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 };
@@ -91,6 +93,23 @@ export type IdFilterComparison = {
 	notIn?: Maybe<Array<Scalars['ID']>>;
 };
 
+export type StringFieldComparison = {
+	is?: Maybe<Scalars['Boolean']>;
+	isNot?: Maybe<Scalars['Boolean']>;
+	eq?: Maybe<Scalars['String']>;
+	neq?: Maybe<Scalars['String']>;
+	gt?: Maybe<Scalars['String']>;
+	gte?: Maybe<Scalars['String']>;
+	lt?: Maybe<Scalars['String']>;
+	lte?: Maybe<Scalars['String']>;
+	like?: Maybe<Scalars['String']>;
+	notLike?: Maybe<Scalars['String']>;
+	iLike?: Maybe<Scalars['String']>;
+	notILike?: Maybe<Scalars['String']>;
+	in?: Maybe<Array<Scalars['String']>>;
+	notIn?: Maybe<Array<Scalars['String']>>;
+};
+
 export type BooleanFieldComparison = {
 	is?: Maybe<Scalars['Boolean']>;
 	isNot?: Maybe<Scalars['Boolean']>;
@@ -104,6 +123,8 @@ export type UpworkJobsSearchCriterionSort = {
 
 export enum UpworkJobsSearchCriterionSortFields {
 	Id = 'id',
+	EmployeeId = 'employeeId',
+	JobType = 'jobType',
 	IsActive = 'isActive',
 	IsArchived = 'isArchived'
 }
@@ -124,6 +145,8 @@ export type UpworkJobsSearchCriterionAggregateFilter = {
 	and?: Maybe<Array<UpworkJobsSearchCriterionAggregateFilter>>;
 	or?: Maybe<Array<UpworkJobsSearchCriterionAggregateFilter>>;
 	id?: Maybe<IdFilterComparison>;
+	employeeId?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 };
@@ -258,6 +281,11 @@ export type JobPostConnection = {
 export type JobPostCountAggregate = {
 	__typename?: 'JobPostCountAggregate';
 	id?: Maybe<Scalars['Int']>;
+	providerCode?: Maybe<Scalars['Int']>;
+	providerJobId?: Maybe<Scalars['Int']>;
+	jobStatus?: Maybe<Scalars['Int']>;
+	jobType?: Maybe<Scalars['Int']>;
+	country?: Maybe<Scalars['Int']>;
 	isActive?: Maybe<Scalars['Int']>;
 	isArchived?: Maybe<Scalars['Int']>;
 };
@@ -265,11 +293,21 @@ export type JobPostCountAggregate = {
 export type JobPostMinAggregate = {
 	__typename?: 'JobPostMinAggregate';
 	id?: Maybe<Scalars['ID']>;
+	providerCode?: Maybe<Scalars['String']>;
+	providerJobId?: Maybe<Scalars['String']>;
+	jobStatus?: Maybe<Scalars['String']>;
+	jobType?: Maybe<Scalars['String']>;
+	country?: Maybe<Scalars['String']>;
 };
 
 export type JobPostMaxAggregate = {
 	__typename?: 'JobPostMaxAggregate';
 	id?: Maybe<Scalars['ID']>;
+	providerCode?: Maybe<Scalars['String']>;
+	providerJobId?: Maybe<Scalars['String']>;
+	jobStatus?: Maybe<Scalars['String']>;
+	jobType?: Maybe<Scalars['String']>;
+	country?: Maybe<Scalars['String']>;
 };
 
 export type JobPostAggregateResponse = {
@@ -316,6 +354,8 @@ export type UpworkJobsSearchCriterionConnection = {
 export type UpworkJobsSearchCriterionCountAggregate = {
 	__typename?: 'UpworkJobsSearchCriterionCountAggregate';
 	id?: Maybe<Scalars['Int']>;
+	employeeId?: Maybe<Scalars['Int']>;
+	jobType?: Maybe<Scalars['Int']>;
 	isActive?: Maybe<Scalars['Int']>;
 	isArchived?: Maybe<Scalars['Int']>;
 };
@@ -323,11 +363,15 @@ export type UpworkJobsSearchCriterionCountAggregate = {
 export type UpworkJobsSearchCriterionMinAggregate = {
 	__typename?: 'UpworkJobsSearchCriterionMinAggregate';
 	id?: Maybe<Scalars['ID']>;
+	employeeId?: Maybe<Scalars['String']>;
+	jobType?: Maybe<Scalars['String']>;
 };
 
 export type UpworkJobsSearchCriterionMaxAggregate = {
 	__typename?: 'UpworkJobsSearchCriterionMaxAggregate';
 	id?: Maybe<Scalars['ID']>;
+	employeeId?: Maybe<Scalars['String']>;
+	jobType?: Maybe<Scalars['String']>;
 };
 
 export type UpworkJobsSearchCriterionAggregateResponse = {
@@ -402,6 +446,8 @@ export type EmployeeAggregateResponse = {
 export type EmployeeUpworkJobSearchCriteriaCountAggregate = {
 	__typename?: 'EmployeeUpworkJobSearchCriteriaCountAggregate';
 	id?: Maybe<Scalars['Int']>;
+	employeeId?: Maybe<Scalars['Int']>;
+	jobType?: Maybe<Scalars['Int']>;
 	isActive?: Maybe<Scalars['Int']>;
 	isArchived?: Maybe<Scalars['Int']>;
 };
@@ -409,11 +455,15 @@ export type EmployeeUpworkJobSearchCriteriaCountAggregate = {
 export type EmployeeUpworkJobSearchCriteriaMinAggregate = {
 	__typename?: 'EmployeeUpworkJobSearchCriteriaMinAggregate';
 	id?: Maybe<Scalars['ID']>;
+	employeeId?: Maybe<Scalars['String']>;
+	jobType?: Maybe<Scalars['String']>;
 };
 
 export type EmployeeUpworkJobSearchCriteriaMaxAggregate = {
 	__typename?: 'EmployeeUpworkJobSearchCriteriaMaxAggregate';
 	id?: Maybe<Scalars['ID']>;
+	employeeId?: Maybe<Scalars['String']>;
+	jobType?: Maybe<Scalars['String']>;
 };
 
 export type EmployeeUpworkJobSearchCriteriaAggregateResponse = {
@@ -457,6 +507,8 @@ export type EmployeeJobPostConnection = {
 export type EmployeeJobPostCountAggregate = {
 	__typename?: 'EmployeeJobPostCountAggregate';
 	id?: Maybe<Scalars['Int']>;
+	employeeId?: Maybe<Scalars['Int']>;
+	jobPostId?: Maybe<Scalars['Int']>;
 	isApplied?: Maybe<Scalars['Int']>;
 	isActive?: Maybe<Scalars['Int']>;
 	isArchived?: Maybe<Scalars['Int']>;
@@ -465,11 +517,15 @@ export type EmployeeJobPostCountAggregate = {
 export type EmployeeJobPostMinAggregate = {
 	__typename?: 'EmployeeJobPostMinAggregate';
 	id?: Maybe<Scalars['ID']>;
+	employeeId?: Maybe<Scalars['String']>;
+	jobPostId?: Maybe<Scalars['String']>;
 };
 
 export type EmployeeJobPostMaxAggregate = {
 	__typename?: 'EmployeeJobPostMaxAggregate';
 	id?: Maybe<Scalars['ID']>;
+	employeeId?: Maybe<Scalars['String']>;
+	jobPostId?: Maybe<Scalars['String']>;
 };
 
 export type EmployeeJobPostAggregateResponse = {
@@ -566,6 +622,11 @@ export type JobPostFilter = {
 	and?: Maybe<Array<JobPostFilter>>;
 	or?: Maybe<Array<JobPostFilter>>;
 	id?: Maybe<IdFilterComparison>;
+	providerCode?: Maybe<StringFieldComparison>;
+	providerJobId?: Maybe<StringFieldComparison>;
+	jobStatus?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
+	country?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 };
@@ -578,6 +639,11 @@ export type JobPostSort = {
 
 export enum JobPostSortFields {
 	Id = 'id',
+	ProviderCode = 'providerCode',
+	ProviderJobId = 'providerJobId',
+	JobStatus = 'jobStatus',
+	JobType = 'jobType',
+	Country = 'country',
 	IsActive = 'isActive',
 	IsArchived = 'isArchived'
 }
@@ -586,6 +652,11 @@ export type JobPostAggregateFilter = {
 	and?: Maybe<Array<JobPostAggregateFilter>>;
 	or?: Maybe<Array<JobPostAggregateFilter>>;
 	id?: Maybe<IdFilterComparison>;
+	providerCode?: Maybe<StringFieldComparison>;
+	providerJobId?: Maybe<StringFieldComparison>;
+	jobStatus?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
+	country?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 };
@@ -598,23 +669,6 @@ export type EmployeeFilter = {
 	jobType?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
-};
-
-export type StringFieldComparison = {
-	is?: Maybe<Scalars['Boolean']>;
-	isNot?: Maybe<Scalars['Boolean']>;
-	eq?: Maybe<Scalars['String']>;
-	neq?: Maybe<Scalars['String']>;
-	gt?: Maybe<Scalars['String']>;
-	gte?: Maybe<Scalars['String']>;
-	lt?: Maybe<Scalars['String']>;
-	lte?: Maybe<Scalars['String']>;
-	like?: Maybe<Scalars['String']>;
-	notLike?: Maybe<Scalars['String']>;
-	iLike?: Maybe<Scalars['String']>;
-	notILike?: Maybe<Scalars['String']>;
-	in?: Maybe<Array<Scalars['String']>>;
-	notIn?: Maybe<Array<Scalars['String']>>;
 };
 
 export type EmployeeSort = {
@@ -645,6 +699,8 @@ export type EmployeeJobPostFilter = {
 	and?: Maybe<Array<EmployeeJobPostFilter>>;
 	or?: Maybe<Array<EmployeeJobPostFilter>>;
 	id?: Maybe<IdFilterComparison>;
+	employeeId?: Maybe<StringFieldComparison>;
+	jobPostId?: Maybe<StringFieldComparison>;
 	isApplied?: Maybe<BooleanFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
@@ -658,6 +714,8 @@ export type EmployeeJobPostSort = {
 
 export enum EmployeeJobPostSortFields {
 	Id = 'id',
+	EmployeeId = 'employeeId',
+	JobPostId = 'jobPostId',
 	IsApplied = 'isApplied',
 	IsActive = 'isActive',
 	IsArchived = 'isArchived'
@@ -667,6 +725,8 @@ export type EmployeeJobPostAggregateFilter = {
 	and?: Maybe<Array<EmployeeJobPostAggregateFilter>>;
 	or?: Maybe<Array<EmployeeJobPostAggregateFilter>>;
 	id?: Maybe<IdFilterComparison>;
+	employeeId?: Maybe<StringFieldComparison>;
+	jobPostId?: Maybe<StringFieldComparison>;
 	isApplied?: Maybe<BooleanFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
@@ -850,6 +910,11 @@ export type JobPostDeleteFilter = {
 	and?: Maybe<Array<JobPostDeleteFilter>>;
 	or?: Maybe<Array<JobPostDeleteFilter>>;
 	id?: Maybe<IdFilterComparison>;
+	providerCode?: Maybe<StringFieldComparison>;
+	providerJobId?: Maybe<StringFieldComparison>;
+	jobStatus?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
+	country?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 };
@@ -906,6 +971,11 @@ export type JobPostUpdateFilter = {
 	and?: Maybe<Array<JobPostUpdateFilter>>;
 	or?: Maybe<Array<JobPostUpdateFilter>>;
 	id?: Maybe<IdFilterComparison>;
+	providerCode?: Maybe<StringFieldComparison>;
+	providerJobId?: Maybe<StringFieldComparison>;
+	jobStatus?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
+	country?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 };
@@ -963,6 +1033,8 @@ export type UpworkJobsSearchCriterionDeleteFilter = {
 	and?: Maybe<Array<UpworkJobsSearchCriterionDeleteFilter>>;
 	or?: Maybe<Array<UpworkJobsSearchCriterionDeleteFilter>>;
 	id?: Maybe<IdFilterComparison>;
+	employeeId?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 };
@@ -1000,6 +1072,8 @@ export type UpworkJobsSearchCriterionUpdateFilter = {
 	and?: Maybe<Array<UpworkJobsSearchCriterionUpdateFilter>>;
 	or?: Maybe<Array<UpworkJobsSearchCriterionUpdateFilter>>;
 	id?: Maybe<IdFilterComparison>;
+	employeeId?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 };
@@ -1127,6 +1201,8 @@ export type EmployeeJobPostDeleteFilter = {
 	and?: Maybe<Array<EmployeeJobPostDeleteFilter>>;
 	or?: Maybe<Array<EmployeeJobPostDeleteFilter>>;
 	id?: Maybe<IdFilterComparison>;
+	employeeId?: Maybe<StringFieldComparison>;
+	jobPostId?: Maybe<StringFieldComparison>;
 	isApplied?: Maybe<BooleanFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
@@ -1162,6 +1238,8 @@ export type EmployeeJobPostUpdateFilter = {
 	and?: Maybe<Array<EmployeeJobPostUpdateFilter>>;
 	or?: Maybe<Array<EmployeeJobPostUpdateFilter>>;
 	id?: Maybe<IdFilterComparison>;
+	employeeId?: Maybe<StringFieldComparison>;
+	jobPostId?: Maybe<StringFieldComparison>;
 	isApplied?: Maybe<BooleanFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
@@ -1270,6 +1348,11 @@ export type JobPostSubscriptionFilter = {
 	and?: Maybe<Array<JobPostSubscriptionFilter>>;
 	or?: Maybe<Array<JobPostSubscriptionFilter>>;
 	id?: Maybe<IdFilterComparison>;
+	providerCode?: Maybe<StringFieldComparison>;
+	providerJobId?: Maybe<StringFieldComparison>;
+	jobStatus?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
+	country?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 };
@@ -1293,6 +1376,8 @@ export type UpworkJobsSearchCriterionSubscriptionFilter = {
 	and?: Maybe<Array<UpworkJobsSearchCriterionSubscriptionFilter>>;
 	or?: Maybe<Array<UpworkJobsSearchCriterionSubscriptionFilter>>;
 	id?: Maybe<IdFilterComparison>;
+	employeeId?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 };
@@ -1341,6 +1426,8 @@ export type EmployeeJobPostSubscriptionFilter = {
 	and?: Maybe<Array<EmployeeJobPostSubscriptionFilter>>;
 	or?: Maybe<Array<EmployeeJobPostSubscriptionFilter>>;
 	id?: Maybe<IdFilterComparison>;
+	employeeId?: Maybe<StringFieldComparison>;
+	jobPostId?: Maybe<StringFieldComparison>;
 	isApplied?: Maybe<BooleanFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
