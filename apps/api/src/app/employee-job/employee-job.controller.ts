@@ -1,10 +1,22 @@
-import { Controller, HttpStatus, Get, Query, UseGuards } from '@nestjs/common';
+import {
+	Controller,
+	HttpStatus,
+	Get,
+	Query,
+	UseGuards,
+	Post,
+	Body
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { EmployeeJobPostService } from './employee-job.service';
 import { EmployeeJobPost } from './employee-job.entity';
 import { IPagination } from '../core';
 import { AuthGuard } from '@nestjs/passport';
-import { IGetEmployeeJobPostInput } from '@gauzy/models';
+import {
+	IApplyJobPostInput,
+	IGetEmployeeJobPostInput,
+	IVisibilityJobPostInput
+} from '@gauzy/models';
 
 @ApiTags('EmployeeJobPost')
 @UseGuards(AuthGuard('jwt'))
@@ -33,5 +45,35 @@ export class EmployeeJobPostController {
 		// const employeeId = ... (note: can be not set, so we get all jobs)
 
 		return this.employeeJobPostService.findAll(data);
+	}
+
+	@ApiOperation({ summary: 'Apply on job' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found employee job posts',
+		type: EmployeeJobPost
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Post('applied')
+	async updateApplied(@Body() data: IApplyJobPostInput) {
+		return this.employeeJobPostService.updateApplied(data);
+	}
+
+	@ApiOperation({ summary: 'Hide job' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found employee job posts',
+		type: EmployeeJobPost
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Post('hide')
+	async updateVisibility(@Body() data: IVisibilityJobPostInput) {
+		return this.employeeJobPostService.updateVisibility(data);
 	}
 }
