@@ -73,12 +73,6 @@ export class JobPresetService {
 			.toPromise();
 	}
 
-	deleteJobPresetCriterion(criterionId: string) {
-		return this.http
-			.delete<IJobPreset>(`/api/job-preset/criterion/${criterionId}`)
-			.toPromise();
-	}
-
 	createEmployeeCriterion(
 		employeeId: string,
 		criterion: IMatchingCriterions
@@ -88,6 +82,12 @@ export class JobPresetService {
 				`/api/job-preset/employee/${employeeId}/criterion`,
 				criterion
 			)
+			.toPromise();
+	}
+
+	deleteJobPresetCriterion(criterionId: string) {
+		return this.http
+			.delete<IJobPreset>(`/api/job-preset/criterion/${criterionId}`)
 			.toPromise();
 	}
 
