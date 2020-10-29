@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import {
 	IEmployeePresetInput,
-	IGetJobPresetCriterionInput,
 	IGetJobPresetInput,
 	IOrganization,
 	JobPostSourceEnum,
@@ -18,7 +17,6 @@ import { JobSearchCategoryService } from 'apps/gauzy/src/app/@core/services/job-
 import { JobSearchOccupationService } from 'apps/gauzy/src/app/@core/services/job-search-occupation.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import { debounceTime } from 'rxjs/operators';
 import * as _ from 'underscore';
 
@@ -195,7 +193,7 @@ export class MatchingComponent implements OnInit {
 					}
 				);
 			}
-			this.jobPresetService.createJobPreset(request).then((resp) => {
+			this.jobPresetService.createJobPreset(request).then(() => {
 				this.hasAnyChanges = false;
 				this.toastrService.success('Preset successfully saved');
 				// this.jobPresets = this.jobPresets.map((oldJobPreset) => {

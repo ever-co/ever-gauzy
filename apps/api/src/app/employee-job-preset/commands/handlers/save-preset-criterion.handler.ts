@@ -1,11 +1,9 @@
-import { GauzyAIService } from '@gauzy/integration-ai';
 import { IMatchingCriterions } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RequestContext } from '../../../core/context/request-context';
 import { Employee } from '../../../employee/employee.entity';
-import { EmployeeUpworkJobsSearchCriterion } from '../../employee-upwork-jobs-search-criterion.entity';
 import { JobPresetUpworkJobSearchCriterion } from '../../job-preset-upwork-job-search-criterion.entity';
 import { SavePresetCriterionCommand } from '../save-preset-criterion.command';
 
