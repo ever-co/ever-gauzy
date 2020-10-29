@@ -58,6 +58,7 @@ COPY --chown=node:node apps/api/src/app/core/seeds/data/default-email-templates 
 COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api .
 
 RUN npm install pm2 -g && mkdir /import && chown node:node /import
+RUN touch ormlogs.log && chown node:node ormlogs.log
 RUN chown node:node wait && chmod +x wait && chown -R node:node apps/
 USER node:node
 

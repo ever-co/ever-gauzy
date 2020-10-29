@@ -1,10 +1,20 @@
 version: 2.1
 
 orbs:
-    node: circleci/node@3.0.0
+    node: circleci/node@4.1.0
     pulumi: pulumi/pulumi@2.0.0
 
 aliases:
+    - &install-node
+      name: Install Node with NPM using NVM
+      command: |
+          echo 'export NVM_DIR="/opt/circleci/.nvm"' >> $BASH_ENV
+          echo ' [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> $BASH_ENV
+          nvm install v14
+          nvm alias default v14
+          source $BASH_ENV
+          node --version
+
     - &install-chrome
       name: Install Chrome
       command: |
@@ -13,6 +23,26 @@ aliases:
           sudo dpkg -i google-chrome.deb
           sudo sed -i 's|HERE/chrome\"|HERE/chrome\" --disable-setuid-sandbox|g' /opt/google/chrome/google-chrome
           rm google-chrome.deb
+
+    - &install-deps
+      name: Install Global Dependencies
+      command: |
+          sudo apt-get update
+          sudo apt install npm
+          sudo apt install build-essential
+          sudo npm install --quiet node-gyp -g              
+          sudo npm config set python /usr/bin/python
+
+    - &install-yarn
+      name: Install Latest Yarn
+      command: |
+          # remove default yarn
+          sudo rm -rf $(dirname $(which yarn))/yarn*
+          # download latest
+          rm -rf ~/.yarn
+          curl -o- -L https://yarnpkg.com/install.sh | bash
+          echo 'export PATH="${PATH}:${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin"' >> $BASH_ENV
+          source $BASH_ENV
 
 defaults: &defaults
     # put here anything which is common between all jobs
@@ -23,14 +53,14 @@ jobs:
     sonarqube:
         <<: *defaults
         machine:
-            image: ubuntu-1604:202004-01
+            image: ubuntu-2004:202010-01
         working_directory: /tmp/workspace/sonarqube-root
         description: Check Code Quality with SonarQube
         steps:
             - checkout
-            - node/install:
-                  install-yarn: true
-                  node-version: latest
+            - run: *install-node
+            - run: *install-deps
+            - run: *install-yarn
             - restore_cache:
                   name: Restore Yarn Package Cache
                   keys:
@@ -63,22 +93,13 @@ jobs:
     build-monorepo-root:
         <<: *defaults
         machine:
-            image: ubuntu-1604:202004-01
+            image: ubuntu-2004:202010-01
         working_directory: /tmp/workspace/monorepo-root
         steps:
             - checkout
-            - node/install:
-                  install-yarn: true
-                  node-version: latest
-            - run:
-                  name: 'Installing latest Yarn'
-                  command: |
-                      # remove default yarn
-                      sudo rm -rf $(dirname $(which yarn))/yarn*
-                      # download latest
-                      rm -rf ~/.yarn
-                      curl -o- -L https://yarnpkg.com/install.sh | bash
-                      echo 'export PATH="${PATH}:${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin"' >> $BASH_ENV
+            - run: *install-node
+            - run: *install-deps
+            - run: *install-yarn
             - restore_cache:
                   name: Restore Yarn Package Cache
                   keys:
@@ -101,22 +122,13 @@ jobs:
     build-desktop:
         <<: *defaults
         machine:
-            image: ubuntu-1604:202004-01
+            image: ubuntu-2004:202010-01
         working_directory: /tmp/workspace/desktop
         steps:
             - checkout
-            - node/install:
-                  install-yarn: true
-                  node-version: latest
-            - run:
-                  name: 'Installing latest Yarn'
-                  command: |
-                      # remove default yarn
-                      sudo rm -rf $(dirname $(which yarn))/yarn*
-                      # download latest
-                      rm -rf ~/.yarn
-                      curl -o- -L https://yarnpkg.com/install.sh | bash
-                      echo 'export PATH="${PATH}:${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin"' >> $BASH_ENV
+            - run: *install-node
+            - run: *install-deps
+            - run: *install-yarn
             - restore_cache:
                   name: Restore Yarn Package Cache
                   keys:
@@ -142,22 +154,13 @@ jobs:
     build-api:
         <<: *defaults
         machine:
-            image: ubuntu-1604:202004-01
+            image: ubuntu-2004:202010-01
         working_directory: /tmp/workspace/api
         steps:
             - checkout
-            - node/install:
-                  install-yarn: true
-                  node-version: latest
-            - run:
-                  name: 'Installing latest Yarn'
-                  command: |
-                      # remove default yarn
-                      sudo rm -rf $(dirname $(which yarn))/yarn*
-                      # download latest
-                      rm -rf ~/.yarn
-                      curl -o- -L https://yarnpkg.com/install.sh | bash
-                      echo 'export PATH="${PATH}:${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin"' >> $BASH_ENV
+            - run: *install-node
+            - run: *install-deps
+            - run: *install-yarn
             - restore_cache:
                   name: Restore Yarn Package Cache
                   keys:
@@ -183,22 +186,13 @@ jobs:
     build-web:
         <<: *defaults
         machine:
-            image: ubuntu-1604:202004-01
+            image: ubuntu-2004:202010-01
         working_directory: /tmp/workspace/web
         steps:
             - checkout
-            - node/install:
-                  install-yarn: true
-                  node-version: latest
-            - run:
-                  name: 'Installing latest Yarn'
-                  command: |
-                      # remove default yarn
-                      sudo rm -rf $(dirname $(which yarn))/yarn*
-                      # download latest
-                      rm -rf ~/.yarn
-                      curl -o- -L https://yarnpkg.com/install.sh | bash
-                      echo 'export PATH="${PATH}:${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin"' >> $BASH_ENV
+            - run: *install-node
+            - run: *install-deps
+            - run: *install-yarn
             - restore_cache:
                   name: Restore Yarn Package Cache
                   keys:
@@ -228,15 +222,9 @@ jobs:
             - image: circleci/node:latest
         steps:
             - checkout
-            - run:
-                  name: 'Installing latest Yarn'
-                  command: |
-                      # remove default yarn
-                      sudo rm -rf $(dirname $(which yarn))/yarn*
-                      # download latest
-                      rm -rf ~/.yarn
-                      curl -o- -L https://yarnpkg.com/install.sh | bash
-                      echo 'export PATH="${PATH}:${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin"' >> $BASH_ENV
+            - run: *install-node
+            - run: *install-deps
+            - run: *install-yarn
             - restore_cache:
                   name: Restore Yarn Package Cache
                   keys:

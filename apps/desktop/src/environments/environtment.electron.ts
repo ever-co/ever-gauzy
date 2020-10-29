@@ -1,3 +1,4 @@
 export const environment = {
-	SCREENSHOTS_ENGINE_METHOD: 'ScreenshotDesktopLib' // ElectronDesktopCapturer || ScreenshotDesktopLib
+	// ElectronDesktopCapturer || ScreenshotDesktopLib
+	SCREENSHOTS_ENGINE_METHOD: 'ScreenshotDesktopLib'
 };

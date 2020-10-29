@@ -4,7 +4,7 @@ import { first } from 'rxjs/operators';
 import {
 	IGetEmployeeJobPostInput,
 	IEmployeeJobPost,
-	Pagination,
+	IPagination,
 	IUpdateEmployeeJobPostAppliedResult,
 	IApplyJobPostInput,
 	IVisibilityJobPostInput
@@ -19,7 +19,7 @@ export class JobService {
 
 	getJobs(request?: IGetEmployeeJobPostInput) {
 		return this.http
-			.get<Pagination<IEmployeeJobPost>>(`/api/employee-job`, {
+			.get<IPagination<IEmployeeJobPost>>(`/api/employee-job`, {
 				params: request ? toParams(request) : {}
 			})
 			.pipe(first())
