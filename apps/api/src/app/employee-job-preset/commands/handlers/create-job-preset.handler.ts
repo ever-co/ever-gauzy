@@ -50,20 +50,16 @@ export class CreateJobPresetHandler
 					})
 			);
 
-			const found = await this.jobPresetRepository.findOne(jobPreset.id, {
-				relations: ['jobPresetCriterions']
-			});
-			const jobPresetCriterionIds = _.pluck(
-				found.jobPresetCriterions,
-				'id'
-			);
 			await this.jobPresetUpworkJobSearchCriterionRepository.delete({
-				id: In(jobPresetCriterionIds)
+				jobPresetId: jobPreset.id
 			});
 
 			await this.jobPresetUpworkJobSearchCriterionRepository.save(
 				jobPresetCriterion
 			);
+
+			jobPreset.jobPresetCriterions = jobPresetCriterion;
+
 			// jobPreset.jobPresetCriterion = jobPresetCriterion;
 			// await this.jobPresetRepository.save(jobPreset);
 		}

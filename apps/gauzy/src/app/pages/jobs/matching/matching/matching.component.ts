@@ -39,9 +39,9 @@ export class MatchingComponent implements OnInit {
 	categories: IJobSearchCategory[] = [];
 	occupations: IJobSearchOccupation[] = [];
 	criterions: IMatchingCriterions[] = [];
-	jobPreset: IJobPreset;
 	selectedEmployeeId: string;
 	selectedOrganization: IOrganization;
+	hasAnyChanges = false;
 
 	constructor(
 		private jobPresetService: JobPresetService,
@@ -51,6 +51,8 @@ export class MatchingComponent implements OnInit {
 		private store: Store
 	) {
 		this.addPreset = this.addPreset.bind(this);
+		this.createNewCategories = this.createNewCategories.bind(this);
+		this.createNewOccupations = this.createNewOccupations.bind(this);
 	}
 
 	ngOnInit(): void {
@@ -73,21 +75,26 @@ export class MatchingComponent implements OnInit {
 			.pipe(debounceTime(500))
 			.subscribe((employee) => {
 				setTimeout(async () => {
+					this.criterions = [];
+					this.criterionForm = {
+						jobSource: JobPostSourceEnum.UPWORK,
+						jobPresetId: null
+					};
 					if (employee && employee.id) {
 						this.selectedEmployeeId = employee.id;
-						const preset = await this.getEmployeePreset();
-						this.criterionForm = {
-							jobSource: JobPostSourceEnum.UPWORK,
-							jobPresetId: preset ? preset.id : null
-						};
+						this.jobPresetService
+							.getJobPresets({ employeeId: employee.id })
+							.then((jobPresets) => {
+								this.criterionForm.jobPresetId =
+									jobPresets.length > 0
+										? jobPresets[0].id
+										: null;
+							});
+						await this.getEmployeeCriterions();
 					} else {
 						this.selectedEmployeeId = null;
-						this.criterionForm = {
-							jobSource: JobPostSourceEnum.UPWORK,
-							jobPresetId: null
-						};
 					}
-					this.updateCriterionsData();
+					this.checkForEmptyCriterion();
 				});
 			});
 	}
@@ -96,24 +103,16 @@ export class MatchingComponent implements OnInit {
 		const request: IGetJobPresetInput = {
 			organizationId: this.selectedOrganization.id
 		};
-		if (this.selectedEmployeeId) {
-			request.employeeId = this.selectedEmployeeId;
-		}
 		this.jobPresetService.getJobPresets(request).then((jobPresets) => {
 			this.jobPresets = jobPresets;
 		});
 	}
 
-	getEmployeePreset() {
+	getEmployeeCriterions() {
 		return this.jobPresetService
-			.getEmployeePresets(this.selectedEmployeeId)
-			.then((jobPresets) => {
-				if (jobPresets.length > 0) {
-					this.jobPreset = jobPresets[0];
-				} else {
-					this.jobPreset = null;
-				}
-				return this.jobPreset;
+			.getEmployeeCriterions(this.selectedEmployeeId)
+			.then((criterions) => {
+				this.criterions = criterions;
 			});
 	}
 
@@ -127,88 +126,59 @@ export class MatchingComponent implements OnInit {
 		}
 		this.jobPresetService.createJobPreset(request).then((jobPreset) => {
 			this.jobPresets = this.jobPresets.concat([jobPreset]);
+			this.criterionForm.jobPresetId = jobPreset.id;
 		});
 	}
 
 	async onPresetSelected(jobPreset: IJobPreset) {
-		this.jobPreset = jobPreset;
-		this.updateEmployeePreset();
-		await this.updateCriterionsData();
+		if (jobPreset) {
+			if (this.selectedEmployeeId) {
+				await this.updateEmployeePreset();
+			} else {
+				await this.jobPresetService
+					.getJobPreset(jobPreset.id)
+					.then(({ jobPresetCriterions }) => {
+						this.criterions = jobPresetCriterions;
+					});
+			}
+		}
+		this.hasAnyChanges = false;
+		this.checkForEmptyCriterion();
 	}
 
 	onSourceSelected() {
 		this.updateEmployeePreset();
 	}
 
-	updateEmployeePreset() {
+	async updateEmployeePreset() {
+		this.criterions = [];
 		if (this.selectedEmployeeId) {
 			const request: IEmployeePresetInput = {
 				source: this.criterionForm.jobSource,
-				jobPresetIds: this.criterionForm.jobPresetId
-					? [this.criterionForm.jobPresetId]
-					: [],
+				jobPresetIds: [this.criterionForm.jobPresetId],
 				employeeId: this.selectedEmployeeId
 			};
-			this.jobPresetService.saveEmployeePreset(request);
+			await this.jobPresetService
+				.saveEmployeePreset(request)
+				.then((criterions) => {
+					this.criterions = criterions;
+				});
 		}
 	}
 
-	async updateCriterionsData() {
-		try {
-			if (this.jobPreset) {
-				const id = this.jobPreset.id;
-				const request: IGetJobPresetCriterionInput = {};
-				if (this.selectedEmployeeId) {
-					request.employeeId = this.selectedEmployeeId;
-				}
-
-				await this.jobPresetService
-					.getJobPreset(id, request)
-					.then((jobPresets) => {
-						this.jobPreset = jobPresets;
-						if (this.selectedEmployeeId) {
-							this.criterions =
-								this.jobPreset.employeeCriterions.length > 0
-									? this.jobPreset.employeeCriterions
-									: this.jobPreset.jobPresetCriterions;
-						} else {
-							this.criterions = this.jobPreset.jobPresetCriterions;
-						}
-						return jobPresets;
-					});
-			} else if (this.selectedEmployeeId) {
-				await this.jobPresetService
-					.getEmployeeCriterions(this.selectedEmployeeId)
-					.then((criterions) => {
-						this.criterions = criterions;
-					});
-			} else {
-				this.criterions = [];
-			}
-		} catch (error) {
-			this.criterions = [];
-		}
-
+	async checkForEmptyCriterion() {
 		if (this.criterions.length === 0) {
 			this.addNewCriterion();
 		}
 	}
 
-	addNewCriterion(criterion: IMatchingCriterions = {}) {
-		this.criterions.push(criterion);
-	}
-
 	saveJobPreset() {
-		if (this.jobPreset) {
-			const request: IJobPreset = _.omit(
-				this.jobPreset,
-				'employeeCriterion'
-			);
-			if (
-				this.jobPreset.employeeCriterions &&
-				this.jobPreset.employeeCriterions.length > 0
-			) {
-				request.jobPresetCriterions = this.jobPreset.employeeCriterions.map(
+		if (this.criterionForm.jobPresetId) {
+			const request: IJobPreset = {
+				id: this.criterionForm.jobPresetId
+			};
+			if (this.criterions && this.criterions.length > 0) {
+				request.jobPresetCriterions = this.criterions.map(
 					(employeeCriterion): IJobPresetUpworkJobSearchCriterion => {
 						return _.omit(
 							employeeCriterion,
@@ -225,63 +195,85 @@ export class MatchingComponent implements OnInit {
 					}
 				);
 			}
-			this.jobPresetService.createJobPreset(request).then((jobPreset) => {
-				this.jobPresets = this.jobPresets.map((oldJobPreset) => {
-					if (oldJobPreset.id === jobPreset.id) {
-						return jobPreset;
-					} else {
-						return oldJobPreset;
-					}
-				});
+			this.jobPresetService.createJobPreset(request).then((resp) => {
+				this.hasAnyChanges = false;
+				this.toastrService.success('Preset successfully saved');
+				// this.jobPresets = this.jobPresets.map((oldJobPreset) => {
+				// 	if (oldJobPreset.id === jobPreset.id) {
+				// 		return jobPreset;
+				// 	} else {
+				// 		return oldJobPreset;
+				// 	}
+				// });
 			});
 		}
 	}
 
 	saveCriterion(criterion?: IMatchingCriterions) {
+		let req: any;
+		this.hasAnyChanges = true;
 		if (this.selectedEmployeeId) {
-			this.jobPresetService
-				.createEmployeeCriterion(this.selectedEmployeeId, criterion)
-				.then((newCreation) => {
-					const index = this.criterions.indexOf(criterion);
-					this.criterions[index] = newCreation;
-					this.toastrService.success('Criterion successfully saved');
-				})
-				.catch(() => {
-					this.toastrService.error(
-						'Error while saving criterion, Please try aging'
-					);
-				});
+			req = this.jobPresetService.createEmployeeCriterion(
+				this.selectedEmployeeId,
+				criterion
+			);
 		} else {
-			this.jobPresetService
-				.createJobPresetCriterion(this.jobPreset.id, criterion)
-				.then((newCreation) => {
-					const index = this.criterions.indexOf(criterion);
-					this.criterions[index] = newCreation;
+			req = this.jobPresetService.createJobPresetCriterion(
+				this.criterionForm.jobPresetId,
+				criterion
+			);
+		}
+
+		req.then((newCreation) => {
+			const index = this.criterions.indexOf(criterion);
+			this.criterions[index] = newCreation;
+			this.toastrService.success('Criterion successfully saved');
+		}).catch(() => {
+			this.toastrService.error(
+				'Error while saving criterion, Please try aging'
+			);
+		});
+	}
+
+	async deleteCriterions(index, criterion: IMatchingCriterions) {
+		if (criterion.id) {
+			this.hasAnyChanges = true;
+			if (this.selectedEmployeeId) {
+				try {
+					await this.jobPresetService.deleteEmployeeCriterion(
+						this.selectedEmployeeId,
+						criterion.id
+					);
 					this.toastrService.success('Criterion successfully saved');
-				})
-				.catch(() => {
+				} catch (error) {
 					this.toastrService.error(
 						'Error while saving criterion, Please try aging'
 					);
-				});
+					return;
+				}
+			} else {
+				try {
+					await this.jobPresetService.deleteJobPresetCriterion(
+						criterion.id
+					);
+					this.toastrService.success('Criterion successfully saved');
+				} catch (error) {
+					this.toastrService.error(
+						'Error while saving criterion, Please try aging'
+					);
+					return;
+				}
+			}
+		}
+
+		this.criterions.splice(index, 1);
+		if (this.criterions.length === 0) {
+			this.addNewCriterion();
 		}
 	}
 
-	deleteCriterions(index, criterion: IMatchingCriterions) {
-		this.jobPresetService
-			.deleteJobPresetCriterion(criterion.id)
-			.then(() => {
-				this.criterions.splice(index, 1);
-				if (this.criterions.length === 0) {
-					this.addNewCriterion();
-				}
-				this.toastrService.success('Criterion successfully saved');
-			})
-			.catch(() => {
-				this.toastrService.error(
-					'Error while saving criterion, Please try aging'
-				);
-			});
+	addNewCriterion(criterion: IMatchingCriterions = {}) {
+		this.criterions.push(criterion);
 	}
 
 	getCategories() {
@@ -304,7 +296,7 @@ export class MatchingComponent implements OnInit {
 			});
 	}
 
-	createNewCategories = (title) => {
+	createNewCategories(title) {
 		this.jobSearchCategoryService
 			.create({
 				name: title,
@@ -315,9 +307,9 @@ export class MatchingComponent implements OnInit {
 				this.categories = this.categories.concat([category]);
 				console.log(this.categories);
 			});
-	};
+	}
 
-	createNewOccupations = (title) => {
+	createNewOccupations(title) {
 		this.jobSearchOccupationService
 			.create({
 				name: title,
@@ -327,5 +319,5 @@ export class MatchingComponent implements OnInit {
 			.then((occupation) => {
 				this.occupations = this.occupations.concat([occupation]);
 			});
-	};
+	}
 }

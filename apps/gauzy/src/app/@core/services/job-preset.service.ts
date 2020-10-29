@@ -30,6 +30,14 @@ export class JobPresetService {
 			.toPromise();
 	}
 
+	getEmployeePreset(request?: IGetJobPresetInput) {
+		return this.http
+			.get<IJobPreset>(`/api/job-preset`, {
+				params: request ? toParams(request) : {}
+			})
+			.toPromise();
+	}
+
 	getEmployeeCriterions(employeeId: string, request?: IGetJobPresetInput) {
 		return this.http
 			.get<IMatchingCriterions[]>(
@@ -41,12 +49,6 @@ export class JobPresetService {
 			.toPromise();
 	}
 
-	getEmployeePresets(employeeId: string) {
-		return this.http
-			.get<IJobPreset[]>(`/api/job-preset/employee/${employeeId}`)
-			.toPromise();
-	}
-
 	createJobPreset(request?: IJobPreset) {
 		return this.http
 			.post<IJobPreset>(`/api/job-preset`, request)
@@ -55,7 +57,7 @@ export class JobPresetService {
 
 	saveEmployeePreset(arg: IEmployeePresetInput) {
 		return this.http
-			.post<IJobPreset>(`/api/job-preset/employee`, arg)
+			.post<IMatchingCriterions[]>(`/api/job-preset/employee`, arg)
 			.toPromise();
 	}
 
@@ -71,6 +73,12 @@ export class JobPresetService {
 			.toPromise();
 	}
 
+	deleteJobPresetCriterion(criterionId: string) {
+		return this.http
+			.delete<IJobPreset>(`/api/job-preset/criterion/${criterionId}`)
+			.toPromise();
+	}
+
 	createEmployeeCriterion(
 		employeeId: string,
 		criterion: IMatchingCriterions
@@ -83,9 +91,11 @@ export class JobPresetService {
 			.toPromise();
 	}
 
-	deleteJobPresetCriterion(criterionId: string) {
+	deleteEmployeeCriterion(employeeId: string, criterionId: string) {
 		return this.http
-			.delete<IJobPreset>(`/api/job-preset/criterion/${criterionId}`)
+			.delete<IMatchingCriterions>(
+				`/api/job-preset/employee/${employeeId}/criterion/${criterionId}`
+			)
 			.toPromise();
 	}
 }

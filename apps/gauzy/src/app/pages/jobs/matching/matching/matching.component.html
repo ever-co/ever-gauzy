@@ -52,7 +52,10 @@
 							</div>
 							<div class="col-auto">
 								<ng-template
-									[ngIf]="criterionForm?.jobPresetId"
+									[ngIf]="
+										criterionForm?.jobPresetId &&
+										hasAnyChanges
+									"
 								>
 									<button
 										*ngIf="selectedEmployeeId"
@@ -203,7 +206,6 @@
 									type="button"
 									ngxConfirmDialog
 									message="Are you sure that, you want to delete criterion"
-									*ngIf="criterion.id"
 									(confirm)="
 										deleteCriterions(index, criterion)
 									"

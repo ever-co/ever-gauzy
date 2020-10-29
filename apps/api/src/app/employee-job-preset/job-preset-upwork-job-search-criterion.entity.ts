@@ -1,7 +1,10 @@
 import { Column, Entity, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { IJobPresetUpworkJobSearchCriterion } from '@gauzy/models';
+import {
+	IJobPresetUpworkJobSearchCriterion,
+	JobPostTypeEnum
+} from '@gauzy/models';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 import { JobPreset } from './job-preset.entity';
 import { JobSearchCategory } from './job-search-category/job-search-category.entity';
@@ -53,12 +56,6 @@ export class JobPresetUpworkJobSearchCriterion
 	@ApiProperty({ type: Boolean })
 	@IsString()
 	@IsNotEmpty()
-	@Column({ default: false })
-	hourly?: boolean;
-
-	@ApiProperty({ type: Boolean })
-	@IsString()
-	@IsNotEmpty()
-	@Column({ default: false })
-	fixPrice?: boolean;
+	@Column({ type: 'text', nullable: true })
+	jobType?: JobPostTypeEnum;
 }

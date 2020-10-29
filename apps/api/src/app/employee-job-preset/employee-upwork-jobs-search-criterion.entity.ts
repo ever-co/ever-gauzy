@@ -6,7 +6,8 @@ import {
 	IEmployeeUpworkJobsSearchCriterion,
 	IJobPreset,
 	IJobSearchCategory,
-	IJobSearchOccupation
+	IJobSearchOccupation,
+	JobPostTypeEnum
 } from '@gauzy/models';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 import { JobPreset } from './job-preset.entity';
@@ -69,12 +70,6 @@ export class EmployeeUpworkJobsSearchCriterion
 	@ApiProperty({ type: Boolean })
 	@IsString()
 	@IsNotEmpty()
-	@Column({ default: false })
-	hourly?: boolean;
-
-	@ApiProperty({ type: Boolean })
-	@IsString()
-	@IsNotEmpty()
-	@Column({ default: false })
-	fixPrice?: boolean;
+	@Column({ type: 'text', nullable: true })
+	jobType?: JobPostTypeEnum;
 }

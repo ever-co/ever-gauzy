@@ -43,49 +43,7 @@ export class SaveEmployeeCriterionHandler
 
 		const creation = new EmployeeUpworkJobsSearchCriterion(input);
 
-		console.log(creation);
-
-		if (input.jobPresetId) {
-			const criteriaCounts = await this.employeeUpworkJobsSearchCriterionRepository.count(
-				{
-					jobPresetId: input.jobPresetId,
-					employeeId: input.employeeId
-				}
-			);
-
-			if (criteriaCounts === 0) {
-				let jobCreation = await this.jobPresetUpworkJobSearchCriterionRepository.find(
-					{
-						jobPresetId: input.jobPresetId
-					}
-				);
-				let found = false;
-				jobCreation = jobCreation.map((item) => {
-					if (creation && creation.id === item.id) {
-						item = creation;
-						found = true;
-					}
-					return new EmployeeUpworkJobsSearchCriterion({
-						...item,
-						employeeId: input.employeeId
-					});
-				});
-				if (!found) {
-					jobCreation.push(creation);
-				}
-				await this.employeeUpworkJobsSearchCriterionRepository.save(
-					jobCreation
-				);
-			} else {
-				await this.employeeUpworkJobsSearchCriterionRepository.save(
-					creation
-				);
-			}
-		} else {
-			await this.employeeUpworkJobsSearchCriterionRepository.save(
-				creation
-			);
-		}
+		await this.employeeUpworkJobsSearchCriterionRepository.save(creation);
 
 		const employee = await this.employeeRepository.findOne(
 			input.employeeId,

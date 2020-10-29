@@ -12,10 +12,8 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import {
-	IEmployeePresetInput,
 	IGetJobPresetCriterionInput,
 	IGetJobPresetInput,
-	IGetMatchingCriterions,
 	IJobPreset,
 	IMatchingCriterions
 } from '@gauzy/models';
@@ -24,10 +22,10 @@ import { JobPreset } from './job-preset.entity';
 import { JobPresetUpworkJobSearchCriterion } from './job-preset-upwork-job-search-criterion.entity';
 import { EmployeeUpworkJobsSearchCriterion } from './employee-upwork-jobs-search-criterion.entity';
 
-@ApiTags('EmployeeJobPreset')
+@ApiTags('JobSearchPreset')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
-export class EmployeeJobPresetController {
+export class JobSearchPresetController {
 	constructor(private readonly jobPresetService: JobPresetService) {}
 
 	@ApiOperation({ summary: 'Find all employee job posts' })
@@ -67,114 +65,6 @@ export class EmployeeJobPresetController {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found employee job preset',
-		type: JobPreset
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Post(':jobPresetId/criterion')
-	async saveUpdate(
-		@Param('jobPresetId') jobPresetId: string,
-		@Body() request: IMatchingCriterions
-	) {
-		return this.jobPresetService.saveJobPresetCriterion({
-			...request,
-			jobPresetId
-		});
-	}
-
-	@ApiOperation({ summary: 'Save Employee preset' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found employee job preset',
-		type: JobPreset
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get('employee/:id')
-	async getEmployeePreset(@Param('id') employeeId: string) {
-		return this.jobPresetService.getEmployeePreset(employeeId);
-	}
-
-	@ApiOperation({ summary: 'Find all employee job posts' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found employee job preset',
-		type: JobPreset
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get('employee/:employeeId/criterion')
-	async getEmployeeCriterion(
-		@Param('employeeId') employeeId: string,
-		@Query() request: IGetMatchingCriterions
-	) {
-		return this.jobPresetService.getEmployeeCriterion({
-			...request,
-			employeeId
-		});
-	}
-
-	@ApiOperation({ summary: 'Find all employee job posts' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found employee job preset',
-		type: JobPreset
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Post('employee/:employeeId/criterion')
-	async saveUpdateEmployeeCriterion(
-		@Param('employeeId') employeeId: string,
-		@Body() request: IMatchingCriterions
-	) {
-		return this.jobPresetService.saveEmployeeCriterion({
-			...request,
-			employeeId
-		});
-	}
-
-	@ApiOperation({ summary: 'Save Employee preset' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found employee job preset',
-		type: JobPreset
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Post('employee')
-	async saveEmployeePreset(@Body() request: IEmployeePresetInput) {
-		return this.jobPresetService.saveEmployeePreset(request);
-	}
-
-	@ApiOperation({ summary: 'Find all employee job posts' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found employee job preset',
-		type: JobPreset
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Delete('criterion/:id')
-	async delete(@Param() creationId: string, @Query() request) {
-		return this.jobPresetService.deleteCriterion(creationId, request);
-	}
-
-	@ApiOperation({ summary: 'Find all employee job posts' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found employee job preset',
 		type: JobPresetUpworkJobSearchCriterion
 	})
 	@ApiResponse({
@@ -199,5 +89,41 @@ export class EmployeeJobPresetController {
 	@Post()
 	async createJobPreset(@Body() request: IJobPreset) {
 		return this.jobPresetService.createJobPreset(request);
+	}
+
+	@ApiOperation({ summary: 'Find all employee job posts' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found employee job preset',
+		type: JobPreset
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Post(':jobPresetId/criterion')
+	async saveUpdate(
+		@Param('jobPresetId') jobPresetId: string,
+		@Body() request: IMatchingCriterions
+	) {
+		return this.jobPresetService.saveJobPresetCriterion({
+			...request,
+			jobPresetId
+		});
+	}
+
+	@ApiOperation({ summary: 'Find all employee job posts' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found employee job preset',
+		type: JobPreset
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Delete('criterion/:criterionId')
+	async deleteJobPresetCriterion(@Param('criterionId') creationId: string) {
+		return this.jobPresetService.deleteJobPresetCriterion(creationId);
 	}
 }

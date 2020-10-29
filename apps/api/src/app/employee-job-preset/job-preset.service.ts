@@ -60,19 +60,16 @@ export class JobPresetService extends CrudService<JobPreset> {
 				}
 				if (request.organizationId) {
 					qb.andWhere(
-						`${qb.alias}."organizationId" = :organizationId`,
+						`"${qb.alias}"."organizationId" = :organizationId`,
 						{
 							organizationId: request.organizationId
 						}
 					);
 				}
 				if (request.employeeId) {
-					qb.andWhere(
-						`${qb.alias}."."employees"."id" = :employeeId`,
-						{
-							employeeId: request.employeeId
-						}
-					);
+					qb.andWhere(`"employees"."id" = :employeeId`, {
+						employeeId: request.employeeId
+					});
 				}
 			}
 		});
@@ -140,11 +137,16 @@ export class JobPresetService extends CrudService<JobPreset> {
 		return this.commandBus.execute(new SaveEmployeePresetCommand(request));
 	}
 
-	deleteCriterion(creationId: string, request: any) {
-		if (request.employeeId) {
-			this.employeeUpworkJobsSearchCriterionRepository.delete(creationId);
-		} else {
-			this.jobPresetUpworkJobSearchCriterionRepository.delete(creationId);
-		}
+	deleteEmployeeCriterion(creationId: string, employeeId: string) {
+		return this.employeeUpworkJobsSearchCriterionRepository.delete({
+			id: creationId,
+			employeeId: employeeId
+		});
+	}
+
+	deleteJobPresetCriterion(creationId: string) {
+		return this.jobPresetUpworkJobSearchCriterionRepository.delete(
+			creationId
+		);
 	}
 }
