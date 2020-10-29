@@ -1,3 +1,5 @@
 export const TimeOffPageData = {
-	timeOffPolicy: 'Default Policy'
+	defaultPolicy: 'Default Policy',
+	defaultDescription: 'Going to the sea',
+	defaultHoliday: 'Нова Година'
 };
