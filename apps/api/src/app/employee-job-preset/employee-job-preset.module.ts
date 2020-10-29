@@ -4,7 +4,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Employee } from '../employee/employee.entity';
 import { Handlers } from './commands/handlers';
-import { EmployeeJobPresetController } from './employee-job-preset.controller';
+import { EmployeePresetController } from './employee-preset.controller';
 import { EmployeeUpworkJobsSearchCriterion } from './employee-upwork-jobs-search-criterion.entity';
 import { JobPresetUpworkJobSearchCriterion } from './job-preset-upwork-job-search-criterion.entity';
 import { JobPreset } from './job-preset.entity';
@@ -15,6 +15,7 @@ import { JobSearchCategoryService } from './job-search-category/job-search-categ
 import { JobSearchOccupationController } from './job-search-occupation/job-search-occupation.controller';
 import { JobSearchOccupation } from './job-search-occupation/job-search-occupation.entity';
 import { JobSearchOccupationService } from './job-search-occupation/job-search-occupation.service';
+import { JobSearchPresetController } from './job-search-preset.controller';
 
 @Module({
 	imports: [
@@ -31,7 +32,8 @@ import { JobSearchOccupationService } from './job-search-occupation/job-search-o
 	controllers: [
 		JobSearchOccupationController,
 		JobSearchCategoryController,
-		EmployeeJobPresetController
+		EmployeePresetController,
+		JobSearchPresetController
 	],
 	providers: [
 		...Handlers,

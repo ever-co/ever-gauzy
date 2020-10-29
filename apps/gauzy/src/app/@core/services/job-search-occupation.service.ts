@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { JobSearchOccupation, Pagination } from '@gauzy/models';
+import { IJobSearchOccupation, IPagination } from '@gauzy/models';
 import { toParams } from '@gauzy/utils';
 
 @Injectable({
@@ -11,7 +11,7 @@ export class JobSearchOccupationService {
 
 	getAll(request?: any) {
 		return this.http
-			.get<Pagination<JobSearchOccupation>>(
+			.get<IPagination<IJobSearchOccupation>>(
 				`/api/job-preset/job-search-occupation`,
 				{
 					params: request ? toParams(request) : {}
@@ -20,9 +20,9 @@ export class JobSearchOccupationService {
 			.toPromise();
 	}
 
-	create(request?: JobSearchOccupation) {
+	create(request?: IJobSearchOccupation) {
 		return this.http
-			.post<JobSearchOccupation>(
+			.post<IJobSearchOccupation>(
 				`/api/job-preset/job-search-occupation`,
 				request
 			)
