@@ -1,11 +1,11 @@
 <label class="label" *ngIf="label">{{ label | translate }}</label>
-
 <nb-select
 	[formControl]="select"
 	[multiple]="multiple"
 	(selectedChange)="onMembersSelected($event)"
 	fullWidth
 	[disabled]="disabled"
+	[(selected)]="preSelected"
 	placeholder="{{ placeholder | translate }}"
 >
 	<nb-option *ngFor="let employee of employees" [value]="employee.id">

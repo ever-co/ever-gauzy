@@ -185,19 +185,14 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 			this.form.resetForm();
 			return;
 		}
-		this.timeTrackerService
-			.toggle()
-			.then((success) => {
-				console.log(success);
-			})
-			.catch((error) => {
-				if (this.timeTrackerService.interval) {
-					this.timeTrackerService.turnOffTimer();
-				} else {
-					this.timeTrackerService.turnOnTimer();
-				}
-				this._errorHandlingService.handleError(error);
-			});
+		this.timeTrackerService.toggle().catch((error) => {
+			if (this.timeTrackerService.interval) {
+				this.timeTrackerService.turnOffTimer();
+			} else {
+				this.timeTrackerService.turnOnTimer();
+			}
+			this._errorHandlingService.handleError(error);
+		});
 	}
 
 	addTime() {
