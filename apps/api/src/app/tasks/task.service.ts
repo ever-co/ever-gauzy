@@ -28,7 +28,7 @@ export class TaskService extends CrudService<Task> {
 		const user = RequestContext.currentUser();
 		const obj = this.repository.create({
 			...task,
-			creatorId: user.id
+			creator: user
 		});
 		try {
 			// https://github.com/Microsoft/TypeScript/issues/21592

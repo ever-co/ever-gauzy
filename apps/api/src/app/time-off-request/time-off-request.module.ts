@@ -10,6 +10,7 @@ import { UserService } from '../user/user.service';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
 import { CqrsModule } from '@nestjs/cqrs';
+import { TenantModule } from '../tenant/tenant.module';
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([
@@ -20,7 +21,8 @@ import { CqrsModule } from '@nestjs/cqrs';
 			RequestApproval,
 			ApprovalPolicy
 		]),
-		CqrsModule
+		CqrsModule,
+		TenantModule
 	],
 	controllers: [TimeOffRequestControler],
 	providers: [TimeOffRequestService, UserService],

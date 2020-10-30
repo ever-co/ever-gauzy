@@ -1,4 +1,4 @@
-import { IHelpCenterArticle } from './../../../../../../libs/models/src/lib/help-center-article.model';
+import { IHelpCenterArticle } from '@gauzy/models';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import { Injectable } from '@angular/core';

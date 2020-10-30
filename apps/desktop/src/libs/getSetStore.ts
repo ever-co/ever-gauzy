@@ -48,10 +48,19 @@ export const LocalStore = {
 					timer: {
 						updatePeriode: 1 // [1, 5, 10]
 					},
-					SCREENSHOTS_ENGINE_METHOD: 'ElectronDesktopCapturer'
+					SCREENSHOTS_ENGINE_METHOD: 'ElectronDesktopCapturer',
+					screenshotNotification: true
 				};
 				store.set({
 					appSetting: defaultAppSetting
+				});
+			} else {
+				config.screenshotNotification =
+					typeof config.screenshotNotification === 'undefined'
+						? true
+						: config.screenshotNotification;
+				store.set({
+					appSetting: config
 				});
 			}
 		} catch (error) {
@@ -62,6 +71,14 @@ export const LocalStore = {
 	updateApplicationSetting: (values) => {
 		store.set({
 			appSetting: values
+		});
+	},
+
+	updateConfigSetting: (values) => {
+		let configs = store.get('configs');
+		configs = { ...configs, ...values };
+		store.set({
+			configs: configs
 		});
 	}
 };

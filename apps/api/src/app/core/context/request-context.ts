@@ -4,9 +4,14 @@
 
 import { HttpException, HttpStatus } from '@nestjs/common';
 import * as cls from 'cls-hooked';
-import { IUser, PermissionsEnum, LanguagesEnum } from '@gauzy/models';
+import {
+	IUser,
+	PermissionsEnum,
+	LanguagesEnum,
+	RolesEnum
+} from '@gauzy/models';
 import { ExtractJwt } from 'passport-jwt';
-import { verify } from 'jsonwebtoken';
+import { JsonWebTokenError, verify } from 'jsonwebtoken';
 import { environment as env } from '@env-api/environment';
 
 export class RequestContext {
@@ -173,5 +178,37 @@ export class RequestContext {
 			throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
 		}
 		return null;
+	}
+
+	static hasRole(role: RolesEnum, throwError?: boolean): boolean {
+		return this.hasRoles([role], throwError);
+	}
+
+	static hasRoles(findRoles: RolesEnum[], throwError?: boolean): boolean {
+		const requestContext = RequestContext.currentRequestContext();
+		if (requestContext) {
+			try {
+				const token = this.currentToken();
+				if (token) {
+					const { role } = verify(token, env.JWT_SECRET) as {
+						id: string;
+						role: RolesEnum;
+					};
+
+					return role ? findRoles.includes(role) : false;
+				}
+			} catch (error) {
+				if (error instanceof JsonWebTokenError) {
+					return false;
+				} else {
+					throw error;
+				}
+			}
+		}
+
+		if (throwError) {
+			throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+		}
+		return false;
 	}
 }

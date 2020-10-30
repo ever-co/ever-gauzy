@@ -66,12 +66,14 @@ import { IncomeCreateCommand } from '../income/commands/income.create.command';
 import { ExpenseCreateCommand } from '../expense/commands/expense.create.command';
 import { OrganizationContactCreateCommand } from '../organization-contact/commands/organization-contact-create.command';
 import { IPagination } from '../core';
-import { UpworkReportService } from './upwork-report.service';
+import {
+	UpworkJobService,
+	UpworkOffersService,
+	UpworkReportService
+} from '@gauzy/integration-upwork';
 import { TimesheetFirstOrCreateCommand } from '../timesheet/timesheet/commands/timesheet-first-or-create.command';
 import { TimeLogCreateCommand } from '../timesheet/time-log/commands/time-log-create.command';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
-import { UpworkJobService } from './upwork-job.service';
-import { UpworkOffersService } from './upwork-offers.service';
 import { ProposalCreateCommand } from '../proposal/commands/proposal-create.command';
 import { OrganizationProjectUpdateCommand } from '../organization-projects/commands/organization-project.update.command';
 import { CreateTimeSlotMinutesCommand } from '../timesheet/time-slot/commands/create-time-slot-minutes.command';

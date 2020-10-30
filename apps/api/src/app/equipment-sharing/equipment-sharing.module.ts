@@ -6,11 +6,13 @@ import { EquipmentSharingService } from './equipment-sharing.service';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CommandHandlers } from './commands/handlers';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([RequestApproval, EquipmentSharing]),
-		CqrsModule
+		CqrsModule,
+		TenantModule
 	],
 	controllers: [EquipmentSharingController],
 	providers: [EquipmentSharingService, ...CommandHandlers],

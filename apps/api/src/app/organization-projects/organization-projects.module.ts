@@ -7,11 +7,13 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { CommandHandlers } from './commands/handlers';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([OrganizationProject, User]),
-		CqrsModule
+		CqrsModule,
+		TenantModule
 	],
 	controllers: [OrganizationProjectsController],
 	providers: [OrganizationProjectsService, UserService, ...CommandHandlers],

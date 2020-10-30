@@ -10,6 +10,7 @@ import { Employee } from '../employee/employee.entity';
 import { EmployeeService } from '../employee/employee.service';
 import { Organization } from '../organization/organization.entity';
 import { OrganizationService } from '../organization/organization.service';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
@@ -18,7 +19,8 @@ import { OrganizationService } from '../organization/organization.service';
 			Organization,
 			Employee
 		]),
-		CqrsModule
+		CqrsModule,
+		TenantModule
 	],
 	controllers: [OrganizationRecurringExpenseController],
 	providers: [

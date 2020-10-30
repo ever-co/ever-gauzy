@@ -30,6 +30,8 @@ import { ParseJsonPipe } from '../shared';
 import { I18nLang } from 'nestjs-i18n';
 import { ITryRequest } from '../core/crud/try-request';
 import { Request } from 'express';
+import { RequestContext } from '../core/context';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('Employee')
 @Controller()
@@ -57,7 +59,7 @@ export class EmployeeController extends CrudController<Employee> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UseGuards(AuthGuard('jwt'))
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 	async update(
 		@Param('id') id: string,
 		@Body() entity: Employee
@@ -86,12 +88,15 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Record not found'
 	})
 	@Get()
-	@UseGuards(AuthGuard('jwt'))
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 	async findAllEmployees(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Employee>> {
-		const { relations, findInput } = JSON.parse(data);
-		return this.employeeService.findAll({ where: findInput, relations });
+		const { relations, findInput } = data;
+		return this.employeeService.findAll({
+			where: findInput,
+			relations
+		});
 	}
 
 	@ApiOperation({
@@ -153,16 +158,14 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Record not found'
 	})
 	@Get('/working')
-	@UseGuards(AuthGuard('jwt'))
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 	async findAllWorkingEmployees(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Employee>> {
-		const {
-			organizationId,
-			tenantId,
-			forMonth = new Date(),
-			withUser
-		} = JSON.parse(data);
+		const { findInput } = data;
+		const { organizationId, forMonth = new Date(), withUser } = findInput;
+		const tenantId = RequestContext.currentTenantId();
+
 		return this.employeeService.findWorkingEmployees(
 			organizationId,
 			tenantId,
@@ -211,16 +214,17 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Record not found'
 	})
 	@Get('/user/:userId')
-	@UseGuards(AuthGuard('jwt'))
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 	async findByUserId(
 		@Param('userId') userId: string,
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<ITryRequest> {
 		const { relations = [] } = data;
-
+		const tenantId = RequestContext.currentTenantId();
 		return this.employeeService.findOneOrFail({
 			where: {
-				userId
+				userId,
+				tenantId
 			},
 			relations
 		});

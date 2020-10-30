@@ -17,11 +17,7 @@ export class SprintStoreService {
 		return this._sprints$.getValue();
 	}
 
-	constructor(private sprintService: SprintService) {
-		if (!this.sprints.length) {
-			this.fetchSprints();
-		}
-	}
+	constructor(private sprintService: SprintService) {}
 
 	fetchSprints(findInput: IGetSprintsOptions = {}) {
 		this.sprintService

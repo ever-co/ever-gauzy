@@ -70,4 +70,10 @@ export interface IEnvironment {
 	upworkConfig?: IUpworkConfig;
 	isElectron?: boolean;
 	gauzyUserPath?: string;
+	allowSuperAdminRole?: boolean;
+
+	/**
+	 * Endpoint for Gauzy AI API (optional), e.g.: http://localhost:3005/graphql
+	 */
+	gauzyAIGraphQLEndpoint?: string;
 }

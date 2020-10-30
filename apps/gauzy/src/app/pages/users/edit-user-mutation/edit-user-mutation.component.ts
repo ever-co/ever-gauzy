@@ -18,7 +18,8 @@ import { BasicInfoFormComponent } from '../../../@shared/user/forms/basic-info/b
 	selector: 'ga-edit-user-mutation',
 	templateUrl: './edit-user-mutation.component.html'
 })
-export class EditUserMutationComponent extends TranslationBaseComponent
+export class EditUserMutationComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	@ViewChild('userBasicInfo')
 	userBasicInfo: BasicInfoFormComponent;

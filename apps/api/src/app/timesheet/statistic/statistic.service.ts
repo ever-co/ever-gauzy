@@ -53,7 +53,7 @@ export class StatisticService {
 		const start = moment.utc(date).startOf('week').format();
 		const end = moment.utc(date).endOf('week').format();
 		const user = RequestContext.currentUser();
-
+		const tenantId = user.tenantId;
 		/*
 		 *  Get employees id of the orginization or get current employe id
 		 */
@@ -68,7 +68,7 @@ export class StatisticService {
 		} else {
 			employeeIds = await this.getEmployeesIds(
 				request.organizationId,
-				request.tenantId
+				tenantId
 			);
 		}
 
@@ -90,7 +90,11 @@ export class StatisticService {
 					end
 				});
 		}
-		const employeesCount = await employeesCountQuery.getCount();
+		const employeesCount = await employeesCountQuery
+			.andWhere(`"${employeesCountQuery.alias}"."tenantId" = :tenantId`, {
+				tenantId
+			})
+			.getCount();
 
 		/*
 		 *  Get projects count who worked in this week.
@@ -110,7 +114,11 @@ export class StatisticService {
 					end
 				});
 		}
-		const projectsCount = await projectsCountQuery.getCount();
+		const projectsCount = await projectsCountQuery
+			.andWhere(`"${projectsCountQuery.alias}"."tenantId" = :tenantId`, {
+				tenantId
+			})
+			.getCount();
 
 		/*
 		 * Get average activity and total duration of the work for the week.
@@ -126,7 +134,8 @@ export class StatisticService {
 				.addSelect('SUM(duration)', 'duration')
 				.where({
 					employeeId: In(employeeIds),
-					startedAt: Between(start, end)
+					startedAt: Between(start, end),
+					tenantId
 				});
 			weekActivites = await activitesQuery.getRawOne();
 		}
@@ -148,7 +157,8 @@ export class StatisticService {
 					startedAt: Between(
 						moment().startOf('day').format(),
 						moment().endOf('day').format()
-					)
+					),
+					tenantId
 				});
 			todayActivites = await activitesQuery.getRawOne();
 		}
@@ -171,6 +181,7 @@ export class StatisticService {
 		const date = request.date || new Date();
 		const start = moment.utc(date).startOf('week').format();
 		const end = moment.utc(date).endOf('week').format();
+		const tenantId = RequestContext.currentTenantId();
 
 		const query = this.employeeRepository.createQueryBuilder();
 		const employees: IMembersStatistics[] = await query
@@ -190,10 +201,10 @@ export class StatisticService {
 			)
 			.innerJoin(`${query.alias}.user`, 'user')
 			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
-
 			.where(`"${query.alias}"."organizationId" = :organizationId`, {
 				organizationId: request.organizationId
 			})
+			.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId })
 			.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
 				start,
 				end
@@ -212,7 +223,8 @@ export class StatisticService {
 				.addSelect('"employeeId"', 'employeeId')
 				.where({
 					employeeId: In(_.pluck(employees, 'id')),
-					startedAt: Between(start, end)
+					startedAt: Between(start, end),
+					tenantId
 				})
 				.groupBy('"employeeId"')
 				.getRawMany();
@@ -239,7 +251,8 @@ export class StatisticService {
 					startedAt: Between(
 						moment().startOf('day').format(),
 						moment().endOf('day').format()
-					)
+					),
+					tenantId
 				})
 				.groupBy('"employeeId"')
 				.getRawMany();
@@ -296,6 +309,10 @@ export class StatisticService {
 							end
 						}
 					)
+					.andWhere(
+						`"${weekHoursQuery.alias}"."tenantId" = :tenantId`,
+						{ tenantId }
+					)
 					.innerJoin(`${weekHoursQuery.alias}.timeLogs`, 'timeLogs')
 					.addGroupBy(
 						`${
@@ -317,6 +334,7 @@ export class StatisticService {
 		const start = moment.utc(date).startOf('week').format();
 		const end = moment.utc(date).endOf('week').format();
 		const user = RequestContext.currentUser();
+		const tenantId = user.tenantId;
 
 		query
 			.select(`"${query.alias}".*`)
@@ -340,19 +358,18 @@ export class StatisticService {
 			query.leftJoin(`${query.alias}.members`, 'members');
 			query.where(`members.id = :employeeId`, { employeeId });
 		} else {
-			query
-				.where(`"${query.alias}"."organizationId" = :organizationId`, {
-					organizationId: request.organizationId
-				})
-				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-					tenantId: request.tenantId
-				});
+			query.where(`"${query.alias}"."organizationId" = :organizationId`, {
+				organizationId: request.organizationId
+			});
 		}
 
 		query
 			.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
 				start,
 				end
+			})
+			.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+				tenantId
 			})
 			.orderBy('duration', 'DESC')
 			.addGroupBy(`"${query.alias}"."id"`)
@@ -376,7 +393,10 @@ export class StatisticService {
 				{
 					organizationId: request.organizationId
 				}
-			);
+			)
+			.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+				tenantId
+			});
 
 		if (
 			(user.employeeId && request.onlyMe) ||
@@ -393,19 +413,12 @@ export class StatisticService {
 				employeeId
 			});
 		} else {
-			totalDurationQuery
-				.where(
-					`"${totalDurationQuery.alias}"."organizationId" = :organizationId`,
-					{
-						organizationId: request.organizationId
-					}
-				)
-				.andWhere(
-					`"${totalDurationQuery.alias}"."tenantId" = :tenantId`,
-					{
-						tenantId: request.tenantId
-					}
-				);
+			totalDurationQuery.where(
+				`"${totalDurationQuery.alias}"."organizationId" = :organizationId`,
+				{
+					organizationId: request.organizationId
+				}
+			);
 		}
 
 		totalDurationQuery.andWhere(
@@ -431,6 +444,7 @@ export class StatisticService {
 		const start = moment.utc(date).startOf('week').format();
 		const end = moment.utc(date).endOf('week').format();
 		const user = RequestContext.currentUser();
+		const tenantId = user.tenantId;
 		/*
 		 *  Get employees id of the orginization or get current employe id
 		 */
@@ -445,7 +459,7 @@ export class StatisticService {
 		} else {
 			employeeIds = await this.getEmployeesIds(
 				request.organizationId,
-				request.tenantId
+				tenantId
 			);
 		}
 
@@ -469,6 +483,9 @@ export class StatisticService {
 				.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
 					start,
 					end
+				})
+				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+					tenantId
 				})
 				.orderBy('duration', 'DESC')
 				.addGroupBy(`"${query.alias}"."id"`)
@@ -511,6 +528,7 @@ export class StatisticService {
 		const start = moment.utc(date).startOf('week').format();
 		const end = moment.utc(date).endOf('week').format();
 		const user = RequestContext.currentUser();
+		const tenantId = user.tenantId;
 		/*
 		 *  Get employees id of the orginization or get current employe id
 		 */
@@ -525,7 +543,7 @@ export class StatisticService {
 		} else {
 			employeeIds = await this.getEmployeesIds(
 				request.organizationId,
-				request.tenantId
+				tenantId
 			);
 		}
 
@@ -535,7 +553,8 @@ export class StatisticService {
 				where: {
 					employeeId: In(employeeIds),
 					logType: TimeLogType.MANUAL,
-					startedAt: Between(start, end)
+					startedAt: Between(start, end),
+					tenantId
 				},
 				take: 5,
 				order: {
@@ -568,6 +587,7 @@ export class StatisticService {
 		const start = moment.utc(date).startOf('week').format();
 		const end = moment.utc(date).endOf('week').format();
 		const user = RequestContext.currentUser();
+		const tenantId = user.tenantId;
 
 		/*
 		 *  Get employees id of the orginization or get current employe id
@@ -583,13 +603,12 @@ export class StatisticService {
 		} else {
 			employeeIds = await this.getEmployeesIds(
 				request.organizationId,
-				request.tenantId
+				tenantId
 			);
 		}
 
 		if (employeeIds.length > 0) {
 			const query = this.activityRepository.createQueryBuilder();
-
 			query
 				.select(`COUNT("${query.alias}"."id")`, `sessions`)
 				.addSelect(`SUM("${query.alias}"."duration")`, `duration`)
@@ -601,6 +620,9 @@ export class StatisticService {
 				})
 				.andWhere(`"${query.alias}"."employeeId" IN(:...employeeId)`, {
 					employeeId: employeeIds
+				})
+				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+					tenantId
 				})
 				.orderBy(`"duration"`, 'DESC')
 				.limit(5);
@@ -626,6 +648,9 @@ export class StatisticService {
 					start,
 					end
 				})
+				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+					tenantId
+				})
 				.getRawOne();
 
 			activities = activities.map((activity) => {
@@ -647,6 +672,7 @@ export class StatisticService {
 		const start = moment.utc(date).startOf('week').format();
 		const end = moment.utc(date).endOf('week').format();
 		const user = RequestContext.currentUser();
+		const tenantId = user.tenantId;
 
 		const query = this.employeeRepository.createQueryBuilder();
 		query
@@ -677,16 +703,19 @@ export class StatisticService {
 			const employeeId = user.employeeId;
 			query.andWhere(`"${query.alias}".id = :employeeId`, { employeeId });
 		} else {
-			query
-				.where(`"${query.alias}"."organizationId" = :organizationId`, {
+			query.andWhere(
+				`"${query.alias}"."organizationId" = :organizationId`,
+				{
 					organizationId: request.organizationId
-				})
-				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-					tenantId: request.tenantId
-				});
+				}
+			);
 		}
 
-		employees = await query.getRawMany();
+		employees = await query
+			.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+				tenantId
+			})
+			.getRawMany();
 
 		for (let index = 0; index < employees.length; index++) {
 			const employee = employees[index];
@@ -700,7 +729,8 @@ export class StatisticService {
 			employee.timeSlots = await this.timeSlotRepository.find({
 				relations: ['screenshots'],
 				where: {
-					employeeId: employee.id
+					employeeId: employee.id,
+					tenantId
 				},
 				take: 3,
 				order: {

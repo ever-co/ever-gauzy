@@ -12,6 +12,7 @@ import { ProductVariantSettings } from '../product-settings/product-settings.ent
 import { ProductService } from '../product/product.service';
 import { Product } from '../product/product.entity';
 import { ProductVariantDeleteHandler } from './commands/handlers/product-variant.delete.handler';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
@@ -21,7 +22,8 @@ import { ProductVariantDeleteHandler } from './commands/handlers/product-variant
 			ProductVariantSettings,
 			Product
 		]),
-		CqrsModule
+		CqrsModule,
+		TenantModule
 	],
 	controllers: [ProductVariantController],
 	providers: [

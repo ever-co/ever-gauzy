@@ -186,9 +186,9 @@ export default class Timerhandler {
 		setupWindow.webContents.send('set_time_slot', {
 			...userInfo,
 			duration: now.diff(moment(lastTimeSlot), 'seconds'),
-			keyboard: duration,
-			mouse: duration,
-			overall: duration,
+			keyboard: Math.round(duration),
+			mouse: Math.round(duration),
+			overall: Math.round(duration),
 			startedAt: lastTimeSlot.utc().toDate(),
 			activities: allActivities,
 			idsAw: idsAw,

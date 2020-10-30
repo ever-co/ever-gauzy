@@ -46,6 +46,12 @@ export default class TrayIcon {
 				visible: false
 			},
 			{
+				id: '6',
+				label: '',
+				visible: false,
+				enabled: false
+			},
+			{
 				id: '1',
 				label: 'Start Tracking Time',
 				click(menuItem) {
@@ -118,13 +124,15 @@ export default class TrayIcon {
 				label: 'Setting',
 				click() {
 					const appSetting = LocalStore.getStore('appSetting');
+					const config = LocalStore.getStore('configs');
 					if (!settingsWindow) {
 						settingsWindow = createSettingsWindow(settingsWindow);
 					}
 					settingsWindow.show();
 					setTimeout(() => {
 						settingsWindow.webContents.send('app_setting', {
-							setting: appSetting
+							setting: appSetting,
+							config: config
 						});
 					}, 500);
 				}
@@ -138,26 +146,34 @@ export default class TrayIcon {
 			}
 		];
 
-		const menuWindowTime = Menu.getApplicationMenu().getMenuItemById('window-time-track');
-		const menuWindowSetting = Menu.getApplicationMenu().getMenuItemById('window-setting');
+		const menuWindowTime = Menu.getApplicationMenu().getMenuItemById(
+			'window-time-track'
+		);
+		const menuWindowSetting = Menu.getApplicationMenu().getMenuItemById(
+			'window-setting'
+		);
 		if (auth && auth.employeeId) {
 			contextMenu = menuAuth;
 			menuWindowSetting.enabled = true;
 			menuWindowTime.enabled = true;
+			timeTrackerWindow.webContents.send(
+				'get_user_detail',
+				LocalStore.beforeRequestParams()
+			);
 		}
 		this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
 
 		ipcMain.on('update_tray_start', (event, arg) => {
-			contextMenu[1].enabled = false;
+			contextMenu[2].enabled = false;
 			contextMenu[0].visible = true;
-			contextMenu[2].enabled = true;
+			contextMenu[3].enabled = true;
 			this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
 		});
 
 		ipcMain.on('update_tray_stop', (event, arg) => {
-			contextMenu[1].enabled = true;
+			contextMenu[2].enabled = true;
 			contextMenu[0].visible = false;
-			contextMenu[2].enabled = false;
+			contextMenu[3].enabled = false;
 			this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
 		});
 
@@ -169,10 +185,14 @@ export default class TrayIcon {
 		ipcMain.on('auth_success', (event, arg) => {
 			//check last auth
 			const lastUser = store.get('auth');
+			timeTrackerWindow.webContents.send(
+				'get_user_detail',
+				LocalStore.beforeRequestParams()
+			);
 			if (lastUser && lastUser.userId !== arg.userId) {
 				store.set({
 					project: null
-				})
+				});
 			}
 			store.set({
 				auth: arg
@@ -197,6 +217,17 @@ export default class TrayIcon {
 			}
 			timeTrackerWindow.hide();
 			if (settingsWindow) settingsWindow.hide();
-		})
+		});
+
+		ipcMain.on('user_detail', (event, arg) => {
+			if (
+				arg.employee &&
+				arg.employee.organization &&
+				arg.employee.organization.name
+			) {
+				contextMenu[1].label = arg.employee.organization.name;
+				contextMenu[1].visible = true;
+			}
+		});
 	}
 }

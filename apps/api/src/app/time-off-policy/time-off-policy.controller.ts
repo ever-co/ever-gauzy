@@ -24,9 +24,11 @@ import { IPagination } from '../core';
 import { TimeOffPolicyService } from './time-off-policy.service';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { AuthGuard } from '@nestjs/passport';
+import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('TimeOffPolicy')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class TimeOffPolicyControler extends CrudController<TimeOffPolicy> {
 	constructor(private readonly policyService: TimeOffPolicyService) {
@@ -47,10 +49,9 @@ export class TimeOffPolicyControler extends CrudController<TimeOffPolicy> {
 	@Permissions(PermissionsEnum.POLICY_VIEW)
 	@Get()
 	async findAllTimeOffPolicies(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<ITimeOffPolicy>> {
-		const { relations, findInput } = JSON.parse(data);
-
+		const { relations, findInput } = data;
 		return this.policyService.getAllPolicies({
 			where: findInput,
 			relations

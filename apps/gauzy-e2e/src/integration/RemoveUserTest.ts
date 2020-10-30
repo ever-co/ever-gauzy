@@ -20,7 +20,7 @@ describe('Remove user test', () => {
 		removeUserPage.gridButtonVisible();
 		removeUserPage.clickGridButton();
 		removeUserPage.tableBodyExists();
-		removeUserPage.clickTableRow(3);
+		removeUserPage.clickTableRow(2);
 		removeUserPage.removeButtonVisible();
 		removeUserPage.clickRemoveButton();
 		removeUserPage.confirmRemoveBtnVisible();

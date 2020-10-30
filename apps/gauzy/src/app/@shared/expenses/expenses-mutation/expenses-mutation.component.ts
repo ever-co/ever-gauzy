@@ -17,6 +17,7 @@ import {
 	IOrganizationContact,
 	IOrganizationProject,
 	ExpenseStatusesEnum,
+	IOrganizationExpenseCategory,
 	ContactType
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
@@ -32,11 +33,9 @@ import { OrganizationContactService } from '../../../@core/services/organization
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { AttachReceiptComponent } from './attach-receipt/attach-receipt.component';
 import { Subject } from 'rxjs';
-
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-import { IOrganizationExpenseCategory } from '../../../../../../../libs/models/src/lib/organization-expense-category.model';
 import { OrganizationExpenseCategoriesService } from '../../../@core/services/organization-expense-categories.service';
 
 @Component({

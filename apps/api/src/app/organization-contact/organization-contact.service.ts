@@ -17,11 +17,23 @@ export class OrganizationContactService extends TenantAwareCrudService<
 		super(organizationContactRepository);
 	}
 
-	async findByEmployee(id: string): Promise<any> {
-		return await this.organizationContactRepository
+	async findByEmployee(id: string, data: any): Promise<any> {
+		const { findInput = null } = data;
+		const query = this.organizationContactRepository
 			.createQueryBuilder('organization_contact')
 			.leftJoin('organization_contact.members', 'member')
-			.where('member.id = :id', { id })
-			.getMany();
+			.where('member.id = :id', { id });
+
+		if (findInput) {
+			const { organizationId, tenantId } = findInput;
+			query
+				.andWhere(`${query.alias}.organizationId = :organizationId`, {
+					organizationId
+				})
+				.andWhere(`${query.alias}.tenantId = :tenantId`, {
+					tenantId
+				});
+		}
+		return await query.getMany();
 	}
 }

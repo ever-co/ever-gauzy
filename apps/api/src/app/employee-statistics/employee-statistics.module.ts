@@ -16,6 +16,7 @@ import { EmployeeStatisticsService } from './employee-statistics.service';
 import { QueryHandlers } from './queries/handlers';
 import { OrganizationRecurringExpense } from '../organization-recurring-expense/organization-recurring-expense.entity';
 import { OrganizationRecurringExpenseService } from '../organization-recurring-expense/organization-recurring-expense.service';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
@@ -27,7 +28,8 @@ import { OrganizationRecurringExpenseService } from '../organization-recurring-e
 			EmployeeRecurringExpense,
 			OrganizationRecurringExpense
 		]),
-		CqrsModule
+		CqrsModule,
+		TenantModule
 	],
 	controllers: [EmployeeStatisticsController],
 	providers: [

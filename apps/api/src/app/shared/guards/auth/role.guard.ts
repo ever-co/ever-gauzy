@@ -1,17 +1,14 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { RequestContext } from '../../../core/context';
-import { AuthService } from '../../../auth/auth.service';
+import { RolesEnum } from '@gauzy/models';
 
 @Injectable()
 export class RoleGuard implements CanActivate {
-	constructor(
-		private readonly _reflector: Reflector,
-		private readonly _authService: AuthService
-	) {}
+	constructor(private readonly _reflector: Reflector) {}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
-		const roles = this._reflector.get<string[]>(
+		const roles = this._reflector.get<RolesEnum[]>(
 			'roles',
 			context.getHandler()
 		);
@@ -21,10 +18,8 @@ export class RoleGuard implements CanActivate {
 		if (!roles) {
 			isAuthorized = true;
 		} else {
-			const token = RequestContext.currentToken();
-			isAuthorized = await this._authService.hasRole(token, roles);
+			isAuthorized = RequestContext.hasRoles(roles);
 		}
-
 		return isAuthorized;
 	}
 }

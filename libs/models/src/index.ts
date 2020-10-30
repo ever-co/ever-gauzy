@@ -1,3 +1,4 @@
+export * from './lib/core.model';
 export * from './lib/help-center-menu.model';
 export * from './lib/help-center-article.model';
 export * from './lib/user.model';
@@ -30,6 +31,7 @@ export * from './lib/organization-vendors.model';
 export * from './lib/organization-team-model';
 export * from './lib/organization-team-employee-model';
 export * from './lib/organization-recurring-expense.model';
+export * from './lib/organization-expense-category.model';
 export * from './lib/organization-awards.model';
 export * from './lib/employee-recurring-expense.model';
 export * from './lib/country.model';
@@ -84,6 +86,10 @@ export * from './lib/organization-document.model';
 export * from './lib/employee-award.model';
 export * from './lib/invoice-estimate-history.model';
 export * from './lib/file-provider';
+export * from './lib/employee-job.model';
+export * from './lib/job-matching.model';
+export * from './lib/job-search-category.model';
+export * from './lib/job-search-occupation.model';
 
 export { IRole, RolesEnum } from './lib/role.model';
 export { IBaseEntityModel as BaseEntityModel } from './lib/base-entity.model';

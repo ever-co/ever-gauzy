@@ -13,9 +13,10 @@ import { CrudController, IPagination } from '../core/crud';
 import { OrganizationEmploymentType } from './organization-employment-type.entity';
 import { OrganizationEmploymentTypeService } from './organization-employment-type.service';
 import { AuthGuard } from '@nestjs/passport';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('OrganizationEmploymentType')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class OrganizationEmploymentTypeController extends CrudController<
 	OrganizationEmploymentType

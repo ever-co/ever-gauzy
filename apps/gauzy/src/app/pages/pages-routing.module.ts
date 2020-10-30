@@ -113,6 +113,11 @@ const routes: Routes = [
 				]
 			},
 			{
+				path: 'jobs',
+				loadChildren: () =>
+					import('./jobs/jobs.module').then((m) => m.JobsModule)
+			},
+			{
 				path: 'sales',
 				children: [
 					{

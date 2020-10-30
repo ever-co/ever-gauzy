@@ -4,8 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { PaymentService } from '../../@core/services/payment.service';
 import { Store } from '../../@core/services/store.service';
-import { takeUntil, first, filter } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { first, filter } from 'rxjs/operators';
 import {
 	IPayment,
 	ComponentLayoutStyleEnum,
@@ -28,7 +27,8 @@ import { NotesWithTagsComponent } from '../../@shared/table-components/notes-wit
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-estimate-history.service';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-payments',
 	templateUrl: './payments.component.html',
@@ -62,7 +62,6 @@ export class PaymentsComponent
 	selectedPayment: IPayment;
 	payments: IPayment[];
 	paymentsData: IPayment[];
-	private _ngDestroy$ = new Subject<void>();
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	invoices: IInvoice[];
@@ -78,7 +77,7 @@ export class PaymentsComponent
 		this._applyTranslationOnSmartTable();
 		this.loadSettings();
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
@@ -90,7 +89,7 @@ export class PaymentsComponent
 		this.viewComponentName = ComponentEnum.PAYMENTS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
@@ -100,21 +99,24 @@ export class PaymentsComponent
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe(async (org) => {
 				if (org) {
 					this.loading = true;
 					try {
 						this.organization = org;
+						const { tenantId } = this.store.user;
+						const { id: organizationId } = this.organization;
+
 						const orgData = await this.organizationsService
 							.getById(org.id, [OrganizationSelectInput.currency])
 							.pipe(first())
 							.toPromise();
 						this.currency = orgData.currency;
 						const invoices = await this.invoicesService.getAll([], {
-							organizationId: org.id,
-							tenantId: org.tenantId,
+							organizationId,
+							tenantId,
 							isEstimate: false
 						});
 						this.invoices = invoices.items;
@@ -122,30 +124,17 @@ export class PaymentsComponent
 						const { items } = await this.paymentService.getAll(
 							[
 								'invoice',
+								'invoice.toContact',
 								'recordedBy',
 								'contact',
 								'project',
 								'tags'
 							],
-							{
-								organizationId: org.id,
-								tenantId: org.tenantId
-							}
+							{ organizationId, tenantId }
 						);
-						for (const payment of items) {
-							if (payment.invoice) {
-								const organizationContact = await this.organizationContactService.getById(
-									payment.invoice.organizationContactId
-								);
-								payment.invoice.toContact = organizationContact;
-							}
-						}
 						const res = await this.organizationContactService.getAll(
 							[],
-							{
-								organizationId: org.id,
-								tenantId: org.tenantId
-							}
+							{ organizationId, tenantId }
 						);
 
 						if (res) {
@@ -154,10 +143,7 @@ export class PaymentsComponent
 
 						const projects = await this.organizationProjectsService.getAll(
 							[],
-							{
-								organizationId: org.id,
-								tenantId: org.tenantId
-							}
+							{ organizationId, tenantId }
 						);
 						this.projects = projects.items;
 						this.smartTableSource.load(items);
@@ -184,8 +170,9 @@ export class PaymentsComponent
 			.toPromise();
 
 		if (result) {
+			const { tenantId } = this.store.user;
 			result['organizationId'] = this.organization.id;
-			result['tenantId'] = this.organization.tenantId;
+			result['tenantId'] = tenantId;
 			await this.paymentService.add(result);
 			await this.loadSettings();
 			if (result.invoice) {
@@ -197,7 +184,7 @@ export class PaymentsComponent
 					userId: this.store.userId,
 					organization: this.organization,
 					organizationId: this.organization.id,
-					tenantId: this.organization.tenantId
+					tenantId
 				});
 			}
 		}
@@ -221,6 +208,7 @@ export class PaymentsComponent
 		if (result) {
 			await this.paymentService.update(result.id, result);
 			await this.loadSettings();
+			const { tenantId } = this.store.user;
 			await this.invoiceEstimateHistoryService.add({
 				action: `Payment edited`,
 				invoice: result.invoice,
@@ -229,8 +217,9 @@ export class PaymentsComponent
 				userId: this.store.userId,
 				organization: this.organization,
 				organizationId: this.organization.id,
-				tenantId: this.organization.tenantId
+				tenantId
 			});
+			this.clearItem();
 		}
 	}
 
@@ -243,6 +232,7 @@ export class PaymentsComponent
 		if (result) {
 			await this.paymentService.delete(this.selectedPayment.id);
 			this.loadSettings();
+			const { tenantId } = this.store.user;
 			await this.invoiceEstimateHistoryService.add({
 				action: `Payment deleted`,
 				invoice: this.selectedPayment.invoice,
@@ -251,12 +241,13 @@ export class PaymentsComponent
 				userId: this.store.userId,
 				organization: this.organization,
 				organizationId: this.organization.id,
-				tenantId: this.organization.tenantId
+				tenantId
 			});
 			this.toastrService.primary(
 				this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE'),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
+			this.clearItem();
 		}
 		this.disableButton = true;
 	}
@@ -375,23 +366,30 @@ export class PaymentsComponent
 		};
 	}
 
+	clearItem() {
+		this.selectPayment({
+			isSelected: false,
+			data: null
+		});
+	}
+
 	async selectPayment({ isSelected, data }) {
 		const selectedPayment = isSelected ? data : null;
 		if (this.paymentsTable) {
 			this.paymentsTable.grid.dataSet.willSelect = false;
 		}
+
 		this.disableButton = !isSelected;
 		this.selectedPayment = selectedPayment;
 	}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

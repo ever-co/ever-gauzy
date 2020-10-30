@@ -84,10 +84,11 @@ export class ProposalRegisterComponent
 
 			try {
 				if (selectedEmployee) {
+					const { tenantId } = this.store.user;
 					await this.proposalsService.create({
 						employeeId: selectedEmployee.id,
 						organizationId: this.selectedOrganization.id,
-						tenantId: this.selectedOrganization.tenantId,
+						tenantId,
 						jobPostUrl: result.jobPostUrl,
 						valueDate: result.valueDate,
 						jobPostContent: result.jobPostContent,

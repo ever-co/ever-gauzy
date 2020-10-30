@@ -1,13 +1,19 @@
 import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 
 import * as moment from 'moment';
-import { Observable, Subject } from 'rxjs';
-import { map, takeUntil } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { filter, map, tap } from 'rxjs/operators';
 
-import { IOrganizationSprint, IOrganizationProject } from '@gauzy/models';
+import {
+	IOrganizationSprint,
+	IOrganizationProject,
+	IOrganization
+} from '@gauzy/models';
 import { SprintStoreService } from '../../../../../../../@core/services/organization-sprint-store.service';
 import { ItemActionType } from '../../../../../../../@shared/components/editable-grid/gauzy-editable-grid.component';
-
+import { Store } from '../../../../../../../@core/services/store.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-tasks-sprint-settings-view',
 	templateUrl: './tasks-sprint-settings-view.component.html'
@@ -28,11 +34,29 @@ export class TasksSprintSettingsViewComponent implements OnInit, OnDestroy {
 		})
 	);
 	moment: any = moment;
-	private _onDestroy$: Subject<void> = new Subject<void>();
+	organization: IOrganization;
 
-	constructor(private store: SprintStoreService) {}
+	constructor(
+		private store: SprintStoreService,
+		private storeSerive: Store
+	) {}
 
-	ngOnInit(): void {}
+	ngOnInit(): void {
+		this.storeSerive.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				tap((organization) => (this.organization = organization)),
+				tap(() =>
+					this.store.fetchSprints({
+						organizationId: this.organization.id,
+						tenantId: this.storeSerive.user.tenantId,
+						projectId: this.project.id
+					})
+				),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 
 	sprintAction({
 		actionType,
@@ -46,32 +70,30 @@ export class TasksSprintSettingsViewComponent implements OnInit, OnDestroy {
 				const createSprintInput: IOrganizationSprint = {
 					...data,
 					organizationId: this.project.organizationId,
+					tenantId: this.storeSerive.user.tenantId,
 					projectId: this.project.id
 				};
 				this.store
 					.createSprint(createSprintInput)
-					.pipe(takeUntil(this._onDestroy$))
+					.pipe(untilDestroyed(this))
 					.subscribe();
 				break;
 
 			case 'edit':
 				this.store
 					.updateSprint(data)
-					.pipe(takeUntil(this._onDestroy$))
+					.pipe(untilDestroyed(this))
 					.subscribe();
 				break;
 
 			case 'delete':
 				this.store
 					.deleteSprint(data.id)
-					.pipe(takeUntil(this._onDestroy$))
+					.pipe(untilDestroyed(this))
 					.subscribe();
 				break;
 		}
 	}
 
-	ngOnDestroy(): void {
-		this._onDestroy$.next();
-		this._onDestroy$.complete();
-	}
+	ngOnDestroy(): void {}
 }

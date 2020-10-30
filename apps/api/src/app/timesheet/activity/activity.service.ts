@@ -12,7 +12,7 @@ import {
 	IBulkActivitiesInput
 } from '@gauzy/models';
 import { CommandBus } from '@nestjs/cqrs';
-import { BulkActivitesSaveCommand } from './commands/bulk-activites-save.command';
+import { BulkActivitiesSaveCommand } from './commands/bulk-activities-save.command';
 
 @Injectable()
 export class ActivityService extends CrudService<Activity> {
@@ -45,12 +45,12 @@ export class ActivityService extends CrudService<Activity> {
 		query.addGroupBy(`"${query.alias}"."employeeId"`);
 
 		query.orderBy(`time`, 'ASC');
-		query.orderBy(`"duration"`, 'DESC');
+		query.addOrderBy(`"duration"`, 'DESC');
 
 		return query.getRawMany();
 	}
 
-	async getAllActivites(request: IGetActivitiesInput) {
+	async getAllActivities(request: IGetActivitiesInput) {
 		const query = this.filterQuery(request);
 
 		return await query.getMany();
@@ -65,12 +65,12 @@ export class ActivityService extends CrudService<Activity> {
 		) {
 			query.leftJoinAndSelect(
 				`${query.alias}.employee`,
-				'activiyEmployee'
+				'activityEmployee'
 			);
 			query.leftJoinAndSelect(
-				`activiyEmployee.user`,
-				'activiyUser',
-				'"employee"."userId" = activiyUser.id'
+				`activityEmployee.user`,
+				'activityUser',
+				'"employee"."userId" = activityUser.id'
 			);
 		}
 
@@ -80,7 +80,7 @@ export class ActivityService extends CrudService<Activity> {
 	}
 
 	bulkSave(input: IBulkActivitiesInput) {
-		return this.commandBus.execute(new BulkActivitesSaveCommand(input));
+		return this.commandBus.execute(new BulkActivitiesSaveCommand(input));
 	}
 
 	private filterQuery(request: IGetActivitiesInput) {

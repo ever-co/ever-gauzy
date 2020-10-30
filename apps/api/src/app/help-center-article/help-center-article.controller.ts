@@ -20,9 +20,10 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { HelpCenterArticleService } from './help-center-article.service';
 import { KnowledgeBaseCategoryBulkDeleteCommand } from './commands';
 import { CommandBus } from '@nestjs/cqrs';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('KnowledgeBaseArticle')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class HelpCenterArticleController extends CrudController<
 	HelpCenterArticle

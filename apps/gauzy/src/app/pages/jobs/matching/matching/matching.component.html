@@ -1,0 +1,229 @@
+<nb-card class="jobs-preset-card">
+	<nb-card-header class="header">
+		<h4>
+			{{
+				'JOB_MATCHING.CONFIGURE_EMPLOYEES_TO_JOBS_MATCHING' | translate
+			}}
+		</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group row">
+					<label class="col-sm-4">{{
+						'JOB_MATCHING.SOURCE' | translate
+					}}</label>
+					<nb-select
+						[placeholder]="'JOB_MATCHING.SOURCE' | translate"
+						class="w-100 col-sm-8"
+						(selectedChange)="onSourceSelected()"
+						[(ngModel)]="criterionForm.jobSource"
+					>
+						<nb-option
+							*ngFor="let source of JobPostSourceEnum | keyvalue"
+							[value]="source.value"
+						>
+							{{ source.value | titlecase }}</nb-option
+						>
+					</nb-select>
+				</div>
+
+				<div class="row form-group">
+					<label class="d-block col-sm-4">{{
+						'JOB_MATCHING.PRESET' | translate
+					}}</label>
+					<div class="w-100 col-sm-8">
+						<div class="row">
+							<div class="col">
+								<ng-select
+									class="w-100"
+									[addTag]="
+										!selectedEmployeeId ? addPreset : null
+									"
+									(change)="onPresetSelected($event)"
+									[clearable]="true"
+									[items]="jobPresets"
+									[(ngModel)]="criterionForm.jobPresetId"
+									[placeholder]="
+										'JOB_MATCHING.PRESET' | translate
+									"
+									bindValue="id"
+									bindLabel="name"
+								>
+								</ng-select>
+							</div>
+							<div class="col-auto">
+								<ng-template
+									[ngIf]="
+										criterionForm?.jobPresetId &&
+										hasAnyChanges
+									"
+								>
+									<button
+										*ngIf="selectedEmployeeId"
+										nbButton
+										status="primary"
+										ngxConfirmDialog
+										message="Criterions will save for job preset. Are you sure you want to save?"
+										(confirm)="saveJobPreset()"
+									>
+										<nb-icon icon="save-outline"></nb-icon>
+										{{ 'JOB_MATCHING.SAVE' | translate }}
+									</button>
+									<button
+										*ngIf="!selectedEmployeeId"
+										nbButton
+										status="primary"
+										(click)="saveJobPreset()"
+									>
+										<nb-icon icon="save-outline"></nb-icon>
+										{{ 'JOB_MATCHING.SAVE' | translate }}
+									</button>
+								</ng-template>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div
+			class="row align-items-center my-3"
+			*ngIf="selectedEmployeeId || criterionForm?.jobPresetId"
+		>
+			<h6 class="col m-0">{{ 'JOB_MATCHING.CRITERIONS' | translate }}</h6>
+			<div class="col-auto">
+				<button nbButton status="primary" (click)="addNewCriterion()">
+					<nb-icon icon="plus-outline"></nb-icon>
+					{{ 'JOB_MATCHING.ADD_NEW_CRITERIONS' | translate }}
+				</button>
+			</div>
+		</div>
+		<div
+			class="criterions-list card my-3 p-4"
+			*ngFor="let criterion of criterions; let index = index"
+		>
+			<form #form (ngSubmit)="saveCriterion(criterion)">
+				<div class="row">
+					<div class="col-auto">
+						<h6>{{ index + 1 }}</h6>
+					</div>
+					<div class="col-sm">
+						<div class="form-group row">
+							<label class="d-block col-sm-2">
+								{{ 'JOB_MATCHING.KEYWORDS' | translate }}</label
+							>
+							<div class="col-sm-6">
+								<input
+									nbInput
+									class="w-100"
+									name="keyword"
+									[(ngModel)]="criterion.keyword"
+									[placeholder]="
+										'JOB_MATCHING.KEYWORDS' | translate
+									"
+								/>
+							</div>
+						</div>
+						<div class="form-group row">
+							<label class="d-block col-sm-2">
+								{{
+									'JOB_MATCHING.CATEGORIES' | translate
+								}}</label
+							>
+
+							<div class="col-sm-6">
+								<ng-select
+									name="categoryId"
+									[addTag]="createNewCategories"
+									[(ngModel)]="criterion.categoryId"
+									[clearable]="true"
+									[items]="categories"
+									[placeholder]="
+										'JOB_MATCHING.CATEGORIES' | translate
+									"
+									bindValue="id"
+									bindLabel="name"
+								>
+								</ng-select>
+							</div>
+						</div>
+						<div class="form-group row">
+							<label class="d-block col-sm-2">
+								{{
+									'JOB_MATCHING.OCCUPATIONS' | translate
+								}}</label
+							>
+
+							<div class="col-sm-6">
+								<ng-select
+									name="occupationId"
+									[addTag]="createNewOccupations"
+									[(ngModel)]="criterion.occupationId"
+									[clearable]="true"
+									[items]="occupations"
+									[placeholder]="
+										'JOB_MATCHING.OCCUPATIONS' | translate
+									"
+									bindValue="id"
+									bindLabel="name"
+								>
+								</ng-select>
+							</div>
+						</div>
+
+						<div class="row">
+							<label class="d-block col-sm-2"></label>
+							<div class="col-sm">
+								<nb-radio-group
+									name="jobType"
+									class="d-flex"
+									[(ngModel)]="criterion.jobType"
+								>
+									<nb-radio
+										*ngFor="
+											let type of JobPostTypeEnum
+												| keyvalue
+										"
+										[value]="type.value"
+									>
+										{{
+											type.key
+												| titlecase
+												| replace: '_':' '
+										}}
+									</nb-radio>
+								</nb-radio-group>
+							</div>
+
+							<div class="col-auto">
+								<button
+									type="submit"
+									class="mr-1"
+									nbButton
+									status="success"
+								>
+									<nb-icon icon="save-outline"></nb-icon>
+									{{ 'JOB_MATCHING.SAVE' | translate }}
+								</button>
+								<button
+									nbButton
+									status="danger"
+									type="button"
+									ngxConfirmDialog
+									message="Are you sure that, you want to delete criterion"
+									(confirm)="
+										deleteCriterions(index, criterion)
+									"
+								>
+									<nb-icon icon="trash-outline"></nb-icon>
+									{{ 'JOB_MATCHING.DELETE' | translate }}
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+	</nb-card-body>
+</nb-card>

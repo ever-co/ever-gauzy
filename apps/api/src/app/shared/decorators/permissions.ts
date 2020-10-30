@@ -15,5 +15,5 @@ export const UserPermissions = createParamDecorator((): PermissionsEnum[] => {
 		permissions: PermissionsEnum[];
 	};
 
-	return permissions.map((permition) => PermissionsEnum[permition]);
+	return permissions.map((permission) => PermissionsEnum[permission]);
 });

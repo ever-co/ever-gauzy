@@ -22,9 +22,11 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import { AuthGuard } from '@nestjs/passport';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
 
 @ApiTags('ApprovalPolicy')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 @Controller()
 export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 	constructor(private readonly approvalPolicyService: ApprovalPolicyService) {
@@ -41,12 +43,10 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.APPROVAL_POLICY_VIEW)
 	@Get()
-	findAllApprovalPolicies(@Query('data') data: string): any {
-		const { findInput, relations } = JSON.parse(data);
-
+	findAllApprovalPolicies(@Query('data', ParseJsonPipe) data: any): any {
+		const { findInput, relations } = data;
 		return this.approvalPolicyService.findAllApprovalPolicies({
 			where: findInput,
 			relations
@@ -66,19 +66,14 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.APPROVAL_POLICY_VIEW)
 	@Get('/requestapproval')
-	findApprovalPoliciesForRequestApproval(@Query('data') data: string): any {
-		const { findInput, relations } = JSON.parse(data);
-
-		let organizationId = '';
-		if (findInput['organizationId']) {
-			organizationId = findInput['organizationId'];
-		}
-
+	findApprovalPoliciesForRequestApproval(
+		@Query('data', ParseJsonPipe) data: any
+	): any {
+		const { findInput, relations } = data;
 		return this.approvalPolicyService.findApprovalPoliciesForRequestApproval(
-			organizationId,
+			findInput,
 			relations
 		);
 	}
@@ -93,7 +88,6 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.APPROVAL_POLICY_EDIT)
 	@Post('')
 	async createApprovalPolicy(
@@ -117,7 +111,6 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.APPROVAL_POLICY_EDIT)
 	@Put(':id')
 	async updateApprovalPolicy(

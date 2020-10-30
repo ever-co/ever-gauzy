@@ -1,0 +1,26 @@
+:host {
+  .form-group {
+    nb-select,
+    input {
+      max-width: none;
+    }
+  }
+  // .menu-item{
+  //   min-width: 200px;
+  // }
+  ::ng-deep {
+    ng2-smart-table {
+      .ng2-smart-actions {
+        padding: 0.875rem 1.25rem !important;
+        height: auto;
+        ng2-st-tbody-custom {
+          display: flex;
+          a.ng2-smart-action {
+            font-size: 1rem !important;
+            margin: 0 5px;
+          }
+        }
+      }
+    }
+  }
+}

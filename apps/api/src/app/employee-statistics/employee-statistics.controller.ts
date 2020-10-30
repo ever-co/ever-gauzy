@@ -20,9 +20,11 @@ import { EmployeeStatisticsService } from './employee-statistics.service';
 import { AggregatedEmployeeStatisticQuery } from './queries/aggregate-employee-statistic.query';
 import { MonthAggregatedEmployeeStatisticsQuery } from './queries/month-aggregated-employee-statistics.query';
 import { EmployeeStatisticsHistoryQuery } from './queries/employee-statistics-history.query';
+import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('EmployeeStatistics')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class EmployeeStatisticsController {
 	constructor(
@@ -40,9 +42,9 @@ export class EmployeeStatisticsController {
 	})
 	@Get('/aggregate')
 	async findAggregatedByOrganizationId(
-		@Query('data') data?: string
+		@Query('data', ParseJsonPipe) data?: any
 	): Promise<IAggregatedEmployeeStatistic[]> {
-		const { findInput } = JSON.parse(data);
+		const { findInput } = data;
 		/**
 		 * JSON parse changes Date object to String type
 		 * Changing Date String to Date Object using parseISO
@@ -64,9 +66,9 @@ export class EmployeeStatisticsController {
 	@Get('/months/:id')
 	async findAllByEmloyeeId(
 		@Param('id') id: string,
-		@Query('data') data?: string
+		@Query('data', ParseJsonPipe) data?: any
 	): Promise<IEmployeeStatistics> {
-		const { findInput } = JSON.parse(data);
+		const { findInput } = data;
 		return this.employeeStatisticsService.getStatisticsByEmployeeId(
 			id,
 			findInput
@@ -84,9 +86,9 @@ export class EmployeeStatisticsController {
 	})
 	@Get('/months')
 	async findAggregatedStatisticsByEmployeeId(
-		@Query('data') data?: string
+		@Query('data', ParseJsonPipe) data?: any
 	): Promise<IMonthAggregatedEmployeeStatistics> {
-		const { findInput } = JSON.parse(data);
+		const { findInput } = data;
 		/**
 		 * JSON parse changes Date object to String type
 		 * Changing Date String to Date Object using parseISO
@@ -108,9 +110,9 @@ export class EmployeeStatisticsController {
 	})
 	@Get('/history')
 	async findEmployeeStatisticsHistory(
-		@Query('data') data?: string
+		@Query('data', ParseJsonPipe) data?: any
 	): Promise<IEmployeeStatisticsHistory[]> {
-		const { findInput } = JSON.parse(data);
+		const { findInput } = data;
 		/**
 		 * JSON parse changes Date object to String type
 		 * Changing Date String to Date Object using parseISO

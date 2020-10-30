@@ -156,7 +156,8 @@ export const defaultRolePermissions = [
 			PermissionsEnum.REQUEST_APPROVAL_EDIT,
 			PermissionsEnum.REQUEST_APPROVAL_VIEW,
 			PermissionsEnum.ORG_CANDIDATES_TASK_EDIT,
-			PermissionsEnum.EVENT_TYPES_VIEW
+			PermissionsEnum.EVENT_TYPES_VIEW,
+			PermissionsEnum.TIME_TRACKER
 		]
 	},
 	{

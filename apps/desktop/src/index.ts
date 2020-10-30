@@ -6,7 +6,7 @@ console.log = log.log;
 Object.assign(console, log.functions);
 
 import { app, dialog, BrowserWindow, ipcMain } from 'electron';
-
+import { environment } from './environments/environment';
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 log.catchErrors({
 	showDialog: false,
@@ -51,6 +51,7 @@ import { LocalStore } from './libs/getSetStore';
 import { createGauzyWindow } from './window/gauzy';
 import { createSetupWindow } from './window/setup';
 import { createTimeTrackerWindow } from './window/timeTracker';
+import { createSettingsWindow } from './window/settings';
 import { fork } from 'child_process';
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
@@ -106,7 +107,11 @@ function startServer(value) {
 		process.env.DB_PASS = value.dbPassword;
 	}
 	if (value.isLocalServer) {
-		process.env.port = value.port;
+		process.env.port = value.port || environment.API_DEFAULT_PORT;
+		process.env.host = 'http://localhost';
+		process.env.BASE_URL = `http://localhost:${
+			value.port || environment.API_DEFAULT_PORT
+		}`;
 		// require(path.join(__dirname, 'api/main.js'));
 		serverGauzy = fork(path.join(__dirname, 'api/main.js'));
 	}
@@ -126,17 +131,22 @@ function startServer(value) {
 		if (!isAlreadyRun && value) {
 			onWaitingServer = true;
 			setupWindow.webContents.send('server_ping', {
-				host: value.serverUrl
-					? value.serverUrl
-					: value.port
-					? `http://localhost:${value.port}`
-					: 'http://localhost:3000'
+				host: getApiBaseUrl(value)
 			});
 		}
 	});
 
 	return true;
 }
+
+const getApiBaseUrl = (configs) => {
+	if (configs.serverUrl) return configs.serverUrl;
+	else {
+		return configs.port
+			? `http://localhost:${configs.port}`
+			: `http://localhost:${environment.API_DEFAULT_PORT}`;
+	}
+};
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -150,11 +160,7 @@ app.on('ready', async () => {
 	const configs: any = store.get('configs');
 	if (configs && configs.isSetup) {
 		global.variableGlobal = {
-			API_BASE_URL: configs.serverUrl
-				? configs.serverUrl
-				: configs.port
-				? `http://localhost:${configs.port}`
-				: 'http://localhost:3000'
+			API_BASE_URL: getApiBaseUrl(configs)
 		};
 		setupWindow = createSetupWindow(setupWindow, true);
 		startServer(configs);
@@ -177,7 +183,7 @@ ipcMain.on('server_is_ready', () => {
 	if (!isAlreadyRun) {
 		setTimeout(() => {
 			setupWindow.hide();
-
+			settingsWindow = createSettingsWindow(settingsWindow);
 			if (!gauzyWindow)
 				gauzyWindow = createGauzyWindow(gauzyWindow, serve);
 
@@ -186,7 +192,8 @@ ipcMain.on('server_is_ready', () => {
 				knex,
 				setupWindow,
 				timeTrackerWindow,
-				NotificationWindow
+				NotificationWindow,
+				settingsWindow
 			);
 
 			const auth = store.get('auth');
@@ -228,6 +235,32 @@ ipcMain.on('restore', () => {
 	gauzyWindow.restore();
 });
 
+ipcMain.on('restart_app', (event, arg) => {
+	LocalStore.updateConfigSetting(arg);
+	serverGauzy.kill();
+	gauzyWindow.destroy();
+	gauzyWindow = null;
+	isAlreadyRun = false;
+	setTimeout(() => {
+		if (!gauzyWindow) {
+			const configs = LocalStore.getStore('configs');
+			global.variableGlobal = {
+				API_BASE_URL: getApiBaseUrl(configs)
+			};
+			startServer(configs);
+			setupWindow.webContents.send('server_ping_restart', {
+				host: getApiBaseUrl(configs)
+			});
+		}
+	}, 100);
+});
+
+ipcMain.on('server_already_start', () => {
+	if (!gauzyWindow && !isAlreadyRun) {
+		gauzyWindow = createGauzyWindow(gauzyWindow, serve);
+		isAlreadyRun = true;
+	}
+});
 app.on('activate', () => {
 	if (gauzyWindow) {
 		gauzyWindow.show();
@@ -251,8 +284,8 @@ app.on('before-quit', (e) => {
 		}, 1000);
 	} else {
 		app.exit(0);
-		serverDesktop.kill();
-		serverGauzy.kill();
+		if (serverDesktop) serverDesktop.kill();
+		if (serverGauzy) serverGauzy.kill();
 	}
 });
 

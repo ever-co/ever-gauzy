@@ -22,11 +22,17 @@ describe('Add existing user/s test', () => {
 		addExistingUserPage.clickAddExistingUsersButton();
 		addExistingUserPage.cancelButtonVisible();
 		addExistingUserPage.clickCancelButton();
+		addExistingUserPage.tableBodyExists();
+		addExistingUserPage.clickTableRow(0);
+		addExistingUserPage.clickTableRow(0);
+		addExistingUserPage.removeUserButtonVisible();
+		addExistingUserPage.clickRemoveUserButton();
+		addExistingUserPage.confirmRemoveUserBtnVisible();
+		addExistingUserPage.clickConfirmRemoveUserBtn();
 		addExistingUserPage.clickAddExistingUsersButton();
 		addExistingUserPage.usersMultyselectVisible();
 		addExistingUserPage.clickUsersMultyselect();
 		addExistingUserPage.selectUsersFromDropdown(0);
-		addExistingUserPage.selectUsersFromDropdown(3);
 		addExistingUserPage.clickKeyboardButtonByKeyCode(9);
 		addExistingUserPage.saveUsersButtonVisible();
 		addExistingUserPage.clickSaveUsersButton();

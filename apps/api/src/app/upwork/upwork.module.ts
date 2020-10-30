@@ -26,8 +26,10 @@ import { TimeSlotMinute } from '../timesheet/time-slot-minute.entity';
 import { ExportAllModule } from '../export_import/export-all.module';
 import { Activity } from '../timesheet/activity.entity';
 import { TimeLog } from '../timesheet/time-log.entity';
-import { UpworkJobService } from './upwork-job.service';
-import { UpworkOffersService } from './upwork-offers.service';
+import {
+	UpworkJobService,
+	UpworkOffersService
+} from '@gauzy/integration-upwork';
 
 @Module({
 	imports: [

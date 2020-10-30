@@ -7,6 +7,7 @@ import {
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs';
+import { toParams } from '@gauzy/utils';
 
 @Injectable()
 export class InvoicesService {
@@ -28,15 +29,17 @@ export class InvoicesService {
 			.toPromise();
 	}
 
-	getHighestInvoiceNumber(): Promise<IInvoice> {
+	getHighestInvoiceNumber(tenantId: string): Promise<IInvoice> {
 		return this.http
-			.get<IInvoice>('/api/invoices/highest')
+			.get<IInvoice>('/api/invoices/highest', {
+				params: toParams({ tenantId })
+			})
 			.pipe(first())
 			.toPromise();
 	}
 
-	getById(id: string, relations?: string[]) {
-		const data = JSON.stringify({ relations });
+	getById(id: string, relations?: string[], findInput?: IInvoiceFindInput) {
+		const data = JSON.stringify({ relations, findInput });
 		return this.http
 			.get<IInvoice>(`/api/invoices/${id}`, {
 				params: { data }

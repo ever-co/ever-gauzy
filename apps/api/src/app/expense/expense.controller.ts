@@ -32,9 +32,10 @@ import { FindSplitExpenseQuery } from './queries/expense.find-split-expense.quer
 import { ParseJsonPipe } from '../shared';
 import { ExpenseDeleteCommand } from './commands/expense.delete.command';
 import { ExpenseUpdateCommand } from './commands/expense.update.command';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('Expense')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class ExpenseController extends CrudController<Expense> {
 	constructor(

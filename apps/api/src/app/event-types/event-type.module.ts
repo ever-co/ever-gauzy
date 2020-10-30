@@ -10,12 +10,14 @@ import { EmployeeService } from '../employee/employee.service';
 import { Organization } from '../organization/organization.entity';
 import { OrganizationService } from '../organization/organization.service';
 import { UserModule } from '../user/user.module';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
 		UserModule,
 		TypeOrmModule.forFeature([EventType, Employee, Organization]),
-		CqrsModule
+		CqrsModule,
+		TenantModule
 	],
 	controllers: [EventTypeController],
 	providers: [

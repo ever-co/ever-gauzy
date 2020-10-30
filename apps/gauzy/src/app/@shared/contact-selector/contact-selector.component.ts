@@ -14,7 +14,7 @@ import { debounceTime } from 'rxjs/operators';
 
 @UntilDestroy()
 @Component({
-	selector: 'gauzy-contact-selector',
+	selector: 'ga-contact-selector',
 	templateUrl: './contact-selector.component.html',
 	styleUrls: ['./contact-selector.component.scss'],
 	providers: [
@@ -74,25 +74,28 @@ export class ContactSelectorComponent implements OnInit, OnDestroy {
 		merge(this.loadContacts$, this.store.selectedDate$)
 			.pipe(untilDestroyed(this), debounceTime(300))
 			.subscribe(async () => {
-				if (this.store.selectedOrganization)
+				if (this.store.selectedOrganization) {
+					const { tenantId } = this.store.user;
+					const {
+						id: organizationId
+					} = this.store.selectedOrganization;
+
 					if (this.employeeId) {
 						const items = await this.organizationContactService.getAllByEmployee(
-							this.employeeId
+							this.employeeId,
+							{ organizationId, tenantId }
 						);
 						this.contacts = items;
 					} else {
 						const {
 							items = []
 						} = await this.organizationContactService.getAll([], {
-							...(this.store.selectedOrganization.id
-								? {
-										organizationId: this.store
-											.selectedOrganization.id
-								  }
-								: {})
+							organizationId,
+							tenantId
 						});
 						this.contacts = items;
 					}
+				}
 			});
 
 		this.loadContacts$.next();
@@ -129,7 +132,7 @@ export class ContactSelectorComponent implements OnInit, OnDestroy {
 				name,
 				organizationId: organizationId,
 				contactType: ContactType.CLIENT,
-				members,
+				...(members.length > 0 ? { members } : 0),
 				imageUrl:
 					'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text'
 			});

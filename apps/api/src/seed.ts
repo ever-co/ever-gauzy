@@ -2,7 +2,7 @@
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
 
-import { SeedDataService } from "./app/core/seeds/SeedDataService";
+import { SeedDataService } from './app/core/seeds/seed-data.service';
 
 /**
  * WARNING: Running this file will DELETE all data in your database
@@ -12,8 +12,8 @@ import { SeedDataService } from "./app/core/seeds/SeedDataService";
  * SeedData checks if environment is in production or not by checking src/environments/environment.ts file configs.
  * If environment.production config is set to true, then the seeding process will only generate default roles and 2 default users.
  * */
-(async () => {	
+(async () => {
 	const seedDataService = new SeedDataService();
-	await seedDataService.run(true);
+	await seedDataService.runDefaultSeed();
 	process.exit(0);
 })();

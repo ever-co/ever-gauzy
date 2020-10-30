@@ -1,0 +1,50 @@
+query employeeJobPosts {
+	employeeJobPosts {
+		edges {
+			node {
+				id
+				isApplied
+				appliedDate
+				employee {
+					externalEmployeeId
+				}
+				jobPost {
+					id
+					providerCode
+					providerJobId
+					title
+					description
+					jobDateCreated
+					jobStatus
+					jobType
+					url
+					budget
+					duration
+					workload
+					skills
+					category
+					subcategory
+					country
+					clientFeedback
+					clientReviewsCount
+					clientJobsPosted
+					clientPastHires
+					clientPaymentVerificationStatus
+				}
+			}
+		}
+	}
+}
+
+query employee {
+	employees {
+		edges {
+			node {
+				id
+				externalEmployeeId
+				firstName
+				lastName
+			}
+		}
+	}
+}

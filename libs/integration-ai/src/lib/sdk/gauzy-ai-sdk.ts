@@ -26,6 +26,10 @@ export type UpworkJobsSearchCriterion = {
 	occupationId?: Maybe<Scalars['String']>;
 	jobType: Scalars['String'];
 	keyword: Scalars['String'];
+	createdAt?: Maybe<Scalars['DateTime']>;
+	updatedAt?: Maybe<Scalars['DateTime']>;
+	isActive: Scalars['Boolean'];
+	isArchived: Scalars['Boolean'];
 	employee: Employee;
 };
 
@@ -37,6 +41,10 @@ export type Employee = {
 	lastName?: Maybe<Scalars['String']>;
 	name?: Maybe<Scalars['String']>;
 	jobType?: Maybe<Scalars['String']>;
+	createdAt?: Maybe<Scalars['DateTime']>;
+	updatedAt?: Maybe<Scalars['DateTime']>;
+	isActive: Scalars['Boolean'];
+	isArchived: Scalars['Boolean'];
 	upworkJobSearchCriteria: Array<UpworkJobsSearchCriterion>;
 	upworkJobSearchCriteriaAggregate: EmployeeUpworkJobSearchCriteriaAggregateResponse;
 };
@@ -61,14 +69,11 @@ export type OffsetPaging = {
 export type UpworkJobsSearchCriterionFilter = {
 	and?: Maybe<Array<UpworkJobsSearchCriterionFilter>>;
 	or?: Maybe<Array<UpworkJobsSearchCriterionFilter>>;
+	id?: Maybe<IdFilterComparison>;
+	employeeId?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
-	id?: Maybe<IdFilterComparison>;
-};
-
-export type BooleanFieldComparison = {
-	is?: Maybe<Scalars['Boolean']>;
-	isNot?: Maybe<Scalars['Boolean']>;
 };
 
 export type IdFilterComparison = {
@@ -88,6 +93,28 @@ export type IdFilterComparison = {
 	notIn?: Maybe<Array<Scalars['ID']>>;
 };
 
+export type StringFieldComparison = {
+	is?: Maybe<Scalars['Boolean']>;
+	isNot?: Maybe<Scalars['Boolean']>;
+	eq?: Maybe<Scalars['String']>;
+	neq?: Maybe<Scalars['String']>;
+	gt?: Maybe<Scalars['String']>;
+	gte?: Maybe<Scalars['String']>;
+	lt?: Maybe<Scalars['String']>;
+	lte?: Maybe<Scalars['String']>;
+	like?: Maybe<Scalars['String']>;
+	notLike?: Maybe<Scalars['String']>;
+	iLike?: Maybe<Scalars['String']>;
+	notILike?: Maybe<Scalars['String']>;
+	in?: Maybe<Array<Scalars['String']>>;
+	notIn?: Maybe<Array<Scalars['String']>>;
+};
+
+export type BooleanFieldComparison = {
+	is?: Maybe<Scalars['Boolean']>;
+	isNot?: Maybe<Scalars['Boolean']>;
+};
+
 export type UpworkJobsSearchCriterionSort = {
 	field: UpworkJobsSearchCriterionSortFields;
 	direction: SortDirection;
@@ -95,9 +122,11 @@ export type UpworkJobsSearchCriterionSort = {
 };
 
 export enum UpworkJobsSearchCriterionSortFields {
+	Id = 'id',
+	EmployeeId = 'employeeId',
+	JobType = 'jobType',
 	IsActive = 'isActive',
-	IsArchived = 'isArchived',
-	Id = 'id'
+	IsArchived = 'isArchived'
 }
 
 /** Sort Directions */
@@ -115,9 +144,11 @@ export enum SortNulls {
 export type UpworkJobsSearchCriterionAggregateFilter = {
 	and?: Maybe<Array<UpworkJobsSearchCriterionAggregateFilter>>;
 	or?: Maybe<Array<UpworkJobsSearchCriterionAggregateFilter>>;
+	id?: Maybe<IdFilterComparison>;
+	employeeId?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
-	id?: Maybe<IdFilterComparison>;
 };
 
 export type JobPost = {
@@ -149,6 +180,10 @@ export type JobPost = {
 	searchOccupationId?: Maybe<Scalars['String']>;
 	searchJobType?: Maybe<Scalars['String']>;
 	searchKeyword?: Maybe<Scalars['String']>;
+	createdAt?: Maybe<Scalars['DateTime']>;
+	updatedAt?: Maybe<Scalars['DateTime']>;
+	isActive: Scalars['Boolean'];
+	isArchived: Scalars['Boolean'];
 };
 
 export type EmployeeJobPost = {
@@ -158,6 +193,10 @@ export type EmployeeJobPost = {
 	jobPostId: Scalars['String'];
 	isApplied?: Maybe<Scalars['Boolean']>;
 	appliedDate?: Maybe<Scalars['DateTime']>;
+	createdAt?: Maybe<Scalars['DateTime']>;
+	updatedAt?: Maybe<Scalars['DateTime']>;
+	isActive: Scalars['Boolean'];
+	isArchived: Scalars['Boolean'];
 	jobPost: JobPost;
 	employee: Employee;
 };
@@ -197,6 +236,10 @@ export type JobPostDeleteResponse = {
 	searchOccupationId?: Maybe<Scalars['String']>;
 	searchJobType?: Maybe<Scalars['String']>;
 	searchKeyword?: Maybe<Scalars['String']>;
+	createdAt?: Maybe<Scalars['DateTime']>;
+	updatedAt?: Maybe<Scalars['DateTime']>;
+	isActive?: Maybe<Scalars['Boolean']>;
+	isArchived?: Maybe<Scalars['Boolean']>;
 };
 
 export type UpdateManyResponse = {
@@ -237,19 +280,34 @@ export type JobPostConnection = {
 
 export type JobPostCountAggregate = {
 	__typename?: 'JobPostCountAggregate';
+	id?: Maybe<Scalars['Int']>;
+	providerCode?: Maybe<Scalars['Int']>;
+	providerJobId?: Maybe<Scalars['Int']>;
+	jobStatus?: Maybe<Scalars['Int']>;
+	jobType?: Maybe<Scalars['Int']>;
+	country?: Maybe<Scalars['Int']>;
 	isActive?: Maybe<Scalars['Int']>;
 	isArchived?: Maybe<Scalars['Int']>;
-	id?: Maybe<Scalars['Int']>;
 };
 
 export type JobPostMinAggregate = {
 	__typename?: 'JobPostMinAggregate';
 	id?: Maybe<Scalars['ID']>;
+	providerCode?: Maybe<Scalars['String']>;
+	providerJobId?: Maybe<Scalars['String']>;
+	jobStatus?: Maybe<Scalars['String']>;
+	jobType?: Maybe<Scalars['String']>;
+	country?: Maybe<Scalars['String']>;
 };
 
 export type JobPostMaxAggregate = {
 	__typename?: 'JobPostMaxAggregate';
 	id?: Maybe<Scalars['ID']>;
+	providerCode?: Maybe<Scalars['String']>;
+	providerJobId?: Maybe<Scalars['String']>;
+	jobStatus?: Maybe<Scalars['String']>;
+	jobType?: Maybe<Scalars['String']>;
+	country?: Maybe<Scalars['String']>;
 };
 
 export type JobPostAggregateResponse = {
@@ -269,6 +327,10 @@ export type UpworkJobsSearchCriterionDeleteResponse = {
 	occupationId?: Maybe<Scalars['String']>;
 	jobType?: Maybe<Scalars['String']>;
 	keyword?: Maybe<Scalars['String']>;
+	createdAt?: Maybe<Scalars['DateTime']>;
+	updatedAt?: Maybe<Scalars['DateTime']>;
+	isActive?: Maybe<Scalars['Boolean']>;
+	isArchived?: Maybe<Scalars['Boolean']>;
 };
 
 export type UpworkJobsSearchCriterionEdge = {
@@ -291,19 +353,25 @@ export type UpworkJobsSearchCriterionConnection = {
 
 export type UpworkJobsSearchCriterionCountAggregate = {
 	__typename?: 'UpworkJobsSearchCriterionCountAggregate';
+	id?: Maybe<Scalars['Int']>;
+	employeeId?: Maybe<Scalars['Int']>;
+	jobType?: Maybe<Scalars['Int']>;
 	isActive?: Maybe<Scalars['Int']>;
 	isArchived?: Maybe<Scalars['Int']>;
-	id?: Maybe<Scalars['Int']>;
 };
 
 export type UpworkJobsSearchCriterionMinAggregate = {
 	__typename?: 'UpworkJobsSearchCriterionMinAggregate';
 	id?: Maybe<Scalars['ID']>;
+	employeeId?: Maybe<Scalars['String']>;
+	jobType?: Maybe<Scalars['String']>;
 };
 
 export type UpworkJobsSearchCriterionMaxAggregate = {
 	__typename?: 'UpworkJobsSearchCriterionMaxAggregate';
 	id?: Maybe<Scalars['ID']>;
+	employeeId?: Maybe<Scalars['String']>;
+	jobType?: Maybe<Scalars['String']>;
 };
 
 export type UpworkJobsSearchCriterionAggregateResponse = {
@@ -321,6 +389,10 @@ export type EmployeeDeleteResponse = {
 	lastName?: Maybe<Scalars['String']>;
 	name?: Maybe<Scalars['String']>;
 	jobType?: Maybe<Scalars['String']>;
+	createdAt?: Maybe<Scalars['DateTime']>;
+	updatedAt?: Maybe<Scalars['DateTime']>;
+	isActive?: Maybe<Scalars['Boolean']>;
+	isArchived?: Maybe<Scalars['Boolean']>;
 };
 
 export type EmployeeEdge = {
@@ -343,19 +415,31 @@ export type EmployeeConnection = {
 
 export type EmployeeCountAggregate = {
 	__typename?: 'EmployeeCountAggregate';
+	id?: Maybe<Scalars['Int']>;
+	externalEmployeeId?: Maybe<Scalars['Int']>;
+	firstName?: Maybe<Scalars['Int']>;
+	lastName?: Maybe<Scalars['Int']>;
+	jobType?: Maybe<Scalars['Int']>;
 	isActive?: Maybe<Scalars['Int']>;
 	isArchived?: Maybe<Scalars['Int']>;
-	id?: Maybe<Scalars['Int']>;
 };
 
 export type EmployeeMinAggregate = {
 	__typename?: 'EmployeeMinAggregate';
 	id?: Maybe<Scalars['ID']>;
+	externalEmployeeId?: Maybe<Scalars['String']>;
+	firstName?: Maybe<Scalars['String']>;
+	lastName?: Maybe<Scalars['String']>;
+	jobType?: Maybe<Scalars['String']>;
 };
 
 export type EmployeeMaxAggregate = {
 	__typename?: 'EmployeeMaxAggregate';
 	id?: Maybe<Scalars['ID']>;
+	externalEmployeeId?: Maybe<Scalars['String']>;
+	firstName?: Maybe<Scalars['String']>;
+	lastName?: Maybe<Scalars['String']>;
+	jobType?: Maybe<Scalars['String']>;
 };
 
 export type EmployeeAggregateResponse = {
@@ -367,19 +451,25 @@ export type EmployeeAggregateResponse = {
 
 export type EmployeeUpworkJobSearchCriteriaCountAggregate = {
 	__typename?: 'EmployeeUpworkJobSearchCriteriaCountAggregate';
+	id?: Maybe<Scalars['Int']>;
+	employeeId?: Maybe<Scalars['Int']>;
+	jobType?: Maybe<Scalars['Int']>;
 	isActive?: Maybe<Scalars['Int']>;
 	isArchived?: Maybe<Scalars['Int']>;
-	id?: Maybe<Scalars['Int']>;
 };
 
 export type EmployeeUpworkJobSearchCriteriaMinAggregate = {
 	__typename?: 'EmployeeUpworkJobSearchCriteriaMinAggregate';
 	id?: Maybe<Scalars['ID']>;
+	employeeId?: Maybe<Scalars['String']>;
+	jobType?: Maybe<Scalars['String']>;
 };
 
 export type EmployeeUpworkJobSearchCriteriaMaxAggregate = {
 	__typename?: 'EmployeeUpworkJobSearchCriteriaMaxAggregate';
 	id?: Maybe<Scalars['ID']>;
+	employeeId?: Maybe<Scalars['String']>;
+	jobType?: Maybe<Scalars['String']>;
 };
 
 export type EmployeeUpworkJobSearchCriteriaAggregateResponse = {
@@ -396,6 +486,10 @@ export type EmployeeJobPostDeleteResponse = {
 	jobPostId?: Maybe<Scalars['String']>;
 	isApplied?: Maybe<Scalars['Boolean']>;
 	appliedDate?: Maybe<Scalars['DateTime']>;
+	createdAt?: Maybe<Scalars['DateTime']>;
+	updatedAt?: Maybe<Scalars['DateTime']>;
+	isActive?: Maybe<Scalars['Boolean']>;
+	isArchived?: Maybe<Scalars['Boolean']>;
 };
 
 export type EmployeeJobPostEdge = {
@@ -418,20 +512,26 @@ export type EmployeeJobPostConnection = {
 
 export type EmployeeJobPostCountAggregate = {
 	__typename?: 'EmployeeJobPostCountAggregate';
+	id?: Maybe<Scalars['Int']>;
+	employeeId?: Maybe<Scalars['Int']>;
+	jobPostId?: Maybe<Scalars['Int']>;
+	isApplied?: Maybe<Scalars['Int']>;
 	isActive?: Maybe<Scalars['Int']>;
 	isArchived?: Maybe<Scalars['Int']>;
-	id?: Maybe<Scalars['Int']>;
-	isApplied?: Maybe<Scalars['Int']>;
 };
 
 export type EmployeeJobPostMinAggregate = {
 	__typename?: 'EmployeeJobPostMinAggregate';
 	id?: Maybe<Scalars['ID']>;
+	employeeId?: Maybe<Scalars['String']>;
+	jobPostId?: Maybe<Scalars['String']>;
 };
 
 export type EmployeeJobPostMaxAggregate = {
 	__typename?: 'EmployeeJobPostMaxAggregate';
 	id?: Maybe<Scalars['ID']>;
+	employeeId?: Maybe<Scalars['String']>;
+	jobPostId?: Maybe<Scalars['String']>;
 };
 
 export type EmployeeJobPostAggregateResponse = {
@@ -527,9 +627,14 @@ export type CursorPaging = {
 export type JobPostFilter = {
 	and?: Maybe<Array<JobPostFilter>>;
 	or?: Maybe<Array<JobPostFilter>>;
+	id?: Maybe<IdFilterComparison>;
+	providerCode?: Maybe<StringFieldComparison>;
+	providerJobId?: Maybe<StringFieldComparison>;
+	jobStatus?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
+	country?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
-	id?: Maybe<IdFilterComparison>;
 };
 
 export type JobPostSort = {
@@ -539,25 +644,39 @@ export type JobPostSort = {
 };
 
 export enum JobPostSortFields {
+	Id = 'id',
+	ProviderCode = 'providerCode',
+	ProviderJobId = 'providerJobId',
+	JobStatus = 'jobStatus',
+	JobType = 'jobType',
+	Country = 'country',
 	IsActive = 'isActive',
-	IsArchived = 'isArchived',
-	Id = 'id'
+	IsArchived = 'isArchived'
 }
 
 export type JobPostAggregateFilter = {
 	and?: Maybe<Array<JobPostAggregateFilter>>;
 	or?: Maybe<Array<JobPostAggregateFilter>>;
+	id?: Maybe<IdFilterComparison>;
+	providerCode?: Maybe<StringFieldComparison>;
+	providerJobId?: Maybe<StringFieldComparison>;
+	jobStatus?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
+	country?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
-	id?: Maybe<IdFilterComparison>;
 };
 
 export type EmployeeFilter = {
 	and?: Maybe<Array<EmployeeFilter>>;
 	or?: Maybe<Array<EmployeeFilter>>;
+	id?: Maybe<IdFilterComparison>;
+	externalEmployeeId?: Maybe<StringFieldComparison>;
+	firstName?: Maybe<StringFieldComparison>;
+	lastName?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
-	id?: Maybe<IdFilterComparison>;
 };
 
 export type EmployeeSort = {
@@ -567,26 +686,36 @@ export type EmployeeSort = {
 };
 
 export enum EmployeeSortFields {
+	Id = 'id',
+	ExternalEmployeeId = 'externalEmployeeId',
+	FirstName = 'firstName',
+	LastName = 'lastName',
+	JobType = 'jobType',
 	IsActive = 'isActive',
-	IsArchived = 'isArchived',
-	Id = 'id'
+	IsArchived = 'isArchived'
 }
 
 export type EmployeeAggregateFilter = {
 	and?: Maybe<Array<EmployeeAggregateFilter>>;
 	or?: Maybe<Array<EmployeeAggregateFilter>>;
+	id?: Maybe<IdFilterComparison>;
+	externalEmployeeId?: Maybe<StringFieldComparison>;
+	firstName?: Maybe<StringFieldComparison>;
+	lastName?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
-	id?: Maybe<IdFilterComparison>;
 };
 
 export type EmployeeJobPostFilter = {
 	and?: Maybe<Array<EmployeeJobPostFilter>>;
 	or?: Maybe<Array<EmployeeJobPostFilter>>;
+	id?: Maybe<IdFilterComparison>;
+	employeeId?: Maybe<StringFieldComparison>;
+	jobPostId?: Maybe<StringFieldComparison>;
+	isApplied?: Maybe<BooleanFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
-	id?: Maybe<IdFilterComparison>;
-	isApplied?: Maybe<BooleanFieldComparison>;
 };
 
 export type EmployeeJobPostSort = {
@@ -596,19 +725,23 @@ export type EmployeeJobPostSort = {
 };
 
 export enum EmployeeJobPostSortFields {
-	IsActive = 'isActive',
-	IsArchived = 'isArchived',
 	Id = 'id',
-	IsApplied = 'isApplied'
+	EmployeeId = 'employeeId',
+	JobPostId = 'jobPostId',
+	IsApplied = 'isApplied',
+	IsActive = 'isActive',
+	IsArchived = 'isArchived'
 }
 
 export type EmployeeJobPostAggregateFilter = {
 	and?: Maybe<Array<EmployeeJobPostAggregateFilter>>;
 	or?: Maybe<Array<EmployeeJobPostAggregateFilter>>;
+	id?: Maybe<IdFilterComparison>;
+	employeeId?: Maybe<StringFieldComparison>;
+	jobPostId?: Maybe<StringFieldComparison>;
+	isApplied?: Maybe<BooleanFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
-	id?: Maybe<IdFilterComparison>;
-	isApplied?: Maybe<BooleanFieldComparison>;
 };
 
 export type Mutation = {
@@ -788,9 +921,14 @@ export type DeleteManyJobPostsInput = {
 export type JobPostDeleteFilter = {
 	and?: Maybe<Array<JobPostDeleteFilter>>;
 	or?: Maybe<Array<JobPostDeleteFilter>>;
+	id?: Maybe<IdFilterComparison>;
+	providerCode?: Maybe<StringFieldComparison>;
+	providerJobId?: Maybe<StringFieldComparison>;
+	jobStatus?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
+	country?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
-	id?: Maybe<IdFilterComparison>;
 };
 
 export type UpdateOneJobPostInput = {
@@ -828,6 +966,10 @@ export type UpdateJobPost = {
 	searchOccupationId?: Maybe<Scalars['String']>;
 	searchJobType?: Maybe<Scalars['String']>;
 	searchKeyword?: Maybe<Scalars['String']>;
+	createdAt?: Maybe<Scalars['DateTime']>;
+	updatedAt?: Maybe<Scalars['DateTime']>;
+	isActive?: Maybe<Scalars['Boolean']>;
+	isArchived?: Maybe<Scalars['Boolean']>;
 };
 
 export type UpdateManyJobPostsInput = {
@@ -840,9 +982,14 @@ export type UpdateManyJobPostsInput = {
 export type JobPostUpdateFilter = {
 	and?: Maybe<Array<JobPostUpdateFilter>>;
 	or?: Maybe<Array<JobPostUpdateFilter>>;
+	id?: Maybe<IdFilterComparison>;
+	providerCode?: Maybe<StringFieldComparison>;
+	providerJobId?: Maybe<StringFieldComparison>;
+	jobStatus?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
+	country?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
-	id?: Maybe<IdFilterComparison>;
 };
 
 export type CreateOneJobPostInput = {
@@ -878,6 +1025,10 @@ export type CreateJobPost = {
 	searchOccupationId?: Maybe<Scalars['String']>;
 	searchJobType?: Maybe<Scalars['String']>;
 	searchKeyword?: Maybe<Scalars['String']>;
+	createdAt?: Maybe<Scalars['DateTime']>;
+	updatedAt?: Maybe<Scalars['DateTime']>;
+	isActive?: Maybe<Scalars['Boolean']>;
+	isArchived?: Maybe<Scalars['Boolean']>;
 };
 
 export type CreateManyJobPostsInput = {
@@ -893,9 +1044,11 @@ export type DeleteManyUpworkJobsSearchCriteriaInput = {
 export type UpworkJobsSearchCriterionDeleteFilter = {
 	and?: Maybe<Array<UpworkJobsSearchCriterionDeleteFilter>>;
 	or?: Maybe<Array<UpworkJobsSearchCriterionDeleteFilter>>;
+	id?: Maybe<IdFilterComparison>;
+	employeeId?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
-	id?: Maybe<IdFilterComparison>;
 };
 
 export type UpdateOneUpworkJobsSearchCriterionInput = {
@@ -914,6 +1067,10 @@ export type UpdateUpworkJobsSearchCriterion = {
 	occupationId?: Maybe<Scalars['String']>;
 	jobType?: Maybe<Scalars['String']>;
 	keyword?: Maybe<Scalars['String']>;
+	createdAt?: Maybe<Scalars['DateTime']>;
+	updatedAt?: Maybe<Scalars['DateTime']>;
+	isActive?: Maybe<Scalars['Boolean']>;
+	isArchived?: Maybe<Scalars['Boolean']>;
 };
 
 export type UpdateManyUpworkJobsSearchCriteriaInput = {
@@ -926,9 +1083,11 @@ export type UpdateManyUpworkJobsSearchCriteriaInput = {
 export type UpworkJobsSearchCriterionUpdateFilter = {
 	and?: Maybe<Array<UpworkJobsSearchCriterionUpdateFilter>>;
 	or?: Maybe<Array<UpworkJobsSearchCriterionUpdateFilter>>;
+	id?: Maybe<IdFilterComparison>;
+	employeeId?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
-	id?: Maybe<IdFilterComparison>;
 };
 
 export type CreateOneUpworkJobsSearchCriterionInput = {
@@ -945,6 +1104,10 @@ export type CreateUpworkJobsSearchCriterion = {
 	occupationId?: Maybe<Scalars['String']>;
 	jobType?: Maybe<Scalars['String']>;
 	keyword?: Maybe<Scalars['String']>;
+	createdAt?: Maybe<Scalars['DateTime']>;
+	updatedAt?: Maybe<Scalars['DateTime']>;
+	isActive?: Maybe<Scalars['Boolean']>;
+	isArchived?: Maybe<Scalars['Boolean']>;
 };
 
 export type CreateManyUpworkJobsSearchCriteriaInput = {
@@ -967,9 +1130,13 @@ export type DeleteManyEmployeesInput = {
 export type EmployeeDeleteFilter = {
 	and?: Maybe<Array<EmployeeDeleteFilter>>;
 	or?: Maybe<Array<EmployeeDeleteFilter>>;
+	id?: Maybe<IdFilterComparison>;
+	externalEmployeeId?: Maybe<StringFieldComparison>;
+	firstName?: Maybe<StringFieldComparison>;
+	lastName?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
-	id?: Maybe<IdFilterComparison>;
 };
 
 export type UpdateOneEmployeeInput = {
@@ -986,6 +1153,10 @@ export type UpdateEmployee = {
 	lastName?: Maybe<Scalars['String']>;
 	name?: Maybe<Scalars['String']>;
 	jobType?: Maybe<Scalars['String']>;
+	createdAt?: Maybe<Scalars['DateTime']>;
+	updatedAt?: Maybe<Scalars['DateTime']>;
+	isActive?: Maybe<Scalars['Boolean']>;
+	isArchived?: Maybe<Scalars['Boolean']>;
 };
 
 export type UpdateManyEmployeesInput = {
@@ -998,9 +1169,13 @@ export type UpdateManyEmployeesInput = {
 export type EmployeeUpdateFilter = {
 	and?: Maybe<Array<EmployeeUpdateFilter>>;
 	or?: Maybe<Array<EmployeeUpdateFilter>>;
+	id?: Maybe<IdFilterComparison>;
+	externalEmployeeId?: Maybe<StringFieldComparison>;
+	firstName?: Maybe<StringFieldComparison>;
+	lastName?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
-	id?: Maybe<IdFilterComparison>;
 };
 
 export type CreateOneEmployeeInput = {
@@ -1015,6 +1190,10 @@ export type CreateEmployee = {
 	lastName?: Maybe<Scalars['String']>;
 	name?: Maybe<Scalars['String']>;
 	jobType?: Maybe<Scalars['String']>;
+	createdAt?: Maybe<Scalars['DateTime']>;
+	updatedAt?: Maybe<Scalars['DateTime']>;
+	isActive?: Maybe<Scalars['Boolean']>;
+	isArchived?: Maybe<Scalars['Boolean']>;
 };
 
 export type CreateManyEmployeesInput = {
@@ -1037,10 +1216,12 @@ export type DeleteManyEmployeeJobPostsInput = {
 export type EmployeeJobPostDeleteFilter = {
 	and?: Maybe<Array<EmployeeJobPostDeleteFilter>>;
 	or?: Maybe<Array<EmployeeJobPostDeleteFilter>>;
+	id?: Maybe<IdFilterComparison>;
+	employeeId?: Maybe<StringFieldComparison>;
+	jobPostId?: Maybe<StringFieldComparison>;
+	isApplied?: Maybe<BooleanFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
-	id?: Maybe<IdFilterComparison>;
-	isApplied?: Maybe<BooleanFieldComparison>;
 };
 
 export type UpdateOneEmployeeJobPostInput = {
@@ -1056,6 +1237,10 @@ export type UpdateEmployeeJobPost = {
 	jobPostId?: Maybe<Scalars['String']>;
 	isApplied?: Maybe<Scalars['Boolean']>;
 	appliedDate?: Maybe<Scalars['DateTime']>;
+	createdAt?: Maybe<Scalars['DateTime']>;
+	updatedAt?: Maybe<Scalars['DateTime']>;
+	isActive?: Maybe<Scalars['Boolean']>;
+	isArchived?: Maybe<Scalars['Boolean']>;
 };
 
 export type UpdateManyEmployeeJobPostsInput = {
@@ -1068,10 +1253,12 @@ export type UpdateManyEmployeeJobPostsInput = {
 export type EmployeeJobPostUpdateFilter = {
 	and?: Maybe<Array<EmployeeJobPostUpdateFilter>>;
 	or?: Maybe<Array<EmployeeJobPostUpdateFilter>>;
+	id?: Maybe<IdFilterComparison>;
+	employeeId?: Maybe<StringFieldComparison>;
+	jobPostId?: Maybe<StringFieldComparison>;
+	isApplied?: Maybe<BooleanFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
-	id?: Maybe<IdFilterComparison>;
-	isApplied?: Maybe<BooleanFieldComparison>;
 };
 
 export type CreateOneEmployeeJobPostInput = {
@@ -1085,6 +1272,10 @@ export type CreateEmployeeJobPost = {
 	jobPostId?: Maybe<Scalars['String']>;
 	isApplied?: Maybe<Scalars['Boolean']>;
 	appliedDate?: Maybe<Scalars['DateTime']>;
+	createdAt?: Maybe<Scalars['DateTime']>;
+	updatedAt?: Maybe<Scalars['DateTime']>;
+	isActive?: Maybe<Scalars['Boolean']>;
+	isArchived?: Maybe<Scalars['Boolean']>;
 };
 
 export type CreateManyEmployeeJobPostsInput = {
@@ -1172,9 +1363,14 @@ export type DeleteOneJobPostSubscriptionFilterInput = {
 export type JobPostSubscriptionFilter = {
 	and?: Maybe<Array<JobPostSubscriptionFilter>>;
 	or?: Maybe<Array<JobPostSubscriptionFilter>>;
+	id?: Maybe<IdFilterComparison>;
+	providerCode?: Maybe<StringFieldComparison>;
+	providerJobId?: Maybe<StringFieldComparison>;
+	jobStatus?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
+	country?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
-	id?: Maybe<IdFilterComparison>;
 };
 
 export type UpdateOneJobPostSubscriptionFilterInput = {
@@ -1195,9 +1391,11 @@ export type DeleteOneUpworkJobsSearchCriterionSubscriptionFilterInput = {
 export type UpworkJobsSearchCriterionSubscriptionFilter = {
 	and?: Maybe<Array<UpworkJobsSearchCriterionSubscriptionFilter>>;
 	or?: Maybe<Array<UpworkJobsSearchCriterionSubscriptionFilter>>;
+	id?: Maybe<IdFilterComparison>;
+	employeeId?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
-	id?: Maybe<IdFilterComparison>;
 };
 
 export type UpdateOneUpworkJobsSearchCriterionSubscriptionFilterInput = {
@@ -1218,9 +1416,13 @@ export type DeleteOneEmployeeSubscriptionFilterInput = {
 export type EmployeeSubscriptionFilter = {
 	and?: Maybe<Array<EmployeeSubscriptionFilter>>;
 	or?: Maybe<Array<EmployeeSubscriptionFilter>>;
+	id?: Maybe<IdFilterComparison>;
+	externalEmployeeId?: Maybe<StringFieldComparison>;
+	firstName?: Maybe<StringFieldComparison>;
+	lastName?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
-	id?: Maybe<IdFilterComparison>;
 };
 
 export type UpdateOneEmployeeSubscriptionFilterInput = {
@@ -1241,10 +1443,12 @@ export type DeleteOneEmployeeJobPostSubscriptionFilterInput = {
 export type EmployeeJobPostSubscriptionFilter = {
 	and?: Maybe<Array<EmployeeJobPostSubscriptionFilter>>;
 	or?: Maybe<Array<EmployeeJobPostSubscriptionFilter>>;
+	id?: Maybe<IdFilterComparison>;
+	employeeId?: Maybe<StringFieldComparison>;
+	jobPostId?: Maybe<StringFieldComparison>;
+	isApplied?: Maybe<BooleanFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
-	id?: Maybe<IdFilterComparison>;
-	isApplied?: Maybe<BooleanFieldComparison>;
 };
 
 export type UpdateOneEmployeeJobPostSubscriptionFilterInput = {
@@ -1265,17 +1469,52 @@ export type EmployeeJobPostsQuery = { __typename?: 'Query' } & {
 			{ __typename?: 'EmployeeJobPostEdge' } & {
 				node: { __typename?: 'EmployeeJobPost' } & Pick<
 					EmployeeJobPost,
-					'id'
+					'id' | 'isApplied' | 'appliedDate'
 				> & {
 						employee: { __typename?: 'Employee' } & Pick<
 							Employee,
-							'name'
+							'externalEmployeeId'
 						>;
 						jobPost: { __typename?: 'JobPost' } & Pick<
 							JobPost,
-							'title'
+							| 'id'
+							| 'providerCode'
+							| 'providerJobId'
+							| 'title'
+							| 'description'
+							| 'jobDateCreated'
+							| 'jobStatus'
+							| 'jobType'
+							| 'url'
+							| 'budget'
+							| 'duration'
+							| 'workload'
+							| 'skills'
+							| 'category'
+							| 'subcategory'
+							| 'country'
+							| 'clientFeedback'
+							| 'clientReviewsCount'
+							| 'clientJobsPosted'
+							| 'clientPastHires'
+							| 'clientPaymentVerificationStatus'
 						>;
 					};
+			}
+		>;
+	};
+};
+
+export type EmployeeQueryVariables = Exact<{ [key: string]: never }>;
+
+export type EmployeeQuery = { __typename?: 'Query' } & {
+	employees: { __typename?: 'EmployeeConnection' } & {
+		edges: Array<
+			{ __typename?: 'EmployeeEdge' } & {
+				node: { __typename?: 'Employee' } & Pick<
+					Employee,
+					'id' | 'externalEmployeeId' | 'firstName' | 'lastName'
+				>;
 			}
 		>;
 	};
@@ -1337,6 +1576,26 @@ export const EmployeeJobPostsDocument: DocumentNode<
 															name: {
 																kind: 'Name',
 																value:
+																	'isApplied'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
+																	'appliedDate'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
 																	'employee'
 															},
 															arguments: [],
@@ -1352,7 +1611,7 @@ export const EmployeeJobPostsDocument: DocumentNode<
 																			kind:
 																				'Name',
 																			value:
-																				'name'
+																				'externalEmployeeId'
 																		},
 																		arguments: [],
 																		directives: []
@@ -1379,13 +1638,348 @@ export const EmployeeJobPostsDocument: DocumentNode<
 																			kind:
 																				'Name',
 																			value:
+																				'id'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'providerCode'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'providerJobId'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
 																				'title'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'description'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'jobDateCreated'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'jobStatus'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'jobType'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'url'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'budget'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'duration'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'workload'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'skills'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'category'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'subcategory'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'country'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'clientFeedback'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'clientReviewsCount'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'clientJobsPosted'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'clientPastHires'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'clientPaymentVerificationStatus'
 																		},
 																		arguments: [],
 																		directives: []
 																	}
 																]
 															}
+														}
+													]
+												}
+											}
+										]
+									}
+								}
+							]
+						}
+					}
+				]
+			}
+		}
+	]
+};
+export const EmployeeDocument: DocumentNode<
+	EmployeeQuery,
+	EmployeeQueryVariables
+> = {
+	kind: 'Document',
+	definitions: [
+		{
+			kind: 'OperationDefinition',
+			operation: 'query',
+			name: { kind: 'Name', value: 'employee' },
+			variableDefinitions: [],
+			directives: [],
+			selectionSet: {
+				kind: 'SelectionSet',
+				selections: [
+					{
+						kind: 'Field',
+						name: { kind: 'Name', value: 'employees' },
+						arguments: [],
+						directives: [],
+						selectionSet: {
+							kind: 'SelectionSet',
+							selections: [
+								{
+									kind: 'Field',
+									name: { kind: 'Name', value: 'edges' },
+									arguments: [],
+									directives: [],
+									selectionSet: {
+										kind: 'SelectionSet',
+										selections: [
+											{
+												kind: 'Field',
+												name: {
+													kind: 'Name',
+													value: 'node'
+												},
+												arguments: [],
+												directives: [],
+												selectionSet: {
+													kind: 'SelectionSet',
+													selections: [
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value: 'id'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
+																	'externalEmployeeId'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
+																	'firstName'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
+																	'lastName'
+															},
+															arguments: [],
+															directives: []
 														}
 													]
 												}

@@ -19,6 +19,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { DeepPartial } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { IPagination } from '../core/crud';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('OrganizationLanguages')
 @Controller()
@@ -43,7 +44,7 @@ export class OrganizationLanguagesController extends CrudController<
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UseGuards(AuthGuard('jwt'))
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 	async create(
 		@Body() entity: DeepPartial<OrganizationLanguages>
 	): Promise<OrganizationLanguages> {
@@ -66,7 +67,7 @@ export class OrganizationLanguagesController extends CrudController<
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UseGuards(AuthGuard('jwt'))
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 	async update(
 		@Param('id') id: string,
 		@Body() entity: QueryDeepPartialEntity<OrganizationLanguages>
@@ -85,7 +86,7 @@ export class OrganizationLanguagesController extends CrudController<
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	@UseGuards(AuthGuard('jwt'))
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 	async delete(@Param('id') id: string): Promise<any> {
 		return this.organizationLanguagesService.delete(id);
 	}

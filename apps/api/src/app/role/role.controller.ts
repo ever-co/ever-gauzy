@@ -4,9 +4,10 @@ import { RoleService } from './role.service';
 import { CrudController } from '../core/crud/crud.controller';
 import { Role } from './role.entity';
 import { AuthGuard } from '@nestjs/passport';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('Role')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class RoleController extends CrudController<Role> {
 	constructor(private readonly roleService: RoleService) {

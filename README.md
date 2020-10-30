@@ -74,7 +74,8 @@ Note: Desktop App can connect to [ActivityWatch](https://activitywatch.net)[*](h
 
 -   Clone repo
 -   Make sure you have Docker Compose [installed locally](https://docs.docker.com/compose/install)
--   Run `docker-compose up`
+-   Run `docker-compose up`, if you want to build everything (code and Docker images) locally
+-   Run `docker-compose -f docker-compose.demo.yml up`, if you want to run the platform using our prebuild Docker images _(note: images might be outdated)_
 -   :coffee: time...
 -   Open <http://localhost:8080> in your browser
 -   Login with email `admin@ever.co` and password: `admin`

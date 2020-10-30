@@ -40,9 +40,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 	today: Date = new Date();
 	checkboxAll = false;
 	selectedIds: any = {};
-	selectedDate: Date = new Date();
 
-	private _ngDestroy$ = new Subject<void>();
 	@ViewChild('checkAllCheckbox')
 	checkAllCheckbox: NbCheckboxComponent;
 	organization: IOrganization;
@@ -82,16 +80,16 @@ export class DailyComponent implements OnInit, OnDestroy {
 				map(({ item: { title } }) => title)
 			)
 			.subscribe((title) => this.bulkAction(title));
-
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((organization: IOrganization) => {
 				if (organization) {
 					this.organization = organization;
-					this.updateLogs$.next();
 				}
 			});
-
 		this.updateLogs$
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(() => {
@@ -101,12 +99,15 @@ export class DailyComponent implements OnInit, OnDestroy {
 
 	async filtersChange($event: ITimeLogFilters) {
 		this.logRequest = $event;
-		this.selectedDate = new Date(this.logRequest.startDate);
 		this.timesheetFilterService.filter = $event;
 		this.updateLogs$.next();
 	}
+
 	async getLogs() {
 		if (!this.organization) {
+			return;
+		}
+		if (!this.logRequest) {
 			return;
 		}
 
@@ -268,8 +269,5 @@ export class DailyComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	ngOnDestroy(): void {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy(): void {}
 }

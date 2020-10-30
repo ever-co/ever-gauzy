@@ -4,9 +4,11 @@ import { CrudController, IPagination } from '../core';
 import { Contact } from './contact.entity';
 import { ContactService } from './contact.service';
 import { AuthGuard } from '@nestjs/passport';
+import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('Contact')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class ContactController extends CrudController<Contact> {
 	constructor(private readonly contactService: ContactService) {
@@ -27,9 +29,9 @@ export class ContactController extends CrudController<Contact> {
 	})
 	@Get()
 	async getAllContact(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Contact>> {
-		const { relations, findInput } = JSON.parse(data);
+		const { relations, findInput } = data;
 		return this.contactService.findAll({ where: findInput, relations });
 	}
 }

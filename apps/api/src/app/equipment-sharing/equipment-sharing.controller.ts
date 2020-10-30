@@ -21,9 +21,10 @@ import {
 	EquipmentSharingCreateCommand,
 	EquipmentSharingUpdateCommand
 } from './commands';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('EquipmentSharing')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class EquipmentSharingController extends CrudController<
 	EquipmentSharing

@@ -11,6 +11,7 @@ import { EmailService, Email } from '../email';
 import { EmailTemplate } from '../email-template';
 import { OrganizationService } from '../organization/organization.service';
 import { Organization } from '../organization/organization.entity';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
@@ -21,7 +22,8 @@ import { Organization } from '../organization/organization.entity';
 			Email,
 			EmailTemplate
 		]),
-		CqrsModule
+		CqrsModule,
+		TenantModule
 	],
 	controllers: [OrganizationContactController],
 	providers: [

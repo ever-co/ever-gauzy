@@ -155,5 +155,12 @@ export const environment: IEnvironment = {
 	},
 
 	isElectron: process.env.IS_ELECTRON === 'true' ? true : false,
-	gauzyUserPath: process.env.GAUZY_USER_PATH
+	gauzyUserPath: process.env.GAUZY_USER_PATH,
+	allowSuperAdminRole:
+		process.env.AllowSuperAdminRole === 'false' ? false : true,
+
+	/**
+	 * Endpoint for Gauzy AI API (optional), e.g.: http://localhost:3005/graphql
+	 */
+	gauzyAIGraphQLEndpoint: process.env.GAUZY_AI_GRAPHQL_ENDPOINT
 };

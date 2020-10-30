@@ -28,7 +28,8 @@ import { ValueWithUnitComponent } from '../../@shared/table-components/value-wit
 	templateUrl: './goal-settings.component.html',
 	styleUrls: ['./goal-settings.component.scss']
 })
-export class GoalSettingsComponent extends TranslationBaseComponent
+export class GoalSettingsComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	smartTableData = new LocalDataSource();
 	generalSettingsForm: FormGroup;
@@ -135,14 +136,14 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 	}
 
 	selectRow({ isSelected, data }) {
+		this.selectedKPI = null;
+		this.selectedTimeFrame = null;
 		if (isSelected) {
-			this.selectedTab === 'KPI'
-				? (this.selectedKPI = data)
-				: (this.selectedTimeFrame = data);
-		} else {
-			this.selectedTab === 'KPI'
-				? (this.selectedKPI = null)
-				: (this.selectedTimeFrame = null);
+			if (this.selectedTab === 'kpi') {
+				this.selectedKPI = data;
+			} else if (this.selectedTab === 'timeframe') {
+				this.selectedTimeFrame = data;
+			}
 		}
 		if (this.smartTable) {
 			this.smartTable.grid.dataSet.willSelect = false;
@@ -157,7 +158,8 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 
 		this.smartTableData.empty();
 		this.goalTimeFrames = [];
-		const { id: organizationId, tenantId } = this.organization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 		const findObj = {
 			organization: {
 				id: organizationId
@@ -289,8 +291,8 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
 			this.cancel();
-			this._loadTableSettings(null);
-			await this._loadTableData(null);
+			this._loadTableSettings('timeframe');
+			await this._loadTableData('timeframe');
 		}
 	}
 
@@ -351,8 +353,8 @@ export class GoalSettingsComponent extends TranslationBaseComponent
 								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
 							this.cancel();
-							this._loadTableSettings(null);
-							await this._loadTableData(null);
+							this._loadTableSettings('timeframe');
+							await this._loadTableData('timeframe');
 						}
 					});
 			}

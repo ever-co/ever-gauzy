@@ -265,10 +265,15 @@ export class AuthService {
 		if (user.role) {
 			payload.role = user.role.name;
 			if (user.role.rolePermissions) {
-				payload.permissions = user.role.rolePermissions.map(
-					(rolePermission: IRolePermission) =>
-						rolePermission.permission
-				);
+				payload.permissions = user.role.rolePermissions
+					.filter(
+						(rolePermission: IRolePermission) =>
+							rolePermission.enabled
+					)
+					.map(
+						(rolePermission: IRolePermission) =>
+							rolePermission.permission
+					);
 			} else {
 				payload.permissions = null;
 			}

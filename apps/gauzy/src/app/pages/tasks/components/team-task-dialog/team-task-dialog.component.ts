@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import {
 	ITask,
 	IOrganizationProject,
@@ -33,7 +33,8 @@ const initialTaskValue = {
 	templateUrl: './team-task-dialog.component.html',
 	styleUrls: ['./team-task-dialog.component.scss']
 })
-export class TeamTaskDialogComponent extends TranslationBaseComponent
+export class TeamTaskDialogComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	form: FormGroup;
 	selectedTaskId: string;
@@ -45,7 +46,9 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 	selectedTeams: string[];
 	selectedTask: ITask;
 	organizationId: string;
+	tenantId: string;
 	tags: ITag[] = [];
+	@Input() task: Partial<ITask> = {};
 
 	constructor(
 		public dialogRef: NbDialogRef<TeamTaskDialogComponent>,
@@ -62,15 +65,21 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
+		this.tenantId = this.store.user.tenantId;
+		this.organizationId = this._organizationsStore.selectedOrganization.id;
+
 		this.loadProjects();
 		this.loadTeams();
-		this.initializeForm(this.selectedTask || initialTaskValue);
+		this.initializeForm(
+			Object.assign({}, initialTaskValue, this.selectedTask || this.task)
+		);
 	}
 
 	private async loadProjects() {
-		const organizationId = this._organizationsStore.selectedOrganization.id;
+		const { organizationId, tenantId } = this;
 		const { items } = await this.organizationProjectsService.getAll([], {
-			organizationId
+			organizationId,
+			tenantId
 		});
 
 		if (items) this.projects = items;
@@ -122,7 +131,7 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 	}
 
 	addNewProject = (name: string): Promise<IOrganizationProject> => {
-		this.organizationId = this.store.selectedOrganization.id;
+		const { organizationId, tenantId } = this;
 		try {
 			this.toastrService.primary(
 				this.getTranslation(
@@ -135,7 +144,8 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 			);
 			return this.organizationProjectsService.create({
 				name,
-				organizationId: this.organizationId
+				organizationId,
+				tenantId
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -160,15 +170,16 @@ export class TeamTaskDialogComponent extends TranslationBaseComponent
 	}
 
 	async loadTeams() {
-		const organizationId = this._organizationsStore.selectedOrganization.id;
+		const { organizationId, tenantId } = this;
 		if (!organizationId) {
 			return;
 		}
 		this.teams = (
-			await this.organizationTeamsService.getMyTeams(['members'])
-		).items.filter((org) => {
-			return org.organizationId === organizationId;
-		});
+			await this.organizationTeamsService.getMyTeams(['members'], {
+				organizationId,
+				tenantId
+			})
+		).items;
 	}
 
 	onTeamsSelected(teamsSelection: string[]) {

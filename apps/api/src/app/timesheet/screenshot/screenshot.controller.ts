@@ -19,9 +19,10 @@ import { FileStorage } from '../../core/file-storage';
 import { UploadedFileStorage } from '../../core/file-storage/uploaded-file-storage';
 import * as fs from 'fs';
 import { tempFile } from '../../core/utils';
+import { TenantPermissionGuard } from '../../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('Screenshot')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller('screenshot')
 export class ScreenshotController extends CrudController<Screenshot> {
 	constructor(private readonly screenshotService: ScreenshotService) {

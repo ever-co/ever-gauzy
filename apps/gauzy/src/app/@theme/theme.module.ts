@@ -24,14 +24,7 @@ import {
 	SearchInputComponent,
 	TinyMCEComponent
 } from './components';
-import {
-	CapitalizePipe,
-	PluralPipe,
-	RoundPipe,
-	TimingPipe,
-	NumberWithCommasPipe,
-	EvaIconsPipe
-} from './pipes';
+import { Pipes } from './pipes';
 import {
 	OneColumnLayoutComponent,
 	ThreeColumnsLayoutComponent,
@@ -100,14 +93,7 @@ const COMPONENTS = [
 	ThemeSettingsComponent,
 	LayoutSelectorComponent
 ];
-const PIPES = [
-	CapitalizePipe,
-	PluralPipe,
-	RoundPipe,
-	TimingPipe,
-	NumberWithCommasPipe,
-	EvaIconsPipe
-];
+const PIPES = [...Pipes];
 
 @NgModule({
 	imports: [CommonModule, ...NB_MODULES],

@@ -20,9 +20,10 @@ import { IPayment, PermissionsEnum } from '@gauzy/models';
 import { ParseJsonPipe } from '../shared';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('Payment')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class PaymentController extends CrudController<Payment> {
 	constructor(private paymentService: PaymentService) {

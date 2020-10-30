@@ -9,10 +9,12 @@ import { CommandHandlers } from './commands/handlers';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CandidateInterviewService } from '../candidate-interview/candidate-interview.service';
 import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
+import { TenantModule } from '../tenant/tenant.module';
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([CandidateFeedback, User, CandidateInterview]),
-		CqrsModule
+		CqrsModule,
+		TenantModule
 	],
 	providers: [
 		CandidateFeedbacksService,

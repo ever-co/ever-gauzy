@@ -7,9 +7,14 @@ import { HelpCenterArticleService } from './help-center-article.service';
 import { HelpCenterArticleController } from './help-center-article.controller';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CommandHandlers } from './commands/handlers';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([HelpCenterArticle, User]), CqrsModule],
+	imports: [
+		TypeOrmModule.forFeature([HelpCenterArticle, User]),
+		CqrsModule,
+		TenantModule
+	],
 	providers: [HelpCenterArticleService, UserService, ...CommandHandlers],
 	controllers: [HelpCenterArticleController],
 	exports: [HelpCenterArticleService]

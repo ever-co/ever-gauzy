@@ -56,9 +56,9 @@ export interface IExpenseCreateInput
 	status?: string;
 }
 
-export interface IExpenseFindInput {
+export interface IExpenseFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employee?: IEmployeeFindInput;
-	organization?: IOrganizationFindInput;
 	vendorName?: string;
 	vendorId?: string;
 	typeOfExpense?: string;

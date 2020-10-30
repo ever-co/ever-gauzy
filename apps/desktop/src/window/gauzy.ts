@@ -2,7 +2,7 @@ import log from 'electron-log';
 import { screen, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
 import * as url from 'url';
-
+import { environment } from '../environments/environment';
 export function createGauzyWindow(gauzyWindow, serve) {
 	log.info('createGauzyWindow started');
 
@@ -16,7 +16,7 @@ export function createGauzyWindow(gauzyWindow, serve) {
 			electron: require(`${__dirname}/../../../../node_modules/electron`)
 		});
 
-		launchPath = 'http://localhost:4200';
+		launchPath = `http://localhost:${environment.GAUZY_UI_DEFAULT_PORT}`;
 
 		gauzyWindow.loadURL(launchPath);
 	} else {
@@ -55,7 +55,8 @@ const windowSetting = () => {
 		fullscreenable: true,
 		webPreferences: {
 			nodeIntegration: true,
-			webSecurity: false
+			webSecurity: false,
+			enableRemoteModule: true
 		},
 		width: sizes.width,
 		height: sizes.height,

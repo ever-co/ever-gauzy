@@ -25,6 +25,7 @@ import { OrganizationRecurringExpenseService } from '../organization-recurring-e
 import { IncomeModule } from '../income/income.module';
 import { Income } from '../income/income.entity';
 import { OrganizationRecurringExpense } from '../organization-recurring-expense/organization-recurring-expense.entity';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
@@ -41,7 +42,8 @@ import { OrganizationRecurringExpense } from '../organization-recurring-expense/
 			User,
 			ExpenseCategory
 		]),
-		CqrsModule
+		CqrsModule,
+		TenantModule
 	],
 	controllers: [ExpenseController],
 	providers: [

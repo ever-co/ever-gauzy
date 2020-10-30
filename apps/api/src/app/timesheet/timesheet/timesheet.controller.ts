@@ -19,9 +19,10 @@ import {
 	LanguagesEnum
 } from '@gauzy/models';
 import { I18nLang } from 'nestjs-i18n';
+import { TenantPermissionGuard } from '../../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('TimeSheet')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class TimeSheetController extends CrudController<Timesheet> {
 	constructor(private readonly timeSheetService: TimeSheetService) {

@@ -1,3 +1,3 @@
-import { BulkActivitesSaveHandler } from './bulk-activites-save.handler';
+import { BulkActivitiesSaveHandler } from './bulk-activities-save.handler';
 
-export const ActivityCommandHandlers = [BulkActivitesSaveHandler];
+export const ActivityCommandHandlers = [BulkActivitiesSaveHandler];

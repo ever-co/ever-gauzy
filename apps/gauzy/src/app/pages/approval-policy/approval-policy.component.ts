@@ -1,36 +1,39 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { IApprovalPolicy, ComponentLayoutStyleEnum } from '@gauzy/models';
+import {
+	IApprovalPolicy,
+	ComponentLayoutStyleEnum,
+	IRolePermission
+} from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
-import { Subject } from 'rxjs';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { PermissionsEnum } from '@gauzy/models';
-import { takeUntil, first } from 'rxjs/operators';
+import { first, filter } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
 import { ApprovalPolicyMutationComponent } from '../../@shared/approval-policy/approval-policy-mutation.component';
 import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
-
+import { NgxPermissionsService } from 'ngx-permissions';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-approval-policy',
 	templateUrl: './approval-policy.component.html',
 	styleUrls: ['./approval-policy.component.scss']
 })
-export class ApprovalPolicyComponent extends TranslationBaseComponent
+export class ApprovalPolicyComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	public settingsSmartTable: object;
 	public loading = true;
 	public selectedApprovalPolicy: IApprovalPolicy;
 	public disableButton = true;
 	public smartTableSource = new LocalDataSource();
-	public hasEditPermission = false;
 	approvalData: IApprovalPolicy[];
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	private ngDestroy$ = new Subject<void>();
 	private selectedOrganizationId: string;
 	private selectedTenantId: string;
 
@@ -42,7 +45,8 @@ export class ApprovalPolicyComponent extends TranslationBaseComponent
 		private dialogService: NbDialogService,
 		private toastrService: NbToastrService,
 		private approvalPolicyService: ApprovalPolicyService,
-		private router: Router
+		private router: Router,
+		private permissionsService: NgxPermissionsService
 	) {
 		super(translateService);
 		this.setView();
@@ -50,15 +54,20 @@ export class ApprovalPolicyComponent extends TranslationBaseComponent
 
 	ngOnInit() {
 		this.store.userRolePermissions$
-			.pipe(takeUntil(this.ngDestroy$))
-			.subscribe(() => {
-				this.hasEditPermission = this.store.hasPermission(
-					PermissionsEnum.APPROVAL_POLICY_EDIT
+			.pipe(
+				filter(
+					(permissions: IRolePermission[]) => permissions.length > 0
+				),
+				untilDestroyed(this)
+			)
+			.subscribe((data) => {
+				const permissions = data.map(
+					(permisson) => permisson.permission
 				);
+				this.permissionsService.loadPermissions(permissions);
 			});
-
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this.ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((org) => {
 				if (org) {
 					this.selectedOrganizationId = org.id;
@@ -66,25 +75,22 @@ export class ApprovalPolicyComponent extends TranslationBaseComponent
 					this.loadSettings();
 				}
 			});
-
-		this.loadSmartTable();
-		this._applyTranslationOnSmartTable();
-		this.loadSettings();
-		// this.initListApprovals();
 		this.router.events
-			.pipe(takeUntil(this.ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
 				}
 			});
+		this.loadSmartTable();
+		this._applyTranslationOnSmartTable();
 	}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.APPROVAL_POLICY;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this.ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
@@ -99,7 +105,6 @@ export class ApprovalPolicyComponent extends TranslationBaseComponent
 				tenantId: this.selectedTenantId
 			};
 		}
-
 		const items = (
 			await this.approvalPolicyService.getAll(['organization'], findInput)
 		).items;
@@ -129,9 +134,11 @@ export class ApprovalPolicyComponent extends TranslationBaseComponent
 		};
 	}
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
 	}
 
 	async save(selectedItem?: IApprovalPolicy) {
@@ -199,8 +206,5 @@ export class ApprovalPolicyComponent extends TranslationBaseComponent
 		this.disableButton = true;
 	}
 
-	ngOnDestroy() {
-		this.ngDestroy$.next();
-		this.ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

@@ -12,7 +12,7 @@ import { Subject } from 'rxjs';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { OrganizationRecurringExpenseService } from '../../@core/services/organization-recurring-expense.service';
-import { takeUntil, first } from 'rxjs/operators';
+import { takeUntil, first, filter } from 'rxjs/operators';
 import { monthNames } from '../../@core/utils/date';
 import { RecurringExpenseDeleteConfirmationComponent } from '../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.component';
 import {
@@ -29,7 +29,8 @@ import { Store } from '../../@core/services/store.service';
 		'../dashboard/dashboard.component.scss'
 	]
 })
-export class ExpenseRecurringComponent extends TranslationBaseComponent
+export class ExpenseRecurringComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	selectedOrg: IOrganization;
 	selectedDate: Date;
@@ -74,14 +75,15 @@ export class ExpenseRecurringComponent extends TranslationBaseComponent
 			});
 
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((organization) => !!organization),
+				takeUntil(this._ngDestroy$)
+			)
 			.subscribe((organization) => {
 				if (organization) {
 					this.selectedOrg = organization;
 					this._loadOrgRecurringExpense();
 					this.selectedOrgFromHeader = this.selectedOrg;
-					this.store.selectedOrganization = this.selectedOrg;
-					this.store.selectedEmployee = null;
 				}
 			});
 	}

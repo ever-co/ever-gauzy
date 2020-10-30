@@ -16,9 +16,10 @@ import { GoalTimeFrame } from './goal-time-frame.entity';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { GoalTimeFrameService } from './goal-time-frame.service';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('GoalTimeFrame')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 	constructor(private readonly goalTimeFrameService: GoalTimeFrameService) {

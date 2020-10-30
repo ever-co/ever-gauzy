@@ -34,6 +34,7 @@ import { EmailService } from '../email/email.service';
 import { EmailModule } from '../email';
 import { TimeSlotCommandHandlers } from './time-slot/commands/handlers';
 import { ActivityCommandHandlers } from './activity/commands/handlers';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	controllers: [
@@ -61,7 +62,8 @@ import { ActivityCommandHandlers } from './activity/commands/handlers';
 			Organization
 		]),
 		CqrsModule,
-		EmailModule
+		EmailModule,
+		TenantModule
 	],
 	providers: [
 		TimerService,

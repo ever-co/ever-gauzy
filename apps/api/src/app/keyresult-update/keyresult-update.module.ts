@@ -5,9 +5,14 @@ import { KeyResultUpdateController } from './keyresult-update.controller';
 import { KeyResultUpdate } from './keyresult-update.entity';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CommandHandlers } from './commands/handlers';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([KeyResultUpdate]), CqrsModule],
+	imports: [
+		TypeOrmModule.forFeature([KeyResultUpdate]),
+		CqrsModule,
+		TenantModule
+	],
 	controllers: [KeyResultUpdateController],
 	providers: [KeyResultUpdateService, ...CommandHandlers],
 	exports: [KeyResultUpdateService]

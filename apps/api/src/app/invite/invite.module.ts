@@ -29,6 +29,7 @@ import { TenantService } from '../tenant/tenant.service';
 import { Tenant } from '../tenant/tenant.entity';
 import { RolePermissionsService } from '../role-permissions/role-permissions.service';
 import { RolePermissions } from '../role-permissions/role-permissions.entity';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
@@ -47,7 +48,8 @@ import { RolePermissions } from '../role-permissions/role-permissions.entity';
 		]),
 		SharedModule,
 		CqrsModule,
-		EmailModule
+		EmailModule,
+		TenantModule
 	],
 	controllers: [InviteController],
 	providers: [

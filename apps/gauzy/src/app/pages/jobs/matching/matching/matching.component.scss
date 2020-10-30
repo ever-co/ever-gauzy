@@ -1,0 +1,13 @@
+:host {
+  min-height: 100%;
+  display: block;
+  [nbInput] {
+    max-width: none !important;
+  }
+  .jobs-preset-card {
+    min-height: 100%;
+    nb-card-body {
+      overflow: visible;
+    }
+  }
+}

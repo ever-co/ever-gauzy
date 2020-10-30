@@ -29,7 +29,7 @@ import { IntegrationEntitySettingService } from '../integration-entity-setting/i
 import {
 	DEFAULT_ENTITY_SETTINGS,
 	PROJECT_TIED_ENTITIES
-} from './hubstaff-entity-settings';
+} from '@gauzy/integration-hubstaff';
 import {
 	OrganizationCreateCommand,
 	OrganizationUpdateCommand
@@ -60,6 +60,7 @@ import { RequestContext } from '../core/context';
 import { OrganizationProjectCreateCommand } from '../organization-projects/commands/organization-project.create.command';
 import { OrganizationProjectUpdateCommand } from '../organization-projects/commands/organization-project.update.command';
 import { TaskUpdateCommand } from '../tasks/commands/task-update.command';
+
 @Injectable()
 export class HubstaffService {
 	constructor(

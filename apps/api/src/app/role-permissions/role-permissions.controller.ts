@@ -19,9 +19,10 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { RolePermissions } from './role-permissions.entity';
 import { RolePermissionsService } from './role-permissions.service';
 import { AuthGuard } from '@nestjs/passport';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('Role')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class RolePermissionsController extends CrudController<RolePermissions> {
 	constructor(
@@ -41,7 +42,7 @@ export class RolePermissionsController extends CrudController<RolePermissions> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findRole(
+	async findRolePermission(
 		@Query('data') data: string
 	): Promise<IPagination<RolePermissions>> {
 		const { findInput } = JSON.parse(data);

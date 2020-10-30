@@ -16,9 +16,10 @@ import {
 	ITimerStatusInput
 } from '@gauzy/models';
 import { TimerService } from './timer.service';
+import { TenantPermissionGuard } from '../../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('Timer')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller('timer')
 export class TimerController {
 	constructor(private readonly timerService: TimerService) {}

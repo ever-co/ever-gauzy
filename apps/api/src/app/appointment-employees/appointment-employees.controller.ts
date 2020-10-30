@@ -5,9 +5,10 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Controller, UseGuards, HttpStatus, Get, Param } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UUIDValidationPipe } from '../shared';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('AppointmentEmployee')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class AppointmentEmployeesController extends CrudController<
 	AppointmentEmployee

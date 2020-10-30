@@ -1,6 +1,7 @@
 import { IUser } from './user.model';
 import { IExpense } from './expense.model';
 import { IOrganizationRecurringExpense } from './organization-recurring-expense.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
 export interface IEmployeeStatisticsFindInput {
 	valueDate: Date;
@@ -12,9 +13,9 @@ export interface IEmployeeStatistics {
 	profitStatistics: number[];
 	bonusStatistics: number[];
 }
-export interface IMonthAggregatedEmployeeStatisticsFindInput {
+export interface IMonthAggregatedEmployeeStatisticsFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId: string;
-	organizationId: string;
 	valueDate: Date;
 	months: number;
 }

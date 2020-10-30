@@ -25,8 +25,9 @@ import {
 	CandidateTechnologiesBulkUpdateCommand
 } from './commands';
 import { ParseJsonPipe } from '../shared';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 @ApiTags('CandidateTechnology')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class CandidateTechnologiesController extends CrudController<
 	CandidateTechnologies

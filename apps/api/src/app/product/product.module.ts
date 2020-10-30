@@ -17,6 +17,7 @@ import { ProductVariantSettings } from '../product-settings/product-settings.ent
 import { ProductVariantSettingService } from '../product-settings/product-settings.service';
 import { ProductVariantPriceService } from '../product-variant-price/product-variant-price.service';
 import { ProductVariantPrice } from '../product-variant-price/product-variant-price.entity';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
@@ -28,7 +29,8 @@ import { ProductVariantPrice } from '../product-variant-price/product-variant-pr
 			ProductVariantSettings,
 			ProductVariantPrice
 		]),
-		CqrsModule
+		CqrsModule,
+		TenantModule
 	],
 	controllers: [ProductController],
 	providers: [

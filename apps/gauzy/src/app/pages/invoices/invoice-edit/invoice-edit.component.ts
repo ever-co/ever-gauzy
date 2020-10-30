@@ -147,16 +147,19 @@ export class InvoiceEditComponent
 				this.organization = organization;
 				await this.loadData();
 			});
+		this.observableTasks.pipe(untilDestroyed(this)).subscribe((data) => {
+			this.tasks = data;
+		});
 	}
 
 	async loadData() {
 		this.loading = true;
-		const invoice = await this.invoicesService.getById(this.invoiceId, [
-			'invoiceItems',
-			'tags',
-			'toContact',
-			'fromOrganization'
-		]);
+		const { tenantId } = this.store.user;
+		const invoice = await this.invoicesService.getById(
+			this.invoiceId,
+			['invoiceItems', 'tags', 'toContact', 'fromOrganization'],
+			{ tenantId }
+		);
 		this.loading = false;
 		this.invoice = invoice;
 		this.invoiceItems = invoice.invoiceItems;
@@ -465,6 +468,10 @@ export class InvoiceEditComponent
 		}
 	}
 
+	private _loadTasks() {
+		this.tasksStore.fetchTasks(this.organization);
+	}
+
 	private async _loadOrganizationData() {
 		if (!this.organization) {
 			return;
@@ -489,20 +496,13 @@ export class InvoiceEditComponent
 				break;
 
 			case InvoiceTypeEnum.BY_TASK_HOURS:
-				this.tasksStore.fetchTasks();
-				this.observableTasks
-					.pipe(untilDestroyed(this))
-					.subscribe((data) => {
-						this.tasks = data;
-					});
+				this._loadTasks();
 				break;
 
 			case InvoiceTypeEnum.BY_PRODUCTS:
 				const products = await this.productService.getAll(
 					[],
-					{
-						organizationId: this.organization.id
-					},
+					{ organizationId, tenantId },
 					this.selectedLanguage
 				);
 				this.products = products.items;
@@ -511,10 +511,8 @@ export class InvoiceEditComponent
 			case InvoiceTypeEnum.BY_EXPENSES:
 				const expenses = await this.expensesService.getAll([], {
 					typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,
-					organization: {
-						id: organizationId,
-						tenantId: tenantId
-					}
+					organizationId,
+					tenantId
 				});
 
 				this.expenses = expenses.items;
@@ -558,10 +556,12 @@ export class InvoiceEditComponent
 				);
 				return;
 			}
-			const { id: organizationId, tenantId } = this.organization;
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
 			const invoice = await this.invoicesService.getAll([], {
 				invoiceNumber: invoiceData.invoiceNumber,
-				organizationId
+				organizationId,
+				tenantId
 			});
 
 			if (
@@ -720,10 +720,12 @@ export class InvoiceEditComponent
 				);
 				return;
 			}
-			const { id: organizationId, tenantId } = this.organization;
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
 			const invoiceExists = await this.invoicesService.getAll([], {
 				invoiceNumber: invoiceData.invoiceNumber,
-				organizationId
+				organizationId,
+				tenantId
 			});
 
 			if (

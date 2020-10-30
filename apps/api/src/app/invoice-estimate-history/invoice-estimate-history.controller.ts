@@ -8,6 +8,7 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { PermissionsEnum, IInvoiceEstimateHistory } from '@gauzy/models';
 import { ParseJsonPipe } from '../shared';
 import { InvoiceEstimateHistoryService } from './invoice-estimate-history.service';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('InvoiceEstimateHistory')
 @Controller()
@@ -20,7 +21,7 @@ export class InvoiceEstimateHistoryController extends CrudController<
 		super(invoiceEstimateHistoryService);
 	}
 
-	@UseGuards(AuthGuard('jwt'), PermissionGuard)
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get()
 	async findAllHistories(

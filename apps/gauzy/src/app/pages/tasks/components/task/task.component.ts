@@ -102,9 +102,12 @@ export class TaskComponent
 		this.initProjectFilter();
 		this._applyTranslationOnSmartTable();
 		this._organizationsStore.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((employee) => !!employee),
+				takeUntil(this._ngDestroy$)
+			)
 			.subscribe((selectedEmployee: SelectedEmployee) => {
-				if (selectedEmployee && this.organization) {
+				if (selectedEmployee.id && this.organization) {
 					this.loadTeams(selectedEmployee.id);
 					this.storeInstance.fetchTasks(
 						this.organization,
@@ -113,7 +116,10 @@ export class TaskComponent
 				}
 			});
 		this._organizationsStore.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((organization) => !!organization),
+				takeUntil(this._ngDestroy$)
+			)
 			.subscribe((organization) => {
 				if (organization) {
 					this.organization = organization;
@@ -215,7 +221,6 @@ export class TaskComponent
 		} else if (pathName.indexOf('tasks/team') !== -1) {
 			this.view = 'team-tasks';
 			this.viewComponentName = ComponentEnum.TEAM_TASKS;
-			this._teamTaskStore.fetchTasks();
 			// this.availableTasks$ = this.teamTasks$;
 		} else {
 			this.view = 'tasks';
@@ -450,13 +455,13 @@ export class TaskComponent
 			selectedTask.members = null;
 			dialog = this.dialogService.open(MyTaskDialogComponent, {
 				context: {
-					selectedTask: selectedTask
+					task: selectedTask
 				}
 			});
 		} else if (this.isTeamTaskPage()) {
 			dialog = this.dialogService.open(TeamTaskDialogComponent, {
 				context: {
-					selectedTask: this.selectedTask
+					task: this.selectedTask
 				}
 			});
 		}

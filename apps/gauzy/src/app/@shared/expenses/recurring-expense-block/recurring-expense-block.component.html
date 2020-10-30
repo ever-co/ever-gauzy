@@ -4,6 +4,7 @@
 			<div class="block-info">
 				<div class="expense">
 					<ga-picture-name-tags
+						*ngIf="currentEmployee?.user"
 						class="block-item-big"
 						[isTags]="false"
 						[rowData]="currentEmployee?.user"

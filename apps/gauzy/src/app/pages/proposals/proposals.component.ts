@@ -1,16 +1,15 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { takeUntil } from 'rxjs/operators';
+import { debounceTime, filter, withLatestFrom } from 'rxjs/operators';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import {
 	IProposal,
-	PermissionsEnum,
 	ITag,
 	ComponentLayoutStyleEnum,
-	IOrganization
+	IOrganization,
+	IRolePermission
 } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
-import { Subject } from 'rxjs';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { ProposalsService } from '../../@core/services/proposals.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,6 +21,8 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { NgxPermissionsService } from 'ngx-permissions';
 
 export interface ProposalViewModel {
 	tags?: ITag[];
@@ -36,13 +37,14 @@ export interface ProposalViewModel {
 	status?: string;
 	author?: string;
 }
-
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-proposals',
 	templateUrl: './proposals.component.html',
 	styleUrls: ['./proposals.component.scss']
 })
-export class ProposalsComponent extends TranslationBaseComponent
+export class ProposalsComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	constructor(
 		private store: Store,
@@ -51,7 +53,8 @@ export class ProposalsComponent extends TranslationBaseComponent
 		private toastrService: NbToastrService,
 		private dialogService: NbDialogService,
 		private errorHandler: ErrorHandlingService,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private readonly permissionsService: NgxPermissionsService
 	) {
 		super(translateService);
 		this.setView();
@@ -74,67 +77,71 @@ export class ProposalsComponent extends TranslationBaseComponent
 	totalProposals: number;
 	countAccepted = 0;
 	showTable: boolean;
-	loading = true;
-	hasEditPermission = false;
+	loading = false;
 	disableButton = true;
-	private _selectedOrganizationId: string;
-	private _ngDestroy$ = new Subject<void>();
 	selectedOrganization: IOrganization;
 
 	ngOnInit() {
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
-
 		this.store.userRolePermissions$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this.hasEditPermission = this.store.hasPermission(
-					PermissionsEnum.ORG_PROPOSALS_EDIT
+			.pipe(
+				filter(
+					(permissions: IRolePermission[]) => permissions.length > 0
+				),
+				untilDestroyed(this)
+			)
+			.subscribe((data) => {
+				const permissions = data.map(
+					(permisson) => permisson.permission
 				);
+				this.permissionsService.loadPermissions(permissions);
 			});
-
 		this.store.selectedDate$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((date) => {
 				this.selectedDate = date;
-
-				if (this.selectedEmployeeId) {
+				if (this.selectedOrganization) {
 					this._loadTableData();
-				} else {
-					if (this._selectedOrganizationId) {
-						this._loadTableData(this._selectedOrganizationId);
-					}
 				}
 			});
 
-		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((org) => {
-				if (org) {
-					this.selectedOrganization = org;
-					this._selectedOrganizationId = org.id;
-					this._loadTableData(this._selectedOrganizationId);
-				}
-			});
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeOrganization$ = this.store.selectedOrganization$;
 
-		this.store.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((employee) => {
-				if (employee && employee.id) {
+		storeEmployee$
+			.pipe(
+				filter((value) => !!value),
+				debounceTime(200),
+				withLatestFrom(storeOrganization$),
+				untilDestroyed(this)
+			)
+			.subscribe(([employee]) => {
+				if (employee && this.selectedOrganization) {
 					this.selectedEmployeeId = employee.id;
 					this._loadTableData();
 				} else {
-					if (this._selectedOrganizationId) {
-						this.selectedEmployeeId = null;
-						this._loadTableData(this._selectedOrganizationId);
-					}
+					this.selectedEmployeeId = null;
 				}
+			});
 
-				this.loading = false;
+		storeOrganization$
+			.pipe(
+				filter((value) => !!value),
+				debounceTime(200),
+				withLatestFrom(storeEmployee$),
+				untilDestroyed(this)
+			)
+			.subscribe(([organization, employee]) => {
+				this.selectedEmployeeId = employee ? employee.id : null;
+				if (organization) {
+					this.selectedOrganization = organization;
+					this._loadTableData();
+				}
 			});
 
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
@@ -146,7 +153,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 		this.viewComponentName = ComponentEnum.PROPOSALS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
@@ -188,7 +195,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 					recordType: 'Proposal'
 				}
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
@@ -224,15 +231,14 @@ export class ProposalsComponent extends TranslationBaseComponent
 					recordType: 'status'
 				}
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
+						const { tenantId } = this.store.user;
 						await this.proposalsService.update(
 							this.selectedProposal.id,
-							{
-								status: 'ACCEPTED'
-							}
+							{ status: 'ACCEPTED', tenantId }
 						);
 						// TODO translate
 						this.toastrService.primary(
@@ -263,15 +269,14 @@ export class ProposalsComponent extends TranslationBaseComponent
 					recordType: 'status'
 				}
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
+						const { tenantId } = this.store.user;
 						await this.proposalsService.update(
 							this.selectedProposal.id,
-							{
-								status: 'SENT'
-							}
+							{ status: 'SENT', tenantId }
 						);
 
 						this.toastrService.primary(
@@ -363,19 +368,25 @@ export class ProposalsComponent extends TranslationBaseComponent
 		}
 	}
 
-	private async _loadTableData(orgId?: string) {
+	private async _loadTableData() {
+		if (!this.selectedOrganization) {
+			return;
+		}
+
 		this.showTable = false;
 		this.selectedProposal = null;
 		this.disableButton = true;
 
 		let items: IProposal[];
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.selectedOrganization;
 		if (this.selectedEmployeeId) {
 			const response = await this.proposalsService.getAll(
 				['employee', 'organization', 'tags'],
 				{
 					employeeId: this.selectedEmployeeId,
-					organizationId: this._selectedOrganizationId,
-					tenantId: this.selectedOrganization.tenantId
+					organizationId,
+					tenantId
 				},
 				this.selectedDate
 			);
@@ -385,10 +396,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 		} else {
 			const response = await this.proposalsService.getAll(
 				['organization', 'employee', 'employee.user', 'tags'],
-				{
-					organizationId: orgId,
-					tenantId: this.selectedOrganization.tenantId
-				},
+				{ organizationId, tenantId },
 				this.selectedDate
 			);
 
@@ -467,14 +475,14 @@ export class ProposalsComponent extends TranslationBaseComponent
 	}
 
 	private _applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSettingsSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loadSettingsSmartTable();
+			});
 	}
 
 	ngOnDestroy() {
 		delete this.smartTableSettings['columns']['author'];
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
 	}
 }

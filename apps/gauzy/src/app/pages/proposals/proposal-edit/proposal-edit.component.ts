@@ -18,7 +18,8 @@ import { ITag } from '@gauzy/models';
 	selector: 'ngx-proposal-edit',
 	templateUrl: './proposal-edit.component.html'
 })
-export class ProposalEditComponent extends TranslationBaseComponent
+export class ProposalEditComponent
+	extends TranslationBaseComponent
 	implements OnInit, AfterViewInit {
 	constructor(
 		private store: Store,
@@ -68,11 +69,13 @@ export class ProposalEditComponent extends TranslationBaseComponent
 		if (this.form.valid) {
 			const result = this.form.value;
 			try {
+				const { tenantId } = this.store.user;
 				await this.proposalsService.update(this.proposal.id, {
 					jobPostContent: result.jobPostContent,
 					jobPostUrl: result.jobPostUrl,
 					proposalContent: result.proposalContent,
-					tags: this.tags
+					tags: this.tags,
+					tenantId
 				});
 
 				// TODO translate

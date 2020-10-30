@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { ITask, IOrganizationProject, IEmployee } from '@gauzy/models';
+import { Component, Input, OnInit } from '@angular/core';
+import { ITask, IOrganizationProject, IEmployee, ITag } from '@gauzy/models';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { OrganizationProjectsService } from '../../../../@core/services/organization-projects.service';
@@ -28,7 +28,8 @@ const initialTaskValue = {
 	templateUrl: './my-task-dialog.component.html',
 	styleUrls: ['./my-task-dialog.component.scss']
 })
-export class MyTaskDialogComponent extends TranslationBaseComponent
+export class MyTaskDialogComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	form: FormGroup;
 	selectedTaskId: string;
@@ -41,6 +42,8 @@ export class MyTaskDialogComponent extends TranslationBaseComponent
 	selectedTags: any;
 	participants = 'employees';
 	employeeId;
+	tags: ITag[] = [];
+	@Input() task: Partial<ITask> = {};
 
 	constructor(
 		public dialogRef: NbDialogRef<MyTaskDialogComponent>,
@@ -59,7 +62,9 @@ export class MyTaskDialogComponent extends TranslationBaseComponent
 	ngOnInit() {
 		this.loadProjects();
 		this.loadEmployees();
-		this.initializeForm(this.selectedTask || initialTaskValue);
+		this.initializeForm(
+			Object.assign({}, initialTaskValue, this.selectedTask || this.task)
+		);
 	}
 
 	private async loadProjects() {
@@ -116,6 +121,7 @@ export class MyTaskDialogComponent extends TranslationBaseComponent
 			tags: [tags],
 			teams: []
 		});
+		this.tags = this.form.get('tags').value || [];
 	}
 
 	addNewProject = (name: string): Promise<IOrganizationProject> => {

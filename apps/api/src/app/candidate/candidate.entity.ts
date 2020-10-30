@@ -1,9 +1,9 @@
-import { ICandidateInterview } from './../../../../../libs/models/src/lib/candidate-interview.model';
-import { ICandidateSource } from './../../../../../libs/models/src/lib/candidate-source.model';
 import { CandidateSkill } from './../candidate-skill/candidate-skill.entity';
 import { CandidateExperience } from './../candidate-experience/candidate-experience.entity';
 import {
 	ICandidate,
+	ICandidateInterview,
+	ICandidateSource,
 	PayPeriodEnum,
 	ICandidateEducation,
 	ICandidateExperience,

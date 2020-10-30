@@ -10,9 +10,10 @@ import {
 import { EstimateEmail } from './estimate-email.entity';
 import { EstimateEmailService } from './estimate-email.service';
 import { AuthGuard } from '@nestjs/passport';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('EstimateEmail')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class EstimateEmailController extends CrudController<EstimateEmail> {
 	constructor(private estimateEmailService: EstimateEmailService) {

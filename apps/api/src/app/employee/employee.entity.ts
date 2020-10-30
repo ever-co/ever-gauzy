@@ -47,6 +47,7 @@ import { Contact } from '../contact/contact.entity';
 import { TimeLog } from '../timesheet/time-log.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 import { Payment } from '../payment/payment.entity';
+import { JobPreset } from '../employee-job-preset/job-preset.entity';
 
 @Entity('employee')
 export class Employee extends TenantOrganizationBase implements IEmployee {
@@ -190,6 +191,9 @@ export class Employee extends TenantOrganizationBase implements IEmployee {
 		{ cascade: true }
 	)
 	organizationEmploymentTypes?: IOrganizationEmploymentType[];
+
+	@ManyToMany(() => JobPreset, (jobPreset) => jobPreset.employees)
+	jobPresets?: JobPreset[];
 
 	@ApiPropertyOptional({ type: String, maxLength: 500 })
 	@IsOptional()

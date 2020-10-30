@@ -25,6 +25,7 @@ import { ApprovalPolicyRoutingModule } from './approval-policy-routing.module';
 import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
 import { ApprovalPolicyMutationModule } from '../../@shared/approval-policy/approval-policy-mutation.module';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
+import { NgxPermissionsModule } from 'ngx-permissions';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -57,6 +58,10 @@ export function HttpLoaderFactory(http: HttpClient) {
 				useFactory: HttpLoaderFactory,
 				deps: [HttpClient]
 			}
+		}),
+		NgxPermissionsModule.forChild({
+			permissionsIsolate: true,
+			rolesIsolate: true
 		})
 	],
 	declarations: [ApprovalPolicyComponent],

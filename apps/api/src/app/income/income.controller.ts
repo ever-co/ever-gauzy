@@ -27,9 +27,10 @@ import { IncomeService } from './income.service';
 import { ParseJsonPipe } from '../shared';
 import { IncomeDeleteCommand } from './commands/income.delete.command';
 import { IncomeUpdateCommand } from './commands/income.update.command';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('Income')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class IncomeController extends CrudController<Income> {
 	constructor(

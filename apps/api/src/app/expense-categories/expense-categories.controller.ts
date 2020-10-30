@@ -12,9 +12,10 @@ import { CrudController, IPagination } from '../core';
 import { ExpenseCategoriesService } from './expense-categories.service';
 import { ExpenseCategory } from './expense-category.entity';
 import { AuthGuard } from '@nestjs/passport';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('ExpenseCategories')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class ExpenseCategoriesController extends CrudController<
 	ExpenseCategory

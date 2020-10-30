@@ -22,9 +22,11 @@ import { ITimeOff, PermissionsEnum } from '@gauzy/models';
 import { IPagination } from '../core';
 import { CommandBus } from '@nestjs/cqrs';
 import { TimeOffStatusCommand } from './commands';
+import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('TimeOffRequest')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class TimeOffRequestControler extends CrudController<TimeOffRequest> {
 	constructor(
@@ -38,10 +40,9 @@ export class TimeOffRequestControler extends CrudController<TimeOffRequest> {
 	@UseGuards(PermissionGuard)
 	@Get()
 	async findAllTimeOffRequest(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<ITimeOff>> {
-		const { relations, findInput, filterDate } = JSON.parse(data);
-
+		const { relations, findInput, filterDate } = data;
 		return this.requestService.getAllTimeOffRequests(
 			relations,
 			findInput,

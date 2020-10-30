@@ -23,9 +23,10 @@ import { CandidateCriterionsRatingBulkCreateCommand } from './commands/candidate
 import { ParseJsonPipe } from '../shared';
 import { CandidateCriterionsRatingBulkDeleteCommand } from './commands/candidate-criterions-rating.bulk.delete.command';
 import { CandidateCriterionsRatingBulkUpdateCommand } from './commands';
+import { TenantModule } from '../tenant/tenant.module';
 
 @ApiTags('CandidateCriterionRating')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), TenantModule)
 @Controller()
 export class CandidateCriterionsRatingController extends CrudController<
 	CandidateCriterionsRating

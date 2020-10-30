@@ -5,9 +5,14 @@ import { IntegrationMap } from './integration-map.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CommandHandlers } from './commands/handlers';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([IntegrationMap]), CqrsModule],
+	imports: [
+		TypeOrmModule.forFeature([IntegrationMap]),
+		CqrsModule,
+		TenantModule
+	],
 	controllers: [IntegrationMapController],
 	providers: [IntegrationMapService, ...CommandHandlers]
 })

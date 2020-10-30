@@ -49,6 +49,7 @@ export default class AppMenu {
 							const appSetting = LocalStore.getStore(
 								'appSetting'
 							);
+							const config = LocalStore.getStore('configs');
 							if (!settingsWindow) {
 								settingsWindow = createSettingsWindow(
 									settingsWindow
@@ -57,19 +58,20 @@ export default class AppMenu {
 							settingsWindow.show();
 							setTimeout(() => {
 								settingsWindow.webContents.send('app_setting', {
-									setting: appSetting
+									setting: appSetting,
+									config: config
 								});
 							}, 500);
 						}
-					},
-					{
-						id: 'devtools',
-						label: 'DevTool',
-						enabled: true,
-						click() {
-							timeTrackerWindow.webContents.toggleDevTools();
-						}
 					}
+					// {
+					// 	id: 'devtools',
+					// 	label: 'DevTool',
+					// 	enabled: true,
+					// 	click() {
+					// 		settingsWindow.webContents.toggleDevTools();
+					// 	}
+					// }
 				]
 			},
 			{

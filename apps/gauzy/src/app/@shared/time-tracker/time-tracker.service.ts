@@ -14,11 +14,13 @@ import * as moment from 'moment';
 import { StoreConfig, Store, Query } from '@datorama/akita';
 import { Store as AppStore } from '../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { filter } from 'rxjs/operators';
 
 export function createInitialTimerState(): TimerState {
 	let timerConfig = {
 		isBillable: true,
 		organizationId: null,
+		tenantId: null,
 		projectId: null,
 		taskId: null,
 		organizationContactId: null,
@@ -59,7 +61,7 @@ export class TimerQuery extends Query<TimerState> {
 	}
 }
 
-@UntilDestroy({ checkProperties: true })
+@UntilDestroy()
 @Injectable({
 	providedIn: 'root'
 })
@@ -81,7 +83,31 @@ export class TimeTrackerService implements OnDestroy {
 		protected store: AppStore,
 		private http: HttpClient
 	) {
-		this.getTimerStatus()
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
+			.subscribe((organization: IOrganization) => {
+				const { tenantId } = this.store.user;
+				this.organization = organization;
+				if (organization) {
+					this.timerStore.update({
+						timerConfig: {
+							...this.timerConfig,
+							organizationId: organization.id,
+							tenantId
+						}
+					});
+				}
+			});
+	}
+
+	/*
+	 * Check current timer status for employee only
+	 */
+	public checkTimerStatus(tenantId: string) {
+		this.getTimerStatus(tenantId)
 			.then((status: ITimerStatus) => {
 				this.duration = status.duration;
 				if (status.lastLog && !status.lastLog.stoppedAt) {
@@ -99,20 +125,6 @@ export class TimeTrackerService implements OnDestroy {
 				}
 			})
 			.catch(() => {});
-
-		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe((organization: IOrganization) => {
-				this.organization = organization;
-				if (organization) {
-					this.timerStore.update({
-						timerConfig: {
-							...this.timerConfig,
-							organizationId: organization.id
-						}
-					});
-				}
-			});
 	}
 
 	public get showTimerWindow(): boolean {
@@ -166,11 +178,12 @@ export class TimeTrackerService implements OnDestroy {
 		});
 	}
 
-	getTimerStatus(): Promise<ITimerStatus> {
+	getTimerStatus(tenantId: string): Promise<ITimerStatus> {
 		return this.http
 			.get<ITimerStatus>('/api/timesheet/timer/status', {
 				params: {
-					source: TimeLogSourceEnum.BROWSER
+					source: TimeLogSourceEnum.BROWSER,
+					tenantId
 				}
 			})
 			.toPromise();
@@ -187,7 +200,7 @@ export class TimeTrackerService implements OnDestroy {
 		if (!this.running) {
 			if (this.canStartTimer()) {
 				this.current_session_duration = 0;
-				this.turnOnTimer();
+				this.toggle();
 			}
 		}
 	}
