@@ -8,6 +8,20 @@ export interface IGetEmployeeJobPostInput {
 	filters: IGetEmployeeJobPostFilters;
 }
 
+export interface IApplyJobPostInput {
+	applied: boolean;
+	employeeId: string;
+	providerCode: string;
+	providerJobId: string;
+}
+
+export interface IVisibilityJobPostInput {
+	hide: boolean;
+	employeeId: string | undefined;
+	providerCode: string;
+	providerJobId: string;
+}
+
 export interface IGetEmployeeJobPostFilters {
 	search?: string;
 	employeeIds?: string[];

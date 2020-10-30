@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
-	EmployeePresetInput,
-	GetJobPresetInput,
-	JobPreset,
-	MatchingCriterions
+	IEmployeePresetInput,
+	IGetJobPresetInput,
+	IJobPreset,
+	IMatchingCriterions
 } from '@gauzy/models';
 import { toParams } from '@gauzy/utils';
 
@@ -14,46 +14,72 @@ import { toParams } from '@gauzy/utils';
 export class JobPresetService {
 	constructor(private http: HttpClient) {}
 
-	getJobPresets(request?: GetJobPresetInput) {
+	getJobPresets(request?: IGetJobPresetInput) {
 		return this.http
-			.get<JobPreset[]>(`/api/job-preset`, {
+			.get<IJobPreset[]>(`/api/job-preset`, {
 				params: request ? toParams(request) : {}
 			})
 			.toPromise();
 	}
 
-	getJobPreset(id: string, request?: GetJobPresetInput) {
+	getJobPreset(id: string, request?: IGetJobPresetInput) {
 		return this.http
-			.get<JobPreset>(`/api/job-preset/${id}`, {
+			.get<IJobPreset>(`/api/job-preset/${id}`, {
 				params: request ? toParams(request) : {}
 			})
 			.toPromise();
 	}
 
-	getEmployeePresets(id: string) {
+	getEmployeePreset(request?: IGetJobPresetInput) {
 		return this.http
-			.get<JobPreset[]>(`/api/job-preset/employee/${id}`)
-			.toPromise();
-	}
-	createJobPreset(request?: JobPreset) {
-		return this.http
-			.post<JobPreset>(`/api/job-preset`, request)
+			.get<IJobPreset>(`/api/job-preset`, {
+				params: request ? toParams(request) : {}
+			})
 			.toPromise();
 	}
 
-	saveEmployeePreset(arg: EmployeePresetInput) {
+	getEmployeeCriterions(employeeId: string, request?: IGetJobPresetInput) {
 		return this.http
-			.post<JobPreset>(`/api/job-preset/employee`, arg)
+			.get<IMatchingCriterions[]>(
+				`/api/job-preset/employee/${employeeId}/criterion`,
+				{
+					params: request ? toParams(request) : {}
+				}
+			)
+			.toPromise();
+	}
+
+	createJobPreset(request?: IJobPreset) {
+		return this.http
+			.post<IJobPreset>(`/api/job-preset`, request)
+			.toPromise();
+	}
+
+	saveEmployeePreset(arg: IEmployeePresetInput) {
+		return this.http
+			.post<IMatchingCriterions[]>(`/api/job-preset/employee`, arg)
 			.toPromise();
 	}
 
 	createJobPresetCriterion(
 		jobPresetId: string,
-		criterion: MatchingCriterions
+		criterion: IMatchingCriterions
 	) {
 		return this.http
-			.post<JobPreset>(
+			.post<IJobPreset>(
 				`/api/job-preset/${jobPresetId}/criterion`,
+				criterion
+			)
+			.toPromise();
+	}
+
+	createEmployeeCriterion(
+		employeeId: string,
+		criterion: IMatchingCriterions
+	) {
+		return this.http
+			.post<IMatchingCriterions>(
+				`/api/job-preset/employee/${employeeId}/criterion`,
 				criterion
 			)
 			.toPromise();
@@ -61,7 +87,15 @@ export class JobPresetService {
 
 	deleteJobPresetCriterion(criterionId: string) {
 		return this.http
-			.delete<JobPreset>(`/api/job-preset/criterion/${criterionId}`)
+			.delete<IJobPreset>(`/api/job-preset/criterion/${criterionId}`)
+			.toPromise();
+	}
+
+	deleteEmployeeCriterion(employeeId: string, criterionId: string) {
+		return this.http
+			.delete<IMatchingCriterions>(
+				`/api/job-preset/employee/${employeeId}/criterion/${criterionId}`
+			)
 			.toPromise();
 	}
 }

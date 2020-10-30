@@ -3,7 +3,7 @@ export interface IPaginationInput {
 	page?: number;
 }
 
-export interface Pagination<T> {
+export interface IPagination<T> {
 	count: number;
 	items: T[];
 }
