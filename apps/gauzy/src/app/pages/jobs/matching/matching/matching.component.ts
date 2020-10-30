@@ -91,6 +91,7 @@ export class MatchingComponent implements OnInit {
 						await this.getEmployeeCriterions();
 					} else {
 						this.selectedEmployeeId = null;
+						this.criterions = [];
 					}
 					this.checkForEmptyCriterion();
 				});
@@ -125,6 +126,8 @@ export class MatchingComponent implements OnInit {
 		this.jobPresetService.createJobPreset(request).then((jobPreset) => {
 			this.jobPresets = this.jobPresets.concat([jobPreset]);
 			this.criterionForm.jobPresetId = jobPreset.id;
+
+			this.checkForEmptyCriterion();
 		});
 	}
 
@@ -139,6 +142,8 @@ export class MatchingComponent implements OnInit {
 						this.criterions = jobPresetCriterions;
 					});
 			}
+		} else {
+			this.criterions = [];
 		}
 		this.hasAnyChanges = false;
 		this.checkForEmptyCriterion();
@@ -165,7 +170,10 @@ export class MatchingComponent implements OnInit {
 	}
 
 	async checkForEmptyCriterion() {
-		if (this.criterions.length === 0) {
+		if (
+			(this.selectedEmployeeId || this.criterionForm.jobPresetId) &&
+			this.criterions.length === 0
+		) {
 			this.addNewCriterion();
 		}
 	}

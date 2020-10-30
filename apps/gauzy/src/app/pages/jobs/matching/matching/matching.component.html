@@ -37,7 +37,9 @@
 							<div class="col">
 								<ng-select
 									class="w-100"
-									[addTag]="addPreset"
+									[addTag]="
+										!selectedEmployeeId ? addPreset : null
+									"
 									(change)="onPresetSelected($event)"
 									[clearable]="true"
 									[items]="jobPresets"
@@ -185,7 +187,11 @@
 										"
 										[value]="type.value"
 									>
-										{{ type.key | titlecase }}
+										{{
+											type.key
+												| titlecase
+												| replace: '_':' '
+										}}
 									</nb-radio>
 								</nb-radio-group>
 							</div>
