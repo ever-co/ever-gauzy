@@ -1,5 +1,6 @@
 export const EditUserPage = {
 	gridButtonCss: 'div.layout-switch > button',
+	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
 	editButtonCss: 'button[status="info"]',
 	orgTabButtonCss: 'ul.route-tabset > li > a.tab-link',
 	addOrgButtonCss: 'nb-card-header > button[status="success"]',
