@@ -109,11 +109,11 @@ export class EmployeePresetController {
 	})
 	@Delete(':employeeId/criterion/:criterionId')
 	async deleteEmployeeCriterion(
-		@Param('creationId') creationId: string,
+		@Param('criterionId') criterionId: string,
 		@Param('employeeId') employeeId: string
 	) {
 		return this.jobPresetService.deleteEmployeeCriterion(
-			creationId,
+			criterionId,
 			employeeId
 		);
 	}

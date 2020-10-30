@@ -26,7 +26,7 @@ export class JobSearchOccupation
 	@ApiProperty({ type: String })
 	@IsString()
 	@Index()
-	@Column()
+	@Column({ nullable: true })
 	jobSourceOccupationId?: string;
 
 	@ApiProperty({ type: String })
