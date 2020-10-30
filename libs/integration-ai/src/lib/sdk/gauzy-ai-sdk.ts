@@ -417,6 +417,8 @@ export type EmployeeCountAggregate = {
 	__typename?: 'EmployeeCountAggregate';
 	id?: Maybe<Scalars['Int']>;
 	externalEmployeeId?: Maybe<Scalars['Int']>;
+	firstName?: Maybe<Scalars['Int']>;
+	lastName?: Maybe<Scalars['Int']>;
 	jobType?: Maybe<Scalars['Int']>;
 	isActive?: Maybe<Scalars['Int']>;
 	isArchived?: Maybe<Scalars['Int']>;
@@ -426,6 +428,8 @@ export type EmployeeMinAggregate = {
 	__typename?: 'EmployeeMinAggregate';
 	id?: Maybe<Scalars['ID']>;
 	externalEmployeeId?: Maybe<Scalars['String']>;
+	firstName?: Maybe<Scalars['String']>;
+	lastName?: Maybe<Scalars['String']>;
 	jobType?: Maybe<Scalars['String']>;
 };
 
@@ -433,6 +437,8 @@ export type EmployeeMaxAggregate = {
 	__typename?: 'EmployeeMaxAggregate';
 	id?: Maybe<Scalars['ID']>;
 	externalEmployeeId?: Maybe<Scalars['String']>;
+	firstName?: Maybe<Scalars['String']>;
+	lastName?: Maybe<Scalars['String']>;
 	jobType?: Maybe<Scalars['String']>;
 };
 
@@ -666,6 +672,8 @@ export type EmployeeFilter = {
 	or?: Maybe<Array<EmployeeFilter>>;
 	id?: Maybe<IdFilterComparison>;
 	externalEmployeeId?: Maybe<StringFieldComparison>;
+	firstName?: Maybe<StringFieldComparison>;
+	lastName?: Maybe<StringFieldComparison>;
 	jobType?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
@@ -680,6 +688,8 @@ export type EmployeeSort = {
 export enum EmployeeSortFields {
 	Id = 'id',
 	ExternalEmployeeId = 'externalEmployeeId',
+	FirstName = 'firstName',
+	LastName = 'lastName',
 	JobType = 'jobType',
 	IsActive = 'isActive',
 	IsArchived = 'isArchived'
@@ -690,6 +700,8 @@ export type EmployeeAggregateFilter = {
 	or?: Maybe<Array<EmployeeAggregateFilter>>;
 	id?: Maybe<IdFilterComparison>;
 	externalEmployeeId?: Maybe<StringFieldComparison>;
+	firstName?: Maybe<StringFieldComparison>;
+	lastName?: Maybe<StringFieldComparison>;
 	jobType?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
@@ -1120,6 +1132,8 @@ export type EmployeeDeleteFilter = {
 	or?: Maybe<Array<EmployeeDeleteFilter>>;
 	id?: Maybe<IdFilterComparison>;
 	externalEmployeeId?: Maybe<StringFieldComparison>;
+	firstName?: Maybe<StringFieldComparison>;
+	lastName?: Maybe<StringFieldComparison>;
 	jobType?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
@@ -1157,6 +1171,8 @@ export type EmployeeUpdateFilter = {
 	or?: Maybe<Array<EmployeeUpdateFilter>>;
 	id?: Maybe<IdFilterComparison>;
 	externalEmployeeId?: Maybe<StringFieldComparison>;
+	firstName?: Maybe<StringFieldComparison>;
+	lastName?: Maybe<StringFieldComparison>;
 	jobType?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
@@ -1402,6 +1418,8 @@ export type EmployeeSubscriptionFilter = {
 	or?: Maybe<Array<EmployeeSubscriptionFilter>>;
 	id?: Maybe<IdFilterComparison>;
 	externalEmployeeId?: Maybe<StringFieldComparison>;
+	firstName?: Maybe<StringFieldComparison>;
+	lastName?: Maybe<StringFieldComparison>;
 	jobType?: Maybe<StringFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;

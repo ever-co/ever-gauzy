@@ -21,12 +21,18 @@ import { JobPresetService } from './job-preset.service';
 import { JobPreset } from './job-preset.entity';
 import { JobPresetUpworkJobSearchCriterion } from './job-preset-upwork-job-search-criterion.entity';
 import { EmployeeUpworkJobsSearchCriterion } from './employee-upwork-jobs-search-criterion.entity';
+import { GauzyAIService } from '@gauzy/integration-ai';
+import { EmployeeService } from '../employee/employee.service';
 
 @ApiTags('JobSearchPreset')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class JobSearchPresetController {
-	constructor(private readonly jobPresetService: JobPresetService) {}
+	constructor(
+		private readonly jobPresetService: JobPresetService,
+		private readonly employeeService: EmployeeService,
+		private readonly gauzyAIService: GauzyAIService
+	) {}
 
 	@ApiOperation({ summary: 'Find all employee job posts' })
 	@ApiResponse({
@@ -40,6 +46,14 @@ export class JobSearchPresetController {
 	})
 	@Get()
 	async getAll(@Query() data: IGetJobPresetInput) {
+		console.log('GetAll Presets called. We will sync all employees now');
+
+		// TODO: we can actually sync just for one employee if data.employeeId is defined
+
+		const employees = await this.employeeService.findAllActive();
+
+		await this.gauzyAIService.syncEmployees(employees);
+
 		return this.jobPresetService.getAll(data);
 	}
 

@@ -132,108 +132,162 @@ export class GauzyAIService {
 			return false;
 		}
 
-		const gauzyAIEmployee: Employee = await this.syncEmployee({
-			externalEmployeeId: employee.id,
-			isActive: employee.isActive,
-			isArchived: false,
-			upworkJobSearchCriteria: undefined,
-			upworkJobSearchCriteriaAggregate: undefined,
-			firstName: employee.user.firstName,
-			lastName: employee.user.lastName
-		});
+		console.log(
+			`syncGauzyEmployeeJobSearchCriteria called. Criteria: ${JSON.stringify(
+				criteria
+			)}. Employee: ${JSON.stringify(employee)}`
+		);
 
-		console.log(`Synced Employee ${JSON.stringify(gauzyAIEmployee)}`);
+		try {
+			const gauzyAIEmployee: Employee = await this.syncEmployee({
+				externalEmployeeId: employee.id,
+				isActive: employee.isActive,
+				isArchived: false,
+				upworkJobSearchCriteria: undefined,
+				upworkJobSearchCriteriaAggregate: undefined,
+				firstName: employee.user.firstName,
+				lastName: employee.user.lastName
+			});
 
-		// let's delete all criteria for Employee
+			console.log(`Synced Employee ${JSON.stringify(gauzyAIEmployee)}`);
 
-		const deleteAllCriteriaMutation: DocumentNode<any> = gql`
-			mutation deleteManyUpworkJobsSearchCriteria(
-				$input: DeleteManyUpworkJobsSearchCriteriaInput!
-			) {
-				deleteManyUpworkJobsSearchCriteria(input: $input) {
-					deletedCount
+			// let's delete all criteria for Employee
+
+			const deleteAllCriteriaMutation: DocumentNode<any> = gql`
+				mutation deleteManyUpworkJobsSearchCriteria(
+					$input: DeleteManyUpworkJobsSearchCriteriaInput!
+				) {
+					deleteManyUpworkJobsSearchCriteria(input: $input) {
+						deletedCount
+					}
 				}
-			}
-		`;
+			`;
 
-		const deleteMutationResult = await this._client.mutate({
-			mutation: deleteAllCriteriaMutation,
-			variables: {
-				input: {
-					filter: {
-						isActive: {
-							is: true
-						},
-						employeeId: {
-							eq: gauzyAIEmployee.id
+			const deleteMutationResult = await this._client.mutate({
+				mutation: deleteAllCriteriaMutation,
+				variables: {
+					input: {
+						filter: {
+							isActive: {
+								is: true
+							},
+							employeeId: {
+								eq: gauzyAIEmployee.id
+							}
 						}
 					}
 				}
-			}
-		});
-
-		console.log(
-			`Delete Existed Criterions count: ${JSON.stringify(
-				deleteMutationResult.data.deleteManyUpworkJobsSearchCriteria
-					.deletedCount
-			)}`
-		);
-
-		// now let's create new criteria in Gauzy AI based on Gauzy criterions data
-
-		const gauzyAICriteria: UpworkJobsSearchCriterion[] = [];
-
-		criteria.forEach((criterion: IEmployeeUpworkJobsSearchCriterion) => {
-			gauzyAICriteria.push({
-				employee: undefined,
-				employeeId: gauzyAIEmployee.id,
-				isActive: true,
-				isArchived: false,
-				jobType: 'hourly', // TODO: criterion.jobType
-				keyword: criterion.keyword,
-				category: criterion.category?.name,
-				categoryId: criterion.categoryId,
-				occupation: criterion.occupation?.name,
-				occupationId: criterion.occupationId
 			});
-		});
 
-		const createCriteriaMutation: DocumentNode<any> = gql`
-			mutation createManyUpworkJobsSearchCriteria(
-				$input: CreateManyUpworkJobsSearchCriteriaInput!
-			) {
-				createManyUpworkJobsSearchCriteria(input: $input) {
-					id
+			console.log(
+				`Delete Existed Criterions count: ${JSON.stringify(
+					deleteMutationResult.data.deleteManyUpworkJobsSearchCriteria
+						.deletedCount
+				)}`
+			);
+
+			// now let's create new criteria in Gauzy AI based on Gauzy criterions data
+
+			const gauzyAICriteria: UpworkJobsSearchCriterion[] = [];
+
+			criteria.forEach(
+				(criterion: IEmployeeUpworkJobsSearchCriterion) => {
+					gauzyAICriteria.push({
+						employee: undefined,
+						employeeId: gauzyAIEmployee.id,
+						isActive: true,
+						isArchived: false,
+						jobType: 'hourly', // TODO: criterion.jobType
+						keyword: criterion.keyword,
+						category: criterion.category?.name,
+						categoryId: criterion.categoryId,
+						occupation: criterion.occupation?.name,
+						occupationId: criterion.occupationId
+					});
 				}
-			}
-		`;
+			);
 
-		const createNewCriteriaResult = await this._client.mutate({
-			mutation: createCriteriaMutation,
-			variables: {
-				input: {
-					upworkJobsSearchCriteria: gauzyAICriteria
+			const createCriteriaMutation: DocumentNode<any> = gql`
+				mutation createManyUpworkJobsSearchCriteria(
+					$input: CreateManyUpworkJobsSearchCriteriaInput!
+				) {
+					createManyUpworkJobsSearchCriteria(input: $input) {
+						id
+					}
 				}
-			}
-		});
+			`;
 
-		console.log(
-			`Create New Criteria result: ${JSON.stringify(
-				createNewCriteriaResult.data.createManyUpworkJobsSearchCriteria
-			)}`
+			const createNewCriteriaResult = await this._client.mutate({
+				mutation: createCriteriaMutation,
+				variables: {
+					input: {
+						upworkJobsSearchCriteria: gauzyAICriteria
+					}
+				}
+			});
+
+			console.log(
+				`Create New Criteria result: ${JSON.stringify(
+					createNewCriteriaResult.data
+						.createManyUpworkJobsSearchCriteria
+				)}`
+			);
+
+			return true;
+		} catch (err) {
+			this._logger.error(err);
+			return false;
+		}
+	}
+
+	/**
+	 *
+	 * Creates employees in Gauzy AI if not exists yet. If exists, updates fields, including externalEmployeeId
+	 * How it works:
+	 * - search done externalEmployeeId field first in Gauzy AI to be equal to Gauzy employee Id.
+	 * - if no record found in Gauzy AI, it search Gauzy AI employees records by employee name
+	 * - if no record found in Gauzy AI, it creates new employee in Gauzy AI
+	 *
+	 * @param employees
+	 */
+	public async syncEmployees(employees: IEmployee[]): Promise<boolean> {
+		if (this._client == null) {
+			return false;
+		}
+
+		await Promise.all(
+			employees.map(async (employee) => {
+				try {
+					const gauzyAIEmployee: Employee = await this.syncEmployee({
+						externalEmployeeId: employee.id,
+						isActive: employee.isActive,
+						isArchived: false,
+						upworkJobSearchCriteria: undefined,
+						upworkJobSearchCriteriaAggregate: undefined,
+						firstName: employee.user.firstName,
+						lastName: employee.user.lastName
+					});
+
+					console.log(
+						`Synced Employee ${JSON.stringify(gauzyAIEmployee)}`
+					);
+				} catch (err) {
+					this._logger.error(err);
+				}
+			})
 		);
 
 		return true;
 	}
 
 	/** Sync Employee between Gauzy and Gauzy AI
-	 *  Creates new Employee in Gauzy AI if it's not yet exists there yet (it try to find by externalEmployeeId field value)
+	 *  Creates new Employee in Gauzy AI if it's not yet exists there yet (it try to find by externalEmployeeId field value or by name)
 	 *  Update existed Gauzy AI Employee record with new data from Gauzy DB
 	 */
 	private async syncEmployee(employee: Employee): Promise<Employee> {
-		// TODO: replace <any> with <EmployeeQuery>
+		// First, let's search by employee.externalEmployeeId (which is Gauzy employeeId)
 
-		const employeesQuery: DocumentNode<EmployeeQuery> = gql`
+		let employeesQuery: DocumentNode<EmployeeQuery> = gql`
 			query employee($externalEmployeeIdFilter: String!) {
 				employees(
 					filter: {
@@ -251,7 +305,7 @@ export class GauzyAIService {
 			}
 		`;
 
-		const employeesQueryResult: ApolloQueryResult<EmployeeQuery> = await this._client.query<
+		let employeesQueryResult: ApolloQueryResult<EmployeeQuery> = await this._client.query<
 			EmployeeQuery
 		>({
 			query: employeesQuery,
@@ -260,65 +314,112 @@ export class GauzyAIService {
 			}
 		});
 
-		const employeesResponse = employeesQueryResult.data.employees.edges;
+		let employeesResponse = employeesQueryResult.data.employees.edges;
 
-		const isAlreadyCreated = employeesResponse.length > 0;
+		let isAlreadyCreated = employeesResponse.length > 0;
 
 		console.log(
-			`Is Employee ${employee.externalEmployeeId} already exists in Gauzy AI: ${isAlreadyCreated}`
+			`Is Employee ${employee.externalEmployeeId} already exists in Gauzy AI: ${isAlreadyCreated} by externalEmployeeId field`
 		);
 
 		if (!isAlreadyCreated) {
-			const createEmployeeMutation: DocumentNode<any> = gql`
-				mutation createOneEmployee($input: CreateOneEmployeeInput!) {
-					createOneEmployee(input: $input) {
-						id
-						externalEmployeeId
-						firstName
-						lastName
+			// OK, so we can't find by employee.externalEmployeeId value, let's try to search by name
+
+			employeesQuery = gql`
+				query employee(
+					$firstNameFilter: String!
+					$lastNameFilter: String!
+				) {
+					employees(
+						filter: {
+							firstName: { eq: $firstNameFilter }
+							lastName: { eq: $lastNameFilter }
+						}
+					) {
+						edges {
+							node {
+								id
+								firstName
+								lastName
+								externalEmployeeId
+							}
+						}
+						totalCount
 					}
 				}
 			`;
 
-			const newEmployee = await this._client.mutate({
-				mutation: createEmployeeMutation,
+			employeesQueryResult = await this._client.query<EmployeeQuery>({
+				query: employeesQuery,
 				variables: {
-					input: {
-						employee
-					}
+					firstNameFilter: employee.firstName,
+					lastNameFilter: employee.lastName
 				}
 			});
 
-			return newEmployee.data.createOneEmployee;
-		} else {
-			// update record of employee
+			employeesResponse = employeesQueryResult.data.employees.edges;
 
-			const id = employeesResponse[0].node.id;
+			isAlreadyCreated = employeesResponse.length > 0;
 
-			const updateEmployeeMutation: DocumentNode<any> = gql`
-				mutation updateOneEmployee($input: UpdateOneEmployeeInput!) {
-					updateOneEmployee(input: $input) {
-						id
-						isActive
-						isArchived
-						firstName
-						lastName
+			console.log(
+				`Is Employee ${employee.externalEmployeeId} already exists in Gauzy AI: ${isAlreadyCreated} by name fields`
+			);
+
+			if (!isAlreadyCreated) {
+				const createEmployeeMutation: DocumentNode<any> = gql`
+					mutation createOneEmployee(
+						$input: CreateOneEmployeeInput!
+					) {
+						createOneEmployee(input: $input) {
+							id
+							externalEmployeeId
+							firstName
+							lastName
+						}
 					}
-				}
-			`;
+				`;
 
-			await this._client.mutate({
-				mutation: updateEmployeeMutation,
-				variables: {
-					input: {
-						id: id,
-						update: employee
+				const newEmployee = await this._client.mutate({
+					mutation: createEmployeeMutation,
+					variables: {
+						input: {
+							employee
+						}
 					}
-				}
-			});
+				});
 
-			return <Employee>employeesResponse[0].node;
+				return newEmployee.data.createOneEmployee;
+			}
 		}
+
+		// update record of employee
+
+		const id = employeesResponse[0].node.id;
+
+		const updateEmployeeMutation: DocumentNode<any> = gql`
+			mutation updateOneEmployee($input: UpdateOneEmployeeInput!) {
+				updateOneEmployee(input: $input) {
+					id
+					externalEmployeeId
+					isActive
+					isArchived
+					firstName
+					lastName
+				}
+			}
+		`;
+
+		await this._client.mutate({
+			mutation: updateEmployeeMutation,
+			variables: {
+				input: {
+					id: id,
+					update: employee
+				}
+			}
+		});
+
+		return <Employee>employeesResponse[0].node;
 	}
 
 	/**

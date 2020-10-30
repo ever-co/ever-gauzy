@@ -15,12 +15,14 @@ import {
 } from '@gauzy/models';
 import { EmployeeJobPost } from './employee-job.entity';
 import { JobPost } from './jobPost.entity';
+import { EmployeeService } from '../employee/employee.service';
 
 @Injectable()
 export class EmployeeJobPostService {
 	constructor(
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
+		private readonly employeeService: EmployeeService,
 		private readonly gauzyAIService: GauzyAIService
 	) {}
 
@@ -67,9 +69,7 @@ export class EmployeeJobPostService {
 	public async findAll(
 		data: IGetEmployeeJobPostInput
 	): Promise<IPagination<IEmployeeJobPost>> {
-		const employees = await this.employeeRepository.find({
-			relations: ['user']
-		});
+		const employees = await this.employeeService.findAllActive();
 
 		let jobs: IPagination<IEmployeeJobPost>;
 

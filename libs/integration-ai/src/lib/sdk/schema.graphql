@@ -461,6 +461,8 @@ type EmployeeConnection {
 type EmployeeCountAggregate {
 	id: Int
 	externalEmployeeId: Int
+	firstName: Int
+	lastName: Int
 	jobType: Int
 	isActive: Int
 	isArchived: Int
@@ -469,12 +471,16 @@ type EmployeeCountAggregate {
 type EmployeeMinAggregate {
 	id: ID
 	externalEmployeeId: String
+	firstName: String
+	lastName: String
 	jobType: String
 }
 
 type EmployeeMaxAggregate {
 	id: ID
 	externalEmployeeId: String
+	firstName: String
+	lastName: String
 	jobType: String
 }
 
@@ -763,6 +769,8 @@ input EmployeeFilter {
 	or: [EmployeeFilter!]
 	id: IDFilterComparison
 	externalEmployeeId: StringFieldComparison
+	firstName: StringFieldComparison
+	lastName: StringFieldComparison
 	jobType: StringFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
@@ -777,6 +785,8 @@ input EmployeeSort {
 enum EmployeeSortFields {
 	id
 	externalEmployeeId
+	firstName
+	lastName
 	jobType
 	isActive
 	isArchived
@@ -787,6 +797,8 @@ input EmployeeAggregateFilter {
 	or: [EmployeeAggregateFilter!]
 	id: IDFilterComparison
 	externalEmployeeId: StringFieldComparison
+	firstName: StringFieldComparison
+	lastName: StringFieldComparison
 	jobType: StringFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
@@ -1157,6 +1169,8 @@ input EmployeeDeleteFilter {
 	or: [EmployeeDeleteFilter!]
 	id: IDFilterComparison
 	externalEmployeeId: StringFieldComparison
+	firstName: StringFieldComparison
+	lastName: StringFieldComparison
 	jobType: StringFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
@@ -1204,6 +1218,8 @@ input EmployeeUpdateFilter {
 	or: [EmployeeUpdateFilter!]
 	id: IDFilterComparison
 	externalEmployeeId: StringFieldComparison
+	firstName: StringFieldComparison
+	lastName: StringFieldComparison
 	jobType: StringFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
@@ -1457,6 +1473,8 @@ input EmployeeSubscriptionFilter {
 	or: [EmployeeSubscriptionFilter!]
 	id: IDFilterComparison
 	externalEmployeeId: StringFieldComparison
+	firstName: StringFieldComparison
+	lastName: StringFieldComparison
 	jobType: StringFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison

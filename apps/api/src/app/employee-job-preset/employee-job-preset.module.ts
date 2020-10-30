@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Employee } from '../employee/employee.entity';
+import { EmployeeService } from '../employee/employee.service';
 import { Handlers } from './commands/handlers';
 import { EmployeePresetController } from './employee-preset.controller';
 import { EmployeeUpworkJobsSearchCriterion } from './employee-upwork-jobs-search-criterion.entity';
@@ -37,6 +38,7 @@ import { JobSearchPresetController } from './job-search-preset.controller';
 	],
 	providers: [
 		...Handlers,
+		EmployeeService,
 		JobPresetService,
 		JobSearchCategoryService,
 		JobSearchOccupationService,
