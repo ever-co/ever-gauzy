@@ -70,3 +70,7 @@ export const clickElementIfVisible = (loc, index) => {
 export const compareTwoTexts = (loc, text) => {
 	cy.get(loc, { timeout: 40000 }).should('contain.text', text);
 };
+
+export const getLastElement = (loc) => {
+	cy.get(loc, { timeout: 40000 }).last().trigger('click');
+};

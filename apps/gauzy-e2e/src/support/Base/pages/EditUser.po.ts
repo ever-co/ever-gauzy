@@ -6,7 +6,8 @@ import {
 	enterInput,
 	clickElementByText,
 	clickElementIfVisible,
-	clickKeyboardBtnByKeycode
+	clickKeyboardBtnByKeycode,
+	getLastElement
 } from '../utils/util';
 import { EditUserPage } from '../pageobjects/EditUserPageObject';
 
@@ -15,7 +16,15 @@ export const gridButtonVisible = () => {
 };
 
 export const clickGridButton = () => {
-	clickButtonByIndex(EditUserPage.gridButtonCss, 0);
+	clickButtonByIndex(EditUserPage.gridButtonCss, 1);
+};
+
+export const tableRowVisible = () => {
+	verifyElementIsVisible(EditUserPage.selectTableRowCss);
+};
+
+export const selectLastTableRow = () => {
+	getLastElement(EditUserPage.selectTableRowCss);
 };
 
 export const editButtonVisible = () => {

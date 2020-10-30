@@ -18,7 +18,8 @@ import { BasicInfoFormComponent } from '../../../@shared/user/forms/basic-info/b
 	selector: 'ga-edit-user-mutation',
 	templateUrl: './edit-user-mutation.component.html'
 })
-export class EditUserMutationComponent extends TranslationBaseComponent
+export class EditUserMutationComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	@ViewChild('userBasicInfo')
 	userBasicInfo: BasicInfoFormComponent;
@@ -62,10 +63,11 @@ export class EditUserMutationComponent extends TranslationBaseComponent
 			id: organizationId,
 			tenantId
 		} = this.store.selectedOrganization;
-		const { items } = await this.usersOrganizationsService.getAll(
-			['user', 'user.role', 'user.tags'],
-			{ organizationId, tenantId }
-		);
+		const { items } = await this.usersOrganizationsService.getAll([
+			'user',
+			'user.role',
+			'user.tags'
+		]);
 
 		const usersVm = [];
 		const existedUsers = items
