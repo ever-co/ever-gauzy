@@ -9,7 +9,10 @@ import {
 	NbIconModule,
 	NbListModule,
 	NbSelectModule,
-	NbToggleModule
+	NbToggleModule,
+	NbInputModule,
+	NbButtonModule,
+	NbAlertModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 
@@ -25,7 +28,10 @@ import { FormsModule } from '@angular/forms';
 		NbListModule,
 		NbSelectModule,
 		FormsModule,
-		NbToggleModule
+		NbToggleModule,
+		NbInputModule,
+		NbButtonModule,
+		NbAlertModule
 	],
 	exports: [SettingsComponent]
 })

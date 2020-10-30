@@ -56,7 +56,9 @@ export const LocalStore = {
 				});
 			} else {
 				config.screenshotNotification =
-					config.screenshotNotification || true;
+					typeof config.screenshotNotification === 'undefined'
+						? true
+						: config.screenshotNotification;
 				store.set({
 					appSetting: config
 				});
@@ -69,6 +71,14 @@ export const LocalStore = {
 	updateApplicationSetting: (values) => {
 		store.set({
 			appSetting: values
+		});
+	},
+
+	updateConfigSetting: (values) => {
+		let configs = store.get('configs');
+		configs = { ...configs, ...values };
+		store.set({
+			configs: configs
 		});
 	}
 };

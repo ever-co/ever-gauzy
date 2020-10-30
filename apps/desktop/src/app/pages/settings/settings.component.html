@@ -110,5 +110,114 @@
 				</nb-select>
 			</div>
 		</div>
+		<div class="row" *ngIf="selectedMenu === 'Advanced Setting'">
+			<div class="col-12"><h4>Anvanced Setting</h4></div>
+			<div class="col-12 warning-config" *ngIf="appSetting.timerStarted">
+				<span>Please stop timer if you want to change config</span>
+			</div>
+			<div class="col-12">
+				<nb-card>
+					<nb-card-body>
+						<div class="row">
+							<div class="col-12">
+								<p class="subtitle-tile">API Config</p>
+							</div>
+							<div class="col-5 centered-text">
+								<p>Server Type</p>
+							</div>
+							<div class="col-7 form-group">
+								<input
+									[(ngModel)]="config.serverType"
+									type="text"
+									nbInput
+									fullWidth
+									disabled="true"
+									status="basic"
+								/>
+							</div>
+							<div class="col-5 centered-text">
+								<p>Local API Port</p>
+							</div>
+							<div class="col-7 form-group">
+								<input
+									[(ngModel)]="config.port"
+									type="text"
+									nbInput
+									fullWidth
+									[disabled]="appSetting.timerStarted"
+									status="basic"
+								/>
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+			<div class="col-12">
+				<nb-card>
+					<nb-card-body>
+						<div class="row">
+							<div class="col-12">
+								<p class="subtitle-tile">Database Config</p>
+							</div>
+							<div class="col-5 centered-text">
+								<p>DB DRIVER</p>
+							</div>
+							<div class="col-7 form-group">
+								<input
+									[(ngModel)]="config.db"
+									type="text"
+									nbInput
+									fullWidth
+									disabled="true"
+									status="basic"
+								/>
+							</div>
+							<div class="col-5 centered-text">
+								<p>DB PORT</p>
+							</div>
+							<div class="col-7 form-group">
+								<input
+									[(ngModel)]="config.dbPort"
+									type="text"
+									nbInput
+									fullWidth
+									status="basic"
+									[disabled]="true"
+								/>
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+			<div class="col-12">
+				<nb-card>
+					<nb-card-body>
+						<div class="row">
+							<div class="col-12">
+								<p class="subtitle-tile">Third Party Config</p>
+							</div>
+							<div class="col-5 centered-text">
+								<p>Activity Watch Port</p>
+							</div>
+							<div class="col-7 form-group">
+								<input
+									[(ngModel)]="config.awPort"
+									type="text"
+									nbInput
+									fullWidth
+									status="basic"
+									[disabled]="true"
+								/>
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+			<div class="col-12">
+				<button nbButton status="primary" (click)="restartApp()">
+					Save & Restart App
+				</button>
+			</div>
+		</div>
 	</nb-layout-column>
 </nb-layout>

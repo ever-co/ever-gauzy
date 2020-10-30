@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import { SetupService } from './setup.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
 	selector: 'ngx-setup',
@@ -21,7 +22,7 @@ export class SetupComponent implements OnInit {
 	iconAw = 'close-square-outline';
 	statusIcon = 'success';
 	awCheck = false;
-	awAPI: String = 'http://localhost:5600';
+	awAPI: String = environment.AWHost;
 	buttonSave = false;
 	serverOption: any = [
 		{
@@ -59,11 +60,11 @@ export class SetupComponent implements OnInit {
 
 	defaultValue: any = {
 		dbHost: 'localhost',
-		dbPort: '5433',
+		dbPort: '5432',
 		dbName: 'postgres',
 		dbUser: 'postgres',
 		dbPassword: 'postgres',
-		serverPort: '3000',
+		serverPort: environment.API_DEFAULT_PORT,
 		serverUrl: 'http://localhost:3000'
 	};
 

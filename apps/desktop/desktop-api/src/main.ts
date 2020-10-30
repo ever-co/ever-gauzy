@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
-
+import { environment } from './environments/environment';
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule);
 
@@ -11,7 +11,7 @@ async function bootstrap() {
 
 	app.setGlobalPrefix(globalPrefix);
 
-	const port = 3232;
+	const port = environment.DESKTOP_API_DEFAULT_PORT;
 
 	await app.listen(port, () => {
 		const message =
