@@ -80,7 +80,7 @@ export class AppComponent implements OnInit {
 					timerId: arg.timerId,
 					timeSlotId: res.id,
 					quitApp: arg.quitApp
-				})
+				});
 			});
 		});
 
@@ -158,11 +158,36 @@ export class AppComponent implements OnInit {
 			}, 2000);
 		});
 
-		this.electronService.ipcRenderer.on('upload_screen_shot', (event, arg) => {
-			appService.uploadScreenCapture(arg).then((res) => {
-				console.log('screen upload', res);
-			})
-		})
+		this.electronService.ipcRenderer.on(
+			'upload_screen_shot',
+			(event, arg) => {
+				appService.uploadScreenCapture(arg).then((res) => {
+					console.log('screen upload', res);
+				});
+			}
+		);
+
+		this.electronService.ipcRenderer.on(
+			'server_ping_restart',
+			(event, arg) => {
+				const pinghost = setInterval(() => {
+					appService
+						.pingServer(arg)
+						.then((res) => {
+							console.log('server found');
+							event.sender.send('server_already_start');
+							clearInterval(pinghost);
+						})
+						.catch((e) => {
+							console.log('error', e.status);
+							if (e.status === 404) {
+								event.sender.send('server_already_start');
+								clearInterval(pinghost);
+							}
+						});
+				}, 2000);
+			}
+		);
 	}
 
 	ngOnInit(): void {

@@ -124,13 +124,15 @@ export default class TrayIcon {
 				label: 'Setting',
 				click() {
 					const appSetting = LocalStore.getStore('appSetting');
+					const config = LocalStore.getStore('configs');
 					if (!settingsWindow) {
 						settingsWindow = createSettingsWindow(settingsWindow);
 					}
 					settingsWindow.show();
 					setTimeout(() => {
 						settingsWindow.webContents.send('app_setting', {
-							setting: appSetting
+							setting: appSetting,
+							config: config
 						});
 					}, 500);
 				}

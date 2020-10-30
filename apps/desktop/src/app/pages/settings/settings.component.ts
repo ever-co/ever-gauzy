@@ -14,7 +14,7 @@ import { ElectronService } from 'ngx-electron';
 })
 export class SettingsComponent implements OnInit {
 	@ViewChild('selectRef') selectProjectElement: ElementRef;
-	menus = ['Screen Capture', 'Timer'];
+	menus = ['Screen Capture', 'Timer', 'Advanced Setting'];
 
 	montorsOption = [
 		{
@@ -41,10 +41,16 @@ export class SettingsComponent implements OnInit {
 	periodeOption = [1, 5, 10];
 	selectedPeriod = null;
 	screenshotNotification = null;
+	config = null;
 	constructor(private electronService: ElectronService) {
 		this.electronService.ipcRenderer.on('app_setting', (event, arg) => {
-			const { setting } = arg;
+			const { setting, config } = arg;
 			this.appSetting = setting;
+			this.config = config;
+			this.config.awPort = this.config.awAPI.split('t:')[1];
+			this.config.serverType = this.config.isLocalServer
+				? 'Local'
+				: 'External';
 			this.selectMonitorOption({
 				value: setting.monitor.captured
 			});
@@ -55,6 +61,14 @@ export class SettingsComponent implements OnInit {
 				.nativeElement as HTMLElement;
 			setTimeout(() => el.click(), 1000);
 		});
+
+		this.electronService.ipcRenderer.on(
+			'app_setting_update',
+			(event, arg) => {
+				const { setting } = arg;
+				this.appSetting = setting;
+			}
+		);
 	}
 
 	ngOnInit(): void {
@@ -94,5 +108,13 @@ export class SettingsComponent implements OnInit {
 
 	toggleNotificationChange(value) {
 		this.updateSetting(value, 'screenshotNotification');
+	}
+
+	restartApp() {
+		this.electronService.ipcRenderer.send('restart_app', {
+			port: this.config.port,
+			dbPort: this.config.dbPort,
+			awAPI: `http://localhost:${this.config.awPort}`
+		});
 	}
 }

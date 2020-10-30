@@ -5,7 +5,7 @@ import TimerHandler from './timer';
 import moment from 'moment';
 import { LocalStore } from './getSetStore';
 import { takeshot, captureScreen } from './screenshot';
-import { environment } from '../environments/environtment.electron';
+import { environment } from '../environments/environment';
 import {
 	hasPromptedForPermission,
 	hasScreenCapturePermission,
@@ -18,7 +18,7 @@ export function ipcMainHandler(store, startServer, knex) {
 				? arg.serverUrl
 				: arg.port
 				? `http://localhost:${arg.port}`
-				: 'http://localhost:3000'
+				: `http://localhost:${environment.API_DEFAULT_PORT}`
 		};
 		startServer(arg);
 	});
@@ -147,7 +147,8 @@ export function ipcTimer(
 	knex,
 	setupWindow,
 	timeTrackerWindow,
-	NotificationWindow
+	NotificationWindow,
+	SettingWindow
 ) {
 	const timerHandler = new TimerHandler();
 	ipcMain.on('start_timer', (event, arg) => {
@@ -162,6 +163,9 @@ export function ipcTimer(
 		});
 		timerHandler.startTimer(setupWindow, knex, timeTrackerWindow);
 		timerHandler.updateTime(setupWindow, knex, timeTrackerWindow);
+		SettingWindow.webContents.send('app_setting_update', {
+			setting: LocalStore.getStore('appSetting')
+		});
 	});
 
 	ipcMain.on('stop_timer', (event, arg) => {
@@ -171,6 +175,9 @@ export function ipcTimer(
 			knex,
 			arg.quitApp
 		);
+		SettingWindow.webContents.send('app_setting_update', {
+			setting: LocalStore.getStore('appSetting')
+		});
 	});
 
 	ipcMain.on('return_time_slot', (event, arg) => {
