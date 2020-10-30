@@ -63,11 +63,10 @@ export class EditUserMutationComponent
 			id: organizationId,
 			tenantId
 		} = this.store.selectedOrganization;
-		const { items } = await this.usersOrganizationsService.getAll([
-			'user',
-			'user.role',
-			'user.tags'
-		]);
+		const { items } = await this.usersOrganizationsService.getAll(
+			['user', 'user.role', 'user.tags'],
+			{ organizationId, tenantId }
+		);
 
 		const usersVm = [];
 		const existedUsers = items
