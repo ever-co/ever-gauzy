@@ -150,7 +150,9 @@ export class MatchingComponent implements OnInit {
 	}
 
 	onSourceSelected() {
+		this.criterionForm.jobPresetId = null;
 		this.updateEmployeePreset();
+		this.checkForEmptyCriterion();
 	}
 
 	async updateEmployeePreset() {
