@@ -244,17 +244,20 @@ export class SearchComponent
 					valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
 						let badgeClass;
 						if (
-							row.jobPost.jobStatus === JobPostStatusEnum.CLOSED
+							row.jobPost.jobStatus.toLowerCase() ===
+							JobPostStatusEnum.CLOSED.toLowerCase()
 						) {
 							badgeClass = 'danger';
 							cell = this.getTranslation('JOBS.STATUS_CLOSED');
 						} else if (
-							row.jobPost.jobStatus === JobPostStatusEnum.OPEN
+							row.jobPost.jobStatus.toLowerCase() ===
+							JobPostStatusEnum.OPEN.toLowerCase()
 						) {
 							badgeClass = 'success';
 							cell = this.getTranslation('JOBS.STATUS_OPEN');
 						} else if (
-							row.jobPost.jobStatus === JobPostStatusEnum.APPLIED
+							row.jobPost.jobStatus.toLowerCase() ===
+							JobPostStatusEnum.APPLIED.toLowerCase()
 						) {
 							badgeClass = 'warning';
 							cell = this.getTranslation('JOBS.STATUS_APPLIED');
@@ -262,8 +265,6 @@ export class SearchComponent
 							badgeClass = 'default';
 							cell = row.jobPost.jobStatus;
 						}
-
-						// return `<span class="badge badge-${badgeClass}">${cell}</span>`;
 
 						return {
 							text: cell,
