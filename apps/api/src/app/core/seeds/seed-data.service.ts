@@ -33,7 +33,8 @@ import {
 import { Organization } from '../../organization/organization.entity';
 import {
 	createDefaultOrganizations,
-	createRandomOrganizations
+	createRandomOrganizations,
+	getDefaultBulgarianOrganization
 } from '../../organization/organization.seed';
 import {
 	createDefaultIncomes,
@@ -55,7 +56,8 @@ import {
 import { createRolePermissions } from '../../role-permissions/role-permissions.seed';
 import {
 	createDefaultTenants,
-	createRandomTenants
+	createRandomTenants,
+	getDefaultTenant
 } from '../../tenant/tenant.seed';
 import { createDefaultEmailTemplates } from '../../email-template/email-template.seed';
 import {
@@ -84,7 +86,7 @@ import {
 	createDefaultCandidates,
 	createRandomCandidates
 } from '../../candidate/candidate.seed';
-import { Tenant } from './../../tenant/tenant.entity';
+import { Tenant } from '../../tenant/tenant.entity';
 import {
 	createCandidateSources,
 	createRandomCandidateSources
@@ -279,32 +281,11 @@ import {
 import { createDefaultGoalTemplates } from '../../goal-template/goal-template.seed';
 import { createDefaultKeyResultTemplates } from '../../keyresult-template/keyresult-template.seed';
 import { createDefaultEmployeeAwards } from '../../employee-award/employee-award.seed';
-import { allEntities } from './allEntity';
+import { allEntities } from './entities';
 import { createDefaultGoalKpiTemplate } from '../../goal-kpi-template/goal-kpi-template.seed';
-
-const randomSeedConfig = {
-	tenants: 5, //The number of random tenants to be seeded.
-	organizationsPerTenant: 2, //No of random organizations seeded will be (organizationsPerTenant * tenants)
-	employeesPerOrganization: 5, //No of random employees seeded will be (employeesPerOrganization * organizationsPerTenant * tenants)
-	candidatesPerOrganization: 2, //No of random employees seeded will be (candidatesPerOrganization * organizationsPerTenant * tenants)
-	managersPerOrganization: 2, //No of random manager seeded will be (managersPerOrganization * organizationsPerTenant * tenants)
-	dataEntriesPerOrganization: 4, //No of random data entry users seeded will be (dataEntriesPerOrganization * organizationsPerTenant * tenants)
-	viewersPerOrganization: 4, //No of random viewers seeded will be (viewersPerOrganization * organizationsPerTenant * tenants)
-	projectsPerOrganization: 30, // No of random projects seeded will be  (projectsPerOrganization * organizationsPerTenant * tenants)
-	emailsPerOrganization: 30, // No of random emails seeded will be  (emailsPerOrganization * organizationsPerTenant * tenants)
-	invitePerOrganization: 30, // No of random emails seeded will be  (emailsPerOrganization * organizationsPerTenant * tenants)
-	requestApprovalPerOrganization: 20, // No of random request to approve seeded will be  (requestApprovalPerOrganization * organizationsPerTenant * tenants)
-	employeeTimeOffPerOrganization: 10, // No of time off request to approve seeded will be  (employeeTimeOffPerOrganization * organizationsPerTenant * tenants)
-	equipmentPerTenant: 20, // No of equipmentPerTenant request to approve seeded will be  (equipmentPerTenant * tenants)
-	equipmentSharingPerTenant: 20, // No of equipmentSharingPerTenant request to approve seeded will be  (equipmentSharingPerTenant * tenants)
-	proposalsSharingPerOrganizations: 30, // No of proposalsSharingPerOrganizations request to approve seeded will be  (proposalsSharingPerOrganizations * tenants * organizations)
-	contacts: 50, // The number of random contacts to be seeded.
-	noOfHelpCenterArticle: 10, // The number of random Help Center Articles.
-	availabilitySlotsPerOrganization: 50, // No of availability slots request to approve seeded will be  (availabilitySlotsPerOrganization * organizationsPerTenant * tenants)
-	noOfTimeLogsPerTimeSheet: 5, // No of time logs entry per time sheets
-	numberOfOptionPerProduct: 5, // number of product options per product
-	numberOfVariantPerProduct: 5 // number of product variant per product
-};
+import { randomSeedConfig } from './random-seed-config';
+import { createDefaultJobSearchCategories } from '../../employee-job-preset/job-search-category/job-search-category.seed';
+import { createDefaultJobSearchOccupations } from '../../employee-job-preset/job-search-occupation/job-search-occupation.seed';
 
 @Injectable()
 export class SeedDataService {
@@ -329,74 +310,12 @@ export class SeedDataService {
 		logger: 'file' //Removes console logging, instead logs all queries in a file ormlogs.log
 	};
 
-	private async cleanUpPreviousRuns() {
-		this.log(chalk.green(`CLEANING UP FROM PREVIOUS RUNS...`));
-
-		await new Promise((resolve, reject) => {
-			const dir = path.join(
-				process.cwd(),
-				'apps',
-				'api',
-				'public',
-				'screenshots'
-			);
-
-			// delete old generated screenshots
-			rimraf(dir, () => {
-				this.log(chalk.green(`CLEANED UP`));
-				resolve();
-			});
-		});
-	}
-
-	private async createConnection() {
-		try {
-			this.connection = getConnection();
-		} catch (error) {
-			this.log(
-				'NOTE: DATABASE CONNECTION DOES NOT EXIST YET. NEW ONE WILL BE CREATED!'
-			);
-		}
-
-		if (!this.connection || !this.connection.isConnected) {
-			try {
-				this.log(chalk.green(`CONNECTING TO DATABASE ...`));
-
-				this.connection = await createConnection({
-					...env.database,
-					...this.overrideDbConfig,
-					// TODO: possible to do it like this: [__dirname + '/../../entity/**.entity{.ts,.js}'] so we don't need hardcoded allEntities
-					entities: allEntities
-				} as ConnectionOptions);
-			} catch (error) {
-				this.handleError(error, 'Unable to connect to database');
-			}
-		}
-	}
-
 	/**
-	 * Use this wrapper function for all seed functions which are not essential.
-	 * Essentials seeds are ONLY those which are required to start the UI/login
+	 * Seed All Data
 	 */
-	tryExecute<T>(name: string, p: Promise<T>): Promise<T> | Promise<void> {
-		this.log(chalk.green(`SEEDING ${name}`));
+	public async runAllSeed() {
+		const isDefault = false;
 
-		return (p as any).then(
-			(x: T) => x,
-			(error: Error) => {
-				this.log(
-					chalk.bgRed(
-						`🛑 ERROR: ${error ? error.message : 'unknown'}`
-					)
-				);
-			}
-		);
-	}
-
-	/**
-	 * Seed data
-	 */
-	public async run(isDefault: boolean) {
 		try {
 			await this.cleanUpPreviousRuns();
 
@@ -409,7 +328,103 @@ export class SeedDataService {
 			// Seed data with mock / fake data
 			await this.seedData(isDefault);
 
-			console.log('Database Seed completed');
+			// Seed jobs related data
+			await this.seedJobsData(isDefault);
+
+			console.log('Database All Seed completed');
+		} catch (error) {
+			this.handleError(error);
+		}
+	}
+
+	/**
+	 * Seed Default Data
+	 */
+	public async runDefaultSeed() {
+		const isDefault = true;
+
+		try {
+			await this.cleanUpPreviousRuns();
+
+			// Connect to database
+			await this.createConnection();
+
+			// Reset database to start with new, fresh data
+			await this.resetDatabase();
+
+			// Seed data with mock / fake data
+			await this.seedData(isDefault);
+
+			console.log('Database Default Seed completed');
+		} catch (error) {
+			this.handleError(error);
+		}
+	}
+
+	/**
+	 * Seed Default Data
+	 */
+	public async runJobsSeed() {
+		const isDefault = true;
+
+		try {
+			// Connect to database
+			await this.createConnection();
+
+			await this.seedJobsData(isDefault);
+
+			console.log('Database Jobs Seed completed');
+		} catch (error) {
+			this.handleError(error);
+		}
+	}
+
+	/**
+	 * Populate database with jobs related data
+	 * @param isDefault
+	 */
+	private async seedJobsData(isDefault: boolean) {
+		// TODO: implement for isDefault = false (i.e for other tenants with random data too)
+
+		try {
+			this.log(
+				chalk.green(
+					`🌱 SEEDING ${
+						env.production ? 'PRODUCTION' : ''
+					} DATABASE...`
+				)
+			);
+
+			const defaultTenant = await getDefaultTenant(this.connection);
+
+			const defaultBulgarianOrganization = await getDefaultBulgarianOrganization(
+				this.connection,
+				defaultTenant
+			);
+
+			await this.tryExecute(
+				'Default Job Search Categories',
+				createDefaultJobSearchCategories(
+					this.connection,
+					defaultTenant,
+					defaultBulgarianOrganization
+				)
+			);
+
+			await this.tryExecute(
+				'Default Job Search Occupations',
+				createDefaultJobSearchOccupations(
+					this.connection,
+					defaultTenant,
+					defaultBulgarianOrganization
+				)
+			);
+
+			this.log(
+				chalk.green(
+					`✅ SEEDED ${env.production ? 'PRODUCTION' : ''} DATABASE`
+				)
+			);
 		} catch (error) {
 			this.handleError(error);
 		}
@@ -453,7 +468,7 @@ export class SeedDataService {
 
 	/** Populate Database with Basic Default Data **/
 	private async seedBasicDefaultData() {
-		//Platform level data
+		// Platform level data
 
 		await this.tryExecute('Languages', createLanguages(this.connection));
 
@@ -463,11 +478,12 @@ export class SeedDataService {
 
 		await createRolePermissions(this.connection, this.roles, [this.tenant]);
 
-		//Tenant level inserts which only need connection, tenant, roles
+		// Tenant level inserts which only need connection, tenant, roles
 		const defaultOrganizations = await createDefaultOrganizations(
 			this.connection,
 			this.tenant
 		);
+
 		this.organizations = defaultOrganizations;
 
 		await this.tryExecute(
@@ -1784,6 +1800,70 @@ export class SeedDataService {
 				tenantEmployeeMap,
 				tenantOrganizationsMap
 			)
+		);
+	}
+
+	private async cleanUpPreviousRuns() {
+		this.log(chalk.green(`CLEANING UP FROM PREVIOUS RUNS...`));
+
+		await new Promise((resolve, reject) => {
+			const dir = path.join(
+				process.cwd(),
+				'apps',
+				'api',
+				'public',
+				'screenshots'
+			);
+
+			// delete old generated screenshots
+			rimraf(dir, () => {
+				this.log(chalk.green(`CLEANED UP`));
+				resolve();
+			});
+		});
+	}
+
+	private async createConnection() {
+		try {
+			this.connection = getConnection();
+		} catch (error) {
+			this.log(
+				'NOTE: DATABASE CONNECTION DOES NOT EXIST YET. NEW ONE WILL BE CREATED!'
+			);
+		}
+
+		if (!this.connection || !this.connection.isConnected) {
+			try {
+				this.log(chalk.green(`CONNECTING TO DATABASE ...`));
+
+				this.connection = await createConnection({
+					...env.database,
+					...this.overrideDbConfig,
+					// TODO: possible to do it like this: [__dirname + '/../../entity/**.entity{.ts,.js}'] so we don't need hardcoded allEntities
+					entities: allEntities
+				} as ConnectionOptions);
+			} catch (error) {
+				this.handleError(error, 'Unable to connect to database');
+			}
+		}
+	}
+
+	/**
+	 * Use this wrapper function for all seed functions which are not essential.
+	 * Essentials seeds are ONLY those which are required to start the UI/login
+	 */
+	tryExecute<T>(name: string, p: Promise<T>): Promise<T> | Promise<void> {
+		this.log(chalk.green(`SEEDING ${name}`));
+
+		return (p as any).then(
+			(x: T) => x,
+			(error: Error) => {
+				this.log(
+					chalk.bgRed(
+						`🛑 ERROR: ${error ? error.message : 'unknown'}`
+					)
+				);
+			}
 		);
 	}
 

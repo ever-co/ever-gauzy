@@ -24,8 +24,11 @@ import { Store } from '../../../@core/services/store.service';
 import { EmployeesService } from '../../../@core/services/employees.service';
 import { Options, ChangeContext } from 'ng5-slider';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { TimesheetFilterService } from '../timesheet-filter.service';
-import { debounceTime, filter, take } from 'rxjs/operators';
+import {
+	ActivityLevel,
+	TimesheetFilterService
+} from '../timesheet-filter.service';
+import { debounceTime, filter, take, tap } from 'rxjs/operators';
 import { isEmpty } from '@gauzy/utils';
 
 @UntilDestroy({ checkProperties: true })
@@ -36,7 +39,7 @@ import { isEmpty } from '@gauzy/utils';
 })
 export class FiltersComponent implements OnInit, OnDestroy {
 	PermissionsEnum = PermissionsEnum;
-	today: Date = new Date();
+	today: Date = new Date(moment().format('YYYY-MM-DD HH:mm:ss'));
 	TimeLogType = TimeLogType;
 	TimeLogSourceEnum = TimeLogSourceEnum;
 	updateLogs$: Subject<any> = new Subject();
@@ -46,10 +49,12 @@ export class FiltersComponent implements OnInit, OnDestroy {
 		employeeIds: [],
 		source: [],
 		logType: [],
-		projectIds: []
+		projectIds: [],
+		activityLevel: ActivityLevel
 	};
 	futureDateAllowed: boolean;
 	hasFilterApplies: boolean;
+	isEmployee: boolean;
 
 	@Input()
 	public get filters(): ITimeLogFilters {
@@ -62,6 +67,7 @@ export class FiltersComponent implements OnInit, OnDestroy {
 			end: value.activityLevel ? value.activityLevel.end : 100
 		};
 	}
+
 	@Output() filtersChange: EventEmitter<ITimeLogFilters> = new EventEmitter();
 
 	@Input() hasProjectFilter = true;
@@ -72,10 +78,7 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	@Input() hasSourceFilter = true;
 	@Input() hasActivityLevelFilter = true;
 
-	activityLevel = {
-		start: 0,
-		end: 100
-	};
+	activityLevel = ActivityLevel;
 	sliderOptions: Partial<Options> = {
 		floor: 0,
 		ceil: 100,
@@ -83,13 +86,19 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	};
 	organization: IOrganization;
 	employees: IEmployee[];
+	user: IUser;
+
 	public get selectedDate(): Date {
 		return this.filters.date as Date;
 	}
 	public set selectedDate(value: Date) {
-		this.filters.date = value;
-		this.filters.startDate = moment(value).startOf(this.dateRange).toDate();
-		this.filters.endDate = moment(value).endOf(this.dateRange).toDate();
+		this.filters.date = moment(value).format('YYYY-MM-DD HH:mm:ss');
+		this.filters.startDate = moment(value)
+			.startOf(this.dateRange)
+			.format('YYYY-MM-DD HH:mm:ss');
+		this.filters.endDate = moment(value)
+			.endOf(this.dateRange)
+			.format('YYYY-MM-DD HH:mm:ss');
 		this.triggerFilterChange();
 	}
 
@@ -116,21 +125,14 @@ export class FiltersComponent implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.selectedDate = this.today;
-		this.updateLogs$
-			.pipe(untilDestroyed(this), debounceTime(400))
-			.subscribe(() => {
-				this.hasFilterApplies = this.hasFilter();
-				Object.keys(this.filters).forEach((key) =>
-					this.filters[key] === undefined
-						? delete this.filters[key]
-						: {}
-				);
-				if (this.filters.employeeIds.length === 0) {
-					return;
-				}
-				this.filtersChange.emit(this.filters);
-			});
-
+		this.store.user$
+			.pipe(
+				filter((user) => !!user),
+				tap((user) => (this.isEmployee = user.employee ? true : false)),
+				tap((user) => (this.user = user)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.timesheetFilterService.filter$
 			.pipe(untilDestroyed(this), take(1))
 			.subscribe((filters: ITimeLogFilters) => {
@@ -138,7 +140,6 @@ export class FiltersComponent implements OnInit, OnDestroy {
 				this.selectedDate = new Date(filters.date);
 				this.employeeIds = filters.employeeIds;
 			});
-
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
@@ -150,22 +151,17 @@ export class FiltersComponent implements OnInit, OnDestroy {
 					this.loadEmployees();
 				}
 			});
-
-		this.store.user$
-			.pipe(
-				filter((user) => !!user),
-				untilDestroyed(this)
-			)
-			.subscribe((user: IUser) => {
-				// if (user && this.employeeIds && this.employeeIds.length === 0) {
-				if (
-					user &&
-					(!this.employeeIds || this.employeeIds.length === 0)
-				) {
-					this.employeeIds = [user.employeeId];
-				}
+		this.updateLogs$
+			.pipe(untilDestroyed(this), debounceTime(500))
+			.subscribe(() => {
+				this.hasFilterApplies = this.hasFilter();
+				Object.keys(this.filters).forEach((key) =>
+					this.filters[key] === undefined
+						? delete this.filters[key]
+						: {}
+				);
+				this.filtersChange.emit(this.filters);
 			});
-
 		this.ngxPermissionsService.permissions$
 			.pipe(untilDestroyed(this))
 			.subscribe(async () => {
@@ -173,7 +169,6 @@ export class FiltersComponent implements OnInit, OnDestroy {
 					OrganizationPermissionsEnum.ALLOW_FUTURE_DATE
 				);
 			});
-
 		this.triggerFilterChange();
 	}
 
@@ -214,9 +209,10 @@ export class FiltersComponent implements OnInit, OnDestroy {
 		this.updateLogs$.next();
 	}
 
-	celarFilters(): void {
+	clearFilters(): void {
 		const obj = this.timesheetFilterService.clear();
 		this.filters = obj;
+		this._employeeIds = [];
 		this.setDefaultEmplyee();
 		this.updateLogs$.next();
 	}
@@ -233,22 +229,21 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	}
 
 	setDefaultEmplyee() {
-		if (
-			this.employees &&
-			this.employees.length > 0 &&
-			// this.employeeIds && this.employeeIds.length === 0
-			(!this.employeeIds || this.employeeIds.length === 0)
-		) {
-			this.filters.employeeIds = [this.employees[0].id];
-			this._employeeIds = this.multipleEmployeSelect
-				? [this.employees[0].id]
-				: this.employees[0].id;
+		const isNullFilterEmployeeIds = this.filters.employeeIds.length === 0;
+		if (this.isEmployee && isNullFilterEmployeeIds) {
+			const employeeId = this.store.user.employeeId;
+			this.employeeIds = employeeId;
 		}
 	}
 
+	onChangeEmployee($event) {
+		this._employeeIds = $event;
+	}
+
 	hasFilter(): boolean {
+		const idCount = this.isEmployee ? 2 : 1;
 		return (
-			this._filters.employeeIds.length >= 2 ||
+			this._filters.employeeIds.length >= idCount ||
 			this._filters.source.length >= 1 ||
 			this._filters.logType.length >= 1 ||
 			this._filters.projectIds.length >= 1 ||

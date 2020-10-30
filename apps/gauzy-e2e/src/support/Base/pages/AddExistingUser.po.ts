@@ -2,7 +2,8 @@ import {
 	verifyElementIsVisible,
 	clickButton,
 	clickKeyboardBtnByKeycode,
-	clickElementIfVisible
+	clickElementIfVisible,
+	clickButtonByIndex
 } from '../utils/util';
 import { AddExistingUserPage } from '../pageobjects/AddExistingUserPageObject';
 
@@ -12,6 +13,30 @@ export const addExistingUsersButtonVisible = () => {
 
 export const clickAddExistingUsersButton = () => {
 	clickButton(AddExistingUserPage.addUserButtonCss);
+};
+
+export const tableBodyExists = () => {
+	verifyElementIsVisible(AddExistingUserPage.selectTableRowCss);
+};
+
+export const clickTableRow = (index) => {
+	clickButtonByIndex(AddExistingUserPage.selectTableRowCss, index);
+};
+
+export const removeUserButtonVisible = () => {
+	verifyElementIsVisible(AddExistingUserPage.removeUserButtonCss);
+};
+
+export const clickRemoveUserButton = () => {
+	clickButton(AddExistingUserPage.removeUserButtonCss);
+};
+
+export const confirmRemoveUserBtnVisible = () => {
+	verifyElementIsVisible(AddExistingUserPage.confirmRemoveUserButtonCss);
+};
+
+export const clickConfirmRemoveUserBtn = () => {
+	clickButton(AddExistingUserPage.confirmRemoveUserButtonCss);
 };
 
 export const usersMultyselectVisible = () => {

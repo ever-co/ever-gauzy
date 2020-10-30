@@ -200,7 +200,7 @@ export class TimeTrackerService implements OnDestroy {
 		if (!this.running) {
 			if (this.canStartTimer()) {
 				this.current_session_duration = 0;
-				this.turnOnTimer();
+				this.toggle();
 			}
 		}
 	}

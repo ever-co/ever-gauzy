@@ -8,7 +8,11 @@ import {
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { JobPreset as IJobPreset } from '@gauzy/models';
+import {
+	IEmployeeUpworkJobsSearchCriterion,
+	IJobPresetUpworkJobSearchCriterion,
+	IJobPreset
+} from '@gauzy/models';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 import { Employee } from '../employee/employee.entity';
 import { JobPresetUpworkJobSearchCriterion } from './job-preset-upwork-job-search-criterion.entity';
@@ -39,7 +43,7 @@ export class JobPreset extends TenantOrganizationBase implements IJobPreset {
 			onDelete: 'CASCADE'
 		}
 	)
-	employeeCriterions?: EmployeeUpworkJobsSearchCriterion[];
+	employeeCriterions?: IEmployeeUpworkJobsSearchCriterion[];
 
 	@OneToMany(
 		() => JobPresetUpworkJobSearchCriterion,
@@ -49,5 +53,5 @@ export class JobPreset extends TenantOrganizationBase implements IJobPreset {
 			onDelete: 'CASCADE'
 		}
 	)
-	jobPresetCriterions?: JobPresetUpworkJobSearchCriterion[];
+	jobPresetCriterions?: IJobPresetUpworkJobSearchCriterion[];
 }

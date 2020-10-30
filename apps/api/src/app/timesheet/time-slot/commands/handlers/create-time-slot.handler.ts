@@ -8,8 +8,8 @@ import { CreateTimeSlotCommand } from '../create-time-slot.command';
 import { TimeSlot } from '../../../time-slot.entity';
 import { TimeLog } from '../../../time-log.entity';
 import * as _ from 'underscore';
-import { BulkActivitesSaveCommand } from '../../../activity/commands/bulk-activites-save.command';
 import { Employee } from 'apps/api/src/app/employee/employee.entity';
+import { BulkActivitiesSaveCommand } from '../../../activity/commands/bulk-activities-save.command';
 
 @CommandHandler(CreateTimeSlotCommand)
 export class CreateTimeSlotHandler
@@ -76,7 +76,7 @@ export class CreateTimeSlotHandler
 
 		if (input.activities) {
 			input.activities = await this.commandBus.execute(
-				new BulkActivitesSaveCommand({
+				new BulkActivitiesSaveCommand({
 					employeeId: timeSlot.employeeId,
 					projectId:
 						timeSlot.timeLogs && timeSlot.timeLogs.length > 0

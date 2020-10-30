@@ -26,6 +26,13 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		);
 	}
 
+	async findAllActive() {
+		return await this.repository.find({
+			where: { isActive: true },
+			relations: ['user']
+		});
+	}
+
 	/**
 	 * Find the employees working in the organization for a particular month.
 	 * An employee is considered to be 'working' if:

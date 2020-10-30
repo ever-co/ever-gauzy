@@ -9,7 +9,9 @@ import {
 } from '@gauzy/models';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
+import { JobService } from 'apps/gauzy/src/app/@core/services/job.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { AvatarComponent } from 'apps/gauzy/src/app/@shared/components/avatar/avatar.component';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { StatusBadgeComponent } from 'apps/gauzy/src/app/@shared/status-badge/status-badge.component';
@@ -96,7 +98,9 @@ export class SearchComponent
 	constructor(
 		private http: HttpClient,
 		private store: Store,
-		public translateService: TranslateService
+		public translateService: TranslateService,
+		public toastrService: ToastrService,
+		public jobService: JobService
 	) {
 		super(translateService);
 	}
@@ -145,7 +149,32 @@ export class SearchComponent
 	}
 
 	onCustom($event) {
-		console.log('onCustom', $event);
+		switch ($event.action) {
+			case 'view':
+				if ($event.data.jobPost) {
+					window.open($event.data.jobPost.url, '_blank');
+				}
+				break;
+
+			case 'apply':
+				this.jobService.applyJob($event.data).then((resp) => {
+					if (resp.isRedirectRequired) {
+						window.open($event.data.jobPost.url, '_blank');
+					} else {
+						this.toastrService.success('Job applied successfully');
+						this.smartTableSource.refresh();
+					}
+				});
+				break;
+
+			case 'hide':
+				this.jobService.hideJob($event.data);
+				this.smartTableSource.refresh();
+				break;
+
+			default:
+				break;
+		}
 	}
 
 	loadSmartTable() {
@@ -215,21 +244,27 @@ export class SearchComponent
 					valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
 						let badgeClass;
 						if (
-							row.jobPost.jobStatus === JobPostStatusEnum.CLOSED
+							row.jobPost.jobStatus.toLowerCase() ===
+							JobPostStatusEnum.CLOSED.toLowerCase()
 						) {
 							badgeClass = 'danger';
 							cell = this.getTranslation('JOBS.STATUS_CLOSED');
 						} else if (
-							row.jobPost.jobStatus === JobPostStatusEnum.OPEN
+							row.jobPost.jobStatus.toLowerCase() ===
+							JobPostStatusEnum.OPEN.toLowerCase()
 						) {
 							badgeClass = 'success';
 							cell = this.getTranslation('JOBS.STATUS_OPEN');
+						} else if (
+							row.jobPost.jobStatus.toLowerCase() ===
+							JobPostStatusEnum.APPLIED.toLowerCase()
+						) {
+							badgeClass = 'warning';
+							cell = this.getTranslation('JOBS.STATUS_APPLIED');
 						} else {
 							badgeClass = 'default';
-							cell = this.getTranslation('JOBS.STATUS_APPLIED');
+							cell = row.jobPost.jobStatus;
 						}
-
-						// return `<span class="badge badge-${badgeClass}">${cell}</span>`;
 
 						return {
 							text: cell,

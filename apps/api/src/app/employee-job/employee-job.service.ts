@@ -7,19 +7,22 @@ import { Employee } from '../employee/employee.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
+	IApplyJobPostInput,
 	IEmployeeJobPost,
 	IGetEmployeeJobPostInput,
 	IUpdateEmployeeJobPostAppliedResult,
-	JobPostSourceEnum
+	IVisibilityJobPostInput
 } from '@gauzy/models';
 import { EmployeeJobPost } from './employee-job.entity';
 import { JobPost } from './jobPost.entity';
+import { EmployeeService } from '../employee/employee.service';
 
 @Injectable()
 export class EmployeeJobPostService {
 	constructor(
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
+		private readonly employeeService: EmployeeService,
 		private readonly gauzyAIService: GauzyAIService
 	) {}
 
@@ -32,11 +35,9 @@ export class EmployeeJobPostService {
 	 * @param providerJobId Unique job id in the provider, e.g. in Upwork
 	 */
 	public async updateVisibility(
-		hide: boolean = true,
-		employeeId: string | undefined,
-		providerCode: string,
-		providerJobId: string
+		input: IVisibilityJobPostInput
 	): Promise<boolean> {
+		const { hide = true, employeeId, providerCode, providerJobId } = input;
 		return true;
 	}
 
@@ -48,11 +49,14 @@ export class EmployeeJobPostService {
 	 * @param providerJobId Unique job id in the provider, e.g. in Upwork
 	 */
 	public async updateApplied(
-		applied: boolean = true,
-		employeeId: string,
-		providerCode: string,
-		providerJobId: string
+		input: IApplyJobPostInput
 	): Promise<IUpdateEmployeeJobPostAppliedResult> {
+		const {
+			applied = true,
+			employeeId,
+			providerCode,
+			providerJobId
+		} = input;
 		return {
 			isRedirectRequired: true
 		};
@@ -65,9 +69,7 @@ export class EmployeeJobPostService {
 	public async findAll(
 		data: IGetEmployeeJobPostInput
 	): Promise<IPagination<IEmployeeJobPost>> {
-		const employees = await this.employeeRepository.find({
-			relations: ['user']
-		});
+		const employees = await this.employeeService.findAllActive();
 
 		let jobs: IPagination<IEmployeeJobPost>;
 

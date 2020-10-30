@@ -9,7 +9,7 @@ import { toParams } from '@gauzy/utils';
 export class ActivityService {
 	constructor(private http: HttpClient) {}
 
-	getActivites(request: IGetActivitiesInput) {
+	getActivities(request: IGetActivitiesInput) {
 		return this.http
 			.get<IActivity[]>('/api/timesheet/activity', {
 				params: toParams(request)
@@ -17,7 +17,7 @@ export class ActivityService {
 			.toPromise();
 	}
 
-	getDailyActivites(request: IGetActivitiesInput) {
+	getDailyActivities(request: IGetActivitiesInput) {
 		return this.http
 			.get<IDailyActivity[]>('/api/timesheet/activity/daily', {
 				params: toParams(request)

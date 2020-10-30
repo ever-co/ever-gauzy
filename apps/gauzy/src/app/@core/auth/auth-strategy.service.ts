@@ -9,6 +9,11 @@ import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
 import { AuthService } from '../services/auth.service';
 import { Store } from '../services/store.service';
 import { ElectronService } from 'ngx-electron';
+import { TimesheetFilterStore } from '../../@shared/timesheet/timesheet-filter.service';
+import {
+	TimerStore,
+	TimeTrackerService
+} from '../../@shared/time-tracker/time-tracker.service';
 // tslint:disable-next-line: nx-enforce-module-boundaries
 
 @Injectable()
@@ -66,6 +71,9 @@ export class AuthStrategy extends NbAuthStrategy {
 		private router: Router,
 		private authService: AuthService,
 		private store: Store,
+		private timesheetFilterStore: TimesheetFilterStore,
+		private timerStore: TimerStore,
+		private timeTrackerService: TimeTrackerService,
 		private electronService: ElectronService
 	) {
 		super();
@@ -118,7 +126,9 @@ export class AuthStrategy extends NbAuthStrategy {
 							token: token,
 							userId: user.id,
 							employeeId: user.employee ? user.employee.id : null,
-							organizationId: user.employee ? user.employee.organizationId : null,
+							organizationId: user.employee
+								? user.employee.organizationId
+								: null,
 							tenantId: user.tenantId ? user.tenantId : null
 						});
 					} catch (error) {}
@@ -333,8 +343,16 @@ export class AuthStrategy extends NbAuthStrategy {
 	}
 
 	private async _logout(): Promise<NbAuthResult> {
-		this.store.clear();
+		//remove timetracking/timesheet filter just before logout
+		if (this.store.user && this.store.user.employeeId) {
+			if (this.timeTrackerService.running) {
+				this.timeTrackerService.toggle();
+			}
+			this.timerStore.reset();
+			this.timesheetFilterStore.reset();
+		}
 
+		this.store.clear();
 		this.store.serverConnection = '200';
 		if (this.electronService.isElectronApp) {
 			try {

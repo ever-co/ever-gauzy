@@ -30,6 +30,7 @@ import { Store } from '../../../@core/services/store.service';
 })
 export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	organization: any;
+	preSelected: string[] | string;
 	@Input()
 	public set reset(value: boolean | null) {
 		if (value) {
@@ -55,6 +56,7 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 		return this.val;
 	}
 	public set selectedEmployeeIds(value: string[] | string) {
+		this.preSelected = value;
 		this.select.setValue(value);
 		this.select.updateValueAndValidity();
 	}
@@ -97,7 +99,6 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 			.subscribe((value) => {
 				this.employeeId = value;
 			});
-
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
 			.subscribe((organization: IOrganization) => {

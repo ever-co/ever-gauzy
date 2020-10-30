@@ -1,7 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
-import * as _ from 'underscore';
+import { Repository } from 'typeorm';
 import { RequestContext } from '../../../core/context/request-context';
 import { Employee } from '../../../employee/employee.entity';
 import { JobPresetUpworkJobSearchCriterion } from '../../job-preset-upwork-job-search-criterion.entity';
@@ -50,20 +49,16 @@ export class CreateJobPresetHandler
 					})
 			);
 
-			const found = await this.jobPresetRepository.findOne(jobPreset.id, {
-				relations: ['jobPresetCriterions']
-			});
-			const jobPresetCriterionIds = _.pluck(
-				found.jobPresetCriterions,
-				'id'
-			);
 			await this.jobPresetUpworkJobSearchCriterionRepository.delete({
-				id: In(jobPresetCriterionIds)
+				jobPresetId: jobPreset.id
 			});
 
 			await this.jobPresetUpworkJobSearchCriterionRepository.save(
 				jobPresetCriterion
 			);
+
+			jobPreset.jobPresetCriterions = jobPresetCriterion;
+
 			// jobPreset.jobPresetCriterion = jobPresetCriterion;
 			// await this.jobPresetRepository.save(jobPreset);
 		}

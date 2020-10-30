@@ -21,7 +21,7 @@ import { EmployeeJobPostModule } from './employee-job';
 import { EmployeeAppointmentModule } from './employee-appointment';
 import { CoreModule } from './core';
 import { AuthModule } from './auth/auth.module';
-import { SeedDataService } from './core/seeds/SeedDataService';
+import { SeedDataService } from './core/seeds/seed-data.service';
 import { UserOrganizationModule } from './user-organization/user-organization.module';
 import { EmployeeStatisticsModule } from './employee-statistics/employee-statistics.module';
 import { OrganizationDepartmentModule } from './organization-department/organization-department.module';
