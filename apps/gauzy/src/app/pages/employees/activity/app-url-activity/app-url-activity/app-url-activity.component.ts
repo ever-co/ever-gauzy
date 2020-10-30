@@ -94,18 +94,18 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 			titles: [item.title]
 		};
 
-		this.activityService.getActivites(request).then((items) => {
+		this.activityService.getActivities(request).then((items) => {
 			item.childItems = items.map(
-				(activite: IActivity): IDailyActivity => {
+				(activity: IActivity): IDailyActivity => {
 					return {
 						sessions: 1,
-						duration: activite.duration,
-						employeeId: activite.employeeId,
-						date: activite.date,
-						title: activite.title,
-						description: activite.description,
+						duration: activity.duration,
+						employeeId: activity.employeeId,
+						date: activity.date,
+						title: activity.title,
+						description: activity.description,
 						durationPercentage:
-							(activite.duration * 100) / item.duration
+							(activity.duration * 100) / item.duration
 					};
 				}
 			);
@@ -131,16 +131,16 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 
 		this.loading = true;
 		this.activityService
-			.getDailyActivites(request)
+			.getDailyActivities(request)
 			.then((activities) => {
 				this.apps = _.chain(activities)
 					.map((activity) => {
 						activity.hours = toLocal(
-							moment(
-								moment(activity.date).format('YYYY-MM-DD') +
+							moment.utc(
+								moment.utc(activity.date).format('YYYY-MM-DD') +
 									' ' +
 									activity.time
-							).toDate()
+							)
 						);
 						return activity;
 					})
@@ -148,8 +148,8 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 					.mapObject((value, key) => {
 						const sum = _.reduce(
 							value,
-							(memo, activitiy) =>
-								memo + parseInt(activitiy.duration + '', 10),
+							(memo, activity) =>
+								memo + parseInt(activity.duration + '', 10),
 							0
 						);
 						value = value.map((activity) => {

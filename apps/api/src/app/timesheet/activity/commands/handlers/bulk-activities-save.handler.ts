@@ -1,14 +1,14 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { BulkActivitesSaveCommand } from '../bulk-activites-save.command';
+import { BulkActivitiesSaveCommand } from '../bulk-activities-save.command';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Activity } from '../../../activity.entity';
 import { Repository } from 'typeorm';
 import { RequestContext } from 'apps/api/src/app/core/context';
 import { Employee } from 'apps/api/src/app/employee/employee.entity';
 
-@CommandHandler(BulkActivitesSaveCommand)
-export class BulkActivitesSaveHandler
-	implements ICommandHandler<BulkActivitesSaveCommand> {
+@CommandHandler(BulkActivitiesSaveCommand)
+export class BulkActivitiesSaveHandler
+	implements ICommandHandler<BulkActivitiesSaveCommand> {
 	constructor(
 		@InjectRepository(Activity)
 		private readonly activityRepository: Repository<Activity>,
@@ -16,7 +16,7 @@ export class BulkActivitesSaveHandler
 		private readonly employeeRepository: Repository<Employee>
 	) {}
 
-	public async execute(command: BulkActivitesSaveCommand): Promise<any> {
+	public async execute(command: BulkActivitiesSaveCommand): Promise<any> {
 		const { input } = command;
 		if (!input.organizationId) {
 			const user = RequestContext.currentUser();
