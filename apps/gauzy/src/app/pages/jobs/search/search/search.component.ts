@@ -253,9 +253,14 @@ export class SearchComponent
 						) {
 							badgeClass = 'success';
 							cell = this.getTranslation('JOBS.STATUS_OPEN');
+						} else if (
+							row.jobPost.jobStatus === JobPostStatusEnum.APPLIED
+						) {
+							badgeClass = 'warning';
+							cell = this.getTranslation('JOBS.STATUS_APPLIED');
 						} else {
 							badgeClass = 'default';
-							cell = this.getTranslation('JOBS.STATUS_APPLIED');
+							cell = row.jobPost.jobStatus;
 						}
 
 						// return `<span class="badge badge-${badgeClass}">${cell}</span>`;
