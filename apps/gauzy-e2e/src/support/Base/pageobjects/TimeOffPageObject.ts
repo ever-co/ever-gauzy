@@ -16,8 +16,21 @@ export const TimeOffPage = {
 	selectEmployeeDropdownOptionCss: '.option-list nb-option',
 	startHolidayDateCss: '[formControlName="start"]',
 	endHolidayDateCss: '[formControlName="end"]',
-	saveHolidayButtonCss: 'nb-card-footer > button[status="success"]',
+	saveButtonCss: 'nb-card-footer > button[status="success"]',
 	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
-	deleteTimeOfRequestCss: 'div.actions-container > button[status="danger"]',
-	confirmDeleteTimeOfButtonCss: 'nb-card-footer > button[status="danger"]'
+	deleteTimeOfRequestButtonCss:
+		'div.actions-container > button[status="danger"]',
+	confirmDeleteTimeOfButtonCss: 'nb-card-footer > button[status="danger"]',
+	editTimeOfRequestButtonCss:
+		'div.actions-container > button[status="primary"]',
+	denyTimeOffRequestButtonCss:
+		'div.actions-container > button[status="warning"]',
+	approveTimeOffRequestButtonCss:
+		'div.actions-container > button[status="success"]',
+	timeOffSettingsButtonCss: 'div.mb-3 > button[status="primary"]',
+	addNewPolicyButtonCss: 'div.mb-3 > button[status="success"]',
+	editPolicyButtonCss: 'div.mb-3 > button[status="info"]',
+	deletePolicyButtonCss: 'div.mb-3 > button[status="danger"]',
+	addNewPolicyInputCss: '[placeholder="Policy Name"]',
+	backButtonCss: 'div.main > button[status="primary"]'
 };

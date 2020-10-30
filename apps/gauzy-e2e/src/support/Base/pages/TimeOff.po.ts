@@ -149,12 +149,12 @@ export const clickKeyboardButtonByKeyCode = (keycode) => {
 	clickKeyboardBtnByKeycode(keycode);
 };
 
-export const saveHolidayButtonVisible = () => {
-	verifyElementIsVisible(TimeOffPage.saveHolidayButtonCss);
+export const saveButtonVisible = () => {
+	verifyElementIsVisible(TimeOffPage.saveButtonCss);
 };
 
-export const clickSaveHolidayButton = () => {
-	clickButton(TimeOffPage.saveHolidayButtonCss);
+export const clickSaveButton = () => {
+	clickButton(TimeOffPage.saveButtonCss);
 };
 
 export const timeOffTableRowVisible = () => {
@@ -165,12 +165,36 @@ export const selectTimeOffTableRow = (index) => {
 	clickButtonByIndex(TimeOffPage.selectTableRowCss, index);
 };
 
+export const editTimeOffRequestBtnVisible = () => {
+	verifyElementIsVisible(TimeOffPage.editTimeOfRequestButtonCss);
+};
+
+export const clickEditTimeOffRequestButton = () => {
+	clickButton(TimeOffPage.editTimeOfRequestButtonCss);
+};
+
 export const deleteTimeOffBtnVisible = () => {
-	verifyElementIsVisible(TimeOffPage.deleteTimeOfRequestCss);
+	verifyElementIsVisible(TimeOffPage.deleteTimeOfRequestButtonCss);
 };
 
 export const clickDeleteTimeOffButton = () => {
-	clickButton(TimeOffPage.deleteTimeOfRequestCss);
+	clickButton(TimeOffPage.deleteTimeOfRequestButtonCss);
+};
+
+export const denyTimeOffButtonVisible = () => {
+	verifyElementIsVisible(TimeOffPage.denyTimeOffRequestButtonCss);
+};
+
+export const clickDenyTimeOffButton = () => {
+	clickButton(TimeOffPage.denyTimeOffRequestButtonCss);
+};
+
+export const approveTimeOffButtonVisible = () => {
+	verifyElementIsVisible(TimeOffPage.approveTimeOffRequestButtonCss);
+};
+
+export const clickApproveTimeOffButton = () => {
+	clickButton(TimeOffPage.approveTimeOffRequestButtonCss);
 };
 
 export const confirmDeleteTimeOffBtnVisible = () => {
@@ -179,4 +203,29 @@ export const confirmDeleteTimeOffBtnVisible = () => {
 
 export const clickConfirmDeleteTimeOffButoon = () => {
 	clickButton(TimeOffPage.confirmDeleteTimeOfButtonCss);
+};
+
+export const timeOffSettingsButtonVisible = () => {
+	verifyElementIsVisible(TimeOffPage.timeOffSettingsButtonCss);
+};
+
+export const clickTimeOffSettingsButton = () => {
+	clickButton(TimeOffPage.timeOffSettingsButtonCss);
+};
+
+export const addNewPolicyButtonVisible = () => {
+	verifyElementIsVisible(TimeOffPage.addNewPolicyButtonCss);
+};
+
+export const clickAddNewPolicyButton = () => {
+	clickButton(TimeOffPage.addNewPolicyButtonCss);
+};
+
+export const policyInputFieldVisible = () => {
+	verifyElementIsVisible(TimeOffPage.addNewPolicyInputCss);
+};
+
+export const enterNewPolicyName = (data) => {
+	clearField(TimeOffPage.addNewPolicyInputCss);
+	enterInput(TimeOffPage.addNewPolicyInputCss, data);
 };
