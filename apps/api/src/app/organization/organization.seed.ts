@@ -31,6 +31,17 @@ const defaultOrganizationsData = [
 	}
 ];
 
+export const getDefaultBulgarianOrganization = async (
+	connection: Connection,
+	tenant: Tenant
+): Promise<Organization> => {
+	const repo = connection.getRepository(Organization);
+	const existedOrganization = await repo.findOne({
+		where: { tenantId: tenant.id, name: 'Ever Technologies LTD' }
+	});
+	return existedOrganization;
+};
+
 let defaultOrganizationsInserted = [];
 
 export const createDefaultOrganizations = async (

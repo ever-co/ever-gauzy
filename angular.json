@@ -257,7 +257,7 @@
 					"builder": "@nrwl/node:build",
 					"options": {
 						"outputPath": "dist/apps/api",
-						"main": "apps/api/src/seedAll.ts",
+						"main": "apps/api/src/seed-all.ts",
 						"showCircularDependencies": false,
 						"sourceMap": true,
 						"tsConfig": "apps/api/tsconfig.app.json"

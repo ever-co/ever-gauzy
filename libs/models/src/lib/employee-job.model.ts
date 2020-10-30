@@ -84,7 +84,7 @@ export interface IJobPost {
 
 export enum JobPostSourceEnum {
 	UPWORK = 'Upwork',
-	WEB = 'WEB'
+	WEB = 'Web'
 }
 
 export enum JobPostStatusEnum {

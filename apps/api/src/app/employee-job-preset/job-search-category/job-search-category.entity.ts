@@ -22,6 +22,13 @@ export class JobSearchCategory
 	@Column()
 	name?: string;
 
+	// Id of category in the job source (e.g. Upwork)
+	@ApiProperty({ type: String })
+	@IsString()
+	@Index()
+	@Column()
+	jobSourceCategoryId?: string;
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

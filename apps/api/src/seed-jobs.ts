@@ -14,6 +14,6 @@ import { SeedDataService } from './app/core/seeds/seed-data.service';
  * */
 (async () => {
 	const seedDataService = new SeedDataService();
-	await seedDataService.runDefaultSeed();
+	await seedDataService.runJobsSeed();
 	process.exit(0);
 })();
