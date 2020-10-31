@@ -68,7 +68,8 @@ export const defaultRolePermissions = [
 			PermissionsEnum.ORG_CONTACT_EDIT,
 			PermissionsEnum.ORG_TEAM_EDIT,
 			PermissionsEnum.ORG_CONTRACT_EDIT,
-			PermissionsEnum.EVENT_TYPES_VIEW
+			PermissionsEnum.EVENT_TYPES_VIEW,
+			PermissionsEnum.TENANT_ADD_EXISTING_USER
 		]
 	},
 	{
@@ -125,7 +126,8 @@ export const defaultRolePermissions = [
 			PermissionsEnum.ORG_CONTACT_EDIT,
 			PermissionsEnum.ORG_TEAM_EDIT,
 			PermissionsEnum.ORG_CONTRACT_EDIT,
-			PermissionsEnum.EVENT_TYPES_VIEW
+			PermissionsEnum.EVENT_TYPES_VIEW,
+			PermissionsEnum.TENANT_ADD_EXISTING_USER
 		]
 	},
 	{

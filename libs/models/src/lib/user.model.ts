@@ -91,3 +91,14 @@ export enum ComponentLayoutStyleEnum {
 	TABLE = 'TABLE',
 	SPRINT_VIEW = 'SPRINT_VIEW'
 }
+
+export interface IUserViewModel extends IBasePerTenantEntityModel {
+	fullName: string;
+	email: string;
+	bonus?: number;
+	endWork?: any;
+	id: string;
+	roleName?: string;
+	role?: string;
+	tags?: ITag[];
+}

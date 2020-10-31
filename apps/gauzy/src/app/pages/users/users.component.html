@@ -5,19 +5,24 @@
 				{{ 'USERS_PAGE.HEADER' | translate }} {{ organizationName }}
 			</h4>
 			<div class="header-selector-wrapper">
-				<button
-					style="margin-right: 9px;"
-					nbButton
-					*ngIf="
-						organizationInvitesAllowed &&
-						hasInviteViewOrEditPermission &&
-						hasEditPermission
-					"
-					status="primary"
-					(click)="manageInvites()"
-				>
-					{{ 'BUTTONS.MANAGE_INVITES' | translate }}
-				</button>
+				<ng-template ngxPermissionsOnly="ORG_USERS_EDIT">
+					<ng-template
+						[ngxPermissionsOnly]="[
+							'ORG_INVITE_VIEW',
+							'ORG_INVITE_EDIT'
+						]"
+					>
+						<button
+							style="margin-right: 9px"
+							nbButton
+							*ngIf="organizationInvitesAllowed"
+							status="primary"
+							(click)="manageInvites()"
+						>
+							{{ 'BUTTONS.MANAGE_INVITES' | translate }}
+						</button>
+					</ng-template>
+				</ng-template>
 				<ga-layout-selector
 					componentName="{{ viewComponentName }}"
 				></ga-layout-selector>
@@ -25,45 +30,53 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="mb-3" *ngIf="hasEditPermission">
-			<button
-				nbButton
-				*ngIf="organizationInvitesAllowed && hasInviteEditPermission"
-				status="primary"
-				(click)="invite()"
-				class="mr-2"
-			>
-				<nb-icon class="mr-1" icon="email-outline"></nb-icon
-				>{{ 'BUTTONS.INVITE' | translate }}
-			</button>
-
-			<button nbButton status="success" (click)="add()" class="mr-2">
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-				>{{ 'BUTTONS.ADD_NEW' | translate }}
-			</button>
-			<button
-				(click)="showAddCard = !showAddCard"
-				nbButton
-				status="warning"
-				class="mr-2"
-			>
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-				>{{ 'BUTTONS.ADD_EXISTING' | translate }}
-			</button>
-			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
-				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
-			</ng-container>
-
-			<ga-edit-user-mutation
-				*ngIf="showAddCard"
-				[organization]="organization"
-				(addOrEditUser)="addOrEditUser($event)"
-				(canceled)="cancel()"
-			>
-			</ga-edit-user-mutation>
-		</div>
+		<ng-template ngxPermissionsOnly="ORG_USERS_EDIT">
+			<div class="mb-3">
+				<ng-template ngxPermissionsOnly="ORG_INVITE_EDIT">
+					<button
+						nbButton
+						*ngIf="organizationInvitesAllowed"
+						status="primary"
+						(click)="invite()"
+						class="mr-2"
+					>
+						<nb-icon class="mr-1" icon="email-outline"></nb-icon
+						>{{ 'BUTTONS.INVITE' | translate }}
+					</button>
+				</ng-template>
+				<button nbButton status="success" (click)="add()" class="mr-2">
+					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+					>{{ 'BUTTONS.ADD_NEW' | translate }}
+				</button>
+				<ng-template ngxPermissionsOnly="TENANT_ADD_EXISTING_USER">
+					<button
+						(click)="showAddCard = !showAddCard"
+						nbButton
+						status="warning"
+						class="mr-2"
+					>
+						<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+						>{{ 'BUTTONS.ADD_EXISTING' | translate }}
+					</button>
+				</ng-template>
+				<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+					<ng-container
+						*ngTemplateOutlet="actionButtons"
+					></ng-container>
+				</ng-container>
+				<ng-template ngxPermissionsOnly="TENANT_ADD_EXISTING_USER">
+					<ga-edit-user-mutation
+						*ngIf="showAddCard"
+						[organization]="organization"
+						(addOrEditUser)="addOrEditUser($event)"
+						(canceled)="cancel()"
+					>
+					</ga-edit-user-mutation>
+				</ng-template>
+			</div>
+		</ng-template>
 		<ng2-smart-table
-			style="cursor: pointer;"
+			style="cursor: pointer"
 			[settings]="settingsSmartTable"
 			[source]="sourceSmartTable"
 			(userRowSelect)="selectUserTmp($event)"
@@ -84,7 +97,6 @@
 					<span class="info-meta">Role</span>
 					<span class="info-value">{{ x.role }}</span>
 				</div>
-
 				<nb-card-footer class="card-footer">
 					<ng-container
 						*ngTemplateOutlet="
