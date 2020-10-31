@@ -1272,7 +1272,9 @@
 			"ORG_PROJECT_EDIT": "Create/Edit Projects",
 			"ORG_CONTACT_EDIT": "Create/Edit Contacts",
 			"ORG_TEAM_EDIT": "Create/Edit Teams",
-			"ORG_CONTRACT_EDIT": "Create/Edit Contracts"
+			"ORG_CONTRACT_EDIT": "Create/Edit Contracts",
+			"TIME_TRACKER": "Access Time Tracker",
+			"TENANT_ADD_EXISTING_USER": "Tenant Add User To Organization"
 		}
 	},
 	"CONTACTS_PAGE": {
