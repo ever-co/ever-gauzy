@@ -59,10 +59,9 @@ export class EditUserMutationComponent
 	}
 
 	private async _loadUsers() {
-		const {
-			id: organizationId,
-			tenantId
-		} = this.store.selectedOrganization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization;
+
 		const { items } = await this.usersOrganizationsService.getAll(
 			['user', 'user.role', 'user.tags'],
 			{ tenantId }
