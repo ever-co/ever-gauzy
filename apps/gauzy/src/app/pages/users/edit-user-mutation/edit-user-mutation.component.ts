@@ -65,7 +65,7 @@ export class EditUserMutationComponent
 		} = this.store.selectedOrganization;
 		const { items } = await this.usersOrganizationsService.getAll(
 			['user', 'user.role', 'user.tags'],
-			{ organizationId, tenantId }
+			{ tenantId }
 		);
 
 		const usersVm = [];

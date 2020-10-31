@@ -15,58 +15,46 @@ import {
 	RolesEnum,
 	IUser,
 	ITag,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	IRolePermission,
+	IUserViewModel
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
-import { Subject } from 'rxjs';
-import { first, takeUntil } from 'rxjs/operators';
+import { filter, first } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mutation.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { UsersService } from '../../@core/services';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { NgxPermissionsService } from 'ngx-permissions';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
-interface UserViewModel {
-	fullName: string;
-	email: string;
-	bonus?: number;
-	endWork?: any;
-	id: string;
-	roleName?: string;
-	role?: string;
-	tags?: ITag[];
-}
-
+@UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './users.component.html',
 	styleUrls: ['./users.component.scss']
 })
-export class UsersComponent extends TranslationBaseComponent
+export class UsersComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	organizationName: string;
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
-	selectedUser: UserViewModel;
+	selectedUser: IUserViewModel;
 	selectedOrganizationId: string;
 	UserRole: IRole;
 	userToRemoveId: string;
 	userToRemove: IUserOrganization;
 
-	private _ngDestroy$ = new Subject<void>();
-
 	userName = 'User';
 
 	organization: IOrganization;
 	loading = true;
-	hasEditPermission = false;
-	hasInviteEditPermission = false;
-	hasInviteViewOrEditPermission = false;
 	hasSuperAdminPermission = false;
 	organizationInvitesAllowed = false;
 	showAddCard: boolean;
@@ -88,56 +76,55 @@ export class UsersComponent extends TranslationBaseComponent
 		private route: ActivatedRoute,
 		private translate: TranslateService,
 		private userOrganizationsService: UsersOrganizationsService,
-		private readonly usersService: UsersService
+		private ngxPermissionsService: NgxPermissionsService
 	) {
 		super(translate);
 		this.setView();
 	}
 
 	async ngOnInit() {
+		this._loadSmartTableSettings();
+		this._applyTranslationOnSmartTable();
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((organization) => {
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
+			.subscribe((organization: IOrganization) => {
 				if (organization) {
 					this.organization = organization;
 					this.selectedOrganizationId = organization.id;
 					this.organizationInvitesAllowed =
 						organization.invitesAllowed;
 					this.cancel();
-					this.loadUsers();
 					this.loadPage();
 				}
 			});
-
-		this._loadSmartTableSettings();
-		this._applyTranslationOnSmartTable();
-
 		this.store.userRolePermissions$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this.hasEditPermission = this.store.hasPermission(
-					PermissionsEnum.ORG_USERS_EDIT
+			.pipe(
+				filter(
+					(permissions: IRolePermission[]) => permissions.length > 0
+				),
+				untilDestroyed(this)
+			)
+			.subscribe((data) => {
+				const permissions = data.map(
+					(permisson) => permisson.permission
 				);
-				this.hasInviteEditPermission = this.store.hasPermission(
-					PermissionsEnum.ORG_INVITE_EDIT
-				);
-				this.hasInviteViewOrEditPermission =
-					this.store.hasPermission(PermissionsEnum.ORG_INVITE_VIEW) ||
-					this.hasInviteEditPermission;
+				this.ngxPermissionsService.loadPermissions(permissions);
 				this.hasSuperAdminPermission = this.store.hasPermission(
 					PermissionsEnum.SUPER_ADMIN_EDIT
 				);
 			});
-
 		this.route.queryParamMap
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((params) => {
 				if (params.get('openAddDialog')) {
 					this.add();
 				}
 			});
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
@@ -149,7 +136,7 @@ export class UsersComponent extends TranslationBaseComponent
 		this.viewComponentName = ComponentEnum.USERS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
@@ -267,7 +254,7 @@ export class UsersComponent extends TranslationBaseComponent
 						this.getTranslation('FORM.DELETE_CONFIRMATION.USER')
 				}
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
@@ -306,20 +293,7 @@ export class UsersComponent extends TranslationBaseComponent
 		this.showAddCard = false;
 	}
 
-	private async loadUsers() {
-		if (!this.organization) {
-			return;
-		}
-		const { id: organizationId, tenantId } = this.organization;
-		const { items } = await this.userOrganizationsService.getAll(
-			['user', 'user.tags'],
-			{ organizationId, tenantId }
-		);
-
-		this.users = items.map((user) => user.user);
-	}
-
-	async remove(selectedOrganization: UserViewModel) {
+	async remove(selectedOrganization: IUserViewModel) {
 		const { id: userOrganizationId } = selectedOrganization;
 		const fullName =
 			selectedOrganization.fullName.trim() || selectedOrganization.email;
@@ -345,7 +319,7 @@ export class UsersComponent extends TranslationBaseComponent
 					)}`
 				}
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
@@ -378,6 +352,10 @@ export class UsersComponent extends TranslationBaseComponent
 			['user', 'user.role', 'user.tags'],
 			{ organizationId, tenantId }
 		);
+
+		this.users = items
+			.filter((orgUser) => orgUser.user.role.name !== RolesEnum.EMPLOYEE)
+			.map((user) => user.user);
 
 		const usersVm = [];
 		for (const orgUser of items) {
@@ -442,15 +420,10 @@ export class UsersComponent extends TranslationBaseComponent
 	}
 
 	private _applyTranslationOnSmartTable() {
-		this.translate.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this._loadSmartTableSettings();
-			});
+		this.translate.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
+			this._loadSmartTableSettings();
+		});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }
