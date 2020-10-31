@@ -145,6 +145,7 @@ export const PermissionGroups = {
 		PermissionsEnum.APPROVAL_POLICY_VIEW,
 		PermissionsEnum.TIME_OFF_EDIT,
 		PermissionsEnum.REQUEST_APPROVAL_EDIT,
+		PermissionsEnum.REQUEST_APPROVAL_VIEW,
 		PermissionsEnum.TENANT_ADD_EXISTING_USER
 	]
 };
