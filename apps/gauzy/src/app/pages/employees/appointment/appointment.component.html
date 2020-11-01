@@ -2,16 +2,17 @@
 	<nb-card-header>
 		<div class="main-header" *ngIf="showHeader">
 			<h4>{{ 'MENU.APPOINTMENTS' | translate }}</h4>
-			<div style="float: right;">
-				<button
-					*ngIf="hasEventTypesViewPermission"
-					style="margin-right: 10px;"
-					status="success"
-					nbButton
-					(click)="openEventTypes()"
-				>
-					{{ 'BUTTONS.EVENT_TYPES' | translate }}
-				</button>
+			<div style="float: right">
+				<ng-template ngxPermissionsOnly="EVENT_TYPES_VIEW">
+					<button
+						style="margin-right: 10px"
+						status="success"
+						nbButton
+						(click)="openEventTypes()"
+					>
+						{{ 'BUTTONS.EVENT_TYPES' | translate }}
+					</button>
+				</ng-template>
 				<button
 					status="success"
 					nbButton
@@ -26,7 +27,7 @@
 			<strong>
 				{{ selectedTimeZoneName }} {{ selectedTimeZoneOffset }}
 			</strong>
-			<a style="cursor: pointer;" (click)="selectTimezone()">{{
+			<a style="cursor: pointer" (click)="selectTimezone()">{{
 				'PUBLIC_APPOINTMENTS.CHANGE' | translate
 			}}</a>
 		</div>

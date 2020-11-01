@@ -1,4 +1,5 @@
 import * as moment from 'moment';
+import * as timezone from 'moment-timezone';
 import { HttpParams } from '@angular/common/http';
 
 export function toUTC(data: string | Date | moment.Moment): moment.Moment {
@@ -7,6 +8,16 @@ export function toUTC(data: string | Date | moment.Moment): moment.Moment {
 
 export function toLocal(data: string | Date | moment.Moment): moment.Moment {
 	return moment.utc(data).local();
+}
+
+// convert local time to another timezone
+export function convertLocalToTimezone(
+	localDt: string | Date,
+	localDtFormat: string,
+	timeZone: string,
+	format = 'YYYY-MM-DD hh:mm:ss'
+) {
+	return timezone(localDt, localDtFormat).tz(timeZone).format(format);
 }
 
 export function getContrastColor(hex: string) {

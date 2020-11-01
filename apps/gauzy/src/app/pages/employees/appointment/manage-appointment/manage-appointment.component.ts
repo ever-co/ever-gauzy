@@ -7,7 +7,9 @@ import {
 	Input,
 	Output,
 	EventEmitter,
-	ViewChild
+	ViewChild,
+	AfterViewInit,
+	ChangeDetectorRef
 } from '@angular/core';
 import { EmployeeAppointmentService } from '../../../../@core/services/employee-appointment.service';
 import {
@@ -42,7 +44,7 @@ import { EmployeeSelectComponent } from 'apps/gauzy/src/app/@shared/employee/emp
 })
 export class ManageAppointmentComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit, OnDestroy, AfterViewInit {
 	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;
 	employees: IEmployee[];
@@ -68,8 +70,7 @@ export class ManageAppointmentComponent
 	end: Date;
 	editMode: Boolean;
 
-	@Input('selectedRange')
-	selectedRange: { start: Date; end: Date };
+	@Input() selectedRange: { start: Date; end: Date };
 
 	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectComponent;
@@ -85,7 +86,8 @@ export class ManageAppointmentComponent
 		private appointmentEmployeesService: AppointmentEmployeesService,
 		private availabilitySlotsService: AvailabilitySlotsService,
 		private toastrService: NbToastrService,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private cdr: ChangeDetectorRef
 	) {
 		super(translateService);
 	}
@@ -117,7 +119,11 @@ export class ManageAppointmentComponent
 		this._loadEmployees().then(() => this._parseParams());
 	}
 
-	EmailListValidator(
+	ngAfterViewInit() {
+		this.cdr.detectChanges();
+	}
+
+	emailListValidator(
 		control: AbstractControl
 	): { [key: string]: boolean } | null {
 		const emailPattern = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
@@ -141,7 +147,7 @@ export class ManageAppointmentComponent
 					: '',
 				Validators.compose([
 					Validators.required,
-					this.EmailListValidator
+					this.emailListValidator
 				])
 			],
 			agenda: [
