@@ -4,6 +4,13 @@ export interface IPaginationInput {
 }
 
 export interface IPagination<T> {
-	count: number;
-	items: T[];
+	/**
+	 * Items included in the current listing
+	 */
+	readonly items: T[];
+
+	/**
+	 * Total number of available items
+	 */
+	readonly total: number;
 }

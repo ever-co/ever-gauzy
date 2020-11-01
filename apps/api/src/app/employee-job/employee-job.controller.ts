@@ -40,10 +40,6 @@ export class EmployeeJobPostController {
 	async findAllEmployeesJobs(
 		@Query() data: IGetEmployeeJobPostInput
 	): Promise<IPagination<EmployeeJobPost>> {
-		// detect here what organization selected and what employee (optional) and query only for relevant jobs
-		// const organizationId = ...
-		// const employeeId = ... (note: can be not set, so we get all jobs)
-
 		return this.employeeJobPostService.findAll(data);
 	}
 

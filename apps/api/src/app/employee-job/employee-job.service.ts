@@ -93,7 +93,7 @@ export class EmployeeJobPostService {
 
 				jobs = {
 					items: jobsConverted,
-					total: result.count
+					total: result.total
 				};
 			}
 		} else {

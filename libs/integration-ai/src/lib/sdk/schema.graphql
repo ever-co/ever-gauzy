@@ -315,9 +315,12 @@ type JobPostCountAggregate {
 	id: Int
 	providerCode: Int
 	providerJobId: Int
+	jobDateCreated: Int
 	jobStatus: Int
 	jobType: Int
 	country: Int
+	createdAt: Int
+	updatedAt: Int
 	isActive: Int
 	isArchived: Int
 }
@@ -326,18 +329,24 @@ type JobPostMinAggregate {
 	id: ID
 	providerCode: String
 	providerJobId: String
+	jobDateCreated: DateTime
 	jobStatus: String
 	jobType: String
 	country: String
+	createdAt: DateTime
+	updatedAt: DateTime
 }
 
 type JobPostMaxAggregate {
 	id: ID
 	providerCode: String
 	providerJobId: String
+	jobDateCreated: DateTime
 	jobStatus: String
 	jobType: String
 	country: String
+	createdAt: DateTime
+	updatedAt: DateTime
 }
 
 type JobPostAggregateResponse {
@@ -464,6 +473,8 @@ type EmployeeCountAggregate {
 	firstName: Int
 	lastName: Int
 	jobType: Int
+	createdAt: Int
+	updatedAt: Int
 	isActive: Int
 	isArchived: Int
 }
@@ -474,6 +485,8 @@ type EmployeeMinAggregate {
 	firstName: String
 	lastName: String
 	jobType: String
+	createdAt: DateTime
+	updatedAt: DateTime
 }
 
 type EmployeeMaxAggregate {
@@ -482,6 +495,8 @@ type EmployeeMaxAggregate {
 	firstName: String
 	lastName: String
 	jobType: String
+	createdAt: DateTime
+	updatedAt: DateTime
 }
 
 type EmployeeAggregateResponse {
@@ -562,6 +577,9 @@ type EmployeeJobPostCountAggregate {
 	employeeId: Int
 	jobPostId: Int
 	isApplied: Int
+	appliedDate: Int
+	createdAt: Int
+	updatedAt: Int
 	isActive: Int
 	isArchived: Int
 }
@@ -570,12 +588,18 @@ type EmployeeJobPostMinAggregate {
 	id: ID
 	employeeId: String
 	jobPostId: String
+	appliedDate: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
 }
 
 type EmployeeJobPostMaxAggregate {
 	id: ID
 	employeeId: String
 	jobPostId: String
+	appliedDate: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
 }
 
 type EmployeeJobPostAggregateResponse {
@@ -727,11 +751,34 @@ input JobPostFilter {
 	id: IDFilterComparison
 	providerCode: StringFieldComparison
 	providerJobId: StringFieldComparison
+	jobDateCreated: DateFieldComparison
 	jobStatus: StringFieldComparison
 	jobType: StringFieldComparison
 	country: StringFieldComparison
+	createdAt: DateFieldComparison
+	updatedAt: DateFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
+}
+
+input DateFieldComparison {
+	is: Boolean
+	isNot: Boolean
+	eq: DateTime
+	neq: DateTime
+	gt: DateTime
+	gte: DateTime
+	lt: DateTime
+	lte: DateTime
+	in: [DateTime!]
+	notIn: [DateTime!]
+	between: DateFieldComparisonBetween
+	notBetween: DateFieldComparisonBetween
+}
+
+input DateFieldComparisonBetween {
+	lower: DateTime!
+	upper: DateTime!
 }
 
 input JobPostSort {
@@ -744,9 +791,12 @@ enum JobPostSortFields {
 	id
 	providerCode
 	providerJobId
+	jobDateCreated
 	jobStatus
 	jobType
 	country
+	createdAt
+	updatedAt
 	isActive
 	isArchived
 }
@@ -757,9 +807,12 @@ input JobPostAggregateFilter {
 	id: IDFilterComparison
 	providerCode: StringFieldComparison
 	providerJobId: StringFieldComparison
+	jobDateCreated: DateFieldComparison
 	jobStatus: StringFieldComparison
 	jobType: StringFieldComparison
 	country: StringFieldComparison
+	createdAt: DateFieldComparison
+	updatedAt: DateFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -772,6 +825,8 @@ input EmployeeFilter {
 	firstName: StringFieldComparison
 	lastName: StringFieldComparison
 	jobType: StringFieldComparison
+	createdAt: DateFieldComparison
+	updatedAt: DateFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -788,6 +843,8 @@ enum EmployeeSortFields {
 	firstName
 	lastName
 	jobType
+	createdAt
+	updatedAt
 	isActive
 	isArchived
 }
@@ -800,6 +857,8 @@ input EmployeeAggregateFilter {
 	firstName: StringFieldComparison
 	lastName: StringFieldComparison
 	jobType: StringFieldComparison
+	createdAt: DateFieldComparison
+	updatedAt: DateFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -811,6 +870,41 @@ input EmployeeJobPostFilter {
 	employeeId: StringFieldComparison
 	jobPostId: StringFieldComparison
 	isApplied: BooleanFieldComparison
+	appliedDate: DateFieldComparison
+	createdAt: DateFieldComparison
+	updatedAt: DateFieldComparison
+	isActive: BooleanFieldComparison
+	isArchived: BooleanFieldComparison
+	jobPost: EmployeeJobPostFilterJobPostFilter
+	employee: EmployeeJobPostFilterEmployeeFilter
+}
+
+input EmployeeJobPostFilterJobPostFilter {
+	and: [EmployeeJobPostFilterJobPostFilter!]
+	or: [EmployeeJobPostFilterJobPostFilter!]
+	id: IDFilterComparison
+	providerCode: StringFieldComparison
+	providerJobId: StringFieldComparison
+	jobDateCreated: DateFieldComparison
+	jobStatus: StringFieldComparison
+	jobType: StringFieldComparison
+	country: StringFieldComparison
+	createdAt: DateFieldComparison
+	updatedAt: DateFieldComparison
+	isActive: BooleanFieldComparison
+	isArchived: BooleanFieldComparison
+}
+
+input EmployeeJobPostFilterEmployeeFilter {
+	and: [EmployeeJobPostFilterEmployeeFilter!]
+	or: [EmployeeJobPostFilterEmployeeFilter!]
+	id: IDFilterComparison
+	externalEmployeeId: StringFieldComparison
+	firstName: StringFieldComparison
+	lastName: StringFieldComparison
+	jobType: StringFieldComparison
+	createdAt: DateFieldComparison
+	updatedAt: DateFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -826,6 +920,9 @@ enum EmployeeJobPostSortFields {
 	employeeId
 	jobPostId
 	isApplied
+	appliedDate
+	createdAt
+	updatedAt
 	isActive
 	isArchived
 }
@@ -837,6 +934,9 @@ input EmployeeJobPostAggregateFilter {
 	employeeId: StringFieldComparison
 	jobPostId: StringFieldComparison
 	isApplied: BooleanFieldComparison
+	appliedDate: DateFieldComparison
+	createdAt: DateFieldComparison
+	updatedAt: DateFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -924,9 +1024,12 @@ input JobPostDeleteFilter {
 	id: IDFilterComparison
 	providerCode: StringFieldComparison
 	providerJobId: StringFieldComparison
+	jobDateCreated: DateFieldComparison
 	jobStatus: StringFieldComparison
 	jobType: StringFieldComparison
 	country: StringFieldComparison
+	createdAt: DateFieldComparison
+	updatedAt: DateFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -995,9 +1098,12 @@ input JobPostUpdateFilter {
 	id: IDFilterComparison
 	providerCode: StringFieldComparison
 	providerJobId: StringFieldComparison
+	jobDateCreated: DateFieldComparison
 	jobStatus: StringFieldComparison
 	jobType: StringFieldComparison
 	country: StringFieldComparison
+	createdAt: DateFieldComparison
+	updatedAt: DateFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -1172,6 +1278,8 @@ input EmployeeDeleteFilter {
 	firstName: StringFieldComparison
 	lastName: StringFieldComparison
 	jobType: StringFieldComparison
+	createdAt: DateFieldComparison
+	updatedAt: DateFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -1221,6 +1329,8 @@ input EmployeeUpdateFilter {
 	firstName: StringFieldComparison
 	lastName: StringFieldComparison
 	jobType: StringFieldComparison
+	createdAt: DateFieldComparison
+	updatedAt: DateFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -1278,6 +1388,9 @@ input EmployeeJobPostDeleteFilter {
 	employeeId: StringFieldComparison
 	jobPostId: StringFieldComparison
 	isApplied: BooleanFieldComparison
+	appliedDate: DateFieldComparison
+	createdAt: DateFieldComparison
+	updatedAt: DateFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -1325,6 +1438,9 @@ input EmployeeJobPostUpdateFilter {
 	employeeId: StringFieldComparison
 	jobPostId: StringFieldComparison
 	isApplied: BooleanFieldComparison
+	appliedDate: DateFieldComparison
+	createdAt: DateFieldComparison
+	updatedAt: DateFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -1409,9 +1525,12 @@ input JobPostSubscriptionFilter {
 	id: IDFilterComparison
 	providerCode: StringFieldComparison
 	providerJobId: StringFieldComparison
+	jobDateCreated: DateFieldComparison
 	jobStatus: StringFieldComparison
 	jobType: StringFieldComparison
 	country: StringFieldComparison
+	createdAt: DateFieldComparison
+	updatedAt: DateFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -1476,6 +1595,8 @@ input EmployeeSubscriptionFilter {
 	firstName: StringFieldComparison
 	lastName: StringFieldComparison
 	jobType: StringFieldComparison
+	createdAt: DateFieldComparison
+	updatedAt: DateFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }
@@ -1508,6 +1629,9 @@ input EmployeeJobPostSubscriptionFilter {
 	employeeId: StringFieldComparison
 	jobPostId: StringFieldComparison
 	isApplied: BooleanFieldComparison
+	appliedDate: DateFieldComparison
+	createdAt: DateFieldComparison
+	updatedAt: DateFieldComparison
 	isActive: BooleanFieldComparison
 	isArchived: BooleanFieldComparison
 }

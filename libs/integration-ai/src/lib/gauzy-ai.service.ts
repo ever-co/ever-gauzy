@@ -28,7 +28,8 @@ import {
 	IGetEmployeeJobPostInput,
 	IPagination,
 	IEmployeeJobPost,
-	IJobPost
+	IJobPost,
+	IGetEmployeeJobPostFilters
 } from '@gauzy/models';
 
 @Injectable()
@@ -729,11 +730,32 @@ export class GauzyAIService {
 
 		console.log(`getEmployeesJobPosts. Data ${JSON.stringify(data)}`);
 
+		const filters: IGetEmployeeJobPostFilters = data.filters
+			? JSON.parse(<any>data.filters)
+			: undefined;
+
+		console.log(`getEmployeesJobPosts. Filters ${JSON.stringify(filters)}`);
+
+		const employeeIdFilter =
+			filters && filters.employeeIds && filters.employeeIds.length > 0
+				? filters.employeeIds[0]
+				: undefined;
+
 		try {
 			// TODO: use Query saved in SDK, not hard-code it here. Note: we may add much more fields to that query as we need more info!
 			const employeesQuery: DocumentNode<EmployeeJobPostsQuery> = gql`
-				query employeeJobPosts($after: ConnectionCursor!) {
-					employeeJobPosts(paging: { after: $after, first: 50 }) {
+				query employeeJobPosts(
+					$after: ConnectionCursor!
+					$first: Int!
+					$filter: EmployeeJobPostFilter!
+					$sorting: [EmployeeJobPostSort!]
+				) {
+					employeeJobPosts(
+						paging: { after: $after, first: $first }
+						filter: $filter
+						sorting: $sorting
+					) {
+						totalCount
 						pageInfo {
 							hasNextPage
 							hasPreviousPage
@@ -750,6 +772,7 @@ export class GauzyAIService {
 								isActive
 								isArchived
 								employee {
+									id
 									externalEmployeeId
 								}
 								jobPost {
@@ -786,13 +809,40 @@ export class GauzyAIService {
 			let isContinue: boolean;
 			let after = '';
 
+			const filter = {
+				isActive: {
+					is: true
+				},
+				employeeId: undefined
+			};
+
+			if (employeeIdFilter) {
+				const employeeId = await this.getEmployeeGauzyAIId(
+					employeeIdFilter
+				);
+
+				filter.employeeId = {
+					eq: employeeId
+				};
+			}
+
+			console.log(`Applying filter: ${JSON.stringify(filter)}`);
+
 			do {
 				const result: ApolloQueryResult<EmployeeJobPostsQuery> = await this._client.query<
 					EmployeeJobPostsQuery
 				>({
 					query: employeesQuery,
 					variables: {
-						after: after
+						after: after,
+						first: 50,
+						sorting: [
+							{
+								field: 'createdAt',
+								direction: 'DESC'
+							}
+						],
+						filter: filter
 					}
 				});
 
@@ -833,8 +883,10 @@ export class GauzyAIService {
 
 			const response: IPagination<IEmployeeJobPost> = {
 				items: this.paginate(jobResponses, data.limit, data.page),
-				count: count
+				total: count
 			};
+
+			// console.log(`Found Records: ${JSON.stringify(response)}`);
 
 			return response;
 		} catch (err) {

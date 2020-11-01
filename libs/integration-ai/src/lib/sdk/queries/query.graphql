@@ -1,5 +1,15 @@
-query employeeJobPosts($after: ConnectionCursor!) {
-	employeeJobPosts(paging: { after: $after, first: 50 }) {
+query employeeJobPosts(
+	$after: ConnectionCursor!
+	$first: Int!
+	$filter: EmployeeJobPostFilter!
+	$sorting: [EmployeeJobPostSort!]
+) {
+	employeeJobPosts(
+		paging: { after: $after, first: $first }
+		filter: $filter
+		sorting: $sorting
+	) {
+		totalCount
 		pageInfo {
 			hasNextPage
 			hasPreviousPage
@@ -16,6 +26,7 @@ query employeeJobPosts($after: ConnectionCursor!) {
 				isActive
 				isArchived
 				employee {
+					id
 					externalEmployeeId
 				}
 				jobPost {
