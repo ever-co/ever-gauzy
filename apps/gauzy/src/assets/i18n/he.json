@@ -1629,14 +1629,16 @@
 		"SOURCE": "Source",
 		"PRESET": "Preset",
 		"KEYWORDS": "Keywords",
-		"CATEGORIES": "Categories",
-		"OCCUPATIONS": "Occupations",
+		"CATEGORY": "קטגוריה",
+		"OCCUPATION": "Occupation",
 		"ADD_NEW_CRITERIONS": "Add New",
 		"FIX_PRICE": "Fix Price",
 		"HOURLY": "Hourly",
 		"SAVE": "לשמור",
 		"DELETE": "מחק",
-		"CRITERIONS": "Criterions"
+		"CRITERIONS": "Criterions",
+		"DELETE_CRITERION_MESSAGE": "Are you sure that, you want to delete criterion",
+		"SAVE_PRESET_MESSAGE": "Criterions will save for job preset. Are you sure you want to save?"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Sprint added",
