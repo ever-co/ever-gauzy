@@ -37,7 +37,7 @@ import { AppointmentEmployeesService } from '../../../@core/services/appointment
 import { TimezoneSelectorComponent } from './timezone-selector/timezone-selector.component';
 import { TimeOffService } from '../../../@core/services/time-off.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { convertLocalToTimezone, toLocal } from '@gauzy/utils';
+import { convertLocalToTimezone } from '@gauzy/utils';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-appointment-calendar',
@@ -498,6 +498,8 @@ export class AppointmentComponent
 			const endDate = moment(
 				convertLocalToTimezone(endTime, null, this.selectedTimeZoneName)
 			).format('YYYY-MM-DD hh:mm:ss');
+
+			console.log(startDate, endDate);
 
 			this.calendarEvents.push({
 				start: new Date(startTime),
