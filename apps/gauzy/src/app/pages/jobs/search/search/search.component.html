@@ -5,9 +5,9 @@
 	<nb-card-body>
 		<div class="job-filters py-3">
 			<div class="row">
-				<div class="col-sm-6">
+				<div class="col-sm-12">
 					<div class="row">
-						<div class="col form-group m-0">
+						<div class="col-sm-3 form-group m-0">
 							<input
 								type="text"
 								class="w-100"
@@ -28,6 +28,25 @@
 							>
 								<nb-icon icon="funnel-outline"></nb-icon>
 								Filter
+							</button>
+						</div>
+						<div class="col-auto d-flex align-items-center">
+							<nb-toggle
+								class="mr-3"
+								(checkedChange)="setAutoRefresh($event)"
+								[(ngModel)]="autoRefresh"
+								>Auto Refresh</nb-toggle
+							>
+
+							<button
+								*ngIf="!autoRefresh"
+								type="button"
+								(click)="smartTableSource.refresh()"
+								nbButton
+								status="success"
+							>
+								<nb-icon icon="refresh-outline"></nb-icon>
+								Refresh
 							</button>
 						</div>
 					</div>
@@ -135,127 +154,5 @@
 			(custom)="onCustom($event)"
 			[source]="smartTableSource"
 		></ng2-smart-table>
-
-		<!-- <div
-			class="row-table"
-			[nbSpinner]="loading"
-			nbSpinnerSize="giant"
-			nbSpinnerStatus="primary"
-		>
-			<div
-				class="row border-bottom border-top py-3 font-weight-bold align-items-center"
-			>
-				<div class="col-sm employee-name">
-					{{ 'JOBS.EMPLOYEE' | translate }}
-				</div>
-				<div class="col-sm">{{ 'JOBS.TITLE' | translate }}</div>
-				<div class="col-sm">{{ 'JOBS.DESCRIPTION' | translate }}</div>
-				<div class="col-sm-1">
-					{{ 'JOBS.CREATED_DATE' | translate }}
-				</div>
-				<div class="col-sm-1">{{ 'JOBS.STATUS' | translate }}</div>
-				<div class="col-sm-1 action">
-					{{ 'JOBS.ACTION' | translate }}
-				</div>
-			</div>
-			<ng-template [ngIf]="jobs?.length > 0" [ngIfElse]="notFound">
-				<div
-					class="row border-bottom py-3 align-items-center"
-					*ngFor="let job of jobs"
-				>
-					<div class="col-sm employee-name">
-						<div class="name-container">
-							<ngx-avatar
-								[name]="job?.employee?.user?.name"
-								[src]="job?.employee?.user?.imageUrl"
-							>
-							</ngx-avatar>
-						</div>
-					</div>
-					<div class="col-sm">{{ job?.jobPost?.title }}</div>
-					<div class="col-sm-3">{{ job?.jobPost?.description }}</div>
-					<div class="col-sm-1">
-						{{ job?.jobPost?.jobDateCreated | amDateFormat: 'LL' }}
-					</div>
-					<div class="col-sm-1">
-						{{ job?.jobPost?.jobStatus | titlecase }}
-					</div>
-					<div class="col-sm-1 action">
-						<div class="action-button">
-							<button
-								outline
-								nbButton
-								[nbPopover]="templateRef"
-								nbPopoverPlacement="bottom"
-							>
-								{{ 'JOBS.ACTION' | translate }}
-							</button>
-
-							<ng-template #templateRef>
-								<div class="menu-item">
-									<button
-										class="m-1"
-										(click)="redirectToView(job)"
-										nbButton
-										ghost
-										size="small"
-									>
-										{{ 'JOBS.VIEW' | translate }}
-									</button>
-								</div>
-								<div class="menu-item" *ngIf="!job?.isApplied">
-									<button
-										class="m-1"
-										(click)="redirectToView(job)"
-										nbButton
-										ghost
-										size="small"
-									>
-										{{ 'JOBS.APPLY' | translate }}
-									</button>
-								</div>
-								<div class="menu-item" *ngIf="job?.isApplied">
-									<button
-										class="m-1"
-										nbButton
-										ghost
-										size="small"
-									>
-										{{ 'JOBS.APPLIED' | translate }}
-									</button>
-								</div>
-								<div class="menu-item">
-									<button
-										class="m-1"
-										(click)="redirectToView(job)"
-										nbButton
-										ghost
-										size="small"
-									>
-										{{ 'JOBS.HIDE' | translate }}
-									</button>
-								</div>
-							</ng-template>
-						</div>
-					</div>
-				</div>
-			</ng-template>
-
-			<div class="row font-weight-bold py-3 align-items-center">
-				<div class="col text-center">
-					<button nbButton (click)="loadMore()">
-						{{ 'JOBS.LOAD_MORE' | translate }}
-					</button>
-				</div>
-			</div>
-
-			<ng-template #notFound>
-				<div class="row font-weight-bold py-3 align-items-center">
-					<div class="col text-center">
-						{{ 'JOBS.NO_JOBS' | translate }}
-					</div>
-				</div>
-			</ng-template>
-		</div> -->
 	</nb-card-body>
 </nb-card>

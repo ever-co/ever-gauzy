@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as moment from 'moment';
 import { Brackets, Repository } from 'typeorm';
+import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { Employee } from './employee.entity';
 
@@ -26,11 +27,15 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		);
 	}
 
-	async findAllActive() {
-		return await this.repository.find({
-			where: { isActive: true },
-			relations: ['user']
-		});
+	public async findAllActive(): Promise<Employee[]> {
+		const user = RequestContext.currentUser();
+
+		if (user && user.tenantId) {
+			return await this.repository.find({
+				where: { isActive: true, tenantId: user.tenantId },
+				relations: ['user']
+			});
+		}
 	}
 
 	/**

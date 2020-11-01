@@ -14,11 +14,12 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { AvatarComponent } from 'apps/gauzy/src/app/@shared/components/avatar/avatar.component';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { Nl2BrPipe } from 'apps/gauzy/src/app/@shared/pipes/text.pipe';
 import { StatusBadgeComponent } from 'apps/gauzy/src/app/@shared/status-badge/status-badge.component';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import * as moment from 'moment';
 import { ServerDataSource } from 'ng2-smart-table';
-import { Subject } from 'rxjs';
+import { Subject, Subscription, timer } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 
 @UntilDestroy()
@@ -31,6 +32,7 @@ export class SearchComponent
 	extends TranslationBaseComponent
 	implements OnInit {
 	loading = false;
+	autoRefresh = false;
 	settingsSmartTable: any = {
 		editable: false,
 		// pager: {
@@ -94,13 +96,15 @@ export class SearchComponent
 		pagerPageKey: 'page',
 		pagerLimitKey: 'limit'
 	});
+	autoRefreshTimer: Subscription;
 
 	constructor(
 		private http: HttpClient,
 		private store: Store,
 		public translateService: TranslateService,
-		public toastrService: ToastrService,
-		public jobService: JobService
+		private toastrService: ToastrService,
+		private jobService: JobService,
+		private nl2BrPipe: Nl2BrPipe
 	) {
 		super(translateService);
 	}
@@ -146,6 +150,20 @@ export class SearchComponent
 
 	applyFilter() {
 		this.updateJobs$.next();
+	}
+
+	setAutoRefresh(value) {
+		if (value) {
+			this.autoRefreshTimer = timer(0, 60000)
+				.pipe(untilDestroyed(this))
+				.subscribe(() => {
+					this.smartTableSource.refresh();
+				});
+		} else {
+			if (this.autoRefreshTimer) {
+				this.autoRefreshTimer.unsubscribe();
+			}
+		}
 	}
 
 	onCustom($event) {
@@ -219,11 +237,13 @@ export class SearchComponent
 				},
 				description: {
 					title: this.getTranslation('JOBS.DESCRIPTION'),
-					type: 'text',
+					type: 'html',
 					width: '30%',
 					filter: false,
 					valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
-						return row.jobPost.description;
+						return this.nl2BrPipe.transform(
+							row.jobPost.description
+						);
 					}
 				},
 				jobDateCreated: {

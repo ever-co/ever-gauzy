@@ -5,7 +5,6 @@ import { getRandomEmployeeJobPosts } from './employee-job.seed';
 import { GauzyAIService } from '@gauzy/integration-ai';
 import { Employee } from '../employee/employee.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import {
 	IApplyJobPostInput,
 	IEmployeeJobPost,
@@ -20,8 +19,6 @@ import { EmployeeService } from '../employee/employee.service';
 @Injectable()
 export class EmployeeJobPostService {
 	constructor(
-		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>,
 		private readonly employeeService: EmployeeService,
 		private readonly gauzyAIService: GauzyAIService
 	) {}
@@ -37,8 +34,7 @@ export class EmployeeJobPostService {
 	public async updateVisibility(
 		input: IVisibilityJobPostInput
 	): Promise<boolean> {
-		const { hide = true, employeeId, providerCode, providerJobId } = input;
-		return true;
+		return await this.gauzyAIService.updateVisibility(input);
 	}
 
 	/**
@@ -51,15 +47,7 @@ export class EmployeeJobPostService {
 	public async updateApplied(
 		input: IApplyJobPostInput
 	): Promise<IUpdateEmployeeJobPostAppliedResult> {
-		const {
-			applied = true,
-			employeeId,
-			providerCode,
-			providerJobId
-		} = input;
-		return {
-			isRedirectRequired: true
-		};
+		return await this.gauzyAIService.updateApplied(input);
 	}
 
 	/**
@@ -74,7 +62,7 @@ export class EmployeeJobPostService {
 		let jobs: IPagination<IEmployeeJobPost>;
 
 		if (env.gauzyAIGraphQLEndpoint) {
-			const result = await this.gauzyAIService.getEmployeesJobPosts();
+			const result = await this.gauzyAIService.getEmployeesJobPosts(data);
 
 			if (result === null) {
 				if (env.production) {
@@ -92,35 +80,20 @@ export class EmployeeJobPostService {
 					);
 				}
 			} else {
-				const jobsResponse = result.data.employeeJobPosts.edges;
+				const jobsConverted = result.items.map((jo) => {
+					if (jo.employeeId) {
+						const employee = employees.find(
+							(emp) => emp.id === jo.employeeId
+						);
+						jo.employee = employee;
+					}
 
-				const jobsConverted = await Promise.all(
-					jobsResponse.map(async (jo) => {
-						// TODO: here should be code to find one employee by j.employee.externalEmployeeId.
-						// But because that values come for now as null, we just use first employee for now
-						const employee = employees[0];
-
-						const j = jo.node;
-						const job = new EmployeeJobPost();
-
-						job.employee = employee;
-						job.employeeId = employee.id;
-
-						job.isApplied = j.isApplied;
-						job.appliedDate = j.appliedDate;
-
-						job.jobPostId = j.jobPost.id;
-						job.jobPost = <JobPost>j.jobPost;
-
-						return job;
-					})
-				);
-
-				// TODO: filter jobsConverted using data.page and data.limit
+					return jo;
+				});
 
 				jobs = {
 					items: jobsConverted,
-					total: jobsConverted.length
+					total: result.count
 				};
 			}
 		} else {
