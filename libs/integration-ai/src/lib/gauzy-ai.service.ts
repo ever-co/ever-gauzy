@@ -1,3 +1,4 @@
+// import * as _ from 'underscore';
 import { Injectable, Logger } from '@nestjs/common';
 import {
 	Employee,
@@ -37,43 +38,48 @@ export class GauzyAIService {
 	private readonly _logger = new Logger(GauzyAIService.name);
 	private _client: ApolloClient<NormalizedCacheObject>;
 
+	// For now, we disable Apollo client caching for all GraphQL queries and mutations
+	private readonly defaultOptions: DefaultOptions = {
+		watchQuery: {
+			fetchPolicy: 'no-cache',
+			errorPolicy: 'ignore'
+		},
+		query: {
+			fetchPolicy: 'no-cache',
+			errorPolicy: 'all'
+		},
+		mutate: {
+			fetchPolicy: 'no-cache',
+			errorPolicy: 'all'
+		}
+	};
+
+	private gauzyAIGraphQLEndpoint: string;
+
+	private initClient() {
+		this._client = new ApolloClient({
+			typeDefs: EmployeeJobPostsDocument,
+			link: new HttpLink({
+				// TODO: use endpoint from .env. We probably should inject settings into constructor for this.
+				uri: this.gauzyAIGraphQLEndpoint,
+				fetch
+			}),
+			cache: new InMemoryCache(),
+			defaultOptions: this.defaultOptions
+		});
+	}
+
 	constructor() {
 		try {
 			// TODO: read from constructor injected parameter (e.g. config service)
-			const gauzyAIGraphQLEndpoint =
-				process.env.GAUZY_AI_GRAPHQL_ENDPOINT;
+			this.gauzyAIGraphQLEndpoint = process.env.GAUZY_AI_GRAPHQL_ENDPOINT;
 
-			if (gauzyAIGraphQLEndpoint) {
+			if (this.gauzyAIGraphQLEndpoint) {
 				this._logger.log(
 					'Gauzy AI Endpoint configured in the environment'
 				);
 
-				// For now, we disable Apollo client caching for all GraphQL queries and mutations
-				const defaultOptions: DefaultOptions = {
-					watchQuery: {
-						fetchPolicy: 'no-cache',
-						errorPolicy: 'ignore'
-					},
-					query: {
-						fetchPolicy: 'no-cache',
-						errorPolicy: 'all'
-					},
-					mutate: {
-						fetchPolicy: 'no-cache',
-						errorPolicy: 'all'
-					}
-				};
-
-				this._client = new ApolloClient({
-					typeDefs: EmployeeJobPostsDocument,
-					link: new HttpLink({
-						// TODO: use endpoint from .env. We probably should inject settings into constructor for this.
-						uri: gauzyAIGraphQLEndpoint,
-						fetch
-					}),
-					cache: new InMemoryCache(),
-					defaultOptions
-				});
+				this.initClient();
 
 				const testConnectionQuery = async () => {
 					try {
@@ -193,7 +199,11 @@ export class GauzyAIService {
 					}
 				}
 			});
+
+			return true;
 		}
+
+		return false;
 	}
 
 	/**
@@ -804,7 +814,7 @@ export class GauzyAIService {
 				}
 			`;
 
-			const jobResponses: IEmployeeJobPost[] = [];
+			let jobResponses: IEmployeeJobPost[] = [];
 
 			let isContinue: boolean;
 			let after = '';
@@ -812,6 +822,9 @@ export class GauzyAIService {
 			const filter = {
 				isActive: {
 					is: true
+				},
+				isArchived: {
+					is: false
 				},
 				employeeId: undefined
 			};
@@ -876,6 +889,9 @@ export class GauzyAIService {
 					`Found ${jobsResponse.length} job records. IsContinue: ${isContinue}. After: ${after}`
 				);
 			} while (isContinue);
+
+			// Note: possible to do additional client side filtering like below:
+			// jobResponses = _.filter(jobResponses, (it) => it.isActive === true && it.isArchived === false);
 
 			const count = jobResponses.length;
 
