@@ -18,7 +18,7 @@ export default class Timerhandler {
 	notificationDesktop = new NotificationDesktop();
 	timeSlotStart = null;
 
-	async startTimer(setupWindow, knex, timeTrackerWindow) {
+	async startTimer(setupWindow, knex, timeTrackerWindow, timeLog) {
 		// store timer is start to electron-store
 		const appSetting = LocalStore.getStore('appSetting');
 		appSetting.timerStarted = true;
@@ -36,12 +36,8 @@ export default class Timerhandler {
 			created_at: moment(),
 			durations: 0,
 			projectid: ProjectInfo.projectId,
-			userId: appInfo.employeeId
-		});
-
-		setupWindow.webContents.send('time_toggle', {
-			...LocalStore.beforeRequestParams(),
-			timerId: this.lastTimer[0]
+			userId: appInfo.employeeId,
+			timeLogId: timeLog.id
 		});
 
 		this.intevalTimer = setInterval(() => {
@@ -62,6 +58,22 @@ export default class Timerhandler {
 					});
 
 					setupWindow.webContents.send('collect_afk', {
+						start: this.timeStart.utc().format(),
+						end: moment().utc().format(),
+						tpURL: ProjectInfo.aw.host,
+						tp: 'aw',
+						timerId: this.lastTimer[0]
+					});
+
+					setupWindow.webContents.send('collect_chrome_activities', {
+						start: this.timeStart.utc().format(),
+						end: moment().utc().format(),
+						tpURL: ProjectInfo.aw.host,
+						tp: 'aw',
+						timerId: this.lastTimer[0]
+					});
+
+					setupWindow.webContents.send('collect_firefox_activities', {
 						start: this.timeStart.utc().format(),
 						end: moment().utc().format(),
 						tpURL: ProjectInfo.aw.host,
@@ -99,8 +111,7 @@ export default class Timerhandler {
 
 	updateToggle(setupWindow, knex, isStop) {
 		const params: any = {
-			...LocalStore.beforeRequestParams(),
-			timerId: this.lastTimer[0]
+			...LocalStore.beforeRequestParams()
 		};
 		if (isStop) params.manualTimeSlot = true;
 		setupWindow.webContents.send('update_toggle_timer', params);
@@ -137,12 +148,13 @@ export default class Timerhandler {
 		// formating aw
 		awActivities = awActivities.map((item) => {
 			idsAw.push(item.id);
+			const dataParse = JSON.parse(item.data);
 			return {
-				title: JSON.parse(item.data).app,
+				title: dataParse.title || dataParse.app,
 				date: moment().format('YYYY-MM-DD'),
 				time: moment().utc().format('HH:mm:ss'),
 				duration: Math.floor(item.durations),
-				type: 'APP',
+				type: item.type,
 				taskId: userInfo.taskId,
 				projectId: userInfo.projectId,
 				organizationContactId: userInfo.organizationContactId,

@@ -144,7 +144,10 @@
 									type="text"
 									nbInput
 									fullWidth
-									[disabled]="appSetting.timerStarted"
+									[disabled]="
+										appSetting.timerStarted ||
+										config.isLocalServer
+									"
 									status="basic"
 								/>
 							</div>

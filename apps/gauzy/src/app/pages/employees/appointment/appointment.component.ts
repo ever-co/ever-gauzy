@@ -13,8 +13,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { Router } from '@angular/router';
-import { Subject } from 'rxjs';
-import { debounceTime, takeUntil } from 'rxjs/operators';
+import { debounceTime, filter, first } from 'rxjs/operators';
 import { EmployeeAppointmentService } from '../../../@core/services/employee-appointment.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
@@ -26,7 +25,6 @@ import {
 	IEventType,
 	IEmployee,
 	IAvailabilitySlot,
-	PermissionsEnum,
 	IOrganization
 } from '@gauzy/models';
 import { NbDialogService } from '@nebular/theme';
@@ -38,8 +36,9 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 import { AppointmentEmployeesService } from '../../../@core/services/appointment-employees.service';
 import { TimezoneSelectorComponent } from './timezone-selector/timezone-selector.component';
 import { TimeOffService } from '../../../@core/services/time-off.service';
-import { first } from 'rxjs/operators';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { convertLocalToTimezone } from '@gauzy/utils';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-appointment-calendar',
 	templateUrl: './appointment.component.html',
@@ -55,25 +54,23 @@ import { first } from 'rxjs/operators';
 export class AppointmentComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
 	organization: IOrganization;
 
-	@Input('showHeader')
+	@Input()
 	showHeader: boolean = true;
 
-	@Input('appointmentFormURL')
+	@Input()
 	appointmentFormURL: string;
 
-	@Input('employee')
+	@Input()
 	employee: IEmployee;
 
-	@Input('selectedEventType')
+	@Input()
 	selectedEventType: IEventType;
 
 	@ViewChild('calendar', { static: true })
 	calendarComponent: FullCalendarComponent;
 
-	hasEventTypesViewPermission: boolean = false;
 	selectedTimeZoneName = timezone.tz.guess();
 	selectedTimeZoneOffset = timezone.tz(this.selectedTimeZoneName).format('Z');
 	calendarOptions: CalendarOptions;
@@ -109,13 +106,67 @@ export class AppointmentComponent
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
+	}
 
+	ngOnInit(): void {
+		if (this.selectedEventType) {
+			this.allowedDuration =
+				this.selectedEventType.durationUnit === 'Day(s)'
+					? this.selectedEventType.duration * 24 * 60
+					: this.selectedEventType.durationUnit === 'Hour(s)'
+					? this.selectedEventType.duration * 60
+					: this.selectedEventType.duration * 1;
+		}
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
+			.subscribe((org) => {
+				if (org) {
+					this.organization = org;
+					this._selectedOrganizationId = org.id;
+					if (org.timeZone && !this.selectedEventType) {
+						this.selectedTimeZoneName = org.timeZone;
+						this.selectedTimeZoneOffset = timezone
+							.tz(org.timeZone)
+							.format('Z');
+					}
+				}
+			});
+		this.store.selectedEmployee$
+			.pipe(
+				filter((employee) => !!employee),
+				untilDestroyed(this),
+				debounceTime(500)
+			)
+			.subscribe((employee) => {
+				if (employee && employee.id) {
+					this._selectedEmployeeId = employee.id;
+					this.renderAppointmentsAndSlots(this._selectedEmployeeId);
+				} else {
+					this._selectedEmployeeId = null;
+					this.calendarEvents = [];
+					this.renderAppointmentsAndSlots(null);
+					if (this.calendarComponent.getApi()) {
+						this.calendarComponent.getApi().refetchEvents();
+					}
+				}
+			});
+
+		// only call in case of public appointment booking
+		if (this.employee && this.employee.id && this.selectedEventType) {
+			this.renderAppointmentsAndSlots(this.employee.id);
+		}
+
+		this.getCalendarOption();
+	}
+
+	async getCalendarOption() {
 		let currentDay = moment().day();
-
 		while (currentDay > 0) {
 			this.hiddenDays.push(currentDay--);
 		}
-
 		this.calendarOptions = {
 			eventClick: (event) => {
 				const eventObject = event.event;
@@ -190,62 +241,6 @@ export class AppointmentComponent
 		};
 	}
 
-	ngOnInit(): void {
-		this.hasEventTypesViewPermission = this.store.hasPermission(
-			PermissionsEnum.EVENT_TYPES_VIEW
-		);
-
-		if (this.selectedEventType) {
-			this.allowedDuration =
-				this.selectedEventType.durationUnit === 'Day(s)'
-					? this.selectedEventType.duration * 24 * 60
-					: this.selectedEventType.durationUnit === 'Hour(s)'
-					? this.selectedEventType.duration * 60
-					: this.selectedEventType.duration * 1;
-		}
-
-		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((org) => {
-				if (org) {
-					this.organization = org;
-					this._selectedOrganizationId = org.id;
-					if (org.timeZone && !this.selectedEventType) {
-						this.selectedTimeZoneName = org.timeZone;
-						this.selectedTimeZoneOffset = timezone
-							.tz(org.timeZone)
-							.format('Z');
-						const calendarApi = this.calendarComponent.getApi();
-						calendarApi &&
-							calendarApi.setOption(
-								'timeZone',
-								this.selectedTimeZoneName
-							);
-					}
-				}
-			});
-
-		this.store.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$), debounceTime(500))
-			.subscribe((employee) => {
-				if (employee && employee.id) {
-					this._selectedEmployeeId = employee.id;
-					this.renderAppointmentsAndSlots(this._selectedEmployeeId);
-				} else {
-					this._selectedEmployeeId = null;
-					this.calendarEvents = [];
-					this.renderAppointmentsAndSlots(null);
-					this.calendarComponent.getApi() &&
-						this.calendarComponent.getApi().refetchEvents();
-				}
-			});
-
-		// only call in case of public appointment booking
-		if (this.employee && this.employee.id && this.selectedEventType) {
-			this.renderAppointmentsAndSlots(this.employee.id);
-		}
-	}
-
 	async fetchTimeOff() {
 		const data = await this.timeOffService
 			.getAllTimeOffRecords(['employees', 'employees.user'], {
@@ -271,30 +266,27 @@ export class AppointmentComponent
 	}
 
 	renderAppointmentsAndSlots(employeeId: string) {
+		const { tenantId } = this.store.user;
 		const findObj = {
 			status: null,
 			organizationId: this.organization.id,
-			tenantId: this.organization.tenantId,
+			tenantId,
 			employeeId: employeeId || null
 		};
 
 		this.employeeAppointmentService
 			.getAll(['employee', 'employee.user'], findObj)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(async (appointments) => {
 				this.calendarEvents = [];
 				this.calendarComponent.getApi().refetchEvents();
-
 				this.appointments = appointments.items;
 				await this.fetchTimeOff();
 				this.renderBookedAppointments(this.appointments);
-				employeeId &&
-					(await this.fetchEmployeeAppointments(employeeId));
-
+				if (employeeId) {
+					await this.fetchEmployeeAppointments(employeeId);
+				}
 				await this._fetchAvailableSlots(employeeId);
-				this.calendarComponent
-					.getApi()
-					.setOption('timeZone', this.selectedTimeZoneName);
 			});
 	}
 
@@ -302,7 +294,7 @@ export class AppointmentComponent
 	async fetchEmployeeAppointments(employeeId: string) {
 		const employeeAppointments = await this.appointmentEmployeesService
 			.findEmployeeAppointments(employeeId)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.toPromise();
 
 		this.renderBookedAppointments(
@@ -477,19 +469,38 @@ export class AppointmentComponent
 			)
 		)
 			return;
+
 		const durationCheck = type === 'AvailabilitySlot' ? true : false;
-		!this.calendarEvents.find(
+		const find = this.calendarEvents.find(
 			(o) =>
 				new Date(o.start.toString()).getTime() ===
 					new Date(startTime).getTime() &&
 				new Date(o.end.toString()).getTime() ===
 					new Date(endTime).getTime()
-		) &&
-			(!durationCheck ||
-				this._selectedEmployeeId ||
-				this._selectedOrganizationId ||
-				moment(endTime).diff(moment(startTime), 'minutes') >=
-					this.allowedDuration) &&
+		);
+		const allowedDuration =
+			moment(endTime).diff(moment(startTime), 'minutes') >=
+			this.allowedDuration;
+		if (
+			!find ||
+			!durationCheck ||
+			this._selectedEmployeeId ||
+			this._selectedOrganizationId ||
+			allowedDuration
+		) {
+			const startDate = moment(
+				convertLocalToTimezone(
+					startTime,
+					null,
+					this.selectedTimeZoneName
+				)
+			).format('YYYY-MM-DD hh:mm:ss');
+			const endDate = moment(
+				convertLocalToTimezone(endTime, null, this.selectedTimeZoneName)
+			).format('YYYY-MM-DD hh:mm:ss');
+
+			console.log(startDate, endDate);
+
 			this.calendarEvents.push({
 				start: new Date(startTime),
 				end: new Date(endTime),
@@ -499,6 +510,7 @@ export class AppointmentComponent
 				},
 				backgroundColor: durationCheck ? 'green' : 'red'
 			});
+		}
 	}
 
 	getAvailabilitySlots(slot: IAvailabilitySlot) {
@@ -573,14 +585,14 @@ export class AppointmentComponent
 				}
 			}
 		}
-
-		appointmentsOnDay.length === 0 &&
+		if (appointmentsOnDay.length === 0) {
 			this.checkAndAddEventToCalendar(
 				moment(slot.startTime).utc().format(),
 				moment(slot.endTime).utc().format(),
 				slot.id,
 				'AvailabilitySlot'
 			);
+		}
 	}
 
 	private _prepareEvent(appointment: IEmployeeAppointment) {
@@ -628,7 +640,7 @@ export class AppointmentComponent
 		}
 
 		if (appointment.breakTimeInMins) {
-			let breakEventStartTime = new Date(appointment.breakStartTime);
+			const breakEventStartTime = new Date(appointment.breakStartTime);
 			this.calendarEvents.push({
 				title: appointment.agenda,
 				start: eventStartTime,
@@ -638,7 +650,7 @@ export class AppointmentComponent
 				}
 			});
 
-			let afterBreakStartTime = new Date(
+			const afterBreakStartTime = new Date(
 				moment(breakEventStartTime)
 					.add(
 						appointment.breakTimeInMins as moment.DurationInputArg1,
@@ -682,26 +694,39 @@ export class AppointmentComponent
 					selectedTimezone: this.selectedTimeZoneName
 				}
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (data) => {
 				if (data) {
 					this.selectedTimeZoneName = data;
 					this.selectedTimeZoneOffset = timezone.tz(data).format('Z');
-					this.calendarComponent
-						.getApi()
-						.setOption('timeZone', this.selectedTimeZoneName);
+					this.setCalenderTimezone(this.selectedTimeZoneName);
 				}
 			});
 	}
 
 	markUnavailability() {}
 
+	/*
+	 * Set calender timezone option
+	 */
+	setCalenderTimezone(timeZone: string) {
+		if (this.calendarComponent) {
+			if (this._selectedEmployeeId) {
+				this.renderAppointmentsAndSlots(this._selectedEmployeeId);
+			} else {
+				this._selectedEmployeeId = null;
+				this.calendarEvents = [];
+				this.renderAppointmentsAndSlots(null);
+				if (this.calendarComponent.getApi()) {
+					this.calendarComponent.getApi().refetchEvents();
+				}
+			}
+		}
+	}
+
 	manageAppointments() {
 		this.router.navigate([this.getManageRoute()]);
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

@@ -19,7 +19,8 @@ const Modules = [NgxPermissionsModule, BackNavigationModule];
 		...Components,
 		...Modules,
 		...Directives
-	]
+	],
+	providers: [...Pipes]
 })
 export class SharedModule {
 	static forRoot(): ModuleWithProviders<SharedModule> {

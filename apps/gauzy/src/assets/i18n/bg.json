@@ -1272,7 +1272,9 @@
 			"ORG_PROJECT_EDIT": "Create/Edit Projects",
 			"ORG_CONTACT_EDIT": "Create/Edit Contacts",
 			"ORG_TEAM_EDIT": "Create/Edit Teams",
-			"ORG_CONTRACT_EDIT": "Create/Edit Contracts"
+			"ORG_CONTRACT_EDIT": "Create/Edit Contracts",
+			"TIME_TRACKER": "Access Time Tracker",
+			"TENANT_ADD_EXISTING_USER": "Tenant Add User To Organization"
 		}
 	},
 	"CONTACTS_PAGE": {
@@ -1627,14 +1629,16 @@
 		"SOURCE": "Source",
 		"PRESET": "Preset",
 		"KEYWORDS": "Keywords",
-		"CATEGORIES": "Categories",
-		"OCCUPATIONS": "Occupations",
+		"CATEGORY": "Категория",
+		"OCCUPATION": "Occupation",
 		"ADD_NEW_CRITERIONS": "Add New",
 		"FIX_PRICE": "Fix Price",
 		"HOURLY": "Hourly",
 		"SAVE": "Запази",
 		"DELETE": "Изтрий",
-		"CRITERIONS": "Criterions"
+		"CRITERIONS": "Criterions",
+		"DELETE_CRITERION_MESSAGE": "Are you sure that, you want to delete criterion",
+		"SAVE_PRESET_MESSAGE": "Criterions will save for job preset. Are you sure you want to save?"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Sprint added",

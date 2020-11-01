@@ -283,9 +283,12 @@ export type JobPostCountAggregate = {
 	id?: Maybe<Scalars['Int']>;
 	providerCode?: Maybe<Scalars['Int']>;
 	providerJobId?: Maybe<Scalars['Int']>;
+	jobDateCreated?: Maybe<Scalars['Int']>;
 	jobStatus?: Maybe<Scalars['Int']>;
 	jobType?: Maybe<Scalars['Int']>;
 	country?: Maybe<Scalars['Int']>;
+	createdAt?: Maybe<Scalars['Int']>;
+	updatedAt?: Maybe<Scalars['Int']>;
 	isActive?: Maybe<Scalars['Int']>;
 	isArchived?: Maybe<Scalars['Int']>;
 };
@@ -295,9 +298,12 @@ export type JobPostMinAggregate = {
 	id?: Maybe<Scalars['ID']>;
 	providerCode?: Maybe<Scalars['String']>;
 	providerJobId?: Maybe<Scalars['String']>;
+	jobDateCreated?: Maybe<Scalars['DateTime']>;
 	jobStatus?: Maybe<Scalars['String']>;
 	jobType?: Maybe<Scalars['String']>;
 	country?: Maybe<Scalars['String']>;
+	createdAt?: Maybe<Scalars['DateTime']>;
+	updatedAt?: Maybe<Scalars['DateTime']>;
 };
 
 export type JobPostMaxAggregate = {
@@ -305,9 +311,12 @@ export type JobPostMaxAggregate = {
 	id?: Maybe<Scalars['ID']>;
 	providerCode?: Maybe<Scalars['String']>;
 	providerJobId?: Maybe<Scalars['String']>;
+	jobDateCreated?: Maybe<Scalars['DateTime']>;
 	jobStatus?: Maybe<Scalars['String']>;
 	jobType?: Maybe<Scalars['String']>;
 	country?: Maybe<Scalars['String']>;
+	createdAt?: Maybe<Scalars['DateTime']>;
+	updatedAt?: Maybe<Scalars['DateTime']>;
 };
 
 export type JobPostAggregateResponse = {
@@ -420,6 +429,8 @@ export type EmployeeCountAggregate = {
 	firstName?: Maybe<Scalars['Int']>;
 	lastName?: Maybe<Scalars['Int']>;
 	jobType?: Maybe<Scalars['Int']>;
+	createdAt?: Maybe<Scalars['Int']>;
+	updatedAt?: Maybe<Scalars['Int']>;
 	isActive?: Maybe<Scalars['Int']>;
 	isArchived?: Maybe<Scalars['Int']>;
 };
@@ -431,6 +442,8 @@ export type EmployeeMinAggregate = {
 	firstName?: Maybe<Scalars['String']>;
 	lastName?: Maybe<Scalars['String']>;
 	jobType?: Maybe<Scalars['String']>;
+	createdAt?: Maybe<Scalars['DateTime']>;
+	updatedAt?: Maybe<Scalars['DateTime']>;
 };
 
 export type EmployeeMaxAggregate = {
@@ -440,6 +453,8 @@ export type EmployeeMaxAggregate = {
 	firstName?: Maybe<Scalars['String']>;
 	lastName?: Maybe<Scalars['String']>;
 	jobType?: Maybe<Scalars['String']>;
+	createdAt?: Maybe<Scalars['DateTime']>;
+	updatedAt?: Maybe<Scalars['DateTime']>;
 };
 
 export type EmployeeAggregateResponse = {
@@ -516,6 +531,9 @@ export type EmployeeJobPostCountAggregate = {
 	employeeId?: Maybe<Scalars['Int']>;
 	jobPostId?: Maybe<Scalars['Int']>;
 	isApplied?: Maybe<Scalars['Int']>;
+	appliedDate?: Maybe<Scalars['Int']>;
+	createdAt?: Maybe<Scalars['Int']>;
+	updatedAt?: Maybe<Scalars['Int']>;
 	isActive?: Maybe<Scalars['Int']>;
 	isArchived?: Maybe<Scalars['Int']>;
 };
@@ -525,6 +543,9 @@ export type EmployeeJobPostMinAggregate = {
 	id?: Maybe<Scalars['ID']>;
 	employeeId?: Maybe<Scalars['String']>;
 	jobPostId?: Maybe<Scalars['String']>;
+	appliedDate?: Maybe<Scalars['DateTime']>;
+	createdAt?: Maybe<Scalars['DateTime']>;
+	updatedAt?: Maybe<Scalars['DateTime']>;
 };
 
 export type EmployeeJobPostMaxAggregate = {
@@ -532,6 +553,9 @@ export type EmployeeJobPostMaxAggregate = {
 	id?: Maybe<Scalars['ID']>;
 	employeeId?: Maybe<Scalars['String']>;
 	jobPostId?: Maybe<Scalars['String']>;
+	appliedDate?: Maybe<Scalars['DateTime']>;
+	createdAt?: Maybe<Scalars['DateTime']>;
+	updatedAt?: Maybe<Scalars['DateTime']>;
 };
 
 export type EmployeeJobPostAggregateResponse = {
@@ -630,11 +654,34 @@ export type JobPostFilter = {
 	id?: Maybe<IdFilterComparison>;
 	providerCode?: Maybe<StringFieldComparison>;
 	providerJobId?: Maybe<StringFieldComparison>;
+	jobDateCreated?: Maybe<DateFieldComparison>;
 	jobStatus?: Maybe<StringFieldComparison>;
 	jobType?: Maybe<StringFieldComparison>;
 	country?: Maybe<StringFieldComparison>;
+	createdAt?: Maybe<DateFieldComparison>;
+	updatedAt?: Maybe<DateFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
+};
+
+export type DateFieldComparison = {
+	is?: Maybe<Scalars['Boolean']>;
+	isNot?: Maybe<Scalars['Boolean']>;
+	eq?: Maybe<Scalars['DateTime']>;
+	neq?: Maybe<Scalars['DateTime']>;
+	gt?: Maybe<Scalars['DateTime']>;
+	gte?: Maybe<Scalars['DateTime']>;
+	lt?: Maybe<Scalars['DateTime']>;
+	lte?: Maybe<Scalars['DateTime']>;
+	in?: Maybe<Array<Scalars['DateTime']>>;
+	notIn?: Maybe<Array<Scalars['DateTime']>>;
+	between?: Maybe<DateFieldComparisonBetween>;
+	notBetween?: Maybe<DateFieldComparisonBetween>;
+};
+
+export type DateFieldComparisonBetween = {
+	lower: Scalars['DateTime'];
+	upper: Scalars['DateTime'];
 };
 
 export type JobPostSort = {
@@ -647,9 +694,12 @@ export enum JobPostSortFields {
 	Id = 'id',
 	ProviderCode = 'providerCode',
 	ProviderJobId = 'providerJobId',
+	JobDateCreated = 'jobDateCreated',
 	JobStatus = 'jobStatus',
 	JobType = 'jobType',
 	Country = 'country',
+	CreatedAt = 'createdAt',
+	UpdatedAt = 'updatedAt',
 	IsActive = 'isActive',
 	IsArchived = 'isArchived'
 }
@@ -660,9 +710,12 @@ export type JobPostAggregateFilter = {
 	id?: Maybe<IdFilterComparison>;
 	providerCode?: Maybe<StringFieldComparison>;
 	providerJobId?: Maybe<StringFieldComparison>;
+	jobDateCreated?: Maybe<DateFieldComparison>;
 	jobStatus?: Maybe<StringFieldComparison>;
 	jobType?: Maybe<StringFieldComparison>;
 	country?: Maybe<StringFieldComparison>;
+	createdAt?: Maybe<DateFieldComparison>;
+	updatedAt?: Maybe<DateFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 };
@@ -675,6 +728,8 @@ export type EmployeeFilter = {
 	firstName?: Maybe<StringFieldComparison>;
 	lastName?: Maybe<StringFieldComparison>;
 	jobType?: Maybe<StringFieldComparison>;
+	createdAt?: Maybe<DateFieldComparison>;
+	updatedAt?: Maybe<DateFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 };
@@ -691,6 +746,8 @@ export enum EmployeeSortFields {
 	FirstName = 'firstName',
 	LastName = 'lastName',
 	JobType = 'jobType',
+	CreatedAt = 'createdAt',
+	UpdatedAt = 'updatedAt',
 	IsActive = 'isActive',
 	IsArchived = 'isArchived'
 }
@@ -703,6 +760,8 @@ export type EmployeeAggregateFilter = {
 	firstName?: Maybe<StringFieldComparison>;
 	lastName?: Maybe<StringFieldComparison>;
 	jobType?: Maybe<StringFieldComparison>;
+	createdAt?: Maybe<DateFieldComparison>;
+	updatedAt?: Maybe<DateFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 };
@@ -714,6 +773,41 @@ export type EmployeeJobPostFilter = {
 	employeeId?: Maybe<StringFieldComparison>;
 	jobPostId?: Maybe<StringFieldComparison>;
 	isApplied?: Maybe<BooleanFieldComparison>;
+	appliedDate?: Maybe<DateFieldComparison>;
+	createdAt?: Maybe<DateFieldComparison>;
+	updatedAt?: Maybe<DateFieldComparison>;
+	isActive?: Maybe<BooleanFieldComparison>;
+	isArchived?: Maybe<BooleanFieldComparison>;
+	jobPost?: Maybe<EmployeeJobPostFilterJobPostFilter>;
+	employee?: Maybe<EmployeeJobPostFilterEmployeeFilter>;
+};
+
+export type EmployeeJobPostFilterJobPostFilter = {
+	and?: Maybe<Array<EmployeeJobPostFilterJobPostFilter>>;
+	or?: Maybe<Array<EmployeeJobPostFilterJobPostFilter>>;
+	id?: Maybe<IdFilterComparison>;
+	providerCode?: Maybe<StringFieldComparison>;
+	providerJobId?: Maybe<StringFieldComparison>;
+	jobDateCreated?: Maybe<DateFieldComparison>;
+	jobStatus?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
+	country?: Maybe<StringFieldComparison>;
+	createdAt?: Maybe<DateFieldComparison>;
+	updatedAt?: Maybe<DateFieldComparison>;
+	isActive?: Maybe<BooleanFieldComparison>;
+	isArchived?: Maybe<BooleanFieldComparison>;
+};
+
+export type EmployeeJobPostFilterEmployeeFilter = {
+	and?: Maybe<Array<EmployeeJobPostFilterEmployeeFilter>>;
+	or?: Maybe<Array<EmployeeJobPostFilterEmployeeFilter>>;
+	id?: Maybe<IdFilterComparison>;
+	externalEmployeeId?: Maybe<StringFieldComparison>;
+	firstName?: Maybe<StringFieldComparison>;
+	lastName?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
+	createdAt?: Maybe<DateFieldComparison>;
+	updatedAt?: Maybe<DateFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 };
@@ -729,6 +823,9 @@ export enum EmployeeJobPostSortFields {
 	EmployeeId = 'employeeId',
 	JobPostId = 'jobPostId',
 	IsApplied = 'isApplied',
+	AppliedDate = 'appliedDate',
+	CreatedAt = 'createdAt',
+	UpdatedAt = 'updatedAt',
 	IsActive = 'isActive',
 	IsArchived = 'isArchived'
 }
@@ -740,6 +837,9 @@ export type EmployeeJobPostAggregateFilter = {
 	employeeId?: Maybe<StringFieldComparison>;
 	jobPostId?: Maybe<StringFieldComparison>;
 	isApplied?: Maybe<BooleanFieldComparison>;
+	appliedDate?: Maybe<DateFieldComparison>;
+	createdAt?: Maybe<DateFieldComparison>;
+	updatedAt?: Maybe<DateFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 };
@@ -924,9 +1024,12 @@ export type JobPostDeleteFilter = {
 	id?: Maybe<IdFilterComparison>;
 	providerCode?: Maybe<StringFieldComparison>;
 	providerJobId?: Maybe<StringFieldComparison>;
+	jobDateCreated?: Maybe<DateFieldComparison>;
 	jobStatus?: Maybe<StringFieldComparison>;
 	jobType?: Maybe<StringFieldComparison>;
 	country?: Maybe<StringFieldComparison>;
+	createdAt?: Maybe<DateFieldComparison>;
+	updatedAt?: Maybe<DateFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 };
@@ -985,9 +1088,12 @@ export type JobPostUpdateFilter = {
 	id?: Maybe<IdFilterComparison>;
 	providerCode?: Maybe<StringFieldComparison>;
 	providerJobId?: Maybe<StringFieldComparison>;
+	jobDateCreated?: Maybe<DateFieldComparison>;
 	jobStatus?: Maybe<StringFieldComparison>;
 	jobType?: Maybe<StringFieldComparison>;
 	country?: Maybe<StringFieldComparison>;
+	createdAt?: Maybe<DateFieldComparison>;
+	updatedAt?: Maybe<DateFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 };
@@ -1135,6 +1241,8 @@ export type EmployeeDeleteFilter = {
 	firstName?: Maybe<StringFieldComparison>;
 	lastName?: Maybe<StringFieldComparison>;
 	jobType?: Maybe<StringFieldComparison>;
+	createdAt?: Maybe<DateFieldComparison>;
+	updatedAt?: Maybe<DateFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 };
@@ -1174,6 +1282,8 @@ export type EmployeeUpdateFilter = {
 	firstName?: Maybe<StringFieldComparison>;
 	lastName?: Maybe<StringFieldComparison>;
 	jobType?: Maybe<StringFieldComparison>;
+	createdAt?: Maybe<DateFieldComparison>;
+	updatedAt?: Maybe<DateFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 };
@@ -1220,6 +1330,9 @@ export type EmployeeJobPostDeleteFilter = {
 	employeeId?: Maybe<StringFieldComparison>;
 	jobPostId?: Maybe<StringFieldComparison>;
 	isApplied?: Maybe<BooleanFieldComparison>;
+	appliedDate?: Maybe<DateFieldComparison>;
+	createdAt?: Maybe<DateFieldComparison>;
+	updatedAt?: Maybe<DateFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 };
@@ -1257,6 +1370,9 @@ export type EmployeeJobPostUpdateFilter = {
 	employeeId?: Maybe<StringFieldComparison>;
 	jobPostId?: Maybe<StringFieldComparison>;
 	isApplied?: Maybe<BooleanFieldComparison>;
+	appliedDate?: Maybe<DateFieldComparison>;
+	createdAt?: Maybe<DateFieldComparison>;
+	updatedAt?: Maybe<DateFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 };
@@ -1366,9 +1482,12 @@ export type JobPostSubscriptionFilter = {
 	id?: Maybe<IdFilterComparison>;
 	providerCode?: Maybe<StringFieldComparison>;
 	providerJobId?: Maybe<StringFieldComparison>;
+	jobDateCreated?: Maybe<DateFieldComparison>;
 	jobStatus?: Maybe<StringFieldComparison>;
 	jobType?: Maybe<StringFieldComparison>;
 	country?: Maybe<StringFieldComparison>;
+	createdAt?: Maybe<DateFieldComparison>;
+	updatedAt?: Maybe<DateFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 };
@@ -1421,6 +1540,8 @@ export type EmployeeSubscriptionFilter = {
 	firstName?: Maybe<StringFieldComparison>;
 	lastName?: Maybe<StringFieldComparison>;
 	jobType?: Maybe<StringFieldComparison>;
+	createdAt?: Maybe<DateFieldComparison>;
+	updatedAt?: Maybe<DateFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 };
@@ -1447,6 +1568,9 @@ export type EmployeeJobPostSubscriptionFilter = {
 	employeeId?: Maybe<StringFieldComparison>;
 	jobPostId?: Maybe<StringFieldComparison>;
 	isApplied?: Maybe<BooleanFieldComparison>;
+	appliedDate?: Maybe<DateFieldComparison>;
+	createdAt?: Maybe<DateFieldComparison>;
+	updatedAt?: Maybe<DateFieldComparison>;
 	isActive?: Maybe<BooleanFieldComparison>;
 	isArchived?: Maybe<BooleanFieldComparison>;
 };
@@ -1461,45 +1585,83 @@ export type CreateEmployeeJobPostSubscriptionFilterInput = {
 	filter: EmployeeJobPostSubscriptionFilter;
 };
 
-export type EmployeeJobPostsQueryVariables = Exact<{ [key: string]: never }>;
+export type EmployeeJobPostsQueryVariables = Exact<{
+	after: Scalars['ConnectionCursor'];
+	first: Scalars['Int'];
+	filter: EmployeeJobPostFilter;
+	sorting?: Maybe<Array<EmployeeJobPostSort>>;
+}>;
 
 export type EmployeeJobPostsQuery = { __typename?: 'Query' } & {
+	employeeJobPosts: { __typename?: 'EmployeeJobPostConnection' } & Pick<
+		EmployeeJobPostConnection,
+		'totalCount'
+	> & {
+			pageInfo: { __typename?: 'PageInfo' } & Pick<
+				PageInfo,
+				'hasNextPage' | 'hasPreviousPage' | 'startCursor' | 'endCursor'
+			>;
+			edges: Array<
+				{ __typename?: 'EmployeeJobPostEdge' } & {
+					node: { __typename?: 'EmployeeJobPost' } & Pick<
+						EmployeeJobPost,
+						| 'id'
+						| 'isApplied'
+						| 'appliedDate'
+						| 'createdAt'
+						| 'updatedAt'
+						| 'isActive'
+						| 'isArchived'
+					> & {
+							employee: { __typename?: 'Employee' } & Pick<
+								Employee,
+								'id' | 'externalEmployeeId'
+							>;
+							jobPost: { __typename?: 'JobPost' } & Pick<
+								JobPost,
+								| 'id'
+								| 'providerCode'
+								| 'providerJobId'
+								| 'title'
+								| 'description'
+								| 'jobDateCreated'
+								| 'jobStatus'
+								| 'jobType'
+								| 'url'
+								| 'budget'
+								| 'duration'
+								| 'workload'
+								| 'skills'
+								| 'category'
+								| 'subcategory'
+								| 'country'
+								| 'clientFeedback'
+								| 'clientReviewsCount'
+								| 'clientJobsPosted'
+								| 'clientPastHires'
+								| 'clientPaymentVerificationStatus'
+							>;
+						};
+				}
+			>;
+		};
+};
+
+export type EmployeeJobPostsByEmployeeIdJobPostIdQueryVariables = Exact<{
+	employeeIdFilter: Scalars['String'];
+	jobPostIdFilter: Scalars['String'];
+}>;
+
+export type EmployeeJobPostsByEmployeeIdJobPostIdQuery = {
+	__typename?: 'Query';
+} & {
 	employeeJobPosts: { __typename?: 'EmployeeJobPostConnection' } & {
 		edges: Array<
 			{ __typename?: 'EmployeeJobPostEdge' } & {
 				node: { __typename?: 'EmployeeJobPost' } & Pick<
 					EmployeeJobPost,
-					'id' | 'isApplied' | 'appliedDate'
-				> & {
-						employee: { __typename?: 'Employee' } & Pick<
-							Employee,
-							'externalEmployeeId'
-						>;
-						jobPost: { __typename?: 'JobPost' } & Pick<
-							JobPost,
-							| 'id'
-							| 'providerCode'
-							| 'providerJobId'
-							| 'title'
-							| 'description'
-							| 'jobDateCreated'
-							| 'jobStatus'
-							| 'jobType'
-							| 'url'
-							| 'budget'
-							| 'duration'
-							| 'workload'
-							| 'skills'
-							| 'category'
-							| 'subcategory'
-							| 'country'
-							| 'clientFeedback'
-							| 'clientReviewsCount'
-							| 'clientJobsPosted'
-							| 'clientPastHires'
-							| 'clientPaymentVerificationStatus'
-						>;
-					};
+					'id' | 'isActive' | 'isArchived'
+				>;
 			}
 		>;
 	};
@@ -1509,11 +1671,132 @@ export type EmployeeQueryVariables = Exact<{ [key: string]: never }>;
 
 export type EmployeeQuery = { __typename?: 'Query' } & {
 	employees: { __typename?: 'EmployeeConnection' } & {
+		pageInfo: { __typename?: 'PageInfo' } & Pick<
+			PageInfo,
+			'hasNextPage' | 'hasPreviousPage' | 'startCursor' | 'endCursor'
+		>;
 		edges: Array<
 			{ __typename?: 'EmployeeEdge' } & {
 				node: { __typename?: 'Employee' } & Pick<
 					Employee,
 					'id' | 'externalEmployeeId' | 'firstName' | 'lastName'
+				>;
+			}
+		>;
+	};
+};
+
+export type EmployeeByExternalEmployeeIdQueryVariables = Exact<{
+	externalEmployeeIdFilter: Scalars['String'];
+}>;
+
+export type EmployeeByExternalEmployeeIdQuery = { __typename?: 'Query' } & {
+	employees: { __typename?: 'EmployeeConnection' } & Pick<
+		EmployeeConnection,
+		'totalCount'
+	> & {
+			edges: Array<
+				{ __typename?: 'EmployeeEdge' } & {
+					node: { __typename?: 'Employee' } & Pick<
+						Employee,
+						'id' | 'externalEmployeeId'
+					>;
+				}
+			>;
+		};
+};
+
+export type EmployeeByNameQueryVariables = Exact<{
+	firstNameFilter: Scalars['String'];
+	lastNameFilter: Scalars['String'];
+}>;
+
+export type EmployeeByNameQuery = { __typename?: 'Query' } & {
+	employees: { __typename?: 'EmployeeConnection' } & Pick<
+		EmployeeConnection,
+		'totalCount'
+	> & {
+			edges: Array<
+				{ __typename?: 'EmployeeEdge' } & {
+					node: { __typename?: 'Employee' } & Pick<
+						Employee,
+						'id' | 'firstName' | 'lastName' | 'externalEmployeeId'
+					>;
+				}
+			>;
+		};
+};
+
+export type UpdateOneEmployeeMutationVariables = Exact<{
+	input: UpdateOneEmployeeInput;
+}>;
+
+export type UpdateOneEmployeeMutation = { __typename?: 'Mutation' } & {
+	updateOneEmployee: { __typename?: 'Employee' } & Pick<
+		Employee,
+		| 'externalEmployeeId'
+		| 'isActive'
+		| 'isArchived'
+		| 'firstName'
+		| 'lastName'
+	>;
+};
+
+export type UpdateOneEmployeeJobPostMutationVariables = Exact<{
+	input: UpdateOneEmployeeJobPostInput;
+}>;
+
+export type UpdateOneEmployeeJobPostMutation = { __typename?: 'Mutation' } & {
+	updateOneEmployeeJobPost: { __typename?: 'EmployeeJobPost' } & Pick<
+		EmployeeJobPost,
+		| 'employeeId'
+		| 'jobPostId'
+		| 'isActive'
+		| 'isArchived'
+		| 'isApplied'
+		| 'appliedDate'
+	>;
+};
+
+export type DeleteManyUpworkJobsSearchCriteriaMutationVariables = Exact<{
+	input: DeleteManyUpworkJobsSearchCriteriaInput;
+}>;
+
+export type DeleteManyUpworkJobsSearchCriteriaMutation = {
+	__typename?: 'Mutation';
+} & {
+	deleteManyUpworkJobsSearchCriteria: {
+		__typename?: 'DeleteManyResponse';
+	} & Pick<DeleteManyResponse, 'deletedCount'>;
+};
+
+export type CreateManyUpworkJobsSearchCriteriaMutationVariables = Exact<{
+	input: CreateManyUpworkJobsSearchCriteriaInput;
+}>;
+
+export type CreateManyUpworkJobsSearchCriteriaMutation = {
+	__typename?: 'Mutation';
+} & {
+	createManyUpworkJobsSearchCriteria: Array<
+		{ __typename?: 'UpworkJobsSearchCriterion' } & Pick<
+			UpworkJobsSearchCriterion,
+			'id'
+		>
+	>;
+};
+
+export type JobPostsQueryVariables = Exact<{
+	providerCodeFilter: Scalars['String'];
+	providerJobIdFilter: Scalars['String'];
+}>;
+
+export type JobPostsQuery = { __typename?: 'Query' } & {
+	jobPosts: { __typename?: 'JobPostConnection' } & {
+		edges: Array<
+			{ __typename?: 'JobPostEdge' } & {
+				node: { __typename?: 'JobPost' } & Pick<
+					JobPost,
+					'id' | 'isActive' | 'isArchived'
 				>;
 			}
 		>;
@@ -1530,7 +1813,77 @@ export const EmployeeJobPostsDocument: DocumentNode<
 			kind: 'OperationDefinition',
 			operation: 'query',
 			name: { kind: 'Name', value: 'employeeJobPosts' },
-			variableDefinitions: [],
+			variableDefinitions: [
+				{
+					kind: 'VariableDefinition',
+					variable: {
+						kind: 'Variable',
+						name: { kind: 'Name', value: 'after' }
+					},
+					type: {
+						kind: 'NonNullType',
+						type: {
+							kind: 'NamedType',
+							name: { kind: 'Name', value: 'ConnectionCursor' }
+						}
+					},
+					directives: []
+				},
+				{
+					kind: 'VariableDefinition',
+					variable: {
+						kind: 'Variable',
+						name: { kind: 'Name', value: 'first' }
+					},
+					type: {
+						kind: 'NonNullType',
+						type: {
+							kind: 'NamedType',
+							name: { kind: 'Name', value: 'Int' }
+						}
+					},
+					directives: []
+				},
+				{
+					kind: 'VariableDefinition',
+					variable: {
+						kind: 'Variable',
+						name: { kind: 'Name', value: 'filter' }
+					},
+					type: {
+						kind: 'NonNullType',
+						type: {
+							kind: 'NamedType',
+							name: {
+								kind: 'Name',
+								value: 'EmployeeJobPostFilter'
+							}
+						}
+					},
+					directives: []
+				},
+				{
+					kind: 'VariableDefinition',
+					variable: {
+						kind: 'Variable',
+						name: { kind: 'Name', value: 'sorting' }
+					},
+					type: {
+						kind: 'ListType',
+						type: {
+							kind: 'NonNullType',
+							type: {
+								kind: 'NamedType',
+								name: {
+									kind: 'Name',
+									value: 'EmployeeJobPostSort'
+								}
+							}
+						}
+					},
+					directives: []
+				}
+			],
 			directives: [],
 			selectionSet: {
 				kind: 'SelectionSet',
@@ -1538,11 +1891,118 @@ export const EmployeeJobPostsDocument: DocumentNode<
 					{
 						kind: 'Field',
 						name: { kind: 'Name', value: 'employeeJobPosts' },
-						arguments: [],
+						arguments: [
+							{
+								kind: 'Argument',
+								name: { kind: 'Name', value: 'paging' },
+								value: {
+									kind: 'ObjectValue',
+									fields: [
+										{
+											kind: 'ObjectField',
+											name: {
+												kind: 'Name',
+												value: 'after'
+											},
+											value: {
+												kind: 'Variable',
+												name: {
+													kind: 'Name',
+													value: 'after'
+												}
+											}
+										},
+										{
+											kind: 'ObjectField',
+											name: {
+												kind: 'Name',
+												value: 'first'
+											},
+											value: {
+												kind: 'Variable',
+												name: {
+													kind: 'Name',
+													value: 'first'
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								kind: 'Argument',
+								name: { kind: 'Name', value: 'filter' },
+								value: {
+									kind: 'Variable',
+									name: { kind: 'Name', value: 'filter' }
+								}
+							},
+							{
+								kind: 'Argument',
+								name: { kind: 'Name', value: 'sorting' },
+								value: {
+									kind: 'Variable',
+									name: { kind: 'Name', value: 'sorting' }
+								}
+							}
+						],
 						directives: [],
 						selectionSet: {
 							kind: 'SelectionSet',
 							selections: [
+								{
+									kind: 'Field',
+									name: { kind: 'Name', value: 'totalCount' },
+									arguments: [],
+									directives: []
+								},
+								{
+									kind: 'Field',
+									name: { kind: 'Name', value: 'pageInfo' },
+									arguments: [],
+									directives: [],
+									selectionSet: {
+										kind: 'SelectionSet',
+										selections: [
+											{
+												kind: 'Field',
+												name: {
+													kind: 'Name',
+													value: 'hasNextPage'
+												},
+												arguments: [],
+												directives: []
+											},
+											{
+												kind: 'Field',
+												name: {
+													kind: 'Name',
+													value: 'hasPreviousPage'
+												},
+												arguments: [],
+												directives: []
+											},
+											{
+												kind: 'Field',
+												name: {
+													kind: 'Name',
+													value: 'startCursor'
+												},
+												arguments: [],
+												directives: []
+											},
+											{
+												kind: 'Field',
+												name: {
+													kind: 'Name',
+													value: 'endCursor'
+												},
+												arguments: [],
+												directives: []
+											}
+										]
+									}
+								},
 								{
 									kind: 'Field',
 									name: { kind: 'Name', value: 'edges' },
@@ -1596,6 +2056,46 @@ export const EmployeeJobPostsDocument: DocumentNode<
 															name: {
 																kind: 'Name',
 																value:
+																	'createdAt'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
+																	'updatedAt'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
+																	'isActive'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
+																	'isArchived'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
 																	'employee'
 															},
 															arguments: [],
@@ -1604,6 +2104,18 @@ export const EmployeeJobPostsDocument: DocumentNode<
 																kind:
 																	'SelectionSet',
 																selections: [
+																	{
+																		kind:
+																			'Field',
+																		name: {
+																			kind:
+																				'Name',
+																			value:
+																				'id'
+																		},
+																		arguments: [],
+																		directives: []
+																	},
 																	{
 																		kind:
 																			'Field',
@@ -1900,6 +2412,189 @@ export const EmployeeJobPostsDocument: DocumentNode<
 		}
 	]
 };
+export const EmployeeJobPostsByEmployeeIdJobPostIdDocument: DocumentNode<
+	EmployeeJobPostsByEmployeeIdJobPostIdQuery,
+	EmployeeJobPostsByEmployeeIdJobPostIdQueryVariables
+> = {
+	kind: 'Document',
+	definitions: [
+		{
+			kind: 'OperationDefinition',
+			operation: 'query',
+			name: {
+				kind: 'Name',
+				value: 'employeeJobPostsByEmployeeIdJobPostId'
+			},
+			variableDefinitions: [
+				{
+					kind: 'VariableDefinition',
+					variable: {
+						kind: 'Variable',
+						name: { kind: 'Name', value: 'employeeIdFilter' }
+					},
+					type: {
+						kind: 'NonNullType',
+						type: {
+							kind: 'NamedType',
+							name: { kind: 'Name', value: 'String' }
+						}
+					},
+					directives: []
+				},
+				{
+					kind: 'VariableDefinition',
+					variable: {
+						kind: 'Variable',
+						name: { kind: 'Name', value: 'jobPostIdFilter' }
+					},
+					type: {
+						kind: 'NonNullType',
+						type: {
+							kind: 'NamedType',
+							name: { kind: 'Name', value: 'String' }
+						}
+					},
+					directives: []
+				}
+			],
+			directives: [],
+			selectionSet: {
+				kind: 'SelectionSet',
+				selections: [
+					{
+						kind: 'Field',
+						name: { kind: 'Name', value: 'employeeJobPosts' },
+						arguments: [
+							{
+								kind: 'Argument',
+								name: { kind: 'Name', value: 'filter' },
+								value: {
+									kind: 'ObjectValue',
+									fields: [
+										{
+											kind: 'ObjectField',
+											name: {
+												kind: 'Name',
+												value: 'employeeId'
+											},
+											value: {
+												kind: 'ObjectValue',
+												fields: [
+													{
+														kind: 'ObjectField',
+														name: {
+															kind: 'Name',
+															value: 'eq'
+														},
+														value: {
+															kind: 'Variable',
+															name: {
+																kind: 'Name',
+																value:
+																	'employeeIdFilter'
+															}
+														}
+													}
+												]
+											}
+										},
+										{
+											kind: 'ObjectField',
+											name: {
+												kind: 'Name',
+												value: 'jobPostId'
+											},
+											value: {
+												kind: 'ObjectValue',
+												fields: [
+													{
+														kind: 'ObjectField',
+														name: {
+															kind: 'Name',
+															value: 'eq'
+														},
+														value: {
+															kind: 'Variable',
+															name: {
+																kind: 'Name',
+																value:
+																	'jobPostIdFilter'
+															}
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						],
+						directives: [],
+						selectionSet: {
+							kind: 'SelectionSet',
+							selections: [
+								{
+									kind: 'Field',
+									name: { kind: 'Name', value: 'edges' },
+									arguments: [],
+									directives: [],
+									selectionSet: {
+										kind: 'SelectionSet',
+										selections: [
+											{
+												kind: 'Field',
+												name: {
+													kind: 'Name',
+													value: 'node'
+												},
+												arguments: [],
+												directives: [],
+												selectionSet: {
+													kind: 'SelectionSet',
+													selections: [
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value: 'id'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
+																	'isActive'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
+																	'isArchived'
+															},
+															arguments: [],
+															directives: []
+														}
+													]
+												}
+											}
+										]
+									}
+								}
+							]
+						}
+					}
+				]
+			}
+		}
+	]
+};
 export const EmployeeDocument: DocumentNode<
 	EmployeeQuery,
 	EmployeeQueryVariables
@@ -1923,6 +2618,53 @@ export const EmployeeDocument: DocumentNode<
 						selectionSet: {
 							kind: 'SelectionSet',
 							selections: [
+								{
+									kind: 'Field',
+									name: { kind: 'Name', value: 'pageInfo' },
+									arguments: [],
+									directives: [],
+									selectionSet: {
+										kind: 'SelectionSet',
+										selections: [
+											{
+												kind: 'Field',
+												name: {
+													kind: 'Name',
+													value: 'hasNextPage'
+												},
+												arguments: [],
+												directives: []
+											},
+											{
+												kind: 'Field',
+												name: {
+													kind: 'Name',
+													value: 'hasPreviousPage'
+												},
+												arguments: [],
+												directives: []
+											},
+											{
+												kind: 'Field',
+												name: {
+													kind: 'Name',
+													value: 'startCursor'
+												},
+												arguments: [],
+												directives: []
+											},
+											{
+												kind: 'Field',
+												name: {
+													kind: 'Name',
+													value: 'endCursor'
+												},
+												arguments: [],
+												directives: []
+											}
+										]
+									}
+								},
 								{
 									kind: 'Field',
 									name: { kind: 'Name', value: 'edges' },
@@ -1977,6 +2719,851 @@ export const EmployeeDocument: DocumentNode<
 																kind: 'Name',
 																value:
 																	'lastName'
+															},
+															arguments: [],
+															directives: []
+														}
+													]
+												}
+											}
+										]
+									}
+								}
+							]
+						}
+					}
+				]
+			}
+		}
+	]
+};
+export const EmployeeByExternalEmployeeIdDocument: DocumentNode<
+	EmployeeByExternalEmployeeIdQuery,
+	EmployeeByExternalEmployeeIdQueryVariables
+> = {
+	kind: 'Document',
+	definitions: [
+		{
+			kind: 'OperationDefinition',
+			operation: 'query',
+			name: { kind: 'Name', value: 'employeeByExternalEmployeeId' },
+			variableDefinitions: [
+				{
+					kind: 'VariableDefinition',
+					variable: {
+						kind: 'Variable',
+						name: {
+							kind: 'Name',
+							value: 'externalEmployeeIdFilter'
+						}
+					},
+					type: {
+						kind: 'NonNullType',
+						type: {
+							kind: 'NamedType',
+							name: { kind: 'Name', value: 'String' }
+						}
+					},
+					directives: []
+				}
+			],
+			directives: [],
+			selectionSet: {
+				kind: 'SelectionSet',
+				selections: [
+					{
+						kind: 'Field',
+						name: { kind: 'Name', value: 'employees' },
+						arguments: [
+							{
+								kind: 'Argument',
+								name: { kind: 'Name', value: 'filter' },
+								value: {
+									kind: 'ObjectValue',
+									fields: [
+										{
+											kind: 'ObjectField',
+											name: {
+												kind: 'Name',
+												value: 'externalEmployeeId'
+											},
+											value: {
+												kind: 'ObjectValue',
+												fields: [
+													{
+														kind: 'ObjectField',
+														name: {
+															kind: 'Name',
+															value: 'eq'
+														},
+														value: {
+															kind: 'Variable',
+															name: {
+																kind: 'Name',
+																value:
+																	'externalEmployeeIdFilter'
+															}
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						],
+						directives: [],
+						selectionSet: {
+							kind: 'SelectionSet',
+							selections: [
+								{
+									kind: 'Field',
+									name: { kind: 'Name', value: 'edges' },
+									arguments: [],
+									directives: [],
+									selectionSet: {
+										kind: 'SelectionSet',
+										selections: [
+											{
+												kind: 'Field',
+												name: {
+													kind: 'Name',
+													value: 'node'
+												},
+												arguments: [],
+												directives: [],
+												selectionSet: {
+													kind: 'SelectionSet',
+													selections: [
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value: 'id'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
+																	'externalEmployeeId'
+															},
+															arguments: [],
+															directives: []
+														}
+													]
+												}
+											}
+										]
+									}
+								},
+								{
+									kind: 'Field',
+									name: { kind: 'Name', value: 'totalCount' },
+									arguments: [],
+									directives: []
+								}
+							]
+						}
+					}
+				]
+			}
+		}
+	]
+};
+export const EmployeeByNameDocument: DocumentNode<
+	EmployeeByNameQuery,
+	EmployeeByNameQueryVariables
+> = {
+	kind: 'Document',
+	definitions: [
+		{
+			kind: 'OperationDefinition',
+			operation: 'query',
+			name: { kind: 'Name', value: 'employeeByName' },
+			variableDefinitions: [
+				{
+					kind: 'VariableDefinition',
+					variable: {
+						kind: 'Variable',
+						name: { kind: 'Name', value: 'firstNameFilter' }
+					},
+					type: {
+						kind: 'NonNullType',
+						type: {
+							kind: 'NamedType',
+							name: { kind: 'Name', value: 'String' }
+						}
+					},
+					directives: []
+				},
+				{
+					kind: 'VariableDefinition',
+					variable: {
+						kind: 'Variable',
+						name: { kind: 'Name', value: 'lastNameFilter' }
+					},
+					type: {
+						kind: 'NonNullType',
+						type: {
+							kind: 'NamedType',
+							name: { kind: 'Name', value: 'String' }
+						}
+					},
+					directives: []
+				}
+			],
+			directives: [],
+			selectionSet: {
+				kind: 'SelectionSet',
+				selections: [
+					{
+						kind: 'Field',
+						name: { kind: 'Name', value: 'employees' },
+						arguments: [
+							{
+								kind: 'Argument',
+								name: { kind: 'Name', value: 'filter' },
+								value: {
+									kind: 'ObjectValue',
+									fields: [
+										{
+											kind: 'ObjectField',
+											name: {
+												kind: 'Name',
+												value: 'firstName'
+											},
+											value: {
+												kind: 'ObjectValue',
+												fields: [
+													{
+														kind: 'ObjectField',
+														name: {
+															kind: 'Name',
+															value: 'eq'
+														},
+														value: {
+															kind: 'Variable',
+															name: {
+																kind: 'Name',
+																value:
+																	'firstNameFilter'
+															}
+														}
+													}
+												]
+											}
+										},
+										{
+											kind: 'ObjectField',
+											name: {
+												kind: 'Name',
+												value: 'lastName'
+											},
+											value: {
+												kind: 'ObjectValue',
+												fields: [
+													{
+														kind: 'ObjectField',
+														name: {
+															kind: 'Name',
+															value: 'eq'
+														},
+														value: {
+															kind: 'Variable',
+															name: {
+																kind: 'Name',
+																value:
+																	'lastNameFilter'
+															}
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						],
+						directives: [],
+						selectionSet: {
+							kind: 'SelectionSet',
+							selections: [
+								{
+									kind: 'Field',
+									name: { kind: 'Name', value: 'edges' },
+									arguments: [],
+									directives: [],
+									selectionSet: {
+										kind: 'SelectionSet',
+										selections: [
+											{
+												kind: 'Field',
+												name: {
+													kind: 'Name',
+													value: 'node'
+												},
+												arguments: [],
+												directives: [],
+												selectionSet: {
+													kind: 'SelectionSet',
+													selections: [
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value: 'id'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
+																	'firstName'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
+																	'lastName'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
+																	'externalEmployeeId'
+															},
+															arguments: [],
+															directives: []
+														}
+													]
+												}
+											}
+										]
+									}
+								},
+								{
+									kind: 'Field',
+									name: { kind: 'Name', value: 'totalCount' },
+									arguments: [],
+									directives: []
+								}
+							]
+						}
+					}
+				]
+			}
+		}
+	]
+};
+export const UpdateOneEmployeeDocument: DocumentNode<
+	UpdateOneEmployeeMutation,
+	UpdateOneEmployeeMutationVariables
+> = {
+	kind: 'Document',
+	definitions: [
+		{
+			kind: 'OperationDefinition',
+			operation: 'mutation',
+			name: { kind: 'Name', value: 'updateOneEmployee' },
+			variableDefinitions: [
+				{
+					kind: 'VariableDefinition',
+					variable: {
+						kind: 'Variable',
+						name: { kind: 'Name', value: 'input' }
+					},
+					type: {
+						kind: 'NonNullType',
+						type: {
+							kind: 'NamedType',
+							name: {
+								kind: 'Name',
+								value: 'UpdateOneEmployeeInput'
+							}
+						}
+					},
+					directives: []
+				}
+			],
+			directives: [],
+			selectionSet: {
+				kind: 'SelectionSet',
+				selections: [
+					{
+						kind: 'Field',
+						name: { kind: 'Name', value: 'updateOneEmployee' },
+						arguments: [
+							{
+								kind: 'Argument',
+								name: { kind: 'Name', value: 'input' },
+								value: {
+									kind: 'Variable',
+									name: { kind: 'Name', value: 'input' }
+								}
+							}
+						],
+						directives: [],
+						selectionSet: {
+							kind: 'SelectionSet',
+							selections: [
+								{
+									kind: 'Field',
+									name: {
+										kind: 'Name',
+										value: 'externalEmployeeId'
+									},
+									arguments: [],
+									directives: []
+								},
+								{
+									kind: 'Field',
+									name: { kind: 'Name', value: 'isActive' },
+									arguments: [],
+									directives: []
+								},
+								{
+									kind: 'Field',
+									name: { kind: 'Name', value: 'isArchived' },
+									arguments: [],
+									directives: []
+								},
+								{
+									kind: 'Field',
+									name: { kind: 'Name', value: 'firstName' },
+									arguments: [],
+									directives: []
+								},
+								{
+									kind: 'Field',
+									name: { kind: 'Name', value: 'lastName' },
+									arguments: [],
+									directives: []
+								}
+							]
+						}
+					}
+				]
+			}
+		}
+	]
+};
+export const UpdateOneEmployeeJobPostDocument: DocumentNode<
+	UpdateOneEmployeeJobPostMutation,
+	UpdateOneEmployeeJobPostMutationVariables
+> = {
+	kind: 'Document',
+	definitions: [
+		{
+			kind: 'OperationDefinition',
+			operation: 'mutation',
+			name: { kind: 'Name', value: 'updateOneEmployeeJobPost' },
+			variableDefinitions: [
+				{
+					kind: 'VariableDefinition',
+					variable: {
+						kind: 'Variable',
+						name: { kind: 'Name', value: 'input' }
+					},
+					type: {
+						kind: 'NonNullType',
+						type: {
+							kind: 'NamedType',
+							name: {
+								kind: 'Name',
+								value: 'UpdateOneEmployeeJobPostInput'
+							}
+						}
+					},
+					directives: []
+				}
+			],
+			directives: [],
+			selectionSet: {
+				kind: 'SelectionSet',
+				selections: [
+					{
+						kind: 'Field',
+						name: {
+							kind: 'Name',
+							value: 'updateOneEmployeeJobPost'
+						},
+						arguments: [
+							{
+								kind: 'Argument',
+								name: { kind: 'Name', value: 'input' },
+								value: {
+									kind: 'Variable',
+									name: { kind: 'Name', value: 'input' }
+								}
+							}
+						],
+						directives: [],
+						selectionSet: {
+							kind: 'SelectionSet',
+							selections: [
+								{
+									kind: 'Field',
+									name: { kind: 'Name', value: 'employeeId' },
+									arguments: [],
+									directives: []
+								},
+								{
+									kind: 'Field',
+									name: { kind: 'Name', value: 'jobPostId' },
+									arguments: [],
+									directives: []
+								},
+								{
+									kind: 'Field',
+									name: { kind: 'Name', value: 'isActive' },
+									arguments: [],
+									directives: []
+								},
+								{
+									kind: 'Field',
+									name: { kind: 'Name', value: 'isArchived' },
+									arguments: [],
+									directives: []
+								},
+								{
+									kind: 'Field',
+									name: { kind: 'Name', value: 'isApplied' },
+									arguments: [],
+									directives: []
+								},
+								{
+									kind: 'Field',
+									name: {
+										kind: 'Name',
+										value: 'appliedDate'
+									},
+									arguments: [],
+									directives: []
+								}
+							]
+						}
+					}
+				]
+			}
+		}
+	]
+};
+export const DeleteManyUpworkJobsSearchCriteriaDocument: DocumentNode<
+	DeleteManyUpworkJobsSearchCriteriaMutation,
+	DeleteManyUpworkJobsSearchCriteriaMutationVariables
+> = {
+	kind: 'Document',
+	definitions: [
+		{
+			kind: 'OperationDefinition',
+			operation: 'mutation',
+			name: { kind: 'Name', value: 'deleteManyUpworkJobsSearchCriteria' },
+			variableDefinitions: [
+				{
+					kind: 'VariableDefinition',
+					variable: {
+						kind: 'Variable',
+						name: { kind: 'Name', value: 'input' }
+					},
+					type: {
+						kind: 'NonNullType',
+						type: {
+							kind: 'NamedType',
+							name: {
+								kind: 'Name',
+								value: 'DeleteManyUpworkJobsSearchCriteriaInput'
+							}
+						}
+					},
+					directives: []
+				}
+			],
+			directives: [],
+			selectionSet: {
+				kind: 'SelectionSet',
+				selections: [
+					{
+						kind: 'Field',
+						name: {
+							kind: 'Name',
+							value: 'deleteManyUpworkJobsSearchCriteria'
+						},
+						arguments: [
+							{
+								kind: 'Argument',
+								name: { kind: 'Name', value: 'input' },
+								value: {
+									kind: 'Variable',
+									name: { kind: 'Name', value: 'input' }
+								}
+							}
+						],
+						directives: [],
+						selectionSet: {
+							kind: 'SelectionSet',
+							selections: [
+								{
+									kind: 'Field',
+									name: {
+										kind: 'Name',
+										value: 'deletedCount'
+									},
+									arguments: [],
+									directives: []
+								}
+							]
+						}
+					}
+				]
+			}
+		}
+	]
+};
+export const CreateManyUpworkJobsSearchCriteriaDocument: DocumentNode<
+	CreateManyUpworkJobsSearchCriteriaMutation,
+	CreateManyUpworkJobsSearchCriteriaMutationVariables
+> = {
+	kind: 'Document',
+	definitions: [
+		{
+			kind: 'OperationDefinition',
+			operation: 'mutation',
+			name: { kind: 'Name', value: 'createManyUpworkJobsSearchCriteria' },
+			variableDefinitions: [
+				{
+					kind: 'VariableDefinition',
+					variable: {
+						kind: 'Variable',
+						name: { kind: 'Name', value: 'input' }
+					},
+					type: {
+						kind: 'NonNullType',
+						type: {
+							kind: 'NamedType',
+							name: {
+								kind: 'Name',
+								value: 'CreateManyUpworkJobsSearchCriteriaInput'
+							}
+						}
+					},
+					directives: []
+				}
+			],
+			directives: [],
+			selectionSet: {
+				kind: 'SelectionSet',
+				selections: [
+					{
+						kind: 'Field',
+						name: {
+							kind: 'Name',
+							value: 'createManyUpworkJobsSearchCriteria'
+						},
+						arguments: [
+							{
+								kind: 'Argument',
+								name: { kind: 'Name', value: 'input' },
+								value: {
+									kind: 'Variable',
+									name: { kind: 'Name', value: 'input' }
+								}
+							}
+						],
+						directives: [],
+						selectionSet: {
+							kind: 'SelectionSet',
+							selections: [
+								{
+									kind: 'Field',
+									name: { kind: 'Name', value: 'id' },
+									arguments: [],
+									directives: []
+								}
+							]
+						}
+					}
+				]
+			}
+		}
+	]
+};
+export const JobPostsDocument: DocumentNode<
+	JobPostsQuery,
+	JobPostsQueryVariables
+> = {
+	kind: 'Document',
+	definitions: [
+		{
+			kind: 'OperationDefinition',
+			operation: 'query',
+			name: { kind: 'Name', value: 'jobPosts' },
+			variableDefinitions: [
+				{
+					kind: 'VariableDefinition',
+					variable: {
+						kind: 'Variable',
+						name: { kind: 'Name', value: 'providerCodeFilter' }
+					},
+					type: {
+						kind: 'NonNullType',
+						type: {
+							kind: 'NamedType',
+							name: { kind: 'Name', value: 'String' }
+						}
+					},
+					directives: []
+				},
+				{
+					kind: 'VariableDefinition',
+					variable: {
+						kind: 'Variable',
+						name: { kind: 'Name', value: 'providerJobIdFilter' }
+					},
+					type: {
+						kind: 'NonNullType',
+						type: {
+							kind: 'NamedType',
+							name: { kind: 'Name', value: 'String' }
+						}
+					},
+					directives: []
+				}
+			],
+			directives: [],
+			selectionSet: {
+				kind: 'SelectionSet',
+				selections: [
+					{
+						kind: 'Field',
+						name: { kind: 'Name', value: 'jobPosts' },
+						arguments: [
+							{
+								kind: 'Argument',
+								name: { kind: 'Name', value: 'filter' },
+								value: {
+									kind: 'ObjectValue',
+									fields: [
+										{
+											kind: 'ObjectField',
+											name: {
+												kind: 'Name',
+												value: 'providerCode'
+											},
+											value: {
+												kind: 'ObjectValue',
+												fields: [
+													{
+														kind: 'ObjectField',
+														name: {
+															kind: 'Name',
+															value: 'eq'
+														},
+														value: {
+															kind: 'Variable',
+															name: {
+																kind: 'Name',
+																value:
+																	'providerCodeFilter'
+															}
+														}
+													}
+												]
+											}
+										},
+										{
+											kind: 'ObjectField',
+											name: {
+												kind: 'Name',
+												value: 'providerJobId'
+											},
+											value: {
+												kind: 'ObjectValue',
+												fields: [
+													{
+														kind: 'ObjectField',
+														name: {
+															kind: 'Name',
+															value: 'eq'
+														},
+														value: {
+															kind: 'Variable',
+															name: {
+																kind: 'Name',
+																value:
+																	'providerJobIdFilter'
+															}
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						],
+						directives: [],
+						selectionSet: {
+							kind: 'SelectionSet',
+							selections: [
+								{
+									kind: 'Field',
+									name: { kind: 'Name', value: 'edges' },
+									arguments: [],
+									directives: [],
+									selectionSet: {
+										kind: 'SelectionSet',
+										selections: [
+											{
+												kind: 'Field',
+												name: {
+													kind: 'Name',
+													value: 'node'
+												},
+												arguments: [],
+												directives: [],
+												selectionSet: {
+													kind: 'SelectionSet',
+													selections: [
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value: 'id'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
+																	'isActive'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
+																	'isArchived'
 															},
 															arguments: [],
 															directives: []

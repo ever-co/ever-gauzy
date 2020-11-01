@@ -114,4 +114,32 @@ export class TimeTrackerService {
 	pingAw(host) {
 		return this.http.get(host).pipe().toPromise();
 	}
+
+	toggleApiStart(values) {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`
+		});
+
+		return this.http
+			.post(
+				`${values.apiHost}/api/timesheet/timer/toggle`,
+				{
+					description: values.note,
+					isBillable: true,
+					logType: 'TRACKED',
+					projectId: values.projectId,
+					taskId: values.taskId,
+					source: 'DESKTOP',
+					manualTimeSlot: values.manualTimeSlot,
+					organizationId: values.organizationId,
+					tenantId: values.tenantId,
+					organizationContactId: values.organizationContactId
+				},
+				{
+					headers: headers
+				}
+			)
+			.pipe()
+			.toPromise();
+	}
 }

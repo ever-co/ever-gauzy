@@ -85,10 +85,6 @@
 								"
 								labelPosition="start"
 								status="basic"
-								[(checked)]="enabledPermissions[permission]"
-								(checkedChange)="
-									permissionChanged(permission, $event)
-								"
 								[disabled]="selectedRole !== adminRole"
 								>{{
 									'ORGANIZATIONS_PAGE.PERMISSIONS.' +

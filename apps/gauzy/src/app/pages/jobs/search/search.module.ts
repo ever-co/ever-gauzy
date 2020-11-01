@@ -12,7 +12,8 @@ import {
 	NbInputModule,
 	NbPopoverModule,
 	NbSelectModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbToggleModule
 } from '@nebular/theme';
 import { MomentModule } from 'ngx-moment';
 import { FormsModule } from '@angular/forms';
@@ -38,7 +39,8 @@ import { StatusBadgeModule } from '../../../@shared/status-badge/status-badge.mo
 		NbButtonModule,
 		EmployeeMultiSelectModule,
 		Ng2SmartTableModule,
-		StatusBadgeModule
+		StatusBadgeModule,
+		NbToggleModule
 	]
 })
 export class SearchModule {}

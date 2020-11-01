@@ -1,11 +1,32 @@
-query employeeJobPosts {
-	employeeJobPosts {
+query employeeJobPosts(
+	$after: ConnectionCursor!
+	$first: Int!
+	$filter: EmployeeJobPostFilter!
+	$sorting: [EmployeeJobPostSort!]
+) {
+	employeeJobPosts(
+		paging: { after: $after, first: $first }
+		filter: $filter
+		sorting: $sorting
+	) {
+		totalCount
+		pageInfo {
+			hasNextPage
+			hasPreviousPage
+			startCursor
+			endCursor
+		}
 		edges {
 			node {
 				id
 				isApplied
 				appliedDate
+				createdAt
+				updatedAt
+				isActive
+				isArchived
 				employee {
+					id
 					externalEmployeeId
 				}
 				jobPost {
@@ -36,14 +57,127 @@ query employeeJobPosts {
 	}
 }
 
+query employeeJobPostsByEmployeeIdJobPostId(
+	$employeeIdFilter: String!
+	$jobPostIdFilter: String!
+) {
+	employeeJobPosts(
+		filter: {
+			employeeId: { eq: $employeeIdFilter }
+			jobPostId: { eq: $jobPostIdFilter }
+		}
+	) {
+		edges {
+			node {
+				id
+				isActive
+				isArchived
+			}
+		}
+	}
+}
+
 query employee {
 	employees {
+		pageInfo {
+			hasNextPage
+			hasPreviousPage
+			startCursor
+			endCursor
+		}
 		edges {
 			node {
 				id
 				externalEmployeeId
 				firstName
 				lastName
+			}
+		}
+	}
+}
+
+query employeeByExternalEmployeeId($externalEmployeeIdFilter: String!) {
+	employees(
+		filter: { externalEmployeeId: { eq: $externalEmployeeIdFilter } }
+	) {
+		edges {
+			node {
+				id
+				externalEmployeeId
+			}
+		}
+		totalCount
+	}
+}
+
+query employeeByName($firstNameFilter: String!, $lastNameFilter: String!) {
+	employees(
+		filter: {
+			firstName: { eq: $firstNameFilter }
+			lastName: { eq: $lastNameFilter }
+		}
+	) {
+		edges {
+			node {
+				id
+				firstName
+				lastName
+				externalEmployeeId
+			}
+		}
+		totalCount
+	}
+}
+
+mutation updateOneEmployee($input: UpdateOneEmployeeInput!) {
+	updateOneEmployee(input: $input) {
+		externalEmployeeId
+		isActive
+		isArchived
+		firstName
+		lastName
+	}
+}
+
+mutation updateOneEmployeeJobPost($input: UpdateOneEmployeeJobPostInput!) {
+	updateOneEmployeeJobPost(input: $input) {
+		employeeId
+		jobPostId
+		isActive
+		isArchived
+		isApplied
+		appliedDate
+	}
+}
+
+mutation deleteManyUpworkJobsSearchCriteria(
+	$input: DeleteManyUpworkJobsSearchCriteriaInput!
+) {
+	deleteManyUpworkJobsSearchCriteria(input: $input) {
+		deletedCount
+	}
+}
+
+mutation createManyUpworkJobsSearchCriteria(
+	$input: CreateManyUpworkJobsSearchCriteriaInput!
+) {
+	createManyUpworkJobsSearchCriteria(input: $input) {
+		id
+	}
+}
+
+query jobPosts($providerCodeFilter: String!, $providerJobIdFilter: String!) {
+	jobPosts(
+		filter: {
+			providerCode: { eq: $providerCodeFilter }
+			providerJobId: { eq: $providerJobIdFilter }
+		}
+	) {
+		edges {
+			node {
+				id
+				isActive
+				isArchived
 			}
 		}
 	}

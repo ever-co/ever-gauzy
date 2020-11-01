@@ -75,7 +75,8 @@ export enum PermissionsEnum {
 	ORG_TEAM_EDIT = 'ORG_TEAM_EDIT',
 	ORG_CONTRACT_EDIT = 'ORG_CONTRACT_EDIT',
 	EVENT_TYPES_VIEW = 'EVENT_TYPES_VIEW',
-	TIME_TRACKER = 'TIME_TRACKER'
+	TIME_TRACKER = 'TIME_TRACKER',
+	TENANT_ADD_EXISTING_USER = 'TENANT_ADD_EXISTING_USER'
 }
 
 export const PermissionGroups = {
@@ -144,6 +145,7 @@ export const PermissionGroups = {
 		PermissionsEnum.APPROVAL_POLICY_VIEW,
 		PermissionsEnum.TIME_OFF_EDIT,
 		PermissionsEnum.REQUEST_APPROVAL_EDIT,
-		PermissionsEnum.REQUEST_APPROVAL_VIEW
+		PermissionsEnum.REQUEST_APPROVAL_VIEW,
+		PermissionsEnum.TENANT_ADD_EXISTING_USER
 	]
 };

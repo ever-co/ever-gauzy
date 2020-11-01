@@ -44,6 +44,7 @@ import { EditUserOrganizationsMutationComponent } from './edit-user-profile/edit
 import { UserIdService } from '../../@core/services/edit-user-data.service';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
+import { NgxPermissionsModule } from 'ngx-permissions';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -97,7 +98,11 @@ const COMPONENTS = [
 		EditProfileFormModule,
 		InviteMutationModule,
 		InviteTableModule,
-		EditEmployeeMembershipFormModule
+		EditEmployeeMembershipFormModule,
+		NgxPermissionsModule.forChild({
+			permissionsIsolate: true,
+			rolesIsolate: true
+		})
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [],
