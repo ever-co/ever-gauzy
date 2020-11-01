@@ -1629,14 +1629,16 @@
 		"SOURCE": "Источник",
 		"PRESET": "Preset",
 		"KEYWORDS": "Ключевые слова",
-		"CATEGORIES": "Категории",
-		"OCCUPATIONS": "Занятия",
+		"CATEGORY": "Категория",
+		"OCCUPATION": "Занятость",
 		"ADD_NEW_CRITERIONS": "Добавить новый",
 		"FIX_PRICE": "Фиксированная цена",
 		"HOURLY": "Почасовой",
 		"SAVE": "Сохранить",
 		"DELETE": "Удалить",
-		"CRITERIONS": "Критерии"
+		"CRITERIONS": "Критерии",
+		"DELETE_CRITERION_MESSAGE": "Вы уверены, что хотите удалить критерий",
+		"SAVE_PRESET_MESSAGE": "Критерии будут сохранены для пресета задания. Вы уверены, что хотите сохранить?"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Спринт добавлен",
