@@ -19,7 +19,7 @@ import { StatusBadgeComponent } from 'apps/gauzy/src/app/@shared/status-badge/st
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import * as moment from 'moment';
 import { ServerDataSource } from 'ng2-smart-table';
-import { Subject } from 'rxjs';
+import { Subject, Subscription, timer } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 
 @UntilDestroy()
@@ -32,6 +32,7 @@ export class SearchComponent
 	extends TranslationBaseComponent
 	implements OnInit {
 	loading = false;
+	autoRefresh = false;
 	settingsSmartTable: any = {
 		editable: false,
 		// pager: {
@@ -95,6 +96,7 @@ export class SearchComponent
 		pagerPageKey: 'page',
 		pagerLimitKey: 'limit'
 	});
+	autoRefreshTimer: Subscription;
 
 	constructor(
 		private http: HttpClient,
@@ -148,6 +150,20 @@ export class SearchComponent
 
 	applyFilter() {
 		this.updateJobs$.next();
+	}
+
+	setAutoRefresh(value) {
+		if (value) {
+			this.autoRefreshTimer = timer(0, 60000)
+				.pipe(untilDestroyed(this))
+				.subscribe(() => {
+					this.smartTableSource.refresh();
+				});
+		} else {
+			if (this.autoRefreshTimer) {
+				this.autoRefreshTimer.unsubscribe();
+			}
+		}
 	}
 
 	onCustom($event) {

@@ -5,9 +5,9 @@
 	<nb-card-body>
 		<div class="job-filters py-3">
 			<div class="row">
-				<div class="col-sm-6">
+				<div class="col-sm-12">
 					<div class="row">
-						<div class="col form-group m-0">
+						<div class="col-sm-3 form-group m-0">
 							<input
 								type="text"
 								class="w-100"
@@ -30,8 +30,16 @@
 								Filter
 							</button>
 						</div>
-						<div class="col-auto">
+						<div class="col-auto d-flex align-items-center">
+							<nb-toggle
+								class="mr-3"
+								(checkedChange)="setAutoRefresh($event)"
+								[(ngModel)]="autoRefresh"
+								>Auto Refresh</nb-toggle
+							>
+
 							<button
+								*ngIf="!autoRefresh"
 								type="button"
 								(click)="smartTableSource.refresh()"
 								nbButton
