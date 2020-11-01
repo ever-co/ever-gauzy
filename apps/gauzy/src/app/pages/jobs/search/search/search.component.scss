@@ -10,6 +10,9 @@
   // }
   ::ng-deep {
     ng2-smart-table {
+      table tr td {
+        vertical-align: top;
+      }
       .ng2-smart-actions {
         padding: 0.875rem 1.25rem !important;
         height: auto;

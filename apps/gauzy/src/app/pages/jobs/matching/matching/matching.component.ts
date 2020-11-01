@@ -206,13 +206,6 @@ export class MatchingComponent implements OnInit {
 			this.jobPresetService.createJobPreset(request).then(() => {
 				this.hasAnyChanges = false;
 				this.toastrService.success('Preset successfully saved');
-				// this.jobPresets = this.jobPresets.map((oldJobPreset) => {
-				// 	if (oldJobPreset.id === jobPreset.id) {
-				// 		return jobPreset;
-				// 	} else {
-				// 		return oldJobPreset;
-				// 	}
-				// });
 			});
 		}
 	}

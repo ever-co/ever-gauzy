@@ -64,7 +64,10 @@
 										nbButton
 										status="primary"
 										ngxConfirmDialog
-										message="Criterions will save for job preset. Are you sure you want to save?"
+										[message]="
+											'JOB_MATCHING.SAVE_PRESET_MESSAGE'
+												| translate
+										"
 										(confirm)="saveJobPreset()"
 									>
 										<nb-icon icon="save-outline"></nb-icon>
@@ -127,9 +130,7 @@
 						</div>
 						<div class="form-group row">
 							<label class="d-block col-sm-2">
-								{{
-									'JOB_MATCHING.CATEGORIES' | translate
-								}}</label
+								{{ 'JOB_MATCHING.CATEGORY' | translate }}</label
 							>
 
 							<div class="col-sm-6">
@@ -140,7 +141,7 @@
 									[clearable]="true"
 									[items]="categories"
 									[placeholder]="
-										'JOB_MATCHING.CATEGORIES' | translate
+										'JOB_MATCHING.CATEGORY' | translate
 									"
 									bindValue="id"
 									bindLabel="name"
@@ -151,7 +152,7 @@
 						<div class="form-group row">
 							<label class="d-block col-sm-2">
 								{{
-									'JOB_MATCHING.OCCUPATIONS' | translate
+									'JOB_MATCHING.OCCUPATION' | translate
 								}}</label
 							>
 
@@ -163,7 +164,7 @@
 									[clearable]="true"
 									[items]="occupations"
 									[placeholder]="
-										'JOB_MATCHING.OCCUPATIONS' | translate
+										'JOB_MATCHING.OCCUPATION' | translate
 									"
 									bindValue="id"
 									bindLabel="name"
@@ -189,8 +190,8 @@
 									>
 										{{
 											type.key
-												| titlecase
 												| replace: '_':' '
+												| titlecase
 										}}
 									</nb-radio>
 								</nb-radio-group>
@@ -211,7 +212,10 @@
 									status="danger"
 									type="button"
 									ngxConfirmDialog
-									message="Are you sure that, you want to delete criterion"
+									[message]="
+										'JOB_MATCHING.DELETE_CRITERION_MESSAGE'
+											| translate
+									"
 									(confirm)="
 										deleteCriterions(index, criterion)
 									"
