@@ -19,7 +19,8 @@ export class AppComponent implements OnInit {
 				.then((res) => {
 					event.sender.send('data_push_activity', {
 						timerId: arg.timerId,
-						windowEvent: res
+						windowEvent: res,
+						type: 'APP'
 					});
 				});
 		});
@@ -35,6 +36,36 @@ export class AppComponent implements OnInit {
 					});
 				});
 		});
+
+		this.electronService.ipcRenderer.on(
+			'collect_chrome_activities',
+			(event, arg) => {
+				appService
+					.collectChromeActivityFromAW(arg.tpURL, arg.start, arg.end)
+					.then((res) => {
+						event.sender.send('data_push_activity', {
+							timerId: arg.timerId,
+							windowEvent: res,
+							type: 'URL'
+						});
+					});
+			}
+		);
+
+		this.electronService.ipcRenderer.on(
+			'collect_firefox_activities',
+			(event, arg) => {
+				appService
+					.collectFirefoxActivityFromAw(arg.tpURL, arg.start, arg.end)
+					.then((res) => {
+						event.sender.send('data_push_activity', {
+							timerId: arg.timerId,
+							windowEvent: res,
+							type: 'URL'
+						});
+					});
+			}
+		);
 
 		this.electronService.ipcRenderer.on('set_time_sheet', (event, arg) => {
 			appService.pushTotimesheet(arg).then((res: any) => {

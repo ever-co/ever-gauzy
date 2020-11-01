@@ -69,6 +69,12 @@ export class AppService {
 				case 'aw-watcher-afk':
 					this.buckets.afkBucket = buckets[key];
 					break;
+				case 'aw-watcher-web-chrome':
+					this.buckets.chromeBucket = buckets[key];
+					break;
+				case 'aw-watcher-web-firefox':
+					this.buckets.firefoxBucket = buckets[key];
+					break;
 				default:
 					break;
 			}
@@ -85,6 +91,26 @@ export class AppService {
 
 	collectAfk(tpURL, tp, start, end): Promise<any> {
 		return this.collectAfkFromAW(tpURL, start, end);
+	}
+
+	collectChromeActivityFromAW(tpURL, start, end): Promise<any> {
+		if (!this.buckets.chromeBucket) return Promise.resolve([]);
+		return this.http
+			.get(
+				`${tpURL}/api/0/buckets/${this.buckets.chromeBucket.id}/events?start=${start}&end=${end}&limit=-1`
+			)
+			.pipe()
+			.toPromise();
+	}
+
+	collectFirefoxActivityFromAw(tpURL, start, end): Promise<any> {
+		if (!this.buckets.firefoxBucket) return Promise.resolve([]);
+		return this.http
+			.get(
+				`${tpURL}/api/0/buckets/${this.buckets.firefoxBucket.id}/events?start=${start}&end=${end}&limit=-1`
+			)
+			.pipe()
+			.toPromise();
 	}
 
 	pushActivityCollectionToGauzy() {

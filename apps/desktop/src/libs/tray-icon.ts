@@ -201,8 +201,8 @@ export default class TrayIcon {
 				contextMenu = menuAuth;
 				menuWindowTime.enabled = true;
 				menuWindowSetting.enabled = true;
+				this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
 			}
-			this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
 		});
 
 		ipcMain.on('logout', () => {
