@@ -48,5 +48,14 @@ export default class DataModel {
 					.then((res) => res);
 			}
 		});
+		knex.schema.hasColumn('window-events', 'type').then((exists) => {
+			if (!exists) {
+				knex.schema
+					.table('window-events', (t) => {
+						t.string('type');
+					})
+					.then((res) => res);
+			}
+		});
 	}
 }

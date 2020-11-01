@@ -62,6 +62,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	organizationContactId = null;
 	employeeId = null;
 	argFromMain = null;
+	token = null;
+	apiHost = null;
 	constructor(
 		private electronService: ElectronService,
 		private _cdr: ChangeDetectorRef,
@@ -74,10 +76,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on(
 			'timer_tracker_show',
 			(event, arg) => {
+				this.apiHost = arg.apiHost;
 				this.argFromMain = arg;
 				this.taskSelect = arg.taskId;
 				this.projectSelect = arg.projectId;
 				this.organizationContactId = arg.organizationContactId;
+				this.token = arg.token;
 				this.note = arg.note;
 				this.aw = arg.aw && arg.aw.isAw ? arg.aw.isAw : false;
 				this.getClient(arg);
@@ -180,10 +184,24 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	toggleStart(val) {
 		if (this.validationField()) {
-			this.start = val;
-			if (this.start) {
-				this.startTime();
+			if (val) {
+				this.timeTrackerService
+					.toggleApiStart({
+						token: this.token,
+						note: this.note,
+						projectId: this.projectSelect,
+						taskId: this.taskSelect,
+						organizationId: this.userOrganization.id,
+						tenantId: this.userData.tenantId,
+						organizationContactId: this.organizationContactId,
+						apiHost: this.apiHost
+					})
+					.then((res) => {
+						this.start = val;
+						this.startTime(res);
+					});
 			} else {
+				this.start = val;
 				this.stopTimer();
 				this._cdr.detectChanges();
 			}
@@ -226,7 +244,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this._cdr.detectChanges();
 	}
 
-	startTime() {
+	startTime(timeLog) {
 		this.electronService.ipcRenderer.send('start_timer', {
 			projectId: this.projectSelect,
 			taskId: this.taskSelect,
@@ -235,7 +253,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			aw: {
 				host: this.defaultAwAPI,
 				isAw: this.aw
-			}
+			},
+			timeLog: timeLog
 		});
 
 		this.electronService.ipcRenderer.send('update_tray_start');
@@ -471,6 +490,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	getUserInfo(arg) {
 		this.timeTrackerService.getUserDetail(arg).then((res: any) => {
 			if (res.employee && res.employee.organization) {
+				this.userData = res;
 				this.userOrganization = res.employee.organization;
 				this._cdr.detectChanges();
 			}

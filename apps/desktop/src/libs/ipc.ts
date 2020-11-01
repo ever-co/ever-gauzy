@@ -32,7 +32,8 @@ export function ipcMainHandler(store, startServer, knex) {
 				data: JSON.stringify(item.data),
 				created_at: new Date(),
 				updated_at: new Date(),
-				activityId: null
+				activityId: null,
+				type: arg.type
 			};
 			TimerData.insertWindowEvent(knex, events);
 		});
@@ -161,7 +162,12 @@ export function ipcTimer(
 				organizationContactId: arg.organizationContactId
 			}
 		});
-		timerHandler.startTimer(setupWindow, knex, timeTrackerWindow);
+		timerHandler.startTimer(
+			setupWindow,
+			knex,
+			timeTrackerWindow,
+			arg.timeLog
+		);
 		timerHandler.updateTime(setupWindow, knex, timeTrackerWindow);
 		SettingWindow.webContents.send('app_setting_update', {
 			setting: LocalStore.getStore('appSetting')
