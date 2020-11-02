@@ -602,7 +602,8 @@
 		"RESET_LAYOUT": "Сбросить макет",
 		"RESET_LAYOUT_TOOLTIP": "Сбросить макет по умолчанию для всех страниц",
 		"TABLE": "Таблица",
-		"CARDS_GRID": "Сетка карт"
+		"CARDS_GRID": "Сетка карт",
+		"SPRINT_VIEW": "Просмотр спринта"
 	},
 	"INTEGRATIONS": {
 		"AVALIABLE_INTEGRATIONS": "Доступные приложения и интеграции",
