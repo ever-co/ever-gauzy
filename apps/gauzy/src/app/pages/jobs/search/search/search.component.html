@@ -30,14 +30,13 @@
 								Filter
 							</button>
 						</div>
-						<div class="col-auto d-flex align-items-center">
+						<div class="col-auto ml-auto d-flex align-items-center">
 							<nb-toggle
 								class="mr-3"
 								(checkedChange)="setAutoRefresh($event)"
 								[(ngModel)]="autoRefresh"
 								>Auto Refresh</nb-toggle
 							>
-
 							<button
 								*ngIf="!autoRefresh"
 								type="button"
