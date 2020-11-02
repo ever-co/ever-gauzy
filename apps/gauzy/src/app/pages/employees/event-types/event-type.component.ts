@@ -5,8 +5,7 @@ import {
 	ITag,
 	ComponentLayoutStyleEnum,
 	IOrganization,
-	IEventTypeViewModel,
-	ITenant
+	IEventTypeViewModel
 } from '@gauzy/models';
 import {
 	ActivatedRoute,

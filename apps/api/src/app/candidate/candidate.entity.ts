@@ -20,7 +20,6 @@ import {
 import { avarage } from '@gauzy/utils';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsOptional, IsEnum } from 'class-validator';
-import * as _ from 'underscore';
 import {
 	Column,
 	Entity,
