@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
 	IEmployeeJobPost,
 	IGetEmployeeJobPostFilters,
@@ -14,11 +14,14 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { AvatarComponent } from 'apps/gauzy/src/app/@shared/components/avatar/avatar.component';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { Nl2BrPipe } from 'apps/gauzy/src/app/@shared/pipes/text.pipe';
+import { ServerDataSource } from 'ng2-smart-table';
+import {
+	Nl2BrPipe,
+	TruncatePipe
+} from 'apps/gauzy/src/app/@shared/pipes/text.pipe';
 import { StatusBadgeComponent } from 'apps/gauzy/src/app/@shared/status-badge/status-badge.component';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import * as moment from 'moment';
-import { ServerDataSource } from 'ng2-smart-table';
 import { Subject, Subscription, timer } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 
@@ -30,15 +33,11 @@ import { debounceTime } from 'rxjs/operators';
 })
 export class SearchComponent
 	extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit, OnDestroy {
 	loading = false;
 	autoRefresh = false;
 	settingsSmartTable: any = {
 		editable: false,
-		// pager: {
-		// 	display: true,
-		// 	perPage: 10
-		// },
 		actions: {
 			columnTitle: 'Actions',
 			add: false,
@@ -79,7 +78,7 @@ export class SearchComponent
 		employeeIds: [],
 		jobSource: [],
 		jobType: [],
-		jobStatus: [JobPostStatusEnum.OPEN],
+		jobStatus: [],
 		budget: null
 	};
 
@@ -104,7 +103,8 @@ export class SearchComponent
 		public translateService: TranslateService,
 		private toastrService: ToastrService,
 		private jobService: JobService,
-		private nl2BrPipe: Nl2BrPipe
+		private nl2BrPipe: Nl2BrPipe,
+		private truncatePipe: TruncatePipe
 	) {
 		super(translateService);
 	}
@@ -113,19 +113,7 @@ export class SearchComponent
 		this.updateJobs$
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(() => {
-				// this.smartTableSource.refresh();
-				this.smartTableSource.setFilter(
-					[
-						{
-							field: 'custom',
-							search: JSON.stringify(this.jobRequest)
-						}
-					],
-					true,
-					false
-				);
 				this.loadSmartTable();
-				this._applyTranslationOnSmartTable();
 			});
 
 		this.store.selectedEmployee$
@@ -142,8 +130,6 @@ export class SearchComponent
 					this.updateJobs$.next();
 				});
 			});
-
-		this.updateJobs$.next();
 	}
 
 	redirectToView() {}
@@ -157,7 +143,7 @@ export class SearchComponent
 			this.autoRefreshTimer = timer(0, 60000)
 				.pipe(untilDestroyed(this))
 				.subscribe(() => {
-					this.smartTableSource.refresh();
+					this.updateJobs$.next();
 				});
 		} else {
 			if (this.autoRefreshTimer) {
@@ -196,6 +182,20 @@ export class SearchComponent
 	}
 
 	loadSmartTable() {
+		this.smartTableSource.setSort(
+			[{ field: 'status', direction: 'asc' }],
+			false
+		);
+		this.smartTableSource.setFilter(
+			[
+				{
+					field: 'custom',
+					search: JSON.stringify(this.jobRequest)
+				}
+			],
+			true,
+			false
+		);
 		this.settingsSmartTable = {
 			...this.settingsSmartTable,
 			columns: {
@@ -207,6 +207,7 @@ export class SearchComponent
 								filter: false,
 								width: '15%',
 								type: 'custom',
+								sort: false,
 								renderComponent: AvatarComponent,
 								valuePrepareFunction: (
 									cell,
@@ -231,6 +232,7 @@ export class SearchComponent
 					type: 'text',
 					width: '20%',
 					filter: false,
+					sort: false,
 					valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
 						return `${row.jobPost.title.slice(0, 150)}`;
 					}
@@ -240,10 +242,13 @@ export class SearchComponent
 					type: 'html',
 					width: '30%',
 					filter: false,
+					sort: false,
 					valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
-						return this.nl2BrPipe.transform(
+						let value = this.nl2BrPipe.transform(
 							row.jobPost.description
 						);
+						value = this.truncatePipe.transform(value, 500);
+						return value;
 					}
 				},
 				jobDateCreated: {
@@ -252,7 +257,7 @@ export class SearchComponent
 					width: '15%',
 					filter: false,
 					valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
-						return moment(row.jobPost.jobDateCreated).format('LL');
+						return moment(row.jobPost.jobDateCreated).format('LLL');
 					}
 				},
 				jobStatus: {
@@ -260,6 +265,7 @@ export class SearchComponent
 					width: '15%',
 					filter: false,
 					type: 'custom',
+					sort: false,
 					renderComponent: StatusBadgeComponent,
 					valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
 						let badgeClass;
@@ -297,8 +303,12 @@ export class SearchComponent
 	}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.updateJobs$.next();
+			});
 	}
+
+	ngOnDestroy(): void {}
 }
