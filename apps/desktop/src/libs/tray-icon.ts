@@ -24,18 +24,54 @@ export default class TrayIcon {
 		let contextMenu: any = [
 			{
 				id: '0',
-				label: 'quit',
+				label: 'Exit',
 				click() {
 					app.quit();
+				}
+			},
+			{
+				id: '4',
+				label: 'Setting',
+				click() {
+					const appSetting = LocalStore.getStore('appSetting');
+					const config = LocalStore.getStore('configs');
+					if (!settingsWindow) {
+						settingsWindow = createSettingsWindow(settingsWindow);
+					}
+					settingsWindow.show();
+					setTimeout(() => {
+						settingsWindow.webContents.send('app_setting', {
+							setting: appSetting,
+							config: config
+						});
+					}, 500);
 				}
 			}
 		];
 		const unAuthMenu = [
 			{
 				id: '0',
-				label: 'quit',
+				label: 'Exit',
 				click() {
 					app.quit();
+				}
+			},
+			{
+				id: '4',
+				label: 'Setting',
+				click() {
+					const appSetting = LocalStore.getStore('appSetting');
+					const config = LocalStore.getStore('configs');
+					if (!settingsWindow) {
+						settingsWindow = createSettingsWindow(settingsWindow);
+					}
+					settingsWindow.show();
+					setTimeout(() => {
+						settingsWindow.webContents.send('app_setting', {
+							setting: appSetting,
+							config: config
+						});
+					}, 500);
 				}
 			}
 		];
@@ -139,7 +175,7 @@ export default class TrayIcon {
 			},
 			{
 				id: '5',
-				label: 'quit',
+				label: 'Exit',
 				click() {
 					app.quit();
 				}

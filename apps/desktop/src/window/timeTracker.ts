@@ -15,7 +15,7 @@ export function createTimeTrackerWindow(timeTrackerWindow) {
 	});
 
 	timeTrackerWindow.loadURL(launchPath);
-
+	timeTrackerWindow.setMenu(null);
 	timeTrackerWindow.hide();
 
 	return timeTrackerWindow;

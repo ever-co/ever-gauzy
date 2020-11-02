@@ -15,7 +15,7 @@ export function createSettingsWindow(settingsWindow) {
 	});
 
 	settingsWindow.loadURL(launchPath);
-
+	settingsWindow.setMenu(null);
 	settingsWindow.hide();
 
 	settingsWindow.on('close', (event) => {
@@ -37,8 +37,8 @@ const windowSetting = () => {
 			webSecurity: false,
 			devTools: true
 		},
-		width: 900,
-		height: 600,
+		width: 1000,
+		height: 800,
 		title: 'Settings',
 		maximizable: false
 	};
