@@ -56,7 +56,8 @@
 								<ng-template
 									[ngIf]="
 										criterionForm?.jobPresetId &&
-										hasAnyChanges
+										hasAnyChanges &&
+										!selectedEmployeeId
 									"
 								>
 									<button
@@ -73,7 +74,7 @@
 										<nb-icon icon="save-outline"></nb-icon>
 										{{ 'JOB_MATCHING.SAVE' | translate }}
 									</button>
-									<button
+									<!-- <button
 										*ngIf="!selectedEmployeeId"
 										nbButton
 										status="primary"
@@ -81,7 +82,7 @@
 									>
 										<nb-icon icon="save-outline"></nb-icon>
 										{{ 'JOB_MATCHING.SAVE' | translate }}
-									</button>
+									</button> -->
 								</ng-template>
 							</div>
 						</div>

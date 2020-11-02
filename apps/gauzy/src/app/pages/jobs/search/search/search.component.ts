@@ -113,20 +113,6 @@ export class SearchComponent
 		this.updateJobs$
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(() => {
-				this.smartTableSource.setSort(
-					[{ field: 'status', direction: 'asc' }],
-					false
-				);
-				this.smartTableSource.setFilter(
-					[
-						{
-							field: 'custom',
-							search: JSON.stringify(this.jobRequest)
-						}
-					],
-					true,
-					false
-				);
 				this.loadSmartTable();
 			});
 
@@ -196,6 +182,20 @@ export class SearchComponent
 	}
 
 	loadSmartTable() {
+		this.smartTableSource.setSort(
+			[{ field: 'status', direction: 'asc' }],
+			false
+		);
+		this.smartTableSource.setFilter(
+			[
+				{
+					field: 'custom',
+					search: JSON.stringify(this.jobRequest)
+				}
+			],
+			true,
+			false
+		);
 		this.settingsSmartTable = {
 			...this.settingsSmartTable,
 			columns: {
