@@ -29,7 +29,8 @@ export interface IEmployeeAppointmentFindInput {
 	organization?: IOrganizationFindInput;
 }
 
-export interface IEmployeeAppointmentCreateInput {
+export interface IEmployeeAppointmentCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
 	description?: string;
 	location?: string;
@@ -41,12 +42,12 @@ export interface IEmployeeAppointmentCreateInput {
 	bufferTimeInMins?: Number;
 	breakTimeInMins?: Number;
 	breakStartTime?: Date;
-	organizationId?: string;
 	emails?: string;
 	invitees?: IAppointmentEmployee[];
 }
 
-export interface IEmployeeAppointmentUpdateInput {
+export interface IEmployeeAppointmentUpdateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
 	description?: string;
 	location?: string;
@@ -58,7 +59,6 @@ export interface IEmployeeAppointmentUpdateInput {
 	bufferTimeInMins?: Number;
 	breakTimeInMins?: Number;
 	breakStartTime?: Date;
-	organizationId?: string;
 	status?: string;
 	invitees?: IAppointmentEmployee[];
 }

@@ -1,6 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IEmployee, IEmployeeFindInput } from './employee.model';
-import { IOrganizationFindInput } from './organization.model';
 import { ITag } from '..';
 
 export interface IEventType extends IBasePerTenantAndOrganizationEntityModel {
@@ -14,35 +13,47 @@ export interface IEventType extends IBasePerTenantAndOrganizationEntityModel {
 	tags?: ITag[];
 }
 
-export interface IEventTypeFindInput {
+export interface IEventTypeFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	title?: string;
 	description?: string;
 	duration?: number;
 	durationUnit?: string;
 	isActive?: boolean;
 	employee?: IEmployeeFindInput;
-	organization?: IOrganizationFindInput;
 	tags?: ITag[];
 }
 
-export interface IEventTypeCreateInput {
+export interface IEventTypeCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
 	title: string;
 	description?: string;
 	duration: number;
 	durationUnit: string;
 	isActive: boolean;
-	organizationId: string;
 	tags?: ITag[];
 }
 
-export interface IEventTypeUpdateInput {
+export interface IEventTypeUpdateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
 	title?: string;
 	description?: string;
 	duration?: number;
 	durationUnit?: string;
 	isActive?: boolean;
-	organizationId?: string;
 	tags?: ITag[];
+}
+
+export interface IEventTypeViewModel {
+	title: string;
+	description: string;
+	durationFormat: string;
+	id: string;
+	Active: string;
+	isActive: boolean;
+	duration: Number;
+	durationUnit: string;
+	tags: ITag[];
 }

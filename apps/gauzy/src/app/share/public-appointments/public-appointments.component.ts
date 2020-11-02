@@ -15,7 +15,8 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 	templateUrl: './public-appointments.component.html',
 	styleUrls: ['./public-appointments.component.scss']
 })
-export class PublicAppointmentsComponent extends TranslationBaseComponent
+export class PublicAppointmentsComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	employee: IEmployee;
@@ -70,11 +71,11 @@ export class PublicAppointmentsComponent extends TranslationBaseComponent
 		);
 
 		if (items.length === 0) {
+			const { tenantId } = this.store.user;
 			items = (
 				await this.eventTypeService.getAll(['tags'], {
-					organization: {
-						id: this._selectedOrganizationId
-					}
+					organizationId: this._selectedOrganizationId,
+					tenantId
 				})
 			).items;
 		}

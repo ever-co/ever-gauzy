@@ -328,9 +328,7 @@ export class AppointmentComponent
 	private async _fetchAvailableSlots(employeeId: string) {
 		const { tenantId } = this.store.user;
 		const findObj = {
-			organization: {
-				id: this._selectedOrganizationId
-			},
+			organizationId: this._selectedOrganizationId,
 			tenantId
 		};
 
@@ -496,8 +494,6 @@ export class AppointmentComponent
 			const endDate = moment(
 				convertLocalToTimezone(endTime, null, this.selectedTimeZoneName)
 			).format('YYYY-MM-DD hh:mm:ss');
-
-			console.log(startDate, endDate);
 
 			this.calendarEvents.push({
 				start: startDate,

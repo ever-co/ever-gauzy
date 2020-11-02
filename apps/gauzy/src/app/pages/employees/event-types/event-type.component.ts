@@ -1,7 +1,13 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { Subject } from 'rxjs';
-import { IEventType, ITag, ComponentLayoutStyleEnum } from '@gauzy/models';
+import {
+	IEventType,
+	ITag,
+	ComponentLayoutStyleEnum,
+	IOrganization,
+	IEventTypeViewModel,
+	ITenant
+} from '@gauzy/models';
 import {
 	ActivatedRoute,
 	Router,
@@ -11,7 +17,7 @@ import {
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
-import { takeUntil } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import { Store } from '../../../@core/services/store.service';
 import { EventTypeMutationComponent } from './event-type-mutation/event-type-mutation.component';
 import { EventTypeService } from '../../../@core/services/event-type.service';
@@ -19,29 +25,20 @@ import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { NotesWithTagsComponent } from '../../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
-export interface EventTypeViewModel {
-	title: string;
-	description: string;
-	durationFormat: string;
-	id: string;
-	Active: string;
-	isActive: boolean;
-	duration: Number;
-	durationUnit: string;
-	tags: ITag[];
-}
+@UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './event-type.component.html',
 	styleUrls: ['event-type.component.scss']
 })
-export class EventTypeComponent extends TranslationBaseComponent
+export class EventTypeComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
-	selectedEventType: EventTypeViewModel;
-	eventTypeData: EventTypeViewModel[];
+	selectedEventType: IEventTypeViewModel;
+	eventTypeData: IEventTypeViewModel[];
 	showTable: boolean;
 	selectedEmployeeId: string;
 	employeeName: string;
@@ -54,7 +51,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 	@ViewChild('eventTypesTable') eventTypesTable;
 
 	loading = true;
-	defaultEventTypes: EventTypeViewModel[] = [
+	defaultEventTypes: IEventTypeViewModel[] = [
 		{
 			id: null,
 			title: '15 Minutes Event',
@@ -89,6 +86,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 			tags: []
 		}
 	];
+	organization: IOrganization;
 
 	constructor(
 		private route: ActivatedRoute,
@@ -105,8 +103,14 @@ export class EventTypeComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
+		this._loadSmartTableSettings();
+		this._applyTranslationOnSmartTable();
+
 		this.store.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((employee) => !!employee),
+				untilDestroyed(this)
+			)
 			.subscribe((employee) => {
 				if (employee && employee.id) {
 					this.selectedEmployeeId = employee.id;
@@ -117,16 +121,16 @@ export class EventTypeComponent extends TranslationBaseComponent
 						this._loadTableData(null, this._selectedOrganizationId);
 					}
 				}
-
-				this._loadSmartTableSettings();
-				this._applyTranslationOnSmartTable();
 			});
-
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((org) => {
-				if (org) {
-					this._selectedOrganizationId = org.id;
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
+			.subscribe((organization: IOrganization) => {
+				if (organization) {
+					this._selectedOrganizationId = organization.id;
+					this.organization = organization;
 					if (this.loading) {
 						this._loadTableData(
 							this.store.selectedEmployee
@@ -142,7 +146,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 			});
 
 		this.route.queryParamMap
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((params) => {
 				if (params.get('openAddDialog')) {
 					this.openAddEventTypeDialog();
@@ -150,7 +154,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 			});
 
 		this.route.queryParamMap
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((params) => {
 				if (params.get('openAddDialog')) {
 					this.openAddEventTypeDialog();
@@ -158,7 +162,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 			});
 
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
@@ -170,7 +174,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 		this.viewComponentName = ComponentEnum.EVENT_TYPES;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
@@ -212,12 +216,15 @@ export class EventTypeComponent extends TranslationBaseComponent
 			delete this.settingsSmartTable['columns']['employee'];
 		}
 
+		const { tenantId } = this.store.user;
+		findObj['tenantId'] = tenantId;
+
 		try {
 			const { items } = await this.eventTypeService.getAll(
 				['employee', 'employee.user', 'tags'],
 				findObj
 			);
-			let eventTypeVM: EventTypeViewModel[] = items.map((i) => ({
+			let eventTypeVM: IEventTypeViewModel[] = items.map((i) => ({
 				isActive: i.isActive,
 				Active: i.isActive ? 'Yes' : 'No',
 				description: i.description,
@@ -275,7 +282,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 	openAddEventTypeDialog() {
 		this.dialogService
 			.open(EventTypeMutationComponent)
-			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (formData) => {
 				if (formData) {
 					await this.addEventType(
@@ -289,10 +296,12 @@ export class EventTypeComponent extends TranslationBaseComponent
 	async addEventType(completedForm: any, formData: any) {
 		completedForm.tags = formData.tags;
 		try {
+			const { tenantId } = this.store.user;
 			await this.eventTypeService.create({
 				...completedForm,
 				employeeId: formData.employee ? formData.employee.id : null,
-				organizationId: this.store.selectedOrganization.id
+				organizationId: this.store.selectedOrganization.id,
+				tenantId
 			});
 
 			this.toastrService.primary(
@@ -311,6 +320,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 				this.selectedEmployeeId,
 				this.selectedEmployeeId ? null : this._selectedOrganizationId
 			);
+			this._clearItem();
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
@@ -323,7 +333,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 		return this.showTable;
 	}
 
-	openEditEventTypeDialog(selectedItem?: EventTypeViewModel) {
+	openEditEventTypeDialog(selectedItem?: IEventTypeViewModel) {
 		if (selectedItem) {
 			this.selectEventType({
 				isSelected: true,
@@ -336,11 +346,12 @@ export class EventTypeComponent extends TranslationBaseComponent
 					eventType: this.selectedEventType
 				}
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (formData) => {
 				try {
 					if (formData) {
 						const completedForm = this.getFormData(formData);
+						const { tenantId } = this.store.user;
 
 						// For default event types
 						if (formData.id === null) {
@@ -350,7 +361,8 @@ export class EventTypeComponent extends TranslationBaseComponent
 									? formData.employee.id
 									: null,
 								organizationId: this.store.selectedOrganization
-									.id
+									.id,
+								tenantId
 							});
 						} else {
 							await this.eventTypeService.update(formData.id, {
@@ -377,6 +389,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 								? null
 								: this._selectedOrganizationId
 						);
+						this._clearItem();
 					}
 				} catch (error) {
 					this.errorHandler.handleError(error);
@@ -393,7 +406,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 		this.selectedEventType = selectedEventType;
 	}
 
-	async deleteEventType(selectedItem?: EventTypeViewModel) {
+	async deleteEventType(selectedItem?: IEventTypeViewModel) {
 		if (selectedItem) {
 			this.selectEventType({
 				isSelected: true,
@@ -408,7 +421,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 					)
 				}
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
@@ -431,7 +444,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 								? null
 								: this._selectedOrganizationId
 						);
-						this.selectedEventType = null;
+						this._clearItem();
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
@@ -441,7 +454,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this._loadSmartTableSettings();
 			});
@@ -484,9 +497,14 @@ export class EventTypeComponent extends TranslationBaseComponent
 		};
 	}
 
+	private _clearItem() {
+		this.selectEventType({
+			isSelected: false,
+			data: null
+		});
+	}
+
 	ngOnDestroy() {
 		delete this.settingsSmartTable['columns']['employee'];
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
 	}
 }
