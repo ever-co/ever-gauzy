@@ -224,8 +224,7 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 	ratings?: number;
 	@AfterLoad()
 	calculateRatings() {
-		console.log(typeof this.feedbacks);
-		if (this.feedbacks) {
+		if (Array.isArray(this.feedbacks)) {
 			this.ratings = avarage(this.feedbacks, 'rating');
 		}
 	}
