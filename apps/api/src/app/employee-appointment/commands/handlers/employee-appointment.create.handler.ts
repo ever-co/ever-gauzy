@@ -6,6 +6,7 @@ import { LanguagesEnum } from '@gauzy/models';
 import { EmailService } from '../../../email';
 import { EmployeeService } from '../../../employee/employee.service';
 import { OrganizationService } from '../../../organization/organization.service';
+import { RequestContext } from '../../../core/context';
 
 @CommandHandler(EmployeeAppointmentCreateCommand)
 export class EmployeeAppointmentCreateHandler
@@ -46,6 +47,7 @@ export class EmployeeAppointmentCreateHandler
 		appointment.startDateTime = employeeAppointmentInput.startDateTime;
 		appointment.endDateTime = employeeAppointmentInput.endDateTime;
 		appointment.location = employeeAppointmentInput.location;
+		appointment.tenantId = RequestContext.currentTenantId();
 
 		const createdAppointment = await this.employeeAppointmentService.create(
 			appointment

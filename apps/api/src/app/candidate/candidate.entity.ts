@@ -17,6 +17,7 @@ import {
 	IContact,
 	ITag
 } from '@gauzy/models';
+import { avarage } from '@gauzy/utils';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsOptional, IsEnum } from 'class-validator';
 import {
@@ -28,7 +29,8 @@ import {
 	ManyToOne,
 	OneToOne,
 	RelationId,
-	OneToMany
+	OneToMany,
+	AfterLoad
 } from 'typeorm';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
 import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
@@ -217,4 +219,12 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 	@ApiPropertyOptional({ type: Boolean, default: false })
 	@Column({ nullable: true, default: false })
 	isArchived?: boolean;
+
+	ratings?: number;
+	@AfterLoad()
+	calculateRatings() {
+		if (Array.isArray(this.feedbacks)) {
+			this.ratings = avarage(this.feedbacks, 'rating');
+		}
+	}
 }

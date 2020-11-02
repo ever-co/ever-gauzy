@@ -41,7 +41,8 @@ import { FeedbackStatusTableComponent } from './table-components/status/status.c
 	templateUrl: './edit-candidate-feedbacks.component.html',
 	styleUrls: ['./edit-candidate-feedbacks.component.scss']
 })
-export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
+export class EditCandidateFeedbacksComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	feedbackId = null;
@@ -331,15 +332,19 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 				fb.interviewTitle = currentInterview
 					? currentInterview.title
 					: '';
-				this.employeeList.forEach((item) => {
-					if (
-						fb.interviewId &&
-						fb.interviewer.employeeId === item.id
-					) {
-						fb.interviewer.employeeImageUrl = item.user.imageUrl;
-						fb.interviewer.employeeName = item.user.name;
-					}
-				});
+
+				if (fb.interviewer) {
+					this.employeeList.forEach((item) => {
+						if (
+							fb.interviewId &&
+							fb.interviewer.employeeId === item.id
+						) {
+							fb.interviewer.employeeImageUrl =
+								item.user.imageUrl;
+							fb.interviewer.employeeName = item.user.name;
+						}
+					});
+				}
 			});
 			const uniq = {};
 			this.interviewList = this.interviewList.filter(
