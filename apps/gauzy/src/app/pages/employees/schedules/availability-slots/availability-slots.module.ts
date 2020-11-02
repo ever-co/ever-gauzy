@@ -16,6 +16,7 @@ import {
 } from '@nebular/theme';
 import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
 import { ThemeModule } from 'apps/gauzy/src/app/@theme/theme.module';
+import { NgxPermissionsModule } from 'ngx-permissions';
 
 @NgModule({
 	declarations: [AvailabilitySlotsComponent],
@@ -32,7 +33,11 @@ import { ThemeModule } from 'apps/gauzy/src/app/@theme/theme.module';
 		NbDialogModule,
 		SharedModule,
 		NbCardModule,
-		NbButtonModule
+		NbButtonModule,
+		NgxPermissionsModule.forChild({
+			permissionsIsolate: true,
+			rolesIsolate: true
+		})
 	]
 })
 export class AvailabilitySlotsModule {}

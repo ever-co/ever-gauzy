@@ -109,6 +109,8 @@ export class AppointmentComponent
 	}
 
 	ngOnInit(): void {
+		this.getCalendarOption();
+		this.calendarEvents = [];
 		if (this.selectedEventType) {
 			this.allowedDuration =
 				this.selectedEventType.durationUnit === 'Day(s)'
@@ -146,7 +148,6 @@ export class AppointmentComponent
 					this.renderAppointmentsAndSlots(this._selectedEmployeeId);
 				} else {
 					this._selectedEmployeeId = null;
-					this.calendarEvents = [];
 					this.renderAppointmentsAndSlots(null);
 					if (this.calendarComponent.getApi()) {
 						this.calendarComponent.getApi().refetchEvents();
@@ -158,11 +159,9 @@ export class AppointmentComponent
 		if (this.employee && this.employee.id && this.selectedEventType) {
 			this.renderAppointmentsAndSlots(this.employee.id);
 		}
-
-		this.getCalendarOption();
 	}
 
-	async getCalendarOption() {
+	getCalendarOption() {
 		let currentDay = moment().day();
 		while (currentDay > 0) {
 			this.hiddenDays.push(currentDay--);
@@ -327,11 +326,12 @@ export class AppointmentComponent
 	}
 
 	private async _fetchAvailableSlots(employeeId: string) {
+		const { tenantId } = this.store.user;
 		const findObj = {
 			organization: {
 				id: this._selectedOrganizationId
 			},
-			tenantId: this.organization.tenantId
+			tenantId
 		};
 
 		if (employeeId) {
@@ -402,8 +402,6 @@ export class AppointmentComponent
 		this.calendarComponent
 			.getApi()
 			.setOption('headerToolbar', this.headerToolbarOptions);
-
-		this._prepareSlots(config.date);
 	}
 
 	private _prepareSlots(date: Date) {
@@ -502,8 +500,8 @@ export class AppointmentComponent
 			console.log(startDate, endDate);
 
 			this.calendarEvents.push({
-				start: new Date(startTime),
-				end: new Date(endTime),
+				start: startDate,
+				end: endDate,
 				extendedProps: {
 					id: id,
 					type: type
