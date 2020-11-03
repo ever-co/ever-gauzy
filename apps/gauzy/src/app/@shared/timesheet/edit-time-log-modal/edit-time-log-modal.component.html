@@ -1,4 +1,4 @@
-<form #f="ngForm" [formGroup]="form" (submit)="addTime()">
+<form #f="ngForm" *ngIf="form" [formGroup]="form" (submit)="addTime()">
 	<nb-card>
 		<nb-card-header class="header">
 			<div class="row">

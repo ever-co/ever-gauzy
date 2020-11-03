@@ -4,7 +4,7 @@ import * as addTaskPage from '../support/Base/pages/AddTasks.po';
 import { AddTasksPageData } from '../support/Base/pagedata/AddTasksPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 
-describe('Add employee level test', () => {
+describe('Add tasks test', () => {
 	before(() => {
 		cy.visit('/');
 		loginPage.verifyTitle();

@@ -4,7 +4,7 @@ import * as addEmployeePositionPage from '../support/Base/pages/AddEmployeePosit
 import { AddEmployeePositionPageData } from '../support/Base/pagedata/AddEmployeePositionPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 
-describe('Add employee level test', () => {
+describe('Add employee position test', () => {
 	before(() => {
 		cy.visit('/');
 		loginPage.verifyTitle();
