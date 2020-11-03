@@ -85,10 +85,13 @@ export class CandidateController extends CrudController<Candidate> {
 	})
 	@Get()
 	async findAllCandidates(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Candidate>> {
-		const { relations, findInput } = JSON.parse(data);
-		return this.candidateService.findAll({ where: findInput, relations });
+		const { relations, findInput } = data;
+		return this.candidateService.findAll({
+			where: findInput,
+			relations
+		});
 	}
 
 	@ApiOperation({ summary: 'Find Candidate by id ' })

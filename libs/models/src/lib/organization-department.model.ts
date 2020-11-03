@@ -2,10 +2,12 @@ import { IBaseEntityWithMembers } from './entity-with-members.model';
 import { IEmployee } from './employee.model';
 import { ITag } from './tag-entity.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { ICandidate } from './candidate.model';
 
 export interface IOrganizationDepartment extends IBaseEntityWithMembers {
 	name: string;
 	tags: ITag[];
+	candidates?: ICandidate[];
 }
 
 export interface IOrganizationDepartmentFindInput

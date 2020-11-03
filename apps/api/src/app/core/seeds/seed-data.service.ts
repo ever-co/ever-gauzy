@@ -751,7 +751,12 @@ export class SeedDataService {
 		);
 		await this.tryExecute(
 			'Default candidate interview',
-			createDefaultCandidateInterview(this.connection, defaultCandidates)
+			createDefaultCandidateInterview(
+				this.connection,
+				this.tenant,
+				this.organizations[0],
+				defaultCandidates
+			)
 		);
 
 		await this.tryExecute(
@@ -813,6 +818,7 @@ export class SeedDataService {
 			'Default Employment Types',
 			seedDefaultEmploymentTypes(
 				this.connection,
+				this.tenant,
 				this.defaultEmployees,
 				this.organizations[0]
 			)

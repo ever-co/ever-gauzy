@@ -32,7 +32,10 @@ export const createCandidateEducations = async (
 			degree: education.degree,
 			completionDate: education.completionDate,
 			field: education.field,
-			candidateId: candidate.id
+			candidateId: candidate.id,
+			organization: candidate.organization,
+			tenant: candidate.tenant,
+			notes: faker.lorem.sentence()
 		}));
 		defaultCandidateEducation = [
 			...defaultCandidateEducation,
@@ -73,7 +76,8 @@ export const createRandomCandidateEducations = async (
 				field: education.field,
 				candidateId: candidate.id,
 				organization: faker.random.arrayElement(organizations),
-				tenant: tenant
+				tenant: tenant,
+				notes: faker.lorem.sentence()
 			}));
 			candidateEducationsMap.set(candidate, educations);
 			candidateEducation = [...candidateEducations, ...educations];

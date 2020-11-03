@@ -95,6 +95,7 @@ import { InterviewersTableComponent } from './manage-candidate-interviews/interv
 import { InterviewActionsTableComponent } from './manage-candidate-interviews/interview-panel/table-components/actions/actions.component';
 import { FeedbackStatusTableComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-feedbacks/table-components/status/status.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
+import { NgxPermissionsModule } from 'ngx-permissions';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -196,7 +197,11 @@ const COMPONENTS = [
 		EmployeeMultiSelectModule,
 		CandidateInterviewFeedbackModule,
 		DeleteInterviewModule,
-		DeleteFeedbackModule
+		DeleteFeedbackModule,
+		NgxPermissionsModule.forChild({
+			permissionsIsolate: true,
+			rolesIsolate: true
+		})
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [

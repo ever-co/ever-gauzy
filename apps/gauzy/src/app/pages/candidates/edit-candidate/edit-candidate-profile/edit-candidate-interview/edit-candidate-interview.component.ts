@@ -1,12 +1,11 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { Subject } from 'rxjs';
-import { CandidateInterviewMutationComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
-import { first, takeUntil } from 'rxjs/operators';
-import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
-import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
+import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
+import { CandidateInterviewMutationComponent } from '../../../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
+import { filter, first } from 'rxjs/operators';
+import { CandidateInterviewService } from '../../../../../@core/services/candidate-interview.service';
+import { CandidateStore } from '../../../../../@core/services/candidate-store.service';
 import { FormGroup } from '@angular/forms';
 import {
 	ICandidate,
@@ -17,28 +16,29 @@ import {
 	ICandidateFeedback,
 	IOrganization
 } from '@gauzy/models';
-import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
-import { CandidateInterviewFeedbackComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
-import { DeleteInterviewComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-confirmation/delete-interview/delete-interview.component';
-import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
+import { EmployeesService } from '../../../../../@core/services';
+import { CandidateInterviewFeedbackComponent } from '../../../../../@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
+import { DeleteInterviewComponent } from '../../../../../@shared/candidate/candidate-confirmation/delete-interview/delete-interview.component';
+import { ComponentEnum } from '../../../../../@core/constants/layout.constants';
 import { LocalDataSource } from 'ng2-smart-table';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { Store } from '../../../../../@core/services/store.service';
 import { InterviewActionsTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/actions/actions.component';
 import { InterviewDateTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/date/date.component';
 import { InterviewStarRatingComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/rating/rating.component';
 import { InterviewersTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/interviewers/interviewers.component';
 import { InterviewCriterionsTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/criterions/criterions.component';
-import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
-import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
-
+import { CandidateFeedbacksService } from '../../../../../@core/services/candidate-feedbacks.service';
+import { CandidatesService } from '../../../../../@core/services/candidates.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-candidate-interview',
 	templateUrl: './edit-candidate-interview.component.html',
 	styleUrls: ['./edit-candidate-interview.component.scss']
 })
-export class EditCandidateInterviewComponent extends TranslationBaseComponent
+export class EditCandidateInterviewComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
 	interviewList: ICandidateInterview[];
 	candidateId: string;
 	selectedCandidate: ICandidate;
@@ -75,7 +75,10 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	}
 	ngOnInit() {
 		this.candidateStore.selectedCandidate$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((candidate) => !!candidate),
+				untilDestroyed(this)
+			)
 			.subscribe((candidate) => {
 				this.selectedCandidate = candidate;
 				if (candidate) {
@@ -91,7 +94,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 					} = this.selectedOrganization;
 					this.candidatesService
 						.getAll(['user'], { organizationId, tenantId })
-						.pipe(takeUntil(this._ngDestroy$))
+						.pipe(untilDestroyed(this))
 						.subscribe((candidates) => {
 							this.candidates = candidates.items;
 						});
@@ -102,7 +105,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		this.viewComponentName = ComponentEnum.INTERVIEWS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
@@ -412,14 +415,12 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	}
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.loadSmartTable();
 			});
 	}
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
+
 	openEmployees(employeeId?: string) {}
 }

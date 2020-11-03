@@ -172,16 +172,22 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 
 	@ManyToMany(
 		(type) => OrganizationDepartment,
-		(organizationDepartment) => organizationDepartment.members,
+		(organizationDepartment) => organizationDepartment.candidates,
 		{ cascade: true }
 	)
+	@JoinTable({
+		name: 'candidate_department'
+	})
 	organizationDepartments?: IOrganizationDepartment[];
 
 	@ManyToMany(
 		(type) => OrganizationEmploymentType,
-		(organizationEmploymentType) => organizationEmploymentType.members,
+		(organizationEmploymentType) => organizationEmploymentType.candidates,
 		{ cascade: true }
 	)
+	@JoinTable({
+		name: 'candidate_employment_type'
+	})
 	organizationEmploymentTypes?: IOrganizationEmploymentType[];
 
 	@ApiPropertyOptional({ type: String, maxLength: 500 })
