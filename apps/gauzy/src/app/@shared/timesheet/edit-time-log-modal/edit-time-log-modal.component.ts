@@ -62,7 +62,6 @@ export class EditTimeLogModalComponent
 	}
 	public set timeLog(value: ITimeLog | Partial<ITimeLog>) {
 		this._timeLog = Object.assign({}, value);
-
 		this.mode = this._timeLog && this._timeLog.id ? 'update' : 'create';
 	}
 
@@ -76,21 +75,14 @@ export class EditTimeLogModalComponent
 	) {
 		const munutes = moment().get('minutes');
 		const roundTime = moment().subtract(munutes - (munutes % 10));
-		const selectedRange: IDateRange = {
+
+		this.selectedRange = {
 			end: roundTime.toDate(),
 			start: roundTime.subtract(1, 'hour').toDate()
 		};
-		this.form = new FormGroup({
-			isBillable: new FormControl(true),
-			employeeId: new FormControl(null),
-			projectId: new FormControl(null),
-			organizationContactId: new FormControl(null),
-			taskId: new FormControl(null),
-			description: new FormControl(null),
-			reason: new FormControl(null),
-			selectedRange: new FormControl(selectedRange)
-		});
+		this._initializeForm();
 	}
+
 	ngAfterViewInit(): void {
 		if (this._timeLog) {
 			setTimeout(() => {
@@ -110,7 +102,7 @@ export class EditTimeLogModalComponent
 						end: this._timeLog.stoppedAt
 					}
 				});
-			});
+			}, 200);
 		}
 	}
 
@@ -178,6 +170,19 @@ export class EditTimeLogModalComponent
 			.subscribe((organization: IOrganization) => {
 				this.organization = organization;
 			});
+	}
+
+	private _initializeForm() {
+		this.form = new FormGroup({
+			isBillable: new FormControl(true),
+			employeeId: new FormControl(null),
+			projectId: new FormControl(null),
+			organizationContactId: new FormControl(null),
+			taskId: new FormControl(null),
+			description: new FormControl(null),
+			reason: new FormControl(null),
+			selectedRange: new FormControl(this.selectedRange)
+		});
 	}
 
 	close() {
