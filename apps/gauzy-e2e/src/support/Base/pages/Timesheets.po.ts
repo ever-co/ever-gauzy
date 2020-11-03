@@ -17,6 +17,69 @@ export const clickAddTimeButton = () => {
 	clickButton(TimesheetsPage.addTimeButtonCss);
 };
 
+export const selectEmployeeDropdownVisible = () => {
+	verifyElementIsVisible(TimesheetsPage.selectEmloyeeCss);
+};
+
+export const clickSelectEmployeeDropdown = () => {
+	clickButton(TimesheetsPage.selectEmloyeeCss);
+};
+
+export const selectEmployeeFromDropdown = (index) => {
+	clickButtonByIndex(TimesheetsPage.selectEmployeeDropdownOptionCss, index);
+};
+
+export const clickKeyboardButtonByKeyCode = (keycode) => {
+	clickKeyboardBtnByKeycode(keycode);
+};
+
+export const dateInputVisible = () => {
+	verifyElementIsVisible(TimesheetsPage.dateInputCss);
+};
+
+export const enterDateData = () => {
+	clearField(TimesheetsPage.dateInputCss);
+	const date = Cypress.moment().format('MMM D, YYYY');
+	enterInput(TimesheetsPage.dateInputCss, date);
+};
+
+export const startTimePickerVisible = () => {
+	verifyElementIsVisible(TimesheetsPage.startTimePickerCss);
+};
+
+export const clickStartTimePicker = () => {
+	clickButton(TimesheetsPage.startTimePickerCss);
+};
+
+export const selectTimeFromDropdown = (index) => {
+	clickButtonByIndex(TimesheetsPage.timePickerDropdownOptionCss, index);
+};
+
+export const endTimePickerVisible = () => {
+	verifyElementIsVisible(TimesheetsPage.endTimePickerCss);
+};
+
+export const clickEndTimePicker = () => {
+	clickButton(TimesheetsPage.endTimePickerCss);
+};
+
+export const addTimeLogDescriptionVisible = () => {
+	verifyElementIsVisible(TimesheetsPage.descriptionTextareaCss);
+};
+
+export const enterTimeLogDescriptionData = (data) => {
+	clearField(TimesheetsPage.descriptionTextareaCss);
+	enterInput(TimesheetsPage.descriptionTextareaCss, data);
+};
+
+export const saveTimeLogButtonVisible = () => {
+	verifyElementIsVisible(TimesheetsPage.saveTimeButtonCss);
+};
+
+export const clickSaveTiemLogButton = () => {
+	clickButton(TimesheetsPage.saveTimeButtonCss);
+};
+
 export const closeAddTimeLogPopoverButtonVisible = () => {
 	verifyElementIsVisible(TimesheetsPage.closeAddTimeLogPopoverCss);
 };
