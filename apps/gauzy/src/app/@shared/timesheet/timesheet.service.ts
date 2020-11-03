@@ -96,6 +96,20 @@ export class TimesheetService {
 			.toPromise();
 	}
 
+	getDailyReport(request?: IGetTimeLogInput) {
+		const params = toParams(request);
+		return this.http
+			.get('/api/timesheet/time-log/report/daily', { params })
+			.toPromise();
+	}
+
+	getWeeklyReport(request?: IGetTimeLogInput) {
+		const params = toParams(request);
+		return this.http
+			.get('/api/timesheet/time-log/report/weekly', { params })
+			.toPromise();
+	}
+
 	getTimeLog(id: string, findOptions) {
 		const params = toParams(findOptions);
 		return this.http

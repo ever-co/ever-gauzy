@@ -1,0 +1,154 @@
+<div class="row">
+	<div
+		class="col-sm-4 col-md-3 col-lg"
+		*ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE"
+	>
+		<nb-card
+			[nbSpinner]="countsLoading"
+			nbSpinnerSize="giant"
+			nbSpinnerStatus="primary"
+		>
+			<nb-card-body>
+				<p>
+					{{ 'TIMESHEET.MEMBERS_WORKED' | translate }}
+				</p>
+				<div class="h1">
+					{{ counts?.employeesCount || 0 }}
+				</div>
+			</nb-card-body>
+		</nb-card>
+	</div>
+	<div class="col-sm-4 col-md-3 col-lg">
+		<nb-card
+			[nbSpinner]="countsLoading"
+			nbSpinnerSize="giant"
+			nbSpinnerStatus="primary"
+		>
+			<nb-card-body>
+				<p>
+					{{ 'TIMESHEET.PROJECTS_WORKED' | translate }}
+				</p>
+				<div class="h1">
+					{{ counts?.projectsCount || 0 }}
+				</div>
+			</nb-card-body>
+		</nb-card>
+	</div>
+	<div class="col-sm-4 col-md-3 col-lg">
+		<nb-card
+			[nbSpinner]="countsLoading"
+			nbSpinnerSize="giant"
+			nbSpinnerStatus="primary"
+		>
+			<nb-card-body>
+				<p>
+					{{ 'TIMESHEET.WEEKLY_ACTIVITY' | translate }}
+				</p>
+				<div class="h1">{{ counts?.weekActivities || 0 }}%</div>
+			</nb-card-body>
+		</nb-card>
+	</div>
+	<div class="col-sm-4 col-md-3 col-lg">
+		<nb-card
+			[nbSpinner]="countsLoading"
+			nbSpinnerSize="giant"
+			nbSpinnerStatus="primary"
+		>
+			<nb-card-body>
+				<p>
+					{{ 'TIMESHEET.WORKED_THIS_WEEK' | translate }}
+				</p>
+				<div class="h1">
+					{{ counts?.weekDuration || 0 | durationFormat }}
+				</div>
+			</nb-card-body>
+		</nb-card>
+	</div>
+	<div class="col-sm-4 col-md-3 col-lg">
+		<nb-card
+			[nbSpinner]="countsLoading"
+			nbSpinnerSize="giant"
+			nbSpinnerStatus="primary"
+		>
+			<nb-card-body>
+				<p>
+					{{ 'TIMESHEET.TODAY_ACTIVITY' | translate }}
+				</p>
+				<div class="h1">{{ counts?.todayActivities || 0 }}%</div>
+			</nb-card-body>
+		</nb-card>
+	</div>
+	<div class="col-sm-4 col-md-3 col-lg">
+		<nb-card
+			[nbSpinner]="countsLoading"
+			nbSpinnerSize="giant"
+			nbSpinnerStatus="primary"
+		>
+			<nb-card-body>
+				<p>
+					{{ 'TIMESHEET.WORKED_TODAY' | translate }}
+				</p>
+				<div class="h1">
+					{{ counts?.todayDuration || 0 | durationFormat }}
+				</div>
+			</nb-card-body>
+		</nb-card>
+	</div>
+</div>
+<div class="daily-time-report my-3">
+	<gauzy-time-report-horizontal-bar-chart></gauzy-time-report-horizontal-bar-chart>
+</div>
+<div class="table">
+	<div
+		class="weekly-logs row-table"
+		[nbSpinner]="loading"
+		nbSpinnerSize="giant"
+		nbSpinnerStatus="primary"
+	>
+		<div
+			class="row border-bottom border-top py-3 font-weight-bold align-items-center"
+		>
+			<div class="col-sm-3 project-name">
+				{{ 'TIMESHEET.EMPLOYEE' | translate }}
+			</div>
+			<div
+				class="col text-center day-col"
+				*ngFor="let date of weekDayList"
+			>
+				{{ date | date }}
+			</div>
+		</div>
+		<ng-template [ngIf]="weekData?.length > 0" [ngIfElse]="notFound">
+			<div
+				class="row border-bottom py-3 align-items-center"
+				*ngFor="let day of weekData"
+			>
+				<div class="col-sm-3 project-name">
+					<ngx-avatar
+						[src]="day?.employee?.user?.imageUrl"
+						[name]="day?.employee?.user?.name"
+					></ngx-avatar>
+					<ng-template #noProjects>
+						<span>{{ 'TIMESHEET.NO_EMPLOYEE' | translate }}</span>
+					</ng-template>
+				</div>
+				<div
+					class="col text-center day-col"
+					*ngFor="let date of weekDayList"
+				>
+					<span *ngIf="day.dates[date]; else noLogsCol">{{
+						day.dates[date]?.sum | durationFormat
+					}}</span>
+					<ng-template #noLogsCol> - </ng-template>
+				</div>
+			</div>
+		</ng-template>
+		<ng-template #notFound>
+			<div class="row font-weight-bold py-3 align-items-center">
+				<div class="col text-center">
+					{{ 'TIMESHEET.NO_TIMELOG' | translate }}
+				</div>
+			</div>
+		</ng-template>
+	</div>
+</div>
