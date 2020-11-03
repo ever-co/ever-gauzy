@@ -20,7 +20,9 @@ export class CandidateCriterionsRatingBulkCreateHandler
 			technologyRating = {
 				rating: item.rating,
 				technologyId: item.id,
-				feedbackId: feedbackId
+				feedbackId: feedbackId,
+				organizationId: item.organizationId,
+				tenantId: item.tenantId
 			};
 			technologyCreateInput.push(technologyRating);
 		}
@@ -31,7 +33,9 @@ export class CandidateCriterionsRatingBulkCreateHandler
 			qualityRating = {
 				rating: item.rating,
 				personalQualityId: item.id,
-				feedbackId: feedbackId
+				feedbackId: feedbackId,
+				organizationId: item.organizationId,
+				tenantId: item.tenantId
 			};
 			qualityCreateInput.push(qualityRating);
 		}

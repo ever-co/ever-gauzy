@@ -6,13 +6,9 @@ import {
 	OnInit,
 	OnDestroy
 } from '@angular/core';
-import { ICandidateInterview, IOrganization } from '@gauzy/models';
-import { Subject } from 'rxjs';
-import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
-import { takeUntil } from 'rxjs/operators';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { ICandidateInterview } from '@gauzy/models';
+import { TranslationBaseComponent } from '../../../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({
 	selector: 'ga-interview-actions',
@@ -32,9 +28,7 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 					{{ 'CANDIDATES_PAGE.ARCHIVED' | translate }}
 				</div>
 			</div>
-			<span class="title">
-				updated:
-			</span>
+			<span class="title"> updated: </span>
 			<span class="title">
 				{{ rowData?.updatedAt | date: 'short' }}
 			</span>
@@ -156,38 +150,17 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 		`
 	]
 })
-export class InterviewActionsTableComponent extends TranslationBaseComponent
+export class InterviewActionsTableComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	@Input() rowData: any;
 	@Output() updateResult = new EventEmitter<any>();
-	private _ngDestroy$ = new Subject<void>();
-	organization: IOrganization;
-	constructor(
-		private candidatesService: CandidatesService,
-		readonly translateService: TranslateService,
-		private readonly store: Store
-	) {
+	constructor(readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
-	ngOnInit() {
-		this.organization = this.store.selectedOrganization;
-		const { id: organizationId, tenantId } = this.organization;
-		this.candidatesService
-			.getAll(['user'], { organizationId, tenantId })
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((candidates) => {
-				candidates.items.forEach((item) => {
-					if (item.id === this.rowData.candidate.id) {
-						this.rowData.candidate = item;
-					}
-				});
-			});
-	}
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnInit() {}
+	ngOnDestroy() {}
 	isPastInterview(interview: ICandidateInterview) {
 		const now = new Date().getTime();
 		if (new Date(interview.startTime).getTime() > now) {

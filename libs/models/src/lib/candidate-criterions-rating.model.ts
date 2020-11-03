@@ -8,14 +8,16 @@ export interface ICandidateCriterionsRating
 	feedbackId?: string;
 }
 
-export interface ICandidateCriterionsRatingFindInput {
+export interface ICandidateCriterionsRatingFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	rating?: number;
 	technologyId?: string;
 	personalQualityId?: string;
 	feedbackId?: string;
 }
 
-export interface ICandidateCriterionsRatingCreateInput {
+export interface ICandidateCriterionsRatingCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	rating: number;
 	technologyId?: string;
 	personalQualityId?: string;

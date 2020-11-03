@@ -1,4 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { ICandidate } from './candidate.model';
 import { ITag } from './tag-entity.model';
 
 export enum GenericEmploymentTypes {
@@ -14,6 +15,7 @@ export interface IOrganizationEmploymentType
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	tags: ITag[];
+	candidates?: ICandidate[];
 }
 
 export interface IOrganizationEmploymentTypeFindInput
