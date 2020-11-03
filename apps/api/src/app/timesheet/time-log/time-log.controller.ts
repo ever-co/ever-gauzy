@@ -17,7 +17,8 @@ import {
 	IGetTimeLogInput,
 	OrganizationPermissionsEnum,
 	PermissionsEnum,
-	IGetTimeLogConflictInput
+	IGetTimeLogConflictInput,
+	IGetTimeLogReportInput
 } from '@gauzy/models';
 import { AuthGuard } from '@nestjs/passport';
 import { TimeLogService } from './time-log.service';
@@ -58,6 +59,34 @@ export class TimeLogController extends CrudController<ITimeLog> {
 		@Query() entity: IGetTimeLogConflictInput
 	): Promise<ITimeLog[]> {
 		return this.timeLogService.checkConflictTime(entity);
+	}
+
+	@ApiOperation({ summary: 'Find Timer Log by id' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found one record' /*, type: T*/
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('report/daily')
+	async getDailyReport(@Query() options: IGetTimeLogReportInput) {
+		return this.timeLogService.getDailyReport(options);
+	}
+
+	@ApiOperation({ summary: 'Find Timer Log by id' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found one record' /*, type: T*/
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('report/weekly')
+	async getWeeklyReport(@Query() options: IGetTimeLogReportInput) {
+		return this.timeLogService.getWeeklyReport(options);
 	}
 
 	@ApiOperation({ summary: 'Find Timer Log by id' })
