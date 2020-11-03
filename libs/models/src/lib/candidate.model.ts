@@ -16,7 +16,6 @@ import { ICandidateExperience } from './candidate-experience.model';
 import { ICandidateSkill } from './candidate-skill.model';
 import { ICandidateEducation } from './candidate-education.model';
 import { ICandidateDocument } from './candidate-document.model';
-import { IEmployeeLevel } from './employee.model';
 
 export interface ICandidate extends IBasePerTenantAndOrganizationEntityModel {
 	user: IUser;

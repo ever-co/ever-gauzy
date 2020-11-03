@@ -1,6 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
-	PermissionsEnum,
 	InvitationTypeEnum,
 	ComponentLayoutStyleEnum,
 	IOrganization,
