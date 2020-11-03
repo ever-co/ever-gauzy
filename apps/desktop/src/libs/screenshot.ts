@@ -207,6 +207,7 @@ const showCapturedToRenderer = (NotificationWindow, thumbUrl, quitApp) => {
 		hash: '/screen-capture'
 	});
 	NotificationWindow.loadURL(urlpath);
+	NotificationWindow.setMenu(null);
 	NotificationWindow.hide();
 
 	setTimeout(() => {

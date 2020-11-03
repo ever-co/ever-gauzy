@@ -42,6 +42,7 @@ export class SettingsComponent implements OnInit {
 	selectedPeriod = null;
 	screenshotNotification = null;
 	config = null;
+	restartDisable = false;
 	constructor(private electronService: ElectronService) {
 		this.electronService.ipcRenderer.on('app_setting', (event, arg) => {
 			const { setting, config } = arg;
@@ -49,7 +50,7 @@ export class SettingsComponent implements OnInit {
 			this.config = config;
 			this.config.awPort = this.config.awAPI.split('t:')[1];
 			this.config.serverType = this.config.isLocalServer
-				? 'Local'
+				? 'Internal'
 				: 'External';
 			this.selectMonitorOption({
 				value: setting.monitor.captured
@@ -116,5 +117,18 @@ export class SettingsComponent implements OnInit {
 			dbPort: this.config.dbPort,
 			awAPI: `http://localhost:${this.config.awPort}`
 		});
+	}
+
+	portChange(val, type) {
+		if (type === 'api') {
+			if (
+				['5621', '5622'].findIndex((item) => item === val.toString()) >
+				-1
+			) {
+				this.restartDisable = true;
+			} else {
+				this.restartDisable = false;
+			}
+		}
 	}
 }

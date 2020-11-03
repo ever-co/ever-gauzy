@@ -8,14 +8,14 @@ export default class AppMenu {
 			{
 				label: app.getName(),
 				submenu: [
-					{ role: 'about' },
+					{ role: 'about', label: 'About' },
 					{ type: 'separator' },
 					{ type: 'separator' },
-					{ role: 'quit' }
+					{ role: 'quit', label: 'Exit' }
 				]
 			},
 			{
-				label: 'window',
+				label: 'Window',
 				submenu: [
 					{
 						id: 'window-time-track',
@@ -75,7 +75,7 @@ export default class AppMenu {
 				]
 			},
 			{
-				label: 'help',
+				label: 'Help',
 				submenu: [{ label: 'Learn More' }]
 			}
 		]);

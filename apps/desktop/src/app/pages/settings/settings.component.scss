@@ -8,13 +8,13 @@
 }
 
 .title-tile {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: bolder;
   margin-bottom: 10px;
 }
 
 .subtitle-tile {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: bold;
 }
 
@@ -29,7 +29,7 @@
 .monitor-many {
   position: absolute;
   top: -9px;
-  left: 70px;
+  left: 90px;
   z-index: 0;
 }
 
@@ -47,4 +47,8 @@
   font-size: 12px;
   font-weight: bold;
   color: orange;
+}
+
+::ng-deep body {
+  overflow: auto !important;
 }

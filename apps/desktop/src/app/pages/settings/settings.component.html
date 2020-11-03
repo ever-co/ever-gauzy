@@ -111,7 +111,7 @@
 			</div>
 		</div>
 		<div class="row" *ngIf="selectedMenu === 'Advanced Setting'">
-			<div class="col-12"><h4>Anvanced Setting</h4></div>
+			<div class="col-12"><h4>Advanced Setting</h4></div>
 			<div class="col-12 warning-config" *ngIf="appSetting.timerStarted">
 				<span>Please stop timer if you want to change config</span>
 			</div>
@@ -135,19 +135,42 @@
 									status="basic"
 								/>
 							</div>
-							<div class="col-5 centered-text">
+							<div
+								class="col-5 centered-text"
+								*ngIf="config.isLocalServer"
+							>
 								<p>Local API Port</p>
 							</div>
-							<div class="col-7 form-group">
+							<div
+								class="col-7 form-group"
+								*ngIf="config.isLocalServer"
+							>
 								<input
 									[(ngModel)]="config.port"
+									type="number"
+									nbInput
+									fullWidth
+									[disabled]="appSetting.timerStarted"
+									status="basic"
+									(ngModelChange)="portChange($event, 'api')"
+								/>
+							</div>
+							<div
+								class="col-5 centered-text"
+								*ngIf="!config.isLocalServer"
+							>
+								<p>Server URL</p>
+							</div>
+							<div
+								class="col-7 form-group"
+								*ngIf="!config.isLocalServer"
+							>
+								<input
+									[(ngModel)]="config.serverUrl"
 									type="text"
 									nbInput
 									fullWidth
-									[disabled]="
-										appSetting.timerStarted ||
-										config.isLocalServer
-									"
+									[disabled]="appSetting.timerStarted"
 									status="basic"
 								/>
 							</div>
@@ -155,7 +178,7 @@
 					</nb-card-body>
 				</nb-card>
 			</div>
-			<div class="col-12">
+			<div class="col-12" *ngIf="config.isLocalServer">
 				<nb-card>
 					<nb-card-body>
 						<div class="row">
@@ -163,7 +186,7 @@
 								<p class="subtitle-tile">Database Config</p>
 							</div>
 							<div class="col-5 centered-text">
-								<p>DB DRIVER</p>
+								<p>DB Driver</p>
 							</div>
 							<div class="col-7 form-group">
 								<input
@@ -175,17 +198,21 @@
 									status="basic"
 								/>
 							</div>
-							<div class="col-5 centered-text">
-								<p>DB PORT</p>
+							<div
+								class="col-5 centered-text"
+								*ngIf="config.db === 'postgres'"
+							>
+								<p>DB Port</p>
 							</div>
 							<div class="col-7 form-group">
 								<input
 									[(ngModel)]="config.dbPort"
-									type="text"
+									type="number"
 									nbInput
 									fullWidth
 									status="basic"
-									[disabled]="true"
+									[disabled]="appSetting.timerStarted"
+									(ngModelChange)="portChange($event, 'db')"
 								/>
 							</div>
 						</div>
@@ -217,7 +244,12 @@
 				</nb-card>
 			</div>
 			<div class="col-12">
-				<button nbButton status="primary" (click)="restartApp()">
+				<button
+					nbButton
+					status="primary"
+					(click)="restartApp()"
+					[disabled]="restartDisable"
+				>
 					Save & Restart App
 				</button>
 			</div>
