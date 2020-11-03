@@ -5,17 +5,27 @@
 [![Gitter](https://badges.gitter.im/JoinChat.svg)](https://gitter.im/ever-co/gauzy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Get help on Codementor](https://cdn.codementor.io/badges/get_help_github.svg)](https://www.codementor.io/evereq?utm_source=github&utm_medium=button&utm_term=evereq&utm_campaign=github)
 
-Gauzy™ Platform - **Open-Source Business Management Platform** focused on **Fairness** and **Transparency** for freelancers, modern agencies, studios and in-house teams.
+Gauzy™ Platform - **Open-Source Business Management Platform** focused on **Fairness** and **Transparency**.
 
 You are welcome to check more information about the platform at our official website - **<https://ever.co/features-gauzy-platform>**.
 
-Gauzy Platform includes multiple ERP/CRM features, usually available in the _accounting_, _human resources_, _invoicing_, _time management_ and _project management_ software:
+Gauzy Platform main features:
+
+- Human Resources Management (HRM), Time Management and Employees Performance Monitoring
+- Customer Relationship Management (CRM)
+- Enterprise Resource Planning (ERP)
+- Project Management
+- Sales Management
+- Financial and Cost Management (including _Accounting_, _Invoicing_, etc)
+- Inventory, Supply Chain Management and Production Management
+
+More detailed list of the features available in the Gauzy Platform:
 
 -   Dashboard (provides overview of different metrics, such as company income / expenses, employees bonuses, etc.)
--   Contacts Management (Clients / Customers / Leads / etc.)
+-   Time Management / Time Tracking / Activity Tracking / Timesheets
 -   Employees Management (register of company employees / contractors, rates of employees, etc.)
 -   Employees Onboarding / Candidates Interviews
--   Time Management / Time Tracking / Activity Tracking / Timesheets
+-   Contacts Management (Clients / Customers / Leads / etc.)
 -   Schedules / Appointments / Events
 -   Project Management / Tasks
 -   Goals / KPI / Objectives / Key Results
@@ -43,11 +53,7 @@ Gauzy Platform includes multiple ERP/CRM features, usually available in the _acc
 -   Multi-language
 -   Dark / Light / Corporate and other Themes
 
-So, while initially the primary purpose of Gauzy Platform was to allow transparent and fair accounting, profits sharing and bonuses calculation, today you can also use Gauzy software as the modern and intelligent platform to run your **Outsourcing/Freelance Agency or Studio business** in a completely new, open way.
-
-In addition, we encourage individual **Freelancers** to join our "Gauzy" revolution and use the platform to jump start your open business!
-
-Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [How to use it](https://github.com/ever-co/gauzy/wiki/How-to-use-Gauzy) at your freelance business, agency, studio or in-house teams.
+Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [How to use it](https://github.com/ever-co/gauzy/wiki/How-to-use-Gauzy) at your company, freelance business, agency, studio or in-house teams.
 
 ## Demos, Testing and Production
 
