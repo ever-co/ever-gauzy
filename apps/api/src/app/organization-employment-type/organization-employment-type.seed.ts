@@ -7,6 +7,7 @@ import { Tenant } from '../tenant/tenant.entity';
 
 export const seedDefaultEmploymentTypes = async (
 	connection: Connection,
+	tenant: Tenant,
 	employees: Employee[],
 	defaultOrganization: Organization
 ) => {
@@ -57,7 +58,7 @@ export const seedDefaultEmploymentTypes = async (
 		const employmentType = new OrganizationEmploymentType();
 		employmentType.name = name;
 		employmentType.organizationId = defaultOrganization.id;
-		employmentType.tenantId = defaultOrganization.tenantId;
+		employmentType.tenant = tenant;
 		if (name === 'Contract') {
 			employmentType.members = employees;
 		} else if (name === 'Full-time') {

@@ -1,41 +1,52 @@
-import { ICandidateInterview } from '@gauzy/models';
+import { ICandidateInterview, IOrganization } from '@gauzy/models';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
-import { takeUntil, first } from 'rxjs/operators';
+import { first, filter } from 'rxjs/operators';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { CandidateInterviewMutationComponent } from '../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
 import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
-
+import { Store } from '../../../@core/services/store.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-manage-candidate-interviews',
 	templateUrl: './manage-candidate-interviews.component.html',
 	styleUrls: ['./manage-candidate-interviews.component.scss']
 })
-export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
+export class ManageCandidateInterviewsComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	tabs: any[];
 	interviewList: ICandidateInterview[];
-
-	private _ngDestroy$ = new Subject<void>();
+	organization: IOrganization;
 	constructor(
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
 		private toastrService: NbToastrService,
-		public candidateInterviewService: CandidateInterviewService
+		public candidateInterviewService: CandidateInterviewService,
+		private store: Store
 	) {
 		super(translateService);
 	}
 	ngOnInit() {
 		this.loadTabs();
 		this._applyTranslationOnTabs();
-		this.loadInterviews();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
+			.subscribe((organization: IOrganization) => {
+				if (organization) {
+					this.organization = organization;
+					this.loadInterviews();
+				}
+			});
 	}
 	getRoute(tab: string): string {
 		return `/pages/employees/candidates/interviews/${tab}`;
 	}
-
 	loadTabs() {
 		this.tabs = [
 			{
@@ -84,26 +95,28 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 		}
 	}
 	async loadInterviews() {
-		const res = await this.candidateInterviewService.getAll([
-			'feedbacks',
-			'interviewers',
-			'technologies',
-			'personalQualities',
-			'candidate'
-		]);
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		const res = await this.candidateInterviewService.getAll(
+			[
+				'feedbacks',
+				'interviewers',
+				'technologies',
+				'personalQualities',
+				'candidate'
+			],
+			{ organizationId, tenantId }
+		);
 		if (res) {
 			this.interviewList = res.items;
 		}
 	}
 	private _applyTranslationOnTabs() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.loadTabs();
 			});
 	}
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

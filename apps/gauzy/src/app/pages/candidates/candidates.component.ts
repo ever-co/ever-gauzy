@@ -4,11 +4,11 @@ import {
 	InvitationTypeEnum,
 	ComponentLayoutStyleEnum,
 	IOrganization,
-	ICandidateViewModel
+	ICandidateViewModel,
+	IRolePermission
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
-import { Subject } from 'rxjs';
 import { first, filter } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
@@ -26,12 +26,11 @@ import {
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { CandidateSourceComponent } from './table-components/candidate-source/candidate-source.component';
-import { CandidateSourceService } from '../../@core/services/candidate-source.service';
-import { CandidateFeedbacksService } from '../../@core/services/candidate-feedbacks.service';
 import { ArchiveConfirmationComponent } from '../../@shared/user/forms/archive-confirmation/archive-confirmation.component';
 import { CandidateActionConfirmationComponent } from '../../@shared/user/forms/candidate-action-confirmation/candidate-action-confirmation.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { NgxPermissionsService } from 'ngx-permissions';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -46,15 +45,9 @@ export class CandidatesComponent
 	sourceSmartTable = new LocalDataSource();
 	selectedCandidate: ICandidateViewModel;
 	selectedOrganizationId: string;
-	private _ngDestroy$ = new Subject<void>();
 	candidateName = 'Candidate';
-	candidateSource: string;
-	candidateRating: number;
 	includeArchived = false;
 	loading = true;
-	hasEditPermission = false;
-	hasInviteEditPermission = false;
-	hasInviteViewOrEditPermission = false;
 	organizationInvitesAllowed = false;
 	viewComponentName: ComponentEnum;
 	disableButton = true;
@@ -72,8 +65,7 @@ export class CandidatesComponent
 		private route: ActivatedRoute,
 		private translate: TranslateService,
 		private errorHandler: ErrorHandlingService,
-		private candidateSourceService: CandidateSourceService,
-		private candidateFeedbacksService: CandidateFeedbacksService
+		private ngxPermissionsService: NgxPermissionsService
 	) {
 		super(translate);
 		this.setView();
@@ -81,18 +73,17 @@ export class CandidatesComponent
 
 	async ngOnInit() {
 		this.store.userRolePermissions$
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.hasEditPermission = this.store.hasPermission(
-					PermissionsEnum.ORG_CANDIDATES_EDIT
+			.pipe(
+				filter(
+					(permissions: IRolePermission[]) => permissions.length > 0
+				),
+				untilDestroyed(this)
+			)
+			.subscribe((data) => {
+				const permissions = data.map(
+					(permisson) => permisson.permission
 				);
-
-				this.hasInviteEditPermission = this.store.hasPermission(
-					PermissionsEnum.ORG_INVITE_EDIT
-				);
-				this.hasInviteViewOrEditPermission =
-					this.store.hasPermission(PermissionsEnum.ORG_INVITE_VIEW) ||
-					this.hasInviteEditPermission;
+				this.ngxPermissionsService.loadPermissions(permissions);
 			});
 		this.store.selectedOrganization$
 			.pipe(
@@ -246,7 +237,7 @@ export class CandidatesComponent
 		const { tenantId } = this.store.user;
 		this.selectedCandidate = null;
 		const { items } = await this.candidatesService
-			.getAll(['user', 'source', 'tags', 'feedbacks'], {
+			.getAll(['user', 'source', 'tags'], {
 				organizationId: this.selectedOrganizationId,
 				tenantId
 			})
@@ -408,8 +399,5 @@ export class CandidatesComponent
 		});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

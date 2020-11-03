@@ -60,7 +60,7 @@ export const createDefaultTeams = async (
 		const team = new OrganizationTeam();
 		team.name = teams[i].name;
 		team.organizationId = organization.id;
-		team.tenantId = organization.tenantId;
+		team.tenant = organization.tenant;
 
 		const filteredEmployees = employees.filter(
 			(e) => (teams[i].defaultMembers || []).indexOf(e.user.email) > -1

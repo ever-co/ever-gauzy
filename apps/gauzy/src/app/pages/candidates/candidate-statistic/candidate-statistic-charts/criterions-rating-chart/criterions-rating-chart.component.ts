@@ -8,7 +8,7 @@ import {
 	IEmployee,
 	ICandidateFeedback
 } from '@gauzy/models';
-import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
+import { CandidateFeedbacksService } from '../../../../../@core/services/candidate-feedbacks.service';
 
 @Component({
 	selector: 'ga-criterions-rating-chart',
@@ -60,8 +60,10 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 					this.getRating(feedback, rating);
 					ratings.push(rating);
 				}
-				if (feedback.interviewer.employeeId === id) {
-					this.getRating(feedback);
+				if (feedback.interviewer) {
+					if (feedback.interviewer.employeeId === id) {
+						this.getRating(feedback);
+					}
 				}
 			});
 			if (id === 'all') {
@@ -134,16 +136,19 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 				allFbIds.push(feedback.interviewer.employeeId);
 				this.loadColor(feedback);
 			});
-			for (const interviewer of this.currentInterview.interviewers) {
-				allIds.push(interviewer.employeeId);
-				if (this.employeeList) {
-					this.employeeList.forEach((item) => {
-						if (interviewer.employeeId === item.id) {
-							interviewer.employeeName = item.user.name;
-							interviewer.employeeImageUrl = item.user.imageUrl;
-							this.currentEmployee.push(item);
-						}
-					});
+			if (this.currentInterview) {
+				for (const interviewer of this.currentInterview.interviewers) {
+					allIds.push(interviewer.employeeId);
+					if (this.employeeList) {
+						this.employeeList.forEach((item) => {
+							if (interviewer.employeeId === item.id) {
+								interviewer.employeeName = item.user.name;
+								interviewer.employeeImageUrl =
+									item.user.imageUrl;
+								this.currentEmployee.push(item);
+							}
+						});
+					}
 				}
 			}
 			this.disabledIds = allIds.filter((x) => !allFbIds.includes(x));
