@@ -16,8 +16,28 @@ describe('Approval request test', () => {
 		loginPage.clickLoginButton();
 		dashboradPage.verifyCreateButton();
 	});
-	it('Should be able to add new approval request', () => {
+	it('Should be able to add approval policy', () => {
 		cy.visit('/#/pages/employees/approvals');
+		approvalRequestPage.approvalPolicyButtonVisible();
+		approvalRequestPage.clickApprovalPolicyButton();
+		approvalRequestPage.gridBtnExists();
+		approvalRequestPage.gridBtnClick(1);
+		approvalRequestPage.addApprovalButtonVisible();
+		approvalRequestPage.clickAddApprovalButton();
+		approvalRequestPage.nameInputVisible();
+		approvalRequestPage.enterNameInputData(
+			ApprovalRequestPageData.defaultApprovalPolicy
+		);
+		approvalRequestPage.descriptionInputVisible();
+		approvalRequestPage.enterDescriptionInputData(
+			ApprovalRequestPageData.defaultpolicyDescription
+		);
+		approvalRequestPage.saveButtonVisible();
+		approvalRequestPage.clickSaveButton();
+		approvalRequestPage.backButtonVisible();
+		approvalRequestPage.clickBackButton();
+	});
+	it('Should be able to add new approval request', () => {
 		approvalRequestPage.gridBtnExists();
 		approvalRequestPage.gridBtnClick(1);
 		approvalRequestPage.addApprovalButtonVisible();
@@ -47,6 +67,7 @@ describe('Approval request test', () => {
 		approvalRequestPage.selectTableRowVisible();
 		approvalRequestPage.selectTableRow(0);
 		approvalRequestPage.selectTableRow(0);
+		approvalRequestPage.selectTableRow(0);
 		approvalRequestPage.editApprovalRequestButtonVisible();
 		approvalRequestPage.clickEditApprovalRequestButton();
 		approvalRequestPage.nameInputVisible();
@@ -66,25 +87,5 @@ describe('Approval request test', () => {
 		approvalRequestPage.selectTableRow(0);
 		approvalRequestPage.deleteApprovalRequestButtonVisible();
 		approvalRequestPage.clickDeleteApprovalRequestButton();
-	});
-	it('Should be able to add approval policy', () => {
-		approvalRequestPage.approvalPolicyButtonVisible();
-		approvalRequestPage.clickApprovalPolicyButton();
-		approvalRequestPage.gridBtnExists();
-		approvalRequestPage.gridBtnClick(1);
-		approvalRequestPage.addApprovalButtonVisible();
-		approvalRequestPage.clickAddApprovalButton();
-		approvalRequestPage.nameInputVisible();
-		approvalRequestPage.enterNameInputData(
-			ApprovalRequestPageData.dafaultName
-		);
-		approvalRequestPage.descriptionInputVisible();
-		approvalRequestPage.enterDescriptionInputData(
-			ApprovalRequestPageData.defaultpolicyDescription
-		);
-		approvalRequestPage.saveButtonVisible();
-		approvalRequestPage.clickSaveButton();
-		approvalRequestPage.backButtonVisible();
-		approvalRequestPage.clickBackButton();
 	});
 });

@@ -19,7 +19,7 @@ describe('Organization tags test', () => {
 	it('Should be able to create tag', () => {
 		cy.visit('/#/pages/organization/tags');
 		organizationTagsUserPage.gridButtonVisible();
-		organizationTagsUserPage.clickGridButton();
+		organizationTagsUserPage.clickGridButton(1);
 		organizationTagsUserPage.addTagButtonVisible();
 		organizationTagsUserPage.clickAddTagButton();
 		organizationTagsUserPage.closeDialogButtonVisible();
@@ -33,8 +33,6 @@ describe('Organization tags test', () => {
 		organizationTagsUserPage.enterTagColorData(
 			OrganizationTagsPageData.tagColor
 		);
-		organizationTagsUserPage.checkboxTenantLevelVisible();
-		organizationTagsUserPage.clickCheckboxTenantLevel();
 		organizationTagsUserPage.tagDescriptionTextareaVisible();
 		organizationTagsUserPage.enterTagDescriptionData(
 			OrganizationTagsPageData.tagDescription
@@ -44,6 +42,7 @@ describe('Organization tags test', () => {
 	});
 	it('Should be able to edit tag', () => {
 		organizationTagsUserPage.tagsTableDataVisible();
+		organizationTagsUserPage.selectTableRow(0);
 		organizationTagsUserPage.selectTableRow(0);
 		organizationTagsUserPage.selectTableRow(0);
 		organizationTagsUserPage.editTagButtonVisible();
@@ -63,6 +62,7 @@ describe('Organization tags test', () => {
 	});
 	it('Should be able to delete tag', () => {
 		organizationTagsUserPage.tagsTableDataVisible();
+		organizationTagsUserPage.selectTableRow(0);
 		organizationTagsUserPage.selectTableRow(0);
 		organizationTagsUserPage.selectTableRow(0);
 		organizationTagsUserPage.deleteTagButtonVisible();

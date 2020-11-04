@@ -11,8 +11,8 @@ export const gridButtonVisible = () => {
 	verifyElementIsVisible(OrganizationTagsPage.gridButtonCss);
 };
 
-export const clickGridButton = () => {
-	clickButtonByIndex(OrganizationTagsPage.gridButtonCss, 1);
+export const clickGridButton = (index) => {
+	clickButtonByIndex(OrganizationTagsPage.gridButtonCss, index);
 };
 
 export const addTagButtonVisible = () => {
@@ -115,9 +115,9 @@ export const clickCancelDeleteTagButton = () => {
 };
 
 export const confirmDeleteTagButtonVisible = () => {
-	verifyElementIsVisible(OrganizationTagsPage.confirmDeletetagButtonCss);
+	verifyElementIsVisible(OrganizationTagsPage.confirmDeleteTagButtonCss);
 };
 
 export const clickConfirmDeleteTagButton = () => {
-	clickButton(OrganizationTagsPage.confirmDeletetagButtonCss);
+	clickButton(OrganizationTagsPage.confirmDeleteTagButtonCss);
 };
