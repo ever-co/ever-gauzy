@@ -108,6 +108,8 @@ export interface IGetCountsStatistics
 	extends IBasePerTenantAndOrganizationEntityModel {
 	date?: Date;
 	onlyMe?: boolean;
+	startDate?: Date;
+	endDate?: Date;
 }
 
 export interface ICountsStatistics {

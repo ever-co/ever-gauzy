@@ -31,7 +31,7 @@ export class StatisticController {
 	})
 	@Get('/counts')
 	async counts(@Query() request: IGetCountsStatistics) {
-		return await this.statisticService.getcounts(request);
+		return await this.statisticService.getCounts(request);
 	}
 
 	@ApiOperation({ summary: 'Statistics - members' })

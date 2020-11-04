@@ -48,14 +48,21 @@ export class StatisticService {
 		private readonly timeLogRepository: Repository<TimeLog>
 	) {}
 
-	async getcounts(request: IGetCountsStatistics): Promise<ICountsStatistics> {
-		const date = request.date || new Date();
-		const start = moment.utc(date).startOf('week').format();
-		const end = moment.utc(date).endOf('week').format();
+	async getCounts(request: IGetCountsStatistics): Promise<ICountsStatistics> {
+		let start;
+		let end;
+		if (request.startDate) {
+			start = moment.utc(request.startDate).startOf('week').format();
+			end = moment.utc(request.endDate).endOf('week').format();
+		} else {
+			const date = request.date || new Date();
+			start = moment.utc(date).startOf('week').format();
+			end = moment.utc(date).endOf('week').format();
+		}
 		const user = RequestContext.currentUser();
 		const tenantId = user.tenantId;
 		/*
-		 *  Get employees id of the orginization or get current employe id
+		 *  Get employees id of the organization or get current employee id
 		 */
 		let employeeIds = [];
 		if (
@@ -123,12 +130,12 @@ export class StatisticService {
 		/*
 		 * Get average activity and total duration of the work for the week.
 		 */
-		let weekActivites = {
+		let weekActivities = {
 			overall: 0,
 			duration: 0
 		};
 		if (employeeIds.length > 0) {
-			const activitesQuery = await this.timeSlotRepository
+			const activitiesQuery = await this.timeSlotRepository
 				.createQueryBuilder()
 				.select('AVG(overall)', 'overall')
 				.addSelect('SUM(duration)', 'duration')
@@ -137,18 +144,18 @@ export class StatisticService {
 					startedAt: Between(start, end),
 					tenantId
 				});
-			weekActivites = await activitesQuery.getRawOne();
+			weekActivities = await activitiesQuery.getRawOne();
 		}
 
 		/*
 		 * Get average activity and total duration of the work for today.
 		 */
-		let todayActivites = {
+		let todayActivities = {
 			overall: 0,
 			duration: 0
 		};
 		if (employeeIds.length > 0) {
-			const activitesQuery = await this.timeSlotRepository
+			const activitiesQuery = await this.timeSlotRepository
 				.createQueryBuilder()
 				.select('AVG(overall)', 'overall')
 				.addSelect('SUM(duration)', 'duration')
@@ -160,20 +167,20 @@ export class StatisticService {
 					),
 					tenantId
 				});
-			todayActivites = await activitesQuery.getRawOne();
+			todayActivities = await activitiesQuery.getRawOne();
 		}
 
 		return {
 			employeesCount,
 			projectsCount,
 			weekActivities: parseFloat(
-				parseFloat(weekActivites.overall + '').toFixed(1)
+				parseFloat(weekActivities.overall + '').toFixed(1)
 			),
-			weekDuration: weekActivites.duration,
+			weekDuration: weekActivities.duration,
 			todayActivities: parseFloat(
-				parseFloat(todayActivites.overall + '').toFixed(1)
+				parseFloat(todayActivities.overall + '').toFixed(1)
 			),
-			todayDuration: todayActivites.duration
+			todayDuration: todayActivities.duration
 		};
 	}
 

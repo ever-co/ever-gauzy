@@ -173,8 +173,6 @@ export class TimeLogService extends CrudService<TimeLog> {
 		}
 		dayList = Object.keys(range);
 
-		console.log(logs);
-
 		const dailyLogs = _.chain(logs)
 
 			.groupBy((log) => moment(log.startedAt).format('YYYY-MM-DD'))
@@ -185,6 +183,11 @@ export class TimeLogService extends CrudService<TimeLog> {
 						const project =
 							byProjectLogs.length > 0
 								? byProjectLogs[0].project
+								: null;
+
+						const task =
+							byProjectLogs.length > 0
+								? byProjectLogs[0].task
 								: null;
 
 						const byEmployee = _.chain(byProjectLogs)
@@ -227,7 +230,11 @@ export class TimeLogService extends CrudService<TimeLog> {
 							})
 							.value();
 
-						return { project, projectLogs: byEmployee };
+						return {
+							project,
+							projectLogs: byEmployee,
+							task: task
+						};
 					})
 					.value();
 
