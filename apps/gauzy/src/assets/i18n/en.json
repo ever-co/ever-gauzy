@@ -578,7 +578,8 @@
 		"EMAIL_TEMPLATES": "Email Templates",
 		"REPORTS": "Reports",
 		"GOALS": "Goals",
-		"TIME_REPORTS": "Time Reports",
+		"TIME_REPORTS": "Time Report",
+		"WEEKLY_TIME_REPORTS": "Weekly Report",
 		"ACCOUNTING_REPORTS": "Accounting Reports",
 		"PAYMENT_GATEWAYS": "Payment Gateways",
 		"CUSTOM_SMTP": "Custom SMTP",
@@ -604,6 +605,19 @@
 		"TABLE": "Table",
 		"CARDS_GRID": "Cards Grid",
 		"SPRINT_VIEW": "Sprint View"
+	},
+	"REPORT_PAGE": {
+		"MEMBERS_WORKED": "Members Worked",
+		"PROJECTS_WORKED": "PRojects Worked",
+		"ACTIVITY": "Activity",
+		"TOTAL_HOURS": "Total Hours",
+		"EMPLOYEE": "Employee",
+		"NO_PROJECT": "No Project",
+		"NO_EMPLOYEE": "No Employee",
+		"NO_TIMELOG": "No Timelog",
+		"NO_TASK": "No Task",
+		"WEEKLY_TIME_AND_ACTIVITY_REPORT": "Weekly Time and Activity Report",
+		"TIME_AND_ACTIVITY_REPORT": "Time and Activity Report"
 	},
 	"INTEGRATIONS": {
 		"AVALIABLE_INTEGRATIONS": "Avaliable Apps & Integrations",

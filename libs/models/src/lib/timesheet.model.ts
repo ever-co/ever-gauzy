@@ -334,7 +334,9 @@ export interface IGetTimeLogInput extends ITimeLogFilters {
 	timesheetId?: string;
 }
 
-export interface IGetTimeLogReportInput extends IGetTimeLogInput {}
+export interface IGetTimeLogReportInput extends IGetTimeLogInput {
+	groupBy?: 'date' | 'employee' | 'project' | 'client';
+}
 
 export interface IGetTimeLogConflictInput
 	extends IBasePerTenantAndOrganizationEntityModel {

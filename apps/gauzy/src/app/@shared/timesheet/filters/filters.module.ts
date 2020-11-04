@@ -8,7 +8,8 @@ import {
 	NbPopoverModule,
 	NbSelectModule,
 	NbDatepickerModule,
-	NbIconModule
+	NbIconModule,
+	NbCalendarRangeModule
 } from '@nebular/theme';
 import { Ng5SliderModule } from 'ng5-slider';
 import { TranslateModule } from '@ngx-translate/core';
@@ -30,7 +31,8 @@ import { ProjectSelectModule } from '../../project-select/project-select.module'
 		NbIconModule,
 		Ng5SliderModule,
 		TranslateModule,
-		ProjectSelectModule
+		ProjectSelectModule,
+		NbCalendarRangeModule
 	]
 })
 export class FiltersModule {}

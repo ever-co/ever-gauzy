@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import {
 	ICountsStatistics,
 	IEmployee,
-	IGetTimeLogInput,
+	IGetCountsStatistics,
+	IGetTimeLogReportInput,
 	IOrganization,
 	ITimeLogFilters,
 	OrganizationPermissionsEnum,
@@ -12,6 +13,7 @@ import { toUTC } from '@gauzy/utils';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-filter.service';
+import { TimesheetStatisticsService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-statistics.service';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import * as moment from 'moment';
@@ -47,6 +49,15 @@ export class WeeklyTimeReportsComponent implements OnInit {
 
 	private _selectedDate: Date = new Date();
 	futureDateAllowed: boolean;
+	chartData: {
+		labels: any[];
+		datasets: {
+			label: any;
+			backgroundColor: any;
+			borderWidth: any;
+			data: any;
+		}[];
+	};
 	public get selectedDate(): Date {
 		return this._selectedDate;
 	}
@@ -58,14 +69,9 @@ export class WeeklyTimeReportsComponent implements OnInit {
 		private timesheetService: TimesheetService,
 		private timesheetFilterService: TimesheetFilterService,
 		private ngxPermissionsService: NgxPermissionsService,
+		private timesheetStatisticsService: TimesheetStatisticsService,
 		private store: Store
 	) {}
-
-	addTimeCallback = (data) => {
-		if (data) {
-			this.updateLogs$.next();
-		}
-	};
 
 	ngOnInit() {
 		this.logRequest.startDate = moment(this.today).startOf('week').toDate();
@@ -137,7 +143,7 @@ export class WeeklyTimeReportsComponent implements OnInit {
 			'activityLevel',
 			'logType'
 		);
-		const request: IGetTimeLogInput = {
+		const request: IGetTimeLogReportInput = {
 			...appliedFilter,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
@@ -150,7 +156,52 @@ export class WeeklyTimeReportsComponent implements OnInit {
 			.getWeeklyReport(request)
 			.then((logs: any) => {
 				this.weekData = logs;
+
+				let employees = [];
+				const datasets = [];
+				logs.forEach((log) => {
+					employees = Object.keys(log.dates);
+					datasets.push({
+						label: log.employee.user.name,
+						data: _.pluck(log.dates, 'sum').map((val) =>
+							val ? parseFloat((val / 3600).toFixed(1)) : 0
+						)
+					});
+				});
+
+				this.chartData = {
+					labels: employees,
+					datasets: datasets
+				};
 			})
 			.finally(() => (this.loading = false));
+	}
+
+	getCounts() {
+		const { startDate, endDate } = this.logRequest;
+		const appliedFilter = _.pick(
+			this.logRequest,
+			'employeeIds',
+			'projectIds',
+			'source',
+			'activityLevel',
+			'logType'
+		);
+		const request: IGetCountsStatistics = {
+			...appliedFilter,
+			startDate: toUTC(startDate).toDate(),
+			endDate: toUTC(endDate).toDate(),
+			organizationId: this.organization ? this.organization.id : null,
+			tenantId: this.organization ? this.organization.tenantId : null
+		};
+		this.countsLoading = true;
+		this.timesheetStatisticsService
+			.getCounts(request)
+			.then((resp) => {
+				this.counts = resp;
+			})
+			.finally(() => {
+				this.countsLoading = false;
+			});
 	}
 }

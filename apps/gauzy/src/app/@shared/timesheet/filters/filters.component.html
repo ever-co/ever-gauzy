@@ -1,11 +1,12 @@
 <div class="row">
 	<div class="bulk-actions col-auto">
-		<div class="input-group" *ngIf="hasDateRangeFilter">
-			<div class="input-group-append" id="button-addon4">
-				<button nbButton status="primary" (click)="previousDay()">
-					<nb-icon icon="arrow-ios-back-outline"></nb-icon>
-				</button>
-			</div>
+		<div
+			class="input-group"
+			*ngIf="
+				hasDateRangeFilter && dateRange == 'custom_range';
+				else datePicker
+			"
+		>
 			<div class="week-date-input form-control ml-1">
 				<div class="display-box">
 					<span *ngIf="dateRange == 'day'; else displayDateRange">
@@ -21,34 +22,66 @@
 					nbInput
 					placeholder="Select Date"
 					[(ngModel)]="selectedDate"
-					[nbDatepicker]="formpicker"
+					[nbDatepicker]="formRangePicker"
 				/>
 			</div>
-			<div class="input-group-append ml-1" id="button-addon4">
-				<button
-					nbButton
-					status="primary"
-					(click)="nextDay()"
-					[disabled]="isNextDisabled()"
-				>
-					<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
-				</button>
-			</div>
-			<div class="input-group-append ml-1" id="button-addon4">
-				<button
-					[disabled]="isTodayDisabled()"
-					nbButton
-					status="primary"
-					(click)="selectedDate = today"
-				>
-					{{ 'TIMESHEET.TODAY' | translate }}
-				</button>
-			</div>
-			<nb-datepicker
-				#formpicker
+			<nb-rangepicker
 				[max]="futureDateAllowed ? null : today"
-			></nb-datepicker>
+				#formRangePicker
+				[(range)]="selectedDate"
+			></nb-rangepicker>
 		</div>
+		<ng-template #datePicker>
+			<div class="input-group" *ngIf="hasDateRangeFilter">
+				<div class="input-group-append" id="button-addon4">
+					<button nbButton status="primary" (click)="previousDay()">
+						<nb-icon icon="arrow-ios-back-outline"></nb-icon>
+					</button>
+				</div>
+				<div class="week-date-input form-control ml-1">
+					<div class="display-box">
+						<span *ngIf="dateRange == 'day'; else displayDateRange">
+							{{ filters.startDate | date }}
+						</span>
+						<ng-template #displayDateRange>
+							{{ filters.startDate | date }} -
+							{{ filters.endDate | date }}
+						</ng-template>
+					</div>
+					<input
+						type="text"
+						nbInput
+						placeholder="Select Date"
+						[(ngModel)]="selectedDate"
+						[nbDatepicker]="formpicker"
+					/>
+				</div>
+				<div class="input-group-append ml-1" id="button-addon4">
+					<button
+						nbButton
+						status="primary"
+						(click)="nextDay()"
+						[disabled]="isNextDisabled()"
+					>
+						<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
+					</button>
+				</div>
+				<div class="input-group-append ml-1" id="button-addon4">
+					<button
+						[disabled]="isTodayDisabled()"
+						nbButton
+						status="primary"
+						(click)="selectedDate = today"
+					>
+						{{ 'TIMESHEET.TODAY' | translate }}
+					</button>
+				</div>
+				<nb-datepicker
+					#formpicker
+					[max]="futureDateAllowed ? null : today"
+				></nb-datepicker>
+			</div>
+		</ng-template>
 	</div>
 	<div class="col-auto ml-auto">
 		<div class="row filter-item-list align-items-end">

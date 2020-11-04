@@ -30,6 +30,7 @@ import {
 } from '../timesheet-filter.service';
 import { debounceTime, filter, take, tap } from 'rxjs/operators';
 import { isEmpty } from '@gauzy/utils';
+import { NbCalendarRange } from '@nebular/theme';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -44,7 +45,7 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	TimeLogSourceEnum = TimeLogSourceEnum;
 	updateLogs$: Subject<any> = new Subject();
 
-	@Input() dateRange: 'day' | 'week' | 'month' = 'day';
+	@Input() dateRange: 'day' | 'week' | 'month' | 'custom_range' = 'day';
 	private _filters: ITimeLogFilters = {
 		employeeIds: [],
 		source: [],
@@ -55,6 +56,7 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	futureDateAllowed: boolean;
 	hasFilterApplies: boolean;
 	isEmployee: boolean;
+	private _dateRage: NbCalendarRange<Date>;
 
 	@Input()
 	public get filters(): ITimeLogFilters {
@@ -91,15 +93,31 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	public get selectedDate(): Date {
 		return this.filters.date as Date;
 	}
+
 	public set selectedDate(value: Date) {
-		this.filters.date = moment(value).format('YYYY-MM-DD HH:mm:ss');
-		this.filters.startDate = moment(value)
-			.startOf(this.dateRange)
+		const date = value as Date;
+		this.filters.date = date;
+		const range = this.dateRange as 'day' | 'week' | 'month';
+		this.filters.startDate = moment(date)
+			.startOf(range)
 			.format('YYYY-MM-DD HH:mm:ss');
-		this.filters.endDate = moment(value)
-			.endOf(this.dateRange)
+		this.filters.endDate = moment(date)
+			.endOf(range)
 			.format('YYYY-MM-DD HH:mm:ss');
+
 		this.triggerFilterChange();
+	}
+
+	get dateRage(): NbCalendarRange<Date> {
+		return this._dateRage;
+	}
+
+	set dateRage(range: NbCalendarRange<Date>) {
+		this._dateRage = range;
+		this.filters.startDate = moment(range.start).format(
+			'YYYY-MM-DD HH:mm:ss'
+		);
+		this.filters.endDate = moment(range.end).format('YYYY-MM-DD HH:mm:ss');
 	}
 
 	private _employeeIds: string | string[];
@@ -183,7 +201,8 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	}
 
 	nextDay() {
-		const date = moment(this.selectedDate).add(1, this.dateRange);
+		const range = this.dateRange as 'day' | 'week' | 'month';
+		const date = moment(this.selectedDate).add(1, range);
 		if (!this.futureDateAllowed && date.isAfter(this.today)) {
 			return;
 		}
@@ -191,8 +210,9 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	}
 
 	previousDay() {
+		const range = this.dateRange as 'day' | 'week' | 'month';
 		this.selectedDate = moment(this.selectedDate)
-			.subtract(1, this.dateRange)
+			.subtract(1, range)
 			.toDate();
 	}
 
