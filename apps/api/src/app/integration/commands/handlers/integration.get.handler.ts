@@ -41,6 +41,6 @@ export class IntegrationGetHandler
 			});
 		}
 
-		return await query.getMany();
+		return await query.orderBy('integration.order', 'ASC').getMany();
 	}
 }

@@ -1,5 +1,4 @@
 import { IEmployee, IEmployeeFindInput } from './employee.model';
-import { IOrganizationFindInput } from './organization.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { ITag } from './tag-entity.model';
 import { IExpenseCategory } from './expense-category.model';

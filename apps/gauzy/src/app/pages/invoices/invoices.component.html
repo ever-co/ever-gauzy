@@ -17,36 +17,43 @@
 	<nb-card-body>
 		<nb-tabset (changeTab)="onChangeTab($event)">
 			<nb-tab tabTitle="Actions" tabId="actions">
-				<div class="mb-3" *ngIf="hasInvoiceEditPermission">
-					<div class="actions-container">
-						<button
-							nbButton
-							status="success"
-							(click)="add()"
-							class="mr-2"
-						>
-							<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-							>{{ 'BUTTONS.ADD' | translate }}
-						</button>
-
-						<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
-							<ng-container
-								*ngTemplateOutlet="actionButtons"
-							></ng-container>
-						</ng-container>
-						<div class="settings-button">
+				<ng-template ngxPermissionsOnly="INVOICES_EDIT">
+					<div class="mb-3">
+						<div class="actions-container">
 							<button
 								nbButton
-								nbPopoverPlacement="bottom"
-								[nbPopover]="settingsPopover"
-								nbPopoverTrigger="noop"
-								(click)="openPopover()"
+								status="success"
+								(click)="add()"
+								class="mr-2"
 							>
-								<nb-icon icon="settings-2-outline"></nb-icon>
+								<nb-icon
+									class="mr-1"
+									icon="plus-outline"
+								></nb-icon
+								>{{ 'BUTTONS.ADD' | translate }}
 							</button>
+
+							<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+								<ng-container
+									*ngTemplateOutlet="actionButtons"
+								></ng-container>
+							</ng-container>
+							<div class="settings-button">
+								<button
+									nbButton
+									nbPopoverPlacement="bottom"
+									[nbPopover]="settingsPopover"
+									nbPopoverTrigger="noop"
+									(click)="openPopover()"
+								>
+									<nb-icon
+										icon="settings-2-outline"
+									></nb-icon>
+								</button>
+							</div>
 						</div>
 					</div>
-				</div>
+				</ng-template>
 			</nb-tab>
 			<nb-tab tabTitle="Search" tabId="search">
 				<form [formGroup]="form">
@@ -325,7 +332,7 @@
 				>
 				<nb-list *ngIf="!disableButton" class="history-list">
 					<nb-list-item
-						*ngFor="let history of selectedInvoiceHistories"
+						*ngFor="let history of histories"
 						class="history-list-item"
 					>
 						<div class="history-item">
@@ -342,25 +349,26 @@
 				</nb-list>
 			</nb-tab>
 		</nb-tabset>
-
-		<div class="mb-3" *ngIf="!hasInvoiceEditPermission">
-			<button
-				nbButton
-				status="info"
-				(click)="view()"
-				class="mr-2"
-				[disabled]="disableButton"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.VIEW' | translate }}
-			</button>
-		</div>
+		<ng-template ngxPermissionsExcept="INVOICES_EDIT">
+			<div class="mb-3">
+				<button
+					nbButton
+					status="info"
+					(click)="view()"
+					class="mr-2"
+					[disabled]="disableButton"
+				>
+					<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+					{{ 'BUTTONS.VIEW' | translate }}
+				</button>
+			</div>
+		</ng-template>
 		<ng2-smart-table
 			class="tags-table"
 			[settings]="settingsSmartTable"
 			[source]="smartTableSource"
 			*ngIf="dataLayoutStyle === 'TABLE'"
-			(userRowSelect)="selectInvoice($event)"
+			(rowSelect)="selectInvoice($event)"
 			style="cursor: pointer"
 			#invoicesTable
 		>

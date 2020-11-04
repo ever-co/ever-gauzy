@@ -606,7 +606,7 @@
 		"SPRINT_VIEW": "Sprint View"
 	},
 	"INTEGRATIONS": {
-		"AVALIABLE_INTEGRATIONS": "Avaliable Apps & Integrations",
+		"AVAILABLE_INTEGRATIONS": "Available Apps & Integrations",
 		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}",
 		"HUBSTAFF_PAGE": {
@@ -637,7 +637,10 @@
 		},
 		"COMING_SOON": "Coming soon",
 		"RE_INTEGRATE": "Re-integrate",
-		"SETTINGS": "Settings"
+		"SETTINGS": "Settings",
+		"SELECT_GROUPS": "Select Groups",
+		"FILTER_INTEGRATIONS": "Filter integrations",
+		"SEARCH_INTEGRATIONS": "Search integrations"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",

@@ -41,6 +41,10 @@ export class Integration extends Base implements IIntegration {
 	@Column({ default: 0, type: 'numeric' })
 	freeTrialPeriod?: number;
 
+	@ApiProperty({ type: Number })
+	@Column({ nullable: true })
+	order?: number;
+
 	@ManyToMany((type) => IntegrationType)
 	@JoinTable({
 		name: 'integration_integration_type'

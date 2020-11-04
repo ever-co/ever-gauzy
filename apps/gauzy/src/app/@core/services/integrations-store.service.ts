@@ -18,13 +18,15 @@ import {
 } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ErrorHandlingService } from './error-handling.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
-const initialFIlter: IIntegrationFilter = {
+export const InitialFilter: IIntegrationFilter = {
 	integrationTypeId: '',
 	searchQuery: '',
-	filter: ''
+	filter: 'all'
 };
 
+@UntilDestroy()
 @Injectable({
 	providedIn: 'root'
 })
@@ -48,21 +50,21 @@ export class IntegrationsStoreService {
 
 	private _selectedIntegrationTypeId$: BehaviorSubject<
 		string
-	> = new BehaviorSubject('');
+	> = new BehaviorSubject(InitialFilter.integrationTypeId);
 	public selectedIntegrationTypeId$: Observable<
 		string
 	> = this._selectedIntegrationTypeId$.asObservable();
 
 	private _selectedIntegrationFilter$: BehaviorSubject<
 		string
-	> = new BehaviorSubject('all');
+	> = new BehaviorSubject(InitialFilter.filter);
 	public selectedIntegrationFilter$: Observable<
 		string
 	> = this._selectedIntegrationFilter$.asObservable();
 
 	private _filters$: BehaviorSubject<
 		IIntegrationFilter
-	> = new BehaviorSubject(initialFIlter);
+	> = new BehaviorSubject(InitialFilter);
 
 	constructor(
 		private sanitizer: DomSanitizer,
@@ -76,7 +78,9 @@ export class IntegrationsStoreService {
 	private _loadIntegrations() {
 		this._filters$
 			.pipe(
-				distinctUntilChanged(),
+				distinctUntilChanged(
+					(a, b) => JSON.stringify(a) === JSON.stringify(b)
+				),
 				debounceTime(300),
 				mergeMap(({ integrationTypeId, searchQuery, filter }) => {
 					return integrationTypeId
@@ -100,7 +104,8 @@ export class IntegrationsStoreService {
 				catchError((error) => {
 					this._errorHandlingService.handleError(error);
 					return of([]);
-				})
+				}),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
@@ -109,6 +114,7 @@ export class IntegrationsStoreService {
 		this._integrationsService
 			.fetchIntegrationGroups()
 			.pipe(
+				distinctUntilChanged(),
 				tap(() => this._isLoading$.next(true)),
 				tap((integrationGroups) =>
 					this._integrationGroups$.next(integrationGroups)
@@ -130,7 +136,8 @@ export class IntegrationsStoreService {
 					this._errorHandlingService.handleError(error);
 					return of([]);
 				}),
-				finalize(() => this._isLoading$.next(false))
+				finalize(() => this._isLoading$.next(false)),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
@@ -145,11 +152,13 @@ export class IntegrationsStoreService {
 	}
 
 	setSelectedIntegrationTypeId(integrationTypeId: string) {
+		this._selectedIntegrationTypeId$.next(integrationTypeId);
 		const filterState = this._filters$.getValue();
 		this._filters$.next({ ...filterState, integrationTypeId });
 	}
 
 	setSelectedIntegrationFilter(filter: string) {
+		this._selectedIntegrationFilter$.next(filter);
 		const filterState = this._filters$.getValue();
 		this._filters$.next({ ...filterState, filter });
 	}
@@ -157,5 +166,18 @@ export class IntegrationsStoreService {
 	searchIntegration(searchQuery: string) {
 		const filterState = this._filters$.getValue();
 		this._filters$.next({ ...filterState, searchQuery });
+	}
+
+	/*
+	 * Clear integration store filters
+	 */
+	clearFilters() {
+		this.setSelectedIntegrationFilter(InitialFilter.filter);
+
+		const integrationGroups = this._integrationGroups$.getValue();
+		const integrationType = this._mapToDefaultType(integrationGroups);
+		this.setSelectedIntegrationTypeId(integrationType.id);
+
+		this.searchIntegration(InitialFilter.searchQuery);
 	}
 }
