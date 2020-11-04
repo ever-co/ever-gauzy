@@ -5,7 +5,8 @@ import {
 	clearField,
 	enterInput,
 	clickKeyboardBtnByKeycode,
-	clickElementByText
+	clickElementByText,
+	getLastElement
 } from '../utils/util';
 import { RecurringExpensesPage } from '../pageobjects/RecurringExpensesPageObject';
 
@@ -66,8 +67,8 @@ export const settingsButtonVisible = () => {
 	verifyElementIsVisible(RecurringExpensesPage.settingsButtonCss);
 };
 
-export const clickSettingsButton = (index) => {
-	clickButtonByIndex(RecurringExpensesPage.settingsButtonCss, index);
+export const clickSettingsButton = () => {
+	getLastElement(RecurringExpensesPage.settingsButtonCss);
 };
 
 export const editButtonVisible = () => {
@@ -75,7 +76,7 @@ export const editButtonVisible = () => {
 };
 
 export const clickEditButton = () => {
-	clickButton(RecurringExpensesPage.editExpenseButtonCss);
+	getLastElement(RecurringExpensesPage.editExpenseButtonCss);
 };
 
 export const deleteButtonVisible = () => {
@@ -83,7 +84,7 @@ export const deleteButtonVisible = () => {
 };
 
 export const clickDeleteButton = () => {
-	clickButton(RecurringExpensesPage.deleteExpenseButtonCss);
+	getLastElement(RecurringExpensesPage.deleteExpenseButtonCss);
 };
 
 export const deleteOnlyThisRadioButtonVisible = () => {

@@ -37,7 +37,7 @@ describe('Recurring expenses test', () => {
 	});
 	it('Should be able to edit expense', () => {
 		recurringExpensesPage.settingsButtonVisible();
-		recurringExpensesPage.clickSettingsButton(1);
+		recurringExpensesPage.clickSettingsButton();
 		recurringExpensesPage.editButtonVisible();
 		recurringExpensesPage.clickEditButton();
 		recurringExpensesPage.expenseDropdownVisible();
@@ -53,7 +53,9 @@ describe('Recurring expenses test', () => {
 		recurringExpensesPage.clickSaveExpenseButton();
 	});
 	it('Should be able to delete expense', () => {
-		recurringExpensesPage.clickSettingsButton(1);
+		cy.wait(5000);
+		recurringExpensesPage.settingsButtonVisible();
+		recurringExpensesPage.clickSettingsButton();
 		recurringExpensesPage.deleteButtonVisible();
 		recurringExpensesPage.clickDeleteButton();
 		recurringExpensesPage.deleteOnlyThisRadioButtonVisible();

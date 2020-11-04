@@ -3,7 +3,6 @@ import {
 	clickButton,
 	clickKeyboardBtnByKeycode,
 	clickElementIfVisible,
-	clickButtonByIndex,
 	clickElementByText,
 	getLastElement
 } from '../utils/util';
