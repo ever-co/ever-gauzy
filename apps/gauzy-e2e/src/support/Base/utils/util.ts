@@ -74,3 +74,7 @@ export const compareTwoTexts = (loc, text) => {
 export const getLastElement = (loc) => {
 	cy.get(loc, { timeout: 40000 }).last().trigger('click');
 };
+
+export const doubleClickOnElement = (loc, index) => {
+	cy.get(loc, { timeout: 40000 }).eq(index).dblclick();
+};

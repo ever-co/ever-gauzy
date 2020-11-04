@@ -175,3 +175,28 @@ export const confirmDuplicateOrEditTaskButtonVisible = () => {
 export const clickConfirmDuplicateOrEditTaskButton = () => {
 	clickButton(AddTaskPage.confirmDuplicateOrEditTaskButtonCss);
 };
+
+export const requestProjectButtonVisible = () => {
+	verifyElementIsVisible(AddTaskPage.requestNewProjectButtonCss);
+};
+
+export const clickRequestProjectButton = () => {
+	clickButton(AddTaskPage.requestNewProjectButtonCss);
+};
+
+export const projectNameInputVisible = () => {
+	verifyElementIsVisible(AddTaskPage.projectNameInputCss);
+};
+
+export const enterProjectNameInputData = (data) => {
+	clearField(AddTaskPage.projectNameInputCss);
+	enterInput(AddTaskPage.projectNameInputCss, data);
+};
+
+export const saveProjectButtonVisible = () => {
+	verifyElementIsVisible(AddTaskPage.saveProjectButtonCss);
+};
+
+export const clickSaveProjectButton = () => {
+	clickButton(AddTaskPage.saveProjectButtonCss);
+};

@@ -3,7 +3,9 @@ import {
 	clickButton,
 	clickKeyboardBtnByKeycode,
 	clickElementIfVisible,
-	clickButtonByIndex
+	clickButtonByIndex,
+	clickElementByText,
+	getLastElement
 } from '../utils/util';
 import { AddExistingUserPage } from '../pageobjects/AddExistingUserPageObject';
 
@@ -19,8 +21,8 @@ export const tableBodyExists = () => {
 	verifyElementIsVisible(AddExistingUserPage.selectTableRowCss);
 };
 
-export const clickTableRow = (index) => {
-	clickButtonByIndex(AddExistingUserPage.selectTableRowCss, index);
+export const clickTableRow = (text) => {
+	clickElementByText(AddExistingUserPage.selectTableRowCss, text);
 };
 
 export const removeUserButtonVisible = () => {
@@ -69,4 +71,16 @@ export const saveUsersButtonVisible = () => {
 
 export const clickSaveUsersButton = () => {
 	clickButton(AddExistingUserPage.saveSelectedUsersButtonCss);
+};
+
+export const organizationDropdownVisible = () => {
+	verifyElementIsVisible(AddExistingUserPage.organizationDropdownCss);
+};
+
+export const clickOrganizationDropdown = () => {
+	clickButton(AddExistingUserPage.organizationDropdownCss);
+};
+
+export const selectOrganizationFromDropdown = () => {
+	getLastElement(AddExistingUserPage.organizationDropdownOptionCss);
 };

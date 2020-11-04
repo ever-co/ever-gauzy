@@ -2,6 +2,8 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as addEmployeeLevelPage from '../support/Base/pages/AddEmployeeLevel.po';
 import { AddEmployeeLevelPageData } from '../support/Base/pagedata/AddEmployeeLevelPageData';
+import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
+import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 
 describe('Add employee level test', () => {
@@ -17,6 +19,25 @@ describe('Add employee level test', () => {
 		dashboradPage.verifyCreateButton();
 	});
 	it('Should be able to add new employee level', () => {
+		cy.visit('/#/pages/organization/tags');
+		organizationTagsUserPage.gridButtonVisible();
+		organizationTagsUserPage.clickGridButton(1);
+		organizationTagsUserPage.addTagButtonVisible();
+		organizationTagsUserPage.clickAddTagButton();
+		organizationTagsUserPage.tagNameInputVisible();
+		organizationTagsUserPage.enterTagNameData(
+			OrganizationTagsPageData.tageName
+		);
+		organizationTagsUserPage.tagColorInputVisible();
+		organizationTagsUserPage.enterTagColorData(
+			OrganizationTagsPageData.tagColor
+		);
+		organizationTagsUserPage.tagDescriptionTextareaVisible();
+		organizationTagsUserPage.enterTagDescriptionData(
+			OrganizationTagsPageData.tagDescription
+		);
+		organizationTagsUserPage.saveTagButtonVisible();
+		organizationTagsUserPage.clickSaveTagButton();
 		cy.visit('/#/pages/employees/employee-level');
 		addEmployeeLevelPage.gridBtnExists();
 		addEmployeeLevelPage.gridBtnClick(1);
@@ -29,8 +50,7 @@ describe('Add employee level test', () => {
 		addEmployeeLevelPage.enterNewLevelData(AddEmployeeLevelPageData.levelE);
 		addEmployeeLevelPage.tagsMultyselectVisible();
 		addEmployeeLevelPage.clickTagsMultyselect();
-		addEmployeeLevelPage.selectTagsFromDropdown(1);
-		addEmployeeLevelPage.selectTagsFromDropdown(2);
+		addEmployeeLevelPage.selectTagsFromDropdown(0);
 		addEmployeeLevelPage.clickKeyboardButtonByKeyCode(9);
 		addEmployeeLevelPage.saveNewLevelButtonVisible();
 		addEmployeeLevelPage.clickSaveNewLevelButton();
@@ -44,8 +64,7 @@ describe('Add employee level test', () => {
 		);
 		addEmployeeLevelPage.tagsMultyselectVisible();
 		addEmployeeLevelPage.clickTagsMultyselect();
-		addEmployeeLevelPage.selectTagsFromDropdown(1);
-		addEmployeeLevelPage.selectTagsFromDropdown(2);
+		addEmployeeLevelPage.selectTagsFromDropdown(0);
 		addEmployeeLevelPage.clickKeyboardButtonByKeyCode(9);
 		addEmployeeLevelPage.saveNewLevelButtonVisible();
 		addEmployeeLevelPage.clickSaveNewLevelButton();
