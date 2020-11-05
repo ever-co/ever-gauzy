@@ -197,6 +197,11 @@ type EmployeeJobPost {
 	id: ID
 	employeeId: String!
 	jobPostId: String!
+	jobDateCreated: DateTime
+	jobStatus: String
+	jobType: String
+	providerCode: String!
+	providerJobId: String!
 	isApplied: Boolean
 	appliedDate: DateTime
 	createdAt: DateTime
@@ -535,6 +540,11 @@ type EmployeeJobPostDeleteResponse {
 	id: ID
 	employeeId: String
 	jobPostId: String
+	jobDateCreated: DateTime
+	jobStatus: String
+	jobType: String
+	providerCode: String
+	providerJobId: String
 	isApplied: Boolean
 	appliedDate: DateTime
 	createdAt: DateTime
@@ -576,6 +586,11 @@ type EmployeeJobPostCountAggregate {
 	id: Int
 	employeeId: Int
 	jobPostId: Int
+	jobDateCreated: Int
+	jobStatus: Int
+	jobType: Int
+	providerCode: Int
+	providerJobId: Int
 	isApplied: Int
 	appliedDate: Int
 	createdAt: Int
@@ -588,6 +603,11 @@ type EmployeeJobPostMinAggregate {
 	id: ID
 	employeeId: String
 	jobPostId: String
+	jobDateCreated: DateTime
+	jobStatus: String
+	jobType: String
+	providerCode: String
+	providerJobId: String
 	appliedDate: DateTime
 	createdAt: DateTime
 	updatedAt: DateTime
@@ -597,6 +617,11 @@ type EmployeeJobPostMaxAggregate {
 	id: ID
 	employeeId: String
 	jobPostId: String
+	jobDateCreated: DateTime
+	jobStatus: String
+	jobType: String
+	providerCode: String
+	providerJobId: String
 	appliedDate: DateTime
 	createdAt: DateTime
 	updatedAt: DateTime
@@ -869,6 +894,11 @@ input EmployeeJobPostFilter {
 	id: IDFilterComparison
 	employeeId: StringFieldComparison
 	jobPostId: StringFieldComparison
+	jobDateCreated: DateFieldComparison
+	jobStatus: StringFieldComparison
+	jobType: StringFieldComparison
+	providerCode: StringFieldComparison
+	providerJobId: StringFieldComparison
 	isApplied: BooleanFieldComparison
 	appliedDate: DateFieldComparison
 	createdAt: DateFieldComparison
@@ -919,6 +949,11 @@ enum EmployeeJobPostSortFields {
 	id
 	employeeId
 	jobPostId
+	jobDateCreated
+	jobStatus
+	jobType
+	providerCode
+	providerJobId
 	isApplied
 	appliedDate
 	createdAt
@@ -933,6 +968,11 @@ input EmployeeJobPostAggregateFilter {
 	id: IDFilterComparison
 	employeeId: StringFieldComparison
 	jobPostId: StringFieldComparison
+	jobDateCreated: DateFieldComparison
+	jobStatus: StringFieldComparison
+	jobType: StringFieldComparison
+	providerCode: StringFieldComparison
+	providerJobId: StringFieldComparison
 	isApplied: BooleanFieldComparison
 	appliedDate: DateFieldComparison
 	createdAt: DateFieldComparison
@@ -1387,6 +1427,11 @@ input EmployeeJobPostDeleteFilter {
 	id: IDFilterComparison
 	employeeId: StringFieldComparison
 	jobPostId: StringFieldComparison
+	jobDateCreated: DateFieldComparison
+	jobStatus: StringFieldComparison
+	jobType: StringFieldComparison
+	providerCode: StringFieldComparison
+	providerJobId: StringFieldComparison
 	isApplied: BooleanFieldComparison
 	appliedDate: DateFieldComparison
 	createdAt: DateFieldComparison
@@ -1411,6 +1456,11 @@ input UpdateEmployeeJobPost {
 	id: ID
 	employeeId: String
 	jobPostId: String
+	jobDateCreated: DateTime
+	jobStatus: String
+	jobType: String
+	providerCode: String
+	providerJobId: String
 	isApplied: Boolean
 	appliedDate: DateTime
 	createdAt: DateTime
@@ -1437,6 +1487,11 @@ input EmployeeJobPostUpdateFilter {
 	id: IDFilterComparison
 	employeeId: StringFieldComparison
 	jobPostId: StringFieldComparison
+	jobDateCreated: DateFieldComparison
+	jobStatus: StringFieldComparison
+	jobType: StringFieldComparison
+	providerCode: StringFieldComparison
+	providerJobId: StringFieldComparison
 	isApplied: BooleanFieldComparison
 	appliedDate: DateFieldComparison
 	createdAt: DateFieldComparison
@@ -1456,6 +1511,11 @@ input CreateEmployeeJobPost {
 	id: ID
 	employeeId: String
 	jobPostId: String
+	jobDateCreated: DateTime
+	jobStatus: String
+	jobType: String
+	providerCode: String
+	providerJobId: String
 	isApplied: Boolean
 	appliedDate: DateTime
 	createdAt: DateTime
@@ -1628,6 +1688,11 @@ input EmployeeJobPostSubscriptionFilter {
 	id: IDFilterComparison
 	employeeId: StringFieldComparison
 	jobPostId: StringFieldComparison
+	jobDateCreated: DateFieldComparison
+	jobStatus: StringFieldComparison
+	jobType: StringFieldComparison
+	providerCode: StringFieldComparison
+	providerJobId: StringFieldComparison
 	isApplied: BooleanFieldComparison
 	appliedDate: DateFieldComparison
 	createdAt: DateFieldComparison

@@ -3,8 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { IPagination } from '../core';
 import { getRandomEmployeeJobPosts } from './employee-job.seed';
 import { GauzyAIService } from '@gauzy/integration-ai';
-import { Employee } from '../employee/employee.entity';
-import { InjectRepository } from '@nestjs/typeorm';
 import {
 	IApplyJobPostInput,
 	IEmployeeJobPost,
@@ -12,8 +10,6 @@ import {
 	IUpdateEmployeeJobPostAppliedResult,
 	IVisibilityJobPostInput
 } from '@gauzy/models';
-import { EmployeeJobPost } from './employee-job.entity';
-import { JobPost } from './jobPost.entity';
 import { EmployeeService } from '../employee/employee.service';
 
 @Injectable()
