@@ -13,7 +13,7 @@ export class JobPost extends Model implements IJobPost {
 	providerJobId: string;
 	title: string;
 	description: string;
-	jobDateCreated?: string;
+	jobDateCreated?: Date;
 	jobStatus?: JobPostStatusEnum;
 	jobSource?: JobPostSourceEnum;
 	jobType?: JobPostTypeEnum;
@@ -38,8 +38,8 @@ export class JobPost extends Model implements IJobPost {
 	searchJobType?: string;
 	searchKeyword?: string;
 
-	createdAt?: string;
-	updatedAt?: string;
+	createdAt?: Date;
+	updatedAt?: Date;
 	isActive: boolean;
 	isArchived: boolean;
 }

@@ -63,6 +63,18 @@ export const clickEndTimePicker = () => {
 	clickButton(TimesheetsPage.endTimePickerCss);
 };
 
+export const selectProjectDropdownVisible = () => {
+	verifyElementIsVisible(TimesheetsPage.projectDropdownCss);
+};
+
+export const clickSelectProjectDropdown = () => {
+	clickButton(TimesheetsPage.projectDropdownCss);
+};
+
+export const selectProjectOptionDropdown = (text) => {
+	clickElementByText(TimesheetsPage.projectDropdownOptionCss, text);
+};
+
 export const addTimeLogDescriptionVisible = () => {
 	verifyElementIsVisible(TimesheetsPage.descriptionTextareaCss);
 };

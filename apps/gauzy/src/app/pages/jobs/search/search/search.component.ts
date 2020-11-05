@@ -162,18 +162,20 @@ export class SearchComponent
 
 			case 'apply':
 				this.jobService.applyJob($event.data).then((resp) => {
+					this.toastrService.success('Job Applied successfully');
+					this.smartTableSource.refresh();
+
 					if (resp.isRedirectRequired) {
 						window.open($event.data.jobPost.url, '_blank');
-					} else {
-						this.toastrService.success('Job applied successfully');
-						this.smartTableSource.refresh();
 					}
 				});
 				break;
 
 			case 'hide':
-				this.jobService.hideJob($event.data);
-				this.smartTableSource.refresh();
+				this.jobService.hideJob($event.data).then(() => {
+					this.toastrService.success('Job Hidden successfully');
+					this.smartTableSource.refresh();
+				});
 				break;
 
 			default:
@@ -186,6 +188,7 @@ export class SearchComponent
 			[{ field: 'status', direction: 'asc' }],
 			false
 		);
+
 		this.smartTableSource.setFilter(
 			[
 				{
@@ -196,6 +199,7 @@ export class SearchComponent
 			true,
 			false
 		);
+
 		this.settingsSmartTable = {
 			...this.settingsSmartTable,
 			columns: {

@@ -36,10 +36,20 @@ export interface IEmployeeJobPost {
 	employee: IEmployee;
 	jobPostId: string;
 	isApplied?: boolean;
-	appliedDate?: string;
+	appliedDate?: Date;
 	jobPost: IJobPost;
-	createdAt?: string;
-	updatedAt?: string;
+
+	// we de-normalize this fields for faster processing
+	jobDateCreated?: Date;
+	jobStatus?: JobPostStatusEnum;
+	jobSource?: JobPostSourceEnum;
+	providerCode: string; // same as jobSource field, but as a string, e.g. 'upwork'
+	// unique ID of job in the source (e.g. in Upwork)
+	providerJobId: string;
+	jobType?: JobPostTypeEnum;
+
+	createdAt?: Date;
+	updatedAt?: Date;
 	isActive: boolean;
 	isArchived: boolean;
 }
@@ -51,7 +61,7 @@ export interface IJobPost {
 	providerJobId: string; // unique ID of job in the source (e.g. in Upwork)
 	title: string;
 	description: string;
-	jobDateCreated?: string;
+	jobDateCreated?: Date;
 	jobStatus?: JobPostStatusEnum;
 	jobSource?: JobPostSourceEnum;
 	jobType?: JobPostTypeEnum;
@@ -76,8 +86,8 @@ export interface IJobPost {
 	searchJobType?: string;
 	searchKeyword?: string;
 
-	createdAt?: string;
-	updatedAt?: string;
+	createdAt?: Date;
+	updatedAt?: Date;
 	isActive: boolean;
 	isArchived: boolean;
 }
