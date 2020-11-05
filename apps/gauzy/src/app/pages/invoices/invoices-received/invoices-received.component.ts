@@ -1,7 +1,7 @@
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { OnInit, Component, OnDestroy, ViewChild, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, first, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { Store } from '../../../@core/services/store.service';
 import { InvoicesService } from '../../../@core/services/invoices.service';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
