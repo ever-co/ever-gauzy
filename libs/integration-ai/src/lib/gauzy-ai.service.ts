@@ -30,7 +30,9 @@ import {
 	IPagination,
 	IEmployeeJobPost,
 	IJobPost,
-	IGetEmployeeJobPostFilters
+	IGetEmployeeJobPostFilters,
+	JobPostStatusEnum,
+	JobPostTypeEnum
 } from '@gauzy/models';
 
 @Injectable()
@@ -877,8 +879,12 @@ export class GauzyAIService {
 							jobDateCreated: rec.jobDateCreated,
 							providerCode: rec.providerCode,
 							providerJobId: rec.providerJobId,
-							jobStatus: rec.jobStatus,
-							jobType: rec.jobType,
+							jobStatus: rec.jobStatus
+								? JobPostStatusEnum[rec.jobStatus]
+								: undefined,
+							jobType: rec.jobType
+								? JobPostTypeEnum[rec.jobType]
+								: undefined,
 
 							isApplied: rec.isApplied,
 							appliedDate: rec.appliedDate,
