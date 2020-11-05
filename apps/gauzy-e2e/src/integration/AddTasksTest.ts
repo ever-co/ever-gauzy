@@ -17,6 +17,19 @@ describe('Add tasks test', () => {
 		dashboradPage.verifyCreateButton();
 	});
 	it('Should be able to add new task', () => {
+		cy.visit('/#/pages/organization/projects');
+		addTaskPage.requestProjectButtonVisible();
+		addTaskPage.clickRequestProjectButton();
+		addTaskPage.projectNameInputVisible();
+		addTaskPage.enterProjectNameInputData(
+			AddTasksPageData.defaultTaskProject
+		);
+		addTaskPage.clickSelectEmployeeDropdown();
+		addTaskPage.selectEmployeeDropdownOption(1);
+		addTaskPage.selectEmployeeDropdownOption(2);
+		addTaskPage.clickKeyboardButtonByKeyCode(9);
+		addTaskPage.saveProjectButtonVisible();
+		addTaskPage.clickSaveProjectButton();
 		cy.visit('/#/pages/tasks/dashboard');
 		addTaskPage.gridBtnExists();
 		addTaskPage.gridBtnClick(1);
@@ -25,7 +38,7 @@ describe('Add tasks test', () => {
 		addTaskPage.selectProjectDropdownVisible();
 		addTaskPage.clickSelectProjectDropdown();
 		addTaskPage.selectProjectOptionDropdown(
-			AddTasksPageData.defaultTAskProject
+			AddTasksPageData.defaultTaskProject
 		);
 		addTaskPage.selectEmployeeDropdownVisible();
 		addTaskPage.clickSelectEmployeeDropdown();
@@ -60,7 +73,6 @@ describe('Add tasks test', () => {
 		addTaskPage.tasksTableVisible();
 		addTaskPage.selectTasksTableRow(0);
 		addTaskPage.selectTasksTableRow(0);
-		addTaskPage.selectTasksTableRow(0);
 		addTaskPage.duplicateOrEditTaskButtonVisible();
 		addTaskPage.clickDuplicateOrEditTaskButton(0);
 		addTaskPage.confirmDuplicateOrEditTaskButtonVisible();
@@ -75,7 +87,7 @@ describe('Add tasks test', () => {
 		addTaskPage.selectProjectDropdownVisible();
 		addTaskPage.clickSelectProjectDropdown();
 		addTaskPage.selectProjectOptionDropdown(
-			AddTasksPageData.defaultTAskProject
+			AddTasksPageData.defaultTaskProject
 		);
 		addTaskPage.addTitleInputVisible();
 		addTaskPage.enterTtielInputData(AddTasksPageData.defaultTaskTitle);

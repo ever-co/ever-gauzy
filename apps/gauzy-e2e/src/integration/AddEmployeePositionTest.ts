@@ -20,42 +20,40 @@ describe('Add employee position test', () => {
 		cy.visit('/#/pages/employees/positions');
 		addEmployeePositionPage.gridBtnExists();
 		addEmployeePositionPage.gridBtnClick(1);
-		addEmployeePositionPage.addNewLevelButtonVisible();
-		addEmployeePositionPage.clickAddNewLevelButton();
-		addEmployeePositionPage.cancelNewLevelButtonVisible();
-		addEmployeePositionPage.clickCancelNewLevelButton();
-		addEmployeePositionPage.clickAddNewLevelButton();
-		addEmployeePositionPage.newLevelInputVisible();
-		addEmployeePositionPage.enterNewLevelData(
+		addEmployeePositionPage.addNewPositionButtonVisible();
+		addEmployeePositionPage.clickAddNewPositionButton();
+		addEmployeePositionPage.cancelNewPositionButtonVisible();
+		addEmployeePositionPage.clickCancelNewPositionButton();
+		addEmployeePositionPage.clickAddNewPositionButton();
+		addEmployeePositionPage.newPositionInputVisible();
+		addEmployeePositionPage.enterNewPositionData(
 			AddEmployeePositionPageData.fullStackDeveloper
 		);
 		addEmployeePositionPage.tagsMultyselectVisible();
 		addEmployeePositionPage.clickTagsMultyselect();
-		addEmployeePositionPage.selectTagsFromDropdown(1);
-		addEmployeePositionPage.selectTagsFromDropdown(2);
+		addEmployeePositionPage.selectTagsFromDropdown(0);
 		addEmployeePositionPage.clickKeyboardButtonByKeyCode(9);
-		addEmployeePositionPage.saveNewLevelButtonVisible();
-		addEmployeePositionPage.clickSaveNewLevelButton();
+		addEmployeePositionPage.savePositionButtonVisible();
+		addEmployeePositionPage.clickSavePositionButton();
 	});
 	it('Should be able to edit employee position', () => {
-		addEmployeePositionPage.editEmployeeLevelButtonVisible();
-		addEmployeePositionPage.clickEditEmployeeLevelButton(0);
-		addEmployeePositionPage.editEmployeeLevelInpuVisible();
-		addEmployeePositionPage.enterEditLevelData(
+		addEmployeePositionPage.editEmployeePositionButtonVisible();
+		addEmployeePositionPage.clickEditEmployeePositionButton(0);
+		addEmployeePositionPage.editEmployeePositionInpuVisible();
+		addEmployeePositionPage.enterEditPositionData(
 			AddEmployeePositionPageData.midLevelWebDeveloper
 		);
 		addEmployeePositionPage.tagsMultyselectVisible();
 		addEmployeePositionPage.clickTagsMultyselect();
-		addEmployeePositionPage.selectTagsFromDropdown(1);
-		addEmployeePositionPage.selectTagsFromDropdown(2);
+		addEmployeePositionPage.selectTagsFromDropdown(0);
 		addEmployeePositionPage.clickKeyboardButtonByKeyCode(9);
-		addEmployeePositionPage.saveNewLevelButtonVisible();
-		addEmployeePositionPage.clickSaveNewLevelButton();
+		addEmployeePositionPage.savePositionButtonVisible();
+		addEmployeePositionPage.clickSavePositionButton();
 	});
 	it('Should be able to delete employee position', () => {
-		addEmployeePositionPage.deleteLevelButtonVisible();
-		addEmployeePositionPage.clickDeleteLevelButton(0);
+		addEmployeePositionPage.deletePositionButtonVisible();
+		addEmployeePositionPage.clickDeletePositionButton(0);
 		addEmployeePositionPage.confirmDeleteButtonVisible();
-		addEmployeePositionPage.clickConfirmDeleteLevelButton();
+		addEmployeePositionPage.clickConfirmDeletePositionButton();
 	});
 });

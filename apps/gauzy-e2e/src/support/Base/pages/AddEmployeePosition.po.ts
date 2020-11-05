@@ -16,27 +16,27 @@ export const gridBtnClick = (index) => {
 	clickButtonByIndex(AddEmployeePositionPage.gridButtonCss, index);
 };
 
-export const addNewLevelButtonVisible = () => {
+export const addNewPositionButtonVisible = () => {
 	verifyElementIsVisible(AddEmployeePositionPage.addNewPositionButtonCss);
 };
 
-export const clickAddNewLevelButton = () => {
+export const clickAddNewPositionButton = () => {
 	clickButton(AddEmployeePositionPage.addNewPositionButtonCss);
 };
 
-export const cancelNewLevelButtonVisible = () => {
+export const cancelNewPositionButtonVisible = () => {
 	verifyElementIsVisible(AddEmployeePositionPage.cancelNewPositionButtonCss);
 };
 
-export const clickCancelNewLevelButton = () => {
+export const clickCancelNewPositionButton = () => {
 	clickButton(AddEmployeePositionPage.cancelNewPositionButtonCss);
 };
 
-export const newLevelInputVisible = () => {
+export const newPositionInputVisible = () => {
 	verifyElementIsVisible(AddEmployeePositionPage.newPositionInputCss);
 };
 
-export const enterNewLevelData = (data) => {
+export const enterNewPositionData = (data) => {
 	clearField(AddEmployeePositionPage.newPositionInputCss);
 	enterInput(AddEmployeePositionPage.newPositionInputCss, data);
 };
@@ -57,43 +57,43 @@ export const clickKeyboardButtonByKeyCode = (keycode) => {
 	clickKeyboardBtnByKeycode(keycode);
 };
 
-export const saveNewLevelButtonVisible = () => {
+export const savePositionButtonVisible = () => {
 	verifyElementIsVisible(AddEmployeePositionPage.saveNewPositionButtonCss);
 };
 
-export const clickSaveNewLevelButton = () => {
+export const clickSavePositionButton = () => {
 	clickButton(AddEmployeePositionPage.saveNewPositionButtonCss);
 };
 
-export const editEmployeeLevelButtonVisible = () => {
+export const editEmployeePositionButtonVisible = () => {
 	verifyElementIsVisible(
 		AddEmployeePositionPage.editEmployeePositionButtonCss
 	);
 };
 
-export const clickEditEmployeeLevelButton = (index) => {
+export const clickEditEmployeePositionButton = (index) => {
 	clickButtonByIndex(
 		AddEmployeePositionPage.editEmployeePositionButtonCss,
 		index
 	);
 };
 
-export const editEmployeeLevelInpuVisible = () => {
+export const editEmployeePositionInpuVisible = () => {
 	verifyElementIsVisible(AddEmployeePositionPage.editPositionInputCss);
 };
 
-export const enterEditLevelData = (data) => {
+export const enterEditPositionData = (data) => {
 	clearField(AddEmployeePositionPage.editPositionInputCss);
 	enterInput(AddEmployeePositionPage.editPositionInputCss, data);
 };
 
-export const deleteLevelButtonVisible = () => {
+export const deletePositionButtonVisible = () => {
 	verifyElementIsVisible(
 		AddEmployeePositionPage.removeEmployeePositionButtonCss
 	);
 };
 
-export const clickDeleteLevelButton = (index) => {
+export const clickDeletePositionButton = (index) => {
 	clickButtonByIndex(
 		AddEmployeePositionPage.removeEmployeePositionButtonCss,
 		index
@@ -106,6 +106,6 @@ export const confirmDeleteButtonVisible = () => {
 	);
 };
 
-export const clickConfirmDeleteLevelButton = () => {
+export const clickConfirmDeletePositionButton = () => {
 	clickButton(AddEmployeePositionPage.confirmDeletePositionButtonCss);
 };

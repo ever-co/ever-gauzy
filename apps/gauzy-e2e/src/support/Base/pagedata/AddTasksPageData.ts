@@ -1,5 +1,5 @@
 export const AddTasksPageData = {
-	defaultTAskProject: 'Gauzy Web Site',
+	defaultTaskProject: 'Gauzy Web Site',
 	defaultTaskTitle: 'Feature: All Integrations should work with useHash',
 	defaultTaskEstimateDays: 1,
 	defaultTaskEstimateHours: 8,

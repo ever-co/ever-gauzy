@@ -15,7 +15,7 @@ describe('Manage invites test', () => {
 		loginPage.clickLoginButton();
 		dashboradPage.verifyCreateButton();
 	});
-	it('Should be able to copy, resend and delete invite', () => {
+	it('Should be able to copy invite', () => {
 		cy.visit('/#/pages/users');
 		manageUserInvitesPage.manageInvitesButtonVisible();
 		manageUserInvitesPage.clickManageInvitesButton();
