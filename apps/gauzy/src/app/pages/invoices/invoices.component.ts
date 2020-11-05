@@ -79,7 +79,13 @@ export class InvoicesComponent
 
 	@Input() isEstimate: boolean;
 
-	@ViewChild('invoicesTable') invoicesTable: Ng2SmartTableComponent;
+	invoicesTable: Ng2SmartTableComponent;
+	@ViewChild('invoicesTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.invoicesTable = content;
+			this.onChangedSource();
+		}
+	}
 	@ViewChild(NbPopoverDirective) popover: NbPopoverDirective;
 
 	constructor(
@@ -104,11 +110,13 @@ export class InvoicesComponent
 		if (!this.isEstimate) {
 			this.isEstimate = false;
 		}
+
 		this.initializeForm();
-		this.loadSmartTable();
+		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.loadMenu();
 		this.loadSettings();
+
 		this.store.userRolePermissions$
 			.pipe(
 				filter(
@@ -128,6 +136,17 @@ export class InvoicesComponent
 				if (event instanceof NavigationEnd) {
 					this.setView();
 				}
+			});
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.invoicesTable.source.onChangedSource
+			.pipe(untilDestroyed(this))
+			.subscribe((res) => {
+				this._clearItem();
 			});
 	}
 
@@ -515,37 +534,12 @@ export class InvoicesComponent
 							}
 						);
 						const invoiceVM: IInvoice[] = items.map((i) => {
-							return {
-								id: i.id,
-								invoiceNumber: i.invoiceNumber,
-								invoiceDate: i.invoiceDate,
-								dueDate: i.dueDate,
-								currency: i.currency,
-								discountValue: i.discountValue,
-								discountType: i.discountType,
-								tax: i.tax,
-								tax2: i.tax2,
-								taxType: i.taxType,
-								tax2Type: i.tax2Type,
-								terms: i.terms,
-								paid: i.paid,
-								payments: i.payments,
-								invoiceItems: i.invoiceItems,
-								totalValue: i.totalValue,
-								toContact: i.toContact,
-								organizationContactId: i.organizationContactId,
-								organizationContactName: i.toContact?.name,
-								fromOrganization: i.fromOrganization,
-								organizationId: i.organizationId,
-								invoiceType: i.invoiceType,
-								tags: i.tags,
-								isEstimate: i.isEstimate,
-								status: i.status,
-								sentTo: i.sentTo
-							};
+							return Object.assign({}, i, {
+								organizationContactName: i.toContact?.name
+							});
 						});
 						this.invoices = invoiceVM;
-						this.smartTableSource.load(items);
+						this.smartTableSource.load(invoiceVM);
 						this.loading = false;
 					} catch (error) {
 						this.toastrService.danger(
@@ -565,7 +559,7 @@ export class InvoicesComponent
 		this.selectedInvoice = isSelected ? data : null;
 
 		if (isSelected) {
-			const { historyRecords } = data;
+			const { historyRecords = [] } = data;
 			const histories = [];
 			historyRecords.forEach((h: IInvoiceEstimateHistory) => {
 				const history = {
@@ -580,7 +574,7 @@ export class InvoicesComponent
 		}
 	}
 
-	loadSmartTable() {
+	loadSettingsSmartTable() {
 		this.settingsSmartTable = {
 			pager: {
 				display: true,
@@ -588,6 +582,9 @@ export class InvoicesComponent
 			},
 			hideSubHeader: true,
 			actions: false,
+			mode: 'external',
+			editable: true,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
 			columns: {
 				invoiceNumber: {
 					title: this.isEstimate
@@ -758,7 +755,7 @@ export class InvoicesComponent
 			this.perPage > 0
 		) {
 			this.smartTableSource.getPaging().perPage = this.perPage;
-			this.loadSmartTable();
+			this.loadSettingsSmartTable();
 		}
 	}
 
@@ -830,12 +827,13 @@ export class InvoicesComponent
 			...this.selectedInvoice,
 			status: $event
 		});
+		this.smartTableSource.refresh();
 		this._clearItem();
 	}
 
 	selectColumn($event) {
 		this.columns = $event;
-		this.loadSmartTable();
+		this.loadSettingsSmartTable();
 	}
 
 	openPopover() {
@@ -851,7 +849,7 @@ export class InvoicesComponent
 		this.translateService.onLangChange
 			.pipe(untilDestroyed(this))
 			.subscribe(() => {
-				this.loadSmartTable();
+				this.loadSettingsSmartTable();
 			});
 	}
 
@@ -875,7 +873,17 @@ export class InvoicesComponent
 			isSelected: false,
 			data: null
 		});
-		this.invoicesTable.grid.dataSet.deselectAll();
+		this._deselectAll();
+	}
+
+	/*
+	 * De select all table rows
+	 */
+	private _deselectAll() {
+		if (this.invoicesTable && this.invoicesTable.grid) {
+			this.invoicesTable.grid.dataSet['willSelect'] = 'false';
+			this.invoicesTable.grid.dataSet.deselectAll();
+		}
 	}
 
 	ngOnDestroy() {}

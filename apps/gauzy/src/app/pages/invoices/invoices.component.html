@@ -368,7 +368,7 @@
 			[settings]="settingsSmartTable"
 			[source]="smartTableSource"
 			*ngIf="dataLayoutStyle === 'TABLE'"
-			(rowSelect)="selectInvoice($event)"
+			(userRowSelect)="selectInvoice($event)"
 			style="cursor: pointer"
 			#invoicesTable
 		>

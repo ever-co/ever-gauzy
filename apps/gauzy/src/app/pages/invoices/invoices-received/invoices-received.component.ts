@@ -1,10 +1,10 @@
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { OnInit, Component, OnDestroy, ViewChild, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, tap } from 'rxjs/operators';
+import { filter, first, tap } from 'rxjs/operators';
 import { Store } from '../../../@core/services/store.service';
 import { InvoicesService } from '../../../@core/services/invoices.service';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import {
 	IInvoice,
 	ComponentLayoutStyleEnum,
@@ -35,7 +35,14 @@ export class InvoicesReceivedComponent
 	organization: IOrganization;
 
 	@Input() isEstimate: boolean;
-	@ViewChild('invoicesTable') invoicesTable;
+
+	invoicesTable: Ng2SmartTableComponent;
+	@ViewChild('invoicesTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.invoicesTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(
 		private store: Store,
@@ -52,7 +59,7 @@ export class InvoicesReceivedComponent
 		if (!this.isEstimate) {
 			this.isEstimate = false;
 		}
-		this.loadSmartTable();
+		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.store.selectedOrganization$
 			.pipe(
@@ -71,6 +78,17 @@ export class InvoicesReceivedComponent
 				if (event instanceof NavigationEnd) {
 					this.setView();
 				}
+			});
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.invoicesTable.source.onChangedSource
+			.pipe(untilDestroyed(this))
+			.subscribe((res) => {
+				this._clearItem();
 			});
 	}
 
@@ -145,9 +163,16 @@ export class InvoicesReceivedComponent
 		await this.getInvoices();
 	}
 
-	loadSmartTable() {
+	loadSettingsSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
+			pager: {
+				display: true,
+				perPage: 10
+			},
+			mode: 'external',
+			editable: true,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
 			columns: {
 				invoiceNumber: {
 					title: this.isEstimate
@@ -185,8 +210,24 @@ export class InvoicesReceivedComponent
 		this.translateService.onLangChange
 			.pipe(untilDestroyed(this))
 			.subscribe(() => {
-				this.loadSmartTable();
+				this.loadSettingsSmartTable();
 			});
+	}
+
+	private _clearItem() {
+		this.selectInvoice({
+			isSelected: false,
+			data: null
+		});
+		this._deselectAll();
+	}
+
+	/*
+	 * De select all table rows
+	 */
+	private _deselectAll() {
+		this.invoicesTable.grid.dataSet['willSelect'] = 'false';
+		this.invoicesTable.grid.dataSet.deselectAll();
 	}
 
 	ngOnDestroy() {}
