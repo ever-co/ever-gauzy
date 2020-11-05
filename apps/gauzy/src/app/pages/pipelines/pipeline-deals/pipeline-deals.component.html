@@ -45,26 +45,26 @@
 						'PIPELINE_DEALS_PAGE.FILTER_BY_STAGE' | translate
 					"
 				>
-					<nb-option [value]="''" style="white-space: nowrap;">
+					<nb-option [value]="''" style="white-space: nowrap">
 						{{ 'PIPELINE_DEALS_PAGE.ALL_STAGES' | translate }}
 					</nb-option>
 					<nb-option
 						*ngFor="let stage of pipeline?.stages"
 						[value]="stage.id"
-						style="white-space: nowrap;"
+						style="white-space: nowrap"
 					>
 						{{ stage.name }}
 					</nb-option>
 				</nb-select>
 			</div>
 		</div>
-
 		<ng2-smart-table
-			(rowSelect)="deal = $event.data"
+			(userRowSelect)="selectPipelineDeals($event)"
 			[settings]="smartTableSettings"
 			[source]="deals"
 			*ngIf="dataLayoutStyle === 'TABLE'"
-			style="cursor: pointer;"
+			style="cursor: pointer"
+			#pipelineDealsTable
 		></ng2-smart-table>
 		<ga-card-grid
 			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
@@ -91,7 +91,7 @@
 	<button
 		*ngIf="deal"
 		(click)="deleteDeal()"
-		style="cursor: pointer;"
+		style="cursor: pointer"
 		status="danger"
 		type="button"
 		class="mr-2"
