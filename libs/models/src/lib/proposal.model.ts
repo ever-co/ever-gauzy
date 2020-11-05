@@ -40,3 +40,17 @@ export enum ProposalStatusEnum {
 	SENT = 'SENT',
 	ACCEPTED = 'ACCEPTED'
 }
+export interface IProposalViewModel
+	extends IBasePerTenantAndOrganizationEntityModel {
+	tags?: ITag[];
+	valueDate: Date;
+	id: string;
+	employeeId?: string;
+	employee?: IEmployee;
+	jobPostUrl?: string;
+	jobPostLink?: string;
+	jobPostContent?: string;
+	proposalContent?: string;
+	status?: string;
+	author?: string;
+}
