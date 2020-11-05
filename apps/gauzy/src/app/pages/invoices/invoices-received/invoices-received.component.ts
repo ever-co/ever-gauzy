@@ -86,10 +86,11 @@ export class InvoicesReceivedComponent
 	 */
 	onChangedSource() {
 		this.invoicesTable.source.onChangedSource
-			.pipe(untilDestroyed(this))
-			.subscribe((res) => {
-				this._clearItem();
-			});
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
 	}
 
 	setView() {
@@ -214,18 +215,18 @@ export class InvoicesReceivedComponent
 			});
 	}
 
-	private _clearItem() {
+	clearItem() {
 		this.selectInvoice({
 			isSelected: false,
 			data: null
 		});
-		this._deselectAll();
+		this.deselectAll();
 	}
 
 	/*
-	 * De select all table rows
+	 * Deselect all table rows
 	 */
-	private _deselectAll() {
+	deselectAll() {
 		this.invoicesTable.grid.dataSet['willSelect'] = 'false';
 		this.invoicesTable.grid.dataSet.deselectAll();
 	}

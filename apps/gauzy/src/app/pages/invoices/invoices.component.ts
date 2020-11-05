@@ -144,10 +144,11 @@ export class InvoicesComponent
 	 */
 	onChangedSource() {
 		this.invoicesTable.source.onChangedSource
-			.pipe(untilDestroyed(this))
-			.subscribe((res) => {
-				this._clearItem();
-			});
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
 	}
 
 	initializeForm() {
@@ -395,7 +396,7 @@ export class InvoicesComponent
 				.subscribe(async () => {
 					await this.loadSettings();
 				});
-			this._clearItem();
+			this.clearItem();
 		} else {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.SEND.NOT_LINKED'),
@@ -429,7 +430,7 @@ export class InvoicesComponent
 			this.getTranslation('INVOICES_PAGE.ESTIMATES.ESTIMATE_CONVERT'),
 			this.getTranslation('TOASTR.TITLE.SUCCESS')
 		);
-		this._clearItem();
+		this.clearItem();
 		await this.loadSettings();
 	}
 
@@ -457,7 +458,7 @@ export class InvoicesComponent
 				await this.invoiceEstimateHistoryService.delete(history.id);
 			}
 
-			this._clearItem();
+			this.clearItem();
 			this.loadSettings();
 			if (this.isEstimate) {
 				this.toastrService.primary(
@@ -501,7 +502,7 @@ export class InvoicesComponent
 			})
 			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async () => {
-				this._clearItem();
+				this.clearItem();
 				await this.loadSettings();
 			});
 	}
@@ -828,7 +829,7 @@ export class InvoicesComponent
 			status: $event
 		});
 		this.smartTableSource.refresh();
-		this._clearItem();
+		this.clearItem();
 	}
 
 	selectColumn($event) {
@@ -868,18 +869,18 @@ export class InvoicesComponent
 		}
 	}
 
-	private _clearItem() {
+	clearItem() {
 		this.selectInvoice({
 			isSelected: false,
 			data: null
 		});
-		this._deselectAll();
+		this.deselectAll();
 	}
 
 	/*
-	 * De select all table rows
+	 * Deselect all table rows
 	 */
-	private _deselectAll() {
+	deselectAll() {
 		if (this.invoicesTable && this.invoicesTable.grid) {
 			this.invoicesTable.grid.dataSet['willSelect'] = 'false';
 			this.invoicesTable.grid.dataSet.deselectAll();

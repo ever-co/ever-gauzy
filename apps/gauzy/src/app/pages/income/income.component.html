@@ -31,12 +31,12 @@
 		</div>
 
 		<ng2-smart-table
-			*ngIf="canShowTable() && dataLayoutStyle === 'TABLE'"
+			*ngIf="dataLayoutStyle === 'TABLE'"
 			class="income-table"
 			(userRowSelect)="selectIncome($event)"
 			[settings]="smartTableSettings"
 			[source]="smartTableSource"
-			style="cursor: pointer;"
+			style="cursor: pointer"
 			#incomeTable
 		>
 		</ng2-smart-table>
