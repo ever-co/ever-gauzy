@@ -8,11 +8,11 @@ import {
 	IOrganization
 } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
-import { first, takeUntil } from 'rxjs/operators';
+import { filter, first, tap } from 'rxjs/operators';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { TimeOffRequestMutationComponent } from '../../@shared/time-off/time-off-request-mutation/time-off-request-mutation.component';
 import { TimeOffService } from '../../@core/services/time-off.service';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { DatePipe } from '@angular/common';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -20,15 +20,16 @@ import { ToastrService } from '../../@core/services/toastr.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { Subject } from 'rxjs/internal/Subject';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-time-off',
 	templateUrl: './time-off.component.html',
 	styleUrls: ['./time-off.component.scss']
 })
-export class TimeOffComponent extends TranslationBaseComponent
+export class TimeOffComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
@@ -47,11 +48,16 @@ export class TimeOffComponent extends TranslationBaseComponent
 	displayHolidays = true;
 	hasEditPermission = false;
 	showActions = false;
-	private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;
 	organization: IOrganization;
 
-	@ViewChild('timeOffTable') timeOffTable;
+	timeOffTable: Ng2SmartTableComponent;
+	@ViewChild('timeOffTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.timeOffTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(
 		private router: Router,
@@ -67,15 +73,14 @@ export class TimeOffComponent extends TranslationBaseComponent
 
 	ngOnInit() {
 		this.store.userRolePermissions$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.hasEditPermission = this.store.hasPermission(
 					PermissionsEnum.POLICY_EDIT
 				);
 			});
-
 		this.store.selectedDate$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((date) => {
 				this.selectedDate = date;
 
@@ -87,9 +92,8 @@ export class TimeOffComponent extends TranslationBaseComponent
 					}
 				}
 			});
-
 		this.store.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((employee) => {
 				if (employee && employee.id) {
 					this.selectedEmployeeId = employee.id;
@@ -102,9 +106,11 @@ export class TimeOffComponent extends TranslationBaseComponent
 					}
 				}
 			});
-
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((org) => {
 				if (org) {
 					this.organization = org;
@@ -112,26 +118,37 @@ export class TimeOffComponent extends TranslationBaseComponent
 					this._loadTableData(this._selectedOrganizationId);
 				}
 			});
-
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
 				}
 			});
-
 		this._loadSmartTableSettings();
+		this.applyTranslationOnSmartTable();
 	}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.TIME_OFF;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.timeOffTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
 	}
 
 	showAdditionalActions() {
@@ -155,11 +172,9 @@ export class TimeOffComponent extends TranslationBaseComponent
 	}
 
 	applyTranslationOnSmartTable() {
-		this.translate.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this._loadSmartTableSettings();
-			});
+		this.translate.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
+			this._loadSmartTableSettings();
+		});
 	}
 
 	detectStatusChange(status: string) {
@@ -203,12 +218,8 @@ export class TimeOffComponent extends TranslationBaseComponent
 	}
 
 	selectRecord({ isSelected, data }) {
-		const selectedTimeOffRecord = isSelected ? data : null;
-		if (this.timeOffTable) {
-			this.timeOffTable.grid.dataSet.willSelect = false;
-		}
 		this.isRecordSelected = isSelected ? true : false;
-		this.selectedTimeOffRecord = selectedTimeOffRecord;
+		this.selectedTimeOffRecord = isSelected ? data : null;
 	}
 
 	approveDaysOff(selectedItem?: ITimeOff) {
@@ -225,17 +236,14 @@ export class TimeOffComponent extends TranslationBaseComponent
 				.updateRequestStatus(requestId, {
 					status: this.selectedTimeOffRecord.status
 				})
-				.pipe(takeUntil(this._ngDestroy$), first())
+				.pipe(untilDestroyed(this), first())
 				.subscribe(
 					() => {
 						this.toastrService.success(
 							'TIME_OFF_PAGE.NOTIFICATIONS.STATUS_SET_APPROVED'
 						);
 						this._loadTableData(this._selectedOrganizationId);
-						this.selectRecord({
-							isSelected: false,
-							data: null
-						});
+						this.clearItem();
 					},
 					() =>
 						this.toastrService.danger(
@@ -248,10 +256,6 @@ export class TimeOffComponent extends TranslationBaseComponent
 				'TIME_OFF_PAGE.NOTIFICATIONS.NO_CHANGES'
 			);
 			this._loadTableData(this._selectedOrganizationId);
-			this.selectRecord({
-				isSelected: false,
-				data: null
-			});
 		}
 	}
 
@@ -269,17 +273,14 @@ export class TimeOffComponent extends TranslationBaseComponent
 				.updateRequestStatus(requestId, {
 					status: this.selectedTimeOffRecord.status
 				})
-				.pipe(takeUntil(this._ngDestroy$), first())
+				.pipe(untilDestroyed(this), first())
 				.subscribe(
 					() => {
 						this.toastrService.success(
 							'TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_DENIED'
 						);
 						this._loadTableData(this._selectedOrganizationId);
-						this.selectRecord({
-							isSelected: false,
-							data: null
-						});
+						this.clearItem();
 					},
 					() =>
 						this.toastrService.danger(
@@ -310,7 +311,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 				if (res) {
 					this.timeOffService
 						.deleteDaysOffRequest(this.selectedTimeOffRecord.id)
-						.pipe(takeUntil(this._ngDestroy$), first())
+						.pipe(untilDestroyed(this), first())
 						.subscribe(
 							() => {
 								this.toastrService.success(
@@ -319,10 +320,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 								this._loadTableData(
 									this._selectedOrganizationId
 								);
-								this.selectRecord({
-									isSelected: false,
-									data: null
-								});
+								this.clearItem();
 							},
 							() =>
 								this.toastrService.danger(
@@ -338,7 +336,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 			.open(TimeOffRequestMutationComponent, {
 				context: { type: 'request' }
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$), first())
+			.onClose.pipe(untilDestroyed(this), first())
 			.subscribe((res) => {
 				this.timeOffRequest = res;
 				this._createRecord();
@@ -350,7 +348,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 			.open(TimeOffRequestMutationComponent, {
 				context: { type: 'holiday' }
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$), first())
+			.onClose.pipe(untilDestroyed(this), first())
 			.subscribe((res) => {
 				if (res) {
 					this.timeOffRequest = res;
@@ -366,7 +364,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 			.open(TimeOffRequestMutationComponent, {
 				context: { type: this.selectedTimeOffRecord }
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$), first())
+			.onClose.pipe(untilDestroyed(this), first())
 			.subscribe((res) => {
 				if (res) {
 					const requestId = this.selectedTimeOffRecord.id;
@@ -453,7 +451,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 	}
 
 	private _loadTableData(orgId?: string) {
-		const { tenantId } = this.organization;
+		const { tenantId } = this.store.user;
 		this.timeOffService
 			.getAllTimeOffRecords(
 				['employees', 'employees.user', 'policy'],
@@ -464,7 +462,7 @@ export class TimeOffComponent extends TranslationBaseComponent
 				},
 				this.selectedDate || null
 			)
-			.pipe(takeUntil(this._ngDestroy$), first())
+			.pipe(untilDestroyed(this), first())
 			.subscribe(
 				(res) => {
 					this.tableData = [];
@@ -510,17 +508,14 @@ export class TimeOffComponent extends TranslationBaseComponent
 		if (this.timeOffRequest) {
 			this.timeOffService
 				.createRequest(this.timeOffRequest)
-				.pipe(takeUntil(this._ngDestroy$), first())
+				.pipe(untilDestroyed(this), first())
 				.subscribe(
 					() => {
 						this.toastrService.success(
 							'TIME_OFF_PAGE.NOTIFICATIONS.RECORD_CREATED'
 						);
 						this._loadTableData(this._selectedOrganizationId);
-						this.selectRecord({
-							isSelected: false,
-							data: null
-						});
+						this.clearItem();
 					},
 					() =>
 						this.toastrService.danger(
@@ -533,17 +528,14 @@ export class TimeOffComponent extends TranslationBaseComponent
 	private _updateRecord(id: string) {
 		this.timeOffService
 			.updateRequest(id, this.timeOffRequest)
-			.pipe(takeUntil(this._ngDestroy$), first())
+			.pipe(untilDestroyed(this), first())
 			.subscribe(
 				() => {
 					this.toastrService.success(
 						'TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_UPDATED'
 					);
 					this._loadTableData(this._selectedOrganizationId);
-					this.selectRecord({
-						isSelected: false,
-						data: null
-					});
+					this.clearItem();
 				},
 				() =>
 					this.toastrService.danger(
@@ -560,8 +552,26 @@ export class TimeOffComponent extends TranslationBaseComponent
 		);
 	}
 
-	ngOnDestroy(): void {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectRecord({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
 	}
+
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.timeOffTable && this.timeOffTable.grid) {
+			this.timeOffTable.grid.dataSet['willSelect'] = 'false';
+			this.timeOffTable.grid.dataSet.deselectAll();
+		}
+	}
+
+	ngOnDestroy(): void {}
 }

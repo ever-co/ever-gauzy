@@ -49,7 +49,6 @@ export class DealController extends CrudController<Deal> {
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<Deal> {
 		const { relations = [], findInput: where = null } = data;
-		console.log(id);
 		return await this.dealService.findOne(id, {
 			relations,
 			where
