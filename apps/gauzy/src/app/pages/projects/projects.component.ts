@@ -10,8 +10,7 @@ import {
 } from '@gauzy/models';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
-import { filter, first, takeUntil } from 'rxjs/operators';
+import { filter, first, tap } from 'rxjs/operators';
 import {
 	ActivatedRoute,
 	Router,
@@ -24,11 +23,12 @@ import { OrganizationContactService } from '../../@core/services/organization-co
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
 import { EmployeesService } from '../../@core/services';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { DatePipe } from '@angular/common';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-projects',
 	templateUrl: './projects.component.html',
@@ -37,7 +37,6 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 export class ProjectsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
 	loading = true;
 	settingsSmartTable: object;
 	viewComponentName: ComponentEnum;
@@ -54,7 +53,13 @@ export class ProjectsComponent
 	selectedProject: IOrganizationProject;
 	smartTableSource = new LocalDataSource();
 
-	@ViewChild('projectsTable') projectsTable;
+	projectsTable: Ng2SmartTableComponent;
+	@ViewChild('projectsTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.projectsTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(
 		private readonly organizationContactService: OrganizationContactService,
@@ -76,7 +81,7 @@ export class ProjectsComponent
 		this._applyTranslationOnSmartTable();
 		this.store.selectedOrganization$
 			.pipe(
-				takeUntil(this._ngDestroy$),
+				untilDestroyed(this),
 				filter((organization) => !!organization)
 			)
 			.subscribe((organization) => {
@@ -84,21 +89,21 @@ export class ProjectsComponent
 				this._initMethod();
 			});
 		this.store.userRolePermissions$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.viewPrivateProjects = this.store.hasPermission(
 					PermissionsEnum.ACCESS_PRIVATE_PROJECTS
 				);
 			});
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
 				}
 			});
 		this.route.queryParamMap
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((params) => {
 				if (params.get('openAddDialog')) {
 					this.showAddCard =
@@ -108,10 +113,7 @@ export class ProjectsComponent
 			});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 
 	private _initMethod() {
 		if (!this.organization) {
@@ -126,8 +128,8 @@ export class ProjectsComponent
 		if (!this.organization) {
 			return;
 		}
-
-		const { id: organizationId, tenantId } = this.organization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 		const { items } = await this.employeesService
 			.getAll(['user'], {
 				organization: { id: organizationId },
@@ -142,7 +144,7 @@ export class ProjectsComponent
 		this.viewComponentName = ComponentEnum.PROJECTS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 				this.selectedProject =
@@ -240,7 +242,8 @@ export class ProjectsComponent
 		if (!this.organization) {
 			return;
 		}
-		const { id: organizationId, tenantId } = this.organization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 		const res = await this.organizationProjectsService.getAll(
 			['organizationContact', 'members', 'members.user', 'tags'],
 			{ organizationId, tenantId }
@@ -337,17 +340,13 @@ export class ProjectsComponent
 	}
 
 	async selectProject({ isSelected, data }) {
-		const selectedProject = isSelected ? data : null;
-		if (this.projectsTable) {
-			this.projectsTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.selectedProject = selectedProject;
+		this.selectedProject = isSelected ? data : null;
 	}
 
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.loadSmartTable();
 			});
@@ -357,8 +356,8 @@ export class ProjectsComponent
 		if (!this.organization) {
 			return;
 		}
-
-		const { id: organizationId, tenantId } = this.organization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 		const res = await this.organizationContactService.getAll(['projects'], {
 			organizationId,
 			tenantId
@@ -371,5 +370,37 @@ export class ProjectsComponent
 	async editProject(project: IOrganizationProject) {
 		this.projectToEdit = project;
 		this.showAddCard = true;
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.projectsTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
+	}
+
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectProject({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
+	}
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.projectsTable && this.projectsTable.grid) {
+			this.projectsTable.grid.dataSet['willSelect'] = 'false';
+			this.projectsTable.grid.dataSet.deselectAll();
+		}
 	}
 }

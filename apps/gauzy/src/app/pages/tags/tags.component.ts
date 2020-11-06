@@ -1,20 +1,21 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TagsMutationComponent } from '../../@shared/tags/tags-mutation.component';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TagsService } from '../../@core/services/tags.service';
 import { ITag, IOrganization, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { first, takeUntil } from 'rxjs/operators';
+import { filter, first, tap } from 'rxjs/operators';
 import { FormGroup } from '@angular/forms';
 import { TagsColorComponent } from './tags-color/tags-color.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../@core/services/store.service';
-import { Subscription, Subject } from 'rxjs';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { RouterEvent, NavigationEnd, Router } from '@angular/router';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-tags',
 	templateUrl: './tags.component.html',
@@ -24,22 +25,27 @@ export class TagsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
-	loading = false;
+	loading: boolean;
 	selectedTag: ITag;
 	smartTableSource = new LocalDataSource();
 	tag: ITag;
 	form: FormGroup;
 	disableButton = true;
 	private selectedOrganization: IOrganization;
-	private subscribeTakingSelectedOrganziation: Subscription;
 	private allTags = [];
-	private _ngDestroy$ = new Subject<void>();
 	filterOptions = [{ property: 'all', displayName: 'All' }];
 	private filterOption: any;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	tagsData: ITag[];
-	@ViewChild('tagsTable') tagsTable;
+
+	tagsTable: Ng2SmartTableComponent;
+	@ViewChild('tagsTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.tagsTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(
 		private dialogService: NbDialogService,
@@ -54,21 +60,22 @@ export class TagsComponent
 	}
 
 	ngOnInit() {
-		this.subscribeTakingSelectedOrganziation = this.store.selectedOrganization$.subscribe(
-			(org) => {
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
+			.subscribe((org) => {
 				this.selectedOrganization = org;
 				this.loadSettings();
-			}
-		);
-
+			});
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
 				}
 			});
-
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 	}
@@ -97,19 +104,15 @@ export class TagsComponent
 		this.viewComponentName = ComponentEnum.TAGS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
 	}
 
 	async selectTag({ isSelected, data }) {
-		const selectedTag = isSelected ? data : null;
-		if (this.tagsTable) {
-			this.tagsTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.tag = selectedTag;
+		this.tag = isSelected ? data : null;
 	}
 
 	async add() {
@@ -117,8 +120,6 @@ export class TagsComponent
 			context: {}
 		});
 		const addData = await dialog.onClose.pipe(first()).toPromise();
-		this.selectedTag = null;
-		this.disableButton = true;
 		if (addData) {
 			this.toastrService.primary(
 				this.getTranslation('TAGS_PAGE.TAGS_ADD_TAG'),
@@ -126,6 +127,7 @@ export class TagsComponent
 			);
 		}
 		this.loadSettings();
+		this.clearItem();
 	}
 
 	async delete(selectedItem?: ITag) {
@@ -148,7 +150,7 @@ export class TagsComponent
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 		}
-		this.disableButton = true;
+		this.clearItem();
 	}
 	async edit(selectedItem?: ITag) {
 		if (selectedItem) {
@@ -164,17 +166,14 @@ export class TagsComponent
 		});
 
 		const editData = await dialog.onClose.pipe(first()).toPromise();
-
-		this.disableButton = true;
-
 		if (editData) {
 			this.toastrService.primary(
 				this.getTranslation('TAGS_PAGE.TAGS_EDIT_TAG'),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 		}
-
 		this.loadSettings();
+		this.clearItem();
 	}
 
 	async loadSmartTable() {
@@ -237,14 +236,14 @@ export class TagsComponent
 		}
 	}
 
-	ngOnDestroy() {
-		this.subscribeTakingSelectedOrganziation.unsubscribe();
-	}
+	ngOnDestroy() {}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
 	}
 
 	selectedFilterOption(value) {
@@ -299,5 +298,37 @@ export class TagsComponent
 			}
 		}
 		return output.join('');
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.tagsTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
+	}
+
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectTag({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
+	}
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.tagsTable && this.tagsTable.grid) {
+			this.tagsTable.grid.dataSet['willSelect'] = 'false';
+			this.tagsTable.grid.dataSet.deselectAll();
+		}
 	}
 }
