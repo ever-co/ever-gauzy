@@ -6,10 +6,12 @@ import {
 	IGetTimeLogReportInput,
 	IOrganization,
 	IOrganizationProject,
+	IReportDayData,
 	ITask,
 	ITimeLogFilters,
 	OrganizationPermissionsEnum,
-	PermissionsEnum
+	PermissionsEnum,
+	TimeLogType
 } from '@gauzy/models';
 import { toUTC } from '@gauzy/utils';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -23,19 +25,6 @@ import { NgxPermissionsService } from 'ngx-permissions';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import * as _ from 'underscore';
-
-interface ReportDayData {
-	date: string;
-	logs: {
-		project: IOrganizationProject;
-		task: ITask;
-		projectLogs: {
-			employee: IEmployee;
-			sum: number;
-			activity: number;
-		}[];
-	}[];
-}
 
 @UntilDestroy()
 @Component({
@@ -52,7 +41,7 @@ export class TimeReportsComponent implements OnInit {
 	organization: IOrganization;
 	counts: ICountsStatistics;
 
-	dailyData: ReportDayData[] = [];
+	dailyData: IReportDayData[] = [];
 	weekDayList: string[] = [];
 	loading: boolean;
 	countsLoading: boolean;
@@ -85,6 +74,7 @@ export class TimeReportsComponent implements OnInit {
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(() => {
 				this.getLogs();
+				this.updateChartData();
 				this.getCounts();
 			});
 
@@ -119,7 +109,7 @@ export class TimeReportsComponent implements OnInit {
 
 	filtersChange($event: ITimeLogFilters) {
 		this.logRequest = $event;
-		this.timesheetFilterService.filter = $event;
+		//	this.timesheetFilterService.filter = $event;
 		this.updateLogs$.next();
 	}
 	filterChange() {
@@ -150,42 +140,42 @@ export class TimeReportsComponent implements OnInit {
 		this.loading = true;
 		this.timesheetService
 			.getDailyReport(request)
-			.then((logs: ReportDayData[]) => {
+			.then((logs: IReportDayData[]) => {
 				this.dailyData = logs;
-
-				const dates = [];
-				const data = [];
-				logs.forEach((log) => {
-					dates.push(log.date);
-					const allProjectSum = log.logs.map(({ projectLogs }) => {
-						const sumAry = _.pluck(projectLogs, 'sum');
-						return sumAry.reduce(
-							(iteratee: any, duration: any) =>
-								iteratee + duration,
-							0
-						);
-					});
-					const sum = allProjectSum.reduce(
-						(iteratee: any, duration: any) => iteratee + duration,
-						0
-					);
-					data.push(sum ? parseFloat((sum / 3600).toFixed(1)) : 0);
-				});
-
-				this.chartData = {
-					labels: dates,
-					datasets: [
-						{
-							label: 'Hours',
-							data
-						}
-					]
-				};
-
-				console.log(this.chartData);
 			})
 			.catch((error) => {
 				console.log(error);
+			})
+			.finally(() => (this.loading = false));
+	}
+
+	updateChartData() {
+		const { startDate, endDate } = this.logRequest;
+		const request: IGetTimeLogReportInput = {
+			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
+			organizationId: this.organization ? this.organization.id : null,
+			tenantId: this.organization ? this.organization.tenantId : null,
+			groupBy: this.groupBy
+		};
+		this.loading = true;
+		this.timesheetService
+			.getDailyReportChartData(request)
+			.then((logs: any[]) => {
+				const datasets = [
+					{
+						label: TimeLogType.MANUAL,
+						data: logs.map((log) => log.value[TimeLogType.MANUAL])
+					},
+					{
+						label: TimeLogType.TRACKED,
+						data: logs.map((log) => log.value[TimeLogType.TRACKED])
+					}
+				];
+				this.chartData = {
+					labels: _.pluck(logs, 'date'),
+					datasets
+				};
 			})
 			.finally(() => (this.loading = false));
 	}

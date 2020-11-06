@@ -11,7 +11,7 @@ import {
 	IDateRange,
 	IGetTimeLogReportInput,
 	ITimeLog,
-	ITimeSlot
+	TimeLogType
 } from '@gauzy/models';
 import * as moment from 'moment';
 import { CrudService } from '../../core';
@@ -24,7 +24,11 @@ import { TimeLogDeleteCommand } from './commands/time-log-delete.command';
 import { DeleteTimeSpanCommand } from './commands/delete-time-span.command';
 import { IGetConflictTimeLogCommand } from './commands/get-conflict-time-log.command';
 import * as _ from 'underscore';
-import { AnyCnameRecord } from 'dns';
+import { GetTimeLogGroupByDateCommand } from './commands/get-time-log-group-by-date.command';
+import { GetTimeLogGroupByEmployeeCommand } from './commands/get-time-log-group-by-employee.command';
+import { GetTimeLogGroupByProjectCommand } from './commands/get-time-log-group-by-project.command';
+import { GetTimeLogGroupByClientCommand } from './commands/get-time-log-group-by-client.command';
+import { chain } from 'underscore';
 
 @Injectable()
 export class TimeLogService extends CrudService<TimeLog> {
@@ -134,6 +138,78 @@ export class TimeLogService extends CrudService<TimeLog> {
 		return weeklyLogs;
 	}
 
+	async getDailyReportChartData(request: IGetTimeLogReportInput) {
+		const logs = await this.timeLogRepository.find({
+			join: {
+				alias: 'timeLogs',
+				innerJoin: {
+					employee: 'timeLogs.employee'
+				}
+			},
+			order: {
+				startedAt: 'ASC'
+			},
+			where: (qb: SelectQueryBuilder<TimeLog>) => {
+				this.getFilterTimeLogQuery(qb, request);
+			}
+		});
+
+		let dayList = [];
+		const range = {};
+		let i = 0;
+		const start = moment(request.startDate);
+		while (start.isSameOrBefore(request.endDate) && i < 7) {
+			const date = start.format('YYYY-MM-DD');
+			range[date] = null;
+			start.add(1, 'day');
+			i++;
+		}
+		dayList = Object.keys(range);
+
+		const byDate = chain(logs)
+			.groupBy((log) => moment(log.startedAt).format('YYYY-MM-DD'))
+			.mapObject((logs: ITimeLog[], date) => {
+				const tacked = logs
+					.filter((log) => log.logType === TimeLogType.TRACKED)
+					.reduce((iteratee: any, log: any) => {
+						return iteratee + log.duration;
+					}, 0);
+				const manual = logs
+					.filter((log) => log.logType === TimeLogType.MANUAL)
+					.reduce((iteratee: any, log: any) => {
+						return iteratee + log.duration;
+					}, 0);
+				return {
+					date,
+					value: {
+						[TimeLogType.TRACKED]: parseFloat(
+							(tacked / 3600).toFixed(1)
+						),
+						[TimeLogType.MANUAL]: parseFloat(
+							(manual / 3600).toFixed(1)
+						)
+					}
+				};
+			})
+			.value();
+
+		const dates = dayList.map((date) => {
+			if (byDate[date]) {
+				return byDate[date];
+			} else {
+				return {
+					date: date,
+					value: {
+						[TimeLogType.TRACKED]: 0,
+						[TimeLogType.MANUAL]: 0
+					}
+				};
+			}
+		});
+
+		return dates;
+	}
+
 	async getDailyReport(request: IGetTimeLogReportInput) {
 		const logs = await this.timeLogRepository.find({
 			join: {
@@ -161,86 +237,31 @@ export class TimeLogService extends CrudService<TimeLog> {
 			}
 		});
 
-		let dayList = [];
-		const range = {};
-		let i = 0;
-		const start = moment(request.startDate);
-		while (start.isSameOrBefore(request.endDate) && i < 7) {
-			const date = start.format('YYYY-MM-DD');
-			range[date] = null;
-			start.add(1, 'day');
-			i++;
+		let dailyLogs;
+		switch (request.groupBy) {
+			case 'employee':
+				dailyLogs = await this.commandBus.execute(
+					new GetTimeLogGroupByEmployeeCommand(logs)
+				);
+				break;
+			case 'project':
+				dailyLogs = await this.commandBus.execute(
+					new GetTimeLogGroupByProjectCommand(logs)
+				);
+				break;
+
+			case 'client':
+				dailyLogs = await this.commandBus.execute(
+					new GetTimeLogGroupByClientCommand(logs)
+				);
+				break;
+
+			default:
+				dailyLogs = await this.commandBus.execute(
+					new GetTimeLogGroupByDateCommand(logs)
+				);
+				break;
 		}
-		dayList = Object.keys(range);
-
-		const dailyLogs = _.chain(logs)
-
-			.groupBy((log) => moment(log.startedAt).format('YYYY-MM-DD'))
-			.map((byDateLogs: ITimeLog[], date) => {
-				const byProject = _.chain(byDateLogs)
-					.groupBy('projectId')
-					.map((byProjectLogs: ITimeLog[], projectId) => {
-						const project =
-							byProjectLogs.length > 0
-								? byProjectLogs[0].project
-								: null;
-
-						const task =
-							byProjectLogs.length > 0
-								? byProjectLogs[0].task
-								: null;
-
-						const byEmployee = _.chain(byProjectLogs)
-							.groupBy('employeeId')
-							.map((byEmployeeLogs: ITimeLog[], date) => {
-								const sum = byEmployeeLogs.reduce(
-									(iteratee: any, log: any) => {
-										return iteratee + log.duration;
-									},
-									0
-								);
-
-								const timeSlots: ITimeSlot[] = _.chain(
-									byEmployeeLogs
-								)
-									.pluck('timeSlots')
-									.flatten(true)
-									.value();
-
-								const activitiesSum =
-									byEmployeeLogs.reduce(
-										(iteratee: any, timeSlot: any) => {
-											return iteratee + timeSlot.overall;
-										},
-										0
-									) || 0;
-
-								const activity =
-									activitiesSum / timeSlots.length;
-
-								const employee =
-									byEmployeeLogs.length > 0
-										? byEmployeeLogs[0].employee
-										: null;
-								return {
-									employee,
-									sum: sum,
-									activity: activity
-								};
-							})
-							.value();
-
-						return {
-							project,
-							projectLogs: byEmployee,
-							task: task
-						};
-					})
-					.value();
-
-				return { date, logs: byProject };
-			})
-			.value();
 
 		return dailyLogs;
 	}

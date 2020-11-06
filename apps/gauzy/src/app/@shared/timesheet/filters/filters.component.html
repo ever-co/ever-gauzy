@@ -7,29 +7,15 @@
 				else datePicker
 			"
 		>
-			<div class="week-date-input form-control ml-1">
-				<div class="display-box">
-					<span *ngIf="dateRange == 'day'; else displayDateRange">
-						{{ filters.startDate | date }}
-					</span>
-					<ng-template #displayDateRange>
-						{{ filters.startDate | date }} -
-						{{ filters.endDate | date }}
-					</ng-template>
-				</div>
-				<input
-					type="text"
-					nbInput
-					placeholder="Select Date"
-					[(ngModel)]="selectedDate"
-					[nbDatepicker]="formRangePicker"
-				/>
-			</div>
-			<nb-rangepicker
-				[max]="futureDateAllowed ? null : today"
-				#formRangePicker
-				[(range)]="selectedDate"
-			></nb-rangepicker>
+			<input
+				class="date-range-input"
+				type="text"
+				nbInput
+				placeholder="Select Date"
+				[(ngModel)]="dateRage"
+				[nbDatepicker]="formRangePicker"
+			/>
+			<nb-rangepicker #formRangePicker></nb-rangepicker>
 		</div>
 		<ng-template #datePicker>
 			<div class="input-group" *ngIf="hasDateRangeFilter">

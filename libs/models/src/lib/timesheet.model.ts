@@ -363,3 +363,64 @@ export interface IBulkActivitiesInput
 	projectId?: string;
 	activities: IActivity[];
 }
+
+export interface IReportDayGroupByDate {
+	date: string;
+	logs: {
+		project: IOrganizationProject;
+		employeeLogs: {
+			task: ITask;
+			employee: IEmployee;
+			sum: number;
+			activity: number;
+		}[];
+	}[];
+}
+
+export interface IReportDayGroupByEmployee {
+	employee: IEmployee;
+	logs: {
+		date: string;
+		employeeLogs: {
+			sum: number;
+			activity: number;
+			project: IOrganizationProject;
+			task: ITask;
+		}[];
+	}[];
+}
+
+export interface IReportDayGroupByProject {
+	project: IOrganizationProject;
+	logs: {
+		date: string;
+		employeeLogs: {
+			task: ITask;
+			employee: IEmployee;
+			sum: number;
+			activity: number;
+		}[];
+	}[];
+}
+
+export interface IReportDayGroupByClient {
+	client: IOrganizationContact;
+	logs: {
+		project: IOrganizationProject;
+		logs: {
+			date: string;
+			employeeLogs: {
+				task: ITask;
+				employee: IEmployee;
+				sum: number;
+				activity: number;
+			}[];
+		}[];
+	};
+}
+
+export type IReportDayData =
+	| IReportDayGroupByDate
+	| IReportDayGroupByEmployee
+	| IReportDayGroupByProject
+	| IReportDayGroupByClient;

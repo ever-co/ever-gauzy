@@ -114,10 +114,15 @@ export class FiltersComponent implements OnInit, OnDestroy {
 
 	set dateRage(range: NbCalendarRange<Date>) {
 		this._dateRage = range;
-		this.filters.startDate = moment(range.start).format(
-			'YYYY-MM-DD HH:mm:ss'
-		);
-		this.filters.endDate = moment(range.end).format('YYYY-MM-DD HH:mm:ss');
+		if (range.start && range.end) {
+			this.filters.startDate = moment(range.start).format(
+				'YYYY-MM-DD HH:mm:ss'
+			);
+			this.filters.endDate = moment(range.end).format(
+				'YYYY-MM-DD HH:mm:ss'
+			);
+			this.triggerFilterChange();
+		}
 	}
 
 	private _employeeIds: string | string[];
