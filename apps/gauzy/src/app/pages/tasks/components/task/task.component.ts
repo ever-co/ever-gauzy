@@ -6,28 +6,20 @@ import {
 	RouterEvent,
 	ActivatedRoute
 } from '@angular/router';
-
 import { uniqBy } from 'lodash';
-import { Observable, Subject } from 'rxjs';
-import {
-	first,
-	takeUntil,
-	map,
-	tap,
-	filter,
-	debounceTime
-} from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { first, map, tap, filter, debounceTime } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
-
 import {
 	ITask,
 	ITag,
 	IOrganizationProject,
 	ComponentLayoutStyleEnum,
 	TaskListTypeEnum,
-	IOrganization
+	IOrganization,
+	IOrganizationTeam
 } from '@gauzy/models';
 import { TasksStoreService } from '../../../../@core/services/tasks-store.service';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
@@ -48,7 +40,8 @@ import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.co
 import { ComponentEnum } from '../../../../@core/constants/layout.constants';
 import { StatusViewComponent } from '../../../../@shared/table-components/status-view/status-view.component';
 import { AddTaskDialogComponent } from '../../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-task',
 	templateUrl: './task.component.html',
@@ -57,8 +50,6 @@ import { AddTaskDialogComponent } from '../../../../@shared/tasks/add-task-dialo
 export class TaskComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	@ViewChild('tasksTable') tasksTable;
-	private _ngDestroy$: Subject<void> = new Subject();
 	settingsSmartTable: object;
 	loading = false;
 	smartTableSource = new LocalDataSource();
@@ -73,11 +64,19 @@ export class TaskComponent
 	tags: ITag[];
 	view: string;
 	viewComponentName: ComponentEnum;
-	teams;
+	teams: IOrganizationTeam[] = [];
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	organization: IOrganization;
 	selectedProject$: Observable<IOrganizationProject>;
 	viewMode: TaskListTypeEnum = TaskListTypeEnum.GRID;
+
+	tasksTable: Ng2SmartTableComponent;
+	@ViewChild('tasksTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.tasksTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(
 		private dialogService: NbDialogService,
@@ -99,12 +98,13 @@ export class TaskComponent
 
 	ngOnInit() {
 		this._loadTableSettings();
-		this.initProjectFilter();
 		this._applyTranslationOnSmartTable();
+
+		this.initProjectFilter();
 		this._organizationsStore.selectedEmployee$
 			.pipe(
 				filter((employee) => !!employee),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe((selectedEmployee: SelectedEmployee) => {
 				if (selectedEmployee.id && this.organization) {
@@ -118,7 +118,7 @@ export class TaskComponent
 		this._organizationsStore.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe((organization) => {
 				if (organization) {
@@ -131,7 +131,7 @@ export class TaskComponent
 			.pipe(
 				filter((params) => !!params),
 				debounceTime(1000),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe((params) => {
 				if (params.get('openAddDialog') === 'true') {
@@ -139,7 +139,7 @@ export class TaskComponent
 				}
 			});
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
@@ -229,15 +229,27 @@ export class TaskComponent
 		}
 		this._organizationsStore
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(
 				(componentLayout) => (this.dataLayoutStyle = componentLayout)
 			);
 	}
 
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.tasksTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
+	}
+
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this._loadTableSettings();
 			});
@@ -375,7 +387,7 @@ export class TaskComponent
 				});
 
 				this.storeInstance.createTask(payload);
-				this.selectTask({ isSelected: false, data: null });
+				this.clearItem();
 			}
 		}
 	}
@@ -430,7 +442,7 @@ export class TaskComponent
 					...payload,
 					id: this.selectedTask.id
 				});
-				this.selectTask({ isSelected: false, data: null });
+				this.clearItem();
 			}
 		}
 	}
@@ -485,7 +497,7 @@ export class TaskComponent
 				});
 
 				this.storeInstance.createTask(payload);
-				this.selectTask({ isSelected: false, data: null });
+				this.clearItem();
 			}
 		}
 	}
@@ -504,17 +516,13 @@ export class TaskComponent
 
 		if (result) {
 			this.storeInstance.delete(this.selectedTask.id);
-			this.selectTask({ isSelected: false, data: null });
+			this.clearItem();
 		}
 	}
 
 	selectTask({ isSelected, data }) {
-		const selectedTask = isSelected ? data : null;
-		if (this.tasksTable) {
-			this.tasksTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.selectedTask = selectedTask;
+		this.selectedTask = isSelected ? data : null;
 	}
 
 	async loadTeams(employeeId?: string) {
@@ -563,8 +571,26 @@ export class TaskComponent
 		}
 	}
 
-	ngOnDestroy(): void {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectTask({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
 	}
+
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.tasksTable && this.tasksTable.grid) {
+			this.tasksTable.grid.dataSet['willSelect'] = 'false';
+			this.tasksTable.grid.dataSet.deselectAll();
+		}
+	}
+
+	ngOnDestroy(): void {}
 }

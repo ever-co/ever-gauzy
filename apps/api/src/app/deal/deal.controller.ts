@@ -45,7 +45,7 @@ export class DealController extends CrudController<Deal> {
 	})
 	@Get(':id')
 	public async getOne(
-		@Param() id: string,
+		@Param('id') id: string,
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<Deal> {
 		const { relations = [], findInput: where = null } = data;

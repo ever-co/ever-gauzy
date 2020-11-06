@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, OnDestroy, Input } from '@angular/core';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -12,7 +12,6 @@ import {
 } from '@nebular/theme';
 import {
 	IInvoice,
-	PermissionsEnum,
 	ITag,
 	IOrganization,
 	InvoiceTypeEnum,
@@ -23,14 +22,14 @@ import {
 	EstimateColumnsEnum,
 	CurrenciesEnum,
 	IOrganizationContact,
-	IInvoiceEstimateHistory
+	IInvoiceEstimateHistory,
+	IRolePermission
 } from '@gauzy/models';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
-import { first, takeUntil, map } from 'rxjs/operators';
+import { first, map, filter, tap } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
 import { InvoiceItemService } from '../../@core/services/invoice-item.service';
-import { Subject } from 'rxjs';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import { InvoicePaidComponent } from './table-components/invoice-paid.component';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
@@ -41,7 +40,10 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-estimate-history.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { NgxPermissionsService } from 'ngx-permissions';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-invoices',
 	templateUrl: './invoices.component.html',
@@ -55,7 +57,6 @@ export class InvoicesComponent
 	selectedInvoice: IInvoice;
 	loading = true;
 	disableButton = true;
-	hasInvoiceEditPermission: boolean;
 	invoices: IInvoice[];
 	tags: ITag[] = [];
 	organization: IOrganization;
@@ -74,14 +75,17 @@ export class InvoicesComponent
 	organizationContacts: IOrganizationContact[];
 	duplicate: boolean;
 	perPage = 10;
-	histories: IInvoiceEstimateHistory[];
-	selectedInvoiceHistories = [];
-
-	private _ngDestroy$ = new Subject<void>();
+	histories: IInvoiceEstimateHistory[] = [];
 
 	@Input() isEstimate: boolean;
 
-	@ViewChild('invoicesTable') invoicesTable;
+	invoicesTable: Ng2SmartTableComponent;
+	@ViewChild('invoicesTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.invoicesTable = content;
+			this.onChangedSource();
+		}
+	}
 	@ViewChild(NbPopoverDirective) popover: NbPopoverDirective;
 
 	constructor(
@@ -95,35 +99,56 @@ export class InvoicesComponent
 		private router: Router,
 		private nbMenuService: NbMenuService,
 		private organizationContactService: OrganizationContactService,
-		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService
+		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
+		private ngxPermissionsService: NgxPermissionsService
 	) {
 		super(translateService);
 		this.setView();
 	}
 
 	ngOnInit() {
-		this.initializeForm();
 		if (!this.isEstimate) {
 			this.isEstimate = false;
 		}
-		this.store.userRolePermissions$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this.hasInvoiceEditPermission = this.store.hasPermission(
-					PermissionsEnum.INVOICES_EDIT
-				);
-			});
-		this.loadSmartTable();
+
+		this.initializeForm();
+		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
-		this.loadSettings();
 		this.loadMenu();
+		this.loadSettings();
+
+		this.store.userRolePermissions$
+			.pipe(
+				filter(
+					(permissions: IRolePermission[]) => permissions.length > 0
+				),
+				untilDestroyed(this)
+			)
+			.subscribe((data) => {
+				const permissions = data.map(
+					(permisson) => permisson.permission
+				);
+				this.ngxPermissionsService.loadPermissions(permissions);
+			});
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
 				}
 			});
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.invoicesTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
 	}
 
 	initializeForm() {
@@ -142,7 +167,7 @@ export class InvoicesComponent
 		this.viewComponentName = ComponentEnum.ESTIMATES;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
@@ -193,7 +218,8 @@ export class InvoicesComponent
 			.onItemClick()
 			.pipe(
 				first(),
-				map(({ item: { title } }) => title)
+				map(({ item: { title } }) => title),
+				untilDestroyed(this)
 			)
 			.subscribe((title) => this.bulkAction(title));
 	}
@@ -366,10 +392,11 @@ export class InvoicesComponent
 						isEstimate: this.isEstimate
 					}
 				})
-				.onClose.subscribe(async () => {
+				.onClose.pipe(untilDestroyed(this))
+				.subscribe(async () => {
 					await this.loadSettings();
 				});
-			this._clearItem();
+			this.clearItem();
 		} else {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.SEND.NOT_LINKED'),
@@ -403,7 +430,7 @@ export class InvoicesComponent
 			this.getTranslation('INVOICES_PAGE.ESTIMATES.ESTIMATE_CONVERT'),
 			this.getTranslation('TOASTR.TITLE.SUCCESS')
 		);
-		this._clearItem();
+		this.clearItem();
 		await this.loadSettings();
 	}
 
@@ -427,11 +454,11 @@ export class InvoicesComponent
 				await this.invoiceItemService.delete(item.id);
 			}
 
-			for (const history of this.selectedInvoiceHistories) {
+			for (const history of this.histories) {
 				await this.invoiceEstimateHistoryService.delete(history.id);
 			}
 
-			this._clearItem();
+			this.clearItem();
 			this.loadSettings();
 			if (this.isEstimate) {
 				this.toastrService.primary(
@@ -473,15 +500,20 @@ export class InvoicesComponent
 					saveAndSend: false
 				}
 			})
-			.onClose.subscribe(async () => {
-				this._clearItem();
+			.onClose.pipe(untilDestroyed(this))
+			.subscribe(async () => {
+				this.clearItem();
 				await this.loadSettings();
 			});
 	}
 
 	async loadSettings() {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((organization) => !!organization),
+				tap((organization) => (this.organization = organization)),
+				untilDestroyed(this)
+			)
 			.subscribe(async (org) => {
 				if (org) {
 					try {
@@ -493,7 +525,8 @@ export class InvoicesComponent
 								'payments',
 								'fromOrganization',
 								'toContact',
-								'historyRecords'
+								'historyRecords',
+								'historyRecords.user'
 							],
 							{
 								organizationId: org.id,
@@ -501,49 +534,14 @@ export class InvoicesComponent
 								isEstimate: this.isEstimate
 							}
 						);
-
 						const invoiceVM: IInvoice[] = items.map((i) => {
-							return {
-								id: i.id,
-								invoiceNumber: i.invoiceNumber,
-								invoiceDate: i.invoiceDate,
-								dueDate: i.dueDate,
-								currency: i.currency,
-								discountValue: i.discountValue,
-								discountType: i.discountType,
-								tax: i.tax,
-								tax2: i.tax2,
-								taxType: i.taxType,
-								tax2Type: i.tax2Type,
-								terms: i.terms,
-								paid: i.paid,
-								payments: i.payments,
-								invoiceItems: i.invoiceItems,
-								totalValue: i.totalValue,
-								toContact: i.toContact,
-								organizationContactId: i.organizationContactId,
-								organizationContactName: i.toContact?.name,
-								fromOrganization: i.fromOrganization,
-								organizationId: i.organizationId,
-								invoiceType: i.invoiceType,
-								tags: i.tags,
-								isEstimate: i.isEstimate,
-								status: i.status,
-								sentTo: i.sentTo
-							};
+							return Object.assign({}, i, {
+								organizationContactName: i.toContact?.name
+							});
 						});
 						this.invoices = invoiceVM;
-						this.smartTableSource.load(items);
-						this.organization = org;
+						this.smartTableSource.load(invoiceVM);
 						this.loading = false;
-						const histories = await this.invoiceEstimateHistoryService.getAll(
-							['invoice', 'user', 'organization'],
-							{
-								organizationId: this.organization.id,
-								tenantId
-							}
-						);
-						this.histories = histories.items;
 					} catch (error) {
 						this.toastrService.danger(
 							this.getTranslation('NOTES.INVOICE.INVOICE_ERROR', {
@@ -558,33 +556,26 @@ export class InvoicesComponent
 
 	async selectInvoice({ isSelected, data }) {
 		this.status = null;
-		const selectedInvoice = isSelected ? data : null;
-		if (this.invoicesTable) {
-			this.invoicesTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.selectedInvoice = selectedInvoice;
+		this.selectedInvoice = isSelected ? data : null;
 
-		const histories = selectedInvoice
-			? this.histories.filter((h) => h.invoice.id === selectedInvoice.id)
-			: null;
-
-		if (histories) {
-			const selectedInvoiceHistories = [];
-			histories.forEach((h) => {
+		if (isSelected) {
+			const { historyRecords = [] } = data;
+			const histories = [];
+			historyRecords.forEach((h: IInvoiceEstimateHistory) => {
 				const history = {
 					id: h.id,
 					createdAt: new Date(h.createdAt).toString().slice(0, 24),
 					action: h.action,
 					user: h.user
 				};
-				selectedInvoiceHistories.push(history);
+				histories.push(history);
 			});
-			this.selectedInvoiceHistories = selectedInvoiceHistories;
+			this.histories = histories;
 		}
 	}
 
-	loadSmartTable() {
+	loadSettingsSmartTable() {
 		this.settingsSmartTable = {
 			pager: {
 				display: true,
@@ -592,6 +583,9 @@ export class InvoicesComponent
 			},
 			hideSubHeader: true,
 			actions: false,
+			mode: 'external',
+			editable: true,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
 			columns: {
 				invoiceNumber: {
 					title: this.isEstimate
@@ -762,7 +756,7 @@ export class InvoicesComponent
 			this.perPage > 0
 		) {
 			this.smartTableSource.getPaging().perPage = this.perPage;
-			this.loadSmartTable();
+			this.loadSettingsSmartTable();
 		}
 	}
 
@@ -834,12 +828,13 @@ export class InvoicesComponent
 			...this.selectedInvoice,
 			status: $event
 		});
-		this._clearItem();
+		this.smartTableSource.refresh();
+		this.clearItem();
 	}
 
 	selectColumn($event) {
 		this.columns = $event;
-		this.loadSmartTable();
+		this.loadSettingsSmartTable();
 	}
 
 	openPopover() {
@@ -853,15 +848,16 @@ export class InvoicesComponent
 
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
-				this.loadSmartTable();
+				this.loadSettingsSmartTable();
 			});
 	}
 
 	async onChangeTab(event) {
 		if (event.tabId === 'search') {
-			const { id: organizationId, tenantId } = this.organization;
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
 			const res = await this.organizationContactService.getAll([], {
 				organizationId,
 				tenantId
@@ -873,15 +869,23 @@ export class InvoicesComponent
 		}
 	}
 
-	private _clearItem() {
+	clearItem() {
 		this.selectInvoice({
 			isSelected: false,
 			data: null
 		});
+		this.deselectAll();
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.invoicesTable && this.invoicesTable.grid) {
+			this.invoicesTable.grid.dataSet['willSelect'] = 'false';
+			this.invoicesTable.grid.dataSet.deselectAll();
+		}
 	}
+
+	ngOnDestroy() {}
 }

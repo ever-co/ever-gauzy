@@ -1,9 +1,9 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { first, take, takeUntil } from 'rxjs/operators';
+import { first, take, tap } from 'rxjs/operators';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import {
 	IProduct,
@@ -17,18 +17,19 @@ import { PictureNameTagsComponent } from '../../../../@shared/table-components/p
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ProductService } from '../../../../@core/services/product.service';
 import { ComponentEnum } from '../../../../@core/constants/layout.constants';
-import { Subject } from 'rxjs';
 import { Store } from '../../../../@core/services/store.service';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-table-inventory',
 	templateUrl: './table-inventory.component.html',
 	styleUrls: ['./table-inventory.component.scss']
 })
-export class TableInventoryComponent extends TranslationBaseComponent
+export class TableInventoryComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
-	loading = true;
+	loading: boolean;
 	selectedProduct: IProduct;
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
@@ -37,9 +38,15 @@ export class TableInventoryComponent extends TranslationBaseComponent
 	disableButton = true;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.CARDS_GRID;
-	private _ngDestroy$ = new Subject<void>();
 	organization: IOrganization;
-	@ViewChild('inventoryTable') inventoryTable;
+
+	inventoryTable: Ng2SmartTableComponent;
+	@ViewChild('inventoryTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.inventoryTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -54,27 +61,24 @@ export class TableInventoryComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
+		this.loadSmartTable();
+		this._applyTranslationOnSmartTable();
 		this.selectedLanguage = this.translateService.currentLang;
 		this.translateService.onLangChange
 			.pipe(take(1))
 			.subscribe((languageEvent) => {
 				this.selectedLanguage = languageEvent.lang;
 			});
-
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((organization: IOrganization) => {
 				if (organization) {
 					this.organization = organization;
 					this.loadSettings();
 				}
 			});
-
-		this.loadSmartTable();
-		this._applyTranslationOnSmartTable();
-
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
@@ -82,19 +86,28 @@ export class TableInventoryComponent extends TranslationBaseComponent
 			});
 	}
 
-	ngOnDestroy(): void {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy(): void {}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.INVENTORY;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.inventoryTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
 	}
 
 	async loadSmartTable() {
@@ -202,38 +215,54 @@ export class TableInventoryComponent extends TranslationBaseComponent
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 		} finally {
-			this.disableButton = true;
+			this.clearItem();
 		}
 	}
 
 	async loadSettings() {
-		const { id: organizationId, tenantId } = this.organization;
-		this.selectedProduct = null;
+		this.loading = true;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 		const { items } = await this.productService.getAll(
 			['type', 'category', 'tags'],
 			{ organizationId, tenantId },
 			this.selectedLanguage
 		);
-
 		this.loading = false;
 		this.inventoryData = items;
 		this.smartTableSource.load(items);
 	}
 
 	async selectProduct({ isSelected, data }) {
-		const selectedProduct = isSelected ? data : null;
-		if (this.inventoryTable) {
-			this.inventoryTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.selectedProduct = selectedProduct;
+		this.selectedProduct = isSelected ? data : null;
 	}
 
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.loadSmartTable();
 			});
+	}
+
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectProduct({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
+	}
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.inventoryTable && this.inventoryTable.grid) {
+			this.inventoryTable.grid.dataSet['willSelect'] = 'false';
+			this.inventoryTable.grid.dataSet.deselectAll();
+		}
 	}
 }

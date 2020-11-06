@@ -43,13 +43,16 @@
 							| translate
 					}}
 				</h6>
-				{{ proposal.valueDate | date: 'shortDate' }}
+				{{ proposal?.valueDate | date: 'shortDate' }}
 			</nb-card>
 			<nb-card class="prop-card">
 				<h6>
 					{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.STATUS' | translate }}
 				</h6>
-				<ga-propsal-status [rowData]="proposal"></ga-propsal-status>
+				<ga-propsal-status
+					*ngIf="proposal"
+					[rowData]="proposal"
+				></ga-propsal-status>
 			</nb-card>
 		</div>
 		<div class="wrapper-bottom">

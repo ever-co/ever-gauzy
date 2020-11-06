@@ -606,7 +606,7 @@
 		"SPRINT_VIEW": "Просмотр спринта"
 	},
 	"INTEGRATIONS": {
-		"AVALIABLE_INTEGRATIONS": "Доступные приложения и интеграции",
+		"AVAILABLE_INTEGRATIONS": "Доступные приложения и интеграции",
 		"ADDED_UPWORK_TRANSACTION": "Добавлена проводка обновления",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Всего транзакций было успешно: {{ totalExpenses }}. Всего операций с доходами было успешно: {{ totalIncomes }}",
 		"HUBSTAFF_PAGE": {

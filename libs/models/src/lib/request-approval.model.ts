@@ -51,3 +51,8 @@ export interface IRequestApprovalFindInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 }
+
+export interface IApprovalsData {
+	icon: string;
+	title: string;
+}

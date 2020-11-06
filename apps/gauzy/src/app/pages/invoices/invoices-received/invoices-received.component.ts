@@ -1,11 +1,10 @@
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { OnInit, Component, OnDestroy, ViewChild, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, takeUntil } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { Store } from '../../../@core/services/store.service';
-import { Subject } from 'rxjs';
 import { InvoicesService } from '../../../@core/services/invoices.service';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import {
 	IInvoice,
 	ComponentLayoutStyleEnum,
@@ -15,7 +14,8 @@ import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { InvoicePaidComponent } from '../table-components/invoice-paid.component';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-invoices-received',
 	templateUrl: './invoices-received.component.html',
@@ -25,7 +25,6 @@ export class InvoicesReceivedComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	loading = true;
-	private _ngDestroy$ = new Subject<void>();
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
 	selectedInvoice: IInvoice;
@@ -36,7 +35,14 @@ export class InvoicesReceivedComponent
 	organization: IOrganization;
 
 	@Input() isEstimate: boolean;
-	@ViewChild('invoicesTable') invoicesTable;
+
+	invoicesTable: Ng2SmartTableComponent;
+	@ViewChild('invoicesTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.invoicesTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(
 		private store: Store,
@@ -53,23 +59,21 @@ export class InvoicesReceivedComponent
 		if (!this.isEstimate) {
 			this.isEstimate = false;
 		}
-		this.loadSmartTable();
+		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
-
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
-				takeUntil(this._ngDestroy$)
+				tap((organization) => (this.organization = organization)),
+				untilDestroyed(this)
 			)
 			.subscribe((organization) => {
-				this.organization = organization;
 				if (organization) {
 					this.getInvoices();
 				}
 			});
-
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
@@ -77,11 +81,23 @@ export class InvoicesReceivedComponent
 			});
 	}
 
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.invoicesTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
+	}
+
 	setView() {
 		this.viewComponentName = ComponentEnum.INVOICE_RECEIVED;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
@@ -89,7 +105,8 @@ export class InvoicesReceivedComponent
 
 	async getInvoices() {
 		try {
-			const { id: organizationId, tenantId } = this.organization;
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
 			const invoices = await this.invoicesService.getAll(['payments'], {
 				sentTo: organizationId,
 				isEstimate: this.isEstimate,
@@ -147,9 +164,16 @@ export class InvoicesReceivedComponent
 		await this.getInvoices();
 	}
 
-	loadSmartTable() {
+	loadSettingsSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
+			pager: {
+				display: true,
+				perPage: 10
+			},
+			mode: 'external',
+			editable: true,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
 			columns: {
 				invoiceNumber: {
 					title: this.isEstimate
@@ -179,22 +203,33 @@ export class InvoicesReceivedComponent
 	}
 
 	selectInvoice({ isSelected, data }) {
-		const selectedInvoice = isSelected ? data : null;
-		if (this.invoicesTable) {
-			this.invoicesTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.selectedInvoice = selectedInvoice;
+		this.selectedInvoice = isSelected ? data : null;
 	}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loadSettingsSmartTable();
+			});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
+	clearItem() {
+		this.selectInvoice({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
 	}
+
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		this.invoicesTable.grid.dataSet['willSelect'] = 'false';
+		this.invoicesTable.grid.dataSet.deselectAll();
+	}
+
+	ngOnDestroy() {}
 }

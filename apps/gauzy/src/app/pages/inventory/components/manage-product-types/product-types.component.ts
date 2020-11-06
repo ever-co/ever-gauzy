@@ -5,39 +5,47 @@ import {
 	LanguagesEnum,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { ProductTypeService } from '../../../../@core/services/product-type.service';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { first, takeUntil } from 'rxjs/operators';
+import { first, tap } from 'rxjs/operators';
 import { ProductTypeMutationComponent } from '../../../../@shared/product-mutation/product-type-mutation/product-type-mutation.component';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { IconRowComponent } from '../table-components/icon-row.component';
 import { Store } from '../../../../@core/services/store.service';
-import { Subject } from 'rxjs';
 import { ComponentEnum } from '../../../../@core/constants/layout.constants';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-product-type',
 	templateUrl: './product-types.component.html',
 	styleUrls: ['./product-types.component.scss']
 })
-export class ProductTypesComponent extends TranslationBaseComponent
+export class ProductTypesComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
-	loading = true;
+	loading: boolean;
 	selectedProductType: IProductTypeTranslated;
 	productData: IProductTypeTranslated[];
 	selectedOrganization: IOrganization;
 	smartTableSource = new LocalDataSource();
 	disableButton = true;
-	private _ngDestroy$ = new Subject<void>();
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 
-	@ViewChild('productTypesTable', { static: true }) productTypesTable;
+	productTypesTable: Ng2SmartTableComponent;
+	@ViewChild('productTypesTable') set content(
+		content: Ng2SmartTableComponent
+	) {
+		if (content) {
+			this.productTypesTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -53,7 +61,7 @@ export class ProductTypesComponent extends TranslationBaseComponent
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((org) => {
 				this.selectedOrganization = org;
 				if (this.selectedOrganization) {
@@ -62,14 +70,14 @@ export class ProductTypesComponent extends TranslationBaseComponent
 			});
 
 		this.store.preferredLanguage$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				if (this.selectedOrganization) {
 					this.loadSettings();
 				}
 			});
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
@@ -83,10 +91,22 @@ export class ProductTypesComponent extends TranslationBaseComponent
 		this.viewComponentName = ComponentEnum.PRODUCT_TYPE;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.productTypesTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
 	}
 
 	async loadSmartTable() {
@@ -115,10 +135,11 @@ export class ProductTypesComponent extends TranslationBaseComponent
 	}
 
 	async loadSettings() {
-		this.selectedProductType = null;
-		const { id: organizationId, tenantId } = this.selectedOrganization;
+		this.loading = true;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.selectedOrganization;
 		const searchCriteria = {
-			organization: { id: organizationId },
+			organizationId,
 			tenantId
 		};
 		const { items } = await this.productTypeService.getAllTranslated(
@@ -134,7 +155,7 @@ export class ProductTypesComponent extends TranslationBaseComponent
 
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.loadSmartTable();
 			});
@@ -158,16 +179,13 @@ export class ProductTypesComponent extends TranslationBaseComponent
 		});
 
 		const productType = await dialog.onClose.pipe(first()).toPromise();
-		this.selectedProductType = null;
-		this.disableButton = true;
-
 		if (productType) {
 			this.toastrService.primary(
 				this.getTranslation('INVENTORY_PAGE.PRODUCT_TYPE_SAVED'),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 		}
-
+		this.clearItem();
 		this.loadSettings();
 	}
 
@@ -191,20 +209,33 @@ export class ProductTypesComponent extends TranslationBaseComponent
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 		}
-		this.disableButton = true;
+		this.clearItem();
 	}
 
 	selectProductType({ isSelected, data }) {
-		const selectedProductType = isSelected ? data : null;
-		if (this.productTypesTable) {
-			this.productTypesTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.selectedProductType = selectedProductType;
+		this.selectedProductType = isSelected ? data : null;
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectProductType({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
 	}
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.productTypesTable && this.productTypesTable.grid) {
+			this.productTypesTable.grid.dataSet['willSelect'] = 'false';
+			this.productTypesTable.grid.dataSet.deselectAll();
+		}
+	}
+
+	ngOnDestroy() {}
 }

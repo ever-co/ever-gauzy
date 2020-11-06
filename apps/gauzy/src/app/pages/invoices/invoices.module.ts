@@ -69,6 +69,7 @@ import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { InvoiceExpensesSelectorComponent } from './table-components/invoice-expense-selector.component';
 import { BackNavigationModule } from '../../@shared/back-navigation';
 import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-estimate-history.service';
+import { NgxPermissionsModule } from 'ngx-permissions';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -114,6 +115,10 @@ export function HttpLoaderFactory(http: HttpClient) {
 				useFactory: HttpLoaderFactory,
 				deps: [HttpClient]
 			}
+		}),
+		NgxPermissionsModule.forChild({
+			permissionsIsolate: true,
+			rolesIsolate: true
 		})
 	],
 	providers: [

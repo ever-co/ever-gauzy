@@ -6,11 +6,12 @@ import {
 	IRequestApproval,
 	ComponentLayoutStyleEnum,
 	IOrganization,
-	IRolePermission
+	IRolePermission,
+	IApprovalsData
 } from '@gauzy/models';
 import { RequestApprovalService } from '../../@core/services/request-approval.service';
-import { LocalDataSource } from 'ng2-smart-table';
-import { filter, first } from 'rxjs/operators';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { filter, first, tap } from 'rxjs/operators';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Store } from '../../@core/services/store.service';
 import { ApprovalPolicyComponent } from './table-components/approval-policy/approval-policy.component';
@@ -23,10 +24,6 @@ import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.co
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
 
-export interface IApprovalsData {
-	icon: string;
-	title: string;
-}
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-approvals',
@@ -37,7 +34,7 @@ export class ApprovalsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	public settingsSmartTable: object;
-	public loading = true;
+	public loading: boolean;
 	public selectedRequestApproval: IRequestApproval;
 	public listApprovals: IApprovalsData[] = [];
 	public disableButton = true;
@@ -49,7 +46,15 @@ export class ApprovalsComponent
 	requestApprovalData: IRequestApproval[];
 	organization: IOrganization;
 
-	@ViewChild('requestApprovalTable') requestApprovalTable;
+	requestApprovalTable: Ng2SmartTableComponent;
+	@ViewChild('requestApprovalTable') set content(
+		content: Ng2SmartTableComponent
+	) {
+		if (content) {
+			this.requestApprovalTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -121,23 +126,30 @@ export class ApprovalsComponent
 			});
 	}
 
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.requestApprovalTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
+	}
+
 	async selectRequestApproval({ isSelected, data }) {
-		const selectedCandidate = isSelected ? data : null;
-		if (this.requestApprovalTable) {
-			this.requestApprovalTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.selectedRequestApproval = selectedCandidate;
+		this.selectedRequestApproval = isSelected ? data : null;
 	}
 
 	async loadSettings() {
 		if (!this.organization) {
 			return;
 		}
-		const { id: organizationId, tenantId } = this.organization;
-
-		this.selectedRequestApproval = null;
-		this.disableButton = true;
+		this.loading = true;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 		let items = [];
 		if (this.selectedEmployeeId) {
 			items = (
@@ -276,7 +288,6 @@ export class ApprovalsComponent
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
 			}
-			this.loadSettings();
 		} else {
 			const request = await this.approvalRequestService.refuseRequestByAdmin(
 				params.data.id
@@ -287,8 +298,9 @@ export class ApprovalsComponent
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
 			}
-			this.loadSettings();
 		}
+		this.clearItem();
+		this.loadSettings();
 	}
 
 	_applyTranslationOnSmartTable() {
@@ -321,8 +333,6 @@ export class ApprovalsComponent
 			dialog = this.dialogService.open(RequestApprovalMutationComponent);
 		}
 		const requestApproval = await dialog.onClose.pipe(first()).toPromise();
-		this.selectedRequestApproval = null;
-		this.disableButton = true;
 		if (requestApproval) {
 			this.toastrService.primary(
 				this.getTranslation(
@@ -331,6 +341,7 @@ export class ApprovalsComponent
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 		}
+		this.clearItem();
 		this.loadSettings();
 	}
 
@@ -352,7 +363,29 @@ export class ApprovalsComponent
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 		}
+		this.clearItem();
 		this.loadSettings();
+	}
+
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectRequestApproval({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
+	}
+
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.requestApprovalTable && this.requestApprovalTable.grid) {
+			this.requestApprovalTable.grid.dataSet['willSelect'] = 'false';
+			this.requestApprovalTable.grid.dataSet.deselectAll();
+		}
 	}
 
 	ngOnDestroy() {}

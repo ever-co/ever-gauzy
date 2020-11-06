@@ -6,25 +6,27 @@ import {
 } from '@gauzy/models';
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ProductCategoryService } from '../../../../@core/services/product-category.service';
 import { Store } from '../../../../@core/services/store.service';
-import { takeUntil, first } from 'rxjs/operators';
+import { first, tap } from 'rxjs/operators';
 import { ImageRowComponent } from '../table-components/image-row.component';
 import { ProductCategoryMutationComponent } from '../../../../@shared/product-mutation/product-category-mutation/product-category-mutation.component';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ComponentEnum } from '../../../../@core/constants/layout.constants';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-product-categories',
 	templateUrl: './product-categories.component.html',
 	styleUrls: ['./product-categories.component.scss']
 })
-export class ProductCategoriesComponent extends TranslationBaseComponent
+export class ProductCategoriesComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	loading = true;
@@ -37,8 +39,15 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	private _ngDestroy$ = new Subject<void>();
 
-	@ViewChild('productCategoriesTable', { static: true })
-	productCategoriesTable;
+	productCategoriesTable: Ng2SmartTableComponent;
+	@ViewChild('productCategoriesTable') set content(
+		content: Ng2SmartTableComponent
+	) {
+		if (content) {
+			this.productCategoriesTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -53,8 +62,10 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
+		this.loadSmartTable();
+		this._applyTranslationOnSmartTable();
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((org) => {
 				if (org) {
 					this.selectedOrganization = org;
@@ -62,28 +73,38 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 				}
 			});
 		this.store.preferredLanguage$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				if (this.selectedOrganization) {
 					this.loadSettings();
 				}
 			});
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
 				}
 			});
-		this.loadSmartTable();
-		this._applyTranslationOnSmartTable();
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.productCategoriesTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
 	}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.PRODUCT_CATEGORY;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
@@ -134,7 +155,7 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.loadSmartTable();
 			});
@@ -202,16 +223,29 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 	}
 
 	selectProductCategory({ isSelected, data }) {
-		const selectedProductCategory = isSelected ? data : null;
-		if (this.productCategoriesTable) {
-			this.productCategoriesTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.selectedProductCategory = selectedProductCategory;
+		this.selectedProductCategory = isSelected ? data : null;
 	}
 
-	ngOnDestroy(): void {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectProductCategory({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
 	}
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.productCategoriesTable && this.productCategoriesTable.grid) {
+			this.productCategoriesTable.grid.dataSet['willSelect'] = 'false';
+			this.productCategoriesTable.grid.dataSet.deselectAll();
+		}
+	}
+
+	ngOnDestroy(): void {}
 }

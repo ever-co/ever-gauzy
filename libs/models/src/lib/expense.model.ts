@@ -1,5 +1,4 @@
 import { IEmployee, IEmployeeFindInput } from './employee.model';
-import { IOrganizationFindInput } from './organization.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { ITag } from './tag-entity.model';
 import { IExpenseCategory } from './expense-category.model';
@@ -133,4 +132,33 @@ export enum ExpenseStatusesEnum {
 	INVOICED = 'Invoiced',
 	UNINVOICED = 'Uninvoiced',
 	PAID = 'Paid'
+}
+
+export interface IExpenseViewModel {
+	id: string;
+	valueDate: Date;
+	vendorId: string;
+	vendorName: string;
+	vendor: IOrganizationVendor;
+	typeOfExpense: string;
+	categoryId: string;
+	categoryName: string;
+	category: IExpenseCategory;
+	organizationContactId: string;
+	organizationContactName: string;
+	projectId: string;
+	projectName: string;
+	currency: string;
+	amount: number;
+	notes: string;
+	purpose: string;
+	taxType: string;
+	taxLabel: string;
+	employee: IEmployee;
+	employeeName: string;
+	rateValue: number;
+	receipt: string;
+	splitExpense: boolean;
+	tags: ITag[];
+	status: string;
 }

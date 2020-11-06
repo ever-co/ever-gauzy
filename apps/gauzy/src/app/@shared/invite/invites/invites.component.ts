@@ -8,8 +8,8 @@ import {
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource } from 'ng2-smart-table';
-import { first } from 'rxjs/operators';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { filter, first, tap } from 'rxjs/operators';
 import { InviteService } from '../../../@core/services/invite.service';
 import { Store } from '../../../@core/services/store.service';
 import { DeleteConfirmationComponent } from '../../user/forms/delete-confirmation/delete-confirmation.component';
@@ -65,7 +65,13 @@ export class InvitesComponent
 	hasInviteEditPermission = false;
 	selectedOrganization: IOrganization;
 
-	@ViewChild('employeesTable') employeesTable;
+	invitesTable: Ng2SmartTableComponent;
+	@ViewChild('invitesTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.invitesTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(
 		private dialogService: NbDialogService,
@@ -79,9 +85,15 @@ export class InvitesComponent
 		this.setView();
 	}
 
-	async ngOnInit() {
+	ngOnInit() {
+		this._loadSmartTableSettings();
+		this._applyTranslationOnSmartTable();
+
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((organization) => {
 				if (organization) {
 					this.selectedOrganization = organization;
@@ -103,9 +115,6 @@ export class InvitesComponent
 					this.setView();
 				}
 			});
-
-		this._loadSmartTableSettings();
-		this._applyTranslationOnSmartTable();
 	}
 
 	ngOnDestroy(): void {}
@@ -120,14 +129,21 @@ export class InvitesComponent
 			});
 	}
 
-	selectEmployeeTmp({ isSelected, data }) {
-		const selectedInvite = isSelected ? data : null;
-		if (this.employeesTable) {
-			this.employeesTable.grid.dataSet.willSelect = false;
-		}
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.invitesTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
+	}
 
+	selectEmployeeTmp({ isSelected, data }) {
 		this.disableButton = !isSelected;
-		this.selectedInvite = selectedInvite;
+		this.selectedInvite = isSelected ? data : null;
 		if (this.selectedInvite) {
 			const checkName = this.selectedInvite.fullName.trim();
 			this.invitedName = checkName ? checkName : 'Employee / User';
@@ -145,7 +161,6 @@ export class InvitesComponent
 		});
 
 		await dialog.onClose.pipe(first()).toPromise();
-
 		this.loadPage();
 	}
 
@@ -168,14 +183,13 @@ export class InvitesComponent
 			this.getTranslation('TOASTR.MESSAGE.COPIED'),
 			this.getTranslation('TOASTR.TITLE.SUCCESS')
 		);
+		this.clearItem();
 	}
 
 	private async loadPage() {
-		this.selectedInvite = null;
-
 		let invites = [];
-
 		try {
+			const { tenantId } = this.store.user;
 			const { items } = await this.inviteService.getAll(
 				[
 					'projects',
@@ -184,10 +198,7 @@ export class InvitesComponent
 					'organizationContact',
 					'departments'
 				],
-				{
-					organizationId: this.selectedOrganizationId,
-					tenantId: this.selectedOrganization.tenantId
-				}
+				{ organizationId: this.selectedOrganizationId, tenantId }
 			);
 			invites = items.filter((invite) => {
 				return this.invitationType === InvitationTypeEnum.USER
@@ -202,7 +213,6 @@ export class InvitesComponent
 		}
 
 		const { name } = this.store.selectedOrganization;
-
 		const invitesVm: InviteViewModel[] = [];
 
 		for (const invite of invites) {
@@ -234,13 +244,7 @@ export class InvitesComponent
 		}
 		this.manageInvites = invitesVm;
 		this.sourceSmartTable.load(invitesVm);
-
-		if (this.employeesTable) {
-			this.employeesTable.grid.dataSet.willSelect = 'false';
-		}
-
 		this.organizationName = name;
-
 		this.loading = false;
 	}
 
@@ -334,17 +338,11 @@ export class InvitesComponent
 				if (result) {
 					try {
 						await this.inviteService.delete(this.selectedInvite.id);
-
 						this.toastrService.primary(
 							this.selectedInvite.email + ' has been deleted.',
 							'Success'
 						);
-
-						this.selectEmployeeTmp({
-							isSelected: false,
-							data: null
-						});
-
+						this.clearItem();
 						this.loadPage();
 					} catch (error) {
 						this.toastrService.danger(
@@ -401,5 +399,26 @@ export class InvitesComponent
 		this.translate.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
 			this._loadSmartTableSettings();
 		});
+	}
+
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectEmployeeTmp({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
+	}
+
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.invitesTable && this.invitesTable.grid) {
+			this.invitesTable.grid.dataSet['willSelect'] = 'false';
+			this.invitesTable.grid.dataSet.deselectAll();
+		}
 	}
 }

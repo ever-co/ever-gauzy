@@ -1,6 +1,18 @@
-import { Component, OnInit } from '@angular/core';
-import { IIntegrationViewModel } from '@gauzy/models';
-import { IntegrationsStoreService } from 'apps/gauzy/src/app/@core/services/integrations-store.service';
+import {
+	Component,
+	ElementRef,
+	OnInit,
+	Renderer2,
+	ViewChild
+} from '@angular/core';
+import {
+	IIntegrationViewModel,
+	DEFAULT_INTEGRATION_PAID_FILTERS
+} from '@gauzy/models';
+import {
+	InitialFilter,
+	IntegrationsStoreService
+} from '../../../../@core/services/integrations-store.service';
 import { Observable } from 'rxjs';
 
 @Component({
@@ -19,7 +31,13 @@ export class IntegrationsListComponent implements OnInit {
 		.selectedIntegrationFilter$;
 	isLoading$: Observable<boolean> = this._integrationsStore.isLoading$;
 
-	constructor(private _integrationsStore: IntegrationsStoreService) {}
+	@ViewChild('searchElement', { static: true }) searchElement: ElementRef;
+	filters = DEFAULT_INTEGRATION_PAID_FILTERS;
+
+	constructor(
+		private _integrationsStore: IntegrationsStoreService,
+		private renderer: Renderer2
+	) {}
 
 	ngOnInit() {}
 
@@ -27,7 +45,7 @@ export class IntegrationsListComponent implements OnInit {
 		this._integrationsStore.setSelectedIntegrationTypeId(integrationTypeId);
 	}
 
-	setSelectedIntegrationFilter(filter) {
+	setSelectedIntegrationFilter(filter: string) {
 		this._integrationsStore.setSelectedIntegrationFilter(filter);
 	}
 
@@ -35,14 +53,12 @@ export class IntegrationsListComponent implements OnInit {
 		this._integrationsStore.searchIntegration(value);
 	}
 
-	/*
-	 * Get integrations filters
-	 */
-	getFilters() {
-		return [
-			{ key: 'All', value: 'all' },
-			{ key: 'Free', value: 'false' },
-			{ key: 'Paid', value: 'true' }
-		];
+	clearFilter() {
+		this._integrationsStore.clearFilters();
+		this.renderer.setProperty(
+			this.searchElement.nativeElement,
+			'value',
+			InitialFilter.searchQuery
+		);
 	}
 }

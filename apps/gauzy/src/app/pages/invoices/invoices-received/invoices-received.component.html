@@ -17,12 +17,12 @@
 			</ng-container>
 		</div>
 		<ng2-smart-table
+			*ngIf="dataLayoutStyle === 'TABLE'"
 			class="tags-table"
 			[settings]="settingsSmartTable"
 			[source]="smartTableSource"
 			(userRowSelect)="selectInvoice($event)"
-			style="cursor: pointer;"
-			*ngIf="dataLayoutStyle === 'TABLE'"
+			style="cursor: pointer"
 			#invoicesTable
 		>
 		</ng2-smart-table>

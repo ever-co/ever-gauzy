@@ -1,13 +1,13 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { debounceTime, filter, withLatestFrom } from 'rxjs/operators';
-import { LocalDataSource } from 'ng2-smart-table';
+import { debounceTime, filter, tap, withLatestFrom } from 'rxjs/operators';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import {
 	IProposal,
-	ITag,
 	ComponentLayoutStyleEnum,
 	IOrganization,
-	IRolePermission
+	IRolePermission,
+	IProposalViewModel
 } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
@@ -24,19 +24,6 @@ import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.co
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
 
-export interface ProposalViewModel {
-	tags?: ITag[];
-	valueDate: Date;
-	id: string;
-	employeeId?: string;
-	organizationId?: string;
-	jobPostUrl?: string;
-	jobPostLink?: string;
-	jobPostContent?: string;
-	proposalContent?: string;
-	status?: string;
-	author?: string;
-}
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-proposals',
@@ -46,6 +33,33 @@ export interface ProposalViewModel {
 export class ProposalsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+	proposalsTable: Ng2SmartTableComponent;
+	@ViewChild('proposalsTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.proposalsTable = content;
+			this.onChangedSource();
+		}
+	}
+
+	smartTableSettings: object;
+	selectedEmployeeId = '';
+	selectedDate: Date;
+	proposals: IProposalViewModel[];
+	smartTableSource = new LocalDataSource();
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	viewComponentName: ComponentEnum;
+	selectedProposal: IProposalViewModel;
+	chartData: { value: number; name: string }[] = [];
+	proposalStatus: string;
+	employeeName: string;
+	successRate: string;
+	totalProposals: number;
+	countAccepted = 0;
+	showTable: boolean;
+	loading = false;
+	disableButton = true;
+	selectedOrganization: IOrganization;
+
 	constructor(
 		private store: Store,
 		private router: Router,
@@ -59,27 +73,6 @@ export class ProposalsComponent
 		super(translateService);
 		this.setView();
 	}
-
-	@ViewChild('proposalsTable') proposalsTable;
-
-	smartTableSettings: object;
-	selectedEmployeeId = '';
-	selectedDate: Date;
-	proposals: ProposalViewModel[];
-	smartTableSource = new LocalDataSource();
-	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	viewComponentName: ComponentEnum;
-	selectedProposal: ProposalViewModel;
-	chartData: { value: number; name: string }[] = [];
-	proposalStatus: string;
-	employeeName: string;
-	successRate: string;
-	totalProposals: number;
-	countAccepted = 0;
-	showTable: boolean;
-	loading = false;
-	disableButton = true;
-	selectedOrganization: IOrganization;
 
 	ngOnInit() {
 		this.loadSettingsSmartTable();
@@ -105,10 +98,8 @@ export class ProposalsComponent
 					this._loadTableData();
 				}
 			});
-
 		const storeEmployee$ = this.store.selectedEmployee$;
 		const storeOrganization$ = this.store.selectedOrganization$;
-
 		storeEmployee$
 			.pipe(
 				filter((value) => !!value),
@@ -124,7 +115,6 @@ export class ProposalsComponent
 					this.selectedEmployeeId = null;
 				}
 			});
-
 		storeOrganization$
 			.pipe(
 				filter((value) => !!value),
@@ -139,7 +129,6 @@ export class ProposalsComponent
 					this._loadTableData();
 				}
 			});
-
 		this.router.events
 			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
@@ -159,11 +148,16 @@ export class ProposalsComponent
 			});
 	}
 
-	canShowTable() {
-		if (this.proposalsTable) {
-			this.proposalsTable.grid.dataSet.willSelect = 'false';
-		}
-		return this.showTable;
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.proposalsTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
 	}
 
 	add() {
@@ -210,7 +204,7 @@ export class ProposalsComponent
 							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
 						this._loadTableData();
-						this.selectedProposal = null;
+						this.clearItem();
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
@@ -247,7 +241,7 @@ export class ProposalsComponent
 							),
 							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
-						this.selectedProposal = null;
+						this.clearItem();
 						this._loadTableData();
 					} catch (error) {
 						this.errorHandler.handleError(error);
@@ -285,7 +279,7 @@ export class ProposalsComponent
 							),
 							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
-						this.selectedProposal = null;
+						this.clearItem();
 						this._loadTableData();
 					} catch (error) {
 						this.errorHandler.handleError(error);
@@ -356,13 +350,8 @@ export class ProposalsComponent
 	}
 
 	selectProposal({ isSelected, data }) {
-		const selectedProposal = isSelected ? data : null;
-		if (this.proposalsTable) {
-			this.proposalsTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.selectedProposal = selectedProposal;
-		this.store.selectedProposal = this.selectedProposal;
+		this.selectedProposal = isSelected ? data : null;
 		if (this.selectedProposal) {
 			this.proposalStatus = this.selectedProposal.status;
 		}
@@ -407,7 +396,7 @@ export class ProposalsComponent
 		this.countAccepted = 0;
 
 		try {
-			const proposalVM: ProposalViewModel[] = [...items]
+			const proposalVM: IProposalViewModel[] = [...items]
 				.sort(
 					(a, b) =>
 						new Date(b.valueDate).getTime() -
@@ -480,6 +469,27 @@ export class ProposalsComponent
 			.subscribe(() => {
 				this.loadSettingsSmartTable();
 			});
+	}
+
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectProposal({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
+	}
+
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.proposalsTable && this.proposalsTable.grid) {
+			this.proposalsTable.grid.dataSet['willSelect'] = 'false';
+			this.proposalsTable.grid.dataSet.deselectAll();
+		}
 	}
 
 	ngOnDestroy() {

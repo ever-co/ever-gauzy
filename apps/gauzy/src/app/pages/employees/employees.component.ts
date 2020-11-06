@@ -14,8 +14,8 @@ import {
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource } from 'ng2-smart-table';
-import { debounceTime, filter, first } from 'rxjs/operators';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { EmployeesService } from '../../@core/services/employees.service';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { Store } from '../../@core/services/store.service';
@@ -74,8 +74,13 @@ export class EmployeesComponent
 	month;
 	year;
 
-	@ViewChild('employeesTable') employeesTable;
-
+	employeesTable: Ng2SmartTableComponent;
+	@ViewChild('employeesTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.employeesTable = content;
+			this.onChangedSource();
+		}
+	}
 	constructor(
 		private employeesService: EmployeesService,
 		private dialogService: NbDialogService,
@@ -151,13 +156,21 @@ export class EmployeesComponent
 			});
 	}
 
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.employeesTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
+	}
+
 	selectEmployeeTmp({ isSelected, data }) {
-		const selectedEmployee = isSelected ? data : null;
-		if (this.employeesTable) {
-			this.employeesTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.selectedEmployee = selectedEmployee;
+		this.selectedEmployee = isSelected ? data : null;
 		if (this.selectedEmployee) {
 			const checkName = this.selectedEmployee.fullName.trim();
 			this.employeeName = checkName ? checkName : 'Employee';
@@ -371,11 +384,6 @@ export class EmployeesComponent
 		}
 		this.employeeData = employeesVm;
 		this.sourceSmartTable.load(employeesVm);
-
-		if (this.employeesTable) {
-			this.employeesTable.grid.dataSet.willSelect = 'false';
-		}
-
 		this.organizationName = name;
 		this.loading = false;
 	}
@@ -449,6 +457,27 @@ export class EmployeesComponent
 		this.translate.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
 			this._loadSmartTableSettings();
 		});
+	}
+
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectEmployeeTmp({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
+	}
+
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.employeesTable && this.employeesTable.grid) {
+			this.employeesTable.grid.dataSet['willSelect'] = 'false';
+			this.employeesTable.grid.dataSet.deselectAll();
+		}
 	}
 
 	ngOnDestroy() {}

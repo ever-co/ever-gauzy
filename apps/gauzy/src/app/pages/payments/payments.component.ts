@@ -1,10 +1,10 @@
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { OnInit, Component, OnDestroy, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { PaymentService } from '../../@core/services/payment.service';
 import { Store } from '../../@core/services/store.service';
-import { first, filter } from 'rxjs/operators';
+import { first, filter, tap } from 'rxjs/operators';
 import {
 	IPayment,
 	ComponentLayoutStyleEnum,
@@ -37,7 +37,27 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 export class PaymentsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	@ViewChild('invoicesTable') paymentsTable;
+	settingsSmartTable: object;
+	smartTableSource = new LocalDataSource();
+	selectedPayment: IPayment;
+	payments: IPayment[];
+	viewComponentName: ComponentEnum;
+	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	invoices: IInvoice[];
+	organization: IOrganization;
+	disableButton = true;
+	currency: string;
+	organizationContacts: IOrganizationContact[];
+	projects: IOrganizationProject[];
+	loading = true;
+
+	paymentsTable: Ng2SmartTableComponent;
+	@ViewChild('paymentsTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.paymentsTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -56,21 +76,6 @@ export class PaymentsComponent
 		super(translateService);
 		this.setView();
 	}
-
-	settingsSmartTable: object;
-	smartTableSource = new LocalDataSource();
-	selectedPayment: IPayment;
-	payments: IPayment[];
-	paymentsData: IPayment[];
-	viewComponentName: ComponentEnum;
-	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	invoices: IInvoice[];
-	organization: IOrganization;
-	disableButton = true;
-	currency: string;
-	organizationContacts: IOrganizationContact[];
-	projects: IOrganizationProject[];
-	loading = true;
 
 	ngOnInit() {
 		this.loadSmartTable();
@@ -93,6 +98,18 @@ export class PaymentsComponent
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.paymentsTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
 	}
 
 	async loadSettings() {
@@ -132,6 +149,7 @@ export class PaymentsComponent
 							],
 							{ organizationId, tenantId }
 						);
+						this.payments = items;
 						const res = await this.organizationContactService.getAll(
 							[],
 							{ organizationId, tenantId }
@@ -371,16 +389,22 @@ export class PaymentsComponent
 			isSelected: false,
 			data: null
 		});
+		this.deselectAll();
+	}
+
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.paymentsTable && this.paymentsTable.grid) {
+			this.paymentsTable.grid.dataSet['willSelect'] = 'false';
+			this.paymentsTable.grid.dataSet.deselectAll();
+		}
 	}
 
 	async selectPayment({ isSelected, data }) {
-		const selectedPayment = isSelected ? data : null;
-		if (this.paymentsTable) {
-			this.paymentsTable.grid.dataSet.willSelect = false;
-		}
-
 		this.disableButton = !isSelected;
-		this.selectedPayment = selectedPayment;
+		this.selectedPayment = isSelected ? data : null;
 	}
 
 	_applyTranslationOnSmartTable() {

@@ -25,9 +25,9 @@
 			[settings]="settingsSmartTable"
 			[source]="smartTableSource"
 			(userRowSelect)="selectOrganization($event)"
-			style="cursor: pointer;"
+			style="cursor: pointer"
 			*ngIf="dataLayoutStyle === 'TABLE'"
-			#settingsTable
+			#organizationsTable
 		>
 		</ng2-smart-table>
 		<ul class="flex-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">

@@ -5,26 +5,27 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/models';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mutation.component';
-import { first, takeUntil } from 'rxjs/operators';
+import { filter, first, tap } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { Store } from '../../@core/services/store.service';
-import { Subject } from 'rxjs';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './equipment.component.html',
 	styleUrls: ['./equipment.component.scss']
 })
-export class EquipmentComponent extends TranslationBaseComponent
+export class EquipmentComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	loading = true;
@@ -38,9 +39,14 @@ export class EquipmentComponent extends TranslationBaseComponent
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 
-	@ViewChild('equipmentTable') equipmentTable;
+	equipmentTable: Ng2SmartTableComponent;
+	@ViewChild('equipmentTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.equipmentTable = content;
+			this.onChangedSource();
+		}
+	}
 	selectedOrganization: IOrganization;
-	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -57,17 +63,18 @@ export class EquipmentComponent extends TranslationBaseComponent
 	ngOnInit(): void {
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
-
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
 				}
 			});
-
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((organization) => {
 				if (organization) {
 					this.selectedOrganization = organization;
@@ -76,19 +83,28 @@ export class EquipmentComponent extends TranslationBaseComponent
 			});
 	}
 
-	ngOnDestroy(): void {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy(): void {}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.EQUIPMENT;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.equipmentTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
 	}
 
 	async loadSmartTable() {
@@ -172,8 +188,7 @@ export class EquipmentComponent extends TranslationBaseComponent
 			}
 		});
 		const equipment = await dialog.onClose.pipe(first()).toPromise();
-		this.selectedEquipment = null;
-		this.disableButton = true;
+		this.clearItem();
 
 		if (equipment) {
 			this.toastrService.primary(
@@ -205,17 +220,14 @@ export class EquipmentComponent extends TranslationBaseComponent
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 		}
-		this.disableButton = true;
+		this.clearItem();
 	}
 
 	async loadSettings() {
-		this.selectedEquipment = null;
+		const { tenantId } = this.store.user;
 		const { items } = await this.equipmentService.getAll(
 			['equipmentSharings', 'tags'],
-			{
-				organizationId: this.selectedOrganization.id,
-				tenantId: this.selectedOrganization.tenantId
-			}
+			{ organizationId: this.selectedOrganization.id, tenantId }
 		);
 
 		this.loading = false;
@@ -224,17 +236,33 @@ export class EquipmentComponent extends TranslationBaseComponent
 	}
 
 	async selectEquipment({ isSelected, data }) {
-		const selectedEquipment = isSelected ? data : null;
-		if (this.equipmentTable) {
-			this.equipmentTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.selectedEquipment = selectedEquipment;
+		this.selectedEquipment = isSelected ? data : null;
+	}
+
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectEquipment({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
+	}
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.equipmentTable && this.equipmentTable.grid) {
+			this.equipmentTable.grid.dataSet['willSelect'] = 'false';
+			this.equipmentTable.grid.dataSet.deselectAll();
+		}
 	}
 
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.loadSmartTable();
 			});

@@ -2,12 +2,11 @@ import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.component';
-import { first, takeUntil } from 'rxjs/operators';
+import { first, tap } from 'rxjs/operators';
 import { GoalSettingsService } from '../../@core/services/goal-settings.service';
-import { Subject } from 'rxjs';
 import { AlertModalComponent } from '../../@shared/alert-modal/alert-modal.component';
 import { Store } from '../../@core/services/store.service';
 import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
@@ -22,7 +21,8 @@ import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { GoalTemplatesComponent } from '../../@shared/goal/goal-templates/goal-templates.component';
 import { ValueWithUnitComponent } from '../../@shared/table-components/value-with-units/value-with-units.component';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-goal-settings',
 	templateUrl: './goal-settings.component.html',
@@ -45,8 +45,16 @@ export class GoalSettingsComponent
 	goalGeneralSettings: IGoalGeneralSetting;
 	goalOwnershipEnum = GoalOwnershipEnum;
 	predefinedTimeFrames = [];
-	@ViewChild('smartTable') smartTable;
-	private _ngDestroy$ = new Subject<void>();
+
+	goalSettingsTable: Ng2SmartTableComponent;
+	@ViewChild('goalSettingsTable') set content(
+		content: Ng2SmartTableComponent
+	) {
+		if (content) {
+			this.goalSettingsTable = content;
+			this.onChangedSource();
+		}
+	}
 	organization: IOrganization;
 	constructor(
 		readonly translateService: TranslateService,
@@ -74,7 +82,7 @@ export class GoalSettingsComponent
 		this._loadTableSettings(null);
 		this._applyTranslationOnSmartTable();
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(async (organization) => {
 				if (organization) {
 					this.organization = organization;
@@ -85,7 +93,7 @@ export class GoalSettingsComponent
 				}
 			});
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
@@ -97,7 +105,7 @@ export class GoalSettingsComponent
 		this.viewComponentName = ComponentEnum.GOAL_SETTINGS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 				this.selectedKPI = null;
@@ -128,10 +136,9 @@ export class GoalSettingsComponent
 		this.selectedTab = e.tabId;
 		this._loadTableSettings(e.tabId);
 		this._loadTableData(e.tabId);
-		if (this.smartTable) {
+		if (this.goalSettingsTable) {
 			this.selectedKPI = null;
 			this.selectedTimeFrame = null;
-			this.smartTable.grid.dataSet.willSelect = 'false';
 		}
 	}
 
@@ -144,9 +151,6 @@ export class GoalSettingsComponent
 			} else if (this.selectedTab === 'timeframe') {
 				this.selectedTimeFrame = data;
 			}
-		}
-		if (this.smartTable) {
-			this.smartTable.grid.dataSet.willSelect = false;
 		}
 		this.disableButton = !isSelected;
 	}
@@ -171,9 +175,6 @@ export class GoalSettingsComponent
 			await this.goalSettingService.getAllKPI(findObj).then((res) => {
 				this.smartTableData.load(res.items);
 				this.goalTimeFrames = res.items;
-				if (this.smartTable) {
-					this.smartTable.grid.dataSet.willSelect = 'false';
-				}
 			});
 		} else if (tab === 'timeframe') {
 			await this.goalSettingService
@@ -182,9 +183,6 @@ export class GoalSettingsComponent
 					if (!!res) {
 						this.smartTableData.load(res.items);
 						this.goalTimeFrames = res.items;
-						if (this.smartTable) {
-							this.smartTable.grid.dataSet.willSelect = 'false';
-						}
 					}
 				});
 		} else {
@@ -276,7 +274,6 @@ export class GoalSettingsComponent
 			});
 			if (source === 'add') {
 				this.selectedTimeFrame = null;
-				this.smartTable.grid.dataSet.willSelect = 'false';
 			}
 		}
 		const dialog = this.dialogService.open(EditTimeFrameComponent, {
@@ -290,7 +287,7 @@ export class GoalSettingsComponent
 
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
-			this.cancel();
+			this.clearItem();
 			this._loadTableSettings('timeframe');
 			await this._loadTableData('timeframe');
 		}
@@ -304,7 +301,6 @@ export class GoalSettingsComponent
 			});
 			if (source === 'add') {
 				this.selectedKPI = null;
-				this.smartTable.grid.dataSet.willSelect = 'false';
 			}
 		}
 		const kpiDialog = this.dialogService.open(EditKpiComponent, {
@@ -316,7 +312,7 @@ export class GoalSettingsComponent
 		});
 		const response = await kpiDialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
-			this.cancel();
+			this.clearItem();
 			this._loadTableSettings('kpi');
 			await this._loadTableData('kpi');
 		}
@@ -352,7 +348,7 @@ export class GoalSettingsComponent
 								),
 								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
-							this.cancel();
+							this.clearItem();
 							this._loadTableSettings('timeframe');
 							await this._loadTableData('timeframe');
 						}
@@ -389,7 +385,7 @@ export class GoalSettingsComponent
 								'KPI Deleted',
 								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
-							this.cancel();
+							this.clearItem();
 							this._loadTableSettings('kpi');
 							await this._loadTableData('kpi');
 						}
@@ -400,16 +396,13 @@ export class GoalSettingsComponent
 
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this._loadTableSettings(null);
 			});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 
 	async addTemplate() {
 		const goalTemplateDialog = this.dialogService.open(
@@ -426,5 +419,37 @@ export class GoalSettingsComponent
 			isSelected: false,
 			data: null
 		});
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.goalSettingsTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
+	}
+
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectRow({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
+	}
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.goalSettingsTable && this.goalSettingsTable.grid) {
+			this.goalSettingsTable.grid.dataSet['willSelect'] = 'false';
+			this.goalSettingsTable.grid.dataSet.deselectAll();
+		}
 	}
 }

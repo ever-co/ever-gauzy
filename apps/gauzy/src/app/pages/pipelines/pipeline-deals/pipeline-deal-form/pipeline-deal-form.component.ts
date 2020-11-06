@@ -120,16 +120,26 @@ export class PipelineDealFormComponent implements OnInit, OnDestroy {
 	async getDeal() {
 		const { tenantId } = this;
 		await this.dealsService
-			.getOne(this.dealId, { tenantId })
-			.then(({ title, stageId, createdBy, probability }) => {
-				this.form.patchValue({
+			.getOne(this.dealId, { tenantId }, ['client'])
+			.then(
+				({
 					title,
 					stageId,
 					createdBy,
-					probability
-				});
-				this.selectedProbability = probability;
-			});
+					probability,
+					clientId,
+					client
+				}) => {
+					this.form.patchValue({
+						title,
+						stageId,
+						createdBy,
+						probability,
+						clientId
+					});
+					this.selectedProbability = probability;
+				}
+			);
 	}
 
 	async getOrganizationContact() {
