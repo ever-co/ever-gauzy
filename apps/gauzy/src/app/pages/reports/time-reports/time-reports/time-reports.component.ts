@@ -1,13 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import {
 	ICountsStatistics,
-	IEmployee,
 	IGetCountsStatistics,
 	IGetTimeLogReportInput,
 	IOrganization,
-	IOrganizationProject,
 	IReportDayData,
-	ITask,
 	ITimeLogFilters,
 	OrganizationPermissionsEnum,
 	PermissionsEnum,
@@ -16,7 +13,6 @@ import {
 import { toUTC } from '@gauzy/utils';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-filter.service';
 import { TimesheetStatisticsService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-statistics.service';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
@@ -60,7 +56,6 @@ export class TimeReportsComponent implements OnInit {
 
 	constructor(
 		private timesheetService: TimesheetService,
-		private timesheetFilterService: TimesheetFilterService,
 		private timesheetStatisticsService: TimesheetStatisticsService,
 		private ngxPermissionsService: NgxPermissionsService,
 		private store: Store

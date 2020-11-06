@@ -1,14 +1,9 @@
 import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import {
-	IMonthAggregatedEmployeeStatistics,
-	ITimeLogFilters
-} from '@gauzy/models';
+import { ITimeLogFilters } from '@gauzy/models';
 import { NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ChartComponent } from 'angular2-chartjs';
 import * as moment from 'moment';
-
-declare let window: any;
 
 export interface ChartData {
 	labels?: string[];
