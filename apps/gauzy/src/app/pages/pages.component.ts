@@ -568,10 +568,18 @@ export class PagesComponent implements OnInit, OnDestroy {
 			children: [
 				{
 					title: 'Time Reports',
-					link: '/pages/reports/time',
+					link: '/pages/reports/time/daily',
 					icon: 'clock-outline',
 					data: {
 						translationKey: 'MENU.TIME_REPORTS'
+					}
+				},
+				{
+					title: 'Weekly Time Reports',
+					link: '/pages/reports/time/weekly',
+					icon: 'clock-outline',
+					data: {
+						translationKey: 'MENU.WEEKLY_TIME_REPORTS'
 					}
 				},
 				{

@@ -137,8 +137,8 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 			.then((resp) => {
 				const sum = _.reduce(
 					resp,
-					(memo, activitiy) =>
-						memo + parseInt(activitiy.duration + '', 10),
+					(memo, activity) =>
+						memo + parseInt(activity.duration + '', 10),
 					0
 				);
 				this.activities = resp.map((activity) => {

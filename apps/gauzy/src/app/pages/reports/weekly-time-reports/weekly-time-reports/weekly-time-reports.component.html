@@ -1,0 +1,165 @@
+<nb-card>
+	<nb-card-header>
+		<h4>{{ 'REPORT_PAGE.WEEKLY_TIME_AND_ACTIVITY_REPORT' | translate }}</h4>
+		<div>
+			{{ logRequest.startDate | date }} - {{ logRequest.endDate | date }}
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="filters row mb-3">
+			<div class="col">
+				<ngx-filters
+					dateRange="week"
+					[hasEmployeeFilter]="false"
+					(filtersChange)="filtersChange($event)"
+				></ngx-filters>
+			</div>
+		</div>
+		<div class="row">
+			<div
+				class="col-sm-4 col-md-3 col-lg"
+				*ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE"
+			>
+				<nb-card
+					[nbSpinner]="countsLoading"
+					nbSpinnerSize="giant"
+					nbSpinnerStatus="primary"
+				>
+					<nb-card-body>
+						<p>
+							{{ 'REPORT_PAGE.MEMBERS_WORKED' | translate }}
+						</p>
+						<div class="h1">
+							{{ counts?.employeesCount || 0 }}
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+			<div class="col-sm-4 col-md-3 col-lg">
+				<nb-card
+					[nbSpinner]="countsLoading"
+					nbSpinnerSize="giant"
+					nbSpinnerStatus="primary"
+				>
+					<nb-card-body>
+						<p>
+							{{ 'REPORT_PAGE.PROJECTS_WORKED' | translate }}
+						</p>
+						<div class="h1">
+							{{ counts?.projectsCount || 0 }}
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+			<div class="col-sm-4 col-md-3 col-lg">
+				<nb-card
+					[nbSpinner]="countsLoading"
+					nbSpinnerSize="giant"
+					nbSpinnerStatus="primary"
+				>
+					<nb-card-body>
+						<p>
+							{{ 'REPORT_PAGE.ACTIVITY' | translate }}
+						</p>
+						<div class="h1">{{ counts?.weekActivities || 0 }}%</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+			<div class="col-sm-4 col-md-3 col-lg">
+				<nb-card
+					[nbSpinner]="countsLoading"
+					nbSpinnerSize="giant"
+					nbSpinnerStatus="primary"
+				>
+					<nb-card-body>
+						<p>
+							{{ 'REPORT_PAGE.TOTAL_HOURS' | translate }}
+						</p>
+						<div class="h1">
+							{{ counts?.weekDuration || 0 | durationFormat }}
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+		</div>
+		<div class="daily-time-report my-3">
+			<nb-card>
+				<nb-card-body>
+					<gauzy-weekly-time-report-horizontal-bar-chart
+						[data]="chartData"
+					></gauzy-weekly-time-report-horizontal-bar-chart>
+				</nb-card-body>
+			</nb-card>
+		</div>
+		<div class="table">
+			<div
+				class="weekly-logs row-table"
+				[nbSpinner]="loading"
+				nbSpinnerSize="giant"
+				nbSpinnerStatus="primary"
+			>
+				<nb-card>
+					<nb-card-header>
+						<div class="row font-weight-bold align-items-center">
+							<div class="col-sm-2 project-name">
+								{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+							</div>
+							<div
+								class="col text-center day-col"
+								*ngFor="let date of weekDayList"
+							>
+								{{ date | date }}
+							</div>
+						</div>
+					</nb-card-header>
+					<nb-card-body>
+						<ng-template
+							[ngIf]="weekData?.length > 0"
+							[ngIfElse]="notFound"
+						>
+							<div
+								class="row py-3 align-items-center"
+								*ngFor="let day of weekData"
+							>
+								<div class="col-sm-2 project-name">
+									<ngx-avatar
+										[src]="day?.employee?.user?.imageUrl"
+										[name]="day?.employee?.user?.name"
+									></ngx-avatar>
+									<ng-template #noProjects>
+										<span>{{
+											'REPORT_PAGE.NO_EMPLOYEE'
+												| translate
+										}}</span>
+									</ng-template>
+								</div>
+								<div
+									class="col text-center day-col"
+									*ngFor="let date of weekDayList"
+								>
+									<span
+										*ngIf="day.dates[date]; else noLogsCol"
+										>{{
+											day.dates[date]?.sum
+												| durationFormat
+										}}</span
+									>
+									<ng-template #noLogsCol> - </ng-template>
+								</div>
+							</div>
+						</ng-template>
+						<ng-template #notFound>
+							<div
+								class="row font-weight-bold py-3 align-items-center"
+							>
+								<div class="col text-center">
+									{{ 'REPORT_PAGE.NO_TIMELOG' | translate }}
+								</div>
+							</div>
+						</ng-template>
+					</nb-card-body>
+				</nb-card>
+			</div>
+		</div>
+	</nb-card-body>
+</nb-card>
