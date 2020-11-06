@@ -578,7 +578,8 @@
 		"EMAIL_TEMPLATES": "Шаблоны писем",
 		"REPORTS": "Отчёты",
 		"GOALS": "Голы",
-		"TIME_REPORTS": "Отчеты по времени",
+		"TIME_REPORTS": "Отчет по времени",
+		"WEEKLY_TIME_REPORTS": "Еженедельный отчет",
 		"ACCOUNTING_REPORTS": "Бухгалтерские отчеты",
 		"PAYMENT_GATEWAYS": "Платежные шлюзы",
 		"CUSTOM_SMTP": "Пользовательский SMTP",
@@ -604,6 +605,20 @@
 		"TABLE": "Таблица",
 		"CARDS_GRID": "Сетка карт",
 		"SPRINT_VIEW": "Просмотр спринта"
+	},
+	"REPORT_PAGE": {
+		"MEMBERS_WORKED": "Участники Раболи",
+		"PROJECTS_WORKED": "Выработанные PRojects",
+		"ACTIVITY": "Активность",
+		"TOTAL_HOURS": "Всего часов",
+		"EMPLOYEE": "Сотрудник",
+		"NO_PROJECT": "Нет проекта",
+		"NO_EMPLOYEE": "Нет сотрудника",
+		"NO_TIMELOG": "Нет Timelog",
+		"NO_TASK": "Нет задач",
+		"WEEKLY_TIME_AND_ACTIVITY_REPORT": "Еженедельный отчет о времени и активности",
+		"TIME_AND_ACTIVITY_REPORT": "Отчет о времени и деятельности",
+		"NO_CLIENT": "Нет клиента"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Доступные приложения и интеграции",
@@ -637,7 +652,10 @@
 		},
 		"COMING_SOON": "Скоро появится",
 		"RE_INTEGRATE": "Переинтегрировать",
-		"SETTINGS": "Настройки"
+		"SETTINGS": "Настройки",
+		"SELECT_GROUPS": "Выберите группы",
+		"FILTER_INTEGRATIONS": "Фильтровать интеграцию",
+		"SEARCH_INTEGRATIONS": "Интеграции поиска"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Бухгалтер",
