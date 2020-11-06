@@ -1,12 +1,14 @@
-import { IOrganizationEmploymentType } from '@gauzy/models';
+import { ICandidate, IOrganizationEmploymentType } from '@gauzy/models';
 import { Column, Entity, JoinTable, ManyToMany } from 'typeorm';
 import { Employee } from '../employee/employee.entity';
 import { Tag } from '../tags/tag.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
+import { Candidate } from '../candidate/candidate.entity';
 
 @Entity('organization_employment_type')
-export class OrganizationEmploymentType extends TenantOrganizationBase
+export class OrganizationEmploymentType
+	extends TenantOrganizationBase
 	implements IOrganizationEmploymentType {
 	@ApiProperty()
 	@ManyToMany((type) => Tag, (tag) => tag.organizationEmploymentType)
@@ -27,4 +29,14 @@ export class OrganizationEmploymentType extends TenantOrganizationBase
 		name: 'organization_employment_type_employee'
 	})
 	members?: Employee[];
+
+	@ManyToMany(
+		(type) => Candidate,
+		(candidate) => candidate.organizationEmploymentTypes,
+		{ cascade: ['update'] }
+	)
+	@JoinTable({
+		name: 'candidate_employment_type'
+	})
+	candidates?: ICandidate[];
 }

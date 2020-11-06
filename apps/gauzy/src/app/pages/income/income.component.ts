@@ -14,9 +14,8 @@ import {
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource } from 'ng2-smart-table';
-import { Subject } from 'rxjs';
-import { debounceTime, filter, takeUntil } from 'rxjs/operators';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { IncomeService } from '../../@core/services/income.service';
 import { Store } from '../../@core/services/store.service';
@@ -27,7 +26,8 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './income.component.html',
 	styleUrls: ['./income.component.scss']
@@ -54,7 +54,6 @@ export class IncomeComponent
 	selectedDate: Date;
 	smartTableSource = new LocalDataSource();
 	disableButton = true;
-	showTable: boolean;
 	employeeName: string;
 	loading = true;
 	hasEditPermission = false;
@@ -66,29 +65,31 @@ export class IncomeComponent
 	averageIncome = 0;
 	averageBonus = 0;
 
-	@ViewChild('incomeTable') incomeTable;
+	incomeTable: Ng2SmartTableComponent;
+	@ViewChild('incomeTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.incomeTable = content;
+			this.onChangedSource();
+		}
+	}
 
-	private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;
-	private _selectedOrganization: IOrganization;
+	public organization: IOrganization;
 
-	async ngOnInit() {
+	ngOnInit() {
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
-
 		this.store.userRolePermissions$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.hasEditPermission = this.store.hasPermission(
 					PermissionsEnum.ORG_INCOMES_EDIT
 				);
 			});
-
 		this.store.selectedDate$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((date) => {
 				this.selectedDate = date;
-
 				if (this.selectedEmployeeId) {
 					this._loadEmployeeIncomeData(this.selectedEmployeeId);
 				} else {
@@ -100,9 +101,8 @@ export class IncomeComponent
 					}
 				}
 			});
-
 		this.store.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((employee) => {
 				if (employee && employee.id) {
 					this.selectedEmployeeId = employee.id;
@@ -117,44 +117,39 @@ export class IncomeComponent
 					}
 				}
 			});
-
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
-				takeUntil(this._ngDestroy$)
+				tap((organization) => (this.organization = organization)),
+				untilDestroyed(this)
 			)
-			.subscribe((org) => {
-				this._selectedOrganization = org;
-				this._selectedOrganizationId = org.id;
-				if (this.loading) {
-					this._loadEmployeeIncomeData(
-						this.store.selectedEmployee
-							? this.store.selectedEmployee.id
-							: null,
-						this.store.selectedEmployee &&
-							this.store.selectedEmployee.id
-							? null
-							: this._selectedOrganizationId
-					);
-				}
+			.subscribe((organization) => {
+				this._selectedOrganizationId = organization.id;
+				this._loadEmployeeIncomeData(
+					this.store.selectedEmployee
+						? this.store.selectedEmployee.id
+						: null,
+					this.store.selectedEmployee &&
+						this.store.selectedEmployee.id
+						? null
+						: this._selectedOrganizationId
+				);
 			});
-
 		this.route.queryParamMap
 			.pipe(
 				filter((params) => !!params),
 				debounceTime(1000),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe((params) => {
 				if (params.get('openAddDialog') === 'true') {
 					this.addIncome();
 				}
 			});
-
 		this.router.events
 			.pipe(
 				filter((event: RouterEvent) => event instanceof NavigationEnd),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe(() => {
 				this.setView();
@@ -165,17 +160,22 @@ export class IncomeComponent
 		this.viewComponentName = ComponentEnum.INCOME;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
 	}
 
-	canShowTable() {
-		if (this.incomeTable) {
-			this.incomeTable.grid.dataSet.willSelect = 'false';
-		}
-		return this.showTable;
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.incomeTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
 	}
 
 	loadSettingsSmartTable() {
@@ -219,7 +219,7 @@ export class IncomeComponent
 
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.loadSettingsSmartTable();
 			});
@@ -232,10 +232,12 @@ export class IncomeComponent
 
 		this.dialogService
 			.open(IncomeMutationComponent)
-			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
+						const { tenantId } = this.store.user;
+						const { id: organizationId } = this.organization;
 						await this.incomeService.create({
 							amount: result.amount,
 							clientName: result.organizationContact.name,
@@ -244,8 +246,8 @@ export class IncomeComponent
 							employeeId: result.employee
 								? result.employee.id
 								: null,
-							organizationId: this.store.selectedOrganization.id,
-							tenantId: this.store.user.tenantId,
+							organizationId,
+							tenantId,
 							notes: result.notes,
 							currency: result.currency,
 							isBonus: result.isBonus,
@@ -280,12 +282,8 @@ export class IncomeComponent
 	}
 
 	selectIncome({ isSelected, data }) {
-		const selectedIncome = isSelected ? data : null;
-		if (this.incomeTable) {
-			this.incomeTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.selectedIncome = selectedIncome;
+		this.selectedIncome = isSelected ? data : null;
 	}
 	async editIncome(selectedItem?: IIncome) {
 		if (selectedItem) {
@@ -300,7 +298,7 @@ export class IncomeComponent
 					income: this.selectedIncome
 				}
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
@@ -333,10 +331,7 @@ export class IncomeComponent
 								? null
 								: this._selectedOrganizationId
 						);
-						this.selectIncome({
-							isSelected: false,
-							data: null
-						});
+						this.clearItem();
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
@@ -357,7 +352,7 @@ export class IncomeComponent
 					recordType: this.getTranslation('INCOME_PAGE.INCOME')
 				}
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
@@ -379,11 +374,7 @@ export class IncomeComponent
 								? null
 								: this._selectedOrganizationId
 						);
-
-						this.selectIncome({
-							isSelected: false,
-							data: null
-						});
+						this.clearItem();
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
@@ -396,12 +387,11 @@ export class IncomeComponent
 		orgId?: string
 	) {
 		let findObj;
-		this.showTable = false;
 		this.selectedIncome = null;
 		const { tenantId } = this.store.user;
 		if (orgId) {
 			findObj = {
-				organization: {
+				organizationId: {
 					id: orgId
 				}
 			};
@@ -431,28 +421,16 @@ export class IncomeComponent
 				this.selectedDate
 			);
 			const incomeVM: IIncome[] = items.map((i) => {
-				return {
-					id: i.id,
-					amount: i.amount,
-					clientName: i.clientName,
-					clientId: i.clientId,
-					valueDate: i.valueDate,
-					organization: i.organization,
+				return Object.assign({}, i, {
 					organizationId: i.organization.id,
-					employee: i.employee,
 					employeeId: i.employee ? i.employee.id : null,
 					employeeName: i.employee ? i.employee.user.name : null,
-					orgId: this.store.selectedOrganization.id,
-					notes: i.notes,
-					currency: i.currency,
-					isBonus: i.isBonus,
-					tags: i.tags
-				};
+					orgId: this.store.selectedOrganization.id
+				});
 			});
-			this.smartTableSource.load(items);
+			this.smartTableSource.load(incomeVM);
 			this.incomes = incomeVM;
 			this.loading = false;
-			this.showTable = true;
 		} catch (error) {
 			this.toastrService.danger(
 				this.getTranslation('NOTES.INCOME.INCOME_ERROR', {
@@ -470,9 +448,28 @@ export class IncomeComponent
 			: '';
 	}
 
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectIncome({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
+	}
+
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.incomeTable && this.incomeTable.grid) {
+			this.incomeTable.grid.dataSet['willSelect'] = 'false';
+			this.incomeTable.grid.dataSet.deselectAll();
+		}
+	}
+
 	ngOnDestroy() {
 		delete this.smartTableSettings['columns']['employee'];
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
 	}
 }

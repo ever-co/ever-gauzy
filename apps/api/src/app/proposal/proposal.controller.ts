@@ -21,6 +21,7 @@ import { PermissionsEnum } from '@gauzy/models';
 import { Permissions } from '../shared/decorators/permissions';
 import { AuthGuard } from '@nestjs/passport';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe } from '../shared';
 
 @ApiTags('Proposal')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -52,6 +53,30 @@ export class ProposalController extends CrudController<Proposal> {
 			{ where: findInput, relations },
 			filterDate
 		);
+	}
+
+	@ApiOperation({ summary: 'Find single proposal by id.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found proposal',
+		type: Proposal
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
+	@Get(':id')
+	async findOne(
+		@Param('id') id: string,
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IProposal> {
+		const { relations, findInput } = data;
+		return this.proposalService.findOne(id, {
+			where: findInput,
+			relations
+		});
 	}
 
 	@ApiOperation({ summary: 'Create new record' })

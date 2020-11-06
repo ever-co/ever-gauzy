@@ -6,7 +6,6 @@ import {
 	FormGroup,
 	AbstractControl
 } from '@angular/forms';
-import { ExpenseViewModel } from '../../../pages/expenses/expenses.component';
 import {
 	CurrenciesEnum,
 	OrganizationSelectInput,
@@ -18,7 +17,8 @@ import {
 	IOrganizationProject,
 	ExpenseStatusesEnum,
 	IOrganizationExpenseCategory,
-	ContactType
+	ContactType,
+	IExpenseViewModel
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
@@ -51,7 +51,7 @@ export class ExpensesMutationComponent
 	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
 	form: FormGroup;
-	expense: ExpenseViewModel;
+	expense: IExpenseViewModel;
 	organizationId: string;
 	tenantId: string;
 	typeOfExpense: string;

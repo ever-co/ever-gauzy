@@ -4,14 +4,15 @@ import { TranslateService } from '@ngx-translate/core';
 import {
 	IEquipmentSharing,
 	IApprovalPolicy,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	ISelectedEquipmentSharing
 } from '@gauzy/models';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing/equipment-sharing-mutation.component';
-import { takeUntil, first, distinctUntilChanged } from 'rxjs/operators';
+import { first, distinctUntilChanged, tap } from 'rxjs/operators';
 import { DatePipe } from '@angular/common';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { EquipmentSharingActionComponent } from './table-components/equipment-sharing-action/equipment-sharing-action.component';
@@ -21,20 +22,17 @@ import { Subject } from 'rxjs';
 import { Router, NavigationEnd, RouterEvent } from '@angular/router';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { EquipmentSharingPolicyComponent } from './table-components/equipment-sharing-policy/equipment-sharing-policy.component';
-
-export interface SelectedEquipmentSharing {
-	data: IEquipmentSharing;
-	isSelected: false;
-}
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './equipment-sharing.component.html',
 	styleUrls: ['./equipment-sharing.component.scss']
 })
-export class EquipmentSharingComponent extends TranslationBaseComponent
+export class EquipmentSharingComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
-	loading = true;
+	loading: boolean;
 	selectedEquipmentSharing: IEquipmentSharing;
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
@@ -46,10 +44,16 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 	equipmentsData: IEquipmentSharing[];
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	private _ngDestroy$ = new Subject<void>();
 
-	@ViewChild('equipmentSharingTable')
-	equipmentSharingTable;
+	equipmentSharingTable: Ng2SmartTableComponent;
+	@ViewChild('equipmentSharingTable') set content(
+		content: Ng2SmartTableComponent
+	) {
+		if (content) {
+			this.equipmentSharingTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -64,8 +68,10 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
+		this.loadSmartTable();
+		this._applyTranslationOnSmartTable();
 		this.store.selectedEmployee$
-			.pipe(distinctUntilChanged(), takeUntil(this.ngDestroy$))
+			.pipe(distinctUntilChanged(), untilDestroyed(this))
 			.subscribe((employee) => {
 				if (employee && employee.id) {
 					this.selectedEmployeeId = employee.id;
@@ -76,7 +82,7 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 				}
 			});
 		this.store.selectedOrganization$
-			.pipe(distinctUntilChanged(), takeUntil(this.ngDestroy$))
+			.pipe(distinctUntilChanged(), untilDestroyed(this))
 			.subscribe((org) => {
 				if (org) {
 					this.selectedOrgId = org.id;
@@ -84,24 +90,34 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 				}
 			});
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
 				}
 			});
-		this.loadSmartTable();
-		this._applyTranslationOnSmartTable();
 	}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.EQUIPMENT_SHARING;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.equipmentSharingTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
 	}
 
 	async loadSmartTable() {
@@ -164,9 +180,11 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 					type: 'custom',
 					renderComponent: EquipmentSharingActionComponent,
 					onComponentInitFunction: (instance) => {
-						instance.updateResult.subscribe((eventUpdate) => {
-							this.handleEvent(eventUpdate);
-						});
+						instance.updateResult
+							.pipe(untilDestroyed(this))
+							.subscribe((eventUpdate) => {
+								this.handleEvent(eventUpdate);
+							});
 					},
 					filter: false
 				}
@@ -202,7 +220,6 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
 			}
-			this.loadSettings();
 		} else {
 			const request = await this.equipmentSharingService.refuse(
 				params.data.id
@@ -215,8 +232,9 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
 			}
-			this.loadSettings();
 		}
+		this.loadSettings();
+		this.clearItem();
 	}
 
 	async save(isCreate: boolean, selectedItem?: IEquipmentSharing) {
@@ -239,8 +257,6 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 		}
 
 		const equipmentSharing = await dialog.onClose.pipe(first()).toPromise();
-
-		this.disableButton = true;
 		if (equipmentSharing) {
 			this.toastrService.primary(
 				this.getTranslation('EQUIPMENT_SHARING_PAGE.REQUEST_SAVED'),
@@ -248,6 +264,7 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 			);
 		}
 		this.loadSettings();
+		this.clearItem();
 	}
 
 	async delete(selectedItem?: IEquipmentSharing) {
@@ -267,25 +284,24 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 				this.selectedEquipmentSharing.id
 			);
 			this.loadSettings();
+			this.clearItem();
 			this.toastrService.primary(
 				this.getTranslation('EQUIPMENT_SHARING_PAGE.REQUEST_DELETED'),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 		}
-		this.disableButton = true;
 	}
 
-	async selectEquipmentSharing({ isSelected, data }) {
-		const selectedEquipment = isSelected ? data : null;
-		if (this.equipmentSharingTable) {
-			this.equipmentSharingTable.grid.dataSet.willSelect = false;
-		}
+	async selectEquipmentSharing({
+		isSelected,
+		data
+	}: ISelectedEquipmentSharing) {
 		this.disableButton = !isSelected;
-		this.selectedEquipmentSharing = selectedEquipment;
+		this.selectedEquipmentSharing = isSelected ? data : null;
 	}
 
 	async loadSettings() {
-		this.selectedEquipmentSharing = null;
+		this.loading = true;
 		let equipmentItems = [];
 		if (this.selectedEmployeeId) {
 			equipmentItems = await this.equipmentSharingService.getEmployee(
@@ -312,15 +328,34 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 	}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
 	}
 
-	ngOnDestroy() {
-		this.ngDestroy$.next();
-		this.ngDestroy$.complete();
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectEquipmentSharing({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
 	}
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.equipmentSharingTable && this.equipmentSharingTable.grid) {
+			this.equipmentSharingTable.grid.dataSet['willSelect'] = 'false';
+			this.equipmentSharingTable.grid.dataSet.deselectAll();
+		}
+	}
+
+	ngOnDestroy() {}
 
 	manageAppropvalPolicy() {
 		this.router.navigate(['/pages/organization/equipment-sharing-policy']);

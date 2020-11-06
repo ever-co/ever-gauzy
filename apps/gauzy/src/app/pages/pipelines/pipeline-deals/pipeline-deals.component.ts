@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { IDeal, IPipeline, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { PipelinesService } from '../../../@core/services/pipelines.service';
 import {
@@ -7,7 +7,7 @@ import {
 	RouterEvent,
 	NavigationEnd
 } from '@angular/router';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
@@ -15,7 +15,7 @@ import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-
 import { DealsService } from '../../../@core/services/deals.service';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { Store } from '../../../@core/services/store.service';
-import { filter } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { PipelineDealCreatedByComponent } from '../table-components/pipeline-deal-created-by/pipeline-deal-created-by';
 import { PipelineDealExcerptComponent } from '../table-components/pipeline-deal-excerpt/pipeline-deal-excerpt.component';
 import { PipelineDealProbabilityComponent } from '../table-components/pipeline-deal-probability/pipeline-deal-probability.component';
@@ -68,6 +68,17 @@ export class PipelineDealsComponent
 			}
 		}
 	};
+	disableButton = true;
+
+	pipelineDealsTable: Ng2SmartTableComponent;
+	@ViewChild('pipelineDealsTable') set content(
+		content: Ng2SmartTableComponent
+	) {
+		if (content) {
+			this.pipelineDealsTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(
 		public translateService: TranslateService,
@@ -122,6 +133,18 @@ export class PipelineDealsComponent
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.pipelineDealsTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
 	}
 
 	filterDealsByStage(): void {
@@ -201,6 +224,32 @@ export class PipelineDealsComponent
 					this.router.navigate(['pages/sales/pipelines']);
 				}
 			});
+	}
+
+	selectPipelineDeals({ isSelected, data }) {
+		this.disableButton = !isSelected;
+		this.deal = isSelected ? data : null;
+	}
+
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectPipelineDeals({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
+	}
+
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.pipelineDealsTable && this.pipelineDealsTable.grid) {
+			this.pipelineDealsTable.grid.dataSet['willSelect'] = 'false';
+			this.pipelineDealsTable.grid.dataSet.deselectAll();
+		}
 	}
 
 	ngOnDestroy() {}

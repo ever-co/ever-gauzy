@@ -38,12 +38,12 @@
 		</div>
 
 		<ng2-smart-table
-			*ngIf="canShowTable() && dataLayoutStyle === 'TABLE'"
+			*ngIf="dataLayoutStyle === 'TABLE'"
 			class="income-table"
 			[settings]="smartTableSettings"
 			[source]="smartTableSource"
 			(userRowSelect)="selectExpense($event)"
-			style="cursor: pointer;"
+			style="cursor: pointer"
 			#expensesTable
 		>
 		</ng2-smart-table>

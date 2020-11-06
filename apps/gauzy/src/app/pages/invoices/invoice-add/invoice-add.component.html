@@ -6,12 +6,12 @@
 >
 	<nb-card-header class="d-flex">
 		<ngx-back-navigation></ngx-back-navigation>
-		<h3 *ngIf="!isEstimate">
+		<h4 *ngIf="!isEstimate">
 			{{ 'INVOICES_PAGE.ADD_INVOICE' | translate }}
-		</h3>
-		<h3 *ngIf="isEstimate">
+		</h4>
+		<h4 *ngIf="isEstimate">
 			{{ 'INVOICES_PAGE.ADD_ESTIMATE' | translate }}
-		</h3>
+		</h4>
 	</nb-card-header>
 
 	<nb-card-body class="body">
@@ -692,7 +692,7 @@
 				class="table"
 				[settings]="settingsSmartTable"
 				[source]="smartTableSource"
-				style="cursor: pointer;"
+				style="cursor: pointer"
 				(createConfirm)="onCreateConfirm($event)"
 				(editConfirm)="onEditConfirm($event)"
 				(deleteConfirm)="onDeleteConfirm($event)"

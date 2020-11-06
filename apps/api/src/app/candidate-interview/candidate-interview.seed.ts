@@ -3,29 +3,33 @@ import { Tenant } from '../tenant/tenant.entity';
 import { ICandidate } from '@gauzy/models';
 import * as faker from 'faker';
 import { CandidateInterview } from './candidate-interview.entity';
+import { Organization } from '../organization/organization.entity';
 
 export const createDefaultCandidateInterview = async (
 	connection: Connection,
-	Candidates
+	tenant: Tenant,
+	organization: Organization,
+	candidates
 ): Promise<CandidateInterview[]> => {
-	if (!Candidates) {
+	if (!candidates) {
 		console.warn(
 			'Warning: Candidates not found, Default Candidate Interview will not be created'
 		);
 		return;
 	}
 
-	let candidates: CandidateInterview[] = [];
-
-	for (const tenantCandidate of Candidates) {
-		candidates = await dataOperation(
+	let candidateInterviewes: CandidateInterview[] = [];
+	for (const tenantCandidate of candidates) {
+		candidateInterviewes = await dataOperation(
 			connection,
-			candidates,
-			tenantCandidate
+			candidateInterviewes,
+			tenantCandidate,
+			tenant,
+			organization
 		);
 	}
 
-	return candidates;
+	return candidateInterviewes;
 };
 
 export const createRandomCandidateInterview = async (
@@ -41,14 +45,19 @@ export const createRandomCandidateInterview = async (
 	}
 
 	let candidates: CandidateInterview[] = [];
-
 	for (const tenant of tenants) {
-		let tenantCandidates = tenantCandidatesMap.get(tenant);
+		const organizations = await connection.manager.find(Organization, {
+			where: [{ tenant: tenant }]
+		});
+		const orgnaization = faker.random.arrayElement(organizations);
+		const tenantCandidates = tenantCandidatesMap.get(tenant);
 		for (const tenantCandidate of tenantCandidates) {
 			candidates = await dataOperation(
 				connection,
 				candidates,
-				tenantCandidate
+				tenantCandidate,
+				tenant,
+				orgnaization
 			);
 		}
 	}
@@ -58,12 +67,13 @@ export const createRandomCandidateInterview = async (
 const dataOperation = async (
 	connection: Connection,
 	candidates,
-	tenantCandidate
+	tenantCandidate,
+	tenant: Tenant,
+	organization: Organization
 ) => {
 	for (let i = 0; i <= Math.floor(Math.random() * 3) + 1; i++) {
-		let candidate = new CandidateInterview();
-
-		var interViewDate = faker.date.past();
+		const candidate = new CandidateInterview();
+		const interViewDate = faker.date.past();
 
 		candidate.title = faker.name.jobArea();
 		candidate.startTime = new Date(interViewDate.setHours(10));
@@ -71,6 +81,8 @@ const dataOperation = async (
 		candidate.location = faker.address.city();
 		candidate.note = faker.lorem.words();
 		candidate.candidate = tenantCandidate;
+		candidate.tenant = tenant;
+		candidate.organization = organization;
 
 		candidates.push(candidate);
 	}

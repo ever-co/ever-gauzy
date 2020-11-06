@@ -30,7 +30,9 @@ import {
 	IPagination,
 	IEmployeeJobPost,
 	IJobPost,
-	IGetEmployeeJobPostFilters
+	IGetEmployeeJobPostFilters,
+	JobPostStatusEnum,
+	JobPostTypeEnum
 } from '@gauzy/models';
 
 @Injectable()
@@ -785,6 +787,11 @@ export class GauzyAIService {
 									id
 									externalEmployeeId
 								}
+								providerCode
+								providerJobId
+								jobDateCreated
+								jobStatus
+								jobType
 								jobPost {
 									id
 									providerCode
@@ -814,7 +821,7 @@ export class GauzyAIService {
 				}
 			`;
 
-			let jobResponses: IEmployeeJobPost[] = [];
+			const jobResponses: IEmployeeJobPost[] = [];
 
 			let isContinue: boolean;
 			let after = '';
@@ -851,7 +858,7 @@ export class GauzyAIService {
 						first: 50,
 						sorting: [
 							{
-								field: 'createdAt',
+								field: 'jobDateCreated',
 								direction: 'DESC'
 							}
 						],
@@ -868,6 +875,17 @@ export class GauzyAIService {
 							employee: undefined,
 							jobPostId: rec.jobPost.id,
 							jobPost: <IJobPost>rec.jobPost,
+
+							jobDateCreated: rec.jobDateCreated,
+							providerCode: rec.providerCode,
+							providerJobId: rec.providerJobId,
+							jobStatus: rec.jobStatus
+								? JobPostStatusEnum[rec.jobStatus]
+								: undefined,
+							jobType: rec.jobType
+								? JobPostTypeEnum[rec.jobType]
+								: undefined,
+
 							isApplied: rec.isApplied,
 							appliedDate: rec.appliedDate,
 							isActive: rec.isActive,
@@ -895,7 +913,9 @@ export class GauzyAIService {
 
 			const count = jobResponses.length;
 
-			console.log(`getEmployeesJobPosts. Total Count: ${count}`);
+			console.log(
+				`getEmployeesJobPosts. Total Count: ${count}. Page ${data.page}`
+			);
 
 			const response: IPagination<IEmployeeJobPost> = {
 				items: this.paginate(jobResponses, data.limit, data.page),

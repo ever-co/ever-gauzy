@@ -578,7 +578,8 @@
 		"EMAIL_TEMPLATES": "Email Templates",
 		"REPORTS": "Reports",
 		"GOALS": "Goals",
-		"TIME_REPORTS": "Time Reports",
+		"TIME_REPORTS": "Time Report",
+		"WEEKLY_TIME_REPORTS": "Weekly Report",
 		"ACCOUNTING_REPORTS": "Accounting Reports",
 		"PAYMENT_GATEWAYS": "Payment Gateways",
 		"CUSTOM_SMTP": "Custom SMTP",
@@ -602,10 +603,25 @@
 		"RESET_LAYOUT": "Reset Layout",
 		"RESET_LAYOUT_TOOLTIP": "Reset layout to default for all pages",
 		"TABLE": "Table",
-		"CARDS_GRID": "Cards Grid"
+		"CARDS_GRID": "Cards Grid",
+		"SPRINT_VIEW": "Sprint View"
+	},
+	"REPORT_PAGE": {
+		"MEMBERS_WORKED": "Members Worked",
+		"PROJECTS_WORKED": "PRojects Worked",
+		"ACTIVITY": "Activity",
+		"TOTAL_HOURS": "Total Hours",
+		"EMPLOYEE": "עובד",
+		"NO_PROJECT": "No Project",
+		"NO_EMPLOYEE": "No Employee",
+		"NO_TIMELOG": "No Timelog",
+		"NO_TASK": "No Task",
+		"WEEKLY_TIME_AND_ACTIVITY_REPORT": "Weekly Time and Activity Report",
+		"TIME_AND_ACTIVITY_REPORT": "Time and Activity Report",
+		"NO_CLIENT": "No Client"
 	},
 	"INTEGRATIONS": {
-		"AVALIABLE_INTEGRATIONS": "Avaliable Apps & Integrations",
+		"AVAILABLE_INTEGRATIONS": "Available Apps & Integrations",
 		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}",
 		"HUBSTAFF_PAGE": {
@@ -636,7 +652,10 @@
 		},
 		"COMING_SOON": "Coming soon",
 		"RE_INTEGRATE": "Re-integrate",
-		"SETTINGS": "הגדרות"
+		"SETTINGS": "הגדרות",
+		"SELECT_GROUPS": "Select Groups",
+		"FILTER_INTEGRATIONS": "Filter integrations",
+		"SEARCH_INTEGRATIONS": "Search integrations"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",

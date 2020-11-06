@@ -13,79 +13,84 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="mb-3" *ngIf="hasEditPermission">
-			<button
-				nbButton
-				*ngIf="organizationInvitesAllowed && hasInviteEditPermission"
-				status="primary"
-				(click)="invite()"
-				class="mr-2"
-			>
-				<nb-icon class="mr-1" icon="email-outline"></nb-icon
-				>{{ 'BUTTONS.INVITE' | translate }}
-			</button>
-
-			<button nbButton status="success" (click)="add()" class="mr-2">
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-				>{{ 'BUTTONS.ADD' | translate }}
-			</button>
-
-			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
-				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
-			</ng-container>
-			<div class="float-right py-auto manage-btn">
-				<nb-checkbox
-					(checkedChange)="changeIncludeArchived($event)"
-					status="warning"
-					class="mr-3"
-					>{{
-						'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate
-					}}</nb-checkbox
-				>
-				<button
-					nbButton
-					status="primary"
-					(click)="goTo('interviews')"
-					class="mr-2"
-				>
-					<nb-icon class="mr-1" icon="people-outline"></nb-icon
-					>{{ 'BUTTONS.MANAGE_INTERVIEWS' | translate }}
+		<ng-template ngxPermissionsOnly="ORG_CANDIDATES_EDIT">
+			<div class="mb-3">
+				<ng-template ngxPermissionsOnly="ORG_INVITE_EDIT">
+					<button
+						nbButton
+						*ngIf="organizationInvitesAllowed"
+						status="primary"
+						(click)="invite()"
+						class="mr-2"
+					>
+						<nb-icon class="mr-1" icon="email-outline"></nb-icon
+						>{{ 'BUTTONS.INVITE' | translate }}
+					</button>
+				</ng-template>
+				<button nbButton status="success" (click)="add()" class="mr-2">
+					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+					>{{ 'BUTTONS.ADD' | translate }}
 				</button>
+				<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+					<ng-container
+						*ngTemplateOutlet="actionButtons"
+					></ng-container>
+				</ng-container>
+				<div class="float-right py-auto manage-btn">
+					<nb-checkbox
+						(checkedChange)="changeIncludeArchived($event)"
+						status="warning"
+						class="mr-3"
+						>{{
+							'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate
+						}}</nb-checkbox
+					>
+					<button
+						nbButton
+						status="primary"
+						(click)="goTo('interviews')"
+						class="mr-2"
+					>
+						<nb-icon class="mr-1" icon="people-outline"></nb-icon
+						>{{ 'BUTTONS.MANAGE_INTERVIEWS' | translate }}
+					</button>
+					<button
+						nbButton
+						status="primary"
+						(click)="goTo('invites')"
+						class="mr-2"
+					>
+						<nb-icon class="mr-1" icon="email-outline"></nb-icon
+						>{{ 'BUTTONS.MANAGE_INVITES' | translate }}
+					</button>
+					<button
+						nbButton
+						status="primary"
+						(click)="goTo('statistic')"
+						class="mr-2"
+					>
+						<nb-icon class="mr-1" icon="bar-chart-outline"></nb-icon
+						>{{ 'BUTTONS.CANDIDATE_STATISTIC' | translate }}
+					</button>
+				</div>
+			</div>
+		</ng-template>
+		<ng-template ngxPermissionsExcept="ORG_CANDIDATES_EDIT">
+			<div class="mb-3">
 				<button
 					nbButton
-					status="primary"
-					(click)="goTo('invites')"
+					[disabled]="!selectedCandidate"
+					status="info"
 					class="mr-2"
 				>
-					<nb-icon class="mr-1" icon="email-outline"></nb-icon
-					>{{ 'BUTTONS.MANAGE_INVITES' | translate }}
-				</button>
-				<button
-					nbButton
-					status="primary"
-					(click)="goTo('statistic')"
-					class="mr-2"
-				>
-					<nb-icon class="mr-1" icon="bar-chart-outline"></nb-icon
-					>{{ 'BUTTONS.CANDIDATE_STATISTIC' | translate }}
+					<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+					>{{ 'BUTTONS.EDIT' | translate }}
 				</button>
 			</div>
-		</div>
-		<div class="mb-3" *ngIf="!hasEditPermission">
-			<button
-				nbButton
-				[disabled]="!selectedCandidate"
-				status="info"
-				class="mr-2"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-				>{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-		</div>
-
+		</ng-template>
 		<ng2-smart-table
 			class="employees-table"
-			style="cursor: pointer;"
+			style="cursor: pointer"
 			[settings]="settingsSmartTable"
 			[source]="sourceSmartTable"
 			*ngIf="dataLayoutStyle === 'TABLE'"

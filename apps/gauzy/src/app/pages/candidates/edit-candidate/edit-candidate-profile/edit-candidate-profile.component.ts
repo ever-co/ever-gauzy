@@ -10,8 +10,6 @@ import {
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
-import { Subject } from 'rxjs';
-import { first, takeUntil } from 'rxjs/operators';
 import { CandidatesService } from '../../../../@core/services/candidates.service';
 import { CandidateStore } from '../../../../@core/services/candidate-store.service';
 import { UsersService } from '../../../../@core/services';
@@ -19,8 +17,9 @@ import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
 import { CandidateInterviewInfoComponent } from '../../../../@shared/candidate/candidate-interview-info/candidate-interview-info.component';
 import { CandidateInterviewService } from '../../../../@core/services/candidate-interview.service';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-
+import { Store } from '../../../../@core/services/store.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-candidate-profile',
 	templateUrl: './edit-candidate-profile.component.html',
@@ -30,9 +29,9 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 	],
 	providers: [CandidateStore]
 })
-export class EditCandidateProfileComponent extends TranslationBaseComponent
+export class EditCandidateProfileComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
 	routeParams: Params;
 	selectedCandidate: ICandidate;
 	candidateName = 'Candidate';
@@ -58,26 +57,24 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
-		this.route.params
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((params) => {
-				this.routeParams = params;
-				this.store.selectedOrganization$
-					.pipe(takeUntil(this._ngDestroy$))
-					.subscribe((organization) => {
-						if (organization) {
-							this.selectedOrganization = this.store.selectedOrganization;
-							this._loadCandidateData();
-						}
-					});
-			});
+		this.route.params.pipe(untilDestroyed(this)).subscribe((params) => {
+			this.routeParams = params;
+			this.store.selectedOrganization$
+				.pipe(untilDestroyed(this))
+				.subscribe((organization) => {
+					if (organization) {
+						this.selectedOrganization = this.store.selectedOrganization;
+						this._loadCandidateData();
+					}
+				});
+		});
 		this.candidateStore.userForm$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((value) => {
 				this.submitUserForm(value);
 			});
 		this.candidateStore.candidateForm$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((value) => {
 				this.submitCandidateForm(value);
 			});
@@ -267,21 +264,25 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 
 	private async _loadCandidateData() {
 		const { id } = this.routeParams;
-		const { id: organizationId, tenantId } = this.selectedOrganization;
-		const { items } = await this.candidatesService
-			.getAll(['user', 'tags', 'contact'], {
-				id,
-				organizationId,
-				tenantId
-			})
-			.pipe(first())
-			.toPromise();
-
-		if (items.length === 0) {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.selectedOrganization;
+		const candidate = await this.candidatesService.getCandidateById(
+			id,
+			[
+				'user',
+				'tags',
+				'contact',
+				'organizationPosition',
+				'organizationDepartments',
+				'organizationEmploymentTypes'
+			],
+			{ organizationId, tenantId }
+		);
+		if (!candidate) {
 			return false;
 		}
 
-		this.selectedCandidate = items[0];
+		this.selectedCandidate = candidate;
 		const checkUsername = this.selectedCandidate.user.username;
 		this.candidateName = checkUsername ? checkUsername : 'Candidate';
 
@@ -289,16 +290,13 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 		this.loadInterviews();
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
-
 	private _applyTranslationOnTabs() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.loadTabs();
 			});
 	}
+
+	ngOnDestroy() {}
 }

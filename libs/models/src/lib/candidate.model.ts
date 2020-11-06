@@ -45,6 +45,7 @@ export interface ICandidate extends IBasePerTenantAndOrganizationEntityModel {
 	isArchived?: boolean;
 	interview?: ICandidateInterview[];
 	contact: IContact;
+	ratings?: number;
 }
 
 export enum CandidateStatus {
@@ -94,4 +95,15 @@ export interface ICandidateLevel {
 export interface ICandidateLevelInput {
 	level: string;
 	organizationId: string;
+}
+
+export interface ICandidateViewModel {
+	fullName: string;
+	email: string;
+	id: string;
+	imageUrl: string;
+	source?: ICandidateSource;
+	rating?: number;
+	isArchived?: boolean;
+	status?: string;
 }

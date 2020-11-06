@@ -7,10 +7,10 @@ import {
 	LanguagesEnum,
 	OrganizationPermissionsEnum,
 	IOrganizationProject,
-	ILanguage
+	ILanguage,
+	IProposalViewModel
 } from '@gauzy/models';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
-import { ProposalViewModel } from '../../pages/proposals/proposals.component';
 import { Injectable } from '@angular/core';
 import { StoreConfig, Store as AkitaStore, Query } from '@datorama/akita';
 import { NgxPermissionsService, NgxRolesService } from 'ngx-permissions';
@@ -27,7 +27,7 @@ export interface AppState {
 	userRolePermissions: IRolePermission[];
 	selectedOrganization: IOrganization;
 	selectedEmployee: SelectedEmployee;
-	selectedProposal: ProposalViewModel;
+	selectedProposal: IProposalViewModel;
 	selectedProject: IOrganizationProject;
 	selectedDate: Date;
 	systemLanguages: ILanguage[];
@@ -265,12 +265,12 @@ export class Store {
 		});
 	}
 
-	get selectedProposal(): ProposalViewModel {
+	get selectedProposal(): IProposalViewModel {
 		const { selectedProposal } = this.appQuery.getValue();
 		return selectedProposal;
 	}
 
-	set selectedProposal(proposal: ProposalViewModel) {
+	set selectedProposal(proposal: IProposalViewModel) {
 		this.appStore.update({
 			selectedProposal: proposal
 		});

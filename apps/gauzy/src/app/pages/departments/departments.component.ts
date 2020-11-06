@@ -10,24 +10,24 @@ import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
 import { TranslateService } from '@ngx-translate/core';
-import { first, takeUntil } from 'rxjs/operators';
+import { filter, first, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Store } from '../../@core/services/store.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { EmployeeWithLinksComponent } from '../../@shared/table-components/employee-with-links/employee-with-links.component';
-import { Subject } from 'rxjs';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-departments',
 	templateUrl: './departments.component.html',
 	styleUrls: ['./departments.component.scss']
 })
-export class DepartmentsComponent extends TranslationBaseComponent
+export class DepartmentsComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
 	organizationId: string;
 	tenantId: string;
 	showAddCard: boolean;
@@ -42,7 +42,16 @@ export class DepartmentsComponent extends TranslationBaseComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
-	@ViewChild('departmentsTable') departmentsTable;
+
+	departmentsTable: Ng2SmartTableComponent;
+	@ViewChild('departmentsTable') set content(
+		content: Ng2SmartTableComponent
+	) {
+		if (content) {
+			this.departmentsTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(
 		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
@@ -58,38 +67,32 @@ export class DepartmentsComponent extends TranslationBaseComponent
 
 	ngOnInit() {
 		this.cancel();
+		this._applyTranslationOnSmartTable();
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((organization) => {
 				if (organization) {
+					const { tenantId } = this.store.user;
+					this.tenantId = tenantId;
 					this.organizationId = organization.id;
-					this.tenantId = organization.tenantId;
 					this.loadDepartments();
 					this.loadEmployees();
 					this.loadSmartTable();
-					this._applyTranslationOnSmartTable();
 				}
 			});
 	}
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 	cancel() {
 		this.departmentToEdit = null;
 		this.showAddCard = false;
-		this.selectDepartment({
-			isSelected: false,
-			data: null
-		});
+		this.clearItem();
 	}
 	selectDepartment({ isSelected, data }) {
-		const selectedDepartment = isSelected ? data : null;
-		if (this.departmentsTable) {
-			this.departmentsTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.selectedDepartment = selectedDepartment;
+		this.selectedDepartment = isSelected ? data : null;
 	}
 	async loadSmartTable() {
 		this.settingsSmartTable = {
@@ -137,7 +140,7 @@ export class DepartmentsComponent extends TranslationBaseComponent
 		this.viewComponentName = ComponentEnum.DEPARTMENTS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 				this.selectedDepartment =
@@ -248,9 +251,41 @@ export class DepartmentsComponent extends TranslationBaseComponent
 	}
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.loadSmartTable();
 			});
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.departmentsTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
+	}
+
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectDepartment({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
+	}
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.departmentsTable && this.departmentsTable.grid) {
+			this.departmentsTable.grid.dataSet['willSelect'] = 'false';
+			this.departmentsTable.grid.dataSet.deselectAll();
+		}
 	}
 }

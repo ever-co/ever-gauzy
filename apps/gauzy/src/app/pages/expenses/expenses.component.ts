@@ -2,20 +2,16 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import {
 	IExpense,
 	PermissionsEnum,
-	IExpenseCategory,
-	IOrganizationVendor,
-	ITag,
 	ComponentLayoutStyleEnum,
-	IEmployee,
-	IOrganization
+	IOrganization,
+	IExpenseViewModel
 } from '@gauzy/models';
-import { debounceTime, filter, takeUntil } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';
 import { Store } from '../../@core/services/store.service';
-import { Subject } from 'rxjs';
 import { ExpensesService } from '../../@core/services/expenses.service';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
 import {
@@ -31,36 +27,8 @@ import { IncomeExpenseAmountComponent } from '../../@shared/table-components/inc
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
-
-export interface ExpenseViewModel {
-	id: string;
-	valueDate: Date;
-	vendorId: string;
-	vendorName: string;
-	vendor: IOrganizationVendor;
-	typeOfExpense: string;
-	categoryId: string;
-	categoryName: string;
-	category: IExpenseCategory;
-	organizationContactId: string;
-	organizationContactName: string;
-	projectId: string;
-	projectName: string;
-	currency: string;
-	amount: number;
-	notes: string;
-	purpose: string;
-	taxType: string;
-	taxLabel: string;
-	employee: IEmployee;
-	employeeName: string;
-	rateValue: number;
-	receipt: string;
-	splitExpense: boolean;
-	tags: ITag[];
-	status: string;
-}
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './expenses.component.html',
 	styleUrls: ['./expenses.component.scss']
@@ -72,21 +40,138 @@ export class ExpensesComponent
 	selectedEmployeeId: string;
 	selectedDate: Date;
 	smartTableSource = new LocalDataSource();
-	expenses: ExpenseViewModel[];
-	selectedExpense: ExpenseViewModel;
+	expenses: IExpenseViewModel[];
+	selectedExpense: IExpenseViewModel;
 	showTable: boolean;
 	employeeName: string;
 	loading = true;
 	hasEditPermission = false;
 	viewComponentName: ComponentEnum;
-	private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	disableButton = true;
 	averageExpense = 0;
-	@ViewChild('expensesTable') expensesTable;
-
 	selectedOrganization: IOrganization;
+
+	expensesTable: Ng2SmartTableComponent;
+	@ViewChild('expensesTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.expensesTable = content;
+			this.onChangedSource();
+		}
+	}
+
+	constructor(
+		private dialogService: NbDialogService,
+		private store: Store,
+		private expenseService: ExpensesService,
+		private toastrService: NbToastrService,
+		private route: ActivatedRoute,
+		private errorHandler: ErrorHandlingService,
+		readonly translateService: TranslateService,
+		private readonly router: Router
+	) {
+		super(translateService);
+		this.setView();
+	}
+
+	async ngOnInit() {
+		this.loadSettingsSmartTable();
+		this._applyTranslationOnSmartTable();
+
+		this.store.userRolePermissions$
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.hasEditPermission = this.store.hasPermission(
+					PermissionsEnum.ORG_EXPENSES_EDIT
+				);
+			});
+		this.store.selectedDate$
+			.pipe(untilDestroyed(this))
+			.subscribe((date) => {
+				this.selectedDate = date;
+
+				if (this.selectedEmployeeId) {
+					this._loadTableData();
+				} else {
+					if (this._selectedOrganizationId) {
+						this._loadTableData(null, this._selectedOrganizationId);
+					}
+				}
+			});
+		this.store.selectedEmployee$
+			.pipe(untilDestroyed(this))
+			.subscribe((employee) => {
+				if (employee && employee.id) {
+					this.selectedEmployeeId = employee.id;
+					this._loadTableData();
+				} else {
+					if (this._selectedOrganizationId) {
+						this.selectedEmployeeId = null;
+						this._loadTableData(null, this._selectedOrganizationId);
+					}
+				}
+			});
+		this.store.selectedOrganization$
+			.pipe(untilDestroyed(this))
+			.subscribe((org) => {
+				if (org) {
+					this.selectedOrganization = org;
+					this._selectedOrganizationId = org.id;
+					if (this.loading) {
+						this._loadTableData(
+							this.store.selectedEmployee
+								? this.store.selectedEmployee.id
+								: null,
+							this.store.selectedEmployee &&
+								this.store.selectedEmployee.id
+								? null
+								: this._selectedOrganizationId
+						);
+					}
+				}
+			});
+		this.route.queryParamMap
+			.pipe(
+				filter((params) => !!params),
+				debounceTime(1000),
+				untilDestroyed(this)
+			)
+			.subscribe((params) => {
+				if (params.get('openAddDialog') === 'true') {
+					this.openAddExpenseDialog();
+				}
+			});
+		this.router.events
+			.pipe(untilDestroyed(this))
+			.subscribe((event: RouterEvent) => {
+				if (event instanceof NavigationEnd) {
+					this.setView();
+				}
+			});
+	}
+
+	setView() {
+		this.viewComponentName = ComponentEnum.EXPENSES;
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(untilDestroyed(this))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+			});
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.expensesTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
+	}
 
 	loadSettingsSmartTable() {
 		this.smartTableSettings = {
@@ -149,120 +234,8 @@ export class ExpensesComponent
 		};
 	}
 
-	constructor(
-		private dialogService: NbDialogService,
-		private store: Store,
-		private expenseService: ExpensesService,
-		private toastrService: NbToastrService,
-		private route: ActivatedRoute,
-		private errorHandler: ErrorHandlingService,
-		readonly translateService: TranslateService,
-		private readonly router: Router
-	) {
-		super(translateService);
-		this.setView();
-	}
-
-	async ngOnInit() {
-		this.loadSettingsSmartTable();
-		this._applyTranslationOnSmartTable();
-
-		this.store.userRolePermissions$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this.hasEditPermission = this.store.hasPermission(
-					PermissionsEnum.ORG_EXPENSES_EDIT
-				);
-			});
-
-		this.store.selectedDate$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((date) => {
-				this.selectedDate = date;
-
-				if (this.selectedEmployeeId) {
-					this._loadTableData();
-				} else {
-					if (this._selectedOrganizationId) {
-						this._loadTableData(null, this._selectedOrganizationId);
-					}
-				}
-			});
-
-		this.store.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((employee) => {
-				if (employee && employee.id) {
-					this.selectedEmployeeId = employee.id;
-					this._loadTableData();
-				} else {
-					if (this._selectedOrganizationId) {
-						this.selectedEmployeeId = null;
-						this._loadTableData(null, this._selectedOrganizationId);
-					}
-				}
-			});
-
-		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((org) => {
-				if (org) {
-					this.selectedOrganization = org;
-					this._selectedOrganizationId = org.id;
-					if (this.loading) {
-						this._loadTableData(
-							this.store.selectedEmployee
-								? this.store.selectedEmployee.id
-								: null,
-							this.store.selectedEmployee &&
-								this.store.selectedEmployee.id
-								? null
-								: this._selectedOrganizationId
-						);
-					}
-				}
-			});
-
-		this.route.queryParamMap
-			.pipe(
-				filter((params) => !!params),
-				debounceTime(1000),
-				takeUntil(this._ngDestroy$)
-			)
-			.subscribe((params) => {
-				if (params.get('openAddDialog') === 'true') {
-					this.openAddExpenseDialog();
-				}
-			});
-
-		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
-	}
-
-	setView() {
-		this.viewComponentName = ComponentEnum.EXPENSES;
-		this.store
-			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-			});
-	}
-
 	manageCategories() {
 		this.router.navigate(['/pages/accounting/expenses/categories']);
-	}
-
-	canShowTable() {
-		if (this.expensesTable) {
-			this.expensesTable.grid.dataSet.willSelect = false;
-		}
-		return this.showTable;
 	}
 
 	getFormData(formData) {
@@ -322,7 +295,7 @@ export class ExpensesComponent
 		}
 		this.dialogService
 			.open(ExpensesMutationComponent)
-			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (formData) => {
 				if (formData) {
 					const completedForm = this.getFormData(formData);
@@ -344,7 +317,7 @@ export class ExpensesComponent
 					expense: this.selectedExpense
 				}
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (formData) => {
 				if (formData) {
 					try {
@@ -396,7 +369,7 @@ export class ExpensesComponent
 					duplicate: true
 				}
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (formData) => {
 				if (formData) {
 					const completedForm = this.getFormData(formData);
@@ -420,7 +393,7 @@ export class ExpensesComponent
 					)
 				}
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
@@ -453,12 +426,8 @@ export class ExpensesComponent
 			});
 	}
 	selectExpense({ isSelected, data }) {
-		const selectedExpense = isSelected ? data : null;
-		if (this.expensesTable) {
-			this.expensesTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.selectedExpense = selectedExpense;
+		this.selectedExpense = isSelected ? data : null;
 	}
 
 	private async _loadTableData(
@@ -479,7 +448,7 @@ export class ExpensesComponent
 			this.smartTableSettings['columns']['employeeName'] = {
 				title: 'Employee',
 				type: 'string',
-				valuePrepareFunction: (_, expense: ExpenseViewModel) => {
+				valuePrepareFunction: (_, expense: IExpenseViewModel) => {
 					const user = expense.employee
 						? expense.employee.user
 						: null;
@@ -505,7 +474,7 @@ export class ExpensesComponent
 				this.selectedDate
 			);
 
-			const expenseVM: ExpenseViewModel[] = items.map((i) => {
+			const expenseVM: IExpenseViewModel[] = items.map((i) => {
 				return {
 					id: i.id,
 					valueDate: i.valueDate,
@@ -557,9 +526,11 @@ export class ExpensesComponent
 	}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSettingsSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loadSettingsSmartTable();
+			});
 	}
 
 	clearItem() {
@@ -567,11 +538,20 @@ export class ExpensesComponent
 			isSelected: false,
 			data: null
 		});
+		this.deselectAll();
+	}
+
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.expensesTable && this.expensesTable.grid) {
+			this.expensesTable.grid.dataSet['willSelect'] = 'false';
+			this.expensesTable.grid.dataSet.deselectAll();
+		}
 	}
 
 	ngOnDestroy() {
 		delete this.smartTableSettings['columns']['employee'];
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
 	}
 }

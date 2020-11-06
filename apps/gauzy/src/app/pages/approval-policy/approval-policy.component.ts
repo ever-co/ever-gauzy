@@ -6,9 +6,9 @@ import {
 	ComponentLayoutStyleEnum,
 	IRolePermission
 } from '@gauzy/models';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { first, filter } from 'rxjs/operators';
+import { first, filter, tap } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
 import { ApprovalPolicyMutationComponent } from '../../@shared/approval-policy/approval-policy-mutation.component';
 import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
@@ -27,7 +27,7 @@ export class ApprovalPolicyComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	public settingsSmartTable: object;
-	public loading = true;
+	public loading: boolean;
 	public selectedApprovalPolicy: IApprovalPolicy;
 	public disableButton = true;
 	public smartTableSource = new LocalDataSource();
@@ -37,7 +37,15 @@ export class ApprovalPolicyComponent
 	private selectedOrganizationId: string;
 	private selectedTenantId: string;
 
-	@ViewChild('approvalPolicyTable') approvalPolicyTable;
+	approvalPolicyTable: Ng2SmartTableComponent;
+	@ViewChild('approvalPolicyTable') set content(
+		content: Ng2SmartTableComponent
+	) {
+		if (content) {
+			this.approvalPolicyTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -71,7 +79,7 @@ export class ApprovalPolicyComponent
 			.subscribe((org) => {
 				if (org) {
 					this.selectedOrganizationId = org.id;
-					this.selectedTenantId = org.tenantId;
+					this.selectedTenantId = this.store.user.tenantId;
 					this.loadSettings();
 				}
 			});
@@ -96,8 +104,20 @@ export class ApprovalPolicyComponent
 			});
 	}
 
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.approvalPolicyTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
+	}
+
 	async loadSettings() {
-		this.selectedApprovalPolicy = null;
+		this.loading = true;
 		let findInput: IApprovalPolicy = {};
 		if (this.selectedOrganizationId) {
 			findInput = {
@@ -159,26 +179,19 @@ export class ApprovalPolicyComponent
 			}
 		);
 		const requestApproval = await dialog.onClose.pipe(first()).toPromise();
-		this.selectedApprovalPolicy = null;
-		this.disableButton = true;
-
 		if (requestApproval) {
 			this.toastrService.primary(
 				this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_SAVED'),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 		}
-
+		this.clearItem();
 		this.loadSettings();
 	}
 
 	async selectApprovalPolicy({ isSelected, data }) {
-		const selectedApprovalPolicy = isSelected ? data : null;
-		if (this.approvalPolicyTable) {
-			this.approvalPolicyTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.selectedApprovalPolicy = selectedApprovalPolicy;
+		this.selectedApprovalPolicy = isSelected ? data : null;
 	}
 
 	async delete(selectedItem?: IApprovalPolicy) {
@@ -203,7 +216,28 @@ export class ApprovalPolicyComponent
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 		}
-		this.disableButton = true;
+		this.clearItem();
+	}
+
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectApprovalPolicy({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
+	}
+
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.approvalPolicyTable && this.approvalPolicyTable.grid) {
+			this.approvalPolicyTable.grid.dataSet['willSelect'] = 'false';
+			this.approvalPolicyTable.grid.dataSet.deselectAll();
+		}
 	}
 
 	ngOnDestroy() {}

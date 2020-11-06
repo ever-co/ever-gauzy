@@ -37,13 +37,13 @@
 				nbInput
 			/>
 		</div>
-
 		<ng2-smart-table
 			*ngIf="dataLayoutStyle === 'TABLE'"
-			(rowSelect)="pipeline = $event.data"
+			(userRowSelect)="selectPipeline($event)"
 			[settings]="smartTableSettings"
 			[source]="pipelines"
 			style="cursor: pointer"
+			#pipelineTable
 		></ng2-smart-table>
 		<ga-card-grid
 			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
@@ -54,10 +54,14 @@
 	</nb-card-body>
 </nb-card>
 
-<ng-template #actionButtons let-buttonSize="buttonSize">
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
 	<ng-template ngxPermissionsOnly="EDIT_SALES_PIPELINES">
 		<button
-			*ngIf="pipeline"
+			[disabled]="!selectedItem && disableButton"
 			[size]="buttonSize || 'medium'"
 			(click)="editPipeline()"
 			style="cursor: pointer"
@@ -70,7 +74,7 @@
 			<span [innerHTML]="'BUTTONS.EDIT' | translate"></span>
 		</button>
 		<button
-			*ngIf="pipeline"
+			[disabled]="!selectedItem && disableButton"
 			[size]="buttonSize || 'medium'"
 			(click)="deletePipeline()"
 			style="cursor: pointer"

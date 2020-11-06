@@ -39,7 +39,10 @@ export class TimeSlotBulkCreateHandler
 
 		const insertedSlots = await this.timeSlotRepository.find({
 			where: {
-				startedAt: In(_.pluck(slots, 'startedAt'))
+				startedAt: In(_.pluck(slots, 'startedAt')),
+				...(slots[0].employeeId
+					? { employeeId: slots[0].employeeId }
+					: {})
 			}
 		});
 
@@ -54,6 +57,10 @@ export class TimeSlotBulkCreateHandler
 							moment(slot.startedAt).format('YYYY-MM-DD HH:mm')
 					)
 			);
+		}
+
+		if (slots.length === 0) {
+			return [];
 		}
 
 		let organizationId;

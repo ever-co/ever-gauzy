@@ -515,7 +515,7 @@ const seedDefaultCandidateUsers = async (
 			password: '123456',
 			firstName: 'Norris ',
 			lastName: 'Nesbit',
-			imageUrl: 'assets/images/avatars/blagovest.jpeg',
+			imageUrl: 'assets/images/avatars/blagovest.jpg',
 			candidateLevel: 'A',
 			preferredLanguage: LanguagesEnum.ENGLISH
 		},

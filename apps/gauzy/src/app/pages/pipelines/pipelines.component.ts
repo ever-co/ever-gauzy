@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
 	IPipeline,
 	ComponentLayoutStyleEnum,
@@ -6,12 +6,12 @@ import {
 } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { PipelinesService } from '../../@core/services/pipelines.service';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
-import { filter, first } from 'rxjs/operators';
+import { filter, first, tap } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { RouterEvent, NavigationEnd, Router } from '@angular/router';
@@ -67,6 +67,15 @@ export class PipelinesComponent
 	organizationId: string;
 	tenantId: string;
 	name: string;
+	disableButton = true;
+
+	pipelineTable: Ng2SmartTableComponent;
+	@ViewChild('pipelineTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.pipelineTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(
 		private pipelinesService: PipelinesService,
@@ -124,6 +133,18 @@ export class PipelinesComponent
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.pipelineTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
 	}
 
 	async updatePipelines(): Promise<void> {
@@ -202,6 +223,32 @@ export class PipelinesComponent
 				)
 			);
 			await this.updatePipelines();
+		}
+	}
+
+	selectPipeline({ isSelected, data }) {
+		this.disableButton = !isSelected;
+		this.pipeline = isSelected ? data : null;
+	}
+
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectPipeline({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
+	}
+
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.pipelineTable && this.pipelineTable.grid) {
+			this.pipelineTable.grid.dataSet['willSelect'] = 'false';
+			this.pipelineTable.grid.dataSet.deselectAll();
 		}
 	}
 

@@ -2,7 +2,8 @@ import {
 	IOrganizationDepartment,
 	ITag,
 	IEmployee,
-	IOrganization
+	IOrganization,
+	ICandidate
 } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
@@ -18,9 +19,11 @@ import { Employee } from '../employee/employee.entity';
 import { Tag } from '../tags/tag.entity';
 import { Organization } from '../organization/organization.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
+import { Candidate } from '../candidate/candidate.entity';
 
 @Entity('organization_department')
-export class OrganizationDepartment extends TenantOrganizationBase
+export class OrganizationDepartment
+	extends TenantOrganizationBase
 	implements IOrganizationDepartment {
 	@ApiProperty()
 	@ManyToMany((type) => Tag, (tag) => tag.organizationDepartment)
@@ -54,4 +57,14 @@ export class OrganizationDepartment extends TenantOrganizationBase
 
 	@ManyToOne((type) => Organization, (organization) => organization.id)
 	organization?: IOrganization;
+
+	@ManyToMany(
+		(type) => Candidate,
+		(candidate) => candidate.organizationDepartments,
+		{ cascade: ['update'] }
+	)
+	@JoinTable({
+		name: 'candidate_department'
+	})
+	candidates?: ICandidate[];
 }

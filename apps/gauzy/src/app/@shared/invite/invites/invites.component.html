@@ -26,11 +26,11 @@
 		<ng2-smart-table
 			*ngIf="dataLayoutStyle === 'TABLE'"
 			class="employees-table"
-			style="cursor: pointer;"
+			style="cursor: pointer"
 			[settings]="settingsSmartTable"
 			[source]="sourceSmartTable"
 			(userRowSelect)="selectEmployeeTmp($event)"
-			#employeesTable
+			#invitesTable
 		>
 		</ng2-smart-table>
 		<ga-card-grid

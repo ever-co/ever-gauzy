@@ -15,6 +15,7 @@ import { OrganizationPositions } from './organization-positions.entity';
 import { IPagination } from '../core';
 import { AuthGuard } from '@nestjs/passport';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
 
 @ApiTags('OrganizationPositions')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -41,11 +42,10 @@ export class OrganizationPositionsController extends CrudController<
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllEmployees(
-		@Query('data') data: string
+	async findAllOrganizationPositions(
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<OrganizationPositions>> {
-		const { relations, findInput } = JSON.parse(data);
-
+		const { relations = [], findInput } = data;
 		return this.organizationPositionsService.findAll({
 			where: findInput,
 			relations

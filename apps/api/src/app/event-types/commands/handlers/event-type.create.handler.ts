@@ -4,6 +4,7 @@ import { EventType } from '../../event-type.entity';
 import { EventTypeService } from '../../event-type.service';
 import { EmployeeService } from '../../../employee/employee.service';
 import { OrganizationService } from '../../../organization/organization.service';
+import { RequestContext } from '../../../core/context';
 
 @CommandHandler(EventTypeCreateCommand)
 export class EventTypeCreateHandler
@@ -33,6 +34,7 @@ export class EventTypeCreateHandler
 		eventType.durationUnit = input.durationUnit;
 		eventType.duration = input.duration;
 		eventType.tags = input.tags;
+		eventType.tenantId = RequestContext.currentTenantId();
 
 		return await this.eventTypeService.create(eventType);
 	}

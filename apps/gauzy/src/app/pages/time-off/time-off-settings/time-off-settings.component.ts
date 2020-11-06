@@ -13,8 +13,8 @@ import {
 	IOrganization,
 	ITimeOffPolicyVM
 } from '@gauzy/models';
-import { first, takeUntil } from 'rxjs/operators';
-import { LocalDataSource } from 'ng2-smart-table';
+import { first, tap } from 'rxjs/operators';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TimeOffSettingsMutationComponent } from '../../../@shared/time-off/settings-mutation/time-off-settings-mutation.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,7 +27,6 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
-import { Subject } from 'rxjs/internal/Subject';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -62,18 +61,24 @@ export class TimeOffSettingsComponent
 	showTable: boolean;
 	loading = false;
 	hasEditPermission = false;
-	private _ngDestroy$ = new Subject<void>();
 	disableButton = true;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	organization: IOrganization;
 
-	@ViewChild('timeOffPolicyTable') timeOffPolicyTable;
+	timeOffPolicySettingsTable: Ng2SmartTableComponent;
+	@ViewChild('timeOffPolicySettingsTable') set content(
+		content: Ng2SmartTableComponent
+	) {
+		if (content) {
+			this.timeOffPolicySettingsTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	async ngOnInit() {
 		this._loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
-
 		this.store.userRolePermissions$
 			.pipe(untilDestroyed(this))
 			.subscribe(() => {
@@ -81,7 +86,6 @@ export class TimeOffSettingsComponent
 					PermissionsEnum.POLICY_EDIT
 				);
 			});
-
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
 			.subscribe((org) => {
@@ -91,14 +95,12 @@ export class TimeOffSettingsComponent
 					this._loadTableData(this._selectedOrganizationId);
 				}
 			});
-
 		this.authService
 			.hasRole([RolesEnum.ADMIN, RolesEnum.DATA_ENTRY])
 			.pipe(first())
 			.subscribe((res) => (this.hasRole = res));
-
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
@@ -110,10 +112,22 @@ export class TimeOffSettingsComponent
 		this.viewComponentName = ComponentEnum.TIME_OFF_SETTINGS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.timeOffPolicySettingsTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
 	}
 
 	private _loadSettingsSmartTable() {
@@ -253,7 +267,7 @@ export class TimeOffSettingsComponent
 								this._loadTableData(
 									this._selectedOrganizationId
 								);
-								this.selectedPolicy = null;
+								this.clearItem();
 							});
 					}
 				},
@@ -262,12 +276,8 @@ export class TimeOffSettingsComponent
 	}
 
 	selectTimeOffPolicy({ isSelected, data }) {
-		const selectedPolicy = isSelected ? data : null;
-		if (this.timeOffPolicyTable) {
-			this.timeOffPolicyTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.selectedPolicy = selectedPolicy;
+		this.selectedPolicy = isSelected ? data : null;
 	}
 
 	private async _loadTableData(orgId: string) {
@@ -301,11 +311,7 @@ export class TimeOffSettingsComponent
 						this.timeOffPolicyData = policyVM;
 						this.smartTableSource.load(policyVM);
 						this.showTable = true;
-
-						this.selectTimeOffPolicy({
-							isSelected: false,
-							data: null
-						});
+						this.clearItem();
 					},
 					(error) => {
 						this.toastrService.danger(
@@ -325,6 +331,31 @@ export class TimeOffSettingsComponent
 			.subscribe(() => {
 				this._loadSettingsSmartTable();
 			});
+	}
+
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectTimeOffPolicy({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
+	}
+
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (
+			this.timeOffPolicySettingsTable &&
+			this.timeOffPolicySettingsTable.grid
+		) {
+			this.timeOffPolicySettingsTable.grid.dataSet['willSelect'] =
+				'false';
+			this.timeOffPolicySettingsTable.grid.dataSet.deselectAll();
+		}
 	}
 
 	ngOnDestroy() {}

@@ -191,6 +191,11 @@ export type EmployeeJobPost = {
 	id?: Maybe<Scalars['ID']>;
 	employeeId: Scalars['String'];
 	jobPostId: Scalars['String'];
+	jobDateCreated?: Maybe<Scalars['DateTime']>;
+	jobStatus?: Maybe<Scalars['String']>;
+	jobType?: Maybe<Scalars['String']>;
+	providerCode: Scalars['String'];
+	providerJobId: Scalars['String'];
 	isApplied?: Maybe<Scalars['Boolean']>;
 	appliedDate?: Maybe<Scalars['DateTime']>;
 	createdAt?: Maybe<Scalars['DateTime']>;
@@ -499,6 +504,11 @@ export type EmployeeJobPostDeleteResponse = {
 	id?: Maybe<Scalars['ID']>;
 	employeeId?: Maybe<Scalars['String']>;
 	jobPostId?: Maybe<Scalars['String']>;
+	jobDateCreated?: Maybe<Scalars['DateTime']>;
+	jobStatus?: Maybe<Scalars['String']>;
+	jobType?: Maybe<Scalars['String']>;
+	providerCode?: Maybe<Scalars['String']>;
+	providerJobId?: Maybe<Scalars['String']>;
 	isApplied?: Maybe<Scalars['Boolean']>;
 	appliedDate?: Maybe<Scalars['DateTime']>;
 	createdAt?: Maybe<Scalars['DateTime']>;
@@ -530,6 +540,11 @@ export type EmployeeJobPostCountAggregate = {
 	id?: Maybe<Scalars['Int']>;
 	employeeId?: Maybe<Scalars['Int']>;
 	jobPostId?: Maybe<Scalars['Int']>;
+	jobDateCreated?: Maybe<Scalars['Int']>;
+	jobStatus?: Maybe<Scalars['Int']>;
+	jobType?: Maybe<Scalars['Int']>;
+	providerCode?: Maybe<Scalars['Int']>;
+	providerJobId?: Maybe<Scalars['Int']>;
 	isApplied?: Maybe<Scalars['Int']>;
 	appliedDate?: Maybe<Scalars['Int']>;
 	createdAt?: Maybe<Scalars['Int']>;
@@ -543,6 +558,11 @@ export type EmployeeJobPostMinAggregate = {
 	id?: Maybe<Scalars['ID']>;
 	employeeId?: Maybe<Scalars['String']>;
 	jobPostId?: Maybe<Scalars['String']>;
+	jobDateCreated?: Maybe<Scalars['DateTime']>;
+	jobStatus?: Maybe<Scalars['String']>;
+	jobType?: Maybe<Scalars['String']>;
+	providerCode?: Maybe<Scalars['String']>;
+	providerJobId?: Maybe<Scalars['String']>;
 	appliedDate?: Maybe<Scalars['DateTime']>;
 	createdAt?: Maybe<Scalars['DateTime']>;
 	updatedAt?: Maybe<Scalars['DateTime']>;
@@ -553,6 +573,11 @@ export type EmployeeJobPostMaxAggregate = {
 	id?: Maybe<Scalars['ID']>;
 	employeeId?: Maybe<Scalars['String']>;
 	jobPostId?: Maybe<Scalars['String']>;
+	jobDateCreated?: Maybe<Scalars['DateTime']>;
+	jobStatus?: Maybe<Scalars['String']>;
+	jobType?: Maybe<Scalars['String']>;
+	providerCode?: Maybe<Scalars['String']>;
+	providerJobId?: Maybe<Scalars['String']>;
 	appliedDate?: Maybe<Scalars['DateTime']>;
 	createdAt?: Maybe<Scalars['DateTime']>;
 	updatedAt?: Maybe<Scalars['DateTime']>;
@@ -772,6 +797,11 @@ export type EmployeeJobPostFilter = {
 	id?: Maybe<IdFilterComparison>;
 	employeeId?: Maybe<StringFieldComparison>;
 	jobPostId?: Maybe<StringFieldComparison>;
+	jobDateCreated?: Maybe<DateFieldComparison>;
+	jobStatus?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
+	providerCode?: Maybe<StringFieldComparison>;
+	providerJobId?: Maybe<StringFieldComparison>;
 	isApplied?: Maybe<BooleanFieldComparison>;
 	appliedDate?: Maybe<DateFieldComparison>;
 	createdAt?: Maybe<DateFieldComparison>;
@@ -822,6 +852,11 @@ export enum EmployeeJobPostSortFields {
 	Id = 'id',
 	EmployeeId = 'employeeId',
 	JobPostId = 'jobPostId',
+	JobDateCreated = 'jobDateCreated',
+	JobStatus = 'jobStatus',
+	JobType = 'jobType',
+	ProviderCode = 'providerCode',
+	ProviderJobId = 'providerJobId',
 	IsApplied = 'isApplied',
 	AppliedDate = 'appliedDate',
 	CreatedAt = 'createdAt',
@@ -836,6 +871,11 @@ export type EmployeeJobPostAggregateFilter = {
 	id?: Maybe<IdFilterComparison>;
 	employeeId?: Maybe<StringFieldComparison>;
 	jobPostId?: Maybe<StringFieldComparison>;
+	jobDateCreated?: Maybe<DateFieldComparison>;
+	jobStatus?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
+	providerCode?: Maybe<StringFieldComparison>;
+	providerJobId?: Maybe<StringFieldComparison>;
 	isApplied?: Maybe<BooleanFieldComparison>;
 	appliedDate?: Maybe<DateFieldComparison>;
 	createdAt?: Maybe<DateFieldComparison>;
@@ -1329,6 +1369,11 @@ export type EmployeeJobPostDeleteFilter = {
 	id?: Maybe<IdFilterComparison>;
 	employeeId?: Maybe<StringFieldComparison>;
 	jobPostId?: Maybe<StringFieldComparison>;
+	jobDateCreated?: Maybe<DateFieldComparison>;
+	jobStatus?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
+	providerCode?: Maybe<StringFieldComparison>;
+	providerJobId?: Maybe<StringFieldComparison>;
 	isApplied?: Maybe<BooleanFieldComparison>;
 	appliedDate?: Maybe<DateFieldComparison>;
 	createdAt?: Maybe<DateFieldComparison>;
@@ -1348,6 +1393,11 @@ export type UpdateEmployeeJobPost = {
 	id?: Maybe<Scalars['ID']>;
 	employeeId?: Maybe<Scalars['String']>;
 	jobPostId?: Maybe<Scalars['String']>;
+	jobDateCreated?: Maybe<Scalars['DateTime']>;
+	jobStatus?: Maybe<Scalars['String']>;
+	jobType?: Maybe<Scalars['String']>;
+	providerCode?: Maybe<Scalars['String']>;
+	providerJobId?: Maybe<Scalars['String']>;
 	isApplied?: Maybe<Scalars['Boolean']>;
 	appliedDate?: Maybe<Scalars['DateTime']>;
 	createdAt?: Maybe<Scalars['DateTime']>;
@@ -1369,6 +1419,11 @@ export type EmployeeJobPostUpdateFilter = {
 	id?: Maybe<IdFilterComparison>;
 	employeeId?: Maybe<StringFieldComparison>;
 	jobPostId?: Maybe<StringFieldComparison>;
+	jobDateCreated?: Maybe<DateFieldComparison>;
+	jobStatus?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
+	providerCode?: Maybe<StringFieldComparison>;
+	providerJobId?: Maybe<StringFieldComparison>;
 	isApplied?: Maybe<BooleanFieldComparison>;
 	appliedDate?: Maybe<DateFieldComparison>;
 	createdAt?: Maybe<DateFieldComparison>;
@@ -1386,6 +1441,11 @@ export type CreateEmployeeJobPost = {
 	id?: Maybe<Scalars['ID']>;
 	employeeId?: Maybe<Scalars['String']>;
 	jobPostId?: Maybe<Scalars['String']>;
+	jobDateCreated?: Maybe<Scalars['DateTime']>;
+	jobStatus?: Maybe<Scalars['String']>;
+	jobType?: Maybe<Scalars['String']>;
+	providerCode?: Maybe<Scalars['String']>;
+	providerJobId?: Maybe<Scalars['String']>;
 	isApplied?: Maybe<Scalars['Boolean']>;
 	appliedDate?: Maybe<Scalars['DateTime']>;
 	createdAt?: Maybe<Scalars['DateTime']>;
@@ -1567,6 +1627,11 @@ export type EmployeeJobPostSubscriptionFilter = {
 	id?: Maybe<IdFilterComparison>;
 	employeeId?: Maybe<StringFieldComparison>;
 	jobPostId?: Maybe<StringFieldComparison>;
+	jobDateCreated?: Maybe<DateFieldComparison>;
+	jobStatus?: Maybe<StringFieldComparison>;
+	jobType?: Maybe<StringFieldComparison>;
+	providerCode?: Maybe<StringFieldComparison>;
+	providerJobId?: Maybe<StringFieldComparison>;
 	isApplied?: Maybe<BooleanFieldComparison>;
 	appliedDate?: Maybe<DateFieldComparison>;
 	createdAt?: Maybe<DateFieldComparison>;
@@ -1612,6 +1677,11 @@ export type EmployeeJobPostsQuery = { __typename?: 'Query' } & {
 						| 'updatedAt'
 						| 'isActive'
 						| 'isArchived'
+						| 'providerCode'
+						| 'providerJobId'
+						| 'jobDateCreated'
+						| 'jobStatus'
+						| 'jobType'
 					> & {
 							employee: { __typename?: 'Employee' } & Pick<
 								Employee,
@@ -2130,6 +2200,55 @@ export const EmployeeJobPostsDocument: DocumentNode<
 																	}
 																]
 															}
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
+																	'providerCode'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
+																	'providerJobId'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
+																	'jobDateCreated'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value:
+																	'jobStatus'
+															},
+															arguments: [],
+															directives: []
+														},
+														{
+															kind: 'Field',
+															name: {
+																kind: 'Name',
+																value: 'jobType'
+															},
+															arguments: [],
+															directives: []
 														},
 														{
 															kind: 'Field',

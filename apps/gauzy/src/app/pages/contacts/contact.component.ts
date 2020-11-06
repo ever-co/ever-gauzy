@@ -15,8 +15,7 @@ import {
 } from '@angular/router';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
-import { first, takeUntil } from 'rxjs/operators';
+import { first, tap } from 'rxjs/operators';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { EmployeesService } from '../../@core/services';
@@ -25,20 +24,21 @@ import { OrganizationContactService } from '../../@core/services/organization-co
 import { Store } from '../../@core/services/store.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { EmployeeWithLinksComponent } from '../../@shared/table-components/employee-with-links/employee-with-links.component';
 import { TaskTeamsComponent } from '../../@shared/table-components/task-teams/task-teams.component';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { ContactActionComponent } from './table-components/contact-action/contact-action.component';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-contact',
 	templateUrl: './contact.component.html',
 	styleUrls: ['./contact.component.scss']
 })
-export class ContactComponent extends TranslationBaseComponent
+export class ContactComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
 	organizationId: string;
 	selectedOrganization: IOrganization;
 	showAddCard: boolean;
@@ -55,7 +55,14 @@ export class ContactComponent extends TranslationBaseComponent
 	disableButton = true;
 	smartTableSource = new LocalDataSource();
 	@Input() contactType: any;
-	@ViewChild('contactsTable') contactsTable;
+
+	contactsTable: Ng2SmartTableComponent;
+	@ViewChild('contactsTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.contactsTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(
 		private readonly organizationContactService: OrganizationContactService,
@@ -74,7 +81,7 @@ export class ContactComponent extends TranslationBaseComponent
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((organization) => {
 				if (organization) {
 					this.selectedOrganization = organization;
@@ -87,14 +94,14 @@ export class ContactComponent extends TranslationBaseComponent
 				}
 			});
 		this.route.queryParamMap
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((params) => {
 				if (params.get('openAddDialog')) {
 					this.add();
 				}
 			});
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
@@ -104,10 +111,7 @@ export class ContactComponent extends TranslationBaseComponent
 		this._applyTranslationOnSmartTable();
 	}
 
-	ngOnDestroy(): void {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy(): void {}
 
 	async loadSmartTable() {
 		this.settingsSmartTable = {
@@ -174,12 +178,8 @@ export class ContactComponent extends TranslationBaseComponent
 		};
 	}
 	selectContact({ isSelected, data }) {
-		const selectedContact = isSelected ? data : null;
-		if (this.contactsTable) {
-			this.contactsTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.selectedContact = selectedContact;
+		this.selectedContact = isSelected ? data : null;
 	}
 	async removeOrganizationContact(id?: string, name?: string) {
 		const result = await this.dialogService
@@ -215,7 +215,7 @@ export class ContactComponent extends TranslationBaseComponent
 		this.viewComponentName = ComponentEnum.CONTACTS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 				this.selectedContact =
@@ -282,13 +282,11 @@ export class ContactComponent extends TranslationBaseComponent
 			return;
 		}
 
-		const { id: organizationId, tenantId } = this.selectedOrganization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.selectedOrganization;
 		const res = await this.organizationContactService.getAll(
 			['projects', 'members', 'members.user', 'tags', 'contact'],
-			{
-				organizationId,
-				tenantId
-			}
+			{ organizationId, tenantId }
 		);
 
 		if (res) {
@@ -318,14 +316,11 @@ export class ContactComponent extends TranslationBaseComponent
 	}
 
 	private async loadProjectsWithoutOrganizationContacts() {
-		const { id: organizationId, tenantId } = this.selectedOrganization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.selectedOrganization;
 		const res = await this.organizationProjectsService.getAll(
 			['organizationContact'],
-			{
-				organizationId,
-				tenantId,
-				organizationContact: null
-			}
+			{ organizationId, tenantId, organizationContact: null }
 		);
 
 		if (res) {
@@ -337,14 +332,14 @@ export class ContactComponent extends TranslationBaseComponent
 		if (!this.selectedOrganization) {
 			return;
 		}
-		const { id: organizationId, tenantId } = this.selectedOrganization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.selectedOrganization;
 		const { items } = await this.employeesService
 			.getAll(['user'], {
 				organization: { id: organizationId, tenantId }
 			})
 			.pipe(first())
 			.toPromise();
-
 		this.employees = items;
 	}
 
@@ -405,9 +400,41 @@ export class ContactComponent extends TranslationBaseComponent
 	}
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.loadSmartTable();
 			});
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.contactsTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
+	}
+
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectContact({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
+	}
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.contactsTable && this.contactsTable.grid) {
+			this.contactsTable.grid.dataSet['willSelect'] = 'false';
+			this.contactsTable.grid.dataSet.deselectAll();
+		}
 	}
 }

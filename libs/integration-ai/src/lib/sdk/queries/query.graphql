@@ -29,6 +29,11 @@ query employeeJobPosts(
 					id
 					externalEmployeeId
 				}
+				providerCode
+				providerJobId
+				jobDateCreated
+				jobStatus
+				jobType
 				jobPost {
 					id
 					providerCode

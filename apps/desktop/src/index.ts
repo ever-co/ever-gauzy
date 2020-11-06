@@ -92,8 +92,9 @@ let onWaitingServer = false;
 let alreadyQuit = false;
 let serverGauzy = null;
 let serverDesktop = null;
+let dialogErr = false;
 
-function startServer(value) {
+function startServer(value, restart = false) {
 	process.env.IS_ELECTRON = 'true';
 	if (value.db === 'sqlite') {
 		process.env.DB_PATH = sqlite3filename;
@@ -113,7 +114,19 @@ function startServer(value) {
 			value.port || environment.API_DEFAULT_PORT
 		}`;
 		// require(path.join(__dirname, 'api/main.js'));
-		serverGauzy = fork(path.join(__dirname, 'api/main.js'));
+		serverGauzy = fork(path.join(__dirname, 'api/main.js'), {
+			silent: true
+		});
+		serverGauzy.stdout.on('data', (data) => {
+			const msgData = data.toString();
+			if (
+				msgData.indexOf('Unable to connect to the database') > -1 &&
+				!dialogErr
+			) {
+				const msg = 'Unable to connect to the database';
+				dialogMessage(msg);
+			}
+		});
 	}
 
 	try {
@@ -128,7 +141,7 @@ function startServer(value) {
 
 	/* ping server before launch the ui */
 	ipcMain.on('app_is_init', () => {
-		if (!isAlreadyRun && value) {
+		if (!isAlreadyRun && value && !restart) {
 			onWaitingServer = true;
 			setupWindow.webContents.send('server_ping', {
 				host: getApiBaseUrl(value)
@@ -138,6 +151,38 @@ function startServer(value) {
 
 	return true;
 }
+
+const dialogMessage = (msg) => {
+	dialogErr = true;
+	const options = {
+		type: 'question',
+		buttons: ['Open Setting', 'Exit'],
+		defaultId: 2,
+		title: 'Warning',
+		message: msg
+	};
+
+	dialog.showMessageBox(null, options).then((response) => {
+		if (response.response === 1) app.quit();
+		else {
+			if (settingsWindow) settingsWindow.show();
+			else {
+				const appSetting = LocalStore.getStore('appSetting');
+				const config = LocalStore.getStore('configs');
+				if (!settingsWindow) {
+					settingsWindow = createSettingsWindow(settingsWindow);
+				}
+				settingsWindow.show();
+				setTimeout(() => {
+					settingsWindow.webContents.send('app_setting', {
+						setting: appSetting,
+						config: config
+					});
+				}, 500);
+			}
+		}
+	});
+};
 
 const getApiBaseUrl = (configs) => {
 	if (configs.serverUrl) return configs.serverUrl;
@@ -183,7 +228,8 @@ ipcMain.on('server_is_ready', () => {
 	if (!isAlreadyRun) {
 		setTimeout(() => {
 			setupWindow.hide();
-			settingsWindow = createSettingsWindow(settingsWindow);
+			if (!settingsWindow)
+				settingsWindow = createSettingsWindow(settingsWindow);
 			if (!gauzyWindow)
 				gauzyWindow = createGauzyWindow(gauzyWindow, serve);
 
@@ -236,9 +282,10 @@ ipcMain.on('restore', () => {
 });
 
 ipcMain.on('restart_app', (event, arg) => {
+	dialogErr = false;
 	LocalStore.updateConfigSetting(arg);
-	serverGauzy.kill();
-	gauzyWindow.destroy();
+	if (serverGauzy) serverGauzy.kill();
+	if (gauzyWindow) gauzyWindow.destroy();
 	gauzyWindow = null;
 	isAlreadyRun = false;
 	setTimeout(() => {
@@ -247,7 +294,7 @@ ipcMain.on('restart_app', (event, arg) => {
 			global.variableGlobal = {
 				API_BASE_URL: getApiBaseUrl(configs)
 			};
-			startServer(configs);
+			startServer(configs, tray ? true : false);
 			setupWindow.webContents.send('server_ping_restart', {
 				host: getApiBaseUrl(configs)
 			});

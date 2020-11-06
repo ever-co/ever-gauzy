@@ -1,6 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IEmployee, IEmployeeFindInput } from './employee.model';
-import { IOrganizationFindInput } from './organization.model';
 
 export interface IAvailabilitySlot
 	extends IBasePerTenantAndOrganizationEntityModel {
@@ -12,10 +11,10 @@ export interface IAvailabilitySlot
 	employee?: IEmployee;
 }
 
-export interface IAvailabilitySlotsFindInput {
+export interface IAvailabilitySlotsFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	type?: string;
 	employee?: IEmployeeFindInput;
-	organization?: IOrganizationFindInput;
 }
 
 export interface IAvailabilitySlotsCreateInput

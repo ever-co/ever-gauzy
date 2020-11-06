@@ -180,7 +180,9 @@ export class CandidateInterviewFeedbackComponent
 								? this.form.get('rating').value
 								: this.averageRating,
 						interviewer: this.feedbackInterviewer,
-						status: this.status
+						status: this.status,
+						organizationId,
+						tenantId
 					}
 				);
 				this.setStatus(this.status);

@@ -4,8 +4,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeeSelectorComponent } from '../../../../@theme/components/header/selectors/employee/employee.component';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
-import { EventTypeViewModel } from '../event-type.component';
-import { ITag } from '@gauzy/models';
+import { IEventTypeViewModel, ITag } from '@gauzy/models';
 
 export enum COMPONENT_TYPE {
 	EMPLOYEE = 'EMPLOYEE',
@@ -15,14 +14,15 @@ export enum COMPONENT_TYPE {
 @Component({
 	templateUrl: './event-type-mutation.component.html'
 })
-export class EventTypeMutationComponent extends TranslationBaseComponent
+export class EventTypeMutationComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	public form: FormGroup;
 	tags: ITag[] = [];
 
 	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
-	eventType: EventTypeViewModel;
+	eventType: IEventTypeViewModel;
 	durationUnits: string[] = ['Minute(s)', 'Hour(s)', 'Day(s)'];
 	durationUnit: string = this.durationUnits[0];
 

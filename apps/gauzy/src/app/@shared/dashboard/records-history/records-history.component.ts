@@ -1,15 +1,16 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import {
 	RecurringExpenseDefaultCategoriesEnum,
 	EmployeeStatisticsHistoryEnum as HistoryType,
 	IEmployeeStatisticsHistory
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DateViewComponent } from '../../table-components/date-view/date-view.component';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { IncomeExpenseAmountComponent } from '../../table-components/income-amount/income-amount.component';
+import { tap } from 'rxjs/operators';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-records-history',
@@ -25,6 +26,16 @@ export class RecordsHistoryComponent
 	translatedType: string;
 
 	smartTableSettings: Object;
+
+	recordHistoryTable: Ng2SmartTableComponent;
+	@ViewChild('recordHistoryTable') set content(
+		content: Ng2SmartTableComponent
+	) {
+		if (content) {
+			this.recordHistoryTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(readonly translateService: TranslateService) {
 		super(translateService);
@@ -204,5 +215,33 @@ export class RecordsHistoryComponent
 				this.loadSettingsSmartTable();
 				this._populateSmartTable();
 			});
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.recordHistoryTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
+	}
+
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.deselectAll();
+	}
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.recordHistoryTable && this.recordHistoryTable.grid) {
+			this.recordHistoryTable.grid.dataSet['willSelect'] = 'false';
+			this.recordHistoryTable.grid.dataSet.deselectAll();
+		}
 	}
 }

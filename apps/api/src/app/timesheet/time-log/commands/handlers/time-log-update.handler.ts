@@ -37,12 +37,12 @@ export class TimeLogUpdateHandler
 
 		let timesheet: Timesheet;
 		let updateTimeSlots = [];
-		let neetToUpdateTimeSlots = false;
+		let needToUpdateTimeSlots = false;
 		if (input.startedAt || input.stoppedAt) {
-			neetToUpdateTimeSlots = true;
+			needToUpdateTimeSlots = true;
 		}
 
-		if (neetToUpdateTimeSlots) {
+		if (needToUpdateTimeSlots) {
 			timesheet = await this.commandBus.execute(
 				new TimesheetFirstOrCreateCommand(
 					input.startedAt,
@@ -63,7 +63,7 @@ export class TimeLogUpdateHandler
 
 		timeLog = await this.timeLogRepository.findOne(timeLog.id);
 
-		if (neetToUpdateTimeSlots) {
+		if (needToUpdateTimeSlots) {
 			const startTimes = timeSlots
 				.filter((timeslot) => {
 					return (

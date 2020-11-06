@@ -4,7 +4,8 @@ import { first } from 'rxjs/operators';
 import {
 	IProposal,
 	IProposalCreateInput,
-	IProposalFindInput
+	IProposalFindInput,
+	IProposalViewModel
 } from '@gauzy/models';
 
 @Injectable()
@@ -41,6 +42,16 @@ export class ProposalsService {
 
 		return this.http
 			.get<{ items: IProposal[]; total: number }>(`/api/proposal`, {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
+
+	getById(id: string, findInput?: IProposalFindInput, relations?: string[]) {
+		const data = JSON.stringify({ relations, findInput });
+		return this.http
+			.get<IProposalViewModel>(`/api/proposal/${id}`, {
 				params: { data }
 			})
 			.pipe(first())

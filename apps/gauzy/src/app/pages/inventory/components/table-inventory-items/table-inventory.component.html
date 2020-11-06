@@ -3,7 +3,7 @@
 		<div class="main-header">
 			<h4>{{ 'INVENTORY_PAGE.HEADER' | translate }}</h4>
 			<div class="header-selector-wrapper">
-				<div style="margin-right: 9px;"></div>
+				<div style="margin-right: 9px"></div>
 				<ga-layout-selector
 					componentName="{{ viewComponentName }}"
 				></ga-layout-selector>
@@ -36,7 +36,7 @@
 			</button>
 			<button
 				class="float-right"
-				style="margin-right: 9px;"
+				style="margin-right: 9px"
 				nbButton
 				status="primary"
 				(click)="manageProductCategories()"
@@ -51,7 +51,7 @@
 			[settings]="settingsSmartTable"
 			(userRowSelect)="selectProduct($event)"
 			[source]="smartTableSource"
-			style="cursor: pointer;"
+			style="cursor: pointer"
 			*ngIf="dataLayoutStyle === 'TABLE'"
 			#inventoryTable
 		>
@@ -68,11 +68,11 @@
 				</div>
 				<div class="info-line">
 					<span class="info-meta">Product type</span>
-					<span class="info-value">{{ x.type.name }}</span>
+					<span class="info-value">{{ x.type?.name }}</span>
 				</div>
 				<div class="info-line">
 					<span class="info-meta">Product category</span>
-					<span class="info-value">{{ x.category.name }}</span>
+					<span class="info-value">{{ x.category?.name }}</span>
 				</div>
 				<div class="info-line">
 					<span class="info-meta">Description</span>
