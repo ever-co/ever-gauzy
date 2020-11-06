@@ -2,15 +2,12 @@ import {
 	enterInput,
 	verifyElementIsVisible,
 	clickButton,
-	clickElementByText,
 	enterInputConditionally,
 	clearField,
 	clickKeyboardBtnByKeycode,
-	clickButtonByIndex,
-	getLastElement
+	clickButtonByIndex
 } from '../utils/util';
 import { IncomePage } from '../pageobjects/IncomePageObject';
-import { verifyLoginButton } from './Login.po';
 
 export const gridBtnExists = () => {
 	verifyElementIsVisible(IncomePage.gridButtonCss);
