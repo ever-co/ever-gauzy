@@ -54,6 +54,7 @@ describe('Add employee level test', () => {
 		addEmployeeLevelPage.clickKeyboardButtonByKeyCode(9);
 		addEmployeeLevelPage.saveNewLevelButtonVisible();
 		addEmployeeLevelPage.clickSaveNewLevelButton();
+		addEmployeeLevelPage.clickSaveNewLevelButton();
 	});
 	it('Should be able to edit employee level', () => {
 		addEmployeeLevelPage.editEmployeeLevelButtonVisible();
@@ -67,6 +68,7 @@ describe('Add employee level test', () => {
 		addEmployeeLevelPage.selectTagsFromDropdown(0);
 		addEmployeeLevelPage.clickKeyboardButtonByKeyCode(9);
 		addEmployeeLevelPage.saveNewLevelButtonVisible();
+		addEmployeeLevelPage.clickSaveNewLevelButton();
 		addEmployeeLevelPage.clickSaveNewLevelButton();
 	});
 	it('Should be able to delete employee level', () => {
