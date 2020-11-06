@@ -132,10 +132,14 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 			const feedbacks = res.items.filter(
 				(item) => item.interviewId && item.interviewId === interview.id
 			);
-			feedbacks.forEach((feedback) => {
-				allFbIds.push(feedback.interviewer.employeeId);
-				this.loadColor(feedback);
-			});
+			if (feedbacks.length > 0) {
+				feedbacks.forEach((feedback) => {
+					if (feedback.interviewer) {
+						allFbIds.push(feedback.interviewer.employeeId);
+					}
+					this.loadColor(feedback);
+				});
+			}
 			if (this.currentInterview) {
 				for (const interviewer of this.currentInterview.interviewers) {
 					allIds.push(interviewer.employeeId);

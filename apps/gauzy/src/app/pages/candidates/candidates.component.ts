@@ -7,8 +7,8 @@ import {
 	IRolePermission
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource } from 'ng2-smart-table';
-import { first, filter } from 'rxjs/operators';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { first, filter, tap } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { CandidateStatusComponent } from './table-components/candidate-status/candidate-status.component';
@@ -54,7 +54,14 @@ export class CandidatesComponent
 	candidateData: ICandidateViewModel[];
 	selectedOrganization: IOrganization;
 
-	@ViewChild('candidatesTable') candidatesTable;
+	candidatesTable: Ng2SmartTableComponent;
+	@ViewChild('candidatesTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.candidatesTable = content;
+			this.onChangedSource();
+		}
+	}
+
 	constructor(
 		private candidatesService: CandidatesService,
 		private dialogService: NbDialogService,
@@ -70,7 +77,7 @@ export class CandidatesComponent
 		this.setView();
 	}
 
-	async ngOnInit() {
+	ngOnInit() {
 		this.store.userRolePermissions$
 			.pipe(
 				filter(
@@ -112,13 +119,14 @@ export class CandidatesComponent
 					this.setView();
 				}
 			});
-
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
 	}
+
 	goTo(page: string) {
 		this.router.navigate([`/pages/employees/candidates/${page}`]);
 	}
+
 	setView() {
 		this.viewComponentName = ComponentEnum.CANDIDATES;
 		this.store
@@ -129,13 +137,21 @@ export class CandidatesComponent
 			});
 	}
 
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.candidatesTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
+	}
+
 	selectCandidateTmp({ isSelected, data }) {
-		const selectedCandidate = isSelected ? data : null;
-		if (this.candidatesTable) {
-			this.candidatesTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.selectedCandidate = selectedCandidate;
+		this.selectedCandidate = isSelected ? data : null;
 		if (this.selectedCandidate) {
 			const checkName = this.selectedCandidate.fullName.trim();
 			this.candidateName = checkName ? checkName : 'Candidate';
@@ -143,7 +159,6 @@ export class CandidatesComponent
 	}
 	async add() {
 		const dialog = this.dialogService.open(CandidateMutationComponent);
-
 		const response = await dialog.onClose.pipe(first()).toPromise();
 
 		if (response) {
@@ -234,7 +249,6 @@ export class CandidatesComponent
 
 	private async loadPage() {
 		const { tenantId } = this.store.user;
-		this.selectedCandidate = null;
 		const { items } = await this.candidatesService
 			.getAll(['user', 'source', 'tags'], {
 				organizationId: this.selectedOrganizationId,
@@ -271,10 +285,6 @@ export class CandidatesComponent
 
 		this.candidateData = candidatesVm;
 		this.sourceSmartTable.load(candidatesVm);
-		if (this.candidatesTable) {
-			this.candidatesTable.grid.dataSet.willSelect = false;
-		}
-
 		const { name } = this.store.selectedOrganization;
 		this.organizationName = name;
 		this.loading = false;
@@ -352,6 +362,7 @@ export class CandidatesComponent
 						);
 
 						this.loadPage();
+						this.clearItem();
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
@@ -386,6 +397,7 @@ export class CandidatesComponent
 						);
 
 						this.loadPage();
+						this.clearItem();
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
@@ -397,6 +409,24 @@ export class CandidatesComponent
 			this._loadSmartTableSettings();
 		});
 	}
-
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectCandidateTmp({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
+	}
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.candidatesTable && this.candidatesTable.grid) {
+			this.candidatesTable.grid.dataSet['willSelect'] = 'false';
+			this.candidatesTable.grid.dataSet.deselectAll();
+		}
+	}
 	ngOnDestroy() {}
 }

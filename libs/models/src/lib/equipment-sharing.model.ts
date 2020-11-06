@@ -37,3 +37,8 @@ export enum EquipmentSharingStatusEnum {
 	REQUESTED = 'Requested',
 	APPROVED = 'Approved'
 }
+
+export interface ISelectedEquipmentSharing {
+	data: IEquipmentSharing;
+	isSelected: boolean;
+}
