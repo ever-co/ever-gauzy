@@ -62,9 +62,18 @@ export class TimeReportHorizontalBarChartComponent
 			.pipe(untilDestroyed(this))
 			.subscribe((config) => {
 				const chartJs: any = config.variables.chartjs;
+
 				this.options = {
 					responsive: true,
 					maintainAspectRatio: false,
+					color: [
+						config.variables.primary,
+						config.variables.primaryLight
+					],
+					backgroundColor: [
+						config.variables.primary,
+						config.variables.primaryLight
+					],
 					elements: {
 						rectangle: {
 							borderWidth: 2

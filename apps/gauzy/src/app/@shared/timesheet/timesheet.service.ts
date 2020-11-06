@@ -9,7 +9,8 @@ import {
 	IGetTimesheetInput,
 	IGetTimeLogConflictInput,
 	IGetTimeSlotInput,
-	ITimeSlot
+	ITimeSlot,
+	IGetTimeLogReportInput
 } from '@gauzy/models';
 import { toParams } from '@gauzy/utils';
 
@@ -100,6 +101,13 @@ export class TimesheetService {
 		const params = toParams(request);
 		return this.http
 			.get('/api/timesheet/time-log/report/daily', { params })
+			.toPromise();
+	}
+
+	getDailyReportChartData(request: IGetTimeLogReportInput) {
+		const params = toParams(request);
+		return this.http
+			.get('/api/timesheet/time-log/report/daily-chart', { params })
 			.toPromise();
 	}
 

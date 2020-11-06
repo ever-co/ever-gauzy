@@ -84,6 +84,20 @@ export class TimeLogController extends CrudController<ITimeLog> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@Get('report/daily-chart')
+	async getDailyReportChartData(@Query() options: IGetTimeLogReportInput) {
+		return this.timeLogService.getDailyReportChartData(options);
+	}
+
+	@ApiOperation({ summary: 'Find Timer Log by id' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found one record' /*, type: T*/
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
 	@Get('report/weekly')
 	async getWeeklyReport(@Query() options: IGetTimeLogReportInput) {
 		return this.timeLogService.getWeeklyReport(options);

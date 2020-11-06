@@ -617,7 +617,8 @@
 		"NO_TIMELOG": "No Timelog",
 		"NO_TASK": "No Task",
 		"WEEKLY_TIME_AND_ACTIVITY_REPORT": "Weekly Time and Activity Report",
-		"TIME_AND_ACTIVITY_REPORT": "Time and Activity Report"
+		"TIME_AND_ACTIVITY_REPORT": "Time and Activity Report",
+		"NO_CLIENT": "No Client"
 	},
 	"INTEGRATIONS": {
 		"AVALIABLE_INTEGRATIONS": "Avaliable Apps & Integrations",
