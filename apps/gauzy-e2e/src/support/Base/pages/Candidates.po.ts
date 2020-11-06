@@ -184,6 +184,14 @@ export const editButtonVisible = () => {
 	verifyElementIsVisible(CandidatesPage.editButtonCss);
 };
 
+export const includeArchiveButtonVisible = () => {
+	verifyElementIsVisible(CandidatesPage.checkboxButtonCss);
+};
+
+export const clickIncludeArchiveButton = () => {
+	clickButton(CandidatesPage.checkboxButtonCss);
+};
+
 export const clickEditButton = () => {
 	clickButton(CandidatesPage.editButtonCss);
 };
@@ -251,12 +259,28 @@ export const enterPostcodeInputData = (data) => {
 	enterInput(CandidatesPage.postcodeInputCss, data);
 };
 
-export const saveLocationButtonVisible = () => {
+export const saveActionButtonVisible = () => {
 	verifyElementIsVisible(CandidatesPage.saveActionButtonCss);
 };
 
-export const clickSaveLocationButton = () => {
+export const clickSaveActionButton = () => {
 	clickButton(CandidatesPage.saveActionButtonCss);
+};
+
+export const backButtonVisible = () => {
+	verifyElementIsVisible(CandidatesPage.backButtonCss);
+};
+
+export const clickBackButton = () => {
+	clickButton(CandidatesPage.backButtonCss);
+};
+
+export const saveEditButtonVisible = () => {
+	verifyElementIsVisible(CandidatesPage.saveEditButtonCss);
+};
+
+export const clickSaveEditButton = () => {
+	clickButton(CandidatesPage.saveEditButtonCss);
 };
 
 export const ratesButtonVisible = () => {

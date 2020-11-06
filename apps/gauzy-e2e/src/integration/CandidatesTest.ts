@@ -99,45 +99,29 @@ describe('Invite candidate test', () => {
 		inviteCandidatePage.allCurrentCandidatesButtonVisible();
 		inviteCandidatePage.clickAllCurrentCandidatesButton();
 	});
-	it('Should be able to archive candidate', () => {
+	it('Should be able to edit candidate', () => {
 		inviteCandidatePage.selectTableRowVisible();
-		inviteCandidatePage.selectTableRow(0);
-		inviteCandidatePage.selectTableRow(0);
-		inviteCandidatePage.archiveButtonVisible();
-		inviteCandidatePage.clickArchiveButton();
+		inviteCandidatePage.selectLastTableRow();
+		inviteCandidatePage.editButtonVisible();
+		inviteCandidatePage.clickEditButton();
+		inviteCandidatePage.saveEditButtonVisible();
+		inviteCandidatePage.clickSaveEditButton();
+		inviteCandidatePage.clickSaveEditButton();
+		inviteCandidatePage.backButtonVisible();
+		inviteCandidatePage.clickBackButton();
+		inviteCandidatePage.clickBackButton();
+	});
+	it('Should be able to reject candidate', () => {
+		inviteCandidatePage.selectLastTableRow();
+		inviteCandidatePage.rejectButtonVisible();
+		inviteCandidatePage.clickRejectButton();
 		inviteCandidatePage.confirmActionButtonVisible();
 		inviteCandidatePage.clickConfirmActionButton();
 	});
-	it('Should be able to reject candidate', () => {
-		inviteCandidatePage.addCandidateButtonVisible();
-		inviteCandidatePage.clickAddCandidateButton(0);
-		inviteCandidatePage.firstNameInputVisible();
-		inviteCandidatePage.enterFirstNameInputData(firstName);
-		inviteCandidatePage.lastNameInputVisible();
-		inviteCandidatePage.enterLastNameInputData(lastName);
-		inviteCandidatePage.usernameInputVisible();
-		inviteCandidatePage.enterUsernameInputData(username);
-		inviteCandidatePage.candidateEmailInputVisible();
-		inviteCandidatePage.enterCandidateEmailInputData(email);
-		inviteCandidatePage.passwordInputVisible();
-		inviteCandidatePage.enterPasswordInputData(password);
-		inviteCandidatePage.candidateDateInputVisible();
-		inviteCandidatePage.enterCandidateDateInputData();
-		inviteCandidatePage.clickKeyboardButtonByKeyCode(9);
-		inviteCandidatePage.imageInputvisible();
-		inviteCandidatePage.enterImageInputData(imgUrl);
-		inviteCandidatePage.nextButtonVisible();
-		inviteCandidatePage.clickNextButton();
-		inviteCandidatePage.nextStepButtonVisible();
-		inviteCandidatePage.clickNextStepButton();
-		inviteCandidatePage.allCurrentCandidatesButtonVisible();
-		inviteCandidatePage.clickAllCurrentCandidatesButton();
-		inviteCandidatePage.clickAddCandidateButton(0);
-		inviteCandidatePage.selectTableRowVisible();
-		inviteCandidatePage.selectTableRow(0);
-		inviteCandidatePage.selectTableRow(0);
-		inviteCandidatePage.rejectButtonVisible();
-		inviteCandidatePage.clickRejectButton();
+	it('Should be able to archive candidate', () => {
+		inviteCandidatePage.selectLastTableRow();
+		inviteCandidatePage.archiveButtonVisible();
+		inviteCandidatePage.clickArchiveButton();
 		inviteCandidatePage.confirmActionButtonVisible();
 		inviteCandidatePage.clickConfirmActionButton();
 	});
