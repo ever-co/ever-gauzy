@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
 	IEmployeeJobPost,
 	IGetEmployeeJobPostFilters,
@@ -14,7 +14,7 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { AvatarComponent } from 'apps/gauzy/src/app/@shared/components/avatar/avatar.component';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { ServerDataSource } from 'ng2-smart-table';
+import { Ng2SmartTableComponent, ServerDataSource } from 'ng2-smart-table';
 import {
 	Nl2BrPipe,
 	TruncatePipe
@@ -23,7 +23,7 @@ import { StatusBadgeComponent } from 'apps/gauzy/src/app/@shared/status-badge/st
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import * as moment from 'moment';
 import { Subject, Subscription, timer } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, tap } from 'rxjs/operators';
 
 @UntilDestroy()
 @Component({
@@ -96,6 +96,14 @@ export class SearchComponent
 		pagerLimitKey: 'limit'
 	});
 	autoRefreshTimer: Subscription;
+
+	jobSearchTable: Ng2SmartTableComponent;
+	@ViewChild('jobSearchTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.jobSearchTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(
 		private http: HttpClient,
@@ -312,6 +320,33 @@ export class SearchComponent
 			.subscribe(() => {
 				this.updateJobs$.next();
 			});
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.jobSearchTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
+	}
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.deselectAll();
+	}
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.jobSearchTable && this.jobSearchTable.grid) {
+			this.jobSearchTable.grid.dataSet['willSelect'] = 'false';
+			this.jobSearchTable.grid.dataSet.deselectAll();
+		}
 	}
 
 	ngOnDestroy(): void {}

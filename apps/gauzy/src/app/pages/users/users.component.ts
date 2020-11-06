@@ -21,8 +21,8 @@ import {
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource } from 'ng2-smart-table';
-import { filter, first } from 'rxjs/operators';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { filter, first, tap } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -66,7 +66,14 @@ export class UsersComponent
 	disableButton = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	userData: IUser[];
-	@ViewChild('usersTable') usersTable;
+
+	usersTable: Ng2SmartTableComponent;
+	@ViewChild('usersTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.usersTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(
 		private dialogService: NbDialogService,
@@ -143,21 +150,20 @@ export class UsersComponent
 	}
 
 	selectUserTmp({ isSelected, data }) {
-		const selectedUser = isSelected ? data : null;
-		if (this.usersTable) {
-			this.usersTable.grid.dataSet.willSelect = false;
-		}
 		this.disableButton = !isSelected;
-		this.selectedUser = selectedUser;
+		this.selectedUser = isSelected ? data : null;
+
 		if (this.selectedUser) {
 			this.userToRemoveId = data.id;
 			const checkName = data.fullName.trim();
 			this.userName = checkName ? checkName : 'User';
 		}
-		if (data.role === RolesEnum.SUPER_ADMIN)
+
+		if (data && data.role === RolesEnum.SUPER_ADMIN) {
 			this.selectedUser = this.hasSuperAdminPermission
 				? this.selectedUser
 				: null;
+		}
 	}
 
 	async add() {
@@ -384,11 +390,6 @@ export class UsersComponent
 		}
 		this.userData = usersVm;
 		this.sourceSmartTable.load(usersVm);
-
-		if (this.usersTable) {
-			this.usersTable.grid.dataSet.willSelect = false;
-		}
-
 		this.organizationName = name;
 		this.loading = false;
 	}
@@ -423,6 +424,38 @@ export class UsersComponent
 		this.translate.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
 			this._loadSmartTableSettings();
 		});
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.usersTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
+	}
+
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectUserTmp({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
+	}
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.usersTable && this.usersTable.grid) {
+			this.usersTable.grid.dataSet['willSelect'] = 'false';
+			this.usersTable.grid.dataSet.deselectAll();
+		}
 	}
 
 	ngOnDestroy() {}
