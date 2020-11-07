@@ -28,7 +28,7 @@ export class ImgDirective implements OnDestroy, OnInit {
 	ngOnInit(): void {
 		let src = this.el.getAttribute('src');
 		if (src && src.indexOf('http') !== 0) {
-			src = '/' + src;
+			src = environment.IS_ELECTRON ? `./${src}` : `/${src}`;
 		}
 		this.el.setAttribute('src', src);
 		this.el.addEventListener('error', this.onError.bind(this));
