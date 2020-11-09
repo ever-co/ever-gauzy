@@ -45,7 +45,9 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	}
 	public set maxDate(value: Date) {
 		this._maxDate = value;
-		!this.fromEmployeeAppointment && this.updateTimePickerLimit(value);
+		if (!this.fromEmployeeAppointment) {
+			this.updateTimePickerLimit(value);
+		}
 	}
 
 	@Input('minDate')
@@ -54,7 +56,9 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	}
 	public set minDate(value: Date) {
 		this._minDate = value;
-		!this.fromEmployeeAppointment && this.updateTimePickerLimit(value);
+		if (!this.fromEmployeeAppointment) {
+			this.updateTimePickerLimit(value);
+		}
 	}
 
 	@Input('disabledDates')
@@ -93,8 +97,8 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 
 	ngOnInit() {
 		if (this.fromEmployeeAppointment) {
-			let maxTime = moment(this._maxDate);
-			let minTime = moment(this._minDate);
+			const maxTime = moment(this._maxDate);
+			const minTime = moment(this._minDate);
 
 			this.minSlotStartTime = minTime.format('HH:mm');
 			this.maxSlotStartTime = moment(maxTime, 'HH:mm')
@@ -195,7 +199,7 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 		this.updateEndTimeSlot(this.startTime);
 	}
 
-	chnageStartTime(time: string) {
+	changeStartTime(time: string) {
 		if (this.slotStartTime && this.allowedDuration) {
 			this.endTime = moment(time, 'HH:mm')
 				.add(this.allowedDuration, 'minutes')
@@ -226,12 +230,10 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 				value.start = moment().subtract(30, 'minutes').toDate();
 			}
 			if (!value.end) {
-				value.end = new Date();
+				value.end = moment().toDate();
 			}
 
 			const start = moment(value.start);
-			this.date = start.toDate();
-
 			let hour = start.get('hour');
 			let minute = this.fromEmployeeAppointment
 				? start.get('minute')
@@ -244,9 +246,10 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 				? end.get('minute')
 				: end.get('minute') - (end.minutes() % 10);
 			this.endTime = `${hour}:${minute}`;
+
+			this.date = end.toDate();
 		}
 		this._selectedRange = value;
-
 		//this.updateTimePickerLimit(value.start)-
 	}
 
