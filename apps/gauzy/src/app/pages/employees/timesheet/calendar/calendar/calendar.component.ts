@@ -106,33 +106,34 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 				this.futureDateAllowed = await this.ngxPermissionsService.hasPermission(
 					OrganizationPermissionsEnum.ALLOW_FUTURE_DATE
 				);
-				const calendar = this.calendar.getApi();
+				if (this.calendar.getApi()) {
+					const calendar = this.calendar.getApi();
+					if (
+						await this.ngxPermissionsService.hasPermission(
+							OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
+						)
+					) {
+						calendar.setOption('selectable', true);
+					} else {
+						calendar.setOption('selectable', false);
+					}
 
-				if (
-					await this.ngxPermissionsService.hasPermission(
-						OrganizationPermissionsEnum.ALLOW_MANUAL_TIME
-					)
-				) {
-					calendar.setOption('selectable', true);
-				} else {
-					calendar.setOption('selectable', false);
-				}
-
-				if (
-					await this.ngxPermissionsService.hasPermission(
-						OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
-					)
-				) {
-					calendar.setOption('editable', true);
-				} else {
-					calendar.setOption('editable', false);
+					if (
+						await this.ngxPermissionsService.hasPermission(
+							OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
+						)
+					) {
+						calendar.setOption('editable', true);
+					} else {
+						calendar.setOption('editable', false);
+					}
 				}
 			});
 	}
 
 	filtersChange($event: ITimeLogFilters) {
 		this.logRequest = $event;
-		if (this.logRequest.date) {
+		if (this.logRequest.date && this.calendar.getApi()) {
 			this.calendar.getApi().gotoDate(this.logRequest.date);
 		}
 		this.timesheetFilterService.filter = $event;
@@ -143,7 +144,9 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 		this.updateLogs$
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(() => {
-				this.calendar.getApi().refetchEvents();
+				if (this.calendar.getApi()) {
+					this.calendar.getApi().refetchEvents();
+				}
 			});
 	}
 
@@ -208,7 +211,9 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	handleDateClick(event) {
-		this.calendar.getApi().changeView('timeGridWeek', event.date);
+		if (this.calendar.getApi()) {
+			this.calendar.getApi().changeView('timeGridWeek', event.date);
+		}
 	}
 
 	handleEventSelect(event) {
