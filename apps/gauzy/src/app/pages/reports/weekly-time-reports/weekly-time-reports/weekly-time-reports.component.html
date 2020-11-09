@@ -11,6 +11,8 @@
 				<ngx-filters
 					dateRange="week"
 					[hasEmployeeFilter]="false"
+					[saveFilters]="false"
+					[filters]="logRequest"
 					(filtersChange)="filtersChange($event)"
 				></ngx-filters>
 			</div>

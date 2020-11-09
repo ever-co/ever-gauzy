@@ -52,8 +52,8 @@ export class StatisticService {
 		let start;
 		let end;
 		if (request.startDate) {
-			start = moment.utc(request.startDate).startOf('week').format();
-			end = moment.utc(request.endDate).endOf('week').format();
+			start = moment(request.startDate).utc().format();
+			end = moment(request.endDate).utc().format();
 		} else {
 			const date = request.date || new Date();
 			start = moment.utc(date).startOf('week').format();

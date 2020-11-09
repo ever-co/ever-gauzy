@@ -140,16 +140,19 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 	}
 
 	async bulkCreateOrUpdate(slots) {
+		console.log('bulkCreateOrUpdate');
 		return this.commandBus.execute(
 			new TimeSlotBulkCreateOrUpdateCommand(slots)
 		);
 	}
 
 	async bulkCreate(slots) {
+		console.log('bulkCreate');
 		return this.commandBus.execute(new TimeSlotBulkCreateCommand(slots));
 	}
 
 	async rangeDelete(employeeId: string, start: Date, stop: Date) {
+		console.log('rangeDelete');
 		return this.commandBus.execute(
 			new TimeSlotRangeDeleteCommand(employeeId, start, stop)
 		);
@@ -160,10 +163,12 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 	}
 
 	async create(request: TimeSlot) {
+		console.log('create');
 		return this.commandBus.execute(new CreateTimeSlotCommand(request));
 	}
 
 	async update(id: string, request: TimeSlot) {
+		console.log('update');
 		return this.commandBus.execute(new UpdateTimeSlotCommand(id, request));
 	}
 
@@ -188,6 +193,7 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 	}
 
 	async deleteTimeSlot(ids: string[]) {
+		console.log('deleteTimeSlot');
 		return this.commandBus.execute(new DeleteTimeSlotCommand(ids));
 	}
 }
