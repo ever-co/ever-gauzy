@@ -1,41 +1,28 @@
 import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { IInvoice, IEmployee, InvoiceTypeEnum } from '@gauzy/models';
-import { EmployeesService } from '../../../../@core/services/employees.service';
-import { Subject } from 'rxjs';
-import { OrganizationProjectsService } from '../../../../@core/services/organization-projects.service';
-import { TasksService } from '../../../../@core/services/tasks.service';
+import { IInvoice, InvoiceTypeEnum } from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
-import { ProductService } from '../../../../@core/services/product.service';
-import { ExpensesService } from '../../../../@core/services/expenses.service';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-invoice-view-inner',
 	templateUrl: './invoice-view-inner.component.html',
 	styleUrls: ['./invoice-view-inner.component.scss']
 })
-export class InvoiceViewInnerComponent extends TranslationBaseComponent
+export class InvoiceViewInnerComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	invoiceDate: string;
 	dueDate: string;
 	settingsSmartTable: object;
 	loadTable = false;
 	smartTableSource = new LocalDataSource();
-	employees: IEmployee[];
-	private _ngDestroy$ = new Subject<void>();
 
 	@Input() invoice: IInvoice;
 	@Input() isEstimate: boolean;
 
-	constructor(
-		readonly translateService: TranslateService,
-		private employeeService: EmployeesService,
-		private projectService: OrganizationProjectsService,
-		private taskService: TasksService,
-		private productService: ProductService,
-		private expensesService: ExpensesService
-	) {
+	constructor(readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
@@ -111,36 +98,36 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent
 			};
 			switch (this.invoice.invoiceType) {
 				case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
-					const employee = await this.employeeService.getEmployeeById(
-						item.employeeId,
-						['user'],
-						false
-					);
-					data[
-						'name'
-					] = `${employee.user.firstName} ${employee.user.lastName}`;
+					if (item.employeeId) {
+						const { employee } = item;
+						data[
+							'name'
+						] = `${employee.user.firstName} ${employee.user.lastName}`;
+					}
 					break;
 				case InvoiceTypeEnum.BY_PROJECT_HOURS:
-					const project = await this.projectService.getById(
-						item.projectId
-					);
-					data['name'] = project.name;
+					if (item.projectId) {
+						const { project } = item;
+						data['name'] = project.name;
+					}
 					break;
 				case InvoiceTypeEnum.BY_TASK_HOURS:
-					const task = await this.taskService.getById(item.taskId);
-					data['name'] = task.title;
+					if (item.projectId) {
+						const { task } = item;
+						data['name'] = task.title;
+					}
 					break;
 				case InvoiceTypeEnum.BY_PRODUCTS:
-					const product = await this.productService.getById(
-						item.productId
-					);
-					data['name'] = product.name;
+					if (item.productId) {
+						const { product } = item;
+						data['name'] = product.name;
+					}
 					break;
 				case InvoiceTypeEnum.BY_EXPENSES:
-					const expense = await this.expensesService.getById(
-						item.expenseId
-					);
-					data['name'] = expense.purpose;
+					if (item.expenseId) {
+						const { expense } = item;
+						data['name'] = expense.purpose;
+					}
 					break;
 				default:
 					delete this.settingsSmartTable['columns']['name'];
@@ -161,13 +148,12 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent
 	}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
-		});
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

@@ -29,7 +29,7 @@
 					</button>
 				</div>
 				<div class="time-count">
-					<span class="currrent-session">{{ current_time }}</span>
+					<span class="current-session">{{ current_time }}</span>
 					<span class="today-time mt-2"
 						>{{ 'TIMER_TRACKER.TODAY' | translate }}:
 						{{ time }}</span
@@ -64,7 +64,7 @@
 					</div>
 				</div>
 			</div>
-			<div class="time-menual" *ngIf="timeType == 'MANUAL'">
+			<div class="time-manual" *ngIf="timeType == 'MANUAL'">
 				<h6>{{ 'TIMER_TRACKER.ADD_TIME' | translate }}</h6>
 				<div class="row">
 					<div class="col-12">
@@ -217,7 +217,7 @@
 				</div>
 			</div>
 		</div>
-		<div class="time-menual" *ngIf="timeType == 'MANUAL'">
+		<div class="time-manual" *ngIf="timeType == 'MANUAL'">
 			<button class="btn btn-success" (click)="addTime()">
 				{{ 'TIMER_TRACKER.ADD_TIME' | translate }}
 			</button>

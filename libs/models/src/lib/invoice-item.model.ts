@@ -1,4 +1,12 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import {
+	IBasePerTenantAndOrganizationEntityModel,
+	IProduct,
+	IOrganizationProject,
+	IEmployee,
+	ITask,
+	IInvoice,
+	IExpense
+} from '@gauzy/models';
 
 export interface IInvoiceItem extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
@@ -14,6 +22,12 @@ export interface IInvoiceItem extends IBasePerTenantAndOrganizationEntityModel {
 	expenseId?: string;
 	applyTax?: boolean;
 	applyDiscount?: boolean;
+	product?: IProduct;
+	project?: IOrganizationProject;
+	employee?: IEmployee;
+	task?: ITask;
+	invoice?: IInvoice;
+	expense?: IExpense;
 }
 
 export interface IInvoiceItemFindInput {

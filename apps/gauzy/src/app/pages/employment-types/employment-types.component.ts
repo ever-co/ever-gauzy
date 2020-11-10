@@ -21,9 +21,11 @@ import { Subject } from 'rxjs/internal/Subject';
 
 @Component({
 	selector: 'ga-employment-types',
-	templateUrl: './employment-types.component.html'
+	templateUrl: './employment-types.component.html',
+	styleUrls: ['./employment-types.component.scss']
 })
-export class EmploymentTypesComponent extends TranslationBaseComponent
+export class EmploymentTypesComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	form: FormGroup;
 	showAddCard: Boolean;

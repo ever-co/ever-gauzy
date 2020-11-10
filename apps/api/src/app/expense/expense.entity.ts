@@ -6,7 +6,8 @@ import {
 	RelationId,
 	JoinColumn,
 	ManyToMany,
-	JoinTable
+	JoinTable,
+	OneToMany
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -31,6 +32,7 @@ import { Tag } from '../tags/tag.entity';
 import { ExpenseCategory } from '../expense-categories/expense-category.entity';
 import { OrganizationVendor } from '../organization-vendors/organization-vendors.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
+import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 
 @Entity('expense')
 export class Expense extends TenantOrganizationBase implements IExpense {
@@ -177,7 +179,14 @@ export class Expense extends TenantOrganizationBase implements IExpense {
 	@Column({ nullable: true })
 	status?: string;
 
-	//IN SOME CASES THE EXPENSES ARE CRASHING BECAUZE ITS TRYING TO ADD EXPENSEID AND THERE IS NO SUCH THING
+	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
+	@OneToMany((type) => InvoiceItem, (invoiceItem) => invoiceItem.expense, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	invoiceItems?: InvoiceItem[];
+
+	//IN SOME CASES THE EXPENSES ARE CRASHING BECAUSE ITS TRYING TO ADD EXPENSES AND THERE IS NO SUCH THING
 
 	// IF THIS HAPPENS AGAIN ADD THIS
 

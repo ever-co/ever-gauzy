@@ -19,7 +19,8 @@ import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-expense-categories',
-	templateUrl: './expense-categories.component.html'
+	templateUrl: './expense-categories.component.html',
+	styles: [':host > nb-card { min-height: 47.50rem; }']
 })
 export class ExpenseCategoriesComponent
 	extends TranslationBaseComponent

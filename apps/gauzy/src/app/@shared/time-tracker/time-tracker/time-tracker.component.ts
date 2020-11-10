@@ -237,6 +237,8 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	setTimeType(type: string) {
 		this.timeType =
 			type === 'TRACKED' ? TimeLogType.TRACKED : TimeLogType.MANUAL;
+
+		this.timeTrackerService.setTimeLogType(this.timeType);
 	}
 
 	ngOnDestroy() {}

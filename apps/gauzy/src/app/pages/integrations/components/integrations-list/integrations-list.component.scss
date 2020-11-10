@@ -3,6 +3,13 @@
   flex-wrap: wrap;
 }
 
+/**
+* By setting min-height of the card to this value, we ensure the card will properly adjust it's height
+*/
+:host > nb-card {
+  min-height: 47.5rem;
+}
+
 .integration-filters {
   display: flex;
   margin-bottom: 20px;

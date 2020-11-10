@@ -15,6 +15,8 @@ import { StoreConfig, Store, Query } from '@datorama/akita';
 import { Store as AppStore } from '../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter } from 'rxjs/operators';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { Observable } from 'rxjs/Observable';
 
 export function createInitialTimerState(): TimerState {
 	let timerConfig = {
@@ -75,7 +77,12 @@ export class TimeTrackerService implements OnDestroy {
 	);
 	$running = this.timerQuery.select((state) => state.running);
 	$timerConfig = this.timerQuery.select((state) => state.timerConfig);
-	organization: any;
+	organization: IOrganization;
+
+	private _trackType$: BehaviorSubject<string> = new BehaviorSubject(
+		TimeLogType.TRACKED
+	);
+	public trackType$: Observable<string> = this._trackType$.asObservable();
 
 	constructor(
 		protected timerStore: TimerStore,
@@ -256,6 +263,10 @@ export class TimeTrackerService implements OnDestroy {
 			isValid = false;
 		}
 		return isValid;
+	}
+
+	setTimeLogType(timeType: string) {
+		this._trackType$.next(timeType);
 	}
 
 	ngOnDestroy(): void {}

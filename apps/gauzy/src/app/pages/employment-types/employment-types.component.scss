@@ -1,17 +1,7 @@
-.grid {
-  display: grid;
-  grid-template-columns: 0.3fr 0.3fr;
-  &-item {
-    margin: 15px;
-  }
-}
-
-.item {
-  margin: 15px;
-}
-
-.table {
-  margin-top: 50px;
+.header-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 /**
