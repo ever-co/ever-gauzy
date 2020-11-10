@@ -567,6 +567,14 @@ export class PagesComponent implements OnInit, OnDestroy {
 			},
 			children: [
 				{
+					title: 'All Reports',
+					link: '/pages/reports/all',
+					icon: 'bar-chart-outline',
+					data: {
+						translationKey: 'MENU.ALL_REPORTS'
+					}
+				},
+				{
 					title: 'Time Reports',
 					link: '/pages/reports/time/daily',
 					icon: 'clock-outline',
