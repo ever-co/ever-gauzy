@@ -118,6 +118,7 @@ import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice
 import { GoalKpiTemplateModule } from './goal-kpi-template/goal-kpi-template.module';
 import { TenantSettingModule } from './tenant/tenant-setting/tenant-setting.module';
 import { EmployeeJobPresetModule } from './employee-job-preset/employee-job-preset.module';
+import { ReportModule } from './reports/report.module';
 
 @Module({
 	imports: [
@@ -477,6 +478,10 @@ import { EmployeeJobPresetModule } from './employee-job-preset/employee-job-pres
 					{
 						path: '/invoice-estimate-history',
 						module: InvoiceEstimateHistoryModule
+					},
+					{
+						path: '/report',
+						module: ReportModule
 					}
 				]
 			}
@@ -607,7 +612,8 @@ import { EmployeeJobPresetModule } from './employee-job-preset/employee-job-pres
 		GoalKpiModule,
 		GoalTemplateModule,
 		KeyresultTemplateModule,
-		GoalKpiTemplateModule
+		GoalKpiTemplateModule,
+		ReportModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

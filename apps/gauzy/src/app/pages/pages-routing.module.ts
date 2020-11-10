@@ -388,8 +388,15 @@ const routes: Routes = [
 				children: [
 					{
 						path: '',
-						redirectTo: 'time/daily',
+						redirectTo: 'all',
 						pathMatch: 'full'
+					},
+					{
+						path: 'all',
+						loadChildren: () =>
+							import(
+								'./reports/all-report/all-report.module'
+							).then((m) => m.AllReportModule)
 					},
 					{
 						path: 'time/daily',
