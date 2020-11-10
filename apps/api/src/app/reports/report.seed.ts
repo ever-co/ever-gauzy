@@ -136,8 +136,7 @@ function copyImage(fileName: string) {
 	const destDir = join('public', 'reports');
 	mkdirSync(join(baseDir, destDir), { recursive: true });
 
-	const sourceFilePath = join(dir, fileName);
-	const destFilePath = join(baseDir, fileName);
-	copyFileSync(sourceFilePath, destFilePath);
+	const destFilePath = join(destDir, fileName);
+	copyFileSync(join(dir, fileName), join(baseDir, destFilePath));
 	return destFilePath;
 }
