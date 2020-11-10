@@ -16,7 +16,7 @@ import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
-import { PermissionsEnum } from '@gauzy/models';
+import { PermissionsEnum, TimeLogType } from '@gauzy/models';
 import { IUser } from '@gauzy/models';
 import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.service';
 import * as moment from 'moment';
@@ -94,6 +94,9 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				if (e.item.data && e.item.data.action) {
 					switch (e.item.data.action) {
 						case this.actions.START_TIMER:
+							this.timeTrackerService.setTimeLogType(
+								TimeLogType.TRACKED
+							);
 							this.timeTrackerService.openAndStartTimer();
 							break;
 					}

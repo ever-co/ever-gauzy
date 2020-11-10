@@ -33,7 +33,7 @@ import { OrganizationsFullnameComponent } from './table-components/organizations
 import { OrganizationsStatusComponent } from './table-components/organizations-status/organizations-status.component';
 import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
 
-import { RecurringExpenseHistoryModule } from '../../@shared/expenses/reecurring-expense-history/recurring-expense-history.module';
+import { RecurringExpenseHistoryModule } from '../../@shared/expenses/recurring-expense-history/recurring-expense-history.module';
 import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 

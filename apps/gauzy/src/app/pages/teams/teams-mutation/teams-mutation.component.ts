@@ -4,7 +4,8 @@ import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-teams-mutation',
-	templateUrl: './teams-mutation.component.html'
+	templateUrl: './teams-mutation.component.html',
+	styles: [':host > nb-card { min-height: 47.50rem; }']
 })
 export class TeamsMutationComponent implements OnInit {
 	@Input()

@@ -9,7 +9,8 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 	templateUrl: './recurring-expense-history.component.html',
 	styleUrls: ['./recurring-expense-history.component.scss']
 })
-export class RecurringExpenseHistoryComponent extends TranslationBaseComponent
+export class RecurringExpenseHistoryComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	@Input()
 	recordsData: IRecurringExpenseModel[] = [];

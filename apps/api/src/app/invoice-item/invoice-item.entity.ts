@@ -1,5 +1,13 @@
 import { Entity, Column, JoinColumn, ManyToOne } from 'typeorm';
-import { IInvoiceItem } from '@gauzy/models';
+import {
+	IEmployee,
+	IExpense,
+	IInvoice,
+	IInvoiceItem,
+	IOrganizationProject,
+	IProduct,
+	ITask
+} from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNumber, IsString, IsOptional, IsBoolean } from 'class-validator';
 import { Invoice } from '../invoice/invoice.entity';
@@ -8,9 +16,11 @@ import { Employee } from '../employee/employee.entity';
 import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { Product } from '../product/product.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
+import { Expense } from '../expense/expense.entity';
 
 @Entity('invoice_item')
-export class InvoiceItem extends TenantOrganizationBase
+export class InvoiceItem
+	extends TenantOrganizationBase
 	implements IInvoiceItem {
 	@ApiPropertyOptional({ type: String })
 	@IsString()
@@ -73,32 +83,39 @@ export class InvoiceItem extends TenantOrganizationBase
 	@Column({ nullable: true })
 	expenseId?: string;
 
+	@ApiPropertyOptional({ type: Expense })
+	@ManyToOne((type) => Expense, (expense) => expense.invoiceItems, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	expense?: IExpense;
+
 	@ApiPropertyOptional({ type: Invoice })
 	@ManyToOne((type) => Invoice, (invoice) => invoice.invoiceItems, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	invoice?: Invoice;
+	invoice?: IInvoice;
 
 	@ApiPropertyOptional({ type: Task })
 	@ManyToOne((type) => Task, (task) => task.invoiceItems)
 	@JoinColumn()
-	task?: Task;
+	task?: ITask;
 
 	@ApiPropertyOptional({ type: Employee })
 	@ManyToOne((type) => Employee, (employee) => employee.invoiceItems)
 	@JoinColumn()
-	employee?: Employee;
+	employee?: IEmployee;
 
 	@ApiPropertyOptional({ type: OrganizationProject })
 	@ManyToOne((type) => OrganizationProject, (project) => project.invoiceItems)
 	@JoinColumn()
-	project?: OrganizationProject;
+	project?: IOrganizationProject;
 
 	@ApiPropertyOptional({ type: Product })
 	@ManyToOne((type) => Product, (product) => product.invoiceItems)
 	@JoinColumn()
-	product?: Product;
+	product?: IProduct;
 
 	@ApiPropertyOptional({ type: Boolean })
 	@IsBoolean()

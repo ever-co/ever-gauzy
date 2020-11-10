@@ -3,8 +3,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { InvoicesService } from '../../../@core/services/invoices.service';
-import { IInvoice, InvoiceTypeEnum } from '@gauzy/models';
-import { Subject } from 'rxjs';
+import { IInvoice, InvoiceTypeEnum, IUser } from '@gauzy/models';
 import * as pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 import { generatePdf } from '../../../@shared/invoice/generate-pdf';
@@ -14,17 +13,21 @@ import { OrganizationProjectsService } from '../../../@core/services/organizatio
 import { TasksService } from '../../../@core/services/tasks.service';
 import { ProductService } from '../../../@core/services/product.service';
 import { ExpensesService } from '../../../@core/services/expenses.service';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Store } from '../../../@core/services/store.service';
+import { filter } from 'rxjs/operators';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-invoice-view',
 	templateUrl: './invoice-view.component.html',
 	styleUrls: ['./invoice-view.component.scss']
 })
-export class InvoiceViewComponent extends TranslationBaseComponent
+export class InvoiceViewComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	invoiceId: string;
+	tenantId: string;
 	invoice: IInvoice;
-	private _ngDestroy$ = new Subject<void>();
 
 	@Input() isEstimate: boolean;
 
@@ -37,24 +40,49 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 		private projectService: OrganizationProjectsService,
 		private taskService: TasksService,
 		private productService: ProductService,
-		private expensesService: ExpensesService
+		private expensesService: ExpensesService,
+		private store: Store
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
-		this.route.paramMap.subscribe(async (params) => {
-			this.invoiceId = params.get('id');
-		});
-		this.getInvoice();
+		this.route.paramMap
+			.pipe(untilDestroyed(this))
+			.subscribe(async (params) => {
+				this.invoiceId = params.get('id');
+			});
+		this.store.user$
+			.pipe(
+				filter((user) => !!user),
+				untilDestroyed(this)
+			)
+			.subscribe((user: IUser) => {
+				this.tenantId = user.tenantId;
+				if (this.invoiceId) {
+					this.getInvoice();
+				}
+			});
 	}
 
 	async getInvoice() {
-		const invoice = await this.invoicesService.getById(this.invoiceId, [
-			'invoiceItems',
-			'fromOrganization',
-			'toContact'
-		]);
+		const { tenantId } = this;
+		const invoice = await this.invoicesService.getById(
+			this.invoiceId,
+			[
+				'invoiceItems',
+				'invoiceItems.employee',
+				'invoiceItems.employee.user',
+				'invoiceItems.project',
+				'invoiceItems.product',
+				'invoiceItems.invoice',
+				'invoiceItems.expense',
+				'invoiceItems.task',
+				'fromOrganization',
+				'toContact'
+			],
+			{ tenantId }
+		);
 		this.invoice = invoice;
 	}
 
@@ -110,8 +138,5 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 		);
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

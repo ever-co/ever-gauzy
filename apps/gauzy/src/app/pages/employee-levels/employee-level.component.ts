@@ -8,9 +8,9 @@ import {
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { first } from 'rxjs/operators';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { EmployeeLevelService } from 'apps/gauzy/src/app/@core/services/employee-level.service';
+import { filter, first } from 'rxjs/operators';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { EmployeeLevelService } from '../../@core/services/employee-level.service';
 import { Store } from '../../@core/services/store.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
@@ -20,7 +20,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-employee-level',
-	templateUrl: './employee-level.component.html'
+	templateUrl: './employee-level.component.html',
+	styles: [':host > nb-card { min-height: 47.50rem; }']
 })
 export class EmployeeLevelComponent
 	extends TranslationBaseComponent
@@ -52,7 +53,10 @@ export class EmployeeLevelComponent
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((organization) => {
 				if (organization) {
 					this.selectedOrganization = organization;
@@ -66,12 +70,11 @@ export class EmployeeLevelComponent
 	ngOnDestroy(): void {}
 
 	private async loadEmployeeLevels() {
+		const { tenantId } = this.store.user;
 		const { items } = await this.employeeLevelService.getAll(
 			this.organizationId,
 			['tags'],
-			{
-				tenantId: this.selectedOrganization.tenantId
-			}
+			{ tenantId }
 		);
 
 		if (items) {
@@ -90,7 +93,7 @@ export class EmployeeLevelComponent
 				this.dataLayoutStyle = componentLayout;
 				this.selectedEmployeeLevel = null;
 
-				//when layout selector change then hide edit showcard
+				//when layout selector change then hide edit show card
 				this.showAddCard = false;
 			});
 	}

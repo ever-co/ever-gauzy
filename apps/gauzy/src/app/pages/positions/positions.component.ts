@@ -6,10 +6,10 @@ import {
 	IOrganization
 } from '@gauzy/models';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
-import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
+import { OrganizationPositionsService } from '../../@core/services/organization-positions';
 import { TranslateService } from '@ngx-translate/core';
 import { first, takeUntil } from 'rxjs/operators';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { Store } from '../../@core/services/store.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -18,9 +18,11 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 import { Subject } from 'rxjs';
 @Component({
 	selector: 'ga-positions',
-	templateUrl: './positions.component.html'
+	templateUrl: './positions.component.html',
+	styles: [':host > nb-card { min-height: 47.50rem; }']
 })
-export class PositionsComponent extends TranslationBaseComponent
+export class PositionsComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	organizationId: string;
 	showAddCard: boolean;
