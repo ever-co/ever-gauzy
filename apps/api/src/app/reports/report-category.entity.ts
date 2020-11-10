@@ -1,14 +1,12 @@
-import { Entity, Index, Column, ManyToOne, JoinTable } from 'typeorm';
+import { Entity, Index, Column, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
-import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 import { IReport, IReportCategory } from '@gauzy/models';
 import { Report } from './report.entity';
+import { Base } from '../core/entities/base';
 
 @Entity('report_category')
-export class ReportCategory
-	extends TenantOrganizationBase
-	implements IReportCategory {
+export class ReportCategory extends Base implements IReportCategory {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -16,13 +14,12 @@ export class ReportCategory
 	@Column()
 	name?: string;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: String })
 	@IsString()
 	@Column({ nullable: true })
-	image?: string;
+	icon?: string;
 
 	@ApiProperty({ type: Report })
-	@ManyToOne((type) => Report, (report) => report.category)
-	@JoinTable({ name: 'tag_proposal' })
+	@ManyToOne(() => Report, (report) => report.category)
 	reports: IReport[];
 }

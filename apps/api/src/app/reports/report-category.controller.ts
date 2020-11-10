@@ -3,15 +3,15 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController, IPagination, PaginationParams } from '../core';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
-import { Report } from './report.entity';
-import { ReportService } from './report.service';
+import { ReportCategory } from './report-category.entity';
+import { ReportCategoryService } from './report-category.service';
 
-@ApiTags('Report')
+@ApiTags('Report Category')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
-@Controller()
-export class ReportController extends CrudController<Report> {
-	constructor(private reportService: ReportService) {
-		super(reportService);
+@Controller('category')
+export class ReportCategoryController extends CrudController<ReportCategory> {
+	constructor(private reportCategoryService: ReportCategoryService) {
+		super(reportCategoryService);
 	}
 
 	@ApiOperation({ summary: 'Find all' })
@@ -21,8 +21,8 @@ export class ReportController extends CrudController<Report> {
 	})
 	@Get()
 	async findAll(
-		@Query() filter?: PaginationParams<Report>
-	): Promise<IPagination<Report>> {
-		return this.reportService.findAll(filter);
+		@Query() filter?: PaginationParams<ReportCategory>
+	): Promise<IPagination<ReportCategory>> {
+		return this.reportCategoryService.findAll(filter);
 	}
 }

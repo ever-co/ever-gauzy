@@ -594,6 +594,7 @@ import { ReportModule } from './reports/report.module';
 		TaskModule,
 		OrganizationEmploymentTypeModule,
 		TimesheetModule,
+		ReportModule,
 		UpworkModule,
 		HubstaffModule,
 		ExpenseCategoriesModule,
@@ -612,8 +613,7 @@ import { ReportModule } from './reports/report.module';
 		GoalKpiModule,
 		GoalTemplateModule,
 		KeyresultTemplateModule,
-		GoalKpiTemplateModule,
-		ReportModule
+		GoalKpiTemplateModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],
