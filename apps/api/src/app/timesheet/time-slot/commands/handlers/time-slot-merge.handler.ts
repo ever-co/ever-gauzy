@@ -47,8 +47,6 @@ export class TimeSlotMergeHandler
 			relations: ['timeLogs', 'screenshots']
 		});
 
-		console.log({ timerSlots });
-
 		if (timerSlots.length > 0) {
 			const savePromises = _.chain(timerSlots)
 				.groupBy((timeSlots) => {
