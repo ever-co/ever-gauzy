@@ -17,6 +17,7 @@
 		"seed": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=8192 yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json src/seed.ts",
 		"seed:build": "yarn ng run api:seed",
 		"seed:all": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=8192 yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json src/seed-all.ts",
+		"seed:module": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=8192 yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json src/seed-module.ts --name",
 		"seed:all:build": "yarn ng run api:seed-all",
 		"seed:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=8192 yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json src/seed.ts",
 		"seed:prod:build": "yarn ng run api:seed -c=production"

@@ -33,6 +33,7 @@
 		"seed": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=8192 yarn run config:dev && yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json ./apps/api/src/seed.ts",
 		"seed:all": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=8192 yarn run config:dev && yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json ./apps/api/src/seed-all.ts",
 		"seed:jobs": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=8192 yarn run config:dev && yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json ./apps/api/src/seed-jobs.ts",
+		"seed:module": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=8192 yarn run config:dev && yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json ./apps/api/src/seed-module.ts --name",
 		"seed:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=8192 yarn run config:prod && yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json ./apps/api/src/seed.ts",
 		"bootstrap": "yarn lerna bootstrap",
 		"prebuild": "rimraf dist coverage",
@@ -262,6 +263,7 @@
 		"unzipper": "^0.10.11",
 		"uuid": "^8.3.0",
 		"web-animations-js": "^2.3.2",
+		"yargs": "^16.0.4-candidate.0",
 		"zone.js": "~0.11.1"
 	},
 	"devDependencies": {
@@ -310,6 +312,7 @@
 		"@types/node": "^12.12.2",
 		"@types/underscore": "^1.9.4",
 		"@types/uuid": "^3.4.4",
+		"@types/yargs": "^15.0.9",
 		"cloc": "^2.7.0",
 		"codelyzer": "^6.0.0",
 		"commitizen": "^4.2.1",
