@@ -12,7 +12,7 @@
 	</div>
 	<form #form="ngForm">
 		<div class="timer-container form-group pr-4">
-			<div class="time-tracker" *ngIf="timeType == 'TRACKED'">
+			<div class="time-tracker" *ngIf="(trackType$ | async) == 'TRACKED'">
 				<div class="is_billable">
 					<button
 						nbButton
@@ -64,7 +64,7 @@
 					</div>
 				</div>
 			</div>
-			<div class="time-manual" *ngIf="timeType == 'MANUAL'">
+			<div class="time-manual" *ngIf="(trackType$ | async) == 'MANUAL'">
 				<h6>{{ 'TIMER_TRACKER.ADD_TIME' | translate }}</h6>
 				<div class="row">
 					<div class="col-12">
@@ -87,7 +87,6 @@
 					</div>
 				</div>
 			</div>
-
 			<div
 				class="mode"
 				*ngxPermissionsOnly="[
@@ -99,7 +98,9 @@
 					type="button"
 					(click)="$event.stopPropagation(); setTimeType('TRACKED')"
 					size="tiny"
-					[status]="timeType == 'TRACKED' ? 'primary' : 'basic'"
+					[status]="
+						(trackType$ | async) == 'TRACKED' ? 'primary' : 'basic'
+					"
 					[nbTooltip]="'TIMER_TRACKER.TIMER' | translate"
 					[disabled]="running"
 				>
@@ -120,7 +121,11 @@
 							$event.stopPropagation(); setTimeType('MANUAL')
 						"
 						size="tiny"
-						[status]="timeType == 'MANUAL' ? 'primary' : 'basic'"
+						[status]="
+							(trackType$ | async) == 'MANUAL'
+								? 'primary'
+								: 'basic'
+						"
 						[disabled]="running || !organization?.allowManualTime"
 					>
 						<nb-icon icon="menu-outline"></nb-icon>
@@ -217,7 +222,7 @@
 				</div>
 			</div>
 		</div>
-		<div class="time-manual" *ngIf="timeType == 'MANUAL'">
+		<div class="time-manual" *ngIf="(trackType$ | async) == 'MANUAL'">
 			<button class="btn btn-success" (click)="addTime()">
 				{{ 'TIMER_TRACKER.ADD_TIME' | translate }}
 			</button>

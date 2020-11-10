@@ -80,7 +80,7 @@ export class TimeTrackerService implements OnDestroy {
 	organization: IOrganization;
 
 	private _trackType$: BehaviorSubject<string> = new BehaviorSubject(
-		TimeLogType.TRACKED
+		this.timeType
 	);
 	public trackType$: Observable<string> = this._trackType$.asObservable();
 
@@ -267,6 +267,18 @@ export class TimeTrackerService implements OnDestroy {
 
 	setTimeLogType(timeType: string) {
 		this._trackType$.next(timeType);
+		this.timeType =
+			timeType === 'TRACKED' ? TimeLogType.TRACKED : TimeLogType.MANUAL;
+	}
+
+	public get timeType(): TimeLogType {
+		return this.timerConfig.logType;
+	}
+	public set timeType(value: TimeLogType) {
+		this.timerConfig = {
+			...this.timerConfig,
+			logType: value
+		};
 	}
 
 	ngOnDestroy(): void {}

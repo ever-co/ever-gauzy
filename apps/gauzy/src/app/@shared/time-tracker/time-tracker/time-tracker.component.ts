@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TimeTrackerService } from '../time-tracker.service';
 import {
-	TimeLogType,
 	IOrganization,
 	IUser,
 	IDateRange,
@@ -17,6 +16,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { filter } from 'rxjs/operators';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
+import { Observable } from 'rxjs/Observable';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -38,6 +38,8 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	allowFutureDate: boolean;
 	@ViewChild(NgForm) form: NgForm;
 
+	trackType$: Observable<string> = this.timeTrackerService.trackType$;
+
 	constructor(
 		private timeTrackerService: TimeTrackerService,
 		private timesheetService: TimesheetService,
@@ -54,16 +56,6 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 		this.timeTrackerService.timerConfig = {
 			...this.timeTrackerService.timerConfig,
 			isBillable: value
-		};
-	}
-
-	public get timeType(): TimeLogType {
-		return this.timeTrackerService.timerConfig.logType;
-	}
-	public set timeType(value: TimeLogType) {
-		this.timeTrackerService.timerConfig = {
-			...this.timeTrackerService.timerConfig,
-			logType: value
 		};
 	}
 
@@ -235,10 +227,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	}
 
 	setTimeType(type: string) {
-		this.timeType =
-			type === 'TRACKED' ? TimeLogType.TRACKED : TimeLogType.MANUAL;
-
-		this.timeTrackerService.setTimeLogType(this.timeType);
+		this.timeTrackerService.setTimeLogType(type);
 	}
 
 	ngOnDestroy() {}
