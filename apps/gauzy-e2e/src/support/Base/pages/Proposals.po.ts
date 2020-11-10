@@ -2,11 +2,9 @@ import {
 	enterInput,
 	verifyElementIsVisible,
 	clickButton,
-	enterInputConditionally,
 	clearField,
 	clickKeyboardBtnByKeycode,
-	clickButtonByIndex,
-	clickElementByText
+	clickButtonByIndex
 } from '../utils/util';
 import { ProposalsPage } from '../pageobjects/ProposalsPageObject';
 
