@@ -12,7 +12,7 @@
 				type="text"
 				nbInput
 				placeholder="Select Date"
-				[(ngModel)]="dateRage"
+				[(ngModel)]="selectedDateRange"
 				[nbDatepicker]="formRangePicker"
 			/>
 			<nb-rangepicker #formRangePicker></nb-rangepicker>
@@ -88,7 +88,7 @@
 						[selectedEmployeeIds]="employeeIds"
 						[(ngModel)]="employeeIds"
 						[allEmployees]="employees"
-						[multiple]="multipleEmployeSelect"
+						[multiple]="multipleEmployeeSelect"
 						(selectedChange)="onChangeEmployee($event)"
 					>
 					</ga-employee-multi-select>

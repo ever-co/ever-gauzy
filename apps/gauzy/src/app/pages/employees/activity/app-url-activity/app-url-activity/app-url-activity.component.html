@@ -2,7 +2,7 @@
 	<div class="col">
 		<ngx-filters
 			[hasLogTypeFilter]="false"
-			[multipleEmployeSelect]="false"
+			[multipleEmployeeSelect]="false"
 			(filtersChange)="filtersChange($event)"
 		></ngx-filters>
 	</div>
@@ -17,12 +17,8 @@
 		class="row border-bottom border-top py-3 font-weight-bold align-items-center"
 	>
 		<div class="col-sm-3 py-2">App or site</div>
-		<div class="col-sm py-2">
-			Percent used
-		</div>
-		<div class="col-sm-2 text-center py-2">
-			Time spent (hrs)
-		</div>
+		<div class="col-sm py-2">Percent used</div>
+		<div class="col-sm-2 text-center py-2">Time spent (hrs)</div>
 	</div>
 	<div class="mt-3" *ngFor="let values of apps">
 		<div class="font-weight-bold py-2 border-bottom">
