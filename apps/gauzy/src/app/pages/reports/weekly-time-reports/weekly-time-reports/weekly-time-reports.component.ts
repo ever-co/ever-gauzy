@@ -14,7 +14,6 @@ import {
 	OrganizationPermissionsEnum,
 	PermissionsEnum
 } from '@gauzy/models';
-import { toUTC } from '@gauzy/utils';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { TimesheetStatisticsService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-statistics.service';
