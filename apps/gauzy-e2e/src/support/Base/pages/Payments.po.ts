@@ -5,7 +5,6 @@ import {
 	clearField,
 	enterInput,
 	clickElementByText,
-	getLastElement,
 	clickKeyboardBtnByKeycode
 } from '../utils/util';
 import { PaymentsPage } from '../pageobjects/PaymentsPageObject';
