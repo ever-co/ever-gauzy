@@ -19,16 +19,10 @@ export interface IReportCategory
 
 export interface IGetReportCategory {
 	relations: string[];
-	where: {
-		organizationId: string;
-		tenantId: string;
-	};
+	where?: IReport;
 }
 
 export interface IGetReport {
 	relations: string[];
-	where: {
-		organizationId: string;
-		tenantId: string;
-	};
+	where?: IReport;
 }

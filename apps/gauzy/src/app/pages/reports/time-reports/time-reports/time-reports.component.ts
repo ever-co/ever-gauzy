@@ -28,7 +28,7 @@ import * as _ from 'underscore';
 
 @UntilDestroy()
 @Component({
-	selector: 'gauzy-time-reports',
+	selector: 'ga-time-reports',
 	templateUrl: './time-reports.component.html',
 	styleUrls: ['./time-reports.component.scss']
 })

@@ -27,7 +27,7 @@ export class ReportService {
 
 	getReportCategories(request?: IGetReportCategory) {
 		return this.http
-			.get<IPagination<IReportCategory>>(`/api/report`, {
+			.get<IPagination<IReportCategory>>(`/api/report/category`, {
 				params: request ? toParams(request) : {}
 			})
 			.pipe(first())
