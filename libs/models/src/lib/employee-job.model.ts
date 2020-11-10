@@ -17,9 +17,9 @@ export interface IApplyJobPostInput {
 
 export interface IVisibilityJobPostInput {
 	hide: boolean;
-	employeeId: string | undefined;
-	providerCode: string;
-	providerJobId: string;
+	employeeId?: string | undefined;
+	providerCode?: string | undefined;
+	providerJobId?: string | undefined;
 }
 
 export interface IGetEmployeeJobPostFilters {

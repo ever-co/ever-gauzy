@@ -135,7 +135,7 @@ export class GauzyAIService {
 	 * @param employeeId If employeeId set, job will be set not active only for that specific employee (using EmployeeJobPost record update in Gauzy AI)
 	 * If employeeId is not set, job will be set not active for all employees (using JobPost record update in Gauzy AI)
 	 * @param providerCode e.g. 'upwork'
-	 * @param providerJobId Unique job id in the provider, e.g. in Upwork
+	 * @param providerJobId Unique job id in the provider, e.g. in Upwork. If this value is not set, it will update ALL jobs for given provider
 	 */
 	public async updateVisibility(
 		input: IVisibilityJobPostInput
@@ -144,65 +144,73 @@ export class GauzyAIService {
 			return false;
 		}
 
-		// First we need to get employee id because we have only externalId
-		const employeeId = await this.getEmployeeGauzyAIId(input.employeeId);
+		// If it's for specific employee and specific job
+		if (input.employeeId && input.providerCode && input.providerJobId) {
+			// First we need to get employee id because we have only externalId
+			const employeeId = await this.getEmployeeGauzyAIId(
+				input.employeeId
+			);
 
-		console.log(`updateVisibility called. EmployeeId: ${employeeId}`);
+			console.log(`updateVisibility called. EmployeeId: ${employeeId}`);
 
-		// Next we need to get a job using providerCode and providerJobId
-		const jobPostId = await this.getJobPostId(
-			input.providerCode,
-			input.providerJobId
-		);
+			// Next we need to get a job using providerCode and providerJobId
+			const jobPostId = await this.getJobPostId(
+				input.providerCode,
+				input.providerJobId
+			);
 
-		console.log(`updateVisibility called. jobPostId: ${jobPostId}`);
+			console.log(`updateVisibility called. jobPostId: ${jobPostId}`);
 
-		// Next, we need to find `public employee job post` table record in Gauzy AI to get id of record.
-		// We can find by employeeId and jobPostId
+			// Next, we need to find `public employee job post` table record in Gauzy AI to get id of record.
+			// We can find by employeeId and jobPostId
 
-		const employeeJobPostId = await this.getEmployeeJobPostId(
-			employeeId,
-			jobPostId
-		);
+			const employeeJobPostId = await this.getEmployeeJobPostId(
+				employeeId,
+				jobPostId
+			);
 
-		console.log(
-			`updateVisibility called. employeeJobPostId: ${employeeJobPostId}`
-		);
+			console.log(
+				`updateVisibility called. employeeJobPostId: ${employeeJobPostId}`
+			);
 
-		if (employeeId && jobPostId && employeeJobPostId) {
-			const update: UpdateEmployeeJobPost = {
-				employeeId: employeeId,
-				jobPostId: jobPostId,
-				isActive: !input.hide,
-				isArchived: input.hide
-			};
+			if (employeeId && jobPostId && employeeJobPostId) {
+				const update: UpdateEmployeeJobPost = {
+					employeeId: employeeId,
+					jobPostId: jobPostId,
+					isActive: !input.hide,
+					isArchived: input.hide
+				};
 
-			const updateEmployeeJobPostMutation: DocumentNode<any> = gql`
-				mutation updateOneEmployeeJobPost(
-					$input: UpdateOneEmployeeJobPostInput!
-				) {
-					updateOneEmployeeJobPost(input: $input) {
-						employeeId
-						jobPostId
-						isActive
-						isArchived
-						isApplied
-						appliedDate
+				const updateEmployeeJobPostMutation: DocumentNode<any> = gql`
+					mutation updateOneEmployeeJobPost(
+						$input: UpdateOneEmployeeJobPostInput!
+					) {
+						updateOneEmployeeJobPost(input: $input) {
+							employeeId
+							jobPostId
+							isActive
+							isArchived
+							isApplied
+							appliedDate
+						}
 					}
-				}
-			`;
+				`;
 
-			await this._client.mutate({
-				mutation: updateEmployeeJobPostMutation,
-				variables: {
-					input: {
-						id: employeeJobPostId,
-						update: update
+				await this._client.mutate({
+					mutation: updateEmployeeJobPostMutation,
+					variables: {
+						input: {
+							id: employeeJobPostId,
+							update: update
+						}
 					}
-				}
-			});
+				});
 
-			return true;
+				return true;
+			}
+		} else {
+			// OK, so it's for all jobs for all employees or for all jobs on specific employee
+			// TODO: implement
 		}
 
 		return false;
