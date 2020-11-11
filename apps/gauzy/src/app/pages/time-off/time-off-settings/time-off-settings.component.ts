@@ -8,7 +8,6 @@ import {
 import { AuthService } from '../../../@core/services/auth.service';
 import {
 	RolesEnum,
-	PermissionsEnum,
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	ITimeOffPolicyVM,
