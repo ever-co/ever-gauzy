@@ -856,6 +856,19 @@ export class GauzyAIService {
 
 			console.log(`Applying filter: ${JSON.stringify(filter)}`);
 
+			const graphQLPageSize = 50;
+
+			// e.g. if it's page 7 and limit is 10, it mean we need to load first 70 records, i.e. do 2 trips to server because each trip get 50 records
+			const loadCounts = Math.ceil(
+				(data.page * data.limit) / graphQLPageSize
+			);
+
+			console.log(`Round trips to Gauzy API: ${loadCounts}`);
+
+			let currentCount = 1;
+
+			let totalCount;
+
 			do {
 				const result: ApolloQueryResult<EmployeeJobPostsQuery> = await this._client.query<
 					EmployeeJobPostsQuery
@@ -863,7 +876,7 @@ export class GauzyAIService {
 					query: employeesQuery,
 					variables: {
 						after: after,
-						first: 50,
+						first: graphQLPageSize,
 						sorting: [
 							{
 								field: 'jobDateCreated',
@@ -906,28 +919,31 @@ export class GauzyAIService {
 					}
 				);
 
-				isContinue = result.data.employeeJobPosts.pageInfo.hasNextPage;
+				isContinue =
+					result.data.employeeJobPosts.pageInfo.hasNextPage &&
+					currentCount < loadCounts;
 				after = result.data.employeeJobPosts.pageInfo.endCursor;
+				totalCount = result.data.employeeJobPosts.totalCount;
 
 				jobResponses.push(...jobsResponse);
 
 				console.log(
 					`Found ${jobsResponse.length} job records. IsContinue: ${isContinue}. After: ${after}`
 				);
+
+				currentCount++;
 			} while (isContinue);
 
 			// Note: possible to do additional client side filtering like below:
 			// jobResponses = _.filter(jobResponses, (it) => it.isActive === true && it.isArchived === false);
 
-			const count = jobResponses.length;
-
 			console.log(
-				`getEmployeesJobPosts. Total Count: ${count}. Page ${data.page}`
+				`getEmployeesJobPosts. Total Count: ${totalCount}. Page ${data.page}`
 			);
 
 			const response: IPagination<IEmployeeJobPost> = {
 				items: this.paginate(jobResponses, data.limit, data.page),
-				total: count
+				total: totalCount
 			};
 
 			// console.log(`Found Records: ${JSON.stringify(response)}`);
