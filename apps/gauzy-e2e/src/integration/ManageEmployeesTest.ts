@@ -8,6 +8,7 @@ import * as addTaskPage from '../support/Base/pages/AddTasks.po';
 import { AddTasksPageData } from '../support/Base/pagedata/AddTasksPageData';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
+import { manageCategoriesButtonVisible } from '../support/Base/pages/Expenses.po';
 
 let email = ' ';
 let secEmail = ' ';
@@ -121,5 +122,65 @@ describe('Manage employees test', () => {
 		manageEmployeesPage.clickNextStepButton();
 		manageEmployeesPage.lastStepButtonVisible();
 		manageEmployeesPage.clickLastStepButton();
+	});
+	it('Should be able to edit employee', () => {
+		manageEmployeesPage.tableRowVisible();
+		manageEmployeesPage.selectTableRow(0);
+		manageEmployeesPage.selectTableRow(0);
+		manageEmployeesPage.editButtonVisible();
+		manageEmployeesPage.clickEditButton();
+		manageEmployeesPage.usernameEditInputVisible();
+		manageEmployeesPage.enterUsernameEditInputData(username);
+		manageEmployeesPage.emailEditInputVisible();
+		manageEmployeesPage.enterEmailEditInputData(email);
+		manageEmployeesPage.firstNameEditInputVisible();
+		manageEmployeesPage.enterFirstNameEditInputData(firstName);
+		manageEmployeesPage.lastNameEditInputVisible();
+		manageEmployeesPage.enterLastNameEditInputData(lastName);
+		manageEmployeesPage.preferedLanguageDropdownVisible();
+		manageEmployeesPage.clickPreferedLanguageDropdown();
+		manageEmployeesPage.selectLanguageFromDropdown(
+			ManageEmployeesPageData.preferedLanguage
+		);
+		manageEmployeesPage.saveEditButtonVisible();
+		manageEmployeesPage.clickSaveEditButton();
+		manageEmployeesPage.backButtonVisible();
+		manageEmployeesPage.clickBackButton();
+	});
+	it('Should be able to end work', () => {
+		manageEmployeesPage.selectTableRow(0);
+		manageEmployeesPage.endWorkButtonVisible();
+		manageEmployeesPage.clickEndWorkButton();
+		manageEmployeesPage.confirmEndWorkButtonVisible();
+		manageEmployeesPage.clickConfirmEndWorkButton();
+	});
+	it('Should be able to delete employee', () => {
+		manageEmployeesPage.selectTableRow(0);
+		manageEmployeesPage.deleteButtonVisible();
+		manageEmployeesPage.clickDeleteButton();
+		manageEmployeesPage.confirmDeleteButtonVisible();
+		manageEmployeesPage.clickConfirmDeleteButton();
+	});
+	it('Should be able to copy invite link', () => {
+		manageEmployeesPage.manageInvitesButtonVisible();
+		manageEmployeesPage.clickManageInviteButton();
+		manageEmployeesPage.selectTableRow(0);
+		manageEmployeesPage.copyLinkButtonVisible();
+		manageEmployeesPage.clickCopyLinkButton();
+	});
+	it('Should be able to resend invite', () => {
+		manageEmployeesPage.selectTableRow(0);
+		manageEmployeesPage.resendInviteButtonVisible();
+		manageEmployeesPage.clickResendInviteButton();
+		manageEmployeesPage.confirmResendInviteButtonVisible();
+		manageEmployeesPage.clickConfirmResendInviteButton();
+	});
+	it('Should be able to delete invite', () => {
+		manageEmployeesPage.selectTableRow(0);
+		manageEmployeesPage.selectTableRow(0);
+		manageEmployeesPage.deleteInviteButtonVisible();
+		manageEmployeesPage.clickDeleteInviteButton();
+		manageEmployeesPage.confirmDeleteInviteButtonVisible();
+		manageEmployeesPage.clickConfirmDeleteInviteButton();
 	});
 });
