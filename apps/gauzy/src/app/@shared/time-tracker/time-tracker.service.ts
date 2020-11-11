@@ -169,7 +169,7 @@ export class TimeTrackerService implements OnDestroy {
 		return timerConfig;
 	}
 	public set timerConfig(value: ITimerToggleInput) {
-		localStorage.setItem('timerConfig', JSON.stringify(value));
+		// localStorage.setItem('timerConfig', JSON.stringify(value));
 		this.timerStore.update({
 			timerConfig: value
 		});
@@ -279,6 +279,15 @@ export class TimeTrackerService implements OnDestroy {
 			...this.timerConfig,
 			logType: value
 		};
+	}
+
+	/*
+	 * Clear time tracker local store
+	 */
+	clearTimeTracker() {
+		const obj = createInitialTimerState();
+		this.timerStore.update(obj);
+		return obj;
 	}
 
 	ngOnDestroy(): void {}

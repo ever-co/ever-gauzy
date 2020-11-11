@@ -13,6 +13,8 @@ import {
 	IGetTimeLogReportInput
 } from '@gauzy/models';
 import { toParams } from '@gauzy/utils';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { Observable } from 'rxjs/Observable';
 
 @Injectable({
 	providedIn: 'root'
@@ -20,7 +22,14 @@ import { toParams } from '@gauzy/utils';
 export class TimesheetService {
 	interval: any;
 
+	private _updateLog$: BehaviorSubject<boolean> = new BehaviorSubject(false);
+	public updateLog$: Observable<boolean> = this._updateLog$.asObservable();
+
 	constructor(private http: HttpClient) {}
+
+	updateLogs(value: boolean) {
+		this._updateLog$.next(value);
+	}
 
 	addTime(request: IManualTimeInput): Promise<ITimeLog> {
 		return this.http
@@ -81,7 +90,7 @@ export class TimesheetService {
 			});
 	}
 
-	submitTimeheet(ids: string | string[], status: 'submit' | 'unsubmit') {
+	submitTimesheet(ids: string | string[], status: 'submit' | 'unsubmit') {
 		return this.http
 			.put(`/api/timesheet/submit`, { ids, status })
 			.toPromise()
