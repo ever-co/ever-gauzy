@@ -6,7 +6,7 @@ import { WeeklyTimeReportsComponent } from './weekly-time-reports/weekly-time-re
 import { SharedModule } from '../../../@shared/shared.module';
 import { NbIconModule, NbSpinnerModule, NbCardModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { WeeklyTimeReportHorizontalBarChartModule } from '../weekly-time-report-horizontal-bar-chart/weekly-time-report-horizontal-bar-chart.module';
+import { WeeklyTimeReportHorizontalBarChartModule } from '../charts/weekly-time-report-horizontal-bar-chart/weekly-time-report-horizontal-bar-chart.module';
 import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
 
 @NgModule({

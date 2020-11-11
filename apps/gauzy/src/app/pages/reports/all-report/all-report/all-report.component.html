@@ -1,0 +1,25 @@
+<nb-card>
+	<nb-card-header>
+		<h4>{{ 'REPORT_PAGE.ALL_REPORTS' | translate }}</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="row" *ngFor="let reportCategory of reportCategories">
+			<div
+				class="col-sm-3 col-md-4"
+				*ngFor="let report of reportCategory.reports"
+			>
+				<nb-card
+					[nbSpinner]="countsLoading"
+					nbSpinnerSize="giant"
+					nbSpinnerStatus="primary"
+				>
+					<nb-card-body>
+						<div class="h3">
+							{{ report?.name || 0 }}
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+		</div>
+	</nb-card-body>
+</nb-card>
