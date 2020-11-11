@@ -31,6 +31,7 @@ import { RequestApprovalIcon } from './table-components/request-approval-icon';
 import { PaidIcon } from './table-components/paid-icon';
 import { SharedModule } from '../../@shared/shared.module';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
+import { NgxPermissionsModule } from 'ngx-permissions';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -66,7 +67,11 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		}),
 		NbSpinnerModule,
-		TimeOffMutationModule
+		TimeOffMutationModule,
+		NgxPermissionsModule.forChild({
+			permissionsIsolate: true,
+			rolesIsolate: true
+		})
 	],
 	declarations: [
 		TimeOffComponent,

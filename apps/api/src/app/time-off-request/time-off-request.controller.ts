@@ -28,7 +28,7 @@ import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.g
 @ApiTags('TimeOffRequest')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
-export class TimeOffRequestControler extends CrudController<TimeOffRequest> {
+export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 	constructor(
 		private readonly requestService: TimeOffRequestService,
 		private commandBus: CommandBus

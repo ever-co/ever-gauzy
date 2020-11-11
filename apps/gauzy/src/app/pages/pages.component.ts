@@ -763,9 +763,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 				takeUntil(this._ngDestroy$)
 			)
 			.subscribe((data) => {
-				const permissions = data.map(
-					(permisson) => permisson.permission
-				);
+				const permissions = data.map(({ permission }) => permission);
 				this.permissionsService.loadPermissions(permissions);
 				this.loadItems(
 					this.selectorService.showSelectors(this.router.url)

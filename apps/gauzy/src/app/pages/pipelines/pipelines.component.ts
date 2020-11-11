@@ -84,7 +84,7 @@ export class PipelinesComponent
 		readonly translateService: TranslateService,
 		private store: Store,
 		private router: Router,
-		private readonly permissionsService: NgxPermissionsService
+		private readonly ngxPermissionsService: NgxPermissionsService
 	) {
 		super(translateService);
 		this.setView();
@@ -99,10 +99,8 @@ export class PipelinesComponent
 				untilDestroyed(this)
 			)
 			.subscribe((data) => {
-				const permissions = data.map(
-					(permisson) => permisson.permission
-				);
-				this.permissionsService.loadPermissions(permissions);
+				const permissions = data.map(({ permission }) => permission);
+				this.ngxPermissionsService.loadPermissions(permissions);
 			});
 		this.store.selectedOrganization$
 			.pipe(

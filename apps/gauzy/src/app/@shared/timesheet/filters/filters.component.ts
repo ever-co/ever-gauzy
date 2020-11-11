@@ -109,7 +109,6 @@ export class FiltersComponent implements OnInit, OnDestroy, AfterViewInit {
 	}
 
 	public set selectedDate(value: Date) {
-		console.log('selectedDate', value);
 		const date = value as Date;
 		this.filters.date = date;
 		const range = this.dateRange as 'day' | 'week' | 'month';
@@ -129,7 +128,6 @@ export class FiltersComponent implements OnInit, OnDestroy, AfterViewInit {
 	}
 
 	set selectedDateRange(range: NbCalendarRange<Date>) {
-		console.log('selectedDateRange', range);
 		this._selectedDateRange = range;
 		if (range.start && range.end) {
 			this.filters.startDate = moment(range.start).format('YYYY-MM-DD');
@@ -260,7 +258,11 @@ export class FiltersComponent implements OnInit, OnDestroy, AfterViewInit {
 	clearFilters(): void {
 		const obj = this.timesheetFilterService.clear();
 		this.filters = obj;
-		this._employeeIds = [];
+		if (this.multipleEmployeeSelect) {
+			this._employeeIds = [];
+		} else {
+			this._employeeIds = '';
+		}
 		this.setDefaultEmployee();
 		this.updateLogs$.next();
 	}

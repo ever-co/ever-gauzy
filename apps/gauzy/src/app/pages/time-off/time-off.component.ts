@@ -2,10 +2,10 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import {
 	StatusTypesEnum,
-	PermissionsEnum,
 	ITimeOff,
 	ComponentLayoutStyleEnum,
-	IOrganization
+	IOrganization,
+	IRolePermission
 } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { filter, first, tap } from 'rxjs/operators';
@@ -22,6 +22,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { NgxPermissionsService } from 'ngx-permissions';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-time-off',
@@ -46,7 +47,6 @@ export class TimeOffComponent
 	loading = false;
 	isRecordSelected = false;
 	displayHolidays = true;
-	hasEditPermission = false;
 	showActions = false;
 	private _selectedOrganizationId: string;
 	organization: IOrganization;
@@ -65,7 +65,8 @@ export class TimeOffComponent
 		private timeOffService: TimeOffService,
 		private toastrService: ToastrService,
 		private store: Store,
-		private translate: TranslateService
+		private translate: TranslateService,
+		private readonly ngxPermissionsService: NgxPermissionsService
 	) {
 		super(translate);
 		this.setView();
@@ -73,17 +74,20 @@ export class TimeOffComponent
 
 	ngOnInit() {
 		this.store.userRolePermissions$
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.hasEditPermission = this.store.hasPermission(
-					PermissionsEnum.POLICY_EDIT
-				);
+			.pipe(
+				filter(
+					(permissions: IRolePermission[]) => permissions.length > 0
+				),
+				untilDestroyed(this)
+			)
+			.subscribe((data) => {
+				const permissions = data.map(({ permission }) => permission);
+				this.ngxPermissionsService.loadPermissions(permissions);
 			});
 		this.store.selectedDate$
 			.pipe(untilDestroyed(this))
 			.subscribe((date) => {
 				this.selectedDate = date;
-
 				if (this.selectedEmployeeId) {
 					this._loadTableData(this._selectedOrganizationId);
 				} else {
@@ -93,7 +97,10 @@ export class TimeOffComponent
 				}
 			});
 		this.store.selectedEmployee$
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter((employee) => !!employee),
+				untilDestroyed(this)
+			)
 			.subscribe((employee) => {
 				if (employee && employee.id) {
 					this.selectedEmployeeId = employee.id;
