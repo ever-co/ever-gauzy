@@ -158,8 +158,7 @@ export const DEFAULT_INTEGRATION_PAID_FILTERS = [
 export const DEFAULT_INTEGRATIONS = [
 	{
 		name: IntegrationEnum.HUBSTAFF,
-		imgSrc:
-			'https://account.hubstaff.com/assets/hubstaff/logos/HS_text_logo_black-18504e00c286dca13b2c503b94d1eabdf6e1c45257ca558b78095c4e184a020c.svg',
+		imgSrc: 'assets/images/integrations/hubstaff.svg',
 		integrationTypesMap: <string[]>[
 			IntegrationTypeNameEnum.ALL_INTEGRATIONS
 		],
