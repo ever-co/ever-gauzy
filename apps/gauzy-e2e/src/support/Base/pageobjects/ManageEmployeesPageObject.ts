@@ -4,7 +4,7 @@ export const ManageEmployeesPage = {
 	emailsInputCss: '#emailsSelect',
 	dateInputCss: '[formcontrolname="startedWorkOn"]',
 	selectProjectDropdownCss: '#projectsSelect',
-	selectProjectDropdownOptionCss: 'div.ng-option',
+	selectProjectDropdownOptionCss: 'div.ng-option > span.ng-option-label',
 	sendInviteButtonCss: 'nb-card-footer.text-right > button[status="success"]',
 	addEmployeeButtonCss: 'div.mb-3 > button[status="success"]',
 	editEmployeeButtonCss: 'div.mb-3 > button[status="info"]',
@@ -32,7 +32,14 @@ export const ManageEmployeesPage = {
 	emailEditInputCss: '#emailInput',
 	firstNameEditInputCss: '#firstNameInput',
 	lastNameEditInputCss: '#lastNameInput',
-	preferedLanguageDropdownCss: 'button',
+	preferedLanguageDropdownCss: '#preferredLanguage',
 	preferedLanguageOptionCss: '.option-list nb-option',
-	cardBodyCss: 'div.text-right'
+	cardBodyCss: 'div.text-right',
+	manageInvitesButonCss:
+		'div.header-selector-wrapper > div > button[status="primary"]',
+	copyLinkButtonCss: 'div.mb-3 > button[status="success"]',
+	resendInviteButtonCss: 'div.mb-3 > button[status="warning"]',
+	deleteInviteButtonCss: 'div.mb-3 > button[status="danger"]',
+	confirmResendInviteButtonCss: 'nb-card-footer > button[status="success"]',
+	confirmDeleteInviteButtonCss: 'nb-card-footer > button[status="danger"]'
 };

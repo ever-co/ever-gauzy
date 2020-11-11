@@ -10,6 +10,7 @@ import {
 } from '../utils/util';
 import { ManageEmployeesPage } from '../pageobjects/ManageEmployeesPageObject';
 
+// INVITE EMPLOYEE BY EMAIL
 export const gridBtnExists = () => {
 	verifyElementIsVisible(ManageEmployeesPage.gridButtonCss);
 };
@@ -57,7 +58,6 @@ export const clickProjectDropdown = () => {
 };
 
 export const selectProjectFromDropdown = (text) => {
-	clickButton(ManageEmployeesPage.selectProjectDropdownOptionCss);
 	clickElementByText(
 		ManageEmployeesPage.selectProjectDropdownOptionCss,
 		text
@@ -72,7 +72,7 @@ export const clickSendInviteButton = () => {
 	clickButton(ManageEmployeesPage.sendInviteButtonCss);
 };
 
-///////////////////////////////
+// ADD NEW EMPLOYEE
 export const addEmployeeButtonVisible = () => {
 	verifyElementIsVisible(ManageEmployeesPage.addEmployeeButtonCss);
 };
@@ -174,6 +174,8 @@ export const clickLastStepButton = () => {
 	clickButton(ManageEmployeesPage.lastStepButtonCss);
 };
 
+// EDIT EMPLOYEE
+
 export const tableRowVisible = () => {
 	verifyElementIsVisible(ManageEmployeesPage.selectTableRowCss);
 };
@@ -230,6 +232,10 @@ export const preferedLanguageDropdownVisible = () => {
 	verifyElementIsVisible(ManageEmployeesPage.preferedLanguageDropdownCss);
 };
 
+export const clickPreferedLanguageDropdown = () => {
+	clickButton(ManageEmployeesPage.preferedLanguageDropdownCss);
+};
+
 export const selectLanguageFromDropdown = (text) => {
 	clickElementByText(ManageEmployeesPage.preferedLanguageOptionCss, text);
 };
@@ -248,4 +254,94 @@ export const backButtonVisible = () => {
 
 export const clickBackButton = () => {
 	clickButton(ManageEmployeesPage.backButtonCss);
+};
+
+// END WORK
+
+export const endWorkButtonVisible = () => {
+	verifyElementIsVisible(ManageEmployeesPage.endWorkButtonCss);
+};
+
+export const clickEndWorkButton = () => {
+	clickButton(ManageEmployeesPage.endWorkButtonCss);
+};
+
+export const confirmEndWorkButtonVisible = () => {
+	verifyElementIsVisible(ManageEmployeesPage.confirmEndWorkButtonCss);
+};
+
+export const clickConfirmEndWorkButton = () => {
+	clickButton(ManageEmployeesPage.confirmEndWorkButtonCss);
+};
+
+// DELETE EMPLOYEE
+
+export const deleteButtonVisible = () => {
+	verifyElementIsVisible(ManageEmployeesPage.deleteEmployeeButtonCss);
+};
+
+export const clickDeleteButton = () => {
+	clickButton(ManageEmployeesPage.deleteEmployeeButtonCss);
+};
+
+export const confirmDeleteButtonVisible = () => {
+	verifyElementIsVisible(ManageEmployeesPage.confirmDeleteButtonCss);
+};
+
+export const clickConfirmDeleteButton = () => {
+	clickButton(ManageEmployeesPage.confirmDeleteButtonCss);
+};
+
+// COPY INVITE LINK
+
+export const manageInvitesButtonVisible = () => {
+	verifyElementIsVisible(ManageEmployeesPage.manageInvitesButonCss);
+};
+
+export const clickManageInviteButton = () => {
+	clickButton(ManageEmployeesPage.manageInvitesButonCss);
+};
+
+export const copyLinkButtonVisible = () => {
+	verifyElementIsVisible(ManageEmployeesPage.copyLinkButtonCss);
+};
+
+export const clickCopyLinkButton = () => {
+	clickButton(ManageEmployeesPage.copyLinkButtonCss);
+};
+
+// RESEND INVITE
+
+export const resendInviteButtonVisible = () => {
+	verifyElementIsVisible(ManageEmployeesPage.resendInviteButtonCss);
+};
+
+export const clickResendInviteButton = () => {
+	clickButton(ManageEmployeesPage.resendInviteButtonCss);
+};
+
+export const confirmResendInviteButtonVisible = () => {
+	verifyElementIsVisible(ManageEmployeesPage.confirmResendInviteButtonCss);
+};
+
+export const clickConfirmResendInviteButton = () => {
+	clickButton(ManageEmployeesPage.confirmResendInviteButtonCss);
+};
+
+// DELETE INVITE
+
+export const deleteInviteButtonVisible = () => {
+	verifyElementIsVisible(ManageEmployeesPage.deleteInviteButtonCss);
+};
+
+export const clickDeleteInviteButton = () => {
+	clickButton(ManageEmployeesPage.deleteInviteButtonCss);
+};
+
+export const confirmDeleteInviteButtonVisible = () => {
+	verifyElementIsVisible(ManageEmployeesPage.confirmDeleteInviteButtonCss);
+};
+
+export const clickConfirmDeleteInviteButton = () => {
+	clickButton(ManageEmployeesPage.confirmDeleteInviteButtonCss);
 };
