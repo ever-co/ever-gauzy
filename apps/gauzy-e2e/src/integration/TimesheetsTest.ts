@@ -38,25 +38,20 @@ describe('Timesheets test', () => {
 		timesheetsPage.selectEmployeeDropdownVisible();
 		timesheetsPage.clickSelectEmployeeDropdown();
 		timesheetsPage.selectEmployeeFromDropdown(0);
+		timesheetsPage.dateInputVisible();
+		timesheetsPage.enterDateData();
+		timesheetsPage.clickKeyboardButtonByKeyCode(9);
 		timesheetsPage.selectProjectDropdownVisible();
-		// timesheetsPage.clickSelectProjectDropdown()
-		// timesheetsPage.selectProjectOptionDropdown(TimesheetsPageData.defaultProjectName)
-		// timesheetsPage.dateInputVisible();
-		// timesheetsPage.enterDateData();
-		// timesheetsPage.startTimePickerVisible();
-		// timesheetsPage.clickStartTimePicker();
-		// timesheetsPage.selectTimeFromDropdown(0);
-		// timesheetsPage.endTimePickerVisible();
-		// timesheetsPage.clickEndTimePicker();
-		// timesheetsPage.selectTimeFromDropdown(0);
-		// timesheetsPage.addTimeLogDescriptionVisible();
-		// timesheetsPage.enterTimeLogDescriptionData(
-		// 	TimesheetsPageData.defaultDescription
-		// );
+		timesheetsPage.clickSelectProjectDropdown();
+		timesheetsPage.selectProjectOptionDropdown(
+			TimesheetsPageData.defaultProjectName
+		);
+		timesheetsPage.addTimeLogDescriptionVisible();
+		timesheetsPage.enterTimeLogDescriptionData(
+			TimesheetsPageData.defaultDescription
+		);
 		timesheetsPage.saveTimeLogButtonVisible();
 		timesheetsPage.clickSaveTiemLogButton();
-		// timesheetsPage.closeAddTimeLogPopoverButtonVisible();
-		// timesheetsPage.clickCloseAddTimeLogPopoverButton();
 		// timesheetsPage.viewEmployeeTimeLogButtonVisible();
 		// timesheetsPage.clickViewEmployeeTimeLogButton();
 		// timesheetsPage.closeAddTimeLogPopoverButtonVisible();
