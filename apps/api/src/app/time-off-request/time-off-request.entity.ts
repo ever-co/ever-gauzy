@@ -6,7 +6,12 @@ import {
 	JoinTable,
 	ManyToOne
 } from 'typeorm';
-import { ITimeOff as ITimeOffRequest, StatusTypesEnum } from '@gauzy/models';
+import {
+	IEmployee,
+	ITimeOff as ITimeOffRequest,
+	ITimeOffPolicy,
+	StatusTypesEnum
+} from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsString,
@@ -20,13 +25,14 @@ import { TimeOffPolicy } from '../time-off-policy/time-off-policy.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('time_off_request')
-export class TimeOffRequest extends TenantOrganizationBase
+export class TimeOffRequest
+	extends TenantOrganizationBase
 	implements ITimeOffRequest {
 	@ManyToMany((type) => Employee, { cascade: true })
 	@JoinTable({
 		name: 'time_off_request_employee'
 	})
-	employees?: Employee[];
+	employees?: IEmployee[];
 
 	@ApiProperty({ type: String })
 	@IsString()
@@ -47,7 +53,7 @@ export class TimeOffRequest extends TenantOrganizationBase
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	policy?: TimeOffPolicy;
+	policy?: ITimeOffPolicy;
 
 	@ApiProperty({ type: Date })
 	@IsDate()

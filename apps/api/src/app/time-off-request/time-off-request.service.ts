@@ -63,16 +63,16 @@ export class TimeOffRequestService extends CrudService<TimeOffRequest> {
 
 	async getAllTimeOffRequests(relations, findInput?, filterDate?) {
 		try {
+			const where = {
+				organizationId: findInput['organizationId'],
+				tenantId: findInput['tenantId']
+			};
 			const allRequests = await this.timeOffRequestRepository.find({
-				where: {
-					organizationId: findInput['organizationId'],
-					tenantId: findInput['tenantId']
-				},
+				where,
 				relations
 			});
-			let items = [];
-			const total = await this.timeOffRequestRepository.count();
 
+			let items = [];
 			if (findInput['employeeId']) {
 				allRequests.forEach((request) => {
 					request.employees.forEach((e) => {
@@ -101,7 +101,7 @@ export class TimeOffRequestService extends CrudService<TimeOffRequest> {
 				});
 			}
 
-			return { items, total };
+			return { items, total: items.length };
 		} catch (err) {
 			throw new BadRequestException(err);
 		}

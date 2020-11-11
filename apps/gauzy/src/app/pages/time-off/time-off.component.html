@@ -48,33 +48,35 @@
 				>{{ 'TIME_OFF_PAGE.DISPLAY_HOLIDAYS' | translate }}
 			</nb-checkbox>
 
-			<button
-				(click)="openTimeOffSettings()"
-				*ngIf="hasEditPermission"
-				nbButton
-				status="primary"
-				style="border-radius: 5px 20px 5px;"
-				class="mr-3"
-			>
-				<nb-icon
-					class="mr-1"
-					style="font-size: 2em;"
-					icon="settings-outline"
-				></nb-icon>
-				{{ 'TIME_OFF_PAGE.SETTINGS' | translate }}
-			</button>
+			<ng-template ngxPermissionsOnly="POLICY_VIEW">
+				<button
+					(click)="openTimeOffSettings()"
+					nbButton
+					status="primary"
+					style="border-radius: 5px 20px 5px"
+					class="mr-3"
+				>
+					<nb-icon
+						class="mr-1"
+						style="font-size: 2em"
+						icon="settings-outline"
+					></nb-icon>
+					{{ 'TIME_OFF_PAGE.SETTINGS' | translate }}
+				</button>
+			</ng-template>
 		</div>
-		<div
-			class="row actions-container"
-			*ngIf="isRecordSelected && hasEditPermission"
-		>
-			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
-				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
-			</ng-container>
-		</div>
+		<ng-template ngxPermissionsOnly="TIME_OFF_EDIT">
+			<div class="row actions-container" *ngIf="isRecordSelected">
+				<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+					<ng-container
+						*ngTemplateOutlet="actionButtons"
+					></ng-container>
+				</ng-container>
+			</div>
+		</ng-template>
 		<ng2-smart-table
 			class="time-off-table"
-			style="cursor: pointer;"
+			style="cursor: pointer"
 			[settings]="settingsSmartTable"
 			[source]="sourceSmartTable"
 			(userRowSelect)="selectRecord($event)"

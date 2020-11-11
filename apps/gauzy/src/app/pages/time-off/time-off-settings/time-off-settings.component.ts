@@ -11,9 +11,10 @@ import {
 	PermissionsEnum,
 	ComponentLayoutStyleEnum,
 	IOrganization,
-	ITimeOffPolicyVM
+	ITimeOffPolicyVM,
+	IRolePermission
 } from '@gauzy/models';
-import { first, tap } from 'rxjs/operators';
+import { filter, first, tap } from 'rxjs/operators';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TimeOffSettingsMutationComponent } from '../../../@shared/time-off/settings-mutation/time-off-settings-mutation.component';
@@ -27,6 +28,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
+import { NgxPermissionsService } from 'ngx-permissions';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -41,11 +43,12 @@ export class TimeOffSettingsComponent
 		private dialogService: NbDialogService,
 		private authService: AuthService,
 		private toastrService: NbToastrService,
-		private tymeOffService: TimeOffService,
+		private timeOffService: TimeOffService,
 		private store: Store,
 		private errorHandler: ErrorHandler,
 		readonly translateService: TranslateService,
-		private router: Router
+		private router: Router,
+		private readonly ngxPermissionsService: NgxPermissionsService
 	) {
 		super(translateService);
 		this.setView();
@@ -76,18 +79,25 @@ export class TimeOffSettingsComponent
 		}
 	}
 
-	async ngOnInit() {
+	ngOnInit() {
 		this._loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.store.userRolePermissions$
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.hasEditPermission = this.store.hasPermission(
-					PermissionsEnum.POLICY_EDIT
-				);
+			.pipe(
+				filter(
+					(permissions: IRolePermission[]) => permissions.length > 0
+				),
+				untilDestroyed(this)
+			)
+			.subscribe((data) => {
+				const permissions = data.map(({ permission }) => permission);
+				this.ngxPermissionsService.loadPermissions(permissions);
 			});
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((org) => {
 				if (org) {
 					this.organization = org;
@@ -178,7 +188,7 @@ export class TimeOffSettingsComponent
 
 	addPolicy(formData) {
 		if (formData) {
-			this.tymeOffService
+			this.timeOffService
 				.createPolicy(formData)
 				.pipe(first(), untilDestroyed(this))
 				.subscribe(
@@ -221,7 +231,7 @@ export class TimeOffSettingsComponent
 	}
 
 	editPolicy(formData) {
-		this.tymeOffService
+		this.timeOffService
 			.updatePolicy(this.selectedPolicyId, formData)
 			.pipe(first(), untilDestroyed(this))
 			.subscribe(
@@ -254,7 +264,7 @@ export class TimeOffSettingsComponent
 			.subscribe(
 				(result) => {
 					if (result) {
-						this.tymeOffService
+						this.timeOffService
 							.deletePolicy(this.selectedPolicy.id)
 							.pipe(first(), untilDestroyed(this))
 							.subscribe(() => {
@@ -293,7 +303,7 @@ export class TimeOffSettingsComponent
 				tenantId: this.organization.tenantId
 			};
 
-			this.tymeOffService
+			this.timeOffService
 				.getAllPolicies(['employees'], findObj)
 				.pipe(first(), untilDestroyed(this))
 				.subscribe(

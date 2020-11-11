@@ -29,6 +29,7 @@ import { Store } from '../../../@core/services/store.service';
 	]
 })
 export class EmployeeSelectComponent implements OnInit, OnDestroy {
+	loaded: boolean;
 	organization: any;
 	preSelected: string[] | string;
 	@Input()
@@ -88,6 +89,12 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	onTouched: any = () => {};
 
 	ngOnInit(): void {
+		//delay to pre selected employee
+		this.loaded = false;
+		setTimeout(() => {
+			this.loaded = true;
+		}, 500);
+
 		this.changeValue$
 			.pipe(untilDestroyed(this), debounceTime(100))
 			.subscribe((value) => {
@@ -126,6 +133,7 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	writeValue(value: any) {
 		this.changeValue$.next(value);
 	}
+
 	registerOnChange(fn: (rating: number) => void): void {
 		this.onChange = fn;
 	}
