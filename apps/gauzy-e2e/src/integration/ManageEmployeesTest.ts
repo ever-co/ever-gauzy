@@ -8,7 +8,6 @@ import * as addTaskPage from '../support/Base/pages/AddTasks.po';
 import { AddTasksPageData } from '../support/Base/pagedata/AddTasksPageData';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
-import { manageCategoriesButtonVisible } from '../support/Base/pages/Expenses.po';
 
 let email = ' ';
 let secEmail = ' ';
