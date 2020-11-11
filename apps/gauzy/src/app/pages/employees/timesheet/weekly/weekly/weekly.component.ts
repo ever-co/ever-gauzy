@@ -13,7 +13,7 @@ import {
 import { toUTC } from '@gauzy/utils';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { NbDialogService } from '@nebular/theme';
 import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
@@ -80,13 +80,18 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 					this.updateLogs$.next();
 				}
 			});
-
 		this.updateLogs$
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(() => {
 				this.getLogs();
 			});
-
+		this.timesheetService.updateLog$
+			.pipe(
+				filter((val) => val === true),
+				tap(() => this.getLogs()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.ngxPermissionsService.permissions$
 			.pipe(untilDestroyed(this))
 			.subscribe(async () => {

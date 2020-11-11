@@ -83,7 +83,11 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		this.timeTrackerService.duration$
 			.pipe(untilDestroyed(this))
 			.subscribe((time) => {
-				this.timerDuration = moment.utc(time * 1000).format('HH:mm:ss');
+				if (!isNaN(time)) {
+					this.timerDuration = moment
+						.utc(time * 1000)
+						.format('HH:mm:ss');
+				}
 			});
 
 		this.menuService
@@ -254,7 +258,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				icon: 'clock-outline',
 				hidden: !this.isEmployee,
 				data: {
-					action: this.actions.START_TIMER //This opens the timer poup in the header, managed by menu.itemClick TOO: Start the timer also
+					action: this.actions.START_TIMER //This opens the timer popup in the header, managed by menu.itemClick TOO: Start the timer also
 				}
 			},
 			// TODO: divider

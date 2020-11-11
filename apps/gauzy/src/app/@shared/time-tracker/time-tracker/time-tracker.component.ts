@@ -205,6 +205,9 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 			this.timesheetService
 				.addTime(addRequestData)
 				.then((timeLog) => {
+					const { tenantId } = this.user;
+					this.timesheetService.updateLogs(true);
+					this.timeTrackerService.checkTimerStatus(tenantId);
 					if (
 						moment
 							.utc(timeLog.startedAt)
