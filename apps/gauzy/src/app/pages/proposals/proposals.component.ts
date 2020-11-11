@@ -86,7 +86,7 @@ export class ProposalsComponent
 			)
 			.subscribe((data) => {
 				const permissions = data.map(
-					(permisson) => permisson.permission
+					(permission) => permission.permission
 				);
 				this.permissionsService.loadPermissions(permissions);
 			});

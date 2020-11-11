@@ -79,7 +79,7 @@
 			<div
 				class="col-auto check-box"
 				*ngxPermissionsOnly="[
-					OrganizationPermissionsEnum.ALLOW_MODIFY_TIME
+					OrganizationPermissionsEnum.ALLOW_DELETE_TIME
 				]"
 			>
 				<nb-checkbox
@@ -90,10 +90,10 @@
 				></nb-checkbox>
 			</div>
 			<div class="col project-name">
-				<span *ngIf="log?.task; else noProfject">
+				<span *ngIf="log?.task; else noProject">
 					{{ log?.project?.name }}
 				</span>
-				<ng-template #noProfject>
+				<ng-template #noProject>
 					<span>{{ 'TIMESHEET.NO_PROJECT' | translate }}</span>
 				</ng-template>
 				<div class="mt-2 small">

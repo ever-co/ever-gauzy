@@ -99,7 +99,9 @@
 								nbButton
 								ghost
 								size="small"
-								(click)="submitTimeheet(timesheet.id, 'submit')"
+								(click)="
+									submitTimesheet(timesheet.id, 'submit')
+								"
 							>
 								{{ 'TIMESHEET.SUBMIT_TIMESHEET' | translate }}
 							</button>
@@ -107,7 +109,7 @@
 						<div
 							class="menu-item"
 							*ngIf="timesheet.submittedAt"
-							(click)="submitTimeheet(timesheet.id, 'unsubmit')"
+							(click)="submitTimesheet(timesheet.id, 'unsubmit')"
 						>
 							<button class="m-1" nbButton ghost size="small">
 								{{ 'TIMESHEET.UNSUBMIT_TIMESHEET' | translate }}

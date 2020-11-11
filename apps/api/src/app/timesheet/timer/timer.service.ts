@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { TimeLog } from '../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThan, IsNull } from 'typeorm';
+import { Repository, IsNull, Between } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import { Employee } from '../../employee/employee.entity';
 import {
@@ -33,8 +33,10 @@ export class TimerService {
 
 	async getTimerStatus(request: ITimerStatusInput): Promise<ITimerStatus> {
 		const user = RequestContext.currentUser();
+		const { tenantId } = user;
 		const employee = await this.employeeRepository.findOne({
-			userId: user.id
+			userId: user.id,
+			tenantId
 		});
 
 		if (!employee) {
@@ -46,34 +48,38 @@ export class TimerService {
 				deletedAt: IsNull(),
 				employeeId: employee.id,
 				source: request.source || TimeLogSourceEnum.BROWSER,
-				startedAt: MoreThan(moment().format('YYYY-MM-DD'))
+				startedAt: Between(
+					moment().startOf('day'),
+					moment().endOf('day')
+				),
+				tenantId
 			},
 			order: {
 				startedAt: 'DESC'
 			}
 		});
-		const stauts: ITimerStatus = {
+		const status: ITimerStatus = {
 			duration: 0,
 			running: false,
 			lastLog: null
 		};
 		if (todayLog.length > 0) {
 			const lastLog = todayLog[0];
-			stauts.lastLog = lastLog;
+			status.lastLog = lastLog;
 
 			if (lastLog.stoppedAt) {
-				stauts.running = false;
+				status.running = false;
 			} else {
-				stauts.running = true;
-				stauts.duration = Math.abs(
+				status.running = true;
+				status.duration = Math.abs(
 					(lastLog.startedAt.getTime() - new Date().getTime()) / 1000
 				);
 			}
 			for (let index = 0; index < todayLog.length; index++) {
-				stauts.duration += todayLog[index].duration;
+				status.duration += todayLog[index].duration;
 			}
 		}
-		return stauts;
+		return status;
 	}
 
 	async startTimer(request: ITimerToggleInput): Promise<TimeLog> {

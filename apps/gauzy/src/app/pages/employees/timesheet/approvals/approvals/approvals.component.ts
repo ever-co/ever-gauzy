@@ -175,11 +175,11 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	submitTimeheet(
+	submitTimesheet(
 		timesheetId: string | string[],
 		status: 'submit' | 'unsubmit'
 	) {
-		this.timesheetService.submitTimeheet(timesheetId, status).then(() => {
+		this.timesheetService.submitTimesheet(timesheetId, status).then(() => {
 			if (status === 'submit') {
 				this.toastrService.success('TIMESHEET.SUBMIT_SUCCESS');
 			} else if (status === 'unsubmit') {

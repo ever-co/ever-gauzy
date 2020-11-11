@@ -16,7 +16,7 @@ import {
 	NbMenuService
 } from '@nebular/theme';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { filter, map, debounceTime } from 'rxjs/operators';
+import { filter, map, debounceTime, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
@@ -95,6 +95,13 @@ export class DailyComponent implements OnInit, OnDestroy {
 			.subscribe(() => {
 				this.getLogs();
 			});
+		this.timesheetService.updateLog$
+			.pipe(
+				filter((val) => val === true),
+				tap(() => this.getLogs()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	async filtersChange($event: ITimeLogFilters) {
@@ -251,7 +258,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 				})
 				.onClose.pipe(untilDestroyed(this))
 				.subscribe((type) => {
-					if (type === 'ok') {
+					if (type === true) {
 						const logIds = [];
 						for (const key in this.selectedIds) {
 							if (this.selectedIds.hasOwnProperty(key)) {
