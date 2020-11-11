@@ -1,11 +1,8 @@
 export const TimesheetsPage = {
 	addTimeButtonCss: 'div.text-left > button[status="primary"]',
-	selectEmloyeeCss: '[formcontrolname="employeeId"]',
+	selectEmloyeeCss: 'button[class="select-button placeholder"]',
 	selectEmployeeDropdownOptionCss: '.option-list nb-option',
 	dateInputCss: '[placeholder="YYYY-MM-DD"]',
-	startTimePickerCss: 'ga-timer-picker[name="start-time"]',
-	endTimePickerCss: 'ga-timer-picker[name="end-time"]',
-	timePickerDropdownOptionCss: 'div.ng-option',
 	projectDropdownCss: '[formcontrolname="projectId"]',
 	projectDropdownOptionCss: 'div.ng-option',
 	descriptionTextareaCss: 'textarea[name="description"]',

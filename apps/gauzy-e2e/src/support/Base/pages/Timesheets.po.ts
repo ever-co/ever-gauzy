@@ -43,26 +43,6 @@ export const enterDateData = () => {
 	enterInput(TimesheetsPage.dateInputCss, date);
 };
 
-export const startTimePickerVisible = () => {
-	verifyElementIsVisible(TimesheetsPage.startTimePickerCss);
-};
-
-export const clickStartTimePicker = () => {
-	clickButton(TimesheetsPage.startTimePickerCss);
-};
-
-export const selectTimeFromDropdown = (index) => {
-	clickButtonByIndex(TimesheetsPage.timePickerDropdownOptionCss, index);
-};
-
-export const endTimePickerVisible = () => {
-	verifyElementIsVisible(TimesheetsPage.endTimePickerCss);
-};
-
-export const clickEndTimePicker = () => {
-	clickButton(TimesheetsPage.endTimePickerCss);
-};
-
 export const selectProjectDropdownVisible = () => {
 	verifyElementIsVisible(TimesheetsPage.projectDropdownCss);
 };
