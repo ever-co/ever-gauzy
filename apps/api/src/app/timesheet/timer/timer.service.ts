@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { TimeLog } from '../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThan, IsNull, Between } from 'typeorm';
+import { Repository, IsNull, Between } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import { Employee } from '../../employee/employee.entity';
 import {
