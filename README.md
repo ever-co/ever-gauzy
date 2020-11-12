@@ -9,6 +9,8 @@ Gauzy™ Platform - **Open-Source Business Management Platform** focused on **Fa
 
 You are welcome to check more information about the platform at our official website - **<https://ever.co/features-gauzy-platform>**.
 
+![overview](https://gauzy.co/wp-content/themes/gauzy/assets/img/home/home-1.png)
+
 Gauzy Platform main features:
 
 - Human Resources Management (HRM), Time Management and Employees Performance Monitoring
