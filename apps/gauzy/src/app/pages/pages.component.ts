@@ -3,7 +3,6 @@ import { NavigationEnd, Router } from '@angular/router';
 import { IOrganization, PermissionsEnum } from '@gauzy/models';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Store } from '../@core/services/store.service';
 import { SelectorService } from '../@core/utils/selector.service';
