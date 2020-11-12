@@ -76,6 +76,26 @@ Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [
 
 Note: Desktop App can connect to [ActivityWatch](https://activitywatch.net)[*](https://github.com/ever-co/gauzy/blob/develop/README.md#legal-notice) API to collect more statistics related to running apps and visited Urls. If you need that functionality, you can install [ActivityWatch](https://activitywatch.net)[*](https://github.com/ever-co/gauzy/blob/develop/README.md#legal-notice) and make sure it's running and you selected "ActivityWatch" checkbox in Gauzy Desktop App. 
 
+## Technology Stack and Requirements
+
+-   [TypeScript](https://www.typescriptlang.org) language
+-   [NodeJs](https://nodejs.org) / [NestJs](https://github.com/nestjs/nest)
+-   [Nx](https://nx.dev)
+-   [Angular](https://angular.io)
+-   [RxJS](http://reactivex.io/rxjs)
+-   [TypeORM](https://github.com/typeorm/typeorm)
+-   [Ngx-admin](https://github.com/akveo/ngx-admin)
+-   [PostgreSQL](https://www.postgresql.org)
+-   For production, we integrate and recommend to use [PM2](https://github.com/Unitech/pm2)
+
+Note: thanks to TypeORM, Gauzy will support lots of DBs: MySql, MariaDb, PostgreSQL, CockroachDb, sqlite, MS SQL, Oracle, MongoDb and others, with minimal changes.
+
+#### See also README.md and CREDITS.md files in relevant folders for lists of libraries and software included in the Platform, information about licenses and other details.
+
+## Documentation
+
+Please refer to our official [Platform Documentation](https://docs.gauzy.co) and to our [Wiki](https://github.com/ever-co/gauzy/wiki) (WIP).
+
 ## Quick Start
 
 ### With Docker Compose
@@ -120,26 +140,6 @@ Notes:
 
 Note: it currently supports AWS EKS (Kubernetes) for development and production (recommended) with Application Load Balancers and AWS RDS Serverless PostgreSQL DB deployments. In addition, we implemented deployments to ECS EC2 and Fargate Clusters.
 
-## Technology Stack
-
--   [TypeScript](https://www.typescriptlang.org)
--   [Node.js](https://nodejs.org)
--   [Nx](https://nx.dev)
--   [Angular](https://angular.io)
--   [Nest](https://github.com/nestjs/nest)
--   [RxJS](http://reactivex.io/rxjs)
--   [TypeORM](https://github.com/typeorm/typeorm)
--   [Ngx-admin](https://github.com/akveo/ngx-admin)
--   [PostgreSQL](https://www.postgresql.org)
-
-Note: thanks to TypeORM, Gauzy will support lots of DBs: MySql, MariaDb, PostgreSQL, CockroachDb, sqlite, MS SQL, Oracle, MongoDb and others, with minimal changes.
-
-#### See also README.md and CREDITS.md files in relevant folders for lists of libraries and software included in the Platform, information about licenses and other details.
-
-### How to use Nx
-
-Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) about Nx usage
-
 ## Contribute
 
 -   Please give us :star: on Github, it **helps**!
@@ -153,7 +153,6 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 #### Core
 
 -   Ruslan Konviser ([Evereq](https://github.com/evereq))
--   Rachit Magon ([rmagon](https://github.com/rmagon))
 
 #### Developers (alphabetical order)
 
@@ -162,6 +161,7 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 -   Elvis Arabadjiyski ([Dreemsuncho](https://github.com/Dreemsuncho))
 -   Hristo Hristov ([hrimar](https://github.com/hrimar))
 -   Pavel Denchev ([PavelDenchev](https://github.com/PavelDenchev))
+-   Rachit Magon ([rmagon](https://github.com/rmagon))
 -   Tsvetelina Yordanova ([tsvetelina-e-y](https://github.com/tsvetelina-e-y))
 -   Valentin Peshev ([valiopld](https://github.com/valiopld))
 -   Yavor Grancharov ([YavorGrancharov](https://github.com/YavorGrancharov))
