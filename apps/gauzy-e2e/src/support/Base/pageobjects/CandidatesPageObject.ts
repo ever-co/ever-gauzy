@@ -22,10 +22,8 @@ export const CandidatesPage = {
 	editButtonCss: '.status-info',
 	archiveButtonCss: 'div.mb-3 > button[status="warning"]',
 	rejectButtonCss: 'div.mb-3 > button[status="danger"]',
-	saveEditButtonCss:
-		'div.employee-form > div.actions > button[status="success"]',
-	backButtonCss:
-		'div.header-selector-wrapper > div.main > button[status="primary"]',
+	saveEditButtonCss: 'div.actions > button[status="success"]',
+	backButtonCss: 'button[status="primary"]',
 	confirmActionButtonCss: 'nb-card-footer > button[status="danger"]',
 	checkboxButtonCss: 'span.custom-checkbox',
 	manageAddButtonCss: 'div.header > button[status="success"]',
