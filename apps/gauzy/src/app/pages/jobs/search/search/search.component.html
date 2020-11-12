@@ -27,7 +27,7 @@
 								status="info"
 							>
 								<nb-icon icon="funnel-outline"></nb-icon>
-								Filter
+								{{ 'BUTTONS.FILTER' | translate }}
 							</button>
 						</div>
 						<div class="col-auto ml-auto d-flex align-items-center">
@@ -35,7 +35,9 @@
 								class="mr-3"
 								(checkedChange)="setAutoRefresh($event)"
 								[(ngModel)]="autoRefresh"
-								>Auto Refresh</nb-toggle
+								>{{
+									'BUTTONS.AUTO_REFRESH' | translate
+								}}</nb-toggle
 							>
 							<button
 								*ngIf="!autoRefresh"
@@ -45,7 +47,7 @@
 								status="success"
 							>
 								<nb-icon icon="refresh-outline"></nb-icon>
-								Refresh
+								{{ 'BUTTONS.REFRESH' | translate }}
 							</button>
 						</div>
 					</div>
@@ -54,15 +56,19 @@
 			<div class="advanced-filter my-4" *ngIf="isOpenAdvancedFilter">
 				<nb-card>
 					<nb-card-header>
-						<h6>Advanced Filter</h6>
+						<h6>{{ 'JOBS.FILTER.TITLE' | translate }}</h6>
 					</nb-card-header>
 					<nb-card-body>
 						<div class="row">
 							<div class="col-sm-6 form-group">
-								<label class="d-block">Source</label>
+								<label class="d-block">{{
+									'JOBS.FILTER.SOURCE' | translate
+								}}</label>
 								<nb-select
 									(selectedChange)="applyFilter()"
-									placeholder="Source"
+									[placeholder]="
+										'JOBS.FILTER.SOURCE' | translate
+									"
 									class="w-100"
 									multiple
 									[(ngModel)]="jobRequest.jobSource"
@@ -72,7 +78,7 @@
 											let source of JobPostSourceEnum
 												| keyvalue
 										"
-										[value]="source.value"
+										[value]="source?.value"
 										>{{
 											source.value | titlecase
 										}}</nb-option
@@ -80,10 +86,14 @@
 								</nb-select>
 							</div>
 							<div class="col-sm-6 form-group">
-								<label class="d-block">Job type</label>
+								<label class="d-block">{{
+									'JOBS.FILTER.JOB_TYPE' | translate
+								}}</label>
 								<nb-select
 									(selectedChange)="applyFilter()"
-									placeholder="Job Type"
+									[placeholder]="
+										'JOBS.FILTER.JOB_TYPE' | translate
+									"
 									class="w-100"
 									multiple
 									[(ngModel)]="jobRequest.jobType"
@@ -99,10 +109,14 @@
 								</nb-select>
 							</div>
 							<div class="col-sm-6 form-group">
-								<label class="d-block">Job Status</label>
+								<label class="d-block">{{
+									'JOBS.FILTER.JOB_STATUS' | translate
+								}}</label>
 								<nb-select
 									(selectedChange)="applyFilter()"
-									placeholder="Job Type"
+									[placeholder]="
+										'JOBS.FILTER.JOB_STATUS' | translate
+									"
 									class="w-100"
 									[(ngModel)]="jobRequest.jobStatus"
 								>
@@ -117,10 +131,14 @@
 								</nb-select>
 							</div>
 							<div class="col-sm-6 form-group">
-								<label class="d-block">Budget</label>
+								<label class="d-block">{{
+									'JOBS.FILTER.BUDGET' | translate
+								}}</label>
 								<nb-select
 									(selectedChange)="applyFilter()"
-									placeholder="Budget"
+									[placeholder]="
+										'JOBS.FILTER.BUDGET' | translate
+									"
 									class="w-100"
 									multiple
 									[(ngModel)]="jobRequest.budget"

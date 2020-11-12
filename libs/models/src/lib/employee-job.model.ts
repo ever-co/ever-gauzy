@@ -25,7 +25,7 @@ export interface IVisibilityJobPostInput {
 export interface IGetEmployeeJobPostFilters {
 	search?: string;
 	employeeIds?: string[];
-	budget?: [number, number];
+	budget?: string[];
 	jobStatus?: JobPostStatusEnum[];
 	jobSource?: JobPostSourceEnum[];
 	jobType?: JobPostTypeEnum[];
