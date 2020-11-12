@@ -69,7 +69,10 @@
 			"EDIT": "Редактиране",
 			"DELETE": "Изтрий"
 		},
-		"CANDIDATE_STATISTIC": "Statistic"
+		"CANDIDATE_STATISTIC": "Statistic",
+		"FILTER": "Filter",
+		"REFRESH": "Refresh",
+		"AUTO_REFRESH": "Auto Refresh"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -1642,7 +1645,14 @@
 		"HIDE": "Hide",
 		"NO_JOBS": "No Jobs found",
 		"JOB_SEARCH": "Job Search",
-		"LOAD_MORE": "Load More"
+		"LOAD_MORE": "Load More",
+		"FILTER": {
+			"TITLE": "Advanced Filter",
+			"SOURCE": "Source",
+			"JOB_TYPE": "Job Type",
+			"JOB_STATUS": "Job Status",
+			"BUDGET": "Budget"
+		}
 	},
 	"JOB_MATCHING": {
 		"CONFIGURE_EMPLOYEES_TO_JOBS_MATCHING": "Configure Employees to Jobs Matching",
