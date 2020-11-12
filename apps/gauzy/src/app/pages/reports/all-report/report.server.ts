@@ -5,16 +5,58 @@ import {
 	IGetReport,
 	IGetReportCategory,
 	IPagination,
-	IReport,
-	IReportCategory
+	IReport
 } from '@gauzy/models';
 import { toParams } from '@gauzy/utils';
+import { Query, Store, StoreConfig } from '@datorama/akita';
 
+export function initialTimesheetFilterState(): IReport[] {
+	return [];
+}
+
+@Injectable({ providedIn: 'root' })
+@StoreConfig({ name: 'report-category', resettable: true })
+export class TimesheetFilterStore extends Store<IReport[]> {
+	constructor() {
+		super(initialTimesheetFilterState());
+	}
+}
+
+@Injectable({ providedIn: 'root' })
+export class TimesheetFilterQuery extends Query<IReport[]> {
+	constructor(protected store: TimesheetFilterStore) {
+		super(store);
+	}
+}
 @Injectable({
 	providedIn: 'root'
 })
 export class ReportService {
-	constructor(private http: HttpClient) {}
+	menuItems$ = this.reportQuery.select((state) => state);
+
+	public get menuItems(): IReport[] {
+		return this.reportQuery.getValue();
+	}
+	public set menuItems(value: IReport[]) {
+		this.reportStore.reset();
+		this.reportStore.update(value);
+	}
+
+	constructor(
+		private http: HttpClient,
+		protected reportStore: TimesheetFilterStore,
+		protected reportQuery: TimesheetFilterQuery
+	) {}
+
+	init() {
+		return this.getReports({
+			where: {
+				showInMenu: true
+			}
+		}).then((resp) => {
+			this.menuItems = resp.items;
+		});
+	}
 
 	getReports(request?: IGetReport) {
 		return this.http
@@ -25,9 +67,16 @@ export class ReportService {
 			.toPromise();
 	}
 
+	updateReport(id: string, request?: Partial<IReport>) {
+		return this.http
+			.put<IPagination<IReport>>(`/api/report/${id}`, request)
+			.pipe(first())
+			.toPromise();
+	}
+
 	getReportCategories(request?: IGetReportCategory) {
 		return this.http
-			.get<IPagination<IReportCategory>>(`/api/report/category`, {
+			.get<IPagination<IReport>>(`/api/report/category`, {
 				params: request ? toParams(request) : {}
 			})
 			.pipe(first())

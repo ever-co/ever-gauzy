@@ -4,10 +4,15 @@ import { ReportCategory } from './report-category.entity';
 import { indexBy } from 'underscore';
 import { join } from 'path';
 import { copyFileSync, mkdirSync } from 'fs';
+import * as rimraf from 'rimraf';
+import chalk from 'chalk';
+import { environment } from '@env-api/environment';
 
 export const createDefaultReport = async (
 	connection: Connection
 ): Promise<Report[]> => {
+	await cleanReport(connection);
+
 	const defaultCategories: ReportCategory[] = [
 		new ReportCategory({
 			name: 'Time Tracking',
@@ -37,6 +42,7 @@ export const createDefaultReport = async (
 			slug: 'time-activity',
 			// image: copyImage('time-activity.png'),
 			category: categoryByName['Time Tracking'],
+			showInMenu: true,
 			description:
 				"See team members' time worked, activity levels, and amounts earned per project or task"
 		}),
@@ -45,6 +51,7 @@ export const createDefaultReport = async (
 			slug: 'weekly',
 			// image: copyImage('weekly.png'),
 			category: categoryByName['Time Tracking'],
+			showInMenu: true,
 			description:
 				"See team members' time worked, activity levels, and amount earned per week"
 		}),
@@ -121,6 +128,31 @@ export const createDefaultReport = async (
 	return await connection.manager.save(reports);
 };
 
+async function cleanReport(connection) {
+	if (environment.database.type === 'sqlite') {
+		await connection.query('DELETE FROM report_category');
+		await connection.query('DELETE FROM report');
+	} else {
+		await connection.query(
+			'TRUNCATE TABLE report_category RESTART IDENTITY CASCADE'
+		);
+		await connection.query(
+			'TRUNCATE TABLE report RESTART IDENTITY CASCADE'
+		);
+	}
+
+	console.log(chalk.green(`CLEANING UP REPORT IMAGES...`));
+
+	await new Promise((resolve, reject) => {
+		const dir = join(process.cwd(), 'apps', 'api', 'public', 'reports');
+
+		// delete old generated report image
+		rimraf(dir, () => {
+			console.log(chalk.green(`CLEANED UP  REPORT IMAGES`));
+			resolve();
+		});
+	});
+}
 function copyImage(fileName: string) {
 	const dir = join(
 		process.cwd(),
@@ -132,8 +164,9 @@ function copyImage(fileName: string) {
 		'reports'
 	);
 
-	const baseDir = join(process.cwd(), 'apps', 'api');
-	const destDir = join('public', 'reports');
+	const baseDir = join(process.cwd(), 'apps', 'api', 'public');
+	const destDir = 'reports';
+
 	mkdirSync(join(baseDir, destDir), { recursive: true });
 
 	const destFilePath = join(destDir, fileName);

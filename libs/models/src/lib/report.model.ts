@@ -5,7 +5,9 @@ export interface IReport extends IBasePerTenantAndOrganizationEntityModel {
 	category?: IReportCategory;
 	name?: string;
 	slug?: string;
+	iconClass?: string;
 	image?: string;
+	imageUrl?: string;
 	description?: string;
 	showInMenu?: boolean;
 }
@@ -14,15 +16,16 @@ export interface IReportCategory
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	icon?: string;
+	iconUrl?: string;
 	reports?: IReport[];
 }
 
 export interface IGetReportCategory {
-	relations: string[];
+	relations?: string[];
 	where?: IReport;
 }
 
 export interface IGetReport {
-	relations: string[];
+	relations?: string[];
 	where?: IReport;
 }
