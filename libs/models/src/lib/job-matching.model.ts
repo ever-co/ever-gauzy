@@ -33,9 +33,9 @@ export interface IEmployeePresetInput {
 	employeeId?: string;
 }
 
-export interface IGetJobPresetInput {
+export interface IGetJobPresetInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	search?: string;
-	organizationId?: string;
 	employeeId?: string;
 }
 
