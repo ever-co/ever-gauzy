@@ -43,6 +43,7 @@ export const createDefaultReport = async (
 			// image: copyImage('time-activity.png'),
 			category: categoryByName['Time Tracking'],
 			showInMenu: true,
+			iconClass: 'clock-outline',
 			description:
 				"See team members' time worked, activity levels, and amounts earned per project or task"
 		}),
@@ -51,6 +52,7 @@ export const createDefaultReport = async (
 			slug: 'weekly',
 			// image: copyImage('weekly.png'),
 			category: categoryByName['Time Tracking'],
+			iconClass: 'calendar-outline',
 			showInMenu: true,
 			description:
 				"See team members' time worked, activity levels, and amount earned per week"
@@ -68,6 +70,7 @@ export const createDefaultReport = async (
 			slug: 'manual-time-edits',
 			// image: copyImage('manual-time-edits.png'),
 			category: categoryByName['Time Tracking'],
+			iconClass: 'browser-outline',
 			description:
 				"See team members' time worked, project, task, and reason for each manual time entry"
 		}),
@@ -76,6 +79,7 @@ export const createDefaultReport = async (
 			slug: 'expense',
 			// image: copyImage('expense.png'),
 			category: categoryByName['Time Tracking'],
+			iconClass: 'credit-card-outline',
 			description:
 				'See how much has been spent on expenses by member and project.'
 		}),
@@ -84,6 +88,7 @@ export const createDefaultReport = async (
 			slug: 'amounts-owed',
 			// image: copyImage('amounts-owed.png'),
 			category: categoryByName['Payments'],
+			iconClass: 'credit-card-outline',
 			description: 'See how much team members are currently owed'
 		}),
 		new Report({
@@ -91,6 +96,7 @@ export const createDefaultReport = async (
 			slug: 'payments',
 			// image: copyImage('payments.png'),
 			category: categoryByName['Payments'],
+			iconClass: 'credit-card-outline',
 			description:
 				'See how much team members were paid over a given period'
 		}),
@@ -106,6 +112,7 @@ export const createDefaultReport = async (
 			slug: 'daily-limits',
 			// image: copyImage('daily-limits.png'),
 			category: categoryByName['Time Off'],
+			iconClass: 'clock-outline',
 			description: "See team members' daily limits usage"
 		}),
 		new Report({
@@ -113,6 +120,7 @@ export const createDefaultReport = async (
 			slug: 'project-budgets',
 			// image: copyImage('project-budgets.png'),
 			category: categoryByName['Invoicing'],
+			iconClass: 'credit-card-outline',
 			description:
 				"See how much of your projects' budgets have been spent"
 		}),
@@ -121,6 +129,7 @@ export const createDefaultReport = async (
 			slug: 'client-budgets',
 			// image: copyImage('client-budgets.png'),
 			category: categoryByName['Invoicing'],
+			iconClass: 'credit-card-outline',
 			description: "See how much of your clients' budgets have been spent"
 		})
 	];

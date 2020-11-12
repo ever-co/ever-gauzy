@@ -803,7 +803,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 							return {
 								title: item.name,
 								link: `/pages/reports/${item.slug}`,
-								icon: item.iconUrl,
+								icon: item.iconClass,
 								data: {
 									translationKey: `${item.name}`
 								}
