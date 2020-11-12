@@ -23,11 +23,11 @@ import { StatusBadgeComponent } from 'apps/gauzy/src/app/@shared/status-badge/st
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import * as moment from 'moment';
 import { Subject, Subscription, timer } from 'rxjs';
-import { debounceTime, tap } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 
 @UntilDestroy()
 @Component({
-	selector: 'gauzy-search',
+	selector: 'ga-search',
 	templateUrl: './search.component.html',
 	styleUrls: ['./search.component.scss']
 })
@@ -78,23 +78,13 @@ export class SearchComponent
 		employeeIds: [],
 		jobSource: [],
 		jobType: [],
-		jobStatus: [],
-		budget: null
+		jobStatus: null,
+		budget: []
 	};
 
 	updateJobs$: Subject<any> = new Subject();
 	selectedEmployee: SelectedEmployee;
-
-	smartTableSource = new ServerDataSource(this.http, {
-		endPoint: '/api/employee-job',
-		sortFieldKey: 'orderBy',
-		sortDirKey: 'order',
-		filterFieldKey: 'filters',
-		totalKey: 'total',
-		dataKey: 'items',
-		pagerPageKey: 'page',
-		pagerLimitKey: 'limit'
-	});
+	smartTableSource: ServerDataSource;
 	autoRefreshTimer: Subscription;
 
 	jobSearchTable: Ng2SmartTableComponent;
@@ -118,25 +108,26 @@ export class SearchComponent
 	}
 
 	ngOnInit(): void {
+		this._applyTranslationOnSmartTable();
 		this.updateJobs$
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(() => {
 				this.loadSmartTable();
 			});
-
 		this.store.selectedEmployee$
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter((employee) => !!employee),
+				untilDestroyed(this)
+			)
 			.subscribe((employee) => {
-				setTimeout(() => {
-					if (employee && employee.id) {
-						this.selectedEmployee = employee;
-						this.jobRequest.employeeIds = [employee.id];
-					} else {
-						this.selectedEmployee = null;
-						this.jobRequest.employeeIds = [];
-					}
-					this.updateJobs$.next();
-				});
+				if (employee && employee.id) {
+					this.selectedEmployee = employee;
+					this.jobRequest.employeeIds = [employee.id];
+				} else {
+					this.selectedEmployee = null;
+					this.jobRequest.employeeIds = [];
+				}
+				this.updateJobs$.next();
 			});
 	}
 
@@ -191,12 +182,28 @@ export class SearchComponent
 		}
 	}
 
+	public getInstance(): ServerDataSource {
+		return new ServerDataSource(this.http, {
+			endPoint: '/api/employee-job',
+			sortFieldKey: 'orderBy',
+			sortDirKey: 'order',
+			filterFieldKey: 'filters',
+			totalKey: 'total',
+			dataKey: 'items',
+			pagerPageKey: 'page',
+			pagerLimitKey: 'limit'
+		});
+	}
+
 	loadSmartTable() {
+		//create ServerDataSource singleton instance
+		if (!this.smartTableSource) {
+			this.smartTableSource = this.getInstance();
+		}
 		this.smartTableSource.setSort(
 			[{ field: 'status', direction: 'asc' }],
 			false
 		);
-
 		this.smartTableSource.setFilter(
 			[
 				{
@@ -207,7 +214,6 @@ export class SearchComponent
 			true,
 			false
 		);
-
 		this.settingsSmartTable = {
 			...this.settingsSmartTable,
 			columns: {
@@ -314,7 +320,7 @@ export class SearchComponent
 		};
 	}
 
-	_applyTranslationOnSmartTable() {
+	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
 			.pipe(untilDestroyed(this))
 			.subscribe(() => {

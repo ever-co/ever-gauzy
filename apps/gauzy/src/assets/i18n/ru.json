@@ -69,7 +69,10 @@
 			"EDIT": "Редактировать",
 			"DELETE": "Удалить"
 		},
-		"CANDIDATE_STATISTIC": "Статистика"
+		"CANDIDATE_STATISTIC": "Статистика",
+		"FILTER": "Фильтр",
+		"REFRESH": "Обновить",
+		"AUTO_REFRESH": "Автообновление"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -578,6 +581,7 @@
 		"EMAIL_TEMPLATES": "Шаблоны писем",
 		"REPORTS": "Отчёты",
 		"GOALS": "Голы",
+		"ALL_REPORTS": "Все отчеты",
 		"TIME_REPORTS": "Отчет по времени",
 		"WEEKLY_TIME_REPORTS": "Еженедельный отчет",
 		"ACCOUNTING_REPORTS": "Бухгалтерские отчеты",
@@ -608,7 +612,7 @@
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Участники Раболи",
-		"PROJECTS_WORKED": "Выработанные PRojects",
+		"PROJECTS_WORKED": "Обработанные проекты",
 		"ACTIVITY": "Активность",
 		"TOTAL_HOURS": "Всего часов",
 		"EMPLOYEE": "Сотрудник",
@@ -618,7 +622,8 @@
 		"NO_TASK": "Нет задач",
 		"WEEKLY_TIME_AND_ACTIVITY_REPORT": "Еженедельный отчет о времени и активности",
 		"TIME_AND_ACTIVITY_REPORT": "Отчет о времени и деятельности",
-		"NO_CLIENT": "Нет клиента"
+		"NO_CLIENT": "Нет клиента",
+		"ALL_REPORTS": "Все отчеты"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Доступные приложения и интеграции",
@@ -1641,7 +1646,14 @@
 		"HIDE": "Скрыть",
 		"NO_JOBS": "Работы не найдены",
 		"JOB_SEARCH": "Поиск Вакансии",
-		"LOAD_MORE": "Загрузить больше"
+		"LOAD_MORE": "Загрузить больше",
+		"FILTER": {
+			"TITLE": "Расширенный фильтр",
+			"SOURCE": "Источник",
+			"JOB_TYPE": "Тип задания",
+			"JOB_STATUS": "Статус Вакансии",
+			"BUDGET": "Бюджет"
+		}
 	},
 	"JOB_MATCHING": {
 		"CONFIGURE_EMPLOYEES_TO_JOBS_MATCHING": "Настройка соответствия заданий сотрудникам",

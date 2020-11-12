@@ -1,0 +1,12 @@
+.header-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/**
+* By setting min-height of the card to this value, we ensure the card will properly adjust it's height
+*/
+:host > nb-card {
+  min-height: 47.5rem;
+}

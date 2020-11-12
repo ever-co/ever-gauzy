@@ -120,6 +120,8 @@ import { JobPresetUpworkJobSearchCriterion } from '../employee-job-preset/job-pr
 import { JobPreset } from '../employee-job-preset/job-preset.entity';
 import { JobSearchOccupation } from '../employee-job-preset/job-search-occupation/job-search-occupation.entity';
 import { JobSearchCategory } from '../employee-job-preset/job-search-category/job-search-category.entity';
+import { Report } from '../reports/report.entity';
+import { ReportCategory } from '../reports/report-category.entity';
 
 const entities = [
 	Invite,
@@ -233,7 +235,9 @@ const entities = [
 	JobPresetUpworkJobSearchCriterion,
 	EmployeeUpworkJobsSearchCriterion,
 	JobSearchOccupation,
-	JobSearchCategory
+	JobSearchCategory,
+	Report,
+	ReportCategory
 ];
 
 @Module({

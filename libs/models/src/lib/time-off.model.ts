@@ -28,10 +28,10 @@ export interface ITimeOffPolicyUpdateInput
 	paid?: boolean;
 }
 
-export interface ITimeOffPolicyFindInput {
+export interface ITimeOffPolicyFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employees?: IEmployee[];
 	// teams?: OrganizationTeams[];
-	organizationId?: string;
 	name?: string;
 	requiresApproval?: boolean;
 	paid?: boolean;
@@ -60,9 +60,9 @@ export interface ITimeOffUpdateInput {
 	status?: string;
 }
 
-export interface ITimeOffCreateInput {
+export interface ITimeOffCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employees?: IEmployee[];
-	organizationId?: string;
 	description?: string;
 	policy?: ITimeOffPolicy;
 	start?: Date;

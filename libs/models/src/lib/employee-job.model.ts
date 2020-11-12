@@ -17,15 +17,15 @@ export interface IApplyJobPostInput {
 
 export interface IVisibilityJobPostInput {
 	hide: boolean;
-	employeeId: string | undefined;
-	providerCode: string;
-	providerJobId: string;
+	employeeId?: string | undefined;
+	providerCode?: string | undefined;
+	providerJobId?: string | undefined;
 }
 
 export interface IGetEmployeeJobPostFilters {
 	search?: string;
 	employeeIds?: string[];
-	budget?: [number, number];
+	budget?: string[];
 	jobStatus?: JobPostStatusEnum[];
 	jobSource?: JobPostSourceEnum[];
 	jobType?: JobPostTypeEnum[];

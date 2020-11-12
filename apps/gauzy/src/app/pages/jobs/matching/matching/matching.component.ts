@@ -17,12 +17,12 @@ import { JobSearchCategoryService } from 'apps/gauzy/src/app/@core/services/job-
 import { JobSearchOccupationService } from 'apps/gauzy/src/app/@core/services/job-search-occupation.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import * as _ from 'underscore';
 
 @UntilDestroy()
 @Component({
-	selector: 'gauzy-matching',
+	selector: 'ga-matching',
 	templateUrl: './matching.component.html',
 	styleUrls: ['./matching.component.scss']
 })
@@ -40,6 +40,7 @@ export class MatchingComponent implements OnInit {
 	selectedEmployeeId: string;
 	selectedOrganization: IOrganization;
 	hasAnyChanges = false;
+	tenantId: string;
 
 	constructor(
 		private jobPresetService: JobPresetService,
@@ -54,9 +55,18 @@ export class MatchingComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
+		this.store.user$
+			.pipe(
+				filter((user) => !!user),
+				tap((user) => (this.tenantId = user.tenantId))
+			)
+			.subscribe();
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.pipe(debounceTime(500))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this),
+				debounceTime(500)
+			)
 			.subscribe((organization) => {
 				setTimeout(async () => {
 					this.selectedOrganization = organization;
@@ -67,10 +77,12 @@ export class MatchingComponent implements OnInit {
 					}
 				});
 			});
-
 		this.store.selectedEmployee$
-			.pipe(untilDestroyed(this))
-			.pipe(debounceTime(500))
+			.pipe(
+				filter((employee) => !!employee),
+				untilDestroyed(this),
+				debounceTime(500)
+			)
 			.subscribe((employee) => {
 				setTimeout(async () => {
 					this.criterions = [];
@@ -99,8 +111,10 @@ export class MatchingComponent implements OnInit {
 	}
 
 	getJobPresets() {
+		const { tenantId } = this;
 		const request: IGetJobPresetInput = {
-			organizationId: this.selectedOrganization.id
+			organizationId: this.selectedOrganization.id,
+			tenantId
 		};
 		this.jobPresetService.getJobPresets(request).then((jobPresets) => {
 			this.jobPresets = jobPresets;

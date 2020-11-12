@@ -388,18 +388,25 @@ const routes: Routes = [
 				children: [
 					{
 						path: '',
-						redirectTo: 'time/daily',
+						redirectTo: 'all',
 						pathMatch: 'full'
 					},
 					{
-						path: 'time/daily',
+						path: 'all',
+						loadChildren: () =>
+							import(
+								'./reports/all-report/all-report.module'
+							).then((m) => m.AllReportModule)
+					},
+					{
+						path: 'time-activity',
 						loadChildren: () =>
 							import(
 								'./reports/time-reports/time-reports.module'
 							).then((m) => m.TimeReportsModule)
 					},
 					{
-						path: 'time/weekly',
+						path: 'weekly',
 						loadChildren: () =>
 							import(
 								'./reports/weekly-time-reports/weekly-time-reports.module'
@@ -411,6 +418,10 @@ const routes: Routes = [
 							import(
 								'./work-in-progress/work-in-progress.module'
 							).then((m) => m.WorkInProgressModule)
+					},
+					{
+						path: '*',
+						component: NotFoundComponent
 					}
 				]
 			},

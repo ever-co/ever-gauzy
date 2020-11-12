@@ -30,7 +30,7 @@ import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.g
 @ApiTags('TimeOffPolicy')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
-export class TimeOffPolicyControler extends CrudController<TimeOffPolicy> {
+export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
 	constructor(private readonly policyService: TimeOffPolicyService) {
 		super(policyService);
 	}

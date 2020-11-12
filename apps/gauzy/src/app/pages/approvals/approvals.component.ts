@@ -63,7 +63,7 @@ export class ApprovalsComponent
 		private dialogService: NbDialogService,
 		private toastrService: NbToastrService,
 		private router: Router,
-		private permissionsService: NgxPermissionsService
+		private ngxPermissionsService: NgxPermissionsService
 	) {
 		super(translateService);
 		this.setView();
@@ -78,10 +78,8 @@ export class ApprovalsComponent
 				untilDestroyed(this)
 			)
 			.subscribe((data) => {
-				const permissions = data.map(
-					(permisson) => permisson.permission
-				);
-				this.permissionsService.loadPermissions(permissions);
+				const permissions = data.map(({ permission }) => permission);
+				this.ngxPermissionsService.loadPermissions(permissions);
 			});
 		this.store.selectedEmployee$
 			.pipe(
@@ -311,7 +309,7 @@ export class ApprovalsComponent
 			});
 	}
 
-	manageAppropvalPolicy() {
+	manageApprovalPolicy() {
 		this.router.navigate(['/pages/organization/approval-policy']);
 	}
 

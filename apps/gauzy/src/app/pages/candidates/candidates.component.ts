@@ -86,9 +86,7 @@ export class CandidatesComponent
 				untilDestroyed(this)
 			)
 			.subscribe((data) => {
-				const permissions = data.map(
-					(permisson) => permisson.permission
-				);
+				const permissions = data.map(({ permission }) => permission);
 				this.ngxPermissionsService.loadPermissions(permissions);
 			});
 		this.store.selectedOrganization$

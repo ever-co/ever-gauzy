@@ -16,7 +16,7 @@ import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
-import { PermissionsEnum } from '@gauzy/models';
+import { PermissionsEnum, TimeLogType } from '@gauzy/models';
 import { IUser } from '@gauzy/models';
 import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.service';
 import * as moment from 'moment';
@@ -83,7 +83,11 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		this.timeTrackerService.duration$
 			.pipe(untilDestroyed(this))
 			.subscribe((time) => {
-				this.timerDuration = moment.utc(time * 1000).format('HH:mm:ss');
+				if (!isNaN(time)) {
+					this.timerDuration = moment
+						.utc(time * 1000)
+						.format('HH:mm:ss');
+				}
 			});
 
 		this.menuService
@@ -94,6 +98,9 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				if (e.item.data && e.item.data.action) {
 					switch (e.item.data.action) {
 						case this.actions.START_TIMER:
+							this.timeTrackerService.setTimeLogType(
+								TimeLogType.TRACKED
+							);
 							this.timeTrackerService.openAndStartTimer();
 							break;
 					}
@@ -251,7 +258,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				icon: 'clock-outline',
 				hidden: !this.isEmployee,
 				data: {
-					action: this.actions.START_TIMER //This opens the timer poup in the header, managed by menu.itemClick TOO: Start the timer also
+					action: this.actions.START_TIMER //This opens the timer popup in the header, managed by menu.itemClick TOO: Start the timer also
 				}
 			},
 			// TODO: divider

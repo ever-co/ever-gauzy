@@ -17,7 +17,7 @@ export interface ChartData {
 
 @UntilDestroy()
 @Component({
-	selector: 'gauzy-weekly-time-report-horizontal-bar-chart',
+	selector: 'ngx-weekly-time-report-horizontal-bar-chart',
 	templateUrl: './weekly-time-report-horizontal-bar-chart.component.html',
 	styleUrls: ['./weekly-time-report-horizontal-bar-chart.component.scss']
 })

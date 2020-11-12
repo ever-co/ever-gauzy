@@ -9,11 +9,8 @@ import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
 import { AuthService } from '../services/auth.service';
 import { Store } from '../services/store.service';
 import { ElectronService } from 'ngx-electron';
-import { TimesheetFilterStore } from '../../@shared/timesheet/timesheet-filter.service';
-import {
-	TimerStore,
-	TimeTrackerService
-} from '../../@shared/time-tracker/time-tracker.service';
+import { TimeTrackerService } from '../../@shared/time-tracker/time-tracker.service';
+import { TimesheetFilterService } from '../../@shared/timesheet/timesheet-filter.service';
 // tslint:disable-next-line: nx-enforce-module-boundaries
 
 @Injectable()
@@ -71,9 +68,8 @@ export class AuthStrategy extends NbAuthStrategy {
 		private router: Router,
 		private authService: AuthService,
 		private store: Store,
-		private timesheetFilterStore: TimesheetFilterStore,
-		private timerStore: TimerStore,
 		private timeTrackerService: TimeTrackerService,
+		private timesheetFilterService: TimesheetFilterService,
 		private electronService: ElectronService
 	) {
 		super();
@@ -343,14 +339,7 @@ export class AuthStrategy extends NbAuthStrategy {
 	}
 
 	private async _logout(): Promise<NbAuthResult> {
-		//remove timetracking/timesheet filter just before logout
-		if (this.store.user && this.store.user.employeeId) {
-			if (this.timeTrackerService.running) {
-				this.timeTrackerService.toggle();
-			}
-			this.timerStore.reset();
-			this.timesheetFilterStore.reset();
-		}
+		await this._preLogout();
 
 		this.store.clear();
 		this.store.serverConnection = '200';
@@ -367,5 +356,17 @@ export class AuthStrategy extends NbAuthStrategy {
 			[],
 			AuthStrategy.config.logout.defaultMessages
 		);
+	}
+
+	private async _preLogout() {
+		//remove time tracking/timesheet filter just before logout
+		if (this.store.user && this.store.user.employeeId) {
+			if (this.timeTrackerService.running) {
+				this.timeTrackerService.toggle();
+			}
+
+			this.timeTrackerService.clearTimeTracker();
+			this.timesheetFilterService.clear();
+		}
 	}
 }

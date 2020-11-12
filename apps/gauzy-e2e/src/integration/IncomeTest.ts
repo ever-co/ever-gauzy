@@ -69,9 +69,7 @@ describe('Income test', () => {
 		incomePage.clickSaveIncomeButton();
 	});
 	it('Should be able to edit income', () => {
-		incomePage.tableRowVisible();
-		incomePage.selectTableRow(0);
-		incomePage.selectTableRow(0);
+		cy.wait(3000);
 		incomePage.selectTableRow(0);
 		incomePage.editIncomeButtonVisible();
 		incomePage.clickEditIncomeButton();
@@ -88,9 +86,7 @@ describe('Income test', () => {
 		incomePage.clickSaveIncomeButton();
 	});
 	it('Should be able to delete income', () => {
-		incomePage.tableRowVisible();
-		incomePage.selectTableRow(0);
-		incomePage.selectTableRow(0);
+		cy.wait(3000);
 		incomePage.selectTableRow(0);
 		incomePage.deleteIncomeButtonVisible();
 		incomePage.clickDeleteIncomeButton();

@@ -85,9 +85,7 @@ export class ProposalsComponent
 				untilDestroyed(this)
 			)
 			.subscribe((data) => {
-				const permissions = data.map(
-					(permisson) => permisson.permission
-				);
+				const permissions = data.map(({ permission }) => permission);
 				this.permissionsService.loadPermissions(permissions);
 			});
 		this.store.selectedDate$

@@ -5,7 +5,9 @@ import {
 	Input,
 	Output,
 	EventEmitter,
-	OnDestroy
+	OnDestroy,
+	ChangeDetectorRef,
+	AfterViewInit
 } from '@angular/core';
 import {
 	ITimeLogFilters,
@@ -38,7 +40,7 @@ import { NbCalendarRange } from '@nebular/theme';
 	templateUrl: './filters.component.html',
 	styleUrls: ['./filters.component.scss']
 })
-export class FiltersComponent implements OnInit, OnDestroy {
+export class FiltersComponent implements OnInit, OnDestroy, AfterViewInit {
 	PermissionsEnum = PermissionsEnum;
 	today: Date = new Date(moment().format('YYYY-MM-DD HH:mm:ss'));
 	TimeLogType = TimeLogType;
@@ -51,12 +53,12 @@ export class FiltersComponent implements OnInit, OnDestroy {
 		source: [],
 		logType: [],
 		projectIds: [],
-		activityLevel: ActivityLevel
+		activityLevel: ActivityLevel,
+		date: new Date()
 	};
 	futureDateAllowed: boolean;
 	hasFilterApplies: boolean;
 	isEmployee: boolean;
-	private _dateRage: NbCalendarRange<Date>;
 
 	@Input()
 	public get filters(): ITimeLogFilters {
@@ -68,14 +70,26 @@ export class FiltersComponent implements OnInit, OnDestroy {
 			start: value.activityLevel ? value.activityLevel.start : 0,
 			end: value.activityLevel ? value.activityLevel.end : 100
 		};
+
+		if (value.startDate && value.endDate) {
+			if (this.dateRange === 'custom_range') {
+				this.selectedDateRange = {
+					start: value.startDate as Date,
+					end: value.endDate as Date
+				};
+			}
+		}
+
+		this.cd.detectChanges();
 	}
 
 	@Output() filtersChange: EventEmitter<ITimeLogFilters> = new EventEmitter();
 
+	@Input() saveFilters = true;
 	@Input() hasProjectFilter = true;
 	@Input() hasDateRangeFilter = true;
 	@Input() hasEmployeeFilter = true;
-	@Input() multipleEmployeSelect = true;
+	@Input() multipleEmployeeSelect = true;
 	@Input() hasLogTypeFilter = true;
 	@Input() hasSourceFilter = true;
 	@Input() hasActivityLevelFilter = true;
@@ -108,20 +122,18 @@ export class FiltersComponent implements OnInit, OnDestroy {
 		this.triggerFilterChange();
 	}
 
-	get dateRage(): NbCalendarRange<Date> {
-		return this._dateRage;
+	private _selectedDateRange: NbCalendarRange<Date>;
+	get selectedDateRange(): NbCalendarRange<Date> {
+		return this._selectedDateRange;
 	}
 
-	set dateRage(range: NbCalendarRange<Date>) {
-		this._dateRage = range;
+	set selectedDateRange(range: NbCalendarRange<Date>) {
+		this._selectedDateRange = range;
 		if (range.start && range.end) {
-			this.filters.startDate = moment(range.start).format(
-				'YYYY-MM-DD HH:mm:ss'
-			);
-			this.filters.endDate = moment(range.end).format(
-				'YYYY-MM-DD HH:mm:ss'
-			);
+			this.filters.startDate = moment(range.start).format('YYYY-MM-DD');
+			this.filters.endDate = moment(range.end).format('YYYY-MM-DD');
 			this.triggerFilterChange();
+			this.cd.detectChanges();
 		}
 	}
 
@@ -143,11 +155,12 @@ export class FiltersComponent implements OnInit, OnDestroy {
 		private store: Store,
 		private timesheetFilterService: TimesheetFilterService,
 		private employeesService: EmployeesService,
-		private ngxPermissionsService: NgxPermissionsService
+		private ngxPermissionsService: NgxPermissionsService,
+		private cd: ChangeDetectorRef
 	) {}
 
 	ngOnInit() {
-		this.selectedDate = this.today;
+		// this.selectedDate = this.today;
 		this.store.user$
 			.pipe(
 				filter((user) => !!user),
@@ -156,13 +169,17 @@ export class FiltersComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.timesheetFilterService.filter$
-			.pipe(untilDestroyed(this), take(1))
-			.subscribe((filters: ITimeLogFilters) => {
-				this.filters = Object.assign({}, filters);
-				this.selectedDate = new Date(filters.date);
-				this.employeeIds = filters.employeeIds;
-			});
+
+		if (this.saveFilters) {
+			this.timesheetFilterService.filter$
+				.pipe(untilDestroyed(this), take(1))
+				.subscribe((filters: ITimeLogFilters) => {
+					this.filters = Object.assign({}, filters);
+					this.selectedDate = new Date(filters.date);
+					this.employeeIds = filters.employeeIds;
+				});
+		}
+
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
@@ -175,7 +192,7 @@ export class FiltersComponent implements OnInit, OnDestroy {
 				}
 			});
 		this.updateLogs$
-			.pipe(untilDestroyed(this), debounceTime(500))
+			.pipe(untilDestroyed(this), debounceTime(400))
 			.subscribe(() => {
 				this.hasFilterApplies = this.hasFilter();
 				Object.keys(this.filters).forEach((key) =>
@@ -193,6 +210,10 @@ export class FiltersComponent implements OnInit, OnDestroy {
 				);
 			});
 		this.triggerFilterChange();
+	}
+
+	ngAfterViewInit() {
+		this.cd.detectChanges();
 	}
 
 	isNextDisabled() {
@@ -237,8 +258,12 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	clearFilters(): void {
 		const obj = this.timesheetFilterService.clear();
 		this.filters = obj;
-		this._employeeIds = [];
-		this.setDefaultEmplyee();
+		if (this.multipleEmployeeSelect) {
+			this._employeeIds = [];
+		} else {
+			this._employeeIds = '';
+		}
+		this.setDefaultEmployee();
 		this.updateLogs$.next();
 	}
 
@@ -250,11 +275,12 @@ export class FiltersComponent implements OnInit, OnDestroy {
 			true
 		);
 		this.employees = items;
-		this.setDefaultEmplyee();
+		this.setDefaultEmployee();
 	}
 
-	setDefaultEmplyee() {
-		const isNullFilterEmployeeIds = this.filters.employeeIds.length === 0;
+	setDefaultEmployee() {
+		const isNullFilterEmployeeIds =
+			this.filters.employeeIds && this.filters.employeeIds.length === 0;
 		if (this.isEmployee && isNullFilterEmployeeIds) {
 			const employeeId = this.store.user.employeeId;
 			this.employeeIds = employeeId;
@@ -268,12 +294,14 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	hasFilter(): boolean {
 		const idCount = this.isEmployee ? 2 : 1;
 		return (
-			this._filters.employeeIds.length >= idCount ||
-			this._filters.source.length >= 1 ||
-			this._filters.logType.length >= 1 ||
-			this._filters.projectIds.length >= 1 ||
-			this.activityLevel.end < 100 ||
-			this.activityLevel.start > 0
+			(this._filters.employeeIds &&
+				this._filters.employeeIds.length >= idCount) ||
+			(this._filters.source && this._filters.source.length >= 1) ||
+			(this._filters.logType && this._filters.logType.length >= 1) ||
+			(this._filters.projectIds &&
+				this._filters.projectIds.length >= 1) ||
+			(this.activityLevel && this.activityLevel.end < 100) ||
+			(this.activityLevel && this.activityLevel.start > 0)
 		);
 	}
 

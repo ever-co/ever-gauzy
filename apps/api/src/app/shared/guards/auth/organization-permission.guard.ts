@@ -24,13 +24,11 @@ export class OrganizationPermissionGuard implements CanActivate {
 		);
 
 		let isAuthorized = false;
-
 		if (!permissions) {
 			isAuthorized = true;
 		} else {
 			const token = RequestContext.currentToken();
-
-			const { id, employeeId, role } = verify(token, env.JWT_SECRET) as {
+			const { employeeId, role } = verify(token, env.JWT_SECRET) as {
 				id: string;
 				role: string;
 				employeeId: string;
@@ -46,8 +44,9 @@ export class OrganizationPermissionGuard implements CanActivate {
 			const employee = await this.employeeRepository.findOne(employeeId, {
 				relations: ['organization']
 			});
-
+			let organizationId: string;
 			if (employeeId && employee.organization) {
+				organizationId = employee.organization.id;
 				isAuthorized =
 					permissions.filter((p) => employee.organization[p]).length >
 					0;
@@ -55,8 +54,8 @@ export class OrganizationPermissionGuard implements CanActivate {
 
 			if (!isAuthorized) {
 				console.log(
-					'Unauthorized access blocked. UserId:',
-					id,
+					'Unauthorized access blocked. OrganizationId:',
+					organizationId,
 					' Permissions Checked:',
 					permissions
 				);

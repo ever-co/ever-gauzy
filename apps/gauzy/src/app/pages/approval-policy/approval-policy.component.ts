@@ -54,7 +54,7 @@ export class ApprovalPolicyComponent
 		private toastrService: NbToastrService,
 		private approvalPolicyService: ApprovalPolicyService,
 		private router: Router,
-		private permissionsService: NgxPermissionsService
+		private ngxPermissionsService: NgxPermissionsService
 	) {
 		super(translateService);
 		this.setView();
@@ -69,13 +69,14 @@ export class ApprovalPolicyComponent
 				untilDestroyed(this)
 			)
 			.subscribe((data) => {
-				const permissions = data.map(
-					(permisson) => permisson.permission
-				);
-				this.permissionsService.loadPermissions(permissions);
+				const permissions = data.map(({ permission }) => permission);
+				this.ngxPermissionsService.loadPermissions(permissions);
 			});
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((org) => {
 				if (org) {
 					this.selectedOrganizationId = org.id;

@@ -286,6 +286,7 @@ import { createDefaultGoalKpiTemplate } from '../../goal-kpi-template/goal-kpi-t
 import { randomSeedConfig } from './random-seed-config';
 import { createDefaultJobSearchCategories } from '../../employee-job-preset/job-search-category/job-search-category.seed';
 import { createDefaultJobSearchOccupations } from '../../employee-job-preset/job-search-occupation/job-search-occupation.seed';
+import { createDefaultReport } from '../../reports/report.seed';
 
 @Injectable()
 export class SeedDataService {
@@ -331,6 +332,9 @@ export class SeedDataService {
 			// Seed jobs related data
 			await this.seedJobsData(isDefault);
 
+			// Seed jobs related data
+			await this.seedReportsData(isDefault);
+
 			console.log('Database All Seed completed');
 		} catch (error) {
 			this.handleError(error);
@@ -364,6 +368,55 @@ export class SeedDataService {
 	/**
 	 * Seed Default Data
 	 */
+	public async runReportsSeed() {
+		const isDefault = true;
+
+		try {
+			// Connect to database
+			await this.createConnection();
+
+			await this.seedReportsData(isDefault);
+
+			console.log('Database Jobs Seed completed');
+		} catch (error) {
+			this.handleError(error);
+		}
+	}
+
+	/**
+	 * Populate database with report related data
+	 * @param isDefault
+	 */
+	private async seedReportsData(isDefault: boolean) {
+		try {
+			this.log(
+				chalk.green(
+					`🌱 SEEDING ${
+						env.production ? 'PRODUCTION' : ''
+					} DATABASE...`
+				)
+			);
+
+			if (isDefault) {
+				await this.tryExecute(
+					'Default Report Category & Report',
+					createDefaultReport(this.connection)
+				);
+			}
+
+			this.log(
+				chalk.green(
+					`✅ SEEDED ${env.production ? 'PRODUCTION' : ''} DATABASE`
+				)
+			);
+		} catch (error) {
+			this.handleError(error);
+		}
+	}
+
+	/**
+	 * Seed Default Data
+	 */
 	public async runJobsSeed() {
 		const isDefault = true;
 
@@ -378,7 +431,6 @@ export class SeedDataService {
 			this.handleError(error);
 		}
 	}
-
 	/**
 	 * Populate database with jobs related data
 	 * @param isDefault

@@ -19,7 +19,7 @@ export interface ChartData {
 
 @UntilDestroy()
 @Component({
-	selector: 'gauzy-time-report-horizontal-bar-chart',
+	selector: 'ngx-time-report-horizontal-bar-chart',
 	templateUrl: './time-report-horizontal-bar-chart.component.html',
 	styleUrls: ['./time-report-horizontal-bar-chart.component.scss']
 })

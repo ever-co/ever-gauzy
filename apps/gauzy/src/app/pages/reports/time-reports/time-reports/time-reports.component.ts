@@ -1,4 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import {
+	AfterViewInit,
+	ChangeDetectorRef,
+	Component,
+	OnInit
+} from '@angular/core';
 import {
 	ICountsStatistics,
 	IGetCountsStatistics,
@@ -10,7 +15,6 @@ import {
 	PermissionsEnum,
 	TimeLogType
 } from '@gauzy/models';
-import { toUTC } from '@gauzy/utils';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { TimesheetStatisticsService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-statistics.service';
@@ -24,15 +28,18 @@ import * as _ from 'underscore';
 
 @UntilDestroy()
 @Component({
-	selector: 'gauzy-time-reports',
+	selector: 'ga-time-reports',
 	templateUrl: './time-reports.component.html',
 	styleUrls: ['./time-reports.component.scss']
 })
-export class TimeReportsComponent implements OnInit {
+export class TimeReportsComponent implements OnInit, AfterViewInit {
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	PermissionsEnum = PermissionsEnum;
 	today: Date = new Date();
-	logRequest: ITimeLogFilters = {};
+	logRequest: ITimeLogFilters = {
+		startDate: moment().startOf('week').toDate(),
+		endDate: moment().endOf('week').toDate()
+	};
 	updateLogs$: Subject<any> = new Subject();
 	organization: IOrganization;
 	counts: ICountsStatistics;
@@ -58,13 +65,11 @@ export class TimeReportsComponent implements OnInit {
 		private timesheetService: TimesheetService,
 		private timesheetStatisticsService: TimesheetStatisticsService,
 		private ngxPermissionsService: NgxPermissionsService,
-		private store: Store
+		private store: Store,
+		private cd: ChangeDetectorRef
 	) {}
 
 	ngOnInit() {
-		this.logRequest.startDate = moment(this.today).startOf('week').toDate();
-		this.logRequest.endDate = moment(this.today).endOf('week').toDate();
-
 		this.updateLogs$
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(() => {
@@ -102,11 +107,16 @@ export class TimeReportsComponent implements OnInit {
 			});
 	}
 
-	filtersChange($event: ITimeLogFilters) {
+	ngAfterViewInit() {
+		this.cd.detectChanges();
+	}
+
+	filtersChange($event) {
+		console.log($event);
 		this.logRequest = $event;
-		//	this.timesheetFilterService.filter = $event;
 		this.updateLogs$.next();
 	}
+
 	filterChange() {
 		this.updateLogs$.next();
 	}
@@ -125,8 +135,8 @@ export class TimeReportsComponent implements OnInit {
 
 		const request: IGetTimeLogReportInput = {
 			...appliedFilter,
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
+			startDate: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
+			endDate: moment(endDate).format('YYYY-MM-DD HH:mm:ss'),
 			organizationId: this.organization ? this.organization.id : null,
 			tenantId: this.organization ? this.organization.tenantId : null,
 			groupBy: this.groupBy
@@ -147,8 +157,8 @@ export class TimeReportsComponent implements OnInit {
 	updateChartData() {
 		const { startDate, endDate } = this.logRequest;
 		const request: IGetTimeLogReportInput = {
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
+			startDate: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
+			endDate: moment(endDate).format('YYYY-MM-DD HH:mm:ss'),
 			organizationId: this.organization ? this.organization.id : null,
 			tenantId: this.organization ? this.organization.tenantId : null,
 			groupBy: this.groupBy
@@ -176,9 +186,21 @@ export class TimeReportsComponent implements OnInit {
 	}
 
 	getCounts() {
+		const { startDate, endDate } = this.logRequest;
+		const appliedFilter = _.pick(
+			this.logRequest,
+			'employeeIds',
+			'projectIds',
+			'source',
+			'activityLevel',
+			'logType'
+		);
 		const request: IGetCountsStatistics = {
-			organizationId: this.organization.id,
-			tenantId: this.organization.tenantId
+			...appliedFilter,
+			startDate: moment(startDate).toDate(),
+			endDate: moment(endDate).toDate(),
+			organizationId: this.organization ? this.organization.id : null,
+			tenantId: this.organization ? this.organization.tenantId : null
 		};
 		this.countsLoading = true;
 		this.timesheetStatisticsService

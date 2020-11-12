@@ -91,18 +91,7 @@ describe('Expense test', () => {
 		expensesPage.saveExpenseButtonVisible();
 		expensesPage.clickSaveExpenseButton();
 	});
-	it('Should be able to duplicate expense', () => {
-		expensesPage.tableRowVisible();
-		expensesPage.selectTableRow(0);
-		expensesPage.selectTableRow(0);
-		expensesPage.duplicateButtonVisible();
-		expensesPage.clickDuplicateButton();
-		expensesPage.saveExpenseButtonVisible();
-		expensesPage.clickSaveExpenseButton();
-	});
 	it('Should be able to edit expense', () => {
-		expensesPage.tableRowVisible();
-		expensesPage.selectTableRow(0);
 		expensesPage.selectTableRow(0);
 		expensesPage.editExpenseButtonVisible();
 		expensesPage.clickEditExpenseButton();
@@ -117,9 +106,16 @@ describe('Expense test', () => {
 		expensesPage.saveExpenseButtonVisible();
 		expensesPage.clickSaveExpenseButton();
 	});
-	it('Should be able to delete expense', () => {
-		expensesPage.tableRowVisible();
+	it('Should be able to duplicate expense', () => {
+		cy.wait(3000);
 		expensesPage.selectTableRow(0);
+		expensesPage.duplicateButtonVisible();
+		expensesPage.clickDuplicateButton();
+		expensesPage.saveExpenseButtonVisible();
+		expensesPage.clickSaveExpenseButton();
+	});
+	it('Should be able to delete expense', () => {
+		cy.wait(3000);
 		expensesPage.selectTableRow(0);
 		expensesPage.deleteExpenseButtonVisible();
 		expensesPage.clickDeleteExpenseButton();

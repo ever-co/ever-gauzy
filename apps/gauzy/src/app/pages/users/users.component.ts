@@ -115,9 +115,7 @@ export class UsersComponent
 				untilDestroyed(this)
 			)
 			.subscribe((data) => {
-				const permissions = data.map(
-					(permisson) => permisson.permission
-				);
+				const permissions = data.map(({ permission }) => permission);
 				this.ngxPermissionsService.loadPermissions(permissions);
 				this.hasSuperAdminPermission = this.store.hasPermission(
 					PermissionsEnum.SUPER_ADMIN_EDIT

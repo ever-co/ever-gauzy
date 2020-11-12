@@ -27,10 +27,10 @@ import { OrganizationPermissionGuard } from '../../shared/guards/auth/organizati
 import { RequestContext } from '../../core/context';
 import { CrudController } from '../../core';
 import { FindOneOptions } from 'typeorm';
-import { TenantPermissionGuard } from '../../shared/guards/auth/tenant-permission.guard';
+import { TenantBaseGuard } from '../../shared/guards/auth/tenant-base.guard ';
 
 @ApiTags('TimeLog')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(AuthGuard('jwt'), TenantBaseGuard)
 @Controller('time-log')
 export class TimeLogController extends CrudController<ITimeLog> {
 	constructor(private readonly timeLogService: TimeLogService) {

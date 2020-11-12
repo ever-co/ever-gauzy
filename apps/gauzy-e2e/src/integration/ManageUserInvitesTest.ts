@@ -27,6 +27,7 @@ describe('Manage invites test', () => {
 		manageUserInvitesPage.clickCopyLinkButton();
 	});
 	it('Should be able to resend invite', () => {
+		manageUserInvitesPage.clickTableRow(0);
 		manageUserInvitesPage.resendInviteButtonVisible();
 		manageUserInvitesPage.clickResendInviteButton();
 		manageUserInvitesPage.cancelResendInviteButtonVisible();
