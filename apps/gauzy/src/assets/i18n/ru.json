@@ -69,7 +69,10 @@
 			"EDIT": "Редактировать",
 			"DELETE": "Удалить"
 		},
-		"CANDIDATE_STATISTIC": "Статистика"
+		"CANDIDATE_STATISTIC": "Статистика",
+		"FILTER": "Фильтр",
+		"REFRESH": "Обновить",
+		"AUTO_REFRESH": "Автообновление"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -1642,7 +1645,14 @@
 		"HIDE": "Скрыть",
 		"NO_JOBS": "Работы не найдены",
 		"JOB_SEARCH": "Поиск Вакансии",
-		"LOAD_MORE": "Загрузить больше"
+		"LOAD_MORE": "Загрузить больше",
+		"FILTER": {
+			"TITLE": "Расширенный фильтр",
+			"SOURCE": "Источник",
+			"JOB_TYPE": "Тип задания",
+			"JOB_STATUS": "Статус Вакансии",
+			"BUDGET": "Бюджет"
+		}
 	},
 	"JOB_MATCHING": {
 		"CONFIGURE_EMPLOYEES_TO_JOBS_MATCHING": "Настройка соответствия заданий сотрудникам",
