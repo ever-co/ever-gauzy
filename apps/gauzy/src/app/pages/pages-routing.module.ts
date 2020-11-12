@@ -399,14 +399,14 @@ const routes: Routes = [
 							).then((m) => m.AllReportModule)
 					},
 					{
-						path: 'time/daily',
+						path: 'time-activity',
 						loadChildren: () =>
 							import(
 								'./reports/time-reports/time-reports.module'
 							).then((m) => m.TimeReportsModule)
 					},
 					{
-						path: 'time/weekly',
+						path: 'weekly',
 						loadChildren: () =>
 							import(
 								'./reports/weekly-time-reports/weekly-time-reports.module'
@@ -418,6 +418,10 @@ const routes: Routes = [
 							import(
 								'./work-in-progress/work-in-progress.module'
 							).then((m) => m.WorkInProgressModule)
+					},
+					{
+						path: '*',
+						component: NotFoundComponent
 					}
 				]
 			},

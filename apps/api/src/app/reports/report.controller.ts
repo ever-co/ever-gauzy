@@ -2,12 +2,11 @@ import { Controller, Get, HttpStatus, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController, IPagination, PaginationParams } from '../core';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 import { Report } from './report.entity';
 import { ReportService } from './report.service';
 
 @ApiTags('Report')
-@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class ReportController extends CrudController<Report> {
 	constructor(private reportService: ReportService) {

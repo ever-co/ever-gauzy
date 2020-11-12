@@ -4,13 +4,15 @@ import {
 	Column,
 	RelationId,
 	ManyToOne,
-	JoinColumn
+	JoinColumn,
+	AfterLoad
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { IReport, IReportCategory } from '@gauzy/models';
 import { ReportCategory } from './report-category.entity';
 import { Base } from '../core/entities/base';
+import { FileStorage } from '../core/file-storage';
 
 @Entity('report')
 export class Report extends Base implements IReport {
@@ -50,6 +52,20 @@ export class Report extends Base implements IReport {
 
 	@ApiProperty({ type: String, readOnly: true })
 	@IsString()
+	@Column({ nullable: true })
+	iconClass?: string;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@IsString()
 	@Column({ default: false })
 	showInMenu?: boolean;
+
+	imageUrl?: string;
+
+	@AfterLoad()
+	afterLoad?() {
+		if (this.image) {
+			this.imageUrl = new FileStorage().getProvider().url(this.image);
+		}
+	}
 }

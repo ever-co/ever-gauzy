@@ -108,6 +108,8 @@ import { EmployeeUpworkJobsSearchCriterion } from '../../employee-job-preset/emp
 import { JobPresetUpworkJobSearchCriterion } from '../../employee-job-preset/job-preset-upwork-job-search-criterion.entity';
 import { JobSearchCategory } from '../../employee-job-preset/job-search-category/job-search-category.entity';
 import { JobSearchOccupation } from '../../employee-job-preset/job-search-occupation/job-search-occupation.entity';
+import { Report } from '../../reports/report.entity';
+import { ReportCategory } from '../../reports/report-category.entity';
 
 export const allEntities = [
 	AppointmentEmployee,
@@ -219,5 +221,7 @@ export const allEntities = [
 	JobPresetUpworkJobSearchCriterion,
 	EmployeeUpworkJobsSearchCriterion,
 	JobSearchOccupation,
-	JobSearchCategory
+	JobSearchCategory,
+	ReportCategory,
+	Report
 ];

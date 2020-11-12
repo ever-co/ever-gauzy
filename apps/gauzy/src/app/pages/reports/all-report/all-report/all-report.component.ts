@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import {
 	IGetReportCategory,
 	IOrganization,
@@ -24,7 +24,7 @@ export class AllReportComponent implements OnInit {
 		startDate: moment().startOf('week').toDate(),
 		endDate: moment().endOf('week').toDate()
 	};
-	countsLoading: boolean;
+	loading: boolean;
 	reportCategories: IReportCategory[];
 
 	constructor(private reportService: ReportService) {}
@@ -33,18 +33,26 @@ export class AllReportComponent implements OnInit {
 		this.getReportCategories();
 	}
 
+	updateShowInMenu($event, report): void {
+		this.reportService
+			.updateReport(report.id, { showInMenu: $event })
+			.then(() => {
+				this.reportService.init();
+			});
+	}
+
 	getReportCategories() {
 		const request: IGetReportCategory = {
 			relations: ['reports']
 		};
-		this.countsLoading = true;
+		this.loading = true;
 		this.reportService
 			.getReportCategories(request)
 			.then((resp) => {
 				this.reportCategories = resp.items;
 			})
 			.finally(() => {
-				this.countsLoading = false;
+				this.loading = false;
 			});
 	}
 }

@@ -1,24 +1,49 @@
-<nb-card>
+<nb-card [nbSpinner]="loading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 	<nb-card-header>
 		<h4>{{ 'REPORT_PAGE.ALL_REPORTS' | translate }}</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="row" *ngFor="let reportCategory of reportCategories">
-			<div
-				class="col-sm-3 col-md-4"
-				*ngFor="let report of reportCategory.reports"
-			>
-				<nb-card
-					[nbSpinner]="countsLoading"
-					nbSpinnerSize="giant"
-					nbSpinnerStatus="primary"
+		<div *ngFor="let reportCategory of reportCategories">
+			<div class="mb-4 mt-5">
+				<h5>
+					<span class="category-icon mr-2">
+						<img [src]="reportCategory.iconUrl" />
+					</span>
+					{{ reportCategory.name }}
+				</h5>
+			</div>
+			<div class="card-grid">
+				<a
+					[routerLink]="['/pages/reports', report.slug]"
+					class="mb-0 card"
+					*ngFor="let report of reportCategory.reports"
 				>
-					<nb-card-body>
-						<div class="h3">
-							{{ report?.name || 0 }}
-						</div>
-					</nb-card-body>
-				</nb-card>
+					<nb-card class="border-0 m-0">
+						<nb-card-header>
+							<div class="row align-items-center">
+								<h6 class="col">{{ report?.name }}</h6>
+								<div class="col-auto">
+									<nb-toggle
+										(click)="$event.stopPropagation()"
+										[(ngModel)]="report.showInMenu"
+										(checkedChange)="
+											updateShowInMenu($event, report)
+										"
+									></nb-toggle>
+								</div>
+							</div>
+						</nb-card-header>
+						<nb-card-body>
+							<div class="caption">{{ report?.description }}</div>
+							<div
+								class="image-container"
+								*ngIf="report.imageUrl"
+							>
+								<img [src]="report.imageUrl" />
+							</div>
+						</nb-card-body>
+					</nb-card>
+				</a>
 			</div>
 		</div>
 	</nb-card-body>
