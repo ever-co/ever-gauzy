@@ -2,7 +2,6 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as inviteCandidatePage from '../support/Base/pages/Candidates.po';
 import * as faker from 'faker';
-import { CandidatesPageData } from '../support/Base/pagedata/CandidatesPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
@@ -99,27 +98,28 @@ describe('Invite candidate test', () => {
 		inviteCandidatePage.allCurrentCandidatesButtonVisible();
 		inviteCandidatePage.clickAllCurrentCandidatesButton();
 	});
-	it('Should be able to edit candidate', () => {
-		inviteCandidatePage.selectTableRowVisible();
-		inviteCandidatePage.selectLastTableRow();
-		inviteCandidatePage.editButtonVisible();
-		inviteCandidatePage.clickEditButton();
-		inviteCandidatePage.saveEditButtonVisible();
-		inviteCandidatePage.clickSaveEditButton();
-		inviteCandidatePage.clickSaveEditButton();
-		inviteCandidatePage.backButtonVisible();
-		inviteCandidatePage.clickBackButton();
-		inviteCandidatePage.clickBackButton();
-	});
 	it('Should be able to reject candidate', () => {
-		inviteCandidatePage.selectLastTableRow();
+		cy.on('uncaught:exception', (err, runnable) => {
+			return false;
+		});
+		cy.wait(3000);
+		inviteCandidatePage.selectTableRow(0);
 		inviteCandidatePage.rejectButtonVisible();
 		inviteCandidatePage.clickRejectButton();
 		inviteCandidatePage.confirmActionButtonVisible();
 		inviteCandidatePage.clickConfirmActionButton();
 	});
+	it('Should be able to edit candidate', () => {
+		inviteCandidatePage.selectTableRow(0);
+		inviteCandidatePage.editButtonVisible();
+		inviteCandidatePage.clickEditButton();
+		inviteCandidatePage.saveEditButtonVisible();
+		inviteCandidatePage.clickSaveEditButton();
+		inviteCandidatePage.backButtonVisible();
+		inviteCandidatePage.clickBackButton();
+	});
 	it('Should be able to archive candidate', () => {
-		inviteCandidatePage.selectLastTableRow();
+		inviteCandidatePage.selectTableRow(0);
 		inviteCandidatePage.archiveButtonVisible();
 		inviteCandidatePage.clickArchiveButton();
 		inviteCandidatePage.confirmActionButtonVisible();

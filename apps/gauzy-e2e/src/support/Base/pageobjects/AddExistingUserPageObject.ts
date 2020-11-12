@@ -6,8 +6,5 @@ export const AddExistingUserPage = {
 	checkUsersMultyselectCss: '.option-list nb-option',
 	saveSelectedUsersButtonCss: 'div.form-group > button[status="success"]',
 	cancelAddUsersButtonCss: 'div.form-group > button[status="danger"]',
-	confirmRemoveUserButtonCss: 'nb-card-footer > button[status="danger"]',
-	organizationDropdownCss: '[placeholder="Select Company"]',
-	organizationDropdownOptionCss: 'div.ng-option',
-	selectUserByTextCss: ''
+	confirmRemoveUserButtonCss: 'nb-card-footer > button[status="danger"]'
 };

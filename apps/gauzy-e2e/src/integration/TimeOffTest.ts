@@ -40,8 +40,7 @@ describe('Time Off test', () => {
 		timeOffPage.clickSaveRequestButton();
 	});
 	it('Should be able to edit time off request', () => {
-		timeOffPage.timeOffTableRowVisible();
-		timeOffPage.selectTimeOffTableRow(0);
+		cy.wait(3000);
 		timeOffPage.selectTimeOffTableRow(0);
 		timeOffPage.editTimeOffRequestBtnVisible();
 		timeOffPage.clickEditTimeOffRequestButton();
@@ -66,17 +65,13 @@ describe('Time Off test', () => {
 		timeOffPage.clickSaveRequestButton();
 	});
 	it('Should be able to DENY time off request', () => {
-		timeOffPage.timeOffTableRowVisible();
-		timeOffPage.selectTimeOffTableRow(0);
+		cy.wait(3000);
 		timeOffPage.selectTimeOffTableRow(0);
 		timeOffPage.denyTimeOffButtonVisible();
 		timeOffPage.clickDenyTimeOffButton();
 		timeOffPage.clickDenyTimeOffButton();
 	});
 	it('Should be able to APPROVE time off request', () => {
-		timeOffPage.timeOffTableRowVisible();
-		timeOffPage.selectTimeOffTableRow(0);
-		timeOffPage.selectTimeOffTableRow(0);
 		timeOffPage.approveTimeOffButtonVisible();
 		timeOffPage.clickApproveTimeOffButton();
 		timeOffPage.clickApproveTimeOffButton();
@@ -102,8 +97,7 @@ describe('Time Off test', () => {
 		timeOffPage.clickSaveRequestButton();
 	});
 	it('Should be able to delete time off request', () => {
-		timeOffPage.timeOffTableRowVisible();
-		timeOffPage.selectTimeOffTableRow(0);
+		cy.wait(3000);
 		timeOffPage.selectTimeOffTableRow(0);
 		timeOffPage.deleteTimeOffBtnVisible();
 		timeOffPage.clickDeleteTimeOffButton();

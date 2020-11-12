@@ -72,7 +72,6 @@ describe('Add tasks test', () => {
 	it('Should be able to duplicate task', () => {
 		addTaskPage.tasksTableVisible();
 		addTaskPage.selectTasksTableRow(0);
-		addTaskPage.selectTasksTableRow(0);
 		addTaskPage.duplicateOrEditTaskButtonVisible();
 		addTaskPage.clickDuplicateOrEditTaskButton(0);
 		addTaskPage.confirmDuplicateOrEditTaskButtonVisible();
@@ -80,7 +79,6 @@ describe('Add tasks test', () => {
 	});
 	it('Should be able to edit task', () => {
 		addTaskPage.tasksTableVisible();
-		addTaskPage.selectTasksTableRow(0);
 		addTaskPage.selectTasksTableRow(0);
 		addTaskPage.duplicateOrEditTaskButtonVisible();
 		addTaskPage.clickDuplicateOrEditTaskButton(1);
@@ -115,7 +113,6 @@ describe('Add tasks test', () => {
 	});
 	it('Should be able to delete task', () => {
 		addTaskPage.tasksTableVisible();
-		addTaskPage.selectTasksTableRow(0);
 		addTaskPage.selectTasksTableRow(0);
 		addTaskPage.deleteTaskButtonVisible();
 		addTaskPage.clickDeleteTaskButton();

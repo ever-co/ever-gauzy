@@ -78,3 +78,7 @@ export const getLastElement = (loc) => {
 export const doubleClickOnElement = (loc, index) => {
 	cy.get(loc, { timeout: 40000 }).eq(index).dblclick();
 };
+
+export const getNotEqualElement = (loc, text) => {
+	cy.get(loc, { timeout: 40000 }).should('not.have.text', text);
+};

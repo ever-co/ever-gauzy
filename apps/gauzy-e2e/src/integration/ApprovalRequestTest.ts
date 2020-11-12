@@ -64,9 +64,7 @@ describe('Approval request test', () => {
 		approvalRequestPage.clickSaveButton();
 	});
 	it('Should be able to edit approval request', () => {
-		approvalRequestPage.selectTableRowVisible();
-		approvalRequestPage.selectTableRow(0);
-		approvalRequestPage.selectTableRow(0);
+		cy.wait(3000);
 		approvalRequestPage.selectTableRow(0);
 		approvalRequestPage.editApprovalRequestButtonVisible();
 		approvalRequestPage.clickEditApprovalRequestButton();
@@ -82,8 +80,7 @@ describe('Approval request test', () => {
 		approvalRequestPage.clickSaveButton();
 	});
 	it('Should be able to delete approval request', () => {
-		approvalRequestPage.selectTableRow(0);
-		approvalRequestPage.selectTableRow(0);
+		cy.wait(3000);
 		approvalRequestPage.selectTableRow(0);
 		approvalRequestPage.deleteApprovalRequestButtonVisible();
 		approvalRequestPage.clickDeleteApprovalRequestButton();

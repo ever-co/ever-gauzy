@@ -175,7 +175,7 @@ describe('Manage employees test', () => {
 		manageEmployeesPage.clickConfirmResendInviteButton();
 	});
 	it('Should be able to delete invite', () => {
-		manageEmployeesPage.selectTableRow(0);
+		cy.wait(3000);
 		manageEmployeesPage.selectTableRow(0);
 		manageEmployeesPage.deleteInviteButtonVisible();
 		manageEmployeesPage.clickDeleteInviteButton();

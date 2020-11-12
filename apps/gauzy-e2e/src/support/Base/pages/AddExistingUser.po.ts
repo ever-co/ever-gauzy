@@ -3,8 +3,7 @@ import {
 	clickButton,
 	clickKeyboardBtnByKeycode,
 	clickElementIfVisible,
-	clickElementByText,
-	getLastElement
+	clickElementByText
 } from '../utils/util';
 import { AddExistingUserPage } from '../pageobjects/AddExistingUserPageObject';
 
@@ -70,16 +69,4 @@ export const saveUsersButtonVisible = () => {
 
 export const clickSaveUsersButton = () => {
 	clickButton(AddExistingUserPage.saveSelectedUsersButtonCss);
-};
-
-export const organizationDropdownVisible = () => {
-	verifyElementIsVisible(AddExistingUserPage.organizationDropdownCss);
-};
-
-export const clickOrganizationDropdown = () => {
-	clickButton(AddExistingUserPage.organizationDropdownCss);
-};
-
-export const selectOrganizationFromDropdown = () => {
-	getLastElement(AddExistingUserPage.organizationDropdownOptionCss);
 };

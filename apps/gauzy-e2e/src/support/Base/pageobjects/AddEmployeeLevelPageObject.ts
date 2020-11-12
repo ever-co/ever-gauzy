@@ -7,7 +7,7 @@ export const AddEmployeeLevelPage = {
 	saveNewLevelButtonCss: 'div.d-flex > button[status="success"]',
 	cancelNewLevelButtonCss: 'div.d-flex > button[status="danger"]',
 	editEmployeeLevelButtonCss: 'svg.eva-edit',
-	removeEmployeeLevelButtonCss: 'g[data-name="close"]',
+	removeEmployeeLevelButtonCss: 'svg.eva-close',
 	confirmDeleteLevelButtonCss: 'nb-card-footer > button[status="danger"]',
 	editLevelInputCss: 'div.d-flex > input[type="text"]'
 };
