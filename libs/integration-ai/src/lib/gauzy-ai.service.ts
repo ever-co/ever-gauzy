@@ -32,7 +32,8 @@ import {
 	IJobPost,
 	IGetEmployeeJobPostFilters,
 	JobPostStatusEnum,
-	JobPostTypeEnum
+	JobPostTypeEnum,
+	IEmployeeJobsStatistics
 } from '@gauzy/models';
 
 @Injectable()
@@ -127,6 +128,38 @@ export class GauzyAIService {
 			this._logger.error(err);
 			this._client = null;
 		}
+	}
+
+	/**
+	 * Get statistic from Gauzy AI about how many jobs are available for given employee
+	 * and to how many of jobs employee already applied and more statistic in the future.
+	 */
+	public async getEmployeesStatistics(): Promise<IEmployeeJobsStatistics[]> {
+		return [];
+	}
+
+	/**
+	 * Updates in Gauzy AI if given Employee looking for a jobs or not.
+	 * If not looking, Gauzy AI will NOT return jobs for such employee and will NOT crawl sources for jobs for such employee
+	 * @param employeeId
+	 * @param isJobSearchActive
+	 */
+	public async updateEmployeeStatus(
+		employeeId: string,
+		isJobSearchActive: boolean
+	): Promise<boolean> {
+		if (this._client == null) {
+			return false;
+		}
+
+		// First we need to get employee id because we have only externalId
+		const gauzyAIEmployeeId = await this.getEmployeeGauzyAIId(employeeId);
+
+		console.log(
+			`updateVisibility called. EmployeeId: ${employeeId}. Gauzy AI EmployeeId: ${gauzyAIEmployeeId}`
+		);
+
+		return true;
 	}
 
 	/**
