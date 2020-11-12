@@ -4,7 +4,7 @@ import { IOrganization, PermissionsEnum } from '@gauzy/models';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
-import { filter, takeUntil } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import { Store } from '../@core/services/store.service';
 import { SelectorService } from '../@core/utils/selector.service';
 import { EmployeesService } from '../@core/services';
@@ -35,7 +35,6 @@ interface GaMenuItem extends NbMenuItem {
 export class PagesComponent implements OnInit, OnDestroy {
 	basicMenu: GaMenuItem[];
 	adminMenu: GaMenuItem[];
-	private _ngDestroy$ = new Subject<void>();
 	isAdmin: boolean;
 	isEmployee: boolean;
 	_selectedOrganization: IOrganization;
@@ -889,8 +888,5 @@ export class PagesComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }
