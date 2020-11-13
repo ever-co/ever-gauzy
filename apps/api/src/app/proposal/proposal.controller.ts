@@ -7,8 +7,7 @@ import {
 	Query,
 	UseGuards,
 	Put,
-	Param,
-	HttpCode
+	Param
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ProposalService } from './proposal.service';

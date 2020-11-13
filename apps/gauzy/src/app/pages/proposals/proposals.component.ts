@@ -6,7 +6,6 @@ import {
 	IProposal,
 	ComponentLayoutStyleEnum,
 	IOrganization,
-	IRolePermission,
 	IProposalViewModel
 } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
