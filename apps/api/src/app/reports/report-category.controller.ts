@@ -6,12 +6,9 @@ import { ReportCategory } from './report-category.entity';
 import { ReportCategoryService } from './report-category.service';
 
 @ApiTags('Report Category')
-@UseGuards(AuthGuard('jwt'))
 @Controller('category')
-export class ReportCategoryController extends CrudController<ReportCategory> {
-	constructor(private reportCategoryService: ReportCategoryService) {
-		super(reportCategoryService);
-	}
+export class ReportCategoryController {
+	constructor(private reportCategoryService: ReportCategoryService) {}
 
 	@ApiOperation({ summary: 'Find all' })
 	@ApiResponse({

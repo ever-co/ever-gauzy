@@ -13,8 +13,6 @@ export class ServerConnectionService {
 	load(endPoint: string, store: { serverConnection: string }) {
 		return new Promise(async (resolve, reject) => {
 			await this.checkServerConnection(endPoint, store);
-
-			await this.reportService.init();
 			resolve(true);
 		});
 	}
