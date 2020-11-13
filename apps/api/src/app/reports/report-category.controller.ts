@@ -1,7 +1,6 @@
-import { Controller, Get, HttpStatus, Query, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Controller, Get, HttpStatus, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController, IPagination, PaginationParams } from '../core';
+import { IPagination, PaginationParams } from '../core';
 import { ReportCategory } from './report-category.entity';
 import { ReportCategoryService } from './report-category.service';
 
