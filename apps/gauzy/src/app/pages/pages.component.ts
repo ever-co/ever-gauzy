@@ -758,7 +758,9 @@ export class PagesComponent implements OnInit, OnDestroy {
 			.subscribe(async (org) => {
 				this._selectedOrganization = org;
 				await this.checkForEmployee();
-				await this.reportService.init();
+						organizationId: org.id
+					});
+				}
 				this.loadItems(
 					this.selectorService.showSelectors(this.router.url)
 						.showOrganizationShortcuts

@@ -5,7 +5,8 @@ import {
 	RelationId,
 	ManyToOne,
 	JoinColumn,
-	AfterLoad
+	AfterLoad,
+	OneToMany
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
@@ -13,9 +14,18 @@ import { IReport, IReportCategory } from '@gauzy/models';
 import { ReportCategory } from './report-category.entity';
 import { Base } from '../core/entities/base';
 import { FileStorage } from '../core/file-storage';
+import { ReportOrganization } from './report-organization.entity';
 
 @Entity('report')
 export class Report extends Base implements IReport {
+	@ApiProperty({ type: ReportOrganization })
+	@OneToMany(
+		() => ReportOrganization,
+		(reportOrganization) => reportOrganization.report
+	)
+	@JoinColumn()
+	reportOrganizations?: ReportOrganization[];
+
 	@ApiProperty({ type: ReportCategory })
 	@ManyToOne(() => ReportCategory)
 	@JoinColumn()
