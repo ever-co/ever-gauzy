@@ -758,6 +758,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 			.subscribe(async (org) => {
 				this._selectedOrganization = org;
 				await this.checkForEmployee();
+				if (org) {
+					await this.reportService.getReportMenuItems({
 						organizationId: org.id
 					});
 				}
