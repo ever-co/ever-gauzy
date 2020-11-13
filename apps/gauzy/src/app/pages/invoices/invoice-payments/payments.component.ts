@@ -3,25 +3,26 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { InvoicesService } from '../../../@core/services/invoices.service';
-import { IInvoice, IPayment, InvoiceStatusTypesEnum } from '@gauzy/models';
-import { LocalDataSource } from 'ng2-smart-table';
+import {
+	IInvoice,
+	IPayment,
+	InvoiceStatusTypesEnum,
+	ISelectedPayment
+} from '@gauzy/models';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { PaymentMutationComponent } from './payment-mutation/payment-mutation.component';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { PaymentService } from '../../../@core/services/payment.service';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { first } from 'rxjs/operators';
+import { filter, first, tap } from 'rxjs/operators';
 import * as pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 import { generatePdf } from '../../../@shared/payment/generate-pdf';
 import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge.component';
 import { Store } from '../../../@core/services/store.service';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
-
-export interface SelectedPayment {
-	data: IPayment;
-	isSelected: false;
-}
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-payments',
 	templateUrl: './payments.component.html',
@@ -53,32 +54,54 @@ export class InvoicePaymentsComponent
 	smartTableSource = new LocalDataSource();
 	selectedPayment: IPayment;
 	disableButton = true;
+	tenantId: string;
 
-	@ViewChild('paymentsTable') paymentsTable;
-
-	ngOnInit() {
-		this.route.paramMap.subscribe((params) => {
-			this.invoiceId = params.get('id');
-		});
-		this.executeInitialFunctions();
-		this.loadSmartTable();
-		this._applyTranslationOnSmartTable();
+	paymentsTable: Ng2SmartTableComponent;
+	@ViewChild('paymentsTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.paymentsTable = content;
+			this.onChangedSource();
+		}
 	}
 
-	async executeInitialFunctions() {
-		await this.getInvoice();
-		this.loadSettings();
-		await this.calculateTotalPaid();
+	ngOnInit() {
+		this.loadSmartTable();
+		this._applyTranslationOnSmartTable();
+		this.route.paramMap.pipe(untilDestroyed(this)).subscribe((params) => {
+			this.invoiceId = params.get('id');
+		});
+		this.store.user$
+			.pipe(
+				filter((user) => !!user),
+				tap((user) => (this.tenantId = user.tenantId)),
+				tap(() => this.getInvoice()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	async getInvoice() {
-		const invoice = await this.invoicesService.getById(this.invoiceId, [
-			'invoiceItems',
-			'tags',
-			'fromOrganization',
-			'toContact'
-		]);
+		if (!this.invoiceId) {
+			return;
+		}
+		const invoice = await this.invoicesService.getById(
+			this.invoiceId,
+			[
+				'invoiceItems',
+				'tags',
+				'fromOrganization',
+				'toContact',
+				'payments',
+				'payments.invoice',
+				'payments.recordedBy'
+			],
+			{ tenantId: this.tenantId }
+		);
 		this.invoice = invoice;
+
+		this.payments = invoice.payments;
+		this.smartTableSource.load(invoice.payments);
+		await this.calculateTotalPaid();
 	}
 
 	async calculateTotalPaid() {
@@ -130,7 +153,7 @@ export class InvoicePaymentsComponent
 		if (result) {
 			await this.paymentService.add(result);
 			this.totalPaid = 0;
-			await this.loadSettings();
+			await this.getInvoice();
 			await this.updateInvoiceStatus(
 				+this.invoice.totalValue,
 				this.totalPaid
@@ -160,7 +183,7 @@ export class InvoicePaymentsComponent
 
 		if (result) {
 			await this.paymentService.update(result.id, result);
-			await this.loadSettings();
+			await this.getInvoice();
 			await this.updateInvoiceStatus(
 				+this.invoice.totalValue,
 				this.totalPaid
@@ -185,7 +208,7 @@ export class InvoicePaymentsComponent
 
 		if (result) {
 			await this.paymentService.delete(this.selectedPayment.id);
-			await this.loadSettings();
+			await this.getInvoice();
 			await this.updateInvoiceStatus(
 				+this.invoice.totalValue,
 				this.totalPaid
@@ -221,7 +244,6 @@ export class InvoicePaymentsComponent
 			return;
 		}
 		pdfMake.vfs = pdfFonts.pdfMake.vfs;
-
 		const docDefinition = await generatePdf(
 			this.invoice,
 			this.payments,
@@ -229,15 +251,13 @@ export class InvoicePaymentsComponent
 			this.invoice.toContact,
 			this.totalPaid
 		);
-
 		pdfMake.createPdf(docDefinition).download(`Payment.pdf`);
 	}
 
-	async selectPayment($event: SelectedPayment) {
+	selectPayment($event: ISelectedPayment) {
 		if ($event.isSelected) {
 			this.selectedPayment = $event.data;
 			this.disableButton = false;
-			this.paymentsTable.grid.dataSet.willSelect = false;
 		} else {
 			this.disableButton = true;
 		}
@@ -311,16 +331,6 @@ export class InvoicePaymentsComponent
 		};
 	}
 
-	async loadSettings() {
-		const { items } = await this.paymentService.getAll(
-			['invoice', 'recordedBy'],
-			{ invoiceId: this.invoiceId }
-		);
-		this.payments = items;
-		this.smartTableSource.load(items);
-		await this.calculateTotalPaid();
-	}
-
 	async updateInvoiceStatus(totalValue: number, totalPaid: number) {
 		if (totalPaid <= 0) {
 			await this.invoicesService.update(this.invoice.id, {
@@ -342,8 +352,42 @@ export class InvoicePaymentsComponent
 	}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.subscribe(() => {
-			this.loadSmartTable();
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loadSmartTable();
+			});
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.paymentsTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
+	}
+
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectPayment({
+			isSelected: false,
+			data: null
 		});
+		this.deselectAll();
+	}
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.paymentsTable && this.paymentsTable.grid) {
+			this.paymentsTable.grid.dataSet['willSelect'] = 'false';
+			this.paymentsTable.grid.dataSet.deselectAll();
+		}
 	}
 }

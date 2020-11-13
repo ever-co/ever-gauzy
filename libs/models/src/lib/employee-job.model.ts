@@ -22,6 +22,12 @@ export interface IVisibilityJobPostInput {
 	providerJobId?: string | undefined;
 }
 
+export interface IEmployeeJobsStatistics {
+	employeeId: string;
+	availableJobs: number;
+	appliedJobs: number;
+}
+
 export interface IGetEmployeeJobPostFilters {
 	search?: string;
 	employeeIds?: string[];

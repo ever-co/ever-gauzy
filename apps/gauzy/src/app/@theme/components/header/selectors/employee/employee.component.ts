@@ -155,11 +155,11 @@ export class EmployeeSelectorComponent
 	}
 
 	selectEmployeeById(employeeId: string) {
-		const employeies = this.people.filter(
+		const employees = this.people.filter(
 			(employee: SelectedEmployee) => employeeId === employee.id
 		);
-		if (employeies.length > 0) {
-			this.selectEmployee(employeies[0]);
+		if (employees.length > 0) {
+			this.selectEmployee(employees[0]);
 		}
 	}
 	getShortenedName(firstName: string, lastName: string) {

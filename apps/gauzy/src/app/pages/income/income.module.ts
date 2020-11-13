@@ -24,6 +24,7 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
+import { NgxPermissionsModule } from 'ngx-permissions';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -55,7 +56,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 				deps: [HttpClient]
 			}
 		}),
-		NbSpinnerModule
+		NbSpinnerModule,
+		NgxPermissionsModule.forChild()
 	],
 	entryComponents: [],
 	declarations: [IncomeComponent],

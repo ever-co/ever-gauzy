@@ -18,7 +18,7 @@ import {
 } from '@gauzy/models';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { RequestContext } from '../core/context';
-
+import * as moment from 'moment';
 @Injectable()
 export class TimeOffRequestService extends CrudService<TimeOffRequest> {
 	constructor(
@@ -63,44 +63,43 @@ export class TimeOffRequestService extends CrudService<TimeOffRequest> {
 
 	async getAllTimeOffRequests(relations, findInput?, filterDate?) {
 		try {
-			const where = {
-				organizationId: findInput['organizationId'],
-				tenantId: findInput['tenantId']
-			};
-			const allRequests = await this.timeOffRequestRepository.find({
-				where,
-				relations
+			const tenantId = RequestContext.currentTenantId();
+			const query = this.timeOffRequestRepository.createQueryBuilder(
+				'timeoff'
+			);
+			query
+				.leftJoinAndSelect(`${query.alias}.employees`, `employees`)
+				.leftJoinAndSelect(`${query.alias}.policy`, `policy`)
+				.leftJoinAndSelect(`employees.user`, `user`);
+			query.where((qb) => {
+				qb.andWhere(
+					`"${query.alias}"."organizationId" = :organizationId`,
+					{
+						organizationId: findInput.organizationId
+					}
+				);
+				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+					tenantId
+				});
 			});
-
-			let items = [];
 			if (findInput['employeeId']) {
-				allRequests.forEach((request) => {
-					request.employees.forEach((e) => {
-						if (e.id === findInput['employeeId']) {
-							items.push(request);
-						}
-					});
-					if (request.employees.length === 0) items.push(request);
-				});
-			} else {
-				items = allRequests;
+				const employeeIds = [findInput['employeeId']];
+				query.innerJoin(
+					`${query.alias}.employees`,
+					'employee',
+					'employee.id IN (:...employeeIds)',
+					{ employeeIds }
+				);
 			}
-
 			if (filterDate) {
-				const dateObject = new Date(filterDate);
-
-				const month = dateObject.getMonth() + 1;
-				const year = dateObject.getFullYear();
-
-				items = [...items].filter((i) => {
-					const currentItemMonth = i.start.getMonth() + 1;
-					const currentItemYear = i.start.getFullYear();
-					return (
-						currentItemMonth === month && currentItemYear === year
-					);
-				});
+				const startDate = moment(filterDate).startOf('month');
+				const endDate = moment(filterDate).endOf('month');
+				query.andWhere(
+					`"${query.alias}"."start" BETWEEN :begin AND :end`,
+					{ begin: startDate, end: endDate }
+				);
 			}
-
+			const items = await query.getMany();
 			return { items, total: items.length };
 		} catch (err) {
 			throw new BadRequestException(err);

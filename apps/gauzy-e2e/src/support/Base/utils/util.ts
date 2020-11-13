@@ -82,3 +82,7 @@ export const doubleClickOnElement = (loc, index) => {
 export const getNotEqualElement = (loc, text) => {
 	cy.get(loc, { timeout: 40000 }).should('not.have.text', text);
 };
+
+export const waitElementToHide = (loc) => {
+	cy.get(loc, { timeout: 40000 }).should('not.exist');
+};

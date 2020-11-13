@@ -1,9 +1,10 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex">
-		<h3>
+		<ngx-back-navigation></ngx-back-navigation>
+		<h4>
 			{{ 'INVOICES_PAGE.PAYMENTS.HEADER' | translate }}
 			{{ invoice ? invoice.invoiceNumber : '' }}
-		</h3>
+		</h4>
 	</nb-card-header>
 	<nb-card-body class="body">
 		<div class="info-container">
@@ -39,7 +40,7 @@
 							<span
 								id="progress-bar-inner"
 								class="progress-bar-inner"
-								style="width: 0%;"
+								style="width: 0%"
 							></span>
 						</div>
 					</div>
@@ -86,7 +87,7 @@
 			[settings]="settingsSmartTable"
 			[source]="smartTableSource"
 			(userRowSelect)="selectPayment($event)"
-			style="cursor: pointer;"
+			style="cursor: pointer"
 			#paymentsTable
 		>
 		</ng2-smart-table>

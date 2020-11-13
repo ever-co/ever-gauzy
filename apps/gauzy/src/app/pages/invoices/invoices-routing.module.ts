@@ -11,51 +11,101 @@ import { EstimateEditComponent } from './invoice-estimates/estimate-edit/estimat
 import { EstimatesReceivedComponent } from './invoice-estimates/estimates-received/estimates-received.component';
 import { EstimateViewComponent } from './invoice-estimates/estimate-view/estimate-view.component';
 import { InvoicePaymentsComponent } from './invoice-payments/payments.component';
+import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsEnum } from '@gauzy/models';
+
+export function redirectTo() {
+	return '/pages/dashboard';
+}
+
+const INVOICES_VIEW_PERMISSION = {
+	permissions: {
+		only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_VIEW],
+		redirectTo
+	}
+};
+
+const INVOICES_EDIT_PERMISSION = {
+	permissions: {
+		only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_EDIT],
+		redirectTo
+	}
+};
 
 const routes: Routes = [
 	{
 		path: '',
-		component: InvoicesComponent
+		component: InvoicesComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: INVOICES_VIEW_PERMISSION
 	},
 	{
 		path: 'add',
-		component: InvoiceAddComponent
+		component: InvoiceAddComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: INVOICES_EDIT_PERMISSION
 	},
 	{
 		path: 'edit/:id',
-		component: InvoiceEditComponent
+		component: InvoiceEditComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: INVOICES_EDIT_PERMISSION
 	},
 	{
 		path: 'received-invoices',
-		component: InvoicesReceivedComponent
+		component: InvoicesReceivedComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: INVOICES_VIEW_PERMISSION
 	},
 	{
 		path: 'view/:id',
-		component: InvoiceViewComponent
+		component: InvoiceViewComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: INVOICES_VIEW_PERMISSION
 	},
 	{
 		path: 'estimates',
-		component: EstimatesComponent
-	},
-	{
-		path: 'estimates/add',
-		component: EstimateAddComponent
-	},
-	{
-		path: 'estimates/edit/:id',
-		component: EstimateEditComponent
+		canActivateChild: [NgxPermissionsGuard],
+		children: [
+			{
+				path: '',
+				component: EstimatesComponent,
+				data: INVOICES_VIEW_PERMISSION
+			},
+			{
+				path: 'add',
+				component: EstimateAddComponent,
+				data: INVOICES_EDIT_PERMISSION
+			},
+			{
+				path: 'edit/:id',
+				component: EstimateEditComponent,
+				data: INVOICES_EDIT_PERMISSION
+			},
+			{
+				path: 'view/:id',
+				component: EstimateViewComponent,
+				data: INVOICES_VIEW_PERMISSION
+			}
+		]
 	},
 	{
 		path: 'received-estimates',
-		component: EstimatesReceivedComponent
-	},
-	{
-		path: 'estimates/view/:id',
-		component: EstimateViewComponent
+		component: EstimatesReceivedComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: INVOICES_VIEW_PERMISSION
 	},
 	{
 		path: 'payments/:id',
-		component: InvoicePaymentsComponent
+		component: InvoicePaymentsComponent,
+		data: INVOICES_VIEW_PERMISSION
+	},
+	{
+		path: 'recurring',
+		loadChildren: () =>
+			import('./../work-in-progress/work-in-progress.module').then(
+				(m) => m.WorkInProgressModule
+			)
 	}
 ];
 
