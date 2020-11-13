@@ -17,6 +17,8 @@ export const defaultRolePermissions = [
 		role: RolesEnum.SUPER_ADMIN,
 		defaultEnabledPermissions: [
 			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
+			PermissionsEnum.ORG_PAYMENT_VIEW,
+			PermissionsEnum.ORG_PAYMENT_ADD_EDIT,
 			PermissionsEnum.ORG_INCOMES_VIEW,
 			PermissionsEnum.ORG_INCOMES_EDIT,
 			PermissionsEnum.ORG_EXPENSES_VIEW,
@@ -76,6 +78,8 @@ export const defaultRolePermissions = [
 		role: RolesEnum.ADMIN,
 		defaultEnabledPermissions: [
 			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
+			PermissionsEnum.ORG_PAYMENT_VIEW,
+			PermissionsEnum.ORG_PAYMENT_ADD_EDIT,
 			PermissionsEnum.ORG_INCOMES_VIEW,
 			PermissionsEnum.ORG_INCOMES_EDIT,
 			PermissionsEnum.ORG_EXPENSES_VIEW,
@@ -133,6 +137,8 @@ export const defaultRolePermissions = [
 	{
 		role: RolesEnum.DATA_ENTRY,
 		defaultEnabledPermissions: [
+			PermissionsEnum.ORG_PAYMENT_VIEW,
+			PermissionsEnum.ORG_PAYMENT_ADD_EDIT,
 			PermissionsEnum.ORG_EXPENSES_EDIT,
 			PermissionsEnum.ORG_EXPENSES_VIEW,
 			PermissionsEnum.ORG_INCOMES_EDIT,

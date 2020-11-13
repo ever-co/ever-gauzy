@@ -99,8 +99,18 @@ export class ProposalController extends CrudController<Proposal> {
 		return this.proposalService.create(entity);
 	}
 
+	@ApiOperation({ summary: 'Update single proposal by id.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Updates proposal',
+		type: Proposal
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
 	@UseGuards(PermissionGuard)
-	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ORG_PROPOSALS_EDIT)
 	@Put(':id')
 	async updateProposal(
 		@Param('id') id: string,

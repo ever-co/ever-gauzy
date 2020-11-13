@@ -137,13 +137,13 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 			this.showEmployeesSelector = true;
 			this.store.selectedEmployee = null;
 		} else {
-			const { items: emp } = await this.employeesService
-				.getAll([], { user: this.user, tenantId: this.user.tenantId })
-				.pipe(first())
-				.toPromise();
-			if (emp && emp.length > 0) {
+			const emp = await this.employeesService.getEmployeeById(
+				this.user.employeeId,
+				[]
+			);
+			if (emp) {
 				this.store.selectedEmployee = {
-					id: emp[0].id,
+					id: emp.id,
 					firstName: this.user.firstName,
 					lastName: this.user.lastName,
 					imageUrl: this.user.imageUrl
@@ -152,7 +152,6 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 				this.store.selectedEmployee = NO_EMPLOYEE_SELECTED;
 			}
 		}
-
 		this.loading = false;
 	}
 }

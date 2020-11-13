@@ -4,23 +4,49 @@ import { ProposalsComponent } from './proposals.component';
 import { ProposalRegisterComponent } from './proposal-register/proposal-register.component';
 import { ProposalDetailsComponent } from './proposal-details/proposal-details.component';
 import { ProposalEditComponent } from './proposal-edit/proposal-edit.component';
+import { PermissionsEnum } from '@gauzy/models';
+import { NgxPermissionsGuard } from 'ngx-permissions';
+
+export function redirectTo() {
+	return '/pages/dashboard';
+}
+const PROPOSAL_VIEW_PERMISSION = {
+	permissions: {
+		only: [PermissionsEnum.ORG_PROPOSALS_VIEW],
+		redirectTo
+	}
+};
+const PROPOSAL_EDIT_PERMISSION = {
+	permissions: {
+		only: [PermissionsEnum.ORG_PROPOSALS_EDIT],
+		redirectTo
+	}
+};
 
 const routes: Routes = [
 	{
 		path: '',
-		component: ProposalsComponent
+		component: ProposalsComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: PROPOSAL_VIEW_PERMISSION
 	},
 	{
 		path: 'register',
-		component: ProposalRegisterComponent
+		component: ProposalRegisterComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: PROPOSAL_EDIT_PERMISSION
 	},
 	{
 		path: 'details/:id',
-		component: ProposalDetailsComponent
+		component: ProposalDetailsComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: PROPOSAL_VIEW_PERMISSION
 	},
 	{
 		path: 'edit/:id',
-		component: ProposalEditComponent
+		component: ProposalEditComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: PROPOSAL_EDIT_PERMISSION
 	}
 ];
 

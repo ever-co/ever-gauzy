@@ -1,12 +1,11 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import {
 	IExpense,
-	PermissionsEnum,
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	IExpenseViewModel
 } from '@gauzy/models';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+import { debounceTime, filter, tap, withLatestFrom } from 'rxjs/operators';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';
 import { Store } from '../../@core/services/store.service';
@@ -78,57 +77,46 @@ export class ExpensesComponent
 	async ngOnInit() {
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
-
-		this.store.userRolePermissions$
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.hasEditPermission = this.store.hasPermission(
-					PermissionsEnum.ORG_EXPENSES_EDIT
-				);
-			});
 		this.store.selectedDate$
 			.pipe(untilDestroyed(this))
 			.subscribe((date) => {
 				this.selectedDate = date;
-
 				if (this.selectedEmployeeId) {
 					this._loadTableData();
 				} else {
 					if (this._selectedOrganizationId) {
-						this._loadTableData(null, this._selectedOrganizationId);
+						this._loadTableData();
 					}
 				}
 			});
-		this.store.selectedEmployee$
-			.pipe(untilDestroyed(this))
-			.subscribe((employee) => {
-				if (employee && employee.id) {
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeOrganization$ = this.store.selectedOrganization$;
+		storeEmployee$
+			.pipe(
+				filter((value) => !!value),
+				debounceTime(200),
+				withLatestFrom(storeOrganization$),
+				untilDestroyed(this)
+			)
+			.subscribe(([employee]) => {
+				if (employee && this.selectedOrganization) {
 					this.selectedEmployeeId = employee.id;
 					this._loadTableData();
-				} else {
-					if (this._selectedOrganizationId) {
-						this.selectedEmployeeId = null;
-						this._loadTableData(null, this._selectedOrganizationId);
-					}
 				}
 			});
-		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe((org) => {
-				if (org) {
-					this.selectedOrganization = org;
-					this._selectedOrganizationId = org.id;
-					if (this.loading) {
-						this._loadTableData(
-							this.store.selectedEmployee
-								? this.store.selectedEmployee.id
-								: null,
-							this.store.selectedEmployee &&
-								this.store.selectedEmployee.id
-								? null
-								: this._selectedOrganizationId
-						);
-					}
+		storeOrganization$
+			.pipe(
+				filter((value) => !!value),
+				debounceTime(200),
+				withLatestFrom(storeEmployee$),
+				untilDestroyed(this)
+			)
+			.subscribe(([organization, employee]) => {
+				if (organization) {
+					this.selectedOrganization = organization;
+					this._selectedOrganizationId = organization.id;
+					this.selectedEmployeeId = employee ? employee.id : null;
+					this._loadTableData();
 				}
 			});
 		this.route.queryParamMap
@@ -193,6 +181,18 @@ export class ExpensesComponent
 				categoryName: {
 					title: this.getTranslation('SM_TABLE.CATEGORY'),
 					type: 'string'
+				},
+				employee: {
+					title: 'Employee',
+					type: 'string',
+					valuePrepareFunction: (_, expense: IExpenseViewModel) => {
+						const user = expense.employee
+							? expense.employee.user
+							: null;
+						if (user) {
+							return `${user.firstName} ${user.lastName}`;
+						}
+					}
 				},
 				amount: {
 					title: this.getTranslation('SM_TABLE.VALUE'),
@@ -279,10 +279,7 @@ export class ExpensesComponent
 				}),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
-			this._loadTableData(
-				this.selectedEmployeeId,
-				this.selectedEmployeeId ? null : this._selectedOrganizationId
-			);
+			this._loadTableData();
 			this.clearItem();
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -337,12 +334,7 @@ export class ExpensesComponent
 							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
 
-						this._loadTableData(
-							this.selectedEmployeeId,
-							this.selectedEmployeeId
-								? null
-								: this._selectedOrganizationId
-						);
+						this._loadTableData();
 						this.clearItem();
 					} catch (error) {
 						this.errorHandler.handleError(error);
@@ -412,12 +404,7 @@ export class ExpensesComponent
 							),
 							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
-						this._loadTableData(
-							this.selectedEmployeeId,
-							this.selectedEmployeeId
-								? null
-								: this._selectedOrganizationId
-						);
+						this._loadTableData();
 						this.clearItem();
 					} catch (error) {
 						this.errorHandler.handleError(error);
@@ -430,50 +417,33 @@ export class ExpensesComponent
 		this.selectedExpense = isSelected ? data : null;
 	}
 
-	private async _loadTableData(
-		employeeId = this.selectedEmployeeId,
-		orgId?: string
-	) {
-		let findObj;
+	private async _loadTableData() {
+		const { tenantId, employeeId } = this.store.user;
+		if (!this._selectedOrganizationId) {
+			return;
+		}
 		this.showTable = false;
-		this.selectedExpense = null;
-		const { tenantId } = this.store.user;
-
-		if (orgId) {
-			findObj = {
-				organization: {
-					id: orgId
-				}
-			};
-			this.smartTableSettings['columns']['employeeName'] = {
-				title: 'Employee',
-				type: 'string',
-				valuePrepareFunction: (_, expense: IExpenseViewModel) => {
-					const user = expense.employee
-						? expense.employee.user
-						: null;
-
-					if (user) {
-						return `${user.firstName} ${user.lastName}`;
-					}
-				}
-			};
-		} else {
-			findObj = {
-				employee: {
-					id: employeeId
-				}
-			};
+		const findObj = {
+			organizationId: this._selectedOrganizationId,
+			tenantId
+		};
+		if (this.selectedEmployeeId) {
+			findObj['employeeId'] = this.selectedEmployeeId;
+		}
+		if (employeeId) {
 			delete this.smartTableSettings['columns']['employee'];
+			this.smartTableSettings = Object.assign(
+				{},
+				this.smartTableSettings
+			);
 		}
 
 		try {
 			const { items } = await this.expenseService.getAll(
 				['employee', 'employee.user', 'category', 'vendor', 'tags'],
-				Object.assign({}, findObj, { tenantId }),
+				findObj,
 				this.selectedDate
 			);
-
 			const expenseVM: IExpenseViewModel[] = items.map((i) => {
 				return {
 					id: i.id,
@@ -551,7 +521,5 @@ export class ExpensesComponent
 		}
 	}
 
-	ngOnDestroy() {
-		delete this.smartTableSettings['columns']['employee'];
-	}
+	ngOnDestroy() {}
 }
