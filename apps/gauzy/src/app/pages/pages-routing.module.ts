@@ -59,13 +59,6 @@ const routes: Routes = [
 							)
 					},
 					{
-						path: 'recurring-invoices',
-						loadChildren: () =>
-							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
-					},
-					{
 						path: 'payments',
 						loadChildren: () =>
 							import('./payments/payments.module').then(
@@ -140,13 +133,6 @@ const routes: Routes = [
 							import('./invoices/invoices.module').then(
 								(m) => m.InvoicesModule
 							)
-					},
-					{
-						path: 'recurring-invoices',
-						loadChildren: () =>
-							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
 					},
 					{
 						path: 'payments',

@@ -12,7 +12,8 @@ import {
 	IOrganization,
 	OrganizationSelectInput,
 	IOrganizationContact,
-	IOrganizationProject
+	IOrganizationProject,
+	ISelectedPayment
 } from '@gauzy/models';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
@@ -241,7 +242,14 @@ export class PaymentsComponent
 		}
 	}
 
-	async deletePayment() {
+	async deletePayment(selectedItem?: ISelectedPayment) {
+		if (selectedItem) {
+			this.selectPayment({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent)
 			.onClose.pipe(first())

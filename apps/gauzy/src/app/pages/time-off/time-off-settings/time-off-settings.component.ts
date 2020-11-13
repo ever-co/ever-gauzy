@@ -10,8 +10,7 @@ import {
 	RolesEnum,
 	ComponentLayoutStyleEnum,
 	IOrganization,
-	ITimeOffPolicyVM,
-	IRolePermission
+	ITimeOffPolicyVM
 } from '@gauzy/models';
 import { filter, first, tap } from 'rxjs/operators';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
@@ -81,17 +80,6 @@ export class TimeOffSettingsComponent
 	ngOnInit() {
 		this._loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
-		this.store.userRolePermissions$
-			.pipe(
-				filter(
-					(permissions: IRolePermission[]) => permissions.length > 0
-				),
-				untilDestroyed(this)
-			)
-			.subscribe((data) => {
-				const permissions = data.map(({ permission }) => permission);
-				this.ngxPermissionsService.loadPermissions(permissions);
-			});
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),

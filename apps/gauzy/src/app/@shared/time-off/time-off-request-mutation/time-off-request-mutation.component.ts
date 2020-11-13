@@ -65,6 +65,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 			this.startDate = this.type['start'];
 			this.endDate = this.type['end'];
 			this.description = this.type['description'];
+			this.employeesArr = this.type['employees'];
 		}
 
 		this._initializeForm();

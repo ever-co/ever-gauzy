@@ -15,21 +15,24 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div *ngIf="hasEditPermission" class="btn-container mb-3">
-			<button
-				nbButton
-				status="success"
-				class="mr-2"
-				(click)="addIncome()"
-			>
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-				>{{ 'BUTTONS.ADD' | translate }}
-			</button>
-			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
-				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
-			</ng-container>
-		</div>
-
+		<ng-template ngxPermissionsOnly="ORG_INCOMES_EDIT">
+			<div class="btn-container mb-3">
+				<button
+					nbButton
+					status="success"
+					class="mr-2"
+					(click)="addIncome()"
+				>
+					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+					>{{ 'BUTTONS.ADD' | translate }}
+				</button>
+				<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+					<ng-container
+						*ngTemplateOutlet="actionButtons"
+					></ng-container>
+				</ng-container>
+			</div>
+		</ng-template>
 		<ng2-smart-table
 			*ngIf="dataLayoutStyle === 'TABLE'"
 			class="income-table"
@@ -45,7 +48,8 @@
 			[settings]="smartTableSettings"
 			[source]="incomes"
 			[buttonTemplate]="actionButtons"
-		></ga-card-grid>
+		>
+		</ga-card-grid>
 	</nb-card-body>
 </nb-card>
 
@@ -54,27 +58,28 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<button
-		nbButton
-		status="info"
-		class="mr-2"
-		[disabled]="!selectedItem && disableButton"
-		(click)="editIncome(selectedItem)"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-		>{{ 'BUTTONS.EDIT' | translate }}
-	</button>
-
-	<button
-		nbButton
-		status="danger"
-		class="mr-2"
-		[disabled]="!selectedItem && disableButton"
-		(click)="deleteIncome(selectedItem)"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="archive-outline"></nb-icon
-		>{{ 'BUTTONS.DELETE' | translate }}
-	</button>
+	<ng-template ngxPermissionsOnly="ORG_INCOMES_EDIT">
+		<button
+			nbButton
+			status="info"
+			class="mr-2"
+			[disabled]="!selectedItem && disableButton"
+			(click)="editIncome(selectedItem)"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+			>{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			nbButton
+			status="danger"
+			class="mr-2"
+			[disabled]="!selectedItem && disableButton"
+			(click)="deleteIncome(selectedItem)"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="archive-outline"></nb-icon
+			>{{ 'BUTTONS.DELETE' | translate }}
+		</button>
+	</ng-template>
 </ng-template>

@@ -32,13 +32,12 @@ export class PaymentController extends CrudController<Payment> {
 
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.INVOICES_EDIT)
+	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
 	@Get()
-	async findAllInvoices(
+	async findAllPayments(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IPayment>> {
 		const { relations = [], findInput = null } = data;
-
 		return this.paymentService.findAll({
 			where: findInput,
 			relations
@@ -47,7 +46,7 @@ export class PaymentController extends CrudController<Payment> {
 
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.INVOICES_EDIT)
+	@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
 	@Post()
 	async createPayment(@Body() entity: IPayment): Promise<any> {
 		return this.paymentService.create(entity);
@@ -55,7 +54,7 @@ export class PaymentController extends CrudController<Payment> {
 
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.INVOICES_EDIT)
+	@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
 	@Put(':id')
 	async updatePayment(
 		@Param('id') id: string,
@@ -69,7 +68,7 @@ export class PaymentController extends CrudController<Payment> {
 
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.INVOICES_EDIT)
+	@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
 	@Delete(':id')
 	async deleteTask(@Param('id') id: string): Promise<any> {
 		return this.paymentService.delete(id);

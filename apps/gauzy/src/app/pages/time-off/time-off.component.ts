@@ -4,8 +4,7 @@ import {
 	StatusTypesEnum,
 	ITimeOff,
 	ComponentLayoutStyleEnum,
-	IOrganization,
-	IRolePermission
+	IOrganization
 } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { filter, first, tap } from 'rxjs/operators';
@@ -73,17 +72,6 @@ export class TimeOffComponent
 	}
 
 	ngOnInit() {
-		this.store.userRolePermissions$
-			.pipe(
-				filter(
-					(permissions: IRolePermission[]) => permissions.length > 0
-				),
-				untilDestroyed(this)
-			)
-			.subscribe((data) => {
-				const permissions = data.map(({ permission }) => permission);
-				this.ngxPermissionsService.loadPermissions(permissions);
-			});
 		this.store.selectedDate$
 			.pipe(untilDestroyed(this))
 			.subscribe((date) => {
@@ -461,7 +449,7 @@ export class TimeOffComponent
 		const { tenantId } = this.store.user;
 		this.timeOffService
 			.getAllTimeOffRecords(
-				['employees', 'employees.user', 'policy'],
+				[],
 				{
 					organizationId: orgId,
 					tenantId,
