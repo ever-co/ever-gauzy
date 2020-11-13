@@ -1239,6 +1239,8 @@
 		},
 		"PERMISSIONS": {
 			"ADMIN_DASHBOARD_VIEW": "Виж Административното Табло",
+			"ORG_PAYMENT_VIEW": "View Payments",
+			"ORG_PAYMENT_ADD_EDIT": "Create/Edit/Delete Payments",
 			"ORG_EXPENSES_VIEW": "Виж всички разходи",
 			"ORG_EXPENSES_EDIT": "Създай/Редактирай/Изтрии разходи",
 			"ORG_INCOMES_EDIT": "Създай/Редактирай/Изтрии приходи",
