@@ -758,6 +758,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 			.subscribe(async (org) => {
 				this._selectedOrganization = org;
 				await this.checkForEmployee();
+				await this.reportService.init();
 				this.loadItems(
 					this.selectorService.showSelectors(this.router.url)
 						.showOrganizationShortcuts
@@ -812,7 +813,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					this.reportMenuItems = [];
 				}
 
-				console.log('this.reportMenuItems', this.reportMenuItems);
 				this.loadItems(
 					this.selectorService.showSelectors(this.router.url)
 						.showOrganizationShortcuts
