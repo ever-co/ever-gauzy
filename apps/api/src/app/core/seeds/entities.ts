@@ -111,6 +111,7 @@ import { JobSearchOccupation } from '../../employee-job-preset/job-search-occupa
 import { Report } from '../../reports/report.entity';
 import { ReportCategory } from '../../reports/report-category.entity';
 import { EmployeeProposalTemplate } from '../../employee-proposal-template/employee-proposal-template.entity';
+import { ReportOrganization } from '../../reports/report-organization.entity';
 
 export const allEntities = [
 	AppointmentEmployee,
@@ -225,5 +226,6 @@ export const allEntities = [
 	JobSearchCategory,
 	ReportCategory,
 	Report,
-	EmployeeProposalTemplate
+	EmployeeProposalTemplate,
+	ReportOrganization
 ];

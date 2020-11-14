@@ -12,7 +12,8 @@ import {
 	IOrganization,
 	OrganizationSelectInput,
 	IOrganizationContact,
-	IOrganizationProject
+	IOrganizationProject,
+	ISelectedPayment
 } from '@gauzy/models';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
@@ -208,7 +209,13 @@ export class PaymentsComponent
 		}
 	}
 
-	async editPayment() {
+	async editPayment(selectedItem?: ISelectedPayment) {
+		if (selectedItem) {
+			this.selectPayment({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 		const result = await this.dialogService
 			.open(PaymentMutationComponent, {
 				context: {
@@ -241,7 +248,14 @@ export class PaymentsComponent
 		}
 	}
 
-	async deletePayment() {
+	async deletePayment(selectedItem?: ISelectedPayment) {
+		if (selectedItem) {
+			this.selectPayment({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent)
 			.onClose.pipe(first())
@@ -254,7 +268,9 @@ export class PaymentsComponent
 			await this.invoiceEstimateHistoryService.add({
 				action: `Payment deleted`,
 				invoice: this.selectedPayment.invoice,
-				invoiceId: this.selectedPayment.invoice.id,
+				invoiceId: this.selectedPayment.invoice
+					? this.selectedPayment.invoice.id
+					: null,
 				user: this.store.user,
 				userId: this.store.userId,
 				organization: this.organization,

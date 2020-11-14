@@ -43,3 +43,8 @@ export enum PaymentMethodEnum {
 	DEBIT = 'Debit',
 	ONLINE = 'Online'
 }
+
+export interface ISelectedPayment {
+	data: IPayment;
+	isSelected: false;
+}

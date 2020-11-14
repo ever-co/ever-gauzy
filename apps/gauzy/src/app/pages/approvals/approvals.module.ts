@@ -60,10 +60,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 				deps: [HttpClient]
 			}
 		}),
-		NgxPermissionsModule.forChild({
-			permissionsIsolate: true,
-			rolesIsolate: true
-		})
+		NgxPermissionsModule.forChild()
 	],
 	declarations: [ApprovalsComponent, RequestApprovalActionComponent],
 	entryComponents: [],

@@ -1,4 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IOrganization } from './organization.model';
 
 export interface IReport extends IBasePerTenantAndOrganizationEntityModel {
 	categoryId?: string;
@@ -10,6 +11,7 @@ export interface IReport extends IBasePerTenantAndOrganizationEntityModel {
 	imageUrl?: string;
 	description?: string;
 	showInMenu?: boolean;
+	reportOrganizations?: IReportOrganization[];
 }
 
 export interface IReportCategory
@@ -19,13 +21,31 @@ export interface IReportCategory
 	iconUrl?: string;
 	reports?: IReport[];
 }
+export interface IReportOrganization
+	extends IBasePerTenantAndOrganizationEntityModel {
+	report?: IReport;
+	reportId?: string;
+	organization?: IOrganization;
+	organizationId?: string;
+	isEnabled?: boolean;
+}
 
 export interface IGetReportCategory {
 	relations?: string[];
 	where?: IReport;
+	organizationId?: string;
 }
 
 export interface IGetReport {
 	relations?: string[];
+	organizationId?: string;
 	where?: IReport;
+}
+export interface UpdateReportMenuInput {
+	organizationId?: string;
+	reportId?: string;
+	isEnabled?: boolean;
+}
+export interface GetReportMenuItemsInput {
+	organizationId?: string;
 }

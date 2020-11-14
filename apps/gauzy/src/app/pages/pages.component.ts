@@ -48,7 +48,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 		private reportService: ReportService,
 		private selectorService: SelectorService,
 		private router: Router,
-		private permissionsService: NgxPermissionsService
+		private ngxPermissionsService: NgxPermissionsService
 	) {}
 
 	getMenuItems(): GaMenuItem[] {
@@ -75,7 +75,11 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'file-outline',
 						link: '/pages/accounting/invoices/estimates',
 						data: {
-							translationKey: 'MENU.ESTIMATES'
+							translationKey: 'MENU.ESTIMATES',
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.INVOICES_VIEW
+							]
 						}
 					},
 					{
@@ -83,7 +87,11 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'archive-outline',
 						link: '/pages/accounting/invoices/received-estimates',
 						data: {
-							translationKey: 'MENU.ESTIMATES_RECEIVED'
+							translationKey: 'MENU.ESTIMATES_RECEIVED',
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.INVOICES_VIEW
+							]
 						}
 					},
 					{
@@ -91,20 +99,23 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'file-text-outline',
 						link: '/pages/accounting/invoices',
 						data: {
+							translationKey: 'MENU.INVOICES',
 							permissionKeys: [
 								PermissionsEnum.ALL_ORG_VIEW,
 								PermissionsEnum.INVOICES_VIEW
-							],
-							translationKey: 'MENU.INVOICES'
+							]
 						}
 					},
 					{
 						title: 'Invoices Recurring',
 						icon: 'flip-outline',
-						link: '/pages/accounting/recurring-invoices',
+						link: '/pages/accounting/invoices/recurring',
 						data: {
-							permissionKeys: [PermissionsEnum.INVOICES_VIEW],
-							translationKey: 'MENU.RECURRING_INVOICES'
+							translationKey: 'MENU.RECURRING_INVOICES',
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.INVOICES_VIEW
+							]
 						}
 					},
 					{
@@ -112,7 +123,11 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'archive',
 						link: '/pages/accounting/invoices/received-invoices',
 						data: {
-							translationKey: 'MENU.INVOICES_RECEIVED'
+							translationKey: 'MENU.INVOICES_RECEIVED',
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.INVOICES_VIEW
+							]
 						}
 					},
 					{
@@ -138,7 +153,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'clipboard-outline',
 						link: '/pages/accounting/payments',
 						data: {
-							translationKey: 'MENU.PAYMENTS'
+							translationKey: 'MENU.PAYMENTS',
+							permissionKeys: [PermissionsEnum.ORG_PAYMENT_VIEW]
 						}
 					}
 				]
@@ -166,7 +182,11 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'file-outline',
 						link: '/pages/sales/invoices/estimates',
 						data: {
-							translationKey: 'MENU.ESTIMATES'
+							translationKey: 'MENU.ESTIMATES',
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.INVOICES_VIEW
+							]
 						}
 					},
 					{
@@ -174,20 +194,23 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'file-text-outline',
 						link: '/pages/sales/invoices',
 						data: {
+							translationKey: 'MENU.INVOICES',
 							permissionKeys: [
 								PermissionsEnum.ALL_ORG_VIEW,
 								PermissionsEnum.INVOICES_VIEW
-							],
-							translationKey: 'MENU.INVOICES'
+							]
 						}
 					},
 					{
 						title: 'Invoices Recurring',
 						icon: 'flip-outline',
-						link: '/pages/sales/recurring-invoices',
+						link: '/pages/sales/invoices/recurring',
 						data: {
-							permissionKeys: [PermissionsEnum.INVOICES_VIEW],
-							translationKey: 'MENU.RECURRING_INVOICES'
+							translationKey: 'MENU.RECURRING_INVOICES',
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.INVOICES_VIEW
+							]
 						}
 					},
 					{
@@ -195,7 +218,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'clipboard-outline',
 						link: '/pages/sales/payments',
 						data: {
-							translationKey: 'MENU.PAYMENTS'
+							translationKey: 'MENU.PAYMENTS',
+							permissionKeys: [PermissionsEnum.ORG_PAYMENT_VIEW]
 						}
 					},
 					{
@@ -766,6 +790,11 @@ export class PagesComponent implements OnInit, OnDestroy {
 			.subscribe(async (org) => {
 				this._selectedOrganization = org;
 				await this.checkForEmployee();
+				if (org) {
+					await this.reportService.getReportMenuItems({
+						organizationId: org.id
+					});
+				}
 				this.loadItems(
 					this.selectorService.showSelectors(this.router.url)
 						.showOrganizationShortcuts
@@ -778,10 +807,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe((data) => {
-				const permissions = data.map(
-					(permission) => permission.permission
-				);
-				this.permissionsService.loadPermissions(permissions);
+				const permissions = data.map(({ permission }) => permission);
+				this.ngxPermissionsService.loadPermissions(permissions);
 				this.loadItems(
 					this.selectorService.showSelectors(this.router.url)
 						.showOrganizationShortcuts
@@ -820,7 +847,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					this.reportMenuItems = [];
 				}
 
-				console.log('this.reportMenuItems', this.reportMenuItems);
 				this.loadItems(
 					this.selectorService.showSelectors(this.router.url)
 						.showOrganizationShortcuts

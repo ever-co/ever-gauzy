@@ -22,6 +22,8 @@ export interface IRolePermissionUpdateInput {
 
 export enum PermissionsEnum {
 	ADMIN_DASHBOARD_VIEW = 'ADMIN_DASHBOARD_VIEW',
+	ORG_PAYMENT_VIEW = 'ORG_PAYMENT_VIEW',
+	ORG_PAYMENT_ADD_EDIT = 'ORG_PAYMENT_ADD_EDIT',
 	ORG_INCOMES_VIEW = 'ORG_INCOMES_VIEW',
 	ORG_INCOMES_EDIT = 'ORG_INCOMES_EDIT',
 	ORG_EXPENSES_VIEW = 'ORG_EXPENSES_VIEW',
@@ -83,6 +85,8 @@ export const PermissionGroups = {
 	//Permissions which can be given to any role
 	GENERAL: [
 		PermissionsEnum.ADMIN_DASHBOARD_VIEW,
+		PermissionsEnum.ORG_PAYMENT_VIEW,
+		PermissionsEnum.ORG_PAYMENT_ADD_EDIT,
 		PermissionsEnum.ORG_EXPENSES_VIEW,
 		PermissionsEnum.ORG_EXPENSES_EDIT,
 		PermissionsEnum.ORG_INCOMES_EDIT,

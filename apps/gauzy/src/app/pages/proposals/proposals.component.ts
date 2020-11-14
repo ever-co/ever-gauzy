@@ -6,7 +6,6 @@ import {
 	IProposal,
 	ComponentLayoutStyleEnum,
 	IOrganization,
-	IRolePermission,
 	IProposalViewModel
 } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
@@ -22,7 +21,6 @@ import { NotesWithTagsComponent } from '../../@shared/table-components/notes-wit
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { NgxPermissionsService } from 'ngx-permissions';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -67,8 +65,7 @@ export class ProposalsComponent
 		private toastrService: NbToastrService,
 		private dialogService: NbDialogService,
 		private errorHandler: ErrorHandlingService,
-		readonly translateService: TranslateService,
-		private readonly permissionsService: NgxPermissionsService
+		readonly translateService: TranslateService
 	) {
 		super(translateService);
 		this.setView();
@@ -77,17 +74,6 @@ export class ProposalsComponent
 	ngOnInit() {
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
-		this.store.userRolePermissions$
-			.pipe(
-				filter(
-					(permissions: IRolePermission[]) => permissions.length > 0
-				),
-				untilDestroyed(this)
-			)
-			.subscribe((data) => {
-				const permissions = data.map(({ permission }) => permission);
-				this.permissionsService.loadPermissions(permissions);
-			});
 		this.store.selectedDate$
 			.pipe(untilDestroyed(this))
 			.subscribe((date) => {
@@ -109,8 +95,6 @@ export class ProposalsComponent
 				if (employee && this.selectedOrganization) {
 					this.selectedEmployeeId = employee.id;
 					this._loadTableData();
-				} else {
-					this.selectedEmployeeId = null;
 				}
 			});
 		storeOrganization$

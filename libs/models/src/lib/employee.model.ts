@@ -137,4 +137,5 @@ export interface EmployeeViewModel {
 	workStatus?: string;
 	startedWorkOn?: string;
 	isActive?: boolean;
+	tags?: ITag[];
 }

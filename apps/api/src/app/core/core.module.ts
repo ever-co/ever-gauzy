@@ -123,6 +123,7 @@ import { JobSearchCategory } from '../employee-job-preset/job-search-category/jo
 import { Report } from '../reports/report.entity';
 import { ReportCategory } from '../reports/report-category.entity';
 import { EmployeeProposalTemplate } from '../employee-proposal-template/employee-proposal-template.entity';
+import { ReportOrganization } from '../reports/report-organization.entity';
 
 const entities = [
 	Invite,
@@ -239,7 +240,8 @@ const entities = [
 	JobSearchCategory,
 	Report,
 	ReportCategory,
-	EmployeeProposalTemplate
+	EmployeeProposalTemplate,
+	ReportOrganization
 ];
 
 @Module({

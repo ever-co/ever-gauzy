@@ -26,6 +26,7 @@ import { ExpenseCategoriesComponent } from './expense-categories/expense-categor
 import { ExpenseCategoriesStoreService } from '../../@core/services/expense-categories-store.service';
 import { OrganizationExpenseCategoriesService } from '../../@core/services/organization-expense-categories.service';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
+import { NgxPermissionsModule } from 'ngx-permissions';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -57,7 +58,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		}),
 		NbSpinnerModule,
 		NbActionsModule,
-		TagsColorInputModule
+		TagsColorInputModule,
+		NgxPermissionsModule.forChild()
 	],
 	declarations: [ExpensesComponent, ExpenseCategoriesComponent],
 	entryComponents: [],

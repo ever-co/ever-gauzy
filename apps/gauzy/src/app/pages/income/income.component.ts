@@ -7,7 +7,6 @@ import {
 } from '@angular/router';
 import {
 	IIncome,
-	PermissionsEnum,
 	ITag,
 	ComponentLayoutStyleEnum,
 	IOrganization
@@ -15,7 +14,7 @@ import {
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+import { debounceTime, filter, tap, withLatestFrom } from 'rxjs/operators';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { IncomeService } from '../../@core/services/income.service';
 import { Store } from '../../@core/services/store.service';
@@ -79,61 +78,47 @@ export class IncomeComponent
 	ngOnInit() {
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
-		this.store.userRolePermissions$
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.hasEditPermission = this.store.hasPermission(
-					PermissionsEnum.ORG_INCOMES_EDIT
-				);
-			});
 		this.store.selectedDate$
 			.pipe(untilDestroyed(this))
 			.subscribe((date) => {
 				this.selectedDate = date;
 				if (this.selectedEmployeeId) {
-					this._loadEmployeeIncomeData(this.selectedEmployeeId);
+					this._loadEmployeeIncomeData();
 				} else {
 					if (this._selectedOrganizationId) {
-						this._loadEmployeeIncomeData(
-							null,
-							this._selectedOrganizationId
-						);
+						this._loadEmployeeIncomeData();
 					}
 				}
 			});
-		this.store.selectedEmployee$
-			.pipe(untilDestroyed(this))
-			.subscribe((employee) => {
-				if (employee && employee.id) {
-					this.selectedEmployeeId = employee.id;
-					this._loadEmployeeIncomeData(employee.id);
-				} else {
-					if (this._selectedOrganizationId) {
-						this.selectedEmployeeId = null;
-						this._loadEmployeeIncomeData(
-							null,
-							this._selectedOrganizationId
-						);
-					}
-				}
-			});
-		this.store.selectedOrganization$
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeOrganization$ = this.store.selectedOrganization$;
+		storeEmployee$
 			.pipe(
-				filter((organization) => !!organization),
-				tap((organization) => (this.organization = organization)),
+				filter((value) => !!value),
+				debounceTime(200),
+				withLatestFrom(storeOrganization$),
 				untilDestroyed(this)
 			)
-			.subscribe((organization) => {
-				this._selectedOrganizationId = organization.id;
-				this._loadEmployeeIncomeData(
-					this.store.selectedEmployee
-						? this.store.selectedEmployee.id
-						: null,
-					this.store.selectedEmployee &&
-						this.store.selectedEmployee.id
-						? null
-						: this._selectedOrganizationId
-				);
+			.subscribe(([employee]) => {
+				if (employee && this.organization) {
+					this.selectedEmployeeId = employee.id;
+					this._loadEmployeeIncomeData();
+				}
+			});
+		storeOrganization$
+			.pipe(
+				filter((value) => !!value),
+				debounceTime(200),
+				withLatestFrom(storeEmployee$),
+				untilDestroyed(this)
+			)
+			.subscribe(([organization, employee]) => {
+				if (organization) {
+					this.organization = organization;
+					this._selectedOrganizationId = organization.id;
+					this.selectedEmployeeId = employee ? employee.id : null;
+					this._loadEmployeeIncomeData();
+				}
 			});
 		this.route.queryParamMap
 			.pipe(
@@ -195,6 +180,18 @@ export class IncomeComponent
 				clientName: {
 					title: this.getTranslation('SM_TABLE.CONTACT_NAME'),
 					type: 'string'
+				},
+				employeeName: {
+					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
+					type: 'string',
+					valuePrepareFunction: (_, income: IIncome) => {
+						const user = income.employee
+							? income.employee.user
+							: null;
+						if (user) {
+							return `${user.firstName} ${user.lastName}`;
+						}
+					}
 				},
 				amount: {
 					title: this.getTranslation('SM_TABLE.VALUE'),
@@ -261,12 +258,7 @@ export class IncomeComponent
 							}),
 							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
-						this._loadEmployeeIncomeData(
-							this.selectedEmployeeId,
-							this.selectedEmployeeId
-								? null
-								: this._selectedOrganizationId
-						);
+						this._loadEmployeeIncomeData();
 					} catch (error) {
 						this.toastrService.danger(
 							this.getTranslation('NOTES.INCOME.INCOME_ERROR', {
@@ -325,12 +317,7 @@ export class IncomeComponent
 							}),
 							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
-						this._loadEmployeeIncomeData(
-							this.selectedEmployeeId,
-							this.selectedEmployeeId
-								? null
-								: this._selectedOrganizationId
-						);
+						this._loadEmployeeIncomeData();
 						this.clearItem();
 					} catch (error) {
 						this.errorHandler.handleError(error);
@@ -368,12 +355,7 @@ export class IncomeComponent
 							}),
 							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
-						this._loadEmployeeIncomeData(
-							this.selectedEmployeeId,
-							this.selectedEmployeeId
-								? null
-								: this._selectedOrganizationId
-						);
+						this._loadEmployeeIncomeData();
 						this.clearItem();
 					} catch (error) {
 						this.errorHandler.handleError(error);
@@ -382,42 +364,31 @@ export class IncomeComponent
 			});
 	}
 
-	private async _loadEmployeeIncomeData(
-		employeId = this.selectedEmployeeId,
-		orgId?: string
-	) {
-		let findObj;
-		this.selectedIncome = null;
-		const { tenantId } = this.store.user;
-		if (orgId) {
-			findObj = {
-				organizationId: {
-					id: orgId
-				}
-			};
-			this.smartTableSettings['columns']['employeeName'] = {
-				title: this.getTranslation('SM_TABLE.EMPLOYEE'),
-				type: 'string',
-				valuePrepareFunction: (_, income: IIncome) => {
-					const user = income.employee ? income.employee.user : null;
-
-					if (user) {
-						return `${user.firstName} ${user.lastName}`;
-					}
-				}
-			};
-		} else {
-			findObj = {
-				employee: {
-					id: employeId
-				}
-			};
-			delete this.smartTableSettings['columns']['employee'];
+	private async _loadEmployeeIncomeData() {
+		const { tenantId, employeeId } = this.store.user;
+		if (!this._selectedOrganizationId) {
+			return;
 		}
+
+		const findObj = {
+			organizationId: this._selectedOrganizationId,
+			tenantId
+		};
+		if (this.selectedEmployeeId) {
+			findObj['employeeId'] = this.selectedEmployeeId;
+		}
+		if (employeeId) {
+			delete this.smartTableSettings['columns']['employeeName'];
+			this.smartTableSettings = Object.assign(
+				{},
+				this.smartTableSettings
+			);
+		}
+
 		try {
 			const { items } = await this.incomeService.getAll(
 				['employee', 'employee.user', 'tags', 'organization'],
-				Object.assign({}, findObj, { tenantId }),
+				findObj,
 				this.selectedDate
 			);
 			const incomeVM: IIncome[] = items.map((i) => {
@@ -469,7 +440,5 @@ export class IncomeComponent
 		}
 	}
 
-	ngOnDestroy() {
-		delete this.smartTableSettings['columns']['employee'];
-	}
+	ngOnDestroy() {}
 }

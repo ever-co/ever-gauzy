@@ -1243,6 +1243,8 @@
 		},
 		"PERMISSIONS": {
 			"ADMIN_DASHBOARD_VIEW": "View Admin Dashboard",
+			"ORG_PAYMENT_VIEW": "View Payments",
+			"ORG_PAYMENT_ADD_EDIT": "Create/Edit/Delete Payments",
 			"ORG_EXPENSES_VIEW": "View All Expenses",
 			"ORG_EXPENSES_EDIT": "Create/Edit/Delete Expenses",
 			"ORG_INCOMES_EDIT": "Create/Edit/Delete Incomes",

@@ -32,6 +32,7 @@ import { JobTitleComponent } from './table-components/job-title/job-title.compon
 import { SharedModule } from '../../@shared/shared.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
+import { NgxPermissionsModule } from 'ngx-permissions';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -67,7 +68,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 				useFactory: HttpLoaderFactory,
 				deps: [HttpClient]
 			}
-		})
+		}),
+		NgxPermissionsModule.forChild()
 	],
 	entryComponents: [
 		ProposalRegisterComponent,

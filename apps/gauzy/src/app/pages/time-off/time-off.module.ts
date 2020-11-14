@@ -68,10 +68,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		}),
 		NbSpinnerModule,
 		TimeOffMutationModule,
-		NgxPermissionsModule.forChild({
-			permissionsIsolate: true,
-			rolesIsolate: true
-		})
+		NgxPermissionsModule.forChild()
 	],
 	declarations: [
 		TimeOffComponent,
