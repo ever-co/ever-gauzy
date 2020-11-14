@@ -72,7 +72,10 @@
 		"CANDIDATE_STATISTIC": "Statistic",
 		"FILTER": "Filter",
 		"REFRESH": "Refresh",
-		"AUTO_REFRESH": "Auto Refresh"
+		"AUTO_REFRESH": "Auto Refresh",
+		"PROPOSAL_DELETE_MESSAGE": "Proposal template successfully delete",
+		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Proposal template successfully make as default",
+		"MAKE_DEFAULT": "Make Default"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",
@@ -572,6 +575,7 @@
 		"ESTIMATES": "Estimates",
 		"MY_TASKS": "My Tasks",
 		"JOBS": "Jobs",
+		"PROPOSAL_TEMPLATE": "Proposal Template",
 		"JOBS_SEARCH": "Browse",
 		"JOBS_MATCHING": "Matching",
 		"TEAM_TASKS": "Team's Tasks",
@@ -1670,6 +1674,17 @@
 		"CRITERIONS": "Criterions",
 		"DELETE_CRITERION_MESSAGE": "Are you sure that, you want to delete criterion",
 		"SAVE_PRESET_MESSAGE": "Criterions will save for job preset. Are you sure you want to save?"
+	},
+	"PROPOSAL_TEMPLATE": {
+		"PROPOSAL_TEMPLATE": "Proposal Template",
+		"EDIT_PROPOSAL_TEMPLATE": "Edit Proposal Template",
+		"ADD_PROPOSAL_TEMPLATE": "Add Proposal Template",
+		"NAME": "Name",
+		"CONTENT": "Content",
+		"EMPLOYEE": "Employee",
+		"DESCRIPTION": "Description",
+		"IS_DEFAULT": "Is Default",
+		"CONFIRM_DELETE": "Are you sure that, you want to delete"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Sprint added",

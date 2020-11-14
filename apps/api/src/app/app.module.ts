@@ -119,6 +119,7 @@ import { GoalKpiTemplateModule } from './goal-kpi-template/goal-kpi-template.mod
 import { TenantSettingModule } from './tenant/tenant-setting/tenant-setting.module';
 import { EmployeeJobPresetModule } from './employee-job-preset/employee-job-preset.module';
 import { ReportModule } from './reports/report.module';
+import { EmployeeProposalTemplateModule } from './employee-proposal-template/employee-proposal-template.module';
 
 @Module({
 	imports: [
@@ -532,6 +533,7 @@ import { ReportModule } from './reports/report.module';
 		EmployeeSettingModule,
 		EmployeeJobPresetModule,
 		EmployeeJobPostModule,
+		EmployeeProposalTemplateModule,
 		EmployeeStatisticsModule,
 		EmployeeAppointmentModule,
 		AppointmentEmployeesModule,

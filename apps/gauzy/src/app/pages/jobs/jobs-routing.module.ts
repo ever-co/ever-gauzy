@@ -23,6 +23,13 @@ const routes: Routes = [
 					import('./matching/matching.module').then(
 						(m) => m.MatchingModule
 					)
+			},
+			{
+				path: 'proposal-template',
+				loadChildren: () =>
+					import('./proposal-template/proposal-template.module').then(
+						(m) => m.ProposalTemplateModule
+					)
 			}
 		]
 	}

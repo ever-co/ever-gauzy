@@ -267,6 +267,14 @@ export class PagesComponent implements OnInit, OnDestroy {
 						data: {
 							translationKey: 'MENU.JOBS_MATCHING'
 						}
+					},
+					{
+						title: 'Proposal Template',
+						icon: 'person-outline',
+						link: '/pages/jobs/proposal-template',
+						data: {
+							translationKey: 'MENU.PROPOSAL_TEMPLATE'
+						}
 					}
 				]
 			},

@@ -1,0 +1,65 @@
+<form [formGroup]="form">
+	<nb-card class="main">
+		<nb-card-header class="d-flex">
+			<h5>
+				{{
+					(mode == 'update'
+						? 'PROPOSAL_TEMPLATE.EDIT_PROPOSAL_TEMPLATE'
+						: 'PROPOSAL_TEMPLATE.ADD_PROPOSAL_TEMPLATE'
+					) | translate
+				}}
+			</h5>
+			<nb-icon
+				class="ml-auto mt-1 close"
+				icon="close-outline"
+				(click)="close()"
+			></nb-icon>
+		</nb-card-header>
+		<nb-card-body class="body">
+			<div class="form-group" *ngIf="!selectedEmployee?.id">
+				<ga-employee-multi-select
+					[multiple]="false"
+					formControlName="employeeId"
+				></ga-employee-multi-select>
+			</div>
+			<div class="form-group">
+				<label class="d-block">{{
+					'PROPOSAL_TEMPLATE.NAME' | translate
+				}}</label>
+				<input
+					fullWidth
+					formControlName="name"
+					type="text"
+					nbInput
+					[placeholder]="'PROPOSAL_TEMPLATE.NAME' | translate"
+				/>
+			</div>
+			<div class="form-group">
+				<label class="d-block">{{
+					'PROPOSAL_TEMPLATE.CONTENT' | translate
+				}}</label>
+				<textarea
+					rows="10"
+					formControlName="content"
+					nbInput
+					fullWidth
+					class="content w-100"
+					[placeholder]="'PROPOSAL_TEMPLATE.CONTENT' | translate"
+				></textarea>
+			</div>
+		</nb-card-body>
+		<nb-card-footer class="text-right">
+			<button (click)="close()" status="danger" class="mr-3" nbButton>
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
+			<button
+				(click)="onSave()"
+				[disabled]="form.invalid"
+				status="success"
+				nbButton
+			>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+		</nb-card-footer>
+	</nb-card>
+</form>
