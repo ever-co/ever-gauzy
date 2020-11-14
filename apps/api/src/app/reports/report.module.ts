@@ -7,9 +7,13 @@ import { ReportService } from './report.service';
 import { TenantModule } from '../tenant/tenant.module';
 import { ReportCategoryController } from './report-category.controller';
 import { ReportCategoryService } from './report-category.service';
+import { ReportOrganization } from './report-organization.entity';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([Report, ReportCategory]), TenantModule],
+	imports: [
+		TypeOrmModule.forFeature([Report, ReportCategory, ReportOrganization]),
+		TenantModule
+	],
 	controllers: [ReportCategoryController, ReportController],
 	providers: [ReportService, ReportCategoryService]
 })

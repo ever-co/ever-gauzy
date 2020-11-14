@@ -206,7 +206,6 @@ export class WeeklyTimeReportsComponent implements OnInit, AfterViewInit {
 			tenantId: this.organization ? this.organization.tenantId : null
 		};
 
-		console.log({ request });
 		this.countsLoading = true;
 		this.timesheetStatisticsService
 			.getCounts(request)
