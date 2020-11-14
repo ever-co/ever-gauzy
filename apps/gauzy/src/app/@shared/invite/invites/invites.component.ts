@@ -2,7 +2,6 @@ import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
 	InvitationTypeEnum,
 	RolesEnum,
-	PermissionsEnum,
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	IInviteViewModel
