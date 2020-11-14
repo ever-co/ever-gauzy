@@ -5,7 +5,7 @@ import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
 
-import { app, dialog, BrowserWindow, ipcMain } from 'electron';
+import { app, dialog, BrowserWindow, ipcMain, shell, Menu } from 'electron';
 import { environment } from './environments/environment';
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 log.catchErrors({
@@ -201,7 +201,19 @@ const getApiBaseUrl = (configs) => {
 
 app.on('ready', async () => {
 	// require(path.join(__dirname, 'desktop-api/main.js'));
-
+	Menu.setApplicationMenu(
+		Menu.buildFromTemplate([
+			{
+				label: app.getName(),
+				submenu: [
+					{ role: 'about', label: 'About' },
+					{ type: 'separator' },
+					{ type: 'separator' },
+					{ role: 'quit', label: 'Exit' }
+				]
+			}
+		])
+	);
 	const configs: any = store.get('configs');
 	if (configs && configs.isSetup) {
 		global.variableGlobal = {
@@ -245,14 +257,15 @@ ipcMain.on('server_is_ready', () => {
 			const auth = store.get('auth');
 
 			appMenu = new AppMenu(timeTrackerWindow, settingsWindow, knex);
-
-			tray = new TrayIcon(
-				setupWindow,
-				knex,
-				timeTrackerWindow,
-				auth,
-				settingsWindow
-			);
+			if (!tray) {
+				tray = new TrayIcon(
+					setupWindow,
+					knex,
+					timeTrackerWindow,
+					auth,
+					settingsWindow
+				);
+			}
 
 			timeTrackerWindow.on('close', (event) => {
 				if (willQuit) {
@@ -308,10 +321,14 @@ ipcMain.on('server_already_start', () => {
 		isAlreadyRun = true;
 	}
 });
+
+ipcMain.on('open_browser', (event, arg) => {
+	shell.openExternal(arg.url);
+});
 app.on('activate', () => {
 	if (gauzyWindow) {
 		gauzyWindow.show();
-	} else if (!onWaitingServer) {
+	} else if (!onWaitingServer && LocalStore.getStore('configs').isSetup) {
 		// On macOS it's common to re-create a window in the app when the
 		// dock icon is clicked and there are no other windows open.
 		createGauzyWindow(gauzyWindow, serve);

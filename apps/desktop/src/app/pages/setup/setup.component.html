@@ -1,255 +1,888 @@
 <nb-layout center>
-	<nb-layout-column>
-		<nb-card size="large" class="full-height">
+	<nb-layout-column class="top-bottom-space">
+		<nb-card class="card-full-height">
 			<nb-card-body>
-				<div class="row mb3">
-					<div class="col-12 form-group">
-						<div class="row">
-							<div class="col-6"></div>
-							<div *ngIf="defaultToggle" class="col-6 pull-right">
-								<nb-toggle status="basic" (change)="onSwitch()"
-									>Default</nb-toggle
+				<nb-stepper orientation="horizontal">
+					<nb-step [label]="labelOne">
+						<ng-template #labelOne>WELCOME</ng-template>
+						<div class="row content-body">
+							<div class="col-12 text-center margin-content">
+								<img
+									src="../assets/images/logos/logo_Gauzy.svg"
+									class="margin-icon"
+								/>
+							</div>
+							<div class="col-12 text-center margin-content">
+								<h4>WELCOME TO</h4>
+								<h4>GAUZY PLATFORM WIZARD</h4>
+							</div>
+							<div class="col-12 text-center margin-content">
+								<div class="row">
+									<div class="col-10 text-center col-center">
+										<p>
+											Gauzy Desktop App provides the full
+											functionality of the Gauzy Platform
+											available directly on your desktop
+											computer or a laptop. In addition,
+											it allows tracking work time,
+											activity recording, and the ability
+											to receive tracking
+											reminders/notifications.
+										</p>
+									</div>
+								</div>
+							</div>
+							<div class="col-12 text-center margin-content">
+								<button
+									class="button-home"
+									status="primary"
+									nbButton
+									nbStepperNext
 								>
+									LET'S GO
+								</button>
 							</div>
 						</div>
-					</div>
-					<div class="col-6 form-group">
-						<div class="row">
-							<div class="col-12 form-group">
-								<nb-select
-									placeholder="Server"
-									[(ngModel)]="selectedServer"
-									(ngModelChange)="onServerChange($event)"
-								>
-									<nb-option
-										[value]="server.id"
-										*ngFor="let server of serverOption"
-										>{{ server.name }}</nb-option
-									>
-								</nb-select>
+					</nb-step>
+					<nb-step [label]="labelTwo">
+						<ng-template #labelTwo>FUNCTIONALITIES</ng-template>
+						<div class="row content-body">
+							<div class="col-12 text-center margin-content">
+								<h4>What would you like to use?</h4>
+								<p>
+									You can select only one option or both
+									options.
+								</p>
 							</div>
 							<div
-								*ngIf="isLocalServer"
-								class="col-12 form-group"
+								class="col-10 text-center margin-content col-center"
 							>
-								<nb-select
-									placeholder="Database"
-									[(ngModel)]="selectedDatabase"
-									(ngModelChange)="onDatabaseChange($event)"
-								>
-									<nb-option
-										[value]="db.id"
-										*ngFor="let db of databaseOption"
-										>{{ db.name }}</nb-option
-									>
-								</nb-select>
-							</div>
-							<div class="col-12 form-group">
 								<div class="row">
-									<div class="col-12">
-										<div class="row">
-											<div class="col-6">
-												<nb-checkbox (click)="setAW()"
-													>Activiwatch</nb-checkbox
-												>
-											</div>
-											<div class="col-6">
-												<p
-													*ngIf="loadingAw"
-													[nbSpinner]="loadingAw"
-													nbSpinnerStatus="info"
-												></p>
-												<nb-icon
-													*ngIf="awCheck"
-													[icon]="iconAw"
-													[status]="statusIcon"
-												>
-												</nb-icon>
-											</div>
-										</div>
+									<div class="col-6">
+										<nb-card class="card-item">
+											<nb-card-body>
+												<div class="row">
+													<div
+														class="col-9 card-item-content"
+													>
+														<nb-checkbox
+															status="primary"
+															[(ngModel)]="
+																desktopFeatures.timeTracking
+															"
+														>
+															<span
+																class="card-item-label"
+																>Time & Activity
+																Tracking
+																Features</span
+															>
+														</nb-checkbox>
+													</div>
+													<div
+														class="col-3 card-item-icon"
+													>
+														<nb-icon
+															class="icon-item"
+															icon="clock"
+														>
+														</nb-icon>
+													</div>
+												</div>
+											</nb-card-body>
+										</nb-card>
 									</div>
-
-									<div class="col-12">
-										<nb-checkbox [disabled]="true"
-											>Wakatime</nb-checkbox
-										>
+									<div class="col-6">
+										<nb-card class="card-item">
+											<nb-card-body>
+												<div class="row">
+													<div
+														class="col-9 card-item-content"
+													>
+														<nb-checkbox
+															status="primary"
+															[(ngModel)]="
+																desktopFeatures.gauzyPlatform
+															"
+															><span
+																class="card-item-label"
+																>Gauzy Platform
+																Features</span
+															></nb-checkbox
+														>
+													</div>
+													<div
+														class="col-3 card-item-icon"
+													>
+														<nb-icon
+															class="icon-item"
+															icon="layers"
+														>
+														</nb-icon>
+													</div>
+												</div>
+											</nb-card-body>
+										</nb-card>
 									</div>
 								</div>
 							</div>
 						</div>
-					</div>
-					<div class="col-6 form-group">
-						<div class="row">
-							<div
-								*ngIf="isLocalServer"
-								class="col-12 form-group"
-							>
-								<input
-									[(ngModel)]="setup.serverPort"
-									type="text"
-									nbInput
-									fullWidth
-									status="basic"
-									placeholder="{{
-										defaultPlaceholder.serverPort
-									}}"
-									(focus)="inputFocus($event)"
-									id="serverPort"
-									(focusout)="inOutFocus($event)"
-									(ngModelChange)="
-										onInputChange($event, 'serverPort')
-									"
-								/>
-							</div>
-							<div *ngIf="isLiveServer" class="col-12 form-group">
-								<input
-									[(ngModel)]="setup.serverUrl"
-									type="text"
-									nbInput
-									fullWidth
-									status="basic"
-									placeholder="{{
-										defaultPlaceholder.serverUrl
-									}}"
-									(ngModelChange)="
-										onInputChange($event, 'serveUrl')
-									"
-									(focus)="inputFocus($event)"
-									id="serverUrl"
-									(focusout)="inOutFocus($event)"
-								/>
-							</div>
-							<div
-								*ngIf="isLocalServer && isPostgres"
-								class="col-12 form-group"
-							>
-								<input
-									[(ngModel)]="setup.dbHost"
-									type="text"
-									nbInput
-									fullWidth
-									status="basic"
-									placeholder="{{
-										defaultPlaceholder.dbHost
-									}}"
-									(focus)="inputFocus($event)"
-									id="dbHost"
-									(focusout)="inOutFocus($event)"
-									autocomplete="off"
-									(ngModelChange)="
-										onInputChange($event, 'dbHost')
-									"
-								/>
-							</div>
-							<div
-								*ngIf="isLocalServer && isPostgres"
-								class="col-12 form-group"
-							>
-								<input
-									[(ngModel)]="setup.dbPort"
-									type="text"
-									nbInput
-									fullWidth
-									status="basic"
-									placeholder="{{
-										defaultPlaceholder.dbPort
-									}}"
-									(focus)="inputFocus($event)"
-									id="dbPort"
-									(focusout)="inOutFocus($event)"
-									autocomplete="off"
-									(ngModelChange)="
-										onInputChange($event, 'dbPort')
-									"
-								/>
-							</div>
-							<div
-								*ngIf="isLocalServer && isPostgres"
-								class="col-12 form-group"
-							>
-								<input
-									[(ngModel)]="setup.dbName"
-									type="text"
-									nbInput
-									fullWidth
-									status="basic"
-									placeholder="{{
-										defaultPlaceholder.dbName
-									}}"
-									(focus)="inputFocus($event)"
-									id="dbName"
-									(focusout)="inOutFocus($event)"
-									autocomplete="off"
-									(ngModelChange)="
-										onInputChange($event, 'dbName')
-									"
-								/>
-							</div>
-							<div
-								*ngIf="isLocalServer && isPostgres"
-								class="col-12 form-group"
-							>
-								<input
-									[(ngModel)]="setup.dbUser"
-									type="text"
-									nbInput
-									fullWidth
-									status="basic"
-									placeholder="{{
-										defaultPlaceholder.dbUser
-									}}"
-									(focus)="inputFocus($event)"
-									id="dbUser"
-									(focusout)="inOutFocus($event)"
-									autocomplete="off"
-									(ngModelChange)="
-										onInputChange($event, 'dbUser')
-									"
-								/>
-							</div>
-							<div
-								*ngIf="isLocalServer && isPostgres"
-								class="col-12 form-group"
-							>
-								<input
-									[(ngModel)]="setup.dbPassword"
-									type="password"
-									nbInput
-									fullWidth
-									status="basic"
-									placeholder="{{
-										defaultPlaceholder.dbPassword
-									}}"
-									(focus)="inputFocus($event)"
-									id="dbPassword"
-									(focusout)="inOutFocus($event)"
-									autocomplete="off"
-									(ngModelChange)="
-										onInputChange($event, 'dbPassword')
-									"
-								/>
-							</div>
-						</div>
-						<div></div>
-					</div>
-					<div class="col-12 form-group btn-save">
-						<div class="row">
-							<div class="col-3">
+						<div class="row button-next-prev">
+							<div class="col-2">
 								<button
-									class="btn-width"
-									[nbSpinner]="loading"
-									nbSpinnerStatus="info"
-									(click)="saveConfiguration()"
 									nbButton
-									status="primary"
-									[disabled]="!buttonSave"
+									nbStepperPrevious
+									class="button-home"
+									status="basic"
 								>
-									Save
+									<nb-icon
+										icon="arrow-back-outline"
+										class="icon-medium"
+									></nb-icon
+									>BACK
+								</button>
+							</div>
+							<div class="col-2 btn-fixed pull-right">
+								<button
+									nbButton
+									nbStepperNext
+									class="btn-next"
+									status="primary"
+									[disabled]="
+										!desktopFeatures.gauzyPlatform &&
+										!desktopFeatures.timeTracking
+									"
+								>
+									CONTINUE<nb-icon
+										icon="arrow-forward-outline"
+										class="icon-medium"
+									></nb-icon>
 								</button>
 							</div>
 						</div>
-					</div>
-				</div>
+					</nb-step>
+					<nb-step label="CONNECTIVITY">
+						<div class="row content-body">
+							<div class="col-12 text-center margin-content">
+								<h4>
+									How are you going to use Gauzy platform?
+								</h4>
+								<p>
+									You have to select only one of the options
+									below.
+								</p>
+							</div>
+							<div
+								class="col-12 text-center margin-content col-center"
+							>
+								<div class="row">
+									<!-- <nb-radio-group> -->
+									<div class="col-4">
+										<nb-card class="card-small-item">
+											<nb-card-body>
+												<div class="row">
+													<div class="col-12">
+														<nb-radio
+															[checked]="
+																connectivity.integrated
+															"
+															(valueChange)="
+																connectivityChange(
+																	$event,
+																	'integrated'
+																)
+															"
+															[value]="
+																connectivity.integrated
+															"
+															><span
+																class="card-item-label"
+																>Integrated</span
+															></nb-radio
+														>
+													</div>
+													<div class="col-12">
+														<span
+															>Install and run
+															Gauzy Platform on
+															your local
+															computer.</span
+														>
+													</div>
+													<div
+														class="col-12 icon-connectivity"
+													>
+														<img
+															src="./assets/icons/monitor.svg"
+														/>
+													</div>
+												</div>
+											</nb-card-body>
+										</nb-card>
+									</div>
+									<div class="col-4">
+										<nb-card class="card-small-item">
+											<nb-card-body>
+												<div class="row">
+													<div class="col-12">
+														<nb-radio
+															[checked]="
+																connectivity.localNetwork
+															"
+															(valueChange)="
+																connectivityChange(
+																	$event,
+																	'localNetwork'
+																)
+															"
+															[value]="
+																connectivity.localNetwork
+															"
+															><span
+																class="card-item-label"
+																>Local /
+																Network</span
+															></nb-radio
+														>
+													</div>
+													<div class="col-12">
+														<span
+															>Connect to a
+															separate server in
+															your work
+															network.</span
+														>
+													</div>
+													<div
+														class="col-12 icon-connectivity"
+													>
+														<img
+															src="./assets/icons/icon local - network.svg"
+														/>
+													</div>
+												</div>
+											</nb-card-body>
+										</nb-card>
+									</div>
+									<div class="col-4">
+										<nb-card class="card-small-item">
+											<nb-card-body>
+												<div class="row">
+													<div class="col-12">
+														<nb-radio
+															[checked]="
+																connectivity.live
+															"
+															(valueChange)="
+																connectivityChange(
+																	$event,
+																	'live'
+																)
+															"
+															[value]="
+																connectivity.live
+															"
+															><span
+																class="card-item-label"
+																>Live</span
+															></nb-radio
+														>
+													</div>
+													<div class="col-12">
+														<span
+															>Connected to our
+															live server and use
+															it as SAAS.</span
+														>
+													</div>
+													<div
+														class="col-12 icon-connectivity"
+													>
+														<img
+															src="./assets/icons/ic_payment_24px.svg"
+														/>
+													</div>
+												</div>
+											</nb-card-body>
+										</nb-card>
+									</div>
+									<!-- </nb-radio-group> -->
+								</div>
+							</div>
+						</div>
+						<div class="row button-next-prev">
+							<div class="col-2">
+								<button
+									nbButton
+									nbStepperPrevious
+									class="button-home"
+									status="basic"
+								>
+									<nb-icon
+										icon="arrow-back-outline"
+										class="icon-medium"
+									></nb-icon
+									>BACk
+								</button>
+							</div>
+							<div class="col-2 btn-fixed pull-right">
+								<button
+									nbButton
+									nbStepperNext
+									class="btn-next"
+									status="primary"
+									(click)="pingAw()"
+								>
+									CONTINUE<nb-icon
+										icon="arrow-forward-outline"
+										class="icon-medium"
+									></nb-icon>
+								</button>
+							</div>
+						</div>
+					</nb-step>
+					<nb-step
+						label="INTEGRATION"
+						*ngIf="desktopFeatures.timeTracking"
+					>
+						<div class="row content-body">
+							<div class="col-12 text-center margin-content">
+								<h4>
+									Are you going to need 3rd party
+									integrations?
+								</h4>
+								<p>
+									This is an option, you can select one or
+									both type of 3rd party integrations.
+								</p>
+							</div>
+							<div
+								class="col-10 text-center margin-content col-center"
+							>
+								<div class="row">
+									<div class="col-6">
+										<nb-card class="card-small-item">
+											<nb-card-body>
+												<div class="row">
+													<div class="col-12">
+														<div class="row">
+															<div class="col-10">
+																<nb-checkbox
+																	[(ngModel)]="
+																		thirdParty.activitywatch
+																	"
+																	><span
+																		class="card-item-label"
+																		>ActivityWatch</span
+																	></nb-checkbox
+																>
+															</div>
+															<div class="col-2">
+																<img
+																	[src]="
+																		iconAw
+																	"
+																/>
+															</div>
+														</div>
+													</div>
+													<div class="col-12">
+														<span
+															>Track more activity
+															metrics and bad
+															screen habits. See
+															more at
+															<a
+																href="#"
+																(click)="
+																	openLink(
+																		'https://activitywatch.net'
+																	)
+																"
+																>activitywatch.net</a
+															>
+															and
+															<a
+																href="#"
+																(click)="
+																	openLink(
+																		'https://github.com/ActivityWatch/activitywatch'
+																	)
+																"
+																>ActivityWatch
+																Github</a
+															></span
+														>
+													</div>
+												</div>
+											</nb-card-body>
+										</nb-card>
+									</div>
+									<div class="col-6">
+										<nb-card class="card-small-item">
+											<nb-card-body>
+												<div class="row">
+													<div class="col-12">
+														<div class="row">
+															<div class="col-10">
+																<nb-checkbox
+																	[(ngModel)]="
+																		thirdParty.wakatime
+																	"
+																	><span
+																		class="card-item-label"
+																		>Wakatime</span
+																	></nb-checkbox
+																>
+															</div>
+															<div class="col-2">
+																<img
+																	src="./assets/icons/toggle-right.svg"
+																/>
+															</div>
+														</div>
+													</div>
+													<div class="col-12">
+														<span
+															>Open-source plugins
+															for metrics about
+															your programming.
+															See more at
+															<a
+																href="#"
+																(click)="
+																	openLink(
+																		'https://wakatime.com'
+																	)
+																"
+																>wakatime.com</a
+															>
+															and
+															<a
+																href="#"
+																(click)="
+																	openLink(
+																		'https://github.com/wakatime'
+																	)
+																"
+																>wakatime
+																Github</a
+															></span
+														>
+													</div>
+												</div>
+											</nb-card-body>
+										</nb-card>
+									</div>
+								</div>
+							</div>
+							<div
+								class="col-9 margin-setting-content col-center"
+							>
+								<span class="note">
+									Legal: All product names, brand names,
+									logos, trademarks, and registered trademarks
+									are the property of their respective owners.
+									We have no affiliation with or endorsement,
+									sponsorship, or support from mentioned
+									third-party companies, brands, products,
+									sites, or services. The links to third-party
+									software are being provided as a convenience
+									and for informational purposes only; they do
+									not constitute an endorsement or approval of
+									any of the products, services, or opinions
+									of the corporation or organization or
+									individual. We use respective logos and
+									brand names only to advertise that our
+									product use corresponding products &
+									technologies or has built-in integration
+									with corresponding services.
+								</span>
+							</div>
+						</div>
+						<div class="row button-next-prev">
+							<div class="col-2">
+								<button
+									nbButton
+									nbStepperPrevious
+									class="button-home"
+									status="basic"
+								>
+									<nb-icon
+										icon="arrow-back-outline"
+										class="icon-medium"
+									></nb-icon
+									>BACK
+								</button>
+							</div>
+							<div class="col-2 btn-fixed pull-right">
+								<button
+									nbButton
+									nbStepperNext
+									class="btn-next"
+									status="primary"
+									(click)="validation()"
+								>
+									CONTINUE<nb-icon
+										icon="arrow-forward-outline"
+										class="icon-medium"
+									></nb-icon>
+								</button>
+							</div>
+						</div>
+					</nb-step>
+					<nb-step [label]="labelFour">
+						<ng-template #labelFour>SETTING</ng-template>
+						<div class="row content-body">
+							<div class="col-12 text-center margin-content">
+								<h4>
+									Are you ready for some advanced settings?
+								</h4>
+								<p>
+									This is the final step where you can get to
+									the nitty-gritty of your Gauzy Platform.
+								</p>
+							</div>
+							<div
+								class="col-10 text-center margin-setting-content col-center"
+								*ngIf="connectivity.integrated"
+							>
+								<div class="col-5 col-center margin-form">
+									<div class="row">
+										<div class="col-3 col-center">
+											<span class="integraion-label"
+												>PORT</span
+											>
+										</div>
+										<div class="col-9">
+											<input
+												type="number"
+												nbInput
+												fullWidth
+												status="basic"
+												[(ngModel)]="
+													serverConfig.integrated.port
+												"
+												(ngModelChange)="validation()"
+											/>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div
+								class="col-6 text-center margin-setting-content col-center"
+								*ngIf="connectivity.integrated"
+							>
+								<div class="row">
+									<div class="col-4">
+										<nb-card class="card-small-item">
+											<nb-card-body>
+												<nb-radio
+													[checked]="
+														databaseDriver.sqlite
+													"
+													(valueChange)="
+														databaseDriverChange(
+															$event,
+															'sqlite'
+														)
+													"
+													[value]="
+														databaseDriver.sqlite
+													"
+												>
+													<img
+														src="./assets/icons/1280px-SQLite370.svg.png"
+													/>
+												</nb-radio>
+											</nb-card-body>
+										</nb-card>
+									</div>
+									<div class="col-8">
+										<nb-card class="card-small-item">
+											<nb-card-body>
+												<nb-radio
+													[checked]="
+														databaseDriver.postgre
+													"
+													(valueChange)="
+														databaseDriverChange(
+															$event,
+															'postgre'
+														)
+													"
+													[value]="
+														databaseDriver.postgre
+													"
+												>
+													<img
+														src="./assets/icons/2106620.png"
+													/>
+												</nb-radio>
+											</nb-card-body>
+										</nb-card>
+									</div>
+								</div>
+							</div>
+							<div class="col-12 margin-setting-content">
+								<div class="row">
+									<div
+										class="col-5 col-center margin-form"
+										*ngIf="connectivity.localNetwork"
+									>
+										<div class="row">
+											<div class="col-3 col-center">
+												<span class="integraion-label"
+													>API HOST</span
+												>
+											</div>
+											<div class="col-9">
+												<input
+													type="text"
+													nbInput
+													fullWidth
+													status="basic"
+													[(ngModel)]="
+														serverConfig
+															.localNetwork
+															.apiHost
+													"
+													(ngModelChange)="
+														validation()
+													"
+												/>
+											</div>
+										</div>
+									</div>
+									<div
+										class="col-5 col-center margin-form"
+										*ngIf="connectivity.localNetwork"
+									>
+										<div class="row">
+											<div class="col-3 col-center">
+												<span class="integraion-label"
+													>PORT</span
+												>
+											</div>
+											<div class="col-9">
+												<input
+													type="number"
+													nbInput
+													fullWidth
+													status="basic"
+													[(ngModel)]="
+														serverConfig
+															.localNetwork.port
+													"
+													(ngModelChange)="
+														validation()
+													"
+												/>
+											</div>
+										</div>
+									</div>
+									<div
+										class="col-5 col-center margin-form"
+										*ngIf="
+											databaseDriver.postgre &&
+											connectivity.integrated
+										"
+									>
+										<div class="row">
+											<div class="col-3 col-center">
+												<span class="integraion-label"
+													>HOST</span
+												>
+											</div>
+											<div class="col-9">
+												<input
+													type="text"
+													nbInput
+													fullWidth
+													status="basic"
+													[(ngModel)]="
+														databaseConfig.postgre
+															.host
+													"
+													(ngModelChange)="
+														validation()
+													"
+												/>
+											</div>
+										</div>
+									</div>
+									<div
+										class="col-5 col-center margin-form"
+										*ngIf="
+											databaseDriver.postgre &&
+											connectivity.integrated
+										"
+									>
+										<div class="row">
+											<div class="col-3 col-center">
+												<span class="integraion-label"
+													>DB NAME</span
+												>
+											</div>
+											<div class="col-9">
+												<input
+													type="text"
+													nbInput
+													fullWidth
+													status="basic"
+													[(ngModel)]="
+														databaseConfig.postgre
+															.dbName
+													"
+													(ngModelChange)="
+														validation()
+													"
+												/>
+											</div>
+										</div>
+									</div>
+									<div
+										class="col-5 col-center margin-form"
+										*ngIf="
+											databaseDriver.postgre &&
+											connectivity.integrated
+										"
+									>
+										<div class="row">
+											<div class="col-3 col-center">
+												<span class="integraion-label"
+													>DB PORT</span
+												>
+											</div>
+											<div class="col-9">
+												<input
+													type="number"
+													nbInput
+													fullWidth
+													status="basic"
+													[(ngModel)]="
+														databaseConfig.postgre
+															.dbPort
+													"
+													(ngModelChange)="
+														validation()
+													"
+												/>
+											</div>
+										</div>
+									</div>
+									<div
+										class="col-5 col-center margin-form"
+										*ngIf="
+											databaseDriver.postgre &&
+											connectivity.integrated
+										"
+									>
+										<div class="row">
+											<div class="col-3 col-center">
+												<span class="integraion-label"
+													>USER</span
+												>
+											</div>
+											<div class="col-9">
+												<input
+													type="text"
+													nbInput
+													fullWidth
+													status="basic"
+													[(ngModel)]="
+														databaseConfig.postgre
+															.dbUser
+													"
+													(ngModelChange)="
+														validation()
+													"
+												/>
+											</div>
+										</div>
+									</div>
+									<div
+										class="col-5 col-center margin-form"
+										*ngIf="
+											databaseDriver.postgre &&
+											connectivity.integrated
+										"
+									>
+										<!-- <div class="row">
+								<div class="col-3">
+									<span class="integraion-label">PASSWORD</span>
+								</div>
+								<div class="col-9">
+									<input type="text" nbInput fullWidth status="basic" placeholder="Default">
+								</div>
+							</div> -->
+									</div>
+									<div
+										class="col-5 col-center margin-form"
+										*ngIf="
+											databaseDriver.postgre &&
+											connectivity.integrated
+										"
+									>
+										<div class="row">
+											<div class="col-3 col-center">
+												<span class="integraion-label"
+													>PASSWORD</span
+												>
+											</div>
+											<div class="col-9">
+												<input
+													type="text"
+													nbInput
+													fullWidth
+													status="basic"
+													[(ngModel)]="
+														databaseConfig.postgre
+															.dbPassword
+													"
+													(ngModelChange)="
+														validation()
+													"
+												/>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row button-next-prev">
+							<div class="col-2">
+								<button
+									nbButton
+									nbStepperPrevious
+									class="button-home"
+									status="basic"
+								>
+									<nb-icon
+										icon="arrow-back-outline"
+										class="icon-medium"
+									></nb-icon
+									>BACK
+								</button>
+							</div>
+							<div class="col-2 btn-fixed pull-right">
+								<button
+									nbButton
+									nbStepperNext
+									class="btn-next"
+									status="primary"
+									[disabled]="!buttonSave"
+									(click)="saveChange()"
+								>
+									SAVE<nb-icon
+										icon="save"
+										class="icon-medium"
+									></nb-icon>
+								</button>
+							</div>
+						</div>
+					</nb-step>
+				</nb-stepper>
 			</nb-card-body>
 		</nb-card>
 	</nb-layout-column>

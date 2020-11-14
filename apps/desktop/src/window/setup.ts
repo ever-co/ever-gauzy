@@ -1,4 +1,4 @@
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, Menu, app } from 'electron';
 import * as path from 'path';
 import * as url from 'url';
 
@@ -14,7 +14,15 @@ export function createSetupWindow(setupWindow, value) {
 	});
 
 	setupWindow.loadURL(launchPath);
-
+	// setupWindow.webContents.toggleDevTools();
+	setupWindow.setMenu(
+		Menu.buildFromTemplate([
+			{
+				label: app.getName(),
+				submenu: [{ role: 'quit', label: 'Exit' }]
+			}
+		])
+	);
 	if (value) {
 		setupWindow.hide();
 	}
@@ -24,16 +32,17 @@ export function createSetupWindow(setupWindow, value) {
 const windowSetting = () => {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 		frame: true,
-		resizable: true,
+		resizable: false,
 		focusable: true,
-		fullscreenable: true,
+		fullscreenable: false,
 		webPreferences: {
 			nodeIntegration: true,
 			webSecurity: false
 		},
-		width: 800,
-		height: 800,
-		title: 'Setup'
+		width: 960,
+		height: 680,
+		title: 'Setup',
+		autoHideMenuBar: true
 	};
 
 	return mainWindowSettings;

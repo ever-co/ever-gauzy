@@ -10,6 +10,7 @@ export default class TrayIcon {
 	tray: Tray;
 	constructor(setupWindow, knex, timeTrackerWindow, auth, settingsWindow) {
 		const timerHandler = new TimerHandler();
+		const appConfig = LocalStore.getStore('configs');
 		const store = new Store();
 		const iconPath = path.join(
 			__dirname,
@@ -90,6 +91,7 @@ export default class TrayIcon {
 			{
 				id: '1',
 				label: 'Start Tracking Time',
+				visible: appConfig.timeTrackerWindow,
 				click(menuItem) {
 					const projectSelect = store.get('project');
 					if (projectSelect && projectSelect.projectId) {
@@ -124,6 +126,7 @@ export default class TrayIcon {
 				id: '2',
 				label: 'Stop Tracking Time',
 				enabled: false,
+				visible: appConfig.timeTrackerWindow,
 				click(menuItem) {
 					// timeTrackerWindow.show();
 					setTimeout(() => {
@@ -135,6 +138,7 @@ export default class TrayIcon {
 				id: '3',
 				label: 'Open Time Tracker',
 				enabled: true,
+				visible: appConfig.timeTrackerWindow,
 				click(menuItem) {
 					timeTrackerWindow.show();
 					setTimeout(async () => {
@@ -219,6 +223,7 @@ export default class TrayIcon {
 		});
 
 		ipcMain.on('auth_success', (event, arg) => {
+			const config = LocalStore.getStore('configs');
 			//check last auth
 			const lastUser = store.get('auth');
 			timeTrackerWindow.webContents.send(
@@ -237,6 +242,7 @@ export default class TrayIcon {
 				contextMenu = menuAuth;
 				menuWindowTime.enabled = true;
 				menuWindowSetting.enabled = true;
+				menuWindowTime.visible = config.timeTrackerWindow;
 				this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
 			}
 		});

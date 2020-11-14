@@ -30,6 +30,7 @@ export function createGauzyWindow(gauzyWindow, serve) {
 	}
 
 	// console.log('launched electron with:', launchPath);
+	// gauzyWindow.webContents.toggleDevTools();
 
 	gauzyWindow.on('close', (e) => {
 		// Dereference the window object, usually you would store windows
