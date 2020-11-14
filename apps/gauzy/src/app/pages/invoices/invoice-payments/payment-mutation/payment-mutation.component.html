@@ -19,13 +19,13 @@
 						</label>
 						<nb-select
 							class="d-block"
-							formControlName="invoice"
+							formControlName="invoiceId"
 							placeholder="Invoice Number"
 							fullWidth
 						>
 							<nb-option
 								*ngFor="let invoice of invoices"
-								[value]="invoice"
+								[value]="invoice.id"
 							>
 								{{ invoice.invoiceNumber }}
 							</nb-option>

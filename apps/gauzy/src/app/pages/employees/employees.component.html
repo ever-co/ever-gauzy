@@ -6,13 +6,8 @@
 			</h4>
 			<div class="header-selector-wrapper">
 				<div style="margin-right: 9px">
-					<ng-template ngxPermissionsOnly="ORG_EMPLOYEES_EDIT">
-						<ng-template
-							[ngxPermissionsOnly]="[
-								'ORG_INVITE_VIEW',
-								'ORG_INVITE_EDIT'
-							]"
-						>
+					<ng-template ngxPermissionsOnly="ORG_EMPLOYEES_VIEW">
+						<ng-template ngxPermissionsOnly="ORG_INVITE_VIEW">
 							<button
 								*ngIf="organizationInvitesAllowed"
 								nbButton
@@ -47,18 +42,15 @@
 						>{{ 'BUTTONS.INVITE' | translate }}
 					</button>
 				</ng-template>
-
 				<button nbButton status="success" (click)="add()" class="mr-2">
 					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 					>{{ 'BUTTONS.ADD' | translate }}
 				</button>
-
 				<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
 					<ng-container
 						*ngTemplateOutlet="actionButtons"
 					></ng-container>
 				</ng-container>
-
 				<nb-checkbox
 					(checkedChange)="changeIncludeDeleted($event)"
 					status="danger"
@@ -69,21 +61,6 @@
 				>
 			</div>
 		</ng-template>
-		<ng-template [ngxPermissionsOnly]="'ORG_EXPENSES_EDIT'">
-			<div class="mb-3" *ngIf="!hasEditPermission">
-				<button
-					nbButton
-					[disabled]="!selectedEmployee"
-					(click)="edit()"
-					status="info"
-					class="mr-2"
-				>
-					<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-					>{{ 'BUTTONS.EDIT' | translate }}
-				</button>
-			</div>
-		</ng-template>
-
 		<ng2-smart-table
 			class="employees-table"
 			style="cursor: pointer"
@@ -98,7 +75,7 @@
 		<ul class="flex-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
 			<li class="flex-item" *ngFor="let x of employeeData">
 				<div class="fullName">
-					<img [src]="x.imageUrl" alt="Avatar" class="avatar" />
+					<ga-notes-with-tags [rowData]="x"></ga-notes-with-tags>
 					<span>{{ x.fullName }}</span>
 				</div>
 				<div class="email">
@@ -180,68 +157,70 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<button
-		nbButton
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-		(click)="edit(selectedItem)"
-		status="info"
-		class="mr-2"
-	>
-		<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-		>{{ 'BUTTONS.EDIT' | translate }}
-	</button>
-	<button
-		nbButton
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-		(click)="delete(selectedItem)"
-		status="danger"
-		class="mr-2"
-	>
-		<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
-		>{{ 'BUTTONS.DELETE' | translate }}
-	</button>
-	<button
-		nbButton
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-		*ngIf="dataLayoutStyle === 'TABLE'"
-		(click)="
-			selectedEmployee.endWork
-				? backToWork(selectedItem)
-				: endWork(selectedItem)
-		"
-		status="warning"
-		class="mr-2"
-	>
-		<nb-icon class="mr-1" icon="person-delete-outline"> </nb-icon>
-		{{
-			(selectedEmployee && selectedEmployee.endWork
-				? 'EMPLOYEES_PAGE.BACK_TO_WORK'
-				: 'EMPLOYEES_PAGE.END_WORK'
-			) | translate
-		}}
-	</button>
-	<button
-		nbButton
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-		*ngIf="dataLayoutStyle === 'CARDS_GRID'"
-		(click)="
-			selectedItem.endWork
-				? backToWork(selectedItem)
-				: endWork(selectedItem)
-		"
-		status="warning"
-		class="mr-2"
-	>
-		<nb-icon class="mr-1" icon="person-delete-outline"> </nb-icon>
-		{{
-			(selectedItem && selectedItem.endWork
-				? 'EMPLOYEES_PAGE.BACK_TO_WORK'
-				: 'EMPLOYEES_PAGE.END_WORK'
-			) | translate
-		}}
-	</button>
+	<ng-template ngxPermissionsOnly="ORG_EMPLOYEES_EDIT">
+		<button
+			nbButton
+			[disabled]="!selectedItem && disableButton"
+			[size]="buttonSize || 'medium'"
+			(click)="edit(selectedItem)"
+			status="info"
+			class="mr-2"
+		>
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+			>{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			nbButton
+			[disabled]="!selectedItem && disableButton"
+			[size]="buttonSize || 'medium'"
+			(click)="delete(selectedItem)"
+			status="danger"
+			class="mr-2"
+		>
+			<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
+			>{{ 'BUTTONS.DELETE' | translate }}
+		</button>
+		<button
+			nbButton
+			[disabled]="!selectedItem && disableButton"
+			[size]="buttonSize || 'medium'"
+			*ngIf="dataLayoutStyle === 'TABLE'"
+			(click)="
+				selectedEmployee.endWork
+					? backToWork(selectedItem)
+					: endWork(selectedItem)
+			"
+			status="warning"
+			class="mr-2"
+		>
+			<nb-icon class="mr-1" icon="person-delete-outline"> </nb-icon>
+			{{
+				(selectedEmployee && selectedEmployee.endWork
+					? 'EMPLOYEES_PAGE.BACK_TO_WORK'
+					: 'EMPLOYEES_PAGE.END_WORK'
+				) | translate
+			}}
+		</button>
+		<button
+			nbButton
+			[disabled]="!selectedItem && disableButton"
+			[size]="buttonSize || 'medium'"
+			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			(click)="
+				selectedItem.endWork
+					? backToWork(selectedItem)
+					: endWork(selectedItem)
+			"
+			status="warning"
+			class="mr-2"
+		>
+			<nb-icon class="mr-1" icon="person-delete-outline"> </nb-icon>
+			{{
+				(selectedItem && selectedItem.endWork
+					? 'EMPLOYEES_PAGE.BACK_TO_WORK'
+					: 'EMPLOYEES_PAGE.END_WORK'
+				) | translate
+			}}
+		</button>
+	</ng-template>
 </ng-template>
