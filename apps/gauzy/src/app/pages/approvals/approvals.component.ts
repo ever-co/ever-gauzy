@@ -6,7 +6,6 @@ import {
 	IRequestApproval,
 	ComponentLayoutStyleEnum,
 	IOrganization,
-	IRolePermission,
 	IApprovalsData
 } from '@gauzy/models';
 import { RequestApprovalService } from '../../@core/services/request-approval.service';
@@ -22,7 +21,6 @@ import { PictureNameTagsComponent } from '../../@shared/table-components/picture
 import { RequestApprovalStatusTypesEnum } from '@gauzy/models';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { NgxPermissionsService } from 'ngx-permissions';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -62,25 +60,13 @@ export class ApprovalsComponent
 		private store: Store,
 		private dialogService: NbDialogService,
 		private toastrService: NbToastrService,
-		private router: Router,
-		private ngxPermissionsService: NgxPermissionsService
+		private router: Router
 	) {
 		super(translateService);
 		this.setView();
 	}
 
 	ngOnInit() {
-		this.store.userRolePermissions$
-			.pipe(
-				filter(
-					(permissions: IRolePermission[]) => permissions.length > 0
-				),
-				untilDestroyed(this)
-			)
-			.subscribe((data) => {
-				const permissions = data.map(({ permission }) => permission);
-				this.ngxPermissionsService.loadPermissions(permissions);
-			});
 		this.store.selectedEmployee$
 			.pipe(
 				filter((employee) => !!employee),

@@ -14,15 +14,24 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div *ngIf="hasInviteEditPermission" class="mb-3">
-			<button nbButton status="primary" (click)="invite()" class="mr-2">
-				<nb-icon class="mr-1" icon="email-outline"></nb-icon
-				>{{ 'BUTTONS.INVITE' | translate }}
-			</button>
-			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
-				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
-			</ng-container>
-		</div>
+		<ng-template ngxPermissionsOnly="ORG_INVITE_EDIT">
+			<div class="mb-3">
+				<button
+					nbButton
+					status="primary"
+					(click)="invite()"
+					class="mr-2"
+				>
+					<nb-icon class="mr-1" icon="email-outline"></nb-icon
+					>{{ 'BUTTONS.INVITE' | translate }}
+				</button>
+				<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+					<ng-container
+						*ngTemplateOutlet="actionButtons"
+					></ng-container>
+				</ng-container>
+			</div>
+		</ng-template>
 		<ng2-smart-table
 			*ngIf="dataLayoutStyle === 'TABLE'"
 			class="employees-table"
@@ -57,28 +66,29 @@
 		<nb-icon class="mr-1" icon="link-2-outline"></nb-icon
 		>{{ 'BUTTONS.COPY_LINK' | translate }}
 	</button>
+	<ng-template ngxPermissionsOnly="ORG_INVITE_EDIT">
+		<button
+			nbButton
+			[disabled]="!selectedItem && disableButton"
+			status="warning"
+			(click)="resendInvite(selectedItem)"
+			class="mr-2"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="flip-2-outline"></nb-icon
+			>{{ 'BUTTONS.RESEND' | translate }}
+		</button>
 
-	<button
-		nbButton
-		[disabled]="!selectedItem && disableButton"
-		status="warning"
-		(click)="resendInvite(selectedItem)"
-		class="mr-2"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="flip-2-outline"></nb-icon
-		>{{ 'BUTTONS.RESEND' | translate }}
-	</button>
-
-	<button
-		nbButton
-		[disabled]="!selectedItem && disableButton"
-		status="danger"
-		(click)="deleteInvite(selectedItem)"
-		class="mr-2"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
-		>{{ 'BUTTONS.DELETE' | translate }}
-	</button>
+		<button
+			nbButton
+			[disabled]="!selectedItem && disableButton"
+			status="danger"
+			(click)="deleteInvite(selectedItem)"
+			class="mr-2"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
+			>{{ 'BUTTONS.DELETE' | translate }}
+		</button>
+	</ng-template>
 </ng-template>

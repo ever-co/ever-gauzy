@@ -4,7 +4,8 @@ import {
 	RolesEnum,
 	PermissionsEnum,
 	ComponentLayoutStyleEnum,
-	IOrganization
+	IOrganization,
+	IInviteViewModel
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -24,20 +25,6 @@ import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { RouterEvent, NavigationEnd, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
-interface InviteViewModel {
-	email: string;
-	expireDate: string;
-	imageUrl: string;
-	fullName: string;
-	roleName?: string;
-	status: string;
-	projectNames: string[];
-	clientNames: string[];
-	departmentNames: string[];
-	id: string;
-	inviteUrl: string;
-}
-
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-invites',
@@ -53,16 +40,14 @@ export class InvitesComponent
 	organizationName: string;
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
-	selectedInvite: InviteViewModel;
+	selectedInvite: IInviteViewModel;
 	selectedOrganizationId: string;
 	viewComponentName: ComponentEnum;
 	disableButton = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	invitedName = 'Employee / User';
-	manageInvites: InviteViewModel[];
+	manageInvites: IInviteViewModel[];
 	loading = true;
-
-	hasInviteEditPermission = false;
 	selectedOrganization: IOrganization;
 
 	invitesTable: Ng2SmartTableComponent;
@@ -100,13 +85,6 @@ export class InvitesComponent
 					this.selectedOrganizationId = organization.id;
 					this.loadPage();
 				}
-			});
-		this.store.userRolePermissions$
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.hasInviteEditPermission = this.store.hasPermission(
-					PermissionsEnum.ORG_INVITE_EDIT
-				);
 			});
 		this.router.events
 			.pipe(untilDestroyed(this))
@@ -164,7 +142,7 @@ export class InvitesComponent
 		this.loadPage();
 	}
 
-	copyToClipboard(selectedItem?: InviteViewModel) {
+	copyToClipboard(selectedItem?: IInviteViewModel) {
 		if (selectedItem) {
 			this.selectEmployeeTmp({
 				isSelected: true,
@@ -213,7 +191,7 @@ export class InvitesComponent
 		}
 
 		const { name } = this.store.selectedOrganization;
-		const invitesVm: InviteViewModel[] = [];
+		const invitesVm: IInviteViewModel[] = [];
 
 		for (const invite of invites) {
 			invitesVm.push({
@@ -315,7 +293,7 @@ export class InvitesComponent
 		this.settingsSmartTable = settingsSmartTable;
 	}
 
-	async deleteInvite(selectedItem?: InviteViewModel) {
+	async deleteInvite(selectedItem?: IInviteViewModel) {
 		if (selectedItem) {
 			this.selectEmployeeTmp({
 				isSelected: true,
@@ -354,7 +332,7 @@ export class InvitesComponent
 			});
 	}
 
-	async resendInvite(selectedItem?: InviteViewModel) {
+	async resendInvite(selectedItem?: IInviteViewModel) {
 		if (selectedItem) {
 			this.selectEmployeeTmp({
 				isSelected: true,

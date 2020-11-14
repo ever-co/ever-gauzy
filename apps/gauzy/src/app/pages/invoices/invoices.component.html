@@ -17,27 +17,47 @@
 	<nb-card-body>
 		<nb-tabset (changeTab)="onChangeTab($event)">
 			<nb-tab tabTitle="Actions" tabId="actions">
-				<ng-template ngxPermissionsOnly="INVOICES_EDIT">
+				<ng-template
+					[ngxPermissionsOnly]="['INVOICES_EDIT', 'INVOICES_VIEW']"
+				>
 					<div class="mb-3">
 						<div class="actions-container">
-							<button
-								nbButton
-								status="success"
-								(click)="add()"
-								class="mr-2"
-							>
-								<nb-icon
-									class="mr-1"
-									icon="plus-outline"
-								></nb-icon
-								>{{ 'BUTTONS.ADD' | translate }}
-							</button>
-
-							<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+							<ng-template ngxPermissionsOnly="INVOICES_EDIT">
+								<button
+									nbButton
+									status="success"
+									(click)="add()"
+									class="mr-2"
+								>
+									<nb-icon
+										class="mr-1"
+										icon="plus-outline"
+									></nb-icon
+									>{{ 'BUTTONS.ADD' | translate }}
+								</button>
 								<ng-container
-									*ngTemplateOutlet="actionButtons"
-								></ng-container>
-							</ng-container>
+									*ngIf="dataLayoutStyle === 'TABLE'"
+								>
+									<ng-container
+										*ngTemplateOutlet="actionButtons"
+									></ng-container>
+								</ng-container>
+							</ng-template>
+							<ng-template ngxPermissionsOnly="INVOICES_VIEW">
+								<button
+									nbButton
+									status="info"
+									(click)="view()"
+									class="mr-2"
+									[disabled]="disableButton"
+								>
+									<nb-icon
+										class="mr-1"
+										icon="edit-outline"
+									></nb-icon>
+									{{ 'BUTTONS.VIEW' | translate }}
+								</button>
+							</ng-template>
 							<div class="settings-button">
 								<button
 									nbButton
@@ -349,20 +369,6 @@
 				</nb-list>
 			</nb-tab>
 		</nb-tabset>
-		<ng-template ngxPermissionsExcept="INVOICES_EDIT">
-			<div class="mb-3">
-				<button
-					nbButton
-					status="info"
-					(click)="view()"
-					class="mr-2"
-					[disabled]="disableButton"
-				>
-					<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-					{{ 'BUTTONS.VIEW' | translate }}
-				</button>
-			</div>
-		</ng-template>
 		<ng2-smart-table
 			class="tags-table"
 			[settings]="settingsSmartTable"
@@ -389,65 +395,66 @@
 	let-selectedItem="selectedItem"
 >
 	<div class="btn-group">
-		<button
-			nbButton
-			status="info"
-			(click)="download(selectedItem)"
-			class="mr-2"
-			[disabled]="!selectedItem && disableButton"
-			[size]="buttonSize || 'medium'"
-		>
-			<nb-icon class="mr-1" icon="download-outline"> </nb-icon>
-			{{ 'BUTTONS.DOWNLOAD' | translate }}
-		</button>
-		<button
-			nbButton
-			status="info"
-			(click)="edit(selectedItem)"
-			class="mr-2"
-			[disabled]="!selectedItem && disableButton"
-			[size]="buttonSize || 'medium'"
-		>
-			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-			{{ 'BUTTONS.EDIT' | translate }}
-		</button>
-		<nb-select
-			filled
-			status="info"
-			class="mr-2"
-			*ngIf="!isEstimate"
-			placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
-			[(selected)]="status"
-			[disabled]="disableButton"
-			(selectedChange)="selectStatus($event)"
-			[size]="dataLayoutStyle === 'CARDS_GRID' ? 'tiny' : 'medium'"
-		>
-			<nb-option
-				*ngFor="let status of invoiceStatusTypes"
-				[value]="status"
+		<ng-template ngxPermissionsOnly="INVOICES_EDIT">
+			<button
+				nbButton
+				status="info"
+				(click)="download(selectedItem)"
+				class="mr-2"
+				[disabled]="!selectedItem && disableButton"
+				[size]="buttonSize || 'medium'"
 			>
-				{{ status }}
-			</nb-option>
-		</nb-select>
-		<nb-select
-			filled
-			status="info"
-			class="mr-2"
-			*ngIf="isEstimate"
-			placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
-			[(selected)]="status"
-			[disabled]="disableButton"
-			(selectedChange)="selectStatus($event)"
-			[size]="dataLayoutStyle === 'CARDS_GRID' ? 'tiny' : 'medium'"
-		>
-			<nb-option
-				*ngFor="let status of estimateStatusTypes"
-				[value]="status"
+				<nb-icon class="mr-1" icon="download-outline"> </nb-icon>
+				{{ 'BUTTONS.DOWNLOAD' | translate }}
+			</button>
+			<button
+				nbButton
+				status="info"
+				(click)="edit(selectedItem)"
+				class="mr-2"
+				[disabled]="!selectedItem && disableButton"
+				[size]="buttonSize || 'medium'"
 			>
-				{{ status }}
-			</nb-option>
-		</nb-select>
-
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<nb-select
+				filled
+				status="info"
+				class="mr-2"
+				*ngIf="!isEstimate"
+				placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
+				[(selected)]="status"
+				[disabled]="disableButton"
+				(selectedChange)="selectStatus($event)"
+				[size]="dataLayoutStyle === 'CARDS_GRID' ? 'tiny' : 'medium'"
+			>
+				<nb-option
+					*ngFor="let status of invoiceStatusTypes"
+					[value]="status"
+				>
+					{{ status }}
+				</nb-option>
+			</nb-select>
+			<nb-select
+				filled
+				status="info"
+				class="mr-2"
+				*ngIf="isEstimate"
+				placeholder="{{ 'INVOICES_PAGE.SET_STATUS' | translate }}"
+				[(selected)]="status"
+				[disabled]="disableButton"
+				(selectedChange)="selectStatus($event)"
+				[size]="dataLayoutStyle === 'CARDS_GRID' ? 'tiny' : 'medium'"
+			>
+				<nb-option
+					*ngFor="let status of estimateStatusTypes"
+					[value]="status"
+				>
+					{{ status }}
+				</nb-option>
+			</nb-select>
+		</ng-template>
 		<button
 			nbButton
 			[nbContextMenu]="settingsContextMenu"

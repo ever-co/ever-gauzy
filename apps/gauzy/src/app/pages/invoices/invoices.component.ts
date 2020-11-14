@@ -23,7 +23,7 @@ import {
 	CurrenciesEnum,
 	IOrganizationContact,
 	IInvoiceEstimateHistory,
-	IRolePermission
+	PermissionsEnum
 } from '@gauzy/models';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
@@ -110,26 +110,8 @@ export class InvoicesComponent
 		if (!this.isEstimate) {
 			this.isEstimate = false;
 		}
-
-		this.initializeForm();
-		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
-		this.loadMenu();
-		this.loadSettings();
-
-		this.store.userRolePermissions$
-			.pipe(
-				filter(
-					(permissions: IRolePermission[]) => permissions.length > 0
-				),
-				untilDestroyed(this)
-			)
-			.subscribe((data) => {
-				const permissions = data.map(
-					(permisson) => permisson.permission
-				);
-				this.ngxPermissionsService.loadPermissions(permissions);
-			});
+		this.loadSettingsSmartTable();
 		this.router.events
 			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
@@ -137,6 +119,10 @@ export class InvoicesComponent
 					this.setView();
 				}
 			});
+
+		this.initializeForm();
+		this.loadMenu();
+		this.loadSettings();
 	}
 
 	/*
@@ -177,32 +163,46 @@ export class InvoicesComponent
 		this.menuArray = [
 			{
 				title: 'Duplicate',
-				icon: 'copy-outline'
+				icon: 'copy-outline',
+				permission: PermissionsEnum.INVOICES_EDIT
 			},
 			{
 				title: 'Send',
-				icon: 'upload-outline'
+				icon: 'upload-outline',
+				permission: PermissionsEnum.INVOICES_VIEW
 			},
 			{
 				title: 'Convert to Invoice',
-				icon: 'swap'
+				icon: 'swap',
+				permission: PermissionsEnum.INVOICES_EDIT
 			},
 			{
 				title: 'Email',
-				icon: 'email-outline'
+				icon: 'email-outline',
+				permission: PermissionsEnum.INVOICES_VIEW
 			},
 			{
 				title: 'Delete',
-				icon: 'archive-outline'
+				icon: 'archive-outline',
+				permission: PermissionsEnum.INVOICES_EDIT
 			}
 		];
 
 		if (this.isEstimate) {
-			this.settingsContextMenu = this.menuArray.filter((items) => items);
-		} else {
 			this.settingsContextMenu = this.menuArray.filter(
-				(items) => items.title !== 'Convert to Invoice'
+				(item) =>
+					this.ngxPermissionsService.getPermission(item.permission) !=
+					null
 			);
+		} else {
+			this.settingsContextMenu = this.menuArray
+				.filter((item) => item.title !== 'Convert to Invoice')
+				.filter(
+					(item) =>
+						this.ngxPermissionsService.getPermission(
+							item.permission
+						) != null
+				);
 		}
 		this.nbMenuService.onItemClick().pipe(first());
 	}
@@ -480,9 +480,15 @@ export class InvoicesComponent
 	}
 
 	view() {
-		this.router.navigate([
-			`/pages/accounting/invoices/view/${this.selectedInvoice.id}`
-		]);
+		if (this.isEstimate) {
+			this.router.navigate([
+				`/pages/accounting/invoices/estimates/view/${this.selectedInvoice.id}`
+			]);
+		} else {
+			this.router.navigate([
+				`/pages/accounting/invoices/view/${this.selectedInvoice.id}`
+			]);
+		}
 	}
 
 	email(selectedItem?: IInvoice) {
