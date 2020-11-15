@@ -209,7 +209,7 @@ export class ProposalTemplateComponent
 	deleteProposal(): void {
 		this.proposalTemplateService.delete(this.selectedItem.id).then(() => {
 			this.toastrService.success(
-				'PROPOSAL_TEMPLATE.PROPOSAL_DELETE_MESSAGE'
+				this.getTranslation('PROPOSAL_TEMPLATE.PROPOSAL_DELETE_MESSAGE')
 			);
 			this.getProposalTemplates();
 		});
@@ -217,10 +217,12 @@ export class ProposalTemplateComponent
 
 	makeDefault(): void {
 		this.proposalTemplateService
-			.update(this.selectedItem.id, { isDefault: true })
+			.makeDefault(this.selectedItem.id)
 			.then(() => {
 				this.toastrService.success(
-					'PROPOSAL_TEMPLATE.PROPOSAL_MAKE_DEFAULT_MESSAGE'
+					this.getTranslation(
+						'PROPOSAL_TEMPLATE.PROPOSAL_MAKE_DEFAULT_MESSAGE'
+					)
 				);
 				this.getProposalTemplates();
 			});

@@ -9,7 +9,13 @@ import {
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { Store } from '../../../@core/services/store.service';
-import { ProposalStatusEnum, ITag, IOrganization } from '@gauzy/models';
+import {
+	ProposalStatusEnum,
+	ITag,
+	IOrganization,
+	IEmployee,
+	IEmployeeProposalTemplate
+} from '@gauzy/models';
 import { ProposalsService } from '../../../@core/services/proposals.service';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,7 +34,8 @@ export class ProposalRegisterComponent
 	implements OnInit, OnDestroy, AfterViewInit {
 	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
-
+	proposalTemplate: IEmployeeProposalTemplate;
+	proposalTemplateId: string;
 	form: FormGroup;
 	selectedOrganization: IOrganization;
 	tags: ITag[] = [];
@@ -37,6 +44,7 @@ export class ProposalRegisterComponent
 		height: '320'
 	};
 	minDate = new Date(moment().subtract(1, 'days').format('YYYY-MM-DD'));
+	selectedEmployee: IEmployee;
 
 	constructor(
 		private fb: FormBuilder,
@@ -62,6 +70,16 @@ export class ProposalRegisterComponent
 	}
 
 	ngOnDestroy(): void {}
+
+	onEmployeeChange(item: IEmployee): void {
+		this.selectedEmployee = item;
+		this.proposalTemplateId = null;
+	}
+
+	onProposalTemplateChange(item: IEmployeeProposalTemplate): void {
+		console.log(item);
+		this.form.get('proposalContent').setValue(item.content);
+	}
 
 	ngAfterViewInit(): void {
 		this.cdRef.detectChanges();

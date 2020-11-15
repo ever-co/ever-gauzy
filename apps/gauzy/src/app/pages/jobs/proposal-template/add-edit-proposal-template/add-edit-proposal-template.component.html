@@ -16,12 +16,43 @@
 			></nb-icon>
 		</nb-card-header>
 		<nb-card-body class="body">
-			<div class="form-group" *ngIf="!selectedEmployee?.id">
+			<div
+				class="form-group"
+				*ngIf="
+					!selectedEmployee?.id && mode === 'create';
+					else employeeInfoEl
+				"
+			>
 				<ga-employee-multi-select
+					[label]="'PROPOSAL_TEMPLATE.SELECT_EMPLOYEE' | translate"
+					[placeholder]="
+						'PROPOSAL_TEMPLATE.SELECT_EMPLOYEE' | translate
+					"
 					[multiple]="false"
 					formControlName="employeeId"
 				></ga-employee-multi-select>
 			</div>
+			<ng-template #employeeInfoEl>
+				<div class="mb-2">
+					<label>{{
+						'PROPOSAL_TEMPLATE.EMPLOYEE' | translate
+					}}</label>
+					<ngx-avatar
+						*ngIf="mode === 'create'"
+						[name]="
+							selectedEmployee?.firstName +
+							' ' +
+							selectedEmployee?.lastName
+						"
+						[src]="selectedEmployee?.imageUrl"
+					></ngx-avatar>
+					<ngx-avatar
+						*ngIf="mode === 'update'"
+						[name]="proposalTemplate?.employee?.user?.name"
+						[src]="proposalTemplate?.employee?.user?.imageUrl"
+					></ngx-avatar>
+				</div>
+			</ng-template>
 			<div class="form-group">
 				<label class="d-block">{{
 					'PROPOSAL_TEMPLATE.NAME' | translate
