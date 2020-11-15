@@ -122,6 +122,7 @@ import { JobSearchOccupation } from '../employee-job-preset/job-search-occupatio
 import { JobSearchCategory } from '../employee-job-preset/job-search-category/job-search-category.entity';
 import { Report } from '../reports/report.entity';
 import { ReportCategory } from '../reports/report-category.entity';
+import { EmployeeProposalTemplate } from '../employee-proposal-template/employee-proposal-template.entity';
 import { ReportOrganization } from '../reports/report-organization.entity';
 
 const entities = [
@@ -239,6 +240,7 @@ const entities = [
 	JobSearchCategory,
 	Report,
 	ReportCategory,
+	EmployeeProposalTemplate,
 	ReportOrganization
 ];
 
