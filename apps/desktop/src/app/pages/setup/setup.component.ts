@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import { SetupService } from './setup.service';
 import { environment } from '../../../environments/environment';
+import { object } from 'underscore';
 
 @Component({
 	selector: 'ngx-setup',
@@ -14,189 +15,182 @@ export class SetupComponent implements OnInit {
 		private setupService: SetupService,
 		private _cdr: ChangeDetectorRef
 	) {}
-	defaultToggle: Boolean = false;
-	isDefaultValue: Boolean = false;
 	loading: Boolean = false;
-	aw: Boolean = false;
-	loadingAw = false;
-	iconAw = 'close-square-outline';
+	iconAw = './assets/icons/toggle-left.svg';
 	statusIcon = 'success';
 	awCheck = false;
 	awAPI: String = environment.AWHost;
 	buttonSave = false;
-	serverOption: any = [
-		{
-			id: 'local',
-			name: 'Local'
+	desktopFeatures: any = {
+		gauzyPlatform: true,
+		timeTracking: true
+	};
+
+	connectivity: any = {
+		integrated: true,
+		localNetwork: false,
+		live: false
+	};
+
+	thirdParty: any = {
+		activitywatch: true,
+		wakatime: true
+	};
+
+	databaseDriver: any = {
+		sqlite: true,
+		postgre: false
+	};
+
+	serverConfig: any = {
+		integrated: {
+			port: '5620'
 		},
-		{
-			id: 'live',
-			name: 'Live'
-		}
-	];
-
-	databaseOption: any = [
-		{
-			id: 'sqlite',
-			name: 'SQLITE'
+		localNetwork: {
+			apiHost: '',
+			port: ''
 		},
-		{
-			id: 'postgres',
-			name: 'postgreSQL'
+		live: {
+			url: 'https://api.gauzy.co'
 		}
-	];
-
-	defaultPlaceholder: any = {
-		dbHost: 'DB Host',
-		dbPort: 'DB Port',
-		dbName: 'DB Name',
-		dbUser: 'DB User',
-		dbPassword: 'DB Password',
-		serverPort: 'Server Port',
-		serverUrl: 'Server Url'
 	};
 
-	tempPlaceholder: any = {};
-
-	defaultValue: any = {
-		dbHost: 'localhost',
-		dbPort: '5432',
-		dbName: 'postgres',
-		dbUser: 'postgres',
-		dbPassword: 'postgres',
-		serverPort: environment.API_DEFAULT_PORT,
-		serverUrl: 'http://localhost:3000'
-	};
-
-	isLocalServer: Boolean = false;
-	isLiveServer: Boolean = false;
-	isPostgres: Boolean = false;
-	setup: any = {
-		dbUser: '',
-		dbPassword: ''
-	};
-	selectedServer: any;
-	selectedDatabase: any;
-
-	onServerChange(event) {
-		this.defaultToggle = true;
-		switch (event) {
-			case 'local':
-				{
-					this.isLocalServer = true;
-					this.isLiveServer = false;
-				}
-				break;
-			case 'live':
-				{
-					this.isLocalServer = false;
-					this.isLiveServer = true;
-				}
-				break;
-			default:
-				this.isLocalServer = false;
+	databaseConfig: any = {
+		postgre: {
+			host: '',
+			port: '',
+			dbName: '',
+			dbUser: '',
+			dbPassword: ''
 		}
-		this.validation(this.setup);
+	};
+
+	connectivityChange(event, key) {
+		Object.keys(this.connectivity).forEach((itemKey) => {
+			if (itemKey === key) {
+				this.connectivity[key] = true;
+			} else this.connectivity[itemKey] = false;
+		});
 	}
 
-	onDatabaseChange(event) {
-		switch (event) {
-			case 'postgres':
-				this.isPostgres = true;
-				break;
-			case 'sqlite':
-				this.isPostgres = false;
-				break;
-			default:
-				this.isPostgres = false;
-		}
-		this.validation(this.setup);
+	databaseDriverChange(event, key) {
+		Object.keys(this.databaseDriver).forEach((itemKey) => {
+			if (itemKey === key) this.databaseDriver[key] = true;
+			else this.databaseDriver[itemKey] = false;
+		});
+		this.validation();
 	}
 
-	saveConfiguration() {
-		this.loading = true;
-		let data: any = {
-			isLocalServer: this.isLocalServer,
-			port: this.isLocalServer
-				? this.setup.serverPort || this.defaultValue.serverPort
-				: null,
-			db: this.selectedDatabase,
-			serverUrl: this.isLiveServer
-				? this.setup.serverUrl || this.defaultValue.serverUrl
-				: null,
-			aw: this.aw,
-			awAPI: this.awAPI
-		};
-		if (this.selectedDatabase && this.isLocalServer) {
-			data = {
-				...data,
-				dbHost: this.setup.dbHost || this.defaultValue.dbHost,
-				dbPort: this.setup.dbPort || this.defaultValue.dbPort,
-				dbName: this.setup.dbName || this.defaultValue.dbName,
-				dbUsername: this.setup.dbUSer || this.defaultValue.dbUser,
-				dbPassword:
-					this.setup.dbPassword || this.defaultValue.dbPassword
+	getThirdPartyConfig() {
+		if (
+			this.desktopFeatures.timeTracking &&
+			this.thirdParty.activitywatch
+		) {
+			return {
+				aw: this.thirdParty.activitywatch,
+				awHost: environment.AWHost
 			};
 		}
 
-		this.electronService.ipcRenderer.send('start_server', data);
+		if (this.desktopFeatures.timeTracking && this.thirdParty.wakatime) {
+			return {
+				wakatime: this.thirdParty.wakatime
+			};
+		}
+
+		return {};
+	}
+
+	getServerConfig() {
+		if (this.connectivity.integrated) {
+			return {
+				...this.serverConfig.integrated,
+				isLocalServer: true
+			};
+		}
+
+		if (this.connectivity.localNetwork) {
+			const url =
+				this.serverConfig.localNetwork.apiHost.indexOf('http') === 0
+					? ''
+					: 'http://';
+			return {
+				serverUrl:
+					url +
+					this.serverConfig.localNetwork.apiHost +
+					':' +
+					this.serverConfig.localNetwork.port,
+				isLocalServer: false
+			};
+		}
+
+		if (this.connectivity.live) {
+			return {
+				serverUrl: this.serverConfig.live.url,
+				isLocalServer: false
+			};
+		}
+	}
+
+	getDataBaseConfig() {
+		if (this.databaseDriver.postgre) {
+			return {
+				dbHost: this.databaseConfig.postgre.host,
+				dbPort: this.databaseConfig.postgre.dbPort,
+				dbName: this.databaseConfig.postgre.dbName,
+				dbUsername: this.databaseConfig.postgre.dbUser,
+				dbPassword: this.databaseConfig.postgre.dbPassword,
+				db: 'postgres'
+			};
+		}
+
+		if (this.databaseDriver.sqlite) {
+			return {
+				db: 'sqlite'
+			};
+		}
+
+		return {};
+	}
+
+	getFeature() {
+		return {
+			gauzyWindow: this.desktopFeatures.gauzyPlatform,
+			timeTrackerWindow: this.desktopFeatures.timeTracking
+		};
+	}
+
+	saveChange() {
+		const gauzyConfig = {
+			...this.getServerConfig(),
+			...this.getDataBaseConfig(),
+			...this.getThirdPartyConfig(),
+			...this.getFeature()
+		};
+
+		console.log('config', gauzyConfig);
+		this.electronService.ipcRenderer.send('start_server', gauzyConfig);
 		this.electronService.ipcRenderer.send('app_is_init');
 	}
 
-	inputFocus(event) {
-		const field = event.target.id;
-		this.tempPlaceholder[field] = this.defaultPlaceholder[field];
-		this.defaultPlaceholder[field] = this.defaultValue[field];
-	}
-
-	inOutFocus(event) {
-		const field = event.target.id;
-		this.defaultPlaceholder[field] = this.tempPlaceholder[field];
-	}
-
-	onSwitch() {
-		this.isDefaultValue = !this.isDefaultValue;
-		if (this.isDefaultValue) {
-			this.setup = {
-				...this.defaultValue
-			};
-		} else {
-			this.setup = {};
-		}
-
-		this.validation(this.setup);
-	}
-
-	setAW() {
-		this.aw = !this.aw;
-		if (this.aw) this.pingAw();
-		else {
-			this.awCheck = false;
-			this._cdr.detectChanges();
-		}
-	}
-
 	pingAw() {
-		this.loadingAw = true;
 		this.awCheck = false;
 		this.setupService
 			.pingAw(`${this.awAPI}/api`)
 			.then((res) => {
-				this.iconAw = 'checkmark-square-outline';
+				this.iconAw = './assets/icons/toggle-right.svg';
 				this.awCheck = true;
 				this.statusIcon = 'success';
 				this._cdr.detectChanges();
 			})
 			.catch((e) => {
 				if (e.status === 200) {
-					this.iconAw = 'checkmark-square-outline';
+					this.iconAw = './assets/icons/toggle-right.svg';
 					this.awCheck = true;
 					this.statusIcon = 'success';
 					this._cdr.detectChanges();
-					this.loadingAw = false;
 				} else {
-					this.loadingAw = false;
-					this.iconAw = 'close-square-outline';
+					this.iconAw = './assets/icons/toggle-left.svg';
 					this.awCheck = true;
 					this.statusIcon = 'danger';
 					this._cdr.detectChanges();
@@ -204,44 +198,52 @@ export class SetupComponent implements OnInit {
 			});
 	}
 
-	onInputChange(e, field) {
-		this.setup[field] = e;
-		this.validation(this.setup);
+	validation() {
+		const { integrated, localNetwork, live } = this.connectivity;
+		const { port } = this.serverConfig.integrated;
+		const { apiHost } = this.serverConfig.localNetwork;
+		const {
+			host,
+			dbPort,
+			dbName,
+			dbUser,
+			dbPassword
+		} = this.databaseConfig.postgre;
+
+		const { postgre, sqlite } = this.databaseDriver;
+
+		switch (true) {
+			case integrated &&
+				port &&
+				dbPort &&
+				host &&
+				dbName &&
+				dbUser &&
+				dbPassword &&
+				postgre:
+				this.buttonSave = true;
+				break;
+			case integrated && port && sqlite:
+				this.buttonSave = true;
+				break;
+			case localNetwork &&
+				apiHost &&
+				this.serverConfig.localNetwork.port > 0:
+				this.buttonSave = true;
+				break;
+			case live:
+				this.buttonSave = true;
+				break;
+			default:
+				this.buttonSave = false;
+				break;
+		}
 	}
 
-	validation(option) {
-		if (this.isLiveServer) {
-			if (option.serverUrl) {
-				this.buttonSave = true;
-			} else {
-				this.buttonSave = false;
-			}
-		} else {
-			if (this.selectedDatabase) {
-				if (this.selectedDatabase === 'sqlite') {
-					if (option.serverPort) {
-						this.buttonSave = true;
-					} else {
-						this.buttonSave = false;
-					}
-				} else {
-					if (
-						option.dbHost &&
-						option.dbPort &&
-						option.dbName &&
-						option.dbUser &&
-						option.dbPassword &&
-						option.serverPort
-					) {
-						this.buttonSave = true;
-					} else {
-						this.buttonSave = false;
-					}
-				}
-			} else {
-				this.buttonSave = false;
-			}
-		}
+	openLink(link) {
+		this.electronService.ipcRenderer.send('open_browser', {
+			url: link
+		});
 	}
 
 	ngOnInit(): void {}

@@ -6,10 +6,14 @@ import { LocalStore } from './getSetStore';
 import { ipcMain } from 'electron';
 import { TimerData } from '../local-data/timer';
 import { createSettingsWindow } from '../window/settings';
+import { loginPage, timeTrackerPage } from '../window/timeTracker';
+import { getApiBaseUrl } from '../window/gauzy';
 export default class TrayIcon {
 	tray: Tray;
 	constructor(setupWindow, knex, timeTrackerWindow, auth, settingsWindow) {
 		const timerHandler = new TimerHandler();
+		let loginPageAlreadyShow = false;
+		const appConfig = LocalStore.getStore('configs');
 		const store = new Store();
 		const iconPath = path.join(
 			__dirname,
@@ -23,13 +27,6 @@ export default class TrayIcon {
 		this.tray = new Tray(iconNativePath);
 		let contextMenu: any = [
 			{
-				id: '0',
-				label: 'Exit',
-				click() {
-					app.quit();
-				}
-			},
-			{
 				id: '4',
 				label: 'Setting',
 				click() {
@@ -45,18 +42,18 @@ export default class TrayIcon {
 							config: config
 						});
 					}, 500);
+				}
+			},
+			{
+				id: '0',
+				label: 'Exit',
+				click() {
+					app.quit();
 				}
 			}
 		];
 		const unAuthMenu = [
 			{
-				id: '0',
-				label: 'Exit',
-				click() {
-					app.quit();
-				}
-			},
-			{
 				id: '4',
 				label: 'Setting',
 				click() {
@@ -72,6 +69,13 @@ export default class TrayIcon {
 							config: config
 						});
 					}, 500);
+				}
+			},
+			{
+				id: '0',
+				label: 'Exit',
+				click() {
+					app.quit();
 				}
 			}
 		];
@@ -90,6 +94,7 @@ export default class TrayIcon {
 			{
 				id: '1',
 				label: 'Start Tracking Time',
+				visible: appConfig.timeTrackerWindow,
 				click(menuItem) {
 					const projectSelect = store.get('project');
 					if (projectSelect && projectSelect.projectId) {
@@ -124,6 +129,7 @@ export default class TrayIcon {
 				id: '2',
 				label: 'Stop Tracking Time',
 				enabled: false,
+				visible: appConfig.timeTrackerWindow,
 				click(menuItem) {
 					// timeTrackerWindow.show();
 					setTimeout(() => {
@@ -135,6 +141,7 @@ export default class TrayIcon {
 				id: '3',
 				label: 'Open Time Tracker',
 				enabled: true,
+				visible: appConfig.timeTrackerWindow,
 				click(menuItem) {
 					timeTrackerWindow.show();
 					setTimeout(async () => {
@@ -219,12 +226,15 @@ export default class TrayIcon {
 		});
 
 		ipcMain.on('auth_success', (event, arg) => {
+			const appConfig = LocalStore.getStore('configs');
 			//check last auth
 			const lastUser = store.get('auth');
-			timeTrackerWindow.webContents.send(
-				'get_user_detail',
-				LocalStore.beforeRequestParams()
-			);
+			if (appConfig.gauzyWindow) {
+				timeTrackerWindow.webContents.send(
+					'get_user_detail',
+					LocalStore.beforeRequestParams()
+				);
+			}
 			if (lastUser && lastUser.userId !== arg.userId) {
 				store.set({
 					project: null
@@ -237,7 +247,26 @@ export default class TrayIcon {
 				contextMenu = menuAuth;
 				menuWindowTime.enabled = true;
 				menuWindowSetting.enabled = true;
+				menuWindowTime.visible = appConfig.timeTrackerWindow;
 				this.tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
+			}
+
+			if (!appConfig.gauzyWindow) {
+				timeTrackerWindow.loadURL(timeTrackerPage());
+				timeTrackerWindow.show();
+				setTimeout(async () => {
+					const lastTime: any = await TimerData.getLastTimer(
+						knex,
+						LocalStore.beforeRequestParams()
+					);
+					timeTrackerWindow.webContents.send('timer_tracker_show', {
+						...LocalStore.beforeRequestParams(),
+						timeSlotId:
+							lastTime && lastTime.length > 0
+								? lastTime[0].timeSlotId
+								: null
+					});
+				}, 1000);
 			}
 		});
 
@@ -251,7 +280,26 @@ export default class TrayIcon {
 					timeTrackerWindow.webContents.send('stop_from_tray');
 				}, 1000);
 			}
-			timeTrackerWindow.hide();
+			if (LocalStore.getStore('configs').gauzyWindow) {
+				timeTrackerWindow.hide();
+			} else {
+				if (!loginPageAlreadyShow) {
+					global.variableGlobal = {
+						API_BASE_URL: getApiBaseUrl(
+							LocalStore.getStore('configs')
+						)
+					};
+					timeTrackerWindow.loadURL(loginPage());
+					timeTrackerWindow.webContents.once(
+						'did-finish-load',
+						() => {
+							timeTrackerWindow.webContents.send('hide_register');
+						}
+					);
+					timeTrackerWindow.show();
+					loginPageAlreadyShow = true;
+				}
+			}
 			if (settingsWindow) settingsWindow.hide();
 		});
 

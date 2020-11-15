@@ -11,7 +11,9 @@ import {
 	NbButtonModule,
 	NbSpinnerModule,
 	NbCheckboxModule,
-	NbIconModule
+	NbIconModule,
+	NbStepperModule,
+	NbRadioModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
@@ -29,7 +31,10 @@ import { NbEvaIconsModule } from '@nebular/eva-icons';
 		NbSpinnerModule,
 		NbCheckboxModule,
 		NbIconModule,
-		NbEvaIconsModule
+		NbEvaIconsModule,
+		NbStepperModule,
+		NbIconModule,
+		NbRadioModule
 	],
 	exports: [SetupComponent],
 	providers: [SetupService]

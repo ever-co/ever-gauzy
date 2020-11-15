@@ -19,3 +19,144 @@
   bottom: 10px;
   right: -500px;
 }
+
+.content-body {
+  margin-top: 40px;
+}
+
+.margin-content {
+  margin-top: 40px !important;
+}
+
+.margin-icon {
+  margin-top: 35px;
+  height: 56px;
+}
+
+.button-home {
+  font-size: 16px;
+  font-weight: bold;
+  height: 56px;
+  width: 130px;
+}
+
+.top-bottom-space {
+  padding: 1px !important;
+}
+
+::ng-deep
+  .nb-theme-default
+  nb-layout
+  .layout
+  .layout-container
+  .content.center {
+  width: 960px;
+  flex: 0 100 960px !important;
+}
+
+.col-center {
+  margin: auto;
+}
+
+::ng-deep .nb-theme-default nb-stepper .step-content {
+  padding: 0px !important;
+}
+
+.card-full-height {
+  min-height: 680px;
+}
+
+::ng-deep body {
+  overflow: hidden !important;
+}
+
+.card-item {
+  border-radius: 15px;
+  text-align: left;
+  box-shadow: 0px 7px 10px #00000029;
+}
+
+.icon-item {
+  font-size: 40px;
+  color: #3366ff;
+}
+
+.card-item-content {
+  padding: 40px 33px 40px 40px;
+}
+
+.card-item-icon {
+  background: #f2f6ff 0 0 no-repeat padding-box;
+  text-align: center;
+  padding-top: 40px;
+  border-radius: 0 15px 15px 0;
+  position: relative;
+  left: -15px;
+}
+
+.card-item ::ng-deep nb-card-body {
+  padding: 0;
+}
+
+.card-item-label {
+  font-size: 18px;
+  font-weight: bolder;
+}
+
+.btn-fixed {
+  position: fixed;
+}
+
+.pull-right {
+  right: 60px;
+}
+
+.button-next-prev {
+  position: fixed;
+  bottom: 24px;
+}
+
+.icon-medium {
+  font-size: 24px;
+}
+
+.card-small-item {
+  border-radius: 15px;
+  text-align: left;
+  box-shadow: 0px 7px 10px #00000029;
+}
+
+.icon-connectivity {
+  height: 55px;
+  position: relative;
+  top: 10px;
+}
+
+.integraion-label {
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.margin-form {
+  padding: 5px;
+}
+
+.btn-next {
+  font-size: 16px;
+  font-weight: bold;
+  height: 56px;
+  width: 180px;
+}
+
+.margin-setting-content {
+  margin-top: 10px !important;
+}
+
+.note {
+  font-size: 10px;
+  line-height: 0px;
+}
+
+::ng-deep .nb-theme-default nb-stepper .header {
+  pointer-events: none !important;
+}
