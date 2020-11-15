@@ -20,7 +20,8 @@ import { Store } from '../../../../@core/services/store.service';
 	templateUrl: './payment-mutation.component.html',
 	styleUrls: ['./payment-mutation.component.scss']
 })
-export class PaymentMutationComponent extends TranslationBaseComponent
+export class PaymentMutationComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	constructor(
 		readonly translateService: TranslateService,
@@ -62,57 +63,48 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 	}
 
 	initializeForm() {
+		this.form = this.fb.group({
+			amount: [
+				'',
+				Validators.compose([Validators.required, Validators.min(1)])
+			],
+			currency: ['', Validators.required],
+			paymentDate: [new Date(), Validators.required],
+			note: ['', Validators.required],
+			paymentMethod: ['', Validators.required],
+			invoiceId: [],
+			contact: [],
+			project: []
+		});
 		if (this.payment) {
-			this.form = this.fb.group({
-				amount: [
-					this.payment.amount,
-					Validators.compose([Validators.required, Validators.min(1)])
-				],
-				currency: [this.payment.currency, Validators.required],
-				paymentDate: [
-					new Date(this.payment.paymentDate),
-					Validators.required
-				],
-				note: [this.payment.note, Validators.required],
-				paymentMethod: [
-					this.payment.paymentMethod,
-					Validators.required
-				],
-				invoice: [this.payment.invoice],
-				contact: [this.payment.contact],
-				project: [this.payment.project]
+			this.form.setValue({
+				amount: this.payment.amount,
+				currency: this.payment.currency,
+				paymentDate: new Date(this.payment.paymentDate),
+				note: this.payment.note,
+				paymentMethod: this.payment.paymentMethod,
+				invoiceId: this.payment.invoice
+					? this.payment.invoice.id
+					: null,
+				contact: this.payment.contact,
+				project: this.payment.project
 			});
-		} else {
-			this.form = this.fb.group({
-				amount: [
-					'',
-					Validators.compose([Validators.required, Validators.min(1)])
-				],
-				currency: ['', Validators.required],
-				paymentDate: [new Date(), Validators.required],
-				note: ['', Validators.required],
-				paymentMethod: ['', Validators.required],
-				invoice: [],
-				contact: [],
-				project: []
-			});
+			this.form.updateValueAndValidity();
 		}
 	}
 
 	async addEditPayment() {
 		const paymentData = this.form.value;
-
+		this.invoice = this.invoices.find(
+			(item) => paymentData.invoiceId === item.id
+		);
 		const payment = {
 			amount: paymentData.amount,
 			paymentDate: paymentData.paymentDate,
 			note: paymentData.note,
 			currency: this.currency.value,
-			invoice: this.invoice ? this.invoice : paymentData.invoice,
-			invoiceId: this.invoice
-				? this.invoice.id
-				: paymentData.invoice
-				? paymentData.invoice.id
-				: null,
+			invoice: this.invoice,
+			invoiceId: paymentData.invoiceId,
 			organization: this.invoice
 				? this.invoice.fromOrganization
 				: this.organization

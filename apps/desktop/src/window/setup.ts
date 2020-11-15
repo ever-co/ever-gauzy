@@ -1,4 +1,4 @@
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, Menu, app } from 'electron';
 import * as path from 'path';
 import * as url from 'url';
 
@@ -14,26 +14,42 @@ export function createSetupWindow(setupWindow, value) {
 	});
 
 	setupWindow.loadURL(launchPath);
-
+	setupWindow.setMenu(
+		Menu.buildFromTemplate([
+			{
+				label: app.getName(),
+				submenu: [{ role: 'quit', label: 'Exit' }]
+			}
+		])
+	);
 	if (value) {
 		setupWindow.hide();
 	}
+
+	setupWindow.on('close', (e) => {
+		// Dereference the window object, usually you would store windows
+		// in an array if your app supports multi windows, this is the time
+		// when you should delete the corresponding element.
+		e.preventDefault();
+		setupWindow.hide(); // gauzyWindow = null;
+	});
 	return setupWindow;
 }
 
 const windowSetting = () => {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 		frame: true,
-		resizable: true,
+		resizable: false,
 		focusable: true,
-		fullscreenable: true,
+		fullscreenable: false,
 		webPreferences: {
 			nodeIntegration: true,
 			webSecurity: false
 		},
-		width: 800,
-		height: 800,
-		title: 'Setup'
+		width: 960,
+		height: 680,
+		title: 'Setup',
+		autoHideMenuBar: true
 	};
 
 	return mainWindowSettings;

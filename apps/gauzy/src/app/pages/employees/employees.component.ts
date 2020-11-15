@@ -7,7 +7,6 @@ import {
 } from '@angular/router';
 import {
 	InvitationTypeEnum,
-	PermissionsEnum,
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	EmployeeViewModel
@@ -31,7 +30,6 @@ import { EmployeeWorkStatusComponent } from './table-components/employee-work-st
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { NgxPermissionsService } from 'ngx-permissions';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -60,16 +58,13 @@ export class EmployeesComponent
 	averageIncome: number;
 	statistics: any;
 	employeeName = 'Employee';
-
 	difference = 0;
 	bonus = 0;
 	totalIncome = 0;
 	totalExpense = 0;
 	bonusForSelectedMonth = 0;
-
 	includeDeleted = false;
 	loading = true;
-	hasEditPermission = false;
 	organizationInvitesAllowed = false;
 	month;
 	year;
@@ -89,25 +84,13 @@ export class EmployeesComponent
 		private toastrService: NbToastrService,
 		private route: ActivatedRoute,
 		private translate: TranslateService,
-		private errorHandler: ErrorHandlingService,
-		private permissionsService: NgxPermissionsService
+		private errorHandler: ErrorHandlingService
 	) {
 		super(translate);
 		this.setView();
 	}
 
 	async ngOnInit() {
-		this.store.userRolePermissions$
-			.pipe(
-				filter((permissions) => permissions.length > 0),
-				untilDestroyed(this)
-			)
-			.subscribe(() => {
-				this.hasEditPermission = this.store.hasPermission(
-					PermissionsEnum.ORG_EMPLOYEES_EDIT
-				);
-			});
-
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
@@ -364,7 +347,7 @@ export class EmployeesComponent
 					: '',
 				imageUrl: emp.user.imageUrl,
 				tags: emp.tags,
-				// TODO: laod real bonus and bonusDate
+				// TODO: load real bonus and bonusDate
 				bonus: this.bonusForSelectedMonth,
 				averageIncome: Math.floor(emp.averageIncome),
 				averageExpenses: Math.floor(emp.averageExpenses),

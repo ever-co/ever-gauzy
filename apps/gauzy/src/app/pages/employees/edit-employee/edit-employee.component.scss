@@ -73,3 +73,7 @@
     padding-left: 30px;
   }
 }
+
+:host > nb-card {
+  min-height: 47.5rem;
+}

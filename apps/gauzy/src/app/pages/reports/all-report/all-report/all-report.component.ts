@@ -2,12 +2,15 @@ import { Component, OnInit } from '@angular/core';
 import {
 	IGetReportCategory,
 	IOrganization,
+	IReport,
 	IReportCategory,
 	ITimeLogFilters,
 	PermissionsEnum
 } from '@gauzy/models';
-import { UntilDestroy } from '@ngneat/until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import * as moment from 'moment';
+import { chain } from 'underscore';
 import { ReportService } from '../report.server';
 
 @UntilDestroy()
@@ -27,29 +30,51 @@ export class AllReportComponent implements OnInit {
 	loading: boolean;
 	reportCategories: IReportCategory[];
 
-	constructor(private reportService: ReportService) {}
+	constructor(private reportService: ReportService, private store: Store) {}
 
 	ngOnInit(): void {
-		this.getReportCategories();
-	}
-
-	updateShowInMenu($event, report): void {
-		this.reportService
-			.updateReport(report.id, { showInMenu: $event })
-			.then(() => {
-				this.reportService.init();
+		this.store.selectedOrganization$
+			.pipe(untilDestroyed(this))
+			.subscribe((organization) => {
+				if (organization) {
+					this.organization = organization;
+					this.getReports();
+				}
 			});
 	}
 
-	getReportCategories() {
+	updateShowInMenu(isEnabled: boolean, report): void {
+		this.reportService
+			.updateReport({
+				reportId: report.id,
+				organizationId: this.organization.id,
+				isEnabled
+			})
+			.then(() => {
+				this.reportService.getReportMenuItems({
+					organizationId: this.organization.id
+				});
+			});
+	}
+
+	getReports() {
 		const request: IGetReportCategory = {
-			relations: ['reports']
+			relations: ['category'],
+			organizationId: this.organization.id
 		};
 		this.loading = true;
 		this.reportService
-			.getReportCategories(request)
+			.getReports(request)
 			.then((resp) => {
-				this.reportCategories = resp.items;
+				this.reportCategories = chain(resp.items)
+					.groupBy('categoryId')
+					.map((reports: IReport[]) => {
+						return {
+							...reports[0].category,
+							reports
+						};
+					})
+					.value();
 			})
 			.finally(() => {
 				this.loading = false;

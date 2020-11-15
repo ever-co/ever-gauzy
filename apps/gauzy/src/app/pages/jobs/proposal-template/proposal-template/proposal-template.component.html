@@ -1,0 +1,68 @@
+<nb-card class="jobs-page">
+	<nb-card-header class="header">
+		<h4>{{ 'PROPOSAL_TEMPLATE.PROPOSAL_TEMPLATE' | translate }}</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="mb-3">
+			<button
+				nbButton
+				status="success"
+				(click)="createProposal()"
+				class="mr-2"
+			>
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+				>{{ 'BUTTONS.ADD' | translate }}
+			</button>
+			<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+		</div>
+
+		<ng2-smart-table
+			[settings]="settingsSmartTable"
+			[source]="smartTableSource"
+			(userRowSelect)="selectItem($event)"
+			#proposalTemplateTable
+		></ng2-smart-table>
+	</nb-card-body>
+</nb-card>
+
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<button
+		nbButton
+		status="info"
+		(click)="editProposal()"
+		[disabled]="!selectedItem && disableButton"
+		class="mr-2"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+		{{ 'BUTTONS.EDIT' | translate }}
+	</button>
+	<button
+		nbButton
+		status="danger"
+		ngxConfirmDialog
+		[message]="'PROPOSAL_TEMPLATE.CONFIRM_DELETE'"
+		(confirm)="deleteProposal()"
+		[disabled]="!selectedItem && disableButton"
+		class="mr-2"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+		{{ 'BUTTONS.DELETE' | translate }}
+	</button>
+	<button
+		nbButton
+		status="info"
+		(click)="makeDefault()"
+		[disabled]="!selectedItem && disableButton && !selectedItem?.isDefault"
+		class="mr-2"
+		[size]="buttonSize || 'medium'"
+	>
+		<!-- <nb-icon class="mr-1" icon="edit-outline"></nb-icon> -->
+		{{ 'BUTTONS.MAKE_DEFAULT' | translate }}
+	</button>
+</ng-template>

@@ -16,8 +16,8 @@ export function createTimeTrackerWindow(timeTrackerWindow) {
 
 	timeTrackerWindow.loadURL(launchPath);
 	timeTrackerWindow.setMenu(null);
-	timeTrackerWindow.hide();
 
+	timeTrackerWindow.hide();
 	return timeTrackerWindow;
 }
 
@@ -29,7 +29,9 @@ const windowSetting = () => {
 		fullscreenable: false,
 		webPreferences: {
 			nodeIntegration: true,
-			webSecurity: false
+			webSecurity: false,
+			enableRemoteModule: true,
+			preload: path.join(__dirname, '../preload/loginPage.js')
 		},
 		width: 400,
 		height: 900,
@@ -38,3 +40,21 @@ const windowSetting = () => {
 
 	return mainWindowSettings;
 };
+
+export function loginPage() {
+	return url.format({
+		pathname: path.join(__dirname, '../index.html'),
+		protocol: 'file:',
+		slashes: true,
+		hash: '/login'
+	});
+}
+
+export function timeTrackerPage() {
+	return url.format({
+		pathname: path.join(__dirname, '../ui/index.html'),
+		protocol: 'file:',
+		slashes: true,
+		hash: '/time-tracker'
+	});
+}

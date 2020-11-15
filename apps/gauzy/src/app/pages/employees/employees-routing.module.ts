@@ -12,16 +12,34 @@ import { InviteGuard } from '../../@core/role/invite.guard';
 import { EditEmployeeHiringComponent } from './edit-employee/edit-employee-profile/edit-employee-hiring/edit-employee-hiring.component';
 import { EditEmployeeLocationComponent } from './edit-employee/edit-employee-profile/edit-employee-location/edit-employee-location.component';
 import { EditEmployeeEmploymentComponent } from './edit-employee/edit-employee-profile/edit-employee-employment/edit-employee-employment.component';
+import { NgxPermissionsGuard } from 'ngx-permissions';
+
+export function redirectTo() {
+	return '/pages/dashboard';
+}
 
 const routes: Routes = [
 	{
 		path: '',
-		component: EmployeesComponent
+		component: EmployeesComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: {
+			permissions: {
+				only: [PermissionsEnum.ORG_EMPLOYEES_VIEW],
+				redirectTo
+			}
+		}
 	},
-
 	{
 		path: 'edit/:id',
 		component: EditEmployeeComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: {
+			permissions: {
+				only: [PermissionsEnum.ORG_EMPLOYEES_EDIT],
+				redirectTo
+			}
+		},
 		children: [
 			{
 				path: '',

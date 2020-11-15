@@ -2,10 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import {
+	GetReportMenuItemsInput,
 	IGetReport,
 	IGetReportCategory,
 	IPagination,
-	IReport
+	IReport,
+	UpdateReportMenuInput
 } from '@gauzy/models';
 import { toParams } from '@gauzy/utils';
 import { Query, Store, StoreConfig } from '@datorama/akita';
@@ -48,14 +50,17 @@ export class ReportService {
 		protected reportQuery: TimesheetFilterQuery
 	) {}
 
-	init() {
-		return this.getReports({
-			where: {
-				showInMenu: true
-			}
-		}).then((resp) => {
-			this.menuItems = resp.items;
-		});
+	getReportMenuItems(request: GetReportMenuItemsInput = {}) {
+		return this.http
+			.get<IReport[]>(`/api/report/menu-items`, {
+				params: request ? toParams(request) : {}
+			})
+			.pipe(first())
+			.toPromise()
+			.then((resp) => {
+				this.menuItems = resp;
+				return resp;
+			});
 	}
 
 	getReports(request?: IGetReport) {
@@ -67,9 +72,9 @@ export class ReportService {
 			.toPromise();
 	}
 
-	updateReport(id: string, request?: Partial<IReport>) {
+	updateReport(request?: UpdateReportMenuInput) {
 		return this.http
-			.put<IPagination<IReport>>(`/api/report/${id}`, request)
+			.post<IPagination<IReport>>(`/api/report/menu-item`, request)
 			.pipe(first())
 			.toPromise();
 	}

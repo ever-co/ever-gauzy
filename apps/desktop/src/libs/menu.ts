@@ -21,6 +21,9 @@ export default class AppMenu {
 						id: 'window-time-track',
 						label: 'Time Tracker',
 						enabled: false,
+						visible:
+							LocalStore.getStore('configs') &&
+							LocalStore.getStore('configs').timeTrackerWindow,
 						click() {
 							timeTrackerWindow.show();
 							setTimeout(async () => {
