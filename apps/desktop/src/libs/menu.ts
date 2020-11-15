@@ -6,7 +6,7 @@ export default class AppMenu {
 	constructor(timeTrackerWindow, settingsWindow, knex) {
 		const menu = Menu.buildFromTemplate([
 			{
-				label: app.getName(),
+				label: 'Gauzy',
 				submenu: [
 					{ role: 'about', label: 'About' },
 					{ type: 'separator' },

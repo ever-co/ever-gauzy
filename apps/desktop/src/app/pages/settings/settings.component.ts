@@ -48,7 +48,7 @@ export class SettingsComponent implements OnInit {
 			const { setting, config } = arg;
 			this.appSetting = setting;
 			this.config = config;
-			this.config.awPort = this.config.awAPI.split('t:')[1];
+			this.config.awPort = this.config.awHost.split('t:')[1];
 			this.config.serverType = this.config.isLocalServer
 				? 'Internal'
 				: 'External';
@@ -115,7 +115,7 @@ export class SettingsComponent implements OnInit {
 		this.electronService.ipcRenderer.send('restart_app', {
 			port: this.config.port,
 			dbPort: this.config.dbPort,
-			awAPI: `http://localhost:${this.config.awPort}`
+			awHost: `http://localhost:${this.config.awPort}`
 		});
 	}
 
