@@ -331,9 +331,20 @@
 									nbStepperNext
 									class="btn-next"
 									status="primary"
-									(click)="pingAw()"
+									(click)="
+										desktopFeatures.timeTracking
+											? pingAw()
+											: connectivity.live
+											? saveChange()
+											: validation()
+									"
 								>
-									CONTINUE<nb-icon
+									{{
+										connectivity.live &&
+										!desktopFeatures.timeTracking
+											? 'Save'
+											: 'Continue'
+									}}<nb-icon
 										icon="arrow-forward-outline"
 										class="icon-medium"
 									></nb-icon>
@@ -521,9 +532,14 @@
 									nbStepperNext
 									class="btn-next"
 									status="primary"
-									(click)="validation()"
+									(click)="
+										connectivity.live
+											? saveChange()
+											: validation()
+									"
 								>
-									CONTINUE<nb-icon
+									{{ connectivity.live ? 'Save' : 'CONTINUE'
+									}}<nb-icon
 										icon="arrow-forward-outline"
 										class="icon-medium"
 									></nb-icon>
@@ -531,7 +547,7 @@
 							</div>
 						</div>
 					</nb-step>
-					<nb-step [label]="labelFour">
+					<nb-step [label]="labelFour" *ngIf="!connectivity.live">
 						<ng-template #labelFour>SETTING</ng-template>
 						<div class="row content-body">
 							<div class="col-12 text-center margin-content">

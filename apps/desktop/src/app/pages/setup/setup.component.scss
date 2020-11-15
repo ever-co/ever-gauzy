@@ -156,3 +156,7 @@
   font-size: 10px;
   line-height: 0px;
 }
+
+::ng-deep .nb-theme-default nb-stepper .header {
+  pointer-events: none !important;
+}

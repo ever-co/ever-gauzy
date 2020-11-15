@@ -3,6 +3,7 @@ import { screen, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
 import * as url from 'url';
 import { environment } from '../environments/environment';
+import { LocalStore } from '../libs/getSetStore';
 export function createGauzyWindow(gauzyWindow, serve) {
 	log.info('createGauzyWindow started');
 
@@ -27,6 +28,11 @@ export function createGauzyWindow(gauzyWindow, serve) {
 		});
 
 		gauzyWindow.loadURL(launchPath);
+	}
+
+	const appConfig = LocalStore.getStore('configs');
+	if (!appConfig.gauzyWindow) {
+		gauzyWindow.hide();
 	}
 
 	// console.log('launched electron with:', launchPath);
@@ -75,4 +81,13 @@ function initMainListener() {
 			event.sender.send('ELECTRON_BRIDGE_CLIENT', 'pong');
 		}
 	});
+}
+
+export function getApiBaseUrl(configs) {
+	if (configs.serverUrl) return configs.serverUrl;
+	else {
+		return configs.port
+			? `http://localhost:${configs.port}`
+			: `http://localhost:${environment.API_DEFAULT_PORT}`;
+	}
 }

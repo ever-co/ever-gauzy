@@ -327,11 +327,21 @@ ipcMain.on('open_browser', (event, arg) => {
 });
 app.on('activate', () => {
 	if (gauzyWindow) {
-		gauzyWindow.show();
-	} else if (!onWaitingServer && LocalStore.getStore('configs').isSetup) {
+		if (LocalStore.getStore('configs').gauzyWindow) {
+			gauzyWindow.show();
+		}
+	} else if (
+		!onWaitingServer &&
+		LocalStore.getStore('configs') &&
+		LocalStore.getStore('configs').isSetup
+	) {
 		// On macOS it's common to re-create a window in the app when the
 		// dock icon is clicked and there are no other windows open.
 		createGauzyWindow(gauzyWindow, serve);
+	} else {
+		if (setupWindow) {
+			setupWindow.show();
+		}
 	}
 });
 
