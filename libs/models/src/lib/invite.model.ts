@@ -87,3 +87,16 @@ export enum InvitationTypeEnum {
 	EMPLOYEE = 'EMPLOYEE',
 	CANDIDATE = 'CANDIDATE'
 }
+export interface IInviteViewModel {
+	email: string;
+	expireDate: string;
+	imageUrl: string;
+	fullName: string;
+	roleName?: string;
+	status: string;
+	projectNames: string[];
+	clientNames: string[];
+	departmentNames: string[];
+	id: string;
+	inviteUrl: string;
+}
