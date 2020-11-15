@@ -72,7 +72,10 @@
 		"CANDIDATE_STATISTIC": "Статистика",
 		"FILTER": "Фильтр",
 		"REFRESH": "Обновить",
-		"AUTO_REFRESH": "Автообновление"
+		"AUTO_REFRESH": "Автообновление",
+		"PROPOSAL_DELETE_MESSAGE": "Шаблон предложения успешно удален",
+		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Шаблон предложения успешно сделан по умолчанию",
+		"MAKE_DEFAULT": "Сделать по умолчанию"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -572,6 +575,7 @@
 		"ESTIMATES": "Оценки",
 		"MY_TASKS": "Мои задачи",
 		"JOBS": "Задания",
+		"PROPOSAL_TEMPLATE": "Шаблон предложения",
 		"JOBS_SEARCH": "Обзор",
 		"JOBS_MATCHING": "Соответствие",
 		"TEAM_TASKS": "Задачи команды",
@@ -1672,6 +1676,17 @@
 		"CRITERIONS": "Критерии",
 		"DELETE_CRITERION_MESSAGE": "Вы уверены, что хотите удалить критерий",
 		"SAVE_PRESET_MESSAGE": "Критерии будут сохранены для пресета задания. Вы уверены, что хотите сохранить?"
+	},
+	"PROPOSAL_TEMPLATE": {
+		"PROPOSAL_TEMPLATE": "Шаблон предложения",
+		"EDIT_PROPOSAL_TEMPLATE": "Редактировать шаблон предложения",
+		"ADD_PROPOSAL_TEMPLATE": "Добавить шаблон предложения",
+		"NAME": "Имя",
+		"CONTENT": "Содержание",
+		"EMPLOYEE": "Сотрудник",
+		"DESCRIPTION": "Описание",
+		"IS_DEFAULT": "По умолчанию",
+		"CONFIRM_DELETE": "Вы уверены, что хотите удалить"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Спринт добавлен",
