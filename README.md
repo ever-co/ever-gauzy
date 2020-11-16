@@ -67,14 +67,12 @@ Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [
 
 ### Desktop App
 
--   Download Gauzy Desktop App for your OS. Currently you can get latest release on <https://github.com/ever-co/gauzy/releases/tag/v0.1.0>.
--   Setup Gauzy Desktop App and run it
--   Select "Local", "Sqlite" and "Default" (that set port 3000 value for API). Click "Save" and after a couple of seconds (minutes) it will create local Sqlite DB for testing of Gauzy.
+-   Download Gauzy Desktop App for your OS from <https://github.com/ever-co/gauzy/releases/tag/v0.1.0>.
+-   Setup Gauzy Desktop App with default choices in Setup Wizard and run it
 -   Gauzy Desktop App is ready to use. 
 -   You can login with `admin@ever.co` and password `admin` to check Admin functionality. Note: such Admin user is not an employee, so you will not be able to track time.
 -   You can login with `ruslan@ever.co` and password `admin` to check Desktop Timer and other functionality from "Employee" perspective (such user is an Employee).
-
-Note: Desktop App can connect to [ActivityWatch](https://activitywatch.net)[*](https://github.com/ever-co/gauzy/blob/develop/README.md#legal-notice) API to collect more statistics related to running apps and visited Urls. If you need that functionality, you can install [ActivityWatch](https://activitywatch.net)[*](https://github.com/ever-co/gauzy/blob/develop/README.md#legal-notice) and make sure it's running and you selected "ActivityWatch" checkbox in Gauzy Desktop App. 
+-   You can read more information about Desktop App in our [Wiki](https://github.com/ever-co/gauzy/wiki/Gauzy-Desktop-App)
 
 ## Technology Stack and Requirements
 
@@ -214,14 +212,6 @@ This software is available under following licenses:
 
 Gauzy™ is a trademark of Ever Co. LTD.  
 All other brand and product names are trademarks, registered trademarks or service marks of their respective holders.
-
-## Legal Notice
-
-The links to third-party software are being provided as a convenience and for informational purposes only; they do not constitute an endorsement or an approval of any of the products, services or opinions of the corporation or organization or individual. Ever Co. LTD bears no responsibility for the accuracy, legality or content of the external sites or applications or for that of subsequent links. Contact the external site or application vendor for answers to questions regarding its content.
-
-Please see the list of third-party software below:
-
-- [ActivityWatch](https://activitywatch.net)
 
 ## Copyright
 
