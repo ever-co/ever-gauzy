@@ -91,3 +91,7 @@ export const clickButtonWithDelay = (loc) => {
 	cy.wait(5000);
 	cy.get(loc, { timeout: 40000 }).click();
 };
+  
+export const clickButtonByText = (text) => {
+	cy.get(`button:contains("${text}")`).click({ force: true });
+};
