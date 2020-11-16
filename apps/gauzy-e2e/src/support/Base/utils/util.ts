@@ -86,3 +86,7 @@ export const getNotEqualElement = (loc, text) => {
 export const waitElementToHide = (loc) => {
 	cy.get(loc, { timeout: 40000 }).should('not.exist');
 };
+
+export const clickButtonByText = (text) => {
+	cy.get(`button:contains("${text}")`).click({ force: true });
+};
