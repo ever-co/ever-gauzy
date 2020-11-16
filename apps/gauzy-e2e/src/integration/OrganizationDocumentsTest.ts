@@ -3,14 +3,9 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as organizationDocumentsPage from '../support/Base/pages/OrganizationDocuments.po';
 import { OrganizationDocumentsPageData } from '../support/Base/pagedata/OrganizationDocumentsPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
-import * as faker from 'faker';
-
-let documentUrl = ' ';
 
 describe('Organization documents test', () => {
 	before(() => {
-		documentUrl = faker.image.avatar();
-
 		cy.visit('/');
 		loginPage.verifyTitle();
 		loginPage.verifyLoginText();
