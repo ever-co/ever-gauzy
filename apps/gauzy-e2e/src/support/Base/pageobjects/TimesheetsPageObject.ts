@@ -1,10 +1,13 @@
 export const TimesheetsPage = {
 	addTimeButtonCss: 'div.text-left > button[status="primary"]',
-	selectEmloyeeCss: 'button[class="select-button placeholder"]',
+	selectEmloyeeCss:
+		'div.form-group ga-employee-multi-select[name="employeeId"]',
 	selectEmployeeDropdownOptionCss: '.option-list nb-option',
-	dateInputCss: '[placeholder="YYYY-MM-DD"]',
+	dateInputCss: '[name="date"]',
 	projectDropdownCss: '[formcontrolname="projectId"]',
-	projectDropdownOptionCss: 'div.ng-option',
+	dropdownOptionCss: 'div.ng-option',
+	clientDropdownCss: '[formcontrolname="organizationContactId"]',
+	taskDropdownCss: '[formcontrolname="taskId"]',
 	descriptionTextareaCss: 'textarea[name="description"]',
 	saveTimeButtonCss: 'nb-card-footer > button[status="priamry"]',
 	viewEmployeeTimeCss: 'div.action-button > button[status="primary"]',
