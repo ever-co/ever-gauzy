@@ -75,6 +75,7 @@
 		"AUTO_REFRESH": "Автообновление",
 		"PROPOSAL_DELETE_MESSAGE": "Шаблон предложения успешно удален",
 		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Шаблон предложения успешно сделан по умолчанию",
+		"MANAGE_TEMPLATES": "Управление шаблонами",
 		"MAKE_DEFAULT": "Сделать по умолчанию"
 	},
 	"SM_TABLE": {
@@ -1681,6 +1682,8 @@
 		"PROPOSAL_TEMPLATE": "Шаблон предложения",
 		"EDIT_PROPOSAL_TEMPLATE": "Редактировать шаблон предложения",
 		"ADD_PROPOSAL_TEMPLATE": "Добавить шаблон предложения",
+		"SELECT_PROPOSAL_TEMPLATE": "Выберите шаблон предложения",
+		"SELECT_EMPLOYEE": "Выберите сотрудника",
 		"NAME": "Имя",
 		"CONTENT": "Содержание",
 		"EMPLOYEE": "Сотрудник",
