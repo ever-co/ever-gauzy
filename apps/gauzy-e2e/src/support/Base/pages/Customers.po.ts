@@ -202,29 +202,29 @@ export const waitMessageToHide = () => {
 	waitElementToHide(CustomersPage.toastrMessageCss);
 };
 
-export const contactNameInputVisible = () => {
-	verifyElementIsVisible(CustomersPage.contactNameCss);
+export const customerNameInputVisible = () => {
+	verifyElementIsVisible(CustomersPage.customerNameCss);
 };
 
-export const enterContactNameData = (data) => {
-	clearField(CustomersPage.contactNameCss);
-	enterInput(CustomersPage.contactNameCss, data);
+export const enterCustomerNameData = (data) => {
+	clearField(CustomersPage.customerNameCss);
+	enterInput(CustomersPage.customerNameCss, data);
 };
 
-export const contactPhoneInputVisible = () => {
-	verifyElementIsVisible(CustomersPage.contactPhoneCss);
+export const customerPhoneInputVisible = () => {
+	verifyElementIsVisible(CustomersPage.customerPhoneCss);
 };
 
-export const enterContactPhoneData = (data) => {
-	clearField(CustomersPage.contactPhoneCss);
-	enterInput(CustomersPage.contactPhoneCss, data);
+export const enterCustomerPhoneData = (data) => {
+	clearField(CustomersPage.customerPhoneCss);
+	enterInput(CustomersPage.customerPhoneCss, data);
 };
 
-export const contactEmailInputVisible = () => {
-	verifyElementIsVisible(CustomersPage.contactEmailCss);
+export const customerEmailInputVisible = () => {
+	verifyElementIsVisible(CustomersPage.customerEmailCss);
 };
 
-export const enterContactEmailData = (data) => {
-	clearField(CustomersPage.contactEmailCss);
-	enterInput(CustomersPage.contactEmailCss, data);
+export const enterCustomerEmailData = (data) => {
+	clearField(CustomersPage.customerEmailCss);
+	enterInput(CustomersPage.customerEmailCss, data);
 };

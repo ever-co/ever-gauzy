@@ -22,9 +22,9 @@ export const CustomersPage = {
 	saveButtonCss: 'div.form-group > button[status="success"]',
 	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="info"]',
-	contactNameCss: '[formcontrolname="name"]',
-	contactPhoneCss: '[formcontrolname="primaryPhone"]',
-	contactEmailCss: '#emailInput',
+	customerNameCss: '[formcontrolname="name"]',
+	customerPhoneCss: '[formcontrolname="primaryPhone"]',
+	customerEmailCss: '#emailInput',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	saveInviteButtonCss: 'nb-card-footer > button[status="success"]'
 };

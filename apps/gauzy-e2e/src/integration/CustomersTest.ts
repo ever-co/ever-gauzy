@@ -112,12 +112,12 @@ describe('Customers test', () => {
 		customersPage.waitMessageToHide();
 		customersPage.inviteButtonVisible();
 		customersPage.clickInviteButton();
-		customersPage.contactNameInputVisible();
-		customersPage.enterContactNameData(fullName);
-		customersPage.contactPhoneInputVisible();
-		customersPage.enterContactPhoneData(CustomersPageData.defaultPhone);
-		customersPage.contactEmailInputVisible();
-		customersPage.enterContactEmailData(email);
+		customersPage.customerNameInputVisible();
+		customersPage.enterCustomerNameData(fullName);
+		customersPage.customerPhoneInputVisible();
+		customersPage.enterCustomerPhoneData(CustomersPageData.defaultPhone);
+		customersPage.customerEmailInputVisible();
+		customersPage.enterCustomerEmailData(email);
 		customersPage.saveInvitebuttonVisible();
 		customersPage.clickSaveInviteButton();
 	});
