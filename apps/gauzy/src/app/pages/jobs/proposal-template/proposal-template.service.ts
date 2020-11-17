@@ -35,6 +35,16 @@ export class ProposalTemplateService {
 			.toPromise();
 	}
 
+	makeDefault(id) {
+		return this.http
+			.post<IEmployeeProposalTemplate>(
+				`${this.API_URL}/${id}/make-default`,
+				{}
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
 	delete(id: string) {
 		return this.http
 			.delete(`${this.API_URL}/${id}`)

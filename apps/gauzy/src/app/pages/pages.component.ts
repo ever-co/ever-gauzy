@@ -294,7 +294,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					},
 					{
 						title: 'Proposal Template',
-						icon: 'person-outline',
+						icon: 'file-text-outline',
 						link: '/pages/jobs/proposal-template',
 						data: {
 							translationKey: 'MENU.PROPOSAL_TEMPLATE'

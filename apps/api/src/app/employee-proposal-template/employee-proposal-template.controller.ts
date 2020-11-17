@@ -1,5 +1,12 @@
 import { IPagination } from '@gauzy/models';
-import { Controller, Get, HttpStatus, Query } from '@nestjs/common';
+import {
+	Controller,
+	Get,
+	HttpStatus,
+	Param,
+	Post,
+	Query
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FindManyOptions } from 'typeorm';
 import { CrudController } from '../core';
@@ -26,5 +33,19 @@ export class EmployeeProposalTemplateController extends CrudController<
 		@Query() filter?: FindManyOptions<EmployeeProposalTemplate>
 	): Promise<IPagination<EmployeeProposalTemplate>> {
 		return this.employeeProposalTemplateService.findAll(filter);
+	}
+
+	@ApiOperation({ summary: 'Make Default' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Record Updated'
+	})
+	@Post(':id/make-default')
+	async makeDefault(
+		@Param('id') employeeProposalTemplate?: string
+	): Promise<EmployeeProposalTemplate> {
+		return this.employeeProposalTemplateService.makeDefault(
+			employeeProposalTemplate
+		);
 	}
 }

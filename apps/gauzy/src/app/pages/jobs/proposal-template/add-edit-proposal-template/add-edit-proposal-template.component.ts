@@ -1,11 +1,15 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { IEmployeeProposalTemplate } from '@gauzy/models';
+import { IEmployeeProposalTemplate, IOrganization } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
+import { filter } from 'rxjs/operators';
 import { ProposalTemplateService } from '../proposal-template.service';
 
+@UntilDestroy()
 @Component({
 	selector: 'ga-add-edit-proposal-template',
 	templateUrl: './add-edit-proposal-template.component.html',
@@ -17,12 +21,14 @@ export class AddEditProposalTemplateComponent implements OnInit {
 	@Input() selectedEmployee: SelectedEmployee;
 	@Input() proposalTemplate: IEmployeeProposalTemplate = {};
 	form: FormGroup;
+	organization: IOrganization;
 
 	constructor(
 		private dialogRef: NbDialogRef<AddEditProposalTemplateComponent>,
 		private fb: FormBuilder,
 		private proposalTemplateService: ProposalTemplateService,
-		private toastrService: ToastrService
+		private toastrService: ToastrService,
+		private store: Store
 	) {}
 
 	ngOnInit(): void {
@@ -36,6 +42,19 @@ export class AddEditProposalTemplateComponent implements OnInit {
 			name: [this.proposalTemplate.name || ''],
 			content: [this.proposalTemplate.content || '']
 		});
+
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!(organization && organization.id)),
+				untilDestroyed(this)
+			)
+			.subscribe((organization) => {
+				if (organization.id) {
+					this.organization = organization;
+				} else {
+					this.organization = null;
+				}
+			});
 	}
 
 	close() {
@@ -45,7 +64,11 @@ export class AddEditProposalTemplateComponent implements OnInit {
 	onSave(): void {
 		if (this.form.valid) {
 			let resp: Promise<IEmployeeProposalTemplate>;
-			const request = this.form.value;
+			const request = {
+				...this.form.value,
+				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId
+			};
 			if (this.selectedEmployee && this.selectedEmployee.id) {
 				request.employeeId = this.selectedEmployee.id;
 			}
@@ -54,7 +77,10 @@ export class AddEditProposalTemplateComponent implements OnInit {
 			} else {
 				resp = this.proposalTemplateService.update(
 					this.proposalTemplate.id,
-					request
+					{
+						...request,
+						employeeId: this.proposalTemplate.employeeId
+					}
 				);
 			}
 

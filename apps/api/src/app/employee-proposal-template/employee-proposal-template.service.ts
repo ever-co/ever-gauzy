@@ -16,4 +16,24 @@ export class EmployeeProposalTemplateService extends CrudService<
 	) {
 		super(employeeProposalTemplateRepository);
 	}
+
+	async makeDefault(id: string) {
+		const proposalTemplate = await this.employeeProposalTemplateRepository.findOne(
+			id
+		);
+		proposalTemplate.isDefault = true;
+
+		await this.employeeProposalTemplateRepository.update(
+			{
+				employeeId: proposalTemplate.employeeId
+			},
+			{
+				isDefault: false
+			}
+		);
+
+		await this.employeeProposalTemplateRepository.save(proposalTemplate);
+
+		return proposalTemplate;
+	}
 }

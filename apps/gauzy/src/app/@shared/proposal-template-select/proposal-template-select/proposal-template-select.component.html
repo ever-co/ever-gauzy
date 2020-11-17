@@ -1,0 +1,15 @@
+<nb-select
+	class="multiple-select"
+	[disabled]="disabled"
+	[multiple]="multiple"
+	[placeholder]="'PROPOSAL_TEMPLATE.SELECT_PROPOSAL_TEMPLATE' | translate"
+	[(selected)]="proposalTemplateId"
+	(selectedChange)="onSelectedChange($event)"
+>
+	<nb-option
+		*ngFor="let proposalTemplate of proposalTemplates"
+		[value]="proposalTemplate"
+	>
+		{{ proposalTemplate.name }}
+	</nb-option>
+</nb-select>
