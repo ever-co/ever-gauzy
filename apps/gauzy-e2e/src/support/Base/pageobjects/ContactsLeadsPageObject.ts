@@ -28,5 +28,3 @@ export const ContactsLeadsPage = {
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	saveInviteButtonCss: 'nb-card-footer > button[status="success"]'
 };
-
-//div[class="form-group float-right"]
