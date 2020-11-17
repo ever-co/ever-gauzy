@@ -16,19 +16,19 @@ export const createDefaultReport = async (
 	const defaultCategories: ReportCategory[] = [
 		new ReportCategory({
 			name: 'Time Tracking',
-			icon: copyImage('time-tracking.svg')
+			iconClass: 'fa-clock'
 		}),
 		new ReportCategory({
 			name: 'Payments',
-			icon: copyImage('payments.svg')
+			iconClass: 'fa-credit-card'
 		}),
 		new ReportCategory({
 			name: 'Time Off',
-			icon: copyImage('time-off.svg')
+			iconClass: 'fa-stopwatch'
 		}),
 		new ReportCategory({
 			name: 'Invoicing',
-			icon: copyImage('invoicing.svg')
+			iconClass: 'fa-file-invoice-dollar'
 		})
 	];
 
