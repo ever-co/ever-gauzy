@@ -147,23 +147,23 @@ describe('Timesheets test', () => {
 		cy.visit('/#/pages/employees/timesheets/daily');
 		timesheetsPage.addTimeButtonVisible();
 		timesheetsPage.clickAddTimeButton();
-		timesheetsPage.selectEmployeeDropdownVisible();
-		timesheetsPage.clickSelectEmployeeDropdown();
-		timesheetsPage.selectEmployeeFromDropdown(0);
 		timesheetsPage.dateInputVisible();
 		timesheetsPage.enterDateData();
 		timesheetsPage.clickKeyboardButtonByKeyCode(9);
-		timesheetsPage.clientDropdownVisible();
-		timesheetsPage.clickClientDropdown();
-		timesheetsPage.selectClientFromDropdown(0);
 		timesheetsPage.selectProjectDropdownVisible();
 		timesheetsPage.clickSelectProjectDropdown();
 		timesheetsPage.selectProjectFromDropdown(
 			TimesheetsPageData.defaultProjectName
 		);
+		timesheetsPage.clientDropdownVisible();
+		timesheetsPage.clickClientDropdown();
+		timesheetsPage.selectClientFromDropdown(0);
 		timesheetsPage.taskDropdownVisible();
 		timesheetsPage.clickTaskDropdown();
 		timesheetsPage.selectTaskFromDropdown(0);
+		timesheetsPage.selectEmployeeDropdownVisible();
+		timesheetsPage.clickSelectEmployeeDropdown();
+		timesheetsPage.selectEmployeeFromDropdown(0);
 		timesheetsPage.addTimeLogDescriptionVisible();
 		timesheetsPage.enterTimeLogDescriptionData(
 			TimesheetsPageData.defaultDescription
