@@ -75,6 +75,7 @@
 		"AUTO_REFRESH": "Auto Refresh",
 		"PROPOSAL_DELETE_MESSAGE": "Proposal template successfully delete",
 		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Proposal template successfully make as default",
+		"MANAGE_TEMPLATES": "Manage Templates",
 		"MAKE_DEFAULT": "Make Default"
 	},
 	"SM_TABLE": {
@@ -1681,6 +1682,8 @@
 		"PROPOSAL_TEMPLATE": "Proposal Template",
 		"EDIT_PROPOSAL_TEMPLATE": "Edit Proposal Template",
 		"ADD_PROPOSAL_TEMPLATE": "Add Proposal Template",
+		"SELECT_PROPOSAL_TEMPLATE": "Select Proposal Template",
+		"SELECT_EMPLOYEE": "Select employee",
 		"NAME": "Име",
 		"CONTENT": "Content",
 		"EMPLOYEE": "Служител",
