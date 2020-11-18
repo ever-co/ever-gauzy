@@ -6,6 +6,8 @@ import { SettingsComponent } from './settings.component';
 import { EmailHistoryComponent } from './email-history/email-history.component';
 import { EmailTemplatesComponent } from '../email-templates/email-templates.component';
 import { FileStorageComponent } from './file-storage/file-storage.component';
+import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsEnum } from '@gauzy/models';
 
 const routes: Routes = [
 	{
@@ -22,7 +24,14 @@ const routes: Routes = [
 			},
 			{
 				path: 'roles',
-				component: EditRolesPermissionsComponent
+				component: EditRolesPermissionsComponent,
+				canActivate: [NgxPermissionsGuard],
+				data: {
+					permissions: {
+						only: [PermissionsEnum.CHANGE_ROLES_PERMISSIONS],
+						redirectTo: '/pages/dashboard'
+					}
+				}
 			},
 			{
 				path: 'import-export',

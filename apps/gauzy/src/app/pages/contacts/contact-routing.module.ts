@@ -4,6 +4,15 @@ import { ContactComponent } from './contact.component';
 import { ClientsComponent } from './clients/clients.component';
 import { LeadsComponent } from './leads/leads.component';
 import { CustomersComponent } from './customers/customers.component';
+import { PermissionsEnum } from '@gauzy/models';
+import { NgxPermissionsGuard } from 'ngx-permissions';
+
+const CONTACT_VIEW_PERMISSION = {
+	permissions: {
+		only: [PermissionsEnum.ALL_ORG_EDIT],
+		redirectTo: '/pages/contacts/visitors'
+	}
+};
 
 const routes: Routes = [
 	{
@@ -12,15 +21,21 @@ const routes: Routes = [
 	},
 	{
 		path: 'clients',
-		component: ClientsComponent
+		component: ClientsComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: CONTACT_VIEW_PERMISSION
 	},
 	{
 		path: 'customers',
-		component: CustomersComponent
+		component: CustomersComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: CONTACT_VIEW_PERMISSION
 	},
 	{
 		path: 'leads',
-		component: LeadsComponent
+		component: LeadsComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: CONTACT_VIEW_PERMISSION
 	}
 ];
 

@@ -426,7 +426,7 @@
 		}
 	},
 	"POP_UPS": {
-		"SELECT_ORGANZIATION": "Please select organizations from the menu above.",
+		"SELECT_ORGANIZATION": "Please select organizations from the menu above.",
 		"ADD_INCOME": "Add Income",
 		"ADD_EXPENSE": "Add Expense",
 		"EMPLOYEE": "Employee",
@@ -1143,7 +1143,7 @@
 		"EMPLOYEES": "Employees",
 		"POSITIONS": "Positions",
 		"EDIT_PUBLIC_PAGE": "Edit Public Page",
-		"SELECT_ORGANZIATION": "Please select organizations from the menu above.",
+		"SELECT_ORGANIZATION": "Please select organizations from the menu above.",
 		"MAIN": "Main",
 		"DEPARTMENTS": "Departments",
 		"VENDORS": "Vendors",
@@ -1700,6 +1700,7 @@
 		"HEADER": "Manage Users for ",
 		"ADD_USER": "Add User",
 		"ADD_EXISTING_USER": "Add Existing User",
+		"ADD_EXISTING_ORGANIZATION": "Add Existing Organization",
 		"ROLE": {
 			"SUPER_ADMIN": "Super Admin",
 			"ADMIN": "Admin",

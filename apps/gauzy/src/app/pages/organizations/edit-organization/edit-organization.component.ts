@@ -1,8 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { IOrganization, PermissionsEnum } from '@gauzy/models';
-import { Subject } from 'rxjs';
-import { first, takeUntil, switchMap, tap } from 'rxjs/operators';
+import { filter, first, switchMap, tap } from 'rxjs/operators';
 import { EmployeesService } from '../../../@core/services';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
@@ -25,7 +24,6 @@ export class EditOrganizationComponent
 	selectedOrg: IOrganization;
 	selectedOrgFromHeader: IOrganization;
 	employeesCount: number;
-	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
 		private route: ActivatedRoute,
@@ -48,24 +46,25 @@ export class EditOrganizationComponent
 					this.selectedOrg = selectedOrg;
 					this.store.selectedOrganization = this.selectedOrg;
 					this.selectedOrgFromHeader = this.selectedOrg;
-					this.loadEmployeesCount();
 					this.store.selectedEmployee = null;
 				}),
 				switchMap(() => this.store.selectedOrganization$),
 				tap((selectedOrg) => {
 					this.selectedOrgFromHeader = selectedOrg;
 					this.selectedOrg = selectedOrg;
-					this.organizationEditStore.selectedOrganization = selectedOrg;
 				}),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe();
-
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((organization) => {
 				if (organization) {
 					this.selectedOrg = organization;
+					this.organizationEditStore.selectedOrganization = this.selectedOrg;
 					this.loadEmployeesCount();
 				}
 			});
@@ -83,22 +82,17 @@ export class EditOrganizationComponent
 		);
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 
 	private async loadEmployeesCount() {
+		const { tenantId } = this.store.user;
 		const { total } = await this.employeesService
 			.getAll([], {
-				organization: {
-					id: this.selectedOrg.id,
-					tenantId: this.selectedOrg.tenantId
-				}
+				organizationId: this.selectedOrg.id,
+				tenantId
 			})
 			.pipe(first())
 			.toPromise();
-
 		this.employeesCount = total;
 	}
 }

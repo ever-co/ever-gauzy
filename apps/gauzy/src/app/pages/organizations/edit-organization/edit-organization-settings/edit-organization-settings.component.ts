@@ -1,18 +1,11 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
-import { ICountry, IOrganization } from '@gauzy/models';
+import { IOrganization } from '@gauzy/models';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 import { CountryService } from '../../../../@core/services/country.service';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
-
-export enum ListsInputType {
-	DEPARTMENTS = 'DEPARTMENTS',
-	POSITIONS = 'POSITIONS',
-	VENDORS = 'VENDORS'
-}
-
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-edit-organization-settings',
 	templateUrl: './edit-organization-settings.component.html',
@@ -22,18 +15,11 @@ export enum ListsInputType {
 	],
 	providers: [CountryService]
 })
-export class EditOrganizationSettingsComponent extends TranslationBaseComponent
+export class EditOrganizationSettingsComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	@Input() organization: IOrganization;
 
-	departments: string[] = [];
-	positions: string[] = [];
-	vendors: string[] = [];
-	employeesCount: number;
-	countries: ICountry[] = [];
-	test: any;
-
-	private _ngOnDestroy$ = new Subject();
 	routeParams: Params;
 	tabs: any[];
 
@@ -45,12 +31,9 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
-		this.route.params
-			.pipe(takeUntil(this._ngOnDestroy$))
-			.subscribe((params) => {
-				this.routeParams = params;
-			});
-
+		this.route.params.pipe(untilDestroyed(this)).subscribe((params) => {
+			this.routeParams = params;
+		});
 		this.loadTabs();
 		this._applyTranslationOnTabs();
 	}
@@ -84,7 +67,7 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 
 	private _applyTranslationOnTabs() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngOnDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.loadTabs();
 			});

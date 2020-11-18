@@ -176,6 +176,12 @@ export class Organization extends TenantBase implements IOrganization {
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
+	regionCode?: string;
+
+	@ApiProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
 	brandColor?: string;
 
 	@ApiProperty({ type: String })

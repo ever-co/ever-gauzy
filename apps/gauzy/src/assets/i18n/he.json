@@ -426,7 +426,7 @@
 		}
 	},
 	"POP_UPS": {
-		"SELECT_ORGANZIATION": "אנא בחר ארגונים מהתפריט שלמעלה",
+		"SELECT_ORGANIZATION": "אנא בחר ארגונים מהתפריט שלמעלה",
 		"ADD_INCOME": "הוסף הכנסה",
 		"ADD_EXPENSE": "הוסף הוצאה",
 		"EMPLOYEE": "עובד",
@@ -1143,7 +1143,7 @@
 		"EMPLOYEES": "עובדים",
 		"POSITIONS": "עמדות",
 		"EDIT_PUBLIC_PAGE": "Edit Public Page",
-		"SELECT_ORGANZIATION": "אנא בחר ארגונים מהתפריט שלמעלה",
+		"SELECT_ORGANIZATION": "אנא בחר ארגונים מהתפריט שלמעלה",
 		"MAIN": "עיקרי",
 		"DEPARTMENTS": "מחלקות",
 		"VENDORS": "ספקים",

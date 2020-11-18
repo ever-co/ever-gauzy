@@ -2,23 +2,24 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CurrenciesEnum, IOrganization, ITag } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
-import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
-import { Subject } from 'rxjs';
-import { first, takeUntil } from 'rxjs/operators';
+import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
+import { filter, first } from 'rxjs/operators';
 import { EmployeesService } from '../../../../../@core/services';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-
+import { Router } from '@angular/router';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Store } from '../../../../../@core/services/store.service';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-org-main',
 	templateUrl: './edit-organization-main.component.html',
 	styleUrls: ['./edit-organization-main.component.scss']
 })
-export class EditOrganizationMainComponent extends TranslationBaseComponent
+export class EditOrganizationMainComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
-
 	organization: IOrganization;
 	imageUrl: string;
 	hoverState: boolean;
@@ -29,12 +30,14 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 	selectedTags: any;
 
 	constructor(
+		private router: Router,
 		private fb: FormBuilder,
 		private employeesService: EmployeesService,
 		private organizationService: OrganizationsService,
 		private toastrService: NbToastrService,
 		private organizationEditStore: OrganizationEditStore,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private store: Store
 	) {
 		super(translateService);
 	}
@@ -46,27 +49,27 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 	handleImageUploadError(event: any) {}
 
 	ngOnInit(): void {
-		this.organizationEditStore.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((organization) => {
-				if (organization) {
-					this.organization = organization;
-					this._initializeForm();
-					this.imageUrl = this.organization.imageUrl;
-					this.loadEmployeesCount();
-				}
+				this.imageUrl = organization.imageUrl;
+				this._loadOrganizationData(organization);
 			});
 	}
 
-	ngOnDestroy(): void {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy(): void {}
 
 	private async loadEmployeesCount() {
-		const { id: organizationId, tenantId } = this.organization;
+		if (!this.organization) {
+			return;
+		}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 		const { total } = await this.employeesService
-			.getAll([], { organization: { id: organizationId }, tenantId })
+			.getAll([], { organizationId, tenantId })
 			.pipe(first())
 			.toPromise();
 
@@ -86,11 +89,7 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 	}
 
 	goBack() {
-		const currentURL = window.location.href;
-		window.location.href = currentURL.substring(
-			0,
-			currentURL.indexOf('/settings')
-		);
+		this.router.navigate([`/pages/organizations`]);
 	}
 
 	private _initializeForm() {
@@ -112,6 +111,26 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 			website: [this.organization.website]
 		});
 		this.tags = this.form.get('tags').value || [];
+	}
+
+	private async _loadOrganizationData(organization) {
+		if (!organization) {
+			return;
+		}
+		const id = organization.id;
+		const { tenantId } = this.store.user;
+		const { items } = await this.organizationService.getAll(
+			['contact', 'tags'],
+			{
+				id,
+				tenantId
+			}
+		);
+		this.organization = items[0];
+		this.organizationEditStore.selectedOrganization = this.organization;
+
+		this.loadEmployeesCount();
+		this._initializeForm();
 	}
 
 	selectedTagsEvent(currentSelection: ITag[]) {

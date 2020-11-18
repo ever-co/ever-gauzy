@@ -36,6 +36,7 @@ import { OrganizationEmploymentTypesService } from '../../@core/services/organiz
 import { RecurringExpenseHistoryModule } from '../../@shared/expenses/recurring-expense-history/recurring-expense-history.module';
 import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { NgxPermissionsModule } from 'ngx-permissions';
 
 @NgModule({
 	imports: [
@@ -71,7 +72,8 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 		NbSpinnerModule,
 		NbActionsModule,
 		RecurringExpenseHistoryModule,
-		RecurringExpenseBlockModule
+		RecurringExpenseBlockModule,
+		NgxPermissionsModule.forChild()
 	],
 	entryComponents: [
 		OrganizationsFullnameComponent,

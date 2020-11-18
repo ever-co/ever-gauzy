@@ -7,16 +7,17 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="mb-3">
-			<button
-				nbButton
-				status="success"
-				(click)="addOrganization()"
-				class="mr-2"
-				*ngIf="hasEditPermission"
-			>
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-				>{{ 'BUTTONS.ADD' | translate }}
-			</button>
+			<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT']">
+				<button
+					nbButton
+					status="success"
+					(click)="addOrganization()"
+					class="mr-2"
+				>
+					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+					>{{ 'BUTTONS.ADD' | translate }}
+				</button>
+			</ng-template>
 			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
@@ -81,28 +82,30 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<button
-		nbButton
-		[disabled]="!selectedItem && disableButton"
-		(click)="editOrganization(selectedItem)"
-		status="info"
-		class="mr-2"
-		*ngIf="hasEditPermission || hasEditExpensesPermission"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-		>{{ 'BUTTONS.MANAGE' | translate }}
-	</button>
-	<button
-		nbButton
-		[disabled]="!selectedItem && disableButton"
-		(click)="deleteOrganization(selectedItem)"
-		status="danger"
-		class="mr-2"
-		*ngIf="hasEditPermission"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
-		>{{ 'BUTTONS.DELETE' | translate }}
-	</button>
+	<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_EXPENSES_EDIT']">
+		<button
+			nbButton
+			[disabled]="!selectedItem && disableButton"
+			(click)="editOrganization(selectedItem)"
+			status="info"
+			class="mr-2"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+			>{{ 'BUTTONS.MANAGE' | translate }}
+		</button>
+	</ng-template>
+	<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT']">
+		<button
+			nbButton
+			[disabled]="!selectedItem && disableButton"
+			(click)="deleteOrganization(selectedItem)"
+			status="danger"
+			class="mr-2"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
+			>{{ 'BUTTONS.DELETE' | translate }}
+		</button>
+	</ng-template>
 </ng-template>
