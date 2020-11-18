@@ -99,10 +99,7 @@ const COMPONENTS = [
 		InviteMutationModule,
 		InviteTableModule,
 		EditEmployeeMembershipFormModule,
-		NgxPermissionsModule.forChild({
-			permissionsIsolate: true,
-			rolesIsolate: true
-		})
+		NgxPermissionsModule.forChild()
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [],

@@ -1,33 +1,36 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { ICountry, IOrganization } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
 import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
-import { takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { CountryService } from '../../../../../@core/services/country.service';
 import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Store } from '../../../../../@core/services/store.service';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-org-location',
 	templateUrl: './edit-organization-location.component.html',
 	styleUrls: ['./edit-organization-location.component.scss']
 })
-export class EditOrganizationLocationComponent extends TranslationBaseComponent
+export class EditOrganizationLocationComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
-
 	selectedOrganization: IOrganization;
 	countries: ICountry[];
 	form: FormGroup;
 
 	constructor(
+		private router: Router,
 		private fb: FormBuilder,
 		private organizationService: OrganizationsService,
 		private toastrService: NbToastrService,
 		private organizationEditStore: OrganizationEditStore,
+		private store: Store,
 		private countryService: CountryService,
 		readonly translateService: TranslateService
 	) {
@@ -35,15 +38,17 @@ export class EditOrganizationLocationComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
-		this.organizationEditStore.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((organization) => {
-				this.selectedOrganization = organization;
-				if (this.selectedOrganization) {
-					this._initializeForm(this.selectedOrganization);
-				}
+				this._loadOrganizationData(organization);
 			});
-		this._loadOrganizationData();
+
+		//Load countries before initializing the form
+		this.loadCountries();
 	}
 
 	async updateOrganizationSettings() {
@@ -66,23 +71,17 @@ export class EditOrganizationLocationComponent extends TranslationBaseComponent
 			this.selectedOrganization.name + ' organization location updated.',
 			'Success'
 		);
-		this._loadOrganizationData();
 		this.goBack();
 	}
 
 	goBack() {
-		const currentURL = window.location.href;
-		window.location.href = currentURL.substring(
-			0,
-			currentURL.indexOf('/settings')
-		);
+		this.router.navigate([
+			`/pages/organizations/edit/${this.selectedOrganization.id}`
+		]);
 	}
 
+	//Initialize form
 	private async _initializeForm(organization: IOrganization) {
-		//Load countries before initializing the form
-		await this.loadCountries();
-
-		//Initialize form
 		this.form = this.fb.group({
 			country: [organization.contact ? organization.contact.country : ''],
 			city: [organization.contact ? organization.contact.city : ''],
@@ -96,13 +95,21 @@ export class EditOrganizationLocationComponent extends TranslationBaseComponent
 		});
 	}
 
-	private async _loadOrganizationData() {
-		const id = this.selectedOrganization.id;
-		const { items } = await this.organizationService.getAll(['contact'], {
-			id
-		});
-
+	private async _loadOrganizationData(organization) {
+		if (!organization) {
+			return;
+		}
+		const id = organization.id;
+		const { tenantId } = this.store.user;
+		const { items } = await this.organizationService.getAll(
+			['contact', 'tags'],
+			{
+				id,
+				tenantId
+			}
+		);
 		this.selectedOrganization = items[0];
+		this._initializeForm(this.selectedOrganization);
 		this.organizationEditStore.selectedOrganization = this.selectedOrganization;
 	}
 
@@ -111,8 +118,5 @@ export class EditOrganizationLocationComponent extends TranslationBaseComponent
 		this.countries = items;
 	}
 
-	ngOnDestroy(): void {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy(): void {}
 }

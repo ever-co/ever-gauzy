@@ -15,6 +15,11 @@ export enum OrganizationPermissionsEnum {
 	ALLOW_FUTURE_DATE = 'futureDateAllowed'
 }
 
+export enum ListsInputTypeEnum {
+	DEPARTMENTS = 'DEPARTMENTS',
+	POSITIONS = 'POSITIONS',
+	VENDORS = 'VENDORS'
+}
 export interface IOrganization extends IBasePerTenantEntityModel {
 	name: string;
 	profile_link: string;
@@ -119,6 +124,7 @@ export interface IOrganizationCreateInput extends IContact {
 	inviteExpiryPeriod?: number;
 	tags?: ITag[];
 	tenant: ITenant;
+	contact?: IContact;
 	skills?: ISkill[];
 	minimumProjectSize?: string;
 	show_clients?: boolean;

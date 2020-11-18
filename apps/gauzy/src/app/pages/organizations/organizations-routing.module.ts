@@ -5,15 +5,35 @@ import { EditOrganizationComponent } from './edit-organization/edit-organization
 import { EditOrganizationLocationComponent } from './edit-organization/edit-organization-settings/edit-organization-location/edit-organization-location.component';
 import { EditOrganizationOtherSettingsComponent } from './edit-organization/edit-organization-settings/edit-organization-other-settings/edit-organization-other-settings.component';
 import { EditOrganizationMainComponent } from './edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component';
+import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsEnum } from '@gauzy/models';
+
+export function redirectTo() {
+	return '/pages/dashboard';
+}
 
 const routes: Routes = [
 	{
 		path: '',
-		component: OrganizationsComponent
+		component: OrganizationsComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: {
+			permissions: {
+				only: [PermissionsEnum.ALL_ORG_VIEW],
+				redirectTo
+			}
+		}
 	},
 	{
 		path: 'edit/:id',
 		component: EditOrganizationComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: {
+			permissions: {
+				only: [PermissionsEnum.ALL_ORG_EDIT],
+				redirectTo
+			}
+		},
 		children: [
 			{
 				path: '',
