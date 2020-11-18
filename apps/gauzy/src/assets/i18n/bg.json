@@ -1700,6 +1700,7 @@
 		"HEADER": "Manage Users for ",
 		"ADD_USER": "Add User",
 		"ADD_EXISTING_USER": "Add Existing User",
+		"ADD_EXISTING_ORGANIZATION": "Add Existing Organization",
 		"ROLE": {
 			"SUPER_ADMIN": "Super Admin",
 			"ADMIN": "Администратор",
