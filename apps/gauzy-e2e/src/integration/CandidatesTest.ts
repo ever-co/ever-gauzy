@@ -5,6 +5,7 @@ import * as faker from 'faker';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
+import { CustomCommands } from '../support/commands';
 
 let email = ' ';
 let secondEmail = ' ';
@@ -24,37 +25,14 @@ describe('Invite candidate test', () => {
 		password = faker.internet.password();
 		imgUrl = faker.image.avatar();
 
-		cy.visit('/');
-		loginPage.verifyTitle();
-		loginPage.verifyLoginText();
-		loginPage.clearEmailField();
-		loginPage.enterEmail(LoginPageData.email);
-		loginPage.clearPasswordField();
-		loginPage.enterPassword(LoginPageData.password);
-		loginPage.clickLoginButton();
-		dashboradPage.verifyCreateButton();
+		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 
 	it('Should be able to send invite', () => {
-		cy.visit('/#/pages/organization/tags');
-		organizationTagsUserPage.gridButtonVisible();
-		organizationTagsUserPage.clickGridButton(1);
-		organizationTagsUserPage.addTagButtonVisible();
-		organizationTagsUserPage.clickAddTagButton();
-		organizationTagsUserPage.tagNameInputVisible();
-		organizationTagsUserPage.enterTagNameData(
-			OrganizationTagsPageData.tageName
+		CustomCommands.addTag(
+			organizationTagsUserPage,
+			OrganizationTagsPageData
 		);
-		organizationTagsUserPage.tagColorInputVisible();
-		organizationTagsUserPage.enterTagColorData(
-			OrganizationTagsPageData.tagColor
-		);
-		organizationTagsUserPage.tagDescriptionTextareaVisible();
-		organizationTagsUserPage.enterTagDescriptionData(
-			OrganizationTagsPageData.tagDescription
-		);
-		organizationTagsUserPage.saveTagButtonVisible();
-		organizationTagsUserPage.clickSaveTagButton();
 		cy.visit('/#/pages/employees/candidates');
 		inviteCandidatePage.gridBtnExists();
 		inviteCandidatePage.gridBtnClick(1);
@@ -102,7 +80,7 @@ describe('Invite candidate test', () => {
 		cy.on('uncaught:exception', (err, runnable) => {
 			return false;
 		});
-		cy.wait(3000);
+		inviteCandidatePage.waitMessageToHide();
 		inviteCandidatePage.selectTableRow(0);
 		inviteCandidatePage.rejectButtonVisible();
 		inviteCandidatePage.clickRejectButton();
@@ -110,6 +88,7 @@ describe('Invite candidate test', () => {
 		inviteCandidatePage.clickConfirmActionButton();
 	});
 	it('Should be able to edit candidate', () => {
+		inviteCandidatePage.waitMessageToHide();
 		inviteCandidatePage.selectTableRow(0);
 		inviteCandidatePage.editButtonVisible();
 		inviteCandidatePage.clickEditButton();
@@ -119,6 +98,7 @@ describe('Invite candidate test', () => {
 		inviteCandidatePage.clickBackButton();
 	});
 	it('Should be able to archive candidate', () => {
+		inviteCandidatePage.waitMessageToHide();
 		inviteCandidatePage.selectTableRow(0);
 		inviteCandidatePage.archiveButtonVisible();
 		inviteCandidatePage.clickArchiveButton();

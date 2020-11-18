@@ -5,39 +5,17 @@ import { AddEmployeeLevelPageData } from '../support/Base/pagedata/AddEmployeeLe
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import { CustomCommands } from '../support/commands';
 
 describe('Add employee level test', () => {
 	before(() => {
-		cy.visit('/');
-		loginPage.verifyTitle();
-		loginPage.verifyLoginText();
-		loginPage.clearEmailField();
-		loginPage.enterEmail(LoginPageData.email);
-		loginPage.clearPasswordField();
-		loginPage.enterPassword(LoginPageData.password);
-		loginPage.clickLoginButton();
-		dashboradPage.verifyCreateButton();
+		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 	it('Should be able to add new employee level', () => {
-		cy.visit('/#/pages/organization/tags');
-		organizationTagsUserPage.gridButtonVisible();
-		organizationTagsUserPage.clickGridButton(1);
-		organizationTagsUserPage.addTagButtonVisible();
-		organizationTagsUserPage.clickAddTagButton();
-		organizationTagsUserPage.tagNameInputVisible();
-		organizationTagsUserPage.enterTagNameData(
-			OrganizationTagsPageData.tageName
+		CustomCommands.addTag(
+			organizationTagsUserPage,
+			OrganizationTagsPageData
 		);
-		organizationTagsUserPage.tagColorInputVisible();
-		organizationTagsUserPage.enterTagColorData(
-			OrganizationTagsPageData.tagColor
-		);
-		organizationTagsUserPage.tagDescriptionTextareaVisible();
-		organizationTagsUserPage.enterTagDescriptionData(
-			OrganizationTagsPageData.tagDescription
-		);
-		organizationTagsUserPage.saveTagButtonVisible();
-		organizationTagsUserPage.clickSaveTagButton();
 		cy.visit('/#/pages/employees/employee-level');
 		addEmployeeLevelPage.gridBtnExists();
 		addEmployeeLevelPage.gridBtnClick(1);

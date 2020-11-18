@@ -5,7 +5,8 @@ import {
 	enterInputConditionally,
 	clearField,
 	clickKeyboardBtnByKeycode,
-	clickButtonByIndex
+	clickButtonByIndex,
+	waitElementToHide
 } from '../utils/util';
 import { IncomePage } from '../pageobjects/IncomePageObject';
 
@@ -135,4 +136,8 @@ export const clickConfirmDeleteButton = () => {
 
 export const clickCardBody = () => {
 	clickButton(IncomePage.cardBodyCss);
+};
+
+export const waitMessageToHide = () => {
+	waitElementToHide(IncomePage.toastrMessageCss);
 };

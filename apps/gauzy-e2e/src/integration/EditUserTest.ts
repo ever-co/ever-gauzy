@@ -6,6 +6,7 @@ import * as faker from 'faker';
 import { EditUserPageData } from '../support/Base/pagedata/EditUserPageData';
 import { AddUserPageData } from '../support/Base/pagedata/AddUserPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import { CustomCommands } from '../support/commands';
 
 let firstName = ' ';
 let lastName = ' ';
@@ -23,15 +24,7 @@ describe('Edit user test', () => {
 		password = faker.internet.password();
 		imgUrl = faker.image.avatar();
 
-		cy.visit('/');
-		loginPage.verifyTitle();
-		loginPage.verifyLoginText();
-		loginPage.clearEmailField();
-		loginPage.enterEmail(LoginPageData.email);
-		loginPage.clearPasswordField();
-		loginPage.enterPassword(LoginPageData.password);
-		loginPage.clickLoginButton();
-		dashboradPage.verifyCreateButton();
+		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 	it('Should be able to add new user', () => {
 		cy.visit('/#/pages/users');
@@ -89,9 +82,6 @@ describe('Edit user test', () => {
 		editUserPage.enterPasswordData(password);
 		editUserPage.enterRepeatPasswordData(password);
 		editUserPage.enterEmailData(email);
-		// editUserPage.clickTagsMultyselect();
-		// editUserPage.selectTagsFromDropdown(0);
-		// editUserPage.selectTagsFromDropdown(1);
 		editUserPage.clickKeyboardButtonByKeyCode(9);
 		editUserPage.chooseRoleSelectData(EditUserPageData.role);
 		editUserPage.chooseLanguage(EditUserPageData.preferredLanguage);

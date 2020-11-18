@@ -3,18 +3,11 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as organizationRecurringExpensesPage from '../support/Base/pages/OrganizationRecurringExpenses.po';
 import { OrganizationRecurringExpensesPageData } from '../support/Base/pagedata/OrganizationRecurringExpensesPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import { CustomCommands } from '../support/commands';
 
 describe('Organization recurring expenses test', () => {
 	before(() => {
-		cy.visit('/');
-		loginPage.verifyTitle();
-		loginPage.verifyLoginText();
-		loginPage.clearEmailField();
-		loginPage.enterEmail(LoginPageData.email);
-		loginPage.clearPasswordField();
-		loginPage.enterPassword(LoginPageData.password);
-		loginPage.clickLoginButton();
-		dashboradPage.verifyCreateButton();
+		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 	it('Should be able to add new expense', () => {
 		cy.visit('/#/pages/organization/expense-recurring');

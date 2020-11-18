@@ -3,6 +3,8 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as timesheetsPage from '../support/Base/pages/Timesheets.po';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import { TimesheetsPageData } from '../support/Base/pagedata/TimesheetsPageData';
+import * as organizationProjectsPage from '../support/Base/pages/OrganizationProjects.po';
+import { OrganizationProjectsPageData } from '../support/Base/pagedata/OrganizationProjectsPageData';
 import * as addTaskPage from '../support/Base/pages/AddTasks.po';
 import { AddTasksPageData } from '../support/Base/pagedata/AddTasksPageData';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
@@ -10,6 +12,7 @@ import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationT
 import * as clientsPage from '../support/Base/pages/Clients.po';
 import * as faker from 'faker';
 import { ClientsData } from '../support/Base/pagedata/ClientsPageData';
+import { CustomCommands } from '../support/commands';
 
 let email = ' ';
 let fullName = ' ';
@@ -29,49 +32,17 @@ describe('Timesheets test', () => {
 		street = faker.address.streetAddress();
 		website = faker.internet.url();
 
-		cy.visit('/');
-		loginPage.verifyTitle();
-		loginPage.verifyLoginText();
-		loginPage.clearEmailField();
-		loginPage.enterEmail(LoginPageData.email);
-		loginPage.clearPasswordField();
-		loginPage.enterPassword(LoginPageData.password);
-		loginPage.clickLoginButton();
-		dashboradPage.verifyCreateButton();
+		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 	it('Should be able to add time', () => {
-		cy.visit('/#/pages/organization/projects');
-		addTaskPage.requestProjectButtonVisible();
-		addTaskPage.clickRequestProjectButton();
-		addTaskPage.projectNameInputVisible();
-		addTaskPage.enterProjectNameInputData(
-			AddTasksPageData.defaultTaskProject
+		CustomCommands.addProject(
+			organizationProjectsPage,
+			OrganizationProjectsPageData
 		);
-		addTaskPage.clickSelectEmployeeDropdown();
-		addTaskPage.selectEmployeeDropdownOption(1);
-		addTaskPage.selectEmployeeDropdownOption(2);
-		addTaskPage.clickKeyboardButtonByKeyCode(9);
-		addTaskPage.saveProjectButtonVisible();
-		addTaskPage.clickSaveProjectButton();
-		cy.visit('/#/pages/organization/tags');
-		organizationTagsUserPage.gridButtonVisible();
-		organizationTagsUserPage.clickGridButton(1);
-		organizationTagsUserPage.addTagButtonVisible();
-		organizationTagsUserPage.clickAddTagButton();
-		organizationTagsUserPage.tagNameInputVisible();
-		organizationTagsUserPage.enterTagNameData(
-			OrganizationTagsPageData.tageName
+		CustomCommands.addTag(
+			organizationTagsUserPage,
+			OrganizationTagsPageData
 		);
-		organizationTagsUserPage.tagColorInputVisible();
-		organizationTagsUserPage.enterTagColorData(
-			OrganizationTagsPageData.tagColor
-		);
-		organizationTagsUserPage.tagDescriptionTextareaVisible();
-		organizationTagsUserPage.enterTagDescriptionData(
-			OrganizationTagsPageData.tagDescription
-		);
-		organizationTagsUserPage.saveTagButtonVisible();
-		organizationTagsUserPage.clickSaveTagButton();
 		cy.visit('/#/pages/contacts/clients');
 		clientsPage.gridBtnExists();
 		clientsPage.gridBtnClick(1);

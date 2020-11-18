@@ -42,5 +42,6 @@ export const CandidatesPage = {
 	addExperienceButtonCss: 'div.btn > button[status="success"]',
 	schoolNameInputCss: '[formcontrolname="schoolName"]',
 	degreeInputCss: '[formcontrolname="degree"]',
-	saveExperisnceButtonCss: 'div.col-2 > button[status="success"]'
+	saveExperisnceButtonCss: 'div.col-2 > button[status="success"]',
+	toastrMessageCss: 'nb-toast.ng-trigger'
 };

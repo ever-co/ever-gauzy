@@ -6,6 +6,7 @@ import { ProposalsPageData } from '../support/Base/pagedata/ProposalsPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
+import { CustomCommands } from '../support/commands';
 
 let jobPostUrl = ' ';
 let jobPostContent = ' ';
@@ -17,37 +18,14 @@ describe('Proposals test', () => {
 		jobPostContent = faker.lorem.paragraph();
 		proposalContent = faker.lorem.paragraph();
 
-		cy.visit('/');
-		loginPage.verifyTitle();
-		loginPage.verifyLoginText();
-		loginPage.clearEmailField();
-		loginPage.enterEmail(LoginPageData.email);
-		loginPage.clearPasswordField();
-		loginPage.enterPassword(LoginPageData.password);
-		loginPage.clickLoginButton();
-		dashboradPage.verifyCreateButton();
+		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 
 	it('Should be able to add new proposal', () => {
-		cy.visit('/#/pages/organization/tags');
-		organizationTagsUserPage.gridButtonVisible();
-		organizationTagsUserPage.clickGridButton(1);
-		organizationTagsUserPage.addTagButtonVisible();
-		organizationTagsUserPage.clickAddTagButton();
-		organizationTagsUserPage.tagNameInputVisible();
-		organizationTagsUserPage.enterTagNameData(
-			OrganizationTagsPageData.tageName
+		CustomCommands.addTag(
+			organizationTagsUserPage,
+			OrganizationTagsPageData
 		);
-		organizationTagsUserPage.tagColorInputVisible();
-		organizationTagsUserPage.enterTagColorData(
-			OrganizationTagsPageData.tagColor
-		);
-		organizationTagsUserPage.tagDescriptionTextareaVisible();
-		organizationTagsUserPage.enterTagDescriptionData(
-			OrganizationTagsPageData.tagDescription
-		);
-		organizationTagsUserPage.saveTagButtonVisible();
-		organizationTagsUserPage.clickSaveTagButton();
 		cy.visit('/#/pages/sales/proposals');
 		proposalsPage.gridBtnExists();
 		proposalsPage.gridBtnClick(1);

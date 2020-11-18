@@ -4,10 +4,11 @@ import * as manageEmployeesPage from '../support/Base/pages/ManageEmployees.po';
 import * as faker from 'faker';
 import { ManageEmployeesPageData } from '../support/Base/pagedata/ManageEmployeesPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
-import * as addTaskPage from '../support/Base/pages/AddTasks.po';
-import { AddTasksPageData } from '../support/Base/pagedata/AddTasksPageData';
+import * as organizationProjectsPage from '../support/Base/pages/OrganizationProjects.po';
+import { OrganizationProjectsPageData } from '../support/Base/pagedata/OrganizationProjectsPageData';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
+import { CustomCommands } from '../support/commands';
 
 let email = ' ';
 let secEmail = ' ';
@@ -30,50 +31,18 @@ describe('Manage employees test', () => {
 		employeeEmail = faker.internet.email();
 		imgUrl = faker.image.avatar();
 
-		cy.visit('/');
-		loginPage.verifyTitle();
-		loginPage.verifyLoginText();
-		loginPage.clearEmailField();
-		loginPage.enterEmail(LoginPageData.email);
-		loginPage.clearPasswordField();
-		loginPage.enterPassword(LoginPageData.password);
-		loginPage.clickLoginButton();
-		dashboradPage.verifyCreateButton();
+		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 
 	it('Should be able to invite employees', () => {
-		cy.visit('/#/pages/organization/projects');
-		addTaskPage.requestProjectButtonVisible();
-		addTaskPage.clickRequestProjectButton();
-		addTaskPage.projectNameInputVisible();
-		addTaskPage.enterProjectNameInputData(
-			AddTasksPageData.defaultTaskProject
+		CustomCommands.addProject(
+			organizationProjectsPage,
+			OrganizationProjectsPageData
 		);
-		addTaskPage.clickSelectEmployeeDropdown();
-		addTaskPage.selectEmployeeDropdownOption(1);
-		addTaskPage.selectEmployeeDropdownOption(2);
-		addTaskPage.clickKeyboardButtonByKeyCode(9);
-		addTaskPage.saveProjectButtonVisible();
-		addTaskPage.clickSaveProjectButton();
-		cy.visit('/#/pages/organization/tags');
-		organizationTagsUserPage.gridButtonVisible();
-		organizationTagsUserPage.clickGridButton(1);
-		organizationTagsUserPage.addTagButtonVisible();
-		organizationTagsUserPage.clickAddTagButton();
-		organizationTagsUserPage.tagNameInputVisible();
-		organizationTagsUserPage.enterTagNameData(
-			OrganizationTagsPageData.tageName
+		CustomCommands.addTag(
+			organizationTagsUserPage,
+			OrganizationTagsPageData
 		);
-		organizationTagsUserPage.tagColorInputVisible();
-		organizationTagsUserPage.enterTagColorData(
-			OrganizationTagsPageData.tagColor
-		);
-		organizationTagsUserPage.tagDescriptionTextareaVisible();
-		organizationTagsUserPage.enterTagDescriptionData(
-			OrganizationTagsPageData.tagDescription
-		);
-		organizationTagsUserPage.saveTagButtonVisible();
-		organizationTagsUserPage.clickSaveTagButton();
 		cy.visit('/#/pages/employees');
 		manageEmployeesPage.gridBtnExists();
 		manageEmployeesPage.gridBtnClick(1);
@@ -147,6 +116,7 @@ describe('Manage employees test', () => {
 		manageEmployeesPage.clickBackButton();
 	});
 	it('Should be able to end work', () => {
+		manageEmployeesPage.waitMessageToHide();
 		manageEmployeesPage.selectTableRow(0);
 		manageEmployeesPage.endWorkButtonVisible();
 		manageEmployeesPage.clickEndWorkButton();
@@ -154,6 +124,7 @@ describe('Manage employees test', () => {
 		manageEmployeesPage.clickConfirmEndWorkButton();
 	});
 	it('Should be able to delete employee', () => {
+		manageEmployeesPage.waitMessageToHide();
 		manageEmployeesPage.selectTableRow(0);
 		manageEmployeesPage.deleteButtonVisible();
 		manageEmployeesPage.clickDeleteButton();
@@ -168,6 +139,7 @@ describe('Manage employees test', () => {
 		manageEmployeesPage.clickCopyLinkButton();
 	});
 	it('Should be able to resend invite', () => {
+		manageEmployeesPage.waitMessageToHide();
 		manageEmployeesPage.selectTableRow(0);
 		manageEmployeesPage.resendInviteButtonVisible();
 		manageEmployeesPage.clickResendInviteButton();
@@ -175,7 +147,7 @@ describe('Manage employees test', () => {
 		manageEmployeesPage.clickConfirmResendInviteButton();
 	});
 	it('Should be able to delete invite', () => {
-		cy.wait(3000);
+		manageEmployeesPage.waitMessageToHide();
 		manageEmployeesPage.selectTableRow(0);
 		manageEmployeesPage.deleteInviteButtonVisible();
 		manageEmployeesPage.clickDeleteInviteButton();

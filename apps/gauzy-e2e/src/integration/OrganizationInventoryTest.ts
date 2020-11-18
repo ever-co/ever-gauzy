@@ -3,18 +3,11 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as organizationInventoryPage from '../support/Base/pages/OrganizationInventory.po';
 import { OrganizationInventoryPageData } from '../support/Base/pagedata/OrganizationInventoryPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import { CustomCommands } from '../support/commands';
 
 describe('Organization inventory test', () => {
 	before(() => {
-		cy.visit('/');
-		loginPage.verifyTitle();
-		loginPage.verifyLoginText();
-		loginPage.clearEmailField();
-		loginPage.enterEmail(LoginPageData.email);
-		loginPage.clearPasswordField();
-		loginPage.enterPassword(LoginPageData.password);
-		loginPage.clickLoginButton();
-		dashboradPage.verifyCreateButton();
+		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 
 	it('Should be able to add new product category', () => {

@@ -9,5 +9,6 @@ export const RecurringExpensesPage = {
 	editExpenseButtonCss: 'div.block-settings g[data-name="edit"]',
 	deleteExpenseButtonCss: 'g[data-name="close"]',
 	deleteOnlyThisRadioButtonCss: 'nb-radio[value="current"]',
-	confirmDeleteExpenseButtonCss: 'nb-card-footer > button[status="danger"]'
+	confirmDeleteExpenseButtonCss: 'nb-card-footer > button[status="danger"]',
+	toastrMessageCss: 'nb-toast.ng-trigger'
 };

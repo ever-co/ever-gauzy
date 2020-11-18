@@ -3,18 +3,11 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as emailTemplatesPage from '../support/Base/pages/EmailTempates.po';
 import { EmailTemplatesPageData } from '../support/Base/pagedata/EmailTempatesPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import { CustomCommands } from '../support/commands';
 
 describe('Validate email templates test', () => {
 	before(() => {
-		cy.visit('/');
-		loginPage.verifyTitle();
-		loginPage.verifyLoginText();
-		loginPage.clearEmailField();
-		loginPage.enterEmail(LoginPageData.email);
-		loginPage.clearPasswordField();
-		loginPage.enterPassword(LoginPageData.password);
-		loginPage.clickLoginButton();
-		dashboradPage.verifyCreateButton();
+		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 	it('Should be able to validate Password Reset template', () => {
 		cy.visit('/#/pages/settings/email-templates');

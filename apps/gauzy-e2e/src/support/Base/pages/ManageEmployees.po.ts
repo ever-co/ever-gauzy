@@ -6,7 +6,8 @@ import {
 	enterInputConditionally,
 	clearField,
 	clickKeyboardBtnByKeycode,
-	clickButtonByIndex
+	clickButtonByIndex,
+	waitElementToHide
 } from '../utils/util';
 import { ManageEmployeesPage } from '../pageobjects/ManageEmployeesPageObject';
 
@@ -344,4 +345,8 @@ export const confirmDeleteInviteButtonVisible = () => {
 
 export const clickConfirmDeleteInviteButton = () => {
 	clickButton(ManageEmployeesPage.confirmDeleteInviteButtonCss);
+};
+
+export const waitMessageToHide = () => {
+	waitElementToHide(ManageEmployeesPage.toastrMessageCss);
 };

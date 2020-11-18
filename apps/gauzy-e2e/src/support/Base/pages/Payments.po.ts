@@ -5,7 +5,8 @@ import {
 	clearField,
 	enterInput,
 	clickElementByText,
-	clickKeyboardBtnByKeycode
+	clickKeyboardBtnByKeycode,
+	waitElementToHide
 } from '../utils/util';
 import { PaymentsPage } from '../pageobjects/PaymentsPageObject';
 
@@ -135,4 +136,8 @@ export const clickKeyboardButtonByKeyCode = (keycode) => {
 
 export const clickCardBody = () => {
 	clickButton(PaymentsPage.cardBodyCss);
+};
+
+export const waitMessageToHide = () => {
+	waitElementToHide(PaymentsPage.toastrMessageCss);
 };
