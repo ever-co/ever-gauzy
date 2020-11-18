@@ -7,7 +7,8 @@ import {
 	clearField,
 	clickKeyboardBtnByKeycode,
 	clickButtonByIndex,
-	getLastElement
+	getLastElement,
+	waitElementToHide
 } from '../utils/util';
 import { CandidatesPage } from '../pageobjects/CandidatesPageObject';
 
@@ -368,4 +369,8 @@ export const confirmActionButtonVisible = () => {
 
 export const clickConfirmActionButton = () => {
 	clickButton(CandidatesPage.confirmActionButtonCss);
+};
+
+export const waitMessageToHide = () => {
+	waitElementToHide(CandidatesPage.toastrMessageCss);
 };

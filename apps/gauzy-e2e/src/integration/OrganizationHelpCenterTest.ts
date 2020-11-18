@@ -3,18 +3,11 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as organizationHelpCenterPage from '../support/Base/pages/OrganizationHelpCenter.po';
 import { OrganizationHelpCenterPageData } from '../support/Base/pagedata/OrganizationHelpCenterPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import { CustomCommands } from '../support/commands';
 
 describe('Organization help center test', () => {
 	before(() => {
-		cy.visit('/');
-		loginPage.verifyTitle();
-		loginPage.verifyLoginText();
-		loginPage.clearEmailField();
-		loginPage.enterEmail(LoginPageData.email);
-		loginPage.clearPasswordField();
-		loginPage.enterPassword(LoginPageData.password);
-		loginPage.clickLoginButton();
-		dashboradPage.verifyCreateButton();
+		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 	it('Should be able to add base', () => {
 		cy.visit('/#/pages/organization/help-center');

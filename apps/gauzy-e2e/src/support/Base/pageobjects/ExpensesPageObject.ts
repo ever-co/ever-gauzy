@@ -26,5 +26,6 @@ export const ExpensesPage = {
 	saveCategorieButtonCss:
 		'div.justify-content-end > button[status="success"]',
 	backButtonCss: 'div.main > button[status="primary"]',
-	categorieCardCss: 'nb-card.ng-star-inserted'
+	categorieCardCss: 'nb-card.ng-star-inserted',
+	toastrMessageCss: 'nb-toast.ng-trigger'
 };

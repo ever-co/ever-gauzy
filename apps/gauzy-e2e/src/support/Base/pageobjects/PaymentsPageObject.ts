@@ -16,5 +16,6 @@ export const PaymentsPage = {
 	editPaymentButtonCss: 'div.mb-3 > button[status="info"]',
 	deletePaymentButtonCss: 'div.mb-3 > button[status="danger"]',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
-	cardBodyCss: 'nb-card-footer.text-right'
+	cardBodyCss: 'nb-card-footer.text-right',
+	toastrMessageCss: 'nb-toast.ng-trigger'
 };

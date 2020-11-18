@@ -41,5 +41,6 @@ export const ManageEmployeesPage = {
 	resendInviteButtonCss: 'div.mb-3 > button[status="warning"]',
 	deleteInviteButtonCss: 'div.mb-3 > button[status="danger"]',
 	confirmResendInviteButtonCss: 'nb-card-footer > button[status="success"]',
-	confirmDeleteInviteButtonCss: 'nb-card-footer > button[status="danger"]'
+	confirmDeleteInviteButtonCss: 'nb-card-footer > button[status="danger"]',
+	toastrMessageCss: 'nb-toast.ng-trigger'
 };

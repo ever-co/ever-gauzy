@@ -6,6 +6,7 @@ import { IncomePageData } from '../support/Base/pagedata/IncomePageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
+import { CustomCommands } from '../support/commands';
 
 let name = ' ';
 
@@ -13,37 +14,14 @@ describe('Income test', () => {
 	before(() => {
 		name = faker.name.firstName();
 
-		cy.visit('/');
-		loginPage.verifyTitle();
-		loginPage.verifyLoginText();
-		loginPage.clearEmailField();
-		loginPage.enterEmail(LoginPageData.email);
-		loginPage.clearPasswordField();
-		loginPage.enterPassword(LoginPageData.password);
-		loginPage.clickLoginButton();
-		dashboradPage.verifyCreateButton();
+		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 
 	it('Should be able to add new income', () => {
-		cy.visit('/#/pages/organization/tags');
-		organizationTagsUserPage.gridButtonVisible();
-		organizationTagsUserPage.clickGridButton(1);
-		organizationTagsUserPage.addTagButtonVisible();
-		organizationTagsUserPage.clickAddTagButton();
-		organizationTagsUserPage.tagNameInputVisible();
-		organizationTagsUserPage.enterTagNameData(
-			OrganizationTagsPageData.tageName
+		CustomCommands.addTag(
+			organizationTagsUserPage,
+			OrganizationTagsPageData
 		);
-		organizationTagsUserPage.tagColorInputVisible();
-		organizationTagsUserPage.enterTagColorData(
-			OrganizationTagsPageData.tagColor
-		);
-		organizationTagsUserPage.tagDescriptionTextareaVisible();
-		organizationTagsUserPage.enterTagDescriptionData(
-			OrganizationTagsPageData.tagDescription
-		);
-		organizationTagsUserPage.saveTagButtonVisible();
-		organizationTagsUserPage.clickSaveTagButton();
 		cy.visit('/#/pages/accounting/income');
 		incomePage.gridBtnExists();
 		incomePage.gridBtnClick(1);
@@ -69,7 +47,7 @@ describe('Income test', () => {
 		incomePage.clickSaveIncomeButton();
 	});
 	it('Should be able to edit income', () => {
-		cy.wait(3000);
+		incomePage.waitMessageToHide();
 		incomePage.selectTableRow(0);
 		incomePage.editIncomeButtonVisible();
 		incomePage.clickEditIncomeButton();
@@ -86,7 +64,7 @@ describe('Income test', () => {
 		incomePage.clickSaveIncomeButton();
 	});
 	it('Should be able to delete income', () => {
-		cy.wait(3000);
+		incomePage.waitMessageToHide();
 		incomePage.selectTableRow(0);
 		incomePage.deleteIncomeButtonVisible();
 		incomePage.clickDeleteIncomeButton();

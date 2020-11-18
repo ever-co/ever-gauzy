@@ -3,18 +3,11 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as timeOffPage from '../support/Base/pages/TimeOff.po';
 import { TimeOffPageData } from '../support/Base/pagedata/TimeOffPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import { CustomCommands } from '../support/commands';
 
 describe('Time Off test', () => {
 	before(() => {
-		cy.visit('/');
-		loginPage.verifyTitle();
-		loginPage.verifyLoginText();
-		loginPage.clearEmailField();
-		loginPage.enterEmail(LoginPageData.email);
-		loginPage.clearPasswordField();
-		loginPage.enterPassword(LoginPageData.password);
-		loginPage.clickLoginButton();
-		dashboradPage.verifyCreateButton();
+		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 	it('Should be able to create new time off request', () => {
 		cy.visit('/#/pages/employees/time-off');
@@ -40,7 +33,7 @@ describe('Time Off test', () => {
 		timeOffPage.clickSaveRequestButton();
 	});
 	it('Should be able to edit time off request', () => {
-		cy.wait(3000);
+		timeOffPage.waitMessageToHide();
 		timeOffPage.selectTimeOffTableRow(0);
 		timeOffPage.editTimeOffRequestBtnVisible();
 		timeOffPage.clickEditTimeOffRequestButton();
@@ -65,7 +58,7 @@ describe('Time Off test', () => {
 		timeOffPage.clickSaveRequestButton();
 	});
 	it('Should be able to DENY time off request', () => {
-		cy.wait(3000);
+		timeOffPage.waitMessageToHide();
 		timeOffPage.selectTimeOffTableRow(0);
 		timeOffPage.denyTimeOffButtonVisible();
 		timeOffPage.clickDenyTimeOffButton();
@@ -97,7 +90,7 @@ describe('Time Off test', () => {
 		timeOffPage.clickSaveRequestButton();
 	});
 	it('Should be able to delete time off request', () => {
-		cy.wait(3000);
+		timeOffPage.waitMessageToHide();
 		timeOffPage.selectTimeOffTableRow(0);
 		timeOffPage.deleteTimeOffBtnVisible();
 		timeOffPage.clickDeleteTimeOffButton();

@@ -4,6 +4,7 @@ import * as addUserPage from '../support/Base/pages/AddUser.po';
 import * as faker from 'faker';
 import { AddUserPageData } from '../support/Base/pagedata/AddUserPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import { CustomCommands } from '../support/commands';
 
 let firstName = ' ';
 let lastName = ' ';
@@ -21,15 +22,7 @@ describe('Add user test', () => {
 		password = faker.internet.password();
 		imgUrl = faker.image.avatar();
 
-		cy.visit('/');
-		loginPage.verifyTitle();
-		loginPage.verifyLoginText();
-		loginPage.clearEmailField();
-		loginPage.enterEmail(LoginPageData.email);
-		loginPage.clearPasswordField();
-		loginPage.enterPassword(LoginPageData.password);
-		loginPage.clickLoginButton();
-		dashboradPage.verifyCreateButton();
+		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 
 	it('Should be able to add new user', () => {

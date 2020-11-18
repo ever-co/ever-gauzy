@@ -6,7 +6,8 @@ import {
 	enterInput,
 	clickKeyboardBtnByKeycode,
 	clickElementByText,
-	getLastElement
+	getLastElement,
+	waitElementToHide
 } from '../utils/util';
 import { RecurringExpensesPage } from '../pageobjects/RecurringExpensesPageObject';
 
@@ -101,4 +102,8 @@ export const confirmDeleteButtonVisible = () => {
 
 export const clickConfirmDeleteButton = () => {
 	clickButton(RecurringExpensesPage.confirmDeleteExpenseButtonCss);
+};
+
+export const waitMessageToHide = () => {
+	waitElementToHide(RecurringExpensesPage.toastrMessageCss);
 };

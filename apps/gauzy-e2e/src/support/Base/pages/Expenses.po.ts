@@ -6,7 +6,8 @@ import {
 	clearField,
 	clickKeyboardBtnByKeycode,
 	clickButtonByIndex,
-	clickElementByText
+	clickElementByText,
+	waitElementToHide
 } from '../utils/util';
 import { ExpensesPage } from '../pageobjects/ExpensesPageObject';
 
@@ -221,4 +222,8 @@ export const categorieCardVisible = () => {
 
 export const clickCategorieCard = () => {
 	clickButton(ExpensesPage.categorieCardCss);
+};
+
+export const waitMessageToHide = () => {
+	waitElementToHide(ExpensesPage.toastrMessageCss);
 };

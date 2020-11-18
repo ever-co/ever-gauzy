@@ -4,6 +4,7 @@ import * as addOrganizationPage from '../support/Base/pages/AddOrganization.po';
 import * as faker from 'faker';
 import { AddOrganizationPageData } from '../support/Base/pagedata/AddOrganizationPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import { CustomCommands } from '../support/commands';
 
 let organizationName = ' ';
 let taxId = ' ';
@@ -13,15 +14,7 @@ describe('Create Organization Test', () => {
 		organizationName = faker.company.companyName();
 		taxId = faker.random.alphaNumeric();
 
-		cy.visit('/');
-		loginPage.verifyTitle();
-		loginPage.verifyLoginText();
-		loginPage.clearEmailField();
-		loginPage.enterEmail(LoginPageData.email);
-		loginPage.clearPasswordField();
-		loginPage.enterPassword(LoginPageData.password);
-		loginPage.clickLoginButton();
-		dashboradPage.verifyCreateButton();
+		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 
 	it('Should able to create organization', () => {
