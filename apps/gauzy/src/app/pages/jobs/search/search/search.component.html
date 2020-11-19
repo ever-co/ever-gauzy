@@ -37,6 +37,10 @@
 								(confirm)="hideAll()"
 								ngxConfirmDialog
 								[message]="'JOBS.HIDE_ALL_CONFIRM' | translate"
+								[yesText]="
+									'BUTTONS.YES_HIDE_ALL_JOBS' | translate
+								"
+								[noText]="'BUTTONS.CANCEL' | translate"
 								nbButton
 								status="danger"
 							>
