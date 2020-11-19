@@ -631,30 +631,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 						}
 					},
 					...this.reportMenuItems
-					// {
-					// 	title: 'Time Reports',
-					// 	link: '/pages/reports/time/daily',
-					// 	icon: 'clock-outline',
-					// 	data: {
-					// 		translationKey: 'MENU.TIME_REPORTS'
-					// 	}
-					// },
-					// {
-					// 	title: 'Weekly Time Reports',
-					// 	link: '/pages/reports/time/weekly',
-					// 	icon: 'clock-outline',
-					// 	data: {
-					// 		translationKey: 'MENU.WEEKLY_TIME_REPORTS'
-					// 	}
-					// },
-					// {
-					// 	title: 'Accounting Reports',
-					// 	link: '/pages/reports/accounting',
-					// 	icon: 'credit-card-outline',
-					// 	data: {
-					// 		translationKey: 'MENU.ACCOUNTING_REPORTS'
-					// 	}
-					// }
 				]
 			},
 			{
@@ -865,11 +841,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 	}
 
 	loadItems(withOrganizationShortcuts: boolean) {
-		// this.menu = this.getMenuItems().map((item) => {
-		// 	this.refreshMenuItem(item, withOrganizationShortcuts);
-		// 	return item;
-		// });
-
 		this.menu.forEach((item) => {
 			this.refreshMenuItem(item, withOrganizationShortcuts);
 		});
