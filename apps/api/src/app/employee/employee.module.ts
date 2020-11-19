@@ -12,6 +12,7 @@ import { EmailService, EmailModule } from '../email';
 import { UserOrganizationModule } from '../user-organization/user-organization.module';
 import { TimeLog } from '../timesheet/time-log.entity';
 import { TenantModule } from '../tenant/tenant.module';
+import { GauzyAIService } from '@gauzy/integration-ai';
 
 @Module({
 	imports: [
@@ -27,6 +28,7 @@ import { TenantModule } from '../tenant/tenant.module';
 		UserService,
 		AuthService,
 		EmailService,
+		GauzyAIService,
 		...CommandHandlers
 	],
 	exports: [TypeOrmModule, EmployeeService]

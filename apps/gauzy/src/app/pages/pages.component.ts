@@ -277,6 +277,14 @@ export class PagesComponent implements OnInit, OnDestroy {
 				},
 				children: [
 					{
+						title: 'Employee',
+						icon: 'people-outline',
+						link: '/pages/jobs/employee',
+						data: {
+							translationKey: 'MENU.EMPLOYEES'
+						}
+					},
+					{
 						title: 'Browse',
 						icon: 'list-outline',
 						link: '/pages/jobs/search',

@@ -11,7 +11,7 @@ import { Employee } from './employee.entity';
 export class EmployeeService extends TenantAwareCrudService<Employee> {
 	constructor(
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>
+		employeeRepository: Repository<Employee>
 	) {
 		super(employeeRepository);
 	}
