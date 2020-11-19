@@ -1678,6 +1678,13 @@
 		"DELETE_CRITERION_MESSAGE": "Are you sure that, you want to delete criterion",
 		"SAVE_PRESET_MESSAGE": "Criterions will save for job preset. Are you sure you want to save?"
 	},
+	"JOB_EMPLOYEE": {
+		"EMPLOYEE": "Служител",
+		"EMPLOYEES": "Служители",
+		"AVAILABLE_JOBS": "Available Jobs",
+		"APPLIED_JOBS": "Applied Jobs",
+		"JOB_SEARCH_STATUS": "Job Search Status"
+	},
 	"PROPOSAL_TEMPLATE": {
 		"PROPOSAL_TEMPLATE": "Proposal Template",
 		"EDIT_PROPOSAL_TEMPLATE": "Edit Proposal Template",
