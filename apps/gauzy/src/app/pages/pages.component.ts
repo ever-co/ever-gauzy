@@ -631,30 +631,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 						}
 					},
 					...this.reportMenuItems
-					// {
-					// 	title: 'Time Reports',
-					// 	link: '/pages/reports/time/daily',
-					// 	icon: 'clock-outline',
-					// 	data: {
-					// 		translationKey: 'MENU.TIME_REPORTS'
-					// 	}
-					// },
-					// {
-					// 	title: 'Weekly Time Reports',
-					// 	link: '/pages/reports/time/weekly',
-					// 	icon: 'clock-outline',
-					// 	data: {
-					// 		translationKey: 'MENU.WEEKLY_TIME_REPORTS'
-					// 	}
-					// },
-					// {
-					// 	title: 'Accounting Reports',
-					// 	link: '/pages/reports/accounting',
-					// 	icon: 'credit-card-outline',
-					// 	data: {
-					// 		translationKey: 'MENU.ACCOUNTING_REPORTS'
-					// 	}
-					// }
 				]
 			},
 			{
@@ -840,7 +816,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					this.reportMenuItems = chain(menuItems)
 						.values()
 						.map((item) => {
-							console.log(item);
 							return {
 								title: item.name,
 								link: `/pages/reports/${item.slug}`,
@@ -855,17 +830,19 @@ export class PagesComponent implements OnInit, OnDestroy {
 					this.reportMenuItems = [];
 				}
 
+				this.menu = this.getMenuItems();
 				this.loadItems(
 					this.selectorService.showSelectors(this.router.url)
 						.showOrganizationShortcuts
 				);
 			});
+
+		this.menu = this.getMenuItems();
 	}
 
 	loadItems(withOrganizationShortcuts: boolean) {
-		this.menu = this.getMenuItems().map((item) => {
+		this.menu.forEach((item) => {
 			this.refreshMenuItem(item, withOrganizationShortcuts);
-			return item;
 		});
 	}
 
