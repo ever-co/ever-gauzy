@@ -31,6 +31,19 @@
 							</button>
 						</div>
 						<div class="col-auto ml-auto d-flex align-items-center">
+							<button
+								class="mr-5"
+								type="button"
+								(confirm)="hideAll()"
+								ngxConfirmDialog
+								[message]="'JOBS.HIDE_ALL_CONFIRM' | translate"
+								nbButton
+								status="danger"
+							>
+								<nb-icon icon="eye-off-outline"></nb-icon>
+								{{ 'BUTTONS.HIDE_ALL' | translate }}
+							</button>
+
 							<nb-toggle
 								class="mr-3"
 								(checkedChange)="setAutoRefresh($event)"

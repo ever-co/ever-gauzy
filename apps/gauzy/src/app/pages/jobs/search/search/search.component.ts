@@ -1,9 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
+	IApplyJobPostInput,
 	IEmployeeJobPost,
 	IGetEmployeeJobPostFilters,
 	IJobMatchings,
+	IVisibilityJobPostInput,
 	JobPostSourceEnum,
 	JobPostStatusEnum,
 	JobPostTypeEnum
@@ -215,7 +217,13 @@ export class SearchComponent
 				break;
 
 			case 'apply':
-				this.jobService.applyJob($event.data).then(async (resp) => {
+				const applyRequest: IApplyJobPostInput = {
+					applied: true,
+					employeeId: $event.data.employeeId,
+					providerCode: $event.data.jobPost.providerCode,
+					providerJobId: $event.data.jobPost.providerJobId
+				};
+				this.jobService.applyJob(applyRequest).then(async (resp) => {
 					this.toastrService.success('Job Applied successfully');
 					this.smartTableSource.refresh();
 
@@ -234,7 +242,13 @@ export class SearchComponent
 				break;
 
 			case 'hide':
-				this.jobService.hideJob($event.data).then(() => {
+				const hideRequest: IVisibilityJobPostInput = {
+					hide: true,
+					employeeId: $event.data.employeeId,
+					providerCode: $event.data.jobPost.providerCode,
+					providerJobId: $event.data.jobPost.providerJobId
+				};
+				this.jobService.hideJob(hideRequest).then(() => {
 					this.toastrService.success('Job Hidden successfully');
 					this.smartTableSource.refresh();
 				});
@@ -402,6 +416,23 @@ export class SearchComponent
 			)
 			.subscribe();
 	}
+
+	/*
+	 * Hide all jobs
+	 */
+	hideAll() {
+		const request: IVisibilityJobPostInput = {
+			hide: true,
+			...(this.selectedEmployee && this.selectedEmployee.id
+				? { employeeId: this.selectedEmployee.id }
+				: {})
+		};
+		this.jobService.hideJob(request).then(() => {
+			this.toastrService.success('Job Hidden successfully');
+			this.smartTableSource.refresh();
+		});
+	}
+
 	/*
 	 * Clear selected item
 	 */
