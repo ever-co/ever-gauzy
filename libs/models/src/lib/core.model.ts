@@ -14,3 +14,15 @@ export interface IPagination<T> {
 	 */
 	readonly total: number;
 }
+
+/*
+ * Common query parameter
+ */
+export interface IListQueryInput<T> {
+	/**
+	 * Model entity defined relations
+	 */
+	readonly relations?: string[];
+	readonly findInput?: T | any;
+	readonly where?: any;
+}

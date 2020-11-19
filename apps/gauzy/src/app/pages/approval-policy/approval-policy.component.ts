@@ -1,11 +1,7 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import {
-	IApprovalPolicy,
-	ComponentLayoutStyleEnum,
-	IRolePermission
-} from '@gauzy/models';
+import { IApprovalPolicy, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { first, filter, tap } from 'rxjs/operators';
@@ -15,7 +11,6 @@ import { ApprovalPolicyService } from '../../@core/services/approval-policy.serv
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
-import { NgxPermissionsService } from 'ngx-permissions';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -53,25 +48,13 @@ export class ApprovalPolicyComponent
 		private dialogService: NbDialogService,
 		private toastrService: NbToastrService,
 		private approvalPolicyService: ApprovalPolicyService,
-		private router: Router,
-		private ngxPermissionsService: NgxPermissionsService
+		private router: Router
 	) {
 		super(translateService);
 		this.setView();
 	}
 
 	ngOnInit() {
-		this.store.userRolePermissions$
-			.pipe(
-				filter(
-					(permissions: IRolePermission[]) => permissions.length > 0
-				),
-				untilDestroyed(this)
-			)
-			.subscribe((data) => {
-				const permissions = data.map(({ permission }) => permission);
-				this.ngxPermissionsService.loadPermissions(permissions);
-			});
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
