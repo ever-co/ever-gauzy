@@ -840,7 +840,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					this.reportMenuItems = chain(menuItems)
 						.values()
 						.map((item) => {
-							console.log(item);
 							return {
 								title: item.name,
 								link: `/pages/reports/${item.slug}`,
@@ -855,17 +854,24 @@ export class PagesComponent implements OnInit, OnDestroy {
 					this.reportMenuItems = [];
 				}
 
+				this.menu = this.getMenuItems();
 				this.loadItems(
 					this.selectorService.showSelectors(this.router.url)
 						.showOrganizationShortcuts
 				);
 			});
+
+		this.menu = this.getMenuItems();
 	}
 
 	loadItems(withOrganizationShortcuts: boolean) {
-		this.menu = this.getMenuItems().map((item) => {
+		// this.menu = this.getMenuItems().map((item) => {
+		// 	this.refreshMenuItem(item, withOrganizationShortcuts);
+		// 	return item;
+		// });
+
+		this.menu.forEach((item) => {
 			this.refreshMenuItem(item, withOrganizationShortcuts);
-			return item;
 		});
 	}
 
