@@ -20,11 +20,9 @@ export const createDefaultInvoice = async (
 		const tags = await connection.manager.find(Tag, {
 			where: [{ organization: organization }]
 		});
-		const OrganizationContacts = await connection.manager.find(
+		const organizationContacts = await connection.manager.find(
 			OrganizationContact,
-			{
-				where: [{ organizationId: organization.id }]
-			}
+			{ where: [{ organizationId: organization.id }] }
 		);
 		for (let i = 0; i < noOfInvoicePerOrganization; i++) {
 			const invoice = new Invoice();
@@ -41,11 +39,11 @@ export const createDefaultInvoice = async (
 			});
 			invoice.dueDate = faker.date.recent(50);
 			invoice.organizationContactId = faker.random.arrayElement(
-				OrganizationContacts
+				organizationContacts
 			).id;
 			invoice.sentTo = organization.id;
 			invoice.fromOrganization = organization;
-			invoice.toContact = faker.random.arrayElement(OrganizationContacts);
+			invoice.toContact = faker.random.arrayElement(organizationContacts);
 			invoice.currency = organization.currency;
 			invoice.discountValue = faker.random.number({
 				min: 1,
@@ -96,11 +94,9 @@ export const createRandomInvoice = async (
 			const tags = await connection.manager.find(Tag, {
 				where: [{ organization: organization }]
 			});
-			const OrganizationContacts = await connection.manager.find(
+			const organizationContacts = await connection.manager.find(
 				OrganizationContact,
-				{
-					where: [{ organizationId: organization.id }]
-				}
+				{ where: [{ organizationId: organization.id }] }
 			);
 			for (let i = 0; i < noOfInvoicePerOrganization; i++) {
 				const invoice = new Invoice();
@@ -117,12 +113,12 @@ export const createRandomInvoice = async (
 				});
 				invoice.dueDate = faker.date.recent(50);
 				invoice.organizationContactId = faker.random.arrayElement(
-					OrganizationContacts
+					organizationContacts
 				).id;
 				invoice.sentTo = organization.id;
 				invoice.fromOrganization = organization;
 				invoice.toContact = faker.random.arrayElement(
-					OrganizationContacts
+					organizationContacts
 				);
 				invoice.currency = organization.currency;
 				invoice.discountValue = faker.random.number({

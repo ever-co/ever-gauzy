@@ -170,7 +170,10 @@ import {
 	createDefaultProposals,
 	createRandomProposals
 } from '../../proposal/proposal.seed';
-import { createRandomInvoiceItem } from '../../invoice-item/invoice-item.seed';
+import {
+	createDefaultInvoiceItem,
+	createRandomInvoiceItem
+} from '../../invoice-item/invoice-item.seed';
 import {
 	createDefaultInvoice,
 	createRandomInvoice
@@ -802,7 +805,7 @@ export class SeedDataService {
 			)
 		);
 		await this.tryExecute(
-			'Default candidate interview',
+			'Default Candidate Interview',
 			createDefaultCandidateInterview(
 				this.connection,
 				this.tenant,
@@ -812,7 +815,7 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
-			'Default candidate interviewers',
+			'Default Candidate Interviewers',
 			createDefaultCandidateInterviewers(
 				this.connection,
 				this.tenant,
@@ -996,7 +999,17 @@ export class SeedDataService {
 				this.connection,
 				this.tenant,
 				this.organizations,
-				50
+				randomSeedConfig.numberOfInvoicePerOrganization || 50
+			)
+		);
+
+		await this.tryExecute(
+			'Default Invoice Items',
+			createDefaultInvoiceItem(
+				this.connection,
+				this.tenant,
+				this.organizations,
+				randomSeedConfig.numberOfInvoiceItemPerInvoice || 5
 			)
 		);
 
@@ -1137,7 +1150,7 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
-			'default Email Sent',
+			'Default Email Sent',
 			createDefaultEmailSent(
 				this.connection,
 				this.tenant,
@@ -1572,14 +1585,23 @@ export class SeedDataService {
 			)
 		);
 
-		const noOfInvoicePerOrganization = 50;
 		await this.tryExecute(
 			'Random Invoices',
 			createRandomInvoice(
 				this.connection,
 				tenants,
 				tenantOrganizationsMap,
-				noOfInvoicePerOrganization
+				randomSeedConfig.numberOfInvoicePerOrganization || 50
+			)
+		);
+
+		await this.tryExecute(
+			'Random Invoice Items',
+			createRandomInvoiceItem(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap,
+				randomSeedConfig.numberOfInvoiceItemPerInvoice || 5
 			)
 		);
 
@@ -1591,16 +1613,6 @@ export class SeedDataService {
 				tenantOrganizationsMap,
 				tenantEmployeeMap,
 				randomSeedConfig.availabilitySlotsPerOrganization || 20
-			)
-		);
-
-		await this.tryExecute(
-			'Random Invoice Items',
-			createRandomInvoiceItem(
-				this.connection,
-				tenants,
-				tenantOrganizationsMap,
-				tenantEmployeeMap
 			)
 		);
 
