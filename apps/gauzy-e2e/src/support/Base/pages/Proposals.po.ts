@@ -4,7 +4,8 @@ import {
 	clickButton,
 	clearField,
 	clickKeyboardBtnByKeycode,
-	clickButtonByIndex
+	clickButtonByIndex,
+	waitElementToHide
 } from '../utils/util';
 import { ProposalsPage } from '../pageobjects/ProposalsPageObject';
 
@@ -111,8 +112,8 @@ export const detailsButtonVisible = () => {
 	verifyElementIsVisible(ProposalsPage.detailsButtonCss);
 };
 
-export const clickDetailsButton = () => {
-	clickButton(ProposalsPage.detailsButtonCss);
+export const clickDetailsButton = (index) => {
+	clickButtonByIndex(ProposalsPage.detailsButtonCss, index);
 };
 
 export const editProposalButtonVisible = () => {
@@ -157,4 +158,8 @@ export const clickConfirmDeleteButton = () => {
 
 export const clickCardBody = () => {
 	clickButton(ProposalsPage.cardBodyCss);
+};
+
+export const waitMessageToHide = () => {
+	waitElementToHide(ProposalsPage.toastrMessageCss);
 };
