@@ -1,7 +1,8 @@
 import {
 	IEmployeeCreateInput,
 	PermissionsEnum,
-	LanguagesEnum
+	LanguagesEnum,
+	UpdateEmployeeJobsStatistics
 } from '@gauzy/models';
 import {
 	Body,
@@ -32,6 +33,9 @@ import { ITryRequest } from '../core/crud/try-request';
 import { Request } from 'express';
 import { RequestContext } from '../core/context';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { UpdateEmployeeJobSearchStatusCommand } from './commands/update-employee-job-search-status.command';
+import { FindManyOptions } from 'typeorm';
+import { GetEmployeeJobStatisticsCommand } from './commands/get-employee-job-statistics.command';
 
 @ApiTags('Employee')
 @Controller()
@@ -41,6 +45,26 @@ export class EmployeeController extends CrudController<Employee> {
 		private readonly commandBus: CommandBus
 	) {
 		super(employeeService);
+	}
+
+	@ApiOperation({ summary: 'Get Employee Jobs Statistics' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'Found employee'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
+	@Get('/job-statistics')
+	@UseGuards(AuthGuard('jwt'))
+	async getEmployeeJobsStatistics(@Query() request: FindManyOptions) {
+		return this.commandBus.execute(
+			new GetEmployeeJobStatisticsCommand(request)
+		);
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })
@@ -291,6 +315,29 @@ export class EmployeeController extends CrudController<Employee> {
 
 		return this.commandBus.execute(
 			new EmployeeBulkCreateCommand(input, languageCode)
+		);
+	}
+
+	@ApiOperation({ summary: 'Update Job Search Status' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'Records have been successfully updated.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
+	@Put('/:id/job-search-status')
+	@UseGuards(AuthGuard('jwt'))
+	async updateJobSearchStatus(
+		@Param('id') employeeId: string,
+		@Body() request: UpdateEmployeeJobsStatistics
+	): Promise<Employee[]> {
+		return this.commandBus.execute(
+			new UpdateEmployeeJobSearchStatusCommand(employeeId, request)
 		);
 	}
 }

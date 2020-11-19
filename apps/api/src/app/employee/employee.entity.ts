@@ -280,4 +280,9 @@ export class Employee extends TenantOrganizationBase implements IEmployee {
 	@IsBoolean()
 	@Column({ nullable: true })
 	show_start_work_on?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	isJobSearchActive?: boolean;
 }
