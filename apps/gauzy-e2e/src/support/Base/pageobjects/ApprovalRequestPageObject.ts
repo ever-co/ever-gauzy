@@ -14,5 +14,6 @@ export const ApprovalRequestPage = {
 	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
 	approvalPolicyButtonCss: 'div.mb-3 > button[status="primary"]',
 	descriptioninputCss: '[formcontrolname="description"]',
-	backButtonCss: 'g[data-name="arrow-back"]'
+	backButtonCss: 'g[data-name="arrow-back"]',
+	toastrMessageCss: 'nb-toast.ng-trigger'
 };
