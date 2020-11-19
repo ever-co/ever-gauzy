@@ -1,0 +1,21 @@
+export const EstimatesPage = {
+	gridButtonCss: 'div.layout-switch > button',
+	addButtonCss: 'div.actions-container > button[status="success"]',
+	addTagsDropdownCss: '#addTags',
+	tagsDropdownOption: 'div.ng-option',
+	discountInputCss: '#inputDiscountValue',
+	discountTypeDropdownCss: '[formcontrolname="discountType"]',
+	dropdownOptionCss: '.option-list nb-option',
+	organizationContactDropdownCss: '#inputOrganizationContact',
+	contactOptionCss: 'div.ng-option',
+	taxTypeDropdownCss: '[formcontrolname="taxType"]',
+	invoiceTypeDropdownCss: '[formcontrolname="invoiceType"]',
+	generateItemsButtonCss: 'div.buttons > button[status="success"]',
+	selectEmloyeeCss: 'div.form-group ga-employee-multi-select nb-select',
+	saveAsDraftButtonCss: 'nb-card-footer > button[status="success"]',
+	emailInputCss: '#email',
+	tableRowCss: 'table > tbody > tr.ng2-smart-row',
+	toastrMessageCss: 'nb-toast.ng-trigger',
+	cardBodyCss: 'nb-card-header.d-flex',
+	backButtonCss: 'g[data-name="arrow-back"]'
+};
