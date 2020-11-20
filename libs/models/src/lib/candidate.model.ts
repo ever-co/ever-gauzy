@@ -62,16 +62,21 @@ export interface ICandidateFindInput
 }
 
 export interface ICandidateUpdateInput {
+	id?: string;
 	payPeriod?: string;
 	billRateValue?: number;
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
-	organizationDepartment?: IOrganizationDepartment;
+	organizationDepartment?: IOrganizationDepartment[];
 	organizationPosition?: IOrganizationPosition;
+	organizationEmploymentTypes?: IOrganizationEmploymentType[];
+	tags?: ITag[];
+	contact?: IContact;
 	appliedDate?: Date;
 	hiredDate?: Date;
 	rejectDate?: Date;
 	cvUrl?: string;
+	candidateLevel?: string;
 }
 
 export interface ICandidateCreateInput {
