@@ -21,8 +21,28 @@
 							[skipGlobalChange]="true"
 							id="authorInput"
 							class="employees"
+							(selectionChanged)="onEmployeeChange($event)"
 						>
 						</ga-employee-selector>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-3">
+					<div class="form-group">
+						<label class="label">
+							{{
+								'PROPOSALS_PAGE.REGISTER.AUTHOR' | translate
+							}}</label
+						>
+
+						<ngx-proposal-template-select
+							(selectedChange)="onProposalTemplateChange($event)"
+							[ngModelOptions]="{ standalone: true }"
+							[(ngModel)]="proposalTemplateId"
+							[employeeId]="selectedEmployee?.id"
+						>
+						</ngx-proposal-template-select>
 					</div>
 				</div>
 			</div>

@@ -3,18 +3,11 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as approvalRequestPage from '../support/Base/pages/ApprovalRequest.po';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import { ApprovalRequestPageData } from '../support/Base/pagedata/ApprovalRequestPageData';
+import { CustomCommands } from '../support/commands';
 
 describe('Approval request test', () => {
 	before(() => {
-		cy.visit('/');
-		loginPage.verifyTitle();
-		loginPage.verifyLoginText();
-		loginPage.clearEmailField();
-		loginPage.enterEmail(LoginPageData.email);
-		loginPage.clearPasswordField();
-		loginPage.enterPassword(LoginPageData.password);
-		loginPage.clickLoginButton();
-		dashboradPage.verifyCreateButton();
+		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 	it('Should be able to add approval policy', () => {
 		cy.visit('/#/pages/employees/approvals');
@@ -64,7 +57,7 @@ describe('Approval request test', () => {
 		approvalRequestPage.clickSaveButton();
 	});
 	it('Should be able to edit approval request', () => {
-		cy.wait(3000);
+		approvalRequestPage.waitMessageToHide();
 		approvalRequestPage.selectTableRow(0);
 		approvalRequestPage.editApprovalRequestButtonVisible();
 		approvalRequestPage.clickEditApprovalRequestButton();
@@ -80,7 +73,7 @@ describe('Approval request test', () => {
 		approvalRequestPage.clickSaveButton();
 	});
 	it('Should be able to delete approval request', () => {
-		cy.wait(3000);
+		approvalRequestPage.waitMessageToHide();
 		approvalRequestPage.selectTableRow(0);
 		approvalRequestPage.deleteApprovalRequestButtonVisible();
 		approvalRequestPage.clickDeleteApprovalRequestButton();

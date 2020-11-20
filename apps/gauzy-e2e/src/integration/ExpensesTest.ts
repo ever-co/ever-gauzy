@@ -6,8 +6,9 @@ import { ExpensePageData } from '../support/Base/pagedata/ExpensesPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
-import * as addTaskPage from '../support/Base/pages/AddTasks.po';
-import { AddTasksPageData } from '../support/Base/pagedata/AddTasksPageData';
+import * as organizationProjectsPage from '../support/Base/pages/OrganizationProjects.po';
+import { OrganizationProjectsPageData } from '../support/Base/pagedata/OrganizationProjectsPageData';
+import { CustomCommands } from '../support/commands';
 
 let name = ' ';
 
@@ -15,50 +16,18 @@ describe('Expense test', () => {
 	before(() => {
 		name = faker.name.firstName();
 
-		cy.visit('/');
-		loginPage.verifyTitle();
-		loginPage.verifyLoginText();
-		loginPage.clearEmailField();
-		loginPage.enterEmail(LoginPageData.email);
-		loginPage.clearPasswordField();
-		loginPage.enterPassword(LoginPageData.password);
-		loginPage.clickLoginButton();
-		dashboradPage.verifyCreateButton();
+		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 
 	it('Should be able to add new expense', () => {
-		cy.visit('/#/pages/organization/projects');
-		addTaskPage.requestProjectButtonVisible();
-		addTaskPage.clickRequestProjectButton();
-		addTaskPage.projectNameInputVisible();
-		addTaskPage.enterProjectNameInputData(
-			AddTasksPageData.defaultTaskProject
+		CustomCommands.addProject(
+			organizationProjectsPage,
+			OrganizationProjectsPageData
 		);
-		addTaskPage.clickSelectEmployeeDropdown();
-		addTaskPage.selectEmployeeDropdownOption(1);
-		addTaskPage.selectEmployeeDropdownOption(2);
-		addTaskPage.clickKeyboardButtonByKeyCode(9);
-		addTaskPage.saveProjectButtonVisible();
-		addTaskPage.clickSaveProjectButton();
-		cy.visit('/#/pages/organization/tags');
-		organizationTagsUserPage.gridButtonVisible();
-		organizationTagsUserPage.clickGridButton(1);
-		organizationTagsUserPage.addTagButtonVisible();
-		organizationTagsUserPage.clickAddTagButton();
-		organizationTagsUserPage.tagNameInputVisible();
-		organizationTagsUserPage.enterTagNameData(
-			OrganizationTagsPageData.tageName
+		CustomCommands.addTag(
+			organizationTagsUserPage,
+			OrganizationTagsPageData
 		);
-		organizationTagsUserPage.tagColorInputVisible();
-		organizationTagsUserPage.enterTagColorData(
-			OrganizationTagsPageData.tagColor
-		);
-		organizationTagsUserPage.tagDescriptionTextareaVisible();
-		organizationTagsUserPage.enterTagDescriptionData(
-			OrganizationTagsPageData.tagDescription
-		);
-		organizationTagsUserPage.saveTagButtonVisible();
-		organizationTagsUserPage.clickSaveTagButton();
 		cy.visit('/#/pages/accounting/expenses');
 		expensesPage.gridBtnExists();
 		expensesPage.gridBtnClick(1);
@@ -107,7 +76,7 @@ describe('Expense test', () => {
 		expensesPage.clickSaveExpenseButton();
 	});
 	it('Should be able to duplicate expense', () => {
-		cy.wait(3000);
+		expensesPage.waitMessageToHide();
 		expensesPage.selectTableRow(0);
 		expensesPage.duplicateButtonVisible();
 		expensesPage.clickDuplicateButton();
@@ -115,7 +84,7 @@ describe('Expense test', () => {
 		expensesPage.clickSaveExpenseButton();
 	});
 	it('Should be able to delete expense', () => {
-		cy.wait(3000);
+		expensesPage.waitMessageToHide();
 		expensesPage.selectTableRow(0);
 		expensesPage.deleteExpenseButtonVisible();
 		expensesPage.clickDeleteExpenseButton();
@@ -123,6 +92,7 @@ describe('Expense test', () => {
 		expensesPage.clickConfirmDeleteButton();
 	});
 	it('Should be able to add new categorie', () => {
+		expensesPage.waitMessageToHide();
 		expensesPage.manageCategoriesButtonVisible();
 		expensesPage.clickManageCategoriesButton();
 		expensesPage.addExpenseButtonVisible();

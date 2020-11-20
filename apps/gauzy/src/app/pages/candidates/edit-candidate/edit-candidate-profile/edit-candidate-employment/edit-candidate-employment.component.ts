@@ -81,11 +81,13 @@ export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 
 	private async getEmployeeLevel() {
 		const { organizationId, tenantId } = this;
-		const {
-			items = []
-		} = await this.employeeLevelService.getAll(organizationId, [], {
-			tenantId
-		});
+		const { items = [] } = await this.employeeLevelService.getAll(
+			organizationId,
+			[],
+			{
+				tenantId
+			}
+		);
 		this.candidateLevels = items;
 	}
 
@@ -141,7 +143,7 @@ export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 			organizationEmploymentTypes: [
 				candidate.organizationEmploymentTypes || null
 			],
-			candidateLevel: [candidateLevel.level || null],
+			candidateLevel: [candidateLevel || null],
 			organizationDepartments: [
 				candidate.organizationDepartments || null
 			],

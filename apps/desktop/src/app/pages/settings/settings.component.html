@@ -204,7 +204,10 @@
 							>
 								<p>DB Port</p>
 							</div>
-							<div class="col-7 form-group">
+							<div
+								class="col-7 form-group"
+								*ngIf="config.db === 'postgres'"
+							>
 								<input
 									[(ngModel)]="config.dbPort"
 									type="number"

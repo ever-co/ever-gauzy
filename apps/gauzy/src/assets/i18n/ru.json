@@ -75,7 +75,10 @@
 		"AUTO_REFRESH": "Автообновление",
 		"PROPOSAL_DELETE_MESSAGE": "Шаблон предложения успешно удален",
 		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Шаблон предложения успешно сделан по умолчанию",
-		"MAKE_DEFAULT": "Сделать по умолчанию"
+		"MANAGE_TEMPLATES": "Управление шаблонами",
+		"MAKE_DEFAULT": "Сделать по умолчанию",
+		"HIDE_ALL": "Скрыть все",
+		"YES_HIDE_ALL_JOBS": "Да, скрыть все задания"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -425,7 +428,7 @@
 		}
 	},
 	"POP_UPS": {
-		"SELECT_ORGANZIATION": "Пожалуйста, выберите организации из меню выше",
+		"SELECT_ORGANIZATION": "Пожалуйста, выберите организации из меню выше",
 		"ADD_INCOME": "Добавить доход",
 		"ADD_EXPENSE": "Добавить расходы",
 		"EMPLOYEE": "Сотрудник",
@@ -1142,7 +1145,7 @@
 		"EMPLOYEES": "Сотрудники",
 		"POSITIONS": "Позиции",
 		"EDIT_PUBLIC_PAGE": "Изменить публичную страницу",
-		"SELECT_ORGANZIATION": "Пожалуйста, выберите организации из меню выше",
+		"SELECT_ORGANIZATION": "Пожалуйста, выберите организации из меню выше",
 		"MAIN": "Главная",
 		"DEPARTMENTS": "Департаменты",
 		"VENDORS": "Вендоры",
@@ -1653,6 +1656,7 @@
 		"NO_JOBS": "Работы не найдены",
 		"JOB_SEARCH": "Поиск Вакансии",
 		"LOAD_MORE": "Загрузить больше",
+		"HIDE_ALL_CONFIRM": "Вы уверены, что хотите скрыть все работы?",
 		"FILTER": {
 			"TITLE": "Расширенный фильтр",
 			"SOURCE": "Источник",
@@ -1677,10 +1681,19 @@
 		"DELETE_CRITERION_MESSAGE": "Вы уверены, что хотите удалить критерий",
 		"SAVE_PRESET_MESSAGE": "Критерии будут сохранены для пресета задания. Вы уверены, что хотите сохранить?"
 	},
+	"JOB_EMPLOYEE": {
+		"EMPLOYEE": "Сотрудник",
+		"EMPLOYEES": "Сотрудники",
+		"AVAILABLE_JOBS": "Доступные задания",
+		"APPLIED_JOBS": "Прикладные задания",
+		"JOB_SEARCH_STATUS": "Статус поиска Вакансии"
+	},
 	"PROPOSAL_TEMPLATE": {
 		"PROPOSAL_TEMPLATE": "Шаблон предложения",
 		"EDIT_PROPOSAL_TEMPLATE": "Редактировать шаблон предложения",
 		"ADD_PROPOSAL_TEMPLATE": "Добавить шаблон предложения",
+		"SELECT_PROPOSAL_TEMPLATE": "Выберите шаблон предложения",
+		"SELECT_EMPLOYEE": "Выберите сотрудника",
 		"NAME": "Имя",
 		"CONTENT": "Содержание",
 		"EMPLOYEE": "Сотрудник",
@@ -1697,6 +1710,7 @@
 		"HEADER": "Управление пользователями для ",
 		"ADD_USER": "Добавить пользователя",
 		"ADD_EXISTING_USER": "Добавить существующего пользователя",
+		"ADD_EXISTING_ORGANIZATION": "Добавить существующую организацию",
 		"ROLE": {
 			"SUPER_ADMIN": "Супер админ",
 			"ADMIN": "Администратор",

@@ -30,13 +30,7 @@ export class TagService extends CrudService<Tag> {
 	): Promise<any> {
 		const { organizationId, tenantId } = findInput;
 		const allTags = await this.tagRepository.find({
-			where: [
-				{
-					organizationId,
-					tenantId,
-					isSystem: false
-				}
-			],
+			where: [{ organizationId, tenantId, isSystem: false }],
 			relations: relations
 		});
 		return allTags;
@@ -45,15 +39,9 @@ export class TagService extends CrudService<Tag> {
 		relations: string[],
 		findInput: ITag
 	): Promise<any> {
-		const { organizationId, tenantId } = findInput;
+		const { tenantId } = findInput;
 		const allTags = await this.tagRepository.find({
-			where: [
-				{
-					organizationId,
-					tenantId,
-					isSystem: false
-				}
-			],
+			where: [{ tenantId, isSystem: false }],
 			relations: relations
 		});
 		return allTags;

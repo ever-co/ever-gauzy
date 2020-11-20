@@ -19,5 +19,7 @@ export const randomSeedConfig = {
 	availabilitySlotsPerOrganization: 50, // No of availability slots request to approve seeded will be  (availabilitySlotsPerOrganization * organizationsPerTenant * tenants)
 	noOfTimeLogsPerTimeSheet: 5, // No of time logs entry per time sheets
 	numberOfOptionPerProduct: 5, // number of product options per product
-	numberOfVariantPerProduct: 5 // number of product variant per product
+	numberOfVariantPerProduct: 5, // number of product variant per product
+	numberOfInvoicePerOrganization: 50, // number of invoice per organizations
+	numberOfInvoiceItemPerInvoice: 20 // number of invoice item per invoices
 };

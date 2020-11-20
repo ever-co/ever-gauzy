@@ -118,26 +118,28 @@
 	let-buttonSize="buttonSize"
 	let-selectedItem="selectedItem"
 >
-	<button
-		nbButton
-		[disabled]="!selectedItem && disableButton"
-		(click)="edit(selectedItem)"
-		status="info"
-		class="mr-2"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-		>{{ 'BUTTONS.EDIT' | translate }}
-	</button>
-	<button
-		nbButton
-		[disabled]="!selectedItem && disableButton"
-		(click)="remove(selectedUser, selectedItem)"
-		status="danger"
-		class="mr-2"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
-		>{{ 'BUTTONS.REMOVE' | translate }}
-	</button>
+	<ng-template ngxPermissionsOnly="ORG_USERS_EDIT">
+		<button
+			nbButton
+			[disabled]="!selectedItem && disableButton"
+			(click)="edit(selectedItem)"
+			status="info"
+			class="mr-2"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+			>{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			nbButton
+			[disabled]="!selectedItem && disableButton"
+			(click)="remove(selectedUser, selectedItem)"
+			status="danger"
+			class="mr-2"
+			[size]="buttonSize || 'medium'"
+		>
+			<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
+			>{{ 'BUTTONS.REMOVE' | translate }}
+		</button>
+	</ng-template>
 </ng-template>

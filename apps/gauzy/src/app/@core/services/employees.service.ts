@@ -8,6 +8,7 @@ import {
 } from '@gauzy/models';
 import { Observable } from 'rxjs';
 import { first } from 'rxjs/operators';
+import { toParams } from '@gauzy/utils';
 
 @Injectable()
 export class EmployeesService {
@@ -120,6 +121,23 @@ export class EmployeesService {
 	update(id: string, updateInput: IEmployeeUpdateInput): Promise<any> {
 		return this.http
 			.put(`/api/employee/${id}`, updateInput)
+			.pipe(first())
+			.toPromise();
+	}
+
+	getEmployeeJobsStatistics(request): Promise<any> {
+		return this.http
+			.get(`/api/employee/job-statistics`, { params: toParams(request) })
+			.pipe(first())
+			.toPromise();
+	}
+
+	updateJobSearchStatus(
+		id: string,
+		isJobSearchActive: boolean
+	): Promise<any> {
+		return this.http
+			.put(`/api/employee/${id}/job-search-status`, { isJobSearchActive })
 			.pipe(first())
 			.toPromise();
 	}

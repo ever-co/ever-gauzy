@@ -33,6 +33,7 @@ import { SharedModule } from '../../@shared/shared.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
+import { ProposalTemplateSelectModule } from '../../@shared/proposal-template-select/proposal-template-select.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -69,7 +70,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 				deps: [HttpClient]
 			}
 		}),
-		NgxPermissionsModule.forChild()
+		NgxPermissionsModule.forChild(),
+		ProposalTemplateSelectModule
 	],
 	entryComponents: [
 		ProposalRegisterComponent,

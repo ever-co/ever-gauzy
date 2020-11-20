@@ -3,7 +3,8 @@ import {
 	clickButton,
 	clickButtonByIndex,
 	clearField,
-	enterInput
+	enterInput,
+	waitElementToHide
 } from '../utils/util';
 import { OrganizationTagsPage } from '../pageobjects/OrganizationTagsPageObject';
 
@@ -120,4 +121,8 @@ export const confirmDeleteTagButtonVisible = () => {
 
 export const clickConfirmDeleteTagButton = () => {
 	clickButton(OrganizationTagsPage.confirmDeleteTagButtonCss);
+};
+
+export const waitMessageToHide = () => {
+	waitElementToHide(OrganizationTagsPage.toastrMessageCss);
 };

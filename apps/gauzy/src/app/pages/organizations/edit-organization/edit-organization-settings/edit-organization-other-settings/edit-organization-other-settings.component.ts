@@ -13,14 +13,16 @@ import {
 	CurrencyPosition
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
-import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
 import { formatDate } from '@angular/common';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { filter } from 'rxjs/operators';
+import { Router } from '@angular/router';
+import { Store } from '../../../../../@core/services/store.service';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-org-other-settings',
 	templateUrl: './edit-organization-other-settings.component.html',
@@ -29,8 +31,6 @@ import { TranslateService } from '@ngx-translate/core';
 export class EditOrganizationOtherSettingsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
-
 	organization: IOrganization;
 	form: FormGroup;
 
@@ -55,11 +55,13 @@ export class EditOrganizationOtherSettingsComponent
 	regions = Object.values(RegionsEnum);
 
 	constructor(
+		private router: Router,
 		private fb: FormBuilder,
 		private organizationService: OrganizationsService,
 		private toastrService: NbToastrService,
 		private readonly organizationEditStore: OrganizationEditStore,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private store: Store
 	) {
 		super(translateService);
 	}
@@ -76,11 +78,9 @@ export class EditOrganizationOtherSettingsComponent
 	}
 
 	dateFormatPreview(format: string) {
-		this.form.valueChanges
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((val) => {
-				this.regionCode = val.regionCode;
-			});
+		this.form.valueChanges.pipe(untilDestroyed(this)).subscribe((val) => {
+			this.regionCode = val.regionCode;
+		});
 
 		moment.locale(this.regionCode);
 		return moment().format(format);
@@ -108,11 +108,13 @@ export class EditOrganizationOtherSettingsComponent
 	}
 
 	ngOnInit(): void {
-		this.organizationEditStore.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((organization) => {
-				this.organization = organization;
-				this._initializedForm();
+				this._loadOrganizationData(organization);
 			});
 	}
 
@@ -129,11 +131,9 @@ export class EditOrganizationOtherSettingsComponent
 	}
 
 	goBack() {
-		const currentURL = window.location.href;
-		window.location.href = currentURL.substring(
-			0,
-			currentURL.indexOf('/settings')
-		);
+		this.router.navigate([
+			`/pages/organizations/edit/${this.organization.id}`
+		]);
 	}
 
 	loadDefaultBonusPercentage(bonusType: BonusTypeEnum) {
@@ -233,8 +233,24 @@ export class EditOrganizationOtherSettingsComponent
 		this.organization.discountAfterTax = $event;
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
+	private async _loadOrganizationData(organization) {
+		if (!organization) {
+			return;
+		}
+		const id = organization.id;
+		const { tenantId } = this.store.user;
+		const { items } = await this.organizationService.getAll(
+			['contact', 'tags'],
+			{
+				id,
+				tenantId
+			}
+		);
+		this.organization = items[0];
+		this.organizationEditStore.selectedOrganization = this.organization;
+
+		this._initializedForm();
 	}
+
+	ngOnDestroy() {}
 }

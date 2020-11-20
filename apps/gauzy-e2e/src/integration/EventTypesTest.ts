@@ -3,18 +3,11 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as eventTypesPage from '../support/Base/pages/EventTypes.po';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import { EventTypePageData } from '../support/Base/pagedata/EventTypesPageData';
+import { CustomCommands } from '../support/commands';
 
 describe('Event types test', () => {
 	before(() => {
-		cy.visit('/');
-		loginPage.verifyTitle();
-		loginPage.verifyLoginText();
-		loginPage.clearEmailField();
-		loginPage.enterEmail(LoginPageData.email);
-		loginPage.clearPasswordField();
-		loginPage.enterPassword(LoginPageData.password);
-		loginPage.clickLoginButton();
-		dashboradPage.verifyCreateButton();
+		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 	it('Should be able to add new event type', () => {
 		cy.visit('/#/pages/employees/event-types');

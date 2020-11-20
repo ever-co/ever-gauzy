@@ -3,18 +3,11 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as recurringExpensesPage from '../support/Base/pages/RecurringExpenses.po';
 import { RecurringExpensesPageData } from '../support/Base/pagedata/RecurringExpensesPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
+import { CustomCommands } from '../support/commands';
 
 describe('Recurring expenses test', () => {
 	before(() => {
-		cy.visit('/');
-		loginPage.verifyTitle();
-		loginPage.verifyLoginText();
-		loginPage.clearEmailField();
-		loginPage.enterEmail(LoginPageData.email);
-		loginPage.clearPasswordField();
-		loginPage.enterPassword(LoginPageData.password);
-		loginPage.clickLoginButton();
-		dashboradPage.verifyCreateButton();
+		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 	it('Should be able to add new expense', () => {
 		cy.visit('/#/pages/employees/recurring-expenses');
@@ -53,7 +46,7 @@ describe('Recurring expenses test', () => {
 		recurringExpensesPage.clickSaveExpenseButton();
 	});
 	it('Should be able to delete expense', () => {
-		cy.wait(5000);
+		recurringExpensesPage.waitMessageToHide();
 		recurringExpensesPage.settingsButtonVisible();
 		recurringExpensesPage.clickSettingsButton();
 		recurringExpensesPage.deleteButtonVisible();

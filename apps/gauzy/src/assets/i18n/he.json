@@ -75,7 +75,10 @@
 		"AUTO_REFRESH": "Auto Refresh",
 		"PROPOSAL_DELETE_MESSAGE": "Proposal template successfully delete",
 		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Proposal template successfully make as default",
-		"MAKE_DEFAULT": "Make Default"
+		"MANAGE_TEMPLATES": "Manage Templates",
+		"MAKE_DEFAULT": "Make Default",
+		"HIDE_ALL": "Hide All",
+		"YES_HIDE_ALL_JOBS": "Yes, Hide All Jobs"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "סוג",
@@ -425,7 +428,7 @@
 		}
 	},
 	"POP_UPS": {
-		"SELECT_ORGANZIATION": "אנא בחר ארגונים מהתפריט שלמעלה",
+		"SELECT_ORGANIZATION": "אנא בחר ארגונים מהתפריט שלמעלה",
 		"ADD_INCOME": "הוסף הכנסה",
 		"ADD_EXPENSE": "הוסף הוצאה",
 		"EMPLOYEE": "עובד",
@@ -1142,7 +1145,7 @@
 		"EMPLOYEES": "עובדים",
 		"POSITIONS": "עמדות",
 		"EDIT_PUBLIC_PAGE": "Edit Public Page",
-		"SELECT_ORGANZIATION": "אנא בחר ארגונים מהתפריט שלמעלה",
+		"SELECT_ORGANIZATION": "אנא בחר ארגונים מהתפריט שלמעלה",
 		"MAIN": "עיקרי",
 		"DEPARTMENTS": "מחלקות",
 		"VENDORS": "ספקים",
@@ -1653,6 +1656,7 @@
 		"NO_JOBS": "No Jobs found",
 		"JOB_SEARCH": "Job Search",
 		"LOAD_MORE": "Load More",
+		"HIDE_ALL_CONFIRM": "Are you sure you want to Hide All jobs?",
 		"FILTER": {
 			"TITLE": "Advanced Filter",
 			"SOURCE": "Source",
@@ -1677,10 +1681,19 @@
 		"DELETE_CRITERION_MESSAGE": "Are you sure that, you want to delete criterion",
 		"SAVE_PRESET_MESSAGE": "Criterions will save for job preset. Are you sure you want to save?"
 	},
+	"JOB_EMPLOYEE": {
+		"EMPLOYEE": "עובד",
+		"EMPLOYEES": "עובדים",
+		"AVAILABLE_JOBS": "Available Jobs",
+		"APPLIED_JOBS": "Applied Jobs",
+		"JOB_SEARCH_STATUS": "Job Search Status"
+	},
 	"PROPOSAL_TEMPLATE": {
 		"PROPOSAL_TEMPLATE": "Proposal Template",
 		"EDIT_PROPOSAL_TEMPLATE": "Edit Proposal Template",
 		"ADD_PROPOSAL_TEMPLATE": "Add Proposal Template",
+		"SELECT_PROPOSAL_TEMPLATE": "Select Proposal Template",
+		"SELECT_EMPLOYEE": "Select employee",
 		"NAME": "שם",
 		"CONTENT": "Content",
 		"EMPLOYEE": "עובד",
@@ -1697,6 +1710,7 @@
 		"HEADER": "Manage Users for ",
 		"ADD_USER": "Add User",
 		"ADD_EXISTING_USER": "Add Existing User",
+		"ADD_EXISTING_ORGANIZATION": "Add Existing Organization",
 		"ROLE": {
 			"SUPER_ADMIN": "Super Admin",
 			"ADMIN": "מנהל",

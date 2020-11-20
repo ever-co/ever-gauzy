@@ -7,15 +7,34 @@ import { InviteGuard } from '../../@core/role/invite.guard';
 import { PermissionsEnum } from '@gauzy/models';
 import { EditUserDataComponent } from './edit-user-profile/edit-user-data/edit-user-data.component';
 import { EditUserOrganizationsComponent } from './edit-user-profile/edit-user-organizations/edit-user-organizations.component';
+import { NgxPermissionsGuard } from 'ngx-permissions';
+
+export function redirectTo() {
+	return '/pages/dashboard';
+}
 
 const routes: Routes = [
 	{
 		path: '',
-		component: UsersComponent
+		component: UsersComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: {
+			permissions: {
+				only: [PermissionsEnum.ORG_USERS_VIEW],
+				redirectTo
+			}
+		}
 	},
 	{
 		path: 'edit/:id',
 		component: EditUserProfileComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: {
+			permissions: {
+				only: [PermissionsEnum.ORG_USERS_EDIT],
+				redirectTo
+			}
+		},
 		children: [
 			{
 				path: '',

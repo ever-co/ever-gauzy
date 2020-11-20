@@ -17,8 +17,7 @@ export interface IReport extends IBasePerTenantAndOrganizationEntityModel {
 export interface IReportCategory
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
-	icon?: string;
-	iconUrl?: string;
+	iconClass?: string;
 	reports?: IReport[];
 }
 export interface IReportOrganization

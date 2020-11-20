@@ -43,6 +43,18 @@ export const enterDateData = () => {
 	enterInput(TimesheetsPage.dateInputCss, date);
 };
 
+export const clientDropdownVisible = () => {
+	verifyElementIsVisible(TimesheetsPage.clientDropdownCss);
+};
+
+export const clickClientDropdown = () => {
+	clickButton(TimesheetsPage.clientDropdownCss);
+};
+
+export const selectClientFromDropdown = (index) => {
+	clickButtonByIndex(TimesheetsPage.dropdownOptionCss, index);
+};
+
 export const selectProjectDropdownVisible = () => {
 	verifyElementIsVisible(TimesheetsPage.projectDropdownCss);
 };
@@ -51,8 +63,20 @@ export const clickSelectProjectDropdown = () => {
 	clickButton(TimesheetsPage.projectDropdownCss);
 };
 
-export const selectProjectOptionDropdown = (text) => {
-	clickElementByText(TimesheetsPage.projectDropdownOptionCss, text);
+export const selectProjectFromDropdown = (text) => {
+	clickElementByText(TimesheetsPage.dropdownOptionCss, text);
+};
+
+export const taskDropdownVisible = () => {
+	verifyElementIsVisible(TimesheetsPage.taskDropdownCss);
+};
+
+export const clickTaskDropdown = () => {
+	clickButton(TimesheetsPage.taskDropdownCss);
+};
+
+export const selectTaskFromDropdown = (index) => {
+	clickButtonByIndex(TimesheetsPage.dropdownOptionCss, index);
 };
 
 export const addTimeLogDescriptionVisible = () => {
@@ -68,7 +92,7 @@ export const saveTimeLogButtonVisible = () => {
 	verifyElementIsVisible(TimesheetsPage.saveTimeButtonCss);
 };
 
-export const clickSaveTiemLogButton = () => {
+export const clickSaveTimeLogButton = () => {
 	clickButton(TimesheetsPage.saveTimeButtonCss);
 };
 

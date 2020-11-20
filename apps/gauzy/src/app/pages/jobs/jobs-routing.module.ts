@@ -30,6 +30,13 @@ const routes: Routes = [
 					import('./proposal-template/proposal-template.module').then(
 						(m) => m.ProposalTemplateModule
 					)
+			},
+			{
+				path: 'employee',
+				loadChildren: () =>
+					import('./employees/employees.module').then(
+						(m) => m.EmployeesModule
+					)
 			}
 		]
 	}

@@ -1,8 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
+	IApplyJobPostInput,
 	IEmployeeJobPost,
 	IGetEmployeeJobPostFilters,
+	IJobMatchings,
+	IVisibilityJobPostInput,
 	JobPostSourceEnum,
 	JobPostStatusEnum,
 	JobPostTypeEnum
@@ -24,6 +27,7 @@ import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/se
 import * as moment from 'moment';
 import { Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
+import { ProposalTemplateService } from '../../proposal-template/proposal-template.service';
 
 @UntilDestroy()
 @Component({
@@ -99,6 +103,7 @@ export class SearchComponent
 		private http: HttpClient,
 		private store: Store,
 		public translateService: TranslateService,
+		public proposalTemplateService: ProposalTemplateService,
 		private toastrService: ToastrService,
 		private jobService: JobService,
 		private nl2BrPipe: Nl2BrPipe,
@@ -137,6 +142,58 @@ export class SearchComponent
 		this.updateJobs$.next();
 	}
 
+	getEmployeeDefaultProposalTemplate(job: IJobMatchings) {
+		console.log({ job });
+		return this.proposalTemplateService
+			.getAll({
+				where: {
+					employeeId: job.employeeId,
+					isDefault: true
+				}
+			})
+			.then(async (resp) => {
+				if (resp.items.length > 0) {
+					return resp.items[0];
+				}
+				return null;
+			});
+	}
+
+	copyTextToClipboard(text) {
+		if (!navigator.clipboard) {
+			const textArea = document.createElement('textarea');
+			textArea.value = text;
+
+			// Avoid scrolling to bottom
+			textArea.style.width = '0';
+			textArea.style.height = '0';
+			textArea.style.top = '0';
+			textArea.style.left = '0';
+			textArea.style.position = 'fixed';
+
+			document.body.appendChild(textArea);
+			textArea.focus();
+			textArea.select();
+
+			try {
+				const successful = document.execCommand('copy');
+				const msg = successful ? 'successful' : 'unsuccessful';
+				console.log('Fallback: Copying text command was ' + msg);
+			} catch (err) {
+				console.error('Fallback: Oops, unable to copy', err);
+			}
+			return;
+		}
+		return navigator.clipboard.writeText(text).then(
+			() => {
+				console.log('Async: Copying to clipboard was successful!');
+			},
+			(err) => {
+				console.error('Async: Could not copy text: ', err);
+			}
+		);
+	}
+
 	setAutoRefresh(value) {
 		if (value) {
 			this.autoRefreshTimer = timer(0, 60000)
@@ -160,18 +217,38 @@ export class SearchComponent
 				break;
 
 			case 'apply':
-				this.jobService.applyJob($event.data).then((resp) => {
+				const applyRequest: IApplyJobPostInput = {
+					applied: true,
+					employeeId: $event.data.employeeId,
+					providerCode: $event.data.jobPost.providerCode,
+					providerJobId: $event.data.jobPost.providerJobId
+				};
+				this.jobService.applyJob(applyRequest).then(async (resp) => {
 					this.toastrService.success('Job Applied successfully');
 					this.smartTableSource.refresh();
 
 					if (resp.isRedirectRequired) {
+						const proposalTemplate = await this.getEmployeeDefaultProposalTemplate(
+							$event.data
+						);
+						if (proposalTemplate) {
+							await this.copyTextToClipboard(
+								proposalTemplate.content
+							);
+						}
 						window.open($event.data.jobPost.url, '_blank');
 					}
 				});
 				break;
 
 			case 'hide':
-				this.jobService.hideJob($event.data).then(() => {
+				const hideRequest: IVisibilityJobPostInput = {
+					hide: true,
+					employeeId: $event.data.employeeId,
+					providerCode: $event.data.jobPost.providerCode,
+					providerJobId: $event.data.jobPost.providerJobId
+				};
+				this.jobService.hideJob(hideRequest).then(() => {
 					this.toastrService.success('Job Hidden successfully');
 					this.smartTableSource.refresh();
 				});
@@ -339,6 +416,23 @@ export class SearchComponent
 			)
 			.subscribe();
 	}
+
+	/*
+	 * Hide all jobs
+	 */
+	hideAll() {
+		const request: IVisibilityJobPostInput = {
+			hide: true,
+			...(this.selectedEmployee && this.selectedEmployee.id
+				? { employeeId: this.selectedEmployee.id }
+				: {})
+		};
+		this.jobService.hideJob(request).then(() => {
+			this.toastrService.success('Job Hidden successfully');
+			this.smartTableSource.refresh();
+		});
+	}
+
 	/*
 	 * Clear selected item
 	 */

@@ -5,7 +5,8 @@ import {
 	clickElementByText,
 	clearField,
 	enterInput,
-	clickKeyboardBtnByKeycode
+	clickKeyboardBtnByKeycode,
+	waitElementToHide
 } from '../utils/util';
 import { TimeOffPage } from '../pageobjects/TimeOffPageObject';
 
@@ -228,4 +229,8 @@ export const policyInputFieldVisible = () => {
 export const enterNewPolicyName = (data) => {
 	clearField(TimeOffPage.addNewPolicyInputCss);
 	enterInput(TimeOffPage.addNewPolicyInputCss, data);
+};
+
+export const waitMessageToHide = () => {
+	waitElementToHide(TimeOffPage.toastrMessageCss);
 };

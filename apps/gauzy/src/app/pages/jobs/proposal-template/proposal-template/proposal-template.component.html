@@ -45,7 +45,7 @@
 		nbButton
 		status="danger"
 		ngxConfirmDialog
-		[message]="'PROPOSAL_TEMPLATE.CONFIRM_DELETE'"
+		[message]="'PROPOSAL_TEMPLATE.CONFIRM_DELETE' | translate"
 		(confirm)="deleteProposal()"
 		[disabled]="!selectedItem && disableButton"
 		class="mr-2"

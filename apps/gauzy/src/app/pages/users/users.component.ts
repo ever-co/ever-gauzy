@@ -31,7 +31,6 @@ import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/in
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { NgxPermissionsService } from 'ngx-permissions';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
@@ -82,8 +81,7 @@ export class UsersComponent
 		private toastrService: NbToastrService,
 		private route: ActivatedRoute,
 		private translate: TranslateService,
-		private userOrganizationsService: UsersOrganizationsService,
-		private ngxPermissionsService: NgxPermissionsService
+		private userOrganizationsService: UsersOrganizationsService
 	) {
 		super(translate);
 		this.setView();
@@ -114,9 +112,7 @@ export class UsersComponent
 				),
 				untilDestroyed(this)
 			)
-			.subscribe((data) => {
-				const permissions = data.map(({ permission }) => permission);
-				this.ngxPermissionsService.loadPermissions(permissions);
+			.subscribe(() => {
 				this.hasSuperAdminPermission = this.store.hasPermission(
 					PermissionsEnum.SUPER_ADMIN_EDIT
 				);
@@ -158,6 +154,7 @@ export class UsersComponent
 		}
 
 		if (data && data.role === RolesEnum.SUPER_ADMIN) {
+			this.disableButton = !this.hasSuperAdminPermission;
 			this.selectedUser = this.hasSuperAdminPermission
 				? this.selectedUser
 				: null;

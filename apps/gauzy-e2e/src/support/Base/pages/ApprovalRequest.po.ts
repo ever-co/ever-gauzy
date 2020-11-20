@@ -5,7 +5,8 @@ import {
 	clickButtonByIndex,
 	clearField,
 	enterInput,
-	clickKeyboardBtnByKeycode
+	clickKeyboardBtnByKeycode,
+	waitElementToHide
 } from '../utils/util';
 import { ApprovalRequestPage } from '../pageobjects/ApprovalRequestPageObject';
 
@@ -129,4 +130,8 @@ export const backButtonVisible = () => {
 
 export const clickBackButton = () => {
 	clickButton(ApprovalRequestPage.backButtonCss);
+};
+
+export const waitMessageToHide = () => {
+	waitElementToHide(ApprovalRequestPage.toastrMessageCss);
 };

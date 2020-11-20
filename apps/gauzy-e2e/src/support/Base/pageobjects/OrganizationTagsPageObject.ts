@@ -12,5 +12,6 @@ export const OrganizationTagsPage = {
 	editTagButtonCss: 'div.mb-3 > button[status="info"]',
 	deleteTagButtonCss: 'div.mb-3 > button[status="danger"]',
 	confirmDeleteTagButtonCss: 'nb-card-footer > button[status="danger"]',
-	cancelDeleteTagButtonCss: 'nb-card-footer > button[status="info"]'
+	cancelDeleteTagButtonCss: 'nb-card-footer > button[status="info"]',
+	toastrMessageCss: 'nb-toast.ng-trigger'
 };

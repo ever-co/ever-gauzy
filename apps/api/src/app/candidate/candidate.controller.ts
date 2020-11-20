@@ -21,12 +21,18 @@ import { Permissions } from '../shared/decorators/permissions';
 import {
 	PermissionsEnum,
 	ICandidateCreateInput,
-	LanguagesEnum
+	LanguagesEnum,
+	ICandidate,
+	ICandidateUpdateInput
 } from '@gauzy/models';
 import { CommandBus } from '@nestjs/cqrs';
-import { CandidateCreateCommand, CandidateBulkCreateCommand } from './commands';
+import {
+	CandidateCreateCommand,
+	CandidateBulkCreateCommand,
+	CandidateUpdateCommand
+} from './commands';
 import { I18nLang } from 'nestjs-i18n';
-import { ParseJsonPipe } from '../shared';
+import { ParseJsonPipe, UUIDValidationPipe } from '../shared';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @ApiTags('Candidate')
@@ -57,20 +63,14 @@ export class CandidateController extends CrudController<Candidate> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
-		@Body() entity: Candidate
-	): Promise<any> {
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() entity: ICandidateUpdateInput
+	): Promise<ICandidate> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
-		try {
-			return await this.candidateService.create({
-				id,
-				...entity
-			});
-		} catch (error) {
-			console.log(error);
-			return;
-		}
+		return this.commandBus.execute(
+			new CandidateUpdateCommand({ id, ...entity })
+		);
 	}
 
 	@ApiOperation({ summary: 'Find all candidates in the same tenant.' })

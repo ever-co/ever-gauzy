@@ -1,16 +1,10 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
-import {
-	IOrganization,
-	PermissionsEnum,
-	ComponentLayoutStyleEnum,
-	IUser
-} from '@gauzy/models';
+import { IOrganization, ComponentLayoutStyleEnum, IUser } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { first, tap } from 'rxjs/operators';
-import { EmployeesService } from '../../@core/services';
+import { filter, first, tap } from 'rxjs/operators';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { Store } from '../../@core/services/store.service';
@@ -38,7 +32,6 @@ export class OrganizationsComponent
 		private toastrService: NbToastrService,
 		private dialogService: NbDialogService,
 		private router: Router,
-		private employeesService: EmployeesService,
 		readonly translateService: TranslateService,
 		private errorHandler: ErrorHandlingService,
 		private store: Store,
@@ -65,9 +58,8 @@ export class OrganizationsComponent
 	disableButton = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	loading = true;
-	hasEditPermission = false;
-	hasEditExpensesPermission = false;
 	user: IUser;
+
 	loadSettingsSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
@@ -107,25 +99,19 @@ export class OrganizationsComponent
 			}
 		};
 	}
-
 	ngOnInit() {
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
-		this.store.user$.pipe(untilDestroyed(this)).subscribe((user: IUser) => {
-			if (user) {
-				this.user = user;
-				this._loadSmartTable();
-			}
-		});
-		this.store.userRolePermissions$
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.hasEditPermission = this.store.hasPermission(
-					PermissionsEnum.ALL_ORG_EDIT
-				);
-				this.hasEditExpensesPermission = this.store.hasPermission(
-					PermissionsEnum.ORG_EXPENSES_EDIT
-				);
+		this.store.user$
+			.pipe(
+				filter((user) => !!user),
+				untilDestroyed(this)
+			)
+			.subscribe((user: IUser) => {
+				if (user) {
+					this.user = user;
+					this._loadSmartTable();
+				}
 			});
 		this.router.events
 			.pipe(untilDestroyed(this))
@@ -246,11 +232,6 @@ export class OrganizationsComponent
 			);
 
 			for (const org of this.organizations) {
-				// const data = await this.employeesService
-				// 	.getAll([], { organization: { id: org.id }, tenantId: org.tenantId })
-				// 	.pipe(first())
-				// 	.toPromise();
-
 				const activeEmployees = org.employees.filter((i) => i.isActive);
 				org.totalEmployees = activeEmployees.length;
 				delete org['employees'];
