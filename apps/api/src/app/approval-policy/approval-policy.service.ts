@@ -1,18 +1,21 @@
-import { CrudService, IPagination } from '../core';
+import { TenantAwareCrudService, IPagination } from '../core';
 import { ApprovalPolicy } from './approval-policy.entity';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindManyOptions, Repository, Not, In } from 'typeorm';
+import { Repository, Not, In } from 'typeorm';
 import {
 	IApprovalPolicy,
 	IApprovalPolicyCreateInput,
 	ApprovalPolicyTypesStringEnum,
+	IListQueryInput,
 	IRequestApprovalFindInput
 } from '@gauzy/models';
 import { RequestContext } from '../core/context';
 
 @Injectable()
-export class ApprovalPolicyService extends CrudService<ApprovalPolicy> {
+export class ApprovalPolicyService extends TenantAwareCrudService<
+	ApprovalPolicy
+> {
 	constructor(
 		@InjectRepository(ApprovalPolicy)
 		private readonly approvalPolicyRepository: Repository<ApprovalPolicy>
@@ -20,20 +23,28 @@ export class ApprovalPolicyService extends CrudService<ApprovalPolicy> {
 		super(approvalPolicyRepository);
 	}
 
-	async findAllApprovalPolicies(
-		filter?: FindManyOptions<ApprovalPolicy>
-	): Promise<IPagination<IApprovalPolicy>> {
-		const total = await this.approvalPolicyRepository.count(filter);
-		const items = await this.approvalPolicyRepository.find(filter);
-
-		return { items, total };
+	/*
+	 * Get all approval policies
+	 */
+	async findAllApprovalPolicies({
+		findInput: where,
+		relations
+	}: IListQueryInput<IRequestApprovalFindInput>): Promise<
+		IPagination<IApprovalPolicy>
+	> {
+		const query = { where, relations };
+		return await super.findAll(query);
 	}
 
-	async findApprovalPoliciesForRequestApproval(
-		findInput?: IRequestApprovalFindInput,
-		relations?: string[]
-	): Promise<IPagination<IApprovalPolicy>> {
-		const { organizationId, tenantId } = findInput;
+	/*
+	 * Get all request approval policies
+	 */
+	async findApprovalPoliciesForRequestApproval({
+		findInput,
+		relations
+	}: IListQueryInput<IRequestApprovalFindInput>): Promise<
+		IPagination<IApprovalPolicy>
+	> {
 		const query = {
 			where: {
 				approvalType: Not(
@@ -42,20 +53,19 @@ export class ApprovalPolicyService extends CrudService<ApprovalPolicy> {
 						ApprovalPolicyTypesStringEnum.TIME_OFF
 					])
 				),
-				organizationId,
-				tenantId
+				...findInput
 			},
 			relations
 		};
-		const total = await this.approvalPolicyRepository.count(query);
-		const items = await this.approvalPolicyRepository.find(query);
-		return { items, total };
+		return await super.findAll(query);
 	}
 
+	/*
+	 * Create approval policy
+	 */
 	async create(entity: IApprovalPolicyCreateInput): Promise<ApprovalPolicy> {
 		try {
 			const approvalPolicy = new ApprovalPolicy();
-
 			approvalPolicy.name = entity.name;
 			approvalPolicy.organizationId = entity.organizationId;
 			approvalPolicy.tenantId = RequestContext.currentTenantId();
@@ -64,11 +74,14 @@ export class ApprovalPolicyService extends CrudService<ApprovalPolicy> {
 				? entity.name.replace(/\s+/g, '_').toUpperCase()
 				: null;
 			return this.approvalPolicyRepository.save(approvalPolicy);
-		} catch (error) {
+		} catch (error /*: WriteError*/) {
 			throw new BadRequestException(error);
 		}
 	}
 
+	/*
+	 * Update approval policy
+	 */
 	async update(
 		id: string,
 		entity: IApprovalPolicyCreateInput
@@ -85,8 +98,8 @@ export class ApprovalPolicyService extends CrudService<ApprovalPolicy> {
 				? entity.name.replace(/\s+/g, '_').toUpperCase()
 				: null;
 			return this.approvalPolicyRepository.save(approvalPolicy);
-		} catch (err /*: WriteError*/) {
-			throw new BadRequestException(err);
+		} catch (error /*: WriteError*/) {
+			throw new BadRequestException(error);
 		}
 	}
 }

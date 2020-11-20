@@ -1,0 +1,12 @@
+<nb-card class="jobs-page">
+	<nb-card-header class="header">
+		<h4>{{ 'JOB_EMPLOYEE.EMPLOYEES' | translate }}</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<ng2-smart-table
+			[settings]="settingsSmartTable"
+			[source]="smartTableSource"
+			#jobSearchTable
+		></ng2-smart-table>
+	</nb-card-body>
+</nb-card>

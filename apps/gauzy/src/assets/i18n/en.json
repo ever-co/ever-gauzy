@@ -76,7 +76,9 @@
 		"PROPOSAL_DELETE_MESSAGE": "Proposal template successfully delete",
 		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Proposal template successfully make as default",
 		"MANAGE_TEMPLATES": "Manage Templates",
-		"MAKE_DEFAULT": "Make Default"
+		"MAKE_DEFAULT": "Make Default",
+		"HIDE_ALL": "Hide All",
+		"YES_HIDE_ALL_JOBS": "Yes, Hide All Jobs"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",
@@ -1654,6 +1656,7 @@
 		"NO_JOBS": "No Jobs found",
 		"JOB_SEARCH": "Job Search",
 		"LOAD_MORE": "Load More",
+		"HIDE_ALL_CONFIRM": "Are you sure you want to Hide All jobs?",
 		"FILTER": {
 			"TITLE": "Advanced Filter",
 			"SOURCE": "Source",
@@ -1677,6 +1680,13 @@
 		"CRITERIONS": "Criterions",
 		"DELETE_CRITERION_MESSAGE": "Are you sure that, you want to delete criterion",
 		"SAVE_PRESET_MESSAGE": "Criterions will save for job preset. Are you sure you want to save?"
+	},
+	"JOB_EMPLOYEE": {
+		"EMPLOYEE": "Employee",
+		"EMPLOYEES": "Employees",
+		"AVAILABLE_JOBS": "Available Jobs",
+		"APPLIED_JOBS": "Applied Jobs",
+		"JOB_SEARCH_STATUS": "Job Search Status"
 	},
 	"PROPOSAL_TEMPLATE": {
 		"PROPOSAL_TEMPLATE": "Proposal Template",

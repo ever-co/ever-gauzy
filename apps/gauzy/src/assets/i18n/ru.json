@@ -76,7 +76,9 @@
 		"PROPOSAL_DELETE_MESSAGE": "Шаблон предложения успешно удален",
 		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Шаблон предложения успешно сделан по умолчанию",
 		"MANAGE_TEMPLATES": "Управление шаблонами",
-		"MAKE_DEFAULT": "Сделать по умолчанию"
+		"MAKE_DEFAULT": "Сделать по умолчанию",
+		"HIDE_ALL": "Скрыть все",
+		"YES_HIDE_ALL_JOBS": "Да, скрыть все задания"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -1654,6 +1656,7 @@
 		"NO_JOBS": "Работы не найдены",
 		"JOB_SEARCH": "Поиск Вакансии",
 		"LOAD_MORE": "Загрузить больше",
+		"HIDE_ALL_CONFIRM": "Вы уверены, что хотите скрыть все работы?",
 		"FILTER": {
 			"TITLE": "Расширенный фильтр",
 			"SOURCE": "Источник",
@@ -1677,6 +1680,13 @@
 		"CRITERIONS": "Критерии",
 		"DELETE_CRITERION_MESSAGE": "Вы уверены, что хотите удалить критерий",
 		"SAVE_PRESET_MESSAGE": "Критерии будут сохранены для пресета задания. Вы уверены, что хотите сохранить?"
+	},
+	"JOB_EMPLOYEE": {
+		"EMPLOYEE": "Сотрудник",
+		"EMPLOYEES": "Сотрудники",
+		"AVAILABLE_JOBS": "Доступные задания",
+		"APPLIED_JOBS": "Прикладные задания",
+		"JOB_SEARCH_STATUS": "Статус поиска Вакансии"
 	},
 	"PROPOSAL_TEMPLATE": {
 		"PROPOSAL_TEMPLATE": "Шаблон предложения",

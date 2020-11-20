@@ -14,18 +14,18 @@ import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../@core/services/store.service';
 import { EmployeesService } from '../../@core/services/employees.service';
-import { takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
 import { OrganizationTeamsService } from '../../@core/services/organization-teams.service';
 import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
 import { RequestApprovalService } from '../../@core/services/request-approval.service';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-approval-mutation',
 	templateUrl: './approvals-mutation.component.html',
 	styleUrls: ['./approvals-mutation.component.scss']
 })
-export class RequestApprovalMutationComponent extends TranslationBaseComponent
+export class RequestApprovalMutationComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	form: FormGroup;
 	requestApproval: IRequestApproval;
@@ -40,8 +40,6 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 	selectedEmployees: string[] = [];
 	selectedApprovalPolicy: string[] = [];
 	tags: ITag[] = [];
-
-	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
 		public dialogRef: NbDialogRef<RequestApprovalMutationComponent>,
@@ -72,10 +70,7 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 		this.loadApprovalPolicies();
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 
 	async loadEmployees() {
 		this.employeesService
@@ -83,7 +78,7 @@ export class RequestApprovalMutationComponent extends TranslationBaseComponent
 				organizationId: this.organizationId,
 				tenantId: this.tenantId
 			})
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((employees) => {
 				const { items } = employees;
 				this.employees = items;

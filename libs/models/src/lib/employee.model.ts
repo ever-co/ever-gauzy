@@ -3,7 +3,8 @@ import {
 	ITag,
 	ISkill,
 	IOrganizationDepartment,
-	IOrganizationPosition
+	IOrganizationPosition,
+	IEmployeeJobsStatistics
 } from '..';
 import { IOrganizationFindInput } from './organization.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
@@ -50,6 +51,14 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	show_average_income?: boolean;
 	show_billrate?: boolean;
 	show_payperiod?: boolean;
+	isJobSearchActive?: boolean;
+}
+
+export type IEmployeeJobsStatisticsResponse = IEmployee &
+	IEmployeeJobsStatistics;
+
+export interface UpdateEmployeeJobsStatistics {
+	isJobSearchActive?: boolean;
 }
 
 export interface IEmployeeFindInput {
@@ -79,6 +88,7 @@ export interface IEmployeeUpdateInput {
 	averageExpenses?: number;
 	averageBonus?: number;
 	skills?: ISkill[];
+	isJobSearchActive?: boolean;
 }
 
 export interface IEmployeeCreateInput

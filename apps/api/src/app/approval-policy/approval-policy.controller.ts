@@ -4,7 +4,11 @@ import { ApprovalPolicyService } from './approval-policy.service';
 import {
 	PermissionsEnum,
 	IApprovalPolicyCreateInput,
-	IApprovalPolicyUpdateInput
+	IApprovalPolicyUpdateInput,
+	IPagination,
+	IApprovalPolicy,
+	IListQueryInput,
+	IRequestApprovalFindInput
 } from '@gauzy/models';
 import {
 	Query,
@@ -24,12 +28,22 @@ import { Permissions } from '../shared/decorators/permissions';
 import { AuthGuard } from '@nestjs/passport';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
-
+import { CommandBus } from '@nestjs/cqrs';
+import {
+	ApprovalPolicyCreateCommand,
+	ApprovalPolicyGetCommand,
+	ApprovalPolicyUpdateCommand,
+	RequestApprovalPolicyGetCommand
+} from './commands';
+import { UUIDValidationPipe } from '../shared';
 @ApiTags('ApprovalPolicy')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 @Controller()
 export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
-	constructor(private readonly approvalPolicyService: ApprovalPolicyService) {
+	constructor(
+		private readonly approvalPolicyService: ApprovalPolicyService,
+		private readonly commandBus: CommandBus
+	) {
 		super(approvalPolicyService);
 	}
 
@@ -44,13 +58,13 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 		description: 'Record not found'
 	})
 	@Permissions(PermissionsEnum.APPROVAL_POLICY_VIEW)
+	@HttpCode(HttpStatus.ACCEPTED)
 	@Get()
-	findAllApprovalPolicies(@Query('data', ParseJsonPipe) data: any): any {
-		const { findInput, relations } = data;
-		return this.approvalPolicyService.findAllApprovalPolicies({
-			where: findInput,
-			relations
-		});
+	findAllApprovalPolicies(
+		@Query('data', ParseJsonPipe)
+		data: IListQueryInput<IRequestApprovalFindInput>
+	): Promise<IPagination<IApprovalPolicy>> {
+		return this.commandBus.execute(new ApprovalPolicyGetCommand(data));
 	}
 
 	@ApiOperation({
@@ -67,14 +81,14 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 		description: 'Record not found'
 	})
 	@Permissions(PermissionsEnum.APPROVAL_POLICY_VIEW)
-	@Get('/requestapproval')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Get('/request-approval')
 	findApprovalPoliciesForRequestApproval(
-		@Query('data', ParseJsonPipe) data: any
-	): any {
-		const { findInput, relations } = data;
-		return this.approvalPolicyService.findApprovalPoliciesForRequestApproval(
-			findInput,
-			relations
+		@Query('data', ParseJsonPipe)
+		data: IListQueryInput<IRequestApprovalFindInput>
+	): Promise<IPagination<IApprovalPolicy>> {
+		return this.commandBus.execute(
+			new RequestApprovalPolicyGetCommand(data)
 		);
 	}
 
@@ -89,11 +103,12 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Permissions(PermissionsEnum.APPROVAL_POLICY_EDIT)
-	@Post('')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Post()
 	async createApprovalPolicy(
 		@Body() entity: IApprovalPolicyCreateInput
 	): Promise<ApprovalPolicy> {
-		return this.approvalPolicyService.create(entity);
+		return this.commandBus.execute(new ApprovalPolicyCreateCommand(entity));
 	}
 
 	@ApiOperation({ summary: 'Update record' })
@@ -114,9 +129,11 @@ export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
 	@Permissions(PermissionsEnum.APPROVAL_POLICY_EDIT)
 	@Put(':id')
 	async updateApprovalPolicy(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IApprovalPolicyUpdateInput
 	): Promise<ApprovalPolicy> {
-		return this.approvalPolicyService.update(id, entity);
+		return this.commandBus.execute(
+			new ApprovalPolicyUpdateCommand({ id, ...entity })
+		);
 	}
 }

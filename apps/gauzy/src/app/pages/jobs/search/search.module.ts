@@ -20,12 +20,14 @@ import { FormsModule } from '@angular/forms';
 import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { StatusBadgeModule } from '../../../@shared/status-badge/status-badge.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { DialogsModule } from '../../../@shared/dialogs';
 
 @NgModule({
 	declarations: [SearchComponent],
 	imports: [
 		CommonModule,
 		SearchRoutingModule,
+		DialogsModule,
 		TranslateModule,
 		SharedModule,
 		NbIconModule,

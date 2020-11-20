@@ -46,10 +46,11 @@ describe('Proposals test', () => {
 		proposalsPage.clickSaveProposalButton();
 	});
 	it('Should be able to edit proposal', () => {
+		proposalsPage.waitMessageToHide();
 		proposalsPage.tableRowVisible();
 		proposalsPage.selectTableRow(0);
 		proposalsPage.detailsButtonVisible();
-		proposalsPage.clickDetailsButton();
+		proposalsPage.clickDetailsButton(0);
 		proposalsPage.editProposalButtonVisible();
 		proposalsPage.clickEditProposalButton();
 		proposalsPage.jobPostInputVisible();
@@ -62,6 +63,7 @@ describe('Proposals test', () => {
 		proposalsPage.clickSaveProposalButton();
 	});
 	it('Should be able to mark proposal as Accepted', () => {
+		proposalsPage.waitMessageToHide();
 		proposalsPage.selectTableRow(0);
 		proposalsPage.markAsStatusButtonVisible();
 		proposalsPage.clickMarkAsStatusButton();
@@ -69,6 +71,7 @@ describe('Proposals test', () => {
 		proposalsPage.clickConfirmStatusButton();
 	});
 	it('Should be able to delete proposal', () => {
+		proposalsPage.waitMessageToHide();
 		proposalsPage.selectTableRow(0);
 		proposalsPage.deleteProposalButtonVisible();
 		proposalsPage.clickDeleteProposalButton();

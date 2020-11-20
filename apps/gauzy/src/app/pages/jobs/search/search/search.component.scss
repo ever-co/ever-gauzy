@@ -9,6 +9,11 @@
   //   min-width: 200px;
   // }
   ::ng-deep {
+    .toggle-label {
+      margin-bottom: 0;
+    }
+  }
+  ::ng-deep {
     ng2-smart-table {
       table tr td {
         vertical-align: top;

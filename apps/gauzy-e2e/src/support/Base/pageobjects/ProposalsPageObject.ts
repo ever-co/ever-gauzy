@@ -18,5 +18,6 @@ export const ProposalsPage = {
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	confirmStatusButtonCss: 'nb-card-footer > button[status="success"]',
 	cardBodyCss: 'nb-card-footer.text-right',
-	backButtonCss: 'div.main > button[status="primary"]'
+	backButtonCss: 'div.main > button[status="primary"]',
+	toastrMessageCss: 'nb-toast.ng-trigger'
 };

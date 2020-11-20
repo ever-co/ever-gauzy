@@ -34,7 +34,7 @@ export class ApprovalPolicyService {
 
 		return this.http
 			.get<{ items: IApprovalPolicy[]; total: number }>(
-				`${this.APPROVAL_POLICY_URL}/requestapproval`,
+				`${this.APPROVAL_POLICY_URL}/request-approval`,
 				{
 					params: { data }
 				}

@@ -26,26 +26,14 @@ export class JobService {
 			.toPromise();
 	}
 
-	hideJob(data: IEmployeeJobPost) {
-		const request: IVisibilityJobPostInput = {
-			hide: true,
-			employeeId: data.employeeId,
-			providerCode: data.jobPost.providerCode,
-			providerJobId: data.jobPost.providerJobId
-		};
+	hideJob(request: IVisibilityJobPostInput) {
 		return this.http
 			.post<boolean>(`/api/employee-job/hide`, request)
 			.pipe(first())
 			.toPromise();
 	}
 
-	applyJob(data: IEmployeeJobPost) {
-		const request: IApplyJobPostInput = {
-			applied: true,
-			employeeId: data.employeeId,
-			providerCode: data.jobPost.providerCode,
-			providerJobId: data.jobPost.providerJobId
-		};
+	applyJob(request: IApplyJobPostInput) {
 		return this.http
 			.post<IUpdateEmployeeJobPostAppliedResult>(
 				`/api/employee-job/applied`,
