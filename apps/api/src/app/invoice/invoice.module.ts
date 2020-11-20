@@ -11,7 +11,7 @@ import { EstimateEmailModule } from '../estimate-email/estimate-email.module';
 import { EstimateEmailController } from '../estimate-email/estimate-email.controller';
 import { EstimateEmail } from '../estimate-email/estimate-email.entity';
 import { TenantModule } from '../tenant/tenant.module';
-import { CommandHandlers } from './commands/handlers';
+import { CommandHandlers } from './commands';
 import { CqrsModule } from '@nestjs/cqrs';
 
 @Module({
