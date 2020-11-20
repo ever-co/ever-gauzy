@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ITimeLogFilters } from '@gauzy/models';
 import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-filter.service';
-import * as moment from 'moment';
 
 @Component({
 	selector: 'gauzy-time-and-activities',
