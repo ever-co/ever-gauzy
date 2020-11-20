@@ -2,44 +2,44 @@ import {
 	AfterViewInit,
 	ChangeDetectorRef,
 	Component,
+	Input,
 	OnInit
 } from '@angular/core';
 import {
-	IGetTimeLogReportInput,
+	ICountsStatistics,
+	IGetCountsStatistics,
 	IOrganization,
 	ITimeLogFilters,
-	TimeLogType
+	PermissionsEnum
 } from '@gauzy/models';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import * as moment from 'moment';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
-import * as _ from 'underscore';
+import { pick } from 'underscore';
+import { TimesheetStatisticsService } from '../../../timesheet/timesheet-statistics.service';
 
 @UntilDestroy()
 @Component({
-	selector: 'ga-time-reports',
-	templateUrl: './time-reports.component.html',
-	styleUrls: ['./time-reports.component.scss']
+	selector: 'ga-daily-statistics',
+	templateUrl: './daily-statistics.component.html',
+	styleUrls: ['./daily-statistics.component.scss']
 })
-export class TimeReportsComponent implements OnInit, AfterViewInit {
+export class DailyStatisticsComponent implements OnInit, AfterViewInit {
+	PermissionsEnum = PermissionsEnum;
 	logRequest: ITimeLogFilters = {
 		startDate: moment().startOf('week').toDate(),
 		endDate: moment().endOf('week').toDate()
 	};
 	updateLogs$: Subject<any> = new Subject();
 	organization: IOrganization;
+	counts: ICountsStatistics;
 
-	filters: ITimeLogFilters;
-
-	loading: boolean;
-	chartData: any;
+	countsLoading: boolean;
 
 	private _selectedDate: Date = new Date();
-	groupBy: 'date' | 'employee' | 'project' | 'client' = 'date';
 
 	public get selectedDate(): Date {
 		return this._selectedDate;
@@ -48,8 +48,14 @@ export class TimeReportsComponent implements OnInit, AfterViewInit {
 		this._selectedDate = value;
 	}
 
+	@Input()
+	set filters(value) {
+		this.logRequest = value;
+		this.updateLogs$.next();
+	}
+
 	constructor(
-		private timesheetService: TimesheetService,
+		private timesheetStatisticsService: TimesheetStatisticsService,
 		private store: Store,
 		private cd: ChangeDetectorRef
 	) {}
@@ -58,7 +64,7 @@ export class TimeReportsComponent implements OnInit, AfterViewInit {
 		this.updateLogs$
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(() => {
-				this.updateChartData();
+				this.getCounts();
 			});
 
 		this.store.selectedOrganization$
@@ -78,7 +84,6 @@ export class TimeReportsComponent implements OnInit, AfterViewInit {
 				} else {
 					delete this.logRequest.employeeIds;
 				}
-				this.filters = Object.assign({}, this.logRequest);
 				this.updateLogs$.next();
 			});
 	}
@@ -89,38 +94,34 @@ export class TimeReportsComponent implements OnInit, AfterViewInit {
 
 	filtersChange($event) {
 		this.logRequest = $event;
-		this.filters = Object.assign({}, this.logRequest);
 		this.updateLogs$.next();
 	}
 
-	updateChartData() {
+	getCounts() {
 		const { startDate, endDate } = this.logRequest;
-		const request: IGetTimeLogReportInput = {
-			startDate: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: moment(endDate).format('YYYY-MM-DD HH:mm:ss'),
+		const appliedFilter = pick(
+			this.logRequest,
+			'employeeIds',
+			'projectIds',
+			'source',
+			'activityLevel',
+			'logType'
+		);
+		const request: IGetCountsStatistics = {
+			...appliedFilter,
+			startDate: moment(startDate).toDate(),
+			endDate: moment(endDate).toDate(),
 			organizationId: this.organization ? this.organization.id : null,
-			tenantId: this.organization ? this.organization.tenantId : null,
-			groupBy: this.groupBy
+			tenantId: this.organization ? this.organization.tenantId : null
 		};
-		this.loading = true;
-		this.timesheetService
-			.getDailyReportChartData(request)
-			.then((logs: any[]) => {
-				const datasets = [
-					{
-						label: TimeLogType.MANUAL,
-						data: logs.map((log) => log.value[TimeLogType.MANUAL])
-					},
-					{
-						label: TimeLogType.TRACKED,
-						data: logs.map((log) => log.value[TimeLogType.TRACKED])
-					}
-				];
-				this.chartData = {
-					labels: _.pluck(logs, 'date'),
-					datasets
-				};
+		this.countsLoading = true;
+		this.timesheetStatisticsService
+			.getCounts(request)
+			.then((resp) => {
+				this.counts = resp;
 			})
-			.finally(() => (this.loading = false));
+			.finally(() => {
+				this.countsLoading = false;
+			});
 	}
 }
