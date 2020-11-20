@@ -6,18 +6,16 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="filters row mb-3">
-			<div class="col">
-				<ngx-filters
-					dateRange="week"
-					[hasEmployeeFilter]="false"
-					[saveFilters]="false"
-					[filters]="logRequest"
-					(filtersChange)="filtersChange($event)"
-				></ngx-filters>
-			</div>
+		<div class="filters mt-4">
+			<ngx-filters
+				dateRange="week"
+				[hasEmployeeFilter]="false"
+				[saveFilters]="false"
+				[filters]="logRequest"
+				(filtersChange)="filtersChange($event)"
+			></ngx-filters>
 		</div>
-		<div class="row">
+		<div class="row mt-4">
 			<div
 				class="col-sm-4 col-md-3 col-lg"
 				*ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE"
@@ -26,6 +24,7 @@
 					[nbSpinner]="countsLoading"
 					nbSpinnerSize="giant"
 					nbSpinnerStatus="primary"
+					class="mb-0"
 				>
 					<nb-card-body>
 						<p>
@@ -42,6 +41,7 @@
 					[nbSpinner]="countsLoading"
 					nbSpinnerSize="giant"
 					nbSpinnerStatus="primary"
+					class="mb-0"
 				>
 					<nb-card-body>
 						<p>
@@ -58,6 +58,7 @@
 					[nbSpinner]="countsLoading"
 					nbSpinnerSize="giant"
 					nbSpinnerStatus="primary"
+					class="mb-0"
 				>
 					<nb-card-body>
 						<p>
@@ -72,6 +73,7 @@
 					[nbSpinner]="countsLoading"
 					nbSpinnerSize="giant"
 					nbSpinnerStatus="primary"
+					class="mb-0"
 				>
 					<nb-card-body>
 						<p>
@@ -84,7 +86,7 @@
 				</nb-card>
 			</div>
 		</div>
-		<div class="daily-time-report my-3">
+		<div class="daily-time-report mt-4">
 			<nb-card>
 				<nb-card-body>
 					<ngx-weekly-time-report-horizontal-bar-chart
@@ -93,7 +95,7 @@
 				</nb-card-body>
 			</nb-card>
 		</div>
-		<div class="table">
+		<div class="table mt-4">
 			<div
 				class="weekly-logs row-table"
 				[nbSpinner]="loading"
