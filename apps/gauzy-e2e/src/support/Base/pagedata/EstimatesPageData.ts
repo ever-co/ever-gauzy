@@ -2,6 +2,7 @@ export const EstimatesPageData = {
 	invoiceType: 'By Employee Hours',
 	discountValue: 5,
 	discountType: 'Percent',
+	taxValue: 5,
 	taxType: 'Percent',
 	saveAsDraftButton: 'Save as Draft',
 	editButton: 'Edit',
@@ -9,5 +10,6 @@ export const EstimatesPageData = {
 	duplicateButton: 'Duplicate',
 	sendButton: 'Send',
 	convertToInvoiceButton: 'Convert to invoice',
-	viewButton: 'View'
+	viewButton: 'View',
+	emailButton: 'Email'
 };

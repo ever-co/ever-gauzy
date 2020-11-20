@@ -80,6 +80,15 @@ export const selectContactFromDropdwon = (index) => {
 	clickButtonByIndex(EstimatesPage.contactOptionCss, index);
 };
 
+export const taxInputVisible = () => {
+	verifyElementIsVisible(EstimatesPage.taxInputCss);
+};
+
+export const enterTaxData = (data) => {
+	clearField(EstimatesPage.taxInputCss);
+	enterInput(EstimatesPage.taxInputCss, data);
+};
+
 export const taxTypeDropdownVisible = () => {
 	verifyElementIsVisible(EstimatesPage.taxTypeDropdownCss);
 };
@@ -141,4 +150,60 @@ export const tableRowVisible = () => {
 
 export const selectTableRow = (index) => {
 	clickButtonByIndex(EstimatesPage.tableRowCss, index);
+};
+
+export const actionButtonVisible = () => {
+	verifyElementIsVisible(EstimatesPage.infoButtonCss);
+};
+
+export const clickActionButtonByText = (text) => {
+	clickElementByText(EstimatesPage.infoButtonCss, text);
+};
+
+export const backButtonVisible = () => {
+	verifyElementIsVisible(EstimatesPage.backButtonCss);
+};
+
+export const clickBackButton = () => {
+	clickButton(EstimatesPage.backButtonCss);
+};
+
+export const confirmButtonVisible = () => {
+	verifyElementIsVisible(EstimatesPage.confirmButtonCss);
+};
+
+export const clickConfirmButton = () => {
+	clickButton(EstimatesPage.confirmButtonCss);
+};
+
+export const emailInputVisible = () => {
+	verifyElementIsVisible(EstimatesPage.emailInputCss);
+};
+
+export const enterEmailData = (data) => {
+	enterInput(EstimatesPage.emailInputCss, data);
+};
+
+export const editButtonVisible = () => {
+	verifyElementIsVisible(EstimatesPage.editButtonCss);
+};
+
+export const clickEditButton = (text) => {
+	clickElementByText(EstimatesPage.editButtonCss, text);
+};
+
+export const deleteButtonVisible = () => {
+	verifyElementIsVisible(EstimatesPage.deleteButtonCss);
+};
+
+export const clickDeleteButton = () => {
+	clickButton(EstimatesPage.deleteButtonCss);
+};
+
+export const confirmDeleteButtonVisible = () => {
+	verifyElementIsVisible(EstimatesPage.confirmDeleteButtonCss);
+};
+
+export const clickConfirmDeleteButton = () => {
+	clickButton(EstimatesPage.confirmDeleteButtonCss);
 };

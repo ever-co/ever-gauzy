@@ -19,6 +19,7 @@ let city = ' ';
 let postcode = ' ';
 let street = ' ';
 let website = ' ';
+let ssendEmail = ' ';
 
 describe('Estimates test', () => {
 	before(() => {
@@ -29,6 +30,7 @@ describe('Estimates test', () => {
 		postcode = faker.address.zipCode();
 		street = faker.address.streetAddress();
 		website = faker.internet.url();
+		ssendEmail = faker.internet.email();
 
 		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
@@ -71,6 +73,8 @@ describe('Estimates test', () => {
 		estimatesPage.contactDropdownVisible();
 		estimatesPage.clickContactDropdown();
 		estimatesPage.selectContactFromDropdwon(0);
+		estimatesPage.taxInputVisible();
+		estimatesPage.enterTaxData(EstimatesPageData.taxValue);
 		estimatesPage.taxTypeDropdownVisible();
 		estimatesPage.clickTaxTypeDropdown();
 		estimatesPage.selectTaxTypeFromDropdown(EstimatesPageData.taxType);
@@ -90,10 +94,87 @@ describe('Estimates test', () => {
 			EstimatesPageData.saveAsDraftButton
 		);
 	});
-	it('Should be able to edit estimate', () => {});
-	it('Should be able to duplicate estimate', () => {});
-	it('Should be able to send estimate', () => {});
-	it('Should be able to convert estimate to invoice', () => {});
-	it('Should be able to view estimate', () => {});
-	it('Should be able to delete estimate', () => {});
+	it('Should be able to edit estimate', () => {
+		estimatesPage.waitMessageToHide();
+		estimatesPage.addButtonVisible();
+		estimatesPage.clickAddButton();
+		estimatesPage.backButtonVisible();
+		estimatesPage.clickBackButton();
+		estimatesPage.selectTableRow(0);
+		estimatesPage.editButtonVisible();
+		estimatesPage.clickEditButton(EstimatesPageData.editButton);
+		estimatesPage.discountInputVisible();
+		estimatesPage.enterDiscountData(EstimatesPageData.discountValue);
+		estimatesPage.discountTypeDropdownVisible();
+		estimatesPage.clickDiscountDropdown();
+		estimatesPage.selectDiscountTypeFromDropdown(
+			EstimatesPageData.discountType
+		);
+		estimatesPage.contactDropdownVisible();
+		estimatesPage.clickContactDropdown();
+		estimatesPage.selectContactFromDropdwon(0);
+		estimatesPage.taxInputVisible();
+		estimatesPage.enterTaxData(EstimatesPageData.taxValue);
+		estimatesPage.taxTypeDropdownVisible();
+		estimatesPage.clickTaxTypeDropdown();
+		estimatesPage.selectTaxTypeFromDropdown(EstimatesPageData.taxType);
+		estimatesPage.saveAsDraftButtonVisible();
+		estimatesPage.clickSaveAsDraftButton(
+			EstimatesPageData.saveAsDraftButton
+		);
+	});
+	it('Should be able to duplicate estimate', () => {
+		estimatesPage.waitMessageToHide();
+		estimatesPage.selectTableRow(0);
+		estimatesPage.actionButtonVisible();
+		estimatesPage.clickActionButtonByText(
+			EstimatesPageData.duplicateButton
+		);
+		estimatesPage.waitMessageToHide();
+		estimatesPage.backButtonVisible();
+		estimatesPage.clickBackButton();
+	});
+	it('Should be able to send estimate', () => {
+		cy.on('uncaught:exception', (err, runnable) => {
+			return false;
+		});
+		estimatesPage.selectTableRow(0);
+		estimatesPage.actionButtonVisible();
+		estimatesPage.clickActionButtonByText(EstimatesPageData.sendButton);
+		estimatesPage.confirmButtonVisible();
+		estimatesPage.clickConfirmButton();
+	});
+	it('Should be able to view estimate', () => {
+		estimatesPage.waitMessageToHide();
+		estimatesPage.selectTableRow(0);
+		estimatesPage.actionButtonVisible();
+		estimatesPage.clickActionButtonByText(EstimatesPageData.viewButton);
+		estimatesPage.backButtonVisible();
+		estimatesPage.clickBackButton();
+	});
+	it('Should be able to send estimate by email', () => {
+		estimatesPage.selectTableRow(0);
+		estimatesPage.actionButtonVisible();
+		estimatesPage.clickActionButtonByText(EstimatesPageData.emailButton);
+		estimatesPage.emailInputVisible();
+		estimatesPage.enterEmailData(ssendEmail);
+		estimatesPage.confirmButtonVisible();
+		estimatesPage.clickConfirmButton();
+	});
+	it('Should be able to convert estimate to invoice', () => {
+		estimatesPage.waitMessageToHide();
+		estimatesPage.selectTableRow(0);
+		estimatesPage.actionButtonVisible();
+		estimatesPage.clickActionButtonByText(
+			EstimatesPageData.convertToInvoiceButton
+		);
+	});
+	it('Should be able to delete estimate', () => {
+		estimatesPage.waitMessageToHide();
+		estimatesPage.selectTableRow(0);
+		estimatesPage.deleteButtonVisible();
+		estimatesPage.clickDeleteButton();
+		estimatesPage.confirmDeleteButtonVisible();
+		estimatesPage.clickConfirmDeleteButton();
+	});
 });
