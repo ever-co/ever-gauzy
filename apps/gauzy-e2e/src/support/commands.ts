@@ -57,6 +57,56 @@ export const CustomCommands = {
 		organizationTagsUserPage.saveTagButtonVisible();
 		organizationTagsUserPage.clickSaveTagButton();
 	},
+	addContact: (
+		fullName,
+		email,
+		country,
+		city,
+		postcode,
+		street,
+		website,
+		contactsLeadsPage,
+		ContactsLeadsPageData
+	) => {
+		cy.visit('/#/pages/contacts/leads');
+		contactsLeadsPage.gridBtnExists();
+		contactsLeadsPage.gridBtnClick(1);
+		contactsLeadsPage.addButtonVisible();
+		contactsLeadsPage.clickAddButton();
+		contactsLeadsPage.nameInputVisible();
+		contactsLeadsPage.enterNameInputData(fullName);
+		contactsLeadsPage.emailInputVisible();
+		contactsLeadsPage.enterEmailInputData(email);
+		contactsLeadsPage.phoneInputVisible();
+		contactsLeadsPage.enterPhoneInputData(
+			ContactsLeadsPageData.defaultPhone
+		);
+		contactsLeadsPage.countryInputVisible();
+		contactsLeadsPage.enterCountryInputData(country);
+		contactsLeadsPage.cityInputVisible();
+		contactsLeadsPage.enterCityInputData(city);
+		contactsLeadsPage.postcodeInputVisible();
+		contactsLeadsPage.enterPostcodeInputData(postcode);
+		contactsLeadsPage.streetInputVisible();
+		contactsLeadsPage.enterStreetInputData(street);
+		contactsLeadsPage.projectDropdownVisible();
+		contactsLeadsPage.clickProjectDropdown();
+		contactsLeadsPage.selectProjectFromDropdown(
+			ContactsLeadsPageData.defaultProject
+		);
+		contactsLeadsPage.selectEmployeeDropdownVisible();
+		contactsLeadsPage.clickSelectEmployeeDropdown();
+		contactsLeadsPage.selectEmployeeDropdownOption(0);
+		contactsLeadsPage.clickKeyboardButtonByKeyCode(9);
+		contactsLeadsPage.tagsMultyselectVisible();
+		contactsLeadsPage.clickTagsMultyselect();
+		contactsLeadsPage.selectTagsFromDropdown(0);
+		contactsLeadsPage.clickCardBody();
+		contactsLeadsPage.websiteInputVisible();
+		contactsLeadsPage.enterWebsiteInputData(website);
+		contactsLeadsPage.saveButtonVisible();
+		contactsLeadsPage.clickSaveButton();
+	},
 	addProject: (organizationProjectsPage, OrganizationProjectsPageData) => {
 		cy.visit('/#/pages/organization/projects');
 		organizationProjectsPage.gridBtnExists();
