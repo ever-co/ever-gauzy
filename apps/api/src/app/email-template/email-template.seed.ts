@@ -3,7 +3,6 @@ import { Connection } from 'typeorm';
 import { EmailTemplate } from './email-template.entity';
 import * as mjml2html from 'mjml';
 import * as path from 'path';
-import { IOrganization, ITenant } from '@gauzy/models';
 /**
  * Note: This seed file assumes the following directory structure in seeds/data/email/default-email-templates/ folder
  *
@@ -14,11 +13,7 @@ import { IOrganization, ITenant } from '@gauzy/models';
  * template-type: Can be 'html', 'subject' or 'text' but needs to only have .hbs or .mjml extension
  */
 export const createDefaultEmailTemplates = async (
-	connection: Connection,
-	defaultData: {
-		tenant: ITenant;
-		organization: IOrganization;
-	}
+	connection: Connection
 ): Promise<any> => {
 	try {
 		const templatePath = [
@@ -40,7 +35,7 @@ export const createDefaultEmailTemplates = async (
 
 		findInDir(FOLDER_PATH, files);
 		console.log(files);
-		await fileToTemplate(connection, files, defaultData);
+		await fileToTemplate(connection, files);
 	} catch (error) {
 		// it's not a big issue for now if we can't create email templates
 		console.error(error);
@@ -62,9 +57,9 @@ function findInDir(dir, fileList = []) {
 	});
 }
 
-const fileToTemplate = async (connection, files, defaultData) => {
+const fileToTemplate = async (connection, files) => {
 	for (const file of files) {
-		const template = await pathToEmailTemplate(file, defaultData);
+		const template = await pathToEmailTemplate(file);
 		if (template && template.hbs) {
 			await insertTemplate(connection, template);
 		}
@@ -84,13 +79,11 @@ const insertTemplate = async (
 };
 
 const pathToEmailTemplate = async (
-	fullPath: string,
-	{ tenant, organization }
+	fullPath: string
 ): Promise<EmailTemplate> => {
 	try {
 		const template = new EmailTemplate();
-		template.tenant = tenant;
-		template.organization = organization;
+		//default template access for tenant organizations
 
 		const templatePath = fullPath.replace(/\\/g, '/').split('/');
 		const fileName = templatePath[templatePath.length - 1].split('.', 2);

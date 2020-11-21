@@ -14,6 +14,7 @@ import { IFiverrConfig } from './IFiverrConfig';
 import { IKeycloakConfig } from './IKeycloakConfig';
 import { IAuth0Config } from './IAuth0Config';
 import { AWSConfig } from './AWSConfig';
+import { ISMTPConfig } from './ISMTPConfig';
 import { FileStorageProviderEnum } from '@gauzy/models';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -76,4 +77,6 @@ export interface IEnvironment {
 	 * Endpoint for Gauzy AI API (optional), e.g.: http://localhost:3005/graphql
 	 */
 	gauzyAIGraphQLEndpoint?: string;
+
+	smtpConfig?: ISMTPConfig;
 }

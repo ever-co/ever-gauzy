@@ -4,7 +4,6 @@ import { EmailTemplateService } from '../../email-template.service';
 import { EmailTemplate } from '../../email-template.entity';
 import { LanguagesEnum, EmailTemplateNameEnum } from '@gauzy/models';
 import * as mjml2html from 'mjml';
-import { Organization } from '../../../organization/organization.entity';
 import { BadRequestException } from '@nestjs/common';
 
 @CommandHandler(EmailTemplateSaveCommand)
@@ -16,7 +15,14 @@ export class EmailTemplateSaveHandler
 		command: EmailTemplateSaveCommand
 	): Promise<EmailTemplate> {
 		const {
-			input: { languageCode, name, organizationId, mjml, subject }
+			input: {
+				languageCode,
+				name,
+				organizationId,
+				tenantId,
+				mjml,
+				subject
+			}
 		} = command;
 
 		try {
@@ -24,6 +30,7 @@ export class EmailTemplateSaveHandler
 				languageCode,
 				name,
 				organizationId,
+				tenantId,
 				mjml,
 				'html'
 			);
@@ -36,6 +43,7 @@ export class EmailTemplateSaveHandler
 			languageCode,
 			name,
 			organizationId,
+			tenantId,
 			subject,
 			'subject'
 		);
@@ -45,6 +53,7 @@ export class EmailTemplateSaveHandler
 		languageCode: LanguagesEnum,
 		name: EmailTemplateNameEnum,
 		organizationId: string,
+		tenantId: string,
 		content: string,
 		type: 'html' | 'subject'
 	): Promise<EmailTemplate> {
@@ -57,7 +66,8 @@ export class EmailTemplateSaveHandler
 		} = await this.emailTemplateService.findOneOrFail({
 			languageCode,
 			name: `${name}/${type}`,
-			organization: { id: organizationId }
+			organizationId,
+			tenantId
 		});
 
 		let entity: EmailTemplate;
@@ -80,8 +90,8 @@ export class EmailTemplateSaveHandler
 			await this.emailTemplateService.update(record.id, entity);
 		} else {
 			entity = new EmailTemplate();
-			entity.organization = new Organization();
-			entity.organization.id = organizationId;
+			entity.organizationId = organizationId;
+			entity.tenantId = tenantId;
 			entity.languageCode = languageCode;
 			entity.name = `${name}/${type}`;
 			switch (type) {
