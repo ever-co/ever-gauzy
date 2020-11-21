@@ -100,3 +100,24 @@ export interface IInviteViewModel {
 	id: string;
 	inviteUrl: string;
 }
+
+export interface IInviteUserModel
+	extends IBasePerTenantAndOrganizationEntityModel {
+	email: string;
+	role: string;
+	registerUrl: string;
+	languageCode: LanguagesEnum;
+	invitedBy: IUser;
+	originUrl?: string;
+}
+export interface IInviteEmployeeModel
+	extends IBasePerTenantAndOrganizationEntityModel {
+	email: string;
+	registerUrl: string;
+	languageCode: LanguagesEnum;
+	invitedBy: IUser;
+	projects?: IOrganizationProject[];
+	organizationContacts?: IOrganizationContact[];
+	departments?: IOrganizationDepartment[];
+	originUrl?: string;
+}

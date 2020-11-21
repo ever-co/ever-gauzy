@@ -1,8 +1,8 @@
 import { environment } from '@env-api/environment';
 import {
+	IInviteEmployeeModel,
+	IInviteUserModel,
 	IOrganizationContact,
-	IOrganizationDepartment,
-	IOrganizationProject,
 	LanguagesEnum
 } from '@gauzy/models';
 import { Injectable } from '@nestjs/common';
@@ -20,28 +20,6 @@ import { Invite } from '../invite/invite.entity';
 import { Timesheet } from '../timesheet/timesheet.entity';
 import { RequestContext } from '../core/context';
 
-export interface InviteUserModel {
-	email: string;
-	role: string;
-	organization: Organization;
-	registerUrl: string;
-	languageCode: LanguagesEnum;
-	invitedBy: User;
-	originUrl?: string;
-}
-
-export interface InviteEmployeeModel {
-	email: string;
-	registerUrl: string;
-	organization: Organization;
-	languageCode: LanguagesEnum;
-	invitedBy: User;
-	projects?: IOrganizationProject[];
-	organizationContacts?: IOrganizationContact[];
-	departments?: IOrganizationDepartment[];
-	originUrl?: string;
-}
-
 @Injectable()
 export class EmailService extends CrudService<IEmail> {
 	constructor(
@@ -58,9 +36,6 @@ export class EmailService extends CrudService<IEmail> {
 	email = new Email({
 		message: {
 			from: 'Gauzy@Ever.co'
-		},
-		transport: {
-			jsonTransport: true
 		},
 		i18n: {},
 		views: {
@@ -83,7 +58,8 @@ export class EmailService extends CrudService<IEmail> {
 					{
 						name: view,
 						languageCode: locals.locale || 'en',
-						organization: { id: locals.organizationId }
+						organizationId: locals.organizationId,
+						tenantId: locals.tenantId
 					}
 				);
 				emailTemplate = customEmailTemplate;
@@ -93,12 +69,12 @@ export class EmailService extends CrudService<IEmail> {
 						{
 							name: view,
 							languageCode: locals.locale || 'en',
-							organization: { id: IsNull() }
+							organizationId: locals.organizationId,
+							tenantId: locals.tenantId
 						}
 					);
 					emailTemplate = defaultEmailTemplate;
 				}
-
 				if (!emailTemplate || emailTemplate.length < 1) {
 					return resolve('');
 				}
@@ -119,7 +95,9 @@ export class EmailService extends CrudService<IEmail> {
 		invoiceId: string,
 		isEstimate: boolean,
 		token: any,
-		originUrl?: string
+		originUrl?: string,
+		tenantId?: string,
+		organizationId?: string
 	) {
 		this.email
 			.send({
@@ -137,6 +115,8 @@ export class EmailService extends CrudService<IEmail> {
 					]
 				},
 				locals: {
+					tenantId,
+					organizationId,
 					locale: languageCode,
 					host: originUrl || environment.host,
 					acceptUrl:
@@ -148,6 +128,7 @@ export class EmailService extends CrudService<IEmail> {
 				}
 			})
 			.then((res) => {
+				console.log(res, 'res');
 				this.createEmailRecord({
 					templateName: isEstimate
 						? 'email-estimate'
@@ -204,7 +185,7 @@ export class EmailService extends CrudService<IEmail> {
 			.catch(console.error);
 	}
 
-	inviteUser(inviteUserModel: InviteUserModel) {
+	inviteUser(inviteUserModel: IInviteUserModel) {
 		const {
 			email,
 			role,
@@ -245,7 +226,7 @@ export class EmailService extends CrudService<IEmail> {
 			.catch(console.error);
 	}
 
-	inviteEmployee(inviteEmployeeModel: InviteEmployeeModel) {
+	inviteEmployee(inviteEmployeeModel: IInviteEmployeeModel) {
 		const {
 			email,
 			registerUrl,

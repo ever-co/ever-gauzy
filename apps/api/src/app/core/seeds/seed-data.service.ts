@@ -543,10 +543,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Email Templates',
-			createDefaultEmailTemplates(this.connection, {
-				tenant: this.tenant,
-				organization: this.organizations[0]
-			})
+			createDefaultEmailTemplates(this.connection)
 		);
 
 		await this.tryExecute(

@@ -14,6 +14,7 @@ import {
 	LanguagesEnum
 } from '@gauzy/models';
 import { NbThemeService, NbToastrService } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import 'brace';
 import 'brace/ext/language_tools';
@@ -21,10 +22,11 @@ import 'brace/mode/handlebars';
 import 'brace/theme/sqlserver';
 import 'brace/theme/tomorrow_night';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import { EmailTemplateService } from '../../@core/services/email-template.service';
 import { Store } from '../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './email-templates.component.html',
 	styleUrls: ['./email-templates.component.scss']
@@ -61,12 +63,15 @@ export class EmailTemplatesComponent
 
 	async ngOnInit() {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (org) => {
-				if (org) {
-					this.organization = org;
-					this.organizationName = org.name;
-					this.organizationId = org.id;
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
+			.subscribe(async (organization) => {
+				if (organization) {
+					this.organization = organization;
+					this.organizationName = organization.name;
+					this.organizationId = organization.id;
 					await this.getTemplate();
 				}
 			});
@@ -77,7 +82,7 @@ export class EmailTemplatesComponent
 	ngAfterViewInit() {
 		this.themeService
 			.getJsTheme()
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(
 				({
 					name
@@ -114,7 +119,8 @@ export class EmailTemplatesComponent
 
 	async getTemplate() {
 		try {
-			const { id: organizationId, tenantId } = this.organization;
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
 			const result = this.form
 				? await this.emailTemplateService.getTemplate({
 						languageCode: this.form.get('languageCode').value,
