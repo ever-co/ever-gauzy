@@ -58,6 +58,26 @@
 							</nb-select>
 						</div>
 					</div>
+
+					<div class="form-group col-6">
+						<label class="label">{{
+							'FORM.LABELS.START_TIME' | translate
+						}}</label>
+						<ga-timer-picker
+							fullWidth
+							formControlName="defaultStartTime"
+						></ga-timer-picker>
+					</div>
+
+					<div class="form-group col-6">
+						<label class="label">{{
+							'FORM.LABELS.END_TIME' | translate
+						}}</label>
+						<ga-timer-picker
+							fullWidth
+							formControlName="defaultEndTime"
+						></ga-timer-picker>
+					</div>
 				</div>
 				<div class="row">
 					<div class="col-6">
@@ -262,9 +282,7 @@
 	</nb-card>
 
 	<nb-card>
-		<nb-card-header>
-			Accounting
-		</nb-card-header>
+		<nb-card-header> Accounting </nb-card-header>
 		<nb-card-body>
 			<div class="fields">
 				<div class="row">
@@ -285,9 +303,7 @@
 					</div>
 					<div class="col-6">
 						<div class="form-group">
-							<label class="label">
-								Fiscal Year End Date
-							</label>
+							<label class="label"> Fiscal Year End Date </label>
 							<input
 								fullWidth
 								type="date"
@@ -340,9 +356,7 @@
 				</div>
 				<div class="row">
 					<div class="col-6">
-						<label class="label">
-							Discount after tax
-						</label>
+						<label class="label"> Discount after tax </label>
 						<nb-toggle
 							class="d-block"
 							formControlName="discountAfterTax"

@@ -64,6 +64,11 @@ export class AvailabilitySlotsComponent
 	public loading: boolean = true;
 	organization: IOrganization;
 
+	createForm = {
+		startTime: '00:00',
+		endTime: '00:00'
+	};
+
 	constructor(
 		private store: Store,
 		private route: ActivatedRoute,
@@ -122,6 +127,22 @@ export class AvailabilitySlotsComponent
 				this.organization = org;
 				this._selectedOrganizationId = org.id;
 				this.fetchAvailableSlots();
+
+				if (org.defaultStartTime) {
+					this.createForm.startTime = org.defaultStartTime;
+				}
+				if (org.defaultEndTime) {
+					this.createForm.endTime = org.defaultEndTime;
+				}
+			});
+
+		this.store.selectedEmployee$
+			.pipe(
+				filter((employee) => !!employee),
+				untilDestroyed(this)
+			)
+			.subscribe((employee) => {
+				this.onEmployeeChange(employee);
 			});
 	}
 
@@ -273,6 +294,31 @@ export class AvailabilitySlotsComponent
 		});
 
 		this.saveSelectedDateRange();
+	}
+
+	async setSchedule() {
+		const payload: IAvailabilitySlotsCreateInput[] = [];
+		const calender = this.calendar.getApi();
+		const range = calender.getCurrentData().dateProfile.currentRange;
+		let start = range.start;
+		while (start < range.end) {
+			const date = moment(start).format('YYYY-MM-DD');
+			payload.push({
+				startTime: moment(
+					date + ' ' + this.createForm.startTime
+				).toDate(),
+				endTime: moment(date + ' ' + this.createForm.endTime).toDate(),
+				employeeId: this.selectedEmployeeId,
+				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId,
+				type: this.recurringAvailabilityMode ? 'Recurring' : 'Default',
+				allDay: false
+			});
+			start = moment(start).add(1, 'day').toDate();
+		}
+
+		await this.availabilitySlotsService.createBulk(payload);
+		this.fetchAvailableSlots();
 	}
 
 	async saveSelectedDateRange() {

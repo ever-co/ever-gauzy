@@ -5,7 +5,7 @@ import { LayoutComponent } from './layout/layout.component';
 const routes: Routes = [
 	{
 		path: '',
-		redirectTo: 'date-specific-availability',
+		redirectTo: 'recurring-availability',
 		pathMatch: 'full'
 	},
 	{

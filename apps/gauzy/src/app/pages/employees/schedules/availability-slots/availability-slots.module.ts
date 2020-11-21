@@ -17,6 +17,8 @@ import {
 import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
 import { ThemeModule } from 'apps/gauzy/src/app/@theme/theme.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
+import { TimerPickerModule } from 'apps/gauzy/src/app/@shared/timer-picker/timer-picker.module';
+import { FormsModule } from '@angular/forms';
 
 @NgModule({
 	declarations: [AvailabilitySlotsComponent],
@@ -27,13 +29,15 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 		NbIconModule,
 		NbTooltipModule,
 		ThemeModule,
-		FullCalendarModule,
 		TranslateModule,
+		FullCalendarModule,
 		EmployeeSelectorsModule,
 		NbDialogModule,
 		SharedModule,
 		NbCardModule,
 		NbButtonModule,
+		TimerPickerModule,
+		FormsModule,
 		NgxPermissionsModule.forChild({
 			permissionsIsolate: true,
 			rolesIsolate: true

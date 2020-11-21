@@ -348,15 +348,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 						}
 					},
 					{
-						title: 'Schedules',
-						icon: 'calendar-outline',
-						link: '/pages/employees/schedules',
-						pathMatch: 'prefix',
-						data: {
-							translationKey: 'MENU.SCHEDULES'
-						}
-					},
-					{
 						title: 'Appointments',
 						icon: 'calendar-outline',
 						link: '/pages/employees/appointments',
