@@ -75,7 +75,7 @@ export class InviteAcceptOrganizationContactHandler
 		const { organizationContact } = await this.inviteService.findOne(
 			inviteId,
 			{
-				relations: ['contact']
+				relations: ['organizationContact']
 			}
 		);
 
