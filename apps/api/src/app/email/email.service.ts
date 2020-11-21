@@ -19,7 +19,8 @@ import { Email as IEmail } from './email.entity';
 import { Invite } from '../invite/invite.entity';
 import { Timesheet } from '../timesheet/timesheet.entity';
 import { RequestContext } from '../core/context';
-
+import { environment as env } from '@env-api/environment';
+import { ISMTPConfig } from '../../environments/ISMTPConfig';
 @Injectable()
 export class EmailService extends CrudService<IEmail> {
 	constructor(
@@ -35,8 +36,11 @@ export class EmailService extends CrudService<IEmail> {
 
 	email = new Email({
 		message: {
-			from: 'Gauzy@Ever.co'
+			from: env.smtpConfig.from || 'Gauzy@Ever.co'
 		},
+		//If you want to send emails in development or test environments, set options.send to true.
+		send: true,
+		transport: this.createSMTPTransporter(),
 		i18n: {},
 		views: {
 			options: {
@@ -69,8 +73,8 @@ export class EmailService extends CrudService<IEmail> {
 						{
 							name: view,
 							languageCode: locals.locale || 'en',
-							organizationId: locals.organizationId,
-							tenantId: locals.tenantId
+							organizationId: IsNull(),
+							tenantId: IsNull()
 						}
 					);
 					emailTemplate = defaultEmailTemplate;
@@ -78,7 +82,6 @@ export class EmailService extends CrudService<IEmail> {
 				if (!emailTemplate || emailTemplate.length < 1) {
 					return resolve('');
 				}
-
 				const template = Handlebars.compile(emailTemplate[0].hbs);
 				const html = template(locals);
 
@@ -128,7 +131,6 @@ export class EmailService extends CrudService<IEmail> {
 				}
 			})
 			.then((res) => {
-				console.log(res, 'res');
 				this.createEmailRecord({
 					templateName: isEstimate
 						? 'email-estimate'
@@ -498,6 +500,22 @@ export class EmailService extends CrudService<IEmail> {
 				});
 			})
 			.catch(console.error);
+	}
+
+	/*
+	 * This example would connect to a SMTP server separately for every single message
+	 */
+	createSMTPTransporter() {
+		const smtp: ISMTPConfig = env.smtpConfig;
+		return {
+			host: smtp.host,
+			port: smtp.port,
+			secure: smtp.secure, // true for 465, false for other ports
+			auth: {
+				user: smtp.auth.user,
+				pass: smtp.auth.pass
+			}
+		};
 	}
 
 	// tested e-mail send functionality
