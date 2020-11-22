@@ -200,6 +200,8 @@ import {
 	UpworkJobService,
 	UpworkOffersService
 } from '@gauzy/integration-upwork';
+import { CustomSmtp } from '../custom-smtp/custom-smtp.entity';
+import { CustomSmtpService } from '../custom-smtp/custom-smtp.service';
 
 @Module({
 	imports: [
@@ -225,6 +227,7 @@ import {
 			CandidateTechnologies,
 			Contact,
 			Country,
+			CustomSmtp,
 
 			Deal,
 
@@ -338,6 +341,7 @@ import {
 		CandidateTechnologiesService,
 		ContactService,
 		CountryService,
+		CustomSmtpService,
 
 		DealService,
 
@@ -452,6 +456,7 @@ import {
 		CandidateTechnologiesService,
 		ContactService,
 		CountryService,
+		CustomSmtpService,
 
 		DealService,
 

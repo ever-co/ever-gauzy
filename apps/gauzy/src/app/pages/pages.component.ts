@@ -734,8 +734,17 @@ export class PagesComponent implements OnInit, OnDestroy {
 						}
 					},
 					{
+						title: 'SMS Gateways',
+						icon: 'at-outline',
+						link: '/pages/settings/sms-gateway',
+						data: {
+							translationKey: 'MENU.SMS_GATEWAYS'
+						}
+					},
+					{
 						title: 'Custom SMTP',
 						icon: 'at-outline',
+						link: '/pages/settings/custom-smtp',
 						data: {
 							translationKey: 'MENU.CUSTOM_SMTP'
 						}
