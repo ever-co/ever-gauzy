@@ -13,6 +13,9 @@ export function createSetupWindow(setupWindow, value) {
 		slashes: true
 	});
 
+	if (value) {
+		setupWindow.hide();
+	}
 	setupWindow.loadURL(launchPath);
 	setupWindow.setMenu(
 		Menu.buildFromTemplate([
@@ -22,9 +25,7 @@ export function createSetupWindow(setupWindow, value) {
 			}
 		])
 	);
-	if (value) {
-		setupWindow.hide();
-	}
+	// setupWindow.webContents.toggleDevTools();
 
 	setupWindow.on('close', (e) => {
 		// Dereference the window object, usually you would store windows
