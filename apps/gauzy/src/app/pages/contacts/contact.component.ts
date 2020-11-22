@@ -15,7 +15,7 @@ import {
 } from '@angular/router';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { first, tap } from 'rxjs/operators';
+import { filter, first, tap } from 'rxjs/operators';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { EmployeesService } from '../../@core/services';
@@ -81,7 +81,10 @@ export class ContactComponent
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((organization) => {
 				if (organization) {
 					this.selectedOrganization = organization;
@@ -89,8 +92,6 @@ export class ContactComponent
 					this.loadOrganizationContacts();
 					this.loadProjectsWithoutOrganizationContacts();
 					this.loadEmployees();
-					this.loadSmartTable();
-					this._applyTranslationOnSmartTable();
 				}
 			});
 		this.route.queryParamMap

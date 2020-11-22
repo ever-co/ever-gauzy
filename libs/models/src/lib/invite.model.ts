@@ -47,10 +47,10 @@ export interface ICreateEmailInvitesInput
 	startedWorkOn: string;
 }
 
-export interface ICreateOrganizationContactInviteInput {
+export interface ICreateOrganizationContactInviteInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	emailId: string;
 	organizationContactId: string;
-	organizationId: string;
 	roleId: string;
 	invitedById: string;
 	originalUrl: string;
