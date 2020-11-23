@@ -78,7 +78,9 @@
 		"MANAGE_TEMPLATES": "Manage Templates",
 		"MAKE_DEFAULT": "Make Default",
 		"HIDE_ALL": "Hide All",
-		"YES_HIDE_ALL_JOBS": "Yes, Hide All Jobs"
+		"YES_HIDE_ALL_JOBS": "Yes, Hide All Jobs",
+		"VALIDATE": "Validate",
+		"VALIDATED": "Validated"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -825,7 +827,7 @@
 			"TIME_FRAME_PAGE_TITLE": "Set Time Frame",
 			"PREDEFINED_TIME_FRAMES": "Predefined Time Frames",
 			"ADD_KPI": "Add KPI",
-			"MAX_ENTITIES": "Max Number of entites that can be created",
+			"MAX_ENTITIES": "Max Number of entities that can be created",
 			"EMPLOYEE_OBJECTIVES": "Employees can create their own objectives",
 			"WHO_CAN_OWN_OBJECTIVES": "Who can own Objectives?",
 			"WHO_CAN_OWN_KEY_RESULTS": "Who can own Key Results?",
@@ -881,7 +883,7 @@
 				"DESCRIPTION": "Objective Description.",
 				"LEVEL": "Goal Level",
 				"TIME_FRAME_NAME": "Time frame name eg. 'Q4-2020'",
-				"KPI_DESCRIPTION": "A short descripton to give some context about the KPI",
+				"KPI_DESCRIPTION": "A short description to give some context about the KPI",
 				"KPI_NAME": "KPI Title. eg. Maintain page views - 200/day"
 			},
 			"ERROR": {
@@ -968,7 +970,7 @@
 			},
 			"PLACEHOLDERS": {
 				"NAME": "Key Result Name. eg. Add Metadata to improve SEO",
-				"DESCRIPTION": "A short desciption to give some context about the Key Result"
+				"DESCRIPTION": "A short description to give some context about the Key Result"
 			}
 		},
 		"HELPER_TEXT": {
@@ -1219,8 +1221,8 @@
 			"DATE_LIMIT": "Date Limit",
 			"USER_ORGANIZATIONS": "{{ name }}'s List of Organizations",
 			"ADDED_TO_ORGANIZATION": " the organization",
-			"USER_WAS_DELETED": "{{ name }} was successfuly deleted.",
-			"USER_WAS_REMOVED": "{{ name }} was successfuly removed from organization.",
+			"USER_WAS_DELETED": "{{ name }} was successfully deleted.",
+			"USER_WAS_REMOVED": "{{ name }} was successfully removed from organization.",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timer Settings",
 				"ALLOW_MODIFY_TIME": "Allow Modify Time",
@@ -1438,7 +1440,7 @@
 		"EDI": "Edit Time Off record",
 		"SELECT_HOLIDAY_NAME": "Select Holiday name",
 		"ADD_OR_REMOVE_EMPLOYEES": "Добави или премахни служители",
-		"SELECT_TIME_OFF_POLICY": "Seletc Time-off Policy",
+		"SELECT_TIME_OFF_POLICY": "Select Time-off Policy",
 		"ADD_A_DESCRIPTION": "Add a description",
 		"STATUSES": {
 			"REQUESTED": "Requested",
@@ -2135,11 +2137,11 @@
 			"EXPENSES_ERROR": "{{ error }}"
 		},
 		"PROPOSALS": {
-			"EDIT_PROPOSAL": "Proposal successfuly updated",
+			"EDIT_PROPOSAL": "Proposal successfully updated",
 			"REGISTER_PROPOSAL": "New proposal registered",
 			"REGISTER_PROPOSAL_NO_EMPLOYEE_SELECTED": "Please select an employee from the dropdown menu.",
 			"REGISTER_PROPOSAL_ERROR": "{{ error }}",
-			"DELETE_PROPOSAL": "Proposal deleted successfuly",
+			"DELETE_PROPOSAL": "Proposal successfully deleted",
 			"PROPOSAL_ACCEPTED": "Proposal status updated to Accepted",
 			"PROPOSAL_SENT": "Proposal status updated to Sent"
 		},
@@ -2257,7 +2259,7 @@
 			}
 		},
 		"DANGER_ZONE": {
-			"DELETE_ACCOUNT_WRONG_DATA": "Wrong input! Pleace try again.",
+			"DELETE_ACCOUNT_WRONG_DATA": "Wrong input! Please try again.",
 			"ACCOUNT_DELETED": "Your account was deleted successfully!",
 			"RECORD_TYPE": "If Yes, please type 'REMOVE ALL DATA' to confirm."
 		},
@@ -2268,7 +2270,7 @@
 			"ERROR": "{{ error }}"
 		},
 		"AVAILABILITY_SLOTS": {
-			"SAVE": "Availabiliy Slots saved",
+			"SAVE": "Availability Slots saved",
 			"ERROR": "{{ error }}"
 		}
 	},
@@ -2432,7 +2434,7 @@
 	"SCHEDULE": {
 		"DATE_SPECIFIC_AVAILABILITY": "Date Specific Availability",
 		"RECURRING_AVAILABILITY": "Recurring Availability",
-		"DATE_SPECIFIC_AVAILABILITY_TOOLTIP": "You can use Date specific availability to mark availabity for a particular date or add exceptions to your Recurring availability pattern. The changes you make will override your Weekly recurring availability on those sepcific dates only.",
+		"DATE_SPECIFIC_AVAILABILITY_TOOLTIP": "You can use Date specific availability to mark availability for a particular date or add exceptions to your Recurring availability pattern. The changes you make will override your Weekly recurring availability on those specific dates only.",
 		"RECURRING_AVAILABILITY_TOOLTIP": "You can use Recurring availability to mark your availability on a weekly basis. To change your availability for specific days only, you must use Date-specific availability."
 	},
 	"PUBLIC_APPOINTMENTS": {
@@ -2538,5 +2540,8 @@
 			"USERNAME": "Потребителско име",
 			"PASSWORD": "Парола"
 		}
+	},
+	"SMS_GATEWAY_PAGE": {
+		"HEADER": "SMS Provider"
 	}
 }
