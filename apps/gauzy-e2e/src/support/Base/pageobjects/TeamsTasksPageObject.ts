@@ -1,8 +1,10 @@
-export const AddTaskPage = {
+export const TeamsTasksPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	addTaskButtonCss: 'div.mb-3 > button[status="success"]',
-	selectProjectDropdownCss: '[formControlName="project"]',
-	selectProjectDrodownOptionCss: '.ng-option',
+	projectDropdownCss: '[formControlName="project"]',
+	statusDropdownCss: '[formcontrolname="status"]',
+	teamDropdownCss: '[formcontrolname="teams"]',
+	drodownOptionCss: 'div.ng-option',
 	duplicateOrEditTaskButtonCss: 'div.mb-3 > button[status="info"]',
 	deleteTaskButtonCss: 'div.mb-3 > button[status="danger"]',
 	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
@@ -13,12 +15,13 @@ export const AddTaskPage = {
 		'nb-card-footer > button[status="success"]',
 	confirmDeleteTaskButtonCss: 'nb-card-footer > button[status="danger"]',
 	addTitleInputCss: '[formControlName="title"]',
-	selectEmloyeeMultyselectCss: 'button[class="select-button placeholder"]',
-	selectEmployeeDropdownOptionCss: '.option-list nb-option',
+	selectTeamMultyselectCss: 'button[class="select-button placeholder"]',
+	selectTeamDropdownOptionCss: '.option-list nb-option',
 	dueDateInputCss: '[formControlName="dueDate"]',
 	estimateDaysInputCss: '[formControlName="estimateDays"]',
 	estimateHoursInputCss: '[formControlName="estimateHours"]',
 	estimateMinsInputCss: '[formControlName="estimateMinutes"]',
 	descriptionTextareaCss: '[formControlName="description"]',
-	saveNewTaskButtonCss: 'nb-card-footer > button[status="success"]'
+	saveNewTaskButtonCss: 'nb-card-footer > button[status="success"]',
+	cardBodyCss: 'nb-card-footer.text-right'
 };

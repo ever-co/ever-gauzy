@@ -77,44 +77,7 @@ describe('Timesheets test', () => {
 		clientsPage.enterWebsiteInputData(website);
 		clientsPage.saveButtonVisible();
 		clientsPage.clickSaveButton();
-		cy.visit('/#/pages/tasks/dashboard');
-		addTaskPage.gridBtnExists();
-		addTaskPage.gridBtnClick(1);
-		addTaskPage.addTaskButtonVisible();
-		addTaskPage.clickAddTaskButton();
-		addTaskPage.selectProjectDropdownVisible();
-		addTaskPage.clickSelectProjectDropdown();
-		addTaskPage.selectProjectOptionDropdown(
-			AddTasksPageData.defaultTaskProject
-		);
-		addTaskPage.selectEmployeeDropdownVisible();
-		addTaskPage.clickSelectEmployeeDropdown();
-		addTaskPage.selectEmployeeDropdownOption(1);
-		addTaskPage.selectEmployeeDropdownOption(2);
-		addTaskPage.clickKeyboardButtonByKeyCode(9);
-		addTaskPage.addTitleInputVisible();
-		addTaskPage.enterTtielInputData(AddTasksPageData.defaultTaskTitle);
-		addTaskPage.dueDateInputVisible();
-		addTaskPage.enterDueDateData();
-		addTaskPage.clickKeyboardButtonByKeyCode(9);
-		addTaskPage.estimateDaysInputVisible();
-		addTaskPage.enterEstiamteDaysInputData(
-			AddTasksPageData.defaultTaskEstimateDays
-		);
-		addTaskPage.estimateHoursInputVisible();
-		addTaskPage.enterEstiamteHoursInputData(
-			AddTasksPageData.defaultTaskEstimateHours
-		);
-		addTaskPage.estimateMinutesInputVisible();
-		addTaskPage.enterEstimateMinutesInputData(
-			AddTasksPageData.defaultTaskEstimateMinutes
-		);
-		addTaskPage.taskDecriptionTextareaVisible();
-		addTaskPage.enterTaskDescriptionTextareaData(
-			AddTasksPageData.defaultTaskDescription
-		);
-		addTaskPage.saveTaskButtonVisible();
-		addTaskPage.clickSaveTaskButton();
+		CustomCommands.addTask(addTaskPage, AddTasksPageData);
 		cy.visit('/#/pages/employees/timesheets/daily');
 		timesheetsPage.addTimeButtonVisible();
 		timesheetsPage.clickAddTimeButton();
