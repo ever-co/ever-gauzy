@@ -9,7 +9,11 @@
 	</nb-card-header>
 	<nb-card-body>
 		<ng-container *ngIf="organization">
-			<ga-smtp [organization]="organization"></ga-smtp>
+			<ga-smtp [organization]="organization">
+				<header>
+					{{ 'CUSTOM_SMTP_PAGE.HEADER' | translate }}
+				</header>
+			</ga-smtp>
 		</ng-container>
 	</nb-card-body>
 </nb-card>

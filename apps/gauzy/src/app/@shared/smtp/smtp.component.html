@@ -1,6 +1,6 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header>
-		{{ 'CUSTOM_SMTP_PAGE.HEADER' | translate }}
+		<ng-content select="header"></ng-content>
 	</nb-card-header>
 	<nb-card-body>
 		<form
