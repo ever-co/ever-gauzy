@@ -14,12 +14,17 @@ import {
 } from '@nebular/theme';
 import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
 import { FormsModule } from '@angular/forms';
+import { DailyGridModule } from '../../../@shared/report/daily-grid/daily-grid.module';
+import { DailyStatisticsModule } from '../../../@shared/report/daily-statistics/daily-statistics.module';
 
 @NgModule({
 	declarations: [TimeReportsComponent],
 	imports: [
 		CommonModule,
 		SharedModule,
+		DailyGridModule,
+		DailyStatisticsModule,
+
 		TimeReportsRoutingModule,
 		TimeReportHorizontalBarChartModule,
 		TranslateModule,

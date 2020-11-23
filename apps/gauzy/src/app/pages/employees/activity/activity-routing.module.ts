@@ -23,9 +23,31 @@ const routes: Routes = [
 					)
 			},
 			{
-				path: ':type',
+				path: 'time-activities',
 				data: {
-					title: 'ACTIVITY.APPS'
+					title: 'ACTIVITY.TIME_AND_ACTIVITIES'
+				},
+				loadChildren: () =>
+					import(
+						'./time-and-activities/time-and-activities.module'
+					).then((m) => m.TimeAndActivitiesModule)
+			},
+			{
+				path: 'urls',
+				data: {
+					title: 'ACTIVITY.VISITED_SITES',
+					type: 'urls'
+				},
+				loadChildren: () =>
+					import('./app-url-activity/app-url-activity.module').then(
+						(m) => m.AppUrlActivityModule
+					)
+			},
+			{
+				path: 'apps',
+				data: {
+					title: 'ACTIVITY.APPS',
+					type: 'apps'
 				},
 				loadChildren: () =>
 					import('./app-url-activity/app-url-activity.module').then(

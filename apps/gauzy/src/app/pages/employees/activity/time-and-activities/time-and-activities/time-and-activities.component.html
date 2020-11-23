@@ -1,0 +1,10 @@
+<div class="filters mt-4 pr-2">
+	<ngx-filters
+		(filtersChange)="filtersChange($event)"
+		[multipleEmployeeSelect]="false"
+	></ngx-filters>
+</div>
+
+<ga-daily-statistics class="mt-4" [filters]="filters"></ga-daily-statistics>
+
+<ga-daily-grid class="mt-4" [filters]="filters"></ga-daily-grid>

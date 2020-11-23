@@ -330,12 +330,12 @@ export class PagesComponent implements OnInit, OnDestroy {
 						}
 					},
 					{
-						title: 'Activity',
+						title: 'Time & Activity',
 						icon: 'trending-up-outline',
 						link: '/pages/employees/activity',
 						pathMatch: 'prefix',
 						data: {
-							translationKey: 'MENU.ACTIVITY'
+							translationKey: 'MENU.TIME_ACTIVITY'
 						}
 					},
 					{

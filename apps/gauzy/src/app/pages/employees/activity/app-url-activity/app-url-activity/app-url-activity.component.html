@@ -16,9 +16,16 @@
 	<div
 		class="row border-bottom border-top py-3 font-weight-bold align-items-center"
 	>
-		<div class="col-sm-3 py-2">App or site</div>
-		<div class="col-sm py-2">Percent used</div>
-		<div class="col-sm-2 text-center py-2">Time spent (hrs)</div>
+		<div class="col-sm-3 py-2">
+			{{
+				(type == 'apps' ? 'ACTIVITY.APPS' : 'ACTIVITY.VISITED_SITES')
+					| translate
+			}}
+		</div>
+		<div class="col-sm py-2">{{ 'ACTIVITY.PERCENT_USED' | translate }}</div>
+		<div class="col-sm-2 text-center py-2">
+			{{ 'ACTIVITY.TIME_SPENT' | translate }}
+		</div>
 	</div>
 	<div class="mt-3" *ngFor="let values of apps">
 		<div class="font-weight-bold py-2 border-bottom">
@@ -33,6 +40,6 @@
 		</div>
 	</div>
 	<div class="py-5 text-center" *ngIf="!loading && apps?.length == 0">
-		<h6>{{ 'ACTIVITY.NO_ACTIVITES' | translate }}</h6>
+		<h6>{{ 'ACTIVITY.NO_ACTIVITIES' | translate }}</h6>
 	</div>
 </div>

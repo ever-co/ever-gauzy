@@ -527,6 +527,13 @@ export class InvoicesComponent
 						const { items } = await this.invoicesService.getAll(
 							[
 								'invoiceItems',
+								'invoiceItems.employee',
+								'invoiceItems.employee.user',
+								'invoiceItems.project',
+								'invoiceItems.product',
+								'invoiceItems.invoice',
+								'invoiceItems.expense',
+								'invoiceItems.task',
 								'tags',
 								'payments',
 								'fromOrganization',

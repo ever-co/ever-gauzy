@@ -5,7 +5,7 @@ import {
 import { ICommand } from '@nestjs/cqrs';
 
 export class InviteAcceptOrganizationContactCommand implements ICommand {
-	static readonly type = '[Invite] Accept Organziation Contact';
+	static readonly type = '[Invite] Accept Organization Contact';
 
 	constructor(
 		public readonly input: IOrganizationContactAcceptInviteInput,

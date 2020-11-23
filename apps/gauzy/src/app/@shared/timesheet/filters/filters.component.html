@@ -77,7 +77,7 @@
 				]"
 			>
 				<div
-					class="col-auto filter-item ml-auto pr-1"
+					class="col-auto filter-item ml-auto pl-1"
 					*ngIf="hasEmployeeFilter"
 				>
 					<ga-employee-multi-select
@@ -95,7 +95,7 @@
 				</div>
 			</ng-template>
 			<div
-				class="col-auto filter-item ml-auto pr-1"
+				class="col-auto filter-item ml-auto pl-1"
 				*ngIf="hasProjectFilter"
 			>
 				<ga-project-selector
@@ -106,7 +106,7 @@
 				></ga-project-selector>
 			</div>
 			<div
-				class="col-auto filter-item ml-auto pr-1"
+				class="col-auto filter-item ml-auto pl-1"
 				*ngIf="hasSourceFilter"
 			>
 				<nb-select
@@ -124,7 +124,7 @@
 				</nb-select>
 			</div>
 			<div
-				class="col-auto filter-item ml-auto pr-1"
+				class="col-auto filter-item ml-auto pl-1"
 				*ngIf="hasActivityLevelFilter"
 			>
 				<button
@@ -162,7 +162,7 @@
 				</ng-template>
 			</div>
 			<div
-				class="col-auto filter-item ml-auto pr-1"
+				class="col-auto filter-item ml-auto pl-1"
 				*ngIf="hasLogTypeFilter"
 			>
 				<nb-select
@@ -181,7 +181,7 @@
 			</div>
 
 			<div
-				class="col-auto ml-auto pr-1 clear-fitlers"
+				class="col-auto ml-auto pl-1 clear-fitlers"
 				*ngIf="hasFilterApplies"
 			>
 				<button nbButton status="danger" (click)="clearFilters()">

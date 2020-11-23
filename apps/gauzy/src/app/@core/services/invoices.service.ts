@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
 	IInvoice,
+	IInvoiceCreateInput,
 	IInvoiceFindInput,
 	IInvoiceUpdateInput
 } from '@gauzy/models';
@@ -48,7 +49,7 @@ export class InvoicesService {
 			.toPromise();
 	}
 
-	add(invoice: IInvoice): Promise<IInvoice> {
+	add(invoice: IInvoiceCreateInput): Promise<IInvoice> {
 		return this.http
 			.post<IInvoice>('/api/invoices', invoice)
 			.pipe(first())
@@ -91,7 +92,9 @@ export class InvoicesService {
 		base64: string,
 		invoiceNumber: number,
 		invoiceId: string,
-		isEstimate: boolean
+		isEstimate: boolean,
+		organizationId: string,
+		tenantId: string
 	): Promise<any> {
 		return this.http
 			.put<any>(`/api/invoices/email/${email}`, {
@@ -99,7 +102,9 @@ export class InvoicesService {
 					isEstimate,
 					base64,
 					invoiceNumber,
-					invoiceId
+					invoiceId,
+					organizationId,
+					tenantId
 				}
 			})
 			.pipe(first())
