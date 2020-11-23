@@ -6,7 +6,7 @@ export interface IAvailabilitySlot
 	startTime: Date;
 	endTime: Date;
 	allDay: boolean;
-	type: string;
+	type: AvailabilitySlotType;
 	employeeId?: string;
 	employee?: IEmployee;
 }
@@ -49,4 +49,10 @@ export interface IGetAvailabilitySlotsConflictInput {
 	endTime: Date;
 	employeeId?: string;
 	type?: AvailabilitySlotType;
+}
+
+export enum AvailabilityMergeType {
+	MERGE = 'merge',
+	REMOVE = 'remove',
+	SKIP = 'skip'
 }

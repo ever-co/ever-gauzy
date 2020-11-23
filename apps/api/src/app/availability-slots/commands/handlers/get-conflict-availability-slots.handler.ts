@@ -18,15 +18,14 @@ export class GetConflictAvailabilitySlotsHandler
 	): Promise<AvailabilitySlot[]> {
 		const { input } = command;
 
-		const startedAt = moment.utc(input.startTime).toDate();
-		const stoppedAt = moment.utc(input.endTime).toDate();
+		const startedAt = moment(input.startTime).toISOString();
+		const stoppedAt = moment(input.endTime).toISOString();
 		let conflictQuery = this.timeLogRepository.createQueryBuilder();
 
 		conflictQuery = conflictQuery
 			.where(`"${conflictQuery.alias}"."employeeId" = :employeeId`, {
 				employeeId: input.employeeId
 			})
-			.andWhere(`"${conflictQuery.alias}"."deletedAt" IS null`)
 			.andWhere(
 				`("${conflictQuery.alias}"."startTime", "${conflictQuery.alias}"."endTime") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`
 			);

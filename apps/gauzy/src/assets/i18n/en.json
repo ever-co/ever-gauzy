@@ -2438,6 +2438,7 @@
 	},
 	"SCHEDULE": {
 		"DATE_SPECIFIC_AVAILABILITY": "Date Specific Availability",
+		"SELECT_EMPLOYEE": "Please select employee from the menu above.",
 		"RECURRING_AVAILABILITY": "Recurring Availability",
 		"DATE_SPECIFIC_AVAILABILITY_TOOLTIP": "You can use Date specific availability to mark availability for a particular date or add exceptions to your Recurring availability pattern. The changes you make will override your Weekly recurring availability on those specific dates only.",
 		"RECURRING_AVAILABILITY_TOOLTIP": "You can use Recurring availability to mark your availability on a weekly basis. To change your availability for specific days only, you must use Date-specific availability."
