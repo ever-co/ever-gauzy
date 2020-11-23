@@ -9,7 +9,7 @@ export interface ICustomSmtp extends IBasePerTenantAndOrganizationEntityModel {
 	isValidate?: boolean;
 }
 
-export interface ICustomSmtpFind
+export interface ICustomSmtpFindInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 }

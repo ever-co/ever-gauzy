@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { ICustomSmtp, ICustomSmtpFind } from '@gauzy/models';
+import { ICustomSmtp, ICustomSmtpFindInput } from '@gauzy/models';
 import { toParams } from '@gauzy/utils';
 
 @Injectable()
@@ -11,19 +11,19 @@ export class CustomSmtpService {
 
 	saveSMTPSetting(request: ICustomSmtp) {
 		return this.http
-			.post<ICustomSmtp>(`${this.API_URL}/tenant`, request)
+			.post<ICustomSmtp>(`${this.API_URL}`, request)
 			.toPromise();
 	}
 
 	updateSMTPSetting(id, request: ICustomSmtp) {
 		return this.http
-			.put<ICustomSmtp>(`${this.API_URL}/tenant/${id}`, request)
+			.put<ICustomSmtp>(`${this.API_URL}/${id}`, request)
 			.toPromise();
 	}
 
-	getSMTPSetting(request: ICustomSmtpFind) {
+	getSMTPSetting(request: ICustomSmtpFindInput) {
 		return this.http
-			.get<ICustomSmtp>(`${this.API_URL}/tenant`, {
+			.get<ICustomSmtp>(`${this.API_URL}`, {
 				params: toParams(request)
 			})
 			.toPromise();

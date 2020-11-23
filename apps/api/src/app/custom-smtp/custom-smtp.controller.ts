@@ -19,15 +19,21 @@ import { UUIDValidationPipe } from '../shared/pipes/uuid-validation.pipe';
 import {
 	ICustomSmtp,
 	ICustomSmtpCreateInput,
+	ICustomSmtpFindInput,
 	ICustomSmtpUpdateInput
 } from '@gauzy/models';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { CommandBus } from '@nestjs/cqrs';
+import { CustomSmtpCreateCommand, CustomSmtpUpdateCommand } from './commands';
 
 @ApiTags('CustomSmtp')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class CustomSmtpController extends CrudController<CustomSmtp> {
-	constructor(private readonly customSmtpService: CustomSmtpService) {
+	constructor(
+		private readonly customSmtpService: CustomSmtpService,
+		private readonly commandBus: CommandBus
+	) {
 		super(customSmtpService);
 	}
 
@@ -41,11 +47,11 @@ export class CustomSmtpController extends CrudController<CustomSmtp> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get('tenant')
+	@Get()
 	async tenantSmtpSetting(
-		@Query('tenantId', UUIDValidationPipe) tenantId: string
+		@Query() query: ICustomSmtpFindInput
 	): Promise<ICustomSmtp> {
-		return this.customSmtpService.getTenantSmtpSetting(tenantId);
+		return this.customSmtpService.getSmtpSetting(query);
 	}
 
 	@ApiOperation({ summary: 'Create new record' })
@@ -59,11 +65,11 @@ export class CustomSmtpController extends CrudController<CustomSmtp> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Post('tenant')
-	async createTenantSetting(
+	@Post()
+	async createSmtpSetting(
 		@Body() entity: ICustomSmtpCreateInput
 	): Promise<ICustomSmtp> {
-		return this.customSmtpService.create(entity);
+		return this.commandBus.execute(new CustomSmtpCreateCommand(entity));
 	}
 
 	@ApiOperation({ summary: 'Update record' })
@@ -81,15 +87,13 @@ export class CustomSmtpController extends CrudController<CustomSmtp> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Put('tenant/:id')
-	async updateTenantSetting(
+	@Put(':id')
+	async updateSmtpSetting(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: ICustomSmtpUpdateInput
 	): Promise<ICustomSmtp> {
-		this.customSmtpService.create({
-			id,
-			...entity
-		});
-		return this.customSmtpService.findOne(id);
+		return this.commandBus.execute(
+			new CustomSmtpUpdateCommand({ id, ...entity })
+		);
 	}
 }

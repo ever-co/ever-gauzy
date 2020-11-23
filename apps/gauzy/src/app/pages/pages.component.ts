@@ -534,6 +534,14 @@ export class PagesComponent implements OnInit, OnDestroy {
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.HELP_CENTER'
 						}
+					},
+					{
+						title: 'Custom SMTP',
+						icon: 'at-outline',
+						link: '/pages/organization/custom-smtp',
+						data: {
+							translationKey: 'MENU.CUSTOM_SMTP'
+						}
 					}
 				]
 			},

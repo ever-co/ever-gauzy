@@ -1,7 +1,7 @@
-import { ICustomSmtp } from '@gauzy/models';
+import { ICustomSmtp, ICustomSmtpFindInput } from '@gauzy/models';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { CustomSmtp } from './custom-smtp.entity';
 
@@ -14,9 +14,21 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 		super(customSmtpRepository);
 	}
 
-	async getTenantSmtpSetting(tenantId: string): Promise<ICustomSmtp> {
+	async getSmtpSetting(query: ICustomSmtpFindInput): Promise<ICustomSmtp> {
+		const { tenantId, organizationId } = query;
+		if (!organizationId) {
+			return await this.customSmtpRepository.findOne({
+				where: {
+					tenantId,
+					organizationId: IsNull()
+				}
+			});
+		}
 		return await this.customSmtpRepository.findOne({
-			where: { tenantId }
+			where: {
+				tenantId,
+				organizationId: organizationId
+			}
 		});
 	}
 }

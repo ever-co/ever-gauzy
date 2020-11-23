@@ -340,6 +340,13 @@ const routes: Routes = [
 							import('./teams/teams.module').then(
 								(m) => m.TeamsModule
 							)
+					},
+					{
+						path: 'custom-smtp',
+						loadChildren: () =>
+							import('./custom-smtp/custom-smtp.module').then(
+								(m) => m.CustomSmtpModule
+							)
 					}
 				]
 			},
