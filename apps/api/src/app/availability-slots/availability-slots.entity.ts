@@ -14,7 +14,6 @@ import {
 } from '@gauzy/models';
 import { Employee } from '../employee/employee.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
-import { ɵbypassSanitizationTrustStyle } from '@angular/core';
 
 @Entity('availability_slot')
 export class AvailabilitySlot
