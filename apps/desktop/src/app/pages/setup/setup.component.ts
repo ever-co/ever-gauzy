@@ -14,7 +14,38 @@ export class SetupComponent implements OnInit {
 		private electronService: ElectronService,
 		private setupService: SetupService,
 		private _cdr: ChangeDetectorRef
-	) {}
+	) {
+		electronService.ipcRenderer.on('setup-data', (event, arg) => {
+			this.desktopFeatures.gauzyPlatform = arg.gauzyWindow;
+			this.desktopFeatures.timeTracking = arg.timeTrackerWindow;
+			this.connectivity.integrated = arg.isLocalServer;
+			this.connectivity.localNetwork =
+				!arg.isLocalServer && arg.serverUrl !== 'https://api.gauzy.co';
+			this.connectivity.live =
+				arg.serverUrl && arg.serverUrl === 'https://api.gauzy.co';
+			this.thirdParty.activityWatch = arg.aw;
+			this.databaseDriver.sqlite = arg.db === 'sqlite';
+			this.databaseDriver.postgre = arg.db === 'postgres';
+			this.serverConfig.integrated.port = arg.port;
+			if (!arg.isLocalServer) {
+				this.serverConfig.localNetwork.apiHost = arg.serverUrl
+					.split(':')[1]
+					.slice(2);
+				this.serverConfig.localNetwork.port = arg.serverUrl.split(
+					':'
+				)[2];
+			}
+			if (arg.db === 'postgres') {
+				this.databaseConfig.postgre = {
+					host: arg.dbHost,
+					dbPort: arg.dbPort,
+					dbName: arg.dbName,
+					dbUser: arg.dbUsername,
+					dbPassword: arg.dbPassword
+				};
+			}
+		});
+	}
 	loading: Boolean = false;
 	iconAw = './assets/icons/toggle-left.svg';
 	statusIcon = 'success';
@@ -58,7 +89,7 @@ export class SetupComponent implements OnInit {
 	databaseConfig: any = {
 		postgre: {
 			host: '',
-			port: '',
+			dbPort: '',
 			dbName: '',
 			dbUser: '',
 			dbPassword: ''

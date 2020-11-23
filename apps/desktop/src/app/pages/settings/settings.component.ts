@@ -48,10 +48,10 @@ export class SettingsComponent implements OnInit {
 			const { setting, config } = arg;
 			this.appSetting = setting;
 			this.config = config;
-			this.config.awPort = this.config.awHost.split('t:')[1];
-			this.config.serverType = this.config.isLocalServer
-				? 'Internal'
-				: 'External';
+			this.config.awPort = this.config.timeTrackerWindow
+				? this.config.awHost.split('t:')[1]
+				: null;
+			this.serverConnectivity();
 			this.selectMonitorOption({
 				value: setting.monitor.captured
 			});
@@ -112,11 +112,13 @@ export class SettingsComponent implements OnInit {
 	}
 
 	restartApp() {
-		this.electronService.ipcRenderer.send('restart_app', {
+		const newConfig: any = {
 			port: this.config.port,
-			dbPort: this.config.dbPort,
-			awHost: `http://localhost:${this.config.awPort}`
-		});
+			dbPort: this.config.dbPort
+		};
+		if (this.config.timeTrackerWindow)
+			newConfig.awHost = `http://localhost:${this.config.awPort}`;
+		this.electronService.ipcRenderer.send('restart_app', newConfig);
 	}
 
 	portChange(val, type) {
@@ -129,6 +131,24 @@ export class SettingsComponent implements OnInit {
 			} else {
 				this.restartDisable = false;
 			}
+		}
+	}
+
+	serverConnectivity() {
+		switch (true) {
+			case this.config.isLocalServer:
+				this.config.serverType = 'Integrated';
+				break;
+			case !this.config.isLocalServer &&
+				this.config.serverUrl !== 'https://api.gauzy.co':
+				this.config.serverType = 'Local Network';
+				break;
+			case !this.config.isLocalServer &&
+				this.config.serverUrl === 'https://api.gauzy.co':
+				this.config.serverType = 'Live';
+				break;
+			default:
+				break;
 		}
 	}
 }

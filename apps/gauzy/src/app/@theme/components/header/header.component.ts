@@ -21,7 +21,7 @@ import { IUser } from '@gauzy/models';
 import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.service';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-
+import { environment } from '../../../../environments/environment';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-header',
@@ -44,6 +44,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	hasPermissionTeamEdit = false;
 	hasPermissionContractEdit = false;
 	isEmployee = false;
+	isElectron: boolean = environment.IS_ELECTRON;
 
 	@Input() position = 'normal';
 	user: IUser;

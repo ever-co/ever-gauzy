@@ -11,6 +11,10 @@ export function createGauzyWindow(gauzyWindow, serve) {
 	mainWindowSettings = windowSetting();
 	gauzyWindow = new BrowserWindow(mainWindowSettings);
 	let launchPath;
+	const appConfig = LocalStore.getStore('configs');
+	if (!appConfig.gauzyWindow) {
+		gauzyWindow.hide();
+	}
 
 	if (serve) {
 		require('electron-reload')(__dirname, {
@@ -28,11 +32,6 @@ export function createGauzyWindow(gauzyWindow, serve) {
 		});
 
 		gauzyWindow.loadURL(launchPath);
-	}
-
-	const appConfig = LocalStore.getStore('configs');
-	if (!appConfig.gauzyWindow) {
-		gauzyWindow.hide();
 	}
 
 	// console.log('launched electron with:', launchPath);
