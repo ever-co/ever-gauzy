@@ -22,7 +22,7 @@ import {
 } from '@gauzy/models';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, pairwise, startWith, tap } from 'rxjs/operators';
+import { filter, pairwise, tap } from 'rxjs/operators';
 import { CustomSmtpService } from '../../@core/services/custom-smtp.service';
 import { Store } from '../../@core/services/store.service';
 import { ToastrService } from '../../@core/services/toastr.service';
