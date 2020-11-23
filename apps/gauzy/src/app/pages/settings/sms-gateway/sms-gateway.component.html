@@ -1,0 +1,15 @@
+<nb-card>
+	<nb-card-header
+		>{{ 'SMS_GATEWAY_PAGE.HEADER' | translate }}
+	</nb-card-header>
+	<nb-card-body class="permission-items-col">
+		<nb-toggle
+			*ngFor="let provider of smsProviders"
+			(checkedChange)="providerChanged(provider, $event)"
+			labelPosition="start"
+			status="basic"
+		>
+			{{ provider }}
+		</nb-toggle>
+	</nb-card-body>
+</nb-card>

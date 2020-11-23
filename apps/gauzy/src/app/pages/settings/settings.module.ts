@@ -33,6 +33,7 @@ import { BackNavigationModule } from '../../@shared/back-navigation/back-navigat
 import { FileStorageComponent } from './file-storage/file-storage.component';
 import { CustomSmtpComponent } from './custom-smtp/custom-smtp.component';
 import { SMTPModule } from '../../@shared/smtp/smtp.module';
+import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -77,7 +78,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		DangerZoneComponent,
 		EmailHistoryComponent,
 		EmailFiltersComponent,
-		CustomSmtpComponent
+		CustomSmtpComponent,
+		SmsGatewayComponent
 	],
 	providers: [RolePermissionsService, RoleService]
 })

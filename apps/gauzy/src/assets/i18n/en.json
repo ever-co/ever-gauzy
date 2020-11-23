@@ -78,7 +78,9 @@
 		"MANAGE_TEMPLATES": "Manage Templates",
 		"MAKE_DEFAULT": "Make Default",
 		"HIDE_ALL": "Hide All",
-		"YES_HIDE_ALL_JOBS": "Yes, Hide All Jobs"
+		"YES_HIDE_ALL_JOBS": "Yes, Hide All Jobs",
+		"VALIDATE": "Validate",
+		"VALIDATED": "Validated"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",
@@ -2538,5 +2540,8 @@
 			"USERNAME": "Username",
 			"PASSWORD": "Password"
 		}
+	},
+	"SMS_GATEWAY_PAGE": {
+		"HEADER": "SMS Provider"
 	}
 }

@@ -28,4 +28,10 @@ export class CustomSmtpService {
 			})
 			.toPromise();
 	}
+
+	validateSMTPSetting(request: ICustomSmtp) {
+		return this.http
+			.post<boolean>(`${this.API_URL}/validate`, request)
+			.toPromise();
+	}
 }

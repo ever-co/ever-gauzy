@@ -29,7 +29,7 @@
 					}}</label>
 					<input
 						nbInput
-						type="text"
+						type="number"
 						fullWidth
 						placeholder="{{ 'CUSTOM_SMTP_PAGE.PORT' | translate }}"
 						id="port"
@@ -91,14 +91,43 @@
 		</form>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
-		<button
-			class="mr-2"
-			nbButton
-			status="success"
-			(click)="formDirective.ngSubmit.emit()"
-			[disabled]="form.invalid"
+		<ng-container
+			*ngIf="
+				isValidated;
+				then validatedTemplate;
+				else notValidatedTemplate
+			"
 		>
-			{{ 'BUTTONS.SAVE' | translate }}
-		</button>
+		</ng-container>
+		<ng-template #validatedTemplate>
+			<button
+				class="mr-2"
+				nbButton
+				status="success"
+				(click)="formDirective.ngSubmit.emit()"
+				[disabled]="form.invalid"
+			>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+			<button
+				class="mr-2"
+				nbButton
+				status="success"
+				[disabled]="isValidated"
+			>
+				{{ 'BUTTONS.VALIDATED' | translate }}
+			</button>
+		</ng-template>
+		<ng-template #notValidatedTemplate>
+			<button
+				class="mr-2"
+				nbButton
+				status="primary"
+				(click)="validateSmtp()"
+				[disabled]="form.invalid"
+			>
+				{{ 'BUTTONS.VALIDATE' | translate }}
+			</button>
+		</ng-template>
 	</nb-card-footer>
 </nb-card>
