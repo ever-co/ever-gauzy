@@ -593,6 +593,7 @@
 		"WEEKLY_TIME_REPORTS": "Weekly Report",
 		"ACCOUNTING_REPORTS": "Accounting Reports",
 		"PAYMENT_GATEWAYS": "Payment Gateways",
+		"SMS_GATEWAYS": "SMS Gateways",
 		"CUSTOM_SMTP": "Custom SMTP",
 		"INVENTORY": "Inventory",
 		"SALES": "Sales",
@@ -2094,7 +2095,9 @@
 			"DELETE_PAST_INTERVIEW": "Deleting past interviews is prohibited",
 			"GOAL_GENERAL_SETTING_UPDATED": "Goal General settings updated",
 			"MAX_OBJECTIVE_LIMIT": "You cannot create any more Objectives. Please change maximum objective limit to add more objectives.",
-			"MAX_KEY_RESULT_LIMIT": "You cannot create any more Key Results for this Objective. Please change maximum key result limit to add more Key Results."
+			"MAX_KEY_RESULT_LIMIT": "You cannot create any more Key Results for this Objective. Please change maximum key result limit to add more Key Results.",
+			"CUSTOM_SMTP_ADDED": "Smtp settings successfully created",
+			"CUSTOM_SMTP_UPDATED": "Smtp settings successfully updated"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -2525,5 +2528,15 @@
 		"SECRET_ACCESS_KEY": "Secret access key",
 		"REGION": "Region",
 		"BUCKET": "Bucket"
+	},
+	"CUSTOM_SMTP_PAGE": {
+		"HEADER": "Custom SMTP",
+		"HOST": "Host",
+		"PORT": "Port",
+		"SECURE": "Secure",
+		"AUTH": {
+			"USERNAME": "Username",
+			"PASSWORD": "Password"
+		}
 	}
 }

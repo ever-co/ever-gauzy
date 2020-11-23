@@ -1,0 +1,15 @@
+<nb-card [nbSpinner]="false" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header>
+		<div class="main-header">
+			<h4>
+				{{ 'CUSTOM_SMTP_PAGE.HEADER' | translate }}
+				{{ organization?.name }}
+			</h4>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<ng-container *ngIf="organization">
+			<ga-smtp [organization]="organization"></ga-smtp>
+		</ng-container>
+	</nb-card-body>
+</nb-card>

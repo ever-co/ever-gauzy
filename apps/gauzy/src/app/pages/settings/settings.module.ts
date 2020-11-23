@@ -31,6 +31,8 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { EmailTemplatesModule } from '../email-templates/email-templates.module';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { FileStorageComponent } from './file-storage/file-storage.component';
+import { CustomSmtpComponent } from './custom-smtp/custom-smtp.component';
+import { SMTPModule } from '../../@shared/smtp/smtp.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -64,7 +66,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		}),
 		NgSelectModule,
-		BackNavigationModule
+		BackNavigationModule,
+		SMTPModule
 	],
 	entryComponents: [EditRolesPermissionsComponent, DangerZoneComponent],
 	declarations: [
@@ -73,7 +76,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		EditRolesPermissionsComponent,
 		DangerZoneComponent,
 		EmailHistoryComponent,
-		EmailFiltersComponent
+		EmailFiltersComponent,
+		CustomSmtpComponent
 	],
 	providers: [RolePermissionsService, RoleService]
 })

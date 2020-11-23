@@ -100,6 +100,7 @@ import { EstimateEmail } from '../../estimate-email/estimate-email.entity';
 import { EventType } from '../../event-types/event-type.entity';
 import { GoalGeneralSetting } from '../../goal-general-setting/goal-general-setting.entity';
 import { PipelineStage } from '../../pipeline-stage/pipeline-stage.entity';
+import { CustomSmtp } from '../../custom-smtp/custom-smtp.entity';
 @Module({
 	imports: [
 		CqrsModule,
@@ -128,6 +129,7 @@ import { PipelineStage } from '../../pipeline-stage/pipeline-stage.entity';
 			CandidateTechnologies,
 			Contact,
 			Country,
+			CustomSmtp,
 
 			Deal,
 

@@ -120,6 +120,7 @@ import { TenantSettingModule } from './tenant/tenant-setting/tenant-setting.modu
 import { EmployeeJobPresetModule } from './employee-job-preset/employee-job-preset.module';
 import { ReportModule } from './reports/report.module';
 import { EmployeeProposalTemplateModule } from './employee-proposal-template/employee-proposal-template.module';
+import { CustomSmtpModule } from './custom-smtp/custom-smtp.module';
 
 @Module({
 	imports: [
@@ -483,6 +484,10 @@ import { EmployeeProposalTemplateModule } from './employee-proposal-template/emp
 					{
 						path: '/report',
 						module: ReportModule
+					},
+					{
+						path: '/smtp',
+						module: CustomSmtpModule
 					}
 				]
 			}
@@ -528,6 +533,7 @@ import { EmployeeProposalTemplateModule } from './employee-proposal-template/emp
 		CandidatePersonalQualitiesModule,
 		CandidateTechnologiesModule,
 		CandidateCriterionsRatingModule,
+		CustomSmtpModule,
 		ExportAllModule,
 		ImportAllModule,
 		EmployeeSettingModule,
