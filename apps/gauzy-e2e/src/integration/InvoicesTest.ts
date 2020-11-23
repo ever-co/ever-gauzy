@@ -121,6 +121,7 @@ describe('Invoices test', () => {
 	});
 	it('Should be able to duplicate invoice', () => {
 		invoicesPage.waitMessageToHide();
+		invoicesPage.tableRowVisible();
 		invoicesPage.selectTableRow(0);
 		invoicesPage.actionButtonVisible();
 		invoicesPage.clickActionButtonByText(InvoicesPageData.duplicateButton);
@@ -158,7 +159,8 @@ describe('Invoices test', () => {
 	it('Should be able to set invoice status', () => {
 		invoicesPage.waitMessageToHide();
 		invoicesPage.selectTableRow(0);
-		invoicesPage.clickActionButtonByText(InvoicesPageData.setStatusButton);
+		invoicesPage.setStatusButtonVisible();
+		invoicesPage.clickSetStatusButton(InvoicesPageData.setStatusButton);
 		invoicesPage.setStatusFromDropdown(InvoicesPageData.status);
 	});
 	it('Should be able to delete invoice', () => {

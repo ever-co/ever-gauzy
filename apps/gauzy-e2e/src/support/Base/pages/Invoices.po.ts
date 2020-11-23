@@ -208,6 +208,14 @@ export const clickConfirmDeleteButton = () => {
 	clickButton(InvoicesPage.confirmDeleteButtonCss);
 };
 
+export const setStatusButtonVisible = () => {
+	verifyElementIsVisible(InvoicesPage.setStatusButtonCss);
+};
+
+export const clickSetStatusButton = (text) => {
+	clickElementByText(InvoicesPage.setStatusButtonCss, text);
+};
+
 export const setStatusFromDropdown = (text) => {
 	clickElementByText(InvoicesPage.dropdownOptionCss, text);
 };

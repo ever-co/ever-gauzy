@@ -3,7 +3,7 @@ export const InvoicesPage = {
 	addButtonCss: 'div.actions-container > button[status="success"]',
 	infoButtonCss: 'div.actions-container > button[status="info"]',
 	editButtonCss: 'div.btn-group > button[status="info"]',
-	setStatusButtonCss: 'div.btn-group > button[status="info"]',
+	setStatusButtonCss: 'div.btn-group > nb-select[status="info"]',
 	deleteButtonCss: 'div.actions-container > button[status="danger"]',
 	addTagsDropdownCss: '#addTags',
 	tagsDropdownOption: 'div.ng-option',
