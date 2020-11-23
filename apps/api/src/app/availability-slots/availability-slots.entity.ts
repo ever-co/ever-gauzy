@@ -14,14 +14,13 @@ import {
 } from '@gauzy/models';
 import { Employee } from '../employee/employee.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
-import { ɵbypassSanitizationTrustStyle } from '@angular/core';
 
 @Entity('availability_slot')
 export class AvailabilitySlot
 	extends TenantOrganizationBase
 	implements IAvailabilitySlot {
 	@ApiProperty({ type: Employee })
-	@ManyToOne((type) => Employee, { nullable: true, onDelete: 'CASCADE' })
+	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	employee?: IEmployee;
 
