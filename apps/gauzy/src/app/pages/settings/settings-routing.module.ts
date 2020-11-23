@@ -9,6 +9,7 @@ import { FileStorageComponent } from './file-storage/file-storage.component';
 import { NgxPermissionsGuard } from 'ngx-permissions';
 import { PermissionsEnum } from '@gauzy/models';
 import { CustomSmtpComponent } from './custom-smtp/custom-smtp.component';
+import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
 
 const routes: Routes = [
 	{
@@ -40,6 +41,10 @@ const routes: Routes = [
 					import('../import-export/import-export.module').then(
 						(m) => m.ImportExportModule
 					)
+			},
+			{
+				path: 'sms-gateway',
+				component: SmsGatewayComponent
 			},
 			{
 				path: 'custom-smtp',

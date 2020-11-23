@@ -1531,7 +1531,7 @@
 		"REQUEST": "Запросить",
 		"EQUIPMENT_NAME": "Название оборудования",
 		"EQUIPMENT_SHARING_POLICY": "Совместное использование снаряжения",
-		"SHARE_REQUIEST_DATE": "Поделиться датой запроса",
+		"SHARE_REQUEST_DATE": "Поделиться датой запроса",
 		"SHARE_START_DATE": "Поделиться датой начала",
 		"SHARE_END_DATE": "Поделиться датой окончания",
 		"CREATED_BY": "Создано",
@@ -2009,7 +2009,7 @@
 	},
 	"FOOTER": {
 		"BY": "по",
-		"RIGHTS_RECERVED": "Все права защищены.",
+		"RIGHTS_RESERVED": "Все права защищены.",
 		"PRESENT": "Подарочный"
 	},
 	"TOASTR": {
@@ -2041,7 +2041,7 @@
 			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Вы уверены, что хотите изменить",
 			"PERMISSION_UPDATED": "Права доступа {{ permissionName }} изменены для {{ roleName }}",
 			"PERMISSION_UPDATE_ERROR": "Произошла ошибка при обновлении разрешений, пожалуйста, обновите и повторите попытку",
-			"REGISTER_PROPOSAL_NO_EMPLOEE_MSG": "Требуется сотрудник!",
+			"REGISTER_PROPOSAL_NO_EMPLOYEE_MSG": "Требуется сотрудник!",
 			"NEW_ORGANIZATION_PROJECT_INVALID_NAME": "Invalid input",
 			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Требуется название команды и члены",
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Требуется название поставщика",
@@ -2137,7 +2137,7 @@
 		"PROPOSALS": {
 			"EDIT_PROPOSAL": "Предложение успешно обновлено",
 			"REGISTER_PROPOSAL": "Новое предложение зарегистрировано",
-			"REGISTER_PROPOSAL_NO_EMPLOEE_SELECTED": "Пожалуйста, выберите сотрудника из выпадающего меню.",
+			"REGISTER_PROPOSAL_NO_EMPLOYEE_SELECTED": "Пожалуйста, выберите сотрудника из выпадающего меню.",
 			"REGISTER_PROPOSAL_ERROR": "{{ error }}",
 			"DELETE_PROPOSAL": "Предложение успешно удалено",
 			"PROPOSAL_ACCEPTED": "Статус предложения обновлен для принятия",
@@ -2327,7 +2327,7 @@
 		"BULK_ACTION": "Массовое действие",
 		"LOG_TYPE": "Тип журнала",
 		"TOTAL_TIME": "Общее время",
-		"ACTIVITES": "Действия",
+		"ACTIVITIES": "Действия",
 		"APPROVED_AT": "Одобрено",
 		"SUBMITTED_AT": "Отправлено в",
 		"STATUS": "Статус",
@@ -2514,7 +2514,7 @@
 	"PIPELINE_DEAL_CREATE_PAGE": {
 		"HEADER": "Создать сделку | Пипеллинг: {{ name }}",
 		"SELECT_STAGE": "Выбрать этап",
-		"PROBABLITY": "Вероятность"
+		"PROBABILITY": "Вероятность"
 	},
 	"DIALOG": {
 		"CONFIRM": "Подтвердить",

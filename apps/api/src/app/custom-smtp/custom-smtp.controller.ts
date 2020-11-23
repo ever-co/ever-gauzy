@@ -96,4 +96,16 @@ export class CustomSmtpController extends CrudController<CustomSmtp> {
 			new CustomSmtpUpdateCommand({ id, ...entity })
 		);
 	}
+
+	@ApiOperation({ summary: 'Validate new record' })
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Post('validate')
+	async validateSmtpSetting(@Body() entity: ICustomSmtpCreateInput) {
+		return await this.customSmtpService.verifyTransporter(entity);
+	}
 }
