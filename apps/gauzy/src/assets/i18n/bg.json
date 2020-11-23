@@ -1530,7 +1530,7 @@
 		"REQUEST": "Request",
 		"EQUIPMENT_NAME": "Equipment name",
 		"EQUIPMENT_SHARING_POLICY": "Equipment Sharing Policy",
-		"SHARE_REQUIEST_DATE": "Share request date",
+		"SHARE_REQUEST_DATE": "Share request date",
 		"SHARE_START_DATE": "Share start date",
 		"SHARE_END_DATE": "Share end date",
 		"CREATED_BY": "Created By",
@@ -2008,7 +2008,7 @@
 	},
 	"FOOTER": {
 		"BY": "от",
-		"RIGHTS_RECERVED": "Всички права запазени.",
+		"RIGHTS_RESERVED": "Всички права запазени.",
 		"PRESENT": "Present"
 	},
 	"TOASTR": {
@@ -2040,7 +2040,7 @@
 			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the",
 			"PERMISSION_UPDATED": "разрешения обновени за",
 			"PERMISSION_UPDATE_ERROR": "There was an error in updating the permissions, please refresh & try again",
-			"REGISTER_PROPOSAL_NO_EMPLOEE_MSG": "Employee is required!",
+			"REGISTER_PROPOSAL_NO_EMPLOYEE_MSG": "Employee is required!",
 			"NEW_ORGANIZATION_PROJECT_INVALID_NAME": "Invalid input",
 			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Team name and members are required",
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Vendor name is required",
@@ -2134,7 +2134,7 @@
 		"PROPOSALS": {
 			"EDIT_PROPOSAL": "Proposal successfuly updated",
 			"REGISTER_PROPOSAL": "New proposal registered",
-			"REGISTER_PROPOSAL_NO_EMPLOEE_SELECTED": "Please select an employee from the dropdown menu.",
+			"REGISTER_PROPOSAL_NO_EMPLOYEE_SELECTED": "Please select an employee from the dropdown menu.",
 			"REGISTER_PROPOSAL_ERROR": "{{ error }}",
 			"DELETE_PROPOSAL": "Proposal deleted successfuly",
 			"PROPOSAL_ACCEPTED": "Proposal status updated to Accepted",
@@ -2324,7 +2324,7 @@
 		"BULK_ACTION": "Bulk action",
 		"LOG_TYPE": "Log type",
 		"TOTAL_TIME": "Total Time",
-		"ACTIVITES": "Activities",
+		"ACTIVITIES": "Activities",
 		"APPROVED_AT": "Approved At",
 		"SUBMITTED_AT": "Submitted At",
 		"STATUS": "Статус",
@@ -2511,7 +2511,7 @@
 	"PIPELINE_DEAL_CREATE_PAGE": {
 		"HEADER": "Create Deal | Pipeline: {{ name }}",
 		"SELECT_STAGE": "Select Stage",
-		"PROBABLITY": "Probability"
+		"PROBABILITY": "Probability"
 	},
 	"DIALOG": {
 		"CONFIRM": "Потвърждение",
