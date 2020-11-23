@@ -125,6 +125,7 @@ describe('Estimates test', () => {
 	});
 	it('Should be able to duplicate estimate', () => {
 		estimatesPage.waitMessageToHide();
+		estimatesPage.tableRowVisible();
 		estimatesPage.selectTableRow(0);
 		estimatesPage.actionButtonVisible();
 		estimatesPage.clickActionButtonByText(
