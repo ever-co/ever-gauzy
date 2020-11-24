@@ -39,6 +39,7 @@ export class ProjectsMutationComponent
 	@Input()
 	organizationContacts: Object[] = [];
 
+	TaskListTypeEnum = TaskListTypeEnum;
 	form: FormGroup;
 	members: string[];
 	selectedEmployeeIds: string[];

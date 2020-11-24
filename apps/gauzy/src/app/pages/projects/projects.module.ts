@@ -35,6 +35,8 @@ import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi
 import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploader-input.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { ColorPickerModule } from 'ngx-color-picker';
+import { TasksSprintSettingsViewModule } from '../../@shared/tasks-sprint-settings-view/tasks-sprint-settings-view.module';
+import { CommonModule } from '@angular/common';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -42,6 +44,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 @NgModule({
 	imports: [
+		CommonModule,
 		ThemeModule,
 		NbCardModule,
 		FormsModule,
@@ -77,7 +80,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		FileUploaderModule,
 		SharedModule,
 		Ng2SmartTableModule,
-		NbSpinnerModule
+		NbSpinnerModule,
+		TasksSprintSettingsViewModule
 	],
 	declarations: [ProjectsComponent, ProjectsMutationComponent],
 	entryComponents: [],

@@ -3,17 +3,17 @@ import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import * as moment from 'moment';
 import { Observable } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
-
 import {
 	IOrganizationSprint,
 	IOrganizationProject,
 	IOrganization
 } from '@gauzy/models';
-import { SprintStoreService } from '../../../../../../../@core/services/organization-sprint-store.service';
-import { ItemActionType } from '../../../../../../../@shared/components/editable-grid/gauzy-editable-grid.component';
-import { Store } from '../../../../../../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-@UntilDestroy({ checkProperties: true })
+import { SprintStoreService } from '../../@core/services/organization-sprint-store.service';
+import { Store } from '../../@core/services/store.service';
+import { ItemActionType } from '../components/editable-grid/gauzy-editable-grid.component';
+
+@UntilDestroy()
 @Component({
 	selector: 'ngx-tasks-sprint-settings-view',
 	templateUrl: './tasks-sprint-settings-view.component.html'
@@ -38,18 +38,18 @@ export class TasksSprintSettingsViewComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private store: SprintStoreService,
-		private storeSerive: Store
+		private storeService: Store
 	) {}
 
 	ngOnInit(): void {
-		this.storeSerive.selectedOrganization$
+		this.storeService.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
 				tap((organization) => (this.organization = organization)),
 				tap(() =>
 					this.store.fetchSprints({
 						organizationId: this.organization.id,
-						tenantId: this.storeSerive.user.tenantId,
+						tenantId: this.storeService.user.tenantId,
 						projectId: this.project.id
 					})
 				),
@@ -70,7 +70,7 @@ export class TasksSprintSettingsViewComponent implements OnInit, OnDestroy {
 				const createSprintInput: IOrganizationSprint = {
 					...data,
 					organizationId: this.project.organizationId,
-					tenantId: this.storeSerive.user.tenantId,
+					tenantId: this.storeService.user.tenantId,
 					projectId: this.project.id
 				};
 				this.store
