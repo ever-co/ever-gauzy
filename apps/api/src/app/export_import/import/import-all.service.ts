@@ -101,6 +101,7 @@ import { ProductCategory } from '../../product-category/product-category.entity'
 import { Product } from '../../product/product.entity';
 import { convertToDatetime } from '../../core/utils';
 import { FileStorage } from '../../core/file-storage';
+import { Currency } from '../../currency/currency.entity';
 
 @Injectable()
 export class ImportAllService implements OnDestroy {
@@ -179,6 +180,9 @@ export class ImportAllService implements OnDestroy {
 
 		@InjectRepository(Country)
 		private readonly countryRepository: Repository<Country>,
+
+		@InjectRepository(Currency)
+		private readonly currencyRepository: Repository<Currency>,
 
 		@InjectRepository(Deal)
 		private readonly dealRepository: Repository<Deal>,

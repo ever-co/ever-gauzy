@@ -202,6 +202,8 @@ import {
 } from '@gauzy/integration-upwork';
 import { CustomSmtp } from '../custom-smtp/custom-smtp.entity';
 import { CustomSmtpService } from '../custom-smtp/custom-smtp.service';
+import { Currency } from '../currency/currency.entity';
+import { CurrencyService } from '../currency/currency.service';
 
 @Module({
 	imports: [
@@ -227,6 +229,7 @@ import { CustomSmtpService } from '../custom-smtp/custom-smtp.service';
 			CandidateTechnologies,
 			Contact,
 			Country,
+			Currency,
 			CustomSmtp,
 
 			Deal,
@@ -341,6 +344,7 @@ import { CustomSmtpService } from '../custom-smtp/custom-smtp.service';
 		CandidateTechnologiesService,
 		ContactService,
 		CountryService,
+		CurrencyService,
 		CustomSmtpService,
 
 		DealService,
@@ -456,6 +460,7 @@ import { CustomSmtpService } from '../custom-smtp/custom-smtp.service';
 		CandidateTechnologiesService,
 		ContactService,
 		CountryService,
+		CurrencyService,
 		CustomSmtpService,
 
 		DealService,

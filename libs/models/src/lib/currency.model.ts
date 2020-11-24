@@ -1,5 +1,5 @@
 import { IBaseEntityModel } from './base-entity.model';
-export interface ICountry extends IBaseEntityModel {
+export interface ICurrency extends IBaseEntityModel {
 	isoCode: string;
-	country: string;
+	currency: string;
 }

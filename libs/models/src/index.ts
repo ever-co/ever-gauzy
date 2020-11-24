@@ -35,6 +35,7 @@ export * from './lib/organization-expense-category.model';
 export * from './lib/organization-awards.model';
 export * from './lib/employee-recurring-expense.model';
 export * from './lib/country.model';
+export * from './lib/currency.model';
 export * from './lib/invite.model';
 export * from './lib/email.model';
 export * from './lib/time-off.model';

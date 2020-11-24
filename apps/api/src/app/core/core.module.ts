@@ -125,6 +125,7 @@ import { ReportCategory } from '../reports/report-category.entity';
 import { EmployeeProposalTemplate } from '../employee-proposal-template/employee-proposal-template.entity';
 import { ReportOrganization } from '../reports/report-organization.entity';
 import { CustomSmtp } from '../custom-smtp/custom-smtp.entity';
+import { Currency } from '../currency/currency.entity';
 
 const entities = [
 	Invite,
@@ -151,6 +152,7 @@ const entities = [
 	OrganizationDocuments,
 	Proposal,
 	Country,
+	Currency,
 	Email,
 	TimeOffPolicy,
 	TimeOffRequest,

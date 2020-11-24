@@ -38,6 +38,7 @@ import { OrganizationLanguagesModule } from './organization-languages/organizati
 import { OrganizationDocumentsModule } from './organization-documents/organization-documents.module';
 import { ProposalModule } from './proposal/proposal.module';
 import { CountryModule } from './country/country.module';
+import { CurrencyModule } from './currency/currency.module';
 import { InviteModule } from './invite/invite.module';
 import { EmailModule } from './email/email.module';
 import { TimeOffPolicyModule } from './time-off-policy/time-off-policy.module';
@@ -288,6 +289,10 @@ import { CustomSmtpModule } from './custom-smtp/custom-smtp.module';
 					{
 						path: '/country',
 						module: CountryModule
+					},
+					{
+						path: '/currency',
+						module: CurrencyModule
 					},
 					{
 						path: '/invite',
