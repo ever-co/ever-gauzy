@@ -6,8 +6,7 @@ import {
 	NbCardModule,
 	NbDatepickerModule,
 	NbIconModule,
-	NbInputModule,
-	NbSelectModule
+	NbInputModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { GauzyEditableGridModule } from '../components/editable-grid/gauzy-editable-grid.module';
