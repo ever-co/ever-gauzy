@@ -371,21 +371,25 @@
 				</div>
 				<div class="row">
 					<div class="col-6">
-						<label class="label">
-							{{ 'FORM.LABELS.DISCOUNT_AFTER_TAX' | translate }}
-						</label>
-						<nb-toggle
-							class="d-block"
-							formControlName="discountAfterTax"
-							status="primary"
-							labelPosition="start"
-							(checkedChange)="toggleDiscountAfterTax($event)"
-						>
-							{{
-								'FORM.LABELS.APPLY_DISCOUNT_AFTER_TAX_FOR_INVOICES_AND_ESTIMATES'
-									| translate
-							}}
-						</nb-toggle>
+						<div class="form-group invite-toggle">
+							<label class="label">
+								{{
+									'FORM.LABELS.DISCOUNT_AFTER_TAX' | translate
+								}}
+							</label>
+							<nb-toggle
+								class="d-block"
+								formControlName="discountAfterTax"
+								status="primary"
+								labelPosition="start"
+								(checkedChange)="toggleDiscountAfterTax($event)"
+							>
+								{{
+									'FORM.LABELS.APPLY_DISCOUNT_AFTER_TAX_FOR_INVOICES_AND_ESTIMATES'
+										| translate
+								}}
+							</nb-toggle>
+						</div>
 					</div>
 				</div>
 			</div>
