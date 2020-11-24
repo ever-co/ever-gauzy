@@ -78,6 +78,7 @@
 		"MANAGE_TEMPLATES": "Управление шаблонами",
 		"MAKE_DEFAULT": "Сделать по умолчанию",
 		"HIDE_ALL": "Скрыть все",
+		"SCHEDULES": "Графики",
 		"YES_HIDE_ALL_JOBS": "Да, скрыть все задания",
 		"VALIDATE": "Validate",
 		"VALIDATED": "Проверено"
@@ -195,6 +196,8 @@
 			"BRAND_COLOR": "Цвет бренда",
 			"DATE_FORMAT": "Формат даты",
 			"CHOOSE_TIME_ZONE": "Выберите часовой пояс",
+			"START_TIME": "Время начала рабочего дня по умолчанию",
+			"END_TIME": "Время окончания рабочего дня по умолчанию",
 			"POSTCODE": "Postcode (Zip)",
 			"PAY_PERIOD": "Период оплаты",
 			"BILL_RATE": "Ставка счета / час",
@@ -258,7 +261,13 @@
 			"SHORT_DESCRIPTION": "Краткое описание",
 			"ENABLE_EMPLOYEE_FEATURES": "Включить функции сотрудника",
 			"REVOKE_EMPLOYEE_FEATURES": "Отозвать функции сотрудника",
-			"STATUS": "Статус"
+			"STATUS": "Статус",
+			"FISCAL_YEAR_START_DATE": "Дата начала финансового года",
+			"FISCAL_YEAR_END_DATE": "Дата окончания финансового года",
+			"TAX_AND_DISCOUNT_INVOICE_ITEMS_SEPARATELY": "Налог и Скидка накладных пунктов отдельно",
+			"ALLOW_TAXING_AND_DISCOUNTING_OF_INVOICE_ITEMS_SEPARATELY": "Разрешить налогообложение и дисконтирование товаров по отдельности",
+			"DISCOUNT_AFTER_TAX": "Скидка после налога",
+			"APPLY_DISCOUNT_AFTER_TAX_FOR_INVOICES_AND_ESTIMATES": "Применить скидку после налога на счета и оценки"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -314,6 +323,8 @@
 			"PROJECTS": "Выберите проекты",
 			"CHOOSE_FORMAT": "Выберите формат",
 			"CHOOSE_TIME_ZONE": "Выберите часовой пояс",
+			"START_TIME": "H:mm",
+			"END_TIME": "H:mm",
 			"ADD_COLOR": "Добавить цвет",
 			"ALIGN_LOGO_TO": "Выровнять логотип по",
 			"DEPARTMENTS": "Департаменты",
@@ -1182,6 +1193,7 @@
 		"CONTACTS": "Контакты",
 		"LEVEL": "Уровень",
 		"EDIT": {
+			"ACCOUNTING": "Бухгалтер",
 			"HEADER": "Управление",
 			"CLIENT": "Kлиент",
 			"CONTACT": "Контакт",
@@ -2433,6 +2445,7 @@
 	},
 	"SCHEDULE": {
 		"DATE_SPECIFIC_AVAILABILITY": "Определенная дата наличия",
+		"SELECT_EMPLOYEE": "Пожалуйста, выберите сотрудника из меню выше.",
 		"RECURRING_AVAILABILITY": "Повторяющаяся доступность",
 		"DATE_SPECIFIC_AVAILABILITY_TOOLTIP": "Вы можете использовать дату для обозначения доступности на определенную дату или исключения из повторяющегося шаблона доступности. Изменения, которые вы вносите, превзойдут вашу Еженедельную активность только на определённые даты.",
 		"RECURRING_AVAILABILITY_TOOLTIP": "Вы можете использовать Периодическую доступность для отметки наличия на еженедельно. Чтобы изменить доступность только на определённые дни, вы должны использовать доступность, специфичную для дат."
