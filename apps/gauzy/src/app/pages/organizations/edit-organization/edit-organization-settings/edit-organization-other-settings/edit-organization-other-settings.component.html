@@ -282,14 +282,19 @@
 	</nb-card>
 
 	<nb-card>
-		<nb-card-header> Accounting </nb-card-header>
+		<nb-card-header>
+			{{ 'ORGANIZATIONS_PAGE.EDIT.ACCOUNTING' | translate }}
+		</nb-card-header>
 		<nb-card-body>
 			<div class="fields">
 				<div class="row">
 					<div class="col-6">
 						<div class="form-group">
 							<label class="label">
-								Fiscal Year Start Date
+								{{
+									'FORM.LABELS.FISCAL_YEAR_START_DATE'
+										| translate
+								}}
 							</label>
 							<input
 								fullWidth
@@ -303,7 +308,12 @@
 					</div>
 					<div class="col-6">
 						<div class="form-group">
-							<label class="label"> Fiscal Year End Date </label>
+							<label class="label">
+								{{
+									'FORM.LABELS.FISCAL_YEAR_END_DATE'
+										| translate
+								}}</label
+							>
 							<input
 								fullWidth
 								type="date"
@@ -318,7 +328,10 @@
 					<div class="col-6">
 						<div class="form-group invite-toggle">
 							<label class="label">
-								Tax And Discount Invoice Items Separately
+								{{
+									'FORM.LABELS.TAX_AND_DISCOUNT_INVOICE_ITEMS_SEPARATELY'
+										| translate
+								}}
 							</label>
 							<nb-toggle
 								class="d-block"
@@ -327,8 +340,10 @@
 								labelPosition="start"
 								(checkedChange)="toggleSeparateTaxing($event)"
 							>
-								Allow taxing and discounting of invoice items
-								separately
+								{{
+									'FORM.LABELS.ALLOW_TAXING_AND_DISCOUNTING_OF_INVOICE_ITEMS_SEPARATELY'
+										| translate
+								}}
 							</nb-toggle>
 						</div>
 					</div>
@@ -356,7 +371,9 @@
 				</div>
 				<div class="row">
 					<div class="col-6">
-						<label class="label"> Discount after tax </label>
+						<label class="label">
+							{{ 'FORM.LABELS.DISCOUNT_AFTER_TAX' | translate }}
+						</label>
 						<nb-toggle
 							class="d-block"
 							formControlName="discountAfterTax"
@@ -364,7 +381,10 @@
 							labelPosition="start"
 							(checkedChange)="toggleDiscountAfterTax($event)"
 						>
-							Apply discount after tax for invoices and estimates
+							{{
+								'FORM.LABELS.APPLY_DISCOUNT_AFTER_TAX_FOR_INVOICES_AND_ESTIMATES'
+									| translate
+							}}
 						</nb-toggle>
 					</div>
 				</div>
