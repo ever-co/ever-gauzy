@@ -51,6 +51,16 @@ export interface IUserRegistrationInput {
 	createdById?: string;
 }
 
+export interface IAuthLoginInput {
+	findObj: {
+		email: string;
+	};
+	password: string;
+}
+export interface IAuthResponse {
+	user: IUser;
+	token: string;
+}
 export interface IUserCreateInput {
 	firstName?: string;
 	lastName?: string;
@@ -92,6 +102,10 @@ export enum ComponentLayoutStyleEnum {
 	SPRINT_VIEW = 'SPRINT_VIEW'
 }
 
+export enum ProviderEnum {
+	GOOGLE = 'google',
+	FACEBOOK = 'facebook'
+}
 export interface IUserViewModel extends IBasePerTenantEntityModel {
 	fullName: string;
 	email: string;
