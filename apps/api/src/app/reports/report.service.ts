@@ -56,7 +56,7 @@ export class ReportService extends CrudService<Report> {
 					'"reportOrganizations"."organizationId" = :organizationId',
 					{ organizationId: filter.organizationId }
 				);
-				qb.where('"reportOrganizations"."isEnabled" = :isEnabled', {
+				qb.andWhere('"reportOrganizations"."isEnabled" = :isEnabled', {
 					isEnabled: true
 				});
 			}
