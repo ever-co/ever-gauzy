@@ -84,6 +84,9 @@ describe('Timesheets test', () => {
 		timesheetsPage.dateInputVisible();
 		timesheetsPage.enterDateData();
 		timesheetsPage.clickKeyboardButtonByKeyCode(9);
+		timesheetsPage.startTimeDropdownVisible();
+		timesheetsPage.clickStartTimeDropdown();
+		timesheetsPage.selectTaskFromDropdown(0);
 		timesheetsPage.selectProjectDropdownVisible();
 		timesheetsPage.clickSelectProjectDropdown();
 		timesheetsPage.selectProjectFromDropdown(
@@ -104,5 +107,32 @@ describe('Timesheets test', () => {
 		);
 		timesheetsPage.saveTimeLogButtonVisible();
 		timesheetsPage.clickSaveTimeLogButton();
+	});
+	it('Should be able to view time', () => {
+		timesheetsPage.waitMessageToHide();
+		timesheetsPage.viewEmployeeTimeLogButtonVisible();
+		timesheetsPage.clickViewEmployeeTimeLogButton(0);
+		timesheetsPage.closeAddTimeLogPopoverButtonVisible();
+		timesheetsPage.clickCloseAddTimeLogPopoverButton();
+	});
+	it('Should be able to edit time', () => {
+		timesheetsPage.editEmployeeTimeLogButtonVisible();
+		timesheetsPage.clickEditEmployeeTimeLogButton(0);
+		timesheetsPage.dateInputVisible();
+		timesheetsPage.enterDateData();
+		timesheetsPage.clickKeyboardButtonByKeyCode(9);
+		timesheetsPage.addTimeLogDescriptionVisible();
+		timesheetsPage.enterTimeLogDescriptionData(
+			TimesheetsPageData.defaultDescription
+		);
+		timesheetsPage.saveTimeLogButtonVisible();
+		timesheetsPage.clickSaveTimeLogButton();
+	});
+	it('Should be able to delete time', () => {
+		timesheetsPage.waitMessageToHide();
+		timesheetsPage.deleteEmployeeTimeLogButtonVisible();
+		timesheetsPage.clickDeleteEmployeeTimeLogButton(0);
+		timesheetsPage.confirmDeleteButtonVisible();
+		timesheetsPage.clickConfirmDeleteButton();
 	});
 });
