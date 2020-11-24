@@ -78,6 +78,7 @@
 		"MANAGE_TEMPLATES": "Manage Templates",
 		"MAKE_DEFAULT": "Make Default",
 		"HIDE_ALL": "Hide All",
+		"SCHEDULES": "Schedules",
 		"YES_HIDE_ALL_JOBS": "Yes, Hide All Jobs",
 		"VALIDATE": "Validate",
 		"VALIDATED": "Validated"
@@ -195,6 +196,8 @@
 			"BRAND_COLOR": "Brand Color",
 			"DATE_FORMAT": "Date Format",
 			"CHOOSE_TIME_ZONE": "Choose Time Zone",
+			"START_TIME": "Default Work Day Start Time",
+			"END_TIME": "Default Work Day End Time",
 			"POSTCODE": "Postcode (Zip)",
 			"PAY_PERIOD": "Pay Period",
 			"BILL_RATE": "Bill Rate / hr",
@@ -258,7 +261,13 @@
 			"SHORT_DESCRIPTION": "Short Description",
 			"ENABLE_EMPLOYEE_FEATURES": "Enable Employee Features",
 			"REVOKE_EMPLOYEE_FEATURES": "Revoke Employee Features",
-			"STATUS": "Status"
+			"STATUS": "Status",
+			"FISCAL_YEAR_START_DATE": "Fiscal Year Start Date",
+			"FISCAL_YEAR_END_DATE": "Fiscal Year End Date",
+			"TAX_AND_DISCOUNT_INVOICE_ITEMS_SEPARATELY": "Tax And Discount Invoice Items Separately",
+			"ALLOW_TAXING_AND_DISCOUNTING_OF_INVOICE_ITEMS_SEPARATELY": "Allow taxing and discounting of invoice items separately",
+			"DISCOUNT_AFTER_TAX": "Discount after tax",
+			"APPLY_DISCOUNT_AFTER_TAX_FOR_INVOICES_AND_ESTIMATES": "Apply discount after tax for invoices and estimates"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -314,6 +323,8 @@
 			"PROJECTS": "Choose Projects",
 			"CHOOSE_FORMAT": "Choose Format",
 			"CHOOSE_TIME_ZONE": "Choose Time Zone",
+			"START_TIME": "HH:mm",
+			"END_TIME": "HH:mm",
 			"ADD_COLOR": "Add Color",
 			"ALIGN_LOGO_TO": "Align Logo To",
 			"DEPARTMENTS": "Departments",
@@ -1182,6 +1193,7 @@
 		"CONTACTS": "Contacts",
 		"LEVEL": "Level",
 		"EDIT": {
+			"ACCOUNTING": "Accounting",
 			"HEADER": "Manage",
 			"CLIENT": "Client",
 			"CONTACT": "Contact",
@@ -2433,6 +2445,7 @@
 	},
 	"SCHEDULE": {
 		"DATE_SPECIFIC_AVAILABILITY": "Date Specific Availability",
+		"SELECT_EMPLOYEE": "Please select employee from the menu above.",
 		"RECURRING_AVAILABILITY": "Recurring Availability",
 		"DATE_SPECIFIC_AVAILABILITY_TOOLTIP": "You can use Date specific availability to mark availability for a particular date or add exceptions to your Recurring availability pattern. The changes you make will override your Weekly recurring availability on those specific dates only.",
 		"RECURRING_AVAILABILITY_TOOLTIP": "You can use Recurring availability to mark your availability on a weekly basis. To change your availability for specific days only, you must use Date-specific availability."

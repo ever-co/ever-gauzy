@@ -11,7 +11,8 @@ import {
 	ITimeOff,
 	IAvailabilitySlotsView,
 	IOrganization,
-	IRolePermission
+	IRolePermission,
+	AvailabilitySlotType
 } from '@gauzy/models';
 import { Store } from '../../../../@core/services/store.service';
 import { AvailabilitySlotsService } from '../../../../@core/services/availability-slots.service';
@@ -28,6 +29,7 @@ import {
 import { TimeOffService } from '../../../../@core/services/time-off.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './availability-slots.component.html'
@@ -64,11 +66,17 @@ export class AvailabilitySlotsComponent
 	public loading: boolean = true;
 	organization: IOrganization;
 
+	createForm = {
+		startTime: '00:00',
+		endTime: '00:00'
+	};
+
 	constructor(
 		private store: Store,
 		private route: ActivatedRoute,
 		private errorHandler: ErrorHandlingService,
-		private toastrService: NbToastrService,
+		private nbToastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private availabilitySlotsService: AvailabilitySlotsService,
 		private timeOffService: TimeOffService,
 		readonly translateService: TranslateService,
@@ -79,22 +87,32 @@ export class AvailabilitySlotsComponent
 
 	ngOnInit() {
 		this.getCalendarOption();
-		if (
-			this.route.snapshot['_routerState'].url.includes(
-				'recurring-availability'
-			)
-		) {
-			this.recurringAvailabilityMode = true;
-			delete this.calendarOptions.selectAllow;
 
-			this.calendarOptions.dayHeaderFormat = { weekday: 'long' };
-			this.calendarOptions.headerToolbar = {
-				center: '',
-				right: '',
-				left: ''
-			};
-			this.calendarOptions.hiddenDays = [];
-		}
+		this.route.data.pipe(untilDestroyed(this)).subscribe(({ page }) => {
+			if (page === 'recurring') {
+				this.recurringAvailabilityMode = true;
+				delete this.calendarOptions.selectAllow;
+
+				this.calendarOptions.dayHeaderFormat = { weekday: 'long' };
+				this.calendarOptions.headerToolbar = {
+					center: '',
+					right: '',
+					left: ''
+				};
+				this.calendarOptions.hiddenDays = [];
+			}
+		});
+
+		// this.recurringAvailabilityMode = true;
+		// delete this.calendarOptions.selectAllow;
+
+		// this.calendarOptions.dayHeaderFormat = { weekday: 'long' };
+		// this.calendarOptions.headerToolbar = {
+		// 	center: '',
+		// 	right: '',
+		// 	left: ''
+		// };
+		// this.calendarOptions.hiddenDays = [];
 
 		this.calendarEvents = [];
 		this.selectedEmployeeId =
@@ -122,6 +140,22 @@ export class AvailabilitySlotsComponent
 				this.organization = org;
 				this._selectedOrganizationId = org.id;
 				this.fetchAvailableSlots();
+
+				if (org.defaultStartTime) {
+					this.createForm.startTime = org.defaultStartTime;
+				}
+				if (org.defaultEndTime) {
+					this.createForm.endTime = org.defaultEndTime;
+				}
+			});
+
+		this.store.selectedEmployee$
+			.pipe(
+				filter((employee) => !!employee),
+				untilDestroyed(this)
+			)
+			.subscribe((employee) => {
+				this.onEmployeeChange(employee);
 			});
 	}
 
@@ -171,7 +205,9 @@ export class AvailabilitySlotsComponent
 		const input = {
 			startTime: event.start,
 			endTime: event.end,
-			type: this.recurringAvailabilityMode ? 'Recurring' : 'Default',
+			type: this.recurringAvailabilityMode
+				? AvailabilitySlotType.RECURRING
+				: AvailabilitySlotType.DEFAULT,
 			allDay: event.allDay,
 			employeeId: this.selectedEmployeeId,
 			organizationId,
@@ -275,7 +311,55 @@ export class AvailabilitySlotsComponent
 		this.saveSelectedDateRange();
 	}
 
+	async setSchedule() {
+		if (!this.selectedEmployeeId) {
+			this.toastrService.danger('SCHEDULE.SELECT_EMPLOYEE');
+			return;
+		}
+		const payload: IAvailabilitySlotsCreateInput[] = [];
+		const calender = this.calendar.getApi();
+		const range = calender.getCurrentData().dateProfile.currentRange;
+		let start = range.start;
+		while (start < range.end) {
+			const date = moment(start).format('YYYY-MM-DD');
+
+			let days = [];
+			if (this.organization.startWeekOn.toLowerCase() === 'monday') {
+				days = [0, 1, 2, 3, 4];
+			} else {
+				days = [6, 0, 1, 2, 3];
+			}
+
+			if (days.indexOf(moment(start).weekday()) >= 0) {
+				payload.push({
+					startTime: moment(
+						date + ' ' + this.createForm.startTime
+					).toDate(),
+					endTime: moment(
+						date + ' ' + this.createForm.endTime
+					).toDate(),
+					employeeId: this.selectedEmployeeId,
+					organizationId: this.organization.id,
+					tenantId: this.organization.tenantId,
+					type: this.recurringAvailabilityMode
+						? AvailabilitySlotType.RECURRING
+						: AvailabilitySlotType.DEFAULT,
+					allDay: false
+				});
+			}
+
+			start = moment(start).add(1, 'day').toDate();
+		}
+
+		await this.availabilitySlotsService.createBulk(payload);
+		this.fetchAvailableSlots();
+	}
+
 	async saveSelectedDateRange() {
+		if (!this.selectedEmployeeId) {
+			this.toastrService.danger('SCHEDULE.SELECT_EMPLOYEE');
+			return;
+		}
 		try {
 			const payload: IAvailabilitySlotsCreateInput[] = [];
 			for (const e of this.calendarEvents) {
@@ -287,8 +371,8 @@ export class AvailabilitySlotsComponent
 						organizationId: this.organization.id,
 						tenantId: this.organization.tenantId,
 						type: this.recurringAvailabilityMode
-							? 'Recurring'
-							: 'Default',
+							? AvailabilitySlotType.RECURRING
+							: AvailabilitySlotType.DEFAULT,
 						allDay: e.allDay
 					});
 				}
@@ -303,7 +387,7 @@ export class AvailabilitySlotsComponent
 				);
 			}
 
-			this.toastrService.primary(
+			this.nbToastrService.primary(
 				this.getTranslation('NOTES.AVAILABILITY_SLOTS.SAVE'),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
@@ -333,7 +417,9 @@ export class AvailabilitySlotsComponent
 	async fetchAvailableSlots() {
 		this.calendarEvents = [];
 		const findObj = {
-			type: this.recurringAvailabilityMode ? 'Recurring' : 'Default',
+			type: this.recurringAvailabilityMode
+				? AvailabilitySlotType.RECURRING
+				: AvailabilitySlotType.DEFAULT,
 			organizationId: this.organization.id,
 			tenantId: this.organization.tenantId,
 			employeeId: this.selectedEmployeeId || null
@@ -389,7 +475,7 @@ export class AvailabilitySlotsComponent
 			this.calendar.getApi().refetchEvents();
 			this.firstLoad = false;
 		} catch (error) {
-			this.toastrService.danger(
+			this.nbToastrService.danger(
 				this.getTranslation('NOTES.AVAILABILITY_SLOTS.ERROR', {
 					error: error.message || error.error.message
 				}),

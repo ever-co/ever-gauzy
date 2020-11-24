@@ -50,6 +50,7 @@ import { InviteService } from '../../../../@core/services/invite.service';
 import { TableComponentsModule } from '../../../../@shared/table-components/table-components.module';
 import { FileUploaderModule } from 'apps/gauzy/src/app/@shared/file-uploader-input/file-uploader-input.module';
 import { SharedModule } from '../../../../@shared/shared.module';
+import { TimerPickerModule } from 'apps/gauzy/src/app/@shared/timer-picker/timer-picker.module';
 
 @NgModule({
 	imports: [
@@ -92,7 +93,8 @@ import { SharedModule } from '../../../../@shared/shared.module';
 		EmployeeMultiSelectModule,
 		TagsColorInputModule,
 		FileUploaderModule,
-		SharedModule
+		SharedModule,
+		TimerPickerModule
 	],
 	providers: [
 		OrganizationDepartmentsService,

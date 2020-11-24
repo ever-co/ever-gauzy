@@ -26,7 +26,7 @@ export class ToastrService {
 		);
 	}
 
-	danger(
+	async danger(
 		error: any,
 		title: string = 'TOASTR.TITLE.ERROR',
 		translationParams: Object = {}
@@ -60,10 +60,6 @@ export class ToastrService {
 	}
 
 	private getTranslation(prefix: string, params?: Object) {
-		let result = '';
-		this.translateService.get(prefix, params).subscribe((res) => {
-			result = res;
-		});
-		return result;
+		return this.translateService.instant(prefix, params);
 	}
 }

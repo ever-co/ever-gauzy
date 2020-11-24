@@ -58,6 +58,26 @@
 							</nb-select>
 						</div>
 					</div>
+
+					<div class="form-group col-6">
+						<label class="label">{{
+							'FORM.LABELS.START_TIME' | translate
+						}}</label>
+						<ga-timer-picker
+							fullWidth
+							formControlName="defaultStartTime"
+						></ga-timer-picker>
+					</div>
+
+					<div class="form-group col-6">
+						<label class="label">{{
+							'FORM.LABELS.END_TIME' | translate
+						}}</label>
+						<ga-timer-picker
+							fullWidth
+							formControlName="defaultEndTime"
+						></ga-timer-picker>
+					</div>
 				</div>
 				<div class="row">
 					<div class="col-6">
@@ -263,7 +283,7 @@
 
 	<nb-card>
 		<nb-card-header>
-			Accounting
+			{{ 'ORGANIZATIONS_PAGE.EDIT.ACCOUNTING' | translate }}
 		</nb-card-header>
 		<nb-card-body>
 			<div class="fields">
@@ -271,7 +291,10 @@
 					<div class="col-6">
 						<div class="form-group">
 							<label class="label">
-								Fiscal Year Start Date
+								{{
+									'FORM.LABELS.FISCAL_YEAR_START_DATE'
+										| translate
+								}}
 							</label>
 							<input
 								fullWidth
@@ -286,8 +309,11 @@
 					<div class="col-6">
 						<div class="form-group">
 							<label class="label">
-								Fiscal Year End Date
-							</label>
+								{{
+									'FORM.LABELS.FISCAL_YEAR_END_DATE'
+										| translate
+								}}</label
+							>
 							<input
 								fullWidth
 								type="date"
@@ -302,7 +328,10 @@
 					<div class="col-6">
 						<div class="form-group invite-toggle">
 							<label class="label">
-								Tax And Discount Invoice Items Separately
+								{{
+									'FORM.LABELS.TAX_AND_DISCOUNT_INVOICE_ITEMS_SEPARATELY'
+										| translate
+								}}
 							</label>
 							<nb-toggle
 								class="d-block"
@@ -311,8 +340,10 @@
 								labelPosition="start"
 								(checkedChange)="toggleSeparateTaxing($event)"
 							>
-								Allow taxing and discounting of invoice items
-								separately
+								{{
+									'FORM.LABELS.ALLOW_TAXING_AND_DISCOUNTING_OF_INVOICE_ITEMS_SEPARATELY'
+										| translate
+								}}
 							</nb-toggle>
 						</div>
 					</div>
@@ -340,18 +371,25 @@
 				</div>
 				<div class="row">
 					<div class="col-6">
-						<label class="label">
-							Discount after tax
-						</label>
-						<nb-toggle
-							class="d-block"
-							formControlName="discountAfterTax"
-							status="primary"
-							labelPosition="start"
-							(checkedChange)="toggleDiscountAfterTax($event)"
-						>
-							Apply discount after tax for invoices and estimates
-						</nb-toggle>
+						<div class="form-group invite-toggle">
+							<label class="label">
+								{{
+									'FORM.LABELS.DISCOUNT_AFTER_TAX' | translate
+								}}
+							</label>
+							<nb-toggle
+								class="d-block"
+								formControlName="discountAfterTax"
+								status="primary"
+								labelPosition="start"
+								(checkedChange)="toggleDiscountAfterTax($event)"
+							>
+								{{
+									'FORM.LABELS.APPLY_DISCOUNT_AFTER_TAX_FOR_INVOICES_AND_ESTIMATES'
+										| translate
+								}}
+							</nb-toggle>
+						</div>
 					</div>
 				</div>
 			</div>

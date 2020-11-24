@@ -5,6 +5,7 @@ import { Employee } from '../employee/employee.entity';
 import { AvailabilitySlot } from './availability-slots.entity';
 import * as faker from 'faker';
 import * as moment from 'moment';
+import { AvailabilitySlotType } from '@gauzy/models';
 
 export const createDefaultAvailabilitySlots = async (
 	connection: Connection,
@@ -77,7 +78,9 @@ const dataOperation = async (
 			slot.startTime,
 			moment(slot.startTime).add(7, 'hours').toDate()
 		);
-		slot.type = faker.random.arrayElement(['Default', 'Recurring']);
+		slot.type = faker.random.arrayElement(
+			Object.values(AvailabilitySlotType)
+		);
 		slots.push(slot);
 	}
 	await connection.manager.save(slots);
