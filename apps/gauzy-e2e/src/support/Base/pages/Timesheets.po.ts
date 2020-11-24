@@ -5,7 +5,8 @@ import {
 	clickElementByText,
 	clearField,
 	enterInput,
-	clickKeyboardBtnByKeycode
+	clickKeyboardBtnByKeycode,
+	waitElementToHide
 } from '../utils/util';
 import { TimesheetsPage } from '../pageobjects/TimesheetsPageObject';
 
@@ -41,6 +42,18 @@ export const enterDateData = () => {
 	clearField(TimesheetsPage.dateInputCss);
 	const date = Cypress.moment().format('MMM D, YYYY');
 	enterInput(TimesheetsPage.dateInputCss, date);
+};
+
+export const startTimeDropdownVisible = () => {
+	verifyElementIsVisible(TimesheetsPage.startTimeDropdownCss);
+};
+
+export const clickStartTimeDropdown = () => {
+	clickButton(TimesheetsPage.startTimeDropdownCss);
+};
+
+export const selectTimeFromDropdown = (index) => {
+	clickButtonByIndex(TimesheetsPage.dropdownOptionCss, index);
 };
 
 export const clientDropdownVisible = () => {
@@ -108,22 +121,34 @@ export const viewEmployeeTimeLogButtonVisible = () => {
 	verifyElementIsVisible(TimesheetsPage.viewEmployeeTimeCss);
 };
 
-export const clickViewEmployeeTimeLogButton = () => {
-	clickButton(TimesheetsPage.viewEmployeeTimeCss);
+export const clickViewEmployeeTimeLogButton = (index) => {
+	clickButtonByIndex(TimesheetsPage.viewEmployeeTimeCss, index);
 };
 
 export const editEmployeeTimeLogButtonVisible = () => {
 	verifyElementIsVisible(TimesheetsPage.editEmployeeTimeCss);
 };
 
-export const clickEditEmployeeTimeLogButton = () => {
-	clickButton(TimesheetsPage.editEmployeeTimeCss);
+export const clickEditEmployeeTimeLogButton = (index) => {
+	clickButtonByIndex(TimesheetsPage.editEmployeeTimeCss, index);
 };
 
 export const deleteEmployeeTimeLogButtonVisible = () => {
 	verifyElementIsVisible(TimesheetsPage.deleteEmployeeTimeCss);
 };
 
-export const clickDeleteEmployeeTimeLogButton = () => {
-	clickButton(TimesheetsPage.deleteEmployeeTimeCss);
+export const clickDeleteEmployeeTimeLogButton = (index) => {
+	clickButtonByIndex(TimesheetsPage.deleteEmployeeTimeCss, index);
+};
+
+export const confirmDeleteButtonVisible = () => {
+	verifyElementIsVisible(TimesheetsPage.confirmDeleteButtonCss);
+};
+
+export const clickConfirmDeleteButton = () => {
+	clickButton(TimesheetsPage.confirmDeleteButtonCss);
+};
+
+export const waitMessageToHide = () => {
+	waitElementToHide(TimesheetsPage.toastrMessageCss);
 };
