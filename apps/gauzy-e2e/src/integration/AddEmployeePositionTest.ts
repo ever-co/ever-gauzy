@@ -28,10 +28,17 @@ describe('Add employee position test', () => {
 		addEmployeePositionPage.clickKeyboardButtonByKeyCode(9);
 		addEmployeePositionPage.savePositionButtonVisible();
 		addEmployeePositionPage.clickSavePositionButton();
+		addEmployeePositionPage.waitMessageToHide();
+		addEmployeePositionPage.editEmployeePositionButtonVisible();
+		addEmployeePositionPage.clickEditEmployeePositionButton();
+		addEmployeePositionPage.verifyTitleExists(
+			AddEmployeePositionPageData.fullStackDeveloper
+		);
+		addEmployeePositionPage.cancelButtonVisible();
+		addEmployeePositionPage.clickCancelButton();
 	});
 	it('Should be able to edit employee position', () => {
-		addEmployeePositionPage.editEmployeePositionButtonVisible();
-		addEmployeePositionPage.clickEditEmployeePositionButton(0);
+		addEmployeePositionPage.clickEditEmployeePositionButton();
 		addEmployeePositionPage.editEmployeePositionInpuVisible();
 		addEmployeePositionPage.enterEditPositionData(
 			AddEmployeePositionPageData.midLevelWebDeveloper
@@ -42,11 +49,22 @@ describe('Add employee position test', () => {
 		addEmployeePositionPage.clickKeyboardButtonByKeyCode(9);
 		addEmployeePositionPage.savePositionButtonVisible();
 		addEmployeePositionPage.clickSavePositionButton();
+		addEmployeePositionPage.waitMessageToHide();
+		addEmployeePositionPage.editEmployeePositionButtonVisible();
+		addEmployeePositionPage.clickEditEmployeePositionButton();
+		addEmployeePositionPage.verifyTitleExists(
+			AddEmployeePositionPageData.midLevelWebDeveloper
+		);
+		addEmployeePositionPage.cancelButtonVisible();
+		addEmployeePositionPage.clickCancelButton();
 	});
 	it('Should be able to delete employee position', () => {
 		addEmployeePositionPage.deletePositionButtonVisible();
-		addEmployeePositionPage.clickDeletePositionButton(0);
+		addEmployeePositionPage.clickDeletePositionButton();
 		addEmployeePositionPage.confirmDeleteButtonVisible();
 		addEmployeePositionPage.clickConfirmDeletePositionButton();
+		addEmployeePositionPage.verifyElementIsDeleted(
+			AddEmployeePositionPageData.midLevelWebDeveloper
+		);
 	});
 });
