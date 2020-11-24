@@ -371,9 +371,7 @@ export class SeedDataService {
 	/**
 	 * Seed Default Data
 	 */
-	public async runReportsSeed() {
-		const isDefault = true;
-
+	public async runReportsSeed(isDefault = true) {
 		try {
 			// Connect to database
 			await this.createConnection();
@@ -384,6 +382,7 @@ export class SeedDataService {
 		} catch (error) {
 			this.handleError(error);
 		}
+		return;
 	}
 
 	/**
@@ -530,6 +529,8 @@ export class SeedDataService {
 		this.tenant = await createDefaultTenants(this.connection);
 
 		this.roles = await createRoles(this.connection, [this.tenant]);
+
+		await this.runReportsSeed(true);
 
 		await createRolePermissions(this.connection, this.roles, [this.tenant]);
 
