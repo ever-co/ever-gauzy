@@ -162,5 +162,16 @@ export const environment: IEnvironment = {
 	/**
 	 * Endpoint for Gauzy AI API (optional), e.g.: http://localhost:3005/graphql
 	 */
-	gauzyAIGraphQLEndpoint: process.env.GAUZY_AI_GRAPHQL_ENDPOINT
+	gauzyAIGraphQLEndpoint: process.env.GAUZY_AI_GRAPHQL_ENDPOINT,
+
+	smtpConfig: {
+		host: process.env.MAIL_HOST,
+		port: parseInt(process.env.MAIL_PORT, 10),
+		secure: process.env.MAIL_PORT === '465' ? true : false, // true for 465, false for other ports
+		auth: {
+			user: process.env.MAIL_USERNAME,
+			pass: process.env.MAIL_PASSWORD
+		},
+		from: process.env.MAIL_FROM_ADDRESS
+	}
 };

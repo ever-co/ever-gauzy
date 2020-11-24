@@ -77,50 +77,16 @@ describe('Timesheets test', () => {
 		clientsPage.enterWebsiteInputData(website);
 		clientsPage.saveButtonVisible();
 		clientsPage.clickSaveButton();
-		cy.visit('/#/pages/tasks/dashboard');
-		addTaskPage.gridBtnExists();
-		addTaskPage.gridBtnClick(1);
-		addTaskPage.addTaskButtonVisible();
-		addTaskPage.clickAddTaskButton();
-		addTaskPage.selectProjectDropdownVisible();
-		addTaskPage.clickSelectProjectDropdown();
-		addTaskPage.selectProjectOptionDropdown(
-			AddTasksPageData.defaultTaskProject
-		);
-		addTaskPage.selectEmployeeDropdownVisible();
-		addTaskPage.clickSelectEmployeeDropdown();
-		addTaskPage.selectEmployeeDropdownOption(1);
-		addTaskPage.selectEmployeeDropdownOption(2);
-		addTaskPage.clickKeyboardButtonByKeyCode(9);
-		addTaskPage.addTitleInputVisible();
-		addTaskPage.enterTtielInputData(AddTasksPageData.defaultTaskTitle);
-		addTaskPage.dueDateInputVisible();
-		addTaskPage.enterDueDateData();
-		addTaskPage.clickKeyboardButtonByKeyCode(9);
-		addTaskPage.estimateDaysInputVisible();
-		addTaskPage.enterEstiamteDaysInputData(
-			AddTasksPageData.defaultTaskEstimateDays
-		);
-		addTaskPage.estimateHoursInputVisible();
-		addTaskPage.enterEstiamteHoursInputData(
-			AddTasksPageData.defaultTaskEstimateHours
-		);
-		addTaskPage.estimateMinutesInputVisible();
-		addTaskPage.enterEstimateMinutesInputData(
-			AddTasksPageData.defaultTaskEstimateMinutes
-		);
-		addTaskPage.taskDecriptionTextareaVisible();
-		addTaskPage.enterTaskDescriptionTextareaData(
-			AddTasksPageData.defaultTaskDescription
-		);
-		addTaskPage.saveTaskButtonVisible();
-		addTaskPage.clickSaveTaskButton();
+		CustomCommands.addTask(addTaskPage, AddTasksPageData);
 		cy.visit('/#/pages/employees/timesheets/daily');
 		timesheetsPage.addTimeButtonVisible();
 		timesheetsPage.clickAddTimeButton();
 		timesheetsPage.dateInputVisible();
 		timesheetsPage.enterDateData();
 		timesheetsPage.clickKeyboardButtonByKeyCode(9);
+		timesheetsPage.startTimeDropdownVisible();
+		timesheetsPage.clickStartTimeDropdown();
+		timesheetsPage.selectTaskFromDropdown(0);
 		timesheetsPage.selectProjectDropdownVisible();
 		timesheetsPage.clickSelectProjectDropdown();
 		timesheetsPage.selectProjectFromDropdown(
@@ -141,5 +107,32 @@ describe('Timesheets test', () => {
 		);
 		timesheetsPage.saveTimeLogButtonVisible();
 		timesheetsPage.clickSaveTimeLogButton();
+	});
+	it('Should be able to view time', () => {
+		timesheetsPage.waitMessageToHide();
+		timesheetsPage.viewEmployeeTimeLogButtonVisible();
+		timesheetsPage.clickViewEmployeeTimeLogButton(0);
+		timesheetsPage.closeAddTimeLogPopoverButtonVisible();
+		timesheetsPage.clickCloseAddTimeLogPopoverButton();
+	});
+	it('Should be able to edit time', () => {
+		timesheetsPage.editEmployeeTimeLogButtonVisible();
+		timesheetsPage.clickEditEmployeeTimeLogButton(0);
+		timesheetsPage.dateInputVisible();
+		timesheetsPage.enterDateData();
+		timesheetsPage.clickKeyboardButtonByKeyCode(9);
+		timesheetsPage.addTimeLogDescriptionVisible();
+		timesheetsPage.enterTimeLogDescriptionData(
+			TimesheetsPageData.defaultDescription
+		);
+		timesheetsPage.saveTimeLogButtonVisible();
+		timesheetsPage.clickSaveTimeLogButton();
+	});
+	it('Should be able to delete time', () => {
+		timesheetsPage.waitMessageToHide();
+		timesheetsPage.deleteEmployeeTimeLogButtonVisible();
+		timesheetsPage.clickDeleteEmployeeTimeLogButton(0);
+		timesheetsPage.confirmDeleteButtonVisible();
+		timesheetsPage.clickConfirmDeleteButton();
 	});
 });

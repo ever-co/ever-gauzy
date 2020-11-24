@@ -107,6 +107,29 @@ export const CustomCommands = {
 		contactsLeadsPage.saveButtonVisible();
 		contactsLeadsPage.clickSaveButton();
 	},
+	addTeam: (organizationTeamsPage, OrganizationTeamsPageData) => {
+		cy.visit('/#/pages/organization/teams');
+		organizationTeamsPage.gridBtnExists();
+		organizationTeamsPage.gridBtnClick(1);
+		organizationTeamsPage.addTeamButtonVisible();
+		organizationTeamsPage.clickAddTeamButton();
+		organizationTeamsPage.nameInputVisible();
+		organizationTeamsPage.enterNameInputData(
+			OrganizationTeamsPageData.name
+		);
+		organizationTeamsPage.tagsMultyselectVisible();
+		organizationTeamsPage.clickTagsMultyselect();
+		organizationTeamsPage.selectTagsFromDropdown(0);
+		organizationTeamsPage.clickCardBody();
+		organizationTeamsPage.clickEmployeeDropdown();
+		organizationTeamsPage.selectEmployeeFromDropdown(0);
+		organizationTeamsPage.clickCardBody();
+		organizationTeamsPage.clickManagerDropdown();
+		organizationTeamsPage.selectManagerFromDropdown(0);
+		organizationTeamsPage.clickCardBody();
+		organizationTeamsPage.saveButtonVisible();
+		organizationTeamsPage.clickSaveButton();
+	},
 	addProject: (organizationProjectsPage, OrganizationProjectsPageData) => {
 		cy.visit('/#/pages/organization/projects');
 		organizationProjectsPage.gridBtnExists();
@@ -153,7 +176,7 @@ export const CustomCommands = {
 		addTaskPage.selectEmployeeDropdownOption(2);
 		addTaskPage.clickKeyboardButtonByKeyCode(9);
 		addTaskPage.addTitleInputVisible();
-		addTaskPage.enterTtielInputData(AddTasksPageData.defaultTaskTitle);
+		addTaskPage.enterTitleInputData(AddTasksPageData.defaultTaskTitle);
 		addTaskPage.dueDateInputVisible();
 		addTaskPage.enterDueDateData();
 		addTaskPage.clickKeyboardButtonByKeyCode(9);

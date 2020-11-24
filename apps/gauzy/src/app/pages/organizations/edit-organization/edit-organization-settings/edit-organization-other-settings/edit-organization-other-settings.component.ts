@@ -170,6 +170,8 @@ export class EditOrganizationOtherSettingsComponent
 			dateFormat: [this.organization.dateFormat],
 			timeZone: [this.organization.timeZone],
 			startWeekOn: [this.organization.startWeekOn],
+			defaultStartTime: [this.organization.defaultStartTime],
+			defaultEndTime: [this.organization.defaultEndTime],
 			numberFormat: [this.organization.numberFormat],
 			bonusType: [this.organization.bonusType],
 			bonusPercentage: [

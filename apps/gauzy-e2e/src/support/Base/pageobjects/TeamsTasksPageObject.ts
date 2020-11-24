@@ -1,0 +1,27 @@
+export const TeamsTasksPage = {
+	gridButtonCss: 'div.layout-switch > button',
+	addTaskButtonCss: 'div.mb-3 > button[status="success"]',
+	projectDropdownCss: '[formControlName="project"]',
+	statusDropdownCss: '[formcontrolname="status"]',
+	teamDropdownCss: '[formcontrolname="teams"]',
+	drodownOptionCss: 'div.ng-option',
+	duplicateOrEditTaskButtonCss: 'div.mb-3 > button[status="info"]',
+	deleteTaskButtonCss: 'div.mb-3 > button[status="danger"]',
+	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
+	tagsSelectCss: '#addTags',
+	tagsSelectOptionCss: '[type="checkbox"]',
+	closeTagsMultyselectDropdownCss: '.ng-select-container > .ng-arrow-wrapper',
+	confirmDuplicateOrEditTaskButtonCss:
+		'nb-card-footer > button[status="success"]',
+	confirmDeleteTaskButtonCss: 'nb-card-footer > button[status="danger"]',
+	addTitleInputCss: '[formControlName="title"]',
+	selectTeamMultyselectCss: 'button[class="select-button placeholder"]',
+	selectTeamDropdownOptionCss: '.option-list nb-option',
+	dueDateInputCss: '[formControlName="dueDate"]',
+	estimateDaysInputCss: '[formControlName="estimateDays"]',
+	estimateHoursInputCss: '[formControlName="estimateHours"]',
+	estimateMinsInputCss: '[formControlName="estimateMinutes"]',
+	descriptionTextareaCss: '[formControlName="description"]',
+	saveNewTaskButtonCss: 'nb-card-footer > button[status="success"]',
+	cardBodyCss: 'nb-card-footer.text-right'
+};

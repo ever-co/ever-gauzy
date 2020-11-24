@@ -21,8 +21,12 @@ export class LayoutComponent implements OnInit, OnDestroy {
 			route: '/pages/employees/activity/apps'
 		},
 		{
-			title: 'Urls',
+			title: 'Visited Sites',
 			route: '/pages/employees/activity/urls'
+		},
+		{
+			title: 'Time & Activities',
+			route: '/pages/employees/activity/time-activities'
 		}
 	];
 

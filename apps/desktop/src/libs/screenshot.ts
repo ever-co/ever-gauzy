@@ -148,9 +148,11 @@ const readOrCreateTempDir = (tempPath) => {
 	try {
 		const isDirExist = existsSync(tempPath);
 		if (!isDirExist) {
+			mkdirSync(path.join(app.getPath('userData'), '/public'));
 			mkdirSync(tempPath);
 		}
 	} catch (error) {
+		mkdirSync(tempPath);
 		console.log('hahahha error', error);
 	}
 };

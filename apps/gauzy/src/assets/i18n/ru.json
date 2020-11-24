@@ -78,7 +78,10 @@
 		"MANAGE_TEMPLATES": "Управление шаблонами",
 		"MAKE_DEFAULT": "Сделать по умолчанию",
 		"HIDE_ALL": "Скрыть все",
-		"YES_HIDE_ALL_JOBS": "Да, скрыть все задания"
+		"SCHEDULES": "Графики",
+		"YES_HIDE_ALL_JOBS": "Да, скрыть все задания",
+		"VALIDATE": "Validate",
+		"VALIDATED": "Проверено"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -193,6 +196,8 @@
 			"BRAND_COLOR": "Цвет бренда",
 			"DATE_FORMAT": "Формат даты",
 			"CHOOSE_TIME_ZONE": "Выберите часовой пояс",
+			"START_TIME": "Время начала рабочего дня по умолчанию",
+			"END_TIME": "Время окончания рабочего дня по умолчанию",
 			"POSTCODE": "Postcode (Zip)",
 			"PAY_PERIOD": "Период оплаты",
 			"BILL_RATE": "Ставка счета / час",
@@ -256,7 +261,13 @@
 			"SHORT_DESCRIPTION": "Краткое описание",
 			"ENABLE_EMPLOYEE_FEATURES": "Включить функции сотрудника",
 			"REVOKE_EMPLOYEE_FEATURES": "Отозвать функции сотрудника",
-			"STATUS": "Статус"
+			"STATUS": "Статус",
+			"FISCAL_YEAR_START_DATE": "Дата начала финансового года",
+			"FISCAL_YEAR_END_DATE": "Дата окончания финансового года",
+			"TAX_AND_DISCOUNT_INVOICE_ITEMS_SEPARATELY": "Налог и Скидка накладных пунктов отдельно",
+			"ALLOW_TAXING_AND_DISCOUNTING_OF_INVOICE_ITEMS_SEPARATELY": "Разрешить налогообложение и дисконтирование товаров по отдельности",
+			"DISCOUNT_AFTER_TAX": "Скидка после налога",
+			"APPLY_DISCOUNT_AFTER_TAX_FOR_INVOICES_AND_ESTIMATES": "Применить скидку после налога на счета и оценки"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -312,6 +323,8 @@
 			"PROJECTS": "Выберите проекты",
 			"CHOOSE_FORMAT": "Выберите формат",
 			"CHOOSE_TIME_ZONE": "Выберите часовой пояс",
+			"START_TIME": "H:mm",
+			"END_TIME": "H:mm",
 			"ADD_COLOR": "Добавить цвет",
 			"ALIGN_LOGO_TO": "Выровнять логотип по",
 			"DEPARTMENTS": "Департаменты",
@@ -582,7 +595,7 @@
 		"JOBS_SEARCH": "Обзор",
 		"JOBS_MATCHING": "Соответствие",
 		"TEAM_TASKS": "Задачи команды",
-		"ACTIVITY": "Активность",
+		"TIME_ACTIVITY": "Время и активность",
 		"TIMESHEETS": "Сроки",
 		"SCHEDULES": "Графики",
 		"EMAIL_TEMPLATES": "Шаблоны писем",
@@ -593,6 +606,7 @@
 		"WEEKLY_TIME_REPORTS": "Еженедельный отчет",
 		"ACCOUNTING_REPORTS": "Бухгалтерские отчеты",
 		"PAYMENT_GATEWAYS": "Платежные шлюзы",
+		"SMS_GATEWAYS": "СМС шлюзы",
 		"CUSTOM_SMTP": "Пользовательский SMTP",
 		"INVENTORY": "Инвентаризация",
 		"SALES": "Продажи",
@@ -824,7 +838,7 @@
 			"TIME_FRAME_PAGE_TITLE": "Установить время",
 			"PREDEFINED_TIME_FRAMES": "Предопределенные время кадров",
 			"ADD_KPI": "Добавить KPI",
-			"MAX_ENTITIES": "Максимальное количество элементов, которые могут быть созданы",
+			"MAX_ENTITIES": "Максимальное количество сущностей, которые могут быть созданы",
 			"EMPLOYEE_OBJECTIVES": "Сотрудники могут самостоятельно решать свои задачи",
 			"WHO_CAN_OWN_OBJECTIVES": "Кто может владеть целями?",
 			"WHO_CAN_OWN_KEY_RESULTS": "Кто может владеть ключевыми результатами?",
@@ -880,7 +894,7 @@
 				"DESCRIPTION": "Описание цели.",
 				"LEVEL": "Уровень цели",
 				"TIME_FRAME_NAME": "Time frame name eg. 'Q4-2020'",
-				"KPI_DESCRIPTION": "Короткий описание, чтобы дать некоторый контекст о КПП",
+				"KPI_DESCRIPTION": "Краткое описание, чтобы дать определенный контекст о КПП",
 				"KPI_NAME": "Название KPI. Например. Поддержка страниц - 200/день"
 			},
 			"ERROR": {
@@ -967,7 +981,7 @@
 			},
 			"PLACEHOLDERS": {
 				"NAME": "Имя результата ключа. Например. Добавить метаданные для улучшения SEO",
-				"DESCRIPTION": "Короткое отчуждение, чтобы дать контекст о ключевых результатах"
+				"DESCRIPTION": "Короткое описание, чтобы дать контекст о результатах ключа"
 			}
 		},
 		"HELPER_TEXT": {
@@ -1179,6 +1193,7 @@
 		"CONTACTS": "Контакты",
 		"LEVEL": "Уровень",
 		"EDIT": {
+			"ACCOUNTING": "Бухгалтер",
 			"HEADER": "Управление",
 			"CLIENT": "Kлиент",
 			"CONTACT": "Контакт",
@@ -1437,7 +1452,7 @@
 		"EDI": "Редактировать запись отключения времени",
 		"SELECT_HOLIDAY_NAME": "Выберите название праздника",
 		"ADD_OR_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
-		"SELECT_TIME_OFF_POLICY": "Временная политика Seletc",
+		"SELECT_TIME_OFF_POLICY": "Выберите политику ожидания",
 		"ADD_A_DESCRIPTION": "Добавить описание",
 		"STATUSES": {
 			"REQUESTED": "Запрошено",
@@ -1530,7 +1545,7 @@
 		"REQUEST": "Запросить",
 		"EQUIPMENT_NAME": "Название оборудования",
 		"EQUIPMENT_SHARING_POLICY": "Совместное использование снаряжения",
-		"SHARE_REQUIEST_DATE": "Поделиться датой запроса",
+		"SHARE_REQUEST_DATE": "Поделиться датой запроса",
 		"SHARE_START_DATE": "Поделиться датой начала",
 		"SHARE_END_DATE": "Поделиться датой окончания",
 		"CREATED_BY": "Создано",
@@ -2008,7 +2023,7 @@
 	},
 	"FOOTER": {
 		"BY": "по",
-		"RIGHTS_RECERVED": "Все права защищены.",
+		"RIGHTS_RESERVED": "Все права защищены.",
 		"PRESENT": "Подарочный"
 	},
 	"TOASTR": {
@@ -2040,7 +2055,7 @@
 			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Вы уверены, что хотите изменить",
 			"PERMISSION_UPDATED": "Права доступа {{ permissionName }} изменены для {{ roleName }}",
 			"PERMISSION_UPDATE_ERROR": "Произошла ошибка при обновлении разрешений, пожалуйста, обновите и повторите попытку",
-			"REGISTER_PROPOSAL_NO_EMPLOEE_MSG": "Требуется сотрудник!",
+			"REGISTER_PROPOSAL_NO_EMPLOYEE_MSG": "Требуется сотрудник!",
 			"NEW_ORGANIZATION_PROJECT_INVALID_NAME": "Invalid input",
 			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Требуется название команды и члены",
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Требуется название поставщика",
@@ -2094,7 +2109,9 @@
 			"DELETE_PAST_INTERVIEW": "Удаление прошлых интервью запрещено",
 			"GOAL_GENERAL_SETTING_UPDATED": "Общие настройки цели обновлены",
 			"MAX_OBJECTIVE_LIMIT": "Вы не можете создать больше целей. Пожалуйста, измените ограничение на максимальные цели, чтобы добавить больше целей.",
-			"MAX_KEY_RESULT_LIMIT": "Вы не можете создать дополнительные ключевые результаты для этой цели. Пожалуйста, измените максимальный результат для добавления дополнительных результатов ключа."
+			"MAX_KEY_RESULT_LIMIT": "Вы не можете создать дополнительные ключевые результаты для этой цели. Пожалуйста, измените максимальный результат для добавления дополнительных результатов ключа.",
+			"CUSTOM_SMTP_ADDED": "Настройки Smtp успешно созданы",
+			"CUSTOM_SMTP_UPDATED": "Настройки Smtp успешно обновлены"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -2134,7 +2151,7 @@
 		"PROPOSALS": {
 			"EDIT_PROPOSAL": "Предложение успешно обновлено",
 			"REGISTER_PROPOSAL": "Новое предложение зарегистрировано",
-			"REGISTER_PROPOSAL_NO_EMPLOEE_SELECTED": "Пожалуйста, выберите сотрудника из выпадающего меню.",
+			"REGISTER_PROPOSAL_NO_EMPLOYEE_SELECTED": "Пожалуйста, выберите сотрудника из выпадающего меню.",
 			"REGISTER_PROPOSAL_ERROR": "{{ error }}",
 			"DELETE_PROPOSAL": "Предложение успешно удалено",
 			"PROPOSAL_ACCEPTED": "Статус предложения обновлен для принятия",
@@ -2254,7 +2271,7 @@
 			}
 		},
 		"DANGER_ZONE": {
-			"DELETE_ACCOUNT_WRONG_DATA": "Неправильный ввод! Повторите попытку.",
+			"DELETE_ACCOUNT_WRONG_DATA": "Неверный ввод! Пожалуйста, попробуйте еще раз.",
 			"ACCOUNT_DELETED": "Ваш аккаунт был успешно удален!",
 			"RECORD_TYPE": "Если да, то введите 'УДАЛИТЬ ВСЕ ДАННЫЕ' для подтверждения."
 		},
@@ -2265,7 +2282,7 @@
 			"ERROR": "{{ error }}"
 		},
 		"AVAILABILITY_SLOTS": {
-			"SAVE": "Доступные слоты сохранены",
+			"SAVE": "Слоты наличия сохранены",
 			"ERROR": "{{ error }}"
 		}
 	},
@@ -2302,7 +2319,7 @@
 		"APPROVALS": "Утверждения",
 		"APPROVE_SUCCESS": "Сроки успешно утверждены",
 		"DENIED_SUCCESS": "Таблица времени успешно отклонена",
-		"SUBMIT_SUCCESS": "Сроки успешно отправлены",
+		"SUBMIT_SUCCESS": "Таблица времени успешно отправлена",
 		"UNSUBMIT_SUCCESS": "Таблица времени успешно отменена",
 		"DELETE_TIMELOG": "Вы уверены, что хотите удалить Timelog?",
 		"SELECT_EMPLOYEE": "Выбрать сотрудника",
@@ -2324,7 +2341,7 @@
 		"BULK_ACTION": "Массовое действие",
 		"LOG_TYPE": "Тип журнала",
 		"TOTAL_TIME": "Общее время",
-		"ACTIVITES": "Activites",
+		"ACTIVITIES": "Действия",
 		"APPROVED_AT": "Одобрено",
 		"SUBMITTED_AT": "Отправлено в",
 		"STATUS": "Статус",
@@ -2380,10 +2397,13 @@
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Скриншот",
-		"APPS": "Активность приложений",
-		"URLS": "Активность ссылок",
-		"NO_ACTIVITES": "No activites",
+		"PERCENT_USED": "Процент использованных",
+		"TIME_SPENT": "Прошло времени (в часах)",
+		"APPS": "Приложения",
+		"VISITED_SITES": "Посещенные сайты",
+		"NO_ACTIVITIES": "Нет активности",
 		"NO_ACTIVITY": "Нет активности",
+		"TIME_AND_ACTIVITIES": "Время и активность",
 		"VIEW_SCREEN": "Экран",
 		"VIEW_INFO": "Просмотр информации",
 		"MINUTES": "Минут",
@@ -2425,8 +2445,9 @@
 	},
 	"SCHEDULE": {
 		"DATE_SPECIFIC_AVAILABILITY": "Определенная дата наличия",
+		"SELECT_EMPLOYEE": "Пожалуйста, выберите сотрудника из меню выше.",
 		"RECURRING_AVAILABILITY": "Повторяющаяся доступность",
-		"DATE_SPECIFIC_AVAILABILITY_TOOLTIP": "Вы можете использовать дату для обозначения доступности для определенной даты или исключения из повторяющегося шаблона доступности. Изменения, которые вы вносите, превзойдут вашу еженедельную периодическую доступность только на эти собственные даты.",
+		"DATE_SPECIFIC_AVAILABILITY_TOOLTIP": "Вы можете использовать дату для обозначения доступности на определенную дату или исключения из повторяющегося шаблона доступности. Изменения, которые вы вносите, превзойдут вашу Еженедельную активность только на определённые даты.",
 		"RECURRING_AVAILABILITY_TOOLTIP": "Вы можете использовать Периодическую доступность для отметки наличия на еженедельно. Чтобы изменить доступность только на определённые дни, вы должны использовать доступность, специфичную для дат."
 	},
 	"PUBLIC_APPOINTMENTS": {
@@ -2508,7 +2529,7 @@
 	"PIPELINE_DEAL_CREATE_PAGE": {
 		"HEADER": "Создать сделку | Пипеллинг: {{ name }}",
 		"SELECT_STAGE": "Выбрать этап",
-		"PROBABLITY": "Вероятность"
+		"PROBABILITY": "Вероятность"
 	},
 	"DIALOG": {
 		"CONFIRM": "Подтвердить",
@@ -2522,5 +2543,18 @@
 		"SECRET_ACCESS_KEY": "Секретный ключ доступа",
 		"REGION": "Регион",
 		"BUCKET": "Ведро"
+	},
+	"CUSTOM_SMTP_PAGE": {
+		"HEADER": "Пользовательский SMTP",
+		"HOST": "Хост",
+		"PORT": "Порт",
+		"SECURE": "Безопасность",
+		"AUTH": {
+			"USERNAME": "Имя пользователя",
+			"PASSWORD": "Пароль"
+		}
+	},
+	"SMS_GATEWAY_PAGE": {
+		"HEADER": "Поставщик SMS"
 	}
 }

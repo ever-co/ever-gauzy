@@ -175,7 +175,7 @@ export class InviteController {
 		);
 	}
 
-	@ApiOperation({ summary: 'Accept organization Contact invite.' })
+	@ApiOperation({ summary: 'Accept organization contact invite.' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
 		description: 'The record has been successfully created.'

@@ -14,10 +14,13 @@ export function createTimeTrackerWindow(timeTrackerWindow) {
 		hash: '/time-tracker'
 	});
 
+	timeTrackerWindow.hide();
 	timeTrackerWindow.loadURL(launchPath);
 	timeTrackerWindow.setMenu(null);
-
-	timeTrackerWindow.hide();
+	timeTrackerWindow.on('close', (event) => {
+		event.preventDefault();
+		timeTrackerWindow.hide();
+	});
 	return timeTrackerWindow;
 }
 

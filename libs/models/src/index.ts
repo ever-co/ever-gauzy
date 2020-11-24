@@ -92,6 +92,8 @@ export * from './lib/job-search-category.model';
 export * from './lib/job-search-occupation.model';
 export * from './lib/report.model';
 export * from './lib/employee-proposal-template.model';
+export * from './lib/custom-smtp.model';
+export * from './lib/sms.model';
 
 export { IRole, RolesEnum } from './lib/role.model';
 export { IBaseEntityModel as BaseEntityModel } from './lib/base-entity.model';

@@ -14,9 +14,9 @@ export function createSettingsWindow(settingsWindow) {
 		hash: '/settings'
 	});
 
+	settingsWindow.hide();
 	settingsWindow.loadURL(launchPath);
 	settingsWindow.setMenu(null);
-	settingsWindow.hide();
 
 	settingsWindow.on('close', (event) => {
 		settingsWindow.hide();

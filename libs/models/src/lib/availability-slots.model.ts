@@ -6,7 +6,7 @@ export interface IAvailabilitySlot
 	startTime: Date;
 	endTime: Date;
 	allDay: boolean;
-	type: string;
+	type: AvailabilitySlotType;
 	employeeId?: string;
 	employee?: IEmployee;
 }
@@ -19,7 +19,7 @@ export interface IAvailabilitySlotsFindInput
 
 export interface IAvailabilitySlotsCreateInput
 	extends IBasePerTenantAndOrganizationEntityModel {
-	type: string;
+	type: AvailabilitySlotType;
 	allDay: boolean;
 	startTime: Date;
 	endTime: Date;
@@ -32,7 +32,27 @@ export interface IAvailabilitySlotsView
 	startTime: Date;
 	endTime: Date;
 	allDay: boolean;
-	type?: string;
+	type?: AvailabilitySlotType;
 	employeeId?: string;
 	employee?: IEmployee;
+}
+
+export enum AvailabilitySlotType {
+	DEFAULT = 'Default',
+	RECURRING = 'Recurring'
+}
+
+export interface IGetAvailabilitySlotsConflictInput {
+	relations?: string[];
+	ignoreId?: string | string[];
+	startTime: Date;
+	endTime: Date;
+	employeeId?: string;
+	type?: AvailabilitySlotType;
+}
+
+export enum AvailabilityMergeType {
+	MERGE = 'merge',
+	REMOVE = 'remove',
+	SKIP = 'skip'
 }

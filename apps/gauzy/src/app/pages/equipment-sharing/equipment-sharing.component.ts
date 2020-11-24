@@ -140,7 +140,7 @@ export class EquipmentSharingComponent
 				},
 				shareRequestDay: {
 					title: this.getTranslation(
-						'EQUIPMENT_SHARING_PAGE.SHARE_REQUIEST_DATE'
+						'EQUIPMENT_SHARING_PAGE.SHARE_REQUEST_DATE'
 					),
 					type: 'date',
 					valuePrepareFunction: this._formatDate

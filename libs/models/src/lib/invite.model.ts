@@ -47,10 +47,10 @@ export interface ICreateEmailInvitesInput
 	startedWorkOn: string;
 }
 
-export interface ICreateOrganizationContactInviteInput {
+export interface ICreateOrganizationContactInviteInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	emailId: string;
 	organizationContactId: string;
-	organizationId: string;
 	roleId: string;
 	invitedById: string;
 	originalUrl: string;
@@ -99,4 +99,25 @@ export interface IInviteViewModel {
 	departmentNames: string[];
 	id: string;
 	inviteUrl: string;
+}
+
+export interface IInviteUserModel
+	extends IBasePerTenantAndOrganizationEntityModel {
+	email: string;
+	role: string;
+	registerUrl: string;
+	languageCode: LanguagesEnum;
+	invitedBy: IUser;
+	originUrl?: string;
+}
+export interface IInviteEmployeeModel
+	extends IBasePerTenantAndOrganizationEntityModel {
+	email: string;
+	registerUrl: string;
+	languageCode: LanguagesEnum;
+	invitedBy: IUser;
+	projects?: IOrganizationProject[];
+	organizationContacts?: IOrganizationContact[];
+	departments?: IOrganizationDepartment[];
+	originUrl?: string;
 }

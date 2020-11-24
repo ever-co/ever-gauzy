@@ -32,7 +32,7 @@ describe('Add tasks test', () => {
 		addTaskPage.selectEmployeeDropdownOption(2);
 		addTaskPage.clickKeyboardButtonByKeyCode(9);
 		addTaskPage.addTitleInputVisible();
-		addTaskPage.enterTtielInputData(AddTasksPageData.defaultTaskTitle);
+		addTaskPage.enterTitleInputData(AddTasksPageData.defaultTaskTitle);
 		addTaskPage.dueDateInputVisible();
 		addTaskPage.enterDueDateData();
 		addTaskPage.clickKeyboardButtonByKeyCode(9);
@@ -74,7 +74,7 @@ describe('Add tasks test', () => {
 			AddTasksPageData.defaultTaskProject
 		);
 		addTaskPage.addTitleInputVisible();
-		addTaskPage.enterTtielInputData(AddTasksPageData.defaultTaskTitle);
+		addTaskPage.enterTitleInputData(AddTasksPageData.defaultTaskTitle);
 		addTaskPage.dueDateInputVisible();
 		addTaskPage.enterDueDateData();
 		addTaskPage.clickKeyboardButtonByKeyCode(9);

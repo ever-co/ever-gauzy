@@ -37,7 +37,9 @@ export class InvoiceService extends CrudService<Invoice> {
 		invoiceNumber: number,
 		invoiceId: string,
 		isEstimate: boolean,
-		originUrl: string
+		originUrl: string,
+		tenantId: string,
+		organizationId: string
 	) {
 		const token = this.createToken(email);
 		await this.estimateEmailService.createEstimateEmail(
@@ -53,7 +55,9 @@ export class InvoiceService extends CrudService<Invoice> {
 			invoiceId,
 			isEstimate,
 			token,
-			originUrl
+			originUrl,
+			tenantId,
+			organizationId
 		);
 	}
 

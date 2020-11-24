@@ -78,7 +78,10 @@
 		"MANAGE_TEMPLATES": "Manage Templates",
 		"MAKE_DEFAULT": "Make Default",
 		"HIDE_ALL": "Hide All",
-		"YES_HIDE_ALL_JOBS": "Yes, Hide All Jobs"
+		"SCHEDULES": "Schedules",
+		"YES_HIDE_ALL_JOBS": "Yes, Hide All Jobs",
+		"VALIDATE": "Validate",
+		"VALIDATED": "Validated"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "סוג",
@@ -193,6 +196,8 @@
 			"BRAND_COLOR": "Brand Color",
 			"DATE_FORMAT": "Date Format",
 			"CHOOSE_TIME_ZONE": "Choose Time Zone",
+			"START_TIME": "Default Work Day Start Time",
+			"END_TIME": "Default Work Day End Time",
 			"POSTCODE": "Postcode (Zip)",
 			"PAY_PERIOD": "Pay Period",
 			"BILL_RATE": "Bill Rate / hr",
@@ -256,7 +261,13 @@
 			"SHORT_DESCRIPTION": "Short Description",
 			"ENABLE_EMPLOYEE_FEATURES": "Enable Employee Features",
 			"REVOKE_EMPLOYEE_FEATURES": "Revoke Employee Features",
-			"STATUS": "עבודה"
+			"STATUS": "עבודה",
+			"FISCAL_YEAR_START_DATE": "Fiscal Year Start Date",
+			"FISCAL_YEAR_END_DATE": "Fiscal Year End Date",
+			"TAX_AND_DISCOUNT_INVOICE_ITEMS_SEPARATELY": "Tax And Discount Invoice Items Separately",
+			"ALLOW_TAXING_AND_DISCOUNTING_OF_INVOICE_ITEMS_SEPARATELY": "Allow taxing and discounting of invoice items separately",
+			"DISCOUNT_AFTER_TAX": "Discount after tax",
+			"APPLY_DISCOUNT_AFTER_TAX_FOR_INVOICES_AND_ESTIMATES": "Apply discount after tax for invoices and estimates"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -312,6 +323,8 @@
 			"PROJECTS": "Choose Projects",
 			"CHOOSE_FORMAT": "Choose Format",
 			"CHOOSE_TIME_ZONE": "Choose Time Zone",
+			"START_TIME": "HH:mm",
+			"END_TIME": "HH:mm",
 			"ADD_COLOR": "Add Color",
 			"ALIGN_LOGO_TO": "Align Logo To",
 			"DEPARTMENTS": "מחלקות",
@@ -582,7 +595,7 @@
 		"JOBS_SEARCH": "Browse",
 		"JOBS_MATCHING": "Matching",
 		"TEAM_TASKS": "Team's Tasks",
-		"ACTIVITY": "Activity",
+		"TIME_ACTIVITY": "Time & Activity",
 		"TIMESHEETS": "Timesheets",
 		"SCHEDULES": "Schedules",
 		"EMAIL_TEMPLATES": "Email Templates",
@@ -593,6 +606,7 @@
 		"WEEKLY_TIME_REPORTS": "Weekly Report",
 		"ACCOUNTING_REPORTS": "Accounting Reports",
 		"PAYMENT_GATEWAYS": "Payment Gateways",
+		"SMS_GATEWAYS": "SMS Gateways",
 		"CUSTOM_SMTP": "Custom SMTP",
 		"INVENTORY": "Inventory",
 		"SALES": "Sales",
@@ -824,7 +838,7 @@
 			"TIME_FRAME_PAGE_TITLE": "Set Time Frame",
 			"PREDEFINED_TIME_FRAMES": "Predefined Time Frames",
 			"ADD_KPI": "Add KPI",
-			"MAX_ENTITIES": "Max Number of entites that can be created",
+			"MAX_ENTITIES": "Max Number of entities that can be created",
 			"EMPLOYEE_OBJECTIVES": "Employees can create their own objectives",
 			"WHO_CAN_OWN_OBJECTIVES": "Who can own Objectives?",
 			"WHO_CAN_OWN_KEY_RESULTS": "Who can own Key Results?",
@@ -880,7 +894,7 @@
 				"DESCRIPTION": "Objective Description.",
 				"LEVEL": "Goal Level",
 				"TIME_FRAME_NAME": "Time frame name eg. 'Q4-2020'",
-				"KPI_DESCRIPTION": "A short descripton to give some context about the KPI",
+				"KPI_DESCRIPTION": "A short description to give some context about the KPI",
 				"KPI_NAME": "KPI Title. eg. Maintain page views - 200/day"
 			},
 			"ERROR": {
@@ -967,7 +981,7 @@
 			},
 			"PLACEHOLDERS": {
 				"NAME": "Key Result Name. eg. Add Metadata to improve SEO",
-				"DESCRIPTION": "A short desciption to give some context about the Key Result"
+				"DESCRIPTION": "A short description to give some context about the Key Result"
 			}
 		},
 		"HELPER_TEXT": {
@@ -1179,6 +1193,7 @@
 		"CONTACTS": "Contacts",
 		"LEVEL": "Level",
 		"EDIT": {
+			"ACCOUNTING": "Accounting",
 			"HEADER": "Manage",
 			"CLIENT": "לקוחות",
 			"CONTACT": "Contact",
@@ -1218,8 +1233,8 @@
 			"DATE_LIMIT": "Date Limit",
 			"USER_ORGANIZATIONS": "{{ name }}'s List of Organizations",
 			"ADDED_TO_ORGANIZATION": " the organization",
-			"USER_WAS_DELETED": "{{ name }} was successfuly deleted.",
-			"USER_WAS_REMOVED": "{{ name }} was successfuly removed from organization.",
+			"USER_WAS_DELETED": "{{ name }} was successfully deleted.",
+			"USER_WAS_REMOVED": "{{ name }} was successfully removed from organization.",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timer Settings",
 				"ALLOW_MODIFY_TIME": "Allow Modify Time",
@@ -1437,7 +1452,7 @@
 		"EDI": "Edit Time Off record",
 		"SELECT_HOLIDAY_NAME": "Select Holiday name",
 		"ADD_OR_REMOVE_EMPLOYEES": "Add or Remove Employees",
-		"SELECT_TIME_OFF_POLICY": "Seletc Time-off Policy",
+		"SELECT_TIME_OFF_POLICY": "Select Time-off Policy",
 		"ADD_A_DESCRIPTION": "Add a description",
 		"STATUSES": {
 			"REQUESTED": "Requested",
@@ -1530,7 +1545,7 @@
 		"REQUEST": "Request",
 		"EQUIPMENT_NAME": "Equipment name",
 		"EQUIPMENT_SHARING_POLICY": "Equipment Sharing Policy",
-		"SHARE_REQUIEST_DATE": "Share request date",
+		"SHARE_REQUEST_DATE": "Share request date",
 		"SHARE_START_DATE": "Share start date",
 		"SHARE_END_DATE": "Share end date",
 		"CREATED_BY": "Created By",
@@ -2008,7 +2023,7 @@
 	},
 	"FOOTER": {
 		"BY": "על ידי",
-		"RIGHTS_RECERVED": "כל הזכויות שמורות",
+		"RIGHTS_RESERVED": "כל הזכויות שמורות",
 		"PRESENT": "Present"
 	},
 	"TOASTR": {
@@ -2040,7 +2055,7 @@
 			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the",
 			"PERMISSION_UPDATED": "{{ permissionName }} permission updated for {{ roleName }}",
 			"PERMISSION_UPDATE_ERROR": "There was an error in updating the permissions, please refresh & try again",
-			"REGISTER_PROPOSAL_NO_EMPLOEE_MSG": "Employee is required!",
+			"REGISTER_PROPOSAL_NO_EMPLOYEE_MSG": "Employee is required!",
 			"NEW_ORGANIZATION_PROJECT_INVALID_NAME": "Invalid input",
 			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Team name and members are required",
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Vendor name is required",
@@ -2094,7 +2109,9 @@
 			"DELETE_PAST_INTERVIEW": "Deleting past interviews is prohibited",
 			"GOAL_GENERAL_SETTING_UPDATED": "Goal General settings updated",
 			"MAX_OBJECTIVE_LIMIT": "You cannot create any more Objectives. Please change maximum objective limit to add more objectives.",
-			"MAX_KEY_RESULT_LIMIT": "You cannot create any more Key Results for this Objective. Please change maximum key result limit to add more Key Results."
+			"MAX_KEY_RESULT_LIMIT": "You cannot create any more Key Results for this Objective. Please change maximum key result limit to add more Key Results.",
+			"CUSTOM_SMTP_ADDED": "Smtp settings successfully created",
+			"CUSTOM_SMTP_UPDATED": "Smtp settings successfully updated"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -2132,11 +2149,11 @@
 			"EXPENSES_ERROR": "{{ error }}"
 		},
 		"PROPOSALS": {
-			"EDIT_PROPOSAL": "Proposal successfuly updated",
+			"EDIT_PROPOSAL": "Proposal successfully updated",
 			"REGISTER_PROPOSAL": "New proposal registered",
-			"REGISTER_PROPOSAL_NO_EMPLOEE_SELECTED": "Please select an employee from the dropdown menu.",
+			"REGISTER_PROPOSAL_NO_EMPLOYEE_SELECTED": "Please select an employee from the dropdown menu.",
 			"REGISTER_PROPOSAL_ERROR": "{{ error }}",
-			"DELETE_PROPOSAL": "Proposal deleted successfuly",
+			"DELETE_PROPOSAL": "Proposal successfully deleted",
 			"PROPOSAL_ACCEPTED": "Proposal status updated to Accepted",
 			"PROPOSAL_SENT": "Proposal status updated to Sent"
 		},
@@ -2254,7 +2271,7 @@
 			}
 		},
 		"DANGER_ZONE": {
-			"DELETE_ACCOUNT_WRONG_DATA": "Wrong input! Pleace try again.",
+			"DELETE_ACCOUNT_WRONG_DATA": "Wrong input! Please try again.",
 			"ACCOUNT_DELETED": "Your account was deleted successfully!",
 			"RECORD_TYPE": "If Yes, please type 'REMOVE ALL DATA' to confirm."
 		},
@@ -2265,7 +2282,7 @@
 			"ERROR": "{{ error }}"
 		},
 		"AVAILABILITY_SLOTS": {
-			"SAVE": "Availabiliy Slots saved",
+			"SAVE": "Availability Slots saved",
 			"ERROR": "{{ error }}"
 		}
 	},
@@ -2302,7 +2319,7 @@
 		"APPROVALS": "Approvals",
 		"APPROVE_SUCCESS": "Timesheet Successfully Approved",
 		"DENIED_SUCCESS": "Timesheet Successfully Denied",
-		"SUBMIT_SUCCESS": "Timesheet Successfully Submited",
+		"SUBMIT_SUCCESS": "Timesheet Successfully Submitted",
 		"UNSUBMIT_SUCCESS": "Timesheet Successfully Unsubmit",
 		"DELETE_TIMELOG": "Are you sure you want to delete Timelog?",
 		"SELECT_EMPLOYEE": "Select Employee",
@@ -2324,7 +2341,7 @@
 		"BULK_ACTION": "Bulk action",
 		"LOG_TYPE": "Log type",
 		"TOTAL_TIME": "Total Time",
-		"ACTIVITES": "Activites",
+		"ACTIVITIES": "Activities",
 		"APPROVED_AT": "Approved At",
 		"SUBMITTED_AT": "Submitted At",
 		"STATUS": "עבודה",
@@ -2372,18 +2389,21 @@
 		"NO_MEMBER_ACTIVITY": "No member activity for the week",
 		"VALIDATION": {
 			"DESCRIPTION": "Description is required",
-			"TASK": "Please selct task",
-			"PROJECT": "Please selct project",
-			"EMPLOYEE": "Please selct employee",
-			"REASON": "Please selct reason"
+			"TASK": "Please select task",
+			"PROJECT": "Please select project",
+			"EMPLOYEE": "Please select employee",
+			"REASON": "Please select reason"
 		}
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",
-		"APPS": "Apps Activity",
-		"URLS": "Urls Activity",
-		"NO_ACTIVITES": "No activites",
+		"PERCENT_USED": "Percent used",
+		"TIME_SPENT": "Time spent (hrs)",
+		"APPS": "Apps",
+		"VISITED_SITES": "Visited Sites",
+		"NO_ACTIVITIES": "No activities",
 		"NO_ACTIVITY": "No Activity",
+		"TIME_AND_ACTIVITIES": "Time & Activities",
 		"VIEW_SCREEN": "View Screen",
 		"VIEW_INFO": "View Info",
 		"MINUTES": "Minutes",
@@ -2425,8 +2445,9 @@
 	},
 	"SCHEDULE": {
 		"DATE_SPECIFIC_AVAILABILITY": "Date Specific Availability",
+		"SELECT_EMPLOYEE": "Please select employee from the menu above.",
 		"RECURRING_AVAILABILITY": "Recurring Availability",
-		"DATE_SPECIFIC_AVAILABILITY_TOOLTIP": "You can use Date specific availability to mark availabity for a particular date or add exceptions to your Recurring availability pattern. The changes you make will override your Weekly recurring availability on those sepcific dates only.",
+		"DATE_SPECIFIC_AVAILABILITY_TOOLTIP": "You can use Date specific availability to mark availability for a particular date or add exceptions to your Recurring availability pattern. The changes you make will override your Weekly recurring availability on those specific dates only.",
 		"RECURRING_AVAILABILITY_TOOLTIP": "You can use Recurring availability to mark your availability on a weekly basis. To change your availability for specific days only, you must use Date-specific availability."
 	},
 	"PUBLIC_APPOINTMENTS": {
@@ -2508,7 +2529,7 @@
 	"PIPELINE_DEAL_CREATE_PAGE": {
 		"HEADER": "Create Deal | Pipeline: {{ name }}",
 		"SELECT_STAGE": "Select Stage",
-		"PROBABLITY": "Probability"
+		"PROBABILITY": "Probability"
 	},
 	"DIALOG": {
 		"CONFIRM": "אשר",
@@ -2522,5 +2543,18 @@
 		"SECRET_ACCESS_KEY": "Secret access key",
 		"REGION": "Region",
 		"BUCKET": "Bucket"
+	},
+	"CUSTOM_SMTP_PAGE": {
+		"HEADER": "Custom SMTP",
+		"HOST": "Host",
+		"PORT": "Port",
+		"SECURE": "Secure",
+		"AUTH": {
+			"USERNAME": "שם משתמש",
+			"PASSWORD": "סיסמה"
+		}
+	},
+	"SMS_GATEWAY_PAGE": {
+		"HEADER": "SMS Provider"
 	}
 }

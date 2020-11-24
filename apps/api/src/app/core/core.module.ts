@@ -124,6 +124,7 @@ import { Report } from '../reports/report.entity';
 import { ReportCategory } from '../reports/report-category.entity';
 import { EmployeeProposalTemplate } from '../employee-proposal-template/employee-proposal-template.entity';
 import { ReportOrganization } from '../reports/report-organization.entity';
+import { CustomSmtp } from '../custom-smtp/custom-smtp.entity';
 
 const entities = [
 	Invite,
@@ -241,7 +242,8 @@ const entities = [
 	Report,
 	ReportCategory,
 	EmployeeProposalTemplate,
-	ReportOrganization
+	ReportOrganization,
+	CustomSmtp
 ];
 
 @Module({

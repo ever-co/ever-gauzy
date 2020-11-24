@@ -411,4 +411,12 @@ export class Organization extends TenantBase implements IOrganization {
 	@IsBoolean()
 	@Column({ nullable: true })
 	discountAfterTax?: boolean;
+
+	@ApiPropertyOptional({ type: String })
+	@Column({ nullable: true })
+	defaultStartTime?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@Column({ nullable: true })
+	defaultEndTime?: string;
 }

@@ -1,10 +1,16 @@
-import { InviteStatusEnum, IOrganization, RolesEnum } from '@gauzy/models';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import {
+	InviteStatusEnum,
+	IOrganization,
+	IRole,
+	RolesEnum
+} from '@gauzy/models';
+import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateResult } from 'typeorm';
 import { AuthService } from '../../../auth/auth.service';
 import { OrganizationContactService } from '../../../organization-contact/organization-contact.service';
 import { OrganizationService } from '../../../organization/organization.service';
 import { RolePermissionsService } from '../../../role-permissions/role-permissions.service';
+import { TenantRoleBulkCreateCommand } from '../../../role/commands/tenant-role-bulk-create.command';
 import { RoleService } from '../../../role/role.service';
 import { Tenant } from '../../../tenant/tenant.entity';
 import { TenantService } from '../../../tenant/tenant.service';
@@ -22,7 +28,8 @@ export class InviteAcceptOrganizationContactHandler
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly tenantService: TenantService,
 		private readonly roleService: RoleService,
-		private readonly rolePermissionService: RolePermissionsService
+		private readonly rolePermissionService: RolePermissionsService,
+		private readonly commandBus: CommandBus
 	) {}
 
 	public async execute(
@@ -53,12 +60,13 @@ export class InviteAcceptOrganizationContactHandler
 		);
 
 		// 3. Create Role and Role Permissions for contact
-		const role = await this.roleService.create({
-			name: RolesEnum.SUPER_ADMIN,
-			tenant
-		});
+		const roles = await this.commandBus.execute(
+			new TenantRoleBulkCreateCommand([tenant])
+		);
 
-		this.rolePermissionService.updateRoles(tenant, role);
+		const role = await roles.find(
+			(defaultRole: IRole) => defaultRole.name === RolesEnum.SUPER_ADMIN
+		);
 
 		// 4. Create user account for contact and link role, tenant and organization
 		await this.authService.register(
@@ -75,7 +83,7 @@ export class InviteAcceptOrganizationContactHandler
 		const { organizationContact } = await this.inviteService.findOne(
 			inviteId,
 			{
-				relations: ['contact']
+				relations: ['organizationContact']
 			}
 		);
 

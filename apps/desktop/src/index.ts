@@ -50,7 +50,7 @@ import DataModel from './local-data/local-table';
 import { LocalStore } from './libs/getSetStore';
 import { createGauzyWindow } from './window/gauzy';
 import { createSetupWindow } from './window/setup';
-import { createTimeTrackerWindow } from './window/timeTracker';
+import { createTimeTrackerWindow, loginPage } from './window/timeTracker';
 import { createSettingsWindow } from './window/settings';
 import { fork } from 'child_process';
 
@@ -119,6 +119,7 @@ function startServer(value, restart = false) {
 		});
 		serverGauzy.stdout.on('data', (data) => {
 			const msgData = data.toString();
+			console.log('log -- ', msgData);
 			if (
 				msgData.indexOf('Unable to connect to the database') > -1 &&
 				!dialogErr
@@ -138,6 +139,18 @@ function startServer(value, restart = false) {
 			configs: config
 		});
 	} catch (error) {}
+
+	/* create main window */
+	setupWindow.hide();
+	gauzyWindow = createGauzyWindow(gauzyWindow, serve);
+	const auth = store.get('auth');
+	tray = new TrayIcon(
+		setupWindow,
+		knex,
+		timeTrackerWindow,
+		auth,
+		settingsWindow
+	);
 
 	/* ping server before launch the ui */
 	ipcMain.on('app_is_init', () => {
@@ -201,6 +214,7 @@ const getApiBaseUrl = (configs) => {
 
 app.on('ready', async () => {
 	// require(path.join(__dirname, 'desktop-api/main.js'));
+	/* set menu */
 	Menu.setApplicationMenu(
 		Menu.buildFromTemplate([
 			{
@@ -214,69 +228,60 @@ app.on('ready', async () => {
 			}
 		])
 	);
+
+	/* create window */
+	timeTrackerWindow = createTimeTrackerWindow(timeTrackerWindow);
+	settingsWindow = createSettingsWindow(settingsWindow);
+
+	/* Set Menu */
+	appMenu = new AppMenu(timeTrackerWindow, settingsWindow, knex);
+
 	const configs: any = store.get('configs');
 	if (configs && configs.isSetup) {
-		global.variableGlobal = {
-			API_BASE_URL: getApiBaseUrl(configs)
-		};
-		setupWindow = createSetupWindow(setupWindow, true);
-		startServer(configs);
+		if (!configs.serverConfigConnected) {
+			setupWindow = createSetupWindow(setupWindow, false);
+			setTimeout(() => {
+				setupWindow.webContents.send('setup-data', {
+					...configs
+				});
+			}, 1000);
+		} else {
+			global.variableGlobal = {
+				API_BASE_URL: getApiBaseUrl(configs)
+			};
+			setupWindow = createSetupWindow(setupWindow, true);
+			startServer(configs);
+		}
 	} else {
 		setupWindow = createSetupWindow(setupWindow, false);
 	}
+
 	ipcMainHandler(store, startServer, knex);
 });
 
 app.on('window-all-closed', quit);
 
 ipcMain.on('server_is_ready', () => {
-	serverDesktop = fork(path.join(__dirname, 'desktop-api/main.js'));
 	LocalStore.setDefaultApplicationSetting();
 
 	onWaitingServer = false;
-
-	timeTrackerWindow = createTimeTrackerWindow(timeTrackerWindow);
-
 	if (!isAlreadyRun) {
-		setTimeout(() => {
-			setupWindow.hide();
-			if (!settingsWindow)
-				settingsWindow = createSettingsWindow(settingsWindow);
-			if (!gauzyWindow)
-				gauzyWindow = createGauzyWindow(gauzyWindow, serve);
-
-			ipcTimer(
-				store,
-				knex,
-				setupWindow,
-				timeTrackerWindow,
-				NotificationWindow,
-				settingsWindow
-			);
-
-			const auth = store.get('auth');
-
-			appMenu = new AppMenu(timeTrackerWindow, settingsWindow, knex);
-			if (!tray) {
-				tray = new TrayIcon(
-					setupWindow,
-					knex,
-					timeTrackerWindow,
-					auth,
-					settingsWindow
-				);
-			}
-
-			timeTrackerWindow.on('close', (event) => {
-				if (willQuit) {
-					app.quit();
-				} else {
-					event.preventDefault();
-					timeTrackerWindow.hide();
-				}
-			});
-		}, 1000);
+		serverDesktop = fork(path.join(__dirname, 'desktop-api/main.js'));
+		gauzyWindow.loadURL(loginPage());
+		ipcTimer(
+			store,
+			knex,
+			setupWindow,
+			timeTrackerWindow,
+			NotificationWindow,
+			settingsWindow
+		);
 		isAlreadyRun = true;
+		const appConfig = LocalStore.getStore('configs');
+		appConfig.serverConfigConnected = true;
+		store.set({
+			configs: appConfig
+		});
 	}
 });
 

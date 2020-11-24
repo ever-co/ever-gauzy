@@ -20,8 +20,5 @@ export const AddTaskPage = {
 	estimateHoursInputCss: '[formControlName="estimateHours"]',
 	estimateMinsInputCss: '[formControlName="estimateMinutes"]',
 	descriptionTextareaCss: '[formControlName="description"]',
-	saveNewTaskButtonCss: 'nb-card-footer > button[status="success"]',
-	requestNewProjectButtonCss: 'div.mb-3 > button[status="success"]',
-	projectNameInputCss: '#name',
-	saveProjectButtonCss: 'div.form-group > button[status="success"]'
+	saveNewTaskButtonCss: 'nb-card-footer > button[status="success"]'
 };

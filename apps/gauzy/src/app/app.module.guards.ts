@@ -6,6 +6,7 @@ import {
 	RouterStateSnapshot
 } from '@angular/router';
 import { Store } from './@core/services/store.service';
+import { environment } from '../environments/environment';
 
 @Injectable()
 export class AppModuleGuard implements CanActivate {
@@ -18,8 +19,12 @@ export class AppModuleGuard implements CanActivate {
 		const serverConnection = Number(this.store.serverConnection);
 
 		if (serverConnection === 0) {
-			this.router.navigate(['server-down']);
-			return false;
+			if (!environment.IS_ELECTRON) {
+				this.router.navigate(['server-down']);
+				return false;
+			} else {
+				return true;
+			}
 		}
 
 		return true;

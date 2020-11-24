@@ -5,28 +5,10 @@ import { LayoutComponent } from './layout/layout.component';
 const routes: Routes = [
 	{
 		path: '',
-		redirectTo: 'date-specific-availability',
-		pathMatch: 'full'
-	},
-	{
-		path: '',
 		component: LayoutComponent,
 		children: [
 			{
-				path: 'date-specific-availability',
-				loadChildren: () =>
-					import(
-						'./availability-slots/availability-slots.module'
-					).then((m) => m.AvailabilitySlotsModule)
-			}
-		]
-	},
-	{
-		path: '',
-		component: LayoutComponent,
-		children: [
-			{
-				path: 'recurring-availability',
+				path: '',
 				loadChildren: () =>
 					import(
 						'./availability-slots/availability-slots.module'

@@ -1,0 +1,133 @@
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header>
+		<ng-content select="header"></ng-content>
+	</nb-card-header>
+	<nb-card-body>
+		<form
+			[formGroup]="form"
+			id="smtpForm"
+			#formDirective="ngForm"
+			(ngSubmit)="onSubmit()"
+		>
+			<div class="row">
+				<div class="col-sm-12 col-md-4">
+					<label class="label" for="name">{{
+						'CUSTOM_SMTP_PAGE.HOST' | translate
+					}}</label>
+					<input
+						nbInput
+						type="text"
+						fullWidth
+						placeholder="{{ 'CUSTOM_SMTP_PAGE.HOST' | translate }}"
+						id="host"
+						formControlName="host"
+					/>
+				</div>
+				<div class="col-sm-12 col-md-4">
+					<label class="label" for="name">{{
+						'CUSTOM_SMTP_PAGE.PORT' | translate
+					}}</label>
+					<input
+						nbInput
+						type="number"
+						fullWidth
+						placeholder="{{ 'CUSTOM_SMTP_PAGE.PORT' | translate }}"
+						id="port"
+						formControlName="port"
+					/>
+				</div>
+				<div class="col-sm-12 col-md-4">
+					<label class="label" for="name">{{
+						'CUSTOM_SMTP_PAGE.SECURE' | translate
+					}}</label>
+					<nb-select
+						class="d-block"
+						size="medium"
+						fullWidth
+						id="secure"
+						formControlName="secure"
+					>
+						<nb-option
+							*ngFor="let secure of secureOptions"
+							[value]="secure.value"
+						>
+							{{ secure.label | titlecase }}
+						</nb-option>
+					</nb-select>
+				</div>
+			</div>
+			<div class="row mt-2">
+				<div class="col-sm-12 col-md-6">
+					<label class="label" for="name">{{
+						'CUSTOM_SMTP_PAGE.AUTH.USERNAME' | translate
+					}}</label>
+					<input
+						nbInput
+						type="text"
+						fullWidth
+						placeholder="{{
+							'CUSTOM_SMTP_PAGE.AUTH.USERNAME' | translate
+						}}"
+						id="username"
+						formControlName="username"
+					/>
+				</div>
+				<div class="col-sm-12 col-md-6">
+					<label class="label" for="name">{{
+						'CUSTOM_SMTP_PAGE.AUTH.PASSWORD' | translate
+					}}</label>
+					<input
+						nbInput
+						type="text"
+						fullWidth
+						placeholder="{{
+							'CUSTOM_SMTP_PAGE.AUTH.PASSWORD' | translate
+						}}"
+						id="password"
+						formControlName="password"
+					/>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<ng-container
+			*ngIf="
+				isValidated;
+				then validatedTemplate;
+				else notValidatedTemplate
+			"
+		>
+		</ng-container>
+		<ng-template #validatedTemplate>
+			<button
+				class="mr-2"
+				nbButton
+				status="success"
+				(click)="formDirective.ngSubmit.emit()"
+				[disabled]="form.invalid"
+			>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+			<button
+				class="mr-2"
+				nbButton
+				status="success"
+				[disabled]="isValidated"
+			>
+				{{ 'BUTTONS.VALIDATED' | translate }}
+			</button>
+		</ng-template>
+		<ng-template #notValidatedTemplate>
+			<button
+				class="mr-2"
+				nbButton
+				status="primary"
+				(click)="validateSmtp()"
+				[disabled]="form.invalid"
+			>
+				{{ 'BUTTONS.VALIDATE' | translate }}
+			</button>
+		</ng-template>
+	</nb-card-footer>
+</nb-card>

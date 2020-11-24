@@ -127,10 +127,10 @@ export class ProposalRegisterComponent
 				} else {
 					this.toastrService.primary(
 						this.getTranslation(
-							'NOTES.PROPOSALS.REGISTER_PROPOSAL_NO_EMPLOEE_SELECTED'
+							'NOTES.PROPOSALS.REGISTER_PROPOSAL_NO_EMPLOYEE_SELECTED'
 						),
 						this.getTranslation(
-							'TOASTR.MESSAGE.REGISTER_PROPOSAL_NO_EMPLOEE_MSG'
+							'TOASTR.MESSAGE.REGISTER_PROPOSAL_NO_EMPLOYEE_MSG'
 						)
 					);
 				}

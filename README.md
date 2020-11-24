@@ -116,12 +116,14 @@ Note: together with Gauzy, Docker Compose will run following:
 
 ### Manually
 
--   Install and run latest [PostgreSQL](https://www.postgresql.org) (optionally, other DB can be configured manually).
+-   Install [NodeJs](https://nodejs.org/en/download) LTS version, e.g. 14.x (note: at the moment Gauzy may not work with Node 15.x)
+-   Install and run [PostgreSQL](https://www.postgresql.org) version 11 or 12 (note: version 13 is not supported yet). Optionally, other DB can be configured manually in TypeORM. 
 -   Install [Yarn](https://github.com/yarnpkg/yarn) (if you don't have it) with `npm i -g yarn`
 -   Install NPM packages with `yarn install`
+-   Copy [`.env.sample`](https://github.com/ever-co/gauzy/blob/develop/.env.sample) to `.env` and optionaly change default settings, e.g. database name, user, password, etc.
 -   Optionally, if you want to seed a lot of fake data for demo testing, run `yarn seed:all`
--   Run API with `yarn start:api` (by default runs on <http://localhost:3000/api>)
--   Run Gauzy front-end with `yarn start`
+-   In new console, run API with `yarn start:api` (by default runs on <http://localhost:3000/api>)
+-   In new console, run Gauzy front-end with `yarn start`
 -   Open <http://localhost:4200> in your browser
 -   Login with email `admin@ever.co` and password: `admin`
 -   Enjoy

@@ -330,12 +330,12 @@ export class PagesComponent implements OnInit, OnDestroy {
 						}
 					},
 					{
-						title: 'Activity',
+						title: 'Time & Activity',
 						icon: 'trending-up-outline',
 						link: '/pages/employees/activity',
 						pathMatch: 'prefix',
 						data: {
-							translationKey: 'MENU.ACTIVITY'
+							translationKey: 'MENU.TIME_ACTIVITY'
 						}
 					},
 					{
@@ -345,15 +345,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 						pathMatch: 'prefix',
 						data: {
 							translationKey: 'MENU.TIMESHEETS'
-						}
-					},
-					{
-						title: 'Schedules',
-						icon: 'calendar-outline',
-						link: '/pages/employees/schedules',
-						pathMatch: 'prefix',
-						data: {
-							translationKey: 'MENU.SCHEDULES'
 						}
 					},
 					{
@@ -533,6 +524,14 @@ export class PagesComponent implements OnInit, OnDestroy {
 						link: '/pages/organization/help-center',
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.HELP_CENTER'
+						}
+					},
+					{
+						title: 'Custom SMTP',
+						icon: 'at-outline',
+						link: '/pages/organization/custom-smtp',
+						data: {
+							translationKey: 'MENU.CUSTOM_SMTP'
 						}
 					}
 				]
@@ -734,8 +733,17 @@ export class PagesComponent implements OnInit, OnDestroy {
 						}
 					},
 					{
+						title: 'SMS Gateways',
+						icon: 'at-outline',
+						link: '/pages/settings/sms-gateway',
+						data: {
+							translationKey: 'MENU.SMS_GATEWAYS'
+						}
+					},
+					{
 						title: 'Custom SMTP',
 						icon: 'at-outline',
+						link: '/pages/settings/custom-smtp',
 						data: {
 							translationKey: 'MENU.CUSTOM_SMTP'
 						}

@@ -43,7 +43,7 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit(): void {
-		this.activatedRoute.params
+		this.activatedRoute.data
 			.pipe(untilDestroyed(this))
 			.subscribe((params) => {
 				if (params.type) {

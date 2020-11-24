@@ -124,7 +124,9 @@ export class InvoiceEmailMutationComponent
 				data,
 				this.invoice.invoiceNumber,
 				this.invoice.id ? this.invoice.id : this.createdInvoice.id,
-				this.isEstimate
+				this.isEstimate,
+				organizationId,
+				tenantId
 			);
 		});
 

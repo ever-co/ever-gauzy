@@ -92,7 +92,9 @@ export class InvoicesService {
 		base64: string,
 		invoiceNumber: number,
 		invoiceId: string,
-		isEstimate: boolean
+		isEstimate: boolean,
+		organizationId: string,
+		tenantId: string
 	): Promise<any> {
 		return this.http
 			.put<any>(`/api/invoices/email/${email}`, {
@@ -100,7 +102,9 @@ export class InvoicesService {
 					isEstimate,
 					base64,
 					invoiceNumber,
-					invoiceId
+					invoiceId,
+					organizationId,
+					tenantId
 				}
 			})
 			.pipe(first())

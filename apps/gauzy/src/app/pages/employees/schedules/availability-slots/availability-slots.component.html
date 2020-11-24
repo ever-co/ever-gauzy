@@ -25,7 +25,7 @@
 	</div>
 </div>
 
-<div class="filters row mb-3">
+<!-- <div class="filters row mb-3">
 	<ng-template ngxPermissionsOnly="CHANGE_SELECTED_EMPLOYEE">
 		<div class="employee-select col-sm-3" *ngIf="_selectedOrganizationId">
 			<ga-employee-selector
@@ -36,6 +36,31 @@
 			></ga-employee-selector>
 		</div>
 	</ng-template>
+</div> -->
+
+<div class="time-range" *ngIf="recurringAvailabilityMode">
+	<div class="row align-items-center">
+		<div class="col-auto">
+			{{
+				organization?.startWeekOn?.toLowerCase() == 'monday'
+					? 'Monday - Friday'
+					: 'Sunday - Thursday'
+			}}
+		</div>
+		<div class="col-sm-2">
+			<ga-timer-picker
+				[(ngModel)]="createForm.startTime"
+			></ga-timer-picker>
+		</div>
+		<div class="col-sm-2">
+			<ga-timer-picker [(ngModel)]="createForm.endTime"></ga-timer-picker>
+		</div>
+		<div class="col-auto">
+			<button nbButton status="primary" (click)="setSchedule()">
+				Set
+			</button>
+		</div>
+	</div>
 </div>
 
 <full-calendar

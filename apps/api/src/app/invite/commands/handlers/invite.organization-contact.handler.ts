@@ -11,6 +11,7 @@ import { InviteOrganizationContactCommand } from '../invite.organization-contact
 import { OrganizationContactService } from '../../../organization-contact/organization-contact.service';
 import { InviteService } from '../../invite.service';
 import { RoleService } from '../../../role/role.service';
+import { RequestContext } from '../../../core/context';
 
 /**
  * Sends an invitation email to the organization organizationContact's primaryEmail
@@ -60,6 +61,7 @@ export class InviteOrganizationContactHandler
 			roleId,
 			organizationContactId: organizationContact.id,
 			organizationId: organizationContact.organizationId,
+			tenantId: RequestContext.currentTenantId(),
 			invitedById: inviterUser.id,
 			originalUrl,
 			languageCode
