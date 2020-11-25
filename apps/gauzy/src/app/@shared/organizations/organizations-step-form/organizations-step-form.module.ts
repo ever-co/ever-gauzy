@@ -22,8 +22,9 @@ import { RemoveLodashModule } from '../../remove-lodash/remove-lodash.module';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { CountryService } from '../../../@core/services/country.service';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
+import { CurrencyModule } from '../../currency/currency.module';
+import { CountryModule } from '../../country/country.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -55,11 +56,13 @@ export function HttpLoaderFactory(http: HttpClient) {
 				useFactory: HttpLoaderFactory,
 				deps: [HttpClient]
 			}
-		})
+		}),
+		CurrencyModule,
+		CountryModule
 	],
 	declarations: [OrganizationsStepFormComponent],
 	entryComponents: [OrganizationsStepFormComponent],
-	providers: [OrganizationDepartmentsService, CountryService],
+	providers: [OrganizationDepartmentsService],
 	exports: [OrganizationsStepFormComponent]
 })
 export class OrganizationsStepFormModule {}

@@ -3,7 +3,6 @@ import { ActivatedRoute, Params } from '@angular/router';
 import { IOrganization } from '@gauzy/models';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { CountryService } from '../../../../@core/services/country.service';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -12,8 +11,7 @@ import { TranslationBaseComponent } from '../../../../@shared/language-base/tran
 	styleUrls: [
 		'./edit-organization-settings.component.scss',
 		'../../../../@shared/user/edit-profile-form/edit-profile-form.component.scss'
-	],
-	providers: [CountryService]
+	]
 })
 export class EditOrganizationSettingsComponent
 	extends TranslationBaseComponent

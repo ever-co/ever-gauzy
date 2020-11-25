@@ -2,29 +2,11 @@
 	<div class="fields">
 		<div class="row">
 			<div class="col-6">
-				<div class="form-group">
-					<label class="label" for="countrySelect">{{
-						'FORM.LABELS.COUNTRY' | translate
-					}}</label>
-					<nb-select
-						class="d-block"
-						size="medium"
-						formControlName="country"
-						id="countrySelect"
-						placeholder="{{
-							'FORM.PLACEHOLDERS.COUNTRY' | translate
-						}}"
-						fullWidth="true"
-						required
-					>
-						<nb-option
-							*ngFor="let c of countries"
-							[value]="c.isoCode"
-						>
-							{{ c.country }}
-						</nb-option>
-					</nb-select>
-				</div>
+				<ga-country
+					[(ngModel)]="country"
+					[formControl]="form.get('country')"
+					(onOptionChange)="countryChanged($event)"
+				></ga-country>
 			</div>
 			<div class="col-6">
 				<div class="form-group">

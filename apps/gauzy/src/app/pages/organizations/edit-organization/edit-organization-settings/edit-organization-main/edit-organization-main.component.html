@@ -78,27 +78,11 @@
 					</div>
 				</div>
 				<div class="col">
-					<div class="form-group">
-						<label class="label">{{
-							'FORM.LABELS.CURRENCY' | translate
-						}}</label>
-						<nb-select
-							class="d-block"
-							size="medium"
-							formControlName="currency"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.ALL_CURRENCIES' | translate
-							}}"
-							fullWidth="true"
-						>
-							<nb-option
-								*ngFor="let currency of currencies"
-								[value]="currency"
-							>
-								{{ currency }}
-							</nb-option>
-						</nb-select>
-					</div>
+					<ga-currency
+						[(ngModel)]="currency"
+						[formControl]="form.get('currency')"
+						(onOptionChange)="currencyChanged($event)"
+					></ga-currency>
 				</div>
 			</div>
 

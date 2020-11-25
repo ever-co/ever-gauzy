@@ -5,8 +5,6 @@ import { IEmployee, ICountry, ICandidate } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { CandidateStore } from '../../../@core/services/candidate-store.service';
 import { EmployeeStore } from '../../../@core/services/employee-store.service';
-import { CountryService } from '../../../@core/services/country.service';
-
 @Component({
 	selector: 'ga-employee-location',
 	templateUrl: 'employee-location.component.html'
@@ -19,13 +17,12 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 	form: FormGroup;
 	selectedEmployee: IEmployee;
 	selectedCandidate: ICandidate;
-	countries: ICountry[];
+	country: string;
 
 	constructor(
 		private fb: FormBuilder,
 		private candidateStore: CandidateStore,
-		private employeeStore: EmployeeStore,
-		private countryService: CountryService
+		private employeeStore: EmployeeStore
 	) {}
 
 	ngOnInit() {
@@ -73,20 +70,34 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	private async _initializeForm(role: IEmployee | ICandidate) {
-		await this.loadCountries();
-
+	private async _initializeForm(employee: IEmployee | ICandidate) {
 		this.form = this.fb.group({
-			country: [role.contact ? role.contact.country : ''],
-			city: [role.contact ? role.contact.city : ''],
-			postcode: [role.contact ? role.contact.postcode : ''],
-			address: [role.contact ? role.contact.address : ''],
-			address2: [role.contact ? role.contact.address2 : '']
+			country: [''],
+			city: [''],
+			postcode: [''],
+			address: [''],
+			address2: ['']
 		});
+		this._setValues(employee);
 	}
 
-	private async loadCountries() {
-		const { items } = await this.countryService.getAll();
-		this.countries = items;
+	private _setValues(employee: IEmployee | ICandidate) {
+		if (!employee.contact) {
+			return;
+		}
+		this.country = employee.contact.country;
+		this.form.setValue({
+			country: employee.contact.country,
+			city: employee.contact.city,
+			postcode: employee.contact.postcode,
+			address: employee.contact.address,
+			address2: employee.contact.address2
+		});
+		this.form.updateValueAndValidity();
 	}
+
+	/*
+	 * On Changed Country Event Emitter
+	 */
+	countryChanged($event: ICountry) {}
 }

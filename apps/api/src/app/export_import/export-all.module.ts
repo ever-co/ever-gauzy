@@ -202,8 +202,7 @@ import {
 } from '@gauzy/integration-upwork';
 import { CustomSmtp } from '../custom-smtp/custom-smtp.entity';
 import { CustomSmtpService } from '../custom-smtp/custom-smtp.service';
-import { Currency } from '../currency/currency.entity';
-import { CurrencyService } from '../currency/currency.service';
+import { Currency, CurrencyService } from '../currency';
 
 @Module({
 	imports: [

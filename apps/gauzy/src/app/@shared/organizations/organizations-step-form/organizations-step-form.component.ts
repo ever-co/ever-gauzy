@@ -17,13 +17,12 @@ import {
 	DEFAULT_PROFIT_BASED_BONUS,
 	RegionsEnum,
 	WeekDaysEnum,
-	ITag
+	ITag,
+	ICurrency
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { CountryService } from '../../../@core/services/country.service';
-
 @Component({
 	selector: 'ga-organizations-step-form',
 	templateUrl: './organizations-step-form.component.html',
@@ -52,19 +51,19 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 	orgBonusForm: FormGroup;
 	orgSettingsForm: FormGroup;
 	tags: ITag[] = [];
+	currency: ICurrency;
+	country: ICountry;
 
 	@Output()
 	createOrganization = new EventEmitter();
 
 	constructor(
 		private fb: FormBuilder,
-		private toastrService: NbToastrService,
-		private countryService: CountryService
+		private toastrService: NbToastrService
 	) {}
 
 	async ngOnInit() {
 		this._initializedForm();
-		await this.loadCountries();
 	}
 
 	private _initializedForm() {
@@ -89,7 +88,7 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 		});
 
 		this.orgBonusForm = this.fb.group({
-			bonusType: [BonusTypeEnum.PROFIT_BASED_BONUS],
+			bonusType: [],
 			bonusPercentage: [
 				DEFAULT_PROFIT_BASED_BONUS,
 				[Validators.min(0), Validators.max(100)]
@@ -124,18 +123,12 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	private async loadCountries() {
-		const { items } = await this.countryService.getAll();
-		this.countries = items;
-	}
-
 	handleImageUploadError(error) {
 		this.toastrService.danger(error, 'Error');
 	}
 
 	loadDefaultBonusPercentage(bonusType: BonusTypeEnum) {
 		const bonusPercentageControl = this.orgBonusForm.get('bonusPercentage');
-
 		switch (bonusType) {
 			case BonusTypeEnum.PROFIT_BASED_BONUS:
 				bonusPercentageControl.setValue(75);
@@ -212,6 +205,16 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 	selectedTagsEvent(currentSelection: ITag[]) {
 		this.orgMainForm.get('tags').setValue(currentSelection);
 	}
+
+	/*
+	 * On Changed Currency Event Emitter
+	 */
+	currencyChanged($event: ICurrency) {}
+
+	/*
+	 * On Changed Country Event Emitter
+	 */
+	countryChanged($event: ICountry) {}
 
 	ngOnDestroy() {
 		this._ngDestroy$.next();

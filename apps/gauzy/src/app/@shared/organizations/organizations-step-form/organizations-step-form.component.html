@@ -105,35 +105,15 @@
 									</div>
 								</div>
 								<div class="col">
-									<div class="form-group">
-										<label class="label">{{
-											'FORM.LABELS.CURRENCY' | translate
-										}}</label>
-										<nb-select
-											class="d-block"
-											size="medium"
-											formControlName="currency"
-											placeholder="{{
-												'FORM.PLACEHOLDERS.ALL_CURRENCIES'
-													| translate
-											}}"
-											fullWidth="true"
-											[ngClass]="{
-												'status-danger': orgMainForm.get(
-													'currency'
-												).invalid
-											}"
-										>
-											<nb-option
-												*ngFor="
-													let currency of currencies
-												"
-												[value]="currency"
-											>
-												{{ currency }}
-											</nb-option>
-										</nb-select>
-									</div>
+									<ga-currency
+										[(ngModel)]="currency"
+										[formControl]="
+											orgMainForm.get('currency')
+										"
+										(onOptionChange)="
+											currencyChanged($event)
+										"
+									></ga-currency>
 								</div>
 							</div>
 
@@ -205,7 +185,7 @@
 							</div>
 						</div>
 
-						<div class="" style="margin-top: 20px;">
+						<div class="" style="margin-top: 20px">
 							<button
 								[disabled]="orgMainForm.invalid"
 								nbButton
@@ -234,29 +214,13 @@
 					<div class="fields">
 						<div class="row">
 							<div class="col-6">
-								<div class="form-group">
-									<label class="label" for="countrySelect">{{
-										'FORM.LABELS.COUNTRY' | translate
-									}}</label>
-									<nb-select
-										class="d-block"
-										size="medium"
-										formControlName="country"
-										id="countrySelect"
-										placeholder="{{
-											'FORM.PLACEHOLDERS.COUNTRY'
-												| translate
-										}}"
-										fullWidth="true"
-									>
-										<nb-option
-											*ngFor="let c of countries"
-											[value]="c.isoCode"
-										>
-											{{ c.country }}
-										</nb-option>
-									</nb-select>
-								</div>
+								<ga-country
+									[(ngModel)]="country"
+									[formControl]="
+										orgLocationForm.get('country')
+									"
+									(onOptionChange)="countryChanged($event)"
+								></ga-country>
 							</div>
 							<div class="col-6">
 								<div class="form-group">

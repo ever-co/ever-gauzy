@@ -2,6 +2,7 @@ import { EmployeeJobPost } from './employee-job.entity';
 import { JobPost } from './jobPost.entity';
 import * as faker from 'faker';
 import {
+	ICountry,
 	IEmployee,
 	IEmployeeJobPost,
 	JobPostSourceEnum,
@@ -9,12 +10,15 @@ import {
 	JobPostTypeEnum
 } from '@gauzy/models';
 import { IPagination } from '../core';
+import { Country } from '../country';
+import { getConnection } from 'typeorm';
 
 export const getRandomEmployeeJobPosts = async (
 	employees?: IEmployee[],
 	page = 0,
 	limit = 10
 ): Promise<IPagination<IEmployeeJobPost>> => {
+	const countries: ICountry[] = await getConnection().manager.find(Country);
 	const employeesJobs: EmployeeJobPost[] = [];
 
 	for (let i = 0; i < limit; i++) {
@@ -25,7 +29,7 @@ export const getRandomEmployeeJobPosts = async (
 		});
 
 		const job = new JobPost({
-			country: faker.address.country(),
+			country: faker.random.arrayElement(countries).isoCode,
 			category: faker.name.jobTitle(),
 			title: faker.lorem.sentence(),
 			description: faker.lorem.sentences(3),

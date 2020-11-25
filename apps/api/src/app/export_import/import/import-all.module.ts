@@ -101,7 +101,7 @@ import { EventType } from '../../event-types/event-type.entity';
 import { GoalGeneralSetting } from '../../goal-general-setting/goal-general-setting.entity';
 import { PipelineStage } from '../../pipeline-stage/pipeline-stage.entity';
 import { CustomSmtp } from '../../custom-smtp/custom-smtp.entity';
-import { Currency } from '../../currency/currency.entity';
+import { Currency } from '../../currency';
 @Module({
 	imports: [
 		CqrsModule,

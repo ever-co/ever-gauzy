@@ -6,7 +6,6 @@ import { NbToastrService } from '@nebular/theme';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
 import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
 import { filter } from 'rxjs/operators';
-import { CountryService } from '../../../../../@core/services/country.service';
 import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -20,8 +19,8 @@ import { Store } from '../../../../../@core/services/store.service';
 export class EditOrganizationLocationComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	selectedOrganization: IOrganization;
-	countries: ICountry[];
+	organization: IOrganization;
+	country: string;
 	form: FormGroup;
 
 	constructor(
@@ -31,7 +30,6 @@ export class EditOrganizationLocationComponent
 		private toastrService: NbToastrService,
 		private organizationEditStore: OrganizationEditStore,
 		private store: Store,
-		private countryService: CountryService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -46,9 +44,6 @@ export class EditOrganizationLocationComponent
 			.subscribe((organization) => {
 				this._loadOrganizationData(organization);
 			});
-
-		//Load countries before initializing the form
-		this.loadCountries();
 	}
 
 	async updateOrganizationSettings() {
@@ -63,12 +58,9 @@ export class EditOrganizationLocationComponent
 			...this.form.value,
 			contact
 		};
-		this.organizationService.update(
-			this.selectedOrganization.id,
-			contactData
-		);
+		this.organizationService.update(this.organization.id, contactData);
 		this.toastrService.primary(
-			this.selectedOrganization.name + ' organization location updated.',
+			this.organization.name + ' organization location updated.',
 			'Success'
 		);
 		this.goBack();
@@ -76,23 +68,42 @@ export class EditOrganizationLocationComponent
 
 	goBack() {
 		this.router.navigate([
-			`/pages/organizations/edit/${this.selectedOrganization.id}`
+			`/pages/organizations/edit/${this.organization.id}`
 		]);
 	}
 
 	//Initialize form
-	private async _initializeForm(organization: IOrganization) {
+	private async _initializeForm() {
 		this.form = this.fb.group({
-			country: [organization.contact ? organization.contact.country : ''],
-			city: [organization.contact ? organization.contact.city : ''],
-			postcode: [
-				organization.contact ? organization.contact.postcode : ''
-			],
-			address: [organization.contact ? organization.contact.address : ''],
-			address2: [
-				organization.contact ? organization.contact.address2 : ''
-			]
+			country: [''],
+			city: [''],
+			postcode: [''],
+			address: [''],
+			address2: ['']
 		});
+		setTimeout(() => {
+			this._setValues();
+		}, 200);
+	}
+
+	private _setValues() {
+		if (!this.organization) {
+			return;
+		}
+
+		const organization: IOrganization = this.organization;
+		const { contact } = organization;
+		if (contact) {
+			this.form.setValue({
+				country: contact.country,
+				city: contact.city,
+				postcode: contact.postcode,
+				address: contact.address,
+				address2: contact.address2
+			});
+			this.country = contact.country;
+			this.form.updateValueAndValidity();
+		}
 	}
 
 	private async _loadOrganizationData(organization) {
@@ -103,20 +114,17 @@ export class EditOrganizationLocationComponent
 		const { tenantId } = this.store.user;
 		const { items } = await this.organizationService.getAll(
 			['contact', 'tags'],
-			{
-				id,
-				tenantId
-			}
+			{ id, tenantId }
 		);
-		this.selectedOrganization = items[0];
-		this._initializeForm(this.selectedOrganization);
-		this.organizationEditStore.selectedOrganization = this.selectedOrganization;
+		this.organization = items[0];
+		this._initializeForm();
+		this.organizationEditStore.selectedOrganization = this.organization;
 	}
 
-	private async loadCountries() {
-		const { items } = await this.countryService.getAll();
-		this.countries = items;
-	}
+	/*
+	 * On Changed Country Event Emitter
+	 */
+	countryChanged($event: ICountry) {}
 
 	ngOnDestroy(): void {}
 }
