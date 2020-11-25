@@ -79,9 +79,7 @@ describe('Create Organization Test', () => {
 		);
 		addOrganizationPage.dateFormatDropdownVisible();
 		addOrganizationPage.clickDateFormatDropdown();
-		addOrganizationPage.selectDateFormatFromDropdown(
-			AddOrganizationPageData.dateFormat
-		);
+		addOrganizationPage.selectDateFormatFromDropdown();
 		addOrganizationPage.clickOnNextButton();
 		addOrganizationPage.waitMessageToHide();
 		addOrganizationPage.verifyOrganizationExists(organizationName);

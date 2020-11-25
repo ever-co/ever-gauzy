@@ -11,6 +11,5 @@ export const AddOrganizationPageData = {
 	timeZone: '(EET+02:00) Sofia',
 	region: 'English (United States)',
 	dateType: 'Today',
-	dateFormat: '11/24/2020',
 	numberFormat: '$12,345.67'
 };

@@ -21,10 +21,11 @@ export const ContactsLeadsPage = {
 	cardBodyCss: 'div.contact-container',
 	saveButtonCss: 'div.form-group > button[status="success"]',
 	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
-	confirmDeleteButtonCss: 'nb-card-footer > button[status="info"]',
+	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	contactNameCss: '[formcontrolname="name"]',
 	contactPhoneCss: '[formcontrolname="primaryPhone"]',
 	contactEmailCss: '#emailInput',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	saveInviteButtonCss: 'nb-card-footer > button[status="success"]'
+	saveInviteButtonCss: 'nb-card-footer > button[status="success"]',
+	verifyLeadCss: 'div.d-block'
 };

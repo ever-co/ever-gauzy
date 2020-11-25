@@ -20,5 +20,7 @@ export const AddTaskPage = {
 	estimateHoursInputCss: '[formControlName="estimateHours"]',
 	estimateMinsInputCss: '[formControlName="estimateMinutes"]',
 	descriptionTextareaCss: '[formControlName="description"]',
-	saveNewTaskButtonCss: 'nb-card-footer > button[status="success"]'
+	saveNewTaskButtonCss: 'nb-card-footer > button[status="success"]',
+	verifyTextCss: 'ga-notes-with-tags > div > div.ng-star-inserted',
+	toastrMessageCss: 'nb-toast.ng-trigger'
 };

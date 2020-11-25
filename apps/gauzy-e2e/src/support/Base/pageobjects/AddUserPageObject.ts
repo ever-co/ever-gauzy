@@ -9,5 +9,7 @@ export const AddUserPage = {
 	passwordInputCss: '#inputPassword',
 	imageInputUrlCss: '[placeholder="Image"]',
 	confirmAddUserButtonCss:
-		'nb-card-footer.text-right > button[status="success"]'
+		'nb-card-footer.text-right > button[status="success"]',
+	verifyUserCss: 'div.d-block',
+	toastrMessageCss: 'nb-toast.ng-trigger'
 };

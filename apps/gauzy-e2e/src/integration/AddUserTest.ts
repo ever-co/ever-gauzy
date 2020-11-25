@@ -45,5 +45,7 @@ describe('Add user test', () => {
 		addUserPage.enterImageDataUrl(imgUrl);
 		addUserPage.confirmAddButtonVisible();
 		addUserPage.clickConfirmAddButton();
+		addUserPage.waitMessageToHide();
+		addUserPage.verifyUserExists(`${firstName} ${lastName}`);
 	});
 });

@@ -6,7 +6,9 @@ import {
 	enterInput,
 	clickKeyboardBtnByKeycode,
 	clickElementByText,
-	waitElementToHide
+	waitElementToHide,
+	verifyText,
+	verifyTextNotExisting
 } from '../utils/util';
 import { CustomersPage } from '../pageobjects/CustomersPageObject';
 
@@ -227,4 +229,12 @@ export const customerEmailInputVisible = () => {
 export const enterCustomerEmailData = (data) => {
 	clearField(CustomersPage.customerEmailCss);
 	enterInput(CustomersPage.customerEmailCss, data);
+};
+
+export const verifyCustomerExists = (text) => {
+	verifyText(CustomersPage.verifyCustomerCss, text);
+};
+
+export const verifyElementIsDeleted = (text) => {
+	verifyTextNotExisting(CustomersPage.verifyCustomerCss, text);
 };
