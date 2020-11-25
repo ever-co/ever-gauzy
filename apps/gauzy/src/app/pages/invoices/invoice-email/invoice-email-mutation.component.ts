@@ -25,7 +25,8 @@ import { InvoiceItemService } from '../../../@core/services/invoice-item.service
 
 @Component({
 	selector: 'ga-invoice-email',
-	templateUrl: './invoice-email-mutation.component.html'
+	templateUrl: './invoice-email-mutation.component.html',
+	styleUrls: ['./invoice-email-mutation.component.scss']
 })
 export class InvoiceEmailMutationComponent
 	extends TranslationBaseComponent
@@ -36,6 +37,7 @@ export class InvoiceEmailMutationComponent
 	saveAndSend: boolean;
 	invoiceItems: IInvoiceItem[];
 	createdInvoice: IInvoice;
+	docDefinition: any;
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -58,6 +60,50 @@ export class InvoiceEmailMutationComponent
 
 	ngOnInit() {
 		this.initializeForm();
+		this.loadPdf();
+	}
+
+	async loadPdf() {
+		pdfMake.vfs = pdfFonts.pdfMake.vfs;
+		let docDefinition;
+		let service;
+
+		switch (this.invoice.invoiceType) {
+			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
+				service = this.employeeService;
+				break;
+			case InvoiceTypeEnum.BY_PROJECT_HOURS:
+				service = this.projectService;
+				break;
+			case InvoiceTypeEnum.BY_TASK_HOURS:
+				service = this.taskService;
+				break;
+			case InvoiceTypeEnum.BY_PRODUCTS:
+				service = this.productService;
+				break;
+			case InvoiceTypeEnum.BY_EXPENSES:
+				service = this.expensesService;
+				break;
+			default:
+				break;
+		}
+
+		docDefinition = await generatePdf(
+			this.invoice,
+			this.invoice.fromOrganization,
+			this.invoice.toContact,
+			service
+		);
+
+		this.docDefinition = docDefinition;
+
+		const pdfDocGenerator = pdfMake.createPdf(docDefinition);
+		pdfDocGenerator.getDataUrl((dataUrl) => {
+			const iframe = document.querySelector(
+				'#iframe'
+			) as HTMLIFrameElement;
+			iframe.src = dataUrl;
+		});
 	}
 
 	initializeForm() {

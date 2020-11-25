@@ -8,8 +8,7 @@
 		</h5>
 	</nb-card-header>
 	<nb-card-body>
-		<ga-invoice-view-inner [invoice]="invoice" [isEstimate]="isEstimate">
-		</ga-invoice-view-inner>
+		<iframe id="iframe" class="pdfDoc"></iframe>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
 		<button (click)="closeDialog()" status="danger" class="mr-3" nbButton>

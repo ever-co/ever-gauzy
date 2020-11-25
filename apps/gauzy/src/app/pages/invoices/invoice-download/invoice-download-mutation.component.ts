@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
@@ -15,13 +15,16 @@ import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-e
 import { Store } from '../../../@core/services/store.service';
 
 @Component({
-	selector: 'ga-invoice-send',
-	templateUrl: './invoice-download-mutation.component.html'
+	selector: 'ga-invoice-download',
+	templateUrl: './invoice-download-mutation.component.html',
+	styleUrls: ['./invoice-download-mutation.component.scss']
 })
-export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
+export class InvoiceDownloadMutationComponent
+	extends TranslationBaseComponent
+	implements OnInit {
 	invoice: IInvoice;
 	isEstimate: boolean;
-	tableBody: any;
+	docDefinition: any;
 
 	constructor(
 		protected dialogRef: NbDialogRef<InvoiceDownloadMutationComponent>,
@@ -38,11 +41,15 @@ export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
 		super(translateService);
 	}
 
+	ngOnInit() {
+		this.loadPdf();
+	}
+
 	async closeDialog() {
 		this.dialogRef.close();
 	}
 
-	async download() {
+	async loadPdf() {
 		pdfMake.vfs = pdfFonts.pdfMake.vfs;
 		let docDefinition;
 		let service;
@@ -74,8 +81,20 @@ export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
 			service
 		);
 
+		this.docDefinition = docDefinition;
+
+		const pdfDocGenerator = pdfMake.createPdf(docDefinition);
+		pdfDocGenerator.getDataUrl((dataUrl) => {
+			const iframe = document.querySelector(
+				'#iframe'
+			) as HTMLIFrameElement;
+			iframe.src = dataUrl;
+		});
+	}
+
+	async download() {
 		pdfMake
-			.createPdf(docDefinition)
+			.createPdf(this.docDefinition)
 			.download(
 				`${this.isEstimate ? 'Estimate' : 'Invoice'}-${
 					this.invoice.invoiceNumber

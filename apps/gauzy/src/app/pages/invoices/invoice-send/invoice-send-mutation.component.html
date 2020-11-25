@@ -12,11 +12,7 @@
 	</nb-card-header>
 	<nb-card-body>
 		<span *ngIf="!alreadySent">
-			<ga-invoice-view-inner
-				[invoice]="invoice"
-				[isEstimate]="isEstimate"
-			>
-			</ga-invoice-view-inner>
+			<iframe id="iframe" class="pdfDoc"></iframe>
 		</span>
 		<span *ngIf="alreadySent">
 			<span *ngIf="!isEstimate">{{

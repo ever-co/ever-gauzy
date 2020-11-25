@@ -9,9 +9,8 @@
 			}}</span>
 		</h5>
 	</nb-card-header>
-	<nb-card-body>
-		<ga-invoice-view-inner [invoice]="invoice" [isEstimate]="isEstimate">
-		</ga-invoice-view-inner>
+	<nb-card-body class="invoice-email-body">
+		<iframe id="iframe" class="pdfDoc"></iframe>
 		<form [formGroup]="form" *ngIf="form">
 			<div class="row">
 				<div class="form-group col-12">
