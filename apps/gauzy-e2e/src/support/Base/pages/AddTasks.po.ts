@@ -5,7 +5,10 @@ import {
 	clearField,
 	enterInput,
 	clickKeyboardBtnByKeycode,
-	clickElementByText
+	clickElementByText,
+	waitElementToHide,
+	verifyText,
+	verifyTextNotExisting
 } from '../utils/util';
 import { AddTaskPage } from '../pageobjects/AddTasksPageObject';
 
@@ -174,4 +177,16 @@ export const confirmDuplicateOrEditTaskButtonVisible = () => {
 
 export const clickConfirmDuplicateOrEditTaskButton = () => {
 	clickButton(AddTaskPage.confirmDuplicateOrEditTaskButtonCss);
+};
+
+export const waitMessageToHide = () => {
+	waitElementToHide(AddTaskPage.toastrMessageCss);
+};
+
+export const verifyTaskExists = (text) => {
+	verifyText(AddTaskPage.verifyTextCss, text);
+};
+
+export const verifyElementIsDeleted = (text) => {
+	verifyTextNotExisting(AddTaskPage.verifyTextCss, text);
 };

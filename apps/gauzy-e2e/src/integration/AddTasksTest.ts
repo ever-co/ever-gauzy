@@ -54,6 +54,8 @@ describe('Add tasks test', () => {
 		);
 		addTaskPage.saveTaskButtonVisible();
 		addTaskPage.clickSaveTaskButton();
+		addTaskPage.waitMessageToHide();
+		addTaskPage.verifyTaskExists(AddTasksPageData.defaultTaskTitle);
 	});
 	it('Should be able to duplicate task', () => {
 		addTaskPage.tasksTableVisible();
@@ -96,6 +98,8 @@ describe('Add tasks test', () => {
 		);
 		addTaskPage.saveTaskButtonVisible();
 		addTaskPage.clickSaveTaskButton();
+		addTaskPage.waitMessageToHide();
+		addTaskPage.verifyTaskExists(AddTasksPageData.defaultTaskTitle);
 	});
 	it('Should be able to delete task', () => {
 		addTaskPage.tasksTableVisible();
@@ -104,5 +108,16 @@ describe('Add tasks test', () => {
 		addTaskPage.clickDeleteTaskButton();
 		addTaskPage.confirmDeleteTaskButtonVisible();
 		addTaskPage.clickConfirmDeleteTaskButton();
+		addTaskPage.waitMessageToHide();
+		addTaskPage.tasksTableVisible();
+		addTaskPage.selectTasksTableRow(0);
+		addTaskPage.deleteTaskButtonVisible();
+		addTaskPage.clickDeleteTaskButton();
+		addTaskPage.confirmDeleteTaskButtonVisible();
+		addTaskPage.clickConfirmDeleteTaskButton();
+		addTaskPage.waitMessageToHide();
+		addTaskPage.verifyElementIsDeleted(
+			` ${AddTasksPageData.defaultTaskDescription} ${AddTasksPageData.defaultTaskTitle}`
+		);
 	});
 });

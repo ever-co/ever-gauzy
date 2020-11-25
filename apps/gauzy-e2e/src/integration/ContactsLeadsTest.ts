@@ -12,6 +12,7 @@ import { CustomCommands } from '../support/commands';
 
 let email = ' ';
 let fullName = ' ';
+let deleteName = ' ';
 let country = ' ';
 let city = ' ';
 let postcode = ' ';
@@ -22,6 +23,7 @@ describe('Contacts leads test', () => {
 	before(() => {
 		email = faker.internet.email();
 		fullName = faker.name.firstName() + ' ' + faker.name.lastName();
+		deleteName = faker.name.firstName() + ' ' + faker.name.lastName();
 		country = faker.address.country();
 		city = faker.address.city();
 		postcode = faker.address.zipCode();
@@ -66,15 +68,16 @@ describe('Contacts leads test', () => {
 		contactsLeadsPage.enterContactEmailData(email);
 		contactsLeadsPage.saveInvitebuttonVisible();
 		contactsLeadsPage.clickSaveInviteButton();
+		contactsLeadsPage.waitMessageToHide();
+		contactsLeadsPage.verifyLeadExists(fullName);
 	});
 	it('Should be able to edit lead', () => {
-		contactsLeadsPage.waitMessageToHide();
 		contactsLeadsPage.tableRowVisible();
 		contactsLeadsPage.selectTableRow(0);
 		contactsLeadsPage.editButtonVisible();
 		contactsLeadsPage.clickEditButton();
 		contactsLeadsPage.nameInputVisible();
-		contactsLeadsPage.enterNameInputData(fullName);
+		contactsLeadsPage.enterNameInputData(deleteName);
 		contactsLeadsPage.emailInputVisible();
 		contactsLeadsPage.enterEmailInputData(email);
 		contactsLeadsPage.phoneInputVisible();
@@ -93,13 +96,16 @@ describe('Contacts leads test', () => {
 		contactsLeadsPage.enterWebsiteInputData(website);
 		contactsLeadsPage.saveButtonVisible();
 		contactsLeadsPage.clickSaveButton();
+		contactsLeadsPage.waitMessageToHide();
+		contactsLeadsPage.verifyLeadExists(deleteName);
 	});
 	it('Should be able to delete lead', () => {
-		contactsLeadsPage.waitMessageToHide();
 		contactsLeadsPage.selectTableRow(0);
 		contactsLeadsPage.deleteButtonVisible();
 		contactsLeadsPage.clickDeleteButton();
 		contactsLeadsPage.confirmDeleteButtonVisible();
 		contactsLeadsPage.clickConfirmDeleteButton();
+		contactsLeadsPage.waitMessageToHide();
+		contactsLeadsPage.verifyElementIsDeleted(deleteName);
 	});
 });

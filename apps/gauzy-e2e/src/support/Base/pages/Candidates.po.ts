@@ -8,7 +8,9 @@ import {
 	clickKeyboardBtnByKeycode,
 	clickButtonByIndex,
 	getLastElement,
-	waitElementToHide
+	waitElementToHide,
+	verifyText,
+	verifyTextNotExisting
 } from '../utils/util';
 import { CandidatesPage } from '../pageobjects/CandidatesPageObject';
 
@@ -373,4 +375,16 @@ export const clickConfirmActionButton = () => {
 
 export const waitMessageToHide = () => {
 	waitElementToHide(CandidatesPage.toastrMessageCss);
+};
+
+export const verifyCandidateExists = (text) => {
+	verifyText(CandidatesPage.verifyCandidateCss, text);
+};
+
+export const verifyElementIsDeleted = (text) => {
+	verifyTextNotExisting(CandidatesPage.verifyCandidateCss, text);
+};
+
+export const verifyBadgeClass = () => {
+	verifyElementIsVisible(CandidatesPage.badgeCss);
 };

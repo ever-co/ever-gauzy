@@ -12,6 +12,7 @@ import { CustomCommands } from '../support/commands';
 
 let email = ' ';
 let fullName = ' ';
+let deleteName = ' ';
 let country = ' ';
 let city = ' ';
 let postcode = ' ';
@@ -22,6 +23,7 @@ describe('Customers test', () => {
 	before(() => {
 		email = faker.internet.email();
 		fullName = faker.name.firstName() + ' ' + faker.name.lastName();
+		deleteName = faker.name.firstName() + ' ' + faker.name.lastName();
 		country = faker.address.country();
 		city = faker.address.city();
 		postcode = faker.address.zipCode();
@@ -76,9 +78,10 @@ describe('Customers test', () => {
 		customersPage.enterWebsiteInputData(website);
 		customersPage.saveButtonVisible();
 		customersPage.clickSaveButton();
+		customersPage.waitMessageToHide();
+		customersPage.verifyCustomerExists(fullName);
 	});
 	it('Should be able to invite customer', () => {
-		customersPage.waitMessageToHide();
 		customersPage.inviteButtonVisible();
 		customersPage.clickInviteButton();
 		customersPage.customerNameInputVisible();
@@ -89,15 +92,16 @@ describe('Customers test', () => {
 		customersPage.enterCustomerEmailData(email);
 		customersPage.saveInvitebuttonVisible();
 		customersPage.clickSaveInviteButton();
+		customersPage.waitMessageToHide();
+		customersPage.verifyCustomerExists(fullName);
 	});
 	it('Should be able to edit customer', () => {
-		customersPage.waitMessageToHide();
 		customersPage.tableRowVisible();
 		customersPage.selectTableRow(0);
 		customersPage.editButtonVisible();
 		customersPage.clickEditButton();
 		customersPage.nameInputVisible();
-		customersPage.enterNameInputData(fullName);
+		customersPage.enterNameInputData(deleteName);
 		customersPage.emailInputVisible();
 		customersPage.enterEmailInputData(email);
 		customersPage.phoneInputVisible();
@@ -114,13 +118,16 @@ describe('Customers test', () => {
 		customersPage.enterWebsiteInputData(website);
 		customersPage.saveButtonVisible();
 		customersPage.clickSaveButton();
+		customersPage.waitMessageToHide();
+		customersPage.verifyCustomerExists(deleteName);
 	});
 	it('Should be able to delete customer', () => {
-		customersPage.waitMessageToHide();
 		customersPage.selectTableRow(0);
 		customersPage.deleteButtonVisible();
 		customersPage.clickDeleteButton();
 		customersPage.confirmDeleteButtonVisible();
 		customersPage.clickConfirmDeleteButton();
+		customersPage.waitMessageToHide();
+		customersPage.verifyElementIsDeleted(deleteName);
 	});
 });

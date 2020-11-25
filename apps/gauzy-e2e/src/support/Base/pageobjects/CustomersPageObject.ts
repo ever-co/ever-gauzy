@@ -21,10 +21,11 @@ export const CustomersPage = {
 	cardBodyCss: 'div.contact-container',
 	saveButtonCss: 'div.form-group > button[status="success"]',
 	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
-	confirmDeleteButtonCss: 'nb-card-footer > button[status="info"]',
+	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	customerNameCss: '[formcontrolname="name"]',
 	customerPhoneCss: '[formcontrolname="primaryPhone"]',
 	customerEmailCss: '#emailInput',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	saveInviteButtonCss: 'nb-card-footer > button[status="success"]'
+	saveInviteButtonCss: 'nb-card-footer > button[status="success"]',
+	verifyCustomerCss: 'div.d-block'
 };

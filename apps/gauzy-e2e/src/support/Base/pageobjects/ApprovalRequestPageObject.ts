@@ -15,5 +15,7 @@ export const ApprovalRequestPage = {
 	approvalPolicyButtonCss: 'div.mb-3 > button[status="primary"]',
 	descriptioninputCss: '[formcontrolname="description"]',
 	backButtonCss: 'g[data-name="arrow-back"]',
-	toastrMessageCss: 'nb-toast.ng-trigger'
+	toastrMessageCss: 'nb-toast.ng-trigger',
+	verifyApprovalPolicyCss: 'div.ng-star-inserted',
+	verifyRequestCss: 'div.d-block'
 };

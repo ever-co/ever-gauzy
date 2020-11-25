@@ -6,6 +6,7 @@ import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 import { CustomCommands } from '../support/commands';
+import { last } from 'cypress/types/lodash';
 
 let email = ' ';
 let secondEmail = ' ';
@@ -48,6 +49,9 @@ describe('Invite candidate test', () => {
 		inviteCandidatePage.clickSendInviteButton();
 	});
 	it('Should be able to add new candidate', () => {
+		cy.on('uncaught:exception', (err, runnable) => {
+			return false;
+		});
 		inviteCandidatePage.addCandidateButtonVisible();
 		inviteCandidatePage.clickAddCandidateButton(0);
 		inviteCandidatePage.firstNameInputVisible();
@@ -75,17 +79,20 @@ describe('Invite candidate test', () => {
 		inviteCandidatePage.clickNextStepButton();
 		inviteCandidatePage.allCurrentCandidatesButtonVisible();
 		inviteCandidatePage.clickAllCurrentCandidatesButton();
+		inviteCandidatePage.waitMessageToHide();
+		inviteCandidatePage.verifyCandidateExists(`${firstName} ${lastName}`);
 	});
 	it('Should be able to reject candidate', () => {
 		cy.on('uncaught:exception', (err, runnable) => {
 			return false;
 		});
-		inviteCandidatePage.waitMessageToHide();
 		inviteCandidatePage.selectTableRow(0);
 		inviteCandidatePage.rejectButtonVisible();
 		inviteCandidatePage.clickRejectButton();
 		inviteCandidatePage.confirmActionButtonVisible();
 		inviteCandidatePage.clickConfirmActionButton();
+		inviteCandidatePage.waitMessageToHide();
+		inviteCandidatePage.verifyBadgeClass();
 	});
 	it('Should be able to edit candidate', () => {
 		inviteCandidatePage.waitMessageToHide();
@@ -104,5 +111,7 @@ describe('Invite candidate test', () => {
 		inviteCandidatePage.clickArchiveButton();
 		inviteCandidatePage.confirmActionButtonVisible();
 		inviteCandidatePage.clickConfirmActionButton();
+		inviteCandidatePage.waitMessageToHide();
+		inviteCandidatePage.verifyElementIsDeleted(`${firstName} ${lastName}`);
 	});
 });

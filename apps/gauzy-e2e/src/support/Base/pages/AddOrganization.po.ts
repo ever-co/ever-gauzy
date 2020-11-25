@@ -179,8 +179,9 @@ export const clickDateFormatDropdown = () => {
 	clickButton(AddOrganizationPage.dateFormatDropdownCss);
 };
 
-export const selectDateFormatFromDropdown = (text) => {
-	clickElementByText(AddOrganizationPage.dropdownOptionCss, text);
+export const selectDateFormatFromDropdown = () => {
+	const today = Cypress.moment().format('MM/DD/YYYY');
+	clickElementByText(AddOrganizationPage.dropdownOptionCss, today);
 };
 
 export const selectTableRow = () => {
