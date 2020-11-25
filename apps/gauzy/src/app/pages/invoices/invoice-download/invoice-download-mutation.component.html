@@ -1,4 +1,4 @@
-<nb-card class="main">
+<nb-card class="pdf-preview-card">
 	<nb-card-header class="d-flex">
 		<h5 *ngIf="!isEstimate">
 			{{ 'INVOICES_PAGE.DOWNLOAD.CONFIRMATION_INVOICE' | translate }}
@@ -8,7 +8,10 @@
 		</h5>
 	</nb-card-header>
 	<nb-card-body>
-		<iframe id="iframe" class="pdfDoc"></iframe>
+		<ga-invoice-pdf
+			[invoice]="invoice"
+			(docDef)="getDocDef($event)"
+		></ga-invoice-pdf>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
 		<button (click)="closeDialog()" status="danger" class="mr-3" nbButton>

@@ -1,4 +1,4 @@
-<nb-card class="main">
+<nb-card class="pdf-preview-card">
 	<nb-card-header class="d-flex">
 		<h5>
 			<span *ngIf="!isEstimate">{{
@@ -12,7 +12,7 @@
 	</nb-card-header>
 	<nb-card-body>
 		<span *ngIf="!alreadySent">
-			<iframe id="iframe" class="pdfDoc"></iframe>
+			<ga-invoice-pdf [invoice]="invoice"></ga-invoice-pdf>
 		</span>
 		<span *ngIf="alreadySent">
 			<span *ngIf="!isEstimate">{{

@@ -1,32 +1,20 @@
 import { Component } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { OnInit } from '@angular/core';
-import {
-	IInvoice,
-	InvoiceTypeEnum,
-	InvoiceStatusTypesEnum,
-	IInvoiceItem
-} from '@gauzy/models';
+import { IInvoice, InvoiceStatusTypesEnum, IInvoiceItem } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { InvoicesService } from '../../../@core/services/invoices.service';
 import * as pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
-import { EmployeesService } from '../../../@core/services';
-import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
-import { TasksService } from '../../../@core/services/tasks.service';
-import { ProductService } from '../../../@core/services/product.service';
-import { generatePdf } from '../../../@shared/invoice/generate-pdf';
-import { ExpensesService } from '../../../@core/services/expenses.service';
 import { Store } from '../../../@core/services/store.service';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 import { InvoiceItemService } from '../../../@core/services/invoice-item.service';
 
 @Component({
 	selector: 'ga-invoice-email',
-	templateUrl: './invoice-email-mutation.component.html',
-	styleUrls: ['./invoice-email-mutation.component.scss']
+	templateUrl: './invoice-email-mutation.component.html'
 })
 export class InvoiceEmailMutationComponent
 	extends TranslationBaseComponent
@@ -44,12 +32,7 @@ export class InvoiceEmailMutationComponent
 		protected dialogRef: NbDialogRef<InvoiceEmailMutationComponent>,
 		private fb: FormBuilder,
 		private toastrService: NbToastrService,
-		private employeeService: EmployeesService,
-		private projectService: OrganizationProjectsService,
-		private taskService: TasksService,
-		private productService: ProductService,
 		private invoiceService: InvoicesService,
-		private expensesService: ExpensesService,
 		private store: Store,
 		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
 		private invoicesService: InvoicesService,
@@ -60,50 +43,10 @@ export class InvoiceEmailMutationComponent
 
 	ngOnInit() {
 		this.initializeForm();
-		this.loadPdf();
 	}
 
-	async loadPdf() {
-		pdfMake.vfs = pdfFonts.pdfMake.vfs;
-		let docDefinition;
-		let service;
-
-		switch (this.invoice.invoiceType) {
-			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
-				service = this.employeeService;
-				break;
-			case InvoiceTypeEnum.BY_PROJECT_HOURS:
-				service = this.projectService;
-				break;
-			case InvoiceTypeEnum.BY_TASK_HOURS:
-				service = this.taskService;
-				break;
-			case InvoiceTypeEnum.BY_PRODUCTS:
-				service = this.productService;
-				break;
-			case InvoiceTypeEnum.BY_EXPENSES:
-				service = this.expensesService;
-				break;
-			default:
-				break;
-		}
-
-		docDefinition = await generatePdf(
-			this.invoice,
-			this.invoice.fromOrganization,
-			this.invoice.toContact,
-			service
-		);
-
-		this.docDefinition = docDefinition;
-
-		const pdfDocGenerator = pdfMake.createPdf(docDefinition);
-		pdfDocGenerator.getDataUrl((dataUrl) => {
-			const iframe = document.querySelector(
-				'#iframe'
-			) as HTMLIFrameElement;
-			iframe.src = dataUrl;
-		});
+	getDocDef(event) {
+		this.docDefinition = event;
 	}
 
 	initializeForm() {
@@ -133,37 +76,8 @@ export class InvoiceEmailMutationComponent
 			});
 		}
 		pdfMake.vfs = pdfFonts.pdfMake.vfs;
-		let docDefinition;
-		let service;
 
-		switch (this.invoice.invoiceType) {
-			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
-				service = this.employeeService;
-				break;
-			case InvoiceTypeEnum.BY_PROJECT_HOURS:
-				service = this.projectService;
-				break;
-			case InvoiceTypeEnum.BY_TASK_HOURS:
-				service = this.taskService;
-				break;
-			case InvoiceTypeEnum.BY_PRODUCTS:
-				service = this.productService;
-				break;
-			case InvoiceTypeEnum.BY_EXPENSES:
-				service = this.expensesService;
-				break;
-			default:
-				break;
-		}
-
-		docDefinition = await generatePdf(
-			this.invoice,
-			this.invoice.fromOrganization,
-			this.invoice.toContact,
-			service
-		);
-
-		const pdfDocGenerator = pdfMake.createPdf(docDefinition);
+		const pdfDocGenerator = pdfMake.createPdf(this.docDefinition);
 		pdfDocGenerator.getBase64(async (data) => {
 			await this.invoiceService.sendEmail(
 				this.form.value.email,
