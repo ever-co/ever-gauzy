@@ -6,7 +6,6 @@ import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 import { CustomCommands } from '../support/commands';
-import { last } from 'cypress/types/lodash';
 
 let email = ' ';
 let secondEmail = ' ';

@@ -1,8 +1,4 @@
-import {
-	verifyElementIsVisible,
-	clickButtonByIndex,
-	verifyTextNotExisting
-} from '../utils/util';
+import { verifyElementIsVisible, clickButtonByIndex } from '../utils/util';
 import { DeleteOrganizationPage } from '../pageobjects/DeleteOrganizationPageObject';
 
 export const gridBtnExists = () => {
