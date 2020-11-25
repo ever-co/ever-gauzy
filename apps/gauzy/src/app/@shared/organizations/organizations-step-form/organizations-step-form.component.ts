@@ -78,7 +78,6 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 			taxId: [],
 			tags: []
 		});
-
 		this.orgLocationForm = this.fb.group({
 			country: [],
 			city: [],
@@ -86,13 +85,20 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 			address: [],
 			address2: []
 		});
-
 		this.orgBonusForm = this.fb.group({
 			bonusType: [],
-			bonusPercentage: [
-				DEFAULT_PROFIT_BASED_BONUS,
-				[Validators.min(0), Validators.max(100)]
+			bonusPercentage: ['', [Validators.min(0), Validators.max(100)]]
+		});
+		this.orgSettingsForm = this.fb.group({
+			timeZone: [],
+			startWeekOn: [],
+			defaultValueDateType: [
+				DefaultValueDateTypeEnum.TODAY,
+				Validators.required
 			],
+			regionCode: [],
+			numberFormat: [],
+			dateFormat: [],
 			fiscalStartDate: [
 				formatDate(
 					new Date(`01/01/${new Date().getFullYear()}`),
@@ -109,17 +115,6 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 			],
 			invitesAllowed: [true],
 			inviteExpiryPeriod: [7, [Validators.min(1)]]
-		});
-		this.orgSettingsForm = this.fb.group({
-			timeZone: [],
-			startWeekOn: [],
-			defaultValueDateType: [
-				DefaultValueDateTypeEnum.TODAY,
-				Validators.required
-			],
-			regionCode: [],
-			numberFormat: [],
-			dateFormat: []
 		});
 	}
 
@@ -195,7 +190,7 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 	addOrganization() {
 		const consolidatedFormValues = {
 			...this.orgMainForm.value,
-			...this.orgLocationForm.value,
+			contact: this.orgLocationForm.value,
 			...this.orgBonusForm.value,
 			...this.orgSettingsForm.value
 		};
