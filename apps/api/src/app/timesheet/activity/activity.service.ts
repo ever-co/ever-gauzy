@@ -50,6 +50,49 @@ export class ActivityService extends CrudService<Activity> {
 		return query.getRawMany();
 	}
 
+	async getDailyActivitiesReport(
+		request: IGetActivitiesInput
+	): Promise<IDailyActivity[]> {
+		const query = this.filterQuery(request);
+		// query.select(`COUNT("${query.alias}"."id")`, `sessions`);
+		// query.addSelect(`SUM("${query.alias}"."duration")`, `duration`);
+		// query.addSelect(`"${query.alias}"."employeeId"`, `employeeId`);
+		// query.addSelect(`"${query.alias}"."date"`, `date`);
+		// query.addSelect(`"${query.alias}"."title"`, `title`);
+
+		let activities;
+
+		if (request.groupBy === 'date') {
+			// query.addGroupBy(`"${query.alias}"."date"`);
+			// query.addGroupBy(`"${query.alias}"."employeeId"`);
+			query.limit(10);
+			activities = await query.getRawMany();
+		} else if (request.groupBy === 'employee') {
+			query.addGroupBy(`"${query.alias}"."employeeId"`);
+			query.addGroupBy(`"${query.alias}"."date"`);
+			query.addGroupBy(`"${query.alias}"."title"`);
+			query.orderBy(`"${query.alias}"."date"`, 'ASC');
+			query.addOrderBy(`"duration"`, 'DESC');
+
+			query.limit(10);
+			activities = await query.getRawMany();
+		} else if (request.groupBy === 'project') {
+			query.addGroupBy(`"${query.alias}"."projectId"`);
+			query.addGroupBy(`"${query.alias}"."date"`);
+			query.addGroupBy(`"${query.alias}"."employeeId"`);
+			query.addGroupBy(`"${query.alias}"."title"`);
+			query.orderBy(`"${query.alias}"."date"`, 'ASC');
+			query.addOrderBy(`"duration"`, 'DESC');
+
+			query.limit(10);
+			activities = await query.getRawMany();
+		} else if (request.groupBy === 'client') {
+		} else {
+		}
+
+		return activities;
+	}
+
 	async getAllActivities(request: IGetActivitiesInput) {
 		const query = this.filterQuery(request);
 

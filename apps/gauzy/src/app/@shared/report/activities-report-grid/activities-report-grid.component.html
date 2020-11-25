@@ -18,10 +18,10 @@
 	<div class="px-4" *ngIf="dailyData?.length > 0">
 		<div class="row py-3 font-weight-bold align-items-center">
 			<div *ngIf="groupBy != 'date'" class="col-sm-2">
-				{{ 'REPORT_PAGE.DATE' | translate }}
+				{{ 'Date' | translate }}
 			</div>
 			<div *ngIf="groupBy != 'project'" class="col-sm-2">
-				{{ 'REPORT_PAGE.PROJECT' | translate }}
+				{{ 'Project' | translate }}
 			</div>
 			<div *ngIf="groupBy != 'employee'" class="col-sm-2">
 				{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
@@ -80,7 +80,7 @@
 			<nb-card-body>
 				<div class="row font-weight-bold py-5 align-items-center">
 					<div class="col text-center">
-						{{ 'REPORT_PAGE.NO_TIMELOG' | translate }}
+						{{ 'REPORT_PAGE.NO_ACTIVITIES' | translate }}
 					</div>
 				</div>
 			</nb-card-body>

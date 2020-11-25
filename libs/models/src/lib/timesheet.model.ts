@@ -355,6 +355,7 @@ export interface IGetActivitiesInput extends ITimeLogFilters, IPaginationInput {
 	relations?: string[];
 	types?: string[];
 	titles?: string[];
+	groupBy?: string;
 }
 
 export interface IBulkActivitiesInput

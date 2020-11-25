@@ -50,6 +50,17 @@ export class ActivityController extends CrudController<Activity> {
 		return this.activityService.getDailyActivities(request);
 	}
 
+	@ApiOperation({ summary: 'Get Daily Activities' })
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Get('/report')
+	async getDailyActivitiesReport(@Query() request: IGetActivitiesInput) {
+		return this.activityService.getDailyActivitiesReport(request);
+	}
+
 	@ApiOperation({ summary: 'Save bulk Activities' })
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
