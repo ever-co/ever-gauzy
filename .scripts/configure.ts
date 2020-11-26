@@ -9,6 +9,12 @@ import { argv } from 'yargs';
 const environment = argv.environment;
 const isProd = environment === 'prod';
 
+if (!env.GOOGLE_MAPS_API_KEY) {
+	console.warn(
+		'WARNING: No Google Maps API Key defined in the .env. Google Maps may not be visible!'
+	);
+}
+
 const envFileContent = `// NOTE: Auto-generated file
 // The file contents for the current environment will overwrite these during build.
 // The build system defaults to the dev environment which uses 'environment.ts', but if you do
@@ -60,9 +66,9 @@ export const environment: Environment = {
   HUBSTAFF_REDIRECT_URI: 'http://localhost:4200/pages/integrations/hubstaff',
   IS_ELECTRON: IS_ELECTRON,
 
-  GOOGLE_MAPS_API_KEY: '',
-  DEFAULT_LATITUDE: 42.6459136,
-  DEFAULT_LONGITUDE: 23.3332736
+  GOOGLE_MAPS_API_KEY: '${env.GOOGLE_MAPS_API_KEY}',
+  DEFAULT_LATITUDE: ${env.DEFAULT_LATITUDE},
+  DEFAULT_LONGITUDE: ${env.DEFAULT_LONGITUDE},
 };
 
 export const cloudinaryConfiguration: CloudinaryConfiguration = {
