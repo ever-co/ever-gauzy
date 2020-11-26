@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { IRolePermission, IUser } from '@gauzy/models';
+import { IUser } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { UsersService } from '../../@core/services';
