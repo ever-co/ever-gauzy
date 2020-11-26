@@ -14,7 +14,6 @@ import {
 	ICountry,
 	CurrenciesEnum,
 	DefaultValueDateTypeEnum,
-	DEFAULT_PROFIT_BASED_BONUS,
 	RegionsEnum,
 	WeekDaysEnum,
 	ITag,
