@@ -13,6 +13,7 @@ import {
 } from '@gauzy/models';
 import { CommandBus } from '@nestjs/cqrs';
 import { BulkActivitiesSaveCommand } from './commands/bulk-activities-save.command';
+import { ActivityMapService } from './activity.map.service';
 
 @Injectable()
 export class ActivityService extends CrudService<Activity> {
@@ -52,45 +53,20 @@ export class ActivityService extends CrudService<Activity> {
 
 	async getDailyActivitiesReport(
 		request: IGetActivitiesInput
-	): Promise<IDailyActivity[]> {
+	): Promise<Activity[]> {
 		const query = this.filterQuery(request);
-		// query.select(`COUNT("${query.alias}"."id")`, `sessions`);
-		// query.addSelect(`SUM("${query.alias}"."duration")`, `duration`);
-		// query.addSelect(`"${query.alias}"."employeeId"`, `employeeId`);
-		// query.addSelect(`"${query.alias}"."date"`, `date`);
-		// query.addSelect(`"${query.alias}"."title"`, `title`);
 
-		let activities;
+		query.leftJoinAndSelect(`${query.alias}.employee`, 'activityEmployee');
 
-		if (request.groupBy === 'date') {
-			// query.addGroupBy(`"${query.alias}"."date"`);
-			// query.addGroupBy(`"${query.alias}"."employeeId"`);
-			query.limit(10);
-			activities = await query.getRawMany();
-		} else if (request.groupBy === 'employee') {
-			query.addGroupBy(`"${query.alias}"."employeeId"`);
-			query.addGroupBy(`"${query.alias}"."date"`);
-			query.addGroupBy(`"${query.alias}"."title"`);
-			query.orderBy(`"${query.alias}"."date"`, 'ASC');
-			query.addOrderBy(`"duration"`, 'DESC');
+		query.leftJoinAndSelect(`activityEmployee.user`, 'user');
 
-			query.limit(10);
-			activities = await query.getRawMany();
-		} else if (request.groupBy === 'project') {
-			query.addGroupBy(`"${query.alias}"."projectId"`);
-			query.addGroupBy(`"${query.alias}"."date"`);
-			query.addGroupBy(`"${query.alias}"."employeeId"`);
-			query.addGroupBy(`"${query.alias}"."title"`);
-			query.orderBy(`"${query.alias}"."date"`, 'ASC');
-			query.addOrderBy(`"duration"`, 'DESC');
+		query.leftJoinAndSelect(`${query.alias}.project`, 'project');
 
-			query.limit(10);
-			activities = await query.getRawMany();
-		} else if (request.groupBy === 'client') {
-		} else {
-		}
+		query.orderBy('duration', 'DESC');
 
-		return activities;
+		query.limit(200);
+
+		return await query.getMany();
 	}
 
 	async getAllActivities(request: IGetActivitiesInput) {

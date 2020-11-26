@@ -14,12 +14,16 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { IGetActivitiesInput, IBulkActivitiesInput } from '@gauzy/models';
 import { TenantPermissionGuard } from '../../shared/guards/auth/tenant-permission.guard';
+import { ActivityMapService } from './activity.map.service';
 
 @ApiTags('Activity')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller('activity')
 export class ActivityController extends CrudController<Activity> {
-	constructor(private readonly activityService: ActivityService) {
+	constructor(
+		private readonly activityService: ActivityService,
+		private readonly activityMapService: ActivityMapService
+	) {
 		super(activityService);
 	}
 
@@ -58,7 +62,19 @@ export class ActivityController extends CrudController<Activity> {
 	})
 	@Get('/report')
 	async getDailyActivitiesReport(@Query() request: IGetActivitiesInput) {
-		return this.activityService.getDailyActivitiesReport(request);
+		let activities = await this.activityService.getDailyActivitiesReport(
+			request
+		);
+
+		if (request.groupBy === 'date') {
+			activities = this.activityMapService.mapByDate(activities);
+		} else if (request.groupBy === 'employee') {
+			activities = this.activityMapService.mapByEmployee(activities);
+		} else if (request.groupBy === 'project') {
+			activities = this.activityMapService.mapByProject(activities);
+		}
+
+		return activities;
 	}
 
 	@ApiOperation({ summary: 'Save bulk Activities' })

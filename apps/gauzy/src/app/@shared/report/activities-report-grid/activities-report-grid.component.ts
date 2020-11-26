@@ -57,7 +57,7 @@ export class ActivitiesReportGridComponent implements OnInit, AfterViewInit {
 
 	@Input()
 	set filters(value) {
-		this.logRequest = value;
+		this.logRequest = value || {};
 		this.updateLogs$.next();
 	}
 

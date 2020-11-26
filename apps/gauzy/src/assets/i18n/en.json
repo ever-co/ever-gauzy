@@ -648,6 +648,8 @@
 		"NO_PROJECT": "No Project",
 		"NO_EMPLOYEE": "No Employee",
 		"NO_TIMELOG": "No Timelog",
+		"TITLE": "Title",
+		"DURATION": "Duration",
 		"NO_TASK": "No Task",
 		"WEEKLY_TIME_AND_ACTIVITY_REPORT": "Weekly Time and Activity Report",
 		"TIME_AND_ACTIVITY_REPORT": "Time and Activity Report",
