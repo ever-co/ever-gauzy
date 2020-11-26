@@ -54,6 +54,8 @@ import { ColorPickerService } from 'ngx-color-picker';
 import { EstimateEmailModule } from './auth/estimate-email/estimate-email.module';
 import * as moment from 'moment';
 import { TenantInterceptor } from './@core/tenant.interceptor';
+import { NgxAuthModule } from './auth/auth.module';
+import { LegalModule } from './legal/legal.module';
 
 export const cloudinary = {
 	Cloudinary: CloudinaryCore
@@ -71,6 +73,8 @@ if (environment.SENTRY_DNS && environment.production) {
 @NgModule({
 	declarations: [AppComponent],
 	imports: [
+		LegalModule,
+		NgxAuthModule,
 		EstimateEmailModule,
 		BrowserModule,
 		BrowserAnimationsModule,
