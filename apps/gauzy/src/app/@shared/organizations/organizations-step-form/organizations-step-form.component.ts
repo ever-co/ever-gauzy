@@ -6,7 +6,8 @@ import {
 	EventEmitter,
 	OnDestroy,
 	OnInit,
-	Output
+	Output,
+	ViewChild
 } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
@@ -22,6 +23,7 @@ import {
 import { NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { LocationFormComponent } from '../../forms/location';
 @Component({
 	selector: 'ga-organizations-step-form',
 	templateUrl: './organizations-step-form.component.html',
@@ -32,6 +34,9 @@ import { takeUntil } from 'rxjs/operators';
 })
 export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
+
+	@ViewChild('locationTemplate') locationTemplate: LocationFormComponent;
+	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
 
 	hoverState: boolean;
 	currencies: string[] = Object.values(CurrenciesEnum);
@@ -46,7 +51,6 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 	listOfDateFormats = ['L', 'L hh:mm', 'LL', 'LLL', 'LLLL'];
 
 	orgMainForm: FormGroup;
-	orgLocationForm: FormGroup;
 	orgBonusForm: FormGroup;
 	orgSettingsForm: FormGroup;
 	tags: ITag[] = [];
@@ -76,13 +80,6 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 			officialName: [],
 			taxId: [],
 			tags: []
-		});
-		this.orgLocationForm = this.fb.group({
-			country: [],
-			city: [],
-			postcode: [],
-			address: [],
-			address2: []
 		});
 		this.orgBonusForm = this.fb.group({
 			bonusType: [],
@@ -187,9 +184,12 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 	}
 
 	addOrganization() {
+		const contact = this.locationForm.value;
+		delete contact['loc'];
+
 		const consolidatedFormValues = {
 			...this.orgMainForm.value,
-			contact: this.orgLocationForm.value,
+			contact,
 			...this.orgBonusForm.value,
 			...this.orgSettingsForm.value
 		};
@@ -209,6 +209,14 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 	 * On Changed Country Event Emitter
 	 */
 	countryChanged($event: ICountry) {}
+
+	onCoordinatesChanges(coordinates: number[]) {
+		console.log(coordinates, 'coordinates');
+	}
+
+	onGeometrySend(geometry: any) {
+		console.log(geometry, 'geometry');
+	}
 
 	ngOnDestroy() {
 		this._ngDestroy$.next();

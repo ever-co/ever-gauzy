@@ -25,6 +25,7 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { CurrencyModule } from '../../currency/currency.module';
 import { CountryModule } from '../../country/country.module';
+import { LocationFormModule } from '../../forms/location';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -58,7 +59,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		}),
 		CurrencyModule,
-		CountryModule
+		CountryModule,
+		LocationFormModule
 	],
 	declarations: [OrganizationsStepFormComponent],
 	entryComponents: [OrganizationsStepFormComponent],

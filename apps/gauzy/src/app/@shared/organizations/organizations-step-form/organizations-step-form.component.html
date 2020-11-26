@@ -202,111 +202,30 @@
 			<!-- Step 1 Organization Main Form End -->
 
 			<!-- Step 2 Organization Location Form -->
-			<nb-step [stepControl]="orgLocationForm" [label]="location">
+			<nb-step [stepControl]="locationForm" [label]="location">
 				<ng-template #location>{{
 					'ORGANIZATIONS_PAGE.LOCATION' | translate
 				}}</ng-template>
 				<form
 					class="step-container"
-					[formGroup]="orgLocationForm"
-					*ngIf="orgLocationForm"
-					(ngSubmit)="this.orgLocationForm.markAsDirty()"
+					[formGroup]="locationForm"
+					*ngIf="locationForm"
+					(ngSubmit)="this.locationForm.markAsDirty()"
 				>
-					<div class="fields">
-						<div class="row">
-							<div class="col-6">
-								<ga-country
-									[(ngModel)]="country"
-									[formControl]="
-										orgLocationForm.get('country')
-									"
-									(onOptionChange)="countryChanged($event)"
-								></ga-country>
-							</div>
-							<div class="col-6">
-								<div class="form-group">
-									<label class="label" for="cityInput">{{
-										'FORM.LABELS.CITY' | translate
-									}}</label>
-									<input
-										fullWidth
-										id="cityInput"
-										type="text"
-										nbInput
-										formControlName="city"
-										placeholder="{{
-											'FORM.PLACEHOLDERS.CITY' | translate
-										}}"
-									/>
-								</div>
-							</div>
-						</div>
-						<div class="row">
-							<div class="col-6">
-								<div class="form-group">
-									<label class="label" for="addressInput">{{
-										'FORM.LABELS.ADDRESS' | translate
-									}}</label>
-									<textarea
-										fullWidth
-										id="addressInput"
-										type="text-area"
-										nbInput
-										formControlName="address"
-										placeholder="{{
-											'FORM.PLACEHOLDERS.ADDRESS'
-												| translate
-										}}"
-									></textarea>
-								</div>
-							</div>
-							<div class="col-6">
-								<div class="form-group">
-									<label class="label" for="address2Input">{{
-										'FORM.LABELS.ADDRESS_2' | translate
-									}}</label>
-									<textarea
-										fullWidth
-										id="address2Input"
-										type="text"
-										nbInput
-										formControlName="address2"
-										placeholder="{{
-											'FORM.PLACEHOLDERS.ADDRESS_2'
-												| translate
-										}}"
-									></textarea>
-								</div>
-							</div>
-						</div>
-						<div class="row">
-							<div class="col-6">
-								<div class="form-group">
-									<label class="label" for="postcodeInput">{{
-										'FORM.LABELS.POSTCODE' | translate
-									}}</label>
-									<input
-										fullWidth
-										id="postcodeInput"
-										type="number"
-										nbInput
-										formControlName="postcode"
-										placeholder="{{
-											'FORM.PLACEHOLDERS.POSTCODE'
-												| translate
-										}}"
-									/>
-								</div>
-							</div>
-						</div>
-					</div>
-
+					<ga-location-form
+						#locationTemplate
+						[form]="locationForm"
+						[showAutocompleteSearch]="true"
+						(mapCoordinatesEmitter)="onCoordinatesChanges($event)"
+						(mapGeometryEmitter)="onGeometrySend($event)"
+					>
+					</ga-location-form>
 					<div class="stepper-buttons">
 						<button nbButton nbStepperPrevious>
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>
 						<button
-							[disabled]="this.orgLocationForm.invalid"
+							[disabled]="this.locationForm.invalid"
 							nbButton
 							status="success"
 							nbStepperNext

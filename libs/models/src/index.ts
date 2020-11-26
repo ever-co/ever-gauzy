@@ -95,6 +95,7 @@ export * from './lib/report.model';
 export * from './lib/employee-proposal-template.model';
 export * from './lib/custom-smtp.model';
 export * from './lib/sms.model';
+export * from './lib/geo-location.model';
 
 export { IRole, RolesEnum } from './lib/role.model';
 export { IBaseEntityModel as BaseEntityModel } from './lib/base-entity.model';

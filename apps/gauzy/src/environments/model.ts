@@ -23,4 +23,8 @@ export interface Environment {
 	SENTRY_DNS?: string;
 	HUBSTAFF_REDIRECT_URI?: string;
 	IS_ELECTRON: boolean;
+
+	GOOGLE_MAPS_API_KEY: string;
+	DEFAULT_LATITUDE: number;
+	DEFAULT_LONGITUDE: number;
 }

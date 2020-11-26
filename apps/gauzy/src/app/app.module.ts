@@ -54,6 +54,7 @@ import { ColorPickerService } from 'ngx-color-picker';
 import { EstimateEmailModule } from './auth/estimate-email/estimate-email.module';
 import * as moment from 'moment';
 import { TenantInterceptor } from './@core/tenant.interceptor';
+import { GoogleMapsLoaderService } from './@core/services/google-maps-loader.service';
 
 export const cloudinary = {
 	Cloudinary: CloudinaryCore
@@ -67,6 +68,10 @@ if (environment.SENTRY_DNS && environment.production) {
 		dsn: environment.SENTRY_DNS,
 		environment: environment.production ? 'production' : 'development'
 	});
+}
+
+export function googleMapsLoaderFactory(provider: GoogleMapsLoaderService) {
+	return () => provider.load(environment.GOOGLE_MAPS_API_KEY);
 }
 @NgModule({
 	declarations: [AppComponent],
@@ -142,6 +147,13 @@ if (environment.SENTRY_DNS && environment.production) {
 			provide: APP_INITIALIZER,
 			useFactory: serverConnectionFactory,
 			deps: [ServerConnectionService, Store],
+			multi: true
+		},
+		GoogleMapsLoaderService,
+		{
+			provide: APP_INITIALIZER,
+			useFactory: googleMapsLoaderFactory,
+			deps: [GoogleMapsLoaderService],
 			multi: true
 		},
 		{
