@@ -23,5 +23,6 @@ export const GoalsPage = {
 	weightTypeButtonCss: 'nb-actions > nb-action[icon="percent"]',
 	weightParameterDropdownCss: '#key-result-weight',
 	saveDeadlineButtonCss: 'div.d-flex > button[status="success"]',
-	progressBarCss: 'div.progress-value'
+	progressBarCss: 'div.progress-value',
+	verifyGoalCss: 'nb-accordion-item-header'
 };

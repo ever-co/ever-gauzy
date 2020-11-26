@@ -8,7 +8,7 @@ import {
 	verifyTextNotExisting,
 	getLastElement,
 	waitElementToHide,
-	verifyTextExists
+	verifyValue
 } from '../utils/util';
 import { AddEmployeeLevelPage } from '../pageobjects/AddEmployeeLevelPageObject';
 
@@ -103,7 +103,7 @@ export const clickConfirmDeleteLevelButton = () => {
 };
 
 export const verifyTitleExists = (text) => {
-	verifyTextExists(AddEmployeeLevelPage.editLevelInputCss, text);
+	verifyValue(AddEmployeeLevelPage.editLevelInputCss, text);
 };
 
 export const verifyElementIsDeleted = (text) => {

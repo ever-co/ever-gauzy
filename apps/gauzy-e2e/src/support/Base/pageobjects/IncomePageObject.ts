@@ -15,5 +15,6 @@ export const IncomePage = {
 	deleteIncomeButtonCss: 'div.mb-3 > button[status="danger"]',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	cardBodyCss: 'nb-card-footer.text-right',
-	toastrMessageCss: 'nb-toast.ng-trigger'
+	toastrMessageCss: 'nb-toast.ng-trigger',
+	verifyIncomeCss: 'ga-notes-with-tags > div > div.ng-star-inserted'
 };

@@ -24,9 +24,10 @@ describe('Goals test', () => {
 		goalsPage.selectLeadFromDropdown(0);
 		goalsPage.confirmButtonVisible();
 		goalsPage.clickConfirmButton();
+		goalsPage.waitMessageToHide();
+		goalsPage.verifyGoalExists(GoalsPageData.name);
 	});
 	it('Should be able to add key result', () => {
-		goalsPage.waitMessageToHide();
 		goalsPage.tableRowVisible();
 		goalsPage.clickTableRow(0);
 		goalsPage.addButtonVisible();
@@ -97,5 +98,8 @@ describe('Goals test', () => {
 		goalsPage.clickDeleteButton();
 		goalsPage.confirmButtonVisible();
 		goalsPage.clickConfirmButton();
+		goalsPage.waitMessageToHide();
+		cy.reload();
+		goalsPage.verifyElementIsDeleted(GoalsPageData.name);
 	});
 });

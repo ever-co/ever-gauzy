@@ -5,7 +5,10 @@ import {
 	clearField,
 	clickButtonByIndex,
 	waitElementToHide,
-	clickElementByText
+	clickElementByText,
+	verifyElementIsNotVisible,
+	verifyTextNotExisting,
+	verifyText
 } from '../utils/util';
 import { GoalsPage } from '../pageobjects/GoalsPageObject';
 
@@ -208,4 +211,12 @@ export const progressBarVisible = () => {
 
 export const clickProgressBar = (index) => {
 	clickButtonByIndex(GoalsPage.progressBarCss, index);
+};
+
+export const verifyElementIsDeleted = (text) => {
+	verifyTextNotExisting(GoalsPage.verifyGoalCss, text);
+};
+
+export const verifyGoalExists = (text) => {
+	verifyText(GoalsPage.verifyGoalCss, text);
 };

@@ -20,5 +20,7 @@ export const EditUserPage = {
 	roleSelectOptionCss: '.option-list nb-option',
 	preferredLanguageCss: '#preferredLanguage',
 	preferredLanguageOptionCss: '.option-list nb-option',
-	saveButtonCss: 'div.actions > button[status="success"]'
+	saveButtonCss: 'div.actions > button[status="success"]',
+	verifyUserCss: 'div.d-block',
+	toastrMessageCss: 'nb-toast.ng-trigger'
 };

@@ -7,7 +7,11 @@ import {
 	clickKeyboardBtnByKeycode,
 	clickButtonByIndex,
 	clickElementByText,
-	waitElementToHide
+	waitElementToHide,
+	verifyTextNotExisting,
+	verifyValue,
+	verifyElementIsNotVisible,
+	verifyText
 } from '../utils/util';
 import { ExpensesPage } from '../pageobjects/ExpensesPageObject';
 
@@ -226,4 +230,16 @@ export const clickCategorieCard = () => {
 
 export const waitMessageToHide = () => {
 	waitElementToHide(ExpensesPage.toastrMessageCss);
+};
+
+export const verifyExpenseExists = () => {
+	verifyElementIsVisible(ExpensesPage.notBillableBadgeCss);
+};
+
+export const verifyElementIsDeleted = () => {
+	verifyElementIsNotVisible(ExpensesPage.notBillableBadgeCss);
+};
+
+export const verifyCategoryExists = (text) => {
+	verifyText(ExpensesPage.verifyCategoryCss, text);
 };

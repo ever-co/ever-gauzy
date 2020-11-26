@@ -1,6 +1,7 @@
 export const EstimatesPageData = {
 	invoiceType: 'By Employee Hours',
-	discountValue: 5,
+	discountValue: 2,
+	editDiscountValue: 4,
 	discountType: 'Percent',
 	taxValue: 5,
 	taxType: 'Percent',
