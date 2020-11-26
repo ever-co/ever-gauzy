@@ -15,7 +15,7 @@ export class FormHelpers {
 		markAs: 'touched' | 'untouched' | 'dirty' | 'pristine' | 'pending',
 		opts = { onlySelf: false }
 	): void {
-		Object.values(formGroup.controls).map((c) => {
+		Object.values(formGroup.controls).forEach((c) => {
 			if (c instanceof FormGroup || c instanceof FormArray) {
 				FormHelpers.deepMark(c, markAs, opts);
 			} else {
