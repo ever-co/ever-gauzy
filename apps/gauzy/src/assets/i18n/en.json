@@ -999,6 +999,7 @@
 		"DELETED": "Deleted",
 		"ARCHIVED": "Archived",
 		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",
+		"JOBS_CANDIDATES": "Job Candidates",
 		"EDIT_CANDIDATE": {
 			"HEADER": "Manage Candidate",
 			"DEVELOPER": "Developer",
