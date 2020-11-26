@@ -27,6 +27,10 @@ describe('Approval request test', () => {
 		);
 		approvalRequestPage.saveButtonVisible();
 		approvalRequestPage.clickSaveButton();
+		approvalRequestPage.waitMessageToHide();
+		approvalRequestPage.verifyApprovalpolicyExists(
+			ApprovalRequestPageData.defaultApprovalPolicy
+		);
 		approvalRequestPage.backButtonVisible();
 		approvalRequestPage.clickBackButton();
 	});
@@ -55,6 +59,10 @@ describe('Approval request test', () => {
 		approvalRequestPage.clickKeyboardButtonByKeyCode(9);
 		approvalRequestPage.saveButtonVisible();
 		approvalRequestPage.clickSaveButton();
+		approvalRequestPage.waitMessageToHide();
+		approvalRequestPage.verifyRequestExists(
+			ApprovalRequestPageData.dafaultName
+		);
 	});
 	it('Should be able to edit approval request', () => {
 		approvalRequestPage.waitMessageToHide();
@@ -71,11 +79,19 @@ describe('Approval request test', () => {
 		);
 		approvalRequestPage.saveButtonVisible();
 		approvalRequestPage.clickSaveButton();
+		approvalRequestPage.waitMessageToHide();
+		approvalRequestPage.verifyRequestExists(
+			ApprovalRequestPageData.dafaultName
+		);
 	});
 	it('Should be able to delete approval request', () => {
 		approvalRequestPage.waitMessageToHide();
 		approvalRequestPage.selectTableRow(0);
 		approvalRequestPage.deleteApprovalRequestButtonVisible();
 		approvalRequestPage.clickDeleteApprovalRequestButton();
+		approvalRequestPage.waitMessageToHide();
+		approvalRequestPage.verifyElementIsDeleted(
+			ApprovalRequestPageData.dafaultName
+		);
 	});
 });

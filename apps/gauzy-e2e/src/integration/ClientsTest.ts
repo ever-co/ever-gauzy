@@ -12,6 +12,8 @@ import { CustomCommands } from '../support/commands';
 
 let email = ' ';
 let fullName = ' ';
+let inviteName = ' ';
+let deleteName = ' ';
 let country = ' ';
 let city = ' ';
 let postcode = ' ';
@@ -22,6 +24,8 @@ describe('Clients test', () => {
 	before(() => {
 		email = faker.internet.email();
 		fullName = faker.name.firstName() + ' ' + faker.name.lastName();
+		inviteName = faker.name.firstName() + ' ' + faker.name.lastName();
+		deleteName = faker.name.firstName() + ' ' + faker.name.lastName();
 		country = faker.address.country();
 		city = faker.address.city();
 		postcode = faker.address.zipCode();
@@ -74,28 +78,30 @@ describe('Clients test', () => {
 		clientsPage.enterWebsiteInputData(website);
 		clientsPage.saveButtonVisible();
 		clientsPage.clickSaveButton();
+		clientsPage.waitMessageToHide();
+		clientsPage.verifyClientExists(fullName);
 	});
 	it('Should be able to invite client', () => {
-		clientsPage.waitMessageToHide();
 		clientsPage.inviteButtonVisible();
 		clientsPage.clickInviteButton();
 		clientsPage.contactNameInputVisible();
-		clientsPage.enterClientNameData(fullName);
+		clientsPage.enterClientNameData(inviteName);
 		clientsPage.clientPhoneInputVisible();
 		clientsPage.enterClientPhoneData(ClientsData.defaultPhone);
 		clientsPage.clientEmailInputVisible();
 		clientsPage.enterClientEmailData(email);
 		clientsPage.saveInvitebuttonVisible();
 		clientsPage.clickSaveInviteButton();
+		clientsPage.waitMessageToHide();
+		clientsPage.verifyClientExists(inviteName);
 	});
 	it('Should be able to edit client', () => {
-		clientsPage.waitMessageToHide();
 		clientsPage.tableRowVisible();
 		clientsPage.selectTableRow(0);
 		clientsPage.editButtonVisible();
 		clientsPage.clickEditButton();
 		clientsPage.nameInputVisible();
-		clientsPage.enterNameInputData(fullName);
+		clientsPage.enterNameInputData(deleteName);
 		clientsPage.emailInputVisible();
 		clientsPage.enterEmailInputData(email);
 		clientsPage.phoneInputVisible();
@@ -112,13 +118,17 @@ describe('Clients test', () => {
 		clientsPage.enterWebsiteInputData(website);
 		clientsPage.saveButtonVisible();
 		clientsPage.clickSaveButton();
+		clientsPage.waitMessageToHide();
+		clientsPage.verifyClientExists(deleteName);
 	});
 	it('Should be able to delete client', () => {
-		clientsPage.waitMessageToHide();
+		clientsPage.tableRowVisible();
 		clientsPage.selectTableRow(0);
 		clientsPage.deleteButtonVisible();
 		clientsPage.clickDeleteButton();
 		clientsPage.confirmDeleteButtonVisible();
 		clientsPage.clickConfirmDeleteButton();
+		clientsPage.waitMessageToHide();
+		clientsPage.verifyElementIsDeleted(deleteName);
 	});
 });

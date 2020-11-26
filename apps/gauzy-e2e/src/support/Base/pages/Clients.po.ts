@@ -6,7 +6,9 @@ import {
 	enterInput,
 	clickKeyboardBtnByKeycode,
 	clickElementByText,
-	waitElementToHide
+	waitElementToHide,
+	verifyText,
+	verifyTextNotExisting
 } from '../utils/util';
 import { ClientsPage } from '../pageobjects/ClientsPageObject';
 
@@ -170,6 +172,10 @@ export const selectTableRow = (index) => {
 	clickButtonByIndex(ClientsPage.selectTableRowCss, index);
 };
 
+export const clickTabelRowByText = (text) => {
+	clickElementByText(ClientsPage.selectTableRowCss, text);
+};
+
 export const editButtonVisible = () => {
 	verifyElementIsVisible(ClientsPage.editButtonCss);
 };
@@ -227,4 +233,12 @@ export const clientEmailInputVisible = () => {
 export const enterClientEmailData = (data) => {
 	clearField(ClientsPage.clientEmailCss);
 	enterInput(ClientsPage.clientEmailCss, data);
+};
+
+export const verifyClientExists = (text) => {
+	verifyText(ClientsPage.verifyClientCss, text);
+};
+
+export const verifyElementIsDeleted = (text) => {
+	verifyTextNotExisting(ClientsPage.verifyClientCss, text);
 };

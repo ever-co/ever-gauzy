@@ -98,6 +98,11 @@ const routes: Routes = [
 				(m) => m.ServerDownModule
 			)
 	},
+	{
+		path: 'legal',
+		loadChildren: () =>
+			import('./legal/legal.module').then((m) => m.LegalModule)
+	},
 	{ path: 'sign-in/success', component: SignInSuccessComponent },
 	{ path: '', redirectTo: 'pages', pathMatch: 'full' },
 	{ path: '**', redirectTo: 'pages' }

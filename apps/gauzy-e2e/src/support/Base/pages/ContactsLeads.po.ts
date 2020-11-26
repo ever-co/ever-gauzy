@@ -6,7 +6,9 @@ import {
 	enterInput,
 	clickKeyboardBtnByKeycode,
 	clickElementByText,
-	waitElementToHide
+	waitElementToHide,
+	verifyText,
+	verifyTextNotExisting
 } from '../utils/util';
 import { ContactsLeadsPage } from '../pageobjects/ContactsLeadsPageObject';
 
@@ -227,4 +229,12 @@ export const contactEmailInputVisible = () => {
 export const enterContactEmailData = (data) => {
 	clearField(ContactsLeadsPage.contactEmailCss);
 	enterInput(ContactsLeadsPage.contactEmailCss, data);
+};
+
+export const verifyLeadExists = (text) => {
+	verifyText(ContactsLeadsPage.verifyLeadCss, text);
+};
+
+export const verifyElementIsDeleted = (text) => {
+	verifyTextNotExisting(ContactsLeadsPage.verifyLeadCss, text);
 };

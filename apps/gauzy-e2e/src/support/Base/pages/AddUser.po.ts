@@ -3,7 +3,9 @@ import {
 	verifyElementIsVisible,
 	clickButton,
 	clickElementByText,
-	clearField
+	clearField,
+	verifyText,
+	waitElementToHide
 } from '../utils/util';
 import { AddUserPage } from '../pageobjects/AddUserPageObject';
 
@@ -84,4 +86,12 @@ export const confirmAddButtonVisible = () => {
 
 export const clickConfirmAddButton = () => {
 	clickButton(AddUserPage.confirmAddUserButtonCss);
+};
+
+export const verifyUserExists = (text) => {
+	verifyText(AddUserPage.verifyUserCss, text);
+};
+
+export const waitMessageToHide = () => {
+	waitElementToHide(AddUserPage.toastrMessageCss);
 };

@@ -29,10 +29,16 @@ describe('Add employee level test', () => {
 		addEmployeeLevelPage.clickKeyboardButtonByKeyCode(9);
 		addEmployeeLevelPage.saveNewLevelButtonVisible();
 		addEmployeeLevelPage.clickSaveNewLevelButton();
+		addEmployeeLevelPage.waitMessageToHide();
+		addEmployeeLevelPage.editEmployeeLevelButtonVisible();
+		addEmployeeLevelPage.clickEditEmployeeLevelButton();
+		addEmployeeLevelPage.verifyTitleExists(AddEmployeeLevelPageData.levelE);
+		addEmployeeLevelPage.cancelButtonVisible();
+		addEmployeeLevelPage.clickCancelButton();
 	});
 	it('Should be able to edit employee level', () => {
 		addEmployeeLevelPage.editEmployeeLevelButtonVisible();
-		addEmployeeLevelPage.clickEditEmployeeLevelButton(0);
+		addEmployeeLevelPage.clickEditEmployeeLevelButton();
 		addEmployeeLevelPage.editEmployeeLevelInpuVisible();
 		addEmployeeLevelPage.enterEditLevelData(
 			AddEmployeeLevelPageData.levelF
@@ -43,11 +49,20 @@ describe('Add employee level test', () => {
 		addEmployeeLevelPage.clickKeyboardButtonByKeyCode(9);
 		addEmployeeLevelPage.saveNewLevelButtonVisible();
 		addEmployeeLevelPage.clickSaveNewLevelButton();
+		addEmployeeLevelPage.waitMessageToHide();
+		addEmployeeLevelPage.editEmployeeLevelButtonVisible();
+		addEmployeeLevelPage.clickEditEmployeeLevelButton();
+		addEmployeeLevelPage.verifyTitleExists(AddEmployeeLevelPageData.levelF);
+		addEmployeeLevelPage.cancelButtonVisible();
+		addEmployeeLevelPage.clickCancelButton();
 	});
 	it('Should be able to delete employee level', () => {
 		addEmployeeLevelPage.deleteLevelButtonVisible();
-		addEmployeeLevelPage.clickDeleteLevelButton(0);
+		addEmployeeLevelPage.clickDeleteLevelButton();
 		addEmployeeLevelPage.confirmDeleteButtonVisible();
 		addEmployeeLevelPage.clickConfirmDeleteLevelButton();
+		addEmployeeLevelPage.verifyElementIsDeleted(
+			AddEmployeeLevelPageData.levelF
+		);
 	});
 });

@@ -9,5 +9,9 @@ export const AddEmployeeLevelPage = {
 	editEmployeeLevelButtonCss: 'svg.eva-edit',
 	removeEmployeeLevelButtonCss: 'svg.eva-close',
 	confirmDeleteLevelButtonCss: 'nb-card-footer > button[status="danger"]',
-	editLevelInputCss: 'div.d-flex > input[type="text"]'
+	editLevelInputCss: 'div.d-flex > input[type="text"]',
+	verifyTextCss: 'ga-notes-with-tags > div > div.ng-star-inserted',
+	cardBodyCss: 'nb-card-body',
+	toastrMessageCss: 'nb-toast.ng-trigger',
+	cancelButtonCss: 'div.d-flex > button[status="danger"]'
 };

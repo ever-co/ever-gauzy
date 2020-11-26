@@ -3,11 +3,24 @@ export const getTitle = () => {
 };
 
 export const verifyText = (loc, data) => {
+	wait(3000);
 	cy.get(loc, { timeout: 40000 })
 		.invoke('text')
 		.then((text) => {
-			expect(text).to.include(data);
+			expect(text.trim()).to.include(data);
 		});
+};
+
+export const verifyTextExists = (loc, data) => {
+	cy.get(loc, { timeout: 40000 })
+		.invoke('val')
+		.then((val) => {
+			expect(val).to.equal(data);
+		});
+};
+
+export const verifyTextNotExisting = (loc, text) => {
+	cy.get(loc, { timeout: 40000 }).should('not.contain.text', text);
 };
 
 export const verifyTextByIndex = (loc, data, index) => {

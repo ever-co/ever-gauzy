@@ -54,6 +54,8 @@ import { ColorPickerService } from 'ngx-color-picker';
 import { EstimateEmailModule } from './auth/estimate-email/estimate-email.module';
 import * as moment from 'moment';
 import { TenantInterceptor } from './@core/tenant.interceptor';
+import { NgxAuthModule } from './auth/auth.module';
+import { LegalModule } from './legal/legal.module';
 import { GoogleMapsLoaderService } from './@core/services/google-maps-loader.service';
 
 export const cloudinary = {
@@ -76,6 +78,8 @@ export function googleMapsLoaderFactory(provider: GoogleMapsLoaderService) {
 @NgModule({
 	declarations: [AppComponent],
 	imports: [
+		LegalModule,
+		NgxAuthModule,
 		EstimateEmailModule,
 		BrowserModule,
 		BrowserAnimationsModule,
