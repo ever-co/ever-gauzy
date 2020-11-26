@@ -60,7 +60,7 @@ export const environment: Environment = {
   HUBSTAFF_REDIRECT_URI: 'http://localhost:4200/pages/integrations/hubstaff',
   IS_ELECTRON: IS_ELECTRON,
 
-  GOOGLE_MAPS_API_KEY: 'AIzaSyATV9qayPdPY8GHlyc0wPIr1r7AyW5UIwQ',
+  GOOGLE_MAPS_API_KEY: '',
   DEFAULT_LATITUDE: 42.6459136,
   DEFAULT_LONGITUDE: 23.3332736
 };
