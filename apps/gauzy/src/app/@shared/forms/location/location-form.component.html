@@ -47,11 +47,7 @@
 						type="text"
 						nbInput
 						formControlName="city"
-						[status]="
-							form.get('city').invalid && form.get('city').touched
-								? 'danger'
-								: 'basic'
-						"
+						[status]="isInvalidControl('city') ? 'danger' : 'basic'"
 						[placeholder]="'FORM.PLACEHOLDERS.CITY' | translate"
 					/>
 				</div>
@@ -70,10 +66,7 @@
 						type="text-area"
 						nbInput
 						[status]="
-							form.get('address').invalid &&
-							form.get('address').touched
-								? 'danger'
-								: 'basic'
+							isInvalidControl('address') ? 'danger' : 'basic'
 						"
 						formControlName="address"
 						[placeholder]="'FORM.PLACEHOLDERS.ADDRESS' | translate"
@@ -92,10 +85,7 @@
 						type="text"
 						nbInput
 						[status]="
-							form.get('address2').invalid &&
-							form.get('address2').touched
-								? 'danger'
-								: 'basic'
+							isInvalidControl('address2') ? 'danger' : 'basic'
 						"
 						formControlName="address2"
 						[placeholder]="
@@ -118,10 +108,7 @@
 						type="number"
 						nbInput
 						[status]="
-							form.get('postcode').invalid &&
-							form.get('postcode').touched
-								? 'danger'
-								: 'basic'
+							isInvalidControl('postcode') ? 'danger' : 'basic'
 						"
 						formControlName="postcode"
 						[placeholder]="'FORM.PLACEHOLDERS.POSTCODE' | translate"

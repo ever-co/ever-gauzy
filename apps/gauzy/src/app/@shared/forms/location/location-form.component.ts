@@ -22,7 +22,8 @@ import { environment } from '../../../../environments/environment';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { CountryService } from '../../../@core/services/country.service';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-location-form',
 	styleUrls: ['./location-form.component.scss'],
@@ -69,9 +70,9 @@ export class LocationFormComponent
 		const form = formBuilder.group({
 			country: ['', [Validators.required]],
 			city: ['', [Validators.required]],
-			postcode: [''],
 			address: ['', [Validators.required]],
 			address2: [''],
+			postcode: [''],
 			loc: formBuilder.group({
 				type: ['Point'],
 				coordinates: formBuilder.array([null, null])
@@ -85,48 +86,20 @@ export class LocationFormComponent
 		public countryService: CountryService
 	) {
 		super(translateService);
-		this.countryService.countries$.subscribe(
-			(countries) => (this.countries = countries)
-		);
+		this.countryService.countries$
+			.pipe(untilDestroyed(this))
+			.subscribe((countries) => (this.countries = countries));
 	}
 
 	ngAfterViewInit() {
 		this._initGoogleAutocompleteApi();
 	}
 
-	get isCountryValid(): boolean {
-		return (
-			this.countryControl.errors &&
-			(this.countryControl.dirty || this.countryControl.touched)
-		);
-	}
-
-	get isCityValid(): boolean {
-		return (
-			this.cityControl.errors &&
-			(this.cityControl.dirty || this.cityControl.touched)
-		);
-	}
-
-	get isAddressValid(): boolean {
-		return (
-			this.addressControl.errors &&
-			(this.addressControl.dirty || this.addressControl.touched)
-		);
-	}
-
-	get isAddress2Valid(): boolean {
-		return (
-			this.address2Control.errors &&
-			(this.address2Control.dirty || this.address2Control.touched)
-		);
-	}
-
-	get isLocationValid(): boolean {
-		return (
-			this.coordinates.errors &&
-			(this.coordinates.dirty || this.coordinates.touched)
-		);
+	isInvalidControl(control: string) {
+		if (!this.form.contains(control)) {
+			return true;
+		}
+		return this.form.get(control).touched && this.form.get(control).invalid;
 	}
 
 	get countryControl() {
