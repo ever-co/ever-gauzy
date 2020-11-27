@@ -47,6 +47,7 @@ export class ActivitiesReportGridComponent implements OnInit, AfterViewInit {
 	private _selectedDate: Date = new Date();
 	futureDateAllowed: boolean;
 	groupBy: 'date' | 'employee' | 'project' | 'client' = 'date';
+	selectedEmployee: SelectedEmployee;
 
 	public get selectedDate(): Date {
 		return this._selectedDate;
@@ -88,9 +89,9 @@ export class ActivitiesReportGridComponent implements OnInit, AfterViewInit {
 			.pipe(untilDestroyed(this))
 			.subscribe((employee: SelectedEmployee) => {
 				if (employee && employee.id) {
-					this.logRequest.employeeIds = [employee.id];
+					this.selectedEmployee = employee;
 				} else {
-					delete this.logRequest.employeeIds;
+					this.selectedEmployee = null;
 				}
 				this.updateLogs$.next();
 			});
@@ -122,7 +123,6 @@ export class ActivitiesReportGridComponent implements OnInit, AfterViewInit {
 
 		const appliedFilter = pick(
 			this.logRequest,
-			'employeeIds',
 			'projectIds',
 			'source',
 			'activityLevel',
@@ -135,8 +135,13 @@ export class ActivitiesReportGridComponent implements OnInit, AfterViewInit {
 			endDate: moment(endDate).format('YYYY-MM-DD HH:mm:ss'),
 			organizationId: this.organization ? this.organization.id : null,
 			tenantId: this.organization ? this.organization.tenantId : null,
-			groupBy: this.groupBy
+			groupBy: this.groupBy,
+			...(this.selectedEmployee && this.selectedEmployee.id
+				? { employeeIds: [this.selectedEmployee.id] }
+				: {})
 		};
+
+		console.log(request);
 
 		this.loading = true;
 		this.activityService

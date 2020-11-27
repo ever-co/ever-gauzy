@@ -11,6 +11,7 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { FiltersModule } from '../../timesheet/filters/filters.module';
+import { ProgressStatusModule } from '../../progress-status/progress-status.module';
 
 @NgModule({
 	declarations: [ActivitiesReportGridComponent],
@@ -24,7 +25,8 @@ import { FiltersModule } from '../../timesheet/filters/filters.module';
 		NbCardModule,
 		FiltersModule,
 		NbSelectModule,
-		FormsModule
+		FormsModule,
+		ProgressStatusModule
 	]
 })
 export class ActivitiesReportGridModule {}

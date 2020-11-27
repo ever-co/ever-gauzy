@@ -10,6 +10,8 @@ export class ActivityMapService {
 	mapByDate(activities: IActivity[]) {
 		const dailyLogs: any = this.groupByDate(activities).map(
 			(byDateActivity: IActivity[], date) => {
+				const sum = this.getDurationSum(byDateActivity);
+				console.log({ sum });
 				const byEmployee = this.groupByEmployee(byDateActivity).map(
 					(byEmployeeActivity: IActivity[]) => {
 						const byProject = this.groupByProject(
@@ -20,9 +22,12 @@ export class ActivityMapService {
 								byProjectActivity[0]
 									? byProjectActivity[0].project
 									: null;
+
 							return {
 								project,
-								activity: byProjectActivity
+								activity: byProjectActivity.map((row) =>
+									this.mapActivitiesPercentage(row, sum)
+								)
 							};
 						});
 
@@ -50,6 +55,7 @@ export class ActivityMapService {
 	mapByEmployee(activities: IActivity[]) {
 		const byEmployee: any = this.groupByEmployee(activities).map(
 			(byEmployeeActivity: IActivity[]) => {
+				const sum = this.getDurationSum(byEmployeeActivity);
 				const dailyLogs = this.groupByDate(byEmployeeActivity).map(
 					(byDateActivity: IActivity[], date) => {
 						const byProject = this.groupByProject(
@@ -62,7 +68,9 @@ export class ActivityMapService {
 									: null;
 							return {
 								project,
-								activity: byProjectActivity
+								activity: byProjectActivity.map((row) =>
+									this.mapActivitiesPercentage(row, sum)
+								)
 							};
 						});
 
@@ -89,6 +97,8 @@ export class ActivityMapService {
 	mapByProject(activities: IActivity[]) {
 		const byEmployee: any = this.groupByProject(activities).map(
 			(byProjectActivity: IActivity[]) => {
+				const sum = this.getDurationSum(byProjectActivity);
+
 				const dailyLogs = this.groupByDate(byProjectActivity).map(
 					(byDateActivity: IActivity[], date) => {
 						const byProject = this.groupByEmployee(
@@ -101,7 +111,9 @@ export class ActivityMapService {
 									: null;
 							return {
 								employee,
-								activity: byEmployeeActivity
+								activity: byEmployeeActivity.map((row) =>
+									this.mapActivitiesPercentage(row, sum)
+								)
 							};
 						});
 
@@ -133,9 +145,7 @@ export class ActivityMapService {
 
 	private groupByDate(activities: IActivity[]) {
 		return chain(activities).groupBy((activity) => {
-			console.log(activity);
-			return activity.date;
-			//return moment.utc(activity.date + ' ' + activity.time).format('YYYY-MM-DD')
+			return moment.utc(activity.date).format('YYYY-MM-DD');
 		});
 	}
 
@@ -143,5 +153,17 @@ export class ActivityMapService {
 		return chain(activities).groupBy((activity) => {
 			return activity.employeeId;
 		});
+	}
+
+	private mapActivitiesPercentage(activity, sum = 0) {
+		activity.duration_percentage =
+			(parseInt(activity.duration, 10) * 100) / sum;
+		return activity;
+	}
+
+	private getDurationSum(activities) {
+		return activities.reduce((iteratee: any, log: any) => {
+			return iteratee + parseInt(log.duration, 10);
+		}, 0);
 	}
 }

@@ -151,7 +151,9 @@
 						{{ activityRow.duration | durationFormat }}
 					</div>
 					<div class="col text-center day-col">
-						{{ activityRow.duration_percentage || 0 }}%
+						<ngx-progress-status
+							[percentage]="activityRow.duration_percentage"
+						></ngx-progress-status>
 					</div>
 				</div>
 			</div>
@@ -214,7 +216,9 @@
 					</div>
 
 					<div class="col text-center day-col">
-						{{ activityRow.duration_percentage || 0 }}%
+						<ngx-progress-status
+							[percentage]="activityRow.duration_percentage"
+						></ngx-progress-status>
 					</div>
 				</div>
 			</div>
@@ -279,7 +283,9 @@
 						{{ activityRow.duration | durationFormat }}
 					</div>
 					<div class="col text-center day-col">
-						{{ activityRow.duration_percentage || 0 }}%
+						<ngx-progress-status
+							[percentage]="activityRow.duration_percentage"
+						></ngx-progress-status>
 					</div>
 				</div>
 			</div>
