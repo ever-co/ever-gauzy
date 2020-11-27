@@ -8,8 +8,6 @@ import {
 	clickButtonByIndex,
 	clickElementByText,
 	waitElementToHide,
-	verifyTextNotExisting,
-	verifyValue,
 	verifyElementIsNotVisible,
 	verifyText
 } from '../utils/util';

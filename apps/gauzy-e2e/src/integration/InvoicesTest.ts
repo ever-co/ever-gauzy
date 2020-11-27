@@ -119,16 +119,8 @@ describe('Invoices test', () => {
 		invoicesPage.selectTaxTypeFromDropdown(InvoicesPageData.taxType);
 		invoicesPage.saveAsDraftButtonVisible();
 		invoicesPage.clickSaveAsDraftButton(InvoicesPageData.saveAsDraftButton);
-	});
-	it('Should be able to duplicate invoice', () => {
 		invoicesPage.waitMessageToHide();
-		invoicesPage.selectTableRow(0);
-		invoicesPage.selectTableRow(0);
-		invoicesPage.actionButtonVisible();
-		invoicesPage.clickActionButtonByText(InvoicesPageData.duplicateButton);
-		invoicesPage.waitMessageToHide();
-		invoicesPage.backButtonVisible();
-		invoicesPage.clickBackButton();
+		invoicesPage.verifyDraftBadgeClass();
 	});
 	it('Should be able to send invoice', () => {
 		invoicesPage.selectTableRow(0);
@@ -169,12 +161,6 @@ describe('Invoices test', () => {
 		invoicesPage.setStatusFromDropdown(InvoicesPageData.status);
 	});
 	it('Should be able to delete invoice', () => {
-		invoicesPage.selectTableRow(0);
-		invoicesPage.deleteButtonVisible();
-		invoicesPage.clickDeleteButton();
-		invoicesPage.confirmDeleteButtonVisible();
-		invoicesPage.clickConfirmDeleteButton();
-		invoicesPage.waitMessageToHide();
 		invoicesPage.selectTableRow(0);
 		invoicesPage.deleteButtonVisible();
 		invoicesPage.clickDeleteButton();

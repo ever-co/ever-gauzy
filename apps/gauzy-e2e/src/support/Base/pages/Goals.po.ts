@@ -6,7 +6,6 @@ import {
 	clickButtonByIndex,
 	waitElementToHide,
 	clickElementByText,
-	verifyElementIsNotVisible,
 	verifyTextNotExisting,
 	verifyText
 } from '../utils/util';

@@ -29,5 +29,5 @@ export const ExpensesPage = {
 	categorieCardCss: 'nb-card.ng-star-inserted',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	notBillableBadgeCss: 'div.badge-danger',
-	verifyCategoryCss: 'ga-notes-with-tags > div > div.ng-star-inserted'
+	verifyCategoryCss: 'ga-notes-with-tags > div > div > div.ng-star-inserted'
 };

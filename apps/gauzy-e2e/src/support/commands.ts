@@ -209,6 +209,7 @@ export const CustomCommands = {
 		imgUrl
 	) => {
 		cy.visit('/#/pages/employees');
+		cy.wait(3000);
 		manageEmployeesPage.addEmployeeButtonVisible();
 		manageEmployeesPage.clickAddEmployeeButton();
 		manageEmployeesPage.firstNameInputVisible();
