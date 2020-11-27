@@ -1,11 +1,11 @@
 <div class="d-flex align-items-center" *ngIf="dailyData?.length > 0">
-	<div class="label">Group By</div>
+	<div class="label">{{ 'REPORT_PAGE.GROUP_BY' }}</div>
 	<div class="ml-3">
 		<nb-select [(ngModel)]="groupBy" (selectedChange)="groupByChange()">
-			<nb-option value="date">Date</nb-option>
-			<nb-option value="employee">Employee</nb-option>
-			<nb-option value="project">Project</nb-option>
-			<nb-option value="client">Client</nb-option>
+			<nb-option value="date">{{ 'REPORT_PAGE.DATE' }}</nb-option>
+			<nb-option value="employee">{{ 'REPORT_PAGE.EMPLOYEE' }}</nb-option>
+			<nb-option value="project">{{ 'REPORT_PAGE.PROJECT' }}</nb-option>
+			<nb-option value="client">{{ 'REPORT_PAGE.CLIENT' }}</nb-option>
 		</nb-select>
 	</div>
 </div>
@@ -18,17 +18,21 @@
 	<div class="px-4" *ngIf="dailyData?.length > 0">
 		<div class="row py-3 font-weight-bold align-items-center">
 			<div *ngIf="groupBy != 'date'" class="col-sm-2">
-				{{ 'Date' | translate }}
+				{{ 'REPORT_PAGE.DATE' | translate }}
 			</div>
 			<div *ngIf="groupBy != 'project'" class="col-sm-2">
-				{{ 'Project' | translate }}
+				{{ 'REPORT_PAGE.PROJECT' | translate }}
 			</div>
 			<div *ngIf="groupBy != 'employee'" class="col-sm-2">
 				{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 			</div>
-			<div class="col-sm-3 text-center day-col">To-dos</div>
-			<div class="col text-center day-col">Time</div>
-			<div class="col text-center day-col">Activity</div>
+			<div class="col-sm-3 text-center day-col">
+				{{ 'REPORT_PAGE.TO_DOS' }}
+			</div>
+			<div class="col text-center day-col">{{ 'REPORT_PAGE.TIME' }}</div>
+			<div class="col text-center day-col">
+				{{ 'REPORT_PAGE.ACTIVITY' }}
+			</div>
 		</div>
 	</div>
 	<ng-template [ngIf]="dailyData?.length > 0" [ngIfElse]="notFound">

@@ -1,0 +1,13 @@
+<div class="row align-items-center">
+	<div class="col-auto percentage-col">{{ percentage }}%</div>
+	<div class="col">
+		<nb-progress-bar
+			class="mb-1"
+			[value]="percentage"
+			[status]="progressStatus(percentage)"
+			[displayValue]="true"
+			size="tiny"
+		>
+		</nb-progress-bar>
+	</div>
+</div>

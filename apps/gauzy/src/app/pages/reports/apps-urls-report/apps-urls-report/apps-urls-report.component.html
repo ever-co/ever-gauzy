@@ -1,0 +1,24 @@
+<nb-card>
+	<nb-card-header>
+		<h4>{{ 'REPORT_PAGE.APPS_AND_URLS_REPORT' | translate }}</h4>
+		<div>
+			{{ logRequest?.startDate | date }} -
+			{{ logRequest?.endDate | date }}
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="filters mt-4 mb-4">
+			<ngx-filters
+				dateRange="custom_range"
+				[hasEmployeeFilter]="false"
+				[hasEmployeeFilter]="false"
+				[saveFilters]="false"
+				[filters]="logRequest"
+				(filtersChange)="filtersChange($event)"
+			></ngx-filters>
+		</div>
+		<ga-activities-report-grid
+			[filters]="filters"
+		></ga-activities-report-grid>
+	</nb-card-body>
+</nb-card>

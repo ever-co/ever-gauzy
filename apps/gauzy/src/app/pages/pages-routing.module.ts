@@ -406,6 +406,14 @@ const routes: Routes = [
 							).then((m) => m.WeeklyTimeReportsModule)
 					},
 					{
+						path: 'apps-urls',
+						loadChildren: () =>
+							import(
+								'./reports/apps-urls-report/apps-urls-report.module'
+							).then((m) => m.AppsUrlsReportModule)
+					},
+
+					{
 						path: 'accounting',
 						loadChildren: () =>
 							import(
