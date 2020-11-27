@@ -141,17 +141,13 @@ export class ActivitiesReportGridComponent implements OnInit, AfterViewInit {
 				: {})
 		};
 
-		console.log(request);
-
 		this.loading = true;
 		this.activityService
 			.getDailyActivitiesReport(request)
 			.then((logs: IReportDayData[]) => {
 				this.dailyData = logs;
 			})
-			.catch((error) => {
-				console.log(error);
-			})
+			.catch((error) => {})
 			.finally(() => (this.loading = false));
 	}
 }
