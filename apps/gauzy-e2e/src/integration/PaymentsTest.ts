@@ -47,6 +47,7 @@ describe('Payments test', () => {
 		paymentsPage.savePaymentButtonVisible();
 		paymentsPage.clickSavePaymentButton();
 		paymentsPage.waitMessageToHide();
+		paymentsPage.verifyPaymentExists(PaymentsPageData.defaultNote);
 	});
 	it('Should be able to edit payment', () => {
 		cy.on('uncaught:exception', (err, runnable) => {
@@ -82,5 +83,7 @@ describe('Payments test', () => {
 		paymentsPage.clickDeletePaymentButton();
 		paymentsPage.confirmDeleteButtonVisible();
 		paymentsPage.clickConfirmDeleteButton();
+		paymentsPage.waitMessageToHide();
+		paymentsPage.verifyElementIsDeleted(PaymentsPageData.defaultNote);
 	});
 });

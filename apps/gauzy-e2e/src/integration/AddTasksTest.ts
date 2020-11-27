@@ -6,15 +6,46 @@ import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import * as organizationProjectsPage from '../support/Base/pages/OrganizationProjects.po';
 import { OrganizationProjectsPageData } from '../support/Base/pagedata/OrganizationProjectsPageData';
 import { CustomCommands } from '../support/commands';
+import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
+import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
+import * as faker from 'faker';
+import * as manageEmployeesPage from '../support/Base/pages/ManageEmployees.po';
+
+let firstName = ' ';
+let lastName = ' ';
+let username = ' ';
+let password = ' ';
+let employeeEmail = ' ';
+let imgUrl = ' ';
 
 describe('Add tasks test', () => {
 	before(() => {
+		firstName = faker.name.firstName();
+		lastName = faker.name.lastName();
+		username = faker.internet.userName();
+		password = faker.internet.password();
+		employeeEmail = faker.internet.email();
+		imgUrl = faker.image.avatar();
+
 		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 	it('Should be able to add new task', () => {
+		CustomCommands.addTag(
+			organizationTagsUserPage,
+			OrganizationTagsPageData
+		);
 		CustomCommands.addProject(
 			organizationProjectsPage,
 			OrganizationProjectsPageData
+		);
+		CustomCommands.addEmployee(
+			manageEmployeesPage,
+			firstName,
+			lastName,
+			username,
+			employeeEmail,
+			password,
+			imgUrl
 		);
 		cy.visit('/#/pages/tasks/dashboard');
 		addTaskPage.gridBtnExists();
@@ -28,8 +59,7 @@ describe('Add tasks test', () => {
 		);
 		addTaskPage.selectEmployeeDropdownVisible();
 		addTaskPage.clickSelectEmployeeDropdown();
-		addTaskPage.selectEmployeeDropdownOption(1);
-		addTaskPage.selectEmployeeDropdownOption(2);
+		addTaskPage.selectEmployeeDropdownOption(0);
 		addTaskPage.clickKeyboardButtonByKeyCode(9);
 		addTaskPage.addTitleInputVisible();
 		addTaskPage.enterTitleInputData(AddTasksPageData.defaultTaskTitle);

@@ -7,7 +7,10 @@ import {
 	clickButtonByIndex,
 	clickElementByText,
 	waitElementToHide,
-	clickButtonByText
+	clickButtonByText,
+	verifyValue,
+	verifyTextNotExisting,
+	scrollDown
 } from '../utils/util';
 import { EstimatesPage } from '../pageobjects/EstimatesPageObject';
 
@@ -206,4 +209,24 @@ export const confirmDeleteButtonVisible = () => {
 
 export const clickConfirmDeleteButton = () => {
 	clickButton(EstimatesPage.confirmDeleteButtonCss);
+};
+
+export const verifyEstimateExists = (val) => {
+	verifyValue(EstimatesPage.verifyEstimateCss, val);
+};
+
+export const verifyDraftBadgeClass = () => {
+	verifyElementIsVisible(EstimatesPage.draftBadgeCss);
+};
+
+export const verifySentBadgeClass = () => {
+	verifyElementIsVisible(EstimatesPage.successBadgeCss);
+};
+
+export const verifyElementIsDeleted = (text) => {
+	verifyTextNotExisting(EstimatesPage.verifyEstimateCss, text);
+};
+
+export const scrollEmailInviteTemplate = () => {
+	scrollDown(EstimatesPage.emailCardCss);
 };

@@ -19,7 +19,7 @@ let city = ' ';
 let postcode = ' ';
 let street = ' ';
 let website = ' ';
-let ssendEmail = ' ';
+let sendEmail = ' ';
 
 describe('Invoices test', () => {
 	before(() => {
@@ -30,7 +30,7 @@ describe('Invoices test', () => {
 		postcode = faker.address.zipCode();
 		street = faker.address.streetAddress();
 		website = faker.internet.url();
-		ssendEmail = faker.internet.email();
+		sendEmail = faker.internet.email();
 
 		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
@@ -91,9 +91,10 @@ describe('Invoices test', () => {
 		invoicesPage.clickGenerateItemsButton();
 		invoicesPage.saveAsDraftButtonVisible();
 		invoicesPage.clickSaveAsDraftButton(InvoicesPageData.saveAsDraftButton);
+		invoicesPage.waitMessageToHide();
+		invoicesPage.verifyDraftBadgeClass();
 	});
 	it('Should be able to edit invoice', () => {
-		invoicesPage.waitMessageToHide();
 		invoicesPage.addButtonVisible();
 		invoicesPage.clickAddButton();
 		invoicesPage.backButtonVisible();
@@ -102,7 +103,7 @@ describe('Invoices test', () => {
 		invoicesPage.editButtonVisible();
 		invoicesPage.clickEditButton(InvoicesPageData.editButton);
 		invoicesPage.discountInputVisible();
-		invoicesPage.enterDiscountData(InvoicesPageData.discountValue);
+		invoicesPage.enterDiscountData(InvoicesPageData.editDiscountValue);
 		invoicesPage.discountTypeDropdownVisible();
 		invoicesPage.clickDiscountDropdown();
 		invoicesPage.selectDiscountTypeFromDropdown(
@@ -118,16 +119,8 @@ describe('Invoices test', () => {
 		invoicesPage.selectTaxTypeFromDropdown(InvoicesPageData.taxType);
 		invoicesPage.saveAsDraftButtonVisible();
 		invoicesPage.clickSaveAsDraftButton(InvoicesPageData.saveAsDraftButton);
-	});
-	it('Should be able to duplicate invoice', () => {
 		invoicesPage.waitMessageToHide();
-		invoicesPage.tableRowVisible();
-		invoicesPage.selectTableRow(0);
-		invoicesPage.actionButtonVisible();
-		invoicesPage.clickActionButtonByText(InvoicesPageData.duplicateButton);
-		invoicesPage.waitMessageToHide();
-		invoicesPage.backButtonVisible();
-		invoicesPage.clickBackButton();
+		invoicesPage.verifyDraftBadgeClass();
 	});
 	it('Should be able to send invoice', () => {
 		invoicesPage.selectTableRow(0);
@@ -135,9 +128,10 @@ describe('Invoices test', () => {
 		invoicesPage.clickActionButtonByText(InvoicesPageData.sendButton);
 		invoicesPage.confirmButtonVisible();
 		invoicesPage.clickConfirmButton();
+		invoicesPage.waitMessageToHide();
+		invoicesPage.verifySentBadgeClass();
 	});
 	it('Should be able to view invoice', () => {
-		invoicesPage.waitMessageToHide();
 		invoicesPage.selectTableRow(0);
 		invoicesPage.actionButtonVisible();
 		invoicesPage.clickActionButtonByText(InvoicesPageData.viewButton);
@@ -151,10 +145,13 @@ describe('Invoices test', () => {
 		invoicesPage.selectTableRow(0);
 		invoicesPage.actionButtonVisible();
 		invoicesPage.clickActionButtonByText(InvoicesPageData.emailButton);
+		invoicesPage.scrollEmailInviteTemplate();
 		invoicesPage.emailInputVisible();
-		invoicesPage.enterEmailData(ssendEmail);
+		invoicesPage.enterEmailData(sendEmail);
 		invoicesPage.confirmButtonVisible();
 		invoicesPage.clickConfirmButton();
+		invoicesPage.waitMessageToHide();
+		invoicesPage.verifySentBadgeClass();
 	});
 	it('Should be able to set invoice status', () => {
 		invoicesPage.waitMessageToHide();
@@ -164,11 +161,12 @@ describe('Invoices test', () => {
 		invoicesPage.setStatusFromDropdown(InvoicesPageData.status);
 	});
 	it('Should be able to delete invoice', () => {
-		invoicesPage.waitMessageToHide();
 		invoicesPage.selectTableRow(0);
 		invoicesPage.deleteButtonVisible();
 		invoicesPage.clickDeleteButton();
 		invoicesPage.confirmDeleteButtonVisible();
 		invoicesPage.clickConfirmDeleteButton();
+		invoicesPage.waitMessageToHide();
+		invoicesPage.verifyElementIsDeleted(InvoicesPageData.discountValue);
 	});
 });

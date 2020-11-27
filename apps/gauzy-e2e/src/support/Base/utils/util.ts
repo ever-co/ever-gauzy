@@ -11,7 +11,7 @@ export const verifyText = (loc, data) => {
 		});
 };
 
-export const verifyTextExists = (loc, data) => {
+export const verifyValue = (loc, data) => {
 	cy.get(loc, { timeout: 40000 })
 		.invoke('val')
 		.then((val) => {
@@ -107,4 +107,14 @@ export const clickButtonWithDelay = (loc) => {
 
 export const clickButtonByText = (text) => {
 	cy.get(`button:contains("${text}")`).click({ force: true });
+};
+
+export const scrollDown = (loc) => {
+	cy.get(loc, { timeout: 40000 }).scrollTo('bottom', {
+		ensureScrollable: false
+	});
+};
+
+export const verifyElementIsNotVisible = (loc) => {
+	cy.get(loc, { timeout: 40000 }).should('not.be.visible');
 };

@@ -27,5 +27,7 @@ export const ExpensesPage = {
 		'div.justify-content-end > button[status="success"]',
 	backButtonCss: 'div.main > button[status="primary"]',
 	categorieCardCss: 'nb-card.ng-star-inserted',
-	toastrMessageCss: 'nb-toast.ng-trigger'
+	toastrMessageCss: 'nb-toast.ng-trigger',
+	notBillableBadgeCss: 'div.badge-danger',
+	verifyCategoryCss: 'ga-notes-with-tags > div > div > div.ng-star-inserted'
 };
