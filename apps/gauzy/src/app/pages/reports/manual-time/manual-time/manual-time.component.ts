@@ -16,10 +16,9 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import * as moment from 'moment';
-import { NgxPermissionsService } from 'ngx-permissions';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
-import { chain, groupBy, pick } from 'underscore';
+import { chain, pick } from 'underscore';
 
 @UntilDestroy()
 @Component({
