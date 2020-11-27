@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { createQueryBuilder, In, Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { CrudService } from '../../core/crud/crud.service';
 import { Activity } from '../activity.entity';
 import * as moment from 'moment';
@@ -13,11 +13,8 @@ import {
 } from '@gauzy/models';
 import { CommandBus } from '@nestjs/cqrs';
 import { BulkActivitiesSaveCommand } from './commands/bulk-activities-save.command';
-import { ActivityMapService } from './activity.map.service';
 import { Employee } from '../../employee/employee.entity';
-import { Organization } from '../../organization/organization.entity';
 import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
-import { User } from '../../user/user.entity';
 import { indexBy, pluck } from 'underscore';
 
 @Injectable()
