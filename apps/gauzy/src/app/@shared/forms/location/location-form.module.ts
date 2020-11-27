@@ -13,7 +13,7 @@ import {
 } from '@nebular/theme';
 import { HttpClient } from '@angular/common/http';
 import { CountryModule } from '../../country/country.module';
-
+import { LeafletMapModule } from '../maps/leaflet/leaflet.module';
 @NgModule({
 	imports: [
 		ThemeModule,
@@ -32,7 +32,8 @@ import { CountryModule } from '../../country/country.module';
 			}
 		}),
 		AgmCoreModule,
-		CountryModule
+		CountryModule,
+		LeafletMapModule
 	],
 	exports: [LocationFormComponent],
 	declarations: [LocationFormComponent]

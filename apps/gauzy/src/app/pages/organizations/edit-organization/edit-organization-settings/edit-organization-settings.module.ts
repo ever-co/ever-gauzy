@@ -51,9 +51,9 @@ import { TableComponentsModule } from '../../../../@shared/table-components/tabl
 import { FileUploaderModule } from '../../../../@shared/file-uploader-input/file-uploader-input.module';
 import { SharedModule } from '../../../../@shared/shared.module';
 import { TimerPickerModule } from '../../../../@shared/timer-picker/timer-picker.module';
-import { CountryModule } from '../../../../@shared/country/country.module';
-import { CurrencyModule } from 'apps/gauzy/src/app/@shared/currency/currency.module';
-
+import { CurrencyModule } from '../../../../@shared/currency/currency.module';
+import { LocationFormModule } from '../../../../@shared/forms/location';
+import { LeafletMapModule } from 'apps/gauzy/src/app/@shared/forms/maps/leaflet/leaflet.module';
 @NgModule({
 	imports: [
 		NbBadgeModule,
@@ -97,8 +97,9 @@ import { CurrencyModule } from 'apps/gauzy/src/app/@shared/currency/currency.mod
 		FileUploaderModule,
 		SharedModule,
 		TimerPickerModule,
-		CountryModule,
-		CurrencyModule
+		CurrencyModule,
+		LocationFormModule,
+		LeafletMapModule
 	],
 	providers: [
 		OrganizationDepartmentsService,

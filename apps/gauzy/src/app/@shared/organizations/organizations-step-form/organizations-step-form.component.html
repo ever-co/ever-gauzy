@@ -213,13 +213,16 @@
 					(ngSubmit)="this.locationForm.markAsDirty()"
 				>
 					<ga-location-form
-						#locationTemplate
+						#locationFormDirective
 						[form]="locationForm"
 						[showAutocompleteSearch]="true"
 						(mapCoordinatesEmitter)="onCoordinatesChanges($event)"
 						(mapGeometryEmitter)="onGeometrySend($event)"
 					>
 					</ga-location-form>
+
+					<ga-leaflet-map></ga-leaflet-map>
+
 					<div class="stepper-buttons">
 						<button nbButton nbStepperPrevious>
 							{{ 'BUTTONS.PREVIOUS' | translate }}

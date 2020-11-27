@@ -15,7 +15,8 @@ import { ThemeModule } from '../../../@theme/theme.module';
 import { EmployeeLocationComponent } from './employee-location.component';
 import { CandidateStore } from '../../../@core/services/candidate-store.service';
 import { EmployeeStore } from '../../../@core/services/employee-store.service';
-import { CountryModule } from '../../country/country.module';
+import { LeafletMapModule } from '../../forms/maps/leaflet/leaflet.module';
+import { LocationFormModule } from '../../forms/location';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -40,7 +41,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 				deps: [HttpClient]
 			}
 		}),
-		CountryModule
+		LocationFormModule,
+		LeafletMapModule
 	],
 	exports: [EmployeeLocationComponent],
 	declarations: [EmployeeLocationComponent],

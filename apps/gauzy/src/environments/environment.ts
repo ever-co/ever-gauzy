@@ -49,8 +49,8 @@ export const environment: Environment = {
 	IS_ELECTRON: IS_ELECTRON,
 
 	GOOGLE_MAPS_API_KEY: 'AIzaSyATV9qayPdPY8GHlyc0wPIr1r7AyW5UIwQ',
-	DEFAULT_LATITUDE: 42.6459136,
-	DEFAULT_LONGITUDE: 23.3332736
+	DEFAULT_LATITUDE: 23.05899,
+	DEFAULT_LONGITUDE: 72.641144
 };
 
 export const cloudinaryConfiguration: CloudinaryConfiguration = {

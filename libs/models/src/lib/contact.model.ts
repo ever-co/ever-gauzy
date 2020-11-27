@@ -10,6 +10,8 @@ export interface IContact extends IBasePerTenantAndOrganizationEntityModel {
 	address?: string;
 	address2?: string;
 	postcode?: number;
+	latitude?: number;
+	longitude?: number;
 	regionCode?: string;
 	fax?: string;
 	fiscalInformation?: string;
@@ -30,6 +32,8 @@ export interface IContactCreateInput
 	address?: string;
 	address2?: string;
 	postcode?: number;
+	latitude?: number;
+	longitude?: number;
 	regionCode?: string;
 	fax?: string;
 	fiscalInformation?: string;

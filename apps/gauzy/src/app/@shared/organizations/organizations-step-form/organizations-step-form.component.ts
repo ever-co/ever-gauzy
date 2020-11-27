@@ -21,9 +21,10 @@ import {
 	ICurrency
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 import { LocationFormComponent } from '../../forms/location';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-organizations-step-form',
 	templateUrl: './organizations-step-form.component.html',
@@ -33,9 +34,9 @@ import { LocationFormComponent } from '../../forms/location';
 	]
 })
 export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
+	@ViewChild('locationFormDirective')
+	locationFormDirective: LocationFormComponent;
 
-	@ViewChild('locationTemplate') locationTemplate: LocationFormComponent;
 	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
 
 	hoverState: boolean;
@@ -163,7 +164,7 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 
 	dateFormatPreview(format: string) {
 		this.orgSettingsForm.valueChanges
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((val) => {
 				this.regionCode = val.regionCode;
 			});
@@ -184,8 +185,17 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 	}
 
 	addOrganization() {
-		const contact = this.locationForm.value;
-		delete contact['loc'];
+		const location = this.locationFormDirective.getValue();
+		const { coordinates } = location['loc'];
+		delete location['loc'];
+
+		const contact = {
+			...location,
+			...{
+				latitude: coordinates[0],
+				longitude: coordinates[1]
+			}
+		};
 
 		const consolidatedFormValues = {
 			...this.orgMainForm.value,
@@ -205,11 +215,6 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 	 */
 	currencyChanged($event: ICurrency) {}
 
-	/*
-	 * On Changed Country Event Emitter
-	 */
-	countryChanged($event: ICountry) {}
-
 	onCoordinatesChanges(coordinates: number[]) {
 		console.log(coordinates, 'coordinates');
 	}
@@ -218,8 +223,5 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 		console.log(geometry, 'geometry');
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

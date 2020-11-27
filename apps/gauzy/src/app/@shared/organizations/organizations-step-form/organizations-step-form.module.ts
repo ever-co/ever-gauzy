@@ -26,6 +26,7 @@ import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-inp
 import { CurrencyModule } from '../../currency/currency.module';
 import { CountryModule } from '../../country/country.module';
 import { LocationFormModule } from '../../forms/location';
+import { LeafletMapModule } from '../../forms/maps/leaflet/leaflet.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -60,7 +61,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		}),
 		CurrencyModule,
 		CountryModule,
-		LocationFormModule
+		LocationFormModule,
+		LeafletMapModule
 	],
 	declarations: [OrganizationsStepFormComponent],
 	entryComponents: [OrganizationsStepFormComponent],

@@ -145,7 +145,7 @@ export class EmployeeComponent
 				empFormValue
 			);
 
-			const updatedFemployee = {
+			const updatedEmployee = {
 				...employee,
 				...employeeUpdatedRes,
 				isActive: employee.isActive,
@@ -163,7 +163,7 @@ export class EmployeeComponent
 					  )
 					: employee.startedWorkOn
 			};
-			this.employee$ = of(updatedFemployee);
+			this.employee$ = of(updatedEmployee);
 			this.toastrService.success('PUBLIC_PAGE.EMPLOYEE_UPDATED');
 		} catch (e) {
 			this.errorHandlingService.handleError(e);

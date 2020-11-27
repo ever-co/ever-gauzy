@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { ICountry, IOrganization } from '@gauzy/models';
+import { IOrganization } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
 import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
@@ -10,6 +10,7 @@ import { TranslationBaseComponent } from '../../../../../@shared/language-base/t
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '../../../../../@core/services/store.service';
+import { LocationFormComponent } from '../../../../../@shared/forms/location';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-org-location',
@@ -21,7 +22,9 @@ export class EditOrganizationLocationComponent
 	implements OnInit, OnDestroy {
 	organization: IOrganization;
 	country: string;
-	form: FormGroup;
+	readonly form: FormGroup = LocationFormComponent.buildForm(this.fb);
+
+	@ViewChild('locationForm') locationForm: LocationFormComponent;
 
 	constructor(
 		private router: Router,
@@ -47,17 +50,22 @@ export class EditOrganizationLocationComponent
 	}
 
 	async updateOrganizationSettings() {
+		const location = this.locationForm.getValue();
+		const { coordinates } = location['loc'];
+		delete location['loc'];
+
 		const contact = {
-			country: this.form.value.country,
-			city: this.form.value.city,
-			address: this.form.value.address,
-			address2: this.form.value.address2,
-			postcode: this.form.value.postcode
+			...location,
+			...{
+				latitude: coordinates[0],
+				longitude: coordinates[1]
+			}
 		};
 		const contactData = {
 			...this.form.value,
 			contact
 		};
+
 		this.organizationService.update(this.organization.id, contactData);
 		this.toastrService.primary(
 			this.organization.name + ' organization location updated.',
@@ -73,37 +81,27 @@ export class EditOrganizationLocationComponent
 	}
 
 	//Initialize form
-	private async _initializeForm() {
-		this.form = this.fb.group({
-			country: [''],
-			city: [''],
-			postcode: [''],
-			address: [''],
-			address2: ['']
-		});
+	private _initializeForm() {
 		setTimeout(() => {
-			this._setValues();
+			if (!this.organization) {
+				return;
+			}
+			const organization: IOrganization = this.organization;
+			const { contact } = organization;
+			if (contact) {
+				this.locationForm.setValue({
+					country: contact.country,
+					city: contact.city,
+					postcode: contact.postcode,
+					address: contact.address,
+					address2: contact.address2,
+					loc: {
+						type: 'Point',
+						coordinates: [contact.latitude, contact.longitude]
+					}
+				});
+			}
 		}, 200);
-	}
-
-	private _setValues() {
-		if (!this.organization) {
-			return;
-		}
-
-		const organization: IOrganization = this.organization;
-		const { contact } = organization;
-		if (contact) {
-			this.form.setValue({
-				country: contact.country,
-				city: contact.city,
-				postcode: contact.postcode,
-				address: contact.address,
-				address2: contact.address2
-			});
-			this.country = contact.country;
-			this.form.updateValueAndValidity();
-		}
 	}
 
 	private async _loadOrganizationData(organization) {
@@ -121,10 +119,13 @@ export class EditOrganizationLocationComponent
 		this.organizationEditStore.selectedOrganization = this.organization;
 	}
 
-	/*
-	 * On Changed Country Event Emitter
-	 */
-	countryChanged($event: ICountry) {}
+	onCoordinatesChanges(coordinates: number[]) {
+		console.log(coordinates, 'coordinates');
+	}
+
+	onGeometrySend(geometry: any) {
+		console.log(geometry, 'geometry');
+	}
 
 	ngOnDestroy(): void {}
 }

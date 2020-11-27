@@ -146,28 +146,16 @@ export class LocationFormComponent
 		return location;
 	}
 
-	getApartment(): string {
-		// apartment is not part of geo location
-		if (!this.apartment) {
-			throw new Error("Form doesn't contain apartment");
-		}
-		return this.apartment.value as string;
-	}
-
 	setValue<T extends IGeoLocationCreateObject>(geoLocation: T) {
 		FormHelpers.deepMark(this.form, 'dirty');
-
 		this.form.setValue({
 			postcode: geoLocation.postcode || '',
 			...(pick(geoLocation, Object.keys(this.getValue())) as any)
 		});
+		this.form.updateValueAndValidity();
 
 		// This setup the form and map with new received values.
 		this._tryFindNewCoordinates();
-	}
-
-	setApartment(apartment: string) {
-		this.apartment.setValue(apartment);
 	}
 
 	toggleShowCoordinates() {
@@ -210,7 +198,7 @@ export class LocationFormComponent
 				{
 					address: `${address} ${address2}, ${city}`,
 					componentRestrictions: {
-						country: city
+						country: country
 					}
 				},
 				(results, status) => {
@@ -337,6 +325,7 @@ export class LocationFormComponent
 		let city = '';
 
 		locationResult.address_components.forEach((address) => {
+			console.log(address, 'address');
 			const addressType = address.types[0];
 			const addressTypeKey = neededAddressTypes[addressType];
 			const val = address[addressTypeKey];
@@ -351,11 +340,15 @@ export class LocationFormComponent
 					case 'administrative_area_level_3':
 					case 'administrative_area_level_4':
 					case 'administrative_area_level_5':
-						city = val;
+						if (city === '') {
+							city = val;
+						}
 						break;
 					case 'route':
 					case 'intersection':
-						addressInput = val;
+						if (addressInput === '') {
+							addressInput = val;
+						}
 						break;
 					case 'street_number':
 						address2Input = val;
@@ -391,8 +384,10 @@ export class LocationFormComponent
 			const find = this.countries.find(
 				(item) => item.isoCode === country
 			);
-			this.country = find.isoCode;
-			this.countryControl.setValue(this.country);
+			if (find) {
+				this.country = find.isoCode;
+				this.countryControl.setValue(this.country);
+			}
 		}
 		if (!isEmpty(city)) {
 			this.cityControl.setValue(city);
