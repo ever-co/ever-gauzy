@@ -59,6 +59,8 @@ describe('Expense test', () => {
 		expensesPage.clickCardBody();
 		expensesPage.saveExpenseButtonVisible();
 		expensesPage.clickSaveExpenseButton();
+		expensesPage.waitMessageToHide();
+		expensesPage.verifyExpenseExists();
 	});
 	it('Should be able to edit expense', () => {
 		expensesPage.selectTableRow(0);
@@ -74,6 +76,8 @@ describe('Expense test', () => {
 		expensesPage.selectProjectFromDropdown(ExpensePageData.defaultProject);
 		expensesPage.saveExpenseButtonVisible();
 		expensesPage.clickSaveExpenseButton();
+		expensesPage.waitMessageToHide();
+		expensesPage.verifyExpenseExists();
 	});
 	it('Should be able to duplicate expense', () => {
 		expensesPage.waitMessageToHide();
@@ -90,6 +94,13 @@ describe('Expense test', () => {
 		expensesPage.clickDeleteExpenseButton();
 		expensesPage.confirmDeleteButtonVisible();
 		expensesPage.clickConfirmDeleteButton();
+		expensesPage.waitMessageToHide();
+		expensesPage.selectTableRow(0);
+		expensesPage.deleteExpenseButtonVisible();
+		expensesPage.clickDeleteExpenseButton();
+		expensesPage.confirmDeleteButtonVisible();
+		expensesPage.clickConfirmDeleteButton();
+		expensesPage.verifyElementIsDeleted();
 	});
 	it('Should be able to add new categorie', () => {
 		expensesPage.waitMessageToHide();
@@ -106,6 +117,7 @@ describe('Expense test', () => {
 		expensesPage.clickKeyboardButtonByKeyCode(9);
 		expensesPage.saveCategorieButtonVisible();
 		expensesPage.clickSaveCategorieButton();
+		expensesPage.verifyCategoryExists(ExpensePageData.defaultCategory);
 		expensesPage.backButtonVisible();
 		expensesPage.clickBackButton();
 	});

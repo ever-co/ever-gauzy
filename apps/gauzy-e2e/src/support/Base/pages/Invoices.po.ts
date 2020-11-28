@@ -7,7 +7,10 @@ import {
 	clickButtonByIndex,
 	clickElementByText,
 	waitElementToHide,
-	clickButtonByText
+	clickButtonByText,
+	verifyValue,
+	scrollDown,
+	verifyTextNotExisting
 } from '../utils/util';
 import { InvoicesPage } from '../pageobjects/InvoicesPageObject';
 
@@ -218,4 +221,24 @@ export const clickSetStatusButton = (text) => {
 
 export const setStatusFromDropdown = (text) => {
 	clickElementByText(InvoicesPage.dropdownOptionCss, text);
+};
+
+export const verifyEstimateExists = (val) => {
+	verifyValue(InvoicesPage.verifyInvoiceCss, val);
+};
+
+export const verifyDraftBadgeClass = () => {
+	verifyElementIsVisible(InvoicesPage.draftBadgeCss);
+};
+
+export const verifySentBadgeClass = () => {
+	verifyElementIsVisible(InvoicesPage.successBadgeCss);
+};
+
+export const verifyElementIsDeleted = (text) => {
+	verifyTextNotExisting(InvoicesPage.verifyInvoiceCss, text);
+};
+
+export const scrollEmailInviteTemplate = () => {
+	scrollDown(InvoicesPage.emailCardCss);
 };

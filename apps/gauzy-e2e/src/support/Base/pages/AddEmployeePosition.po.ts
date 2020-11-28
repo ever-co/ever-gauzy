@@ -8,7 +8,7 @@ import {
 	verifyTextNotExisting,
 	getLastElement,
 	waitElementToHide,
-	verifyTextExists
+	verifyValue
 } from '../utils/util';
 import { AddEmployeePositionPage } from '../pageobjects/AddEmployeePositionPageObject';
 
@@ -109,7 +109,7 @@ export const clickConfirmDeletePositionButton = () => {
 };
 
 export const verifyTitleExists = (text) => {
-	verifyTextExists(AddEmployeePositionPage.editPositionInputCss, text);
+	verifyValue(AddEmployeePositionPage.editPositionInputCss, text);
 };
 
 export const verifyElementIsDeleted = (text) => {

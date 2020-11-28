@@ -19,7 +19,7 @@ let city = ' ';
 let postcode = ' ';
 let street = ' ';
 let website = ' ';
-let ssendEmail = ' ';
+let sendEmail = ' ';
 
 describe('Estimates test', () => {
 	before(() => {
@@ -30,7 +30,7 @@ describe('Estimates test', () => {
 		postcode = faker.address.zipCode();
 		street = faker.address.streetAddress();
 		website = faker.internet.url();
-		ssendEmail = faker.internet.email();
+		sendEmail = faker.internet.email();
 
 		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
@@ -93,9 +93,10 @@ describe('Estimates test', () => {
 		estimatesPage.clickSaveAsDraftButton(
 			EstimatesPageData.saveAsDraftButton
 		);
+		estimatesPage.waitMessageToHide();
+		estimatesPage.verifyDraftBadgeClass();
 	});
 	it('Should be able to edit estimate', () => {
-		estimatesPage.waitMessageToHide();
 		estimatesPage.addButtonVisible();
 		estimatesPage.clickAddButton();
 		estimatesPage.backButtonVisible();
@@ -104,7 +105,7 @@ describe('Estimates test', () => {
 		estimatesPage.editButtonVisible();
 		estimatesPage.clickEditButton(EstimatesPageData.editButton);
 		estimatesPage.discountInputVisible();
-		estimatesPage.enterDiscountData(EstimatesPageData.discountValue);
+		estimatesPage.enterDiscountData(EstimatesPageData.editDiscountValue);
 		estimatesPage.discountTypeDropdownVisible();
 		estimatesPage.clickDiscountDropdown();
 		estimatesPage.selectDiscountTypeFromDropdown(
@@ -125,7 +126,7 @@ describe('Estimates test', () => {
 	});
 	it('Should be able to duplicate estimate', () => {
 		estimatesPage.waitMessageToHide();
-		estimatesPage.tableRowVisible();
+		estimatesPage.selectTableRow(0);
 		estimatesPage.selectTableRow(0);
 		estimatesPage.actionButtonVisible();
 		estimatesPage.clickActionButtonByText(
@@ -144,9 +145,10 @@ describe('Estimates test', () => {
 		estimatesPage.clickActionButtonByText(EstimatesPageData.sendButton);
 		estimatesPage.confirmButtonVisible();
 		estimatesPage.clickConfirmButton();
+		estimatesPage.waitMessageToHide();
+		estimatesPage.verifySentBadgeClass();
 	});
 	it('Should be able to view estimate', () => {
-		estimatesPage.waitMessageToHide();
 		estimatesPage.selectTableRow(0);
 		estimatesPage.actionButtonVisible();
 		estimatesPage.clickActionButtonByText(EstimatesPageData.viewButton);
@@ -157,13 +159,15 @@ describe('Estimates test', () => {
 		estimatesPage.selectTableRow(0);
 		estimatesPage.actionButtonVisible();
 		estimatesPage.clickActionButtonByText(EstimatesPageData.emailButton);
+		estimatesPage.scrollEmailInviteTemplate();
 		estimatesPage.emailInputVisible();
-		estimatesPage.enterEmailData(ssendEmail);
+		estimatesPage.enterEmailData(sendEmail);
 		estimatesPage.confirmButtonVisible();
 		estimatesPage.clickConfirmButton();
+		estimatesPage.waitMessageToHide();
+		estimatesPage.verifySentBadgeClass();
 	});
 	it('Should be able to convert estimate to invoice', () => {
-		estimatesPage.waitMessageToHide();
 		estimatesPage.selectTableRow(0);
 		estimatesPage.actionButtonVisible();
 		estimatesPage.clickActionButtonByText(
@@ -177,5 +181,6 @@ describe('Estimates test', () => {
 		estimatesPage.clickDeleteButton();
 		estimatesPage.confirmDeleteButtonVisible();
 		estimatesPage.clickConfirmDeleteButton();
+		estimatesPage.verifyElementIsDeleted(EstimatesPageData.discountValue);
 	});
 });

@@ -14,6 +14,8 @@ let username = ' ';
 let password = ' ';
 let email = ' ';
 let imgUrl = ' ';
+let editFirstName = ' ';
+let editLastName = ' ';
 
 describe('Edit user test', () => {
 	before(() => {
@@ -23,6 +25,8 @@ describe('Edit user test', () => {
 		email = faker.internet.email();
 		password = faker.internet.password();
 		imgUrl = faker.image.avatar();
+		editFirstName = faker.name.firstName();
+		editLastName = faker.name.lastName();
 
 		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
@@ -46,8 +50,13 @@ describe('Edit user test', () => {
 		addUserPage.enterImageDataUrl(imgUrl);
 		addUserPage.confirmAddButtonVisible();
 		addUserPage.clickConfirmAddButton();
+		addUserPage.waitMessageToHide();
+		addUserPage.verifyUserExists(`${firstName} ${lastName}`);
 	});
 	it('Should be able to edit user', () => {
+		cy.on('uncaught:exception', (err, runnable) => {
+			return false;
+		});
 		editUserPage.gridButtonVisible();
 		editUserPage.clickGridButton();
 		editUserPage.tableRowVisible();
@@ -77,8 +86,8 @@ describe('Edit user test', () => {
 		editUserPage.selectRoleVisible();
 		editUserPage.languageSelectVisible();
 		editUserPage.saveBtnExists();
-		editUserPage.enterFirstNameData(firstName);
-		editUserPage.enterLastNameData(lastName);
+		editUserPage.enterFirstNameData(editFirstName);
+		editUserPage.enterLastNameData(editLastName);
 		editUserPage.enterPasswordData(password);
 		editUserPage.enterRepeatPasswordData(password);
 		editUserPage.enterEmailData(email);
@@ -86,5 +95,7 @@ describe('Edit user test', () => {
 		editUserPage.chooseRoleSelectData(EditUserPageData.role);
 		editUserPage.chooseLanguage(EditUserPageData.preferredLanguage);
 		editUserPage.saveBtnClick();
+		addUserPage.waitMessageToHide();
+		addUserPage.verifyUserExists(`${editFirstName} ${editLastName}`);
 	});
 });

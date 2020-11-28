@@ -198,5 +198,44 @@ export const CustomCommands = {
 		);
 		addTaskPage.saveTaskButtonVisible();
 		addTaskPage.clickSaveTaskButton();
+	},
+	addEmployee: (
+		manageEmployeesPage,
+		firstName,
+		lastName,
+		username,
+		employeeEmail,
+		password,
+		imgUrl
+	) => {
+		cy.visit('/#/pages/employees');
+		cy.wait(3000);
+		manageEmployeesPage.addEmployeeButtonVisible();
+		manageEmployeesPage.clickAddEmployeeButton();
+		manageEmployeesPage.firstNameInputVisible();
+		manageEmployeesPage.enterFirstNameData(firstName);
+		manageEmployeesPage.lastNameInputVisible();
+		manageEmployeesPage.enterLastNameData(lastName);
+		manageEmployeesPage.usernameInputVisible();
+		manageEmployeesPage.enterUsernameData(username);
+		manageEmployeesPage.employeeEmailInputVisible();
+		manageEmployeesPage.enterEmployeeEmailData(employeeEmail);
+		manageEmployeesPage.dateInputVisible();
+		manageEmployeesPage.enterDateData();
+		manageEmployeesPage.clickKeyboardButtonByKeyCode(9);
+		manageEmployeesPage.passwordInputVisible();
+		manageEmployeesPage.enterPasswordInputData(password);
+		manageEmployeesPage.tagsDropdownVisible();
+		manageEmployeesPage.clickTagsDropdwon();
+		manageEmployeesPage.selectTagFromDropdown(0);
+		manageEmployeesPage.clickCardBody();
+		manageEmployeesPage.imageInputVisible();
+		manageEmployeesPage.enterImageDataUrl(imgUrl);
+		manageEmployeesPage.nextButtonVisible();
+		manageEmployeesPage.clickNextButton();
+		manageEmployeesPage.nextStepButtonVisible();
+		manageEmployeesPage.clickNextStepButton();
+		manageEmployeesPage.lastStepButtonVisible();
+		manageEmployeesPage.clickLastStepButton();
 	}
 };

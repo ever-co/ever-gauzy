@@ -3,7 +3,8 @@ import {
 	verifyElementIsVisible,
 	clickButton,
 	clickElementByText,
-	clearField
+	clearField,
+	verifyValue
 } from '../utils/util';
 import { EditProfilePage } from '../pageobjects/EditProfilePageObject';
 
@@ -65,4 +66,16 @@ export const saveBtnExists = () => {
 
 export const saveBtnClick = () => {
 	clickButton(EditProfilePage.saveButtonCss);
+};
+
+export const verifyFirstName = (val) => {
+	verifyValue(EditProfilePage.firstNameInputCss, val);
+};
+
+export const verifyLastName = (val) => {
+	verifyValue(EditProfilePage.lastNameInputCss, val);
+};
+
+export const verifyEmail = (val) => {
+	verifyValue(EditProfilePage.emailInputCss, val);
 };
