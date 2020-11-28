@@ -472,6 +472,7 @@ export class ImportAllService implements OnDestroy {
 		 * These entities do not have any other dependency so need to be imported first
 		 */
 		countries: this.countryRepository,
+		currencies: this.currencyRepository,
 		skill: this.skillRepository, //TODO: This should be organization level but currently does not have any org detail
 		language: this.languageRepository,
 		tenant: this.tenantRepository,

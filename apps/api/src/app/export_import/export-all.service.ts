@@ -98,6 +98,7 @@ import { CandidateTechnologiesService } from '../candidate-technologies/candidat
 import { CandidateSourceService } from '../candidate-source/candidate-source.service';
 import { LanguageService } from '../language/language.service';
 import { OrganizationDocumentsService } from '../organization-documents/organization-documents.service';
+import { CurrencyService } from '../currency';
 
 @Injectable()
 export class ExportAllService implements OnDestroy {
@@ -113,8 +114,8 @@ export class ExportAllService implements OnDestroy {
 		private availabilitySlotsService: AvailabilitySlotsService,
 
 		private candidateService: CandidateService,
-		private candidateCrieationsRatingService: CandidateCriterionsRatingService,
-		private candidateDocumnetsService: CandidateDocumentsService,
+		private candidateCriterionsRatingService: CandidateCriterionsRatingService,
+		private candidateDocumentsService: CandidateDocumentsService,
 		private candidateEducationService: CandidateEducationService,
 		private candidateExperienceService: CandidateExperienceService,
 		private candidateFeedbacksService: CandidateFeedbacksService,
@@ -126,6 +127,7 @@ export class ExportAllService implements OnDestroy {
 		private candidateTechnologiesService: CandidateTechnologiesService,
 		private contactService: ContactService,
 		private countryService: CountryService,
+		private currencyService: CurrencyService,
 
 		private dealService: DealService,
 
@@ -135,7 +137,7 @@ export class ExportAllService implements OnDestroy {
 		private employeeAppointmentService: EmployeeAppointmentService,
 		private employeeRecurringExpensesService: EmployeeRecurringExpenseService,
 		private employeeSettingService: EmployeeSettingService,
-		private equpmentService: EquipmentService,
+		private equipmentService: EquipmentService,
 		private equipmentSharingService: EquipmentSharingService,
 		private estimateEmailService: EstimateEmailService,
 		private eventTypesService: EventTypeService,
@@ -171,7 +173,7 @@ export class ExportAllService implements OnDestroy {
 		private organizationAwardsService: OrganizationAwardsService,
 		private organizationContactService: OrganizationContactService,
 		private organizationDepartmentService: OrganizationDepartmentService,
-		private organizationDocumnetService: OrganizationDocumentsService,
+		private organizationDocumentService: OrganizationDocumentsService,
 		private organizationEmploymentTypeService: OrganizationEmploymentTypeService,
 		private organizationLanguagesService: OrganizationLanguagesService,
 		private organizationPositionsService: OrganizationPositionsService,
@@ -300,15 +302,15 @@ export class ExportAllService implements OnDestroy {
 				tenantId: findInput['tenantId']
 			};
 		}
-		const incommingData: Array<any> = (
+		const incomingData: Array<any> = (
 			await this.services[service_count].service.findAll(whereClause)
 		).items;
 
-		if (incommingData.length > 0) {
+		if (incomingData.length > 0) {
 			return new Promise((resolve, reject) => {
 				const createCsvWriter = csv.createObjectCsvWriter;
 				const dataIn = [];
-				const dataKeys = Object.keys(incommingData[0]);
+				const dataKeys = Object.keys(incomingData[0]);
 
 				for (const count of dataKeys) {
 					dataIn.push({ id: count, title: count });
@@ -324,7 +326,7 @@ export class ExportAllService implements OnDestroy {
 					header: dataIn
 				});
 
-				const data = incommingData;
+				const data = incomingData;
 
 				csvWriter.writeRecords(data).then(() => {
 					resolve();
@@ -444,11 +446,11 @@ export class ExportAllService implements OnDestroy {
 			},
 			{ service: this.candidateService, nameFile: 'candidate' },
 			{
-				service: this.candidateCrieationsRatingService,
+				service: this.candidateCriterionsRatingService,
 				nameFile: 'candidate_creation_rating'
 			},
 			{
-				service: this.candidateDocumnetsService,
+				service: this.candidateDocumentsService,
 				nameFile: 'candidate_document'
 			},
 			{
@@ -493,6 +495,11 @@ export class ExportAllService implements OnDestroy {
 				nameFile: 'country',
 				tenantOrganizationBase: false
 			},
+			{
+				service: this.currencyService,
+				nameFile: 'currency',
+				tenantOrganizationBase: false
+			},
 			{ service: this.dealService, nameFile: 'deal' },
 			{ service: this.emailService, nameFile: 'email' },
 			{ service: this.emailTemplate, nameFile: 'email_template' },
@@ -510,7 +517,7 @@ export class ExportAllService implements OnDestroy {
 				service: this.employeeSettingService,
 				nameFile: 'employee_setting'
 			},
-			{ service: this.equpmentService, nameFile: 'equipment' },
+			{ service: this.equipmentService, nameFile: 'equipment' },
 			{
 				service: this.equipmentSharingService,
 				nameFile: 'equipment_sharing'
@@ -591,7 +598,7 @@ export class ExportAllService implements OnDestroy {
 				nameFile: 'organization_department'
 			},
 			{
-				service: this.organizationDocumnetService,
+				service: this.organizationDocumentService,
 				nameFile: 'organization_document'
 			},
 			{

@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { environment } from '../../../../../environments/environment';
 import L, { icon, LatLng, latLng, Layer, marker, tileLayer } from 'leaflet';
+import { convertPrecisionFloatDigit } from '@gauzy/utils';
 @Component({
 	selector: 'ga-leaflet-map',
 	templateUrl: './leaflet.component.html',
@@ -103,8 +104,9 @@ export class LeafletMapComponent implements AfterViewInit {
 	 */
 	onMapClick(map: any) {
 		const { lat, lng }: LatLng = map.latlng;
-		const latitude = parseFloat(parseFloat(lat.toString()).toFixed(6));
-		const longitude = parseFloat(parseFloat(lng.toString()).toFixed(6));
+
+		const latitude = convertPrecisionFloatDigit(lat);
+		const longitude = convertPrecisionFloatDigit(lng);
 
 		this.mapClicked.emit(new LatLng(latitude, longitude));
 		this.addMarker(new LatLng(latitude, longitude));

@@ -17,6 +17,7 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 import { TranslateService } from '@ngx-translate/core';
 import { CountryService } from '../../../@core/services/country.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { convertPrecisionFloatDigit } from '@gauzy/utils';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-location-form',
@@ -264,8 +265,8 @@ export class LocationFormComponent
 
 		if (useGeometryLatLng) {
 			const loc = place.geometry.location;
-			this._lat = parseFloat(parseFloat(loc.lat().toString()).toFixed(6));
-			this._lng = parseFloat(parseFloat(loc.lng().toString()).toFixed(6));
+			this._lat = convertPrecisionFloatDigit(loc.lat());
+			this._lng = convertPrecisionFloatDigit(loc.lng());
 		}
 
 		this.coordinates.setValue([this._lat, this._lng]);
