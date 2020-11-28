@@ -23,6 +23,8 @@ import {
 import { NbToastrService } from '@nebular/theme';
 import { LocationFormComponent } from '../../forms/location';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { LatLng } from 'leaflet';
+import { LeafletMapComponent } from '../../forms/maps/leaflet/leaflet.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -36,6 +38,9 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 	@ViewChild('locationFormDirective')
 	locationFormDirective: LocationFormComponent;
+
+	@ViewChild('leafletTemplate')
+	leafletTemplate: LeafletMapComponent;
 
 	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
 
@@ -189,12 +194,10 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 		const { coordinates } = location['loc'];
 		delete location['loc'];
 
+		const [latitude, longitude] = coordinates;
 		const contact = {
 			...location,
-			...{
-				latitude: coordinates[0],
-				longitude: coordinates[1]
-			}
+			...{ latitude, longitude }
 		};
 
 		const consolidatedFormValues = {
@@ -215,13 +218,40 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 	 */
 	currencyChanged($event: ICurrency) {}
 
-	onCoordinatesChanges(coordinates: number[]) {
-		console.log(coordinates, 'coordinates');
+	/*
+	 * Google Place and Leaflet Map Coordinates Changed Event Emitter
+	 */
+	onCoordinatesChanges(
+		$event: google.maps.LatLng | google.maps.LatLngLiteral
+	) {
+		const {
+			loc: { coordinates }
+		} = this.locationFormDirective.getValue();
+		const [lat, lng] = coordinates;
+		this.leafletTemplate.addMarker(new LatLng(lat, lng));
 	}
 
-	onGeometrySend(geometry: any) {
-		console.log(geometry, 'geometry');
+	/*
+	 * Leaflet Map Click Event Emitter
+	 */
+	onMapClicked(latlng: LatLng) {
+		const { lat, lng }: LatLng = latlng;
+		const location = this.locationFormDirective.getValue();
+		this.locationFormDirective.setValue({
+			...location,
+			country: '',
+			loc: {
+				type: 'Point',
+				coordinates: [lat, lng]
+			}
+		});
+		this.locationFormDirective.onCoordinatesChanged();
 	}
+
+	/*
+	 * Google Place Geometry Changed Event Emitter
+	 */
+	onGeometrySend(geometry: any) {}
 
 	ngOnDestroy() {}
 }

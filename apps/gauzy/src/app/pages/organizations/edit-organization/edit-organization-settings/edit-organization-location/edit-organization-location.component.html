@@ -1,13 +1,14 @@
 <form class="main-form" [formGroup]="form" *ngIf="form">
 	<ga-location-form
-		#locationForm
+		#locationFormDirective
 		[form]="form"
 		[showAutocompleteSearch]="true"
 		(mapCoordinatesEmitter)="onCoordinatesChanges($event)"
 		(mapGeometryEmitter)="onGeometrySend($event)"
 	>
 	</ga-location-form>
-	<ga-leaflet-map></ga-leaflet-map>
+	<ga-leaflet-map #leafletTemplate (mapClicked)="onMapClicked($event)">
+	</ga-leaflet-map>
 	<div class="actions">
 		<button
 			[disabled]="this.form.invalid"

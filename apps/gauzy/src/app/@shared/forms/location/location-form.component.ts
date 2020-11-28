@@ -7,13 +7,7 @@ import {
 	ElementRef,
 	AfterViewInit
 } from '@angular/core';
-import {
-	AbstractControl,
-	FormArray,
-	FormBuilder,
-	FormGroup,
-	Validators
-} from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 import { FormHelpers } from '../helpers';
 import { pick, isEmpty } from 'lodash';
@@ -42,9 +36,6 @@ export class LocationFormComponent
 
 	@Input()
 	readonly form: FormGroup;
-
-	@Input()
-	readonly apartment?: AbstractControl;
 
 	@Input()
 	set showAutocompleteSearch(val: boolean) {
@@ -273,9 +264,11 @@ export class LocationFormComponent
 
 		if (useGeometryLatLng) {
 			const loc = place.geometry.location;
-			this._lat = loc.lat();
-			this._lng = loc.lng();
+			this._lat = parseFloat(parseFloat(loc.lat().toString()).toFixed(6));
+			this._lng = parseFloat(parseFloat(loc.lng().toString()).toFixed(6));
 		}
+
+		this.coordinates.setValue([this._lat, this._lng]);
 
 		// If the place has a geometry, then present it on a map.
 		this._emitGeometry(place.geometry);
@@ -325,7 +318,6 @@ export class LocationFormComponent
 		let city = '';
 
 		locationResult.address_components.forEach((address) => {
-			console.log(address, 'address');
 			const addressType = address.types[0];
 			const addressTypeKey = neededAddressTypes[addressType];
 			const val = address[addressTypeKey];

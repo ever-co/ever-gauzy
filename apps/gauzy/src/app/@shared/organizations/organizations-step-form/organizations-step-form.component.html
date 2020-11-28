@@ -221,7 +221,11 @@
 					>
 					</ga-location-form>
 
-					<ga-leaflet-map></ga-leaflet-map>
+					<ga-leaflet-map
+						#leafletTemplate
+						(mapClicked)="onMapClicked($event)"
+					>
+					</ga-leaflet-map>
 
 					<div class="stepper-buttons">
 						<button nbButton nbStepperPrevious>

@@ -11,6 +11,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '../../../../../@core/services/store.service';
 import { LocationFormComponent } from '../../../../../@shared/forms/location';
+import { LeafletMapComponent } from '../../../../../@shared/forms/maps/leaflet/leaflet.component';
+import { LatLng } from 'leaflet';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-org-location',
@@ -24,7 +26,11 @@ export class EditOrganizationLocationComponent
 	country: string;
 	readonly form: FormGroup = LocationFormComponent.buildForm(this.fb);
 
-	@ViewChild('locationForm') locationForm: LocationFormComponent;
+	@ViewChild('locationFormDirective')
+	locationFormDirective: LocationFormComponent;
+
+	@ViewChild('leafletTemplate')
+	leafletTemplate: LeafletMapComponent;
 
 	constructor(
 		private router: Router,
@@ -50,16 +56,14 @@ export class EditOrganizationLocationComponent
 	}
 
 	async updateOrganizationSettings() {
-		const location = this.locationForm.getValue();
+		const location = this.locationFormDirective.getValue();
 		const { coordinates } = location['loc'];
 		delete location['loc'];
 
+		const [latitude, longitude] = coordinates;
 		const contact = {
 			...location,
-			...{
-				latitude: coordinates[0],
-				longitude: coordinates[1]
-			}
+			...{ latitude, longitude }
 		};
 		const contactData = {
 			...this.form.value,
@@ -89,7 +93,7 @@ export class EditOrganizationLocationComponent
 			const organization: IOrganization = this.organization;
 			const { contact } = organization;
 			if (contact) {
-				this.locationForm.setValue({
+				this.locationFormDirective.setValue({
 					country: contact.country,
 					city: contact.city,
 					postcode: contact.postcode,
@@ -119,13 +123,40 @@ export class EditOrganizationLocationComponent
 		this.organizationEditStore.selectedOrganization = this.organization;
 	}
 
-	onCoordinatesChanges(coordinates: number[]) {
-		console.log(coordinates, 'coordinates');
+	/*
+	 * Google Place and Leaflet Map Coordinates Changed Event Emitter
+	 */
+	onCoordinatesChanges(
+		$event: google.maps.LatLng | google.maps.LatLngLiteral
+	) {
+		const {
+			loc: { coordinates }
+		} = this.locationFormDirective.getValue();
+		const [lat, lng] = coordinates;
+		this.leafletTemplate.addMarker(new LatLng(lat, lng));
 	}
 
-	onGeometrySend(geometry: any) {
-		console.log(geometry, 'geometry');
+	/*
+	 * Leaflet Map Click Event Emitter
+	 */
+	onMapClicked(latlng: LatLng) {
+		const { lat, lng }: LatLng = latlng;
+		const location = this.locationFormDirective.getValue();
+		this.locationFormDirective.setValue({
+			...location,
+			country: '',
+			loc: {
+				type: 'Point',
+				coordinates: [lat, lng]
+			}
+		});
+		this.locationFormDirective.onCoordinatesChanged();
 	}
+
+	/*
+	 * Google Place Geometry Changed Event Emitter
+	 */
+	onGeometrySend(geometry: any) {}
 
 	ngOnDestroy(): void {}
 }
