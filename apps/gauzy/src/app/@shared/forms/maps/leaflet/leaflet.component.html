@@ -1,0 +1,26 @@
+<div class="row mt-3 mb-3">
+	<div class="col-12">
+		<ng-container *ngIf="loaded">
+			<div
+				leaflet
+				[(leafletZoom)]="zoom"
+				[leafletOptions]="options"
+				[leafletLayers]="markers"
+				(leafletMapReady)="onMapReady($event)"
+				(leafletMapMove)="onMapMove($event)"
+				(leafletMapMoveStart)="onMapMoveStart($event)"
+				(leafletMapMoveEnd)="onMapMoveEnd($event)"
+				(leafletMapZoom)="onMapZoom($event)"
+				(leafletMapZoomStart)="onMapZoomStart($event)"
+				(leafletMapZoomEnd)="onMapZoomEnd($event)"
+				(leafletClick)="onMapClick($event)"
+				(leafletDoubleClick)="onMapDoubleClick($event)"
+				(leafletMouseDown)="onMapMouseDown($event)"
+				(leafletMouseUp)="onMapMouseUp($event)"
+				(leafletMouseMove)="onMapMouseMove($event)"
+				(leafletMouseOver)="onMapMouseOver($event)"
+				(leafletMouseOut)="onMapMouseOut($event)"
+			></div>
+		</ng-container>
+	</div>
+</div>

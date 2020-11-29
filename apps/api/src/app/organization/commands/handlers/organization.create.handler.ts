@@ -41,6 +41,9 @@ export class OrganizationCreateHandler
 			}
 		});
 
+		let { contact } = input;
+		delete input['contact'];
+
 		// 3. Create organization
 		const createdOrganization: IOrganization = await this.organizationService.create(
 			{
@@ -66,6 +69,14 @@ export class OrganizationCreateHandler
 			this.userOrganizationService.create(userOrganization);
 		});
 
-		return createdOrganization;
+		//5. Create contact details of created organization
+		const { id } = createdOrganization;
+		contact = Object.assign(contact, { organizationId: id, tenantId });
+		await this.organizationService.create({
+			contact,
+			...createdOrganization
+		});
+
+		return await this.organizationService.findOne(id);
 	}
 }

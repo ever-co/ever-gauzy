@@ -290,6 +290,7 @@ import { randomSeedConfig } from './random-seed-config';
 import { createDefaultJobSearchCategories } from '../../employee-job-preset/job-search-category/job-search-category.seed';
 import { createDefaultJobSearchOccupations } from '../../employee-job-preset/job-search-occupation/job-search-occupation.seed';
 import { createDefaultReport } from '../../reports/report.seed';
+import { createCurrencies } from '../../currency/currency.seed';
 
 @Injectable()
 export class SeedDataService {
@@ -501,6 +502,11 @@ export class SeedDataService {
 			await this.tryExecute(
 				'Countries',
 				createCountries(this.connection)
+			);
+
+			await this.tryExecute(
+				'Currencies',
+				createCurrencies(this.connection)
 			);
 
 			await this.seedBasicDefaultData();

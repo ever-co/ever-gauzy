@@ -1,0 +1,183 @@
+<ng-container [formGroup]="form" *ngIf="form">
+	<div class="fields">
+		<ng-container *ngIf="showAutocompleteSearch">
+			<div class="row">
+				<div class="col-12">
+					<div class="form-group">
+						<nb-form-field>
+							<nb-icon
+								icon-basic-color
+								nbPrefix
+								icon="search-outline"
+								pack="eva"
+							>
+							</nb-icon>
+							<input
+								#autocomplete
+								fullWidth
+								nbInput
+								type="text"
+								class="form-control"
+								[placeholder]="
+									'FORM.LABELS.FIND_ADDRESS' | translate
+								"
+							/>
+						</nb-form-field>
+					</div>
+				</div>
+			</div>
+		</ng-container>
+		<ng-container>
+			<div class="row">
+				<div class="col-6">
+					<ga-country
+						[(ngModel)]="country"
+						[formControl]="form.get('country')"
+						(selectChange)="onAddressChanges()"
+					></ga-country>
+				</div>
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label" for="cityInput">{{
+							'FORM.LABELS.CITY' | translate
+						}}</label>
+						<input
+							(blur)="onAddressChanges()"
+							fullWidth
+							id="cityInput"
+							type="text"
+							nbInput
+							formControlName="city"
+							[status]="
+								isInvalidControl('city') ? 'danger' : 'basic'
+							"
+							[placeholder]="'FORM.PLACEHOLDERS.CITY' | translate"
+						/>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label" for="addressInput">{{
+							'FORM.LABELS.ADDRESS' | translate
+						}}</label>
+						<textarea
+							(blur)="onAddressChanges()"
+							fullWidth
+							id="addressInput"
+							type="text-area"
+							nbInput
+							[status]="
+								isInvalidControl('address') ? 'danger' : 'basic'
+							"
+							formControlName="address"
+							[placeholder]="
+								'FORM.PLACEHOLDERS.ADDRESS' | translate
+							"
+						></textarea>
+					</div>
+				</div>
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label" for="address2Input">{{
+							'FORM.LABELS.ADDRESS_2' | translate
+						}}</label>
+						<textarea
+							(blur)="onAddressChanges()"
+							fullWidth
+							id="address2Input"
+							type="text"
+							nbInput
+							[status]="
+								isInvalidControl('address2')
+									? 'danger'
+									: 'basic'
+							"
+							formControlName="address2"
+							[placeholder]="
+								'FORM.PLACEHOLDERS.ADDRESS_2' | translate
+							"
+						></textarea>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label" for="postcodeInput">{{
+							'FORM.LABELS.POSTCODE' | translate
+						}}</label>
+						<input
+							(blur)="onAddressChanges()"
+							fullWidth
+							id="postcodeInput"
+							type="number"
+							nbInput
+							[status]="
+								isInvalidControl('postcode')
+									? 'danger'
+									: 'basic'
+							"
+							formControlName="postcode"
+							[placeholder]="
+								'FORM.PLACEHOLDERS.POSTCODE' | translate
+							"
+						/>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-12">
+					<nb-checkbox (checkedChange)="toggleShowCoordinates()">{{
+						'FORM.LABELS.COORDINATE.TITLE' | translate
+					}}</nb-checkbox>
+				</div>
+			</div>
+		</ng-container>
+		<ng-container *ngIf="showCoordinates">
+			<div class="row mt-3" formGroupName="loc">
+				<ng-container formArrayName="coordinates">
+					<div class="col-sm-6">
+						<div class="form-group">
+							<label class="label" for="postcodeInput">{{
+								'FORM.LABELS.COORDINATE.LATITUDE' | translate
+							}}</label>
+							<input
+								(blur)="onCoordinatesChanged()"
+								fullWidth
+								type="number"
+								nbInput
+								[placeholder]="
+									'FORM.PLACEHOLDERS.COORDINATE.LATITUDE'
+										| translate
+								"
+								formControlName="0"
+								step="0.1"
+							/>
+						</div>
+					</div>
+					<div class="col-sm-6">
+						<div class="form-group">
+							<label class="label" for="postcodeInput">{{
+								'FORM.LABELS.COORDINATE.LONGITUDE' | translate
+							}}</label>
+							<input
+								(blur)="onCoordinatesChanged()"
+								fullWidth
+								type="number"
+								nbInput
+								[placeholder]="
+									'FORM.PLACEHOLDERS.COORDINATE.LONGITUDE'
+										| translate
+								"
+								formControlName="1"
+								step="0.1"
+							/>
+						</div>
+					</div>
+				</ng-container>
+			</div>
+		</ng-container>
+	</div>
+</ng-container>

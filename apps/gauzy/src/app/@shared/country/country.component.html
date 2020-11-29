@@ -1,0 +1,27 @@
+<ng-container>
+	<div class="form-group">
+		<label class="label" for="countrySelect">{{
+			'FORM.LABELS.COUNTRY' | translate
+		}}</label>
+		<nb-select
+			class="d-block"
+			size="medium"
+			placeholder="{{ 'FORM.PLACEHOLDERS.COUNTRY' | translate }}"
+			fullWidth="true"
+			[status]="
+				formControl.invalid && formControl.touched ? 'danger' : 'basic'
+			"
+			[(ngModel)]="country"
+			[formControl]="formControl"
+			(selectedChange)="onSelectChange($event)"
+		>
+			<nb-option
+				*ngFor="let item of countries$ | async"
+				[value]="item.isoCode"
+				(click)="onOptionChange(item)"
+			>
+				{{ item.country }}
+			</nb-option>
+		</nb-select>
+	</div>
+</ng-container>

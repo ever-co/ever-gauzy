@@ -113,6 +113,7 @@ import { ReportCategory } from '../../reports/report-category.entity';
 import { EmployeeProposalTemplate } from '../../employee-proposal-template/employee-proposal-template.entity';
 import { ReportOrganization } from '../../reports/report-organization.entity';
 import { CustomSmtp } from '../../custom-smtp/custom-smtp.entity';
+import { Currency } from '../../currency';
 
 export const allEntities = [
 	AppointmentEmployee,
@@ -132,6 +133,7 @@ export const allEntities = [
 	CandidateTechnologies,
 	Contact,
 	Country,
+	Currency,
 	CustomSmtp,
 	Deal,
 	Email,

@@ -5,7 +5,8 @@ import {
 	IUser,
 	RolesEnum,
 	IUserRegistrationInput,
-	PermissionsEnum
+	PermissionsEnum,
+	IAuthResponse
 } from '@gauzy/models';
 import { Observable } from 'rxjs';
 
@@ -20,11 +21,8 @@ export class AuthService {
 			.toPromise();
 	}
 
-	login(loginInput): Observable<{ user?: IUser; token?: string }> {
-		return this.http.post<{ user?: IUser; token?: string }>(
-			'/api/auth/login',
-			loginInput
-		);
+	login(loginInput): Observable<IAuthResponse> {
+		return this.http.post<IAuthResponse>('/api/auth/login', loginInput);
 	}
 
 	register(registerInput: IUserRegistrationInput): Observable<IUser> {
@@ -34,7 +32,7 @@ export class AuthService {
 	requestPassword(
 		requestPasswordInput
 	): Observable<{ id?: string; token?: string }> {
-		return this.http.post<{ user?: IUser; token?: string }>(
+		return this.http.post<IAuthResponse>(
 			'/api/auth/request-password',
 			requestPasswordInput
 		);

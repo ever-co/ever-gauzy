@@ -54,6 +54,18 @@ export class Contact extends TenantOrganizationBase implements IContact {
 	@Column({ nullable: true })
 	postcode?: number;
 
+	@ApiPropertyOptional({ type: Number })
+	@IsNumber()
+	@IsOptional()
+	@Column({ nullable: true, type: 'float', scale: 6 })
+	latitude?: number;
+
+	@ApiPropertyOptional({ type: Number })
+	@IsNumber()
+	@IsOptional()
+	@Column({ nullable: true, type: 'float', scale: 6 })
+	longitude?: number;
+
 	@ApiProperty({ type: String })
 	@Column()
 	@IsOptional()

@@ -471,10 +471,10 @@
   dependencies:
     tslib "~2.0.1"
 
-"@asymmetrik/ngx-leaflet@^5.0.2":
-  version "5.0.2"
-  resolved "https://registry.yarnpkg.com/@asymmetrik/ngx-leaflet/-/ngx-leaflet-5.0.2.tgz#307d7e99b6fd0e27f23601213aa5e696ab23a8da"
-  integrity sha512-y4+U9nUnukdTTO2Z6fCt0V85U605bveERNIzrovjKELkHbxz70TvJSvCU7iSSc5ZwS5ZJI1a24SiBJ5sGt9WMQ==
+"@asymmetrik/ngx-leaflet@^8.1.0":
+  version "8.1.0"
+  resolved "https://registry.yarnpkg.com/@asymmetrik/ngx-leaflet/-/ngx-leaflet-8.1.0.tgz#e67b965ed49220b4ae55c3218125fc972c6d96a2"
+  integrity sha512-lq7LduBP/vXcaSEmKnx7mzCR8WsoYqh9pB6BNnq53yeCwsqRbG3GdKye1/i8VvoRzjDsmQBPQsIFZ9uclXrtgg==
 
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.10.1":
   version "7.10.1"
@@ -6377,10 +6377,10 @@
     "@types/koa-compose" "*"
     "@types/node" "*"
 
-"@types/leaflet@^1.4.4":
-  version "1.5.12"
-  resolved "https://registry.yarnpkg.com/@types/leaflet/-/leaflet-1.5.12.tgz#9953b7e47a53e0a70cdd7a903a43dc3c343cf623"
-  integrity sha512-61HRMIng+bWvnnAIqUWLBlrd/TQZc4gU+gN1JL4K47EDtwIrcMEhWgi7PdcpbG1YmpH4F0EfOimkvV82gJIl9w==
+"@types/leaflet@^1.5.19":
+  version "1.5.19"
+  resolved "https://registry.yarnpkg.com/@types/leaflet/-/leaflet-1.5.19.tgz#f290e21fe7a4744d68bb4b0709e99ce490120e6e"
+  integrity sha512-ZAKqfvdU/+KFoCpf8aUba09F8mfSc8R2esq++Cha3E2DgwS5K/I/4eJ+0JylrVHZivgY7PSAeXFv/izP+81/MQ==
   dependencies:
     "@types/geojson" "*"
 

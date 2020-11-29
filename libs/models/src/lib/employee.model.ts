@@ -89,6 +89,7 @@ export interface IEmployeeUpdateInput {
 	averageBonus?: number;
 	skills?: ISkill[];
 	isJobSearchActive?: boolean;
+	contact?: IContact;
 }
 
 export interface IEmployeeCreateInput

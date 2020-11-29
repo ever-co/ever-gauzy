@@ -1,12 +1,14 @@
-import { OnInit, OnDestroy, Component, Input } from '@angular/core';
-import { Subject } from 'rxjs';
+import { OnInit, OnDestroy, Component, Input, ViewChild } from '@angular/core';
 import { FormGroup, FormBuilder } from '@angular/forms';
-import { IEmployee, ICountry, ICandidate } from '@gauzy/models';
-import { takeUntil } from 'rxjs/operators';
+import { IEmployee, ICandidate } from '@gauzy/models';
 import { CandidateStore } from '../../../@core/services/candidate-store.service';
 import { EmployeeStore } from '../../../@core/services/employee-store.service';
-import { CountryService } from '../../../@core/services/country.service';
-
+import { LocationFormComponent } from '../../forms/location';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { filter } from 'rxjs/operators';
+import { LeafletMapComponent } from '../../forms/maps/leaflet/leaflet.component';
+import { LatLng } from 'leaflet';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-employee-location',
 	templateUrl: 'employee-location.component.html'
@@ -15,30 +17,40 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 	@Input() public isEmployee: boolean;
 	@Input() public isCandidate: boolean;
 
-	private _ngDestroy$ = new Subject<void>();
-	form: FormGroup;
 	selectedEmployee: IEmployee;
 	selectedCandidate: ICandidate;
-	countries: ICountry[];
+
+	readonly form: FormGroup = LocationFormComponent.buildForm(this.fb);
+
+	@ViewChild('locationFormDirective')
+	locationFormDirective: LocationFormComponent;
+
+	@ViewChild('leafletTemplate')
+	leafletTemplate: LeafletMapComponent;
 
 	constructor(
 		private fb: FormBuilder,
 		private candidateStore: CandidateStore,
-		private employeeStore: EmployeeStore,
-		private countryService: CountryService
+		private employeeStore: EmployeeStore
 	) {}
 
 	ngOnInit() {
 		this.employeeStore.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((emp) => {
-				this.selectedEmployee = emp;
+			.pipe(
+				filter((employee) => !!employee),
+				untilDestroyed(this)
+			)
+			.subscribe((employee) => {
+				this.selectedEmployee = employee;
 				if (this.selectedEmployee) {
 					this._initializeForm(this.selectedEmployee);
 				}
 			});
 		this.candidateStore.selectedCandidate$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((candidate) => !!candidate),
+				untilDestroyed(this)
+			)
 			.subscribe((candidate) => {
 				this.selectedCandidate = candidate;
 				if (this.selectedCandidate) {
@@ -47,46 +59,86 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-	}
+	ngOnDestroy() {}
 
 	async submitForm() {
+		const location = this.locationFormDirective.getValue();
+		const { coordinates } = location['loc'];
+		delete location['loc'];
+
+		const [latitude, longitude] = coordinates;
 		const contact = {
-			country: this.form.value.country,
-			city: this.form.value.city,
-			address: this.form.value.address,
-			address2: this.form.value.address2,
-			postcode: this.form.value.postcode
+			...location,
+			...{ latitude, longitude }
 		};
+		const contactData = {
+			...this.form.value,
+			contact
+		};
+
 		if (this.form.valid && this.isCandidate) {
-			this.candidateStore.candidateForm = {
-				...this.form.value,
-				contact
-			};
+			this.candidateStore.candidateForm = contactData;
 		}
 		if (this.form.valid && this.isEmployee) {
-			this.employeeStore.employeeForm = {
-				...this.form.value,
-				contact
-			};
+			this.employeeStore.employeeForm = contactData;
 		}
 	}
 
-	private async _initializeForm(role: IEmployee | ICandidate) {
-		await this.loadCountries();
+	//Initialize form
+	private _initializeForm(employee: IEmployee | ICandidate) {
+		if (!employee.contact) {
+			return;
+		}
+		setTimeout(() => {
+			const { contact } = employee;
+			if (contact) {
+				this.locationFormDirective.setValue({
+					country: contact.country,
+					city: contact.city,
+					postcode: contact.postcode,
+					address: contact.address,
+					address2: contact.address2,
+					loc: {
+						type: 'Point',
+						coordinates: [contact.latitude, contact.longitude]
+					}
+				});
+			}
+		}, 200);
+	}
 
-		this.form = this.fb.group({
-			country: [role.contact ? role.contact.country : ''],
-			city: [role.contact ? role.contact.city : ''],
-			postcode: [role.contact ? role.contact.postcode : ''],
-			address: [role.contact ? role.contact.address : ''],
-			address2: [role.contact ? role.contact.address2 : '']
+	/*
+	 * Google Place and Leaflet Map Coordinates Changed Event Emitter
+	 */
+	onCoordinatesChanges(
+		$event: google.maps.LatLng | google.maps.LatLngLiteral
+	) {
+		const {
+			loc: { coordinates }
+		} = this.locationFormDirective.getValue();
+		const [lat, lng] = coordinates;
+		this.leafletTemplate.addMarker(new LatLng(lat, lng));
+	}
+
+	/*
+	 * Leaflet Map Click Event Emitter
+	 */
+	onMapClicked(latlng: LatLng) {
+		const { lat, lng }: LatLng = latlng;
+		const location = this.locationFormDirective.getValue();
+		this.locationFormDirective.setValue({
+			...location,
+			country: '',
+			loc: {
+				type: 'Point',
+				coordinates: [lat, lng]
+			}
 		});
+		this.locationFormDirective.onCoordinatesChanged();
 	}
 
-	private async loadCountries() {
-		const { items } = await this.countryService.getAll();
-		this.countries = items;
-	}
+	/*
+	 * Google Place Geometry Changed Event Emitter
+	 */
+	onGeometrySend(geometry: any) {}
 }

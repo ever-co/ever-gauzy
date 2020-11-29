@@ -34,7 +34,6 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
-import { CountryService } from '../../@core/services/country.service';
 import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
@@ -212,7 +211,6 @@ const COMPONENTS = [
 	providers: [
 		OrganizationsService,
 		InviteGuard,
-		CountryService,
 		OrganizationEmploymentTypesService,
 		CandidatesService,
 		CandidateInterviewersService,

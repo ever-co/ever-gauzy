@@ -10,13 +10,20 @@ export interface IContact extends IBasePerTenantAndOrganizationEntityModel {
 	address?: string;
 	address2?: string;
 	postcode?: number;
+	latitude?: number;
+	longitude?: number;
 	regionCode?: string;
 	fax?: string;
 	fiscalInformation?: string;
 	website?: string;
 }
 
-export interface IContactFindInput {
+export interface IContactFindInput extends IContactCreateInput {
+	id?: string;
+}
+
+export interface IContactCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	firstName?: string;
 	lastName?: string;
@@ -25,21 +32,8 @@ export interface IContactFindInput {
 	address?: string;
 	address2?: string;
 	postcode?: number;
-	regionCode?: string;
-	fax?: string;
-	fiscalInformation?: string;
-	website?: string;
-}
-
-export interface IContactCreateInput {
-	name?: string;
-	firstName?: string;
-	lastName?: string;
-	country?: string;
-	city?: string;
-	address?: string;
-	address2?: string;
-	postcode?: number;
+	latitude?: number;
+	longitude?: number;
 	regionCode?: string;
 	fax?: string;
 	fiscalInformation?: string;

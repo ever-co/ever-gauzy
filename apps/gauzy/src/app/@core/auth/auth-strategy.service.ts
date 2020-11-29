@@ -2,9 +2,9 @@ import { Observable, from, of } from 'rxjs';
 import { NbAuthResult, NbAuthStrategy } from '@nebular/auth';
 import { ActivatedRoute, Router } from '@angular/router';
 import 'rxjs/add/observable/of';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
-import { IUser, ITag, ITenant } from '@gauzy/models';
+import { IUser, ITag, ITenant, IAuthResponse } from '@gauzy/models';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
 import { AuthService } from '../services/auth.service';
 import { Store } from '../services/store.service';
@@ -96,61 +96,7 @@ export class AuthStrategy extends NbAuthStrategy {
 			password
 		};
 
-		return this.authService.login(loginInput).pipe(
-			map((res: { user?: IUser; token?: string }) => {
-				let user, token;
-
-				if (res) {
-					user = res.user;
-					token = res.token;
-				}
-
-				if (!user) {
-					return new NbAuthResult(
-						false,
-						res,
-						false,
-						AuthStrategy.config.login.defaultErrors
-					);
-				}
-
-				this.store.userId = user.id;
-				this.store.token = token;
-				if (this.electronService.isElectronApp) {
-					try {
-						this.electronService.ipcRenderer.send('auth_success', {
-							token: token,
-							userId: user.id,
-							employeeId: user.employee ? user.employee.id : null,
-							organizationId: user.employee
-								? user.employee.organizationId
-								: null,
-							tenantId: user.tenantId ? user.tenantId : null
-						});
-					} catch (error) {}
-				}
-				return new NbAuthResult(
-					true,
-					res,
-					AuthStrategy.config.login.redirect.success,
-					[],
-					AuthStrategy.config.login.defaultMessages
-				);
-			}),
-			catchError((err) => {
-				console.log(err);
-
-				return of(
-					new NbAuthResult(
-						false,
-						err,
-						false,
-						AuthStrategy.config.login.defaultErrors,
-						[AuthStrategy.config.login.defaultErrors]
-					)
-				);
-			})
-		);
+		return this.login(loginInput);
 	}
 
 	register(args: {
@@ -195,18 +141,20 @@ export class AuthStrategy extends NbAuthStrategy {
 		};
 
 		return this.authService.register(registerInput).pipe(
-			map((res) => {
-				return new NbAuthResult(
-					true,
-					res,
-					AuthStrategy.config.register.redirect.success,
-					[],
-					AuthStrategy.config.register.defaultMessages
-				);
+			switchMap((res: IUser) => {
+				const user: IUser = res;
+				if (user) {
+					const loginInput = {
+						findObj: {
+							email
+						},
+						password
+					};
+					return this.login(loginInput);
+				}
 			}),
 			catchError((err) => {
 				console.log(err);
-
 				return of(
 					new NbAuthResult(
 						false,
@@ -367,6 +315,70 @@ export class AuthStrategy extends NbAuthStrategy {
 
 			this.timeTrackerService.clearTimeTracker();
 			this.timesheetFilterService.clear();
+		}
+	}
+
+	public login(loginInput): Observable<NbAuthResult> {
+		return this.authService.login(loginInput).pipe(
+			map((res: IAuthResponse) => {
+				let user, token;
+				if (res) {
+					user = res.user;
+					token = res.token;
+				}
+
+				if (!user) {
+					return new NbAuthResult(
+						false,
+						res,
+						false,
+						AuthStrategy.config.login.defaultErrors
+					);
+				}
+
+				this.store.userId = user.id;
+				this.store.token = token;
+
+				this._electronAuthentication({ user, token });
+
+				return new NbAuthResult(
+					true,
+					res,
+					AuthStrategy.config.login.redirect.success,
+					[],
+					AuthStrategy.config.login.defaultMessages
+				);
+			}),
+			catchError((err) => {
+				console.log(err);
+				return of(
+					new NbAuthResult(
+						false,
+						err,
+						false,
+						AuthStrategy.config.login.defaultErrors,
+						[AuthStrategy.config.login.defaultErrors]
+					)
+				);
+			})
+		);
+	}
+
+	private _electronAuthentication({ user, token }: IAuthResponse) {
+		if (this.electronService.isElectronApp) {
+			try {
+				this.electronService.ipcRenderer.send('auth_success', {
+					token: token,
+					userId: user.id,
+					employeeId: user.employee ? user.employee.id : null,
+					organizationId: user.employee
+						? user.employee.organizationId
+						: null,
+					tenantId: user.tenantId ? user.tenantId : null
+				});
+			} catch (error) {
+				console.log(error);
+			}
 		}
 	}
 }

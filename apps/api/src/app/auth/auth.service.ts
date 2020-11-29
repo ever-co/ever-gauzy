@@ -2,7 +2,8 @@ import { environment as env, environment } from '@env-api/environment';
 import {
 	IUserRegistrationInput,
 	LanguagesEnum,
-	IRolePermission
+	IRolePermission,
+	IAuthResponse
 } from '@gauzy/models';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
@@ -12,12 +13,6 @@ import { EmailService } from '../email/email.service';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
-
-export enum Provider {
-	GOOGLE = 'google',
-	FACEBOOK = 'facebook'
-}
-
 @Injectable()
 export class AuthService {
 	saltRounds: number;
@@ -34,10 +29,7 @@ export class AuthService {
 		return bcrypt.hash(password, this.saltRounds);
 	}
 
-	async login(
-		findObj: any,
-		password: string
-	): Promise<{ user: User; token: string } | null> {
+	async login(findObj: any, password: string): Promise<IAuthResponse | null> {
 		const user = await this.userService.findOne(findObj, {
 			relations: ['role', 'role.rolePermissions', 'employee']
 		});
@@ -47,7 +39,6 @@ export class AuthService {
 		}
 
 		const { token } = await this.createToken(user);
-
 		delete user.hash;
 
 		return {
