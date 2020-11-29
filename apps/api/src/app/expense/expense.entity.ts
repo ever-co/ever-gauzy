@@ -25,7 +25,8 @@ import {
 	IOrganizationVendor,
 	IExpenseCategory,
 	ITag,
-	IEmployee
+	IEmployee,
+	IOrganizationProject
 } from '@gauzy/models';
 import { Employee } from '../employee/employee.entity';
 import { Tag } from '../tags/tag.entity';
@@ -33,6 +34,7 @@ import { ExpenseCategory } from '../expense-categories/expense-category.entity';
 import { OrganizationVendor } from '../organization-vendors/organization-vendors.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
+import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 
 @Entity('expense')
 export class Expense extends TenantOrganizationBase implements IExpense {
@@ -105,7 +107,15 @@ export class Expense extends TenantOrganizationBase implements IExpense {
 	@Index()
 	@IsOptional()
 	@Column({ nullable: true })
+	@RelationId((expense: Expense) => expense.project)
 	projectId?: string;
+
+	@ApiProperty({ type: OrganizationProject })
+	@ManyToOne((type) => OrganizationProject, {
+		nullable: false
+	})
+	@JoinColumn()
+	project: IOrganizationProject;
 
 	@ApiPropertyOptional({ type: String })
 	@Index()

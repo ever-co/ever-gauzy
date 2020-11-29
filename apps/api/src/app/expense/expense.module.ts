@@ -26,6 +26,7 @@ import { IncomeModule } from '../income/income.module';
 import { Income } from '../income/income.entity';
 import { OrganizationRecurringExpense } from '../organization-recurring-expense/organization-recurring-expense.entity';
 import { TenantModule } from '../tenant/tenant.module';
+import { ExpenseMapService } from './expense.map.service';
 
 @Module({
 	imports: [
@@ -55,6 +56,7 @@ import { TenantModule } from '../tenant/tenant.module';
 		IncomeService,
 		EmployeeRecurringExpenseService,
 		OrganizationRecurringExpenseService,
+		ExpenseMapService,
 		...CommandHandlers,
 		...QueryHandlers
 	],
