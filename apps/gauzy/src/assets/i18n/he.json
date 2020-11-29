@@ -212,7 +212,7 @@
 			"PROJECTS": "פרויקטים",
 			"ADD_NEW_DEPARTMENT": "Add New Department",
 			"EDIT_DEPARTMENT": "Edit Department",
-			"TYPE_OF_BONUS": "Bonus Type",
+			"TYPE_OF_BONUS": "Employee Bonus Type",
 			"BONUS_PERCENTAGE": "Bonus Percentage",
 			"ENABLE_DISABLE_INVITES": "Enable/Disable Invites",
 			"ALLOW_USER_INVITES": "Allow Users to send invites",
@@ -267,7 +267,13 @@
 			"TAX_AND_DISCOUNT_INVOICE_ITEMS_SEPARATELY": "Tax And Discount Invoice Items Separately",
 			"ALLOW_TAXING_AND_DISCOUNTING_OF_INVOICE_ITEMS_SEPARATELY": "Allow taxing and discounting of invoice items separately",
 			"DISCOUNT_AFTER_TAX": "Discount after tax",
-			"APPLY_DISCOUNT_AFTER_TAX_FOR_INVOICES_AND_ESTIMATES": "Apply discount after tax for invoices and estimates"
+			"APPLY_DISCOUNT_AFTER_TAX_FOR_INVOICES_AND_ESTIMATES": "Apply discount after tax for invoices and estimates",
+			"FIND_ADDRESS": "Find Address",
+			"COORDINATE": {
+				"TITLE": "COORDINATES",
+				"LATITUDE": "Latitude",
+				"LONGITUDE": "Longitude"
+			}
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -396,7 +402,11 @@
 			"DURATION": "Duration",
 			"TITLE": "Title",
 			"SHORT_DESCRIPTION": "Short Description",
-			"EG_FULL_STACK_WEB_DEVELOPER": "E.g. Full-Stack Web Developer"
+			"EG_FULL_STACK_WEB_DEVELOPER": "E.g. Full-Stack Web Developer",
+			"COORDINATE": {
+				"LATITUDE": "Latitude",
+				"LONGITUDE": "Longitude"
+			}
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -1014,6 +1024,7 @@
 		"DELETED": "Deleted",
 		"ARCHIVED": "נשמר בארכיון",
 		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",
+		"JOBS_CANDIDATES": "Job Candidates",
 		"EDIT_CANDIDATE": {
 			"HEADER": "Manage Candidate",
 			"DEVELOPER": "מפתח",
