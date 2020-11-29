@@ -1,7 +1,9 @@
 import {
 	IExpenseCreateInput,
 	PermissionsEnum,
-	ISplitExpenseOutput
+	ISplitExpenseOutput,
+	IGetExpenseInput,
+	IExpenseReportData
 } from '@gauzy/models';
 import {
 	Body,
@@ -33,6 +35,7 @@ import { ParseJsonPipe } from '../shared';
 import { ExpenseDeleteCommand } from './commands/expense.delete.command';
 import { ExpenseUpdateCommand } from './commands/expense.update.command';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ExpenseMapService } from './expense.map.service';
 
 @ApiTags('Expense')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -40,6 +43,7 @@ import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.g
 export class ExpenseController extends CrudController<Expense> {
 	constructor(
 		private readonly expenseService: ExpenseService,
+		private readonly expenseMapService: ExpenseMapService,
 		private readonly employeeService: EmployeeService,
 		private readonly commandBus: CommandBus,
 		private readonly queryBus: QueryBus
@@ -107,6 +111,36 @@ export class ExpenseController extends CrudController<Expense> {
 				filterDate
 			})
 		);
+	}
+
+	@ApiOperation({
+		summary: 'Find all expenses for an employee, including split expenses.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found split expenses'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
+	@Get('report')
+	async getExpanseReport(
+		@Query() request: IGetExpenseInput
+	): Promise<IExpenseReportData[]> {
+		const expenses = await this.expenseService.getExpanse(request);
+
+		let response: IExpenseReportData[] = [];
+		if (request.groupBy === 'date') {
+			response = this.expenseMapService.mapByDate(expenses);
+		} else if (request.groupBy === 'employee') {
+			response = this.expenseMapService.mapByEmployee(expenses);
+		} else if (request.groupBy === 'project') {
+			response = this.expenseMapService.mapByProject(expenses);
+		}
+		return response;
 	}
 
 	@ApiOperation({ summary: 'Find all expense.' })

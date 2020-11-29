@@ -1,0 +1,308 @@
+<div class="d-flex align-items-center" *ngIf="dailyData?.length > 0">
+	<div class="label">{{ 'REPORT_PAGE.GROUP_BY' | translate }}</div>
+	<div class="ml-3">
+		<nb-select [(ngModel)]="groupBy" (selectedChange)="groupByChange()">
+			<nb-option value="date">{{
+				'REPORT_PAGE.DATE' | translate
+			}}</nb-option>
+			<nb-option value="employee">{{
+				'REPORT_PAGE.EMPLOYEE' | translate
+			}}</nb-option>
+			<nb-option value="project">{{
+				'REPORT_PAGE.PROJECT' | translate
+			}}</nb-option>
+		</nb-select>
+	</div>
+</div>
+<div
+	class="weekly-logs row-table"
+	[nbSpinner]="loading"
+	nbSpinnerSize="giant"
+	nbSpinnerStatus="primary"
+>
+	<div class="px-4" *ngIf="dailyData?.length > 0">
+		<div class="row py-3 font-weight-bold align-items-center">
+			<div *ngIf="groupBy != 'date'" class="col-sm-2">
+				{{ 'REPORT_PAGE.DATE' | translate }}
+			</div>
+			<div *ngIf="groupBy != 'employee'" class="col-sm-2">
+				{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+			</div>
+			<div *ngIf="groupBy != 'project'" class="col-sm-2">
+				{{ 'REPORT_PAGE.PROJECT' | translate }}
+			</div>
+			<div class="col-sm-3 text-center day-col">
+				{{ 'REPORT_PAGE.CATEGORY' | translate }}
+			</div>
+			<div class="col-sm-3 text-center day-col">
+				{{ 'REPORT_PAGE.DESCRIPTION' | translate }}
+			</div>
+			<div class="col text-center day-col">
+				{{ 'REPORT_PAGE.AMOUNT' | translate }}
+			</div>
+		</div>
+	</div>
+
+	<ng-template [ngIf]="dailyData?.length > 0" [ngIfElse]="notFound">
+		<nb-card
+			[ngSwitch]="groupBy"
+			class="card"
+			*ngFor="let day of dailyData"
+		>
+			<ng-container *ngSwitchCase="'employee'">
+				<ng-container
+					*ngTemplateOutlet="
+						groupByEmployeeCardEl;
+						context: { $implicit: day }
+					"
+				></ng-container>
+			</ng-container>
+			<ng-container *ngSwitchCase="'project'">
+				<ng-container
+					*ngTemplateOutlet="
+						groupByProjectCardEl;
+						context: { $implicit: day }
+					"
+				></ng-container>
+			</ng-container>
+			<ng-container *ngSwitchDefault>
+				<ng-container
+					*ngTemplateOutlet="
+						groupByDateCardEl;
+						context: { $implicit: day }
+					"
+				></ng-container>
+			</ng-container>
+		</nb-card>
+	</ng-template>
+	<ng-template #notFound>
+		<nb-card>
+			<nb-card-body>
+				<div class="row font-weight-bold py-5 align-items-center">
+					<div class="col text-center">
+						{{ 'REPORT_PAGE.NO_EXPENSES' | translate }}
+					</div>
+				</div>
+			</nb-card-body>
+		</nb-card>
+	</ng-template>
+</div>
+
+<ng-template let-day #groupByDateCardEl>
+	<nb-card-header class="card-title">{{ day.date }}</nb-card-header>
+	<nb-card-body
+		class="cart-body project-row"
+		*ngFor="let employeeRow of day.employees; let employeeIndex = index"
+	>
+		<div
+			class="project-row"
+			*ngFor="
+				let projectRow of employeeRow.projects;
+				let projectIndex = index
+			"
+		>
+			<div
+				class="expanse-row"
+				*ngFor="
+					let expanseRow of projectRow.expanse;
+					let expanseIndex = index
+				"
+			>
+				<div
+					class="row report-row py-1 align-items-center"
+					[ngClass]="{
+						'mt-3': expanseIndex == 0 && projectIndex == 0
+					}"
+				>
+					<div class="col-sm-2 project-name">
+						<ng-template
+							[ngIf]="expanseIndex == 0 && projectIndex == 0"
+						>
+							<ng-container
+								*ngTemplateOutlet="
+									employeeEl;
+									context: {
+										$implicit: employeeRow?.employee
+									}
+								"
+							>
+							</ng-container>
+						</ng-template>
+					</div>
+					<div class="col-sm-2 project-name">
+						<ng-template [ngIf]="expanseIndex == 0">
+							<ng-container
+								*ngTemplateOutlet="
+									projectEl;
+									context: { $implicit: projectRow?.project }
+								"
+							>
+							</ng-container>
+						</ng-template>
+					</div>
+
+					<div class="col-sm-3 text-center day-col">
+						{{ expanseRow?.category?.name }}
+					</div>
+					<div class="col-sm-3 text-center day-col">
+						{{ expanseRow?.description }}
+					</div>
+					<div class="col text-center day-col">
+						{{ expanseRow?.amount | currency }}
+					</div>
+				</div>
+			</div>
+		</div>
+	</nb-card-body>
+</ng-template>
+
+<ng-template let-employee #groupByEmployeeCardEl>
+	<nb-card-header class="card-title">
+		<ng-container
+			*ngTemplateOutlet="
+				employeeEl;
+				context: { $implicit: employee?.employee }
+			"
+		>
+		</ng-container>
+	</nb-card-header>
+	<nb-card-body
+		class="cart-body project-row"
+		*ngFor="let dateRow of employee.dates; let dateIndex = index"
+	>
+		<div
+			class="employee-row"
+			*ngFor="
+				let projectRow of dateRow.projects;
+				let projectIndex = index
+			"
+		>
+			<div
+				class="project-row"
+				*ngFor="
+					let expanseRow of projectRow.expanse;
+					let expanseIndex = index
+				"
+			>
+				<div class="row py-3 align-items-center">
+					<div class="col-sm-2 project-name">
+						{{
+							projectIndex == 0 && expanseIndex == 0
+								? dateRow.date
+								: ''
+						}}
+					</div>
+					<div class="col-sm-2 project-name">
+						<ng-template [ngIf]="expanseIndex == 0">
+							<ng-container
+								*ngTemplateOutlet="
+									projectEl;
+									context: { $implicit: projectRow?.project }
+								"
+							>
+							</ng-container>
+						</ng-template>
+					</div>
+					<div class="col-sm-3 text-center day-col">
+						{{ expanseRow?.category?.name }}
+					</div>
+					<div class="col-sm-3 text-center day-col">
+						{{ expanseRow?.description }}
+					</div>
+					<div class="col text-center day-col">
+						{{ expanseRow?.amount | currency }}
+					</div>
+				</div>
+			</div>
+		</div>
+	</nb-card-body>
+</ng-template>
+
+<ng-template let-project #groupByProjectCardEl>
+	<nb-card-header class="card-title">
+		<ng-container
+			*ngTemplateOutlet="
+				projectEl;
+				context: { $implicit: project?.project }
+			"
+		>
+		</ng-container>
+	</nb-card-header>
+	<nb-card-body
+		class="cart-body project-row"
+		*ngFor="let dateRow of project.dates; let dateIndex = index"
+	>
+		<div
+			class="employee-row"
+			*ngFor="
+				let employeeRow of dateRow.employees;
+				let employeeIndex = index
+			"
+		>
+			<div
+				class="project-row"
+				*ngFor="
+					let expanseRow of employeeRow.expanse;
+					let expanseIndex = index
+				"
+			>
+				<div class="row py-3 align-items-center">
+					<div class="col-sm-2 project-name">
+						{{
+							employeeIndex == 0 && expanseIndex == 0
+								? dateRow.date
+								: ''
+						}}
+					</div>
+					<div class="col-sm-2 project-name">
+						<ng-template [ngIf]="expanseIndex == 0">
+							<ng-container
+								*ngTemplateOutlet="
+									employeeEl;
+									context: {
+										$implicit: employeeRow?.employee
+									}
+								"
+							>
+							</ng-container>
+						</ng-template>
+					</div>
+					<div class="col-sm-3 text-center day-col">
+						{{ expanseRow?.category?.name }}
+					</div>
+					<div class="col-sm-3 text-center day-col">
+						{{ expanseRow?.description }}
+					</div>
+					<div class="col text-center day-col">
+						{{ expanseRow?.amount | currency }}
+					</div>
+				</div>
+			</div>
+		</div>
+	</nb-card-body>
+</ng-template>
+
+<ng-template let-project #projectEl>
+	<span *ngIf="project; else noProjects">{{ project?.name }} </span>
+	<ng-template #noProjects>
+		<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
+	</ng-template>
+</ng-template>
+
+<ng-template let-client #clientEl>
+	<span *ngIf="client; else noClient">{{ client?.name }} </span>
+	<ng-template #noClient>
+		<span>{{ 'REPORT_PAGE.NO_CLIENT' | translate }}</span>
+	</ng-template>
+</ng-template>
+
+<ng-template let-employee #employeeEl>
+	<ngx-avatar
+		*ngIf="employee"
+		[src]="employee?.user?.imageUrl"
+		[name]="employee?.user?.name"
+	></ngx-avatar>
+	<ng-template #noEmployee>
+		<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
+	</ng-template>
+</ng-template>

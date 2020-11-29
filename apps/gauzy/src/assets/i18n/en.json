@@ -669,7 +669,12 @@
 		"WEEKLY_TIME_AND_ACTIVITY_REPORT": "Weekly Time and Activity Report",
 		"TIME_AND_ACTIVITY_REPORT": "Time and Activity Report",
 		"NO_CLIENT": "No Client",
-		"ALL_REPORTS": "All Reports"
+		"ALL_REPORTS": "All Reports",
+		"EXPENSES_REPORT": "Expenses Report",
+		"CATEGORY": "Category",
+		"DESCRIPTION": "Description",
+		"AMOUNT": "Amount",
+		"NO_EXPENSES": "No Expenses"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Available Apps & Integrations",

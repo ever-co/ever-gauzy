@@ -427,6 +427,13 @@ const routes: Routes = [
 							).then((m) => m.WorkInProgressModule)
 					},
 					{
+						path: 'expense',
+						loadChildren: () =>
+							import(
+								'./reports/expenses-report/expenses-report.module'
+							).then((m) => m.ExpensesReportModule)
+					},
+					{
 						path: '*',
 						component: NotFoundComponent
 					}
