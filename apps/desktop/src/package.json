@@ -36,7 +36,7 @@
 			"category": "public.app-category.developer-tools",
 			"icon": "icon.png",
 			"target": [
-				"pkg",
+				"zip",
 				"dmg"
 			]
 		},
