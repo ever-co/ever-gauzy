@@ -1,0 +1,53 @@
+<nb-layout center>
+	<nb-layout-column class="top-bottom-space">
+		<nb-card class="card-full-height">
+			<nb-card-body>
+				<div class="row center-content">
+					<div class="col-12 text-center margin-content">
+						<img
+							src="../assets/images/logos/logo_Gauzy.svg"
+							class="margin-icon"
+						/>
+					</div>
+					<div class="col-12 version-text">
+						<span>Version {{ version }}</span>
+					</div>
+					<div class="col-12 button-update" *ngIf="!downloadFinish">
+						<button
+							nbButton
+							[disabled]="loading"
+							status="primary"
+							class="button-big"
+							(click)="checkForUpdate()"
+						>
+							Check Update<nb-icon
+								icon="sync-outline"
+								[class]="
+									loading
+										? 'icon-medium icon-spin'
+										: 'icon-medium'
+								"
+							></nb-icon>
+						</button>
+					</div>
+					<div class="col-12 button-update" *ngIf="downloadFinish">
+						<button
+							nbButton
+							status="primary"
+							class="button-big"
+							(click)="restartAndUpdate()"
+						>
+							Update Now<nb-icon
+								icon="arrow-circle-up-outline"
+								class="icon-medium"
+							></nb-icon>
+						</button>
+					</div>
+					<div class="col-12 update-message" *ngIf="notAvailable">
+						<span>{{ message }}</span>
+					</div>
+				</div>
+			</nb-card-body>
+		</nb-card>
+	</nb-layout-column>
+</nb-layout>
