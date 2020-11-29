@@ -7,20 +7,6 @@ import { ICountry } from '@gauzy/models';
 export const createCountries = async (
 	connection: Connection
 ): Promise<ICountry[]> => {
-	// const countries: ICountry[] = [
-	// 	{
-	// 		isoCode: 'USA',
-	// 		country: 'United States of America'
-	// 	},
-	// 	{
-	// 		isoCode: 'ISR',
-	// 		country: 'Israel'
-	// 	},
-	// 	{
-	// 		isoCode: 'BGR',
-	// 		country: 'Bulgaria'
-	// 	}
-	// ];
 	return await new Promise<ICountry[]>((resolve, reject) => {
 		const baseDir = path.join(
 			process.cwd(),
