@@ -212,7 +212,7 @@
 			"PROJECTS": "Проекти",
 			"ADD_NEW_DEPARTMENT": "Добави Нов Отдел",
 			"EDIT_DEPARTMENT": "Редактирай Отдела",
-			"TYPE_OF_BONUS": "Тип Бонус",
+			"TYPE_OF_BONUS": "Employee Bonus Type",
 			"BONUS_PERCENTAGE": "Процентен Бонус",
 			"ENABLE_DISABLE_INVITES": "Включване / Изключване на Поканите",
 			"ALLOW_USER_INVITES": "Позволи на юзърите да изпращат покани",
@@ -267,7 +267,13 @@
 			"TAX_AND_DISCOUNT_INVOICE_ITEMS_SEPARATELY": "Tax And Discount Invoice Items Separately",
 			"ALLOW_TAXING_AND_DISCOUNTING_OF_INVOICE_ITEMS_SEPARATELY": "Allow taxing and discounting of invoice items separately",
 			"DISCOUNT_AFTER_TAX": "Discount after tax",
-			"APPLY_DISCOUNT_AFTER_TAX_FOR_INVOICES_AND_ESTIMATES": "Apply discount after tax for invoices and estimates"
+			"APPLY_DISCOUNT_AFTER_TAX_FOR_INVOICES_AND_ESTIMATES": "Apply discount after tax for invoices and estimates",
+			"FIND_ADDRESS": "Find Address",
+			"COORDINATE": {
+				"TITLE": "COORDINATES",
+				"LATITUDE": "Latitude",
+				"LONGITUDE": "Longitude"
+			}
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -396,7 +402,11 @@
 			"DURATION": "Duration",
 			"TITLE": "Title",
 			"SHORT_DESCRIPTION": "Short Description",
-			"EG_FULL_STACK_WEB_DEVELOPER": "E.g. Full-Stack Web Developer"
+			"EG_FULL_STACK_WEB_DEVELOPER": "E.g. Full-Stack Web Developer",
+			"COORDINATE": {
+				"LATITUDE": "Latitude",
+				"LONGITUDE": "Longitude"
+			}
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Норма по подразбиране",
@@ -1014,6 +1024,7 @@
 		"DELETED": "Изтрит",
 		"ARCHIVED": "Архивирана",
 		"SELECT_EMPLOYEE_MSG": "Моля селектирайте служител от менюто по-долу.",
+		"JOBS_CANDIDATES": "Job Candidates",
 		"EDIT_CANDIDATE": {
 			"HEADER": "Manage Candidate",
 			"DEVELOPER": "Разработчик",

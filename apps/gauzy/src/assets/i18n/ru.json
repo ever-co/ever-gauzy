@@ -212,7 +212,7 @@
 			"PROJECTS": "Проекты",
 			"ADD_NEW_DEPARTMENT": "Добавить новый отдел",
 			"EDIT_DEPARTMENT": "Редактировать отдел",
-			"TYPE_OF_BONUS": "Тип бонуса",
+			"TYPE_OF_BONUS": "Тип бонуса сотрудника",
 			"BONUS_PERCENTAGE": "Бонус Процент",
 			"ENABLE_DISABLE_INVITES": "Включить/выключить приглашения",
 			"ALLOW_USER_INVITES": "Разрешить пользователям отправлять приглашения",
@@ -267,7 +267,13 @@
 			"TAX_AND_DISCOUNT_INVOICE_ITEMS_SEPARATELY": "Налог и Скидка накладных пунктов отдельно",
 			"ALLOW_TAXING_AND_DISCOUNTING_OF_INVOICE_ITEMS_SEPARATELY": "Разрешить налогообложение и дисконтирование товаров по отдельности",
 			"DISCOUNT_AFTER_TAX": "Скидка после налога",
-			"APPLY_DISCOUNT_AFTER_TAX_FOR_INVOICES_AND_ESTIMATES": "Применить скидку после налога на счета и оценки"
+			"APPLY_DISCOUNT_AFTER_TAX_FOR_INVOICES_AND_ESTIMATES": "Применить скидку после налога на счета и оценки",
+			"FIND_ADDRESS": "Найти адрес",
+			"COORDINATE": {
+				"TITLE": "КУРДИНАТ",
+				"LATITUDE": "Широта",
+				"LONGITUDE": "Долгота"
+			}
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -396,7 +402,11 @@
 			"DURATION": "Продолжительность",
 			"TITLE": "Заголовок",
 			"SHORT_DESCRIPTION": "Краткое описание",
-			"EG_FULL_STACK_WEB_DEVELOPER": "Например, разработчик Full-Stack"
+			"EG_FULL_STACK_WEB_DEVELOPER": "Например, разработчик Full-Stack",
+			"COORDINATE": {
+				"LATITUDE": "Широта",
+				"LONGITUDE": "Долгота"
+			}
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -1014,6 +1024,7 @@
 		"DELETED": "Удалено",
 		"ARCHIVED": "Архивирован",
 		"SELECT_EMPLOYEE_MSG": "Пожалуйста, выберите сотрудника из меню выше.",
+		"JOBS_CANDIDATES": "Кандидаты на работу",
 		"EDIT_CANDIDATE": {
 			"HEADER": "Управление Кандидатом",
 			"DEVELOPER": "Разработчик",
