@@ -669,7 +669,12 @@
 		"WEEKLY_TIME_AND_ACTIVITY_REPORT": "Еженедельный отчет о времени и активности",
 		"TIME_AND_ACTIVITY_REPORT": "Отчет о времени и деятельности",
 		"NO_CLIENT": "Нет клиента",
-		"ALL_REPORTS": "Все отчеты"
+		"ALL_REPORTS": "Все отчеты",
+		"EXPENSES_REPORT": "Отчет о расходах",
+		"CATEGORY": "Категория",
+		"DESCRIPTION": "Описание",
+		"AMOUNT": "Количество",
+		"NO_EXPENSES": "Нет расходов"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Доступные приложения и интеграции",
