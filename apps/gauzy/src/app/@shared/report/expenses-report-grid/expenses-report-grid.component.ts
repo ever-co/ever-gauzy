@@ -9,7 +9,6 @@ import {
 	IExpenseReportData,
 	IGetTimeLogReportInput,
 	IOrganization,
-	IReportDayData,
 	ITimeLogFilters,
 	OrganizationPermissionsEnum,
 	PermissionsEnum
@@ -150,7 +149,7 @@ export class ExpensesReportGridComponent implements OnInit, AfterViewInit {
 			.then((logs) => {
 				this.dailyData = logs;
 			})
-			.catch((error) => {})
+			.catch(() => {})
 			.finally(() => (this.loading = false));
 	}
 }
