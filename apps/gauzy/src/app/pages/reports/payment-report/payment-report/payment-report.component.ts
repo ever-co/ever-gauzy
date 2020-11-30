@@ -7,11 +7,9 @@ import {
 import {
 	IGetPaymentInput,
 	IOrganization,
-	IPaymentReportChartData,
-	IPaymentReportData
+	IPaymentReportChartData
 } from '@gauzy/models';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ExpensesService } from 'apps/gauzy/src/app/@core/services/expenses.service';
 import { PaymentService } from 'apps/gauzy/src/app/@core/services/payment.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
