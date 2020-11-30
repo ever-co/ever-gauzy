@@ -5,9 +5,9 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { FileStorageProviderEnum } from '@gauzy/models';
 
 const dbType =
-	process.env.DB_TYPE && process.env.DB_TYPE === 'sqlite'
-		? 'sqlite'
-		: 'postgres';
+	process.env.DB_TYPE && process.env.DB_TYPE === 'postgres'
+		? 'postgres'
+		: 'sqlite';
 
 let databaseConfig: TypeOrmModuleOptions;
 if (process.env.IS_ELECTRON && process.env.GAUZY_USER_PATH) {

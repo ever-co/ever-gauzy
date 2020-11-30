@@ -24,22 +24,6 @@ aliases:
           sudo sed -i 's|HERE/chrome\"|HERE/chrome\" --disable-setuid-sandbox|g' /opt/google/chrome/google-chrome
           rm google-chrome.deb
 
-    - &install-postgresql
-      name: Install PostgreSQL
-      command: |
-          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-          echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" | sudo tee  /etc/apt/sources.list.d/pgdg.list
-          sudo apt update
-          sudo apt -y install postgresql-12 postgresql-client-12          
-          echo 'PostgreSQL Client Installed'
-          sudo pg_ctlcluster 12 main start
-          echo 'PostgreSQL Cluster Started'
-          systemctl status postgresql.service
-          echo 'PostgreSQL Status Displayed Above'
-          # sudo su - postgres
-          # echo 'Altering Postgres User password'
-          psql -c "alter user postgres with password 'root'"
-
     - &install-deps
       name: Install Global Dependencies
       command: |
@@ -235,11 +219,10 @@ jobs:
     test-web:
         <<: *defaults
         machine:
-            image: ubuntu-1604:202010-01
+            image: ubuntu-2004:202010-01
         working_directory: /tmp/workspace/test-web
         steps:
             - checkout
-            - run: *install-postgresql
             - run: *install-node
             - run: *install-deps
             - run: *install-yarn
@@ -265,8 +248,6 @@ jobs:
                   name: Run Build for Gauzy API
                   command: yarn build:api:prod
 
-            # start server before starting tests
-            # TODO: Database???
             - run:
                   name: Run API in background
                   command: yarn start:api
