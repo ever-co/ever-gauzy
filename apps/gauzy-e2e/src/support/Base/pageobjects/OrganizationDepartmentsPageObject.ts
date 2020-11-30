@@ -11,5 +11,6 @@ export const OrganizationDepartmentsPage = {
 	editDepartmentButtonCss: 'nb-card-body > div > button[status="info"]',
 	deleteDepartmentButtonCss: 'nb-card-body > div > button[status="danger"]',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
-	footerCss: 'nb-card-body > div.form-group'
+	footerCss: 'nb-card-body > div.form-group',
+	verifyDepartmentCss: 'div.ng-star-inserted'
 };

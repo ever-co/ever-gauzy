@@ -6,7 +6,9 @@ import {
 	clearField,
 	clickKeyboardBtnByKeycode,
 	clickButtonByIndex,
-	waitElementToHide
+	waitElementToHide,
+	verifyText,
+	verifyTextNotExisting
 } from '../utils/util';
 import { IncomePage } from '../pageobjects/IncomePageObject';
 
@@ -140,4 +142,12 @@ export const clickCardBody = () => {
 
 export const waitMessageToHide = () => {
 	waitElementToHide(IncomePage.toastrMessageCss);
+};
+
+export const verifyElementIsDeleted = (text) => {
+	verifyTextNotExisting(IncomePage.verifyIncomeCss, text);
+};
+
+export const verifyIncomeExists = (text) => {
+	verifyText(IncomePage.verifyIncomeCss, text);
 };

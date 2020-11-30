@@ -16,12 +16,18 @@ import { User as IUser } from '../user/user.entity';
 import { CommandBus } from '@nestjs/cqrs';
 import { AuthRegisterCommand } from './commands';
 import { RequestContext } from '../core/context';
-import { IUserRegistrationInput, LanguagesEnum } from '@gauzy/models';
+import {
+	IAuthLoginInput,
+	IAuthResponse,
+	IUserRegistrationInput,
+	LanguagesEnum
+} from '@gauzy/models';
 import { getUserDummyImage } from '../core';
 import { environment as env } from '@env-api/environment';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { I18nLang } from 'nestjs-i18n';
+import { AuthLoginCommand } from './commands/auth.login.command';
 
 @ApiTags('Auth')
 @Controller()
@@ -79,10 +85,10 @@ export class AuthController {
 	@HttpCode(HttpStatus.OK)
 	@Post('/login')
 	async login(
-		@Body() { findObj, password },
+		@Body() entity: IAuthLoginInput,
 		...options: any[]
-	): Promise<{ user: IUser; token: string } | null> {
-		return this.authService.login(findObj, password);
+	): Promise<IAuthResponse | null> {
+		return this.commandBus.execute(new AuthLoginCommand(entity));
 	}
 
 	@Post('/reset-password')

@@ -48,6 +48,9 @@ describe('Invite candidate test', () => {
 		inviteCandidatePage.clickSendInviteButton();
 	});
 	it('Should be able to add new candidate', () => {
+		cy.on('uncaught:exception', (err, runnable) => {
+			return false;
+		});
 		inviteCandidatePage.addCandidateButtonVisible();
 		inviteCandidatePage.clickAddCandidateButton(0);
 		inviteCandidatePage.firstNameInputVisible();
@@ -75,17 +78,20 @@ describe('Invite candidate test', () => {
 		inviteCandidatePage.clickNextStepButton();
 		inviteCandidatePage.allCurrentCandidatesButtonVisible();
 		inviteCandidatePage.clickAllCurrentCandidatesButton();
+		inviteCandidatePage.waitMessageToHide();
+		inviteCandidatePage.verifyCandidateExists(`${firstName} ${lastName}`);
 	});
 	it('Should be able to reject candidate', () => {
 		cy.on('uncaught:exception', (err, runnable) => {
 			return false;
 		});
-		inviteCandidatePage.waitMessageToHide();
 		inviteCandidatePage.selectTableRow(0);
 		inviteCandidatePage.rejectButtonVisible();
 		inviteCandidatePage.clickRejectButton();
 		inviteCandidatePage.confirmActionButtonVisible();
 		inviteCandidatePage.clickConfirmActionButton();
+		inviteCandidatePage.waitMessageToHide();
+		inviteCandidatePage.verifyBadgeClass();
 	});
 	it('Should be able to edit candidate', () => {
 		inviteCandidatePage.waitMessageToHide();
@@ -104,5 +110,7 @@ describe('Invite candidate test', () => {
 		inviteCandidatePage.clickArchiveButton();
 		inviteCandidatePage.confirmActionButtonVisible();
 		inviteCandidatePage.clickConfirmActionButton();
+		inviteCandidatePage.waitMessageToHide();
+		inviteCandidatePage.verifyElementIsDeleted(`${firstName} ${lastName}`);
 	});
 });

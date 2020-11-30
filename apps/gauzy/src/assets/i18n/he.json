@@ -212,7 +212,7 @@
 			"PROJECTS": "פרויקטים",
 			"ADD_NEW_DEPARTMENT": "Add New Department",
 			"EDIT_DEPARTMENT": "Edit Department",
-			"TYPE_OF_BONUS": "Bonus Type",
+			"TYPE_OF_BONUS": "Employee Bonus Type",
 			"BONUS_PERCENTAGE": "Bonus Percentage",
 			"ENABLE_DISABLE_INVITES": "Enable/Disable Invites",
 			"ALLOW_USER_INVITES": "Allow Users to send invites",
@@ -267,7 +267,13 @@
 			"TAX_AND_DISCOUNT_INVOICE_ITEMS_SEPARATELY": "Tax And Discount Invoice Items Separately",
 			"ALLOW_TAXING_AND_DISCOUNTING_OF_INVOICE_ITEMS_SEPARATELY": "Allow taxing and discounting of invoice items separately",
 			"DISCOUNT_AFTER_TAX": "Discount after tax",
-			"APPLY_DISCOUNT_AFTER_TAX_FOR_INVOICES_AND_ESTIMATES": "Apply discount after tax for invoices and estimates"
+			"APPLY_DISCOUNT_AFTER_TAX_FOR_INVOICES_AND_ESTIMATES": "Apply discount after tax for invoices and estimates",
+			"FIND_ADDRESS": "Find Address",
+			"COORDINATE": {
+				"TITLE": "COORDINATES",
+				"LATITUDE": "Latitude",
+				"LONGITUDE": "Longitude"
+			}
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -396,7 +402,11 @@
 			"DURATION": "Duration",
 			"TITLE": "Title",
 			"SHORT_DESCRIPTION": "Short Description",
-			"EG_FULL_STACK_WEB_DEVELOPER": "E.g. Full-Stack Web Developer"
+			"EG_FULL_STACK_WEB_DEVELOPER": "E.g. Full-Stack Web Developer",
+			"COORDINATE": {
+				"LATITUDE": "Latitude",
+				"LONGITUDE": "Longitude"
+			}
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -633,18 +643,38 @@
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Members Worked",
+		"MANUAL_TIME_EDIT_REPORT": "Manual Time Edit Report",
+		"GROUP_BY": "Group By",
+		"DATE": "תאריך",
+		"TO_DO": "TO-DO",
+		"TIME": "Time",
+		"PROJECT": "פרויקטים",
+		"CLIENT": "לקוחות",
 		"PROJECTS_WORKED": "Projects Worked",
+		"APPS_AND_URLS_REPORT": "APPS & URLS REPORT",
+		"NO_ACTIVITIES": "No Activities",
 		"ACTIVITY": "Activity",
 		"TOTAL_HOURS": "Total Hours",
 		"EMPLOYEE": "עובד",
 		"NO_PROJECT": "No Project",
 		"NO_EMPLOYEE": "No Employee",
 		"NO_TIMELOG": "No Timelog",
+		"TITLE": "Title",
+		"ACTION": "Action",
+		"TIME_SPAN": "Time Span",
+		"REASON": "Reason",
+		"CHANGED_AT": "Changed at",
+		"DURATION": "Duration",
 		"NO_TASK": "No Task",
 		"WEEKLY_TIME_AND_ACTIVITY_REPORT": "Weekly Time and Activity Report",
 		"TIME_AND_ACTIVITY_REPORT": "Time and Activity Report",
 		"NO_CLIENT": "No Client",
-		"ALL_REPORTS": "All Reports"
+		"ALL_REPORTS": "All Reports",
+		"EXPENSES_REPORT": "Expenses Report",
+		"CATEGORY": "קטגוריה",
+		"DESCRIPTION": "Description",
+		"AMOUNT": "כמות",
+		"NO_EXPENSES": "No Expenses"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Available Apps & Integrations",
@@ -999,6 +1029,7 @@
 		"DELETED": "Deleted",
 		"ARCHIVED": "נשמר בארכיון",
 		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",
+		"JOBS_CANDIDATES": "Job Candidates",
 		"EDIT_CANDIDATE": {
 			"HEADER": "Manage Candidate",
 			"DEVELOPER": "מפתח",

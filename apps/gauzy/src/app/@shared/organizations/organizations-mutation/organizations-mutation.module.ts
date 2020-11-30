@@ -21,7 +21,6 @@ import { RemoveLodashModule } from '../../remove-lodash/remove-lodash.module';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { CountryService } from '../../../@core/services/country.service';
 import { OrganizationsStepFormModule } from '../organizations-step-form/organizations-step-form.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
@@ -57,7 +56,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 	],
 	declarations: [OrganizationsMutationComponent],
 	entryComponents: [OrganizationsMutationComponent],
-	providers: [OrganizationDepartmentsService, CountryService],
+	providers: [OrganizationDepartmentsService],
 	exports: [OrganizationsMutationComponent]
 })
 export class OrganizationsMutationModule {}

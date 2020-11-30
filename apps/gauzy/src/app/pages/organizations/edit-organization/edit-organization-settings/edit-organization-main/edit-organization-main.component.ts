@@ -1,6 +1,12 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import {
+	AfterViewInit,
+	ChangeDetectorRef,
+	Component,
+	OnDestroy,
+	OnInit
+} from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { CurrenciesEnum, IOrganization, ITag } from '@gauzy/models';
+import { ICurrency, IOrganization, ITag } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
 import { filter, first } from 'rxjs/operators';
@@ -19,15 +25,15 @@ import { Store } from '../../../../../@core/services/store.service';
 })
 export class EditOrganizationMainComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit, OnDestroy, AfterViewInit {
 	organization: IOrganization;
 	imageUrl: string;
 	hoverState: boolean;
 	employeesCount: number;
 	form: FormGroup;
-	currencies: string[] = Object.values(CurrenciesEnum);
 	tags: ITag[] = [];
 	selectedTags: any;
+	currency: string;
 
 	constructor(
 		private router: Router,
@@ -37,7 +43,8 @@ export class EditOrganizationMainComponent
 		private toastrService: NbToastrService,
 		private organizationEditStore: OrganizationEditStore,
 		readonly translateService: TranslateService,
-		private store: Store
+		private store: Store,
+		private cdr: ChangeDetectorRef
 	) {
 		super(translateService);
 	}
@@ -61,6 +68,10 @@ export class EditOrganizationMainComponent
 	}
 
 	ngOnDestroy(): void {}
+
+	ngAfterViewInit() {
+		this.cdr.detectChanges();
+	}
 
 	private async loadEmployeesCount() {
 		if (!this.organization) {
@@ -93,23 +104,39 @@ export class EditOrganizationMainComponent
 	}
 
 	private _initializeForm() {
+		this.form = this.fb.group({
+			tags: [''],
+			currency: ['', Validators.required],
+			name: ['', Validators.required],
+			officialName: [''],
+			profile_link: [''],
+			taxId: [''],
+			registrationDate: [''],
+			website: ['']
+		});
+		setTimeout(() => {
+			this._setValues();
+		}, 100);
+	}
+
+	private _setValues() {
 		if (!this.organization) {
 			return;
 		}
-		this.form = this.fb.group({
-			tags: [this.organization.tags],
-			currency: [this.organization.currency, Validators.required],
-			name: [this.organization.name, Validators.required],
-			officialName: [this.organization.officialName],
-			profile_link: [this.organization.profile_link],
-			taxId: [this.organization.taxId],
-			registrationDate: [
-				this.organization.registrationDate
-					? new Date(this.organization.registrationDate)
-					: null
-			],
-			website: [this.organization.website]
+		this.form.setValue({
+			tags: this.organization.tags,
+			currency: this.organization.currency,
+			name: this.organization.name,
+			officialName: this.organization.officialName,
+			profile_link: this.organization.profile_link,
+			taxId: this.organization.taxId,
+			registrationDate: this.organization.registrationDate
+				? new Date(this.organization.registrationDate)
+				: null,
+			website: this.organization.website
 		});
+		this.form.updateValueAndValidity();
+		this.currency = this.organization.currency;
 		this.tags = this.form.get('tags').value || [];
 	}
 
@@ -135,5 +162,12 @@ export class EditOrganizationMainComponent
 
 	selectedTagsEvent(currentSelection: ITag[]) {
 		this.form.get('tags').setValue(currentSelection);
+	}
+
+	/*
+	 * On Changed Currency Event Emitter
+	 */
+	currencyChanged($event: ICurrency) {
+		console.log($event);
 	}
 }

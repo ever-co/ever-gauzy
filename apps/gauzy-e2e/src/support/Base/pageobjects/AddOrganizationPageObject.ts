@@ -1,9 +1,25 @@
 export const AddOrganizationPage = {
 	organisationNameFieldCss: '[placeholder="Organization Name"]',
 	currencyFieldCss: '[class="select-button placeholder"]',
-	currencyOptionCss: '.option-list nb-option',
+	dropdownOptionCss: '.option-list nb-option',
 	officialNameFieldCss: '#officialNameInput',
 	taxFieldCss: '#taxIdInput',
 	nextButtonCss: 'button[type="submit"]',
-	addButtonCss: 'nb-card-body > div > button[status="success"]'
+	addButtonCss: 'nb-card-body > div > button[status="success"]',
+	verifyOrganizationCss: 'div.d-block',
+	toastrMessageCss: 'nb-toast.ng-trigger',
+	countryDropdownCss: '#countrySelect',
+	cityInputCss: '#cityInput',
+	postcodeInputCss: '#postcodeInput',
+	bonusTypeDropdownCss: '[formcontrolname="bonusType"]',
+	bonusPercentageCss: '[formcontrolname="bonusPercentage"]',
+	expiryPeriodInputCss: '[formcontrolname="inviteExpiryPeriod"]',
+	dateTypeDropdownCss: '[formcontrolname="defaultValueDateType"]',
+	startOfWeekDropdownCss: '#startWeekOnSelect',
+	regionCodeDropdownCss: '[formcontrolname="regionCode"]',
+	numberFormatDropdownCss: '[formcontrolname="numberFormat"]',
+	dateFormatDropdownCss: '[formcontrolname="dateFormat"]',
+	timeZoneDropdownCss: '[formcontrolname="timeZone"]',
+	timeZoneDropdownOptionCss: 'div.ng-option',
+	tableRowCss: 'table > tbody > tr.ng2-smart-row'
 };

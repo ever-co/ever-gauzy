@@ -4,7 +4,11 @@ import {
 	clickButton,
 	clearField,
 	enterInput,
-	clickKeyboardBtnByKeycode
+	clickKeyboardBtnByKeycode,
+	verifyTextNotExisting,
+	getLastElement,
+	waitElementToHide,
+	verifyValue
 } from '../utils/util';
 import { AddEmployeePositionPage } from '../pageobjects/AddEmployeePositionPageObject';
 
@@ -71,11 +75,8 @@ export const editEmployeePositionButtonVisible = () => {
 	);
 };
 
-export const clickEditEmployeePositionButton = (index) => {
-	clickButtonByIndex(
-		AddEmployeePositionPage.editEmployeePositionButtonCss,
-		index
-	);
+export const clickEditEmployeePositionButton = () => {
+	getLastElement(AddEmployeePositionPage.editEmployeePositionButtonCss);
 };
 
 export const editEmployeePositionInpuVisible = () => {
@@ -93,11 +94,8 @@ export const deletePositionButtonVisible = () => {
 	);
 };
 
-export const clickDeletePositionButton = (index) => {
-	clickButtonByIndex(
-		AddEmployeePositionPage.removeEmployeePositionButtonCss,
-		index
-	);
+export const clickDeletePositionButton = () => {
+	getLastElement(AddEmployeePositionPage.removeEmployeePositionButtonCss);
 };
 
 export const confirmDeleteButtonVisible = () => {
@@ -108,4 +106,24 @@ export const confirmDeleteButtonVisible = () => {
 
 export const clickConfirmDeletePositionButton = () => {
 	clickButton(AddEmployeePositionPage.confirmDeletePositionButtonCss);
+};
+
+export const verifyTitleExists = (text) => {
+	verifyValue(AddEmployeePositionPage.editPositionInputCss, text);
+};
+
+export const verifyElementIsDeleted = (text) => {
+	verifyTextNotExisting(AddEmployeePositionPage.verifyTextCss, text);
+};
+
+export const waitMessageToHide = () => {
+	waitElementToHide(AddEmployeePositionPage.toastrMessageCss);
+};
+
+export const cancelButtonVisible = () => {
+	verifyElementIsVisible(AddEmployeePositionPage.cancelButtonCss);
+};
+
+export const clickCancelButton = () => {
+	clickButton(AddEmployeePositionPage.cancelButtonCss);
 };

@@ -25,5 +25,9 @@ export const InvoicesPage = {
 	backButtonCss: 'g[data-name="arrow-back"]',
 	deleteItemCss: 'i.nb-trash',
 	confirmButtonCss: 'nb-card-footer.text-right > button[status="success"]',
-	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]'
+	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
+	verifyInvoiceCss: 'div.ng-star-inserted',
+	draftBadgeCss: 'div.badge-warning',
+	successBadgeCss: 'div.badge-success',
+	emailCardCss: 'nb-card-body.invoice-email-body'
 };

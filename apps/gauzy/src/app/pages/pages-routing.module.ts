@@ -406,11 +406,32 @@ const routes: Routes = [
 							).then((m) => m.WeeklyTimeReportsModule)
 					},
 					{
+						path: 'apps-urls',
+						loadChildren: () =>
+							import(
+								'./reports/apps-urls-report/apps-urls-report.module'
+							).then((m) => m.AppsUrlsReportModule)
+					},
+					{
+						path: 'manual-time-edits',
+						loadChildren: () =>
+							import(
+								'./reports/manual-time/manual-time.module'
+							).then((m) => m.ManualTimeModule)
+					},
+					{
 						path: 'accounting',
 						loadChildren: () =>
 							import(
 								'./work-in-progress/work-in-progress.module'
 							).then((m) => m.WorkInProgressModule)
+					},
+					{
+						path: 'expense',
+						loadChildren: () =>
+							import(
+								'./reports/expenses-report/expenses-report.module'
+							).then((m) => m.ExpensesReportModule)
 					},
 					{
 						path: '*',

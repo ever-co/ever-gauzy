@@ -4,9 +4,11 @@ import {
 	IExpense,
 	IExpenseCreateInput,
 	IExpenseFindInput,
+	IExpenseReportData,
 	IExpenseUpdateInput,
 	ISplitExpenseOutput
 } from '@gauzy/models';
+import { toParams } from '@gauzy/utils';
 import { first } from 'rxjs/operators';
 
 @Injectable({
@@ -91,6 +93,15 @@ export class ExpensesService {
 		return this.http
 			.delete('/api/expense/deleteExpense', {
 				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
+
+	getDailyExpensesReport(request: any = {}) {
+		return this.http
+			.get<IExpenseReportData[]>(`/api/expense/report`, {
+				params: toParams(request)
 			})
 			.pipe(first())
 			.toPromise();

@@ -6,7 +6,9 @@ import {
 	enterInput,
 	clickElementByText,
 	clickKeyboardBtnByKeycode,
-	waitElementToHide
+	waitElementToHide,
+	verifyText,
+	verifyTextNotExisting
 } from '../utils/util';
 import { PaymentsPage } from '../pageobjects/PaymentsPageObject';
 
@@ -140,4 +142,12 @@ export const clickCardBody = () => {
 
 export const waitMessageToHide = () => {
 	waitElementToHide(PaymentsPage.toastrMessageCss);
+};
+
+export const verifyElementIsDeleted = (text) => {
+	verifyTextNotExisting(PaymentsPage.verifyPaymentCss, text);
+};
+
+export const verifyPaymentExists = (text) => {
+	verifyText(PaymentsPage.verifyPaymentCss, text);
 };

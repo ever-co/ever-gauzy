@@ -48,10 +48,12 @@ import { TagsColorInputModule } from '../../../../@shared/tags/tags-color-input/
 import { OrganizationExpenseCategoriesService } from '../../../../@core/services/organization-expense-categories.service';
 import { InviteService } from '../../../../@core/services/invite.service';
 import { TableComponentsModule } from '../../../../@shared/table-components/table-components.module';
-import { FileUploaderModule } from 'apps/gauzy/src/app/@shared/file-uploader-input/file-uploader-input.module';
+import { FileUploaderModule } from '../../../../@shared/file-uploader-input/file-uploader-input.module';
 import { SharedModule } from '../../../../@shared/shared.module';
-import { TimerPickerModule } from 'apps/gauzy/src/app/@shared/timer-picker/timer-picker.module';
-
+import { TimerPickerModule } from '../../../../@shared/timer-picker/timer-picker.module';
+import { CurrencyModule } from '../../../../@shared/currency/currency.module';
+import { LocationFormModule } from '../../../../@shared/forms/location';
+import { LeafletMapModule } from 'apps/gauzy/src/app/@shared/forms/maps/leaflet/leaflet.module';
 @NgModule({
 	imports: [
 		NbBadgeModule,
@@ -94,7 +96,10 @@ import { TimerPickerModule } from 'apps/gauzy/src/app/@shared/timer-picker/timer
 		TagsColorInputModule,
 		FileUploaderModule,
 		SharedModule,
-		TimerPickerModule
+		TimerPickerModule,
+		CurrencyModule,
+		LocationFormModule,
+		LeafletMapModule
 	],
 	providers: [
 		OrganizationDepartmentsService,

@@ -23,9 +23,10 @@ describe('Job proposals test', () => {
 		jobProposalsPage.enterContentInputData(JobsProposalsPageData.content);
 		jobProposalsPage.saveButtonVisible();
 		jobProposalsPage.clickSaveButton();
+		jobProposalsPage.waitMessageToHide();
+		jobProposalsPage.verifyProposalExists(JobsProposalsPageData.name);
 	});
 	it('Should be able to edit job proposal', () => {
-		jobProposalsPage.waitMessageToHide();
 		jobProposalsPage.selectTableRow(0);
 		jobProposalsPage.selectTableRow(0);
 		jobProposalsPage.editButtonVisible();
@@ -36,6 +37,8 @@ describe('Job proposals test', () => {
 		jobProposalsPage.enterContentInputData(JobsProposalsPageData.content);
 		jobProposalsPage.saveButtonVisible();
 		jobProposalsPage.clickSaveButton();
+		jobProposalsPage.waitMessageToHide();
+		jobProposalsPage.verifyProposalExists(JobsProposalsPageData.name);
 	});
 	it('Should be able to make proposal default', () => {
 		jobProposalsPage.makeDefaultButtonVisible();
@@ -49,5 +52,7 @@ describe('Job proposals test', () => {
 		jobProposalsPage.clickDeleteButton();
 		jobProposalsPage.confirmDeleteButtonVisible();
 		jobProposalsPage.clickConfirmDeleteButton();
+		jobProposalsPage.waitMessageToHide();
+		jobProposalsPage.verifyElementIsDeleted(JobsProposalsPageData.name);
 	});
 });

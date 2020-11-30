@@ -139,3 +139,11 @@ export function avarage(items: any, column: string) {
 	}
 	return sum / items.length;
 }
+
+/**
+ * The precision for a decimal (exact numeric applies only for decimal column), which is the maximum
+ * number of digits that are stored.
+ */
+export function convertPrecisionFloatDigit(val: number, digit: number = 6) {
+	return parseFloat(parseFloat(val.toString()).toFixed(digit));
+}

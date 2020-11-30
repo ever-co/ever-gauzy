@@ -150,20 +150,27 @@ export class OrganizationsComponent
 			.open(OrganizationsMutationComponent)
 			.onClose.pipe(first())
 			.toPromise();
-
 		if (result) {
 			try {
-				await this.organizationsService.create(result);
-				this.toastrService.primary(
-					this.getTranslation(
-						'NOTES.ORGANIZATIONS.ADD_NEW_ORGANIZATION',
-						{
-							name: result.name
-						}
-					),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				);
-				this._loadSmartTable();
+				await this.organizationsService
+					.create(result)
+					.then(() => {
+						this.toastrService.primary(
+							this.getTranslation(
+								'NOTES.ORGANIZATIONS.ADD_NEW_ORGANIZATION',
+								{
+									name: result.name
+								}
+							),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						);
+						setTimeout(() => {
+							this._loadSmartTable();
+						}, 200);
+					})
+					.catch((error) => {
+						this.errorHandler.handleError(error);
+					});
 			} catch (error) {
 				this.errorHandler.handleError(error);
 			}

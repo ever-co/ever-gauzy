@@ -70,6 +70,7 @@ import { InvoiceExpensesSelectorComponent } from './table-components/invoice-exp
 import { BackNavigationModule } from '../../@shared/back-navigation';
 import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-estimate-history.service';
 import { NgxPermissionsModule } from 'ngx-permissions';
+import { InvoicePdfComponent } from './invoice-pdf/invoice-pdf.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -154,7 +155,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		InvoicePaymentsComponent,
 		PaymentMutationComponent,
 		InvoiceApplyTaxDiscountComponent,
-		InvoiceExpensesSelectorComponent
+		InvoiceExpensesSelectorComponent,
+		InvoicePdfComponent
 	],
 	declarations: [
 		InvoicesComponent,
@@ -179,7 +181,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		InvoicePaymentsComponent,
 		PaymentMutationComponent,
 		InvoiceApplyTaxDiscountComponent,
-		InvoiceExpensesSelectorComponent
+		InvoiceExpensesSelectorComponent,
+		InvoicePdfComponent
 	]
 })
 export class InvoicesModule {}

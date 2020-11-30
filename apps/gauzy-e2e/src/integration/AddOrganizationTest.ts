@@ -26,8 +26,62 @@ describe('Create Organization Test', () => {
 		addOrganizationPage.enterOfficialName(organizationName);
 		addOrganizationPage.enterTaxId(taxId);
 		addOrganizationPage.clickOnNextButton();
+		addOrganizationPage.countryDropdownVisible();
+		addOrganizationPage.clickCountryDropdown();
+		addOrganizationPage.selectCountryFromDropdown(
+			AddOrganizationPageData.country
+		);
+		addOrganizationPage.cityInputVisible();
+		addOrganizationPage.enterCityInputData(AddOrganizationPageData.city);
+		addOrganizationPage.postcodeInputVisible();
+		addOrganizationPage.enterPostcodeInputData(
+			AddOrganizationPageData.postcode
+		);
 		addOrganizationPage.clickOnNextButton();
+		addOrganizationPage.bonusTypeDropdownVisible();
+		addOrganizationPage.clickBonusTypeDropdown();
+		addOrganizationPage.selectBonusTypeFromDropdown(
+			AddOrganizationPageData.bonusType
+		);
+		addOrganizationPage.bonusPercentageInputVisible();
+		addOrganizationPage.enterBonusPercentageInputData(
+			AddOrganizationPageData.bonusPercentage
+		);
+		addOrganizationPage.expiryPeriodInputVisible();
+		addOrganizationPage.enterExpiryPeriodInputData(
+			AddOrganizationPageData.expiryPeriod
+		);
 		addOrganizationPage.clickOnNextButton();
+		addOrganizationPage.timeZoneDropdownVisible();
+		addOrganizationPage.clickTimeZoneDropdown();
+		addOrganizationPage.selectTimeZoneFromDropdown(
+			AddOrganizationPageData.timeZone
+		);
+		addOrganizationPage.startOfWeekDropdownVisible();
+		addOrganizationPage.clickStartOfWeekDropdown();
+		addOrganizationPage.selectStartOfWeekFromDropdown(
+			AddOrganizationPageData.startOfWeek
+		);
+		addOrganizationPage.dateTypeDropdownVisible();
+		addOrganizationPage.clickDateTypeDropdown();
+		addOrganizationPage.selectDateTypeFromDropdown(
+			AddOrganizationPageData.dateType
+		);
+		addOrganizationPage.regionDropdownVisible();
+		addOrganizationPage.clickRegionDropdown();
+		addOrganizationPage.selectRegionFromDropdown(
+			AddOrganizationPageData.region
+		);
+		addOrganizationPage.numberFormatDropdownVisible();
+		addOrganizationPage.clickNumberFormatDropdown();
+		addOrganizationPage.selectNumberFormatFromDropdown(
+			AddOrganizationPageData.numberFormat
+		);
+		addOrganizationPage.dateFormatDropdownVisible();
+		addOrganizationPage.clickDateFormatDropdown();
+		addOrganizationPage.selectDateFormatFromDropdown();
 		addOrganizationPage.clickOnNextButton();
+		addOrganizationPage.waitMessageToHide();
+		addOrganizationPage.verifyOrganizationExists(organizationName);
 	});
 });

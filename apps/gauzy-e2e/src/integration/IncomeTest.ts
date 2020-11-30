@@ -45,9 +45,10 @@ describe('Income test', () => {
 		incomePage.enterNotesInputData(IncomePageData.defaultNote);
 		incomePage.saveIncomeButtonVisible();
 		incomePage.clickSaveIncomeButton();
+		incomePage.waitMessageToHide();
+		incomePage.verifyIncomeExists(IncomePageData.defaultNote);
 	});
 	it('Should be able to edit income', () => {
-		incomePage.waitMessageToHide();
 		incomePage.selectTableRow(0);
 		incomePage.editIncomeButtonVisible();
 		incomePage.clickEditIncomeButton();
@@ -62,13 +63,16 @@ describe('Income test', () => {
 		incomePage.enterNotesInputData(IncomePageData.defaultNote);
 		incomePage.saveIncomeButtonVisible();
 		incomePage.clickSaveIncomeButton();
+		incomePage.waitMessageToHide();
+		incomePage.verifyIncomeExists(IncomePageData.defaultNote);
 	});
 	it('Should be able to delete income', () => {
-		incomePage.waitMessageToHide();
 		incomePage.selectTableRow(0);
 		incomePage.deleteIncomeButtonVisible();
 		incomePage.clickDeleteIncomeButton();
 		incomePage.confirmDeleteButtonVisible();
 		incomePage.clickConfirmDeleteButton();
+		incomePage.waitMessageToHide();
+		incomePage.verifyElementIsDeleted(IncomePageData.defaultNote);
 	});
 });

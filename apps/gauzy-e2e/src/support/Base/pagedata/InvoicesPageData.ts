@@ -1,6 +1,7 @@
 export const InvoicesPageData = {
 	invoiceType: 'By Employee Hours',
 	discountValue: 5,
+	editDiscountValue: 3,
 	discountType: 'Percent',
 	taxValue: 5,
 	taxType: 'Percent',

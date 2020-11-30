@@ -290,6 +290,7 @@ import { randomSeedConfig } from './random-seed-config';
 import { createDefaultJobSearchCategories } from '../../employee-job-preset/job-search-category/job-search-category.seed';
 import { createDefaultJobSearchOccupations } from '../../employee-job-preset/job-search-occupation/job-search-occupation.seed';
 import { createDefaultReport } from '../../reports/report.seed';
+import { createCurrencies } from '../../currency/currency.seed';
 
 @Injectable()
 export class SeedDataService {
@@ -371,9 +372,7 @@ export class SeedDataService {
 	/**
 	 * Seed Default Data
 	 */
-	public async runReportsSeed() {
-		const isDefault = true;
-
+	public async runReportsSeed(isDefault = true) {
 		try {
 			// Connect to database
 			await this.createConnection();
@@ -384,6 +383,7 @@ export class SeedDataService {
 		} catch (error) {
 			this.handleError(error);
 		}
+		return;
 	}
 
 	/**
@@ -504,6 +504,11 @@ export class SeedDataService {
 				createCountries(this.connection)
 			);
 
+			await this.tryExecute(
+				'Currencies',
+				createCurrencies(this.connection)
+			);
+
 			await this.seedBasicDefaultData();
 
 			if (!isDefault) {
@@ -530,6 +535,8 @@ export class SeedDataService {
 		this.tenant = await createDefaultTenants(this.connection);
 
 		this.roles = await createRoles(this.connection, [this.tenant]);
+
+		await this.runReportsSeed(true);
 
 		await createRolePermissions(this.connection, this.roles, [this.tenant]);
 

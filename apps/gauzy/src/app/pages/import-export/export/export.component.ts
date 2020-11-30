@@ -185,6 +185,13 @@ export class ExportComponent implements OnInit, OnDestroy {
 				entities: []
 			},
 			{
+				name: 'Currency',
+				value: 'currency',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
 				name: 'Deal',
 				value: 'deal',
 				checked: true,

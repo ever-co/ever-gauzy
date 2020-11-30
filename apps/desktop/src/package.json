@@ -36,7 +36,7 @@
 			"category": "public.app-category.developer-tools",
 			"icon": "icon.png",
 			"target": [
-				"pkg",
+				"zip",
 				"dmg"
 			]
 		},
@@ -95,6 +95,7 @@
 		"mac-screen-capture-permissions": "https://github.com/ever-co/mac-screen-capture-permissions.git",
 		"form-data": "^3.0.0",
 		"node-fetch": "^2.6.1",
-		"screenshot-desktop": "^1.12.2"
+		"screenshot-desktop": "^1.12.2",
+		"electron-updater": "~4.3.5"
 	}
 }

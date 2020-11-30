@@ -35,14 +35,13 @@ import { TeamTaskDialogComponent } from './components/team-task-dialog/team-task
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { TaskSettingsComponent } from './components/task/task-settings/task-settings.component';
 import { ProjectViewComponent } from './components/task/task-settings/project-view/project-view.component';
-import { TasksSprintSettingsViewComponent } from './components/task/task-settings/project-view/tasks-sprint-settings-view/tasks-sprint-settings-view.component';
 import { GauzyEditableGridModule } from '../../@shared/components/editable-grid/gauzy-editable-grid.module';
-import { SprintDialogComponent } from './components/task/task-settings/project-view/tasks-sprint-settings-view/sprint-dialog/sprint-dialog.component';
 import { TasksSprintViewComponent } from './components/task/tasks-layouts/tasks-sprint-view/tasks-sprint-view.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprint-view/task/task.component';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { AddTaskDialogModule } from '../../@shared/tasks/add-task-dialog/add-task-dialog.module';
+import { TasksSprintSettingsViewModule } from '../../@shared/tasks-sprint-settings-view/tasks-sprint-settings-view.module';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
@@ -54,8 +53,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 		TeamTaskDialogComponent,
 		TaskSettingsComponent,
 		ProjectViewComponent,
-		TasksSprintSettingsViewComponent,
-		SprintDialogComponent,
 		TasksSprintViewComponent,
 		SprintTaskComponent
 	],
@@ -97,7 +94,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		EmployeeMultiSelectModule,
 		GauzyEditableGridModule,
 		DragDropModule,
-		BackNavigationModule
+		BackNavigationModule,
+		TasksSprintSettingsViewModule
 	],
 	entryComponents: [MyTaskDialogComponent, TeamTaskDialogComponent]
 })

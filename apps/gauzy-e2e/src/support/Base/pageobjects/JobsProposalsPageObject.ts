@@ -10,5 +10,6 @@ export const JobsProposalsPage = {
 	makeDefaultButtonCss: 'div.mb-3 > button[status="info"]',
 	deleteButtonCss: 'div.mb-3 > button[status="danger"]',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="primary"]',
-	toastrMessageCss: 'nb-toast.ng-trigger'
+	toastrMessageCss: 'nb-toast.ng-trigger',
+	verifyProposalCss: 'div.ng-star-inserted'
 };

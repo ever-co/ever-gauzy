@@ -11,7 +11,8 @@ import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-e
 	selector: 'ga-invoice-send',
 	templateUrl: './invoice-send-mutation.component.html'
 })
-export class InvoiceSendMutationComponent extends TranslationBaseComponent
+export class InvoiceSendMutationComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	invoice: IInvoice;
 	alreadySent = false;

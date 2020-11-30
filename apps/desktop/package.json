@@ -24,8 +24,7 @@
 		"electron-installer-dmg": "~3.0.0",
 		"electron-packager": "~15.1.0",
 		"electron-rebuild": "~2.2.0",
-		"electron-reload": "~1.5.0",
-		"electron-updater": "~4.3.5"
+		"electron-reload": "~1.5.0"
 	},
 	"dependencies": {
 		"@nestjs/typeorm": "^7.1.4",
@@ -44,6 +43,7 @@
 		"squirrelly": "^8.0.8",
 		"twing": "^5.0.2",
 		"typeorm": "^0.2.26",
-		"typeorm-express-query-builder": "^1.2.0"
+		"typeorm-express-query-builder": "^1.2.0",
+		"electron-updater": "~4.3.5"
 	}
 }

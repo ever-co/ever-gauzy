@@ -6,7 +6,8 @@ import {
 	EventEmitter,
 	OnDestroy,
 	OnInit,
-	Output
+	Output,
+	ViewChild
 } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
@@ -14,16 +15,18 @@ import {
 	ICountry,
 	CurrenciesEnum,
 	DefaultValueDateTypeEnum,
-	DEFAULT_PROFIT_BASED_BONUS,
 	RegionsEnum,
 	WeekDaysEnum,
-	ITag
+	ITag,
+	ICurrency
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import { CountryService } from '../../../@core/services/country.service';
+import { LocationFormComponent } from '../../forms/location';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { LatLng } from 'leaflet';
+import { LeafletMapComponent } from '../../forms/maps/leaflet/leaflet.component';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-organizations-step-form',
 	templateUrl: './organizations-step-form.component.html',
@@ -33,7 +36,13 @@ import { CountryService } from '../../../@core/services/country.service';
 	]
 })
 export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
+	@ViewChild('locationFormDirective')
+	locationFormDirective: LocationFormComponent;
+
+	@ViewChild('leafletTemplate')
+	leafletTemplate: LeafletMapComponent;
+
+	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
 
 	hoverState: boolean;
 	currencies: string[] = Object.values(CurrenciesEnum);
@@ -48,23 +57,22 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 	listOfDateFormats = ['L', 'L hh:mm', 'LL', 'LLL', 'LLLL'];
 
 	orgMainForm: FormGroup;
-	orgLocationForm: FormGroup;
 	orgBonusForm: FormGroup;
 	orgSettingsForm: FormGroup;
 	tags: ITag[] = [];
+	currency: ICurrency;
+	country: ICountry;
 
 	@Output()
 	createOrganization = new EventEmitter();
 
 	constructor(
 		private fb: FormBuilder,
-		private toastrService: NbToastrService,
-		private countryService: CountryService
+		private toastrService: NbToastrService
 	) {}
 
 	async ngOnInit() {
 		this._initializedForm();
-		await this.loadCountries();
 	}
 
 	private _initializedForm() {
@@ -79,21 +87,20 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 			taxId: [],
 			tags: []
 		});
-
-		this.orgLocationForm = this.fb.group({
-			country: [],
-			city: [],
-			postcode: [],
-			address: [],
-			address2: []
-		});
-
 		this.orgBonusForm = this.fb.group({
-			bonusType: [BonusTypeEnum.PROFIT_BASED_BONUS],
-			bonusPercentage: [
-				DEFAULT_PROFIT_BASED_BONUS,
-				[Validators.min(0), Validators.max(100)]
+			bonusType: [],
+			bonusPercentage: ['', [Validators.min(0), Validators.max(100)]]
+		});
+		this.orgSettingsForm = this.fb.group({
+			timeZone: [],
+			startWeekOn: [],
+			defaultValueDateType: [
+				DefaultValueDateTypeEnum.TODAY,
+				Validators.required
 			],
+			regionCode: [],
+			numberFormat: [],
+			dateFormat: [],
 			fiscalStartDate: [
 				formatDate(
 					new Date(`01/01/${new Date().getFullYear()}`),
@@ -111,22 +118,6 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 			invitesAllowed: [true],
 			inviteExpiryPeriod: [7, [Validators.min(1)]]
 		});
-		this.orgSettingsForm = this.fb.group({
-			timeZone: [],
-			startWeekOn: [],
-			defaultValueDateType: [
-				DefaultValueDateTypeEnum.TODAY,
-				Validators.required
-			],
-			regionCode: [],
-			numberFormat: [],
-			dateFormat: []
-		});
-	}
-
-	private async loadCountries() {
-		const { items } = await this.countryService.getAll();
-		this.countries = items;
 	}
 
 	handleImageUploadError(error) {
@@ -135,7 +126,6 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 
 	loadDefaultBonusPercentage(bonusType: BonusTypeEnum) {
 		const bonusPercentageControl = this.orgBonusForm.get('bonusPercentage');
-
 		switch (bonusType) {
 			case BonusTypeEnum.PROFIT_BASED_BONUS:
 				bonusPercentageControl.setValue(75);
@@ -179,7 +169,7 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 
 	dateFormatPreview(format: string) {
 		this.orgSettingsForm.valueChanges
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((val) => {
 				this.regionCode = val.regionCode;
 			});
@@ -200,9 +190,19 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 	}
 
 	addOrganization() {
+		const location = this.locationFormDirective.getValue();
+		const { coordinates } = location['loc'];
+		delete location['loc'];
+
+		const [latitude, longitude] = coordinates;
+		const contact = {
+			...location,
+			...{ latitude, longitude }
+		};
+
 		const consolidatedFormValues = {
 			...this.orgMainForm.value,
-			...this.orgLocationForm.value,
+			contact,
 			...this.orgBonusForm.value,
 			...this.orgSettingsForm.value
 		};
@@ -213,8 +213,45 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 		this.orgMainForm.get('tags').setValue(currentSelection);
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
+	/*
+	 * On Changed Currency Event Emitter
+	 */
+	currencyChanged($event: ICurrency) {}
+
+	/*
+	 * Google Place and Leaflet Map Coordinates Changed Event Emitter
+	 */
+	onCoordinatesChanges(
+		$event: google.maps.LatLng | google.maps.LatLngLiteral
+	) {
+		const {
+			loc: { coordinates }
+		} = this.locationFormDirective.getValue();
+		const [lat, lng] = coordinates;
+		this.leafletTemplate.addMarker(new LatLng(lat, lng));
 	}
+
+	/*
+	 * Leaflet Map Click Event Emitter
+	 */
+	onMapClicked(latlng: LatLng) {
+		const { lat, lng }: LatLng = latlng;
+		const location = this.locationFormDirective.getValue();
+		this.locationFormDirective.setValue({
+			...location,
+			country: '',
+			loc: {
+				type: 'Point',
+				coordinates: [lat, lng]
+			}
+		});
+		this.locationFormDirective.onCoordinatesChanged();
+	}
+
+	/*
+	 * Google Place Geometry Changed Event Emitter
+	 */
+	onGeometrySend(geometry: any) {}
+
+	ngOnDestroy() {}
 }

@@ -4,6 +4,7 @@ import { SetupComponent } from './pages/setup/setup.component';
 import { TimeTrackerComponent } from './pages/time-tracker/time-tracker.component';
 import { ScreenCaptureComponent } from './pages/screen-capture/screen-capture.component';
 import { SettingsComponent } from './pages/settings/settings.component';
+import { UpdaterComponent } from './pages/updater/updater.component';
 
 const routes: Routes = [
 	{
@@ -21,6 +22,10 @@ const routes: Routes = [
 	{
 		path: 'settings',
 		component: SettingsComponent
+	},
+	{
+		path: 'updater',
+		component: UpdaterComponent
 	}
 ];
 

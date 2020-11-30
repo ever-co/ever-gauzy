@@ -35,6 +35,7 @@ import { EmailModule } from '../email';
 import { TimeSlotCommandHandlers } from './time-slot/commands/handlers';
 import { ActivityCommandHandlers } from './activity/commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
+import { ActivityMapService } from './activity/activity.map.service';
 
 @Module({
 	controllers: [
@@ -74,6 +75,7 @@ import { TenantModule } from '../tenant/tenant.module';
 		TimeSlotService,
 		StatisticService,
 		EmailService,
+		ActivityMapService,
 		...TimeLogCommandHandlers,
 		...TimesheetCommandHandlers,
 		...TimeSlotCommandHandlers,

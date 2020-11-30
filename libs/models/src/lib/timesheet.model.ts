@@ -336,6 +336,7 @@ export interface IGetTimeLogInput extends ITimeLogFilters {
 
 export interface IGetTimeLogReportInput extends IGetTimeLogInput {
 	groupBy?: 'date' | 'employee' | 'project' | 'client';
+	relations?: string[];
 }
 
 export interface IGetTimeLogConflictInput
@@ -355,6 +356,7 @@ export interface IGetActivitiesInput extends ITimeLogFilters, IPaginationInput {
 	relations?: string[];
 	types?: string[];
 	titles?: string[];
+	groupBy?: string;
 }
 
 export interface IBulkActivitiesInput

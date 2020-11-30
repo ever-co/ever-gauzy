@@ -4,7 +4,11 @@ import {
 	clickButton,
 	clearField,
 	enterInput,
-	clickKeyboardBtnByKeycode
+	clickKeyboardBtnByKeycode,
+	verifyTextNotExisting,
+	getLastElement,
+	waitElementToHide,
+	verifyValue
 } from '../utils/util';
 import { AddEmployeeLevelPage } from '../pageobjects/AddEmployeeLevelPageObject';
 
@@ -69,8 +73,8 @@ export const editEmployeeLevelButtonVisible = () => {
 	verifyElementIsVisible(AddEmployeeLevelPage.editEmployeeLevelButtonCss);
 };
 
-export const clickEditEmployeeLevelButton = (index) => {
-	clickButtonByIndex(AddEmployeeLevelPage.editEmployeeLevelButtonCss, index);
+export const clickEditEmployeeLevelButton = () => {
+	getLastElement(AddEmployeeLevelPage.editEmployeeLevelButtonCss);
 };
 
 export const editEmployeeLevelInpuVisible = () => {
@@ -86,11 +90,8 @@ export const deleteLevelButtonVisible = () => {
 	verifyElementIsVisible(AddEmployeeLevelPage.removeEmployeeLevelButtonCss);
 };
 
-export const clickDeleteLevelButton = (index) => {
-	clickButtonByIndex(
-		AddEmployeeLevelPage.removeEmployeeLevelButtonCss,
-		index
-	);
+export const clickDeleteLevelButton = () => {
+	getLastElement(AddEmployeeLevelPage.removeEmployeeLevelButtonCss);
 };
 
 export const confirmDeleteButtonVisible = () => {
@@ -99,4 +100,24 @@ export const confirmDeleteButtonVisible = () => {
 
 export const clickConfirmDeleteLevelButton = () => {
 	clickButton(AddEmployeeLevelPage.confirmDeleteLevelButtonCss);
+};
+
+export const verifyTitleExists = (text) => {
+	verifyValue(AddEmployeeLevelPage.editLevelInputCss, text);
+};
+
+export const verifyElementIsDeleted = (text) => {
+	verifyTextNotExisting(AddEmployeeLevelPage.verifyTextCss, text);
+};
+
+export const waitMessageToHide = () => {
+	waitElementToHide(AddEmployeeLevelPage.toastrMessageCss);
+};
+
+export const cancelButtonVisible = () => {
+	verifyElementIsVisible(AddEmployeeLevelPage.cancelButtonCss);
+};
+
+export const clickCancelButton = () => {
+	clickButton(AddEmployeeLevelPage.cancelButtonCss);
 };

@@ -3,6 +3,8 @@ import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { ITag } from './tag-entity.model';
 import { IExpenseCategory } from './expense-category.model';
 import { IOrganizationVendor } from './organization-vendors.model';
+import { IOrganizationProject } from './organization-projects.model';
+import { IPaginationInput } from './core.model';
 
 export interface IExpense extends IBasePerTenantAndOrganizationEntityModel {
 	employee?: IEmployee;
@@ -16,6 +18,7 @@ export interface IExpense extends IBasePerTenantAndOrganizationEntityModel {
 	organizationContactId?: string;
 	organizationContactName?: string;
 	projectId?: string;
+	project?: IOrganizationProject;
 	projectName?: string;
 	notes?: string;
 	valueDate?: Date;
@@ -162,3 +165,58 @@ export interface IExpenseViewModel {
 	tags: ITag[];
 	status: string;
 }
+
+export interface IGetExpenseInput
+	extends IPaginationInput,
+		IBasePerTenantAndOrganizationEntityModel {
+	relations?: string[];
+	types?: string[];
+	titles?: string[];
+	groupBy?: string;
+	date?: Date | string;
+	startDate?: Date | string;
+	endDate?: Date | string;
+	projectIds?: string[];
+	employeeIds?: string[];
+}
+
+export interface IExpenseReportGroupByDate {
+	date: string;
+	employees: {
+		employee: IEmployee;
+		projects: {
+			project: IOrganizationProject;
+			expanse: IExpense;
+			sum: number;
+		}[];
+	}[];
+}
+
+export interface IExpenseReportGroupByEmployee {
+	employee: IEmployee;
+	dates: {
+		date: string;
+		projects: {
+			project: IOrganizationProject;
+			expanse: IExpense;
+			sum: number;
+		}[];
+	}[];
+}
+
+export interface IExpenseReportGroupByProject {
+	project: IOrganizationProject;
+	dates: {
+		date: string;
+		employees: {
+			employee: IEmployee;
+			expanse: IExpense;
+			sum: number;
+		}[];
+	}[];
+}
+
+export type IExpenseReportData =
+	| IExpenseReportGroupByDate
+	| IExpenseReportGroupByEmployee
+	| IExpenseReportGroupByProject;

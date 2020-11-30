@@ -78,6 +78,7 @@
 		"MANAGE_TEMPLATES": "Manage Templates",
 		"MAKE_DEFAULT": "Make Default",
 		"HIDE_ALL": "Hide All",
+		"SCHEDULES": "Schedules",
 		"YES_HIDE_ALL_JOBS": "Yes, Hide All Jobs",
 		"VALIDATE": "Validate",
 		"VALIDATED": "Validated"
@@ -195,6 +196,8 @@
 			"BRAND_COLOR": "Главен Цвят",
 			"DATE_FORMAT": "Формат на Датата",
 			"CHOOSE_TIME_ZONE": "Избери Времева Зона",
+			"START_TIME": "Default Work Day Start Time",
+			"END_TIME": "Default Work Day End Time",
 			"POSTCODE": "Пощенски код (Zip)",
 			"PAY_PERIOD": "Период на Плащане",
 			"BILL_RATE": "Заплащане по часово",
@@ -209,7 +212,7 @@
 			"PROJECTS": "Проекти",
 			"ADD_NEW_DEPARTMENT": "Добави Нов Отдел",
 			"EDIT_DEPARTMENT": "Редактирай Отдела",
-			"TYPE_OF_BONUS": "Тип Бонус",
+			"TYPE_OF_BONUS": "Employee Bonus Type",
 			"BONUS_PERCENTAGE": "Процентен Бонус",
 			"ENABLE_DISABLE_INVITES": "Включване / Изключване на Поканите",
 			"ALLOW_USER_INVITES": "Позволи на юзърите да изпращат покани",
@@ -258,7 +261,19 @@
 			"SHORT_DESCRIPTION": "Short Description",
 			"ENABLE_EMPLOYEE_FEATURES": "Enable Employee Features",
 			"REVOKE_EMPLOYEE_FEATURES": "Revoke Employee Features",
-			"STATUS": "Статус"
+			"STATUS": "Статус",
+			"FISCAL_YEAR_START_DATE": "Fiscal Year Start Date",
+			"FISCAL_YEAR_END_DATE": "Fiscal Year End Date",
+			"TAX_AND_DISCOUNT_INVOICE_ITEMS_SEPARATELY": "Tax And Discount Invoice Items Separately",
+			"ALLOW_TAXING_AND_DISCOUNTING_OF_INVOICE_ITEMS_SEPARATELY": "Allow taxing and discounting of invoice items separately",
+			"DISCOUNT_AFTER_TAX": "Discount after tax",
+			"APPLY_DISCOUNT_AFTER_TAX_FOR_INVOICES_AND_ESTIMATES": "Apply discount after tax for invoices and estimates",
+			"FIND_ADDRESS": "Find Address",
+			"COORDINATE": {
+				"TITLE": "COORDINATES",
+				"LATITUDE": "Latitude",
+				"LONGITUDE": "Longitude"
+			}
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -314,6 +329,8 @@
 			"PROJECTS": "Избери проекти",
 			"CHOOSE_FORMAT": "Избери формат",
 			"CHOOSE_TIME_ZONE": "Избери времева зона",
+			"START_TIME": "HH:mm",
+			"END_TIME": "HH:mm",
 			"ADD_COLOR": "Добави цвят",
 			"ALIGN_LOGO_TO": "Подравни логото към",
 			"DEPARTMENTS": "Отдели",
@@ -385,7 +402,11 @@
 			"DURATION": "Duration",
 			"TITLE": "Title",
 			"SHORT_DESCRIPTION": "Short Description",
-			"EG_FULL_STACK_WEB_DEVELOPER": "E.g. Full-Stack Web Developer"
+			"EG_FULL_STACK_WEB_DEVELOPER": "E.g. Full-Stack Web Developer",
+			"COORDINATE": {
+				"LATITUDE": "Latitude",
+				"LONGITUDE": "Longitude"
+			}
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Норма по подразбиране",
@@ -622,18 +643,38 @@
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Members Worked",
+		"MANUAL_TIME_EDIT_REPORT": "Manual Time Edit Report",
+		"GROUP_BY": "Group By",
+		"DATE": "Дата",
+		"TO_DO": "TO-DO",
+		"TIME": "Time",
+		"PROJECT": "Проект",
+		"CLIENT": "Клиент",
 		"PROJECTS_WORKED": "Projects Worked",
+		"APPS_AND_URLS_REPORT": "APPS & URLS REPORT",
+		"NO_ACTIVITIES": "No Activities",
 		"ACTIVITY": "Activity",
 		"TOTAL_HOURS": "Total Hours",
 		"EMPLOYEE": "Служител",
 		"NO_PROJECT": "No Project",
 		"NO_EMPLOYEE": "No Employee",
 		"NO_TIMELOG": "No Timelog",
+		"TITLE": "Title",
+		"ACTION": "Action",
+		"TIME_SPAN": "Time Span",
+		"REASON": "Reason",
+		"CHANGED_AT": "Changed at",
+		"DURATION": "Duration",
 		"NO_TASK": "No Task",
 		"WEEKLY_TIME_AND_ACTIVITY_REPORT": "Weekly Time and Activity Report",
 		"TIME_AND_ACTIVITY_REPORT": "Time and Activity Report",
 		"NO_CLIENT": "No Client",
-		"ALL_REPORTS": "All Reports"
+		"ALL_REPORTS": "All Reports",
+		"EXPENSES_REPORT": "Expenses Report",
+		"CATEGORY": "Категория",
+		"DESCRIPTION": "Description",
+		"AMOUNT": "Сума",
+		"NO_EXPENSES": "No Expenses"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Available Apps & Integrations",
@@ -988,6 +1029,7 @@
 		"DELETED": "Изтрит",
 		"ARCHIVED": "Архивирана",
 		"SELECT_EMPLOYEE_MSG": "Моля селектирайте служител от менюто по-долу.",
+		"JOBS_CANDIDATES": "Job Candidates",
 		"EDIT_CANDIDATE": {
 			"HEADER": "Manage Candidate",
 			"DEVELOPER": "Разработчик",
@@ -1182,6 +1224,7 @@
 		"CONTACTS": "Contacts",
 		"LEVEL": "Level",
 		"EDIT": {
+			"ACCOUNTING": "Accounting",
 			"HEADER": "Управление",
 			"CLIENT": "Клиент",
 			"CONTACT": "Contact",
@@ -2433,6 +2476,7 @@
 	},
 	"SCHEDULE": {
 		"DATE_SPECIFIC_AVAILABILITY": "Date Specific Availability",
+		"SELECT_EMPLOYEE": "Моля селектирайте служител от менюто по-долу.",
 		"RECURRING_AVAILABILITY": "Recurring Availability",
 		"DATE_SPECIFIC_AVAILABILITY_TOOLTIP": "You can use Date specific availability to mark availability for a particular date or add exceptions to your Recurring availability pattern. The changes you make will override your Weekly recurring availability on those specific dates only.",
 		"RECURRING_AVAILABILITY_TOOLTIP": "You can use Recurring availability to mark your availability on a weekly basis. To change your availability for specific days only, you must use Date-specific availability."

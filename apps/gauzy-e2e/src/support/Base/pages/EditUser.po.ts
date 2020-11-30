@@ -7,7 +7,9 @@ import {
 	clickElementByText,
 	clickElementIfVisible,
 	clickKeyboardBtnByKeycode,
-	getLastElement
+	getLastElement,
+	verifyText,
+	waitElementToHide
 } from '../utils/util';
 import { EditUserPage } from '../pageobjects/EditUserPageObject';
 
@@ -170,4 +172,12 @@ export const saveBtnExists = () => {
 
 export const saveBtnClick = () => {
 	clickButton(EditUserPage.saveButtonCss);
+};
+
+export const verifyUserExists = (text) => {
+	verifyText(EditUserPage.verifyUserCss, text);
+};
+
+export const waitMessageToHide = () => {
+	waitElementToHide(EditUserPage.toastrMessageCss);
 };

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { CrudService } from '../../core/crud/crud.service';
 import { Activity } from '../activity.entity';
 import * as moment from 'moment';
@@ -13,12 +13,21 @@ import {
 } from '@gauzy/models';
 import { CommandBus } from '@nestjs/cqrs';
 import { BulkActivitiesSaveCommand } from './commands/bulk-activities-save.command';
+import { Employee } from '../../employee/employee.entity';
+import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
+import { indexBy, pluck } from 'underscore';
 
 @Injectable()
 export class ActivityService extends CrudService<Activity> {
 	constructor(
 		@InjectRepository(Activity)
 		private readonly activityRepository: Repository<Activity>,
+		@InjectRepository(Employee)
+		private readonly employeeRepository: Repository<Employee>,
+		@InjectRepository(OrganizationProject)
+		private readonly organizationProjectRepository: Repository<
+			OrganizationProject
+		>,
 		private readonly commandBus: CommandBus
 	) {
 		super(activityRepository);
@@ -48,6 +57,61 @@ export class ActivityService extends CrudService<Activity> {
 		query.addOrderBy(`"duration"`, 'DESC');
 
 		return query.getRawMany();
+	}
+
+	async getDailyActivitiesReport(
+		request: IGetActivitiesInput
+	): Promise<Activity[]> {
+		const query = this.filterQuery(request);
+
+		console.log(query.getQuery());
+
+		query.select(`COUNT("${query.alias}"."id")`, `sessions`);
+		query.addSelect(`SUM("${query.alias}"."duration")`, `duration`);
+		query.addSelect(`"${query.alias}"."employeeId"`, `employeeId`);
+		query.addSelect(`"${query.alias}"."projectId"`, `projectId`);
+		query.addSelect(`"${query.alias}"."date"`, `date`);
+		query.addSelect(`"${query.alias}"."title"`, `title`);
+		query.addGroupBy(`"${query.alias}"."date"`);
+		query.addGroupBy(`"${query.alias}"."title"`);
+		query.addGroupBy(`"${query.alias}"."employeeId"`);
+		query.addGroupBy(`"${query.alias}"."projectId"`);
+		query.orderBy(`"duration"`, 'DESC');
+
+		query.limit(200);
+		let activitiesData = await query.getRawMany();
+
+		const projectIds = pluck(activitiesData, 'projectId');
+		const employeeIds = pluck(activitiesData, 'employeeId');
+
+		let employeeById: any = {};
+		if (employeeIds.length > 0) {
+			const employees = await this.employeeRepository.find({
+				where: {
+					id: In(employeeIds)
+				},
+				relations: ['user']
+			});
+			employeeById = indexBy(employees, 'id');
+		}
+
+		let projectById: any = {};
+		if (projectIds.length > 0) {
+			const projects = await this.organizationProjectRepository.find({
+				where: {
+					id: In(projectIds)
+				}
+			});
+			projectById = indexBy(projects, 'id');
+		}
+
+		activitiesData = activitiesData.map((activity) => {
+			activity.employee = employeeById[activity.employeeId];
+			activity.project = projectById[activity.projectId];
+			return activity;
+		});
+
+		return activitiesData;
 	}
 
 	async getAllActivities(request: IGetActivitiesInput) {
@@ -125,6 +189,13 @@ export class ActivityService extends CrudService<Activity> {
 					}
 				);
 			}
+
+			if (request.projectIds) {
+				qb.andWhere(`"${query.alias}"."projectId" IN (:...projectId)`, {
+					projectId: request.projectIds
+				});
+			}
+
 			if (request.titles) {
 				qb.andWhere(`"${query.alias}"."title" IN (:...title)`, {
 					title: request.titles

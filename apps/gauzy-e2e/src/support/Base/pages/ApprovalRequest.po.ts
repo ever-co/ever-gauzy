@@ -6,7 +6,9 @@ import {
 	clearField,
 	enterInput,
 	clickKeyboardBtnByKeycode,
-	waitElementToHide
+	waitElementToHide,
+	verifyText,
+	verifyTextNotExisting
 } from '../utils/util';
 import { ApprovalRequestPage } from '../pageobjects/ApprovalRequestPageObject';
 
@@ -134,4 +136,16 @@ export const clickBackButton = () => {
 
 export const waitMessageToHide = () => {
 	waitElementToHide(ApprovalRequestPage.toastrMessageCss);
+};
+
+export const verifyApprovalpolicyExists = (text) => {
+	verifyText(ApprovalRequestPage.verifyApprovalPolicyCss, text);
+};
+
+export const verifyRequestExists = (text) => {
+	verifyText(ApprovalRequestPage.verifyRequestCss, text);
+};
+
+export const verifyElementIsDeleted = (text) => {
+	verifyTextNotExisting(ApprovalRequestPage.verifyRequestCss, text);
 };

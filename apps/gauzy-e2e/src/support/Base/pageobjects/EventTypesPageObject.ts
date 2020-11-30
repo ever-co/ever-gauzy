@@ -11,5 +11,6 @@ export const EventTypesPage = {
 	activeCheckboxCss: '[formcontrolname="isActive"]',
 	saveButtonCss: 'nb-card-footer > button[status="success"]',
 	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
-	confirmDeleteEventTypeButtonCss: 'nb-card-footer > button[status="danger"]'
+	confirmDeleteEventTypeButtonCss: 'nb-card-footer > button[status="danger"]',
+	verifyEventTypeCss: 'ga-notes-with-tags > div > div.ng-star-inserted'
 };
