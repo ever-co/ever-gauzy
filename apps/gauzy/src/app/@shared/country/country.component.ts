@@ -64,11 +64,10 @@ export class CountryComponent
 		private readonly cdr: ChangeDetectorRef
 	) {
 		super(translateService);
+		this.countryService.find$.next(true);
 	}
 
-	ngOnInit(): void {
-		this.countryService.getAll().pipe(untilDestroyed(this)).subscribe();
-	}
+	ngOnInit(): void {}
 
 	ngAfterViewInit() {
 		this.cdr.detectChanges();

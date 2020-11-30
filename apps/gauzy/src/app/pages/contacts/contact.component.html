@@ -9,7 +9,7 @@
 	</nb-card-header>
 
 	<nb-card-body>
-		<div class="mb-3" style="display: flex;">
+		<div class="mb-3" style="display: flex">
 			<button
 				*ngIf="!showAddCard"
 				(click)="add()"
@@ -116,7 +116,7 @@
 							{{ 'ORGANIZATIONS_PAGE.EDIT.COUNTRY' | translate }}
 						</div>
 						<div class="info-value">
-							{{ c.contact ? c.contact.country : '' }}
+							{{ c.contact ? getCountry(c.contact) : '' }}
 						</div>
 					</div>
 					<div class="info-line">
@@ -212,7 +212,7 @@
 				(userRowSelect)="selectContact($event)"
 				[settings]="settingsSmartTable"
 				[source]="smartTableSource"
-				style="cursor: pointer;"
+				style="cursor: pointer"
 				#contactsTable
 			>
 			</ng2-smart-table>

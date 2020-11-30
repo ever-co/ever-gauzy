@@ -30,6 +30,7 @@ export interface IOrganizationContactFindInput
 	primaryPhone?: string;
 	notes?: string;
 	imageUrl?: string;
+	contactType?: string;
 }
 
 export interface IOrganizationContactCreateInput extends IContact {

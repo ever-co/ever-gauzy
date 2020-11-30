@@ -4,6 +4,9 @@
 			<div class="row">
 				<div class="col-12">
 					<div class="form-group">
+						<label class="label" for="findInput">{{
+							'FORM.LABELS.FIND_ADDRESS' | translate
+						}}</label>
 						<nb-form-field>
 							<nb-icon
 								icon-basic-color
@@ -14,6 +17,7 @@
 							</nb-icon>
 							<input
 								#autocomplete
+								id="findInput"
 								fullWidth
 								nbInput
 								type="text"
@@ -29,14 +33,14 @@
 		</ng-container>
 		<ng-container>
 			<div class="row">
-				<div class="col-6">
+				<div class="col-4">
 					<ga-country
 						[(ngModel)]="country"
 						[formControl]="form.get('country')"
 						(selectChange)="onAddressChanges()"
 					></ga-country>
 				</div>
-				<div class="col-6">
+				<div class="col-4">
 					<div class="form-group">
 						<label class="label" for="cityInput">{{
 							'FORM.LABELS.CITY' | translate
@@ -55,55 +59,7 @@
 						/>
 					</div>
 				</div>
-			</div>
-			<div class="row">
-				<div class="col-6">
-					<div class="form-group">
-						<label class="label" for="addressInput">{{
-							'FORM.LABELS.ADDRESS' | translate
-						}}</label>
-						<textarea
-							(blur)="onAddressChanges()"
-							fullWidth
-							id="addressInput"
-							type="text-area"
-							nbInput
-							[status]="
-								isInvalidControl('address') ? 'danger' : 'basic'
-							"
-							formControlName="address"
-							[placeholder]="
-								'FORM.PLACEHOLDERS.ADDRESS' | translate
-							"
-						></textarea>
-					</div>
-				</div>
-				<div class="col-6">
-					<div class="form-group">
-						<label class="label" for="address2Input">{{
-							'FORM.LABELS.ADDRESS_2' | translate
-						}}</label>
-						<textarea
-							(blur)="onAddressChanges()"
-							fullWidth
-							id="address2Input"
-							type="text"
-							nbInput
-							[status]="
-								isInvalidControl('address2')
-									? 'danger'
-									: 'basic'
-							"
-							formControlName="address2"
-							[placeholder]="
-								'FORM.PLACEHOLDERS.ADDRESS_2' | translate
-							"
-						></textarea>
-					</div>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-6">
+				<div class="col-4">
 					<div class="form-group">
 						<label class="label" for="postcodeInput">{{
 							'FORM.LABELS.POSTCODE' | translate
@@ -128,12 +84,65 @@
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-12">
-					<nb-checkbox (checkedChange)="toggleShowCoordinates()">{{
-						'FORM.LABELS.COORDINATE.TITLE' | translate
-					}}</nb-checkbox>
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label" for="addressInput">{{
+							'FORM.LABELS.ADDRESS' | translate
+						}}</label>
+						<input
+							(blur)="onAddressChanges()"
+							#address
+							id="addressInput"
+							type="text"
+							nbInput
+							fullWidth
+							[status]="
+								isInvalidControl('address') ? 'danger' : 'basic'
+							"
+							formControlName="address"
+							[placeholder]="
+								'FORM.PLACEHOLDERS.ADDRESS' | translate
+							"
+						/>
+					</div>
+				</div>
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label" for="address2Input">{{
+							'FORM.LABELS.ADDRESS_2' | translate
+						}}</label>
+						<input
+							(blur)="onAddressChanges()"
+							#address
+							id="address2Input"
+							type="text"
+							nbInput
+							fullWidth
+							[status]="
+								isInvalidControl('address2')
+									? 'danger'
+									: 'basic'
+							"
+							formControlName="address2"
+							[placeholder]="
+								'FORM.PLACEHOLDERS.ADDRESS_2' | translate
+							"
+						/>
+					</div>
 				</div>
 			</div>
+			<ng-container *ngIf="showCoordinateInput">
+				<div class="row">
+					<div class="col-sm-12">
+						<nb-checkbox
+							(checkedChange)="toggleShowCoordinates()"
+							>{{
+								'FORM.LABELS.COORDINATE.TITLE' | translate
+							}}</nb-checkbox
+						>
+					</div>
+				</div>
+			</ng-container>
 		</ng-container>
 		<ng-container *ngIf="showCoordinates">
 			<div class="row mt-3" formGroupName="loc">
