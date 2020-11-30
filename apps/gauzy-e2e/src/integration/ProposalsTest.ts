@@ -10,7 +10,6 @@ import * as manageEmployeesPage from '../support/Base/pages/ManageEmployees.po';
 
 let jobPostUrl = ' ';
 let editJobPostUrl = ' ';
-let jobPostContent = ' ';
 let proposalContent = ' ';
 
 let firstName = ' ';
@@ -24,7 +23,6 @@ describe('Proposals test', () => {
 	before(() => {
 		jobPostUrl = faker.internet.url();
 		editJobPostUrl = faker.internet.url();
-		jobPostContent = faker.lorem.paragraph();
 		proposalContent = faker.lorem.paragraph();
 
 		firstName = faker.name.firstName();
