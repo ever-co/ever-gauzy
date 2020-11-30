@@ -29,17 +29,17 @@ aliases:
       command: |
           wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
           sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" >> /etc/apt/sources.list.d/pgdg.list'
-          sudo apt update          
+          sudo apt update
           sudo apt -y install postgresql
           echo 'PostgreSQL Installed'
           sudo apt -y install postgresql-contrib
           echo 'PostgreSQL Contrib Installed'
-          sudo systemctl start postgresql@13-main
+          sudo pg_ctlcluster 13 main start
           echo 'PostgreSQL Cluster Started'
           systemctl status postgresql.service
           echo 'PostgreSQL Status Displayed Above'
-          sudo su - postgres
-          echo 'Altering Postgres User password'
+          # sudo su - postgres
+          # echo 'Altering Postgres User password'
           psql -c "alter user postgres with password 'root'"
 
     - &install-deps
