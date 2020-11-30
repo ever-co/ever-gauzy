@@ -216,11 +216,11 @@ jobs:
                   paths:
                       - '*'
 
-    test-web:
+    test-e2e:
         <<: *defaults
         machine:
             image: ubuntu-2004:202010-01
-        working_directory: /tmp/workspace/test-web
+        working_directory: /tmp/workspace/test-e2e
         steps:
             - checkout
             - run: *install-node
@@ -230,7 +230,7 @@ jobs:
             - restore_cache:
                   name: Restore Yarn Package Cache
                   keys:
-                      - yarn-packages-test-web-{{ checksum "yarn.lock" }}
+                      - yarn-packages-test-e2e-{{ checksum "yarn.lock" }}
 
             - run:
                   name: Install Dependencies
@@ -241,14 +241,6 @@ jobs:
                   command: yarn bootstrap
 
             - run:
-                  name: Run Build for Gauzy UI
-                  command: yarn build:prod:circle
-
-            - run:
-                  name: Run Build for Gauzy API
-                  command: yarn build:api:prod
-
-            - run:
                   name: Run API in background
                   command: yarn start:api
                   background: true
@@ -257,12 +249,12 @@ jobs:
 
             - save_cache:
                   name: Save Yarn Package Cache
-                  key: yarn-packages-test-web-{{ checksum "yarn.lock" }}
+                  key: yarn-packages-test-e2e-{{ checksum "yarn.lock" }}
                   paths:
                       - ~/.cache/yarn
 
             - persist_to_workspace:
-                  root: /tmp/workspace/test-web
+                  root: /tmp/workspace/test-e2e
                   paths:
                       - '*'
 
@@ -308,4 +300,4 @@ workflows:
             - build-desktop
     test:
         jobs:
-            - test-web
+            - test-e2e
