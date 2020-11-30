@@ -91,6 +91,9 @@ describe('Organization departments test', () => {
 		organizationDepartmentsPage.clickCardBody();
 		organizationDepartmentsPage.saveDepartmentButtonVisible();
 		organizationDepartmentsPage.clickSaveDepartmentButton();
+		organizationDepartmentsPage.verifyDepartmentExists(
+			OrganizationDepartmentsPageData.departmentName
+		);
 	});
 	it('Should be able to edit department', () => {
 		organizationDepartmentsPage.tableRowVisible();
@@ -110,5 +113,8 @@ describe('Organization departments test', () => {
 		organizationDepartmentsPage.clickDeleteButton();
 		organizationDepartmentsPage.confirmDeleteButtonVisible();
 		organizationDepartmentsPage.clickConfirmDeleteButton();
+		organizationDepartmentsPage.verifyDepartmentIsDeleted(
+			OrganizationDepartmentsPageData.departmentName
+		);
 	});
 });

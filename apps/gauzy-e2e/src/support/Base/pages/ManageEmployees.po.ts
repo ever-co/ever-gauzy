@@ -7,7 +7,9 @@ import {
 	clearField,
 	clickKeyboardBtnByKeycode,
 	clickButtonByIndex,
-	waitElementToHide
+	waitElementToHide,
+	verifyText,
+	verifyTextNotExisting
 } from '../utils/util';
 import { ManageEmployeesPage } from '../pageobjects/ManageEmployeesPageObject';
 
@@ -349,4 +351,20 @@ export const clickConfirmDeleteInviteButton = () => {
 
 export const waitMessageToHide = () => {
 	waitElementToHide(ManageEmployeesPage.toastrMessageCss);
+};
+
+export const verifyEmployeeExists = (text) => {
+	verifyText(ManageEmployeesPage.verifyEmployeeCss, text);
+};
+
+export const verifyEmployeeIsDeleted = (text) => {
+	verifyTextNotExisting(ManageEmployeesPage.verifyEmployeeCss, text);
+};
+
+export const verifyInviteExists = (text) => {
+	verifyText(ManageEmployeesPage.verifyInviteCss, text);
+};
+
+export const verifyInviteIsDeleted = (text) => {
+	verifyTextNotExisting(ManageEmployeesPage.verifyInviteCss, text);
 };

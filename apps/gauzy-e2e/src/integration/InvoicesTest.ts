@@ -161,6 +161,7 @@ describe('Invoices test', () => {
 		invoicesPage.setStatusFromDropdown(InvoicesPageData.status);
 	});
 	it('Should be able to delete invoice', () => {
+		invoicesPage.waitMessageToHide();
 		invoicesPage.selectTableRow(0);
 		invoicesPage.deleteButtonVisible();
 		invoicesPage.clickDeleteButton();

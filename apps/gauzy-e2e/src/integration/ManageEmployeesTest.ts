@@ -90,6 +90,8 @@ describe('Manage employees test', () => {
 		manageEmployeesPage.clickNextStepButton();
 		manageEmployeesPage.lastStepButtonVisible();
 		manageEmployeesPage.clickLastStepButton();
+		manageEmployeesPage.waitMessageToHide();
+		manageEmployeesPage.verifyEmployeeExists(`${firstName} ${lastName}`);
 	});
 	it('Should be able to edit employee', () => {
 		manageEmployeesPage.tableRowVisible();
@@ -130,6 +132,8 @@ describe('Manage employees test', () => {
 		manageEmployeesPage.clickDeleteButton();
 		manageEmployeesPage.confirmDeleteButtonVisible();
 		manageEmployeesPage.clickConfirmDeleteButton();
+		manageEmployeesPage.waitMessageToHide();
+		manageEmployeesPage.verifyEmployeeIsDeleted(`${firstName} ${lastName}`);
 	});
 	it('Should be able to copy invite link', () => {
 		manageEmployeesPage.manageInvitesButtonVisible();

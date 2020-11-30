@@ -5,7 +5,9 @@ import {
 	clearField,
 	clickButtonByIndex,
 	waitElementToHide,
-	clickElementByText
+	clickElementByText,
+	verifyTextNotExisting,
+	verifyText
 } from '../utils/util';
 import { JobsProposalsPage } from '../pageobjects/JobsProposalsPageObject';
 
@@ -100,4 +102,12 @@ export const clickConfirmDeleteButton = () => {
 
 export const waitMessageToHide = () => {
 	waitElementToHide(JobsProposalsPage.toastrMessageCss);
+};
+
+export const verifyElementIsDeleted = (text) => {
+	verifyTextNotExisting(JobsProposalsPage.verifyProposalCss, text);
+};
+
+export const verifyProposalExists = (text) => {
+	verifyText(JobsProposalsPage.verifyProposalCss, text);
 };
