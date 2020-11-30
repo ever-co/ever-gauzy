@@ -674,7 +674,9 @@
 		"CATEGORY": "Category",
 		"DESCRIPTION": "Description",
 		"AMOUNT": "Amount",
-		"NO_EXPENSES": "No Expenses"
+		"NO_EXPENSES": "No Expenses",
+		"PAYMENT_REPORT": "Payments Report",
+		"NO_PAYMENTS": "No Payments"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Available Apps & Integrations",

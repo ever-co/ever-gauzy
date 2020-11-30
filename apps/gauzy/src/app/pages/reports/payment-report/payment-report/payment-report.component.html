@@ -1,0 +1,26 @@
+<nb-card>
+	<nb-card-header>
+		<h4>{{ 'REPORT_PAGE.PAYMENT_REPORT' | translate }}</h4>
+		<div>
+			{{ logRequest?.startDate | date }} -
+			{{ logRequest?.endDate | date }}
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="filters mt-4 mb-4">
+			<ngx-filters
+				dateRange="custom_range"
+				[hasEmployeeFilter]="false"
+				[hasActivityLevelFilter]="false"
+				[hasSourceFilter]="false"
+				[hasLogTypeFilter]="false"
+				[hasEmployeeFilter]="false"
+				[saveFilters]="false"
+				[filters]="logRequest"
+				(filtersChange)="filtersChange($event)"
+			></ngx-filters>
+		</div>
+		<ngx-line-chart [data]="chartData"></ngx-line-chart>
+		<ga-payment-report-grid [filters]="filters"></ga-payment-report-grid>
+	</nb-card-body>
+</nb-card>
