@@ -1,0 +1,70 @@
+.margin-icon {
+  margin-top: 35px;
+  height: 56px;
+}
+
+.full-height {
+  height: 80% !important;
+  min-height: 600px !important;
+}
+
+.card-full-height {
+  min-height: 600px;
+}
+
+.top-bottom-space {
+  padding: 1px !important;
+}
+
+::ng-deep body {
+  overflow: hidden !important;
+}
+
+.icon-medium {
+  font-size: 48px;
+}
+
+.version-text {
+  text-align: center;
+  font-size: 16px;
+  font-weight: bold;
+  margin-top: 40px;
+}
+
+.button-update {
+  margin-top: 40px;
+  text-align: center;
+}
+
+.button-big {
+  font-size: 16px;
+  font-weight: bold;
+  height: 56px;
+  width: 180px;
+}
+
+.center-content {
+  position: relative;
+  top: 20vh;
+}
+
+.icon-spin {
+  animation: rotate 1s ease-in-out 0s infinite;
+}
+
+.update-message {
+  margin-top: 15px;
+  text-align: center;
+  font-weight: bold;
+  color: #00d68f;
+  font-size: 12px;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

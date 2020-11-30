@@ -52,7 +52,9 @@ import { createGauzyWindow } from './window/gauzy';
 import { createSetupWindow } from './window/setup';
 import { createTimeTrackerWindow, loginPage } from './window/timeTracker';
 import { createSettingsWindow } from './window/settings';
+import { createUpdaterWindow } from './window/updater';
 import { fork } from 'child_process';
+import { autoUpdater } from 'electron-updater';
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
 // C:\Users\USERNAME\AppData\Roaming\gauzy-desktop
@@ -83,6 +85,7 @@ let setupWindow: BrowserWindow = null;
 let timeTrackerWindow: BrowserWindow = null;
 let NotificationWindow: BrowserWindow = null;
 let settingsWindow: BrowserWindow = null;
+let updaterWindow: BrowserWindow = null;
 
 let tray = null;
 let appMenu = null;
@@ -232,9 +235,15 @@ app.on('ready', async () => {
 	/* create window */
 	timeTrackerWindow = createTimeTrackerWindow(timeTrackerWindow);
 	settingsWindow = createSettingsWindow(settingsWindow);
+	updaterWindow = createUpdaterWindow(updaterWindow);
 
 	/* Set Menu */
-	appMenu = new AppMenu(timeTrackerWindow, settingsWindow, knex);
+	appMenu = new AppMenu(
+		timeTrackerWindow,
+		settingsWindow,
+		updaterWindow,
+		knex
+	);
 
 	const configs: any = store.get('configs');
 	if (configs && configs.isSetup) {
@@ -329,6 +338,40 @@ ipcMain.on('server_already_start', () => {
 
 ipcMain.on('open_browser', (event, arg) => {
 	shell.openExternal(arg.url);
+});
+
+ipcMain.on('check_for_update', (event, arg) => {
+	autoUpdater.checkForUpdatesAndNotify();
+});
+
+autoUpdater.on('update-available', () => {
+	updaterWindow.webContents.send('update_available');
+});
+
+autoUpdater.on('update-downloaded', () => {
+	updaterWindow.webContents.send('update_downloaded');
+});
+
+autoUpdater.on('update-not-available', () => {
+	updaterWindow.webContents.send('update_not_available');
+});
+
+autoUpdater.on('download-progress', (event) => {
+	updaterWindow.webContents.send('download_on_progress', event);
+});
+
+ipcMain.on('restart_and_update', () => {
+	setImmediate(() => {
+		app.removeAllListeners('window-all-closed');
+		autoUpdater.quitAndInstall(false);
+		if (serverDesktop) serverDesktop.kill();
+		if (serverGauzy) serverGauzy.kill();
+		app.exit(0);
+	});
+});
+
+autoUpdater.on('error', () => {
+	console.log('eroro');
 });
 app.on('activate', () => {
 	if (gauzyWindow) {

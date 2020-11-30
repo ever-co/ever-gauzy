@@ -3,7 +3,7 @@ import { LocalStore } from './getSetStore';
 import { TimerData } from '../local-data/timer';
 import { createSettingsWindow } from '../window/settings';
 export default class AppMenu {
-	constructor(timeTrackerWindow, settingsWindow, knex) {
+	constructor(timeTrackerWindow, settingsWindow, updaterWindow, knex) {
 		const menu = Menu.buildFromTemplate([
 			{
 				label: 'Gauzy',
@@ -79,7 +79,15 @@ export default class AppMenu {
 			},
 			{
 				label: 'Help',
-				submenu: [{ label: 'Learn More' }]
+				submenu: [
+					{ label: 'Learn More' },
+					{
+						label: 'Check for update',
+						click() {
+							updaterWindow.show();
+						}
+					}
+				]
 			}
 		]);
 		Menu.setApplicationMenu(menu);

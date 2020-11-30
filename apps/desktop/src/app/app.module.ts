@@ -11,6 +11,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { TimeTrackerModule } from './pages/time-tracker/time-tracker.module';
 import { ScreenCaptureModule } from './pages/screen-capture/screen-capture.module';
 import { SettingsModule } from './pages/settings/settings.module';
+import { UpdaterModule } from './pages/updater/updater.module';
 
 @NgModule({
 	declarations: [AppComponent],
@@ -24,7 +25,8 @@ import { SettingsModule } from './pages/settings/settings.module';
 		NgxElectronModule,
 		HttpClientModule,
 		ScreenCaptureModule,
-		SettingsModule
+		SettingsModule,
+		UpdaterModule
 	],
 	providers: [AppService, HttpClientModule],
 	bootstrap: [AppComponent]
