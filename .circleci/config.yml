@@ -215,6 +215,59 @@ jobs:
                   root: /tmp/workspace/web
                   paths:
                       - '*'
+
+    test-web:
+        <<: *defaults
+        machine:
+            image: ubuntu-2004:202010-01
+        working_directory: /tmp/workspace/test-web
+        steps:
+            - checkout
+            - run: *install-node
+            - run: *install-deps
+            - run: *install-yarn
+
+            - restore_cache:
+                  name: Restore Yarn Package Cache
+                  keys:
+                      - yarn-packages-test-web-{{ checksum "yarn.lock" }}
+
+            - run:
+                  name: Install Dependencies
+                  command: yarn install
+
+            - run:
+                  name: Run Bootstrap
+                  command: yarn bootstrap
+
+            - run:
+                  name: Run Build for Gauzy UI
+                  command: yarn build:prod:circle
+
+            - run:
+                  name: Run Build for Gauzy API
+                  command: yarn build:api:prod
+
+            # start server before starting tests
+            # TODO: Database???
+            - run:
+                  name: Run API in background
+                  command: yarn start:api
+                  background: true
+
+            - run: yarn run e2e
+
+            - save_cache:
+                  name: Save Yarn Package Cache
+                  key: yarn-packages-test-web-{{ checksum "yarn.lock" }}
+                  paths:
+                      - ~/.cache/yarn
+
+            - persist_to_workspace:
+                  root: /tmp/workspace/test-web
+                  paths:
+                      - '*'
+
     pulumi_deploy:
         <<: *defaults
         working_directory: /tmp/workspace/pulumi
@@ -248,10 +301,13 @@ jobs:
 
 workflows:
     version: 2
-    build_and_test:
+    build:
         jobs:
             # - sonarqube
             - build-monorepo-root
             - build-web
             - build-api
             - build-desktop
+    test:
+        jobs:
+            - test-web
