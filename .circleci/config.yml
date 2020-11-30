@@ -33,8 +33,13 @@ aliases:
           sudo apt -y install postgresql
           echo 'PostgreSQL Installed'
           sudo apt -y install postgresql-contrib
+          echo 'PostgreSQL Contrib Installed'
+          pg_ctlcluster 13 main start
+          echo 'PostgreSQL Cluster Installed'
           systemctl status postgresql.service
+          echo 'PostgreSQL Status Displayed Above'
           sudo su - postgres
+          echo 'Altering Postgres User password'
           psql -c "alter user postgres with password 'root'"
 
     - &install-deps
