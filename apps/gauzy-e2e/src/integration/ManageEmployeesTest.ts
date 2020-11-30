@@ -9,7 +9,6 @@ import { OrganizationProjectsPageData } from '../support/Base/pagedata/Organizat
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 import { CustomCommands } from '../support/commands';
-import { ManageUserInvitesPage } from '../support/Base/pageobjects/ManageUserInvitesPageObject';
 
 let email = ' ';
 let secEmail = ' ';
