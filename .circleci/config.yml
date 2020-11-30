@@ -34,8 +34,8 @@ aliases:
           echo 'PostgreSQL Installed'
           sudo apt -y install postgresql-contrib
           echo 'PostgreSQL Contrib Installed'
-          pg_ctlcluster 13 main start
-          echo 'PostgreSQL Cluster Installed'
+          sudo systemctl start postgresql@13-main
+          echo 'PostgreSQL Cluster Started'
           systemctl status postgresql.service
           echo 'PostgreSQL Status Displayed Above'
           sudo su - postgres
