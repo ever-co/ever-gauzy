@@ -31,6 +31,7 @@ export class LocationFormComponent
 	private _lat: number;
 	private _lng: number;
 	private _showAutocompleteSearch = false;
+	private _showCoordinateInput = true;
 	public showCoordinates: boolean;
 	public country: string;
 	public countries: ICountry[] = [];
@@ -44,6 +45,14 @@ export class LocationFormComponent
 	}
 	get showAutocompleteSearch(): boolean {
 		return this._showAutocompleteSearch;
+	}
+
+	@Input()
+	set showCoordinateInput(val: boolean) {
+		this._showCoordinateInput = val;
+	}
+	get showCoordinateInput(): boolean {
+		return this._showCoordinateInput;
 	}
 
 	@Output()

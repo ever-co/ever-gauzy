@@ -70,7 +70,6 @@
 					/>
 				</div>
 			</div>
-
 			<div class="row">
 				<div class="form-group col-4">
 					<label class="label">{{
@@ -83,30 +82,13 @@
 						nbInput
 						fullWidth
 						formControlName="name"
-						placeholder="{{
+						[placeholder]="
 							'ORGANIZATIONS_PAGE.EDIT.NAME' | translate
-						}}"
-						[status]="
-							form.controls.name.touched
-								? form.controls.name.value == 0
-									? 'danger'
-									: 'basic'
-								: 'basic'
 						"
-						[attr.aria-invalid]="
-							form.controls.name.invalid &&
-							form.controls.name.touched
-								? true
-								: null
-						"
+						[status]="isInvalidControl('name') ? 'danger' : 'basic'"
 					/>
-					<ng-container
-						*ngIf="
-							form.controls.name.invalid &&
-							form.controls.name.touched
-						"
-					>
-						<p class="caption status-danger">
+					<ng-container *ngIf="isInvalidControl('name')">
+						<p class="caption status-danger mt-1">
 							{{ 'TOASTR.MESSAGE.NAME_REQUIRED' | translate }}
 						</p>
 					</ng-container>
@@ -124,36 +106,24 @@
 						nbInput
 						fullWidth
 						formControlName="primaryEmail"
-						placeholder="{{
+						[placeholder]="
 							'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL' | translate
-						}}"
+						"
 						[status]="
-							form.controls.primaryEmail.dirty &&
-							form.controls.primaryEmail.invalid
+							isInvalidControl('primaryEmail')
 								? 'danger'
 								: 'basic'
 						"
-						[attr.aria-invalid]="
-							form.controls.primaryEmail.invalid &&
-							form.controls.primaryEmail.touched
-								? true
-								: null
-						"
 					/>
-					<ng-container
-						*ngIf="
-							form.controls.primaryEmail.invalid &&
-							form.controls.primaryEmail.touched
-						"
-					>
+					<ng-container *ngIf="isInvalidControl('primaryEmail')">
 						<p
-							class="caption status-danger"
+							class="caption status-danger mt-1"
 							*ngIf="form.controls.primaryEmail.errors?.required"
 						>
 							{{ 'TOASTR.MESSAGE.EMAIL_REQUIRED' | translate }}
 						</p>
 						<p
-							class="caption status-danger"
+							class="caption status-danger mt-1"
 							*ngIf="form.controls.primaryEmail.errors?.pattern"
 						>
 							{{
@@ -174,37 +144,24 @@
 						nbInput
 						fullWidth
 						formControlName="primaryPhone"
-						placeholder="{{
+						[placeholder]="
 							'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate
-						}}"
+						"
 						[status]="
-							form.controls.primaryPhone.dirty
-								? form.controls.primaryPhone.invalid
-									? 'danger'
-									: 'basic'
+							isInvalidControl('primaryPhone')
+								? 'danger'
 								: 'basic'
 						"
-						[attr.aria-invalid]="
-							form.controls.primaryPhone.invalid &&
-							form.controls.primaryPhone.touched
-								? true
-								: null
-						"
 					/>
-					<ng-container
-						*ngIf="
-							form.controls.primaryPhone.invalid &&
-							form.controls.primaryPhone.touched
-						"
-					>
+					<ng-container *ngIf="isInvalidControl('primaryPhone')">
 						<p
-							class="caption status-danger"
+							class="caption status-danger mt-1"
 							*ngIf="form.controls.primaryPhone.errors?.required"
 						>
 							{{ 'TOASTR.MESSAGE.PHONE_REQUIRED' | translate }}
 						</p>
 						<p
-							class="caption status-danger"
+							class="caption status-danger mt-1"
 							*ngIf="form.controls.primaryPhone.errors?.pattern"
 						>
 							{{
@@ -214,80 +171,14 @@
 						</p>
 					</ng-container>
 				</div>
-				<div class="form-group col-4">
-					<label class="label">{{
-						'ORGANIZATIONS_PAGE.EDIT.COUNTRY' | translate
-					}}</label>
-					<input
-						type="text"
-						#country
-						nbInput
-						fullWidth
-						formControlName="country"
-						placeholder="{{
-							'ORGANIZATIONS_PAGE.EDIT.COUNTRY' | translate
-						}}"
-					/>
-				</div>
-				<div class="form-group col-4">
-					<label class="label">{{
-						'ORGANIZATIONS_PAGE.EDIT.CITY' | translate
-					}}</label>
-					<input
-						type="text"
-						#city
-						nbInput
-						fullWidth
-						formControlName="city"
-						placeholder="{{
-							'ORGANIZATIONS_PAGE.EDIT.CITY' | translate
-						}}"
-					/>
-				</div>
-				<div class="form-group col-4">
-					<label class="label">{{
-						'ORGANIZATIONS_PAGE.EDIT.POSTCODE' | translate
-					}}</label>
-					<input
-						type="number"
-						#postcode
-						nbInput
-						fullWidth
-						formControlName="postcode"
-						placeholder="{{
-							'ORGANIZATIONS_PAGE.EDIT.POSTCODE' | translate
-						}}"
-					/>
-				</div>
-				<div class="form-group col-6">
-					<label class="label">{{
-						'ORGANIZATIONS_PAGE.EDIT.STREET' | translate
-					}}</label>
-					<input
-						#address
-						type="text"
-						nbInput
-						fullWidth
-						formControlName="address"
-						placeholder="{{
-							'ORGANIZATIONS_PAGE.EDIT.STREET' | translate
-						}}"
-					/>
-				</div>
-				<div class="form-group col-6">
-					<label class="label">{{
-						'ORGANIZATIONS_PAGE.EDIT.SECOND_ADDRESS' | translate
-					}}</label>
-					<input
-						type="text"
-						#address2
-						nbInput
-						fullWidth
-						formControlName="address2"
-						placeholder="{{
-							'ORGANIZATIONS_PAGE.EDIT.SECOND_ADDRESS' | translate
-						}}"
-					/>
+				<div class="col-12">
+					<ga-location-form
+						#locationFormDirective
+						[form]="form.get('location')"
+						[showAutocompleteSearch]="true"
+						[showCoordinateInput]="false"
+					>
+					</ga-location-form>
 				</div>
 				<div class="form-group col-4">
 					<label class="label">{{
@@ -295,14 +186,14 @@
 					}}</label>
 					<ng-select
 						[addTag]="addNewProject"
-						[items]="selectedproject"
+						[items]="selectedProject"
 						bindLabel="name"
 						[(ngModel)]="projects"
 						[searchable]="true"
 						formControlName="projects"
-						placeholder="{{
+						[placeholder]="
 							'ORGANIZATIONS_PAGE.EDIT.PROJECTS' | translate
-						}}"
+						"
 					>
 					</ng-select>
 				</div>
@@ -327,23 +218,15 @@
 						'CONTACTS_PAGE.CONTACT_TYPE' | translate
 					}}</label>
 					<ng-select
+						#contactType
 						formControlName="contactType"
 						[clearable]="false"
 						[searchable]="false"
 						[(ngModel)]="defaultSelectedType"
-						placeholder="{{
-							'CONTACTS_PAGE.CONTACT_TYPE' | translate
-						}}"
-						[status]="
-							form.controls.contactType.touched
-								? form.controls.contactType.value == 0
-									? 'danger'
-									: 'basic'
-								: 'basic'
-						"
+						[placeholder]="'CONTACTS_PAGE.CONTACT_TYPE' | translate"
 						[attr.aria-invalid]="
-							form.controls.contactType.invalid &&
-							form.controls.contactType.touched
+							form.get('contactType').invalid &&
+							form.get('contactType').touched
 								? true
 								: null
 						"
@@ -354,11 +237,11 @@
 					</ng-select>
 					<ng-container
 						*ngIf="
-							form.controls.contactType.invalid &&
-							form.controls.contactType.touched
+							form.get('contactType').invalid &&
+							form.get('contactType').touched
 						"
 					>
-						<p class="caption status-danger">
+						<p class="caption status-danger mt-1">
 							{{
 								'TOASTR.MESSAGE.CONTACT_TYPE_REQUIRED'
 									| translate
@@ -376,9 +259,9 @@
 						nbInput
 						fullWidth
 						formControlName="fax"
-						placeholder="{{
+						[placeholder]="
 							'ORGANIZATIONS_PAGE.EDIT.FAX' | translate
-						}}"
+						"
 					/>
 				</div>
 				<div class="form-group col-4">
@@ -391,10 +274,10 @@
 						nbInput
 						fullWidth
 						formControlName="fiscalInformation"
-						placeholder="{{
+						[placeholder]="
 							'ORGANIZATIONS_PAGE.EDIT.FISCAL_INFORMATION'
 								| translate
-						}}"
+						"
 					/>
 				</div>
 				<div class="form-group col-4">
@@ -407,25 +290,24 @@
 						nbInput
 						fullWidth
 						formControlName="website"
-						placeholder="{{
+						[placeholder]="
 							'ORGANIZATIONS_PAGE.EDIT.WEBSITE' | translate
-						}}"
+						"
 					/>
 				</div>
 			</div>
 		</form>
 		<div class="form-group float-right">
+			<button class="mr-2" (click)="cancel()" nbButton status="danger">
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
 			<button
-				class="mr-2"
 				(click)="submitForm()"
 				nbButton
 				status="success"
 				[disabled]="!form.valid"
 			>
 				{{ 'BUTTONS.SAVE' | translate }}
-			</button>
-			<button (click)="cancel()" nbButton status="danger">
-				{{ 'BUTTONS.CANCEL' | translate }}
 			</button>
 		</div>
 	</nb-card-body>

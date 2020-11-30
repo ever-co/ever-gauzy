@@ -34,6 +34,7 @@ import { LeadsComponent } from './leads/leads.component';
 import { CustomersComponent } from './customers/customers.component';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { ContactActionComponent } from './table-components/contact-action/contact-action.component';
+import { LocationFormModule } from '../../@shared/forms/location';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -80,7 +81,8 @@ const COMPONENTS = [
 				deps: [HttpClient]
 			}
 		}),
-		NbToggleModule
+		NbToggleModule,
+		LocationFormModule
 	],
 
 	declarations: [...COMPONENTS],

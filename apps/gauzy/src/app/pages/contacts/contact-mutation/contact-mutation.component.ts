@@ -1,4 +1,11 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {
+	Component,
+	EventEmitter,
+	Input,
+	OnInit,
+	Output,
+	ViewChild
+} from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	IEmployee,
@@ -13,13 +20,15 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { Store } from '../../../@core/services/store.service';
+import { LocationFormComponent } from '../../../@shared/forms/location';
 
 @Component({
 	selector: 'ga-contact-mutation',
 	templateUrl: './contact-mutation.component.html',
 	styleUrls: ['./contact-mutation.component.scss']
 })
-export class ContactMutationComponent extends TranslationBaseComponent
+export class ContactMutationComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	@Input()
 	employees: IEmployee[];
@@ -40,15 +49,22 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	@Output()
 	addOrEditOrganizationContact = new EventEmitter();
 
+	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
+
+	@ViewChild('locationFormDirective')
+	locationFormDirective: LocationFormComponent;
+
 	defaultSelectedType: any;
 	form: FormGroup;
 	members: string[];
 	selectedEmployeeIds: string[];
 	allProjects: IOrganizationProject[] = [];
 	tags: ITag[] = [];
-	selectedproject: Object[] = [];
-	contactTypes = [];
+	selectedProject: Object[] = [];
+	contactTypes: ContactType[] = Object.values(ContactType);
 	hoverState: boolean;
+	country: string;
+	projects: IOrganizationProject[] = [];
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -80,23 +96,19 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	}
 
 	private async _getProjects() {
-		const { id: organizationId, tenantId } = this.organization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 		this.organizationId = organizationId;
 		const { items } = await this.organizationProjectsService.getAll([], {
 			organizationId,
 			tenantId
 		});
 		items.forEach((i) => {
-			this.selectedproject = [
-				...this.selectedproject,
+			this.selectedProject = [
+				...this.selectedProject,
 				{ name: i.name, projectId: i.id }
 			];
 		});
-		this.contactTypes = [
-			ContactType.CLIENT,
-			ContactType.CUSTOMER,
-			ContactType.LEAD
-		];
 	}
 
 	private _initializeForm() {
@@ -134,41 +146,6 @@ export class ContactMutationComponent extends TranslationBaseComponent
 					: '',
 				Validators.required
 			],
-			country: [
-				this.organizationContact
-					? this.organizationContact.contact
-						? this.organizationContact.contact.country
-						: ''
-					: ''
-			],
-			city: [
-				this.organizationContact
-					? this.organizationContact.contact
-						? this.organizationContact.contact.city
-						: ''
-					: ''
-			],
-			address: [
-				this.organizationContact
-					? this.organizationContact.contact
-						? this.organizationContact.contact.address
-						: ''
-					: ''
-			],
-			address2: [
-				this.organizationContact
-					? this.organizationContact.contact
-						? this.organizationContact.contact.address2
-						: ''
-					: ''
-			],
-			postcode: [
-				this.organizationContact
-					? this.organizationContact.contact
-						? this.organizationContact.contact.postcode
-						: null
-					: null
-			],
 			projects: [
 				this.organizationContact
 					? (this.organizationContact.projects || []).map(
@@ -202,8 +179,42 @@ export class ContactMutationComponent extends TranslationBaseComponent
 						? this.organizationContact.contact.fiscalInformation
 						: ''
 					: ''
-			]
+			],
+			location: this.locationForm
 		});
+
+		this._setLocationForm();
+	}
+
+	private _setLocationForm() {
+		if (!this.organizationContact) {
+			return;
+		}
+		setTimeout(() => {
+			const { contact } = this.organizationContact;
+			if (contact) {
+				const {
+					country,
+					city,
+					postcode,
+					address,
+					address2,
+					latitude,
+					longitude
+				} = contact;
+				this.locationFormDirective.setValue({
+					country,
+					city,
+					postcode,
+					address,
+					address2,
+					loc: {
+						type: 'Point',
+						coordinates: [latitude, longitude]
+					}
+				});
+			}
+		}, 200);
 	}
 
 	handleImageUploadError(error) {
@@ -212,20 +223,26 @@ export class ContactMutationComponent extends TranslationBaseComponent
 
 	addNewProject = (name: string): Promise<IOrganizationProject> => {
 		try {
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
-					{
-						name: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
-			return this.organizationProjectsService.create({
-				name,
-				organizationId: this.organizationId,
-				tenantId: this.organization.tenantId
-			});
+			const { tenantId } = this.store.user;
+			const { organizationId } = this;
+			return this.organizationProjectsService
+				.create({
+					name,
+					organizationId,
+					tenantId
+				})
+				.then((project) => {
+					this.toastrService.primary(
+						this.getTranslation(
+							'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
+							{
+								name: name
+							}
+						),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					);
+					return project;
+				});
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
@@ -249,21 +266,28 @@ export class ContactMutationComponent extends TranslationBaseComponent
 			imgUrl = imgUrl
 				? this.form.value['imageUrl']
 				: 'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text';
+
+			const location = this.locationFormDirective.getValue();
+			const { coordinates } = location['loc'];
+			delete location['loc'];
+
+			const [latitude, longitude] = coordinates;
+			const contact = {
+				...location,
+				...{ latitude, longitude }
+			};
+
+			const { tenantId } = this.store.user;
 			this.addOrEditOrganizationContact.emit({
 				tags: this.tags,
 				id: this.organizationContact
 					? this.organizationContact.id
 					: undefined,
 				organizationId: this.organizationId,
-				tenantId: this.organization.tenantId,
+				tenantId,
 				name: this.form.value['name'],
 				primaryEmail: this.form.value['primaryEmail'],
 				primaryPhone: this.form.value['primaryPhone'],
-				country: this.form.value['country'],
-				city: this.form.value['city'],
-				address: this.form.value['address'],
-				address2: this.form.value['address2'],
-				postcode: this.form.value['postcode'],
 				projects: this.form.value['projects']
 					? this.form.value['projects']
 					: '',
@@ -274,7 +298,8 @@ export class ContactMutationComponent extends TranslationBaseComponent
 					.filter((e) => !!e),
 				fax: this.form.value['fax'],
 				fiscalInformation: this.form.value['fiscalInformation'],
-				website: this.form.value['website']
+				website: this.form.value['website'],
+				...contact
 			});
 
 			this.selectedEmployeeIds = [];
@@ -299,5 +324,12 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	}
 	selectedTagsEvent(ev) {
 		this.tags = ev;
+	}
+
+	isInvalidControl(control: string) {
+		if (!this.form.contains(control)) {
+			return true;
+		}
+		return this.form.get(control).touched && this.form.get(control).invalid;
 	}
 }
