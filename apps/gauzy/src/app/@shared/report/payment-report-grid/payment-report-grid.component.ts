@@ -6,10 +6,10 @@ import {
 	OnInit
 } from '@angular/core';
 import {
-	IExpenseReportData,
+	IGetPaymentInput,
 	IGetTimeLogReportInput,
 	IOrganization,
-	ITimeLogFilters,
+	IPaymentReportData,
 	OrganizationPermissionsEnum,
 	PermissionsEnum
 } from '@gauzy/models';
@@ -19,28 +19,28 @@ import { NgxPermissionsService } from 'ngx-permissions';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { pick } from 'underscore';
-import { ExpensesService } from '../../../@core/services/expenses.service';
+import { PaymentService } from '../../../@core/services/payment.service';
 import { Store } from '../../../@core/services/store.service';
 import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
 
 @UntilDestroy()
 @Component({
-	selector: 'ga-expenses-report-grid',
-	templateUrl: './expenses-report-grid.component.html',
-	styleUrls: ['./expenses-report-grid.component.scss']
+	selector: 'ga-payment-report-grid',
+	templateUrl: './payment-report-grid.component.html',
+	styleUrls: ['./payment-report-grid.component.scss']
 })
-export class ExpensesReportGridComponent implements OnInit, AfterViewInit {
+export class PaymentReportGridComponent implements OnInit, AfterViewInit {
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	PermissionsEnum = PermissionsEnum;
 	today: Date = new Date();
-	logRequest: ITimeLogFilters = {
+	logRequest: IGetPaymentInput = {
 		startDate: moment().startOf('week').toDate(),
 		endDate: moment().endOf('week').toDate()
 	};
 	updateLogs$: Subject<any> = new Subject();
 	organization: IOrganization;
 
-	dailyData: IExpenseReportData[] = [];
+	dailyData: IPaymentReportData[] = [];
 	weekDayList: string[] = [];
 	loading: boolean;
 
@@ -63,7 +63,7 @@ export class ExpensesReportGridComponent implements OnInit, AfterViewInit {
 	}
 
 	constructor(
-		private expensesService: ExpensesService,
+		private paymentService: PaymentService,
 		private ngxPermissionsService: NgxPermissionsService,
 		private store: Store,
 		private cd: ChangeDetectorRef
@@ -73,7 +73,7 @@ export class ExpensesReportGridComponent implements OnInit, AfterViewInit {
 		this.updateLogs$
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(() => {
-				this.getExpenses();
+				this.getPayment();
 			});
 
 		this.store.selectedOrganization$
@@ -120,7 +120,7 @@ export class ExpensesReportGridComponent implements OnInit, AfterViewInit {
 		this.updateLogs$.next();
 	}
 
-	async getExpenses() {
+	async getPayment() {
 		const { startDate, endDate } = this.logRequest;
 
 		const appliedFilter = pick(this.logRequest, 'projectIds');
@@ -138,8 +138,8 @@ export class ExpensesReportGridComponent implements OnInit, AfterViewInit {
 		};
 
 		this.loading = true;
-		this.expensesService
-			.getDailyExpensesReport(request)
+		this.paymentService
+			.getReportData(request)
 			.then((logs) => {
 				this.dailyData = logs;
 			})

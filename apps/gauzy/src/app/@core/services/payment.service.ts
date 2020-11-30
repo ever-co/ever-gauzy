@@ -1,13 +1,19 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
+	IGetPaymentInput,
 	IPayment,
 	IPaymentFindInput,
+	IPaymentReportChartData,
+	IPaymentReportData,
 	IPaymentUpdateInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
+import { toParams } from '@gauzy/utils';
 
-@Injectable()
+@Injectable({
+	providedIn: 'root'
+})
 export class PaymentService {
 	constructor(private http: HttpClient) {}
 
@@ -41,6 +47,23 @@ export class PaymentService {
 	delete(id: string): Promise<any> {
 		return this.http
 			.delete(`/api/payments/${id}`)
+			.pipe(first())
+			.toPromise();
+	}
+
+	getReportData(request: IGetPaymentInput) {
+		return this.http
+			.get<IPaymentReportData[]>('/api/payments/report', {
+				params: toParams(request)
+			})
+			.pipe(first())
+			.toPromise();
+	}
+	getReportChartData(request: IGetPaymentInput) {
+		return this.http
+			.get<IPaymentReportChartData[]>('/api/payments/report/chart-data', {
+				params: toParams(request)
+			})
 			.pipe(first())
 			.toPromise();
 	}
