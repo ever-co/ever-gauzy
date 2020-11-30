@@ -8,6 +8,7 @@ import { IGetExpenseInput, IOrganization } from '@gauzy/models';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ExpensesService } from 'apps/gauzy/src/app/@core/services/expenses.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import * as moment from 'moment';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
