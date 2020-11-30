@@ -14,7 +14,7 @@ import {
 	NG_VALUE_ACCESSOR
 } from '@angular/forms';
 import { ICountry } from '@gauzy/models';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable } from 'rxjs/Observable';
 import { CountryService } from '../../@core/services/country.service';
