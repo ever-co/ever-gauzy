@@ -27,14 +27,14 @@ aliases:
     - &install-postgresql
       name: Install PostgreSQL
       command: |
-          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" >> /etc/apt/sources.list.d/pgdg.list'
-          sudo apt update
-          sudo apt -y install postgresql-11
+          # wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+          # sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" >> /etc/apt/sources.list.d/pgdg.list'
+          # sudo apt update
+          sudo apt -y install postgresql-12
           echo 'PostgreSQL Installed'
-          sudo apt -y install postgresql-contrib-11
-          echo 'PostgreSQL Contrib Installed'
-          sudo pg_ctlcluster 11 main start
+          sudo apt -y install postgresql-client-12
+          echo 'PostgreSQL Client Installed'
+          sudo pg_ctlcluster 12 main start
           echo 'PostgreSQL Cluster Started'
           systemctl status postgresql.service
           echo 'PostgreSQL Status Displayed Above'
