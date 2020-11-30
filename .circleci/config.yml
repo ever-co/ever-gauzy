@@ -30,11 +30,11 @@ aliases:
           wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
           sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" >> /etc/apt/sources.list.d/pgdg.list'
           sudo apt update
-          sudo apt -y install postgresql
+          sudo apt -y install postgresql-11
           echo 'PostgreSQL Installed'
-          sudo apt -y install postgresql-contrib
+          sudo apt -y install postgresql-contrib-11
           echo 'PostgreSQL Contrib Installed'
-          sudo pg_ctlcluster 13 main start
+          sudo pg_ctlcluster 11 main start
           echo 'PostgreSQL Cluster Started'
           systemctl status postgresql.service
           echo 'PostgreSQL Status Displayed Above'
@@ -237,14 +237,14 @@ jobs:
     test-web:
         <<: *defaults
         machine:
-            image: ubuntu-2004:202010-01
+            image: ubuntu-1604:202010-01
         working_directory: /tmp/workspace/test-web
         steps:
             - checkout
+            - run: *install-postgresql
             - run: *install-node
             - run: *install-deps
             - run: *install-yarn
-            - run: *install-postgresql
 
             - restore_cache:
                   name: Restore Yarn Package Cache
