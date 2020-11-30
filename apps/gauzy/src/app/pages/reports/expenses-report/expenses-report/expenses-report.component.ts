@@ -5,9 +5,16 @@ import {
 	OnInit
 } from '@angular/core';
 import { IGetExpenseInput, IOrganization } from '@gauzy/models';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ExpensesService } from 'apps/gauzy/src/app/@core/services/expenses.service';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import * as moment from 'moment';
 import { Subject } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
+import { pluck } from 'underscore';
 
+@UntilDestroy()
 @Component({
 	selector: 'ga-expenses-report',
 	templateUrl: './expenses-report.component.html',
@@ -35,9 +42,41 @@ export class ExpensesReportComponent implements OnInit, AfterViewInit {
 		this._selectedDate = value;
 	}
 
-	constructor(private cd: ChangeDetectorRef) {}
+	constructor(
+		private expensesService: ExpensesService,
+		private cd: ChangeDetectorRef,
+		private store: Store
+	) {}
 
-	ngOnInit() {}
+	ngOnInit() {
+		this.updateLogs$
+			.pipe(untilDestroyed(this), debounceTime(500))
+			.subscribe(() => {
+				this.updateChartData();
+			});
+
+		this.store.selectedOrganization$
+			.pipe(untilDestroyed(this))
+			.subscribe((organization: IOrganization) => {
+				if (organization) {
+					this.organization = organization;
+					this.updateLogs$.next();
+				}
+			});
+
+		this.store.selectedEmployee$
+			.pipe(untilDestroyed(this))
+			.subscribe((employee: SelectedEmployee) => {
+				if (employee && employee.id) {
+					this.logRequest.employeeIds = [employee.id];
+				} else {
+					delete this.logRequest.employeeIds;
+				}
+				this.updateLogs$.next();
+			});
+
+		this.updateLogs$.next();
+	}
 
 	ngAfterViewInit() {
 		this.cd.detectChanges();
@@ -47,5 +86,33 @@ export class ExpensesReportComponent implements OnInit, AfterViewInit {
 		this.logRequest = $event;
 		this.filters = Object.assign({}, this.logRequest);
 		this.updateLogs$.next();
+	}
+
+	updateChartData() {
+		const { startDate, endDate } = this.logRequest;
+		const request: IGetExpenseInput = {
+			startDate: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
+			endDate: moment(endDate).endOf('day').format('YYYY-MM-DD HH:mm:ss'),
+			organizationId: this.organization ? this.organization.id : null,
+			tenantId: this.organization ? this.organization.tenantId : null,
+			groupBy: this.groupBy
+		};
+
+		this.loading = true;
+		this.expensesService
+			.getReportChartData(request)
+			.then((logs: any[]) => {
+				const datasets = [
+					{
+						label: 'Expanse',
+						data: logs.map((log) => log.value['expanse'])
+					}
+				];
+				this.chartData = {
+					labels: pluck(logs, 'date'),
+					datasets
+				};
+			})
+			.finally(() => (this.loading = false));
 	}
 }

@@ -106,4 +106,13 @@ export class ExpensesService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	getReportChartData(request: any = {}) {
+		return this.http
+			.get<IExpenseReportData[]>(`/api/expense/report/daily-chart`, {
+				params: toParams(request)
+			})
+			.pipe(first())
+			.toPromise();
+	}
 }
