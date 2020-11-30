@@ -4,7 +4,9 @@ import {
 	clickButtonByIndex,
 	clearField,
 	enterInput,
-	waitElementToHide
+	waitElementToHide,
+	verifyText,
+	verifyTextNotExisting
 } from '../utils/util';
 import { OrganizationTagsPage } from '../pageobjects/OrganizationTagsPageObject';
 
@@ -125,4 +127,12 @@ export const clickConfirmDeleteTagButton = () => {
 
 export const waitMessageToHide = () => {
 	waitElementToHide(OrganizationTagsPage.toastrMessageCss);
+};
+
+export const verifyTagExists = (text) => {
+	verifyText(OrganizationTagsPage.verifyTagCss, text);
+};
+
+export const verifyTagIsDeleted = (text) => {
+	verifyTextNotExisting(OrganizationTagsPage.verifyTagCss, text);
 };

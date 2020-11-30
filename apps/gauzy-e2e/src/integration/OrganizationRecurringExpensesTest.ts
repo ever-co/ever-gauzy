@@ -24,9 +24,12 @@ describe('Organization recurring expenses test', () => {
 		);
 		organizationRecurringExpensesPage.saveExpenseButtonVisible();
 		organizationRecurringExpensesPage.clickSaveExpenseButton();
+		organizationRecurringExpensesPage.waitMessageToHide();
+		organizationRecurringExpensesPage.verifyExpenseExists(
+			OrganizationRecurringExpensesPageData.defaultExpense
+		);
 	});
 	it('Should be able to edit expense', () => {
-		organizationRecurringExpensesPage.waitMessageToHide();
 		organizationRecurringExpensesPage.settingsButtonVisible();
 		organizationRecurringExpensesPage.clickSettingsButton();
 		organizationRecurringExpensesPage.editButtonVisible();
@@ -34,7 +37,7 @@ describe('Organization recurring expenses test', () => {
 		organizationRecurringExpensesPage.expenseDropdownVisible();
 		organizationRecurringExpensesPage.clickExpenseDropdown();
 		organizationRecurringExpensesPage.selectExpenseOptionDropdown(
-			OrganizationRecurringExpensesPageData.defaultExpense
+			OrganizationRecurringExpensesPageData.editExpense
 		);
 		organizationRecurringExpensesPage.expenseValueInputVisible();
 		organizationRecurringExpensesPage.enterExpenseValueInputData(
@@ -51,5 +54,11 @@ describe('Organization recurring expenses test', () => {
 		organizationRecurringExpensesPage.clickDeleteButton();
 		organizationRecurringExpensesPage.deleteOnlyThisRadioButtonVisible();
 		organizationRecurringExpensesPage.clickDeleteOnlyThisRadioButton();
+		organizationRecurringExpensesPage.confirmDeleteButtonVisible();
+		organizationRecurringExpensesPage.clickConfirmDeleteButton();
+		organizationRecurringExpensesPage.waitMessageToHide();
+		organizationRecurringExpensesPage.verifyExpenseIsDeleted(
+			OrganizationRecurringExpensesPageData.editExpense
+		);
 	});
 });

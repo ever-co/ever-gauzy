@@ -6,7 +6,9 @@ import {
 	clickKeyboardBtnByKeycode,
 	clickElementByText,
 	getLastElement,
-	waitElementToHide
+	waitElementToHide,
+	verifyText,
+	verifyTextNotExisting
 } from '../utils/util';
 import { OrganizationRecurringExpensesPage } from '../pageobjects/OrganizationRecurringExpensesPageObject';
 
@@ -104,4 +106,15 @@ export const clickConfirmDeleteButton = () => {
 
 export const waitMessageToHide = () => {
 	waitElementToHide(OrganizationRecurringExpensesPage.toastrMessageCss);
+};
+
+export const verifyExpenseExists = (text) => {
+	verifyText(OrganizationRecurringExpensesPage.verifyExpenseCss, text);
+};
+
+export const verifyExpenseIsDeleted = (text) => {
+	verifyTextNotExisting(
+		OrganizationRecurringExpensesPage.verifyExpenseCss,
+		text
+	);
 };

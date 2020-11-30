@@ -6,7 +6,9 @@ import {
 	clickButtonByIndex,
 	waitElementToHide,
 	clickElementByText,
-	getLastElement
+	getLastElement,
+	verifyText,
+	verifyTextNotExisting
 } from '../utils/util';
 import { OrganizationHelpCenterPage } from '../pageobjects/OrganizationHelpCenterPageObject';
 
@@ -129,4 +131,12 @@ export const clickDeleteButton = () => {
 
 export const waitMessageToHide = () => {
 	waitElementToHide(OrganizationHelpCenterPage.toastrMessageCss);
+};
+
+export const verifybaseExists = (text) => {
+	verifyText(OrganizationHelpCenterPage.verifyBaseCss, text);
+};
+
+export const verifyBaseIsDeleted = (text) => {
+	verifyTextNotExisting(OrganizationHelpCenterPage.verifyBaseCss, text);
 };

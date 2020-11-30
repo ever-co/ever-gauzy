@@ -9,5 +9,6 @@ export const OrganizationDocumentsPage = {
 	deleteButtonCss: 'nb-actions g[data-name="close"]',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	cardBodyCss: 'nb-card-body',
-	toastrMessageCss: 'nb-toast.ng-trigger'
+	toastrMessageCss: 'nb-toast.ng-trigger',
+	verifyDocumentCss: 'div > a'
 };

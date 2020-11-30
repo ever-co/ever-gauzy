@@ -10,5 +10,7 @@ export const OrganizationVendorsPage = {
 	saveVendorbuttonCss: 'nb-card-footer > button[status="success"]',
 	editVendorButtonCss: 'nb-actions > nb-action[icon="edit"]',
 	deleteVendorButtonCss: 'nb-actions > nb-action[icon="close"]',
-	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]'
+	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
+	toastrMessageCss: 'nb-toast.ng-trigger',
+	verifyVendorCss: 'div.float-left > div.ng-star-inserted > span.mb-1'
 };
