@@ -24,10 +24,20 @@ aliases:
           sudo sed -i 's|HERE/chrome\"|HERE/chrome\" --disable-setuid-sandbox|g' /opt/google/chrome/google-chrome
           rm google-chrome.deb
 
+    - &install-postgresql
+      name: Install PostgreSQL
+      command: |
+          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+          echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt update
+          sudo apt -y install postgresql-12 postgresql-client-12
+          systemctl status postgresql.service 
+          psql -c "alter user postgres with password 'root'"
+
     - &install-deps
       name: Install Global Dependencies
       command: |
-          sudo apt-get update
+          sudo apt-get update          
           sudo apt install npm
           sudo apt install build-essential
           sudo npm install --quiet node-gyp -g              
@@ -226,6 +236,7 @@ jobs:
             - run: *install-node
             - run: *install-deps
             - run: *install-yarn
+            - run: *install-postgresql
 
             - restore_cache:
                   name: Restore Yarn Package Cache
