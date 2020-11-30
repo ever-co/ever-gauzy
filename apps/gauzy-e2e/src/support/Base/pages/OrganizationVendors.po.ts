@@ -4,7 +4,10 @@ import {
 	clickButtonByIndex,
 	clearField,
 	enterInput,
-	clickKeyboardBtnByKeycode
+	clickKeyboardBtnByKeycode,
+	verifyText,
+	verifyTextNotExisting,
+	waitElementToHide
 } from '../utils/util';
 import { OrganizationVendorsPage } from '../pageobjects/OrganizationVendorsPageObject';
 
@@ -106,4 +109,16 @@ export const clickConfirmDeleteButton = () => {
 
 export const clickKeyboardButtonByKeyCode = (keycode) => {
 	clickKeyboardBtnByKeycode(keycode);
+};
+
+export const waitMessageToHide = () => {
+	waitElementToHide(OrganizationVendorsPage.toastrMessageCss);
+};
+
+export const verifyVendorExists = (text) => {
+	verifyText(OrganizationVendorsPage.verifyVendorCss, text);
+};
+
+export const verifyVendorIsDeleted = (text) => {
+	verifyTextNotExisting(OrganizationVendorsPage.verifyVendorCss, text);
 };

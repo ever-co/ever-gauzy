@@ -5,7 +5,9 @@ import {
 	clearField,
 	enterInput,
 	clickButtonWithDelay,
-	waitElementToHide
+	waitElementToHide,
+	verifyText,
+	verifyTextNotExisting
 } from '../utils/util';
 import { OrganizationDocumentsPage } from '../pageobjects/OrganizationDocumentsPageObject';
 
@@ -80,4 +82,12 @@ export const clickCardBody = () => {
 
 export const waitMessageToHide = () => {
 	waitElementToHide(OrganizationDocumentsPage.toastrMessageCss);
+};
+
+export const verifyDocumentExists = (text) => {
+	verifyText(OrganizationDocumentsPage.verifyDocumentCss, text);
+};
+
+export const verifyDocumentIsDeleted = (text) => {
+	verifyTextNotExisting(OrganizationDocumentsPage.verifyDocumentCss, text);
 };

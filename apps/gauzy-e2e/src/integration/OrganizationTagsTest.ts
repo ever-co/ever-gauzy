@@ -20,7 +20,7 @@ describe('Organization tags test', () => {
 		organizationTagsUserPage.clickAddTagButton();
 		organizationTagsUserPage.tagNameInputVisible();
 		organizationTagsUserPage.enterTagNameData(
-			OrganizationTagsPageData.tageName
+			OrganizationTagsPageData.tagName
 		);
 		organizationTagsUserPage.tagColorInputVisible();
 		organizationTagsUserPage.enterTagColorData(
@@ -32,31 +32,40 @@ describe('Organization tags test', () => {
 		);
 		organizationTagsUserPage.saveTagButtonVisible();
 		organizationTagsUserPage.clickSaveTagButton();
+		organizationTagsUserPage.waitMessageToHide();
+		organizationTagsUserPage.verifyTagExists(
+			OrganizationTagsPageData.tagName
+		);
 	});
 	it('Should be able to edit tag', () => {
-		organizationTagsUserPage.waitMessageToHide();
 		organizationTagsUserPage.selectTableRow(0);
 		organizationTagsUserPage.editTagButtonVisible();
 		organizationTagsUserPage.clickEditTagButton();
 		organizationTagsUserPage.enterTagNameData(
-			OrganizationTagsPageData.tageName
+			OrganizationTagsPageData.editTagName
 		);
 		organizationTagsUserPage.enterTagColorData(
 			OrganizationTagsPageData.tagColor
 		);
-		organizationTagsUserPage.clickCheckboxTenantLevel();
 		organizationTagsUserPage.enterTagDescriptionData(
 			OrganizationTagsPageData.tagDescription
 		);
 		organizationTagsUserPage.saveTagButtonVisible();
 		organizationTagsUserPage.clickSaveTagButton();
+		organizationTagsUserPage.waitMessageToHide();
+		organizationTagsUserPage.verifyTagExists(
+			OrganizationTagsPageData.editTagName
+		);
 	});
 	it('Should be able to delete tag', () => {
-		organizationTagsUserPage.waitMessageToHide();
 		organizationTagsUserPage.selectTableRow(0);
 		organizationTagsUserPage.deleteTagButtonVisible();
 		organizationTagsUserPage.clickDeleteTagButton();
 		organizationTagsUserPage.confirmDeleteTagButtonVisible();
 		organizationTagsUserPage.clickConfirmDeleteTagButton();
+		organizationTagsUserPage.waitMessageToHide();
+		organizationTagsUserPage.verifyTagIsDeleted(
+			OrganizationTagsPageData.editTagName
+		);
 	});
 });

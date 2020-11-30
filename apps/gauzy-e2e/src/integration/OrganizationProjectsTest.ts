@@ -37,6 +37,10 @@ describe('Organization projects test', () => {
 		);
 		organizationProjectsPage.saveProjectButtonVisible();
 		organizationProjectsPage.clickSaveProjectButton();
+		organizationProjectsPage.waitMessageToHide();
+		organizationProjectsPage.verifyProjectExists(
+			OrganizationProjectsPageData.name
+		);
 	});
 	it('Should be able to edit project', () => {
 		organizationProjectsPage.tableRowVisible();
@@ -45,7 +49,7 @@ describe('Organization projects test', () => {
 		organizationProjectsPage.clickEditButton();
 		organizationProjectsPage.nameInputVisible();
 		organizationProjectsPage.enterNameInputData(
-			OrganizationProjectsPageData.name
+			OrganizationProjectsPageData.editName
 		);
 		organizationProjectsPage.colorInputVisible();
 		organizationProjectsPage.enterColorInputData(
@@ -59,10 +63,15 @@ describe('Organization projects test', () => {
 		organizationProjectsPage.clickSaveProjectButton();
 	});
 	it('Should be able to delete project', () => {
+		organizationProjectsPage.waitMessageToHide();
 		organizationProjectsPage.selectTableRow(0);
 		organizationProjectsPage.deleteButtonVisible();
 		organizationProjectsPage.clickDeleteButton();
 		organizationProjectsPage.confirmDeleteButtonVisible();
 		organizationProjectsPage.clickConfirmDeleteButton();
+		organizationProjectsPage.waitMessageToHide();
+		organizationProjectsPage.verifyProjectIsDeleted(
+			OrganizationProjectsPageData.editName
+		);
 	});
 });

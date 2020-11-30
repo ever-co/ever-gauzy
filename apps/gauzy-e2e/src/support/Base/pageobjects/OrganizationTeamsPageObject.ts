@@ -15,5 +15,6 @@ export const OrganizationTeamsPage = {
 	editButtonCss: 'nb-card-body > div > button[status="info"]',
 	deleteButtonCss: 'nb-card-body > div > button[status="danger"]',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
-	toastrMessageCss: 'nb-toast.ng-trigger'
+	toastrMessageCss: 'nb-toast.ng-trigger',
+	verifyTeamCss: 'div.ng-star-inserted'
 };

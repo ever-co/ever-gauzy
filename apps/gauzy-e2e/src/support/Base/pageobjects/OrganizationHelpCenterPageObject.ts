@@ -11,5 +11,6 @@ export const OrganizationHelpCenterPage = {
 	settingsButtonCss: 'nb-action.icons',
 	deleteButtonCss: 'div.save-button > button[status="warning"]',
 	settingsDropdownOptionCss: '.menu-items li',
-	toastrMessageCss: 'nb-toast.ng-trigger'
+	toastrMessageCss: 'nb-toast.ng-trigger',
+	verifyBaseCss: 'div.base > div > span.text'
 };

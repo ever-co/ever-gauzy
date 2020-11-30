@@ -44,13 +44,17 @@ describe('Organization vendors test', () => {
 		organizationVendorsPage.clickKeyboardButtonByKeyCode(9);
 		organizationVendorsPage.saveVendorButtonVisible();
 		organizationVendorsPage.clickSaveVendorButton();
+		organizationVendorsPage.waitMessageToHide();
+		organizationVendorsPage.verifyVendorExists(
+			OrganizationVendorsPageData.vendorName
+		);
 	});
 	it('Should be able to edit vendor', () => {
 		organizationVendorsPage.editVendorButtonVisible();
 		organizationVendorsPage.clickEditVendorButton(0);
 		organizationVendorsPage.nameInputVisible();
 		organizationVendorsPage.enterNameInputData(
-			OrganizationVendorsPageData.vendorName
+			OrganizationVendorsPageData.editVendorName
 		);
 		organizationVendorsPage.phoneInputVisible();
 		organizationVendorsPage.enterPhoneInputData(
@@ -70,11 +74,19 @@ describe('Organization vendors test', () => {
 		organizationVendorsPage.clickKeyboardButtonByKeyCode(9);
 		organizationVendorsPage.saveVendorButtonVisible();
 		organizationVendorsPage.clickSaveVendorButton();
+		organizationVendorsPage.waitMessageToHide();
+		organizationVendorsPage.verifyVendorExists(
+			OrganizationVendorsPageData.editVendorName
+		);
 	});
 	it('Should be able to delete vendor', () => {
 		organizationVendorsPage.deleteVendorButtonVisible();
 		organizationVendorsPage.clickDeleteVendorButton(0);
 		organizationVendorsPage.confirmDeletebuttonVisible();
 		organizationVendorsPage.clickConfirmDeleteButton();
+		organizationVendorsPage.waitMessageToHide();
+		organizationVendorsPage.verifyVendorIsDeleted(
+			OrganizationVendorsPageData.editVendorName
+		);
 	});
 });

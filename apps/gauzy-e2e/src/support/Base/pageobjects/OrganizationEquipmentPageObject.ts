@@ -26,8 +26,11 @@ export const OrganizationEquipmentPage = {
 	startDateInputCss: '[formcontrolname="shareStartDay"]',
 	endDateInputCss: '[formcontrolname="shareEndDay"]',
 	equipmentSharingPolicyButtonCss:
-		'div.main-header > button[status="primary"]',
+		'nb-card-header.main-header > div.main-header > button[status="primary"]',
 	policyDescriptionInputCss: '[formcontrolname="description"]',
 	backButtonCss: 'g[data-name="arrow-back"]',
-	toastrMessageCss: 'nb-toast.ng-trigger'
+	toastrMessageCss: 'nb-toast.ng-trigger',
+	verifyPolicyCss: 'div.ng-star-inserted',
+	verifySharingCss: 'div.ng-star-inserted',
+	verifyEquipmentCss: 'ga-picture-name-tags > div > div.d-block'
 };

@@ -38,6 +38,8 @@ describe('Organization teams test', () => {
 		organizationTeamsPage.clickCardBody();
 		organizationTeamsPage.saveButtonVisible();
 		organizationTeamsPage.clickSaveButton();
+		organizationTeamsPage.waitMessageToHide();
+		organizationTeamsPage.verifyTeamExists(OrganizationTeamsPageData.name);
 	});
 	it('Should be able to edit team', () => {
 		organizationTeamsPage.tableRowVisible();
@@ -46,7 +48,7 @@ describe('Organization teams test', () => {
 		organizationTeamsPage.clickEditButton();
 		organizationTeamsPage.nameInputVisible();
 		organizationTeamsPage.enterNameInputData(
-			OrganizationTeamsPageData.name
+			OrganizationTeamsPageData.editName
 		);
 		organizationTeamsPage.tagsMultyselectVisible();
 		organizationTeamsPage.clickTagsMultyselect();
@@ -60,13 +62,20 @@ describe('Organization teams test', () => {
 		organizationTeamsPage.clickCardBody();
 		organizationTeamsPage.saveButtonVisible();
 		organizationTeamsPage.clickSaveButton();
+		organizationTeamsPage.waitMessageToHide();
+		organizationTeamsPage.verifyTeamExists(
+			OrganizationTeamsPageData.editName
+		);
 	});
 	it('Should be able to delete team', () => {
-		organizationTeamsPage.waitMessageToHide();
 		organizationTeamsPage.selectTableRow(0);
 		organizationTeamsPage.deleteButtonVisible();
 		organizationTeamsPage.clickDeleteButton();
 		organizationTeamsPage.confirmDeleteButtonVisible();
 		organizationTeamsPage.clickConfirmDeleteButton();
+		organizationTeamsPage.waitMessageToHide();
+		organizationTeamsPage.verifyTeamIsDeleted(
+			OrganizationTeamsPageData.editName
+		);
 	});
 });

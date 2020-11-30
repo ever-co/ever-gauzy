@@ -44,7 +44,7 @@ export const CustomCommands = {
 		organizationTagsUserPage.clickAddTagButton();
 		organizationTagsUserPage.tagNameInputVisible();
 		organizationTagsUserPage.enterTagNameData(
-			OrganizationTagsPageData.tageName
+			OrganizationTagsPageData.tagName
 		);
 		organizationTagsUserPage.tagColorInputVisible();
 		organizationTagsUserPage.enterTagColorData(

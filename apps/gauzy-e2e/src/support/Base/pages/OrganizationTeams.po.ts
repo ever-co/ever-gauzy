@@ -5,7 +5,9 @@ import {
 	clearField,
 	enterInput,
 	clickKeyboardBtnByKeycode,
-	waitElementToHide
+	waitElementToHide,
+	verifyText,
+	verifyTextNotExisting
 } from '../utils/util';
 import { OrganizationTeamsPage } from '../pageobjects/OrganizationTeamsPageObject';
 
@@ -112,4 +114,12 @@ export const clickConfirmDeleteButton = () => {
 
 export const waitMessageToHide = () => {
 	waitElementToHide(OrganizationTeamsPage.toastrMessageCss);
+};
+
+export const verifyTeamExists = (text) => {
+	verifyText(OrganizationTeamsPage.verifyTeamCss, text);
+};
+
+export const verifyTeamIsDeleted = (text) => {
+	verifyTextNotExisting(OrganizationTeamsPage.verifyTeamCss, text);
 };

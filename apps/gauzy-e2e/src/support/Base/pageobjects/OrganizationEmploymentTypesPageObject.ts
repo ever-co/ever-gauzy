@@ -9,5 +9,6 @@ export const OrganizationEmploymentTypesPage = {
 	deleteButtonCss: 'nb-actions g[data-name="close"]',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	cardBodyCss: 'nb-card-body',
-	toastrMessageCss: 'nb-toast.ng-trigger'
+	toastrMessageCss: 'nb-toast.ng-trigger',
+	verifyTextCss: 'ga-notes-with-tags > div > div > div.ng-star-inserted'
 };
