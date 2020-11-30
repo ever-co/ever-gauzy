@@ -9,6 +9,7 @@ import { OrganizationProjectsPageData } from '../support/Base/pagedata/Organizat
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 import { CustomCommands } from '../support/commands';
+import { ManageUserInvitesPage } from '../support/Base/pageobjects/ManageUserInvitesPageObject';
 
 let email = ' ';
 let secEmail = ' ';
@@ -90,6 +91,8 @@ describe('Manage employees test', () => {
 		manageEmployeesPage.clickNextStepButton();
 		manageEmployeesPage.lastStepButtonVisible();
 		manageEmployeesPage.clickLastStepButton();
+		manageEmployeesPage.waitMessageToHide();
+		manageEmployeesPage.verifyEmployeeExists(`${firstName} ${lastName}`);
 	});
 	it('Should be able to edit employee', () => {
 		manageEmployeesPage.tableRowVisible();
@@ -130,6 +133,8 @@ describe('Manage employees test', () => {
 		manageEmployeesPage.clickDeleteButton();
 		manageEmployeesPage.confirmDeleteButtonVisible();
 		manageEmployeesPage.clickConfirmDeleteButton();
+		manageEmployeesPage.waitMessageToHide();
+		manageEmployeesPage.verifyEmployeeIsDeleted(`${firstName} ${lastName}`);
 	});
 	it('Should be able to copy invite link', () => {
 		manageEmployeesPage.manageInvitesButtonVisible();

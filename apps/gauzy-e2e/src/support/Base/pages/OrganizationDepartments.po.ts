@@ -4,7 +4,9 @@ import {
 	clickButton,
 	clearField,
 	clickKeyboardBtnByKeycode,
-	clickButtonByIndex
+	clickButtonByIndex,
+	verifyText,
+	verifyTextNotExisting
 } from '../utils/util';
 import { OrganizationDepartmentsPage } from '../pageobjects/OrganizationDepartmentsPageObject';
 
@@ -110,4 +112,15 @@ export const confirmDeleteButtonVisible = () => {
 
 export const clickConfirmDeleteButton = () => {
 	clickButton(OrganizationDepartmentsPage.confirmDeleteButtonCss);
+};
+
+export const verifyDepartmentExists = (text) => {
+	verifyText(OrganizationDepartmentsPage.verifyDepartmentCss, text);
+};
+
+export const verifyDepartmentIsDeleted = (text) => {
+	verifyTextNotExisting(
+		OrganizationDepartmentsPage.verifyDepartmentCss,
+		text
+	);
 };
