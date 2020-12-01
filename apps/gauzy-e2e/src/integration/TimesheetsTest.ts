@@ -13,10 +13,17 @@ import * as clientsPage from '../support/Base/pages/Clients.po';
 import * as faker from 'faker';
 import { ClientsData } from '../support/Base/pagedata/ClientsPageData';
 import { CustomCommands } from '../support/commands';
+import * as manageEmployeesPage from '../support/Base/pages/ManageEmployees.po';
+
+let firstName = ' ';
+let lastName = ' ';
+let username = ' ';
+let password = ' ';
+let employeeEmail = ' ';
+let imgUrl = ' ';
 
 let email = ' ';
 let fullName = ' ';
-let country = ' ';
 let city = ' ';
 let postcode = ' ';
 let street = ' ';
@@ -26,11 +33,17 @@ describe('Timesheets test', () => {
 	before(() => {
 		email = faker.internet.email();
 		fullName = faker.name.firstName() + ' ' + faker.name.lastName();
-		country = faker.address.country();
 		city = faker.address.city();
 		postcode = faker.address.zipCode();
 		street = faker.address.streetAddress();
 		website = faker.internet.url();
+
+		firstName = faker.name.firstName();
+		lastName = faker.name.lastName();
+		username = faker.internet.userName();
+		password = faker.internet.password();
+		employeeEmail = faker.internet.email();
+		imgUrl = faker.image.avatar();
 
 		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
@@ -43,6 +56,15 @@ describe('Timesheets test', () => {
 			organizationTagsUserPage,
 			OrganizationTagsPageData
 		);
+		CustomCommands.addEmployee(
+			manageEmployeesPage,
+			firstName,
+			lastName,
+			username,
+			employeeEmail,
+			password,
+			imgUrl
+		);
 		cy.visit('/#/pages/contacts/clients');
 		clientsPage.gridBtnExists();
 		clientsPage.gridBtnClick(1);
@@ -54,8 +76,6 @@ describe('Timesheets test', () => {
 		clientsPage.enterEmailInputData(email);
 		clientsPage.phoneInputVisible();
 		clientsPage.enterPhoneInputData(ClientsData.defaultPhone);
-		clientsPage.countryInputVisible();
-		clientsPage.enterCountryInputData(country);
 		clientsPage.cityInputVisible();
 		clientsPage.enterCityInputData(city);
 		clientsPage.postcodeInputVisible();

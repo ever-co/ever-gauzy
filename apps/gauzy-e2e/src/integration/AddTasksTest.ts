@@ -95,7 +95,17 @@ describe('Add tasks test', () => {
 		addTaskPage.confirmDuplicateOrEditTaskButtonVisible();
 		addTaskPage.clickConfirmDuplicateOrEditTaskButton();
 	});
+	it('Should be able to delete task', () => {
+		addTaskPage.waitMessageToHide();
+		addTaskPage.tasksTableVisible();
+		addTaskPage.selectTasksTableRow(0);
+		addTaskPage.deleteTaskButtonVisible();
+		addTaskPage.clickDeleteTaskButton();
+		addTaskPage.confirmDeleteTaskButtonVisible();
+		addTaskPage.clickConfirmDeleteTaskButton();
+	});
 	it('Should be able to edit task', () => {
+		addTaskPage.waitMessageToHide();
 		addTaskPage.tasksTableVisible();
 		addTaskPage.selectTasksTableRow(0);
 		addTaskPage.duplicateOrEditTaskButtonVisible();
@@ -106,7 +116,7 @@ describe('Add tasks test', () => {
 			AddTasksPageData.defaultTaskProject
 		);
 		addTaskPage.addTitleInputVisible();
-		addTaskPage.enterTitleInputData(AddTasksPageData.defaultTaskTitle);
+		addTaskPage.enterTitleInputData(AddTasksPageData.editTaskTitle);
 		addTaskPage.dueDateInputVisible();
 		addTaskPage.enterDueDateData();
 		addTaskPage.clickKeyboardButtonByKeyCode(9);
@@ -129,15 +139,9 @@ describe('Add tasks test', () => {
 		addTaskPage.saveTaskButtonVisible();
 		addTaskPage.clickSaveTaskButton();
 		addTaskPage.waitMessageToHide();
-		addTaskPage.verifyTaskExists(AddTasksPageData.defaultTaskTitle);
+		addTaskPage.verifyTaskExists(AddTasksPageData.editTaskTitle);
 	});
 	it('Should be able to delete task', () => {
-		addTaskPage.tasksTableVisible();
-		addTaskPage.selectTasksTableRow(0);
-		addTaskPage.deleteTaskButtonVisible();
-		addTaskPage.clickDeleteTaskButton();
-		addTaskPage.confirmDeleteTaskButtonVisible();
-		addTaskPage.clickConfirmDeleteTaskButton();
 		addTaskPage.waitMessageToHide();
 		addTaskPage.tasksTableVisible();
 		addTaskPage.selectTasksTableRow(0);

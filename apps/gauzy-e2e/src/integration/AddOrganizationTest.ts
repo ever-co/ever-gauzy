@@ -8,11 +8,13 @@ import { CustomCommands } from '../support/commands';
 
 let organizationName = ' ';
 let taxId = ' ';
+let street = ' ';
 
 describe('Create Organization Test', () => {
 	before(() => {
 		organizationName = faker.company.companyName();
 		taxId = faker.random.alphaNumeric();
+		street = faker.address.streetAddress();
 
 		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
@@ -37,6 +39,8 @@ describe('Create Organization Test', () => {
 		addOrganizationPage.enterPostcodeInputData(
 			AddOrganizationPageData.postcode
 		);
+		addOrganizationPage.streetInputVisible();
+		addOrganizationPage.enterStreetInputData(street);
 		addOrganizationPage.clickOnNextButton();
 		addOrganizationPage.bonusTypeDropdownVisible();
 		addOrganizationPage.clickBonusTypeDropdown();
@@ -46,10 +50,6 @@ describe('Create Organization Test', () => {
 		addOrganizationPage.bonusPercentageInputVisible();
 		addOrganizationPage.enterBonusPercentageInputData(
 			AddOrganizationPageData.bonusPercentage
-		);
-		addOrganizationPage.expiryPeriodInputVisible();
-		addOrganizationPage.enterExpiryPeriodInputData(
-			AddOrganizationPageData.expiryPeriod
 		);
 		addOrganizationPage.clickOnNextButton();
 		addOrganizationPage.timeZoneDropdownVisible();
@@ -80,6 +80,10 @@ describe('Create Organization Test', () => {
 		addOrganizationPage.dateFormatDropdownVisible();
 		addOrganizationPage.clickDateFormatDropdown();
 		addOrganizationPage.selectDateFormatFromDropdown();
+		addOrganizationPage.expiryPeriodInputVisible();
+		addOrganizationPage.enterExpiryPeriodInputData(
+			AddOrganizationPageData.expiryPeriod
+		);
 		addOrganizationPage.clickOnNextButton();
 		addOrganizationPage.waitMessageToHide();
 		addOrganizationPage.verifyOrganizationExists(organizationName);

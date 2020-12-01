@@ -81,6 +81,15 @@ export const enterPostcodeInputData = (data) => {
 	enterInput(AddOrganizationPage.postcodeInputCss, data);
 };
 
+export const streetInputVisible = () => {
+	verifyElementIsVisible(AddOrganizationPage.streetInputCss);
+};
+
+export const enterStreetInputData = (data) => {
+	clearField(AddOrganizationPage.streetInputCss);
+	enterInput(AddOrganizationPage.streetInputCss, data);
+};
+
 export const bonusTypeDropdownVisible = () => {
 	verifyElementIsVisible(AddOrganizationPage.bonusTypeDropdownCss);
 };

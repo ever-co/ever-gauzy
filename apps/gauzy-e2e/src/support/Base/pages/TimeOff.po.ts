@@ -6,7 +6,9 @@ import {
 	clearField,
 	enterInput,
 	clickKeyboardBtnByKeycode,
-	waitElementToHide
+	waitElementToHide,
+	verifyText,
+	verifyTextNotExisting
 } from '../utils/util';
 import { TimeOffPage } from '../pageobjects/TimeOffPageObject';
 
@@ -233,4 +235,12 @@ export const enterNewPolicyName = (data) => {
 
 export const waitMessageToHide = () => {
 	waitElementToHide(TimeOffPage.toastrMessageCss);
+};
+
+export const verifyPolicyExists = (text) => {
+	verifyText(TimeOffPage.verifyPolicyCss, text);
+};
+
+export const verifyPolicyIsDeleted = (text) => {
+	verifyTextNotExisting(TimeOffPage.verifyPolicyCss, text);
 };

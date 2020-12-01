@@ -6,7 +6,9 @@ import {
 	clearField,
 	enterInput,
 	clickKeyboardBtnByKeycode,
-	waitElementToHide
+	waitElementToHide,
+	verifyText,
+	verifyTextNotExisting
 } from '../utils/util';
 import { TimesheetsPage } from '../pageobjects/TimesheetsPageObject';
 
@@ -151,4 +153,12 @@ export const clickConfirmDeleteButton = () => {
 
 export const waitMessageToHide = () => {
 	waitElementToHide(TimesheetsPage.toastrMessageCss);
+};
+
+export const verifyTimeExists = (text) => {
+	verifyText(TimesheetsPage.verifyTimeCss, text);
+};
+
+export const verifyTimeIsDeleted = (text) => {
+	verifyTextNotExisting(TimesheetsPage.verifyTimeCss, text);
 };

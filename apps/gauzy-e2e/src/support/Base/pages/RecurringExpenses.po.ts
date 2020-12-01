@@ -7,7 +7,9 @@ import {
 	clickKeyboardBtnByKeycode,
 	clickElementByText,
 	getLastElement,
-	waitElementToHide
+	waitElementToHide,
+	verifyText,
+	verifyTextNotExisting
 } from '../utils/util';
 import { RecurringExpensesPage } from '../pageobjects/RecurringExpensesPageObject';
 
@@ -88,12 +90,12 @@ export const clickDeleteButton = () => {
 	getLastElement(RecurringExpensesPage.deleteExpenseButtonCss);
 };
 
-export const deleteOnlyThisRadioButtonVisible = () => {
-	verifyElementIsVisible(RecurringExpensesPage.deleteOnlyThisRadioButtonCss);
+export const deleteAllButtonVisible = () => {
+	verifyElementIsVisible(RecurringExpensesPage.deleteAllButtonCss);
 };
 
-export const clickDeleteOnlyThisRadioButton = () => {
-	clickButton(RecurringExpensesPage.deleteOnlyThisRadioButtonCss);
+export const clickDeleteAllButton = () => {
+	clickButton(RecurringExpensesPage.deleteAllButtonCss);
 };
 
 export const confirmDeleteButtonVisible = () => {
@@ -106,4 +108,12 @@ export const clickConfirmDeleteButton = () => {
 
 export const waitMessageToHide = () => {
 	waitElementToHide(RecurringExpensesPage.toastrMessageCss);
+};
+
+export const verifyExpenseExists = (text) => {
+	verifyText(RecurringExpensesPage.verifyExpenseCss, text);
+};
+
+export const verifyExpenseIsDeleted = (text) => {
+	verifyTextNotExisting(RecurringExpensesPage.verifyExpenseCss, text);
 };
