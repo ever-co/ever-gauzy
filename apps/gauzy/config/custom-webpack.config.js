@@ -14,6 +14,7 @@ if (isCircleEnv) {
 
 module.exports = {
 	optimization: {
+		concatenateModules: false,
 		// for now let's disable minimize in CircleCI
 		minimize: !isCircleCI,
 		minimizer: [

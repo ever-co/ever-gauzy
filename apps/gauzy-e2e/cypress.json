@@ -1,4 +1,5 @@
 {
+	"projectId": "2n3iur",
 	"fileServerFolder": "../../dist/out-tsc/apps/gauzy-e2e",
 	"fixturesFolder": "../../dist/out-tsc/apps/gauzy-e2e/src/fixtures",
 	"integrationFolder": "../../dist/out-tsc/apps/gauzy-e2e/src/integration",

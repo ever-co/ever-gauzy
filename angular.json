@@ -76,17 +76,20 @@
 									"with": "apps/gauzy/src/environments/environment.prod.ts"
 								}
 							],
-							"optimization": true,
+							"optimization": false,
 							"outputHashing": "all",
-							"serviceWorker": true,
+							"serviceWorker": false,
 							"sourceMap": false,
 							"extractCss": true,
 							"namedChunks": false,
 							"ngswConfigPath": "apps/gauzy/ngsw-config.prod.json",
+							"showCircularDependencies": false,
 							"aot": true,
 							"extractLicenses": false,
-							"vendorChunk": false,
+							"vendorChunk": true,
 							"buildOptimizer": false,
+							"statsJson": false,
+							"progress": true,
 							"budgets": [
 								{
 									"type": "initial",
@@ -181,6 +184,7 @@
 						"showCircularDependencies": false,
 						"sourceMap": true,
 						"maxWorkers": 4,
+						"memoryLimit": 4000,
 						"tsConfig": "apps/api/tsconfig.app.json",
 						"assets": ["apps/api/src/assets"]
 					},
@@ -232,6 +236,8 @@
 				"seed": {
 					"builder": "@nrwl/node:build",
 					"options": {
+						"maxWorkers": 4,
+						"memoryLimit": 4000,
 						"outputPath": "dist/apps/api",
 						"main": "apps/api/src/seed.ts",
 						"showCircularDependencies": false,
@@ -256,6 +262,8 @@
 				"seed-all": {
 					"builder": "@nrwl/node:build",
 					"options": {
+						"maxWorkers": 4,
+						"memoryLimit": 4000,
 						"outputPath": "dist/apps/api",
 						"main": "apps/api/src/seed-all.ts",
 						"showCircularDependencies": false,
@@ -422,6 +430,7 @@
 						"showCircularDependencies": false,
 						"sourceMap": true,
 						"maxWorkers": 4,
+						"memoryLimit": 4000,
 						"tsConfig": "apps/api/tsconfig.app.json",
 						"assets": ["apps/api/src/assets"]
 					},
@@ -561,6 +570,8 @@
 				"build": {
 					"builder": "@nrwl/node:build",
 					"options": {
+						"maxWorkers": 4,
+						"memoryLimit": 4000,
 						"webpackConfig": "tools/build/webpack.config.js",
 						"outputPath": "dist/apps/desktop/desktop-api",
 						"main": "apps/desktop/desktop-api/src/main.ts",

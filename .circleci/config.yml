@@ -12,6 +12,8 @@ aliases:
           echo ' [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> $BASH_ENV
           nvm install v14
           nvm alias default v14
+          echo 'export NODE_OPTIONS=--max_old_space_size=7000' >> $BASH_ENV
+          echo 'export NG_CLI_ANALYTICS=false' >> $BASH_ENV
           source $BASH_ENV
           node --version
 
@@ -27,7 +29,7 @@ aliases:
     - &install-deps
       name: Install Global Dependencies
       command: |
-          sudo apt-get update
+          sudo apt-get update          
           sudo apt install npm
           sudo apt install build-essential
           sudo npm install --quiet node-gyp -g              
@@ -68,6 +70,7 @@ jobs:
             - run:
                   name: Install Dependencies
                   command: yarn install
+                  no_output_timeout: 60m
             - run:
                   name: Install Sonarqube scanner
                   command: |
@@ -81,6 +84,7 @@ jobs:
                       -Dsonar.projectKey=gauzy \
                       -Dsonar.sources=. \
                       -Dsonar.login=$SONAR_TOKEN
+                  no_output_timeout: 60m
             - save_cache:
                   name: Save Yarn Package Cache
                   key: yarn-packages-sonarqube-root-{{ checksum "yarn.lock" }}
@@ -107,9 +111,11 @@ jobs:
             - run:
                   name: Install Dependencies
                   command: yarn install
+                  no_output_timeout: 60m
             - run:
                   name: Run Bootstrap
                   command: yarn bootstrap
+                  no_output_timeout: 60m
             - save_cache:
                   name: Save Yarn Package Cache
                   key: yarn-packages-monorepo-root-{{ checksum "yarn.lock" }}
@@ -136,12 +142,15 @@ jobs:
             - run:
                   name: Install Dependencies
                   command: yarn install
+                  no_output_timeout: 60m
             - run:
                   name: Run Bootstrap
                   command: yarn bootstrap
+                  no_output_timeout: 60m
             - run:
                   name: Run Build
                   command: yarn build:desktop
+                  no_output_timeout: 60m
             - save_cache:
                   name: Save Yarn Package Cache
                   key: yarn-packages-desktop-{{ checksum "yarn.lock" }}
@@ -168,12 +177,15 @@ jobs:
             - run:
                   name: Install Dependencies
                   command: yarn install
+                  no_output_timeout: 60m
             - run:
                   name: Run Bootstrap
                   command: yarn bootstrap
+                  no_output_timeout: 60m
             - run:
                   name: Run Build
                   command: yarn build:api:prod
+                  no_output_timeout: 60m
             - save_cache:
                   name: Save Yarn Package Cache
                   key: yarn-packages-api-{{ checksum "yarn.lock" }}
@@ -200,12 +212,15 @@ jobs:
             - run:
                   name: Install Dependencies
                   command: yarn install
+                  no_output_timeout: 60m
             - run:
                   name: Run Bootstrap
                   command: yarn bootstrap
+                  no_output_timeout: 60m
             - run:
                   name: Run Build
-                  command: yarn build:prod:circle
+                  command: yarn build:prod:ci
+                  no_output_timeout: 60m
             - save_cache:
                   name: Save Yarn Package Cache
                   key: yarn-packages-web-{{ checksum "yarn.lock" }}
@@ -215,6 +230,54 @@ jobs:
                   root: /tmp/workspace/web
                   paths:
                       - '*'
+
+    test-e2e:
+        <<: *defaults
+        machine:
+            image: ubuntu-2004:202010-01
+        working_directory: /tmp/workspace/test-e2e
+        steps:
+            - checkout
+            - run: *install-node
+            - run: *install-deps
+            - run: *install-yarn
+
+            - restore_cache:
+                  name: Restore Yarn Package Cache
+                  keys:
+                      - yarn-packages-test-e2e-{{ checksum "yarn.lock" }}
+
+            - run:
+                  name: Install Dependencies
+                  command: yarn install
+                  no_output_timeout: 60m
+
+            - run:
+                  name: Run Bootstrap
+                  command: yarn bootstrap
+                  no_output_timeout: 60m
+
+            - run:
+                  name: Run API in background
+                  command: yarn start:api:ci
+                  background: true
+
+            # - run:
+            #      name: Run e2e tests
+            #      command: yarn run e2e:ci
+            #      no_output_timeout: 120m
+
+            - save_cache:
+                  name: Save Yarn Package Cache
+                  key: yarn-packages-test-e2e-{{ checksum "yarn.lock" }}
+                  paths:
+                      - ~/.cache/yarn
+
+            - persist_to_workspace:
+                  root: /tmp/workspace/test-e2e
+                  paths:
+                      - '*'
+
     pulumi_deploy:
         <<: *defaults
         working_directory: /tmp/workspace/pulumi
@@ -234,6 +297,7 @@ jobs:
                   name: 'Installing NPM Packages'
                   command: |
                       yarn install
+                  no_output_timeout: 60m
             - pulumi/update:
                   stack: dev
             - save_cache:
@@ -248,10 +312,13 @@ jobs:
 
 workflows:
     version: 2
-    build_and_test:
+    build:
         jobs:
             # - sonarqube
             - build-monorepo-root
             - build-web
             - build-api
             - build-desktop
+    test:
+        jobs:
+            - test-e2e
