@@ -262,10 +262,10 @@ jobs:
                   command: yarn start:api:ci
                   background: true
 
-            - run:
-                  name: Run e2e tests
-                  command: yarn run e2e:ci
-                  no_output_timeout: 60m
+            # - run:
+            #      name: Run e2e tests
+            #      command: yarn run e2e:ci
+            #      no_output_timeout: 120m
 
             - save_cache:
                   name: Save Yarn Package Cache
