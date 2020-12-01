@@ -14,7 +14,7 @@ aliases:
           nvm alias default v14
           source $BASH_ENV
           node --version
-          export NODE_OPTIONS="--max_old_space_size=7000"
+          export NODE_OPTIONS=--max_old_space_size=7000
 
     - &install-chrome
       name: Install Chrome
@@ -69,6 +69,7 @@ jobs:
             - run:
                   name: Install Dependencies
                   command: yarn install
+                  no_output_timeout: 60m
             - run:
                   name: Install Sonarqube scanner
                   command: |
@@ -82,6 +83,7 @@ jobs:
                       -Dsonar.projectKey=gauzy \
                       -Dsonar.sources=. \
                       -Dsonar.login=$SONAR_TOKEN
+                  no_output_timeout: 60m
             - save_cache:
                   name: Save Yarn Package Cache
                   key: yarn-packages-sonarqube-root-{{ checksum "yarn.lock" }}
@@ -108,9 +110,11 @@ jobs:
             - run:
                   name: Install Dependencies
                   command: yarn install
+                  no_output_timeout: 60m
             - run:
                   name: Run Bootstrap
                   command: yarn bootstrap
+                  no_output_timeout: 60m
             - save_cache:
                   name: Save Yarn Package Cache
                   key: yarn-packages-monorepo-root-{{ checksum "yarn.lock" }}
@@ -137,12 +141,15 @@ jobs:
             - run:
                   name: Install Dependencies
                   command: yarn install
+                  no_output_timeout: 60m
             - run:
                   name: Run Bootstrap
                   command: yarn bootstrap
+                  no_output_timeout: 60m
             - run:
                   name: Run Build
                   command: yarn build:desktop
+                  no_output_timeout: 60m
             - save_cache:
                   name: Save Yarn Package Cache
                   key: yarn-packages-desktop-{{ checksum "yarn.lock" }}
@@ -169,12 +176,15 @@ jobs:
             - run:
                   name: Install Dependencies
                   command: yarn install
+                  no_output_timeout: 60m
             - run:
                   name: Run Bootstrap
                   command: yarn bootstrap
+                  no_output_timeout: 60m
             - run:
                   name: Run Build
                   command: yarn build:api:prod
+                  no_output_timeout: 60m
             - save_cache:
                   name: Save Yarn Package Cache
                   key: yarn-packages-api-{{ checksum "yarn.lock" }}
@@ -201,12 +211,15 @@ jobs:
             - run:
                   name: Install Dependencies
                   command: yarn install
+                  no_output_timeout: 60m
             - run:
                   name: Run Bootstrap
                   command: yarn bootstrap
+                  no_output_timeout: 60m
             - run:
                   name: Run Build
                   command: yarn build:prod:ci
+                  no_output_timeout: 60m
             - save_cache:
                   name: Save Yarn Package Cache
                   key: yarn-packages-web-{{ checksum "yarn.lock" }}
@@ -236,17 +249,22 @@ jobs:
             - run:
                   name: Install Dependencies
                   command: yarn install
+                  no_output_timeout: 60m
 
             - run:
                   name: Run Bootstrap
                   command: yarn bootstrap
+                  no_output_timeout: 60m
 
             - run:
                   name: Run API in background
                   command: yarn start:api:ci
                   background: true
 
-            - run: yarn run e2e:ci
+            - run:
+                  name: Run e2e tests
+                  command: yarn run e2e:ci
+                  no_output_timeout: 60m
 
             - save_cache:
                   name: Save Yarn Package Cache
@@ -278,6 +296,7 @@ jobs:
                   name: 'Installing NPM Packages'
                   command: |
                       yarn install
+                  no_output_timeout: 60m
             - pulumi/update:
                   stack: dev
             - save_cache:
