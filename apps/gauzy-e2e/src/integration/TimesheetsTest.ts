@@ -24,7 +24,6 @@ let imgUrl = ' ';
 
 let email = ' ';
 let fullName = ' ';
-let country = ' ';
 let city = ' ';
 let postcode = ' ';
 let street = ' ';
@@ -34,7 +33,6 @@ describe('Timesheets test', () => {
 	before(() => {
 		email = faker.internet.email();
 		fullName = faker.name.firstName() + ' ' + faker.name.lastName();
-		country = faker.address.country();
 		city = faker.address.city();
 		postcode = faker.address.zipCode();
 		street = faker.address.streetAddress();

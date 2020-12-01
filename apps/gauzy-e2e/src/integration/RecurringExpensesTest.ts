@@ -4,7 +4,6 @@ import * as recurringExpensesPage from '../support/Base/pages/RecurringExpenses.
 import { RecurringExpensesPageData } from '../support/Base/pagedata/RecurringExpensesPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
-import { verifyExpenseExists } from '../support/Base/pages/Expenses.po';
 
 describe('Recurring expenses test', () => {
 	before(() => {
