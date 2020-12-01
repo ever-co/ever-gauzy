@@ -1,6 +1,6 @@
 export const TimesheetsPage = {
 	addTimeButtonCss: 'div.text-left > button[status="primary"]',
-	selectEmloyeeCss: 'div.form-group ga-employee-multi-select nb-select',
+	selectEmloyeeCss: 'ga-employee-multi-select nb-select',
 	selectEmployeeDropdownOptionCss: '.option-list nb-option',
 	dateInputCss: '[name="date"]',
 	projectDropdownCss: '[formcontrolname="projectId"]',
@@ -16,5 +16,6 @@ export const TimesheetsPage = {
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="primary"]',
 	startTimeDropdownCss: 'ga-timer-picker[name="start_time"]',
 	closeButtonCss: 'button.close-button',
-	toastrMessageCss: 'nb-toast.ng-trigger'
+	toastrMessageCss: 'nb-toast.ng-trigger',
+	verifyTimeCss: 'ngx-avatar > div > div.col > div.ng-star-inserted'
 };

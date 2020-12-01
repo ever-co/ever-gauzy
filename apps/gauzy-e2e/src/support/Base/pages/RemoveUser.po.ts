@@ -1,7 +1,11 @@
 import {
 	verifyElementIsVisible,
 	clickButton,
-	clickButtonByIndex
+	clickButtonByIndex,
+	getLastElement,
+	waitElementToHide,
+	verifyText,
+	verifyTextNotExisting
 } from '../utils/util';
 import { RemoveUserPage } from '../pageobjects/RemoveUserPageObject';
 
@@ -17,8 +21,8 @@ export const tableBodyExists = () => {
 	verifyElementIsVisible(RemoveUserPage.selectTableRowCss);
 };
 
-export const clickTableRow = (index) => {
-	clickButtonByIndex(RemoveUserPage.selectTableRowCss, index);
+export const clickTableRow = () => {
+	getLastElement(RemoveUserPage.selectTableRowCss);
 };
 
 export const removeButtonVisible = () => {
@@ -35,4 +39,16 @@ export const confirmRemoveBtnVisible = () => {
 
 export const clickConfirmRemoveButton = () => {
 	clickButton(RemoveUserPage.confirmRemoveUserButtonCss);
+};
+
+export const waitMessageToHide = () => {
+	waitElementToHide(RemoveUserPage.toastrMessageCss);
+};
+
+export const verifyUserExists = (text) => {
+	verifyText(RemoveUserPage.verifyUserCss, text);
+};
+
+export const verifyUserIsDeleted = (text) => {
+	verifyTextNotExisting(RemoveUserPage.verifyUserCss, text);
 };

@@ -4,6 +4,7 @@ import * as recurringExpensesPage from '../support/Base/pages/RecurringExpenses.
 import { RecurringExpensesPageData } from '../support/Base/pagedata/RecurringExpensesPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
+import { verifyExpenseExists } from '../support/Base/pages/Expenses.po';
 
 describe('Recurring expenses test', () => {
 	before(() => {
@@ -27,6 +28,10 @@ describe('Recurring expenses test', () => {
 		);
 		recurringExpensesPage.saveExpenseButtonVisible();
 		recurringExpensesPage.clickSaveExpenseButton();
+		recurringExpensesPage.waitMessageToHide();
+		recurringExpensesPage.verifyExpenseExists(
+			`BGN${RecurringExpensesPageData.defaultExpenseValue}`
+		);
 	});
 	it('Should be able to edit expense', () => {
 		recurringExpensesPage.settingsButtonVisible();
@@ -40,10 +45,14 @@ describe('Recurring expenses test', () => {
 		);
 		recurringExpensesPage.expenseValueInputVisible();
 		recurringExpensesPage.enterExpenseValueInputData(
-			RecurringExpensesPageData.defaultExpenseValue
+			RecurringExpensesPageData.editExpenseValue
 		);
 		recurringExpensesPage.saveExpenseButtonVisible();
 		recurringExpensesPage.clickSaveExpenseButton();
+		recurringExpensesPage.waitMessageToHide();
+		recurringExpensesPage.verifyExpenseExists(
+			`BGN${RecurringExpensesPageData.editExpenseValue}`
+		);
 	});
 	it('Should be able to delete expense', () => {
 		recurringExpensesPage.waitMessageToHide();
@@ -51,7 +60,13 @@ describe('Recurring expenses test', () => {
 		recurringExpensesPage.clickSettingsButton();
 		recurringExpensesPage.deleteButtonVisible();
 		recurringExpensesPage.clickDeleteButton();
-		recurringExpensesPage.deleteOnlyThisRadioButtonVisible();
-		recurringExpensesPage.clickDeleteOnlyThisRadioButton();
+		recurringExpensesPage.deleteAllButtonVisible();
+		recurringExpensesPage.clickDeleteAllButton();
+		recurringExpensesPage.confirmDeleteButtonVisible();
+		recurringExpensesPage.clickConfirmDeleteButton();
+		recurringExpensesPage.waitMessageToHide();
+		recurringExpensesPage.verifyExpenseIsDeleted(
+			`BGN${RecurringExpensesPageData.editExpenseValue}`
+		);
 	});
 });
