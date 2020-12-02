@@ -69,9 +69,7 @@ export class PaymentService extends CrudService<Payment> {
 				}, 0);
 				return {
 					date,
-					value: {
-						expanse: sum.toFixed(1)
-					}
+					value: sum.toFixed(1)
 				};
 			})
 			.value();
