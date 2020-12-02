@@ -21,23 +21,25 @@ export class PaymentService extends CrudService<Payment> {
 		const query = this.filterQuery(request);
 		query.orderBy(`"${query.alias}"."paymentDate"`, 'ASC');
 
-		if (
-			RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
-			query.leftJoinAndSelect(
-				`${query.alias}.employee`,
-				'activityEmployee'
-			);
-			query.leftJoinAndSelect(
-				`activityEmployee.user`,
-				'activityUser',
-				'"employee"."userId" = activityUser.id'
-			);
-		}
+		// if (
+		// 	RequestContext.hasPermission(
+		// 		PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		// 	)
+		// ) {
+		// 	query.leftJoinAndSelect(
+		// 		`${query.alias}.employee`,
+		// 		'activityEmployee'
+		// 	);
+		// 	query.leftJoinAndSelect(
+		// 		`activityEmployee.user`,
+		// 		'activityUser',
+		// 		'"employee"."userId" = activityUser.id'
+		// 	);
+		// }
 
-		return await query.getMany();
+		const payments = await query.getMany();
+
+		return payments;
 	}
 
 	async getDailyReportChartData(request: IGetPaymentInput) {
@@ -58,12 +60,12 @@ export class PaymentService extends CrudService<Payment> {
 		const payments = await query.getMany();
 
 		const byDate = chain(payments)
-			.groupBy((expense) =>
-				moment(expense.paymentDate).format('YYYY-MM-DD')
+			.groupBy((payment) =>
+				moment(payment.paymentDate).format('YYYY-MM-DD')
 			)
 			.mapObject((payments: Payment[], date) => {
-				const sum = payments.reduce((iteratee: any, expense: any) => {
-					return iteratee + parseFloat(expense.amount);
+				const sum = payments.reduce((iteratee: any, payment: any) => {
+					return iteratee + parseFloat(payment.amount);
 				}, 0);
 				return {
 					date,
@@ -91,27 +93,27 @@ export class PaymentService extends CrudService<Payment> {
 	}
 
 	private filterQuery(request: IGetPaymentInput) {
-		let employeeIds: string[];
+		// let employeeIds: string[];
 
 		const query = this.paymentRepository.createQueryBuilder();
 		if (request && request.limit > 0) {
 			query.take(request.limit);
 			query.skip((request.page || 0) * request.limit);
 		}
-		if (
-			RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
-			if (request.employeeIds) {
-				employeeIds = request.employeeIds;
-			}
-		} else {
-			const user = RequestContext.currentUser();
-			employeeIds = [user.employeeId];
-		}
+		// if (
+		// 	RequestContext.hasPermission(
+		// 		PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		// 	)
+		// ) {
+		// 	if (request.employeeIds) {
+		// 		employeeIds = request.employeeIds;
+		// 	}
+		// } else {
+		// 	const user = RequestContext.currentUser();
+		// 	employeeIds = [user.employeeId];
+		// }
 
-		query.innerJoin(`${query.alias}.employee`, 'employee');
+		// query.innerJoin(`${query.alias}.employee`, 'employee');
 		query.where((qb) => {
 			if (request.startDate && request.endDate) {
 				const startDate = moment.utc(request.startDate).toDate();
@@ -124,14 +126,14 @@ export class PaymentService extends CrudService<Payment> {
 					}
 				);
 			}
-			if (employeeIds) {
-				qb.andWhere(
-					`"${query.alias}"."employeeId" IN (:...employeeId)`,
-					{
-						employeeId: employeeIds
-					}
-				);
-			}
+			// if (employeeIds) {
+			// 	qb.andWhere(
+			// 		`"${query.alias}"."employeeId" IN (:...employeeId)`,
+			// 		{
+			// 			employeeId: employeeIds
+			// 		}
+			// 	);
+			// }
 
 			if (request.projectIds) {
 				qb.andWhere(`"${query.alias}"."projectId" IN (:...projectId)`, {

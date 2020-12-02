@@ -1,7 +1,7 @@
 import {
 	IPayment,
+	IPaymentReportGroupByClient,
 	IPaymentReportGroupByDate,
-	IPaymentReportGroupByEmployee,
 	IPaymentReportGroupByProject
 } from '@gauzy/models';
 import { Injectable } from '@nestjs/common';
@@ -12,14 +12,14 @@ import { chain } from 'underscore';
 export class PaymentMapService {
 	constructor() {}
 
-	mapByDate(expenses: IPayment[]): IPaymentReportGroupByDate[] {
-		const dailyLogs: any = this.groupByDate(expenses).map(
+	mapByDate(payments: IPayment[]): IPaymentReportGroupByDate[] {
+		const dailyLogs: any = this.groupByDate(payments).map(
 			(byDatePayment: IPayment[], date) => {
 				const sum = this.getDurationSum(byDatePayment);
-				const byEmployee = this.groupByEmployee(byDatePayment).map(
-					(byEmployeePayment: IPayment[]) => {
+				const byClient = this.groupByClient(byDatePayment).map(
+					(byClientPayment: IPayment[]) => {
 						const byProject = this.groupByProject(
-							byEmployeePayment
+							byClientPayment
 						).map((byProjectPayment: IPayment[]) => {
 							const project =
 								byProjectPayment.length > 0 &&
@@ -29,15 +29,15 @@ export class PaymentMapService {
 
 							return {
 								project,
-								expanse: byProjectPayment.map((row) =>
+								payments: byProjectPayment.map((row) =>
 									this.mapPaymentPercentage(row, sum)
 								)
 							};
 						});
 
 						const employee =
-							byEmployeePayment.length > 0 && byEmployeePayment[0]
-								? byEmployeePayment[0].employee
+							byClientPayment.length > 0 && byClientPayment[0]
+								? byClientPayment[0].employee
 								: null;
 						return {
 							employee,
@@ -48,18 +48,18 @@ export class PaymentMapService {
 
 				return {
 					date,
-					employees: byEmployee
+					clients: byClient
 				};
 			}
 		);
 		return dailyLogs;
 	}
 
-	mapByEmployee(expenses: IPayment[]): IPaymentReportGroupByEmployee[] {
-		const byEmployee: any = this.groupByEmployee(expenses).map(
-			(byEmployeePayment: IPayment[]) => {
-				const sum = this.getDurationSum(byEmployeePayment);
-				const dailyLogs = this.groupByDate(byEmployeePayment).map(
+	mapByClient(payments: IPayment[]): IPaymentReportGroupByClient[] {
+		const byClient: any = this.groupByClient(payments).map(
+			(byClientPayment: IPayment[]) => {
+				const sum = this.getDurationSum(byClientPayment);
+				const dailyLogs = this.groupByDate(byClientPayment).map(
 					(byDatePayment: IPayment[], date) => {
 						const byProject = this.groupByProject(
 							byDatePayment
@@ -71,7 +71,7 @@ export class PaymentMapService {
 									: null;
 							return {
 								project,
-								expanse: byProjectPayment.map((row) =>
+								payments: byProjectPayment.map((row) =>
 									this.mapPaymentPercentage(row, sum)
 								)
 							};
@@ -84,45 +84,95 @@ export class PaymentMapService {
 					}
 				);
 
-				const employee =
-					byEmployeePayment.length > 0 && byEmployeePayment[0]
-						? byEmployeePayment[0].employee
+				const client =
+					byClientPayment.length > 0 && byClientPayment[0]
+						? byClientPayment[0].contact
 						: null;
 				return {
-					employee,
+					client,
 					dates: dailyLogs
 				};
 			}
 		);
-		return byEmployee;
+		return byClient;
 	}
 
-	mapByProject(expenses: IPayment[]): IPaymentReportGroupByProject[] {
-		const byEmployee: any = this.groupByProject(expenses).map(
+	// mapByClient(payments: IPayment[]): IPaymentReportGroupByClient[] {
+	// 	const byClient: any = this.groupByClient(payments).map(
+	// 		(byClientPayment: IPayment[]) => {
+	// 			const sum = this.getDurationSum(byClientPayment);
+	// 			const dailyLogs = this.groupByDate(byClientPayment).map((byDatePayment: IPayment[], date) => {
+
+	// 				const byClient = this.groupByProject(byDatePayment).map((byClientPayment: IPayment[]) => {
+
+	// 					const byProject = this.groupByProject(byClientPayment).map((byProjectPayment: IPayment[]) => {
+
+	// 						const project =
+	// 							byProjectPayment.length > 0 &&
+	// 								byProjectPayment[0]
+	// 								? byProjectPayment[0].project
+	// 								: null;
+	// 						return {
+	// 							project,
+	// 							payments: byProjectPayment.map((row) =>
+	// 								this.mapPaymentPercentage(row, sum)
+	// 							)
+	// 						};
+
+	// 					});
+
+	// 					return {
+	// 						date,
+	// 						projects: byProject
+	// 					};
+	// 				});
+
+	// 				return {
+	// 					date,
+	// 					employees: byClient
+	// 				};
+	// 			}
+	// 			);
+
+	// 			const contact =
+	// 				byClientPayment.length > 0 && byClientPayment[0]
+	// 					? byClientPayment[0].contact
+	// 					: null;
+	// 			return {
+	// 				contact,
+	// 				dates: dailyLogs
+	// 			};
+	// 		}
+	// 	);
+	// 	return byClient;
+	// }
+
+	mapByProject(payments: IPayment[]): IPaymentReportGroupByProject[] {
+		const byClient: any = this.groupByProject(payments).map(
 			(byProjectPayment: IPayment[]) => {
 				const sum = this.getDurationSum(byProjectPayment);
 
 				const dailyLogs = this.groupByDate(byProjectPayment).map(
 					(byDatePayment: IPayment[], date) => {
-						const byProject = this.groupByEmployee(
-							byDatePayment
-						).map((byEmployeePayment: IPayment[]) => {
-							const employee =
-								byEmployeePayment.length > 0 &&
-								byEmployeePayment[0]
-									? byEmployeePayment[0].employee
-									: null;
-							return {
-								employee,
-								expanse: byEmployeePayment.map((row) =>
-									this.mapPaymentPercentage(row, sum)
-								)
-							};
-						});
+						const byProject = this.groupByClient(byDatePayment).map(
+							(byClientPayment: IPayment[]) => {
+								const employee =
+									byClientPayment.length > 0 &&
+									byClientPayment[0]
+										? byClientPayment[0].employee
+										: null;
+								return {
+									employee,
+									payments: byClientPayment.map((row) =>
+										this.mapPaymentPercentage(row, sum)
+									)
+								};
+							}
+						);
 
 						return {
 							date,
-							employees: byProject
+							clients: byProject
 						};
 					}
 				);
@@ -137,35 +187,41 @@ export class PaymentMapService {
 				};
 			}
 		);
-		return byEmployee;
+		return byClient;
 	}
 
-	private groupByProject(expenses: IPayment[]) {
-		return chain(expenses).groupBy((expanse) => {
-			return expanse.projectId;
+	private groupByProject(payments: IPayment[]) {
+		return chain(payments).groupBy((payment) => {
+			return payment.projectId;
 		});
 	}
 
-	private groupByDate(expenses: IPayment[]) {
-		return chain(expenses).groupBy((expanse) => {
-			return moment.utc(expanse.paymentDate).format('YYYY-MM-DD');
+	private groupByDate(payments: IPayment[]) {
+		return chain(payments).groupBy((payment) => {
+			return moment.utc(payment.paymentDate).format('YYYY-MM-DD');
 		});
 	}
 
-	private groupByEmployee(expenses: IPayment[]) {
-		return chain(expenses).groupBy((expanse) => {
-			return expanse.employeeId;
+	private groupByClient(payments: IPayment[]) {
+		return chain(payments).groupBy((payment) => {
+			return payment.employeeId;
 		});
 	}
 
-	private mapPaymentPercentage(expanse, sum = 0) {
-		expanse.duration_percentage =
-			(parseInt(expanse.duration, 10) * 100) / sum;
-		return expanse;
+	// private groupByClient(payments: IPayment[]) {
+	// 	return chain(payments).groupBy((payment) => {
+	// 		return payment.contactId;
+	// 	});
+	// }
+
+	private mapPaymentPercentage(payments, sum = 0) {
+		payments.duration_percentage =
+			(parseInt(payments.duration, 10) * 100) / sum;
+		return payments;
 	}
 
-	private getDurationSum(expenses) {
-		return expenses.reduce((iteratee: any, log: any) => {
+	private getDurationSum(payments) {
+		return payments.reduce((iteratee: any, log: any) => {
 			return iteratee + parseInt(log.duration, 10);
 		}, 0);
 	}

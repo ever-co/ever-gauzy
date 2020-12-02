@@ -106,7 +106,20 @@ export interface IPaymentReportGroupByProject {
 	}[];
 }
 
+export interface IPaymentReportGroupByClient {
+	client: IOrganizationContact;
+	dates: {
+		date: string;
+		employees: {
+			employee: IEmployee;
+			payments: IPayment;
+			sum: number;
+		}[];
+	}[];
+}
+
 export type IPaymentReportData =
 	| IPaymentReportGroupByDate
 	| IPaymentReportGroupByEmployee
+	| IPaymentReportGroupByClient
 	| IPaymentReportGroupByProject;

@@ -75,8 +75,8 @@ export class PaymentController extends CrudController<Payment> {
 		let response: IPaymentReportData[] = [];
 		if (request.groupBy === 'date') {
 			response = this.paymentMapService.mapByDate(reports);
-		} else if (request.groupBy === 'employee') {
-			response = this.paymentMapService.mapByEmployee(reports);
+		} else if (request.groupBy === 'client') {
+			response = this.paymentMapService.mapByClient(reports);
 		} else if (request.groupBy === 'project') {
 			response = this.paymentMapService.mapByProject(reports);
 		}
