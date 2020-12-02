@@ -55,6 +55,7 @@ export class InvoicePaymentsComponent
 	selectedPayment: IPayment;
 	disableButton = true;
 	tenantId: string;
+	loading: boolean;
 
 	paymentsTable: Ng2SmartTableComponent;
 	@ViewChild('paymentsTable') set content(content: Ng2SmartTableComponent) {
@@ -81,6 +82,7 @@ export class InvoicePaymentsComponent
 	}
 
 	async getInvoice() {
+		this.loading = true;
 		if (!this.invoiceId) {
 			return;
 		}
@@ -138,6 +140,7 @@ export class InvoicePaymentsComponent
 		if (this.leftToPay < 0) {
 			this.leftToPay = 0;
 		}
+		this.loading = false;
 	}
 
 	async recordPayment() {
@@ -252,6 +255,10 @@ export class InvoicePaymentsComponent
 			this.totalPaid
 		);
 		pdfMake.createPdf(docDefinition).download(`Payment.pdf`);
+		this.toastrService.primary(
+			this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_DOWNLOAD'),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		);
 	}
 
 	selectPayment($event: ISelectedPayment) {

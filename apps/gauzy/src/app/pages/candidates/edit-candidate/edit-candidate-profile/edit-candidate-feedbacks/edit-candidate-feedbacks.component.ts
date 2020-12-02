@@ -111,6 +111,7 @@ export class EditCandidateFeedbacksComponent
 		this.selectInterview.setValue('all');
 	}
 	async getEmployees() {
+		this.loading = true;
 		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const { items } = await this.employeesService
 			.getAll(['user'], {
@@ -120,6 +121,7 @@ export class EditCandidateFeedbacksComponent
 			.pipe(first())
 			.toPromise();
 		this.employeeList = items;
+		this.loading = false;
 	}
 	setView() {
 		this.viewComponentName = ComponentEnum.FEEDBACKS;

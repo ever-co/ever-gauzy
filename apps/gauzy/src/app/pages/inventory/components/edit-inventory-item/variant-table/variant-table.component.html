@@ -1,4 +1,4 @@
-<div class="">
+<div [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<div class="mb-3">
 		<button
 			(click)="onEditVariant()"
@@ -27,7 +27,7 @@
 		[settings]="settingsSmartTable"
 		(userRowSelect)="selectItem($event)"
 		[source]="smartTableSource"
-		style="cursor: pointer;"
+		style="cursor: pointer"
 		#variantTable
 	>
 	</ng2-smart-table>

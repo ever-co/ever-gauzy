@@ -24,6 +24,7 @@ export class RecordsHistoryComponent
 	recordsData: IEmployeeStatisticsHistory[];
 	smartTableSource = new LocalDataSource();
 	translatedType: string;
+	loading: boolean;
 
 	smartTableSettings: Object;
 
@@ -48,6 +49,7 @@ export class RecordsHistoryComponent
 	}
 
 	private _populateSmartTable() {
+		this.loading = true;
 		let viewModel: any;
 		switch (this.type) {
 			case HistoryType.INCOME:
@@ -97,6 +99,7 @@ export class RecordsHistoryComponent
 		}
 
 		this.smartTableSource.load(viewModel);
+		this.loading = false;
 	}
 
 	loadSettingsSmartTable() {

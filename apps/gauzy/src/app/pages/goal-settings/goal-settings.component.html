@@ -227,23 +227,29 @@
 				</div>
 			</nb-tab>
 		</nb-tabset>
-		<ng-container *ngIf="selectedTab != 'general'">
-			<ng2-smart-table
-				[settings]="smartTableSettings"
-				[source]="smartTableData"
-				(userRowSelect)="selectRow($event)"
-				style="cursor: pointer"
-				*ngIf="dataLayoutStyle === 'TABLE'"
-				#goalSettingsTable
-			>
-			</ng2-smart-table>
-			<ga-card-grid
-				[settings]="smartTableSettings"
-				[source]="goalTimeFrames"
-				*ngIf="dataLayoutStyle === 'CARDS_GRID'"
-				[buttonTemplate]="actionButtons"
-			></ga-card-grid>
-		</ng-container>
+		<div
+			[nbSpinner]="loading"
+			nbSpinnerStatus="primary"
+			nbSpinnerSize="large"
+		>
+			<ng-container *ngIf="selectedTab != 'general'">
+				<ng2-smart-table
+					[settings]="smartTableSettings"
+					[source]="smartTableData"
+					(userRowSelect)="selectRow($event)"
+					style="cursor: pointer"
+					*ngIf="dataLayoutStyle === 'TABLE'"
+					#goalSettingsTable
+				>
+				</ng2-smart-table>
+				<ga-card-grid
+					[settings]="smartTableSettings"
+					[source]="goalTimeFrames"
+					*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+					[buttonTemplate]="actionButtons"
+				></ga-card-grid>
+			</ng-container>
+		</div>
 	</nb-card-body>
 </nb-card>
 <ng-template

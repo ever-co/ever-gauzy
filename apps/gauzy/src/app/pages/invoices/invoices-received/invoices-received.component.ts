@@ -15,6 +15,7 @@ import { InvoicePaidComponent } from '../table-components/invoice-paid.component
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { NbToastrService } from '@nebular/theme';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-invoices-received',
@@ -49,7 +50,8 @@ export class InvoicesReceivedComponent
 		private invoicesService: InvoicesService,
 		readonly translateService: TranslateService,
 		private router: Router,
-		private _errorHandlingService: ErrorHandlingService
+		private _errorHandlingService: ErrorHandlingService,
+		private toastrService: NbToastrService
 	) {
 		super(translateService);
 		this.setView();
@@ -149,6 +151,10 @@ export class InvoicesReceivedComponent
 			isAccepted: true
 		});
 		await this.getInvoices();
+		this.toastrService.primary(
+			this.getTranslation('INVOICES_PAGE.INVOICE_ACCEPTED'),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		);
 	}
 
 	async reject(selectedItem?: IInvoice) {
@@ -162,6 +168,10 @@ export class InvoicesReceivedComponent
 			isAccepted: false
 		});
 		await this.getInvoices();
+		this.toastrService.primary(
+			this.getTranslation('INVOICES_PAGE.INVOICE_REJECTED'),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		);
 	}
 
 	loadSettingsSmartTable() {

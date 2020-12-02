@@ -8,7 +8,8 @@ import {
 	NbIconModule,
 	NbInputModule,
 	NbTooltipModule,
-	NbSelectModule
+	NbSelectModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -54,6 +55,7 @@ const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 		EntityWithMembersModule,
 		TagsColorInputModule,
 		EmployeeMultiSelectModule,
+		NbSpinnerModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

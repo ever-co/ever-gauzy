@@ -1,4 +1,9 @@
-<div class="records">
+<div
+	class="records"
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<h5>{{ translatedType }}</h5>
 	<ng2-smart-table
 		class="table"

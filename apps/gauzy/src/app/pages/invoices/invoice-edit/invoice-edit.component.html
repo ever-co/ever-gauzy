@@ -1,4 +1,9 @@
-<nb-card class="main">
+<nb-card
+	class="main"
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<nb-card-header>
 		<div class="header-selector-wrapper" *ngIf="duplicate; else headerAdd">
 			<div class="header-selector-wrapper">

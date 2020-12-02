@@ -406,9 +406,14 @@
 			</nb-card>
 		</div>
 	</nb-card-body>
-	<nb-card-body *ngIf="dataLayoutStyle === 'TABLE'">
+	<nb-card-body
+		[nbSpinner]="loading"
+		nbSpinnerSize="giant"
+		nbSpinnerStatus="primary"
+		*ngIf="dataLayoutStyle === 'TABLE'"
+	>
 		<ng2-smart-table
-			style="cursor: pointer;"
+			style="cursor: pointer"
 			[settings]="settingsSmartTable"
 			[source]="sourceSmartTable"
 			(userRowSelect)="selectFeedback($event)"

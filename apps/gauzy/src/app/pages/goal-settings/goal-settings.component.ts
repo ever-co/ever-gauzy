@@ -45,6 +45,7 @@ export class GoalSettingsComponent
 	goalGeneralSettings: IGoalGeneralSetting;
 	goalOwnershipEnum = GoalOwnershipEnum;
 	predefinedTimeFrames = [];
+	loading: boolean;
 
 	goalSettingsTable: Ng2SmartTableComponent;
 	@ViewChild('goalSettingsTable') set content(
@@ -156,6 +157,7 @@ export class GoalSettingsComponent
 	}
 
 	private async _loadTableData(tab) {
+		this.loading = true;
 		if (!this.organization) {
 			return;
 		}
@@ -196,6 +198,7 @@ export class GoalSettingsComponent
 					});
 				});
 		}
+		this.loading = false;
 	}
 
 	private _loadTableSettings(tab: string | null) {

@@ -36,7 +36,7 @@
 				nbSpinnerStatus="primary"
 			>
 				<nb-card
-					style="padding: 0 !important;"
+					style="padding: 0 !important"
 					class="card-body"
 					*ngFor="let interview of interviewList"
 				>
@@ -256,14 +256,20 @@
 				</nb-card>
 			</div>
 		</div>
-		<ng2-smart-table
+		<div
 			*ngIf="dataLayoutStyle === 'TABLE'"
-			class="interviews-table"
-			style="cursor: pointer;"
-			[settings]="settingsSmartTable"
-			[source]="sourceSmartTable"
-			#interviewsTable
+			[nbSpinner]="loading"
+			nbSpinnerSize="giant"
+			nbSpinnerStatus="primary"
 		>
-		</ng2-smart-table>
+			<ng2-smart-table
+				class="interviews-table"
+				style="cursor: pointer"
+				[settings]="settingsSmartTable"
+				[source]="sourceSmartTable"
+				#interviewsTable
+			>
+			</ng2-smart-table>
+		</div>
 	</nb-card-body>
 </nb-card>
