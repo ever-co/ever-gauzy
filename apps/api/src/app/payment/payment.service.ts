@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { Payment } from './payment.entity';
 import { RequestContext } from '../core/context';
-import { IGetPaymentInput, PermissionsEnum } from '@gauzy/models';
+import { IGetPaymentInput } from '@gauzy/models';
 import { chain } from 'underscore';
 import * as moment from 'moment';
 
