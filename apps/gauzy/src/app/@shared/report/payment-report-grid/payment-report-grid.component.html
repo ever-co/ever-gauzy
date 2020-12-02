@@ -5,8 +5,8 @@
 			<nb-option value="date">{{
 				'REPORT_PAGE.DATE' | translate
 			}}</nb-option>
-			<nb-option value="employee">{{
-				'REPORT_PAGE.EMPLOYEE' | translate
+			<nb-option value="client">{{
+				'REPORT_PAGE.CLIENT' | translate
 			}}</nb-option>
 			<nb-option value="project">{{
 				'REPORT_PAGE.PROJECT' | translate
@@ -25,17 +25,17 @@
 			<div *ngIf="groupBy != 'date'" class="col-sm-2">
 				{{ 'REPORT_PAGE.DATE' | translate }}
 			</div>
-			<div *ngIf="groupBy != 'employee'" class="col-sm-2">
-				{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
-			</div>
 			<div *ngIf="groupBy != 'project'" class="col-sm-2">
 				{{ 'REPORT_PAGE.PROJECT' | translate }}
 			</div>
-			<div class="col-sm-3 text-center day-col">
-				{{ 'REPORT_PAGE.CATEGORY' | translate }}
+			<div *ngIf="groupBy != 'client'" class="col-sm-2">
+				{{ 'REPORT_PAGE.CONTACT' | translate }}
 			</div>
-			<div class="col-sm-3 text-center day-col">
-				{{ 'REPORT_PAGE.DESCRIPTION' | translate }}
+			<div class="col text-center day-col">
+				{{ 'REPORT_PAGE.CURRENCY' | translate }}
+			</div>
+			<div class="col text-center day-col">
+				{{ 'REPORT_PAGE.NOTE' | translate }}
 			</div>
 			<div class="col text-center day-col">
 				{{ 'REPORT_PAGE.AMOUNT' | translate }}
@@ -49,10 +49,10 @@
 			class="card"
 			*ngFor="let day of dailyData"
 		>
-			<ng-container *ngSwitchCase="'employee'">
+			<ng-container *ngSwitchCase="'client'">
 				<ng-container
 					*ngTemplateOutlet="
-						groupByEmployeeCardEl;
+						groupByClientCardEl;
 						context: { $implicit: day }
 					"
 				></ng-container>
@@ -80,7 +80,7 @@
 			<nb-card-body>
 				<div class="row font-weight-bold py-5 align-items-center">
 					<div class="col text-center">
-						{{ 'REPORT_PAGE.NO_EXPENSES' | translate }}
+						{{ 'REPORT_PAGE.NO_PAYMENTS' | translate }}
 					</div>
 				</div>
 			</nb-card-body>
@@ -92,37 +92,37 @@
 	<nb-card-header class="card-title">{{ day.date }}</nb-card-header>
 	<nb-card-body
 		class="cart-body project-row"
-		*ngFor="let employeeRow of day.employees; let employeeIndex = index"
+		*ngFor="let clientRow of day.clients; let clientIndex = index"
 	>
 		<div
 			class="project-row"
 			*ngFor="
-				let projectRow of employeeRow.projects;
+				let projectRow of clientRow.projects;
 				let projectIndex = index
 			"
 		>
 			<div
-				class="expanse-row"
+				class="payment-row"
 				*ngFor="
-					let expanseRow of projectRow.expanse;
-					let expanseIndex = index
+					let paymentRow of projectRow.payments;
+					let paymentIndex = index
 				"
 			>
 				<div
 					class="row report-row py-1 align-items-center"
 					[ngClass]="{
-						'mt-3': expanseIndex == 0 && projectIndex == 0
+						'mt-3': paymentIndex == 0 && projectIndex == 0
 					}"
 				>
 					<div class="col-sm-2 project-name">
 						<ng-template
-							[ngIf]="expanseIndex == 0 && projectIndex == 0"
+							[ngIf]="paymentIndex == 0 && projectIndex == 0"
 						>
 							<ng-container
 								*ngTemplateOutlet="
-									employeeEl;
+									clientEl;
 									context: {
-										$implicit: employeeRow?.employee
+										$implicit: clientRow?.contact
 									}
 								"
 							>
@@ -130,7 +130,7 @@
 						</ng-template>
 					</div>
 					<div class="col-sm-2 project-name">
-						<ng-template [ngIf]="expanseIndex == 0">
+						<ng-template [ngIf]="paymentIndex == 0">
 							<ng-container
 								*ngTemplateOutlet="
 									projectEl;
@@ -141,38 +141,37 @@
 						</ng-template>
 					</div>
 
-					<div class="col-sm-3 text-center day-col">
-						{{ expanseRow?.category?.name }}
-					</div>
-					<div class="col-sm-3 text-center day-col">
-						{{ expanseRow?.description }}
+					<div class="col text-center day-col">
+						{{ paymentRow?.currency }}
 					</div>
 					<div class="col text-center day-col">
-						{{ expanseRow?.amount | currency }}
+						{{ paymentRow?.note }}
 					</div>
-					;
+					<div class="col text-center day-col">
+						{{ paymentRow?.amount | currency }}
+					</div>
 				</div>
 			</div>
 		</div>
 	</nb-card-body>
 </ng-template>
 
-<ng-template let-employee #groupByEmployeeCardEl>
+<ng-template let-client #groupByClientCardEl>
 	<nb-card-header class="card-title">
 		<ng-container
 			*ngTemplateOutlet="
-				employeeEl;
-				context: { $implicit: employee?.employee }
+				clientEl;
+				context: { $implicit: client?.contact }
 			"
 		>
 		</ng-container>
 	</nb-card-header>
 	<nb-card-body
 		class="cart-body project-row"
-		*ngFor="let dateRow of employee.dates; let dateIndex = index"
+		*ngFor="let dateRow of client.dates; let dateIndex = index"
 	>
 		<div
-			class="employee-row"
+			class="client-row"
 			*ngFor="
 				let projectRow of dateRow.projects;
 				let projectIndex = index
@@ -181,20 +180,20 @@
 			<div
 				class="project-row"
 				*ngFor="
-					let expanseRow of projectRow.expanse;
-					let expanseIndex = index
+					let paymentRow of projectRow.payments;
+					let paymentIndex = index
 				"
 			>
 				<div class="row py-3 align-items-center">
 					<div class="col-sm-2 project-name">
 						{{
-							projectIndex == 0 && expanseIndex == 0
+							projectIndex == 0 && paymentIndex == 0
 								? dateRow.date
 								: ''
 						}}
 					</div>
 					<div class="col-sm-2 project-name">
-						<ng-template [ngIf]="expanseIndex == 0">
+						<ng-template [ngIf]="paymentIndex == 0">
 							<ng-container
 								*ngTemplateOutlet="
 									projectEl;
@@ -204,14 +203,14 @@
 							</ng-container>
 						</ng-template>
 					</div>
-					<div class="col-sm-3 text-center day-col">
-						{{ expanseRow?.category?.name }}
-					</div>
-					<div class="col-sm-3 text-center day-col">
-						{{ expanseRow?.description }}
+					<div class="col text-center day-col">
+						{{ paymentRow?.currency }}
 					</div>
 					<div class="col text-center day-col">
-						{{ expanseRow?.amount | currency }}
+						{{ paymentRow?.note }}
+					</div>
+					<div class="col text-center day-col">
+						{{ paymentRow?.amount | currency }}
 					</div>
 				</div>
 			</div>
@@ -234,48 +233,45 @@
 		*ngFor="let dateRow of project.dates; let dateIndex = index"
 	>
 		<div
-			class="employee-row"
-			*ngFor="
-				let employeeRow of dateRow.employees;
-				let employeeIndex = index
-			"
+			class="client-row"
+			*ngFor="let clientRow of dateRow.clients; let clientIndex = index"
 		>
 			<div
 				class="project-row"
 				*ngFor="
-					let expanseRow of employeeRow.expanse;
-					let expanseIndex = index
+					let paymentRow of clientRow.payments;
+					let paymentIndex = index
 				"
 			>
 				<div class="row py-3 align-items-center">
 					<div class="col-sm-2 project-name">
 						{{
-							employeeIndex == 0 && expanseIndex == 0
+							clientIndex == 0 && paymentIndex == 0
 								? dateRow.date
 								: ''
 						}}
 					</div>
 					<div class="col-sm-2 project-name">
-						<ng-template [ngIf]="expanseIndex == 0">
+						<ng-template [ngIf]="paymentIndex == 0">
 							<ng-container
 								*ngTemplateOutlet="
-									employeeEl;
+									clientEl;
 									context: {
-										$implicit: employeeRow?.employee
+										$implicit: clientRow?.client
 									}
 								"
 							>
 							</ng-container>
 						</ng-template>
 					</div>
-					<div class="col-sm-3 text-center day-col">
-						{{ expanseRow?.category?.name }}
-					</div>
-					<div class="col-sm-3 text-center day-col">
-						{{ expanseRow?.description }}
+					<div class="col text-center day-col">
+						{{ paymentRow?.currency }}
 					</div>
 					<div class="col text-center day-col">
-						{{ expanseRow?.amount | currency }}
+						{{ paymentRow?.note }}
+					</div>
+					<div class="col text-center day-col">
+						{{ paymentRow?.amount | currency }}
 					</div>
 				</div>
 			</div>
@@ -294,16 +290,5 @@
 	<span *ngIf="client; else noClient">{{ client?.name }} </span>
 	<ng-template #noClient>
 		<span>{{ 'REPORT_PAGE.NO_CLIENT' | translate }}</span>
-	</ng-template>
-</ng-template>
-
-<ng-template let-employee #employeeEl>
-	<ngx-avatar
-		*ngIf="employee"
-		[src]="employee?.user?.imageUrl"
-		[name]="employee?.user?.name"
-	></ngx-avatar>
-	<ng-template #noEmployee>
-		<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
 	</ng-template>
 </ng-template>
