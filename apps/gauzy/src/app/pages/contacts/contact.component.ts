@@ -57,6 +57,7 @@ export class ContactComponent
 	isGridEdit: boolean;
 	disableButton = true;
 	countries: ICountry[] = [];
+	loading: boolean;
 
 	smartTableSource = new LocalDataSource();
 	@Input() contactType: any;
@@ -298,6 +299,7 @@ export class ContactComponent
 	}
 
 	private async loadOrganizationContacts() {
+		this.loading = true;
 		if (!this.selectedOrganization) {
 			return;
 		}
@@ -328,10 +330,12 @@ export class ContactComponent
 			});
 			this.organizationContact = result;
 			this.smartTableSource.load(result);
+			this.loading = false;
 		}
 	}
 
 	private async loadProjectsWithoutOrganizationContacts() {
+		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.selectedOrganization;
 		const res = await this.organizationProjectsService.getAll(
@@ -342,9 +346,11 @@ export class ContactComponent
 		if (res) {
 			this.projectsWithoutOrganizationContact = res.items;
 		}
+		this.loading = false;
 	}
 
 	private async loadEmployees() {
+		this.loading = true;
 		if (!this.selectedOrganization) {
 			return;
 		}
@@ -357,6 +363,7 @@ export class ContactComponent
 			.pipe(first())
 			.toPromise();
 		this.employees = items;
+		this.loading = false;
 	}
 
 	cancel() {

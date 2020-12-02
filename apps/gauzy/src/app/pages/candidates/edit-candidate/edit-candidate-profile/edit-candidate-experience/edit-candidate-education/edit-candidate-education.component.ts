@@ -22,7 +22,8 @@ import { DateViewComponent } from 'apps/gauzy/src/app/@shared/table-components/d
 	templateUrl: './edit-candidate-education.component.html',
 	styleUrls: ['./edit-candidate-education.component.scss']
 })
-export class EditCandidateEducationComponent extends TranslationBaseComponent
+export class EditCandidateEducationComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	selectedOrganization: IOrganization;
 	showAddCard: boolean;
@@ -36,6 +37,7 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	selectedEducation: ICandidateEducation;
 	disableButton = true;
+	loading: boolean;
 	@ViewChild('educationTable') educationTable;
 	constructor(
 		private readonly toastrService: NbToastrService,
@@ -110,6 +112,7 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 		this.form.reset();
 	}
 	private async loadEducations() {
+		this.loading = true;
 		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const { items = [] } = await this.candidateEducationsService.getAll({
 			candidateId: this.candidateId,
@@ -118,6 +121,7 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 		});
 		this.educationList = items;
 		this.sourceSmartTable.load(items);
+		this.loading = false;
 	}
 	async loadSmartTable() {
 		this.settingsSmartTable = {

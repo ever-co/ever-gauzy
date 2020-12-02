@@ -15,7 +15,8 @@ import {
 	NbTabsetModule,
 	NbCheckboxModule,
 	NbToggleModule,
-	NbFormFieldModule
+	NbFormFieldModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
@@ -64,6 +65,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		GoalCustomUnitModule,
 		GoalTemplatesModule,
 		NbFormFieldModule,
+		NbSpinnerModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({
 			loader: {
