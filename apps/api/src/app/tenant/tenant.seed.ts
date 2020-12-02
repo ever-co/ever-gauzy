@@ -58,12 +58,12 @@ const insertTenant = async (
 
 const insertTenants = async (
 	connection: Connection,
-	tenant: Tenant[]
+	tenants: Tenant[]
 ): Promise<void> => {
 	await connection
 		.createQueryBuilder()
 		.insert()
 		.into(Tenant)
-		.values(tenant)
+		.values(tenants)
 		.execute();
 };
