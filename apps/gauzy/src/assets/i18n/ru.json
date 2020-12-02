@@ -674,7 +674,12 @@
 		"CATEGORY": "Категория",
 		"DESCRIPTION": "Описание",
 		"AMOUNT": "Количество",
-		"NO_EXPENSES": "Нет расходов"
+		"NO_EXPENSES": "Нет расходов",
+		"PAYMENT_REPORT": "Отчет по платежам",
+		"NO_PAYMENTS": "Нет платежей",
+		"CONTACT": "Контакт",
+		"CURRENCY": "Валюта",
+		"NOTE": "Примечание"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Доступные приложения и интеграции",

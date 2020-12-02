@@ -23,5 +23,7 @@ export const TeamsTasksPage = {
 	estimateMinsInputCss: '[formControlName="estimateMinutes"]',
 	descriptionTextareaCss: '[formControlName="description"]',
 	saveNewTaskButtonCss: 'nb-card-footer > button[status="success"]',
-	cardBodyCss: 'nb-card-footer.text-right'
+	cardBodyCss: 'nb-card-footer.text-right',
+	verifyTextCss: 'ga-notes-with-tags > div > div.ng-star-inserted',
+	toastrMessageCss: 'nb-toast.ng-trigger'
 };

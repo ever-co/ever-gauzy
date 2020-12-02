@@ -37,9 +37,12 @@ describe('Organization help center test', () => {
 		);
 		organizationHelpCenterPage.saveButtonVisible();
 		organizationHelpCenterPage.clickSaveButton();
+		organizationHelpCenterPage.waitMessageToHide();
+		organizationHelpCenterPage.verifybaseExists(
+			OrganizationHelpCenterPageData.defaultBaseName
+		);
 	});
 	it('Should be able to edit base', () => {
-		organizationHelpCenterPage.waitMessageToHide();
 		organizationHelpCenterPage.settingsButtonVisible();
 		organizationHelpCenterPage.clickSettingsButton(0);
 		organizationHelpCenterPage.editBaseOptionVisible();
@@ -70,5 +73,9 @@ describe('Organization help center test', () => {
 		);
 		organizationHelpCenterPage.deleteButtonVisible();
 		organizationHelpCenterPage.clickDeleteButton();
+		organizationHelpCenterPage.waitMessageToHide();
+		organizationHelpCenterPage.verifyBaseIsDeleted(
+			OrganizationHelpCenterPageData.defaultBaseName
+		);
 	});
 });

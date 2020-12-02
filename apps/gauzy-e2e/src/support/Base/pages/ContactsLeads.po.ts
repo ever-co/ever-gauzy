@@ -55,13 +55,16 @@ export const enterPhoneInputData = (data) => {
 	enterInput(ContactsLeadsPage.phoneInputCss, data);
 };
 
-export const countryInputVisible = () => {
-	verifyElementIsVisible(ContactsLeadsPage.countryInputCss);
+export const countryDropdownVisible = () => {
+	verifyElementIsVisible(ContactsLeadsPage.countryDropdownCss);
 };
 
-export const enterCountryInputData = (data) => {
-	clearField(ContactsLeadsPage.countryInputCss);
-	enterInput(ContactsLeadsPage.countryInputCss, data);
+export const clickCountryDropdown = () => {
+	clickButton(ContactsLeadsPage.countryDropdownCss);
+};
+
+export const selectCountryFromDropdown = (text) => {
+	clickElementByText(ContactsLeadsPage.dropdownOptionCss, text);
 };
 
 export const cityInputVisible = () => {
@@ -112,7 +115,7 @@ export const clickSelectEmployeeDropdown = () => {
 };
 
 export const selectEmployeeDropdownOption = (index) => {
-	clickButtonByIndex(ContactsLeadsPage.checkUsersMultyselectCss, index);
+	clickButtonByIndex(ContactsLeadsPage.dropdownOptionCss, index);
 };
 
 export const tagsMultyselectVisible = () => {

@@ -5,7 +5,9 @@ import {
 	clearField,
 	clickKeyboardBtnByKeycode,
 	clickButtonByIndex,
-	waitElementToHide
+	waitElementToHide,
+	verifyTextNotExisting,
+	verifyText
 } from '../utils/util';
 import { ProposalsPage } from '../pageobjects/ProposalsPageObject';
 
@@ -162,4 +164,16 @@ export const clickCardBody = () => {
 
 export const waitMessageToHide = () => {
 	waitElementToHide(ProposalsPage.toastrMessageCss);
+};
+
+export const verifyProposalIsDeleted = (text) => {
+	verifyTextNotExisting(ProposalsPage.verifyProposalCss, text);
+};
+
+export const verifyProposalExists = (text) => {
+	verifyText(ProposalsPage.verifyProposalCss, text);
+};
+
+export const verifyProposalAccepted = () => {
+	verifyElementIsVisible(ProposalsPage.acceptedproposalCss);
 };

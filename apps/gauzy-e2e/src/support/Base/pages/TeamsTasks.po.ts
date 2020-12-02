@@ -5,7 +5,10 @@ import {
 	clearField,
 	enterInput,
 	clickKeyboardBtnByKeycode,
-	clickElementByText
+	clickElementByText,
+	waitElementToHide,
+	verifyText,
+	verifyTextNotExisting
 } from '../utils/util';
 import { TeamsTasksPage } from '../pageobjects/TeamsTasksPageObject';
 
@@ -190,4 +193,16 @@ export const clickConfirmDuplicateOrEditTaskButton = () => {
 
 export const clickCardBody = () => {
 	clickButton(TeamsTasksPage.cardBodyCss);
+};
+
+export const waitMessageToHide = () => {
+	waitElementToHide(TeamsTasksPage.toastrMessageCss);
+};
+
+export const verifyTaskExists = (text) => {
+	verifyText(TeamsTasksPage.verifyTextCss, text);
+};
+
+export const verifyTaskIsDeleted = (text) => {
+	verifyTextNotExisting(TeamsTasksPage.verifyTextCss, text);
 };

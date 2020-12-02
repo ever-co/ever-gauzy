@@ -14,5 +14,7 @@ export const OrganizationProjectsPage = {
 	deleteProjectButtonCss: 'div.mb-3 > button[status="danger"]',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	colorInputCss: '[formcontrolname="color"]',
-	footerCss: 'nb-card-body > div.form-group'
+	footerCss: 'nb-card-body > div.form-group',
+	toastrMessageCss: 'nb-toast.ng-trigger',
+	verifyProjectCss: 'ga-picture-name-tags > div > div.d-block'
 };

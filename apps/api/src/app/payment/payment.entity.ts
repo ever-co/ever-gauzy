@@ -4,10 +4,16 @@ import {
 	ManyToOne,
 	JoinColumn,
 	JoinTable,
-	ManyToMany
+	ManyToMany,
+	RelationId
 } from 'typeorm';
-import { IPayment, CurrenciesEnum, PaymentMethodEnum } from '@gauzy/models';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import {
+	IPayment,
+	CurrenciesEnum,
+	PaymentMethodEnum,
+	IEmployee
+} from '@gauzy/models';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsEnum,
 	IsString,
@@ -22,6 +28,7 @@ import { Invoice } from '../invoice/invoice.entity';
 import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
+import { Employee } from '../employee/employee.entity';
 
 @Entity('payment')
 export class Payment extends TenantOrganizationBase implements IPayment {
@@ -38,11 +45,17 @@ export class Payment extends TenantOrganizationBase implements IPayment {
 	@JoinColumn()
 	invoice?: Invoice;
 
-	@ApiPropertyOptional({ type: String })
-	@IsString()
-	@IsOptional()
+	@ApiProperty({ type: String })
+	@RelationId((expense: Payment) => expense.employee)
 	@Column({ nullable: true })
 	employeeId?: string;
+
+	@ApiProperty({ type: Employee })
+	@ManyToOne((type) => Employee, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	employee?: IEmployee;
 
 	@ApiPropertyOptional({ type: User })
 	@ManyToOne((type) => User)

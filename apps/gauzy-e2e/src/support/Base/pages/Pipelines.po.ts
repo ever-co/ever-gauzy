@@ -3,7 +3,10 @@ import {
 	verifyElementIsVisible,
 	clickButton,
 	clearField,
-	clickButtonByIndex
+	clickButtonByIndex,
+	waitElementToHide,
+	verifyTextNotExisting,
+	verifyText
 } from '../utils/util';
 import { PipelinesPage } from '../pageobjects/PipelinesPageObject';
 
@@ -87,4 +90,16 @@ export const confirmDeleteButtonVisible = () => {
 
 export const clickConfirmDeleteButton = () => {
 	clickButton(PipelinesPage.confirmDeleteButtonCss);
+};
+
+export const waitMessageToHide = () => {
+	waitElementToHide(PipelinesPage.toastrMessageCss);
+};
+
+export const verifyPipelineIsDeleted = (text) => {
+	verifyTextNotExisting(PipelinesPage.verifyPipelineCss, text);
+};
+
+export const verifyPipelineExists = (text) => {
+	verifyText(PipelinesPage.verifyPipelineCss, text);
 };

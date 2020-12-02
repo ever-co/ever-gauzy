@@ -123,13 +123,7 @@ export class ExpensesReportGridComponent implements OnInit, AfterViewInit {
 	async getExpenses() {
 		const { startDate, endDate } = this.logRequest;
 
-		const appliedFilter = pick(
-			this.logRequest,
-			'projectIds',
-			'source',
-			'activityLevel',
-			'logType'
-		);
+		const appliedFilter = pick(this.logRequest, 'projectIds');
 
 		const request: IGetTimeLogReportInput = {
 			...appliedFilter,

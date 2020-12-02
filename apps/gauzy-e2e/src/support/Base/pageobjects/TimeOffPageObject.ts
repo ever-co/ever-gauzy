@@ -33,5 +33,6 @@ export const TimeOffPage = {
 	deletePolicyButtonCss: 'div.mb-3 > button[status="danger"]',
 	addNewPolicyInputCss: '[placeholder="Policy Name"]',
 	backButtonCss: 'div.main > button[status="primary"]',
-	toastrMessageCss: 'nb-toast.ng-trigger'
+	toastrMessageCss: 'nb-toast.ng-trigger',
+	verifyPolicyCss: 'div.ng-star-inserted'
 };

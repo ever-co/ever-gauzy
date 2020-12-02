@@ -52,6 +52,10 @@ describe('Organization equipment test', () => {
 		organizationEquipmentPage.clickCardBody();
 		organizationEquipmentPage.saveButtonVisible();
 		organizationEquipmentPage.clickSaveButton();
+		organizationEquipmentPage.waitMessageToHide();
+		organizationEquipmentPage.verifyEquipmentExists(
+			OrganizationEquipmentPageData.name
+		);
 	});
 	it('Should be able to add equipment policy', () => {
 		organizationEquipmentPage.equipmentSharingButtonVisible();
@@ -70,6 +74,10 @@ describe('Organization equipment test', () => {
 		);
 		organizationEquipmentPage.saveButtonVisible();
 		organizationEquipmentPage.clickSaveButton();
+		organizationEquipmentPage.waitMessageToHide();
+		organizationEquipmentPage.verifyPolicyExists(
+			OrganizationEquipmentPageData.policy
+		);
 		organizationEquipmentPage.backButtonVisible();
 		organizationEquipmentPage.clickBackButton();
 	});
@@ -98,6 +106,10 @@ describe('Organization equipment test', () => {
 		organizationEquipmentPage.enterEndDateData();
 		organizationEquipmentPage.saveButtonVisible();
 		organizationEquipmentPage.clickSaveButton();
+		organizationEquipmentPage.waitMessageToHide();
+		organizationEquipmentPage.verifySharingExists(
+			OrganizationEquipmentPageData.requestName
+		);
 		organizationEquipmentPage.clickBackButton();
 	});
 	it('Should be able to edit equipment', () => {
@@ -162,6 +174,10 @@ describe('Organization equipment test', () => {
 		organizationEquipmentPage.clickDeleteButton();
 		organizationEquipmentPage.confirmDeleteButtonVisible();
 		organizationEquipmentPage.clickConfirmDeleteButton();
+		organizationEquipmentPage.waitMessageToHide();
+		organizationEquipmentPage.verifyEquipmentIsDeleted(
+			OrganizationEquipmentPageData.name
+		);
 	});
 	it('Should be able to edit policy', () => {
 		organizationEquipmentPage.sharingpolicyButtonVisible();
@@ -181,10 +197,15 @@ describe('Organization equipment test', () => {
 		organizationEquipmentPage.clickSaveButton();
 	});
 	it('Should be able to delete policy', () => {
+		organizationEquipmentPage.waitMessageToHide();
 		organizationEquipmentPage.selectTableRow(0);
 		organizationEquipmentPage.deleteButtonVisible();
 		organizationEquipmentPage.clickDeleteButton();
 		organizationEquipmentPage.confirmDeleteButtonVisible();
 		organizationEquipmentPage.clickConfirmDeleteButton();
+		organizationEquipmentPage.waitMessageToHide();
+		organizationEquipmentPage.verifyPolicyIsDeleted(
+			OrganizationEquipmentPageData.policy
+		);
 	});
 });

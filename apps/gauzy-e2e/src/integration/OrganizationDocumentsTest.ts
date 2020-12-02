@@ -26,9 +26,12 @@ describe('Organization documents test', () => {
 		organizationDocumentsPage.clickCardBody();
 		organizationDocumentsPage.saveButtonVisible();
 		organizationDocumentsPage.clickSaveButton();
+		organizationDocumentsPage.waitMessageToHide();
+		organizationDocumentsPage.verifyDocumentExists(
+			OrganizationDocumentsPageData.documentName
+		);
 	});
 	it('Should be able to edit document', () => {
-		organizationDocumentsPage.waitMessageToHide();
 		organizationDocumentsPage.editButtonVisible();
 		organizationDocumentsPage.clickEditButton(0);
 		organizationDocumentsPage.nameInputVisible();
@@ -44,5 +47,9 @@ describe('Organization documents test', () => {
 		organizationDocumentsPage.clickDeleteButton(0);
 		organizationDocumentsPage.confirmDeleteButtonVisible();
 		organizationDocumentsPage.clickConfirmDeleteButton();
+		organizationDocumentsPage.waitMessageToHide();
+		organizationDocumentsPage.verifyDocumentIsDeleted(
+			OrganizationDocumentsPageData.documentName
+		);
 	});
 });

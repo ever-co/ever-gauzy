@@ -8,5 +8,7 @@ export const PipelinesPage = {
 	editPipelineButtonCss: 'div.mb-3 > button[status="info"]',
 	updateButtonCss: 'nb-card-footer > button[status="info"]',
 	deletePipelineButtonCss: 'div.mb-3 > button[status="danger"]',
-	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]'
+	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
+	toastrMessageCss: 'nb-toast.ng-trigger',
+	verifyPipelineCss: 'div.ng-star-inserted'
 };

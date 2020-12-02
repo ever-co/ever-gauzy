@@ -5,7 +5,9 @@ import {
 	IOrganizationContactCreateInput,
 	IOrganizationProject,
 	ComponentLayoutStyleEnum,
-	IOrganization
+	IOrganization,
+	IContact,
+	ICountry
 } from '@gauzy/models';
 import {
 	ActivatedRoute,
@@ -30,6 +32,7 @@ import { TaskTeamsComponent } from '../../@shared/table-components/task-teams/ta
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { ContactActionComponent } from './table-components/contact-action/contact-action.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { CountryService } from '../../@core/services/country.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-contact',
@@ -53,6 +56,8 @@ export class ContactComponent
 	selectedContact: any;
 	isGridEdit: boolean;
 	disableButton = true;
+	countries: ICountry[] = [];
+
 	smartTableSource = new LocalDataSource();
 	@Input() contactType: any;
 
@@ -73,10 +78,12 @@ export class ContactComponent
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
 		private route: ActivatedRoute,
-		private router: Router
+		private router: Router,
+		private readonly countryService: CountryService
 	) {
 		super(translateService);
 		this.setView();
+		this.countryService.find$.next(true);
 	}
 
 	ngOnInit(): void {
@@ -108,7 +115,13 @@ export class ContactComponent
 					this.setView();
 				}
 			});
-		this.loadSmartTable();
+		this.countryService.countries$
+			.pipe(
+				tap((countries: ICountry[]) => (this.countries = countries)),
+				tap(() => this.loadSmartTable()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this._applyTranslationOnSmartTable();
 	}
 
@@ -148,7 +161,11 @@ export class ContactComponent
 				},
 				country: {
 					title: this.getTranslation('CONTACTS_PAGE.COUNTRY'),
-					type: 'string'
+					type: 'string',
+					filter: false,
+					valuePrepareFunction: (value, item) => {
+						return this.getCountry(item);
+					}
 				},
 				city: {
 					title: this.getTranslation('CONTACTS_PAGE.CITY'),
@@ -229,7 +246,7 @@ export class ContactComponent
 	public async addOrEditOrganizationContact(
 		organizationContact: IOrganizationContactCreateInput
 	) {
-		const contact = {
+		const contact: IContact = {
 			country: organizationContact.country,
 			city: organizationContact.city,
 			address: organizationContact.address,
@@ -237,7 +254,9 @@ export class ContactComponent
 			postcode: organizationContact.postcode,
 			fax: organizationContact.fax,
 			fiscalInformation: organizationContact.fiscalInformation,
-			website: organizationContact.website
+			website: organizationContact.website,
+			latitude: organizationContact.latitude,
+			longitude: organizationContact.longitude
 		};
 		const organizationContactData = {
 			...organizationContact,
@@ -282,17 +301,16 @@ export class ContactComponent
 		if (!this.selectedOrganization) {
 			return;
 		}
-
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.selectedOrganization;
 		const res = await this.organizationContactService.getAll(
 			['projects', 'members', 'members.user', 'tags', 'contact'],
-			{ organizationId, tenantId }
+			{ organizationId, tenantId, contactType: this.contactType }
 		);
 
 		if (res) {
 			const result = [];
-			res.items.forEach(async (contact: IOrganizationContact) => {
+			res.items.forEach((contact: IOrganizationContact) => {
 				result.push({
 					...contact,
 					contact_name: contact.name,
@@ -308,11 +326,8 @@ export class ContactComponent
 						: ''
 				});
 			});
-			const contact_items = result.filter(
-				(contact) => contact.contactType === this.contactType
-			);
-			this.organizationContact = contact_items;
-			this.smartTableSource.load(contact_items);
+			this.organizationContact = result;
+			this.smartTableSource.load(result);
 		}
 	}
 
@@ -437,5 +452,12 @@ export class ContactComponent
 			this.contactsTable.grid.dataSet['willSelect'] = 'false';
 			this.contactsTable.grid.dataSet.deselectAll();
 		}
+	}
+
+	getCountry(row) {
+		const find: ICountry = this.countries.find(
+			(item) => item.isoCode === row.country
+		);
+		return find ? find.country : row.country;
 	}
 }

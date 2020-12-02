@@ -32,9 +32,12 @@ describe('Organization employment types test', () => {
 		organizationEmploymentTypePage.clickKeyboardButtonByKeyCode(9);
 		organizationEmploymentTypePage.saveButtonVisible();
 		organizationEmploymentTypePage.clickSaveButton();
+		organizationEmploymentTypePage.waitMessageToHide();
+		organizationEmploymentTypePage.verifyTypeExists(
+			OrganizationEmploymentTypesPageData.name
+		);
 	});
 	it('Should be able to edit employment type', () => {
-		organizationEmploymentTypePage.waitMessageToHide();
 		organizationEmploymentTypePage.editButtonVisible();
 		organizationEmploymentTypePage.clickEditButton(0);
 		organizationEmploymentTypePage.saveButtonVisible();
@@ -46,5 +49,9 @@ describe('Organization employment types test', () => {
 		organizationEmploymentTypePage.clickDeleteButton(0);
 		organizationEmploymentTypePage.confirmDeleteButtonVisible();
 		organizationEmploymentTypePage.clickConfirmDeleteButton();
+		organizationEmploymentTypePage.waitMessageToHide();
+		organizationEmploymentTypePage.verifyTypeIsDeleted(
+			OrganizationEmploymentTypesPageData.name
+		);
 	});
 });

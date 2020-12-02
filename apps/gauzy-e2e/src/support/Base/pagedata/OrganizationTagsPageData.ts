@@ -1,5 +1,6 @@
 export const OrganizationTagsPageData = {
-	tageName: 'Test',
+	tagName: 'Default',
+	editTagName: 'Urgent',
 	tagColor: '#e6880e',
 	tagDescription: 'Only testing'
 };

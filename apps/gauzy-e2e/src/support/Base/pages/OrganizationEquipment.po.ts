@@ -5,7 +5,9 @@ import {
 	clearField,
 	clickKeyboardBtnByKeycode,
 	clickButtonByIndex,
-	waitElementToHide
+	waitElementToHide,
+	verifyText,
+	verifyTextNotExisting
 } from '../utils/util';
 import { OrganizationEquipmentPage } from '../pageobjects/OrganizationEquipmentPageObject';
 
@@ -301,4 +303,28 @@ export const clickConfirmDeleteButton = () => {
 
 export const waitMessageToHide = () => {
 	waitElementToHide(OrganizationEquipmentPage.toastrMessageCss);
+};
+
+export const verifyPolicyExists = (text) => {
+	verifyText(OrganizationEquipmentPage.verifyPolicyCss, text);
+};
+
+export const verifyPolicyIsDeleted = (text) => {
+	verifyTextNotExisting(OrganizationEquipmentPage.verifyPolicyCss, text);
+};
+
+export const verifySharingExists = (text) => {
+	verifyText(OrganizationEquipmentPage.verifySharingCss, text);
+};
+
+export const verifySharingIsDeleted = (text) => {
+	verifyTextNotExisting(OrganizationEquipmentPage.verifySharingCss, text);
+};
+
+export const verifyEquipmentExists = (text) => {
+	verifyText(OrganizationEquipmentPage.verifyEquipmentCss, text);
+};
+
+export const verifyEquipmentIsDeleted = (text) => {
+	verifyTextNotExisting(OrganizationEquipmentPage.verifyEquipmentCss, text);
 };

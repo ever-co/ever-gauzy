@@ -5,7 +5,9 @@ import {
 	clearField,
 	clickKeyboardBtnByKeycode,
 	clickButtonByIndex,
-	waitElementToHide
+	waitElementToHide,
+	verifyText,
+	verifyTextNotExisting
 } from '../utils/util';
 import { OrganizationEmploymentTypesPage } from '../pageobjects/OrganizationEmploymentTypesPageObject';
 
@@ -93,4 +95,12 @@ export const clickConfirmDeleteButton = () => {
 
 export const waitMessageToHide = () => {
 	waitElementToHide(OrganizationEmploymentTypesPage.toastrMessageCss);
+};
+
+export const verifyTypeExists = (text) => {
+	verifyText(OrganizationEmploymentTypesPage.verifyTextCss, text);
+};
+
+export const verifyTypeIsDeleted = (text) => {
+	verifyTextNotExisting(OrganizationEmploymentTypesPage.verifyTextCss, text);
 };

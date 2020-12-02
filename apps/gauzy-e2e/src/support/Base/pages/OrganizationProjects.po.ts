@@ -4,7 +4,10 @@ import {
 	clickButton,
 	clearField,
 	enterInput,
-	clickKeyboardBtnByKeycode
+	clickKeyboardBtnByKeycode,
+	verifyText,
+	verifyTextNotExisting,
+	waitElementToHide
 } from '../utils/util';
 import { OrganizationProjectsPage } from '../pageobjects/OrganizationProjectsPageObject';
 
@@ -126,4 +129,16 @@ export const clickConfirmDeleteButton = () => {
 
 export const clickCardBody = () => {
 	clickButton(OrganizationProjectsPage.footerCss);
+};
+
+export const verifyProjectExists = (text) => {
+	verifyText(OrganizationProjectsPage.verifyProjectCss, text);
+};
+
+export const verifyProjectIsDeleted = (text) => {
+	verifyTextNotExisting(OrganizationProjectsPage.verifyProjectCss, text);
+};
+
+export const waitMessageToHide = () => {
+	waitElementToHide(OrganizationProjectsPage.toastrMessageCss);
 };

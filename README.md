@@ -13,13 +13,13 @@ You are welcome to check more information about the platform at our official web
 
 Gauzy Platform main features:
 
-- Human Resources Management (HRM), Time Management and Employees Performance Monitoring
-- Customer Relationship Management (CRM)
-- Enterprise Resource Planning (ERP)
-- Project Management
-- Sales Management
-- Financial and Cost Management (including _Accounting_, _Invoicing_, etc)
-- Inventory, Supply Chain Management and Production Management
+-   Human Resources Management (HRM), Time Management and Employees Performance Monitoring
+-   Customer Relationship Management (CRM)
+-   Enterprise Resource Planning (ERP)
+-   Project Management
+-   Sales Management
+-   Financial and Cost Management (including _Accounting_, _Invoicing_, etc)
+-   Inventory, Supply Chain Management and Production Management
 
 More detailed list of the features available in the Gauzy Platform:
 
@@ -69,7 +69,7 @@ Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [
 
 -   Download Gauzy Desktop App for your OS from <https://github.com/ever-co/gauzy/releases/tag/v0.1.0>.
 -   Setup Gauzy Desktop App with default choices in Setup Wizard and run it
--   Gauzy Desktop App is ready to use. 
+-   Gauzy Desktop App is ready to use.
 -   You can login with `admin@ever.co` and password `admin` to check Admin functionality. Note: such Admin user is not an employee, so you will not be able to track time.
 -   You can login with `ruslan@ever.co` and password `admin` to check Desktop Timer and other functionality from "Employee" perspective (such user is an Employee).
 -   You can read more information about Desktop App in our [Wiki](https://github.com/ever-co/gauzy/wiki/Gauzy-Desktop-App)
@@ -83,10 +83,13 @@ Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [
 -   [RxJS](http://reactivex.io/rxjs)
 -   [TypeORM](https://github.com/typeorm/typeorm)
 -   [Ngx-admin](https://github.com/akveo/ngx-admin)
--   [PostgreSQL](https://www.postgresql.org)
--   For production, we integrate and recommend to use [PM2](https://github.com/Unitech/pm2)
 
-Note: thanks to TypeORM, Gauzy will support lots of DBs: MySql, MariaDb, PostgreSQL, CockroachDb, sqlite, MS SQL, Oracle, MongoDb and others, with minimal changes.
+For Production, we recommend:
+
+-   [PostgreSQL](https://www.postgresql.org)
+-   [PM2](https://github.com/Unitech/pm2)
+
+Note: thanks to TypeORM, Gauzy will support lots of DBs: SQLite (default, for demos), PostgreSQL (development/production), MySql, MariaDb, CockroachDb, MS SQL, Oracle, MongoDb and others, with minimal changes.
 
 #### See also README.md and CREDITS.md files in relevant folders for lists of libraries and software included in the Platform, information about licenses and other details.
 
@@ -117,10 +120,10 @@ Note: together with Gauzy, Docker Compose will run following:
 ### Manually
 
 -   Install [NodeJs](https://nodejs.org/en/download) LTS version, e.g. 14.x (note: at the moment Gauzy may not work with Node 15.x)
--   Install and run [PostgreSQL](https://www.postgresql.org) version 11 or 12 (note: version 13 is not supported yet). Optionally, other DB can be configured manually in TypeORM. 
+-   Optionally install and run [PostgreSQL](https://www.postgresql.org) version 11 or 12 (note: version 13 is not supported yet). Note: other DB can be configured manually in TypeORM. The default DB is set to SQLite for demo purposes.
 -   Install [Yarn](https://github.com/yarnpkg/yarn) (if you don't have it) with `npm i -g yarn`
 -   Install NPM packages with `yarn install`
--   Copy [`.env.sample`](https://github.com/ever-co/gauzy/blob/develop/.env.sample) to `.env` and optionaly change default settings, e.g. database name, user, password, etc.
+-   Copy [`.env.sample`](https://github.com/ever-co/gauzy/blob/develop/.env.sample) to `.env` and optionaly change default settings, e.g. database type, name, user, password, etc.
 -   Optionally, if you want to seed a lot of fake data for demo testing, run `yarn seed:all`
 -   In new console, run API with `yarn start:api` (by default runs on <http://localhost:3000/api>)
 -   In new console, run Gauzy front-end with `yarn start`

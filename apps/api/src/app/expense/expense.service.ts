@@ -8,6 +8,7 @@ import { startOfMonth, endOfMonth } from 'date-fns';
 import { RequestContext } from '../core/context';
 import { IGetExpenseInput, PermissionsEnum } from '@gauzy/models';
 import * as moment from 'moment';
+import { chain } from 'underscore';
 
 @Injectable()
 export class ExpenseService extends TenantAwareCrudService<Expense> {
@@ -56,6 +57,8 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 
 	async getExpanse(request: IGetExpenseInput) {
 		const query = this.filterQuery(request);
+		query.orderBy(`"${query.alias}"."valueDate"`, 'ASC');
+
 		if (
 			RequestContext.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
@@ -75,6 +78,56 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		query.leftJoinAndSelect(`${query.alias}.category`, 'category');
 
 		return await query.getMany();
+	}
+
+	async getDailyReportChartData(request: IGetExpenseInput) {
+		const query = this.filterQuery(request);
+		query.orderBy(`"${query.alias}"."valueDate"`, 'ASC');
+
+		let dayList = [];
+		const range = {};
+		let i = 0;
+		const start = moment(request.startDate);
+		while (start.isSameOrBefore(request.endDate) && i < 31) {
+			const date = start.format('YYYY-MM-DD');
+			range[date] = null;
+			start.add(1, 'day');
+			i++;
+		}
+		dayList = Object.keys(range);
+		const expenses = await query.getMany();
+
+		const byDate = chain(expenses)
+			.groupBy((expense) =>
+				moment(expense.valueDate).format('YYYY-MM-DD')
+			)
+			.mapObject((expenses: Expense[], date) => {
+				const sum = expenses.reduce((iteratee: any, expense: any) => {
+					return iteratee + parseFloat(expense.amount);
+				}, 0);
+				return {
+					date,
+					value: {
+						expanse: sum.toFixed(1)
+					}
+				};
+			})
+			.value();
+
+		const dates = dayList.map((date) => {
+			if (byDate[date]) {
+				return byDate[date];
+			} else {
+				return {
+					date: date,
+					value: {
+						expanse: 0
+					}
+				};
+			}
+		});
+
+		return dates;
 	}
 
 	private filterQuery(request: IGetExpenseInput) {

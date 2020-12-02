@@ -6,7 +6,9 @@ import {
 	clickButtonByIndex,
 	clickElementByText,
 	waitElementToHide,
-	clickButtonByText
+	clickButtonByText,
+	verifyText,
+	verifyTextNotExisting
 } from '../utils/util';
 import { OrganizationInventoryPage } from '../pageobjects/OrganizationInventoryPageObject';
 
@@ -143,4 +145,28 @@ export const clickConfirmDeleteButton = () => {
 
 export const waitMessageToHide = () => {
 	waitElementToHide(OrganizationInventoryPage.toastrMessageCss);
+};
+
+export const verifyTypeExists = (text) => {
+	verifyText(OrganizationInventoryPage.verifyTypeCss, text);
+};
+
+export const verifyTypeIsDeleted = (text) => {
+	verifyTextNotExisting(OrganizationInventoryPage.verifyTypeCss, text);
+};
+
+export const verifyCategorieExists = (text) => {
+	verifyText(OrganizationInventoryPage.verifyCategorieCss, text);
+};
+
+export const verifyCategorieIsDeleted = (text) => {
+	verifyTextNotExisting(OrganizationInventoryPage.verifyCategorieCss, text);
+};
+
+export const verifyInventoryExists = (text) => {
+	verifyText(OrganizationInventoryPage.verifyInventoryCss, text);
+};
+
+export const verifyInventoryIsDeleted = (text) => {
+	verifyTextNotExisting(OrganizationInventoryPage.verifyInventoryCss, text);
 };

@@ -143,6 +143,20 @@ export class ExpenseController extends CrudController<Expense> {
 		return response;
 	}
 
+	@ApiOperation({ summary: 'Report daily chart' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found one record'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('report/daily-chart')
+	async getDailyReportChartData(@Query() options: IGetExpenseInput) {
+		return this.expenseService.getDailyReportChartData(options);
+	}
+
 	@ApiOperation({ summary: 'Find all expense.' })
 	@ApiResponse({
 		status: HttpStatus.OK,

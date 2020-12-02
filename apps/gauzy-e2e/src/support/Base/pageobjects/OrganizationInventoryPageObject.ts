@@ -15,5 +15,8 @@ export const OrganizationInventoryPage = {
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	addCategoryOrTypeButtonCss: 'div.mb-3 > button[status="primary"]',
 	backButtonCss: 'g[data-name="arrow-back"]',
-	toastrMessageCss: 'nb-toast.ng-trigger'
+	toastrMessageCss: 'nb-toast.ng-trigger',
+	verifyTypeCss: 'div.ng-star-inserted',
+	verifyCategorieCss: 'div.ng-star-inserted',
+	verifyInventoryCss: 'ga-picture-name-tags > div > div.d-block'
 };

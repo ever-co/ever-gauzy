@@ -8,7 +8,8 @@ export const RecurringExpensesPage = {
 	settingsButtonCss: 'g[data-name="settings-2"]',
 	editExpenseButtonCss: 'div.block-settings g[data-name="edit"]',
 	deleteExpenseButtonCss: 'g[data-name="close"]',
-	deleteOnlyThisRadioButtonCss: 'nb-radio[value="current"]',
+	deleteAllButtonCss: 'nb-radio[value="all"]',
 	confirmDeleteExpenseButtonCss: 'nb-card-footer > button[status="danger"]',
-	toastrMessageCss: 'nb-toast.ng-trigger'
+	toastrMessageCss: 'nb-toast.ng-trigger',
+	verifyExpenseCss: 'div.expense > div.block-item > span.block-amount'
 };
