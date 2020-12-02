@@ -273,6 +273,10 @@ jobs:
                   paths:
                       - ~/.cache/yarn
 
+            - run: 
+                  name: Kill API Background Process
+                  command: killall -w node
+
             - persist_to_workspace:
                   root: /tmp/workspace/test-e2e
                   paths:
