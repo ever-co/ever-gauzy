@@ -6,6 +6,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { SentryService } from '@ntegral/nestjs-sentry';
 import * as expressSession from 'express-session';
 import { environment as env } from '@env-api/environment';
+import { AppService } from './app/app.service';
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule, {
@@ -30,6 +31,9 @@ async function bootstrap() {
 	app.use(helmet());
 	const globalPrefix = 'api';
 	app.setGlobalPrefix(globalPrefix);
+
+	const service = app.select(AppModule).get(AppService);
+	await service.seedDBIfEmpty();
 
 	const options = new DocumentBuilder()
 		.setTitle('Gauzy API')
