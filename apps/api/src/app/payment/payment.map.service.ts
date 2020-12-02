@@ -97,56 +97,6 @@ export class PaymentMapService {
 		return byClient;
 	}
 
-	// mapByClient(payments: IPayment[]): IPaymentReportGroupByClient[] {
-	// 	const byClient: any = this.groupByClient(payments).map(
-	// 		(byClientPayment: IPayment[]) => {
-	// 			const sum = this.getDurationSum(byClientPayment);
-	// 			const dailyLogs = this.groupByDate(byClientPayment).map((byDatePayment: IPayment[], date) => {
-
-	// 				const byClient = this.groupByProject(byDatePayment).map((byClientPayment: IPayment[]) => {
-
-	// 					const byProject = this.groupByProject(byClientPayment).map((byProjectPayment: IPayment[]) => {
-
-	// 						const project =
-	// 							byProjectPayment.length > 0 &&
-	// 								byProjectPayment[0]
-	// 								? byProjectPayment[0].project
-	// 								: null;
-	// 						return {
-	// 							project,
-	// 							payments: byProjectPayment.map((row) =>
-	// 								this.mapPaymentPercentage(row, sum)
-	// 							)
-	// 						};
-
-	// 					});
-
-	// 					return {
-	// 						date,
-	// 						projects: byProject
-	// 					};
-	// 				});
-
-	// 				return {
-	// 					date,
-	// 					employees: byClient
-	// 				};
-	// 			}
-	// 			);
-
-	// 			const contact =
-	// 				byClientPayment.length > 0 && byClientPayment[0]
-	// 					? byClientPayment[0].contact
-	// 					: null;
-	// 			return {
-	// 				contact,
-	// 				dates: dailyLogs
-	// 			};
-	// 		}
-	// 	);
-	// 	return byClient;
-	// }
-
 	mapByProject(payments: IPayment[]): IPaymentReportGroupByProject[] {
 		const byClient: any = this.groupByProject(payments).map(
 			(byProjectPayment: IPayment[]) => {

@@ -48,7 +48,14 @@ export class Payment extends TenantOrganizationBase implements IPayment {
 	@ApiProperty({ type: String })
 	@RelationId((expense: Payment) => expense.employee)
 	@Column({ nullable: true })
-	employeeId?: string;
+	readonly employeeId?: string;
+
+	@ApiProperty({ type: Employee })
+	@ManyToOne((type) => Employee, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	employee?: IEmployee;
 
 	@ApiProperty({ type: Employee })
 	@ManyToOne((type) => Employee, {
