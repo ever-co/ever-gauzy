@@ -679,7 +679,11 @@
 		"NO_PAYMENTS": "Нет платежей",
 		"CONTACT": "Контакт",
 		"CURRENCY": "Валюта",
-		"NOTE": "Примечание"
+		"NOTE": "Примечание",
+		"AMOUNT_OWED": "Сумма причитающегося отчета",
+		"NO_AMOUNT_OWED": "Недостаточно сумм",
+		"CURRENT_RATE": "Текущий курс",
+		"HOURS": "Часы"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Доступные приложения и интеграции",
