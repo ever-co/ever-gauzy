@@ -8,16 +8,11 @@ import * as moment from 'moment';
 let fileList: string[] = [];
 
 const dir = path.join(
-	process.cwd(),
-	'apps',
-	'api',
-	'src',
-	'assets',
-	'seed',
+	path.resolve('.', ...['apps', 'api', 'src', 'assets', 'seed']),
 	'screenshots'
 );
 
-const baseDir = path.join(process.cwd(), 'apps', 'api');
+const baseDir = path.join(path.resolve('.', ...['apps']), 'api');
 
 const destDir = path.join(
 	'public',

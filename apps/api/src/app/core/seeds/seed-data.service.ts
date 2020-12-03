@@ -1885,10 +1885,7 @@ export class SeedDataService {
 
 		await new Promise((resolve, reject) => {
 			const dir = path.join(
-				process.cwd(),
-				'apps',
-				'api',
-				'public',
+				path.resolve('.', ...['apps', 'api', 'public']),
 				'screenshots'
 			);
 

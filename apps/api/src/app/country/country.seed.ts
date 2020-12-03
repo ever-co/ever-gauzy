@@ -8,13 +8,9 @@ export const createCountries = async (
 	connection: Connection
 ): Promise<ICountry[]> => {
 	return await new Promise<ICountry[]>((resolve, reject) => {
-		const baseDir = path.join(
-			process.cwd(),
-			'apps',
-			'api',
-			'src',
-			'app',
-			'country'
+		const baseDir = path.resolve(
+			'.',
+			...['apps', 'api', 'src', 'app', 'country']
 		);
 		fs.readFile(
 			path.join(baseDir, 'country.json'),

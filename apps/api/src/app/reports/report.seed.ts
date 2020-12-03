@@ -2,8 +2,8 @@ import { Connection } from 'typeorm';
 import { Report } from './report.entity';
 import { ReportCategory } from './report-category.entity';
 import { indexBy } from 'underscore';
-import { join } from 'path';
-import { copyFileSync, mkdirSync } from 'fs';
+import * as path from 'path';
+// import { copyFileSync, mkdirSync } from 'fs';
 import * as rimraf from 'rimraf';
 import chalk from 'chalk';
 import { environment } from '@env-api/environment';
@@ -153,32 +153,36 @@ async function cleanReport(connection) {
 	console.log(chalk.green(`CLEANING UP REPORT IMAGES...`));
 
 	await new Promise((resolve, reject) => {
-		const dir = join(process.cwd(), 'apps', 'api', 'public', 'reports');
+		const dir = path.resolve('.', ...['apps', 'api', 'public', 'reports']);
 
 		// delete old generated report image
 		rimraf(dir, () => {
-			console.log(chalk.green(`CLEANED UP  REPORT IMAGES`));
+			console.log(chalk.green(`CLEANED UP REPORT IMAGES`));
 			resolve();
 		});
 	});
 }
-function copyImage(fileName: string) {
-	const dir = join(
-		process.cwd(),
-		'apps',
-		'api',
-		'src',
+
+/* function copyImage(fileName: string) {
+	const dir = path.resolve('.', ...[
+		'apps', 
+		'api', 
+		'src', 
 		'assets',
 		'seed',
 		'reports'
-	);
-
-	const baseDir = join(process.cwd(), 'apps', 'api', 'public');
+	]);
+	const baseDir = path.resolve('.', ...[
+		'apps', 
+		'api', 
+		'public'
+	]);
 	const destDir = 'reports';
 
-	mkdirSync(join(baseDir, destDir), { recursive: true });
+	mkdirSync(path.join(baseDir, destDir), { recursive: true });
 
-	const destFilePath = join(destDir, fileName);
-	copyFileSync(join(dir, fileName), join(baseDir, destFilePath));
+	const destFilePath = path.join(destDir, fileName);
+	copyFileSync(path.join(dir, fileName), path.join(baseDir, destFilePath));
+
 	return destFilePath;
-}
+} */

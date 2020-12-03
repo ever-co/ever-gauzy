@@ -42,11 +42,9 @@ switch (dbType) {
 			type: dbType,
 			database:
 				process.env.DB_PATH ||
-				path.resolve(
-					process.cwd(),
-					'apps',
-					'api',
-					'data/gauzy.sqlite3'
+				path.join(
+					path.resolve('.', ...['apps', 'api', 'data']),
+					'gauzy.sqlite3'
 				),
 			keepConnectionAlive: true,
 			logging: true,
