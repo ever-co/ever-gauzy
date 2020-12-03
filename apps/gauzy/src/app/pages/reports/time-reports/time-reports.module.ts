@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 
 import { TimeReportsRoutingModule } from './time-reports-routing.module';
 import { TimeReportsComponent } from './time-reports/time-reports.component';
-import { TimeReportHorizontalBarChartModule } from '../charts/time-report-horizontal-bar-chart/time-report-horizontal-bar-chart.module';
 import { SharedModule } from '../../../@shared/shared.module';
 import { TranslateModule } from '@ngx-translate/core';
 import {
@@ -16,6 +15,7 @@ import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module
 import { FormsModule } from '@angular/forms';
 import { DailyGridModule } from '../../../@shared/report/daily-grid/daily-grid.module';
 import { DailyStatisticsModule } from '../../../@shared/report/daily-statistics/daily-statistics.module';
+import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
 
 @NgModule({
 	declarations: [TimeReportsComponent],
@@ -26,7 +26,7 @@ import { DailyStatisticsModule } from '../../../@shared/report/daily-statistics/
 		DailyStatisticsModule,
 
 		TimeReportsRoutingModule,
-		TimeReportHorizontalBarChartModule,
+		LineChartModule,
 		TranslateModule,
 		NbIconModule,
 		NbSpinnerModule,

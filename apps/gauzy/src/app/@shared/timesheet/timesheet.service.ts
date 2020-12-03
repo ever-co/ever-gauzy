@@ -10,7 +10,8 @@ import {
 	IGetTimeLogConflictInput,
 	IGetTimeSlotInput,
 	ITimeSlot,
-	IGetTimeLogReportInput
+	IGetTimeLogReportInput,
+	IAmountOwedReport
 } from '@gauzy/models';
 import { toParams } from '@gauzy/utils';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
@@ -110,6 +111,23 @@ export class TimesheetService {
 		const params = toParams(request);
 		return this.http
 			.get('/api/timesheet/time-log/report/daily', { params })
+			.toPromise();
+	}
+
+	getOwedAmountReport(request?: IGetTimeLogInput) {
+		const params = toParams(request);
+		return this.http
+			.get<IAmountOwedReport[]>(
+				'/api/timesheet/time-log/report/owed-report',
+				{ params }
+			)
+			.toPromise();
+	}
+
+	getOwedAmountReportChartData(request?: IGetTimeLogInput) {
+		const params = toParams(request);
+		return this.http
+			.get('/api/timesheet/time-log/report/owed-chart-data', { params })
 			.toPromise();
 	}
 

@@ -1,11 +1,19 @@
 <div class="d-flex align-items-center" *ngIf="dailyData?.length > 0">
-	<div class="label">{{ 'REPORT_PAGE.GROUP_BY' }}</div>
+	<div class="label">{{ 'REPORT_PAGE.GROUP_BY' | translate }}</div>
 	<div class="ml-3">
 		<nb-select [(ngModel)]="groupBy" (selectedChange)="groupByChange()">
-			<nb-option value="date">{{ 'REPORT_PAGE.DATE' }}</nb-option>
-			<nb-option value="employee">{{ 'REPORT_PAGE.EMPLOYEE' }}</nb-option>
-			<nb-option value="project">{{ 'REPORT_PAGE.PROJECT' }}</nb-option>
-			<nb-option value="client">{{ 'REPORT_PAGE.CLIENT' }}</nb-option>
+			<nb-option value="date">{{
+				'REPORT_PAGE.DATE' | translate
+			}}</nb-option>
+			<nb-option value="employee">{{
+				'REPORT_PAGE.EMPLOYEE' | translate
+			}}</nb-option>
+			<nb-option value="project">{{
+				'REPORT_PAGE.PROJECT' | translate
+			}}</nb-option>
+			<nb-option value="client">{{
+				'REPORT_PAGE.CLIENT' | translate
+			}}</nb-option>
 		</nb-select>
 	</div>
 </div>
@@ -27,11 +35,13 @@
 				{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 			</div>
 			<div class="col-sm-3 text-center day-col">
-				{{ 'REPORT_PAGE.TO_DO' }}
+				{{ 'REPORT_PAGE.TO_DO' | translate }}
 			</div>
-			<div class="col text-center day-col">{{ 'REPORT_PAGE.TIME' }}</div>
 			<div class="col text-center day-col">
-				{{ 'REPORT_PAGE.ACTIVITY' }}
+				{{ 'REPORT_PAGE.TIME' | translate }}
+			</div>
+			<div class="col text-center day-col">
+				{{ 'REPORT_PAGE.ACTIVITY' | translate }}
 			</div>
 		</div>
 	</div>
