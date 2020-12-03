@@ -71,6 +71,10 @@ describe('Proposals test', () => {
 		proposalsPage.verifyProposalExists(jobPostUrl);
 	});
 	it('Should be able to edit proposal', () => {
+		cy.on('uncaught:exception', (err, runnable) => {
+			return false;
+		});
+		proposalsPage.waitMessageToHide();
 		proposalsPage.tableRowVisible();
 		proposalsPage.selectTableRow(0);
 		proposalsPage.detailsButtonVisible();

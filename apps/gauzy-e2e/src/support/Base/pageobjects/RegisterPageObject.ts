@@ -5,5 +5,5 @@ export const RegisterPage = {
 	passwordFieldCss: '#input-password',
 	confirmPassFieldCss: '#input-re-password',
 	termAndConditionCheckboxCss: 'span.custom-checkbox',
-	registerButtonCss: 'nb-register > form > button'
+	registerButtonCss: 'ngx-register > form > button'
 };

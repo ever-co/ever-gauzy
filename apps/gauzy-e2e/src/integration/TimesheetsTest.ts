@@ -76,6 +76,9 @@ describe('Timesheets test', () => {
 		clientsPage.enterEmailInputData(email);
 		clientsPage.phoneInputVisible();
 		clientsPage.enterPhoneInputData(ClientsData.defaultPhone);
+		clientsPage.countryDropdownVisible();
+		clientsPage.clickCountryDropdown();
+		clientsPage.selectCountryFromDropdown(ClientsData.country);
 		clientsPage.cityInputVisible();
 		clientsPage.enterCityInputData(city);
 		clientsPage.postcodeInputVisible();
