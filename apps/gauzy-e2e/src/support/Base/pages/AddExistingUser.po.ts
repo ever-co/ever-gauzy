@@ -2,7 +2,6 @@ import {
 	verifyElementIsVisible,
 	clickButton,
 	clickKeyboardBtnByKeycode,
-	clickElementIfVisible,
 	clickElementByText
 } from '../utils/util';
 import { AddExistingUserPage } from '../pageobjects/AddExistingUserPageObject';
@@ -47,8 +46,8 @@ export const clickUsersMultyselect = () => {
 	clickButton(AddExistingUserPage.usersMultyselectCss);
 };
 
-export const selectUsersFromDropdown = (index) => {
-	clickElementIfVisible(AddExistingUserPage.checkUsersMultyselectCss, index);
+export const selectUsersFromDropdown = (text) => {
+	clickElementByText(AddExistingUserPage.checkUsersMultyselectCss, text);
 };
 
 export const cancelButtonVisible = () => {

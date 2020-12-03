@@ -1,4 +1,4 @@
 export const OnboardingPageData = {
-	currency: 'USD',
+	currency: 'US Dollar',
 	dashboardCardText: 'Go to dashboard'
 };

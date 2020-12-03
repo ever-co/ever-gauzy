@@ -60,7 +60,6 @@ export const CustomCommands = {
 	addContact: (
 		fullName,
 		email,
-		country,
 		city,
 		postcode,
 		street,
@@ -81,8 +80,11 @@ export const CustomCommands = {
 		contactsLeadsPage.enterPhoneInputData(
 			ContactsLeadsPageData.defaultPhone
 		);
-		contactsLeadsPage.countryInputVisible();
-		contactsLeadsPage.enterCountryInputData(country);
+		contactsLeadsPage.countryDropdownVisible();
+		contactsLeadsPage.clickCountryDropdown();
+		contactsLeadsPage.selectCountryFromDropdown(
+			ContactsLeadsPageData.country
+		);
 		contactsLeadsPage.cityInputVisible();
 		contactsLeadsPage.enterCityInputData(city);
 		contactsLeadsPage.postcodeInputVisible();

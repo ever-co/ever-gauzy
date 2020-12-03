@@ -46,7 +46,6 @@ describe('Invoices test', () => {
 		CustomCommands.addContact(
 			fullName,
 			email,
-			country,
 			city,
 			postcode,
 			street,

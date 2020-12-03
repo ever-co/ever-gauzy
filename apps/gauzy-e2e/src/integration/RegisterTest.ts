@@ -34,16 +34,6 @@ describe('Register Test', () => {
 		registerPage.clickRegisterButton();
 	});
 
-	it('Should able to login with same credentials', () => {
-		loginPage.verifyLoginButton();
-		loginPage.clearEmailField();
-		loginPage.enterEmail(email);
-		loginPage.clearPasswordField();
-		loginPage.enterPassword(pass);
-		loginPage.clickLoginButton();
-		onboardingPage.verifyOrganisationNameField();
-	});
-
 	it('Should able to create first organization', () => {
 		onboardingPage.enterOrganizationName(organizationName);
 		onboardingPage.selectCurrency(OnboardingPageData.currency);
@@ -62,5 +52,15 @@ describe('Register Test', () => {
 		dashboradPage.clickUserName();
 		logoutPage.clickLogoutButton();
 		loginPage.verifyLoginText();
+	});
+
+	it('Should able to login with same credentials', () => {
+		loginPage.verifyLoginButton();
+		loginPage.clearEmailField();
+		loginPage.enterEmail(email);
+		loginPage.clearPasswordField();
+		loginPage.enterPassword(pass);
+		loginPage.clickLoginButton();
+		onboardingPage.verifyOrganisationNameField();
 	});
 });

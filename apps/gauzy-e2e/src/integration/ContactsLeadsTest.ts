@@ -45,7 +45,6 @@ describe('Contacts leads test', () => {
 		CustomCommands.addContact(
 			fullName,
 			email,
-			country,
 			city,
 			postcode,
 			street,
