@@ -11,7 +11,8 @@ import {
 	IDateRange,
 	IGetTimeLogReportInput,
 	ITimeLog,
-	TimeLogType
+	TimeLogType,
+	IAmountOwedReport
 } from '@gauzy/models';
 import * as moment from 'moment';
 import { CrudService } from '../../core';
@@ -264,6 +265,129 @@ export class TimeLogService extends CrudService<TimeLog> {
 		}
 
 		return dailyLogs;
+	}
+
+	async getOwedAmountReport(
+		request: IGetTimeLogReportInput
+	): Promise<IAmountOwedReport[]> {
+		const timeLogs = await this.timeLogRepository.find({
+			relations: ['employee', 'employee.user'],
+			order: {
+				startedAt: 'ASC'
+			},
+			where: (qb: SelectQueryBuilder<TimeLog>) => {
+				this.getFilterTimeLogQuery(qb, request);
+			}
+		});
+
+		const dailyLogs: any = chain(timeLogs)
+			.groupBy((log) => moment(log.startedAt).format('YYYY-MM-DD'))
+			.map((byDateLogs: ITimeLog[], date: string) => {
+				const byEmployee = chain(byDateLogs)
+					.groupBy('employeeId')
+					.map((byEmployeeLogs: ITimeLog[]) => {
+						const durationSum = byEmployeeLogs.reduce(
+							(iteratee: any, log: any) => {
+								return iteratee + log.duration;
+							},
+							0
+						);
+
+						const employee =
+							byEmployeeLogs.length > 0
+								? byEmployeeLogs[0].employee
+								: null;
+
+						const amount =
+							employee?.billRateValue * (durationSum / 3600);
+
+						return {
+							employee,
+							amount: parseFloat(amount.toFixed(1)),
+							duration: durationSum
+						};
+					})
+					.value();
+
+				return { date, employees: byEmployee };
+			})
+			.value();
+
+		return dailyLogs;
+	}
+
+	async getOwedAmountReportChartData(request: IGetTimeLogReportInput) {
+		const timeLogs = await this.timeLogRepository.find({
+			relations: ['employee', 'employee.user'],
+			order: {
+				startedAt: 'ASC'
+			},
+			where: (qb: SelectQueryBuilder<TimeLog>) => {
+				this.getFilterTimeLogQuery(qb, request);
+			}
+		});
+
+		let dayList = [];
+		const range = {};
+		let i = 0;
+		const start = moment(request.startDate);
+		while (start.isSameOrBefore(request.endDate) && i < 7) {
+			const date = start.format('YYYY-MM-DD');
+			range[date] = null;
+			start.add(1, 'day');
+			i++;
+		}
+		dayList = Object.keys(range);
+
+		const byDate: any = chain(timeLogs)
+			.groupBy((log) => moment(log.startedAt).format('YYYY-MM-DD'))
+			.mapObject((byDateLogs: ITimeLog[], date) => {
+				const byEmployee = chain(byDateLogs)
+					.groupBy('employeeId')
+					.map((byEmployeeLogs: ITimeLog[]) => {
+						const durationSum = byEmployeeLogs.reduce(
+							(iteratee: any, log: any) => {
+								return iteratee + log.duration;
+							},
+							0
+						);
+
+						const employee =
+							byEmployeeLogs.length > 0
+								? byEmployeeLogs[0].employee
+								: null;
+
+						const amount =
+							employee?.billRateValue * (durationSum / 3600);
+
+						return {
+							employee,
+							amount: parseFloat(amount.toFixed(1)),
+							duration: durationSum
+						};
+					})
+					.value();
+
+				const value = byEmployee.reduce((iteratee: any, obj: any) => {
+					return iteratee + obj.amount;
+				}, 0);
+
+				return { date, value };
+			})
+			.value();
+
+		const dates = dayList.map((date) => {
+			if (byDate[date]) {
+				return byDate[date];
+			} else {
+				return {
+					date: date,
+					value: 0
+				};
+			}
+		});
+
+		return dates;
 	}
 
 	getFilterTimeLogQuery(

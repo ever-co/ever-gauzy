@@ -441,6 +441,13 @@ const routes: Routes = [
 							).then((m) => m.PaymentReportModule)
 					},
 					{
+						path: 'amounts-owed',
+						loadChildren: () =>
+							import(
+								'./reports/amounts-owed-report/amounts-owed-report.module'
+							).then((m) => m.AmountsOwedReportModule)
+					},
+					{
 						path: '*',
 						component: NotFoundComponent
 					}

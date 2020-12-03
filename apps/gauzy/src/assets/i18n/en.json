@@ -679,7 +679,11 @@
 		"NO_PAYMENTS": "No Payments",
 		"CONTACT": "Contact",
 		"CURRENCY": "Currency",
-		"NOTE": "Note"
+		"NOTE": "Note",
+		"AMOUNT_OWED": "Amount Owed Report",
+		"NO_AMOUNT_OWED": "No Amount Owed",
+		"CURRENT_RATE": "Current Rate",
+		"HOURS": "Hours"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Available Apps & Integrations",

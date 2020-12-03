@@ -87,13 +87,13 @@
 			</div>
 		</div>
 		<div class="daily-time-report mt-4">
-			<nb-card>
-				<nb-card-body>
-					<ngx-weekly-time-report-horizontal-bar-chart
-						[data]="chartData"
-					></ngx-weekly-time-report-horizontal-bar-chart>
-				</nb-card-body>
-			</nb-card>
+			<div class="daily-time-report">
+				<nb-card>
+					<nb-card-body>
+						<ngx-line-chart [data]="chartData"></ngx-line-chart>
+					</nb-card-body>
+				</nb-card>
+			</div>
 		</div>
 		<div class="table mt-4">
 			<div

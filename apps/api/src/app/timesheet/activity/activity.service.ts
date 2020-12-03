@@ -16,6 +16,7 @@ import { BulkActivitiesSaveCommand } from './commands/bulk-activities-save.comma
 import { Employee } from '../../employee/employee.entity';
 import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
 import { indexBy, pluck } from 'underscore';
+import { environment } from '@env-api/environment';
 
 @Injectable()
 export class ActivityService extends CrudService<Activity> {
@@ -41,15 +42,25 @@ export class ActivityService extends CrudService<Activity> {
 		query.addSelect(`SUM("${query.alias}"."duration")`, `duration`);
 		query.addSelect(`"${query.alias}"."employeeId"`, `employeeId`);
 		query.addSelect(`"${query.alias}"."date"`, `date`);
-		query.addSelect(
-			`(to_char("${query.alias}"."time", 'HH24') || ':00')::time`,
-			`time`
-		);
+		if (environment.database.type === 'sqlite') {
+			query.addSelect(`time("${query.alias}"."time")`, `time`);
+		} else {
+			query.addSelect(
+				`(to_char("${query.alias}"."time", 'HH24') || ':00')::time`,
+				`time`
+			);
+		}
 		query.addSelect(`"${query.alias}"."title"`, `title`);
 		query.addGroupBy(`"${query.alias}"."date"`);
-		query.addGroupBy(
-			`(to_char("${query.alias}"."time", 'HH24') || ':00')::time`
-		);
+
+		if (environment.database.type === 'sqlite') {
+			query.addGroupBy(`time("${query.alias}"."time")`);
+		} else {
+			query.addGroupBy(
+				`(to_char("${query.alias}"."time", 'HH24') || ':00')::time`
+			);
+		}
+
 		query.addGroupBy(`"${query.alias}"."title"`);
 		query.addGroupBy(`"${query.alias}"."employeeId"`);
 
@@ -63,8 +74,6 @@ export class ActivityService extends CrudService<Activity> {
 		request: IGetActivitiesInput
 	): Promise<Activity[]> {
 		const query = this.filterQuery(request);
-
-		console.log(query.getQuery());
 
 		query.select(`COUNT("${query.alias}"."id")`, `sessions`);
 		query.addSelect(`SUM("${query.alias}"."duration")`, `duration`);
@@ -80,6 +89,8 @@ export class ActivityService extends CrudService<Activity> {
 
 		query.limit(200);
 		let activitiesData = await query.getRawMany();
+
+		console.log(query.getQuery());
 
 		const projectIds = pluck(activitiesData, 'projectId');
 		const employeeIds = pluck(activitiesData, 'employeeId');
@@ -173,13 +184,23 @@ export class ActivityService extends CrudService<Activity> {
 			if (request.startDate && request.endDate) {
 				const startDate = moment.utc(request.startDate).toDate();
 				const endDate = moment.utc(request.endDate).toDate();
-				qb.andWhere(
-					`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :startDate AND :endDate`,
-					{
-						startDate,
-						endDate
-					}
-				);
+				if (environment.database.type === 'sqlite') {
+					qb.andWhere(
+						`datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :startDate AND :endDate`,
+						{
+							startDate,
+							endDate
+						}
+					);
+				} else {
+					qb.andWhere(
+						`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :startDate AND :endDate`,
+						{
+							startDate,
+							endDate
+						}
+					);
+				}
 			}
 			if (employeeIds) {
 				qb.andWhere(

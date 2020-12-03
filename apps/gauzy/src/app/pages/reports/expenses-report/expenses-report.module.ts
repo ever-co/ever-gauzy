@@ -13,7 +13,7 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
 import { ExpensesReportGridModule } from '../../../@shared/report/expenses-report-grid/expenses-report-grid.module';
-import { ExpansesReportHorizontalChartModule } from '../charts/expanses-report-horizontal-chart/expanses-report-horizontal-chart.module';
+import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
 
 @NgModule({
 	declarations: [ExpensesReportComponent],
@@ -29,7 +29,7 @@ import { ExpansesReportHorizontalChartModule } from '../charts/expanses-report-h
 		NbSelectModule,
 		FormsModule,
 		ExpensesReportGridModule,
-		ExpansesReportHorizontalChartModule
+		LineChartModule
 	]
 })
 export class ExpensesReportModule {}
