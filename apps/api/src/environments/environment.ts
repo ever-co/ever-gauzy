@@ -42,7 +42,12 @@ switch (dbType) {
 			type: dbType,
 			database:
 				process.env.DB_PATH ||
-				path.join(__dirname, '../../data/gauzy.sqlite3'),
+				path.resolve(
+					process.cwd(),
+					'apps',
+					'api',
+					'data/gauzy.sqlite3'
+				),
 			keepConnectionAlive: true,
 			logging: true,
 			logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log

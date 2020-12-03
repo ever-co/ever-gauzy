@@ -42,6 +42,7 @@ export class DepartmentsComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
+	loading: boolean;
 
 	departmentsTable: Ng2SmartTableComponent;
 	@ViewChild('departmentsTable') set content(
@@ -120,6 +121,7 @@ export class DepartmentsComponent
 		};
 	}
 	private async loadEmployees() {
+		this.loading = true;
 		if (!this.organizationId) {
 			return;
 		}
@@ -134,6 +136,7 @@ export class DepartmentsComponent
 			.toPromise();
 
 		this.employees = items;
+		this.loading = false;
 	}
 
 	setView() {
@@ -223,6 +226,7 @@ export class DepartmentsComponent
 	}
 
 	private async loadDepartments() {
+		this.loading = true;
 		if (!this.organizationId) {
 			return;
 		}
@@ -248,6 +252,7 @@ export class DepartmentsComponent
 			);
 			this.smartTableSource.load(result);
 		}
+		this.loading = false;
 	}
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange

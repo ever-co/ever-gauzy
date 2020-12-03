@@ -36,6 +36,7 @@ export class EditCandidateExperienceFormComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
+	loading: boolean;
 	@ViewChild('experienceTable') experienceTable;
 	constructor(
 		private readonly toastrService: NbToastrService,
@@ -78,6 +79,7 @@ export class EditCandidateExperienceFormComponent
 		);
 	}
 	private async loadExperience() {
+		this.loading = true;
 		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const { items = [] } = await this.candidateExperienceService.getAll(
 			{
@@ -89,6 +91,7 @@ export class EditCandidateExperienceFormComponent
 		);
 		this.experienceList = items;
 		this.sourceSmartTable.load(items);
+		this.loading = false;
 	}
 	editExperience(experience: ICandidateExperience) {
 		const selectedItem = experience ? experience : this.selectedExperience;

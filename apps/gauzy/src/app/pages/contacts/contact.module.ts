@@ -9,7 +9,8 @@ import {
 	NbInputModule,
 	NbTooltipModule,
 	NbSelectModule,
-	NbToggleModule
+	NbToggleModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -74,6 +75,7 @@ const COMPONENTS = [
 		Ng2SmartTableModule,
 		ImageUploaderModule,
 		EmployeeMultiSelectModule,
+		NbSpinnerModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

@@ -1,4 +1,9 @@
-<nb-card-body class="contentToConvert">
+<nb-card-body
+	class="contentToConvert"
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<div class="item">
 		<span *ngIf="!isEstimate"
 			>{{ 'INVOICES_PAGE.INVOICE_NUMBER' | translate }}:</span
@@ -70,7 +75,7 @@
 	</div>
 	<div class="table">
 		<ng2-smart-table
-			*ngIf="loadTable"
+			*ngIf="isTableLoaded"
 			[settings]="settingsSmartTable"
 			[source]="smartTableSource"
 			style="cursor: pointer"

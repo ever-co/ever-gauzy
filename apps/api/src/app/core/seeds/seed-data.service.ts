@@ -284,7 +284,6 @@ import {
 import { createDefaultGoalTemplates } from '../../goal-template/goal-template.seed';
 import { createDefaultKeyResultTemplates } from '../../keyresult-template/keyresult-template.seed';
 import { createDefaultEmployeeAwards } from '../../employee-award/employee-award.seed';
-import { allEntities } from './entities';
 import { createDefaultGoalKpiTemplate } from '../../goal-kpi-template/goal-kpi-template.seed';
 import { randomSeedConfig } from './random-seed-config';
 import { createDefaultJobSearchCategories } from '../../employee-job-preset/job-search-category/job-search-category.seed';
@@ -339,7 +338,7 @@ export class SeedDataService {
 			// Seed jobs related data
 			await this.seedReportsData(isDefault);
 
-			console.log('Database All Seed completed');
+			console.log('Database All Seed Completed');
 		} catch (error) {
 			this.handleError(error);
 		}
@@ -363,7 +362,7 @@ export class SeedDataService {
 			// Seed data with mock / fake data
 			await this.seedData(isDefault);
 
-			console.log('Database Default Seed completed');
+			console.log('Database Default Seed Completed');
 		} catch (error) {
 			this.handleError(error);
 		}
@@ -379,7 +378,7 @@ export class SeedDataService {
 
 			await this.seedReportsData(isDefault);
 
-			console.log('Database Jobs Seed completed');
+			console.log('Database Reports Seed completed');
 		} catch (error) {
 			this.handleError(error);
 		}
@@ -396,7 +395,7 @@ export class SeedDataService {
 				chalk.green(
 					`🌱 SEEDING ${
 						env.production ? 'PRODUCTION' : ''
-					} DATABASE...`
+					} REPORTS DATABASE...`
 				)
 			);
 
@@ -409,7 +408,9 @@ export class SeedDataService {
 
 			this.log(
 				chalk.green(
-					`✅ SEEDED ${env.production ? 'PRODUCTION' : ''} DATABASE`
+					`✅ SEEDED ${
+						env.production ? 'PRODUCTION' : ''
+					} REPORTS DATABASE`
 				)
 			);
 		} catch (error) {
@@ -446,7 +447,7 @@ export class SeedDataService {
 				chalk.green(
 					`🌱 SEEDING ${
 						env.production ? 'PRODUCTION' : ''
-					} DATABASE...`
+					} JOBS DATABASE...`
 				)
 			);
 
@@ -477,7 +478,9 @@ export class SeedDataService {
 
 			this.log(
 				chalk.green(
-					`✅ SEEDED ${env.production ? 'PRODUCTION' : ''} DATABASE`
+					`✅ SEEDED ${
+						env.production ? 'PRODUCTION' : ''
+					} JOBS DATABASE`
 				)
 			);
 		} catch (error) {
@@ -1908,14 +1911,21 @@ export class SeedDataService {
 
 		if (!this.connection || !this.connection.isConnected) {
 			try {
-				this.log(chalk.green(`CONNECTING TO DATABASE ...`));
+				this.log(chalk.green(`CONNECTING TO DATABASE...`));
 
 				this.connection = await createConnection({
 					...env.database,
 					...this.overrideDbConfig,
-					// TODO: possible to do it like this: [__dirname + '/../../entity/**.entity{.ts,.js}'] so we don't need hardcoded allEntities
-					entities: allEntities
+					entities: [
+						path.resolve(
+							__dirname,
+							'../../**',
+							'**.entity{.ts,.js}'
+						)
+					]
 				} as ConnectionOptions);
+
+				this.log(chalk.green(`CONNECTED TO DATABASE`));
 			} catch (error) {
 				this.handleError(error, 'Unable to connect to database');
 			}
@@ -1967,10 +1977,15 @@ export class SeedDataService {
 		try {
 			for (const entity of entities) {
 				const repository = getRepository(entity.name);
-				const truncateSql =
-					env.database.type === 'sqlite'
-						? `DELETE FROM  "${entity.tableName}";`
-						: `TRUNCATE  "${entity.tableName}" RESTART IDENTITY CASCADE;`;
+				let truncateSql: string;
+				switch (env.database.type) {
+					case 'postgres':
+						truncateSql = `TRUNCATE  "${entity.tableName}" RESTART IDENTITY CASCADE;`;
+						break;
+					default:
+						truncateSql = `DELETE FROM  "${entity.tableName}";`;
+						await repository.query('PRAGMA foreign_keys = OFF;');
+				}
 				await repository.query(truncateSql);
 			}
 		} catch (error) {
@@ -1984,7 +1999,6 @@ export class SeedDataService {
 	private async resetDatabase() {
 		const entities = await this.getEntities();
 		await this.cleanAll(entities);
-		//await loadAll(entities);
 		this.log(chalk.green(`✅ RESET DATABASE SUCCESSFUL`));
 	}
 

@@ -16,8 +16,9 @@ export class InvoiceViewInnerComponent
 	invoiceDate: string;
 	dueDate: string;
 	settingsSmartTable: object;
-	loadTable = false;
+	isTableLoaded = false;
 	smartTableSource = new LocalDataSource();
+	loading: boolean;
 
 	@Input() invoice: IInvoice;
 	@Input() isEstimate: boolean;
@@ -86,6 +87,7 @@ export class InvoiceViewInnerComponent
 	}
 
 	async loadTableData() {
+		this.loading = true;
 		const items = [];
 		let data;
 		for (const item of this.invoice.invoiceItems) {
@@ -144,7 +146,8 @@ export class InvoiceViewInnerComponent
 			items.push(data);
 		}
 		this.smartTableSource.load(items);
-		this.loadTable = true;
+		this.isTableLoaded = true;
+		this.loading = false;
 	}
 
 	_applyTranslationOnSmartTable() {

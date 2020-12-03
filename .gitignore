@@ -8,6 +8,10 @@
 # dependencies
 /node_modules
 /apps/api/node_modules
+
+# sqlite3 database
+/apps/api/data
+
 # IDEs and editors
 /.idea
 .project

@@ -23,6 +23,7 @@ export class ProfitHistoryComponent implements OnInit, OnDestroy {
 		expenseTotal: number;
 		profit: number;
 	};
+	loading: boolean;
 
 	currency: string;
 
@@ -39,6 +40,7 @@ export class ProfitHistoryComponent implements OnInit, OnDestroy {
 	constructor(private store: Store) {}
 
 	ngOnInit() {
+		this.loading = true;
 		this.loadSettingsSmartTable();
 		const incomeList = this.recordsData.incomes.map((inc) => {
 			return {
@@ -62,6 +64,7 @@ export class ProfitHistoryComponent implements OnInit, OnDestroy {
 		this.currency = this.store.selectedOrganization.currency;
 
 		this.smartTableSource.load(combinedTableData);
+		this.loading = false;
 	}
 
 	loadSettingsSmartTable() {
