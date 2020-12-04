@@ -1884,10 +1884,15 @@ export class SeedDataService {
 		this.log(chalk.green(`CLEANING UP FROM PREVIOUS RUNS...`));
 
 		await new Promise((resolve, reject) => {
-			const dir = path.join(
-				path.resolve('.', ...['apps', 'api', 'public']),
-				'screenshots'
-			);
+			const dir = env.isElectron
+				? path.join(
+						path.resolve(env.gauzyUserPath, ...['public']),
+						'screenshots'
+				  )
+				: path.join(
+						path.resolve('.', ...['apps', 'api', 'public']),
+						'screenshots'
+				  );
 
 			// delete old generated screenshots
 			rimraf(dir, () => {

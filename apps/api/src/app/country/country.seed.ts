@@ -3,15 +3,17 @@ import { Country } from './country.entity';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ICountry } from '@gauzy/models';
+import { environment as env } from '@env-api/environment';
 
 export const createCountries = async (
 	connection: Connection
 ): Promise<ICountry[]> => {
 	return await new Promise<ICountry[]>((resolve, reject) => {
-		const baseDir = path.resolve(
-			'.',
-			...['apps', 'api', 'src', 'app', 'country']
-		);
+		const baseDir = env.isElectron
+			? path.resolve(env.gauzyUserPath, ...['src', 'app', 'country'])
+			: path.resolve('.', ...['apps', 'api', 'src', 'app', 'country']);
+		console.log(baseDir, 'baseDir');
+
 		fs.readFile(
 			path.join(baseDir, 'country.json'),
 			'utf8',

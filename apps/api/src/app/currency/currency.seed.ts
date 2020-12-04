@@ -3,15 +3,17 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { ICurrency } from '@gauzy/models';
 import { Currency } from './currency.entity';
+import { environment as env } from '@env-api/environment';
 
 export const createCurrencies = async (
 	connection: Connection
 ): Promise<ICurrency[]> => {
 	return await new Promise<ICurrency[]>((resolve, reject) => {
-		const baseDir = path.resolve(
-			'.',
-			...['apps', 'api', 'src', 'app', 'currency']
-		);
+		const baseDir = env.isElectron
+			? path.resolve(env.gauzyUserPath, ...['src', 'app', 'currency'])
+			: path.resolve('.', ...['apps', 'api', 'src', 'app', 'currency']);
+		console.log(baseDir, 'baseDir');
+
 		fs.readFile(
 			path.join(baseDir, 'currency.json'),
 			'utf8',
