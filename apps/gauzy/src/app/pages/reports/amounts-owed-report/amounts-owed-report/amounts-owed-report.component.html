@@ -1,6 +1,6 @@
 <nb-card>
 	<nb-card-header>
-		<h4>{{ 'REPORT_PAGE.PAYMENT_REPORT' | translate }}</h4>
+		<h4>{{ 'REPORT_PAGE.AMOUNT_OWED' | translate }}</h4>
 		<div>
 			{{ logRequest?.startDate | date }} -
 			{{ logRequest?.endDate | date }}
@@ -27,6 +27,6 @@
 				</nb-card-body>
 			</nb-card>
 		</div>
-		<ga-payment-report-grid [filters]="filters"></ga-payment-report-grid>
+		<ga-amounts-owed-grid [filters]="filters"></ga-amounts-owed-grid>
 	</nb-card-body>
 </nb-card>

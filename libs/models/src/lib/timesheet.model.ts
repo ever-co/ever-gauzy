@@ -379,6 +379,28 @@ export interface IReportDayGroupByDate {
 	}[];
 }
 
+export interface IAmountOwedReport {
+	date: string;
+	employees: {
+		employee: IEmployee;
+		duration: number;
+		amount: number;
+	}[];
+}
+
+export interface IReportDayGroupByDate {
+	date: string;
+	logs: {
+		project: IOrganizationProject;
+		employeeLogs: {
+			task: ITask;
+			employee: IEmployee;
+			sum: number;
+			activity: number;
+		}[];
+	}[];
+}
+
 export interface IReportDayGroupByEmployee {
 	employee: IEmployee;
 	logs: {

@@ -89,6 +89,40 @@ export class TimeLogController extends CrudController<ITimeLog> {
 		return this.timeLogService.getDailyReportChartData(options);
 	}
 
+	@ApiOperation({ summary: 'Get Owed Amount Report' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Get report data'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Get('/report/owed-report')
+	async getOwedAmountReport(
+		@Query() entity: IGetTimeLogReportInput
+	): Promise<any> {
+		return this.timeLogService.getOwedAmountReport(entity);
+	}
+
+	@ApiOperation({ summary: 'Get Owed Amount Report Chart Data' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Get report chart data'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Get('/report/owed-chart-data')
+	async getOwedAmountReportChartData(
+		@Query() entity: IGetTimeLogReportInput
+	): Promise<any> {
+		return this.timeLogService.getOwedAmountReportChartData(entity);
+	}
+
 	@ApiOperation({ summary: 'Find Timer Log by id' })
 	@ApiResponse({
 		status: HttpStatus.OK,

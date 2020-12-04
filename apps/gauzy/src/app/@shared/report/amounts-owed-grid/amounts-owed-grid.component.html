@@ -1,0 +1,98 @@
+<div class="d-flex align-items-center" *ngIf="dailyData?.length > 0">
+	<div
+		class="weekly-logs w-100 row-table"
+		[nbSpinner]="loading"
+		nbSpinnerSize="giant"
+		nbSpinnerStatus="primary"
+	>
+		<div class="px-4" *ngIf="dailyData?.length > 0">
+			<div class="row py-3 font-weight-bold align-items-center">
+				<div class="col-sm-3">
+					{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+				</div>
+				<div class="col text-center day-col">
+					{{ 'REPORT_PAGE.CURRENT_RATE' | translate }}
+				</div>
+				<div class="coltext-center day-col">
+					{{ 'REPORT_PAGE.HOURS' | translate }}
+				</div>
+				<div class="col text-center day-col">
+					{{ 'REPORT_PAGE.AMOUNT' | translate }}
+				</div>
+			</div>
+		</div>
+
+		<ng-template [ngIf]="dailyData?.length > 0" [ngIfElse]="notFound">
+			<nb-card class="card" *ngFor="let day of dailyData">
+				<nb-card-header class="card-title">{{
+					day.date
+				}}</nb-card-header>
+				<nb-card-body
+					class="cart-body employee-row"
+					*ngFor="let employeeRow of day.employees"
+				>
+					<div class="row report-row py-1 align-items-center">
+						<div class="col-sm-3 employee-name">
+							<ng-container
+								*ngTemplateOutlet="
+									employeeEl;
+									context: {
+										$implicit: employeeRow?.employee
+									}
+								"
+							>
+							</ng-container>
+						</div>
+						<div class="col text-center day-col">
+							{{ employeeRow?.employee?.billRateValue }}
+							{{ employeeRow?.employee?.billRateCurrency }}
+						</div>
+						<div class="coltext-center day-col">
+							{{ employeeRow?.duration | durationFormat }}
+						</div>
+						<div class="col text-center day-col">
+							{{ employeeRow?.amount }}
+							{{ employeeRow?.employee?.billRateCurrency }}
+						</div>
+					</div>
+				</nb-card-body>
+			</nb-card>
+		</ng-template>
+		<ng-template #notFound>
+			<nb-card>
+				<nb-card-body>
+					<div class="row font-weight-bold py-5 align-items-center">
+						<div class="col text-center">
+							{{ 'REPORT_PAGE.NO_AMOUNT_OWED' | translate }}
+						</div>
+					</div>
+				</nb-card-body>
+			</nb-card>
+		</ng-template>
+	</div>
+
+	<ng-template let-project #projectEl>
+		<span *ngIf="project; else noProjects">{{ project?.name }} </span>
+		<ng-template #noProjects>
+			<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
+		</ng-template>
+	</ng-template>
+
+	<ng-template let-client #clientEl>
+		<span *ngIf="client; else noClient">{{ client?.name }} </span>
+		<ng-template #noClient>
+			<span>{{ 'REPORT_PAGE.NO_CLIENT' | translate }}</span>
+		</ng-template>
+	</ng-template>
+
+	<ng-template let-employee #employeeEl>
+		<ngx-avatar
+			*ngIf="employee"
+			[src]="employee?.user?.imageUrl"
+			[name]="employee?.user?.name"
+		></ngx-avatar>
+		<ng-template #noEmployee>
+			<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
+		</ng-template>
+	</ng-template>
+</div>
