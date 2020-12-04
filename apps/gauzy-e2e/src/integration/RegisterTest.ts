@@ -5,12 +5,15 @@ import * as faker from 'faker';
 import { OnboardingPageData } from '../support/Base/pagedata/OnboardingPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import * as logoutPage from '../support/Base/pages/Logout.po';
+import { RegisterPageData } from '../support/Base/pagedata/RegisterPageData';
 
 let fullName = ' ';
 let email = ' ';
 let pass = ' ';
 let organizationName = ' ';
 let taxId = ' ';
+let street = ' ';
+
 describe('Register Test', () => {
 	before(() => {
 		fullName = faker.name.findName();
@@ -18,6 +21,7 @@ describe('Register Test', () => {
 		pass = faker.internet.password();
 		organizationName = faker.company.companyName();
 		taxId = faker.random.alphaNumeric();
+		street = faker.address.streetAddress();
 
 		cy.visit('/');
 		loginPage.verifyTitle();
@@ -39,10 +43,50 @@ describe('Register Test', () => {
 		onboardingPage.selectCurrency(OnboardingPageData.currency);
 		onboardingPage.enterOfficialName(organizationName);
 		onboardingPage.enterTaxId(taxId);
-		onboardingPage.clickOnNextButton();
-		onboardingPage.clickOnNextButton();
-		onboardingPage.clickOnNextButton();
-		onboardingPage.clickOnNextButton();
+		registerPage.clickOnNextButton();
+		registerPage.countryDropdownVisible();
+		registerPage.clickCountryDropdown();
+		registerPage.selectCountryFromDropdown(RegisterPageData.country);
+		registerPage.cityInputVisible();
+		registerPage.enterCityInputData(RegisterPageData.city);
+		registerPage.postcodeInputVisible();
+		registerPage.enterPostcodeInputData(RegisterPageData.postcode);
+		registerPage.streetInputVisible();
+		registerPage.enterStreetInputData(street);
+		registerPage.clickOnNextButton();
+		registerPage.bonusTypeDropdownVisible();
+		registerPage.clickBonusTypeDropdown();
+		registerPage.selectBonusTypeFromDropdown(RegisterPageData.bonusType);
+		registerPage.bonusPercentageInputVisible();
+		registerPage.enterBonusPercentageInputData(
+			RegisterPageData.bonusPercentage
+		);
+		registerPage.clickOnNextButton();
+		registerPage.timeZoneDropdownVisible();
+		registerPage.clickTimeZoneDropdown();
+		registerPage.selectTimeZoneFromDropdown(RegisterPageData.timeZone);
+		registerPage.startOfWeekDropdownVisible();
+		registerPage.clickStartOfWeekDropdown();
+		registerPage.selectStartOfWeekFromDropdown(
+			RegisterPageData.startOfWeek
+		);
+		registerPage.dateTypeDropdownVisible();
+		registerPage.clickDateTypeDropdown();
+		registerPage.selectDateTypeFromDropdown(RegisterPageData.dateType);
+		registerPage.regionDropdownVisible();
+		registerPage.clickRegionDropdown();
+		registerPage.selectRegionFromDropdown(RegisterPageData.region);
+		registerPage.numberFormatDropdownVisible();
+		registerPage.clickNumberFormatDropdown();
+		registerPage.selectNumberFormatFromDropdown(
+			RegisterPageData.numberFormat
+		);
+		registerPage.dateFormatDropdownVisible();
+		registerPage.clickDateFormatDropdown();
+		registerPage.selectDateFormatFromDropdown();
+		registerPage.expiryPeriodInputVisible();
+		registerPage.enterExpiryPeriodInputData(RegisterPageData.expiryPeriod);
+		registerPage.clickOnNextButton();
 		onboardingPage.verifyHeadingOnCompletePage();
 		onboardingPage.clickDashboardCard(0);
 		dashboradPage.verifyCreateButton();
@@ -61,6 +105,6 @@ describe('Register Test', () => {
 		loginPage.clearPasswordField();
 		loginPage.enterPassword(pass);
 		loginPage.clickLoginButton();
-		onboardingPage.verifyOrganisationNameField();
+		registerPage.verifyLogoExists();
 	});
 });
