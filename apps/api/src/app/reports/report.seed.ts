@@ -3,7 +3,7 @@ import { Report } from './report.entity';
 import { ReportCategory } from './report-category.entity';
 import { indexBy } from 'underscore';
 import * as path from 'path';
-// import { copyFileSync, mkdirSync } from 'fs';
+import { copyFileSync, mkdirSync } from 'fs';
 import * as rimraf from 'rimraf';
 import chalk from 'chalk';
 import { environment as env } from '@env-api/environment';
@@ -165,14 +165,20 @@ async function cleanReport(connection) {
 	});
 }
 
-/* function copyImage(fileName: string) {
-	const dir = (environment.isElectron) ? 
-						path.resolve(environment.gauzyUserPath, ...['src', 'assets', 'seed', 'reports']) :
-						path.resolve('.', ...['apps', 'api', 'src', 'assets', 'seed', 'reports']);
+function copyImage(fileName: string) {
+	const dir = env.isElectron
+		? path.resolve(
+				env.gauzyUserPath,
+				...['src', 'assets', 'seed', 'reports']
+		  )
+		: path.resolve(
+				'.',
+				...['apps', 'api', 'src', 'assets', 'seed', 'reports']
+		  );
 
-	const baseDir = (environment.isElectron) ? 
-					path.resolve(environment.gauzyUserPath, ...['public']) :
-					path.resolve('.', ...['apps', 'api', 'public']);
+	const baseDir = env.isElectron
+		? path.resolve(env.gauzyUserPath, ...['public'])
+		: path.resolve('.', ...['apps', 'api', 'public']);
 
 	const destDir = 'reports';
 
@@ -182,4 +188,4 @@ async function cleanReport(connection) {
 	copyFileSync(path.join(dir, fileName), path.join(baseDir, destFilePath));
 
 	return destFilePath;
-} */
+}

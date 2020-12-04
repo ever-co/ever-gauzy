@@ -12,7 +12,6 @@ export const createCurrencies = async (
 		const baseDir = env.isElectron
 			? path.resolve(env.gauzyUserPath, ...['src', 'app', 'currency'])
 			: path.resolve('.', ...['apps', 'api', 'src', 'app', 'currency']);
-		console.log(baseDir, 'baseDir');
 
 		fs.readFile(
 			path.join(baseDir, 'currency.json'),

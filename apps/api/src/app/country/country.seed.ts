@@ -12,7 +12,6 @@ export const createCountries = async (
 		const baseDir = env.isElectron
 			? path.resolve(env.gauzyUserPath, ...['src', 'app', 'country'])
 			: path.resolve('.', ...['apps', 'api', 'src', 'app', 'country']);
-		console.log(baseDir, 'baseDir');
 
 		fs.readFile(
 			path.join(baseDir, 'country.json'),
