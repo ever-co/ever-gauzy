@@ -40,7 +40,7 @@ export const createDefaultReport = async (
 		new Report({
 			name: 'Time & Activity',
 			slug: 'time-activity',
-			// image: copyImage('time-activity.png'),
+			image: copyImage('time-activity.png'),
 			category: categoryByName['Time Tracking'],
 			showInMenu: true,
 			iconClass: 'clock-outline',
@@ -50,7 +50,7 @@ export const createDefaultReport = async (
 		new Report({
 			name: 'Weekly',
 			slug: 'weekly',
-			// image: copyImage('weekly.png'),
+			image: copyImage('weekly.png'),
 			category: categoryByName['Time Tracking'],
 			iconClass: 'calendar-outline',
 			showInMenu: true,
@@ -60,7 +60,7 @@ export const createDefaultReport = async (
 		new Report({
 			name: 'Apps & URLs',
 			slug: 'apps-urls',
-			// image: copyImage('apps-urls.png'),
+			image: copyImage('apps-urls.png'),
 			category: categoryByName['Time Tracking'],
 			description:
 				"See team members' apps used and URLs visited while working"
@@ -68,7 +68,7 @@ export const createDefaultReport = async (
 		new Report({
 			name: 'Manual time edits',
 			slug: 'manual-time-edits',
-			// image: copyImage('manual-time-edits.png'),
+			image: copyImage('manual-time-edits.png'),
 			category: categoryByName['Time Tracking'],
 			iconClass: 'browser-outline',
 			description:
@@ -77,7 +77,7 @@ export const createDefaultReport = async (
 		new Report({
 			name: 'Expense',
 			slug: 'expense',
-			// image: copyImage('expense.png'),
+			image: copyImage('expense.png'),
 			category: categoryByName['Time Tracking'],
 			iconClass: 'credit-card-outline',
 			description:
@@ -86,7 +86,7 @@ export const createDefaultReport = async (
 		new Report({
 			name: 'Amounts owed',
 			slug: 'amounts-owed',
-			// image: copyImage('amounts-owed.png'),
+			image: copyImage('amounts-owed.png'),
 			category: categoryByName['Payments'],
 			iconClass: 'credit-card-outline',
 			description: 'See how much team members are currently owed'
@@ -94,7 +94,7 @@ export const createDefaultReport = async (
 		new Report({
 			name: 'Payments',
 			slug: 'payments',
-			// image: copyImage('payments.png'),
+			image: copyImage('payments.png'),
 			category: categoryByName['Payments'],
 			iconClass: 'credit-card-outline',
 			description:
