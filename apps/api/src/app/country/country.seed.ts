@@ -1,11 +1,12 @@
 import { Connection } from 'typeorm';
 import { Country } from './country.entity';
-import * as fs from 'fs';
-import * as path from 'path';
+// import * as fs from 'fs';
+// import * as path from 'path';
 import { ICountry } from '@gauzy/models';
-import { environment as env } from '@env-api/environment';
+import { DEFAULT_COUNTRY_ENTITY } from './country';
+// import { environment as env } from '@env-api/environment';
 
-export const createCountries = async (
+/* export const createCountries = async (
 	connection: Connection
 ): Promise<ICountry[]> => {
 	return await new Promise<ICountry[]>((resolve, reject) => {
@@ -35,9 +36,9 @@ export const createCountries = async (
 								country: entries[key]
 							};
 							countries.push(country);
-							await insertCountry(connection, country);
 						}
 					}
+					await insertCountry(connection, countries);
 					resolve(countries);
 				} catch (err) {
 					console.log('Error parsing country JSON string:', err);
@@ -47,16 +48,42 @@ export const createCountries = async (
 			}
 		);
 	});
+}; */
+
+export const createCountries = async (
+	connection: Connection
+): Promise<ICountry[]> => {
+	return await new Promise<ICountry[]>(async (resolve, reject) => {
+		try {
+			const countries: ICountry[] = [];
+			const entries = DEFAULT_COUNTRY_ENTITY;
+			for (const key of Object.keys(entries)) {
+				if (entries.hasOwnProperty(key)) {
+					const country: ICountry = {
+						isoCode: key,
+						country: entries[key]
+					};
+					countries.push(country);
+				}
+			}
+			await insertCountry(connection, countries);
+			resolve(countries);
+		} catch (err) {
+			console.log('Error parsing country:', err);
+			reject(null);
+			return;
+		}
+	});
 };
 
 const insertCountry = async (
 	connection: Connection,
-	country: ICountry
+	countries: ICountry[]
 ): Promise<void> => {
 	await connection
 		.createQueryBuilder()
 		.insert()
 		.into(Country)
-		.values(country)
+		.values(countries)
 		.execute();
 };
