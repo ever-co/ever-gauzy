@@ -5,5 +5,5 @@ export const CustomSMTPPage = {
 	dropdownOptionCss: '.option-list nb-option',
 	usernameInputCss: '#username',
 	passwordInputCss: '#password',
-	saveButtonCss: 'nb-card-footer.text-right > button[status="success"]'
+	saveButtonCss: 'nb-card-footer.text-right > button[status="primary"]'
 };

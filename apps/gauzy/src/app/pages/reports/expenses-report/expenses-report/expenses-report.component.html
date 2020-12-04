@@ -20,9 +20,13 @@
 				(filtersChange)="filtersChange($event)"
 			></ngx-filters>
 		</div>
-		<ngx-expanses-report-horizontal-chart
-			[data]="chartData"
-		></ngx-expanses-report-horizontal-chart>
+		<div class="daily-time-report">
+			<nb-card>
+				<nb-card-body>
+					<ngx-line-chart [data]="chartData"></ngx-line-chart>
+				</nb-card-body>
+			</nb-card>
+		</div>
 		<ga-expenses-report-grid [filters]="filters"></ga-expenses-report-grid>
 	</nb-card-body>
 </nb-card>

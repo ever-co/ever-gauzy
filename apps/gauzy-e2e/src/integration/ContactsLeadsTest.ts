@@ -13,7 +13,6 @@ import { CustomCommands } from '../support/commands';
 let email = ' ';
 let fullName = ' ';
 let deleteName = ' ';
-let country = ' ';
 let city = ' ';
 let postcode = ' ';
 let street = ' ';
@@ -24,7 +23,6 @@ describe('Contacts leads test', () => {
 		email = faker.internet.email();
 		fullName = faker.name.firstName() + ' ' + faker.name.lastName();
 		deleteName = faker.name.firstName() + ' ' + faker.name.lastName();
-		country = faker.address.country();
 		city = faker.address.city();
 		postcode = faker.address.zipCode();
 		street = faker.address.streetAddress();
@@ -45,7 +43,6 @@ describe('Contacts leads test', () => {
 		CustomCommands.addContact(
 			fullName,
 			email,
-			country,
 			city,
 			postcode,
 			street,

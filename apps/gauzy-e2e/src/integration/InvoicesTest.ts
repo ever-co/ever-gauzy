@@ -14,7 +14,6 @@ import { OrganizationProjectsPageData } from '../support/Base/pagedata/Organizat
 
 let email = ' ';
 let fullName = ' ';
-let country = ' ';
 let city = ' ';
 let postcode = ' ';
 let street = ' ';
@@ -25,7 +24,6 @@ describe('Invoices test', () => {
 	before(() => {
 		email = faker.internet.email();
 		fullName = faker.name.firstName() + ' ' + faker.name.lastName();
-		country = faker.address.country();
 		city = faker.address.city();
 		postcode = faker.address.zipCode();
 		street = faker.address.streetAddress();
@@ -46,7 +44,6 @@ describe('Invoices test', () => {
 		CustomCommands.addContact(
 			fullName,
 			email,
-			country,
 			city,
 			postcode,
 			street,
