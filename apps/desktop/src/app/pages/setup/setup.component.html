@@ -866,7 +866,7 @@
 								</div>
 							</div>
 						</div>
-						<div class="row button-next-prev">
+						<div class="row button-next-prev" *ngIf="!onProgress">
 							<div class="col-2">
 								<button
 									nbButton
@@ -895,6 +895,26 @@
 										class="icon-medium"
 									></nb-icon>
 								</button>
+							</div>
+						</div>
+						<div class="progress-setup" *ngIf="onProgress">
+							<div class="progress-icon">
+								<nb-icon
+									icon="settings-2-outline"
+									class="gear-small icon-spin"
+								></nb-icon>
+								<nb-icon
+									icon="settings-2-outline"
+									class="gear-medium icon-spin"
+								></nb-icon>
+							</div>
+							<nb-progress-bar
+								[value]="progressSetup"
+								status="primary"
+								>{{ progressSetup }}%</nb-progress-bar
+							>
+							<div class="progress-icon progress-message">
+								{{ progressMessage }}
 							</div>
 						</div>
 					</nb-step>

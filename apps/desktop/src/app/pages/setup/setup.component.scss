@@ -160,3 +160,41 @@
 ::ng-deep .nb-theme-default nb-stepper .header {
   pointer-events: none !important;
 }
+
+.progress-setup {
+  position: absolute;
+  bottom: 45px;
+  width: 95%;
+}
+
+.progress-icon {
+  text-align: center;
+}
+
+.gear-small {
+  font-size: 28;
+}
+
+.gear-medium {
+  font-size: 35px;
+  position: relative;
+  top: -11px;
+  left: -11px;
+}
+
+.progress-message {
+  font-size: 10px;
+}
+
+.icon-spin {
+  animation: rotate 2s ease-in-out 0s infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
