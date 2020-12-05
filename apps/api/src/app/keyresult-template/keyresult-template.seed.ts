@@ -228,20 +228,16 @@ export const createDefaultKeyResultTemplates = async (
 			});
 		});
 
-		await insertDefaultKeyResults(connection, defaultKeyResultTemplates);
-
-		return defaultKeyResultTemplates;
+		return await insertDefaultKeyResults(
+			connection,
+			defaultKeyResultTemplates
+		);
 	}
 };
 
 const insertDefaultKeyResults = async (
 	connection: Connection,
-	defaultkeyResults: KeyResultTemplate[]
-) => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(KeyResultTemplate)
-		.values(defaultkeyResults)
-		.execute();
+	defaultKeyResults: KeyResultTemplate[]
+): Promise<KeyResultTemplate[]> => {
+	return await connection.manager.save(defaultKeyResults);
 };

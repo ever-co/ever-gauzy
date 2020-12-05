@@ -26,8 +26,6 @@ export const createDefaultSuperAdminUsers = async (
 	tenant: Tenant
 ): Promise<User[]> => {
 	const superAdmins: User[] = [];
-	let superAdminUser: User;
-
 	const superAdminRole = roles.find(
 		(role) => role.name === RolesEnum.SUPER_ADMIN
 	);
@@ -44,7 +42,7 @@ export const createDefaultSuperAdminUsers = async (
 
 	// Generate default super admins
 	for (const superAdmin of defaultSuperAdmins) {
-		superAdminUser = await generateDefaultUser(
+		const superAdminUser: User = await generateDefaultUser(
 			superAdmin,
 			superAdminRole,
 			tenant
@@ -52,8 +50,7 @@ export const createDefaultSuperAdminUsers = async (
 		superAdmins.push(superAdminUser);
 	}
 
-	await insertUsers(connection, superAdmins);
-	return superAdmins;
+	return await insertUsers(connection, superAdmins);
 };
 
 export const createRandomSuperAdminUsers = async (
@@ -85,7 +82,6 @@ export const createRandomSuperAdminUsers = async (
 	}
 
 	await insertUsers(connection, superAdmins);
-
 	return tenantSuperAdminsMap;
 };
 
@@ -386,11 +382,6 @@ const generateRandomUser = async (
 const insertUsers = async (
 	connection: Connection,
 	users: User[]
-): Promise<void> => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(User)
-		.values(users)
-		.execute();
+): Promise<User[]> => {
+	return await connection.manager.save(users);
 };

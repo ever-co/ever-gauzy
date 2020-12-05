@@ -205,12 +205,5 @@ export const createRolePermissions = async (
 		});
 	});
 
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(RolePermissions)
-		.values(rolePermissions)
-		.execute();
-
-	return rolePermissions;
+	return await connection.manager.save(rolePermissions);
 };
