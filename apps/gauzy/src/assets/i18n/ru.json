@@ -2599,5 +2599,19 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "Поставщик SMS"
+	},
+	"SETTINGS": {
+		"EMAIL_HISTORY": {
+			"EMAIL_ARCHIVED": "Почта архивирована",
+			"ARCHIVE": "Архивировать",
+			"HEADER": "История писем",
+			"FROM": "От:",
+			"TO": "Кому:",
+			"DATE": "Дата:",
+			"SUBJECT": "Тема:",
+			"LANGUAGE": "Язык:",
+			"TEMPLATE": "Шаблон:",
+			"NO_EMAILS_SENT": "Нет писем."
+		}
 	}
 }
