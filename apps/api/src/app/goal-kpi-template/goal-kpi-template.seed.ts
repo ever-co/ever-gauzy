@@ -29,33 +29,26 @@ export const createDefaultGoalKpiTemplate = async (
 	tenant: Tenant,
 	organization: Organization
 ): Promise<GoalKPITemplate[]> => {
-	const GoalKpiTemplates: GoalKPITemplate[] = [];
-	goalKPIData.forEach((goalKPI) => {
-		const goalkpi = new GoalKPITemplate();
-		goalkpi.name = goalKPI.name;
-		goalkpi.description = ' ';
-		goalkpi.type = goalKPI.type;
-		goalkpi.operator = goalKPI.operator;
-		goalkpi.unit = goalKPI.unit;
-		goalkpi.currentValue = goalKPI.currentValue;
-		goalkpi.targetValue = goalKPI.targetValue;
-		goalkpi.organization = organization;
-		goalkpi.tenant = tenant;
-		GoalKpiTemplates.push(goalkpi);
+	const goalKpiTemplates: GoalKPITemplate[] = [];
+	goalKPIData.forEach((item) => {
+		const goalKpi = new GoalKPITemplate();
+		goalKpi.name = item.name;
+		goalKpi.description = '';
+		goalKpi.type = item.type;
+		goalKpi.operator = item.operator;
+		goalKpi.unit = item.unit;
+		goalKpi.currentValue = item.currentValue;
+		goalKpi.targetValue = item.targetValue;
+		goalKpi.organization = organization;
+		goalKpi.tenant = tenant;
+		goalKpiTemplates.push(goalKpi);
 	});
-
-	await insertRandomGoalKpi(connection, GoalKpiTemplates);
-	return GoalKpiTemplates;
+	return await insertRandomGoalKpi(connection, goalKpiTemplates);
 };
 
 const insertRandomGoalKpi = async (
 	connection: Connection,
-	Employees: GoalKPITemplate[]
-) => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(GoalKPITemplate)
-		.values(Employees)
-		.execute();
+	goalKpiTemplates: GoalKPITemplate[]
+): Promise<GoalKPITemplate[]> => {
+	return await connection.manager.save(goalKpiTemplates);
 };

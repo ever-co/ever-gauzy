@@ -67,9 +67,6 @@ export const createRandomIncomes = async (
 	tenantEmployeeMap: Map<Tenant, IEmployee[]>
 ): Promise<void> => {
 	const currencies = Object.values(CurrenciesEnum);
-
-	const randomIncomes: Income[] = [];
-
 	const clientsArray = ['NA', 'UR', 'CA', 'ET', 'GA'];
 	const notesArray = [
 		'Great job!',
@@ -79,18 +76,16 @@ export const createRandomIncomes = async (
 		'Great job!'
 	];
 
+	const randomIncomes: Income[] = [];
 	(tenants || []).forEach((tenant) => {
 		const employees = tenantEmployeeMap.get(tenant);
-
 		(employees || []).forEach((employee) => {
 			for (let index = 0; index < 100; index++) {
 				const income = new Income();
-
 				const currentIndex = faker.random.number({
 					min: 0,
 					max: index % 5
 				});
-
 				income.organization = employee.organization;
 				income.tenant = tenant;
 				income.employee = employee;
@@ -106,7 +101,6 @@ export const createRandomIncomes = async (
 					moment(new Date()).add(10, 'days').toDate()
 				);
 				income.notes = notesArray[currentIndex];
-
 				randomIncomes.push(income);
 			}
 		});
@@ -118,12 +112,7 @@ export const createRandomIncomes = async (
 
 const insertIncome = async (
 	connection: Connection,
-	income: Income[]
+	incomes: Income[]
 ): Promise<void> => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(Income)
-		.values(income)
-		.execute();
+	await connection.manager.save(incomes);
 };

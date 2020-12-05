@@ -82,6 +82,8 @@ export interface IOrganization extends IBasePerTenantEntityModel {
 	website?: string;
 	// used in invoice headers to display organization details
 	fiscalInformation?: string;
+	fiscalStartDate?: Date;
+	fiscalEndDate?: Date;
 	discountAfterTax?: boolean;
 }
 

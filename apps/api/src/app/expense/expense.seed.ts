@@ -125,15 +125,13 @@ export const createRandomExpenses = async (
 	];
 
 	for (const tenant of tenants) {
-		const randomExpenses: Expense[] = [];
-
 		const employees = tenantEmployeeMap.get(tenant);
-
 		for (const employee of employees) {
 			const organizationVendors = organizationVendorsMap.get(
 				employee.organization
 			);
 			const categories = categoriesMap.get(employee.organization);
+			const randomExpenses: Expense[] = [];
 
 			for (let index = 0; index < 100; index++) {
 				const expense = new Expense();
@@ -162,22 +160,15 @@ export const createRandomExpenses = async (
 
 				randomExpenses.push(expense);
 			}
+			await insertExpense(connection, randomExpenses);
 		}
-
-		await insertExpense(connection, randomExpenses);
 	}
-
 	return;
 };
 
 const insertExpense = async (
 	connection: Connection,
-	expense: Expense[]
+	expenses: Expense[]
 ): Promise<void> => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(Expense)
-		.values(expense)
-		.execute();
+	await connection.manager.save(expenses);
 };

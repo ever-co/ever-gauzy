@@ -10,12 +10,15 @@ import {
 	IDefaultUser,
 	RolesEnum,
 	ISeedUsers,
-	LanguagesEnum
+	LanguagesEnum,
+	IRole
 } from '@gauzy/models';
 import { Role } from '../role/role.entity';
 import { User } from './user.entity';
 import { getUserDummyImage } from '../core';
 import { Tenant } from '../tenant/tenant.entity';
+import { DEFAULT_EMPLOYEES } from '../employee/employee';
+import { DEFAULT_CANDIDATES } from '../candidate/candidate';
 
 export const createDefaultSuperAdminUsers = async (
 	connection: Connection,
@@ -23,8 +26,6 @@ export const createDefaultSuperAdminUsers = async (
 	tenant: Tenant
 ): Promise<User[]> => {
 	const superAdmins: User[] = [];
-	let superAdminUser: User;
-
 	const superAdminRole = roles.find(
 		(role) => role.name === RolesEnum.SUPER_ADMIN
 	);
@@ -41,7 +42,7 @@ export const createDefaultSuperAdminUsers = async (
 
 	// Generate default super admins
 	for (const superAdmin of defaultSuperAdmins) {
-		superAdminUser = await generateDefaultUser(
+		const superAdminUser: User = await generateDefaultUser(
 			superAdmin,
 			superAdminRole,
 			tenant
@@ -49,9 +50,7 @@ export const createDefaultSuperAdminUsers = async (
 		superAdmins.push(superAdminUser);
 	}
 
-	await insertUsers(connection, superAdmins);
-
-	return superAdmins;
+	return await insertUsers(connection, superAdmins);
 };
 
 export const createRandomSuperAdminUsers = async (
@@ -83,7 +82,6 @@ export const createRandomSuperAdminUsers = async (
 	}
 
 	await insertUsers(connection, superAdmins);
-
 	return tenantSuperAdminsMap;
 };
 
@@ -96,21 +94,15 @@ export const createDefaultUsers = async (
 	defaultEmployeeUsers: User[];
 	defaultCandidateUsers: User[];
 }> => {
-	const employeeRole = roles.find((role) => role.name === RolesEnum.EMPLOYEE);
-
-	const candidateRole = roles.find(
-		(role) => role.name === RolesEnum.CANDIDATE
-	);
-
 	const _adminUsers: Promise<User[]> = seedAdminUsers(roles, tenant);
 
 	const _defaultEmployeeUsers: Promise<User[]> = seedDefaultEmployeeUsers(
-		employeeRole,
+		roles,
 		tenant
 	);
 
 	const _defaultCandidateUsers: Promise<User[]> = seedDefaultCandidateUsers(
-		candidateRole,
+		roles,
 		tenant
 	);
 
@@ -242,10 +234,12 @@ const seedAdminUsers = async (
 	roles: Role[],
 	tenant: Tenant
 ): Promise<User[]> => {
+	const adminRole = roles.find(
+		(role: IRole) => role.name === RolesEnum.ADMIN
+	);
 	const admins: Promise<User>[] = [];
 	let adminUser: Promise<User>;
 
-	const adminRole = roles.find((role) => role.name === RolesEnum.ADMIN);
 	const defaultAdmins = [
 		{
 			email: 'local.admin@ever.co',
@@ -267,195 +261,22 @@ const seedAdminUsers = async (
 };
 
 const seedDefaultEmployeeUsers = async (
-	role: Role,
+	roles: Role[],
 	tenant: Tenant
 ): Promise<User[]> => {
+	const employeeRole = roles.find(
+		(role: IRole) => role.name === RolesEnum.EMPLOYEE
+	);
+	const defaultEmployees = DEFAULT_EMPLOYEES;
 	const defaultUsers: Promise<User>[] = [];
-	let user: Promise<User>;
 
-	const defaultEmployees = [
-		{
-			email: 'ruslan@ever.co',
-			password: '123456',
-			firstName: 'Ruslan',
-			lastName: 'Konviser',
-			imageUrl: 'assets/images/avatars/ruslan.jpg',
-			employeeLevel: 'A',
-			preferredLanguage: LanguagesEnum.ENGLISH
-		},
-		{
-			email: 'alish@ever.co',
-			password: '123456',
-			firstName: 'Alish',
-			lastName: 'Meklyov',
-			imageUrl: 'assets/images/avatars/alish.jpg',
-			startedWorkOn: '2018-03-20',
-			endWork: null,
-			employeeLevel: 'D',
-			preferredLanguage: LanguagesEnum.ENGLISH
-		},
-		{
-			email: 'blagovest@ever.co',
-			password: '123456',
-			firstName: 'Blagovest',
-			lastName: 'Gerov',
-			imageUrl: 'assets/images/avatars/blagovest.jpg',
-			startedWorkOn: '2018-03-19',
-			endWork: null,
-			employeeLevel: 'C',
-			preferredLanguage: LanguagesEnum.ENGLISH
-		},
-		{
-			email: 'elvis@ever.co',
-			password: '123456',
-			firstName: 'Elvis',
-			lastName: 'Arabadjiiski',
-			imageUrl: 'assets/images/avatars/elvis.jpg',
-			startedWorkOn: '2018-05-25',
-			endWork: null,
-			employeeLevel: 'C',
-			preferredLanguage: LanguagesEnum.ENGLISH
-		},
-		{
-			email: 'hristo@ever.co',
-			password: '123456',
-			firstName: 'Hristo',
-			lastName: 'Hristov',
-			imageUrl: 'assets/images/avatars/hristo.jpg',
-			startedWorkOn: '2019-06-17',
-			endWork: null,
-			employeeLevel: 'B',
-			preferredLanguage: LanguagesEnum.ENGLISH
-		},
-		{
-			email: 'alex@ever.co',
-			password: '123456',
-			firstName: 'Aleksandar',
-			lastName: 'Tasev',
-			imageUrl: 'assets/images/avatars/alexander.jpg',
-			startedWorkOn: '2019-08-01',
-			endWork: null,
-			employeeLevel: 'B',
-			preferredLanguage: LanguagesEnum.ENGLISH
-		},
-		{
-			email: 'rachit@ever.co',
-			password: '123456',
-			firstName: 'Rachit',
-			lastName: 'Magon',
-			imageUrl: 'assets/images/avatars/rachit.png',
-			startedWorkOn: '2019-11-27',
-			endWork: null,
-			employeeLevel: null,
-			preferredLanguage: LanguagesEnum.ENGLISH
-		},
-		{
-			email: 'dimana@ever.co',
-			password: '123456',
-			firstName: 'Dimana',
-			lastName: 'Tsvetkova',
-			imageUrl: 'assets/images/avatars/dimana.jpeg',
-			startedWorkOn: '2019-11-26',
-			endWork: null,
-			employeeLevel: null,
-			preferredLanguage: LanguagesEnum.ENGLISH
-		},
-		{
-			email: 'pavel@ever.co',
-			password: '123456',
-			firstName: 'Pavel',
-			lastName: 'Denchev',
-			imageUrl: 'assets/images/avatars/pavel.jpg',
-			startedWorkOn: '2020-03-16',
-			endWork: null,
-			employeeLevel: 'A',
-			preferredLanguage: LanguagesEnum.ENGLISH
-		},
-		{
-			email: 'yavor@ever.co',
-			password: '123456',
-			firstName: 'Yavor',
-			lastName: 'Grancharov',
-			imageUrl: 'assets/images/avatars/yavor.jpg',
-			startedWorkOn: '2020-02-05',
-			endWork: null,
-			employeeLevel: 'A',
-			preferredLanguage: LanguagesEnum.ENGLISH
-		},
-		{
-			email: 'tsvetelina@ever.co',
-			password: '123456',
-			firstName: 'Tsvetelina',
-			lastName: 'Yordanova',
-			imageUrl: 'assets/images/avatars/tsvetelina.jpg',
-			startedWorkOn: '2020-03-02',
-			endWork: null,
-			employeeLevel: 'A',
-			preferredLanguage: LanguagesEnum.ENGLISH
-		},
-		{
-			email: 'muiz@smooper.xyz',
-			password: '123456',
-			firstName: 'Muiz',
-			lastName: 'Nadeem',
-			imageUrl: 'assets/images/avatars/muiz.jpg',
-			startedWorkOn: '2019-11-27',
-			endWork: null,
-			employeeLevel: null,
-			preferredLanguage: LanguagesEnum.ENGLISH
-		},
-		{
-			email: 'deko898@hotmail.com',
-			password: '123456',
-			firstName: 'Dejan',
-			lastName: 'Obradovikj',
-			imageUrl: 'assets/images/avatars/dejan.jpg',
-			startedWorkOn: '2020-03-07',
-			endWork: null,
-			employeeLevel: null,
-			preferredLanguage: LanguagesEnum.ENGLISH
-		},
-		{
-			email: 'ckhandla94@gmail.com',
-			password: '123456',
-			firstName: 'Chetan',
-			lastName: 'Khandla',
-			imageUrl: 'assets/images/avatars/chetan.png',
-			startedWorkOn: '2020-03-07',
-			endWork: null,
-			employeeLevel: null,
-			preferredLanguage: LanguagesEnum.ENGLISH
-		},
-		{
-			email: 'julia@ever.co',
-			password: '123456',
-			firstName: 'Julia',
-			lastName: 'Konviser',
-			imageUrl: 'assets/images/avatars/julia.png',
-			startedWorkOn: '2018-08-01',
-			endWork: null,
-			employeeLevel: 'C',
-			preferredLanguage: LanguagesEnum.ENGLISH
-		},
-		{
-			email: 'yordan@ever.co',
-			password: '123456',
-			firstName: 'Yordan',
-			lastName: 'Genovski',
-			imageUrl: 'assets/images/avatars/yordan.jpg',
-			startedWorkOn: '2018-08-01',
-			endWork: null,
-			employeeLevel: 'C',
-			preferredLanguage: LanguagesEnum.ENGLISH
-		}
-	];
-	let counter = 0;
+	let user: Promise<User>;
 	// Generate default users
 	for (const employee of defaultEmployees) {
-		user = generateDefaultUser(employee, role, tenant);
+		user = generateDefaultUser(employee, employeeRole, tenant);
 		defaultUsers.push(user);
-		counter++;
 	}
+
 	return Promise.all(defaultUsers);
 };
 
@@ -476,76 +297,22 @@ const seedRandomUsers = async (
 };
 
 const seedDefaultCandidateUsers = async (
-	role: Role,
+	roles: Role[],
 	tenant: Tenant
 ): Promise<User[]> => {
+	const candidateRole = roles.find(
+		(role: IRole) => role.name === RolesEnum.CANDIDATE
+	);
+	const defaultCandidates = DEFAULT_CANDIDATES;
 	const defaultCandidateUsers: Promise<User>[] = [];
 	let user: Promise<User>;
 
-	const defaultCandidates = [
-		{
-			email: 'john@ever.co',
-			password: '123456',
-			firstName: 'John',
-			lastName: 'Smith',
-			imageUrl: 'assets/images/avatars/alish.jpg',
-			candidateLevel: 'D',
-			preferredLanguage: LanguagesEnum.ENGLISH
-		},
-		{
-			email: 'jaye@ever.co',
-			password: '123456',
-			firstName: 'Jaye',
-			lastName: 'Jeffreys',
-			imageUrl: 'assets/images/avatars/alexander.jpg',
-			candidateLevel: 'B',
-			preferredLanguage: LanguagesEnum.ENGLISH
-		},
-		{
-			email: 'kasey@ever.co',
-			password: '123456',
-			firstName: 'Kasey',
-			lastName: 'Kraker',
-			imageUrl: 'assets/images/avatars/rachit.png',
-			candidateLevel: null,
-			preferredLanguage: LanguagesEnum.ENGLISH
-		},
-		{
-			email: 'norris@ever.co',
-			password: '123456',
-			firstName: 'Norris ',
-			lastName: 'Nesbit',
-			imageUrl: 'assets/images/avatars/blagovest.jpg',
-			candidateLevel: 'A',
-			preferredLanguage: LanguagesEnum.ENGLISH
-		},
-		{
-			email: 'estella@ever.co',
-			password: '123456',
-			firstName: 'Estella',
-			lastName: 'Ennis',
-			imageUrl: 'assets/images/avatars/dimana.jpeg',
-			candidateLevel: null,
-			preferredLanguage: LanguagesEnum.ENGLISH
-		},
-		{
-			email: 'greg@ever.co',
-			password: '123456',
-			firstName: 'Greg ',
-			lastName: 'Grise',
-			imageUrl: 'assets/images/avatars/hristo.jpg',
-			candidateLevel: 'A',
-			preferredLanguage: LanguagesEnum.ENGLISH
-		}
-	];
-
-	let counter = 0;
 	// Generate default candidate users
 	for (const candidate of defaultCandidates) {
-		user = generateDefaultUser(candidate, role, tenant);
+		user = generateDefaultUser(candidate, candidateRole, tenant);
 		defaultCandidateUsers.push(user);
-		counter++;
 	}
+
 	return Promise.all(defaultCandidateUsers);
 };
 
@@ -615,11 +382,6 @@ const generateRandomUser = async (
 const insertUsers = async (
 	connection: Connection,
 	users: User[]
-): Promise<void> => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(User)
-		.values(users)
-		.execute();
+): Promise<User[]> => {
+	return await connection.manager.save(users);
 };

@@ -27,12 +27,5 @@ export const createDefaultSkills = async (
 		skills.push(skill);
 	}
 
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(Skill)
-		.values(skills)
-		.execute();
-
-	return skills;
+	return await connection.manager.save(skills);
 };

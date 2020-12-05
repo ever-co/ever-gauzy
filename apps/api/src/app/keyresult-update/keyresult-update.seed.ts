@@ -44,15 +44,9 @@ export const createDefaultKeyResultUpdates = async (
 				keyResultUpdate.keyResult = keyResult;
 				keyResultUpdate.tenant = tenant;
 				keyResultUpdate.organization = organization;
-				keyResultUpdate.status = faker.random.arrayElement([
-					KeyResultUpdateStatusEnum.NEEDS_ATTENTION,
-					KeyResultUpdateStatusEnum.NONE,
-					KeyResultUpdateStatusEnum.OFF_TRACK,
-					KeyResultUpdateStatusEnum.ON_TRACK,
-					KeyResultUpdateStatusEnum.ON_TRACK,
-					KeyResultUpdateStatusEnum.ON_TRACK,
-					KeyResultUpdateStatusEnum.ON_TRACK
-				]);
+				keyResultUpdate.status = faker.random.arrayElement(
+					Object.values(KeyResultUpdateStatusEnum)
+				);
 				keyResultUpdate.update = faker.random.number({
 					min: keyResult.initialValue + 1,
 					max: keyResult.targetValue
@@ -89,18 +83,16 @@ export const createDefaultKeyResultUpdates = async (
 			}
 		}
 	});
-	await insertDefaultKeyResultUpdates(connection, defaultKeyResultUpdates);
-	return defaultKeyResultUpdates;
+
+	return await insertDefaultKeyResultUpdates(
+		connection,
+		defaultKeyResultUpdates
+	);
 };
 
 const insertDefaultKeyResultUpdates = async (
 	connection: Connection,
 	defaultKeyResultUpdates: KeyResultUpdate[]
-) => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(KeyResultUpdate)
-		.values(defaultKeyResultUpdates)
-		.execute();
+): Promise<KeyResultUpdate[]> => {
+	return await connection.manager.save(defaultKeyResultUpdates);
 };

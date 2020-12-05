@@ -67,12 +67,7 @@ const insertRandomHelpCenterAuthor = async (
 	connection: Connection,
 	data: HelpCenterAuthor[]
 ) => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(HelpCenterAuthor)
-		.values(data)
-		.execute();
+	await connection.manager.save(data);
 };
 
 const operateData = async (

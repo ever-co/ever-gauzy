@@ -312,6 +312,7 @@ export class SeedDataService {
 	overrideDbConfig = {
 		logging: true,
 		logger: 'file' //Removes console logging, instead logs all queries in a file ormlogs.log
+		// dropSchema: !env.production //Drops the schema each time connection is being established in development mode.
 	};
 
 	/**
@@ -565,14 +566,13 @@ export class SeedDataService {
 			)
 		);
 
-		const noOfRandomContacts = 5;
 		await this.tryExecute(
 			'Contacts',
 			createRandomContacts(
 				this.connection,
 				this.tenant,
 				this.organizations,
-				noOfRandomContacts
+				randomSeedConfig.noOfRandomContacts || 5
 			)
 		);
 
@@ -587,8 +587,6 @@ export class SeedDataService {
 			defaultCandidateUsers
 		} = await createDefaultUsers(this.connection, this.roles, this.tenant);
 
-		this.defaultCandidateUsers = defaultCandidateUsers;
-
 		await createDefaultUsersOrganizations(this.connection, {
 			organizations: this.organizations,
 			users: [
@@ -597,6 +595,8 @@ export class SeedDataService {
 				...this.superAdminUsers
 			]
 		});
+
+		this.defaultCandidateUsers = defaultCandidateUsers;
 
 		//User level data that needs connection, tenant, organization, role, users
 		this.defaultEmployees = await createDefaultEmployees(this.connection, {

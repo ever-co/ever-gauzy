@@ -30,9 +30,7 @@ export const createDefaultUsersOrganizations = async (
 			usersOrganizations.push(userOrganization);
 		}
 	});
-
-	await insertUserOrganization(connection, usersOrganizations);
-	return usersOrganizations;
+	return await insertUserOrganization(connection, usersOrganizations);
 };
 
 export const createRandomUsersOrganizations = async (
@@ -77,19 +75,12 @@ export const createRandomUsersOrganizations = async (
 		});
 	}
 
-	await insertUserOrganization(connection, usersOrganizations);
-
-	return usersOrganizations;
+	return await insertUserOrganization(connection, usersOrganizations);
 };
 
 const insertUserOrganization = async (
 	connection: Connection,
 	userOrganizations: IUserOrganization[]
-): Promise<void> => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(UserOrganization)
-		.values(userOrganizations)
-		.execute();
+): Promise<IUserOrganization[]> => {
+	return await connection.manager.save(userOrganizations);
 };

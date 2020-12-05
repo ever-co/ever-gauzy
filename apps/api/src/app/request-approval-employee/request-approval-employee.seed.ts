@@ -25,25 +25,21 @@ export const createRandomRequestApprovalEmployee = async (
 		return;
 	}
 
-	const requestApprovalEmployees: RequestApprovalEmployee[] = [];
-
 	for (const tenant of tenants) {
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
-
 		for (const tenantEmployee of tenantEmployees) {
 			for (const tenantOrg of tenantOrgs) {
+				const requestApprovalEmployees: RequestApprovalEmployee[] = [];
 				const approvalPolicies = await connection.manager.find(
 					ApprovalPolicy,
-					{
-						where: [{ organization: tenantOrg }]
-					}
+					{ where: { organization: tenantOrg } }
 				);
 				for (const approvalPolicy of approvalPolicies) {
 					const requestApprovals = await connection.manager.find(
 						RequestApproval,
 						{
-							where: [{ approvalPolicy: approvalPolicy }]
+							where: { approvalPolicy: approvalPolicy }
 						}
 					);
 					for (const requestApproval of requestApprovals) {
@@ -52,21 +48,19 @@ export const createRandomRequestApprovalEmployee = async (
 						requestApprovalEmployee.requestApprovalId =
 							requestApproval.id;
 						requestApprovalEmployee.requestApproval = requestApproval;
-						requestApprovalEmployee.employeeId = tenantEmployee.id;
+						// requestApprovalEmployee.employeeId = tenantEmployee.id;
 						requestApprovalEmployee.employee = tenantEmployee;
 						requestApprovalEmployee.status = faker.random.number(
 							99
 						);
-
 						requestApprovalEmployee.tenant = tenant;
 						requestApprovalEmployee.organization = tenantOrg;
 
 						requestApprovalEmployees.push(requestApprovalEmployee);
 					}
 				}
+				await connection.manager.save(requestApprovalEmployees);
 			}
 		}
 	}
-
-	await connection.manager.save(requestApprovalEmployees);
 };
