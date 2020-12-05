@@ -9,6 +9,16 @@ export interface IEmail extends IBasePerTenantAndOrganizationEntityModel {
 	emailTemplate: IEmailTemplate;
 	email: string;
 	user?: IUser;
+	isArchived?: boolean;
+}
+
+export interface IEmailUpdateInput {
+	name?: string;
+	content?: string;
+	emailTemplate?: IEmailTemplate;
+	email?: string;
+	user?: IUser;
+	isArchived?: boolean;
 }
 
 export interface IEmailFindInput
@@ -17,4 +27,5 @@ export interface IEmailFindInput
 	// TODO! Maybe user here
 	userId?: string;
 	email?: string;
+	isArchived?: boolean;
 }

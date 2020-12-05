@@ -1,6 +1,6 @@
 import { IEmail, IEmailTemplate, IUser } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsString } from 'class-validator';
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { EmailTemplate } from '../email-template/email-template.entity';
 import { User } from '../user/user.entity';
@@ -40,6 +40,11 @@ export class Email extends TenantOrganizationBase implements IEmail {
 	@IsNotEmpty()
 	@Column()
 	email: string;
+
+	@ApiPropertyOptional({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	isArchived?: boolean;
 
 	@ApiProperty({ type: User })
 	@ManyToOne((type) => User, {
