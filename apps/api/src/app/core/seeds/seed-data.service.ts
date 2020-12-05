@@ -311,7 +311,8 @@ export class SeedDataService {
 	 */
 	overrideDbConfig = {
 		logging: true,
-		logger: 'file' //Removes console logging, instead logs all queries in a file ormlogs.log
+		logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
+		dropSchema: !env.production //Drops the schema each time connection is being established in development mode.
 	};
 
 	/**
