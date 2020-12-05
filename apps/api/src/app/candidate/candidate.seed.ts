@@ -74,7 +74,6 @@ export const createDefaultCandidates = async (
 	*/
 	//const defaultSources = await connection.manager.find(CandidateSource);
 
-	let candidate: Candidate;
 	const candidates: Candidate[] = [];
 	const defaultUsers = defaultData.users;
 	const defaultOrg = defaultData.org;
@@ -82,7 +81,7 @@ export const createDefaultCandidates = async (
 
 	let counter = 0;
 	for (const user of defaultUsers) {
-		candidate = new Candidate();
+		const candidate = new Candidate();
 		candidate.organization = defaultOrg;
 		candidate.user = user;
 		candidate.isArchived = false;

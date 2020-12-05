@@ -10,26 +10,14 @@ import {
 	DefaultValueDateTypeEnum,
 	BonusTypeEnum,
 	WeekDaysEnum,
-	AlignmentOptions
+	AlignmentOptions,
+	IOrganizationCreateInput,
+	IOrganization
 } from '@gauzy/models';
 import { Tenant } from './../tenant/tenant.entity';
 import { Skill } from '../skills/skill.entity';
 import { Contact } from '../contact/contact.entity';
-
-const defaultOrganizationsData = [
-	{
-		name: 'Ever Technologies LTD',
-		currency: CurrenciesEnum.BGN,
-		defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
-		imageUrl: 'assets/images/logos/ever-large.jpg'
-	},
-	{
-		name: 'Ever Co. Ltd',
-		currency: CurrenciesEnum.BGN,
-		defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
-		imageUrl: 'assets/images/logos/ever-large.jpg'
-	}
-];
+import { DEFAULT_ORGANIZATIONS } from './organization';
 
 export const getDefaultBulgarianOrganization = async (
 	connection: Connection,
@@ -48,27 +36,18 @@ export const createDefaultOrganizations = async (
 	connection: Connection,
 	tenant: Tenant
 ): Promise<Organization[]> => {
-	const defaultOrganizations: Organization[] = [];
-
+	const defaultOrganizations: IOrganization[] = [];
 	const skills = await getSkills(connection);
 	const contacts = await getContacts(connection);
 
-	defaultOrganizationsData.forEach((organiziation) => {
+	DEFAULT_ORGANIZATIONS.forEach((organization: IOrganizationCreateInput) => {
 		const organizationSkills = _.chain(skills)
 			.shuffle()
 			.take(faker.random.number({ min: 1, max: 4 }))
 			.values()
 			.value();
-
-		const defaultOrganization: Organization = new Organization();
-
-		const {
-			name,
-			currency,
-			defaultValueDateType,
-			imageUrl
-		} = organiziation;
-
+		const defaultOrganization: IOrganization = new Organization();
+		const { name, currency, defaultValueDateType, imageUrl } = organization;
 		defaultOrganization.name = name;
 		defaultOrganization.profile_link = generateLink(name);
 		defaultOrganization.currency = currency;
@@ -78,7 +57,6 @@ export const createDefaultOrganizations = async (
 		defaultOrganization.bonusType = BonusTypeEnum.REVENUE_BASED_BONUS;
 		defaultOrganization.bonusPercentage = 10;
 		defaultOrganization.registrationDate = faker.date.past(5);
-
 		defaultOrganization.overview = faker.name.jobDescriptor();
 		defaultOrganization.short_description = faker.name.jobDescriptor();
 		defaultOrganization.client_focus = faker.name.jobDescriptor();
@@ -92,7 +70,6 @@ export const createDefaultOrganizations = async (
 		defaultOrganization.show_clients = true;
 		defaultOrganization.show_employees_count = true;
 		defaultOrganization.banner = faker.name.jobDescriptor();
-
 		defaultOrganization.skills = organizationSkills;
 		defaultOrganization.brandColor = faker.random.arrayElement([
 			'red',
@@ -142,11 +119,9 @@ export const createDefaultOrganizations = async (
 		defaultOrganizations.push(defaultOrganization);
 	});
 
-	await insertOrganizations(connection, defaultOrganizations);
-
+	const organizations = await connection.manager.save(defaultOrganizations);
 	defaultOrganizationsInserted = [...defaultOrganizations];
-
-	return defaultOrganizations;
+	return organizations;
 };
 
 export const createRandomOrganizations = async (
@@ -264,7 +239,6 @@ export const createRandomOrganizations = async (
 	});
 
 	await insertOrganizations(connection, allOrganizations);
-
 	return tenantOrganizations;
 };
 
