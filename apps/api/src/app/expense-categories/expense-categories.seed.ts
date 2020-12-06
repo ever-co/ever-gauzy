@@ -10,17 +10,17 @@ export const createExpenseCategories = async (
 ): Promise<ExpenseCategory[]> => {
 	let defaultExpenseCategories: ExpenseCategory[] = [];
 	organizations.forEach((organization) => {
-		const category = Object.values(ExpenseCategoriesEnum).map((name) => ({
-			name,
-			organizationId: organization.id,
-			tenant: tenant
-		}));
-		defaultExpenseCategories = [...defaultExpenseCategories, ...category];
+		const categories = Object.values(ExpenseCategoriesEnum).map((name) => {
+			const category = new ExpenseCategory();
+			category.name = name;
+			category.organization = organization;
+			category.tenant = tenant;
+			return category;
+		});
+		defaultExpenseCategories = [...defaultExpenseCategories, ...categories];
 	});
 
-	insertExpenseCategories(connection, defaultExpenseCategories);
-
-	return defaultExpenseCategories;
+	return insertExpenseCategories(connection, defaultExpenseCategories);
 };
 
 export const createRandomExpenseCategories = async (
@@ -34,15 +34,17 @@ export const createRandomExpenseCategories = async (
 	(tenants || []).forEach((tenant) => {
 		const organizations = tenantOrganizationMap.get(tenant);
 		(organizations || []).forEach((organization) => {
-			const category = Object.values(ExpenseCategoriesEnum).map(
-				(name) => ({
-					name,
-					organizationId: organization.id,
-					tenant: tenant
-				})
+			const categories = Object.values(ExpenseCategoriesEnum).map(
+				(name) => {
+					const category = new ExpenseCategory();
+					category.name = name;
+					category.organization = organization;
+					category.tenant = tenant;
+					return category;
+				}
 			);
-			expenseCategoryMap.set(organization, category);
-			expenseCategories = [...expenseCategories, ...category];
+			expenseCategoryMap.set(organization, categories);
+			expenseCategories = [...expenseCategories, ...categories];
 		});
 	});
 
@@ -52,12 +54,7 @@ export const createRandomExpenseCategories = async (
 
 const insertExpenseCategories = async (
 	connection: Connection,
-	expenseCategory: ExpenseCategory[]
-) => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(ExpenseCategory)
-		.values(expenseCategory)
-		.execute();
+	expenseCategories: ExpenseCategory[]
+): Promise<ExpenseCategory[]> => {
+	return await connection.manager.save(expenseCategories);
 };

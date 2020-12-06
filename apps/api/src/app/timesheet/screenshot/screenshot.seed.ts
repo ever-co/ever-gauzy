@@ -4,20 +4,25 @@ import * as faker from 'faker';
 import { TimeSlot } from '../time-slot.entity';
 import { Screenshot } from '../screenshot.entity';
 import * as moment from 'moment';
+import { environment as env } from '@env-api/environment';
 
 let fileList: string[] = [];
 
-const dir = path.join(
-	process.cwd(),
-	'apps',
-	'api',
-	'src',
-	'assets',
-	'seed',
-	'screenshots'
-);
-
-const baseDir = path.join(process.cwd(), 'apps', 'api');
+let dir: string;
+let baseDir: string;
+if (env.isElectron) {
+	dir = path.join(
+		path.resolve(env.gauzyUserPath, ...['src', 'assets', 'seed']),
+		'screenshots'
+	);
+	baseDir = path.join(path.resolve(env.gauzyUserPath));
+} else {
+	dir = path.join(
+		path.resolve('.', ...['apps', 'api', 'src', 'assets', 'seed']),
+		'screenshots'
+	);
+	baseDir = path.join(path.resolve('.', ...['apps']), 'api');
+}
 
 const destDir = path.join(
 	'public',

@@ -48,19 +48,12 @@ export const createDefaultGoalTemplates = async (
 		defaultGoalTemplates.push(goalTemplate);
 	});
 
-	await insertDefaultGoalTemplates(connection, defaultGoalTemplates);
-
-	return defaultGoalTemplates;
+	return await insertDefaultGoalTemplates(connection, defaultGoalTemplates);
 };
 
 const insertDefaultGoalTemplates = async (
 	connection: Connection,
-	defaultGoals: GoalTemplate[]
-) => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(GoalTemplate)
-		.values(defaultGoals)
-		.execute();
+	defaultGoalTemplates: GoalTemplate[]
+): Promise<GoalTemplate[]> => {
+	return await connection.manager.save(defaultGoalTemplates);
 };

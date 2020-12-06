@@ -14,19 +14,17 @@ export const createDefaultInvoice = async (
 	defaultOrganizations: Organization[],
 	noOfInvoicePerOrganization: number
 ) => {
-	const invoices: Invoice[] = [];
-
 	for (const organization of defaultOrganizations) {
+		const invoices: Invoice[] = [];
 		const tags = await connection.manager.find(Tag, {
-			where: [{ organization: organization }]
+			where: { organization: organization }
 		});
 		const organizationContacts = await connection.manager.find(
 			OrganizationContact,
-			{ where: [{ organizationId: organization.id }] }
+			{ where: { organizationId: organization.id } }
 		);
 		for (let i = 0; i < noOfInvoicePerOrganization; i++) {
 			const invoice = new Invoice();
-
 			invoice.tags = _.chain(tags)
 				.shuffle()
 				.take(faker.random.number({ min: 1, max: 3 }))
@@ -38,9 +36,11 @@ export const createDefaultInvoice = async (
 				max: 9999999
 			});
 			invoice.dueDate = faker.date.recent(50);
-			invoice.organizationContactId = faker.random.arrayElement(
-				organizationContacts
-			).id;
+			if (organizationContacts.length) {
+				invoice.organizationContactId = faker.random.arrayElement(
+					organizationContacts
+				).id;
+			}
 			invoice.sentTo = organization.id;
 			invoice.fromOrganization = organization;
 			invoice.toContact = faker.random.arrayElement(organizationContacts);
@@ -75,9 +75,8 @@ export const createDefaultInvoice = async (
 			invoice.tenant = tenant;
 			invoices.push(invoice);
 		}
+		await connection.manager.save(invoices);
 	}
-
-	await connection.manager.save(invoices);
 };
 
 export const createRandomInvoice = async (
@@ -86,17 +85,16 @@ export const createRandomInvoice = async (
 	tenantOrganizationsMap: Map<Tenant, Organization[]>,
 	noOfInvoicePerOrganization: number
 ) => {
-	const invoices: Invoice[] = [];
-
 	for (const tenant of tenants) {
 		const organizations = tenantOrganizationsMap.get(tenant);
 		for (const organization of organizations) {
+			const invoices: Invoice[] = [];
 			const tags = await connection.manager.find(Tag, {
-				where: [{ organization: organization }]
+				where: { organization: organization }
 			});
 			const organizationContacts = await connection.manager.find(
 				OrganizationContact,
-				{ where: [{ organizationId: organization.id }] }
+				{ where: { organizationId: organization.id } }
 			);
 			for (let i = 0; i < noOfInvoicePerOrganization; i++) {
 				const invoice = new Invoice();
@@ -112,9 +110,11 @@ export const createRandomInvoice = async (
 					max: 9999999
 				});
 				invoice.dueDate = faker.date.recent(50);
-				invoice.organizationContactId = faker.random.arrayElement(
-					organizationContacts
-				).id;
+				if (organizationContacts.length) {
+					invoice.organizationContactId = faker.random.arrayElement(
+						organizationContacts
+					).id;
+				}
 				invoice.sentTo = organization.id;
 				invoice.fromOrganization = organization;
 				invoice.toContact = faker.random.arrayElement(
@@ -151,7 +151,7 @@ export const createRandomInvoice = async (
 				invoice.tenant = tenant;
 				invoices.push(invoice);
 			}
+			await connection.manager.save(invoices);
 		}
 	}
-	await connection.manager.save(invoices);
 };

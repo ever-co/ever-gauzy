@@ -1,13 +1,18 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	ChangeDetectorRef,
+	ChangeDetectionStrategy
+} from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import { SetupService } from './setup.service';
 import { environment } from '../../../environments/environment';
-import { object } from 'underscore';
 
 @Component({
 	selector: 'ngx-setup',
 	templateUrl: './setup.component.html',
-	styleUrls: ['./setup.component.scss']
+	styleUrls: ['./setup.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SetupComponent implements OnInit {
 	constructor(
@@ -44,6 +49,30 @@ export class SetupComponent implements OnInit {
 					dbPassword: arg.dbPassword
 				};
 			}
+		});
+
+		electronService.ipcRenderer.on('setup-progress', (event, arg) => {
+			const validMessage = this.defaultMessage.findIndex(
+				(item) => arg.msg.indexOf(item) > -1
+			);
+			if (validMessage > -1) {
+				if (
+					validMessage === 0 &&
+					arg.msg.indexOf('Found 0 users in DB') < 0
+				) {
+					this.progressSetup = 100;
+					this.progressMessage = arg.msg;
+				} else {
+					if (arg.msg.indexOf('SEEDED PRODUCTION DATABASE') > -1) {
+						const leftProgress = 100 - this.progressSetup;
+						this.progressSetup += leftProgress;
+					} else {
+						this.progressSetup += 3;
+					}
+					this.progressMessage = arg.msg;
+				}
+			}
+			this._cdr.detectChanges();
 		});
 	}
 	loading: Boolean = false;
@@ -95,6 +124,40 @@ export class SetupComponent implements OnInit {
 			dbPassword: ''
 		}
 	};
+
+	progressSetup = 0;
+	progressMessage = 'Waiting ...';
+	onProgress = false;
+
+	defaultMessage: any = [
+		'users in DB',
+		'Found 0 users in DB',
+		'CLEANING UP FROM PREVIOUS RUNS...',
+		'CLEANED UP',
+		'RESET DATABASE SUCCESSFUL',
+		'SEEDING PRODUCTION DATABASE...',
+		'SEEDING Countries',
+		'SEEDING Currencies',
+		'SEEDING Languages',
+		'SEEDING PRODUCTION REPORTS DATABASE...',
+		'SEEDING Default Report Category & Report',
+		'CLEANING UP REPORT IMAGES...',
+		'CLEANED UP REPORT IMAGES',
+		'SEEDED PRODUCTION REPORTS DATABASE',
+		'Database Reports Seed completed',
+		'SEEDING Default Email Templates',
+		'SEEDING Skills',
+		'SEEDING Contacts',
+		'SEEDING Default Employee Invite',
+		'SEEDING Default General Goal Setting',
+		'SEEDING Default Goal Template',
+		'SEEDING Default Goal KPI Template',
+		'SEEDING Default Key Result Template',
+		'SEEDING Default Time Off Policy',
+		'SEEDING Default Integration Types',
+		'SEEDING Default Integrations',
+		'SEEDED PRODUCTION DATABASE'
+	];
 
 	connectivityChange(event, key) {
 		Object.keys(this.connectivity).forEach((itemKey) => {
@@ -192,6 +255,9 @@ export class SetupComponent implements OnInit {
 	}
 
 	saveChange() {
+		if (this.connectivity.integrated) {
+			this.onProgress = true;
+		}
 		const gauzyConfig = {
 			...this.getServerConfig(),
 			...this.getDataBaseConfig(),
@@ -199,7 +265,6 @@ export class SetupComponent implements OnInit {
 			...this.getFeature()
 		};
 
-		console.log('config', gauzyConfig);
 		this.electronService.ipcRenderer.send('start_server', gauzyConfig);
 		this.electronService.ipcRenderer.send('app_is_init');
 	}
