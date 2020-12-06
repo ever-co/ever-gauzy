@@ -103,14 +103,14 @@ export const createDefaultReport = async (
 		new Report({
 			name: 'Weekly limits',
 			slug: 'weekly-limits',
-			// image: copyImage('weekly-limits.png'),
+			image: copyImage('blank.png'),
 			category: categoryByName['Time Off'],
 			description: "See team members' weekly limits usage"
 		}),
 		new Report({
 			name: 'Daily limits',
 			slug: 'daily-limits',
-			// image: copyImage('daily-limits.png'),
+			image: copyImage('blank.png'),
 			category: categoryByName['Time Off'],
 			iconClass: 'clock-outline',
 			description: "See team members' daily limits usage"
@@ -118,7 +118,7 @@ export const createDefaultReport = async (
 		new Report({
 			name: 'Project budgets',
 			slug: 'project-budgets',
-			// image: copyImage('project-budgets.png'),
+			image: copyImage('blank.png'),
 			category: categoryByName['Invoicing'],
 			iconClass: 'credit-card-outline',
 			description:
@@ -127,7 +127,7 @@ export const createDefaultReport = async (
 		new Report({
 			name: 'Client budgets',
 			slug: 'client-budgets',
-			// image: copyImage('client-budgets.png'),
+			image: copyImage('blank.png'),
 			category: categoryByName['Invoicing'],
 			iconClass: 'credit-card-outline',
 			description: "See how much of your clients' budgets have been spent"
