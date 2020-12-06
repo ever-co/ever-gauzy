@@ -2,7 +2,6 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import { SetupService } from './setup.service';
 import { environment } from '../../../environments/environment';
-import { object } from 'underscore';
 
 @Component({
 	selector: 'ngx-setup',
