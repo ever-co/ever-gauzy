@@ -2,21 +2,7 @@ import { Connection } from 'typeorm';
 import { IEmployeeLevelInput } from '@gauzy/models';
 import { EmployeeLevel } from './organization-employee-level.entity';
 import { Organization } from '../organization/organization.entity';
-
-const DEFAULT_EMPLOYEE_LEVELS = [
-	{
-		level: 'Level A'
-	},
-	{
-		level: 'Level B'
-	},
-	{
-		level: 'Level C'
-	},
-	{
-		level: 'Level D'
-	}
-];
+import { DEFAULT_EMPLOYEE_LEVELS } from './default-organization-employee-levels';
 
 export const createEmployeeLevels = async (
 	connection: Connection,

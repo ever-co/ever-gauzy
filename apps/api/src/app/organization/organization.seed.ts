@@ -17,7 +17,7 @@ import {
 import { Tenant } from './../tenant/tenant.entity';
 import { Skill } from '../skills/skill.entity';
 import { Contact } from '../contact/contact.entity';
-import { DEFAULT_ORGANIZATIONS } from './organization';
+import { DEFAULT_ORGANIZATIONS } from './default-organizations';
 
 export const getDefaultBulgarianOrganization = async (
 	connection: Connection,

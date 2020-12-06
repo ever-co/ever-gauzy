@@ -64,7 +64,7 @@ import {
 	seedDefaultEmploymentTypes,
 	seedRandomEmploymentTypes
 } from '../../organization-employment-type/organization-employment-type.seed';
-import { createEmployeeLevels } from '../../organization_employeeLevel/organization-employee-level.seed';
+import { createEmployeeLevels } from '../../organization_employee-level/organization-employee-level.seed';
 import {
 	createDefaultTimeOffPolicy,
 	createRandomTimeOffPolicies

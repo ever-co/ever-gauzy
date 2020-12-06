@@ -7,29 +7,7 @@ import { Employee } from '../employee/employee.entity';
 import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
 import { GoalLevelEnum } from '@gauzy/models';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
-
-const defaultGoalData = [
-	{
-		name: 'Improve product performance',
-		level: 'Organization'
-	},
-	{
-		name: 'Successfully launch version 2 of our main product',
-		level: 'Organization'
-	},
-	{
-		name: 'Redesign and launch our new landing page',
-		level: 'Team'
-	},
-	{
-		name: 'Increase quality of releases and make sure they are timely',
-		level: 'Team'
-	},
-	{
-		name: 'Identify problems with current user interface',
-		level: 'Employee'
-	}
-];
+import { DEFAULT_GOALS } from './default-goals';
 
 export const createDefaultGoals = async (
 	connection: Connection,
@@ -46,7 +24,7 @@ export const createDefaultGoals = async (
 	);
 
 	organizations.forEach((organization, index) => {
-		defaultGoalData.forEach((goalData) => {
+		DEFAULT_GOALS.forEach((goalData) => {
 			const goal = new Goal();
 			goal.name = goalData.name;
 			goal.progress = 0;

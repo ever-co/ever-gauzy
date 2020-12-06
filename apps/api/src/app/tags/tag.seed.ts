@@ -3,41 +3,7 @@ import * as faker from 'faker';
 import { Tag } from './tag.entity';
 import { Tenant } from '../tenant/tenant.entity';
 import { Organization } from '../organization/organization.entity';
-
-const tagGlobalNames = [
-	'VIP',
-	'Urgent',
-	'Crazy',
-	'Broken',
-	'TODO',
-	'In Process',
-	'Verified',
-	'Third Party API',
-	'Killer',
-	'Idiot',
-	'Super',
-	'WIP'
-];
-
-const tagOrganizationsNames = [
-	'Program',
-	'Web',
-	'Mobile',
-	'Frontend',
-	'Backend',
-	'Database',
-	'Authentication',
-	'Security',
-	'Dashboard',
-	'API',
-	'Design',
-	'Testing',
-	'Local',
-	'QC',
-	'Production',
-	'Crap',
-	'WTF'
-];
+import { DEFAULT_GLOBAL_TAGS, DEFAULT_ORGANIZATION_TAGS } from './default-tags';
 
 export const createDefaultTags = async (
 	connection: Connection,
@@ -47,15 +13,15 @@ export const createDefaultTags = async (
 	let tags: Tag[] = [];
 
 	organizations.forEach((org) => {
-		const organizationTags: Tag[] = Object.values(tagGlobalNames).map(
+		const organizationTags: Tag[] = Object.values(DEFAULT_GLOBAL_TAGS).map(
 			(name) => {
 				const orgTags = new Tag();
 				orgTags.name = name;
 				orgTags.description = '';
 				orgTags.color = faker.commerce.color();
-				if(orgTags.color === 'white'){
-				  orgTags.color = 'Red'
-        }
+				if (orgTags.color === 'white') {
+					orgTags.color = 'Red';
+				}
 				orgTags.organization = org;
 				orgTags.tenant = tenant;
 				return orgTags;
@@ -68,14 +34,14 @@ export const createDefaultTags = async (
 
 export const createTags = async (connection: Connection): Promise<Tag[]> => {
 	const tags: Tag[] = [];
-	for (const name of tagOrganizationsNames) {
+	for (const name of DEFAULT_ORGANIZATION_TAGS) {
 		const tag = new Tag();
 		tag.name = name;
 		tag.description = '';
 		tag.color = faker.commerce.color();
-		if(tag.color === 'white'){
-		  tag.color = 'red';
-    }
+		if (tag.color === 'white') {
+			tag.color = 'red';
+		}
 		tags.push(tag);
 	}
 
@@ -99,22 +65,22 @@ export const createRandomOrganizationTags = async (
 	for (const tenant of tenants) {
 		const organizations = tenantOrganizationsMap.get(tenant);
 		organizations.forEach((org) => {
-			const organizationTags: Tag[] = Object.values(tagGlobalNames).map(
-				(name) => {
-					const orgTags = new Tag();
-					orgTags.name = name;
-					orgTags.description = '';
-					orgTags.color = faker.commerce.color();
-					orgTags.organization = org;
-					orgTags.tenant = tenant;
+			const organizationTags: Tag[] = Object.values(
+				DEFAULT_ORGANIZATION_TAGS
+			).map((name) => {
+				const orgTags = new Tag();
+				orgTags.name = name;
+				orgTags.description = '';
+				orgTags.color = faker.commerce.color();
+				orgTags.organization = org;
+				orgTags.tenant = tenant;
 
-					if(orgTags.color === 'white'){
-					  orgTags.color = 'red';
-          }
-
-					return orgTags;
+				if (orgTags.color === 'white') {
+					orgTags.color = 'red';
 				}
-			);
+
+				return orgTags;
+			});
 			tags = [...tags, ...organizationTags];
 		});
 	}

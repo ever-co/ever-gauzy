@@ -17,8 +17,9 @@ import { Role } from '../role/role.entity';
 import { User } from './user.entity';
 import { getUserDummyImage } from '../core';
 import { Tenant } from '../tenant/tenant.entity';
-import { DEFAULT_EMPLOYEES } from '../employee/employee';
-import { DEFAULT_CANDIDATES } from '../candidate/candidate';
+import { DEFAULT_EMPLOYEES } from '../employee/default-employees';
+import { DEFAULT_CANDIDATES } from '../candidate/default-candidates';
+import { DEFAULT_SUPER_ADMINS, DEFAULT_ADMINS } from './default-users';
 
 export const createDefaultSuperAdminUsers = async (
 	connection: Connection,
@@ -29,19 +30,9 @@ export const createDefaultSuperAdminUsers = async (
 	const superAdminRole = roles.find(
 		(role) => role.name === RolesEnum.SUPER_ADMIN
 	);
-	const defaultSuperAdmins = [
-		{
-			email: 'admin@ever.co',
-			password: 'admin',
-			firstName: 'Admin',
-			lastName: 'Super',
-			imageUrl: 'assets/images/avatars/ruslan.jpg',
-			preferredLanguage: LanguagesEnum.ENGLISH
-		}
-	];
 
 	// Generate default super admins
-	for (const superAdmin of defaultSuperAdmins) {
+	for (const superAdmin of DEFAULT_SUPER_ADMINS) {
 		const superAdminUser: User = await generateDefaultUser(
 			superAdmin,
 			superAdminRole,
@@ -239,20 +230,8 @@ const seedAdminUsers = async (
 	);
 	const admins: Promise<User>[] = [];
 	let adminUser: Promise<User>;
-
-	const defaultAdmins = [
-		{
-			email: 'local.admin@ever.co',
-			password: 'admin',
-			firstName: 'Admin',
-			lastName: 'Local',
-			imageUrl: 'assets/images/avatars/ruslan.jpg',
-			preferredLanguage: LanguagesEnum.ENGLISH
-		}
-	];
-
 	// Generate default admins
-	for (const admin of defaultAdmins) {
+	for (const admin of DEFAULT_ADMINS) {
 		adminUser = generateDefaultUser(admin, adminRole, tenant);
 		admins.push(adminUser);
 	}

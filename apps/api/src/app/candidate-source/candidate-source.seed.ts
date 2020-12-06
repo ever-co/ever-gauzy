@@ -1,26 +1,9 @@
 import { Connection } from 'typeorm';
-import { ICandidate, ICandidateSource } from '@gauzy/models';
+import { ICandidate } from '@gauzy/models';
 import { CandidateSource } from './candidate-source.entity';
 import { Tenant } from '../tenant/tenant.entity';
 import { Organization } from '../organization/organization.entity';
-
-const candidateSourceList: ICandidateSource[] = [
-	{
-		name: 'LinkedIn'
-	},
-	{
-		name: 'Indeed'
-	},
-	{
-		name: 'Idealist'
-	},
-	{
-		name: 'Dice'
-	},
-	{
-		name: 'Monster'
-	}
-];
+import { DEFAULT_CANDIDATE_SOURCES } from './default-candidate-sources';
 
 export const createCandidateSources = async (
 	connection: Connection,
@@ -37,9 +20,11 @@ export const createCandidateSources = async (
 
 	let defaultCandidateSources: CandidateSource[] = [];
 	candidates.forEach((candidate) => {
-		const rand = Math.floor(Math.random() * candidateSourceList.length);
+		const rand = Math.floor(
+			Math.random() * DEFAULT_CANDIDATE_SOURCES.length
+		);
 		const sources = {
-			name: candidateSourceList[rand].name,
+			name: DEFAULT_CANDIDATE_SOURCES[rand].name,
 			candidateId: candidate.id,
 			...{ organization, tenant }
 		};
@@ -69,11 +54,13 @@ export const createRandomCandidateSources = async (
 	(tenants || []).forEach((tenant) => {
 		const candidates = tenantCandidatesMap.get(tenant);
 
-		const rand = Math.floor(Math.random() * candidateSourceList.length);
+		const rand = Math.floor(
+			Math.random() * DEFAULT_CANDIDATE_SOURCES.length
+		);
 
 		(candidates || []).forEach((candidate) => {
 			const sources: any = {
-				name: candidateSourceList[rand].name,
+				name: DEFAULT_CANDIDATE_SOURCES[rand].name,
 				candidateId: candidate.id,
 				...{ organization: candidate.organization, tenant }
 			};

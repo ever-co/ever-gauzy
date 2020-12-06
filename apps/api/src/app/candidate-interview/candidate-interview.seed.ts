@@ -49,7 +49,7 @@ export const createRandomCandidateInterview = async (
 		const organizations = await connection.manager.find(Organization, {
 			where: [{ tenant: tenant }]
 		});
-		const orgnaization = faker.random.arrayElement(organizations);
+		const organization = faker.random.arrayElement(organizations);
 		const tenantCandidates = tenantCandidatesMap.get(tenant);
 		for (const tenantCandidate of tenantCandidates) {
 			candidates = await dataOperation(
@@ -57,7 +57,7 @@ export const createRandomCandidateInterview = async (
 				candidates,
 				tenantCandidate,
 				tenant,
-				orgnaization
+				organization
 			);
 		}
 	}
