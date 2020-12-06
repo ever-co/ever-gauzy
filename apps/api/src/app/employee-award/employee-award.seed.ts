@@ -2,7 +2,7 @@ import { Connection } from 'typeorm';
 import { Employee } from '../employee/employee.entity';
 import { EmployeeAward } from './employee-award.entity';
 import { Tenant } from '../tenant/tenant.entity';
-import { DEFAULT_EMPLOYEE_AWARDS } from './default-employee-award';
+import { DEFAULT_EMPLOYEE_AWARDS } from './default-employee-awards';
 
 export const createDefaultEmployeeAwards = async (
 	connection: Connection,

@@ -3,7 +3,7 @@ import { ICandidate } from '@gauzy/models';
 import { CandidateSource } from './candidate-source.entity';
 import { Tenant } from '../tenant/tenant.entity';
 import { Organization } from '../organization/organization.entity';
-import { DEFAULT_CANDIDATE_SOURCES } from './default-candidate-source';
+import { DEFAULT_CANDIDATE_SOURCES } from './default-candidate-sources';
 
 export const createCandidateSources = async (
 	connection: Connection,

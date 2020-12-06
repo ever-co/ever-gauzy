@@ -5,7 +5,7 @@ import { Tag } from '../tags/tag.entity';
 import { CurrenciesEnum, IOrganization } from '@gauzy/models';
 import { Tenant } from '../tenant/tenant.entity';
 import { Organization } from '../organization/organization.entity';
-import { DEFAULT_RANDOM_EQUIPMENTS } from './default-equipment';
+import { DEFAULT_RANDOM_EQUIPMENTS } from './default-equipments';
 
 export const createDefaultEquipments = async (
 	connection: Connection,

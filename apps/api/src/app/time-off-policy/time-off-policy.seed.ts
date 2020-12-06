@@ -7,7 +7,7 @@ import {
 import { TimeOffPolicy } from './time-off-policy.entity';
 import { Tenant } from '../tenant/tenant.entity';
 import * as faker from 'faker';
-import { DEFAULT_TIMEOFF_POLICIES } from './default-time-off-policy';
+import { DEFAULT_TIMEOFF_POLICIES } from './default-time-off-policies';
 
 export const createDefaultTimeOffPolicy = async (
 	connection: Connection,

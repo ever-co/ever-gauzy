@@ -4,7 +4,7 @@ import * as faker from 'faker';
 import { Tenant } from '../tenant/tenant.entity';
 import { Organization } from '../organization/organization.entity';
 import { Tag } from '../tags/tag.entity';
-import { DEFAULT_ORGANIZATION_DEPARTMENTS } from './default-organization-department';
+import { DEFAULT_ORGANIZATION_DEPARTMENTS } from './default-organization-departments';
 
 export const createDefaultOrganizationDepartments = async (
 	connection: Connection,
