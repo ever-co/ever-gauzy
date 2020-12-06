@@ -1999,8 +1999,11 @@ export class SeedDataService {
 	 * Reset the database, truncate all tables (remove all data)
 	 */
 	private async resetDatabase() {
+		this.log(chalk.green(`RESETTING DATABASE`));
+
 		const entities = await this.getEntities();
 		await this.cleanAll(entities);
+
 		this.log(chalk.green(`✅ RESET DATABASE SUCCESSFUL`));
 	}
 
