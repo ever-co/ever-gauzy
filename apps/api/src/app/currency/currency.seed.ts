@@ -1,7 +1,7 @@
 import { Connection } from 'typeorm';
 import { ICurrency } from '@gauzy/models';
 import { Currency } from './currency.entity';
-import { DEFAULT_CURRENCY_ENTITY } from './currency';
+import { DEFAULT_CURRENCIES } from './default-currencies';
 
 export const createCurrencies = async (
 	connection: Connection
@@ -9,7 +9,7 @@ export const createCurrencies = async (
 	return await new Promise<ICurrency[]>(async (resolve, reject) => {
 		try {
 			const currencies: ICurrency[] = [];
-			const entries = DEFAULT_CURRENCY_ENTITY;
+			const entries = DEFAULT_CURRENCIES;
 			for (const key of Object.keys(entries)) {
 				if (entries.hasOwnProperty(key)) {
 					const currency: ICurrency = {

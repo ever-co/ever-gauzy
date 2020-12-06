@@ -1,4 +1,4 @@
-export const DEFAULT_CURRENCY_ENTITY = {
+export const DEFAULT_CURRENCIES = {
 	AFN: 'Afghan Afghani',
 	AFA: 'Afghan Afghani (1927\u20132002)',
 	ALL: 'Albanian Lek',

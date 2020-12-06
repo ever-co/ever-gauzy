@@ -17,8 +17,8 @@ import { Role } from '../role/role.entity';
 import { User } from './user.entity';
 import { getUserDummyImage } from '../core';
 import { Tenant } from '../tenant/tenant.entity';
-import { DEFAULT_EMPLOYEES } from '../employee/employee';
-import { DEFAULT_CANDIDATES } from '../candidate/candidate';
+import { DEFAULT_EMPLOYEES } from '../employee/default-employees';
+import { DEFAULT_CANDIDATES } from '../candidate/default-candidates';
 
 export const createDefaultSuperAdminUsers = async (
 	connection: Connection,

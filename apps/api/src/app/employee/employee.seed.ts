@@ -6,7 +6,7 @@ import { User } from '../user/user.entity';
 import { date as fakerDate } from 'faker';
 import { CurrenciesEnum, ISeedUsers, PayPeriodEnum } from '@gauzy/models';
 import * as faker from 'faker';
-import { DEFAULT_EMPLOYEES } from './employee';
+import { DEFAULT_EMPLOYEES } from './default-employees';
 import * as moment from 'moment';
 
 export const createDefaultEmployees = async (

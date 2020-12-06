@@ -1,4 +1,4 @@
-export const DEFAULT_COUNTRY_ENTITY = {
+export const DEFAULT_COUNTRIES = {
 	AF: 'Afghanistan',
 	AX: '\u00c5land Islands',
 	AL: 'Albania',
