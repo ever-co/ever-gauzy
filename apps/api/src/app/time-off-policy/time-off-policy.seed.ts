@@ -7,6 +7,7 @@ import {
 import { TimeOffPolicy } from './time-off-policy.entity';
 import { Tenant } from '../tenant/tenant.entity';
 import * as faker from 'faker';
+import { DEFAULT_TIMEOFF_POLICIES } from './default-time-off-policy';
 
 export const createDefaultTimeOffPolicy = async (
 	connection: Connection,
@@ -46,23 +47,10 @@ export const createRandomTimeOffPolicies = async (
 	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
 ): Promise<TimeOffPolicy[]> => {
 	const policies: TimeOffPolicy[] = [];
-	const policyArray = [
-		'Policy 1',
-		'Policy 2',
-		'Policy 3',
-		'Policy 4',
-		'Policy 5',
-		'Policy 6',
-		'Policy 7',
-		'Policy 8',
-		'Policy 9',
-		'Policy 10'
-	];
-
 	(tenants || []).forEach((tenant) => {
 		const organizations = tenantOrganizationsMap.get(tenant);
 		(organizations || []).forEach((organization) => {
-			policyArray.forEach((name) => {
+			DEFAULT_TIMEOFF_POLICIES.forEach((name) => {
 				const policy = new TimeOffPolicy();
 				policy.name = name;
 				policy.organization = organization;

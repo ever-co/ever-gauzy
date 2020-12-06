@@ -16,7 +16,7 @@ import { OrganizationProject } from '../organization-projects/organization-proje
 import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
 import { ExpenseCategory } from '../expense-categories/expense-category.entity';
 import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
-import { EmployeeLevel } from '../organization_employeeLevel/organization-employee-level.entity';
+import { EmployeeLevel } from '../organization_employee-level/organization-employee-level.entity';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { Product } from '../product/product.entity';

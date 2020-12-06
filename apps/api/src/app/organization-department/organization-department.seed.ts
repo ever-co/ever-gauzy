@@ -4,17 +4,7 @@ import * as faker from 'faker';
 import { Tenant } from '../tenant/tenant.entity';
 import { Organization } from '../organization/organization.entity';
 import { Tag } from '../tags/tag.entity';
-
-const organizationDepartmentsArray = [
-	'Designers',
-	'QA',
-	'Engineering',
-	'Management',
-	'Sales',
-	'Marketing',
-	'Frontend Developers',
-	'Backend Developers'
-];
+import { DEFAULT_ORGANIZATION_DEPARTMENTS } from './default-organization-department';
 
 export const createDefaultOrganizationDepartments = async (
 	connection: Connection,
@@ -28,7 +18,7 @@ export const createDefaultOrganizationDepartments = async (
 	const departments: OrganizationDepartment[] = [];
 
 	for (const defaultOrganization of defaultOrganizations) {
-		organizationDepartmentsArray.forEach((name) => {
+		DEFAULT_ORGANIZATION_DEPARTMENTS.forEach((name) => {
 			const department = new OrganizationDepartment();
 			department.tags = [tag];
 			department.name = name;
@@ -50,7 +40,7 @@ export const seedRandomOrganizationDepartments = async (
 	for (const tenant of tenants) {
 		const organizations = tenantOrganizationsMap.get(tenant);
 		organizations.forEach(({ id: organizationId }) => {
-			const organizationDepartments: OrganizationDepartment[] = organizationDepartmentsArray.map(
+			const organizationDepartments: OrganizationDepartment[] = DEFAULT_ORGANIZATION_DEPARTMENTS.map(
 				(name) => {
 					const employmentDepartment = new OrganizationDepartment();
 					employmentDepartment.name = name;

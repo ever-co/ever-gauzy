@@ -1,21 +1,12 @@
-import { ICandidate, CandidateStatus, ICandidateFeedback } from '@gauzy/models';
+import { ICandidate, CandidateStatus } from '@gauzy/models';
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
 import { CandidateFeedback } from './candidate-feedbacks.entity';
 import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
 import * as faker from 'faker';
 import { Organization } from '../organization/organization.entity';
+import { DEFAULT_CANDIDATE_FEEDBACKS } from './default-candidate-feedbacks';
 
-const candidateFeedbackList: ICandidateFeedback[] = [
-	{
-		description: 'Feedback 1',
-		rating: 4
-	},
-	{
-		description: 'Feedback 2',
-		rating: 3
-	}
-];
 export const createCandidateFeedbacks = async (
 	connection: Connection,
 	tenant: Tenant,
@@ -98,12 +89,10 @@ const dataOperation = async (
 	for (const candidate of candidates) {
 		const candidateInterviews = await connection.manager.find(
 			CandidateInterview,
-			{
-				where: [{ candidate: candidate }]
-			}
+			{ where: [{ candidate: candidate }] }
 		);
 		const interview = faker.random.arrayElement(candidateInterviews);
-		const feedbacks = candidateFeedbackList.map((feedback) => ({
+		const feedbacks = DEFAULT_CANDIDATE_FEEDBACKS.map((feedback) => ({
 			description: feedback.description,
 			rating: feedback.rating,
 			candidateId: candidate.id,
