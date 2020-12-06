@@ -123,6 +123,16 @@ function startServer(value, restart = false) {
 		serverGauzy.stdout.on('data', (data) => {
 			const msgData = data.toString();
 			console.log('log -- ', msgData);
+			setupWindow.webContents.send('setup-progress', {
+				msg: msgData
+			});
+			if (!value.isSetup && !value.serverConfigConnected) {
+				if (msgData.indexOf('Listening at http') > -1) {
+					setupWindow.hide();
+					// isAlreadyRun = true;
+					gauzyWindow = createGauzyWindow(gauzyWindow, serve);
+				}
+			}
 			if (
 				msgData.indexOf('Unable to connect to the database') > -1 &&
 				!dialogErr
@@ -144,8 +154,10 @@ function startServer(value, restart = false) {
 	} catch (error) {}
 
 	/* create main window */
-	setupWindow.hide();
-	gauzyWindow = createGauzyWindow(gauzyWindow, serve);
+	if (value.serverConfigConnected || !value.isLocalServer) {
+		setupWindow.hide();
+		gauzyWindow = createGauzyWindow(gauzyWindow, serve);
+	}
 	const auth = store.get('auth');
 	tray = new TrayIcon(
 		setupWindow,
@@ -256,7 +268,8 @@ app.on('ready', async () => {
 			}, 1000);
 		} else {
 			global.variableGlobal = {
-				API_BASE_URL: getApiBaseUrl(configs)
+				API_BASE_URL: getApiBaseUrl(configs),
+				IS_INTEGRATED_DESKTOP: configs.isLocalServer
 			};
 			setupWindow = createSetupWindow(setupWindow, true);
 			startServer(configs);
@@ -272,7 +285,11 @@ app.on('window-all-closed', quit);
 
 ipcMain.on('server_is_ready', () => {
 	LocalStore.setDefaultApplicationSetting();
-
+	const appConfig = LocalStore.getStore('configs');
+	appConfig.serverConfigConnected = true;
+	store.set({
+		configs: appConfig
+	});
 	onWaitingServer = false;
 	if (!isAlreadyRun) {
 		serverDesktop = fork(path.join(__dirname, 'desktop-api/main.js'));
@@ -286,11 +303,6 @@ ipcMain.on('server_is_ready', () => {
 			settingsWindow
 		);
 		isAlreadyRun = true;
-		const appConfig = LocalStore.getStore('configs');
-		appConfig.serverConfigConnected = true;
-		store.set({
-			configs: appConfig
-		});
 	}
 });
 
@@ -319,7 +331,8 @@ ipcMain.on('restart_app', (event, arg) => {
 		if (!gauzyWindow) {
 			const configs = LocalStore.getStore('configs');
 			global.variableGlobal = {
-				API_BASE_URL: getApiBaseUrl(configs)
+				API_BASE_URL: getApiBaseUrl(configs),
+				IS_INTEGRATED_DESKTOP: configs.isLocalServer
 			};
 			startServer(configs, tray ? true : false);
 			setupWindow.webContents.send('server_ping_restart', {

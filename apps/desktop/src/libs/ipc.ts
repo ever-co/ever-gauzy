@@ -18,7 +18,8 @@ export function ipcMainHandler(store, startServer, knex) {
 				? arg.serverUrl
 				: arg.port
 				? `http://localhost:${arg.port}`
-				: `http://localhost:${environment.API_DEFAULT_PORT}`
+				: `http://localhost:${environment.API_DEFAULT_PORT}`,
+			IS_INTEGRATED_DESKTOP: arg.isLocalServer
 		};
 		startServer(arg);
 	});

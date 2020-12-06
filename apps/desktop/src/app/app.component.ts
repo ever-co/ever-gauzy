@@ -186,7 +186,7 @@ export class AppComponent implements OnInit {
 							clearInterval(pinghost);
 						}
 					});
-			}, 3000);
+			}, 1000);
 		});
 
 		this.electronService.ipcRenderer.on(

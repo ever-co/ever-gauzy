@@ -13,7 +13,8 @@ import {
 	NbCheckboxModule,
 	NbIconModule,
 	NbStepperModule,
-	NbRadioModule
+	NbRadioModule,
+	NbProgressBarModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
@@ -34,7 +35,8 @@ import { NbEvaIconsModule } from '@nebular/eva-icons';
 		NbEvaIconsModule,
 		NbStepperModule,
 		NbIconModule,
-		NbRadioModule
+		NbRadioModule,
+		NbProgressBarModule
 	],
 	exports: [SetupComponent],
 	providers: [SetupService]
