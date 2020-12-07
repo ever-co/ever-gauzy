@@ -95,9 +95,11 @@ export class PaymentMutationComponent
 
 	async addEditPayment() {
 		const paymentData = this.form.value;
-		this.invoice = this.invoices.find(
-			(item) => paymentData.invoiceId === item.id
-		);
+		if (this.invoices) {
+			this.invoice = this.invoices.find(
+				(item) => paymentData.invoiceId === item.id
+			);
+		}
 		const payment = {
 			amount: paymentData.amount,
 			paymentDate: paymentData.paymentDate,
