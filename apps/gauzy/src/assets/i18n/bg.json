@@ -1754,7 +1754,11 @@
 		"EMPLOYEE": "Служител",
 		"DESCRIPTION": "Description",
 		"IS_DEFAULT": "Is Default",
-		"CONFIRM_DELETE": "Are you sure that, you want to delete"
+		"CONFIRM_DELETE": "Are you sure that, you want to delete",
+		"PROPOSAL_CREATE_MESSAGE": "Proposal template successfully created",
+		"PROPOSAL_EDIT_MESSAGE": "Proposal template successfully edited",
+		"PROPOSAL_DELETE_MESSAGE": "Proposal template successfully deleted",
+		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Proposal template successfully made as default"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Sprint added",
@@ -2564,7 +2568,10 @@
 		"HEADER": "Pipeline Deals",
 		"FILTER_BY_STAGE": "Filter by Stage",
 		"RECORD_TYPE": "stage \"{{ title }}\"",
-		"ALL_STAGES": "All Stages"
+		"ALL_STAGES": "All Stages",
+		"DEAL_DELETED": "Deal deleted",
+		"DEAL_EDITED": "Deal edited",
+		"DEAL_ADDED": "Deal added"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Edit Deal | Pipeline: {{ name }}"
