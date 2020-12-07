@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ExportAllService } from '../../../@core/services/exportAll.service';
 import { saveAs } from 'file-saver';
-import { Router } from '@angular/router';
 import * as _ from 'lodash';
 import { Store } from '../../../@core/services/store.service';
 import { IOrganization } from '@gauzy/models';
@@ -28,11 +27,7 @@ export class ExportComponent implements OnInit, OnDestroy {
 	organization: IOrganization;
 	private _ngDestroy$ = new Subject<void>();
 
-	constructor(
-		private exportAll: ExportAllService,
-		private router: Router,
-		private store: Store
-	) {}
+	constructor(private exportAll: ExportAllService, private store: Store) {}
 
 	ngOnInit() {
 		this.getEntities();
@@ -127,17 +122,6 @@ export class ExportComponent implements OnInit, OnDestroy {
 			.downloadAllData({ organizationId, tenantId })
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((data) => saveAs(data, `export.zip`));
-	}
-
-	onDownloadTemplates() {
-		this.exportAll
-			.downloadTemplates()
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((data) => saveAs(data, `template.zip`));
-	}
-
-	importPage() {
-		this.router.navigate(['/pages/settings/import-export/import']);
 	}
 
 	getEntities() {
