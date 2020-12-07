@@ -1754,7 +1754,11 @@
 		"EMPLOYEE": "Сотрудник",
 		"DESCRIPTION": "Описание",
 		"IS_DEFAULT": "По умолчанию",
-		"CONFIRM_DELETE": "Вы уверены, что хотите удалить"
+		"CONFIRM_DELETE": "Вы уверены, что хотите удалить",
+		"PROPOSAL_CREATE_MESSAGE": "Шаблон предложения успешно создан",
+		"PROPOSAL_EDIT_MESSAGE": "Шаблон предложения отредактирован",
+		"PROPOSAL_DELETE_MESSAGE": "Шаблон предложения успешно удален",
+		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Шаблон предложения успешно создан по умолчанию"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Спринт добавлен",
@@ -2564,7 +2568,10 @@
 		"HEADER": "Сделки Трубопровода",
 		"FILTER_BY_STAGE": "Фильтр по этапу",
 		"RECORD_TYPE": "этап \"{{ title }}\"",
-		"ALL_STAGES": "Все этапы"
+		"ALL_STAGES": "Все этапы",
+		"DEAL_DELETED": "Сделка удалена",
+		"DEAL_EDITED": "Предложение отредактировано",
+		"DEAL_ADDED": "Сделка добавлена"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Редактировать сделку | Пипеллинн: {{ name }}"
