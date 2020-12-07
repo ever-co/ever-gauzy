@@ -31,8 +31,7 @@ export const createRandomTenants = async (
 		});
 	}
 
-	await insertTenants(connection, randomTenants);
-	return randomTenants;
+	return await insertTenants(connection, randomTenants);
 };
 
 const insertTenant = async (
@@ -59,11 +58,6 @@ const insertTenant = async (
 const insertTenants = async (
 	connection: Connection,
 	tenants: Tenant[]
-): Promise<void> => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(Tenant)
-		.values(tenants)
-		.execute();
+): Promise<Tenant[]> => {
+	return await connection.manager.save(tenants);
 };

@@ -19,7 +19,6 @@ export const createDefaultEmployeeTimeOff = async (
 	noOfEmployeeTimeOffRequest: number
 ): Promise<TimeOffRequest[]> => {
 	let requests: TimeOffRequest[] = [];
-	// for (const organization of organizations) {
 	const policies = await connection.manager.find(TimeOffPolicy, {
 		where: [{ organizationId: organization.id }]
 	});
@@ -32,8 +31,6 @@ export const createDefaultEmployeeTimeOff = async (
 		employees,
 		policies
 	);
-	// }
-
 	return requests;
 };
 
@@ -79,6 +76,7 @@ const dataOperation = async (
 		const request = new TimeOffRequest();
 		request.organizationId = organization.id;
 		request.tenant = tenant;
+		console.log(employees, 'employees');
 		request.employees = _.chain(employees)
 			.shuffle()
 			.take(faker.random.number({ min: 1, max: 3 }))

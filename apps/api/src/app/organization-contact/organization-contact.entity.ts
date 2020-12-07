@@ -7,7 +7,8 @@ import {
 	OneToMany,
 	JoinTable,
 	RelationId,
-	ManyToOne
+	ManyToOne,
+	OneToOne
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -37,7 +38,8 @@ import { Payment } from '../payment/payment.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('organization_contact')
-export class OrganizationContact extends TenantOrganizationBase
+export class OrganizationContact
+	extends TenantOrganizationBase
 	implements IOrganizationContact {
 	@ApiProperty()
 	@ManyToMany((type) => Tag, (tag) => tag.organizationContact)
@@ -47,7 +49,9 @@ export class OrganizationContact extends TenantOrganizationBase
 	tags: ITag[];
 
 	@ApiProperty({ type: Contact })
-	@ManyToOne(() => Contact, { nullable: true, cascade: true })
+	@ManyToOne(() => Contact, (contact) => contact.organization_contacts, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	contact: IContact;
 

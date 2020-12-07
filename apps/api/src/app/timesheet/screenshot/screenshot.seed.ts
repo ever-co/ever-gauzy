@@ -5,6 +5,7 @@ import { TimeSlot } from '../time-slot.entity';
 import { Screenshot } from '../screenshot.entity';
 import * as moment from 'moment';
 import { environment as env } from '@env-api/environment';
+import { Tenant } from '../../tenant/tenant.entity';
 
 let fileList: string[] = [];
 
@@ -24,13 +25,14 @@ if (env.isElectron) {
 	baseDir = path.join(path.resolve('.', ...['apps']), 'api');
 }
 
-const destDir = path.join(
-	'public',
-	'screenshots',
-	moment().format('YYYY/MM/DD')
-);
+const fileDir = path.join('screenshots', moment().format('YYYY/MM/DD'));
 
-export const createRandomScreenshot = async (timeSlot: TimeSlot, tenant) => {
+const destDir = path.join('public', fileDir);
+
+export const createRandomScreenshot = async (
+	timeSlot: TimeSlot,
+	tenant: Tenant
+): Promise<Screenshot[]> => {
 	await getList();
 
 	const screenshots: Screenshot[] = [];
@@ -40,10 +42,10 @@ export const createRandomScreenshot = async (timeSlot: TimeSlot, tenant) => {
 		index++
 	) {
 		const sourceFile = faker.random.arrayElement(fileList);
-		const destFile = path.join(
-			destDir,
-			'screenshot-' + moment().unix() + faker.random.number(999) + '.jpg'
-		);
+		const sourceName =
+			'screenshot-' + moment().unix() + faker.random.number(999) + '.jpg';
+
+		const destFile = path.join(destDir, sourceName);
 
 		fs.mkdirSync(path.join(baseDir, destDir), { recursive: true });
 
@@ -55,7 +57,7 @@ export const createRandomScreenshot = async (timeSlot: TimeSlot, tenant) => {
 				if (err) {
 					resolve('');
 				}
-				resolve(destFile);
+				resolve(path.join(fileDir, sourceName));
 			});
 		});
 
@@ -65,7 +67,8 @@ export const createRandomScreenshot = async (timeSlot: TimeSlot, tenant) => {
 			screenshot.organizationId = timeSlot.organizationId;
 
 			screenshot.fullUrl = file;
-			screenshot.file = sourceFile;
+			screenshot.file = file;
+			screenshot.thumb = file;
 			screenshot.timeSlot = timeSlot;
 			screenshot.thumbUrl = file;
 			screenshot.recordedAt = faker.date.between(

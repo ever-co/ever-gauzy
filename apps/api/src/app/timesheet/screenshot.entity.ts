@@ -16,7 +16,9 @@ import { TenantOrganizationBase } from '../core/entities/tenant-organization-bas
 @Entity('screenshot')
 export class Screenshot extends TenantOrganizationBase implements IScreenshot {
 	@ApiProperty({ type: TimeSlot })
-	@ManyToOne(() => TimeSlot, { nullable: true, onDelete: 'CASCADE' })
+	@ManyToOne(() => TimeSlot, (timeSlot) => timeSlot.screenshots, {
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	timeSlot?: ITimeSlot;
 

@@ -1,5 +1,7 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-
+import { ICandidate } from './candidate.model';
+import { IEmployee } from './employee.model';
+import { IOrganizationContact } from './organization-contact.model';
 export interface IContact extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 	name?: string;
@@ -16,6 +18,9 @@ export interface IContact extends IBasePerTenantAndOrganizationEntityModel {
 	fax?: string;
 	fiscalInformation?: string;
 	website?: string;
+	organization_contacts?: IOrganizationContact[];
+	employees?: IEmployee[];
+	candidates?: ICandidate[];
 }
 
 export interface IContactFindInput extends IContactCreateInput {

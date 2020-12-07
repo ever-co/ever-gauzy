@@ -517,7 +517,7 @@ export class SeedDataService {
 
 			if (!isDefault) {
 				await this.seedDefaultData();
-				await this.seedRandomData();
+				// await this.seedRandomData();
 			}
 
 			this.log(
@@ -811,6 +811,7 @@ export class SeedDataService {
 				this.organizations[0]
 			)
 		);
+
 		await this.tryExecute(
 			'Default Candidate Interview',
 			createDefaultCandidateInterview(
@@ -1330,7 +1331,6 @@ export class SeedDataService {
 			createRandomTeam(
 				this.connection,
 				tenants,
-				tenantEmployeeMap,
 				tenantOrganizationsMap,
 				roles
 			)
