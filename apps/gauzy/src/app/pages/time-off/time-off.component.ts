@@ -446,6 +446,7 @@ export class TimeOffComponent
 	}
 
 	private _loadTableData(orgId?: string) {
+		this.loading = true;
 		const { tenantId } = this.store.user;
 		this.timeOffService
 			.getAllTimeOffRecords(
@@ -497,6 +498,7 @@ export class TimeOffComponent
 						'TIME_OFF_PAGE.NOTIFICATIONS.ERR_LOAD_RECORDS'
 					)
 			);
+		this.loading = false;
 	}
 
 	private _createRecord() {

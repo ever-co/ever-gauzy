@@ -20,7 +20,7 @@ import { SmartTableToggleComponent } from 'apps/gauzy/src/app/@shared/smart-tabl
 export class EmployeesComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	loading = false;
+	loading: boolean;
 
 	settingsSmartTable: any = {
 		editable: false,
@@ -63,6 +63,7 @@ export class EmployeesComponent
 	}
 
 	getEmployees() {
+		this.loading = true;
 		this.employeesService
 			.getEmployeeJobsStatistics({
 				relations: ['user'],
@@ -73,6 +74,7 @@ export class EmployeesComponent
 			})
 			.then((data) => {
 				this.smartTableSource.load(data.items);
+				this.loading = false;
 			});
 	}
 

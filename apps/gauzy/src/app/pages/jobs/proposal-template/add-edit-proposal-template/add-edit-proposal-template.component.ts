@@ -86,6 +86,15 @@ export class AddEditProposalTemplateComponent implements OnInit {
 
 			resp.then((data) => {
 				this.dialogRef.close(data);
+				if (this.mode === 'create') {
+					this.toastrService.success(
+						'PROPOSAL_TEMPLATE.PROPOSAL_CREATE_MESSAGE'
+					);
+				} else {
+					this.toastrService.success(
+						'PROPOSAL_TEMPLATE.PROPOSAL_EDIT_MESSAGE'
+					);
+				}
 			}).catch((error) => {
 				this.toastrService.error(error);
 			});

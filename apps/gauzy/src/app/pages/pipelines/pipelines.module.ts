@@ -9,7 +9,8 @@ import {
 	NbIconModule,
 	NbInputModule,
 	NbSelectModule,
-	NbCheckboxModule
+	NbCheckboxModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { PipelinesRouting } from './pipelines.routing';
 import { TranslateModule } from '@ngx-translate/core';
@@ -55,6 +56,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 		Ng2SmartTableModule,
 		NbAccordionModule,
 		NbFormFieldModule,
+		NbSpinnerModule,
 		PipelinesRouting,
 		TranslateModule,
 		DragDropModule,
