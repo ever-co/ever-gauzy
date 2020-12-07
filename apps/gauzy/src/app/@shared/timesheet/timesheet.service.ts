@@ -11,7 +11,9 @@ import {
 	IGetTimeSlotInput,
 	ITimeSlot,
 	IGetTimeLogReportInput,
-	IAmountOwedReport
+	IAmountOwedReport,
+	IGetTimeLimitReportInput,
+	ITimeLimitReport
 } from '@gauzy/models';
 import { toParams } from '@gauzy/utils';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
@@ -142,6 +144,14 @@ export class TimesheetService {
 		const params = toParams(request);
 		return this.http
 			.get('/api/timesheet/time-log/report/weekly', { params })
+			.toPromise();
+	}
+
+	getTimeLimit(request: IGetTimeLimitReportInput) {
+		return this.http
+			.get<ITimeLimitReport[]>('/api/timesheet/time-log/time-limit', {
+				params: toParams(request)
+			})
 			.toPromise();
 	}
 

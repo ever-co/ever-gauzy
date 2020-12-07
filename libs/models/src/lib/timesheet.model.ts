@@ -448,3 +448,21 @@ export type IReportDayData =
 	| IReportDayGroupByEmployee
 	| IReportDayGroupByProject
 	| IReportDayGroupByClient;
+
+export interface IGetTimeLimitReportInput {
+	organizationId?: string;
+	startDate?: string | Date;
+	endDate?: string | Date;
+	employeeId?: string;
+	relations?: string[];
+	duration?: 'day' | 'week' | 'month';
+}
+export interface ITimeLimitReport {
+	date: string;
+	employeeLogs: {
+		employee: IEmployee;
+		duration: number;
+		durationPercentage: number;
+		limit: number;
+	}[];
+}

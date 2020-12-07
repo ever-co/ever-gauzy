@@ -12,7 +12,9 @@ import {
 	IGetTimeLogReportInput,
 	ITimeLog,
 	TimeLogType,
-	IAmountOwedReport
+	IAmountOwedReport,
+	IGetTimeLimitReportInput,
+	ITimeLimitReport
 } from '@gauzy/models';
 import * as moment from 'moment';
 import { CrudService } from '../../core';
@@ -388,6 +390,95 @@ export class TimeLogService extends CrudService<TimeLog> {
 		});
 
 		return dates;
+	}
+
+	async getTimeLimit(request: IGetTimeLimitReportInput) {
+		if (!request.duration) {
+			request.duration = 'day';
+		}
+		const timeLogs = await this.timeLogRepository.find({
+			relations: ['employee', 'employee.user'],
+			order: {
+				startedAt: 'ASC'
+			},
+			where: (qb: SelectQueryBuilder<TimeLog>) => {
+				this.getFilterTimeLogQuery(qb, request);
+			}
+		});
+
+		let dayList = [];
+		const range = {};
+		let i = 0;
+		const start = moment(request.startDate);
+		while (start.isSameOrBefore(request.endDate) && i < 7) {
+			const date = start.format('YYYY-MM-DD');
+			range[date] = null;
+			start.add(1, 'day');
+			i++;
+		}
+		dayList = Object.keys(range);
+
+		const byDate: any = chain(timeLogs)
+			.groupBy((log) => {
+				moment(log.startedAt)
+					.startOf(request.duration)
+					.format('YYYY-MM-DD');
+			})
+			.mapObject((byDateLogs: ITimeLog[], date) => {
+				const byEmployee = chain(byDateLogs)
+					.groupBy('employeeId')
+					.map((byEmployeeLogs: ITimeLog[]) => {
+						const durationSum = byEmployeeLogs.reduce(
+							(iteratee: any, log: any) => {
+								return iteratee + log.duration;
+							},
+							0
+						);
+
+						const employee =
+							byEmployeeLogs.length > 0
+								? byEmployeeLogs[0].employee
+								: null;
+
+						let limit = employee.reWeeklyLimit;
+						if (request.duration === 'day') {
+							limit = employee.reWeeklyLimit / 5;
+						} else if (request.duration === 'month') {
+							limit = employee.reWeeklyLimit * 4;
+						}
+
+						const durationPercentage =
+							((durationSum / 3600) * 100) / limit;
+
+						return {
+							employee,
+							duration: durationSum,
+							durationPercentage,
+							limit
+						};
+					})
+					.value();
+
+				const value = byEmployee.reduce((iteratee: any, obj: any) => {
+					return iteratee + obj.amount;
+				}, 0);
+
+				return { date, value };
+			})
+			.value();
+
+		const dates = dayList.map((date) => {
+			if (byDate[date]) {
+				return byDate[date];
+			} else {
+				return {
+					date: date,
+					value: 0
+				};
+			}
+		});
+
+		return dates as ITimeLimitReport[];
 	}
 
 	getFilterTimeLogQuery(

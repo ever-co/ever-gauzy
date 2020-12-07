@@ -1,0 +1,186 @@
+<nb-card>
+	<nb-card-header>
+		<h4>{{ 'REPORT_PAGE.PAYMENT_REPORT' | translate }}</h4>
+		<div>
+			{{ logRequest?.startDate | date }} -
+			{{ logRequest?.endDate | date }}
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="filters mt-4 mb-4">
+			<ngx-filters
+				dateRange="custom_range"
+				[hasEmployeeFilter]="false"
+				[hasActivityLevelFilter]="false"
+				[hasSourceFilter]="false"
+				[hasLogTypeFilter]="false"
+				[hasEmployeeFilter]="false"
+				[saveFilters]="false"
+				[filters]="logRequest"
+				(filtersChange)="filtersChange($event)"
+			></ngx-filters>
+		</div>
+
+		<div
+			class="weekly-logs row-table"
+			[nbSpinner]="loading"
+			nbSpinnerSize="giant"
+			nbSpinnerStatus="primary"
+		>
+			<div class="px-4" *ngIf="dailyData?.length > 0">
+				<div class="row py-3 font-weight-bold align-items-center">
+					<div *ngIf="groupBy != 'date'" class="col-sm-2">
+						{{ 'REPORT_PAGE.DATE' | translate }}
+					</div>
+					<div *ngIf="groupBy != 'employee'" class="col-sm-2">
+						{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+					</div>
+					<div *ngIf="groupBy != 'project'" class="col-sm-2">
+						{{ 'REPORT_PAGE.PROJECT' | translate }}
+					</div>
+					<div class="col-sm-3 text-center day-col">
+						{{ 'REPORT_PAGE.TITLE' | translate }}
+					</div>
+					<div class="col text-center day-col">
+						{{ 'REPORT_PAGE.DURATION' | translate }}
+					</div>
+					<div class="col text-center day-col"></div>
+				</div>
+			</div>
+
+			<ng-template [ngIf]="dailyData?.length > 0" [ngIfElse]="notFound">
+				<nb-card
+					[ngSwitch]="groupBy"
+					class="card"
+					*ngFor="let day of dailyData"
+				>
+					<nb-card-header class="card-title">{{
+						day.date
+					}}</nb-card-header>
+					<nb-card-body
+						class="cart-body project-row"
+						*ngFor="
+							let employeeRow of day.employees;
+							let employeeIndex = index
+						"
+					>
+						<div
+							class="project-row"
+							*ngFor="
+								let projectRow of employeeRow.projects;
+								let projectIndex = index
+							"
+						>
+							<div
+								class="activity-row"
+								*ngFor="
+									let activityRow of projectRow.activity;
+									let activityIndex = index
+								"
+							>
+								<div
+									class="row report-row py-1 align-items-center"
+									[ngClass]="{
+										'mt-3':
+											activityIndex == 0 &&
+											projectIndex == 0
+									}"
+								>
+									<div class="col-sm-2 project-name">
+										<ng-template
+											[ngIf]="
+												activityIndex == 0 &&
+												projectIndex == 0
+											"
+										>
+											<ng-container
+												*ngTemplateOutlet="
+													employeeEl;
+													context: {
+														$implicit:
+															employeeRow?.employee
+													}
+												"
+											>
+											</ng-container>
+										</ng-template>
+									</div>
+									<div class="col-sm-2 project-name">
+										<ng-template
+											[ngIf]="activityIndex == 0"
+										>
+											<ng-container
+												*ngTemplateOutlet="
+													projectEl;
+													context: {
+														$implicit:
+															projectRow?.project
+													}
+												"
+											>
+											</ng-container>
+										</ng-template>
+									</div>
+									<div class="col-sm-3 text-center day-col">
+										{{ activityRow?.title }}
+									</div>
+									<div class="col text-center day-col">
+										{{
+											activityRow?.duration
+												| durationFormat
+										}}
+									</div>
+									<div class="col text-center day-col">
+										<ngx-progress-status
+											[percentage]="
+												activityRow?.duration_percentage
+											"
+										></ngx-progress-status>
+									</div>
+								</div>
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</ng-template>
+			<ng-template #notFound>
+				<nb-card>
+					<nb-card-body>
+						<div
+							class="row font-weight-bold py-5 align-items-center"
+						>
+							<div class="col text-center">
+								{{ 'REPORT_PAGE.NO_ACTIVITIES' | translate }}
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</ng-template>
+		</div>
+	</nb-card-body>
+</nb-card>
+
+<ng-template let-project #projectEl>
+	<span *ngIf="project; else noProjects">{{ project?.name }} </span>
+	<ng-template #noProjects>
+		<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
+	</ng-template>
+</ng-template>
+
+<ng-template let-client #clientEl>
+	<span *ngIf="client; else noClient">{{ client?.name }} </span>
+	<ng-template #noClient>
+		<span>{{ 'REPORT_PAGE.NO_CLIENT' | translate }}</span>
+	</ng-template>
+</ng-template>
+
+<ng-template let-employee #employeeEl>
+	<ngx-avatar
+		*ngIf="employee"
+		[src]="employee?.user?.imageUrl"
+		[name]="employee?.user?.name"
+	></ngx-avatar>
+	<ng-template #noEmployee>
+		<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
+	</ng-template>
+</ng-template>

@@ -720,7 +720,13 @@
 		"AMOUNT_OWED": "Amount Owed Report",
 		"NO_AMOUNT_OWED": "No Amount Owed",
 		"CURRENT_RATE": "Current Rate",
-		"HOURS": "Hours"
+		"HOURS": "Hours",
+		"SPENT": "Spent",
+		"BUDGET": "Budget",
+		"REMAINING": "Remaining",
+		"WEEKLY_LIMIT_REPORT": "Weekly Limit Report",
+		"NO_EMPLOYEES": "No Employees",
+		"DAILY_LIMIT_REPORT": "Daily Limit Report"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Available Apps & Integrations",
