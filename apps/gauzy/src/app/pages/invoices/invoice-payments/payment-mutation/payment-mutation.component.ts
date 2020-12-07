@@ -86,8 +86,8 @@ export class PaymentMutationComponent
 				invoiceId: this.payment.invoice
 					? this.payment.invoice.id
 					: null,
-				contact: this.payment.contact,
-				project: this.payment.project
+				contact: this.payment.contact ? this.payment.contact : null,
+				project: this.payment.project ? this.payment.project : null
 			});
 			this.form.updateValueAndValidity();
 		}
