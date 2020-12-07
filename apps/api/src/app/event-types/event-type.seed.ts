@@ -24,20 +24,17 @@ export const createRandomEventType = async (
 		return;
 	}
 
-	const eventTypes: EventType[] = [];
-
 	for (const tenant of tenants) {
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
-
 		for (const tenantEmployee of tenantEmployees) {
+			const eventTypes: EventType[] = [];
 			for (const tenantOrg of tenantOrgs) {
 				const tags = await connection.manager.find(Tag, {
 					where: [{ organization: tenantOrg }]
 				});
 
 				const event = new EventType();
-
 				event.isActive = faker.random.boolean();
 				event.description = faker.name.jobDescriptor();
 				event.title = faker.name.jobTitle();
@@ -50,10 +47,9 @@ export const createRandomEventType = async (
 
 				eventTypes.push(event);
 			}
+			await connection.manager.save(eventTypes);
 		}
 	}
-
-	await connection.manager.save(eventTypes);
 };
 
 export const createDefaultEventTypes = async (
@@ -62,8 +58,6 @@ export const createDefaultEventTypes = async (
 	orgs: IOrganization[]
 ): Promise<void> => {
 	const eventTypes: EventType[] = [];
-	console.log('tenant', tenant);
-
 	orgs.forEach((org) => {
 		const eventType = new EventType();
 		eventType.title = '15 Minutes Event';
@@ -103,10 +97,5 @@ const insertEventTypes = async (
 	connection: Connection,
 	eventTypes: EventType[]
 ): Promise<void> => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(EventType)
-		.values(eventTypes)
-		.execute();
+	await connection.manager.save(eventTypes);
 };

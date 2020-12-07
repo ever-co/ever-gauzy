@@ -5,13 +5,7 @@ import { OrganizationProject } from './organization-projects.entity';
 import { IOrganization, TaskListTypeEnum } from '@gauzy/models';
 import { Tenant } from '../tenant/tenant.entity';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
-
-const defaultProjects = [
-	'Gauzy Platform (Open-Source)',
-	'Gauzy Web Site',
-	'Gauzy Platform SaaS',
-	'Gauzy Platform DevOps'
-];
+import { DEFAULT_ORGANIZATION_PROJECTS } from './default-organization-projects';
 
 export const createDefaultOrganizationProjects = async (
 	connection: Connection,
@@ -24,8 +18,8 @@ export const createDefaultOrganizationProjects = async (
 	});
 	const projects: OrganizationProject[] = [];
 
-	for (let index = 0; index < defaultProjects.length; index++) {
-		const name = defaultProjects[index];
+	for (let index = 0; index < DEFAULT_ORGANIZATION_PROJECTS.length; index++) {
+		const name = DEFAULT_ORGANIZATION_PROJECTS[index];
 
 		const organization = faker.random.arrayElement(defaultOrganizations);
 		const organizationContacts = await connection

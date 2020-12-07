@@ -1,7 +1,7 @@
 import { Connection } from 'typeorm';
 import { Country } from './country.entity';
 import { ICountry } from '@gauzy/models';
-import { DEFAULT_COUNTRY_ENTITY } from './country';
+import { DEFAULT_COUNTRIES } from './default-countries';
 
 export const createCountries = async (
 	connection: Connection
@@ -9,7 +9,7 @@ export const createCountries = async (
 	return await new Promise<ICountry[]>(async (resolve, reject) => {
 		try {
 			const countries: ICountry[] = [];
-			const entries = DEFAULT_COUNTRY_ENTITY;
+			const entries = DEFAULT_COUNTRIES;
 			for (const key of Object.keys(entries)) {
 				if (entries.hasOwnProperty(key)) {
 					const country: ICountry = {

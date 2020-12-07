@@ -32,16 +32,14 @@ export const createDefaultProductType = async (
 		});
 	});
 
-	await insertProductTypes(connection, seedProductTypes);
-
-	return seedProductTypes;
+	return await insertProductTypes(connection, seedProductTypes);
 };
 
 const insertProductTypes = async (
 	connection: Connection,
 	productTypes: ProductType[]
-): Promise<void> => {
-	await connection.manager.save(productTypes);
+): Promise<ProductType[]> => {
+	return await connection.manager.save(productTypes);
 };
 
 export const createRandomProductType = async (
@@ -82,7 +80,5 @@ export const createRandomProductType = async (
 		}
 	}
 
-	await connection.manager.save(productTypes);
-
-	return productTypes;
+	return await insertProductTypes(connection, productTypes);
 };

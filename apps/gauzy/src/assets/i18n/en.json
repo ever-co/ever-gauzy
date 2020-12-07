@@ -2603,5 +2603,19 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "SMS Provider"
+	},
+	"SETTINGS": {
+		"EMAIL_HISTORY": {
+			"EMAIL_ARCHIVED": "Email Archived",
+			"ARCHIVE": "Archive",
+			"HEADER": "Email History",
+			"FROM": "From:",
+			"TO": "To:",
+			"DATE": "Date:",
+			"SUBJECT": "Subject:",
+			"LANGUAGE": "Language:",
+			"TEMPLATE": "Template:",
+			"NO_EMAILS_SENT": "No emails sent."
+		}
 	}
 }

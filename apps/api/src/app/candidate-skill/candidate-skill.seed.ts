@@ -4,12 +4,7 @@ import * as faker from 'faker';
 import { CandidateSkill } from './candidate-skill.entity';
 import { Tenant } from '../tenant/tenant.entity';
 import { Organization } from '../organization/organization.entity';
-
-const createCandiateSkills: ISkill[] = [
-	{
-		name: 'Fullstack Developer'
-	}
-];
+import { DEFAULT_CANDIDATE_SKILLS } from './default-candidate-skills';
 
 export const createCandidateSkills = async (
 	connection: Connection,
@@ -26,7 +21,7 @@ export const createCandidateSkills = async (
 	}
 
 	candidates.forEach((candidate) => {
-		const skills = createCandiateSkills.map((skill) => ({
+		const skills = DEFAULT_CANDIDATE_SKILLS.map((skill: ISkill) => ({
 			name: skill.name,
 			candidateId: candidate.id,
 			...{ organization, tenant }
@@ -59,7 +54,7 @@ export const createRandomCandidateSkills = async (
 		});
 		const candidates = tenantCandidatesMap.get(tenant);
 		(candidates || []).forEach((candidate) => {
-			const skills = createCandiateSkills.map((skill) => ({
+			const skills = DEFAULT_CANDIDATE_SKILLS.map((skill) => ({
 				name: skill.name,
 				candidateId: candidate.id,
 				organization: faker.random.arrayElement(organizations),

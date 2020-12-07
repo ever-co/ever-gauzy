@@ -2,6 +2,7 @@ import { Connection } from 'typeorm';
 import { IOrganization } from '@gauzy/models';
 import { ApprovalPolicy } from './approval-policy.entity';
 import { Tenant } from '../tenant/tenant.entity';
+import { DEFAULT_APPROVAL_POLICIES } from './default-approval-policies';
 
 export const createDefaultApprovalPolicyForOrg = async (
 	connection: Connection,
@@ -42,22 +43,10 @@ export const createRandomApprovalPolicyForOrg = async (
 	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
 ): Promise<ApprovalPolicy[]> => {
 	const policies: ApprovalPolicy[] = [];
-	const policyArray = [
-		'Trade Policy',
-		'Union Budget',
-		'Definition, Licensing Policies and Registration',
-		'State Government Industrial Policies',
-		'Reservation Policy',
-		'National Policies',
-		'International Policies',
-		'Time Off',
-		'Equipment Sharing'
-	];
-
 	for (const tenant of tenants) {
 		const orgs = tenantOrganizationsMap.get(tenant);
 		orgs.forEach((org) => {
-			policyArray.forEach((name) => {
+			DEFAULT_APPROVAL_POLICIES.forEach((name) => {
 				const policy = new ApprovalPolicy();
 				policy.description = name;
 				policy.name = name;

@@ -17,7 +17,7 @@ export const createRandomCandidateExperience = async (
 		return;
 	}
 
-	const candidates: CandidateExperience[] = [];
+	const candidateExperiences: CandidateExperience[] = [];
 
 	for (const tenant of tenants) {
 		const tenantCandidates = tenantCandidatesMap.get(tenant);
@@ -26,7 +26,7 @@ export const createRandomCandidateExperience = async (
 		});
 		for (const tenantCandidate of tenantCandidates) {
 			for (let i = 0; i <= Math.floor(Math.random() * 3) + 1; i++) {
-				const candidate = new CandidateExperience();
+				const candidateExperience = new CandidateExperience();
 				let getExperience =
 					(faker.date.past().getDate() -
 						faker.date.past().getDate()) /
@@ -38,32 +38,29 @@ export const createRandomCandidateExperience = async (
 							faker.date.past().getFullYear());
 				getExperience = Number(getExperience.toFixed(2));
 				const val = Math.abs(getExperience);
-				candidate.occupation = faker.name.jobArea();
-				candidate.organization = faker.random.arrayElement(
+				candidateExperience.occupation = faker.name.jobArea();
+				candidateExperience.organization = faker.random.arrayElement(
 					organizations
 				);
-				candidate.duration =
+				candidateExperience.duration =
 					val.toString().split('.')[0].toString() + ' months';
-				candidate.description = faker.lorem.words();
-				candidate.candidateId = tenantCandidate.id;
-				candidate.candidate = tenantCandidate;
-				candidate.tenant = tenant;
-				candidates.push(candidate);
+				candidateExperience.description = faker.lorem.words();
+				candidateExperience.candidateId = tenantCandidate.id;
+				candidateExperience.candidate = tenantCandidate;
+				candidateExperience.tenant = tenant;
+				candidateExperiences.push(candidateExperience);
 			}
 		}
 	}
-	await insertRandomCandidateExperience(connection, candidates);
-	return candidates;
+	return await insertRandomCandidateExperience(
+		connection,
+		candidateExperiences
+	);
 };
 
 const insertRandomCandidateExperience = async (
 	connection: Connection,
-	Candidates: CandidateExperience[]
-) => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(CandidateExperience)
-		.values(Candidates)
-		.execute();
+	candidateExperiences: CandidateExperience[]
+): Promise<CandidateExperience[]> => {
+	return await connection.manager.save(candidateExperiences);
 };

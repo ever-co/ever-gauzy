@@ -44,7 +44,7 @@ import { Tenant } from './../tenant/tenant.entity';
 import { EmailTemplate } from '../email-template/email-template.entity';
 import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
 import { Equipment } from '../equipment/equipment.entity';
-import { EmployeeLevel } from '../organization_employeeLevel/organization-employee-level.entity';
+import { EmployeeLevel } from '../organization_employee-level/organization-employee-level.entity';
 import { Task } from '../tasks/task.entity';
 import { Timesheet } from '../timesheet/timesheet.entity';
 import { TimeSlot } from '../timesheet/time-slot.entity';

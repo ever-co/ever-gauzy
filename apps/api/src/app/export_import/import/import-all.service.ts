@@ -71,7 +71,7 @@ import { Integration } from '../../integration/integration.entity';
 import { IntegrationEntitySetting } from '../../integration-entity-setting/integration-entity-setting.entity';
 import { IntegrationEntitySettingTiedEntity } from '../../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.entity';
 import { Organization } from '../../organization/organization.entity';
-import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
+import { EmployeeLevel } from '../../organization_employee-level/organization-employee-level.entity';
 import { OrganizationAwards } from '../../organization-awards/organization-awards.entity';
 import { OrganizationContact } from '../../organization-contact/organization-contact.entity';
 import { OrganizationDepartment } from '../../organization-department/organization-department.entity';

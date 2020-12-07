@@ -3,13 +3,7 @@ import { Tenant } from '../tenant/tenant.entity';
 import { Organization } from '../organization/organization.entity';
 import { OrganizationAwards } from './organization-awards.entity';
 import * as faker from 'faker';
-
-const defaultAwardsData = {
-	'Top Software Development Company': 2015,
-	'Upwork Top Rated Development Company 2019': 2019,
-	'Upwork Top Rated Development Company 2018': 2018,
-	'Upwork Top Rated Development Company 2017': 2017
-};
+import { DEFAULT_ORGANIZATION_AWARDS } from './default-organization-awards';
 
 export const createDefaultAwards = async (
 	connection: Connection,
@@ -17,12 +11,12 @@ export const createDefaultAwards = async (
 	organizations: Organization[]
 ): Promise<OrganizationAwards[]> => {
 	const awards: OrganizationAwards[] = [];
-	const awardsNames = Object.keys(defaultAwardsData);
+	const awardsNames = Object.keys(DEFAULT_ORGANIZATION_AWARDS);
 	for (const org of organizations) {
 		for (const awardsName of awardsNames) {
 			const award = new OrganizationAwards();
 			award.name = awardsName;
-			award.year = defaultAwardsData[awardsName];
+			award.year = DEFAULT_ORGANIZATION_AWARDS[awardsName];
 			award.organization = org;
 			award.tenant = tenant;
 			awards.push(award);

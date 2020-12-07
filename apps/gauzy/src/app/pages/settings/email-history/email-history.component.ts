@@ -2,13 +2,27 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { EmailService } from '../../../@core/services/email.service';
-import { IEmail, IOrganization } from '@gauzy/models';
+import {
+	IEmail,
+	IEmployee,
+	IOrganization,
+	IOrganizationContact
+} from '@gauzy/models';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Store } from '../../../@core/services/store.service';
 import { takeUntil, first } from 'rxjs/operators';
 import { EmailFiltersComponent } from './email-filters/email-filters.component';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { EmployeesService } from '../../../@core/services';
+import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
+
+export interface DisplayEmail {
+	from: string;
+	to: string;
+	date: string;
+}
+
 @Component({
 	selector: 'ngx-email-history',
 	templateUrl: './email-history.component.html',
@@ -25,9 +39,19 @@ export class EmailHistoryComponent
 
 	emails: IEmail[];
 
+	employees: IEmployee[];
+
+	organizationContacts: IOrganizationContact[];
+
 	selectedEmail: IEmail;
 
 	filteredCount: Number;
+
+	threshholdHitCount = 1;
+
+	pageSize = 10;
+
+	imageUrl: string;
 
 	filters = [];
 
@@ -43,6 +67,8 @@ export class EmailHistoryComponent
 		private sanitizer: DomSanitizer,
 		private store: Store,
 		private toastrService: NbToastrService,
+		private organizationContactService: OrganizationContactService,
+		private employeesService: EmployeesService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -63,6 +89,9 @@ export class EmailHistoryComponent
 						organizationId,
 						tenantId
 					);
+					this._getEmployees(organizationId, tenantId);
+					this._getOrganizationContacts();
+					this.loading = false;
 				}
 			});
 	}
@@ -119,23 +148,96 @@ export class EmailHistoryComponent
 	) {
 		try {
 			await this.emailService
-				.getAll(['emailTemplate', 'user'], {
-					organizationId,
-					tenantId,
-					...filters
-				})
+				.getAll(
+					['emailTemplate', 'user'],
+					{
+						organizationId,
+						tenantId,
+						isArchived: false || null,
+						...filters
+					},
+					this.threshholdHitCount * this.pageSize
+				)
 				.then((data) => {
 					this.emails = data.items;
-					this.loading = false;
+					// this.loading = false;
 
-					this.selectedEmail = null;
+					this.selectedEmail = this.emails ? this.emails[0] : null;
 				});
 		} catch (error) {
 			this.toastrService.danger(
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 			console.error(error);
-			this.loading = false;
+			// this.loading = false;
+		}
+	}
+
+	private async _getEmployees(organizationId: string, tenantId: string) {
+		const { items } = await this.employeesService
+			.getAll(['user'], { organizationId, tenantId })
+			.pipe(first())
+			.toPromise();
+		this.employees = items;
+	}
+
+	private async _getOrganizationContacts() {
+		const { items } = await this.organizationContactService.getAll();
+		this.organizationContacts = items;
+	}
+
+	async archive() {
+		if (!this.selectedEmail) {
+			return;
+		}
+		await this.emailService.update(this.selectedEmail.id, {
+			isArchived: true
+		});
+		this._getSelectedOrganizationEmails(
+			this._selectedOrganization.id,
+			this._selectedOrganization.tenantId,
+			this.filters
+		);
+		this.toastrService.primary(
+			this.getTranslation('SETTINGS.EMAIL_HISTORY.EMAIL_ARCHIVED'),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		);
+	}
+
+	getEmailDate(createdAt: string): string {
+		const date = createdAt.slice(0, 10);
+		const time = createdAt.slice(11, 19);
+		return `${date} ${time}`;
+	}
+
+	loadNext() {
+		this.threshholdHitCount++;
+		this._getSelectedOrganizationEmails(
+			this._selectedOrganization.id,
+			this._selectedOrganization.tenantId,
+			this.filters
+		);
+	}
+
+	getUrl(email: string): string {
+		let employee;
+		let organizationContact;
+		if (this.employees) {
+			employee = this.employees.find((e) => e.user.email === email);
+		}
+
+		if (this.organizationContacts) {
+			organizationContact = this.organizationContacts.find(
+				(oc) => oc.primaryEmail === email
+			);
+		}
+
+		if (employee) {
+			return employee.user.imageUrl;
+		} else if (organizationContact) {
+			return organizationContact.imageUrl;
+		} else {
+			return '../../../../assets/images/avatar-default.svg';
 		}
 	}
 

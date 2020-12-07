@@ -72,7 +72,7 @@ import { AppointmentEmployee } from '../../appointment-employees/appointment-emp
 import { CandidateCriterionsRating } from '../../candidate-criterions-rating/candidate-criterion-rating.entity';
 import { Contact } from '../../contact/contact.entity';
 import { EmployeeAppointment } from '../../employee-appointment';
-import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
+import { EmployeeLevel } from '../../organization_employee-level/organization-employee-level.entity';
 import { EmployeeRecurringExpense } from '../../employee-recurring-expense/employee-recurring-expense.entity';
 import { EmployeeSetting } from '../../employee-setting/employee-setting.entity';
 import { EquipmentSharing } from '../../equipment-sharing';

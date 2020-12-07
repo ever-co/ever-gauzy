@@ -5,13 +5,7 @@ import { EmployeeAppointment } from './employee-appointment.entity';
 import * as faker from 'faker';
 import * as moment from 'moment';
 import { AppointmentEmployee } from '../appointment-employees/appointment-employees.entity';
-
-const agendas = [
-	'Meeting',
-	'Knowledge Transfer',
-	'Query Solution',
-	'Sprint Planning'
-];
+import { AGENDAS } from './default-employee-appointment';
 
 export const createDefaultEmployeeAppointment = async (
 	connection: Connection,
@@ -110,7 +104,7 @@ const dataOperation = async (
 			.add(1, 'hours')
 			.toDate();
 		employeesAppointment.invitees = invitees;
-		employeesAppointment.agenda = faker.random.arrayElement(agendas);
+		employeesAppointment.agenda = faker.random.arrayElement(AGENDAS);
 		employeesAppointment.tenant = tenant;
 		employeesAppointments.push(employeesAppointment);
 	}

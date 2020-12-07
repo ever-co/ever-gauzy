@@ -23,12 +23,5 @@ export const createRoles = async (
 		}
 	});
 
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(Role)
-		.values(roles)
-		.execute();
-
-	return roles;
+	return await connection.manager.save(roles);
 };

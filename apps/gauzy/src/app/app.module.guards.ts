@@ -19,11 +19,11 @@ export class AppModuleGuard implements CanActivate {
 		const serverConnection = Number(this.store.serverConnection);
 
 		if (serverConnection === 0) {
-			if (!environment.IS_ELECTRON) {
+			if (environment.IS_ELECTRON && environment.IS_INTEGRATED_DESKTOP) {
+				return true;
+			} else {
 				this.router.navigate(['server-down']);
 				return false;
-			} else {
-				return true;
 			}
 		}
 

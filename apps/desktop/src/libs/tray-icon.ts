@@ -275,7 +275,7 @@ export default class TrayIcon {
 			menuWindowSetting.enabled = false;
 			menuWindowTime.enabled = false;
 			const appSetting = store.get('appSetting');
-			if (appSetting.timerStarted) {
+			if (appSetting && appSetting.timerStarted) {
 				setTimeout(() => {
 					timeTrackerWindow.webContents.send('stop_from_tray');
 				}, 1000);
@@ -284,10 +284,10 @@ export default class TrayIcon {
 				timeTrackerWindow.hide();
 			} else {
 				if (!loginPageAlreadyShow) {
+					const serverConfig = LocalStore.getStore('configs');
 					global.variableGlobal = {
-						API_BASE_URL: getApiBaseUrl(
-							LocalStore.getStore('configs')
-						)
+						API_BASE_URL: getApiBaseUrl(serverConfig),
+						IS_INTEGRATED_DESKTOP: serverConfig.isLocalServer
 					};
 					timeTrackerWindow.loadURL(loginPage());
 					timeTrackerWindow.webContents.once(

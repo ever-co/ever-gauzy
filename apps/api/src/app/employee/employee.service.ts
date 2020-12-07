@@ -11,7 +11,7 @@ import { Employee } from './employee.entity';
 export class EmployeeService extends TenantAwareCrudService<Employee> {
 	constructor(
 		@InjectRepository(Employee)
-		employeeRepository: Repository<Employee>
+		protected readonly employeeRepository: Repository<Employee>
 	) {
 		super(employeeRepository);
 	}
@@ -52,34 +52,39 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		forMonth: Date,
 		withUser: boolean
 	): Promise<{ total: number; items: Employee[] }> {
-		let query = this.repository
-			.createQueryBuilder('employee')
-			.where('"employee"."organizationId" = :organizationId', {
+		const query = this.employeeRepository.createQueryBuilder('employee');
+		query
+			.where(`${query.alias}."organizationId" = :organizationId`, {
 				organizationId
 			})
-			.andWhere('"employee"."tenantId" = :tenantId', {
+			.andWhere(`${query.alias}."tenantId" = :tenantId`, {
 				tenantId
 			})
-			.andWhere('"employee"."startedWorkOn" <= :startedWorkOnCondition', {
-				startedWorkOnCondition: moment(forMonth).endOf('month').toDate()
-			})
+			.andWhere(
+				`${query.alias}."startedWorkOn" <= :startedWorkOnCondition`,
+				{
+					startedWorkOnCondition: moment(forMonth)
+						.endOf('month')
+						.format('YYYY-MM-DD hh:mm:ss')
+				}
+			)
 			.andWhere(
 				new Brackets((notEndedCondition) => {
 					notEndedCondition
-						.where('"employee"."endWork" IS NULL')
+						.where(`${query.alias}."endWork" IS NULL`)
 						.orWhere(
-							'"employee"."endWork" >= :endWorkOnCondition',
+							`${query.alias}."endWork" >= :endWorkOnCondition`,
 							{
 								endWorkOnCondition: moment(forMonth)
 									.startOf('month')
-									.toDate()
+									.format('YYYY-MM-DD hh:mm:ss')
 							}
 						);
 				})
 			);
 
 		if (withUser) {
-			query = query.leftJoinAndSelect('employee.user', 'user');
+			query.leftJoinAndSelect(`${query.alias}.user`, 'user');
 		}
 
 		const [items, total] = await query.getManyAndCount();
