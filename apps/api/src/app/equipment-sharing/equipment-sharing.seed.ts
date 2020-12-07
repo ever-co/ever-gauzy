@@ -76,8 +76,6 @@ const dataOperation = async (
 			faker.random.number(15)
 		);
 		sharing.status = faker.random.number({ min: 1, max: 3 });
-		console.log(employees, 'employees');
-
 		// sharing.teams =[faker.random.arrayElement(teams)];
 		sharing.employees = [faker.random.arrayElement(employees)];
 		sharing.organization = organization;

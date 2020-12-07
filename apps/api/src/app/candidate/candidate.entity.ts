@@ -69,7 +69,7 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 		(candidateEducation) => candidateEducation.candidate,
 		{
 			cascade: true,
-			onDelete: 'CASCADE'
+			onDelete: 'SET NULL'
 		}
 	)
 	@JoinColumn()
@@ -80,7 +80,7 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 		(candidateInterview) => candidateInterview.candidate,
 		{
 			cascade: true,
-			onDelete: 'CASCADE'
+			onDelete: 'SET NULL'
 		}
 	)
 	@JoinColumn()
@@ -91,7 +91,7 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 		(candidateExperience) => candidateExperience.candidate,
 		{
 			cascade: true,
-			onDelete: 'CASCADE'
+			onDelete: 'SET NULL'
 		}
 	)
 	@JoinColumn()
@@ -102,7 +102,7 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 		(candidateSkill) => candidateSkill.candidate,
 		{
 			cascade: true,
-			onDelete: 'CASCADE'
+			onDelete: 'SET NULL'
 		}
 	)
 	@JoinColumn()
@@ -122,7 +122,7 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 		(candidateDocument) => candidateDocument.candidate,
 		{
 			cascade: true,
-			onDelete: 'CASCADE'
+			onDelete: 'SET NULL'
 		}
 	)
 	@JoinColumn()
@@ -133,7 +133,7 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 		(candidateFeedback) => candidateFeedback.candidate,
 		{
 			cascade: true,
-			onDelete: 'CASCADE'
+			onDelete: 'SET NULL'
 		}
 	)
 	@JoinColumn()
