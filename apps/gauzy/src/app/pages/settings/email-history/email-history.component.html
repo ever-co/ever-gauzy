@@ -1,5 +1,5 @@
 <nb-card>
-	<nb-card-header>
+	<nb-card-header class="d-flex justify-content-between">
 		<h4 class="email-history-header">
 			{{ 'SETTINGS.EMAIL_HISTORY.HEADER' | translate }}
 		</h4>
@@ -37,26 +37,34 @@
 					*ngFor="let email of emails"
 				>
 					<div class="email-list-item">
-						<div class="image-container">
-							<img
-								class="email-history-avatar"
-								[src]="getUrl(email.email)"
-							/>
+						<div class="d-flex flex-row">
+							<div class="image-container">
+								<img
+									class="email-history-avatar"
+									[src]="getUrl(email.email)"
+								/>
+							</div>
+							<div>
+								<span [title]="email.email">
+									<b>{{ getEmailDate(email.createdAt) }}</b>
+								</span>
+								<span>
+									{{
+										'SETTINGS.EMAIL_HISTORY.FROM'
+											| translate
+									}}
+									<b>{{
+										email.user ? email.user.email : 'System'
+									}}</b>
+								</span>
+							</div>
 						</div>
-						<span>
-							{{ 'SETTINGS.EMAIL_HISTORY.FROM' | translate }}
-							<b>{{
-								email.user ? email.user.email : 'System'
-							}}</b>
-						</span>
-						<span [title]="email.email">
-							{{ 'SETTINGS.EMAIL_HISTORY.TO' | translate }}
-							<b>{{ email.email }}</b>
-						</span>
-						<span [title]="email.email">
-							{{ 'SETTINGS.EMAIL_HISTORY.DATE' | translate }}
-							<b>{{ getEmailDate(email.createdAt) }}</b>
-						</span>
+						<div class="email-history-to">
+							<span [title]="email.email">
+								{{ 'SETTINGS.EMAIL_HISTORY.TO' | translate }}
+								<b>{{ email.email }}</b>
+							</span>
+						</div>
 					</div>
 				</nb-list-item>
 			</nb-list>
