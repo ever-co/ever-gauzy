@@ -343,7 +343,7 @@ export class ProposalsComponent
 		if (!this.selectedOrganization) {
 			return;
 		}
-
+		this.loading = true;
 		this.showTable = false;
 		this.selectedProposal = null;
 		this.disableButton = true;
@@ -443,6 +443,7 @@ export class ProposalsComponent
 		} catch (error) {
 			this.toastrService.danger(error.message, 'Error');
 		}
+		this.loading = false;
 	}
 
 	private _applyTranslationOnSmartTable() {

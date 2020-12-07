@@ -68,6 +68,7 @@ export class PipelinesComponent
 	tenantId: string;
 	name: string;
 	disableButton = true;
+	loading: boolean;
 
 	pipelineTable: Ng2SmartTableComponent;
 	@ViewChild('pipelineTable') set content(content: Ng2SmartTableComponent) {
@@ -146,6 +147,7 @@ export class PipelinesComponent
 	}
 
 	async updatePipelines(): Promise<void> {
+		this.loading = true;
 		let { organizationId, tenantId } = this;
 		organizationId = organizationId || void 0;
 		tenantId = tenantId || void 0;
@@ -157,6 +159,8 @@ export class PipelinesComponent
 				this.pipelines.load(items);
 				this.filterPipelines();
 			});
+
+		this.loading = false;
 	}
 
 	filterPipelines(): void {

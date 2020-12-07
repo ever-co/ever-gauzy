@@ -9,13 +9,18 @@ import { DealsService } from '../../../../@core/services/deals.service';
 import { AppStore, Store } from '../../../../@core/services/store.service';
 import { OrganizationContactService } from '../../../../@core/services/organization-contact.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { NbToastrService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './pipeline-deal-form.component.html',
 	selector: 'ga-pipeline-deals-form',
 	styleUrls: ['./pipeline-deal-form.component.scss']
 })
-export class PipelineDealFormComponent implements OnInit, OnDestroy {
+export class PipelineDealFormComponent
+	extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	form: FormGroup;
 	pipeline: IPipeline;
 	clients: IContact[];
@@ -32,6 +37,7 @@ export class PipelineDealFormComponent implements OnInit, OnDestroy {
 	private tenantId: string;
 
 	constructor(
+		public translateService: TranslateService,
 		private router: Router,
 		private fb: FormBuilder,
 		private appStore: AppStore,
@@ -39,8 +45,11 @@ export class PipelineDealFormComponent implements OnInit, OnDestroy {
 		private dealsService: DealsService,
 		private activatedRoute: ActivatedRoute,
 		private pipelinesService: PipelinesService,
-		private clientsService: OrganizationContactService
+		private clientsService: OrganizationContactService,
+		private toastrService: NbToastrService
 	) {
+		super(translateService);
+
 		this.$akitaPreUpdate = appStore.akitaPreUpdate;
 
 		appStore.akitaPreUpdate = (previous, next) => {
@@ -180,9 +189,20 @@ export class PipelineDealFormComponent implements OnInit, OnDestroy {
 					)
 			  )
 		)
-			.then(() =>
-				this.router.navigate([dealId ? '../..' : '..'], { relativeTo })
-			)
+			.then(() => {
+				if (this.dealId) {
+					this.toastrService.primary(
+						this.getTranslation('PIPELINE_DEALS_PAGE.DEAL_EDITED'),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					);
+				} else {
+					this.toastrService.primary(
+						this.getTranslation('PIPELINE_DEALS_PAGE.DEAL_ADDED'),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					);
+				}
+				this.router.navigate([dealId ? '../..' : '..'], { relativeTo });
+			})
 			.catch(() => this.form.enable());
 	}
 

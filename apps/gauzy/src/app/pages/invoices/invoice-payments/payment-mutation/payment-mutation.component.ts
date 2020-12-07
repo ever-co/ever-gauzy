@@ -141,12 +141,17 @@ export class PaymentMutationComponent
 
 		if (this.payment) {
 			payment['id'] = this.payment.id;
+			this.toastrService.primary(
+				this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_EDIT'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+		} else {
+			this.toastrService.primary(
+				this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
 		}
 
-		this.toastrService.primary(
-			this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD'),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
-		);
 		this.dialogRef.close(payment);
 	}
 

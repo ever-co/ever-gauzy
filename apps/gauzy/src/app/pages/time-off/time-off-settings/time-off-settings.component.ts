@@ -278,6 +278,7 @@ export class TimeOffSettingsComponent
 	}
 
 	private async _loadTableData(orgId: string) {
+		this.loading = true;
 		this.showTable = false;
 		this.selectedPolicy = null;
 		let findObj: {};
@@ -320,6 +321,7 @@ export class TimeOffSettingsComponent
 					}
 				);
 		}
+		this.loading = false;
 	}
 
 	_applyTranslationOnSmartTable() {

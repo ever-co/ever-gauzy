@@ -203,6 +203,7 @@ export class TagsComponent
 	}
 
 	async loadSettings() {
+		this.loading = true;
 		this.selectedTag = null;
 		this.allTags = [];
 		this.filterOptions = [{ property: 'all', displayName: 'All' }];
@@ -234,6 +235,7 @@ export class TagsComponent
 				this.smartTableSource.load([]);
 			}
 		}
+		this.loading = false;
 	}
 
 	ngOnDestroy() {}
