@@ -26,9 +26,9 @@ export const createRandomTenants = async (
 ): Promise<Tenant[]> => {
 	const randomTenants: Tenant[] = [];
 	for (let i = 0; i < noOfTenants; i++) {
-		randomTenants.push({
-			name: faker.company.companyName()
-		});
+		const tenant = new Tenant();
+		tenant.name = faker.company.companyName();
+		randomTenants.push(tenant);
 	}
 
 	return await insertTenants(connection, randomTenants);
