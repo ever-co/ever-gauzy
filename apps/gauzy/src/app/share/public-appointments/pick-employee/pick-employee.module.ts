@@ -8,6 +8,7 @@ import { PickEmployeeRoutingModule } from './pick-employee.routing.module';
 import { NbCardModule, NbButtonModule, NbToastrModule } from '@nebular/theme';
 import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';
 import { BackNavigationModule } from '../../../@shared/back-navigation/back-navigation.module';
+import { EventTypeService } from '../../../@core/services/event-type.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -32,6 +33,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 	],
 	declarations: [PickEmployeeComponent],
 	entryComponents: [PickEmployeeComponent],
-	providers: []
+	providers: [EventTypeService]
 })
 export class PickEmployeeModule {}
