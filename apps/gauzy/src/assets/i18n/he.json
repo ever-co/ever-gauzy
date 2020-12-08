@@ -1418,6 +1418,7 @@
 		"REGISTER": {
 			"REGISTER_PROPOSALS": "Register Proposal",
 			"AUTHOR": "Author",
+			"TEMPLATE": "Template",
 			"JOB_POST_URL": "Job Post URL",
 			"PICK_A_DATE": "תבחר תאריך",
 			"PROPOSAL_DATE": "Proposal Date",
