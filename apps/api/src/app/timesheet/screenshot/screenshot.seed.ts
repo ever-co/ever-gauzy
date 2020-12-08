@@ -38,7 +38,7 @@ export const createRandomScreenshot = async (
 	const screenshots: Screenshot[] = [];
 	for (
 		let index = 0;
-		index < faker.random.number({ min: 1, max: 3 });
+		index < faker.random.number({ min: 1, max: 2 });
 		index++
 	) {
 		const sourceFile = faker.random.arrayElement(fileList);

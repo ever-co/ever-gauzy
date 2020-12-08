@@ -131,57 +131,47 @@ export const createRandomUsers = async (
 	dataEntriesPerOrganization: number,
 	viewerPerOrganization: number
 ): Promise<Map<Tenant, ISeedUsers>> => {
-	const adminRole = roles.find((role) => role.name === RolesEnum.ADMIN);
-
-	const employeeRole = roles.find((role) => role.name === RolesEnum.EMPLOYEE);
-
-	const candidateRole = roles.find(
-		(role) => role.name === RolesEnum.CANDIDATE
-	);
-
-	const managerRole = roles.find((role) => role.name === RolesEnum.MANAGER);
-
-	const dataEntryRole = roles.find(
-		(role) => role.name === RolesEnum.DATA_ENTRY
-	);
-
-	const viewerRole = roles.find((role) => role.name === RolesEnum.VIEWER);
-
 	const randomTenantUsers: Map<Tenant, ISeedUsers> = new Map();
 
 	for (const tenant of tenants) {
 		const _adminUsers: Promise<User[]> = seedRandomUsers(
-			adminRole,
+			RolesEnum.ADMIN,
+			roles,
 			tenant,
 			organizationPerTenant //Because we want to seed at least one admin per organization
 		);
 
 		const _employeeUsers: Promise<User[]> = seedRandomUsers(
-			employeeRole,
+			RolesEnum.EMPLOYEE,
+			roles,
 			tenant,
 			employeesPerOrganization * organizationPerTenant
 		);
 
 		const _candidateUsers: Promise<User[]> = seedRandomUsers(
-			candidateRole,
+			RolesEnum.CANDIDATE,
+			roles,
 			tenant,
 			candidatesPerOrganization * organizationPerTenant
 		);
 
 		const _managerUsers: Promise<User[]> = seedRandomUsers(
-			managerRole,
+			RolesEnum.MANAGER,
+			roles,
 			tenant,
 			managersPerOrganization * organizationPerTenant
 		);
 
 		const _dataEntryUsers: Promise<User[]> = seedRandomUsers(
-			dataEntryRole,
+			RolesEnum.DATA_ENTRY,
+			roles,
 			tenant,
 			dataEntriesPerOrganization * organizationPerTenant
 		);
 
 		const _viewerUsers: Promise<User[]> = seedRandomUsers(
-			viewerRole,
+			RolesEnum.VIEWER,
+			roles,
 			tenant,
 			viewerPerOrganization * organizationPerTenant
 		);
@@ -260,10 +250,12 @@ const seedDefaultEmployeeUsers = async (
 };
 
 const seedRandomUsers = async (
-	role: Role,
+	roleEnum: RolesEnum,
+	roles: Role[],
 	tenant: Tenant,
 	maxUserCount: number
 ): Promise<User[]> => {
+	const role = roles.find(({ name }) => name === roleEnum);
 	const randomUsers: Promise<User>[] = [];
 	let user: Promise<User>;
 

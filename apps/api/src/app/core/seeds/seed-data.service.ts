@@ -1199,42 +1199,6 @@ export class SeedDataService {
 			randomSeedConfig.organizationsPerTenant || 1
 		);
 
-		await this.tryExecute(
-			'Random Categories',
-			createRandomCategories(
-				this.connection,
-				tenants,
-				tenantOrganizationsMap
-			)
-		);
-
-		await this.tryExecute(
-			'Random Product Types',
-			createRandomProductType(
-				this.connection,
-				tenants,
-				tenantOrganizationsMap
-			)
-		);
-
-		await this.tryExecute(
-			'Random Products',
-			createRandomProduct(
-				this.connection,
-				tenants,
-				tenantOrganizationsMap
-			)
-		);
-
-		await this.tryExecute(
-			'Random Organization Documents',
-			createRandomOrganizationDocuments(
-				this.connection,
-				tenants,
-				tenantOrganizationsMap
-			)
-		);
-
 		const tenantSuperAdminsMap = await createRandomSuperAdminUsers(
 			this.connection,
 			roles,
@@ -1270,6 +1234,42 @@ export class SeedDataService {
 			tenantOrganizationsMap,
 			tenantUsersMap,
 			randomSeedConfig.employeesPerOrganization || 1
+		);
+
+		await this.tryExecute(
+			'Random Categories',
+			createRandomCategories(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap
+			)
+		);
+
+		await this.tryExecute(
+			'Random Product Types',
+			createRandomProductType(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap
+			)
+		);
+
+		await this.tryExecute(
+			'Random Products',
+			createRandomProduct(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap
+			)
+		);
+
+		await this.tryExecute(
+			'Random Organization Documents',
+			createRandomOrganizationDocuments(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap
+			)
 		);
 
 		await this.tryExecute(
