@@ -48,18 +48,10 @@ export const createRandomPipelineStage = async (
 		}
 	}
 
-	await insertRandomPipelineStage(connection, pipelineStages);
-	return pipelineStages;
+	return await insertRandomPipelineStage(connection, pipelineStages);
 };
 
 const insertRandomPipelineStage = async (
 	connection: Connection,
-	data: PipelineStage[]
-) => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(PipelineStage)
-		.values(data)
-		.execute();
-};
+	pipelineStages: PipelineStage[]
+) => await connection.manager.save(pipelineStages);
