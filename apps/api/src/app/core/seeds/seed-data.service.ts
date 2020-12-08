@@ -952,7 +952,7 @@ export class SeedDataService {
 			})
 		);
 
-		/* await this.tryExecute(
+		await this.tryExecute(
 			'Default TimeSheets',
 			createDefaultTimeSheet(
 				this.connection,
@@ -961,7 +961,7 @@ export class SeedDataService {
 				this.defaultProjects,
 				randomSeedConfig.noOfTimeLogsPerTimeSheet
 			)
-		); */
+		);
 
 		await this.tryExecute(
 			'Default Proposals',
@@ -1574,7 +1574,7 @@ export class SeedDataService {
 			createRandomTask(this.connection, tenants, this.defaultProjects)
 		);
 
-		/* await this.tryExecute(
+		await this.tryExecute(
 			'Random TimeSheets',
 			createRandomTimesheet(
 				this.connection,
@@ -1582,7 +1582,7 @@ export class SeedDataService {
 				this.defaultProjects,
 				randomSeedConfig.noOfTimeLogsPerTimeSheet
 			)
-		); */
+		);
 
 		const noOfContactsPerOrganization = 10;
 		await this.tryExecute(
