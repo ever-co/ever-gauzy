@@ -563,12 +563,13 @@
 		"FILE_STORAGE": "File Storage",
 		"IMPORT_EXPORT": {
 			"IMPORT_EXPORT": "Import/Export",
+			"IMPORT_EXPORT_DATA": "Import / Export Data",
 			"IMPORT": "Import",
 			"IMPORT_HISTORY": "Import History",
 			"EXPORT": "Export",
 			"MERGE": "merge data",
 			"CLEAN_UP": "clean up before import",
-			"EXPORT_MESSAGE": "Click \"EXPORT\" to download all tables from the database or click \"DOWNLOAD TEMPLATES\" to download zip archive with CSV templates ",
+			"EXPORT_MESSAGE": "Click \"EXPORT\" to download all tables from the database. ",
 			"IMPORT_MESSAGE": "Click \"IMPORT\" to insert all tables in the database. The name of the file for upload should be: \"import.zip\". Chose also between options \"merge data\" and \"clean up before import\".",
 			"IMPORT_HISTORY_MESSAGE": "You can track your recently imported files here",
 			"SELECT_FILE": "Select File",
@@ -584,7 +585,10 @@
 			"REMOVE": "Remove",
 			"WRONG_FILE_NAME": "Wrong file name!!!",
 			"CORRECT_FILE_NAME": "The file name should be: \"import.zip\"",
-			"DOWNLOAD_TEMPLATES": "Download templates"
+			"DOWNLOAD_TEMPLATES": "Download templates",
+			"IMPORT_INFO": "Click \"Import\" to import your data into Gauzy DB.",
+			"EXPORT_INFO": "Click \"Export\" to export data from Gauzy DB.",
+			"DOWNLOAD_TEMPLATES_INFO": "Click \"Download Templates\" to download Zip archive with CSV templates for the format of Gauzy data."
 		},
 		"TAGS": "Тагове",
 		"LANGUAGE": "Език (Language)",
