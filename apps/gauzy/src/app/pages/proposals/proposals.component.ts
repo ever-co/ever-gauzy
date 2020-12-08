@@ -319,8 +319,10 @@ export class ProposalsComponent
 				organizationContactName: {
 					title: this.getTranslation('SM_TABLE.CONTACT_NAME'),
 					type: 'text',
-					valuePrepareFunction: (cell) => {
-						return cell;
+					valuePrepareFunction: (cell, row) => {
+						return row.organizationContact
+							? row.organizationContact.name
+							: '';
 					}
 				}
 			}
@@ -427,9 +429,9 @@ export class ProposalsComponent
 							  ' ' +
 							  i.employee.user.lastName
 							: '',
-						organizationContactName: i.organizationContact
-							? i.organizationContact.name
-							: ''
+						organizationContact: i.organizationContact
+							? i.organizationContact
+							: null
 					};
 				});
 

@@ -57,5 +57,5 @@ export interface IProposalViewModel
 	proposalContent?: string;
 	status?: string;
 	author?: string;
-	organizationContactName?: string;
+	organizationContact?: IOrganizationContact;
 }

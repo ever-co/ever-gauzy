@@ -100,8 +100,7 @@ export class ProposalRegisterComponent
 				Validators.compose([
 					Validators.pattern(
 						new RegExp(
-							`^((?:https?:\/\/)?[^./]+(?:\.[^./]+)+(?:\/.*)?)$`,
-							'g'
+							`^((?:https?://)?[^./]+(?:.[^./]+)+(?:/.*)?)$`
 						)
 					)
 				])
