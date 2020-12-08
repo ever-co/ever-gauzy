@@ -22,6 +22,10 @@ export class AddEditProposalTemplateComponent implements OnInit {
 	@Input() proposalTemplate: IEmployeeProposalTemplate = {};
 	form: FormGroup;
 	organization: IOrganization;
+	public ckConfig: any = {
+		width: '100%',
+		height: '320'
+	};
 
 	constructor(
 		private dialogRef: NbDialogRef<AddEditProposalTemplateComponent>,

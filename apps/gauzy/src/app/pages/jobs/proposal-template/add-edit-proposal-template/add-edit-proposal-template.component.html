@@ -69,14 +69,8 @@
 				<label class="d-block">{{
 					'PROPOSAL_TEMPLATE.CONTENT' | translate
 				}}</label>
-				<textarea
-					rows="10"
-					formControlName="content"
-					nbInput
-					fullWidth
-					class="content w-100"
-					[placeholder]="'PROPOSAL_TEMPLATE.CONTENT' | translate"
-				></textarea>
+				<ckeditor formControlName="content" [config]="ckConfig">
+				</ckeditor>
 			</div>
 		</nb-card-body>
 		<nb-card-footer class="text-right">
