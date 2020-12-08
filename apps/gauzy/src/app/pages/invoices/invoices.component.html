@@ -58,7 +58,7 @@
 									{{ 'BUTTONS.VIEW' | translate }}
 								</button>
 							</ng-template>
-							<div class="settings-button">
+							<div>
 								<button
 									nbButton
 									nbPopoverPlacement="bottom"
@@ -467,6 +467,18 @@
 		</button>
 	</div>
 
+	<button
+		*ngIf="!isEstimate && dataLayoutStyle === 'TABLE'"
+		nbButton
+		status="info"
+		(click)="payments()"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="clipboard-outline"></nb-icon>
+		{{ 'INVOICES_PAGE.PAYMENTS_BUTTON' | translate }}
+	</button>
 	<button
 		*ngIf="dataLayoutStyle === 'TABLE'"
 		nbButton
