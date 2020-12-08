@@ -4,8 +4,7 @@ import { Repository, FindManyOptions, Between } from 'typeorm';
 import { Income } from './income.entity';
 import { IPagination } from '../core';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
-import { startOfMonth, endOfMonth } from 'date-fns';
-
+import * as moment from 'moment';
 @Injectable()
 export class IncomeService extends TenantAwareCrudService<Income> {
 	constructor(
@@ -20,24 +19,23 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 		filterDate?: string
 	): Promise<IPagination<Income>> {
 		if (filterDate) {
-			const dateObject = new Date(filterDate);
+			const startOfMonth = moment(filterDate)
+				.startOf('month')
+				.format('YYYY-MM-DD hh:mm:ss');
+			const endOfMonth = moment(filterDate)
+				.endOf('month')
+				.format('YYYY-MM-DD hh:mm:ss');
 			return filter
 				? await this.findAll({
 						where: {
-							valueDate: Between(
-								startOfMonth(dateObject),
-								endOfMonth(dateObject)
-							),
+							valueDate: Between(startOfMonth, endOfMonth),
 							...(filter.where as Object)
 						},
 						relations: filter.relations
 				  })
 				: await this.findAll({
 						where: {
-							valueDate: Between(
-								startOfMonth(dateObject),
-								endOfMonth(dateObject)
-							)
+							valueDate: Between(startOfMonth, endOfMonth)
 						}
 				  });
 		}

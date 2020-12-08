@@ -55,6 +55,7 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 
 	@ApiProperty({ type: Contact })
 	@ManyToOne(() => Contact, (contact) => contact.candidates, {
+		cascade: true,
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()

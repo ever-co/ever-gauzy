@@ -24,24 +24,23 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		filterDate?: string
 	): Promise<IPagination<Expense>> {
 		if (filterDate) {
-			const dateObject = new Date(filterDate);
+			const startOfMonth = moment(filterDate)
+				.startOf('month')
+				.format('YYYY-MM-DD hh:mm:ss');
+			const endOfMonth = moment(filterDate)
+				.endOf('month')
+				.format('YYYY-MM-DD hh:mm:ss');
 			return filter
 				? await this.findAll({
 						where: {
-							valueDate: Between(
-								startOfMonth(dateObject),
-								endOfMonth(dateObject)
-							),
+							valueDate: Between(startOfMonth, endOfMonth),
 							...(filter.where as Object)
 						},
 						relations: filter.relations
 				  })
 				: await this.findAll({
 						where: {
-							valueDate: Between(
-								startOfMonth(dateObject),
-								endOfMonth(dateObject)
-							)
+							valueDate: Between(startOfMonth, endOfMonth)
 						}
 				  });
 		}
