@@ -1911,6 +1911,7 @@
 		"INVOICES_PER_PAGE": "Счета на странице",
 		"ESTIMATES_PER_PAGE": "Оценки на странице",
 		"APPLY_DISCOUNT_AFTER_TAX": "Применить скидку после налога",
+		"PAYMENTS_BUTTON": "Платежи",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"ESTIMATE_TYPE": "Тип оценки",
