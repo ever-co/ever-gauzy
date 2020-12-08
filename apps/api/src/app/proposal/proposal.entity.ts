@@ -36,7 +36,6 @@ export class Proposal extends TenantOrganizationBase implements IProposal {
 	@ApiProperty({ type: String })
 	@Index()
 	@IsString()
-	@IsNotEmpty()
 	@Column({ nullable: true })
 	jobPostUrl: string;
 

@@ -87,7 +87,17 @@ export class ProposalRegisterComponent
 
 	private _initializeForm() {
 		this.form = this.fb.group({
-			jobPostUrl: ['', Validators.required],
+			jobPostUrl: [
+				'',
+				Validators.compose([
+					Validators.pattern(
+						new RegExp(
+							`^((?:https?:\/\/)?[^./]+(?:\.[^./]+)+(?:\/.*)?)$`,
+							'g'
+						)
+					)
+				])
+			],
 			valueDate: [new Date(), Validators.required],
 			jobPostContent: [''],
 			proposalContent: [''],
