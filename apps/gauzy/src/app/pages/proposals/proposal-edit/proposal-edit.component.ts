@@ -118,7 +118,7 @@ export class ProposalEditComponent
 				Validators.compose([
 					Validators.pattern(
 						new RegExp(
-							`^((?:https?://)?[^./]+(?:.[^./]+)+(?:/.*)?)$`
+							/^((?:https?:\/\/)?[^./]+(?:\.[^./]+)+(?:\/.*)?)$/
 						)
 					)
 				])
