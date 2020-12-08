@@ -76,7 +76,6 @@ const dataOperation = async (
 		const request = new TimeOffRequest();
 		request.organizationId = organization.id;
 		request.tenant = tenant;
-		console.log(employees, 'employees');
 		request.employees = _.chain(employees)
 			.shuffle()
 			.take(faker.random.number({ min: 1, max: 3 }))

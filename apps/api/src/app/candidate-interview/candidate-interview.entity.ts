@@ -16,7 +16,8 @@ import { Candidate } from '../candidate/candidate.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('candidate_interview')
-export class CandidateInterview extends TenantOrganizationBase
+export class CandidateInterview
+	extends TenantOrganizationBase
 	implements ICandidateInterview {
 	@ApiProperty({ type: String })
 	@Column()
@@ -30,13 +31,6 @@ export class CandidateInterview extends TenantOrganizationBase
 	@Column({ nullable: true })
 	endTime: Date;
 
-	@OneToMany(
-		(type) => CandidateFeedback,
-		(candidateFeedback) => candidateFeedback.interview
-	)
-	@JoinColumn()
-	feedbacks?: ICandidateFeedback[];
-
 	@ApiProperty({ type: String })
 	@Column({ nullable: true })
 	candidateId?: string;
@@ -49,30 +43,6 @@ export class CandidateInterview extends TenantOrganizationBase
 	@Column()
 	note?: string;
 
-	@OneToMany(
-		(type) => CandidateTechnologies,
-		(candidateTechnologies) => candidateTechnologies.interview
-	)
-	@JoinColumn()
-	technologies?: ICandidateTechnologies[];
-
-	@OneToMany(
-		(type) => CandidatePersonalQualities,
-		(candidatePersonalQualities) => candidatePersonalQualities.interview
-	)
-	@JoinColumn()
-	personalQualities?: ICandidatePersonalQualities[];
-
-	@OneToMany(
-		(type) => CandidateInterviewers,
-		(candidateInterviewers) => candidateInterviewers.interview
-	)
-	@JoinColumn()
-	interviewers?: ICandidateInterviewers[];
-
-	@ManyToOne((type) => Candidate, (candidate) => candidate.interview)
-	candidate: ICandidate;
-
 	@ApiPropertyOptional({ type: Boolean, default: false })
 	@Column({ nullable: true, default: false })
 	isArchived?: boolean;
@@ -80,4 +50,45 @@ export class CandidateInterview extends TenantOrganizationBase
 	@ApiPropertyOptional({ type: Number })
 	@Column({ nullable: true, type: 'numeric' })
 	rating?: number;
+
+	@OneToMany(() => CandidateFeedback, (feedback) => feedback.interview, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	feedbacks?: ICandidateFeedback[];
+
+	@OneToMany(
+		() => CandidateTechnologies,
+		(technologies) => technologies.interview,
+		{
+			onDelete: 'SET NULL'
+		}
+	)
+	@JoinColumn()
+	technologies?: ICandidateTechnologies[];
+
+	@OneToMany(
+		() => CandidatePersonalQualities,
+		(personalQualities) => personalQualities.interview,
+		{
+			onDelete: 'SET NULL'
+		}
+	)
+	@JoinColumn()
+	personalQualities?: ICandidatePersonalQualities[];
+
+	@OneToMany(
+		() => CandidateInterviewers,
+		(interviewers) => interviewers.interview,
+		{
+			onDelete: 'SET NULL'
+		}
+	)
+	@JoinColumn()
+	interviewers?: ICandidateInterviewers[];
+
+	@ManyToOne(() => Candidate, (candidate) => candidate.interview, {
+		onDelete: 'CASCADE'
+	})
+	candidate: ICandidate;
 }

@@ -23,7 +23,8 @@ import { CandidateInterview } from '../candidate-interview/candidate-interview.e
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('candidate_feedback')
-export class CandidateFeedback extends TenantOrganizationBase
+export class CandidateFeedback
+	extends TenantOrganizationBase
 	implements ICandidateFeedback {
 	@ApiProperty({ type: String })
 	@Column()
@@ -54,19 +55,24 @@ export class CandidateFeedback extends TenantOrganizationBase
 
 	@OneToMany(
 		(type) => CandidateCriterionsRating,
-		(candidateCriterionsRating) => candidateCriterionsRating.feedback
+		(criterionsRating) => criterionsRating.feedback,
+		{
+			cascade: true
+		}
 	)
 	@JoinColumn()
 	criterionsRating?: ICandidateCriterionsRating[];
 
 	@ManyToOne(
 		(type) => CandidateInterview,
-		(candidateInterview) => candidateInterview.feedbacks
+		(candidateInterview) => candidateInterview.feedbacks,
+		{
+			onDelete: 'CASCADE'
+		}
 	)
 	interview: ICandidateInterview;
 
 	@ManyToOne((type) => Candidate, (candidate) => candidate.feedbacks, {
-		nullable: false,
 		onDelete: 'CASCADE'
 	})
 	candidate: ICandidate;

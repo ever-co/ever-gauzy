@@ -56,7 +56,7 @@ export const createDefaultEventTypes = async (
 	connection: Connection,
 	tenant: Tenant,
 	orgs: IOrganization[]
-): Promise<void> => {
+): Promise<EventType[]> => {
 	const eventTypes: EventType[] = [];
 	orgs.forEach((org) => {
 		const eventType = new EventType();
@@ -90,12 +90,12 @@ export const createDefaultEventTypes = async (
 		eventTypes.push(eventTypeTwo);
 	});
 
-	await insertEventTypes(connection, eventTypes);
+	return await insertEventTypes(connection, eventTypes);
 };
 
 const insertEventTypes = async (
 	connection: Connection,
 	eventTypes: EventType[]
-): Promise<void> => {
-	await connection.manager.save(eventTypes);
+): Promise<EventType[]> => {
+	return await connection.manager.save(eventTypes);
 };

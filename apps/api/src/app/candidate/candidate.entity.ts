@@ -64,84 +64,56 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 	@RelationId((candidate: Candidate) => candidate.contact)
 	readonly contactId?: string;
 
-	@OneToMany(
-		(type) => CandidateEducation,
-		(candidateEducation) => candidateEducation.candidate,
-		{
-			cascade: true,
-			onDelete: 'SET NULL'
-		}
-	)
+	@OneToMany(() => CandidateEducation, (education) => education.candidate, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	educations: ICandidateEducation[];
 
-	@OneToMany(
-		(type) => CandidateInterview,
-		(candidateInterview) => candidateInterview.candidate,
-		{
-			cascade: true,
-			onDelete: 'SET NULL'
-		}
-	)
+	@OneToMany(() => CandidateInterview, (interview) => interview.candidate, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	interview?: ICandidateInterview[];
 
 	@OneToMany(
-		(type) => CandidateExperience,
-		(candidateExperience) => candidateExperience.candidate,
+		() => CandidateExperience,
+		(experience) => experience.candidate,
 		{
-			cascade: true,
 			onDelete: 'SET NULL'
 		}
 	)
 	@JoinColumn()
 	experience: ICandidateExperience[];
 
-	@OneToMany(
-		(type) => CandidateSkill,
-		(candidateSkill) => candidateSkill.candidate,
-		{
-			cascade: true,
-			onDelete: 'SET NULL'
-		}
-	)
+	@OneToMany(() => CandidateSkill, (skill) => skill.candidate, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	skills: ICandidateSkill[];
 
 	@ApiProperty({ type: CandidateSource })
 	@OneToOne((type) => CandidateSource, {
-		nullable: true,
 		cascade: true,
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	source?: ICandidateSource;
 
-	@OneToMany(
-		(type) => CandidateDocument,
-		(candidateDocument) => candidateDocument.candidate,
-		{
-			cascade: true,
-			onDelete: 'SET NULL'
-		}
-	)
+	@OneToMany(() => CandidateDocument, (document) => document.candidate, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	documents?: ICandidateDocument[];
 
-	@OneToMany(
-		(type) => CandidateFeedback,
-		(candidateFeedback) => candidateFeedback.candidate,
-		{
-			cascade: true,
-			onDelete: 'SET NULL'
-		}
-	)
+	@OneToMany(() => CandidateFeedback, (feedback) => feedback.candidate, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	feedbacks?: ICandidateFeedback[];
 
 	@ApiProperty({ type: User })
 	@OneToOne((type) => User, {
-		nullable: false,
 		cascade: true,
 		onDelete: 'CASCADE'
 	})
@@ -197,9 +169,11 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 	rejectDate?: Date;
 
 	@ManyToMany(
-		(type) => OrganizationDepartment,
-		(organizationDepartment) => organizationDepartment.candidates,
-		{ cascade: true }
+		() => OrganizationDepartment,
+		(department) => department.candidates,
+		{
+			cascade: true
+		}
 	)
 	@JoinTable({
 		name: 'candidate_department'
@@ -207,9 +181,11 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 	organizationDepartments?: IOrganizationDepartment[];
 
 	@ManyToMany(
-		(type) => OrganizationEmploymentType,
-		(organizationEmploymentType) => organizationEmploymentType.candidates,
-		{ cascade: true }
+		() => OrganizationEmploymentType,
+		(employmentType) => employmentType.candidates,
+		{
+			cascade: true
+		}
 	)
 	@JoinTable({
 		name: 'candidate_employment_type'

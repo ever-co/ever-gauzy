@@ -100,23 +100,21 @@ export class Contact extends TenantOrganizationBase implements IContact {
 
 	@ApiProperty({ type: OrganizationContact })
 	@OneToMany(
-		(type) => OrganizationContact,
+		() => OrganizationContact,
 		(organizationContact) => organizationContact.contact,
 		{
-			cascade: true,
-			onDelete: 'CASCADE'
+			onDelete: 'SET NULL'
 		}
 	)
 	public organization_contacts?: IOrganizationContact[];
 
 	@ApiProperty({ type: Employee })
-	@OneToMany((type) => Employee, (employee) => employee.contact)
+	@OneToMany(() => Employee, (employee) => employee.contact)
 	public employees?: IEmployee[];
 
 	@ApiProperty({ type: Candidate })
-	@OneToMany((type) => Candidate, (candidate) => candidate.contact, {
-		cascade: true,
-		onDelete: 'CASCADE'
+	@OneToMany(() => Candidate, (candidate) => candidate.contact, {
+		onDelete: 'SET NULL'
 	})
 	public candidates?: ICandidate[];
 }

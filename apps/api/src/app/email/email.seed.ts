@@ -15,7 +15,6 @@ export const createDefaultEmailSent = async (
 	const emailTemplates = await connection.getRepository(EmailTemplate).find();
 
 	let sentEmails: Email[] = [];
-	// for(let organization of Organizations){
 	sentEmails = await dataOperation(
 		connection,
 		sentEmails,
@@ -24,7 +23,6 @@ export const createDefaultEmailSent = async (
 		emailTemplates,
 		tenant
 	);
-	// }
 	return sentEmails;
 };
 

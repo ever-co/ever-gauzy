@@ -6,6 +6,7 @@ import * as faker from 'faker';
 
 export const createOrganizationDocuments = async (
 	connection: Connection,
+	tenant: Tenant,
 	organizations: Organization[]
 ): Promise<OrganizationDocuments[]> => {
 	const documents: OrganizationDocuments[] = [];
@@ -16,7 +17,7 @@ export const createOrganizationDocuments = async (
 
 		requestPaidDaysOff.name = 'Paid Days off Request';
 		requestPaidDaysOff.organizationId = organization.id;
-		requestPaidDaysOff.tenant = organization.tenant;
+		requestPaidDaysOff.tenant = tenant;
 		requestPaidDaysOff.documentUrl =
 			'http://res.cloudinary.com/evereq/image/upload/v1595424362/everbie-products-images/qanadywgn3gxte7kwtwu.pdf';
 
@@ -24,7 +25,7 @@ export const createOrganizationDocuments = async (
 		requestUnpaidDaysOff.documentUrl =
 			'http://res.cloudinary.com/evereq/image/upload/v1595506200/everbie-products-images/am3ujibzu660swicfcsw.pdf';
 		requestUnpaidDaysOff.organizationId = organization.id;
-		requestUnpaidDaysOff.tenant = organization.tenant;
+		requestUnpaidDaysOff.tenant = tenant;
 
 		documents.push(requestPaidDaysOff);
 		documents.push(requestUnpaidDaysOff);

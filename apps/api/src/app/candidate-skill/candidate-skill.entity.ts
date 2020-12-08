@@ -19,7 +19,7 @@ export class CandidateSkill
 	@Column({ nullable: true })
 	candidateId?: string;
 
-	@ManyToOne((type) => Candidate, (candidate) => candidate.skills, {
+	@ManyToOne(() => Candidate, (candidate) => candidate.skills, {
 		onDelete: 'CASCADE'
 	})
 	candidate: ICandidate;

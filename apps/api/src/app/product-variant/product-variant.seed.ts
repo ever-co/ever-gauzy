@@ -23,31 +23,28 @@ export const createRandomProductVariant = async (
 	}
 
 	const productVariants: ProductVariant[] = [];
-
 	for (const tenant of tenants) {
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrgs) {
 			const productCategories = await connection.manager.find(
 				ProductCategory,
 				{
-					where: [{ organization: tenantOrg }]
+					where: { organization: tenantOrg }
 				}
 			);
 			for (const productCategory of productCategories) {
 				const products = await connection.manager.find(Product, {
-					where: [{ category: productCategory }]
+					where: { category: productCategory }
 				});
 				for (const product of products) {
 					const productOptions = await connection.manager.find(
 						ProductOption,
 						{
-							where: [{ product: product }]
+							where: { product: product }
 						}
 					);
-
 					for (let i = 0; i < numberOfVariantPerProduct; i++) {
 						const productVariant = new ProductVariant();
-
 						productVariant.notes = faker.name.jobDescriptor();
 						productVariant.productId = product.id;
 						productVariant.quantity = faker.random.number(20);
@@ -69,5 +66,5 @@ export const createRandomProductVariant = async (
 		}
 	}
 
-	await connection.manager.save(productVariants);
+	return await connection.manager.save(productVariants);
 };
