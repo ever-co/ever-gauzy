@@ -188,6 +188,15 @@ export class InvoicesComponent
 			}
 		];
 
+		if (!this.isEstimate) {
+			const paymentsObj = {
+				title: 'Payments',
+				icon: 'clipboard-outline',
+				permission: PermissionsEnum.INVOICES_EDIT
+			};
+			this.menuArray.push(paymentsObj);
+		}
+
 		if (this.isEstimate) {
 			this.settingsContextMenu = this.menuArray.filter(
 				(item) =>
@@ -230,6 +239,7 @@ export class InvoicesComponent
 		if (action === 'Convert to Invoice') this.convert(this.selectedInvoice);
 		if (action === 'Email') this.email(this.selectedInvoice);
 		if (action === 'Delete') this.delete(this.selectedInvoice);
+		if (action === 'Payments') this.payments();
 	}
 
 	add() {
@@ -511,6 +521,12 @@ export class InvoicesComponent
 				this.clearItem();
 				await this.loadSettings();
 			});
+	}
+
+	payments() {
+		this.router.navigate([
+			`/pages/accounting/invoices/payments/${this.selectedInvoice.id}`
+		]);
 	}
 
 	async loadSettings() {

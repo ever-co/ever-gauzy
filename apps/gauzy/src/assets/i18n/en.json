@@ -1911,6 +1911,7 @@
 		"INVOICES_PER_PAGE": "Invoices Per Page",
 		"ESTIMATES_PER_PAGE": "Estimates Per Page",
 		"APPLY_DISCOUNT_AFTER_TAX": "Apply discount after tax",
+		"PAYMENTS_BUTTON": "Payments",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",
