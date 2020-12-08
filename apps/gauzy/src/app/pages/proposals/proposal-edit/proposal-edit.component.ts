@@ -5,19 +5,27 @@ import {
 	OnInit
 } from '@angular/core';
 import { Store } from '../../../@core/services/store.service';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProposalsService } from '../../../@core/services/proposals.service';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { IProposalViewModel, ITag } from '@gauzy/models';
+import {
+	ContactType,
+	IOrganizationContact,
+	IProposalViewModel,
+	ITag
+} from '@gauzy/models';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
+import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
+import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-proposal-edit',
-	templateUrl: './proposal-edit.component.html'
+	templateUrl: './proposal-edit.component.html',
+	styleUrls: ['./proposal-edit.component.scss']
 })
 export class ProposalEditComponent
 	extends TranslationBaseComponent
@@ -30,7 +38,9 @@ export class ProposalEditComponent
 		private toastrService: NbToastrService,
 		private proposalsService: ProposalsService,
 		private translate: TranslateService,
-		private cdRef: ChangeDetectorRef
+		private cdRef: ChangeDetectorRef,
+		private organizationContactService: OrganizationContactService,
+		private errorHandler: ErrorHandlingService
 	) {
 		super(translate);
 	}
@@ -39,6 +49,8 @@ export class ProposalEditComponent
 	proposal: IProposalViewModel;
 	tags: ITag[] = [];
 	form: FormGroup;
+	organizationContact: IOrganizationContact;
+	organizationContacts: Object[] = [];
 	public ckConfig: any = {
 		width: '100%',
 		height: '320'
@@ -68,7 +80,7 @@ export class ProposalEditComponent
 		const proposal = await this.proposalsService.getById(
 			this.proposalId,
 			{ tenantId },
-			['employee', 'employee.user', 'tags']
+			['employee', 'employee.user', 'tags', 'organizationContact']
 		);
 		this.proposal = Object.assign({}, proposal, {
 			jobPostLink:
@@ -90,6 +102,7 @@ export class ProposalEditComponent
 				  proposal.employee.user.lastName
 				: ''
 		});
+		await this._getOrganizationContacts();
 		this._initializeForm();
 	}
 
@@ -100,10 +113,20 @@ export class ProposalEditComponent
 	private _initializeForm() {
 		this.tags = this.proposal.tags;
 		this.form = this.fb.group({
-			jobPostUrl: [this.proposal.jobPostUrl],
+			jobPostUrl: [
+				this.proposal.jobPostUrl,
+				Validators.compose([
+					Validators.pattern(
+						new RegExp(
+							/^((?:https?:\/\/)[^./]+(?:\.[^./]+)+(?:\/.*)?)$/
+						)
+					)
+				])
+			],
 			valueDate: [this.proposal.valueDate],
 			jobPostContent: this.proposal.jobPostContent,
-			proposalContent: this.proposal.proposalContent
+			proposalContent: this.proposal.proposalContent,
+			organizationContact: this.proposal.organizationContact
 		});
 	}
 
@@ -117,7 +140,10 @@ export class ProposalEditComponent
 					jobPostUrl: result.jobPostUrl,
 					proposalContent: result.proposalContent,
 					tags: this.tags,
-					tenantId
+					tenantId,
+					organizationContactId: result.organizationContact
+						? result.organizationContact.id
+						: null
 				});
 
 				// TODO translate
@@ -139,6 +165,43 @@ export class ProposalEditComponent
 				);
 			}
 		}
+	}
+
+	private async _getOrganizationContacts() {
+		const { items } = await this.organizationContactService.getAll([], {
+			organizationId: this.proposal.organizationId,
+			tenantId: this.proposal.organizationId
+		});
+
+		this.organizationContacts = items;
+	}
+
+	addNewOrganizationContact = (
+		name: string
+	): Promise<IOrganizationContact> => {
+		try {
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
+					{
+						name: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			return this.organizationContactService.create({
+				name,
+				contactType: ContactType.CLIENT,
+				organizationId: this.proposal.organizationId,
+				tenantId: this.proposal.organizationId
+			});
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	};
+
+	selectOrganizationContact($event) {
+		this.organizationContact = $event;
 	}
 
 	selectedTagsEvent(ev) {

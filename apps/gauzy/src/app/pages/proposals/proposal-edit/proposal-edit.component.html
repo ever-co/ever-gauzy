@@ -47,6 +47,35 @@
 				</div>
 				<div class="col-sm-3">
 					<div class="form-group">
+						<label class="label">{{
+							'POP_UPS.CONTACT' | translate
+						}}</label>
+						<ng-select
+							[addTag]="addNewOrganizationContact"
+							[items]="organizationContacts"
+							bindLabel="name"
+							[searchable]="true"
+							formControlName="organizationContact"
+							(change)="selectOrganizationContact($event)"
+							placeholder="{{ 'POP_UPS.CONTACT' | translate }}"
+						>
+							<ng-template
+								ng-option-tmp
+								let-item="item"
+								let-index="index"
+							>
+								{{ item.name }}
+							</ng-template>
+							<ng-template ng-label-tmp let-item="item">
+								<div class="selector-template">
+									<span>{{ item.name }}</span>
+								</div>
+							</ng-template>
+						</ng-select>
+					</div>
+				</div>
+				<div class="col-sm-3">
+					<div class="form-group">
 						<ga-tags-color-input
 							[selectedTags]="tags"
 							(selectedTagsEvent)="selectedTagsEvent($event)"
@@ -55,29 +84,31 @@
 						</ga-tags-color-input>
 					</div>
 				</div>
-				<div class="col-sm-6">
-					<div class="form-group">
-						<label class="label">{{
-							'PROPOSALS_PAGE.EDIT_PROPOSAL.JOB_POST_CONTENT'
-								| translate
-						}}</label>
-						<ckeditor
-							formControlName="jobPostContent"
-							[config]="ckConfig"
-						>
-						</ckeditor>
+				<div class="row text-editors">
+					<div class="col-sm-6">
+						<div class="form-group">
+							<label class="label">{{
+								'PROPOSALS_PAGE.EDIT_PROPOSAL.JOB_POST_CONTENT'
+									| translate
+							}}</label>
+							<ckeditor
+								formControlName="jobPostContent"
+								[config]="ckConfig"
+							>
+							</ckeditor>
+						</div>
 					</div>
-				</div>
-				<div class="col-sm-6">
-					<div class="form-group">
-						<label class="label">{{
-							'PROPOSALS_PAGE.EDIT_PROPOSAL.PROPOSAL_CONTENT'
-								| translate
-						}}</label>
-						<ckeditor
-							formControlName="proposalContent"
-							[config]="ckConfig"
-						></ckeditor>
+					<div class="col-sm-6">
+						<div class="form-group">
+							<label class="label">{{
+								'PROPOSALS_PAGE.EDIT_PROPOSAL.PROPOSAL_CONTENT'
+									| translate
+							}}</label>
+							<ckeditor
+								formControlName="proposalContent"
+								[config]="ckConfig"
+							></ckeditor>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -85,6 +116,7 @@
 	</nb-card-body>
 	<nb-card-footer class="text-right">
 		<button
+			[disabled]="form ? form.invalid : true"
 			(click)="editProposal()"
 			class="edit-btn"
 			status="success"
