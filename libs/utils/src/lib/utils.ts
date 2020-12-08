@@ -128,9 +128,9 @@ export function isEmpty(value: any) {
 }
 
 /*
- * Get avarage value column in array object
+ * Get average value column in array object
  */
-export function avarage(items: any, column: string) {
+export function average(items: any, column: string) {
 	let sum = 0;
 	if (items.length > 0) {
 		items.forEach((item) => {

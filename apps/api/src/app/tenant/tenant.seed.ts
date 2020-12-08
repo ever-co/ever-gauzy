@@ -26,13 +26,12 @@ export const createRandomTenants = async (
 ): Promise<Tenant[]> => {
 	const randomTenants: Tenant[] = [];
 	for (let i = 0; i < noOfTenants; i++) {
-		randomTenants.push({
-			name: faker.company.companyName()
-		});
+		const tenant = new Tenant();
+		tenant.name = faker.company.companyName();
+		randomTenants.push(tenant);
 	}
 
-	await insertTenants(connection, randomTenants);
-	return randomTenants;
+	return await insertTenants(connection, randomTenants);
 };
 
 const insertTenant = async (
@@ -59,11 +58,6 @@ const insertTenant = async (
 const insertTenants = async (
 	connection: Connection,
 	tenants: Tenant[]
-): Promise<void> => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(Tenant)
-		.values(tenants)
-		.execute();
+): Promise<Tenant[]> => {
+	return await connection.manager.save(tenants);
 };

@@ -63,7 +63,6 @@ export const createDefaultTeams = async (
 export const createRandomTeam = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, Employee[]>,
 	tenantOrganizationsMap: Map<Tenant, Organization[]>,
 	roles: Role[]
 ): Promise<OrganizationTeam[]> => {

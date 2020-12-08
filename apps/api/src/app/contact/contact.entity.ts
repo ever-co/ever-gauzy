@@ -1,8 +1,16 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber } from 'class-validator';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
-import { IContact } from '@gauzy/models';
+import {
+	ICandidate,
+	IContact,
+	IEmployee,
+	IOrganizationContact
+} from '@gauzy/models';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
+import { Employee } from '../employee/employee.entity';
+import { Candidate } from '../candidate/candidate.entity';
 
 @Entity('contact')
 export class Contact extends TenantOrganizationBase implements IContact {
@@ -89,4 +97,24 @@ export class Contact extends TenantOrganizationBase implements IContact {
 	@IsOptional()
 	@Column({ nullable: true })
 	website?: string;
+
+	@ApiProperty({ type: OrganizationContact })
+	@OneToMany(
+		() => OrganizationContact,
+		(organizationContact) => organizationContact.contact,
+		{
+			onDelete: 'SET NULL'
+		}
+	)
+	public organization_contacts?: IOrganizationContact[];
+
+	@ApiProperty({ type: Employee })
+	@OneToMany(() => Employee, (employee) => employee.contact)
+	public employees?: IEmployee[];
+
+	@ApiProperty({ type: Candidate })
+	@OneToMany(() => Candidate, (candidate) => candidate.contact, {
+		onDelete: 'SET NULL'
+	})
+	public candidates?: ICandidate[];
 }

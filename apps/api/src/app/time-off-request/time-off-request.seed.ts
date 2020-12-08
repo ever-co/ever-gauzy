@@ -19,7 +19,6 @@ export const createDefaultEmployeeTimeOff = async (
 	noOfEmployeeTimeOffRequest: number
 ): Promise<TimeOffRequest[]> => {
 	let requests: TimeOffRequest[] = [];
-	// for (const organization of organizations) {
 	const policies = await connection.manager.find(TimeOffPolicy, {
 		where: [{ organizationId: organization.id }]
 	});
@@ -32,8 +31,6 @@ export const createDefaultEmployeeTimeOff = async (
 		employees,
 		policies
 	);
-	// }
-
 	return requests;
 };
 

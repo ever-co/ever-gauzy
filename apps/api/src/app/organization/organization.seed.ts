@@ -11,8 +11,7 @@ import {
 	BonusTypeEnum,
 	WeekDaysEnum,
 	AlignmentOptions,
-	IOrganizationCreateInput,
-	IOrganization
+	IOrganizationCreateInput
 } from '@gauzy/models';
 import { Tenant } from './../tenant/tenant.entity';
 import { Skill } from '../skills/skill.entity';
@@ -36,7 +35,7 @@ export const createDefaultOrganizations = async (
 	connection: Connection,
 	tenant: Tenant
 ): Promise<Organization[]> => {
-	const defaultOrganizations: IOrganization[] = [];
+	const defaultOrganizations: Organization[] = [];
 	const skills = await getSkills(connection);
 	const contacts = await getContacts(connection);
 
@@ -46,7 +45,7 @@ export const createDefaultOrganizations = async (
 			.take(faker.random.number({ min: 1, max: 4 }))
 			.values()
 			.value();
-		const defaultOrganization: IOrganization = new Organization();
+		const defaultOrganization: Organization = new Organization();
 		const { name, currency, defaultValueDateType, imageUrl } = organization;
 		defaultOrganization.name = name;
 		defaultOrganization.profile_link = generateLink(name);
@@ -246,12 +245,7 @@ const insertOrganizations = async (
 	connection: Connection,
 	organizations: Organization[]
 ): Promise<void> => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(Organization)
-		.values(organizations)
-		.execute();
+	await connection.manager.save(organizations);
 };
 
 const _extractLogoAbbreviation = (companyName: string) => {

@@ -40,19 +40,29 @@ export class TimeSlot extends TenantOrganizationBase implements ITimeSlot {
 	employeeId: string;
 
 	@ApiProperty({ type: Screenshot })
-	@OneToMany(() => Screenshot, (screenshot) => screenshot.timeSlot)
+	@OneToMany(() => Screenshot, (screenshot) => screenshot.timeSlot, {
+		cascade: true,
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	screenshots?: IScreenshot[];
 
 	@ApiProperty({ type: Activity })
-	@OneToMany(() => Activity, (activities) => activities.timeSlot)
+	@OneToMany(() => Activity, (activities) => activities.timeSlot, {
+		cascade: true,
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	activities?: IActivity[];
 
 	@ApiProperty({ type: TimeSlotMinute })
 	@OneToMany(
 		() => TimeSlotMinute,
-		(timeSlotMinute) => timeSlotMinute.timeSlot
+		(timeSlotMinute) => timeSlotMinute.timeSlot,
+		{
+			cascade: true,
+			onDelete: 'CASCADE'
+		}
 	)
 	@JoinColumn()
 	timeSlotMinutes?: ITimeSlotMinute[];

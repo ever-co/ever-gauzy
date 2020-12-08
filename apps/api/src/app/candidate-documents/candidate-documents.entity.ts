@@ -5,7 +5,8 @@ import { Candidate } from '../candidate/candidate.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('candidate_document')
-export class CandidateDocument extends TenantOrganizationBase
+export class CandidateDocument
+	extends TenantOrganizationBase
 	implements ICandidateDocument {
 	@ApiProperty({ type: String })
 	@Column()
@@ -20,7 +21,6 @@ export class CandidateDocument extends TenantOrganizationBase
 	documentUrl: string;
 
 	@ManyToOne((type) => Candidate, (candidate) => candidate.documents, {
-		nullable: false,
 		onDelete: 'CASCADE'
 	})
 	candidate: ICandidate;

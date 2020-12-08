@@ -9,7 +9,7 @@ export const createDefaultProductType = async (
 	connection: Connection,
 	organizations: Organization[]
 ): Promise<ProductType[]> => {
-	const seedProductTypes = [];
+	const seedProductTypes: ProductType[] = [];
 
 	organizations.forEach(async (organization) => {
 		seed.forEach((seedProductType) => {

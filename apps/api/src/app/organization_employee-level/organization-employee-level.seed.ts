@@ -8,7 +8,7 @@ export const createEmployeeLevels = async (
 	connection: Connection,
 	organizations: Organization[]
 ): Promise<IEmployeeLevelInput[]> => {
-	const employeeLevels: IEmployeeLevelInput[] = [];
+	const employeeLevels: EmployeeLevel[] = [];
 	DEFAULT_EMPLOYEE_LEVELS.forEach(({ level }) => {
 		organizations.forEach((organization: Organization) => {
 			const entity = new EmployeeLevel();
@@ -19,18 +19,10 @@ export const createEmployeeLevels = async (
 		});
 	});
 
-	insertLevels(connection, employeeLevels);
-	return employeeLevels;
+	return insertLevels(connection, employeeLevels);
 };
 
 const insertLevels = async (
 	connection: Connection,
-	employeeLevel: IEmployeeLevelInput[]
-): Promise<void> => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(EmployeeLevel)
-		.values(employeeLevel)
-		.execute();
-};
+	employeeLevels: EmployeeLevel[]
+) => await connection.manager.save(employeeLevels);
