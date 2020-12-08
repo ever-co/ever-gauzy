@@ -712,7 +712,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					{
 						title: 'Import/Export',
 						icon: 'flip-outline',
-						link: '/pages/settings/import-export/export',
+						link: '/pages/settings/import-export',
 						data: {
 							translationKey: 'MENU.IMPORT_EXPORT.IMPORT_EXPORT'
 						}

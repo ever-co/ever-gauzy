@@ -1,1 +1,56 @@
+<nb-card>
+	<nb-card-header>
+		<div class="h4">
+			{{ 'MENU.IMPORT_EXPORT.IMPORT_EXPORT_DATA' | translate }}
+		</div>
+		<div class="info">
+			{{ 'MENU.IMPORT_EXPORT.IMPORT_INFO' | translate }}
+		</div>
+		<div class="info">
+			{{ 'MENU.IMPORT_EXPORT.EXPORT_INFO' | translate }}
+		</div>
+		<div class="info">
+			{{ 'MENU.IMPORT_EXPORT.DOWNLOAD_TEMPLATES_INFO' | translate }}
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="row">
+			<div class="col-sm-12 col-md-12 m-2">
+				<button
+					class="m-1"
+					nbButton
+					shape="round"
+					status="success"
+					size="large"
+					(click)="importPage()"
+				>
+					<nb-icon icon="upload-outline"></nb-icon>
+					{{ 'MENU.IMPORT_EXPORT.IMPORT' | translate }}
+				</button>
+				<button
+					class="m-1"
+					nbButton
+					shape="round"
+					status="info"
+					size="large"
+					(click)="exportPage()"
+				>
+					<nb-icon icon="download-outline"></nb-icon>
+					{{ 'MENU.IMPORT_EXPORT.EXPORT' | translate }}
+				</button>
+
+				<button
+					class="m-1"
+					nbButton
+					shape="round"
+					size="large"
+					(click)="onDownloadTemplates()"
+				>
+					<nb-icon icon="file-text-outline"></nb-icon>
+					{{ 'MENU.IMPORT_EXPORT.DOWNLOAD_TEMPLATES' | translate }}
+				</button>
+			</div>
+		</div>
+	</nb-card-body>
+</nb-card>
 <router-outlet></router-outlet>
