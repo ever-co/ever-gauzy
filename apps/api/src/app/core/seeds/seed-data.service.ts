@@ -665,6 +665,15 @@ export class SeedDataService {
 			'Default Integrations',
 			createDefaultIntegrations(this.connection, integrationTypes)
 		);
+
+		await this.tryExecute(
+			'Default Event Types',
+			createDefaultEventTypes(
+				this.connection,
+				this.tenant,
+				this.organizations
+			)
+		);
 	}
 
 	/**
@@ -1027,15 +1036,6 @@ export class SeedDataService {
 				this.connection,
 				this.tenant,
 				this.defaultEmployees,
-				this.organizations
-			)
-		);
-
-		await this.tryExecute(
-			'Default Event Types',
-			createDefaultEventTypes(
-				this.connection,
-				this.tenant,
 				this.organizations
 			)
 		);
