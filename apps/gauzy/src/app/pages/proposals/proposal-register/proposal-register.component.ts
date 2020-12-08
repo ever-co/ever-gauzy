@@ -14,7 +14,9 @@ import {
 	ITag,
 	IOrganization,
 	IEmployee,
-	IEmployeeProposalTemplate
+	IEmployeeProposalTemplate,
+	IOrganizationContact,
+	ContactType
 } from '@gauzy/models';
 import { ProposalsService } from '../../../@core/services/proposals.service';
 import { NbToastrService } from '@nebular/theme';
@@ -23,6 +25,8 @@ import { Router } from '@angular/router';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
+import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
+import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-proposal-register',
@@ -38,6 +42,8 @@ export class ProposalRegisterComponent
 	proposalTemplateId: string;
 	form: FormGroup;
 	selectedOrganization: IOrganization;
+	organizationContact: IOrganizationContact;
+	organizationContacts: Object[] = [];
 	tags: ITag[] = [];
 	public ckConfig: any = {
 		width: '100%',
@@ -53,7 +59,9 @@ export class ProposalRegisterComponent
 		private proposalsService: ProposalsService,
 		private toastrService: NbToastrService,
 		readonly translateService: TranslateService,
-		private cdRef: ChangeDetectorRef
+		private cdRef: ChangeDetectorRef,
+		private organizationContactService: OrganizationContactService,
+		private errorHandler: ErrorHandlingService
 	) {
 		super(translateService);
 	}
@@ -65,6 +73,7 @@ export class ProposalRegisterComponent
 			.subscribe((org) => {
 				if (org) {
 					this.selectedOrganization = org;
+					this._getOrganizationContacts();
 				}
 			});
 	}
@@ -77,7 +86,6 @@ export class ProposalRegisterComponent
 	}
 
 	onProposalTemplateChange(item: IEmployeeProposalTemplate): void {
-		console.log(item);
 		this.form.get('proposalContent').setValue(item.content);
 	}
 
@@ -101,7 +109,8 @@ export class ProposalRegisterComponent
 			valueDate: [new Date(), Validators.required],
 			jobPostContent: [''],
 			proposalContent: [''],
-			tags: ['']
+			tags: [''],
+			organizationContact: []
 		});
 	}
 
@@ -122,7 +131,10 @@ export class ProposalRegisterComponent
 						jobPostContent: result.jobPostContent,
 						proposalContent: result.proposalContent,
 						status: ProposalStatusEnum.SENT,
-						tags: this.tags
+						tags: this.tags,
+						organizationContactId: result.organizationContact
+							? result.organizationContact.id
+							: null
 					});
 
 					// TODO translate
@@ -156,6 +168,43 @@ export class ProposalRegisterComponent
 				);
 			}
 		}
+	}
+
+	private async _getOrganizationContacts() {
+		const { items } = await this.organizationContactService.getAll([], {
+			organizationId: this.selectedOrganization.id,
+			tenantId: this.selectedOrganization.tenantId
+		});
+
+		this.organizationContacts = items;
+	}
+
+	addNewOrganizationContact = (
+		name: string
+	): Promise<IOrganizationContact> => {
+		try {
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
+					{
+						name: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			return this.organizationContactService.create({
+				name,
+				contactType: ContactType.CLIENT,
+				organizationId: this.selectedOrganization.id,
+				tenantId: this.selectedOrganization.id
+			});
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	};
+
+	selectOrganizationContact($event) {
+		this.organizationContact = $event;
 	}
 
 	selectedTagsEvent(ev) {

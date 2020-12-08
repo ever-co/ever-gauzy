@@ -35,9 +35,11 @@ import { Tag } from '../tags/tag.entity';
 import { Contact } from '../contact/contact.entity';
 import { Payment } from '../payment/payment.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
+import { Proposal } from '../proposal/proposal.entity';
 
 @Entity('organization_contact')
-export class OrganizationContact extends TenantOrganizationBase
+export class OrganizationContact
+	extends TenantOrganizationBase
 	implements IOrganizationContact {
 	@ApiProperty()
 	@ManyToMany((type) => Tag, (tag) => tag.organizationContact)
@@ -131,4 +133,9 @@ export class OrganizationContact extends TenantOrganizationBase
 	})
 	@JoinColumn()
 	payments?: IPayment[];
+
+	@ApiPropertyOptional({ type: Proposal, isArray: true })
+	@OneToMany((type) => Proposal, (proposal) => proposal.organizationContact)
+	@JoinColumn()
+	proposals?: IOrganizationProject[];
 }

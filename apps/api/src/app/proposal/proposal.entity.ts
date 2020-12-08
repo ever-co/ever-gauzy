@@ -9,11 +9,17 @@ import {
 	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsOptional, IsDate } from 'class-validator';
-import { IProposal, IEmployee, ITag } from '@gauzy/models';
+import { IsString, IsOptional, IsDate } from 'class-validator';
+import {
+	IProposal,
+	IEmployee,
+	ITag,
+	IOrganizationContact
+} from '@gauzy/models';
 import { Employee } from '../employee/employee.entity';
 import { Tag } from '../tags/tag.entity';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 
 @Entity('proposal')
 export class Proposal extends TenantOrganizationBase implements IProposal {
@@ -62,4 +68,21 @@ export class Proposal extends TenantOrganizationBase implements IProposal {
 	@IsOptional()
 	@Column()
 	status?: string;
+
+	@ApiPropertyOptional({ type: OrganizationContact })
+	@ManyToOne(
+		(type) => OrganizationContact,
+		(organizationContact) => organizationContact.proposals,
+		{
+			nullable: true,
+			onDelete: 'CASCADE'
+		}
+	)
+	@JoinColumn()
+	organizationContact?: IOrganizationContact;
+
+	@ApiProperty({ type: String })
+	@RelationId((contact: Proposal) => contact.organizationContact)
+	@Column({ nullable: true })
+	organizationContactId?: string;
 }

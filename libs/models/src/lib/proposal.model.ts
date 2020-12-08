@@ -1,3 +1,4 @@
+import { IOrganizationContact } from '..';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IEmployee, IEmployeeFindInput } from './employee.model';
 import { ITag } from './tag-entity.model';
@@ -11,6 +12,8 @@ export interface IProposal extends IBasePerTenantAndOrganizationEntityModel {
 	proposalContent?: string;
 	status?: string;
 	tags?: ITag[];
+	organizationContact?: IOrganizationContact;
+	organizationContactId?: string;
 }
 
 export interface IProposalCreateInput
@@ -22,6 +25,7 @@ export interface IProposalCreateInput
 	proposalContent?: string;
 	status?: string;
 	tags?: ITag[];
+	organizationContactId?: string;
 }
 
 export interface IProposalFindInput
@@ -53,4 +57,5 @@ export interface IProposalViewModel
 	proposalContent?: string;
 	status?: string;
 	author?: string;
+	organizationContactName?: string;
 }

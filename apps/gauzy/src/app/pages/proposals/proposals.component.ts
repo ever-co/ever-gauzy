@@ -315,6 +315,13 @@ export class ProposalsComponent
 							class: badgeClass
 						};
 					}
+				},
+				organizationContactName: {
+					title: this.getTranslation('SM_TABLE.CONTACT_NAME'),
+					type: 'text',
+					valuePrepareFunction: (cell) => {
+						return cell;
+					}
 				}
 			}
 		};
@@ -353,7 +360,7 @@ export class ProposalsComponent
 		const { id: organizationId } = this.selectedOrganization;
 		if (this.selectedEmployeeId) {
 			const response = await this.proposalsService.getAll(
-				['employee', 'organization', 'tags'],
+				['employee', 'organization', 'tags', 'organizationContact'],
 				{
 					employeeId: this.selectedEmployeeId,
 					organizationId,
@@ -366,11 +373,16 @@ export class ProposalsComponent
 			this.totalProposals = response.total;
 		} else {
 			const response = await this.proposalsService.getAll(
-				['organization', 'employee', 'employee.user', 'tags'],
+				[
+					'organization',
+					'employee',
+					'employee.user',
+					'tags',
+					'organizationContact'
+				],
 				{ organizationId, tenantId },
 				this.selectedDate
 			);
-
 			items = response.items;
 			this.totalProposals = response.total;
 		}
@@ -414,6 +426,9 @@ export class ProposalsComponent
 							? i.employee.user.firstName +
 							  ' ' +
 							  i.employee.user.lastName
+							: '',
+						organizationContactName: i.organizationContact
+							? i.organizationContact.name
 							: ''
 					};
 				});
