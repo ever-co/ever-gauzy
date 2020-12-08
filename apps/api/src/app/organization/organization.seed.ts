@@ -11,8 +11,7 @@ import {
 	BonusTypeEnum,
 	WeekDaysEnum,
 	AlignmentOptions,
-	IOrganizationCreateInput,
-	IOrganization
+	IOrganizationCreateInput
 } from '@gauzy/models';
 import { Tenant } from './../tenant/tenant.entity';
 import { Skill } from '../skills/skill.entity';
