@@ -13,6 +13,7 @@ import { EditEmployeeHiringComponent } from './edit-employee/edit-employee-profi
 import { EditEmployeeLocationComponent } from './edit-employee/edit-employee-profile/edit-employee-location/edit-employee-location.component';
 import { EditEmployeeEmploymentComponent } from './edit-employee/edit-employee-profile/edit-employee-employment/edit-employee-employment.component';
 import { NgxPermissionsGuard } from 'ngx-permissions';
+import { EditEmployeeNetworksComponent } from './edit-employee/edit-employee-profile/edit-employee-networks/edit-employee-networks.component';
 
 export function redirectTo() {
 	return '/pages/dashboard';
@@ -49,6 +50,10 @@ const routes: Routes = [
 			{
 				path: 'account',
 				component: EditEmployeeMainComponent
+			},
+			{
+				path: 'networks',
+				component: EditEmployeeNetworksComponent
 			},
 			{
 				path: 'rates',

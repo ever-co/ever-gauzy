@@ -59,6 +59,7 @@ import { EmployeeRatesModule } from '../../@shared/employee/employee-rates/emplo
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { SkillsService } from '../../@core/services/skills.service';
 import { CKEditorModule } from 'ng2-ckeditor';
+import { EditEmployeeNetworksComponent } from './edit-employee/edit-employee-profile/edit-employee-networks/edit-employee-networks.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -80,7 +81,8 @@ const COMPONENTS = [
 	EditEmployeeContactComponent,
 	EditEmployeeHiringComponent,
 	EditEmployeeLocationComponent,
-	EditEmployeeEmploymentComponent
+	EditEmployeeEmploymentComponent,
+	EditEmployeeNetworksComponent
 ];
 
 @NgModule({
