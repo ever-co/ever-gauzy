@@ -1,4 +1,9 @@
-<nb-card class="jobs-page">
+<nb-card
+	class="jobs-page"
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<nb-card-header class="header">
 		<h4>
 			<ngx-back-navigation></ngx-back-navigation>

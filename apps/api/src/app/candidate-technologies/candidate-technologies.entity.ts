@@ -5,7 +5,8 @@ import { CandidateInterview } from '../candidate-interview/candidate-interview.e
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('candidate_technology')
-export class CandidateTechnologies extends TenantOrganizationBase
+export class CandidateTechnologies
+	extends TenantOrganizationBase
 	implements ICandidateTechnologies {
 	@ApiProperty({ type: String })
 	@Column()
@@ -20,8 +21,11 @@ export class CandidateTechnologies extends TenantOrganizationBase
 	rating?: number;
 
 	@ManyToOne(
-		(type) => CandidateInterview,
-		(interview) => interview.technologies
+		() => CandidateInterview,
+		(interview) => interview.technologies,
+		{
+			onDelete: 'CASCADE'
+		}
 	)
 	interview: ICandidateInterview;
 }

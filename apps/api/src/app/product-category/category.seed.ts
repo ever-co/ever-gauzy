@@ -36,16 +36,14 @@ export const createCategories = async (
 		});
 	});
 
-	await insertProductCategories(connection, seedProductCategories);
-
-	return seedProductCategories;
+	return await insertProductCategories(connection, seedProductCategories);
 };
 
 const insertProductCategories = async (
 	connection: Connection,
 	categories: ProductCategory[]
-): Promise<void> => {
-	await connection.manager.save(categories);
+): Promise<ProductCategory[]> => {
+	return await connection.manager.save(categories);
 };
 
 export const createRandomCategories = async (
@@ -53,7 +51,7 @@ export const createRandomCategories = async (
 	tenants: Tenant[],
 	tenantOrganizationsMap: Map<Tenant, Organization[]>
 ): Promise<ProductCategory[]> => {
-	const seedProductCategories = [];
+	const seedProductCategories: ProductCategory[] = [];
 
 	for (const tenant of tenants) {
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
@@ -80,9 +78,7 @@ export const createRandomCategories = async (
 				seedProductCategories.push(newCategory);
 			}
 		}
-
-		await insertProductCategories(connection, seedProductCategories);
-
-		return seedProductCategories;
 	}
+	await insertProductCategories(connection, seedProductCategories);
+	return seedProductCategories;
 };

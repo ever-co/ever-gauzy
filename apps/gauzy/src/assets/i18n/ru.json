@@ -563,12 +563,13 @@
 		"FILE_STORAGE": "Файловое хранилище",
 		"IMPORT_EXPORT": {
 			"IMPORT_EXPORT": "Импорт/Экспорт",
+			"IMPORT_EXPORT_DATA": "Импорт / Экспорт данных",
 			"IMPORT": "Импорт",
 			"IMPORT_HISTORY": "История импорта",
 			"EXPORT": "Экспорт",
 			"MERGE": "объединение данных",
 			"CLEAN_UP": "очистить перед импортом",
-			"EXPORT_MESSAGE": "Нажмите \"ЭКСПОРТ\", чтобы загрузить все таблицы из базы данных или нажмите \"ЗАКАЗАТЬ ТЕМПЛЕКТЫ\", чтобы загрузить zip-архив с шаблонами CSV ",
+			"EXPORT_MESSAGE": "Нажмите \"EXPORT\" для загрузки всех таблиц из базы данных. ",
 			"IMPORT_MESSAGE": "Нажмите \"ВАЖНО\" для вставки всех таблиц в базу данных. Имя файла для загрузки должно быть: \"import. Также выберите между параметрами \"объединить данные\" и \"очистить перед импортом\".",
 			"IMPORT_HISTORY_MESSAGE": "Здесь вы можете отслеживать ваши недавно импортированные файлы",
 			"SELECT_FILE": "Выбрать файл",
@@ -584,7 +585,10 @@
 			"REMOVE": "Удалить",
 			"WRONG_FILE_NAME": "Неправильное имя файла!!!",
 			"CORRECT_FILE_NAME": "Имя файла должно быть: \"import.zip\"",
-			"DOWNLOAD_TEMPLATES": "Скачать шаблоны"
+			"DOWNLOAD_TEMPLATES": "Скачать шаблоны",
+			"IMPORT_INFO": "Нажмите кнопку \"Import\" для импорта данных в БД Gauzy.",
+			"EXPORT_INFO": "Нажмите кнопку \"Экспорт\" для экспорта данных из базы данных Gauzy.",
+			"DOWNLOAD_TEMPLATES_INFO": "Нажмите \"Скачать шаблоны\" для загрузки Zip архива с шаблонами CSV для формата Gauzy данных."
 		},
 		"TAGS": "Теги",
 		"LANGUAGE": "Язык",
@@ -1418,6 +1422,7 @@
 		"REGISTER": {
 			"REGISTER_PROPOSALS": "Регистрация предложения",
 			"AUTHOR": "Автор",
+			"TEMPLATE": "Шаблон",
 			"JOB_POST_URL": "URL записи задания",
 			"PICK_A_DATE": "Выбрать дату",
 			"PROPOSAL_DATE": "Дата предложения",
@@ -1754,7 +1759,11 @@
 		"EMPLOYEE": "Сотрудник",
 		"DESCRIPTION": "Описание",
 		"IS_DEFAULT": "По умолчанию",
-		"CONFIRM_DELETE": "Вы уверены, что хотите удалить"
+		"CONFIRM_DELETE": "Вы уверены, что хотите удалить",
+		"PROPOSAL_CREATE_MESSAGE": "Шаблон предложения успешно создан",
+		"PROPOSAL_EDIT_MESSAGE": "Шаблон предложения отредактирован",
+		"PROPOSAL_DELETE_MESSAGE": "Шаблон предложения успешно удален",
+		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Шаблон предложения успешно создан по умолчанию"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Спринт добавлен",
@@ -1907,6 +1916,7 @@
 		"INVOICES_PER_PAGE": "Счета на странице",
 		"ESTIMATES_PER_PAGE": "Оценки на странице",
 		"APPLY_DISCOUNT_AFTER_TAX": "Применить скидку после налога",
+		"PAYMENTS_BUTTON": "Платежи",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"ESTIMATE_TYPE": "Тип оценки",
@@ -2564,7 +2574,10 @@
 		"HEADER": "Сделки Трубопровода",
 		"FILTER_BY_STAGE": "Фильтр по этапу",
 		"RECORD_TYPE": "этап \"{{ title }}\"",
-		"ALL_STAGES": "Все этапы"
+		"ALL_STAGES": "Все этапы",
+		"DEAL_DELETED": "Сделка удалена",
+		"DEAL_EDITED": "Предложение отредактировано",
+		"DEAL_ADDED": "Сделка добавлена"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Редактировать сделку | Пипеллинн: {{ name }}"

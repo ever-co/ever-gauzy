@@ -62,14 +62,16 @@ export class TimeSlotBulkCreateOrUpdateHandler
 			.flatten()
 			.value();
 
+		const timeLogIds = _.chain(oldSlotsTimeLogIds)
+			.concat(newSlotsTimeLogIds)
+			.uniq()
+			.values()
+			.value();
+
 		const timeLogs = await this.timeLogRepository.find({
-			id: In(
-				_.chain(oldSlotsTimeLogIds)
-					.concat(newSlotsTimeLogIds)
-					.uniq()
-					.values()
-					.value()
-			)
+			where: {
+				id: In(timeLogIds)
+			}
 		});
 
 		if (insertedSlots.length > 0) {

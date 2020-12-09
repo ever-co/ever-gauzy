@@ -83,7 +83,7 @@ export const createRandomTimeLogs = async (
 						Object.keys(TimeLogSourceEnum)
 					) as TimeLogSourceEnum;
 
-					const timelog = new TimeLog({
+					const timeLog = new TimeLog({
 						employeeId: timesheet.employeeId
 					});
 
@@ -105,40 +105,42 @@ export const createRandomTimeLogs = async (
 					});
 					timeSlots = timeSlots.concat(newTimeSlot);
 
-					timelog.timesheet = timesheet;
-					timelog.timeSlots = newTimeSlot;
-					timelog.project = project;
-					timelog.task = task;
-					timelog.organizationContact = project.organizationContact;
-					timelog.startedAt = startedAt;
-					timelog.stoppedAt = stoppedAt;
-					timelog.logType = logType;
-					timelog.source = source;
-					timelog.description = faker.lorem.sentence(
+					timeLog.timesheet = timesheet;
+					timeLog.timeSlots = newTimeSlot;
+					timeLog.project = project;
+					timeLog.task = task;
+					timeLog.organizationContact = project.organizationContact;
+					timeLog.startedAt = startedAt;
+					timeLog.stoppedAt = stoppedAt;
+					timeLog.logType = logType;
+					timeLog.source = source;
+					timeLog.description = faker.lorem.sentence(
 						faker.random.number(10)
 					);
-					timelog.isBillable = faker.random.arrayElement([
+					timeLog.isBillable = faker.random.arrayElement([
 						true,
 						true,
 						false
 					]);
-					timelog.deletedAt = null;
-					(timelog.organizationId = timesheet.organizationId),
-						(timelog.tenantId = timesheet.tenantId);
-					timeLogs.push(timelog);
+					timeLog.deletedAt = null;
+					(timeLog.organizationId = timesheet.organizationId),
+						(timeLog.tenantId = timesheet.tenantId);
+					timeLogs.push(timeLog);
 				}
 			}
 		}
 
-		const savedtimeSlots = await connection.manager.save(timeSlots);
-		allTimeSlots.push(...savedtimeSlots);
+		const savedTimeSlots = await connection.manager.save(timeSlots);
+		const savedTimeLogs = await connection.manager.save(timeLogs);
 
-		for await (const timelog of timeLogs) {
-			if (timelog.logType === TimeLogType.TRACKED) {
-				timeSlots = savedtimeSlots.filter(
-					(x) => x.employeeId === timelog.employeeId
+		allTimeSlots.push(...savedTimeSlots);
+
+		for await (const timeLog of savedTimeLogs) {
+			if (timeLog.logType === TimeLogType.TRACKED) {
+				const filterTimeSlots = savedTimeSlots.filter(
+					(x) => x.employeeId === timeLog.employeeId
 				);
-				for await (const timeSlot of timeSlots) {
+				for await (const timeSlot of filterTimeSlots) {
 					for (let i = 0; i < noOfTimeLogsPerTimeSheet; i++) {
 						screenshotsPromise.push(
 							createRandomScreenshot(timeSlot, tenant)
@@ -148,20 +150,17 @@ export const createRandomTimeLogs = async (
 			}
 		}
 
-		await connection.manager.save(timeSlots);
-		let screenshots: Screenshot[] = [];
 		await Promise.all(screenshotsPromise)
-			.then((data) => {
+			.then(async (data) => {
+				const screenshots: Screenshot[] = [];
 				data.forEach((row) => {
-					screenshots = screenshots.concat(row);
+					screenshots.push(...row);
 				});
+				await connection.manager.save(screenshots);
 			})
 			.catch((err) => {
 				console.log({ err });
 			});
-
-		await connection.manager.save(screenshots);
-		await connection.manager.save(timeLogs);
 	}
 	return allTimeSlots;
 };

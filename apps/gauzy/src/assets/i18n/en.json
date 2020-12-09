@@ -563,12 +563,13 @@
 		"FILE_STORAGE": "File Storage",
 		"IMPORT_EXPORT": {
 			"IMPORT_EXPORT": "Import/Export",
+			"IMPORT_EXPORT_DATA": "Import / Export Data",
 			"IMPORT": "Import",
 			"IMPORT_HISTORY": "Import History",
 			"EXPORT": "Export",
 			"MERGE": "merge data",
 			"CLEAN_UP": "clean up before import",
-			"EXPORT_MESSAGE": "Click \"EXPORT\" to download all tables from the database or click \"DOWNLOAD TEMPLATES\" to download zip archive with CSV templates ",
+			"EXPORT_MESSAGE": "Click \"EXPORT\" to download all tables from the database. ",
 			"IMPORT_MESSAGE": "Click \"IMPORT\" to insert all tables in the database. The name of the file for upload should be: \"import.zip\". Chose also between options \"merge data\" and \"clean up before import\".",
 			"IMPORT_HISTORY_MESSAGE": "You can track your recently imported files here",
 			"SELECT_FILE": "Select File",
@@ -584,7 +585,10 @@
 			"REMOVE": "Remove",
 			"WRONG_FILE_NAME": "Wrong file name!!!",
 			"CORRECT_FILE_NAME": "The file name should be: \"import.zip\"",
-			"DOWNLOAD_TEMPLATES": "Download templates"
+			"DOWNLOAD_TEMPLATES": "Download templates",
+			"IMPORT_INFO": "Click \"Import\" to import your data into Gauzy DB.",
+			"EXPORT_INFO": "Click \"Export\" to export data from Gauzy DB.",
+			"DOWNLOAD_TEMPLATES_INFO": "Click \"Download Templates\" to download Zip archive with CSV templates for the format of Gauzy data."
 		},
 		"TAGS": "Tags",
 		"LANGUAGE": "Language",
@@ -1418,6 +1422,7 @@
 		"REGISTER": {
 			"REGISTER_PROPOSALS": "Register Proposal",
 			"AUTHOR": "Author",
+			"TEMPLATE": "Template",
 			"JOB_POST_URL": "Job Post URL",
 			"PICK_A_DATE": "Pick a Date",
 			"PROPOSAL_DATE": "Proposal Date",
@@ -1754,7 +1759,11 @@
 		"EMPLOYEE": "Employee",
 		"DESCRIPTION": "Description",
 		"IS_DEFAULT": "Is Default",
-		"CONFIRM_DELETE": "Are you sure that, you want to delete"
+		"CONFIRM_DELETE": "Are you sure that, you want to delete",
+		"PROPOSAL_CREATE_MESSAGE": "Proposal template successfully created",
+		"PROPOSAL_EDIT_MESSAGE": "Proposal template successfully edited",
+		"PROPOSAL_DELETE_MESSAGE": "Proposal template successfully deleted",
+		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Proposal template successfully made as default"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Sprint added",
@@ -1791,9 +1800,13 @@
 	},
 	"CONTEXT_MENU": {
 		"TIMER": "Start Timer",
-		"ADD_INCOME": "Add Income",
-		"ADD_EXPENSE": "Add Expense",
+		"ADD_INCOME": "Income",
+		"ADD_EXPENSE": "Expense",
 		"INVOICE": "Invoice",
+		"ESTIMATE": "Estimate",
+		"PAYMENT": "Payment",
+		"TIME_LOG": "Time Log",
+		"CANDIDATE": "Candidate",
 		"PROPOSAL": "Proposal",
 		"CONTRACT": "Contract",
 		"TEAM": "Team",
@@ -1801,7 +1814,7 @@
 		"CLIENT": "Client",
 		"CONTACT": "Contact",
 		"PROJECT": "Project",
-		"ADD_EMPLOYEE": "Add Employee",
+		"ADD_EMPLOYEE": "Employee",
 		"CHAT": "Support Chat",
 		"FAQ": "FAQ",
 		"HELP": "Help"
@@ -1907,6 +1920,7 @@
 		"INVOICES_PER_PAGE": "Invoices Per Page",
 		"ESTIMATES_PER_PAGE": "Estimates Per Page",
 		"APPLY_DISCOUNT_AFTER_TAX": "Apply discount after tax",
+		"PAYMENTS_BUTTON": "Payments",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",
@@ -2564,7 +2578,10 @@
 		"HEADER": "Pipeline Deals",
 		"FILTER_BY_STAGE": "Filter by Stage",
 		"RECORD_TYPE": "stage \"{{ title }}\"",
-		"ALL_STAGES": "All Stages"
+		"ALL_STAGES": "All Stages",
+		"DEAL_DELETED": "Deal deleted",
+		"DEAL_EDITED": "Deal edited",
+		"DEAL_ADDED": "Deal added"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Edit Deal | Pipeline: {{ name }}"

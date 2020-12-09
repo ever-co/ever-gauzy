@@ -86,8 +86,8 @@ export class PaymentMutationComponent
 				invoiceId: this.payment.invoice
 					? this.payment.invoice.id
 					: null,
-				contact: this.payment.contact,
-				project: this.payment.project
+				contact: this.payment.contact ? this.payment.contact : null,
+				project: this.payment.project ? this.payment.project : null
 			});
 			this.form.updateValueAndValidity();
 		}
@@ -95,9 +95,11 @@ export class PaymentMutationComponent
 
 	async addEditPayment() {
 		const paymentData = this.form.value;
-		this.invoice = this.invoices.find(
-			(item) => paymentData.invoiceId === item.id
-		);
+		if (this.invoices) {
+			this.invoice = this.invoices.find(
+				(item) => paymentData.invoiceId === item.id
+			);
+		}
 		const payment = {
 			amount: paymentData.amount,
 			paymentDate: paymentData.paymentDate,
@@ -141,12 +143,17 @@ export class PaymentMutationComponent
 
 		if (this.payment) {
 			payment['id'] = this.payment.id;
+			this.toastrService.primary(
+				this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_EDIT'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+		} else {
+			this.toastrService.primary(
+				this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
 		}
 
-		this.toastrService.primary(
-			this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD'),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
-		);
 		this.dialogRef.close(payment);
 	}
 

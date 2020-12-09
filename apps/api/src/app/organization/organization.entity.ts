@@ -60,7 +60,11 @@ export class Organization extends TenantBase implements IOrganization {
 	tags: ITag[];
 
 	@ApiProperty({ type: Contact })
-	@ManyToOne((type) => Contact, { nullable: true, cascade: true })
+	@ManyToOne(() => Contact, (contact) => contact.organization, {
+		nullable: true,
+		cascade: true,
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	contact: IContact;
 

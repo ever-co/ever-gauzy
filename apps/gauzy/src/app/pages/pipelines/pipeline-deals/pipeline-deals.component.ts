@@ -10,7 +10,7 @@ import {
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { DealsService } from '../../../@core/services/deals.service';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
@@ -37,6 +37,7 @@ export class PipelineDealsComponent
 	deal: IDeal;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	loading: boolean;
 
 	private _selectedOrganizationId: string;
 	readonly smartTableSettings = {
@@ -87,7 +88,8 @@ export class PipelineDealsComponent
 		private activatedRoute: ActivatedRoute,
 		private pipelinesService: PipelinesService,
 		private router: Router,
-		private store: Store
+		private store: Store,
+		private toastrService: NbToastrService
 	) {
 		super(translateService);
 		this.setView();
@@ -177,10 +179,15 @@ export class PipelineDealsComponent
 			await this.dealsService.delete(this.deal.id);
 			this.updateViewData();
 			delete this.deal;
+			this.toastrService.primary(
+				this.getTranslation('PIPELINE_DEALS_PAGE.DEAL_DELETED'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
 		}
 	}
 
 	private updateViewData(): void {
+		this.loading = true;
 		this.activatedRoute.params
 			.pipe(untilDestroyed(this))
 			.subscribe(async ({ pipelineId }) => {
@@ -207,6 +214,7 @@ export class PipelineDealsComponent
 						this.filterDealsByStage();
 					});
 			});
+		this.loading = false;
 	}
 
 	private _checkOrganization() {

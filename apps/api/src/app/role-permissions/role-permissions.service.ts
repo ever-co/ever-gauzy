@@ -6,7 +6,7 @@ import { RolePermissions } from './role-permissions.entity';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { RolesEnum, ITenant, IRole, IRolePermission } from '@gauzy/models';
 import { Role } from '../role/role.entity';
-import { defaultRolePermissions } from './role-permissions.seed';
+import { DEFAULT_ROLE_PERMISSIONS } from './default-role-permissions';
 
 @Injectable()
 export class RolePermissionsService extends TenantAwareCrudService<
@@ -47,7 +47,7 @@ export class RolePermissionsService extends TenantAwareCrudService<
 	}
 
 	public async updateRoles(tenant: ITenant, role: Role) {
-		const { defaultEnabledPermissions } = defaultRolePermissions.find(
+		const { defaultEnabledPermissions } = DEFAULT_ROLE_PERMISSIONS.find(
 			(defaultRole) => role.name === defaultRole.role
 		);
 
@@ -72,7 +72,7 @@ export class RolePermissionsService extends TenantAwareCrudService<
 		const rolesPermissions: IRolePermission[] = [];
 		for await (const tenant of tenants) {
 			for await (const role of roles) {
-				const defaultPermissions = defaultRolePermissions.find(
+				const defaultPermissions = DEFAULT_ROLE_PERMISSIONS.find(
 					(defaultRole) => role.name === defaultRole.role
 				);
 				if (

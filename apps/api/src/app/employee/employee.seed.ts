@@ -6,7 +6,7 @@ import { User } from '../user/user.entity';
 import { date as fakerDate } from 'faker';
 import { CurrenciesEnum, ISeedUsers, PayPeriodEnum } from '@gauzy/models';
 import * as faker from 'faker';
-import { DEFAULT_EMPLOYEES } from './employee';
+import { DEFAULT_EMPLOYEES } from './default-employees';
 import * as moment from 'moment';
 
 export const createDefaultEmployees = async (
@@ -48,9 +48,10 @@ export const createDefaultEmployees = async (
 		);
 		employee.reWeeklyLimit = faker.random.number(40);
 		employee.tenant = defaultTenant;
-		await insertEmployee(connection, employee);
 		employees.push(employee);
 	}
+
+	await insertEmployees(connection, employees);
 	return employees;
 };
 
@@ -64,7 +65,6 @@ export const createRandomEmployees = async (
 	const employeeMap: Map<Tenant, Employee[]> = new Map();
 
 	for (const tenant of tenants) {
-		let employee: Employee;
 		const employees: Employee[] = [];
 		const randomUsers = tenantUsersMap.get(tenant).employeeUsers;
 		const randomOrgs = tenantOrganizationsMap.get(tenant);
@@ -72,7 +72,7 @@ export const createRandomEmployees = async (
 		for (const organization of randomOrgs) {
 			if (randomUsers.length) {
 				for (let index = 0; index < employeesPerOrganization; index++) {
-					employee = new Employee();
+					const employee = new Employee();
 					employee.organization = organization;
 					employee.user = randomUsers.pop();
 					employee.isActive = true;
@@ -108,25 +108,8 @@ export const createRandomEmployees = async (
 const insertEmployees = async (
 	connection: Connection,
 	employees: Employee[]
-): Promise<void> => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(Employee)
-		.values(employees)
-		.execute();
-};
-
-const insertEmployee = async (
-	connection: Connection,
-	employee: Employee
-): Promise<void> => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(Employee)
-		.values(employee)
-		.execute();
+): Promise<Employee[]> => {
+	return await connection.manager.save(employees);
 };
 
 const getDate = (dateString: string): Date => {

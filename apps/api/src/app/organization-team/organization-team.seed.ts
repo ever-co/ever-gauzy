@@ -8,6 +8,7 @@ import { RolesEnum } from '@gauzy/models';
 import { Tenant } from '../tenant/tenant.entity';
 import * as _ from 'underscore';
 import * as faker from 'faker';
+import { DEFAULT_ORGANIZATION_TEAMS } from './default-organization-teams';
 
 export const createDefaultTeams = async (
 	connection: Connection,
@@ -15,45 +16,7 @@ export const createDefaultTeams = async (
 	employees: Employee[],
 	roles: Role[]
 ): Promise<OrganizationTeam[]> => {
-	const teams = [
-		{
-			name: 'Employees',
-			defaultMembers: [
-				'admin@ever.co',
-				'ruslan@ever.co',
-				'alish@ever.co',
-				'blagovest@ever.co',
-				'elvis@ever.co',
-				'hristo@ever.co',
-				'alex@ever.co',
-				'pavel@ever.co',
-				'yavor@ever.co',
-				'tsvetelina@ever.co',
-				'julia@ever.co'
-			],
-			manager: ['ruslan@ever.co']
-		},
-		{
-			name: 'Contractors',
-			defaultMembers: [
-				'dimana@ever.co',
-				'deko898@hotmail.com',
-				'muiz@smooper.xyz',
-				'ckhandla94@gmail.com'
-			],
-			manager: ['ruslan@ever.co', 'rachit@ever.co']
-		},
-		{
-			name: 'Designers',
-			defaultMembers: ['julia@ever.co', 'yordan@ever.co'],
-			manager: []
-		},
-		{
-			name: 'QA',
-			defaultMembers: ['julia@ever.co', 'yordan@ever.co'],
-			manager: []
-		}
-	];
+	const teams = DEFAULT_ORGANIZATION_TEAMS;
 
 	const organizationTeams: OrganizationTeam[] = [];
 	for (let i = 0; i < teams.length; i++) {
@@ -100,7 +63,6 @@ export const createDefaultTeams = async (
 export const createRandomTeam = async (
 	connection: Connection,
 	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, Employee[]>,
 	tenantOrganizationsMap: Map<Tenant, Organization[]>,
 	roles: Role[]
 ): Promise<OrganizationTeam[]> => {

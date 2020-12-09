@@ -315,6 +315,15 @@ export class ProposalsComponent
 							class: badgeClass
 						};
 					}
+				},
+				organizationContactName: {
+					title: this.getTranslation('SM_TABLE.CONTACT_NAME'),
+					type: 'text',
+					valuePrepareFunction: (cell, row) => {
+						return row.organizationContact
+							? row.organizationContact.name
+							: '';
+					}
 				}
 			}
 		};
@@ -343,7 +352,7 @@ export class ProposalsComponent
 		if (!this.selectedOrganization) {
 			return;
 		}
-
+		this.loading = true;
 		this.showTable = false;
 		this.selectedProposal = null;
 		this.disableButton = true;
@@ -353,7 +362,7 @@ export class ProposalsComponent
 		const { id: organizationId } = this.selectedOrganization;
 		if (this.selectedEmployeeId) {
 			const response = await this.proposalsService.getAll(
-				['employee', 'organization', 'tags'],
+				['employee', 'organization', 'tags', 'organizationContact'],
 				{
 					employeeId: this.selectedEmployeeId,
 					organizationId,
@@ -366,11 +375,16 @@ export class ProposalsComponent
 			this.totalProposals = response.total;
 		} else {
 			const response = await this.proposalsService.getAll(
-				['organization', 'employee', 'employee.user', 'tags'],
+				[
+					'organization',
+					'employee',
+					'employee.user',
+					'tags',
+					'organizationContact'
+				],
 				{ organizationId, tenantId },
 				this.selectedDate
 			);
-
 			items = response.items;
 			this.totalProposals = response.total;
 		}
@@ -410,11 +424,16 @@ export class ProposalsComponent
 						proposalContent: i.proposalContent,
 						tags: i.tags,
 						status: i.status,
-						author: i.employee.user
-							? i.employee.user.firstName +
-							  ' ' +
-							  i.employee.user.lastName
-							: ''
+						author: i.employee
+							? i.employee.user
+								? i.employee.user.firstName +
+								  ' ' +
+								  i.employee.user.lastName
+								: ''
+							: '',
+						organizationContact: i.organizationContact
+							? i.organizationContact
+							: null
 					};
 				});
 
@@ -443,6 +462,7 @@ export class ProposalsComponent
 		} catch (error) {
 			this.toastrService.danger(error.message, 'Error');
 		}
+		this.loading = false;
 	}
 
 	private _applyTranslationOnSmartTable() {

@@ -1,18 +1,10 @@
-import { ICandidateEducation, ICandidate } from '@gauzy/models';
+import { ICandidate } from '@gauzy/models';
 import { Connection } from 'typeorm';
 import { CandidateEducation } from './candidate-education.entity';
 import { Tenant } from '../tenant/tenant.entity';
 import { Organization } from '../organization/organization.entity';
 import * as faker from 'faker';
-
-const candidateEducations: ICandidateEducation[] = [
-	{
-		schoolName: 'MIT',
-		degree: 'Master',
-		completionDate: new Date(2017, 4, 4),
-		field: 'Computer Science'
-	}
-];
+import { DEFAULT_CANDIDATE_EDUCATIONS } from './default-candidate-educations';
 
 export const createCandidateEducations = async (
 	connection: Connection,
@@ -27,7 +19,7 @@ export const createCandidateEducations = async (
 		return;
 	}
 	candidates.forEach((candidate) => {
-		const educations = candidateEducations.map((education) => ({
+		const educations = DEFAULT_CANDIDATE_EDUCATIONS.map((education) => ({
 			schoolName: education.schoolName,
 			degree: education.degree,
 			completionDate: education.completionDate,
@@ -69,18 +61,23 @@ export const createRandomCandidateEducations = async (
 		const candidates = tenantCandidatesMap.get(tenant);
 
 		(candidates || []).forEach((candidate) => {
-			const educations = candidateEducations.map((education) => ({
-				schoolName: education.schoolName,
-				degree: education.degree,
-				completionDate: education.completionDate,
-				field: education.field,
-				candidateId: candidate.id,
-				organization: faker.random.arrayElement(organizations),
-				tenant: tenant,
-				notes: faker.lorem.sentence()
-			}));
+			const educations = DEFAULT_CANDIDATE_EDUCATIONS.map(
+				(education) => ({
+					schoolName: education.schoolName,
+					degree: education.degree,
+					completionDate: education.completionDate,
+					field: education.field,
+					candidateId: candidate.id,
+					organization: faker.random.arrayElement(organizations),
+					tenant: tenant,
+					notes: faker.lorem.sentence()
+				})
+			);
 			candidateEducationsMap.set(candidate, educations);
-			candidateEducation = [...candidateEducations, ...educations];
+			candidateEducation = [
+				...DEFAULT_CANDIDATE_EDUCATIONS,
+				...educations
+			];
 		});
 	}
 

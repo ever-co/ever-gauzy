@@ -1,28 +1,8 @@
 import { Connection } from 'typeorm';
 import { Organization } from '../organization/organization.entity';
 import { Tenant } from '../tenant/tenant.entity';
+import { DEFAULT_GOAL_KPI_TEMPLATES } from './default-goal-kpi-templates';
 import { GoalKPITemplate } from './goal-kpi-template.entity';
-
-const goalKPIData = [
-	{
-		name: 'Average response time',
-		description: '',
-		type: 'Numerical',
-		unit: 'ms',
-		operator: '<=',
-		currentValue: 1000,
-		targetValue: 500
-	},
-	{
-		name: '# of Priority bugs in production',
-		description: '',
-		type: 'Numerical',
-		unit: 'bugs',
-		operator: '<=',
-		currentValue: 15,
-		targetValue: 2
-	}
-];
 
 export const createDefaultGoalKpiTemplate = async (
 	connection: Connection,
@@ -30,7 +10,7 @@ export const createDefaultGoalKpiTemplate = async (
 	organization: Organization
 ): Promise<GoalKPITemplate[]> => {
 	const goalKpiTemplates: GoalKPITemplate[] = [];
-	goalKPIData.forEach((item) => {
+	DEFAULT_GOAL_KPI_TEMPLATES.forEach((item) => {
 		const goalKpi = new GoalKPITemplate();
 		goalKpi.name = item.name;
 		goalKpi.description = '';

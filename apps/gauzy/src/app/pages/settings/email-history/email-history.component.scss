@@ -5,6 +5,10 @@
     padding: 0;
   }
 
+  .image-container {
+    margin-right: 10px;
+  }
+
   h2 {
     text-align: center;
   }
@@ -19,10 +23,13 @@
     }
 
     &-avatar {
-      max-width: 50px;
-      width: 50px;
+      width: 40px;
       height: 100%;
       border-radius: 50%;
+    }
+
+    &-to {
+      margin-left: 50px;
     }
   }
 

@@ -32,7 +32,7 @@ export const createDefaultOrganizationContact = async (
 
 			const tags = org.tags;
 
-			for (let i = 0; i < faker.random.number({ min: 1, max: 2 }); i++) {
+			for (let i = 0; i < faker.random.number({ min: 5, max: 6 }); i++) {
 				const orgContact = new OrganizationContact();
 
 				const contact = faker.random.arrayElement(contacts);

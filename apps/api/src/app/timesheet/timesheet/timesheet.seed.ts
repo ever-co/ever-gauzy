@@ -117,11 +117,9 @@ export const createRandomTimesheet = async (
 	}
 
 	const timesheets: Timesheet[] = [];
-
-	const employees = await connection
-		.getRepository(Employee)
-		.createQueryBuilder()
-		.getMany();
+	const employees = await connection.getRepository(Employee).find({
+		relations: ['organization']
+	});
 
 	for (let index = 0; index < 2; index++) {
 		const date = moment().subtract(index, 'week').toDate();

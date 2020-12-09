@@ -17,7 +17,7 @@ import {
 	IContact,
 	ITag
 } from '@gauzy/models';
-import { avarage } from '@gauzy/utils';
+import { average } from '@gauzy/utils';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsOptional, IsEnum } from 'class-validator';
 import {
@@ -54,7 +54,11 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 	tags: ITag[];
 
 	@ApiProperty({ type: Contact })
-	@ManyToOne((type) => Contact, { nullable: true, cascade: true })
+	@ManyToOne(() => Contact, (contact) => contact.candidates, {
+		nullable: true,
+		cascade: true,
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	contact: IContact;
 
@@ -62,60 +66,56 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 	@RelationId((candidate: Candidate) => candidate.contact)
 	readonly contactId?: string;
 
-	@OneToMany(
-		(type) => CandidateEducation,
-		(candidateEducation) => candidateEducation.candidate
-	)
+	@OneToMany(() => CandidateEducation, (education) => education.candidate, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	educations: ICandidateEducation[];
 
-	@OneToMany(
-		(type) => CandidateInterview,
-		(candidateInterview) => candidateInterview.candidate
-	)
+	@OneToMany(() => CandidateInterview, (interview) => interview.candidate, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	interview?: ICandidateInterview[];
 
 	@OneToMany(
-		(type) => CandidateExperience,
-		(candidateExperience) => candidateExperience.candidate
+		() => CandidateExperience,
+		(experience) => experience.candidate,
+		{
+			onDelete: 'SET NULL'
+		}
 	)
 	@JoinColumn()
 	experience: ICandidateExperience[];
 
-	@OneToMany(
-		(type) => CandidateSkill,
-		(candidateSkill) => candidateSkill.candidate
-	)
+	@OneToMany(() => CandidateSkill, (skill) => skill.candidate, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	skills: ICandidateSkill[];
 
 	@ApiProperty({ type: CandidateSource })
 	@OneToOne((type) => CandidateSource, {
-		nullable: true,
 		cascade: true,
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	source?: ICandidateSource;
 
-	@OneToMany(
-		(type) => CandidateDocument,
-		(candidateDocument) => candidateDocument.candidate
-	)
+	@OneToMany(() => CandidateDocument, (document) => document.candidate, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	documents?: ICandidateDocument[];
 
-	@OneToMany(
-		(type) => CandidateFeedback,
-		(candidateFeedback) => candidateFeedback.candidate
-	)
+	@OneToMany(() => CandidateFeedback, (feedback) => feedback.candidate, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	feedbacks?: ICandidateFeedback[];
 
 	@ApiProperty({ type: User })
 	@OneToOne((type) => User, {
-		nullable: false,
 		cascade: true,
 		onDelete: 'CASCADE'
 	})
@@ -171,9 +171,11 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 	rejectDate?: Date;
 
 	@ManyToMany(
-		(type) => OrganizationDepartment,
-		(organizationDepartment) => organizationDepartment.candidates,
-		{ cascade: true }
+		() => OrganizationDepartment,
+		(department) => department.candidates,
+		{
+			cascade: true
+		}
 	)
 	@JoinTable({
 		name: 'candidate_department'
@@ -181,9 +183,11 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 	organizationDepartments?: IOrganizationDepartment[];
 
 	@ManyToMany(
-		(type) => OrganizationEmploymentType,
-		(organizationEmploymentType) => organizationEmploymentType.candidates,
-		{ cascade: true }
+		() => OrganizationEmploymentType,
+		(employmentType) => employmentType.candidates,
+		{
+			cascade: true
+		}
 	)
 	@JoinTable({
 		name: 'candidate_employment_type'
@@ -230,7 +234,7 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 	@AfterLoad()
 	calculateRatings() {
 		if (Array.isArray(this.feedbacks)) {
-			this.ratings = avarage(this.feedbacks, 'rating');
+			this.ratings = average(this.feedbacks, 'rating');
 		}
 	}
 }

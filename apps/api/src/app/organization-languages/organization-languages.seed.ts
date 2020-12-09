@@ -4,14 +4,8 @@ import * as faker from 'faker';
 import { Tenant } from '../tenant/tenant.entity';
 import { IOrganization } from '@gauzy/models';
 import { Language } from '../language/language.entity';
+import { DEFAULT_ORGANIZATION_LANGUAGES } from './default-organization-languages';
 
-const defaultLanguageLevel = {
-	Bulgarian: 'Native or Bilingual',
-	Russian: 'Native or Bilingual',
-	Ukrainian: 'Native or Bilingual',
-	English: 'Fluent',
-	Hebrew: 'Conversational'
-};
 export const createDefaultOrganizationLanguage = async (
 	connection: Connection,
 	tenant: Tenant,
@@ -28,8 +22,8 @@ export const createDefaultOrganizationLanguage = async (
 			organization.tenant = tenant;
 			organization.language = language;
 			organization.name = language.name;
-			organization.level = defaultLanguageLevel[language.name]
-				? defaultLanguageLevel[language.name]
+			organization.level = DEFAULT_ORGANIZATION_LANGUAGES[language.name]
+				? DEFAULT_ORGANIZATION_LANGUAGES[language.name]
 				: 'intermediate';
 
 			mapOrganizationLanguage.push(organization);
@@ -66,8 +60,8 @@ export const createRandomOrganizationLanguage = async (
 			organization.tenant = tenant;
 			organization.language = language;
 			organization.name = language.name;
-			organization.level = defaultLanguageLevel[language.name]
-				? defaultLanguageLevel[language.name]
+			organization.level = DEFAULT_ORGANIZATION_LANGUAGES[language.name]
+				? DEFAULT_ORGANIZATION_LANGUAGES[language.name]
 				: 'intermediate';
 
 			mapOrganizationLanguage.push(organization);

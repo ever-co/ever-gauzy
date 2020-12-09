@@ -10,6 +10,7 @@ import { ElectronService } from 'ngx-electron';
 
 let API_BASE_URL = 'http://localhost:3000';
 let IS_ELECTRON = false;
+let IS_INTEGRATED_DESKTOP = false;
 
 // https://github.com/electron/electron/issues/2288#issuecomment-337858978
 const userAgent = navigator.userAgent.toLowerCase();
@@ -19,6 +20,7 @@ if (userAgent.indexOf(' electron/') > -1) {
 		const variableGlobal = el.remote.getGlobal('variableGlobal');
 		API_BASE_URL = variableGlobal.API_BASE_URL;
 		IS_ELECTRON = true;
+		IS_INTEGRATED_DESKTOP = variableGlobal.IS_INTEGRATED_DESKTOP;
 	} catch (e) {}
 }
 
@@ -47,6 +49,7 @@ export const environment: Environment = {
 	SENTRY_DNS: 'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292',
 	HUBSTAFF_REDIRECT_URI: 'http://localhost:4200/pages/integrations/hubstaff',
 	IS_ELECTRON: IS_ELECTRON,
+	IS_INTEGRATED_DESKTOP: IS_INTEGRATED_DESKTOP,
 
 	GOOGLE_MAPS_API_KEY: '',
 	DEFAULT_LATITUDE: 42.6459136,

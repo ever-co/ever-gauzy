@@ -64,7 +64,7 @@ import {
 	seedDefaultEmploymentTypes,
 	seedRandomEmploymentTypes
 } from '../../organization-employment-type/organization-employment-type.seed';
-import { createEmployeeLevels } from '../../organization_employeeLevel/organization-employee-level.seed';
+import { createEmployeeLevels } from '../../organization_employee-level/organization-employee-level.seed';
 import {
 	createDefaultTimeOffPolicy,
 	createRandomTimeOffPolicies
@@ -665,6 +665,15 @@ export class SeedDataService {
 			'Default Integrations',
 			createDefaultIntegrations(this.connection, integrationTypes)
 		);
+
+		await this.tryExecute(
+			'Default Event Types',
+			createDefaultEventTypes(
+				this.connection,
+				this.tenant,
+				this.organizations
+			)
+		);
 	}
 
 	/**
@@ -688,7 +697,7 @@ export class SeedDataService {
 
 		//todo :  Need to fix error of seeding Product Category
 		await this.tryExecute(
-			'Categories',
+			'Default Categories',
 			createCategories(this.connection, this.organizations)
 		);
 
@@ -771,7 +780,7 @@ export class SeedDataService {
 		);
 
 		const organizationVendors = await this.tryExecute(
-			'Organization Vendors',
+			'Default Organization Vendors',
 			createOrganizationVendors(this.connection, this.organizations)
 		);
 
@@ -784,7 +793,7 @@ export class SeedDataService {
 		);
 
 		const defaultCandidates = await this.tryExecute(
-			'Candidates',
+			'Default Candidates',
 			createDefaultCandidates(this.connection, {
 				tenant: this.tenant,
 				org: this.organizations[0],
@@ -793,7 +802,7 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
-			'Candidate Sources',
+			'Default Candidate Sources',
 			createCandidateSources(
 				this.connection,
 				this.tenant,
@@ -803,7 +812,7 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
-			'Candidate Documents',
+			'Default Candidate Documents',
 			createCandidateDocuments(
 				this.connection,
 				this.tenant,
@@ -811,6 +820,7 @@ export class SeedDataService {
 				this.organizations[0]
 			)
 		);
+
 		await this.tryExecute(
 			'Default Candidate Interview',
 			createDefaultCandidateInterview(
@@ -833,7 +843,7 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
-			'Candidate Feedbacks',
+			'Default Candidate Feedbacks',
 			createCandidateFeedbacks(
 				this.connection,
 				this.tenant,
@@ -843,12 +853,12 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
-			'Candidate Educations',
+			'Default Candidate Educations',
 			createCandidateEducations(this.connection, defaultCandidates)
 		);
 
 		await this.tryExecute(
-			'Candidate Skills',
+			'Default Candidate Skills',
 			createCandidateSkills(
 				this.connection,
 				this.tenant,
@@ -1031,15 +1041,6 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
-			'Default Event Types',
-			createDefaultEventTypes(
-				this.connection,
-				this.tenant,
-				this.organizations
-			)
-		);
-
-		await this.tryExecute(
 			'Default Pipelines',
 			createDefaultPipeline(
 				this.connection,
@@ -1064,6 +1065,15 @@ export class SeedDataService {
 				this.connection,
 				this.tenant,
 				this.organizations[0]
+			)
+		);
+
+		await this.tryExecute(
+			'Default Organization Documents',
+			createOrganizationDocuments(
+				this.connection,
+				this.tenant,
+				this.organizations
 			)
 		);
 
@@ -1129,7 +1139,7 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
-			'Help Center Articles',
+			'Default Help Center Articles',
 			createHelpCenterArticle(
 				this.connection,
 				this.organizations,
@@ -1189,42 +1199,6 @@ export class SeedDataService {
 			randomSeedConfig.organizationsPerTenant || 1
 		);
 
-		await this.tryExecute(
-			'Random Categories',
-			createRandomCategories(
-				this.connection,
-				tenants,
-				tenantOrganizationsMap
-			)
-		);
-
-		await this.tryExecute(
-			'Random Product Types',
-			createRandomProductType(
-				this.connection,
-				tenants,
-				tenantOrganizationsMap
-			)
-		);
-
-		await this.tryExecute(
-			'Random Products',
-			createRandomProduct(
-				this.connection,
-				tenants,
-				tenantOrganizationsMap
-			)
-		);
-
-		await this.tryExecute(
-			'Random Organization Documents',
-			createRandomOrganizationDocuments(
-				this.connection,
-				tenants,
-				tenantOrganizationsMap
-			)
-		);
-
 		const tenantSuperAdminsMap = await createRandomSuperAdminUsers(
 			this.connection,
 			roles,
@@ -1262,14 +1236,39 @@ export class SeedDataService {
 			randomSeedConfig.employeesPerOrganization || 1
 		);
 
-		const tenantCandidatesMap = await this.tryExecute(
-			'Random Candidates',
-			createRandomCandidates(
+		await this.tryExecute(
+			'Random Categories',
+			createRandomCategories(
 				this.connection,
 				tenants,
-				tenantOrganizationsMap,
-				tenantUsersMap,
-				randomSeedConfig.candidatesPerOrganization || 1
+				tenantOrganizationsMap
+			)
+		);
+
+		await this.tryExecute(
+			'Random Product Types',
+			createRandomProductType(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap
+			)
+		);
+
+		await this.tryExecute(
+			'Random Products',
+			createRandomProduct(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap
+			)
+		);
+
+		await this.tryExecute(
+			'Random Organization Documents',
+			createRandomOrganizationDocuments(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap
 			)
 		);
 
@@ -1312,15 +1311,6 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
-			'Random Candidate Sources',
-			createRandomCandidateSources(
-				this.connection,
-				tenants,
-				tenantCandidatesMap
-			)
-		);
-
-		await this.tryExecute(
 			'Random Incomes',
 			createRandomIncomes(this.connection, tenants, tenantEmployeeMap)
 		);
@@ -1330,7 +1320,6 @@ export class SeedDataService {
 			createRandomTeam(
 				this.connection,
 				tenants,
-				tenantEmployeeMap,
 				tenantOrganizationsMap,
 				roles
 			)
@@ -1353,6 +1342,26 @@ export class SeedDataService {
 				tenants,
 				tenantEmployeeMap,
 				randomGoals
+			)
+		);
+
+		const tenantCandidatesMap = await this.tryExecute(
+			'Random Candidates',
+			createRandomCandidates(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap,
+				tenantUsersMap,
+				randomSeedConfig.candidatesPerOrganization || 1
+			)
+		);
+
+		await this.tryExecute(
+			'Random Candidate Sources',
+			createRandomCandidateSources(
+				this.connection,
+				tenants,
+				tenantCandidatesMap
 			)
 		);
 
@@ -1537,11 +1546,6 @@ export class SeedDataService {
 				tenantEmployeeMap,
 				randomSeedConfig.employeeTimeOffPerOrganization || 20
 			)
-		);
-
-		await this.tryExecute(
-			'Random Organization Documents',
-			createOrganizationDocuments(this.connection, this.organizations)
 		);
 
 		await this.tryExecute(
@@ -1999,8 +2003,11 @@ export class SeedDataService {
 	 * Reset the database, truncate all tables (remove all data)
 	 */
 	private async resetDatabase() {
+		this.log(chalk.green(`RESETTING DATABASE`));
+
 		const entities = await this.getEntities();
 		await this.cleanAll(entities);
+
 		this.log(chalk.green(`✅ RESET DATABASE SUCCESSFUL`));
 	}
 

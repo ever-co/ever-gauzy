@@ -20,19 +20,18 @@ export const createRandomProductOption = async (
 	}
 
 	const productOptions: ProductOption[] = [];
-
 	for (const tenant of tenants) {
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
 		for (const tenantOrg of tenantOrgs) {
 			const productCategories = await connection.manager.find(
 				ProductCategory,
 				{
-					where: [{ organization: tenantOrg }]
+					where: { organization: tenantOrg }
 				}
 			);
 			for (const productCategory of productCategories) {
 				const products = await connection.manager.find(Product, {
-					where: [{ category: productCategory }]
+					where: { category: productCategory }
 				});
 				for (const product of products) {
 					for (let i = 0; i <= numberOfOptionPerProduct; i++) {
@@ -50,6 +49,5 @@ export const createRandomProductOption = async (
 			}
 		}
 	}
-
-	await connection.manager.save(productOptions);
+	return await connection.manager.save(productOptions);
 };

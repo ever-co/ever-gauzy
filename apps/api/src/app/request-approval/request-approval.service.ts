@@ -49,12 +49,12 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 			.leftJoinAndSelect(
 				'time_off_request',
 				'time_off_request',
-				'"time_off_request"."id"::"varchar" = "request_approval"."requestId"'
+				'"time_off_request"."id" = "request_approval"."requestId"'
 			)
 			.leftJoinAndSelect(
 				'equipment_sharing',
 				'equipment_sharing',
-				'"equipment_sharing"."id"::"varchar" = "request_approval"."requestId"'
+				'"equipment_sharing"."id" = "request_approval"."requestId"'
 			);
 
 		if (filter.relations && filter.relations.length > 0) {

@@ -77,8 +77,6 @@ export const createRandomPayment = async (
 		return;
 	}
 
-	const payments: Payment[] = [];
-
 	for (const tenant of tenants) {
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
@@ -87,19 +85,18 @@ export const createRandomPayment = async (
 		});
 
 		for (const tenantOrg of tenantOrgs) {
+			const payments1: Payment[] = [];
+			const payments2: Payment[] = [];
 			const invoices = await connection.manager.find(Invoice, {
-				where: [{ organizationId: tenantOrg.id }]
+				where: { organizationId: tenantOrg.id }
 			});
+			let count = 0;
 			for (const invoice of invoices) {
 				const tags = await connection.manager.find(Tag, {
 					where: [{ organization: tenantOrg }]
 				});
-
 				const payment = new Payment();
-
-				payment.invoiceId = invoice.id;
 				payment.invoice = invoice;
-				payment.organization = tenantOrg;
 				payment.organizationId = tenantOrg.id;
 				payment.paymentDate = faker.date.between(
 					2019,
@@ -123,10 +120,15 @@ export const createRandomPayment = async (
 					tenantEmployees
 				).id;
 				payment.recordedBy = faker.random.arrayElement(users);
-
-				payments.push(payment);
+				if (count % 2 === 0) {
+					payments1.push(payment);
+				} else {
+					payments2.push(payment);
+				}
+				count++;
 			}
+			await connection.manager.save(payments1);
+			await connection.manager.save(payments2);
 		}
 	}
-	await connection.manager.save(payments);
 };

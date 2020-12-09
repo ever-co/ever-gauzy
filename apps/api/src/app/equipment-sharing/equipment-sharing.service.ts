@@ -39,7 +39,7 @@ export class EquipmentSharingService extends CrudService<EquipmentSharing> {
 				.leftJoinAndSelect(
 					'request_approval',
 					'request_approval',
-					'"equipment_sharing"."id"::"varchar" = "request_approval"."requestId"'
+					'"equipment_sharing"."id" = "request_approval"."requestId"'
 				)
 				.leftJoinAndSelect(
 					'request_approval.approvalPolicy',
@@ -47,9 +47,7 @@ export class EquipmentSharingService extends CrudService<EquipmentSharing> {
 				)
 				.where(
 					'equipmentSharingPolicy.organizationId =:organizationId',
-					{
-						organizationId
-					}
+					{ organizationId }
 				)
 				.getMany();
 		} catch (err) {

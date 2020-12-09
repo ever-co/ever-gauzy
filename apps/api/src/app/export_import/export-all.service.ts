@@ -23,7 +23,7 @@ import { InviteService } from '../invite/invite.service';
 import { InvoiceService } from '../invoice/invoice.service';
 import { InvoiceItemService } from '../invoice-item/invoice-item.service';
 import { OrganizationService } from '../organization/organization.service';
-import { EmployeeLevelService } from '../organization_employeeLevel/organization-employee-level.service';
+import { EmployeeLevelService } from '../organization_employee-level/organization-employee-level.service';
 import { OrganizationContactService } from '../organization-contact/organization-contact.service';
 import { OrganizationDepartmentService } from '../organization-department/organization-department.service';
 import { OrganizationEmploymentTypeService } from '../organization-employment-type/organization-employment-type.service';

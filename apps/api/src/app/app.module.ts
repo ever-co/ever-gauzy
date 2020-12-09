@@ -46,7 +46,7 @@ import { RolePermissionsModule } from './role-permissions/role-permissions.modul
 import { TenantModule } from './tenant/tenant.module';
 import { EmailTemplateModule } from './email-template/email-template.module';
 import { EquipmentModule } from './equipment/equipment.module';
-import { EmployeeLevelModule } from './organization_employeeLevel/organization-employee-level.module';
+import { EmployeeLevelModule } from './organization_employee-level/organization-employee-level.module';
 import { ExportAllModule } from './export_import/export-all.module';
 import { ImportAllModule } from './export_import/import/import-all.module';
 import { SentryModule } from '@ntegral/nestjs-sentry';

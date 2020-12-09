@@ -40,13 +40,9 @@
   margin: 10px auto;
 }
 
-.settings-button {
-  width: 100%;
-  text-align: right;
-}
-
 .actions-container {
   display: flex;
+  flex-wrap: wrap;
 }
 
 .show-columns-select {
@@ -85,4 +81,12 @@
 .btn-group {
   display: flex;
   align-items: center;
+}
+
+button {
+  margin: 5px;
+}
+
+.content-active {
+  padding-left: 0;
 }

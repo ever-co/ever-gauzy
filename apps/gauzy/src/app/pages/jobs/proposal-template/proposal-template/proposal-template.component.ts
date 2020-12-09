@@ -40,6 +40,7 @@ export class ProposalTemplateComponent
 	};
 	updateJobs$: Subject<any> = new Subject();
 	selectedItem: any;
+	loading: boolean;
 
 	constructor(
 		public translateService: TranslateService,
@@ -78,6 +79,7 @@ export class ProposalTemplateComponent
 	}
 
 	getProposalTemplates() {
+		this.loading = true;
 		const request = {
 			...this.proposalTemplateRequest,
 			where: {
@@ -89,6 +91,7 @@ export class ProposalTemplateComponent
 
 		this.proposalTemplateService.getAll(request).then((data) => {
 			this.smartTableSource.load(data.items);
+			this.loading = false;
 		});
 	}
 
