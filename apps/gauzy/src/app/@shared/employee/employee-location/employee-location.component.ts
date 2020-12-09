@@ -8,6 +8,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter } from 'rxjs/operators';
 import { LeafletMapComponent } from '../../forms/maps/leaflet/leaflet.component';
 import { LatLng } from 'leaflet';
+import { Store } from '../../../@core/services/store.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-employee-location',
@@ -31,7 +32,8 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 	constructor(
 		private fb: FormBuilder,
 		private candidateStore: CandidateStore,
-		private employeeStore: EmployeeStore
+		private employeeStore: EmployeeStore,
+		private store: Store
 	) {}
 
 	ngOnInit() {
@@ -62,12 +64,16 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 	ngOnDestroy() {}
 
 	async submitForm() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization;
+
 		const location = this.locationFormDirective.getValue();
 		const { coordinates } = location['loc'];
 		delete location['loc'];
 
 		const [latitude, longitude] = coordinates;
 		const contact = {
+			...{ organizationId, tenantId },
 			...location,
 			...{ latitude, longitude }
 		};

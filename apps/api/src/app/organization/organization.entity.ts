@@ -61,6 +61,8 @@ export class Organization extends TenantBase implements IOrganization {
 
 	@ApiProperty({ type: Contact })
 	@ManyToOne(() => Contact, (contact) => contact.organization, {
+		nullable: true,
+		cascade: true,
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()

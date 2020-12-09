@@ -424,10 +424,12 @@ export class ProposalsComponent
 						proposalContent: i.proposalContent,
 						tags: i.tags,
 						status: i.status,
-						author: i.employee.user
-							? i.employee.user.firstName +
-							  ' ' +
-							  i.employee.user.lastName
+						author: i.employee
+							? i.employee.user
+								? i.employee.user.firstName +
+								  ' ' +
+								  i.employee.user.lastName
+								: ''
 							: '',
 						organizationContact: i.organizationContact
 							? i.organizationContact

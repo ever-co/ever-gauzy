@@ -74,7 +74,9 @@ export class TimeSlotBulkCreateHandler
 		}
 
 		const timeLogs = await this.timeLogRepository.find({
-			id: In(_.chain(slots).pluck('timeLogId').flatten().value())
+			where: {
+				id: In(_.chain(slots).pluck('timeLogId').flatten().value())
+			}
 		});
 
 		slots = slots.map((slot) => {

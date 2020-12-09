@@ -92,8 +92,12 @@ export class TimeOffRequestService extends CrudService<TimeOffRequest> {
 				);
 			}
 			if (filterDate) {
-				const startDate = moment(filterDate).startOf('month');
-				const endDate = moment(filterDate).endOf('month');
+				const startDate = moment(filterDate)
+					.startOf('month')
+					.format('YYYY-MM-DD hh:mm:ss');
+				const endDate = moment(filterDate)
+					.endOf('month')
+					.format('YYYY-MM-DD hh:mm:ss');
 				query.andWhere(
 					`"${query.alias}"."start" BETWEEN :begin AND :end`,
 					{ begin: startDate, end: endDate }
