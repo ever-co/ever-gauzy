@@ -42,7 +42,8 @@ import { Payment } from '../payment/payment.entity';
 import { TimeLog } from '../timesheet/time-log.entity';
 
 @Entity('organization_project')
-export class OrganizationProject extends TenantOrganizationBase
+export class OrganizationProject
+	extends TenantOrganizationBase
 	implements IOrganizationProject {
 	@ApiProperty()
 	@ManyToMany((type) => Tag, (tag) => tag.organizationProject)
@@ -178,4 +179,21 @@ export class OrganizationProject extends TenantOrganizationBase
 	@IsOptional()
 	@Column({ nullable: true })
 	billingFlat?: boolean;
+
+	@ApiPropertyOptional({ type: Boolean })
+	@IsOptional()
+	@Column({ nullable: true })
+	openSource?: boolean;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	projectUrl?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	openSourceProjectUrl?: string;
 }
