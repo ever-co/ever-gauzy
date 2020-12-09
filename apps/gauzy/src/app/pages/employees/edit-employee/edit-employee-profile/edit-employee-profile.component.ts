@@ -24,7 +24,8 @@ import { first, takeUntil } from 'rxjs/operators';
 	],
 	providers: [EmployeeStore]
 })
-export class EditEmployeeProfileComponent extends TranslationBaseComponent
+export class EditEmployeeProfileComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;
@@ -87,6 +88,14 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 				icon: 'person-outline',
 				responsive: true,
 				route: this.getRoute('account')
+			},
+			{
+				title: this.getTranslation(
+					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.NETWORKS'
+				),
+				icon: 'at-outline',
+				responsive: true,
+				route: this.getRoute('networks')
 			},
 			{
 				title: this.getTranslation(
