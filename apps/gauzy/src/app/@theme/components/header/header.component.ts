@@ -43,6 +43,9 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	hasPermissionContactEdit = false;
 	hasPermissionTeamEdit = false;
 	hasPermissionContractEdit = false;
+	hasPermissionPaymentAddEdit = false;
+	hasPermissionTimesheetEdit = false;
+	hasPermissionCandidateEdit = false;
 	isEmployee = false;
 	isElectron: boolean = environment.IS_ELECTRON;
 
@@ -251,6 +254,15 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				this.hasPermissionContractEdit = this.store.hasPermission(
 					PermissionsEnum.ORG_CONTRACT_EDIT
 				);
+				this.hasPermissionPaymentAddEdit = this.store.hasPermission(
+					PermissionsEnum.ORG_PAYMENT_ADD_EDIT
+				);
+				this.hasPermissionTimesheetEdit = this.store.hasPermission(
+					PermissionsEnum.TIMESHEET_EDIT_TIME
+				);
+				this.hasPermissionCandidateEdit = this.store.hasPermission(
+					PermissionsEnum.ORG_CANDIDATES_EDIT
+				);
 			});
 
 		this.createContextMenu = [
@@ -283,6 +295,30 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				hidden: !this.hasPermissionI || !this.hasPermissionIEdit
 			},
 			{
+				title: this.getTranslation('CONTEXT_MENU.ESTIMATE'),
+				icon: 'file-outline',
+				link: 'pages/accounting/invoices/estimates/add',
+				hidden: !this.hasPermissionInEdit
+			},
+			{
+				title: this.getTranslation('CONTEXT_MENU.PAYMENT'),
+				icon: 'clipboard-outline',
+				link: 'pages/accounting/payments',
+				hidden: !this.hasPermissionPaymentAddEdit
+			},
+			{
+				title: this.getTranslation('CONTEXT_MENU.TIME_LOG'),
+				icon: 'clock-outline',
+				link: 'pages/employees/timesheets/daily',
+				hidden: !this.hasPermissionTimesheetEdit
+			},
+			{
+				title: this.getTranslation('CONTEXT_MENU.CANDIDATE'),
+				icon: 'person-done-outline',
+				link: 'pages/employees/candidates',
+				hidden: !this.hasPermissionCandidateEdit
+			},
+			{
 				title: this.getTranslation('CONTEXT_MENU.PROPOSAL'),
 				icon: 'paper-plane-outline',
 				link: 'pages/sales/proposals/register',
@@ -310,7 +346,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			{
 				title: this.getTranslation('CONTEXT_MENU.CONTACT'),
 				icon: 'person-done-outline',
-				link: `pages/organization/contacts`,
+				link: `pages/contacts`,
 				hidden: !this.hasPermissionContactEdit
 			},
 			{

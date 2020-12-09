@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { PaymentService } from '../../@core/services/payment.service';
 import { Store } from '../../@core/services/store.service';
-import { first, filter, tap } from 'rxjs/operators';
+import { first, filter, tap, debounceTime } from 'rxjs/operators';
 import {
 	IPayment,
 	ComponentLayoutStyleEnum,
@@ -17,7 +17,12 @@ import {
 } from '@gauzy/models';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { Router, RouterEvent, NavigationEnd } from '@angular/router';
+import {
+	Router,
+	RouterEvent,
+	NavigationEnd,
+	ActivatedRoute
+} from '@angular/router';
 import { PaymentMutationComponent } from '../invoices/invoice-payments/payment-mutation/payment-mutation.component';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { InvoicesService } from '../../@core/services/invoices.service';
@@ -72,7 +77,8 @@ export class PaymentsComponent
 		private organizationProjectsService: OrganizationProjectsService,
 		private toastrService: NbToastrService,
 		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
-		private _errorHandlingService: ErrorHandlingService
+		private _errorHandlingService: ErrorHandlingService,
+		private route: ActivatedRoute
 	) {
 		super(translateService);
 		this.setView();
@@ -87,6 +93,17 @@ export class PaymentsComponent
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
+				}
+			});
+		this.route.queryParamMap
+			.pipe(
+				filter((params) => !!params),
+				debounceTime(1000),
+				untilDestroyed(this)
+			)
+			.subscribe((params) => {
+				if (params.get('openAddDialog') === 'true') {
+					this.recordPayment();
 				}
 			});
 	}
