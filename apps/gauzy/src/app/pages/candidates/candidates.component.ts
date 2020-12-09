@@ -8,7 +8,7 @@ import {
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { first, filter, tap } from 'rxjs/operators';
+import { first, filter, tap, debounceTime } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { CandidateStatusComponent } from './table-components/candidate-status/candidate-status.component';
@@ -104,9 +104,13 @@ export class CandidatesComponent
 				}
 			});
 		this.route.queryParamMap
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter((params) => !!params),
+				debounceTime(1000),
+				untilDestroyed(this)
+			)
 			.subscribe((params) => {
-				if (params.get('openAddDialog')) {
+				if (params.get('openAddDialog') === 'true') {
 					this.add();
 				}
 			});

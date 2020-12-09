@@ -17,7 +17,7 @@ import {
 } from '@angular/router';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, first, tap } from 'rxjs/operators';
+import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { EmployeesService } from '../../@core/services';
@@ -103,7 +103,11 @@ export class ContactComponent
 				}
 			});
 		this.route.queryParamMap
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter((params) => !!params),
+				debounceTime(1000),
+				untilDestroyed(this)
+			)
 			.subscribe((params) => {
 				if (params.get('openAddDialog')) {
 					this.add();

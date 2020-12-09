@@ -26,6 +26,7 @@ import { ConfirmComponent } from 'apps/gauzy/src/app/@shared/dialogs';
 import { TranslateService } from '@ngx-translate/core';
 import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-filter.service';
 import * as _ from 'underscore';
+import { ActivatedRoute } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -68,7 +69,8 @@ export class DailyComponent implements OnInit, OnDestroy {
 		private store: Store,
 		private nbMenuService: NbMenuService,
 		private timesheetFilterService: TimesheetFilterService,
-		private translateService: TranslateService
+		private translateService: TranslateService,
+		private route: ActivatedRoute
 	) {}
 
 	async ngOnInit() {
@@ -102,6 +104,17 @@ export class DailyComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.route.queryParamMap
+			.pipe(
+				filter((params) => !!params),
+				debounceTime(1000),
+				untilDestroyed(this)
+			)
+			.subscribe((params) => {
+				if (params.get('openAddDialog') === 'true') {
+					this.openAdd();
+				}
+			});
 	}
 
 	async filtersChange($event: ITimeLogFilters) {
