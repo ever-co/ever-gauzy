@@ -17,13 +17,14 @@ import { OrganizationAwardsService } from '../../../@core/services/organization-
 import { OrganizationLanguagesService } from '../../../@core/services/organization-languages.service';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import * as moment from 'moment';
-
+import { Store } from '../../../@core/services/store.service';
 @Component({
 	selector: 'ngx-public-page-mutation',
 	templateUrl: './public-page-mutation.component.html',
 	styleUrls: ['./public-page-mutation.component.scss']
 })
-export class PublicPageMutationComponent extends TranslationBaseComponent
+export class PublicPageMutationComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	income?: IIncome;
 	organization?: IOrganization;
@@ -36,6 +37,7 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 	awardExist: boolean;
 	languageExist: boolean;
 	organizationId: string;
+	tenantId: string;
 	form: FormGroup;
 	selectedLanguage: ILanguage;
 	awards: IOrganizationAwards[];
@@ -77,7 +79,8 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 		private readonly toastrService: NbToastrService,
 		private readonly organizationAwardsService: OrganizationAwardsService,
 		private readonly organizationLanguagesService: OrganizationLanguagesService,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
@@ -115,6 +118,7 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 				);
 			}
 			this.organizationId = this.organization.id;
+			this.tenantId = this.store.user.tenantId;
 			this.form = this.fb.group({
 				name: [this.organization.name, Validators.required],
 				banner: this.organization.banner,
@@ -152,15 +156,17 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 		this.selectedLanguage = ev;
 	}
 
-	private changeShowAction(sel: any) {
+	changeShowAction(sel: any) {
 		this.form.get(sel).setValue(this.organization[sel]);
 	}
 
-	private async addAward(name: string, year: string) {
+	async addAward(name: string, year: string) {
 		if (name && year) {
+			const { organizationId, tenantId } = this;
 			await this.organizationAwardsService.create({
 				name,
-				organizationId: this.organizationId,
+				organizationId,
+				tenantId,
 				year
 			});
 
@@ -189,17 +195,19 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 		}
 	}
 
-	private async addLanguage(
+	async addLanguage(
 		language: ILanguage,
 		level: string,
 		organization: IOrganization,
 		name: string
 	) {
 		if (language && level && name) {
+			const { tenantId } = this;
 			await this.organizationLanguagesService.create({
 				language,
 				level,
 				organization,
+				tenantId,
 				name
 			});
 
@@ -228,7 +236,7 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 		}
 	}
 
-	private async removeAward(id: string) {
+	async removeAward(id: string) {
 		await this.organizationAwardsService.delete(id);
 		this.toastrService.primary(
 			this.getTranslation(
@@ -242,7 +250,7 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 		this.loadAwards();
 	}
 
-	private async removeLanguage(id: string) {
+	async removeLanguage(id: string) {
 		await this.organizationLanguagesService.delete(id);
 		this.toastrService.primary(
 			this.getTranslation(
@@ -257,12 +265,13 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 	}
 
 	private async loadAwards() {
+		const { organizationId, tenantId } = this;
 		const res = await this.organizationAwardsService.getAll({
-			organizationId: this.organizationId
+			organizationId,
+			tenantId
 		});
 		if (res) {
 			this.awards = res.items;
-
 			if (this.awards.length <= 0) {
 				this.awardExist = false;
 			} else {
@@ -272,15 +281,13 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 	}
 
 	private async loadLanguages() {
+		const { organizationId, tenantId } = this;
 		const res = await this.organizationLanguagesService.getAll(
-			{
-				organizationId: this.organizationId
-			},
+			{ organizationId, tenantId },
 			['language']
 		);
 		if (res) {
 			this.organization_languages = res.items;
-
 			if (this.organization_languages.length <= 0) {
 				this.languageExist = false;
 			} else {
