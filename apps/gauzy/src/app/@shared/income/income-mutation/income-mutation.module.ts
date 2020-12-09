@@ -1,4 +1,4 @@
-import { ThemeModule } from '../../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import {
@@ -16,15 +16,9 @@ import { IncomeMutationComponent } from './income-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';
-
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
 
 @NgModule({
 	imports: [

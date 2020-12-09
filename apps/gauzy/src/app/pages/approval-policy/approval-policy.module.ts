@@ -2,7 +2,6 @@ import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { NgModule } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -18,7 +17,7 @@ import {
 	NbRadioModule
 } from '@nebular/theme';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
-import { ThemeModule } from '../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
 import { ApprovalPolicyComponent } from './approval-policy.component';
 import { SharedModule } from '../../@shared/shared.module';
 import { ApprovalPolicyRoutingModule } from './approval-policy-routing.module';
@@ -26,10 +25,6 @@ import { ApprovalPolicyService } from '../../@core/services/approval-policy.serv
 import { ApprovalPolicyMutationModule } from '../../@shared/approval-policy/approval-policy-mutation.module';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
 
 @NgModule({
 	imports: [
