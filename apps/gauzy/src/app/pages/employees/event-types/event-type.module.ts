@@ -12,7 +12,6 @@ import {
 	NbToastrModule
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
 import { EventTypeRoutingModule } from './event-type.routing.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';

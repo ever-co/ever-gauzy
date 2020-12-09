@@ -1,7 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
 import { PickEmployeeComponent } from './pick-employee.component';
 import { PickEmployeeRoutingModule } from './pick-employee.routing.module';

@@ -20,7 +20,6 @@ import {
 import { HubstaffRoutingModule } from './hubstaff-routing.module';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HubstaffComponent } from './components/hubstaff/hubstaff.component';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
