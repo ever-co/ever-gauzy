@@ -8,6 +8,7 @@ import * as faker from 'faker';
 import { ContactOrganizationInviteStatus, ContactType } from '@gauzy/models';
 import { Tag } from '../tags/tag.entity';
 import * as _ from 'underscore';
+import { getDummyImage } from '../core';
 
 export const createDefaultOrganizationContact = async (
 	connection: Connection
@@ -65,6 +66,12 @@ export const createDefaultOrganizationContact = async (
 				orgContact.primaryEmail = orgContact.emailAddresses[0];
 				orgContact.primaryPhone = orgContact.phones[0];
 				orgContact.tenant = tenant;
+
+				orgContact.imageUrl = getDummyImage(
+					330,
+					300,
+					orgContact.name.charAt(0).toUpperCase()
+				);
 
 				orgContact.tags = _.chain(tags)
 					.shuffle()
@@ -136,6 +143,12 @@ export const createRandomOrganizationContact = async (
 				orgContact.primaryEmail = orgContact.emailAddresses[0];
 				orgContact.primaryPhone = orgContact.phones[0];
 				orgContact.tenant = tenant;
+
+				orgContact.imageUrl = getDummyImage(
+					330,
+					300,
+					orgContact.name.charAt(0).toUpperCase()
+				);
 
 				orgContact.tags = _.chain(tags)
 					.shuffle()

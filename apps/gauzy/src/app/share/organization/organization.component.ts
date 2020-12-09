@@ -13,46 +13,35 @@ import {
 	IOrganizationContact
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { Subject } from 'rxjs';
-import { first, takeUntil, tap } from 'rxjs/operators';
+import { first, tap } from 'rxjs/operators';
 import { PublicPageMutationComponent } from '../../@shared/organizations/public-page-mutation/public-page-mutation.component';
-import { OrganizationLanguagesService } from '../../@core/services/organization-languages.service';
-import { OrganizationAwardsService } from '../../@core/services/organization-awards.service';
 import * as moment from 'moment';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.service';
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
-
-export enum CURRENCY {
-	USD = '$',
-	BGN = 'Лв',
-	ILS = '₪'
-}
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-organization',
 	templateUrl: './organization.component.html',
 	styleUrls: ['./organization.component.scss']
 })
-export class OrganizationComponent extends TranslationBaseComponent
+export class OrganizationComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	organization: IOrganization;
 	hasEditPermission = false;
 	belongsToOrganization = false;
-
-	private _ngDestroy$ = new Subject<void>();
-
-	organization_languages: IOrganizationLanguages[];
+	organizationLanguages: IOrganizationLanguages[];
 	awards: IOrganizationAwards[];
-	loading = true;
-	bonuses_paid = 0;
-	total_clients = 0;
-	total_income = 0;
+	clients: IOrganizationContact[];
+	bonusesPaid = 0;
+	totalClients = 0;
+	totalIncome = 0;
 	profits = 0;
-	total_projects = 0;
-	total_employees = 0;
-	employee_bonuses = [];
+	totalProjects = 0;
+	totalEmployees = 0;
 	employees = [];
 	imageUrl: string;
 	hoverState: boolean;
@@ -60,9 +49,9 @@ export class OrganizationComponent extends TranslationBaseComponent
 	awardExist: boolean;
 	imageUpdateButton = false;
 	moment = moment;
-	currencies = Object.values(CURRENCY);
-	clients: IOrganizationContact[];
 	tabTitle = 'Profile';
+	tenantId: string;
+	profileLink: string;
 
 	constructor(
 		private route: ActivatedRoute,
@@ -71,8 +60,6 @@ export class OrganizationComponent extends TranslationBaseComponent
 		private userOrganizationService: UsersOrganizationsService,
 		private toastrService: NbToastrService,
 		private employeesService: EmployeesService,
-		private organization_language_service: OrganizationLanguagesService,
-		private organizationAwardsService: OrganizationAwardsService,
 		private organizationContactService: OrganizationContactService,
 		private employeeStatisticsService: EmployeeStatisticsService,
 		private organizationProjectsService: OrganizationProjectsService,
@@ -92,112 +79,109 @@ export class OrganizationComponent extends TranslationBaseComponent
 
 	ngOnInit() {
 		this.store.userRolePermissions$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.hasEditPermission = this.store.hasPermission(
 					PermissionsEnum.PUBLIC_PAGE_EDIT
 				);
 			});
-
-		this.route.params
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (params) => {
-				const profileLink = params.link;
-
-				try {
-					this.organization = await this.organizationsService
-						.getByProfileLink(profileLink, null, ['skills'])
-						.pipe(first())
-						.toPromise();
-
-					if (this.store.userId) {
-						const {
-							total
-						} = await this.userOrganizationService.getAll([], {
-							userId: this.store.userId,
-							organizationId: this.organization.id
-						});
-						this.belongsToOrganization = total > 0;
-					}
-
-					this.imageUrl = this.organization.imageUrl;
-					this.reloadPageData();
-					await this.getEmployeeStatistics();
-					if (
-						!!this.organization.show_clients_count ||
-						this.organization.show_clients
-					) {
-						await this.getClientsAndClientsCount();
-					}
-					if (!!this.organization.show_employees_count) {
-						await this.getEmployees();
-					}
-					if (!!this.organization.show_projects_count) {
-						await this.getProjectCount();
-					}
-					await this.getEmployees();
-				} catch (error) {
-					await this.router.navigate(['/share/404']);
-				}
-			});
-	}
-
-	private async loadLanguages() {
-		const res = await this.organization_language_service.getAll(
-			{
-				organizationId: this.organization.id
-			},
-			['language']
-		);
-		if (res) {
-			this.organization_languages = res.items;
-			this.languageExist = !!this.organization_languages.length;
-		}
-	}
-
-	private async loadAwards() {
-		const res = await this.organizationAwardsService.getAll({
-			organizationId: this.organization.id
+		this.route.params.pipe(untilDestroyed(this)).subscribe((params) => {
+			this.profileLink = params.link;
+			this.getPublicOrganization();
 		});
-		if (res) {
-			this.awards = res.items;
+	}
+
+	private async getPublicOrganization() {
+		try {
+			this.organization = await this.organizationsService
+				.getByProfileLink(this.profileLink, null, [
+					'skills',
+					'awards',
+					'languages',
+					'languages.language'
+				])
+				.pipe(first())
+				.toPromise();
+
+			this.tenantId = this.store.user.tenantId;
+			if (this.store.userId) {
+				const { total } = await this.userOrganizationService.getAll(
+					[],
+					{
+						userId: this.store.userId,
+						organizationId: this.organization.id,
+						tenantId: this.tenantId
+					}
+				);
+				this.belongsToOrganization = total > 0;
+			}
+
+			this.imageUrl = this.organization.imageUrl;
+
+			this.organizationLanguages = this.organization.languages;
+			this.languageExist = !!this.organizationLanguages.length;
+
+			this.awards = this.organization.awards;
 			this.awardExist = !!this.awards.length;
+
+			await this.getEmployeeStatistics();
+			if (
+				!!this.organization.show_clients_count ||
+				this.organization.show_clients
+			) {
+				await this.getClientsAndClientsCount();
+			}
+			if (!!this.organization.show_employees_count) {
+				await this.getEmployees();
+			}
+			if (!!this.organization.show_projects_count) {
+				await this.getProjectCount();
+			}
+		} catch (error) {
+			await this.router.navigate(['/share/404']);
 		}
 	}
 
 	private async getClientsAndClientsCount() {
-		const { total, items } = await this.organizationContactService.getAll(
-			null,
-			{
-				organizationId: this.organization.id
-			}
-		);
-		this.total_clients = total;
+		const { tenantId } = this;
+		const { id: organizationId } = this.organization;
+
+		const {
+			total,
+			items = []
+		} = await this.organizationContactService.getAll(null, {
+			organizationId,
+			tenantId
+		});
+		this.totalClients = total;
 		this.clients = items;
 	}
 
 	private async getProjectCount() {
+		const { tenantId } = this;
+		const { id: organizationId } = this.organization;
+
 		const { total } = await this.organizationProjectsService.getAll(
 			['members'],
-			{
-				organizationId: this.organization.id,
-				public: true
-			}
+			{ organizationId, tenantId, public: true }
 		);
-		this.total_projects = total;
+		this.totalProjects = total;
 	}
 
 	private async getEmployees() {
+		const { tenantId } = this;
+		const { id: organizationId } = this.organization;
+
 		const employees = await this.employeesService
 			.getAllPublic(['user', 'skills', 'organization'], {
-				organization: {
-					id: this.organization.id
-				}
+				organizationId,
+				tenantId
 			})
 			.pipe(first())
 			.toPromise();
+
 		this.employees = employees.items;
-		this.total_employees = employees.total;
+		this.totalEmployees = employees.total;
 
 		if (typeof this.organization.totalEmployees !== 'number') {
 			this.organization.totalEmployees = employees.total;
@@ -205,27 +189,25 @@ export class OrganizationComponent extends TranslationBaseComponent
 	}
 
 	private async getEmployeeStatistics() {
+		const { tenantId } = this;
+		const { id: organizationId } = this.organization;
+
 		const statistics = await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
 			{
-				organizationId: this.organization.id,
-				tenantId: this.organization.tenantId,
+				organizationId,
+				tenantId,
 				filterDate: new Date()
 			}
 		);
 		if (!!this.organization.show_bonuses_paid) {
-			this.bonuses_paid = statistics.total.bonus;
+			this.bonusesPaid = statistics.total.bonus;
 		}
 		if (!!this.organization.show_income) {
-			this.total_income = statistics.total.income;
+			this.totalIncome = statistics.total.income;
 		}
 		if (!!this.organization.show_profits) {
 			this.profits = statistics.total.profit;
 		}
-	}
-
-	private reloadPageData() {
-		this.loadAwards();
-		this.loadLanguages();
 	}
 
 	async saveImage(organization: any) {
@@ -248,7 +230,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 				tap(() =>
 					this._changeClientsTabIfActiveAndPrivacyIsTurnedOff()
 				),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe(async (result) => {
 				if (!!result) {
@@ -256,8 +238,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 						this.organization.id,
 						result
 					);
-					Object.assign(this.organization, result);
-					this.reloadPageData();
+					this.getPublicOrganization();
 					this.toastrService.primary(
 						this.organization.name + ' page is updated.',
 						'Success'

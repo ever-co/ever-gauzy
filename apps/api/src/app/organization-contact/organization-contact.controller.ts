@@ -69,7 +69,7 @@ export class OrganizationContactController extends CrudController<
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllEmployees(
+	async findAllOrganizationContacts(
 		@Query('data') data: string
 	): Promise<IPagination<OrganizationContact>> {
 		const { relations, findInput } = JSON.parse(data);

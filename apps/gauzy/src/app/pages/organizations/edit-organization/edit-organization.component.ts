@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { IOrganization, PermissionsEnum } from '@gauzy/models';
 import { filter, first, switchMap, tap } from 'rxjs/operators';
 import { EmployeesService } from '../../../@core/services';
@@ -9,7 +9,6 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 import { TranslateService } from '@ngx-translate/core';
 import { OrganizationEditStore } from '../../../@core/services/organization-edit-store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './edit-organization.component.html',
@@ -26,6 +25,7 @@ export class EditOrganizationComponent
 	employeesCount: number;
 
 	constructor(
+		private router: Router,
 		private route: ActivatedRoute,
 		private organizationsService: OrganizationsService,
 		private employeesService: EmployeesService,
@@ -74,12 +74,15 @@ export class EditOrganizationComponent
 		return this.store.hasPermission(PermissionsEnum.PUBLIC_PAGE_EDIT);
 	}
 
-	//Open the public page in a new tab
+	// Converts the route into a string that can be used
+	// with the window.open() function
 	editPublicPage() {
-		window.open(
-			'/share/organization/' + this.selectedOrg.profile_link,
-			'_blank'
+		const url = this.router.serializeUrl(
+			this.router.createUrlTree([
+				`/share/organization/${this.selectedOrg.profile_link}`
+			])
 		);
+		window.open('#' + url, '_blank');
 	}
 
 	ngOnDestroy() {}

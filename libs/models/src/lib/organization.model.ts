@@ -4,9 +4,11 @@ import {
 	ITag,
 	ISkill,
 	IOrganizationSprint,
-	IEmployee
+	IEmployee,
+	IOrganizationAwards
 } from '@gauzy/models';
 import { IContact } from './contact.model';
+import { IOrganizationLanguages } from './organization-languages.model';
 
 export enum OrganizationPermissionsEnum {
 	ALLOW_MANUAL_TIME = 'allowManualTime',
@@ -85,6 +87,8 @@ export interface IOrganization extends IBasePerTenantEntityModel {
 	fiscalStartDate?: Date;
 	fiscalEndDate?: Date;
 	discountAfterTax?: boolean;
+	awards?: IOrganizationAwards[];
+	languages?: IOrganizationLanguages[];
 }
 
 export interface IOrganizationFindInput {
