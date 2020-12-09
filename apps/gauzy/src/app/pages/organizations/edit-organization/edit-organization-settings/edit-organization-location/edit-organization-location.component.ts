@@ -5,7 +5,7 @@ import { IOrganization } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
 import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
-import { filter } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -13,6 +13,7 @@ import { Store } from '../../../../../@core/services/store.service';
 import { LocationFormComponent } from '../../../../../@shared/forms/location';
 import { LeafletMapComponent } from '../../../../../@shared/forms/maps/leaflet/leaflet.component';
 import { LatLng } from 'leaflet';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-org-location',
@@ -48,6 +49,7 @@ export class EditOrganizationLocationComponent
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
+				tap((organization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)
 			.subscribe((organization) => {
@@ -56,12 +58,16 @@ export class EditOrganizationLocationComponent
 	}
 
 	async updateOrganizationSettings() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
 		const location = this.locationFormDirective.getValue();
 		const { coordinates } = location['loc'];
 		delete location['loc'];
 
 		const [latitude, longitude] = coordinates;
 		const contact = {
+			...{ organizationId, tenantId },
 			...location,
 			...{ latitude, longitude }
 		};

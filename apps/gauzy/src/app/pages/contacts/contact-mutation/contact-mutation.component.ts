@@ -267,23 +267,26 @@ export class ContactMutationComponent
 				? this.form.value['imageUrl']
 				: 'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text';
 
+			const { tenantId } = this.store.user;
+			const { organizationId } = this;
+
 			const location = this.locationFormDirective.getValue();
 			const { coordinates } = location['loc'];
 			delete location['loc'];
 
 			const [latitude, longitude] = coordinates;
 			const contact = {
+				...{ organizationId, tenantId },
 				...location,
 				...{ latitude, longitude }
 			};
 
-			const { tenantId } = this.store.user;
 			this.addOrEditOrganizationContact.emit({
 				tags: this.tags,
 				id: this.organizationContact
 					? this.organizationContact.id
 					: undefined,
-				organizationId: this.organizationId,
+				organizationId,
 				tenantId,
 				name: this.form.value['name'],
 				primaryEmail: this.form.value['primaryEmail'],
