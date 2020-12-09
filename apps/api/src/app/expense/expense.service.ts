@@ -4,7 +4,6 @@ import { Repository, FindManyOptions, Between } from 'typeorm';
 import { Expense } from './expense.entity';
 import { IPagination } from '../core';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
-import { startOfMonth, endOfMonth } from 'date-fns';
 import { RequestContext } from '../core/context';
 import { IGetExpenseInput, PermissionsEnum } from '@gauzy/models';
 import * as moment from 'moment';

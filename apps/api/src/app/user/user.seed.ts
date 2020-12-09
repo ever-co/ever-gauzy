@@ -177,12 +177,12 @@ export const createRandomUsers = async (
 		);
 
 		const [
-			adminUsers,
-			employeeUsers,
-			candidateUsers,
-			managerUsers,
-			dataEntryUsers,
-			viewerUsers
+			promiseAdminUsers,
+			promiseEmployeeUsers,
+			promiseCandidateUsers,
+			promiseManagerUsers,
+			promiseDataEntryUsers,
+			promiseViewerUsers
 		] = await Promise.all([
 			_adminUsers,
 			_employeeUsers,
@@ -192,13 +192,20 @@ export const createRandomUsers = async (
 			_viewerUsers
 		]);
 
+		const adminUsers = await insertUsers(connection, [
+			...promiseAdminUsers
+		]);
+		const employeeUsers = await insertUsers(connection, [
+			...promiseEmployeeUsers
+		]);
+		const candidateUsers = await insertUsers(connection, [
+			...promiseCandidateUsers
+		]);
+
 		await insertUsers(connection, [
-			...adminUsers,
-			...employeeUsers,
-			...candidateUsers,
-			...managerUsers,
-			...dataEntryUsers,
-			...viewerUsers
+			...promiseManagerUsers,
+			...promiseDataEntryUsers,
+			...promiseViewerUsers
 		]);
 
 		randomTenantUsers.set(tenant, {
