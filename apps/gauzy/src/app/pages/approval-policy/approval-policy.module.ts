@@ -18,7 +18,7 @@ import {
 	NbRadioModule
 } from '@nebular/theme';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
-import { ThemeModule } from '../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
 import { ApprovalPolicyComponent } from './approval-policy.component';
 import { SharedModule } from '../../@shared/shared.module';
 import { ApprovalPolicyRoutingModule } from './approval-policy-routing.module';
@@ -26,10 +26,6 @@ import { ApprovalPolicyService } from '../../@core/services/approval-policy.serv
 import { ApprovalPolicyMutationModule } from '../../@shared/approval-policy/approval-policy-mutation.module';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
 
 @NgModule({
 	imports: [

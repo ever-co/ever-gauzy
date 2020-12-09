@@ -14,17 +14,11 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { InviteService } from '../../@core/services/invite.service';
 import { RoleService } from '../../@core/services/role.service';
-import { ThemeModule } from '../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
 import { AcceptInviteFormComponent } from './accept-invite-form/accept-invite-form.component';
 import { AcceptInvitePage } from './accept-invite.component';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
-
 @NgModule({
 	imports: [
 		CommonModule,

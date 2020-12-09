@@ -1,8 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { ThemeModule } from '../../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
 import {
 	NbCardModule,
 	NbSpinnerModule,
@@ -15,11 +14,6 @@ import { ManageAppointmentModule } from '../../../pages/employees/appointment/ma
 import { EmployeesService } from '../../../@core/services';
 import { EmployeeAppointmentService } from '../../../@core/services/employee-appointment.service';
 import { AlertModalModule } from '../../../@shared/alert-modal/alert-modal.module';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
-
 @NgModule({
 	imports: [
 		ThemeModule,

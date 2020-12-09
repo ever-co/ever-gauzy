@@ -11,12 +11,10 @@ import {
 	NbCheckboxModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ThemeModule } from '../../@theme/theme.module';
-import { HttpLoaderFactory } from '../../@theme/components/header/selectors/employee/employee.module';
+import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
 import { EquipmentMutationComponent } from './equipment-mutation.component';
 import { Store } from '../../@core/services/store.service';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
-
 @NgModule({
 	imports: [
 		TagsColorInputModule,

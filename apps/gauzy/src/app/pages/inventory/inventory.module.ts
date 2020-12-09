@@ -15,10 +15,9 @@ import {
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
 import { ProductMutationModule } from '../../@shared/product-mutation/product-mutation.module';
-import { ThemeModule } from '../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { ProductTypesComponent } from './components/manage-product-types/product-types.component';
 import { ProductTypeMutationComponent } from '../../@shared/product-mutation/product-type-mutation/product-type-mutation.component';
@@ -47,10 +46,6 @@ import { OrganizationsService } from '../../@core/services/organizations.service
 import { InventoryVariantFormComponent } from './components/edit-inventory-item-variant/variant-form.component';
 import { EnabledStatusComponent } from './components/table-components/enabled-row.component';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
 
 const NB_MODULES = [
 	NbCardModule,

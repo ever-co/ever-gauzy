@@ -12,8 +12,7 @@ import {
 	NbRadioModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ThemeModule } from '../../@theme/theme.module';
-import { HttpLoaderFactory } from '../../@theme/components/header/selectors/employee/employee.module';
+import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
 import { Store } from '../../@core/services/store.service';
 import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';
 import { EquipmentSharingMutationComponent } from './equipment-sharing-mutation.component';

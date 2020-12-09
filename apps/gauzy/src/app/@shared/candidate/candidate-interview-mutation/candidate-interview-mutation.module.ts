@@ -1,5 +1,5 @@
 import { CandidateInterviewFormComponent } from './candidate-interview-form/candidate-interview-form.component';
-import { ThemeModule } from '../../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import {
@@ -16,7 +16,6 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
 import { CandidateInterviewMutationComponent } from './candidate-interview-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -29,9 +28,6 @@ import { CandidateNotificationFormComponent } from './candidate-notification-for
 import { CandidateEmailComponent } from './candidate-notification-form/candidate-email/candidate-email.component';
 import { CandidateTechnologiesService } from '../../../@core/services/candidate-technologies.service';
 import { CKEditorModule } from 'ng2-ckeditor';
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
 
 @NgModule({
 	imports: [

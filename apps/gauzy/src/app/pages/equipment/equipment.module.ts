@@ -1,7 +1,7 @@
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { NgModule } from '@angular/core';
 import { EquipmentRoutingModule } from './equipment-routing.module';
-import { ThemeModule } from '../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -16,16 +16,11 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { EquipmentComponent } from './equipment.component';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { EquipmentMutationModule } from '../../@shared/equipment/equipment-mutation.module';
 import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mutation.component';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
-
 @NgModule({
 	imports: [
 		EquipmentRoutingModule,
