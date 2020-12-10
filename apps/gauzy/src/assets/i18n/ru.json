@@ -81,7 +81,10 @@
 		"SCHEDULES": "Графики",
 		"YES_HIDE_ALL_JOBS": "Да, скрыть все задания",
 		"VALIDATE": "Validate",
-		"VALIDATED": "Проверено"
+		"VALIDATED": "Проверено",
+		"APPROVE": "Одобрить",
+		"DENY": "Запретить",
+		"PAYMENTS": "Платежи"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -276,6 +279,10 @@
 			"GITHUB": "Github",
 			"GITLAB": "Gitlab",
 			"UPWORK": "Обновления",
+			"PROJECT_URL": "URL проекта",
+			"CLIENTS": "Клиенты",
+			"IS_PROJECT_OPEN_SOURCE": "Является проектом открытым исходным кодом",
+			"OPEN_SOURCE_PROJECT_URL": "URL проекта с открытым исходным кодом",
 			"COORDINATE": {
 				"TITLE": "КУРДИНАТ",
 				"LATITUDE": "Широта",
@@ -311,8 +318,8 @@
 			"ADD_TECHNOLOGY": "Добавить технологию",
 			"ADD_EXPENSE_CATEGORY": "Добавить категорию расходов",
 			"CONTACTS": "Контакты",
-			"START_DATE_PROJECT": "Дата начала (необязательно)",
-			"END_DATE_PROJECT": "Дата окончания (необязательно)",
+			"START_DATE_PROJECT": "Дата начала проекта",
+			"END_DATE_PROJECT": "Дата окончания проекта",
 			"TEAM_NAME": "Имя команды",
 			"ADD_REMOVE_MEMBERS": "Добавление или удаление членов команды",
 			"ADD_REMOVE_MANAGERS": "Добавление и удаление менеджеров команды",
@@ -382,6 +389,10 @@
 			"GITHUB": "Github",
 			"GITLAB": "Gitlab",
 			"UPWORK": "Обновления",
+			"STATUS": "Статус",
+			"INVOICE_NUMBER": "Номер счёта",
+			"PROJECT_URL": "URL проекта",
+			"CLIENTS": "Клиенты",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Название школы",
 				"DEGREE": "Диплом",
@@ -857,7 +868,15 @@
 			"PROJECTS": "Проекты",
 			"CONTACTS": "Контакты",
 			"HIRING": "Hiring",
-			"NETWORKS": "Сети"
+			"NETWORKS": "Сети",
+			"EMPLOYEE_LEVEL": "Уровень сотрудника",
+			"DISPLAY_BONUS_ANONYMOUSLY": "Анонимное отображение бонуса",
+			"JOB_SUCCESS": "Работа выполнена",
+			"TOTAL_JOBS": "Всего заданий",
+			"TOTAL_HOURS": "Всего часов",
+			"RATE": "Ставка",
+			"VETTED": "Ограблен",
+			"HR": "час"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Шаг 1",
@@ -1454,7 +1473,8 @@
 			"PROPOSAL_SENT_ON": "Предложение отправлено",
 			"STATUS": "Статус",
 			"JOB_POST_CONTENT": "Контент должности",
-			"PROPOSAL_CONTENT": "Содержание предложения"
+			"PROPOSAL_CONTENT": "Содержание предложения",
+			"VIEW_JOB_POST": "Смотреть Вакансии"
 		},
 		"EDIT_PROPOSAL": {
 			"EDIT_PROPOSAL": "Изменить предложение",
@@ -1514,6 +1534,11 @@
 		"ADD_OR_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
 		"SELECT_TIME_OFF_POLICY": "Выберите политику ожидания",
 		"ADD_A_DESCRIPTION": "Добавить описание",
+		"DESCRIPTION": "Описание",
+		"START_DATE": "Дата начала",
+		"END_DATE": "Дата окончания",
+		"REQUEST_DATE": "Дата запроса",
+		"STATUS": "Статус",
 		"STATUSES": {
 			"REQUESTED": "Запрошено",
 			"APPROVED": "Одобрено",
@@ -1737,7 +1762,8 @@
 			"SOURCE": "Источник",
 			"JOB_TYPE": "Тип задания",
 			"JOB_STATUS": "Статус Вакансии",
-			"BUDGET": "Бюджет"
+			"BUDGET": "Бюджет",
+			"LESS_THAN": "Менее чем"
 		}
 	},
 	"JOB_MATCHING": {
@@ -1797,7 +1823,8 @@
 			"DATA_ENTRY": "Ввод данных",
 			"VIEWER": "Просмотрщик",
 			"EMPLOYEE": "Сотрудник",
-			"CANDIDATE": "Кандидат"
+			"CANDIDATE": "Кандидат",
+			"ROLE": "Роль"
 		},
 		"EDIT_USER": {
 			"HEADER": "Управление пользователем",
@@ -1935,7 +1962,7 @@
 		"INVOICES_PER_PAGE": "Счета на странице",
 		"ESTIMATES_PER_PAGE": "Оценки на странице",
 		"APPLY_DISCOUNT_AFTER_TAX": "Применить скидку после налога",
-		"PAYMENTS_BUTTON": "Платежи",
+		"SELECT_INVOICE_TO_VIEW_HISTORY": "Выберите счет-фактуру для просмотра истории",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"ESTIMATE_TYPE": "Тип оценки",
@@ -2009,7 +2036,8 @@
 			"ACCEPTED": "Принято",
 			"REJECTED": "Отклонено",
 			"ACCEPTED_STATUS": "Статус принят",
-			"ESTIMATE_CONVERT": "Расчет конвертированных"
+			"ESTIMATE_CONVERT": "Расчет конвертированных",
+			"SELECT_ESTIMATE_TO_VIEW_HISTORY": "Выберите оценку, чтобы просмотреть её историю"
 		},
 		"PAYMENTS": {
 			"HEADER": "Платежи за счет",

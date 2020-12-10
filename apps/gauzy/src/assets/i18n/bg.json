@@ -81,7 +81,10 @@
 		"SCHEDULES": "Schedules",
 		"YES_HIDE_ALL_JOBS": "Yes, Hide All Jobs",
 		"VALIDATE": "Validate",
-		"VALIDATED": "Validated"
+		"VALIDATED": "Validated",
+		"APPROVE": "Approve",
+		"DENY": "Deny",
+		"PAYMENTS": "Payments"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -276,6 +279,10 @@
 			"GITHUB": "Github",
 			"GITLAB": "Gitlab",
 			"UPWORK": "Upwork",
+			"PROJECT_URL": "Project URL",
+			"CLIENTS": "Клиенти",
+			"IS_PROJECT_OPEN_SOURCE": "Is Project Open-Source",
+			"OPEN_SOURCE_PROJECT_URL": "Open-Source Project URL",
 			"COORDINATE": {
 				"TITLE": "COORDINATES",
 				"LATITUDE": "Latitude",
@@ -311,8 +318,8 @@
 			"ADD_TECHNOLOGY": "Add technology",
 			"ADD_EXPENSE_CATEGORY": "Add expense category",
 			"CONTACTS": "Contacts",
-			"START_DATE_PROJECT": "Начало на проекта (опция)",
-			"END_DATE_PROJECT": "Край на проекта (опция)",
+			"START_DATE_PROJECT": "Project Start Date",
+			"END_DATE_PROJECT": "Project End Date",
 			"TEAM_NAME": "Име на отбора",
 			"ADD_REMOVE_MEMBERS": "Добавяне или премахване на членове",
 			"ADD_REMOVE_MANAGERS": "Add or Remove Team Managers",
@@ -382,6 +389,10 @@
 			"GITHUB": "Github",
 			"GITLAB": "Gitlab",
 			"UPWORK": "Upwork",
+			"STATUS": "Статус",
+			"INVOICE_NUMBER": "Invoice Number",
+			"PROJECT_URL": "Project URL",
+			"CLIENTS": "Клиенти",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -857,7 +868,15 @@
 			"PROJECTS": "Проекти",
 			"CONTACTS": "Contacts",
 			"HIRING": "Hiring",
-			"NETWORKS": "Networks"
+			"NETWORKS": "Networks",
+			"EMPLOYEE_LEVEL": "Employee Level",
+			"DISPLAY_BONUS_ANONYMOUSLY": "Display bonus Anonymously",
+			"JOB_SUCCESS": "Job Success",
+			"TOTAL_JOBS": "Total Jobs",
+			"TOTAL_HOURS": "Total Hours",
+			"RATE": "Почасово",
+			"VETTED": "Vetted",
+			"HR": "hr"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Step 1",
@@ -1454,7 +1473,8 @@
 			"PROPOSAL_SENT_ON": "Proposal Sent On",
 			"STATUS": "Статус",
 			"JOB_POST_CONTENT": "Job Post Content",
-			"PROPOSAL_CONTENT": "Proposal Content"
+			"PROPOSAL_CONTENT": "Proposal Content",
+			"VIEW_JOB_POST": "View Job Pos"
 		},
 		"EDIT_PROPOSAL": {
 			"EDIT_PROPOSAL": "Edit Proposal",
@@ -1514,6 +1534,11 @@
 		"ADD_OR_REMOVE_EMPLOYEES": "Добави или премахни служители",
 		"SELECT_TIME_OFF_POLICY": "Select Time-off Policy",
 		"ADD_A_DESCRIPTION": "Add a description",
+		"DESCRIPTION": "Description",
+		"START_DATE": "Начална дата",
+		"END_DATE": "Крайна дата",
+		"REQUEST_DATE": "Request Date",
+		"STATUS": "Статус",
 		"STATUSES": {
 			"REQUESTED": "Requested",
 			"APPROVED": "Approved",
@@ -1737,7 +1762,8 @@
 			"SOURCE": "Source",
 			"JOB_TYPE": "Job Type",
 			"JOB_STATUS": "Job Status",
-			"BUDGET": "Budget"
+			"BUDGET": "Budget",
+			"LESS_THAN": "Less than"
 		}
 	},
 	"JOB_MATCHING": {
@@ -1797,7 +1823,8 @@
 			"DATA_ENTRY": "Data Entry",
 			"VIEWER": "Viewer",
 			"EMPLOYEE": "Служител",
-			"CANDIDATE": "Candidate"
+			"CANDIDATE": "Candidate",
+			"ROLE": "Роля"
 		},
 		"EDIT_USER": {
 			"HEADER": "Manage User",
@@ -1935,7 +1962,7 @@
 		"INVOICES_PER_PAGE": "Invoices Per Page",
 		"ESTIMATES_PER_PAGE": "Estimates Per Page",
 		"APPLY_DISCOUNT_AFTER_TAX": "Apply discount after tax",
-		"PAYMENTS_BUTTON": "Payments",
+		"SELECT_INVOICE_TO_VIEW_HISTORY": "Select an invoice to view it's history",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",
@@ -2009,7 +2036,8 @@
 			"ACCEPTED": "Прието",
 			"REJECTED": "Rejected",
 			"ACCEPTED_STATUS": "Accepted Status",
-			"ESTIMATE_CONVERT": "Estimate Converted"
+			"ESTIMATE_CONVERT": "Estimate Converted",
+			"SELECT_ESTIMATE_TO_VIEW_HISTORY": "Select an estimate to view it's history"
 		},
 		"PAYMENTS": {
 			"HEADER": "Payments for Invoice",
