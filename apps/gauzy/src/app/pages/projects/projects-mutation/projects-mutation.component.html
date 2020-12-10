@@ -6,233 +6,314 @@
 		) | translate
 	}}</nb-card-header>
 	<nb-card-body>
-		<form [formGroup]="form" *ngIf="form" class="row">
-			<div class="form-group col-4">
-				<label for="name" class="label">{{
-					'FORM.PLACEHOLDERS.NAME' | translate
-				}}</label>
-				<input
-					type="text"
-					#name
-					nbInput
-					fullWidth
-					formControlName="name"
-					placeholder="{{ 'FORM.PLACEHOLDERS.NAME' | translate }}"
-					id="name"
-				/>
-			</div>
-			<div class="form-group col-4">
-				<label for="organizationContacts" class="label">{{
-					'FORM.PLACEHOLDERS.CONTACTS' | translate
-				}}</label>
-				<ng-select
-					[addTag]="addNewOrganizationContact"
-					[items]="organizationContacts"
-					bindLabel="name"
-					[searchable]="true"
-					#organizationContact
-					formControlName="organizationContact"
-					placeholder="{{ 'FORM.PLACEHOLDERS.CONTACTS' | translate }}"
-				>
-				</ng-select>
-			</div>
-			<div class="form-group col-4">
-				<label for="billing" class="label">{{
-					'FORM.PLACEHOLDERS.BILLING' | translate
-				}}</label>
-				<nb-select
-					fullWidth
-					placeholder="{{ 'FORM.PLACEHOLDERS.BILLING' | translate }}"
-					formControlName="billing"
-					id="billing"
-				>
-					<nb-option
-						*ngFor="let billing of billings"
-						[value]="billing"
-					>
-						{{ 'SM_TABLE.' + billing | translate }}
-					</nb-option>
-				</nb-select>
-			</div>
-			<div class="form-group col-4">
-				<label for="currency" class="label">{{
-					'FORM.PLACEHOLDERS.CURRENCY' | translate
-				}}</label>
-				<nb-select
-					fullWidth
-					placeholder="{{ 'FORM.PLACEHOLDERS.CURRENCY' | translate }}"
-					formControlName="currency"
-					id="currency"
-				>
-					<nb-option
-						*ngFor="let currency of currencies"
-						value="{{ currency }}"
-						>{{ currency }}
-					</nb-option>
-				</nb-select>
-			</div>
+		<form [formGroup]="form" *ngIf="form">
+			<nb-tabset>
+				<nb-tab tabTitle="Main">
+					<div class="row">
+						<div class="form-group col-4">
+							<label for="name" class="label">{{
+								'FORM.PLACEHOLDERS.NAME' | translate
+							}}</label>
+							<input
+								type="text"
+								#name
+								nbInput
+								fullWidth
+								formControlName="name"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.NAME' | translate
+								}}"
+								id="name"
+							/>
+						</div>
+						<div class="form-group col-4">
+							<label for="code" class="label">{{
+								'FORM.PLACEHOLDERS.CODE' | translate
+							}}</label>
+							<input
+								type="text"
+								#code
+								nbInput
+								fullWidth
+								formControlName="code"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.CODE' | translate
+								}}"
+								id="code"
+							/>
+						</div>
+					</div>
+					<div class="row">
+						<div class="form-group col-4">
+							<label for="projectUrl" class="label">
+								{{ 'FORM.LABELS.PROJECT_URL' | translate }}
+							</label>
+							<input
+								type="text"
+								nbInput
+								fullWidth
+								placeholder="{{
+									'FORM.PLACEHOLDERS.PROJECT_URL' | translate
+								}}"
+								id="projectUrl"
+								formControlName="projectUrl"
+							/>
+						</div>
+					</div>
+					<div class="row">
+						<div class="form-group col-4">
+							<label for="owner" class="label">{{
+								'FORM.PLACEHOLDERS.OWNER' | translate
+							}}</label>
+							<nb-select
+								fullWidth
+								placeholder="{{
+									'FORM.PLACEHOLDERS.OWNER' | translate
+								}}"
+								formControlName="owner"
+								id="owner"
+								(selectedChange)="changeProjectOwner($event)"
+							>
+								<nb-option
+									*ngFor="let owner of owners"
+									[value]="owner"
+									>{{ 'SM_TABLE.' + owner | translate }}
+								</nb-option>
+							</nb-select>
+						</div>
+						<div class="form-group col-4">
+							<label for="organizationContacts" class="label">
+								{{ 'FORM.LABELS.CLIENTS' | translate }}
+							</label>
+							<ng-select
+								[addTag]="addNewOrganizationContact"
+								[items]="organizationContacts"
+								bindLabel="name"
+								[searchable]="true"
+								#organizationContact
+								formControlName="organizationContact"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.CLIENTS' | translate
+								}}"
+							>
+							</ng-select>
+						</div>
+					</div>
+					<div class="row">
+						<div class="form-group col-4">
+							<ga-employee-multi-select
+								[selectedEmployeeIds]="selectedEmployeeIds"
+								[allEmployees]="employees"
+								(selectedChange)="onMembersSelected($event)"
+								id="add-remove-emploees"
+							>
+							</ga-employee-multi-select>
+						</div>
+					</div>
+					<div class="row">
+						<div class="form-group col-4">
+							<label for="start-date-project" class="label">{{
+								'FORM.PLACEHOLDERS.START_DATE_PROJECT'
+									| translate
+							}}</label>
+							<input
+								[nbDatepicker]="startDate"
+								nbInput
+								fullWidth
+								formControlName="startDate"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.START_DATE_PROJECT'
+										| translate
+								}}"
+								id="start-date-project"
+							/>
+							<nb-datepicker #startDate></nb-datepicker>
+						</div>
+						<div class="form-group col-4">
+							<label for="end-date-project" class="label">{{
+								'FORM.PLACEHOLDERS.END_DATE_PROJECT' | translate
+							}}</label>
+							<input
+								[nbDatepicker]="endDate"
+								nbInput
+								fullWidth
+								formControlName="endDate"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.END_DATE_PROJECT'
+										| translate
+								}}"
+								id="end-date-project"
+							/>
+							<nb-datepicker #endDate></nb-datepicker>
+						</div>
+					</div>
+				</nb-tab>
+				<nb-tab tabTitle="Description">
+					<ckeditor formControlName="description" [config]="ckConfig">
+					</ckeditor>
+					<div class="form-group col-4">
+						<ga-tags-color-input
+							[selectedTags]="tags"
+							(selectedTagsEvent)="selectedTagsEvent($event)"
+							[isOrgLevel]="true"
+						>
+						</ga-tags-color-input>
+					</div>
+				</nb-tab>
+				<nb-tab tabTitle="Billing">
+					<div class="row">
+						<div class="form-group col-4">
+							<label for="billing" class="label">{{
+								'FORM.PLACEHOLDERS.BILLING' | translate
+							}}</label>
+							<nb-select
+								fullWidth
+								placeholder="{{
+									'FORM.PLACEHOLDERS.BILLING' | translate
+								}}"
+								formControlName="billing"
+								id="billing"
+							>
+								<nb-option
+									*ngFor="let billing of billings"
+									[value]="billing"
+								>
+									{{ 'SM_TABLE.' + billing | translate }}
+								</nb-option>
+							</nb-select>
+						</div>
+						<div class="form-group col-4">
+							<label for="currency" class="label">{{
+								'FORM.PLACEHOLDERS.CURRENCY' | translate
+							}}</label>
+							<nb-select
+								fullWidth
+								placeholder="{{
+									'FORM.PLACEHOLDERS.CURRENCY' | translate
+								}}"
+								formControlName="currency"
+								id="currency"
+							>
+								<nb-option
+									*ngFor="let currency of currencies"
+									value="{{ currency }}"
+									>{{ currency }}
+								</nb-option>
+							</nb-select>
+						</div>
+					</div>
+				</nb-tab>
+				<nb-tab tabTitle="Open-Source">
+					<div class="row">
+						<div class="col-4 d-flex align-items-center">
+							<nb-toggle
+								class="project-toggle"
+								labelPosition="start"
+								status="basic"
+								[checked]="openSource"
+								(checkedChange)="toggleOpenSource($event)"
+								formControlName="openSource"
+							>
+								{{
+									'FORM.LABELS.IS_PROJECT_OPEN_SOURCE'
+										| translate
+								}}
+							</nb-toggle>
+						</div>
+						<div *ngIf="openSource" class="form-group col-4">
+							<label for="openSourceProjectUrl" class="label">
+								{{
+									'FORM.LABELS.OPEN_SOURCE_PROJECT_URL'
+										| translate
+								}}
+							</label>
+							<input
+								type="text"
+								nbInput
+								fullWidth
+								placeholder="https://github.com/..."
+								id="openSourceProjectUrl"
+								formControlName="openSourceProjectUrl"
+							/>
+						</div>
+					</div>
+				</nb-tab>
+				<nb-tab tabTitle="Settings">
+					<div class="row">
+						<div class="form-group col-3">
+							<label for="color" class="label">{{
+								'FORM.PLACEHOLDERS.COLOR' | translate
+							}}</label>
 
-			<div class="form-group col-4">
-				<label for="start-date-project" class="label">{{
-					'FORM.PLACEHOLDERS.START_DATE_PROJECT' | translate
-				}}</label>
-				<input
-					[nbDatepicker]="startDate"
-					nbInput
-					fullWidth
-					formControlName="startDate"
-					placeholder="{{
-						'FORM.PLACEHOLDERS.START_DATE_PROJECT' | translate
-					}}"
-					id="start-date-project"
-				/>
-				<nb-datepicker #startDate></nb-datepicker>
-			</div>
-			<div class="form-group col-4">
-				<label for="end-date-project" class="label">{{
-					'FORM.PLACEHOLDERS.END_DATE_PROJECT' | translate
-				}}</label>
-				<input
-					[nbDatepicker]="endDate"
-					nbInput
-					fullWidth
-					formControlName="endDate"
-					placeholder="{{
-						'FORM.PLACEHOLDERS.END_DATE_PROJECT' | translate
-					}}"
-					id="end-date-project"
-				/>
-				<nb-datepicker #endDate></nb-datepicker>
-			</div>
-			<div class="form-group col-4">
-				<ga-employee-multi-select
-					[selectedEmployeeIds]="selectedEmployeeIds"
-					[allEmployees]="employees"
-					(selectedChange)="onMembersSelected($event)"
-					id="add-remove-emploees"
-				>
-				</ga-employee-multi-select>
-			</div>
-			<div class="form-group col-4">
-				<ga-tags-color-input
-					[selectedTags]="tags"
-					(selectedTagsEvent)="selectedTagsEvent($event)"
-					[isOrgLevel]="true"
-				>
-				</ga-tags-color-input>
-			</div>
-			<div class="form-group col-4">
-				<label for="owner" class="label">{{
-					'FORM.PLACEHOLDERS.OWNER' | translate
-				}}</label>
-				<nb-select
-					fullWidth
-					placeholder="{{ 'FORM.PLACEHOLDERS.OWNER' | translate }}"
-					formControlName="owner"
-					id="owner"
-					(selectedChange)="changeProjectOwner($event)"
-				>
-					<nb-option *ngFor="let owner of owners" [value]="owner"
-						>{{ 'SM_TABLE.' + owner | translate }}
-					</nb-option>
-				</nb-select>
-			</div>
-			<div class="form-group col-4">
-				<label for="owner" class="label">{{
-					'FORM.PLACEHOLDERS.TASK_VIEW_MODE' | translate
-				}}</label>
-				<nb-select
-					fullWidth
-					placeholder="{{
-						'FORM.PLACEHOLDERS.TASK_VIEW_MODE' | translate
-					}}"
-					formControlName="taskViewMode"
-					id="taskViewMode"
-				>
-					<nb-option
-						*ngFor="let mode of taskViewModeTypes"
-						[value]="mode"
-						>{{ mode }}
-					</nb-option>
-				</nb-select>
-			</div>
-			<div class="form-group col-4">
-				<label for="color" class="label">{{
-					'FORM.PLACEHOLDERS.COLOR' | translate
-				}}</label>
-
-				<input
-					type="text"
-					nbInput
-					fullWidth
-					formControlName="color"
-					placeholder="{{ 'FORM.PLACEHOLDERS.COLOR' | translate }}"
-					id="color"
-					[colorPicker]="form.get('color').value"
-					[style.background]="form.get('color').value"
-					[value]="form.get('color').value"
-					(colorPickerChange)="form.get('color').setValue($event)"
-				/>
-			</div>
-			<div class="form-group col-4">
-				<label for="code" class="label">{{
-					'FORM.PLACEHOLDERS.CODE' | translate
-				}}</label>
-				<input
-					type="text"
-					#code
-					nbInput
-					fullWidth
-					formControlName="code"
-					placeholder="{{ 'FORM.PLACEHOLDERS.CODE' | translate }}"
-					id="code"
-				/>
-			</div>
-			<div class="col-sm-12 mb-3">
-				<label for="description" class="label">
-					{{
-						'APPROVAL_POLICY_PAGE.APPROVAL_POLICY_DESCRIPTION'
-							| translate
-					}}
-				</label>
-				<textarea
-					#description
-					nbInput
-					formControlName="description"
-					fullWidth
-					rows="4"
-					placeholder="{{
-						'APPROVAL_POLICY_PAGE.APPROVAL_POLICY_DESCRIPTION'
-							| translate
-					}}"
-					id="description"
-				></textarea>
-			</div>
-
-			<div class="col-2">
-				<nb-toggle
-					#public
-					labelPosition="start"
-					status="basic"
-					[checked]="public"
-					formControlName="public"
-					(checkedChange)="togglePublic($event)"
-					>{{
-						'FORM.PLACEHOLDERS.SWITCH_PROJECT_STATE' | translate
-					}}</nb-toggle
-				>
-			</div>
-			<div class="col-2">
-				<nb-toggle
-					#billable
-					labelPosition="start"
-					status="basic"
-					[checked]="billable"
-					formControlName="billable"
-					(checkedChange)="toggleBillable($event)"
-					>{{ 'FORM.PLACEHOLDERS.BILLABLE' | translate }}</nb-toggle
-				>
-			</div>
+							<input
+								type="text"
+								nbInput
+								fullWidth
+								formControlName="color"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.COLOR' | translate
+								}}"
+								id="color"
+								[colorPicker]="form.get('color').value"
+								[style.background]="form.get('color').value"
+								[value]="form.get('color').value"
+								(colorPickerChange)="
+									form.get('color').setValue($event)
+								"
+							/>
+						</div>
+						<div class="form-group col-3">
+							<label for="owner" class="label">{{
+								'FORM.PLACEHOLDERS.TASK_VIEW_MODE' | translate
+							}}</label>
+							<nb-select
+								fullWidth
+								placeholder="{{
+									'FORM.PLACEHOLDERS.TASK_VIEW_MODE'
+										| translate
+								}}"
+								formControlName="taskViewMode"
+								id="taskViewMode"
+							>
+								<nb-option
+									*ngFor="let mode of taskViewModeTypes"
+									[value]="mode"
+									>{{ mode }}
+								</nb-option>
+							</nb-select>
+						</div>
+						<div class="col-2 d-flex align-items-center">
+							<nb-toggle
+								#public
+								class="project-toggle"
+								labelPosition="start"
+								status="basic"
+								[checked]="public"
+								formControlName="public"
+								(checkedChange)="togglePublic($event)"
+								>{{
+									'FORM.PLACEHOLDERS.SWITCH_PROJECT_STATE'
+										| translate
+								}}</nb-toggle
+							>
+						</div>
+						<div class="col-2 d-flex align-items-center">
+							<nb-toggle
+								#billable
+								class="project-toggle"
+								labelPosition="start"
+								status="basic"
+								[checked]="billable"
+								formControlName="billable"
+								(checkedChange)="toggleBillable($event)"
+								>{{
+									'FORM.PLACEHOLDERS.BILLABLE' | translate
+								}}</nb-toggle
+							>
+						</div>
+					</div>
+				</nb-tab>
+			</nb-tabset>
 		</form>
 		<div
 			class="form-group"

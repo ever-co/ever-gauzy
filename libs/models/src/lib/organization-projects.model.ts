@@ -37,6 +37,9 @@ export interface IOrganizationProject extends IBaseEntityWithMembers {
 	billable?: boolean;
 	// true if the project is flat rate, false if the project is time / materials billable
 	billingFlat?: boolean;
+	openSource?: boolean;
+	projectUrl?: string;
+	openSourceProjectUrl?: string;
 }
 
 export enum TaskListTypeEnum {
@@ -75,6 +78,9 @@ export interface IOrganizationProjectsCreateInput
 	billable?: boolean;
 	billingFlat?: boolean;
 	status?: string;
+	openSource?: boolean;
+	projectUrl?: string;
+	openSourceProjectUrl?: string;
 }
 
 export interface IOrganizationProjectsUpdateInput

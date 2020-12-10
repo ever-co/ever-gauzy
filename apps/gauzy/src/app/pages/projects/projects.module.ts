@@ -10,7 +10,8 @@ import {
 	NbToggleModule,
 	NbSelectModule,
 	NbDatepickerModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbTabsetModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
@@ -36,6 +37,7 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { ColorPickerModule } from 'ngx-color-picker';
 import { TasksSprintSettingsViewModule } from '../../@shared/tasks-sprint-settings-view/tasks-sprint-settings-view.module';
 import { CommonModule } from '@angular/common';
+import { CKEditorModule } from 'ng2-ckeditor';
 @NgModule({
 	imports: [
 		CommonModule,
@@ -75,7 +77,9 @@ import { CommonModule } from '@angular/common';
 		SharedModule,
 		Ng2SmartTableModule,
 		NbSpinnerModule,
-		TasksSprintSettingsViewModule
+		TasksSprintSettingsViewModule,
+		NbTabsetModule,
+		CKEditorModule
 	],
 	declarations: [ProjectsComponent, ProjectsMutationComponent],
 	entryComponents: [],

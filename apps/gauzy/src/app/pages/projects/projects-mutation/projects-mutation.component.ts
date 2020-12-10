@@ -18,10 +18,12 @@ import { Router } from '@angular/router';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
+import { patterns } from '../../../@shared/regex/regex-patterns.const';
 
 @Component({
 	selector: 'ga-projects-mutation',
-	templateUrl: './projects-mutation.component.html'
+	templateUrl: './projects-mutation.component.html',
+	styleUrls: ['./projects-mutation.component.scss']
 })
 export class ProjectsMutationComponent
 	extends TranslationBaseComponent
@@ -54,6 +56,11 @@ export class ProjectsMutationComponent
 	owners: string[] = Object.values(ProjectOwnerEnum);
 	taskViewModeTypes: TaskListTypeEnum[] = Object.values(TaskListTypeEnum);
 	showSprintManage = false;
+	openSource: boolean;
+	public ckConfig: any = {
+		width: '100%',
+		height: '320'
+	};
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -99,6 +106,7 @@ export class ProjectsMutationComponent
 		}
 
 		if (this.project) {
+			this.openSource = this.project.openSource;
 			this.selectedEmployeeIds = this.project.members.map(
 				(member) => member.id
 			);
@@ -132,7 +140,20 @@ export class ProjectsMutationComponent
 			taskViewMode: [this.project ? this.project.taskListType : 'GRID'],
 			description: [this.project ? this.project.description : ''],
 			code: [this.project ? this.project.code : ''],
-			color: [this.project ? this.project.color : '']
+			color: [this.project ? this.project.color : ''],
+			openSource: [this.project ? this.project.openSource : null],
+			projectUrl: [
+				this.project ? this.project.projectUrl : null,
+				Validators.compose([
+					Validators.pattern(new RegExp(patterns.websiteUrl))
+				])
+			],
+			openSourceProjectUrl: [
+				this.project ? this.project.openSourceProjectUrl : null,
+				Validators.compose([
+					Validators.pattern(new RegExp(patterns.websiteUrl))
+				])
+			]
 		});
 	}
 
@@ -142,6 +163,10 @@ export class ProjectsMutationComponent
 
 	toggleBillable(state: boolean) {
 		this.billable = state;
+	}
+
+	toggleOpenSource(state: boolean) {
+		this.openSource = state;
 	}
 
 	onMembersSelected(members: string[]) {
@@ -183,7 +208,12 @@ export class ProjectsMutationComponent
 							? true
 							: false,
 					code: this.form.value['code'],
-					color: this.form.value['color']
+					color: this.form.value['color'],
+					openSource: this.form.value['openSource'],
+					projectUrl: this.form.value['projectUrl'],
+					openSourceProjectUrl: this.form.value[
+						'openSourceProjectUrl'
+					]
 				}
 			});
 			this.selectedEmployeeIds = [];

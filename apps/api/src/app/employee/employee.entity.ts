@@ -324,4 +324,26 @@ export class Employee extends TenantOrganizationBase implements IEmployee {
 	@IsOptional()
 	@Column({ nullable: true })
 	upworkUrl?: string;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	isVerified?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	isVetted?: boolean;
+
+	@ApiProperty({ type: Number })
+	@IsNumber()
+	@IsOptional()
+	@Column({ type: 'numeric', nullable: true })
+	totalJobs?: number;
+
+	@ApiProperty({ type: Number })
+	@IsNumber()
+	@IsOptional()
+	@Column({ type: 'numeric', nullable: true })
+	jobSuccess?: number;
 }
