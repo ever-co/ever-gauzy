@@ -82,25 +82,34 @@
 					<span class="info-value">{{ x.email }}</span>
 				</div>
 				<div class="info-line">
-					<span class="info-meta">Income (Average)</span>
+					<span class="info-meta">{{
+						'SM_TABLE.INCOME' | translate
+					}}</span>
 					<span class="info-value">{{ x.averageIncome }}</span>
 				</div>
 				<div class="info-line">
-					<span class="info-meta">Expenses (Average)</span>
+					<span class="info-meta">{{
+						'SM_TABLE.EXPENSES' | translate
+					}}</span>
 					<span class="info-value">{{ x.averageExpenses }}</span>
 				</div>
 				<div class="info-line">
-					<span class="info-meta">Bonus (Average)</span>
+					<span class="info-meta">{{
+						'SM_TABLE.BONUS_AVG' | translate
+					}}</span>
 					<span class="info-value">{{ x.averageBonus }}</span>
 				</div>
 				<div class="info-line">
 					<span class="info-meta"
-						>Bonus ({{ month }} {{ year }})</span
+						>{{ 'SM_TABLE.BONUS' | translate }} ({{ month }}
+						{{ year }})</span
 					>
 					<span class="info-value">{{ x.bonus }}</span>
 				</div>
 				<div class="info-line" style="height: 62px">
-					<span class="info-meta">Work Status</span>
+					<span class="info-meta"
+						>{{ 'SM_TABLE.WORK_STATUS' | translate }}s</span
+					>
 					<div class="text-center d-block" *ngIf="x.workStatus">
 						<div class="badge-danger">
 							{{ 'EMPLOYEES_PAGE.WORK_ENDED' | translate }}
