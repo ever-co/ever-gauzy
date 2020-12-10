@@ -9,7 +9,7 @@ import { NgxPermissionsGuard } from 'ngx-permissions';
 
 const CONTACT_VIEW_PERMISSION = {
 	permissions: {
-		only: [PermissionsEnum.ALL_ORG_EDIT],
+		only: [PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_CONTACT_VIEW],
 		redirectTo: '/pages/contacts/visitors'
 	}
 };

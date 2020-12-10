@@ -79,6 +79,7 @@ export enum PermissionsEnum {
 	ORG_SPRINT_EDIT = 'ORG_SPRINT_EDIT',
 	ORG_PROJECT_EDIT = 'ORG_PROJECT_EDIT',
 	ORG_CONTACT_EDIT = 'ORG_CONTACT_EDIT',
+	ORG_CONTACT_VIEW = 'ORG_CONTACT_VIEW',
 	ORG_TEAM_EDIT = 'ORG_TEAM_EDIT',
 	ORG_CONTRACT_EDIT = 'ORG_CONTRACT_EDIT',
 	EVENT_TYPES_VIEW = 'EVENT_TYPES_VIEW',
@@ -140,6 +141,7 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_SPRINT_VIEW,
 		PermissionsEnum.ORG_PROJECT_EDIT,
 		PermissionsEnum.ORG_CONTACT_EDIT,
+		PermissionsEnum.ORG_CONTACT_VIEW,
 		PermissionsEnum.ORG_TEAM_EDIT,
 		PermissionsEnum.ORG_CONTRACT_EDIT,
 		PermissionsEnum.EVENT_TYPES_VIEW

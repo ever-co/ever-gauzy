@@ -303,10 +303,10 @@ export class ContactComponent
 	}
 
 	private async loadOrganizationContacts() {
-		this.loading = true;
 		if (!this.selectedOrganization) {
 			return;
 		}
+		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.selectedOrganization;
 		const res = await this.organizationContactService.getAll(

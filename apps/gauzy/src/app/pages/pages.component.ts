@@ -541,7 +541,11 @@ export class PagesComponent implements OnInit, OnDestroy {
 				title: 'Contacts',
 				icon: 'book-open-outline',
 				data: {
-					translationKey: 'MENU.CONTACTS'
+					translationKey: 'MENU.CONTACTS',
+					permissionKeys: [
+						PermissionsEnum.ORG_CONTACT_VIEW,
+						PermissionsEnum.ALL_ORG_EDIT
+					]
 				},
 				children: [
 					{
@@ -557,7 +561,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'book-open-outline',
 						link: `/pages/contacts/leads`,
 						data: {
-							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 							translationKey: 'CONTACTS_PAGE.LEADS'
 						}
 					},
@@ -566,7 +569,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'book-open-outline',
 						link: `/pages/contacts/customers`,
 						data: {
-							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 							translationKey: 'CONTACTS_PAGE.CUSTOMERS'
 						}
 					},
@@ -575,7 +577,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'book-open-outline',
 						link: `/pages/contacts/clients`,
 						data: {
-							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 							translationKey: 'CONTACTS_PAGE.CLIENTS'
 						}
 					}

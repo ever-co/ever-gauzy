@@ -61,6 +61,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_SPRINT_VIEW,
 			PermissionsEnum.ORG_PROJECT_EDIT,
 			PermissionsEnum.ORG_CONTACT_EDIT,
+			PermissionsEnum.ORG_CONTACT_VIEW,
 			PermissionsEnum.ORG_TEAM_EDIT,
 			PermissionsEnum.ORG_CONTRACT_EDIT,
 			PermissionsEnum.EVENT_TYPES_VIEW,
@@ -134,6 +135,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_SPRINT_VIEW,
 			PermissionsEnum.ORG_PROJECT_EDIT,
 			PermissionsEnum.ORG_CONTACT_EDIT,
+			PermissionsEnum.ORG_CONTACT_VIEW,
 			PermissionsEnum.ORG_TEAM_EDIT,
 			PermissionsEnum.ORG_CONTRACT_EDIT,
 			PermissionsEnum.EVENT_TYPES_VIEW,
@@ -188,7 +190,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.INVOICES_VIEW,
 			PermissionsEnum.INVOICES_EDIT,
 			PermissionsEnum.ESTIMATES_VIEW,
-			PermissionsEnum.ESTIMATES_EDIT
+			PermissionsEnum.ESTIMATES_EDIT,
+			PermissionsEnum.ORG_CONTACT_VIEW
 		]
 	},
 	{
