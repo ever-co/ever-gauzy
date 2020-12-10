@@ -857,7 +857,13 @@
 			"PROJECTS": "Projects",
 			"CONTACTS": "Contacts",
 			"HIRING": "Hiring",
-			"NETWORKS": "Networks"
+			"NETWORKS": "Networks",
+			"JOB_SUCCESS": "Job Success",
+			"TOTAL_JOBS": "Total Jobs",
+			"TOTAL_HOURS": "Total Hours",
+			"RATE": "Rate",
+			"VETTED": "Vetted",
+			"HR": "hr"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Step 1",

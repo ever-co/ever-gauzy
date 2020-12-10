@@ -59,6 +59,10 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	githubUrl?: string;
 	gitlabUrl?: string;
 	upworkUrl?: string;
+	jobSuccess?: number;
+	isVerified?: boolean;
+	isVetted?: boolean;
+	totalJobs?: number;
 }
 
 export type IEmployeeJobsStatisticsResponse = IEmployee &
