@@ -3,37 +3,53 @@ import {
 	ICustomSmtpCreateInput,
 	ICustomSmtpFindInput
 } from '@gauzy/models';
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { CustomSmtp } from './custom-smtp.entity';
+import { ISMTPConfig } from '../../environments/ISMTPConfig';
+import { EmailService } from '../email/email.service';
 @Injectable()
 export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 	constructor(
 		@InjectRepository(CustomSmtp)
-		private readonly customSmtpRepository: Repository<CustomSmtp>
+		private readonly customSmtpRepository: Repository<CustomSmtp>,
+
+		@Inject(forwardRef(() => EmailService))
+		private readonly emailService: EmailService
 	) {
 		super(customSmtpRepository);
 	}
 
-	async getSmtpSetting(query: ICustomSmtpFindInput): Promise<ICustomSmtp> {
+	async getSmtpSetting(
+		query: ICustomSmtpFindInput
+	): Promise<ICustomSmtp | ISMTPConfig> {
 		const { tenantId, organizationId } = query;
-		if (!organizationId) {
-			return await this.customSmtpRepository.findOne({
+		const globalSmtp = this.emailService.createSMTPTransporter();
+		try {
+			if (!organizationId) {
+				const organizationSmtp = await this.customSmtpRepository.findOne(
+					{
+						where: {
+							tenantId,
+							organizationId: IsNull()
+						}
+					}
+				);
+				return organizationSmtp || globalSmtp;
+			}
+			const tenantSmtp = await this.customSmtpRepository.findOne({
 				where: {
 					tenantId,
-					organizationId: IsNull()
+					organizationId: organizationId
 				}
 			});
+			return tenantSmtp || globalSmtp;
+		} catch {
+			return globalSmtp;
 		}
-		return await this.customSmtpRepository.findOne({
-			where: {
-				tenantId,
-				organizationId: organizationId
-			}
-		});
 	}
 
 	// Verify connection configuration

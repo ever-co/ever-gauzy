@@ -25,6 +25,7 @@ import {
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 import { CommandBus } from '@nestjs/cqrs';
 import { CustomSmtpCreateCommand, CustomSmtpUpdateCommand } from './commands';
+import { ISMTPConfig } from '../../environments/ISMTPConfig';
 
 @ApiTags('CustomSmtp')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -50,7 +51,7 @@ export class CustomSmtpController extends CrudController<CustomSmtp> {
 	@Get()
 	async tenantSmtpSetting(
 		@Query() query: ICustomSmtpFindInput
-	): Promise<ICustomSmtp> {
+	): Promise<ICustomSmtp | ISMTPConfig> {
 		return this.customSmtpService.getSmtpSetting(query);
 	}
 

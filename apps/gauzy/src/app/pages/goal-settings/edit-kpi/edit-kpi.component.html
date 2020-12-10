@@ -251,7 +251,12 @@
 		</form>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
-		<button class="mr-3" nbButton (click)="closeDialog(null)">
+		<button
+			class="mr-3"
+			nbButton
+			status="danger"
+			(click)="closeDialog(null)"
+		>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button

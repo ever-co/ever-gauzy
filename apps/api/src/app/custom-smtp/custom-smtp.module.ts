@@ -7,15 +7,18 @@ import { AuthModule } from '../auth/auth.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { CommandHandlers } from './commands';
 import { CqrsModule } from '@nestjs/cqrs';
+import { EmailModule } from '../email/email.module';
+import { EmailService } from '../email/email.service';
 
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([CustomSmtp]),
 		AuthModule,
 		TenantModule,
-		CqrsModule
+		CqrsModule,
+		EmailModule
 	],
 	controllers: [CustomSmtpController],
-	providers: [CustomSmtpService, ...CommandHandlers]
+	providers: [CustomSmtpService, EmailService, ...CommandHandlers]
 })
 export class CustomSmtpModule {}
