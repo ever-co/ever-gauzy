@@ -269,6 +269,13 @@
 			"DISCOUNT_AFTER_TAX": "Скидка после налога",
 			"APPLY_DISCOUNT_AFTER_TAX_FOR_INVOICES_AND_ESTIMATES": "Применить скидку после налога на счета и оценки",
 			"FIND_ADDRESS": "Найти адрес",
+			"LINKEDIN": "LinkedIn",
+			"FACEBOOK": "Facebook",
+			"INSTAGRAM": "Инстаграмма",
+			"TWITTER": "Твиттер",
+			"GITHUB": "Github",
+			"GITLAB": "Gitlab",
+			"UPWORK": "Обновления",
 			"COORDINATE": {
 				"TITLE": "КУРДИНАТ",
 				"LATITUDE": "Широта",
@@ -368,6 +375,13 @@
 			"OWNER": "Владелец",
 			"TASK_VIEW_MODE": "Режим просмотра задач",
 			"SELECT_STATUS": "Выберите статус",
+			"LINKEDIN": "LinkedIn",
+			"FACEBOOK": "Facebook",
+			"INSTAGRAM": "Инстаграмма",
+			"TWITTER": "Твиттер",
+			"GITHUB": "Github",
+			"GITLAB": "Gitlab",
+			"UPWORK": "Обновления",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Название школы",
 				"DEGREE": "Диплом",
@@ -842,7 +856,8 @@
 			"RATES": "Тарифы",
 			"PROJECTS": "Проекты",
 			"CONTACTS": "Контакты",
-			"HIRING": "Hiring"
+			"HIRING": "Hiring",
+			"NETWORKS": "Сети"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Шаг 1",

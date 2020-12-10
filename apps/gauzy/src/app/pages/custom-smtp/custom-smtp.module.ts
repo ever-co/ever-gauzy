@@ -3,14 +3,10 @@ import { CommonModule } from '@angular/common';
 import { CustomSmtpRoutingModule } from './custom-smtp-routing.module';
 import { CustomSmtpComponent as OrganizationCustomSmtpComponent } from './custom-smtp.component';
 import { HttpClient } from '@angular/common/http';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { NbCardModule, NbSpinnerModule } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { SMTPModule } from '../../@shared/smtp/smtp.module';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
+import { HttpLoaderFactory } from '../../@theme/theme.module';
 
 @NgModule({
 	declarations: [OrganizationCustomSmtpComponent],

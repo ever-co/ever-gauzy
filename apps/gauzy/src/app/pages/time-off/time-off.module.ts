@@ -17,10 +17,9 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { OrganizationsService } from '../../@core/services/organizations.service';
-import { ThemeModule } from '../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
 import { TimeOffComponent } from './time-off.component';
 import { TimeOffRoutingModule } from './time-off-routing.module';
 import { TimeOffSettingsComponent } from './time-off-settings/time-off-settings.component';
@@ -32,10 +31,6 @@ import { PaidIcon } from './table-components/paid-icon';
 import { SharedModule } from '../../@shared/shared.module';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
 
 @NgModule({
 	imports: [

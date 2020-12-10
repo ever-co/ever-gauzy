@@ -10,18 +10,12 @@ import {
 	NbInputModule
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { ThemeModule } from '../../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
 import { EmployeeLocationComponent } from './employee-location.component';
 import { CandidateStore } from '../../../@core/services/candidate-store.service';
 import { EmployeeStore } from '../../../@core/services/employee-store.service';
 import { LeafletMapModule } from '../../forms/maps/leaflet/leaflet.module';
 import { LocationFormModule } from '../../forms/location';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
-
 @NgModule({
 	imports: [
 		ThemeModule,

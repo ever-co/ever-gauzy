@@ -16,10 +16,9 @@ import {
 	NbBadgeModule
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { RolePermissionsService } from '../../@core/services/role-permissions.service';
 import { RoleService } from '../../@core/services/role.service';
-import { ThemeModule } from '../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
 import { EditRolesPermissionsComponent } from './edit-roles-permissions/edit-roles-permissions.component';
 import { SettingsRoutingModule } from './settings-routing.module';
 import { SettingsComponent } from './settings.component';
@@ -34,11 +33,6 @@ import { FileStorageComponent } from './file-storage/file-storage.component';
 import { CustomSmtpComponent } from './custom-smtp/custom-smtp.component';
 import { SMTPModule } from '../../@shared/smtp/smtp.module';
 import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
-
 @NgModule({
 	imports: [
 		SettingsRoutingModule,

@@ -153,7 +153,7 @@
 								[textContent]="
 									('PUBLIC_PAGE.TOTAL_CLIENTS' | translate) +
 									': ' +
-									total_clients
+									totalClients
 								"
 							></h5>
 						</div>
@@ -216,7 +216,7 @@
 								</h5>
 								<span
 									class="org-value"
-									[textContent]="total_projects"
+									[textContent]="totalProjects"
 								></span>
 							</div>
 						</div>
@@ -234,7 +234,7 @@
 									[textContent]="
 										organization.currency +
 										' ' +
-										total_income
+										totalIncome
 									"
 								></span>
 							</div>
@@ -257,7 +257,7 @@
 									[textContent]="
 										organization.currency +
 										' ' +
-										bonuses_paid
+										bonusesPaid
 									"
 								></span>
 							</div>
@@ -273,7 +273,7 @@
 									<span
 										class="org_list_data"
 										*ngFor="
-											let l of organization_languages;
+											let l of organizationLanguages;
 											let i = index
 										"
 										[textContent]="
@@ -323,7 +323,7 @@
 								</h5>
 								<span
 									class="org-value"
-									[textContent]="total_employees"
+									[textContent]="totalEmployees"
 								>
 								</span>
 							</div>
@@ -402,7 +402,7 @@
 					class="o__p__s__t"
 					[active]="tabTitle === 'Employees'"
 				>
-					<div class="row" *ngIf="employees">
+					<div class="row" *ngIf="employees.length">
 						<div class="col">
 							<div class="employee-list">
 								<nb-list class="nb_list">
@@ -670,13 +670,13 @@
 							class="search-result"
 						>
 							<div class="avatar has-aura">
-								<img src="{{ client.imageUrl }}" />
+								<img [src]="client?.imageUrl" />
 							</div>
 							<div class="main-details">
-								{{ client.name }}
+								{{ client?.name }}
 							</div>
 							<div class="speciality">
-								{{ client.primaryEmail }}
+								{{ client?.primaryEmail }}
 							</div>
 						</nb-list-item>
 					</nb-list>

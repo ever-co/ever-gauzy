@@ -289,4 +289,39 @@ export class Employee extends TenantOrganizationBase implements IEmployee {
 	@IsBoolean()
 	@Column({ nullable: true })
 	isJobSearchActive?: boolean;
+
+	@ApiPropertyOptional({ type: String })
+	@IsOptional()
+	@Column({ nullable: true })
+	linkedInUrl?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsOptional()
+	@Column({ nullable: true })
+	facebookUrl?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsOptional()
+	@Column({ nullable: true })
+	instagramUrl?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsOptional()
+	@Column({ nullable: true })
+	twitterUrl?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsOptional()
+	@Column({ nullable: true })
+	githubUrl?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsOptional()
+	@Column({ nullable: true })
+	gitlabUrl?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsOptional()
+	@Column({ nullable: true })
+	upworkUrl?: string;
 }

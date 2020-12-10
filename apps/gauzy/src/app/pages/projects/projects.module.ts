@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { ThemeModule } from '../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -16,7 +16,6 @@ import {
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { ProjectsRoutingModule } from './projects-routing.module';
 import { ProjectsComponent } from './projects.component';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
@@ -38,12 +37,6 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { ColorPickerModule } from 'ngx-color-picker';
 import { TasksSprintSettingsViewModule } from '../../@shared/tasks-sprint-settings-view/tasks-sprint-settings-view.module';
 import { CommonModule } from '@angular/common';
-import { CKEditorModule } from 'ng2-ckeditor';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
-
 @NgModule({
 	imports: [
 		CommonModule,
@@ -84,8 +77,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		Ng2SmartTableModule,
 		NbSpinnerModule,
 		TasksSprintSettingsViewModule,
-		NbTabsetModule,
-		CKEditorModule
+		NbTabsetModule
 	],
 	declarations: [ProjectsComponent, ProjectsMutationComponent],
 	entryComponents: [],

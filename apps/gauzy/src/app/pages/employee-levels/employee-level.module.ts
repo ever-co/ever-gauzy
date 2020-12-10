@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { ThemeModule } from '../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -11,7 +11,6 @@ import {
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { SharedModule } from '../../@shared/shared.module';
@@ -19,10 +18,6 @@ import { EmployeeLevelComponent } from './employee-level.component';
 import { EmployeeLevelRoutingModule } from './employee-level-routing.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
 
 @NgModule({
 	imports: [

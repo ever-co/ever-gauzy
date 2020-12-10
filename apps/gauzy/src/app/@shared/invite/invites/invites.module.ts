@@ -16,9 +16,8 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
-import { ThemeModule } from '../../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
 import { InviteMutationModule } from '../invite-mutation/invite-mutation.module';
 import { InvitesComponent } from './invites.component';
 import { ProjectNamesComponent } from './project-names/project-names.component';
@@ -28,10 +27,6 @@ import { ClientNamesComponent } from './client-names/client-names.component';
 import { DepartmentNamesComponent } from './department-names/department-names.component';
 import { SharedModule } from '../../shared.module';
 import { CardGridModule } from '../../card-grid/card-grid.module';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
 
 const COMPONENTS = [
 	InvitesComponent,

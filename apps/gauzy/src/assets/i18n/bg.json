@@ -269,6 +269,13 @@
 			"DISCOUNT_AFTER_TAX": "Discount after tax",
 			"APPLY_DISCOUNT_AFTER_TAX_FOR_INVOICES_AND_ESTIMATES": "Apply discount after tax for invoices and estimates",
 			"FIND_ADDRESS": "Find Address",
+			"LINKEDIN": "LinkedIn",
+			"FACEBOOK": "Facebook",
+			"INSTAGRAM": "Instagram",
+			"TWITTER": "Twitter",
+			"GITHUB": "Github",
+			"GITLAB": "Gitlab",
+			"UPWORK": "Upwork",
 			"COORDINATE": {
 				"TITLE": "COORDINATES",
 				"LATITUDE": "Latitude",
@@ -368,6 +375,13 @@
 			"OWNER": "Owner",
 			"TASK_VIEW_MODE": "Task view mode",
 			"SELECT_STATUS": "Select Status",
+			"LINKEDIN": "LinkedIn",
+			"FACEBOOK": "Facebook",
+			"INSTAGRAM": "Instagram",
+			"TWITTER": "Twitter",
+			"GITHUB": "Github",
+			"GITLAB": "Gitlab",
+			"UPWORK": "Upwork",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -842,7 +856,8 @@
 			"RATES": "Rates",
 			"PROJECTS": "Проекти",
 			"CONTACTS": "Contacts",
-			"HIRING": "Hiring"
+			"HIRING": "Hiring",
+			"NETWORKS": "Networks"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Step 1",

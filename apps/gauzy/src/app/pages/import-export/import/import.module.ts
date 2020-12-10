@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { ThemeModule } from '../../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -14,13 +14,9 @@ import { ImportRoutingModule } from './import-routing.module';
 
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { ExportAllService } from '../../../@core/services/exportAll.service';
 import { FileUploaderModule } from '../../../@shared/file-uploader-input/file-uploader-input.module';
 import { FileUploadModule } from 'ng2-file-upload';
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
 
 @NgModule({
 	imports: [
