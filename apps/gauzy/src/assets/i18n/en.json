@@ -1328,6 +1328,8 @@
 			"ORG_INCOMES_VIEW": "View All Incomes",
 			"ORG_PROPOSALS_EDIT": "Create/Edit/Delete Proposals Register",
 			"ORG_PROPOSALS_VIEW": "View Proposals Page",
+			"ORG_PROPOSAL_TEMPLATES_VIEW": "View Proposal Templates Page",
+			"ORG_PROPOSAL_TEMPLATES_EDIT": "Create/Edit/Delete Proposal Templates",
 			"ORG_TIME_OFF_VIEW": "View Time Off Page",
 			"ORG_EMPLOYEES_VIEW": "View Organization Employees",
 			"ORG_EMPLOYEES_EDIT": "Create/Edit/Delete Organization Employees",
@@ -1356,6 +1358,8 @@
 			"SUPER_ADMIN_EDIT": "Edit Super Admin Users",
 			"INVOICES_VIEW": "View Invoices",
 			"INVOICES_EDIT": "Edit Invoices Add",
+			"ESTIMATES_VIEW": "View Estimates",
+			"ESTIMATES_EDIT": "Edit Estimates Add",
 			"EDIT_SALES_PIPELINES": "Edit Sales Pipelines",
 			"APPROVALS_POLICY_EDIT": "Edit Approvals Policy",
 			"APPROVALS_POLICY_VIEW": "View Approvals Policy",
@@ -1388,7 +1392,9 @@
 			"PAYMENT_GATEWAY_VIEW": "View Payment Gateway",
 			"SMS_GATEWAY_VIEW": "View SMS Gateway",
 			"CUSTOM_SMTP_VIEW": "View Custom SMTP",
-			"IMPORT_EXPORT_VIEW": "View Import/Export"
+			"IMPORT_EXPORT_VIEW": "View Import/Export",
+			"ORG_JOB_EMPLOYEE_VIEW": "View Job Employees",
+			"ORG_JOB_MATCHING_VIEW": "View Job Matching"
 		}
 	},
 	"CONTACTS_PAGE": {

@@ -32,6 +32,20 @@ const INVOICES_EDIT_PERMISSION = {
 	}
 };
 
+const ESTIMATES_VIEW_PERMISSION = {
+	permissions: {
+		only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ESTIMATES_VIEW],
+		redirectTo
+	}
+};
+
+const ESTIMATES_EDIT_PERMISSION = {
+	permissions: {
+		only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ESTIMATES_EDIT],
+		redirectTo
+	}
+};
+
 const routes: Routes = [
 	{
 		path: '',
@@ -70,22 +84,22 @@ const routes: Routes = [
 			{
 				path: '',
 				component: EstimatesComponent,
-				data: INVOICES_VIEW_PERMISSION
+				data: ESTIMATES_VIEW_PERMISSION
 			},
 			{
 				path: 'add',
 				component: EstimateAddComponent,
-				data: INVOICES_EDIT_PERMISSION
+				data: ESTIMATES_EDIT_PERMISSION
 			},
 			{
 				path: 'edit/:id',
 				component: EstimateEditComponent,
-				data: INVOICES_EDIT_PERMISSION
+				data: ESTIMATES_EDIT_PERMISSION
 			},
 			{
 				path: 'view/:id',
 				component: EstimateViewComponent,
-				data: INVOICES_VIEW_PERMISSION
+				data: ESTIMATES_VIEW_PERMISSION
 			}
 		]
 	},
@@ -93,7 +107,7 @@ const routes: Routes = [
 		path: 'received-estimates',
 		component: EstimatesReceivedComponent,
 		canActivate: [NgxPermissionsGuard],
-		data: INVOICES_VIEW_PERMISSION
+		data: ESTIMATES_VIEW_PERMISSION
 	},
 	{
 		path: 'payments/:id',

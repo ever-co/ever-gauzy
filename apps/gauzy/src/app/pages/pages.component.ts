@@ -78,7 +78,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 							translationKey: 'MENU.ESTIMATES',
 							permissionKeys: [
 								PermissionsEnum.ALL_ORG_VIEW,
-								PermissionsEnum.INVOICES_VIEW
+								PermissionsEnum.ESTIMATES_VIEW
 							]
 						}
 					},
@@ -90,7 +90,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 							translationKey: 'MENU.ESTIMATES_RECEIVED',
 							permissionKeys: [
 								PermissionsEnum.ALL_ORG_VIEW,
-								PermissionsEnum.INVOICES_VIEW
+								PermissionsEnum.ESTIMATES_VIEW
 							]
 						}
 					},
@@ -185,7 +185,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 							translationKey: 'MENU.ESTIMATES',
 							permissionKeys: [
 								PermissionsEnum.ALL_ORG_VIEW,
-								PermissionsEnum.INVOICES_VIEW
+								PermissionsEnum.ESTIMATES_VIEW
 							]
 						}
 					},
@@ -281,7 +281,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'people-outline',
 						link: '/pages/jobs/employee',
 						data: {
-							translationKey: 'MENU.EMPLOYEES'
+							translationKey: 'MENU.EMPLOYEES',
+							permissionKeys: [
+								PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW
+							]
 						}
 					},
 					{
@@ -297,7 +300,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'person-outline',
 						link: '/pages/jobs/matching',
 						data: {
-							translationKey: 'MENU.JOBS_MATCHING'
+							translationKey: 'MENU.JOBS_MATCHING',
+							permissionKeys: [
+								PermissionsEnum.ORG_JOB_MATCHING_VIEW
+							]
 						}
 					},
 					{
@@ -305,7 +311,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'file-text-outline',
 						link: '/pages/jobs/proposal-template',
 						data: {
-							translationKey: 'MENU.PROPOSAL_TEMPLATE'
+							translationKey: 'MENU.PROPOSAL_TEMPLATE',
+							permissionKeys: [
+								PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW
+							]
 						}
 					}
 				]
