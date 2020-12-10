@@ -9,7 +9,7 @@
 				else noName
 			"
 		>
-			<div style="display: flex;">
+			<div style="display: flex">
 				<ngx-back-navigation></ngx-back-navigation>
 				<div class="employee-info">
 					<img
@@ -18,7 +18,14 @@
 						alt="Employee Avatar"
 					/>
 
-					<div class="employee-details">
+					<div class="employee-details flex-row align-items-center">
+						<nb-icon
+							*ngIf="selectedEmployee.isVerified"
+							class="icon-verified"
+							icon="checkmark-circle-2"
+							status="primary"
+						>
+						</nb-icon>
 						<span class="employee-name"
 							>{{ selectedEmployee.user.firstName }}
 							{{ selectedEmployee.user.lastName }}</span

@@ -16,7 +16,8 @@ import { EmployeeStore } from '../../../../../@core/services/employee-store.serv
 	selector: 'ga-edit-employee-main',
 	templateUrl: './edit-employee-main.component.html',
 	styleUrls: [
-		'../../../../organizations/edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component.scss'
+		'../../../../organizations/edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component.scss',
+		'./edit-employee-main.component.scss'
 	]
 })
 export class EditEmployeeMainComponent implements OnInit, OnDestroy {
