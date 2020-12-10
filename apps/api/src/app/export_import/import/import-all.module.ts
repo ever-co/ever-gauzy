@@ -102,6 +102,20 @@ import { GoalGeneralSetting } from '../../goal-general-setting/goal-general-sett
 import { PipelineStage } from '../../pipeline-stage/pipeline-stage.entity';
 import { CustomSmtp } from '../../custom-smtp/custom-smtp.entity';
 import { Currency } from '../../currency';
+import { EmployeeAward } from '../../employee-award/employee-award.entity';
+import { JobSearchOccupation } from '../../employee-job-preset/job-search-occupation/job-search-occupation.entity';
+import { JobSearchCategory } from '../../employee-job-preset/job-search-category/job-search-category.entity';
+import { JobPresetUpworkJobSearchCriterion } from '../../employee-job-preset/job-preset-upwork-job-search-criterion.entity';
+import { EmployeeUpworkJobsSearchCriterion } from '../../employee-job-preset/employee-upwork-jobs-search-criterion.entity';
+import { EmployeeProposalTemplate } from '../../employee-proposal-template/employee-proposal-template.entity';
+import { GoalKPITemplate } from '../../goal-kpi-template/goal-kpi-template.entity';
+import { GoalTemplate } from '../../goal-template/goal-template.entity';
+import { InvoiceEstimateHistory } from '../../invoice-estimate-history/invoice-estimate-history.entity';
+import { KeyResultTemplate } from '../../keyresult-template/keyresult-template.entity';
+import { Report } from '../../reports/report.entity';
+import { ReportCategory } from '../../reports/report-category.entity';
+import { ReportOrganization } from '../../reports/report-organization.entity';
+import { JobPreset } from '../../employee-job-preset/job-preset.entity';
 @Module({
 	imports: [
 		CqrsModule,
@@ -116,15 +130,14 @@ import { Currency } from '../../currency';
 			AvailabilitySlot,
 
 			Candidate,
+			CandidateCriterionsRating,
 			CandidateDocument,
 			CandidateEducation,
-			CandidateExperience,
 			CandidateExperience,
 			CandidateFeedback,
 			CandidateInterview,
 			CandidateInterviewers,
 			CandidatePersonalQualities,
-			CandidateCriterionsRating,
 			CandidateSkill,
 			CandidateSource,
 			CandidateTechnologies,
@@ -135,25 +148,30 @@ import { Currency } from '../../currency';
 
 			Deal,
 
-			EstimateEmail,
-			EmailTemplate,
 			Email,
+			EmailTemplate,
 			Employee,
 			EmployeeAppointment,
+			EmployeeAward,
 			EmployeeLevel,
+			EmployeeProposalTemplate,
 			EmployeeRecurringExpense,
 			EmployeeSetting,
+			EmployeeUpworkJobsSearchCriterion,
 			Equipment,
 			EquipmentSharing,
 			EquipmentSharingPolicy,
-			ExpenseCategory,
-			Expense,
+			EstimateEmail,
 			EventType,
+			Expense,
+			ExpenseCategory,
 
+			Goal,
 			GoalGeneralSetting,
 			GoalKPI,
+			GoalKPITemplate,
+			GoalTemplate,
 			GoalTimeFrame,
-			Goal,
 
 			HelpCenter,
 			HelpCenterArticle,
@@ -161,20 +179,28 @@ import { Currency } from '../../currency';
 
 			Income,
 			Integration,
-			IntegrationTenant,
-			IntegrationSetting,
-			IntegrationMap,
 			IntegrationEntitySetting,
 			IntegrationEntitySettingTiedEntity,
+			IntegrationMap,
+			IntegrationSetting,
+			IntegrationTenant,
 			Invite,
-			InvoiceItem,
 			Invoice,
+			InvoiceEstimateHistory,
+			InvoiceItem,
+
+			JobPreset,
+			JobSearchOccupation,
+			JobSearchCategory,
+			JobPresetUpworkJobSearchCriterion,
 
 			KeyResult,
+			KeyResultTemplate,
 			KeyResultUpdate,
 
 			Language,
 
+			Organization,
 			OrganizationAwards,
 			OrganizationContact,
 			OrganizationDepartment,
@@ -188,20 +214,22 @@ import { Currency } from '../../currency';
 			OrganizationTeam,
 			OrganizationTeamEmployee,
 			OrganizationVendor,
-			Organization,
 
 			Payment,
 			Pipeline,
 			PipelineStage,
+			Product,
 			ProductCategory,
 			ProductOption,
 			ProductVariantSettings,
 			ProductType,
-			ProductVariantPrice,
 			ProductVariant,
-			Product,
+			ProductVariantPrice,
 			Proposal,
 
+			Report,
+			ReportCategory,
+			ReportOrganization,
 			RequestApproval,
 			RequestApprovalEmployee,
 			RequestApprovalTeam,
@@ -214,12 +242,11 @@ import { Currency } from '../../currency';
 			Tag,
 			Task,
 			Tenant,
-			TimeLog,
-			TimeSlot,
 			TimeOffPolicy,
 			TimeOffRequest,
 			Timesheet,
 			TimeLog,
+			TimeSlot,
 			TimeSlotMinute,
 
 			User,

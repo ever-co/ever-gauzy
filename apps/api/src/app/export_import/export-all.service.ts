@@ -99,6 +99,17 @@ import { CandidateSourceService } from '../candidate-source/candidate-source.ser
 import { LanguageService } from '../language/language.service';
 import { OrganizationDocumentsService } from '../organization-documents/organization-documents.service';
 import { CurrencyService } from '../currency';
+import { EmployeeAwardService } from '../employee-award/employee-award.service';
+import { EmployeeProposalTemplateService } from '../employee-proposal-template/employee-proposal-template.service';
+import { GoalTemplateService } from '../goal-template/goal-template.service';
+import { GoalKpiTemplateService } from '../goal-kpi-template/goal-kpi-template.service';
+import { InvoiceEstimateHistoryService } from '../invoice-estimate-history/invoice-estimate-history.service';
+import { JobSearchOccupationService } from '../employee-job-preset/job-search-occupation/job-search-occupation.service';
+import { JobPresetService } from '../employee-job-preset/job-preset.service';
+import { JobSearchCategoryService } from '../employee-job-preset/job-search-category/job-search-category.service';
+import { KeyresultTemplateService } from '../keyresult-template/keyresult-template.service';
+import { ReportService } from '../reports/report.service';
+import { ReportCategoryService } from '../reports/report-category.service';
 
 @Injectable()
 export class ExportAllService implements OnDestroy {
@@ -135,6 +146,8 @@ export class ExportAllService implements OnDestroy {
 		private emailTemplate: EmailTemplateService,
 		private employeeService: EmployeeService,
 		private employeeAppointmentService: EmployeeAppointmentService,
+		private employeeAwardService: EmployeeAwardService,
+		private employeeProposalTemplateService: EmployeeProposalTemplateService,
 		private employeeRecurringExpensesService: EmployeeRecurringExpenseService,
 		private employeeSettingService: EmployeeSettingService,
 		private equipmentService: EquipmentService,
@@ -146,7 +159,9 @@ export class ExportAllService implements OnDestroy {
 		private employeeLevelService: EmployeeLevelService,
 
 		private goalService: GoalService,
+		private goalTemplateService: GoalTemplateService,
 		private goalKpiService: GoalKpiService,
+		private goalKpiTemplateService: GoalKpiTemplateService,
 		private goalTimeFrameService: GoalTimeFrameService,
 
 		private helpCenterService: HelpCenterService,
@@ -163,8 +178,14 @@ export class ExportAllService implements OnDestroy {
 		private inviteService: InviteService,
 		private invoiceService: InvoiceService,
 		private invoiceItemService: InvoiceItemService,
+		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
+
+		private jobPresetService: JobPresetService,
+		private jobSearchOccupationService: JobSearchOccupationService,
+		private jobSearchCategoryService: JobSearchCategoryService,
 
 		private keyResultService: KeyResultService,
+		private keyResultTemplateService: KeyresultTemplateService,
 		private keyResultUpdateService: KeyResultUpdateService,
 
 		private languageService: LanguageService,
@@ -195,6 +216,8 @@ export class ExportAllService implements OnDestroy {
 		private productVariantPriceService: ProductVariantPriceService,
 		private proposalService: ProposalService,
 
+		private reportService: ReportService,
+		private reportCategoryService: ReportCategoryService,
 		private requestApprovalService: RequestApprovalService,
 		private roleService: RoleService,
 		private rolePermissionsService: RolePermissionsService,
@@ -510,6 +533,14 @@ export class ExportAllService implements OnDestroy {
 				nameFile: 'employee_appointment'
 			},
 			{
+				service: this.employeeAwardService,
+				nameFile: 'employee_award'
+			},
+			{
+				service: this.employeeProposalTemplateService,
+				nameFile: 'employee_proposal_template'
+			},
+			{
 				service: this.employeeRecurringExpensesService,
 				nameFile: 'employee_recurring_expense'
 			},
@@ -529,7 +560,15 @@ export class ExportAllService implements OnDestroy {
 				nameFile: 'expense_category'
 			},
 			{ service: this.goalService, nameFile: 'goal' },
+			{
+				service: this.goalTemplateService,
+				nameFile: 'goal_template'
+			},
 			{ service: this.goalKpiService, nameFile: 'goal_kpi' },
+			{
+				service: this.goalKpiTemplateService,
+				nameFile: 'goal_kpi_template'
+			},
 			{ service: this.goalTimeFrameService, nameFile: 'goal_time_frame' },
 			{ service: this.helpCenterService, nameFile: 'knowledge_base' },
 			{
@@ -569,16 +608,40 @@ export class ExportAllService implements OnDestroy {
 			{ service: this.inviteService, nameFile: 'invite' },
 			{ service: this.invoiceService, nameFile: 'invoice' },
 			{ service: this.invoiceItemService, nameFile: 'invoice_item' },
+			{
+				service: this.invoiceEstimateHistoryService,
+				nameFile: 'invoice_estimate_history'
+			},
+
+			{
+				service: this.jobPresetService,
+				nameFile: 'job_preset'
+			},
+			{
+				service: this.jobSearchOccupationService,
+				nameFile: 'job_search_occupation'
+			},
+			{
+				service: this.jobSearchCategoryService,
+				nameFile: 'job_search_category'
+			},
+
 			{ service: this.keyResultService, nameFile: 'key_result' },
+			{
+				service: this.keyResultTemplateService,
+				nameFile: 'key_result_template'
+			},
 			{
 				service: this.keyResultUpdateService,
 				nameFile: 'key_result_update'
 			},
+
 			{
 				service: this.languageService,
 				nameFile: 'language',
 				tenantOrganizationBase: false
 			},
+
 			{
 				service: this.organizationService,
 				nameFile: 'organization',
@@ -641,6 +704,7 @@ export class ExportAllService implements OnDestroy {
 				service: this.organizationVendorsService,
 				nameFile: 'organization_vendor'
 			},
+
 			{ service: this.paymentService, nameFile: 'payment' },
 			{ service: this.pipelineService, nameFile: 'pipeline' },
 			{ service: this.productService, nameFile: 'product' },
@@ -663,6 +727,15 @@ export class ExportAllService implements OnDestroy {
 				nameFile: 'product_variant_setting'
 			},
 			{ service: this.proposalService, nameFile: 'proposal' },
+
+			{
+				service: this.reportService,
+				nameFile: 'report'
+			},
+			{
+				service: this.reportCategoryService,
+				nameFile: 'report_category'
+			},
 			{
 				service: this.requestApprovalService,
 				nameFile: 'request_approval'
@@ -677,6 +750,7 @@ export class ExportAllService implements OnDestroy {
 				nameFile: 'role_permission',
 				tenantOrganizationBase: false
 			},
+
 			{ service: this.screenShotService, nameFile: 'screenshot' },
 			{
 				service: this.skillService,
@@ -684,6 +758,7 @@ export class ExportAllService implements OnDestroy {
 				tenantOrganizationBase: false
 			},
 			{ service: this.stageService, nameFile: 'pipeline_stage' },
+
 			{ service: this.tagService, nameFile: 'tag' },
 			{ service: this.taskService, nameFile: 'task' },
 			{
