@@ -45,14 +45,16 @@
 					</div>
 					<div class="row">
 						<div class="form-group col-4">
-							<label for="projectUrl" class="label"
-								>Project URL</label
-							>
+							<label for="projectUrl" class="label">
+								{{ 'FORM.LABELS.PROJECT_URL' | translate }}
+							</label>
 							<input
 								type="text"
 								nbInput
 								fullWidth
-								placeholder="Project URL"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.PROJECT_URL' | translate
+								}}"
 								id="projectUrl"
 								formControlName="projectUrl"
 							/>
@@ -80,9 +82,9 @@
 							</nb-select>
 						</div>
 						<div class="form-group col-4">
-							<label for="organizationContacts" class="label"
-								>Clients</label
-							>
+							<label for="organizationContacts" class="label">
+								{{ 'FORM.LABELS.CLIENTS' | translate }}
+							</label>
 							<ng-select
 								[addTag]="addNewOrganizationContact"
 								[items]="organizationContacts"
@@ -90,7 +92,9 @@
 								[searchable]="true"
 								#organizationContact
 								formControlName="organizationContact"
-								placeholder="Clients"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.CLIENTS' | translate
+								}}"
 							>
 							</ng-select>
 						</div>
@@ -203,19 +207,26 @@
 					<div class="row">
 						<div class="col-4 d-flex align-items-center">
 							<nb-toggle
+								class="project-toggle"
 								labelPosition="start"
 								status="basic"
 								[checked]="openSource"
 								(checkedChange)="toggleOpenSource($event)"
 								formControlName="openSource"
 							>
-								Is Project Open-Source
+								{{
+									'FORM.LABELS.IS_PROJECT_OPEN_SOURCE'
+										| translate
+								}}
 							</nb-toggle>
 						</div>
 						<div *ngIf="openSource" class="form-group col-4">
-							<label for="openSourceProjectUrl" class="label"
-								>Open-Source Project URL</label
-							>
+							<label for="openSourceProjectUrl" class="label">
+								{{
+									'FORM.LABELS.OPEN_SOURCE_PROJECT_URL'
+										| translate
+								}}
+							</label>
 							<input
 								type="text"
 								nbInput
@@ -274,6 +285,7 @@
 						<div class="col-2 d-flex align-items-center">
 							<nb-toggle
 								#public
+								class="project-toggle"
 								labelPosition="start"
 								status="basic"
 								[checked]="public"
@@ -288,6 +300,7 @@
 						<div class="col-2 d-flex align-items-center">
 							<nb-toggle
 								#billable
+								class="project-toggle"
 								labelPosition="start"
 								status="basic"
 								[checked]="billable"

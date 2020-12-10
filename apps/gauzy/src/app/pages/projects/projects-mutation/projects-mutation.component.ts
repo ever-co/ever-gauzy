@@ -18,11 +18,12 @@ import { Router } from '@angular/router';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
-import { th } from 'date-fns/locale';
+import { patterns } from '../../../@shared/regex/regex-patterns.const';
 
 @Component({
 	selector: 'ga-projects-mutation',
-	templateUrl: './projects-mutation.component.html'
+	templateUrl: './projects-mutation.component.html',
+	styleUrls: ['./projects-mutation.component.scss']
 })
 export class ProjectsMutationComponent
 	extends TranslationBaseComponent
@@ -105,6 +106,7 @@ export class ProjectsMutationComponent
 		}
 
 		if (this.project) {
+			this.openSource = this.project.openSource;
 			this.selectedEmployeeIds = this.project.members.map(
 				(member) => member.id
 			);
@@ -140,9 +142,17 @@ export class ProjectsMutationComponent
 			code: [this.project ? this.project.code : ''],
 			color: [this.project ? this.project.color : ''],
 			openSource: [this.project ? this.project.openSource : null],
-			projectUrl: [this.project ? this.project.projectUrl : ''],
+			projectUrl: [
+				this.project ? this.project.projectUrl : null,
+				Validators.compose([
+					Validators.pattern(new RegExp(patterns.websiteUrl))
+				])
+			],
 			openSourceProjectUrl: [
-				this.project ? this.project.openSourceProjectUrl : ''
+				this.project ? this.project.openSourceProjectUrl : null,
+				Validators.compose([
+					Validators.pattern(new RegExp(patterns.websiteUrl))
+				])
 			]
 		});
 	}

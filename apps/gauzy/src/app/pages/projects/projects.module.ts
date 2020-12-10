@@ -37,6 +37,7 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { ColorPickerModule } from 'ngx-color-picker';
 import { TasksSprintSettingsViewModule } from '../../@shared/tasks-sprint-settings-view/tasks-sprint-settings-view.module';
 import { CommonModule } from '@angular/common';
+import { CKEditorModule } from 'ng2-ckeditor';
 @NgModule({
 	imports: [
 		CommonModule,
@@ -77,7 +78,8 @@ import { CommonModule } from '@angular/common';
 		Ng2SmartTableModule,
 		NbSpinnerModule,
 		TasksSprintSettingsViewModule,
-		NbTabsetModule
+		NbTabsetModule,
+		CKEditorModule
 	],
 	declarations: [ProjectsComponent, ProjectsMutationComponent],
 	entryComponents: [],
