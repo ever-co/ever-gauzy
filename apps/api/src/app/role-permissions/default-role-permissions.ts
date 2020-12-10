@@ -50,6 +50,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT,
 			PermissionsEnum.ORG_TAGS_EDIT,
 			PermissionsEnum.VIEW_ALL_EMAILS,
+			PermissionsEnum.VIEW_ALL_EMAIL_TEMPLATES,
 			PermissionsEnum.EDIT_SALES_PIPELINES,
 			PermissionsEnum.CAN_APPROVE_TIMESHEET,
 			PermissionsEnum.ORG_SPRINT_EDIT,
@@ -59,7 +60,13 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_TEAM_EDIT,
 			PermissionsEnum.ORG_CONTRACT_EDIT,
 			PermissionsEnum.EVENT_TYPES_VIEW,
-			PermissionsEnum.TENANT_ADD_EXISTING_USER
+			PermissionsEnum.TENANT_ADD_EXISTING_USER,
+			PermissionsEnum.INTEGRATION_VIEW,
+			PermissionsEnum.IMPORT_EXPORT_VIEW,
+			PermissionsEnum.FILE_STORAGE_VIEW,
+			PermissionsEnum.PAYMENT_GATEWAY_VIEW,
+			PermissionsEnum.SMS_GATEWAY_VIEW,
+			PermissionsEnum.CUSTOM_SMTP_VIEW
 		]
 	},
 	{
@@ -110,6 +117,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT,
 			PermissionsEnum.ORG_TAGS_EDIT,
 			PermissionsEnum.VIEW_ALL_EMAILS,
+			PermissionsEnum.VIEW_ALL_EMAIL_TEMPLATES,
 			PermissionsEnum.EDIT_SALES_PIPELINES,
 			PermissionsEnum.CAN_APPROVE_TIMESHEET,
 			PermissionsEnum.ORG_SPRINT_EDIT,
@@ -119,7 +127,13 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_TEAM_EDIT,
 			PermissionsEnum.ORG_CONTRACT_EDIT,
 			PermissionsEnum.EVENT_TYPES_VIEW,
-			PermissionsEnum.TENANT_ADD_EXISTING_USER
+			PermissionsEnum.TENANT_ADD_EXISTING_USER,
+			PermissionsEnum.INTEGRATION_VIEW,
+			PermissionsEnum.IMPORT_EXPORT_VIEW,
+			PermissionsEnum.FILE_STORAGE_VIEW,
+			PermissionsEnum.PAYMENT_GATEWAY_VIEW,
+			PermissionsEnum.SMS_GATEWAY_VIEW,
+			PermissionsEnum.CUSTOM_SMTP_VIEW
 		]
 	},
 	{
@@ -146,6 +160,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 		defaultEnabledPermissions: [
 			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
 			PermissionsEnum.ORG_PROPOSALS_VIEW,
+			PermissionsEnum.ORG_PROPOSALS_EDIT,
 			PermissionsEnum.ORG_TIME_OFF_VIEW,
 			PermissionsEnum.APPROVAL_POLICY_EDIT,
 			PermissionsEnum.APPROVAL_POLICY_VIEW,

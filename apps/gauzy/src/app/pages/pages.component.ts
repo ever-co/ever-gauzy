@@ -525,14 +525,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.HELP_CENTER'
 						}
-					},
-					{
-						title: 'Custom SMTP',
-						icon: 'at-outline',
-						link: '/pages/organization/custom-smtp',
-						data: {
-							translationKey: 'MENU.CUSTOM_SMTP'
-						}
 					}
 				]
 			},
@@ -650,7 +642,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 				icon: 'people-outline',
 				link: '/pages/users',
 				data: {
-					permissionKeys: [PermissionsEnum.ORG_USERS_VIEW],
+					permissionKeys: [
+						PermissionsEnum.ALL_ORG_VIEW,
+						PermissionsEnum.ORG_USERS_VIEW
+					],
 					translationKey: 'MENU.USERS'
 				}
 			},
@@ -672,6 +667,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 				link: '/pages/integrations',
 				pathMatch: 'prefix',
 				data: {
+					permissionKeys: [PermissionsEnum.INTEGRATION_VIEW],
 					translationKey: 'MENU.INTEGRATIONS'
 				}
 			},
@@ -695,10 +691,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'email-outline',
 						link: '/pages/settings/email-history',
 						data: {
-							translationKey: 'MENU.EMAIL_HISTORY'
-							// permissionKeys: [
-							// 	PermissionsEnum.VIEW_ALL_EMAILS
-							// ]
+							translationKey: 'MENU.EMAIL_HISTORY',
+							permissionKeys: [PermissionsEnum.VIEW_ALL_EMAILS]
 						}
 					},
 					{
@@ -706,7 +700,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'email-outline',
 						link: '/pages/settings/email-templates',
 						data: {
-							translationKey: 'MENU.EMAIL_TEMPLATES'
+							translationKey: 'MENU.EMAIL_TEMPLATES',
+							permissionKeys: [
+								PermissionsEnum.VIEW_ALL_EMAIL_TEMPLATES
+							]
 						}
 					},
 					{
@@ -714,7 +711,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'flip-outline',
 						link: '/pages/settings/import-export',
 						data: {
-							translationKey: 'MENU.IMPORT_EXPORT.IMPORT_EXPORT'
+							translationKey: 'MENU.IMPORT_EXPORT.IMPORT_EXPORT',
+							permissionKeys: [PermissionsEnum.IMPORT_EXPORT_VIEW]
 						}
 					},
 					{
@@ -722,14 +720,18 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'file',
 						link: '/pages/settings/file-storage',
 						data: {
-							translationKey: 'MENU.FILE_STORAGE'
+							translationKey: 'MENU.FILE_STORAGE',
+							permissionKeys: [PermissionsEnum.FILE_STORAGE_VIEW]
 						}
 					},
 					{
 						title: 'Payment Gateways',
 						icon: 'credit-card-outline',
 						data: {
-							translationKey: 'MENU.PAYMENT_GATEWAYS'
+							translationKey: 'MENU.PAYMENT_GATEWAYS',
+							permissionKeys: [
+								PermissionsEnum.PAYMENT_GATEWAY_VIEW
+							]
 						}
 					},
 					{
@@ -737,7 +739,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'at-outline',
 						link: '/pages/settings/sms-gateway',
 						data: {
-							translationKey: 'MENU.SMS_GATEWAYS'
+							translationKey: 'MENU.SMS_GATEWAYS',
+							permissionKeys: [PermissionsEnum.SMS_GATEWAY_VIEW]
 						}
 					},
 					{
@@ -745,7 +748,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'at-outline',
 						link: '/pages/settings/custom-smtp',
 						data: {
-							translationKey: 'MENU.CUSTOM_SMTP'
+							translationKey: 'MENU.CUSTOM_SMTP',
+							permissionKeys: [PermissionsEnum.CUSTOM_SMTP_VIEW]
 						}
 					},
 					{

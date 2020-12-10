@@ -22,7 +22,25 @@ const routes: Routes = [
 			},
 			{
 				path: 'email-history',
-				component: EmailHistoryComponent
+				component: EmailHistoryComponent,
+				canActivate: [NgxPermissionsGuard],
+				data: {
+					permissions: {
+						only: [PermissionsEnum.VIEW_ALL_EMAILS],
+						redirectTo: '/pages/settings'
+					}
+				}
+			},
+			{
+				path: 'email-templates',
+				component: EmailTemplatesComponent,
+				canActivate: [NgxPermissionsGuard],
+				data: {
+					permissions: {
+						only: [PermissionsEnum.VIEW_ALL_EMAIL_TEMPLATES],
+						redirectTo: '/pages/settings'
+					}
+				}
 			},
 			{
 				path: 'roles',
@@ -31,7 +49,7 @@ const routes: Routes = [
 				data: {
 					permissions: {
 						only: [PermissionsEnum.CHANGE_ROLES_PERMISSIONS],
-						redirectTo: '/pages/dashboard'
+						redirectTo: '/pages/settings'
 					}
 				}
 			},
@@ -44,23 +62,40 @@ const routes: Routes = [
 			},
 			{
 				path: 'sms-gateway',
-				component: SmsGatewayComponent
+				component: SmsGatewayComponent,
+				canActivate: [NgxPermissionsGuard],
+				data: {
+					permissions: {
+						only: [PermissionsEnum.SMS_GATEWAY_VIEW],
+						redirectTo: '/pages/settings'
+					}
+				}
 			},
 			{
 				path: 'custom-smtp',
-				component: CustomSmtpComponent
+				component: CustomSmtpComponent,
+				canActivate: [NgxPermissionsGuard],
+				data: {
+					permissions: {
+						only: [PermissionsEnum.CUSTOM_SMTP_VIEW],
+						redirectTo: '/pages/settings'
+					}
+				}
 			},
 			{
 				path: 'file-storage',
-				component: FileStorageComponent
+				component: FileStorageComponent,
+				canActivate: [NgxPermissionsGuard],
+				data: {
+					permissions: {
+						only: [PermissionsEnum.FILE_STORAGE_VIEW],
+						redirectTo: '/pages/settings'
+					}
+				}
 			},
 			{
 				path: 'danger-zone',
 				component: DangerZoneComponent
-			},
-			{
-				path: 'email-templates',
-				component: EmailTemplatesComponent
 			}
 		]
 	}

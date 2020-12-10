@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { ThemeModule } from '../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -19,16 +19,10 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { IncomeMutationModule } from '../../@shared/income/income-mutation/income-mutation.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
-
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
 
 @NgModule({
 	imports: [

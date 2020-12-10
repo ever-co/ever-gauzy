@@ -1363,6 +1363,7 @@
 			"REQUEST_APPROVAL_VIEW": "View Approval Request",
 			"ORG_CANDIDATES_INTERVIEWERS_EDIT": "Create/Edit Interviewers",
 			"VIEW_ALL_EMAILS": "View All Emails",
+			"VIEW_ALL_EMAIL_TEMPLATES": "View All Emails Templates",
 			"ORG_HELP_CENTER_EDIT": "Edit Organization Help Center",
 			"PUBLIC_PAGE_EDIT": "Edit Organization Public Page",
 			"CAN_APPROVE_TIMESHEET": "Approve Timesheet",
@@ -1381,7 +1382,13 @@
 			"ORG_TEAM_EDIT": "Create/Edit Teams",
 			"ORG_CONTRACT_EDIT": "Create/Edit Contracts",
 			"TIME_TRACKER": "Access Time Tracker",
-			"TENANT_ADD_EXISTING_USER": "Tenant Add User To Organization"
+			"TENANT_ADD_EXISTING_USER": "Tenant Add User To Organization",
+			"INTEGRATION_VIEW": "View Integrations",
+			"FILE_STORAGE_VIEW": "View File Storage",
+			"PAYMENT_GATEWAY_VIEW": "View Payment Gateway",
+			"SMS_GATEWAY_VIEW": "View SMS Gateway",
+			"CUSTOM_SMTP_VIEW": "View Custom SMTP",
+			"IMPORT_EXPORT_VIEW": "View Import/Export"
 		}
 	},
 	"CONTACTS_PAGE": {

@@ -9,7 +9,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule, APP_INITIALIZER, ErrorHandler } from '@angular/core';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { CoreModule } from './@core/core.module';
-import { ThemeModule } from './@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from './@theme/theme.module';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import {
@@ -27,7 +27,6 @@ import { TokenInterceptor } from './@core/auth/token.interceptor';
 
 import { HttpClient } from '@angular/common/http';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 
 import { Cloudinary as CloudinaryCore } from 'cloudinary-core';
 import { CloudinaryModule } from '@cloudinary/angular-5.x';
@@ -62,9 +61,6 @@ export const cloudinary = {
 	Cloudinary: CloudinaryCore
 };
 
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
 if (environment.SENTRY_DNS && environment.production) {
 	Sentry.init({
 		dsn: environment.SENTRY_DNS,
