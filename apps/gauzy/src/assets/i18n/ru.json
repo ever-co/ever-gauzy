@@ -84,7 +84,8 @@
 		"VALIDATED": "Проверено",
 		"APPROVE": "Одобрить",
 		"DENY": "Запретить",
-		"PAYMENTS": "Платежи"
+		"PAYMENTS": "Платежи",
+		"NOTE": "Примечание"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -2061,6 +2062,13 @@
 			"NO_PAYMENTS_RECORDED": "Платежей нет",
 			"LEFT_TO_PAY": "Слева для оплаты",
 			"PAYMENT_METHOD": "Способ оплаты"
+		},
+		"INTERNAL_NOTE": {
+			"NOTE_SAVED": "Внутренняя заметка сохранена",
+			"ADD_INTERNAL_NOTE": "Добавить примечание",
+			"ADD_NOTE": "Добавить заметку",
+			"NOTE": "Примечание",
+			"INTERNAL_NOTE": "Внутренняя заметка"
 		}
 	},
 	"PAYMENTS_PAGE": {
