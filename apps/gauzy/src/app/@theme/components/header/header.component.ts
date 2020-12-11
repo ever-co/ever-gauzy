@@ -181,7 +181,6 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			});
 			if (count > 1) {
 				this.showProjectsSelector = true;
-				console.log(this.showProjectsSelector);
 			}
 		}
 
