@@ -13,7 +13,7 @@ import {
 } from '@nebular/theme';
 import { LayoutService } from '../../../@core/utils';
 import { Router, NavigationEnd } from '@angular/router';
-import { filter } from 'rxjs/operators';
+import { filter, first, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
 import { PermissionsEnum, TimeLogType } from '@gauzy/models';
@@ -22,6 +22,12 @@ import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.s
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment } from '../../../../environments/environment';
+import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
+import { OrganizationsService } from '../../../@core/services/organizations.service';
+import { EmployeesService } from '../../../@core/services/employees.service';
+import { NO_EMPLOYEE_SELECTED } from './selectors/employee/employee.component';
+import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-header',
@@ -51,9 +57,10 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 
 	@Input() position = 'normal';
 	user: IUser;
-	@Input() showEmployeesSelector;
-	@Input() showOrganizationsSelector;
-	@Input() showProjectsSelector;
+
+	showEmployeesSelector: boolean;
+	showOrganizationsSelector: boolean;
+	showProjectsSelector: boolean;
 
 	showDateSelector = true;
 	organizationSelected = false;
@@ -74,17 +81,22 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		private router: Router,
 		private translate: TranslateService,
 		private store: Store,
-		private timeTrackerService: TimeTrackerService
+		private timeTrackerService: TimeTrackerService,
+		private usersOrganizationsService: UsersOrganizationsService,
+		private organizationsService: OrganizationsService,
+		private employeesService: EmployeesService,
+		private organizationProjectsService: OrganizationProjectsService
 	) {}
 
 	ngOnInit() {
 		this.router.events
-			.pipe(filter((event) => event instanceof NavigationEnd))
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter((event) => event instanceof NavigationEnd),
+				untilDestroyed(this)
+			)
 			.subscribe(() => {
 				this.timeTrackerService.showTimerWindow = false;
 			});
-
 		this.timeTrackerService.duration$
 			.pipe(untilDestroyed(this))
 			.subscribe((time) => {
@@ -94,11 +106,12 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 						.format('HH:mm:ss');
 				}
 			});
-
 		this.menuService
 			.onItemClick()
-			.pipe(filter(({ tag }) => tag === 'create-context-menu'))
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter(({ tag }) => tag === 'create-context-menu'),
+				untilDestroyed(this)
+			)
 			.subscribe((e) => {
 				if (e.item.data && e.item.data.action) {
 					switch (e.item.data.action) {
@@ -111,25 +124,19 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 					}
 					return; //If action is given then do not navigate
 				}
-
 				this.router.navigate([e.item.link], {
 					queryParams: {
 						openAddDialog: true
 					}
 				});
 			});
-
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
-				untilDestroyed(this)
+				untilDestroyed(this),
+				tap(() => this.loadItems())
 			)
-			.subscribe((org) => {
-				if (org) {
-					this.loadItems();
-				}
-			});
-
+			.subscribe();
 		this.store.user$
 			.pipe(
 				filter((user) => !!user),
@@ -138,22 +145,82 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			.subscribe((user) => {
 				this.user = user;
 				this.isEmployee = !!user && !!user.employeeId;
-
+				//check header selectors dropdown permissions
+				this.checkSelectorsPermission();
 				//check timer status for employee
 				if (this.isEmployee) {
 					this._checkTimerStatus();
 				}
 			});
-
 		this.themeService
 			.onThemeChange()
 			.pipe(untilDestroyed(this))
 			.subscribe((t) => {
 				this.theme = t.name;
 			});
-
-		this.loadItems();
 		this._applyTranslationOnSmartTable();
+		this.loadItems();
+	}
+
+	async checkSelectorsPermission() {
+		const { userId } = this.store;
+		const { tenantId } = this.store.user;
+
+		const { items: userOrg } = await this.usersOrganizationsService.getAll(
+			[],
+			{
+				userId,
+				tenantId
+			}
+		);
+
+		if (userOrg.length > 1) {
+			const count = await this.organizationProjectsService.getCount([], {
+				organizationId: userOrg[0].organizationId,
+				tenantId: this.user.tenantId
+			});
+			if (count > 1) {
+				this.showProjectsSelector = true;
+			}
+		}
+
+		if (
+			this.store.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_ORGANIZATION
+			) &&
+			userOrg.length > 1
+		) {
+			this.showOrganizationsSelector = true;
+		} else {
+			if (userOrg.length > 0) {
+				const org = await this.organizationsService
+					.getById(userOrg[0].organizationId)
+					.pipe(first())
+					.toPromise();
+				this.store.selectedOrganization = org;
+			}
+		}
+		if (
+			this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+		) {
+			this.showEmployeesSelector = true;
+			this.store.selectedEmployee = null;
+		} else {
+			const emp = await this.employeesService.getEmployeeById(
+				this.user.employeeId,
+				[]
+			);
+			if (emp) {
+				this.store.selectedEmployee = {
+					id: emp.id,
+					firstName: this.user.firstName,
+					lastName: this.user.lastName,
+					imageUrl: this.user.imageUrl
+				};
+			} else {
+				this.store.selectedEmployee = NO_EMPLOYEE_SELECTED;
+			}
+		}
 	}
 
 	ngAfterViewInit(): void {}
