@@ -43,8 +43,6 @@
 			</ng-template>
 			<ga-contact-mutation
 				*ngIf="showAddCard"
-				[employees]="employees"
-				[organizationId]="organizationId"
 				[contactType]="contactType"
 				[organizationContact]="organizationContactToEdit"
 				[projectsWithoutOrganizationContact]="
@@ -55,7 +53,6 @@
 				(addOrEditOrganizationContact)="
 					addOrEditOrganizationContact($event)
 				"
-				[organization]="selectedOrganization"
 			>
 			</ga-contact-mutation>
 		</div>

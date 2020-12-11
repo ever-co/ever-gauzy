@@ -140,4 +140,9 @@ export class OrganizationContact
 	@OneToMany((type) => Proposal, (proposal) => proposal.organizationContact)
 	@JoinColumn()
 	proposals?: IOrganizationProject[];
+
+	@ApiProperty({ type: String })
+	@IsOptional()
+	@Column({ nullable: true })
+	createdBy?: string;
 }

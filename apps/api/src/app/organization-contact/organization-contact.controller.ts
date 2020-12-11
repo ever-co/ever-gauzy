@@ -70,13 +70,11 @@ export class OrganizationContactController extends CrudController<
 	})
 	@Get()
 	async findAllOrganizationContacts(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<OrganizationContact>> {
-		const { relations, findInput } = JSON.parse(data);
-		return this.organizationContactService.findAll({
-			where: findInput,
-			relations
-		});
+		return this.organizationContactService.findAllOrganizationContacts(
+			data
+		);
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })

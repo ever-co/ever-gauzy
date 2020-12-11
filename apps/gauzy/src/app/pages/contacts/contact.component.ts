@@ -1,6 +1,5 @@
 import { Component, OnInit, ViewChild, Input, OnDestroy } from '@angular/core';
 import {
-	IEmployee,
 	IOrganizationContact,
 	IOrganizationContactCreateInput,
 	IOrganizationProject,
@@ -17,10 +16,15 @@ import {
 } from '@angular/router';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { debounceTime, filter, first, tap } from 'rxjs/operators';
+import {
+	debounceTime,
+	filter,
+	first,
+	tap,
+	withLatestFrom
+} from 'rxjs/operators';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { EmployeesService } from '../../@core/services';
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { Store } from '../../@core/services/store.service';
@@ -48,7 +52,6 @@ export class ContactComponent
 	organizationContact: IOrganizationContact[] = [];
 	projectsWithoutOrganizationContact: IOrganizationProject[];
 	selectProjects: string[] = [];
-	employees: IEmployee[] = [];
 	organizationContactToEdit: IOrganizationContact;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.CARDS_GRID;
@@ -58,8 +61,9 @@ export class ContactComponent
 	disableButton = true;
 	countries: ICountry[] = [];
 	loading: boolean;
-
 	smartTableSource = new LocalDataSource();
+	selectedEmployeeId: string;
+
 	@Input() contactType: any;
 
 	contactsTable: Ng2SmartTableComponent;
@@ -75,7 +79,6 @@ export class ContactComponent
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly toastrService: NbToastrService,
 		private readonly store: Store,
-		private readonly employeesService: EmployeesService,
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
 		private route: ActivatedRoute,
@@ -88,18 +91,35 @@ export class ContactComponent
 	}
 
 	ngOnInit(): void {
-		this.store.selectedOrganization$
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeOrganization$ = this.store.selectedOrganization$;
+		storeEmployee$
 			.pipe(
-				filter((organization) => !!organization),
+				filter((employee) => !!employee),
+				withLatestFrom(storeOrganization$),
 				untilDestroyed(this)
 			)
-			.subscribe((organization) => {
+			.subscribe(([employee]) => {
+				if (employee && this.selectedOrganization) {
+					this.selectedEmployeeId = employee.id;
+					this.loadOrganizationContacts();
+					this.loadProjectsWithoutOrganizationContacts();
+				}
+			});
+		storeOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				debounceTime(200),
+				withLatestFrom(storeEmployee$),
+				untilDestroyed(this)
+			)
+			.subscribe(([organization, employee]) => {
+				this.selectedEmployeeId = employee ? employee.id : null;
 				if (organization) {
 					this.selectedOrganization = organization;
 					this.organizationId = organization.id;
 					this.loadOrganizationContacts();
 					this.loadProjectsWithoutOrganizationContacts();
-					this.loadEmployees();
 				}
 			});
 		this.route.queryParamMap
@@ -306,68 +326,81 @@ export class ContactComponent
 		if (!this.selectedOrganization) {
 			return;
 		}
+
 		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.selectedOrganization;
-		const res = await this.organizationContactService.getAll(
-			['projects', 'members', 'members.user', 'tags', 'contact'],
-			{ organizationId, tenantId, contactType: this.contactType }
-		);
 
-		if (res) {
-			const result = [];
-			res.items.forEach((contact: IOrganizationContact) => {
-				result.push({
-					...contact,
-					contact_name: contact.name,
-					country: contact.contact ? contact.contact.country : '',
-					city: contact.contact ? contact.contact.city : '',
-					street: contact.contact ? contact.contact.address : '',
-					street2: contact.contact ? contact.contact.address2 : '',
-					postcode: contact.contact ? contact.contact.postcode : null,
-					fax: contact.contact ? contact.contact.fax : '',
-					website: contact.contact ? contact.contact.website : '',
-					fiscalInformation: contact.contact
-						? contact.contact.fiscalInformation
-						: ''
-				});
-			});
-			this.organizationContact = result;
-			this.smartTableSource.load(result);
-			this.loading = false;
+		const findObj = {
+			organizationId,
+			tenantId,
+			contactType: this.contactType
+		};
+		if (this.selectedEmployeeId) {
+			findObj['employeeId'] = this.selectedEmployeeId;
 		}
+
+		this.organizationContactService
+			.getAll(
+				['projects', 'members', 'members.user', 'tags', 'contact'],
+				findObj
+			)
+			.then(({ items = [] }) => {
+				const result = [];
+				items.forEach((contact: IOrganizationContact) => {
+					result.push({
+						...contact,
+						contact_name: contact.name,
+						country: contact.contact ? contact.contact.country : '',
+						city: contact.contact ? contact.contact.city : '',
+						street: contact.contact ? contact.contact.address : '',
+						street2: contact.contact
+							? contact.contact.address2
+							: '',
+						postcode: contact.contact
+							? contact.contact.postcode
+							: null,
+						fax: contact.contact ? contact.contact.fax : '',
+						website: contact.contact ? contact.contact.website : '',
+						fiscalInformation: contact.contact
+							? contact.contact.fiscalInformation
+							: ''
+					});
+				});
+				this.organizationContact = result;
+				this.smartTableSource.load(result);
+			})
+			.catch(() => {
+				this.toastrService.danger(
+					this.getTranslation('TOASTR.TITLE.ERROR')
+				);
+			})
+			.finally(() => {
+				this.loading = false;
+			});
 	}
 
 	private async loadProjectsWithoutOrganizationContacts() {
 		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.selectedOrganization;
-		const res = await this.organizationProjectsService.getAll(
-			['organizationContact'],
-			{ organizationId, tenantId, organizationContact: null }
-		);
-
-		if (res) {
-			this.projectsWithoutOrganizationContact = res.items;
-		}
-		this.loading = false;
-	}
-
-	private async loadEmployees() {
-		this.loading = true;
-		if (!this.selectedOrganization) {
-			return;
-		}
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.selectedOrganization;
-		const { items } = await this.employeesService
-			.getAll(['user'], {
-				organization: { id: organizationId, tenantId }
+		this.organizationProjectsService
+			.getAll(['organizationContact'], {
+				organizationId,
+				tenantId,
+				organizationContact: null
 			})
-			.pipe(first())
-			.toPromise();
-		this.employees = items;
-		this.loading = false;
+			.then(({ items }) => {
+				this.projectsWithoutOrganizationContact = items;
+			})
+			.catch(() => {
+				this.toastrService.danger(
+					this.getTranslation('TOASTR.TITLE.ERROR')
+				);
+			})
+			.finally(() => {
+				this.loading = false;
+			});
 	}
 
 	cancel() {
@@ -385,7 +418,6 @@ export class ContactComponent
 	}
 
 	async add() {
-		await this.loadProjectsWithoutOrganizationContacts();
 		this.organizationContactToEdit = null;
 		this.showAddCard = true;
 	}
@@ -405,7 +437,6 @@ export class ContactComponent
 
 			if (result) {
 				await this.loadOrganizationContacts();
-
 				this.toastrService.primary(
 					this.getTranslation(
 						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.INVITE_CONTACT',
