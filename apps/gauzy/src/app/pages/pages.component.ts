@@ -81,7 +81,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 							translationKey: 'MENU.ESTIMATES',
 							permissionKeys: [
 								PermissionsEnum.ALL_ORG_VIEW,
-								PermissionsEnum.INVOICES_VIEW
+								PermissionsEnum.ESTIMATES_VIEW
 							]
 						}
 					},
@@ -93,7 +93,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 							translationKey: 'MENU.ESTIMATES_RECEIVED',
 							permissionKeys: [
 								PermissionsEnum.ALL_ORG_VIEW,
-								PermissionsEnum.INVOICES_VIEW
+								PermissionsEnum.ESTIMATES_VIEW
 							]
 						}
 					},
@@ -188,7 +188,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 							translationKey: 'MENU.ESTIMATES',
 							permissionKeys: [
 								PermissionsEnum.ALL_ORG_VIEW,
-								PermissionsEnum.INVOICES_VIEW
+								PermissionsEnum.ESTIMATES_VIEW
 							]
 						}
 					},
@@ -284,7 +284,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'people-outline',
 						link: '/pages/jobs/employee',
 						data: {
-							translationKey: 'MENU.EMPLOYEES'
+							translationKey: 'MENU.EMPLOYEES',
+							permissionKeys: [
+								PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW
+							]
 						}
 					},
 					{
@@ -300,7 +303,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'person-outline',
 						link: '/pages/jobs/matching',
 						data: {
-							translationKey: 'MENU.JOBS_MATCHING'
+							translationKey: 'MENU.JOBS_MATCHING',
+							permissionKeys: [
+								PermissionsEnum.ORG_JOB_MATCHING_VIEW
+							]
 						}
 					},
 					{
@@ -308,7 +314,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'file-text-outline',
 						link: '/pages/jobs/proposal-template',
 						data: {
-							translationKey: 'MENU.PROPOSAL_TEMPLATE'
+							translationKey: 'MENU.PROPOSAL_TEMPLATE',
+							permissionKeys: [
+								PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW
+							]
 						}
 					}
 				]
@@ -317,11 +326,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 				title: 'Employees',
 				icon: 'people-outline',
 				data: {
-					translationKey: 'MENU.EMPLOYEES',
-					permissionKeys: [
-						PermissionsEnum.ORG_EMPLOYEES_VIEW,
-						PermissionsEnum.ORG_EXPENSES_EDIT
-					]
+					translationKey: 'MENU.EMPLOYEES'
 				},
 				children: [
 					{
@@ -329,7 +334,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'list-outline',
 						link: '/pages/employees',
 						data: {
-							translationKey: 'MENU.MANAGE'
+							translationKey: 'MENU.MANAGE',
+							permissionKeys: [PermissionsEnum.ORG_EMPLOYEES_VIEW]
 						}
 					},
 					{
@@ -372,7 +378,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'bar-chart-outline',
 						link: `/pages/employees/employee-level`,
 						data: {
-							translationKey: 'MENU.EMPLOYEE_LEVEL'
+							translationKey: 'MENU.EMPLOYEE_LEVEL',
+							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW]
 						}
 					},
 					{
@@ -380,7 +387,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'award-outline',
 						link: `/pages/employees/positions`,
 						data: {
-							translationKey: 'MENU.POSITIONS'
+							translationKey: 'MENU.POSITIONS',
+							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW]
 						}
 					},
 					{
@@ -397,7 +405,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'flip-outline',
 						link: '/pages/employees/recurring-expenses',
 						data: {
-							translationKey: 'MENU.RECURRING_EXPENSE'
+							translationKey: 'MENU.RECURRING_EXPENSE',
+							permissionKeys: [
+								PermissionsEnum.EMPLOYEE_EXPENSES_VIEW
+							]
 						}
 					},
 					{
@@ -405,7 +416,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'person-done-outline',
 						link: '/pages/employees/candidates',
 						data: {
-							translationKey: 'MENU.CANDIDATES'
+							translationKey: 'MENU.CANDIDATES',
+							permissionKeys: [
+								PermissionsEnum.ORG_CANDIDATES_VIEW
+							]
 						}
 					}
 				]
@@ -445,8 +459,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						link: '/pages/organization/inventory',
 						pathMatch: 'prefix',
 						data: {
-							// permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
-							translationKey: 'MENU.INVENTORY'
+							translationKey: 'MENU.INVENTORY',
+							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW]
 						}
 					},
 					{
@@ -455,7 +469,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 						link: '/pages/organization/tags',
 						data: {
 							translationKey: 'MENU.TAGS'
-							//   permissionKeys: [],
 						}
 					},
 					{
@@ -463,8 +476,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'car-outline',
 						link: '/pages/organization/vendors',
 						data: {
-							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-							translationKey: 'ORGANIZATIONS_PAGE.VENDORS'
+							translationKey: 'ORGANIZATIONS_PAGE.VENDORS',
+							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT]
 						}
 					},
 					{
@@ -472,8 +485,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'book-outline',
 						link: `/pages/organization/projects`,
 						data: {
-							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-							translationKey: 'ORGANIZATIONS_PAGE.PROJECTS'
+							translationKey: 'ORGANIZATIONS_PAGE.PROJECTS',
+							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT]
 						}
 					},
 					{
@@ -481,8 +494,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'briefcase-outline',
 						link: `/pages/organization/departments`,
 						data: {
-							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-							translationKey: 'ORGANIZATIONS_PAGE.DEPARTMENTS'
+							translationKey: 'ORGANIZATIONS_PAGE.DEPARTMENTS',
+							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT]
 						}
 					},
 					{
@@ -490,8 +503,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'people-outline',
 						link: `/pages/organization/teams`,
 						data: {
-							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-							translationKey: 'ORGANIZATIONS_PAGE.EDIT.TEAMS'
+							translationKey: 'ORGANIZATIONS_PAGE.EDIT.TEAMS',
+							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT]
 						}
 					},
 					{
@@ -499,8 +512,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'file-text-outline',
 						link: `/pages/organization/documents`,
 						data: {
-							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-							translationKey: 'ORGANIZATIONS_PAGE.DOCUMENTS'
+							translationKey: 'ORGANIZATIONS_PAGE.DOCUMENTS',
+							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT]
 						}
 					},
 					{
@@ -508,8 +521,9 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'layers-outline',
 						link: `/pages/organization/employment-types`,
 						data: {
-							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-							translationKey: 'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE'
+							translationKey:
+								'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE',
+							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT]
 						}
 					},
 					{
@@ -518,7 +532,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						link: '/pages/organization/expense-recurring',
 						data: {
 							translationKey:
-								'ORGANIZATIONS_PAGE.EXPENSE_RECURRING'
+								'ORGANIZATIONS_PAGE.EXPENSE_RECURRING',
+							permissionKeys: [PermissionsEnum.ORG_EXPENSES_VIEW]
 						}
 					},
 					{
@@ -528,14 +543,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.HELP_CENTER'
 						}
-					},
-					{
-						title: 'Custom SMTP',
-						icon: 'at-outline',
-						link: '/pages/organization/custom-smtp',
-						data: {
-							translationKey: 'MENU.CUSTOM_SMTP'
-						}
 					}
 				]
 			},
@@ -543,7 +550,11 @@ export class PagesComponent implements OnInit, OnDestroy {
 				title: 'Contacts',
 				icon: 'book-open-outline',
 				data: {
-					translationKey: 'MENU.CONTACTS'
+					translationKey: 'MENU.CONTACTS',
+					permissionKeys: [
+						PermissionsEnum.ORG_CONTACT_VIEW,
+						PermissionsEnum.ALL_ORG_EDIT
+					]
 				},
 				children: [
 					{
@@ -559,7 +570,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'book-open-outline',
 						link: `/pages/contacts/leads`,
 						data: {
-							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 							translationKey: 'CONTACTS_PAGE.LEADS'
 						}
 					},
@@ -568,7 +578,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'book-open-outline',
 						link: `/pages/contacts/customers`,
 						data: {
-							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 							translationKey: 'CONTACTS_PAGE.CUSTOMERS'
 						}
 					},
@@ -577,7 +586,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'book-open-outline',
 						link: `/pages/contacts/clients`,
 						data: {
-							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 							translationKey: 'CONTACTS_PAGE.CLIENTS'
 						}
 					}
@@ -639,13 +647,13 @@ export class PagesComponent implements OnInit, OnDestroy {
 				title: 'Admin',
 				group: true,
 				data: {
+					translationKey: 'MENU.ADMIN',
 					permissionKeys: [
 						PermissionsEnum.ORG_EMPLOYEES_VIEW,
 						PermissionsEnum.ORG_USERS_VIEW,
 						PermissionsEnum.ALL_ORG_EDIT,
 						PermissionsEnum.ALL_ORG_VIEW
-					],
-					translationKey: 'MENU.ADMIN'
+					]
 				}
 			},
 			{
@@ -653,8 +661,11 @@ export class PagesComponent implements OnInit, OnDestroy {
 				icon: 'people-outline',
 				link: '/pages/users',
 				data: {
-					permissionKeys: [PermissionsEnum.ORG_USERS_VIEW],
-					translationKey: 'MENU.USERS'
+					translationKey: 'MENU.USERS',
+					permissionKeys: [
+						PermissionsEnum.ALL_ORG_VIEW,
+						PermissionsEnum.ORG_USERS_VIEW
+					]
 				}
 			},
 			{
@@ -662,11 +673,11 @@ export class PagesComponent implements OnInit, OnDestroy {
 				icon: 'globe-outline',
 				link: '/pages/organizations',
 				data: {
+					translationKey: 'MENU.ORGANIZATIONS',
 					permissionKeys: [
 						PermissionsEnum.ALL_ORG_VIEW,
 						PermissionsEnum.ORG_EXPENSES_EDIT
-					],
-					translationKey: 'MENU.ORGANIZATIONS'
+					]
 				}
 			},
 			{
@@ -675,7 +686,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 				link: '/pages/integrations',
 				pathMatch: 'prefix',
 				data: {
-					translationKey: 'MENU.INTEGRATIONS'
+					translationKey: 'MENU.INTEGRATIONS',
+					permissionKeys: [PermissionsEnum.INTEGRATION_VIEW]
 				}
 			},
 			{
@@ -698,10 +710,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'email-outline',
 						link: '/pages/settings/email-history',
 						data: {
-							translationKey: 'MENU.EMAIL_HISTORY'
-							// permissionKeys: [
-							// 	PermissionsEnum.VIEW_ALL_EMAILS
-							// ]
+							translationKey: 'MENU.EMAIL_HISTORY',
+							permissionKeys: [PermissionsEnum.VIEW_ALL_EMAILS]
 						}
 					},
 					{
@@ -709,7 +719,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'email-outline',
 						link: '/pages/settings/email-templates',
 						data: {
-							translationKey: 'MENU.EMAIL_TEMPLATES'
+							translationKey: 'MENU.EMAIL_TEMPLATES',
+							permissionKeys: [
+								PermissionsEnum.VIEW_ALL_EMAIL_TEMPLATES
+							]
 						}
 					},
 					{
@@ -717,7 +730,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'flip-outline',
 						link: '/pages/settings/import-export',
 						data: {
-							translationKey: 'MENU.IMPORT_EXPORT.IMPORT_EXPORT'
+							translationKey: 'MENU.IMPORT_EXPORT.IMPORT_EXPORT',
+							permissionKeys: [PermissionsEnum.IMPORT_EXPORT_VIEW]
 						}
 					},
 					{
@@ -725,14 +739,18 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'file',
 						link: '/pages/settings/file-storage',
 						data: {
-							translationKey: 'MENU.FILE_STORAGE'
+							translationKey: 'MENU.FILE_STORAGE',
+							permissionKeys: [PermissionsEnum.FILE_STORAGE_VIEW]
 						}
 					},
 					{
 						title: 'Payment Gateways',
 						icon: 'credit-card-outline',
 						data: {
-							translationKey: 'MENU.PAYMENT_GATEWAYS'
+							translationKey: 'MENU.PAYMENT_GATEWAYS',
+							permissionKeys: [
+								PermissionsEnum.PAYMENT_GATEWAY_VIEW
+							]
 						}
 					},
 					{
@@ -740,7 +758,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'at-outline',
 						link: '/pages/settings/sms-gateway',
 						data: {
-							translationKey: 'MENU.SMS_GATEWAYS'
+							translationKey: 'MENU.SMS_GATEWAYS',
+							permissionKeys: [PermissionsEnum.SMS_GATEWAY_VIEW]
 						}
 					},
 					{
@@ -748,7 +767,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						icon: 'at-outline',
 						link: '/pages/settings/custom-smtp',
 						data: {
-							translationKey: 'MENU.CUSTOM_SMTP'
+							translationKey: 'MENU.CUSTOM_SMTP',
+							permissionKeys: [PermissionsEnum.CUSTOM_SMTP_VIEW]
 						}
 					},
 					{

@@ -24,6 +24,7 @@ import { CrudController } from '../core/crud/crud.controller';
 import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
 import { EmployeeRecurringExpenseCreateCommand } from './commands/employee-recurring-expense.create.command';
 import { EmployeeRecurringExpenseDeleteCommand } from './commands/employee-recurring-expense.delete.command';
 import { EmployeeRecurringExpenseEditCommand } from './commands/employee-recurring-expense.edit.command';
@@ -127,12 +128,11 @@ export class EmployeeRecurringExpenseController extends CrudController<
 	})
 	@Get('/month')
 	async findAllEmployees(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<EmployeeRecurringExpense>> {
-		const { findInput } = JSON.parse(data);
-
+		const { findInput, relations } = data;
 		return this.queryBus.execute(
-			new EmployeeRecurringExpenseByMonthQuery(findInput)
+			new EmployeeRecurringExpenseByMonthQuery(findInput, relations)
 		);
 	}
 
@@ -150,13 +150,13 @@ export class EmployeeRecurringExpenseController extends CrudController<
 	})
 	@Get()
 	async findAllRecurringExpenses(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<EmployeeRecurringExpense>> {
-		const { findInput, order = {} } = JSON.parse(data);
-
+		const { findInput, order = {}, relations = [] } = data;
 		return this.employeeRecurringExpenseService.findAll({
 			where: findInput,
-			order: order
+			order: order,
+			relations
 		});
 	}
 

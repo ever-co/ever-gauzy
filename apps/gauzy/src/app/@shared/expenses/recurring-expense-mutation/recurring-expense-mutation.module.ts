@@ -19,6 +19,7 @@ import { OrganizationsService } from '../../../@core/services/organizations.serv
 import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
 import { RecurringExpenseMutationComponent } from './recurring-expense-mutation.component';
 import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';
+import { CurrencyModule } from '../../currency/currency.module';
 
 @NgModule({
 	imports: [
@@ -43,7 +44,8 @@ import { EmployeeSelectorsModule } from '../../../@theme/components/header/selec
 				useFactory: HttpLoaderFactory,
 				deps: [HttpClient]
 			}
-		})
+		}),
+		CurrencyModule
 	],
 	exports: [RecurringExpenseMutationComponent],
 	declarations: [RecurringExpenseMutationComponent],

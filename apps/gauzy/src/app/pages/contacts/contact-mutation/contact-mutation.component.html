@@ -1,11 +1,11 @@
-<nb-card>
+<nb-card *ngIf="form">
 	<nb-card-header>{{
 		(organizationContact
 			? 'ORGANIZATIONS_PAGE.EDIT.EDIT_CONTACT'
 			: 'ORGANIZATIONS_PAGE.EDIT.ADD_NEW_CONTACT'
 		) | translate
 	}}</nb-card-header>
-	<nb-card-body *ngIf="form">
+	<nb-card-body>
 		<form [formGroup]="form" class="contact-form">
 			<div class="contact-container">
 				<div class="contact-photo">

@@ -1,5 +1,21 @@
-<ga-smtp>
-	<header>
-		{{ 'CUSTOM_SMTP_PAGE.HEADER' | translate }}
-	</header>
-</ga-smtp>
+<nb-card>
+	<nb-card-body>
+		<nb-tabset>
+			<nb-tab [tabTitle]="'MENU.TENANT' | translate">
+				<ga-smtp>
+					<header>
+						{{ 'CUSTOM_SMTP_PAGE.HEADER' | translate }}
+					</header>
+				</ga-smtp>
+			</nb-tab>
+			<nb-tab [tabTitle]="'MENU.ORGANIZATION' | translate">
+				<ga-smtp [organization]="organization">
+					<header>
+						{{ 'CUSTOM_SMTP_PAGE.HEADER' | translate }}
+						{{ organization?.name }}
+					</header>
+				</ga-smtp>
+			</nb-tab>
+		</nb-tabset>
+	</nb-card-body>
+</nb-card>

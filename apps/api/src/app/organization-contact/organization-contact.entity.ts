@@ -50,6 +50,7 @@ export class OrganizationContact
 
 	@ApiProperty({ type: Contact })
 	@ManyToOne(() => Contact, (contact) => contact.organization_contacts, {
+		cascade: true,
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -140,4 +141,9 @@ export class OrganizationContact
 	@OneToMany((type) => Proposal, (proposal) => proposal.organizationContact)
 	@JoinColumn()
 	proposals?: IOrganizationProject[];
+
+	@ApiProperty({ type: String })
+	@IsOptional()
+	@Column({ nullable: true })
+	createdBy?: string;
 }

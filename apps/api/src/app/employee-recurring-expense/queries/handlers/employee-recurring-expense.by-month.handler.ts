@@ -26,8 +26,8 @@ export class EmployeeRecurringExpenseByMonthHandler
 	public async execute(
 		command: EmployeeRecurringExpenseByMonthQuery
 	): Promise<IPagination<EmployeeRecurringExpense>> {
-		const { input } = command;
+		const { input, relations = [] } = command;
 
-		return await this.executeCommand(input);
+		return await this.executeCommand(input, relations);
 	}
 }
