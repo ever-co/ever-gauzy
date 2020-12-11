@@ -20,7 +20,8 @@ export abstract class FindRecurringExpenseByMonthHandler<
 	constructor(private readonly crudService: CrudService<T>) {}
 
 	public async executeCommand(
-		input: IRecurringExpenseByMonthFindInput | any
+		input: IRecurringExpenseByMonthFindInput | any,
+		relations?: string[]
 	): Promise<IPagination<T>> {
 		const lastDayOfMonth = getLastDayOfMonth(input.year, input.month);
 		const inputStartDate = new Date(
@@ -60,7 +61,8 @@ export abstract class FindRecurringExpenseByMonthHandler<
 					startDate: LessThanOrEqual(inputStartDate),
 					endDate: MoreThanOrEqual(inputEndDate)
 				}
-			]
+			],
+			relations
 		});
 
 		return expenses;

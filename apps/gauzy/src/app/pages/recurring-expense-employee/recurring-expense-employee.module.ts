@@ -13,6 +13,7 @@ import { HttpClient } from '@angular/common/http';
 import { RecurringExpensesEmployeeRoutingModule } from './recurring-expense-employee-routing.module';
 import { RecurringExpensesEmployeeComponent } from './recurring-expense-employee.component';
 import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
+import { NgxPermissionsModule } from 'ngx-permissions';
 
 @NgModule({
 	imports: [
@@ -31,7 +32,8 @@ import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-ex
 				useFactory: HttpLoaderFactory,
 				deps: [HttpClient]
 			}
-		})
+		}),
+		NgxPermissionsModule.forChild()
 	],
 	declarations: [RecurringExpensesEmployeeComponent],
 	entryComponents: []

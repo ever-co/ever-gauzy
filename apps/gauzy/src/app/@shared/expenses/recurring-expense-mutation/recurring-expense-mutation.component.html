@@ -1,11 +1,18 @@
-<nb-card>
-	<nb-card-header>
-		{{
-			(componentType === 'EMPLOYEE'
-				? 'EMPLOYEES_PAGE.RECURRING_EXPENSE'
-				: 'ORGANIZATIONS_PAGE.RECURRING_EXPENSE'
-			) | translate
-		}}
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h5>
+			{{
+				(componentType === 'EMPLOYEE'
+					? 'EMPLOYEES_PAGE.RECURRING_EXPENSE'
+					: 'ORGANIZATIONS_PAGE.RECURRING_EXPENSE'
+				) | translate
+			}}
+		</h5>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			(click)="close()"
+			icon="close-outline"
+		></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
 		<form [formGroup]="form" *ngIf="form">
@@ -26,6 +33,9 @@
 			<div class="row">
 				<div class="col">
 					<div class="form-group">
+						<label class="label" for="currencySelect">{{
+							'POP_UPS.CATEGORY_NAME' | translate
+						}}</label>
 						<ng-select
 							[items]="defaultFilteredCategories"
 							[addTag]="addNewCustomCategoryName"
@@ -60,6 +70,9 @@
 			<div class="row">
 				<div class="col-6">
 					<div class="form-group">
+						<label class="label" for="currencySelect">{{
+							'SM_TABLE.VALUE' | translate
+						}}</label>
 						<input
 							placeholder="{{ 'SM_TABLE.VALUE' | translate }}"
 							fullWidth
@@ -72,22 +85,14 @@
 					</div>
 				</div>
 				<div class="col-sm-6">
-					<nb-select class="d-block" formControlName="currency">
-						<nb-option
-							*ngFor="let currency of currencies"
-							value="{{ currency }}"
-							>{{ currency }}</nb-option
-						>
-					</nb-select>
+					<ga-currency formControlName="currency"></ga-currency>
 				</div>
 			</div>
 			<!-- TODO: translate -->
 			<div class="row" *ngIf="recurringExpense">
 				<div class="col">
 					<div class="form-group">
-						<label>
-							Starts On
-						</label>
+						<label> Starts On </label>
 						<input
 							[nbDatepicker]="datepicker"
 							nbInput
@@ -100,7 +105,7 @@
 
 						<div
 							[ngSwitch]="startDateUpdateType"
-							style="margin-top: 10px;"
+							style="margin-top: 10px"
 							[nbSpinner]="startDateChangeLoading"
 							nbSpinnerStatus="danger"
 							nbSpinnerSize="large"
@@ -227,44 +232,34 @@
 					</div>
 				</div>
 			</div>
-			<div class="actions">
-				<!-- TODO: FIX dialogRef.close() -->
-				<button
-					type="button"
-					(click)="dialogRef.close()"
-					nbButton
-					outline
-					status="warning"
-				>
-					{{ 'BUTTONS.CANCEL' | translate }}
-				</button>
-				<button
-					(click)="submitForm()"
-					[disabled]="form.invalid"
-					type="submit"
-					nbButton
-					status="success"
-					*ngIf="!recurringExpense"
-					nbTooltip="{{
-						'EMPLOYEES_PAGE.RECURRING_EXPENSE_ADD' | translate
-					}}"
-				>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button>
-				<button
-					(click)="submitForm()"
-					[disabled]="
-						form.invalid ||
-						startDateUpdateType === 'INCREASE_CONFLICT'
-					"
-					type="submit"
-					nbButton
-					status="success"
-					*ngIf="recurringExpense"
-				>
-					{{ 'BUTTONS.EDIT' | translate }}
-				</button>
-			</div>
 		</form>
 	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button (click)="close()" nbButton class="mr-3" status="danger">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			(click)="submitForm()"
+			[disabled]="form.invalid"
+			type="submit"
+			nbButton
+			status="success"
+			*ngIf="!recurringExpense"
+			nbTooltip="{{ 'EMPLOYEES_PAGE.RECURRING_EXPENSE_ADD' | translate }}"
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+		<button
+			(click)="submitForm()"
+			[disabled]="
+				form.invalid || startDateUpdateType === 'INCREASE_CONFLICT'
+			"
+			type="submit"
+			nbButton
+			status="success"
+			*ngIf="recurringExpense"
+		>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+	</nb-card-footer>
 </nb-card>

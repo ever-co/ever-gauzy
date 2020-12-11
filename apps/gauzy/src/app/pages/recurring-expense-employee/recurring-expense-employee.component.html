@@ -6,7 +6,7 @@
 					{{ 'DASHBOARD_PAGE.RECURRING_EXPENSES' | translate }}
 				</span>
 			</div>
-			<div *ngIf="hasEditExpensePermission">
+			<ng-template ngxPermissionsOnly="EMPLOYEE_EXPENSES_EDIT">
 				<button
 					(click)="addEmployeeRecurringExpense()"
 					nbButton
@@ -15,7 +15,7 @@
 					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 					>{{ 'BUTTONS.ADD' | translate }}
 				</button>
-			</div>
+			</ng-template>
 		</div>
 
 		<div
@@ -38,26 +38,23 @@
 			</div>
 		</div>
 
-		<ng-container
-			*ngIf="
-				selectedEmployeeRecurringExpense.length &&
-				this.employeeList.length
-			"
-		>
-			<ga-recurring-expense-block
+		<ng-container *ngIf="selectedEmployeeRecurringExpense.length">
+			<ng-container
 				*ngFor="
 					let expense of selectedEmployeeRecurringExpense;
 					let i = index
 				"
-				(editRecurringExpense)="editEmployeeRecurringExpense(i)"
-				(deleteRecurringExpense)="deleteEmployeeRecurringExpense(i)"
-				(fetchRecurringExpenseHistory)="fetchHistory(i)"
-				[fetchedHistories]="fetchedHistories[i]"
-				[recurringExpense]="expense"
-				[selectedOrganization]="selectedOrganization"
-				[employees]="employeeList"
 			>
-			</ga-recurring-expense-block>
+				<ga-recurring-expense-block
+					(editRecurringExpense)="editEmployeeRecurringExpense(i)"
+					(deleteRecurringExpense)="deleteEmployeeRecurringExpense(i)"
+					(fetchRecurringExpenseHistory)="fetchHistory(i)"
+					[fetchedHistories]="fetchedHistories[i]"
+					[recurringExpense]="expense"
+					[selectedOrganization]="selectedOrganization"
+				>
+				</ga-recurring-expense-block>
+			</ng-container>
 		</ng-container>
 	</nb-card-body>
 </nb-card>

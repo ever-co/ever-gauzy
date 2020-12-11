@@ -2,21 +2,14 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import {
 	IOrganization,
-	PermissionsEnum,
 	RecurringExpenseDefaultCategoriesEnum,
 	RecurringExpenseDeletionEnum,
 	IEmployeeRecurringExpense,
 	IEmployee
 } from '@gauzy/models';
-import { Subject } from 'rxjs';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import {
-	takeUntil,
-	first,
-	distinctUntilChanged,
-	debounceTime
-} from 'rxjs/operators';
+import { first, debounceTime, filter, withLatestFrom } from 'rxjs/operators';
 import { monthNames } from '../../@core/utils/date';
 import { RecurringExpenseDeleteConfirmationComponent } from '../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.component';
 import {
@@ -28,15 +21,17 @@ import { SelectedEmployee } from '../../@theme/components/header/selectors/emplo
 import { ActivatedRoute } from '@angular/router';
 import { EmployeesService } from '../../@core/services';
 import { EmployeeRecurringExpenseService } from '../../@core/services/employee-recurring-expense.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-recurring-expenses-employee',
 	templateUrl: './recurring-expense-employee.component.html',
 	styleUrls: ['./recurring-expense-employee.component.scss']
 })
-export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
+export class RecurringExpensesEmployeeComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
 	selectedEmployee: IEmployee;
 	selectedDate: Date;
 	employeeList: IEmployee[] = [];
@@ -44,9 +39,9 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 	selectedEmployeeRecurringExpense: IEmployeeRecurringExpense[] = [];
 	selectedRowIndexToShow: number;
 	employeeName = 'Employee';
-	hasEditExpensePermission = false;
 	fetchedHistories: Object = {};
 	selectedOrganization: IOrganization;
+	selectedEmployeeId: string;
 
 	constructor(
 		private route: ActivatedRoute,
@@ -62,26 +57,43 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 
 	async ngOnInit() {
 		this.store.selectedDate$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((date) => {
 				this.selectedDate = date;
-				if (this.selectedEmployeeFromHeader) {
-					this._loadEmployeeRecurringExpense(
-						this.selectedEmployeeFromHeader.id
-					);
+				if (this.selectedOrganization) {
+					this._loadEmployeeRecurringExpense();
 				}
 			});
-
-		this.store.userRolePermissions$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this.hasEditExpensePermission = this.store.hasPermission(
-					PermissionsEnum.ORG_EXPENSES_EDIT
-				);
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeOrganization$ = this.store.selectedOrganization$;
+		storeEmployee$
+			.pipe(
+				filter((employee) => !!employee),
+				debounceTime(200),
+				withLatestFrom(storeOrganization$),
+				untilDestroyed(this)
+			)
+			.subscribe(([employee]) => {
+				if (employee && this.selectedOrganization) {
+					this.selectedEmployeeId = employee.id;
+				}
 			});
-
+		storeOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				debounceTime(200),
+				withLatestFrom(storeEmployee$),
+				untilDestroyed(this)
+			)
+			.subscribe(([organization, employee]) => {
+				this.selectedEmployeeId = employee ? employee.id : null;
+				if (organization) {
+					this.selectedOrganization = organization;
+					this._loadEmployeeRecurringExpense();
+				}
+			});
 		this.route.params
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(async (params) => {
 				if (params.hasOwnProperty('id')) {
 					const id = params.id;
@@ -92,9 +104,7 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 						)
 						.pipe(first())
 						.toPromise();
-
 					this.selectedEmployee = items[0];
-
 					this.store.selectedEmployee = {
 						id: items[0].id,
 						firstName: items[0].user.firstName,
@@ -103,41 +113,11 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 						tags: items[0].user.tags,
 						skills: items[0].skills
 					};
-
 					const checkUsername = this.selectedEmployee.user.username;
 					this.employeeName = checkUsername
 						? checkUsername
 						: 'Employee';
 				}
-
-				this.store.selectedEmployee$
-					.pipe(
-						distinctUntilChanged(),
-						debounceTime(300),
-						takeUntil(this._ngDestroy$)
-					)
-					.subscribe((employee) => {
-						if (this.selectedOrganization) {
-							if (employee && typeof employee.id === 'string') {
-								this.selectedEmployeeFromHeader = employee;
-								this._loadEmployeeRecurringExpense(employee.id);
-							} else {
-								this._loadEmployeeRecurringExpense(null);
-							}
-						}
-					});
-
-				this.store.selectedOrganization$
-					.pipe(takeUntil(this._ngDestroy$))
-					.subscribe((organization) => {
-						if (organization) {
-							this.selectedOrganization = organization;
-							this.selectedEmployeeFromHeader = null;
-							this.loadEmployees();
-
-							this.store.selectedEmployee = this.selectedEmployeeFromHeader;
-						}
-					});
 			});
 	}
 
@@ -174,20 +154,21 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 				const employeeRecurringExpense = this._recurringExpenseMutationResultTransform(
 					result
 				);
-
-				await this.employeeRecurringExpenseService.create(
-					employeeRecurringExpense
-				);
-				this.toastrService.primary(
-					this.employeeName + ' recurring expense set.',
-					'Success'
-				);
-
-				this._loadEmployeeRecurringExpense(
-					!this.selectedEmployeeFromHeader
-						? null
-						: this.selectedEmployeeFromHeader.id
-				);
+				await this.employeeRecurringExpenseService
+					.create(employeeRecurringExpense)
+					.then(() => {
+						this.toastrService.primary(
+							this.employeeName + ' recurring expense set.',
+							'Success'
+						);
+						this._loadEmployeeRecurringExpense();
+					})
+					.catch((error) => {
+						this.toastrService.danger(
+							error.error.message || error.message,
+							'Error'
+						);
+					});
 			} catch (error) {
 				this.toastrService.danger(
 					error.error.message || error.message,
@@ -217,24 +198,22 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 				const employeeRecurringExpense = this._recurringExpenseMutationResultTransform(
 					result
 				);
-				await this.employeeRecurringExpenseService.update(
-					id,
-					employeeRecurringExpense
-				);
-				this.selectedRowIndexToShow = null;
-				this._loadEmployeeRecurringExpense();
-
-				this.toastrService.primary(
-					this.employeeName + ' recurring expense edited.',
-					'Success'
-				);
-				setTimeout(() => {
-					this._loadEmployeeRecurringExpense(
-						this.selectedEmployeeFromHeader === null
-							? null
-							: employeeRecurringExpense.employeeId
-					);
-				}, 300);
+				this.employeeRecurringExpenseService
+					.update(id, employeeRecurringExpense)
+					.then(() => {
+						this.selectedRowIndexToShow = null;
+						this.toastrService.primary(
+							this.employeeName + ' recurring expense edited.',
+							'Success'
+						);
+						this._loadEmployeeRecurringExpense();
+					})
+					.catch((error) => {
+						this.toastrService.danger(
+							error.error.message || error.message,
+							'Error'
+						);
+					});
 			} catch (error) {
 				this.toastrService.danger(
 					error.error.message || error.message,
@@ -268,24 +247,26 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 		if (result) {
 			try {
 				const id = selectedExpense.id;
-				await this.employeeRecurringExpenseService.delete(id, {
-					deletionType: result,
-					month: this.selectedDate.getMonth(),
-					year: this.selectedDate.getFullYear()
-				});
-				this.selectedRowIndexToShow = null;
-
-				this.toastrService.primary(
-					this.employeeName + ' recurring expense deleted.',
-					'Success'
-				);
-				setTimeout(() => {
-					this._loadEmployeeRecurringExpense(
-						this.selectedEmployeeFromHeader === null
-							? null
-							: selectedExpense.employeeId
-					);
-				}, 100);
+				this.employeeRecurringExpenseService
+					.delete(id, {
+						deletionType: result,
+						month: this.selectedDate.getMonth(),
+						year: this.selectedDate.getFullYear()
+					})
+					.then(() => {
+						this.selectedRowIndexToShow = null;
+						this.toastrService.primary(
+							this.employeeName + ' recurring expense deleted.',
+							'Success'
+						);
+						this._loadEmployeeRecurringExpense();
+					})
+					.catch((error) => {
+						this.toastrService.danger(
+							error.error.message || error.message,
+							'Error'
+						);
+					});
 			} catch (error) {
 				this.toastrService.danger(
 					error.error.message || error.message,
@@ -319,37 +300,36 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 		};
 	}
 
-	private async _loadEmployeeRecurringExpense(employeeId?: string) {
+	private async _loadEmployeeRecurringExpense() {
+		if (!this.selectedOrganization) return;
 		const { id: organizationId, tenantId } = this.selectedOrganization;
 		this.fetchedHistories = {};
-		if (employeeId) {
+		if (this.selectedEmployeeId) {
 			this.selectedEmployeeRecurringExpense = (
-				await this.employeeRecurringExpenseService.getAllByMonth([], {
-					employeeId,
-					year: this.selectedDate.getFullYear(),
-					month: this.selectedDate.getMonth(),
-					organizationId,
-					tenantId
-				})
+				await this.employeeRecurringExpenseService.getAllByMonth(
+					['employee', 'employee.user'],
+					{
+						employeeId: this.selectedEmployeeId,
+						year: this.selectedDate.getFullYear(),
+						month: this.selectedDate.getMonth(),
+						organizationId,
+						tenantId
+					}
+				)
 			).items;
 		} else {
 			this.selectedEmployeeRecurringExpense = (
-				await this.employeeRecurringExpenseService.getAll([], {
-					organizationId,
-					tenantId
-				})
+				await this.employeeRecurringExpenseService.getAll(
+					['employee', 'employee.user'],
+					{
+						organizationId,
+						tenantId
+					}
+				)
 			).items;
 		}
 	}
-	async loadEmployees() {
-		this.employeeList = [];
-		const { id: organizationId, tenantId } = this.selectedOrganization;
-		const { items } = await this.employeeService
-			.getAll(['user'], { organizationId, tenantId })
-			.pipe(first())
-			.toPromise();
-		this.employeeList = items;
-	}
+
 	public async fetchHistory(i: number) {
 		this.fetchedHistories[i] = (
 			await this.employeeRecurringExpenseService.getAll(
@@ -359,16 +339,12 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 						.selectedEmployeeRecurringExpense[i]
 						.parentRecurringExpenseId
 				},
-				{
-					startDate: 'ASC'
-				}
+				{ startDate: 'ASC' }
 			)
 		).items;
 	}
 
 	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
 		clearTimeout();
 	}
 }

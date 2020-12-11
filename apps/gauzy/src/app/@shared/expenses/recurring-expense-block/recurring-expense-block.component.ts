@@ -15,13 +15,11 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 	templateUrl: './recurring-expense-block.component.html',
 	styleUrls: ['./recurring-expense-block.component.scss']
 })
-export class RecurringExpenseBlockComponent extends TranslationBaseComponent
+export class RecurringExpenseBlockComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	@Input()
 	recurringExpense: IRecurringExpenseModel;
-
-	@Input()
-	employees: IEmployee[];
 
 	@Input()
 	splitExpense?: boolean;
@@ -50,9 +48,7 @@ export class RecurringExpenseBlockComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
-		if (this.recurringExpense && this.employees) {
-			this.getEmployee();
-		}
+		this.currentEmployee = this.recurringExpense.employee;
 	}
 
 	emitEdit() {
@@ -73,11 +69,7 @@ export class RecurringExpenseBlockComponent extends TranslationBaseComponent
 			this.showMenu = false;
 		}
 	}
-	getEmployee() {
-		this.currentEmployee = this.employees.find(
-			(item) => item.id === this.recurringExpense.employeeId
-		);
-	}
+
 	getStartDate() {
 		return this.recurringExpense && this.selectedOrganization
 			? moment(this.recurringExpense.startDate).format(

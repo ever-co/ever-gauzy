@@ -1,4 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IEmployee } from './employee.model';
 
 export interface IRecurringExpenseModel
 	extends IBasePerTenantAndOrganizationEntityModel {
@@ -15,6 +16,7 @@ export interface IRecurringExpenseModel
 	currency: string;
 	parentRecurringExpenseId?: string;
 	employeeId?: string;
+	employee?: IEmployee;
 }
 
 export interface IRecurringExpenseByMonthFindInput {
