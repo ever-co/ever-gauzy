@@ -84,7 +84,8 @@
 		"VALIDATED": "Validated",
 		"APPROVE": "Approve",
 		"DENY": "Deny",
-		"PAYMENTS": "Payments"
+		"PAYMENTS": "Payments",
+		"NOTE": "Note"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",
@@ -2061,6 +2062,13 @@
 			"NO_PAYMENTS_RECORDED": "No payments recorded",
 			"LEFT_TO_PAY": "Left to pay",
 			"PAYMENT_METHOD": "Payment Method"
+		},
+		"INTERNAL_NOTE": {
+			"NOTE_SAVED": "Internal Note Saved",
+			"ADD_INTERNAL_NOTE": "Add Internal Note",
+			"ADD_NOTE": "Add note",
+			"NOTE": "Note",
+			"INTERNAL_NOTE": "Internal Note"
 		}
 	},
 	"PAYMENTS_PAGE": {

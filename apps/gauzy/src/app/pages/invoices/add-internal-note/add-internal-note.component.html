@@ -1,0 +1,36 @@
+<nb-card class="add-internal-note">
+	<nb-card-header>
+		<h5>
+			{{ 'INVOICES_PAGE.INTERNAL_NOTE.ADD_INTERNAL_NOTE' | translate }}
+		</h5>
+	</nb-card-header>
+	<nb-card-body>
+		<form [formGroup]="form" *ngIf="form">
+			<div class="row">
+				<div class="form-group col-12">
+					<label for="note" class="label">{{
+						'INVOICES_PAGE.INTERNAL_NOTE.NOTE' | translate
+					}}</label>
+					<textarea
+						nbInput
+						placeholder="{{
+							'INVOICES_PAGE.INTERNAL_NOTE.ADD_NOTE' | translate
+						}}"
+						id="note"
+						formControlName="internalNote"
+						class="internal-note-input"
+						fullWidth
+					></textarea>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button status="danger" class="mr-3" nbButton (click)="cancel()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button *ngIf="form" (click)="addNote()" status="success" nbButton>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

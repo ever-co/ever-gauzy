@@ -33,6 +33,7 @@ export interface IInvoice extends IBasePerTenantAndOrganizationEntityModel {
 	payments?: IPayment[];
 	isAccepted?: boolean;
 	historyRecords?: IInvoiceEstimateHistory[];
+	internalNote?: string;
 }
 
 export interface IInvoiceCreateInput
@@ -64,6 +65,7 @@ export interface IInvoiceCreateInput
 
 export interface IInvoiceUpdateInput extends IInvoiceCreateInput {
 	id?: string;
+	internalNote?: string;
 }
 export interface IInvoiceFindInput
 	extends IBasePerTenantAndOrganizationEntityModel {

@@ -42,6 +42,7 @@ import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.co
 import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-estimate-history.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
+import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -185,6 +186,11 @@ export class InvoicesComponent
 				title: 'Delete',
 				icon: 'archive-outline',
 				permission: PermissionsEnum.INVOICES_EDIT
+			},
+			{
+				title: 'Note',
+				icon: 'book-open-outline',
+				permission: PermissionsEnum.INVOICES_EDIT
 			}
 		];
 
@@ -240,6 +246,7 @@ export class InvoicesComponent
 		if (action === 'Email') this.email(this.selectedInvoice);
 		if (action === 'Delete') this.delete(this.selectedInvoice);
 		if (action === 'Payments') this.payments();
+		if (action === 'Note') this.addInternalNote();
 	}
 
 	add() {
@@ -527,6 +534,20 @@ export class InvoicesComponent
 		this.router.navigate([
 			`/pages/accounting/invoices/payments/${this.selectedInvoice.id}`
 		]);
+	}
+
+	addInternalNote() {
+		this.dialogService
+			.open(AddInternalNoteComponent, {
+				context: {
+					invoice: this.selectedInvoice
+				}
+			})
+			.onClose.pipe(untilDestroyed(this))
+			.subscribe(async () => {
+				this.clearItem();
+				await this.loadSettings();
+			});
 	}
 
 	async loadSettings() {
