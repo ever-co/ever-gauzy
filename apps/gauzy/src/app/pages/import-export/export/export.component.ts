@@ -9,7 +9,7 @@ import { filter, takeUntil } from 'rxjs/operators';
 
 export interface IEntityModel {
 	name: string;
-	value: string;
+	value?: string;
 	checked: boolean;
 	isGroup?: boolean;
 	entities?: IEntityModel[];
@@ -253,6 +253,13 @@ export class ExportComponent implements OnInit, OnDestroy {
 				entities: this.getInvoiceEntities()
 			},
 			{
+				name: 'Job',
+				checked: true,
+				isGroup: true,
+				entities: this.getJobEntities()
+			},
+
+			{
 				name: 'Key Result',
 				value: 'key_result',
 				checked: true,
@@ -306,6 +313,13 @@ export class ExportComponent implements OnInit, OnDestroy {
 				checked: true,
 				isGroup: false,
 				entities: []
+			},
+			{
+				name: 'Report',
+				value: 'report',
+				checked: true,
+				isGroup: true,
+				entities: this.getReportEntities()
 			},
 			{
 				name: 'Request Approval',
@@ -598,7 +612,20 @@ export class ExportComponent implements OnInit, OnDestroy {
 				isGroup: false,
 				entities: []
 			},
-			// { name: 'Employee Award', value: 'employee_award', checked: true, isGroup: false, entities: [] },
+			{
+				name: 'Employee Award',
+				value: 'employee_award',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: 'Employee Proposal Template',
+				value: 'employee_proposal_template',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
 			{
 				name: 'Employee Recurring Expense',
 				value: 'employee_recurring_expense',
@@ -727,6 +754,18 @@ export class ExportComponent implements OnInit, OnDestroy {
 			{
 				name: 'Product Variant Setting',
 				value: 'product_variant_setting',
+				checked: true,
+				isGroup: false,
+				entities: []
+			}
+		];
+	}
+
+	getReportEntities(): IEntityModel[] {
+		return [
+			{
+				name: 'Report Category',
+				value: 'report_category',
 				checked: true,
 				isGroup: false,
 				entities: []
@@ -994,8 +1033,20 @@ export class ExportComponent implements OnInit, OnDestroy {
 				isGroup: false,
 				entities: []
 			},
-			// { name: 'Goal Kpi Template', value: 'goal_kpi_template', checked: true, isGroup: false, entities: [] },
-			// { name: 'Goal Template', value: 'goal_template', checked: true, isGroup: false, entities: [] },
+			{
+				name: 'Goal Kpi Template',
+				value: 'goal_kpi_template',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: 'Goal Template',
+				value: 'goal_template',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
 			{
 				name: 'Goal Time Frame',
 				value: 'goal_time_frame',
@@ -1027,7 +1078,13 @@ export class ExportComponent implements OnInit, OnDestroy {
 
 	getInvoiceEntities(): IEntityModel[] {
 		return [
-			// { name: 'Invoice Estimate History', value: 'invoice_estimate_history', checked: true, isGroup: false, entities: [] },
+			{
+				name: 'Invoice Estimate History',
+				value: 'invoice_estimate_history',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
 			{
 				name: 'Invoice Item',
 				value: 'invoice_item',
@@ -1038,9 +1095,41 @@ export class ExportComponent implements OnInit, OnDestroy {
 		];
 	}
 
+	getJobEntities(): IEntityModel[] {
+		return [
+			{
+				name: 'Job Preset',
+				value: 'job_preset',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: 'Job Search Occupation',
+				value: 'job_search_occupation',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: 'Job Search Category',
+				value: 'job_search_category',
+				checked: true,
+				isGroup: false,
+				entities: []
+			}
+		];
+	}
+
 	getKeyResultEntities(): IEntityModel[] {
 		return [
-			// { name: 'Key Result Template', value: 'key_result_template', checked: true, isGroup: false, entities: [] },
+			{
+				name: 'Key Result Template',
+				value: 'key_result_template',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
 			{
 				name: 'Key Result Update',
 				value: 'key_result_update',
@@ -1065,15 +1154,27 @@ export class ExportComponent implements OnInit, OnDestroy {
 
 	getTimeoffEntities(): IEntityModel[] {
 		return [
-			// { name: 'Time Off Policy Employee', value: 'time_off_policy_employee', checked: true, isGroup: false, entities: [] },
+			{
+				name: 'Time Off Policy Employee',
+				value: 'time_off_policy_employee',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
 			{
 				name: 'Time Off Request',
 				value: 'time_off_request',
 				checked: true,
 				isGroup: false,
 				entities: []
+			},
+			{
+				name: 'Time Off Request Employee',
+				value: 'time_off_request_employee',
+				checked: true,
+				isGroup: false,
+				entities: []
 			}
-			// { name: 'Time Off Request Employee', value: 'time_off_request_employee', checked: true, isGroup: false, entities: [] },
 		];
 	}
 
@@ -1099,9 +1200,21 @@ export class ExportComponent implements OnInit, OnDestroy {
 				checked: true,
 				isGroup: false,
 				entities: []
+			},
+			{
+				name: 'Time Slot Minutes',
+				value: 'time_slot_minutes',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: 'Time Slot Time Logs',
+				value: 'time_slot_time_logs',
+				checked: true,
+				isGroup: false,
+				entities: []
 			}
-			// { name: 'Time Slot Minutes', value: 'time_slot_minutes', checked: true, isGroup: false,  entities: [] },
-			// { name: 'Time Slot Time Logs', value: 'time_slot_time_logs', checked: true, isGroup: false,  entities: [] },
 		];
 	}
 
