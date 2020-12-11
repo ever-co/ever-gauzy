@@ -142,6 +142,12 @@ export class Invoice extends TenantOrganizationBase implements IInvoice {
 	@Column({ nullable: true })
 	organizationContactId?: string;
 
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	internalNote?: string;
+
 	@ApiPropertyOptional({ type: Organization })
 	@ManyToOne((type) => Organization)
 	@JoinColumn()

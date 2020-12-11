@@ -70,6 +70,7 @@ import { BackNavigationModule } from '../../@shared/back-navigation';
 import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-estimate-history.service';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { InvoicePdfComponent } from './invoice-pdf/invoice-pdf.component';
+import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
 
 @NgModule({
 	imports: [
@@ -151,7 +152,8 @@ import { InvoicePdfComponent } from './invoice-pdf/invoice-pdf.component';
 		PaymentMutationComponent,
 		InvoiceApplyTaxDiscountComponent,
 		InvoiceExpensesSelectorComponent,
-		InvoicePdfComponent
+		InvoicePdfComponent,
+		AddInternalNoteComponent
 	],
 	declarations: [
 		InvoicesComponent,
@@ -177,7 +179,8 @@ import { InvoicePdfComponent } from './invoice-pdf/invoice-pdf.component';
 		PaymentMutationComponent,
 		InvoiceApplyTaxDiscountComponent,
 		InvoiceExpensesSelectorComponent,
-		InvoicePdfComponent
+		InvoicePdfComponent,
+		AddInternalNoteComponent
 	]
 })
 export class InvoicesModule {}

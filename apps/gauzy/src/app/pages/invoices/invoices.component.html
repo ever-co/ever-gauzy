@@ -540,6 +540,18 @@
 	<button
 		*ngIf="dataLayoutStyle === 'TABLE'"
 		nbButton
+		status="info"
+		(click)="addInternalNote()"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="book-open-outline"> </nb-icon>
+		{{ 'BUTTONS.NOTE' | translate }}
+	</button>
+	<button
+		*ngIf="dataLayoutStyle === 'TABLE'"
+		nbButton
 		status="danger"
 		(click)="delete(selectedItem)"
 		class="mr-2"
