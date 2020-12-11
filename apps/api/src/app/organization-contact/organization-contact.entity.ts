@@ -50,6 +50,7 @@ export class OrganizationContact
 
 	@ApiProperty({ type: Contact })
 	@ManyToOne(() => Contact, (contact) => contact.organization_contacts, {
+		cascade: true,
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
