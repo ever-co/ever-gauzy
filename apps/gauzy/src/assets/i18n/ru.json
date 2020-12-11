@@ -2077,7 +2077,8 @@
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Выбрать сотрудника",
 		"SELECT_A_DATE": "Выберите дату",
-		"SELECT_AN_ORGANIZATION": "Выберите организацию"
+		"SELECT_AN_ORGANIZATION": "Выберите организацию",
+		"SELECT_PROJECT": "Выбрать проект"
 	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "404 страница не найдена",
