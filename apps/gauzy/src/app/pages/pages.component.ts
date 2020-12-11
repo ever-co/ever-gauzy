@@ -1,16 +1,17 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import { IOrganization, PermissionsEnum } from '@gauzy/models';
+import { IOrganization, IUser, PermissionsEnum } from '@gauzy/models';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter } from 'rxjs/operators';
 import { Store } from '../@core/services/store.service';
 import { SelectorService } from '../@core/utils/selector.service';
-import { EmployeesService } from '../@core/services';
+import { EmployeesService, UsersService } from '../@core/services';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { ReportService } from './reports/all-report/report.server';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { chain } from 'underscore';
+import { AuthStrategy } from '../@core/auth/auth-strategy.service';
 
 interface GaMenuItem extends NbMenuItem {
 	data: {
@@ -25,7 +26,7 @@ interface GaMenuItem extends NbMenuItem {
 	selector: 'ngx-pages',
 	styleUrls: ['pages.component.scss'],
 	template: `
-		<ngx-one-column-layout *ngIf="!!menu">
+		<ngx-one-column-layout *ngIf="!!menu && user">
 			<nb-menu [items]="menu"></nb-menu>
 			<router-outlet></router-outlet>
 		</ngx-one-column-layout>
@@ -37,7 +38,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 	isAdmin: boolean;
 	isEmployee: boolean;
 	_selectedOrganization: IOrganization;
-
+	user: IUser;
 	menu: NbMenuItem[] = [];
 	reportMenuItems: NbMenuItem[];
 
@@ -48,7 +49,9 @@ export class PagesComponent implements OnInit, OnDestroy {
 		private reportService: ReportService,
 		private selectorService: SelectorService,
 		private router: Router,
-		private ngxPermissionsService: NgxPermissionsService
+		private ngxPermissionsService: NgxPermissionsService,
+		private readonly usersService: UsersService,
+		private readonly authStrategy: AuthStrategy
 	) {}
 
 	getMenuItems(): GaMenuItem[] {
@@ -773,6 +776,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 	}
 
 	async ngOnInit() {
+		this._createEntryPoint();
 		this._applyTranslationOnSmartTable();
 		this.store.selectedOrganization$
 			.pipe(
@@ -792,7 +796,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 						.showOrganizationShortcuts
 				);
 			});
-
 		this.store.userRolePermissions$
 			.pipe(
 				filter((permissions) => permissions.length > 0),
@@ -806,7 +809,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 						.showOrganizationShortcuts
 				);
 			});
-
 		this.router.events
 			.pipe(filter((event) => event instanceof NavigationEnd))
 			.pipe(untilDestroyed(this))
@@ -816,7 +818,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 						.showOrganizationShortcuts
 				);
 			});
-
 		this.reportService.menuItems$
 			.pipe(untilDestroyed(this))
 			.subscribe((menuItems) => {
@@ -844,8 +845,41 @@ export class PagesComponent implements OnInit, OnDestroy {
 						.showOrganizationShortcuts
 				);
 			});
-
 		this.menu = this.getMenuItems();
+	}
+
+	/*
+	 * This is app entry point after login
+	 */
+	private async _createEntryPoint() {
+		const id = this.store.userId;
+		if (!id) return;
+
+		this.user = await this.usersService.getMe([
+			'employee',
+			'role',
+			'role.rolePermissions',
+			'tenant'
+		]);
+
+		this.authStrategy.electronAuthentication({
+			user: this.user,
+			token: this.store.token
+		});
+
+		//When a new user registers & logs in for the first time, he/she does not have tenantId.
+		//In this case, we have to redirect the user to the onboarding page to create their first organization, tenant, role.
+		if (!this.user.tenantId) {
+			this.router.navigate(['/onboarding/tenant']);
+			return;
+		}
+
+		this.store.user = this.user;
+
+		//only enabled permissions assign to logged in user
+		this.store.userRolePermissions = this.user.role.rolePermissions.filter(
+			(permission) => permission.enabled
+		);
 	}
 
 	loadItems(withOrganizationShortcuts: boolean) {
