@@ -57,7 +57,7 @@ export class OrganizationContactService extends TenantAwareCrudService<
 	 */
 	async getOrganizationContactByEmployee(data: any) {
 		const { relations, findInput } = data;
-		const { employeeId, organizationId } = findInput;
+		const { employeeId, organizationId, contactType } = findInput;
 		const { tenantId, id: createdBy } = RequestContext.currentUser();
 
 		const query = this.organizationContactRepository.createQueryBuilder(
@@ -77,15 +77,18 @@ export class OrganizationContactService extends TenantAwareCrudService<
 				}
 			});
 		}
-		query.andWhere(
+		query.where(
 			new Brackets((subQuery) => {
 				subQuery
 					.where('members.id =:employeeId', { employeeId })
-					.orWhere(`${query.alias}.createdBy =:createdBy`, {
+					.orWhere(`${query.alias}.createdBy = :createdBy`, {
 						createdBy
 					});
 			})
 		);
+		query.andWhere(`${query.alias}.contactType = :contactType`, {
+			contactType
+		});
 		if (organizationId) {
 			query.andWhere(`${query.alias}.organizationId = :organizationId`, {
 				organizationId
