@@ -122,6 +122,12 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 			}
 		);
 
+		const org = await this.organizationsService
+			.getById(userOrg[0].organizationId)
+			.pipe(first())
+			.toPromise();
+		this.store.selectedOrganization = org;
+
 		const count = await this.organizationProjectsService.getCount([], {
 			organizationId: userOrg[0].organizationId,
 			tenantId: this.user.tenantId
@@ -134,15 +140,10 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 		if (
 			this.store.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_ORGANIZATION
-			)
+			) &&
+			userOrg.length > 1
 		) {
 			this.showOrganizationsSelector = true;
-		} else {
-			const org = await this.organizationsService
-				.getById(userOrg[0].organizationId)
-				.pipe(first())
-				.toPromise();
-			this.store.selectedOrganization = org;
 		}
 
 		if (
