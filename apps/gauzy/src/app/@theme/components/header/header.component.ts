@@ -53,6 +53,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	user: IUser;
 	@Input() showEmployeesSelector;
 	@Input() showOrganizationsSelector;
+	@Input() showProjectsSelector;
 
 	showDateSelector = true;
 	organizationSelected = false;

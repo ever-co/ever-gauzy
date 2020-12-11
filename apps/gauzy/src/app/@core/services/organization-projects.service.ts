@@ -72,6 +72,22 @@ export class OrganizationProjectsService {
 			.toPromise();
 	}
 
+	getCount(
+		relations: string[],
+		findInput?: IOrganizationProjectsFindInput
+	): Promise<any> {
+		const data = JSON.stringify({ relations, findInput });
+		return this.http
+			.get<{ items: IOrganizationProject[]; total: number }>(
+				`${this.API_URL}/count`,
+				{
+					params: toParams({ data })
+				}
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
 	updateByEmployee(updateInput: IEditEntityByMemberInput): Promise<any> {
 		return this.http
 			.put(`${this.API_URL}/employee`, updateInput)

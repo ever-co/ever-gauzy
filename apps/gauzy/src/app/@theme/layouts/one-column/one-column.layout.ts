@@ -24,6 +24,7 @@ import { PermissionsEnum } from '@gauzy/models';
 import { NO_EMPLOYEE_SELECTED } from '../../components/header/selectors/employee/employee.component';
 import { Router } from '@angular/router';
 import { ElectronService } from 'ngx-electron';
+import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 
 @Component({
 	selector: 'ngx-one-column-layout',
@@ -41,13 +42,15 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 		private store: Store,
 		private directionService: NbLayoutDirectionService,
 		private router: Router,
-		private electronService: ElectronService
+		private electronService: ElectronService,
+		private organizationProjectsService: OrganizationProjectsService
 	) {}
 	@ViewChild(NbLayoutComponent) layout: NbLayoutComponent;
 
 	user: any;
 	showOrganizationsSelector = false;
 	showEmployeesSelector = false;
+	showProjectsSelector = false;
 	loading = true;
 
 	userMenu = [
@@ -111,6 +114,23 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 		);
 		this.store.user = this.user;
 
+		const { items: userOrg } = await this.usersOrganizationsService.getAll(
+			[],
+			{
+				userId: id,
+				tenantId: this.user.tenantId
+			}
+		);
+
+		const count = await this.organizationProjectsService.getCount([], {
+			organizationId: userOrg[0].organizationId,
+			tenantId: this.user.tenantId
+		});
+
+		if (count > 1) {
+			this.showProjectsSelector = true;
+		}
+
 		if (
 			this.store.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_ORGANIZATION
@@ -118,12 +138,6 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 		) {
 			this.showOrganizationsSelector = true;
 		} else {
-			const {
-				items: userOrg
-			} = await this.usersOrganizationsService.getAll([], {
-				userId: id,
-				tenantId: this.user.tenantId
-			});
 			const org = await this.organizationsService
 				.getById(userOrg[0].organizationId)
 				.pipe(first())
