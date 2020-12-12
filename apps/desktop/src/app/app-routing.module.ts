@@ -5,6 +5,7 @@ import { TimeTrackerComponent } from './pages/time-tracker/time-tracker.componen
 import { ScreenCaptureComponent } from './pages/screen-capture/screen-capture.component';
 import { SettingsComponent } from './pages/settings/settings.component';
 import { UpdaterComponent } from './pages/updater/updater.component';
+import { ImageViewerComponent } from './pages/image-viewer/image-viewer.component';
 
 const routes: Routes = [
 	{
@@ -26,6 +27,10 @@ const routes: Routes = [
 	{
 		path: 'updater',
 		component: UpdaterComponent
+	},
+	{
+		path: 'viewer',
+		component: ImageViewerComponent
 	}
 ];
 

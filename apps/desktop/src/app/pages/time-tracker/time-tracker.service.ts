@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import * as moment from 'moment';
 @Injectable({
@@ -141,5 +141,58 @@ export class TimeTrackerService {
 			)
 			.pipe()
 			.toPromise();
+	}
+
+	deleteTimeSlot(values) {
+		const params = this.toParams({
+			ids: [values.timeSlotId],
+			tenantId: values.tenantId
+		});
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`
+		});
+		return this.http
+			.delete(`${values.apiHost}/api/timesheet/time-slot`, {
+				params,
+				headers: headers
+			})
+			.pipe()
+			.toPromise();
+	}
+
+	toParams(query) {
+		let params: HttpParams = new HttpParams();
+		Object.keys(query).forEach((key) => {
+			if (this.isJsObject(query[key])) {
+				params = this.toSubParams(params, key, query[key]);
+			} else {
+				params = params.append(key.toString(), query[key]);
+			}
+		});
+		return params;
+	}
+
+	isJsObject(object: any) {
+		return (
+			object !== null &&
+			object !== undefined &&
+			typeof object === 'object'
+		);
+	}
+
+	toSubParams(params: HttpParams, key: string, object: any) {
+		Object.keys(object).forEach((childKey) => {
+			if (this.isJsObject(object[childKey])) {
+				params = this.toSubParams(
+					params,
+					`${key}[${childKey}]`,
+					object[childKey]
+				);
+			} else {
+				params = params.append(`${key}[${childKey}]`, object[childKey]);
+			}
+		});
+
+		return params;
 	}
 }

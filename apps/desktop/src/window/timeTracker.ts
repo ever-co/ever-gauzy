@@ -13,6 +13,7 @@ export function createTimeTrackerWindow(timeTrackerWindow) {
 		slashes: true,
 		hash: '/time-tracker'
 	});
+	// timeTrackerWindow.webContents.openDevTools();
 
 	timeTrackerWindow.hide();
 	timeTrackerWindow.loadURL(launchPath);

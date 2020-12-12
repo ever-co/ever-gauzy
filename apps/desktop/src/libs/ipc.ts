@@ -150,7 +150,8 @@ export function ipcTimer(
 	setupWindow,
 	timeTrackerWindow,
 	NotificationWindow,
-	SettingWindow
+	SettingWindow,
+	imageView
 ) {
 	const timerHandler = new TimerHandler();
 	ipcMain.on('start_timer', (event, arg) => {
@@ -224,5 +225,14 @@ export function ipcTimer(
 
 	ipcMain.on('save_screen_shoot', (event, arg) => {
 		takeshot(timeTrackerWindow, arg, NotificationWindow);
+	});
+
+	ipcMain.on('show_image', (event, arg) => {
+		imageView.show();
+		imageView.webContents.send('show_image', arg);
+	});
+
+	ipcMain.on('close_image_view', () => {
+		imageView.hide();
 	});
 }
