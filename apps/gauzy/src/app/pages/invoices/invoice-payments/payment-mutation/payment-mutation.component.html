@@ -163,7 +163,15 @@
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-6">
+				<div class="col-sm-12">
+					<ga-currency
+						[formControl]="form.get('currency')"
+						(optionChange)="currencyChanged($event)"
+					></ga-currency>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-12">
 					<div class="form-group">
 						<label for="inputAmount" class="label">
 							<span>{{
@@ -180,28 +188,6 @@
 							id="inputAmount"
 							fullWidth
 						/>
-					</div>
-				</div>
-				<div class="col-sm-6">
-					<div class="form-group">
-						<label for="inputCurrency" class="label">
-							{{
-								'INVOICES_PAGE.INVOICES_SELECT_CURRENCY'
-									| translate
-							}}
-						</label>
-						<nb-select
-							class="d-block"
-							formControlName="currency"
-							fullWidth
-						>
-							<nb-option
-								*ngFor="let currency of currencies"
-								value="{{ currency }}"
-							>
-								{{ currency }}
-							</nb-option>
-						</nb-select>
 					</div>
 				</div>
 			</div>

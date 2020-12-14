@@ -19,6 +19,7 @@ import { EmployeeSelectorsModule } from '../../../@theme/components/header/selec
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
+import { CurrencyModule } from '../../currency/currency.module';
 
 @NgModule({
 	imports: [
@@ -42,7 +43,8 @@ import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-inp
 				useFactory: HttpLoaderFactory,
 				deps: [HttpClient]
 			}
-		})
+		}),
+		CurrencyModule
 	],
 	declarations: [IncomeMutationComponent],
 	entryComponents: [IncomeMutationComponent],

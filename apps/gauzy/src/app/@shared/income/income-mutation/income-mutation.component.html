@@ -1,4 +1,4 @@
-<nb-card class="main">
+<nb-card class="main" *ngIf="form">
 	<nb-card-header class="d-flex">
 		<h5>
 			{{
@@ -13,7 +13,7 @@
 		></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="body">
-		<form [formGroup]="form" *ngIf="form">
+		<form [formGroup]="form">
 			<div class="row employees">
 				<div class="col-sm-12">
 					<label class="label" for="status" [hidden]="income">
@@ -86,9 +86,16 @@
 					</div>
 				</div>
 			</div>
-
 			<div class="row">
-				<div class="col-sm-6">
+				<div class="col-sm-12">
+					<ga-currency
+						[formControl]="form.get('currency')"
+						(optionChange)="currencyChanged($event)"
+					></ga-currency>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-12">
 					<div class="form-group">
 						<label class="label">{{
 							'POP_UPS.AMOUNT' | translate
@@ -112,18 +119,6 @@
 						/>
 					</div>
 				</div>
-				<div class="col-sm-6">
-					<label class="label">{{
-						'FORM.LABELS.CURRENCY' | translate
-					}}</label>
-					<nb-select class="d-block" formControlName="currency">
-						<nb-option
-							*ngFor="let currency of currencies"
-							value="{{ currency }}"
-							>{{ currency }}</nb-option
-						>
-					</nb-select>
-				</div>
 			</div>
 			<div class="row">
 				<div class="col-sm-12">
@@ -137,7 +132,6 @@
 					</div>
 				</div>
 			</div>
-
 			<div class="row">
 				<div class="col">
 					<div class="form-group flex-container">
@@ -158,7 +152,6 @@
 					</div>
 				</div>
 			</div>
-
 			<div class="row">
 				<div class="col">
 					<label class="label">{{
