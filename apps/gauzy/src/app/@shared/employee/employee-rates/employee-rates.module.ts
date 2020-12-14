@@ -14,6 +14,7 @@ import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
 import { EmployeeRatesComponent } from './employee-rates.component';
 import { CandidateStore } from '../../../@core/services/candidate-store.service';
 import { EmployeeStore } from '../../../@core/services/employee-store.service';
+import { CurrencyModule } from '../../currency/currency.module';
 
 @NgModule({
 	imports: [
@@ -33,7 +34,8 @@ import { EmployeeStore } from '../../../@core/services/employee-store.service';
 				useFactory: HttpLoaderFactory,
 				deps: [HttpClient]
 			}
-		})
+		}),
+		CurrencyModule
 	],
 	exports: [EmployeeRatesComponent],
 	declarations: [EmployeeRatesComponent],
