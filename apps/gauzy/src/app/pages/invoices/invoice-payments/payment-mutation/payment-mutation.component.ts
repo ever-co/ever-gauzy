@@ -9,7 +9,8 @@ import {
 	IOrganization,
 	IOrganizationContact,
 	IOrganizationProject,
-	ITag
+	ITag,
+	ICurrency
 } from '@gauzy/models';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
@@ -46,6 +47,7 @@ export class PaymentMutationComponent
 	project: IOrganizationProject;
 	projects: IOrganizationProject[];
 	tags: ITag[] = [];
+
 	get currency() {
 		return this.form.get('currency');
 	}
@@ -58,8 +60,8 @@ export class PaymentMutationComponent
 			} else if (this.currencyString) {
 				this.currency.setValue(this.currencyString);
 			}
+			this.currency.updateValueAndValidity();
 		}
-		this.form.get('currency').disable();
 	}
 
 	initializeForm() {
@@ -68,7 +70,7 @@ export class PaymentMutationComponent
 				'',
 				Validators.compose([Validators.required, Validators.min(1)])
 			],
-			currency: ['', Validators.required],
+			currency: [''],
 			paymentDate: [new Date(), Validators.required],
 			note: ['', Validators.required],
 			paymentMethod: ['', Validators.required],
@@ -191,4 +193,9 @@ export class PaymentMutationComponent
 	cancel() {
 		this.dialogRef.close();
 	}
+
+	/*
+	 * On Changed Currency Event Emitter
+	 */
+	currencyChanged($event: ICurrency) {}
 }

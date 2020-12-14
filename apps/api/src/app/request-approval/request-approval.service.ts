@@ -19,6 +19,7 @@ import { RequestApprovalEmployee } from '../request-approval-employee/request-ap
 import { RequestContext } from '../core/context';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 import { RequestApprovalTeam } from '../request-approval-team/request-approval-team.entity';
+import { environment as env } from '@env-api/environment';
 
 @Injectable()
 export class RequestApprovalService extends CrudService<RequestApproval> {
@@ -40,34 +41,46 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 		filter: FindManyOptions<RequestApproval>,
 		findInput: IRequestApprovalFindInput
 	): Promise<IPagination<IRequestApproval>> {
-		let requestApproval = this.requestApprovalRepository
-			.createQueryBuilder('request_approval')
-			.leftJoinAndSelect(
-				'request_approval.approvalPolicy',
-				'approvalPolicy'
-			)
-			.leftJoinAndSelect(
+		const query = this.requestApprovalRepository.createQueryBuilder(
+			'request_approval'
+		);
+		query.leftJoinAndSelect(
+			`${query.alias}.approvalPolicy`,
+			'approvalPolicy'
+		);
+
+		if (env.database.type === 'sqlite') {
+			query.leftJoinAndSelect(
 				'time_off_request',
 				'time_off_request',
 				'"time_off_request"."id" = "request_approval"."requestId"'
-			)
-			.leftJoinAndSelect(
+			);
+			query.leftJoinAndSelect(
 				'equipment_sharing',
 				'equipment_sharing',
 				'"equipment_sharing"."id" = "request_approval"."requestId"'
 			);
+		} else {
+			query.leftJoinAndSelect(
+				'time_off_request',
+				'time_off_request',
+				'"time_off_request"."id"::"varchar" = "request_approval"."requestId"'
+			);
+			query.leftJoinAndSelect(
+				'equipment_sharing',
+				'equipment_sharing',
+				'"equipment_sharing"."id"::"varchar" = "request_approval"."requestId"'
+			);
+		}
 
 		if (filter.relations && filter.relations.length > 0) {
 			filter.relations.forEach((item) => {
-				requestApproval = requestApproval.leftJoinAndSelect(
-					`request_approval.${item}`,
-					item
-				);
+				query.leftJoinAndSelect(`request_approval.${item}`, item);
 			});
 		}
 
 		const { organizationId, tenantId } = findInput;
-		const [items, total] = await requestApproval
+		const [items, total] = await query
 			.where(
 				new Brackets((sqb) => {
 					sqb.where(

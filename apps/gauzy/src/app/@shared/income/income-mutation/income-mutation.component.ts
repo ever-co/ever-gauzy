@@ -8,34 +8,36 @@ import {
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import {
 	IIncome,
-	OrganizationSelectInput,
 	ITag,
 	IOrganizationContact,
 	ContactType,
-	IOrganization
+	IOrganization,
+	ICurrency,
+	OrganizationSelectInput
 } from '@gauzy/models';
-import { CurrenciesEnum } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
-import { first } from 'rxjs/operators';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { debounceTime, filter, first } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-income-mutation',
 	templateUrl: './income-mutation.component.html',
 	styleUrls: ['./income-mutation.component.scss']
 })
-export class IncomeMutationComponent extends TranslationBaseComponent
+export class IncomeMutationComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
 
 	income?: IIncome;
-	currencies = Object.values(CurrenciesEnum);
 
 	form: FormGroup;
 	notes: AbstractControl;
@@ -94,17 +96,26 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
-		this._initializeForm();
-		this.form.get('currency').disable();
-		this._getOrganizationContacts();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				debounceTime(200),
+				untilDestroyed(this)
+			)
+			.subscribe((organization: IOrganization) => {
+				this.selectedOrganization = organization;
+				this._initializeForm();
+				this._getOrganizationContacts();
+			});
 	}
 
 	private async _getOrganizationContacts() {
 		this.selectedOrganization = this.store.selectedOrganization;
+		const { tenantId } = this.store.user;
 
 		const { items } = await this.organizationContactService.getAll([], {
 			organizationId: this.selectedOrganization.id,
-			tenantId: this.selectedOrganization.tenantId
+			tenantId
 		});
 
 		items.forEach((i) => {
@@ -135,21 +146,25 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 		name: string
 	): Promise<IOrganizationContact> => {
 		try {
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
-					{
-						name: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
-			return this.organizationContactService.create({
-				name,
-				contactType: ContactType.CLIENT,
-				organizationId: this.selectedOrganization.id,
-				tenantId: this.selectedOrganization.id
-			});
+			return this.organizationContactService
+				.create({
+					name,
+					contactType: ContactType.CLIENT,
+					organizationId: this.selectedOrganization.id,
+					tenantId: this.selectedOrganization.id
+				})
+				.then((contact) => {
+					this.toastrService.primary(
+						this.getTranslation(
+							'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
+							{
+								name: name
+							}
+						),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					);
+					return contact;
+				});
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
@@ -189,7 +204,6 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 				isBonus: false,
 				tags: []
 			});
-
 			this._loadDefaultCurrency();
 		}
 		this.notes = this.form.get('notes');
@@ -206,9 +220,16 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 
 		if (orgData && this.currency && !this.currency.value) {
 			this.currency.setValue(orgData.currency);
+			this.currency.updateValueAndValidity();
 		}
 	}
+
 	selectedTagsHandler(currentSelection: ITag[]) {
 		this.form.get('tags').setValue(currentSelection);
 	}
+
+	/*
+	 * On Changed Currency Event Emitter
+	 */
+	currencyChanged($event: ICurrency) {}
 }

@@ -1,9 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import {
-	IPipeline,
-	ComponentLayoutStyleEnum,
-	IRolePermission
-} from '@gauzy/models';
+import { IPipeline, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { PipelinesService } from '../../@core/services/pipelines.service';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
@@ -17,7 +13,6 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { RouterEvent, NavigationEnd, Router } from '@angular/router';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { NgxPermissionsService } from 'ngx-permissions';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -84,25 +79,13 @@ export class PipelinesComponent
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService,
 		private store: Store,
-		private router: Router,
-		private readonly ngxPermissionsService: NgxPermissionsService
+		private router: Router
 	) {
 		super(translateService);
 		this.setView();
 	}
 
 	ngOnInit() {
-		this.store.userRolePermissions$
-			.pipe(
-				filter(
-					(permissions: IRolePermission[]) => permissions.length > 0
-				),
-				untilDestroyed(this)
-			)
-			.subscribe((data) => {
-				const permissions = data.map(({ permission }) => permission);
-				this.ngxPermissionsService.loadPermissions(permissions);
-			});
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
@@ -158,9 +141,10 @@ export class PipelinesComponent
 				this.pipelineData = items;
 				this.pipelines.load(items);
 				this.filterPipelines();
+			})
+			.finally(() => {
+				this.loading = false;
 			});
-
-		this.loading = false;
 	}
 
 	filterPipelines(): void {

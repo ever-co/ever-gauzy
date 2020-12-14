@@ -20,10 +20,10 @@ import {
 	EstimateStatusTypesEnum,
 	InvoiceColumnsEnum,
 	EstimateColumnsEnum,
-	CurrenciesEnum,
 	IOrganizationContact,
 	IInvoiceEstimateHistory,
-	PermissionsEnum
+	PermissionsEnum,
+	ICurrency
 } from '@gauzy/models';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
@@ -71,12 +71,12 @@ export class InvoicesComponent
 	settingsContextMenu: NbMenuItem[];
 	menuArray = [];
 	columns = Object.values(InvoiceColumnsEnum);
-	currencies = Object.values(CurrenciesEnum);
 	form: FormGroup;
 	organizationContacts: IOrganizationContact[];
 	duplicate: boolean;
 	perPage = 10;
 	histories: IInvoiceEstimateHistory[] = [];
+	currency: string = '';
 
 	@Input() isEstimate: boolean;
 
@@ -113,6 +113,8 @@ export class InvoicesComponent
 		}
 		this._applyTranslationOnSmartTable();
 		this.loadSettingsSmartTable();
+		this.initializeForm();
+
 		this.router.events
 			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
@@ -121,7 +123,6 @@ export class InvoicesComponent
 				}
 			});
 
-		this.initializeForm();
 		this.loadMenu();
 		this.loadSettings();
 	}
@@ -858,6 +859,7 @@ export class InvoicesComponent
 		this.smartTableSource.load(this.invoices);
 		this.initializeForm();
 		this.tags = [];
+		this.currency = '';
 	}
 
 	searchContact(term: string, item: any) {
@@ -936,6 +938,11 @@ export class InvoicesComponent
 			this.invoicesTable.grid.dataSet.deselectAll();
 		}
 	}
+
+	/*
+	 * On Changed Currency Event Emitter
+	 */
+	currencyChanged($event: ICurrency) {}
 
 	ngOnDestroy() {}
 }

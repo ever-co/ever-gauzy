@@ -145,7 +145,7 @@ const routes: Routes = [
 						path: 'pipelines',
 						loadChildren: () =>
 							import('./pipelines/pipelines.module').then(
-								({ PipelinesModule }) => PipelinesModule
+								(m) => m.PipelinesModule
 							)
 					}
 				]

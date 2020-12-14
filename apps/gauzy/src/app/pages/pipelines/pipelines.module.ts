@@ -71,10 +71,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 		CardGridModule,
 		ThemeModule,
 		BackNavigationModule,
-		NgxPermissionsModule.forChild({
-			permissionsIsolate: true,
-			rolesIsolate: true
-		})
+		NgxPermissionsModule.forChild()
 	]
 })
 export class PipelinesModule {}

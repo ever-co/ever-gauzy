@@ -6,11 +6,22 @@ import { ProductCategoriesComponent } from './components/manage-product-categori
 import { ProductFormComponent } from './components/edit-inventory-item/product-form.component';
 import { TableInventoryComponent } from './components/table-inventory-items/table-inventory.component';
 import { InventoryVariantFormComponent } from './components/edit-inventory-item-variant/variant-form.component';
+import { PermissionsEnum } from '@gauzy/models';
+import { NgxPermissionsGuard } from 'ngx-permissions';
+
+const ALL_ORG_PERMISSIONS = {
+	permissions: {
+		only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ALL_ORG_EDIT],
+		redirectTo: '/pages/dashboard'
+	}
+};
 
 const routes: Routes = [
 	{
 		path: '',
 		component: InventoryComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: ALL_ORG_PERMISSIONS,
 		children: [
 			{
 				path: '',
@@ -37,11 +48,15 @@ const routes: Routes = [
 	},
 	{
 		path: 'product-types',
-		component: ProductTypesComponent
+		component: ProductTypesComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: ALL_ORG_PERMISSIONS
 	},
 	{
 		path: 'product-categories',
-		component: ProductCategoriesComponent
+		component: ProductCategoriesComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: ALL_ORG_PERMISSIONS
 	}
 ];
 

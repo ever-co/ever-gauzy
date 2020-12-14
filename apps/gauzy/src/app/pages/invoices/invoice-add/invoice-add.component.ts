@@ -4,7 +4,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Store } from '../../../@core/services/store.service';
 import {
-	CurrenciesEnum,
 	IInvoice,
 	IOrganizationContact,
 	IOrganization,
@@ -19,11 +18,11 @@ import {
 	ExpenseTypesEnum,
 	ExpenseStatusesEnum,
 	ContactType,
-	InvoiceStatusTypesEnum
+	InvoiceStatusTypesEnum,
+	OrganizationSelectInput
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
-import { OrganizationSelectInput } from '@gauzy/models';
-import { filter, first } from 'rxjs/operators';
+import { filter, first, tap } from 'rxjs/operators';
 import { InvoicesService } from '../../../@core/services/invoices.service';
 import { InvoiceItemService } from '../../../@core/services/invoice-item.service';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -46,6 +45,7 @@ import { ExpensesService } from '../../../@core/services/expenses.service';
 import { InvoiceExpensesSelectorComponent } from '../table-components/invoice-expense-selector.component';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-invoice-add',
@@ -61,7 +61,6 @@ export class InvoiceAddComponent
 	invoice?: IInvoice;
 	createdInvoice: IInvoice;
 	formInvoiceNumber: number;
-	currencies = Object.values(CurrenciesEnum);
 	invoiceTypes = Object.values(InvoiceTypeEnum);
 	smartTableSource = new LocalDataSource();
 	generatedTask: string;
@@ -126,12 +125,19 @@ export class InvoiceAddComponent
 		if (!this.isEstimate) {
 			this.isEstimate = false;
 		}
-		this._loadOrganizationData();
 		this.initializeForm();
+		this.selectedLanguage = this.translateService.currentLang;
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				tap((organization) => (this.organization = organization)),
+				tap(() => this._loadOrganizationData()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.observableTasks.pipe(untilDestroyed(this)).subscribe((data) => {
 			this.tasks = data;
 		});
-		this.selectedLanguage = this.translateService.currentLang;
 		this.translateService.onLangChange
 			.pipe(untilDestroyed(this))
 			.subscribe((languageEvent) => {
@@ -147,7 +153,7 @@ export class InvoiceAddComponent
 				Validators.compose([Validators.required, Validators.min(1)])
 			],
 			dueDate: [this.getNextMonth(), Validators.required],
-			currency: [{ value: '', disabled: true }, Validators.required],
+			currency: ['', Validators.required],
 			discountValue: [
 				0,
 				Validators.compose([Validators.required, Validators.min(0)])
@@ -693,65 +699,58 @@ export class InvoiceAddComponent
 	}
 
 	private async _loadOrganizationData() {
-		this.store.selectedOrganization$
-			.pipe(
-				filter((organization) => !!organization),
-				untilDestroyed(this)
-			)
-			.subscribe(async (organization) => {
-				if (organization) {
-					this.organization = organization;
-					this.discountAfterTax = organization.discountAfterTax;
-					const { id: organizationId } = organization;
-					const { tenantId } = this.store.user;
+		const { organization } = this;
+		if (!organization) return;
 
-					this.employeeService
-						.getAll(['user'], { organizationId, tenantId })
-						.pipe(untilDestroyed(this))
-						.subscribe(({ items }) => {
-							this.employees = items;
-						});
+		this.discountAfterTax = organization.discountAfterTax;
+		const { id: organizationId } = organization;
+		const { tenantId } = this.store.user;
 
-					const projects = await this.organizationProjectsService.getAll(
-						[],
-						{ organizationId, tenantId }
-					);
-					this.projects = projects.items;
-
-					const orgData = await this.organizationsService
-						.getById(organization.id, [
-							OrganizationSelectInput.currency
-						])
-						.pipe(first())
-						.toPromise();
-					if (orgData && this.currency && !this.currency.value) {
-						this.currency.setValue(orgData.currency);
-					}
-
-					const contacts = await this.organizationContactService.getAll(
-						['projects'],
-						{ organizationId, tenantId }
-					);
-					this.organizationContacts = contacts.items;
-
-					const products = await this.productService.getAll(
-						[],
-						{ organizationId, tenantId },
-						this.selectedLanguage
-					);
-					this.products = products.items;
-
-					const expenses = await this.expensesService.getAll([], {
-						typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,
-						organizationId,
-						tenantId
-					});
-					this.expenses = expenses.items;
-
-					this.createInvoiceNumber();
-					this._loadTasks();
-				}
+		this.employeeService
+			.getAll(['user'], { organizationId, tenantId })
+			.pipe(untilDestroyed(this))
+			.subscribe(({ items }) => {
+				this.employees = items;
 			});
+
+		const projects = await this.organizationProjectsService.getAll([], {
+			organizationId,
+			tenantId
+		});
+		this.projects = projects.items;
+
+		const contacts = await this.organizationContactService.getAll(
+			['projects'],
+			{ organizationId, tenantId }
+		);
+		this.organizationContacts = contacts.items;
+
+		const products = await this.productService.getAll(
+			[],
+			{ organizationId, tenantId },
+			this.selectedLanguage
+		);
+		this.products = products.items;
+
+		const orgData = await this.organizationsService
+			.getById(organization.id, [OrganizationSelectInput.currency])
+			.pipe(first())
+			.toPromise();
+
+		if (orgData && this.currency && !this.currency.value) {
+			this.currency.setValue(orgData.currency);
+			this.currency.updateValueAndValidity();
+		}
+
+		const expenses = await this.expensesService.getAll([], {
+			typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,
+			organizationId,
+			tenantId
+		});
+		this.expenses = expenses.items;
+
+		this.createInvoiceNumber();
+		this._loadTasks();
 	}
 
 	onTypeChange($event) {
@@ -1036,7 +1035,7 @@ export class InvoiceAddComponent
 		this.calculateTotal();
 	}
 
-	async onCurrencyChange() {
+	async onCurrencyChange($event) {
 		const tableData = await this.smartTableSource.getAll();
 		this.smartTableSource.load(tableData);
 	}

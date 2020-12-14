@@ -71,6 +71,7 @@ import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-esti
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { InvoicePdfComponent } from './invoice-pdf/invoice-pdf.component';
 import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
+import { CurrencyModule } from '../../@shared/currency/currency.module';
 
 @NgModule({
 	imports: [
@@ -113,7 +114,8 @@ import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.
 				deps: [HttpClient]
 			}
 		}),
-		NgxPermissionsModule.forChild()
+		NgxPermissionsModule.forChild(),
+		CurrencyModule
 	],
 	providers: [
 		InvoicesService,

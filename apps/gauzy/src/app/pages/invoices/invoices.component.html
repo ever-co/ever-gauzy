@@ -78,7 +78,7 @@
 			<nb-tab tabTitle="Search" tabId="search">
 				<form [formGroup]="form">
 					<div class="row">
-						<div class="col-sm-3">
+						<div class="col-sm-4">
 							<div class="form-group">
 								<label for="inputInvoiceNumber" class="label">
 									<span *ngIf="!isEstimate">{{
@@ -116,7 +116,7 @@
 								/>
 							</div>
 						</div>
-						<div class="col-sm-3">
+						<div class="col-sm-4">
 							<div class="form-group">
 								<label
 									for="inputOrganizationContact"
@@ -154,7 +154,7 @@
 						</div>
 					</div>
 					<div class="row">
-						<div class="col-sm-3">
+						<div class="col-sm-4">
 							<div class="form-group">
 								<label for="inputInvoiceDate" class="label">
 									<span *ngIf="!isEstimate">{{
@@ -199,7 +199,7 @@
 								></nb-datepicker>
 							</div>
 						</div>
-						<div class="col-sm-3">
+						<div class="col-sm-4">
 							<div class="form-group">
 								<label for="inputDueDate" class="label">{{
 									'INVOICES_PAGE.INVOICES_SELECT_DUE_DATE'
@@ -221,7 +221,7 @@
 						</div>
 					</div>
 					<div class="row">
-						<div class="col-sm-3">
+						<div class="col-sm-4">
 							<div class="form-group">
 								<label for="inputTotalValue" class="label">
 									{{
@@ -240,34 +240,19 @@
 								/>
 							</div>
 						</div>
-						<div class="col-sm-3">
+						<div class="col-sm-4">
 							<div class="form-group">
-								<label for="inputCurrency" class="label">
-									{{
-										'INVOICES_PAGE.INVOICES_SELECT_CURRENCY'
-											| translate
-									}}
-								</label>
-								<nb-select
-									class="d-block"
-									formControlName="currency"
-									placeholder="{{
-										'INVOICES_PAGE.INVOICES_SELECT_CURRENCY'
-											| translate
-									}}"
-									fullWidth
+								<ga-currency
+									[(ngModel)]="currency"
+									[formControl]="form.get('currency')"
+									(optionChange)="currencyChanged($event)"
 								>
-									<nb-option
-										*ngFor="let currency of currencies"
-										value="{{ currency }}"
-										>{{ currency }}</nb-option
-									>
-								</nb-select>
+								</ga-currency>
 							</div>
 						</div>
 					</div>
 					<div class="row">
-						<div class="col-sm-3">
+						<div class="col-sm-4">
 							<div class="form-group">
 								<label for="inputStatus" class="label">
 									{{ 'INVOICES_PAGE.STATUS' | translate }}
@@ -310,7 +295,7 @@
 								</nb-select>
 							</div>
 						</div>
-						<div class="col-sm-3">
+						<div class="col-sm-4">
 							<ga-tags-color-input
 								[selectedTags]="tags"
 								(selectedTagsEvent)="selectedTagsEvent($event)"
@@ -320,7 +305,7 @@
 						</div>
 					</div>
 					<div class="row">
-						<div class="col-sm-3">
+						<div class="col-sm-4">
 							<button
 								class="mr-3"
 								(click)="search()"
@@ -330,7 +315,7 @@
 								{{ 'BUTTONS.SEARCH' | translate }}
 							</button>
 						</div>
-						<div class="col-sm-3">
+						<div class="col-sm-4">
 							<button
 								class="mr-3"
 								(click)="reset()"
