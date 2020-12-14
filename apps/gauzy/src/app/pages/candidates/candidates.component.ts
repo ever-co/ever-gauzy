@@ -3,8 +3,7 @@ import {
 	InvitationTypeEnum,
 	ComponentLayoutStyleEnum,
 	IOrganization,
-	ICandidateViewModel,
-	IRolePermission
+	ICandidateViewModel
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
@@ -29,7 +28,6 @@ import { ArchiveConfirmationComponent } from '../../@shared/user/forms/archive-c
 import { CandidateActionConfirmationComponent } from '../../@shared/user/forms/candidate-action-confirmation/candidate-action-confirmation.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { NgxPermissionsService } from 'ngx-permissions';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -70,25 +68,13 @@ export class CandidatesComponent
 		private router: Router,
 		private route: ActivatedRoute,
 		private translate: TranslateService,
-		private errorHandler: ErrorHandlingService,
-		private ngxPermissionsService: NgxPermissionsService
+		private errorHandler: ErrorHandlingService
 	) {
 		super(translate);
 		this.setView();
 	}
 
 	ngOnInit() {
-		this.store.userRolePermissions$
-			.pipe(
-				filter(
-					(permissions: IRolePermission[]) => permissions.length > 0
-				),
-				untilDestroyed(this)
-			)
-			.subscribe((data) => {
-				const permissions = data.map(({ permission }) => permission);
-				this.ngxPermissionsService.loadPermissions(permissions);
-			});
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),

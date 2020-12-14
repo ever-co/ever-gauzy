@@ -22,19 +22,41 @@ import { CandidateStatisticComponent } from './candidate-statistic/candidate-sta
 import { InterviewCalendarComponent } from './manage-candidate-interviews/interview-calendar/interview-calendar.component';
 import { InterviewPanelComponent } from './manage-candidate-interviews/interview-panel/interview-panel.component';
 import { InterviewCriterionsComponent } from './manage-candidate-interviews/interview-criterions/interview-criterions.component';
+import { NgxPermissionsGuard } from 'ngx-permissions';
 
 const routes: Routes = [
 	{
 		path: '',
-		component: CandidatesComponent
+		component: CandidatesComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: {
+			permissions: {
+				only: [PermissionsEnum.ORG_CANDIDATES_VIEW],
+				redirectTo: '/pages/dashboard'
+			}
+		}
 	},
 	{
 		path: 'edit/:id',
-		component: EditCandidateComponent
+		component: EditCandidateComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: {
+			permissions: {
+				only: [PermissionsEnum.ORG_CANDIDATES_EDIT],
+				redirectTo: '/pages/dashboard'
+			}
+		}
 	},
 	{
 		path: 'edit/:id/profile',
 		component: EditCandidateProfileComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: {
+			permissions: {
+				only: [PermissionsEnum.ORG_CANDIDATES_EDIT],
+				redirectTo: '/pages/dashboard'
+			}
+		},
 		children: [
 			{
 				path: '',
@@ -101,6 +123,13 @@ const routes: Routes = [
 	{
 		path: 'interviews',
 		component: ManageCandidateInterviewsComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: {
+			permissions: {
+				only: [PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT],
+				redirectTo: '/pages/dashboard'
+			}
+		},
 		children: [
 			{
 				path: '',
@@ -123,7 +152,14 @@ const routes: Routes = [
 	},
 	{
 		path: 'statistic',
-		component: CandidateStatisticComponent
+		component: CandidateStatisticComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: {
+			permissions: {
+				only: [PermissionsEnum.ORG_CANDIDATES_VIEW],
+				redirectTo: '/pages/dashboard'
+			}
+		}
 	}
 ];
 
