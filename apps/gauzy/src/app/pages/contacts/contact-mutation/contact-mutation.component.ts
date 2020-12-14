@@ -21,7 +21,11 @@ import { ErrorHandlingService } from '../../../@core/services/error-handling.ser
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { Store } from '../../../@core/services/store.service';
 import { LocationFormComponent } from '../../../@shared/forms/location';
+import { EmployeesService } from '../../../@core/services/employees.service';
+import { debounceTime, filter, first, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-contact-mutation',
 	templateUrl: './contact-mutation.component.html',
@@ -30,22 +34,14 @@ import { LocationFormComponent } from '../../../@shared/forms/location';
 export class ContactMutationComponent
 	extends TranslationBaseComponent
 	implements OnInit {
-	@Input()
-	employees: IEmployee[];
-	@Input()
-	organizationId: string;
-	@Input()
-	organizationContact?: any;
-	@Input()
-	projectsWithoutOrganizationContact: IOrganizationProject[];
+	@Input() organizationContact?: any;
+	@Input() projectsWithoutOrganizationContact: IOrganizationProject[];
 	@Input() isGridEdit: boolean;
-	@Input()
-	contactType: string;
-	@Input()
-	organization: IOrganization;
+	@Input() contactType: string;
 
 	@Output()
 	canceled = new EventEmitter();
+
 	@Output()
 	addOrEditOrganizationContact = new EventEmitter();
 
@@ -65,6 +61,9 @@ export class ContactMutationComponent
 	hoverState: boolean;
 	country: string;
 	projects: IOrganizationProject[] = [];
+	employees: IEmployee[] = [];
+	organizationId: string;
+	organization: IOrganization;
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -72,13 +71,29 @@ export class ContactMutationComponent
 		private organizationProjectsService: OrganizationProjectsService,
 		private readonly toastrService: NbToastrService,
 		readonly translateService: TranslateService,
-		private errorHandler: ErrorHandlingService
+		private errorHandler: ErrorHandlingService,
+		private readonly employeesService: EmployeesService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
-		this._initializeForm();
+		const storeOrganization$ = this.store.selectedOrganization$;
+		storeOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				debounceTime(200),
+				tap((organization) => {
+					this.organization = organization;
+					this.organizationId = organization.id;
+					this._initializeForm();
+					this._getProjects();
+					this._getEmployees();
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
 		this.allProjects = (
 			this.projectsWithoutOrganizationContact || []
 		).concat(
@@ -91,14 +106,25 @@ export class ContactMutationComponent
 				(member) => member.id
 			);
 		}
-		this._getProjects();
 		this.defaultSelectedType = this.contactType;
+	}
+
+	private async _getEmployees() {
+		const { tenantId } = this.store.user;
+		const { organizationId } = this;
+		const { items } = await this.employeesService
+			.getAll(['user'], {
+				organizationId,
+				tenantId
+			})
+			.pipe(first())
+			.toPromise();
+		this.employees = items;
 	}
 
 	private async _getProjects() {
 		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-		this.organizationId = organizationId;
+		const { organizationId } = this;
 		const { items } = await this.organizationProjectsService.getAll([], {
 			organizationId,
 			tenantId

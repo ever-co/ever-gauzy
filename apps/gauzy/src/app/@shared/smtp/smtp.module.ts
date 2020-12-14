@@ -10,14 +10,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SMTPComponent } from './smtp.component';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { CustomSmtpService } from '../../@core/services/custom-smtp.service';
-import { ThemeModule } from '../../@theme/theme.module';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
-
+import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
 @NgModule({
 	imports: [
 		FormsModule,

@@ -1,4 +1,4 @@
-import { ThemeModule } from '../../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import {
@@ -20,12 +20,7 @@ import { OrganizationDepartmentsService } from '../../../@core/services/organiza
 import { RemoveLodashModule } from '../../remove-lodash/remove-lodash.module';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { OrganizationsStepFormModule } from '../organizations-step-form/organizations-step-form.module';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
 
 @NgModule({
 	imports: [

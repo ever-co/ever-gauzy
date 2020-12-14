@@ -281,6 +281,10 @@ export class ProjectsComponent
 					type: 'custom',
 					renderComponent: PictureNameTagsComponent
 				},
+				projectUrl: {
+					title: 'Project Url',
+					type: 'text'
+				},
 				organizationContact: {
 					title: this.getTranslation(
 						'ORGANIZATIONS_PAGE.EDIT.CONTACT'

@@ -279,7 +279,7 @@ export class ProposalsComponent
 				valueDate: {
 					title: this.getTranslation('SM_TABLE.DATE'),
 					type: 'custom',
-					width: '25%',
+					width: '10%',
 					renderComponent: DateViewComponent,
 					filter: false
 				},

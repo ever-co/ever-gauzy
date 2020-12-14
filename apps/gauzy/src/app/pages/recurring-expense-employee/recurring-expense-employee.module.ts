@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { ThemeModule } from '../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -10,14 +10,10 @@ import {
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { RecurringExpensesEmployeeRoutingModule } from './recurring-expense-employee-routing.module';
 import { RecurringExpensesEmployeeComponent } from './recurring-expense-employee.component';
 import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
+import { NgxPermissionsModule } from 'ngx-permissions';
 
 @NgModule({
 	imports: [
@@ -36,7 +32,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 				useFactory: HttpLoaderFactory,
 				deps: [HttpClient]
 			}
-		})
+		}),
+		NgxPermissionsModule.forChild()
 	],
 	declarations: [RecurringExpensesEmployeeComponent],
 	entryComponents: []

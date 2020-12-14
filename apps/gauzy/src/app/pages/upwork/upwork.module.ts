@@ -19,7 +19,6 @@ import {
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { UpworkAuthorizeComponent } from './components/upwork-authorize/upwork-authorize.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TransactionsComponent } from './components/transactions/transactions.component';
@@ -30,10 +29,8 @@ import { SyncDataSelectionComponent } from './components/sync-data-selection/syn
 import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
 import { ReportsComponent } from './components/reports/reports.component';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
+import { HttpLoaderFactory } from '../../@theme/theme.module';
 
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
 @NgModule({
 	declarations: [
 		UpworkComponent,

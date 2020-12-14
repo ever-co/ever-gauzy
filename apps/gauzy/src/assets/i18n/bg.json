@@ -81,7 +81,11 @@
 		"SCHEDULES": "Schedules",
 		"YES_HIDE_ALL_JOBS": "Yes, Hide All Jobs",
 		"VALIDATE": "Validate",
-		"VALIDATED": "Validated"
+		"VALIDATED": "Validated",
+		"APPROVE": "Approve",
+		"DENY": "Deny",
+		"PAYMENTS": "Payments",
+		"NOTE": "Note"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -269,6 +273,17 @@
 			"DISCOUNT_AFTER_TAX": "Discount after tax",
 			"APPLY_DISCOUNT_AFTER_TAX_FOR_INVOICES_AND_ESTIMATES": "Apply discount after tax for invoices and estimates",
 			"FIND_ADDRESS": "Find Address",
+			"LINKEDIN": "LinkedIn",
+			"FACEBOOK": "Facebook",
+			"INSTAGRAM": "Instagram",
+			"TWITTER": "Twitter",
+			"GITHUB": "Github",
+			"GITLAB": "Gitlab",
+			"UPWORK": "Upwork",
+			"PROJECT_URL": "Project URL",
+			"CLIENTS": "Клиенти",
+			"IS_PROJECT_OPEN_SOURCE": "Is Project Open-Source",
+			"OPEN_SOURCE_PROJECT_URL": "Open-Source Project URL",
 			"COORDINATE": {
 				"TITLE": "COORDINATES",
 				"LATITUDE": "Latitude",
@@ -304,8 +319,8 @@
 			"ADD_TECHNOLOGY": "Add technology",
 			"ADD_EXPENSE_CATEGORY": "Add expense category",
 			"CONTACTS": "Contacts",
-			"START_DATE_PROJECT": "Начало на проекта (опция)",
-			"END_DATE_PROJECT": "Край на проекта (опция)",
+			"START_DATE_PROJECT": "Project Start Date",
+			"END_DATE_PROJECT": "Project End Date",
 			"TEAM_NAME": "Име на отбора",
 			"ADD_REMOVE_MEMBERS": "Добавяне или премахване на членове",
 			"ADD_REMOVE_MANAGERS": "Add or Remove Team Managers",
@@ -368,6 +383,17 @@
 			"OWNER": "Owner",
 			"TASK_VIEW_MODE": "Task view mode",
 			"SELECT_STATUS": "Select Status",
+			"LINKEDIN": "LinkedIn",
+			"FACEBOOK": "Facebook",
+			"INSTAGRAM": "Instagram",
+			"TWITTER": "Twitter",
+			"GITHUB": "Github",
+			"GITLAB": "Gitlab",
+			"UPWORK": "Upwork",
+			"STATUS": "Статус",
+			"INVOICE_NUMBER": "Invoice Number",
+			"PROJECT_URL": "Project URL",
+			"CLIENTS": "Клиенти",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -599,6 +625,7 @@
 		"TASKS_SETTINGS": "Настройки",
 		"INVOICES": "Invoices",
 		"ORGANIZATION": "Organization",
+		"TENANT": "Tenant",
 		"RECURRING_INVOICES": "Invoices Recurring",
 		"INVOICES_RECEIVED": "Invoices Received",
 		"ESTIMATES_RECEIVED": "Estimates Received",
@@ -842,7 +869,16 @@
 			"RATES": "Rates",
 			"PROJECTS": "Проекти",
 			"CONTACTS": "Contacts",
-			"HIRING": "Hiring"
+			"HIRING": "Hiring",
+			"NETWORKS": "Networks",
+			"EMPLOYEE_LEVEL": "Employee Level",
+			"DISPLAY_BONUS_ANONYMOUSLY": "Display bonus Anonymously",
+			"JOB_SUCCESS": "Job Success",
+			"TOTAL_JOBS": "Total Jobs",
+			"TOTAL_HOURS": "Total Hours",
+			"RATE": "Почасово",
+			"VETTED": "Vetted",
+			"HR": "hr"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Step 1",
@@ -1309,10 +1345,14 @@
 			"ORG_PAYMENT_ADD_EDIT": "Create/Edit/Delete Payments",
 			"ORG_EXPENSES_VIEW": "Виж всички разходи",
 			"ORG_EXPENSES_EDIT": "Създай/Редактирай/Изтрии разходи",
+			"EMPLOYEE_EXPENSES_VIEW": "View All Employee Expenses",
+			"EMPLOYEE_EXPENSES_EDIT": "Create/Edit/Delete Employee Expenses",
 			"ORG_INCOMES_EDIT": "Създай/Редактирай/Изтрии приходи",
 			"ORG_INCOMES_VIEW": "Виж всички приходи",
 			"ORG_PROPOSALS_EDIT": "Create/Edit/Delete Proposals Register",
 			"ORG_PROPOSALS_VIEW": "Виж страницата с кандидатствания",
+			"ORG_PROPOSAL_TEMPLATES_VIEW": "View Proposal Templates Page",
+			"ORG_PROPOSAL_TEMPLATES_EDIT": "Create/Edit/Delete Proposal Templates",
 			"ORG_TIME_OFF_VIEW": "Виж Time Off страницата",
 			"ORG_EMPLOYEES_VIEW": "Преглед на служителите в организацията",
 			"ORG_EMPLOYEES_EDIT": "Създай/Редактирай/Изтрии служители в организацията",
@@ -1341,6 +1381,8 @@
 			"SUPER_ADMIN_EDIT": "Edit Super Admin Users",
 			"INVOICES_VIEW": "View Invoices",
 			"INVOICES_EDIT": "Edit Invoices Add",
+			"ESTIMATES_VIEW": "View Estimates",
+			"ESTIMATES_EDIT": "Edit Estimates Add",
 			"EDIT_SALES_PIPELINES": "Edit Sales Pipelines",
 			"APPROVALS_POLICY_EDIT": "Edit Approvals Policy",
 			"APPROVALS_POLICY_VIEW": "View Approvals Policy",
@@ -1348,6 +1390,7 @@
 			"REQUEST_APPROVAL_VIEW": "View Approval Request",
 			"ORG_CANDIDATES_INTERVIEWERS_EDIT": "Create/Edit Interviewers",
 			"VIEW_ALL_EMAILS": "View All Emails",
+			"VIEW_ALL_EMAIL_TEMPLATES": "View All Emails Templates",
 			"ORG_HELP_CENTER_EDIT": "Edit Organization Help Center",
 			"PUBLIC_PAGE_EDIT": "Edit Organization Public Page",
 			"CAN_APPROVE_TIMESHEET": "Approve Timesheet",
@@ -1363,10 +1406,19 @@
 			"ORG_SPRINT_VIEW": "View Sprints",
 			"ORG_PROJECT_EDIT": "Create/Edit Projects",
 			"ORG_CONTACT_EDIT": "Create/Edit Contacts",
+			"ORG_CONTACT_VIEW": "View Contacts",
 			"ORG_TEAM_EDIT": "Create/Edit Teams",
 			"ORG_CONTRACT_EDIT": "Create/Edit Contracts",
 			"TIME_TRACKER": "Access Time Tracker",
-			"TENANT_ADD_EXISTING_USER": "Tenant Add User To Organization"
+			"TENANT_ADD_EXISTING_USER": "Tenant Add User To Organization",
+			"INTEGRATION_VIEW": "View Integrations",
+			"FILE_STORAGE_VIEW": "View File Storage",
+			"PAYMENT_GATEWAY_VIEW": "View Payment Gateway",
+			"SMS_GATEWAY_VIEW": "View SMS Gateway",
+			"CUSTOM_SMTP_VIEW": "View Custom SMTP",
+			"IMPORT_EXPORT_VIEW": "View Import/Export",
+			"ORG_JOB_EMPLOYEE_VIEW": "View Job Employees",
+			"ORG_JOB_MATCHING_VIEW": "View Job Matching"
 		}
 	},
 	"CONTACTS_PAGE": {
@@ -1439,7 +1491,8 @@
 			"PROPOSAL_SENT_ON": "Proposal Sent On",
 			"STATUS": "Статус",
 			"JOB_POST_CONTENT": "Job Post Content",
-			"PROPOSAL_CONTENT": "Proposal Content"
+			"PROPOSAL_CONTENT": "Proposal Content",
+			"VIEW_JOB_POST": "View Job Pos"
 		},
 		"EDIT_PROPOSAL": {
 			"EDIT_PROPOSAL": "Edit Proposal",
@@ -1499,6 +1552,11 @@
 		"ADD_OR_REMOVE_EMPLOYEES": "Добави или премахни служители",
 		"SELECT_TIME_OFF_POLICY": "Select Time-off Policy",
 		"ADD_A_DESCRIPTION": "Add a description",
+		"DESCRIPTION": "Description",
+		"START_DATE": "Начална дата",
+		"END_DATE": "Крайна дата",
+		"REQUEST_DATE": "Request Date",
+		"STATUS": "Статус",
 		"STATUSES": {
 			"REQUESTED": "Requested",
 			"APPROVED": "Approved",
@@ -1722,7 +1780,8 @@
 			"SOURCE": "Source",
 			"JOB_TYPE": "Job Type",
 			"JOB_STATUS": "Job Status",
-			"BUDGET": "Budget"
+			"BUDGET": "Budget",
+			"LESS_THAN": "Less than"
 		}
 	},
 	"JOB_MATCHING": {
@@ -1782,7 +1841,8 @@
 			"DATA_ENTRY": "Data Entry",
 			"VIEWER": "Viewer",
 			"EMPLOYEE": "Служител",
-			"CANDIDATE": "Candidate"
+			"CANDIDATE": "Candidate",
+			"ROLE": "Роля"
 		},
 		"EDIT_USER": {
 			"HEADER": "Manage User",
@@ -1800,9 +1860,13 @@
 	},
 	"CONTEXT_MENU": {
 		"TIMER": "Страртирай таймер",
-		"ADD_INCOME": "Добаветe доход",
-		"ADD_EXPENSE": "Добавете разход",
+		"ADD_INCOME": "Доход",
+		"ADD_EXPENSE": "Разходи",
 		"INVOICE": "Фактура",
+		"ESTIMATE": "Estimate",
+		"PAYMENT": "Payment",
+		"TIME_LOG": "Time Log",
+		"CANDIDATE": "Candidate",
 		"PROPOSAL": "Предложение",
 		"CONTRACT": "Договор",
 		"TEAM": "Team",
@@ -1810,7 +1874,7 @@
 		"CLIENT": "Клиент",
 		"CONTACT": "Contact",
 		"PROJECT": "Проект",
-		"ADD_EMPLOYEE": "Добавяне на служител",
+		"ADD_EMPLOYEE": "Служител",
 		"CHAT": "Чат за поддръжка",
 		"FAQ": "FAQ",
 		"HELP": "Помощ"
@@ -1916,7 +1980,7 @@
 		"INVOICES_PER_PAGE": "Invoices Per Page",
 		"ESTIMATES_PER_PAGE": "Estimates Per Page",
 		"APPLY_DISCOUNT_AFTER_TAX": "Apply discount after tax",
-		"PAYMENTS_BUTTON": "Payments",
+		"SELECT_INVOICE_TO_VIEW_HISTORY": "Select an invoice to view it's history",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",
@@ -1990,7 +2054,8 @@
 			"ACCEPTED": "Прието",
 			"REJECTED": "Rejected",
 			"ACCEPTED_STATUS": "Accepted Status",
-			"ESTIMATE_CONVERT": "Estimate Converted"
+			"ESTIMATE_CONVERT": "Estimate Converted",
+			"SELECT_ESTIMATE_TO_VIEW_HISTORY": "Select an estimate to view it's history"
 		},
 		"PAYMENTS": {
 			"HEADER": "Payments for Invoice",
@@ -2014,6 +2079,13 @@
 			"NO_PAYMENTS_RECORDED": "No payments recorded",
 			"LEFT_TO_PAY": "Left to pay",
 			"PAYMENT_METHOD": "Payment Method"
+		},
+		"INTERNAL_NOTE": {
+			"NOTE_SAVED": "Internal Note Saved",
+			"ADD_INTERNAL_NOTE": "Add Internal Note",
+			"ADD_NOTE": "Add note",
+			"NOTE": "Note",
+			"INTERNAL_NOTE": "Internal Note"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -2030,7 +2102,8 @@
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Select Employee",
 		"SELECT_A_DATE": "Select A date",
-		"SELECT_AN_ORGANIZATION": "Select An Organization"
+		"SELECT_AN_ORGANIZATION": "Select An Organization",
+		"SELECT_PROJECT": "Select Project"
 	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "404 Page Not Found",

@@ -13,8 +13,7 @@ import {
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { ThemeModule } from '../../@theme/theme.module';
-import { HttpLoaderFactory } from '../../@theme/components/header/selectors/employee/employee.module';
+import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
 import { RequestApprovalMutationComponent } from './approvals-mutation.component';
 import { Store } from '../../@core/services/store.service';
 import { EmployeeMultiSelectModule } from '../employee/employee-multi-select/employee-multi-select.module';

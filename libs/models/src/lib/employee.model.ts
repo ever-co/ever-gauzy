@@ -52,6 +52,17 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	show_billrate?: boolean;
 	show_payperiod?: boolean;
 	isJobSearchActive?: boolean;
+	linkedInUrl?: string;
+	facebookUrl?: string;
+	instagramUrl?: string;
+	twitterUrl?: string;
+	githubUrl?: string;
+	gitlabUrl?: string;
+	upworkUrl?: string;
+	jobSuccess?: number;
+	isVerified?: boolean;
+	isVetted?: boolean;
+	totalJobs?: number;
 }
 
 export type IEmployeeJobsStatisticsResponse = IEmployee &
@@ -90,6 +101,13 @@ export interface IEmployeeUpdateInput {
 	skills?: ISkill[];
 	isJobSearchActive?: boolean;
 	contact?: IContact;
+	linkedInUrl?: string;
+	facebookUrl?: string;
+	instagramUrl?: string;
+	twitterUrl?: string;
+	githubUrl?: string;
+	gitlabUrl?: string;
+	upworkUrl?: string;
 }
 
 export interface IEmployeeCreateInput

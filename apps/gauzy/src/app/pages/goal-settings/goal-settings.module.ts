@@ -20,21 +20,16 @@ import {
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { SharedModule } from '../../@shared/shared.module';
 import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
-import { ThemeModule } from '../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { GoalCustomUnitModule } from '../../@shared/goal/goal-custom-unit/goal-custom-unit.module';
 import { GoalTemplatesModule } from '../../@shared/goal/goal-templates/goal-templates.module';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
 
 @NgModule({
 	declarations: [

@@ -1,19 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { CustomSmtpComponent } from './custom-smtp.component';
+import { ImageViewerComponent } from './image-viewer.component';
 
-describe('CustomSmtpComponent', () => {
-	let component: CustomSmtpComponent;
-	let fixture: ComponentFixture<CustomSmtpComponent>;
+describe('ImageViewerComponent', () => {
+	let component: ImageViewerComponent;
+	let fixture: ComponentFixture<ImageViewerComponent>;
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [CustomSmtpComponent]
+			declarations: [ImageViewerComponent]
 		}).compileComponents();
 	});
 
 	beforeEach(() => {
-		fixture = TestBed.createComponent(CustomSmtpComponent);
+		fixture = TestBed.createComponent(ImageViewerComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();
 	});

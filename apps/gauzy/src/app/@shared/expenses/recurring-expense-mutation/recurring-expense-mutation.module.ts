@@ -15,15 +15,11 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
-import { ThemeModule } from '../../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
 import { RecurringExpenseMutationComponent } from './recurring-expense-mutation.component';
 import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
+import { CurrencyModule } from '../../currency/currency.module';
 
 @NgModule({
 	imports: [
@@ -48,7 +44,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 				useFactory: HttpLoaderFactory,
 				deps: [HttpClient]
 			}
-		})
+		}),
+		CurrencyModule
 	],
 	exports: [RecurringExpenseMutationComponent],
 	declarations: [RecurringExpenseMutationComponent],

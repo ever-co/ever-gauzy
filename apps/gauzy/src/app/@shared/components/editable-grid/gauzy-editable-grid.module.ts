@@ -1,7 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import {
 	NbButtonModule,
@@ -12,12 +11,8 @@ import {
 } from '@nebular/theme';
 
 import { Store } from '../../../@core/services/store.service';
-import { ThemeModule } from '../../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
 import { GauzyEditableGridComponent } from './gauzy-editable-grid.component';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
 
 const NbModules = [
 	NbButtonModule,

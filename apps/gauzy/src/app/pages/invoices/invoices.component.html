@@ -277,7 +277,9 @@
 									*ngIf="!isEstimate"
 									formControlName="status"
 									fullWidth
-									placeholder="Status"
+									placeholder="{{
+										'FORM.PLACEHOLDERS.STATUS' | translate
+									}}"
 								>
 									<nb-option
 										*ngFor="
@@ -293,7 +295,9 @@
 									*ngIf="isEstimate"
 									formControlName="status"
 									fullWidth
-									placeholder="Status"
+									placeholder="{{
+										'FORM.PLACEHOLDERS.STATUS' | translate
+									}}"
 								>
 									<nb-option
 										*ngFor="
@@ -343,12 +347,18 @@
 				<nb-list-item
 					*ngIf="disableButton && !isEstimate"
 					class="history-list-select"
-					>Select an invoice to view it's history</nb-list-item
+					>{{
+						'INVOICES_PAGE.SELECT_INVOICE_TO_VIEW_HISTORY'
+							| translate
+					}}</nb-list-item
 				>
 				<nb-list-item
 					*ngIf="disableButton && isEstimate"
 					class="history-list-select"
-					>Select an estimate to view it's history</nb-list-item
+					>{{
+						'INVOICES_PAGE.ESTIMATES.SELECT_ESTIMATE_TO_VIEW_HISTORY'
+							| translate
+					}}</nb-list-item
 				>
 				<nb-list *ngIf="!disableButton" class="history-list">
 					<nb-list-item
@@ -477,7 +487,7 @@
 		[size]="buttonSize || 'medium'"
 	>
 		<nb-icon class="mr-1" icon="clipboard-outline"></nb-icon>
-		{{ 'INVOICES_PAGE.PAYMENTS_BUTTON' | translate }}
+		{{ 'BUTTONS.PAYMENTS' | translate }}
 	</button>
 	<button
 		*ngIf="dataLayoutStyle === 'TABLE'"
@@ -526,6 +536,18 @@
 	>
 		<nb-icon class="mr-1" icon="email-outline"> </nb-icon>
 		{{ 'BUTTONS.EMAIL' | translate }}
+	</button>
+	<button
+		*ngIf="dataLayoutStyle === 'TABLE'"
+		nbButton
+		status="info"
+		(click)="addInternalNote()"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="book-open-outline"> </nb-icon>
+		{{ 'BUTTONS.NOTE' | translate }}
 	</button>
 	<button
 		*ngIf="dataLayoutStyle === 'TABLE'"

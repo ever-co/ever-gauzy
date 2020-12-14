@@ -53,6 +53,7 @@ import { createSetupWindow } from './window/setup';
 import { createTimeTrackerWindow, loginPage } from './window/timeTracker';
 import { createSettingsWindow } from './window/settings';
 import { createUpdaterWindow } from './window/updater';
+import { createImageViewerWindow } from './window/imageView';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
 
@@ -86,6 +87,7 @@ let timeTrackerWindow: BrowserWindow = null;
 let NotificationWindow: BrowserWindow = null;
 let settingsWindow: BrowserWindow = null;
 let updaterWindow: BrowserWindow = null;
+let imageView: BrowserWindow = null;
 
 let tray = null;
 let appMenu = null;
@@ -248,6 +250,7 @@ app.on('ready', async () => {
 	timeTrackerWindow = createTimeTrackerWindow(timeTrackerWindow);
 	settingsWindow = createSettingsWindow(settingsWindow);
 	updaterWindow = createUpdaterWindow(updaterWindow);
+	imageView = createImageViewerWindow(imageView);
 
 	/* Set Menu */
 	appMenu = new AppMenu(
@@ -300,7 +303,8 @@ ipcMain.on('server_is_ready', () => {
 			setupWindow,
 			timeTrackerWindow,
 			NotificationWindow,
-			settingsWindow
+			settingsWindow,
+			imageView
 		);
 		isAlreadyRun = true;
 	}

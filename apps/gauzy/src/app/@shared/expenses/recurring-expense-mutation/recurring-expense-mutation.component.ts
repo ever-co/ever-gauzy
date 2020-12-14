@@ -35,7 +35,8 @@ export enum COMPONENT_TYPE {
 	templateUrl: './recurring-expense-mutation.component.html',
 	styleUrls: ['./recurring-expense-mutation.component.scss']
 })
-export class RecurringExpenseMutationComponent extends TranslationBaseComponent
+export class RecurringExpenseMutationComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	public form: FormGroup;
 	@ViewChild('employeeSelector')
@@ -294,5 +295,9 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 		if (orgData && this.currency && !this.currency.value) {
 			this.currency.setValue(orgData.currency);
 		}
+	}
+
+	close() {
+		this.dialogRef.close();
 	}
 }

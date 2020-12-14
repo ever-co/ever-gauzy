@@ -96,3 +96,27 @@
 .error-border {
   border: solid 1px red;
 }
+
+.img-button {
+  position: relative;
+  transform: translateY(100%);
+  margin: auto;
+}
+
+.overlay-img {
+  position: relative;
+  background-color: rgba(0, 0, 0, 0.4);
+  top: -150px;
+  height: 150px;
+  display: none;
+}
+
+.max-card {
+  height: 200px;
+}
+
+.screen-capture-img:hover + .overlay-img,
+.overlay-img:hover {
+  display: block;
+  margin: auto;
+}

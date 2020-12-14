@@ -14,8 +14,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { ThemeModule } from '../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
 import { SharedModule } from '../../@shared/shared.module';
 import { DocumentsComponent } from './documents.component';
 import { DocumentsRoutingModule } from './documents-routing.module';
@@ -24,10 +23,6 @@ import { UploadDocumentComponent } from './upload-document/upload-document.compo
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
 
 const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 

@@ -12,8 +12,7 @@ import {
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
-import { ThemeModule } from '../../@theme/theme.module';
-import { HttpLoaderFactory } from '../../@theme/components/header/selectors/employee/employee.module';
+import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EquipmentSharingPolicyMutationComponent } from './equipment-sharing-policy-mutation.component';
 import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sharing-policy.service';

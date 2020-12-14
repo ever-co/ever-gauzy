@@ -4,8 +4,10 @@ import {
 	ChangeDetectionStrategy,
 	ChangeDetectorRef,
 	AfterViewInit,
-	forwardRef
+	forwardRef,
+	TemplateRef
 } from '@angular/core';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ElectronService } from 'ngx-electron';
 import { TimeTrackerService } from './time-tracker.service';
 import * as moment from 'moment';
@@ -64,10 +66,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	argFromMain = null;
 	token = null;
 	apiHost = null;
+	screenshots = [];
+	selectedTimeSlot: any = null;
+	lastTimeSlot = null;
 	constructor(
 		private electronService: ElectronService,
 		private _cdr: ChangeDetectorRef,
-		private timeTrackerService: TimeTrackerService
+		private timeTrackerService: TimeTrackerService,
+		private dialogService: NbDialogService,
+		private toastrService: NbToastrService
 	) {
 		this.electronService.ipcRenderer.on('timer_push', (event, arg) => {
 			this.setTime(arg);
@@ -477,11 +484,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.timeTrackerService.getTimeSlot(arg).then((res: any) => {
 			if (res.screenshots && res.screenshots.length > 0) {
 				this.lastScreenCapture = res.screenshots[0];
+				this.screenshots = res.screenshots;
+				this.lastTimeSlot = res;
+			} else {
+				this.lastScreenCapture = {};
 			}
 			if (this.lastScreenCapture.createdAt) {
 				this.lastScreenCapture.textTime = moment(
 					this.lastScreenCapture.createdAt
 				).fromNow();
+			} else {
+				this.lastScreenCapture = {};
 			}
 			this._cdr.detectChanges();
 		});
@@ -495,5 +508,45 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this._cdr.detectChanges();
 			}
 		});
+	}
+
+	showImage() {
+		this.electronService.ipcRenderer.send('show_image', this.screenshots);
+	}
+
+	open(dialog: TemplateRef<any>) {
+		this.selectedTimeSlot = this.lastTimeSlot;
+		this.dialogService
+			.open(dialog, {
+				context:
+					'Do you really want to remove this screenshot and activities log ?'
+			})
+			.onClose.subscribe((selectedOption) => {
+				if (selectedOption) {
+					this.deleteTimeSlot();
+				}
+			});
+	}
+
+	deleteTimeSlot() {
+		this.timeTrackerService
+			.deleteTimeSlot({
+				...this.argFromMain,
+				timeSlotId: this.selectedTimeSlot.id
+			})
+			.then((res) => {
+				this.getLastTimeSlotImage(this.argFromMain);
+				this.toastrService.show(
+					`Successfully remove last screenshot and activities`,
+					`Success`,
+					{ status: 'success' }
+				);
+			})
+			.catch((e) => {
+				console.log('error on delte', e);
+				this.toastrService.show(`${e.statusText}`, `Warning`, {
+					status: 'danger'
+				});
+			});
 	}
 }

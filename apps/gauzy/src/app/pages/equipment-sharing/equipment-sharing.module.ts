@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { EquipmentSharingRoutingModule } from './equipment-sharing-routing.module';
-import { ThemeModule } from '../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -16,7 +16,6 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { EquipmentSharingComponent } from './equipment-sharing.component';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';
 import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing/equipment-sharing-mutation.component';
@@ -26,9 +25,6 @@ import { EquipmentSharingStatusComponent } from './table-components/equipment-sh
 import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
 
 @NgModule({
 	imports: [

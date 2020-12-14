@@ -203,6 +203,33 @@ import {
 import { CustomSmtp } from '../custom-smtp/custom-smtp.entity';
 import { CustomSmtpService } from '../custom-smtp/custom-smtp.service';
 import { Currency, CurrencyService } from '../currency';
+import { EmployeeAward } from '../employee-award/employee-award.entity';
+import { EmployeeProposalTemplate } from '../employee-proposal-template/employee-proposal-template.entity';
+import { EmployeeUpworkJobsSearchCriterion } from '../employee-job-preset/employee-upwork-jobs-search-criterion.entity';
+import { EquipmentSharingPolicy } from '../equipment-sharing-policy/equipment-sharing-policy.entity';
+import { GoalGeneralSetting } from '../goal-general-setting/goal-general-setting.entity';
+import { GoalTemplate } from '../goal-template/goal-template.entity';
+import { GoalKPITemplate } from '../goal-kpi-template/goal-kpi-template.entity';
+import { InvoiceEstimateHistory } from '../invoice-estimate-history/invoice-estimate-history.entity';
+import { JobPreset } from '../employee-job-preset/job-preset.entity';
+import { JobSearchOccupation } from '../employee-job-preset/job-search-occupation/job-search-occupation.entity';
+import { JobSearchCategory } from '../employee-job-preset/job-search-category/job-search-category.entity';
+import { JobPresetUpworkJobSearchCriterion } from '../employee-job-preset/job-preset-upwork-job-search-criterion.entity';
+import { KeyResultTemplate } from '../keyresult-template/keyresult-template.entity';
+import { Report } from '../reports/report.entity';
+import { ReportCategory } from '../reports/report-category.entity';
+import { ReportOrganization } from '../reports/report-organization.entity';
+import { EmployeeAwardService } from '../employee-award/employee-award.service';
+import { EmployeeProposalTemplateService } from '../employee-proposal-template/employee-proposal-template.service';
+import { GoalTemplateService } from '../goal-template/goal-template.service';
+import { GoalKpiTemplateService } from '../goal-kpi-template/goal-kpi-template.service';
+import { InvoiceEstimateHistoryService } from '../invoice-estimate-history/invoice-estimate-history.service';
+import { JobPresetService } from '../employee-job-preset/job-preset.service';
+import { JobSearchOccupationService } from '../employee-job-preset/job-search-occupation/job-search-occupation.service';
+import { JobSearchCategoryService } from '../employee-job-preset/job-search-category/job-search-category.service';
+import { KeyresultTemplateService } from '../keyresult-template/keyresult-template.service';
+import { ReportService } from '../reports/report.service';
+import { ReportCategoryService } from '../reports/report-category.service';
 
 @Module({
 	imports: [
@@ -217,7 +244,6 @@ import { Currency, CurrencyService } from '../currency';
 			CandidateCriterionsRating,
 			CandidateDocument,
 			CandidateEducation,
-			CandidateExperience,
 			CandidateExperience,
 			CandidateFeedback,
 			CandidateInterview,
@@ -237,19 +263,25 @@ import { Currency, CurrencyService } from '../currency';
 			EmailTemplate,
 			Employee,
 			EmployeeAppointment,
+			EmployeeAward,
 			EmployeeLevel,
+			EmployeeProposalTemplate,
 			EmployeeRecurringExpense,
 			EmployeeSetting,
-			EmployeeSetting,
+			EmployeeUpworkJobsSearchCriterion,
 			Equipment,
 			EquipmentSharing,
+			EquipmentSharingPolicy,
 			EstimateEmail,
 			EventType,
 			Expense,
 			ExpenseCategory,
 
 			Goal,
+			GoalGeneralSetting,
 			GoalKPI,
+			GoalKPITemplate,
+			GoalTemplate,
 			GoalTimeFrame,
 
 			HelpCenter,
@@ -265,9 +297,16 @@ import { Currency, CurrencyService } from '../currency';
 			IntegrationTenant,
 			Invite,
 			Invoice,
+			InvoiceEstimateHistory,
 			InvoiceItem,
 
+			JobPreset,
+			JobSearchOccupation,
+			JobSearchCategory,
+			JobPresetUpworkJobSearchCriterion,
+
 			KeyResult,
+			KeyResultTemplate,
 			KeyResultUpdate,
 
 			Language,
@@ -289,6 +328,7 @@ import { Currency, CurrencyService } from '../currency';
 
 			Payment,
 			Pipeline,
+			PipelineStage,
 			Product,
 			ProductCategory,
 			ProductOption,
@@ -298,6 +338,9 @@ import { Currency, CurrencyService } from '../currency';
 			ProductVariantPrice,
 			Proposal,
 
+			Report,
+			ReportCategory,
+			ReportOrganization,
 			RequestApproval,
 			RequestApprovalEmployee,
 			RequestApprovalTeam,
@@ -306,7 +349,6 @@ import { Currency, CurrencyService } from '../currency';
 
 			Screenshot,
 			Skill,
-			PipelineStage,
 
 			Tag,
 			Task,
@@ -351,8 +393,10 @@ import { Currency, CurrencyService } from '../currency';
 		EmailService,
 		EmailTemplateService,
 		EmployeeService,
+		EmployeeAwardService,
 		EmployeeAppointmentService,
 		EmployeeLevelService,
+		EmployeeProposalTemplateService,
 		EmployeeRecurringExpenseService,
 		EmployeeSettingService,
 		EmployeeStatisticsService,
@@ -365,7 +409,9 @@ import { Currency, CurrencyService } from '../currency';
 		ExportAllService,
 
 		GoalService,
+		GoalTemplateService,
 		GoalKpiService,
+		GoalKpiTemplateService,
 		GoalTimeFrameService,
 
 		HelpCenterService,
@@ -382,8 +428,14 @@ import { Currency, CurrencyService } from '../currency';
 		InviteService,
 		InvoiceService,
 		InvoiceItemService,
+		InvoiceEstimateHistoryService,
+
+		JobPresetService,
+		JobSearchOccupationService,
+		JobSearchCategoryService,
 
 		KeyResultService,
+		KeyresultTemplateService,
 		KeyResultUpdateService,
 
 		LanguageService,
@@ -414,6 +466,8 @@ import { Currency, CurrencyService } from '../currency';
 		ProductVariantPriceService,
 		ProposalService,
 
+		ReportService,
+		ReportCategoryService,
 		RequestApprovalService,
 		RoleService,
 		RolePermissionsService,
@@ -468,6 +522,8 @@ import { Currency, CurrencyService } from '../currency';
 		EmailTemplateService,
 		EmployeeService,
 		EmployeeAppointmentService,
+		EmployeeAwardService,
+		EmployeeProposalTemplateService,
 		EmployeeLevelService,
 		EmployeeRecurringExpenseService,
 		EmployeeSettingService,
@@ -481,7 +537,9 @@ import { Currency, CurrencyService } from '../currency';
 		ExportAllService,
 
 		GoalService,
+		GoalTemplateService,
 		GoalKpiService,
+		GoalKpiTemplateService,
 		GoalTimeFrameService,
 
 		HelpCenterService,
@@ -498,8 +556,14 @@ import { Currency, CurrencyService } from '../currency';
 		InviteService,
 		InvoiceService,
 		InvoiceItemService,
+		InvoiceEstimateHistoryService,
+
+		JobPresetService,
+		JobSearchOccupationService,
+		JobSearchCategoryService,
 
 		KeyResultService,
+		KeyresultTemplateService,
 		KeyResultUpdateService,
 
 		LanguageService,
@@ -530,6 +594,8 @@ import { Currency, CurrencyService } from '../currency';
 		ProductVariantPriceService,
 		ProposalService,
 
+		ReportService,
+		ReportCategoryService,
 		RoleService,
 		RolePermissionsService,
 		RequestApprovalService,

@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { ThemeModule } from '../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -27,7 +27,6 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
 import { EditProfileFormModule } from '../../@shared/user/edit-profile-form/edit-profile-form.module';
 import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invite-mutation.module';
@@ -45,10 +44,6 @@ import { UserIdService } from '../../@core/services/edit-user-data.service';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
 
 const COMPONENTS = [
 	UsersComponent,

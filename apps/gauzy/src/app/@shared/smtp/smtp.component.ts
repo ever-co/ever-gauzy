@@ -92,11 +92,19 @@ export class SMTPComponent
 			control2.updateValueAndValidity();
 		});
 
-		this.form.valueChanges.pipe(pairwise()).subscribe((valuesArray) => {
-			const newVal = valuesArray[1];
-			const oldVal = valuesArray[0];
-			if (newVal !== oldVal) {
-				this.isValidated = false;
+		this.form.valueChanges.pipe(pairwise()).subscribe((values) => {
+			const oldVal = values[0];
+			const newVal = values[1];
+			if (
+				(newVal.username && oldVal.username) ||
+				(newVal.host && oldVal.host)
+			) {
+				if (
+					newVal.username !== oldVal.username ||
+					newVal.host !== oldVal.host
+				) {
+					this.isValidated = false;
+				}
 			}
 		});
 	}
@@ -134,9 +142,19 @@ export class SMTPComponent
 		this.customSmtpService
 			.getSMTPSetting(find)
 			.then((setting) => {
-				this.customSmtp = setting;
 				this.formDirective.resetForm();
-				this.patchValue();
+				if (setting && setting.hasOwnProperty('auth')) {
+					this.globalSmtpPatch(setting);
+				} else {
+					this.customSmtp = setting;
+					this.patchValue();
+				}
+				// if organization exist
+				if (this.organization) {
+					this.form.patchValue({
+						organizationId: this.organization.id
+					});
+				}
 			})
 			.finally(() => (this.loading = false));
 	}
@@ -145,12 +163,6 @@ export class SMTPComponent
 	 * Patch old SMTP details for tenant
 	 */
 	patchValue() {
-		// if organization exist
-		if (this.organization) {
-			this.form.patchValue({
-				organizationId: this.organization.id
-			});
-		}
 		if (this.customSmtp) {
 			this.isValidated = this.customSmtp.isValidate ? true : false;
 			this.form.patchValue({
@@ -163,6 +175,19 @@ export class SMTPComponent
 				isValidate: this.customSmtp.isValidate
 			});
 		}
+	}
+
+	/*
+	 * Global SMTP Configuration
+	 */
+	globalSmtpPatch(setting: any) {
+		this.form.patchValue({
+			host: setting.host,
+			port: setting.port,
+			secure: setting.secure,
+			username: setting['auth']['user'],
+			password: setting['auth']['pass']
+		});
 	}
 
 	onSubmit() {

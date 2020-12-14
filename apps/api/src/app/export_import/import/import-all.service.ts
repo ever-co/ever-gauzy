@@ -102,6 +102,20 @@ import { Product } from '../../product/product.entity';
 import { convertToDatetime } from '../../core/utils';
 import { FileStorage } from '../../core/file-storage';
 import { Currency } from '../../currency/currency.entity';
+import { EmployeeAward } from '../../employee-award/employee-award.entity';
+import { EmployeeProposalTemplate } from '../../employee-proposal-template/employee-proposal-template.entity';
+import { EmployeeUpworkJobsSearchCriterion } from '../../employee-job-preset/employee-upwork-jobs-search-criterion.entity';
+import { GoalTemplate } from '../../goal-template/goal-template.entity';
+import { GoalKPITemplate } from '../../goal-kpi-template/goal-kpi-template.entity';
+import { InvoiceEstimateHistory } from '../../invoice-estimate-history/invoice-estimate-history.entity';
+import { JobSearchOccupation } from '../../employee-job-preset/job-search-occupation/job-search-occupation.entity';
+import { JobPresetUpworkJobSearchCriterion } from '../../employee-job-preset/job-preset-upwork-job-search-criterion.entity';
+import { JobSearchCategory } from '../../employee-job-preset/job-search-category/job-search-category.entity';
+import { JobPreset } from '../../employee-job-preset/job-preset.entity';
+import { KeyResultTemplate } from '../../keyresult-template/keyresult-template.entity';
+import { Report } from '../../reports/report.entity';
+import { ReportCategory } from '../../reports/report-category.entity';
+import { ReportOrganization } from '../../reports/report-organization.entity';
 
 @Injectable()
 export class ImportAllService implements OnDestroy {
@@ -201,6 +215,19 @@ export class ImportAllService implements OnDestroy {
 			EmployeeAppointment
 		>,
 
+		@InjectRepository(EmployeeAward)
+		private readonly employeeAwardRepository: Repository<EmployeeAward>,
+
+		@InjectRepository(EmployeeProposalTemplate)
+		private readonly employeeProposalTemplateRepository: Repository<
+			EmployeeProposalTemplate
+		>,
+
+		@InjectRepository(EmployeeUpworkJobsSearchCriterion)
+		private readonly employeeUpworkJobsSearchCriterionRepository: Repository<
+			EmployeeUpworkJobsSearchCriterion
+		>,
+
 		@InjectRepository(EmployeeRecurringExpense)
 		private readonly employeeRecurringExpenseRepository: Repository<
 			EmployeeRecurringExpense
@@ -237,6 +264,9 @@ export class ImportAllService implements OnDestroy {
 		@InjectRepository(Goal)
 		private readonly goalRepository: Repository<Goal>,
 
+		@InjectRepository(GoalTemplate)
+		private readonly goalTemplateRepository: Repository<GoalTemplate>,
+
 		@InjectRepository(GoalGeneralSetting)
 		private readonly goalGeneralSettingRepository: Repository<
 			GoalGeneralSetting
@@ -244,6 +274,9 @@ export class ImportAllService implements OnDestroy {
 
 		@InjectRepository(GoalKPI)
 		private readonly goalKpiRepository: Repository<GoalKPI>,
+
+		@InjectRepository(GoalKPITemplate)
+		private readonly goalKpiTemplateRepository: Repository<GoalKPITemplate>,
 
 		@InjectRepository(GoalTimeFrame)
 		private readonly goalTimeFrameRepository: Repository<GoalTimeFrame>,
@@ -296,11 +329,39 @@ export class ImportAllService implements OnDestroy {
 		@InjectRepository(Invoice)
 		private readonly invoiceRepository: Repository<Invoice>,
 
+		@InjectRepository(InvoiceEstimateHistory)
+		private readonly invoiceEstimateHistoryRepository: Repository<
+			InvoiceEstimateHistory
+		>,
+
 		@InjectRepository(InvoiceItem)
 		private readonly invoiceItemRepository: Repository<InvoiceItem>,
 
+		@InjectRepository(JobPreset)
+		private readonly jobPresetRepository: Repository<JobPreset>,
+
+		@InjectRepository(JobSearchCategory)
+		private readonly jobSearchCategoryRepository: Repository<
+			JobSearchCategory
+		>,
+
+		@InjectRepository(JobSearchOccupation)
+		private readonly jobSearchOccupationRepository: Repository<
+			JobSearchOccupation
+		>,
+
+		@InjectRepository(JobPresetUpworkJobSearchCriterion)
+		private readonly jobPresetUpworkJobSearchCriterionRepository: Repository<
+			JobPresetUpworkJobSearchCriterion
+		>,
+
 		@InjectRepository(KeyResult)
 		private readonly keyResultRepository: Repository<KeyResult>,
+
+		@InjectRepository(KeyResultTemplate)
+		private readonly keyResultTemplateRepository: Repository<
+			KeyResultTemplate
+		>,
 
 		@InjectRepository(KeyResultUpdate)
 		private readonly keyResultUpdateRepository: Repository<KeyResultUpdate>,
@@ -330,10 +391,12 @@ export class ImportAllService implements OnDestroy {
 		>,
 
 		@InjectRepository(OrganizationDocuments)
-		private readonly documentRepository: Repository<OrganizationDocuments>,
+		private readonly organizationDocumentRepository: Repository<
+			OrganizationDocuments
+		>,
 
 		@InjectRepository(OrganizationEmploymentType)
-		private readonly employmentTypesRepo: Repository<
+		private readonly organizationEmploymentTypeRepository: Repository<
 			OrganizationEmploymentType
 		>,
 
@@ -427,6 +490,17 @@ export class ImportAllService implements OnDestroy {
 		@InjectRepository(RolePermissions)
 		private readonly RolePermissionsRepository: Repository<RolePermissions>,
 
+		@InjectRepository(Report)
+		private readonly reportRepository: Repository<Report>,
+
+		@InjectRepository(ReportCategory)
+		private readonly reportCategoryRepository: Repository<ReportCategory>,
+
+		@InjectRepository(ReportOrganization)
+		private readonly reportOrganizationRepository: Repository<
+			ReportOrganization
+		>,
+
 		@InjectRepository(Tag)
 		private readonly tagRepository: Repository<Tag>,
 
@@ -476,6 +550,8 @@ export class ImportAllService implements OnDestroy {
 		skill: this.skillRepository, //TODO: This should be organization level but currently does not have any org detail
 		language: this.languageRepository,
 		tenant: this.tenantRepository,
+		report_category: this.reportCategoryRepository,
+		report: this.reportRepository,
 
 		/**
 		 * These entities need TENANT
@@ -490,6 +566,13 @@ export class ImportAllService implements OnDestroy {
 		users: this.userRepository,
 		candidate: this.candidateRepository,
 		user_organization: this.userOrganizationRepository,
+		contact: this.contactRepository,
+		report_organization: this.reportOrganizationRepository,
+		job_preset: this.jobPresetRepository,
+		job_search_category: this.jobSearchCategoryRepository,
+		job_search_occupation: this.jobSearchOccupationRepository,
+		job_preset_upwork_job_search_criterion: this
+			.jobPresetUpworkJobSearchCriterionRepository,
 
 		/**
 		 * These entities need TENANT, ORGANIZATION & USER
@@ -508,7 +591,7 @@ export class ImportAllService implements OnDestroy {
 		candidate_personal_qualities: this.candidatePersonalQualitiesRepository,
 		candidate_creation_rating: this.candidateCriterionsRatingRepository,
 		candidate_skill: this.candidateSkillRepository,
-		candidate_source: this.candidateSkillRepository,
+		candidate_source: this.candidateSourceRepository,
 		candidate_technologies: this.candidateTechnologiesRepository,
 
 		activity: this.activityRepository,
@@ -522,15 +605,24 @@ export class ImportAllService implements OnDestroy {
 		email: this.emailRepository,
 
 		employee_appointment: this.employeeAppointmentRepository,
+		employee_award: this.employeeAwardRepository,
+		employee_proposal_template: this.employeeProposalTemplateRepository,
 		employee_recurring_expense: this.employeeRecurringExpenseRepository,
 		employee_setting: this.employeeSettingRepository,
+		employee_upwork_job_search_criterion: this
+			.employeeUpworkJobsSearchCriterionRepository,
 		equipment: this.equipmentRepository,
+		equipment_sharing: this.equipmentSharingRepository,
+		equipment_sharing_policy: this.equipmentSharingPolicyRepository,
 		event_types: this.eventTypeRepository,
 		expense_category: this.expenseCategoryRepository,
 		expense: this.expenseRepository,
 		goal_kpi: this.goalKpiRepository,
+		gosl_kpi_template: this.goalKpiTemplateRepository,
 		goal_time_frame: this.goalTimeFrameRepository,
 		goal: this.goalRepository,
+		goal_template: this.goalTemplateRepository,
+		goal_general_setting: this.goalGeneralSettingRepository,
 		income: this.incomeRepository,
 		integration_tenant: this.integrationTenantRepository,
 		integration_entity_setting: this.integrationEntitySettingRepository,
@@ -542,7 +634,9 @@ export class ImportAllService implements OnDestroy {
 		invite: this.inviteRepository,
 		invoice_item: this.invoiceItemRepository,
 		invoice: this.invoiceRepository,
+		invoise_estimate_history: this.invoiceEstimateHistoryRepository,
 		key_result: this.keyResultRepository,
+		key_result_template: this.keyResultTemplateRepository,
 		key_result_update: this.keyResultUpdateRepository,
 		knowledge_base: this.HelpCenterRepository,
 		knowledge_base_article: this.HelpCenterArticleRepository,
@@ -551,9 +645,9 @@ export class ImportAllService implements OnDestroy {
 		organization_award: this.organizationAwardsRepository,
 		organization_contact: this.organizationContactRepository,
 		organization_department: this.organizationDepartmentRepository,
-		organization_document: this.documentRepository,
+		organization_document: this.organizationDocumentRepository,
 		organization_employee_level: this.employeeLevelRepository,
-		organization_employment_type: this.employmentTypesRepo,
+		organization_employment_type: this.organizationEmploymentTypeRepository,
 		organization_language: this.organizationLanguagesRepository,
 		organization_position: this.organizationPositionsRepository,
 		organization_project: this.organizationProjectsRepository,
@@ -569,7 +663,7 @@ export class ImportAllService implements OnDestroy {
 		product_option: this.productOptionRepository,
 		product_settings: this.productVariantSettingsRepository,
 		product_type: this.productTypeRepository,
-		product_variant_price: this.productVariantRepository,
+		product_variant_price: this.productVariantPriceRepository,
 		product_variant: this.productVariantRepository,
 		product: this.productRepository,
 		proposal: this.proposalRepository,

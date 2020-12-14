@@ -21,6 +21,7 @@ export interface IOrganizationContact extends IBaseEntityWithMembers {
 	inviteStatus?: string;
 	tags: ITag[];
 	contact: IContact;
+	createdBy?: string;
 }
 
 export interface IOrganizationContactFindInput
@@ -31,6 +32,7 @@ export interface IOrganizationContactFindInput
 	notes?: string;
 	imageUrl?: string;
 	contactType?: string;
+	createdBy?: string;
 }
 
 export interface IOrganizationContactCreateInput extends IContact {
@@ -46,6 +48,7 @@ export interface IOrganizationContactCreateInput extends IContact {
 	notes?: string;
 	imageUrl?: string;
 	contactType?: string;
+	createdBy?: string;
 }
 
 export interface IOrganizationContactInviteInput {

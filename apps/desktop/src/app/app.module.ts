@@ -3,7 +3,7 @@ import { NgModule } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
-import { NbThemeModule } from '@nebular/theme';
+import { NbDialogModule, NbThemeModule, NbToastrModule } from '@nebular/theme';
 import { SetupModule } from './pages/setup/setup.module';
 import { NgxElectronModule } from 'ngx-electron';
 import { AppService } from './app.service';
@@ -12,6 +12,7 @@ import { TimeTrackerModule } from './pages/time-tracker/time-tracker.module';
 import { ScreenCaptureModule } from './pages/screen-capture/screen-capture.module';
 import { SettingsModule } from './pages/settings/settings.module';
 import { UpdaterModule } from './pages/updater/updater.module';
+import { ImageViewerModule } from './pages/image-viewer/image-viewer.module';
 
 @NgModule({
 	declarations: [AppComponent],
@@ -26,7 +27,10 @@ import { UpdaterModule } from './pages/updater/updater.module';
 		HttpClientModule,
 		ScreenCaptureModule,
 		SettingsModule,
-		UpdaterModule
+		UpdaterModule,
+		ImageViewerModule,
+		NbDialogModule.forRoot(),
+		NbToastrModule.forRoot()
 	],
 	providers: [AppService, HttpClientModule],
 	bootstrap: [AppComponent]

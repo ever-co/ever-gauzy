@@ -28,7 +28,6 @@ import {
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { EditObjectiveComponent } from './edit-objective/edit-objective.component';
 import { EditKeyResultsComponent } from './edit-keyresults/edit-keyresults.component';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -48,10 +47,7 @@ import { GoalCustomUnitModule } from '../../@shared/goal/goal-custom-unit/goal-c
 import { KeyresultTypeSelectModule } from '../../@shared/goal/keyresult-type-select/keyresult-type-select.module';
 import { GoalLevelSelectModule } from '../../@shared/goal/goal-level-select/goal-level-select.module';
 import { GoalTemplateSelectModule } from '../../@shared/goal/goal-template-select/goal-template-select.module';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
+import { HttpLoaderFactory } from '../../@theme/theme.module';
 
 @NgModule({
 	declarations: [

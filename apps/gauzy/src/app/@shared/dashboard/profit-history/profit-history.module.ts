@@ -7,12 +7,7 @@ import { ExpenseTableComponent } from './table-components/expense-table.componen
 import { IncomeTableComponent } from './table-components/income-table.component';
 import { HttpClient } from '@angular/common/http';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
-
+import { HttpLoaderFactory } from '../../../@theme/theme.module';
 @NgModule({
 	imports: [
 		Ng2SmartTableModule,

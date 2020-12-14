@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { IEmployeeProposalTemplate } from '@gauzy/models';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -12,9 +12,9 @@ import {
 	TruncatePipe
 } from 'apps/gauzy/src/app/@shared/pipes/text.pipe';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
-import { debounceTime, filter } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { AddEditProposalTemplateComponent } from '../add-edit-proposal-template/add-edit-proposal-template.component';
 import { ProposalTemplateService } from '../proposal-template.service';
 
@@ -41,6 +41,16 @@ export class ProposalTemplateComponent
 	updateJobs$: Subject<any> = new Subject();
 	selectedItem: any;
 	loading: boolean;
+
+	proposalTemplateTable: Ng2SmartTableComponent;
+	@ViewChild('proposalTemplateTable') set content(
+		content: Ng2SmartTableComponent
+	) {
+		if (content) {
+			this.proposalTemplateTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(
 		public translateService: TranslateService,
@@ -229,6 +239,28 @@ export class ProposalTemplateComponent
 				);
 				this.getProposalTemplates();
 			});
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.proposalTemplateTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.deselectAll())
+			)
+			.subscribe();
+	}
+
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.proposalTemplateTable && this.proposalTemplateTable.grid) {
+			this.proposalTemplateTable.grid.dataSet['willSelect'] = 'false';
+			this.proposalTemplateTable.grid.dataSet.deselectAll();
+		}
 	}
 
 	ngOnDestroy(): void {}

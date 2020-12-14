@@ -98,7 +98,10 @@
 				<div class="col-md-6">
 					<div class="form-group">
 						<label class="label" for="empLevelInput">
-							Employee Level
+							{{
+								'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYEE_LEVEL'
+									| translate
+							}}
 						</label>
 						<ng-select formControlName="employeeLevel">
 							<ng-option
@@ -179,7 +182,10 @@
 				<div class="col">
 					<div class="form-group">
 						<nb-checkbox formControlName="anonymousBonus">
-							Display bonus Anonymously
+							{{
+								'EMPLOYEES_PAGE.EDIT_EMPLOYEE.DISPLAY_BONUS_ANONYMOUSLY'
+									| translate
+							}}
 						</nb-checkbox>
 					</div>
 				</div>

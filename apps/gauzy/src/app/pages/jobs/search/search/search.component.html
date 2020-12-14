@@ -161,7 +161,10 @@
 									[(ngModel)]="jobRequest.budget"
 								>
 									<nb-option [value]="[null, 100]"
-										>Less than $100</nb-option
+										>{{
+											'JOBS.FILTER.LESS_THAN' | translate
+										}}
+										$100</nb-option
 									>
 									<nb-option [value]="[100, 500]"
 										>$100 - $500</nb-option

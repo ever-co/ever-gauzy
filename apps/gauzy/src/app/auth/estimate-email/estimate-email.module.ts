@@ -5,12 +5,8 @@ import { CommonModule } from '@angular/common';
 import { EstimateEmailService } from '../../@core/services/estimate-email.service';
 import { NbCardModule, NbSpinnerModule } from '@nebular/theme';
 import { HttpClient } from '@angular/common/http';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { TranslateModule } from '@ngx-translate/core';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
+import { HttpLoaderFactory } from '../../@theme/theme.module';
 
 @NgModule({
 	imports: [

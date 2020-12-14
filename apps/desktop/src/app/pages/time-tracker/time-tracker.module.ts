@@ -13,7 +13,10 @@ import {
 	NbIconModule,
 	NbSidebarModule,
 	NbSidebarService,
-	NbCheckboxModule
+	NbCheckboxModule,
+	NbDialogService,
+	NbDialogModule,
+	NbToastrService
 } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -36,9 +39,15 @@ import { NgSelectModule } from '@ng-select/ng-select';
 		FormsModule,
 		NbCheckboxModule,
 		ReactiveFormsModule,
-		NgSelectModule
+		NgSelectModule,
+		NbDialogModule
 	],
-	providers: [NbSidebarService, TimeTrackerService],
+	providers: [
+		NbSidebarService,
+		TimeTrackerService,
+		NbDialogService,
+		NbToastrService
+	],
 	exports: [TimeTrackerComponent]
 })
 export class TimeTrackerModule {}

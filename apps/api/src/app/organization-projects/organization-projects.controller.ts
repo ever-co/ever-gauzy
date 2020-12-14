@@ -86,6 +86,30 @@ export class OrganizationProjectsController extends CrudController<
 		});
 	}
 
+	@ApiOperation({
+		summary: 'Find organization projects count.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found count',
+		type: OrganizationProject
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('count')
+	async findProjectsCount(
+		@Query('data', ParseJsonPipe) data: any,
+		@Request() req
+	): Promise<any> {
+		const { relations, findInput } = data;
+		return this.organizationProjectsService.count({
+			where: findInput,
+			relations
+		});
+	}
+
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,

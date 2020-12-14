@@ -16,14 +16,13 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { AuthService } from '../../@core/services/auth.service';
 import { ExpensesService } from '../../@core/services/expenses.service';
 import { IncomeService } from '../../@core/services/income.service';
 import { ProfitHistoryModule } from '../../@shared/dashboard/profit-history/profit-history.module';
 import { RecordsHistoryModule } from '../../@shared/dashboard/records-history/records-history.module';
 import { SingleStatisticModule } from '../../@shared/single-statistic/single-statistic.module';
-import { ThemeModule } from '../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
 import { DashboardRoutingModule } from './dashboard-routing.module';
 import { DashboardComponent } from './dashboard.component';
 import { DataEntryShortcutsComponent } from './data-entry-shortcuts/data-entry-shortcuts.component';
@@ -33,10 +32,6 @@ import { InfoBlockModule } from '../../@shared/dashboard/info-block/info-block.m
 import { ProjectManagementComponent } from './project-management/project-management.component';
 import { EmployeeChartsModule } from './human-resources/employee-charts/employee-charts.module';
 import { TimeTrackingModule } from './time-tracking/time-tracking.module';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
 
 @NgModule({
 	imports: [

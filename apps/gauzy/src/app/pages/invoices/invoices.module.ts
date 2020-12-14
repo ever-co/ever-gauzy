@@ -22,11 +22,10 @@ import {
 	NbListModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ThemeModule } from '../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { InvoiceAddComponent } from './invoice-add/invoice-add.component';
@@ -71,10 +70,7 @@ import { BackNavigationModule } from '../../@shared/back-navigation';
 import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-estimate-history.service';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { InvoicePdfComponent } from './invoice-pdf/invoice-pdf.component';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
+import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
 
 @NgModule({
 	imports: [
@@ -156,7 +152,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		PaymentMutationComponent,
 		InvoiceApplyTaxDiscountComponent,
 		InvoiceExpensesSelectorComponent,
-		InvoicePdfComponent
+		InvoicePdfComponent,
+		AddInternalNoteComponent
 	],
 	declarations: [
 		InvoicesComponent,
@@ -182,7 +179,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		PaymentMutationComponent,
 		InvoiceApplyTaxDiscountComponent,
 		InvoiceExpensesSelectorComponent,
-		InvoicePdfComponent
+		InvoicePdfComponent,
+		AddInternalNoteComponent
 	]
 })
 export class InvoicesModule {}

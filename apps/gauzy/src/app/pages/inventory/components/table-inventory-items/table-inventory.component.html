@@ -59,23 +59,33 @@
 		<ul class="flex-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
 			<li class="flex-item" *ngFor="let x of inventoryData">
 				<div class="info-line">
-					<span class="info-meta">Name</span>
+					<span class="info-meta">{{
+						'INVENTORY_PAGE.NAME' | translate
+					}}</span>
 					<span class="info-value">{{ x.name }}</span>
 				</div>
 				<div class="info-line">
-					<span class="info-meta">Code</span>
+					<span class="info-meta">{{
+						'INVENTORY_PAGE.CODE' | translate
+					}}</span>
 					<span class="info-value">{{ x.code }}</span>
 				</div>
 				<div class="info-line">
-					<span class="info-meta">Product type</span>
+					<span class="info-meta">{{
+						'INVENTORY_PAGE.PRODUCT_TYPE' | translate
+					}}</span>
 					<span class="info-value">{{ x.type?.name }}</span>
 				</div>
 				<div class="info-line">
-					<span class="info-meta">Product category</span>
+					<span class="info-meta">{{
+						'INVENTORY_PAGE.PRODUCT_CATEGORY' | translate
+					}}</span>
 					<span class="info-value">{{ x.category?.name }}</span>
 				</div>
 				<div class="info-line">
-					<span class="info-meta">Description</span>
+					<span class="info-meta">{{
+						'INVENTORY_PAGE.DESCRIPTION' | translate
+					}}</span>
 					<span class="info-value">{{ x.description }}</span>
 				</div>
 				<nb-card-footer class="card-footer">

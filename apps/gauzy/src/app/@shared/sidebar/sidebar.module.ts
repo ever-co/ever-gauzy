@@ -1,6 +1,6 @@
 import { AddIconModule } from './add-icon/add-icon.module';
 import { NgModule } from '@angular/core';
-import { ThemeModule } from '../../@theme/theme.module';
+import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbCardModule,
@@ -14,7 +14,6 @@ import {
 	NbContextMenuModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpLoaderFactory } from '../../@theme/components/header/selectors/selectors.module';
 import { HttpClient } from '@angular/common/http';
 import { SidebarComponent } from './sidebar.component';
 import { TreeModule } from '@circlon/angular-tree-component';

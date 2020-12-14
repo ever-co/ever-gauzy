@@ -55,6 +55,7 @@ export function createInitialAppState(): AppState {
 export function createInitialPersistState(): PersistState {
 	const token = localStorage.getItem('token') || null;
 	const userId = localStorage.getItem('_userId') || null;
+	const organizationId = localStorage.getItem('_organizationId') || null;
 	const serverConnection = localStorage.getItem('serverConnection') || null;
 	const preferredLanguage = localStorage.getItem('preferredLanguage') || null;
 	const componentLayout = localStorage.getItem('componentLayout') || [];
@@ -62,6 +63,7 @@ export function createInitialPersistState(): PersistState {
 	return {
 		token,
 		userId,
+		organizationId,
 		serverConnection,
 		preferredLanguage,
 		componentLayout
@@ -234,6 +236,17 @@ export class Store {
 		});
 	}
 
+	get organizationId(): IOrganization['id'] | null {
+		const { organizationId } = this.persistQuery.getValue();
+		return organizationId;
+	}
+
+	set organizationId(id: IOrganization['id'] | null) {
+		this.persistStore.update({
+			organizationId: id
+		});
+	}
+
 	get user(): IUser {
 		const { user } = this.appQuery.getValue();
 		return user;
@@ -369,13 +382,13 @@ export class Store {
 		permissions = permissions.concat(userPermissions);
 
 		if (selectedOrganization) {
-			const orginizationPermissions = Object.keys(
+			const organizationPermissions = Object.keys(
 				OrganizationPermissionsEnum
 			)
 				.map((key) => OrganizationPermissionsEnum[key])
 				.filter((permission) => selectedOrganization[permission]);
 
-			permissions = permissions.concat(orginizationPermissions);
+			permissions = permissions.concat(organizationPermissions);
 		}
 
 		this.permissionsService.flushPermissions();

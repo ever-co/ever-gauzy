@@ -29,6 +29,7 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
 	selectOrganization(organization: IOrganization) {
 		if (organization) {
 			this.store.selectedOrganization = organization;
+			this.store.organizationId = organization.id;
 			this.store.selectedEmployee = null;
 		}
 	}
@@ -39,12 +40,17 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
 			['organization'],
 			{ userId: this.store.userId, tenantId }
 		);
-
 		this.organizations = items.map((userOrg) => userOrg.organization);
-
-		if (this.organizations.length > 0 && !this.store.selectedOrganization) {
-			// set first organizations as default
-			this.store.selectedOrganization = this.organizations[0];
+		if (this.organizations.length > 0) {
+			if (this.store.organizationId) {
+				this.store.selectedOrganization = this.organizations.find(
+					(organization: IOrganization) =>
+						organization.id === this.store.organizationId
+				);
+			} else {
+				// set first organizations as default
+				this.store.selectedOrganization = this.organizations[0];
+			}
 		}
 	}
 

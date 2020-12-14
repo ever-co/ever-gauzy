@@ -1,5 +1,5 @@
 <div class="content">
-	<div class="organization-container">
+	<div class="organization-container d-flex flex-column">
 		<div class="organization-photo">
 			<ngx-image-uploader
 				(changeHoverState)="hoverState = $event"
@@ -46,6 +46,49 @@
 				(mouseenter)="hoverState = true"
 				(mouseleave)="hoverState = false"
 			/>
+		</div>
+		<nb-badge
+			*ngIf="selectedEmployee && selectedEmployee.isVetted"
+			status="success"
+			style="position: relative; margin-top: 20px"
+			[text]="'EMPLOYEES_PAGE.EDIT_EMPLOYEE.VETTED' | translate"
+			position="bottom-left"
+		>
+		</nb-badge>
+		<div *ngIf="selectedEmployee">
+			<div
+				class="employee-optional-info"
+				*ngIf="selectedEmployee.jobSuccess"
+			>
+				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.JOB_SUCCESS' | translate }}:
+				{{ selectedEmployee.jobSuccess }}%
+			</div>
+			<div
+				class="employee-optional-info"
+				*ngIf="selectedEmployee.totalJobs"
+			>
+				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.TOTAL_JOBS' | translate }}:
+				{{ selectedEmployee.totalJobs }}
+			</div>
+			<div
+				class="employee-optional-info"
+				*ngIf="selectedEmployee.totalWorkHours"
+			>
+				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.TOTAL_HOURS' | translate }}:
+				{{ selectedEmployee.totalWorkHours }}
+			</div>
+			<div
+				class="employee-optional-info"
+				*ngIf="
+					selectedEmployee.billRateCurrency &&
+					selectedEmployee.billRateValue
+				"
+			>
+				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.RATE' | translate }}:
+				{{ selectedEmployee.billRateCurrency }}
+				{{ selectedEmployee.billRateValue }} /
+				{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.HR' | translate }}
+			</div>
 		</div>
 	</div>
 

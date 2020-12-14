@@ -1,0 +1,143 @@
+<nb-card>
+	<nb-card-body>
+		<form [formGroup]="form">
+			<div class="row">
+				<div class="col-sm-3">
+					<div class="form-group">
+						<label class="label" for="linkedIn">{{
+							'FORM.LABELS.LINKEDIN' | translate
+						}}</label>
+						<input
+							fullWidth
+							id="linkedIn"
+							type="text"
+							nbInput
+							formControlName="linkedInUrl"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.LINKEDIN' | translate
+							}}"
+						/>
+					</div>
+				</div>
+				<div class="col-sm-3">
+					<div class="form-group">
+						<label class="label" for="facebook">{{
+							'FORM.LABELS.FACEBOOK' | translate
+						}}</label>
+						<input
+							fullWidth
+							id="facebook"
+							type="text"
+							nbInput
+							formControlName="facebookUrl"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.FACEBOOK' | translate
+							}}"
+						/>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-3">
+					<div class="form-group">
+						<label class="label" for="instagram">{{
+							'FORM.LABELS.INSTAGRAM' | translate
+						}}</label>
+						<input
+							fullWidth
+							id="instagram"
+							type="text"
+							nbInput
+							formControlName="instagramUrl"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.INSTAGRAM' | translate
+							}}"
+						/>
+					</div>
+				</div>
+				<div class="col-sm-3">
+					<div class="form-group">
+						<label class="label" for="twitter">{{
+							'FORM.LABELS.TWITTER' | translate
+						}}</label>
+						<input
+							fullWidth
+							id="twitter"
+							type="text"
+							nbInput
+							formControlName="twitterUrl"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.TWITTER' | translate
+							}}"
+						/>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-3">
+					<div class="form-group">
+						<label class="label" for="github">{{
+							'FORM.LABELS.GITHUB' | translate
+						}}</label>
+						<input
+							fullWidth
+							id="github"
+							type="text"
+							nbInput
+							formControlName="githubUrl"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.GITHUB' | translate
+							}}"
+						/>
+					</div>
+				</div>
+				<div class="col-sm-3">
+					<div class="form-group">
+						<label class="label" for="gitlab">{{
+							'FORM.LABELS.GITLAB' | translate
+						}}</label>
+						<input
+							fullWidth
+							id="gitlab"
+							type="text"
+							nbInput
+							formControlName="gitlabUrl"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.GITLAB' | translate
+							}}"
+						/>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-3">
+					<div class="form-group">
+						<label class="label" for="upwork">{{
+							'FORM.LABELS.UPWORK' | translate
+						}}</label>
+						<input
+							fullWidth
+							id="upwork"
+							type="text"
+							nbInput
+							formControlName="upworkUrl"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.UPWORK' | translate
+							}}"
+						/>
+					</div>
+				</div>
+			</div>
+			<div class="actions">
+				<button
+					[disabled]="form.invalid"
+					(click)="submitForm()"
+					nbButton
+					status="success"
+				>
+					{{ 'BUTTONS.SAVE' | translate }}
+				</button>
+			</div>
+		</form>
+	</nb-card-body>
+</nb-card>
