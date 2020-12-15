@@ -7,6 +7,7 @@ import {
 } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
+import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-goal-custom-unit-select',
@@ -17,18 +18,20 @@ export class GoalCustomUnitSelectComponent implements OnInit, OnDestroy {
 	@Input() parentFormGroup: FormGroup;
 	@Input() numberUnits: string[];
 	keyResultTypeEnum = KeyResultTypeEnum;
-	currenciesEnum = CurrenciesEnum;
 	createNew = false;
 	private _ngDestroy$ = new Subject<void>();
-	constructor() {}
+	defaultCurrency: string;
+
+	constructor(private readonly store: Store) {}
 
 	ngOnInit() {
+		this.defaultCurrency = this.store.selectedOrganization.currency;
 		this.parentFormGroup.controls['type'].valueChanges
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((formValue) => {
 				if (formValue === KeyResultTypeEnum.CURRENCY) {
 					this.parentFormGroup.controls['unit'].patchValue(
-						CurrenciesEnum.BGN
+						this.defaultCurrency || CurrenciesEnum.BGN
 					);
 				} else if (formValue === KeyResultTypeEnum.NUMERICAL) {
 					this.parentFormGroup.controls['unit'].patchValue(

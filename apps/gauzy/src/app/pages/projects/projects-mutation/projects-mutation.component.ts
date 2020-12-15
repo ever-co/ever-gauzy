@@ -10,7 +10,8 @@ import {
 	ITag,
 	ProjectOwnerEnum,
 	TaskListTypeEnum,
-	ContactType
+	ContactType,
+	ICurrency
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -46,7 +47,6 @@ export class ProjectsMutationComponent
 	members: string[];
 	selectedEmployeeIds: string[];
 	billings: string[] = Object.values(ProjectBillingEnum);
-	currencies: string[] = Object.values(CurrenciesEnum);
 	defaultCurrency: string;
 	public: Boolean = true;
 	billable: Boolean = true;
@@ -112,7 +112,7 @@ export class ProjectsMutationComponent
 			);
 		}
 
-		this.defaultCurrency = this.organization.currency || 'USD';
+		this.defaultCurrency = this.organization.currency || CurrenciesEnum.USD;
 		this.form = this.fb.group({
 			tags: [this.project ? (this.tags = this.project.tags) : ''],
 			public: [this.project ? this.project.public : this.public],
@@ -125,12 +125,7 @@ export class ProjectsMutationComponent
 			],
 			billing: [this.project ? this.project.billing : 'RATE'],
 			currency: [
-				{
-					value: this.project
-						? this.project.currency
-						: this.defaultCurrency,
-					disabled: true
-				}
+				this.project ? this.project.currency : this.defaultCurrency
 			],
 			startDate: [
 				this.project ? new Date(this.project.startDate) : new Date()
@@ -190,7 +185,7 @@ export class ProjectsMutationComponent
 					name: this.form.value['name'],
 					organizationContactId: this.form.value[
 						'organizationContact'
-					].organizationContactId,
+					].id,
 					billing: this.form.value['billing'],
 					currency:
 						this.form.value['currency'] || this.defaultCurrency,
@@ -255,4 +250,9 @@ export class ProjectsMutationComponent
 			state: this.project
 		});
 	}
+
+	/*
+	 * On Changed Currency Event Emitter
+	 */
+	currencyChanged($event: ICurrency) {}
 }

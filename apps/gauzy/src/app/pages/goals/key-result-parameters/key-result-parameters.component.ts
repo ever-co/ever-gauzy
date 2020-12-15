@@ -7,7 +7,6 @@ import {
 	KeyResultDeadlineEnum,
 	IKPI,
 	IGoalGeneralSetting,
-	CurrenciesEnum,
 	KeyResultNumberUnitsEnum,
 	IOrganization
 } from '@gauzy/models';
@@ -36,7 +35,6 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 	keyResultWeightEnum = KeyResultWeightEnum;
 	keyResultWeight: any;
 	KPIs: IKPI[];
-	currenciesEnum = CurrenciesEnum;
 	numberUnitsEnum: string[] = Object.values(KeyResultNumberUnitsEnum);
 	private _ngDestroy$ = new Subject<void>();
 	organization: IOrganization;

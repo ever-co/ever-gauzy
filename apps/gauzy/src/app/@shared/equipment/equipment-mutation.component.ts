@@ -11,12 +11,12 @@ import { Store } from '../../@core/services/store.service';
 	selector: 'ngx-equipment-mutation',
 	templateUrl: './equipment-mutation.component.html'
 })
-export class EquipmentMutationComponent extends TranslationBaseComponent
+export class EquipmentMutationComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	form: FormGroup;
 	equipment: IEquipment;
-	currencies = Object.values(CurrenciesEnum);
-	selectedCurrency;
+	selectedCurrency: string;
 	tags: ITag[] = [];
 	selectedTags: any;
 	selectedOrganization: IOrganization;
@@ -34,10 +34,9 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 	ngOnInit(): void {
 		this.selectedCurrency = this.store.selectedOrganization
 			? this.store.selectedOrganization.currency
-			: this.currencies[0];
+			: CurrenciesEnum.BGN;
 
 		this.initializeForm();
-		this.form.get('currency').disable();
 	}
 
 	async initializeForm() {
@@ -57,7 +56,12 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 				this.equipment ? this.equipment.initialCost : null,
 				[Validators.min(0)]
 			],
-			currency: [this.selectedCurrency, Validators.required],
+			currency: [
+				this.equipment
+					? this.equipment.currency
+					: this.selectedCurrency,
+				Validators.required
+			],
 			maxSharePeriod: [
 				this.equipment ? this.equipment.maxSharePeriod : null
 			],
@@ -75,7 +79,6 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 		}
 		const equipment = await this.equipmentService.save({
 			...this.form.value,
-			currency: this.selectedCurrency,
 			tags: this.tags,
 			organizationId: this.selectedOrganization.id,
 			tenantId: this.selectedOrganization.tenantId

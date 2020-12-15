@@ -10,7 +10,6 @@ import {
 	IOrganizationEmploymentType,
 	ITag,
 	PayPeriodEnum,
-	CurrenciesEnum,
 	LanguagesEnum,
 	IEmployeeAward
 } from '@gauzy/models';
@@ -44,7 +43,6 @@ export class PublicPageEmployeeMutationComponent
 	employmentTypes$: Observable<IOrganizationEmploymentType[]>;
 	employeeLevels: { level: string; organizationId: string }[] = [];
 	payPeriods = Object.values(PayPeriodEnum);
-	currencies = Object.values(CurrenciesEnum);
 	languages: string[] = Object.values(LanguagesEnum);
 	privacySettings: any[];
 	employeeAwards: IEmployeeAward[];
@@ -123,9 +121,7 @@ export class PublicPageEmployeeMutationComponent
 			short_description: this.employee.short_description,
 			description: this.employee.description,
 			billRateValue: this.employee.billRateValue,
-			billRateCurrency: [
-				{ value: this.employee.billRateCurrency, disabled: true }
-			],
+			billRateCurrency: [this.employee.billRateCurrency],
 			reWeeklyLimit: this.employee.reWeeklyLimit,
 			startedWorkOn: this.employee.startedWorkOn,
 			organizationEmploymentTypes: [

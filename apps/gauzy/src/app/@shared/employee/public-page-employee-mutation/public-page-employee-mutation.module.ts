@@ -25,6 +25,7 @@ import { SkillsInputModule } from '../../skills/skills-input/skills-input.module
 import { LanguageInputModule } from '../../language/language-input/language-input.module';
 import { CKEditorModule } from 'ng2-ckeditor';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
+import { CurrencyModule } from '../../currency/currency.module';
 
 @NgModule({
 	imports: [
@@ -56,7 +57,8 @@ import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-inp
 		NbToggleModule,
 		NbTabsetModule,
 		CKEditorModule,
-		TagsColorInputModule
+		TagsColorInputModule,
+		CurrencyModule
 	],
 	declarations: [PublicPageEmployeeMutationComponent],
 	entryComponents: [PublicPageEmployeeMutationComponent],

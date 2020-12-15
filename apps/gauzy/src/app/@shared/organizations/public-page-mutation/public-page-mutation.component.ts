@@ -11,7 +11,6 @@ import {
 	ClientFocusEnum,
 	MinimumProjectSizeEnum
 } from '@gauzy/models';
-import { CurrenciesEnum } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { OrganizationAwardsService } from '../../../@core/services/organization-awards.service';
 import { OrganizationLanguagesService } from '../../../@core/services/organization-languages.service';
@@ -28,7 +27,6 @@ export class PublicPageMutationComponent
 	implements OnInit {
 	income?: IIncome;
 	organization?: IOrganization;
-	currencies = Object.values(CurrenciesEnum);
 	client_focus = Object.values(ClientFocusEnum);
 	minimumProjectSizes = Object.values(MinimumProjectSizeEnum);
 	selectedLanguageLevel: string;

@@ -21,7 +21,6 @@ import {
 	IGoal,
 	IKPI,
 	IGoalGeneralSetting,
-	CurrenciesEnum,
 	KeyResultNumberUnitsEnum,
 	IOrganization
 } from '@gauzy/models';
@@ -46,7 +45,6 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	settings: IGoalGeneralSetting;
 	orgId: string;
 	orgName: string;
-	currenciesEnum = CurrenciesEnum;
 	numberUnitsEnum: string[] = Object.values(KeyResultNumberUnitsEnum);
 	helperText = '';
 	teams: IOrganizationTeam[] = [];

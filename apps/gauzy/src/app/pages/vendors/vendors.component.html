@@ -224,17 +224,16 @@
 
 	<ng-container *ngIf="showAddCard" ;>
 		<nb-card-footer class="text-right">
+			<button (click)="cancel()" nbButton status="danger" class="mr-2">
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
 			<button
-				class="mr-3"
 				(click)="save()"
 				nbButton
 				status="success"
 				[disabled]="form.invalid"
 			>
 				{{ 'BUTTONS.SAVE' | translate }}
-			</button>
-			<button (click)="cancel()" nbButton status="danger">
-				{{ 'BUTTONS.CANCEL' | translate }}
 			</button>
 		</nb-card-footer>
 	</ng-container>

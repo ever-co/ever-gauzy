@@ -8,6 +8,7 @@ import {
 	NbInputModule
 } from '@nebular/theme';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { CurrencyModule } from '../../currency/currency.module';
 
 @NgModule({
 	declarations: [GoalCustomUnitSelectComponent],
@@ -20,7 +21,8 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 		NbIconModule,
 		ReactiveFormsModule,
 		FormsModule,
-		NbInputModule
+		NbInputModule,
+		CurrencyModule
 	]
 })
 export class GoalCustomUnitModule {}

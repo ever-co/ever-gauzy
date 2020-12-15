@@ -10,7 +10,8 @@ import {
 	DefaultValueDateTypeEnum,
 	IIntegrationMap,
 	IntegrationEntity,
-	IntegrationEnum
+	IntegrationEnum,
+	CurrenciesEnum
 } from '@gauzy/models';
 import { v4 as uuid } from 'uuid';
 import { Store } from './store.service';
@@ -212,7 +213,7 @@ export class HubstaffService {
 						({ name, id }) => ({
 							name,
 							sourceId: id,
-							currency: 'BGN',
+							currency: CurrenciesEnum.BGN,
 							defaultValueDateType: DefaultValueDateTypeEnum.TODAY
 						})
 					)
