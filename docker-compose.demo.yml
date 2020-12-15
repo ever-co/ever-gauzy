@@ -113,7 +113,7 @@ services:
 
     api:
         container_name: api
-        image: docker.pkg.github.com/ever-co/gauzy/gauzy-api:latest
+        image: ghcr.io/ever-co/gauzy-api:latest
         environment:
             NODE_ENV: ${NODE_ENV:-development}
             DB_HOST: db
@@ -136,7 +136,7 @@ services:
 
     webapp:
         container_name: webapp
-        image: docker.pkg.github.com/ever-co/gauzy/gauzy-webapp:latest
+        image: ghcr.io/ever-co/gauzy-webapp:latest
         environment:
             NODE_ENV: ${NODE_ENV:-development}
         env_file:
