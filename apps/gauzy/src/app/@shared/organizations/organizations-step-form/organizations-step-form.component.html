@@ -218,12 +218,13 @@
 						(mapGeometryEmitter)="onGeometrySend($event)"
 					>
 					</ga-location-form>
-
-					<ga-leaflet-map
-						#leafletTemplate
-						(mapClicked)="onMapClicked($event)"
-					>
-					</ga-leaflet-map>
+					<ng-container *ngIf="stepper._selectedIndex === 1">
+						<ga-leaflet-map
+							#leafletTemplate
+							(mapClicked)="onMapClicked($event)"
+						>
+						</ga-leaflet-map>
+					</ng-container>
 
 					<div class="stepper-buttons">
 						<button nbButton nbStepperPrevious>

@@ -1,0 +1,6 @@
+::ng-deep .pac-container {
+  &.pac-logo {
+    z-index: 1130 !important;
+    position: absolute !important;
+  }
+}
