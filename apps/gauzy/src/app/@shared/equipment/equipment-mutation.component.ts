@@ -34,7 +34,7 @@ export class EquipmentMutationComponent
 	ngOnInit(): void {
 		this.selectedCurrency = this.store.selectedOrganization
 			? this.store.selectedOrganization.currency
-			: CurrenciesEnum.BGN;
+			: CurrenciesEnum.USD;
 
 		this.initializeForm();
 	}

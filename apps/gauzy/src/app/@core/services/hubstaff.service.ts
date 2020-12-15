@@ -213,7 +213,7 @@ export class HubstaffService {
 						({ name, id }) => ({
 							name,
 							sourceId: id,
-							currency: CurrenciesEnum.BGN,
+							currency: CurrenciesEnum.USD,
 							defaultValueDateType: DefaultValueDateTypeEnum.TODAY
 						})
 					)

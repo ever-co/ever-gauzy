@@ -31,7 +31,7 @@ export class GoalCustomUnitSelectComponent implements OnInit, OnDestroy {
 			.subscribe((formValue) => {
 				if (formValue === KeyResultTypeEnum.CURRENCY) {
 					this.parentFormGroup.controls['unit'].patchValue(
-						this.defaultCurrency || CurrenciesEnum.BGN
+						this.defaultCurrency || CurrenciesEnum.USD
 					);
 				} else if (formValue === KeyResultTypeEnum.NUMERICAL) {
 					this.parentFormGroup.controls['unit'].patchValue(
