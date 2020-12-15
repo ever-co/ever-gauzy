@@ -6,6 +6,7 @@ import { CurrenciesEnum, IOrganization } from '@gauzy/models';
 import { Tenant } from '../tenant/tenant.entity';
 import { Organization } from '../organization/organization.entity';
 import { DEFAULT_RANDOM_EQUIPMENTS } from './default-equipments';
+import { environment as env } from '@env-api/environment';
 
 export const createDefaultEquipments = async (
 	connection: Connection,
@@ -24,7 +25,7 @@ export const createDefaultEquipments = async (
 	equipment.serialNumber = 'CB0950AT';
 	equipment.manufacturedYear = 2015;
 	equipment.initialCost = 40000;
-	equipment.currency = CurrenciesEnum.USD;
+	equipment.currency = env.defaultCurrency;
 	equipment.maxSharePeriod = 7;
 	equipment.tags = [faker.random.arrayElement(tags)];
 	equipment.tenant = tenant;

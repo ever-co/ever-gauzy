@@ -72,6 +72,7 @@ export const environment: Environment = {
   GOOGLE_MAPS_API_KEY: '${env.GOOGLE_MAPS_API_KEY}',
   DEFAULT_LATITUDE: ${env.DEFAULT_LATITUDE},
   DEFAULT_LONGITUDE: ${env.DEFAULT_LONGITUDE},
+  DEFAULT_CURRENCY: '${env.DEFAULT_CURRENCY}'
 };
 
 export const cloudinaryConfiguration: CloudinaryConfiguration = {
