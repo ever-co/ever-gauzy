@@ -2,7 +2,7 @@ name: docker
 
 on:
     push:
-        branches: develop
+        branches: master
 
 jobs:
     gauzy-api:
