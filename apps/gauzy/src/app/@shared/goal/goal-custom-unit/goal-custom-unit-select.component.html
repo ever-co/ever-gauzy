@@ -1,32 +1,40 @@
 <div [formGroup]="parentFormGroup">
-	<ga-currency
-		*ngIf="parentFormGroup.value.type == keyResultTypeEnum.CURRENCY"
-		formControlName="unit"
-		[placeholder]="'Unit'"
-	></ga-currency>
-	<nb-select
-		fullWidth
-		formControlName="unit"
-		[selected]="numberUnits[0]"
-		(selectedChange)="
-			parentFormGroup.value.unit == 'create-new'
-				? (createNew = !createNew)
-				: true
-		"
-		*ngIf="
-			parentFormGroup.value.type == keyResultTypeEnum.NUMERICAL &&
-			!createNew
-		"
-		id="unit"
-		nbSuffix
+	<ng-template
+		[ngIf]="parentFormGroup.value.type == keyResultTypeEnum.CURRENCY"
+		[ngIfElse]="unitTemplate"
 	>
-		<nb-option [value]="unit" *ngFor="let unit of numberUnits">
-			{{ unit }}
-		</nb-option>
-		<nb-option value="create-new" class="bg-secondary text-light">
-			+ create new
-		</nb-option>
-	</nb-select>
+		<ga-currency
+			*ngIf="parentFormGroup.value.type == keyResultTypeEnum.CURRENCY"
+			formControlName="unit"
+			[placeholder]="'Unit'"
+		></ga-currency>
+	</ng-template>
+	<ng-template #unitTemplate>
+		<label for="unit" class="label"> Unit </label>
+		<nb-select
+			fullWidth
+			formControlName="unit"
+			[selected]="numberUnits[0]"
+			(selectedChange)="
+				parentFormGroup.value.unit == 'create-new'
+					? (createNew = !createNew)
+					: true
+			"
+			*ngIf="
+				parentFormGroup.value.type == keyResultTypeEnum.NUMERICAL &&
+				!createNew
+			"
+			id="unit"
+			nbSuffix
+		>
+			<nb-option [value]="unit" *ngFor="let unit of numberUnits">
+				{{ unit }}
+			</nb-option>
+			<nb-option value="create-new" class="bg-secondary text-light">
+				+ create new
+			</nb-option>
+		</nb-select>
+	</ng-template>
 	<nb-form-field *ngIf="createNew">
 		<input type="text" formControlName="unit" nbInput fullWidth />
 		<nb-icon
