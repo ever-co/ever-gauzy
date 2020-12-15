@@ -182,24 +182,12 @@
 								</nb-option>
 							</nb-select>
 						</div>
-						<div class="form-group col-4">
-							<label for="currency" class="label">{{
-								'FORM.PLACEHOLDERS.CURRENCY' | translate
-							}}</label>
-							<nb-select
-								fullWidth
-								placeholder="{{
-									'FORM.PLACEHOLDERS.CURRENCY' | translate
-								}}"
+						<div class="col-4">
+							<ga-currency
 								formControlName="currency"
-								id="currency"
+								(optionChange)="currencyChanged($event)"
 							>
-								<nb-option
-									*ngFor="let currency of currencies"
-									value="{{ currency }}"
-									>{{ currency }}
-								</nb-option>
-							</nb-select>
+							</ga-currency>
 						</div>
 					</div>
 				</nb-tab>
@@ -319,6 +307,9 @@
 			class="form-group"
 			style="display: flex; justify-content: flex-end"
 		>
+			<button class="mr-2" (click)="cancel()" nbButton status="danger">
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
 			<button
 				class="mr-2"
 				(click)="submitForm()"
@@ -332,9 +323,6 @@
 				"
 			>
 				{{ 'BUTTONS.SAVE' | translate }}
-			</button>
-			<button class="mr-2" (click)="cancel()" nbButton status="danger">
-				{{ 'BUTTONS.CANCEL' | translate }}
 			</button>
 			<button
 				*ngIf="form.controls['taskViewMode'].value === 'SPRINT'"

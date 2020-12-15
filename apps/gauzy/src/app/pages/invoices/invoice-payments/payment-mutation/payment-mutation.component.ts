@@ -3,7 +3,6 @@ import { TranslationBaseComponent } from '../../../../@shared/language-base/tran
 import { TranslateService } from '@ngx-translate/core';
 import {
 	IInvoice,
-	CurrenciesEnum,
 	IPayment,
 	PaymentMethodEnum,
 	IOrganization,
@@ -39,7 +38,6 @@ export class PaymentMutationComponent
 	organization: IOrganization;
 	payment: IPayment;
 	form: FormGroup;
-	currencies = Object.values(CurrenciesEnum);
 	paymentMethods = Object.values(PaymentMethodEnum);
 	currencyString: string;
 	organizationContact: IOrganizationContact;

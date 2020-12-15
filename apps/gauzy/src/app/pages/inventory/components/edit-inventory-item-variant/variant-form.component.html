@@ -152,7 +152,7 @@
 									}}
 								</label>
 								<nb-select
-									id="unitCostCurrency"
+									id="invoicingPolicyInput"
 									fullWidth
 									[placeholder]="
 										'INVENTORY_PAGE.BILLING_INVOICING_POLICY'
@@ -369,37 +369,14 @@
 								</div>
 							</div>
 							<div class="col-sm-4 mb-4">
-								<label
-									class="label"
-									for="retailPriceCurrencyInput"
-								>
-									{{
-										'INVENTORY_PAGE.RETAIL_PRICE_CURRENCY'
-											| translate
-									}}
-								</label>
-								<nb-select
-									id="retailPriceCurrencyInput"
-									fullWidth
-									formControlName="retailPriceCurrency"
+								<ga-currency
 									[placeholder]="
 										'INVENTORY_PAGE.RETAIL_PRICE_CURRENCY'
 											| translate
 									"
-									[ngClass]="{
-										'status-danger':
-											form.controls['retailPriceCurrency']
-												.invalid &&
-											form.controls['retailPriceCurrency']
-												.touched
-									}"
+									formControlName="retailPriceCurrency"
 								>
-									<nb-option
-										*ngFor="let currency of currencies"
-										value="{{ currency }}"
-										>{{ currency }}
-									</nb-option>
-								</nb-select>
+								</ga-currency>
 								<div
 									*ngIf="
 										form.controls['retailPriceCurrency']
@@ -479,34 +456,14 @@
 								</div>
 							</div>
 							<div class="col-sm-4 mb-4">
-								<label class="label" for="unitCostCurrency">
-									{{
-										'INVENTORY_PAGE.UNIT_COST_CURRENCY'
-											| translate
-									}}
-								</label>
-								<nb-select
-									id="unitCostCurrency"
-									fullWidth
+								<ga-currency
 									[placeholder]="
 										'INVENTORY_PAGE.UNIT_COST_CURRENCY'
 											| translate
 									"
 									formControlName="unitCostCurrency"
-									[ngClass]="{
-										'status-danger':
-											form.controls['unitCostCurrency']
-												.invalid &&
-											form.controls['unitCostCurrency']
-												.touched
-									}"
 								>
-									<nb-option
-										*ngFor="let currency of currencies"
-										value="{{ currency }}"
-										>{{ currency }}
-									</nb-option>
-								</nb-select>
+								</ga-currency>
 								<div
 									*ngIf="
 										form.controls['unitCostCurrency']
@@ -617,7 +574,7 @@
 		</div>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
-		<button (click)="onCancel()" status="warning" class="mr-3" nbButton>
+		<button (click)="onCancel()" status="danger" class="mr-2" nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button

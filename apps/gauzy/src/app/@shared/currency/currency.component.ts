@@ -37,6 +37,7 @@ export class CurrencyComponent
 	extends TranslationBaseComponent
 	implements OnInit, AfterViewInit, ControlValueAccessor {
 	private _currency: string;
+	private _placeholder: string;
 
 	@Input() formControl: FormControl = new FormControl();
 	@Output() selectChange = new EventEmitter<string>();
@@ -58,6 +59,16 @@ export class CurrencyComponent
 	}
 	get currency() {
 		return this._currency;
+	}
+
+	@Input()
+	set placeholder(val: string) {
+		if (val) {
+			this._placeholder = val;
+		}
+	}
+	get placeholder() {
+		return this._placeholder;
 	}
 
 	constructor(

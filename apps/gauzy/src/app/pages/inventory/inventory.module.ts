@@ -46,6 +46,7 @@ import { OrganizationsService } from '../../@core/services/organizations.service
 import { InventoryVariantFormComponent } from './components/edit-inventory-item-variant/variant-form.component';
 import { EnabledStatusComponent } from './components/table-components/enabled-row.component';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
+import { CurrencyModule } from '../../@shared/currency/currency.module';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -97,7 +98,8 @@ const NB_MODULES = [
 				deps: [HttpClient]
 			}
 		}),
-		...NB_MODULES
+		...NB_MODULES,
+		CurrencyModule
 	],
 	entryComponents: [
 		ProductTypeMutationComponent,

@@ -11,7 +11,6 @@ import {
 	KpiMetricEnum,
 	KpiOperatorEnum,
 	IKPI,
-	CurrenciesEnum,
 	KeyResultNumberUnitsEnum,
 	IOrganization
 } from '@gauzy/models';
@@ -23,14 +22,14 @@ import { GoalSettingsService } from '../../../@core/services/goal-settings.servi
 	templateUrl: './edit-kpi.component.html',
 	styleUrls: ['./edit-kpi.component.scss']
 })
-export class EditKpiComponent extends TranslationBaseComponent
+export class EditKpiComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	kpiForm: FormGroup;
 	employees: IEmployee[];
 	selectedKPI: IKPI;
 	type: string;
 	helper = '';
-	currenciesEnum = CurrenciesEnum;
 	numberUnitsEnum: string[] = Object.values(KeyResultNumberUnitsEnum);
 	kpiOperatorEnum = KpiOperatorEnum;
 	kpiMetricEnum = KpiMetricEnum;

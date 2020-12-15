@@ -646,7 +646,7 @@ export class InvoicesComponent
 						: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'custom',
 					sortDirection: 'asc',
-					width: '10px',
+					width: '10%',
 					renderComponent: NotesWithTagsComponent
 				}
 			}
@@ -670,7 +670,7 @@ export class InvoicesComponent
 					'INVOICES_PAGE.INVOICES_SELECT_DUE_DATE'
 				),
 				type: 'date',
-				width: '11%',
+				width: '10%',
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
 					return `${cell.slice(0, 10)}`;
@@ -715,9 +715,9 @@ export class InvoicesComponent
 				title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
 				type: 'text',
 				filter: false,
-				width: '8%',
+				width: '10%',
 				valuePrepareFunction: (cell, row) => {
-					return `${parseFloat(cell).toFixed(2)}`;
+					return `${row.currency} ${parseFloat(cell).toFixed(2)}`;
 				}
 			};
 		}
@@ -726,7 +726,7 @@ export class InvoicesComponent
 			this.settingsSmartTable['columns']['tax'] = {
 				title: this.getTranslation('INVOICES_PAGE.INVOICES_SELECT_TAX'),
 				type: 'text',
-				width: '8%',
+				width: '5%',
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
 					return `${cell} ${row.taxType === 'Percent' ? '%' : ''}`;
@@ -738,7 +738,7 @@ export class InvoicesComponent
 			this.settingsSmartTable['columns']['tax2'] = {
 				title: this.getTranslation('INVOICES_PAGE.TAX_2'),
 				type: 'text',
-				width: '8%',
+				width: '5%',
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
 					return `${cell} ${row.tax2Type === 'Percent' ? '%' : ''}`;
@@ -752,7 +752,7 @@ export class InvoicesComponent
 					'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE'
 				),
 				type: 'text',
-				width: '8%',
+				width: '5%',
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
 					return `${cell} ${
@@ -762,24 +762,13 @@ export class InvoicesComponent
 			};
 		}
 
-		if (this.columns.includes(InvoiceColumnsEnum.CURRENCY)) {
-			this.settingsSmartTable['columns']['currency'] = {
-				title: this.getTranslation(
-					'INVOICES_PAGE.INVOICES_SELECT_CURRENCY'
-				),
-				type: 'text',
-				width: '8%',
-				filter: false
-			};
-		}
-
 		if (this.columns.includes(InvoiceColumnsEnum.CONTACT)) {
 			this.settingsSmartTable['columns']['organizationContactName'] = {
 				title: this.getTranslation(
 					'INVOICES_PAGE.INVOICES_SELECT_CONTACT'
 				),
 				type: 'text',
-				width: '8%',
+				width: '12%',
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
 					return row.toContact.name;

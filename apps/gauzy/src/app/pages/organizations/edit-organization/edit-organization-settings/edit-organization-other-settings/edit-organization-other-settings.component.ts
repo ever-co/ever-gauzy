@@ -8,7 +8,6 @@ import {
 	IOrganization,
 	WeekDaysEnum,
 	RegionsEnum,
-	CurrenciesEnum,
 	BonusTypeEnum,
 	CurrencyPosition
 } from '@gauzy/models';
@@ -49,7 +48,6 @@ export class EditOrganizationOtherSettingsComponent
 	numberFormats = ['USD', 'BGN', 'ILS'];
 	numberFormat: string;
 	weekdays: string[] = Object.values(WeekDaysEnum);
-	currencies = Object.values(CurrenciesEnum);
 	regionCodes = Object.keys(RegionsEnum);
 	regionCode: string;
 	regions = Object.values(RegionsEnum);

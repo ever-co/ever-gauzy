@@ -15,6 +15,7 @@ import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
 import { EquipmentMutationComponent } from './equipment-mutation.component';
 import { Store } from '../../@core/services/store.service';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
+import { CurrencyModule } from '../currency/currency.module';
 @NgModule({
 	imports: [
 		TagsColorInputModule,
@@ -33,7 +34,8 @@ import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.
 				useFactory: HttpLoaderFactory,
 				deps: [HttpClient]
 			}
-		})
+		}),
+		CurrencyModule
 	],
 	declarations: [EquipmentMutationComponent],
 	entryComponents: [],

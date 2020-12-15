@@ -2,7 +2,6 @@ import { Component, OnDestroy, OnInit, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Params } from '@angular/router';
 import {
-	CurrenciesEnum,
 	IEmployee,
 	OrganizationSelectInput,
 	PayPeriodEnum,
@@ -32,8 +31,6 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 	routeParams: Params;
 	selectedEmployee: IEmployee;
 	selectedCandidate: ICandidate;
-
-	currencies = Object.values(CurrenciesEnum);
 	payPeriods = Object.values(PayPeriodEnum);
 
 	constructor(

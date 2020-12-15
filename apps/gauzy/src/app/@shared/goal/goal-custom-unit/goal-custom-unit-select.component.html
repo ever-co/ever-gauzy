@@ -1,21 +1,9 @@
 <div [formGroup]="parentFormGroup">
-	<label for="unit" class="label">
-		Unit
-	</label>
-	<nb-select
-		fullWidth
-		formControlName="unit"
+	<ga-currency
 		*ngIf="parentFormGroup.value.type == keyResultTypeEnum.CURRENCY"
-		[(selected)]="currenciesEnum.BGN"
-		id="unit"
-		nbSuffix
-	>
-		<nb-option
-			[value]="currency.value"
-			*ngFor="let currency of currenciesEnum | keyvalue"
-			>{{ currency.value }}</nb-option
-		>
-	</nb-select>
+		formControlName="unit"
+		[placeholder]="'Unit'"
+	></ga-currency>
 	<nb-select
 		fullWidth
 		formControlName="unit"
@@ -32,8 +20,8 @@
 		id="unit"
 		nbSuffix
 	>
-		<nb-option [value]="unit" *ngFor="let unit of numberUnits"
-			>{{ unit }}
+		<nb-option [value]="unit" *ngFor="let unit of numberUnits">
+			{{ unit }}
 		</nb-option>
 		<nb-option value="create-new" class="bg-secondary text-light">
 			+ create new

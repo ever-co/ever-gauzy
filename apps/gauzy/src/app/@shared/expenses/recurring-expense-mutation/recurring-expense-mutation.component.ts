@@ -1,7 +1,6 @@
 import { Component, OnInit, ViewChild, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
-	CurrenciesEnum,
 	OrganizationSelectInput,
 	IRecurringExpenseModel,
 	RecurringExpenseDefaultCategoriesEnum,
@@ -76,7 +75,6 @@ export class RecurringExpenseMutationComponent
 	@Input() isAdd: boolean;
 	recurringExpense?: IRecurringExpenseModel;
 	componentType: COMPONENT_TYPE;
-	currencies = Object.values(CurrenciesEnum);
 	selectedDate: Date;
 	conflicts: IRecurringExpenseModel[] = [];
 	selectedOrganization: IOrganization;

@@ -13,7 +13,6 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	BonusTypeEnum,
 	ICountry,
-	CurrenciesEnum,
 	DefaultValueDateTypeEnum,
 	RegionsEnum,
 	WeekDaysEnum,
@@ -45,7 +44,6 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
 
 	hoverState: boolean;
-	currencies: string[] = Object.values(CurrenciesEnum);
 	countries: ICountry[];
 	defaultValueDateTypes: string[] = Object.values(DefaultValueDateTypeEnum);
 	defaultBonusTypes: string[] = Object.values(BonusTypeEnum);
