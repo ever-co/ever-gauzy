@@ -311,7 +311,7 @@ export class HubstaffService {
 					organizationId,
 					public: true,
 					billing: ProjectBillingEnum.RATE,
-					currency: CurrenciesEnum.BGN,
+					currency: CurrenciesEnum.USD,
 					billable,
 					description
 				};

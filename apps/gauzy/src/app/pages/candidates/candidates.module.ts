@@ -192,10 +192,7 @@ const COMPONENTS = [
 		CandidateInterviewFeedbackModule,
 		DeleteInterviewModule,
 		DeleteFeedbackModule,
-		NgxPermissionsModule.forChild({
-			permissionsIsolate: true,
-			rolesIsolate: true
-		})
+		NgxPermissionsModule.forChild()
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [

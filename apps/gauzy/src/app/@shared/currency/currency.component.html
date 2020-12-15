@@ -1,13 +1,15 @@
 <ng-container>
 	<div class="form-group">
 		<label class="label" for="currencySelect">{{
-			'FORM.LABELS.CURRENCY' | translate
+			placeholder || 'FORM.LABELS.CURRENCY' | translate
 		}}</label>
 		<nb-select
 			id="currencySelect"
 			class="d-block"
 			size="medium"
-			placeholder="{{ 'FORM.PLACEHOLDERS.ALL_CURRENCIES' | translate }}"
+			[placeholder]="
+				placeholder || 'FORM.PLACEHOLDERS.ALL_CURRENCIES' | translate
+			"
 			fullWidth="true"
 			[status]="
 				formControl.invalid && formControl.touched ? 'danger' : 'basic'
@@ -21,7 +23,7 @@
 				[value]="item.isoCode"
 				(click)="onOptionChange(item)"
 			>
-				{{ item.currency }}
+				{{ item.currency + ' (' + item.isoCode + ')' }}
 			</nb-option>
 		</nb-select>
 	</div>

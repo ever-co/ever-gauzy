@@ -17,6 +17,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '../../../../../@core/services/store.service';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-org-main',
@@ -167,7 +168,5 @@ export class EditOrganizationMainComponent
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) {
-		console.log($event);
-	}
+	currencyChanged($event: ICurrency) {}
 }

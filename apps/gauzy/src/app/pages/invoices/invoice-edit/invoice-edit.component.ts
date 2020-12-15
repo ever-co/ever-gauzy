@@ -6,12 +6,9 @@ import { TranslateService } from '@ngx-translate/core';
 import {
 	IInvoice,
 	IOrganizationContact,
-	CurrenciesEnum,
-	OrganizationSelectInput,
 	IInvoiceItem,
 	IOrganization,
 	IEmployee,
-	PermissionsEnum,
 	InvoiceTypeEnum,
 	DiscountTaxTypeEnum,
 	ITag,
@@ -24,7 +21,7 @@ import {
 import { filter, first } from 'rxjs/operators';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
-import { Subject, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { InvoiceItemService } from '../../../@core/services/invoice-item.service';
@@ -44,6 +41,7 @@ import { InvoiceExpensesSelectorComponent } from '../table-components/invoice-ex
 import { ExpensesService } from '../../../@core/services/expenses.service';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-invoice-edit',
@@ -74,7 +72,6 @@ export class InvoiceEditComponent
 	) {
 		super(translate);
 		this.observableTasks = this.tasksStore.tasks$;
-		this.initializeForm();
 	}
 
 	invoiceLoaded = false;
@@ -94,10 +91,8 @@ export class InvoiceEditComponent
 	employees: IEmployee[];
 	projects: IOrganizationProject[];
 	products: IProduct[];
-	currencies = Object.values(CurrenciesEnum);
 	invoiceDate: Date;
 	dueDate: Date;
-	hasInvoiceEditPermission: boolean;
 	tags: ITag[] = [];
 	tasks: ITask[];
 	expenses: IExpense[] = [];
@@ -111,19 +106,12 @@ export class InvoiceEditComponent
 	get currency() {
 		return this.form.get('currency');
 	}
-	private _ngDestroy$ = new Subject<void>();
 
 	@Input() isEstimate: boolean;
 
 	ngOnInit() {
 		this._applyTranslationOnSmartTable();
-		this.store.userRolePermissions$
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.hasInvoiceEditPermission = this.store.hasPermission(
-					PermissionsEnum.INVOICES_EDIT
-				);
-			});
+		this.initializeForm();
 		this.route.paramMap.pipe(untilDestroyed(this)).subscribe((params) => {
 			this.invoiceId = params.get('id');
 		});
@@ -167,9 +155,7 @@ export class InvoiceEditComponent
 		this.discountAfterTax = invoice.fromOrganization.discountAfterTax;
 
 		await this._loadOrganizationData();
-
 		this.seedFormData(invoice);
-		this.form.get('currency').disable();
 	}
 
 	initializeForm() {
@@ -204,17 +190,23 @@ export class InvoiceEditComponent
 	}
 
 	seedFormData(invoice: IInvoice) {
-		this.form.get('id').setValue(invoice.id);
-		this.form.get('invoiceNumber').setValue(invoice.invoiceNumber);
-		this.form.get('invoiceDate').setValue(new Date(invoice.invoiceDate));
-		this.form.get('dueDate').setValue(new Date(invoice.dueDate));
-		this.form.get('discountValue').setValue(invoice.discountValue);
-		this.form.get('tax').setValue(invoice.tax);
-		this.form.get('tax2').setValue(invoice.tax2);
-		this.form.get('terms').setValue(invoice.terms);
-		this.form.get('discountType').setValue(invoice.discountType);
-		this.form.get('taxType').setValue(invoice.taxType);
-		this.form.get('tax2Type').setValue(invoice.tax2Type);
+		this.form.setValue({
+			id: invoice.id,
+			invoiceNumber: invoice.invoiceNumber,
+			invoiceDate: new Date(invoice.invoiceDate),
+			dueDate: new Date(invoice.dueDate),
+			discountValue: invoice.discountValue,
+			tax: invoice.tax,
+			tax2: invoice.tax2,
+			terms: invoice.terms,
+			organizationContact: invoice.toContact,
+			currency: invoice.currency,
+			discountType: invoice.discountType,
+			taxType: invoice.taxType,
+			tax2Type: invoice.tax2Type,
+			tags: invoice.tags
+		});
+		this.form.updateValueAndValidity();
 		this.invoiceLoaded = true;
 		this.tags = invoice.tags;
 	}
@@ -486,7 +478,6 @@ export class InvoiceEditComponent
 						this.employees = items;
 					});
 				break;
-
 			case InvoiceTypeEnum.BY_PROJECT_HOURS:
 				const projects = await this.projectService.getAll([], {
 					organizationId,
@@ -494,11 +485,9 @@ export class InvoiceEditComponent
 				});
 				this.projects = projects.items;
 				break;
-
 			case InvoiceTypeEnum.BY_TASK_HOURS:
 				this._loadTasks();
 				break;
-
 			case InvoiceTypeEnum.BY_PRODUCTS:
 				const products = await this.productService.getAll(
 					[],
@@ -507,27 +496,16 @@ export class InvoiceEditComponent
 				);
 				this.products = products.items;
 				break;
-
 			case InvoiceTypeEnum.BY_EXPENSES:
 				const expenses = await this.expensesService.getAll([], {
 					typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,
 					organizationId,
 					tenantId
 				});
-
 				this.expenses = expenses.items;
 				break;
-
 			default:
 				break;
-		}
-
-		const orgData = await this.organizationsService
-			.getById(organizationId, [OrganizationSelectInput.currency])
-			.pipe(first())
-			.toPromise();
-		if (orgData && this.currency) {
-			this.currency.setValue(orgData.currency);
 		}
 
 		const organizationContacts = await this.organizationContactService.getAll(
@@ -965,7 +943,7 @@ export class InvoiceEditComponent
 		}
 	}
 
-	async onCurrencyChange() {
+	async onCurrencyChange($event) {
 		const tableData = await this.smartTableSource.getAll();
 		this.smartTableSource.load(tableData);
 	}
@@ -1075,8 +1053,5 @@ export class InvoiceEditComponent
 		this.tags = currentTagSelection;
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

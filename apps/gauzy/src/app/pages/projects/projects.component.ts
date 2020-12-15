@@ -37,11 +37,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 export class ProjectsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	loading = true;
+	loading: boolean;
 	settingsSmartTable: object;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.CARDS_GRID;
-
 	organization: IOrganization;
 	showAddCard: boolean;
 	projects: IOrganizationProject[];
@@ -81,13 +80,15 @@ export class ProjectsComponent
 		this._applyTranslationOnSmartTable();
 		this.store.selectedOrganization$
 			.pipe(
-				untilDestroyed(this),
-				filter((organization) => !!organization)
+				filter((organization) => !!organization),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
+				tap(() => this._initMethod()),
+				untilDestroyed(this)
 			)
-			.subscribe((organization) => {
-				this.organization = organization;
-				this._initMethod();
-			});
+			.subscribe();
 		this.store.userRolePermissions$
 			.pipe(untilDestroyed(this))
 			.subscribe(() => {
@@ -119,15 +120,13 @@ export class ProjectsComponent
 		if (!this.organization) {
 			return;
 		}
+
 		this.loadProjects();
 		this.loadEmployees();
 		this.loadOrganizationContacts();
 	}
 
 	private async loadEmployees() {
-		if (!this.organization) {
-			return;
-		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 		const { items } = await this.employeesService
@@ -238,36 +237,37 @@ export class ProjectsComponent
 	}
 
 	async loadProjects() {
-		this.loading = false;
-		if (!this.organization) {
-			return;
-		}
+		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const res = await this.organizationProjectsService.getAll(
-			['organizationContact', 'members', 'members.user', 'tags'],
-			{ organizationId, tenantId }
-		);
-		if (res) {
-			const canView = [];
-			if (this.viewPrivateProjects) {
-				this.projects = res.items;
-				this.smartTableSource.load(res.items);
-			} else {
-				res.items.forEach((item) => {
-					if (item.public) {
-						canView.push(item);
-					} else {
-						item.members.forEach((member) => {
-							if (member.id === this.store.userId) {
-								canView.push(item);
-							}
-						});
-					}
-				});
-				this.projects = canView;
-			}
-		}
+		this.organizationProjectsService
+			.getAll(
+				['organizationContact', 'members', 'members.user', 'tags'],
+				{ organizationId, tenantId }
+			)
+			.then(({ items }) => {
+				const canView = [];
+				if (this.viewPrivateProjects) {
+					this.projects = items;
+					this.smartTableSource.load(items);
+				} else {
+					items.forEach((item) => {
+						if (item.public) {
+							canView.push(item);
+						} else {
+							item.members.forEach((member) => {
+								if (member.id === this.store.userId) {
+									canView.push(item);
+								}
+							});
+						}
+					});
+					this.projects = canView;
+				}
+			})
+			.finally(() => {
+				this.loading = false;
+			});
 	}
 
 	async loadSmartTable() {
@@ -356,19 +356,17 @@ export class ProjectsComponent
 			});
 	}
 
-	private async loadOrganizationContacts() {
-		if (!this.organization) {
-			return;
-		}
+	private loadOrganizationContacts() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const res = await this.organizationContactService.getAll(['projects'], {
-			organizationId,
-			tenantId
-		});
-		if (res) {
-			this.organizationContacts = res.items;
-		}
+		this.organizationContactService
+			.getAll(['projects'], {
+				organizationId,
+				tenantId
+			})
+			.then(({ items }) => {
+				this.organizationContacts = items;
+			});
 	}
 
 	async editProject(project: IOrganizationProject) {

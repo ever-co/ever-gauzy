@@ -1,6 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
-	CurrenciesEnum,
 	BillingInvoicingPolicyEnum,
 	IProductVariant,
 	IOrganization
@@ -32,13 +31,13 @@ export interface IVariantCreateInput {
 	templateUrl: './variant-form.component.html',
 	styleUrls: ['./variant-form.component.scss']
 })
-export class InventoryVariantFormComponent extends TranslationBaseComponent
+export class InventoryVariantFormComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	itemVariant: IProductVariant;
 	hoverState: boolean;
-	currencies = Object.values(CurrenciesEnum);
 	billingInvoicingPolicies = Object.values(BillingInvoicingPolicyEnum);
-
+	defaultCurrency: string;
 	form: FormGroup;
 	organization: IOrganization;
 	private ngDestroy$ = new Subject<void>();
@@ -63,6 +62,7 @@ export class InventoryVariantFormComponent extends TranslationBaseComponent
 			.subscribe((organization: IOrganization) => {
 				if (organization) {
 					this.organization = organization;
+					this.defaultCurrency = organization.currency;
 				}
 			});
 
@@ -112,7 +112,7 @@ export class InventoryVariantFormComponent extends TranslationBaseComponent
 			retailPriceCurrency: [
 				this.itemVariant
 					? this.itemVariant.price.retailPriceCurrency
-					: CurrenciesEnum.USD,
+					: this.defaultCurrency,
 				Validators.required
 			],
 			unitCost: [
@@ -122,7 +122,7 @@ export class InventoryVariantFormComponent extends TranslationBaseComponent
 			unitCostCurrency: [
 				this.itemVariant
 					? this.itemVariant.price.unitCostCurrency
-					: CurrenciesEnum.USD,
+					: this.defaultCurrency,
 				Validators.required
 			],
 			enabled: [

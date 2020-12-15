@@ -25,8 +25,8 @@ export async function generatePdf(
 					`${employee.user.firstName} ${employee.user.lastName}`,
 					`${item.description}`,
 					`${item.quantity}`,
-					`${item.price}`,
-					`${item.totalValue}`
+					`${invoice.currency} ${item.price}`,
+					`${invoice.currency} ${item.totalValue}`
 				];
 				break;
 			case InvoiceTypeEnum.BY_PROJECT_HOURS:
@@ -35,8 +35,8 @@ export async function generatePdf(
 					`${project.name}`,
 					`${item.description}`,
 					`${item.quantity}`,
-					`${item.price}`,
-					`${item.totalValue}`
+					`${invoice.currency} ${item.price}`,
+					`${invoice.currency} ${item.totalValue}`
 				];
 				break;
 			case InvoiceTypeEnum.BY_TASK_HOURS:
@@ -45,8 +45,8 @@ export async function generatePdf(
 					`${task.title}`,
 					`${item.description}`,
 					`${item.quantity}`,
-					`${item.price}`,
-					`${item.totalValue}`
+					`${invoice.currency} ${item.price}`,
+					`${invoice.currency} ${item.totalValue}`
 				];
 				break;
 			case InvoiceTypeEnum.BY_PRODUCTS:
@@ -55,8 +55,8 @@ export async function generatePdf(
 					`${product.name}`,
 					`${item.description}`,
 					`${item.quantity}`,
-					`${item.price}`,
-					`${item.totalValue}`
+					`${invoice.currency} ${item.price}`,
+					`${invoice.currency} ${item.totalValue}`
 				];
 				break;
 			case InvoiceTypeEnum.BY_EXPENSES:
@@ -65,8 +65,8 @@ export async function generatePdf(
 					`${expense.purpose}`,
 					`${item.description}`,
 					`${item.quantity}`,
-					`${item.price}`,
-					`${item.totalValue}`
+					`${invoice.currency} ${item.price}`,
+					`${invoice.currency} ${item.totalValue}`
 				];
 				break;
 			default:
@@ -168,7 +168,7 @@ export async function generatePdf(
 				columns: [
 					{
 						width: '50%',
-						text: `Total Value: ${invoice.totalValue}`
+						text: `Total Value: ${invoice.currency} ${invoice.totalValue}`
 					},
 					{
 						width: '50%',

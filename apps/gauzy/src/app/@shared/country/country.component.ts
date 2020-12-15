@@ -85,6 +85,7 @@ export class CountryComponent
 		if (value) {
 			this.country = value;
 		}
+		this.cdr.detectChanges();
 	}
 
 	registerOnChange(fn: (rating: number) => void): void {

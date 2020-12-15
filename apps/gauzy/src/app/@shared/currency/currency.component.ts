@@ -17,6 +17,7 @@ import { ICurrency } from '@gauzy/models';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable } from 'rxjs/Observable';
+import { tap } from 'rxjs/operators';
 import { CurrencyService } from '../../@core/services/currency.service';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
 
@@ -36,12 +37,14 @@ export class CurrencyComponent
 	extends TranslationBaseComponent
 	implements OnInit, AfterViewInit, ControlValueAccessor {
 	private _currency: string;
+	private _placeholder: string;
 
 	@Input() formControl: FormControl = new FormControl();
 	@Output() selectChange = new EventEmitter<string>();
 	@Output() optionChange = new EventEmitter<ICurrency>();
 
 	currencies$: Observable<ICurrency[]> = this.currencyService.currencies$;
+	private _currencies: ICurrency[] = [];
 
 	onChange: any = () => {};
 	onTouched: any = () => {};
@@ -58,24 +61,48 @@ export class CurrencyComponent
 		return this._currency;
 	}
 
+	@Input()
+	set placeholder(val: string) {
+		if (val) {
+			this._placeholder = val;
+		}
+	}
+	get placeholder() {
+		return this._placeholder;
+	}
+
 	constructor(
 		private readonly currencyService: CurrencyService,
 		public translateService: TranslateService,
 		private readonly cdr: ChangeDetectorRef
 	) {
 		super(translateService);
+		this.currencyService.find$.next(true);
 	}
 
 	ngOnInit(): void {
-		this.currencyService.getAll().pipe(untilDestroyed(this)).subscribe();
+		this.currencies$
+			.pipe(
+				tap(
+					(currencies: ICurrency[]) => (this._currencies = currencies)
+				),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngAfterViewInit() {
 		this.cdr.detectChanges();
 	}
 
-	onSelectChange($event: string) {
-		this.selectChange.emit($event);
+	onSelectChange(value: string) {
+		if (this._currencies.length > 0) {
+			const currency = this._currencies.find(
+				(currency: ICurrency) => currency.isoCode === value
+			);
+			this.onOptionChange(currency);
+		}
+		this.selectChange.emit(value);
 	}
 
 	onOptionChange($event: ICurrency) {
@@ -86,6 +113,7 @@ export class CurrencyComponent
 		if (value) {
 			this.currency = value;
 		}
+		this.cdr.detectChanges();
 	}
 
 	registerOnChange(fn: (rating: number) => void): void {

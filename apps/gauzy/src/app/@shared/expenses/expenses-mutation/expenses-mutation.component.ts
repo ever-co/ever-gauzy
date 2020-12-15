@@ -7,8 +7,6 @@ import {
 	AbstractControl
 } from '@angular/forms';
 import {
-	CurrenciesEnum,
-	OrganizationSelectInput,
 	TaxTypesEnum,
 	ExpenseTypesEnum,
 	IOrganizationVendor,
@@ -18,11 +16,12 @@ import {
 	ExpenseStatusesEnum,
 	IOrganizationExpenseCategory,
 	ContactType,
-	IExpenseViewModel
+	IExpenseViewModel,
+	ICurrency,
+	OrganizationSelectInput
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
-import { first, takeUntil } from 'rxjs/operators';
 import {
 	EmployeeSelectorComponent,
 	ALL_EMPLOYEES_SELECTED,
@@ -32,12 +31,13 @@ import { OrganizationVendorsService } from '../../../@core/services/organization
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { AttachReceiptComponent } from './attach-receipt/attach-receipt.component';
-import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { OrganizationExpenseCategoriesService } from '../../../@core/services/organization-expense-categories.service';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { first } from 'rxjs/operators';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-expenses-mutation',
 	templateUrl: './expenses-mutation.component.html',
@@ -46,8 +46,6 @@ import { OrganizationExpenseCategoriesService } from '../../../@core/services/or
 export class ExpensesMutationComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
-
 	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
 	form: FormGroup;
@@ -56,7 +54,6 @@ export class ExpensesMutationComponent
 	tenantId: string;
 	typeOfExpense: string;
 	expenseTypes = Object.values(ExpenseTypesEnum);
-	currencies = Object.values(CurrenciesEnum);
 	taxTypes = Object.values(TaxTypesEnum);
 	expenseStatuses = Object.values(ExpenseStatusesEnum);
 	expenseCategories: IOrganizationExpenseCategory[];
@@ -114,7 +111,6 @@ export class ExpensesMutationComponent
 		this.loadOrganizationContacts();
 		this.loadProjects();
 		this._initializeForm();
-		this.form.get('currency');
 		this.changeExpenseType(this.form.value.typeOfExpense);
 	}
 
@@ -123,22 +119,26 @@ export class ExpensesMutationComponent
 	}
 
 	private async getDefaultData() {
-		this.organizationId = this.store.selectedOrganization.id;
-		this.tenantId = this.store.selectedOrganization.tenantId;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization;
+
+		this.organizationId = organizationId;
+		this.tenantId = tenantId;
 
 		const { items: category } = await this.expenseCategoriesStore.getAll({
-			organizationId: this.organizationId,
-			tenantId: this.tenantId
+			organizationId,
+			tenantId
 		});
-
 		this.expenseCategories = category;
+
 		const { items: vendors } = await this.organizationVendorsService.getAll(
 			{
-				organizationId: this.organizationId,
-				tenantId: this.tenantId
+				organizationId,
+				tenantId
 			}
 		);
 		this.vendors = vendors;
+		this._loadDefaultCurrency();
 	}
 
 	selectOrganizationContact($event) {
@@ -341,9 +341,8 @@ export class ExpensesMutationComponent
 				tags: [],
 				status: []
 			});
-
-			this._loadDefaultCurrency();
 		}
+
 		this.valueDate = this.form.get('valueDate');
 		this.amount = this.form.get('amount');
 		this.notes = this.form.get('notes');
@@ -351,28 +350,25 @@ export class ExpensesMutationComponent
 	}
 
 	private calculateTaxes() {
-		this.form.valueChanges
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((val) => {
-				const amount = val.amount;
-				const rate = val.rateValue;
-				const oldNotes = val.notes;
+		this.form.valueChanges.pipe(untilDestroyed(this)).subscribe((val) => {
+			const amount = val.amount;
+			const rate = val.rateValue;
+			const oldNotes = val.notes;
 
-				if (val.taxType === 'Percentage') {
-					const result = (amount / (rate + 100)) * 100 * (rate / 100);
+			if (val.taxType === 'Percentage') {
+				const result = (amount / (rate + 100)) * 100 * (rate / 100);
 
-					this.calculatedValue =
-						'Tax Amount: ' + result.toFixed(2) + ' ' + val.currency;
-				} else {
-					const result = (rate / (amount - rate)) * 100;
-					this.calculatedValue =
-						'Tax Rate: ' + result.toFixed(2) + ' %';
-				}
+				this.calculatedValue =
+					'Tax Amount: ' + result.toFixed(2) + ' ' + val.currency;
+			} else {
+				const result = (rate / (amount - rate)) * 100;
+				this.calculatedValue = 'Tax Rate: ' + result.toFixed(2) + ' %';
+			}
 
-				if (rate !== 0) {
-					val.notes = this.calculatedValue + '. ' + oldNotes;
-				}
-			});
+			if (rate !== 0) {
+				val.notes = this.calculatedValue + '. ' + oldNotes;
+			}
+		});
 	}
 
 	private async loadOrganizationContacts() {
@@ -420,6 +416,7 @@ export class ExpensesMutationComponent
 
 		if (orgData && this.currency && !this.currency.value) {
 			this.currency.setValue(orgData.currency);
+			this.currency.updateValueAndValidity();
 		}
 	}
 
@@ -434,7 +431,7 @@ export class ExpensesMutationComponent
 					currentReceipt: this.form.value.receipt
 				}
 			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe((newReceipt) => {
 				this.form.value.receipt = newReceipt;
 			});
@@ -456,9 +453,16 @@ export class ExpensesMutationComponent
 		}
 	}
 
+	close() {
+		this.dialogRef.close();
+	}
+
+	/*
+	 * On Changed Currency Event Emitter
+	 */
+	currencyChanged($event: ICurrency) {}
+
 	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
 		clearTimeout();
 	}
 }

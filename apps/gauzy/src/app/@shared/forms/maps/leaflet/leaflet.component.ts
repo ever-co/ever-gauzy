@@ -70,7 +70,9 @@ export class LeafletMapComponent implements AfterViewInit {
 	constructor(private cdr: ChangeDetectorRef) {}
 
 	ngAfterViewInit() {
-		this.loaded = true;
+		setTimeout(() => {
+			this.loaded = true;
+		}, 100);
 		this.cdr.detectChanges();
 	}
 

@@ -11,6 +11,7 @@ import { Repository } from 'typeorm';
 import { RequestApprovalStatusTypesEnum } from '@gauzy/models';
 import { RequestContext } from '../core/context';
 import { RequestApproval } from '../request-approval/request-approval.entity';
+import { environment as env } from '@env-api/environment';
 
 @Injectable()
 export class EquipmentSharingService extends CrudService<EquipmentSharing> {
@@ -27,27 +28,41 @@ export class EquipmentSharingService extends CrudService<EquipmentSharing> {
 
 	async findEquipmentSharingsByOrgId(organizationId: string): Promise<any> {
 		try {
-			return await this.equipmentSharingRepository
-				.createQueryBuilder('equipment_sharing')
-				.leftJoinAndSelect('equipment_sharing.employees', 'employees')
-				.leftJoinAndSelect('equipment_sharing.teams', 'teams')
-				.innerJoinAndSelect('equipment_sharing.equipment', 'equipment')
+			const query = this.equipmentSharingRepository.createQueryBuilder(
+				'equipment_sharing'
+			);
+			query
+				.leftJoinAndSelect(`${query.alias}.employees`, 'employees')
+				.leftJoinAndSelect(`${query.alias}.teams`, 'teams')
+				.innerJoinAndSelect(`${query.alias}.equipment`, 'equipment')
 				.leftJoinAndSelect(
-					'equipment_sharing.equipmentSharingPolicy',
+					`${query.alias}.equipmentSharingPolicy`,
 					'equipmentSharingPolicy'
-				)
-				.leftJoinAndSelect(
+				);
+
+			if (env.database.type === 'sqlite') {
+				query.leftJoinAndSelect(
 					'request_approval',
 					'request_approval',
 					'"equipment_sharing"."id" = "request_approval"."requestId"'
-				)
+				);
+			} else {
+				query.leftJoinAndSelect(
+					'request_approval',
+					'request_approval',
+					'"equipment_sharing"."id"::"varchar" = "request_approval"."requestId"'
+				);
+			}
+			return await query
 				.leftJoinAndSelect(
 					'request_approval.approvalPolicy',
 					'approvalPolicy'
 				)
 				.where(
 					'equipmentSharingPolicy.organizationId =:organizationId',
-					{ organizationId }
+					{
+						organizationId
+					}
 				)
 				.getMany();
 		} catch (err) {

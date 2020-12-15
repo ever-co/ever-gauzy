@@ -2,18 +2,20 @@ import { Component, OnDestroy, OnInit, Input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Params } from '@angular/router';
 import {
-	CurrenciesEnum,
 	IEmployee,
 	OrganizationSelectInput,
 	PayPeriodEnum,
-	ICandidate
+	ICandidate,
+	ICurrency
 } from '@gauzy/models';
-import { Subject, Subscription } from 'rxjs';
-import { first, takeUntil } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Subscription } from 'rxjs';
+import { first } from 'rxjs/operators';
 import { CandidateStore } from '../../../@core/services/candidate-store.service';
 import { EmployeeStore } from '../../../@core/services/employee-store.service';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-employee-rates',
 	templateUrl: 'employee-rates.component.html',
@@ -23,15 +25,12 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 	@Input() public isEmployee: boolean;
 	@Input() public isCandidate: boolean;
 
-	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;
 	paramSubscription: Subscription;
 	hoverState: boolean;
 	routeParams: Params;
 	selectedEmployee: IEmployee;
 	selectedCandidate: ICandidate;
-
-	currencies = Object.values(CurrenciesEnum);
 	payPeriods = Object.values(PayPeriodEnum);
 
 	constructor(
@@ -43,7 +42,7 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.employeeStore.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((emp) => {
 				this.selectedEmployee = emp;
 				if (this.selectedEmployee) {
@@ -51,7 +50,7 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 				}
 			});
 		this.candidateStore.selectedCandidate$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((candidate) => {
 				this.selectedCandidate = candidate;
 				if (this.selectedCandidate) {
@@ -88,10 +87,7 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 
 	private async getDefaultCurrency(role: IEmployee | ICandidate) {
 		const orgData = await this.organizationsService
@@ -101,4 +97,9 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 
 		return orgData.currency;
 	}
+
+	/*
+	 * On Changed Currency Event Emitter
+	 */
+	currencyChanged($event: ICurrency) {}
 }

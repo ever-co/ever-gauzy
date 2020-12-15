@@ -2,6 +2,8 @@ import * as moment from 'moment';
 import * as timezone from 'moment-timezone';
 import { formatDate } from '@angular/common';
 import {
+	AfterViewInit,
+	ChangeDetectorRef,
 	Component,
 	EventEmitter,
 	OnDestroy,
@@ -13,7 +15,6 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	BonusTypeEnum,
 	ICountry,
-	CurrenciesEnum,
 	DefaultValueDateTypeEnum,
 	RegionsEnum,
 	WeekDaysEnum,
@@ -35,7 +36,8 @@ import { LeafletMapComponent } from '../../forms/maps/leaflet/leaflet.component'
 		'../../../@shared/user/edit-profile-form/edit-profile-form.component.scss'
 	]
 })
-export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
+export class OrganizationsStepFormComponent
+	implements OnInit, OnDestroy, AfterViewInit {
 	@ViewChild('locationFormDirective')
 	locationFormDirective: LocationFormComponent;
 
@@ -45,7 +47,6 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
 
 	hoverState: boolean;
-	currencies: string[] = Object.values(CurrenciesEnum);
 	countries: ICountry[];
 	defaultValueDateTypes: string[] = Object.values(DefaultValueDateTypeEnum);
 	defaultBonusTypes: string[] = Object.values(BonusTypeEnum);
@@ -68,11 +69,16 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private fb: FormBuilder,
-		private toastrService: NbToastrService
+		private toastrService: NbToastrService,
+		private readonly cdr: ChangeDetectorRef
 	) {}
 
-	async ngOnInit() {
+	ngOnInit() {
 		this._initializedForm();
+	}
+
+	ngAfterViewInit() {
+		this.cdr.detectChanges();
 	}
 
 	private _initializedForm() {

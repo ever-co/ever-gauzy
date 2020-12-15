@@ -16,10 +16,9 @@
 		>
 			<nb-icon icon="alert-triangle-outline"></nb-icon>
 		</span>
-		<!-- TODO: FIX dialogRef.close() -->
 		<nb-icon
 			class="ml-auto mt-1 close"
-			(click)="dialogRef.close()"
+			(click)="close()"
 			icon="close-outline"
 		></nb-icon>
 	</nb-card-header>
@@ -122,8 +121,19 @@
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-6">
+				<div class="col-sm-12">
+					<ga-currency
+						[formControl]="form.get('currency')"
+						(optionChange)="currencyChanged($event)"
+					></ga-currency>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-12">
 					<div class="form-group">
+						<label class="label">{{
+							'POP_UPS.AMOUNT' | translate
+						}}</label>
 						<input
 							nbInput
 							type="number"
@@ -142,19 +152,6 @@
 							autocomplete="off"
 						/>
 					</div>
-				</div>
-				<div class="col-sm-6">
-					<nb-select
-						class="d-block"
-						formControlName="currency"
-						disabled
-					>
-						<nb-option
-							*ngFor="let currency of currencies"
-							value="{{ currency }}"
-							>{{ currency }}</nb-option
-						>
-					</nb-select>
 				</div>
 			</div>
 			<div class="row">
@@ -404,12 +401,7 @@
 		</form>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
-		<button
-			(click)="dialogRef.close()"
-			status="danger"
-			class="mr-3"
-			nbButton
-		>
+		<button (click)="close()" status="danger" class="mr-3" nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button

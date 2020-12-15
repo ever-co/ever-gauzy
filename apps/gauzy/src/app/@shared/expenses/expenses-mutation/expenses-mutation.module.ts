@@ -21,6 +21,7 @@ import { HttpClient } from '@angular/common/http';
 import { AttachReceiptComponent } from './attach-receipt/attach-receipt.component';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
+import { CurrencyModule } from '../../currency/currency.module';
 
 @NgModule({
 	imports: [
@@ -46,7 +47,8 @@ import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-inp
 				useFactory: HttpLoaderFactory,
 				deps: [HttpClient]
 			}
-		})
+		}),
+		CurrencyModule
 	],
 	exports: [ExpensesMutationComponent],
 	declarations: [ExpensesMutationComponent, AttachReceiptComponent],

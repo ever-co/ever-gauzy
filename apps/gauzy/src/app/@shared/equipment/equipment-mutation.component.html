@@ -132,28 +132,7 @@
 					/>
 				</div>
 				<div class="col-sm-6 mb-3">
-					<label for="currency" class="label">
-						{{ 'EQUIPMENT_PAGE.CURRENCY' | translate }}
-					</label>
-					<nb-select
-						class="d-block"
-						formControlName="currency"
-						fullWidth
-						[ngClass]="{
-							'status-danger':
-								form.controls['currency'].invalid &&
-								form.controls['currency'].dirty,
-							'status-success':
-								form.controls['currency'].valid &&
-								form.controls['currency'].dirty
-						}"
-					>
-						<nb-option
-							*ngFor="let currency of currencies"
-							value="{{ currency }}"
-							>{{ currency }}</nb-option
-						>
-					</nb-select>
+					<ga-currency formControlName="currency"></ga-currency>
 				</div>
 			</div>
 
@@ -209,8 +188,8 @@
 	<nb-card-footer class="text-right">
 		<button
 			(click)="dialogRef.close()"
-			status="warning"
-			class="mr-3"
+			status="danger"
+			class="mr-2"
 			nbButton
 		>
 			{{ 'BUTTONS.CANCEL' | translate }}

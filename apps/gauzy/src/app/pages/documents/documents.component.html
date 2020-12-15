@@ -37,8 +37,9 @@
 					<div formArrayName="documents">
 						<div
 							*ngFor="
-								let document of form.controls.documents
-									?.controls;
+								let document of form.controls.documents[
+									'controls'
+								];
 								let i = index
 							"
 						>
@@ -73,20 +74,10 @@
 						#uploadDoc
 						[documentUrl]="documentUrl"
 						[isDocument]="true"
-						style="width: 50%;"
+						style="width: 50%"
 					>
 					</ga-upload-doc>
 				</div>
-				<span class="col-1 pl-2 pt-4 pr-0 button"
-					><button
-						class="w-100 form-btn"
-						(click)="submitForm()"
-						nbButton
-						status="success"
-					>
-						{{ 'BUTTONS.SAVE' | translate }}
-					</button></span
-				>
 				<span class="col-1 pl-2 pt-4 pr-0 button"
 					><button
 						class="w-100 form-btn"
@@ -95,6 +86,16 @@
 						status="danger"
 					>
 						{{ 'BUTTONS.CANCEL' | translate }}
+					</button></span
+				>
+				<span class="col-1 pl-2 pt-4 pr-0 button"
+					><button
+						class="w-100 form-btn"
+						(click)="submitForm()"
+						nbButton
+						status="success"
+					>
+						{{ 'BUTTONS.SAVE' | translate }}
 					</button></span
 				>
 			</div>
@@ -147,33 +148,33 @@
 			[source]="documentList"
 			[buttonTemplate]="actionButtons"
 		></ga-card-grid>
-		<ng-template
-			#actionButtons
-			let-buttonSize="buttonSize"
-			let-selectedItem="selectedItem"
-		>
-			<button
-				(click)="editDocument(selectedItem)"
-				nbButton
-				status="info"
-				class="mr-2"
-				[disabled]="!selectedItem && disableButton"
-				[size]="buttonSize || 'medium'"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				(click)="removeDocument(selectedItem.id)"
-				nbButton
-				status="danger"
-				class="mr-2"
-				[disabled]="!selectedItem && disableButton"
-				[size]="buttonSize || 'medium'"
-			>
-				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-				{{ 'BUTTONS.DELETE' | translate }}
-			</button>
-		</ng-template>
 	</nb-card-body>
 </nb-card>
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<button
+		(click)="editDocument(selectedItem)"
+		nbButton
+		status="info"
+		class="mr-2"
+		[disabled]="!selectedItem"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+		{{ 'BUTTONS.EDIT' | translate }}
+	</button>
+	<button
+		(click)="removeDocument(selectedItem.id)"
+		nbButton
+		status="danger"
+		class="mr-2"
+		[disabled]="!selectedItem"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+		{{ 'BUTTONS.DELETE' | translate }}
+	</button>
+</ng-template>

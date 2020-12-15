@@ -231,7 +231,9 @@ export class PagesComponent implements OnInit, OnDestroy {
 						link: '/pages/sales/pipelines',
 						data: {
 							translationKey: 'MENU.PIPELINES',
-							permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW]
+							permissionKeys: [
+								PermissionsEnum.VIEW_SALES_PIPELINES
+							]
 						}
 					}
 				]
@@ -553,7 +555,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					translationKey: 'MENU.CONTACTS',
 					permissionKeys: [
 						PermissionsEnum.ORG_CONTACT_VIEW,
-						PermissionsEnum.ALL_ORG_EDIT
+						PermissionsEnum.ALL_ORG_VIEW
 					]
 				},
 				children: [

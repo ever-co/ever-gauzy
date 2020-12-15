@@ -321,34 +321,9 @@
 										<div
 											class="form-group currency-per-hour"
 										>
-											<label
-												class="label"
-												for="currencyPerHourInput"
-												>{{
-													'FORM.LABELS.CURRENCY_PER_HOUR'
-														| translate
-												}}</label
-											>
-											<nb-select
-												id="currencyPerHourInput"
+											<ga-currency
 												formControlName="billRateCurrency"
-												placeholder="{{
-													'FORM.LABELS.CURRENCY_PER_HOUR'
-														| translate
-												}}"
-												class="d-block"
-												size="medium"
-												fullWidth="true"
-											>
-												<nb-option
-													*ngFor="
-														let currency of currencies
-													"
-													[value]="currency"
-												>
-													{{ currency }}
-												</nb-option>
-											</nb-select>
+											></ga-currency>
 										</div>
 									</div>
 								</nb-card-body>
@@ -447,7 +422,7 @@
 									/>
 								</div>
 
-								<span class="col" style="margin-top: 29px;">
+								<span class="col" style="margin-top: 29px">
 									<button
 										class="w-100"
 										(click)="
@@ -462,7 +437,7 @@
 										{{ 'BUTTONS.SAVE' | translate }}
 									</button></span
 								>
-								<span class="col" style="margin-top: 29px;"
+								<span class="col" style="margin-top: 29px"
 									><button
 										class="w-100"
 										(click)="showAddAward = !showAddAward"

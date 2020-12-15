@@ -5,7 +5,9 @@ import {
 	Output,
 	ViewChild,
 	ElementRef,
-	AfterViewInit
+	AfterViewInit,
+	Inject,
+	Renderer2
 } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 
@@ -18,6 +20,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { CountryService } from '../../../@core/services/country.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { convertPrecisionFloatDigit } from '@gauzy/utils';
+import { DOCUMENT } from '@angular/common';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-location-form',
@@ -84,7 +87,10 @@ export class LocationFormComponent
 
 	constructor(
 		public translateService: TranslateService,
-		public countryService: CountryService
+		public countryService: CountryService,
+
+		@Inject(DOCUMENT) private _document: Document,
+		private renderer: Renderer2
 	) {
 		super(translateService);
 		this.countryService.countries$
@@ -93,6 +99,7 @@ export class LocationFormComponent
 	}
 
 	ngAfterViewInit() {
+		this._removeGoogleAutocompleteApi();
 		this._initGoogleAutocompleteApi();
 	}
 
@@ -369,6 +376,19 @@ export class LocationFormComponent
 			address2Input,
 			postcode
 		);
+	}
+
+	/*
+	 * Removed multiple google place container before register new
+	 */
+	private _removeGoogleAutocompleteApi() {
+		const body = this._document.body;
+		const container = this._document.body.getElementsByClassName(
+			'pac-container'
+		);
+		if (container.length > 0) {
+			this.renderer.removeChild(body, container[0]);
+		}
 	}
 
 	private _initGoogleAutocompleteApi() {

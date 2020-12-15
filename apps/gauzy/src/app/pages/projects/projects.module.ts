@@ -38,6 +38,8 @@ import { ColorPickerModule } from 'ngx-color-picker';
 import { TasksSprintSettingsViewModule } from '../../@shared/tasks-sprint-settings-view/tasks-sprint-settings-view.module';
 import { CommonModule } from '@angular/common';
 import { CKEditorModule } from 'ng2-ckeditor';
+import { CurrencyModule } from '../../@shared/currency/currency.module';
+
 @NgModule({
 	imports: [
 		CommonModule,
@@ -79,7 +81,8 @@ import { CKEditorModule } from 'ng2-ckeditor';
 		NbSpinnerModule,
 		TasksSprintSettingsViewModule,
 		NbTabsetModule,
-		CKEditorModule
+		CKEditorModule,
+		CurrencyModule
 	],
 	declarations: [ProjectsComponent, ProjectsMutationComponent],
 	entryComponents: [],

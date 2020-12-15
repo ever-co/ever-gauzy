@@ -9,7 +9,7 @@ export const DEFAULT_ORGANIZATIONS = [
 	},
 	{
 		name: 'Ever Co. Ltd',
-		currency: CurrenciesEnum.BGN,
+		currency: CurrenciesEnum.ILS,
 		defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
 		imageUrl: 'assets/images/logos/ever-large.jpg'
 	}

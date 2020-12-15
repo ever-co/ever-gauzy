@@ -13,31 +13,34 @@
 							}}</nb-card-header
 						>
 						<nb-card-body>
-							<div class="form-group">
-								<label class="label">{{
-									'FORM.LABELS.PAY_PERIOD' | translate
-								}}</label>
-								<nb-select
-									id="payPeriodsSelect"
-									formControlName="payPeriod"
-									placeholder="{{
+							<div class="col-12">
+								<div class="form-group">
+									<label class="label">{{
 										'FORM.LABELS.PAY_PERIOD' | translate
-									}}"
-									class="d-block"
-									size="medium"
-									fullWidth="true"
-								>
-									<nb-option
-										*ngFor="let payPeriod of payPeriods"
-										[value]="payPeriod"
+									}}</label>
+									<nb-select
+										id="payPeriodsSelect"
+										formControlName="payPeriod"
+										placeholder="{{
+											'FORM.LABELS.PAY_PERIOD' | translate
+										}}"
+										class="d-block"
+										size="medium"
+										fullWidth="true"
 									>
-										{{
-											'SM_TABLE.' + payPeriod | translate
-										}}
-									</nb-option>
-								</nb-select>
+										<nb-option
+											*ngFor="let payPeriod of payPeriods"
+											[value]="payPeriod"
+										>
+											{{
+												'SM_TABLE.' + payPeriod
+													| translate
+											}}
+										</nb-option>
+									</nb-select>
+								</div>
 							</div>
-							<div class="bill-rate">
+							<div class="col-6 float-left">
 								<div class="form-group">
 									<label
 										class="label"
@@ -59,34 +62,12 @@
 										}}"
 									/>
 								</div>
-								<div class="form-group currency-per-hour">
-									<label
-										class="label"
-										for="currencyPerHourInput"
-										>{{
-											'FORM.LABELS.CURRENCY_PER_HOUR'
-												| translate
-										}}</label
-									>
-									<nb-select
-										id="currencyPerHourInput"
-										formControlName="billRateCurrency"
-										placeholder="{{
-											'FORM.LABELS.CURRENCY_PER_HOUR'
-												| translate
-										}}"
-										class="d-block"
-										size="medium"
-										disabled
-									>
-										<nb-option
-											*ngFor="let currency of currencies"
-											[value]="currency"
-										>
-											{{ currency }}
-										</nb-option>
-									</nb-select>
-								</div>
+							</div>
+							<div class="col-6 float-left">
+								<ga-currency
+									formControlName="billRateCurrency"
+									(optionChange)="currencyChanged($event)"
+								></ga-currency>
 							</div>
 						</nb-card-body>
 					</nb-card>

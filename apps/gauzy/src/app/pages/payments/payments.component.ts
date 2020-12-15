@@ -311,12 +311,15 @@ export class PaymentsComponent
 					title: this.getTranslation('PAYMENTS_PAGE.AMOUNT'),
 					type: 'text',
 					filter: false,
-					width: '9%'
+					width: '12%',
+					valuePrepareFunction: (cell, row) => {
+						return `${row.currency} ${cell}`;
+					}
 				},
 				paymentDate: {
 					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_DATE'),
 					type: 'text',
-					width: '9%',
+					width: '10%',
 					valuePrepareFunction: (cell, row) => {
 						return `${cell.slice(0, 10)}`;
 					}
@@ -324,18 +327,13 @@ export class PaymentsComponent
 				paymentMethod: {
 					title: 'Payment Method',
 					type: 'text',
-					width: '9%'
-				},
-				currency: {
-					title: 'Currency',
-					type: 'text',
-					width: '9%'
+					width: '10%'
 				},
 				recordedBy: {
 					title: this.getTranslation('PAYMENTS_PAGE.RECORDED_BY'),
 					type: 'text',
 					filter: false,
-					width: '9%',
+					width: '10%',
 					valuePrepareFunction: (cell, row) => {
 						if (cell && cell.firstName && cell.lastName) {
 							return `${cell.firstName} ${cell.lastName}`;
@@ -348,12 +346,12 @@ export class PaymentsComponent
 					title: this.getTranslation('PAYMENTS_PAGE.NOTE'),
 					type: 'text',
 					filter: false,
-					width: '9%'
+					width: '10%'
 				},
 				organizationContactName: {
 					title: this.getTranslation('PAYMENTS_PAGE.CONTACT'),
 					type: 'text',
-					width: '9%',
+					width: '10%',
 					valuePrepareFunction: (cell, row) => {
 						if (row.invoice) {
 							return row.invoice.toContact.name;
@@ -365,7 +363,7 @@ export class PaymentsComponent
 				projectName: {
 					title: 'Project',
 					type: 'text',
-					width: '9%',
+					width: '10%',
 					valuePrepareFunction: (cell, row) => {
 						if (row.project) {
 							return row.project.name;
@@ -375,14 +373,14 @@ export class PaymentsComponent
 				tags: {
 					title: 'Tags',
 					type: 'custom',
-					width: '9%',
+					width: '10%',
 					renderComponent: NotesWithTagsComponent
 				},
 				invoiceNumber: {
 					title: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'text',
 					filter: false,
-					width: '9%',
+					width: '8%',
 					valuePrepareFunction: (cell, row) => {
 						if (row.invoice) {
 							return row.invoice.invoiceNumber;
@@ -392,7 +390,7 @@ export class PaymentsComponent
 				overdue: {
 					title: this.getTranslation('PAYMENTS_PAGE.STATUS'),
 					type: 'custom',
-					width: '9%',
+					width: '10%',
 					renderComponent: StatusBadgeComponent,
 					valuePrepareFunction: (cell, row) => {
 						let badgeClass;
