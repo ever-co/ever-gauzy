@@ -133,10 +133,11 @@ export class OrganizationController extends CrudController<Organization> {
 		@Param('id') id: string,
 		@Body() entity: IOrganizationCreateInput,
 		...options: any[]
-	): Promise<any> {
-		return this.organizationService.create({
+	): Promise<Organization> {
+		await this.organizationService.create({
 			id,
 			...entity
 		});
+		return await this.organizationService.findOne(id);
 	}
 }

@@ -12,17 +12,15 @@ import {
 	IOrganizationContact,
 	ContactType,
 	IOrganization,
-	ICurrency,
-	OrganizationSelectInput
+	ICurrency
 } from '@gauzy/models';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { debounceTime, filter, first } from 'rxjs/operators';
+import { debounceTime, filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
@@ -85,7 +83,6 @@ export class IncomeMutationComponent
 	constructor(
 		private fb: FormBuilder,
 		protected dialogRef: NbDialogRef<IncomeMutationComponent>,
-		private organizationsService: OrganizationsService,
 		private store: Store,
 		private organizationContactService: OrganizationContactService,
 		private readonly toastrService: NbToastrService,
@@ -199,8 +196,8 @@ export class IncomeMutationComponent
 				],
 				amount: ['', Validators.required],
 				organizationContact: [null, Validators.required],
-				notes: '',
-				currency: '',
+				notes: [],
+				currency: [],
 				isBonus: false,
 				tags: []
 			});
@@ -211,13 +208,7 @@ export class IncomeMutationComponent
 	}
 
 	private async _loadDefaultCurrency() {
-		const orgData = await this.organizationsService
-			.getById(this.store.selectedOrganization.id, [
-				OrganizationSelectInput.currency
-			])
-			.pipe(first())
-			.toPromise();
-
+		const orgData = this.selectedOrganization;
 		if (orgData && this.currency && !this.currency.value) {
 			this.currency.setValue(orgData.currency);
 			this.currency.updateValueAndValidity();

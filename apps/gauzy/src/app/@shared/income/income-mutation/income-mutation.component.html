@@ -23,7 +23,9 @@
 					</label>
 					<ga-employee-selector
 						#employeeSelector
-						placeholder="Organization"
+						placeholder="{{
+							'INCOME_PAGE.EMPLOYEES_GENERATE_INCOME' | translate
+						}}"
 						[defaultSelected]="false"
 						[showAllEmployeesOption]="false"
 						[hidden]="income"
