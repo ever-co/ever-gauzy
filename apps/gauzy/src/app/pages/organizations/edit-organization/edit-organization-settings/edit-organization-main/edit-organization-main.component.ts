@@ -70,7 +70,6 @@ export class EditOrganizationMainComponent
 				untilDestroyed(this)
 			)
 			.subscribe((organization) => {
-				console.log(organization);
 				this.imageUrl = organization.imageUrl;
 				this._loadOrganizationData(organization);
 			});
@@ -113,12 +112,11 @@ export class EditOrganizationMainComponent
 							' organization main info updated.',
 						'Success'
 					);
+					this.goBack();
 				})
 				.catch((error) => {
 					this.errorHandler.handleError(error);
 				});
-
-			this.goBack();
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}

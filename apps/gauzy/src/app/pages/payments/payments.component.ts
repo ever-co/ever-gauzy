@@ -10,7 +10,6 @@ import {
 	ComponentLayoutStyleEnum,
 	IInvoice,
 	IOrganization,
-	OrganizationSelectInput,
 	IOrganizationContact,
 	IOrganizationProject,
 	ISelectedPayment
@@ -26,7 +25,6 @@ import {
 import { PaymentMutationComponent } from '../invoices/invoice-payments/payment-mutation/payment-mutation.component';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { InvoicesService } from '../../@core/services/invoices.service';
-import { OrganizationsService } from '../../@core/services/organizations.service';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
@@ -34,6 +32,7 @@ import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.co
 import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-estimate-history.service';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-payments',
@@ -73,7 +72,6 @@ export class PaymentsComponent
 		private dialogService: NbDialogService,
 		private router: Router,
 		private invoicesService: InvoicesService,
-		private organizationsService: OrganizationsService,
 		private organizationProjectsService: OrganizationProjectsService,
 		private toastrService: NbToastrService,
 		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
@@ -87,7 +85,14 @@ export class PaymentsComponent
 	ngOnInit() {
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
-		this.loadSettings();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				tap((organization) => (this.organization = organization)),
+				tap(() => this.loadSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.router.events
 			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
@@ -131,64 +136,52 @@ export class PaymentsComponent
 	}
 
 	async loadSettings() {
-		this.store.selectedOrganization$
-			.pipe(
-				filter((organization) => !!organization),
-				untilDestroyed(this)
-			)
-			.subscribe(async (org) => {
-				if (org) {
-					this.loading = true;
-					try {
-						this.organization = org;
-						const { tenantId } = this.store.user;
-						const { id: organizationId } = this.organization;
+		try {
+			this.loading = true;
+			this.currency = this.organization.currency;
 
-						const orgData = await this.organizationsService
-							.getById(org.id, [OrganizationSelectInput.currency])
-							.pipe(first())
-							.toPromise();
-						this.currency = orgData.currency;
-						const invoices = await this.invoicesService.getAll([], {
-							organizationId,
-							tenantId,
-							isEstimate: false
-						});
-						this.invoices = invoices.items;
-						this.selectedPayment = null;
-						const { items } = await this.paymentService.getAll(
-							[
-								'invoice',
-								'invoice.toContact',
-								'recordedBy',
-								'contact',
-								'project',
-								'tags'
-							],
-							{ organizationId, tenantId }
-						);
-						this.payments = items;
-						const res = await this.organizationContactService.getAll(
-							[],
-							{ organizationId, tenantId }
-						);
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
 
-						if (res) {
-							this.organizationContacts = res.items;
-						}
+			this.invoicesService
+				.getAll([], { organizationId, tenantId, isEstimate: false })
+				.then(({ items }) => {
+					this.invoices = items;
+				});
 
-						const projects = await this.organizationProjectsService.getAll(
-							[],
-							{ organizationId, tenantId }
-						);
-						this.projects = projects.items;
-						this.smartTableSource.load(items);
-						this.loading = false;
-					} catch (error) {
-						this._errorHandlingService.handleError(error);
-					}
-				}
-			});
+			this.paymentService
+				.getAll(
+					[
+						'invoice',
+						'invoice.toContact',
+						'recordedBy',
+						'contact',
+						'project',
+						'tags'
+					],
+					{ organizationId, tenantId }
+				)
+				.then(({ items }) => {
+					this.payments = items;
+					this.smartTableSource.load(items);
+				});
+
+			this.organizationContactService
+				.getAll([], { organizationId, tenantId })
+				.then(({ items }) => {
+					this.organizationContacts = items;
+				});
+
+			this.organizationProjectsService
+				.getAll([], { organizationId, tenantId })
+				.then(({ items }) => {
+					this.projects = items;
+				});
+
+			this.loading = false;
+		} catch (error) {
+			this._errorHandlingService.handleError(error);
+		}
 	}
 
 	async recordPayment() {
@@ -209,6 +202,7 @@ export class PaymentsComponent
 			const { tenantId } = this.store.user;
 			result['organizationId'] = this.organization.id;
 			result['tenantId'] = tenantId;
+
 			await this.paymentService.add(result);
 			await this.loadSettings();
 			if (result.invoice) {
@@ -250,6 +244,7 @@ export class PaymentsComponent
 		if (result) {
 			await this.paymentService.update(result.id, result);
 			await this.loadSettings();
+
 			const { tenantId } = this.store.user;
 			await this.invoiceEstimateHistoryService.add({
 				action: `Payment edited`,
@@ -281,6 +276,7 @@ export class PaymentsComponent
 		if (result) {
 			await this.paymentService.delete(this.selectedPayment.id);
 			this.loadSettings();
+
 			const { tenantId } = this.store.user;
 			await this.invoiceEstimateHistoryService.add({
 				action: `Payment deleted`,
@@ -300,7 +296,6 @@ export class PaymentsComponent
 			);
 			this.clearItem();
 		}
-		this.disableButton = true;
 	}
 
 	loadSmartTable() {

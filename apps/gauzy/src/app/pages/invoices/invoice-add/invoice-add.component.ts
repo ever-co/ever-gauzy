@@ -20,7 +20,6 @@ import {
 	ContactType,
 	InvoiceStatusTypesEnum
 } from '@gauzy/models';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { filter, first, tap } from 'rxjs/operators';
 import { InvoicesService } from '../../../@core/services/invoices.service';
 import { InvoiceItemService } from '../../../@core/services/invoice-item.service';
@@ -106,7 +105,6 @@ export class InvoiceAddComponent
 		private router: Router,
 		private toastrService: NbToastrService,
 		private invoicesService: InvoicesService,
-		private organizationsService: OrganizationsService,
 		private organizationProjectsService: OrganizationProjectsService,
 		private invoiceItemService: InvoiceItemService,
 		private tasksStore: TasksStoreService,

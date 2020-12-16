@@ -108,9 +108,12 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
 	 */
 	updateOrganization(organization: IOrganization) {
 		let organizations: IOrganization[] = this.organizations;
-		organizations = organizations.map((item: IOrganization) =>
-			item.id === organization.id ? organization : item
-		);
+		organizations = organizations.map((item: IOrganization) => {
+			if (item.id === organization.id) {
+				return Object.assign({}, item, organization);
+			}
+			return item;
+		});
 
 		this.store.selectedOrganization = organization;
 		this.organizations = [...organizations];
