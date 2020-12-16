@@ -10,7 +10,8 @@ import {
 	NbTooltipModule,
 	NbSelectModule,
 	NbToggleModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbStepperModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -61,6 +62,7 @@ const COMPONENTS = [
 		NbIconModule,
 		NbDialogModule.forChild(),
 		NbTooltipModule,
+		NbStepperModule,
 		FileUploaderModule,
 		CardGridModule,
 		Ng2SmartTableModule,

@@ -50,6 +50,9 @@ export class ContactMutationComponent
 	@ViewChild('locationFormDirective')
 	locationFormDirective: LocationFormComponent;
 
+	congMainForm: FormGroup;
+	conAddressForm: FormGroup;
+	conMemberForm: FormGroup;
 	defaultSelectedType: any;
 	form: FormGroup;
 	members: string[];
@@ -141,6 +144,78 @@ export class ContactMutationComponent
 		if (!this.organizationId) {
 			return;
 		}
+
+		this.congMainForm = this.fb.group({
+			imageUrl: [
+				this.organizationContact
+					? this.organizationContact.imageUrl
+					: 'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text'
+			],
+			tags: [
+				this.organizationContact
+					? (this.tags = this.organizationContact.tags)
+					: ''
+			],
+			name: [
+				this.organizationContact
+					? this.isGridEdit
+						? this.organizationContact.contact_name
+						: this.organizationContact.name
+					: '',
+				Validators.required
+			],
+			primaryEmail: [
+				this.organizationContact
+					? this.organizationContact.primaryEmail
+					: '',
+				[Validators.required, Validators.email]
+			],
+			primaryPhone: [
+				this.organizationContact
+					? this.organizationContact.primaryPhone
+					: '',
+				Validators.required
+			],
+			projects: [
+				this.organizationContact
+					? (this.organizationContact.projects || []).map(
+							(m) => m.projectId
+					  )
+					: []
+			],
+			contactType: [
+				this.organizationContact
+					? this.organizationContact.contactType
+					: '',
+				Validators.required
+			],
+			fax: [
+				this.organizationContact
+					? this.organizationContact.contact
+						? this.organizationContact.contact.fax
+						: ''
+					: ''
+			],
+			website: [
+				this.organizationContact
+					? this.organizationContact.contact
+						? this.organizationContact.contact.website
+						: ''
+					: ''
+			],
+			fiscalInformation: [
+				this.organizationContact
+					? this.organizationContact.contact
+						? this.organizationContact.contact.fiscalInformation
+						: ''
+					: ''
+			]
+		});
+
+		this.conMemberForm = this.fb.group({
+			//location: this.locationForm
+		});
+
 		this.form = this.fb.group({
 			imageUrl: [
 				this.organizationContact
@@ -283,6 +358,22 @@ export class ContactMutationComponent
 	}
 
 	async submitForm() {
+		// const location = this.locationFormDirective.getValue();
+		// const { coordinates } = location['loc'];
+		// delete location['loc'];
+
+		// const [latitude, longitude] = coordinates;
+		// const contact = {
+		// 	...location,
+		// 	...{ latitude, longitude }
+		// };
+
+		// const consolidatedFormValues = {
+		// 	...this.congMainForm.value,
+		// 	contact,
+		// };
+		// console.log(consolidatedFormValues, 'consolidatedFormValues');
+
 		if (this.form.valid) {
 			let contactType = this.form.value['contactType'].$ngOptionLabel;
 			if (contactType === undefined) {
