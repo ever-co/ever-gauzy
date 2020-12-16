@@ -79,4 +79,5 @@ export interface IEnvironment {
 	gauzyAIGraphQLEndpoint?: string;
 
 	smtpConfig?: ISMTPConfig;
+	defaultCurrency: string;
 }

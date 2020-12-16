@@ -9,13 +9,6 @@ const routes: Routes = [
 	{
 		path: '',
 		component: WorkspaceComponent,
-		canActivate: [NgxPermissionsGuard],
-		data: {
-			permissions: {
-				only: [PermissionsEnum.INTEGRATION_VIEW],
-				redirectTo: '/pages/dashboard'
-			}
-		},
 		children: [
 			{
 				path: '',
@@ -24,7 +17,14 @@ const routes: Routes = [
 			},
 			{
 				path: 'list',
-				component: IntegrationsListComponent
+				component: IntegrationsListComponent,
+				canActivate: [NgxPermissionsGuard],
+				data: {
+					permissions: {
+						only: [PermissionsEnum.INTEGRATION_VIEW],
+						redirectTo: '/pages/dashboard'
+					}
+				}
 			},
 			{
 				path: 'upwork',

@@ -60,6 +60,7 @@ import { RequestContext } from '../core/context';
 import { OrganizationProjectCreateCommand } from '../organization-projects/commands/organization-project.create.command';
 import { OrganizationProjectUpdateCommand } from '../organization-projects/commands/organization-project.update.command';
 import { TaskUpdateCommand } from '../tasks/commands/task-update.command';
+import { environment as env } from '@env-api/environment';
 
 @Injectable()
 export class HubstaffService {
@@ -299,19 +300,13 @@ export class HubstaffService {
 	}): Promise<IIntegrationMap[]> {
 		const tenantId = RequestContext.currentTenantId();
 		const integrationMaps = await projects.map(
-			async ({
-				name,
-				sourceId,
-				billable,
-				description,
-				client_id = null
-			}) => {
+			async ({ name, sourceId, billable, description }) => {
 				const payload = {
 					name,
 					organizationId,
 					public: true,
 					billing: ProjectBillingEnum.RATE,
-					currency: CurrenciesEnum.USD,
+					currency: env.defaultCurrency as CurrenciesEnum,
 					billable,
 					description
 				};

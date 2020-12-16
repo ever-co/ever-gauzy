@@ -4,10 +4,11 @@ import { Employee } from './employee.entity';
 import { Organization } from '../organization/organization.entity';
 import { User } from '../user/user.entity';
 import { date as fakerDate } from 'faker';
-import { CurrenciesEnum, ISeedUsers, PayPeriodEnum } from '@gauzy/models';
+import { ISeedUsers, PayPeriodEnum } from '@gauzy/models';
 import * as faker from 'faker';
 import { DEFAULT_EMPLOYEES } from './default-employees';
 import * as moment from 'moment';
+import { environment as env } from '@env-api/environment';
 
 export const createDefaultEmployees = async (
 	connection: Connection,
@@ -43,9 +44,7 @@ export const createDefaultEmployees = async (
 			Object.keys(PayPeriodEnum)
 		);
 		employee.billRateValue = faker.random.number(100);
-		employee.billRateCurrency = faker.random.arrayElement(
-			Object.keys(CurrenciesEnum)
-		);
+		employee.billRateCurrency = defaultOrg.currency || env.defaultCurrency;
 		employee.reWeeklyLimit = faker.random.number(40);
 		employee.tenant = defaultTenant;
 		employees.push(employee);
@@ -86,9 +85,8 @@ export const createRandomEmployees = async (
 						Object.keys(PayPeriodEnum)
 					);
 					employee.billRateValue = faker.random.number(100);
-					employee.billRateCurrency = faker.random.arrayElement(
-						Object.keys(CurrenciesEnum)
-					);
+					employee.billRateCurrency =
+						organization.currency || env.defaultCurrency;
 					employee.reWeeklyLimit = faker.random.number(40);
 					employee.tenant = tenant;
 

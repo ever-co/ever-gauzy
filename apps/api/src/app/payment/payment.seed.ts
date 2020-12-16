@@ -1,17 +1,13 @@
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
-import {
-	CurrenciesEnum,
-	IEmployee,
-	IOrganization,
-	PaymentMethodEnum
-} from '@gauzy/models';
+import { IEmployee, IOrganization, PaymentMethodEnum } from '@gauzy/models';
 import { Payment } from './payment.entity';
 import * as faker from 'faker';
 import { Invoice } from '../invoice/invoice.entity';
 import { Tag } from '../tags/tag.entity';
 import { User } from '../user/user.entity';
 import * as moment from 'moment';
+import { environment as env } from '@env-api/environment';
 
 export const createDefaultPayment = async (
 	connection: Connection,
@@ -45,9 +41,7 @@ export const createDefaultPayment = async (
 				max: 100000
 			});
 			payment.note = faker.name.jobDescriptor();
-			payment.currency = faker.random.arrayElement(
-				Object.keys(CurrenciesEnum)
-			);
+			payment.currency = tenantOrg.currency || env.defaultCurrency;
 			payment.paymentMethod = faker.random.arrayElement(
 				Object.keys(PaymentMethodEnum)
 			);
@@ -107,9 +101,7 @@ export const createRandomPayment = async (
 					max: 100000
 				});
 				payment.note = faker.name.jobDescriptor();
-				payment.currency = faker.random.arrayElement(
-					Object.keys(CurrenciesEnum)
-				);
+				payment.currency = tenantOrg.currency || env.defaultCurrency;
 				payment.paymentMethod = faker.random.arrayElement(
 					Object.keys(PaymentMethodEnum)
 				);

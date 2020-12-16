@@ -27,5 +27,7 @@ export interface Environment {
 	GOOGLE_MAPS_API_KEY: string;
 	DEFAULT_LATITUDE: number;
 	DEFAULT_LONGITUDE: number;
+	DEFAULT_CURRENCY: string;
+
 	IS_INTEGRATED_DESKTOP: boolean;
 }
