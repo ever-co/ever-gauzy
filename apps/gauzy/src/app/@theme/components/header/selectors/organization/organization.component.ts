@@ -1,10 +1,12 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { IOrganization } from '@gauzy/models';
+import { IOrganization, OrganizationAction } from '@gauzy/models';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { Subject } from 'rxjs';
-import { filter, takeUntil } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import { UsersOrganizationsService } from 'apps/gauzy/src/app/@core/services/users-organizations.service';
+import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-organization-selector',
 	templateUrl: './organization.component.html',
@@ -14,16 +16,16 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
 	organizations: IOrganization[];
 	selectedOrganization: IOrganization;
 
-	private _ngDestroy$ = new Subject<void>();
-
 	constructor(
 		private store: Store,
-		private userOrganizationService: UsersOrganizationsService
+		private userOrganizationService: UsersOrganizationsService,
+		private readonly _organizationEditStore: OrganizationEditStore
 	) {}
 
 	ngOnInit() {
-		this.loadOrganizationsId();
+		this.loadSelectedOrganization();
 		this.loadOrganizations();
+		this.organizationAction();
 	}
 
 	selectOrganization(organization: IOrganization) {
@@ -57,19 +59,74 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	private loadOrganizationsId() {
+	private loadSelectedOrganization() {
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe((organization: IOrganization) => {
 				this.selectedOrganization = organization;
 			});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
+	private organizationAction() {
+		this._organizationEditStore.organizationAction$
+			.pipe(
+				filter(({ organization }) => !!organization),
+				untilDestroyed(this)
+			)
+			.subscribe(({ organization, action }) => {
+				switch (action) {
+					case OrganizationAction.CREATED:
+						this.createOrganization(organization);
+						break;
+					case OrganizationAction.UPDATED:
+						this.updateOrganization(organization);
+						break;
+					case OrganizationAction.DELETED:
+						this.deleteOrganization(organization);
+						break;
+					default:
+						break;
+				}
+			});
 	}
+
+	/*
+	 * After created new organization pushed on dropdown
+	 */
+	createOrganization(organization: IOrganization) {
+		const organizations: IOrganization[] = this.organizations;
+		organizations.push(organization);
+
+		this.organizations = [...organizations];
+	}
+
+	/*
+	 * After updated existing organization changed in the dropdown
+	 */
+	updateOrganization(organization: IOrganization) {
+		let organizations: IOrganization[] = this.organizations;
+		organizations = organizations.map((item: IOrganization) =>
+			item.id === organization.id ? organization : item
+		);
+
+		this.store.selectedOrganization = organization;
+		this.organizations = [...organizations];
+	}
+
+	/*
+	 * After deleted organization removed on dropdown
+	 */
+	deleteOrganization(organization: IOrganization) {
+		let organizations: IOrganization[] = this.organizations;
+		organizations = organizations.filter(
+			(item: IOrganization) => item.id !== organization.id
+		);
+
+		this.organizations = [...organizations];
+	}
+
+	ngOnDestroy() {}
 }

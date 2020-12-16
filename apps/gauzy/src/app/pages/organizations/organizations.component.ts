@@ -1,6 +1,11 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
-import { IOrganization, ComponentLayoutStyleEnum, IUser } from '@gauzy/models';
+import {
+	IOrganization,
+	ComponentLayoutStyleEnum,
+	IUser,
+	OrganizationAction
+} from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
@@ -18,6 +23,7 @@ import { PictureNameTagsComponent } from '../../@shared/table-components/picture
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { OrganizationEditStore } from '../../@core/services/organization-edit-store.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -35,7 +41,8 @@ export class OrganizationsComponent
 		readonly translateService: TranslateService,
 		private errorHandler: ErrorHandlingService,
 		private store: Store,
-		private userOrganizationService: UsersOrganizationsService
+		private userOrganizationService: UsersOrganizationsService,
+		private readonly _organizationEditStore: OrganizationEditStore
 	) {
 		super(translateService);
 		this.setView();
@@ -154,7 +161,12 @@ export class OrganizationsComponent
 			try {
 				await this.organizationsService
 					.create(result)
-					.then(() => {
+					.then((organization: IOrganization) => {
+						this._organizationEditStore.organizationAction = {
+							organization,
+							action: OrganizationAction.CREATED
+						};
+
 						this.toastrService.primary(
 							this.getTranslation(
 								'NOTES.ORGANIZATIONS.ADD_NEW_ORGANIZATION',
@@ -207,18 +219,26 @@ export class OrganizationsComponent
 
 		if (result) {
 			try {
-				await this.organizationsService.delete(
-					this.selectedOrganization.id
-				);
-				this.toastrService.primary(
-					this.getTranslation(
-						'NOTES.ORGANIZATIONS.DELETE_ORGANIZATION',
-						{
-							name: this.selectedOrganization.name
-						}
-					),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				);
+				await this.organizationsService
+					.delete(this.selectedOrganization.id)
+					.then(() => {
+						this._organizationEditStore.organizationAction = {
+							organization: this.selectedOrganization,
+							action: OrganizationAction.DELETED
+						};
+						this.toastrService.primary(
+							this.getTranslation(
+								'NOTES.ORGANIZATIONS.DELETE_ORGANIZATION',
+								{
+									name: this.selectedOrganization.name
+								}
+							),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						);
+					})
+					.catch((error) => {
+						this.errorHandler.handleError(error);
+					});
 				this.clearItem();
 				this._loadSmartTable();
 			} catch (error) {
