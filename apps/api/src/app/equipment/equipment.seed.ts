@@ -2,7 +2,7 @@ import { Connection } from 'typeorm';
 import { Equipment } from './equipment.entity';
 import * as faker from 'faker';
 import { Tag } from '../tags/tag.entity';
-import { CurrenciesEnum, IOrganization } from '@gauzy/models';
+import { IOrganization } from '@gauzy/models';
 import { Tenant } from '../tenant/tenant.entity';
 import { Organization } from '../organization/organization.entity';
 import { DEFAULT_RANDOM_EQUIPMENTS } from './default-equipments';
@@ -76,9 +76,8 @@ export const createRandomEquipments = async (
 				min: 10000,
 				max: 50000
 			});
-			equipment.currency = faker.random.arrayElement(
-				Object.values(CurrenciesEnum)
-			);
+
+			equipment.currency = env.defaultCurrency;
 			equipment.maxSharePeriod = faker.random.number({ min: 1, max: 15 });
 			equipment.tags = [faker.random.arrayElement(tags)];
 			equipment.tenant = tenant;

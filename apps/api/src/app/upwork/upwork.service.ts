@@ -78,6 +78,7 @@ import { ProposalCreateCommand } from '../proposal/commands/proposal-create.comm
 import { OrganizationProjectUpdateCommand } from '../organization-projects/commands/organization-project.update.command';
 import { CreateTimeSlotMinutesCommand } from '../timesheet/time-slot/commands/create-time-slot-minutes.command';
 import { RequestContext } from '../core/context';
+import { environment as env } from '@env-api/environment';
 
 @Injectable()
 export class UpworkService {
@@ -376,7 +377,7 @@ export class UpworkService {
 						name,
 						organizationId,
 						public: true,
-						currency: CurrenciesEnum.USD
+						currency: env.defaultCurrency as CurrenciesEnum
 					};
 
 					if (typeof active_milestone === 'object') {
@@ -1181,7 +1182,7 @@ export class UpworkService {
 							reference,
 							notes: description,
 							typeOfExpense: subtype,
-							currency: CurrenciesEnum.USD
+							currency: env.defaultCurrency
 						})
 					);
 
@@ -1288,7 +1289,7 @@ export class UpworkService {
 						notes,
 						tags: [],
 						reference: contractId,
-						currency: CurrenciesEnum.USD
+						currency: env.defaultCurrency
 					})
 				);
 				integratedIncome = await this._integrationMapService.create({

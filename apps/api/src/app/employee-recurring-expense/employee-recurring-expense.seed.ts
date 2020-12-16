@@ -1,7 +1,6 @@
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
 import {
-	CurrenciesEnum,
 	IEmployee,
 	RecurringExpenseDefaultCategoriesEnum
 } from '@gauzy/models';
@@ -9,6 +8,7 @@ import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
 import * as faker from 'faker';
 import * as moment from 'moment';
 import { Organization } from '../organization/organization.entity';
+import { environment as env } from '@env-api/environment';
 
 export const createRandomEmployeeRecurringExpense = async (
 	connection: Connection,
@@ -57,7 +57,7 @@ export const createRandomEmployeeRecurringExpense = async (
 				RecurringExpenseDefaultCategoriesEnum.SALARY;
 
 			employee.value = faker.random.number(999); // new changes
-			employee.currency = CurrenciesEnum.USD; // new changes
+			employee.currency = env.defaultCurrency; // new changes
 
 			// TODO: some expenses should have a parent if they change "over time"
 			employee.parentRecurringExpenseId = null;

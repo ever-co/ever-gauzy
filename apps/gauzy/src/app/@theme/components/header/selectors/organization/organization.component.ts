@@ -42,14 +42,17 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
 		);
 		this.organizations = items.map((userOrg) => userOrg.organization);
 		if (this.organizations.length > 0) {
+			const [defaultOrganization] = this.organizations;
 			if (this.store.organizationId) {
-				this.store.selectedOrganization = this.organizations.find(
+				const organization = this.organizations.find(
 					(organization: IOrganization) =>
 						organization.id === this.store.organizationId
 				);
+				this.store.selectedOrganization =
+					organization || defaultOrganization;
 			} else {
 				// set first organizations as default
-				this.store.selectedOrganization = this.organizations[0];
+				this.store.selectedOrganization = defaultOrganization;
 			}
 		}
 	}

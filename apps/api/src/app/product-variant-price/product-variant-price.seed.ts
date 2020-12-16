@@ -1,11 +1,12 @@
 import { Connection } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
-import { CurrenciesEnum, IOrganization } from '@gauzy/models';
+import { IOrganization } from '@gauzy/models';
 import { ProductVariantPrice } from './product-variant-price.entity';
 import * as faker from 'faker';
 import { ProductCategory } from '../product-category/product-category.entity';
 import { Product } from '../product/product.entity';
 import { ProductVariant } from '../product-variant/product-variant.entity';
+import { environment as env } from '@env-api/environment';
 
 export const createRandomProductVariantPrice = async (
 	connection: Connection,
@@ -48,15 +49,13 @@ export const createRandomProductVariantPrice = async (
 						productVariantPrice.unitCost = faker.random.number(
 							10000
 						);
-						productVariantPrice.unitCostCurrency = faker.random.arrayElement(
-							Object.keys(CurrenciesEnum)
-						);
+						productVariantPrice.unitCostCurrency =
+							tenantOrg.currency || env.defaultCurrency;
 						productVariantPrice.retailPrice = faker.random.number(
 							productVariantPrice.unitCost
 						);
-						productVariantPrice.retailPriceCurrency = faker.random.arrayElement(
-							Object.keys(CurrenciesEnum)
-						);
+						productVariantPrice.retailPriceCurrency =
+							tenantOrg.currency || env.defaultCurrency;
 						productVariantPrice.tenant = tenant;
 						productVariant.organization = tenantOrg;
 

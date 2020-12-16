@@ -6,7 +6,6 @@ import { Organization } from './organization.entity';
 import * as faker from 'faker';
 import { getDummyImage } from '../core';
 import {
-	CurrenciesEnum,
 	DefaultValueDateTypeEnum,
 	BonusTypeEnum,
 	WeekDaysEnum,
@@ -17,6 +16,7 @@ import { Tenant } from './../tenant/tenant.entity';
 import { Skill } from '../skills/skill.entity';
 import { Contact } from '../contact/contact.entity';
 import { DEFAULT_ORGANIZATIONS } from './default-organizations';
+import { environment as env } from '@env-api/environment';
 
 export const getDefaultBulgarianOrganization = async (
 	connection: Connection,
@@ -128,7 +128,6 @@ export const createRandomOrganizations = async (
 	tenants: Tenant[],
 	noOfOrganizations: number
 ): Promise<Map<Tenant, Organization[]>> => {
-	const currencies = Object.values(CurrenciesEnum);
 	const defaultDateTypes = Object.values(DefaultValueDateTypeEnum);
 	const skills = await getSkills(connection);
 	const contacts = await getContacts(connection);
@@ -153,7 +152,7 @@ export const createRandomOrganizations = async (
 
 				organization.name = companyName;
 				organization.profile_link = generateLink(companyName);
-				organization.currency = currencies[index % currencies.length];
+				organization.currency = env.defaultCurrency;
 				organization.defaultValueDateType =
 					defaultDateTypes[index % defaultDateTypes.length];
 				organization.imageUrl = getDummyImage(

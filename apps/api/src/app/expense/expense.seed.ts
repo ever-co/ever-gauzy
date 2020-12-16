@@ -2,7 +2,6 @@ import { Connection } from 'typeorm';
 import { Expense } from './expense.entity';
 import * as faker from 'faker';
 import {
-	CurrenciesEnum,
 	IOrganization,
 	IEmployee,
 	IExpenseCategory,
@@ -14,6 +13,7 @@ import { Tenant } from '../tenant/tenant.entity';
 import { OrganizationVendor } from '../organization-vendors/organization-vendors.entity';
 import { ExpenseCategory } from '../expense-categories/expense-category.entity';
 import * as moment from 'moment';
+import { environment as env } from '@env-api/environment';
 
 export const createDefaultExpenses = async (
 	connection: Connection,
@@ -76,7 +76,8 @@ export const createDefaultExpenses = async (
 					expense.amount = Math.abs(seedExpense.amount);
 					expense.vendor = foundVendor;
 					expense.category = foundCategory;
-					expense.currency = seedExpense.currency;
+					expense.currency =
+						seedExpense.currency || env.defaultCurrency;
 					expense.valueDate = faker.date.between(
 						new Date(),
 						moment(new Date()).add(10, 'days').toDate()
@@ -114,8 +115,6 @@ export const createRandomExpenses = async (
 		return;
 	}
 
-	const currencies = Object.values(CurrenciesEnum);
-
 	const notesArray = [
 		'Windows 10',
 		'MultiSport Card',
@@ -151,7 +150,7 @@ export const createRandomExpenses = async (
 					];
 				expense.category = categories[currentIndex % categories.length];
 				expense.currency =
-					currencies[(index % currencies.length) + 1 - 1];
+					employee.organization.currency || env.defaultCurrency;
 				expense.valueDate = faker.date.between(
 					new Date(),
 					moment(new Date()).add(10, 'days').toDate()

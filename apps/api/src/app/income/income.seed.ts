@@ -1,11 +1,12 @@
 import { Connection } from 'typeorm';
 import { Income } from './income.entity';
 import * as faker from 'faker';
-import { CurrenciesEnum, IOrganization, IEmployee } from '@gauzy/models';
+import { IOrganization, IEmployee } from '@gauzy/models';
 import * as fs from 'fs';
 import * as csv from 'csv-parser';
 import { Tenant } from '../tenant/tenant.entity';
 import * as moment from 'moment';
+import { environment as env } from '@env-api/environment';
 
 export const createDefaultIncomes = async (
 	connection: Connection,
@@ -45,7 +46,8 @@ export const createDefaultIncomes = async (
 					income.clientId = faker.random
 						.number({ min: 10, max: 9999 })
 						.toString();
-					income.currency = seedIncome.currency;
+					income.currency =
+						seedIncome.currency || env.defaultCurrency;
 					income.valueDate = faker.date.between(
 						new Date(),
 						moment(new Date()).add(10, 'days').toDate()
@@ -66,7 +68,6 @@ export const createRandomIncomes = async (
 	tenants: Tenant[],
 	tenantEmployeeMap: Map<Tenant, IEmployee[]>
 ): Promise<void> => {
-	const currencies = Object.values(CurrenciesEnum);
 	const clientsArray = ['NA', 'UR', 'CA', 'ET', 'GA'];
 	const notesArray = [
 		'Great job!',
@@ -95,7 +96,7 @@ export const createRandomIncomes = async (
 					.number({ min: 10, max: 9999 })
 					.toString();
 				income.currency =
-					employee.organization.currency || currencies[0];
+					employee.organization.currency || env.defaultCurrency;
 				income.valueDate = faker.date.between(
 					new Date(),
 					moment(new Date()).add(10, 'days').toDate()
