@@ -46,14 +46,16 @@ export const environment: Environment = {
 	MICROSOFT_AUTH_LINK: 'http://localhost:3000/api/auth/microsoft',
 	AUTH0_AUTH_LINK: 'http://localhost:3000/api/auth/auth0',
 	NO_INTERNET_LOGO: 'assets/images/logos/logo_Gauzy.svg',
-	SENTRY_DNS: 'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292',
+	SENTRY_DSN:
+		'https://0c1149caec2a431fadf16c80f2b6a8b6@o51327.ingest.sentry.io/4397292',
 	HUBSTAFF_REDIRECT_URI: 'http://localhost:4200/pages/integrations/hubstaff',
 	IS_ELECTRON: IS_ELECTRON,
 	IS_INTEGRATED_DESKTOP: IS_INTEGRATED_DESKTOP,
 
 	GOOGLE_MAPS_API_KEY: '',
 	DEFAULT_LATITUDE: 42.6459136,
-	DEFAULT_LONGITUDE: 23.3332736
+	DEFAULT_LONGITUDE: 23.3332736,
+	DEFAULT_CURRENCY: 'USD'
 };
 
 export const cloudinaryConfiguration: CloudinaryConfiguration = {
