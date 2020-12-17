@@ -7,11 +7,10 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 import { RolesEnum, ITenant, IRole, IRolePermission } from '@gauzy/models';
 import { Role } from '../role/role.entity';
 import { DEFAULT_ROLE_PERMISSIONS } from './default-role-permissions';
+import { RequestContext } from '../core/context';
 
 @Injectable()
-export class RolePermissionsService extends TenantAwareCrudService<
-	RolePermissions
-> {
+export class RolePermissionsService extends TenantAwareCrudService<RolePermissions> {
 	constructor(
 		@InjectRepository(RolePermissions)
 		private readonly rolePermissionsRepository: Repository<RolePermissions>
@@ -37,8 +36,12 @@ export class RolePermissionsService extends TenantAwareCrudService<
 				relations: ['role']
 			});
 
-			if (role.name === RolesEnum.SUPER_ADMIN)
+			if (
+				role.name === RolesEnum.SUPER_ADMIN &&
+				!RequestContext.hasRole(RolesEnum.SUPER_ADMIN)
+			) {
 				throw new Error('Cannot modify Permissions for Super Admin');
+			}
 
 			return await this.repository.update(id, partialEntity);
 		} catch (err /*: WriteError*/) {
