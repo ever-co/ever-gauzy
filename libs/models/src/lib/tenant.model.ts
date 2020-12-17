@@ -21,5 +21,5 @@ export interface ITenantCreateInput {
 }
 
 export interface ITenantSetting extends S3FileStorageProviderConfig {
-	fileStorageProvider: FileStorageProviderEnum;
+	fileStorageProvider?: FileStorageProviderEnum;
 }

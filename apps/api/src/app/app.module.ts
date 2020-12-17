@@ -49,6 +49,8 @@ import { EquipmentModule } from './equipment/equipment.module';
 import { EmployeeLevelModule } from './organization_employee-level/organization-employee-level.module';
 import { ExportAllModule } from './export_import/export-all.module';
 import { ImportAllModule } from './export_import/import/import-all.module';
+import * as Sentry from '@sentry/node';
+import * as Tracing from '@sentry/tracing';
 import { SentryModule } from '@ntegral/nestjs-sentry';
 import { environment } from '@env-api/environment';
 import { LogLevel } from '@sentry/types';
@@ -122,6 +124,17 @@ import { EmployeeJobPresetModule } from './employee-job-preset/employee-job-pres
 import { ReportModule } from './reports/report.module';
 import { EmployeeProposalTemplateModule } from './employee-proposal-template/employee-proposal-template.module';
 import { CustomSmtpModule } from './custom-smtp/custom-smtp.module';
+
+const sentryIntegrations = [];
+
+sentryIntegrations.push(
+	// enable HTTP calls tracing
+	new Sentry.Integrations.Http({ tracing: true })
+);
+
+if (process.env.DB_TYPE === 'postgres') {
+	sentryIntegrations.push(new Tracing.Integrations.Postgres());
+}
 
 @Module({
 	imports: [
@@ -510,12 +523,15 @@ import { CustomSmtpModule } from './custom-smtp/custom-smtp.module';
 			? [
 					SentryModule.forRoot({
 						dsn: environment.sentry.dns,
-						debug: true,
+						debug: !environment.production,
 						environment: environment.production
 							? 'production'
-							: 'development', //production, development
-						//release: null, // must create a release in sentry.io dashboard
-						logLevel: LogLevel.Error
+							: 'development',
+						// TODO: we should use some internal function which returns version of Gauzy
+						release: 'gauzy@' + process.env.npm_package_version,
+						logLevel: LogLevel.Error,
+						integrations: sentryIntegrations,
+						tracesSampleRate: 1.0
 					})
 			  ]
 			: []),

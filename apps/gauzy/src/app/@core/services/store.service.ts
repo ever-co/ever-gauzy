@@ -45,7 +45,6 @@ export interface PersistState {
 }
 
 export function createInitialAppState(): AppState {
-	console.log('create initial app state');
 	return {
 		selectedDate: new Date(),
 		userRolePermissions: []

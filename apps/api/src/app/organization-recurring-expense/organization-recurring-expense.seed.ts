@@ -3,12 +3,12 @@ import { OrganizationRecurringExpense } from './organization-recurring-expense.e
 import * as faker from 'faker';
 import { Tenant } from '../tenant/tenant.entity';
 import {
-	CurrenciesEnum,
 	IOrganization,
 	RecurringExpenseDefaultCategoriesEnum
 } from '@gauzy/models';
 import * as moment from 'moment';
 import { Organization } from '../organization/organization.entity';
+import { environment as env } from '@env-api/environment';
 
 export const createDefaultOrganizationRecurringExpense = async (
 	connection: Connection,
@@ -26,19 +26,14 @@ export const createDefaultOrganizationRecurringExpense = async (
 	const expenseCategories = Object.keys(
 		RecurringExpenseDefaultCategoriesEnum
 	);
-	const currency = Object.keys(CurrenciesEnum);
 
-	// for (const tenantOrg of defaultOrganizations) {
 	mapOrganizationRecurringExpense = await dataOperation(
 		connection,
 		tenant,
 		mapOrganizationRecurringExpense,
 		expenseCategories,
-		defaultOrganizations,
-		currency
+		defaultOrganizations
 	);
-
-	// }
 	return mapOrganizationRecurringExpense;
 };
 
@@ -58,7 +53,6 @@ export const createRandomOrganizationRecurringExpense = async (
 	const expenseCategories = Object.keys(
 		RecurringExpenseDefaultCategoriesEnum
 	);
-	const currency = Object.keys(CurrenciesEnum);
 
 	for (const tenant of tenants) {
 		const tenantOrganization = tenantOrganizationsMap.get(tenant);
@@ -68,8 +62,7 @@ export const createRandomOrganizationRecurringExpense = async (
 				tenant,
 				mapOrganizationRecurringExpense,
 				expenseCategories,
-				tenantOrg,
-				currency
+				tenantOrg
 			);
 		}
 	}
@@ -82,8 +75,7 @@ const dataOperation = async (
 	tenant: Tenant,
 	mapOrganizationRecurringExpense,
 	expenseCategories,
-	tenantOrg: Organization,
-	currency
+	tenantOrg: Organization
 ) => {
 	for (const expenseCategory of expenseCategories) {
 		const organization = new OrganizationRecurringExpense();
@@ -108,8 +100,7 @@ const dataOperation = async (
 		organization.categoryName = expenseCategory;
 		organization.value = faker.random.number(9999);
 
-		organization.currency =
-			CurrenciesEnum[currency[faker.random.number(2)]];
+		organization.currency = tenantOrg.currency || env.defaultCurrency;
 
 		mapOrganizationRecurringExpense.push(organization);
 	}

@@ -1,7 +1,6 @@
 import { Connection } from 'typeorm';
-import { ICurrency } from '@gauzy/models';
+import { ICurrency, DEFAULT_CURRENCIES } from '@gauzy/models';
 import { Currency } from './currency.entity';
-import { DEFAULT_CURRENCIES } from './default-currencies';
 
 export const createCurrencies = async (
 	connection: Connection

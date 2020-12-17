@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
-	CurrenciesEnum,
 	IEmployee,
 	IOrganization,
 	IOrganizationContact,
@@ -20,6 +19,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { patterns } from '../../../@shared/regex/regex-patterns.const';
+import { environment as ENV } from 'apps/gauzy/src/environments/environment';
 
 @Component({
 	selector: 'ga-projects-mutation',
@@ -112,7 +112,8 @@ export class ProjectsMutationComponent
 			);
 		}
 
-		this.defaultCurrency = this.organization.currency || CurrenciesEnum.USD;
+		this.defaultCurrency =
+			this.organization.currency || ENV.DEFAULT_CURRENCY;
 		this.form = this.fb.group({
 			tags: [this.project ? (this.tags = this.project.tags) : ''],
 			public: [this.project ? this.project.public : this.public],

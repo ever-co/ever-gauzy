@@ -9,6 +9,7 @@ import {
 } from '@gauzy/models';
 import { IContact } from './contact.model';
 import { IOrganizationLanguages } from './organization-languages.model';
+import { CurrenciesEnum } from '@gauzy/models';
 
 export enum OrganizationPermissionsEnum {
 	ALLOW_MANUAL_TIME = 'allowManualTime',
@@ -164,12 +165,6 @@ export enum RegionsEnum {
 	'RU' = 'Rusian (Russia)'
 }
 
-export enum CurrenciesEnum {
-	USD = 'USD',
-	BGN = 'BGN',
-	ILS = 'ILS'
-}
-
 export enum DefaultValueDateTypeEnum {
 	TODAY = 'TODAY',
 	END_OF_MONTH = 'END_OF_MONTH',
@@ -231,3 +226,14 @@ export enum MinimumProjectSizeEnum {
 
 export const DEFAULT_PROFIT_BASED_BONUS = 75;
 export const DEFAULT_REVENUE_BASED_BONUS = 10;
+
+export interface IOrganizationStoreState {
+	organization: IOrganization;
+	action: OrganizationAction;
+}
+
+export enum OrganizationAction {
+	CREATED = 'CREATED',
+	UPDATED = 'UPDATED',
+	DELETED = 'DELETED'
+}

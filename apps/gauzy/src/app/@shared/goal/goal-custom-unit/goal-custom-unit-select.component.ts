@@ -1,14 +1,11 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import {
-	KeyResultTypeEnum,
-	CurrenciesEnum,
-	KeyResultNumberUnitsEnum
-} from '@gauzy/models';
-import { takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { KeyResultTypeEnum, KeyResultNumberUnitsEnum } from '@gauzy/models';
 import { Store } from '../../../@core/services/store.service';
+import { environment as ENV } from 'apps/gauzy/src/environments/environment';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-goal-custom-unit-select',
 	templateUrl: './goal-custom-unit-select.component.html',
@@ -19,7 +16,6 @@ export class GoalCustomUnitSelectComponent implements OnInit, OnDestroy {
 	@Input() numberUnits: string[];
 	keyResultTypeEnum = KeyResultTypeEnum;
 	createNew = false;
-	private _ngDestroy$ = new Subject<void>();
 	defaultCurrency: string;
 
 	constructor(private readonly store: Store) {}
@@ -27,11 +23,11 @@ export class GoalCustomUnitSelectComponent implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.defaultCurrency = this.store.selectedOrganization.currency;
 		this.parentFormGroup.controls['type'].valueChanges
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((formValue) => {
 				if (formValue === KeyResultTypeEnum.CURRENCY) {
 					this.parentFormGroup.controls['unit'].patchValue(
-						this.defaultCurrency || CurrenciesEnum.USD
+						this.defaultCurrency || ENV.DEFAULT_CURRENCY
 					);
 				} else if (formValue === KeyResultTypeEnum.NUMERICAL) {
 					this.parentFormGroup.controls['unit'].patchValue(
@@ -48,8 +44,5 @@ export class GoalCustomUnitSelectComponent implements OnInit, OnDestroy {
 		this.createNew = false;
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

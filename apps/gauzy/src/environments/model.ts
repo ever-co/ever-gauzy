@@ -20,12 +20,14 @@ export interface Environment {
 	MICROSOFT_AUTH_LINK: string;
 	AUTH0_AUTH_LINK: string;
 	NO_INTERNET_LOGO: string;
-	SENTRY_DNS?: string;
+	SENTRY_DSN?: string;
 	HUBSTAFF_REDIRECT_URI?: string;
 	IS_ELECTRON: boolean;
 
 	GOOGLE_MAPS_API_KEY: string;
 	DEFAULT_LATITUDE: number;
 	DEFAULT_LONGITUDE: number;
+	DEFAULT_CURRENCY: string;
+
 	IS_INTEGRATED_DESKTOP: boolean;
 }

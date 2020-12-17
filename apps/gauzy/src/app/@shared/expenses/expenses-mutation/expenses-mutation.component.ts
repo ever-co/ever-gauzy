@@ -17,10 +17,8 @@ import {
 	IOrganizationExpenseCategory,
 	ContactType,
 	IExpenseViewModel,
-	ICurrency,
-	OrganizationSelectInput
+	ICurrency
 } from '@gauzy/models';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
 import {
 	EmployeeSelectorComponent,
@@ -36,7 +34,7 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { OrganizationExpenseCategoriesService } from '../../../@core/services/organization-expense-categories.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { first } from 'rxjs/operators';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-expenses-mutation',
@@ -93,7 +91,6 @@ export class ExpensesMutationComponent
 		public dialogRef: NbDialogRef<ExpensesMutationComponent>,
 		private dialogService: NbDialogService,
 		private fb: FormBuilder,
-		private organizationsService: OrganizationsService,
 		private organizationVendorsService: OrganizationVendorsService,
 		private store: Store,
 		private readonly organizationContactService: OrganizationContactService,
@@ -107,10 +104,10 @@ export class ExpensesMutationComponent
 	}
 
 	ngOnInit() {
+		this._initializeForm();
 		this.getDefaultData();
 		this.loadOrganizationContacts();
 		this.loadProjects();
-		this._initializeForm();
 		this.changeExpenseType(this.form.value.typeOfExpense);
 	}
 
@@ -138,7 +135,6 @@ export class ExpensesMutationComponent
 			}
 		);
 		this.vendors = vendors;
-		this._loadDefaultCurrency();
 	}
 
 	selectOrganizationContact($event) {
@@ -341,6 +337,11 @@ export class ExpensesMutationComponent
 				tags: [],
 				status: []
 			});
+			const { currency } = this.store.selectedOrganization;
+			if (this.currency && !this.currency.value) {
+				this.currency.setValue(currency);
+				this.currency.updateValueAndValidity();
+			}
 		}
 
 		this.valueDate = this.form.get('valueDate');
@@ -403,20 +404,6 @@ export class ExpensesMutationComponent
 					projectId: project.id
 				});
 			});
-		}
-	}
-
-	private async _loadDefaultCurrency() {
-		const orgData = await this.organizationsService
-			.getById(this.store.selectedOrganization.id, [
-				OrganizationSelectInput.currency
-			])
-			.pipe(first())
-			.toPromise();
-
-		if (orgData && this.currency && !this.currency.value) {
-			this.currency.setValue(orgData.currency);
-			this.currency.updateValueAndValidity();
 		}
 	}
 

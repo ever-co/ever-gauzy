@@ -40,7 +40,8 @@ import { ServerConnectionService } from './@core/services/server-connection.serv
 import { Store } from './@core/services/store.service';
 import { AppModuleGuard } from './app.module.guards';
 import { DangerZoneMutationModule } from './@shared/settings/danger-zone-mutation.module';
-import * as Sentry from '@sentry/browser';
+import * as Sentry from '@sentry/angular';
+import { Integrations } from '@sentry/tracing';
 import { SentryErrorHandler } from './@core/sentry-error.handler';
 import { TimeTrackerModule } from './@shared/time-tracker/time-tracker.module';
 import { SharedModule } from './@shared/shared.module';
@@ -56,21 +57,36 @@ import { TenantInterceptor } from './@core/tenant.interceptor';
 import { NgxAuthModule } from './auth/auth.module';
 import { LegalModule } from './legal/legal.module';
 import { GoogleMapsLoaderService } from './@core/services/google-maps-loader.service';
+import { Router } from '@angular/router';
+
+// TODO: we should use some internal function which returns version of Gauzy;
+const version = '0.1.0';
 
 export const cloudinary = {
 	Cloudinary: CloudinaryCore
 };
 
-if (environment.SENTRY_DNS && environment.production) {
+if (environment.SENTRY_DSN) {
 	Sentry.init({
-		dsn: environment.SENTRY_DNS,
-		environment: environment.production ? 'production' : 'development'
+		dsn: environment.SENTRY_DSN,
+		environment: environment.production ? 'production' : 'development',
+		// this enables automatic instrumentation
+		integrations: [
+			new Integrations.BrowserTracing({
+				routingInstrumentation: Sentry.routingInstrumentation
+			})
+		],
+		// TODO: we should use some internal function which returns version of Gauzy
+		release: 'gauzy@' + version,
+		// set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring
+		tracesSampleRate: 1
 	});
 }
 
 export function googleMapsLoaderFactory(provider: GoogleMapsLoaderService) {
 	return () => provider.load(environment.GOOGLE_MAPS_API_KEY);
 }
+
 @NgModule({
 	declarations: [AppComponent],
 	imports: [
@@ -112,6 +128,10 @@ export function googleMapsLoaderFactory(provider: GoogleMapsLoaderService) {
 	],
 	bootstrap: [AppComponent],
 	providers: [
+		{
+			provide: Sentry.TraceService,
+			deps: [Router]
+		},
 		{ provide: APP_BASE_HREF, useValue: '/' },
 		{
 			provide: ErrorHandler,

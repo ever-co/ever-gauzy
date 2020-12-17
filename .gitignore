@@ -41,16 +41,18 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
-/apps/api/src/app/integrations/upwork/csv
-/export
-/import
-
 
 .env
-/.deploy/nginx/log
 
 # Typeorm Logs
 ormlogs.log
  
 # Cache File
 /.cache
+
+/.deploy/nginx/log
+/apps/api/src/app/integrations/upwork/csv
+/apps/gauzy/src/environments/environment.prod.ts
+/apps/gauzy/src/environments/environment.ts
+/export
+/import

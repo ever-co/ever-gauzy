@@ -145,9 +145,7 @@ export const environment: IEnvironment = {
 	},
 
 	sentry: {
-		dns:
-			process.env.SENTRY ||
-			'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292'
+		dns: process.env.SENTRY_DSN
 	},
 
 	defaultHubstaffUserPass:
@@ -178,5 +176,6 @@ export const environment: IEnvironment = {
 			pass: process.env.MAIL_PASSWORD
 		},
 		from: process.env.MAIL_FROM_ADDRESS
-	}
+	},
+	defaultCurrency: process.env.DEFAULT_CURRENCY || 'USD'
 };

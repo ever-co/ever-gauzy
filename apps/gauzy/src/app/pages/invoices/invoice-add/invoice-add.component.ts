@@ -18,10 +18,8 @@ import {
 	ExpenseTypesEnum,
 	ExpenseStatusesEnum,
 	ContactType,
-	InvoiceStatusTypesEnum,
-	OrganizationSelectInput
+	InvoiceStatusTypesEnum
 } from '@gauzy/models';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { filter, first, tap } from 'rxjs/operators';
 import { InvoicesService } from '../../../@core/services/invoices.service';
 import { InvoiceItemService } from '../../../@core/services/invoice-item.service';
@@ -107,7 +105,6 @@ export class InvoiceAddComponent
 		private router: Router,
 		private toastrService: NbToastrService,
 		private invoicesService: InvoicesService,
-		private organizationsService: OrganizationsService,
 		private organizationProjectsService: OrganizationProjectsService,
 		private invoiceItemService: InvoiceItemService,
 		private tasksStore: TasksStoreService,
@@ -131,6 +128,10 @@ export class InvoiceAddComponent
 			.pipe(
 				filter((organization) => !!organization),
 				tap((organization) => (this.organization = organization)),
+				tap(({ currency }) => {
+					this.currency.setValue(currency);
+					this.currency.updateValueAndValidity();
+				}),
 				tap(() => this._loadOrganizationData()),
 				untilDestroyed(this)
 			)
@@ -731,16 +732,6 @@ export class InvoiceAddComponent
 			this.selectedLanguage
 		);
 		this.products = products.items;
-
-		const orgData = await this.organizationsService
-			.getById(organization.id, [OrganizationSelectInput.currency])
-			.pipe(first())
-			.toPromise();
-
-		if (orgData && this.currency && !this.currency.value) {
-			this.currency.setValue(orgData.currency);
-			this.currency.updateValueAndValidity();
-		}
 
 		const expenses = await this.expensesService.getAll([], {
 			typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,

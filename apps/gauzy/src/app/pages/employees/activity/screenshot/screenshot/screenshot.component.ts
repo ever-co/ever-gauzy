@@ -175,7 +175,9 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 					timeSlots = ['00', '10', '20', '30', '40', '50'].map(
 						(key) => byMinutes[key] || null
 					);
-					const time = moment().set('hour', hour).set('minute', 0);
+					const time = moment()
+						.set('hour', parseInt(hour, 0))
+						.set('minute', 0);
 					const startTime = time.format('HH:mm');
 					const endTime = time.add(1, 'hour').format('HH:mm');
 					return { startTime, endTime, timeSlots };
