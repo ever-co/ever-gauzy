@@ -75,7 +75,7 @@ export class CreateTimeSlotHandler
 		}
 
 		if (input.activities) {
-			input.activities = await this.commandBus.execute(
+			timeSlot.activities = await this.commandBus.execute(
 				new BulkActivitiesSaveCommand({
 					employeeId: timeSlot.employeeId,
 					projectId:
