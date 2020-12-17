@@ -8,13 +8,13 @@
 	<nb-card-body>
 		<nb-stepper #stepper>
 			<!-- Step 1 Contact Main Form -->
-			<nb-step [stepControl]="congMainForm" label="Main">
-				<ng-template #main>
+			<nb-step [stepControl]="contMainForm" label="Main">
+				<ng-template #mainStep>
 					{{ 'CONTACTS_PAGE.MAIN' | translate }}
 				</ng-template>
 				<form
-					[formGroup]="congMainForm"
-					(ngSubmit)="this.congMainForm.markAsDirty()"
+					[formGroup]="contMainForm"
+					(ngSubmit)="this.contMainForm.markAsDirty()"
 					class="contact-form"
 				>
 					<div class="contact-container">
@@ -22,7 +22,7 @@
 							<ngx-image-uploader
 								(changeHoverState)="hoverState = $event"
 								(uploadedImageUrl)="
-									congMainForm
+									contMainForm
 										.get('imageUrl')
 										.setValue($event)
 								"
@@ -76,8 +76,8 @@
 							></div>
 
 							<img
-								*ngIf="congMainForm"
-								[src]="congMainForm.get('imageUrl').value"
+								*ngIf="contMainForm"
+								[src]="contMainForm.get('imageUrl').value"
 								alt="Contact Photo"
 								(mouseenter)="hoverState = true"
 								(mouseleave)="hoverState = false"
@@ -146,7 +146,7 @@
 									<p
 										class="caption status-danger mt-1"
 										*ngIf="
-											congMainForm.controls.primaryEmail
+											contMainForm.controls.primaryEmail
 												.errors?.required
 										"
 									>
@@ -158,7 +158,7 @@
 									<p
 										class="caption status-danger mt-1"
 										*ngIf="
-											congMainForm.controls.primaryEmail
+											contMainForm.controls.primaryEmail
 												.errors?.pattern
 										"
 									>
@@ -196,7 +196,7 @@
 									<p
 										class="caption status-danger mt-1"
 										*ngIf="
-											congMainForm.controls.primaryPhone
+											contMainForm.controls.primaryPhone
 												.errors?.required
 										"
 									>
@@ -208,7 +208,7 @@
 									<p
 										class="caption status-danger mt-1"
 										*ngIf="
-											congMainForm.controls.primaryPhone
+											contMainForm.controls.primaryPhone
 												.errors?.pattern
 										"
 									>
@@ -341,7 +341,7 @@
 						<div class="row">
 							<div class="form-group col-4">
 								<button
-									[disabled]="congMainForm.invalid"
+									[disabled]="contMainForm.invalid"
 									nbButton
 									nbStepperNext
 									status="success"
@@ -357,7 +357,7 @@
 
 			<!-- Step 2 Address Form -->
 			<nb-step [stepControl]="locationForm" label="Address">
-				<ng-template #location>{{
+				<ng-template #addressStep>{{
 					'CONTACTS_PAGE.ADDRESS' | translate
 				}}</ng-template>
 				<form
@@ -373,9 +373,24 @@
 									#locationFormDirective
 									[form]="locationForm"
 									[showAutocompleteSearch]="true"
-									[showCoordinateInput]="false"
+									[showCoordinateInput]="true"
+									(mapCoordinatesEmitter)="
+										onCoordinatesChanges($event)
+									"
+									(mapGeometryEmitter)="
+										onGeometrySend($event)
+									"
 								>
 								</ga-location-form>
+								<ng-container
+									*ngIf="stepper._selectedIndex === 1"
+								>
+									<ga-leaflet-map
+										#leafletTemplate
+										(mapClicked)="onMapClicked($event)"
+									>
+									</ga-leaflet-map>
+								</ng-container>
 							</div>
 						</div>
 						<div>
@@ -397,49 +412,66 @@
 			<!-- Step 2 Address Form End -->
 
 			<!-- Step 3 Members Form -->
-			<nb-step [stepControl]="conMemberForm" label="Members">
-				<ng-template #location>{{
+			<nb-step label="Members">
+				<ng-template #membersStep>{{
 					'CONTACTS_PAGE.MEMBERS' | translate
 				}}</ng-template>
-				<form
-					class="step-container"
-					[formGroup]="conMemberForm"
-					*ngIf="conMemberForm"
-					(ngSubmit)="this.conMemberForm.markAsDirty()"
-				>
-					<div class="fields">
-						<div class="row">
-							<div class="col-6">
-								<div class="form-group">
-									<ga-employee-multi-select
-										[selectedEmployeeIds]="
-											selectedEmployeeIds
-										"
-										[allEmployees]="employees"
-										(selectedChange)="
-											onMembersSelected($event)
-										"
-									>
-									</ga-employee-multi-select>
+				<div class="fields">
+					<div class="row">
+						<div class="col-6">
+							<div class="form-group">
+								<ga-employee-multi-select
+									[selectedEmployeeIds]="selectedEmployeeIds"
+									[allEmployees]="employees"
+									(selectedChange)="onMembersSelected($event)"
+								>
+								</ga-employee-multi-select>
+							</div>
+						</div>
+						<div class="col-6" *ngIf="selectedMembers">
+							<div class="team-card">
+								<div
+									class="name-container"
+									*ngFor="let member of selectedMembers"
+								>
+									<div class="image-container">
+										<a
+											href="/pages/employees/edit/{{
+												member.id
+											}}/profile"
+											target="_blank"
+										>
+											<img
+												nbTooltip="{{
+													'ORGANIZATIONS_PAGE.EDIT.CLICK_EMPLOYEE'
+														| translate
+												}}"
+												[src]="member.user.imageUrl"
+											/>
+										</a>
+									</div>
+									<span
+										>{{ member.user.firstName }}
+										{{ member.user.lastName }}
+									</span>
 								</div>
 							</div>
 						</div>
-						<div>
-							<button nbButton nbStepperPrevious class="mr-2">
-								{{ 'BUTTONS.PREVIOUS' | translate }}
-							</button>
-							<button
-								[disabled]="this.conMemberForm.invalid"
-								(click)="submitForm()"
-								nbButton
-								status="success"
-								nbStepperNext
-							>
-								{{ 'BUTTONS.NEXT' | translate }}
-							</button>
-						</div>
 					</div>
-				</form>
+					<div>
+						<button nbButton nbStepperPrevious class="mr-2">
+							{{ 'BUTTONS.PREVIOUS' | translate }}
+						</button>
+						<button
+							(click)="submitForm()"
+							nbButton
+							status="success"
+							nbStepperNext
+						>
+							{{ 'BUTTONS.NEXT' | translate }}
+						</button>
+					</div>
+				</div>
 			</nb-step>
 			<!-- Step 3 Members Form End -->
 		</nb-stepper>
