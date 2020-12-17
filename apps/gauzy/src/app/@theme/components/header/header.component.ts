@@ -337,7 +337,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			{
 				title: this.getTranslation('CONTEXT_MENU.TIMER'),
 				icon: 'clock-outline',
-				hidden: !this.isEmployee,
+				hidden: !this.isEmployee || this.isElectron,
 				data: {
 					action: this.actions.START_TIMER //This opens the timer popup in the header, managed by menu.itemClick TOO: Start the timer also
 				}

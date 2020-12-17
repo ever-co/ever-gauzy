@@ -159,6 +159,7 @@ export default class Timerhandler {
 				projectId: userInfo.projectId,
 				organizationContactId: userInfo.organizationContactId,
 				organizationId: userInfo.organizationId,
+				employeeId: userInfo.employeeId,
 				source: 'DESKTOP'
 			};
 		});
@@ -185,6 +186,7 @@ export default class Timerhandler {
 				organizationId: userInfo.organizationId,
 				projectId: userInfo.projectId,
 				organizationContactId: userInfo.organizationContactId,
+				employeeId: userInfo.employeeId,
 				metaData:
 					this.configs && this.configs.db === 'sqlite'
 						? JSON.stringify(activityMetadata)
