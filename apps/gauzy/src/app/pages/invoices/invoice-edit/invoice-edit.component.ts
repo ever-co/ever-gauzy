@@ -468,7 +468,8 @@ export class InvoiceEditComponent
 		if (!this.organization) {
 			return;
 		}
-		const { id: organizationId, tenantId } = this.organization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 		switch (this.invoice.invoiceType) {
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
 				this.employeeService

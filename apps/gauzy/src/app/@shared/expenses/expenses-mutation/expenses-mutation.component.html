@@ -60,7 +60,10 @@
 						[hidden]="expense && !duplicate"
 						[skipGlobalChange]="true"
 						class="employees"
-						placeholder="Organization"
+						placeholder="{{
+							'EXPENSES_PAGE.MUTATION.EMPLOYEES_GENERATE_EXPENSE'
+								| translate
+						}}"
 						[defaultSelected]="false"
 						(selectionChanged)="onEmployeeChange($event)"
 						[selectedDate]="valueDate.value"

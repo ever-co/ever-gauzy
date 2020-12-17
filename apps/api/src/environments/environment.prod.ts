@@ -141,9 +141,7 @@ export const environment: IEnvironment = {
 	},
 
 	sentry: {
-		dns:
-			process.env.SENTRY ||
-			'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292'
+		dns: process.env.SENTRY_DSN
 	},
 
 	defaultHubstaffUserPass:

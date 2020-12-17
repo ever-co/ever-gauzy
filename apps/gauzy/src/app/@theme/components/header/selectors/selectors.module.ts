@@ -16,6 +16,7 @@ import { OrganizationsService } from 'apps/gauzy/src/app/@core/services/organiza
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -44,6 +45,6 @@ const COMPONENTS = [OrganizationSelectorComponent, DateSelectorComponent];
 	],
 	exports: [...COMPONENTS],
 	declarations: [...COMPONENTS],
-	providers: [OrganizationsService]
+	providers: [OrganizationsService, OrganizationEditStore]
 })
 export class HeaderSelectorsModule {}

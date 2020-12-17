@@ -64,7 +64,7 @@ export const environment: Environment = {
   MICROSOFT_AUTH_LINK: 'http://localhost:3000/api/auth/microsoft',
   AUTH0_AUTH_LINK: 'http://localhost:3000/api/auth/auth0',
   NO_INTERNET_LOGO: 'assets/images/logos/logo_Gauzy.svg',
-  SENTRY_DNS: 'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292',
+  SENTRY_DSN: '${env.SENTRY_DSN}',
   HUBSTAFF_REDIRECT_URI: 'http://localhost:4200/pages/integrations/hubstaff',
   IS_ELECTRON: IS_ELECTRON,
   IS_INTEGRATED_DESKTOP: IS_INTEGRATED_DESKTOP,
@@ -115,14 +115,16 @@ writeFile(
 	}
 );
 
-writeFile(`./apps/gauzy/src/environments/${envFileDestOther}`, '', function (
-	err
-) {
-	if (err) {
-		console.log(err);
-	} else {
-		console.log(
-			`Generated Second Empty Angular environment file: ${envFileDestOther}`
-		);
+writeFile(
+	`./apps/gauzy/src/environments/${envFileDestOther}`,
+	'',
+	function (err) {
+		if (err) {
+			console.log(err);
+		} else {
+			console.log(
+				`Generated Second Empty Angular environment file: ${envFileDestOther}`
+			);
+		}
 	}
-});
+);

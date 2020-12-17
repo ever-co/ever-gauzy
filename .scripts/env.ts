@@ -7,6 +7,7 @@ import { cleanEnv, str, bool, num } from 'envalid';
 export type Env = Readonly<{
 	production: boolean;
 	API_BASE_URL: string;
+	SENTRY_DSN: string;
 	GOOGLE_MAPS_API_KEY: string;
 	DEFAULT_LATITUDE: number;
 	DEFAULT_LONGITUDE: number;
@@ -20,6 +21,7 @@ export const env: Env = cleanEnv(
 		API_BASE_URL: str({ default: 'http://localhost:3000' }),
 		CLIENT_BASE_URL: str({ default: 'http://localhost:4200' }),
 		GOOGLE_MAPS_API_KEY: str({ default: '' }),
+		SENTRY_DSN: str({ default: '' }),
 		DEFAULT_LATITUDE: num({ default: 42.6459136 }),
 		DEFAULT_LONGITUDE: num({ default: 23.3332736 }),
 		DEFAULT_CURRENCY: str({ default: 'USD' })

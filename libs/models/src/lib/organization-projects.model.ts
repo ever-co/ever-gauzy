@@ -1,10 +1,7 @@
 import { IEmployee } from './employee.model';
 import { IOrganizationContact } from './organization-contact.model';
-import {
-	CurrenciesEnum,
-	ProjectBillingEnum,
-	ProjectOwnerEnum
-} from './organization.model';
+import { ProjectBillingEnum, ProjectOwnerEnum } from './organization.model';
+import { CurrenciesEnum } from '@gauzy/models';
 import { IBaseEntityWithMembers } from './entity-with-members.model';
 import { ITag } from './tag-entity.model';
 import { ITask } from './task-entity.model';

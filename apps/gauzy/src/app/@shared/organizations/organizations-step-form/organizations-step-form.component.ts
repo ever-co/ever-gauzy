@@ -11,7 +11,12 @@ import {
 	Output,
 	ViewChild
 } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+	FormBuilder,
+	FormControl,
+	FormGroup,
+	Validators
+} from '@angular/forms';
 import {
 	BonusTypeEnum,
 	ICountry,
@@ -95,7 +100,7 @@ export class OrganizationsStepFormComponent
 		});
 		this.orgBonusForm = this.fb.group({
 			bonusType: [],
-			bonusPercentage: ['', [Validators.min(0), Validators.max(100)]]
+			bonusPercentage: [{ value: null, disabled: true }]
 		});
 		this.orgSettingsForm = this.fb.group({
 			timeZone: [],
@@ -124,6 +129,23 @@ export class OrganizationsStepFormComponent
 			invitesAllowed: [true],
 			inviteExpiryPeriod: [7, [Validators.min(1)]]
 		});
+
+		const bonusType = <FormControl>this.orgBonusForm.get('bonusType');
+		const bonusPercentage = <FormControl>(
+			this.orgBonusForm.get('bonusPercentage')
+		);
+		bonusType.valueChanges.subscribe((value) => {
+			if (value) {
+				bonusPercentage.setValidators([
+					Validators.required,
+					Validators.min(0),
+					Validators.max(100)
+				]);
+			} else {
+				bonusPercentage.setValidators(null);
+			}
+			bonusPercentage.updateValueAndValidity();
+		});
 	}
 
 	handleImageUploadError(error) {
@@ -146,6 +168,7 @@ export class OrganizationsStepFormComponent
 				bonusPercentageControl.disable();
 				break;
 		}
+		bonusPercentageControl.updateValueAndValidity();
 	}
 	toggleExpiry(checked) {
 		const inviteExpiryControl = this.orgBonusForm.get('inviteExpiryPeriod');

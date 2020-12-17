@@ -6,7 +6,12 @@ import {
 	OnInit
 } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ICurrency, IOrganization, ITag } from '@gauzy/models';
+import {
+	ICurrency,
+	IOrganization,
+	ITag,
+	OrganizationAction
+} from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
 import { filter, first } from 'rxjs/operators';
@@ -17,6 +22,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '../../../../../@core/services/store.service';
+import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -45,7 +51,8 @@ export class EditOrganizationMainComponent
 		private organizationEditStore: OrganizationEditStore,
 		readonly translateService: TranslateService,
 		private store: Store,
-		private cdr: ChangeDetectorRef
+		private cdr: ChangeDetectorRef,
+		private errorHandler: ErrorHandlingService
 	) {
 		super(translateService);
 	}
@@ -89,15 +96,30 @@ export class EditOrganizationMainComponent
 	}
 
 	async updateOrganizationSettings() {
-		this.organizationService.update(this.organization.id, {
-			imageUrl: this.imageUrl,
-			...this.form.getRawValue()
-		});
-		this.toastrService.primary(
-			this.organization.name + ' organization main info updated.',
-			'Success'
-		);
-		this.goBack();
+		try {
+			this.organizationService
+				.update(this.organization.id, {
+					imageUrl: this.imageUrl,
+					...this.form.getRawValue()
+				})
+				.then((organization: IOrganization) => {
+					this.organizationEditStore.organizationAction = {
+						organization,
+						action: OrganizationAction.UPDATED
+					};
+					this.toastrService.primary(
+						this.organization.name +
+							' organization main info updated.',
+						'Success'
+					);
+					this.goBack();
+				})
+				.catch((error) => {
+					this.errorHandler.handleError(error);
+				});
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
 	}
 
 	goBack() {
