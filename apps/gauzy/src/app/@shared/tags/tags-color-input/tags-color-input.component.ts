@@ -10,8 +10,10 @@ import { TagsService } from '../../../@core/services/tags.service';
 import { ITag, IOrganization } from '@gauzy/models';
 import { getContrastColor } from '@gauzy/utils';
 import { Store } from '../../../@core/services/store.service';
-import { Subscription } from 'rxjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { filter } from 'rxjs/operators';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-tags-color-input',
 	templateUrl: './tags-color-input.component.html',
@@ -21,7 +23,6 @@ export class TagsColorInputComponent implements OnInit, OnDestroy {
 	tags: ITag[];
 	loading = false;
 	private selectedOrganization: IOrganization;
-	private subscribeTakingSelectedOrganziation: Subscription;
 
 	@Input('isOrgLevel')
 	isOrgLevel: boolean = false;
@@ -64,19 +65,23 @@ export class TagsColorInputComponent implements OnInit, OnDestroy {
 	};
 
 	ngOnInit() {
-		this.subscribeTakingSelectedOrganziation = this.store.selectedOrganization$.subscribe(
-			(org) => {
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				untilDestroyed(this)
+			)
+			.subscribe((org) => {
 				this.selectedOrganization = org;
 				this.getAllTags();
-			}
-		);
-
+			});
 		this.selectedTagIds = this.selectedTags?.map((tag: ITag) => tag.id);
 	}
 
 	async getAllTags() {
 		if (this.selectedOrganization) {
-			const { id: organizationId, tenantId } = this.selectedOrganization;
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.selectedOrganization;
+
 			if (this.isOrgLevel) {
 				const tagsByOrgLevel = await this.tagsService.getAllTagsByOrgLevel(
 					{ organizationId, tenantId },
@@ -97,7 +102,6 @@ export class TagsColorInputComponent implements OnInit, OnDestroy {
 	backgroundContrast(bgColor: string) {
 		return getContrastColor(bgColor);
 	}
-	ngOnDestroy() {
-		this.subscribeTakingSelectedOrganziation.unsubscribe();
-	}
+
+	ngOnDestroy() {}
 }

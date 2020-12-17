@@ -309,11 +309,14 @@
 										}}"
 										fullWidth
 										class="d-block"
-										[ngClass]="{
-											'status-danger': this.orgBonusForm.get(
-												'bonusPercentage'
-											).invalid
-										}"
+										[status]="
+											orgBonusForm.get('bonusPercentage')
+												.invalid &&
+											orgBonusForm.get('bonusPercentage')
+												.invalid
+												? 'danger'
+												: 'basic'
+										"
 									/>
 								</div>
 							</div>

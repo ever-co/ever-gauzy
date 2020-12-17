@@ -226,3 +226,14 @@ export enum MinimumProjectSizeEnum {
 
 export const DEFAULT_PROFIT_BASED_BONUS = 75;
 export const DEFAULT_REVENUE_BASED_BONUS = 10;
+
+export interface IOrganizationStoreState {
+	organization: IOrganization;
+	action: OrganizationAction;
+}
+
+export enum OrganizationAction {
+	CREATED = 'CREATED',
+	UPDATED = 'UPDATED',
+	DELETED = 'DELETED'
+}
