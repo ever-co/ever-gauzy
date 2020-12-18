@@ -107,10 +107,7 @@
 								</div>
 								<div class="col">
 									<ga-currency
-										[(ngModel)]="currency"
-										[formControl]="
-											orgMainForm.get('currency')
-										"
+										formControlName="currency"
 										(optionChange)="currencyChanged($event)"
 									></ga-currency>
 								</div>
@@ -230,14 +227,27 @@
 						<button nbButton nbStepperPrevious>
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>
-						<button
-							[disabled]="this.locationForm.invalid"
-							nbButton
-							status="success"
-							nbStepperNext
+						<ng-container
+							*ngIf="
+								locationFormBlank;
+								then skipButton;
+								else nextButton
+							"
 						>
-							{{ 'BUTTONS.NEXT' | translate }}
-						</button>
+						</ng-container>
+						<ng-template #nextButton>
+							<button nbButton status="success" nbStepperNext>
+								{{ 'BUTTONS.NEXT' | translate }}
+							</button>
+						</ng-template>
+						<ng-template #skipButton>
+							<button nbButton status="success" nbStepperNext>
+								{{
+									'BUTTONS.SKIP_CONTINUE'
+										| translate: { label: 'address' }
+								}}
+							</button>
+						</ng-template>
 					</div>
 				</form>
 			</nb-step>
@@ -254,71 +264,66 @@
 					*ngIf="orgBonusForm"
 					(ngSubmit)="this.orgBonusForm.markAsDirty()"
 				>
-					<div class="fields">
-						<div class="row">
-							<div class="col-6">
-								<div class="form-group">
-									<label class="label">
-										{{
-											'FORM.LABELS.TYPE_OF_BONUS'
-												| translate
-										}}
-									</label>
-									<nb-select
-										class="d-block"
-										size="medium"
-										formControlName="bonusType"
-										placeholder="{{
-											'FORM.PLACEHOLDERS.TYPE_OF_BONUS'
-												| translate
-										}}"
-										(selectedChange)="
-											loadDefaultBonusPercentage($event)
-										"
-										fullWidth
+					<div class="row">
+						<div class="col-6">
+							<div class="form-group">
+								<label class="label">
+									{{
+										'FORM.LABELS.TYPE_OF_BONUS' | translate
+									}}
+								</label>
+								<nb-select
+									class="d-block"
+									size="medium"
+									formControlName="bonusType"
+									placeholder="{{
+										'FORM.PLACEHOLDERS.TYPE_OF_BONUS'
+											| translate
+									}}"
+									(selectedChange)="
+										loadDefaultBonusPercentage($event)
+									"
+									fullWidth
+								>
+									<nb-option [value]="null">
+										{{ 'SM_TABLE.NONE' | translate }}
+									</nb-option>
+									<nb-option
+										*ngFor="let type of defaultBonusTypes"
+										[value]="type"
 									>
-										<nb-option [value]="null">
-											{{ 'SM_TABLE.NONE' | translate }}
-										</nb-option>
-										<nb-option
-											*ngFor="
-												let type of defaultBonusTypes
-											"
-											[value]="type"
-										>
-											{{ 'SM_TABLE.' + type | translate }}
-										</nb-option>
-									</nb-select>
-								</div>
+										{{ 'SM_TABLE.' + type | translate }}
+									</nb-option>
+								</nb-select>
 							</div>
-							<div class="col-6">
-								<div class="form-group">
-									<label class="label">
-										{{
-											'FORM.LABELS.BONUS_PERCENTAGE'
-												| translate
-										}}
-									</label>
-									<input
-										nbInput
-										type="number"
-										formControlName="bonusPercentage"
-										placeholder="{{
-											'FORM.PLACEHOLDERS.BONUS_PERCENTAGE'
-												| translate
-										}}"
-										fullWidth
-										class="d-block"
-										[status]="
-											orgBonusForm.get('bonusPercentage')
-												.invalid &&
-											orgBonusForm.get('bonusPercentage')
-												.invalid
-												? 'danger'
-												: 'basic'
-										"
-									/>
-								</div>
+						</div>
+						<div class="col-6">
+							<div class="form-group">
+								<label class="label">
+									{{
+										'FORM.LABELS.BONUS_PERCENTAGE'
+											| translate
+									}}
+								</label>
+								<input
+									nbInput
+									type="number"
+									formControlName="bonusPercentage"
+									placeholder="{{
+										'FORM.PLACEHOLDERS.BONUS_PERCENTAGE'
+											| translate
+									}}"
+									fullWidth
+									class="d-block"
+									[status]="
+										orgBonusForm.get('bonusPercentage')
+											.invalid &&
+										orgBonusForm.get('bonusPercentage')
+											.invalid
+											? 'danger'
+											: 'basic'
+									"
+								/>
 							</div>
 						</div>
 					</div>

@@ -1,9 +1,12 @@
-<nb-spinner *ngIf="isLoading"></nb-spinner>
-<div *ngIf="!isLoading" class="logo">
-	<img src="assets/images/logos/logo_Gauzy.svg" />
-	{{ 'ONBOARDING.FIRST_ORGANIZATION' | translate }}
-</div>
-<ga-organizations-step-form
-	*ngIf="!isLoading"
-	(createOrganization)="onboardUser($event)"
-></ga-organizations-step-form>
+<ng-container *ngIf="!isLoading; else loadingTemplate">
+	<div class="logo">
+		<img src="assets/images/logos/logo_Gauzy.svg" />
+		{{ 'ONBOARDING.FIRST_ORGANIZATION' | translate }}
+	</div>
+	<ga-organizations-step-form
+		(createOrganization)="onboardUser($event)"
+	></ga-organizations-step-form>
+</ng-container>
+<ng-template #loadingTemplate>
+	<nb-spinner></nb-spinner>
+</ng-template>

@@ -9,8 +9,7 @@ import {
 	Inject,
 	Renderer2
 } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
-
+import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
 import { FormHelpers } from '../helpers';
 import { pick, isEmpty } from 'lodash';
 import { ICountry, IGeoLocationCreateObject } from '@gauzy/models';
@@ -21,6 +20,7 @@ import { CountryService } from '../../../@core/services/country.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { convertPrecisionFloatDigit } from '@gauzy/utils';
 import { DOCUMENT } from '@angular/common';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-location-form',
@@ -68,15 +68,15 @@ export class LocationFormComponent
 		google.maps.places.PlaceGeometry | google.maps.GeocoderGeometry
 	>();
 
-	@ViewChild('autocomplete') searchElement: ElementRef;
+	@ViewChild('autocomplete', { static: true }) searchElement: ElementRef;
 
 	static buildForm(formBuilder: FormBuilder): FormGroup {
 		const form = formBuilder.group({
-			country: ['', [Validators.required]],
-			city: ['', [Validators.required]],
-			address: ['', [Validators.required]],
-			address2: [''],
-			postcode: [''],
+			country: [],
+			city: [],
+			address: [],
+			address2: [],
+			postcode: [],
 			loc: formBuilder.group({
 				type: ['Point'],
 				coordinates: formBuilder.array([null, null])
@@ -99,6 +99,11 @@ export class LocationFormComponent
 	}
 
 	ngAfterViewInit() {
+		const { GOOGLE_PLACE_AUTOCOMPLETE, GOOGLE_MAPS_API_KEY } = environment;
+		if (!GOOGLE_PLACE_AUTOCOMPLETE || !GOOGLE_MAPS_API_KEY) {
+			this.showAutocompleteSearch = false;
+		}
+
 		this._removeGoogleAutocompleteApi();
 		this._initGoogleAutocompleteApi();
 	}
@@ -424,5 +429,7 @@ export class LocationFormComponent
 			this.address2Control.setValue(address2);
 		}
 		this.coordinates.setValue([this._lat, this._lng]);
+
+		this.form.updateValueAndValidity();
 	}
 }

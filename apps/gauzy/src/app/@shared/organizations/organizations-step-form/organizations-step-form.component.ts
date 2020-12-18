@@ -24,13 +24,19 @@ import {
 	RegionsEnum,
 	WeekDaysEnum,
 	ITag,
-	ICurrency
+	ICurrency,
+	IUser,
+	CurrenciesEnum
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { LocationFormComponent } from '../../forms/location';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LatLng } from 'leaflet';
 import { LeafletMapComponent } from '../../forms/maps/leaflet/leaflet.component';
+import { Store } from '../../../@core/services/store.service';
+import { filter, tap } from 'rxjs/operators';
+import { retrieveNameFromEmail } from '@gauzy/utils';
+import { environment as ENV } from 'apps/gauzy/src/environments/environment';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -51,6 +57,7 @@ export class OrganizationsStepFormComponent
 
 	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
 
+	locationFormBlank: boolean;
 	hoverState: boolean;
 	countries: ICountry[];
 	defaultValueDateTypes: string[] = Object.values(DefaultValueDateTypeEnum);
@@ -66,8 +73,8 @@ export class OrganizationsStepFormComponent
 	orgBonusForm: FormGroup;
 	orgSettingsForm: FormGroup;
 	tags: ITag[] = [];
-	currency: ICurrency;
 	country: ICountry;
+	user: IUser;
 
 	@Output()
 	createOrganization = new EventEmitter();
@@ -75,10 +82,17 @@ export class OrganizationsStepFormComponent
 	constructor(
 		private fb: FormBuilder,
 		private toastrService: NbToastrService,
-		private readonly cdr: ChangeDetectorRef
+		private readonly cdr: ChangeDetectorRef,
+		private readonly store: Store
 	) {}
 
 	ngOnInit() {
+		this.store.user$
+			.pipe(
+				filter((user) => !!user),
+				tap((user: IUser) => (this.user = user))
+			)
+			.subscribe();
 		this._initializedForm();
 	}
 
@@ -92,8 +106,8 @@ export class OrganizationsStepFormComponent
 				'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text',
 				Validators.required
 			],
-			currency: ['', Validators.required],
-			name: ['', Validators.required],
+			currency: [ENV.DEFAULT_CURRENCY || CurrenciesEnum.USD],
+			name: [retrieveNameFromEmail(this.user.email), Validators.required],
 			officialName: [],
 			taxId: [],
 			tags: []
@@ -145,6 +159,14 @@ export class OrganizationsStepFormComponent
 				bonusPercentage.setValidators(null);
 			}
 			bonusPercentage.updateValueAndValidity();
+		});
+
+		this.locationForm.valueChanges.subscribe((value) => {
+			if (value.hasOwnProperty('loc')) {
+				delete value['loc'];
+			}
+			const values = Object.values(value).filter((item) => item);
+			this.locationFormBlank = values.length === 0 ? true : false;
 		});
 	}
 

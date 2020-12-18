@@ -147,3 +147,20 @@ export function average(items: any, column: string) {
 export function convertPrecisionFloatDigit(val: number, digit: number = 6) {
 	return parseFloat(parseFloat(val.toString()).toFixed(digit));
 }
+
+/*
+ * Retrieve name from email address
+ */
+export function retrieveNameFromEmail(email: string): string {
+	return ucFirst(email.substring(0, email.lastIndexOf('@')), true);
+}
+
+/*
+ * Capitalize the first letter of a string being
+ */
+export function ucFirst(str: string, force: boolean): string {
+	str = force ? str.toLowerCase() : str;
+	return str.replace(/(\b)([a-zA-Z])/, function (firstLetter: string) {
+		return firstLetter.toUpperCase();
+	});
+}
