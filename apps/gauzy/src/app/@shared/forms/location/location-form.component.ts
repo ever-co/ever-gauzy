@@ -7,7 +7,8 @@ import {
 	ElementRef,
 	AfterViewInit,
 	Inject,
-	Renderer2
+	Renderer2,
+	ChangeDetectorRef
 } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
 import { FormHelpers } from '../helpers';
@@ -88,6 +89,7 @@ export class LocationFormComponent
 	constructor(
 		public translateService: TranslateService,
 		public countryService: CountryService,
+		private readonly cdr: ChangeDetectorRef,
 
 		@Inject(DOCUMENT) private _document: Document,
 		private renderer: Renderer2
@@ -104,6 +106,7 @@ export class LocationFormComponent
 			this.showAutocompleteSearch = false;
 		}
 
+		this.cdr.detectChanges();
 		this._removeGoogleAutocompleteApi();
 		this._initGoogleAutocompleteApi();
 	}
