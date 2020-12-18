@@ -1,4 +1,4 @@
-<nb-card *ngIf="form">
+<nb-card *ngIf="contMainForm">
 	<nb-card-header>{{
 		(organizationContact
 			? 'ORGANIZATIONS_PAGE.EDIT.EDIT_CONTACT'
@@ -6,7 +6,7 @@
 		) | translate
 	}}</nb-card-header>
 	<nb-card-body>
-		<nb-stepper #stepper>
+		<nb-stepper #stepper disableStepNavigation>
 			<!-- Step 1 Contact Main Form -->
 			<nb-step [stepControl]="contMainForm" label="Main">
 				<ng-template #mainStep>
@@ -262,8 +262,9 @@
 										'CONTACTS_PAGE.CONTACT_TYPE' | translate
 									"
 									[attr.aria-invalid]="
-										form.get('contactType').invalid &&
-										form.get('contactType').touched
+										contMainForm.get('contactType')
+											.invalid &&
+										contMainForm.get('contactType').touched
 											? true
 											: null
 									"
@@ -275,8 +276,9 @@
 								</ng-select>
 								<ng-container
 									*ngIf="
-										form.get('contactType').invalid &&
-										form.get('contactType').touched
+										contMainForm.get('contactType')
+											.invalid &&
+										contMainForm.get('contactType').touched
 									"
 								>
 									<p class="caption status-danger mt-1">
@@ -343,7 +345,7 @@
 								<button
 									[disabled]="contMainForm.invalid"
 									nbButton
-									nbStepperNext
+									(click)="nextStep()"
 									status="success"
 								>
 									{{ 'BUTTONS.NEXT' | translate }}

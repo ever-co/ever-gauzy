@@ -14,7 +14,7 @@ import {
 	ContactType,
 	IOrganization
 } from '@gauzy/models';
-import { NbToastrService } from '@nebular/theme';
+import { NbStepperComponent, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
@@ -48,19 +48,17 @@ export class ContactMutationComponent
 	@Output()
 	addOrEditOrganizationContact = new EventEmitter();
 
-	@ViewChild('leafletTemplate')
+	@ViewChild('leafletTemplate', { static: false })
 	leafletTemplate: LeafletMapComponent;
-
 	@ViewChild('locationFormDirective')
 	locationFormDirective: LocationFormComponent;
+
+	@ViewChild('stepper') stepper: NbStepperComponent;
 
 	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
 
 	contMainForm: FormGroup;
-	conAddressForm: FormGroup;
-	conMemberForm: FormGroup;
 	defaultSelectedType: any;
-	form: FormGroup;
 	members: string[];
 	selectedMembers: IEmployee[];
 	selectedEmployeeIds: string[];
@@ -226,78 +224,6 @@ export class ContactMutationComponent
 			]
 		});
 
-		this.conMemberForm = this.fb.group({
-			//location: this.locationForm
-		});
-
-		this.form = this.fb.group({
-			imageUrl: [
-				this.organizationContact
-					? this.organizationContact.imageUrl
-					: 'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text'
-			],
-			tags: [
-				this.organizationContact
-					? (this.tags = this.organizationContact.tags)
-					: ''
-			],
-			name: [
-				this.organizationContact
-					? this.isGridEdit
-						? this.organizationContact.contact_name
-						: this.organizationContact.name
-					: '',
-				Validators.required
-			],
-			primaryEmail: [
-				this.organizationContact
-					? this.organizationContact.primaryEmail
-					: '',
-				[Validators.required, Validators.email]
-			],
-			primaryPhone: [
-				this.organizationContact
-					? this.organizationContact.primaryPhone
-					: '',
-				Validators.required
-			],
-			projects: [
-				this.organizationContact
-					? (this.organizationContact.projects || []).map(
-							(m) => m.projectId
-					  )
-					: []
-			],
-			contactType: [
-				this.organizationContact
-					? this.organizationContact.contactType
-					: '',
-				Validators.required
-			],
-			fax: [
-				this.organizationContact
-					? this.organizationContact.contact
-						? this.organizationContact.contact.fax
-						: ''
-					: ''
-			],
-			website: [
-				this.organizationContact
-					? this.organizationContact.contact
-						? this.organizationContact.contact.website
-						: ''
-					: ''
-			],
-			fiscalInformation: [
-				this.organizationContact
-					? this.organizationContact.contact
-						? this.organizationContact.contact.fiscalInformation
-						: ''
-					: ''
-			],
-			location: this.locationForm
-		});
-
 		this._setLocationForm();
 	}
 
@@ -460,6 +386,19 @@ export class ContactMutationComponent
 		);
 	}
 
+	nextStep() {
+		this.stepper.next();
+		if (this.stepper.selectedIndex === 1) {
+			const {
+				loc: { coordinates }
+			} = this.locationFormDirective.getValue();
+			const [lat, lng] = coordinates;
+			setTimeout(() => {
+				this.leafletTemplate.addMarker(new LatLng(lat, lng));
+			}, 200);
+		}
+	}
+
 	/*
 	 * Google Place and Leaflet Map Coordinates Changed Event Emitter
 	 */
@@ -471,7 +410,9 @@ export class ContactMutationComponent
 		} = this.locationFormDirective.getValue();
 
 		const [lat, lng] = coordinates;
-		this.leafletTemplate.addMarker(new LatLng(lat, lng));
+		if (this.leafletTemplate) {
+			this.leafletTemplate.addMarker(new LatLng(lat, lng));
+		}
 	}
 
 	/*
