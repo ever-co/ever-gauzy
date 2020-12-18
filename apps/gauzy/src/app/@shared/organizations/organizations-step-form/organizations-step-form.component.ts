@@ -97,7 +97,6 @@ export class OrganizationsStepFormComponent
 			)
 			.subscribe();
 		this._initializedForm();
-		this.cdr.detectChanges();
 	}
 
 	ngAfterViewInit() {
@@ -172,6 +171,7 @@ export class OrganizationsStepFormComponent
 			const values = Object.values(value).filter((item) => item);
 			this.locationFormBlank = values.length === 0 ? true : false;
 		});
+		this.cdr.detectChanges();
 	}
 
 	handleImageUploadError(error) {

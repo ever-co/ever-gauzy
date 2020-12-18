@@ -13,7 +13,7 @@ import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
 import { FormHelpers } from '../helpers';
 import { pick, isEmpty } from 'lodash';
 import { ICountry, IGeoLocationCreateObject } from '@gauzy/models';
-import { environment } from '../../../../environments/environment';
+import { environment as env } from '../../../../environments/environment';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { CountryService } from '../../../@core/services/country.service';
@@ -68,7 +68,7 @@ export class LocationFormComponent
 		google.maps.places.PlaceGeometry | google.maps.GeocoderGeometry
 	>();
 
-	@ViewChild('autocomplete', { static: true }) searchElement: ElementRef;
+	@ViewChild('autocomplete') searchElement: ElementRef;
 
 	static buildForm(formBuilder: FormBuilder): FormGroup {
 		const form = formBuilder.group({
@@ -99,7 +99,7 @@ export class LocationFormComponent
 	}
 
 	ngAfterViewInit() {
-		const { GOOGLE_PLACE_AUTOCOMPLETE, GOOGLE_MAPS_API_KEY } = environment;
+		const { GOOGLE_PLACE_AUTOCOMPLETE, GOOGLE_MAPS_API_KEY } = env;
 		if (!GOOGLE_PLACE_AUTOCOMPLETE || !GOOGLE_MAPS_API_KEY) {
 			this.showAutocompleteSearch = false;
 		}
@@ -176,8 +176,8 @@ export class LocationFormComponent
 	}
 
 	setDefaultCoords() {
-		const lat = environment.DEFAULT_LATITUDE;
-		const lng = environment.DEFAULT_LONGITUDE;
+		const lat = env.DEFAULT_LATITUDE;
+		const lng = env.DEFAULT_LONGITUDE;
 		if (lat && lng) {
 			this.coordinates.setValue([lat, lng]);
 			this.onCoordinatesChanged();
@@ -202,7 +202,6 @@ export class LocationFormComponent
 		}
 
 		const newAddress = `${address}${address2}${city}${country}`;
-
 		if (newAddress !== this._lastUsedAddressText) {
 			this._lastUsedAddressText = newAddress;
 
