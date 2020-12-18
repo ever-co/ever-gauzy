@@ -6,6 +6,7 @@ import {
 	ChangeDetectorRef,
 	Component,
 	EventEmitter,
+	Input,
 	OnDestroy,
 	OnInit,
 	Output,
@@ -76,6 +77,8 @@ export class OrganizationsStepFormComponent
 	country: ICountry;
 	user: IUser;
 
+	@Input('onboarding') onboarding?: boolean;
+
 	@Output()
 	createOrganization = new EventEmitter();
 
@@ -94,6 +97,7 @@ export class OrganizationsStepFormComponent
 			)
 			.subscribe();
 		this._initializedForm();
+		this.cdr.detectChanges();
 	}
 
 	ngAfterViewInit() {

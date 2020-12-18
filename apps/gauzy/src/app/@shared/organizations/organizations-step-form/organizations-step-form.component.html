@@ -264,8 +264,8 @@
 					*ngIf="orgBonusForm"
 					(ngSubmit)="this.orgBonusForm.markAsDirty()"
 				>
-					<div class="row">
-						<div class="col-6">
+					<div class="row justify-content-center">
+						<div [ngClass]="onboarding ? 'col-3' : 'col-6'">
 							<div class="form-group">
 								<label class="label">
 									{{
@@ -297,7 +297,7 @@
 								</nb-select>
 							</div>
 						</div>
-						<div class="col-6">
+						<div [ngClass]="onboarding ? 'col-3' : 'col-6'">
 							<div class="form-group">
 								<label class="label">
 									{{

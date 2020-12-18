@@ -4,6 +4,7 @@
 		{{ 'ONBOARDING.FIRST_ORGANIZATION' | translate }}
 	</div>
 	<ga-organizations-step-form
+		[onboarding]="true"
 		(createOrganization)="onboardUser($event)"
 	></ga-organizations-step-form>
 </ng-container>
