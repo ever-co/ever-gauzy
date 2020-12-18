@@ -3,8 +3,7 @@ import {
 	IEmployeeUpdateInput,
 	IUserFindInput,
 	IEmployeeStoreState,
-	EmployeeAction,
-	SelectedEmployee
+	EmployeeAction
 } from '@gauzy/models';
 import { BehaviorSubject } from 'rxjs';
 import { Injectable } from '@angular/core';
@@ -68,11 +67,13 @@ export class EmployeeStore {
 		employee,
 		action
 	}: {
-		employee: SelectedEmployee;
+		employee: IEmployee;
 		action: EmployeeAction;
 	}) {
+		console.log(employee, 'employee');
+
 		this.iEmployeeStore.update({
-			employee: employee.user,
+			employee: employee,
 			action
 		});
 	}
