@@ -290,6 +290,7 @@ import { createDefaultJobSearchCategories } from '../../employee-job-preset/job-
 import { createDefaultJobSearchOccupations } from '../../employee-job-preset/job-search-occupation/job-search-occupation.seed';
 import { createDefaultReport } from '../../reports/report.seed';
 import { createCurrencies } from '../../currency/currency.seed';
+import { createDefaultFeatureToggle } from '../../feature/feature.seed';
 
 @Injectable()
 export class SeedDataService {
@@ -551,6 +552,15 @@ export class SeedDataService {
 		);
 
 		this.organizations = defaultOrganizations;
+
+		await this.tryExecute(
+			'Default Feature Toggle',
+			createDefaultFeatureToggle(
+				this.connection,
+				this.tenant,
+				this.organizations
+			)
+		);
 
 		await this.tryExecute(
 			'Default Email Templates',

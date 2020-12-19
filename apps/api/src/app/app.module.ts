@@ -124,6 +124,7 @@ import { EmployeeJobPresetModule } from './employee-job-preset/employee-job-pres
 import { ReportModule } from './reports/report.module';
 import { EmployeeProposalTemplateModule } from './employee-proposal-template/employee-proposal-template.module';
 import { CustomSmtpModule } from './custom-smtp/custom-smtp.module';
+import { FeatureModule } from './feature/feature.module';
 
 const sentryIntegrations = [];
 
@@ -506,6 +507,10 @@ if (process.env.DB_TYPE === 'postgres') {
 					{
 						path: '/smtp',
 						module: CustomSmtpModule
+					},
+					{
+						path: '/feature',
+						module: FeatureModule
 					}
 				]
 			}

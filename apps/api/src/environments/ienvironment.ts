@@ -30,6 +30,9 @@ export interface Env {
 export interface FileSystem {
 	name: FileStorageProviderEnum;
 }
+export interface IGauzyFeatures {
+	[key: string]: boolean;
+}
 
 /**
  * Server Environment

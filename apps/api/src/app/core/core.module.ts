@@ -4,6 +4,7 @@
 // Originally MIT Licensed
 // - see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // - original code `Copyright (c) 2018 Sumanth Chinthagunta`
+
 import { CandidateInterviewers } from './../candidate-interviewers/candidate-interviewers.entity';
 import { Invoice } from '../invoice/invoice.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
@@ -126,6 +127,8 @@ import { EmployeeProposalTemplate } from '../employee-proposal-template/employee
 import { ReportOrganization } from '../reports/report-organization.entity';
 import { CustomSmtp } from '../custom-smtp/custom-smtp.entity';
 import { Currency } from '../currency';
+import { Feature } from '../feature/feature.entity';
+import { FeatureOrganization } from '../feature/feature_organization.entity';
 
 const entities = [
 	Activity,
@@ -166,6 +169,8 @@ const entities = [
 	EventType,
 	Expense,
 	ExpenseCategory,
+	Feature,
+	FeatureOrganization,
 	Goal,
 	GoalGeneralSetting,
 	GoalKPI,

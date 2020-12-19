@@ -160,7 +160,7 @@ async function cleanReport(connection) {
 		// delete old generated report image
 		rimraf(dir, () => {
 			console.log(chalk.green(`CLEANED UP REPORT IMAGES`));
-			resolve();
+			resolve(null);
 		});
 	});
 }
