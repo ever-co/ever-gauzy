@@ -85,7 +85,8 @@
 		"APPROVE": "Одобрить",
 		"DENY": "Запретить",
 		"PAYMENTS": "Платежи",
-		"NOTE": "Примечание"
+		"NOTE": "Примечание",
+		"SKIP_CONTINUE": "Пропустить {{ label }} и продолжить"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
