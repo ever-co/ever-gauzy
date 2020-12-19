@@ -1433,7 +1433,10 @@
 		"PROJECTS": "Projects",
 		"EMAIL": "Primary Email",
 		"PHONE": "Primary Phone",
-		"CONTACT_TYPE": "Contact type"
+		"CONTACT_TYPE": "Contact type",
+		"MAIN": "Main",
+		"ADDRESS": "Address",
+		"MEMBERS": "Members"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
