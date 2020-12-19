@@ -9,17 +9,20 @@ import { BehaviorSubject } from 'rxjs';
 import { Injectable } from '@angular/core';
 import { Query, Store as AkitaStore, StoreConfig } from '@datorama/akita';
 
+export function createInitialEmployeeState(): IEmployeeStoreState {
+	return {} as IEmployeeStoreState;
+}
 @Injectable({ providedIn: 'root' })
 @StoreConfig({ name: 'app' })
-export class IEmployeeStore extends AkitaStore<IEmployeeStoreState> {
+export class EmployeeAkitaStore extends AkitaStore<IEmployeeStoreState> {
 	constructor() {
-		super({} as IEmployeeStoreState);
+		super(createInitialEmployeeState());
 	}
 }
 
 @Injectable({ providedIn: 'root' })
-export class IEmployeeQuery extends Query<IEmployeeStoreState> {
-	constructor(protected store: IEmployeeStore) {
+export class EmployeeAkitaQuery extends Query<IEmployeeStoreState> {
+	constructor(protected store: EmployeeAkitaStore) {
 		super(store);
 	}
 }
@@ -34,8 +37,8 @@ export class EmployeeStore {
 	private _employeeForm: IEmployeeUpdateInput;
 
 	constructor(
-		protected iEmployeeStore: IEmployeeStore,
-		protected iEmployeeQuery: IEmployeeQuery
+		protected employeeAkitaStore: EmployeeAkitaStore,
+		protected employeeAkitaQuery: EmployeeAkitaQuery
 	) {}
 
 	selectedEmployee$: BehaviorSubject<IEmployee> = new BehaviorSubject(
@@ -59,21 +62,12 @@ export class EmployeeStore {
 		return this._selectedEmployee;
 	}
 
-	employeeAction$ = this.iEmployeeQuery.select(({ employee, action }) => {
-		return { employee, action };
+	employeeAction$ = this.employeeAkitaQuery.select(({ action }) => {
+		return { action };
 	});
 
-	set employeeAction({
-		employee,
-		action
-	}: {
-		employee: IEmployee;
-		action: EmployeeAction;
-	}) {
-		console.log(employee, 'employee');
-
-		this.iEmployeeStore.update({
-			employee: employee,
+	set employeeAction({ action }: { action: EmployeeAction }) {
+		this.employeeAkitaStore.update({
 			action
 		});
 	}

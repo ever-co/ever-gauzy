@@ -102,12 +102,10 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 				.createBulk(this.employees)
 				.pipe(first())
 				.toPromise();
-			this.employees.forEach((employee: any) => {
-				this._employeeStore.employeeAction = {
-					employee,
-					action: EmployeeAction.CREATED
-				};
-			});
+
+			this._employeeStore.employeeAction = {
+				action: EmployeeAction.CREATED
+			};
 			this.closeDialog(employee);
 		} catch (error) {
 			this.errorHandler.handleError(error);

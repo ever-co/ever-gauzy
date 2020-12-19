@@ -13,13 +13,15 @@ import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.se
 import { takeUntil, filter, debounceTime } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
-import { ITag, IOrganization, ISkill } from '@gauzy/models';
+import { IOrganization, EmployeeAction, ITag, ISkill } from '@gauzy/models';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
 
 //TODO: Currently the whole application assumes that if employee or id is null then you need to get data for All Employees
 //That should not be the case, sometimes due to permissions like CHANGE_SELECTED_EMPLOYEE not being available
 //we need to handle cases where No Employee is selected too
+
 export interface SelectedEmployee {
 	id: string;
 	firstName: string;
@@ -103,7 +105,8 @@ export class EmployeeSelectorComponent
 		private employeesService: EmployeesService,
 		private store: Store,
 		private activatedRoute: ActivatedRoute,
-		private cdRef: ChangeDetectorRef
+		private cdRef: ChangeDetectorRef,
+		private readonly _employeeStore: EmployeeStore
 	) {}
 
 	ngOnInit() {
@@ -126,6 +129,7 @@ export class EmployeeSelectorComponent
 			.subscribe((query) => {
 				this.selectEmployeeById(query.employeeId);
 			});
+		this.employeeActionAction();
 	}
 
 	ngAfterViewInit(): void {
@@ -243,6 +247,14 @@ export class EmployeeSelectorComponent
 
 		this._selectedOrganization = org;
 		this._selectedDate = selectedDate;
+		await this.getEmployees(org, selectedDate);
+	};
+
+	private getEmployees = async (org: IOrganization, selectedDate: Date) => {
+		if (!org) {
+			this.people = [];
+			return;
+		}
 
 		const { items } = await this.employeesService.getWorking(
 			org.id,
@@ -273,6 +285,17 @@ export class EmployeeSelectorComponent
 				this.people[0] || ALL_EMPLOYEES_SELECTED;
 		}
 	};
+
+	private employeeActionAction() {
+		this._employeeStore.employeeAction$
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.getEmployees(
+					this.store.selectedOrganization,
+					this.store.selectedDate
+				);
+			});
+	}
 
 	ngOnDestroy() {
 		this._ngDestroy$.next();
