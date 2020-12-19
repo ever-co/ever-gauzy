@@ -1433,7 +1433,10 @@
 		"PROJECTS": "פרויקטים",
 		"EMAIL": "דוא\"ל עיקרי",
 		"PHONE": "מספר טלפון ראשי",
-		"CONTACT_TYPE": "Contact type"
+		"CONTACT_TYPE": "Contact type",
+		"MAIN": "עיקרי",
+		"ADDRESS": "Address",
+		"MEMBERS": "Members"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
