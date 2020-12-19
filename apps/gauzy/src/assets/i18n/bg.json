@@ -1433,7 +1433,10 @@
 		"PROJECTS": "Проекти",
 		"EMAIL": "Основна Е-поща",
 		"PHONE": "Основен телефон",
-		"CONTACT_TYPE": "Contact type"
+		"CONTACT_TYPE": "Contact type",
+		"MAIN": "Основни",
+		"ADDRESS": "Address",
+		"MEMBERS": "Members"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
