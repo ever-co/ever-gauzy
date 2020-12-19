@@ -7,20 +7,21 @@ import {
 	ElementRef,
 	AfterViewInit,
 	Inject,
-	Renderer2
+	Renderer2,
+	ChangeDetectorRef
 } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
-
+import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
 import { FormHelpers } from '../helpers';
 import { pick, isEmpty } from 'lodash';
 import { ICountry, IGeoLocationCreateObject } from '@gauzy/models';
-import { environment } from '../../../../environments/environment';
+import { environment as env } from '../../../../environments/environment';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { CountryService } from '../../../@core/services/country.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { convertPrecisionFloatDigit } from '@gauzy/utils';
 import { DOCUMENT } from '@angular/common';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-location-form',
@@ -72,11 +73,11 @@ export class LocationFormComponent
 
 	static buildForm(formBuilder: FormBuilder): FormGroup {
 		const form = formBuilder.group({
-			country: ['', [Validators.required]],
-			city: ['', [Validators.required]],
-			address: ['', [Validators.required]],
-			address2: [''],
-			postcode: [''],
+			country: [],
+			city: [],
+			address: [],
+			address2: [],
+			postcode: [],
 			loc: formBuilder.group({
 				type: ['Point'],
 				coordinates: formBuilder.array([null, null])
@@ -88,6 +89,7 @@ export class LocationFormComponent
 	constructor(
 		public translateService: TranslateService,
 		public countryService: CountryService,
+		private readonly cdr: ChangeDetectorRef,
 
 		@Inject(DOCUMENT) private _document: Document,
 		private renderer: Renderer2
@@ -99,6 +101,12 @@ export class LocationFormComponent
 	}
 
 	ngAfterViewInit() {
+		const { GOOGLE_PLACE_AUTOCOMPLETE, GOOGLE_MAPS_API_KEY } = env;
+		if (!GOOGLE_PLACE_AUTOCOMPLETE || !GOOGLE_MAPS_API_KEY) {
+			this.showAutocompleteSearch = false;
+		}
+
+		this.cdr.detectChanges();
 		this._removeGoogleAutocompleteApi();
 		this._initGoogleAutocompleteApi();
 	}
@@ -171,8 +179,8 @@ export class LocationFormComponent
 	}
 
 	setDefaultCoords() {
-		const lat = environment.DEFAULT_LATITUDE;
-		const lng = environment.DEFAULT_LONGITUDE;
+		const lat = env.DEFAULT_LATITUDE;
+		const lng = env.DEFAULT_LONGITUDE;
 		if (lat && lng) {
 			this.coordinates.setValue([lat, lng]);
 			this.onCoordinatesChanged();
@@ -197,7 +205,6 @@ export class LocationFormComponent
 		}
 
 		const newAddress = `${address}${address2}${city}${country}`;
-
 		if (newAddress !== this._lastUsedAddressText) {
 			this._lastUsedAddressText = newAddress;
 
@@ -424,5 +431,7 @@ export class LocationFormComponent
 			this.address2Control.setValue(address2);
 		}
 		this.coordinates.setValue([this._lat, this._lng]);
+
+		this.form.updateValueAndValidity();
 	}
 }

@@ -195,7 +195,7 @@
 		fullWidth
 		status="primary"
 		size="large"
-		[disabled]="submitted || !form.valid"
+		[disabled]="submitted || !form.valid || !user.terms"
 		[class.btn-pulse]="submitted"
 	>
 		Register
