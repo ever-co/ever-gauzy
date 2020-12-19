@@ -497,6 +497,13 @@ const routes: Routes = [
 					)
 			},
 			{
+				path: 'legal',
+				loadChildren: () =>
+					import('./legal/legal.module').then(
+						(m) => m.PageLegalModule
+					)
+			},
+			{
 				path: '**',
 				component: NotFoundComponent
 			}

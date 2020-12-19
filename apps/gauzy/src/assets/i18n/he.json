@@ -85,7 +85,8 @@
 		"APPROVE": "Approve",
 		"DENY": "Deny",
 		"PAYMENTS": "Payments",
-		"NOTE": "Note"
+		"NOTE": "Note",
+		"SKIP_CONTINUE": "Skip {{ label }} and Continue"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "סוג",
@@ -1433,7 +1434,10 @@
 		"PROJECTS": "פרויקטים",
 		"EMAIL": "דוא\"ל עיקרי",
 		"PHONE": "מספר טלפון ראשי",
-		"CONTACT_TYPE": "Contact type"
+		"CONTACT_TYPE": "Contact type",
+		"MAIN": "עיקרי",
+		"ADDRESS": "Address",
+		"MEMBERS": "Members"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",

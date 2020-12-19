@@ -184,9 +184,13 @@
 			[required]="getConfigValue('forms.register.terms')"
 		>
 			Agree to
-			<a routerLink="/legal/terms" target="_blank"
-				><strong>Terms & Conditions</strong></a
-			>
+			<a routerLink="/legal/terms" target="_blank">
+				<strong>Terms & Conditions</strong>
+			</a>
+			and
+			<a routerLink="/legal/privacy" target="_blank">
+				<strong>Privacy Policy</strong>
+			</a>
 		</nb-checkbox>
 	</div>
 
@@ -195,7 +199,7 @@
 		fullWidth
 		status="primary"
 		size="large"
-		[disabled]="submitted || !form.valid"
+		[disabled]="submitted || !form.valid || !user.terms"
 		[class.btn-pulse]="submitted"
 	>
 		Register

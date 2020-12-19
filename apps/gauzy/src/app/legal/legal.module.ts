@@ -1,9 +1,8 @@
 import { NgModule } from '@angular/core';
 import { LegalRoutingModule } from './legal-routing.module';
-import { TermsAndConditionsComponent } from './terms-and-conditions/terms-and-conditions.component';
-
+import { MainLegalModule } from '../@shared/legal/legal.module';
 @NgModule({
-	imports: [LegalRoutingModule],
-	declarations: [TermsAndConditionsComponent]
+	imports: [LegalRoutingModule, MainLegalModule],
+	declarations: []
 })
 export class LegalModule {}

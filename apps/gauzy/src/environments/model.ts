@@ -25,6 +25,7 @@ export interface Environment {
 	IS_ELECTRON: boolean;
 
 	GOOGLE_MAPS_API_KEY: string;
+	GOOGLE_PLACE_AUTOCOMPLETE: boolean;
 	DEFAULT_LATITUDE: number;
 	DEFAULT_LONGITUDE: number;
 	DEFAULT_CURRENCY: string;

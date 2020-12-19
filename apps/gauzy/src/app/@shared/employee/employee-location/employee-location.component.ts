@@ -1,5 +1,5 @@
 import { OnInit, OnDestroy, Component, Input, ViewChild } from '@angular/core';
-import { FormGroup, FormBuilder } from '@angular/forms';
+import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { IEmployee, ICandidate } from '@gauzy/models';
 import { CandidateStore } from '../../../@core/services/candidate-store.service';
 import { EmployeeStore } from '../../../@core/services/employee-store.service';
@@ -59,6 +59,7 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 					this._initializeForm(this.selectedCandidate);
 				}
 			});
+		this.setValidator();
 	}
 
 	ngOnDestroy() {}
@@ -95,6 +96,7 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 		if (!employee.contact) {
 			return;
 		}
+
 		setTimeout(() => {
 			const { contact } = employee;
 			if (contact) {
@@ -141,6 +143,18 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 			}
 		});
 		this.locationFormDirective.onCoordinatesChanged();
+	}
+
+	setValidator(): void {
+		if (!this.form) {
+			return;
+		}
+		this.form.get('country').setValidators([Validators.required]);
+		this.form.get('city').setValidators([Validators.required]);
+		this.form.get('address').setValidators([Validators.required]);
+		this.form.get('address2').setValidators([Validators.required]);
+		this.form.get('postcode').setValidators([Validators.required]);
+		this.form.updateValueAndValidity();
 	}
 
 	/*

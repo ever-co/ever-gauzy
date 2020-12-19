@@ -51,6 +51,7 @@ import { TimeTrackerModule } from '../@shared/time-tracker/time-tracker.module';
 import { LanguagesService } from '../@core/services/languages.service';
 import { LayoutSelectorComponent } from './components/layout-selector/layout-selector.component';
 import { ProjectSelectModule } from '../@shared/project-select/project-select.module';
+import { RouterModule } from '@angular/router';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -81,7 +82,8 @@ const NB_MODULES = [
 			useFactory: HttpLoaderFactory,
 			deps: [HttpClient]
 		}
-	})
+	}),
+	RouterModule
 ];
 const COMPONENTS = [
 	HeaderComponent,

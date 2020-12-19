@@ -14,7 +14,7 @@ import {
 	ContactType,
 	IOrganization
 } from '@gauzy/models';
-import { NbToastrService } from '@nebular/theme';
+import { NbStepperComponent, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
@@ -24,6 +24,9 @@ import { LocationFormComponent } from '../../../@shared/forms/location';
 import { EmployeesService } from '../../../@core/services/employees.service';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { FilterArrayPipe } from '../../../@shared/pipes/filter-array.pipe';
+import { LeafletMapComponent } from '../../../@shared/forms/maps/leaflet/leaflet.component';
+import { LatLng } from 'leaflet';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -45,14 +48,19 @@ export class ContactMutationComponent
 	@Output()
 	addOrEditOrganizationContact = new EventEmitter();
 
-	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
-
+	@ViewChild('leafletTemplate', { static: false })
+	leafletTemplate: LeafletMapComponent;
 	@ViewChild('locationFormDirective')
 	locationFormDirective: LocationFormComponent;
 
+	@ViewChild('stepper') stepper: NbStepperComponent;
+
+	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
+
+	contMainForm: FormGroup;
 	defaultSelectedType: any;
-	form: FormGroup;
 	members: string[];
+	selectedMembers: IEmployee[];
 	selectedEmployeeIds: string[];
 	allProjects: IOrganizationProject[] = [];
 	tags: ITag[] = [];
@@ -72,6 +80,7 @@ export class ContactMutationComponent
 		private readonly toastrService: NbToastrService,
 		readonly translateService: TranslateService,
 		private errorHandler: ErrorHandlingService,
+		private filterArrayPipe: FilterArrayPipe,
 		private readonly employeesService: EmployeesService
 	) {
 		super(translateService);
@@ -120,6 +129,12 @@ export class ContactMutationComponent
 			.pipe(first())
 			.toPromise();
 		this.employees = items;
+		if (this.organizationId) {
+			this.selectedMembers = this.filterArrayPipe.transform(
+				this.employees,
+				this.selectedEmployeeIds
+			);
+		}
 	}
 
 	private async _getProjects() {
@@ -141,7 +156,8 @@ export class ContactMutationComponent
 		if (!this.organizationId) {
 			return;
 		}
-		this.form = this.fb.group({
+
+		this.contMainForm = this.fb.group({
 			imageUrl: [
 				this.organizationContact
 					? this.organizationContact.imageUrl
@@ -205,8 +221,7 @@ export class ContactMutationComponent
 						? this.organizationContact.contact.fiscalInformation
 						: ''
 					: ''
-			],
-			location: this.locationForm
+			]
 		});
 
 		this._setLocationForm();
@@ -276,6 +291,10 @@ export class ContactMutationComponent
 
 	onMembersSelected(members: string[]) {
 		this.members = members;
+		this.selectedMembers = this.filterArrayPipe.transform(
+			this.employees,
+			this.members
+		);
 	}
 
 	cancel() {
@@ -283,14 +302,15 @@ export class ContactMutationComponent
 	}
 
 	async submitForm() {
-		if (this.form.valid) {
-			let contactType = this.form.value['contactType'].$ngOptionLabel;
+		if (this.contMainForm.valid) {
+			let contactType = this.contMainForm.value['contactType']
+				.$ngOptionLabel;
 			if (contactType === undefined) {
 				contactType = this.defaultSelectedType;
 			}
-			let imgUrl = this.form.value.imageUrl;
+			let imgUrl = this.contMainForm.value.imageUrl;
 			imgUrl = imgUrl
-				? this.form.value['imageUrl']
+				? this.contMainForm.value['imageUrl']
 				: 'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text';
 
 			const { tenantId } = this.store.user;
@@ -314,26 +334,26 @@ export class ContactMutationComponent
 					: undefined,
 				organizationId,
 				tenantId,
-				name: this.form.value['name'],
-				primaryEmail: this.form.value['primaryEmail'],
-				primaryPhone: this.form.value['primaryPhone'],
-				projects: this.form.value['projects']
-					? this.form.value['projects']
+				name: this.contMainForm.value['name'],
+				primaryEmail: this.contMainForm.value['primaryEmail'],
+				primaryPhone: this.contMainForm.value['primaryPhone'],
+				projects: this.contMainForm.value['projects']
+					? this.contMainForm.value['projects']
 					: '',
 				contactType: contactType,
 				imageUrl: imgUrl,
 				members: (this.members || this.selectedEmployeeIds || [])
 					.map((id) => this.employees.find((e) => e.id === id))
 					.filter((e) => !!e),
-				fax: this.form.value['fax'],
-				fiscalInformation: this.form.value['fiscalInformation'],
-				website: this.form.value['website'],
+				fax: this.contMainForm.value['fax'],
+				fiscalInformation: this.contMainForm.value['fiscalInformation'],
+				website: this.contMainForm.value['website'],
 				...contact
 			});
 
 			this.selectedEmployeeIds = [];
 			this.members = [];
-			this.form.reset({
+			this.contMainForm.reset({
 				name: '',
 				primaryEmail: '',
 				primaryPhone: '',
@@ -351,14 +371,69 @@ export class ContactMutationComponent
 			});
 		}
 	}
+
 	selectedTagsEvent(ev) {
 		this.tags = ev;
 	}
 
 	isInvalidControl(control: string) {
-		if (!this.form.contains(control)) {
+		if (!this.contMainForm.contains(control)) {
 			return true;
 		}
-		return this.form.get(control).touched && this.form.get(control).invalid;
+		return (
+			this.contMainForm.get(control).touched &&
+			this.contMainForm.get(control).invalid
+		);
 	}
+
+	nextStep() {
+		this.stepper.next();
+		if (this.stepper.selectedIndex === 1) {
+			const {
+				loc: { coordinates }
+			} = this.locationFormDirective.getValue();
+			const [lat, lng] = coordinates;
+			setTimeout(() => {
+				this.leafletTemplate.addMarker(new LatLng(lat, lng));
+			}, 200);
+		}
+	}
+
+	/*
+	 * Google Place and Leaflet Map Coordinates Changed Event Emitter
+	 */
+	onCoordinatesChanges(
+		$event: google.maps.LatLng | google.maps.LatLngLiteral
+	) {
+		const {
+			loc: { coordinates }
+		} = this.locationFormDirective.getValue();
+
+		const [lat, lng] = coordinates;
+		if (this.leafletTemplate) {
+			this.leafletTemplate.addMarker(new LatLng(lat, lng));
+		}
+	}
+
+	/*
+	 * Leaflet Map Click Event Emitter
+	 */
+	onMapClicked(latlng: LatLng) {
+		const { lat, lng }: LatLng = latlng;
+		const location = this.locationFormDirective.getValue();
+		this.locationFormDirective.setValue({
+			...location,
+			country: '',
+			loc: {
+				type: 'Point',
+				coordinates: [lat, lng]
+			}
+		});
+		this.locationFormDirective.onCoordinatesChanged();
+	}
+
+	/*
+	 * Google Place Geometry Changed Event Emitter
+	 */
+	onGeometrySend(geometry: any) {}
 }

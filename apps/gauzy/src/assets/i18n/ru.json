@@ -85,7 +85,8 @@
 		"APPROVE": "Одобрить",
 		"DENY": "Запретить",
 		"PAYMENTS": "Платежи",
-		"NOTE": "Примечание"
+		"NOTE": "Примечание",
+		"SKIP_CONTINUE": "Пропустить {{ label }} и продолжить"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -1433,7 +1434,10 @@
 		"PROJECTS": "Проекты",
 		"EMAIL": "Основной адрес э-почты",
 		"PHONE": "Основной телефон",
-		"CONTACT_TYPE": "Тип контакта"
+		"CONTACT_TYPE": "Тип контакта",
+		"MAIN": "Главная",
+		"ADDRESS": "Адрес",
+		"MEMBERS": "Члены Комитета"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Языки",
