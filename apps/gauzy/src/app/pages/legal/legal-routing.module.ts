@@ -1,12 +1,12 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { NbAuthComponent } from '@nebular/auth';
-import { PrivacyPolicyComponent } from '../@shared/legal/privacy-policy/privacy-policy.component';
-import { TermsAndConditionsComponent } from '../@shared/legal/terms-and-conditions/terms-and-conditions.component';
+import { PrivacyPolicyComponent } from '../../@shared/legal/privacy-policy/privacy-policy.component';
+import { TermsAndConditionsComponent } from '../../@shared/legal/terms-and-conditions/terms-and-conditions.component';
 
 export const routes: Routes = [
 	{
-		path: 'legal',
+		path: '',
 		component: NbAuthComponent,
 		children: [
 			{
@@ -25,4 +25,4 @@ export const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class LegalRoutingModule {}
+export class PageLegalRoutingModule {}

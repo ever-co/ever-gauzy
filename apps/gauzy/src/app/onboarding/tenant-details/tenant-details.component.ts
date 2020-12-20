@@ -1,10 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { IOrganizationCreateInput } from '@gauzy/models';
+import { IOrganizationCreateInput, ITenant } from '@gauzy/models';
 import { User } from '@sentry/browser';
 import { UsersService } from '../../@core/services/users.service';
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { TenantService } from '../../@core/services/tenant.service';
+import { Store } from '../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-tenant-details',
@@ -19,7 +20,8 @@ export class TenantDetailsComponent implements OnInit, OnDestroy {
 		private router: Router,
 		private organizationsService: OrganizationsService,
 		private tenantService: TenantService,
-		private usersService: UsersService
+		private usersService: UsersService,
+		private readonly store: Store
 	) {}
 
 	ngOnInit() {
@@ -31,14 +33,25 @@ export class TenantDetailsComponent implements OnInit, OnDestroy {
 		if (this.user.tenantId) {
 			this.router.navigate(['/']);
 		} else {
+			this.store.user = this.user;
 			this.isLoading = false;
 		}
 	}
 
 	async onboardUser(formData: IOrganizationCreateInput) {
-		const tenant = await this.tenantService.create({ name: formData.name });
-		await this.organizationsService.create({ ...formData, tenant });
-		this.router.navigate(['/onboarding/complete']);
+		this.tenantService
+			.create({ name: formData.name })
+			.then(async (tenant: ITenant) => {
+				this.user = await this.usersService.getMe(['tenant']);
+				this.store.user = this.user;
+				this.organizationsService
+					.create({ ...formData, tenant })
+					.then(() => {
+						this.router.navigate(['/onboarding/complete']);
+					})
+					.catch((error) => {});
+			})
+			.catch((error) => {});
 	}
 
 	ngOnDestroy() {}

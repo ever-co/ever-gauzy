@@ -85,7 +85,8 @@
 		"APPROVE": "Approve",
 		"DENY": "Deny",
 		"PAYMENTS": "Payments",
-		"NOTE": "Note"
+		"NOTE": "Note",
+		"SKIP_CONTINUE": "Skip {{ label }} and Continue"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",
@@ -1433,7 +1434,10 @@
 		"PROJECTS": "Projects",
 		"EMAIL": "Primary Email",
 		"PHONE": "Primary Phone",
-		"CONTACT_TYPE": "Contact type"
+		"CONTACT_TYPE": "Contact type",
+		"MAIN": "Main",
+		"ADDRESS": "Address",
+		"MEMBERS": "Members"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",

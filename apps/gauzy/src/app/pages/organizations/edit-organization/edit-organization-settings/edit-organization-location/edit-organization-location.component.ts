@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { IOrganization } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
@@ -55,6 +55,7 @@ export class EditOrganizationLocationComponent
 			.subscribe((organization) => {
 				this._loadOrganizationData(organization);
 			});
+		this.setValidator();
 	}
 
 	async updateOrganizationSettings() {
@@ -96,6 +97,7 @@ export class EditOrganizationLocationComponent
 			if (!this.organization) {
 				return;
 			}
+
 			const organization: IOrganization = this.organization;
 			const { contact } = organization;
 			if (contact) {
@@ -157,6 +159,18 @@ export class EditOrganizationLocationComponent
 			}
 		});
 		this.locationFormDirective.onCoordinatesChanged();
+	}
+
+	setValidator(): void {
+		if (!this.form) {
+			return;
+		}
+		this.form.get('country').setValidators([Validators.required]);
+		this.form.get('city').setValidators([Validators.required]);
+		this.form.get('address').setValidators([Validators.required]);
+		this.form.get('address2').setValidators([Validators.required]);
+		this.form.get('postcode').setValidators([Validators.required]);
+		this.form.updateValueAndValidity();
 	}
 
 	/*

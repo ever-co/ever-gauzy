@@ -85,7 +85,8 @@
 		"APPROVE": "Approve",
 		"DENY": "Deny",
 		"PAYMENTS": "Payments",
-		"NOTE": "Note"
+		"NOTE": "Note",
+		"SKIP_CONTINUE": "Skip {{ label }} and Continue"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -1433,7 +1434,10 @@
 		"PROJECTS": "Проекти",
 		"EMAIL": "Основна Е-поща",
 		"PHONE": "Основен телефон",
-		"CONTACT_TYPE": "Contact type"
+		"CONTACT_TYPE": "Contact type",
+		"MAIN": "Основни",
+		"ADDRESS": "Address",
+		"MEMBERS": "Members"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",

@@ -7,25 +7,32 @@
 		>. {{ 'FOOTER.RIGHTS_RESERVED' | translate }}</b
 	></span
 >
-<div class="socials">
-	<a
-		href="{{ companyGithubLink }}"
-		target="_blank"
-		class="ion ion-logo-github"
-	></a>
-	<a
-		href="{{ companyFacebookLink }}"
-		target="_blank"
-		class="ion ion-logo-facebook"
-	></a>
-	<a
-		href="{{ companyTwitterLink }}"
-		target="_blank"
-		class="ion ion-logo-twitter"
-	></a>
-	<a
-		href="{{ companyLinkedinLink }}"
-		target="_blank"
-		class="ion ion-logo-linkedin"
-	></a>
+<div class="right-side">
+	<div class="mr-2" *ngIf="user">
+		<a [routerLink]="['legal/terms']" target="_blank">Terms Of Service</a>
+		<span class="mx-1">|</span>
+		<a [routerLink]="['legal/privacy']" target="_blank">Privacy Policy</a>
+	</div>
+	<div class="socials">
+		<a
+			href="{{ companyGithubLink }}"
+			target="_blank"
+			class="ion ion-logo-github"
+		></a>
+		<a
+			href="{{ companyFacebookLink }}"
+			target="_blank"
+			class="ion ion-logo-facebook"
+		></a>
+		<a
+			href="{{ companyTwitterLink }}"
+			target="_blank"
+			class="ion ion-logo-twitter"
+		></a>
+		<a
+			href="{{ companyLinkedinLink }}"
+			target="_blank"
+			class="ion ion-logo-linkedin"
+		></a>
+	</div>
 </div>

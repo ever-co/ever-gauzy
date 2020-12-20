@@ -10,7 +10,8 @@ import {
 	NbTooltipModule,
 	NbSelectModule,
 	NbToggleModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbStepperModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -35,6 +36,7 @@ import { CustomersComponent } from './customers/customers.component';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { ContactActionComponent } from './table-components/contact-action/contact-action.component';
 import { LocationFormModule } from '../../@shared/forms/location';
+import { LeafletMapModule } from '../../@shared/forms/maps/leaflet/leaflet.module';
 
 const COMPONENTS = [
 	ContactComponent,
@@ -61,6 +63,7 @@ const COMPONENTS = [
 		NbIconModule,
 		NbDialogModule.forChild(),
 		NbTooltipModule,
+		NbStepperModule,
 		FileUploaderModule,
 		CardGridModule,
 		Ng2SmartTableModule,
@@ -79,7 +82,8 @@ const COMPONENTS = [
 			}
 		}),
 		NbToggleModule,
-		LocationFormModule
+		LocationFormModule,
+		LeafletMapModule
 	],
 
 	declarations: [...COMPONENTS],
