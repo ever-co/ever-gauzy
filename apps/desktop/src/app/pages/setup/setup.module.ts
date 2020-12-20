@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SetupComponent } from './setup.component';
+// import { AlertComponent } from '../../@shared/dialogs/alert/alert.component';
 import { SetupService } from './setup.service';
 import {
 	NbLayoutModule,
@@ -14,7 +15,10 @@ import {
 	NbIconModule,
 	NbStepperModule,
 	NbRadioModule,
-	NbProgressBarModule
+	NbProgressBarModule,
+	NbFormFieldModule,
+	NbDialogService,
+	NbDialogModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
@@ -36,9 +40,11 @@ import { NbEvaIconsModule } from '@nebular/eva-icons';
 		NbStepperModule,
 		NbIconModule,
 		NbRadioModule,
-		NbProgressBarModule
+		NbProgressBarModule,
+		NbFormFieldModule,
+		NbDialogModule
 	],
 	exports: [SetupComponent],
-	providers: [SetupService]
+	providers: [SetupService, NbDialogService]
 })
 export class SetupModule {}
