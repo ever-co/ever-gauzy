@@ -1,0 +1,9 @@
+<nb-card class="dialog-card" [accent]="data.status">
+	<nb-card-header>{{ data.title }}</nb-card-header>
+	<nb-card-body>
+		{{ data.message }}
+	</nb-card-body>
+	<nb-card-footer>
+		<button nbButton status="primary" (click)="dismiss()">Ok</button>
+	</nb-card-footer>
+</nb-card>

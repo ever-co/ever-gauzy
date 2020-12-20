@@ -387,6 +387,45 @@ ipcMain.on('restart_and_update', () => {
 	});
 });
 
+ipcMain.on('check_database_connection', async (event, arg) => {
+	let databaseOptions = {};
+	if (arg.db == 'postgres') {
+		databaseOptions = {
+			client: 'pg',
+			connection: {
+				host: arg.dbHost,
+				user: arg.dbUsername,
+				password: arg.dbPassword,
+				database: arg.dbName,
+				port: arg.dbPort
+			}
+		};
+	} else {
+		databaseOptions = {
+			client: 'sqlite',
+			connection: {
+				filename: sqlite3filename
+			}
+		};
+	}
+	const dbConn = require('knex')(databaseOptions);
+	try {
+		await dbConn.raw('select 1+1 as result');
+		event.sender.send('database_status', {
+			status: true,
+			message:
+				arg.db === 'postgres'
+					? 'Connection to PostgreSQL DB Succeeds'
+					: 'Connection to SQLITE DB Succeeds'
+		});
+	} catch (error) {
+		event.sender.send('database_status', {
+			status: false,
+			message: error.message
+		});
+	}
+});
+
 autoUpdater.on('error', () => {
 	console.log('eroro');
 });
