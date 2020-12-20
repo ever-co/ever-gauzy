@@ -170,7 +170,7 @@ export interface EmployeeViewModel {
 }
 
 export interface IEmployeeStoreState {
-	employee: IEmployee;
+	employee?: IEmployee;
 	action: EmployeeAction;
 }
 

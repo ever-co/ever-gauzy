@@ -84,3 +84,14 @@ export interface IOrganizationProjectsUpdateInput
 	extends IOrganizationProjectsCreateInput {
 	id?: string;
 }
+
+export interface IOrganizationProjectStoreState {
+	projects: IOrganizationProject;
+	action: OrganizationProjectAction;
+}
+
+export enum OrganizationProjectAction {
+	CREATED = 'CREATED',
+	UPDATED = 'UPDATED',
+	DELETED = 'DELETED'
+}
