@@ -2,11 +2,15 @@ import {
 	Component,
 	OnInit,
 	ChangeDetectorRef,
-	ChangeDetectionStrategy
+	ChangeDetectionStrategy,
+	ViewChild,
+	ElementRef
 } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import { SetupService } from './setup.service';
 import { environment } from '../../../environments/environment';
+import { NbDialogService } from '@nebular/theme';
+import { AlertComponent } from '../../@shared/dialogs/alert/alert.component';
 
 @Component({
 	selector: 'ngx-setup',
@@ -15,10 +19,12 @@ import { environment } from '../../../environments/environment';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SetupComponent implements OnInit {
+	@ViewChild('dialogOpenBtn') btnDialogOpen: ElementRef<HTMLElement>;
 	constructor(
 		private electronService: ElectronService,
 		private setupService: SetupService,
-		private _cdr: ChangeDetectorRef
+		private _cdr: ChangeDetectorRef,
+		private dialogService: NbDialogService
 	) {
 		electronService.ipcRenderer.on('setup-data', (event, arg) => {
 			this.desktopFeatures.gauzyPlatform = arg.gauzyWindow;
@@ -117,13 +123,15 @@ export class SetupComponent implements OnInit {
 
 	databaseConfig: any = {
 		postgre: {
-			host: '',
-			dbPort: '',
-			dbName: '',
-			dbUser: '',
+			host: 'localhost',
+			dbPort: '5432',
+			dbName: 'postgres',
+			dbUser: 'postgres',
 			dbPassword: ''
 		}
 	};
+
+	showPassword = false;
 
 	progressSetup = 0;
 	progressMessage = 'Waiting ...';
@@ -158,6 +166,14 @@ export class SetupComponent implements OnInit {
 		'SEEDING Default Integrations',
 		'SEEDED PRODUCTION DATABASE'
 	];
+
+	dialogData: any = {
+		title: 'Success',
+		message: '',
+		status: 'success'
+	};
+
+	runApp: boolean = false;
 
 	connectivityChange(event, key) {
 		Object.keys(this.connectivity).forEach((itemKey) => {
@@ -254,7 +270,7 @@ export class SetupComponent implements OnInit {
 		};
 	}
 
-	saveChange() {
+	saveAndRun() {
 		if (this.connectivity.integrated) {
 			this.onProgress = true;
 		}
@@ -267,6 +283,11 @@ export class SetupComponent implements OnInit {
 
 		this.electronService.ipcRenderer.send('start_server', gauzyConfig);
 		this.electronService.ipcRenderer.send('app_is_init');
+	}
+
+	saveChange() {
+		this.runApp = true;
+		this.checkConnection(true);
 	}
 
 	pingAw() {
@@ -342,5 +363,114 @@ export class SetupComponent implements OnInit {
 		});
 	}
 
-	ngOnInit(): void {}
+	getInputType() {
+		if (this.showPassword) {
+			return 'text';
+		}
+		return 'password';
+	}
+
+	toggleShowPassword() {
+		this.showPassword = !this.showPassword;
+	}
+
+	checkDatabaseConn() {
+		this.electronService.ipcRenderer.send('check_database_connection', {
+			...this.getDataBaseConfig()
+		});
+	}
+
+	checkServerConn() {
+		const serverHostOptions = this.getServerConfig();
+		console.log('server host', serverHostOptions);
+		this.setupService
+			.pingServer({
+				host: serverHostOptions.serverUrl
+			})
+			.then((res) => {
+				if (this.runApp) {
+					this.saveAndRun();
+				} else {
+					this.dialogData = {
+						title: 'Succes',
+						message: `Connection to Server ${serverHostOptions.serverUrl} Succeeds`,
+						status: 'success'
+					};
+					let elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
+					elBtn.click();
+				}
+			})
+			.catch((e) => {
+				if (e.status === 404) {
+					if (this.runApp) {
+						this.saveAndRun();
+					} else {
+						this.dialogData = {
+							title: 'Succes',
+							message: `Connection to Server ${serverHostOptions.serverUrl} Succeeds`,
+							status: 'success'
+						};
+						let elBtn: HTMLElement = this.btnDialogOpen
+							.nativeElement;
+						elBtn.click();
+					}
+				} else {
+					this.dialogData = {
+						title: 'Error',
+						message: e.message,
+						status: 'danger'
+					};
+					let elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
+					elBtn.click();
+				}
+			});
+	}
+
+	checkConnection(notRun = false) {
+		this.runApp = notRun;
+		if (this.connectivity.integrated) {
+			this.checkDatabaseConn();
+		} else {
+			this.checkServerConn();
+		}
+	}
+
+	open(hasBackdrop: boolean) {
+		this.dialogService.open(AlertComponent, {
+			context: {
+				data: this.dialogData
+			}
+		});
+	}
+
+	openfromhere(hasBackdrop: boolean) {
+		this.open(hasBackdrop);
+	}
+
+	ngOnInit(): void {
+		this.electronService.ipcRenderer.on('database_status', (event, arg) => {
+			// this.open(true);
+			// this._cdr.detectChanges();
+			if (arg.status) {
+				this.dialogData = {
+					title: 'Success',
+					message: arg.message,
+					status: 'success'
+				};
+			} else {
+				this.dialogData = {
+					title: 'Warning',
+					message: arg.message,
+					status: 'danger'
+				};
+			}
+
+			if (arg.status && this.runApp) {
+				this.saveAndRun();
+			} else {
+				let elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
+				elBtn.click();
+			}
+		});
+	}
 }

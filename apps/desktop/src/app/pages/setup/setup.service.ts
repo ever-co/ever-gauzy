@@ -9,4 +9,8 @@ export class SetupService {
 	pingAw(host) {
 		return this.http.get(host).pipe().toPromise();
 	}
+
+	pingServer(values) {
+		return this.http.get(values.host).pipe().toPromise();
+	}
 }

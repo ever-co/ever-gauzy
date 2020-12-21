@@ -1,6 +1,31 @@
-import { IEmployee, IEmployeeUpdateInput, IUserFindInput } from '@gauzy/models';
+import {
+	IEmployee,
+	IEmployeeUpdateInput,
+	IUserFindInput,
+	IEmployeeStoreState,
+	EmployeeAction
+} from '@gauzy/models';
 import { BehaviorSubject } from 'rxjs';
 import { Injectable } from '@angular/core';
+import { Query, Store as AkitaStore, StoreConfig } from '@datorama/akita';
+
+export function createInitialEmployeeState(): IEmployeeStoreState {
+	return {} as IEmployeeStoreState;
+}
+@Injectable({ providedIn: 'root' })
+@StoreConfig({ name: 'app' })
+export class EmployeeAkitaStore extends AkitaStore<IEmployeeStoreState> {
+	constructor() {
+		super(createInitialEmployeeState());
+	}
+}
+
+@Injectable({ providedIn: 'root' })
+export class EmployeeAkitaQuery extends Query<IEmployeeStoreState> {
+	constructor(protected store: EmployeeAkitaStore) {
+		super(store);
+	}
+}
 
 /**
  * Service used to update employee
@@ -10,6 +35,11 @@ export class EmployeeStore {
 	private _selectedEmployee: IEmployee;
 	private _userForm: IUserFindInput;
 	private _employeeForm: IEmployeeUpdateInput;
+
+	constructor(
+		protected employeeAkitaStore: EmployeeAkitaStore,
+		protected employeeAkitaQuery: EmployeeAkitaQuery
+	) {}
 
 	selectedEmployee$: BehaviorSubject<IEmployee> = new BehaviorSubject(
 		this.selectedEmployee
@@ -30,6 +60,16 @@ export class EmployeeStore {
 
 	get selectedEmployee(): IEmployee {
 		return this._selectedEmployee;
+	}
+
+	employeeAction$ = this.employeeAkitaQuery.select(({ action }) => {
+		return { action };
+	});
+
+	set employeeAction({ action }: { action: EmployeeAction }) {
+		this.employeeAkitaStore.update({
+			action
+		});
 	}
 
 	set userForm(user: IUserFindInput) {

@@ -6,7 +6,8 @@ import {
 	IOrganizationProject,
 	IOrganizationProjectsCreateInput,
 	PermissionsEnum,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	OrganizationProjectAction
 } from '@gauzy/models';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,6 +29,7 @@ import { DatePipe } from '@angular/common';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { OrganizationProjectStore } from '../../@core/services/organization-projects-store.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-projects',
@@ -69,7 +71,8 @@ export class ProjectsComponent
 		readonly translateService: TranslateService,
 		private route: ActivatedRoute,
 		private router: Router,
-		private dialogService: NbDialogService
+		private dialogService: NbDialogService,
+		private organizationProjectStore: OrganizationProjectStore
 	) {
 		super(translateService);
 		this.setView();
@@ -164,9 +167,14 @@ export class ProjectsComponent
 			.toPromise();
 
 		if (result) {
-			await this.organizationProjectsService.delete(
-				this.selectedProject ? this.selectedProject.id : id
-			);
+			await this.organizationProjectsService
+				.delete(this.selectedProject ? this.selectedProject.id : id)
+				.then(() => {
+					this.organizationProjectStore.organizationProjectAction = {
+						project: this.selectedProject,
+						action: OrganizationProjectAction.DELETED
+					};
+				});
 
 			this.toastrService.primary(
 				this.getTranslation(
@@ -204,7 +212,14 @@ export class ProjectsComponent
 		switch (action) {
 			case 'add':
 				if (project.name) {
-					await this.organizationProjectsService.create(project);
+					await this.organizationProjectsService
+						.create(project)
+						.then((project: IOrganizationProject) => {
+							this.organizationProjectStore.organizationProjectAction = {
+								project,
+								action: OrganizationProjectAction.CREATED
+							};
+						});
 				} else {
 					this.toastrService.danger(
 						this.getTranslation(
@@ -218,7 +233,14 @@ export class ProjectsComponent
 				break;
 
 			case 'edit':
-				await this.organizationProjectsService.edit(project);
+				await this.organizationProjectsService
+					.edit(project)
+					.then((project: IOrganizationProject) => {
+						this.organizationProjectStore.organizationProjectAction = {
+							project,
+							action: OrganizationProjectAction.UPDATED
+						};
+					});
 				break;
 		}
 
@@ -231,7 +253,6 @@ export class ProjectsComponent
 			),
 			this.getTranslation('TOASTR.TITLE.SUCCESS')
 		);
-
 		this.cancel();
 		this.loadProjects();
 	}

@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
 import {
 	IOrganization,
 	IOrganizationProject,
+	OrganizationProjectAction,
 	PermissionsEnum
 } from '@gauzy/models';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
@@ -11,6 +12,7 @@ import { debounceTime } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '../../../@core/services/store.service';
 import { ToastrService } from '../../../@core/services/toastr.service';
+import { OrganizationProjectStore } from '../../../@core/services/organization-projects-store.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -64,7 +66,8 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	constructor(
 		private organizationProjects: OrganizationProjectsService,
 		private store: Store,
-		private toastrService: ToastrService
+		private toastrService: ToastrService,
+		private readonly _organizationProjectStore: OrganizationProjectStore
 	) {}
 
 	set projectId(val: string | string[]) {
@@ -120,6 +123,8 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 					this.loadProjects$.next();
 				}
 			});
+
+		this.organizationProjectAction();
 	}
 
 	writeValue(value: string | string[]) {
@@ -167,6 +172,63 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 			this.toastrService.error(error);
 		}
 	};
+
+	private organizationProjectAction() {
+		this._organizationProjectStore.organizationProjectAction$
+			.pipe(untilDestroyed(this))
+			.subscribe(({ project, action }) => {
+				switch (action) {
+					case OrganizationProjectAction.CREATED:
+						this.createOrganizationProject(project);
+						break;
+					case OrganizationProjectAction.UPDATED:
+						this.updateOrganizationProject(project);
+						break;
+					case OrganizationProjectAction.DELETED:
+						this.deleteOrganizationProject(project);
+						break;
+					default:
+						break;
+				}
+			});
+	}
+
+	/*
+	 * After created new organization project pushed on dropdown
+	 */
+	createOrganizationProject(project: IOrganizationProject) {
+		const projects: IOrganizationProject[] = this.projects;
+		projects.push(project);
+
+		this.projects = [...projects];
+	}
+
+	/*
+	 * After updated existing organization project changed in the dropdown
+	 */
+	updateOrganizationProject(project: IOrganizationProject) {
+		let projects: IOrganizationProject[] = this.projects;
+		projects = projects.map((item: IOrganizationProject) => {
+			if (item.id === project.id) {
+				return Object.assign({}, item, project);
+			}
+			return item;
+		});
+
+		this.projects = [...projects];
+	}
+
+	/*
+	 * After deleted organization project removed on dropdown
+	 */
+	deleteOrganizationProject(project: IOrganizationProject) {
+		let projects: IOrganizationProject[] = this.projects;
+		projects = projects.filter(
+			(item: IOrganizationProject) => item.id !== project.id
+		);
+
+		this.projects = [...projects];
+	}
 
 	ngOnDestroy() {}
 }
