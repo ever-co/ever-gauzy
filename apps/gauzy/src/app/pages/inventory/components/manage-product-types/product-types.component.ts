@@ -180,8 +180,11 @@ export class ProductTypesComponent
 
 		const productType = await dialog.onClose.pipe(first()).toPromise();
 		if (productType) {
+			let productTranslations = productType.translations[0];
 			this.toastrService.primary(
-				this.getTranslation('INVENTORY_PAGE.PRODUCT_TYPE_SAVED'),
+				this.getTranslation('INVENTORY_PAGE.PRODUCT_TYPE_SAVED', {
+					name: productTranslations.name
+				}),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 		}
@@ -205,7 +208,9 @@ export class ProductTypesComponent
 			await this.productTypeService.delete(this.selectedProductType.id);
 			this.loadSettings();
 			this.toastrService.primary(
-				this.getTranslation('INVENTORY_PAGE.PRODUCT_TYPE_DELETED'),
+				this.getTranslation('INVENTORY_PAGE.PRODUCT_TYPE_DELETED', {
+					name: this.selectedProductType.name
+				}),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 		}

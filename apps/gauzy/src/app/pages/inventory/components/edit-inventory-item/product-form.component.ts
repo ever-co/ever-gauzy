@@ -29,7 +29,8 @@ import { ProductVariantService } from 'apps/gauzy/src/app/@core/services/product
 	templateUrl: './product-form.component.html',
 	styleUrls: ['./product-form.component.scss']
 })
-export class ProductFormComponent extends TranslationBaseComponent
+export class ProductFormComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	form: FormGroup;
 	inventoryItem: IProduct;
@@ -240,7 +241,9 @@ export class ProductFormComponent extends TranslationBaseComponent
 
 			this.toastrService.success(
 				this.getTranslation('TOASTR.TITLE.SUCCESS'),
-				this.getTranslation('INVENTORY_PAGE.INVENTORY_ITEM_SAVED')
+				this.getTranslation('INVENTORY_PAGE.INVENTORY_ITEM_SAVED', {
+					name: productResult.name
+				})
 			);
 		} catch (err) {
 			this.toastrService.danger(

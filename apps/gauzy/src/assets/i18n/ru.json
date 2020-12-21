@@ -1606,9 +1606,9 @@
 		"TAGS_NAME": "Имя",
 		"TAGS_DESCRIPTION": "Описание",
 		"TAGS_COLOR": "Цвет",
-		"TAGS_ADD_TAG": "Тег добавлен",
-		"TAGS_EDIT_TAG": "Тег отредактирован",
-		"TAGS_DELETE_TAG": "Метка удалена",
+		"TAGS_ADD_TAG": "Тег '{{ name }}' добавлен",
+		"TAGS_EDIT_TAG": "Тег '{{ name }}' отредактирован",
+		"TAGS_DELETE_TAG": "Метка '{{ name }}' удалена",
 		"TAGS_SELECT_NAME": "Имя тега",
 		"TAGS_SELECT_COLOR": "Цвет тега",
 		"TAGS_SELECT_DESCRIPTION": "Описание метки",
@@ -1640,9 +1640,9 @@
 		"EQUIPMENT_MAX_SHARE_PERIOD": "Макс. срок акции",
 		"EQUIPMENT_AUTO_APPROVE": "Авто подтверждение",
 		"EQUIPMENT_EDITED": "Оборудование отредактировано",
-		"EQUIPMENT_DELETED": "Снаряжение удалено",
+		"EQUIPMENT_DELETED": "Снаряжение '{{ name }}' удалено",
 		"EQUIPMENT_ADDED": "Снаряжение добавлено",
-		"EQUIPMENT_SAVED": "Оборудование сохранено",
+		"EQUIPMENT_SAVED": "Оборудование '{{ name }}' сохранено",
 		"CURRENCY": "Валюта"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
@@ -1689,8 +1689,8 @@
 		"HEADER": "Инвентаризация",
 		"ADD_INVENTORY_ITEM": "Добавить товар в инвентарь",
 		"EDIT_INVENTORY_ITEM": "Изменить элемент инвентаря",
-		"INVENTORY_ITEM_DELETED": "Элемент инвентаря удален!",
-		"INVENTORY_ITEM_SAVED": "Элемент инвентаря сохранен!",
+		"INVENTORY_ITEM_DELETED": "Элемент {{name}} инвентаря удален!",
+		"INVENTORY_ITEM_SAVED": "Элемент {{name}} инвентаря сохранен!",
 		"EDIT_PRODUCT_VARIANT": "Изменить вариант товара",
 		"PRODUCT_VARIANT_SAVED": "Вариант товара сохранен",
 		"NAME": "Имя",
@@ -1723,12 +1723,12 @@
 		"ORGANIZATION": "Организация",
 		"EDIT_PRODUCT_TYPE": "Изменить тип товара",
 		"ADD_PRODUCT_TYPE": "Добавить тип товара",
-		"PRODUCT_TYPE_SAVED": "Тип товара сохранен",
-		"PRODUCT_TYPE_DELETED": "Тип товара удален",
+		"PRODUCT_TYPE_SAVED": "Тип товара '{{ name }}' сохранен",
+		"PRODUCT_TYPE_DELETED": "Тип товара '{{ name }}' удален",
 		"EDIT_PRODUCT_CATEGORY": "Редактировать категорию товара",
 		"ADD_PRODUCT_CATEGORY": "Добавить категорию товара",
-		"PRODUCT_CATEGORY_SAVED": "Категория товара сохранена",
-		"PRODUCT_CATEGORY_DELETED": "Категория товара удалена",
+		"PRODUCT_CATEGORY_SAVED": "Категория товара '{{ name }}' сохранена",
+		"PRODUCT_CATEGORY_DELETED": "Категория товара '{{ name }}' удалена",
 		"IMAGE": "Изображение",
 		"LANGUAGE": "Язык",
 		"PRODUCT_VARIANT_DELETED": "Вариант товара удален!",
@@ -1861,7 +1861,7 @@
 				"ru": "Русский"
 			}
 		},
-		"REMOVE_USER": "{{ name }} успешно удален"
+		"REMOVE_USER": "'{{ name }}' успешно удален"
 	},
 	"CONTEXT_MENU": {
 		"TIMER": "Запустить таймер",
@@ -2321,15 +2321,15 @@
 			"DELETE_USER_FROM_ORGANIZATION": "{{ username }} установлен как неактивный.",
 			"DATA_ERROR": "{{ error }}",
 			"EDIT_ORGANIZATIONS_PROJECTS": {
-				"ADD_PROJECT": "Проект {{ name }} успешно добавлен!",
-				"REMOVE_PROJECT": "Проект {{ name }} успешно удален!",
+				"ADD_PROJECT": "Проект '{{ name }}' успешно добавлен",
+				"REMOVE_PROJECT": "Проект '{{ name }}' успешно удален",
 				"INVALID_PROJECT_NAME": "Пожалуйста, введите название вашего проекта"
 			},
 			"EDIT_ORGANIZATIONS_TEAM": {
-				"ADD_NEW_TEAM": "Новая команда {{ name }} успешно добавлена!",
-				"EDIT_EXISTING_TEAM": "Команда {{ name }} успешно обновлена!",
+				"ADD_NEW_TEAM": "Kоманда '{{ name }}' успешно добавлена!",
+				"EDIT_EXISTING_TEAM": "Команда '{{ name }}' успешно обновлена!",
 				"INVALID_TEAM_NAME": "Пожалуйста, добавьте название команды и хотя бы одного участника",
-				"REMOVE_TEAM": "Команда {{ name }} успешно удалена!"
+				"REMOVE_TEAM": "Команда '{{ name }}' успешно удалена!"
 			},
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "Новый уровень {{ name }} успешно добавлен!",
@@ -2337,9 +2337,9 @@
 				"INVALID_EMPLOYEE_LEVEL": "Пожалуйста, добавьте уровень сотрудника"
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
-				"ADD_VENDOR": "Новый поставщик {{ name }} успешно добавлен!",
-				"UPDATE_VENDOR": "Поставщик {{ name }} успешно обновлен!",
-				"REMOVE_VENDOR": "Поставщик {{ name }} успешно удален!",
+				"ADD_VENDOR": "Новый поставщик '{{ name }}' успешно добавлен!",
+				"UPDATE_VENDOR": "Поставщик '{{ name }}' успешно обновлен!",
+				"REMOVE_VENDOR": "Поставщик '{{ name }}' успешно удален!",
 				"INVALID_VENDOR_NAME": "Пожалуйста, добавьте название поставщика"
 			},
 			"EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES": {
@@ -2354,8 +2354,8 @@
 				"INVALID_POSITION_NAME": "Пожалуйста, добавьте название позиции"
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
-				"ADD_DEPARTMENT": "{{ name }} Департамент успешно добавлен!",
-				"REMOVE_DEPARTMENT": "Департамент {{ name }} успешно удален!",
+				"ADD_DEPARTMENT": "Департамент '{{ name }}' успешно добавлен!",
+				"REMOVE_DEPARTMENT": "Департамент '{{ name }}' успешно удален!",
 				"INVALID_DEPARTMENT_NAME": "Пожалуйста, добавьте название департамента"
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
@@ -2375,10 +2375,15 @@
 				"EMAIL_EXISTS": "Этот контактный адрес электронной почты уже существует в качестве пользователя"
 			},
 			"EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES": {
-				"ADD_EMPLOYMENT_TYPE": "Новый тип занятости {{ name }} успешно добавлен!",
-				"UPDATE_EMPLOYMENT_TYPE": "Занятость {{ name }} была обновлена",
+				"ADD_EMPLOYMENT_TYPE": "Tип занятости '{{ name }}' успешно добавлен!",
+				"UPDATE_EMPLOYMENT_TYPE": "Занятость '{{ name }}' была обновлена",
 				"INVALID_EMPLOYMENT_TYPE": "Пожалуйста, проверьте входные данные по типу занятости",
-				"DELETE_EMPLOYMENT_TYPE": "Тип занятости удален для {{ name }}"
+				"DELETE_EMPLOYMENT_TYPE": "Тип занятости удален для '{{ name }}'"
+			},
+			"EDIT_ORGANIZATIONS_RECURRING_EXPENSES": {
+				"ADD_RECURRING_EXPENSE": "Recurring expense was added for `{{ name }}`",
+				"UPDATE_RECURRING_EXPENSE": "Recurring expense was changed for '{{ name }}'",
+				"DELETE_RECURRING_EXPENSE": "Recurring expense was removed"
 			},
 			"EDIT_ORGANIZATIONS_AWARDS": {
 				"ADD_AWARD": "Новая награда {{ name }} успешно добавлена!",
@@ -2391,13 +2396,13 @@
 				"REMOVE_LANGUAGE": "Язык {{ name }} успешно удален!"
 			},
 			"EDIT_ORGANIZATION_DOCS": {
-				"CREATED": "Документ успешно создан",
+				"CREATED": "Документ '{{ name }}' успешно создан",
 				"ERR_CREATE": "Не удается создать новый документ организации",
 				"ERR_LOAD": "Не удается загрузить документы организации",
-				"UPDATED": "Выбранный документ успешно обновлен!",
+				"UPDATED": "Документ '{{ name }}' успешно обновлен!",
 				"ERR_UPDATED": "Не удается обновить выбранный документ!",
 				"SELECTED_DOC": "выбранный документ",
-				"DELETED": "Документ успешно удален!",
+				"DELETED": "Документ '{{ name }}' успешно удален!",
 				"ERR_DELETED": "Не удается удалить выбранный документ!"
 			}
 		},

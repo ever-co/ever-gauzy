@@ -192,7 +192,9 @@ export class EquipmentComponent
 
 		if (equipment) {
 			this.toastrService.primary(
-				this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_SAVED'),
+				this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_SAVED', {
+					name: equipment.name
+				}),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 		}
@@ -216,7 +218,9 @@ export class EquipmentComponent
 			await this.equipmentService.delete(this.selectedEquipment.id);
 			this.loadSettings();
 			this.toastrService.primary(
-				this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_DELETED'),
+				this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_DELETED', {
+					name: this.selectedEquipment.name
+				}),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 		}

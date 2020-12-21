@@ -122,7 +122,9 @@ export class TagsComponent
 		const addData = await dialog.onClose.pipe(first()).toPromise();
 		if (addData) {
 			this.toastrService.primary(
-				this.getTranslation('TAGS_PAGE.TAGS_ADD_TAG'),
+				this.getTranslation('TAGS_PAGE.TAGS_ADD_TAG', {
+					name: addData.name
+				}),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 		}
@@ -146,7 +148,9 @@ export class TagsComponent
 			await this.tagsService.delete(this.tag.id);
 			this.loadSettings();
 			this.toastrService.primary(
-				this.getTranslation('TAGS_PAGE.TAGS_DELETE_TAG'),
+				this.getTranslation('TAGS_PAGE.TAGS_DELETE_TAG', {
+					name: this.tag.name
+				}),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 		}
@@ -168,7 +172,9 @@ export class TagsComponent
 		const editData = await dialog.onClose.pipe(first()).toPromise();
 		if (editData) {
 			this.toastrService.primary(
-				this.getTranslation('TAGS_PAGE.TAGS_EDIT_TAG'),
+				this.getTranslation('TAGS_PAGE.TAGS_EDIT_TAG', {
+					name: this.tag.name
+				}),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 		}

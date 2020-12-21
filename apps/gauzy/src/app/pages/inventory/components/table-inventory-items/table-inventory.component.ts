@@ -204,7 +204,10 @@ export class TableInventoryComponent
 				this.loadSettings();
 				this.toastrService.primary(
 					this.getTranslation(
-						'INVENTORY_PAGE.INVENTORY_ITEM_DELETED'
+						'INVENTORY_PAGE.INVENTORY_ITEM_DELETED',
+						{
+							name: this.selectedProduct.name
+						}
 					),
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);

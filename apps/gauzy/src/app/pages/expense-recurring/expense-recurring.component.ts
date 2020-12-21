@@ -141,8 +141,13 @@ export class ExpenseRecurringComponent
 				this.selectedRowIndexToShow = null;
 
 				this.toastrService.primary(
-					this.selectedOrg.name + ' recurring expense deleted.',
-					'Success'
+					this.getTranslation(
+						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_RECURRING_EXPENSES.DELETE_RECURRING_EXPENSE',
+						{
+							name: this.selectedOrg.name
+						}
+					),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
 				setTimeout(() => {
 					this._loadOrgRecurringExpense();
@@ -175,8 +180,13 @@ export class ExpenseRecurringComponent
 				});
 
 				this.toastrService.primary(
-					this.selectedOrg.name + ' recurring expense set.',
-					'Success'
+					this.getTranslation(
+						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_RECURRING_EXPENSES.ADD_RECURRING_EXPENSE',
+						{
+							name: this.selectedOrg.name
+						}
+					),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
 				this._loadOrgRecurringExpense();
 			} catch (error) {
@@ -210,8 +220,13 @@ export class ExpenseRecurringComponent
 				this._loadOrgRecurringExpense();
 
 				this.toastrService.primary(
-					this.selectedOrg.name + ' recurring expense edited.',
-					'Success'
+					this.getTranslation(
+						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_RECURRING_EXPENSES.UPDATE_RECURRING_EXPENSE',
+						{
+							name: this.selectedOrg.name
+						}
+					),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
 			} catch (error) {
 				this.toastrService.danger(

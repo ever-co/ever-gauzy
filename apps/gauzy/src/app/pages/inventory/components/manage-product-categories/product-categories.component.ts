@@ -186,10 +186,12 @@ export class ProductCategoriesComponent
 		const productCategory = await dialog.onClose.pipe(first()).toPromise();
 		this.selectedProductCategory = null;
 		this.disableButton = true;
-
 		if (productCategory) {
+			let productCatTranslaction = productCategory.translations[0];
 			this.toastrService.primary(
-				this.getTranslation('INVENTORY_PAGE.PRODUCT_CATEGORY_SAVED'),
+				this.getTranslation('INVENTORY_PAGE.PRODUCT_CATEGORY_SAVED', {
+					name: productCatTranslaction?.name
+				}),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 		}
@@ -213,11 +215,15 @@ export class ProductCategoriesComponent
 			await this.productCategoryService.delete(
 				this.selectedProductCategory.id
 			);
-			this.loadSettings();
+
 			this.toastrService.primary(
-				this.getTranslation('INVENTORY_PAGE.PRODUCT_CATEGORY_DELETED'),
+				this.getTranslation('INVENTORY_PAGE.PRODUCT_CATEGORY_DELETED', {
+					name: this.selectedProductCategory.name
+				}),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
+
+			this.loadSettings();
 		}
 		this.disableButton = true;
 	}

@@ -1606,9 +1606,9 @@
 		"TAGS_NAME": "Name",
 		"TAGS_DESCRIPTION": "Description",
 		"TAGS_COLOR": "Color",
-		"TAGS_ADD_TAG": "Tag added",
-		"TAGS_EDIT_TAG": "Tag edited",
-		"TAGS_DELETE_TAG": "Tag deleted",
+		"TAGS_ADD_TAG": "Tag '{{ name }}' was added",
+		"TAGS_EDIT_TAG": "Tag '{{ name }}' was changed",
+		"TAGS_DELETE_TAG": "Tag '{{ name }}' was removed",
 		"TAGS_SELECT_NAME": "Tag name",
 		"TAGS_SELECT_COLOR": "Tag color",
 		"TAGS_SELECT_DESCRIPTION": "Tag description",
@@ -1640,9 +1640,9 @@
 		"EQUIPMENT_MAX_SHARE_PERIOD": "Max share period",
 		"EQUIPMENT_AUTO_APPROVE": "Auto approve",
 		"EQUIPMENT_EDITED": "Equipment edited",
-		"EQUIPMENT_DELETED": "Equipment deleted",
+		"EQUIPMENT_DELETED": "Equipment '{{ name }}' was removed",
 		"EQUIPMENT_ADDED": "Equipment added",
-		"EQUIPMENT_SAVED": "Equipment saved",
+		"EQUIPMENT_SAVED": "Equipment '{{ name }}' was saved",
 		"CURRENCY": "Currency"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
@@ -1689,8 +1689,8 @@
 		"HEADER": "Inventory",
 		"ADD_INVENTORY_ITEM": "Add inventory item",
 		"EDIT_INVENTORY_ITEM": "Edit inventory item",
-		"INVENTORY_ITEM_DELETED": "Inventory item deleted!",
-		"INVENTORY_ITEM_SAVED": "Inventory item saved!",
+		"INVENTORY_ITEM_DELETED": "Inventory '{{ name }}' was removed",
+		"INVENTORY_ITEM_SAVED": "Inventory '{{ name }}' was saved",
 		"EDIT_PRODUCT_VARIANT": "Edit product variant",
 		"PRODUCT_VARIANT_SAVED": "Product variant saved",
 		"NAME": "Name",
@@ -1723,12 +1723,12 @@
 		"ORGANIZATION": "Organization",
 		"EDIT_PRODUCT_TYPE": "Edit product type",
 		"ADD_PRODUCT_TYPE": "Add product type",
-		"PRODUCT_TYPE_SAVED": "Product type saved",
-		"PRODUCT_TYPE_DELETED": "Product type deleted",
+		"PRODUCT_TYPE_SAVED": "Product type '{{ name }}' was saved",
+		"PRODUCT_TYPE_DELETED": "Product type '{{ name }}' was removed",
 		"EDIT_PRODUCT_CATEGORY": "Edit product category",
 		"ADD_PRODUCT_CATEGORY": "Add product category",
-		"PRODUCT_CATEGORY_SAVED": "Product category saved",
-		"PRODUCT_CATEGORY_DELETED": "Product category deleted",
+		"PRODUCT_CATEGORY_SAVED": "Product category '{{ name }}' was saved",
+		"PRODUCT_CATEGORY_DELETED": "Product category '{{ name }}' was removed",
 		"IMAGE": "Image",
 		"LANGUAGE": "Language",
 		"PRODUCT_VARIANT_DELETED": "Product variant deleted!",
@@ -2321,15 +2321,15 @@
 			"DELETE_USER_FROM_ORGANIZATION": "{{ username }} set as inactive.",
 			"DATA_ERROR": "{{ error }}",
 			"EDIT_ORGANIZATIONS_PROJECTS": {
-				"ADD_PROJECT": "New project {{ name }} successfully added!",
-				"REMOVE_PROJECT": "Project {{ name }} successfully removed!",
+				"ADD_PROJECT": "Project '{{ name }}' was saved",
+				"REMOVE_PROJECT": "Project '{{ name }}' was removed",
 				"INVALID_PROJECT_NAME": "Please fill in the name of your project"
 			},
 			"EDIT_ORGANIZATIONS_TEAM": {
-				"ADD_NEW_TEAM": "New team {{ name }} successfully added!",
-				"EDIT_EXISTING_TEAM": "Team {{ name }} successfully updated!",
+				"ADD_NEW_TEAM": "Team '{{ name }}' was added",
+				"EDIT_EXISTING_TEAM": "Team '{{ name }}' was changed",
 				"INVALID_TEAM_NAME": "Please add a Team name and at least one member",
-				"REMOVE_TEAM": "Team {{ name }} successfully removed!"
+				"REMOVE_TEAM": "Team '{{ name }}' was removed"
 			},
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "New Employee Level {{ name }} successfully added!",
@@ -2337,9 +2337,9 @@
 				"INVALID_EMPLOYEE_LEVEL": "Please add an Employee Level"
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
-				"ADD_VENDOR": "New vendor {{ name }} successfully added!",
-				"UPDATE_VENDOR": "Vendor {{ name }} successfully updated!",
-				"REMOVE_VENDOR": "Vendor {{ name }} successfully removed!",
+				"ADD_VENDOR": "vendor '{{ name }}' was added",
+				"UPDATE_VENDOR": "Vendor '{{ name }}' was changed",
+				"REMOVE_VENDOR": "Vendor '{{ name }}' was removed",
 				"INVALID_VENDOR_NAME": "Please add a Vendor name"
 			},
 			"EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES": {
@@ -2354,8 +2354,8 @@
 				"INVALID_POSITION_NAME": "Please add a Position name"
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
-				"ADD_DEPARTMENT": "{{ name }} Department successfully added!",
-				"REMOVE_DEPARTMENT": "{{ name }} Department successfully removed!",
+				"ADD_DEPARTMENT": "Department '{{ name }}' was saved",
+				"REMOVE_DEPARTMENT": "Department '{{ name }}' was removed",
 				"INVALID_DEPARTMENT_NAME": "Please add a Department name"
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
@@ -2375,10 +2375,15 @@
 				"EMAIL_EXISTS": "This contact email already exists as a user"
 			},
 			"EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES": {
-				"ADD_EMPLOYMENT_TYPE": "New Employment type {{ name }} successfully added!",
-				"UPDATE_EMPLOYMENT_TYPE": "Employment type {{ name }} has been updated",
+				"ADD_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was added",
+				"UPDATE_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was changed",
 				"INVALID_EMPLOYMENT_TYPE": "Please check the Name for Employment type input",
-				"DELETE_EMPLOYMENT_TYPE": "Employment type deleted for {{ name }}"
+				"DELETE_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was removed"
+			},
+			"EDIT_ORGANIZATIONS_RECURRING_EXPENSES": {
+				"ADD_RECURRING_EXPENSE": "Recurring expense was added for `{{ name }}`",
+				"UPDATE_RECURRING_EXPENSE": "Recurring expense was changed for '{{ name }}'",
+				"DELETE_RECURRING_EXPENSE": "Recurring expense was removed"
 			},
 			"EDIT_ORGANIZATIONS_AWARDS": {
 				"ADD_AWARD": "New award {{ name }} successfully added!",
@@ -2391,13 +2396,13 @@
 				"REMOVE_LANGUAGE": "Language {{ name }} successfully removed!"
 			},
 			"EDIT_ORGANIZATION_DOCS": {
-				"CREATED": "Document successfully created",
+				"CREATED": "Document '{{ name }}' was added",
 				"ERR_CREATE": "Unable to create new organization document",
 				"ERR_LOAD": "Unable to load organization documents",
-				"UPDATED": "Selected document successfully updated!",
+				"UPDATED": "Document '{{ name }}' was changed",
 				"ERR_UPDATED": "Unable to update the selected document!",
 				"SELECTED_DOC": "selected document",
-				"DELETED": "Document successfully deleted!",
+				"DELETED": "Document '{{ name }}' was removed",
 				"ERR_DELETED": "Unable to delete the selected document!"
 			}
 		},
