@@ -7,7 +7,8 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	{
 		name: 'Dashboard',
 		code: 'FEATURE_DASHBOARD',
-		description: 'Go to dashboard',
+		description:
+			'Go to dashboard, Manage Employee Statistics, Time Tracking Dashboard',
 		image: 'dashboard.png',
 		link: 'dashboard/accounting',
 		isEnabled: features.FEATURE_DASHBOARD
@@ -23,7 +24,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	{
 		name: 'Estimate',
 		code: 'FEATURE_ESTIMATE',
-		description: 'Create First Estimate',
+		description: 'Manage Estimate, Create First Estimate',
 		image: 'estimate.png',
 		link: 'accounting/invoices/estimates',
 		isEnabled: features.FEATURE_ESTIMATE
@@ -31,7 +32,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	{
 		name: 'Estimate Received',
 		code: 'FEATURE_ESTIMATE_RECEIVED',
-		description: 'Received Estimate',
+		description: 'Manage Received Estimate, Accept and Reject Estimate',
 		image: 'estimate-received.png',
 		link: 'accounting/invoices/estimates',
 		isEnabled: features.FEATURE_ESTIMATE_RECEIVED
@@ -39,7 +40,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	{
 		name: 'Invoice',
 		code: 'FEATURE_INVOICE',
-		description: 'Create First Invoice',
+		description: 'Manage Invoice, Create First Invoice',
 		image: 'invoice.png',
 		link: 'accounting/invoices',
 		isEnabled: features.FEATURE_INVOICE
@@ -47,7 +48,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	{
 		name: 'Invoice Received',
 		code: 'FEATURE_INVOICE_RECEIVED',
-		description: 'Received Invoice',
+		description: 'View Received Invoice',
 		image: 'invoice-received.png',
 		link: 'accounting/invoices/received-invoices',
 		isEnabled: features.FEATURE_INVOICE_RECEIVED
@@ -71,7 +72,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	{
 		name: 'Payment',
 		code: 'FEATURE_PAYMENT',
-		description: 'Create First Payment',
+		description: 'Manage Payment, Create First Payment',
 		image: 'payment.png',
 		link: 'accounting/payments',
 		isEnabled: features.FEATURE_PAYMENT
@@ -79,7 +80,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	{
 		name: 'Proposal',
 		code: 'FEATURE_PROPOSAL',
-		description: 'Create First Proposal',
+		description: 'Manage Proposal, Register First Proposal',
 		image: 'proposal.png',
 		link: 'sales/proposals',
 		isEnabled: features.FEATURE_PROPOSAL
@@ -143,7 +144,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	{
 		name: 'Employees',
 		code: 'FEATURE_EMPLOYEES',
-		description: 'Manage Employees',
+		description: 'Manage Employees, Add or Invite Employees',
 		image: 'employee.png',
 		link: 'employees',
 		isEnabled: features.FEATURE_EMPLOYEES
@@ -151,9 +152,10 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	{
 		name: 'Employee Time Activity',
 		code: 'FEATURE_EMPLOYEE_TIME_ACTIVITY',
-		description: 'Manage Employee Time Activity',
+		description:
+			'Manage Employee Time Activity, Screenshots, App, Visited Sites, Activities',
 		image: 'screenshot.png',
-		link: 'employees/activity/screenshots',
+		link: 'employees/activity',
 		isEnabled: features.FEATURE_EMPLOYEE_TIME_ACTIVITY
 	},
 	{
@@ -168,7 +170,8 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	{
 		name: 'Appointment & Schedule',
 		code: 'FEATURE_EMPLOYEE_APPOINTMENT',
-		description: 'Employee Appointment & Schedule Management',
+		description:
+			'Employee Appointment, Schedules & Book Public Appointment',
 		image: 'appointment.png',
 		link: 'employees/appointments',
 		isEnabled: features.FEATURE_EMPLOYEE_APPOINTMENT
@@ -184,7 +187,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	{
 		name: 'Employee Approval Policy',
 		code: 'FEATURE_EMPLOYEE_APPROVAL_POLICY',
-		description: 'Manage Employee Approval Policy',
+		description: 'Manage Employee Approval Request Policy',
 		image: 'approval-policy.png',
 		link: 'organization/approval-policy',
 		isEnabled: features.FEATURE_EMPLOYEE_APPROVAL_POLICY
@@ -224,186 +227,180 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 	{
 		name: 'Candidate',
 		code: 'FEATURE_EMPLOYEE_CANDIDATE',
-		description: 'Manage Employee Candidate',
+		description: 'Manage Candidates, Interviews & Invites',
 		image: 'candidate.png',
 		link: 'employees/candidates',
 		isEnabled: features.FEATURE_EMPLOYEE_CANDIDATE
 	},
-
 	{
-		name: 'My Task Dashboard',
+		name: 'Manage Interview',
 		code: 'FEATURE_MANAGE_INTERVIEW',
-		description: 'My Task Dashboard',
-		image: 'team-task.png',
-		link: 'tasks/me',
+		description: 'Manage Candidate Interviews',
+		image: 'interview.png',
+		link: 'employees/candidates/interviews/calendar',
 		isEnabled: features.FEATURE_MANAGE_INTERVIEW
 	},
 	{
-		name: 'My Task Dashboard',
+		name: 'Manage Invite',
 		code: 'FEATURE_MANAGE_INVITE',
-		description: 'My Task Dashboard',
-		image: 'team-task.png',
-		link: 'tasks/me',
+		description: 'Manage Invites, Create First Candidate Invites',
+		image: 'invite.png',
+		link: 'employees/candidates/invites',
 		isEnabled: features.FEATURE_MANAGE_INVITE
 	},
 	{
-		name: 'My Task Dashboard',
+		name: 'Manage Organization',
 		code: 'FEATURE_ORGANIZATION',
-		description: 'My Task Dashboard',
-		image: 'team-task.png',
-		link: 'tasks/me',
+		description: 'Manage Organization Details, Location and Settings',
+		image: 'organization-detail.png',
+		link: 'organizations',
 		isEnabled: features.FEATURE_ORGANIZATION
 	},
 	{
-		name: 'My Task Dashboard',
+		name: 'Organization Equipment',
 		code: 'FEATURE_ORGANIZATION_EQUIPMENT',
-		description: 'My Task Dashboard',
-		image: 'team-task.png',
-		link: 'tasks/me',
+		description: 'Manage Organization Equipment, Create First Equipment',
+		image: 'equipment.png',
+		link: 'organization/equipment',
 		isEnabled: features.FEATURE_ORGANIZATION_EQUIPMENT
 	},
 	{
-		name: 'My Task Dashboard',
+		name: 'Product Inventory',
 		code: 'FEATURE_ORGANIZATION_INVENTORY',
-		description: 'My Task Dashboard',
-		image: 'team-task.png',
-		link: 'tasks/me',
+		description: 'Manage Product Inventory, Create First Product',
+		image: 'inventory.png',
+		link: 'organization/inventory/all',
 		isEnabled: features.FEATURE_ORGANIZATION_INVENTORY
 	},
 	{
-		name: 'My Task Dashboard',
+		name: 'Organization Tag',
 		code: 'FEATURE_ORGANIZATION_TAG',
-		description: 'My Task Dashboard',
-		image: 'team-task.png',
-		link: 'tasks/me',
+		description: 'Manage Organization Tag, Create First Tag',
+		image: 'tag.png',
+		link: 'organization/tags',
 		isEnabled: features.FEATURE_ORGANIZATION_TAG
 	},
 	{
-		name: 'My Task Dashboard',
+		name: 'Organization Vendor',
 		code: 'FEATURE_ORGANIZATION_VENDOR',
-		description: 'My Task Dashboard',
-		image: 'team-task.png',
-		link: 'tasks/me',
+		description: 'Manage Organization Vendor, Create First Vendor',
+		image: 'vendor.png',
+		link: 'organization/vendors',
 		isEnabled: features.FEATURE_ORGANIZATION_VENDOR
 	},
 	{
-		name: 'My Task Dashboard',
+		name: 'Organization Project',
 		code: 'FEATURE_ORGANIZATION_PROJECT',
-		description: 'My Task Dashboard',
-		image: 'team-task.png',
-		link: 'tasks/me',
+		description: 'Manage Organization Project, Create First Project',
+		image: 'project.png',
+		link: 'organization/projects',
 		isEnabled: features.FEATURE_ORGANIZATION_PROJECT
 	},
 	{
-		name: 'My Task Dashboard',
+		name: 'Organization Department',
 		code: 'FEATURE_ORGANIZATION_DEPARTMENT',
-		description: 'My Task Dashboard',
-		image: 'team-task.png',
-		link: 'tasks/me',
+		description: 'Manage Organization Department, Create First Department',
+		image: 'department.png',
+		link: 'organization/departments',
 		isEnabled: features.FEATURE_ORGANIZATION_DEPARTMENT
 	},
 	{
-		name: 'My Task Dashboard',
+		name: 'Organization Team',
 		code: 'FEATURE_ORGANIZATION_TEAM',
-		description: 'My Task Dashboard',
-		image: 'team-task.png',
-		link: 'tasks/me',
+		description: 'Manage Organization Team, Create First Team',
+		image: 'team.png',
+		link: 'organization/teams',
 		isEnabled: features.FEATURE_ORGANIZATION_TEAM
 	},
 	{
-		name: 'My Task Dashboard',
+		name: 'Organization Document',
 		code: 'FEATURE_ORGANIZATION_DOCUMENT',
-		description: 'My Task Dashboard',
-		image: 'team-task.png',
-		link: 'tasks/me',
+		description: 'Manage Organization Document, Create First Document',
+		image: 'document.png',
+		link: 'organization/documents',
 		isEnabled: features.FEATURE_ORGANIZATION_DOCUMENT
 	},
 	{
-		name: 'My Task Dashboard',
+		name: 'Organization Employment Type',
 		code: 'FEATURE_ORGANIZATION_EMPLOYMENT_TYPE',
-		description: 'My Task Dashboard',
-		image: 'team-task.png',
-		link: 'tasks/me',
+		description: 'Manage Organization Employment Type',
+		image: 'employment-type.png',
+		link: 'organization/employment-types',
 		isEnabled: features.FEATURE_ORGANIZATION_EMPLOYMENT_TYPE
 	},
 	{
-		name: 'My Task Dashboard',
+		name: 'Organization Recurring Expenses',
 		code: 'FEATURE_ORGANIZATION_RECURRING_EXPENSE',
-		description: 'My Task Dashboard',
-		image: 'team-task.png',
-		link: 'tasks/me',
+		description:
+			'Manage Organization Recurring Expenses, Create First Recurring Expenses',
+		image: 'organization-recurring-expense.png',
+		link: 'organization/expense-recurring',
 		isEnabled: features.FEATURE_ORGANIZATION_RECURRING_EXPENSE
 	},
 	{
-		name: 'My Task Dashboard',
+		name: 'Help Center',
 		code: 'FEATURE_ORGANIZATION_HELP_CENTER',
-		description: 'My Task Dashboard',
-		image: 'team-task.png',
-		link: 'tasks/me',
+		description: 'Find out more about how to use Gauzy',
+		image: 'help.png',
+		link: 'help',
 		isEnabled: features.FEATURE_ORGANIZATION_HELP_CENTER
 	},
 	{
-		name: 'My Task Dashboard',
+		name: 'Lead, Customer & Client',
 		code: 'FEATURE_CONTACT',
-		description: 'My Task Dashboard',
-		image: 'team-task.png',
-		link: 'tasks/me',
+		description:
+			'Manage Leads, Customers and Clients, Create First Customer/Clients',
+		image: 'contact.png',
+		link: 'contacts/customers',
 		isEnabled: features.FEATURE_CONTACT
 	},
 	{
-		name: 'My Task Dashboard',
+		name: 'Goal and Objective',
 		code: 'FEATURE_GOAL',
-		description: 'My Task Dashboard',
-		image: 'team-task.png',
-		link: 'tasks/me',
+		description: 'Manage Goals and Objectives',
+		image: 'goal.png',
+		link: 'goals',
 		isEnabled: features.FEATURE_GOAL
 	},
 	{
-		name: 'My Task Dashboard',
-		code: 'FEATURE_GOAL_REPORT',
-		description: 'My Task Dashboard',
-		image: 'team-task.png',
-		link: 'tasks/me',
-		isEnabled: features.FEATURE_GOAL_REPORT
-	},
-	{
-		name: 'My Task Dashboard',
+		name: 'Goal Time Frame & KPI',
 		code: 'FEATURE_GOAL_SETTING',
-		description: 'My Task Dashboard',
-		image: 'team-task.png',
-		link: 'tasks/me',
+		description: 'Manage Goal Time Framework & KPIs',
+		image: 'goal-setting.png',
+		link: 'goals/settings',
 		isEnabled: features.FEATURE_GOAL_SETTING
 	},
 	{
-		name: 'My Task Dashboard',
+		name: 'All Report',
 		code: 'FEATURE_REPORT',
-		description: 'My Task Dashboard',
-		image: 'team-task.png',
-		link: 'tasks/me',
+		description: 'Manage Expense, Weekly, Time & Activity and etc reports',
+		image: 'all-report.png',
+		link: 'reports/all',
 		isEnabled: features.FEATURE_REPORT
 	},
 	{
-		name: 'My Task Dashboard',
+		name: 'Tenant User',
 		code: 'FEATURE_USER',
-		description: 'My Task Dashboard',
-		image: 'team-task.png',
-		link: 'tasks/me',
+		description: 'Manage Tenant Users',
+		image: 'user.png',
+		link: 'users',
 		isEnabled: features.FEATURE_USER
 	},
 	{
-		name: 'My Task Dashboard',
+		name: 'Tenant Organization',
 		code: 'FEATURE_ORGANIZATIONS',
-		description: 'My Task Dashboard',
-		image: 'team-task.png',
-		link: 'tasks/me',
+		description: 'Manage Tenant Organizations',
+		image: 'organization.png',
+		link: 'organizations',
 		isEnabled: features.FEATURE_ORGANIZATIONS
 	},
 	{
-		name: 'My Task Dashboard',
+		name: 'Apps & Integrations',
 		code: 'FEATURE_APP_INTEGRATION',
-		description: 'My Task Dashboard',
-		image: 'team-task.png',
-		link: 'tasks/me',
+		description:
+			'Manage Available Apps & Integrations Like Upwork & Hubstaff',
+		image: 'app-integration.png',
+		link: 'integrations/list',
 		isEnabled: features.FEATURE_APP_INTEGRATION
 	},
 	{
