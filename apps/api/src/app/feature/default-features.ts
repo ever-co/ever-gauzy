@@ -11,7 +11,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 			'Go to dashboard, Manage Employee Statistics, Time Tracking Dashboard',
 		image: 'dashboard.png',
 		link: 'dashboard/accounting',
-		isEnabled: features.FEATURE_DASHBOARD
+		isEnabled: features.FEATURE_DASHBOARD,
+		icon: 'home-outline',
+		status: 'info'
 	},
 	{
 		name: 'Time Tracking',
@@ -19,7 +21,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Download Desktop App, Create First Timesheet',
 		image: 'time-tracking-timesheet.png',
 		link: 'employees/timesheets',
-		isEnabled: features.FEATURE_TIME_TRACKING
+		isEnabled: features.FEATURE_TIME_TRACKING,
+		icon: 'file-text-outline',
+		status: 'primary'
 	},
 	{
 		name: 'Estimate',
@@ -27,7 +31,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Estimate, Create First Estimate',
 		image: 'estimate.png',
 		link: 'accounting/invoices/estimates',
-		isEnabled: features.FEATURE_ESTIMATE
+		isEnabled: features.FEATURE_ESTIMATE,
+		icon: 'file-text-outline',
+		status: 'success'
 	},
 	{
 		name: 'Estimate Received',
@@ -35,7 +41,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Received Estimate, Accept and Reject Estimate',
 		image: 'estimate-received.png',
 		link: 'accounting/invoices/estimates',
-		isEnabled: features.FEATURE_ESTIMATE_RECEIVED
+		isEnabled: features.FEATURE_ESTIMATE_RECEIVED,
+		icon: 'file-text-outline',
+		status: 'warning'
 	},
 	{
 		name: 'Invoice',
@@ -43,7 +51,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Invoice, Create First Invoice',
 		image: 'invoice.png',
 		link: 'accounting/invoices',
-		isEnabled: features.FEATURE_INVOICE
+		isEnabled: features.FEATURE_INVOICE,
+		icon: 'file-text-outline',
+		status: 'primary'
 	},
 	{
 		name: 'Invoice Received',
@@ -51,7 +61,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'View Received Invoice',
 		image: 'invoice-received.png',
 		link: 'accounting/invoices/received-invoices',
-		isEnabled: features.FEATURE_INVOICE_RECEIVED
+		isEnabled: features.FEATURE_INVOICE_RECEIVED,
+		icon: 'file-text-outline',
+		status: 'info'
 	},
 	{
 		name: 'Income',
@@ -59,7 +71,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Create First Income',
 		image: 'income.png',
 		link: 'accounting/income',
-		isEnabled: features.FEATURE_INCOME
+		isEnabled: features.FEATURE_INCOME,
+		icon: 'file-text-outline',
+		status: 'warning'
 	},
 	{
 		name: 'Expense',
@@ -67,7 +81,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Create First Expense',
 		image: 'expense.png',
 		link: 'accounting/expenses',
-		isEnabled: features.FEATURE_EXPENSE
+		isEnabled: features.FEATURE_EXPENSE,
+		icon: 'file-text-outline',
+		status: 'success'
 	},
 	{
 		name: 'Payment',
@@ -75,7 +91,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Payment, Create First Payment',
 		image: 'payment.png',
 		link: 'accounting/payments',
-		isEnabled: features.FEATURE_PAYMENT
+		isEnabled: features.FEATURE_PAYMENT,
+		icon: 'file-text-outline',
+		status: 'primary'
 	},
 	{
 		name: 'Proposal',
@@ -83,7 +101,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Proposal, Register First Proposal',
 		image: 'proposal.png',
 		link: 'sales/proposals',
-		isEnabled: features.FEATURE_PROPOSAL
+		isEnabled: features.FEATURE_PROPOSAL,
+		icon: 'file-text-outline',
+		status: 'info'
 	},
 	{
 		name: 'Proposal Template',
@@ -91,7 +111,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Create First Proposal Template',
 		image: 'proposal-template.png',
 		link: 'jobs/proposal-template',
-		isEnabled: features.FEATURE_PROPOSAL_TEMPLATE
+		isEnabled: features.FEATURE_PROPOSAL_TEMPLATE,
+		icon: 'file-text-outline',
+		status: 'primary'
 	},
 	{
 		name: 'Sales Pipeline',
@@ -99,7 +121,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Create Sales Pipeline',
 		image: 'pipeline.png',
 		link: 'sales/pipelines',
-		isEnabled: features.FEATURE_PIPELINE
+		isEnabled: features.FEATURE_PIPELINE,
+		icon: 'file-text-outline',
+		status: 'warning'
 	},
 	{
 		name: 'Sales Pipeline Deal',
@@ -107,7 +131,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Create Sales Pipeline Deal',
 		image: 'pipeline-deal.png',
 		link: 'sales/pipelines',
-		isEnabled: features.FEATURE_PIPELINE_DEAL
+		isEnabled: features.FEATURE_PIPELINE_DEAL,
+		icon: 'file-text-outline',
+		status: 'success'
 	},
 	{
 		name: 'Task Dashboard',
@@ -115,7 +141,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Task Dashboard',
 		image: 'task-dashboard.png',
 		link: 'tasks/dashboard',
-		isEnabled: features.FEATURE_DASHBOARD_TASK
+		isEnabled: features.FEATURE_DASHBOARD_TASK,
+		icon: 'file-text-outline',
+		status: 'primary'
 	},
 	{
 		name: 'Team Task Dashboard',
@@ -123,7 +151,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Team Task Dashboard',
 		image: 'team-task.png',
 		link: 'tasks/team',
-		isEnabled: features.FEATURE_TEAM_TASK
+		isEnabled: features.FEATURE_TEAM_TASK,
+		icon: 'file-text-outline',
+		status: 'info'
 	},
 	{
 		name: 'My Task Dashboard',
@@ -131,7 +161,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'My Task Dashboard',
 		image: 'team-task.png',
 		link: 'tasks/me',
-		isEnabled: features.FEATURE_MY_TASK
+		isEnabled: features.FEATURE_MY_TASK,
+		icon: 'file-text-outline',
+		status: 'success'
 	},
 	{
 		name: 'Jobs',
@@ -139,7 +171,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Job Search & Jobs Matching',
 		image: 'job.png',
 		link: 'jobs/search',
-		isEnabled: features.FEATURE_JOB
+		isEnabled: features.FEATURE_JOB,
+		icon: 'file-text-outline',
+		status: 'warning'
 	},
 	{
 		name: 'Employees',
@@ -147,7 +181,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Employees, Add or Invite Employees',
 		image: 'employee.png',
 		link: 'employees',
-		isEnabled: features.FEATURE_EMPLOYEES
+		isEnabled: features.FEATURE_EMPLOYEES,
+		icon: 'file-text-outline',
+		status: 'info'
 	},
 	{
 		name: 'Employee Time Activity',
@@ -156,7 +192,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 			'Manage Employee Time Activity, Screenshots, App, Visited Sites, Activities',
 		image: 'screenshot.png',
 		link: 'employees/activity',
-		isEnabled: features.FEATURE_EMPLOYEE_TIME_ACTIVITY
+		isEnabled: features.FEATURE_EMPLOYEE_TIME_ACTIVITY,
+		icon: 'file-text-outline',
+		status: 'primary'
 	},
 	{
 		name: 'Employee Timesheet',
@@ -165,7 +203,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 			'Manage Employee Timesheet Daily, Weekly, Calendar, Create First Timesheet',
 		image: 'timesheet.png',
 		link: 'employees/timesheets/daily',
-		isEnabled: features.FEATURE_EMPLOYEE_TIMESHEETS
+		isEnabled: features.FEATURE_EMPLOYEE_TIMESHEETS,
+		icon: 'file-text-outline',
+		status: 'success'
 	},
 	{
 		name: 'Appointment & Schedule',
@@ -174,7 +214,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 			'Employee Appointment, Schedules & Book Public Appointment',
 		image: 'appointment.png',
 		link: 'employees/appointments',
-		isEnabled: features.FEATURE_EMPLOYEE_APPOINTMENT
+		isEnabled: features.FEATURE_EMPLOYEE_APPOINTMENT,
+		icon: 'file-text-outline',
+		status: 'warning'
 	},
 	{
 		name: 'Employee Approval',
@@ -182,7 +224,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Employee Approval Request',
 		image: 'approval.png',
 		link: 'employees/approvals',
-		isEnabled: features.FEATURE_EMPLOYEE_APPROVAL
+		isEnabled: features.FEATURE_EMPLOYEE_APPROVAL,
+		icon: 'file-text-outline',
+		status: 'primary'
 	},
 	{
 		name: 'Employee Approval Policy',
@@ -190,7 +234,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Employee Approval Request Policy',
 		image: 'approval-policy.png',
 		link: 'organization/approval-policy',
-		isEnabled: features.FEATURE_EMPLOYEE_APPROVAL_POLICY
+		isEnabled: features.FEATURE_EMPLOYEE_APPROVAL_POLICY,
+		icon: 'file-text-outline',
+		status: 'info'
 	},
 	{
 		name: 'Employee Level',
@@ -198,7 +244,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Employee Level',
 		image: 'employee-level.png',
 		link: 'employees/employee-level',
-		isEnabled: features.FEATURE_EMPLOYEE_LEVEL
+		isEnabled: features.FEATURE_EMPLOYEE_LEVEL,
+		icon: 'file-text-outline',
+		status: 'warning'
 	},
 	{
 		name: 'Position',
@@ -206,7 +254,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Employee Position',
 		image: 'position.png',
 		link: 'employees/positions',
-		isEnabled: features.FEATURE_EMPLOYEE_POSITION
+		isEnabled: features.FEATURE_EMPLOYEE_POSITION,
+		icon: 'file-text-outline',
+		status: 'success'
 	},
 	{
 		name: 'Employee Time Off',
@@ -214,7 +264,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Employee Time Off',
 		image: 'timeoff.png',
 		link: 'employees/time-off',
-		isEnabled: features.FEATURE_EMPLOYEE_TIMEOFF
+		isEnabled: features.FEATURE_EMPLOYEE_TIMEOFF,
+		icon: 'file-text-outline',
+		status: 'info'
 	},
 	{
 		name: 'Employee Recurring Expense',
@@ -222,7 +274,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Employee Recurring Expense',
 		image: 'recurring-expense.png',
 		link: 'employees/recurring-expenses',
-		isEnabled: features.FEATURE_EMPLOYEE_RECURRING_EXPENSE
+		isEnabled: features.FEATURE_EMPLOYEE_RECURRING_EXPENSE,
+		icon: 'file-text-outline',
+		status: 'primary'
 	},
 	{
 		name: 'Candidate',
@@ -230,7 +284,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Candidates, Interviews & Invites',
 		image: 'candidate.png',
 		link: 'employees/candidates',
-		isEnabled: features.FEATURE_EMPLOYEE_CANDIDATE
+		isEnabled: features.FEATURE_EMPLOYEE_CANDIDATE,
+		icon: 'file-text-outline',
+		status: 'success'
 	},
 	{
 		name: 'Manage Interview',
@@ -238,7 +294,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Candidate Interviews',
 		image: 'interview.png',
 		link: 'employees/candidates/interviews/calendar',
-		isEnabled: features.FEATURE_MANAGE_INTERVIEW
+		isEnabled: features.FEATURE_MANAGE_INTERVIEW,
+		icon: 'file-text-outline',
+		status: 'warning'
 	},
 	{
 		name: 'Manage Invite',
@@ -246,7 +304,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Invites, Create First Candidate Invites',
 		image: 'invite.png',
 		link: 'employees/candidates/invites',
-		isEnabled: features.FEATURE_MANAGE_INVITE
+		isEnabled: features.FEATURE_MANAGE_INVITE,
+		icon: 'file-text-outline',
+		status: 'primary'
 	},
 	{
 		name: 'Manage Organization',
@@ -254,7 +314,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Organization Details, Location and Settings',
 		image: 'organization-detail.png',
 		link: 'organizations',
-		isEnabled: features.FEATURE_ORGANIZATION
+		isEnabled: features.FEATURE_ORGANIZATION,
+		icon: 'file-text-outline',
+		status: 'info'
 	},
 	{
 		name: 'Organization Equipment',
@@ -262,7 +324,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Organization Equipment, Create First Equipment',
 		image: 'equipment.png',
 		link: 'organization/equipment',
-		isEnabled: features.FEATURE_ORGANIZATION_EQUIPMENT
+		isEnabled: features.FEATURE_ORGANIZATION_EQUIPMENT,
+		icon: 'file-text-outline',
+		status: 'warning'
 	},
 	{
 		name: 'Product Inventory',
@@ -270,7 +334,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Product Inventory, Create First Product',
 		image: 'inventory.png',
 		link: 'organization/inventory/all',
-		isEnabled: features.FEATURE_ORGANIZATION_INVENTORY
+		isEnabled: features.FEATURE_ORGANIZATION_INVENTORY,
+		icon: 'file-text-outline',
+		status: 'success'
 	},
 	{
 		name: 'Organization Tag',
@@ -278,7 +344,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Organization Tag, Create First Tag',
 		image: 'tag.png',
 		link: 'organization/tags',
-		isEnabled: features.FEATURE_ORGANIZATION_TAG
+		isEnabled: features.FEATURE_ORGANIZATION_TAG,
+		icon: 'file-text-outline',
+		status: 'primary'
 	},
 	{
 		name: 'Organization Vendor',
@@ -286,7 +354,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Organization Vendor, Create First Vendor',
 		image: 'vendor.png',
 		link: 'organization/vendors',
-		isEnabled: features.FEATURE_ORGANIZATION_VENDOR
+		isEnabled: features.FEATURE_ORGANIZATION_VENDOR,
+		icon: 'file-text-outline',
+		status: 'info'
 	},
 	{
 		name: 'Organization Project',
@@ -294,7 +364,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Organization Project, Create First Project',
 		image: 'project.png',
 		link: 'organization/projects',
-		isEnabled: features.FEATURE_ORGANIZATION_PROJECT
+		isEnabled: features.FEATURE_ORGANIZATION_PROJECT,
+		icon: 'file-text-outline',
+		status: 'warning'
 	},
 	{
 		name: 'Organization Department',
@@ -302,7 +374,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Organization Department, Create First Department',
 		image: 'department.png',
 		link: 'organization/departments',
-		isEnabled: features.FEATURE_ORGANIZATION_DEPARTMENT
+		isEnabled: features.FEATURE_ORGANIZATION_DEPARTMENT,
+		icon: 'file-text-outline',
+		status: 'success'
 	},
 	{
 		name: 'Organization Team',
@@ -310,7 +384,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Organization Team, Create First Team',
 		image: 'team.png',
 		link: 'organization/teams',
-		isEnabled: features.FEATURE_ORGANIZATION_TEAM
+		isEnabled: features.FEATURE_ORGANIZATION_TEAM,
+		icon: 'file-text-outline',
+		status: 'info'
 	},
 	{
 		name: 'Organization Document',
@@ -318,7 +394,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Organization Document, Create First Document',
 		image: 'document.png',
 		link: 'organization/documents',
-		isEnabled: features.FEATURE_ORGANIZATION_DOCUMENT
+		isEnabled: features.FEATURE_ORGANIZATION_DOCUMENT,
+		icon: 'file-text-outline',
+		status: 'primary'
 	},
 	{
 		name: 'Organization Employment Type',
@@ -326,7 +404,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Organization Employment Type',
 		image: 'employment-type.png',
 		link: 'organization/employment-types',
-		isEnabled: features.FEATURE_ORGANIZATION_EMPLOYMENT_TYPE
+		isEnabled: features.FEATURE_ORGANIZATION_EMPLOYMENT_TYPE,
+		icon: 'file-text-outline',
+		status: 'success'
 	},
 	{
 		name: 'Organization Recurring Expenses',
@@ -335,7 +415,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 			'Manage Organization Recurring Expenses, Create First Recurring Expenses',
 		image: 'organization-recurring-expense.png',
 		link: 'organization/expense-recurring',
-		isEnabled: features.FEATURE_ORGANIZATION_RECURRING_EXPENSE
+		isEnabled: features.FEATURE_ORGANIZATION_RECURRING_EXPENSE,
+		icon: 'file-text-outline',
+		status: 'warning'
 	},
 	{
 		name: 'Help Center',
@@ -343,7 +425,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Find out more about how to use Gauzy',
 		image: 'help.png',
 		link: 'help',
-		isEnabled: features.FEATURE_ORGANIZATION_HELP_CENTER
+		isEnabled: features.FEATURE_ORGANIZATION_HELP_CENTER,
+		icon: 'file-text-outline',
+		status: 'primary'
 	},
 	{
 		name: 'Lead, Customer & Client',
@@ -352,7 +436,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 			'Manage Leads, Customers and Clients, Create First Customer/Clients',
 		image: 'contact.png',
 		link: 'contacts/customers',
-		isEnabled: features.FEATURE_CONTACT
+		isEnabled: features.FEATURE_CONTACT,
+		icon: 'file-text-outline',
+		status: 'info'
 	},
 	{
 		name: 'Goal and Objective',
@@ -360,7 +446,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Goals and Objectives',
 		image: 'goal.png',
 		link: 'goals',
-		isEnabled: features.FEATURE_GOAL
+		isEnabled: features.FEATURE_GOAL,
+		icon: 'file-text-outline',
+		status: 'warning'
 	},
 	{
 		name: 'Goal Time Frame & KPI',
@@ -368,7 +456,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Goal Time Framework & KPIs',
 		image: 'goal-setting.png',
 		link: 'goals/settings',
-		isEnabled: features.FEATURE_GOAL_SETTING
+		isEnabled: features.FEATURE_GOAL_SETTING,
+		icon: 'file-text-outline',
+		status: 'success'
 	},
 	{
 		name: 'All Report',
@@ -376,7 +466,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Expense, Weekly, Time & Activity and etc reports',
 		image: 'all-report.png',
 		link: 'reports/all',
-		isEnabled: features.FEATURE_REPORT
+		isEnabled: features.FEATURE_REPORT,
+		icon: 'file-text-outline',
+		status: 'info'
 	},
 	{
 		name: 'Tenant User',
@@ -384,7 +476,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Tenant Users',
 		image: 'user.png',
 		link: 'users',
-		isEnabled: features.FEATURE_USER
+		isEnabled: features.FEATURE_USER,
+		icon: 'file-text-outline',
+		status: 'primary'
 	},
 	{
 		name: 'Tenant Organization',
@@ -392,7 +486,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Tenant Organizations',
 		image: 'organization.png',
 		link: 'organizations',
-		isEnabled: features.FEATURE_ORGANIZATIONS
+		isEnabled: features.FEATURE_ORGANIZATIONS,
+		icon: 'file-text-outline',
+		status: 'success'
 	},
 	{
 		name: 'Apps & Integrations',
@@ -401,7 +497,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 			'Manage Available Apps & Integrations Like Upwork & Hubstaff',
 		image: 'app-integration.png',
 		link: 'integrations/list',
-		isEnabled: features.FEATURE_APP_INTEGRATION
+		isEnabled: features.FEATURE_APP_INTEGRATION,
+		icon: 'file-text-outline',
+		status: 'warning'
 	},
 	{
 		name: 'Email History',
@@ -409,7 +507,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Email History',
 		image: 'email-history.png',
 		link: 'settings/email-history',
-		isEnabled: features.FEATURE_EMAIL_HISTORY
+		isEnabled: features.FEATURE_EMAIL_HISTORY,
+		icon: 'file-text-outline',
+		status: 'primary'
 	},
 	{
 		name: 'Custom Email Template',
@@ -417,7 +517,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Customize Email Template',
 		image: 'email-template.png',
 		link: 'settings/email-templates',
-		isEnabled: features.FEATURE_EMAIL_TEMPLATE
+		isEnabled: features.FEATURE_EMAIL_TEMPLATE,
+		icon: 'file-text-outline',
+		status: 'info'
 	},
 	{
 		name: 'Entity Import',
@@ -425,7 +527,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Entity Import',
 		image: 'import.png',
 		link: 'settings/import-export/import',
-		isEnabled: features.FEATURE_IMPORT
+		isEnabled: features.FEATURE_IMPORT,
+		icon: 'file-text-outline',
+		status: 'warning'
 	},
 	{
 		name: 'Entity Export',
@@ -433,7 +537,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Entity Export',
 		image: 'export.png',
 		link: 'settings/import-export/export',
-		isEnabled: features.FEATURE_EXPORT
+		isEnabled: features.FEATURE_EXPORT,
+		icon: 'file-text-outline',
+		status: 'success'
 	},
 
 	{
@@ -442,7 +548,9 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage File Storage Provider',
 		image: 'file-storage.png',
 		link: 'settings/file-storage',
-		isEnabled: features.FEATURE_FILE_STORAGE
+		isEnabled: features.FEATURE_FILE_STORAGE,
+		icon: 'file-text-outline',
+		status: 'info'
 	},
 	{
 		name: 'SMS Gateway',
@@ -450,16 +558,19 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage SMS Gateway',
 		image: 'sms-gateway.png',
 		link: 'tasks/me',
-		isEnabled: features.FEATURE_SMS_GATEWAY
+		isEnabled: features.FEATURE_SMS_GATEWAY,
+		icon: 'file-text-outline',
+		status: 'primary'
 	},
 	{
 		name: 'Custom SMTP',
 		code: 'FEATURE_SMTP',
 		description: 'Manage Tenant & Organization Custom SMTP',
-
 		image: 'smtp.png',
 		link: 'settings/custom-smtp',
-		isEnabled: features.FEATURE_SMTP
+		isEnabled: features.FEATURE_SMTP,
+		icon: 'file-text-outline',
+		status: 'success'
 	},
 	{
 		name: 'Roles & Permissions',
@@ -467,6 +578,8 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		description: 'Manage Roles & Permissions',
 		image: 'role-permission.png',
 		link: 'settings/roles',
-		isEnabled: features.FEATURE_ROLES_PERMISSION
+		isEnabled: features.FEATURE_ROLES_PERMISSION,
+		icon: 'home-outline',
+		status: 'warning'
 	}
 ];

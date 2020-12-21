@@ -6,16 +6,16 @@
 
 <ng-container *ngFor="let block of blocks">
 	<div class="row centered">
-		<ng-container *ngFor="let row of block.rows">
+		<ng-container *ngFor="let row of block">
 			<div class="col-3">
 				<nb-card
-					[status]="row?.status"
 					class="shortcut-card"
-					(click)="navigateTo(row?.navigateTo)"
+					[status]="row?.status"
+					(click)="navigateTo(row?.link)"
 				>
 					<nb-card-header>
-						<nb-icon [icon]="row?.icon"></nb-icon>
-						{{ row?.title }}
+						<nb-icon [icon]="row?.icon" *ngIf="row?.icon"></nb-icon>
+						{{ row?.name }}
 					</nb-card-header>
 					<nb-card-body>
 						<div class="shortcut">

@@ -7,9 +7,14 @@ import {
 	OneToMany
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
+import * as _ from 'underscore';
 import { Base } from '../core/entities/base';
 import { FeatureOrganization } from './feature_organization.entity';
-import { IFeature, IFeatureOrganization } from '@gauzy/models';
+import {
+	IFeature,
+	IFeatureOrganization,
+	FeatureStatusEnum
+} from '@gauzy/models';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { FileStorage } from '../core/file-storage';
 import { gauzyToggleFeatures } from '@env-api/environment';
@@ -56,6 +61,23 @@ export class Feature extends Base implements IFeature {
 	@IsString()
 	@Column()
 	link: string;
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@Column({ nullable: true })
+	status?: string;
+
+	@AfterLoad()
+	afterLoadStatus() {
+		if (!this.status) {
+			this.status = _.shuffle(Object.values(FeatureStatusEnum))[0];
+		}
+	}
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@Column({ nullable: true })
+	icon?: string;
 
 	isEnabled?: boolean;
 	@AfterLoad()

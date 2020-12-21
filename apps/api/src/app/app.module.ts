@@ -648,7 +648,8 @@ if (process.env.DB_TYPE === 'postgres') {
 		GoalKpiModule,
 		GoalTemplateModule,
 		KeyresultTemplateModule,
-		GoalKpiTemplateModule
+		GoalKpiTemplateModule,
+		FeatureModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

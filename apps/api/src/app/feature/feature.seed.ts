@@ -23,13 +23,24 @@ export const createDefaultFeatureToggle = async (
 
 	const features: IFeature[] = [];
 	DEFAULT_FEATURES.forEach((item: IFeatureCreateInput) => {
-		const { name, code, description, image, link, isEnabled } = item;
+		const {
+			name,
+			code,
+			description,
+			image,
+			link,
+			isEnabled,
+			status,
+			icon
+		} = item;
 		const feature: IFeature = new Feature({
 			name,
 			code,
 			description,
 			image: copyImage(image),
 			link,
+			status,
+			icon,
 			featureOrganizations: [
 				new FeatureOrganization({
 					isEnabled,
