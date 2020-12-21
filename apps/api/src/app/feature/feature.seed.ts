@@ -1,48 +1,124 @@
 import { Connection } from 'typeorm';
 import * as path from 'path';
 import { copyFileSync, mkdirSync } from 'fs';
+import chalk from 'chalk';
+import * as rimraf from 'rimraf';
 import { environment as env } from '@env-api/environment';
+import {
+	IFeature,
+	IFeatureCreateInput,
+	IFeatureOrganization,
+	ITenant
+} from '@gauzy/models';
 import { DEFAULT_FEATURES } from './default-features';
-import { Organization } from '../organization/organization.entity';
 import { Tenant } from '../tenant/tenant.entity';
 import { Feature } from './feature.entity';
-import { IFeatureCreateInput } from '@gauzy/models';
+import { FeatureOrganization } from './feature_organization.entity';
 
 export const createDefaultFeatureToggle = async (
 	connection: Connection,
-	tenant: Tenant,
-	organizations: Organization[]
+	tenant: Tenant
 ) => {
+	await cleanFeature(connection);
+
+	const features: IFeature[] = [];
 	DEFAULT_FEATURES.forEach((item: IFeatureCreateInput) => {
-		const { name, code, description, image, link } = item;
-		const feature = new Feature({
+		const { name, code, description, image, link, isEnabled } = item;
+		const feature: IFeature = new Feature({
 			name,
 			code,
 			description,
 			image: copyImage(image),
-			link
+			link,
+			featureOrganizations: [
+				new FeatureOrganization({
+					isEnabled,
+					tenant
+				})
+			]
 		});
-		console.log(feature);
+		features.push(feature);
 	});
+
+	await connection.manager.save(features);
+	return await connection.getRepository(Feature).find();
 };
+
+export const createRandomFeatureToggle = async (
+	connection: Connection,
+	tenants: Tenant[]
+) => {
+	const features: IFeature[] = await connection.getRepository(Feature).find();
+
+	const featureOrganizations: IFeatureOrganization[] = [];
+	features.forEach(async (feature: IFeature) => {
+		tenants.forEach((tenant: ITenant) => {
+			const { isEnabled } = feature;
+			const featureOrganization: IFeatureOrganization = new FeatureOrganization(
+				{
+					isEnabled,
+					tenant,
+					feature
+				}
+			);
+			featureOrganizations.push(featureOrganization);
+		});
+	});
+
+	await connection.manager.save(featureOrganizations);
+	return features;
+};
+
+async function cleanFeature(connection) {
+	if (env.database.type === 'sqlite') {
+		await connection.query('DELETE FROM feature');
+		await connection.query('DELETE FROM feature_organization');
+	} else {
+		await connection.query(
+			'TRUNCATE TABLE feature RESTART IDENTITY CASCADE'
+		);
+		await connection.query(
+			'TRUNCATE TABLE feature_organization RESTART IDENTITY CASCADE'
+		);
+	}
+
+	console.log(chalk.green(`CLEANING UP FEATURE IMAGES...`));
+	const destDir = 'features';
+
+	await new Promise((resolve, reject) => {
+		const dir = env.isElectron
+			? path.resolve(env.gauzyUserPath, ...['public', destDir])
+			: path.resolve('.', ...['apps', 'api', 'public', destDir]);
+
+		// delete old generated report image
+		rimraf(
+			dir,
+			() => {
+				console.log(chalk.green(`CLEANED UP FEATURE IMAGES`));
+				resolve(null);
+			},
+			(error) => {
+				reject(null);
+			}
+		);
+	});
+}
 
 function copyImage(fileName: string) {
 	try {
+		const destDir = 'features';
 		const dir = env.isElectron
 			? path.resolve(
 					env.gauzyUserPath,
-					...['src', 'assets', 'seed', 'features']
+					...['src', 'assets', 'seed', destDir]
 			  )
 			: path.resolve(
 					'.',
-					...['apps', 'api', 'src', 'assets', 'seed', 'features']
+					...['apps', 'api', 'src', 'assets', 'seed', destDir]
 			  );
-
 		const baseDir = env.isElectron
 			? path.resolve(env.gauzyUserPath, ...['public'])
 			: path.resolve('.', ...['apps', 'api', 'public']);
-
-		const destDir = 'features';
 
 		mkdirSync(path.join(baseDir, destDir), { recursive: true });
 

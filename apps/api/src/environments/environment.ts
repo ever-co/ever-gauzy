@@ -278,8 +278,8 @@ export const gauzyToggleFeatures: IGauzyFeatures = {
 		process.env.FEATURE_EMAIL_HISTORY === 'false' ? false : true,
 	FEATURE_EMAIL_TEMPLATE:
 		process.env.FEATURE_EMAIL_TEMPLATE === 'false' ? false : true,
-	FEATURE_IMPORT_EXPORT:
-		process.env.FEATURE_IMPORT_EXPORT === 'false' ? false : true,
+	FEATURE_IMPORT: process.env.FEATURE_IMPORT === 'false' ? false : true,
+	FEATURE_EXPORT: process.env.FEATURE_EXPORT === 'false' ? false : true,
 	FEATURE_FILE_STORAGE:
 		process.env.FEATURE_FILE_STORAGE === 'false' ? false : true,
 	FEATURE_PAYMENT_GATEWAY:
@@ -288,7 +288,5 @@ export const gauzyToggleFeatures: IGauzyFeatures = {
 		process.env.FEATURE_SMS_GATEWAY === 'false' ? false : true,
 	FEATURE_SMTP: process.env.FEATURE_SMTP === 'false' ? false : true,
 	FEATURE_ROLES_PERMISSION:
-		process.env.FEATURE_ROLES_PERMISSION === 'false' ? false : true,
-	FEATURE_DANGER_ZONE:
-		process.env.FEATURE_DANGER_ZONE === 'false' ? false : true
+		process.env.FEATURE_ROLES_PERMISSION === 'false' ? false : true
 };

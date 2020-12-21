@@ -290,7 +290,10 @@ import { createDefaultJobSearchCategories } from '../../employee-job-preset/job-
 import { createDefaultJobSearchOccupations } from '../../employee-job-preset/job-search-occupation/job-search-occupation.seed';
 import { createDefaultReport } from '../../reports/report.seed';
 import { createCurrencies } from '../../currency/currency.seed';
-import { createDefaultFeatureToggle } from '../../feature/feature.seed';
+import {
+	createDefaultFeatureToggle,
+	createRandomFeatureToggle
+} from '../../feature/feature.seed';
 
 @Injectable()
 export class SeedDataService {
@@ -555,11 +558,7 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Feature Toggle',
-			createDefaultFeatureToggle(
-				this.connection,
-				this.tenant,
-				this.organizations
-			)
+			createDefaultFeatureToggle(this.connection, this.tenant)
 		);
 
 		await this.tryExecute(
@@ -1195,6 +1194,11 @@ export class SeedDataService {
 		const tenants = await createRandomTenants(
 			this.connection,
 			randomSeedConfig.tenants || 1
+		);
+
+		await this.tryExecute(
+			'Random Feature Toggle',
+			createRandomFeatureToggle(this.connection, tenants)
 		);
 
 		// Independent roles and role permissions for each tenant

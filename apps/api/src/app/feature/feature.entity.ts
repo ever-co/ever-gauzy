@@ -1,12 +1,33 @@
-import { Column, Entity, Index, JoinColumn, OneToMany } from 'typeorm';
+import {
+	AfterLoad,
+	Column,
+	Entity,
+	Index,
+	JoinColumn,
+	OneToMany
+} from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { Base } from '../core/entities/base';
 import { FeatureOrganization } from './feature_organization.entity';
 import { IFeature, IFeatureOrganization } from '@gauzy/models';
 import { IsNotEmpty, IsString } from 'class-validator';
+import { FileStorage } from '../core/file-storage';
+import { gauzyToggleFeatures } from '@env-api/environment';
 
 @Entity('feature')
 export class Feature extends Base implements IFeature {
+	@ApiProperty({ type: FeatureOrganization })
+	@OneToMany(
+		() => FeatureOrganization,
+		(featureOrganization) => featureOrganization.feature,
+		{
+			cascade: true,
+			onDelete: 'CASCADE'
+		}
+	)
+	@JoinColumn()
+	featureOrganizations?: IFeatureOrganization[];
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -36,11 +57,22 @@ export class Feature extends Base implements IFeature {
 	@Column()
 	link: string;
 
-	@ApiProperty({ type: FeatureOrganization })
-	@OneToMany(
-		() => FeatureOrganization,
-		(featureOrganization) => featureOrganization.feature
-	)
-	@JoinColumn()
-	featureOrganizations?: IFeatureOrganization[];
+	isEnabled?: boolean;
+	@AfterLoad()
+	afterLoadEnabled?() {
+		if (gauzyToggleFeatures.hasOwnProperty(this.code)) {
+			const feature = gauzyToggleFeatures[this.code];
+			this.isEnabled = feature;
+		} else {
+			this.isEnabled = true;
+		}
+	}
+
+	imageUrl?: string;
+	@AfterLoad()
+	afterLoad?() {
+		if (this.image) {
+			this.imageUrl = new FileStorage().getProvider().url(this.image);
+		}
+	}
 }

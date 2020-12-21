@@ -16,7 +16,7 @@ export class FeatureOrganization
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((feature: FeatureOrganization) => feature.feature)
 	@Column()
-	featureId: string;
+	readonly featureId: string;
 
 	@Column({ default: true })
 	isEnabled: boolean;
