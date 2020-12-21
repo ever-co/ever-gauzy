@@ -86,7 +86,7 @@ export interface IOrganizationProjectsUpdateInput
 }
 
 export interface IOrganizationProjectStoreState {
-	projects: IOrganizationProject;
+	project: IOrganizationProject;
 	action: OrganizationProjectAction;
 }
 

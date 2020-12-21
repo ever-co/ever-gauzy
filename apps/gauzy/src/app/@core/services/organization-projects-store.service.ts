@@ -32,20 +32,20 @@ export class OrganizationProjectStore {
 	) {}
 
 	organizationProjectAction$ = this.organizationProjectAkitaQuery.select(
-		({ projects, action }) => {
-			return { projects, action };
+		({ project, action }) => {
+			return { project, action };
 		}
 	);
 
 	set organizationProjectAction({
-		projects,
+		project,
 		action
 	}: {
-		projects: IOrganizationProject;
+		project: IOrganizationProject;
 		action: OrganizationProjectAction;
 	}) {
 		this.organizationProjectAkitaStore.update({
-			projects: projects,
+			project: project,
 			action
 		});
 	}

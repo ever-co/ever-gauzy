@@ -171,7 +171,7 @@ export class ProjectsComponent
 				.delete(this.selectedProject ? this.selectedProject.id : id)
 				.then(() => {
 					this.organizationProjectStore.organizationProjectAction = {
-						projects: this.selectedProject,
+						project: this.selectedProject,
 						action: OrganizationProjectAction.DELETED
 					};
 				});
@@ -214,9 +214,9 @@ export class ProjectsComponent
 				if (project.name) {
 					await this.organizationProjectsService
 						.create(project)
-						.then((projects: IOrganizationProject) => {
+						.then((project: IOrganizationProject) => {
 							this.organizationProjectStore.organizationProjectAction = {
-								projects,
+								project,
 								action: OrganizationProjectAction.CREATED
 							};
 						});
@@ -235,9 +235,9 @@ export class ProjectsComponent
 			case 'edit':
 				await this.organizationProjectsService
 					.edit(project)
-					.then((projects: IOrganizationProject) => {
+					.then((project: IOrganizationProject) => {
 						this.organizationProjectStore.organizationProjectAction = {
-							projects,
+							project,
 							action: OrganizationProjectAction.UPDATED
 						};
 					});

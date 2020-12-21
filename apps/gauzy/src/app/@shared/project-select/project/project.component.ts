@@ -176,16 +176,16 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	private organizationProjectAction() {
 		this._organizationProjectStore.organizationProjectAction$
 			.pipe(untilDestroyed(this))
-			.subscribe(({ projects, action }) => {
+			.subscribe(({ project, action }) => {
 				switch (action) {
 					case OrganizationProjectAction.CREATED:
-						this.createOrganizationProject(projects);
+						this.createOrganizationProject(project);
 						break;
 					case OrganizationProjectAction.UPDATED:
-						this.updateOrganizationProject(projects);
+						this.updateOrganizationProject(project);
 						break;
 					case OrganizationProjectAction.DELETED:
-						this.deleteOrganizationProject(projects);
+						this.deleteOrganizationProject(project);
 						break;
 					default:
 						break;
