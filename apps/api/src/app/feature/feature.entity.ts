@@ -5,8 +5,7 @@ import {
 	Index,
 	JoinColumn,
 	ManyToOne,
-	OneToMany,
-	RelationId
+	OneToMany
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import * as _ from 'underscore';
