@@ -3,8 +3,10 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { IEmployeeProposalTemplate, IOrganization } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import { filter } from 'rxjs/operators';
 import { ProposalTemplateService } from '../proposal-template.service';
@@ -15,7 +17,9 @@ import { ProposalTemplateService } from '../proposal-template.service';
 	templateUrl: './add-edit-proposal-template.component.html',
 	styleUrls: ['./add-edit-proposal-template.component.scss']
 })
-export class AddEditProposalTemplateComponent implements OnInit {
+export class AddEditProposalTemplateComponent
+	extends TranslationBaseComponent
+	implements OnInit {
 	mode: 'create' | 'update' = 'create';
 
 	@Input() selectedEmployee: SelectedEmployee;
@@ -32,8 +36,11 @@ export class AddEditProposalTemplateComponent implements OnInit {
 		private fb: FormBuilder,
 		private proposalTemplateService: ProposalTemplateService,
 		private toastrService: ToastrService,
-		private store: Store
-	) {}
+		private store: Store,
+		readonly translate: TranslateService
+	) {
+		super(translate);
+	}
 
 	ngOnInit(): void {
 		if (this.proposalTemplate && this.proposalTemplate.id) {
@@ -92,11 +99,23 @@ export class AddEditProposalTemplateComponent implements OnInit {
 				this.dialogRef.close(data);
 				if (this.mode === 'create') {
 					this.toastrService.success(
-						'PROPOSAL_TEMPLATE.PROPOSAL_CREATE_MESSAGE'
+						this.getTranslation(
+							'PROPOSAL_TEMPLATE.PROPOSAL_CREATE_MESSAGE',
+							{
+								name: request.name
+							}
+						),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 				} else {
 					this.toastrService.success(
-						'PROPOSAL_TEMPLATE.PROPOSAL_EDIT_MESSAGE'
+						this.getTranslation(
+							'PROPOSAL_TEMPLATE.PROPOSAL_EDIT_MESSAGE',
+							{
+								name: request.name
+							}
+						),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 				}
 			}).catch((error) => {

@@ -222,7 +222,13 @@ export class ProposalTemplateComponent
 	deleteProposal(): void {
 		this.proposalTemplateService.delete(this.selectedItem.id).then(() => {
 			this.toastrService.success(
-				this.getTranslation('PROPOSAL_TEMPLATE.PROPOSAL_DELETE_MESSAGE')
+				this.getTranslation(
+					'PROPOSAL_TEMPLATE.PROPOSAL_DELETE_MESSAGE',
+					{
+						name: this.selectedItem.name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 			this.getProposalTemplates();
 		});
@@ -234,8 +240,12 @@ export class ProposalTemplateComponent
 			.then(() => {
 				this.toastrService.success(
 					this.getTranslation(
-						'PROPOSAL_TEMPLATE.PROPOSAL_MAKE_DEFAULT_MESSAGE'
-					)
+						'PROPOSAL_TEMPLATE.PROPOSAL_MAKE_DEFAULT_MESSAGE',
+						{
+							name: this.selectedItem.name
+						}
+					),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
 				this.getProposalTemplates();
 			});

@@ -7,7 +7,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbIconModule,
 	NbSpinnerModule,
-	NbPopoverModule,
 	NbCardModule,
 	NbInputModule,
 	NbSelectModule,

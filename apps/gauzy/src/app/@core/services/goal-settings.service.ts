@@ -42,12 +42,7 @@ export class GoalSettingsService {
 	createTimeFrame(timeFrame): Promise<IGoalTimeFrame> {
 		return this._http
 			.post<IGoalTimeFrame>(`${this.TIME_FRAME_URL}/create`, timeFrame)
-			.pipe(
-				tap(() =>
-					this.toastrService.primary('Time Frame Created', 'Success')
-				),
-				catchError((error) => this.errorHandler(error))
-			)
+			.pipe(first())
 			.toPromise();
 	}
 
@@ -76,11 +71,7 @@ export class GoalSettingsService {
 	): Promise<IGoalTimeFrame> {
 		return this._http
 			.put<IGoalTimeFrame>(`${this.TIME_FRAME_URL}/${id}`, goalTimeFrame)
-			.pipe(
-				tap(() =>
-					this.toastrService.primary('Time Frame Updated', 'Success')
-				)
-			)
+			.pipe(first())
 			.toPromise();
 	}
 
@@ -88,10 +79,7 @@ export class GoalSettingsService {
 	createKPI(kpi): Promise<IKPI> {
 		return this._http
 			.post<IKPI>(`${this.KPI_URL}/create`, kpi)
-			.pipe(
-				tap(() => this.toastrService.primary('KPI Created', 'Success')),
-				catchError((error) => this.errorHandler(error))
-			)
+			.pipe(first())
 			.toPromise();
 	}
 
@@ -115,9 +103,7 @@ export class GoalSettingsService {
 	updateKPI(id: string, kpiData: IKPI): Promise<IKPI> {
 		return this._http
 			.put<IKPI>(`${this.KPI_URL}/${id}`, kpiData)
-			.pipe(
-				tap(() => this.toastrService.primary('KPI Updated', 'Success'))
-			)
+			.pipe(first())
 			.toPromise();
 	}
 

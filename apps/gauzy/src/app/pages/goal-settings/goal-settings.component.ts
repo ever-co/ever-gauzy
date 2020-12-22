@@ -211,19 +211,19 @@ export class GoalSettingsComponent
 						type: 'string'
 					},
 					currentValue: {
-						title: 'Current value',
+						title: this.getTranslation('SM_TABLE.CURRENT_VALUE'),
 						type: 'custom',
 						filter: false,
 						renderComponent: ValueWithUnitComponent
 					},
 					targetValue: {
-						title: 'Target value',
+						title: this.getTranslation('SM_TABLE.TARGET_VALUE'),
 						type: 'custom',
 						filter: false,
 						renderComponent: ValueWithUnitComponent
 					},
 					updatedAt: {
-						title: 'Last Updated',
+						title: this.getTranslation('SM_TABLE.LAST_UPDATED'),
 						type: 'custom',
 						filter: false,
 						renderComponent: DateViewComponent
@@ -331,8 +331,12 @@ export class GoalSettingsComponent
 		const dialog = this.dialogService.open(AlertModalComponent, {
 			context: {
 				alertOptions: {
-					title: 'Delete Time Frame',
-					message: 'Are you sure? This action is irreversible.',
+					title: this.translateService.instant(
+						'GOALS_PAGE.SETTINGS.DELETE_TIME_FRAME_TITLE'
+					),
+					message: this.translateService.instant(
+						'GOALS_PAGE.SETTINGS.DELETE_TIME_FRAME_CONFIRMATION'
+					),
 					status: 'danger'
 				}
 			},
@@ -345,9 +349,12 @@ export class GoalSettingsComponent
 					.deleteTimeFrame(this.selectedTimeFrame.id)
 					.then(async (res) => {
 						if (res) {
-							this.toastrService.danger(
+							this.toastrService.primary(
 								this.getTranslation(
-									'TOASTR.MESSAGE.TIME_FRAME_DELETED'
+									'TOASTR.MESSAGE.TIME_FRAME_DELETED',
+									{
+										name: this.selectedTimeFrame.name
+									}
 								),
 								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
@@ -370,8 +377,12 @@ export class GoalSettingsComponent
 		const dialog = this.dialogService.open(AlertModalComponent, {
 			context: {
 				alertOptions: {
-					title: 'Delete KPI',
-					message: 'Are you sure? This action is irreversible.',
+					title: this.translateService.instant(
+						'GOALS_PAGE.SETTINGS.DELETE_KPI_TITLE'
+					),
+					message: this.translateService.instant(
+						'GOALS_PAGE.SETTINGS.DELETE_KPI_CONFIRMATION'
+					),
 					status: 'danger'
 				}
 			},
@@ -384,8 +395,10 @@ export class GoalSettingsComponent
 					.deleteKPI(this.selectedKPI.id)
 					.then(async (res) => {
 						if (res) {
-							this.toastrService.danger(
-								'KPI Deleted',
+							this.toastrService.primary(
+								this.getTranslation(
+									'TOASTR.MESSAGE.KPI_DELETED'
+								),
 								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
 							this.clearItem();

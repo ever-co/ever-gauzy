@@ -10,13 +10,17 @@ import { ITask, IEmployee, TaskStatusEnum } from '@gauzy/models';
 import { NbMenuService } from '@nebular/theme';
 import { tap, filter, map, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ga-sprint-task',
 	templateUrl: './task.component.html',
 	styleUrls: ['./task.component.css']
 })
-export class SprintTaskComponent implements OnInit, OnDestroy {
+export class SprintTaskComponent
+	extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	@Input() task: ITask & { employees: IEmployee[] };
 	@Output() taskActionEvent: EventEmitter<{
 		action: string;
@@ -28,12 +32,24 @@ export class SprintTaskComponent implements OnInit, OnDestroy {
 	taskStatusList: any;
 	taskActions: any;
 	private onDestroy$ = new Subject<void>();
-	constructor(private nbMenuService: NbMenuService) {}
+
+	constructor(
+		private nbMenuService: NbMenuService,
+		readonly translate: TranslateService
+	) {
+		super(translate);
+	}
 
 	ngOnInit(): void {
 		this.taskActions = [
-			{ title: 'Edit task', action: 'EDIT_TASK' },
-			{ title: 'Delete task', action: 'DELETE_TASK' }
+			{
+				title: this.getTranslation('TASKS_PAGE.EDIT_TASK'),
+				action: 'EDIT_TASK'
+			},
+			{
+				title: this.getTranslation('TASKS_PAGE.DELETE_TASK'),
+				action: 'DELETE_TASK'
+			}
 		];
 
 		this.taskStatusList = this.getStatusList(this.task.status);
