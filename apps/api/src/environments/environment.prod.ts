@@ -284,7 +284,5 @@ export const gauzyToggleFeatures: IGauzyFeatures = {
 		process.env.FEATURE_SMS_GATEWAY === 'false' ? false : true,
 	FEATURE_SMTP: process.env.FEATURE_SMTP === 'false' ? false : true,
 	FEATURE_ROLES_PERMISSION:
-		process.env.FEATURE_ROLES_PERMISSION === 'false' ? false : true,
-	FEATURE_DANGER_ZONE:
-		process.env.FEATURE_DANGER_ZONE === 'false' ? false : true
+		process.env.FEATURE_ROLES_PERMISSION === 'false' ? false : true
 };

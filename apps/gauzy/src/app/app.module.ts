@@ -58,6 +58,8 @@ import { NgxAuthModule } from './auth/auth.module';
 import { LegalModule } from './legal/legal.module';
 import { GoogleMapsLoaderService } from './@core/services/google-maps-loader.service';
 import { Router } from '@angular/router';
+import { FeatureToggleModule } from 'ngx-feature-toggle';
+import { FeatureService } from './@core/services/feature.service';
 
 // TODO: we should use some internal function which returns version of Gauzy;
 const version = '0.1.0';
@@ -81,10 +83,6 @@ if (environment.SENTRY_DSN) {
 		// set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring
 		tracesSampleRate: 1
 	});
-}
-
-export function googleMapsLoaderFactory(provider: GoogleMapsLoaderService) {
-	return () => provider.load(environment.GOOGLE_MAPS_API_KEY);
 }
 
 @NgModule({
@@ -124,6 +122,7 @@ export function googleMapsLoaderFactory(provider: GoogleMapsLoaderService) {
 		environment.production ? [] : AkitaNgDevtools,
 		SharedModule.forRoot(),
 		NgxElectronModule,
+		FeatureToggleModule,
 		NgxPermissionsModule.forRoot()
 	],
 	bootstrap: [AppComponent],
@@ -176,6 +175,13 @@ export function googleMapsLoaderFactory(provider: GoogleMapsLoaderService) {
 			deps: [GoogleMapsLoaderService],
 			multi: true
 		},
+		FeatureService,
+		{
+			provide: APP_INITIALIZER,
+			useFactory: featureToggleLoaderFactory,
+			deps: [FeatureService],
+			multi: true
+		},
 		{
 			provide: ErrorHandler,
 			useClass: SentryErrorHandler
@@ -201,4 +207,12 @@ export function serverConnectionFactory(
 	store: Store
 ) {
 	return () => provider.load(environment.API_BASE_URL, store);
+}
+
+export function googleMapsLoaderFactory(provider: GoogleMapsLoaderService) {
+	return () => provider.load(environment.GOOGLE_MAPS_API_KEY);
+}
+
+export function featureToggleLoaderFactory(provider: FeatureService) {
+	return () => provider.getFeatureToggles();
 }

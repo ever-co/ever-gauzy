@@ -708,6 +708,18 @@ export class PagesComponent implements OnInit, OnDestroy {
 						}
 					},
 					{
+						title: 'Features',
+						icon: 'pantone-outline',
+						link: '/pages/settings/features',
+						data: {
+							translationKey: 'MENU.FEATURES',
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_EDIT,
+								PermissionsEnum.ALL_ORG_VIEW
+							]
+						}
+					},
+					{
 						title: 'Email History',
 						icon: 'email-outline',
 						link: '/pages/settings/email-history',

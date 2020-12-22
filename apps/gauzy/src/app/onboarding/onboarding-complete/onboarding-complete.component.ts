@@ -49,7 +49,7 @@ export class OnboardingCompleteComponent
 	}
 
 	getFeatures() {
-		this.featureService.getFeatures().then(({ items }) => {
+		this.featureService.getFeatures(['children']).then(({ items }) => {
 			this.features = items;
 			this.blocks = _.chunk(this.features, 2) as Array<IFeature[]>;
 		});

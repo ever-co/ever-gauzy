@@ -278,8 +278,8 @@ export const gauzyToggleFeatures: IGauzyFeatures = {
 		process.env.FEATURE_EMAIL_HISTORY === 'false' ? false : true,
 	FEATURE_EMAIL_TEMPLATE:
 		process.env.FEATURE_EMAIL_TEMPLATE === 'false' ? false : true,
-	FEATURE_IMPORT: process.env.FEATURE_IMPORT === 'false' ? false : true,
-	FEATURE_EXPORT: process.env.FEATURE_EXPORT === 'false' ? false : true,
+	FEATURE_IMPORT_EXPORT:
+		process.env.FEATURE_IMPORT_EXPORT === 'false' ? false : true,
 	FEATURE_FILE_STORAGE:
 		process.env.FEATURE_FILE_STORAGE === 'false' ? false : true,
 	FEATURE_PAYMENT_GATEWAY:

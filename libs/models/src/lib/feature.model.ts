@@ -1,15 +1,19 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 export interface IFeature extends IBasePerTenantAndOrganizationEntityModel {
 	code: string;
-	description?: string;
+	description: string;
 	featureOrganizations?: IFeatureOrganization[];
-	image?: string;
-	imageUrl?: string;
+	image: string;
+	readonly imageUrl?: string;
 	link: string;
 	name: string;
-	status?: string;
-	icon?: string;
+	status: string;
+	icon: string;
 	isEnabled?: boolean;
+	isPaid?: boolean;
+	readonly parentId?: string;
+	parent?: IFeature;
+	children?: IFeature[];
 }
 export interface IFeatureCreateInput extends IFeature {
 	isEnabled: boolean;

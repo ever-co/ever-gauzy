@@ -21,37 +21,22 @@ export const createDefaultFeatureToggle = async (
 ) => {
 	await cleanFeature(connection);
 
-	const features: IFeature[] = [];
-	DEFAULT_FEATURES.forEach((item: IFeatureCreateInput) => {
-		const {
-			name,
-			code,
-			description,
-			image,
-			link,
-			isEnabled,
-			status,
-			icon
-		} = item;
-		const feature: IFeature = new Feature({
-			name,
-			code,
-			description,
-			image: copyImage(image),
-			link,
-			status,
-			icon,
-			featureOrganizations: [
-				new FeatureOrganization({
-					isEnabled,
-					tenant
-				})
-			]
-		});
-		features.push(feature);
-	});
+	DEFAULT_FEATURES.forEach(async (item: IFeatureCreateInput) => {
+		const feature: IFeature = createFeature(item, tenant);
+		const parent = await connection.manager.save(feature);
 
-	await connection.manager.save(features);
+		const { children = [] } = item;
+		if (children.length > 0) {
+			const featureChildren: IFeature[] = [];
+			children.forEach((child: IFeature) => {
+				const childFeature: IFeature = createFeature(child, tenant);
+				childFeature.parent = parent;
+				featureChildren.push(childFeature);
+			});
+
+			await connection.manager.save(featureChildren);
+		}
+	});
 	return await connection.getRepository(Feature).find();
 };
 
@@ -79,6 +64,35 @@ export const createRandomFeatureToggle = async (
 	await connection.manager.save(featureOrganizations);
 	return features;
 };
+
+function createFeature(item: IFeature, tenant: Tenant) {
+	const {
+		name,
+		code,
+		description,
+		image,
+		link,
+		isEnabled,
+		status,
+		icon
+	} = item;
+	const feature: IFeature = new Feature({
+		name,
+		code,
+		description,
+		image: copyImage(image),
+		link,
+		status,
+		icon,
+		featureOrganizations: [
+			new FeatureOrganization({
+				isEnabled,
+				tenant
+			})
+		]
+	});
+	return feature;
+}
 
 async function cleanFeature(connection) {
 	if (env.database.type === 'sqlite') {

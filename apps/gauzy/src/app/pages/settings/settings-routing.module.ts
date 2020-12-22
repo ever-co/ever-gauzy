@@ -10,6 +10,7 @@ import { NgxPermissionsGuard } from 'ngx-permissions';
 import { PermissionsEnum } from '@gauzy/models';
 import { CustomSmtpComponent } from './custom-smtp/custom-smtp.component';
 import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
+import { FeatureComponent } from './feature/feature.component';
 
 const routes: Routes = [
 	{
@@ -19,6 +20,20 @@ const routes: Routes = [
 			{
 				path: 'general',
 				component: SettingsComponent
+			},
+			{
+				path: 'features',
+				component: FeatureComponent,
+				canActivate: [NgxPermissionsGuard],
+				data: {
+					permissions: {
+						only: [
+							PermissionsEnum.ALL_ORG_EDIT,
+							PermissionsEnum.ALL_ORG_VIEW
+						],
+						redirectTo: '/pages/settings'
+					}
+				}
 			},
 			{
 				path: 'email-history',

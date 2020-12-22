@@ -4,7 +4,9 @@ import {
 	Entity,
 	Index,
 	JoinColumn,
-	OneToMany
+	ManyToOne,
+	OneToMany,
+	RelationId
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import * as _ from 'underscore';
@@ -33,6 +35,23 @@ export class Feature extends Base implements IFeature {
 	@JoinColumn()
 	featureOrganizations?: IFeatureOrganization[];
 
+	@ApiProperty({ type: Feature })
+	@ManyToOne((type) => Feature, (feature) => feature.children)
+	parent: Feature;
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@Column({ nullable: true })
+	parentId?: string;
+
+	@ApiProperty({ type: Feature })
+	@OneToMany((type) => Feature, (feature) => feature.parent, {
+		cascade: true,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn({ name: 'parentId' })
+	children: Feature[];
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -47,15 +66,19 @@ export class Feature extends Base implements IFeature {
 	@Column()
 	code: string;
 
-	@ApiProperty({ type: String, readOnly: true })
-	@IsString()
-	@Column({ nullable: true })
-	description?: string;
+	@ApiProperty({ type: Boolean, default: false })
+	@Column({ default: false })
+	isPaid?: boolean;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@IsString()
 	@Column({ nullable: true })
-	image?: string;
+	description: string;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@IsString()
+	@Column({ nullable: true })
+	image: string;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@IsString()
@@ -65,7 +88,7 @@ export class Feature extends Base implements IFeature {
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column({ nullable: true })
-	status?: string;
+	status: string;
 
 	@AfterLoad()
 	afterLoadStatus() {
@@ -77,7 +100,7 @@ export class Feature extends Base implements IFeature {
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column({ nullable: true })
-	icon?: string;
+	icon: string;
 
 	isEnabled?: boolean;
 	@AfterLoad()

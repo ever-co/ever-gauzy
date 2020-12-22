@@ -126,6 +126,12 @@ import { EmployeeProposalTemplateModule } from './employee-proposal-template/emp
 import { CustomSmtpModule } from './custom-smtp/custom-smtp.module';
 import { FeatureModule } from './feature/feature.module';
 
+import * as unleash from 'unleash-client';
+unleash.initialize({
+	appName: 'gauzy-demo',
+	url: 'http://unleash.herokuapp.com/api/'
+});
+
 const sentryIntegrations = [];
 
 sentryIntegrations.push(
@@ -509,7 +515,7 @@ if (process.env.DB_TYPE === 'postgres') {
 						module: CustomSmtpModule
 					},
 					{
-						path: '/feature',
+						path: '/feature/toggle',
 						module: FeatureModule
 					}
 				]
@@ -629,6 +635,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		TaskModule,
 		OrganizationEmploymentTypeModule,
 		TimesheetModule,
+		FeatureModule,
 		ReportModule,
 		UpworkModule,
 		HubstaffModule,
@@ -648,8 +655,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		GoalKpiModule,
 		GoalTemplateModule,
 		KeyresultTemplateModule,
-		GoalKpiTemplateModule,
-		FeatureModule
+		GoalKpiTemplateModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

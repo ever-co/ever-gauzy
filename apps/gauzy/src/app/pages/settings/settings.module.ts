@@ -33,6 +33,9 @@ import { FileStorageComponent } from './file-storage/file-storage.component';
 import { CustomSmtpComponent } from './custom-smtp/custom-smtp.component';
 import { SMTPModule } from '../../@shared/smtp/smtp.module';
 import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
+import { FeatureComponent } from './feature/feature.component';
+import { FeatureService } from '../../@core/services/feature.service';
+
 @NgModule({
 	imports: [
 		SettingsRoutingModule,
@@ -73,8 +76,9 @@ import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
 		EmailHistoryComponent,
 		EmailFiltersComponent,
 		CustomSmtpComponent,
-		SmsGatewayComponent
+		SmsGatewayComponent,
+		FeatureComponent
 	],
-	providers: [RolePermissionsService, RoleService]
+	providers: [RolePermissionsService, RoleService, FeatureService]
 })
 export class SettingsModule {}
