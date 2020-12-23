@@ -36,7 +36,7 @@ export class FeaturesToggleController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+	@UseGuards(AuthGuard('jwt'))
 	@Get('all')
 	async getAllFeaturesList(@Query('data') data: any) {
 		return this.featureService.getAll(data);
