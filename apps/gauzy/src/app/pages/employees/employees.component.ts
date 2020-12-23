@@ -11,7 +11,7 @@ import {
 	IOrganization,
 	EmployeeViewModel
 } from '@gauzy/models';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
@@ -31,6 +31,7 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './employees.component.html',
@@ -81,7 +82,7 @@ export class EmployeesComponent
 		private dialogService: NbDialogService,
 		private store: Store,
 		private router: Router,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private route: ActivatedRoute,
 		private translate: TranslateService,
 		private errorHandler: ErrorHandlingService
@@ -170,12 +171,10 @@ export class EmployeesComponent
 					this.employeeName =
 						data.user.firstName + ' ' + data.user.lastName;
 				}
-				this.toastrService.primary(
-					this.employeeName.trim() +
-						' added to ' +
-						data.organization.name,
-					'Success'
-				);
+				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ADDED', {
+					name: this.employeeName.trim(),
+					organization: data.organization.name
+				});
 			});
 
 			this.loadPage();
@@ -235,11 +234,10 @@ export class EmployeesComponent
 							this.selectedEmployee.id
 						);
 
-						this.toastrService.primary(
-							this.employeeName + ' set as inactive.',
-							'Success'
+						this.toastrService.success(
+							'TOASTR.MESSAGE.EMPLOYEE_INACTIVE',
+							{ name: this.employeeName.trim() }
 						);
-
 						this.loadPage();
 					} catch (error) {
 						this.errorHandler.handleError(error);
@@ -270,10 +268,9 @@ export class EmployeesComponent
 					this.selectedEmployee.id,
 					data
 				);
-				this.toastrService.primary(
-					this.employeeName + ' set as inactive.',
-					'Success'
-				);
+				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_INACTIVE', {
+					name: this.employeeName.trim()
+				});
 			} catch (error) {
 				this.errorHandler.handleError(error);
 			}
@@ -304,15 +301,11 @@ export class EmployeesComponent
 					this.selectedEmployee.id,
 					null
 				);
-				this.toastrService.primary(
-					this.employeeName + ' set as active.',
-					'Success'
-				);
+				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ACTIVE', {
+					name: this.employeeName.trim()
+				});
 			} catch (error) {
-				this.toastrService.danger(
-					error.error.message || error.message,
-					'Error'
-				);
+				this.toastrService.danger(error.error.message || error.message);
 			}
 			this.selectedEmployee = null;
 			this.loadPage();

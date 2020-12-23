@@ -6,7 +6,7 @@ import {
 	ITag,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
-import { NbToastrService, NbDialogService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -19,6 +19,7 @@ import { NotesWithTagsComponent } from '../../@shared/table-components/notes-wit
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { EmployeeWithLinksComponent } from '../../@shared/table-components/employee-with-links/employee-with-links.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-departments',
@@ -56,7 +57,7 @@ export class DepartmentsComponent
 
 	constructor(
 		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		private readonly employeesService: EmployeesService,
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
@@ -166,16 +167,13 @@ export class DepartmentsComponent
 			await this.organizationDepartmentsService.delete(
 				this.selectedDepartment ? this.selectedDepartment.id : id
 			);
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_DEPARTMENTS.REMOVE_DEPARTMENT',
-					{
-						name: this.selectedDepartment
-							? this.selectedDepartment.department_name
-							: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_DEPARTMENTS.REMOVE_DEPARTMENT',
+				{
+					name: this.selectedDepartment
+						? this.selectedDepartment.department_name
+						: name
+				}
 			);
 			this.cancel();
 			this.loadDepartments();
@@ -203,14 +201,11 @@ export class DepartmentsComponent
 
 			this.cancel();
 
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_DEPARTMENTS.ADD_DEPARTMENT',
-					{
-						name: input.name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_DEPARTMENTS.ADD_DEPARTMENT',
+				{
+					name: input.name
+				}
 			);
 			this.loadDepartments();
 		} else {

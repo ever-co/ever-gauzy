@@ -6,7 +6,7 @@ import {
 	IExpenseViewModel
 } from '@gauzy/models';
 import { debounceTime, filter, tap, withLatestFrom } from 'rxjs/operators';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';
 import { Store } from '../../@core/services/store.service';
 import { ExpensesService } from '../../@core/services/expenses.service';
@@ -27,6 +27,7 @@ import { NotesWithTagsComponent } from '../../@shared/table-components/notes-wit
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './expenses.component.html',
@@ -64,7 +65,7 @@ export class ExpensesComponent
 		private dialogService: NbDialogService,
 		private store: Store,
 		private expenseService: ExpensesService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private route: ActivatedRoute,
 		private errorHandler: ErrorHandlingService,
 		readonly translateService: TranslateService,
@@ -271,14 +272,11 @@ export class ExpensesComponent
 				organizationId: this.store.selectedOrganization.id,
 				tenantId: this.store.selectedOrganization.tenantId
 			});
-			this.toastrService.primary(
-				this.getTranslation('NOTES.EXPENSES.ADD_EXPENSE', {
-					name: formData.employee
-						? `${formData.employee.firstName} ${formData.employee.lastName}`
-						: this.getTranslation('SM_TABLE.EMPLOYEE')
-				}),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('NOTES.EXPENSES.ADD_EXPENSE', {
+				name: formData.employee
+					? `${formData.employee.firstName} ${formData.employee.lastName}`
+					: this.getTranslation('SM_TABLE.EMPLOYEE')
+			});
 			this._loadTableData();
 			this.clearItem();
 		} catch (error) {
@@ -324,14 +322,9 @@ export class ExpensesComponent
 								? this.selectedExpense.employee.id
 								: null
 						});
-						this.toastrService.primary(
-							this.getTranslation(
-								'NOTES.EXPENSES.OPEN_EDIT_EXPENSE_DIALOG',
-								{
-									name: this.employeeName
-								}
-							),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						this.toastrService.success(
+							'NOTES.EXPENSES.OPEN_EDIT_EXPENSE_DIALOG',
+							{ name: this.employeeName }
 						);
 
 						this._loadTableData();
@@ -395,14 +388,11 @@ export class ExpensesComponent
 								? this.selectedExpense.employee.id
 								: null
 						);
-						this.toastrService.primary(
-							this.getTranslation(
-								'NOTES.EXPENSES.DELETE_EXPENSE',
-								{
-									name: this.employeeName
-								}
-							),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						this.toastrService.success(
+							'NOTES.EXPENSES.DELETE_EXPENSE',
+							{
+								name: this.employeeName
+							}
 						);
 						this._loadTableData();
 						this.clearItem();
@@ -478,12 +468,9 @@ export class ExpensesComponent
 			this.smartTableSource.load(expenseVM);
 			this.showTable = true;
 		} catch (error) {
-			this.toastrService.danger(
-				this.getTranslation('NOTES.EXPENSES.EXPENSES_ERROR', {
-					error: error.error.message || error.message
-				}),
-				this.getTranslation('TOASTR.TITLE.ERROR')
-			);
+			this.toastrService.danger('NOTES.EXPENSES.EXPENSES_ERROR', null, {
+				error: error.error.message || error.message
+			});
 		}
 		this.employeeName = this.store.selectedEmployee
 			? (

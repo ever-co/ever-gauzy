@@ -21,8 +21,8 @@ import { takeUntil } from 'rxjs/operators';
 import { ProductService } from 'apps/gauzy/src/app/@core/services/product.service';
 import { Location } from '@angular/common';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { NbToastrService } from '@nebular/theme';
 import { ProductVariantService } from 'apps/gauzy/src/app/@core/services/product-variant.service';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
 @Component({
 	selector: 'ngx-product-form',
@@ -62,7 +62,7 @@ export class ProductFormComponent
 		private route: ActivatedRoute,
 		private location: Location,
 		private router: Router,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private productVariantService: ProductVariantService
 	) {
 		super(translationService);
@@ -239,17 +239,11 @@ export class ProductFormComponent
 				`/pages/organization/inventory/edit/${this.inventoryItem.id}`
 			]);
 
-			this.toastrService.success(
-				this.getTranslation('TOASTR.TITLE.SUCCESS'),
-				this.getTranslation('INVENTORY_PAGE.INVENTORY_ITEM_SAVED', {
-					name: productResult.name
-				})
-			);
+			this.toastrService.success('INVENTORY_PAGE.INVENTORY_ITEM_SAVED', {
+				name: productResult.name
+			});
 		} catch (err) {
-			this.toastrService.danger(
-				this.getTranslation('TOASTR.TITLE.ERROR'),
-				this.getTranslation('TOASTR.MESSAGE.SOMETHING_BAD_HAPPENED')
-			);
+			this.toastrService.danger('TOASTR.MESSAGE.SOMETHING_BAD_HAPPENED');
 		}
 	}
 
@@ -262,10 +256,7 @@ export class ProductFormComponent
 	}
 
 	handleImageUploadError(error: any) {
-		this.toastrService.danger(
-			error.error.message || error.message,
-			'Error'
-		);
+		this.toastrService.danger(error.error.message || error.message);
 	}
 
 	onCancel() {

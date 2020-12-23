@@ -31,13 +31,13 @@ import { NbDialogService } from '@nebular/theme';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Store } from '../../../@core/services/store.service';
 import { AvailabilitySlotsService } from '../../../@core/services/availability-slots.service';
-import { NbToastrService } from '@nebular/theme';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { AppointmentEmployeesService } from '../../../@core/services/appointment-employees.service';
 import { TimezoneSelectorComponent } from './timezone-selector/timezone-selector.component';
 import { TimeOffService } from '../../../@core/services/time-off.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { convertLocalToTimezone } from '@gauzy/utils';
+import { ToastrService } from '../../../@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-appointment-calendar',
@@ -97,7 +97,7 @@ export class AppointmentComponent
 	constructor(
 		private router: Router,
 		private store: Store,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private dialogService: NbDialogService,
 		private availabilitySlotsService: AvailabilitySlotsService,
 		private employeeAppointmentService: EmployeeAppointmentService,
@@ -366,12 +366,9 @@ export class AppointmentComponent
 				dayDiff--;
 			}
 		} catch (error) {
-			this.toastrService.danger(
-				this.getTranslation('NOTES.AVAILABILITY_SLOTS.ERROR', {
-					error: error.error.message || error.message
-				}),
-				this.getTranslation('TOASTR.TITLE.ERROR')
-			);
+			this.toastrService.danger('NOTES.AVAILABILITY_SLOTS.ERROR', null, {
+				error: error.error.message || error.message
+			});
 		}
 	}
 

@@ -160,12 +160,10 @@ export class DocumentsComponent
 			.subscribe(
 				() => {
 					this.toastrService.success(
-						this.getTranslation(
-							'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.CREATED',
-							{
-								name: formValue.name
-							}
-						)
+						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.CREATED',
+						{
+							name: formValue.name
+						}
 					);
 					this.cancel();
 					this._loadDocuments();

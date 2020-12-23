@@ -11,7 +11,7 @@ export class ToastrService {
 		private readonly translateService: TranslateService
 	) {}
 
-	success(message: any, title?: string, translationParams: Object = {}) {
+	success(message: any, translationParams: Object = {}, title?: string) {
 		let displayMessage = '';
 
 		if (message && message.message && typeof message.message === 'string') {
@@ -26,7 +26,7 @@ export class ToastrService {
 		);
 	}
 
-	async danger(
+	danger(
 		error: any,
 		title: string = 'TOASTR.TITLE.ERROR',
 		translationParams: Object = {}

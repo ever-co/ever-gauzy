@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NbToastrService, NbDialogService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { first } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
@@ -15,6 +15,7 @@ import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NotesWithTagsComponent } from '../../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -41,7 +42,7 @@ export class ExpenseCategoriesComponent
 
 	constructor(
 		private readonly organizationExpenseCategoryService: OrganizationExpenseCategoriesService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		private store: Store,
 		readonly translateService: TranslateService,
 		private errorHandlingService: ErrorHandlingService,
@@ -122,14 +123,9 @@ export class ExpenseCategoriesComponent
 
 			if (result) {
 				await this.organizationExpenseCategoryService.delete(id);
-				this.toastrService.primary(
-					this.getTranslation(
-						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.REMOVE_EXPENSE_CATEGORY',
-						{
-							name: name
-						}
-					),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				this.toastrService.success(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.REMOVE_EXPENSE_CATEGORY',
+					{ name }
 				);
 				this.loadCategories();
 			}
@@ -156,12 +152,9 @@ export class ExpenseCategoriesComponent
 			expenseCategory
 		);
 
-		this.toastrService.primary(
-			this.getTranslation(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.UPDATE_EXPENSE_CATEGORY',
-				{ name: name }
-			),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		this.toastrService.success(
+			'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.UPDATE_EXPENSE_CATEGORY',
+			{ name }
 		);
 
 		this.loadCategories();
@@ -177,12 +170,9 @@ export class ExpenseCategoriesComponent
 				tags: this.tags
 			});
 
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.ADD_EXPENSE_CATEGORY',
-					{ name: name }
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.ADD_EXPENSE_CATEGORY',
+				{ name }
 			);
 
 			this.cancel();
@@ -190,12 +180,8 @@ export class ExpenseCategoriesComponent
 		} else {
 			// TODO translate
 			this.toastrService.danger(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.INVALID_EXPENSE_CATEGORY_NAME'
-				),
-				this.getTranslation(
-					'TOASTR.MESSAGE.NEW_ORGANIZATION_EXPENSE_CATEGORY_INVALID_NAME'
-				)
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.INVALID_EXPENSE_CATEGORY_NAME',
+				'TOASTR.MESSAGE.NEW_ORGANIZATION_EXPENSE_CATEGORY_INVALID_NAME'
 			);
 		}
 	}

@@ -7,7 +7,6 @@ import {
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { NbToastrService } from '@nebular/theme';
 import { ProductVariantService } from 'apps/gauzy/src/app/@core/services/product-variant.service';
 import { ProductVariantPriceService } from 'apps/gauzy/src/app/@core/services/product-variant-price.service';
 import { ProductVariantSettingsService } from 'apps/gauzy/src/app/@core/services/product-variant-settings.service';
@@ -16,6 +15,7 @@ import { ActivatedRoute } from '@angular/router';
 import { takeUntil } from 'rxjs/operators';
 import { Location } from '@angular/common';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
 export interface IOptionCreateInput {
 	name: string;
@@ -45,7 +45,7 @@ export class InventoryVariantFormComponent
 	constructor(
 		translationService: TranslateService,
 		private fb: FormBuilder,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private productVariantService: ProductVariantService,
 		private productVariantPriceService: ProductVariantPriceService,
 		private productVariantSettingsService: ProductVariantSettingsService,
@@ -226,17 +226,11 @@ export class InventoryVariantFormComponent
 				productVariantRequest.itemVariant
 			);
 
-			this.toastrService.primary(
-				this.getTranslation('INVENTORY_PAGE.PRODUCT_VARIANT_SAVED'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('INVENTORY_PAGE.PRODUCT_VARIANT_SAVED');
 
 			this.location.back();
 		} catch {
-			this.toastrService.danger(
-				this.getTranslation('TOASTR.TITLE.ERROR'),
-				this.getTranslation('TOASTR.MESSAGE.SOMETHING_BAD_HAPPENED')
-			);
+			this.toastrService.success('TOASTR.MESSAGE.SOMETHING_BAD_HAPPENED');
 		}
 	}
 

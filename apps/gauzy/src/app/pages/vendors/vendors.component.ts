@@ -5,7 +5,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/models';
-import { NbToastrService, NbDialogService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { OrganizationVendorsService } from 'apps/gauzy/src/app/@core/services/organization-vendors.service';
 import { TranslateService } from '@ngx-translate/core';
 import { first, takeUntil } from 'rxjs/operators';
@@ -19,13 +19,15 @@ import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { ToastrService } from '../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-vendors',
 	templateUrl: './vendors.component.html',
 	styleUrls: ['vendors.component.scss']
 })
-export class VendorsComponent extends TranslationBaseComponent
+export class VendorsComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	selectedOrganization: IOrganization;
 	showAddCard: boolean;
@@ -41,7 +43,7 @@ export class VendorsComponent extends TranslationBaseComponent
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private readonly organizationVendorsService: OrganizationVendorsService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		private readonly fb: FormBuilder,
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
@@ -174,22 +176,18 @@ export class VendorsComponent extends TranslationBaseComponent
 				tags: this.tags
 			});
 
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.ADD_VENDOR',
-					{ name: name }
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.ADD_VENDOR',
+				{
+					name: name
+				}
 			);
-
 			this.showAddCard = !this.showAddCard;
 			this.loadVendors();
 		} else {
 			// TODO translate
 			this.toastrService.danger(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.INVALID_VENDOR_NAME'
-				),
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.INVALID_VENDOR_NAME',
 				this.getTranslation(
 					'TOASTR.MESSAGE.NEW_ORGANIZATION_VENDOR_INVALID_NAME'
 				)
@@ -210,12 +208,11 @@ export class VendorsComponent extends TranslationBaseComponent
 		if (result) {
 			try {
 				await this.organizationVendorsService.delete(id);
-				this.toastrService.primary(
-					this.getTranslation(
-						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.REMOVE_VENDOR',
-						{ name: name }
-					),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				this.toastrService.success(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.REMOVE_VENDOR',
+					{
+						name
+					}
 				);
 				this.loadVendors();
 			} catch (error) {
@@ -238,12 +235,9 @@ export class VendorsComponent extends TranslationBaseComponent
 			tenantId
 		});
 
-		this.toastrService.primary(
-			this.getTranslation(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.UPDATE_VENDOR',
-				{ name: name }
-			),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		this.toastrService.success(
+			'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.UPDATE_VENDOR',
+			{ name }
 		);
 
 		this.loadVendors();

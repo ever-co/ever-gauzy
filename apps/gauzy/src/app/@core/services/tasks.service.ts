@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { NbToastrService } from '@nebular/theme';
 import { Observable, throwError } from 'rxjs';
 import {
 	ITask,
@@ -11,6 +10,7 @@ import { tap, catchError, first } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { toParams } from '@gauzy/utils';
+import { ToastrService } from './toastr.service';
 
 interface ITaskResponse {
 	items: ITask[];
@@ -25,7 +25,7 @@ export class TasksService extends TranslationBaseComponent {
 
 	constructor(
 		private _http: HttpClient,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		public translateService: TranslateService
 	) {
 		super(translateService);
@@ -97,36 +97,21 @@ export class TasksService extends TranslationBaseComponent {
 
 	createTask(task): Observable<ITask> {
 		return this._http.post<ITask>(this.API_URL, task).pipe(
-			tap(() =>
-				this.toastrService.primary(
-					this.getTranslation('TASKS_PAGE.TASK_ADDED'),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				)
-			),
+			tap(() => this.toastrService.success('TASKS_PAGE.TASK_ADDED')),
 			catchError((error) => this.errorHandler(error))
 		);
 	}
 
 	editTask(task: ITask): Observable<ITask> {
 		return this._http.put<ITask>(`${this.API_URL}/${task.id}`, task).pipe(
-			tap(() =>
-				this.toastrService.primary(
-					this.getTranslation('TASKS_PAGE.TASK_UPDATED'),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				)
-			),
+			tap(() => this.toastrService.success('TASKS_PAGE.TASK_UPDATED')),
 			catchError((error) => this.errorHandler(error))
 		);
 	}
 
 	deleteTask(id: string): Observable<void> {
 		return this._http.delete<void>(`${this.API_URL}/${id}`).pipe(
-			tap(() =>
-				this.toastrService.primary(
-					this.getTranslation('TASKS_PAGE.TASK_DELETED'),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				)
-			),
+			tap(() => this.toastrService.success('TASKS_PAGE.TASK_DELETED')),
 			catchError((error) => this.errorHandler(error))
 		);
 	}

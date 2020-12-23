@@ -99,23 +99,17 @@ export class AddEditProposalTemplateComponent
 				this.dialogRef.close(data);
 				if (this.mode === 'create') {
 					this.toastrService.success(
-						this.getTranslation(
-							'PROPOSAL_TEMPLATE.PROPOSAL_CREATE_MESSAGE',
-							{
-								name: request.name
-							}
-						),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
+						'PROPOSAL_TEMPLATE.PROPOSAL_CREATE_MESSAGE',
+						{
+							name: request.name
+						}
 					);
 				} else {
 					this.toastrService.success(
-						this.getTranslation(
-							'PROPOSAL_TEMPLATE.PROPOSAL_EDIT_MESSAGE',
-							{
-								name: request.name
-							}
-						),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
+						'PROPOSAL_TEMPLATE.PROPOSAL_EDIT_MESSAGE',
+						{
+							name: request.name
+						}
 					);
 				}
 			}).catch((error) => {

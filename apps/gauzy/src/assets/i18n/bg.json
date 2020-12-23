@@ -2186,7 +2186,7 @@
 			"EMPLOYEE_CLIENT_ADDED": "Employee added to the client",
 			"EMPLOYEE_CLIENT_REMOVED": "Employee removed from the client",
 			"EMPLOYEE_EDIT_ERROR": "Error in editing employee",
-			"EMPLOYEE_PROFILE_UPDATE": "{{name}} profile updated.",
+			"EMPLOYEE_PROFILE_UPDATE": "Profile '{{name}}' was changed",
 			"EMPLOYEE_LEVEL_UPDATE": "Employee Level is successfully updated.",
 			"CONFIRM": "Потвърждение",
 			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Are you sure you want to resend the invite to",
@@ -2262,7 +2262,10 @@
 			"MAX_OBJECTIVE_LIMIT": "You cannot create any more Objectives. Please change maximum objective limit to add more objectives.",
 			"MAX_KEY_RESULT_LIMIT": "You cannot create any more Key Results for this Objective. Please change maximum key result limit to add more Key Results.",
 			"CUSTOM_SMTP_ADDED": "Smtp settings successfully created",
-			"CUSTOM_SMTP_UPDATED": "Smtp settings successfully updated"
+			"CUSTOM_SMTP_UPDATED": "Smtp settings successfully updated",
+			"JOB_MATCHING_SAVED": "Criterion was changed",
+			"JOB_MATCHING_ERROR": "Error while saving criterion, Please try aging",
+			"JOB_MATCHING_DELETED": "Criterion was removed"
 		}
 	},
 	"ACCEPT_INVITE": {

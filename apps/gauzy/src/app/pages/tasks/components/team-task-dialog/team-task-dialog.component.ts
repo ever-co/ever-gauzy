@@ -7,7 +7,7 @@ import {
 	ITag
 } from '@gauzy/models';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import { OrganizationProjectsService } from '../../../../@core/services/organization-projects.service';
 import { Store } from '../../../../@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -15,6 +15,7 @@ import { ErrorHandlingService } from '../../../../@core/services/error-handling.
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import * as moment from 'moment';
 import { OrganizationTeamsService } from '../../../../@core/services/organization-teams.service';
+import { ToastrService } from '../../../../@core/services/toastr.service';
 
 const initialTaskValue = {
 	title: '',
@@ -57,7 +58,7 @@ export class TeamTaskDialogComponent
 		private _organizationsStore: Store,
 		private organizationProjectsService: OrganizationProjectsService,
 		readonly translateService: TranslateService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		private errorHandler: ErrorHandlingService,
 		private organizationTeamsService: OrganizationTeamsService
 	) {
@@ -133,14 +134,9 @@ export class TeamTaskDialogComponent
 	addNewProject = (name: string): Promise<IOrganizationProject> => {
 		const { organizationId, tenantId } = this;
 		try {
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
-					{
-						name: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
+				{ name }
 			);
 			return this.organizationProjectsService.create({
 				name,

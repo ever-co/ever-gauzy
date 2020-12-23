@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { first, take, tap } from 'rxjs/operators';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import {
@@ -19,6 +19,7 @@ import { ProductService } from '../../../../@core/services/product.service';
 import { ComponentEnum } from '../../../../@core/constants/layout.constants';
 import { Store } from '../../../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-table-inventory',
@@ -51,7 +52,7 @@ export class TableInventoryComponent
 	constructor(
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private productService: ProductService,
 		private router: Router,
 		private store: Store
@@ -202,21 +203,15 @@ export class TableInventoryComponent
 
 			if (res.affected > 0) {
 				this.loadSettings();
-				this.toastrService.primary(
-					this.getTranslation(
-						'INVENTORY_PAGE.INVENTORY_ITEM_DELETED',
-						{
-							name: this.selectedProduct.name
-						}
-					),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				this.toastrService.success(
+					'INVENTORY_PAGE.INVENTORY_ITEM_DELETED',
+					{
+						name: this.selectedProduct.name
+					}
 				);
 			}
 		} catch {
-			this.toastrService.danger(
-				this.getTranslation('TOASTR.MESSAGE.SOMETHING_BAD_HAPPENED'),
-				this.getTranslation('TOASTR.TITLE.ERROR')
-			);
+			this.toastrService.danger('TOASTR.MESSAGE.SOMETHING_BAD_HAPPENED');
 		} finally {
 			this.clearItem();
 		}

@@ -242,11 +242,9 @@ export class MatchingComponent implements OnInit {
 		req.then((newCreation) => {
 			const index = this.criterions.indexOf(criterion);
 			this.criterions[index] = newCreation;
-			this.toastrService.success('Criterion successfully saved');
+			this.toastrService.success('TOASTR.MESSAGE.JOB_MATCHING_SAVED');
 		}).catch(() => {
-			this.toastrService.error(
-				'Error while saving criterion, Please try aging'
-			);
+			this.toastrService.error('TOASTR.MESSAGE.JOB_MATCHING_ERROR');
 		});
 	}
 
@@ -259,10 +257,12 @@ export class MatchingComponent implements OnInit {
 						this.selectedEmployeeId,
 						criterion.id
 					);
-					this.toastrService.success('Criterion successfully saved');
+					this.toastrService.success(
+						'TOASTR.MESSAGE.JOB_MATCHING_DELETED'
+					);
 				} catch (error) {
 					this.toastrService.error(
-						'Error while saving criterion, Please try aging'
+						'TOASTR.MESSAGE.JOB_MATCHING_ERROR'
 					);
 					return;
 				}
@@ -271,10 +271,12 @@ export class MatchingComponent implements OnInit {
 					await this.jobPresetService.deleteJobPresetCriterion(
 						criterion.id
 					);
-					this.toastrService.success('Criterion successfully saved');
+					this.toastrService.success(
+						'TOASTR.MESSAGE.JOB_MATCHING_DELETED'
+					);
 				} catch (error) {
 					this.toastrService.error(
-						'Error while saving criterion, Please try aging'
+						'TOASTR.MESSAGE.JOB_MATCHING_ERROR'
 					);
 					return;
 				}

@@ -13,7 +13,7 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 import { CandidateStatusComponent } from './table-components/candidate-status/candidate-status.component';
 import { CandidatesService } from '../../@core/services/candidates.service';
 import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mutation/candidate-mutation.component';
-import { NbToastrService, NbDialogService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import {
 	Router,
@@ -28,6 +28,7 @@ import { ArchiveConfirmationComponent } from '../../@shared/user/forms/archive-c
 import { CandidateActionConfirmationComponent } from '../../@shared/user/forms/candidate-action-confirmation/candidate-action-confirmation.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -63,7 +64,7 @@ export class CandidatesComponent
 	constructor(
 		private candidatesService: CandidatesService,
 		private dialogService: NbDialogService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private store: Store,
 		private router: Router,
 		private route: ActivatedRoute,
@@ -155,12 +156,10 @@ export class CandidatesComponent
 					this.candidateName =
 						data.user.firstName + ' ' + data.user.lastName;
 				}
-				this.toastrService.primary(
-					this.candidateName.trim() +
-						' added to ' +
-						data.organization.name,
-					'Success'
-				);
+				this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_CREATED', {
+					name: this.candidateName.trim(),
+					organization: data.organization.name
+				});
 			});
 
 			this.loadPage();
@@ -205,9 +204,11 @@ export class CandidatesComponent
 							this.selectedCandidate.id
 						);
 
-						this.toastrService.primary(
-							this.candidateName + '  set as archived.',
-							'Success'
+						this.toastrService.success(
+							'TOASTR.MESSAGE.CANDIDATE_ARCHIVED',
+							{
+								name: this.candidateName
+							}
 						);
 
 						this.loadPage();
@@ -345,10 +346,11 @@ export class CandidatesComponent
 						);
 
 						this.toastrService.success(
-							this.candidateName + '  set as rejected.',
-							'Success'
+							'TOASTR.MESSAGE.CANDIDATE_REJECTED',
+							{
+								name: this.candidateName
+							}
 						);
-
 						this.loadPage();
 						this.clearItem();
 					} catch (error) {
@@ -380,10 +382,11 @@ export class CandidatesComponent
 						);
 
 						this.toastrService.success(
-							this.candidateName + '  set as hired.',
-							'Success'
+							'TOASTR.MESSAGE.CANDIDATE_HIRED',
+							{
+								name: this.candidateName
+							}
 						);
-
 						this.loadPage();
 						this.clearItem();
 					} catch (error) {

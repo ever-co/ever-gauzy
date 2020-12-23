@@ -165,7 +165,6 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 			this.projectId = project.id;
 			this.toastrService.success(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
-				null,
 				{ name }
 			);
 		} catch (error) {

@@ -140,7 +140,6 @@ export class ContactSelectorComponent implements OnInit, OnDestroy {
 			this.contactId = contact.id;
 			this.toastrService.success(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.ADD_CLIENT',
-				null,
 				{ name }
 			);
 		} catch (error) {
