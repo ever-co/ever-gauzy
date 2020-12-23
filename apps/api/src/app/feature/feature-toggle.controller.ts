@@ -11,18 +11,24 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Feature } from './feature.entity';
 import { FeatureService } from './feature.service';
 import * as unleash from 'unleash-client';
+import { FeatureInterface } from 'unleash-client/lib/feature';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 import { AuthGuard } from '@nestjs/passport';
-import { IFeatureOrganizationCreateInput } from '@gauzy/models';
+import { IFeatureOrganizationUpdateInput } from '@gauzy/models';
+import { CommandBus } from '@nestjs/cqrs';
+import { FeatureToggleUpdateCommand } from './commands/feature-toggle.update.command';
 
 @ApiTags('Feature')
 @Controller()
 export class FeaturesToggleController {
-	constructor(private readonly featureService: FeatureService) {}
+	constructor(
+		private readonly featureService: FeatureService,
+		private readonly commandBus: CommandBus
+	) {}
 
 	@Get()
 	async get() {
-		const featureToggles = unleash.getFeatureToggleDefinitions();
+		const featureToggles: FeatureInterface[] = unleash.getFeatureToggleDefinitions();
 		return featureToggles;
 	}
 
@@ -61,8 +67,7 @@ export class FeaturesToggleController {
 	@ApiOperation({ summary: 'Enabled or disabled features' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description:
-			'The record has been successfully created/updated.' /*, type: T*/
+		description: 'The record has been successfully created/updated.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
@@ -70,10 +75,10 @@ export class FeaturesToggleController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
-	@Post('action')
+	@Post()
 	async enabledDisabledFeature(
-		@Body() input: IFeatureOrganizationCreateInput
+		@Body() input: IFeatureOrganizationUpdateInput
 	) {
-		return this.featureService.updateFeatureOrganization(input);
+		return this.commandBus.execute(new FeatureToggleUpdateCommand(input));
 	}
 }

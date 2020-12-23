@@ -2,10 +2,10 @@ import { Injectable } from '@angular/core';
 import {
 	IFeature,
 	IFeatureOrganization,
-	IFeatureOrganizationCreateInput,
+	IFeatureOrganizationUpdateInput,
 	IFeatureOrganizationFindInput
 } from '@gauzy/models';
-import { BehaviorSubject, EMPTY, Observable } from 'rxjs';
+import { BehaviorSubject, EMPTY, from, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import * as _ from 'underscore';
 import { FeatureService } from './feature.service';
@@ -25,7 +25,20 @@ export class FeatureStoreService {
 		IFeatureOrganization[]
 	> = this._featureOrganizations$.asObservable();
 
+	private _featureToggles$: BehaviorSubject<any> = new BehaviorSubject([]);
+	public featureToggles$: Observable<any> = this._featureToggles$.asObservable();
+
 	constructor(private _featureService: FeatureService) {}
+
+	public loadUnleashFeatures() {
+		const promise = this._featureService.getFeatureToggles();
+		const observable = from(promise);
+		return observable.pipe(
+			tap((items) => {
+				this._featureToggles$.next(items);
+			})
+		);
+	}
 
 	public loadFeatures(
 		relations?: string[]
@@ -52,7 +65,7 @@ export class FeatureStoreService {
 			.pipe(tap((items) => this._featureOrganizations$.next(items)));
 	}
 
-	changedFeature(payload: IFeatureOrganizationCreateInput) {
-		return this._featureService.featureAction(payload);
+	changedFeature(payload: IFeatureOrganizationUpdateInput) {
+		return this._featureService.featureToggle(payload);
 	}
 }

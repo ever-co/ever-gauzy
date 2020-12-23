@@ -6,7 +6,7 @@ import { CrudService } from '../core/crud/crud.service';
 import {
 	IFeature,
 	IFeatureOrganization,
-	IFeatureOrganizationCreateInput,
+	IFeatureOrganizationUpdateInput,
 	IPagination
 } from '@gauzy/models';
 import { FeatureOrganization } from './feature_organization.entity';
@@ -45,14 +45,20 @@ export class FeatureService extends CrudService<Feature> {
 	}
 
 	async updateFeatureOrganization(
-		input: IFeatureOrganizationCreateInput
+		input: IFeatureOrganizationUpdateInput
 	): Promise<IFeatureOrganization> {
-		const { featureId } = input;
+		const { featureId, tenantId, organizationId } = input;
+		const where = {
+			featureId,
+			tenantId
+		};
+		if (organizationId) {
+			where['organizationId'] = organizationId;
+		}
+
 		let featureOrganization = await this.featureOrganizationRepository.findOne(
 			{
-				where: {
-					featureId
-				}
+				where
 			}
 		);
 

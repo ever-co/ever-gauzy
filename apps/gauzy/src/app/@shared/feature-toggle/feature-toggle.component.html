@@ -6,34 +6,64 @@
 					<div class="col-6">
 						<nb-card class="shortcut-card" [status]="row?.status">
 							<nb-card-header>
-								<div class="float-left text-left">
-									<nb-icon
-										[icon]="row?.icon"
-										*ngIf="row?.icon"
-									></nb-icon>
-									<span>{{ row?.name }}</span>
-								</div>
-								<div
-									class="float-right text-right"
-									*ngIf="row?.isPaid"
-								>
-									<button nbButton [status]="'basic'">
-										{{ 'BUTTONS.BUY' | translate }}
-									</button>
+								<div class="row">
+									<div class="col-6 loat-left text-left">
+										<nb-icon
+											[icon]="row?.icon"
+											*ngIf="row?.icon"
+										></nb-icon>
+										<span>{{ row?.name }}</span>
+									</div>
+									<div
+										class="col-6 float-right text-right"
+										*ngIf="row?.isPaid"
+									>
+										<button nbButton [status]="'basic'">
+											{{ 'BUTTONS.BUY' | translate }}
+										</button>
+									</div>
 								</div>
 							</nb-card-header>
 							<nb-card-body>
-								<div class="float-left text-left">
-									{{ row?.description }}
+								<div class="row">
+									<div class="col-6 float-left text-left">
+										{{ row?.description }}
+									</div>
+									<div class="col-6 float-right text-right">
+										<nb-toggle
+											[checked]="enabledFeature(row)"
+											(checkedChange)="
+												featureChanged($event, row)
+											"
+											labelPosition="start"
+											status="basic"
+										></nb-toggle>
+									</div>
 								</div>
-								<div class="float-right text-right">
-									<nb-toggle
-										(checkedChange)="
-											featureChanged(row, $event)
-										"
-										labelPosition="start"
-										status="basic"
-									></nb-toggle>
+								<div
+									class="row"
+									*ngIf="row?.children.length > 0"
+								>
+									<nb-list>
+										<nb-list-item
+											*ngFor="let child of row?.children"
+										>
+											<nb-checkbox
+												[checked]="
+													enabledFeature(child)
+												"
+												(checkedChange)="
+													featureChanged(
+														$event,
+														child
+													)
+												"
+												status="basic"
+											>
+												{{ child?.name }}
+											</nb-checkbox>
+										</nb-list-item>
+									</nb-list>
 								</div>
 							</nb-card-body>
 						</nb-card>

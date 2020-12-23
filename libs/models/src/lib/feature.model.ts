@@ -26,7 +26,7 @@ export interface IFeatureOrganization
 	isEnabled: boolean;
 }
 
-export interface IFeatureOrganizationCreateInput
+export interface IFeatureOrganizationUpdateInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	featureId: string;
 	isEnabled: boolean;
@@ -42,4 +42,43 @@ export enum FeatureStatusEnum {
 	PRIMARY = 'primary',
 	SUCCESS = 'success',
 	WARNING = 'warning'
+}
+
+export enum IFeatureToggleTypeEnum {
+	RELEASE = 'release',
+	KILL_SWITCH = 'kill-switch',
+	EXPERIMENT = 'experiment',
+	OPERATIONAL = 'operational',
+	PERMISSION = 'permission'
+}
+
+export interface IFeatureToggleVariant {
+	name?: string;
+	weight?: number;
+	weightType?: string;
+	payload?: IFeatureTogglePayload;
+	overrides?: IFeatureToggleOverride[];
+}
+
+export interface IFeatureToggleOverride {
+	contextName?: string;
+	values?: string[];
+}
+
+export interface IFeatureTogglePayload {
+	type?: string;
+	value?: string;
+}
+
+export interface IFeatureToggle {
+	name: string;
+	description?: string;
+	type: IFeatureToggleTypeEnum;
+	project?: string;
+	enabled: boolean;
+	stale?: boolean;
+	strategies?: any;
+	variants?: IFeatureToggleVariant[];
+	createdAt?: string;
+	lastSeenAt?: string | null;
 }

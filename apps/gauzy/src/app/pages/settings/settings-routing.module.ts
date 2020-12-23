@@ -23,17 +23,10 @@ const routes: Routes = [
 			},
 			{
 				path: 'features',
-				component: FeatureComponent,
-				canActivate: [NgxPermissionsGuard],
-				data: {
-					permissions: {
-						only: [
-							PermissionsEnum.ALL_ORG_EDIT,
-							PermissionsEnum.ALL_ORG_VIEW
-						],
-						redirectTo: '/pages/settings'
-					}
-				}
+				loadChildren: () =>
+					import('./feature/feature.module').then(
+						(m) => m.FeatureModule
+					)
 			},
 			{
 				path: 'email-history',

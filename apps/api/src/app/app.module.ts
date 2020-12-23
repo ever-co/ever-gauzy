@@ -131,7 +131,9 @@ const { unleashConfig } = environment;
 const instance = unleash.initialize({
 	appName: unleashConfig.appName,
 	url: unleashConfig.url,
-	instanceId: unleashConfig.instanceId
+	instanceId: unleashConfig.instanceId,
+	refreshInterval: unleashConfig.refreshInterval,
+	metricsInterval: unleashConfig.metricsInterval
 });
 
 // metrics hooks

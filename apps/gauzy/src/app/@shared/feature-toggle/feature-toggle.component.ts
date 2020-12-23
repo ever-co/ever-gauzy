@@ -1,9 +1,16 @@
-import { Component, Input, OnInit } from '@angular/core';
+import {
+	Component,
+	Input,
+	OnChanges,
+	OnInit,
+	SimpleChanges
+} from '@angular/core';
 import { filter, finalize, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IFeature,
 	IFeatureOrganization,
+	IFeatureToggle,
 	IOrganization,
 	IUser
 } from '@gauzy/models';
@@ -12,6 +19,7 @@ import { Store } from '../../@core/services/store.service';
 import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
+import { ActivatedRoute } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -21,36 +29,88 @@ import { TranslationBaseComponent } from '../language-base/translation-base.comp
 })
 export class FeatureToggleComponent
 	extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit, OnChanges {
 	@Input() organization: IOrganization;
 
+	blocks$: Observable<IFeature[][]> = this._featureStoreService.blocks$;
+
+	isOrganization: boolean;
 	user: IUser;
 	loading: boolean;
 	featureOrganizations: IFeatureOrganization[] = [];
-
-	features$: Observable<IFeature[]> = this._featureStoreService.features$;
-	blocks$: Observable<IFeature[][]> = this._featureStoreService.blocks$;
+	featureTogglesDefinitions: IFeatureToggle[] = [];
 
 	constructor(
+		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _featureStoreService: FeatureStoreService,
-		readonly translationService: TranslateService,
-		private readonly _storeService: Store
+		private readonly _storeService: Store,
+		readonly translationService: TranslateService
 	) {
 		super(translationService);
 	}
 
 	ngOnInit(): void {
+		this._activatedRoute.data
+			.pipe(
+				tap(
+					({ isOrganization }) =>
+						(this.isOrganization = isOrganization)
+				),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this._storeService.user$
 			.pipe(
 				filter((user) => !!user),
 				tap((user) => (this.user = user)),
 				tap(() => (this.loading = true)),
 				tap(() => {
+					this.getFeatureToggleDefinitions();
 					this.getFeatures();
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._storeService.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				tap((organization) => (this.organization = organization)),
+				tap(() => {
 					this.getFeatureOrganizations();
 				}),
 				untilDestroyed(this)
 			)
+			.subscribe();
+		this._featureStoreService.featureOrganizations$
+			.pipe(
+				filter(
+					(featureOrganizations) => featureOrganizations.length > 0
+				),
+				tap(
+					(featureOrganizations: IFeatureOrganization[]) =>
+						(this.featureOrganizations = featureOrganizations)
+				),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this._featureStoreService.featureToggles$
+			.pipe(
+				tap((toggles) => (this.featureTogglesDefinitions = toggles)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	ngOnChanges(change: SimpleChanges): void {
+		if (change.organization.previousValue) {
+			console.log(change.organization);
+		}
+	}
+
+	getFeatureToggleDefinitions() {
+		this._featureStoreService
+			.loadUnleashFeatures()
+			.pipe(untilDestroyed(this))
 			.subscribe();
 	}
 
@@ -66,24 +126,49 @@ export class FeatureToggleComponent
 
 	getFeatureOrganizations() {
 		const { tenantId } = this.user;
+		const find = { tenantId };
+
+		if (this.organization && this.isOrganization) {
+			find['organizationId'] = this.organization.id;
+		}
+
 		this._featureStoreService
-			.loadFeatureOrganizations(['feature'], {
-				tenantId
-			})
+			.loadFeatureOrganizations(['feature'], find)
 			.pipe(untilDestroyed(this))
 			.subscribe();
 	}
 
-	featureChanged(feature: IFeature, enabled: boolean) {
+	featureChanged(isEnabled: boolean, feature: IFeature) {
+		this.emitFeatureToggle(feature, isEnabled);
+	}
+
+	emitFeatureToggle(feature: IFeature, isEnabled: boolean) {
 		const { tenantId } = this.user;
+		const { id: featureId } = feature;
+
 		const request = {
 			tenantId,
-			featureId: feature.id,
-			isEnabled: enabled
+			featureId,
+			isEnabled
 		};
+		if (this.organization && this.isOrganization) {
+			const { id: organizationId } = this.organization;
+			request['organizationId'] = organizationId;
+		}
+
 		this._featureStoreService
 			.changedFeature(request)
 			.pipe(tap(() => window.location.reload()))
 			.subscribe();
+	}
+
+	enabledFeature(row: IFeature) {
+		const featureToggle = this.featureTogglesDefinitions.find(
+			(item: IFeatureToggle) => item.name == row.code
+		);
+		if (featureToggle) {
+			return featureToggle.enabled;
+		}
+		return true;
 	}
 }

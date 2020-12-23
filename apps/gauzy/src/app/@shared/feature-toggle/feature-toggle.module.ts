@@ -6,7 +6,9 @@ import { FeatureStoreService } from '../../@core/services/feature/feature-store.
 import {
 	NbButtonModule,
 	NbCardModule,
+	NbCheckboxModule,
 	NbIconModule,
+	NbListModule,
 	NbSpinnerModule,
 	NbToggleModule
 } from '@nebular/theme';
@@ -19,7 +21,9 @@ import { HttpClient } from '@angular/common/http';
 		CommonModule,
 		NbButtonModule,
 		NbCardModule,
+		NbCheckboxModule,
 		NbIconModule,
+		NbListModule,
 		NbSpinnerModule,
 		NbToggleModule,
 		ThemeModule,

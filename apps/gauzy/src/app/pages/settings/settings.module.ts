@@ -33,8 +33,6 @@ import { FileStorageComponent } from './file-storage/file-storage.component';
 import { CustomSmtpComponent } from './custom-smtp/custom-smtp.component';
 import { SMTPModule } from '../../@shared/smtp/smtp.module';
 import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
-import { FeatureComponent } from './feature/feature.component';
-import { FeatureToggleModule } from '../../@shared/feature-toggle/feature-toggle.module';
 
 @NgModule({
 	imports: [
@@ -65,8 +63,7 @@ import { FeatureToggleModule } from '../../@shared/feature-toggle/feature-toggle
 		}),
 		NgSelectModule,
 		BackNavigationModule,
-		SMTPModule,
-		FeatureToggleModule
+		SMTPModule
 	],
 	entryComponents: [EditRolesPermissionsComponent, DangerZoneComponent],
 	declarations: [
@@ -77,8 +74,7 @@ import { FeatureToggleModule } from '../../@shared/feature-toggle/feature-toggle
 		EmailHistoryComponent,
 		EmailFiltersComponent,
 		CustomSmtpComponent,
-		SmsGatewayComponent,
-		FeatureComponent
+		SmsGatewayComponent
 	],
 	providers: [RolePermissionsService, RoleService]
 })

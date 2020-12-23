@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import {
 	IFeature,
 	IFeatureOrganization,
-	IFeatureOrganizationCreateInput,
+	IFeatureOrganizationUpdateInput,
 	IFeatureOrganizationFindInput
 } from '@gauzy/models';
 import { toParams } from '@gauzy/utils';
@@ -44,7 +44,7 @@ export class FeatureService {
 		);
 	}
 
-	featureAction(payload: IFeatureOrganizationCreateInput) {
-		return this.http.post(`${this.API_URL}/action`, payload);
+	featureToggle(payload: IFeatureOrganizationUpdateInput) {
+		return this.http.post(`${this.API_URL}`, payload);
 	}
 }
