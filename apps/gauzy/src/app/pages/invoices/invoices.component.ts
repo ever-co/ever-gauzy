@@ -23,7 +23,8 @@ import {
 	IOrganizationContact,
 	IInvoiceEstimateHistory,
 	PermissionsEnum,
-	ICurrency
+	ICurrency,
+	IInvoiceItemCreateInput
 } from '@gauzy/models';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
@@ -316,6 +317,8 @@ export class InvoicesComponent
 			status: this.selectedInvoice.status
 		});
 
+		const invoiceItems: IInvoiceItemCreateInput[] = [];
+
 		for (const item of this.selectedInvoice.invoiceItems) {
 			const organizationId = this.organization.id;
 			const itemToAdd = {
@@ -343,8 +346,13 @@ export class InvoicesComponent
 				default:
 					break;
 			}
-			await this.invoiceItemService.add(itemToAdd);
+
+			invoiceItems.push(itemToAdd);
 		}
+		await this.invoiceItemService.createBulk(
+			createdInvoice.id,
+			invoiceItems
+		);
 
 		await this.invoiceEstimateHistoryService.add({
 			action: this.isEstimate

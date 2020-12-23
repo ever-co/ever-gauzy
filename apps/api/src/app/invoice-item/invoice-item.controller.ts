@@ -1,18 +1,33 @@
 import { CrudController, IPagination } from '../core';
 import { InvoiceItem } from './invoice-item.entity';
 import { InvoiceItemService } from './invoice-item.service';
-import { ApiTags } from '@nestjs/swagger';
-import { Controller, UseGuards, Get, Query } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+	Controller,
+	UseGuards,
+	Get,
+	Query,
+	HttpStatus,
+	Post,
+	Body,
+	Param
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { IInvoiceItem } from '@gauzy/models';
+import { IInvoiceItem, IInvoiceItemCreateInput } from '@gauzy/models';
 import { ParseJsonPipe } from '../shared';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { CommandBus } from '@nestjs/cqrs';
+import { InvoiceItemBulkCreateCommand } from './commands';
 
 @ApiTags('InvoiceItem')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class InvoiceItemController extends CrudController<InvoiceItem> {
-	constructor(private invoiceItemService: InvoiceItemService) {
+	constructor(
+		private invoiceItemService: InvoiceItemService,
+		private readonly commandBus: CommandBus
+	) {
 		super(invoiceItemService);
 	}
 
@@ -26,5 +41,26 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 			where: findInput,
 			relations
 		});
+	}
+
+	@ApiOperation({ summary: 'Create invoice item in Bulk' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'Invoice item have been successfully created.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(PermissionGuard)
+	@Post('/createBulk/:id')
+	async createBulk(
+		@Param('id') id: string,
+		@Body() input: IInvoiceItemCreateInput[]
+	): Promise<any> {
+		return this.commandBus.execute(
+			new InvoiceItemBulkCreateCommand(id, input)
+		);
 	}
 }
