@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NgxPermissionsService } from 'ngx-permissions';
 import * as _ from 'underscore';
 import { UsersService } from '../../@core/services';
-import { FeatureService } from '../../@core/services/feature.service';
+import { FeatureService } from '../../@core/services/feature/feature.service';
 import { Store } from '../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 
@@ -49,10 +49,10 @@ export class OnboardingCompleteComponent
 	}
 
 	getFeatures() {
-		this.featureService.getFeatures(['children']).then(({ items }) => {
+		/* this.featureService.getFeatures(['children']).then(({ items }) => {
 			this.features = items;
 			this.blocks = _.chunk(this.features, 2) as Array<IFeature[]>;
-		});
+		}); */
 	}
 
 	navigateTo(link: string) {

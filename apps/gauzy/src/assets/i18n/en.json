@@ -86,7 +86,8 @@
 		"DENY": "Deny",
 		"PAYMENTS": "Payments",
 		"NOTE": "Note",
-		"SKIP_CONTINUE": "Skip {{ label }} and Continue"
+		"SKIP_CONTINUE": "Skip {{ label }} and Continue",
+		"BUY": "Buy"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",

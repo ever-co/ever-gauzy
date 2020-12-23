@@ -1,9 +1,19 @@
-import { Body, Controller, Get, HttpStatus, Post, Query } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Get,
+	HttpStatus,
+	Post,
+	Query,
+	UseGuards
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Feature } from './feature.entity';
 import { FeatureService } from './feature.service';
 import * as unleash from 'unleash-client';
-import { RequestContext } from '../core/context';
+import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { AuthGuard } from '@nestjs/passport';
+import { IFeatureOrganizationCreateInput } from '@gauzy/models';
 
 @ApiTags('Feature')
 @Controller()
@@ -26,6 +36,7 @@ export class FeaturesToggleController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 	@Get('all')
 	async getAllFeaturesList(@Query('data') data: any) {
 		return this.featureService.getAll(data);
@@ -41,10 +52,10 @@ export class FeaturesToggleController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 	@Get('/organizations')
-	async getFeaturesOrganization() {
-		const tenantId = RequestContext.currentTenantId();
-		return this.featureService.getFeatureOrganizations(tenantId);
+	async getFeaturesOrganization(@Query('data') data: any) {
+		return this.featureService.getFeatureOrganizations(data);
 	}
 
 	@ApiOperation({ summary: 'Enabled or disabled features' })
@@ -58,6 +69,11 @@ export class FeaturesToggleController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Post()
-	async enabledDisabledFeature(@Body() input: any) {}
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+	@Post('action')
+	async enabledDisabledFeature(
+		@Body() input: IFeatureOrganizationCreateInput
+	) {
+		return this.featureService.updateFeatureOrganization(input);
+	}
 }

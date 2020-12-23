@@ -1,0 +1,45 @@
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-body>
+		<ng-container *ngFor="let block of blocks$ | async">
+			<div class="row centered">
+				<ng-container *ngFor="let row of block">
+					<div class="col-6">
+						<nb-card class="shortcut-card" [status]="row?.status">
+							<nb-card-header>
+								<div class="float-left text-left">
+									<nb-icon
+										[icon]="row?.icon"
+										*ngIf="row?.icon"
+									></nb-icon>
+									<span>{{ row?.name }}</span>
+								</div>
+								<div
+									class="float-right text-right"
+									*ngIf="row?.isPaid"
+								>
+									<button nbButton [status]="'basic'">
+										{{ 'BUTTONS.BUY' | translate }}
+									</button>
+								</div>
+							</nb-card-header>
+							<nb-card-body>
+								<div class="float-left text-left">
+									{{ row?.description }}
+								</div>
+								<div class="float-right text-right">
+									<nb-toggle
+										(checkedChange)="
+											featureChanged(row, $event)
+										"
+										labelPosition="start"
+										status="basic"
+									></nb-toggle>
+								</div>
+							</nb-card-body>
+						</nb-card>
+					</div>
+				</ng-container>
+			</div>
+		</ng-container>
+	</nb-card-body>
+</nb-card>

@@ -34,7 +34,7 @@ import { CustomSmtpComponent } from './custom-smtp/custom-smtp.component';
 import { SMTPModule } from '../../@shared/smtp/smtp.module';
 import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
 import { FeatureComponent } from './feature/feature.component';
-import { FeatureService } from '../../@core/services/feature.service';
+import { FeatureToggleModule } from '../../@shared/feature-toggle/feature-toggle.module';
 
 @NgModule({
 	imports: [
@@ -65,7 +65,8 @@ import { FeatureService } from '../../@core/services/feature.service';
 		}),
 		NgSelectModule,
 		BackNavigationModule,
-		SMTPModule
+		SMTPModule,
+		FeatureToggleModule
 	],
 	entryComponents: [EditRolesPermissionsComponent, DangerZoneComponent],
 	declarations: [
@@ -79,6 +80,6 @@ import { FeatureService } from '../../@core/services/feature.service';
 		SmsGatewayComponent,
 		FeatureComponent
 	],
-	providers: [RolePermissionsService, RoleService, FeatureService]
+	providers: [RolePermissionsService, RoleService]
 })
 export class SettingsModule {}

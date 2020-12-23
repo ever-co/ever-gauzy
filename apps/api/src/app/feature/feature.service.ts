@@ -1,13 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
-import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { Feature } from './feature.entity';
-import { IFeature, IFeatureOrganization, IPagination } from '@gauzy/models';
+import { CrudService } from '../core/crud/crud.service';
+import {
+	IFeature,
+	IFeatureOrganization,
+	IFeatureOrganizationCreateInput,
+	IPagination
+} from '@gauzy/models';
 import { FeatureOrganization } from './feature_organization.entity';
 
 @Injectable()
-export class FeatureService extends TenantAwareCrudService<Feature> {
+export class FeatureService extends CrudService<Feature> {
 	constructor(
 		@InjectRepository(Feature)
 		public readonly featureRepository: Repository<Feature>,
@@ -31,13 +36,34 @@ export class FeatureService extends TenantAwareCrudService<Feature> {
 		});
 	}
 
-	async getFeatureOrganizations(
-		tenantId: string
-	): Promise<IFeatureOrganization[]> {
+	async getFeatureOrganizations(data: any): Promise<IFeatureOrganization[]> {
+		const { relations = [], findInput = {} } = data;
 		return await this.featureOrganizationRepository.find({
-			where: {
-				tenantId
-			}
+			where: findInput,
+			relations
 		});
+	}
+
+	async updateFeatureOrganization(
+		input: IFeatureOrganizationCreateInput
+	): Promise<IFeatureOrganization> {
+		const { featureId } = input;
+		let featureOrganization = await this.featureOrganizationRepository.findOne(
+			{
+				where: {
+					featureId
+				}
+			}
+		);
+
+		if (!featureOrganization) {
+			featureOrganization = new FeatureOrganization(input);
+		} else {
+			featureOrganization = new FeatureOrganization(
+				Object.assign(featureOrganization, input)
+			);
+		}
+
+		return this.featureOrganizationRepository.save(featureOrganization);
 	}
 }

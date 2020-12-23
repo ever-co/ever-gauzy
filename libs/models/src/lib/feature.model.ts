@@ -26,6 +26,17 @@ export interface IFeatureOrganization
 	isEnabled: boolean;
 }
 
+export interface IFeatureOrganizationCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
+	featureId: string;
+	isEnabled: boolean;
+}
+
+export interface IFeatureOrganizationFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
+	featureId?: string;
+}
+
 export enum FeatureStatusEnum {
 	INFO = 'info',
 	PRIMARY = 'primary',
