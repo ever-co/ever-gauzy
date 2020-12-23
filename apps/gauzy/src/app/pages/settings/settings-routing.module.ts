@@ -10,7 +10,6 @@ import { NgxPermissionsGuard } from 'ngx-permissions';
 import { PermissionsEnum } from '@gauzy/models';
 import { CustomSmtpComponent } from './custom-smtp/custom-smtp.component';
 import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
-import { FeatureComponent } from './feature/feature.component';
 
 const routes: Routes = [
 	{
