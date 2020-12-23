@@ -4,7 +4,7 @@
 	<h6>Where would you like to go now?</h6>
 </div>
 
-<ng-container *ngFor="let block of blocks">
+<ng-container *ngFor="let block of blocks$ | async">
 	<div class="row centered">
 		<ng-container *ngFor="let row of block">
 			<div class="col-3">

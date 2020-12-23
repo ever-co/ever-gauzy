@@ -3,12 +3,14 @@ import { Router } from '@angular/router';
 import { IFeature, IUser } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { NgxPermissionsService } from 'ngx-permissions';
-import * as _ from 'underscore';
 import { UsersService } from '../../@core/services';
-import { FeatureService } from '../../@core/services/feature/feature.service';
-import { Store } from '../../@core/services/store.service';
+import { FeatureStoreService } from '../../@core/services/feature/feature-store.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { Store } from '../../@core/services/store.service';
+import { Observable } from 'rxjs/Observable';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-onboarding-complete',
 	templateUrl: './onboarding-complete.component.html',
@@ -23,13 +25,13 @@ export class OnboardingCompleteComponent
 		private readonly store: Store,
 		private usersService: UsersService,
 		private ngxPermissionsService: NgxPermissionsService,
-		private featureService: FeatureService
+		private readonly _featureStoreService: FeatureStoreService
 	) {
 		super(translationService);
 	}
 
-	blocks: IFeature[][] = [];
-	features: IFeature[] = [];
+	blocks$: Observable<IFeature[][]> = this._featureStoreService.blocks$;
+	features$: Observable<IFeature[]> = this._featureStoreService.features$;
 
 	ngOnInit() {
 		const id = this.store.userId;
@@ -49,10 +51,10 @@ export class OnboardingCompleteComponent
 	}
 
 	getFeatures() {
-		/* this.featureService.getFeatures(['children']).then(({ items }) => {
-			this.features = items;
-			this.blocks = _.chunk(this.features, 2) as Array<IFeature[]>;
-		}); */
+		this._featureStoreService
+			.loadFeatures(['children'])
+			.pipe(untilDestroyed(this))
+			.subscribe();
 	}
 
 	navigateTo(link: string) {
