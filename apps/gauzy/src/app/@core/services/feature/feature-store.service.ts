@@ -48,7 +48,7 @@ export class FeatureStoreService {
 			return EMPTY;
 		}
 
-		return this._featureService.getFeatures(relations).pipe(
+		return this._featureService.getParentFeatures(relations).pipe(
 			tap(({ items }) => {
 				this._features$.next(items);
 				this._blocks$.next(_.chunk(items, 2) as Array<IFeature[]>);

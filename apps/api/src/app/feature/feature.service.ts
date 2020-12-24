@@ -23,13 +23,21 @@ export class FeatureService extends CrudService<Feature> {
 		super(featureRepository);
 	}
 
-	async getAll(request: any): Promise<IPagination<IFeature>> {
+	async getParentFeatureList(request: any): Promise<IPagination<IFeature>> {
 		const { relations = [] } = request;
 		return await this.findAll({
 			where: {
 				parentId: IsNull()
 			},
 			relations,
+			order: {
+				createdAt: 'ASC'
+			}
+		});
+	}
+
+	async getAllFeatureList(): Promise<IPagination<IFeature>> {
+		return await this.findAll({
 			order: {
 				createdAt: 'ASC'
 			}

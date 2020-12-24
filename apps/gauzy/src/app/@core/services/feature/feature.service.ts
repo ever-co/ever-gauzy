@@ -19,15 +19,21 @@ export class FeatureService {
 		return this.http.get(`${this.API_URL}`).toPromise();
 	}
 
-	getFeatures(
+	getParentFeatures(
 		relations?: string[]
 	): Observable<{ items: IFeature[]; total: number }> {
 		const data = { relations };
 		return this.http.get<{ items: IFeature[]; total: number }>(
-			`${this.API_URL}/all`,
+			`${this.API_URL}/parent`,
 			{
 				params: toParams({ data })
 			}
+		);
+	}
+
+	getAllFeatures(): Observable<{ items: IFeature[]; total: number }> {
+		return this.http.get<{ items: IFeature[]; total: number }>(
+			`${this.API_URL}/all`
 		);
 	}
 

@@ -32,6 +32,22 @@ export class FeaturesToggleController {
 		return featureToggles;
 	}
 
+	@ApiOperation({ summary: 'Find all parent features.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found feature',
+		type: Feature
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(AuthGuard('jwt'))
+	@Get('parent')
+	async getParentFeatureList(@Query('data') data: any) {
+		return this.featureService.getParentFeatureList(data);
+	}
+
 	@ApiOperation({ summary: 'Find all features.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -44,8 +60,8 @@ export class FeaturesToggleController {
 	})
 	@UseGuards(AuthGuard('jwt'))
 	@Get('all')
-	async getAllFeaturesList(@Query('data') data: any) {
-		return this.featureService.getAll(data);
+	async getAllFeatureList() {
+		return this.featureService.getAllFeatureList();
 	}
 
 	@ApiOperation({ summary: 'Find all feature organizations.' })

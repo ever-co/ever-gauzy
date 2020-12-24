@@ -167,6 +167,13 @@ export class FeatureToggleComponent
 			(item: IFeatureToggle) => item.name == row.code
 		);
 		if (featureToggle) {
+			const featureOrganization = this.featureOrganizations.find(
+				(featureOrganization: IFeatureOrganization) =>
+					featureOrganization.featureId === row.id
+			);
+			if (featureOrganization) {
+				return featureOrganization.isEnabled;
+			}
 			return featureToggle.enabled;
 		}
 		return true;
