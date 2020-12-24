@@ -14,8 +14,11 @@ export class InvoiceItemService extends CrudService<InvoiceItem> {
 		super(invoiceItemRepository);
 	}
 
-	async createBulk(id: string, createInput: IInvoiceItemCreateInput[]) {
-		await this.repository.delete({ invoiceId: id });
+	async createBulk(
+		invoiceId: string,
+		createInput: IInvoiceItemCreateInput[]
+	) {
+		await this.repository.delete({ invoiceId: invoiceId });
 		return await this.repository.save(createInput);
 	}
 }

@@ -54,13 +54,13 @@ export class InvoiceItemController extends CrudController<InvoiceItem> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(PermissionGuard)
-	@Post('/createBulk/:id')
+	@Post('/createBulk/:invoiceId')
 	async createBulk(
-		@Param('id') id: string,
+		@Param('invoiceId') invoiceId: string,
 		@Body() input: IInvoiceItemCreateInput[]
 	): Promise<any> {
 		return this.commandBus.execute(
-			new InvoiceItemBulkCreateCommand(id, input)
+			new InvoiceItemBulkCreateCommand(invoiceId, input)
 		);
 	}
 }

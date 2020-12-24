@@ -40,7 +40,7 @@ export interface IInvoiceItemCreateInput
 	price: number;
 	quantity: number;
 	totalValue: number;
-	invoiceId?: string;
+	invoiceId: string;
 	taskId?: string;
 	employeeId?: string;
 	projectId?: string;
@@ -48,6 +48,4 @@ export interface IInvoiceItemCreateInput
 	expenseId?: string;
 	applyTax?: boolean;
 	applyDiscount?: boolean;
-	organizationId?: string;
-	tenantId?: string;
 }

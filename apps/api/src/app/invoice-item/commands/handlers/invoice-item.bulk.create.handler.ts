@@ -11,7 +11,7 @@ export class InvoiceItemBulkCreateHandler
 	public async execute(
 		command: InvoiceItemBulkCreateCommand
 	): Promise<InvoiceItem[]> {
-		const { id, input } = command;
-		return await this.invoiceItemService.createBulk(id, input);
+		const { invoiceId, input } = command;
+		return await this.invoiceItemService.createBulk(invoiceId, input);
 	}
 }

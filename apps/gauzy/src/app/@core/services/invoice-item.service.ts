@@ -45,12 +45,12 @@ export class InvoiceItemService {
 	}
 
 	createBulk(
-		id: string,
+		invoiceId: string,
 		invoiceItem: IInvoiceItemCreateInput[]
 	): Promise<IInvoiceItem[]> {
 		return this.http
 			.post<IInvoiceItem[]>(
-				`/api/invoice-item/createBulk/${id}`,
+				`/api/invoice-item/createBulk/${invoiceId}`,
 				invoiceItem
 			)
 			.pipe(first())
