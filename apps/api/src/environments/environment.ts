@@ -180,7 +180,7 @@ export const environment: IEnvironment = {
 	defaultCurrency: process.env.DEFAULT_CURRENCY || 'USD',
 
 	unleashConfig: {
-		url: process.env.UNLEASH_URL || 'http://unleash.herokuapp.com/api/',
+		url: process.env.UNLEASH_API_URL || 'http://unleash.herokuapp.com/api/',
 		appName: process.env.UNLEASH_APP_NAME,
 		instanceId: process.env.UNLEASH_INSTANCE_ID,
 		refreshInterval: parseInt(process.env.UNLEASH_REFRESH_INTERVAL),
