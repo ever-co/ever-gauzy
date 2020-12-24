@@ -20,7 +20,7 @@ export class ToastrService {
 			displayMessage = message;
 		}
 
-		this.nbToastrService.success(
+		this.nbToastrService.primary(
 			this.getTranslation(displayMessage, translationParams),
 			this.getTranslation(title || 'TOASTR.TITLE.SUCCESS')
 		);
