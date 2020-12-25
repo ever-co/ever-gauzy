@@ -9,7 +9,10 @@ import {
 	IOrganizationProject,
 	ILanguage,
 	IProposalViewModel,
-	IFeatureToggle
+	IFeatureToggle,
+	IFeature,
+	IFeatureOrganization,
+	FeatureEnum
 } from '@gauzy/models';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { Injectable } from '@angular/core';
@@ -33,6 +36,7 @@ export interface AppState {
 	selectedDate: Date;
 	systemLanguages: ILanguage[];
 	featureToggles: IFeatureToggle[];
+	featureOrganizations: IFeatureOrganization[];
 }
 
 export interface PersistState {
@@ -50,7 +54,8 @@ export function createInitialAppState(): AppState {
 	return {
 		selectedDate: new Date(),
 		userRolePermissions: [],
-		featureToggles: []
+		featureToggles: [],
+		featureOrganizations: []
 	} as AppState;
 }
 
@@ -124,6 +129,9 @@ export class Store {
 		(state) => state.userRolePermissions
 	);
 	featureToggles$ = this.appQuery.select((state) => state.featureToggles);
+	featureOrganizations$ = this.appQuery.select(
+		(state) => state.featureOrganizations
+	);
 	preferredLanguage$ = this.persistQuery.select(
 		(state) => state.preferredLanguage
 	);
@@ -301,6 +309,27 @@ export class Store {
 		this.appStore.update({
 			featureToggles: featureToggles
 		});
+	}
+
+	get featureOrganizations(): IFeatureOrganization[] {
+		const { featureOrganizations } = this.appQuery.getValue();
+		return featureOrganizations;
+	}
+
+	set featureOrganizations(featureOrganizations: IFeatureOrganization[]) {
+		this.appStore.update({
+			featureOrganizations: featureOrganizations
+		});
+	}
+
+	/*
+	 * Check features are enabled/disabled for tenant organization
+	 */
+	hasFeatureEnabled(feature: FeatureEnum) {
+		const { featureOrganizations } = this.appQuery.getValue();
+		return !!(featureOrganizations || []).find(
+			(item) => item.feature.code === feature && item.isEnabled
+		);
 	}
 
 	get userRolePermissions(): IRolePermission[] {
