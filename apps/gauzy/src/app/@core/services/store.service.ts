@@ -10,7 +10,6 @@ import {
 	ILanguage,
 	IProposalViewModel,
 	IFeatureToggle,
-	IFeature,
 	IFeatureOrganization,
 	FeatureEnum
 } from '@gauzy/models';
@@ -327,8 +326,13 @@ export class Store {
 	 */
 	hasFeatureEnabled(feature: FeatureEnum) {
 		const { featureOrganizations } = this.appQuery.getValue();
+		const { organizationId } = this;
 		return !!(featureOrganizations || []).find(
-			(item) => item.feature.code === feature && item.isEnabled
+			(item) =>
+				item.feature.code === feature &&
+				item.isEnabled &&
+				(item.organizationId === null ||
+					organizationId === item.organizationId)
 		);
 	}
 
