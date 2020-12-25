@@ -21,6 +21,13 @@ const routes: Routes = [
 				component: SettingsComponent
 			},
 			{
+				path: 'features',
+				loadChildren: () =>
+					import('./feature/feature.module').then(
+						(m) => m.FeatureModule
+					)
+			},
+			{
 				path: 'email-history',
 				component: EmailHistoryComponent,
 				canActivate: [NgxPermissionsGuard],

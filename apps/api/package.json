@@ -98,6 +98,7 @@
 		"swagger-ui-express": "^4.1.4",
 		"typeorm": "^0.2.26",
 		"typeorm-express-query-builder": "^1.2.0",
+		"unleash-client": "^3.4.0",
 		"upwork-api": "^1.3.8",
 		"web-push": "^3.4.4"
 	},

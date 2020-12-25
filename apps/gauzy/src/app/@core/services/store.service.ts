@@ -8,7 +8,10 @@ import {
 	OrganizationPermissionsEnum,
 	IOrganizationProject,
 	ILanguage,
-	IProposalViewModel
+	IProposalViewModel,
+	IFeatureToggle,
+	IFeatureOrganization,
+	FeatureEnum
 } from '@gauzy/models';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { Injectable } from '@angular/core';
@@ -31,6 +34,8 @@ export interface AppState {
 	selectedProject: IOrganizationProject;
 	selectedDate: Date;
 	systemLanguages: ILanguage[];
+	featureToggles: IFeatureToggle[];
+	featureOrganizations: IFeatureOrganization[];
 }
 
 export interface PersistState {
@@ -47,7 +52,9 @@ export interface PersistState {
 export function createInitialAppState(): AppState {
 	return {
 		selectedDate: new Date(),
-		userRolePermissions: []
+		userRolePermissions: [],
+		featureToggles: [],
+		featureOrganizations: []
 	} as AppState;
 }
 
@@ -119,6 +126,10 @@ export class Store {
 	selectedDate$ = this.appQuery.select((state) => state.selectedDate);
 	userRolePermissions$ = this.appQuery.select(
 		(state) => state.userRolePermissions
+	);
+	featureToggles$ = this.appQuery.select((state) => state.featureToggles);
+	featureOrganizations$ = this.appQuery.select(
+		(state) => state.featureOrganizations
 	);
 	preferredLanguage$ = this.persistQuery.select(
 		(state) => state.preferredLanguage
@@ -286,6 +297,43 @@ export class Store {
 		this.appStore.update({
 			selectedProposal: proposal
 		});
+	}
+
+	get featureToggles(): IFeatureToggle[] {
+		const { featureToggles } = this.appQuery.getValue();
+		return featureToggles;
+	}
+
+	set featureToggles(featureToggles: IFeatureToggle[]) {
+		this.appStore.update({
+			featureToggles: featureToggles
+		});
+	}
+
+	get featureOrganizations(): IFeatureOrganization[] {
+		const { featureOrganizations } = this.appQuery.getValue();
+		return featureOrganizations;
+	}
+
+	set featureOrganizations(featureOrganizations: IFeatureOrganization[]) {
+		this.appStore.update({
+			featureOrganizations: featureOrganizations
+		});
+	}
+
+	/*
+	 * Check features are enabled/disabled for tenant organization
+	 */
+	hasFeatureEnabled(feature: FeatureEnum) {
+		const { featureOrganizations } = this.appQuery.getValue();
+		const { organizationId } = this;
+		return !!(featureOrganizations || []).find(
+			(item) =>
+				item.feature.code === feature &&
+				item.isEnabled &&
+				(item.organizationId === null ||
+					organizationId === item.organizationId)
+		);
 	}
 
 	get userRolePermissions(): IRolePermission[] {
