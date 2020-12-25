@@ -1,5 +1,5 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-body>
+	<nb-card-body *ngIf="!loading">
 		<ng-container *ngFor="let block of blocks$ | async">
 			<div class="row centered">
 				<ng-container *ngFor="let row of block">

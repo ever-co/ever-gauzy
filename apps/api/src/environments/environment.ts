@@ -182,6 +182,7 @@ export const environment: IEnvironment = {
 	unleashConfig: {
 		url: process.env.UNLEASH_API_URL || 'http://unleash.herokuapp.com/api/',
 		appName: process.env.UNLEASH_APP_NAME,
+		environment: 'development',
 		instanceId: process.env.UNLEASH_INSTANCE_ID,
 		refreshInterval: parseInt(process.env.UNLEASH_REFRESH_INTERVAL),
 		metricsInterval: parseInt(process.env.UNLEASH_METRICS_INTERVAL)

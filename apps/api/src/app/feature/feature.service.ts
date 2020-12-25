@@ -55,31 +55,32 @@ export class FeatureService extends CrudService<Feature> {
 
 	async updateFeatureOrganization(
 		input: IFeatureOrganizationUpdateInput
-	): Promise<IFeatureOrganization> {
+	): Promise<IFeatureOrganization[]> {
 		const { featureId, tenantId, organizationId } = input;
 		const where = {
 			featureId,
 			tenantId
 		};
+
 		if (organizationId) {
 			where['organizationId'] = organizationId;
 		}
 
-		let featureOrganization = await this.featureOrganizationRepository.findOne(
+		const featureOrganizations = await this.featureOrganizationRepository.find(
 			{
 				where
 			}
 		);
-
-		if (!featureOrganization) {
-			featureOrganization = new FeatureOrganization(input);
+		if (!featureOrganizations.length) {
+			const featureOrganization = new FeatureOrganization(input);
+			await this.featureOrganizationRepository.save(featureOrganization);
 		} else {
-			featureOrganization = new FeatureOrganization(
-				Object.assign(featureOrganization, input)
-			);
+			featureOrganizations.map((item: FeatureOrganization) => {
+				return new FeatureOrganization(Object.assign(item, input));
+			});
+			await this.featureOrganizationRepository.save(featureOrganizations);
 		}
-
-		return this.featureOrganizationRepository.save(featureOrganization);
+		return featureOrganizations;
 	}
 
 	/*

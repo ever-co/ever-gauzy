@@ -5,7 +5,7 @@ import {
 	OnInit,
 	SimpleChanges
 } from '@angular/core';
-import { filter, finalize, tap } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IFeature,
@@ -36,7 +36,7 @@ export class FeatureToggleComponent
 
 	isOrganization: boolean;
 	user: IUser;
-	loading: boolean;
+	loading: boolean = true;
 	featureOrganizations: IFeatureOrganization[] = [];
 	featureTogglesDefinitions: IFeatureToggle[] = [];
 
@@ -63,7 +63,6 @@ export class FeatureToggleComponent
 			.pipe(
 				filter((user) => !!user),
 				tap((user) => (this.user = user)),
-				tap(() => (this.loading = true)),
 				tap(() => this.getFeatures()),
 				untilDestroyed(this)
 			)
@@ -72,6 +71,9 @@ export class FeatureToggleComponent
 			.pipe(
 				filter((organization) => !!organization),
 				tap((organization) => (this.organization = organization)),
+				tap(() => (this.loading = true)),
+				debounceTime(50),
+				tap(() => (this.loading = false)),
 				tap(() => this.getFeatureOrganizations()),
 				untilDestroyed(this)
 			)
@@ -105,10 +107,7 @@ export class FeatureToggleComponent
 	getFeatures() {
 		this._featureStoreService
 			.loadFeatures(['children'])
-			.pipe(
-				finalize(() => (this.loading = false)),
-				untilDestroyed(this)
-			)
+			.pipe(untilDestroyed(this))
 			.subscribe();
 	}
 
@@ -154,14 +153,15 @@ export class FeatureToggleComponent
 		const featureToggle = this.featureTogglesDefinitions.find(
 			(item: IFeatureToggle) => item.name == row.code
 		);
+		const featureOrganization = this.featureOrganizations.find(
+			(featureOrganization: IFeatureOrganization) =>
+				featureOrganization.featureId === row.id
+		);
+		if (featureOrganization && featureOrganization.isEnabled === false) {
+			return featureOrganization.isEnabled;
+		}
+
 		if (featureToggle) {
-			const featureOrganization = this.featureOrganizations.find(
-				(featureOrganization: IFeatureOrganization) =>
-					featureOrganization.featureId === row.id
-			);
-			if (featureOrganization) {
-				return featureOrganization.isEnabled;
-			}
 			return featureToggle.enabled;
 		}
 		return true;
