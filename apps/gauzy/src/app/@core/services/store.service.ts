@@ -8,7 +8,8 @@ import {
 	OrganizationPermissionsEnum,
 	IOrganizationProject,
 	ILanguage,
-	IProposalViewModel
+	IProposalViewModel,
+	IFeatureToggle
 } from '@gauzy/models';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { Injectable } from '@angular/core';
@@ -31,6 +32,7 @@ export interface AppState {
 	selectedProject: IOrganizationProject;
 	selectedDate: Date;
 	systemLanguages: ILanguage[];
+	featureToggles: IFeatureToggle[];
 }
 
 export interface PersistState {
@@ -47,7 +49,8 @@ export interface PersistState {
 export function createInitialAppState(): AppState {
 	return {
 		selectedDate: new Date(),
-		userRolePermissions: []
+		userRolePermissions: [],
+		featureToggles: []
 	} as AppState;
 }
 
@@ -120,6 +123,7 @@ export class Store {
 	userRolePermissions$ = this.appQuery.select(
 		(state) => state.userRolePermissions
 	);
+	featureToggles$ = this.appQuery.select((state) => state.featureToggles);
 	preferredLanguage$ = this.persistQuery.select(
 		(state) => state.preferredLanguage
 	);
@@ -285,6 +289,17 @@ export class Store {
 	set selectedProposal(proposal: IProposalViewModel) {
 		this.appStore.update({
 			selectedProposal: proposal
+		});
+	}
+
+	get featureToggles(): IFeatureToggle[] {
+		const { featureToggles } = this.appQuery.getValue();
+		return featureToggles;
+	}
+
+	set featureToggles(featureToggles: IFeatureToggle[]) {
+		this.appStore.update({
+			featureToggles: featureToggles
 		});
 	}
 

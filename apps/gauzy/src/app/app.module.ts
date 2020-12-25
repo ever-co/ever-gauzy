@@ -60,6 +60,7 @@ import { GoogleMapsLoaderService } from './@core/services/google-maps-loader.ser
 import { Router } from '@angular/router';
 import { FeatureToggleModule } from 'ngx-feature-toggle';
 import { FeatureService } from './@core/services/feature/feature.service';
+import { IFeatureToggle } from '@gauzy/models';
 
 // TODO: we should use some internal function which returns version of Gauzy;
 const version = '0.1.0';
@@ -179,7 +180,7 @@ if (environment.SENTRY_DSN) {
 		{
 			provide: APP_INITIALIZER,
 			useFactory: featureToggleLoaderFactory,
-			deps: [FeatureService],
+			deps: [FeatureService, Store],
 			multi: true
 		},
 		{
@@ -213,6 +214,13 @@ export function googleMapsLoaderFactory(provider: GoogleMapsLoaderService) {
 	return () => provider.load(environment.GOOGLE_MAPS_API_KEY);
 }
 
-export function featureToggleLoaderFactory(provider: FeatureService) {
-	return () => provider.getFeatureToggles();
+export function featureToggleLoaderFactory(
+	provider: FeatureService,
+	store: Store
+) {
+	return () =>
+		provider.getFeatureToggles().then((features: IFeatureToggle[]) => {
+			store.featureToggles = features;
+			return features;
+		});
 }

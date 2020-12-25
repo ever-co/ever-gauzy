@@ -7,7 +7,8 @@ import {
 	IFeature,
 	IFeatureOrganization,
 	IFeatureOrganizationUpdateInput,
-	IPagination
+	IPagination,
+	ITenant
 } from '@gauzy/models';
 import { FeatureOrganization } from './feature_organization.entity';
 
@@ -79,5 +80,36 @@ export class FeatureService extends CrudService<Feature> {
 		}
 
 		return this.featureOrganizationRepository.save(featureOrganization);
+	}
+
+	/*
+	 * Create/Update feature organization for relative tenants
+	 */
+	public async updateTenantFeatureOrganizations(
+		tenants: ITenant[]
+	): Promise<IFeatureOrganization[]> {
+		if (!tenants.length) {
+			return;
+		}
+		const features: IFeature[] = await this.featureRepository.find();
+
+		const featureOrganizations: IFeatureOrganization[] = [];
+		features.forEach(async (feature: IFeature) => {
+			tenants.forEach((tenant: ITenant) => {
+				const { isEnabled } = feature;
+				const featureOrganization: IFeatureOrganization = new FeatureOrganization(
+					{
+						isEnabled,
+						tenant,
+						feature
+					}
+				);
+				featureOrganizations.push(featureOrganization);
+			});
+		});
+
+		return await this.featureOrganizationRepository.save(
+			featureOrganizations
+		);
 	}
 }

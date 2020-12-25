@@ -64,10 +64,7 @@ export class FeatureToggleComponent
 				filter((user) => !!user),
 				tap((user) => (this.user = user)),
 				tap(() => (this.loading = true)),
-				tap(() => {
-					this.getFeatureToggleDefinitions();
-					this.getFeatures();
-				}),
+				tap(() => this.getFeatures()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -75,9 +72,7 @@ export class FeatureToggleComponent
 			.pipe(
 				filter((organization) => !!organization),
 				tap((organization) => (this.organization = organization)),
-				tap(() => {
-					this.getFeatureOrganizations();
-				}),
+				tap(() => this.getFeatureOrganizations()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -93,7 +88,7 @@ export class FeatureToggleComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this._featureStoreService.featureToggles$
+		this._storeService.featureToggles$
 			.pipe(
 				tap((toggles) => (this.featureTogglesDefinitions = toggles)),
 				untilDestroyed(this)
@@ -105,13 +100,6 @@ export class FeatureToggleComponent
 		if (change.organization.previousValue) {
 			console.log(change.organization);
 		}
-	}
-
-	getFeatureToggleDefinitions() {
-		this._featureStoreService
-			.loadUnleashFeatures()
-			.pipe(untilDestroyed(this))
-			.subscribe();
 	}
 
 	getFeatures() {
