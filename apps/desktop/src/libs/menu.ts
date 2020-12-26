@@ -64,6 +64,9 @@ export default class AppMenu {
 									setting: appSetting,
 									config: config
 								});
+								settingsWindow.webContents.send(
+									'goto_top_menu'
+								);
 							}, 500);
 						}
 					}
@@ -79,15 +82,7 @@ export default class AppMenu {
 			},
 			{
 				label: 'Help',
-				submenu: [
-					{ label: 'Learn More' },
-					{
-						label: 'Check for update',
-						click() {
-							updaterWindow.show();
-						}
-					}
-				]
+				submenu: [{ label: 'Learn More' }]
 			}
 		]);
 		Menu.setApplicationMenu(menu);
