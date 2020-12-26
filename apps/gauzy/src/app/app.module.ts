@@ -220,7 +220,7 @@ export function featureToggleLoaderFactory(
 ) {
 	return () =>
 		provider.getFeatureToggles().then((features: IFeatureToggle[]) => {
-			store.featureToggles = features;
+			store.featureToggles = features || [];
 			return features;
 		});
 }

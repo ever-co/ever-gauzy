@@ -3,6 +3,6 @@ export interface IUnleashConfig {
 	appName: string;
 	environment?: string;
 	instanceId?: string;
-	refreshInterval: number;
-	metricsInterval: number;
+	refreshInterval?: number;
+	metricsInterval?: number;
 }

@@ -150,9 +150,6 @@ export class FeatureToggleComponent
 	}
 
 	enabledFeature(row: IFeature) {
-		const featureToggle = this.featureTogglesDefinitions.find(
-			(item: IFeatureToggle) => item.name == row.code
-		);
 		const featureOrganization = this.featureOrganizations.find(
 			(featureOrganization: IFeatureOrganization) =>
 				featureOrganization.featureId === row.id
@@ -160,7 +157,9 @@ export class FeatureToggleComponent
 		if (featureOrganization && featureOrganization.isEnabled === false) {
 			return featureOrganization.isEnabled;
 		}
-
+		const featureToggle = this.featureTogglesDefinitions.find(
+			(item: IFeatureToggle) => item.name == row.code
+		);
 		if (featureToggle) {
 			return featureToggle.enabled;
 		}

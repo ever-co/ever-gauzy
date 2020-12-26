@@ -180,8 +180,8 @@ export const environment: IEnvironment = {
 		appName: process.env.UNLEASH_APP_NAME,
 		environment: 'production',
 		instanceId: process.env.UNLEASH_INSTANCE_ID,
-		refreshInterval: parseInt(process.env.UNLEASH_REFRESH_INTERVAL),
-		metricsInterval: parseInt(process.env.UNLEASH_METRICS_INTERVAL)
+		refreshInterval: parseInt(process.env.UNLEASH_REFRESH_INTERVAL) || 1000,
+		metricsInterval: parseInt(process.env.UNLEASH_METRICS_INTERVAL) || 1000
 	}
 };
 
