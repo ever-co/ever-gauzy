@@ -23,6 +23,8 @@ export function createSettingsWindow(settingsWindow) {
 		event.preventDefault();
 	});
 
+	// settingsWindow.webContents.toggleDevTools();
+
 	return settingsWindow;
 }
 
@@ -35,7 +37,8 @@ const windowSetting = () => {
 		webPreferences: {
 			nodeIntegration: true,
 			webSecurity: false,
-			devTools: true
+			devTools: true,
+			enableRemoteModule: true
 		},
 		width: 1000,
 		height: 800,

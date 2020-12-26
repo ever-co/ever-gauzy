@@ -362,19 +362,23 @@ ipcMain.on('check_for_update', (event, arg) => {
 });
 
 autoUpdater.on('update-available', () => {
-	updaterWindow.webContents.send('update_available');
+	settingsWindow.webContents.send('update_available');
 });
 
 autoUpdater.on('update-downloaded', () => {
-	updaterWindow.webContents.send('update_downloaded');
+	settingsWindow.webContents.send('update_downloaded');
 });
 
 autoUpdater.on('update-not-available', () => {
-	updaterWindow.webContents.send('update_not_available');
+	settingsWindow.webContents.send('update_not_available');
 });
 
 autoUpdater.on('download-progress', (event) => {
-	updaterWindow.webContents.send('download_on_progress', event);
+	settingsWindow.webContents.send('download_on_progress', event);
+});
+
+autoUpdater.on('error', (e) => {
+	settingsWindow.webContents.send('error_update');
 });
 
 ipcMain.on('restart_and_update', () => {

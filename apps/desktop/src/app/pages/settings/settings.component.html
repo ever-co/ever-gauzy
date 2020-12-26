@@ -110,6 +110,78 @@
 				</nb-select>
 			</div>
 		</div>
+		<div class="row" *ngIf="selectedMenu === 'Update'">
+			<div class="col-12">
+				<nb-card class="card-full-height">
+					<nb-card-body>
+						<div class="row center-content">
+							<div class="col-12 text-center margin-content">
+								<img
+									src="../assets/images/logos/logo_Gauzy.svg"
+									class="margin-icon"
+								/>
+							</div>
+							<div class="col-12 version-text">
+								<span>Version {{ version }}</span>
+							</div>
+							<div
+								class="col-12 button-update"
+								*ngIf="!downloadFinish"
+							>
+								<button
+									nbButton
+									[disabled]="loading"
+									status="primary"
+									class="button-big"
+									(click)="checkForUpdate()"
+								>
+									Check Update<nb-icon
+										icon="sync-outline"
+										[class]="
+											loading
+												? 'icon-medium icon-spin'
+												: 'icon-medium'
+										"
+									></nb-icon>
+								</button>
+							</div>
+							<div
+								class="col-12 button-update"
+								*ngIf="downloadFinish"
+							>
+								<button
+									nbButton
+									status="primary"
+									class="button-big"
+									(click)="restartAndUpdate()"
+								>
+									Update Now<nb-icon
+										icon="arrow-circle-up-outline"
+										class="icon-medium"
+									></nb-icon>
+								</button>
+							</div>
+							<div
+								class="col-12 update-message"
+								*ngIf="notAvailable"
+							>
+								<span>{{ message }}</span>
+							</div>
+							<div
+								class="col-12 update-message"
+								*ngIf="showProgressBar"
+							>
+								<nb-progress-bar
+									[value]="progressDownload"
+									status="primary"
+									[displayValue]="true"
+								></nb-progress-bar>
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+		</div>
 		<div class="row" *ngIf="selectedMenu === 'Advanced Setting'">
 			<div class="col-12"><h4>Advanced Setting</h4></div>
 			<div class="col-12 warning-config" *ngIf="appSetting.timerStarted">

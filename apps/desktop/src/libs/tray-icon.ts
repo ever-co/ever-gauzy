@@ -41,6 +41,28 @@ export default class TrayIcon {
 							setting: appSetting,
 							config: config
 						});
+						settingsWindow.webContents.send('goto_top_menu');
+					}, 500);
+				}
+			},
+			{
+				id: '6',
+				label: 'Check For Update',
+				click() {
+					const appSetting = LocalStore.getStore('appSetting');
+					const config = LocalStore.getStore('configs');
+					if (!settingsWindow) {
+						settingsWindow = createSettingsWindow(settingsWindow);
+					}
+					settingsWindow.show();
+					setTimeout(() => {
+						settingsWindow.webContents.send('goto_update');
+					}, 100);
+					setTimeout(() => {
+						settingsWindow.webContents.send('app_setting', {
+							setting: appSetting,
+							config: config
+						});
 					}, 500);
 				}
 			},
@@ -63,6 +85,28 @@ export default class TrayIcon {
 						settingsWindow = createSettingsWindow(settingsWindow);
 					}
 					settingsWindow.show();
+					setTimeout(() => {
+						settingsWindow.webContents.send('app_setting', {
+							setting: appSetting,
+							config: config
+						});
+						settingsWindow.webContents.send('goto_top_menu');
+					}, 500);
+				}
+			},
+			{
+				id: '6',
+				label: 'Check For Update',
+				click() {
+					const appSetting = LocalStore.getStore('appSetting');
+					const config = LocalStore.getStore('configs');
+					if (!settingsWindow) {
+						settingsWindow = createSettingsWindow(settingsWindow);
+					}
+					settingsWindow.show();
+					setTimeout(() => {
+						settingsWindow.webContents.send('goto_update');
+					}, 100);
 					setTimeout(() => {
 						settingsWindow.webContents.send('app_setting', {
 							setting: appSetting,
@@ -163,6 +207,27 @@ export default class TrayIcon {
 				}
 			},
 			{
+				id: '6',
+				label: 'Check For Update',
+				click() {
+					const appSetting = LocalStore.getStore('appSetting');
+					const config = LocalStore.getStore('configs');
+					if (!settingsWindow) {
+						settingsWindow = createSettingsWindow(settingsWindow);
+					}
+					settingsWindow.show();
+					setTimeout(() => {
+						settingsWindow.webContents.send('goto_update');
+					}, 100);
+					setTimeout(() => {
+						settingsWindow.webContents.send('app_setting', {
+							setting: appSetting,
+							config: config
+						});
+					}, 500);
+				}
+			},
+			{
 				id: '4',
 				label: 'Setting',
 				click() {
@@ -177,6 +242,7 @@ export default class TrayIcon {
 							setting: appSetting,
 							config: config
 						});
+						settingsWindow.webContents.send('goto_top_menu');
 					}, 500);
 				}
 			},
