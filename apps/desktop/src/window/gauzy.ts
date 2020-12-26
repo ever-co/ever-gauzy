@@ -90,3 +90,11 @@ export function getApiBaseUrl(configs) {
 			: `http://localhost:${environment.API_DEFAULT_PORT}`;
 	}
 }
+
+export function gauzyPage() {
+	return url.format({
+		pathname: path.join(__dirname, '../index.html'),
+		protocol: 'file:',
+		slashes: true
+	});
+}
