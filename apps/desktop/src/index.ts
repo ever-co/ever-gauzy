@@ -55,7 +55,7 @@ import { createSettingsWindow } from './window/settings';
 import { createUpdaterWindow } from './window/updater';
 import { createImageViewerWindow } from './window/imageView';
 import { fork } from 'child_process';
-import { autoUpdater } from 'electron-updater';
+import { autoUpdater, CancellationToken } from 'electron-updater';
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
 // C:\Users\USERNAME\AppData\Roaming\gauzy-desktop
@@ -98,6 +98,7 @@ let alreadyQuit = false;
 let serverGauzy = null;
 let serverDesktop = null;
 let dialogErr = false;
+let cancellationToken = new CancellationToken();
 
 function startServer(value, restart = false) {
 	process.env.IS_ELECTRON = 'true';
@@ -358,7 +359,9 @@ ipcMain.on('open_browser', (event, arg) => {
 });
 
 ipcMain.on('check_for_update', (event, arg) => {
-	autoUpdater.checkForUpdatesAndNotify();
+	autoUpdater.checkForUpdatesAndNotify().then((downloadPromise) => {
+		cancellationToken = downloadPromise.cancellationToken;
+	});
 });
 
 autoUpdater.on('update-available', () => {
@@ -374,7 +377,9 @@ autoUpdater.on('update-not-available', () => {
 });
 
 autoUpdater.on('download-progress', (event) => {
-	settingsWindow.webContents.send('download_on_progress', event);
+	if (settingsWindow) {
+		settingsWindow.webContents.send('download_on_progress', event);
+	}
 });
 
 autoUpdater.on('error', (e) => {
@@ -465,6 +470,7 @@ app.on('before-quit', (e) => {
 			});
 		}, 1000);
 	} else {
+		cancellationToken.cancel();
 		app.exit(0);
 		if (serverDesktop) serverDesktop.kill();
 		if (serverGauzy) serverGauzy.kill();
