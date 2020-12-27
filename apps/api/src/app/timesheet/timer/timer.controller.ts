@@ -82,7 +82,7 @@ export class TimerController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/stop')
-	async stopTimer(): Promise<ITimeLog> {
-		return this.timerService.stopTimer();
+	async stopTimer(@Body() entity: ITimerToggleInput): Promise<ITimeLog> {
+		return this.timerService.stopTimer(entity);
 	}
 }

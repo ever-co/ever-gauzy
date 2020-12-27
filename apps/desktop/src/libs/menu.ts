@@ -10,6 +10,30 @@ export default class AppMenu {
 				submenu: [
 					{ role: 'about', label: 'About' },
 					{ type: 'separator' },
+					{
+						label: 'Check For Update',
+						click() {
+							const appSetting = LocalStore.getStore(
+								'appSetting'
+							);
+							const config = LocalStore.getStore('configs');
+							if (!settingsWindow) {
+								settingsWindow = createSettingsWindow(
+									settingsWindow
+								);
+							}
+							settingsWindow.show();
+							setTimeout(() => {
+								settingsWindow.webContents.send('goto_update');
+							}, 100);
+							setTimeout(() => {
+								settingsWindow.webContents.send('app_setting', {
+									setting: appSetting,
+									config: config
+								});
+							}, 500);
+						}
+					},
 					{ type: 'separator' },
 					{ role: 'quit', label: 'Exit' }
 				]
