@@ -3,7 +3,8 @@ import {
 	OnInit,
 	ChangeDetectionStrategy,
 	ViewChild,
-	ElementRef
+	ElementRef,
+	ChangeDetectorRef
 } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 @Component({
@@ -14,7 +15,7 @@ import { ElectronService } from 'ngx-electron';
 })
 export class SettingsComponent implements OnInit {
 	@ViewChild('selectRef') selectProjectElement: ElementRef;
-	menus = ['Screen Capture', 'Timer', 'Advanced Setting'];
+	menus = ['Screen Capture', 'Timer', 'Update', 'Advanced Setting'];
 
 	montorsOption = [
 		{
@@ -43,7 +44,17 @@ export class SettingsComponent implements OnInit {
 	screenshotNotification = null;
 	config = null;
 	restartDisable = false;
-	constructor(private electronService: ElectronService) {
+	loading = false;
+	version = '0.0.0';
+	notAvailable = false;
+	message = 'Application Uptodate';
+	downloadFinish = false;
+	progressDownload = 0;
+	showProgressBar = false;
+	constructor(
+		private electronService: ElectronService,
+		private _cdr: ChangeDetectorRef
+	) {
 		this.electronService.ipcRenderer.on('app_setting', (event, arg) => {
 			const { setting, config } = arg;
 			this.appSetting = setting;
@@ -57,10 +68,7 @@ export class SettingsComponent implements OnInit {
 			});
 			this.screenshotNotification = setting.screenshotNotification;
 			this.selectPeriod(setting.timer.updatePeriode);
-			this.selectProjectElement.nativeElement.focus();
-			const el: HTMLElement = this.selectProjectElement
-				.nativeElement as HTMLElement;
-			setTimeout(() => el.click(), 1000);
+			this._cdr.detectChanges();
 		});
 
 		this.electronService.ipcRenderer.on(
@@ -70,10 +78,55 @@ export class SettingsComponent implements OnInit {
 				this.appSetting = setting;
 			}
 		);
+
+		electronService.ipcRenderer.on('update_not_available', () => {
+			this.notAvailable = true;
+			this.message = 'Application Uptodate';
+			this.loading = false;
+			this._cdr.detectChanges();
+		});
+
+		electronService.ipcRenderer.on('error_update', (event, arg) => {
+			this.notAvailable = true;
+			this.message = 'Update Error';
+			this._cdr.detectChanges();
+		});
+
+		electronService.ipcRenderer.on('update_available', () => {
+			this.notAvailable = true;
+			this.message = 'Update Available';
+			this._cdr.detectChanges();
+		});
+
+		electronService.ipcRenderer.on('update_downloaded', () => {
+			this.notAvailable = true;
+			this.message = 'Update Download Completed';
+			this.showProgressBar = false;
+			this.downloadFinish = true;
+			this.loading = false;
+			this._cdr.detectChanges();
+		});
+
+		electronService.ipcRenderer.on('download_on_progress', (event, arg) => {
+			this.notAvailable = true;
+			this.showProgressBar = true;
+			this.message = `Update Downloading`;
+			this.progressDownload = Math.floor(Number(arg.percent));
+			this._cdr.detectChanges();
+		});
+
+		electronService.ipcRenderer.on('goto_update', () => {
+			this.selectMenu('Update');
+		});
+
+		electronService.ipcRenderer.on('goto_top_menu', () => {
+			this.selectMenu('Screen Capture');
+		});
 	}
 
 	ngOnInit(): void {
 		this.electronService.ipcRenderer.send('request_permission');
+		this.version = this.electronService.remote.app.getVersion();
 	}
 
 	selectMonitorOption(item) {
@@ -93,6 +146,7 @@ export class SettingsComponent implements OnInit {
 
 	selectMenu(menu) {
 		this.selectedMenu = menu;
+		this._cdr.detectChanges();
 	}
 
 	updateSetting(value, type) {
@@ -150,5 +204,15 @@ export class SettingsComponent implements OnInit {
 			default:
 				break;
 		}
+	}
+
+	checkForUpdate() {
+		this.loading = true;
+		this.electronService.ipcRenderer.send('check_for_update');
+		this._cdr.detectChanges();
+	}
+
+	restartAndUpdate() {
+		this.electronService.ipcRenderer.send('restart_and_update');
 	}
 }

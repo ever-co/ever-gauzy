@@ -33,3 +33,19 @@ export interface IInvoiceItem extends IBasePerTenantAndOrganizationEntityModel {
 export interface IInvoiceItemFindInput {
 	invoiceId?: string;
 }
+
+export interface IInvoiceItemCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel {
+	description: string;
+	price: number;
+	quantity: number;
+	totalValue: number;
+	invoiceId: string;
+	taskId?: string;
+	employeeId?: string;
+	projectId?: string;
+	productId?: string;
+	expenseId?: string;
+	applyTax?: boolean;
+	applyDiscount?: boolean;
+}

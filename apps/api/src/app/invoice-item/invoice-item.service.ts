@@ -3,6 +3,7 @@ import { InvoiceItem } from './invoice-item.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
+import { IInvoiceItemCreateInput } from '@gauzy/models';
 
 @Injectable()
 export class InvoiceItemService extends CrudService<InvoiceItem> {
@@ -11,5 +12,13 @@ export class InvoiceItemService extends CrudService<InvoiceItem> {
 		private readonly invoiceItemRepository: Repository<InvoiceItem>
 	) {
 		super(invoiceItemRepository);
+	}
+
+	async createBulk(
+		invoiceId: string,
+		createInput: IInvoiceItemCreateInput[]
+	) {
+		await this.repository.delete({ invoiceId: invoiceId });
+		return await this.repository.save(createInput);
 	}
 }

@@ -544,6 +544,12 @@
 										class="icon-medium"
 									></nb-icon>
 								</button>
+								<button
+									#dialogOpenBtn
+									(click)="open(true)"
+									style="display: none"
+									*ngIf="connectivity.live"
+								></button>
 							</div>
 						</div>
 					</nb-step>
@@ -847,19 +853,44 @@
 												>
 											</div>
 											<div class="col-9">
-												<input
-													type="text"
-													nbInput
-													fullWidth
-													status="basic"
-													[(ngModel)]="
-														databaseConfig.postgre
-															.dbPassword
-													"
-													(ngModelChange)="
-														validation()
-													"
-												/>
+												<nb-form-field>
+													<input
+														[type]="getInputType()"
+														nbInput
+														[(ngModel)]="
+															databaseConfig
+																.postgre
+																.dbPassword
+														"
+														(ngModelChange)="
+															validation()
+														"
+														fullWidth
+													/>
+													<button
+														nbSuffix
+														nbButton
+														ghost
+														(click)="
+															toggleShowPassword()
+														"
+													>
+														<nb-icon
+															[icon]="
+																showPassword
+																	? 'eye-outline'
+																	: 'eye-off-2-outline'
+															"
+															pack="eva"
+															[attr.aria-label]="
+																showPassword
+																	? 'hide password'
+																	: 'show password'
+															"
+														>
+														</nb-icon>
+													</button>
+												</nb-form-field>
 											</div>
 										</div>
 									</div>
@@ -881,20 +912,46 @@
 									>BACK
 								</button>
 							</div>
-							<div class="col-2 btn-fixed pull-right">
-								<button
-									nbButton
-									nbStepperNext
-									class="btn-next"
-									status="primary"
-									[disabled]="!buttonSave"
-									(click)="saveChange()"
-								>
-									SAVE<nb-icon
-										icon="save"
-										class="icon-medium"
-									></nb-icon>
-								</button>
+							<div class="col-2 btn-fixed"></div>
+
+							<div class="col-5 btn-fixed pull-right-custom">
+								<div class="row">
+									<div class="col-4">
+										<button
+											nbButton
+											nbStepperNext
+											class="btn-check"
+											status="success"
+											[disabled]="!buttonSave"
+											(click)="checkConnection(false)"
+										>
+											Check<nb-icon
+												icon="checkmark-circle-outline"
+												class="icon-medium"
+											></nb-icon>
+										</button>
+										<button
+											#dialogOpenBtn
+											(click)="open(true)"
+											style="display: none"
+										></button>
+									</div>
+									<div class="col-6">
+										<button
+											nbButton
+											nbStepperNext
+											class="btn-next"
+											status="primary"
+											[disabled]="!buttonSave"
+											(click)="saveChange()"
+										>
+											SAVE<nb-icon
+												icon="save"
+												class="icon-medium"
+											></nb-icon>
+										</button>
+									</div>
+								</div>
 							</div>
 						</div>
 						<div class="progress-setup" *ngIf="onProgress">

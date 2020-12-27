@@ -7,6 +7,7 @@ import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.se
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -29,6 +30,6 @@ const COMPONENTS = [EmployeeSelectorComponent];
 	],
 	exports: [...COMPONENTS],
 	declarations: [...COMPONENTS],
-	providers: [EmployeesService]
+	providers: [EmployeesService, EmployeeStore]
 })
 export class EmployeeSelectorsModule {}

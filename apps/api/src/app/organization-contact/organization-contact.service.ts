@@ -6,14 +6,10 @@ import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { OrganizationContact } from './organization-contact.entity';
 
 @Injectable()
-export class OrganizationContactService extends TenantAwareCrudService<
-	OrganizationContact
-> {
+export class OrganizationContactService extends TenantAwareCrudService<OrganizationContact> {
 	constructor(
 		@InjectRepository(OrganizationContact)
-		private readonly organizationContactRepository: Repository<
-			OrganizationContact
-		>
+		private readonly organizationContactRepository: Repository<OrganizationContact>
 	) {
 		super(organizationContactRepository);
 	}
@@ -43,9 +39,10 @@ export class OrganizationContactService extends TenantAwareCrudService<
 	 */
 	async findAllOrganizationContacts(data: any) {
 		const { relations, findInput } = data;
-		if (findInput['employeeId']) {
+		if (findInput && findInput['employeeId']) {
 			return await this.getOrganizationContactByEmployee(data);
 		}
+
 		return this.findAll({
 			where: findInput,
 			relations

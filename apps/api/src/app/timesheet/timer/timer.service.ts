@@ -96,7 +96,7 @@ export class TimerService {
 		});
 
 		if (lastLog) {
-			await this.stopTimer();
+			await this.stopTimer(request);
 		}
 
 		let organizationId;
@@ -129,7 +129,7 @@ export class TimerService {
 		);
 	}
 
-	async stopTimer(): Promise<TimeLog> {
+	async stopTimer(request: ITimerToggleInput): Promise<TimeLog> {
 		const user = RequestContext.currentUser();
 		let lastLog = await this.timeLogRepository.findOne({
 			where: {
@@ -149,7 +149,10 @@ export class TimerService {
 		}
 
 		lastLog = await this.commandBus.execute(
-			new TimeLogUpdateCommand({ stoppedAt }, lastLog.id)
+			new TimeLogUpdateCommand(
+				{ stoppedAt, manualTimeSlot: request.manualTimeSlot },
+				lastLog.id
+			)
 		);
 
 		const conflictInput: IGetTimeLogConflictInput = {
@@ -192,7 +195,7 @@ export class TimerService {
 		if (!lastLog) {
 			return this.startTimer(request);
 		} else {
-			return this.stopTimer();
+			return this.stopTimer(request);
 		}
 	}
 }

@@ -18,7 +18,8 @@ import {
 	ExpenseTypesEnum,
 	ExpenseStatusesEnum,
 	ContactType,
-	InvoiceStatusTypesEnum
+	InvoiceStatusTypesEnum,
+	IInvoiceItemCreateInput
 } from '@gauzy/models';
 import { filter, first, tap } from 'rxjs/operators';
 import { InvoicesService } from '../../../@core/services/invoices.service';
@@ -464,6 +465,8 @@ export class InvoiceAddComponent
 
 			this.createdInvoice = createdInvoice;
 
+			const invoiceItems: IInvoiceItemCreateInput[] = [];
+
 			for (const invoiceItem of tableData) {
 				const itemToAdd = {
 					description: invoiceItem.description,
@@ -495,8 +498,12 @@ export class InvoiceAddComponent
 					default:
 						break;
 				}
-				await this.invoiceItemService.add(itemToAdd);
+				invoiceItems.push(itemToAdd);
 			}
+			await this.invoiceItemService.createBulk(
+				createdInvoice.id,
+				invoiceItems
+			);
 
 			await this.invoiceEstimateHistoryService.add({
 				action: this.isEstimate ? 'Estimate added' : 'Invoice added',

@@ -96,6 +96,7 @@
 		"form-data": "^3.0.0",
 		"node-fetch": "^2.6.1",
 		"screenshot-desktop": "^1.12.2",
-		"electron-updater": "~4.3.5"
+		"electron-updater": "~4.3.5",
+		"pg": "^8.3.3"
 	}
 }

@@ -49,6 +49,7 @@ ormlogs.log
  
 # Cache File
 /.cache
+/apps/api/.cache
 
 /.deploy/nginx/log
 /apps/api/src/app/integrations/upwork/csv

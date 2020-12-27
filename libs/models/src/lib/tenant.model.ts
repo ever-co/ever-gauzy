@@ -1,3 +1,4 @@
+import { IFeatureOrganization } from './feature.model';
 import {
 	FileStorageProviderEnum,
 	S3FileStorageProviderConfig
@@ -14,6 +15,7 @@ export interface ITenant {
 
 	organizations?: IOrganization[];
 	rolePermissions?: IRolePermission[];
+	featureOrganizations?: IFeatureOrganization[];
 }
 
 export interface ITenantCreateInput {

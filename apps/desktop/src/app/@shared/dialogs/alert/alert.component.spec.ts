@@ -1,19 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { SmsGatewayComponent } from './sms-gateway.component';
+import { AlertComponent } from './alert.component';
 
-describe('SmsGatewayComponent', () => {
-	let component: SmsGatewayComponent;
-	let fixture: ComponentFixture<SmsGatewayComponent>;
+describe('AlertComponent', () => {
+	let component: AlertComponent;
+	let fixture: ComponentFixture<AlertComponent>;
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [SmsGatewayComponent]
+			declarations: [AlertComponent]
 		}).compileComponents();
 	});
 
 	beforeEach(() => {
-		fixture = TestBed.createComponent(SmsGatewayComponent);
+		fixture = TestBed.createComponent(AlertComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();
 	});

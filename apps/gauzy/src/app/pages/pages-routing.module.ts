@@ -3,8 +3,6 @@ import { NgModule } from '@angular/core';
 
 import { PagesComponent } from './pages.component';
 import { NotFoundComponent } from './miscellaneous/not-found/not-found.component';
-// import { RoleGuard } from '../@core/role/role.guard';
-// import { RolesEnum } from '@gauzy/models';
 
 const routes: Routes = [
 	{
@@ -15,12 +13,6 @@ const routes: Routes = [
 				path: '',
 				redirectTo: 'dashboard',
 				pathMatch: 'full'
-				// canActivate: [RoleGuard],
-				// data: {
-				// 	expectedRole: [
-				// 		RolesEnum.ADMIN
-				// 	]
-				// }
 			},
 			{
 				path: 'dashboard',

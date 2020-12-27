@@ -10,7 +10,8 @@ import {
 	IEmployee,
 	IUser,
 	IRole,
-	IEmployeeCreateInput
+	IEmployeeCreateInput,
+	EmployeeAction
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { EmployeesService } from '../../../@core/services/employees.service';
@@ -19,6 +20,7 @@ import { Store } from '../../../@core/services/store.service';
 import { first } from 'rxjs/operators';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { FormGroup } from '@angular/forms';
+import { EmployeeStore } from '../../../@core/services/employee-store.service';
 
 @Component({
 	selector: 'ga-employee-mutation',
@@ -40,7 +42,8 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 		private readonly roleService: RoleService,
 		protected toastrService: NbToastrService,
 		protected store: Store,
-		private errorHandler: ErrorHandlingService
+		private errorHandler: ErrorHandlingService,
+		private readonly _employeeStore: EmployeeStore
 	) {}
 
 	ngOnInit(): void {}
@@ -99,6 +102,10 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 				.createBulk(this.employees)
 				.pipe(first())
 				.toPromise();
+
+			this._employeeStore.employeeAction = {
+				action: EmployeeAction.CREATED
+			};
 			this.closeDialog(employee);
 		} catch (error) {
 			this.errorHandler.handleError(error);

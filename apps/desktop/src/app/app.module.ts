@@ -3,7 +3,12 @@ import { NgModule } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
-import { NbDialogModule, NbThemeModule, NbToastrModule } from '@nebular/theme';
+import {
+	NbDialogModule,
+	NbThemeModule,
+	NbToastrModule,
+	NbDialogService
+} from '@nebular/theme';
 import { SetupModule } from './pages/setup/setup.module';
 import { NgxElectronModule } from 'ngx-electron';
 import { AppService } from './app.service';
@@ -13,9 +18,11 @@ import { ScreenCaptureModule } from './pages/screen-capture/screen-capture.modul
 import { SettingsModule } from './pages/settings/settings.module';
 import { UpdaterModule } from './pages/updater/updater.module';
 import { ImageViewerModule } from './pages/image-viewer/image-viewer.module';
+import { AlertComponent } from './@shared/dialogs/alert/alert.component';
+import { NbCardModule, NbButtonModule } from '@nebular/theme';
 
 @NgModule({
-	declarations: [AppComponent],
+	declarations: [AppComponent, AlertComponent],
 	imports: [
 		BrowserModule,
 		BrowserAnimationsModule,
@@ -30,9 +37,11 @@ import { ImageViewerModule } from './pages/image-viewer/image-viewer.module';
 		UpdaterModule,
 		ImageViewerModule,
 		NbDialogModule.forRoot(),
-		NbToastrModule.forRoot()
+		NbToastrModule.forRoot(),
+		NbCardModule,
+		NbButtonModule
 	],
-	providers: [AppService, HttpClientModule],
+	providers: [AppService, HttpClientModule, NbDialogService],
 	bootstrap: [AppComponent]
 })
 export class AppModule {}

@@ -33,6 +33,7 @@ import { FileStorageComponent } from './file-storage/file-storage.component';
 import { CustomSmtpComponent } from './custom-smtp/custom-smtp.component';
 import { SMTPModule } from '../../@shared/smtp/smtp.module';
 import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
+
 @NgModule({
 	imports: [
 		SettingsRoutingModule,
