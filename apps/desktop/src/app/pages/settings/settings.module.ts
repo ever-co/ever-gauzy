@@ -12,7 +12,8 @@ import {
 	NbToggleModule,
 	NbInputModule,
 	NbButtonModule,
-	NbAlertModule
+	NbAlertModule,
+	NbProgressBarModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 
@@ -31,7 +32,8 @@ import { FormsModule } from '@angular/forms';
 		NbToggleModule,
 		NbInputModule,
 		NbButtonModule,
-		NbAlertModule
+		NbAlertModule,
+		NbProgressBarModule
 	],
 	exports: [SettingsComponent]
 })

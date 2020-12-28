@@ -1,6 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IInvoiceItem, IInvoiceItemFindInput } from '@gauzy/models';
+import {
+	IInvoiceItem,
+	IInvoiceItemCreateInput,
+	IInvoiceItemFindInput
+} from '@gauzy/models';
 import { first } from 'rxjs/operators';
 @Injectable()
 export class InvoiceItemService {
@@ -36,6 +40,19 @@ export class InvoiceItemService {
 	delete(id: string): Promise<any> {
 		return this.http
 			.delete(`/api/invoice-item/${id}`)
+			.pipe(first())
+			.toPromise();
+	}
+
+	createBulk(
+		invoiceId: string,
+		invoiceItem: IInvoiceItemCreateInput[]
+	): Promise<IInvoiceItem[]> {
+		return this.http
+			.post<IInvoiceItem[]>(
+				`/api/invoice-item/createBulk/${invoiceId}`,
+				invoiceItem
+			)
 			.pipe(first())
 			.toPromise();
 	}

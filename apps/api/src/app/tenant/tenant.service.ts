@@ -13,6 +13,7 @@ import {
 } from '@gauzy/models';
 import { UserService } from '../user/user.service';
 import { TenantRoleBulkCreateCommand } from '../role/commands/tenant-role-bulk-create.command';
+import { TenantFeatureOrganizationCreateCommand } from './commands/tenant-feature-organization.create.command';
 
 @Injectable()
 export class TenantService extends CrudService<Tenant> {
@@ -29,12 +30,19 @@ export class TenantService extends CrudService<Tenant> {
 		entity: ITenantCreateInput,
 		user: IUser
 	): Promise<ITenant> {
+		//1. Create Tenant of user.
 		const tenant = await this.create(entity);
 
-		//after create tenant, create role/permissions for relative tenants
+		//2. Create Enabled/Disabled features for relative tenants.
+		this.commandBus.execute(
+			new TenantFeatureOrganizationCreateCommand([tenant])
+		);
+
+		//3. Create Role/Permissions for relative tenants.
 		const roles = await this.commandBus.execute(
 			new TenantRoleBulkCreateCommand([tenant])
 		);
+
 		const role = await roles.find(
 			(defaultRole: IRole) => defaultRole.name === RolesEnum.SUPER_ADMIN
 		);

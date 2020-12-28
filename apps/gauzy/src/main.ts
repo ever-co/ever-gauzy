@@ -12,8 +12,7 @@ if (environment.production) {
 }
 
 persistState({
-	key: '_gauzyStore',
-	exclude: ['app']
+	key: '_gauzyStore'
 });
 
 akitaConfig({

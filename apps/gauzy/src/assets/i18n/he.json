@@ -86,7 +86,8 @@
 		"DENY": "Deny",
 		"PAYMENTS": "Payments",
 		"NOTE": "Note",
-		"SKIP_CONTINUE": "Skip {{ label }} and Continue"
+		"SKIP_CONTINUE": "Skip {{ label }} and Continue",
+		"BUY": "Buy"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "סוג",
@@ -655,7 +656,8 @@
 		"CUSTOM_SMTP": "Custom SMTP",
 		"INVENTORY": "Inventory",
 		"SALES": "Sales",
-		"PAYMENTS": "Payments"
+		"PAYMENTS": "Payments",
+		"FEATURES": "Features"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -2719,6 +2721,9 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "SMS Provider"
+	},
+	"FEATURE_PAGE": {
+		"HEADER": "Features"
 	},
 	"SETTINGS": {
 		"EMAIL_HISTORY": {

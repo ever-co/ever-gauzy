@@ -16,6 +16,7 @@ import { IAuth0Config } from './IAuth0Config';
 import { AWSConfig } from './AWSConfig';
 import { ISMTPConfig } from './ISMTPConfig';
 import { FileStorageProviderEnum } from '@gauzy/models';
+import { IUnleashConfig } from './IUnleashConfig';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -29,6 +30,9 @@ export interface Env {
 
 export interface FileSystem {
 	name: FileStorageProviderEnum;
+}
+export interface IGauzyFeatures {
+	[key: string]: boolean;
 }
 
 /**
@@ -80,4 +84,6 @@ export interface IEnvironment {
 
 	smtpConfig?: ISMTPConfig;
 	defaultCurrency: string;
+
+	unleashConfig?: IUnleashConfig;
 }

@@ -48,14 +48,14 @@ import TrayIcon from './libs/tray-icon';
 import AppMenu from './libs/menu';
 import DataModel from './local-data/local-table';
 import { LocalStore } from './libs/getSetStore';
-import { createGauzyWindow } from './window/gauzy';
+import { createGauzyWindow, gauzyPage } from './window/gauzy';
 import { createSetupWindow } from './window/setup';
-import { createTimeTrackerWindow, loginPage } from './window/timeTracker';
+import { createTimeTrackerWindow } from './window/timeTracker';
 import { createSettingsWindow } from './window/settings';
 import { createUpdaterWindow } from './window/updater';
 import { createImageViewerWindow } from './window/imageView';
 import { fork } from 'child_process';
-import { autoUpdater } from 'electron-updater';
+import { autoUpdater, CancellationToken } from 'electron-updater';
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
 // C:\Users\USERNAME\AppData\Roaming\gauzy-desktop
@@ -98,6 +98,7 @@ let alreadyQuit = false;
 let serverGauzy = null;
 let serverDesktop = null;
 let dialogErr = false;
+let cancellationToken = new CancellationToken();
 
 function startServer(value, restart = false) {
 	process.env.IS_ELECTRON = 'true';
@@ -296,7 +297,7 @@ ipcMain.on('server_is_ready', () => {
 	onWaitingServer = false;
 	if (!isAlreadyRun) {
 		serverDesktop = fork(path.join(__dirname, 'desktop-api/main.js'));
-		gauzyWindow.loadURL(loginPage());
+		gauzyWindow.loadURL(gauzyPage());
 		ipcTimer(
 			store,
 			knex,
@@ -358,23 +359,31 @@ ipcMain.on('open_browser', (event, arg) => {
 });
 
 ipcMain.on('check_for_update', (event, arg) => {
-	autoUpdater.checkForUpdatesAndNotify();
+	autoUpdater.checkForUpdatesAndNotify().then((downloadPromise) => {
+		cancellationToken = downloadPromise.cancellationToken;
+	});
 });
 
 autoUpdater.on('update-available', () => {
-	updaterWindow.webContents.send('update_available');
+	settingsWindow.webContents.send('update_available');
 });
 
 autoUpdater.on('update-downloaded', () => {
-	updaterWindow.webContents.send('update_downloaded');
+	settingsWindow.webContents.send('update_downloaded');
 });
 
 autoUpdater.on('update-not-available', () => {
-	updaterWindow.webContents.send('update_not_available');
+	settingsWindow.webContents.send('update_not_available');
 });
 
 autoUpdater.on('download-progress', (event) => {
-	updaterWindow.webContents.send('download_on_progress', event);
+	if (settingsWindow) {
+		settingsWindow.webContents.send('download_on_progress', event);
+	}
+});
+
+autoUpdater.on('error', (e) => {
+	settingsWindow.webContents.send('error_update');
 });
 
 ipcMain.on('restart_and_update', () => {
@@ -461,6 +470,7 @@ app.on('before-quit', (e) => {
 			});
 		}, 1000);
 	} else {
+		cancellationToken.cancel();
 		app.exit(0);
 		if (serverDesktop) serverDesktop.kill();
 		if (serverGauzy) serverGauzy.kill();

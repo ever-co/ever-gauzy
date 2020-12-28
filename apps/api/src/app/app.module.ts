@@ -124,6 +124,23 @@ import { EmployeeJobPresetModule } from './employee-job-preset/employee-job-pres
 import { ReportModule } from './reports/report.module';
 import { EmployeeProposalTemplateModule } from './employee-proposal-template/employee-proposal-template.module';
 import { CustomSmtpModule } from './custom-smtp/custom-smtp.module';
+import { FeatureModule } from './feature/feature.module';
+import * as unleash from 'unleash-client';
+
+const { unleashConfig } = environment;
+
+if (unleashConfig.url) {
+	const instance = unleash.initialize({
+		appName: unleashConfig.appName,
+		url: unleashConfig.url,
+		instanceId: unleashConfig.instanceId,
+		refreshInterval: unleashConfig.refreshInterval,
+		metricsInterval: unleashConfig.metricsInterval
+	});
+
+	// metrics hooks
+	instance.on('registered', (client) => console.log('registered', client));
+}
 
 const sentryIntegrations = [];
 
@@ -506,6 +523,10 @@ if (process.env.DB_TYPE === 'postgres') {
 					{
 						path: '/smtp',
 						module: CustomSmtpModule
+					},
+					{
+						path: '/feature/toggle',
+						module: FeatureModule
 					}
 				]
 			}
@@ -624,6 +645,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		TaskModule,
 		OrganizationEmploymentTypeModule,
 		TimesheetModule,
+		FeatureModule,
 		ReportModule,
 		UpworkModule,
 		HubstaffModule,

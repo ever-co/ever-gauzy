@@ -1,0 +1,75 @@
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-body *ngIf="!loading">
+		<ng-container *ngFor="let block of blocks$ | async">
+			<div class="row centered">
+				<ng-container *ngFor="let row of block">
+					<div class="col-6">
+						<nb-card class="shortcut-card" [status]="row?.status">
+							<nb-card-header>
+								<div class="row">
+									<div class="col-6 loat-left text-left">
+										<nb-icon
+											[icon]="row?.icon"
+											*ngIf="row?.icon"
+										></nb-icon>
+										<span>{{ row?.name }}</span>
+									</div>
+									<div
+										class="col-6 float-right text-right"
+										*ngIf="row?.isPaid"
+									>
+										<button nbButton [status]="'basic'">
+											{{ 'BUTTONS.BUY' | translate }}
+										</button>
+									</div>
+								</div>
+							</nb-card-header>
+							<nb-card-body>
+								<div class="row">
+									<div class="col-6 float-left text-left">
+										{{ row?.description }}
+									</div>
+									<div class="col-6 float-right text-right">
+										<nb-toggle
+											[checked]="enabledFeature(row)"
+											(checkedChange)="
+												featureChanged($event, row)
+											"
+											labelPosition="start"
+											status="basic"
+										></nb-toggle>
+									</div>
+								</div>
+								<div
+									class="row"
+									*ngIf="row?.children.length > 0"
+								>
+									<nb-list>
+										<nb-list-item
+											*ngFor="let child of row?.children"
+										>
+											<nb-checkbox
+												[checked]="
+													enabledFeature(child)
+												"
+												(checkedChange)="
+													featureChanged(
+														$event,
+														child
+													)
+												"
+												status="basic"
+											>
+												{{ child?.name }}
+											</nb-checkbox>
+										</nb-list-item>
+									</nb-list>
+								</div>
+							</nb-card-body>
+						</nb-card>
+					</div>
+				</ng-container>
+			</div>
+		</ng-container>
+	</nb-card-body>
+</nb-card>

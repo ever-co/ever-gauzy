@@ -16,7 +16,8 @@ import {
 	IOrganizationProject,
 	IProduct,
 	IExpense,
-	ExpenseTypesEnum
+	ExpenseTypesEnum,
+	IInvoiceItemCreateInput
 } from '@gauzy/models';
 import { filter, first } from 'rxjs/operators';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
@@ -579,6 +580,8 @@ export class InvoiceEditComponent
 				sentTo: sendTo
 			});
 
+			const invoiceItems: IInvoiceItemCreateInput[] = [];
+
 			for (const invoiceItem of tableData) {
 				const itemToAdd = {
 					description: invoiceItem.description,
@@ -610,21 +613,14 @@ export class InvoiceEditComponent
 					default:
 						break;
 				}
-				if (invoiceItem.id) {
-					await this.invoiceItemService.update(
-						invoiceItem.id,
-						itemToAdd
-					);
-				} else {
-					await this.invoiceItemService.add(itemToAdd);
-				}
+
+				invoiceItems.push(itemToAdd);
 			}
 
-			if (this.itemsToDelete.length) {
-				for (const itemId of this.itemsToDelete) {
-					this.invoiceItemService.delete(itemId);
-				}
-			}
+			await this.invoiceItemService.createBulk(
+				this.invoice.id,
+				invoiceItems
+			);
 
 			await this.invoiceEstimateHistoryService.add({
 				action: this.isEstimate ? 'Estimate edited' : 'Invoice edited',

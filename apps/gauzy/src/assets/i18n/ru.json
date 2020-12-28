@@ -86,7 +86,8 @@
 		"DENY": "Запретить",
 		"PAYMENTS": "Платежи",
 		"NOTE": "Примечание",
-		"SKIP_CONTINUE": "Пропустить {{ label }} и продолжить"
+		"SKIP_CONTINUE": "Пропустить {{ label }} и продолжить",
+		"BUY": "Купить"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -655,7 +656,8 @@
 		"CUSTOM_SMTP": "Пользовательский SMTP",
 		"INVENTORY": "Инвентаризация",
 		"SALES": "Продажи",
-		"PAYMENTS": "Платежи"
+		"PAYMENTS": "Платежи",
+		"FEATURES": "Возможности"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Темы",
@@ -2719,6 +2721,9 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "Поставщик SMS"
+	},
+	"FEATURE_PAGE": {
+		"HEADER": "Возможности"
 	},
 	"SETTINGS": {
 		"EMAIL_HISTORY": {
