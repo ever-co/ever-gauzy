@@ -8,8 +8,7 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { OrganizationVendorsService } from 'apps/gauzy/src/app/@core/services/organization-vendors.service';
 import { TranslateService } from '@ngx-translate/core';
-import { first, takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { first } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { Store } from '../../@core/services/store.service';
@@ -20,7 +19,9 @@ import { NotesWithTagsComponent } from '../../@shared/table-components/notes-wit
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ToastrService } from '../../@core/services/toastr.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-vendors',
 	templateUrl: './vendors.component.html',
@@ -40,7 +41,7 @@ export class VendorsComponent
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
 	currentVendor: IOrganizationVendor;
-	private _ngDestroy$ = new Subject<void>();
+
 	constructor(
 		private readonly organizationVendorsService: OrganizationVendorsService,
 		private readonly toastrService: ToastrService,
@@ -60,16 +61,15 @@ export class VendorsComponent
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((organization) => {
 				if (organization) {
 					this.selectedOrganization = organization;
-					this.cancel();
 					this.loadVendors();
 				}
 			});
 		this.router.events
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
 				if (event instanceof NavigationEnd) {
 					this.setView();
@@ -77,16 +77,13 @@ export class VendorsComponent
 			});
 	}
 
-	ngOnDestroy(): void {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy(): void {}
 
 	private _initializeForm() {
 		this.form = this.fb.group({
 			name: ['', Validators.required],
 			phone: [''],
-			email: ['', Validators.email],
+			email: ['', [Validators.required, Validators.email]],
 			website: [''],
 			tags: ['']
 		});
@@ -96,7 +93,7 @@ export class VendorsComponent
 		this.viewComponentName = ComponentEnum.VENDORS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 
@@ -155,7 +152,6 @@ export class VendorsComponent
 	save() {
 		if (this.currentVendor) {
 			this.updateVendor(this.currentVendor);
-			this.currentVendor = null;
 		} else {
 			this.createVendor();
 		}
@@ -163,26 +159,27 @@ export class VendorsComponent
 
 	async createVendor() {
 		if (!this.form.invalid) {
-			const name = this.form.get('name').value;
-			const { id: organizationId, tenantId } = this.selectedOrganization;
+			const { name, phone, email, website } = this.form.value;
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.selectedOrganization;
 
-			await this.organizationVendorsService.create({
-				name: this.form.get('name').value,
-				phone: this.form.get('phone').value,
-				email: this.form.get('email').value,
-				website: this.form.get('website').value,
-				organizationId,
-				tenantId,
-				tags: this.tags
-			});
-
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.ADD_VENDOR',
-				{
-					name: name
-				}
-			);
-			this.showAddCard = !this.showAddCard;
+			this.organizationVendorsService
+				.create({
+					name,
+					phone,
+					email,
+					website,
+					organizationId,
+					tenantId,
+					tags: this.tags
+				})
+				.then(() => {
+					this.toastrService.success(
+						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.ADD_VENDOR',
+						{ name }
+					);
+				});
+			this.cancel();
 			this.loadVendors();
 		} else {
 			// TODO translate
@@ -210,9 +207,7 @@ export class VendorsComponent
 				await this.organizationVendorsService.delete(id);
 				this.toastrService.success(
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.REMOVE_VENDOR',
-					{
-						name
-					}
+					{ name }
 				);
 				this.loadVendors();
 			} catch (error) {
@@ -222,46 +217,45 @@ export class VendorsComponent
 	}
 
 	async updateVendor(vendor: IOrganizationVendor) {
-		const name = this.form.get('name').value;
-		const { id: organizationId, tenantId } = this.selectedOrganization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.selectedOrganization;
+		const { name, phone, email, website } = this.form.value;
 
-		await this.organizationVendorsService.update(vendor.id, {
-			name: this.form.get('name').value,
-			phone: this.form.get('phone').value,
-			email: this.form.get('email').value,
-			website: this.form.get('website').value,
-			tags: this.tags,
-			organizationId,
-			tenantId
-		});
-
-		this.toastrService.success(
-			'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.UPDATE_VENDOR',
-			{ name }
-		);
+		this.organizationVendorsService
+			.update(vendor.id, {
+				name,
+				phone,
+				email,
+				website,
+				tags: this.tags,
+				organizationId,
+				tenantId
+			})
+			.then(() => {
+				this.toastrService.success(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.UPDATE_VENDOR',
+					{ name }
+				);
+			});
 
 		this.loadVendors();
 		this.showAddCard = !this.showAddCard;
 		this.tags = [];
 	}
 
-	private async loadVendors() {
+	private loadVendors() {
 		if (!this.selectedOrganization) {
 			return;
 		}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.selectedOrganization;
 
-		const { id: organizationId, tenantId } = this.selectedOrganization;
-		const res = await this.organizationVendorsService.getAll(
-			{
-				organizationId,
-				tenantId
-			},
-			['tags']
-		);
-		if (res) {
-			this.vendors = res.items;
-			this.smartTableSource.load(res.items);
-		}
+		this.organizationVendorsService
+			.getAll({ organizationId, tenantId }, ['tags'])
+			.then(({ items }) => {
+				this.vendors = items;
+				this.smartTableSource.load(this.vendors);
+			});
 	}
 
 	selectedTagsEvent(ev) {
@@ -270,9 +264,16 @@ export class VendorsComponent
 
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.loadSmartTable();
 			});
+	}
+
+	isInvalidControl(control: string) {
+		if (!this.form.contains(control)) {
+			return true;
+		}
+		return this.form.get(control).touched && this.form.get(control).invalid;
 	}
 }

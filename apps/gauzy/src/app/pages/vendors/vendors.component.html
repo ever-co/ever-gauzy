@@ -32,6 +32,11 @@
 									}}"
 									id="name"
 									formControlName="name"
+									[status]="
+										isInvalidControl('name')
+											? 'danger'
+											: 'basic'
+									"
 								/>
 							</div>
 							<div class="col-sm-12 col-md-4">
@@ -62,6 +67,11 @@
 									}}"
 									id="email"
 									formControlName="email"
+									[status]="
+										isInvalidControl('email')
+											? 'danger'
+											: 'basic'
+									"
 								/>
 							</div>
 							<div class="col-sm-12 col-md-6">

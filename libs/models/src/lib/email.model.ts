@@ -29,3 +29,9 @@ export interface IEmailFindInput
 	email?: string;
 	isArchived?: boolean;
 }
+
+export interface DisplayEmail {
+	from: string;
+	to: string;
+	date: string;
+}

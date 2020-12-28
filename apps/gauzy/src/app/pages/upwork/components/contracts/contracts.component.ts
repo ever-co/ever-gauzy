@@ -2,16 +2,19 @@ import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { UpworkStoreService } from 'apps/gauzy/src/app/@core/services/upwork-store.service';
 import { IEngagement } from '@gauzy/models';
-import { Observable, of, EMPTY, Subject } from 'rxjs';
+import { Observable, of, EMPTY } from 'rxjs';
 import { DateViewComponent } from 'apps/gauzy/src/app/@shared/table-components/date-view/date-view.component';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { NbToastrService, NbDialogService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { catchError, tap, takeUntil, first } from 'rxjs/operators';
+import { catchError, tap, first } from 'rxjs/operators';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { SyncDataSelectionComponent } from '../sync-data-selection/sync-data-selection.component';
 import { ActivatedRoute } from '@angular/router';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-contracts',
 	templateUrl: './contracts.component.html',
@@ -22,7 +25,6 @@ export class ContractsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	@ViewChild('contractsTable', { static: false }) contractsTable;
-	private _ngDestroy$: Subject<void> = new Subject();
 	contracts$: Observable<IEngagement[]> = this._upworkStoreServices
 		.contracts$;
 	smartTableSettings;
@@ -30,18 +32,18 @@ export class ContractsComponent
 
 	constructor(
 		private _upworkStoreServices: UpworkStoreService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private _ehs: ErrorHandlingService,
 		public translateService: TranslateService,
 		private _ds: NbDialogService,
 		private route: ActivatedRoute,
-		private titlecasePipe: TitleCasePipe
+		private titleCasePipe: TitleCasePipe
 	) {
 		super(translateService);
-		this._loagContracts();
+		this._loadContracts();
 	}
 
-	private _loagContracts() {
+	private _loadContracts() {
 		this._upworkStoreServices
 			.getContracts()
 			.pipe(
@@ -49,7 +51,7 @@ export class ContractsComponent
 					this._ehs.handleError(error);
 					return of(null);
 				}),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
@@ -59,7 +61,7 @@ export class ContractsComponent
 		this._applyTranslationOnSmartTable();
 
 		this.route.queryParamMap
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((params) => {
 				if (params.get('openAddDialog')) {
 					this.manageEntitiesSync();
@@ -99,7 +101,7 @@ export class ContractsComponent
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'string',
 					valuePrepareFunction: (data: string) => {
-						return this.titlecasePipe.transform(data);
+						return this.titleCasePipe.transform(data);
 					}
 				}
 			}
@@ -137,21 +139,18 @@ export class ContractsComponent
 					this._ehs.handleError(err);
 					return EMPTY;
 				}),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.loadSettingsSmartTable();
 			});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

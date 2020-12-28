@@ -10,6 +10,7 @@ import { TranslationBaseComponent } from '../../../../@shared/language-base/tran
 import * as moment from 'moment';
 import { EmployeesService } from '../../../../@core/services';
 import { first } from 'rxjs/operators';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
 const initialTaskValue = {
 	title: '',
@@ -52,7 +53,7 @@ export class MyTaskDialogComponent
 		private _organizationsStore: Store,
 		private organizationProjectsService: OrganizationProjectsService,
 		readonly translateService: TranslateService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		private errorHandler: ErrorHandlingService,
 		private employeesService: EmployeesService
 	) {
@@ -127,14 +128,11 @@ export class MyTaskDialogComponent
 	addNewProject = (name: string): Promise<IOrganizationProject> => {
 		this.organizationId = this.store.selectedOrganization.id;
 		try {
-			this.toastrService.primary(
+			this.toastrService.success(
 				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
-					{
-						name: name
-					}
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT'
 				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+				{ name: name }
 			);
 			return this.organizationProjectsService.create({
 				name,

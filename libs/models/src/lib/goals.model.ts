@@ -71,9 +71,9 @@ export enum KeyResultWeightEnum {
 	INCREASE_BY_4X = '4'
 }
 
-export interface IGoalFindInput {
+export interface IGoalFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employee?: IEmployeeFindInput;
-	organization?: IOrganizationFindInput;
 }
 
 export enum KeyResultTypeEnum {
@@ -101,4 +101,9 @@ export enum KeyResultUpdateStatusEnum {
 	NEEDS_ATTENTION = 'needs attention',
 	OFF_TRACK = 'off track',
 	NONE = 'none'
+}
+
+export interface IGoalResponse {
+	items: IGoal[];
+	count: number;
 }

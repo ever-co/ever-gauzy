@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { NbToastrService } from '@nebular/theme';
 import {
 	IGoalTemplate,
 	IKeyResultTemplate,
@@ -9,6 +8,7 @@ import {
 } from '@gauzy/models';
 import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
+import { ToastrService } from './toastr.service';
 
 interface IGoalTemplateResponse {
 	items: IGoalTemplate[];
@@ -25,7 +25,7 @@ export class GoalTemplatesService {
 
 	constructor(
 		private _http: HttpClient,
-		private toastrService: NbToastrService
+		private toastrService: ToastrService
 	) {}
 
 	createGoalTemplate(goalTemplate): Promise<IGoalTemplate> {

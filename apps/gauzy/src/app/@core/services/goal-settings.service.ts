@@ -5,26 +5,14 @@ import {
 	IKPI,
 	ISettingFindInput,
 	IGoalGeneralSetting,
-	IGoalTimeFrameFindInput
+	IGoalTimeFrameFindInput,
+	IGoalTimeFrameResponse,
+	IKpiResponse,
+	IGeneralSettingResponse
 } from '@gauzy/models';
-import { NbToastrService } from '@nebular/theme';
 import { throwError } from 'rxjs';
-import { catchError, tap, first } from 'rxjs/operators';
-
-interface IGoalTimeFrameResponse {
-	items: IGoalTimeFrame[];
-	count: number;
-}
-
-interface IKpiResponse {
-	items: IKPI[];
-	count: number;
-}
-
-interface IGeneralSettingResponse {
-	items: IGoalGeneralSetting[];
-	count: number;
-}
+import { catchError, first } from 'rxjs/operators';
+import { ToastrService } from './toastr.service';
 
 @Injectable({
 	providedIn: 'root'
@@ -35,7 +23,7 @@ export class GoalSettingsService {
 	private readonly GENERAL_SETTINGS_URL = '/api/goal-general-settings';
 	constructor(
 		private _http: HttpClient,
-		private toastrService: NbToastrService
+		private toastrService: ToastrService
 	) {}
 
 	// Goal Time Frame
@@ -128,14 +116,6 @@ export class GoalSettingsService {
 			.put<IGoalGeneralSetting>(
 				`${this.GENERAL_SETTINGS_URL}/${id}`,
 				generalSettingData
-			)
-			.pipe(
-				tap(() =>
-					this.toastrService.primary(
-						'Goal General Settings Updated',
-						'Success'
-					)
-				)
 			)
 			.toPromise();
 	}

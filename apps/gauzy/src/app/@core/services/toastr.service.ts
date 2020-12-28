@@ -47,7 +47,7 @@ export class ToastrService {
 
 		this.nbToastrService.danger(
 			this.getTranslation(displayMessage, translationParams),
-			this.getTranslation(title)
+			this.getTranslation(title || 'TOASTR.TITLE.ERROR')
 		);
 	}
 
@@ -57,6 +57,21 @@ export class ToastrService {
 		translationParams: Object = {}
 	) {
 		this.danger(message, title, translationParams);
+	}
+
+	info(
+		message: any,
+		title: string,
+		options: Object = {
+			duration: 5000,
+			preventDuplicates: true
+		}
+	) {
+		this.nbToastrService.info(
+			message,
+			this.getTranslation(title || 'TOASTR.TITLE.INFO'),
+			options
+		);
 	}
 
 	private getTranslation(prefix: string, params?: Object) {

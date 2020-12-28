@@ -3,7 +3,7 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 import { TranslateService } from '@ngx-translate/core';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.component';
 import { first, tap } from 'rxjs/operators';
 import { GoalSettingsService } from '../../@core/services/goal-settings.service';
@@ -22,6 +22,8 @@ import { FormGroup, FormBuilder } from '@angular/forms';
 import { GoalTemplatesComponent } from '../../@shared/goal/goal-templates/goal-templates.component';
 import { ValueWithUnitComponent } from '../../@shared/table-components/value-with-units/value-with-units.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../@core/services/toastr.service';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-goal-settings',
@@ -61,7 +63,7 @@ export class GoalSettingsComponent
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
 		private goalSettingService: GoalSettingsService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private store: Store,
 		private router: Router,
 		private fb: FormBuilder
@@ -123,10 +125,7 @@ export class GoalSettingsComponent
 			.then((res) => {
 				if (res) {
 					this.toastrService.success(
-						this.getTranslation(
-							'TOASTR.MESSAGE.GOAL_GENERAL_SETTING_UPDATED'
-						),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
+						'TOASTR.MESSAGE.GOAL_GENERAL_SETTING_UPDATED'
 					);
 					this._loadTableData(null);
 				}
@@ -349,14 +348,9 @@ export class GoalSettingsComponent
 					.deleteTimeFrame(this.selectedTimeFrame.id)
 					.then(async (res) => {
 						if (res) {
-							this.toastrService.primary(
-								this.getTranslation(
-									'TOASTR.MESSAGE.TIME_FRAME_DELETED',
-									{
-										name: this.selectedTimeFrame.name
-									}
-								),
-								this.getTranslation('TOASTR.TITLE.SUCCESS')
+							this.toastrService.success(
+								'TOASTR.MESSAGE.TIME_FRAME_DELETED',
+								{ name: this.selectedTimeFrame.name }
 							);
 							this.clearItem();
 							this._loadTableSettings('timeframe');
@@ -395,11 +389,8 @@ export class GoalSettingsComponent
 					.deleteKPI(this.selectedKPI.id)
 					.then(async (res) => {
 						if (res) {
-							this.toastrService.primary(
-								this.getTranslation(
-									'TOASTR.MESSAGE.KPI_DELETED'
-								),
-								this.getTranslation('TOASTR.TITLE.SUCCESS')
+							this.toastrService.success(
+								'TOASTR.MESSAGE.KPI_DELETED'
 							);
 							this.clearItem();
 							this._loadTableSettings('kpi');

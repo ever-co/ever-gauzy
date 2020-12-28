@@ -1,12 +1,13 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { takeUntil, tap } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
-import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { UpworkService } from 'apps/gauzy/src/app/@core/services/upwork.service';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { untilDestroyed } from '@ngneat/until-destroy';
+import { IOrganization } from '@gauzy/models';
 
 @Component({
 	selector: 'ngx-transactions',
@@ -16,7 +17,6 @@ import { UpworkService } from 'apps/gauzy/src/app/@core/services/upwork.service'
 export class TransactionsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$: Subject<void> = new Subject();
 	private _selectedOrganizationId: string;
 	file: File;
 
@@ -24,7 +24,7 @@ export class TransactionsComponent
 		private _upworkService: UpworkService,
 		private _store: Store,
 		readonly translateService: TranslateService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private errorHandler: ErrorHandlingService
 	) {
 		super(translateService);
@@ -32,18 +32,16 @@ export class TransactionsComponent
 
 	ngOnInit() {
 		this._store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((org) => {
-				if (org) {
-					this._selectedOrganizationId = org.id;
-				}
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
+			.subscribe((organization: IOrganization) => {
+				this._selectedOrganizationId = organization.id;
 			});
 	}
 
-	ngOnDestroy(): void {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy(): void {}
 
 	imageUrlChanged(event) {
 		const [file] = event.target.files;
@@ -58,17 +56,16 @@ export class TransactionsComponent
 		this._upworkService
 			.uploadTransaction(formData)
 			.pipe(
-				takeUntil(this._ngDestroy$),
+				untilDestroyed(this),
 				tap(() => (this.file = null))
 			)
 			.subscribe(
 				({ totalExpenses, totalIncomes }) => {
-					this.toastrService.primary(
+					this.toastrService.success(
 						this.getTranslation(
 							'INTEGRATIONS.TOTAL_UPWORK_TRANSACTIONS_SUCCEED',
 							{ totalExpenses, totalIncomes }
-						),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
+						)
 					);
 				},
 				(err) => {

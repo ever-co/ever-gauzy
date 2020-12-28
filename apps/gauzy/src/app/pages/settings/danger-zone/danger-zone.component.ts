@@ -3,26 +3,28 @@ import { TranslateService } from '@ngx-translate/core';
 import { DangerZoneMutationComponent } from '../../../@shared/settings/danger-zone-mutation/danger-zone-mutation.component';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { UsersService } from '../../../@core/services';
 import { Store } from '../../../@core/services/store.service';
 import { Router } from '@angular/router';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-danger-zone',
 	templateUrl: './danger-zone.component.html'
 })
-export class DangerZoneComponent extends TranslationBaseComponent
+export class DangerZoneComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
-		private translate: TranslateService,
+		readonly translate: TranslateService,
 		private dialogService: NbDialogService,
 		private userService: UsersService,
 		private store: Store,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private router: Router
 	) {
 		super(translate);
@@ -49,7 +51,7 @@ export class DangerZoneComponent extends TranslationBaseComponent
 									data.user
 								);
 
-								this.toastrService.primary(
+								this.toastrService.success(
 									this.getTranslation(
 										'NOTES.DANGER_ZONE.ACCOUNT_DELETED',
 										{
@@ -58,8 +60,7 @@ export class DangerZoneComponent extends TranslationBaseComponent
 												' ' +
 												user.lastName
 										}
-									),
-									this.getTranslation('TOASTR.TITLE.SUCCESS')
+									)
 								);
 							})
 							.then(() => {
@@ -71,11 +72,8 @@ export class DangerZoneComponent extends TranslationBaseComponent
 						this.toastrService.danger(
 							this.getTranslation(
 								'NOTES.ORGANIZATIONS.DATA_ERROR',
-								{
-									error: error.error.message || error.message
-								}
-							),
-							this.getTranslation('TOASTR.TITLE.ERROR')
+								{ error: error.error.message || error.message }
+							)
 						);
 					}
 				}
@@ -84,9 +82,5 @@ export class DangerZoneComponent extends TranslationBaseComponent
 
 	ngOnInit() {}
 
-	ngOnDestroy() {
-		clearTimeout();
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

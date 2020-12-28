@@ -2176,6 +2176,7 @@
 		"TITLE": {
 			"SUCCESS": "Success",
 			"ERROR": "Error",
+			"INFO": "Info",
 			"WARNING": "Warning",
 			"MAX_LIMIT_REACHED": "Max limit reached"
 		},
