@@ -535,7 +535,7 @@
 		"NEW_EXPENSE_VALUE": "New Expense Value",
 		"OFFICIAL_NAME": "This name would be used in tax invoices etc.",
 		"ADD_EVENT_TYPE": "Add Event Type",
-		"EDIT_EVENT_TYPE": " Edit Event Type",
+		"EDIT_EVENT_TYPE": "Edit Event Type",
 		"AWARDS": "Awards",
 		"LEVEL": "Level",
 		"LANGUAGES": "Languages",
@@ -1538,10 +1538,11 @@
 		"CHOOSE_POLICIES": "Choose policies/s",
 		"EDIT_APPROVAL_REQUEST": "Edit Request Approval",
 		"ADD_APPROVAL_REQUEST": "Add Request Approval",
-		"APPROVAL_REQUEST_SAVED": "Request Approval Saved",
-		"APPROVAL_REQUEST_DELETED": "Request Approval Deleted",
-		"APPROVAL_SUCCESS": "Approval Success",
-		"REFUSE_SUCCESS": "Refuse Success"
+		"APPROVAL_REQUEST_CREATED": "Request Approval '{{ name }}' was added",
+		"APPROVAL_REQUEST_UPDATED": "Request Approval '{{ name }}' was changed",
+		"APPROVAL_REQUEST_DELETED": "Request Approval '{{ name }}' was removed",
+		"APPROVAL_SUCCESS": "Approval '{{ name }}' was approved",
+		"REFUSE_SUCCESS": "Approval '{{ name }}' was refused"
 	},
 	"APPROVAL_POLICY_PAGE": {
 		"EDIT_APPROVAL_POLICY": "Edit Approval Policy",
@@ -1597,10 +1598,10 @@
 			"STATUS_SET_APPROVED": "You successfully set the time off request status to approved.",
 			"ERR_SET_STATUS": "Unable to set time off request status.",
 			"APPROVED_NO_CHANGES": "The time off request status is already set to approved",
-			"RECORD_CREATED": "Time off record successfully created!",
+			"RECORD_CREATED": "Time off record was saved",
 			"REQUEST_DENIED": "You successfully set the time off request status to denied",
 			"DENIED_NO_CHANGES": "The time off request status is already set to denied",
-			"REQUEST_DELETED": "Time off request successfully deleted",
+			"REQUEST_DELETED": "Time off request was removed",
 			"ERR_LOAD_RECORDS": "Unable to load time off records",
 			"ERR_DELETE_REQUEST": "Unable to delete Time off request",
 			"ERR_CREATE_RECORD": "Unable to create Time off record",
@@ -1615,9 +1616,9 @@
 		"TAGS_NAME": "שם",
 		"TAGS_DESCRIPTION": "Description",
 		"TAGS_COLOR": "Color",
-		"TAGS_ADD_TAG": "Tag {{ name }} added",
-		"TAGS_EDIT_TAG": "Tag {{ name }} edited",
-		"TAGS_DELETE_TAG": "Tag {{ name }} deleted",
+		"TAGS_ADD_TAG": "Tag '{{ name }}' was added",
+		"TAGS_EDIT_TAG": "Tag '{{ name }}' was changed",
+		"TAGS_DELETE_TAG": "Tag '{{ name }}' was removed",
 		"TAGS_SELECT_NAME": "Tag name",
 		"TAGS_SELECT_COLOR": "Tag color",
 		"TAGS_SELECT_DESCRIPTION": "Tag description",
@@ -1649,9 +1650,9 @@
 		"EQUIPMENT_MAX_SHARE_PERIOD": "Max share period",
 		"EQUIPMENT_AUTO_APPROVE": "Auto approve",
 		"EQUIPMENT_EDITED": "Equipment edited",
-		"EQUIPMENT_DELETED": "Equipment '{{ name }}' deleted",
+		"EQUIPMENT_DELETED": "Equipment '{{ name }}' was removed",
 		"EQUIPMENT_ADDED": "Equipment added",
-		"EQUIPMENT_SAVED": "Equipment '{{ name }}' saved",
+		"EQUIPMENT_SAVED": "Equipment '{{ name }}' was saved",
 		"CURRENCY": "מטבע"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
@@ -1698,8 +1699,8 @@
 		"HEADER": "Inventory",
 		"ADD_INVENTORY_ITEM": "Add inventory item",
 		"EDIT_INVENTORY_ITEM": "Edit inventory item",
-		"INVENTORY_ITEM_DELETED": "Inventory {{name}} item deleted!",
-		"INVENTORY_ITEM_SAVED": "Inventory {{name}} item saved!",
+		"INVENTORY_ITEM_DELETED": "Inventory '{{ name }}' was removed",
+		"INVENTORY_ITEM_SAVED": "Inventory '{{ name }}' was saved",
 		"EDIT_PRODUCT_VARIANT": "Edit product variant",
 		"PRODUCT_VARIANT_SAVED": "Product variant saved",
 		"NAME": "שם",
@@ -1732,12 +1733,12 @@
 		"ORGANIZATION": "Organization",
 		"EDIT_PRODUCT_TYPE": "Edit product type",
 		"ADD_PRODUCT_TYPE": "Add product type",
-		"PRODUCT_TYPE_SAVED": "Product type '{{ name }}' saved",
-		"PRODUCT_TYPE_DELETED": "Product type '{{ name }}' deleted",
+		"PRODUCT_TYPE_SAVED": "Product type '{{ name }}' was saved",
+		"PRODUCT_TYPE_DELETED": "Product type '{{ name }}' was removed",
 		"EDIT_PRODUCT_CATEGORY": "Edit product category",
 		"ADD_PRODUCT_CATEGORY": "Add product category",
-		"PRODUCT_CATEGORY_SAVED": "Product category '{{ name }}' saved",
-		"PRODUCT_CATEGORY_DELETED": "Product category '{{ name }}' deleted",
+		"PRODUCT_CATEGORY_SAVED": "Product category '{{ name }}' was saved",
+		"PRODUCT_CATEGORY_DELETED": "Product category '{{ name }}' was removed",
 		"IMAGE": "תמונה",
 		"LANGUAGE": "Language",
 		"PRODUCT_VARIANT_DELETED": "Product variant deleted!",
@@ -1872,7 +1873,7 @@
 				"ru": "Russian"
 			}
 		},
-		"REMOVE_USER": "'{{ name }}' successfully removed"
+		"REMOVE_USER": "{{ name }} successfully removed"
 	},
 	"CONTEXT_MENU": {
 		"TIMER": "Стартирай Таймер",
@@ -2158,7 +2159,10 @@
 		"REMOVE_BASE": "Remove Base",
 		"CLEAR": "Clear",
 		"SEARCH_BY_NAME": "Search by name",
-		"FILTER_BY_AUTHOR": "Filter by author"
+		"FILTER_BY_AUTHOR": "Filter by author",
+		"CATEGORY_EDIT_ADDED": "Category was added",
+		"CATEGORY_EDIT_UPDATED": "Category was changed",
+		"CATEGORY_EDIT_DELETED": "Category was removed"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "עלינו"
@@ -2172,6 +2176,7 @@
 		"TITLE": {
 			"SUCCESS": "Success",
 			"ERROR": "Error",
+			"INFO": "Info",
 			"WARNING": "Warning",
 			"MAX_LIMIT_REACHED": "Max limit reached"
 		},
@@ -2189,7 +2194,10 @@
 			"EMPLOYEE_CLIENT_REMOVED": "Employee removed from the client",
 			"EMPLOYEE_EDIT_ERROR": "Error in editing employee",
 			"EMPLOYEE_PROFILE_UPDATE": "Profile '{{name}}' was changed",
-			"EMPLOYEE_LEVEL_UPDATE": "Employee Level is successfully updated.",
+			"EMPLOYEE_LEVEL_UPDATE": "Employee Level '{{ name }}' was changed",
+			"EMPLOYEE_ADDED": "Employee '{{name}}' added to '{{organization}}'",
+			"EMPLOYEE_INACTIVE": "Employee '{{name}}' set as inactive.",
+			"EMPLOYEE_ACTIVE": "Employee '{{name}}' set as active.",
 			"CONFIRM": "אשר",
 			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Are you sure you want to resend the invite to",
 			"OK": "OK",
@@ -2219,7 +2227,7 @@
 			"CANDIDATE_EXPERIENCE_REQUIRED": "Experience information is required",
 			"CANDIDATE_DOCUMENT_REQUIRED": "Document information is required",
 			"CANDIDATE_SKILLS_REQUIRED": "Skill's name is required",
-			"CANDIDATE_PROFILE_UPDATE": "{{name}} profile updated.",
+			"CANDIDATE_PROFILE_UPDATE": "'{{name}}' profile updated.",
 			"NAME_REQUIRED": "Name is required!",
 			"CONTACT_TYPE_REQUIRED": "Contact Type is required!",
 			"EMAIL_REQUIRED": "Email is required!",
@@ -2231,29 +2239,29 @@
 			"DELETED": "Successfully deleted",
 			"CREATED": "Successfully created",
 			"UPDATED": "Successfully updated",
-			"MOVED_BASE": "Base has been moved",
-			"MOVED_CATEGORY": "Category has been moved",
+			"MOVED_BASE": "Base was moved",
+			"MOVED_CATEGORY": "Category was moved",
 			"CREATED_BASE": "Base '{{ name }}' was added",
-			"CREATED_CATEGORY": "Category has been created",
 			"EDITED_BASE": "Base '{{ name }}' was changed",
 			"DELETED_BASE": "Base '{{ name }}' was removed",
 			"DELETED_CATEGORY": "Category '{{ name }}' was removed",
+			"CREATED_CATEGORY": "Category was added",
 			"EDIT_ADD_CATEGORY": "Category '{{ name }}' was added",
 			"EDITED_CATEGORY": "Category '{{ name }}' was changed",
 			"HELP_ARTICALE_CREATED": "Article was added",
 			"HELP_ARTICALE_UPDATED": "Article '{{ name }}' was changed",
 			"HELP_ARTICALE_DELETED": "Article '{{ name }}' was removed",
-			"PIPELINE_CREATED": "Pipeline has been created",
-			"PIPELINE_UPDATED": "Pipeline has been updated",
-			"OBJECTIVE_ADDED": "Objective added",
-			"OBJECTIVE_DELETED": "Objective deleted",
-			"OBJECTIVE_UPDATED": "Objective updated",
-			"KEY_RESULT_ADDED": "Key Result added",
-			"KEY_RESULT_DELETED": "Key Result deleted",
-			"KEY_RESULT_UPDATED": "Key Result updated",
+			"PIPELINE_CREATED": "Pipeline was changed",
+			"PIPELINE_UPDATED": "Pipeline was changed",
+			"OBJECTIVE_ADDED": "Objective was added",
+			"OBJECTIVE_DELETED": "Objective was removed",
+			"OBJECTIVE_UPDATED": "Objective was changed",
+			"KEY_RESULT_ADDED": "Key Result was added",
+			"KEY_RESULT_DELETED": "Key Result was removed",
+			"KEY_RESULT_UPDATED": "Key Result was changed",
 			"TIME_FRAME_CREATED": "Time frame '{{ name }}' was added",
 			"TIME_FRAME_UPDATED": "Time frame '{{ name }}' was changed",
-			"TIME_FRAME_DELETED": "Time Frame '{{ name }}' was removed",
+			"TIME_FRAME_DELETED": "Time frame '{{ name }}' was removed",
 			"KPI_CREATED": "KPI was added",
 			"KPI_UPDATED": "KPI was changed",
 			"KPI_DELETED": "KPI was removed",
@@ -2267,7 +2275,15 @@
 			"CUSTOM_SMTP_UPDATED": "Smtp settings successfully updated",
 			"JOB_MATCHING_SAVED": "Criterion was changed",
 			"JOB_MATCHING_ERROR": "Error while saving criterion, Please try aging",
-			"JOB_MATCHING_DELETED": "Criterion was removed"
+			"JOB_MATCHING_DELETED": "Criterion was removed",
+			"APPROVAL_POLICY_CREATED": "Approval policy '{{ name }}' was added",
+			"APPROVAL_POLICY_UPDATED": "Approval policy '{{ name }}' was changed",
+			"APPROVAL_POLICY_DELETED": "Approval policy '{{ name }}' was removed",
+			"CANDIDATE_CREATED": "Candidate '{{ name }}' was added to '{{ organization }}'",
+			"CANDIDATE_ARCHIVED": "Candidate '{{ name }}' set as archived.",
+			"CANDIDATE_REJECTED": "Candidate '{{ name }}' set as rejected.",
+			"CANDIDATE_HIRED": "Candidate '{{ name }}' set as hired.",
+			"CANDIDATE_DELETED": "Candidate '{{ name }}' was removed"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -2314,10 +2330,11 @@
 			"PROPOSAL_SENT": "Proposal status updated to Sent"
 		},
 		"POLICY": {
-			"ADD_POLICY": "New Time off Policy created!",
-			"EDIT_POLICY": "Time off policy edited",
-			"DELETE_POLICY": "Policy deleted",
-			"ERROR": "{{ error }}"
+			"ADD_POLICY": "Time off policy '{{ name }}' was added",
+			"EDIT_POLICY": "Time off policy '{{ name }}' was changed",
+			"DELETE_POLICY": "Time off policy '{{ name }}' was removed",
+			"ERROR": "{{ error }}",
+			"SAVE_ERROR": "Unable to create Policy record"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Your profile has been updated successfully."
@@ -2357,30 +2374,31 @@
 				"REMOVE_TEAM": "Team '{{ name }}' was removed"
 			},
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
-				"ADD_EMPLOYEE_LEVEL": "New Employee Level {{ name }} successfully added!",
-				"REMOVE_EMPLOYEE_LEVEL": "Employee Level {{ name }} successfully removed!",
+				"ADD_EMPLOYEE_LEVEL": "Employee Level '{{ name }}' was added",
+				"REMOVE_EMPLOYEE_LEVEL": "Employee Level '{{ name }}' was removed",
 				"INVALID_EMPLOYEE_LEVEL": "Please add an Employee Level"
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
-				"ADD_VENDOR": "vendor '{{ name }}' successfully added!",
-				"UPDATE_VENDOR": "Vendor '{{ name }}' successfully updated!",
-				"REMOVE_VENDOR": "Vendor '{{ name }}' successfully removed!",
+				"ADD_VENDOR": "vendor '{{ name }}' was added",
+				"UPDATE_VENDOR": "Vendor '{{ name }}' was changed",
+				"REMOVE_VENDOR": "Vendor '{{ name }}' was removed",
 				"INVALID_VENDOR_NAME": "Please add a Vendor name"
 			},
 			"EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES": {
-				"ADD_EXPENSE_CATEGORY": "New Category {{ name }} successfully added!",
-				"UPDATE_EXPENSE_CATEGORY": "Category {{ name }} successfully updated!",
-				"REMOVE_EXPENSE_CATEGORY": "Category {{ name }} successfully removed!",
+				"ADD_EXPENSE_CATEGORY": "Category '{{ name }}' was added",
+				"UPDATE_EXPENSE_CATEGORY": "Category '{{ name }}' was changed",
+				"REMOVE_EXPENSE_CATEGORY": "Category '{{ name }}' was removed",
 				"INVALID_EXPENSE_CATEGORY_NAME": "Please add a Category name"
 			},
 			"EDIT_ORGANIZATIONS_POSITIONS": {
-				"ADD_POSITION": "New position {{ name }} successfully added!",
-				"REMOVE_POSITION": "Position {{ name }} successfully removed!",
+				"ADD_POSITION": "Position '{{ name }}' was added",
+				"UPDATED_POSITION": "Position '{{ name }}' was changed",
+				"REMOVE_POSITION": "Position '{{ name }}' was removed",
 				"INVALID_POSITION_NAME": "Please add a Position name"
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
-				"ADD_DEPARTMENT": "Department '{{ name }}' successfully added!",
-				"REMOVE_DEPARTMENT": "Department '{{ name }}' successfully removed!",
+				"ADD_DEPARTMENT": "Department '{{ name }}' was saved",
+				"REMOVE_DEPARTMENT": "Department '{{ name }}' was removed",
 				"INVALID_DEPARTMENT_NAME": "Please add a Department name"
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
@@ -2438,9 +2456,9 @@
 			"RECORD_TYPE": "If Yes, please type 'REMOVE ALL DATA' to confirm."
 		},
 		"EVENT_TYPES": {
-			"ADD_EVENT_TYPE": "New event type created",
-			"EDIT_EVENT_TYPE": "Event type edited",
-			"DELETE_EVENT_TYPE": "Event type deleted",
+			"ADD_EVENT_TYPE": "Event type '{{ name }}' was added",
+			"EDIT_EVENT_TYPE": "Event type '{{ name }}' was changed",
+			"DELETE_EVENT_TYPE": "Event type '{{ name }}' was removed",
 			"ERROR": "{{ error }}"
 		},
 		"AVAILABILITY_SLOTS": {
@@ -2462,7 +2480,7 @@
 		"START_TIME": "Start Time",
 		"END_TIME": "End Time",
 		"DESCRIPTION": "Description",
-		"ADD_TIME_SUCCESS": "Time Successfully added",
+		"ADD_TIME_SUCCESS": "Time was added",
 		"VALIDATION": {
 			"CLIENT_REQUIRED": "Please select client",
 			"PROJECT_REQUIRED": "Please select project",
@@ -2583,11 +2601,11 @@
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "Add Appointment",
 		"EDIT_APPOINTMENT": "Edit Appointment",
-		"SAVE_SUCCESS": "Appointment saved successfully",
+		"SAVE_SUCCESS": "Appointment was saved",
 		"SAVE_FAILED": "Failed to save appointment",
 		"CANCEL_APPOINTMENT": "Cancel Appointment",
 		"CANCEL_FAIL": "Failed to cancel appointment",
-		"CANCEL_SUCCESS": "Appointment cancelled successfully",
+		"CANCEL_SUCCESS": "Appointment was cancelled",
 		"DURATION_ERROR": "Selected Duration is not valid",
 		"SELECT_EMPLOYEE": "Select Employee",
 		"EMPLOYEE": "עובד"
