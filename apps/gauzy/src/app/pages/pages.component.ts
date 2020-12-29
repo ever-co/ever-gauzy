@@ -2,7 +2,6 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import {
 	FeatureEnum,
-	IFeatureOrganization,
 	IOrganization,
 	IUser,
 	PermissionsEnum
@@ -960,16 +959,19 @@ export class PagesComponent implements OnInit, OnDestroy {
 				);
 			});
 		this.store.featureOrganizations$
-			.pipe(
-				filter((value: IFeatureOrganization[]) => value.length > 0),
-				untilDestroyed(this)
-			)
-			.subscribe((featureOrganizations) => {
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
 				this.loadItems(
 					this.selectorService.showSelectors(this.router.url)
 						.showOrganizationShortcuts
 				);
 			});
+		this.store.featureTenant$.pipe(untilDestroyed(this)).subscribe(() => {
+			this.loadItems(
+				this.selectorService.showSelectors(this.router.url)
+					.showOrganizationShortcuts
+			);
+		});
 		this.menu = this.getMenuItems();
 	}
 
@@ -1005,7 +1007,9 @@ export class PagesComponent implements OnInit, OnDestroy {
 
 		//tenant enabled/disabled features for relatives organizations
 		const { tenant } = this.user;
-		this.store.featureOrganizations = tenant.featureOrganizations;
+		this.store.featureTenant = tenant.featureOrganizations.filter(
+			(item) => !item.organizationId
+		);
 
 		//only enabled permissions assign to logged in user
 		this.store.userRolePermissions = this.user.role.rolePermissions.filter(
@@ -1046,7 +1050,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 		// enabled/disabled features from here
 		if (item.data.hasOwnProperty('featureKey')) {
 			const { featureKey } = item.data;
-			item.hidden = !this.store.hasFeatureEnabled(featureKey);
+			const enabled = !this.store.hasFeatureEnabled(featureKey);
+			item.hidden = enabled || (item.data.hide && item.data.hide());
 		}
 
 		if (item.children) {

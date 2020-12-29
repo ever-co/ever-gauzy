@@ -39,7 +39,8 @@ import {
 	IOrganizationSprint,
 	IInvoiceEstimateHistory,
 	IOrganizationAwards,
-	IOrganizationLanguages
+	IOrganizationLanguages,
+	IFeatureOrganization
 } from '@gauzy/models';
 import { Tag } from '../tags/tag.entity';
 import { Skill } from '../skills/skill.entity';
@@ -53,6 +54,7 @@ import { InvoiceEstimateHistory } from '../invoice-estimate-history/invoice-esti
 import { Deal } from '../deal/deal.entity';
 import { OrganizationAwards } from '../organization-awards/organization-awards.entity';
 import { OrganizationLanguages } from '../organization-languages/organization-languages.entity';
+import { FeatureOrganization } from '../feature/feature_organization.entity';
 
 @Entity('organization')
 export class Organization extends TenantBase implements IOrganization {
@@ -100,6 +102,10 @@ export class Organization extends TenantBase implements IOrganization {
 	@OneToMany(() => OrganizationLanguages, (language) => language.organization)
 	@JoinColumn()
 	languages?: IOrganizationLanguages[];
+
+	@ApiProperty({ type: FeatureOrganization })
+	@OneToMany(() => FeatureOrganization, (feature) => feature.organization)
+	featureOrganizations?: IFeatureOrganization[];
 
 	@ApiProperty({ type: String })
 	@IsString()

@@ -2728,7 +2728,7 @@
 		"BUCKET": "Bucket"
 	},
 	"CUSTOM_SMTP_PAGE": {
-		"HEADER": "Custom SMTP",
+		"HEADER": "Manage SMTP for {{ name }}",
 		"HOST": "Host",
 		"PORT": "Port",
 		"SECURE": "Secure",
@@ -2741,7 +2741,7 @@
 		"HEADER": "SMS Provider"
 	},
 	"FEATURE_PAGE": {
-		"HEADER": "Features"
+		"HEADER": "Manage Features for {{ name }}"
 	},
 	"SETTINGS": {
 		"EMAIL_HISTORY": {

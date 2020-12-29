@@ -20,6 +20,7 @@ import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
 import { ActivatedRoute } from '@angular/router';
+import * as _ from 'underscore';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -37,6 +38,7 @@ export class FeatureToggleComponent
 	isOrganization: boolean;
 	user: IUser;
 	loading: boolean = true;
+	featureTenant: IFeatureOrganization[] = [];
 	featureOrganizations: IFeatureOrganization[] = [];
 	featureTogglesDefinitions: IFeatureToggle[] = [];
 
@@ -78,15 +80,23 @@ export class FeatureToggleComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this._storeService.featureTenant$
+			.pipe(
+				tap(
+					(value: IFeatureOrganization[]) =>
+						(this.featureTenant = value)
+				),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this._featureStoreService.featureOrganizations$
 			.pipe(
-				filter(
-					(featureOrganizations) => featureOrganizations.length > 0
-				),
-				tap(
-					(featureOrganizations: IFeatureOrganization[]) =>
-						(this.featureOrganizations = featureOrganizations)
-				),
+				tap((value: IFeatureOrganization[]) => {
+					this.featureOrganizations = value;
+					if (this.organization && this.isOrganization) {
+						this._storeService.featureOrganizations = value;
+					}
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -132,7 +142,6 @@ export class FeatureToggleComponent
 	emitFeatureToggle(feature: IFeature, isEnabled: boolean) {
 		const { tenantId } = this.user;
 		const { id: featureId } = feature;
-
 		const request = {
 			tenantId,
 			featureId,
@@ -150,13 +159,25 @@ export class FeatureToggleComponent
 	}
 
 	enabledFeature(row: IFeature) {
-		const featureOrganization = this.featureOrganizations.find(
+		let unique: IFeatureOrganization[] = [];
+		if (this.isOrganization) {
+			unique = [...this.featureOrganizations, ...this.featureTenant];
+		} else {
+			unique = [...this.featureTenant];
+		}
+
+		const filtered: IFeatureOrganization[] = _.uniq(
+			unique,
+			(x) => x.featureId
+		);
+		const featureOrganization = filtered.find(
 			(featureOrganization: IFeatureOrganization) =>
 				featureOrganization.featureId === row.id
 		);
 		if (featureOrganization && featureOrganization.isEnabled === false) {
 			return featureOrganization.isEnabled;
 		}
+
 		const featureToggle = this.featureTogglesDefinitions.find(
 			(item: IFeatureToggle) => item.name == row.code
 		);

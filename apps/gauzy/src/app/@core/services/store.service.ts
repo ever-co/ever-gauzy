@@ -24,6 +24,7 @@ import {
 import { ComponentLayoutStyleEnum } from '@gauzy/models';
 import { map } from 'rxjs/operators';
 import { merge, Subject } from 'rxjs';
+import * as _ from 'underscore';
 
 export interface AppState {
 	user: IUser;
@@ -36,6 +37,7 @@ export interface AppState {
 	systemLanguages: ILanguage[];
 	featureToggles: IFeatureToggle[];
 	featureOrganizations: IFeatureOrganization[];
+	featureTenant: IFeatureOrganization[];
 }
 
 export interface PersistState {
@@ -54,7 +56,8 @@ export function createInitialAppState(): AppState {
 		selectedDate: new Date(),
 		userRolePermissions: [],
 		featureToggles: [],
-		featureOrganizations: []
+		featureOrganizations: [],
+		featureTenant: []
 	} as AppState;
 }
 
@@ -131,6 +134,7 @@ export class Store {
 	featureOrganizations$ = this.appQuery.select(
 		(state) => state.featureOrganizations
 	);
+	featureTenant$ = this.appQuery.select((state) => state.featureTenant);
 	preferredLanguage$ = this.persistQuery.select(
 		(state) => state.preferredLanguage
 	);
@@ -310,6 +314,17 @@ export class Store {
 		});
 	}
 
+	get featureTenant(): IFeatureOrganization[] {
+		const { featureTenant } = this.appQuery.getValue();
+		return featureTenant;
+	}
+
+	set featureTenant(featureOrganizations: IFeatureOrganization[]) {
+		this.appStore.update({
+			featureTenant: featureOrganizations
+		});
+	}
+
 	get featureOrganizations(): IFeatureOrganization[] {
 		const { featureOrganizations } = this.appQuery.getValue();
 		return featureOrganizations;
@@ -325,14 +340,25 @@ export class Store {
 	 * Check features are enabled/disabled for tenant organization
 	 */
 	hasFeatureEnabled(feature: FeatureEnum) {
-		const { featureOrganizations } = this.appQuery.getValue();
-		const { organizationId } = this;
-		return !!(featureOrganizations || []).find(
-			(item) =>
-				item.feature.code === feature &&
-				item.isEnabled &&
-				(item.organizationId === null ||
-					organizationId === item.organizationId)
+		const {
+			featureTenant = [],
+			featureOrganizations = [],
+			featureToggles = []
+		} = this.appQuery.getValue();
+		const filtered = _.uniq(
+			[...featureOrganizations, ...featureTenant],
+			(x) => x.featureId
+		);
+
+		const unleashToggle = featureToggles.find(
+			(toggle) => toggle.name === feature && toggle.enabled === false
+		);
+		if (unleashToggle) {
+			return unleashToggle.enabled;
+		}
+
+		return !!filtered.find(
+			(item) => item.feature.code === feature && item.isEnabled
 		);
 	}
 
