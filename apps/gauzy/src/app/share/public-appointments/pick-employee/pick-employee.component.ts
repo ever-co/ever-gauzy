@@ -1,31 +1,31 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { Subject } from 'rxjs';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
-import { NbToastrService } from '@nebular/theme';
 import { Store } from '../../../@core/services/store.service';
 import { EventTypeService } from '../../../@core/services/event-type.service';
-import { takeUntil } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
+	selector: '<ga-pick-employee>',
 	templateUrl: './pick-employee.component.html',
 	styleUrls: ['pick-employee.component.scss']
 })
 export class PickEmployeeComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
-
 	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
-	loading = true;
+	loading: boolean;
 	_selectedOrganizationId: string;
 
 	constructor(
 		private router: Router,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private eventTypeService: EventTypeService,
 		private store: Store
@@ -34,13 +34,15 @@ export class PickEmployeeComponent
 	}
 
 	ngOnInit(): void {
+		this.loading = true;
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((org) => {
-				if (org) {
-					this._selectedOrganizationId = org.id;
-				}
-				setTimeout(() => (this.loading = false), 250);
+				this._selectedOrganizationId = org.id;
+				this.loading = false;
 			});
 	}
 
@@ -77,16 +79,10 @@ export class PickEmployeeComponent
 			}
 		} else {
 			this.toastrService.danger(
-				this.getTranslation(
-					'PUBLIC_APPOINTMENTS.SELECT_EMPLOYEE_ERROR'
-				),
-				this.getTranslation('TOASTR.TITLE.ERROR')
+				this.getTranslation('PUBLIC_APPOINTMENTS.SELECT_EMPLOYEE_ERROR')
 			);
 		}
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

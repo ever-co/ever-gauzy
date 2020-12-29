@@ -233,6 +233,15 @@ export class EmploymentTypesComponent
 			id,
 			orgEmpTypeForEdit
 		);
+		this.toastrService.primary(
+			this.getTranslation(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.UPDATE_EMPLOYMENT_TYPE',
+				{
+					name: name
+				}
+			),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		);
 		this.cancel();
 	}
 	_applyTranslationOnSmartTable() {

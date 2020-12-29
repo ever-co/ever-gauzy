@@ -1,16 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { NbToastrService } from '@nebular/theme';
 import { Observable, throwError } from 'rxjs';
 import { ITask, IOrganizationSprint, IGetSprintsOptions } from '@gauzy/models';
 import { tap, catchError, first } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-
-interface ITaskResponse {
-	items: ITask[];
-	count: number;
-}
+import { ToastrService } from './toastr.service';
 
 @Injectable({
 	providedIn: 'root'
@@ -20,7 +15,7 @@ export class SprintService extends TranslationBaseComponent {
 
 	constructor(
 		private _http: HttpClient,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		public translateService: TranslateService
 	) {
 		super(translateService);
@@ -56,9 +51,8 @@ export class SprintService extends TranslationBaseComponent {
 	createSprint(sprint: IOrganizationSprint): Observable<IOrganizationSprint> {
 		return this._http.post<IOrganizationSprint>(this.API_URL, sprint).pipe(
 			tap(() => {
-				this.toastrService.primary(
-					this.getTranslation('SPRINTS_PAGE.SPRINT_ADDED'),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				this.toastrService.success(
+					this.getTranslation('SPRINTS_PAGE.SPRINT_ADDED')
 				);
 			}),
 			catchError((error) => this.errorHandler(error))
@@ -73,9 +67,8 @@ export class SprintService extends TranslationBaseComponent {
 			.put<IOrganizationSprint>(`${this.API_URL}/${sprintId}`, sprint)
 			.pipe(
 				tap(() =>
-					this.toastrService.primary(
-						this.getTranslation('SPRINTS_PAGE.SPRINT_UPDATED'),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					this.toastrService.success(
+						this.getTranslation('SPRINTS_PAGE.SPRINT_UPDATED')
 					)
 				),
 				catchError((error) => this.errorHandler(error))
@@ -85,9 +78,8 @@ export class SprintService extends TranslationBaseComponent {
 	deleteSprint(id: string): Observable<void> {
 		return this._http.delete<void>(`${this.API_URL}/${id}`).pipe(
 			tap(() =>
-				this.toastrService.primary(
-					this.getTranslation('SPRINTS_PAGE.SPRINT_DELETED'),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				this.toastrService.success(
+					this.getTranslation('SPRINTS_PAGE.SPRINT_DELETED')
 				)
 			),
 			catchError((error) => this.errorHandler(error))
@@ -95,11 +87,7 @@ export class SprintService extends TranslationBaseComponent {
 	}
 
 	private errorHandler(error: HttpErrorResponse) {
-		this.toastrService.danger(
-			error.message,
-			this.getTranslation('TOASTR.TITLE.ERROR')
-		);
-
+		this.toastrService.danger(error);
 		return throwError(error.message);
 	}
 }

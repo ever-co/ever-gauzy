@@ -8,7 +8,7 @@ import {
 	RolesEnum,
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { first, tap } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -22,6 +22,7 @@ import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { EmployeeWithLinksComponent } from '../../@shared/table-components/employee-with-links/employee-with-links.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -59,7 +60,7 @@ export class TeamsComponent
 	constructor(
 		private readonly organizationTeamsService: OrganizationTeamsService,
 		private employeesService: EmployeesService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		private dialogService: NbDialogService,
 		private readonly store: Store,
 		readonly translateService: TranslateService,
@@ -119,14 +120,11 @@ export class TeamsComponent
 						team
 					);
 
-					this.toastrService.primary(
-						this.getTranslation(
-							'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.EDIT_EXISTING_TEAM',
-							{
-								name: team.name
-							}
-						),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					this.toastrService.success(
+						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.EDIT_EXISTING_TEAM',
+						{
+							name: team.name
+						}
 					);
 
 					this.loadTeams();
@@ -139,16 +137,12 @@ export class TeamsComponent
 				try {
 					await this.organizationTeamsService.create(team);
 
-					this.toastrService.primary(
-						this.getTranslation(
-							'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.ADD_NEW_TEAM',
-							{
-								name: team.name
-							}
-						),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					this.toastrService.success(
+						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.ADD_NEW_TEAM',
+						{
+							name: team.name
+						}
 					);
-
 					this.loadTeams();
 				} catch (error) {
 					console.error(error);
@@ -157,9 +151,7 @@ export class TeamsComponent
 		} else {
 			// TODO translate
 			this.toastrService.danger(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.INVALID_TEAM_NAME'
-				),
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.INVALID_TEAM_NAME',
 				this.getTranslation(
 					'TOASTR.MESSAGE.NEW_ORGANIZATION_TEAM_INVALID_NAME'
 				)
@@ -186,18 +178,14 @@ export class TeamsComponent
 					this.selectedTeam ? this.selectedTeam.id : id
 				);
 
-				this.toastrService.primary(
-					this.getTranslation(
-						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.REMOVE_TEAM',
-						{
-							name: this.selectedTeam
-								? this.selectedTeam.team_name
-								: name
-						}
-					),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				this.toastrService.success(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.REMOVE_TEAM',
+					{
+						name: this.selectedTeam
+							? this.selectedTeam.team_name
+							: name
+					}
 				);
-
 				this.loadTeams();
 			} catch (error) {
 				console.error(error);

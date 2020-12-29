@@ -1,6 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IEmployee, IEmployeeFindInput } from './employee.model';
-import { IOrganizationFindInput } from './organization.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { ITask } from './task-entity.model';
 import { IOrganizationTeam } from './organization-team-model';
@@ -71,9 +70,9 @@ export enum KeyResultWeightEnum {
 	INCREASE_BY_4X = '4'
 }
 
-export interface IGoalFindInput {
+export interface IGoalFindInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employee?: IEmployeeFindInput;
-	organization?: IOrganizationFindInput;
 }
 
 export enum KeyResultTypeEnum {
@@ -101,4 +100,9 @@ export enum KeyResultUpdateStatusEnum {
 	NEEDS_ATTENTION = 'needs attention',
 	OFF_TRACK = 'off track',
 	NONE = 'none'
+}
+
+export interface IGoalResponse {
+	items: IGoal[];
+	count: number;
 }

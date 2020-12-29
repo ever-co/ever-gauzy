@@ -28,7 +28,7 @@ import {
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeesService } from '../../../../@core/services';
-import { NbToastrService, NbDialogService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { AppointmentEmployeesService } from '../../../../@core/services/appointment-employees.service';
 import { Store } from '../../../../@core/services/store.service';
 import { AlertModalComponent } from '../../../../@shared/alert-modal/alert-modal.component';
@@ -36,6 +36,7 @@ import { AvailabilitySlotsService } from '../../../../@core/services/availabilit
 import { EmployeeSchedulesComponent } from '../employee-schedules/employee-schedules.component';
 import { EmployeeSelectComponent } from '../../../../@shared/employee/employee-multi-select/employee-multi-select.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-manage-appointment',
@@ -85,7 +86,7 @@ export class ManageAppointmentComponent
 		private employeeAppointmentService: EmployeeAppointmentService,
 		private appointmentEmployeesService: AppointmentEmployeesService,
 		private availabilitySlotsService: AvailabilitySlotsService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private cdr: ChangeDetectorRef
 	) {
@@ -266,8 +267,7 @@ export class ManageAppointmentComponent
 						}
 					);
 					this.toastrService.success(
-						this.getTranslation('APPOINTMENTS_PAGE.CANCEL_SUCCESS'),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
+						'APPOINTMENTS_PAGE.CANCEL_SUCCESS'
 					);
 					history.back();
 				}
@@ -395,20 +395,14 @@ export class ManageAppointmentComponent
 				});
 			}
 
-			this.toastrService.success(
-				this.getTranslation('APPOINTMENTS_PAGE.SAVE_SUCCESS'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('APPOINTMENTS_PAGE.SAVE_SUCCESS');
 			this.employee
 				? this.router.navigate([
 						`/share/employee/${this.employee.id}/confirm/${this.employeeAppointment.id}`
 				  ])
 				: this.router.navigate(['/pages/employees/appointments']);
 		} catch (error) {
-			this.toastrService.danger(
-				this.getTranslation('APPOINTMENTS_PAGE.SAVE_FAILED'),
-				this.getTranslation('TOASTR.TITLE.ERROR')
-			);
+			this.toastrService.danger('APPOINTMENTS_PAGE.SAVE_FAILED');
 		}
 	}
 

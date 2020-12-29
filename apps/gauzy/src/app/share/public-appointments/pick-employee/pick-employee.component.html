@@ -1,4 +1,4 @@
-<nb-card>
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="header-selector-wrapper">
 		<ngx-back-navigation></ngx-back-navigation>
 		<h4>
@@ -7,14 +7,14 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="col-9">
-			<div style="height: 300px;" class="form-group" *ngIf="!loading">
+			<div style="height: 300px" class="form-group">
 				<label for="description" class="label"
 					>{{ 'APPOINTMENTS_PAGE.EMPLOYEE' | translate }}
 				</label>
 				<div class="center-div">
 					<ga-employee-selector
 						class="col-6"
-						style="width: 100%;"
+						style="width: 100%"
 						#employeeSelector
 						[skipGlobalChange]="true"
 						class="employees"

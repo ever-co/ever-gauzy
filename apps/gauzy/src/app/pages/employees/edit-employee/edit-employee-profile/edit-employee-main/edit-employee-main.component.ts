@@ -2,8 +2,8 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Params } from '@angular/router';
 import { IEmployee, IOrganization, LanguagesEnum } from '@gauzy/models';
-import { NbToastrService } from '@nebular/theme';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { Subject, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { EmployeeStore } from '../../../../../@core/services/employee-store.service';
@@ -33,7 +33,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly store: Store,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		private readonly employeeStore: EmployeeStore
 	) {}
 

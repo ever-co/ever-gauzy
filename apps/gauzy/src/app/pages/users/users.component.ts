@@ -19,7 +19,7 @@ import {
 	IRolePermission,
 	IUserViewModel
 } from '@gauzy/models';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { filter, first, tap } from 'rxjs/operators';
@@ -32,6 +32,7 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -78,7 +79,7 @@ export class UsersComponent
 		private dialogService: NbDialogService,
 		private store: Store,
 		private router: Router,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private route: ActivatedRoute,
 		private translate: TranslateService,
 		private userOrganizationsService: UsersOrganizationsService
@@ -173,7 +174,7 @@ export class UsersComponent
 			if (data.user.firstName || data.user.lastName) {
 				this.userName = data.user.firstName + ' ' + data.user.lastName;
 			}
-			this.toastrService.primary(
+			this.toastrService.success(
 				this.getTranslation(
 					'NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION',
 					{
@@ -195,7 +196,7 @@ export class UsersComponent
 				.pipe(first())
 				.toPromise();
 
-			this.toastrService.primary(
+			this.toastrService.success(
 				this.getTranslation(
 					'NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION',
 					{
@@ -263,7 +264,7 @@ export class UsersComponent
 							this.selectedUser.id
 						);
 
-						this.toastrService.primary(
+						this.toastrService.success(
 							this.getTranslation(
 								'NOTES.ORGANIZATIONS.DELETE_USER_FROM_ORGANIZATION',
 								{
@@ -328,7 +329,7 @@ export class UsersComponent
 							userOrganizationId
 						);
 
-						this.toastrService.primary(
+						this.toastrService.success(
 							this.getTranslation('USERS_PAGE.REMOVE_USER', {
 								name: fullName
 							}),

@@ -2,13 +2,8 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../@core/services/store.service';
-import { takeUntil, first } from 'rxjs/operators';
-import { Subject } from 'rxjs';
-import {
-	NbDialogService,
-	NbToastrService,
-	NbPopoverDirective
-} from '@nebular/theme';
+import { first, filter, debounceTime, withLatestFrom } from 'rxjs/operators';
+import { NbDialogService, NbPopoverDirective } from '@nebular/theme';
 import { EditObjectiveComponent } from './edit-objective/edit-objective.component';
 import { EditKeyResultsComponent } from './edit-keyresults/edit-keyresults.component';
 import { GoalDetailsComponent } from './goal-details/goal-details.component';
@@ -28,13 +23,17 @@ import { KeyResultParametersComponent } from './key-result-parameters/key-result
 import { GoalLevelEnum } from '@gauzy/models';
 import { GoalSettingsService } from '../../@core/services/goal-settings.service';
 import { GoalTemplateSelectComponent } from '../../@shared/goal/goal-template-select/goal-template-select.component';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../@core/services/toastr.service';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-goals',
 	templateUrl: './goals.component.html',
 	styleUrls: ['./goals.component.scss']
 })
-export class GoalsComponent extends TranslationBaseComponent
+export class GoalsComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	@ViewChild(NbPopoverDirective) popover: NbPopoverDirective;
 	loading = true;
@@ -47,39 +46,27 @@ export class GoalsComponent extends TranslationBaseComponent
 	goalGeneralSettings: IGoalGeneralSetting;
 	goalTimeFrames: Array<string> = [];
 	filters = [
-		{
-			title: 'All Objectives',
-			value: 'all'
-		},
-		{
-			title: "My Team's Objectives",
-			value: 'team'
-		},
-		{
-			title: 'My Organization Objectives',
-			value: 'organization'
-		},
-		{
-			title: 'My Objectives',
-			value: 'employee'
-		}
+		{ title: 'All Objectives', value: 'all' },
+		{ title: "My Team's Objectives", value: 'team' },
+		{ title: 'My Organization Objectives', value: 'organization' },
+		{ title: 'My Objectives', value: 'employee' }
 	];
 	goalLevels = [...Object.values(GoalLevelEnum)];
 	groupObjectivesBy = [
 		{ title: 'Objective Level', value: 'level' },
 		{ title: 'Time Frames', value: 'timeFrames' }
 	];
-	private _ngDestroy$ = new Subject<void>();
 	goals: IGoal[];
 	allGoals: IGoal[];
 	noGoals = true;
 	keyResult: IKeyResult[];
 	organization: IOrganization;
+
 	constructor(
 		private store: Store,
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private goalService: GoalService,
 		private errorHandler: ErrorHandlingService,
 		private keyResultService: KeyResultService,
@@ -89,24 +76,44 @@ export class GoalsComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
-		this.store.user$.pipe(takeUntil(this._ngDestroy$)).subscribe((user) => {
-			if (user) {
-				this.isEmployee = !!user.employee;
-			}
-		});
-		this.store.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((emp) => {
-				if (this.organization && emp) {
-					this.employee = emp;
+		this.store.user$
+			.pipe(
+				filter((user) => !!user),
+				untilDestroyed(this)
+			)
+			.subscribe((user) => {
+				if (user) {
+					this.isEmployee = !!user.employee;
+				}
+			});
+
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeOrganization$ = this.store.selectedOrganization$;
+		storeEmployee$
+			.pipe(
+				filter((employee) => !!employee),
+				debounceTime(200),
+				withLatestFrom(storeOrganization$),
+				untilDestroyed(this)
+			)
+			.subscribe(([employee]) => {
+				if (employee.id && this.organization) {
+					this.employee = employee;
 					this.loadPage();
 				}
 			});
-		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((organization) => {
+		storeOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				debounceTime(200),
+				withLatestFrom(storeEmployee$),
+				untilDestroyed(this)
+			)
+			.subscribe(([organization, employee]) => {
+				this.employee = employee || null;
 				if (organization) {
 					this.organization = organization;
+					this.organizationName = organization.name;
 					this.selectedOrganizationId = organization.id;
 					this.loadPage();
 				}
@@ -126,17 +133,12 @@ export class GoalsComponent extends TranslationBaseComponent
 		if (!this.organization) {
 			return;
 		}
-
 		this.loading = true;
-		const { name } = this.store.selectedOrganization
-			? this.store.selectedOrganization
-			: { name: 'new' };
-		this.organizationName = name;
+
+		const { tenantId } = this.store.user;
 		const findObj = {
-			organization: {
-				id: this.selectedOrganizationId
-			},
-			tenantId: this.organization.tenantId
+			organizationId: this.selectedOrganizationId,
+			tenantId
 		};
 		await this.getGoalSettings(findObj);
 		await this.goalService
@@ -197,11 +199,7 @@ export class GoalsComponent extends TranslationBaseComponent
 			);
 			const goalData = this.goals[index];
 			delete goalData.keyResults;
-			await this.goalService.update(this.goals[index].id, goalData);
-			this.toastrService.primary(
-				this.getTranslation('TOASTR.MESSAGE.KEY_RESULT_UPDATED'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('TOASTR.MESSAGE.KEY_RESULT_UPDATED');
 			this.loadPage();
 		}
 	}
@@ -265,11 +263,10 @@ export class GoalsComponent extends TranslationBaseComponent
 					.update(keyResult.id, keyResultData)
 					.then((val) => {
 						if (val) {
-							this.toastrService.primary(
+							this.toastrService.success(
 								this.getTranslation(
 									'TOASTR.MESSAGE.KEY_RESULT_UPDATED'
-								),
-								this.getTranslation('TOASTR.TITLE.SUCCESS')
+								)
 							);
 							this.loadPage();
 						}
@@ -283,11 +280,8 @@ export class GoalsComponent extends TranslationBaseComponent
 					.createKeyResult(data)
 					.then((val) => {
 						if (val) {
-							this.toastrService.primary(
-								this.getTranslation(
-									'TOASTR.MESSAGE.KEY_RESULT_ADDED'
-								),
-								this.getTranslation('TOASTR.TITLE.SUCCESS')
+							this.toastrService.success(
+								'TOASTR.MESSAGE.KEY_RESULT_ADDED'
 							);
 							this.loadPage();
 						}
@@ -395,11 +389,10 @@ export class GoalsComponent extends TranslationBaseComponent
 				// Update Goal
 				await this.goalService.update(goal.id, response).then((res) => {
 					if (res) {
-						this.toastrService.primary(
+						this.toastrService.success(
 							this.getTranslation(
 								'TOASTR.MESSAGE.OBJECTIVE_UPDATED'
-							),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
+							)
 						);
 						this.loadPage();
 					}
@@ -412,18 +405,14 @@ export class GoalsComponent extends TranslationBaseComponent
 					progress: 0
 				};
 				try {
-					await this.goalService
-						.createGoal(data)
-						.then(async (val) => {
-							//await this.goalService.getAllGoals();
-							this.toastrService.primary(
-								this.getTranslation(
-									'TOASTR.MESSAGE.OBJECTIVE_ADDED'
-								),
-								this.getTranslation('TOASTR.TITLE.SUCCESS')
-							);
-							await this.loadPage();
-						});
+					await this.goalService.createGoal(data).then((val) => {
+						this.toastrService.success(
+							this.getTranslation(
+								'TOASTR.MESSAGE.OBJECTIVE_ADDED'
+							)
+						);
+						this.loadPage();
+					});
 				} catch (error) {
 					this.errorHandler.handleError(error);
 				}
@@ -431,7 +420,7 @@ export class GoalsComponent extends TranslationBaseComponent
 		}
 	}
 
-	async openGoalDetials(data) {
+	async openGoalDetails(data) {
 		const dialog = this.dialogService.open(GoalDetailsComponent, {
 			hasScroll: true,
 			context: {
@@ -454,11 +443,10 @@ export class GoalsComponent extends TranslationBaseComponent
 					.update(response.id, goalData)
 					.then((res) => {
 						if (res) {
-							this.toastrService.primary(
+							this.toastrService.success(
 								this.getTranslation(
 									'TOASTR.MESSAGE.OBJECTIVE_UPDATED'
-								),
-								this.getTranslation('TOASTR.TITLE.SUCCESS')
+								)
 							);
 							this.loadPage();
 						}
@@ -467,11 +455,11 @@ export class GoalsComponent extends TranslationBaseComponent
 		}
 	}
 
-	async openKeyResultDetails(index, selectedkeyResult) {
+	async openKeyResultDetails(index, selectedKeyResult) {
 		const dialog = this.dialogService.open(KeyResultDetailsComponent, {
 			hasScroll: true,
 			context: {
-				keyResult: selectedkeyResult
+				keyResult: selectedKeyResult
 			},
 			closeOnBackdropClick: false
 		});
@@ -490,10 +478,7 @@ export class GoalsComponent extends TranslationBaseComponent
 				const goalData = this.goals[index];
 				delete goalData.keyResults;
 				await this.goalService.update(this.goals[index].id, goalData);
-				this.toastrService.primary(
-					this.getTranslation('TOASTR.MESSAGE.KEY_RESULT_UPDATED'),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				);
+				this.toastrService.success('TOASTR.MESSAGE.KEY_RESULT_UPDATED');
 				this.loadPage();
 			}
 		}
@@ -533,16 +518,10 @@ export class GoalsComponent extends TranslationBaseComponent
 				this.goals[index].id,
 				this.goals[index]
 			);
-			this.toastrService.primary(
-				this.getTranslation('TOASTR.MESSAGE.KEY_RESULT_UPDATED'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('TOASTR.MESSAGE.KEY_RESULT_UPDATED');
 			this.loadPage();
 		}
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

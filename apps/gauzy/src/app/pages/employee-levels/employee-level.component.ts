@@ -5,7 +5,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/models';
-import { NbToastrService, NbDialogService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { filter, first } from 'rxjs/operators';
@@ -16,6 +16,7 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -43,7 +44,7 @@ export class EmployeeLevelComponent
 	constructor(
 		private readonly employeeLevelService: EmployeeLevelService,
 		private dialogService: NbDialogService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		private readonly store: Store,
 		readonly translateService: TranslateService
 	) {
@@ -119,14 +120,9 @@ export class EmployeeLevelComponent
 				tags: this.tags
 			});
 
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS.ADD_EMPLOYEE_LEVEL',
-					{
-						name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS.ADD_EMPLOYEE_LEVEL',
+				{ name: level }
 			);
 			this.loadEmployeeLevels();
 			this.cancel();
@@ -150,10 +146,9 @@ export class EmployeeLevelComponent
 			tags: this.tags
 		};
 		await this.employeeLevelService.update(id, employeeLevel);
-		this.toastrService.primary(
-			this.getTranslation('TOASTR.MESSAGE.EMPLOYEE_LEVEL_UPDATE'),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
-		);
+		this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_LEVEL_UPDATE', {
+			name: employeeLevelName
+		});
 
 		this.loadEmployeeLevels();
 		this.cancel();
@@ -182,14 +177,9 @@ export class EmployeeLevelComponent
 			.toPromise();
 		if (result) {
 			await this.employeeLevelService.delete(id);
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS.REMOVE_EMPLOYEE_LEVEL',
-					{
-						name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS.REMOVE_EMPLOYEE_LEVEL',
+				{ name }
 			);
 			this.loadEmployeeLevels();
 		}

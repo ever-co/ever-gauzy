@@ -10,13 +10,15 @@ import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { UsersOrganizationsService } from '../../../../@core/services/users-organizations.service';
-import { NbToastrService, NbDialogService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { Store } from '../../../../@core/services/store.service';
 import { OrganizationsService } from '../../../../@core/services/organizations.service';
 import { UsersService } from '../../../../@core/services';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { UserIdService } from '../../../../@core/services/edit-user-data.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-edit-user-organization',
@@ -41,7 +43,7 @@ export class EditUserOrganizationsComponent
 	constructor(
 		readonly translateService: TranslateService,
 		private userOrganizationsService: UsersOrganizationsService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		private organizationsService: OrganizationsService,
 		private userIdService: UserIdService,
 		private dialogService: NbDialogService,
@@ -75,7 +77,7 @@ export class EditUserOrganizationsComponent
 				.pipe(first())
 				.toPromise();
 
-			this.toastrService.primary(
+			this.toastrService.success(
 				this.getTranslation(
 					'NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION',
 					{
@@ -84,10 +86,8 @@ export class EditUserOrganizationsComponent
 							'ORGANIZATIONS_PAGE.EDIT.ADDED_TO_ORGANIZATION'
 						)
 					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+				)
 			);
-
 			this.showAddCard = false;
 			this.loadPage();
 		}
@@ -98,9 +98,7 @@ export class EditUserOrganizationsComponent
 		const user = await this.usersService.getUserById(this.selectedUserId);
 		const { items } = await this.userOrganizationsService.getAll(
 			['user', 'user.role'],
-			{
-				tenantId
-			}
+			{ tenantId }
 		);
 
 		let counter = 0;
@@ -141,22 +139,16 @@ export class EditUserOrganizationsComponent
 								this.userToRemove
 							);
 
-							this.toastrService.primary(
+							this.toastrService.success(
 								this.getTranslation(
 									'ORGANIZATIONS_PAGE.EDIT.USER_WAS_DELETED',
-									{
-										name: userName
-									}
-								),
-								this.getTranslation('TOASTR.TITLE.SUCCESS')
+									{ name: userName }
+								)
 							);
 
 							this.router.navigate(['/pages/users']);
 						} catch (error) {
-							this.toastrService.danger(
-								error.error.message || error.message,
-								'Error'
-							);
+							this.toastrService.danger(error);
 						}
 					}
 				});
@@ -180,22 +172,16 @@ export class EditUserOrganizationsComponent
 								this.orgUserId
 							);
 
-							this.toastrService.primary(
+							this.toastrService.success(
 								this.getTranslation(
 									'ORGANIZATIONS_PAGE.EDIT.USER_WAS_REMOVED',
-									{
-										name: userName
-									}
-								),
-								this.getTranslation('TOASTR.TITLE.SUCCESS')
+									{ name: userName }
+								)
 							);
 
 							this.loadPage();
 						} catch (error) {
-							this.toastrService.danger(
-								error.error.message || error.message,
-								'Error'
-							);
+							this.toastrService.danger(error);
 						}
 					}
 				});
@@ -206,9 +192,7 @@ export class EditUserOrganizationsComponent
 		const { tenantId } = this.store.user;
 		const users = await this.userOrganizationsService.getAll(
 			['user', 'user.role'],
-			{
-				tenantId
-			}
+			{ tenantId }
 		);
 
 		const { items } = await this.userOrganizationsService.getAll([], {

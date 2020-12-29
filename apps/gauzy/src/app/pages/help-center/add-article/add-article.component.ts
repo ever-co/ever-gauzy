@@ -22,7 +22,8 @@ import { Store } from '../../../@core/services/store.service';
 	templateUrl: 'add-article.component.html',
 	styleUrls: ['add-article.component.scss']
 })
-export class AddArticleComponent extends TranslationBaseComponent
+export class AddArticleComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	@Input() article?: IHelpCenterArticle;
 	@Input() editType: string;
@@ -56,6 +57,7 @@ export class AddArticleComponent extends TranslationBaseComponent
 	selectedEmployeeIds = null;
 	employeeIds: string[] = [];
 	organization: IOrganization;
+
 	ngOnInit() {
 		this.organization = this.store.selectedOrganization;
 		this.form = this.fb.group({

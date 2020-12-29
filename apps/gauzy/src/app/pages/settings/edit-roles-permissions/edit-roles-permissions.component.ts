@@ -6,15 +6,16 @@ import {
 	RolesEnum,
 	IUser
 } from '@gauzy/models';
-import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { RolePermissionsService } from '../../../@core/services/role-permissions.service';
 import { RoleService } from '../../../@core/services/role.service';
-import { Subject } from 'rxjs';
-import { first, takeUntil } from 'rxjs/operators';
+import { first } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { Store } from '../../../@core/services/store.service';
+import { ToastrService } from '../../../@core/services/toastr.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-org-roles-permissions',
 	templateUrl: './edit-roles-permissions.component.html',
@@ -23,7 +24,6 @@ import { Store } from '../../../@core/services/store.service';
 export class EditRolesPermissionsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
 	private currentUser: IUser;
 
 	organization: IOrganization;
@@ -44,7 +44,7 @@ export class EditRolesPermissionsComponent
 
 	constructor(
 		readonly translateService: TranslateService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		private readonly rolePermissionsService: RolePermissionsService,
 		private readonly rolesService: RoleService,
 		private readonly store: Store
@@ -53,7 +53,7 @@ export class EditRolesPermissionsComponent
 	}
 
 	ngOnInit(): void {
-		this.store.user$.pipe(takeUntil(this._ngDestroy$)).subscribe((user) => {
+		this.store.user$.pipe(untilDestroyed(this)).subscribe((user) => {
 			this.currentUser = user;
 			if (this.currentUser && this.currentUser.tenant) {
 				this.loadPermissionsForSelectedRole();
@@ -62,9 +62,8 @@ export class EditRolesPermissionsComponent
 	}
 
 	async updateOrganizationSettings() {
-		this.toastrService.primary(
-			this.organization.name + ' organization settings updated.',
-			'Success'
+		this.toastrService.success(
+			this.organization.name + ' organization settings updated.'
 		);
 		this.goBack();
 	}
@@ -150,8 +149,5 @@ export class EditRolesPermissionsComponent
 		}
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

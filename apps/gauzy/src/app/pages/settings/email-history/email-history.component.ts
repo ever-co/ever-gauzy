@@ -1,6 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { Subject } from 'rxjs';
+import { NbDialogService } from '@nebular/theme';
 import { EmailService } from '../../../@core/services/email.service';
 import {
 	IEmail,
@@ -10,19 +9,16 @@ import {
 } from '@gauzy/models';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Store } from '../../../@core/services/store.service';
-import { takeUntil, first } from 'rxjs/operators';
+import { first, filter } from 'rxjs/operators';
 import { EmailFiltersComponent } from './email-filters/email-filters.component';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { EmployeesService } from '../../../@core/services';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
+import { ToastrService } from '../../../@core/services/toastr.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
-export interface DisplayEmail {
-	from: string;
-	to: string;
-	date: string;
-}
-
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-email-history',
 	templateUrl: './email-history.component.html',
@@ -31,8 +27,6 @@ export interface DisplayEmail {
 export class EmailHistoryComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _onDestroy$ = new Subject<void>();
-
 	private _selectedOrganization: IOrganization;
 
 	loading = true;
@@ -66,7 +60,7 @@ export class EmailHistoryComponent
 		private emailService: EmailService,
 		private sanitizer: DomSanitizer,
 		private store: Store,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private organizationContactService: OrganizationContactService,
 		private employeesService: EmployeesService,
 		readonly translateService: TranslateService
@@ -76,20 +70,25 @@ export class EmailHistoryComponent
 
 	ngOnInit() {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._onDestroy$))
-			.subscribe((org) => {
-				if (org) {
-					this._selectedOrganization = org;
-					const {
-						id: organizationId,
-						tenantId
-					} = this._selectedOrganization;
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
+			.subscribe((organization: IOrganization) => {
+				if (organization) {
+					this._selectedOrganization = organization;
+
+					const { tenantId } = this.store.user;
+					const { id: organizationId } = this._selectedOrganization;
+
 					this.resetFilters();
+
 					this._getSelectedOrganizationEmails(
 						organizationId,
 						tenantId
 					);
 					this._getEmployees(organizationId, tenantId);
+
 					this._getOrganizationContacts();
 					this.loading = false;
 				}
@@ -112,7 +111,9 @@ export class EmailHistoryComponent
 			.toPromise();
 
 		if (filters) {
-			const { id: organizationId, tenantId } = this._selectedOrganization;
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this._selectedOrganization;
+
 			this._getSelectedOrganizationEmails(
 				organizationId,
 				tenantId,
@@ -160,16 +161,13 @@ export class EmailHistoryComponent
 				)
 				.then((data) => {
 					this.emails = data.items;
-					// this.loading = false;
-
 					this.selectedEmail = this.emails ? this.emails[0] : null;
 				});
 		} catch (error) {
 			this.toastrService.danger(
+				error,
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
-			console.error(error);
-			// this.loading = false;
 		}
 	}
 
@@ -198,9 +196,8 @@ export class EmailHistoryComponent
 			this._selectedOrganization.tenantId,
 			this.filters
 		);
-		this.toastrService.primary(
-			this.getTranslation('SETTINGS.EMAIL_HISTORY.EMAIL_ARCHIVED'),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		this.toastrService.success(
+			this.getTranslation('SETTINGS.EMAIL_HISTORY.EMAIL_ARCHIVED')
 		);
 	}
 
@@ -246,8 +243,5 @@ export class EmailHistoryComponent
 		this.filteredCount = 0;
 	}
 
-	ngOnDestroy() {
-		this._onDestroy$.next();
-		this._onDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

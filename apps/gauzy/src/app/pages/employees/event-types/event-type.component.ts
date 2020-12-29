@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import {
 	IEventType,
 	ITag,
@@ -25,6 +25,7 @@ import { ErrorHandlingService } from '../../../@core/services/error-handling.ser
 import { NotesWithTagsComponent } from '../../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -93,7 +94,7 @@ export class EventTypeComponent
 		private errorHandler: ErrorHandlingService,
 		private eventTypeService: EventTypeService,
 		private dialogService: NbDialogService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private router: Router
 	) {
@@ -303,14 +304,9 @@ export class EventTypeComponent
 				tenantId
 			});
 
-			this.toastrService.primary(
-				this.getTranslation('NOTES.EVENT_TYPES.ADD_EVENT_TYPE', {
-					name: formData.employee
-						? `${formData.employee.firstName} ${formData.employee.lastName}`
-						: this.getTranslation('SM_TABLE.EMPLOYEE')
-				}),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('NOTES.EVENT_TYPES.ADD_EVENT_TYPE', {
+				name: formData.title
+			});
 
 			this.store.selectedEmployee = formData.employee
 				? formData.employee
@@ -372,14 +368,9 @@ export class EventTypeComponent
 								tags: formData.tags
 							});
 						}
-						this.toastrService.primary(
-							this.getTranslation(
-								'NOTES.EVENT_TYPES.EDIT_EVENT_TYPE',
-								{
-									name: this.employeeName
-								}
-							),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						this.toastrService.success(
+							'NOTES.EVENT_TYPES.EDIT_EVENT_TYPE',
+							{ name: formData.title }
 						);
 
 						this._loadTableData(
@@ -428,14 +419,9 @@ export class EventTypeComponent
 							this.selectedEventType.id
 						);
 
-						this.toastrService.primary(
-							this.getTranslation(
-								'NOTES.EVENT_TYPES.DELETE_EVENT_TYPE',
-								{
-									name: this.employeeName
-								}
-							),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						this.toastrService.success(
+							'NOTES.EVENT_TYPES.DELETE_EVENT_TYPE',
+							{ name: this.selectedEventType.title }
 						);
 						this._loadTableData(
 							this.selectedEmployeeId,

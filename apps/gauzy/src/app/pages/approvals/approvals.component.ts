@@ -11,7 +11,7 @@ import {
 import { RequestApprovalService } from '../../@core/services/request-approval.service';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { filter, first, tap } from 'rxjs/operators';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { Store } from '../../@core/services/store.service';
 import { ApprovalPolicyComponent } from './table-components/approval-policy/approval-policy.component';
 import { RequestApprovalMutationComponent } from '../../@shared/approvals/approvals-mutation.component';
@@ -21,6 +21,7 @@ import { PictureNameTagsComponent } from '../../@shared/table-components/picture
 import { RequestApprovalStatusTypesEnum } from '@gauzy/models';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -59,7 +60,7 @@ export class ApprovalsComponent
 		private approvalRequestService: RequestApprovalService,
 		private store: Store,
 		private dialogService: NbDialogService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private router: Router
 	) {
 		super(translateService);
@@ -265,11 +266,9 @@ export class ApprovalsComponent
 				params.data.id
 			);
 			if (request) {
-				this.toastrService.primary(
-					this.getTranslation(
-						'APPROVAL_REQUEST_PAGE.APPROVAL_SUCCESS'
-					),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				this.toastrService.success(
+					'APPROVAL_REQUEST_PAGE.APPROVAL_SUCCESS',
+					{ name: params.data.name }
 				);
 			}
 		} else {
@@ -277,9 +276,9 @@ export class ApprovalsComponent
 				params.data.id
 			);
 			if (request) {
-				this.toastrService.primary(
-					this.getTranslation('APPROVAL_REQUEST_PAGE.REFUSE_SUCCESS'),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				this.toastrService.success(
+					'APPROVAL_REQUEST_PAGE.REFUSE_SUCCESS',
+					{ name: params.data.name }
 				);
 			}
 		}
@@ -307,6 +306,7 @@ export class ApprovalsComponent
 				data: selectedItem
 			});
 		}
+
 		if (!isCreate) {
 			dialog = this.dialogService.open(RequestApprovalMutationComponent, {
 				context: {
@@ -318,11 +318,11 @@ export class ApprovalsComponent
 		}
 		const requestApproval = await dialog.onClose.pipe(first()).toPromise();
 		if (requestApproval) {
-			this.toastrService.primary(
-				this.getTranslation(
-					'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_SAVED'
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				isCreate
+					? 'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_CREATED'
+					: 'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_UPDATED',
+				{ name: requestApproval.name }
 			);
 		}
 		this.clearItem();
@@ -340,11 +340,9 @@ export class ApprovalsComponent
 			this.selectedRequestApproval.id
 		);
 		if (isSuccess) {
-			this.toastrService.primary(
-				this.getTranslation(
-					'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_DELETED'
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_DELETED',
+				{ name: this.selectedRequestApproval.name }
 			);
 		}
 		this.clearItem();

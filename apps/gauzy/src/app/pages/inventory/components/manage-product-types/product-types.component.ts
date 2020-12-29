@@ -9,7 +9,7 @@ import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { ProductTypeService } from '../../../../@core/services/product-type.service';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { first, tap } from 'rxjs/operators';
 import { ProductTypeMutationComponent } from '../../../../@shared/product-mutation/product-type-mutation/product-type-mutation.component';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -18,6 +18,7 @@ import { Store } from '../../../../@core/services/store.service';
 import { ComponentEnum } from '../../../../@core/constants/layout.constants';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-product-type',
@@ -51,7 +52,7 @@ export class ProductTypesComponent
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
 		private productTypeService: ProductTypeService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private router: Router,
 		private store: Store
 	) {
@@ -180,10 +181,10 @@ export class ProductTypesComponent
 
 		const productType = await dialog.onClose.pipe(first()).toPromise();
 		if (productType) {
-			this.toastrService.primary(
-				this.getTranslation('INVENTORY_PAGE.PRODUCT_TYPE_SAVED'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			let productTranslations = productType.translations[0];
+			this.toastrService.success('INVENTORY_PAGE.PRODUCT_TYPE_SAVED', {
+				name: productTranslations.name
+			});
 		}
 		this.clearItem();
 		this.loadSettings();
@@ -204,10 +205,9 @@ export class ProductTypesComponent
 		if (result) {
 			await this.productTypeService.delete(this.selectedProductType.id);
 			this.loadSettings();
-			this.toastrService.primary(
-				this.getTranslation('INVENTORY_PAGE.PRODUCT_TYPE_DELETED'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('INVENTORY_PAGE.PRODUCT_TYPE_DELETED', {
+				name: this.selectedProductType.name
+			});
 		}
 		this.clearItem();
 	}

@@ -164,7 +164,10 @@
 			"EN": "English (United States)",
 			"RU": "Русский (Россия)",
 			"HE": "עברית ישראל"
-		}
+		},
+		"CURRENT_VALUE": "Current value",
+		"TARGET_VALUE": "Target value",
+		"LAST_UPDATED": "Last Updated"
 	},
 	"FORM": {
 		"USERNAME": "Потребителско име",
@@ -927,7 +930,11 @@
 			"ADD_KPI_TO_KEY_RESULT": "Add KPI to Key Result Type?",
 			"ADD_TASK_TO_KEY_RESULT": "Add Task to Key Result Type?",
 			"GENERAL": "Основни",
-			"KPI": "KPI"
+			"KPI": "KPI",
+			"DELETE_TIME_FRAME_TITLE": "Delete Time Frame",
+			"DELETE_TIME_FRAME_CONFIRMATION": "Are you sure you want to delete Time Frame?",
+			"DELETE_KPI_TITLE": "Delete KPI",
+			"DELETE_KPI_CONFIRMATION": "Are you sure you want to delete KPI?"
 		},
 		"MESSAGE": {
 			"NO_KEY_RESULT": "No Key Results to display.",
@@ -1608,9 +1615,9 @@
 		"TAGS_NAME": "Име",
 		"TAGS_DESCRIPTION": "Description",
 		"TAGS_COLOR": "Color",
-		"TAGS_ADD_TAG": "Tag added",
-		"TAGS_EDIT_TAG": "Tag edited",
-		"TAGS_DELETE_TAG": "Tag deleted",
+		"TAGS_ADD_TAG": "Tag '{{ name }}' added",
+		"TAGS_EDIT_TAG": "Tag '{{ name }}' saved",
+		"TAGS_DELETE_TAG": "Tag '{{ name }}' deleted",
 		"TAGS_SELECT_NAME": "Tag name",
 		"TAGS_SELECT_COLOR": "Tag color",
 		"TAGS_SELECT_DESCRIPTION": "Tag description",
@@ -1642,9 +1649,9 @@
 		"EQUIPMENT_MAX_SHARE_PERIOD": "Max share period",
 		"EQUIPMENT_AUTO_APPROVE": "Auto approve",
 		"EQUIPMENT_EDITED": "Equipment edited",
-		"EQUIPMENT_DELETED": "Equipment deleted",
+		"EQUIPMENT_DELETED": "Equipment '{{ name }}' deleted",
 		"EQUIPMENT_ADDED": "Equipment added",
-		"EQUIPMENT_SAVED": "Equipment saved",
+		"EQUIPMENT_SAVED": "Equipment '{{ name }}' saved",
 		"CURRENCY": "Валута"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
@@ -1691,8 +1698,8 @@
 		"HEADER": "Inventory",
 		"ADD_INVENTORY_ITEM": "Add inventory item",
 		"EDIT_INVENTORY_ITEM": "Edit inventory item",
-		"INVENTORY_ITEM_DELETED": "Inventory item deleted!",
-		"INVENTORY_ITEM_SAVED": "Inventory item saved!",
+		"INVENTORY_ITEM_DELETED": "Inventory '{{ name }}' item deleted!",
+		"INVENTORY_ITEM_SAVED": "Inventory '{{ name }}' item saved!",
 		"EDIT_PRODUCT_VARIANT": "Edit product variant",
 		"PRODUCT_VARIANT_SAVED": "Product variant saved",
 		"NAME": "Име",
@@ -1725,12 +1732,12 @@
 		"ORGANIZATION": "Organization",
 		"EDIT_PRODUCT_TYPE": "Edit product type",
 		"ADD_PRODUCT_TYPE": "Add product type",
-		"PRODUCT_TYPE_SAVED": "Product type saved",
-		"PRODUCT_TYPE_DELETED": "Product type deleted",
+		"PRODUCT_TYPE_SAVED": "Product type '{{ name }}' saved",
+		"PRODUCT_TYPE_DELETED": "Product type '{{ name }}' deleted",
 		"EDIT_PRODUCT_CATEGORY": "Edit product category",
 		"ADD_PRODUCT_CATEGORY": "Add product category",
-		"PRODUCT_CATEGORY_SAVED": "Product category saved",
-		"PRODUCT_CATEGORY_DELETED": "Product category deleted",
+		"PRODUCT_CATEGORY_SAVED": "Product category '{{ name }}' saved",
+		"PRODUCT_CATEGORY_DELETED": "Product category '{{ name }}' deleted",
 		"IMAGE": "Снимка",
 		"LANGUAGE": "Език (Language)",
 		"PRODUCT_VARIANT_DELETED": "Product variant deleted!",
@@ -1746,12 +1753,14 @@
 		"TEAM_TASKS_HEADER": "Team's Tasks",
 		"ADD_TASKS": "Add Tasks",
 		"EDIT_TASKS": "Edit Tasks",
+		"EDIT_TASK": "Edit Task",
+		"DELETE_TASK": "Delete Task",
 		"TASKS_TITLE": "Title",
 		"TASKS_DESCRIPTION": "Description",
 		"TASKS_LOADED": "Tasks loaded",
-		"TASK_ADDED": "Task added",
-		"TASK_UPDATED": "Task updated",
-		"TASK_DELETED": "Task deleted",
+		"TASK_ADDED": "Task was added",
+		"TASK_UPDATED": "Task was changed",
+		"TASK_DELETED": "Task was removed",
 		"TASKS_PROJECT": "Проект",
 		"TASKS_CREATOR": "Created By",
 		"TASK_MEMBERS": "Служители",
@@ -1826,10 +1835,10 @@
 		"DESCRIPTION": "Description",
 		"IS_DEFAULT": "Is Default",
 		"CONFIRM_DELETE": "Are you sure that, you want to delete",
-		"PROPOSAL_CREATE_MESSAGE": "Proposal template successfully created",
-		"PROPOSAL_EDIT_MESSAGE": "Proposal template successfully edited",
-		"PROPOSAL_DELETE_MESSAGE": "Proposal template successfully deleted",
-		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Proposal template successfully made as default"
+		"PROPOSAL_CREATE_MESSAGE": "Proposal template '{{ name }}' was added",
+		"PROPOSAL_EDIT_MESSAGE": "Proposal template '{{ name }}' was changed",
+		"PROPOSAL_DELETE_MESSAGE": "Proposal template '{{ name }}' was removed",
+		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Proposal template '{{ name }}' set as default"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Sprint added",
@@ -2179,7 +2188,7 @@
 			"EMPLOYEE_CLIENT_ADDED": "Employee added to the client",
 			"EMPLOYEE_CLIENT_REMOVED": "Employee removed from the client",
 			"EMPLOYEE_EDIT_ERROR": "Error in editing employee",
-			"EMPLOYEE_PROFILE_UPDATE": "{{name}} profile updated.",
+			"EMPLOYEE_PROFILE_UPDATE": "Profile '{{name}}' was changed",
 			"EMPLOYEE_LEVEL_UPDATE": "Employee Level is successfully updated.",
 			"CONFIRM": "Потвърждение",
 			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Are you sure you want to resend the invite to",
@@ -2224,10 +2233,16 @@
 			"UPDATED": "Successfully updated",
 			"MOVED_BASE": "Base has been moved",
 			"MOVED_CATEGORY": "Category has been moved",
-			"CREATED_BASE": "Base has been created",
+			"CREATED_BASE": "Base '{{ name }}' was added",
 			"CREATED_CATEGORY": "Category has been created",
-			"EDITED_BASE": "Base has been edited",
-			"EDITED_CATEGORY": "Category has been edited",
+			"EDITED_BASE": "Base '{{ name }}' was changed",
+			"DELETED_BASE": "Base '{{ name }}' was removed",
+			"DELETED_CATEGORY": "Category '{{ name }}' was removed",
+			"EDIT_ADD_CATEGORY": "Category '{{ name }}' was added",
+			"EDITED_CATEGORY": "Category '{{ name }}' was changed",
+			"HELP_ARTICALE_CREATED": "Article was added",
+			"HELP_ARTICALE_UPDATED": "Article '{{ name }}' was changed",
+			"HELP_ARTICALE_DELETED": "Article '{{ name }}' was removed",
 			"PIPELINE_CREATED": "Pipeline has been created",
 			"PIPELINE_UPDATED": "Pipeline has been updated",
 			"OBJECTIVE_ADDED": "Objective added",
@@ -2236,7 +2251,12 @@
 			"KEY_RESULT_ADDED": "Key Result added",
 			"KEY_RESULT_DELETED": "Key Result deleted",
 			"KEY_RESULT_UPDATED": "Key Result updated",
-			"TIME_FRAME_DELETED": "Time Frame deleted",
+			"TIME_FRAME_CREATED": "Time frame '{{ name }}' was added",
+			"TIME_FRAME_UPDATED": "Time frame '{{ name }}' was changed",
+			"TIME_FRAME_DELETED": "Time Frame '{{ name }}' was removed",
+			"KPI_CREATED": "KPI was added",
+			"KPI_UPDATED": "KPI was changed",
+			"KPI_DELETED": "KPI was removed",
 			"EDIT_PAST_INTERVIEW": "Editing past interviews is prohibited",
 			"ARCHIVE_INTERVIEW": "This interview has already been archived",
 			"DELETE_PAST_INTERVIEW": "Deleting past interviews is prohibited",
@@ -2244,7 +2264,10 @@
 			"MAX_OBJECTIVE_LIMIT": "You cannot create any more Objectives. Please change maximum objective limit to add more objectives.",
 			"MAX_KEY_RESULT_LIMIT": "You cannot create any more Key Results for this Objective. Please change maximum key result limit to add more Key Results.",
 			"CUSTOM_SMTP_ADDED": "Smtp settings successfully created",
-			"CUSTOM_SMTP_UPDATED": "Smtp settings successfully updated"
+			"CUSTOM_SMTP_UPDATED": "Smtp settings successfully updated",
+			"JOB_MATCHING_SAVED": "Criterion was changed",
+			"JOB_MATCHING_ERROR": "Error while saving criterion, Please try aging",
+			"JOB_MATCHING_DELETED": "Criterion was removed"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -2323,15 +2346,15 @@
 			"DELETE_USER_FROM_ORGANIZATION": "зададен като неактивен.",
 			"DATA_ERROR": "{{ error }}",
 			"EDIT_ORGANIZATIONS_PROJECTS": {
-				"ADD_PROJECT": "Нов проект успешно добавен!",
-				"REMOVE_PROJECT": "Проект успешно премахнат!",
+				"ADD_PROJECT": "проект '{{ name }}' успешно добавен!",
+				"REMOVE_PROJECT": "Проект '{{ name }}' успешно премахнат!",
 				"INVALID_PROJECT_NAME": "Please fill in the name of your project"
 			},
 			"EDIT_ORGANIZATIONS_TEAM": {
-				"ADD_NEW_TEAM": "Нов екип успешно добавен!",
-				"EDIT_EXISTING_TEAM": "Екип успешно обновен!",
+				"ADD_NEW_TEAM": "Eкип '{{ name }}' успешно добавен!",
+				"EDIT_EXISTING_TEAM": "Екип '{{ name }}' успешно обновен!",
 				"INVALID_TEAM_NAME": "Please add a Team name and at least one member",
-				"REMOVE_TEAM": "Екип успешно премахнат!"
+				"REMOVE_TEAM": "Екип '{{ name }}' успешно премахнат!"
 			},
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "New Employee Level {{ name }} successfully added!",
@@ -2339,10 +2362,10 @@
 				"INVALID_EMPLOYEE_LEVEL": "Please add an Employee Level"
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
-				"ADD_VENDOR": "Нов доставчик успешно добавен!",
-				"UPDATE_VENDOR": "Vendor {{ name }} successfully updated!",
-				"REMOVE_VENDOR": "Доставчик успешно премахнат!",
-				"INVALID_VENDOR_NAME": "Моля, добавете име на доставчик"
+				"ADD_VENDOR": "Нов '{{ name }}' доставчик успешно добавен!",
+				"UPDATE_VENDOR": "Vendor '{{ name }}' successfully updated!",
+				"REMOVE_VENDOR": "Доставчик '{{ name }}' успешно премахнат!",
+				"INVALID_VENDOR_NAME": "Моля, '{{ name }}' добавете име на доставчик"
 			},
 			"EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES": {
 				"ADD_EXPENSE_CATEGORY": "New Category {{ name }} successfully added!",
@@ -2356,8 +2379,8 @@
 				"INVALID_POSITION_NAME": "Please add a Position name"
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
-				"ADD_DEPARTMENT": "{{ name }} отдел успешно създаден!",
-				"REMOVE_DEPARTMENT": "{{ name }} отдел успешно премахнат!",
+				"ADD_DEPARTMENT": "отдел '{{ name }}' успешно създаден!",
+				"REMOVE_DEPARTMENT": "отдел '{{ name }}' успешно премахнат!",
 				"INVALID_DEPARTMENT_NAME": "Please add a Department name"
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
@@ -2369,18 +2392,24 @@
 				"EMAIL_EXISTS": "This client email already exists as a user"
 			},
 			"EDIT_ORGANIZATIONS_CONTACTS": {
-				"ADD_CONTACT": "New contact {{ name }} successfully added!",
-				"REMOVE_CONTACT": "Contact {{ name }} successfully removed!",
+				"ADD_CONTACT": "Contact '{{ name }}' was added",
+				"UPDATE_CONTACT": "Contact '{{ name }}' was chnaged",
+				"REMOVE_CONTACT": "Contact '{{ name }}' was removed",
 				"INVALID_CONTACT_DATA": "Please check the Name, Primary Email and Primary Phone of your contact",
-				"INVITE_CONTACT": "Invitation email sent to {{ name }}.",
+				"INVITE_CONTACT": "Invitation email sent to '{{ name }}'.",
 				"INVITE_CONTACT_ERROR": "Some error occurred while trying to invite contact.",
 				"EMAIL_EXISTS": "This contact email already exists as a user"
 			},
 			"EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES": {
-				"ADD_EMPLOYMENT_TYPE": "New Employment type {{ name }} successfully added!",
-				"UPDATE_EMPLOYMENT_TYPE": "Employment type {{ name }} has been updated",
+				"ADD_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was added",
+				"UPDATE_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was changed",
 				"INVALID_EMPLOYMENT_TYPE": "Please check the Name for Employment type input",
-				"DELETE_EMPLOYMENT_TYPE": "Employment type deleted for {{ name }}"
+				"DELETE_EMPLOYMENT_TYPE": "Employment type '{{ name }}' was removed"
+			},
+			"EDIT_ORGANIZATIONS_RECURRING_EXPENSES": {
+				"ADD_RECURRING_EXPENSE": "Recurring expense was added for `{{ name }}`",
+				"UPDATE_RECURRING_EXPENSE": "Recurring expense was changed for '{{ name }}'",
+				"DELETE_RECURRING_EXPENSE": "Recurring expense was removed"
 			},
 			"EDIT_ORGANIZATIONS_AWARDS": {
 				"ADD_AWARD": "New award {{ name }} successfully added!",
@@ -2393,13 +2422,13 @@
 				"REMOVE_LANGUAGE": "Language {{ name }} successfully removed!"
 			},
 			"EDIT_ORGANIZATION_DOCS": {
-				"CREATED": "Document successfully created",
+				"CREATED": "Document '{{ name }}' was added",
 				"ERR_CREATE": "Unable to create new organization document",
 				"ERR_LOAD": "Unable to load organization documents",
-				"UPDATED": "Selected document successfully updated!",
+				"UPDATED": "Document '{{ name }}' was changed",
 				"ERR_UPDATED": "Unable to update the selected document!",
 				"SELECTED_DOC": "selected document",
-				"DELETED": "Document successfully deleted!",
+				"DELETED": "Document '{{ name }}' was removed",
 				"ERR_DELETED": "Unable to delete the selected document!"
 			}
 		},

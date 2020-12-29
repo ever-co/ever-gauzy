@@ -3,7 +3,7 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 import { TranslateService } from '@ngx-translate/core';
 import { IApprovalPolicy, ComponentLayoutStyleEnum } from '@gauzy/models';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { first, filter, tap } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
 import { ApprovalPolicyMutationComponent } from '../../@shared/approval-policy/approval-policy-mutation.component';
@@ -12,6 +12,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-approval-policy',
@@ -46,7 +47,7 @@ export class ApprovalPolicyComponent
 		readonly translateService: TranslateService,
 		private store: Store,
 		private dialogService: NbDialogService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private approvalPolicyService: ApprovalPolicyService,
 		private router: Router
 	) {
@@ -163,10 +164,13 @@ export class ApprovalPolicyComponent
 			}
 		);
 		const requestApproval = await dialog.onClose.pipe(first()).toPromise();
+
 		if (requestApproval) {
-			this.toastrService.primary(
-				this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_SAVED'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				this.selectedApprovalPolicy?.id
+					? 'TOASTR.MESSAGE.APPROVAL_POLICY_UPDATED'
+					: 'TOASTR.MESSAGE.APPROVAL_POLICY_CREATED',
+				{ name: requestApproval.name }
 			);
 		}
 		this.clearItem();
@@ -195,9 +199,9 @@ export class ApprovalPolicyComponent
 				this.selectedApprovalPolicy.id
 			);
 			this.loadSettings();
-			this.toastrService.primary(
-				this.getTranslation('EQUIPMENT_SHARING_PAGE.REQUEST_DELETED'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'TOASTR.MESSAGE.APPROVAL_POLICY_DELETED',
+				{ name: this.selectedApprovalPolicy.name }
 			);
 		}
 		this.clearItem();
