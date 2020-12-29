@@ -14,6 +14,7 @@ import {
 	FormGroupDirective,
 	Validators
 } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import {
 	ICustomSmtp,
 	IOrganization,
@@ -22,7 +23,7 @@ import {
 } from '@gauzy/models';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, pairwise, tap } from 'rxjs/operators';
+import { debounceTime, filter, pairwise, tap } from 'rxjs/operators';
 import { CustomSmtpService } from '../../@core/services/custom-smtp.service';
 import { Store } from '../../@core/services/store.service';
 import { ToastrService } from '../../@core/services/toastr.service';
@@ -37,8 +38,10 @@ import { TranslationBaseComponent } from '../language-base/translation-base.comp
 export class SMTPComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnChanges, AfterViewInit {
-	@Input() organization: IOrganization;
 	@ViewChild('formDirective') formDirective: FormGroupDirective;
+
+	@Input() organization?: IOrganization;
+	@Input() isOrganization?: boolean;
 
 	form: FormGroup;
 	loading: boolean;
@@ -53,6 +56,7 @@ export class SMTPComponent
 	isValidated: boolean;
 
 	constructor(
+		private readonly _activatedRoute: ActivatedRoute,
 		private readonly fb: FormBuilder,
 		private readonly customSmtpService: CustomSmtpService,
 		readonly translate: TranslateService,
@@ -64,10 +68,26 @@ export class SMTPComponent
 
 	ngOnInit(): void {
 		this._initializeForm();
+		this._activatedRoute.data
+			.pipe(
+				tap(
+					({ isOrganization }) =>
+						(this.isOrganization = isOrganization)
+				),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.user$
 			.pipe(
 				filter((user) => !!user),
 				tap((user) => (this.user = user)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				tap((organization) => (this.organization = organization)),
 				tap(() => this.getTenantSmtpSetting()),
 				untilDestroyed(this)
 			)
@@ -134,7 +154,8 @@ export class SMTPComponent
 	getTenantSmtpSetting() {
 		const { tenantId } = this.user;
 		const find = { tenantId };
-		if (this.organization) {
+
+		if (this.organization && this.isOrganization) {
 			find['organizationId'] = this.organization.id;
 		}
 
@@ -150,7 +171,7 @@ export class SMTPComponent
 					this.patchValue();
 				}
 				// if organization exist
-				if (this.organization) {
+				if (this.organization && this.isOrganization) {
 					this.form.patchValue({
 						organizationId: this.organization.id
 					});

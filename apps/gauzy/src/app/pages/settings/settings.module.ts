@@ -30,8 +30,6 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { EmailTemplatesModule } from '../email-templates/email-templates.module';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { FileStorageComponent } from './file-storage/file-storage.component';
-import { CustomSmtpComponent } from './custom-smtp/custom-smtp.component';
-import { SMTPModule } from '../../@shared/smtp/smtp.module';
 import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
 
 @NgModule({
@@ -62,8 +60,7 @@ import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
 			}
 		}),
 		NgSelectModule,
-		BackNavigationModule,
-		SMTPModule
+		BackNavigationModule
 	],
 	entryComponents: [EditRolesPermissionsComponent, DangerZoneComponent],
 	declarations: [
@@ -73,7 +70,6 @@ import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
 		DangerZoneComponent,
 		EmailHistoryComponent,
 		EmailFiltersComponent,
-		CustomSmtpComponent,
 		SmsGatewayComponent
 	],
 	providers: [RolePermissionsService, RoleService]

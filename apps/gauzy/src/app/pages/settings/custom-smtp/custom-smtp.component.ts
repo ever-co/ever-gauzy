@@ -1,10 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { IOrganization } from '@gauzy/models';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, tap } from 'rxjs/operators';
-import { Store } from '../../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-tenant-custom-smtp',
@@ -14,22 +12,39 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 export class CustomSmtpComponent
 	extends TranslationBaseComponent
 	implements OnInit {
-	organization: IOrganization;
+	tabs: any[];
 
-	constructor(
-		public readonly translateService: TranslateService,
-		private readonly store: Store
-	) {
+	constructor(public readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
-		this.store.selectedOrganization$
-			.pipe(
-				filter((organization) => !!organization),
-				tap((organization) => (this.organization = organization)),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		this.loadTabs();
+		this._applyTranslationOnTabs();
+	}
+
+	loadTabs() {
+		this.tabs = [
+			{
+				title: this.getTranslation('MENU.TENANT'),
+				route: this.getRoute('tenant')
+			},
+			{
+				title: this.getTranslation('MENU.ORGANIZATION'),
+				route: this.getRoute('organization')
+			}
+		];
+	}
+
+	getRoute(tab: string): string {
+		return `/pages/settings/custom-smtp/${tab}`;
+	}
+
+	private _applyTranslationOnTabs() {
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loadTabs();
+			});
 	}
 }

@@ -1,4 +1,22 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header>
+		<ng-template [ngIf]="isOrganization" [ngIfElse]="tenantHeader">
+			<header>
+				{{
+					'FEATURE_PAGE.HEADER'
+						| translate: { name: organization?.name }
+				}}
+			</header>
+		</ng-template>
+		<ng-template #tenantHeader>
+			<header>
+				{{
+					'FEATURE_PAGE.HEADER'
+						| translate: { name: user?.tenant?.name }
+				}}
+			</header>
+		</ng-template>
+	</nb-card-header>
 	<nb-card-body *ngIf="!loading">
 		<ng-container *ngFor="let block of blocks$ | async">
 			<div class="row centered">

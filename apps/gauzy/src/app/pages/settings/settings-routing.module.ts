@@ -8,7 +8,6 @@ import { EmailTemplatesComponent } from '../email-templates/email-templates.comp
 import { FileStorageComponent } from './file-storage/file-storage.component';
 import { NgxPermissionsGuard } from 'ngx-permissions';
 import { PermissionsEnum } from '@gauzy/models';
-import { CustomSmtpComponent } from './custom-smtp/custom-smtp.component';
 import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
 
 const routes: Routes = [
@@ -80,14 +79,10 @@ const routes: Routes = [
 			},
 			{
 				path: 'custom-smtp',
-				component: CustomSmtpComponent,
-				canActivate: [NgxPermissionsGuard],
-				data: {
-					permissions: {
-						only: [PermissionsEnum.CUSTOM_SMTP_VIEW],
-						redirectTo: '/pages/settings'
-					}
-				}
+				loadChildren: () =>
+					import('./custom-smtp/custom-smtp.module').then(
+						(m) => m.CustomSmtpModule
+					)
 			},
 			{
 				path: 'file-storage',

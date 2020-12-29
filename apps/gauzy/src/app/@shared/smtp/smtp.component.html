@@ -1,6 +1,21 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header>
-		<ng-content select="header"></ng-content>
+		<ng-template [ngIf]="isOrganization" [ngIfElse]="tenantHeader">
+			<header>
+				{{
+					'CUSTOM_SMTP_PAGE.HEADER'
+						| translate: { name: organization?.name }
+				}}
+			</header>
+		</ng-template>
+		<ng-template #tenantHeader>
+			<header>
+				{{
+					'CUSTOM_SMTP_PAGE.HEADER'
+						| translate: { name: user?.tenant?.name }
+				}}
+			</header>
+		</ng-template>
 	</nb-card-header>
 	<nb-card-body>
 		<form
@@ -21,6 +36,11 @@
 						placeholder="{{ 'CUSTOM_SMTP_PAGE.HOST' | translate }}"
 						id="host"
 						formControlName="host"
+						[status]="
+							form.get('host').invalid && form.get('host').touched
+								? 'danger'
+								: 'basic'
+						"
 					/>
 				</div>
 				<div class="col-sm-12 col-md-4">
@@ -70,6 +90,12 @@
 						}}"
 						id="username"
 						formControlName="username"
+						[status]="
+							form.get('username').invalid &&
+							form.get('username').touched
+								? 'danger'
+								: 'basic'
+						"
 					/>
 				</div>
 				<div class="col-sm-12 col-md-6">
@@ -85,6 +111,12 @@
 						}}"
 						id="password"
 						formControlName="password"
+						[status]="
+							form.get('password').invalid &&
+							form.get('password').touched
+								? 'danger'
+								: 'basic'
+						"
 					/>
 				</div>
 			</div>
