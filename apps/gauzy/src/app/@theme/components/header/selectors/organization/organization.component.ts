@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { IOrganization, OrganizationAction } from '@gauzy/models';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { filter } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { UsersOrganizationsService } from 'apps/gauzy/src/app/@core/services/users-organizations.service';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -39,10 +39,15 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
 	private async loadOrganizations(): Promise<void> {
 		const tenantId = this.store.user.tenantId;
 		const { items = [] } = await this.userOrganizationService.getAll(
-			['organization'],
+			[
+				'organization',
+				'organization.featureOrganizations',
+				'organization.featureOrganizations.feature'
+			],
 			{ userId: this.store.userId, tenantId }
 		);
 		this.organizations = items.map((userOrg) => userOrg.organization);
+
 		if (this.organizations.length > 0) {
 			const [defaultOrganization] = this.organizations;
 			if (this.store.organizationId) {
@@ -63,11 +68,14 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
+				tap((organization: IOrganization) => {
+					this.selectedOrganization = organization;
+					this.store.featureOrganizations =
+						organization.featureOrganizations || [];
+				}),
 				untilDestroyed(this)
 			)
-			.subscribe((organization: IOrganization) => {
-				this.selectedOrganization = organization;
-			});
+			.subscribe();
 	}
 
 	private organizationAction() {

@@ -5,7 +5,8 @@ import {
 	ISkill,
 	IOrganizationSprint,
 	IEmployee,
-	IOrganizationAwards
+	IOrganizationAwards,
+	IFeatureOrganization
 } from '@gauzy/models';
 import { IContact } from './contact.model';
 import { IOrganizationLanguages } from './organization-languages.model';
@@ -90,6 +91,7 @@ export interface IOrganization extends IBasePerTenantEntityModel {
 	discountAfterTax?: boolean;
 	awards?: IOrganizationAwards[];
 	languages?: IOrganizationLanguages[];
+	featureOrganizations?: IFeatureOrganization[];
 }
 
 export interface IOrganizationFindInput {
