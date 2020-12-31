@@ -13,7 +13,11 @@ import {
 	IGetTimeLogReportInput,
 	IAmountOwedReport,
 	IGetTimeLimitReportInput,
-	ITimeLimitReport
+	ITimeLimitReport,
+	IClientBudgetLimitReport,
+	IProjectBudgetLimitReport,
+	IProjectBudgetLimitReportInput,
+	IClientBudgetLimitReportInput
 } from '@gauzy/models';
 import { toParams } from '@gauzy/utils';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
@@ -152,6 +156,28 @@ export class TimesheetService {
 			.get<ITimeLimitReport[]>('/api/timesheet/time-log/time-limit', {
 				params: toParams(request)
 			})
+			.toPromise();
+	}
+
+	getProjectBudgetLimit(request: IProjectBudgetLimitReportInput) {
+		return this.http
+			.get<IProjectBudgetLimitReport[]>(
+				'/api/timesheet/time-log/project-budget-limit',
+				{
+					params: toParams(request)
+				}
+			)
+			.toPromise();
+	}
+
+	getPClientBudgetLimit(request: IClientBudgetLimitReportInput) {
+		return this.http
+			.get<IClientBudgetLimitReport[]>(
+				'/api/timesheet/time-log/client-budget-limit',
+				{
+					params: toParams(request)
+				}
+			)
 			.toPromise();
 	}
 

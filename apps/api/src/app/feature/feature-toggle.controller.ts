@@ -32,9 +32,11 @@ export class FeaturesToggleController {
 
 		//only support gauzy feature and removed other
 		const featureEnums: string[] = Object.values(FeatureEnum);
-		featureToggles = featureToggles.filter((toggle: FeatureInterface) =>
-			featureEnums.includes(toggle.name)
-		);
+		if (featureToggles) {
+			featureToggles = featureToggles.filter((toggle: FeatureInterface) =>
+				featureEnums.includes(toggle.name)
+			);
+		}
 		return featureToggles;
 	}
 

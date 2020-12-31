@@ -7,14 +7,10 @@ import { IOrganizationProjectsFindInput } from '@gauzy/models';
 import { RequestContext } from '../core/context';
 
 @Injectable()
-export class OrganizationProjectsService extends TenantAwareCrudService<
-	OrganizationProject
-> {
+export class OrganizationProjectsService extends TenantAwareCrudService<OrganizationProject> {
 	constructor(
 		@InjectRepository(OrganizationProject)
-		private readonly organizationProjectsRepository: Repository<
-			OrganizationProject
-		>
+		private readonly organizationProjectsRepository: Repository<OrganizationProject>
 	) {
 		super(organizationProjectsRepository);
 	}

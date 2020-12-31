@@ -435,7 +435,8 @@ const routes: Routes = [
 					{
 						path: 'weekly-limits',
 						data: {
-							duration: 'week'
+							duration: 'week',
+							title: 'REPORT_PAGE.WEEKLY_LIMIT_REPORT'
 						},
 						loadChildren: () =>
 							import(
@@ -445,7 +446,8 @@ const routes: Routes = [
 					{
 						path: 'daily-limits',
 						data: {
-							duration: 'day'
+							duration: 'day',
+							title: 'REPORT_PAGE.DAILY_LIMIT_REPORT'
 						},
 						loadChildren: () =>
 							import(

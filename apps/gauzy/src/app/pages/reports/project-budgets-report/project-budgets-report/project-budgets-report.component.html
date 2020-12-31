@@ -29,9 +29,6 @@
 		>
 			<div class="px-4" *ngIf="dailyData?.length > 0">
 				<div class="row py-3 font-weight-bold align-items-center">
-					<div *ngIf="groupBy != 'date'" class="col-sm-2">
-						{{ 'REPORT_PAGE.DATE' | translate }}
-					</div>
 					<div *ngIf="groupBy != 'employee'" class="col-sm-2">
 						{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 					</div>
@@ -59,85 +56,45 @@
 					}}</nb-card-header>
 					<nb-card-body
 						class="cart-body project-row"
-						*ngFor="
-							let employeeRow of day.employees;
-							let employeeIndex = index
-						"
+						*ngFor="let employeeRow of day.employees"
 					>
 						<div
-							class="project-row"
-							*ngFor="
-								let projectRow of employeeRow.projects;
-								let projectIndex = index
-							"
+							class="row report-row py-1 mt-3 align-items-center"
 						>
-							<div
-								class="activity-row"
-								*ngFor="
-									let activityRow of projectRow.activity;
-									let activityIndex = index
-								"
-							>
-								<div
-									class="row report-row py-1 align-items-center"
-									[ngClass]="{
-										'mt-3':
-											activityIndex == 0 &&
-											projectIndex == 0
-									}"
+							<div class="col-sm-2 project-name">
+								<ng-container
+									*ngTemplateOutlet="
+										employeeEl;
+										context: {
+											$implicit: employeeRow?.employee
+										}
+									"
 								>
-									<div class="col-sm-2 project-name">
-										<ng-template
-											[ngIf]="
-												activityIndex == 0 &&
-												projectIndex == 0
-											"
-										>
-											<ng-container
-												*ngTemplateOutlet="
-													employeeEl;
-													context: {
-														$implicit:
-															employeeRow?.employee
-													}
-												"
-											>
-											</ng-container>
-										</ng-template>
-									</div>
-									<div class="col-sm-2 project-name">
-										<ng-template
-											[ngIf]="activityIndex == 0"
-										>
-											<ng-container
-												*ngTemplateOutlet="
-													projectEl;
-													context: {
-														$implicit:
-															projectRow?.project
-													}
-												"
-											>
-											</ng-container>
-										</ng-template>
-									</div>
-									<div class="col-sm-3 text-center day-col">
-										{{ activityRow?.title }}
-									</div>
-									<div class="col text-center day-col">
-										{{
-											activityRow?.duration
-												| durationFormat
-										}}
-									</div>
-									<div class="col text-center day-col">
-										<ngx-progress-status
-											[percentage]="
-												activityRow?.duration_percentage
-											"
-										></ngx-progress-status>
-									</div>
-								</div>
+								</ng-container>
+							</div>
+							<div class="col-sm-2 project-name">
+								<ng-container
+									*ngTemplateOutlet="
+										projectEl;
+										context: {
+											$implicit: employeeRow?.project
+										}
+									"
+								>
+								</ng-container>
+							</div>
+							<div class="col-sm-3 text-center day-col">
+								{{ employeeRow?.title }}
+							</div>
+							<div class="col text-center day-col">
+								{{ employeeRow?.duration | durationFormat }}
+							</div>
+							<div class="col text-center day-col">
+								<ngx-progress-status
+									[percentage]="
+										employeeRow?.duration_percentage
+									"
+								></ngx-progress-status>
 							</div>
 						</div>
 					</nb-card-body>

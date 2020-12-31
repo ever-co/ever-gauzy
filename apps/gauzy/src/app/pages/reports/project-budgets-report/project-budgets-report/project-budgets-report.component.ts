@@ -11,6 +11,7 @@ import {
 } from '@gauzy/models';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import * as moment from 'moment';
 import { Subject } from 'rxjs';
@@ -47,7 +48,11 @@ export class ProjectBudgetsReportComponent implements OnInit, AfterViewInit {
 		this._selectedDate = value;
 	}
 
-	constructor(private cd: ChangeDetectorRef, private store: Store) {}
+	constructor(
+		private cd: ChangeDetectXorRef,
+		private timesheetService: TimesheetService,
+		private store: Store
+	) {}
 
 	ngOnInit() {
 		this.updateLogs$
@@ -107,12 +112,12 @@ export class ProjectBudgetsReportComponent implements OnInit, AfterViewInit {
 		};
 
 		this.loading = true;
-		// this.activityService
-		//   .getDailyActivitiesReport(request)
-		//   .then((logs: IReportDayData[]) => {
-		//     this.dailyData = logs;
-		//   })
-		//   .catch(() => { })
-		//   .finally(() => (this.loading = false));
+		this.timesheetService
+			.getProjectBudgetLimit(request)
+			.then((logs: IProjectBudgetLimitReport[]) => {
+				this.dailyData = logs;
+			})
+			.catch(() => {})
+			.finally(() => (this.loading = false));
 	}
 }

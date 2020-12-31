@@ -413,14 +413,18 @@ export class TimeLogService extends CrudService<TimeLog> {
 		while (start.isSameOrBefore(request.endDate) && i < 7) {
 			const date = start.format('YYYY-MM-DD');
 			range[date] = null;
-			start.add(1, 'day');
+			start.add(1, request.duration);
 			i++;
 		}
 		dayList = Object.keys(range);
 
+		// const employees = await this.employeeRepository.find({
+		// 	organizationId: request.organizationId
+		// });
+
 		const byDate: any = chain(timeLogs)
 			.groupBy((log) => {
-				moment(log.startedAt)
+				return moment(log.startedAt)
 					.startOf(request.duration)
 					.format('YYYY-MM-DD');
 			})
@@ -440,30 +444,25 @@ export class TimeLogService extends CrudService<TimeLog> {
 								? byEmployeeLogs[0].employee
 								: null;
 
-						let limit = employee.reWeeklyLimit;
+						let limit = employee.reWeeklyLimit * 60 * 60;
 						if (request.duration === 'day') {
-							limit = employee.reWeeklyLimit / 5;
+							limit = limit / 5;
 						} else if (request.duration === 'month') {
-							limit = employee.reWeeklyLimit * 4;
+							limit = limit * 4;
 						}
 
-						const durationPercentage =
-							((durationSum / 3600) * 100) / limit;
+						const durationPercentage = (durationSum * 100) / limit;
 
 						return {
 							employee,
 							duration: durationSum,
-							durationPercentage,
+							durationPercentage: durationPercentage.toFixed(2),
 							limit
 						};
 					})
 					.value();
 
-				const value = byEmployee.reduce((iteratee: any, obj: any) => {
-					return iteratee + obj.amount;
-				}, 0);
-
-				return { date, value };
+				return { date, employees: byEmployee };
 			})
 			.value();
 
@@ -473,7 +472,93 @@ export class TimeLogService extends CrudService<TimeLog> {
 			} else {
 				return {
 					date: date,
-					value: 0
+					employees: []
+				};
+			}
+		});
+
+		return dates as ITimeLimitReport[];
+	}
+
+	async budgetLimit(request: any): Promise<any> {
+		const timeLogs = await this.timeLogRepository.find({
+			relations: [
+				'employee',
+				'employee.user',
+				'project',
+				'organizationContact'
+			],
+			order: {
+				startedAt: 'ASC'
+			},
+			where: (qb: SelectQueryBuilder<TimeLog>) => {
+				this.getFilterTimeLogQuery(qb, request);
+			}
+		});
+
+		let dayList = [];
+		const range = {};
+		let i = 0;
+		const start = moment(request.startDate);
+		while (start.isSameOrBefore(request.endDate) && i < 7) {
+			const date = start.format('YYYY-MM-DD');
+			range[date] = null;
+			start.add(1, request.duration);
+			i++;
+		}
+		dayList = Object.keys(range);
+
+		const byDate: any = chain(timeLogs)
+			.groupBy((log) => {
+				return moment(log.startedAt)
+					.startOf(request.duration)
+					.format('YYYY-MM-DD');
+			})
+			.mapObject((byDateLogs: ITimeLog[], date) => {
+				const byEmployee = chain(byDateLogs)
+					.groupBy('employeeId')
+					.map((byEmployeeLogs: ITimeLog[]) => {
+						const durationSum = byEmployeeLogs.reduce(
+							(iteratee: any, log: any) => {
+								return iteratee + log.duration;
+							},
+							0
+						);
+
+						const employee =
+							byEmployeeLogs.length > 0
+								? byEmployeeLogs[0].employee
+								: null;
+
+						let limit = employee.reWeeklyLimit * 60 * 60;
+						if (request.duration === 'day') {
+							limit = limit / 5;
+						} else if (request.duration === 'month') {
+							limit = limit * 4;
+						}
+
+						const durationPercentage = (durationSum * 100) / limit;
+
+						return {
+							employee,
+							duration: durationSum,
+							durationPercentage: durationPercentage.toFixed(2),
+							limit
+						};
+					})
+					.value();
+
+				return { date, employees: byEmployee };
+			})
+			.value();
+
+		const dates = dayList.map((date) => {
+			if (byDate[date]) {
+				return byDate[date];
+			} else {
+				return {
+					date: date,
+					employees: []
 				};
 			}
 		});

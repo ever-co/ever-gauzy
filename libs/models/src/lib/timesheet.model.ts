@@ -457,7 +457,42 @@ export interface IGetTimeLimitReportInput {
 	relations?: string[];
 	duration?: 'day' | 'week' | 'month';
 }
+
 export interface ITimeLimitReport {
+	date: string;
+	employeeLogs: {
+		employee: IEmployee;
+		duration: number;
+		durationPercentage: number;
+		limit: number;
+	}[];
+}
+
+export interface IProjectBudgetLimitReportInput {
+	organizationId?: string;
+	startDate?: string | Date;
+	endDate?: string | Date;
+	employeeId?: string;
+}
+
+export interface IClientBudgetLimitReport {
+	date: string;
+	projects: {
+		project: IOrganizationProject;
+		duration: number;
+		durationPercentage: number;
+		limit: number;
+	}[];
+}
+
+export interface IClientBudgetLimitReportInput {
+	organizationId?: string;
+	startDate?: string | Date;
+	endDate?: string | Date;
+	employeeId?: string;
+}
+
+export interface IClientBudgetLimitReport {
 	date: string;
 	employeeLogs: {
 		employee: IEmployee;

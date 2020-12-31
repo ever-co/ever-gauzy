@@ -37,11 +37,17 @@ export interface IOrganizationProject extends IBaseEntityWithMembers {
 	openSource?: boolean;
 	projectUrl?: string;
 	openSourceProjectUrl?: string;
+	budget?: number;
+	budgetType?: OrganizationProjectBudgetTypeEnum;
 }
 
 export enum TaskListTypeEnum {
 	GRID = 'GRID',
 	SPRINT = 'SPRINT'
+}
+export enum OrganizationProjectBudgetTypeEnum {
+	HOURS = 'hours',
+	COST = 'cost'
 }
 
 export interface IOrganizationProjectsFindInput

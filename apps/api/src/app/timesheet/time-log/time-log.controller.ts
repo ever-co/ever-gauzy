@@ -158,6 +158,26 @@ export class TimeLogController extends CrudController<ITimeLog> {
 		return this.timeLogService.getTimeLimit(request);
 	}
 
+	@ApiOperation({ summary: 'Budget limit' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found one record'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiOperation({ summary: 'Time Limit' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found records'
+	})
+	@UseGuards(AuthGuard('jwt'))
+	@Get('budget-limit')
+	async budgetLimit(@Query() request?: IGetTimeLimitReportInput) {
+		return this.timeLogService.budgetLimit(request);
+	}
+
 	@Get(':id')
 	async findOne(
 		@Param('id') id: string,

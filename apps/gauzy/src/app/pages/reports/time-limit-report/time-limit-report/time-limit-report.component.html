@@ -1,6 +1,6 @@
 <nb-card>
 	<nb-card-header>
-		<h4>{{ 'REPORT_PAGE.DAILY_LIMIT_REPORT' | translate }}</h4>
+		<h4>{{ title | translate }}</h4>
 		<div>
 			{{ logRequest?.startDate | date }} -
 			{{ logRequest?.endDate | date }}
@@ -34,17 +34,15 @@
 						<div class="col-sm-2">
 							{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 						</div>
-						<div class="col-sm-2">
-							{{ 'REPORT_PAGE.PROJECT' | translate }}
+
+						<div class="col text-center day-col">
+							{{ 'REPORT_PAGE.LIMIT' | translate }}
 						</div>
 						<div class="col text-center day-col">
-							{{ 'REPORT_PAGE.SPENT' | translate }}
+							{{ 'REPORT_PAGE.SPENT_HOURS' | translate }}
 						</div>
 						<div class="col text-center day-col">
-							{{ 'REPORT_PAGE.BUDGET' | translate }}
-						</div>
-						<div class="col text-center day-col">
-							{{ 'REPORT_PAGE.REMAINING' | translate }}
+							{{ 'REPORT_PAGE.REMAINING_HOURS' | translate }}
 						</div>
 					</div>
 				</div>
@@ -55,36 +53,47 @@
 					<nb-card-header class="card-title">{{
 						day.date
 					}}</nb-card-header>
-					<nb-card-body
-						class="cart-body row"
-						*ngFor="
-							let timeLogRow of day.timeLogs;
-							let employeeIndex = index
-						"
-					>
-						<div class="col-sm-2">
-							<ng-container
-								*ngTemplateOutlet="
-									employeeEl;
-									context: { $implicit: timeLogRow?.employee }
-								"
-							>
-							</ng-container>
+					<nb-card-body class="cart-body">
+						<div *ngIf="day.employees.length == 0">
+							No Employees worked.
 						</div>
-						<div class="col-sm-2">
-							<ng-container
-								*ngTemplateOutlet="
-									projectEl;
-									context: { $implicit: timeLogRow?.project }
-								"
-							>
-							</ng-container>
+						<div
+							class="row py-3"
+							*ngFor="let timeLogRow of day.employees"
+						>
+							<div class="col-sm-2">
+								<ng-container
+									*ngTemplateOutlet="
+										employeeEl;
+										context: {
+											$implicit: timeLogRow?.employee
+										}
+									"
+								>
+								</ng-container>
+							</div>
+							<div class="col text-center day-col">
+								{{ timeLogRow.limit | durationFormat }}
+							</div>
+							<div class="col text-center d-flex day-col">
+								<span class="mr-4">{{
+									timeLogRow.duration | durationFormat
+								}}</span>
+								<ngx-progress-status
+									class="w-100"
+									[percentage]="timeLogRow.durationPercentage"
+								></ngx-progress-status>
+							</div>
+							<div class="col text-center day-col">
+								{{
+									timeLogRow.limit - timeLogRow.duration > 0
+										? (timeLogRow.limit -
+												timeLogRow.duration
+										  | durationFormat)
+										: 0
+								}}
+							</div>
 						</div>
-						<div class="col text-center day-col"></div>
-						<div class="col text-center day-col">
-							<ngx-progress-status></ngx-progress-status>
-						</div>
-						<div class="col text-center day-col"></div>
 					</nb-card-body>
 				</nb-card>
 			</ng-template>

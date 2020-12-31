@@ -37,6 +37,7 @@ export class TimeLimitReportComponent implements OnInit, AfterViewInit {
 	selectedEmployee: SelectedEmployee;
 	loading: boolean;
 	dailyData: any;
+	title: string;
 
 	constructor(
 		private cd: ChangeDetectorRef,
@@ -65,6 +66,7 @@ export class TimeLimitReportComponent implements OnInit, AfterViewInit {
 			.pipe(untilDestroyed(this))
 			.subscribe((data) => {
 				this.logRequest.duration = data.duration || 'day';
+				this.title = data.title;
 			});
 
 		this.store.selectedEmployee$
