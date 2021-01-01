@@ -1,14 +1,9 @@
 import { Injectable } from '@angular/core';
-import { IGoal, IGoalFindInput } from '@gauzy/models';
+import { IGoal, IGoalFindInput, IGoalResponse } from '@gauzy/models';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { throwError } from 'rxjs';
 import { catchError, first } from 'rxjs/operators';
-import { NbToastrService } from '@nebular/theme';
-
-interface IGoalResponse {
-	items: IGoal[];
-	count: number;
-}
+import { ToastrService } from './toastr.service';
 
 @Injectable({
 	providedIn: 'root'
@@ -17,7 +12,7 @@ export class GoalService {
 	private readonly API_URL = '/api/goals';
 	constructor(
 		private _http: HttpClient,
-		private toastrService: NbToastrService
+		private toastrService: ToastrService
 	) {}
 
 	createGoal(goal): Promise<IGoal> {

@@ -164,7 +164,10 @@
 			"EN": "Русский (Соединенные Штаты)",
 			"RU": "Русский (Россия)",
 			"HE": "עברית ישראל"
-		}
+		},
+		"CURRENT_VALUE": "Текущее значение",
+		"TARGET_VALUE": "Целевое значение",
+		"LAST_UPDATED": "Последнее обновление"
 	},
 	"FORM": {
 		"USERNAME": "Имя пользователя",
@@ -532,7 +535,7 @@
 		"NEW_EXPENSE_VALUE": "Новое значение расхода",
 		"OFFICIAL_NAME": "Это название будет использоваться в налоговых счетах и т.д.",
 		"ADD_EVENT_TYPE": "Добавить тип события",
-		"EDIT_EVENT_TYPE": " Изменить тип события",
+		"EDIT_EVENT_TYPE": "Изменить тип события",
 		"AWARDS": "Награды",
 		"LEVEL": "Уровень",
 		"LANGUAGES": "Языки",
@@ -927,7 +930,11 @@
 			"ADD_KPI_TO_KEY_RESULT": "Добавить KPI к ключевым результатам тип?",
 			"ADD_TASK_TO_KEY_RESULT": "Добавить задание к ключевых результатов тип?",
 			"GENERAL": "Генеральная",
-			"KPI": "KPI"
+			"KPI": "KPI",
+			"DELETE_TIME_FRAME_TITLE": "Удалить кадр времени",
+			"DELETE_TIME_FRAME_CONFIRMATION": "Вы уверены, что хотите удалить рамки времени?",
+			"DELETE_KPI_TITLE": "Удалить KPI",
+			"DELETE_KPI_CONFIRMATION": "Вы уверены, что хотите удалить KPI?"
 		},
 		"MESSAGE": {
 			"NO_KEY_RESULT": "Нет ключевых результатов для отображения.",
@@ -1531,10 +1538,11 @@
 		"CHOOSE_POLICIES": "Выбрать политики/с",
 		"EDIT_APPROVAL_REQUEST": "Редактировать подтверждение запроса",
 		"ADD_APPROVAL_REQUEST": "Добавить подтверждение запроса",
-		"APPROVAL_REQUEST_SAVED": "Утверждение запроса сохранено",
-		"APPROVAL_REQUEST_DELETED": "Утверждение запроса удалено",
-		"APPROVAL_SUCCESS": "Успешное утверждение",
-		"REFUSE_SUCCESS": "Успешно отказано"
+		"APPROVAL_REQUEST_CREATED": "Утверждение запроса '{{ name }}' был добавлен",
+		"APPROVAL_REQUEST_UPDATED": "Утверждение запроса '{{ name }}' был изменен",
+		"APPROVAL_REQUEST_DELETED": "Утверждение запроса '{{ name }}' удалено",
+		"APPROVAL_SUCCESS": "Одобрение '{{ name }}' было одобрено",
+		"REFUSE_SUCCESS": "Одобрение '{{ name }}' было отклонено"
 	},
 	"APPROVAL_POLICY_PAGE": {
 		"EDIT_APPROVAL_POLICY": "Редактировать политику утверждения",
@@ -1590,10 +1598,10 @@
 			"STATUS_SET_APPROVED": "Вы успешно установили время ожидания запроса на подтверждение.",
 			"ERR_SET_STATUS": "Не удалось задать статус запроса на отключение.",
 			"APPROVED_NO_CHANGES": "Статус запроса на отключение уже установлен на одобрение",
-			"RECORD_CREATED": "Запись об отключении времени успешно создана!",
+			"RECORD_CREATED": "Запись об отключении была сохранена",
 			"REQUEST_DENIED": "Отказано в статусе запроса",
 			"DENIED_NO_CHANGES": "Статус запроса о отключении уже установлен в \"Отказано\"",
-			"REQUEST_DELETED": "Запрос на отключение успешно удален",
+			"REQUEST_DELETED": "Запрос на отключение удалён",
 			"ERR_LOAD_RECORDS": "Не удается загрузить записи",
 			"ERR_DELETE_REQUEST": "Не удается удалить запрос на отключение",
 			"ERR_CREATE_RECORD": "Невозможно создать запись",
@@ -1608,9 +1616,9 @@
 		"TAGS_NAME": "Имя",
 		"TAGS_DESCRIPTION": "Описание",
 		"TAGS_COLOR": "Цвет",
-		"TAGS_ADD_TAG": "Тег добавлен",
-		"TAGS_EDIT_TAG": "Тег отредактирован",
-		"TAGS_DELETE_TAG": "Метка удалена",
+		"TAGS_ADD_TAG": "Тег '{{ name }}' был добавлен",
+		"TAGS_EDIT_TAG": "Тег '{{ name }}' ' был изменен",
+		"TAGS_DELETE_TAG": "Тег '{{ name }}' был удален",
 		"TAGS_SELECT_NAME": "Имя тега",
 		"TAGS_SELECT_COLOR": "Цвет тега",
 		"TAGS_SELECT_DESCRIPTION": "Описание метки",
@@ -1642,9 +1650,9 @@
 		"EQUIPMENT_MAX_SHARE_PERIOD": "Макс. срок акции",
 		"EQUIPMENT_AUTO_APPROVE": "Авто подтверждение",
 		"EQUIPMENT_EDITED": "Оборудование отредактировано",
-		"EQUIPMENT_DELETED": "Снаряжение удалено",
+		"EQUIPMENT_DELETED": "Снаряжение{{ name }}было снято",
 		"EQUIPMENT_ADDED": "Снаряжение добавлено",
-		"EQUIPMENT_SAVED": "Оборудование сохранено",
+		"EQUIPMENT_SAVED": "Снаряжение{{ name }}' было сохранено",
 		"CURRENCY": "Валюта"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
@@ -1691,8 +1699,8 @@
 		"HEADER": "Инвентаризация",
 		"ADD_INVENTORY_ITEM": "Добавить товар в инвентарь",
 		"EDIT_INVENTORY_ITEM": "Изменить элемент инвентаря",
-		"INVENTORY_ITEM_DELETED": "Элемент инвентаря удален!",
-		"INVENTORY_ITEM_SAVED": "Элемент инвентаря сохранен!",
+		"INVENTORY_ITEM_DELETED": "Инвентарь '{{ name }}' был удален",
+		"INVENTORY_ITEM_SAVED": "Инвентарь '{{ name }}' был сохранен",
 		"EDIT_PRODUCT_VARIANT": "Изменить вариант товара",
 		"PRODUCT_VARIANT_SAVED": "Вариант товара сохранен",
 		"NAME": "Имя",
@@ -1725,12 +1733,12 @@
 		"ORGANIZATION": "Организация",
 		"EDIT_PRODUCT_TYPE": "Изменить тип товара",
 		"ADD_PRODUCT_TYPE": "Добавить тип товара",
-		"PRODUCT_TYPE_SAVED": "Тип товара сохранен",
-		"PRODUCT_TYPE_DELETED": "Тип товара удален",
+		"PRODUCT_TYPE_SAVED": "Тип товара '{{ name }}' ' был сохранен",
+		"PRODUCT_TYPE_DELETED": "Тип товара '{{ name }}' ' был удален",
 		"EDIT_PRODUCT_CATEGORY": "Редактировать категорию товара",
 		"ADD_PRODUCT_CATEGORY": "Добавить категорию товара",
-		"PRODUCT_CATEGORY_SAVED": "Категория товара сохранена",
-		"PRODUCT_CATEGORY_DELETED": "Категория товара удалена",
+		"PRODUCT_CATEGORY_SAVED": "Товар категории '{{ name }}' ' был сохранен",
+		"PRODUCT_CATEGORY_DELETED": "Категория товара '{{ name }}' ' удалена",
 		"IMAGE": "Изображение",
 		"LANGUAGE": "Язык",
 		"PRODUCT_VARIANT_DELETED": "Вариант товара удален!",
@@ -1746,12 +1754,14 @@
 		"TEAM_TASKS_HEADER": "Задачи команды",
 		"ADD_TASKS": "Добавить задачи",
 		"EDIT_TASKS": "Редактировать задачи",
+		"EDIT_TASK": "Редактировать задачу",
+		"DELETE_TASK": "Удалить задачу",
 		"TASKS_TITLE": "Заголовок",
 		"TASKS_DESCRIPTION": "Описание",
 		"TASKS_LOADED": "Задачи загружены",
-		"TASK_ADDED": "Задача добавлена",
-		"TASK_UPDATED": "Задача обновлена",
-		"TASK_DELETED": "Задача удалена",
+		"TASK_ADDED": "Задача была добавлена",
+		"TASK_UPDATED": "Задача была изменена",
+		"TASK_DELETED": "Задача была удалена",
 		"TASKS_PROJECT": "Проект",
 		"TASKS_CREATOR": "Создано",
 		"TASK_MEMBERS": "Сотрудники",
@@ -1826,10 +1836,10 @@
 		"DESCRIPTION": "Описание",
 		"IS_DEFAULT": "По умолчанию",
 		"CONFIRM_DELETE": "Вы уверены, что хотите удалить",
-		"PROPOSAL_CREATE_MESSAGE": "Шаблон предложения успешно создан",
-		"PROPOSAL_EDIT_MESSAGE": "Шаблон предложения отредактирован",
-		"PROPOSAL_DELETE_MESSAGE": "Шаблон предложения успешно удален",
-		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Шаблон предложения успешно создан по умолчанию"
+		"PROPOSAL_CREATE_MESSAGE": "Шаблон предложения '{{ name }}' был добавлен",
+		"PROPOSAL_EDIT_MESSAGE": "Шаблон предложения '{{ name }}' ' был изменен",
+		"PROPOSAL_DELETE_MESSAGE": "Шаблон предложения '{{ name }}' ' был удален",
+		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Шаблон предложения '{{ name }}' ' установлено по умолчанию"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Спринт добавлен",
@@ -2149,7 +2159,10 @@
 		"REMOVE_BASE": "Удалить базу",
 		"CLEAR": "Очистить",
 		"SEARCH_BY_NAME": "Поиск по названию",
-		"FILTER_BY_AUTHOR": "Фильтр по автору"
+		"FILTER_BY_AUTHOR": "Фильтр по автору",
+		"CATEGORY_EDIT_ADDED": "Категория добавлена",
+		"CATEGORY_EDIT_UPDATED": "Категория была изменена",
+		"CATEGORY_EDIT_DELETED": "Категория была удалена"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "О нас"
@@ -2163,6 +2176,7 @@
 		"TITLE": {
 			"SUCCESS": "Успешно",
 			"ERROR": "Ошибка",
+			"INFO": "Инфо",
 			"WARNING": "Предупреждение",
 			"MAX_LIMIT_REACHED": "Достигнут лимит"
 		},
@@ -2179,8 +2193,11 @@
 			"EMPLOYEE_CLIENT_ADDED": "Сотрудник добавлен к клиенту",
 			"EMPLOYEE_CLIENT_REMOVED": "Сотрудник удалён из клиента",
 			"EMPLOYEE_EDIT_ERROR": "Ошибка в редактировании сотрудника",
-			"EMPLOYEE_PROFILE_UPDATE": "Профиль {{name}} обновлён.",
-			"EMPLOYEE_LEVEL_UPDATE": "Уровень сотрудника успешно обновлен.",
+			"EMPLOYEE_PROFILE_UPDATE": "Профиль '{{name}}' был изменен",
+			"EMPLOYEE_LEVEL_UPDATE": "Уровень сотрудника '{{ name }}' ' был изменен",
+			"EMPLOYEE_ADDED": "Сотрудник '{{name}}' ' ' добавлен в '{{organization}}'",
+			"EMPLOYEE_INACTIVE": "Сотрудник '{{name}}' ' ' установлен как неактивный.",
+			"EMPLOYEE_ACTIVE": "Сотрудник '{{name}}' ' ' установлен как активный.",
 			"CONFIRM": "Подтвердить",
 			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Вы уверены, что хотите отправить приглашение еще раз",
 			"OK": "ОК",
@@ -2210,7 +2227,7 @@
 			"CANDIDATE_EXPERIENCE_REQUIRED": "Требуется информация об опыте",
 			"CANDIDATE_DOCUMENT_REQUIRED": "Требуется информация о документе",
 			"CANDIDATE_SKILLS_REQUIRED": "Требуется название навыка",
-			"CANDIDATE_PROFILE_UPDATE": "Профиль {{name}} обновлён.",
+			"CANDIDATE_PROFILE_UPDATE": "'{{name}}' профиль обновлен.",
 			"NAME_REQUIRED": "Требуется имя!",
 			"CONTACT_TYPE_REQUIRED": "Требуется тип контакта!",
 			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
@@ -2224,19 +2241,30 @@
 			"UPDATED": "Успешно обновлено",
 			"MOVED_BASE": "База была перемещена",
 			"MOVED_CATEGORY": "Категория была перемещена",
-			"CREATED_BASE": "База была создана",
-			"CREATED_CATEGORY": "Категория создана",
-			"EDITED_BASE": "База была отредактирована",
-			"EDITED_CATEGORY": "Категория была отредактирована",
-			"PIPELINE_CREATED": "Конвейер создан",
-			"PIPELINE_UPDATED": "Конвейер обновлен",
+			"CREATED_BASE": "Базовый '{{ name }}' ' был добавлен",
+			"EDITED_BASE": "Базовый '{{ name }}' ' был изменен",
+			"DELETED_BASE": "Базовый '{{ name }}' ' был удален",
+			"DELETED_CATEGORY": "Категория '{{ name }}' ' была удалена",
+			"CREATED_CATEGORY": "Категория добавлена",
+			"EDIT_ADD_CATEGORY": "Категория '{{ name }}' ' была добавлена",
+			"EDITED_CATEGORY": "Категория '{{ name }}' ' ' была изменена",
+			"HELP_ARTICALE_CREATED": "Статья была добавлена",
+			"HELP_ARTICALE_UPDATED": "Статья '{{ name }}' ' была изменена",
+			"HELP_ARTICALE_DELETED": "Статья '{{ name }}' ' удалена",
+			"PIPELINE_CREATED": "Трубопровод был изменен",
+			"PIPELINE_UPDATED": "Трубопровод был изменен",
 			"OBJECTIVE_ADDED": "Цель добавлена",
 			"OBJECTIVE_DELETED": "Цель удалена",
-			"OBJECTIVE_UPDATED": "Цель обновлена",
+			"OBJECTIVE_UPDATED": "Цель была изменена",
 			"KEY_RESULT_ADDED": "Результат ключа добавлен",
 			"KEY_RESULT_DELETED": "Результат ключа удален",
-			"KEY_RESULT_UPDATED": "Результат ключа обновлён",
-			"TIME_FRAME_DELETED": "Рамка времени удалена",
+			"KEY_RESULT_UPDATED": "Результат ключа был изменен",
+			"TIME_FRAME_CREATED": "Временной кадр '{{ name }}' был добавлен",
+			"TIME_FRAME_UPDATED": "Временной кадр '{{ name }}' был изменен",
+			"TIME_FRAME_DELETED": "Временной кадр '{{ name }}' был удален",
+			"KPI_CREATED": "KPI был добавлен",
+			"KPI_UPDATED": "KPI был изменен",
+			"KPI_DELETED": "KPI был удален",
 			"EDIT_PAST_INTERVIEW": "Редактирование прошлых интервью запрещено",
 			"ARCHIVE_INTERVIEW": "Это интервью уже было заархивировано",
 			"DELETE_PAST_INTERVIEW": "Удаление прошлых интервью запрещено",
@@ -2244,7 +2272,18 @@
 			"MAX_OBJECTIVE_LIMIT": "Вы не можете создать больше целей. Пожалуйста, измените ограничение на максимальные цели, чтобы добавить больше целей.",
 			"MAX_KEY_RESULT_LIMIT": "Вы не можете создать дополнительные ключевые результаты для этой цели. Пожалуйста, измените максимальный результат для добавления дополнительных результатов ключа.",
 			"CUSTOM_SMTP_ADDED": "Настройки Smtp успешно созданы",
-			"CUSTOM_SMTP_UPDATED": "Настройки Smtp успешно обновлены"
+			"CUSTOM_SMTP_UPDATED": "Настройки Smtp успешно обновлены",
+			"JOB_MATCHING_SAVED": "Критерий был изменен",
+			"JOB_MATCHING_ERROR": "Ошибка при сохранении критерия, пожалуйста, попробуйте старение",
+			"JOB_MATCHING_DELETED": "Критерий был удален",
+			"APPROVAL_POLICY_CREATED": "Утвержденная политика '{{ name }}' добавлена",
+			"APPROVAL_POLICY_UPDATED": "Утвержденная политика '{{ name }}' была изменена",
+			"APPROVAL_POLICY_DELETED": "Утвержденная политика '{{ name }}' удалена",
+			"CANDIDATE_CREATED": "Кандидат '{{ name }}' ' ' был добавлен в '{{ organization }}'",
+			"CANDIDATE_ARCHIVED": "Кандидат '{{ name }}' ' ' ' установлен в архиве.",
+			"CANDIDATE_REJECTED": "Кандидат '{{ name }}' ' ' ' был отклонён.",
+			"CANDIDATE_HIRED": "Кандидат '{{ name }}' ' ' был нанят.",
+			"CANDIDATE_DELETED": "Кандидат '{{ name }}' ' был удален"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -2291,10 +2330,11 @@
 			"PROPOSAL_SENT": "Статус предложения обновлен для отправки"
 		},
 		"POLICY": {
-			"ADD_POLICY": "Новое время отключения политики создана!",
-			"EDIT_POLICY": "Политика отключения изменена",
-			"DELETE_POLICY": "Политика удалена",
-			"ERROR": "{{ error }}"
+			"ADD_POLICY": "Политика отключения '{{ name }}' была добавлена",
+			"EDIT_POLICY": "Политика отключения '{{ name }}' была изменена",
+			"DELETE_POLICY": "Политика отключения '{{ name }}' была удалена",
+			"ERROR": "{{ error }}",
+			"SAVE_ERROR": "Не удалось создать запись политики политики"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Ваш профиль был успешно обновлен."
@@ -2323,41 +2363,42 @@
 			"DELETE_USER_FROM_ORGANIZATION": "{{ username }} установлен как неактивный.",
 			"DATA_ERROR": "{{ error }}",
 			"EDIT_ORGANIZATIONS_PROJECTS": {
-				"ADD_PROJECT": "Проект {{ name }} успешно добавлен!",
-				"REMOVE_PROJECT": "Проект {{ name }} успешно удален!",
+				"ADD_PROJECT": "Проект '{{ name }}' был сохранен",
+				"REMOVE_PROJECT": "Проект '{{ name }}' ' был удален",
 				"INVALID_PROJECT_NAME": "Пожалуйста, введите название вашего проекта"
 			},
 			"EDIT_ORGANIZATIONS_TEAM": {
-				"ADD_NEW_TEAM": "Новая команда {{ name }} успешно добавлена!",
-				"EDIT_EXISTING_TEAM": "Команда {{ name }} успешно обновлена!",
+				"ADD_NEW_TEAM": "Команда '{{ name }}' была добавлена",
+				"EDIT_EXISTING_TEAM": "Команда '{{ name }}' ' была изменена",
 				"INVALID_TEAM_NAME": "Пожалуйста, добавьте название команды и хотя бы одного участника",
-				"REMOVE_TEAM": "Команда {{ name }} успешно удалена!"
+				"REMOVE_TEAM": "Команда '{{ name }}' ' удалена"
 			},
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
-				"ADD_EMPLOYEE_LEVEL": "Новый уровень {{ name }} успешно добавлен!",
-				"REMOVE_EMPLOYEE_LEVEL": "Уровень {{ name }} сотрудника успешно удален!",
+				"ADD_EMPLOYEE_LEVEL": "Уровень сотрудника '{{ name }}' ' был добавлен",
+				"REMOVE_EMPLOYEE_LEVEL": "Уровень сотрудника '{{ name }}' ' был удален",
 				"INVALID_EMPLOYEE_LEVEL": "Пожалуйста, добавьте уровень сотрудника"
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
-				"ADD_VENDOR": "Новый поставщик {{ name }} успешно добавлен!",
-				"UPDATE_VENDOR": "Поставщик {{ name }} успешно обновлен!",
-				"REMOVE_VENDOR": "Поставщик {{ name }} успешно удален!",
+				"ADD_VENDOR": "исполнитель '{{ name }}' ' был добавлен",
+				"UPDATE_VENDOR": "Поставщик '{{ name }}' ' ' был изменен",
+				"REMOVE_VENDOR": "Поставщик '{{ name }}' ' был удален",
 				"INVALID_VENDOR_NAME": "Пожалуйста, добавьте название поставщика"
 			},
 			"EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES": {
-				"ADD_EXPENSE_CATEGORY": "Новая категория {{ name }} успешно добавлена!",
-				"UPDATE_EXPENSE_CATEGORY": "Категория {{ name }} успешно обновлена!",
-				"REMOVE_EXPENSE_CATEGORY": "Категория {{ name }} успешно удалена!",
+				"ADD_EXPENSE_CATEGORY": "Категория '{{ name }}' ' была добавлена",
+				"UPDATE_EXPENSE_CATEGORY": "Категория '{{ name }}' ' ' была изменена",
+				"REMOVE_EXPENSE_CATEGORY": "Категория '{{ name }}' ' была удалена",
 				"INVALID_EXPENSE_CATEGORY_NAME": "Пожалуйста, добавьте название категории"
 			},
 			"EDIT_ORGANIZATIONS_POSITIONS": {
-				"ADD_POSITION": "Новая позиция {{ name }} успешно добавлена!",
-				"REMOVE_POSITION": "Должность {{ name }} успешно удалена!",
+				"ADD_POSITION": "Позиция '{{ name }}' ' была добавлена",
+				"UPDATED_POSITION": "Позиция '{{ name }}' ' была изменена",
+				"REMOVE_POSITION": "Позиция '{{ name }}' была удалена",
 				"INVALID_POSITION_NAME": "Пожалуйста, добавьте название позиции"
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
-				"ADD_DEPARTMENT": "{{ name }} Департамент успешно добавлен!",
-				"REMOVE_DEPARTMENT": "Департамент {{ name }} успешно удален!",
+				"ADD_DEPARTMENT": "Департамент '{{ name }}' был сохранен",
+				"REMOVE_DEPARTMENT": "Департамент '{{ name }}' был удален",
 				"INVALID_DEPARTMENT_NAME": "Пожалуйста, добавьте название департамента"
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
@@ -2369,18 +2410,24 @@
 				"EMAIL_EXISTS": "Этот адрес электронной почты уже существует в качестве пользователя"
 			},
 			"EDIT_ORGANIZATIONS_CONTACTS": {
-				"ADD_CONTACT": "Новый контакт {{ name }} успешно добавлен!",
-				"REMOVE_CONTACT": "Контакт {{ name }} успешно удален!",
+				"ADD_CONTACT": "Контакт '{{ name }}' был добавлен",
+				"UPDATE_CONTACT": "Контакт '{{ name }}' ' был преломлен",
+				"REMOVE_CONTACT": "Контакт '{{ name }}' был удален",
 				"INVALID_CONTACT_DATA": "Пожалуйста, проверьте имя, основной адрес электронной почты и номер телефона вашего контакта",
-				"INVITE_CONTACT": "Письмо с приглашением отправлено {{ name }}.",
+				"INVITE_CONTACT": "Письмо с приглашением отправлено на '{{ name }}'.",
 				"INVITE_CONTACT_ERROR": "Произошла ошибка при попытке пригласить контакта.",
 				"EMAIL_EXISTS": "Этот контактный адрес электронной почты уже существует в качестве пользователя"
 			},
 			"EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES": {
-				"ADD_EMPLOYMENT_TYPE": "Новый тип занятости {{ name }} успешно добавлен!",
-				"UPDATE_EMPLOYMENT_TYPE": "Занятость {{ name }} была обновлена",
+				"ADD_EMPLOYMENT_TYPE": "Добавлен тип занятости '{{ name }}' '",
+				"UPDATE_EMPLOYMENT_TYPE": "Изменен тип занятости '{{ name }}' '",
 				"INVALID_EMPLOYMENT_TYPE": "Пожалуйста, проверьте входные данные по типу занятости",
-				"DELETE_EMPLOYMENT_TYPE": "Тип занятости удален для {{ name }}"
+				"DELETE_EMPLOYMENT_TYPE": "Тип занятости '{{ name }}' ' был удален"
+			},
+			"EDIT_ORGANIZATIONS_RECURRING_EXPENSES": {
+				"ADD_RECURRING_EXPENSE": "Повторяющиеся расходы были добавлены для `{{ name }}`",
+				"UPDATE_RECURRING_EXPENSE": "Повторяющиеся расходы были изменены для '{{ name }}'",
+				"DELETE_RECURRING_EXPENSE": "Повторяющиеся расходы были удалены"
 			},
 			"EDIT_ORGANIZATIONS_AWARDS": {
 				"ADD_AWARD": "Новая награда {{ name }} успешно добавлена!",
@@ -2393,13 +2440,13 @@
 				"REMOVE_LANGUAGE": "Язык {{ name }} успешно удален!"
 			},
 			"EDIT_ORGANIZATION_DOCS": {
-				"CREATED": "Документ успешно создан",
+				"CREATED": "Документ '{{ name }}' был добавлен",
 				"ERR_CREATE": "Не удается создать новый документ организации",
 				"ERR_LOAD": "Не удается загрузить документы организации",
-				"UPDATED": "Выбранный документ успешно обновлен!",
+				"UPDATED": "Документ '{{ name }}' был изменен",
 				"ERR_UPDATED": "Не удается обновить выбранный документ!",
 				"SELECTED_DOC": "выбранный документ",
-				"DELETED": "Документ успешно удален!",
+				"DELETED": "Документ '{{ name }}' был удален",
 				"ERR_DELETED": "Не удается удалить выбранный документ!"
 			}
 		},
@@ -2409,9 +2456,9 @@
 			"RECORD_TYPE": "Если да, то введите 'УДАЛИТЬ ВСЕ ДАННЫЕ' для подтверждения."
 		},
 		"EVENT_TYPES": {
-			"ADD_EVENT_TYPE": "Создан новый тип события",
-			"EDIT_EVENT_TYPE": "Тип события отредактирован",
-			"DELETE_EVENT_TYPE": "Тип события удален",
+			"ADD_EVENT_TYPE": "Добавлен тип события '{{ name }}'",
+			"EDIT_EVENT_TYPE": "Тип события '{{ name }}' ' был изменен",
+			"DELETE_EVENT_TYPE": "Тип события '{{ name }}' был удален",
 			"ERROR": "{{ error }}"
 		},
 		"AVAILABILITY_SLOTS": {
@@ -2433,7 +2480,7 @@
 		"START_TIME": "Время начала",
 		"END_TIME": "Конец времени",
 		"DESCRIPTION": "Описание",
-		"ADD_TIME_SUCCESS": "Время успешно добавлено",
+		"ADD_TIME_SUCCESS": "Время было добавлено",
 		"VALIDATION": {
 			"CLIENT_REQUIRED": "Пожалуйста, выберите клиента",
 			"PROJECT_REQUIRED": "Пожалуйста, выберите проект",
@@ -2554,11 +2601,11 @@
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "Добавить Назначение",
 		"EDIT_APPOINTMENT": "Редактировать Назначение",
-		"SAVE_SUCCESS": "Назначение успешно сохранено",
+		"SAVE_SUCCESS": "Назначение сохранено",
 		"SAVE_FAILED": "Не удалось сохранить прием",
 		"CANCEL_APPOINTMENT": "Отменить назначение",
 		"CANCEL_FAIL": "Не удалось отменить прием",
-		"CANCEL_SUCCESS": "Назначение успешно отменено",
+		"CANCEL_SUCCESS": "Назначение было отменено",
 		"DURATION_ERROR": "Выбранная длительность недопустима",
 		"SELECT_EMPLOYEE": "Выбрать сотрудника",
 		"EMPLOYEE": "Сотрудник"
@@ -2681,7 +2728,7 @@
 		"BUCKET": "Ведро"
 	},
 	"CUSTOM_SMTP_PAGE": {
-		"HEADER": "Пользовательский SMTP",
+		"HEADER": "Управление SMTP для {{ name }}",
 		"HOST": "Хост",
 		"PORT": "Порт",
 		"SECURE": "Безопасность",
@@ -2694,7 +2741,7 @@
 		"HEADER": "Поставщик SMS"
 	},
 	"FEATURE_PAGE": {
-		"HEADER": "Возможности"
+		"HEADER": "Управление функциями для {{ name }}"
 	},
 	"SETTINGS": {
 		"EMAIL_HISTORY": {

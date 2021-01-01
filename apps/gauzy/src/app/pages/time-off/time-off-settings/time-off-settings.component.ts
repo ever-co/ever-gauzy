@@ -14,7 +14,7 @@ import {
 } from '@gauzy/models';
 import { filter, first, tap } from 'rxjs/operators';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { TimeOffSettingsMutationComponent } from '../../../@shared/time-off/settings-mutation/time-off-settings-mutation.component';
 import { TranslateService } from '@ngx-translate/core';
 import { TimeOffService } from '../../../@core/services/time-off.service';
@@ -27,6 +27,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { NgxPermissionsService } from 'ngx-permissions';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -40,7 +41,7 @@ export class TimeOffSettingsComponent
 	constructor(
 		private dialogService: NbDialogService,
 		private authService: AuthService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private timeOffService: TimeOffService,
 		private store: Store,
 		private errorHandler: ErrorHandler,
@@ -180,16 +181,12 @@ export class TimeOffSettingsComponent
 				.pipe(first(), untilDestroyed(this))
 				.subscribe(
 					() => {
-						this.toastrService.primary(
-							this.getTranslation('NOTES.POLICY.ADD_POLICY'),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
-						);
+						this.toastrService.success('NOTES.POLICY.ADD_POLICY', {
+							name: formData.name
+						});
 						this._loadTableData(this._selectedOrganizationId);
 					},
-					() =>
-						this.toastrService.danger(
-							'Unable to create Policy record'
-						)
+					() => this.toastrService.danger('NOTES.POLICY.SAVE_ERROR')
 				);
 		}
 	}
@@ -223,10 +220,9 @@ export class TimeOffSettingsComponent
 			.pipe(first(), untilDestroyed(this))
 			.subscribe(
 				() => {
-					this.toastrService.primary(
-						this.getTranslation('NOTES.POLICY.EDIT_POLICY'),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
-					);
+					this.toastrService.success('NOTES.POLICY.EDIT_POLICY', {
+						name: formData.name
+					});
 
 					this._loadTableData(this._selectedOrganizationId);
 				},
@@ -255,11 +251,9 @@ export class TimeOffSettingsComponent
 							.deletePolicy(this.selectedPolicy.id)
 							.pipe(first(), untilDestroyed(this))
 							.subscribe(() => {
-								this.toastrService.primary(
-									this.getTranslation(
-										'NOTES.POLICY.DELETE_POLICY'
-									),
-									this.getTranslation('TOASTR.TITLE.SUCCESS')
+								this.toastrService.success(
+									'NOTES.POLICY.DELETE_POLICY',
+									{ name: this.selectedPolicy.name }
 								);
 								this._loadTableData(
 									this._selectedOrganizationId

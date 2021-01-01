@@ -1,15 +1,16 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { Subject } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ITimeOff, IEmployee, IEventType } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { timeOff } from './test-data';
-import { takeUntil } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import { EmployeesService } from '../../@core/services';
 import { EventTypeService } from '../../@core/services/event-type.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-public-appointments',
 	templateUrl: './public-appointments.component.html',
@@ -18,7 +19,6 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 export class PublicAppointmentsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
 	employee: IEmployee;
 	eventTypes: IEventType[];
 	timeOff: ITimeOff[] = timeOff;
@@ -38,7 +38,7 @@ export class PublicAppointmentsComponent
 
 	ngOnInit(): void {
 		this.route.params
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(async (params) => {
 				try {
 					this.employee = await this.employeeService.getEmployeeById(
@@ -50,9 +50,11 @@ export class PublicAppointmentsComponent
 					await this.router.navigate(['/share/404']);
 				}
 			});
-
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((org) => {
 				if (org) {
 					this._selectedOrganizationId = org.id;
@@ -100,8 +102,5 @@ export class PublicAppointmentsComponent
 		this.router.navigate([`${this.router.url}/${id}`]);
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

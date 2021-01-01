@@ -31,12 +31,12 @@
 					<nb-list>
 						<nb-list-item
 							(click)="createObjective(null, null)"
-							style="cursor: pointer;"
+							style="cursor: pointer"
 							>Create New</nb-list-item
 						>
 						<nb-list-item
 							(click)="createObjectiveFromTemplate()"
-							style="cursor: pointer;"
+							style="cursor: pointer"
 							>Create from Preset</nb-list-item
 						>
 					</nb-list>
@@ -64,7 +64,7 @@
 										? 'bold'
 										: 'normal'
 							}"
-							style="cursor: pointer;"
+							style="cursor: pointer"
 							*ngFor="let group of groupObjectivesBy"
 							>{{ group.title }}</nb-list-item
 						>
@@ -90,7 +90,7 @@
 										? 'bold'
 										: 'normal'
 							}"
-							style="cursor: pointer;"
+							style="cursor: pointer"
 							*ngFor="let filter of filters"
 							>{{ filter.title }}</nb-list-item
 						>
@@ -152,7 +152,7 @@
 									'GOALS_PAGE.TOOLTIPS.DETAILS' | translate
 								}}"
 								icon="eye"
-								(click)="openGoalDetials(goal)"
+								(click)="openGoalDetails(goal)"
 							></nb-action>
 							<nb-action
 								icon="edit"

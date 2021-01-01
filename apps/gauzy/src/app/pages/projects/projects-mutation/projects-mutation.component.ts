@@ -10,7 +10,8 @@ import {
 	ProjectOwnerEnum,
 	TaskListTypeEnum,
 	ContactType,
-	ICurrency
+	ICurrency,
+	OrganizationProjectBudgetTypeEnum
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -41,7 +42,7 @@ export class ProjectsMutationComponent
 	addOrEditProject = new EventEmitter();
 	@Input()
 	organizationContacts: Object[] = [];
-
+	OrganizationProjectBudgetTypeEnum = OrganizationProjectBudgetTypeEnum;
 	TaskListTypeEnum = TaskListTypeEnum;
 	form: FormGroup;
 	members: string[];
@@ -137,6 +138,12 @@ export class ProjectsMutationComponent
 			description: [this.project ? this.project.description : ''],
 			code: [this.project ? this.project.code : ''],
 			color: [this.project ? this.project.color : ''],
+			budget: [this.project ? this.project.budget : ''],
+			budgetType: [
+				this.project
+					? this.project.budgetType
+					: OrganizationProjectBudgetTypeEnum.HOURS
+			],
 			openSource: [this.project ? this.project.openSource : null],
 			projectUrl: [
 				this.project ? this.project.projectUrl : null,
@@ -188,6 +195,8 @@ export class ProjectsMutationComponent
 						'organizationContact'
 					].id,
 					billing: this.form.value['billing'],
+					budget: this.form.value.budget,
+					budgetType: this.form.value.budgetType,
 					currency:
 						this.form.value['currency'] || this.defaultCurrency,
 					startDate: this.form.value['startDate'],

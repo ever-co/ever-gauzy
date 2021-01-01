@@ -8,7 +8,7 @@ import {
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mutation.component';
 import { filter, first, tap } from 'rxjs/operators';
@@ -19,6 +19,7 @@ import { PictureNameTagsComponent } from '../../@shared/table-components/picture
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { Store } from '../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './equipment.component.html',
@@ -52,7 +53,7 @@ export class EquipmentComponent
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
 		private equipmentService: EquipmentService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private router: Router,
 		private store: Store
 	) {
@@ -191,10 +192,9 @@ export class EquipmentComponent
 		this.clearItem();
 
 		if (equipment) {
-			this.toastrService.primary(
-				this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_SAVED'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('EQUIPMENT_PAGE.EQUIPMENT_SAVED', {
+				name: equipment.name
+			});
 		}
 
 		this.loadSettings();
@@ -215,10 +215,9 @@ export class EquipmentComponent
 		if (result) {
 			await this.equipmentService.delete(this.selectedEquipment.id);
 			this.loadSettings();
-			this.toastrService.primary(
-				this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_DELETED'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('EQUIPMENT_PAGE.EQUIPMENT_DELETED', {
+				name: this.selectedEquipment.name
+			});
 		}
 		this.clearItem();
 	}

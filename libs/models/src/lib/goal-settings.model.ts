@@ -113,3 +113,18 @@ export enum GoalOwnershipEnum {
 	TEAMS = 'Teams',
 	EMPLOYEES_AND_TEAMS = 'Employees and Teams'
 }
+
+export interface IGoalTimeFrameResponse {
+	items: IGoalTimeFrame[];
+	count: number;
+}
+
+export interface IKpiResponse {
+	items: IKPI[];
+	count: number;
+}
+
+export interface IGeneralSettingResponse {
+	items: IGoalGeneralSetting[];
+	count: number;
+}

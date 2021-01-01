@@ -9,7 +9,7 @@ import {
 	ComponentLayoutStyleEnum,
 	OrganizationProjectAction
 } from '@gauzy/models';
-import { NbToastrService, NbDialogService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, first, tap } from 'rxjs/operators';
 import {
@@ -30,6 +30,7 @@ import { PictureNameTagsComponent } from '../../@shared/table-components/picture
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { OrganizationProjectStore } from '../../@core/services/organization-projects-store.service';
+import { ToastrService } from '../../@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-projects',
@@ -65,7 +66,7 @@ export class ProjectsComponent
 	constructor(
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		private store: Store,
 		private readonly employeesService: EmployeesService,
 		readonly translateService: TranslateService,
@@ -176,16 +177,13 @@ export class ProjectsComponent
 					};
 				});
 
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.REMOVE_PROJECT',
-					{
-						name: this.selectedProject
-							? this.selectedProject.name
-							: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.REMOVE_PROJECT',
+				{
+					name: this.selectedProject
+						? this.selectedProject.name
+						: name
+				}
 			);
 
 			this.loadProjects();
@@ -244,14 +242,11 @@ export class ProjectsComponent
 				break;
 		}
 
-		this.toastrService.primary(
-			this.getTranslation(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
-				{
-					name: project.name
-				}
-			),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		this.toastrService.success(
+			'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
+			{
+				name: project.name
+			}
 		);
 		this.cancel();
 		this.loadProjects();

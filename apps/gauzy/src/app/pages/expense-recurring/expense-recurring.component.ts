@@ -9,7 +9,7 @@ import {
 	RecurringExpenseDeletionEnum
 } from '@gauzy/models';
 import { Subject } from 'rxjs';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { OrganizationRecurringExpenseService } from '../../@core/services/organization-recurring-expense.service';
 import { takeUntil, first, filter } from 'rxjs/operators';
@@ -20,6 +20,7 @@ import {
 	COMPONENT_TYPE
 } from '../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.component';
 import { Store } from '../../@core/services/store.service';
+import { ToastrService } from '../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-expense-recurring',
@@ -48,7 +49,7 @@ export class ExpenseRecurringComponent
 		private organizationRecurringExpenseService: OrganizationRecurringExpenseService,
 		private store: Store,
 		private dialogService: NbDialogService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -140,9 +141,11 @@ export class ExpenseRecurringComponent
 				});
 				this.selectedRowIndexToShow = null;
 
-				this.toastrService.primary(
-					this.selectedOrg.name + ' recurring expense deleted.',
-					'Success'
+				this.toastrService.success(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_RECURRING_EXPENSES.DELETE_RECURRING_EXPENSE',
+					{
+						name: this.selectedOrg.name
+					}
 				);
 				setTimeout(() => {
 					this._loadOrgRecurringExpense();
@@ -174,9 +177,11 @@ export class ExpenseRecurringComponent
 					...result
 				});
 
-				this.toastrService.primary(
-					this.selectedOrg.name + ' recurring expense set.',
-					'Success'
+				this.toastrService.success(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_RECURRING_EXPENSES.ADD_RECURRING_EXPENSE',
+					{
+						name: this.selectedOrg.name
+					}
 				);
 				this._loadOrgRecurringExpense();
 			} catch (error) {
@@ -209,9 +214,11 @@ export class ExpenseRecurringComponent
 				this.selectedRowIndexToShow = null;
 				this._loadOrgRecurringExpense();
 
-				this.toastrService.primary(
-					this.selectedOrg.name + ' recurring expense edited.',
-					'Success'
+				this.toastrService.success(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_RECURRING_EXPENSES.UPDATE_RECURRING_EXPENSE',
+					{
+						name: this.selectedOrg.name
+					}
 				);
 			} catch (error) {
 				this.toastrService.danger(

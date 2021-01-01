@@ -160,7 +160,10 @@ export class DocumentsComponent
 			.subscribe(
 				() => {
 					this.toastrService.success(
-						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.CREATED'
+						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.CREATED',
+						{
+							name: formValue.name
+						}
 					);
 					this.cancel();
 					this._loadDocuments();
@@ -200,7 +203,12 @@ export class DocumentsComponent
 			.subscribe(
 				() => {
 					this.toastrService.success(
-						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.UPDATED'
+						this.getTranslation(
+							'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.UPDATED',
+							{
+								name: formValue.name
+							}
+						)
 					);
 					this.cancel();
 					this._loadDocuments();
@@ -226,7 +234,7 @@ export class DocumentsComponent
 		this.documentUrl = document.documentUrl;
 	}
 
-	removeDocument(id: string) {
+	removeDocument(document: IOrganizationDocument) {
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
@@ -238,12 +246,17 @@ export class DocumentsComponent
 			.subscribe((res) => {
 				if (res) {
 					this.organizationDocumentsService
-						.delete(id)
+						.delete(document.id)
 						.pipe(first())
 						.subscribe(
 							() => {
 								this.toastrService.success(
-									'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.DELETED'
+									this.getTranslation(
+										'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.DELETED',
+										{
+											name: document.name
+										}
+									)
 								);
 								this._loadDocuments();
 							},

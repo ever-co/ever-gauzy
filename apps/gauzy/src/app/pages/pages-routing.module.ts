@@ -433,6 +433,42 @@ const routes: Routes = [
 							).then((m) => m.AmountsOwedReportModule)
 					},
 					{
+						path: 'weekly-limits',
+						data: {
+							duration: 'week',
+							title: 'REPORT_PAGE.WEEKLY_LIMIT_REPORT'
+						},
+						loadChildren: () =>
+							import(
+								'./reports/time-limit-report/time-limit-report.module'
+							).then((m) => m.TimeLimitReportModule)
+					},
+					{
+						path: 'daily-limits',
+						data: {
+							duration: 'day',
+							title: 'REPORT_PAGE.DAILY_LIMIT_REPORT'
+						},
+						loadChildren: () =>
+							import(
+								'./reports/time-limit-report/time-limit-report.module'
+							).then((m) => m.TimeLimitReportModule)
+					},
+					{
+						path: 'project-budgets',
+						loadChildren: () =>
+							import(
+								'./reports/project-budgets-report/project-budgets-report.module'
+							).then((m) => m.ProjectBudgetsReportModule)
+					},
+					{
+						path: 'client-budgets',
+						loadChildren: () =>
+							import(
+								'./reports/client-budgets-report/client-budgets-report.module'
+							).then((m) => m.ClientBudgetsReportModule)
+					},
+					{
 						path: '*',
 						component: NotFoundComponent
 					}

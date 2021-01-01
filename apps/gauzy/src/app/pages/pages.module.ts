@@ -8,7 +8,7 @@ import { AuthService } from '../@core/services/auth.service';
 import { RoleGuard } from '../@core/role/role.guard';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
-import { FeatureToggleModule } from 'ngx-feature-toggle';
+import { FeatureToggleModule as NgxFeatureToggleModule } from 'ngx-feature-toggle';
 
 @NgModule({
 	imports: [
@@ -25,7 +25,7 @@ import { FeatureToggleModule } from 'ngx-feature-toggle';
 			}
 		}),
 		NbSpinnerModule,
-		FeatureToggleModule
+		NgxFeatureToggleModule
 	],
 	entryComponents: [],
 	declarations: [PagesComponent],

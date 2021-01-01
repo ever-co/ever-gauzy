@@ -26,7 +26,8 @@ import {
 	IOrganizationProject,
 	IInvoice,
 	IEmployee,
-	IPayment
+	IPayment,
+	OrganizationContactBudgetTypeEnum
 } from '@gauzy/models';
 import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { Employee } from '../employee/employee.entity';
@@ -141,6 +142,22 @@ export class OrganizationContact
 	@OneToMany((type) => Proposal, (proposal) => proposal.organizationContact)
 	@JoinColumn()
 	proposals?: IOrganizationProject[];
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	budget?: number;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({
+		type: 'text',
+		nullable: true,
+		default: OrganizationContactBudgetTypeEnum.COST
+	})
+	budgetType?: OrganizationContactBudgetTypeEnum;
 
 	@ApiProperty({ type: String })
 	@IsOptional()

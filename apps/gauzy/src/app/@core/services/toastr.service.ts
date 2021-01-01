@@ -11,7 +11,7 @@ export class ToastrService {
 		private readonly translateService: TranslateService
 	) {}
 
-	success(message: any, title?: string, translationParams: Object = {}) {
+	success(message: any, translationParams: Object = {}, title?: string) {
 		let displayMessage = '';
 
 		if (message && message.message && typeof message.message === 'string') {
@@ -26,7 +26,7 @@ export class ToastrService {
 		);
 	}
 
-	async danger(
+	danger(
 		error: any,
 		title: string = 'TOASTR.TITLE.ERROR',
 		translationParams: Object = {}
@@ -47,7 +47,7 @@ export class ToastrService {
 
 		this.nbToastrService.danger(
 			this.getTranslation(displayMessage, translationParams),
-			this.getTranslation(title)
+			this.getTranslation(title || 'TOASTR.TITLE.ERROR')
 		);
 	}
 
@@ -57,6 +57,21 @@ export class ToastrService {
 		translationParams: Object = {}
 	) {
 		this.danger(message, title, translationParams);
+	}
+
+	info(
+		message: any,
+		title: string,
+		options: Object = {
+			duration: 5000,
+			preventDuplicates: true
+		}
+	) {
+		this.nbToastrService.info(
+			message,
+			this.getTranslation(title || 'TOASTR.TITLE.INFO'),
+			options
+		);
 	}
 
 	private getTranslation(prefix: string, params?: Object) {

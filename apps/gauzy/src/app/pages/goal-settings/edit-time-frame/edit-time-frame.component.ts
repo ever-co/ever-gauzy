@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NbDialogRef, NbDateService } from '@nebular/theme';
+import { NbDialogRef, NbDateService, NbToastrService } from '@nebular/theme';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import {
@@ -29,7 +29,8 @@ import {
 	templateUrl: './edit-time-frame.component.html',
 	styleUrls: ['./edit-time-frame.component.scss']
 })
-export class EditTimeFrameComponent extends TranslationBaseComponent
+export class EditTimeFrameComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	timeFrameForm: FormGroup;
 	timeFrame: IGoalTimeFrame;
@@ -44,6 +45,7 @@ export class EditTimeFrameComponent extends TranslationBaseComponent
 		private goalSettingsService: GoalSettingsService,
 		private dateService: NbDateService<Date>,
 		readonly translate: TranslateService,
+		private readonly toastrService: NbToastrService,
 		private store: Store
 	) {
 		super(translate);
@@ -144,6 +146,15 @@ export class EditTimeFrameComponent extends TranslationBaseComponent
 		if (this.type === 'add') {
 			await this.goalSettingsService.createTimeFrame(data).then((res) => {
 				if (res) {
+					this.toastrService.primary(
+						this.getTranslation(
+							'TOASTR.MESSAGE.TIME_FRAME_CREATED',
+							{
+								name: data.name
+							}
+						),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					);
 					this.closeDialog(res);
 				}
 			});
@@ -152,6 +163,15 @@ export class EditTimeFrameComponent extends TranslationBaseComponent
 				.updateTimeFrame(this.timeFrame.id, data)
 				.then((res) => {
 					if (res) {
+						this.toastrService.primary(
+							this.getTranslation(
+								'TOASTR.MESSAGE.TIME_FRAME_UPDATED',
+								{
+									name: data.name
+								}
+							),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						);
 						this.closeDialog(res);
 					}
 				});

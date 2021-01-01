@@ -14,7 +14,7 @@ import * as unleash from 'unleash-client';
 import { FeatureInterface } from 'unleash-client/lib/feature';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 import { AuthGuard } from '@nestjs/passport';
-import { IFeatureOrganizationUpdateInput } from '@gauzy/models';
+import { FeatureEnum, IFeatureOrganizationUpdateInput } from '@gauzy/models';
 import { CommandBus } from '@nestjs/cqrs';
 import { FeatureToggleUpdateCommand } from './commands/feature-toggle.update.command';
 
@@ -28,7 +28,15 @@ export class FeaturesToggleController {
 
 	@Get()
 	async get() {
-		const featureToggles: FeatureInterface[] = unleash.getFeatureToggleDefinitions();
+		let featureToggles: FeatureInterface[] = unleash.getFeatureToggleDefinitions();
+
+		//only support gauzy feature and removed other
+		const featureEnums: string[] = Object.values(FeatureEnum);
+		if (featureToggles) {
+			featureToggles = featureToggles.filter((toggle: FeatureInterface) =>
+				featureEnums.includes(toggle.name)
+			);
+		}
 		return featureToggles;
 	}
 

@@ -5,7 +5,6 @@ import {
 	IOrganization,
 	IOrganizationContact
 } from '@gauzy/models';
-import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeeStore } from '../../../../../@core/services/employee-store.service';
 import { OrganizationContactService } from '../../../../../@core/services/organization-contact.service';
@@ -13,6 +12,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-edit-employee-departments',
@@ -30,7 +30,7 @@ export class EditEmployeeContactComponent
 	organization: IOrganization;
 	constructor(
 		private readonly organizationContactService: OrganizationContactService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		private readonly employeeStore: EmployeeStore,
 		readonly translateService: TranslateService,
 		private readonly store: Store
@@ -67,20 +67,14 @@ export class EditEmployeeContactComponent
 					formInput
 				);
 				this.loadContacts();
-				this.toastrService.primary(
-					this.getTranslation(
-						removed
-							? 'TOASTR.MESSAGE.EMPLOYEE_CLIENT_REMOVED'
-							: 'TOASTR.MESSAGE.EMPLOYEE_CLIENT_ADDED'
-					),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				this.toastrService.success(
+					removed
+						? 'TOASTR.MESSAGE.EMPLOYEE_CLIENT_REMOVED'
+						: 'TOASTR.MESSAGE.EMPLOYEE_CLIENT_ADDED'
 				);
 			}
 		} catch (error) {
-			this.toastrService.danger(
-				this.getTranslation('TOASTR.MESSAGE.EMPLOYEE_EDIT_ERROR'),
-				this.getTranslation('TOASTR.TITLE.ERROR')
-			);
+			this.toastrService.danger('TOASTR.MESSAGE.EMPLOYEE_EDIT_ERROR');
 		}
 	}
 

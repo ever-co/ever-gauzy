@@ -5,7 +5,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/models';
-import { NbToastrService, NbDialogService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { OrganizationPositionsService } from '../../@core/services/organization-positions';
 import { TranslateService } from '@ngx-translate/core';
 import { first, takeUntil } from 'rxjs/operators';
@@ -16,6 +16,7 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { Subject } from 'rxjs';
+import { ToastrService } from '../../@core/services/toastr.service';
 @Component({
 	selector: 'ga-positions',
 	templateUrl: './positions.component.html',
@@ -41,7 +42,7 @@ export class PositionsComponent
 
 	constructor(
 		private readonly organizationPositionsService: OrganizationPositionsService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		private readonly store: Store,
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService
@@ -94,14 +95,9 @@ export class PositionsComponent
 		if (result) {
 			await this.organizationPositionsService.delete(id);
 
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.REMOVE_POSITION',
-					{
-						name: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.REMOVE_POSITION',
+				{ name }
 			);
 
 			this.loadPositions();
@@ -141,7 +137,10 @@ export class PositionsComponent
 			tags: this.tags
 		});
 		this.loadPositions();
-		this.toastrService.success('Successfully updated');
+		this.toastrService.success(
+			'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.UPDATED_POSITION',
+			{ name }
+		);
 		this.cancel();
 	}
 	private async addPosition(name: string) {
@@ -153,14 +152,9 @@ export class PositionsComponent
 				tags: this.tags
 			});
 
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.ADD_POSITION',
-					{
-						name: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.ADD_POSITION',
+				{ name }
 			);
 
 			this.loadPositions();
@@ -168,9 +162,7 @@ export class PositionsComponent
 		} else {
 			// TODO translate
 			this.toastrService.danger(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.INVALID_POSITION_NAME'
-				),
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.INVALID_POSITION_NAME',
 				this.getTranslation(
 					'TOASTR.MESSAGE.NEW_ORGANIZATION_POSITION_INVALID_NAME'
 				)

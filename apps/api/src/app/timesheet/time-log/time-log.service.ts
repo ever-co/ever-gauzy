@@ -12,7 +12,15 @@ import {
 	IGetTimeLogReportInput,
 	ITimeLog,
 	TimeLogType,
-	IAmountOwedReport
+	IAmountOwedReport,
+	IGetTimeLimitReportInput,
+	ITimeLimitReport,
+	IProjectBudgetLimitReport,
+	OrganizationProjectBudgetTypeEnum,
+	IProjectBudgetLimitReportInput,
+	IClientBudgetLimitReportInput,
+	OrganizationContactBudgetTypeEnum,
+	IClientBudgetLimitReport
 } from '@gauzy/models';
 import * as moment from 'moment';
 import { CrudService } from '../../core';
@@ -29,7 +37,9 @@ import { GetTimeLogGroupByDateCommand } from './commands/get-time-log-group-by-d
 import { GetTimeLogGroupByEmployeeCommand } from './commands/get-time-log-group-by-employee.command';
 import { GetTimeLogGroupByProjectCommand } from './commands/get-time-log-group-by-project.command';
 import { GetTimeLogGroupByClientCommand } from './commands/get-time-log-group-by-client.command';
-import { chain } from 'underscore';
+import { chain, pluck } from 'underscore';
+import { OrganizationContact } from '../../organization-contact/organization-contact.entity';
+import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
 
 @Injectable()
 export class TimeLogService extends CrudService<TimeLog> {
@@ -40,7 +50,13 @@ export class TimeLogService extends CrudService<TimeLog> {
 		private readonly timeLogRepository: Repository<TimeLog>,
 
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>
+		private readonly employeeRepository: Repository<Employee>,
+
+		@InjectRepository(OrganizationContact)
+		private readonly organizationContactsRepository: Repository<OrganizationContact>,
+
+		@InjectRepository(OrganizationProject)
+		private readonly organizationProjectRepository: Repository<OrganizationProject>
 	) {
 		super(timeLogRepository);
 	}
@@ -388,6 +404,236 @@ export class TimeLogService extends CrudService<TimeLog> {
 		});
 
 		return dates;
+	}
+
+	async getTimeLimit(request: IGetTimeLimitReportInput) {
+		if (!request.duration) {
+			request.duration = 'day';
+		}
+		const timeLogs = await this.timeLogRepository.find({
+			relations: ['employee', 'employee.user'],
+			order: {
+				startedAt: 'ASC'
+			},
+			where: (qb: SelectQueryBuilder<TimeLog>) => {
+				this.getFilterTimeLogQuery(qb, request);
+			}
+		});
+
+		let dayList = [];
+		const range = {};
+		let i = 0;
+		const start = moment(request.startDate);
+		while (start.isSameOrBefore(request.endDate) && i < 7) {
+			const date = start.format('YYYY-MM-DD');
+			range[date] = null;
+			start.add(1, request.duration);
+			i++;
+		}
+		dayList = Object.keys(range);
+
+		// const employees = await this.employeeRepository.find({
+		// 	organizationId: request.organizationId
+		// });
+
+		const byDate: any = chain(timeLogs)
+			.groupBy((log) => {
+				return moment(log.startedAt)
+					.startOf(request.duration)
+					.format('YYYY-MM-DD');
+			})
+			.mapObject((byDateLogs: ITimeLog[], date) => {
+				const byEmployee = chain(byDateLogs)
+					.groupBy('employeeId')
+					.map((byEmployeeLogs: ITimeLog[]) => {
+						const durationSum = byEmployeeLogs.reduce(
+							(iteratee: any, log: any) => {
+								return iteratee + log.duration;
+							},
+							0
+						);
+
+						const employee =
+							byEmployeeLogs.length > 0
+								? byEmployeeLogs[0].employee
+								: null;
+
+						let limit = employee.reWeeklyLimit * 60 * 60;
+						if (request.duration === 'day') {
+							limit = limit / 5;
+						} else if (request.duration === 'month') {
+							limit = limit * 4;
+						}
+
+						const durationPercentage = (durationSum * 100) / limit;
+
+						return {
+							employee,
+							duration: durationSum,
+							durationPercentage: durationPercentage.toFixed(2),
+							limit
+						};
+					})
+					.value();
+
+				return { date, employees: byEmployee };
+			})
+			.value();
+
+		const dates = dayList.map((date) => {
+			if (byDate[date]) {
+				return byDate[date];
+			} else {
+				return {
+					date: date,
+					employees: []
+				};
+			}
+		});
+
+		return dates as ITimeLimitReport[];
+	}
+
+	async projectBudgetLimit(request: IProjectBudgetLimitReportInput) {
+		// const timeLogs = await this.timeLogRepository.find({
+		// 	relations: [
+		// 		'project',
+		// 	],
+		// 	order: {
+		// 		startedAt: 'ASC'
+		// 	},
+		// 	where: (qb: SelectQueryBuilder<TimeLog>) => {
+		// 		this.getFilterTimeLogQuery(qb, request);
+		// 	}
+		// });
+
+		const projects = await this.organizationProjectRepository.find({
+			relations: ['timeLogs', 'timeLogs.employee'],
+			where: {
+				organizationId: request.organizationId
+			}
+		});
+
+		const projectTimeLogs = projects.map(
+			(project): IProjectBudgetLimitReport => {
+				let spent = 0;
+				let spentPercentage = 0;
+
+				if (
+					project.budgetType ==
+					OrganizationProjectBudgetTypeEnum.HOURS
+				) {
+					spent = project.timeLogs.reduce(
+						(iteratee: any, log: any) => {
+							return iteratee + log.duration;
+						},
+						0
+					);
+					spentPercentage = (spent * 100) / project.budget;
+				} else {
+					spent = project.timeLogs.reduce(
+						(iteratee: any, log: any) => {
+							let amount = 0;
+							if (log.employee) {
+								amount =
+									log.duration *
+									60 *
+									60 *
+									log.employee.billRateValue;
+							}
+							return iteratee + amount;
+						},
+						0
+					);
+					spentPercentage = (spent * 100) / project.budget;
+				}
+
+				const reamingBudget = Math.max(project.budget - spent, 0);
+
+				return {
+					project,
+					budgetType: project.budgetType,
+					budget: project.budget,
+					spent: spent,
+					reamingBudget,
+					spentPercentage: parseFloat(spentPercentage.toFixed(2))
+				};
+			}
+		);
+
+		return projectTimeLogs;
+	}
+
+	async clientBudgetLimit(request: IClientBudgetLimitReportInput) {
+		const organizationContacts = await this.organizationContactsRepository.find(
+			{
+				where: {
+					organizationId: request.organizationId
+				}
+			}
+		);
+
+		const clientProjects = await this.organizationProjectRepository.find({
+			relations: ['timeLogs', 'timeLogs.employee'],
+			where: {
+				organizationContactId: pluck(organizationContacts, 'id')
+			}
+		});
+
+		const projects = clientProjects.map(
+			(project): IClientBudgetLimitReport => {
+				const organizationContact = project.organizationContact;
+
+				let spent = 0;
+				let spentPercentage = 0;
+				if (
+					organizationContact.budgetType ==
+					OrganizationContactBudgetTypeEnum.HOURS
+				) {
+					spent = project.timeLogs.reduce(
+						(iteratee: any, log: any) => {
+							return iteratee + log.duration;
+						},
+						0
+					);
+					spentPercentage =
+						(spent * 100) / organizationContact.budget;
+				} else {
+					spent = project.timeLogs.reduce(
+						(iteratee: any, log: any) => {
+							let amount = 0;
+							if (log.employee) {
+								amount =
+									log.duration *
+									60 *
+									60 *
+									log.employee.billRateValue;
+							}
+							return iteratee + amount;
+						},
+						0
+					);
+					spentPercentage =
+						(spent * 100) / organizationContact.budget;
+				}
+
+				const reamingBudget = Math.max(
+					organizationContact.budget - spent,
+					0
+				);
+
+				return {
+					organizationContact,
+					budgetType: organizationContact.budgetType,
+					budget: organizationContact.budget,
+					spent: spent,
+					reamingBudget,
+					spentPercentage: parseFloat(spentPercentage.toFixed(2))
+				};
+			}
+		);
+
+		return projects;
 	}
 
 	getFilterTimeLogQuery(

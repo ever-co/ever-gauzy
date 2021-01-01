@@ -25,7 +25,8 @@ import { Store } from '../../@core/services/store.service';
 	templateUrl: './help-center.component.html',
 	styleUrls: ['./help-center.component.scss']
 })
-export class HelpCenterComponent extends TranslationBaseComponent
+export class HelpCenterComponent
+	extends TranslationBaseComponent
 	implements OnDestroy, OnInit {
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
@@ -207,7 +208,10 @@ export class HelpCenterComponent extends TranslationBaseComponent
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
-			this.toastrSuccess('CREATED');
+			this.toastrService.success(
+				this.getTranslation('TOASTR.MESSAGE.HELP_ARTICALE_CREATED'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
 			this.loadArticles(this.categoryId);
 		}
 	}
@@ -220,7 +224,12 @@ export class HelpCenterComponent extends TranslationBaseComponent
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
-			this.toastrSuccess('DELETED');
+			this.toastrService.success(
+				this.getTranslation('TOASTR.MESSAGE.HELP_ARTICALE_DELETED', {
+					name: data.name
+				}),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
 			this.loadArticles(this.categoryId);
 		}
 	}
@@ -237,7 +246,12 @@ export class HelpCenterComponent extends TranslationBaseComponent
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
-			this.toastrSuccess('UPDATED');
+			this.toastrService.success(
+				this.getTranslation('TOASTR.MESSAGE.HELP_ARTICALE_UPDATED', {
+					name: data.name
+				}),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
 			this.loadArticles(this.categoryId);
 		}
 	}

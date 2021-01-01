@@ -29,7 +29,7 @@ import { InvoiceTasksSelectorComponent } from '../table-components/invoice-tasks
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { Observable } from 'rxjs';
 import { Router } from '@angular/router';
-import { NbToastrService, NbDialogService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { InvoiceProjectsSelectorComponent } from '../table-components/invoice-project-selector.component';
 import { InvoiceEmployeesSelectorComponent } from '../table-components/invoice-employees-selector.component';
@@ -44,6 +44,7 @@ import { ExpensesService } from '../../../@core/services/expenses.service';
 import { InvoiceExpensesSelectorComponent } from '../table-components/invoice-expense-selector.component';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -104,7 +105,7 @@ export class InvoiceAddComponent
 		readonly translateService: TranslateService,
 		private store: Store,
 		private router: Router,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private invoicesService: InvoicesService,
 		private organizationProjectsService: OrganizationProjectsService,
 		private invoiceItemService: InvoiceItemService,
@@ -517,13 +518,13 @@ export class InvoiceAddComponent
 			});
 
 			if (this.isEstimate) {
-				this.toastrService.primary(
+				this.toastrService.success(
 					this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE'),
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
 				this.router.navigate(['/pages/accounting/invoices/estimates']);
 			} else {
-				this.toastrService.primary(
+				this.toastrService.success(
 					this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
@@ -670,13 +671,13 @@ export class InvoiceAddComponent
 				.toPromise();
 
 			if (this.isEstimate) {
-				this.toastrService.primary(
+				this.toastrService.success(
 					this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE'),
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
 				this.router.navigate(['/pages/accounting/invoices/estimates']);
 			} else {
-				this.toastrService.primary(
+				this.toastrService.success(
 					this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
@@ -1120,7 +1121,7 @@ export class InvoiceAddComponent
 		const { tenantId } = this.store.user;
 		this.organizationId = this.store.selectedOrganization.id;
 		try {
-			this.toastrService.primary(
+			this.toastrService.success(
 				this.getTranslation(
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
 					{

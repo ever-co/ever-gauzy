@@ -20,13 +20,15 @@ import {
 	NbStepperComponent
 } from '@nebular/theme';
 import { EditTimeFrameComponent } from '../../../pages/goal-settings/edit-time-frame/edit-time-frame.component';
-import { first, takeUntil } from 'rxjs/operators';
+import { first } from 'rxjs/operators';
 import { GoalService } from '../../../@core/services/goal.service';
 import { EmployeesService } from '../../../@core/services';
-import { Subject } from 'rxjs';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { KeyResultService } from '../../../@core/services/keyresult.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-goal-template-select',
 	templateUrl: './goal-template-select.component.html',
@@ -42,7 +44,6 @@ export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
 	orgId: string;
 	orgName: string;
 	goalDetailsForm: FormGroup;
-	private _ngDestroy$ = new Subject<void>();
 	organization: IOrganization;
 	@ViewChild('stepper') stepper: NbStepperComponent;
 
@@ -56,7 +57,8 @@ export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
 		private keyResultService: KeyResultService,
 		private employeeService: EmployeesService,
 		private fb: FormBuilder,
-		private goalSettingsService: GoalSettingsService
+		private goalSettingsService: GoalSettingsService,
+		private toastrService: ToastrService
 	) {}
 
 	async ngOnInit() {
@@ -74,19 +76,19 @@ export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
 		});
 		await this.getTimeFrames();
 
-		const { id: organizationId, tenantId } = this.organization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 		this.goalTemplateService
 			.getAllGoalTemplates({ organizationId, tenantId })
 			.then((res) => {
 				const { items } = res;
 				this.goalTemplates = items;
 			});
-
 		this.employeeService
 			.getAll(['user'], { organizationId, tenantId })
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((employees) => {
-				this.employees = employees.items;
+			.pipe(untilDestroyed(this))
+			.subscribe(({ items }) => {
+				this.employees = items;
 			});
 	}
 
@@ -101,9 +103,9 @@ export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
 		await this.goalSettingService.getAllTimeFrames(findObj).then((res) => {
 			if (res) {
 				this.timeFrames = res.items.filter(
-					(timeframe) =>
-						timeframe.status === this.timeFrameStatusEnum.ACTIVE &&
-						isFuture(new Date(timeframe.endDate))
+					(timeFrame) =>
+						timeFrame.status === this.timeFrameStatusEnum.ACTIVE &&
+						isFuture(new Date(timeFrame.endDate))
 				);
 			}
 		});
@@ -152,7 +154,7 @@ export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
 			delete goal.keyResults;
 			const goalCreated = await this.goalService.createGoal(goal);
 			if (goalCreated) {
-				const kpicreatedPromise = [];
+				const kpiCreatedPromise = [];
 				this.selectedGoalTemplate.keyResults.forEach(
 					async (keyResult) => {
 						if (keyResult.type === KeyResultTypeEnum.KPI) {
@@ -166,12 +168,12 @@ export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
 									if (res) {
 										keyResult.kpiId = res.id;
 									}
-									kpicreatedPromise.push(keyResult);
+									kpiCreatedPromise.push(keyResult);
 								});
 						}
 					}
 				);
-				Promise.all(kpicreatedPromise).then(async () => {
+				Promise.all(kpiCreatedPromise).then(async () => {
 					const keyResults = this.selectedGoalTemplate.keyResults.map(
 						(keyResult) => {
 							delete keyResult.kpi;
@@ -195,6 +197,9 @@ export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
 						.createBulkKeyResult(keyResults)
 						.then((res) => {
 							if (res) {
+								this.toastrService.success(
+									'Key Results Created'
+								);
 								this.closeDialog('done');
 							}
 						});
@@ -211,8 +216,5 @@ export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
 		this.dialogRef.close(data);
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

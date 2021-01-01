@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { IKeyResult } from '@gauzy/models';
 import { Observable, throwError } from 'rxjs';
-import { tap, catchError, first } from 'rxjs/operators';
-import { NbToastrService } from '@nebular/theme';
+import { catchError, first } from 'rxjs/operators';
+import { ToastrService } from './toastr.service';
 
 interface IKeyResultResponse {
 	items: IKeyResult[];
@@ -17,30 +17,20 @@ export class KeyResultService {
 	private readonly API_URL = '/api/key-results';
 	constructor(
 		private _http: HttpClient,
-		private toastrService: NbToastrService
+		private toastrService: ToastrService
 	) {}
 
 	createKeyResult(keyResult): Promise<IKeyResult> {
 		return this._http
 			.post<IKeyResult>(`${this.API_URL}/create`, keyResult)
-			.pipe(
-				tap(() =>
-					this.toastrService.primary('Key Result Created', 'Success')
-				),
-				catchError((error) => this.errorHandler(error))
-			)
+			.pipe(catchError((error) => this.errorHandler(error)))
 			.toPromise();
 	}
 
 	createBulkKeyResult(keyResults): Promise<IKeyResult[]> {
 		return this._http
 			.post<IKeyResult[]>(`${this.API_URL}/createBulk`, keyResults)
-			.pipe(
-				tap(() =>
-					this.toastrService.primary('Key Results Created', 'Success')
-				),
-				catchError((error) => this.errorHandler(error))
-			)
+			.pipe(catchError((error) => this.errorHandler(error)))
 			.toPromise();
 	}
 

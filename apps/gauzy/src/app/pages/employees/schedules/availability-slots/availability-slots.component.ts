@@ -18,7 +18,6 @@ import { Store } from '../../../../@core/services/store.service';
 import { AvailabilitySlotsService } from '../../../../@core/services/availability-slots.service';
 import { first, filter } from 'rxjs/operators';
 import { ActivatedRoute } from '@angular/router';
-import { NbToastrService } from '@nebular/theme';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
@@ -75,7 +74,6 @@ export class AvailabilitySlotsComponent
 		private store: Store,
 		private route: ActivatedRoute,
 		private errorHandler: ErrorHandlingService,
-		private nbToastrService: NbToastrService,
 		private toastrService: ToastrService,
 		private availabilitySlotsService: AvailabilitySlotsService,
 		private timeOffService: TimeOffService,
@@ -387,10 +385,7 @@ export class AvailabilitySlotsComponent
 				);
 			}
 
-			this.nbToastrService.primary(
-				this.getTranslation('NOTES.AVAILABILITY_SLOTS.SAVE'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('NOTES.AVAILABILITY_SLOTS.SAVE');
 
 			this.removedEvents = [];
 			this.fetchAvailableSlots();
@@ -475,12 +470,9 @@ export class AvailabilitySlotsComponent
 			this.calendar.getApi().refetchEvents();
 			this.firstLoad = false;
 		} catch (error) {
-			this.nbToastrService.danger(
-				this.getTranslation('NOTES.AVAILABILITY_SLOTS.ERROR', {
-					error: error.message || error.error.message
-				}),
-				this.getTranslation('TOASTR.TITLE.ERROR')
-			);
+			this.toastrService.danger('NOTES.AVAILABILITY_SLOTS.ERROR', null, {
+				error: error.message || error.error.message
+			});
 		}
 	}
 

@@ -1,0 +1,159 @@
+<nb-card>
+	<nb-card-header>
+		<h4>{{ 'REPORT_PAGE.PROJECT_BUDGET_REPORTS' | translate }}</h4>
+		<div>
+			{{ logRequest?.startDate | date }} -
+			{{ logRequest?.endDate | date }}
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="filters mt-4 mb-4">
+			<ngx-filters
+				dateRange="custom_range"
+				[hasEmployeeFilter]="false"
+				[hasActivityLevelFilter]="false"
+				[hasSourceFilter]="false"
+				[hasLogTypeFilter]="false"
+				[hasEmployeeFilter]="false"
+				[saveFilters]="false"
+				[filters]="logRequest"
+				(filtersChange)="filtersChange($event)"
+			></ngx-filters>
+		</div>
+
+		<div
+			class="weekly-logs row-table"
+			[nbSpinner]="loading"
+			nbSpinnerSize="giant"
+			nbSpinnerStatus="primary"
+		>
+			<div class="px-4" *ngIf="projects?.length > 0">
+				<div class="row py-3 font-weight-bold align-items-center">
+					<div class="col-3">
+						{{ 'REPORT_PAGE.PROJECT' | translate }}
+					</div>
+					<div class="text-center col day-col">
+						{{ 'REPORT_PAGE.SPENT' | translate }}
+					</div>
+					<div class="col-4 text-center day-col">
+						{{ 'REPORT_PAGE.BUDGET' | translate }}
+					</div>
+					<div class="col text-center day-col">
+						{{ 'REPORT_PAGE.REMAINING' | translate }}
+					</div>
+				</div>
+			</div>
+
+			<ng-template [ngIf]="projects?.length > 0" [ngIfElse]="notFound">
+				<nb-card class="card">
+					<nb-card-body
+						class="cart-body project-row"
+						*ngFor="let project of projects"
+					>
+						<div
+							class="row report-row py-1 mt-3 align-items-center"
+						>
+							<div class="col-3 project-name">
+								<ng-container
+									*ngTemplateOutlet="
+										projectEl;
+										context: {
+											$implicit: project?.project
+										}
+									"
+								>
+								</ng-container>
+							</div>
+							<div class="col text-center day-col">
+								<span
+									*ngIf="
+										project.budgetType ===
+										OrganizationProjectBudgetTypeEnum.HOURS
+									"
+									>{{
+										project?.spent | durationFormat
+									}}
+									Hours</span
+								>
+								<span
+									*ngIf="
+										project.budgetType ===
+										OrganizationProjectBudgetTypeEnum.COST
+									"
+									>{{ project?.budget | currency }}</span
+								>
+							</div>
+							<div class="col-4 text-center d-flex day-col">
+								<ngx-progress-status
+									[percentage]="project?.spentPercentage"
+								></ngx-progress-status>
+								<span class="ml-3">{{
+									project?.spent | currency
+								}}</span>
+							</div>
+							<div class="col text-center day-col">
+								<span
+									*ngIf="
+										project.budgetType ===
+										OrganizationProjectBudgetTypeEnum.HOURS
+									"
+									>{{
+										project.reamingBudget | durationFormat
+									}}
+									Hours</span
+								>
+								<span
+									*ngIf="
+										project.budgetType ===
+										OrganizationProjectBudgetTypeEnum.COST
+									"
+									>{{
+										project.reamingBudget | currency
+									}}</span
+								>
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</ng-template>
+			<ng-template #notFound>
+				<nb-card>
+					<nb-card-body>
+						<div
+							class="row font-weight-bold py-5 align-items-center"
+						>
+							<div class="col text-center">
+								{{ 'REPORT_PAGE.NO_PROJECTS' | translate }}
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</ng-template>
+		</div>
+	</nb-card-body>
+</nb-card>
+
+<ng-template let-project #projectEl>
+	<span *ngIf="project; else noProjects">{{ project?.name }} </span>
+	<ng-template #noProjects>
+		<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
+	</ng-template>
+</ng-template>
+
+<ng-template let-client #clientEl>
+	<span *ngIf="client; else noClient">{{ client?.name }} </span>
+	<ng-template #noClient>
+		<span>{{ 'REPORT_PAGE.NO_CLIENT' | translate }}</span>
+	</ng-template>
+</ng-template>
+
+<ng-template let-employee #employeeEl>
+	<ngx-avatar
+		*ngIf="employee"
+		[src]="employee?.user?.imageUrl"
+		[name]="employee?.user?.name"
+	></ngx-avatar>
+	<ng-template #noEmployee>
+		<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
+	</ng-template>
+</ng-template>

@@ -6,10 +6,11 @@ import { IProductVariant } from '@gauzy/models';
 import { Subject, BehaviorSubject } from 'rxjs';
 import { takeUntil, first } from 'rxjs/operators';
 import { Router } from '@angular/router';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ProductVariantService } from 'apps/gauzy/src/app/@core/services/product-variant.service';
 import { EnabledStatusComponent } from '../../table-components/enabled-row.component';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
 export interface SelectedProductVariant {
 	data: IProductVariant;
@@ -20,7 +21,8 @@ export interface SelectedProductVariant {
 	selector: 'ngx-variant-table',
 	templateUrl: './variant-table.component.html'
 })
-export class VariantTableComponent extends TranslationBaseComponent
+export class VariantTableComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	@ViewChild('variantTable') variantTable;
 	@Input() variants$: BehaviorSubject<any[]>;
@@ -40,7 +42,7 @@ export class VariantTableComponent extends TranslationBaseComponent
 		private router: Router,
 		private dialogService: NbDialogService,
 		private productVariantService: ProductVariantService,
-		private toastrService: NbToastrService
+		private toastrService: ToastrService
 	) {
 		super(translateService);
 	}
@@ -136,17 +138,11 @@ export class VariantTableComponent extends TranslationBaseComponent
 				}
 
 				this.toastrService.success(
-					this.getTranslation(
-						'INVENTORY_PAGE.PRODUCT_VARIANT_DELETED'
-					),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
+					'INVENTORY_PAGE.PRODUCT_VARIANT_DELETED'
 				);
 			}
 		} catch {
-			this.toastrService.danger(
-				this.getTranslation('TOASTR.MESSAGE.SOMETHING_BAD_HAPPENED'),
-				this.getTranslation('TOASTR.TITLE.ERROR')
-			);
+			this.toastrService.danger('TOASTR.MESSAGE.SOMETHING_BAD_HAPPENED');
 		}
 	}
 

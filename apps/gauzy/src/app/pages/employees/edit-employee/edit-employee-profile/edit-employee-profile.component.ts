@@ -6,7 +6,6 @@ import {
 	IEmployeeUpdateInput,
 	IUserUpdateInput
 } from '@gauzy/models';
-import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeeStore } from '../../../../@core/services/employee-store.service';
 import { EmployeesService } from '../../../../@core/services/employees.service';
@@ -15,6 +14,7 @@ import { UsersService } from '../../../../@core/services/users.service';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { Subject, Subscription } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
+import { ToastrService } from '../../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ngx-edit-employee-profile',
@@ -43,7 +43,7 @@ export class EditEmployeeProfileComponent
 		private route: ActivatedRoute,
 		private employeeService: EmployeesService,
 		private userService: UsersService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private employeeStore: EmployeeStore,
 		private errorHandler: ErrorHandlingService,
 		readonly translateService: TranslateService
@@ -155,12 +155,9 @@ export class EditEmployeeProfileComponent
 					value
 				);
 
-				this.toastrService.primary(
-					this.getTranslation(
-						'TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE',
-						{ name: this.employeeName }
-					),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				this.toastrService.success(
+					'TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE',
+					{ name: this.employeeName }
 				);
 				this._loadEmployeeData();
 			} catch (error) {
@@ -181,12 +178,9 @@ export class EditEmployeeProfileComponent
 					value
 				);
 
-				this.toastrService.primary(
-					this.getTranslation(
-						'TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE',
-						{ name: this.employeeName }
-					),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				this.toastrService.success(
+					'TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE',
+					{ name: this.employeeName }
 				);
 
 				this._loadEmployeeData();

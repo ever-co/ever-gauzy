@@ -9,7 +9,7 @@ import { TranslationBaseComponent } from '../../../../@shared/language-base/tran
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { ProductCategoryService } from '../../../../@core/services/product-category.service';
 import { Store } from '../../../../@core/services/store.service';
 import { first, tap } from 'rxjs/operators';
@@ -19,6 +19,7 @@ import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/dele
 import { ComponentEnum } from '../../../../@core/constants/layout.constants';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-product-categories',
@@ -53,7 +54,7 @@ export class ProductCategoriesComponent
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
 		private productCategoryService: ProductCategoryService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private router: Router,
 		private store: Store
 	) {
@@ -186,11 +187,13 @@ export class ProductCategoriesComponent
 		const productCategory = await dialog.onClose.pipe(first()).toPromise();
 		this.selectedProductCategory = null;
 		this.disableButton = true;
-
 		if (productCategory) {
-			this.toastrService.primary(
-				this.getTranslation('INVENTORY_PAGE.PRODUCT_CATEGORY_SAVED'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			let productCatTranslaction = productCategory.translations[0];
+			this.toastrService.success(
+				'INVENTORY_PAGE.PRODUCT_CATEGORY_SAVED',
+				{
+					name: productCatTranslaction?.name
+				}
 			);
 		}
 
@@ -213,11 +216,15 @@ export class ProductCategoriesComponent
 			await this.productCategoryService.delete(
 				this.selectedProductCategory.id
 			);
-			this.loadSettings();
-			this.toastrService.primary(
-				this.getTranslation('INVENTORY_PAGE.PRODUCT_CATEGORY_DELETED'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+
+			this.toastrService.success(
+				'INVENTORY_PAGE.PRODUCT_CATEGORY_DELETED',
+				{
+					name: this.selectedProductCategory.name
+				}
 			);
+
+			this.loadSettings();
 		}
 		this.disableButton = true;
 	}

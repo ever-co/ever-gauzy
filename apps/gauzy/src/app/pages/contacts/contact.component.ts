@@ -299,13 +299,16 @@ export class ContactComponent
 			this.showAddCard = !this.showAddCard;
 			this.selectProjects = [];
 
+			let toasterMessage: string =
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT';
+			if (organizationContact.id) {
+				toasterMessage =
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.UPDATE_CONTACT';
+			}
 			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
-					{
-						name: organizationContact.name
-					}
-				),
+				this.getTranslation(toasterMessage, {
+					name: organizationContact.name
+				}),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 

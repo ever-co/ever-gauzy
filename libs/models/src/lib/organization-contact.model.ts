@@ -22,6 +22,13 @@ export interface IOrganizationContact extends IBaseEntityWithMembers {
 	tags: ITag[];
 	contact: IContact;
 	createdBy?: string;
+	budget?: number;
+	budgetType?: OrganizationContactBudgetTypeEnum;
+}
+
+export enum OrganizationContactBudgetTypeEnum {
+	HOURS = 'hours',
+	COST = 'cost'
 }
 
 export interface IOrganizationContactFindInput

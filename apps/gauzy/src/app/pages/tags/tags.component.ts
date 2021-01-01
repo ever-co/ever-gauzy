@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TagsMutationComponent } from '../../@shared/tags/tags-mutation.component';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TagsService } from '../../@core/services/tags.service';
 import { ITag, IOrganization, ComponentLayoutStyleEnum } from '@gauzy/models';
@@ -14,6 +14,7 @@ import { Store } from '../../@core/services/store.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { RouterEvent, NavigationEnd, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -51,7 +52,7 @@ export class TagsComponent
 		private dialogService: NbDialogService,
 		private tagsService: TagsService,
 		readonly translateService: TranslateService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private router: Router,
 		private store: Store
 	) {
@@ -121,10 +122,9 @@ export class TagsComponent
 		});
 		const addData = await dialog.onClose.pipe(first()).toPromise();
 		if (addData) {
-			this.toastrService.primary(
-				this.getTranslation('TAGS_PAGE.TAGS_ADD_TAG'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('TAGS_PAGE.TAGS_ADD_TAG', {
+				name: addData.name
+			});
 		}
 		this.loadSettings();
 		this.clearItem();
@@ -145,10 +145,9 @@ export class TagsComponent
 		if (result) {
 			await this.tagsService.delete(this.tag.id);
 			this.loadSettings();
-			this.toastrService.primary(
-				this.getTranslation('TAGS_PAGE.TAGS_DELETE_TAG'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('TAGS_PAGE.TAGS_DELETE_TAG', {
+				name: this.tag.name
+			});
 		}
 		this.clearItem();
 	}
@@ -167,10 +166,9 @@ export class TagsComponent
 
 		const editData = await dialog.onClose.pipe(first()).toPromise();
 		if (editData) {
-			this.toastrService.primary(
-				this.getTranslation('TAGS_PAGE.TAGS_EDIT_TAG'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('TAGS_PAGE.TAGS_EDIT_TAG', {
+				name: this.tag.name
+			});
 		}
 		this.loadSettings();
 		this.clearItem();
