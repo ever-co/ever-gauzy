@@ -2,7 +2,11 @@ import { Connection } from 'typeorm';
 import * as faker from 'faker';
 import { Tag } from '../tags/tag.entity';
 import { OrganizationProject } from './organization-projects.entity';
-import { IOrganization, TaskListTypeEnum } from '@gauzy/models';
+import {
+	IOrganization,
+	OrganizationProjectBudgetTypeEnum,
+	TaskListTypeEnum
+} from '@gauzy/models';
 import { Tenant } from '../tenant/tenant.entity';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { DEFAULT_ORGANIZATION_PROJECTS } from './default-organization-projects';
@@ -40,6 +44,13 @@ export const createDefaultOrganizationProjects = async (
 		project.organizationContact = organizationContact;
 		project.organizationId = organization.id;
 		project.tenant = organization.tenant;
+		project.budgetType = faker.random.arrayElement(
+			Object.values(OrganizationProjectBudgetTypeEnum)
+		);
+		project.budget =
+			project.budgetType == OrganizationProjectBudgetTypeEnum.COST
+				? faker.random.number({ min: 2000, max: 40000 })
+				: faker.random.number({ min: 20, max: 40 });
 		project.taskListType = faker.random.arrayElement(
 			Object.values(TaskListTypeEnum)
 		);
@@ -87,6 +98,14 @@ export const createRandomOrganizationProjects = async (
 				project.organizationContact = organizationContact;
 				project.organizationId = org.id;
 				project.tenant = tenant;
+				project.budgetType = faker.random.arrayElement(
+					Object.values(OrganizationProjectBudgetTypeEnum)
+				);
+				project.budget =
+					project.budgetType == OrganizationProjectBudgetTypeEnum.COST
+						? faker.random.number({ min: 2000, max: 40000 })
+						: faker.random.number({ min: 20, max: 40 });
+
 				project.startDate = faker.date.past(5);
 				project.endDate = faker.date.past(2);
 				projects.push(project);

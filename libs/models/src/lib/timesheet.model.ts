@@ -1,6 +1,12 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { IOrganizationContact } from './organization-contact.model';
-import { IOrganizationProject } from './organization-projects.model';
+import {
+	IOrganizationContact,
+	OrganizationContactBudgetTypeEnum
+} from './organization-contact.model';
+import {
+	IOrganizationProject,
+	OrganizationProjectBudgetTypeEnum
+} from './organization-projects.model';
 import { IEmployee, IEmployeeFindInput } from './employee.model';
 import { ITask } from './task-entity.model';
 import { ITag } from './tag-entity.model';
@@ -448,3 +454,54 @@ export type IReportDayData =
 	| IReportDayGroupByEmployee
 	| IReportDayGroupByProject
 	| IReportDayGroupByClient;
+
+export interface IGetTimeLimitReportInput {
+	organizationId?: string;
+	startDate?: string | Date;
+	endDate?: string | Date;
+	employeeId?: string;
+	relations?: string[];
+	duration?: 'day' | 'week' | 'month';
+}
+
+export interface ITimeLimitReport {
+	date: string;
+	employeeLogs: {
+		employee: IEmployee;
+		duration: number;
+		durationPercentage: number;
+		limit: number;
+	}[];
+}
+
+export interface IProjectBudgetLimitReportInput {
+	organizationId?: string;
+	startDate?: string | Date;
+	endDate?: string | Date;
+	employeeId?: string;
+}
+
+export interface IProjectBudgetLimitReport {
+	project?: IOrganizationProject;
+	budgetType?: OrganizationProjectBudgetTypeEnum;
+	budget?: number;
+	spent?: number;
+	spentPercentage?: number;
+	reamingBudget?: number;
+}
+
+export interface IClientBudgetLimitReportInput {
+	organizationId?: string;
+	startDate?: string | Date;
+	endDate?: string | Date;
+	employeeId?: string;
+}
+
+export interface IClientBudgetLimitReport {
+	organizationContact?: IOrganizationContact;
+	budgetType?: OrganizationContactBudgetTypeEnum;
+	budget?: number;
+	spent?: number;
+	spentPercentage?: number;
+	reamingBudget?: number;
+}

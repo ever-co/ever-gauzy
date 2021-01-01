@@ -29,7 +29,8 @@ import {
 	ITimeLog,
 	IEmployee,
 	IOrganizationSprint,
-	IPayment
+	IPayment,
+	OrganizationProjectBudgetTypeEnum
 } from '@gauzy/models';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { Employee } from '../employee/employee.entity';
@@ -196,4 +197,20 @@ export class OrganizationProject
 	@IsOptional()
 	@Column({ nullable: true })
 	openSourceProjectUrl?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	budget?: number;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({
+		type: 'text',
+		nullable: true,
+		default: OrganizationProjectBudgetTypeEnum.COST
+	})
+	budgetType?: OrganizationProjectBudgetTypeEnum;
 }

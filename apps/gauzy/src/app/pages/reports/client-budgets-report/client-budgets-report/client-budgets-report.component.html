@@ -1,0 +1,145 @@
+<nb-card>
+	<nb-card-header>
+		<h4>{{ 'REPORT_PAGE.CLIENT_BUDGET_REPORTS' | translate }}</h4>
+		<div>
+			{{ logRequest?.startDate | date }} -
+			{{ logRequest?.endDate | date }}
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="filters mt-4 mb-4">
+			<ngx-filters
+				dateRange="custom_range"
+				[hasEmployeeFilter]="false"
+				[hasActivityLevelFilter]="false"
+				[hasSourceFilter]="false"
+				[hasLogTypeFilter]="false"
+				[hasEmployeeFilter]="false"
+				[saveFilters]="false"
+				[filters]="logRequest"
+				(filtersChange)="filtersChange($event)"
+			></ngx-filters>
+		</div>
+
+		<div
+			class="weekly-logs row-table"
+			[nbSpinner]="loading"
+			nbSpinnerSize="giant"
+			nbSpinnerStatus="primary"
+		>
+			<div class="px-4" *ngIf="clients?.length > 0">
+				<div class="row py-3 font-weight-bold align-items-center">
+					<div class="col-3">
+						{{ 'REPORT_PAGE.CLIENT' | translate }}
+					</div>
+					<div class="col text-center day-col">
+						{{ 'REPORT_PAGE.SPENT' | translate }}
+					</div>
+					<div class="col-4 text-center day-col">
+						{{ 'REPORT_PAGE.BUDGET' | translate }}
+					</div>
+					<div class="col text-center day-col">
+						{{ 'REPORT_PAGE.REMAINING' | translate }}
+					</div>
+				</div>
+			</div>
+
+			<ng-template [ngIf]="clients?.length > 0" [ngIfElse]="notFound">
+				<nb-card class="card">
+					<nb-card-body
+						class="cart-body client-row"
+						*ngFor="let client of clients"
+					>
+						<div
+							class="row report-row py-1 mt-3 align-items-center"
+						>
+							<div class="col-3 client-name">
+								<ng-container
+									*ngTemplateOutlet="
+										clientEl;
+										context: {
+											$implicit:
+												client?.organizationContact
+										}
+									"
+								>
+								</ng-container>
+							</div>
+							<div class="col text-center day-col">
+								<span
+									*ngIf="
+										client.budgetType ===
+										OrganizationContactBudgetTypeEnum.HOURS
+									"
+									>{{
+										client?.spent | durationFormat
+									}}
+									Hours</span
+								>
+								<span
+									*ngIf="
+										client.budgetType ===
+										OrganizationContactBudgetTypeEnum.COST
+									"
+									>{{ client?.spent | currency }}</span
+								>
+							</div>
+							<div class="col-4 text-center day-col">
+								<ngx-progress-status
+									[percentage]="client?.spentPercentage"
+								></ngx-progress-status>
+								<span class="ml-3">{{
+									client?.spent | currency
+								}}</span>
+							</div>
+							<div class="col text-center day-col">
+								<div class="col-sm-3 text-center day-col">
+									<span
+										*ngIf="
+											client.budgetType ===
+											OrganizationContactBudgetTypeEnum.HOURS
+										"
+										>{{
+											client.reamingBudget
+												| durationFormat
+										}}
+										Hours</span
+									>
+									<span
+										*ngIf="
+											client.budgetType ===
+											OrganizationContactBudgetTypeEnum.COST
+										"
+										>{{
+											client.reamingBudget | currency
+										}}</span
+									>
+								</div>
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</ng-template>
+			<ng-template #notFound>
+				<nb-card>
+					<nb-card-body>
+						<div
+							class="row font-weight-bold py-5 align-items-center"
+						>
+							<div class="col text-center">
+								{{ 'REPORT_PAGE.NO_CLIENTS' | translate }}
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</ng-template>
+		</div>
+	</nb-card-body>
+</nb-card>
+
+<ng-template let-client #clientEl>
+	<span *ngIf="client; else noClient">{{ client?.name }} </span>
+	<ng-template #noClient>
+		<span>{{ 'REPORT_PAGE.NO_CLIENT' | translate }}</span>
+	</ng-template>
+</ng-template>

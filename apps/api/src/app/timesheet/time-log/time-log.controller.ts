@@ -18,7 +18,10 @@ import {
 	OrganizationPermissionsEnum,
 	PermissionsEnum,
 	IGetTimeLogConflictInput,
-	IGetTimeLogReportInput
+	IGetTimeLogReportInput,
+	IGetTimeLimitReportInput,
+	IProjectBudgetLimitReportInput,
+	IClientBudgetLimitReportInput
 } from '@gauzy/models';
 import { AuthGuard } from '@nestjs/passport';
 import { TimeLogService } from './time-log.service';
@@ -146,6 +149,59 @@ export class TimeLogController extends CrudController<ITimeLog> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@ApiOperation({ summary: 'Time Limit' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found records'
+	})
+	@UseGuards(AuthGuard('jwt'))
+	@Get('time-limit')
+	async weeklyLimit(@Query() request?: IGetTimeLimitReportInput) {
+		return this.timeLogService.getTimeLimit(request);
+	}
+
+	@ApiOperation({ summary: 'Budget limit' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found one record'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiOperation({ summary: 'Time Limit' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found records'
+	})
+	@UseGuards(AuthGuard('jwt'))
+	@Get('project-budget-limit')
+	async projectBudgetLimit(
+		@Query() request?: IProjectBudgetLimitReportInput
+	) {
+		return this.timeLogService.projectBudgetLimit(request);
+	}
+
+	@ApiOperation({ summary: 'Budget limit' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found one record'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiOperation({ summary: 'Time Limit' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found records'
+	})
+	@UseGuards(AuthGuard('jwt'))
+	@Get('client-budget-limit')
+	async clientBudgetLimit(@Query() request?: IClientBudgetLimitReportInput) {
+		return this.timeLogService.clientBudgetLimit(request);
+	}
+
 	@Get(':id')
 	async findOne(
 		@Param('id') id: string,

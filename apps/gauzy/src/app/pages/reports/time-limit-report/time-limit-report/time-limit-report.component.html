@@ -1,0 +1,140 @@
+<nb-card>
+	<nb-card-header>
+		<h4>{{ title | translate }}</h4>
+		<div>
+			{{ logRequest?.startDate | date }} -
+			{{ logRequest?.endDate | date }}
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="filters mt-4 mb-4">
+			<ngx-filters
+				[dateRange]="
+					logRequest.duration == 'day'
+						? 'custom_range'
+						: logRequest.duration
+				"
+				[hasEmployeeFilter]="false"
+				[hasEmployeeFilter]="false"
+				[saveFilters]="false"
+				[filters]="logRequest"
+				(filtersChange)="filtersChange($event)"
+			></ngx-filters>
+		</div>
+
+		<div class="table">
+			<div
+				class="time-logs row-table"
+				[nbSpinner]="loading"
+				nbSpinnerSize="giant"
+				nbSpinnerStatus="primary"
+			>
+				<div class="px-4" *ngIf="dailyData?.length > 0">
+					<div class="row py-3 font-weight-bold align-items-center">
+						<div class="col-sm-2">
+							{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+						</div>
+
+						<div class="col text-center day-col">
+							{{ 'REPORT_PAGE.LIMIT' | translate }}
+						</div>
+						<div class="col text-center day-col">
+							{{ 'REPORT_PAGE.SPENT_HOURS' | translate }}
+						</div>
+						<div class="col text-center day-col">
+							{{ 'REPORT_PAGE.REMAINING_HOURS' | translate }}
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<ng-template [ngIf]="dailyData?.length > 0" [ngIfElse]="notFound">
+				<nb-card class="card" *ngFor="let day of dailyData">
+					<nb-card-header class="card-title">{{
+						day.date
+					}}</nb-card-header>
+					<nb-card-body class="cart-body">
+						<div *ngIf="day.employees.length == 0">
+							No Employees worked.
+						</div>
+						<div
+							class="row py-3"
+							*ngFor="let timeLogRow of day.employees"
+						>
+							<div class="col-sm-2">
+								<ng-container
+									*ngTemplateOutlet="
+										employeeEl;
+										context: {
+											$implicit: timeLogRow?.employee
+										}
+									"
+								>
+								</ng-container>
+							</div>
+							<div class="col text-center day-col">
+								{{ timeLogRow.limit | durationFormat }}
+							</div>
+							<div class="col text-center d-flex day-col">
+								<span class="mr-4">{{
+									timeLogRow.duration | durationFormat
+								}}</span>
+								<ngx-progress-status
+									class="w-100"
+									[percentage]="timeLogRow.durationPercentage"
+								></ngx-progress-status>
+							</div>
+							<div class="col text-center day-col">
+								{{
+									timeLogRow.limit - timeLogRow.duration > 0
+										? (timeLogRow.limit -
+												timeLogRow.duration
+										  | durationFormat)
+										: 0
+								}}
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</ng-template>
+			<ng-template #notFound>
+				<nb-card>
+					<nb-card-body>
+						<div
+							class="row font-weight-bold py-5 align-items-center"
+						>
+							<div class="col text-center">
+								{{ 'REPORT_PAGE.NO_EMPLOYEES' | translate }}
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</ng-template>
+		</div>
+	</nb-card-body>
+</nb-card>
+
+<ng-template let-project #projectEl>
+	<span *ngIf="project; else noProjects">{{ project?.name }} </span>
+	<ng-template #noProjects>
+		<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
+	</ng-template>
+</ng-template>
+
+<ng-template let-task #taskEl>
+	<span *ngIf="task; else noTaSK">{{ task?.title }} </span>
+	<ng-template #noTaSK>
+		<span>{{ 'REPORT_PAGE.NO_TASK' | translate }}</span>
+	</ng-template>
+</ng-template>
+
+<ng-template let-employee #employeeEl>
+	<ngx-avatar
+		*ngIf="employee"
+		[src]="employee?.user?.imageUrl"
+		[name]="employee?.user?.name"
+	></ngx-avatar>
+	<ng-template #noEmployee>
+		<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
+	</ng-template>
+</ng-template>

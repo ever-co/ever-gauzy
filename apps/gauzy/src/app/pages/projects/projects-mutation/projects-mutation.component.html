@@ -191,6 +191,70 @@
 						</div>
 					</div>
 				</nb-tab>
+				<nb-tab tabTitle="Budget">
+					<div class="row">
+						<div class="form-group col-4">
+							<label class="label">{{
+								'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate
+							}}</label>
+							<nb-select
+								fullWidth
+								[placeholder]="
+									'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate
+								"
+								formControlName="budgetType"
+							>
+								<nb-option
+									*ngFor="
+										let budgetType of OrganizationProjectBudgetTypeEnum
+											| keyvalue
+									"
+									[value]="budgetType.value"
+								>
+									{{ budgetType.value | titlecase }}
+								</nb-option>
+							</nb-select>
+						</div>
+						<div
+							class="form-group col-4"
+							*ngIf="
+								form.controls.budgetType.value ===
+								OrganizationProjectBudgetTypeEnum.HOURS
+							"
+						>
+							<label class="label">{{
+								'FORM.PLACEHOLDERS.HOURS' | translate
+							}}</label>
+							<input
+								nbInput
+								fullWidth
+								formControlName="budget"
+								[placeholder]="
+									'FORM.PLACEHOLDERS.HOURS' | translate
+								"
+							/>
+						</div>
+						<div
+							class="form-group col-4"
+							*ngIf="
+								form.controls.budgetType.value ===
+								OrganizationProjectBudgetTypeEnum.COST
+							"
+						>
+							<label class="label">{{
+								'FORM.PLACEHOLDERS.COST' | translate
+							}}</label>
+							<input
+								nbInput
+								fullWidth
+								formControlName="budget"
+								[placeholder]="
+									'FORM.PLACEHOLDERS.COST' | translate
+								"
+							/>
+						</div>
+					</div>
+				</nb-tab>
 				<nb-tab tabTitle="Open-Source">
 					<div class="row">
 						<div class="col-4 d-flex align-items-center">
