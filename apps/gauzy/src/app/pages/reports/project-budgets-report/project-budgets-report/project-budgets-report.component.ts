@@ -8,7 +8,8 @@ import {
 	IGetPaymentInput,
 	IGetTimeLogReportInput,
 	IOrganization,
-	IProjectBudgetLimitReport
+	IProjectBudgetLimitReport,
+	OrganizationProjectBudgetTypeEnum
 } from '@gauzy/models';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
@@ -38,6 +39,8 @@ export class ProjectBudgetsReportComponent implements OnInit, AfterViewInit {
 	groupBy: 'date' | 'employee' | 'project' | 'client' = 'date';
 	filters: IGetPaymentInput;
 	selectedEmployee: any;
+
+	OrganizationProjectBudgetTypeEnum = OrganizationProjectBudgetTypeEnum;
 
 	projects: IProjectBudgetLimitReport[];
 

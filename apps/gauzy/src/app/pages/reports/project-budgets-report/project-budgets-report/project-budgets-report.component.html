@@ -65,7 +65,23 @@
 								</ng-container>
 							</div>
 							<div class="col-sm-3 text-center day-col">
-								{{ project?.spent }}
+								<span
+									*ngIf="
+										project.budgetType ===
+										OrganizationProjectBudgetTypeEnum.HOURS
+									"
+									>{{
+										project?.spent | durationFormat
+									}}
+									Hours</span
+								>
+								<span
+									*ngIf="
+										project.budgetType ===
+										OrganizationProjectBudgetTypeEnum.COST
+									"
+									>{{ project?.spent | currency }}</span
+								>
 							</div>
 							<div class="col text-center day-col">
 								<ngx-progress-status
@@ -73,7 +89,25 @@
 								></ngx-progress-status>
 							</div>
 							<div class="col text-center day-col">
-								{{ project.budget - project.spent }}
+								<span
+									*ngIf="
+										project.budgetType ===
+										OrganizationProjectBudgetTypeEnum.HOURS
+									"
+									>{{
+										project.reamingBudget | durationFormat
+									}}
+									Hours</span
+								>
+								<span
+									*ngIf="
+										project.budgetType ===
+										OrganizationProjectBudgetTypeEnum.COST
+									"
+									>{{
+										project.reamingBudget | currency
+									}}</span
+								>
 							</div>
 						</div>
 					</nb-card-body>

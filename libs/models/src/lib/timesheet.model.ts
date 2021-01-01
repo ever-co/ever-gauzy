@@ -487,6 +487,7 @@ export interface IProjectBudgetLimitReport {
 	budget?: number;
 	spent?: number;
 	spentPercentage?: number;
+	reamingBudget?: number;
 }
 
 export interface IClientBudgetLimitReportInput {
@@ -502,4 +503,5 @@ export interface IClientBudgetLimitReport {
 	budget?: number;
 	spent?: number;
 	spentPercentage?: number;
+	reamingBudget?: number;
 }

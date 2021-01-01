@@ -8,7 +8,8 @@ import {
 	IGetPaymentInput,
 	IGetTimeLogReportInput,
 	IOrganization,
-	IClientBudgetLimitReport
+	IClientBudgetLimitReport,
+	OrganizationContactBudgetTypeEnum
 } from '@gauzy/models';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
@@ -32,6 +33,7 @@ export class ClientBudgetsReportComponent implements OnInit, AfterViewInit {
 	};
 	updateLogs$: Subject<any> = new Subject();
 	organization: IOrganization;
+	OrganizationContactBudgetTypeEnum = OrganizationContactBudgetTypeEnum;
 
 	loading: boolean;
 	private _selectedDate: Date = new Date();

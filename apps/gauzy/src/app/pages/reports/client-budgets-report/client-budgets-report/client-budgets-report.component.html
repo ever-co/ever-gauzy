@@ -66,7 +66,23 @@
 								</ng-container>
 							</div>
 							<div class="col-sm-3 text-center day-col">
-								{{ client?.spent }}
+								<span
+									*ngIf="
+										client.budgetType ===
+										OrganizationContactBudgetTypeEnum.HOURS
+									"
+									>{{
+										client?.spent | durationFormat
+									}}
+									Hours</span
+								>
+								<span
+									*ngIf="
+										client.budgetType ===
+										OrganizationContactBudgetTypeEnum.COST
+									"
+									>{{ client?.spent | currency }}</span
+								>
 							</div>
 							<div class="col text-center day-col">
 								<ngx-progress-status
@@ -74,7 +90,28 @@
 								></ngx-progress-status>
 							</div>
 							<div class="col text-center day-col">
-								{{ client.budget - client.spent }}
+								<div class="col-sm-3 text-center day-col">
+									<span
+										*ngIf="
+											client.budgetType ===
+											OrganizationContactBudgetTypeEnum.HOURS
+										"
+										>{{
+											client.reamingBudget
+												| durationFormat
+										}}
+										Hours</span
+									>
+									<span
+										*ngIf="
+											client.budgetType ===
+											OrganizationContactBudgetTypeEnum.COST
+										"
+										>{{
+											client.reamingBudget | currency
+										}}</span
+									>
+								</div>
 							</div>
 						</div>
 					</nb-card-body>

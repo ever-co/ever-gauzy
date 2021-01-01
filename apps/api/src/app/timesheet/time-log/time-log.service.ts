@@ -508,7 +508,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 		// });
 
 		const projects = await this.organizationProjectRepository.find({
-			relations: ['timeLogs'],
+			relations: ['timeLogs', 'timeLogs.employee'],
 			where: {
 				organizationId: request.organizationId
 			}
@@ -518,6 +518,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 			(project): IProjectBudgetLimitReport => {
 				let spent = 0;
 				let spentPercentage = 0;
+
 				if (
 					project.budgetType ==
 					OrganizationProjectBudgetTypeEnum.HOURS
@@ -529,13 +530,44 @@ export class TimeLogService extends CrudService<TimeLog> {
 						0
 					);
 					spentPercentage = (spent * 100) / project.budget;
+				} else {
+					spent = project.timeLogs.reduce(
+						(iteratee: any, log: any) => {
+							let amount = 0;
+							if (log.employee) {
+								amount =
+									log.duration *
+									60 *
+									60 *
+									log.employee.billRateValue;
+							}
+							return iteratee + amount;
+						},
+						0
+					);
+					spentPercentage = (spent * 100) / project.budget;
 				}
+
+				// if (
+				// 	project.budgetType ==
+				// 	OrganizationProjectBudgetTypeEnum.HOURS
+				// ) {
+				// 	spent = project.timeLogs.reduce(
+				// 		(iteratee: any, log: any) => {
+				// 			return iteratee + log.duration;
+				// 		},
+				// 		0
+				// 	);
+				// 	spentPercentage = (spent * 100) / project.budget;
+				// }
+				const reamingBudget = Math.max(project.budget - spent, 0);
 
 				return {
 					project,
 					budgetType: project.budgetType,
 					budget: project.budget,
 					spent: spent,
+					reamingBudget,
 					spentPercentage: parseFloat(spentPercentage.toFixed(2))
 				};
 			}
@@ -554,6 +586,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 		);
 
 		const clientProjects = await this.organizationProjectRepository.find({
+			relations: ['timeLogs', 'timeLogs.employee'],
 			where: {
 				organizationContactId: pluck(organizationContacts, 'id')
 			}
@@ -566,8 +599,8 @@ export class TimeLogService extends CrudService<TimeLog> {
 				let spent = 0;
 				let spentPercentage = 0;
 				if (
-					project.budgetType ==
-					OrganizationProjectBudgetTypeEnum.HOURS
+					organizationContact.budgetType ==
+					OrganizationContactBudgetTypeEnum.HOURS
 				) {
 					spent = project.timeLogs.reduce(
 						(iteratee: any, log: any) => {
@@ -575,14 +608,38 @@ export class TimeLogService extends CrudService<TimeLog> {
 						},
 						0
 					);
-					spentPercentage = (spent * 100) / project.budget;
+					spentPercentage =
+						(spent * 100) / organizationContact.budget;
+				} else {
+					spent = project.timeLogs.reduce(
+						(iteratee: any, log: any) => {
+							let amount = 0;
+							if (log.employee) {
+								amount =
+									log.duration *
+									60 *
+									60 *
+									log.employee.billRateValue;
+							}
+							return iteratee + amount;
+						},
+						0
+					);
+					spentPercentage =
+						(spent * 100) / organizationContact.budget;
 				}
+
+				const reamingBudget = Math.max(
+					organizationContact.budget - spent,
+					0
+				);
 
 				return {
 					organizationContact,
 					budgetType: organizationContact.budgetType,
 					budget: organizationContact.budget,
 					spent: spent,
+					reamingBudget,
 					spentPercentage: parseFloat(spentPercentage.toFixed(2))
 				};
 			}
