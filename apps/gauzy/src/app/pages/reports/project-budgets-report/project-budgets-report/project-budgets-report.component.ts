@@ -49,9 +49,9 @@ export class ProjectBudgetsReportComponent implements OnInit, AfterViewInit {
 	}
 
 	constructor(
-		private cd: ChangeDetectXorRef,
 		private timesheetService: TimesheetService,
-		private store: Store
+		private store: Store,
+		private cd: ChangeDetectorRef
 	) {}
 
 	ngOnInit() {
