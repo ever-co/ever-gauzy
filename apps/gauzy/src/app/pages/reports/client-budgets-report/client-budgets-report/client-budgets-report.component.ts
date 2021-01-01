@@ -8,7 +8,7 @@ import {
 	IGetPaymentInput,
 	IGetTimeLogReportInput,
 	IOrganization,
-	IProjectBudgetLimitReport
+	IClientBudgetLimitReport
 } from '@gauzy/models';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
@@ -21,11 +21,11 @@ import { pick } from 'underscore';
 
 @UntilDestroy()
 @Component({
-	selector: 'ga-project-budgets-report',
-	templateUrl: './project-budgets-report.component.html',
-	styleUrls: ['./project-budgets-report.component.scss']
+	selector: 'ga-client-budgets-report',
+	templateUrl: './client-budgets-report.component.html',
+	styleUrls: ['./client-budgets-report.component.scss']
 })
-export class ProjectBudgetsReportComponent implements OnInit, AfterViewInit {
+export class ClientBudgetsReportComponent implements OnInit, AfterViewInit {
 	logRequest: IGetPaymentInput = {
 		startDate: moment().startOf('week').toDate(),
 		endDate: moment().endOf('week').toDate()
@@ -35,11 +35,11 @@ export class ProjectBudgetsReportComponent implements OnInit, AfterViewInit {
 
 	loading: boolean;
 	private _selectedDate: Date = new Date();
-	groupBy: 'date' | 'employee' | 'project' | 'client' = 'date';
+	groupBy: 'date' | 'employee' | 'client' | 'client' = 'date';
 	filters: IGetPaymentInput;
 	selectedEmployee: any;
 
-	projects: IProjectBudgetLimitReport[];
+	clients: IClientBudgetLimitReport[];
 
 	public get selectedDate(): Date {
 		return this._selectedDate;
@@ -97,7 +97,7 @@ export class ProjectBudgetsReportComponent implements OnInit, AfterViewInit {
 	async getReportData() {
 		const { startDate, endDate } = this.logRequest;
 
-		const appliedFilter = pick(this.logRequest, 'projectIds');
+		const appliedFilter = pick(this.logRequest, 'clientIds');
 
 		const request: IGetTimeLogReportInput = {
 			...appliedFilter,
@@ -113,9 +113,9 @@ export class ProjectBudgetsReportComponent implements OnInit, AfterViewInit {
 
 		this.loading = true;
 		this.timesheetService
-			.getProjectBudgetLimit(request)
-			.then((logs: IProjectBudgetLimitReport[]) => {
-				this.projects = logs;
+			.getClientBudgetLimit(request)
+			.then((logs: IClientBudgetLimitReport[]) => {
+				this.clients = logs;
 			})
 			.catch(() => {})
 			.finally(() => (this.loading = false));

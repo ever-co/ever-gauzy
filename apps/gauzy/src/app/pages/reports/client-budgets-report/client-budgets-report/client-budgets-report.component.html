@@ -1,6 +1,6 @@
 <nb-card>
 	<nb-card-header>
-		<h4>{{ 'REPORT_PAGE.PROJECT_BUDGET_REPORTS' | translate }}</h4>
+		<h4>{{ 'REPORT_PAGE.CLIENT_BUDGET_REPORTS' | translate }}</h4>
 		<div>
 			{{ logRequest?.startDate | date }} -
 			{{ logRequest?.endDate | date }}
@@ -27,10 +27,10 @@
 			nbSpinnerSize="giant"
 			nbSpinnerStatus="primary"
 		>
-			<div class="px-4" *ngIf="projects?.length > 0">
+			<div class="px-4" *ngIf="clients?.length > 0">
 				<div class="row py-3 font-weight-bold align-items-center">
-					<div *ngIf="groupBy != 'project'" class="col-sm-2">
-						{{ 'REPORT_PAGE.PROJECT' | translate }}
+					<div class="col-sm-2">
+						{{ 'REPORT_PAGE.CLIENT' | translate }}
 					</div>
 					<div class="col-sm-3 text-center day-col">
 						{{ 'REPORT_PAGE.SPENT' | translate }}
@@ -44,36 +44,37 @@
 				</div>
 			</div>
 
-			<ng-template [ngIf]="projects?.length > 0" [ngIfElse]="notFound">
+			<ng-template [ngIf]="clients?.length > 0" [ngIfElse]="notFound">
 				<nb-card class="card">
 					<nb-card-body
-						class="cart-body project-row"
-						*ngFor="let project of projects"
+						class="cart-body client-row"
+						*ngFor="let client of clients"
 					>
 						<div
 							class="row report-row py-1 mt-3 align-items-center"
 						>
-							<div class="col-sm-2 project-name">
+							<div class="col-sm-2 client-name">
 								<ng-container
 									*ngTemplateOutlet="
-										projectEl;
+										clientEl;
 										context: {
-											$implicit: project?.project
+											$implicit:
+												client?.organizationContact
 										}
 									"
 								>
 								</ng-container>
 							</div>
 							<div class="col-sm-3 text-center day-col">
-								{{ project?.spent }}
+								{{ client?.spent }}
 							</div>
 							<div class="col text-center day-col">
 								<ngx-progress-status
-									[percentage]="project?.spentPercentage"
+									[percentage]="client?.spentPercentage"
 								></ngx-progress-status>
 							</div>
 							<div class="col text-center day-col">
-								{{ project.budget - project.spent }}
+								{{ client.budget - client.spent }}
 							</div>
 						</div>
 					</nb-card-body>
@@ -86,7 +87,7 @@
 							class="row font-weight-bold py-5 align-items-center"
 						>
 							<div class="col text-center">
-								{{ 'REPORT_PAGE.NO_PROJECTS' | translate }}
+								{{ 'REPORT_PAGE.NO_CLIENTS' | translate }}
 							</div>
 						</div>
 					</nb-card-body>
@@ -96,27 +97,9 @@
 	</nb-card-body>
 </nb-card>
 
-<ng-template let-project #projectEl>
-	<span *ngIf="project; else noProjects">{{ project?.name }} </span>
-	<ng-template #noProjects>
-		<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
-	</ng-template>
-</ng-template>
-
 <ng-template let-client #clientEl>
 	<span *ngIf="client; else noClient">{{ client?.name }} </span>
 	<ng-template #noClient>
 		<span>{{ 'REPORT_PAGE.NO_CLIENT' | translate }}</span>
-	</ng-template>
-</ng-template>
-
-<ng-template let-employee #employeeEl>
-	<ngx-avatar
-		*ngIf="employee"
-		[src]="employee?.user?.imageUrl"
-		[name]="employee?.user?.name"
-	></ngx-avatar>
-	<ng-template #noEmployee>
-		<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
 	</ng-template>
 </ng-template>

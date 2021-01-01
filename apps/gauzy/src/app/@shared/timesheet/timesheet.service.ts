@@ -170,7 +170,7 @@ export class TimesheetService {
 			.toPromise();
 	}
 
-	getPClientBudgetLimit(request: IClientBudgetLimitReportInput) {
+	getClientBudgetLimit(request: IClientBudgetLimitReportInput) {
 		return this.http
 			.get<IClientBudgetLimitReport[]>(
 				'/api/timesheet/time-log/client-budget-limit',
@@ -190,6 +190,7 @@ export class TimesheetService {
 				return data;
 			});
 	}
+
 	getTimeSlot(id, request?: IGetTimeSlotInput) {
 		const params = toParams(request);
 		return this.http

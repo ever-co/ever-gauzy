@@ -462,6 +462,13 @@ const routes: Routes = [
 							).then((m) => m.ProjectBudgetsReportModule)
 					},
 					{
+						path: 'client-budgets',
+						loadChildren: () =>
+							import(
+								'./reports/client-budgets-report/client-budgets-report.module'
+							).then((m) => m.ClientBudgetsReportModule)
+					},
+					{
 						path: '*',
 						component: NotFoundComponent
 					}

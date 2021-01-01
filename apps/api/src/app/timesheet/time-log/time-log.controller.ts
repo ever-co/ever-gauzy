@@ -19,7 +19,9 @@ import {
 	PermissionsEnum,
 	IGetTimeLogConflictInput,
 	IGetTimeLogReportInput,
-	IGetTimeLimitReportInput
+	IGetTimeLimitReportInput,
+	IProjectBudgetLimitReportInput,
+	IClientBudgetLimitReportInput
 } from '@gauzy/models';
 import { AuthGuard } from '@nestjs/passport';
 import { TimeLogService } from './time-log.service';
@@ -173,9 +175,31 @@ export class TimeLogController extends CrudController<ITimeLog> {
 		description: 'Found records'
 	})
 	@UseGuards(AuthGuard('jwt'))
-	@Get('budget-limit')
-	async budgetLimit(@Query() request?: IGetTimeLimitReportInput) {
-		return this.timeLogService.budgetLimit(request);
+	@Get('project-budget-limit')
+	async projectBudgetLimit(
+		@Query() request?: IProjectBudgetLimitReportInput
+	) {
+		return this.timeLogService.projectBudgetLimit(request);
+	}
+
+	@ApiOperation({ summary: 'Budget limit' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found one record'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiOperation({ summary: 'Time Limit' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found records'
+	})
+	@UseGuards(AuthGuard('jwt'))
+	@Get('client-budget-limit')
+	async clientBudgetLimit(@Query() request?: IClientBudgetLimitReportInput) {
+		return this.timeLogService.clientBudgetLimit(request);
 	}
 
 	@Get(':id')

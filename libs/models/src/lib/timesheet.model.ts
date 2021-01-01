@@ -1,6 +1,12 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { IOrganizationContact } from './organization-contact.model';
-import { IOrganizationProject } from './organization-projects.model';
+import {
+	IOrganizationContact,
+	OrganizationContactBudgetTypeEnum
+} from './organization-contact.model';
+import {
+	IOrganizationProject,
+	OrganizationProjectBudgetTypeEnum
+} from './organization-projects.model';
 import { IEmployee, IEmployeeFindInput } from './employee.model';
 import { ITask } from './task-entity.model';
 import { ITag } from './tag-entity.model';
@@ -475,14 +481,12 @@ export interface IProjectBudgetLimitReportInput {
 	employeeId?: string;
 }
 
-export interface IClientBudgetLimitReport {
-	date: string;
-	projects: {
-		project: IOrganizationProject;
-		duration: number;
-		durationPercentage: number;
-		limit: number;
-	}[];
+export interface IProjectBudgetLimitReport {
+	project?: IOrganizationProject;
+	budgetType?: OrganizationProjectBudgetTypeEnum;
+	budget?: number;
+	spent?: number;
+	spentPercentage?: number;
 }
 
 export interface IClientBudgetLimitReportInput {
@@ -493,11 +497,9 @@ export interface IClientBudgetLimitReportInput {
 }
 
 export interface IClientBudgetLimitReport {
-	date: string;
-	employeeLogs: {
-		employee: IEmployee;
-		duration: number;
-		durationPercentage: number;
-		limit: number;
-	}[];
+	organizationContact?: IOrganizationContact;
+	budgetType?: OrganizationContactBudgetTypeEnum;
+	budget?: number;
+	spent?: number;
+	spentPercentage?: number;
 }

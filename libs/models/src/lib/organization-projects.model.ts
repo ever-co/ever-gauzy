@@ -45,6 +45,7 @@ export enum TaskListTypeEnum {
 	GRID = 'GRID',
 	SPRINT = 'SPRINT'
 }
+
 export enum OrganizationProjectBudgetTypeEnum {
 	HOURS = 'hours',
 	COST = 'cost'

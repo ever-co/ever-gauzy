@@ -733,7 +733,11 @@
 		"DAILY_LIMIT_REPORT": "Daily Limit Report",
 		"LIMIT": "Limit",
 		"SPENT_HOURS": "Spent Hours",
-		"REMAINING_HOURS": "Remaining Hours"
+		"REMAINING_HOURS": "Remaining Hours",
+		"PROJECT_BUDGET_REPORTS": "Project Budget Reports",
+		"NO_PROJECTS": "No Projects",
+		"CLIENT_BUDGET_REPORTS": "Client Budget Reports",
+		"NO_CLIENTS": "No Clients"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Available Apps & Integrations",

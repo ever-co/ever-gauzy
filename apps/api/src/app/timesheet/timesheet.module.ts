@@ -36,6 +36,7 @@ import { TimeSlotCommandHandlers } from './time-slot/commands/handlers';
 import { ActivityCommandHandlers } from './activity/commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
 import { ActivityMapService } from './activity/activity.map.service';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 
 @Module({
 	controllers: [
@@ -60,7 +61,8 @@ import { ActivityMapService } from './activity/activity.map.service';
 			Task,
 			Email,
 			EmailTemplate,
-			Organization
+			Organization,
+			OrganizationContact
 		]),
 		CqrsModule,
 		EmailModule,
