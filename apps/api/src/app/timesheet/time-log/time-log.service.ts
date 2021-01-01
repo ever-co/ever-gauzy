@@ -548,18 +548,6 @@ export class TimeLogService extends CrudService<TimeLog> {
 					spentPercentage = (spent * 100) / project.budget;
 				}
 
-				// if (
-				// 	project.budgetType ==
-				// 	OrganizationProjectBudgetTypeEnum.HOURS
-				// ) {
-				// 	spent = project.timeLogs.reduce(
-				// 		(iteratee: any, log: any) => {
-				// 			return iteratee + log.duration;
-				// 		},
-				// 		0
-				// 	);
-				// 	spentPercentage = (spent * 100) / project.budget;
-				// }
 				const reamingBudget = Math.max(project.budget - spent, 0);
 
 				return {
