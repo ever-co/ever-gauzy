@@ -399,6 +399,10 @@
 			"INVOICE_NUMBER": "Номер счёта",
 			"PROJECT_URL": "URL проекта",
 			"CLIENTS": "Клиенты",
+			"BUDGET_TYPE": "Тип",
+			"BUDGET": "Бюджет",
+			"HOURS": "Часы",
+			"COST": "Затраты",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Название школы",
 				"DEGREE": "Диплом",
@@ -720,7 +724,20 @@
 		"AMOUNT_OWED": "Сумма причитающегося отчета",
 		"NO_AMOUNT_OWED": "Недостаточно сумм",
 		"CURRENT_RATE": "Текущий курс",
-		"HOURS": "Часы"
+		"HOURS": "Часы",
+		"SPENT": "Потрачено",
+		"BUDGET": "Бюджет",
+		"REMAINING": "Осталось",
+		"WEEKLY_LIMIT_REPORT": "Еженедельный лимит",
+		"NO_EMPLOYEES": "Нет сотрудников",
+		"DAILY_LIMIT_REPORT": "Ежедневный лимит отчета",
+		"LIMIT": "Лимит",
+		"SPENT_HOURS": "Потрачено часов",
+		"REMAINING_HOURS": "Осталось часов",
+		"PROJECT_BUDGET_REPORTS": "Бюджетные отчеты по проектам",
+		"NO_PROJECTS": "Нет проектов",
+		"CLIENT_BUDGET_REPORTS": "Бюджетные отчеты клиента",
+		"NO_CLIENTS": "Нет клиентов"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Доступные приложения и интеграции",

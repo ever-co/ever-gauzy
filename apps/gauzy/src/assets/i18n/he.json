@@ -399,6 +399,10 @@
 			"INVOICE_NUMBER": "Invoice Number",
 			"PROJECT_URL": "Project URL",
 			"CLIENTS": "לקוחות",
+			"BUDGET_TYPE": "סוג",
+			"BUDGET": "Budget",
+			"HOURS": "Hours",
+			"COST": "Cost",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -720,7 +724,20 @@
 		"AMOUNT_OWED": "Amount Owed Report",
 		"NO_AMOUNT_OWED": "No Amount Owed",
 		"CURRENT_RATE": "Current Rate",
-		"HOURS": "Hours"
+		"HOURS": "Hours",
+		"SPENT": "Spent",
+		"BUDGET": "Budget",
+		"REMAINING": "Remaining",
+		"WEEKLY_LIMIT_REPORT": "Weekly Limit Report",
+		"NO_EMPLOYEES": "No Employees",
+		"DAILY_LIMIT_REPORT": "Daily Limit Report",
+		"LIMIT": "Limit",
+		"SPENT_HOURS": "Spent Hours",
+		"REMAINING_HOURS": "Remaining Hours",
+		"PROJECT_BUDGET_REPORTS": "Project Budget Reports",
+		"NO_PROJECTS": "No Projects",
+		"CLIENT_BUDGET_REPORTS": "Client Budget Reports",
+		"NO_CLIENTS": "No Clients"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Available Apps & Integrations",
