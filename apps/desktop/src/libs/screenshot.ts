@@ -153,7 +153,7 @@ const readOrCreateTempDir = (tempPath) => {
 		}
 	} catch (error) {
 		mkdirSync(tempPath);
-		console.log('hahahha error', error);
+		console.log('error create dir', error);
 	}
 };
 

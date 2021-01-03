@@ -150,8 +150,9 @@ export class TimerService {
 
 		lastLog = await this.commandBus.execute(
 			new TimeLogUpdateCommand(
-				{ stoppedAt, manualTimeSlot: request.manualTimeSlot },
-				lastLog.id
+				{ stoppedAt },
+				lastLog.id,
+				request.manualTimeSlot
 			)
 		);
 

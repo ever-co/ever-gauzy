@@ -95,7 +95,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.getProjects(arg);
 				this.getTask(arg);
 				this.getTodayTime(arg);
-				this.getUserInfo(arg);
+				this.getUserInfo(arg, false);
 
 				if (arg.timeSlotId) {
 					this.getLastTimeSlotImage(arg);
@@ -104,7 +104,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		);
 
 		this.electronService.ipcRenderer.on('start_from_tray', (event, arg) => {
-			this.toggleStart(true);
+			this.taskSelect = arg.taskId;
+			this.projectSelect = arg.projectId;
+			this.note = arg.note;
+			this.aw = arg.aw && arg.aw.isAw ? arg.aw.isAw : false;
+			this.getUserInfo(arg, true);
 		});
 
 		this.electronService.ipcRenderer.on('stop_from_tray', (event, arg) => {
@@ -500,11 +504,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		});
 	}
 
-	getUserInfo(arg) {
+	getUserInfo(arg, start) {
 		this.timeTrackerService.getUserDetail(arg).then((res: any) => {
 			if (res.employee && res.employee.organization) {
 				this.userData = res;
 				this.userOrganization = res.employee.organization;
+				if (start) {
+					this.toggleStart(true);
+				}
 				this._cdr.detectChanges();
 			}
 		});

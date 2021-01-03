@@ -140,12 +140,13 @@ export default class TrayIcon {
 				label: 'Start Tracking Time',
 				visible: appConfig.timeTrackerWindow,
 				click(menuItem) {
-					const projectSelect = store.get('project');
-					if (projectSelect && projectSelect.projectId) {
+					const userLogin = store.get('auth');
+					if (userLogin && userLogin.employeeId) {
 						// timeTrackerWindow.show();
 						setTimeout(() => {
 							timeTrackerWindow.webContents.send(
-								'start_from_tray'
+								'start_from_tray',
+								LocalStore.beforeRequestParams()
 							);
 						}, 1000);
 					} else {

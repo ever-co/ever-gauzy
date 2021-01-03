@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as moment from 'moment';
 import { IGetConflictTimeLogCommand } from '../get-conflict-time-log.command';
+import { environment as env } from '@env-api/environment';
 
 @CommandHandler(IGetConflictTimeLogCommand)
 export class GetConflictTimeLogHandler
@@ -28,7 +29,9 @@ export class GetConflictTimeLogHandler
 			})
 			.andWhere(`"${conflictQuery.alias}"."deletedAt" IS null`)
 			.andWhere(
-				`("${conflictQuery.alias}"."startedAt", "${conflictQuery.alias}"."stoppedAt") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`
+				env.database.type === 'sqlite'
+					? `'${startedAt}' >= "${conflictQuery.alias}"."startedAt" and '${startedAt}' <= "${conflictQuery.alias}"."stoppedAt"`
+					: `("${conflictQuery.alias}"."startedAt", "${conflictQuery.alias}"."stoppedAt") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`
 			);
 
 		if (input.relations) {

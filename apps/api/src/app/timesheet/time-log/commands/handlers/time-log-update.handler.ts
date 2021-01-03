@@ -20,7 +20,7 @@ export class TimeLogUpdateHandler
 	) {}
 
 	public async execute(command: TimeLogUpdateCommand): Promise<TimeLog> {
-		const { id, input } = command;
+		const { id, input, manualTimeSlot } = command;
 		let timeLog: TimeLog;
 		if (id instanceof TimeLog) {
 			timeLog = id;
@@ -90,7 +90,7 @@ export class TimeLogUpdateHandler
 				mouse: 0,
 				overall: 0
 			}));
-			if (!input.manualTimeSlot) {
+			if (!manualTimeSlot) {
 				updateTimeSlots = await this.timeSlotService.bulkCreate(
 					updateTimeSlots
 				);
