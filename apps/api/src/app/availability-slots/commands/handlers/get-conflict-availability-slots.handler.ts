@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import * as moment from 'moment';
 import { AvailabilitySlot } from '../../availability-slots.entity';
 import { GetConflictAvailabilitySlotsCommand } from '../get-conflict-availability-slots.command';
+import { environment as env } from '@env-api/environment';
 
 @CommandHandler(GetConflictAvailabilitySlotsCommand)
 export class GetConflictAvailabilitySlotsHandler
@@ -27,7 +28,9 @@ export class GetConflictAvailabilitySlotsHandler
 				employeeId: input.employeeId
 			})
 			.andWhere(
-				`("${conflictQuery.alias}"."startTime", "${conflictQuery.alias}"."endTime") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`
+				env.database.type === 'sqlite'
+					? `${startedAt} >= "${conflictQuery.alias}"."startTime" and ${startedAt} <= "${conflictQuery.alias}"."endTime"`
+					: `("${conflictQuery.alias}"."startTime", "${conflictQuery.alias}"."endTime") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`
 			);
 
 		if (input.type) {
