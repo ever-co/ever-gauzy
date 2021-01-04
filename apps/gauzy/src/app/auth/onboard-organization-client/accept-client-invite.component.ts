@@ -10,7 +10,8 @@ import { SetLanguageBaseComponent } from '../../@shared/language-base/set-langua
 	styleUrls: ['accept-client-invite.component.scss'],
 	templateUrl: 'accept-client-invite.component.html'
 })
-export class AcceptClientInvitePage extends SetLanguageBaseComponent
+export class AcceptClientInvitePage
+	extends SetLanguageBaseComponent
 	implements OnInit {
 	invitation: IInvite;
 	loading = true;
@@ -43,7 +44,9 @@ export class AcceptClientInvitePage extends SetLanguageBaseComponent
 			);
 			this.inviteLoadErrorMessage = '';
 		} catch (error) {
-			this.inviteLoadErrorMessage = 'This invitation is no longer valid';
+			this.inviteLoadErrorMessage = this.getTranslation(
+				'ACCEPT_INVITE.INVITATION_NO_LONGER_VALID'
+			);
 		}
 		this.loading = false;
 	};

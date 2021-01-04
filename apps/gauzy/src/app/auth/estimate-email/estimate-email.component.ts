@@ -3,16 +3,23 @@ import { ActivatedRoute } from '@angular/router';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { IEstimateEmail, EstimateStatusTypesEnum } from '@gauzy/models';
 import { EstimateEmailService } from '../../@core/services/estimate-email.service';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	templateUrl: './estimate-email.component.html'
 })
-export class EstimateEmailComponent implements OnInit {
+export class EstimateEmailComponent
+	extends TranslationBaseComponent
+	implements OnInit {
 	constructor(
 		private route: ActivatedRoute,
 		private invoicesService: InvoicesService,
-		private estimateEmailService: EstimateEmailService
-	) {}
+		private estimateEmailService: EstimateEmailService,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	token: string;
 	isAccepted: boolean;
@@ -38,7 +45,9 @@ export class EstimateEmailComponent implements OnInit {
 					await this.updateEstimate(params['id'], this.isAccepted);
 				}
 			} catch (error) {
-				this.errorMessage = 'An error occured.';
+				this.errorMessage = this.getTranslation(
+					'INVOICES_PAGE.ESTIMATES.ERROR'
+				);
 			}
 			this.loading = false;
 		});

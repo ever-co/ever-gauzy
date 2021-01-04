@@ -10,7 +10,8 @@ import { SetLanguageBaseComponent } from '../../@shared/language-base/set-langua
 	styleUrls: ['./accept-invite.component.scss'],
 	templateUrl: 'accept-invite.component.html'
 })
-export class AcceptInvitePage extends SetLanguageBaseComponent
+export class AcceptInvitePage
+	extends SetLanguageBaseComponent
 	implements OnInit, OnDestroy {
 	invitation: IInvite;
 	loading = true;
@@ -43,7 +44,9 @@ export class AcceptInvitePage extends SetLanguageBaseComponent
 			);
 			this.inviteLoadErrorMessage = '';
 		} catch (error) {
-			this.inviteLoadErrorMessage = 'This invitation is no longer valid';
+			this.inviteLoadErrorMessage = this.getTranslation(
+				'ACCEPT_INVITE.INVITATION_NO_LONGER_VALID'
+			);
 		}
 		this.loading = false;
 	};
@@ -69,15 +72,15 @@ export class AcceptInvitePage extends SetLanguageBaseComponent
 			}
 
 			this.toastrService.success(
-				'Your account has been created, please login',
-				'Success'
+				this.getTranslation('ACCEPT_INVITE.ACCOUNT_CREATED'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 
 			this.router.navigate(['/auth/login']);
 		} catch (error) {
 			this.toastrService.danger(
 				error.error ? error.error.message : error.message,
-				'Could not create your account'
+				this.getTranslation('ACCEPT_INVITE.COULD_NOT_CREATE_ACCOUNT')
 			);
 		}
 	};

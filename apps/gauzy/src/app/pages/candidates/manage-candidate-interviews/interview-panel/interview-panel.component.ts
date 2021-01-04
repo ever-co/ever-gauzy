@@ -39,7 +39,8 @@ import { CandidateInterviewFeedbackComponent } from 'apps/gauzy/src/app/@shared/
 	templateUrl: './interview-panel.component.html',
 	styleUrls: ['./interview-panel.component.scss']
 })
-export class InterviewPanelComponent extends TranslationBaseComponent
+export class InterviewPanelComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	interviewList: ICandidateInterview[];
@@ -430,8 +431,11 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 								interview.id
 							);
 							this.toastrService.primary(
-								`${interview.title}` + '  set as archived.',
-								'Success'
+								this.getTranslation(
+									'CANDIDATES_PAGE.INTERVIEW.SET_AS_ARCHIVED',
+									{ title: interview.title }
+								),
+								this.getTranslation('TOASTR.TITLE.SUCCESS')
 							);
 							this.loadInterviews();
 						} catch (error) {

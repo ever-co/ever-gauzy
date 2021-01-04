@@ -259,7 +259,10 @@ export class ContactMutationComponent
 	}
 
 	handleImageUploadError(error) {
-		this.toastrService.danger(error, 'Error');
+		this.toastrService.danger(
+			error,
+			this.getTranslation('TOASTR.TITLE.ERROR')
+		);
 	}
 
 	addNewProject = (name: string): Promise<IOrganizationProject> => {

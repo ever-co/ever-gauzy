@@ -1106,6 +1106,9 @@
 		"ARCHIVED": "Archived",
 		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",
 		"JOBS_CANDIDATES": "Job Candidates",
+		"SOURCE": "Source",
+		"RATING": "Rating",
+		"STATUS": "Status",
 		"EDIT_CANDIDATE": {
 			"HEADER": "Manage Candidate",
 			"DEVELOPER": "Developer",
@@ -1182,7 +1185,8 @@
 				"DESCRIPTION": "Description: ",
 				"POSTPONE": "Postpone",
 				"REJECT": "Reject",
-				"INTERVIEW_TITLE_EXIST": "An interview with such name already exists"
+				"INTERVIEW_TITLE_EXIST": "An interview with such name already exists",
+				"SET_AS_ARCHIVED": "{{ title }} set as archived."
 			}
 		},
 		"INTERVIEW_INFO_MODAL": {
@@ -1559,7 +1563,11 @@
 		"APPROVAL_REQUEST_UPDATED": "Request Approval '{{ name }}' was changed",
 		"APPROVAL_REQUEST_DELETED": "Request Approval '{{ name }}' was removed",
 		"APPROVAL_SUCCESS": "Approval '{{ name }}' was approved",
-		"REFUSE_SUCCESS": "Approval '{{ name }}' was refused"
+		"REFUSE_SUCCESS": "Approval '{{ name }}' was refused",
+		"APPROVED": "Approved",
+		"REFUSED": "Refused",
+		"REQUESTED": "Requested",
+		"ACTION": "Action"
 	},
 	"APPROVAL_POLICY_PAGE": {
 		"EDIT_APPROVAL_POLICY": "Edit Approval Policy",
@@ -1567,7 +1575,10 @@
 		"HEADER": "Approval Policy",
 		"APPROVAL_POLICY_NAME": "Name",
 		"APPROVAL_POLICY_TYPE": "Type",
-		"APPROVAL_POLICY_DESCRIPTION": "Description"
+		"APPROVAL_POLICY_DESCRIPTION": "Description",
+		"BUSINESS_TRIP": "Business Trip",
+		"EQUIPMENT_SHARING": "Equipment Sharing",
+		"TIME_OFF": "Time Off"
 	},
 	"TIME_OFF_PAGE": {
 		"HEADER": "Time Off",
@@ -2089,7 +2100,10 @@
 			"REJECTED": "Rejected",
 			"ACCEPTED_STATUS": "Accepted Status",
 			"ESTIMATE_CONVERT": "Estimate Converted",
-			"SELECT_ESTIMATE_TO_VIEW_HISTORY": "Select an estimate to view it's history"
+			"SELECT_ESTIMATE_TO_VIEW_HISTORY": "Select an estimate to view it's history",
+			"ESTIMATE_ACCEPTED": "Estimate accepted",
+			"ESTEIMATE_REJECTED": "Estimate rejected",
+			"ERROR": "An error occured"
 		},
 		"PAYMENTS": {
 			"HEADER": "Payments for Invoice",
@@ -2312,11 +2326,15 @@
 			"AGREE_TO": "Agree to",
 			"TERMS_AND_CONDITIONS": "Terms & Conditions",
 			"ADD_ORGANIZATION": "Add Organization",
-			"COMPLETE_REGISTRATION": "Complete Registration"
+			"COMPLETE_REGISTRATION": "Complete Registration",
+			"PASSWORDS_DO_NOT_MATCH": "Password Do Not Match!"
 		},
 		"INVALID_INVITE": "Either you entered an incorrect URL or the invitation has expired",
 		"HEADING": "Accept Invitation to {{ organizationName }}",
-		"SUB_HEADING": "Complete your registration {{ email }}"
+		"SUB_HEADING": "Complete your registration {{ email }}",
+		"INVITATION_NO_LONGER_VALID": "This invitation is no longer valid",
+		"ACCOUNT_CREATED": "Your account has been created, please login",
+		"COULD_NOT_CREATE_ACCOUNT": "Could not create your account"
 	},
 	"NOTES": {
 		"INCOME": {
@@ -2697,7 +2715,8 @@
 			"time-off-report-action": "Time off policy action",
 			"task-update": "Task Update",
 			"candidate-schedule-interview": "Candidate Interview Schedule",
-			"interviewer-interview-schedule": "Interviewer Schedule"
+			"interviewer-interview-schedule": "Interviewer Schedule",
+			"TEMPLATE_NAMES": "Template Names"
 		},
 		"LANGUAGE_CODES": {
 			"en": "English",

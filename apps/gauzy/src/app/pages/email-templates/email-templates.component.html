@@ -46,7 +46,10 @@
 						class="d-block"
 						size="small"
 						formControlName="name"
-						placeholder="{{ 'Template Names' | translate }}"
+						placeholder="{{
+							'EMAIL_TEMPLATES_PAGE.TEMPLATE_NAMES.TEMPLATE_NAMES'
+								| translate
+						}}"
 						(selectedChange)="getTemplate()"
 					>
 						<nb-option
@@ -87,7 +90,7 @@
 								<ace-editor
 									id="subject"
 									#subjectEditor
-									style="height: 10vh; font-size: medium;"
+									style="height: 10vh; font-size: medium"
 									[durationBeforeCallback]="400"
 									[mode]="'handlebars'"
 									(textChange)="onSubjectChange($event)"
@@ -105,7 +108,7 @@
 									#emailEditor
 									id="email"
 									[mode]="'handlebars'"
-									style="height: 80vh; font-size: medium;"
+									style="height: 80vh; font-size: medium"
 									[durationBeforeCallback]="400"
 									(textChange)="onEmailChange($event)"
 								>

@@ -13,26 +13,28 @@ import {
 	Validators
 } from '@angular/forms';
 import { IInvite, IUserRegistrationInput, ITag, ITenant } from '@gauzy/models';
+import { TranslateService } from '@ngx-translate/core';
 import { InviteService } from 'apps/gauzy/src/app/@core/services/invite.service';
 import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 
 @Component({
 	selector: 'ga-accept-invite-form',
 	templateUrl: 'accept-invite-form.component.html',
 	styleUrls: ['accept-invite-form.component.scss']
 })
-export class AcceptInviteFormComponent implements OnInit, OnDestroy {
+export class AcceptInviteFormComponent
+	extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	private ngDestroy$ = new Subject<void>();
 
 	@Input()
 	invitation: IInvite;
 
 	@Output()
-	submitForm: EventEmitter<IUserRegistrationInput> = new EventEmitter<
-		IUserRegistrationInput
-	>();
+	submitForm: EventEmitter<IUserRegistrationInput> = new EventEmitter<IUserRegistrationInput>();
 
 	//Fields for the form
 	form: FormGroup;
@@ -83,15 +85,20 @@ export class AcceptInviteFormComponent implements OnInit, OnDestroy {
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly inviteService: InviteService,
-		private readonly roleService: RoleService
-	) {}
+		private readonly roleService: RoleService,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit(): void {
 		this.loadFormData();
 	}
 
 	passwordDoNotMatch() {
-		return 'Password Do Not Match!';
+		return this.getTranslation(
+			'ACCEPT_INVITE.ACCEPT_INVITE_FORM.PASSWORDS_DO_NOT_MATCH'
+		);
 	}
 
 	loadFormData = async () => {

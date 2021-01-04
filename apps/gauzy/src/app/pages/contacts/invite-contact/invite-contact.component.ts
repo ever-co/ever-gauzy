@@ -13,7 +13,8 @@ import { InviteService } from '../../../@core/services/invite.service';
 	templateUrl: './invite-contact.component.html',
 	styleUrls: ['./invite-contact.component.scss']
 })
-export class InviteContactComponent extends TranslationBaseComponent
+export class InviteContactComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	constructor(
 		private readonly dialogRef: NbDialogRef<InviteContactComponent>,
@@ -94,7 +95,7 @@ export class InviteContactComponent extends TranslationBaseComponent
 		} catch (error) {
 			this.toastrService.danger(
 				error.error ? error.error.message : error.message,
-				'Error'
+				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 		}
 	}
@@ -123,7 +124,7 @@ export class InviteContactComponent extends TranslationBaseComponent
 		} catch (error) {
 			this.toastrService.danger(
 				error.error ? error.error.message : error.message,
-				'Error'
+				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 		}
 		return null;

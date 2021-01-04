@@ -120,18 +120,24 @@
 					<span class="info-value">{{ x.email }}</span>
 				</div>
 				<div class="info-line">
-					<span class="info-meta">Source</span>
+					<span class="info-meta">{{
+						'CANDIDATES_PAGE.SOURCE' | translate
+					}}</span>
 					<span class="info-value">{{ x.source?.name }}</span>
 				</div>
 				<div class="info-line">
-					<span class="info-meta">Rating</span>
+					<span class="info-meta">{{
+						'CANDIDATES_PAGE.RATING' | translate
+					}}</span>
 					<ga-star-rating-output
 						[rate]="x.rating"
 						[isGridView]="true"
 					></ga-star-rating-output>
 				</div>
 				<div class="info-line">
-					<span class="info-meta">Status</span>
+					<span class="info-meta">{{
+						'CANDIDATES_PAGE.STATUS' | translate
+					}}</span>
 					<div *ngIf="!x?.isArchived">
 						<div
 							class="text-center d-block"
