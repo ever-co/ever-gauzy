@@ -1,6 +1,6 @@
 export const AddOrganizationPage = {
 	organisationNameFieldCss: '[placeholder="Organization Name"]',
-	currencyFieldCss: '[class="select-button placeholder"]',
+	currencyFieldCss: '#currencySelect',
 	dropdownOptionCss: '.option-list nb-option',
 	officialNameFieldCss: '#officialNameInput',
 	taxFieldCss: '#taxIdInput',

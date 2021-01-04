@@ -67,6 +67,14 @@ export const selectCountryFromDropdown = (text) => {
 	clickElementByText(ClientsPage.dropdownOptionCss, text);
 };
 
+export const nextButtonVisible = () => {
+	verifyElementIsVisible(ClientsPage.nextButtonCss);
+};
+
+export const clickNextButton = () => {
+	clickButton(ClientsPage.nextButtonCss);
+};
+
 export const cityInputVisible = () => {
 	verifyElementIsVisible(ClientsPage.cityInpuCss);
 };
