@@ -89,7 +89,6 @@ export const firstNameInputVisible = () => {
 };
 
 export const enterFirstNameData = (data) => {
-	clearField(ManageEmployeesPage.firstNameInputCss);
 	enterInput(ManageEmployeesPage.firstNameInputCss, data);
 };
 
@@ -98,7 +97,6 @@ export const lastNameInputVisible = () => {
 };
 
 export const enterLastNameData = (data) => {
-	clearField(ManageEmployeesPage.lastNameInputCss);
 	enterInput(ManageEmployeesPage.lastNameInputCss, data);
 };
 
@@ -107,7 +105,6 @@ export const usernameInputVisible = () => {
 };
 
 export const enterUsernameData = (data) => {
-	clearField(ManageEmployeesPage.usernameInputCss);
 	enterInput(ManageEmployeesPage.usernameInputCss, data);
 };
 
@@ -116,7 +113,6 @@ export const employeeEmailInputVisible = () => {
 };
 
 export const enterEmployeeEmailData = (data) => {
-	clearField(ManageEmployeesPage.emailInputCss);
 	enterInput(ManageEmployeesPage.emailInputCss, data);
 };
 
@@ -125,7 +121,6 @@ export const passwordInputVisible = () => {
 };
 
 export const enterPasswordInputData = (data) => {
-	clearField(ManageEmployeesPage.passwordInputCss);
 	enterInput(ManageEmployeesPage.passwordInputCss, data);
 };
 

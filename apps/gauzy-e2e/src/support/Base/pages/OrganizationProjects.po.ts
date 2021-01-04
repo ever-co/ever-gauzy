@@ -82,6 +82,18 @@ export const descriptionInputVisible = () => {
 	verifyElementIsVisible(OrganizationProjectsPage.projectDescriptionCss);
 };
 
+export const clickTabButton = (index) => {
+	clickButtonByIndex(OrganizationProjectsPage.tabButtonCss, index);
+};
+
+export const budgetHoursInputVisible = () => {
+	verifyElementIsVisible(OrganizationProjectsPage.budgetInputCss);
+};
+
+export const enterBudgetHoursInputData = (data) => {
+	enterInput(OrganizationProjectsPage.budgetInputCss, data);
+};
+
 export const enterDescriptionInputData = (data) => {
 	clearField(OrganizationProjectsPage.projectDescriptionCss);
 	enterInput(OrganizationProjectsPage.projectDescriptionCss, data);

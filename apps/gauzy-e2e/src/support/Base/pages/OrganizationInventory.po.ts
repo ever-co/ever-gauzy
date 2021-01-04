@@ -103,6 +103,14 @@ export const clickBackButton = () => {
 	clickButton(OrganizationInventoryPage.backButtonCss);
 };
 
+export const backFromCategoryButtonVisible = () => {
+	verifyElementIsVisible(OrganizationInventoryPage.backFromCategoryButtonCss);
+};
+
+export const clickBackFromCategodyButton = () => {
+	clickButton(OrganizationInventoryPage.backFromCategoryButtonCss);
+};
+
 export const saveButtonVisible = () => {
 	verifyElementIsVisible(OrganizationInventoryPage.saveButtonCss);
 };
