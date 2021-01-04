@@ -2665,7 +2665,8 @@
 		"CHANGE": "(Change)",
 		"SELECT_EMPLOYEE_ERROR": "Please select an employee.",
 		"EXPIRED_OR_CANCELLED": "**This appointment has expired or has been cancelled.",
-		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting."
+		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting.",
+		"NO_ACTIVE_EVENT_TYpES": "There are no active event types"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "Email Templates for {{ organizationName }}",
