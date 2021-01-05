@@ -16,13 +16,17 @@ import {
 	isAfter
 } from 'date-fns';
 import { Store } from '../../../@core/services/store.service';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ga-keyresult-progress-chart',
 	templateUrl: './keyresult-progress-chart.component.html',
 	styleUrls: ['./keyresult-progress-chart.component.scss']
 })
-export class KeyResultProgressChartComponent implements OnInit {
+export class KeyResultProgressChartComponent
+	extends TranslationBaseComponent
+	implements OnInit {
 	data: any;
 	options: any;
 	loading = true;
@@ -31,8 +35,11 @@ export class KeyResultProgressChartComponent implements OnInit {
 	@Input() organization: IOrganization;
 	constructor(
 		private goalSettingsService: GoalSettingsService,
-		private store: Store
-	) {}
+		private store: Store,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this.updateChart(this.keyResult);
@@ -122,7 +129,7 @@ export class KeyResultProgressChartComponent implements OnInit {
 			labels: labelsData,
 			datasets: [
 				{
-					label: 'Expected',
+					label: this.getTranslation('GOALS_PAGE.EXPECTED'),
 					data: this.expectedDataCalculation(
 						!!this.kpi
 							? this.kpi.currentValue
@@ -138,7 +145,7 @@ export class KeyResultProgressChartComponent implements OnInit {
 					fill: false
 				},
 				{
-					label: 'Progress',
+					label: this.getTranslation('GOALS_PAGE.PROGRESS'),
 					data: this.progressData(keyResult, labelsData),
 					borderWidth: 3,
 					borderColor: '#00d68f',

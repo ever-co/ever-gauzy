@@ -578,7 +578,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 						link: `/pages/organization/employment-types`,
 						data: {
 							translationKey:
-								'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE',
+								'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPES',
 							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 							featureKey:
 								FeatureEnum.FEATURE_ORGANIZATION_EMPLOYMENT_TYPE

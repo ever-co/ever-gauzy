@@ -6,7 +6,7 @@
 		</div>
 		<div class="main-header">
 			<button
-				style="margin-right: 9px;"
+				style="margin-right: 9px"
 				nbButton
 				status="primary"
 				(click)="manageAppropvalPolicy()"
@@ -38,7 +38,7 @@
 			[settings]="settingsSmartTable"
 			(userRowSelect)="selectEquipmentSharing($event)"
 			[source]="smartTableSource"
-			style="cursor: pointer;"
+			style="cursor: pointer"
 			*ngIf="dataLayoutStyle === 'TABLE'"
 			#equipmentSharingTable
 		>
@@ -46,46 +46,63 @@
 		<ul class="flex-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
 			<li class="flex-item" *ngFor="let x of equipmentsData">
 				<div class="info-line">
-					<span class="info-meta">Equipment name</span>
+					<span class="info-meta">{{
+						'EQUIPMENT_SHARING_PAGE.EQUIPMENT_NAME' | translate
+					}}</span>
 					<span class="info-value">{{ x.name }}</span>
 				</div>
 				<div class="info-line">
-					<span class="info-meta">Equipment Sharing Policy</span>
+					<span class="info-meta">{{
+						'EQUIPMENT_SHARING_PAGE.EQUIPMENT_SHARING_POLICY'
+							| translate
+					}}</span>
 					<span class="info-value">{{ x.equipment.name }}</span>
 				</div>
 				<div class="info-line">
-					<span class="info-meta">Share request date</span>
+					<span class="info-meta">{{
+						'EQUIPMENT_SHARING_PAGE.SHARE_REQUEST_DATE' | translate
+					}}</span>
 					<span class="info-value">{{
 						x.shareRequestDay | date
 					}}</span>
 				</div>
 				<div class="info-line">
-					<span class="info-meta">Share start date</span>
+					<span class="info-meta">{{
+						'EQUIPMENT_SHARING_PAGE.SHARE_START_DATE' | translate
+					}}</span>
 					<span class="info-value">{{ x.shareStartDay | date }}</span>
 				</div>
 				<div class="info-line">
-					<span class="info-meta">Share end date</span>
+					<span class="info-meta">{{
+						'EQUIPMENT_SHARING_PAGE.SHARE_END_DATE' | translate
+					}}</span>
 					<span class="info-value">{{ x.shareEndDay | date }}</span>
 				</div>
 				<div class="info-line">
-					<span class="info-meta">Created By</span>
+					<span class="info-meta">{{
+						'EQUIPMENT_SHARING_PAGE.CREATED_BY' | translate
+					}}</span>
 					<span class="info-value">{{ x.createdByName }}</span>
 				</div>
 
 				<div class="info-line" [ngSwitch]="x.status">
-					<span class="info-meta">Status</span>
-					<span class="badge-warning-card" *ngSwitchCase="1">{{
-						'Requested'
+					<span class="info-meta">{{
+						'EQUIPMENT_SHARING_PAGE.STATUS' | translate
 					}}</span>
-					<span class="badge-success-card" *ngSwitchCase="2">{{
-						'Approved'
-					}}</span>
-					<span class="badge-danger-card" *ngSwitchCase="3">{{
-						'Refused'
-					}}</span>
+					<span class="badge-warning-card" *ngSwitchCase="1">
+						{{ 'EQUIPMENT_SHARING_PAGE.REQUESTED' | translate }}
+					</span>
+					<span class="badge-success-card" *ngSwitchCase="2">
+						{{ 'EQUIPMENT_SHARING_PAGE.APPROVED' | translate }}
+					</span>
+					<span class="badge-danger-card" *ngSwitchCase="3">
+						{{ 'EQUIPMENT_SHARING_PAGE.REFUSED' | translate }}
+					</span>
 				</div>
-				<div class="info-line" style="height: 56px;">
-					<span class="info-meta">Action</span>
+				<div class="info-line" style="height: 56px">
+					<span class="info-meta">{{
+						'EQUIPMENT_SHARING_PAGE.ACTION' | translate
+					}}</span>
 					<div *ngIf="x.status === 1">
 						<button
 							nbButton
