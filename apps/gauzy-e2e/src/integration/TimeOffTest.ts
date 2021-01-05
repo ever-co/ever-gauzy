@@ -4,25 +4,9 @@ import * as timeOffPage from '../support/Base/pages/TimeOff.po';
 import { TimeOffPageData } from '../support/Base/pagedata/TimeOffPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
-import * as faker from 'faker';
-import * as manageEmployeesPage from '../support/Base/pages/ManageEmployees.po';
-
-let firstName = ' ';
-let lastName = ' ';
-let username = ' ';
-let password = ' ';
-let employeeEmail = ' ';
-let imgUrl = ' ';
 
 describe('Time Off test', () => {
 	before(() => {
-		firstName = faker.name.firstName();
-		lastName = faker.name.lastName();
-		username = faker.internet.userName();
-		password = faker.internet.password();
-		employeeEmail = faker.internet.email();
-		imgUrl = faker.image.avatar();
-
 		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 	it('Should be able to create new time off request', () => {

@@ -3,8 +3,6 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as organizationTeamsPage from '../support/Base/pages/OrganizationTeams.po';
 import { OrganizationTeamsPageData } from '../support/Base/pagedata/OrganizationTeamsPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
-import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
-import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 import { CustomCommands } from '../support/commands';
 
 describe('Organization teams test', () => {

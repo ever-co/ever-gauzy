@@ -3,10 +3,6 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as paymentsPage from '../support/Base/pages/Payments.po';
 import { PaymentsPageData } from '../support/Base/pagedata/PaymentsPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
-import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
-import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
-import * as organizationProjectsPage from '../support/Base/pages/OrganizationProjects.po';
-import { OrganizationProjectsPageData } from '../support/Base/pagedata/OrganizationProjectsPageData';
 import { CustomCommands } from '../support/commands';
 
 describe('Payments test', () => {

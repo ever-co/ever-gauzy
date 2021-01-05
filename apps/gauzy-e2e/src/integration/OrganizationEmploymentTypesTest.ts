@@ -3,8 +3,6 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as organizationEmploymentTypePage from '../support/Base/pages/OrganizationEmploymentTypes.po';
 import { OrganizationEmploymentTypesPageData } from '../support/Base/pagedata/OrganizationEmploymentTypesPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
-import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
-import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 import { CustomCommands } from '../support/commands';
 
 describe('Organization employment types test', () => {

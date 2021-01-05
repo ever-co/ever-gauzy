@@ -3,8 +3,6 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as organizationVendorsPage from '../support/Base/pages/OrganizationVendors.po';
 import { OrganizationVendorsPageData } from '../support/Base/pagedata/OrganizationVendorsPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
-import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
-import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 import { CustomCommands } from '../support/commands';
 
 describe('Organization vendors test', () => {

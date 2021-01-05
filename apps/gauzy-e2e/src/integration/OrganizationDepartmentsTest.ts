@@ -1,37 +1,12 @@
 import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as organizationDepartmentsPage from '../support/Base/pages/OrganizationDepartments.po';
-import * as faker from 'faker';
 import { OrganizationDepartmentsPageData } from '../support/Base/pagedata/OrganizationDepartmentsPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
-import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
-import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
-import * as manageEmployeesPage from '../support/Base/pages/ManageEmployees.po';
-import * as organizationProjectsPage from '../support/Base/pages/OrganizationProjects.po';
-import { OrganizationProjectsPageData } from '../support/Base/pagedata/OrganizationProjectsPageData';
 import { CustomCommands } from '../support/commands';
-
-let email = ' ';
-let secEmail = ' ';
-let firstName = ' ';
-let lastName = ' ';
-let username = ' ';
-let password = ' ';
-let employeeEmail = ' ';
-let imgUrl = ' ';
 
 describe('Organization departments test', () => {
 	before(() => {
-		email = faker.internet.email();
-		secEmail = faker.internet.email();
-		firstName = faker.name.firstName();
-		lastName = faker.name.lastName();
-		username = faker.internet.userName();
-		email = faker.internet.email();
-		password = faker.internet.password();
-		employeeEmail = faker.internet.email();
-		imgUrl = faker.image.avatar();
-
 		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 

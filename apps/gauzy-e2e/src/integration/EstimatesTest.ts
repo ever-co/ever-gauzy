@@ -2,8 +2,6 @@ import * as loginPage from '../support/Base/pages/Login.po';
 import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as estimatesPage from '../support/Base/pages/Estimates.po';
 import { EstimatesPageData } from '../support/Base/pagedata/EstimatesPageData';
-import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
-import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
 import * as faker from 'faker';

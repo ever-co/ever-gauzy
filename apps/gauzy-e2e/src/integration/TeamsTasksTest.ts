@@ -6,8 +6,6 @@ import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import * as organizationProjectsPage from '../support/Base/pages/OrganizationProjects.po';
 import { OrganizationProjectsPageData } from '../support/Base/pagedata/OrganizationProjectsPageData';
 import { CustomCommands } from '../support/commands';
-import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
-import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 import * as organizationTeamsPage from '../support/Base/pages/OrganizationTeams.po';
 import { OrganizationTeamsPageData } from '../support/Base/pagedata/OrganizationTeamsPageData';
 

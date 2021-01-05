@@ -3,8 +3,6 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as organizationEquipmentPage from '../support/Base/pages/OrganizationEquipment.po';
 import { OrganizationEquipmentPageData } from '../support/Base/pagedata/OrganizationEquipmentPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
-import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
-import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 import { CustomCommands } from '../support/commands';
 
 describe('Organization equipment test', () => {

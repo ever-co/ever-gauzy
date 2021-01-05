@@ -3,8 +3,6 @@ import { LoginPageData } from '../support/Base/pagedata/LoginPageData';
 import * as inviteCandidatePage from '../support/Base/pages/Candidates.po';
 import * as faker from 'faker';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
-import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
-import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 import { CustomCommands } from '../support/commands';
 
 let email = ' ';

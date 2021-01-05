@@ -8,25 +8,9 @@ import { OrganizationProjectsPageData } from '../support/Base/pagedata/Organizat
 import { CustomCommands } from '../support/commands';
 import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
 import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
-import * as faker from 'faker';
-import * as manageEmployeesPage from '../support/Base/pages/ManageEmployees.po';
-
-let firstName = ' ';
-let lastName = ' ';
-let username = ' ';
-let password = ' ';
-let employeeEmail = ' ';
-let imgUrl = ' ';
 
 describe('Add tasks test', () => {
 	before(() => {
-		firstName = faker.name.firstName();
-		lastName = faker.name.lastName();
-		username = faker.internet.userName();
-		password = faker.internet.password();
-		employeeEmail = faker.internet.email();
-		imgUrl = faker.image.avatar();
-
 		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 	it('Should be able to add new task', () => {
