@@ -10,13 +10,6 @@ import * as faker from 'faker';
 import { ClientsData } from '../support/Base/pagedata/ClientsPageData';
 import { CustomCommands } from '../support/commands';
 
-let firstName = ' ';
-let lastName = ' ';
-let username = ' ';
-let password = ' ';
-let employeeEmail = ' ';
-let imgUrl = ' ';
-
 let email = ' ';
 let fullName = ' ';
 let city = ' ';
@@ -32,13 +25,6 @@ describe('Timesheets test', () => {
 		postcode = faker.address.zipCode();
 		street = faker.address.streetAddress();
 		website = faker.internet.url();
-
-		firstName = faker.name.firstName();
-		lastName = faker.name.lastName();
-		username = faker.internet.userName();
-		password = faker.internet.password();
-		employeeEmail = faker.internet.email();
-		imgUrl = faker.image.avatar();
 
 		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
