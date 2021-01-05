@@ -20,10 +20,6 @@ describe('Add teams tasks test', () => {
 			organizationProjectsPage,
 			OrganizationProjectsPageData
 		);
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
 		CustomCommands.addTeam(
 			organizationTeamsPage,
 			OrganizationTeamsPageData

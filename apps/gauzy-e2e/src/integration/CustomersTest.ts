@@ -36,10 +36,6 @@ describe('Customers test', () => {
 			organizationProjectsPage,
 			OrganizationProjectsPageData
 		);
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
 		cy.visit('/#/pages/contacts/customers');
 		customersPage.gridBtnExists();
 		customersPage.gridBtnClick(1);
@@ -51,6 +47,19 @@ describe('Customers test', () => {
 		customersPage.enterEmailInputData(email);
 		customersPage.phoneInputVisible();
 		customersPage.enterPhoneInputData(CustomersPageData.defaultPhone);
+		customersPage.projectDropdownVisible();
+		customersPage.clickProjectDropdown();
+		customersPage.selectProjectFromDropdown(
+			CustomersPageData.defaultProject
+		);
+		customersPage.tagsMultyselectVisible();
+		customersPage.clickTagsMultyselect();
+		customersPage.selectTagsFromDropdown(0);
+		customersPage.clickCardBody();
+		customersPage.websiteInputVisible();
+		customersPage.enterWebsiteInputData(website);
+		customersPage.saveButtonVisible();
+		customersPage.clickSaveButton();
 		customersPage.countryDropdownVisible();
 		customersPage.clickCountryDropdown();
 		customersPage.selectCountryFromDropdown(CustomersPageData.country);
@@ -60,23 +69,14 @@ describe('Customers test', () => {
 		customersPage.enterPostcodeInputData(postcode);
 		customersPage.streetInputVisible();
 		customersPage.enterStreetInputData(street);
-		customersPage.projectDropdownVisible();
-		customersPage.clickProjectDropdown();
-		customersPage.selectProjectFromDropdown(
-			CustomersPageData.defaultProject
-		);
+		customersPage.nextButtonVisible();
+		customersPage.clickNextButton();
 		customersPage.selectEmployeeDropdownVisible();
 		customersPage.clickSelectEmployeeDropdown();
 		customersPage.selectEmployeeDropdownOption(0);
 		customersPage.clickKeyboardButtonByKeyCode(9);
-		customersPage.tagsMultyselectVisible();
-		customersPage.clickTagsMultyselect();
-		customersPage.selectTagsFromDropdown(0);
-		customersPage.clickCardBody();
-		customersPage.websiteInputVisible();
-		customersPage.enterWebsiteInputData(website);
-		customersPage.saveButtonVisible();
-		customersPage.clickSaveButton();
+		customersPage.nextButtonVisible();
+		customersPage.clickNextButton();
 		customersPage.waitMessageToHide();
 		customersPage.verifyCustomerExists(fullName);
 	});
@@ -105,6 +105,10 @@ describe('Customers test', () => {
 		customersPage.enterEmailInputData(email);
 		customersPage.phoneInputVisible();
 		customersPage.enterPhoneInputData(CustomersPageData.defaultPhone);
+		customersPage.websiteInputVisible();
+		customersPage.enterWebsiteInputData(website);
+		customersPage.saveButtonVisible();
+		customersPage.clickSaveButton();
 		customersPage.countryDropdownVisible();
 		customersPage.clickCountryDropdown();
 		customersPage.selectCountryFromDropdown(CustomersPageData.country);
@@ -114,10 +118,9 @@ describe('Customers test', () => {
 		customersPage.enterPostcodeInputData(postcode);
 		customersPage.streetInputVisible();
 		customersPage.enterStreetInputData(street);
-		customersPage.websiteInputVisible();
-		customersPage.enterWebsiteInputData(website);
-		customersPage.saveButtonVisible();
-		customersPage.clickSaveButton();
+		customersPage.nextButtonVisible();
+		customersPage.clickNextButton();
+		customersPage.clickNextButton();
 		customersPage.waitMessageToHide();
 		customersPage.verifyCustomerExists(deleteName);
 	});

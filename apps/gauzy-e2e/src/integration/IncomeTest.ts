@@ -18,10 +18,6 @@ describe('Income test', () => {
 	});
 
 	it('Should be able to add new income', () => {
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
 		cy.visit('/#/pages/accounting/income');
 		incomePage.gridBtnExists();
 		incomePage.gridBtnClick(1);

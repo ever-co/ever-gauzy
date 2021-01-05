@@ -24,10 +24,6 @@ describe('Expense test', () => {
 			organizationProjectsPage,
 			OrganizationProjectsPageData
 		);
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
 		cy.visit('/#/pages/accounting/expenses');
 		expensesPage.gridBtnExists();
 		expensesPage.gridBtnClick(1);

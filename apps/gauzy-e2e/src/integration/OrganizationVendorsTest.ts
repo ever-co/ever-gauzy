@@ -13,10 +13,6 @@ describe('Organization vendors test', () => {
 	});
 
 	it('Should be able to add new vendor', () => {
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
 		cy.visit('/#/pages/organization/vendors');
 		organizationVendorsPage.gridButtonVisible();
 		organizationVendorsPage.clickGridButton(1);

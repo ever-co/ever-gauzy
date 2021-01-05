@@ -36,42 +36,6 @@ describe('Organization departments test', () => {
 	});
 
 	it('Should be able to add new department', () => {
-		cy.visit('/#/pages/employees');
-		manageEmployeesPage.addEmployeeButtonVisible();
-		manageEmployeesPage.clickAddEmployeeButton();
-		manageEmployeesPage.firstNameInputVisible();
-		manageEmployeesPage.enterFirstNameData(firstName);
-		manageEmployeesPage.lastNameInputVisible();
-		manageEmployeesPage.enterLastNameData(lastName);
-		manageEmployeesPage.usernameInputVisible();
-		manageEmployeesPage.enterUsernameData(username);
-		manageEmployeesPage.employeeEmailInputVisible();
-		manageEmployeesPage.enterEmployeeEmailData(employeeEmail);
-		manageEmployeesPage.dateInputVisible();
-		manageEmployeesPage.enterDateData();
-		manageEmployeesPage.clickKeyboardButtonByKeyCode(9);
-		manageEmployeesPage.passwordInputVisible();
-		manageEmployeesPage.enterPasswordInputData(password);
-		manageEmployeesPage.tagsDropdownVisible();
-		manageEmployeesPage.clickTagsDropdwon();
-		manageEmployeesPage.selectTagFromDropdown(0);
-		manageEmployeesPage.clickCardBody();
-		manageEmployeesPage.imageInputVisible();
-		manageEmployeesPage.enterImageDataUrl(imgUrl);
-		manageEmployeesPage.nextButtonVisible();
-		manageEmployeesPage.clickNextButton();
-		manageEmployeesPage.nextStepButtonVisible();
-		manageEmployeesPage.clickNextStepButton();
-		manageEmployeesPage.lastStepButtonVisible();
-		manageEmployeesPage.clickLastStepButton();
-		CustomCommands.addProject(
-			organizationProjectsPage,
-			OrganizationProjectsPageData
-		);
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
 		cy.visit('/#/pages/organization/departments');
 		organizationDepartmentsPage.gridBtnExists();
 		organizationDepartmentsPage.gridBtnClick(1);

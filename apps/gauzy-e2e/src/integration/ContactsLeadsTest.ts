@@ -36,10 +36,6 @@ describe('Contacts leads test', () => {
 			organizationProjectsPage,
 			OrganizationProjectsPageData
 		);
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
 		CustomCommands.addContact(
 			fullName,
 			email,
@@ -81,6 +77,10 @@ describe('Contacts leads test', () => {
 		contactsLeadsPage.enterPhoneInputData(
 			ContactsLeadsPageData.defaultPhone
 		);
+		contactsLeadsPage.websiteInputVisible();
+		contactsLeadsPage.enterWebsiteInputData(website);
+		contactsLeadsPage.saveButtonVisible();
+		contactsLeadsPage.clickSaveButton();
 		contactsLeadsPage.countryDropdownVisible();
 		contactsLeadsPage.clickCountryDropdown();
 		contactsLeadsPage.selectCountryFromDropdown(
@@ -92,10 +92,9 @@ describe('Contacts leads test', () => {
 		contactsLeadsPage.enterPostcodeInputData(postcode);
 		contactsLeadsPage.streetInputVisible();
 		contactsLeadsPage.enterStreetInputData(street);
-		contactsLeadsPage.websiteInputVisible();
-		contactsLeadsPage.enterWebsiteInputData(website);
-		contactsLeadsPage.saveButtonVisible();
-		contactsLeadsPage.clickSaveButton();
+		contactsLeadsPage.nextButtonVisible();
+		contactsLeadsPage.clickNextButton();
+		contactsLeadsPage.clickNextButton();
 		contactsLeadsPage.waitMessageToHide();
 		contactsLeadsPage.verifyLeadExists(deleteName);
 	});

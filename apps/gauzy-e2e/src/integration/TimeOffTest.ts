@@ -26,15 +26,6 @@ describe('Time Off test', () => {
 		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 	it('Should be able to create new time off request', () => {
-		CustomCommands.addEmployee(
-			manageEmployeesPage,
-			firstName,
-			lastName,
-			username,
-			employeeEmail,
-			password,
-			imgUrl
-		);
 		cy.visit('/#/pages/employees/time-off');
 		timeOffPage.requestButtonVisible();
 		timeOffPage.clickRequestButton();

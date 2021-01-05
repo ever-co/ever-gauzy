@@ -28,6 +28,14 @@ export const clickAddButton = () => {
 	clickButton(CustomersPage.addButtonCss);
 };
 
+export const nextButtonVisible = () => {
+	verifyElementIsVisible(CustomersPage.nextButtonCss);
+};
+
+export const clickNextButton = () => {
+	clickButton(CustomersPage.nextButtonCss);
+};
+
 export const nameInputVisible = () => {
 	verifyElementIsVisible(CustomersPage.nameInputCss);
 };

@@ -17,6 +17,7 @@ export const CustomersPage = {
 	dropdownOptionCss: '.option-list nb-option',
 	addTagsDropdownCss: '#addTags',
 	tagsDropdownOption: 'div.ng-option',
+	nextButtonCss: 'div.fields > div > button[status="success"]',
 	websiteInputCss: '[formcontrolname="website"]',
 	cardBodyCss: 'div.contact-container',
 	saveButtonCss: 'div.form-group > button[status="success"]',

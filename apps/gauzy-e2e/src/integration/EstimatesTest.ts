@@ -37,10 +37,6 @@ describe('Estimates test', () => {
 			organizationProjectsPage,
 			OrganizationProjectsPageData
 		);
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
 		CustomCommands.addContact(
 			fullName,
 			email,
@@ -124,7 +120,6 @@ describe('Estimates test', () => {
 	it('Should be able to duplicate estimate', () => {
 		estimatesPage.waitMessageToHide();
 		estimatesPage.selectTableRow(0);
-		estimatesPage.selectTableRow(0);
 		estimatesPage.actionButtonVisible();
 		estimatesPage.clickActionButtonByText(
 			EstimatesPageData.duplicateButton
@@ -165,7 +160,6 @@ describe('Estimates test', () => {
 		estimatesPage.verifySentBadgeClass();
 	});
 	it('Should be able to convert estimate to invoice', () => {
-		estimatesPage.selectTableRow(0);
 		estimatesPage.actionButtonVisible();
 		estimatesPage.clickActionButtonByText(
 			EstimatesPageData.convertToInvoiceButton

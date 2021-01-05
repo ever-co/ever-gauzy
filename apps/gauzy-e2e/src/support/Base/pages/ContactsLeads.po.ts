@@ -63,6 +63,14 @@ export const clickCountryDropdown = () => {
 	clickButton(ContactsLeadsPage.countryDropdownCss);
 };
 
+export const nextButtonVisible = () => {
+	verifyElementIsVisible(ContactsLeadsPage.nextButtonCss);
+};
+
+export const clickNextButton = () => {
+	clickButton(ContactsLeadsPage.nextButtonCss);
+};
+
 export const selectCountryFromDropdown = (text) => {
 	clickElementByText(ContactsLeadsPage.dropdownOptionCss, text);
 };

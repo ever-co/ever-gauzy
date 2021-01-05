@@ -28,19 +28,15 @@ describe('Approval request test', () => {
 		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 	it('Should be able to add approval policy', () => {
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
-		CustomCommands.addEmployee(
-			manageEmployeesPage,
-			firstName,
-			lastName,
-			username,
-			employeeEmail,
-			password,
-			imgUrl
-		);
+		// CustomCommands.addEmployee(
+		// 	manageEmployeesPage,
+		// 	firstName,
+		// 	lastName,
+		// 	username,
+		// 	employeeEmail,
+		// 	password,
+		// 	imgUrl
+		// );
 		cy.visit('/#/pages/employees/approvals');
 		approvalRequestPage.approvalPolicyButtonVisible();
 		approvalRequestPage.clickApprovalPolicyButton();

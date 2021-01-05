@@ -13,10 +13,6 @@ describe('Organization employment types test', () => {
 	});
 
 	it('Should be able to add new employment type', () => {
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
 		cy.visit('/#/pages/organization/employment-types');
 		organizationEmploymentTypePage.gridBtnExists();
 		organizationEmploymentTypePage.gridBtnClick(1);

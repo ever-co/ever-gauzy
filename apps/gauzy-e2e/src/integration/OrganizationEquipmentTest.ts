@@ -13,10 +13,6 @@ describe('Organization equipment test', () => {
 	});
 
 	it('Should be able to add new equipment', () => {
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
 		cy.visit('/#/pages/organization/equipment');
 		organizationEquipmentPage.gridBtnExists();
 		organizationEquipmentPage.gridBtnClick(1);

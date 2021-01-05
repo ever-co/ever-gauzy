@@ -16,6 +16,7 @@ export const ContactsLeadsPage = {
 	usersMultyselectCss: 'div.form-group ga-employee-multi-select nb-select',
 	dropdownOptionCss: '.option-list nb-option',
 	addTagsDropdownCss: '#addTags',
+	nextButtonCss: 'div.fields > div > button[status="success"]',
 	tagsDropdownOption: 'div.ng-option',
 	websiteInputCss: '[formcontrolname="website"]',
 	cardBodyCss: 'div.contact-container',

@@ -29,10 +29,6 @@ describe('Invite candidate test', () => {
 	});
 
 	it('Should be able to send invite', () => {
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
 		cy.visit('/#/pages/employees/candidates');
 		inviteCandidatePage.gridBtnExists();
 		inviteCandidatePage.gridBtnClick(1);

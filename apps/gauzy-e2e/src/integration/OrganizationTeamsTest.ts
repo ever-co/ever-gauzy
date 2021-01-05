@@ -13,10 +13,6 @@ describe('Organization teams test', () => {
 	});
 
 	it('Should be able to add new team', () => {
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
 		cy.visit('/#/pages/organization/teams');
 		organizationTeamsPage.gridBtnExists();
 		organizationTeamsPage.gridBtnClick(1);

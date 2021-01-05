@@ -37,10 +37,6 @@ describe('Invoices test', () => {
 			organizationProjectsPage,
 			OrganizationProjectsPageData
 		);
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
 		CustomCommands.addContact(
 			fullName,
 			email,

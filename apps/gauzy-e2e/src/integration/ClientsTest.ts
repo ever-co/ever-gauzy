@@ -38,10 +38,6 @@ describe('Clients test', () => {
 			organizationProjectsPage,
 			OrganizationProjectsPageData
 		);
-		CustomCommands.addTag(
-			organizationTagsUserPage,
-			OrganizationTagsPageData
-		);
 		cy.visit('/#/pages/contacts/clients');
 		clientsPage.gridBtnExists();
 		clientsPage.gridBtnClick(1);
