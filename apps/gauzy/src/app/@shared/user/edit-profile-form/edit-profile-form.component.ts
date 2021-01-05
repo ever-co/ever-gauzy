@@ -143,15 +143,20 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	}
 
 	async submitForm() {
+		const {
+			email,
+			firstName,
+			lastName,
+			tags,
+			preferredLanguage
+		} = this.form.value;
 		this.accountInfo = {
-			email: this.form.value['email'],
-			firstName: this.form.value['firstName'],
-			imageUrl: this.form.value['imageUrl'],
-			lastName: this.form.value['lastName'],
-			tags: this.form.value['tags'],
-			preferredLanguage: this.form.value['preferredLanguage']
+			email,
+			firstName,
+			lastName,
+			tags,
+			preferredLanguage
 		};
-
 		if (this.form.value['password']) {
 			this.accountInfo = {
 				...this.accountInfo,
@@ -160,10 +165,11 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		}
 
 		if (this.allowRoleChange) {
+			const { tenantId } = this.store.user;
 			const role = await this.roleService
 				.getRoleByName({
 					name: this.form.value['roleName'],
-					tenant: this.store.user.tenant
+					tenantId
 				})
 				.pipe(first())
 				.toPromise();

@@ -35,6 +35,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 	form: FormGroup;
 	role: IRole;
 	employees: IEmployeeCreateInput[] = [];
+
 	constructor(
 		protected dialogRef: NbDialogRef<EmployeeMutationComponent>,
 		protected organizationsService: OrganizationsService,
@@ -49,11 +50,12 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 	ngOnInit(): void {}
 
 	async ngAfterViewInit() {
+		const { tenantId } = this.store.user;
 		this.form = this.userBasicInfo.form;
 		this.role = await this.roleService
 			.getRoleByName({
 				name: RolesEnum.EMPLOYEE,
-				tenant: this.store.user.tenant
+				tenantId
 			})
 			.pipe(first())
 			.toPromise();
