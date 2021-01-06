@@ -1,5 +1,5 @@
 <form [formGroup]="form" (ngSubmit)="persist()">
-	<nb-card style="width: 750px;">
+	<nb-card style="width: 750px">
 		<nb-card-header>
 			<h4
 				*ngIf="pipeline.id"
@@ -45,8 +45,9 @@
 						(checkedChange)="setIsActive()"
 						[checked]="isActive"
 						formControlName="isActive"
-						>Active</nb-checkbox
 					>
+						{{ 'PIPELINES_PAGE.ACTIVE' | translate }}
+					</nb-checkbox>
 				</div>
 				<div class="col">
 					<ga-stage-form

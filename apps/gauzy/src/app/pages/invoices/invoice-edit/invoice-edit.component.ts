@@ -104,6 +104,7 @@ export class InvoiceEditComponent
 	total = 0;
 	loading: boolean;
 	selectedLanguage: string;
+	discountTaxTypes = Object.values(DiscountTaxTypeEnum);
 	get currency() {
 		return this.form.get('currency');
 	}
@@ -377,8 +378,7 @@ export class InvoiceEditComponent
 				width: '13%'
 			};
 		} else if (
-			this.invoice.invoiceType ===
-				InvoiceTypeEnum.DETAILS_INVOICE_ITEMS ||
+			this.invoice.invoiceType === InvoiceTypeEnum.DETAILED_ITEMS ||
 			this.invoice.invoiceType === InvoiceTypeEnum.BY_PRODUCTS ||
 			this.invoice.invoiceType === InvoiceTypeEnum.BY_EXPENSES
 		) {
@@ -623,7 +623,13 @@ export class InvoiceEditComponent
 			);
 
 			await this.invoiceEstimateHistoryService.add({
-				action: this.isEstimate ? 'Estimate edited' : 'Invoice edited',
+				action: this.isEstimate
+					? this.getTranslation(
+							'INVOICES_PAGE.INVOICES_EDIT_ESTIMATE'
+					  )
+					: this.getTranslation(
+							'INVOICES_PAGE.INVOICES_EDIT_INVOICE'
+					  ),
 				invoice: this.invoice,
 				invoiceId: this.invoice.id,
 				user: this.store.user,
@@ -662,8 +668,12 @@ export class InvoiceEditComponent
 			);
 			await this.invoiceEstimateHistoryService.add({
 				action: this.isEstimate
-					? `Estimate sent to ${this.form.value.organizationContact.name}`
-					: `Invoice sent to ${this.form.value.organizationContact.name}`,
+					? this.getTranslation('INVOICES_PAGE.ESTIMATE_SENT_TO', {
+							name: this.form.value.organizationContact.name
+					  })
+					: this.getTranslation('INVOICES_PAGE.INVOICE_SENT_TO', {
+							name: this.form.value.organizationContact.name
+					  }),
 				invoice: this.invoice,
 				invoiceId: this.invoice.id,
 				user: this.store.user,
@@ -969,8 +979,7 @@ export class InvoiceEditComponent
 			event.newData.price &&
 			event.newData.description &&
 			(event.newData.selectedItem ||
-				this.invoice.invoiceType ===
-					InvoiceTypeEnum.DETAILS_INVOICE_ITEMS)
+				this.invoice.invoiceType === InvoiceTypeEnum.DETAILED_ITEMS)
 		) {
 			const newData = event.newData;
 			const itemTotal = +event.newData.quantity * +event.newData.price;
@@ -995,8 +1004,7 @@ export class InvoiceEditComponent
 			event.newData.price &&
 			event.newData.description &&
 			(event.newData.selectedItem ||
-				this.invoice.invoiceType ===
-					InvoiceTypeEnum.DETAILS_INVOICE_ITEMS)
+				this.invoice.invoiceType === InvoiceTypeEnum.DETAILED_ITEMS)
 		) {
 			const newData = event.newData;
 			const oldValue = +event.data.quantity * +event.data.price;

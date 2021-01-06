@@ -49,8 +49,12 @@ export class InvoiceSendMutationComponent
 
 		await this.invoiceEstimateHistoryService.add({
 			action: this.isEstimate
-				? `Estimate sent to ${this.invoice.toContact.name}`
-				: `Invoice sent to ${this.invoice.toContact.name}`,
+				? this.getTranslation('INVOICES_PAGE.ESTIMATE_SENT_TO', {
+						name: this.invoice.toContact.name
+				  })
+				: this.getTranslation('INVOICES_PAGE.INVOICE_SENT_TO', {
+						name: this.invoice.toContact.name
+				  }),
 			invoice: this.invoice,
 			invoiceId: this.invoice.id,
 			user: this.store.user,

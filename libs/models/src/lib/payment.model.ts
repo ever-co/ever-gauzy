@@ -39,12 +39,12 @@ export interface IPaymentFindInput
 }
 
 export enum PaymentMethodEnum {
-	BANK_TRANSFER = 'Bank transfer',
-	CASH = 'Cash',
-	CHEQUE = 'Cheque',
-	CREDIT_CARD = 'Credit card',
-	DEBIT = 'Debit',
-	ONLINE = 'Online'
+	BANK_TRANSFER = 'BANK_TRANSFER',
+	CASH = 'CASH',
+	CHEQUE = 'CHEQUE',
+	CREDIT_CARD = 'CREDIT_CARD',
+	DEBIT = 'DEBIT',
+	ONLINE = 'ONLINE'
 }
 
 export interface ISelectedPayment {

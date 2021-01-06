@@ -44,7 +44,9 @@ export class PipelinesComponent
 				renderComponent: StatusBadgeComponent,
 				valuePrepareFunction: (cell, row) => {
 					const badgeClass = row.isActive ? 'success' : 'warning';
-					cell = row.isActive ? 'Active' : 'Inactive';
+					cell = row.isActive
+						? this.getTranslation('PIPELINES_PAGE.ACTIVE')
+						: this.getTranslation('PIPELINES_PAGE.INACTIVE');
 					return {
 						text: cell,
 						class: badgeClass

@@ -16,7 +16,10 @@
 	</nb-card-header>
 	<nb-card-body>
 		<nb-tabset (changeTab)="onChangeTab($event)">
-			<nb-tab tabTitle="Actions" tabId="actions">
+			<nb-tab
+				tabTitle="{{ 'INVOICES_PAGE.ACTIONS' | translate }}"
+				tabId="actions"
+			>
 				<ng-template
 					[ngxPermissionsOnly]="['INVOICES_EDIT', 'INVOICES_VIEW']"
 				>
@@ -75,7 +78,10 @@
 					</div>
 				</ng-template>
 			</nb-tab>
-			<nb-tab tabTitle="Search" tabId="search">
+			<nb-tab
+				tabTitle="{{ 'INVOICES_PAGE.SEARCH' | translate }}"
+				tabId="search"
+			>
 				<form [formGroup]="form">
 					<div class="row">
 						<div class="col-sm-4">
@@ -123,8 +129,7 @@
 									class="label"
 								>
 									<span>{{
-										'INVOICES_PAGE.INVOICES_SELECT_CONTACT'
-											| translate
+										'INVOICES_PAGE.CONTACT' | translate
 									}}</span>
 								</label>
 								<ng-select
@@ -158,8 +163,7 @@
 							<div class="form-group">
 								<label for="inputInvoiceDate" class="label">
 									<span *ngIf="!isEstimate">{{
-										'INVOICES_PAGE.INVOICES_SELECT_INVOICE_DATE'
-											| translate
+										'INVOICES_PAGE.INVOICE_DATE' | translate
 									}}</span>
 									<span *ngIf="isEstimate">{{
 										'INVOICES_PAGE.ESTIMATE_DATE'
@@ -172,8 +176,7 @@
 									type="text"
 									nbInput
 									placeholder="{{
-										'INVOICES_PAGE.INVOICES_SELECT_INVOICE_DATE'
-											| translate
+										'INVOICES_PAGE.INVOICE_DATE' | translate
 									}}"
 									[nbDatepicker]="invoiceDatePicker"
 									id="inputInvoiceDate"
@@ -202,14 +205,12 @@
 						<div class="col-sm-4">
 							<div class="form-group">
 								<label for="inputDueDate" class="label">{{
-									'INVOICES_PAGE.INVOICES_SELECT_DUE_DATE'
-										| translate
+									'INVOICES_PAGE.DUE_DATE' | translate
 								}}</label>
 								<input
 									nbInput
 									placeholder="{{
-										'INVOICES_PAGE.INVOICES_SELECT_DUE_DATE'
-											| translate
+										'INVOICES_PAGE.DUE_DATE' | translate
 									}}"
 									[nbDatepicker]="dueDatePicker"
 									formControlName="dueDate"
@@ -272,7 +273,10 @@
 										"
 										[value]="status"
 									>
-										{{ status }}
+										{{
+											'INVOICES_PAGE.STATUSES.' + status
+												| translate
+										}}
 									</nb-option>
 								</nb-select>
 								<nb-select
@@ -290,7 +294,10 @@
 										"
 										[value]="status"
 									>
-										{{ status }}
+										{{
+											'INVOICES_PAGE.STATUSES.' + status
+												| translate
+										}}
 									</nb-option>
 								</nb-select>
 							</div>
@@ -328,7 +335,10 @@
 					</div>
 				</form>
 			</nb-tab>
-			<nb-tab tabTitle="History" tabId="history">
+			<nb-tab
+				tabTitle="{{ 'INVOICES_PAGE.HISTORY' | translate }}"
+				tabId="history"
+			>
 				<nb-list-item
 					*ngIf="disableButton && !isEstimate"
 					class="history-list-select"
@@ -428,7 +438,7 @@
 					*ngFor="let status of invoiceStatusTypes"
 					[value]="status"
 				>
-					{{ status }}
+					{{ 'INVOICES_PAGE.STATUSES.' + status | translate }}
 				</nb-option>
 			</nb-select>
 			<nb-select
@@ -446,7 +456,7 @@
 					*ngFor="let status of estimateStatusTypes"
 					[value]="status"
 				>
-					{{ status }}
+					{{ 'INVOICES_PAGE.STATUSES.' + status | translate }}
 				</nb-option>
 			</nb-select>
 		</ng-template>
@@ -567,7 +577,7 @@
 					*ngFor="let column of invoiceColumns"
 					[value]="column"
 				>
-					{{ column }}
+					{{ 'INVOICES_PAGE.' + column | translate }}
 				</nb-option>
 			</nb-select>
 			<nb-select
@@ -583,7 +593,7 @@
 					*ngFor="let column of estimateColumns"
 					[value]="column"
 				>
-					{{ column }}
+					{{ 'INVOICES_PAGE.' + column | translate }}
 				</nb-option>
 			</nb-select>
 		</div>

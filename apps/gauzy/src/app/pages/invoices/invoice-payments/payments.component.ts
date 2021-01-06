@@ -162,7 +162,13 @@ export class InvoicePaymentsComponent
 				this.totalPaid
 			);
 			await this.invoiceEstimateHistoryService.add({
-				action: `Payment of ${result.amount} ${result.currency} added`,
+				action: this.getTranslation(
+					'INVOICES_PAGE.PAYMENT.PAYMENT_AMOUNT_ADDED',
+					{
+						amount: result.amount,
+						currency: result.currency
+					}
+				),
 				invoice: result.invoice,
 				invoiceId: result.invoice.id,
 				user: this.store.user,
@@ -192,7 +198,9 @@ export class InvoicePaymentsComponent
 				this.totalPaid
 			);
 			await this.invoiceEstimateHistoryService.add({
-				action: `Payment edited`,
+				action: this.getTranslation(
+					'INVOICES_PAGE.PAYMENT.PAYMENT_EDIT'
+				),
 				invoice: result.invoice,
 				invoiceId: result.invoice.id,
 				user: this.store.user,
@@ -218,7 +226,9 @@ export class InvoicePaymentsComponent
 			);
 
 			await this.invoiceEstimateHistoryService.add({
-				action: `Payment deleted`,
+				action: this.getTranslation(
+					'INVOICES_PAGE.PAYMENT.PAYMENT_DELETE'
+				),
 				invoice: this.invoice,
 				invoiceId: this.invoice.id,
 				user: this.store.user,
@@ -254,7 +264,11 @@ export class InvoicePaymentsComponent
 			this.invoice.toContact,
 			this.totalPaid
 		);
-		pdfMake.createPdf(docDefinition).download(`Payment.pdf`);
+		pdfMake
+			.createPdf(docDefinition)
+			.download(
+				`${this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT')}.pdf`
+			);
 		this.toastrService.primary(
 			this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_DOWNLOAD'),
 			this.getTranslation('TOASTR.TITLE.SUCCESS')

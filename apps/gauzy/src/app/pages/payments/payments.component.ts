@@ -207,7 +207,13 @@ export class PaymentsComponent
 			await this.loadSettings();
 			if (result.invoice) {
 				await this.invoiceEstimateHistoryService.add({
-					action: `Payment of ${result.amount} ${result.currency} added`,
+					action: this.getTranslation(
+						'INVOICES_PAGE.PAYMENT.PAYMENT_AMOUNT_ADDED',
+						{
+							amount: result.amount,
+							currency: result.currency
+						}
+					),
 					invoice: result.invoice,
 					invoiceId: result.invoice.id,
 					user: this.store.user,
@@ -247,7 +253,9 @@ export class PaymentsComponent
 
 			const { tenantId } = this.store.user;
 			await this.invoiceEstimateHistoryService.add({
-				action: `Payment edited`,
+				action: this.getTranslation(
+					'INVOICES_PAGE.PAYMENT.PAYMENT_EDIT'
+				),
 				invoice: result.invoice,
 				invoiceId: result.invoice.id,
 				user: this.store.user,
@@ -279,7 +287,9 @@ export class PaymentsComponent
 
 			const { tenantId } = this.store.user;
 			await this.invoiceEstimateHistoryService.add({
-				action: `Payment deleted`,
+				action: this.getTranslation(
+					'INVOICES_PAGE.PAYMENT.PAYMENT_DELETE'
+				),
 				invoice: this.selectedPayment.invoice,
 				invoiceId: this.selectedPayment.invoice
 					? this.selectedPayment.invoice.id
@@ -320,7 +330,7 @@ export class PaymentsComponent
 					}
 				},
 				paymentMethod: {
-					title: 'Payment Method',
+					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_METHOD'),
 					type: 'text',
 					width: '10%'
 				},
@@ -356,7 +366,7 @@ export class PaymentsComponent
 					}
 				},
 				projectName: {
-					title: 'Project',
+					title: this.getTranslation('PAYMENTS_PAGE.PROJECT'),
 					type: 'text',
 					width: '10%',
 					valuePrepareFunction: (cell, row) => {
@@ -366,7 +376,7 @@ export class PaymentsComponent
 					}
 				},
 				tags: {
-					title: 'Tags',
+					title: this.getTranslation('PAYMENTS_PAGE.TAGS'),
 					type: 'custom',
 					width: '10%',
 					renderComponent: NotesWithTagsComponent

@@ -211,7 +211,7 @@ export class OrganizationsComponent
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
-					recordType: 'Organization'
+					recordType: 'ORGANIZATIONS_PAGE.ORGANIZATION'
 				}
 			})
 			.onClose.pipe(first())

@@ -38,17 +38,23 @@ export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
 		pdfMake
 			.createPdf(this.docDefinition)
 			.download(
-				`${this.isEstimate ? 'Estimate' : 'Invoice'}-${
-					this.invoice.invoiceNumber
-				}.pdf`
+				`${
+					this.isEstimate
+						? this.getTranslation('INVOICES_PAGE.ESTIMATE')
+						: this.getTranslation('INVOICES_PAGE.INVOICE')
+				}-${this.invoice.invoiceNumber}.pdf`
 			);
 
 		this.dialogRef.close();
 
 		await this.invoiceEstimateHistoryService.add({
 			action: this.isEstimate
-				? 'Estimate downloaded'
-				: 'Invoice downloaded',
+				? this.getTranslation(
+						'INVOICES_PAGE.DOWNLOAD.ESTIMATE_DOWNLOAD'
+				  )
+				: this.getTranslation(
+						'INVOICES_PAGE.DOWNLOAD.INVOICE_DOWNLOAD'
+				  ),
 			invoice: this.invoice,
 			invoiceId: this.invoice.id,
 			user: this.store.user,

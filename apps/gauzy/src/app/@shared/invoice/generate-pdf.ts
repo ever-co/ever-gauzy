@@ -77,7 +77,7 @@ export async function generatePdf(
 
 	let widths;
 	let tableHeader;
-	if (invoice.invoiceType === InvoiceTypeEnum.DETAILS_INVOICE_ITEMS) {
+	if (invoice.invoiceType === InvoiceTypeEnum.DETAILED_ITEMS) {
 		widths = ['25%', '25%', '25%', '25%'];
 		tableHeader = ['Description', 'Quantity', 'Price', 'Total Value'];
 	} else {

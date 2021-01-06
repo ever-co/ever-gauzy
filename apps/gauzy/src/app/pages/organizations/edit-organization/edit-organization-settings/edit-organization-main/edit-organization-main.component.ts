@@ -108,9 +108,11 @@ export class EditOrganizationMainComponent
 						action: OrganizationAction.UPDATED
 					};
 					this.toastrService.primary(
-						this.organization.name +
-							' organization main info updated.',
-						'Success'
+						this.getTranslation(
+							'TOASTR.MESSAGE.ORGANIZATION_INFO_UPDATED',
+							{ name: this.organization.name }
+						),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 					this.goBack();
 				})

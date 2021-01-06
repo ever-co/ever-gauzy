@@ -79,8 +79,11 @@ export class EditOrganizationLocationComponent
 
 		this.organizationService.update(this.organization.id, contactData);
 		this.toastrService.primary(
-			this.organization.name + ' organization location updated.',
-			'Success'
+			this.getTranslation(
+				'TOASTR.MESSAGE.ORGANIZATION_LOCATION_UPDATED',
+				{ name: this.organization.name }
+			),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
 		);
 		this.goBack();
 	}

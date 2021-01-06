@@ -65,7 +65,9 @@ export class InvoiceEmailMutationComponent
 				await this.invoiceItemService.add(item);
 			});
 			await this.invoiceEstimateHistoryService.add({
-				action: this.isEstimate ? 'Estimate added' : 'Invoice added',
+				action: this.isEstimate
+					? this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE')
+					: this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
 				invoice: createdInvoice,
 				invoiceId: createdInvoice.id,
 				user: this.store.user,
@@ -98,8 +100,12 @@ export class InvoiceEmailMutationComponent
 
 		await this.invoiceEstimateHistoryService.add({
 			action: this.isEstimate
-				? `Estimate sent to ${this.form.value.email}`
-				: `Invoice sent to ${this.form.value.email}`,
+				? this.getTranslation('INVOICES_PAGE.ESTIMATE_SENT_TO', {
+						name: this.form.value.email
+				  })
+				: this.getTranslation('INVOICES_PAGE.INVOICE_SENT_TO', {
+						name: this.form.value.email
+				  }),
 			invoice: this.createdInvoice ? this.createdInvoice : this.invoice,
 			invoiceId: this.createdInvoice
 				? this.createdInvoice.id

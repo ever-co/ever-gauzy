@@ -167,7 +167,8 @@
 		},
 		"CURRENT_VALUE": "Current value",
 		"TARGET_VALUE": "Target value",
-		"LAST_UPDATED": "Last Updated"
+		"LAST_UPDATED": "Last Updated",
+		"CREATED_BY": "Created By"
 	},
 	"FORM": {
 		"USERNAME": "Username",
@@ -441,7 +442,8 @@
 			"COORDINATE": {
 				"LATITUDE": "Latitude",
 				"LONGITUDE": "Longitude"
-			}
+			},
+			"SELECT_EXPENSE": "Select Expense"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -1456,6 +1458,7 @@
 		"EMPLOYMENT_TYPE_NAME": "Employment type name",
 		"CONTACTS": "Contacts",
 		"LEVEL": "Level",
+		"ORGANIZATION": "ORGANIZATION",
 		"EDIT": {
 			"ACCOUNTING": "Accounting",
 			"HEADER": "Manage",
@@ -1499,6 +1502,7 @@
 			"ADDED_TO_ORGANIZATION": " the organization",
 			"USER_WAS_DELETED": "{{ name }} was successfully deleted.",
 			"USER_WAS_REMOVED": "{{ name }} was successfully removed from organization.",
+			"EMPLOYEE_POSITION": "Employee Position",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timer Settings",
 				"ALLOW_MODIFY_TIME": "Allow Modify Time",
@@ -1977,6 +1981,7 @@
 		"JOB_SEARCH": "Job Search",
 		"LOAD_MORE": "Load More",
 		"HIDE_ALL_CONFIRM": "Are you sure you want to Hide All jobs?",
+		"ACTIONS": "Actions",
 		"FILTER": {
 			"TITLE": "Advanced Filter",
 			"SOURCE": "Source",
@@ -2024,7 +2029,9 @@
 		"PROPOSAL_CREATE_MESSAGE": "Proposal template '{{ name }}' was added",
 		"PROPOSAL_EDIT_MESSAGE": "Proposal template '{{ name }}' was changed",
 		"PROPOSAL_DELETE_MESSAGE": "Proposal template '{{ name }}' was removed",
-		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Proposal template '{{ name }}' set as default"
+		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Proposal template '{{ name }}' set as default",
+		"YES": "Yes",
+		"NO": "No"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Sprint added",
@@ -2120,8 +2127,13 @@
 		"ESTIMATE_NUMBER": "Estimate Number",
 		"INVOICE_DATE": "Invoice Date",
 		"ESTIMATE_DATE": "Estimate Date",
+		"DUE_DATE": "Due Date",
+		"CURRENCY": "Currency",
+		"DISCOUNT": "Discount",
+		"CONTACT": "Contact",
 		"TOTAL_VALUE": "Total Value",
 		"PAID_STATUS": "Paid Status",
+		"TAX": "Tax",
 		"TAX_2": "Tax 2",
 		"INVOICE_ACCEPTED": "Invoice Accepted",
 		"INVOICE_REJECTED": "Invoice Rejected",
@@ -2133,17 +2145,10 @@
 		"INVOICES_DUPLICATE_ESTIMATE": "Estimate Duplicated",
 		"INVOICES_DELETE_INVOICE": "Invoice Deleted",
 		"INVOICES_DELETE_ESTIMATE": "Estimate Deleted",
-		"INVOICES_SELECT_INVOICE_DATE": "Invoice Date",
-		"INVOICES_SELECT_DUE_DATE": "Due Date",
-		"INVOICES_SELECT_CURRENCY": "Currency",
 		"INVOICES_SELECT_DISCOUNT_VALUE": "Discount Value",
 		"INVOICES_SELECT_PAID": "Paid",
-		"INVOICES_SELECT_TAX": "Tax",
 		"INVOICES_TAXES": "Taxes",
-		"INVOICES_DISCOUNT": "Discount",
 		"INVOICES_SELECT_TERMS": "Terms",
-		"INVOICES_SELECT_TOTAL_VALUE": "Total Value",
-		"INVOICES_SELECT_CONTACT": "Contact",
 		"ADD_INVOICE": "Add Invoice",
 		"ADD_ESTIMATE": "Add Estimate",
 		"EDIT_INVOICE": "Edit Invoice",
@@ -2183,6 +2188,13 @@
 		"ESTIMATES_PER_PAGE": "Estimates Per Page",
 		"APPLY_DISCOUNT_AFTER_TAX": "Apply discount after tax",
 		"SELECT_INVOICE_TO_VIEW_HISTORY": "Select an invoice to view it's history",
+		"INVOICE_SENT_TO": "Invoice sent to {{ name }}",
+		"ESTIMATE_SENT_TO": "Estimate sent to {{ name }}",
+		"INVOICE": "Invoice",
+		"ESTIMATE": "Estimate",
+		"ACTIONS": "Actions",
+		"HISTORY": "History",
+		"SEARCH": "Search",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",
@@ -2194,8 +2206,7 @@
 			"BY_TASK_HOURS": "By Task Hours",
 			"BY_PRODUCTS": "By Products",
 			"BY_EXPENSES": "By Expenses",
-			"DETAILS_INVOICE_ITEMS": "Details Invoice Items",
-			"DETAILS_ESTIMATE_ITEMS": "Details Estimate Items",
+			"DETAILED_ITEMS": "Detailed Items",
 			"SELECT_INVOICE_TYPE": "Select an invoice type",
 			"SELECT_ESTIMATE_TYPE": "Select an estimate type",
 			"SELECT_PROJECTS": "Select projects",
@@ -2283,7 +2294,16 @@
 			"OVERDUE": "Overdue",
 			"NO_PAYMENTS_RECORDED": "No payments recorded",
 			"LEFT_TO_PAY": "Left to pay",
-			"PAYMENT_METHOD": "Payment Method"
+			"PAYMENT_METHOD": "Payment Method",
+			"SELECT_INVOICE": "Select Invoice",
+			"PAYMENT_AMOUNT_ADDED": "Payment of {{ amount }} {{ currency }} added",
+			"PAYMENT": "Payment",
+			"BANK_TRANSFER": "Bank Transfer",
+			"CASH": "Cash",
+			"CHEQUE": "Cheque",
+			"CREDIT_CARD": "Credit Card",
+			"DEBIT": "Debit",
+			"ONLINE": "Online"
 		},
 		"INTERNAL_NOTE": {
 			"NOTE_SAVED": "Internal Note Saved",
@@ -2291,6 +2311,26 @@
 			"ADD_NOTE": "Add note",
 			"NOTE": "Note",
 			"INTERNAL_NOTE": "Internal Note"
+		},
+		"STATUSES": {
+			"DRAFT": "Draft",
+			"SENT": "Sent",
+			"VIEWED": "Viewed",
+			"FULLY_PAID": "Fully Paid",
+			"PARTIALLY_PAID": "Partially Paid",
+			"OVERPAID": "Overpaid",
+			"VOID": "Void",
+			"ACCEPTED": "Accepted",
+			"REJECTED": "Rejected"
+		},
+		"ACTION": {
+			"DUPLICATE": "Duplicate",
+			"SEND": "Send",
+			"CONVERT_TO_INVOICE": "Convert to invoice",
+			"EMAIL": "Email",
+			"DELETE": "Delete",
+			"NOTE": "Note",
+			"PAYMENTS": "Payments"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -2302,7 +2342,10 @@
 		"NOTE": "Note",
 		"STATUS": "Status",
 		"ON_TIME": "On time",
-		"OVERDUE": "Overdue"
+		"OVERDUE": "Overdue",
+		"PAYMENT_METHOD": "Payment Method",
+		"PROJECT": "Project",
+		"TAGS": "Tags"
 	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Select Employee",
@@ -2471,7 +2514,13 @@
 			"CANDIDATE_ARCHIVED": "Candidate '{{ name }}' set as archived.",
 			"CANDIDATE_REJECTED": "Candidate '{{ name }}' set as rejected.",
 			"CANDIDATE_HIRED": "Candidate '{{ name }}' set as hired.",
-			"CANDIDATE_DELETED": "Candidate '{{ name }}' was removed"
+			"CANDIDATE_DELETED": "Candidate '{{ name }}' was removed",
+			"PRESET_SAVED": "Preset successfully saved",
+			"JOB_APPLIED": "Job applied successfully",
+			"JOB_HIDDEN": "Job hidden successfully",
+			"ORGANIZATION_LOCATION_UPDATED": "{{ name }} organization location updated.",
+			"ORGANIZATION_INFO_UPDATED": "{{ name }} organization main info updated.",
+			"ORGANIZATION_SETTINGS_UPDATED": "{{ name }} organization settings updated."
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -2899,7 +2948,9 @@
 		"VIEW_DEALS": "View Deals",
 		"HEADER_FORM_EDIT": "Edit Pipeline",
 		"HEADER_FORM_CREATE": "Create Pipeline",
-		"RECORD_TYPE": "pipeline \"{{ name }}\""
+		"RECORD_TYPE": "pipeline \"{{ name }}\"",
+		"ACTIVE": "Active",
+		"INACTIVE": "Inactive"
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Pipeline Deals",
@@ -2908,7 +2959,10 @@
 		"ALL_STAGES": "All Stages",
 		"DEAL_DELETED": "Deal deleted",
 		"DEAL_EDITED": "Deal edited",
-		"DEAL_ADDED": "Deal added"
+		"DEAL_ADDED": "Deal added",
+		"LOW": "Low",
+		"MEDIUM": "Medium",
+		"HIGH": "High"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Edit Deal | Pipeline: {{ name }}"
@@ -2916,7 +2970,8 @@
 	"PIPELINE_DEAL_CREATE_PAGE": {
 		"HEADER": "Create Deal | Pipeline: {{ name }}",
 		"SELECT_STAGE": "Select Stage",
-		"PROBABILITY": "Probability"
+		"PROBABILITY": "Probability",
+		"SELECT_CLIENT": "Select Client"
 	},
 	"DIALOG": {
 		"CONFIRM": "Confirm",

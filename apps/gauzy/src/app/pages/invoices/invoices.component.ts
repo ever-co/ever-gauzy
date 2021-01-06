@@ -165,32 +165,34 @@ export class InvoicesComponent
 	loadMenu() {
 		this.menuArray = [
 			{
-				title: 'Duplicate',
+				title: this.getTranslation('INVOICES_PAGE.ACTION.DUPLICATE'),
 				icon: 'copy-outline',
 				permission: PermissionsEnum.INVOICES_EDIT
 			},
 			{
-				title: 'Send',
+				title: this.getTranslation('INVOICES_PAGE.ACTION.SEND'),
 				icon: 'upload-outline',
 				permission: PermissionsEnum.INVOICES_VIEW
 			},
 			{
-				title: 'Convert to Invoice',
+				title: this.getTranslation(
+					'INVOICES_PAGE.ACTION.CONVERT_TO_INVOICE'
+				),
 				icon: 'swap',
 				permission: PermissionsEnum.INVOICES_EDIT
 			},
 			{
-				title: 'Email',
+				title: this.getTranslation('INVOICES_PAGE.ACTION.EMAIL'),
 				icon: 'email-outline',
 				permission: PermissionsEnum.INVOICES_VIEW
 			},
 			{
-				title: 'Delete',
+				title: this.getTranslation('INVOICES_PAGE.ACTION.DELETE'),
 				icon: 'archive-outline',
 				permission: PermissionsEnum.INVOICES_EDIT
 			},
 			{
-				title: 'Note',
+				title: this.getTranslation('INVOICES_PAGE.ACTION.NOTE'),
 				icon: 'book-open-outline',
 				permission: PermissionsEnum.INVOICES_EDIT
 			}
@@ -198,7 +200,7 @@ export class InvoicesComponent
 
 		if (!this.isEstimate) {
 			const paymentsObj = {
-				title: 'Payments',
+				title: this.getTranslation('INVOICES_PAGE.ACTION.PAYMENTS'),
 				icon: 'clipboard-outline',
 				permission: PermissionsEnum.INVOICES_EDIT
 			};
@@ -213,7 +215,13 @@ export class InvoicesComponent
 			);
 		} else {
 			this.settingsContextMenu = this.menuArray
-				.filter((item) => item.title !== 'Convert to Invoice')
+				.filter(
+					(item) =>
+						item.title !==
+						this.getTranslation(
+							'INVOICES_PAGE.ACTION.CONVERT_TO_INVOICE'
+						)
+				)
 				.filter(
 					(item) =>
 						this.ngxPermissionsService.getPermission(
@@ -242,13 +250,23 @@ export class InvoicesComponent
 	}
 
 	bulkAction(action) {
-		if (action === 'Duplicate') this.duplicated(this.selectedInvoice);
-		if (action === 'Send') this.send(this.selectedInvoice);
-		if (action === 'Convert to Invoice') this.convert(this.selectedInvoice);
-		if (action === 'Email') this.email(this.selectedInvoice);
-		if (action === 'Delete') this.delete(this.selectedInvoice);
-		if (action === 'Payments') this.payments();
-		if (action === 'Note') this.addInternalNote();
+		if (action === this.getTranslation('INVOICES_PAGE.ACTION.DUPLICATE'))
+			this.duplicated(this.selectedInvoice);
+		if (action === this.getTranslation('INVOICES_PAGE.ACTION.SEND'))
+			this.send(this.selectedInvoice);
+		if (
+			action ===
+			this.getTranslation('INVOICES_PAGE.ACTION.CONVERT_TO_INVOICE')
+		)
+			this.convert(this.selectedInvoice);
+		if (action === this.getTranslation('INVOICES_PAGE.ACTION.EMAIL'))
+			this.email(this.selectedInvoice);
+		if (action === this.getTranslation('INVOICES_PAGE.ACTION.DELETE'))
+			this.delete(this.selectedInvoice);
+		if (action === this.getTranslation('INVOICES_PAGE.ACTION.PAYMENTS'))
+			this.payments();
+		if (action === this.getTranslation('INVOICES_PAGE.ACTION.NOTE'))
+			this.addInternalNote();
 	}
 
 	add() {
@@ -674,9 +692,7 @@ export class InvoicesComponent
 
 		if (this.columns.includes(InvoiceColumnsEnum.DUE_DATE)) {
 			this.settingsSmartTable['columns']['dueDate'] = {
-				title: this.getTranslation(
-					'INVOICES_PAGE.INVOICES_SELECT_DUE_DATE'
-				),
+				title: this.getTranslation('INVOICES_PAGE.DUE_DATE'),
 				type: 'date',
 				width: '10%',
 				filter: false,
@@ -711,7 +727,9 @@ export class InvoicesComponent
 							: 'danger';
 					}
 					return {
-						text: cell,
+						text: this.getTranslation(
+							`INVOICES_PAGE.STATUSES.${cell}`
+						),
 						class: badgeClass
 					};
 				}
@@ -732,12 +750,17 @@ export class InvoicesComponent
 
 		if (this.columns.includes(InvoiceColumnsEnum.TAX)) {
 			this.settingsSmartTable['columns']['tax'] = {
-				title: this.getTranslation('INVOICES_PAGE.INVOICES_SELECT_TAX'),
+				title: this.getTranslation('INVOICES_PAGE.TAX'),
 				type: 'text',
 				width: '5%',
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
-					return `${cell} ${row.taxType === 'Percent' ? '%' : ''}`;
+					return `${cell} ${
+						row.taxType ===
+						this.getTranslation('INVOICES_PAGE.PERCENT')
+							? '%'
+							: ''
+					}`;
 				}
 			};
 		}
@@ -749,7 +772,12 @@ export class InvoicesComponent
 				width: '5%',
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
-					return `${cell} ${row.tax2Type === 'Percent' ? '%' : ''}`;
+					return `${cell} ${
+						row.tax2Type ===
+						this.getTranslation('INVOICES_PAGE.PERCENT')
+							? '%'
+							: ''
+					}`;
 				}
 			};
 		}
@@ -764,7 +792,10 @@ export class InvoicesComponent
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
 					return `${cell} ${
-						row.discountType === 'Percent' ? '%' : ''
+						row.discountType ===
+						this.getTranslation('INVOICES_PAGE.PERCENT')
+							? '%'
+							: ''
 					}`;
 				}
 			};
@@ -772,9 +803,7 @@ export class InvoicesComponent
 
 		if (this.columns.includes(InvoiceColumnsEnum.CONTACT)) {
 			this.settingsSmartTable['columns']['organizationContactName'] = {
-				title: this.getTranslation(
-					'INVOICES_PAGE.INVOICES_SELECT_CONTACT'
-				),
+				title: this.getTranslation('INVOICES_PAGE.CONTACT'),
 				type: 'text',
 				width: '12%',
 				filter: false,

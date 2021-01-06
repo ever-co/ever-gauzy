@@ -122,8 +122,11 @@ export class EditOrganizationOtherSettingsComponent
 			this.form.getRawValue()
 		);
 		this.toastrService.primary(
-			this.organization.name + ' organization settings updated.',
-			'Success'
+			this.getTranslation(
+				'TOASTR.MESSAGE.ORGANIZATION_SETTINGS_UPDATED',
+				{ name: this.organization.name }
+			),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
 		);
 		this.goBack();
 	}
