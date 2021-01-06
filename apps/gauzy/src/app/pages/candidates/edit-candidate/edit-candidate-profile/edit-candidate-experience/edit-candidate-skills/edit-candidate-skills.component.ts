@@ -1,6 +1,5 @@
 import { OnInit, OnDestroy, Component } from '@angular/core';
 import { Subject } from 'rxjs';
-import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
@@ -11,12 +10,14 @@ import { ISkill, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/models';
 import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { LocalDataSource } from 'ng2-smart-table';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-edit-candidate-skills',
 	templateUrl: './edit-candidate-skills.component.html'
 })
-export class EditCandidateSkillsComponent extends TranslationBaseComponent
+export class EditCandidateSkillsComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	selectedOrganization: IOrganization;
@@ -31,7 +32,7 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
 	constructor(
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private candidateStore: CandidateStore,
 		private store: Store,
@@ -94,10 +95,15 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 		this.showEditDiv[index] = true;
 		this.skillId = id;
 	}
-	async removeSkill(id: string) {
+	async removeSkill(skill: any) {
 		try {
-			await this.candidateSkillsService.delete(id);
-			this.toastrSuccess('DELETED');
+			await this.candidateSkillsService.delete(skill.id);
+			this.toastrService.success(
+				'TOASTR.MESSAGE.CANDIDATE_SKILL_DELETED',
+				{
+					name: skill.name
+				}
+			);
 			this.loadSkills();
 		} catch (error) {
 			this.toastrError(error);
@@ -121,7 +127,12 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 					name: name
 				});
 				this.loadSkills();
-				this.toastrSuccess('UPDATED');
+				this.toastrService.success(
+					'TOASTR.MESSAGE.CANDIDATE_SKILL_UPDATED',
+					{
+						name
+					}
+				);
 				this.skills.reset();
 				this.showEditDiv[index] = !this.showEditDiv[index];
 				this.showAddCard = false;
@@ -174,7 +185,12 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 					organizationId,
 					tenantId
 				});
-				this.toastrSuccess('CREATED');
+				this.toastrService.success(
+					'TOASTR.MESSAGE.CANDIDATE_SKILL_CREATED',
+					{
+						name: formValue.name
+					}
+				);
 				this.loadSkills();
 			} catch (error) {
 				this.toastrError(error);
@@ -196,12 +212,7 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 			this.getTranslation('TOASTR.TITLE.ERROR')
 		);
 	}
-	private toastrSuccess(text: string) {
-		this.toastrService.success(
-			this.getTranslation('TOASTR.TITLE.SUCCESS'),
-			this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_EDIT_${text}`)
-		);
-	}
+
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange.subscribe(() => {
 			this.loadSmartTable();

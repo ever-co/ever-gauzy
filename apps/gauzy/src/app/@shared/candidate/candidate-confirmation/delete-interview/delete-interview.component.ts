@@ -1,6 +1,6 @@
 import { ICandidateInterview } from '@gauzy/models';
 import { Component, OnDestroy, Input } from '@angular/core';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../language-base/translation-base.component';
@@ -8,20 +8,22 @@ import { CandidateTechnologiesService } from 'apps/gauzy/src/app/@core/services/
 import { CandidatePersonalQualitiesService } from 'apps/gauzy/src/app/@core/services/candidate-personal-qualities.service';
 import { CandidateInterviewersService } from 'apps/gauzy/src/app/@core/services/candidate-interviewers.service';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-delete-interview',
 	templateUrl: 'delete-interview.component.html',
 	styleUrls: ['delete-interview.component.scss']
 })
-export class DeleteInterviewComponent extends TranslationBaseComponent
+export class DeleteInterviewComponent
+	extends TranslationBaseComponent
 	implements OnDestroy {
 	@Input() interview: ICandidateInterview;
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		protected dialogRef: NbDialogRef<DeleteInterviewComponent>,
 		readonly translateService: TranslateService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private candidateInterviewService: CandidateInterviewService,
 		private candidateTechnologiesService: CandidateTechnologiesService,
 		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService,
@@ -53,12 +55,7 @@ export class DeleteInterviewComponent extends TranslationBaseComponent
 	}
 
 	private toastrError(error) {
-		this.toastrService.danger(
-			this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
-				error: error.error ? error.error.message : error.message
-			}),
-			this.getTranslation('TOASTR.TITLE.ERROR')
-		);
+		this.toastrService.danger(error);
 	}
 	closeDialog() {
 		this.dialogRef.close();

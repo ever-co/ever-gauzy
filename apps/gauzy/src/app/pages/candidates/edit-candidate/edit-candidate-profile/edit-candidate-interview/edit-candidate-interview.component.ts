@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
 import { CandidateInterviewMutationComponent } from '../../../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
@@ -30,6 +30,7 @@ import { InterviewCriterionsTableComponent } from '../../../manage-candidate-int
 import { CandidateFeedbacksService } from '../../../../../@core/services/candidate-feedbacks.service';
 import { CandidatesService } from '../../../../../@core/services/candidates.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-candidate-interview',
@@ -68,7 +69,7 @@ export class EditCandidateInterviewComponent
 		readonly translateService: TranslateService,
 		private candidateStore: CandidateStore,
 		private store: Store,
-		private toastrService: NbToastrService
+		private toastrService: ToastrService
 	) {
 		super(translateService);
 		this.setView();
@@ -329,8 +330,7 @@ export class EditCandidateInterviewComponent
 			}
 		} else {
 			this.toastrService.warning(
-				this.getTranslation('TOASTR.TITLE.WARNING'),
-				this.getTranslation('TOASTR.MESSAGE.CANDIDATE_FEEDBACK_ABILITY')
+				'TOASTR.MESSAGE.CANDIDATE_FEEDBACK_ABILITY'
 			);
 		}
 	}
@@ -408,10 +408,7 @@ export class EditCandidateInterviewComponent
 	}
 
 	private toastrSuccess(text: string) {
-		this.toastrService.success(
-			this.getTranslation('TOASTR.TITLE.SUCCESS'),
-			this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_EDIT_${text}`)
-		);
+		this.toastrService.success(`TOASTR.MESSAGE.CANDIDATE_EDIT_${text}`);
 	}
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange

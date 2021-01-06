@@ -6,7 +6,7 @@ import {
 	IOrganization,
 	IInviteViewModel
 } from '@gauzy/models';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { filter, first, tap } from 'rxjs/operators';
@@ -23,6 +23,7 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { RouterEvent, NavigationEnd, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -60,7 +61,7 @@ export class InvitesComponent
 	constructor(
 		private dialogService: NbDialogService,
 		private store: Store,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private translate: TranslateService,
 		private inviteService: InviteService,
 		private router: Router
@@ -156,10 +157,7 @@ export class InvitesComponent
 		document.execCommand('copy');
 		textField.remove();
 
-		this.toastrService.success(
-			this.getTranslation('TOASTR.MESSAGE.COPIED'),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
-		);
+		this.toastrService.success('TOASTR.MESSAGE.COPIED');
 		this.clearItem();
 	}
 
@@ -183,10 +181,7 @@ export class InvitesComponent
 					: invite.role.name !== RolesEnum.EMPLOYEE;
 			});
 		} catch (error) {
-			this.toastrService.danger(
-				this.getTranslation('TOASTR.MESSAGE.INVITES_LOAD'),
-				this.getTranslation('TOASTR.TITLE.ERROR')
-			);
+			this.toastrService.danger('TOASTR.MESSAGE.INVITES_LOAD');
 		}
 
 		const { name } = this.store.selectedOrganization;
@@ -315,16 +310,15 @@ export class InvitesComponent
 				if (result) {
 					try {
 						await this.inviteService.delete(this.selectedInvite.id);
-						this.toastrService.primary(
-							this.selectedInvite.email + ' has been deleted.',
-							'Success'
+						this.toastrService.success(
+							'TOASTR.MESSAGE.INVITES_DELETE',
+							{ email: this.selectedInvite.email }
 						);
 						this.clearItem();
 						this.loadPage();
 					} catch (error) {
 						this.toastrService.danger(
-							error.error.message || error.message,
-							'Error'
+							error.error.message || error.message
 						);
 					}
 				}
@@ -353,20 +347,14 @@ export class InvitesComponent
 							invitedById: this.store.userId
 						});
 
-						this.toastrService.primary(
-							this.getTranslation(
-								'TOASTR.MESSAGE.INVITES_RESEND',
-								{ email: this.selectedInvite.email }
-							),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						this.toastrService.success(
+							'TOASTR.MESSAGE.INVITES_RESEND',
+							{ email: this.selectedInvite.email }
 						);
 
 						this.loadPage();
 					} catch (error) {
-						this.toastrService.danger(
-							error.error.message || error.message,
-							'Error'
-						);
+						this.toastrService.danger(error);
 					}
 				}
 			});

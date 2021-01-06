@@ -5,7 +5,6 @@ import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
-import { NbToastrService } from '@nebular/theme';
 import { CandidateEducationsService } from 'apps/gauzy/src/app/@core/services/candidate-educations.service';
 import {
 	ICandidateEducation,
@@ -16,6 +15,7 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { DateViewComponent } from 'apps/gauzy/src/app/@shared/table-components/date-view/date-view.component';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-edit-candidate-education',
@@ -40,7 +40,7 @@ export class EditCandidateEducationComponent
 	loading: boolean;
 	@ViewChild('educationTable') educationTable;
 	constructor(
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private candidateStore: CandidateStore,
 		private fb: FormBuilder,
@@ -181,11 +181,10 @@ export class EditCandidateEducationComponent
 		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const educationForm = this.educations;
 		if (educationForm.invalid) {
-			this.toastrService.danger(
-				this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.INVALID_FORM'),
-				this.getTranslation(
-					'TOASTR.MESSAGE.CANDIDATE_EDUCATION_REQUIRED'
-				)
+			this.toastrService.success(
+				'TOASTR.MESSAGE.CANDIDATE_EDUCATION_REQUIRED',
+				null,
+				'NOTES.CANDIDATE.EXPERIENCE.INVALID_FORM'
 			);
 			return;
 		}
@@ -201,7 +200,12 @@ export class EditCandidateEducationComponent
 						tenantId
 					}
 				);
-				this.toastrSuccess('UPDATED');
+				this.toastrService.success(
+					'TOASTR.MESSAGE.CANDIDATE_EDUCATION_UPDATED',
+					{
+						name: formValue.schoolName
+					}
+				);
 				this.loadEducations();
 			} catch (error) {
 				this.toastrError(error);
@@ -215,7 +219,12 @@ export class EditCandidateEducationComponent
 					organizationId,
 					tenantId
 				});
-				this.toastrSuccess('CREATED');
+				this.toastrService.success(
+					'TOASTR.MESSAGE.CANDIDATE_EDUCATION_CREATED',
+					{
+						name: formValue.schoolName
+					}
+				);
 				this.loadEducations();
 			} catch (error) {
 				this.toastrError(error);
@@ -231,26 +240,21 @@ export class EditCandidateEducationComponent
 			await this.candidateEducationsService.delete(selectedItem.id);
 			this.selectedEducation = null;
 			this.disableButton = true;
-			this.toastrSuccess('DELETED');
+			this.toastrService.success(
+				'TOASTR.MESSAGE.CANDIDATE_EDUCATION_DELETED',
+				{
+					name: selectedItem.schoolName
+				}
+			);
 			this.loadEducations();
 		} catch (error) {
 			this.toastrError(error);
 		}
 	}
 	private toastrError(error) {
-		this.toastrService.danger(
-			this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
-				error: error.error ? error.error.message : error.message
-			}),
-			this.getTranslation('TOASTR.TITLE.ERROR')
-		);
+		this.toastrService.danger(error);
 	}
-	private toastrSuccess(text: string) {
-		this.toastrService.success(
-			this.getTranslation('TOASTR.TITLE.SUCCESS'),
-			this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_EDIT_${text}`)
-		);
-	}
+
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
 			.pipe(takeUntil(this._ngDestroy$))

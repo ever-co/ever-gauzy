@@ -21,11 +21,11 @@ import {
 	ITag,
 	LanguagesEnum
 } from '@gauzy/models';
-import { NbToastrService } from '@nebular/theme';
 import { RoleService } from '../../../@core/services/role.service';
 import { Subject } from 'rxjs';
 import { takeUntil, first } from 'rxjs/operators';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ngx-profile',
@@ -69,7 +69,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		private fb: FormBuilder,
 		private userService: UsersService,
 		private store: Store,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private errorHandler: ErrorHandlingService,
 		private roleService: RoleService
 	) {}
@@ -136,10 +136,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	}
 
 	handleImageUploadError(error: any) {
-		this.toastrService.danger(
-			error.error.message || error.message,
-			'Error'
-		);
+		this.toastrService.danger(error);
 	}
 
 	async submitForm() {
@@ -179,10 +176,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 				this.selectedUser ? this.selectedUser.id : this.store.userId,
 				this.accountInfo
 			);
-			this.toastrService.primary(
-				'Your profile has been updated successfully.',
-				'Success'
-			);
+			this.toastrService.success('TOASTR.MESSAGE.PROFILE_UPDATED');
 			this.userSubmitted.emit();
 
 			/**

@@ -9,7 +9,6 @@ import {
 	ICandidate,
 	IEmployeeLevel
 } from '@gauzy/models';
-import { NbToastrService } from '@nebular/theme';
 import { OrganizationDepartmentsService } from '../../../../../@core/services/organization-departments.service';
 import { OrganizationEmploymentTypesService } from '../../../../../@core/services/organization-employment-types.service';
 import { OrganizationPositionsService } from '../../../../../@core/services/organization-positions';
@@ -18,6 +17,7 @@ import { filter, tap } from 'rxjs/operators';
 import { CandidateStore } from '../../../../../@core/services/candidate-store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { EmployeeLevelService } from '../../../../../@core/services/employee-level.service';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -41,7 +41,7 @@ export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly store: Store,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		private readonly candidateStore: CandidateStore,
 		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
 		private readonly organizationPositionsService: OrganizationPositionsService,

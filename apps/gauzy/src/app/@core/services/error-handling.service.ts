@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
-import { NbToastrService } from '@nebular/theme';
+import { ToastrService } from './toastr.service';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class ErrorHandlingService {
-	constructor(private toastrService: NbToastrService) {}
+	constructor(private toastrService: ToastrService) {}
 
 	errorTitle: string;
 	errorContent: string;

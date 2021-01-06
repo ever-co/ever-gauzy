@@ -1,17 +1,19 @@
 import { Component, OnDestroy, Input } from '@angular/core';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../language-base/translation-base.component';
 import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
 import { CandidateCriterionsRatingService } from 'apps/gauzy/src/app/@core/services/candidate-criterions-rating.service';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-delete-feedback',
 	templateUrl: 'delete-feedback.component.html',
 	styleUrls: ['delete-feedback.component.scss']
 })
-export class DeleteFeedbackComponent extends TranslationBaseComponent
+export class DeleteFeedbackComponent
+	extends TranslationBaseComponent
 	implements OnDestroy {
 	@Input() feedbackId: string;
 	private _ngDestroy$ = new Subject<void>();
@@ -19,7 +21,7 @@ export class DeleteFeedbackComponent extends TranslationBaseComponent
 	constructor(
 		protected dialogRef: NbDialogRef<DeleteFeedbackComponent>,
 		readonly translateService: TranslateService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private candidateCriterionsRatingService: CandidateCriterionsRatingService,
 		private candidateFeedbacksService: CandidateFeedbacksService
 	) {
@@ -50,10 +52,9 @@ export class DeleteFeedbackComponent extends TranslationBaseComponent
 	}
 	private toastrError(error) {
 		this.toastrService.danger(
-			this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
-				error: error.error ? error.error.message : error.message
-			}),
-			this.getTranslation('TOASTR.TITLE.ERROR')
+			'NOTES.CANDIDATE.EXPERIENCE.ERROR',
+			'TOASTR.TITLE.ERROR',
+			error
 		);
 	}
 	closeDialog() {

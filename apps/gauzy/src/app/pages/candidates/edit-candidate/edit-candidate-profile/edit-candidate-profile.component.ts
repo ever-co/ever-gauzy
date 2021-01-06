@@ -13,12 +13,13 @@ import { TranslationBaseComponent } from '../../../../@shared/language-base/tran
 import { CandidatesService } from '../../../../@core/services/candidates.service';
 import { CandidateStore } from '../../../../@core/services/candidate-store.service';
 import { UsersService } from '../../../../@core/services';
-import { NbToastrService, NbDialogService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
 import { CandidateInterviewInfoComponent } from '../../../../@shared/candidate/candidate-interview-info/candidate-interview-info.component';
 import { CandidateInterviewService } from '../../../../@core/services/candidate-interview.service';
 import { Store } from '../../../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-candidate-profile',
@@ -46,7 +47,7 @@ export class EditCandidateProfileComponent
 		private candidatesService: CandidatesService,
 		private candidateStore: CandidateStore,
 		private userService: UsersService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private errorHandler: ErrorHandlingService,
 		private dialogService: NbDialogService,
 		private readonly candidateInterviewService: CandidateInterviewService,
@@ -221,12 +222,11 @@ export class EditCandidateProfileComponent
 					value
 				);
 
-				this.toastrService.primary(
-					this.getTranslation(
-						'TOASTR.MESSAGE.CANDIDATE_PROFILE_UPDATE',
-						{ name: this.candidateName }
-					),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				this.toastrService.success(
+					'TOASTR.MESSAGE.CANDIDATE_PROFILE_UPDATE',
+					{
+						name: this.candidateName
+					}
 				);
 				this._loadCandidateData();
 			} catch (error) {
@@ -247,12 +247,11 @@ export class EditCandidateProfileComponent
 					value
 				);
 
-				this.toastrService.primary(
-					this.getTranslation(
-						'TOASTR.MESSAGE.CANDIDATE_PROFILE_UPDATE',
-						{ name: this.candidateName }
-					),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				this.toastrService.success(
+					'TOASTR.MESSAGE.CANDIDATE_PROFILE_UPDATE',
+					{
+						name: this.candidateName
+					}
 				);
 
 				this._loadCandidateData();
