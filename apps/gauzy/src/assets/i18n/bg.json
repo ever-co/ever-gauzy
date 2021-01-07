@@ -87,7 +87,10 @@
 		"PAYMENTS": "Payments",
 		"NOTE": "Note",
 		"SKIP_CONTINUE": "Skip {{ label }} and Continue",
-		"BUY": "Buy"
+		"BUY": "Buy",
+		"DELETE_ACCOUNT": "Delete your account",
+		"SELECT_AND_CONTINUE": "Select and Continue",
+		"ADD_KPI": "Add KPI"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -167,7 +170,9 @@
 		},
 		"CURRENT_VALUE": "Current value",
 		"TARGET_VALUE": "Target value",
-		"LAST_UPDATED": "Last Updated"
+		"LAST_UPDATED": "Last Updated",
+		"CREATED_BY": "Created By",
+		"NO_DATA_MESSAGE": "No Data"
 	},
 	"FORM": {
 		"USERNAME": "Потребителско име",
@@ -289,6 +294,9 @@
 			"CLIENTS": "Клиенти",
 			"IS_PROJECT_OPEN_SOURCE": "Is Project Open-Source",
 			"OPEN_SOURCE_PROJECT_URL": "Open-Source Project URL",
+			"EMPLOYEE_LEVEL": "Employee Level",
+			"UNIT": "Unit",
+			"SELECT_EXISTING_OBJECTIVE": "Select Existing Objective",
 			"COORDINATE": {
 				"TITLE": "COORDINATES",
 				"LATITUDE": "Latitude",
@@ -441,7 +449,14 @@
 			"COORDINATE": {
 				"LATITUDE": "Latitude",
 				"LONGITUDE": "Longitude"
-			}
+			},
+			"SELECT_EXPENSE": "Select Expense",
+			"ADD_TITLE": "Add title",
+			"ALL_PROJECTS": "All Projects",
+			"UPWORK_API_KEY": "Upwork API key",
+			"UPWORK_SECRET": "Upwork Secret",
+			"SELECT_COMPANY": "Select Company",
+			"TYPE_SEARCH_REQUEST": "Type your search request here..."
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Норма по подразбиране",
@@ -623,7 +638,146 @@
 			"DOWNLOAD_TEMPLATES": "Download templates",
 			"IMPORT_INFO": "Click \"Import\" to import your data into Gauzy DB.",
 			"EXPORT_INFO": "Click \"Export\" to export data from Gauzy DB.",
-			"DOWNLOAD_TEMPLATES_INFO": "Click \"Download Templates\" to download Zip archive with CSV templates for the format of Gauzy data."
+			"DOWNLOAD_TEMPLATES_INFO": "Click \"Download Templates\" to download Zip archive with CSV templates for the format of Gauzy data.",
+			"ACTIVITY": "Activity",
+			"APPROVAL_POLICY": "Approval Policy",
+			"AVAILABILITY_SLOT": "Availability Slot",
+			"CANDIDATE": "Candidate",
+			"CONTACT": "Contact",
+			"COUNTRY": "Държава",
+			"CURRENCY": "Валута",
+			"DEAL": "Deal",
+			"EMAIL": "Eлектронна поща",
+			"EMPLOYEE": "Служител",
+			"EQUIPMENT": "Equipment",
+			"EVENT_TYPES": "Event Types",
+			"EXPENSE": "Разходи",
+			"GOAL": "Goal",
+			"INCOME": "Доход",
+			"INTEGRATION": "Integration",
+			"INVITE": "Покана",
+			"INVOICE": "Фактура",
+			"JOB": "Job",
+			"KEY_RESULT": "Key Results",
+			"KNOWLAGE_BASE": "Knowlage Base",
+			"LANGUAGE": "Език (Language)",
+			"ORGANIZATION": "Organization",
+			"PAYMENT": "Payment",
+			"PIPELINE": "Pipeline",
+			"PRODUCT": "Product",
+			"PROPOSAL": "Предложение",
+			"REPORT": "Report",
+			"REQUEST_APPROVAL": "Request Approval",
+			"ROLE": "Роля",
+			"SKILL": "Skill",
+			"STAGE": "Stage",
+			"TAG": "Tag",
+			"TASK": "Задача",
+			"TENANT": "Tenant",
+			"TIME_OFF_POLICY": "Time off policy",
+			"TIME_SHEET": "Time Sheet",
+			"USER": "User",
+			"CANDIDATE_CREATION_RATING": "Candidate Creation Rating",
+			"CANDIDATE_DOCUMENT": "Candidate Document",
+			"CANDIDATE_EDUCATION": "Candidate Education",
+			"CANDIDATE_EXPERIENCE": "Candidate Experience",
+			"CANDIDATE_FEEDBACK": "Candidate Feedback",
+			"CANDIDATE_INTERVIEW": "Candidate Interview",
+			"CANDIDATE_INTERVIEWER": "Candidate Interviewer",
+			"CANDIDATE_PERSONAL_QUALITY": "Candidate Personal Quality",
+			"CANDIDATE_SKILL": "Candidate Skill",
+			"CANDIDATE_SOURCE": "Candidate Source",
+			"CANDIDATE_TECHNOLOGY": "Candidate Technology",
+			"ORGANIZATION_AWARDS": "Organization Awards",
+			"ORGANIZATION_CONTACT": "Organization Contact",
+			"ORGANIZATION_DEPARTMENT": "Organization Department",
+			"ORGANIZATION_DOCUMENT": "Organization Document",
+			"ORGANIZATION_EMPLOYEE_LEVEL": "Organization Employee Level",
+			"ORGANIZATION_EMPLOYMENT_TYPE": "Organization Employment Type",
+			"ORGANIZATION_LANGUAGES": "Organization Languages",
+			"ORGANIZATION_POSITION": "Organization Position",
+			"ORGANIZATION_PROJECT": "Organization Project",
+			"ORGANIZATION_RECURRING_EXPENSE": "Задължителни разходи в организацията",
+			"ORGANIZATION_SPRINT": "Organization Sprint",
+			"ORGANIZATION_TEAM": "Organization Team",
+			"ORGANIZATION_TEAM_EMPLOYEE": "Organization Team Employee",
+			"ORGANIZATION_VENDOR": "Organization Vendor",
+			"EMAIL_TEMPLATE": "Email Template",
+			"ESTIMATE_EMAIL": "Estimate Email",
+			"EMPLOYEE_APPOINTMENT": "Employee Appointment",
+			"EMPLOYEE_AWARD": "Employee Award",
+			"EMPLOYEE_PROPOSAL_TEMPLATE": "Employee Proposal Template",
+			"EMPLOYEE_RECURRING_EXPENSE": "Разходи, повтарящи се за служителя",
+			"EMPLOYEE_SETTING": "Employee Setting",
+			"INTEGRATION_ENTITY_SETTING": "Integration Entity Setting",
+			"INTEGRATION_ENTITY_SETTING_TIED_ENTITY": "Integration Entity Setting Tied Entity",
+			"INTEGRATION_MAP": "Integration Map",
+			"INTEGRATION_SETTING": "Integration Setting",
+			"INTEGRATION_TENANT": "Integration Tenant",
+			"INVITE_ORGANIZATION_CONTACT": "Invite Organization Contact",
+			"INVITE_ORGANIZATION_DEPARTMENT": "Invite Organization Department",
+			"INVITE_ORGANIZATION_PROJECT": "Invite Organization Project",
+			"PRODUCT_CATEGORY": "Product Category",
+			"PRODUCT_OPTION": "Product Option",
+			"PRODUCT_TYPE": "Product Type",
+			"PRODUCT_VARIANT": "Product Variant",
+			"PRODUCT_VARIANT_PRICE": "Product Variant Price",
+			"PRODUCT_VARIANT_SETTING": "Product Variant Setting",
+			"REPORT_CATEGORY": "Report Category",
+			"REQUEST_APPROVAL_TAG": "Request Approval Tag",
+			"REQUEST_APPROVAL_EMPLOYEE": "Request Approval Employee",
+			"REQUEST_APPROVAL_TEAM": "Request Approval Team",
+			"SKILL_EMPLOYEE": "Skill Employee",
+			"SKILL_ORGANIZATION": "Skill Organization",
+			"TAG_CANDIDATE": "Tag Candidate",
+			"TAG_EMPLOYEE": "Tag Employee",
+			"TAG_EQUIPMENT": "Tag Equipment",
+			"TAG_EVENT_TYPE": "Tag Event Type",
+			"TAG_EXPENSE": "Tag Expense",
+			"TAG_ICNOME": "Tag Income",
+			"TAG_INVOICE": "Tag Invoice",
+			"TAG_ORGANIZATION_CONTACT": "Tag Organization Contact",
+			"TAG_ORGANIZATION_DEPARTMENT": "Tag Organization Department",
+			"TAG_ORGANIZATION_EMPLOYEE_LEVEL": "Tag Organization Employee Level",
+			"TAG_ORGANIZATION_EMPLOYEE_TYPE": "Tag Organization Employee Type",
+			"TAG_ORGANIZATION_EXPENSES_CATEGORY": "Tag Organization Expense Category",
+			"TAG_ORGANIZATION_POSITION": "Tag Organization Position",
+			"TAG_ORGANIZATION_PROJECT": "Tag Organization Project",
+			"TAG_ORGANIZATION_TEAM": "Tag Organization Team",
+			"TAG_ORGANIZATION_VENDOR": "Tag Organization Vendor",
+			"TAG_ORGANIZATIONS": "Tag Organizations",
+			"TAG_PAYMENT": "Tag Payments",
+			"TAG_PRODUCT": "Tag Product",
+			"TAG_PROPOSAL": "Tag Proposal",
+			"TAG_TASK": "Tag Task",
+			"TAG_USER": "Tag User",
+			"TASK_EMPLOYEE": "Tag Employee",
+			"TASK_TEAM": "Tag Team",
+			"EQUIPMENT_SHARING": "Equipment Sharing",
+			"EXPENSE_CATEGORY": "Expense Category",
+			"GOAL_KPI": "Goal Kpi",
+			"GOAL_KPI_TEMPLATE": "Goal Kpi Template",
+			"GOAL_TEMPLATE": "Goal Template",
+			"GOAL_TIME_FRAME": "Goal Time Frame",
+			"KNOWLAGE_BASE_ARTICLE": "Knowledge Base Article",
+			"KNOWLAGE_BASE_AUTHOR": "Knowledge Base Author",
+			"INVOICE_ESTIMATE_HISTORY": "Invoice Estimate History",
+			"INVOICE_ITEM": "Invoice Item",
+			"JOB_PRESET": "Job Preset",
+			"JOB_SEARCH_OCCUPATION": "Job Search Occupation",
+			"JOB_SEARCH_CATEGORY": "Job Search Category",
+			"KEY_RESULT_TEMPLATE": "Key Result Template",
+			"KEY_RESULT_UPDATE": "Key Result Update",
+			"ROLE_PREMISSION": "Role Permission",
+			"TIME_OFF_POLICY_EMPLOYEE": "Time Off Policy Employee",
+			"TIME_OFF_REQUEST": "Time Off Request",
+			"TIME_OFF_REQUEST_EMPLOYEE": "Time Off Request Employee",
+			"SCREENSHOT": "Screenshot",
+			"TIME_LOG": "Time Log",
+			"TIME_SLOT": "Time Slot",
+			"TIME_SLOT_MINUTES": "Time Slot Minutes",
+			"TIME_SLOT_TIME_LOGOS": "Time Slot Time Logs",
+			"USER_ORGANIIZATION": "User Organization"
 		},
 		"TAGS": "Тагове",
 		"LANGUAGE": "Език (Language)",
@@ -737,7 +891,9 @@
 		"PROJECT_BUDGET_REPORTS": "Project Budget Reports",
 		"NO_PROJECTS": "No Projects",
 		"CLIENT_BUDGET_REPORTS": "Client Budget Reports",
-		"NO_CLIENTS": "No Clients"
+		"NO_CLIENTS": "No Clients",
+		"EXPANSE": "Expanse",
+		"NO_EMPLOYEES_WORKED": "No employees worked"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Available Apps & Integrations",
@@ -752,7 +908,9 @@
 			"TOOLTIP_ACTIVITY_INFO": "Date range Limit: 7 days Earliest Date: 6 full months",
 			"DATE_RANGE_PLACEHOLDER": "Choose date between",
 			"CLIENT_ID": "Hubstaff Client ID",
-			"CLIENT_SECRET": "Hubstaff Client Secret"
+			"CLIENT_SECRET": "Hubstaff Client Secret",
+			"GRANT_PERMISSION": "Next you will be taken to Hubstaff to grant permission to Gauzy.",
+			"ENTER_CLIENT_SECRET": "Enter client secret to get access token."
 		},
 		"UPWORK_PAGE": {
 			"ACTIVITIES": "Activities",
@@ -799,7 +957,11 @@
 			"PROFIT_REPORT": "Репорт на печалбата",
 			"TOTAL_EXPENSES": "Общи разходи",
 			"TOTAL_INCOME": "Общ доход",
-			"TOTAL_PROFIT": "Печалба Общо"
+			"TOTAL_PROFIT": "Печалба Общо",
+			"DATE": "Дата",
+			"EXPENSES": "Разходи",
+			"INCOME": "Доход",
+			"DESCRIPTION": "Desctiption"
 		},
 		"TITLE": {
 			"PROFIT_REPORT": "Репорт на Печалбата",
@@ -863,7 +1025,27 @@
 		"SPLIT_HELP": "If set, this expense will be equally divided amongst all employees of the company & will be considered in each one's expenses.",
 		"SPLIT_WILL_BE_TOOLTIP": "This expense will be equally split amongst all employees",
 		"SPLIT_EXPENSE": "Split Expense",
-		"ADD_EXPENSE_CATEGORY": "Add New Expense category"
+		"ADD_EXPENSE_CATEGORY": "Add New Expense category",
+		"EXPENSE_CATEGORY": "Expense Category",
+		"RECURRING_EXPENSES": {
+			"WARNING": "Warning: This period overlaps with an existing previous record(s):",
+			"FROM": "From",
+			"TO": "to",
+			"VALUE_OVERWRITTEN": "The value will be overwritten from",
+			"ERROR": "Error: This period overlaps with existing future record(s).",
+			"NOT_SUPPORTED": "This is not supported, please edit the future expenses instead.",
+			"EDIT_FUTURE_VALUE": "This will only edit the future value from",
+			"EXISTING_VALUE": "existing value of",
+			"STARTED_ON": "Started on",
+			"AFFECTED": "will not be affected until",
+			"SET_EXPENSE_VALUE": "This will set the expense value",
+			"ONWARDS": "onwards and the existing value of",
+			"ENDING_ON": "and ending on",
+			"SET_UNTIL": "will be now set until",
+			"REDUCE_START_DATE": "This will reduce the start date and include all the months from",
+			"FOR_EXPENSE_VALUE": "for expense value",
+			"CHANGE_START_DATE": "This will change the start date to"
+		}
 	},
 	"EMPLOYEES_PAGE": {
 		"HEADER": "Управление на служителите в ",
@@ -875,6 +1057,10 @@
 		"RECURRING_EXPENSE": "Разходи, повтарящи се за служителя",
 		"RECURRING_EXPENSE_EDIT": "Редактирай текущите и всички бъдещи разходи. Няма да има промяна по ...",
 		"RECURRING_EXPENSE_ADD": "Това ще добави разход повтарящи се ежемесечно.",
+		"RECURRING_EXPENSE_SET": "{{ name }} recurring expense set.",
+		"RECURRING_EXPENSE_EDITED": "{{ name }} recurring expense edited.",
+		"RECURRING_EXPENSE_DELETED": "{{ name }} recurring expense deleted.",
+		"EMPLOYEE_NAME": "Служител",
 		"BACK_TO_WORK": "Връщане на работа",
 		"SELECT_EMPLOYEE_MSG": "Моля селектирайте служител от менюто по-долу.",
 		"EDIT_EMPLOYEE": {
@@ -925,11 +1111,23 @@
 		"GOAL_SETTINGS": "Goals Settings",
 		"NO_DESCRIPTION": "No Description",
 		"PROGRESS": "Progress",
+		"EXPECTED": "Expected",
 		"UPDATES": "Updates",
 		"UPDATE": "Update",
 		"COMMENTS": "Comments",
 		"KEY_RESULTS": "Key Results",
 		"GROUP_BY": "Group By",
+		"DELETE_OBJECTIVE": "Delete Objective",
+		"DELETE_KEY_RESULT": "Delete Key Result",
+		"ARE_YOU_SURE": "Are you sure? This action is irreversible.",
+		"ALL_OBJECTIVES": "All Objectives",
+		"MY_TEAMS_OBJECTIVES": "My Team's Objectives",
+		"MY_ORGANIZATIONS_OBJECTIVES": "'My Organization Objectives",
+		"MY_OBJECTIVES": "My Objectives",
+		"OBJECTIVE_LEVEL": "Objective Level",
+		"TIME_FRAME": "Time Frames",
+		"CREATE_NEW": "+ create new",
+		"GOAL_TEMPLATES": "Goal Templates",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Служители",
 			"TEAMS": "Отбори",
@@ -951,7 +1149,8 @@
 			"DELETE_TIME_FRAME_TITLE": "Delete Time Frame",
 			"DELETE_TIME_FRAME_CONFIRMATION": "Are you sure you want to delete Time Frame?",
 			"DELETE_KPI_TITLE": "Delete KPI",
-			"DELETE_KPI_CONFIRMATION": "Are you sure you want to delete KPI?"
+			"DELETE_KPI_CONFIRMATION": "Are you sure you want to delete KPI?",
+			"ANNUAL": "Annual"
 		},
 		"MESSAGE": {
 			"NO_KEY_RESULT": "No Key Results to display.",
@@ -1106,6 +1305,9 @@
 		"ARCHIVED": "Архивирана",
 		"SELECT_EMPLOYEE_MSG": "Моля селектирайте служител от менюто по-долу.",
 		"JOBS_CANDIDATES": "Job Candidates",
+		"SOURCE": "Source",
+		"RATING": "Rating",
+		"STATUS": "Статус",
 		"EDIT_CANDIDATE": {
 			"HEADER": "Manage Candidate",
 			"DEVELOPER": "Разработчик",
@@ -1182,7 +1384,8 @@
 				"DESCRIPTION": "Description: ",
 				"POSTPONE": "Postpone",
 				"REJECT": "Reject",
-				"INTERVIEW_TITLE_EXIST": "An interview with such name already exists"
+				"INTERVIEW_TITLE_EXIST": "An interview with such name already exists",
+				"SET_AS_ARCHIVED": "{{ title }} set as archived."
 			}
 		},
 		"INTERVIEW_INFO_MODAL": {
@@ -1270,11 +1473,12 @@
 		"MAIN": "Основни",
 		"DEPARTMENTS": "Отдели",
 		"VENDORS": "Доставчици",
+		"VENDOR": "Доставчик",
 		"NAME": "Име",
 		"EXPENSE_CATEGORIES": "Expense Categories",
 		"PROJECTS": "Проекти",
 		"ACTIVE": "Активна",
-		"EMPLOYMENT_TYPE": "Employment Types",
+		"EMPLOYMENT_TYPE": "Employment Type",
 		"ARCHIVED": "Архивирана",
 		"LOCATION": "Локация",
 		"SETTINGS": "Настройки",
@@ -1299,6 +1503,11 @@
 		"EMPLOYMENT_TYPE_NAME": "Employment type name",
 		"CONTACTS": "Contacts",
 		"LEVEL": "Level",
+		"ORGANIZATION": "ORGANIZATION",
+		"HOURS_WORKED": "hours worked",
+		"CLIENTS": "Клиенти",
+		"PROFILE": "Profile",
+		"PORTFOLIO": "Portfolio",
 		"EDIT": {
 			"ACCOUNTING": "Accounting",
 			"HEADER": "Управление",
@@ -1342,6 +1551,8 @@
 			"ADDED_TO_ORGANIZATION": " the organization",
 			"USER_WAS_DELETED": "{{ name }} was successfully deleted.",
 			"USER_WAS_REMOVED": "{{ name }} was successfully removed from organization.",
+			"EMPLOYEE_POSITION": "Employee Position",
+			"PROJECT_URL": "Project Url",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timer Settings",
 				"ALLOW_MODIFY_TIME": "Allow Modify Time",
@@ -1502,6 +1713,7 @@
 		"ACCEPTED_PROPOSALS": "Приети предложения",
 		"TOTAL_PROPOSALS": "Общо предложения",
 		"SUCCESS_RATE": "Успеваемост",
+		"PROPOSALS": "Proposals",
 		"REGISTER": {
 			"REGISTER_PROPOSALS": "Register Proposal",
 			"AUTHOR": "Автор",
@@ -1559,7 +1771,11 @@
 		"APPROVAL_REQUEST_UPDATED": "Request Approval '{{ name }}' was changed",
 		"APPROVAL_REQUEST_DELETED": "Request Approval '{{ name }}' was removed",
 		"APPROVAL_SUCCESS": "Approval '{{ name }}' was approved",
-		"REFUSE_SUCCESS": "Approval '{{ name }}' was refused"
+		"REFUSE_SUCCESS": "Approval '{{ name }}' was refused",
+		"APPROVED": "Approved",
+		"REFUSED": "Refused",
+		"REQUESTED": "Requested",
+		"ACTION": "Action"
 	},
 	"APPROVAL_POLICY_PAGE": {
 		"EDIT_APPROVAL_POLICY": "Edit Approval Policy",
@@ -1567,7 +1783,10 @@
 		"HEADER": "Approval Policy",
 		"APPROVAL_POLICY_NAME": "Име",
 		"APPROVAL_POLICY_TYPE": "Тип",
-		"APPROVAL_POLICY_DESCRIPTION": "Description"
+		"APPROVAL_POLICY_DESCRIPTION": "Description",
+		"BUSINESS_TRIP": "Business Trip",
+		"EQUIPMENT_SHARING": "Equipment Sharing",
+		"TIME_OFF": "Time Off"
 	},
 	"TIME_OFF_PAGE": {
 		"HEADER": "Time Off",
@@ -1589,6 +1808,9 @@
 		"END_DATE": "Крайна дата",
 		"REQUEST_DATE": "Request Date",
 		"STATUS": "Статус",
+		"TIME_OFF_REQUEST": "Time off request",
+		"VIEW_REQUEST_DOCUMENT": "View Request Document",
+		"MULTIPLE_EMPLOYEES": "Multiple employees",
 		"STATUSES": {
 			"REQUESTED": "Requested",
 			"APPROVED": "Approved",
@@ -1697,7 +1919,11 @@
 		"APPROVE": "Approve",
 		"REFUSE": "Refuse",
 		"APPROVAL_SUCCESS": "Request Approval Success",
-		"REFUSE_SUCCESS": "Request Refuse Success"
+		"REFUSE_SUCCESS": "Request Refuse Success",
+		"APPROVED": "Approved",
+		"REFUSED": "Refused",
+		"REQUESTED": "Requested",
+		"ACTION": "Action"
 	},
 	"EQUIPMENT_SHARING_POLICY_PAGE": {
 		"HEADER": "Equipment Sharing Policy",
@@ -1793,7 +2019,20 @@
 		"ESTIMATE_DAYS": "Days",
 		"ESTIMATE_HOURS": "Hours",
 		"ESTIMATE_MINUTES": "Mins",
-		"TASKS_STATUS": "Статус"
+		"TASKS_STATUS": "Статус",
+		"TODO": "Todo",
+		"IN_PROGRESS": "In Progress",
+		"FOR_TESTING": "For Testing",
+		"COMPLETED": "Completed",
+		"TASK_VIEW_MODE": "Task View Mode",
+		"PROJECT": "Проект",
+		"COMPLETE_SPRINT": "Complete Sprint",
+		"DATE_START": "Date Start",
+		"DATE_END": "Date End",
+		"BACKLOG": "Backlog",
+		"EDIT_SPRINT": "Edit Sprint",
+		"DELETE_SPRINT": "Delete Sprint",
+		"SELECT": "Select"
 	},
 	"JOBS": {
 		"EMPLOYEE": "Служител",
@@ -1813,6 +2052,7 @@
 		"JOB_SEARCH": "Job Search",
 		"LOAD_MORE": "Load More",
 		"HIDE_ALL_CONFIRM": "Are you sure you want to Hide All jobs?",
+		"ACTIONS": "Actions",
 		"FILTER": {
 			"TITLE": "Advanced Filter",
 			"SOURCE": "Source",
@@ -1860,7 +2100,9 @@
 		"PROPOSAL_CREATE_MESSAGE": "Proposal template '{{ name }}' was added",
 		"PROPOSAL_EDIT_MESSAGE": "Proposal template '{{ name }}' was changed",
 		"PROPOSAL_DELETE_MESSAGE": "Proposal template '{{ name }}' was removed",
-		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Proposal template '{{ name }}' set as default"
+		"PROPOSAL_MAKE_DEFAULT_MESSAGE": "Proposal template '{{ name }}' set as default",
+		"YES": "Yes",
+		"NO": "No"
 	},
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Sprint added",
@@ -1956,8 +2198,13 @@
 		"ESTIMATE_NUMBER": "Estimate Number",
 		"INVOICE_DATE": "Invoice Date",
 		"ESTIMATE_DATE": "Estimate Date",
+		"DUE_DATE": "Due Date",
+		"CURRENCY": "Валута",
+		"DISCOUNT": "Discount",
+		"CONTACT": "Contact",
 		"TOTAL_VALUE": "Total Value",
 		"PAID_STATUS": "Paid Status",
+		"TAX": "Tax",
 		"TAX_2": "Tax 2",
 		"INVOICE_ACCEPTED": "Invoice Accepted",
 		"INVOICE_REJECTED": "Invoice Rejected",
@@ -1967,19 +2214,15 @@
 		"INVOICES_EDIT_ESTIMATE": "Estimate Edited",
 		"INVOICES_DUPLICATE_INVOICE": "Invoice Duplicated",
 		"INVOICES_DUPLICATE_ESTIMATE": "Estimate Duplicated",
-		"INVOICES_DELETE_INVOICE": "Invoice was removed",
-		"INVOICES_DELETE_ESTIMATE": "Estimate was removed",
+		"INVOICES_DELETE_INVOICE": "Invoice Deleted",
+		"INVOICES_DELETE_ESTIMATE": "Estimate Deleted",
 		"INVOICES_SELECT_INVOICE_DATE": "Invoice Date",
 		"INVOICES_SELECT_DUE_DATE": "Due Date",
 		"INVOICES_SELECT_CURRENCY": "Валута",
 		"INVOICES_SELECT_DISCOUNT_VALUE": "Discount Value",
 		"INVOICES_SELECT_PAID": "Paid",
-		"INVOICES_SELECT_TAX": "Tax",
 		"INVOICES_TAXES": "Taxes",
-		"INVOICES_DISCOUNT": "Discount",
 		"INVOICES_SELECT_TERMS": "Terms",
-		"INVOICES_SELECT_TOTAL_VALUE": "Total Value",
-		"INVOICES_SELECT_CONTACT": "Contact",
 		"ADD_INVOICE": "Add Invoice",
 		"ADD_ESTIMATE": "Add Estimate",
 		"EDIT_INVOICE": "Edit Invoice",
@@ -1994,6 +2237,7 @@
 		"INVOICE_NUMBER_DUPLICATE": "Invoice Number already exists",
 		"DISCOUNT_TYPE": "Discount Type",
 		"TAX_TYPE": "Tax Type",
+		"TAX_VALUE": "Tax Value",
 		"PERCENT": "Percent",
 		"FLAT": "Flat",
 		"SUBTOTAL": "Subtotal",
@@ -2019,6 +2263,19 @@
 		"ESTIMATES_PER_PAGE": "Estimates Per Page",
 		"APPLY_DISCOUNT_AFTER_TAX": "Apply discount after tax",
 		"SELECT_INVOICE_TO_VIEW_HISTORY": "Select an invoice to view it's history",
+		"INVOICE_SENT_TO": "Invoice sent to {{ name }}",
+		"ESTIMATE_SENT_TO": "Estimate sent to {{ name }}",
+		"INVOICE": "Фактура",
+		"ESTIMATE": "Estimate",
+		"ACTIONS": "Actions",
+		"HISTORY": "History",
+		"SEARCH": "Search",
+		"NUMBER": "Number",
+		"FROM": "FROM",
+		"TO": "TO",
+		"DATE": "Дата",
+		"YES": "Yes",
+		"NO": "No",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",
@@ -2030,8 +2287,7 @@
 			"BY_TASK_HOURS": "By Task Hours",
 			"BY_PRODUCTS": "By Products",
 			"BY_EXPENSES": "By Expenses",
-			"DETAILS_INVOICE_ITEMS": "Details Invoice Items",
-			"DETAILS_ESTIMATE_ITEMS": "Details Estimate Items",
+			"DETAILED_ITEMS": "Detailed Items",
 			"SELECT_INVOICE_TYPE": "Select an invoice type",
 			"SELECT_ESTIMATE_TYPE": "Select an estimate type",
 			"SELECT_PROJECTS": "Select projects",
@@ -2057,7 +2313,8 @@
 			"INVALID_ITEM": "Invalid Invoice Item",
 			"EMPLOYEE_VALUE": "Employee cannot be empty",
 			"PROJECT_VALUE": "Project cannot be empty",
-			"TASK_VALUE": "Task cannot be empty"
+			"TASK_VALUE": "Task cannot be empty",
+			"ITEM": "Item"
 		},
 		"SEND": {
 			"CONFIRMATION_INVOICE": "Send this invoice to",
@@ -2093,7 +2350,10 @@
 			"REJECTED": "Rejected",
 			"ACCEPTED_STATUS": "Accepted Status",
 			"ESTIMATE_CONVERT": "Estimate Converted",
-			"SELECT_ESTIMATE_TO_VIEW_HISTORY": "Select an estimate to view it's history"
+			"SELECT_ESTIMATE_TO_VIEW_HISTORY": "Select an estimate to view it's history",
+			"ESTIMATE_ACCEPTED": "Estimate accepted",
+			"ESTEIMATE_REJECTED": "Estimate rejected",
+			"ERROR": "An error occured"
 		},
 		"PAYMENTS": {
 			"HEADER": "Payments for Invoice",
@@ -2116,7 +2376,16 @@
 			"OVERDUE": "Overdue",
 			"NO_PAYMENTS_RECORDED": "No payments recorded",
 			"LEFT_TO_PAY": "Left to pay",
-			"PAYMENT_METHOD": "Payment Method"
+			"PAYMENT_METHOD": "Payment Method",
+			"SELECT_INVOICE": "Select Invoice",
+			"PAYMENT_AMOUNT_ADDED": "Payment of {{ amount }} {{ currency }} added",
+			"PAYMENT": "Payment",
+			"BANK_TRANSFER": "Bank Transfer",
+			"CASH": "Cash",
+			"CHEQUE": "Cheque",
+			"CREDIT_CARD": "Credit Card",
+			"DEBIT": "Debit",
+			"ONLINE": "Online"
 		},
 		"INTERNAL_NOTE": {
 			"NOTE_SAVED": "Internal Note was added",
@@ -2124,6 +2393,26 @@
 			"ADD_NOTE": "Add note",
 			"NOTE": "Note",
 			"INTERNAL_NOTE": "Internal Note"
+		},
+		"STATUSES": {
+			"DRAFT": "Draft",
+			"SENT": "Изпратено",
+			"VIEWED": "Viewed",
+			"FULLY_PAID": "Fully Paid",
+			"PARTIALLY_PAID": "Partially Paid",
+			"OVERPAID": "Overpaid",
+			"VOID": "Void",
+			"ACCEPTED": "Прието",
+			"REJECTED": "Rejected"
+		},
+		"ACTION": {
+			"DUPLICATE": "Дублиране",
+			"SEND": "Send",
+			"CONVERT_TO_INVOICE": "Convert to invoice",
+			"EMAIL": "Eлектронна поща",
+			"DELETE": "Изтрий",
+			"NOTE": "Note",
+			"PAYMENTS": "Payments"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -2135,7 +2424,10 @@
 		"NOTE": "Note",
 		"STATUS": "Статус",
 		"ON_TIME": "On time",
-		"OVERDUE": "Overdue"
+		"OVERDUE": "Overdue",
+		"PAYMENT_METHOD": "Payment Method",
+		"PROJECT": "Проект",
+		"TAGS": "Тагове"
 	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Select Employee",
@@ -2191,7 +2483,9 @@
 	"FOOTER": {
 		"BY": "от",
 		"RIGHTS_RESERVED": "Всички права запазени.",
-		"PRESENT": "Present"
+		"PRESENT": "Present",
+		"TERMS_OF_SERVICE": "Terms Of Service",
+		"PRIVACY_POLICY": "Privacy Policy"
 	},
 	"TOASTR": {
 		"TITLE": {
@@ -2239,9 +2533,9 @@
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Доход добавен за",
 			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "Vendor name and year are required",
 			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "Language name and level are required",
-			"ORGANIZATION_LOCATION_UPDATED": "'{{ name }}' location was changed",
+			"ORGANIZATION_LOCATION_UPDATED": "{{ name }} organization location updated.",
 			"MAIN_ORGANIZATION_UPDATED": "'{{ name }}' info was changed",
-			"ORGANIZATION_SETTINGS_UPDATED": "'{{ name }}' settings was changed",
+			"ORGANIZATION_SETTINGS_UPDATED": "{{ name }} organization settings updated.",
 			"CANDIDATE_SKILL_REQUIRED": "Skill name is required",
 			"CANDIDATE_EDIT_CREATED": "Successfully Created",
 			"CANDIDATE_EDIT_UPDATED": "Successfully updated",
@@ -2310,6 +2604,14 @@
 			"CANDIDATE_REJECTED": "Candidate '{{ name }}' set as rejected.",
 			"CANDIDATE_HIRED": "Candidate '{{ name }}' set as hired.",
 			"CANDIDATE_DELETED": "Candidate '{{ name }}' was removed",
+			"PRESET_SAVED": "Preset successfully saved",
+			"JOB_APPLIED": "Job applied successfully",
+			"JOB_HIDDEN": "Job hidden successfully",
+			"ORGANIZATION_INFO_UPDATED": "{{ name }} organization main info updated.",
+			"ORGANIZATION_PAGE_UPDATED": "Page was changed for '{{ name }}'",
+			"SETTINS_SAVED": "Settings saved successfully",
+			"KEY_RESULTS_CREATED": "Key Results Created",
+			"INVITE_EMAIL_DELETED": "{{ name }} has been deleted.",
 			"HOLIDAY_ERROR": "Unable to get holidays",
 			"INTERVAL_ERROR": "Please pick correct dates and try again",
 			"PROFILE_UPDATED": "Your profile was changed",
@@ -2344,8 +2646,7 @@
 			"RECURRING_EXPENSE_SET": "Recurring expense set for '{{ name }}'",
 			"RECURRING_EXPENSE_UPDATED": "Recurring expense was changed for '{{ name }}'",
 			"RECURRING_EXPENSE_DELETED": "Recurring expense was removed for '{{ name }}'",
-			"IMAGE_UPDATED": "The image has been updated",
-			"ORGANIZATION_PAGE_UPDATED": "Page was changed for '{{ name }}'"
+			"IMAGE_UPDATED": "The image has been updated"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -2357,11 +2658,15 @@
 			"AGREE_TO": "Agree to",
 			"TERMS_AND_CONDITIONS": "Terms & Conditions",
 			"ADD_ORGANIZATION": "Add Organization",
-			"COMPLETE_REGISTRATION": "Complete Registration"
+			"COMPLETE_REGISTRATION": "Complete Registration",
+			"PASSWORDS_DO_NOT_MATCH": "Password Do Not Match!"
 		},
 		"INVALID_INVITE": "Either you entered an incorrect URL or the invitation has expired",
 		"HEADING": "Accept Invitation to {{ organizationName }}",
-		"SUB_HEADING": "Complete your registration {{ email }}"
+		"SUB_HEADING": "Complete your registration {{ email }}",
+		"INVITATION_NO_LONGER_VALID": "This invitation is no longer valid",
+		"ACCOUNT_CREATED": "Your account has been created, please login",
+		"COULD_NOT_CREATE_ACCOUNT": "Could not create your account"
 	},
 	"NOTES": {
 		"INCOME": {
@@ -2670,7 +2975,12 @@
 		"CANCEL_SUCCESS": "Appointment was cancelled",
 		"DURATION_ERROR": "Selected Duration is not valid",
 		"SELECT_EMPLOYEE": "Select Employee",
-		"EMPLOYEE": "Служител"
+		"EMPLOYEE": "Служител",
+		"BUFFER_TIME": "Buffer Time",
+		"BUFFER_AT_START": "Buffer at Start",
+		"BUFFER_AT_END": "Buffer at End",
+		"BREAK_TIME": "Break Time",
+		"ARE_YOU_SURE": "Are you sure? This action is irreversible."
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
 		"EMPLOYEE": "Служител",
@@ -2683,14 +2993,20 @@
 		"EVENT_NAME": "Event Type Name",
 		"EVENT_DURATION": "Duration",
 		"EVENT_DESCRIPTION": "Description",
-		"ACTIVE": "Активен"
+		"ACTIVE": "Активен",
+		"EMPLOYEE": "Служител",
+		"YES": "Yes",
+		"NO": "No",
+		"DURATION_UNIT": "{{ unit }}"
 	},
 	"SCHEDULE": {
 		"DATE_SPECIFIC_AVAILABILITY": "Date Specific Availability",
 		"SELECT_EMPLOYEE": "Моля селектирайте служител от менюто по-долу.",
 		"RECURRING_AVAILABILITY": "Recurring Availability",
 		"DATE_SPECIFIC_AVAILABILITY_TOOLTIP": "You can use Date specific availability to mark availability for a particular date or add exceptions to your Recurring availability pattern. The changes you make will override your Weekly recurring availability on those specific dates only.",
-		"RECURRING_AVAILABILITY_TOOLTIP": "You can use Recurring availability to mark your availability on a weekly basis. To change your availability for specific days only, you must use Date-specific availability."
+		"RECURRING_AVAILABILITY_TOOLTIP": "You can use Recurring availability to mark your availability on a weekly basis. To change your availability for specific days only, you must use Date-specific availability.",
+		"MONDAY_FRIDAY": "Monday - Friday",
+		"SUNDAY_THURSDAY": "Sunday - Thursday"
 	},
 	"PUBLIC_APPOINTMENTS": {
 		"BOOK_APPOINTMENT": "Book Appointment",
@@ -2743,7 +3059,8 @@
 			"time-off-report-action": "Time off policy action",
 			"task-update": "Task Update",
 			"candidate-schedule-interview": "Candidate Interview Schedule",
-			"interviewer-interview-schedule": "Interviewer Schedule"
+			"interviewer-interview-schedule": "Interviewer Schedule",
+			"TEMPLATE_NAMES": "Template Names"
 		},
 		"LANGUAGE_CODES": {
 			"en": "English",
@@ -2758,13 +3075,18 @@
 		"VIEW_DEALS": "View Deals",
 		"HEADER_FORM_EDIT": "Edit Pipeline",
 		"HEADER_FORM_CREATE": "Create Pipeline",
-		"RECORD_TYPE": "pipeline \"{{ name }}\""
+		"RECORD_TYPE": "pipeline \"{{ name }}\"",
+		"ACTIVE": "Активен",
+		"INACTIVE": "Inactive"
 	},
 	"PIPELINE_DEALS_PAGE": {
 		"HEADER": "Pipeline Deals",
 		"FILTER_BY_STAGE": "Filter by Stage",
 		"RECORD_TYPE": "stage \"{{ title }}\"",
 		"ALL_STAGES": "All Stages",
+		"LOW": "Low",
+		"MEDIUM": "Medium",
+		"HIGH": "High",
 		"DEAL_DELETED": "Deal '{{ name }}' was removed",
 		"DEAL_EDITED": "Deal '{{ name }}' was changed",
 		"DEAL_ADDED": "Deal '{{ name }}' was added"
@@ -2775,7 +3097,8 @@
 	"PIPELINE_DEAL_CREATE_PAGE": {
 		"HEADER": "Create Deal | Pipeline: {{ name }}",
 		"SELECT_STAGE": "Select Stage",
-		"PROBABILITY": "Probability"
+		"PROBABILITY": "Probability",
+		"SELECT_CLIENT": "Select Client"
 	},
 	"DIALOG": {
 		"CONFIRM": "Потвърждение",
@@ -2817,7 +3140,13 @@
 			"SUBJECT": "Subject:",
 			"LANGUAGE": "Language:",
 			"TEMPLATE": "Template:",
-			"NO_EMAILS_SENT": "No emails sent."
+			"NO_EMAILS_SENT": "No emails sent.",
+			"SYSTEM": "System",
+			"FILTERS": {
+				"TO": "To",
+				"TEMPLATE_LANGUAGE": "Template/Language"
+			}
 		}
-	}
+	},
+	"GAUZY_MAINTAINANCE": "Gauzy @ Maintenance"
 }
