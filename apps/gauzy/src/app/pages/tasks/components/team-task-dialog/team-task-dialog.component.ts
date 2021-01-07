@@ -40,7 +40,12 @@ export class TeamTaskDialogComponent
 	form: FormGroup;
 	selectedTaskId: string;
 	projects: IOrganizationProject[];
-	statuses: string[] = ['Todo', 'In Progress', 'For Testing', 'Completed'];
+	statuses: string[] = [
+		this.getTranslation('TASKS_PAGE.TODO'),
+		this.getTranslation('TASKS_PAGE.IN_PROGRESS'),
+		this.getTranslation('TASKS_PAGE.FOR_TESTING'),
+		this.getTranslation('TASKS_PAGE.COMPLETED')
+	];
 	employees: IEmployee[] = [];
 	teams: IOrganizationTeam[] = [];
 	selectedMembers: string[];

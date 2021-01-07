@@ -216,7 +216,10 @@ export class OrganizationComponent
 			organization
 		);
 		this.imageUpdateButton = false;
-		this.toastrService.primary('The image has been updated.', 'Success');
+		this.toastrService.primary(
+			this.getTranslation('PUBLIC_PAGE.IMAGE_UPDATED'),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		);
 	}
 
 	async editPage() {
@@ -240,16 +243,22 @@ export class OrganizationComponent
 					);
 					this.getPublicOrganization();
 					this.toastrService.primary(
-						this.organization.name + ' page is updated.',
-						'Success'
+						this.getTranslation(
+							'TOASTR.MESSAGE.ORGANIZATION_PAGE_UPDATED',
+							{ name: this.organization.name }
+						),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 				}
 			});
 	}
 
 	private _changeClientsTabIfActiveAndPrivacyIsTurnedOff() {
-		if (!this.organization.show_clients && this.tabTitle === 'Clients') {
-			this.tabTitle = 'Profile';
+		if (
+			!this.organization.show_clients &&
+			this.tabTitle === this.getTranslation('ORGANIZATIONS_PAGE.CLIENTS')
+		) {
+			this.tabTitle = this.getTranslation('ORGANIZATIONS_PAGE.PROFILE');
 		}
 	}
 

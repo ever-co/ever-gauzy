@@ -316,15 +316,18 @@ export class InvitesComponent
 					try {
 						await this.inviteService.delete(this.selectedInvite.id);
 						this.toastrService.primary(
-							this.selectedInvite.email + ' has been deleted.',
-							'Success'
+							this.getTranslation(
+								'TOASTR.MESSAGE.INVITE_EMAIL_DELETED',
+								{ name: this.selectedInvite.email }
+							),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
 						this.clearItem();
 						this.loadPage();
 					} catch (error) {
 						this.toastrService.danger(
 							error.error.message || error.message,
-							'Error'
+							this.getTranslation('TOASTR.TITLE.ERROR')
 						);
 					}
 				}
@@ -365,7 +368,7 @@ export class InvitesComponent
 					} catch (error) {
 						this.toastrService.danger(
 							error.error.message || error.message,
-							'Error'
+							this.getTranslation('TOASTR.TITLE.ERROR')
 						);
 					}
 				}

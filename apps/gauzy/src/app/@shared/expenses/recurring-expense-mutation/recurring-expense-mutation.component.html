@@ -115,117 +115,179 @@
 								status="warning"
 								*ngSwitchCase="'REDUCE_CONFLICT'"
 							>
-								Warning: This period overlaps with an existing
-								previous record(s):
+								{{
+									'EXPENSES_PAGE.RECURRING_EXPENSES.WARNING'
+										| translate
+								}}
 								<span *ngFor="let conflict of conflicts">
 									{{
 										conflict.value
 											| currency: conflict.currency
-									}}: From
+									}}:
+									{{
+										'EXPENSES_PAGE.RECURRING_EXPENSES.FROM'
+											| translate
+									}}
 									{{
 										formatToOrganizationDate(
 											conflict.startDate
 										)
 									}}
-									to
+									{{
+										'EXPENSES_PAGE.RECURRING_EXPENSES.TO'
+											| translate
+									}}
 									{{
 										formatToOrganizationDate(
 											conflict.endDate
 										)
 									}}</span
-								>The value will be overwritten from
+								>{{
+									'EXPENSES_PAGE.RECURRING_EXPENSES.VALUE_OVERWRITTEN'
+										| translate
+								}}
 								{{ month(startDate) }}!
 							</nb-alert>
 							<nb-alert
 								status="danger"
 								*ngSwitchCase="'INCREASE_CONFLICT'"
 							>
-								Error: This period overlaps with existing future
-								record(s).
+								{{
+									'EXPENSES_PAGE.RECURRING_EXPENSES.ERROR'
+										| translate
+								}}
 								<span *ngFor="let conflict of conflicts">
 									{{
 										conflict.value
 											| currency: conflict.currency
-									}}: From
+									}}:
+									{{
+										'EXPENSES_PAGE.RECURRING_EXPENSES.FROM'
+											| translate
+									}}
 									{{
 										formatToOrganizationDate(
 											conflict.startDate
 										)
 									}}
-									to
+									{{
+										'EXPENSES_PAGE.RECURRING_EXPENSES.TO'
+											| translate
+									}}
 									{{
 										formatToOrganizationDate(
 											conflict.endDate
 										)
 									}}</span
 								>
-								This is not supported, please edit the future
-								expenses instead.
+								{{
+									'EXPENSES_PAGE.RECURRING_EXPENSES.NOT_SUPPORTED'
+										| translate
+								}}
 							</nb-alert>
 							<nb-alert
 								status="warning"
 								*ngSwitchCase="'INCREASE_SAFE_WITHIN_LIMIT'"
 							>
-								This will only edit the future value from
+								{{
+									'EXPENSES_PAGE.RECURRING_EXPENSES.EDIT_FUTURE_VALUE'
+										| translate
+								}}
 								{{ formatToOrganizationDate(startDate) }},
-								existing value of
+								{{
+									'EXPENSES_PAGE.RECURRING_EXPENSES.EXISTING_VALUE'
+										| translate
+								}}
 								{{
 									recurringExpense.value
 										| currency: recurringExpense.currency
 								}}
-								started on
+								{{
+									'EXPENSES_PAGE.RECURRING_EXPENSES.STARTED_ON'
+										| translate
+								}}
 								{{
 									formatToOrganizationDate(
 										recurringExpense.startDate
 									)
 								}}
-								will not be affected till
+								{{
+									'EXPENSES_PAGE.RECURRING_EXPENSES.AFFECTED'
+										| translate
+								}}
 								{{ previousMonth(startDate) }}.
 							</nb-alert>
 							<nb-alert
 								status="warning"
 								*ngSwitchCase="'INCREASE_SAFE_OUTSIDE_LIMIT'"
 							>
-								This will set the expense value
+								{{
+									'EXPENSES_PAGE.RECURRING_EXPENSES.SET_EXPENSE_VALUE'
+										| translate
+								}}
 								{{
 									value | currency: recurringExpense.currency
 								}}
-								from
+								{{
+									'EXPENSES_PAGE.RECURRING_EXPENSES.FROM'
+										| translate
+								}}
 								{{ formatToOrganizationDate(startDate) }}
-								onwards and the existing value of
+								{{
+									'EXPENSES_PAGE.RECURRING_EXPENSES.ONWARDS'
+										| translate
+								}}
 								{{
 									recurringExpense.value
 										| currency: recurringExpense.currency
 								}}
-								(Started on
+								({{
+									'EXPENSES_PAGE.RECURRING_EXPENSES.STARTED_ON'
+										| translate
+								}}
 								{{
 									formatToOrganizationDate(
 										recurringExpense.startDate
 									)
 								}}
-								and ending on
+								{{
+									'EXPENSES_PAGE.RECURRING_EXPENSES.ENDING_ON'
+										| translate
+								}}
 								{{
 									formatToOrganizationDate(
 										recurringExpense.endDate
 									)
-								}}) will be now set till
+								}})
+								{{
+									'EXPENSES_PAGE.RECURRING_EXPENSES.SET_UNTIL'
+										| translate
+								}}
 								{{ previousMonth(startDate) }}.
 							</nb-alert>
 							<nb-alert
 								status="warning"
 								*ngSwitchCase="'REDUCE_SAFE'"
 							>
-								This will reduce the start date and include all
-								the months from
-								{{ formatToOrganizationDate(startDate) }} for
-								expense value
+								{{
+									'EXPENSES_PAGE.RECURRING_EXPENSES.SET_UNTIL'
+										| translate
+								}}
+								{{ formatToOrganizationDate(startDate) }}
+								{{
+									'EXPENSES_PAGE.RECURRING_EXPENSES.FOR_EXPENSE_VALUE'
+										| translate
+								}}
 								{{ value | currency: currencyValue }}
 							</nb-alert>
 							<nb-alert
 								status="primary"
 								*ngSwitchCase="'WITHIN_MONTH'"
 							>
-								This will change the start date to
+								{{
+									'EXPENSES_PAGE.RECURRING_EXPENSES.CHANGE_START_DATE'
+										| translate
+								}}
 								{{ formatToOrganizationDate(startDate) }}
 							</nb-alert>
 						</div>

@@ -27,6 +27,8 @@ import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { KeyResultService } from '../../../@core/services/keyresult.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../../@core/services/toastr.service';
+import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,7 +36,9 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 	templateUrl: './goal-template-select.component.html',
 	styleUrls: ['./goal-template-select.component.scss']
 })
-export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
+export class GoalTemplateSelectComponent
+	extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	goalTemplates: IGoalTemplate[];
 	selectedGoalTemplate: IGoalTemplate;
 	timeFrames: IGoalTimeFrame[] = [];
@@ -58,8 +62,11 @@ export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
 		private employeeService: EmployeesService,
 		private fb: FormBuilder,
 		private goalSettingsService: GoalSettingsService,
-		private toastrService: ToastrService
-	) {}
+		private toastrService: ToastrService,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	async ngOnInit() {
 		this.organization = this.store.selectedOrganization;
@@ -198,7 +205,9 @@ export class GoalTemplateSelectComponent implements OnInit, OnDestroy {
 						.then((res) => {
 							if (res) {
 								this.toastrService.success(
-									'Key Results Created'
+									this.getTranslation(
+										'TOASTR.MESSAGE.KEY_RESULTS_CREATED'
+									)
 								);
 								this.closeDialog('done');
 							}

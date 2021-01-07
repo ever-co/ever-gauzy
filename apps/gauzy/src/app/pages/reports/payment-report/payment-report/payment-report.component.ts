@@ -10,8 +10,10 @@ import {
 	IPaymentReportChartData
 } from '@gauzy/models';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
 import { PaymentService } from 'apps/gauzy/src/app/@core/services/payment.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import * as moment from 'moment';
 import { Subject } from 'rxjs';
@@ -24,7 +26,9 @@ import { pluck } from 'underscore';
 	templateUrl: './payment-report.component.html',
 	styleUrls: ['./payment-report.component.scss']
 })
-export class PaymentReportComponent implements OnInit, AfterViewInit {
+export class PaymentReportComponent
+	extends TranslationBaseComponent
+	implements OnInit, AfterViewInit {
 	logRequest: IGetPaymentInput = {
 		startDate: moment().startOf('week').toDate(),
 		endDate: moment().endOf('week').toDate()
@@ -49,8 +53,11 @@ export class PaymentReportComponent implements OnInit, AfterViewInit {
 	constructor(
 		private paymentService: PaymentService,
 		private cd: ChangeDetectorRef,
-		private store: Store
-	) {}
+		private store: Store,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this.updateLogs$
@@ -108,7 +115,7 @@ export class PaymentReportComponent implements OnInit, AfterViewInit {
 			.then((logs: IPaymentReportChartData[]) => {
 				const datasets = [
 					{
-						label: 'Expanse',
+						label: this.getTranslation('REPORT_PAGE.EXPANSE'),
 						data: logs.map((log) => log.value)
 					}
 				];

@@ -150,7 +150,7 @@ export class RecordsHistoryComponent
 					noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
 					columns: {
 						source: {
-							title: 'Source',
+							title: this.getTranslation('SM_TABLE.SOURCE'),
 							type: 'html',
 							class: 'text-center',
 							filter: false,

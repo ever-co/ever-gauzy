@@ -196,7 +196,7 @@ export class VendorsComponent
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
-					recordType: 'Vendor'
+					recordType: this.getTranslation('ORGANIZATIONS_PAGE.VENDOR')
 				}
 			})
 			.onClose.pipe(first())

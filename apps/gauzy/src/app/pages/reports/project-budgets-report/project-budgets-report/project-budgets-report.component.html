@@ -70,10 +70,8 @@
 										project.budgetType ===
 										OrganizationProjectBudgetTypeEnum.HOURS
 									"
-									>{{
-										project?.spent | durationFormat
-									}}
-									Hours</span
+									>{{ project?.spent | durationFormat }}
+									{{ 'REPORT_PAGE.HOURS' | translate }}</span
 								>
 								<span
 									*ngIf="
@@ -100,7 +98,7 @@
 									>{{
 										project.reamingBudget | durationFormat
 									}}
-									Hours</span
+									{{ 'REPORT_PAGE.HOURS' | translate }}</span
 								>
 								<span
 									*ngIf="

@@ -88,8 +88,12 @@
 						(valueChange)="onParticipantsChange($event)"
 						[value]="participants"
 					>
-						<nb-radio [value]="'employees'">Employees </nb-radio>
-						<nb-radio [value]="'teams'">Teams </nb-radio>
+						<nb-radio [value]="'employees'"
+							>{{ 'APPROVAL_REQUEST_PAGE.EMPLOYEES' | translate }}
+						</nb-radio>
+						<nb-radio [value]="'teams'"
+							>{{ 'APPROVAL_REQUEST_PAGE.TEAMS' | translate }}
+						</nb-radio>
 					</nb-radio-group>
 				</div>
 			</div>

@@ -1,6 +1,6 @@
 <div class="d-flex my-2 settings">
 	<div class="col-10 settings__name">
-		<span>Task View Mode:</span>
+		<span>{{ 'TASKS_PAGE.TASK_VIEW_MODE' | translate }}:</span>
 	</div>
 	<div class="col-2 settings__value">
 		<ng-select
@@ -9,13 +9,13 @@
 			binValue="name"
 			(change)="setTaskViewMode($event)"
 			[(ngModel)]="selectedTaskViewMode"
-			placeholder="Task View Mode"
+			placeholder="{{ 'TASKS_PAGE.TASK_VIEW_MODE' | translate }}"
 		>
 			<ng-template ng-option-tmp let-item="item" let-index="index">
 				<nb-icon
 					[icon]="item.icon"
 					class="mr-1"
-					style="font-size: 1rem;"
+					style="font-size: 1rem"
 				></nb-icon>
 				<span>{{ item.name }}</span>
 			</ng-template>
@@ -24,7 +24,7 @@
 					<nb-icon
 						[icon]="item.icon"
 						class="mr-1"
-						style="font-size: 1rem;"
+						style="font-size: 1rem"
 					></nb-icon>
 					<span>{{ item.name }}</span>
 				</div>

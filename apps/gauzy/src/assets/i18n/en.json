@@ -87,7 +87,10 @@
 		"PAYMENTS": "Payments",
 		"NOTE": "Note",
 		"SKIP_CONTINUE": "Skip {{ label }} and Continue",
-		"BUY": "Buy"
+		"BUY": "Buy",
+		"DELETE_ACCOUNT": "Delete your account",
+		"SELECT_AND_CONTINUE": "Select and Continue",
+		"ADD_KPI": "Add KPI"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",
@@ -168,7 +171,8 @@
 		"CURRENT_VALUE": "Current value",
 		"TARGET_VALUE": "Target value",
 		"LAST_UPDATED": "Last Updated",
-		"CREATED_BY": "Created By"
+		"CREATED_BY": "Created By",
+		"NO_DATA_MESSAGE": "No Data"
 	},
 	"FORM": {
 		"USERNAME": "Username",
@@ -290,6 +294,9 @@
 			"CLIENTS": "Clients",
 			"IS_PROJECT_OPEN_SOURCE": "Is Project Open-Source",
 			"OPEN_SOURCE_PROJECT_URL": "Open-Source Project URL",
+			"EMPLOYEE_LEVEL": "Employee Level",
+			"UNIT": "Unit",
+			"SELECT_EXISTING_OBJECTIVE": "Select Existing Objective",
 			"COORDINATE": {
 				"TITLE": "COORDINATES",
 				"LATITUDE": "Latitude",
@@ -443,7 +450,13 @@
 				"LATITUDE": "Latitude",
 				"LONGITUDE": "Longitude"
 			},
-			"SELECT_EXPENSE": "Select Expense"
+			"SELECT_EXPENSE": "Select Expense",
+			"ADD_TITLE": "Add title",
+			"ALL_PROJECTS": "All Projects",
+			"UPWORK_API_KEY": "Upwork API key",
+			"UPWORK_SECRET": "Upwork Secret",
+			"SELECT_COMPANY": "Select Company",
+			"TYPE_SEARCH_REQUEST": "Type your search request here..."
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -878,7 +891,9 @@
 		"PROJECT_BUDGET_REPORTS": "Project Budget Reports",
 		"NO_PROJECTS": "No Projects",
 		"CLIENT_BUDGET_REPORTS": "Client Budget Reports",
-		"NO_CLIENTS": "No Clients"
+		"NO_CLIENTS": "No Clients",
+		"EXPANSE": "Expanse",
+		"NO_EMPLOYEES_WORKED": "No employees worked"
 	},
 	"INTEGRATIONS": {
 		"AVAILABLE_INTEGRATIONS": "Available Apps & Integrations",
@@ -942,7 +957,11 @@
 			"PROFIT_REPORT": "Profit Report",
 			"TOTAL_EXPENSES": "Total Expenses",
 			"TOTAL_INCOME": "Total Income",
-			"TOTAL_PROFIT": "Total Profit"
+			"TOTAL_PROFIT": "Total Profit",
+			"DATE": "Date",
+			"EXPENSES": "Expenses",
+			"INCOME": "Income",
+			"DESCRIPTION": "Desctiption"
 		},
 		"TITLE": {
 			"PROFIT_REPORT": "Profit Report",
@@ -1007,7 +1026,26 @@
 		"SPLIT_WILL_BE_TOOLTIP": "This expense will be equally split amongst all employees",
 		"SPLIT_EXPENSE": "Split Expense",
 		"ADD_EXPENSE_CATEGORY": "Add New Expense category",
-		"EXPENSE_CATEGORY": "Expense Category"
+		"EXPENSE_CATEGORY": "Expense Category",
+		"RECURRING_EXPENSES": {
+			"WARNING": "Warning: This period overlaps with an existing previous record(s):",
+			"FROM": "From",
+			"TO": "to",
+			"VALUE_OVERWRITTEN": "The value will be overwritten from",
+			"ERROR": "Error: This period overlaps with existing future record(s).",
+			"NOT_SUPPORTED": "This is not supported, please edit the future expenses instead.",
+			"EDIT_FUTURE_VALUE": "This will only edit the future value from",
+			"EXISTING_VALUE": "existing value of",
+			"STARTED_ON": "Started on",
+			"AFFECTED": "will not be affected until",
+			"SET_EXPENSE_VALUE": "This will set the expense value",
+			"ONWARDS": "onwards and the existing value of",
+			"ENDING_ON": "and ending on",
+			"SET_UNTIL": "will be now set until",
+			"REDUCE_START_DATE": "This will reduce the start date and include all the months from",
+			"FOR_EXPENSE_VALUE": "for expense value",
+			"CHANGE_START_DATE": "This will change the start date to"
+		}
 	},
 	"EMPLOYEES_PAGE": {
 		"HEADER": "Manage Employees for ",
@@ -1019,6 +1057,10 @@
 		"RECURRING_EXPENSE": "Employee Recurring Expense",
 		"RECURRING_EXPENSE_EDIT": "Edit the current & all future expenses. There will be no change to any past expense.",
 		"RECURRING_EXPENSE_ADD": "This will add an expense recurring every month.",
+		"RECURRING_EXPENSE_SET": "{{ name }} recurring expense set.",
+		"RECURRING_EXPENSE_EDITED": "{{ name }} recurring expense edited.",
+		"RECURRING_EXPENSE_DELETED": "{{ name }} recurring expense deleted.",
+		"EMPLOYEE_NAME": "Employee",
 		"BACK_TO_WORK": "Back to Work",
 		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",
 		"EDIT_EMPLOYEE": {
@@ -1084,6 +1126,8 @@
 		"MY_OBJECTIVES": "My Objectives",
 		"OBJECTIVE_LEVEL": "Objective Level",
 		"TIME_FRAME": "Time Frames",
+		"CREATE_NEW": "+ create new",
+		"GOAL_TEMPLATES": "Goal Templates",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Employees",
 			"TEAMS": "Teams",
@@ -1429,6 +1473,7 @@
 		"MAIN": "Main",
 		"DEPARTMENTS": "Departments",
 		"VENDORS": "Vendors",
+		"VENDOR": "Vendor",
 		"NAME": "Name",
 		"EXPENSE_CATEGORIES": "Expense Categories",
 		"PROJECTS": "Projects",
@@ -1459,6 +1504,10 @@
 		"CONTACTS": "Contacts",
 		"LEVEL": "Level",
 		"ORGANIZATION": "ORGANIZATION",
+		"HOURS_WORKED": "hours worked",
+		"CLIENTS": "Clients",
+		"PROFILE": "Profile",
+		"PORTFOLIO": "Portfolio",
 		"EDIT": {
 			"ACCOUNTING": "Accounting",
 			"HEADER": "Manage",
@@ -1503,6 +1552,7 @@
 			"USER_WAS_DELETED": "{{ name }} was successfully deleted.",
 			"USER_WAS_REMOVED": "{{ name }} was successfully removed from organization.",
 			"EMPLOYEE_POSITION": "Employee Position",
+			"PROJECT_URL": "Project Url",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timer Settings",
 				"ALLOW_MODIFY_TIME": "Allow Modify Time",
@@ -1663,6 +1713,7 @@
 		"ACCEPTED_PROPOSALS": "Accepted Proposals",
 		"TOTAL_PROPOSALS": "Total Proposals",
 		"SUCCESS_RATE": "Success Rate",
+		"PROPOSALS": "Proposals",
 		"REGISTER": {
 			"REGISTER_PROPOSALS": "Register Proposal",
 			"AUTHOR": "Author",
@@ -1757,6 +1808,9 @@
 		"END_DATE": "End Date",
 		"REQUEST_DATE": "Request Date",
 		"STATUS": "Status",
+		"TIME_OFF_REQUEST": "Time off request",
+		"VIEW_REQUEST_DOCUMENT": "View Request Document",
+		"MULTIPLE_EMPLOYEES": "Multiple employees",
 		"STATUSES": {
 			"REQUESTED": "Requested",
 			"APPROVED": "Approved",
@@ -1961,7 +2015,20 @@
 		"ESTIMATE_DAYS": "Days",
 		"ESTIMATE_HOURS": "Hours",
 		"ESTIMATE_MINUTES": "Mins",
-		"TASKS_STATUS": "Status"
+		"TASKS_STATUS": "Status",
+		"TODO": "Todo",
+		"IN_PROGRESS": "In Progress",
+		"FOR_TESTING": "For Testing",
+		"COMPLETED": "Completed",
+		"TASK_VIEW_MODE": "Task View Mode",
+		"PROJECT": "Project",
+		"COMPLETE_SPRINT": "Complete Sprint",
+		"DATE_START": "Date Start",
+		"DATE_END": "Date End",
+		"BACKLOG": "Backlog",
+		"EDIT_SPRINT": "Edit Sprint",
+		"DELETE_SPRINT": "Delete Sprint",
+		"SELECT": "Select"
 	},
 	"JOBS": {
 		"EMPLOYEE": "Employee",
@@ -2163,6 +2230,7 @@
 		"INVOICE_NUMBER_DUPLICATE": "Invoice Number already exists",
 		"DISCOUNT_TYPE": "Discount Type",
 		"TAX_TYPE": "Tax Type",
+		"TAX_VALUE": "Tax Value",
 		"PERCENT": "Percent",
 		"FLAT": "Flat",
 		"SUBTOTAL": "Subtotal",
@@ -2195,6 +2263,12 @@
 		"ACTIONS": "Actions",
 		"HISTORY": "History",
 		"SEARCH": "Search",
+		"NUMBER": "Number",
+		"FROM": "FROM",
+		"TO": "TO",
+		"DATE": "Date",
+		"YES": "Yes",
+		"NO": "No",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",
@@ -2232,7 +2306,8 @@
 			"INVALID_ITEM": "Invalid Invoice Item",
 			"EMPLOYEE_VALUE": "Employee cannot be empty",
 			"PROJECT_VALUE": "Project cannot be empty",
-			"TASK_VALUE": "Task cannot be empty"
+			"TASK_VALUE": "Task cannot be empty",
+			"ITEM": "Item"
 		},
 		"SEND": {
 			"CONFIRMATION_INVOICE": "Send this invoice to",
@@ -2401,7 +2476,9 @@
 	"FOOTER": {
 		"BY": "by",
 		"RIGHTS_RESERVED": "All rights reserved.",
-		"PRESENT": "Present"
+		"PRESENT": "Present",
+		"TERMS_OF_SERVICE": "Terms Of Service",
+		"PRIVACY_POLICY": "Privacy Policy"
 	},
 	"TOASTR": {
 		"TITLE": {
@@ -2520,7 +2597,11 @@
 			"JOB_HIDDEN": "Job hidden successfully",
 			"ORGANIZATION_LOCATION_UPDATED": "{{ name }} organization location updated.",
 			"ORGANIZATION_INFO_UPDATED": "{{ name }} organization main info updated.",
-			"ORGANIZATION_SETTINGS_UPDATED": "{{ name }} organization settings updated."
+			"ORGANIZATION_SETTINGS_UPDATED": "{{ name }} organization settings updated.",
+			"ORGANIZATION_PAGE_UPDATED": "{{ name }} page is updated.",
+			"SETTINS_SAVED": "Settings saved successfully",
+			"KEY_RESULTS_CREATED": "Key Results Created",
+			"INVITE_EMAIL_DELETED": "{{ name }} has been deleted."
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -3013,7 +3094,13 @@
 			"SUBJECT": "Subject:",
 			"LANGUAGE": "Language:",
 			"TEMPLATE": "Template:",
-			"NO_EMAILS_SENT": "No emails sent."
+			"NO_EMAILS_SENT": "No emails sent.",
+			"SYSTEM": "System",
+			"FILTERS": {
+				"TO": "To",
+				"TEMPLATE_LANGUAGE": "Template/Language"
+			}
 		}
-	}
+	},
+	"GAUZY_MAINTAINANCE": "Gauzy @ Maintenance"
 }

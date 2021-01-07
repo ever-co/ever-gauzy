@@ -9,9 +9,13 @@
 >
 <div class="right-side">
 	<div class="mr-2" *ngIf="user">
-		<a [routerLink]="['legal/terms']" target="_blank">Terms Of Service</a>
+		<a [routerLink]="['legal/terms']" target="_blank">{{
+			'FOOTER.TERMS_OF_SERVICE' | translate
+		}}</a>
 		<span class="mx-1">|</span>
-		<a [routerLink]="['legal/privacy']" target="_blank">Privacy Policy</a>
+		<a [routerLink]="['legal/privacy']" target="_blank">{{
+			'FOOTER.PRIVACY_POLICY' | translate
+		}}</a>
 	</div>
 	<div class="socials">
 		<a
