@@ -1685,8 +1685,8 @@
 		"SHARE_END_DATE": "Поделиться датой окончания",
 		"CREATED_BY": "Создано",
 		"STATUS": "Статус",
-		"REQUEST_SAVED": "Запрос сохранен",
-		"REQUEST_DELETED": "Запрос удален",
+		"REQUEST_SAVED": "Запрос был сохранен",
+		"REQUEST_DELETED": "Запрос был удален",
 		"MESSAGES": {
 			"BEFORE_REQUEST_DAY_ERR": "Дата должна быть после дня запроса.",
 			"EXCEED_PERIOD_ERR": "Максимально допустимые дни для этого элемента ",
@@ -1710,7 +1710,11 @@
 		"EQUIPMENT_SHARING_POLICY_DESCRIPTION": "Описание политики совместного использования снаряжения",
 		"REQUEST_SAVED": "Политика сохранена",
 		"REQUEST_DELETED": "Политика удалена",
-		"ACTIONS": "Действия"
+		"ACTIONS": "Действия",
+		"MESSAGES": {
+			"EQUIPMENT_REQUEST_SAVED": "Запрос '{{ name }}' ' был изменен",
+			"EQUIPMENT_REQUEST_DELETED": "Запрос '{{ name }}' был удален"
+		}
 	},
 	"INVENTORY_PAGE": {
 		"HEADER": "Инвентаризация",
@@ -1964,7 +1968,7 @@
 		"INVOICES_DUPLICATE_INVOICE": "Счет скопирован",
 		"INVOICES_DUPLICATE_ESTIMATE": "Дублирование",
 		"INVOICES_DELETE_INVOICE": "Счет удален",
-		"INVOICES_DELETE_ESTIMATE": "Рассчитать Удаленные",
+		"INVOICES_DELETE_ESTIMATE": "Оценка была удалена",
 		"INVOICES_SELECT_INVOICE_DATE": "Дата Счета",
 		"INVOICES_SELECT_DUE_DATE": "Срок сдачи",
 		"INVOICES_SELECT_CURRENCY": "Валюта",
@@ -2104,7 +2108,7 @@
 			"RECORDED_BY": "Записано",
 			"NOTE": "Примечание",
 			"PAYMENT_ADD": "Платёж добавлен",
-			"PAYMENT_EDIT": "Оплата изменена",
+			"PAYMENT_EDIT": "Оплата была изменена",
 			"PAYMENT_DELETE": "Платёж удален",
 			"PAYMENT_DOWNLOAD": "Платеж загружен",
 			"STATUS": "Статус",
@@ -2115,7 +2119,7 @@
 			"PAYMENT_METHOD": "Способ оплаты"
 		},
 		"INTERNAL_NOTE": {
-			"NOTE_SAVED": "Внутренняя заметка сохранена",
+			"NOTE_SAVED": "Внутренняя заметка была добавлена",
 			"ADD_INTERNAL_NOTE": "Добавить примечание",
 			"ADD_NOTE": "Добавить заметку",
 			"NOTE": "Примечание",
@@ -2203,6 +2207,7 @@
 			"COPIED": "Ссылка скопирована в буфер обмена",
 			"INVITES_LOAD": "Не удалось загрузить приглашения",
 			"INVITES_RESEND": "Приглашение было отправлено на адрес {{ email }}.",
+			"INVITES_DELETE": "{{ email }} был удален",
 			"EMPLOYEE_DEPARTMENT_ADDED": "Сотрудник добавлен в отдел",
 			"EMPLOYEE_DEPARTMENT_REMOVED": "Сотрудник удалён из отдела",
 			"EMPLOYEE_PROJECT_ADDED": "Сотрудник добавлен в проект",
@@ -2234,6 +2239,9 @@
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
 			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "Требуется название и год поставщика",
 			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "Требуется название языка и уровень",
+			"ORGANIZATION_LOCATION_UPDATED": "'{{ name }}' местоположение было изменено",
+			"MAIN_ORGANIZATION_UPDATED": "'{{ name }}' информация была изменена",
+			"ORGANIZATION_SETTINGS_UPDATED": "'{{ name }}' настройки были изменены",
 			"CANDIDATE_SKILL_REQUIRED": "Требуется название навыка",
 			"CANDIDATE_EDIT_CREATED": "Успешно создано",
 			"CANDIDATE_EDIT_UPDATED": "Успешно обновлено",
@@ -2244,7 +2252,7 @@
 			"CANDIDATE_EXPERIENCE_REQUIRED": "Требуется информация об опыте",
 			"CANDIDATE_DOCUMENT_REQUIRED": "Требуется информация о документе",
 			"CANDIDATE_SKILLS_REQUIRED": "Требуется название навыка",
-			"CANDIDATE_PROFILE_UPDATE": "'{{name}}' профиль обновлен.",
+			"CANDIDATE_PROFILE_UPDATE": "Профиль '{{name}}' ' был изменен.",
 			"NAME_REQUIRED": "Требуется имя!",
 			"CONTACT_TYPE_REQUIRED": "Требуется тип контакта!",
 			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
@@ -2252,7 +2260,7 @@
 			"PHONE_REQUIRED": "Требуется указать телефон!",
 			"PHONE_CONTAINS_ONLY_NUMBERS": "Телефон должен содержать только цифры!",
 			"SOMETHING_BAD_HAPPENED": "Произошла ошибка!",
-			"EMAIL_TEMPLATE_SAVED": "{{templateName}} шаблон письма успешно сохранен",
+			"EMAIL_TEMPLATE_SAVED": "Шаблон письма '{{ templateName }}' ' был сохранен",
 			"DELETED": "Успешно удален",
 			"CREATED": "Успешно создано",
 			"UPDATED": "Успешно обновлено",
@@ -2268,8 +2276,9 @@
 			"HELP_ARTICALE_CREATED": "Статья была добавлена",
 			"HELP_ARTICALE_UPDATED": "Статья '{{ name }}' ' была изменена",
 			"HELP_ARTICALE_DELETED": "Статья '{{ name }}' ' удалена",
-			"PIPELINE_CREATED": "Трубопровод был изменен",
-			"PIPELINE_UPDATED": "Трубопровод был изменен",
+			"PIPELINE_CREATED": "Конвейер '{{ name }}' был добавлен",
+			"PIPELINE_UPDATED": "Конвейер '{{ name }}' ' был изменен",
+			"PIPELINE_DELETED": "Конвейер '{{ name }}' был удален",
 			"OBJECTIVE_ADDED": "Цель добавлена",
 			"OBJECTIVE_DELETED": "Цель удалена",
 			"OBJECTIVE_UPDATED": "Цель была изменена",
@@ -2300,7 +2309,43 @@
 			"CANDIDATE_ARCHIVED": "Кандидат '{{ name }}' ' ' ' установлен в архиве.",
 			"CANDIDATE_REJECTED": "Кандидат '{{ name }}' ' ' ' был отклонён.",
 			"CANDIDATE_HIRED": "Кандидат '{{ name }}' ' ' был нанят.",
-			"CANDIDATE_DELETED": "Кандидат '{{ name }}' ' был удален"
+			"CANDIDATE_DELETED": "Кандидат '{{ name }}' ' был удален",
+			"HOLIDAY_ERROR": "Не удается получить выходные",
+			"INTERVAL_ERROR": "Пожалуйста, выберите правильные даты и повторите попытку",
+			"PROFILE_UPDATED": "Ваш профиль был изменен",
+			"PERSONAL_QUALITIES_CREATED": "Личные качества '{{ name }}' были добавлены",
+			"PERSONAL_QUALITIES_UPDATED": "Изменены личные качества '{{ name }}'",
+			"PERSONAL_QUALITIES_DELETED": "Личные качества '{{ name }}' были удалены",
+			"TECHNOLOGY_STACK_CREATED": "{{ name }}стека технологий было добавлено",
+			"TECHNOLOGY_STACK_UPDATED": "Стек технологий '{{ name }}' ' был изменен",
+			"TECHNOLOGY_STACK_DELETED": "Стек технологий '{{ name }}' был удален",
+			"ARCHIVE_INTERVIEW_SET": "'{{ name }}' установлен в архиве.",
+			"INTERVIEW_UPDATED": "'{{ name }}' был изменен",
+			"INTERVIEW_DELETED": "'{{ name }}' был удален",
+			"INTERVIEW_FEEDBACK_CREATED": "Отзыв был добавлен для '{{ name }}'.",
+			"CANDIDATE_EDUCATION_CREATED": "Образование '{{ name }}' добавлено",
+			"CANDIDATE_EDUCATION_UPDATED": "Образование '{{ name }}' ' было изменено",
+			"CANDIDATE_EDUCATION_DELETED": "Образование '{{ name }}' было удалено",
+			"CANDIDATE_EXPERIENCE_CREATED": "Опыт '{{ name }}' добавлен",
+			"CANDIDATE_EXPERIENCE_UPDATED": "Опыт '{{ name }}' был изменен",
+			"CANDIDATE_EXPERIENCE_DELETED": "Опыт '{{ name }}' был удален",
+			"CANDIDATE_SKILL_CREATED": "Навык '{{ name }}' добавлен",
+			"CANDIDATE_SKILL_UPDATED": "Навык '{{ name }}' был изменен",
+			"CANDIDATE_SKILL_DELETED": "Навык '{{ name }}' был удален",
+			"CANDIDATE_DOCUMENT_CREATED": "Документ '{{ name }}' был добавлен",
+			"CANDIDATE_DOCUMENT_UPDATED": "Документ '{{ name }}' был изменен",
+			"CANDIDATE_DOCUMENT_DELETED": "Документ '{{ name }}' был удален",
+			"CANDIDATE_INTERVIEW_CREATED": "Интервью '{{ name }}' ' был добавлен",
+			"CANDIDATE_INTERVIEW_UPDATED": "Интервью '{{ name }}' ' был изменен",
+			"CANDIDATE_INTERVIEW_DELETED": "Интервью '{{ name }}' ' был удален",
+			"CANDIDATE_FEEDBACK_CREATED": "Отзыв добавлен",
+			"CANDIDATE_FEEDBACK_UPDATED": "Отзыв был изменен",
+			"CANDIDATE_FEEDBACK_DELETED": "Отзыв был удален",
+			"RECURRING_EXPENSE_SET": "Повторяющиеся расходы установлены для '{{ name }}'",
+			"RECURRING_EXPENSE_UPDATED": "Повторяющиеся расходы были изменены для '{{ name }}'",
+			"RECURRING_EXPENSE_DELETED": "Повторяющиеся расходы были удалены для '{{ name }}'",
+			"IMAGE_UPDATED": "Изображение было обновлено",
+			"ORGANIZATION_PAGE_UPDATED": "Страница была изменена для '{{ name }}'"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -2320,9 +2365,9 @@
 	},
 	"NOTES": {
 		"INCOME": {
-			"ADD_INCOME": "Доход добавлен для {{ name }}",
-			"EDIT_INCOME": "Доход отредактирован для {{ name }}",
-			"DELETE_INCOME": "Доход удален для {{ name }}",
+			"ADD_INCOME": "Доход добавлен для '{{ name }} ' '",
+			"EDIT_INCOME": "Поступления были изменены для '{{ name }}'",
+			"DELETE_INCOME": "Доход удален для '{{ name }} ' '",
 			"INCOME_ERROR": "{{ error }}"
 		},
 		"INVOICE": {
@@ -2339,10 +2384,10 @@
 		},
 		"PROPOSALS": {
 			"EDIT_PROPOSAL": "Предложение успешно обновлено",
-			"REGISTER_PROPOSAL": "Новое предложение зарегистрировано",
+			"REGISTER_PROPOSAL": "Новое предложение было добавлено",
 			"REGISTER_PROPOSAL_NO_EMPLOYEE_SELECTED": "Пожалуйста, выберите сотрудника из выпадающего меню.",
 			"REGISTER_PROPOSAL_ERROR": "{{ error }}",
-			"DELETE_PROPOSAL": "Предложение успешно удалено",
+			"DELETE_PROPOSAL": "Предложение удалено",
 			"PROPOSAL_ACCEPTED": "Статус предложения обновлен для принятия",
 			"PROPOSAL_SENT": "Статус предложения обновлен для отправки"
 		},
@@ -2368,9 +2413,9 @@
 		},
 		"EMPLOYEE": {
 			"EDIT_EMPLOYEE_AWARDS": {
-				"ADD_AWARD": "Новая награда {{ name }} успешно добавлена!",
+				"ADD_AWARD": "Новая награда '{{ name }}' была добавлена",
 				"INVALID_AWARD_NAME_YEAR": "Пожалуйста, проверьте имя и год для получения награды",
-				"REMOVE_AWARD": "Награда {{ name }} успешно удалена!"
+				"REMOVE_AWARD": "Награда '{{ name }}' была удалена"
 			}
 		},
 		"ORGANIZATIONS": {
@@ -2720,9 +2765,9 @@
 		"FILTER_BY_STAGE": "Фильтр по этапу",
 		"RECORD_TYPE": "этап \"{{ title }}\"",
 		"ALL_STAGES": "Все этапы",
-		"DEAL_DELETED": "Сделка удалена",
-		"DEAL_EDITED": "Предложение отредактировано",
-		"DEAL_ADDED": "Сделка добавлена"
+		"DEAL_DELETED": "Сделка '{{ name }}' удалена",
+		"DEAL_EDITED": "Сделка '{{ name }}' была изменена",
+		"DEAL_ADDED": "Сделка '{{ name }}' была добавлена"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Редактировать сделку | Пипеллинн: {{ name }}"
