@@ -12,8 +12,9 @@ import {
 	ICurrency
 } from '@gauzy/models';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import { Store } from '../../../../@core/services/store.service';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-payment-add',
@@ -28,7 +29,7 @@ export class PaymentMutationComponent
 		private fb: FormBuilder,
 		protected dialogRef: NbDialogRef<PaymentMutationComponent>,
 		private store: Store,
-		private toastrService: NbToastrService
+		private toastrService: ToastrService
 	) {
 		super(translateService);
 	}
@@ -143,15 +144,9 @@ export class PaymentMutationComponent
 
 		if (this.payment) {
 			payment['id'] = this.payment.id;
-			this.toastrService.primary(
-				this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_EDIT'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_EDIT');
 		} else {
-			this.toastrService.primary(
-				this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD');
 		}
 
 		this.dialogRef.close(payment);

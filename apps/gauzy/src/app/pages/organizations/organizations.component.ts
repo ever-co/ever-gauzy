@@ -6,7 +6,7 @@ import {
 	IUser,
 	OrganizationAction
 } from '@gauzy/models';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { filter, first, tap } from 'rxjs/operators';
@@ -24,6 +24,7 @@ import { UsersOrganizationsService } from '../../@core/services/users-organizati
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { OrganizationEditStore } from '../../@core/services/organization-edit-store.service';
+import { ToastrService } from '../../@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -35,7 +36,7 @@ export class OrganizationsComponent
 	implements OnInit, OnDestroy {
 	constructor(
 		private organizationsService: OrganizationsService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private dialogService: NbDialogService,
 		private router: Router,
 		readonly translateService: TranslateService,
@@ -167,14 +168,11 @@ export class OrganizationsComponent
 							action: OrganizationAction.CREATED
 						};
 
-						this.toastrService.primary(
-							this.getTranslation(
-								'NOTES.ORGANIZATIONS.ADD_NEW_ORGANIZATION',
-								{
-									name: result.name
-								}
-							),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						this.toastrService.success(
+							'NOTES.ORGANIZATIONS.ADD_NEW_ORGANIZATION',
+							{
+								name: result.name
+							}
 						);
 						setTimeout(() => {
 							this._loadSmartTable();
@@ -226,14 +224,11 @@ export class OrganizationsComponent
 							organization: this.selectedOrganization,
 							action: OrganizationAction.DELETED
 						};
-						this.toastrService.primary(
-							this.getTranslation(
-								'NOTES.ORGANIZATIONS.DELETE_ORGANIZATION',
-								{
-									name: this.selectedOrganization.name
-								}
-							),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						this.toastrService.success(
+							'NOTES.ORGANIZATIONS.DELETE_ORGANIZATION',
+							{
+								name: this.selectedOrganization.name
+							}
 						);
 					})
 					.catch((error) => {

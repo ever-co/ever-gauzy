@@ -5,7 +5,6 @@ import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
-import { NbToastrService } from '@nebular/theme';
 import { CandidateExperienceService } from 'apps/gauzy/src/app/@core/services/candidate-experience.service';
 import {
 	ICandidateExperience,

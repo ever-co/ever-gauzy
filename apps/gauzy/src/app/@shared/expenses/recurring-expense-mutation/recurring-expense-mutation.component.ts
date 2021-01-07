@@ -8,7 +8,7 @@ import {
 	IEmployee,
 	IOrganization
 } from '@gauzy/models';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import { first } from 'rxjs/operators';
 import * as moment from 'moment';
 import { IExpenseCategory } from './../../../../../../../libs/models/src/lib/expense-category.model';
@@ -23,6 +23,7 @@ import { ErrorHandlingService } from '../../../@core/services/error-handling.ser
 import { ExpenseCategoriesStoreService } from '../../../@core/services/expense-categories-store.service';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { EmployeesService } from '../../../@core/services';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 export enum COMPONENT_TYPE {
 	EMPLOYEE = 'EMPLOYEE',
@@ -87,7 +88,7 @@ export class RecurringExpenseMutationComponent
 		private employeesService: EmployeesService,
 		private readonly expenseCategoriesStore: ExpenseCategoriesStoreService,
 		private translate: TranslateService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		private errorHandler: ErrorHandlingService,
 		private organizationRecurringExpenseService: OrganizationRecurringExpenseService,
 		private employeeRecurringExpenseService: EmployeeRecurringExpenseService
@@ -188,14 +189,11 @@ export class RecurringExpenseMutationComponent
 
 	addNewCustomCategoryName = (name: string): Promise<IExpenseCategory> => {
 		try {
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.ADD_EXPENSE_CATEGORY',
-					{
-						name: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.ADD_EXPENSE_CATEGORY',
+				{
+					name
+				}
 			);
 			return this.expenseCategoriesStore.create(name).toPromise();
 		} catch (error) {

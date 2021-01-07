@@ -10,7 +10,7 @@ import {
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { DealsService } from '../../../@core/services/deals.service';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
@@ -20,6 +20,7 @@ import { PipelineDealCreatedByComponent } from '../table-components/pipeline-dea
 import { PipelineDealExcerptComponent } from '../table-components/pipeline-deal-excerpt/pipeline-deal-excerpt.component';
 import { PipelineDealProbabilityComponent } from '../table-components/pipeline-deal-probability/pipeline-deal-probability.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../../@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-pipeline-deals',
@@ -89,7 +90,7 @@ export class PipelineDealsComponent
 		private pipelinesService: PipelinesService,
 		private router: Router,
 		private store: Store,
-		private toastrService: NbToastrService
+		private toastrService: ToastrService
 	) {
 		super(translateService);
 		this.setView();
@@ -178,11 +179,10 @@ export class PipelineDealsComponent
 		if ('ok' === canProceed) {
 			await this.dealsService.delete(this.deal.id);
 			this.updateViewData();
+			this.toastrService.success('PIPELINE_DEALS_PAGE.DEAL_DELETED', {
+				name: this.deal.title
+			});
 			delete this.deal;
-			this.toastrService.primary(
-				this.getTranslation('PIPELINE_DEALS_PAGE.DEAL_DELETED'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
 		}
 	}
 

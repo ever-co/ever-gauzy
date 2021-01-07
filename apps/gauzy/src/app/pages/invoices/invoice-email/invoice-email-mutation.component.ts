@@ -4,13 +4,14 @@ import { OnInit } from '@angular/core';
 import { IInvoice, InvoiceStatusTypesEnum, IInvoiceItem } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import { InvoicesService } from '../../../@core/services/invoices.service';
 import * as pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 import { Store } from '../../../@core/services/store.service';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 import { InvoiceItemService } from '../../../@core/services/invoice-item.service';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-invoice-email',
@@ -31,7 +32,7 @@ export class InvoiceEmailMutationComponent
 		readonly translateService: TranslateService,
 		protected dialogRef: NbDialogRef<InvoiceEmailMutationComponent>,
 		private fb: FormBuilder,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private invoiceService: InvoicesService,
 		private store: Store,
 		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
@@ -111,10 +112,7 @@ export class InvoiceEmailMutationComponent
 			tenantId
 		});
 
-		this.toastrService.primary(
-			this.getTranslation('INVOICES_PAGE.EMAIL.EMAIL_SENT'),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
-		);
+		this.toastrService.success('INVOICES_PAGE.EMAIL.EMAIL_SENT');
 		this.dialogRef.close('ok');
 	}
 

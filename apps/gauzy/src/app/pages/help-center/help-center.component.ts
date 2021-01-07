@@ -11,7 +11,7 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 import { TranslateService } from '@ngx-translate/core';
 import { AddArticleComponent } from './add-article/add-article.component';
 import { Subject } from 'rxjs';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { DeleteArticleComponent } from './delete-article/delete-article.component';
 import { HelpCenterArticleService } from '../../@core/services/help-center-article.service';
 import { first, takeUntil } from 'rxjs/operators';
@@ -19,6 +19,7 @@ import { HelpCenterAuthorService } from '../../@core/services/help-center-author
 import { EmployeesService } from '../../@core/services';
 import { FormControl } from '@angular/forms';
 import { Store } from '../../@core/services/store.service';
+import { ToastrService } from '../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-help-center',
@@ -33,7 +34,7 @@ export class HelpCenterComponent
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService,
 		private helpCenterArticleService: HelpCenterArticleService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		private helpCenterAuthorService: HelpCenterAuthorService,
 		private employeeService: EmployeesService,
 		private sanitizer: DomSanitizer,
@@ -189,13 +190,6 @@ export class HelpCenterComponent
 		this.filteredArticles = this.articleList;
 	}
 
-	private toastrSuccess(text: string) {
-		this.toastrService.success(
-			this.getTranslation('TOASTR.TITLE.SUCCESS'),
-			this.getTranslation(`TOASTR.MESSAGE.${text}`)
-		);
-	}
-
 	async addNode() {
 		const chosenType = 'add';
 		const dialog = this.dialogService.open(AddArticleComponent, {
@@ -207,11 +201,9 @@ export class HelpCenterComponent
 			}
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
+
 		if (data) {
-			this.toastrService.success(
-				this.getTranslation('TOASTR.MESSAGE.HELP_ARTICALE_CREATED'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('TOASTR.MESSAGE.HELP_ARTICALE_CREATED');
 			this.loadArticles(this.categoryId);
 		}
 	}
@@ -224,12 +216,9 @@ export class HelpCenterComponent
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
-			this.toastrService.success(
-				this.getTranslation('TOASTR.MESSAGE.HELP_ARTICALE_DELETED', {
-					name: data.name
-				}),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('TOASTR.MESSAGE.HELP_ARTICALE_DELETED', {
+				name: data.name
+			});
 			this.loadArticles(this.categoryId);
 		}
 	}
@@ -246,12 +235,9 @@ export class HelpCenterComponent
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
-			this.toastrService.success(
-				this.getTranslation('TOASTR.MESSAGE.HELP_ARTICALE_UPDATED', {
-					name: data.name
-				}),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('TOASTR.MESSAGE.HELP_ARTICALE_UPDATED', {
+				name: data.name
+			});
 			this.loadArticles(this.categoryId);
 		}
 	}

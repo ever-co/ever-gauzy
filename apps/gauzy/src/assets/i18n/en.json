@@ -1685,8 +1685,8 @@
 		"SHARE_END_DATE": "Share end date",
 		"CREATED_BY": "Created By",
 		"STATUS": "Status",
-		"REQUEST_SAVED": "Request saved",
-		"REQUEST_DELETED": "Request deleted",
+		"REQUEST_SAVED": "Request was saved",
+		"REQUEST_DELETED": "Request was removed",
 		"MESSAGES": {
 			"BEFORE_REQUEST_DAY_ERR": "Date must be after request day.",
 			"EXCEED_PERIOD_ERR": "The maximum allowed days for this item are ",
@@ -1710,7 +1710,11 @@
 		"EQUIPMENT_SHARING_POLICY_DESCRIPTION": "Equipment Sharing Policy description",
 		"REQUEST_SAVED": "Policy saved",
 		"REQUEST_DELETED": "Policy deleted",
-		"ACTIONS": "Actions"
+		"ACTIONS": "Actions",
+		"MESSAGES": {
+			"EQUIPMENT_REQUEST_SAVED": "Request '{{ name }}' was changed",
+			"EQUIPMENT_REQUEST_DELETED": "Request '{{ name }}' was removed"
+		}
 	},
 	"INVENTORY_PAGE": {
 		"HEADER": "Inventory",
@@ -1963,8 +1967,8 @@
 		"INVOICES_EDIT_ESTIMATE": "Estimate Edited",
 		"INVOICES_DUPLICATE_INVOICE": "Invoice Duplicated",
 		"INVOICES_DUPLICATE_ESTIMATE": "Estimate Duplicated",
-		"INVOICES_DELETE_INVOICE": "Invoice Deleted",
-		"INVOICES_DELETE_ESTIMATE": "Estimate Deleted",
+		"INVOICES_DELETE_INVOICE": "Invoice was removed",
+		"INVOICES_DELETE_ESTIMATE": "Estimate was removed",
 		"INVOICES_SELECT_INVOICE_DATE": "Invoice Date",
 		"INVOICES_SELECT_DUE_DATE": "Due Date",
 		"INVOICES_SELECT_CURRENCY": "Currency",
@@ -2103,9 +2107,9 @@
 			"AMOUNT": "Amount",
 			"RECORDED_BY": "Recorded By",
 			"NOTE": "Note",
-			"PAYMENT_ADD": "Payment Added",
-			"PAYMENT_EDIT": "Payment Edited",
-			"PAYMENT_DELETE": "Payment Deleted",
+			"PAYMENT_ADD": "Payment was added",
+			"PAYMENT_EDIT": "Payment was changed",
+			"PAYMENT_DELETE": "Payment was removed",
 			"PAYMENT_DOWNLOAD": "Payment Downloaded",
 			"STATUS": "Status",
 			"ON_TIME": "On time",
@@ -2115,7 +2119,7 @@
 			"PAYMENT_METHOD": "Payment Method"
 		},
 		"INTERNAL_NOTE": {
-			"NOTE_SAVED": "Internal Note Saved",
+			"NOTE_SAVED": "Internal Note was added",
 			"ADD_INTERNAL_NOTE": "Add Internal Note",
 			"ADD_NOTE": "Add note",
 			"NOTE": "Note",
@@ -2235,6 +2239,9 @@
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
 			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "Vendor name and year are required",
 			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "Language name and level are required",
+			"ORGANIZATION_LOCATION_UPDATED": "'{{ name }}' location was changed",
+			"MAIN_ORGANIZATION_UPDATED": "'{{ name }}' info was changed",
+			"ORGANIZATION_SETTINGS_UPDATED": "'{{ name }}' settings was changed",
 			"CANDIDATE_SKILL_REQUIRED": "Skill name is required",
 			"CANDIDATE_EDIT_CREATED": "Successfully Created",
 			"CANDIDATE_EDIT_UPDATED": "Successfully updated",
@@ -2253,7 +2260,7 @@
 			"PHONE_REQUIRED": "Phone is required!",
 			"PHONE_CONTAINS_ONLY_NUMBERS": "Phone should only contain numbers!",
 			"SOMETHING_BAD_HAPPENED": "Something bad happened!",
-			"EMAIL_TEMPLATE_SAVED": "{{templateName}} Email template saved successfully",
+			"EMAIL_TEMPLATE_SAVED": "Email template '{{ templateName }}' was saved",
 			"DELETED": "Successfully deleted",
 			"CREATED": "Successfully created",
 			"UPDATED": "Successfully updated",
@@ -2269,8 +2276,9 @@
 			"HELP_ARTICALE_CREATED": "Article was added",
 			"HELP_ARTICALE_UPDATED": "Article '{{ name }}' was changed",
 			"HELP_ARTICALE_DELETED": "Article '{{ name }}' was removed",
-			"PIPELINE_CREATED": "Pipeline was changed",
-			"PIPELINE_UPDATED": "Pipeline was changed",
+			"PIPELINE_CREATED": "Pipeline '{{ name }}' was added",
+			"PIPELINE_UPDATED": "Pipeline '{{ name }}' was changed",
+			"PIPELINE_DELETED": "Pipeline '{{ name }}' was removed",
 			"OBJECTIVE_ADDED": "Objective was added",
 			"OBJECTIVE_DELETED": "Objective was removed",
 			"OBJECTIVE_UPDATED": "Objective was changed",
@@ -2323,7 +2331,21 @@
 			"CANDIDATE_EXPERIENCE_DELETED": "Experience '{{ name }}' was removed",
 			"CANDIDATE_SKILL_CREATED": "Skill '{{ name }}' was added",
 			"CANDIDATE_SKILL_UPDATED": "Skill '{{ name }}' was changed",
-			"CANDIDATE_SKILL_DELETED": "Skill '{{ name }}' was removed"
+			"CANDIDATE_SKILL_DELETED": "Skill '{{ name }}' was removed",
+			"CANDIDATE_DOCUMENT_CREATED": "Document '{{ name }}' was added",
+			"CANDIDATE_DOCUMENT_UPDATED": "Document '{{ name }}' was changed",
+			"CANDIDATE_DOCUMENT_DELETED": "Document '{{ name }}' was removed",
+			"CANDIDATE_INTERVIEW_CREATED": "Interview '{{ name }}' was added",
+			"CANDIDATE_INTERVIEW_UPDATED": "Interview '{{ name }}' was changed",
+			"CANDIDATE_INTERVIEW_DELETED": "Interview '{{ name }}' was removed",
+			"CANDIDATE_FEEDBACK_CREATED": "Feedback was added",
+			"CANDIDATE_FEEDBACK_UPDATED": "Feedback was changed",
+			"CANDIDATE_FEEDBACK_DELETED": "Feedback was removed",
+			"RECURRING_EXPENSE_SET": "Recurring expense set for '{{ name }}'",
+			"RECURRING_EXPENSE_UPDATED": "Recurring expense was changed for '{{ name }}'",
+			"RECURRING_EXPENSE_DELETED": "Recurring expense was removed for '{{ name }}'",
+			"IMAGE_UPDATED": "The image has been updated",
+			"ORGANIZATION_PAGE_UPDATED": "Page was changed for '{{ name }}'"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -2343,9 +2365,9 @@
 	},
 	"NOTES": {
 		"INCOME": {
-			"ADD_INCOME": "Income added for {{ name }}",
-			"EDIT_INCOME": "Income edited for {{ name }}",
-			"DELETE_INCOME": "Income deleted for {{ name }}",
+			"ADD_INCOME": "Income was added for '{{ name }}'",
+			"EDIT_INCOME": "Income was changed for '{{ name }}'",
+			"DELETE_INCOME": "Income was removed for '{{ name }}'",
 			"INCOME_ERROR": "{{ error }}"
 		},
 		"INVOICE": {
@@ -2362,10 +2384,10 @@
 		},
 		"PROPOSALS": {
 			"EDIT_PROPOSAL": "Proposal successfully updated",
-			"REGISTER_PROPOSAL": "New proposal registered",
+			"REGISTER_PROPOSAL": "New proposal was added",
 			"REGISTER_PROPOSAL_NO_EMPLOYEE_SELECTED": "Please select an employee from the dropdown menu.",
 			"REGISTER_PROPOSAL_ERROR": "{{ error }}",
-			"DELETE_PROPOSAL": "Proposal successfully deleted",
+			"DELETE_PROPOSAL": "Proposal was removed",
 			"PROPOSAL_ACCEPTED": "Proposal status updated to Accepted",
 			"PROPOSAL_SENT": "Proposal status updated to Sent"
 		},
@@ -2391,9 +2413,9 @@
 		},
 		"EMPLOYEE": {
 			"EDIT_EMPLOYEE_AWARDS": {
-				"ADD_AWARD": "New award {{ name }} successfully added!",
+				"ADD_AWARD": "New award '{{ name }}' was added",
 				"INVALID_AWARD_NAME_YEAR": "Please check the Name and Year for Award input",
-				"REMOVE_AWARD": "Award {{ name }} successfully removed!"
+				"REMOVE_AWARD": "Award '{{ name }}' was removed"
 			}
 		},
 		"ORGANIZATIONS": {
@@ -2743,9 +2765,9 @@
 		"FILTER_BY_STAGE": "Filter by Stage",
 		"RECORD_TYPE": "stage \"{{ title }}\"",
 		"ALL_STAGES": "All Stages",
-		"DEAL_DELETED": "Deal deleted",
-		"DEAL_EDITED": "Deal edited",
-		"DEAL_ADDED": "Deal added"
+		"DEAL_DELETED": "Deal '{{ name }}' was removed",
+		"DEAL_EDITED": "Deal '{{ name }}' was changed",
+		"DEAL_ADDED": "Deal '{{ name }}' was added"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Edit Deal | Pipeline: {{ name }}"

@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { FileUploader } from 'ng2-file-upload';
 import { NbToastrService, NbGlobalPhysicalPosition } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 
 const URL = '/api/import';
@@ -11,7 +10,8 @@ const URL = '/api/import';
 	templateUrl: './import.component.html',
 	styleUrls: ['./import.component.scss']
 })
-export class ImportComponent extends TranslationBaseComponent
+export class ImportComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	uploader: FileUploader;
 	hasBaseDropZoneOver: boolean;
@@ -24,8 +24,7 @@ export class ImportComponent extends TranslationBaseComponent
 
 	constructor(
 		private toastrService: NbToastrService,
-		readonly translateService: TranslateService,
-		private http: HttpClient
+		readonly translateService: TranslateService
 	) {
 		super(translateService);
 		this.uploader = new FileUploader({

@@ -11,7 +11,7 @@ import {
 } from '@gauzy/models';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { PaymentMutationComponent } from './payment-mutation/payment-mutation.component';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { PaymentService } from '../../../@core/services/payment.service';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { filter, first, tap } from 'rxjs/operators';
@@ -22,6 +22,7 @@ import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge
 import { Store } from '../../../@core/services/store.service';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../../@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-payments',
@@ -37,7 +38,7 @@ export class InvoicePaymentsComponent
 		private invoicesService: InvoicesService,
 		private dialogService: NbDialogService,
 		private paymentService: PaymentService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private store: Store,
 		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService
 	) {
@@ -227,10 +228,7 @@ export class InvoicePaymentsComponent
 				organizationId: this.invoice.fromOrganization.id
 			});
 
-			this.toastrService.primary(
-				this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE');
 		}
 		this.disableButton = true;
 	}
@@ -239,10 +237,7 @@ export class InvoicePaymentsComponent
 		const tableData = await this.smartTableSource.getAll();
 		if (!tableData.length) {
 			this.toastrService.danger(
-				this.getTranslation(
-					'INVOICES_PAGE.PAYMENTS.NO_PAYMENTS_RECORDED'
-				),
-				this.getTranslation('TOASTR.TITLE.WARNING')
+				'INVOICES_PAGE.PAYMENTS.NO_PAYMENTS_RECORDED'
 			);
 			return;
 		}
@@ -255,10 +250,7 @@ export class InvoicePaymentsComponent
 			this.totalPaid
 		);
 		pdfMake.createPdf(docDefinition).download(`Payment.pdf`);
-		this.toastrService.primary(
-			this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_DOWNLOAD'),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
-		);
+		this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_DOWNLOAD');
 	}
 
 	selectPayment($event: ISelectedPayment) {

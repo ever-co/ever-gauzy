@@ -216,7 +216,12 @@ export class EditCandidateInterviewComponent
 		);
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
-			this.toastrSuccess('CREATED');
+			this.toastrService.success(
+				'TOASTR.MESSAGE.CANDIDATE_INTERVIEW_CREATED',
+				{
+					name: data.title
+				}
+			);
 			this.loadInterview();
 		}
 	}
@@ -325,7 +330,12 @@ export class EditCandidateInterviewComponent
 			);
 			const data = await dialog.onClose.pipe(first()).toPromise();
 			if (data) {
-				this.toastrSuccess('CREATED');
+				this.toastrService.success(
+					'TOASTR.MESSAGE.INTERVIEW_FEEDBACK_CREATED',
+					{
+						name: currentInterview.title
+					}
+				);
 				this.loadInterview();
 			}
 		} else {
@@ -355,7 +365,12 @@ export class EditCandidateInterviewComponent
 		);
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
-			this.toastrSuccess('UPDATED');
+			this.toastrService.success(
+				'TOASTR.MESSAGE.CANDIDATE_INTERVIEW_UPDATED',
+				{
+					name: data.title
+				}
+			);
 			this.loadInterview();
 		}
 	}
@@ -402,14 +417,16 @@ export class EditCandidateInterviewComponent
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
-			this.toastrSuccess('DELETED');
+			this.toastrService.success(
+				'TOASTR.MESSAGE.CANDIDATE_INTERVIEW_DELETED',
+				{
+					name: data.title
+				}
+			);
 			this.loadInterview();
 		}
 	}
 
-	private toastrSuccess(text: string) {
-		this.toastrService.success(`TOASTR.MESSAGE.CANDIDATE_EDIT_${text}`);
-	}
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
 			.pipe(untilDestroyed(this))

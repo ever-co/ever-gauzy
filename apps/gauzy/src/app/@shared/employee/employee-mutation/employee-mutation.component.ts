@@ -1,9 +1,5 @@
 import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
-import {
-	NbDialogRef,
-	NbToastrService,
-	NbStepperComponent
-} from '@nebular/theme';
+import { NbDialogRef, NbStepperComponent } from '@nebular/theme';
 import { BasicInfoFormComponent } from '../../user/forms/basic-info/basic-info-form.component';
 import {
 	RolesEnum,
@@ -40,7 +36,6 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 		protected organizationsService: OrganizationsService,
 		protected employeesService: EmployeesService,
 		private readonly roleService: RoleService,
-		protected toastrService: NbToastrService,
 		protected store: Store,
 		private errorHandler: ErrorHandlingService,
 		private readonly _employeeStore: EmployeeStore

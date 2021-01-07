@@ -5,7 +5,7 @@ import { PipelinesService } from '../../@core/services/pipelines.service';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 import { filter, first, tap } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -13,6 +13,7 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { RouterEvent, NavigationEnd, Router } from '@angular/router';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -75,7 +76,7 @@ export class PipelinesComponent
 
 	constructor(
 		private pipelinesService: PipelinesService,
-		private nbToastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService,
 		private store: Store,
@@ -174,6 +175,9 @@ export class PipelinesComponent
 
 		if ('ok' === canProceed) {
 			await this.pipelinesService.delete(this.pipeline.id);
+			this.toastrService.success('TOASTR.MESSAGE.PIPELINE_DELETED', {
+				name: this.pipeline.name
+			});
 			await this.updatePipelines();
 		}
 	}
@@ -198,16 +202,23 @@ export class PipelinesComponent
 		});
 		const data = await dialogRef.onClose.pipe(first()).toPromise();
 		const {
-			pipeline: { id }
+			pipeline: { id, name }
 		} = context;
 
 		if (data) {
-			this.nbToastrService.success(
-				this.getTranslation('TOASTR.TITLE.SUCCESS'),
-				this.getTranslation(
-					`TOASTR.MESSAGE.PIPELINE_${id ? 'UPDATED' : 'CREATED'}`
-				)
-			);
+			id
+				? this.toastrService.success(
+						`TOASTR.MESSAGE.PIPELINE_UPDATED`,
+						{
+							name
+						}
+				  )
+				: this.toastrService.success(
+						`TOASTR.MESSAGE.PIPELINE_CREATED`,
+						{
+							name: data.name
+						}
+				  );
 			await this.updatePipelines();
 		}
 	}

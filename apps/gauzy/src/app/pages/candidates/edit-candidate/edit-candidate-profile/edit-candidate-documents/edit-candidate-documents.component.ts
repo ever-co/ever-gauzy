@@ -174,7 +174,12 @@ export class EditCandidateDocumentsComponent
 				tenantId
 			});
 			this.loadDocuments();
-			this.toastrSuccess('UPDATED');
+			this.toastrService.success(
+				'TOASTR.MESSAGE.CANDIDATE_DOCUMENT_UPDATED',
+				{
+					name: formValue.name
+				}
+			);
 			this.showAddCard = !this.showAddCard;
 			this.form.controls.documents.reset();
 		} catch (error) {
@@ -192,7 +197,12 @@ export class EditCandidateDocumentsComponent
 				organizationId,
 				tenantId
 			});
-			this.toastrSuccess('CREATED');
+			this.toastrService.success(
+				'TOASTR.MESSAGE.CANDIDATE_DOCUMENT_CREATED',
+				{
+					name: formValue.name
+				}
+			);
 			this.loadDocuments();
 			this.showAddCard = !this.showAddCard;
 			this.documents.reset();
@@ -201,10 +211,15 @@ export class EditCandidateDocumentsComponent
 		}
 	}
 
-	async removeDocument(id: string) {
+	async removeDocument(document) {
 		try {
-			await this.candidateDocumentsService.delete(id);
-			this.toastrSuccess('DELETED');
+			await this.candidateDocumentsService.delete(document.id);
+			this.toastrService.success(
+				'TOASTR.MESSAGE.CANDIDATE_DOCUMENT_DELETED',
+				{
+					name: document.name
+				}
+			);
 			this.loadDocuments();
 		} catch (error) {
 			this.toastrError(error);

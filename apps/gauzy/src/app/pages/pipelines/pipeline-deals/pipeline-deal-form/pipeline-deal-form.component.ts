@@ -9,9 +9,9 @@ import { DealsService } from '../../../../@core/services/deals.service';
 import { AppStore, Store } from '../../../../@core/services/store.service';
 import { OrganizationContactService } from '../../../../@core/services/organization-contact.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './pipeline-deal-form.component.html',
@@ -46,7 +46,7 @@ export class PipelineDealFormComponent
 		private activatedRoute: ActivatedRoute,
 		private pipelinesService: PipelinesService,
 		private clientsService: OrganizationContactService,
-		private toastrService: NbToastrService
+		private toastrService: ToastrService
 	) {
 		super(translateService);
 
@@ -191,14 +191,18 @@ export class PipelineDealFormComponent
 		)
 			.then(() => {
 				if (this.dealId) {
-					this.toastrService.primary(
-						this.getTranslation('PIPELINE_DEALS_PAGE.DEAL_EDITED'),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					this.toastrService.success(
+						'PIPELINE_DEALS_PAGE.DEAL_EDITED',
+						{
+							name: value.title
+						}
 					);
 				} else {
-					this.toastrService.primary(
-						this.getTranslation('PIPELINE_DEALS_PAGE.DEAL_ADDED'),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					this.toastrService.success(
+						'PIPELINE_DEALS_PAGE.DEAL_ADDED',
+						{
+							name: value.title
+						}
 					);
 				}
 				this.router.navigate([dealId ? '../..' : '..'], { relativeTo });

@@ -8,7 +8,6 @@ import { Store } from '../../../@core/services/store.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProposalsService } from '../../../@core/services/proposals.service';
-import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import {
@@ -21,6 +20,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
+import { ToastrService } from '../../../@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-proposal-edit',
@@ -35,7 +35,7 @@ export class ProposalEditComponent
 		private store: Store,
 		private fb: FormBuilder,
 		private router: Router,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private proposalsService: ProposalsService,
 		private translate: TranslateService,
 		private cdRef: ChangeDetectorRef,
@@ -147,22 +147,11 @@ export class ProposalEditComponent
 				});
 
 				// TODO translate
-				this.toastrService.primary(
-					this.getTranslation('NOTES.PROPOSALS.EDIT_PROPOSAL'),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				);
+				this.toastrService.success('NOTES.PROPOSALS.EDIT_PROPOSAL');
 
 				this.router.navigate([`/pages/sales/proposals`]);
 			} catch (error) {
-				this.toastrService.danger(
-					this.getTranslation(
-						'NOTES.PROPOSALS.REGISTER_PROPOSAL_ERROR',
-						{
-							error: error.error.message || error.message
-						}
-					),
-					this.getTranslation('TOASTR.TITLE.ERROR')
-				);
+				this.toastrService.danger(error);
 			}
 		}
 	}
@@ -180,14 +169,11 @@ export class ProposalEditComponent
 		name: string
 	): Promise<IOrganizationContact> => {
 		try {
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
-					{
-						name: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
+				{
+					name: name
+				}
 			);
 			return this.organizationContactService.create({
 				name,
