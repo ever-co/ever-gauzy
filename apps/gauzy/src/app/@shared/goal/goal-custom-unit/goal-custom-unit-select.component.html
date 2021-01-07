@@ -10,7 +10,9 @@
 		></ga-currency>
 	</ng-template>
 	<ng-template #unitTemplate>
-		<label for="unit" class="label"> Unit </label>
+		<label for="unit" class="label">
+			{{ 'FORM.LABELS.UNIT' | translate }}
+		</label>
 		<nb-select
 			fullWidth
 			formControlName="unit"
@@ -31,7 +33,7 @@
 				{{ unit }}
 			</nb-option>
 			<nb-option value="create-new" class="bg-secondary text-light">
-				+ create new
+				{{ 'GOALS_PAGE.CREATE_NEW' | translate }}
 			</nb-option>
 		</nb-select>
 	</ng-template>

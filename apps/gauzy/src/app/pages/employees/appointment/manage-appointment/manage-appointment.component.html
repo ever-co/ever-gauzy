@@ -55,21 +55,29 @@
 					<div class="col-3">
 						<div class="form-group">
 							<nb-checkbox formControlName="bufferTime">
-								Buffer Time
+								{{
+									'APPOINTMENTS_PAGE.BUFFER_TIME' | translate
+								}}
 							</nb-checkbox>
 						</div>
 					</div>
 					<div class="col-3" *ngIf="form.get('bufferTime').value">
 						<div class="form-group">
 							<nb-checkbox formControlName="bufferTimeStart">
-								Buffer at Start
+								{{
+									'APPOINTMENTS_PAGE.BUFFER_AT_START'
+										| translate
+								}}
 							</nb-checkbox>
 						</div>
 					</div>
 					<div class="col-3" *ngIf="form.get('bufferTime').value">
 						<div class="form-group">
 							<nb-checkbox formControlName="bufferTimeEnd">
-								Buffer at End
+								{{
+									'APPOINTMENTS_PAGE.BUFFER_AT_END'
+										| translate
+								}}
 							</nb-checkbox>
 						</div>
 					</div>
@@ -95,7 +103,7 @@
 					<div class="col-3">
 						<div class="form-group">
 							<nb-checkbox formControlName="breakTime">
-								Break Time
+								{{ 'APPOINTMENTS_PAGE.BREAK_TIME' | translate }}
 							</nb-checkbox>
 						</div>
 					</div>
@@ -230,7 +238,7 @@
 		</button>
 		<button
 			*ngIf="editMode"
-			style="margin-left: 10px;"
+			style="margin-left: 10px"
 			status="warning"
 			nbButton
 			(click)="cancelAppointment()"

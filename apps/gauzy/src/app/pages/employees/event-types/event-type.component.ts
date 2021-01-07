@@ -194,7 +194,7 @@ export class EventTypeComponent
 			};
 
 			this.settingsSmartTable['columns']['employeeName'] = {
-				title: 'Employee',
+				title: this.getTranslation('EVENT_TYPE_PAGE.EMPLOYEE'),
 				type: 'string',
 				valuePrepareFunction: (_, eventType: IEventType) => {
 					const user = eventType.employee
@@ -226,7 +226,9 @@ export class EventTypeComponent
 			);
 			let eventTypeVM: IEventTypeViewModel[] = items.map((i) => ({
 				isActive: i.isActive,
-				Active: i.isActive ? 'Yes' : 'No',
+				Active: i.isActive
+					? this.getTranslation('EVENT_TYPE_PAGE.YES')
+					: this.getTranslation('EVENT_TYPE_PAGE.NO'),
 				description: i.description,
 				durationFormat: `${i.duration} ${i.durationUnit}`,
 				title: i.title,

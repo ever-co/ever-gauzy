@@ -8,7 +8,10 @@
 	<nb-card-body>
 		<nb-stepper #stepper disableStepNavigation>
 			<!-- Step 1 Contact Main Form -->
-			<nb-step [stepControl]="contMainForm" label="Main">
+			<nb-step
+				[stepControl]="contMainForm"
+				label="{{ 'CONTACTS_PAGE.MAIN' | translate }}"
+			>
 				<ng-template #mainStep>
 					{{ 'CONTACTS_PAGE.MAIN' | translate }}
 				</ng-template>
@@ -358,7 +361,10 @@
 			<!-- Step 1 Contact Main Form End -->
 
 			<!-- Step 2 Address Form -->
-			<nb-step [stepControl]="locationForm" label="Address">
+			<nb-step
+				[stepControl]="locationForm"
+				label="{{ 'CONTACTS_PAGE.ADDRESS' | translate }}"
+			>
 				<ng-template #addressStep>{{
 					'CONTACTS_PAGE.ADDRESS' | translate
 				}}</ng-template>
@@ -414,7 +420,7 @@
 			<!-- Step 2 Address Form End -->
 
 			<!-- Step 3 Members Form -->
-			<nb-step label="Members">
+			<nb-step label="{{ 'CONTACTS_PAGE.MEMBERS' | translate }}">
 				<ng-template #membersStep>{{
 					'CONTACTS_PAGE.MEMBERS' | translate
 				}}</ng-template>

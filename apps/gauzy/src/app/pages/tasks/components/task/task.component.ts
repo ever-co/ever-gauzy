@@ -333,7 +333,9 @@ export class TaskComponent
 					filter: {
 						type: 'list',
 						config: {
-							selectText: 'Select',
+							selectText: this.getTranslation(
+								'TASKS_PAGE.SELECT'
+							),
 							list: (this.teams || []).map((team) => {
 								if (team) {
 									return {

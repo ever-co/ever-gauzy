@@ -119,7 +119,10 @@
 								*ngFor="let unit of durationUnits"
 								value="{{ unit }}"
 							>
-								{{ unit }}
+								{{
+									'EVENT_TYPE_PAGE.DURATION_UNIT'
+										| translate: { unit: unit }
+								}}
 							</nb-option>
 						</nb-select>
 					</div>

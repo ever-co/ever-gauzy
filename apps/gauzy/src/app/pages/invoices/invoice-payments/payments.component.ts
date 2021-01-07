@@ -163,7 +163,13 @@ export class InvoicePaymentsComponent
 				this.totalPaid
 			);
 			await this.invoiceEstimateHistoryService.add({
-				action: `Payment of ${result.amount} ${result.currency} added`,
+				action: this.getTranslation(
+					'INVOICES_PAGE.PAYMENT.PAYMENT_AMOUNT_ADDED',
+					{
+						amount: result.amount,
+						currency: result.currency
+					}
+				),
 				invoice: result.invoice,
 				invoiceId: result.invoice.id,
 				user: this.store.user,
@@ -193,7 +199,9 @@ export class InvoicePaymentsComponent
 				this.totalPaid
 			);
 			await this.invoiceEstimateHistoryService.add({
-				action: `Payment edited`,
+				action: this.getTranslation(
+					'INVOICES_PAGE.PAYMENT.PAYMENT_EDIT'
+				),
 				invoice: result.invoice,
 				invoiceId: result.invoice.id,
 				user: this.store.user,
@@ -219,7 +227,9 @@ export class InvoicePaymentsComponent
 			);
 
 			await this.invoiceEstimateHistoryService.add({
-				action: `Payment deleted`,
+				action: this.getTranslation(
+					'INVOICES_PAGE.PAYMENT.PAYMENT_DELETE'
+				),
 				invoice: this.invoice,
 				invoiceId: this.invoice.id,
 				user: this.store.user,

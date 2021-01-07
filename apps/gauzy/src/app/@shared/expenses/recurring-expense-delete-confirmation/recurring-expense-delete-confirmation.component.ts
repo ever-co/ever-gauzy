@@ -40,7 +40,7 @@ import { RecurringExpenseDeletionEnum } from '@gauzy/models';
 					nbButton
 					[disabled]="!selectedOption"
 				>
-					OK
+					{{ 'BUTTONS.OK' | translate }}
 				</button>
 				<button (click)="close()" status="info" nbButton>
 					{{ 'BUTTONS.CANCEL' | translate }}
@@ -58,9 +58,7 @@ export class RecurringExpenseDeleteConfirmationComponent {
 	selectedOption: RecurringExpenseDeletionEnum;
 
 	constructor(
-		protected dialogRef: NbDialogRef<
-			RecurringExpenseDeleteConfirmationComponent
-		>
+		protected dialogRef: NbDialogRef<RecurringExpenseDeleteConfirmationComponent>
 	) {}
 
 	close() {

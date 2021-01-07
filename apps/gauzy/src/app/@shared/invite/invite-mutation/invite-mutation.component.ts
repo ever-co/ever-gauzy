@@ -20,7 +20,8 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 	templateUrl: './invite-mutation.component.html',
 	styleUrls: ['./invite-mutation.component.scss']
 })
-export class InviteMutationComponent extends TranslationBaseComponent
+export class InviteMutationComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	@Input()
 	invitationType: InvitationTypeEnum;
@@ -144,7 +145,7 @@ export class InviteMutationComponent extends TranslationBaseComponent
 		} catch (error) {
 			this.toastrService.danger(
 				error.error ? error.error.message : error.message,
-				'Error'
+				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 		}
 	}

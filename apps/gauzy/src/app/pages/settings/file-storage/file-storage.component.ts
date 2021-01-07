@@ -10,7 +10,8 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 	templateUrl: './file-storage.component.html',
 	providers: [TenantService]
 })
-export class FileStorageComponent extends TranslationBaseComponent
+export class FileStorageComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	settings: ITenantSetting = {
 		fileStorageProvider: FileStorageProviderEnum.S3
@@ -38,9 +39,9 @@ export class FileStorageComponent extends TranslationBaseComponent
 		});
 	}
 
-	submit() {		
+	submit() {
 		this.tenantService.saveSettings(this.settings).then(() => {
-			this.toastrService.success('Settings saved successfully');
+			this.toastrService.success('TOASTR.MESSAGE.SETTINS_SAVED');
 		});
 	}
 }

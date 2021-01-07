@@ -240,7 +240,9 @@ export class TimeOffSettingsComponent
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
-					recordType: 'Policy'
+					recordType: this.getTranslation(
+						'TIME_OFF_PAGE.POLICY.POLICY'
+					)
 				}
 			})
 			.onClose.pipe(untilDestroyed(this))

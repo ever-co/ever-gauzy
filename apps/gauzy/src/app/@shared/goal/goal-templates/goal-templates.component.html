@@ -1,9 +1,11 @@
 <nb-card>
-	<nb-card-header>Goal Templates</nb-card-header>
+	<nb-card-header>{{
+		'GOALS_PAGE.GOAL_TEMPLATES' | translate
+	}}</nb-card-header>
 	<nb-card-body>
 		<form [formGroup]="goalTemplateForm">
 			<label class="label" for="existing-goal">
-				Select Existing Objective
+				{{ 'FORM.LABELS.SELECT_EXISTING_OBJECTIVE' | translate }}
 			</label>
 			<nb-select fullWidth id="existing-goal">
 				<nb-option></nb-option>

@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { IInvoice, InvoiceTypeEnum } from '@gauzy/models';
+import { TranslateService } from '@ngx-translate/core';
 import * as pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 import { EmployeesService } from '../../../@core/services';
@@ -8,6 +9,7 @@ import { OrganizationProjectsService } from '../../../@core/services/organizatio
 import { ProductService } from '../../../@core/services/product.service';
 import { TasksService } from '../../../@core/services/tasks.service';
 import { generatePdf } from '../../../@shared/invoice/generate-pdf';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 
 @Component({
 	selector: 'ga-invoice-pdf',
@@ -25,18 +27,24 @@ import { generatePdf } from '../../../@shared/invoice/generate-pdf';
 		`
 	]
 })
-export class InvoicePdfComponent implements OnInit {
+export class InvoicePdfComponent
+	extends TranslationBaseComponent
+	implements OnInit {
 	@Input() invoice: IInvoice;
 	@Output() docDef = new EventEmitter();
 	docDefinition: any;
+	translatedText: any;
 
 	constructor(
 		private employeeService: EmployeesService,
 		private projectService: OrganizationProjectsService,
 		private taskService: TasksService,
 		private productService: ProductService,
-		private expensesService: ExpensesService
-	) {}
+		private expensesService: ExpensesService,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this.loadPdf();
@@ -67,11 +75,44 @@ export class InvoicePdfComponent implements OnInit {
 				break;
 		}
 
+		this.translatedText = {
+			description: this.getTranslation(
+				'INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION'
+			),
+			quantity: this.getTranslation(
+				'INVOICES_PAGE.INVOICE_ITEM.QUANTITY'
+			),
+			price: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.PRICE'),
+			totalValue: this.getTranslation(
+				'INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE'
+			),
+			item: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.ITEM'),
+			invoice: this.getTranslation('INVOICES_PAGE.INVOICE'),
+			estimate: this.getTranslation('INVOICES_PAGE.ESTIMATE'),
+			number: this.getTranslation('INVOICES_PAGE.NUMBER'),
+			from: this.getTranslation('INVOICES_PAGE.FROM'),
+			to: this.getTranslation('INVOICES_PAGE.TO'),
+			date: this.getTranslation('INVOICES_PAGE.DATE'),
+			dueDate: this.getTranslation('INVOICES_PAGE.DUE_DATE'),
+			discountValue: this.getTranslation(
+				'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE'
+			),
+			discountType: this.getTranslation('INVOICES_PAGE.DISCOUNT_TYPE'),
+			taxValue: this.getTranslation('INVOICES_PAGE.TAX_VALUE'),
+			taxType: this.getTranslation('INVOICES_PAGE.TAX_TYPE'),
+			currency: this.getTranslation('INVOICES_PAGE.CURRENCY'),
+			terms: this.getTranslation('INVOICES_PAGE.INVOICES_SELECT_TERMS'),
+			paid: this.getTranslation('INVOICES_PAGE.PAID'),
+			yes: this.getTranslation('INVOICES_PAGE.YES'),
+			no: this.getTranslation('INVOICES_PAGE.NO')
+		};
+
 		docDefinition = await generatePdf(
 			this.invoice,
 			this.invoice.fromOrganization,
 			this.invoice.toContact,
-			service
+			service,
+			this.translatedText
 		);
 
 		this.docDef.emit(docDefinition);

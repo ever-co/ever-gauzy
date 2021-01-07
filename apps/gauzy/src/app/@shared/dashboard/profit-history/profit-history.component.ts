@@ -7,13 +7,17 @@ import { IncomeTableComponent } from './table-components/income-table.component'
 import { IEmployeeStatisticsHistory } from '@gauzy/models';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap } from 'rxjs/operators';
+import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './profit-history.component.html',
 	styleUrls: ['./profit-history.component.scss']
 })
-export class ProfitHistoryComponent implements OnInit, OnDestroy {
+export class ProfitHistoryComponent
+	extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	smartTableSettings;
 	smartTableSource = new LocalDataSource();
 	recordsData: {
@@ -37,7 +41,12 @@ export class ProfitHistoryComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	constructor(private store: Store) {}
+	constructor(
+		private store: Store,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this.loading = true;
@@ -72,10 +81,12 @@ export class ProfitHistoryComponent implements OnInit, OnDestroy {
 			actions: false,
 			mode: 'external',
 			editable: true,
-			noDataMessage: 'No Data',
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
 			columns: {
 				valueDate: {
-					title: 'Date',
+					title: this.getTranslation(
+						'DASHBOARD_PAGE.PROFIT_HISTORY.DATE'
+					),
 					type: 'custom',
 					width: '20%',
 					sortDirection: 'desc',
@@ -83,17 +94,23 @@ export class ProfitHistoryComponent implements OnInit, OnDestroy {
 					filter: false
 				},
 				expense: {
-					title: 'Expenses',
+					title: this.getTranslation(
+						'DASHBOARD_PAGE.PROFIT_HISTORY.EXPENSES'
+					),
 					type: 'custom',
 					renderComponent: ExpenseTableComponent
 				},
 				income: {
-					title: 'Income',
+					title: this.getTranslation(
+						'DASHBOARD_PAGE.PROFIT_HISTORY.INCOME'
+					),
 					type: 'custom',
 					renderComponent: IncomeTableComponent
 				},
 				notes: {
-					title: 'Description',
+					title: this.getTranslation(
+						'DASHBOARD_PAGE.PROFIT_HISTORY.DESCRIPTION'
+					),
 					type: 'string'
 				}
 			},

@@ -86,7 +86,9 @@ export class PositionsComponent
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
-					recordType: 'Employee Position'
+					recordType: this.getTranslation(
+						'ORGANIZATIONS_PAGE.EDIT.EMPLOYEE_POSITION'
+					)
 				}
 			})
 			.onClose.pipe(first())

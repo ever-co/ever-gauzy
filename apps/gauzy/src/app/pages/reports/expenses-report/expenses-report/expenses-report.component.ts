@@ -6,8 +6,10 @@ import {
 } from '@angular/core';
 import { IGetExpenseInput, IOrganization } from '@gauzy/models';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
 import { ExpensesService } from 'apps/gauzy/src/app/@core/services/expenses.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import * as moment from 'moment';
 import { Subject } from 'rxjs';
@@ -20,7 +22,9 @@ import { pluck } from 'underscore';
 	templateUrl: './expenses-report.component.html',
 	styleUrls: ['./expenses-report.component.scss']
 })
-export class ExpensesReportComponent implements OnInit, AfterViewInit {
+export class ExpensesReportComponent
+	extends TranslationBaseComponent
+	implements OnInit, AfterViewInit {
 	logRequest: IGetExpenseInput = {
 		startDate: moment().startOf('week').toDate(),
 		endDate: moment().endOf('week').toDate()
@@ -45,8 +49,11 @@ export class ExpensesReportComponent implements OnInit, AfterViewInit {
 	constructor(
 		private expensesService: ExpensesService,
 		private cd: ChangeDetectorRef,
-		private store: Store
-	) {}
+		private store: Store,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this.updateLogs$
@@ -104,7 +111,7 @@ export class ExpensesReportComponent implements OnInit, AfterViewInit {
 			.then((logs: any[]) => {
 				const datasets = [
 					{
-						label: 'Expanse',
+						label: this.getTranslation('REPORT_PAGE.EXPANSE'),
 						data: logs.map((log) => log.value['expanse'])
 					}
 				];

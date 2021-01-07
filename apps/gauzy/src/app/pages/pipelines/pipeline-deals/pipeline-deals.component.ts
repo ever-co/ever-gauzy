@@ -116,7 +116,7 @@ export class PipelineDealsComponent
 			'SM_TABLE.STAGE'
 		);
 		this.smartTableSettings.columns.createdBy.title = this.getTranslation(
-			'Created by'
+			'SM_TABLE.CREATED_BY'
 		);
 
 		this.router.events

@@ -105,13 +105,17 @@ export class EditTimeFrameComponent
 		}
 		// Annual Time Frames
 		this.predefinedTimeFrames.push({
-			name: `Annual-${getYear(today)}`,
+			name: `${this.getTranslation(
+				'GOALS_PAGE.SETTINGS.ANNUAL'
+			)}-${getYear(today)}`,
 			start: new Date(startOfYear(today)),
 			end: new Date(endOfYear(today))
 		});
 		if (year > getYear(today)) {
 			this.predefinedTimeFrames.push({
-				name: `Annual-${year}`,
+				name: `${this.getTranslation(
+					'GOALS_PAGE.SETTINGS.ANNUAL'
+				)}-${year}`,
 				start: new Date(startOfYear(addDays(lastDayOfYear(today), 1))),
 				end: new Date(endOfYear(addDays(lastDayOfYear(today), 1)))
 			});

@@ -27,7 +27,7 @@
 			class="mr-3"
 			(click)="closeDialog('ok')"
 		>
-			OK
+			{{ 'BUTTONS.OK' | translate }}
 		</button>
 		<button
 			*ngIf="employeeSchedule.slots.length"
@@ -35,7 +35,7 @@
 			class="mr-3"
 			(click)="closeDialog('no')"
 		>
-			No
+			{{ 'BUTTONS.NO' | translate }}
 		</button>
 		<button
 			*ngIf="employeeSchedule.slots.length"
@@ -43,7 +43,7 @@
 			status="success"
 			(click)="closeDialog('yes')"
 		>
-			Yes
+			{{ 'BUTTONS.YES' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>

@@ -166,7 +166,7 @@ export class EmploymentTypesComponent
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
-					recordType: 'Employment Type'
+					recordType: 'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE'
 				}
 			})
 			.onClose.pipe(first())

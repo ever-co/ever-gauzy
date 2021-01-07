@@ -298,7 +298,9 @@ export class ProjectsComponent
 					renderComponent: PictureNameTagsComponent
 				},
 				projectUrl: {
-					title: 'Project Url',
+					title: this.getTranslation(
+						'ORGANIZATIONS_PAGE.EDIT.PROJECT_URL'
+					),
 					type: 'text'
 				},
 				organizationContact: {

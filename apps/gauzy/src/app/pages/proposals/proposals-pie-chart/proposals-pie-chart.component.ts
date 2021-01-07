@@ -1,20 +1,27 @@
 import { AfterViewInit, Component, Input, OnDestroy } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 
 @Component({
 	selector: 'ngx-proposals-pie-chart',
-	template: `
-		<chart [options]="options" class="echart"></chart>
-	`,
+	template: ` <chart [options]="options" class="echart"></chart> `,
 	styleUrls: ['./proposals-pie-chart.component.scss']
 })
-export class ProposalsPieChartComponent implements AfterViewInit, OnDestroy {
+export class ProposalsPieChartComponent
+	extends TranslationBaseComponent
+	implements AfterViewInit, OnDestroy {
 	@Input() values: { name: string; value: number }[];
 
 	options: any = {};
 	themeSubscription: any;
 
-	constructor(private theme: NbThemeService) {}
+	constructor(
+		private theme: NbThemeService,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	// TODO translate
 	ngAfterViewInit() {
@@ -37,14 +44,19 @@ export class ProposalsPieChartComponent implements AfterViewInit, OnDestroy {
 				legend: {
 					orient: 'vertical',
 					left: 'left',
-					data: ['Accepted Proposals', 'Total Proposals'],
+					data: [
+						this.getTranslation(
+							'PROPOSALS_PAGE.ACCEPTED_PROPOSALS'
+						),
+						this.getTranslation('PROPOSALS_PAGE.TOTAL_PROPOSALS')
+					],
 					textStyle: {
 						color: echarts.textColor
 					}
 				},
 				series: [
 					{
-						name: 'Proposals',
+						name: this.getTranslation('PROPOSALS_PAGE.PROPOSALS'),
 						type: 'pie',
 						radius: '80%',
 						center: ['50%', '50%'],

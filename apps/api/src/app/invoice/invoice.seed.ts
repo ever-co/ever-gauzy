@@ -70,7 +70,7 @@ export const createDefaultInvoice = async (
 				Object.values(InvoiceTypeEnum)
 			);
 			invoice.organizationId = organization.id;
-			invoice.status = 'Active';
+			invoice.status = 'ACTIVE';
 			invoice.totalValue = faker.random.number(99999);
 			invoice.tenant = tenant;
 			invoices.push(invoice);
@@ -146,7 +146,7 @@ export const createRandomInvoice = async (
 					Object.values(InvoiceTypeEnum)
 				);
 				invoice.organizationId = organization.id;
-				invoice.status = 'Active';
+				invoice.status = 'ACTIVE';
 				invoice.totalValue = faker.random.number(99999);
 				invoice.tenant = tenant;
 				invoices.push(invoice);

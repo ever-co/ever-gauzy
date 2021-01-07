@@ -251,8 +251,11 @@ export class OrganizationComponent
 	}
 
 	private _changeClientsTabIfActiveAndPrivacyIsTurnedOff() {
-		if (!this.organization.show_clients && this.tabTitle === 'Clients') {
-			this.tabTitle = 'Profile';
+		if (
+			!this.organization.show_clients &&
+			this.tabTitle === this.getTranslation('ORGANIZATIONS_PAGE.CLIENTS')
+		) {
+			this.tabTitle = this.getTranslation('ORGANIZATIONS_PAGE.PROFILE');
 		}
 	}
 

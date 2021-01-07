@@ -15,13 +15,13 @@ export class EquipmentSharingStatusComponent implements ViewCell, OnInit {
 	ngOnInit(): void {
 		switch (this.value) {
 			case RequestApprovalStatusTypesEnum.APPROVED:
-				this.value = 'Approved';
+				this.value = 'EQUIPMENT_SHARING_PAGE.APPROVED';
 				break;
 			case RequestApprovalStatusTypesEnum.REFUSED:
-				this.value = 'Refused';
+				this.value = 'EQUIPMENT_SHARING_PAGE.REFUSED';
 				break;
 			default:
-				this.value = 'Requested';
+				this.value = 'EQUIPMENT_SHARING_PAGE.REQUESTED';
 				break;
 		}
 	}

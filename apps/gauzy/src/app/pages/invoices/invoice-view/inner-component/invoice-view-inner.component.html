@@ -24,9 +24,7 @@
 		</div>
 		<div class="grid-item">
 			<span *ngIf="!isEstimate"
-				>{{
-					'INVOICES_PAGE.INVOICES_SELECT_INVOICE_DATE' | translate
-				}}:</span
+				>{{ 'INVOICES_PAGE.INVOICE_DATE' | translate }}:</span
 			>
 			<span *ngIf="isEstimate"
 				>{{
@@ -36,7 +34,7 @@
 			{{ invoiceDate ? invoiceDate : '' }}
 		</div>
 		<div class="grid-item">
-			{{ 'INVOICES_PAGE.INVOICES_SELECT_DUE_DATE' | translate }}:
+			{{ 'INVOICES_PAGE.DUE_DATE' | translate }}:
 			{{ dueDate ? dueDate : '' }}
 		</div>
 		<div class="grid-item">
@@ -48,7 +46,7 @@
 			{{ invoice ? invoice?.discountType : '' }}
 		</div>
 		<div class="grid-item">
-			{{ 'INVOICES_PAGE.INVOICES_SELECT_TAX' | translate }}:
+			{{ 'INVOICES_PAGE.TAX' | translate }}:
 			{{ invoice ? invoice?.tax : '' }}
 		</div>
 		<div class="grid-item">
@@ -56,11 +54,11 @@
 			{{ invoice ? invoice?.taxType : '' }}
 		</div>
 		<div class="grid-item">
-			{{ 'INVOICES_PAGE.INVOICES_SELECT_CURRENCY' | translate }}:
+			{{ 'INVOICES_PAGE.CURRENCY' | translate }}:
 			{{ invoice ? invoice?.currency : '' }}
 		</div>
 		<div class="grid-item">
-			{{ 'INVOICES_PAGE.INVOICES_SELECT_TOTAL_VALUE' | translate }}:
+			{{ 'INVOICES_PAGE.TOTAL_VALUE' | translate }}:
 			{{ invoice ? invoice?.currency : '' }}
 			{{ invoice ? invoice?.totalValue : '' }}
 		</div>

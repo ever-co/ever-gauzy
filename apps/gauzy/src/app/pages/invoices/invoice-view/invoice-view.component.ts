@@ -121,9 +121,11 @@ export class InvoiceViewComponent
 		pdfMake
 			.createPdf(docDefinition)
 			.download(
-				`${this.isEstimate ? 'Estimate' : 'Invoice'}-${
-					this.invoice.invoiceNumber
-				}.pdf`
+				`${
+					this.isEstimate
+						? this.getTranslation('INVOICES_PAGE.ESTIMATE')
+						: this.getTranslation('INVOICES_PAGE.INVOICE')
+				}-${this.invoice.invoiceNumber}.pdf`
 			);
 
 		this.toastrService.success(

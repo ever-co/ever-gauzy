@@ -266,7 +266,7 @@ export class ProposalsComponent
 		this.smartTableSettings = {
 			actions: false,
 			editable: true,
-			noDataMessage: 'No data',
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA_MESSAGE'),
 			columns: {
 				valueDate: {
 					title: this.getTranslation('SM_TABLE.DATE'),
@@ -443,12 +443,12 @@ export class ProposalsComponent
 			this.showTable = true;
 
 			this.chartData[0] = {
-				name: 'Accepted Proposals',
+				name: this.getTranslation('PROPOSALS_PAGE.ACCEPTED_PROPOSALS'),
 				value: this.countAccepted
 			};
 
 			this.chartData[1] = {
-				name: 'Total Proposals',
+				name: this.getTranslation('PROPOSALS_PAGE.TOTAL_PROPOSALS'),
 				value: this.totalProposals
 			};
 		} catch (error) {

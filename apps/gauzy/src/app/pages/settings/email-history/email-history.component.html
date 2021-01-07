@@ -54,7 +54,10 @@
 											| translate
 									}}
 									<b>{{
-										email.user ? email.user.email : 'System'
+										email.user
+											? email.user.email
+											: ('SETTINGS.EMAIL_HISTORY.SYSTEM'
+											  | translate)
 									}}</b>
 								</span>
 							</div>
@@ -75,7 +78,7 @@
 						<b>{{
 							selectedEmail.user
 								? selectedEmail.user.email
-								: 'System'
+								: ('SETTINGS.EMAIL_HISTORY.SYSTEM' | translate)
 						}}</b>
 					</span>
 					<span>

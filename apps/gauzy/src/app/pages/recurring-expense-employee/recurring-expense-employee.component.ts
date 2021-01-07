@@ -39,7 +39,7 @@ export class RecurringExpensesEmployeeComponent
 	selectedEmployeeFromHeader: SelectedEmployee;
 	selectedEmployeeRecurringExpense: IEmployeeRecurringExpense[] = [];
 	selectedRowIndexToShow: number;
-	employeeName = 'Employee';
+	employeeName = this.getTranslation('EMPLOYEES_PAGE.EMPLOYEE_NAME');
 	fetchedHistories: Object = {};
 	selectedOrganization: IOrganization;
 	selectedEmployeeId: string;
@@ -117,7 +117,7 @@ export class RecurringExpensesEmployeeComponent
 					const checkUsername = this.selectedEmployee.user.username;
 					this.employeeName = checkUsername
 						? checkUsername
-						: 'Employee';
+						: this.getTranslation('EMPLOYEES_PAGE.EMPLOYEE_NAME');
 				}
 			});
 	}
@@ -221,7 +221,9 @@ export class RecurringExpensesEmployeeComponent
 		const result: RecurringExpenseDeletionEnum = await this.dialogService
 			.open(RecurringExpenseDeleteConfirmationComponent, {
 				context: {
-					recordType: 'Employee recurring expense',
+					recordType: this.getTranslation(
+						'EMPLOYEES_PAGE.RECURRING_EXPENSE'
+					),
 					start: `${this.getMonthString(
 						selectedExpense.startMonth
 					)}, ${selectedExpense.startYear}`,

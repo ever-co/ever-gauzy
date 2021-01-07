@@ -44,7 +44,9 @@ export class AcceptClientInvitePage
 			);
 			this.inviteLoadErrorMessage = '';
 		} catch (error) {
-			this.inviteLoadErrorMessage = 'This invitation is no longer valid';
+			this.inviteLoadErrorMessage = this.getTranslation(
+				'ACCEPT_INVITE.INVITATION_NO_LONGER_VALID'
+			);
 		}
 		this.loading = false;
 	};

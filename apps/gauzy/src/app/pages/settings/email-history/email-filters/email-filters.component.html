@@ -2,7 +2,9 @@
 	<nb-card-body>
 		<div class="row">
 			<div class="col">
-				<label class="label">To</label>
+				<label class="label">{{
+					'SETTINGS.EMAIL_HISTORY.FILTERS.TO' | translate
+				}}</label>
 
 				<ng-select
 					[(ngModel)]="emailTo"
@@ -18,7 +20,10 @@
 
 		<div class="row">
 			<div class="col">
-				<label class="label">Template/Language</label>
+				<label class="label">{{
+					'SETTINGS.EMAIL_HISTORY.FILTERS.TEMPLATE_LANGUAGE'
+						| translate
+				}}</label>
 
 				<ng-select
 					[(ngModel)]="selectedTemplateId"

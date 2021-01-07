@@ -219,7 +219,7 @@ export class MatchingComponent implements OnInit {
 			}
 			this.jobPresetService.createJobPreset(request).then(() => {
 				this.hasAnyChanges = false;
-				this.toastrService.success('Preset successfully saved');
+				this.toastrService.success('TOASTR.MESSAGE.PRESET_SAVED');
 			});
 		}
 	}

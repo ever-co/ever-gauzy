@@ -15,7 +15,10 @@
 				<div class="col-sm-6">
 					<div class="form-group">
 						<label for="inputPaymentDate" class="label">
-							Select Invoice
+							{{
+								'INVOICES_PAGE.PAYMENTS.SELECT_INVOICE'
+									| translate
+							}}
 						</label>
 						<nb-select
 							class="d-block"
@@ -47,10 +50,7 @@
 				<div class="col-sm-6">
 					<div class="form-group">
 						<label for="inputInvoiceNumber" class="label">
-							{{
-								'INVOICES_PAGE.INVOICES_SELECT_CONTACT'
-									| translate
-							}}
+							{{ 'INVOICES_PAGE.CONTACT' | translate }}
 						</label>
 						<ng-select
 							[items]="organizationContacts"
@@ -156,8 +156,12 @@
 							<nb-option
 								*ngFor="let paymentMethod of paymentMethods"
 								value="{{ paymentMethod }}"
-								>{{ paymentMethod }}</nb-option
 							>
+								{{
+									'INVOICES_PAGE.PAYMENTS.' + paymentMethod
+										| translate
+								}}
+							</nb-option>
 						</nb-select>
 					</div>
 				</div>

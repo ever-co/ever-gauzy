@@ -119,7 +119,7 @@ export class InviteContactComponent
 					...this.form.getRawValue()
 				});
 			}
-		} catch (error) {
+		} catch (error) {			
 			this.toastrService.danger(error);
 		}
 		return null;

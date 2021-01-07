@@ -71,10 +71,8 @@
 										client.budgetType ===
 										OrganizationContactBudgetTypeEnum.HOURS
 									"
-									>{{
-										client?.spent | durationFormat
-									}}
-									Hours</span
+									>{{ client?.spent | durationFormat }}
+									{{ 'REPORT_PAGE.HOURS' | translate }}</span
 								>
 								<span
 									*ngIf="
@@ -103,7 +101,9 @@
 											client.reamingBudget
 												| durationFormat
 										}}
-										Hours</span
+										{{
+											'REPORT_PAGE.HOURS' | translate
+										}}</span
 									>
 									<span
 										*ngIf="

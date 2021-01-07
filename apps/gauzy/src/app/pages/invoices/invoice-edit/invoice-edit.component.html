@@ -103,8 +103,7 @@
 									type="text"
 									nbInput
 									placeholder="{{
-										'INVOICES_PAGE.INVOICES_SELECT_INVOICE_DATE'
-											| translate
+										'INVOICES_PAGE.INVOICE_DATE' | translate
 									}}"
 									[nbDatepicker]="invoiceDatePicker"
 									id="inputInvoiceDate"
@@ -133,14 +132,12 @@
 						<div class="col-sm-6">
 							<div class="form-group">
 								<label for="inputDueDate" class="label">{{
-									'INVOICES_PAGE.INVOICES_SELECT_DUE_DATE'
-										| translate
+									'INVOICES_PAGE.DUE_DATE' | translate
 								}}</label>
 								<input
 									nbInput
 									placeholder="{{
-										'INVOICES_PAGE.INVOICES_SELECT_DUE_DATE'
-											| translate
+										'INVOICES_PAGE.DUE_DATE' | translate
 									}}"
 									[nbDatepicker]="dueDatePicker"
 									formControlName="dueDate"
@@ -160,10 +157,7 @@
 						</div>
 						<div class="col-sm-6">
 							<label for="inputInvoiceNumber" class="label"
-								>{{
-									'INVOICES_PAGE.INVOICES_SELECT_CONTACT'
-										| translate
-								}}
+								>{{ 'INVOICES_PAGE.CONTACT' | translate }}
 							</label>
 							<ng-select
 								[items]="organizationContacts"
@@ -216,7 +210,7 @@
 				<div class="block">
 					<div class="row group">
 						<label class="label label-group">{{
-							'INVOICES_PAGE.INVOICES_DISCOUNT' | translate
+							'INVOICES_PAGE.DISCOUNT' | translate
 						}}</label>
 						<div class="col-sm-6">
 							<div class="form-group">
@@ -272,14 +266,12 @@
 							<div class="col-sm-12 p-0">
 								<div class="form-group">
 									<label for="inputTax" class="label">{{
-										'INVOICES_PAGE.INVOICES_SELECT_TAX'
-											| translate
+										'INVOICES_PAGE.TAX' | translate
 									}}</label>
 									<input
 										nbInput
 										placeholder="{{
-											'INVOICES_PAGE.INVOICES_SELECT_TAX'
-												| translate
+											'INVOICES_PAGE.TAX' | translate
 										}}"
 										type="number"
 										formControlName="tax"
@@ -350,15 +342,14 @@
 										(ngModelChange)="calculateTotal()"
 										fullWidth
 									>
-										<nb-option value="Percent">
+										<nb-option
+											*ngFor="
+												let discountTaxType of discountTaxTypes
+											"
+										>
 											{{
-												'INVOICES_PAGE.PERCENT'
-													| translate
-											}}
-										</nb-option>
-										<nb-option value="Flat">
-											{{
-												'INVOICES_PAGE.FLAT' | translate
+												'INVOICES_PAGE.' +
+													discountTaxType | translate
 											}}
 										</nb-option>
 									</nb-select>
@@ -415,7 +406,7 @@
 		</button>
 		<button
 			class="mr-3"
-			(click)="updateInvoice('Draft')"
+			(click)="updateInvoice('DRAFT')"
 			status="success"
 			[disabled]="form.invalid"
 			nbButton

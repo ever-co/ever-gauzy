@@ -198,9 +198,11 @@
 			<div class="section_block"></div>
 			<nb-tabset class="o__p__s" (changeTab)="onTabChange($event)">
 				<nb-tab
-					tabTitle="Profile"
+					tabTitle="{{ 'ORGANIZATIONS_PAGE.PROFILE' | translate }}"
 					class="o__p__s__t"
-					[active]="tabTitle === 'Profile'"
+					[active]="
+						tabTitle === 'ORGANIZATIONS_PAGE.PROFILE' | translate
+					"
 				>
 					<div
 						class="row mb-3"
@@ -398,9 +400,11 @@
 					</div>
 				</nb-tab>
 				<nb-tab
-					tabTitle="Employees"
+					tabTitle="{{ 'ORGANIZATIONS_PAGE.EMPLOYEES' | translate }}"
 					class="o__p__s__t"
-					[active]="tabTitle === 'Employees'"
+					[active]="
+						tabTitle === 'ORGANIZATIONS_PAGE.EMPLOYEES' | translate
+					"
 				>
 					<div class="row" *ngIf="employees.length">
 						<div class="col">
@@ -478,7 +482,10 @@
 															{{
 																employee.totalWorkHours
 															}}
-															hours worked
+															{{
+																'ORGANIZATIONS_PAGE.HOURS_WORKED'
+																	| translate
+															}}
 														</div>
 													</div>
 												</div>
@@ -653,16 +660,20 @@
 					</div>
 				</nb-tab>
 				<nb-tab
-					tabTitle="Portfolio"
+					tabTitle="{{ 'ORGANIZATIONS_PAGE.PORTFOLIO' | translate }}"
 					class="o__p__s__t"
-					[active]="tabTitle === 'Portfolio'"
+					[active]="
+						tabTitle === 'ORGANIZATIONS_PAGE.PORTFOLIO' | translate
+					"
 				>
 				</nb-tab>
 				<nb-tab
-					tabTitle="Clients"
+					tabTitle="{{ 'ORGANIZATIONS_PAGE.CLIENTS' | translate }}"
 					class="o__p__s__t"
 					*ngIf="organization.show_clients"
-					[active]="tabTitle === 'Clients'"
+					[active]="
+						tabTitle === 'ORGANIZATIONS_PAGE.CLIENTS' | translate
+					"
 				>
 					<nb-list class="nb_list">
 						<nb-list-item

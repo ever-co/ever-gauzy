@@ -63,7 +63,10 @@ export class EditRolesPermissionsComponent
 
 	async updateOrganizationSettings() {
 		this.toastrService.success(
-			this.organization.name + ' organization settings updated.'
+			this.getTranslation(
+				'TOASTR.MESSAGE.ORGANIZATION_SETTINGS_UPDATED',
+				{ name: this.organization.name }
+			)
 		);
 		this.goBack();
 	}

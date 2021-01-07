@@ -44,7 +44,9 @@ export class AcceptInvitePage
 			);
 			this.inviteLoadErrorMessage = '';
 		} catch (error) {
-			this.inviteLoadErrorMessage = 'This invitation is no longer valid';
+			this.inviteLoadErrorMessage = this.getTranslation(
+				'ACCEPT_INVITE.INVITATION_NO_LONGER_VALID'
+			);
 		}
 		this.loading = false;
 	};
@@ -68,7 +70,7 @@ export class AcceptInvitePage
 					inviteId: this.invitation.id
 				});
 			}
-
+      
 			this.toastrService.success('TOASTR.MESSAGE.PROFILE_UPDATED');
 
 			this.router.navigate(['/auth/login']);
