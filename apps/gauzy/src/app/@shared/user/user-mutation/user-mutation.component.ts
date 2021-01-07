@@ -1,7 +1,8 @@
 import { Component, OnInit, ViewChild, Input } from '@angular/core';
 import { RolesEnum, IUser, ITag } from '@gauzy/models';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import { Store } from '../../../@core/services/store.service';
+import { ToastrService } from '../../../@core/services/toastr.service';
 import { BasicInfoFormComponent } from '../forms/basic-info/basic-info-form.component';
 
 @Component({
@@ -20,7 +21,7 @@ export class UserMutationComponent implements OnInit {
 	constructor(
 		protected dialogRef: NbDialogRef<UserMutationComponent>,
 		protected store: Store,
-		private toastrService: NbToastrService
+		private toastrService: ToastrService
 	) {}
 
 	ngOnInit(): void {}
@@ -42,10 +43,7 @@ export class UserMutationComponent implements OnInit {
 			);
 			this.closeDialog(user);
 		} catch (error) {
-			this.toastrService.danger(
-				error.error ? error.error.message : error.message,
-				'Error'
-			);
+			this.toastrService.danger(error);
 		}
 	}
 }

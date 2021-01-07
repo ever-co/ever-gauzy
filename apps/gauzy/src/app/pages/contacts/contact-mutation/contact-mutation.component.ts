@@ -14,7 +14,7 @@ import {
 	ContactType,
 	IOrganization
 } from '@gauzy/models';
-import { NbStepperComponent, NbToastrService } from '@nebular/theme';
+import { NbStepperComponent } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
@@ -27,6 +27,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { FilterArrayPipe } from '../../../@shared/pipes/filter-array.pipe';
 import { LeafletMapComponent } from '../../../@shared/forms/maps/leaflet/leaflet.component';
 import { LatLng } from 'leaflet';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -77,7 +78,7 @@ export class ContactMutationComponent
 		private readonly fb: FormBuilder,
 		private store: Store,
 		private organizationProjectsService: OrganizationProjectsService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private errorHandler: ErrorHandlingService,
 		private filterArrayPipe: FilterArrayPipe,
@@ -259,7 +260,7 @@ export class ContactMutationComponent
 	}
 
 	handleImageUploadError(error) {
-		this.toastrService.danger(error, 'Error');
+		this.toastrService.danger(error);
 	}
 
 	addNewProject = (name: string): Promise<IOrganizationProject> => {
@@ -273,14 +274,11 @@ export class ContactMutationComponent
 					tenantId
 				})
 				.then((project) => {
-					this.toastrService.primary(
-						this.getTranslation(
-							'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
-							{
-								name: name
-							}
-						),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					this.toastrService.success(
+						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
+						{
+							name: name
+						}
 					);
 					return project;
 				});

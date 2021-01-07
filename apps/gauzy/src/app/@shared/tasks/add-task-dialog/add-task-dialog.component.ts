@@ -7,7 +7,7 @@ import {
 	ITag
 } from '@gauzy/models';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { Store } from '../../../@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,6 +18,7 @@ import { EmployeesService } from '../../../@core/services';
 import { first } from 'rxjs/operators';
 import { OrganizationTeamsService } from '../../../@core/services/organization-teams.service';
 import { TasksService } from '../../../@core/services/tasks.service';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 const initialTaskValue = {
 	title: '',
@@ -62,7 +63,7 @@ export class AddTaskDialogComponent
 		private store: Store,
 		private organizationProjectsService: OrganizationProjectsService,
 		readonly translateService: TranslateService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		private errorHandler: ErrorHandlingService,
 		private employeesService: EmployeesService,
 		private tasksService: TasksService,
@@ -138,14 +139,11 @@ export class AddTaskDialogComponent
 		this.organizationId = this.store.selectedOrganization.id;
 		this.tenantId = this.store.user.tenantId;
 		try {
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
-					{
-						name: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
+				{
+					name: name
+				}
 			);
 			return this.organizationProjectsService.create({
 				name,

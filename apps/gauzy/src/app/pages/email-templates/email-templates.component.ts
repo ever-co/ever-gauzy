@@ -13,7 +13,7 @@ import {
 	IOrganization,
 	LanguagesEnum
 } from '@gauzy/models';
-import { NbThemeService, NbToastrService } from '@nebular/theme';
+import { NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import 'brace';
@@ -25,6 +25,7 @@ import { Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { EmailTemplateService } from '../../@core/services/email-template.service';
 import { Store } from '../../@core/services/store.service';
+import { ToastrService } from '../../@core/services/toastr.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -54,7 +55,7 @@ export class EmailTemplatesComponent
 		private sanitizer: DomSanitizer,
 		private store: Store,
 		private fb: FormBuilder,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private emailTemplateService: EmailTemplateService,
 		private themeService: NbThemeService
 	) {
@@ -154,10 +155,7 @@ export class EmailTemplatesComponent
 				subject
 			);
 		} catch (error) {
-			this.toastrService.danger(
-				error.error.message || error,
-				this.getTranslation('TOASTR.TITLE.ERROR')
-			);
+			this.toastrService.danger(error);
 		}
 	}
 
@@ -194,20 +192,14 @@ export class EmailTemplatesComponent
 				organizationId,
 				tenantId
 			});
-			this.toastrService.primary(
-				this.getTranslation('TOASTR.MESSAGE.EMAIL_TEMPLATE_SAVED', {
-					templateName: this.getTranslation(
-						'EMAIL_TEMPLATES_PAGE.TEMPLATE_NAMES.' +
-							this.form.get('name').value
-					)
-				}),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('TOASTR.MESSAGE.EMAIL_TEMPLATE_SAVED', {
+				templateName: this.getTranslation(
+					'EMAIL_TEMPLATES_PAGE.TEMPLATE_NAMES.' +
+						this.form.get('name').value
+				)
+			});
 		} catch ({ error }) {
-			this.toastrService.danger(
-				error.message || error,
-				this.getTranslation('TOASTR.TITLE.ERROR')
-			);
+			this.toastrService.danger(error);
 		}
 	}
 	ngOnDestroy() {

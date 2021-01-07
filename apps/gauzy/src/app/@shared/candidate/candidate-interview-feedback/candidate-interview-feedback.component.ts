@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, ViewChild } from '@angular/core';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import { FormBuilder, Validators, FormArray } from '@angular/forms';
 import { CandidateFeedbacksService } from '../../../@core/services/candidate-feedbacks.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,6 +17,7 @@ import {
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { CandidateCriterionsRatingService } from '../../../@core/services/candidate-criterions-rating.service';
 import { Store } from '../../../@core/services/store.service';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-candidate-interview-feedback',
@@ -54,7 +55,7 @@ export class CandidateInterviewFeedbackComponent
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateInterviewFeedbackComponent>,
 		private readonly fb: FormBuilder,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private candidatesService: CandidatesService,
 		private readonly candidateFeedbacksService: CandidateFeedbacksService,
@@ -194,18 +195,17 @@ export class CandidateInterviewFeedbackComponent
 				this.form.reset();
 			} catch (error) {
 				this.toastrService.danger(
-					this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
+					'NOTES.CANDIDATE.EXPERIENCE.ERROR',
+					'TOASTR.TITLE.ERROR',
+					{
 						error: error.error ? error.error.message : error.message
-					}),
-					this.getTranslation('TOASTR.TITLE.ERROR')
+					}
 				);
 			}
 		} else {
 			this.toastrService.danger(
-				this.getTranslation('NOTES.CANDIDATE.INVALID_FORM'),
-				this.getTranslation(
-					'TOASTR.MESSAGE.CANDIDATE_FEEDBACK_REQUIRED'
-				)
+				'NOTES.CANDIDATE.INVALID_FORM',
+				'TOASTR.MESSAGE.CANDIDATE_FEEDBACK_REQUIRED'
 			);
 		}
 	}

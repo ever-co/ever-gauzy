@@ -1,20 +1,21 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject } from 'rxjs';
 import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
-import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { ICandidateTechnologies, IOrganization } from '@gauzy/models';
 import { CandidateTechnologiesService } from 'apps/gauzy/src/app/@core/services/candidate-technologies.service';
 import { takeUntil } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-candidate-technologies',
 	templateUrl: './candidate-technologies.component.html',
 	styleUrls: ['./candidate-technologies.component.scss']
 })
-export class CandidateTechnologiesComponent extends TranslationBaseComponent
+export class CandidateTechnologiesComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	technologiesList: ICandidateTechnologies[];
@@ -25,7 +26,7 @@ export class CandidateTechnologiesComponent extends TranslationBaseComponent
 	organization: IOrganization;
 	constructor(
 		private fb: FormBuilder,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private candidateTechnologiesService: CandidateTechnologiesService,
 		private readonly store: Store
@@ -114,7 +115,12 @@ export class CandidateTechnologiesComponent extends TranslationBaseComponent
 					...formValue
 				});
 				this.editId = null;
-				this.toastrSuccess('UPDATED');
+				this.toastrService.success(
+					'TOASTR.MESSAGE.TECHNOLOGY_STACK_UPDATED',
+					{
+						name: formValue.name
+					}
+				);
 				this.loadTechnologies();
 			} catch (error) {
 				this.toastrError(error);
@@ -137,17 +143,19 @@ export class CandidateTechnologiesComponent extends TranslationBaseComponent
 				await this.candidateTechnologiesService.create({
 					...formValue
 				});
-				this.toastrSuccess('CREATED');
+				this.toastrService.success(
+					'TOASTR.MESSAGE.TECHNOLOGY_STACK_CREATED',
+					{
+						name: formValue.name
+					}
+				);
 				this.loadTechnologies();
 			} catch (error) {
 				this.toastrError(error);
 			}
 		} else {
 			this.toastrService.danger(
-				this.getTranslation(
-					'CANDIDATES_PAGE.CRITERIONS.TOASTR_ALREADY_EXIST'
-				),
-				this.getTranslation('TOASTR.TITLE.ERROR')
+				'CANDIDATES_PAGE.CRITERIONS.TOASTR_ALREADY_EXIST'
 			);
 		}
 	}
@@ -158,11 +166,16 @@ export class CandidateTechnologiesComponent extends TranslationBaseComponent
 			this.technologiesList[index]
 		]);
 	}
-	async remove(id: string) {
+	async remove(technology: ICandidateTechnologies) {
 		try {
-			await this.candidateTechnologiesService.delete(id);
+			await this.candidateTechnologiesService.delete(technology.id);
 			this.loadTechnologies();
-			this.toastrSuccess('DELETED');
+			this.toastrService.success(
+				'TOASTR.MESSAGE.TECHNOLOGY_STACK_DELETED',
+				{
+					name: technology.name
+				}
+			);
 		} catch (error) {
 			this.toastrError(error);
 		}
@@ -178,12 +191,6 @@ export class CandidateTechnologiesComponent extends TranslationBaseComponent
 				error: error.error ? error.error.message : error.message
 			}),
 			this.getTranslation('TOASTR.TITLE.ERROR')
-		);
-	}
-	private toastrSuccess(text: string) {
-		this.toastrService.success(
-			this.getTranslation('TOASTR.TITLE.SUCCESS'),
-			this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_EDIT_${text}`)
 		);
 	}
 

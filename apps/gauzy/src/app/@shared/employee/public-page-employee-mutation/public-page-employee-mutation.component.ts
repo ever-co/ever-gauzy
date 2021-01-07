@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
@@ -27,6 +27,7 @@ import { Store } from '../../../@core/services/store.service';
 import { EmployeeLevelService } from '../../../@core/services/employee-level.service';
 import { EmployeeAwardService } from '../../../@core/services/employee-award.service';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ngx-public-page-employee-mutation',
@@ -51,7 +52,7 @@ export class PublicPageEmployeeMutationComponent
 	constructor(
 		private fb: FormBuilder,
 		protected dialogRef: NbDialogRef<PublicPageEmployeeMutationComponent>,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private organizationEmploymentTypeService: OrganizationEmploymentTypesService,
 		private employeeLevelService: EmployeeLevelService,
@@ -174,14 +175,11 @@ export class PublicPageEmployeeMutationComponent
 					tap((award) => this.employeeAwards.push(award)),
 					tap(() => {
 						this.showAddAward = false;
-						this.toastrService.primary(
-							this.getTranslation(
-								'NOTES.EMPLOYEE.EDIT_EMPLOYEE_AWARDS.ADD_AWARD',
-								{
-									name
-								}
-							),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						this.toastrService.success(
+							'NOTES.EMPLOYEE.EDIT_EMPLOYEE_AWARDS.ADD_AWARD',
+							{
+								name
+							}
 						);
 					}),
 					catchError((err) => {
@@ -193,12 +191,8 @@ export class PublicPageEmployeeMutationComponent
 				.subscribe();
 		} else {
 			this.toastrService.danger(
-				this.getTranslation(
-					'NOTES.EMPLOYEE.EDIT_EMPLOYEE_AWARDS.INVALID_AWARD_NAME_YEAR'
-				),
-				this.getTranslation(
-					'TOASTR.MESSAGE.NEW_ORGANIZATION_AWARD_INVALID_NAME'
-				)
+				'NOTES.EMPLOYEE.EDIT_EMPLOYEE_AWARDS.INVALID_AWARD_NAME_YEAR',
+				'TOASTR.MESSAGE.NEW_ORGANIZATION_AWARD_INVALID_NAME'
 			);
 		}
 	}
@@ -214,14 +208,11 @@ export class PublicPageEmployeeMutationComponent
 						))
 				),
 				tap(() => {
-					this.toastrService.primary(
-						this.getTranslation(
-							'NOTES.EMPLOYEE.EDIT_EMPLOYEE_AWARDS.REMOVE_AWARD',
-							{
-								name
-							}
-						),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					this.toastrService.success(
+						'NOTES.EMPLOYEE.EDIT_EMPLOYEE_AWARDS.REMOVE_AWARD',
+						{
+							name
+						}
 					);
 				}),
 				catchError((err) => {

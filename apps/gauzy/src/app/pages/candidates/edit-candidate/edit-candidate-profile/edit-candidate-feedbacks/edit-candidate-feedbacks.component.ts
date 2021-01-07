@@ -8,7 +8,7 @@ import {
 	FormArray,
 	FormControl
 } from '@angular/forms';
-import { NbToastrService, NbDialogService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 import { takeUntil, first } from 'rxjs/operators';
@@ -35,6 +35,7 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { InterviewersTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/interviewers/interviewers.component';
 import { InterviewStarRatingComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/rating/rating.component';
 import { FeedbackStatusTableComponent } from './table-components/status/status.component';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-edit-candidate-feedbacks',
@@ -80,7 +81,7 @@ export class EditCandidateFeedbacksComponent
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly candidateFeedbacksService: CandidateFeedbacksService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private candidateStore: CandidateStore,
 		private employeesService: EmployeesService,
@@ -421,7 +422,9 @@ export class EditCandidateFeedbacksComponent
 				organizationId,
 				tenantId
 			});
-			this.toastrSuccess('UPDATED');
+			this.toastrService.success(
+				'TOASTR.MESSAGE.CANDIDATE_FEEDBACK_UPDATED'
+			);
 			this.loadInterviews();
 			this.setStatus(this.status);
 			this.showAddCard = !this.showAddCard;
@@ -440,7 +443,9 @@ export class EditCandidateFeedbacksComponent
 				organizationId,
 				tenantId
 			});
-			this.toastrSuccess('CREATED');
+			this.toastrService.success(
+				'TOASTR.MESSAGE.CANDIDATE_FEEDBACK_CREATED'
+			);
 			this.loadInterviews();
 			this.showAddCard = !this.showAddCard;
 			this.feedbacks.reset();
@@ -487,7 +492,9 @@ export class EditCandidateFeedbacksComponent
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
-			this.toastrSuccess('DELETED');
+			this.toastrService.success(
+				'TOASTR.MESSAGE.CANDIDATE_FEEDBACK_DELETED'
+			);
 			this.loadInterviews();
 		}
 	}
@@ -509,18 +516,7 @@ export class EditCandidateFeedbacksComponent
 		}
 	}
 	private toastrError(error) {
-		this.toastrService.danger(
-			this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
-				error: error.error ? error.error.message : error.message
-			}),
-			this.getTranslation('TOASTR.TITLE.ERROR')
-		);
-	}
-	private toastrSuccess(text: string) {
-		this.toastrService.success(
-			this.getTranslation('TOASTR.TITLE.SUCCESS'),
-			this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_EDIT_${text}`)
-		);
+		this.toastrService.danger(error);
 	}
 	private toastrInvalid() {
 		this.toastrService.danger(

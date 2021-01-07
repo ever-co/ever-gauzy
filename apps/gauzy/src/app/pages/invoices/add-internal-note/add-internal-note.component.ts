@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { IInvoice } from '@gauzy/models';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { InvoicesService } from '../../../@core/services/invoices.service';
+import { ToastrService } from '../../../@core/services/toastr.service';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
 
@@ -22,7 +23,7 @@ export class AddInternalNoteComponent
 		readonly translateService: TranslateService,
 		protected dialogRef: NbDialogRef<InvoiceEmailMutationComponent>,
 		private fb: FormBuilder,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private invoiceService: InvoicesService
 	) {
 		super(translateService);
@@ -42,10 +43,7 @@ export class AddInternalNoteComponent
 		await this.invoiceService.update(this.invoice.id, {
 			internalNote: this.form.value.internalNote
 		});
-		this.toastrService.primary(
-			this.getTranslation('INVOICES_PAGE.INTERNAL_NOTE.NOTE_SAVED'),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
-		);
+		this.toastrService.success('INVOICES_PAGE.INTERNAL_NOTE.NOTE_SAVED');
 		this.dialogRef.close();
 	}
 

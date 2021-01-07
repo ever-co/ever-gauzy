@@ -5,7 +5,6 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 import { TranslateService } from '@ngx-translate/core';
 import {
 	NbDialogService,
-	NbToastrService,
 	NbMenuItem,
 	NbMenuService,
 	NbPopoverDirective
@@ -44,6 +43,7 @@ import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-esti
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
+import { ToastrService } from '../../@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -95,7 +95,7 @@ export class InvoicesComponent
 		readonly translateService: TranslateService,
 		private store: Store,
 		private dialogService: NbDialogService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private invoicesService: InvoicesService,
 		private invoiceItemService: InvoiceItemService,
 		private router: Router,
@@ -368,19 +368,15 @@ export class InvoicesComponent
 		});
 
 		if (this.isEstimate) {
-			this.toastrService.primary(
-				this.getTranslation(
-					'INVOICES_PAGE.INVOICES_DUPLICATE_ESTIMATE'
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'INVOICES_PAGE.INVOICES_DUPLICATE_ESTIMATE'
 			);
 			this.router.navigate([
 				`/pages/accounting/invoices/estimates/edit/${createdInvoice.id}`
 			]);
 		} else {
-			this.toastrService.primary(
-				this.getTranslation('INVOICES_PAGE.INVOICES_DUPLICATE_INVOICE'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'INVOICES_PAGE.INVOICES_DUPLICATE_INVOICE'
 			);
 			this.router.navigate([
 				`/pages/accounting/invoices/edit/${createdInvoice.id}`
@@ -424,10 +420,7 @@ export class InvoicesComponent
 				});
 			this.clearItem();
 		} else {
-			this.toastrService.danger(
-				this.getTranslation('INVOICES_PAGE.SEND.NOT_LINKED'),
-				this.getTranslation('TOASTR.TITLE.WARNING')
-			);
+			this.toastrService.warning('INVOICES_PAGE.SEND.NOT_LINKED');
 		}
 	}
 
@@ -452,10 +445,7 @@ export class InvoicesComponent
 			organizationId: this.organization.id,
 			tenantId: this.organization.tenantId
 		});
-		this.toastrService.primary(
-			this.getTranslation('INVOICES_PAGE.ESTIMATES.ESTIMATE_CONVERT'),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
-		);
+		this.toastrService.success('INVOICES_PAGE.ESTIMATES.ESTIMATE_CONVERT');
 		this.clearItem();
 		await this.loadSettings();
 	}
@@ -487,18 +477,12 @@ export class InvoicesComponent
 			this.clearItem();
 			this.loadSettings();
 			if (this.isEstimate) {
-				this.toastrService.primary(
-					this.getTranslation(
-						'INVOICES_PAGE.INVOICES_DELETE_ESTIMATE'
-					),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				this.toastrService.success(
+					'INVOICES_PAGE.INVOICES_DELETE_ESTIMATE'
 				);
 			} else {
-				this.toastrService.primary(
-					this.getTranslation(
-						'INVOICES_PAGE.INVOICES_DELETE_INVOICE'
-					),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				this.toastrService.success(
+					'INVOICES_PAGE.INVOICES_DELETE_INVOICE'
 				);
 			}
 		}

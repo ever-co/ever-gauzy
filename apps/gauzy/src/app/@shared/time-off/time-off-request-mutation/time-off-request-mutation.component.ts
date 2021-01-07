@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, Input } from '@angular/core';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import * as Holidays from 'date-holidays';
 import { IEmployee, ITimeOffPolicy, ITimeOff } from '@gauzy/models';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
@@ -10,6 +10,7 @@ import { first } from 'rxjs/operators';
 import { EmployeesService } from '../../../@core/services';
 import { OrganizationDocumentsService } from '../../../@core/services/organization-documents.service';
 import * as moment from 'moment';
+import { ToastrService } from '../../../@core/services/toastr.service';
 @Component({
 	selector: 'ngx-time-off-request-mutation',
 	templateUrl: './time-off-request-mutation.component.html',
@@ -19,7 +20,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	constructor(
 		protected dialogRef: NbDialogRef<TimeOffRequestMutationComponent>,
 		private fb: FormBuilder,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private timeOffService: TimeOffService,
 		private employeesService: EmployeesService,
 		private documentsService: OrganizationDocumentsService,
@@ -84,7 +85,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 					.filter((holiday) => holiday.type === 'public');
 			})
 			.catch(() => {
-				this.toastrService.danger('Unable to get holidays');
+				this.toastrService.danger('TOASTR.MESSAGE.HOLIDAY_ERROR');
 			});
 	}
 
@@ -158,10 +159,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 
 		if (start > end || requestDate > start) {
 			this.invalidInterval = true;
-			this.toastrService.danger(
-				'Please pick correct dates and try again',
-				'Invalid days off interval'
-			);
+			this.toastrService.danger('TOASTR.MESSAGE.INTERVAL_ERROR');
 		}
 
 		if (this.policy.requiresApproval) {

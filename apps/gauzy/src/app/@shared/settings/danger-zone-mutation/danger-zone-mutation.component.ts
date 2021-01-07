@@ -1,8 +1,8 @@
 import { Component, Output, EventEmitter } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { NbToastrService } from '@nebular/theme';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-danger-zone-mutation',
@@ -19,7 +19,7 @@ export class DangerZoneMutationComponent extends TranslationBaseComponent {
 	constructor(
 		protected dialogRef: NbDialogRef<DangerZoneMutationComponent>,
 		private translate: TranslateService,
-		private toastrService: NbToastrService
+		private toastrService: ToastrService
 	) {
 		super(translate);
 	}
@@ -37,10 +37,7 @@ export class DangerZoneMutationComponent extends TranslationBaseComponent {
 			this.dialogRef.close('ok');
 		} else {
 			this.toastrService.danger(
-				this.getTranslation(
-					'NOTES.DANGER_ZONE.DELETE_ACCOUNT_WRONG_DATA'
-				),
-				this.getTranslation('TOASTR.TITLE.ERROR')
+				'NOTES.DANGER_ZONE.DELETE_ACCOUNT_WRONG_DATA'
 			);
 		}
 	}
