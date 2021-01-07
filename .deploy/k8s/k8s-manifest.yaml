@@ -1,0 +1,76 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+    name: gauzy-lb
+spec:
+    type: LoadBalancer
+    selector:
+        app: gauzy-lb
+    ports:
+        - name: http
+          protocol: TCP
+          port: 80
+          targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: gauzy-nginx
+spec:
+    selector:
+        matchLabels:
+            app: gauzy-nginx
+    replicas: 2
+    template:
+        metadata:
+            labels:
+                app: gauzy-nginx
+        spec:
+            containers:
+                - name: nginx
+                  image: nginx
+                  ports:
+                      - containerPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: gauzy-api
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: gauzy-api
+    template:
+        metadata:
+            labels:
+                app: gauzy-api
+        spec:
+            containers:
+                - name: gauzy-api
+                  image: ghcr.io/ever-co/gauzy-api:latest
+                  ports:
+                      - containerPort: 3000
+                        protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: gauzy-webapp
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: gauzy-webapp
+    template:
+        metadata:
+            labels:
+                app: gauzy-webapp
+        spec:
+            containers:
+                - name: gauzy-webapp
+                  image: ghcr.io/ever-co/gauzy-webapp:latest
+                  ports:
+                      - containerPort: 4200
+                        protocol: TCP

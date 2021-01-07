@@ -82,10 +82,12 @@ export class EditRolesPermissionsComponent
 	async loadPermissionsForSelectedRole() {
 		this.enabledPermissions = {};
 		this.loading = true;
+
+		const { tenantId } = this.currentUser;
 		const role = await this.rolesService
 			.getRoleByName({
 				name: this.selectedRole,
-				tenant: this.currentUser.tenant
+				tenantId
 			})
 			.pipe(first())
 			.toPromise();

@@ -7,7 +7,7 @@ import {
 	IEmployeeRecurringExpense,
 	IEmployee
 } from '@gauzy/models';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { first, debounceTime, filter, withLatestFrom } from 'rxjs/operators';
 import { monthNames } from '../../@core/utils/date';
@@ -22,6 +22,7 @@ import { ActivatedRoute } from '@angular/router';
 import { EmployeesService } from '../../@core/services';
 import { EmployeeRecurringExpenseService } from '../../@core/services/employee-recurring-expense.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -49,7 +50,7 @@ export class RecurringExpensesEmployeeComponent
 		private store: Store,
 		private dialogService: NbDialogService,
 		private employeeRecurringExpenseService: EmployeeRecurringExpenseService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -157,26 +158,19 @@ export class RecurringExpensesEmployeeComponent
 				await this.employeeRecurringExpenseService
 					.create(employeeRecurringExpense)
 					.then(() => {
-						this.toastrService.primary(
-							this.getTranslation(
-								'EMPLOYEES_PAGE.RECURRING_EXPENSE_SET',
-								{ name: this.employeeName }
-							),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						this.toastrService.success(
+							'TOASTR.MESSAGE.RECURRING_EXPENSE_SET',
+							{
+								name: this.employeeName
+							}
 						);
 						this._loadEmployeeRecurringExpense();
 					})
 					.catch((error) => {
-						this.toastrService.danger(
-							error.error.message || error.message,
-							this.getTranslation('TOASTR.TITLE.ERROR')
-						);
+						this.toastrService.danger(error);
 					});
 			} catch (error) {
-				this.toastrService.danger(
-					error.error.message || error.message,
-					this.getTranslation('TOASTR.TITLE.ERROR')
-				);
+				this.toastrService.danger(error);
 			}
 		}
 	}
@@ -205,26 +199,19 @@ export class RecurringExpensesEmployeeComponent
 					.update(id, employeeRecurringExpense)
 					.then(() => {
 						this.selectedRowIndexToShow = null;
-						this.toastrService.primary(
-							this.getTranslation(
-								'EMPLOYEES_PAGE.RECURRING_EXPENSE_EDITED',
-								{ name: this.employeeName }
-							),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						this.toastrService.success(
+							'TOASTR.MESSAGE.RECURRING_EXPENSE_UPDATED',
+							{
+								name: this.employeeName
+							}
 						);
 						this._loadEmployeeRecurringExpense();
 					})
 					.catch((error) => {
-						this.toastrService.danger(
-							error.error.message || error.message,
-							this.getTranslation('TOASTR.TITLE.ERROR')
-						);
+						this.toastrService.danger(error);
 					});
 			} catch (error) {
-				this.toastrService.danger(
-					error.error.message || error.message,
-					this.getTranslation('TOASTR.TITLE.ERROR')
-				);
+				this.toastrService.danger(error);
 			}
 		}
 	}
@@ -263,26 +250,19 @@ export class RecurringExpensesEmployeeComponent
 					})
 					.then(() => {
 						this.selectedRowIndexToShow = null;
-						this.toastrService.primary(
-							this.getTranslation(
-								'EMPLOYEES_PAGE.RECURRING_EXPENSE_DELETED',
-								{ name: this.employeeName }
-							),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						this.toastrService.success(
+							'TOASTR.MESSAGE.RECURRING_EXPENSE_DELETED',
+							{
+								name: this.employeeName
+							}
 						);
 						this._loadEmployeeRecurringExpense();
 					})
 					.catch((error) => {
-						this.toastrService.danger(
-							error.error.message || error.message,
-							this.getTranslation('TOASTR.TITLE.ERROR')
-						);
+						this.toastrService.danger(error);
 					});
 			} catch (error) {
-				this.toastrService.danger(
-					error.error.message || error.message,
-					this.getTranslation('TOASTR.TITLE.ERROR')
-				);
+				this.toastrService.danger(error);
 			}
 		}
 	}

@@ -7,7 +7,7 @@ import bootstrapPlugin from '@fullcalendar/bootstrap';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { first, takeUntil } from 'rxjs/operators';
 import {
 	ICandidate,
@@ -27,12 +27,14 @@ import { CandidateInterviewMutationComponent } from 'apps/gauzy/src/app/@shared/
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import * as _ from 'underscore';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 @Component({
 	selector: 'ga-interview-calendar',
 	templateUrl: './interview-calendar.component.html',
 	styleUrls: ['./interview-calendar.component.scss']
 })
-export class InterviewCalendarComponent extends TranslationBaseComponent
+export class InterviewCalendarComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	@ViewChild('calendar', { static: true })
@@ -53,7 +55,7 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 		private dialogService: NbDialogService,
 		private candidateInterviewService: CandidateInterviewService,
 		private candidateInterviewersService: CandidateInterviewersService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private candidatesService: CandidatesService,
 		private employeesService: EmployeesService,
 		private candidateStore: CandidateStore,
@@ -223,8 +225,10 @@ export class InterviewCalendarComponent extends TranslationBaseComponent
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
 			this.toastrService.success(
-				this.getTranslation('TOASTR.TITLE.SUCCESS'),
-				this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_EDIT_CREATED`)
+				`TOASTR.MESSAGE.CANDIDATE_EDIT_CREATED`,
+				{
+					name: data.title
+				}
 			);
 			this.loadInterviews();
 		}

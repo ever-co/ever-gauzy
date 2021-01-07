@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NbDialogRef, NbDateService, NbToastrService } from '@nebular/theme';
+import { NbDialogRef, NbDateService } from '@nebular/theme';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import {
@@ -23,6 +23,7 @@ import {
 	startOfYear,
 	endOfYear
 } from 'date-fns';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-edit-time-frame',
@@ -45,7 +46,7 @@ export class EditTimeFrameComponent
 		private goalSettingsService: GoalSettingsService,
 		private dateService: NbDateService<Date>,
 		readonly translate: TranslateService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		private store: Store
 	) {
 		super(translate);
@@ -150,14 +151,11 @@ export class EditTimeFrameComponent
 		if (this.type === 'add') {
 			await this.goalSettingsService.createTimeFrame(data).then((res) => {
 				if (res) {
-					this.toastrService.primary(
-						this.getTranslation(
-							'TOASTR.MESSAGE.TIME_FRAME_CREATED',
-							{
-								name: data.name
-							}
-						),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					this.toastrService.success(
+						'TOASTR.MESSAGE.TIME_FRAME_CREATED',
+						{
+							name: data.name
+						}
 					);
 					this.closeDialog(res);
 				}
@@ -167,14 +165,11 @@ export class EditTimeFrameComponent
 				.updateTimeFrame(this.timeFrame.id, data)
 				.then((res) => {
 					if (res) {
-						this.toastrService.primary(
-							this.getTranslation(
-								'TOASTR.MESSAGE.TIME_FRAME_UPDATED',
-								{
-									name: data.name
-								}
-							),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						this.toastrService.success(
+							'TOASTR.MESSAGE.TIME_FRAME_UPDATED',
+							{
+								name: data.name
+							}
 						);
 						this.closeDialog(res);
 					}

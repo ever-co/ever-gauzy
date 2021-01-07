@@ -1,5 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { IOrganization, IOrganizationContact } from '@gauzy/models';
@@ -7,6 +7,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { UsersService } from '../../../@core/services';
 import { InviteService } from '../../../@core/services/invite.service';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-invite-contact',
@@ -19,7 +20,7 @@ export class InviteContactComponent
 	constructor(
 		private readonly dialogRef: NbDialogRef<InviteContactComponent>,
 		readonly translateService: TranslateService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		private readonly fb: FormBuilder,
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly usersService: UsersService,
@@ -93,10 +94,7 @@ export class InviteContactComponent
 				this.closeDialog(invited);
 			}
 		} catch (error) {
-			this.toastrService.danger(
-				error.error ? error.error.message : error.message,
-				this.getTranslation('TOASTR.TITLE.ERROR')
-			);
+			this.toastrService.danger(error);
 		}
 	}
 
@@ -121,11 +119,8 @@ export class InviteContactComponent
 					...this.form.getRawValue()
 				});
 			}
-		} catch (error) {
-			this.toastrService.danger(
-				error.error ? error.error.message : error.message,
-				this.getTranslation('TOASTR.TITLE.ERROR')
-			);
+		} catch (error) {			
+			this.toastrService.danger(error);
 		}
 		return null;
 	}

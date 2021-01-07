@@ -12,7 +12,7 @@ import {
 	PermissionsEnum,
 	IOrganizationContact
 } from '@gauzy/models';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { first, tap } from 'rxjs/operators';
 import { PublicPageMutationComponent } from '../../@shared/organizations/public-page-mutation/public-page-mutation.component';
 import * as moment from 'moment';
@@ -21,6 +21,7 @@ import { EmployeeStatisticsService } from '../../@core/services/employee-statist
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-organization',
@@ -58,7 +59,7 @@ export class OrganizationComponent
 		private router: Router,
 		private organizationsService: OrganizationsService,
 		private userOrganizationService: UsersOrganizationsService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private employeesService: EmployeesService,
 		private organizationContactService: OrganizationContactService,
 		private employeeStatisticsService: EmployeeStatisticsService,
@@ -216,10 +217,7 @@ export class OrganizationComponent
 			organization
 		);
 		this.imageUpdateButton = false;
-		this.toastrService.primary(
-			this.getTranslation('PUBLIC_PAGE.IMAGE_UPDATED'),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
-		);
+		this.toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
 	}
 
 	async editPage() {
@@ -242,12 +240,11 @@ export class OrganizationComponent
 						result
 					);
 					this.getPublicOrganization();
-					this.toastrService.primary(
-						this.getTranslation(
-							'TOASTR.MESSAGE.ORGANIZATION_PAGE_UPDATED',
-							{ name: this.organization.name }
-						),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					this.toastrService.success(
+						'TOASTR.MESSAGE.ORGANIZATION_PAGE_UPDATED',
+						{
+							name: this.organization.name
+						}
 					);
 				}
 			});

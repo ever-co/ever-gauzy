@@ -20,14 +20,13 @@ import {
 	IInvoiceItemCreateInput
 } from '@gauzy/models';
 import { filter, first } from 'rxjs/operators';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { Observable } from 'rxjs';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { InvoiceItemService } from '../../../@core/services/invoice-item.service';
 import { Router, ActivatedRoute } from '@angular/router';
-import { NbToastrService, NbDialogService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { InvoicesService } from '../../../@core/services/invoices.service';
 import { InvoiceEmployeesSelectorComponent } from '../table-components/invoice-employees-selector.component';
 import { InvoiceProjectsSelectorComponent } from '../table-components/invoice-project-selector.component';
@@ -42,6 +41,7 @@ import { InvoiceExpensesSelectorComponent } from '../table-components/invoice-ex
 import { ExpensesService } from '../../../@core/services/expenses.service';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -59,8 +59,7 @@ export class InvoiceEditComponent
 		private invoiceItemService: InvoiceItemService,
 		private translate: TranslateService,
 		private invoicesService: InvoicesService,
-		private toastrService: NbToastrService,
-		private organizationsService: OrganizationsService,
+		private toastrService: ToastrService,
 		private organizationContactService: OrganizationContactService,
 		private route: ActivatedRoute,
 		private employeeService: EmployeesService,
@@ -530,10 +529,7 @@ export class InvoiceEditComponent
 				!invoiceData.dueDate ||
 				this.compareDate(invoiceData.invoiceDate, invoiceData.dueDate)
 			) {
-				this.toastrService.danger(
-					this.getTranslation('INVOICES_PAGE.INVALID_DATES'),
-					this.getTranslation('TOASTR.TITLE.WARNING')
-				);
+				this.toastrService.danger('INVOICES_PAGE.INVALID_DATES');
 				return;
 			}
 			const { tenantId } = this.store.user;
@@ -549,10 +545,7 @@ export class InvoiceEditComponent
 				+invoice.items[0].invoiceNumber !== +this.invoice.invoiceNumber
 			) {
 				this.toastrService.danger(
-					this.getTranslation(
-						'INVOICES_PAGE.INVOICE_NUMBER_DUPLICATE'
-					),
-					this.getTranslation('TOASTR.TITLE.WARNING')
+					'INVOICES_PAGE.INVOICE_NUMBER_DUPLICATE'
 				);
 				return;
 			}
@@ -640,23 +633,18 @@ export class InvoiceEditComponent
 			});
 
 			if (this.isEstimate) {
-				this.toastrService.primary(
-					this.getTranslation('INVOICES_PAGE.INVOICES_EDIT_ESTIMATE'),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				this.toastrService.success(
+					'INVOICES_PAGE.INVOICES_EDIT_ESTIMATE'
 				);
 				this.router.navigate(['/pages/accounting/invoices/estimates']);
 			} else {
-				this.toastrService.primary(
-					this.getTranslation('INVOICES_PAGE.INVOICES_EDIT_INVOICE'),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				this.toastrService.success(
+					'INVOICES_PAGE.INVOICES_EDIT_INVOICE'
 				);
 				this.router.navigate(['/pages/accounting/invoices']);
 			}
 		} else {
-			this.toastrService.danger(
-				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.NO_ITEMS'),
-				this.getTranslation('TOASTR.TITLE.WARNING')
-			);
+			this.toastrService.warning('INVOICES_PAGE.INVOICE_ITEM.NO_ITEMS');
 		}
 	}
 
@@ -683,10 +671,7 @@ export class InvoiceEditComponent
 				tenantId: this.organization.tenantId
 			});
 		} else {
-			this.toastrService.danger(
-				this.getTranslation('INVOICES_PAGE.SEND.NOT_LINKED'),
-				this.getTranslation('TOASTR.TITLE.WARNING')
-			);
+			this.toastrService.warning('INVOICES_PAGE.SEND.NOT_LINKED');
 		}
 	}
 
@@ -699,10 +684,7 @@ export class InvoiceEditComponent
 				!invoiceData.dueDate ||
 				this.compareDate(invoiceData.invoiceDate, invoiceData.dueDate)
 			) {
-				this.toastrService.danger(
-					this.getTranslation('INVOICES_PAGE.INVALID_DATES'),
-					this.getTranslation('TOASTR.TITLE.WARNING')
-				);
+				this.toastrService.danger('INVOICES_PAGE.INVALID_DATES');
 				return;
 			}
 			const { tenantId } = this.store.user;
@@ -719,10 +701,7 @@ export class InvoiceEditComponent
 					+this.invoice.invoiceNumber
 			) {
 				this.toastrService.danger(
-					this.getTranslation(
-						'INVOICES_PAGE.INVOICE_NUMBER_DUPLICATE'
-					),
-					this.getTranslation('TOASTR.TITLE.WARNING')
+					'INVOICES_PAGE.INVOICE_NUMBER_DUPLICATE'
 				);
 				return;
 			}
@@ -804,10 +783,7 @@ export class InvoiceEditComponent
 				await this.updateInvoice('Sent');
 			}
 		} else {
-			this.toastrService.danger(
-				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.NO_ITEMS'),
-				this.getTranslation('TOASTR.TITLE.WARNING')
-			);
+			this.toastrService.danger('INVOICES_PAGE.INVOICE_ITEM.NO_ITEMS');
 		}
 	}
 
@@ -989,8 +965,7 @@ export class InvoiceEditComponent
 			await this.calculateTotal();
 		} else {
 			this.toastrService.danger(
-				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.INVALID_ITEM'),
-				this.getTranslation('TOASTR.TITLE.WARNING')
+				'INVOICES_PAGE.INVOICE_ITEM.INVALID_ITEM'
 			);
 			event.confirm.reject();
 		}
@@ -1019,8 +994,7 @@ export class InvoiceEditComponent
 			await this.calculateTotal();
 		} else {
 			this.toastrService.danger(
-				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.INVALID_ITEM'),
-				this.getTranslation('TOASTR.TITLE.WARNING')
+				'INVOICES_PAGE.INVOICE_ITEM.INVALID_ITEM'
 			);
 			event.confirm.reject();
 		}

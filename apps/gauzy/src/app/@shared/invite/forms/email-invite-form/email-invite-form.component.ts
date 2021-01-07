@@ -150,12 +150,13 @@ export class EmailInviteFormComponent implements OnInit {
 
 	async saveInvites(): Promise<ICreateEmailInvitesOutput> {
 		if (this.form.valid) {
+			const { tenantId } = this.store.user;
 			const role = await this.roleService
 				.getRoleByName({
 					name: this.isEmployeeInvitation()
 						? RolesEnum.EMPLOYEE
 						: this.getRoleNameFromForm(),
-					tenant: this.store.user.tenant
+					tenantId
 				})
 				.pipe(first())
 				.toPromise();
@@ -167,7 +168,7 @@ export class EmailInviteFormComponent implements OnInit {
 				organizationContactIds: this.organizationContacts.value,
 				roleId: role.id,
 				organizationId: this.selectedOrganization.id,
-				tenantId: this.selectedOrganization.tenantId,
+				tenantId,
 				invitedById: this.currentUserId,
 				inviteType: this.router.url,
 				startedWorkOn: this.startedWorkOn

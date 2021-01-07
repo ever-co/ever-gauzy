@@ -11,7 +11,6 @@ import {
 	BonusTypeEnum,
 	CurrencyPosition
 } from '@gauzy/models';
-import { NbToastrService } from '@nebular/theme';
 import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
 import { formatDate } from '@angular/common';
@@ -21,6 +20,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { Store } from '../../../../../@core/services/store.service';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-org-other-settings',
@@ -56,7 +56,7 @@ export class EditOrganizationOtherSettingsComponent
 		private router: Router,
 		private fb: FormBuilder,
 		private organizationService: OrganizationsService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private readonly organizationEditStore: OrganizationEditStore,
 		readonly translateService: TranslateService,
 		private store: Store
@@ -121,12 +121,11 @@ export class EditOrganizationOtherSettingsComponent
 			this.organization.id,
 			this.form.getRawValue()
 		);
-		this.toastrService.primary(
-			this.getTranslation(
-				'TOASTR.MESSAGE.ORGANIZATION_SETTINGS_UPDATED',
-				{ name: this.organization.name }
-			),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		this.toastrService.success(
+			`TOASTR.MESSAGE.ORGANIZATION_SETTINGS_UPDATED`,
+			{
+				name: this.organization.name
+			}
 		);
 		this.goBack();
 	}

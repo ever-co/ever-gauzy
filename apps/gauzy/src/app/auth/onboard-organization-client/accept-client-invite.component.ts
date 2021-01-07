@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IInvite, IOrganizationContactRegistrationInput } from '@gauzy/models';
-import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { InviteService } from '../../@core/services/invite.service';
+import { ToastrService } from '../../@core/services/toastr.service';
 import { SetLanguageBaseComponent } from '../../@shared/language-base/set-language-base.component';
 
 @Component({
@@ -20,7 +20,7 @@ export class AcceptClientInvitePage
 	constructor(
 		private readonly router: Router,
 		private route: ActivatedRoute,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private translate: TranslateService,
 		private inviteService: InviteService
 	) {
@@ -59,22 +59,16 @@ export class AcceptClientInvitePage
 				...contactRegistrationInput,
 				inviteId: this.invitation.id
 			});
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.ADD_NEW_ORGANIZATION',
-					{
-						name: contactRegistrationInput.contactOrganization.name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.ADD_NEW_ORGANIZATION',
+				{
+					name: contactRegistrationInput.contactOrganization.name
+				}
 			);
 
 			this.router.navigate(['/auth/login']);
 		} catch (error) {
-			this.toastrService.danger(
-				error.error ? error.error.message : error.message,
-				this.getTranslation('TOASTR.TITLE.ERROR')
-			);
+			this.toastrService.danger(error);
 		}
 	};
 }

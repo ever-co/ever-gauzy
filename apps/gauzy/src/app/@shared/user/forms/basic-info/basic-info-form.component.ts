@@ -22,7 +22,8 @@ import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 	templateUrl: 'basic-info-form.component.html',
 	styleUrls: ['basic-info-form.component.scss']
 })
-export class BasicInfoFormComponent extends TranslationBaseComponent
+export class BasicInfoFormComponent
+	extends TranslationBaseComponent
 	implements OnInit, AfterViewInit {
 	UPLOADER_PLACEHOLDER = 'FORM.PLACEHOLDERS.UPLOADER_PLACEHOLDER';
 
@@ -176,10 +177,11 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 		createdById?: string
 	) {
 		if (this.form.valid) {
+			const { tenant } = this.store.user;
 			const role = await this.roleService
 				.getRoleByName({
 					name: this.role.value ? this.role.value : defaultRoleName,
-					tenant: this.store.user.tenant
+					tenantId: tenant.id
 				})
 				.pipe(first())
 				.toPromise();
@@ -191,7 +193,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 				username: this.username.value || null,
 				imageUrl: this.imageUrl.value,
 				role,
-				tenant: this.store.user.tenant,
+				tenant,
 				tags: this.form.get('tags').value
 			};
 

@@ -3,11 +3,12 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { first, filter } from 'rxjs/operators';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { CandidateInterviewMutationComponent } from '../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
 import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
 import { Store } from '../../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../../@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-manage-candidate-interviews',
@@ -23,7 +24,7 @@ export class ManageCandidateInterviewsComponent
 	constructor(
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		public candidateInterviewService: CandidateInterviewService,
 		private store: Store
 	) {
@@ -88,8 +89,10 @@ export class ManageCandidateInterviewsComponent
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
 			this.toastrService.success(
-				this.getTranslation('TOASTR.TITLE.SUCCESS'),
-				this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_EDIT_CREATED`)
+				`TOASTR.MESSAGE.CANDIDATE_EDIT_CREATED`,
+				{
+					name: data.title
+				}
 			);
 			this.loadInterviews();
 		}

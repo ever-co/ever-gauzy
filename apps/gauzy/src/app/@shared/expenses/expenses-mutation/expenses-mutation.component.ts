@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { NbDialogRef, NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import {
 	FormBuilder,
 	Validators,
@@ -34,6 +34,7 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { OrganizationExpenseCategoriesService } from '../../../@core/services/organization-expense-categories.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -96,7 +97,7 @@ export class ExpensesMutationComponent
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly expenseCategoriesStore: OrganizationExpenseCategoriesService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private errorHandler: ErrorHandlingService
 	) {
@@ -190,10 +191,9 @@ export class ExpensesMutationComponent
 		name: string
 	): Promise<IOrganizationExpenseCategory> => {
 		try {
-			this.toastrService.primary(
-				this.getTranslation('EXPENSES_PAGE.ADD_EXPENSE_CATEGORY'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('EXPENSES_PAGE.ADD_EXPENSE_CATEGORY', {
+				name
+			});
 			return await this.expenseCategoriesStore.create({
 				name,
 				organizationId: this.organizationId,
@@ -206,14 +206,11 @@ export class ExpensesMutationComponent
 
 	addNewVendor = (name: string): Promise<IOrganizationVendor> => {
 		try {
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.ADD_VENDOR',
-					{
-						name: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.ADD_VENDOR',
+				{
+					name
+				}
 			);
 			return this.organizationVendorsService.create({
 				name,
@@ -229,14 +226,11 @@ export class ExpensesMutationComponent
 		name: string
 	): Promise<IOrganizationContact> => {
 		try {
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
-					{
-						name: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
+				{
+					name
+				}
 			);
 			return this.organizationContactService.create({
 				name,
@@ -252,14 +246,11 @@ export class ExpensesMutationComponent
 	addNewProject = (name: string): Promise<IOrganizationProject> => {
 		this.organizationId = this.store.selectedOrganization.id;
 		try {
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
-					{
-						name: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
+				{
+					name
+				}
 			);
 			return this.organizationProjectsService.create({
 				name,

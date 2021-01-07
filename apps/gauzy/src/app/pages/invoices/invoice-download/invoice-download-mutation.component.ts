@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { IInvoice } from '@gauzy/models';
 import * as pdfMake from 'pdfmake/build/pdfmake';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 import { Store } from '../../../@core/services/store.service';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-invoice-download',
@@ -19,7 +20,7 @@ export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
 	constructor(
 		protected dialogRef: NbDialogRef<InvoiceDownloadMutationComponent>,
 		readonly translateService: TranslateService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
 		private store: Store
 	) {
@@ -64,15 +65,10 @@ export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
 			tenantId: this.invoice.fromOrganization.tenantId
 		});
 
-		this.toastrService.primary(
+		this.toastrService.success(
 			this.isEstimate
-				? this.getTranslation(
-						'INVOICES_PAGE.DOWNLOAD.ESTIMATE_DOWNLOAD'
-				  )
-				: this.getTranslation(
-						'INVOICES_PAGE.DOWNLOAD.INVOICE_DOWNLOAD'
-				  ),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
+				? 'INVOICES_PAGE.DOWNLOAD.ESTIMATE_DOWNLOAD'
+				: 'INVOICES_PAGE.DOWNLOAD.INVOICE_DOWNLOAD'
 		);
 	}
 }

@@ -26,6 +26,21 @@ export class ToastrService {
 		);
 	}
 
+	warning(message: any, translationParams: Object = {}, title?: string) {
+		let displayMessage = '';
+
+		if (message && message.message && typeof message.message === 'string') {
+			displayMessage = message.message;
+		} else {
+			displayMessage = message;
+		}
+
+		this.nbToastrService.warning(
+			this.getTranslation(displayMessage, translationParams),
+			this.getTranslation(title || 'TOASTR.TITLE.WARNING')
+		);
+	}
+
 	danger(
 		error: any,
 		title: string = 'TOASTR.TITLE.ERROR',

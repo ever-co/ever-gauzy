@@ -1,10 +1,10 @@
 export const CandidatesPage = {
 	gridButtonCss: 'div.layout-switch > button',
-	inviteButtonCss: 'div.mb-3 > button[status="primary"]',
+	inviteButtonCss: 'div.float-left > button[status="primary"]',
 	emailInputCss: '#emailsSelect',
 	dateInputCss: '[placeholder="Date"]',
 	sendInviteButtonCss: 'nb-card-footer.text-right > button[status="success"]',
-	addButtonCss: 'div.mb-3 > button[status="success"]',
+	addButtonCss: 'div.float-left > button[status="success"]',
 	firstNameInputCss: '#inputFirstName',
 	lastNameInputCss: '#inputLastName',
 	usernameInputCss: '#inputUsername',

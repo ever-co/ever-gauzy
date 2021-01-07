@@ -23,7 +23,7 @@ import {
 	ActivatedRoute
 } from '@angular/router';
 import { PaymentMutationComponent } from '../invoices/invoice-payments/payment-mutation/payment-mutation.component';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
@@ -32,6 +32,7 @@ import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.co
 import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-estimate-history.service';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -73,7 +74,7 @@ export class PaymentsComponent
 		private router: Router,
 		private invoicesService: InvoicesService,
 		private organizationProjectsService: OrganizationProjectsService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
 		private _errorHandlingService: ErrorHandlingService,
 		private route: ActivatedRoute
@@ -300,10 +301,7 @@ export class PaymentsComponent
 				organizationId: this.organization.id,
 				tenantId
 			});
-			this.toastrService.primary(
-				this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE');
 			this.clearItem();
 		}
 	}

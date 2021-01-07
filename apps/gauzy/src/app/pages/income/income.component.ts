@@ -11,7 +11,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/models';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { debounceTime, filter, tap, withLatestFrom } from 'rxjs/operators';
@@ -26,6 +26,7 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './income.component.html',
@@ -38,7 +39,7 @@ export class IncomeComponent
 		private store: Store,
 		private incomeService: IncomeService,
 		private dialogService: NbDialogService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private route: ActivatedRoute,
 		private errorHandler: ErrorHandlingService,
 		readonly translateService: TranslateService,
@@ -250,24 +251,14 @@ export class IncomeComponent
 							isBonus: result.isBonus,
 							tags: result.tags
 						});
-						this.toastrService.primary(
-							this.getTranslation('NOTES.INCOME.ADD_INCOME', {
-								name: result.employee
-									? `${result.employee.firstName} ${result.employee.lastName}`
-									: this.getTranslation('SM_TABLE.EMPLOYEE')
-							}),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
-						);
+						this.toastrService.success('NOTES.INCOME.ADD_INCOME', {
+							name: result.employee
+								? `${result.employee.firstName} ${result.employee.lastName}`
+								: this.getTranslation('SM_TABLE.EMPLOYEE')
+						});
 						this._loadEmployeeIncomeData();
 					} catch (error) {
-						this.toastrService.danger(
-							this.getTranslation('NOTES.INCOME.INCOME_ERROR', {
-								error: error.error
-									? error.error.message
-									: error.message
-							}),
-							this.getTranslation('TOASTR.TITLE.ERROR')
-						);
+						this.toastrService.danger(error);
 					}
 				}
 			});
@@ -311,12 +302,9 @@ export class IncomeComponent
 									: null
 							}
 						);
-						this.toastrService.primary(
-							this.getTranslation('NOTES.INCOME.EDIT_INCOME', {
-								name: this.employeeName
-							}),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
-						);
+						this.toastrService.success('NOTES.INCOME.EDIT_INCOME', {
+							name: this.employeeName
+						});
 						this._loadEmployeeIncomeData();
 						this.clearItem();
 					} catch (error) {
@@ -349,11 +337,11 @@ export class IncomeComponent
 								? this.selectedIncome.employee.id
 								: null
 						);
-						this.toastrService.primary(
-							this.getTranslation('NOTES.INCOME.DELETE_INCOME', {
+						this.toastrService.success(
+							'NOTES.INCOME.DELETE_INCOME',
+							{
 								name: this.employeeName
-							}),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
+							}
 						);
 						this._loadEmployeeIncomeData();
 						this.clearItem();
@@ -403,12 +391,7 @@ export class IncomeComponent
 			this.incomes = incomeVM;
 			this.loading = false;
 		} catch (error) {
-			this.toastrService.danger(
-				this.getTranslation('NOTES.INCOME.INCOME_ERROR', {
-					error: error.error.message || error.message
-				}),
-				this.getTranslation('TOASTR.TITLE.ERROR')
-			);
+			this.toastrService.danger(error);
 		}
 		this.employeeName = this.store.selectedEmployee
 			? (

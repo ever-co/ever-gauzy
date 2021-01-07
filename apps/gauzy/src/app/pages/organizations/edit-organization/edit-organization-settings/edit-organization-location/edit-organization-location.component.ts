@@ -2,7 +2,6 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { IOrganization } from '@gauzy/models';
-import { NbToastrService } from '@nebular/theme';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
 import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
 import { filter, tap } from 'rxjs/operators';
@@ -13,6 +12,7 @@ import { Store } from '../../../../../@core/services/store.service';
 import { LocationFormComponent } from '../../../../../@shared/forms/location';
 import { LeafletMapComponent } from '../../../../../@shared/forms/maps/leaflet/leaflet.component';
 import { LatLng } from 'leaflet';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -37,7 +37,7 @@ export class EditOrganizationLocationComponent
 		private router: Router,
 		private fb: FormBuilder,
 		private organizationService: OrganizationsService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private organizationEditStore: OrganizationEditStore,
 		private store: Store,
 		readonly translateService: TranslateService
@@ -78,12 +78,11 @@ export class EditOrganizationLocationComponent
 		};
 
 		this.organizationService.update(this.organization.id, contactData);
-		this.toastrService.primary(
-			this.getTranslation(
-				'TOASTR.MESSAGE.ORGANIZATION_LOCATION_UPDATED',
-				{ name: this.organization.name }
-			),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		this.toastrService.success(
+			`TOASTR.MESSAGE.ORGANIZATION_LOCATION_UPDATED`,
+			{
+				name: this.organization.name
+			}
 		);
 		this.goBack();
 	}
