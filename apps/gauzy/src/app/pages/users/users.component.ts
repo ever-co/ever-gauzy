@@ -175,16 +175,12 @@ export class UsersComponent
 				this.userName = data.user.firstName + ' ' + data.user.lastName;
 			}
 			this.toastrService.success(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION',
-					{
-						username: this.userName.trim(),
-						orgname: this.store.selectedOrganization.name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+				'NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION',
+				{
+					username: this.userName.trim(),
+					orgname: this.store.selectedOrganization.name
+				}
 			);
-
 			this.loadPage();
 		}
 	}
@@ -197,16 +193,12 @@ export class UsersComponent
 				.toPromise();
 
 			this.toastrService.success(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION',
-					{
-						username: this.userName.trim(),
-						orgname: this.store.selectedOrganization.name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+				'NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION',
+				{
+					username: this.userName.trim(),
+					orgname: this.store.selectedOrganization.name
+				}
 			);
-
 			this.showAddCard = false;
 			this.loadPage();
 		}
@@ -265,26 +257,14 @@ export class UsersComponent
 						);
 
 						this.toastrService.success(
-							this.getTranslation(
-								'NOTES.ORGANIZATIONS.DELETE_USER_FROM_ORGANIZATION',
-								{
-									username: this.userName
-								}
-							),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
+							'NOTES.ORGANIZATIONS.DELETE_USER_FROM_ORGANIZATION',
+							{
+								username: this.userName
+							}
 						);
-
 						this.loadPage();
 					} catch (error) {
-						this.toastrService.danger(
-							this.getTranslation(
-								'NOTES.ORGANIZATIONS.DATA_ERROR',
-								{
-									error: error.error.message || error.message
-								}
-							),
-							this.getTranslation('TOASTR.TITLE.ERROR')
-						);
+						this.toastrService.danger(error);
 					}
 				}
 			});
@@ -329,19 +309,12 @@ export class UsersComponent
 							userOrganizationId
 						);
 
-						this.toastrService.success(
-							this.getTranslation('USERS_PAGE.REMOVE_USER', {
-								name: fullName
-							}),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
-						);
-
+						this.toastrService.success('USERS_PAGE.REMOVE_USER', {
+							name: fullName
+						});
 						this.loadPage();
 					} catch (error) {
-						this.toastrService.danger(
-							error.error.message || error.message,
-							'Error'
-						);
+						this.toastrService.danger(error);
 					}
 				}
 			});
