@@ -1057,9 +1057,9 @@
 		"RECURRING_EXPENSE": "Разходи, повтарящи се за служителя",
 		"RECURRING_EXPENSE_EDIT": "Редактирай текущите и всички бъдещи разходи. Няма да има промяна по ...",
 		"RECURRING_EXPENSE_ADD": "Това ще добави разход повтарящи се ежемесечно.",
-		"RECURRING_EXPENSE_SET": "{{ name }} recurring expense set.",
-		"RECURRING_EXPENSE_EDITED": "{{ name }} recurring expense edited.",
-		"RECURRING_EXPENSE_DELETED": "{{ name }} recurring expense deleted.",
+		"RECURRING_EXPENSE_SET": "'{{ name }}' recurring expense set.",
+		"RECURRING_EXPENSE_EDITED": "'{{ name }}' recurring expense edited.",
+		"RECURRING_EXPENSE_DELETED": "'{{ name }}' recurring expense deleted.",
 		"EMPLOYEE_NAME": "Служител",
 		"BACK_TO_WORK": "Връщане на работа",
 		"SELECT_EMPLOYEE_MSG": "Моля селектирайте служител от менюто по-долу.",
@@ -1549,8 +1549,8 @@
 			"DATE_LIMIT": "Date Limit",
 			"USER_ORGANIZATIONS": "{{ name }}'s List of Organizations",
 			"ADDED_TO_ORGANIZATION": " the organization",
-			"USER_WAS_DELETED": "{{ name }} was successfully deleted.",
-			"USER_WAS_REMOVED": "{{ name }} was successfully removed from organization.",
+			"USER_WAS_DELETED": "'{{ name }}' was removed",
+			"USER_WAS_REMOVED": "'{{ name }}' was removed from organization.",
 			"EMPLOYEE_POSITION": "Employee Position",
 			"PROJECT_URL": "Project Url",
 			"SETTINGS": {
@@ -2136,7 +2136,7 @@
 				"ru": "Руски"
 			}
 		},
-		"REMOVE_USER": "{{ name }} successfully removed"
+		"REMOVE_USER": "'{{ name }}' was removed"
 	},
 	"CONTEXT_MENU": {
 		"TIMER": "Страртирай таймер",
@@ -2263,8 +2263,8 @@
 		"ESTIMATES_PER_PAGE": "Estimates Per Page",
 		"APPLY_DISCOUNT_AFTER_TAX": "Apply discount after tax",
 		"SELECT_INVOICE_TO_VIEW_HISTORY": "Select an invoice to view it's history",
-		"INVOICE_SENT_TO": "Invoice sent to {{ name }}",
-		"ESTIMATE_SENT_TO": "Estimate sent to {{ name }}",
+		"INVOICE_SENT_TO": "Invoice sent to '{{ name }}'",
+		"ESTIMATE_SENT_TO": "Estimate sent to '{{ name }}'",
 		"INVOICE": "Фактура",
 		"ESTIMATE": "Estimate",
 		"ACTIONS": "Actions",
@@ -2500,8 +2500,8 @@
 			"PROJECT_LOAD": "Could Not Load Projects",
 			"COPIED": "Link copied to clipboard",
 			"INVITES_LOAD": "Could Not Load Invites",
-			"INVITES_RESEND": "Поканата е изпратена до {{ email }}.",
-			"INVITES_DELETE": "{{ email }} was removed",
+			"INVITES_RESEND": "Invite has been resent to '{{ email }}'.",
+			"INVITES_DELETE": "'{{ email }}' was removed",
 			"EMPLOYEE_DEPARTMENT_ADDED": "Employee added to department",
 			"EMPLOYEE_DEPARTMENT_REMOVED": "Employee removed from department",
 			"EMPLOYEE_PROJECT_ADDED": "Employee added to project",
@@ -2533,9 +2533,7 @@
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Доход добавен за",
 			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "Vendor name and year are required",
 			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "Language name and level are required",
-			"ORGANIZATION_LOCATION_UPDATED": "{{ name }} organization location updated.",
 			"MAIN_ORGANIZATION_UPDATED": "'{{ name }}' info was changed",
-			"ORGANIZATION_SETTINGS_UPDATED": "{{ name }} organization settings updated.",
 			"CANDIDATE_SKILL_REQUIRED": "Skill name is required",
 			"CANDIDATE_EDIT_CREATED": "Successfully Created",
 			"CANDIDATE_EDIT_UPDATED": "Successfully updated",
@@ -2607,8 +2605,9 @@
 			"PRESET_SAVED": "Preset successfully saved",
 			"JOB_APPLIED": "Job applied successfully",
 			"JOB_HIDDEN": "Job hidden successfully",
-			"ORGANIZATION_INFO_UPDATED": "{{ name }} organization main info updated.",
-			"ORGANIZATION_PAGE_UPDATED": "Page was changed for '{{ name }}'",
+			"ORGANIZATION_LOCATION_UPDATED": "'{{ name }}' organization location was changed",
+			"ORGANIZATION_INFO_UPDATED": "'{{ name }}' organization main info was changed",
+			"ORGANIZATION_SETTINGS_UPDATED": "'{{ name }}' organization settings was changed",
 			"SETTINS_SAVED": "Settings saved successfully",
 			"KEY_RESULTS_CREATED": "Key Results Created",
 			"INVITE_EMAIL_DELETED": "{{ name }} has been deleted.",
@@ -2646,7 +2645,8 @@
 			"RECURRING_EXPENSE_SET": "Recurring expense set for '{{ name }}'",
 			"RECURRING_EXPENSE_UPDATED": "Recurring expense was changed for '{{ name }}'",
 			"RECURRING_EXPENSE_DELETED": "Recurring expense was removed for '{{ name }}'",
-			"IMAGE_UPDATED": "The image has been updated"
+			"IMAGE_UPDATED": "The image has been updated",
+			"ORGANIZATION_PAGE_UPDATED": "Page was changed for '{{ name }}'"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -2676,15 +2676,15 @@
 			"INCOME_ERROR": "{{ error }}"
 		},
 		"INVOICE": {
-			"ADD_INVOICE": "Invoice added for {{ name }}",
-			"EDIT_INVOICE": "Invoice edited for {{ name }}",
-			"DELETE_INVOICE": "Invoice deleted for {{ name }}",
+			"ADD_INVOICE": "Invoice added for '{{ name }}'",
+			"EDIT_INVOICE": "Invoice edited for '{{ name }}'",
+			"DELETE_INVOICE": "Invoice deleted for '{{ name }}'",
 			"INVOICE_ERROR": "{{ error }}"
 		},
 		"EXPENSES": {
-			"ADD_EXPENSE": "Разход добавен за",
-			"OPEN_EDIT_EXPENSE_DIALOG": "Разход променен за",
-			"DELETE_EXPENSE": "Разход изтрит за",
+			"ADD_EXPENSE": "Expense added for '{{ name }}'",
+			"OPEN_EDIT_EXPENSE_DIALOG": "Expense edited for '{{ name }}'",
+			"DELETE_EXPENSE": "Expense deleted for '{{ name }}'",
 			"EXPENSES_ERROR": "{{ error }}"
 		},
 		"PROPOSALS": {
@@ -2724,10 +2724,10 @@
 			}
 		},
 		"ORGANIZATIONS": {
-			"ADD_NEW_ORGANIZATION": "{{ name }} organization created.",
-			"DELETE_ORGANIZATION": "{{ name }} организация е изтрита",
-			"ADD_NEW_USER_TO_ORGANIZATION": "добавен към",
-			"DELETE_USER_FROM_ORGANIZATION": "зададен като неактивен.",
+			"ADD_NEW_ORGANIZATION": "Organization '{{ name }}' was added",
+			"DELETE_ORGANIZATION": "Organization '{{ name }}' was removed",
+			"ADD_NEW_USER_TO_ORGANIZATION": "'{{ username }}' was added to '{{ orgname }}'",
+			"DELETE_USER_FROM_ORGANIZATION": "'{{ username }}' set as inactive.",
 			"DATA_ERROR": "{{ error }}",
 			"EDIT_ORGANIZATIONS_PROJECTS": {
 				"ADD_PROJECT": "Project '{{ name }}' was saved",
@@ -2769,10 +2769,10 @@
 				"INVALID_DEPARTMENT_NAME": "Please add a Department name"
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
-				"ADD_CLIENT": "Нов клиент {{ name }} успешно добавен!",
-				"REMOVE_CLIENT": "Клиентът {{ name }} е успешно премахнат!",
+				"ADD_CLIENT": "New client '{{ name }}' successfully added!",
+				"REMOVE_CLIENT": "Client '{{ name }}' successfully removed!",
 				"INVALID_CLIENT_DATA": "Please check the Name, Primary Email and Primary Phone of your client",
-				"INVITE_CLIENT": "Invitation email sent to {{ name }}.",
+				"INVITE_CLIENT": "Invitation email sent to '{{ name }}'.",
 				"INVITE_CLIENT_ERROR": "Some error occurred while trying to invite client.",
 				"EMAIL_EXISTS": "This client email already exists as a user"
 			},
@@ -2797,14 +2797,14 @@
 				"DELETE_RECURRING_EXPENSE": "Recurring expense was removed"
 			},
 			"EDIT_ORGANIZATIONS_AWARDS": {
-				"ADD_AWARD": "New award {{ name }} successfully added!",
+				"ADD_AWARD": "New award '{{ name }}' was added",
 				"INVALID_AWARD_NAME_YEAR": "Please check the Name and Year for Award input",
-				"REMOVE_AWARD": "Award {{ name }} successfully removed!"
+				"REMOVE_AWARD": "Award '{{ name }}' was removed"
 			},
 			"EDIT_ORGANIZATIONS_LANGUAGES": {
-				"ADD_LANGUAGE": "New language {{ name }} successfully added!",
+				"ADD_LANGUAGE": "New language '{{ name }}' was added",
 				"INVALID_LANGUAGE_NAME_LEVEL": "Please check the Name and Level for Language input",
-				"REMOVE_LANGUAGE": "Language {{ name }} successfully removed!"
+				"REMOVE_LANGUAGE": "Language '{{ name }}' was removed"
 			},
 			"EDIT_ORGANIZATION_DOCS": {
 				"CREATED": "Document '{{ name }}' was added",
@@ -3092,10 +3092,10 @@
 		"DEAL_ADDED": "Deal '{{ name }}' was added"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
-		"HEADER": "Edit Deal | Pipeline: {{ name }}"
+		"HEADER": "Edit Deal | Pipeline: '{{ name }}'"
 	},
 	"PIPELINE_DEAL_CREATE_PAGE": {
-		"HEADER": "Create Deal | Pipeline: {{ name }}",
+		"HEADER": "Create Deal | Pipeline: '{{ name }}'",
 		"SELECT_STAGE": "Select Stage",
 		"PROBABILITY": "Probability",
 		"SELECT_CLIENT": "Select Client"
@@ -3114,7 +3114,7 @@
 		"BUCKET": "Bucket"
 	},
 	"CUSTOM_SMTP_PAGE": {
-		"HEADER": "Manage SMTP for {{ name }}",
+		"HEADER": "Manage SMTP for '{{ name }}'",
 		"HOST": "Host",
 		"PORT": "Port",
 		"SECURE": "Secure",
@@ -3127,7 +3127,7 @@
 		"HEADER": "SMS Provider"
 	},
 	"FEATURE_PAGE": {
-		"HEADER": "Manage Features for {{ name }}"
+		"HEADER": "Manage Features for '{{ name }}'"
 	},
 	"SETTINGS": {
 		"EMAIL_HISTORY": {
