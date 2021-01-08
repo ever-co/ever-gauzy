@@ -334,7 +334,7 @@
 									/>
 								</div>
 
-								<span class="col" style="margin-top: 29px;">
+								<span class="col" style="margin-top: 29px">
 									<button
 										class="w-100"
 										(click)="
@@ -349,7 +349,7 @@
 										{{ 'BUTTONS.SAVE' | translate }}
 									</button></span
 								>
-								<span class="col" style="margin-top: 29px;"
+								<span class="col" style="margin-top: 29px"
 									><button
 										class="w-100"
 										(click)="showAddAward = !showAddAward"
@@ -378,7 +378,7 @@
 												e="medium"
 											>
 												<nb-action
-													(click)="removeAward(a.id)"
+													(click)="removeAward(a)"
 													class="d-inline pr-0 block_style"
 													icon="close"
 												></nb-action>
@@ -473,7 +473,7 @@
 									</nb-select>
 								</div>
 
-								<span class="col" style="margin-top: 29px;">
+								<span class="col" style="margin-top: 29px">
 									<button
 										class="w-100"
 										(click)="
@@ -490,7 +490,7 @@
 										{{ 'BUTTONS.SAVE' | translate }}
 									</button>
 								</span>
-								<span class="col" style="margin-top: 29px;">
+								<span class="col" style="margin-top: 29px">
 									<button
 										class="w-100"
 										(click)="
@@ -526,9 +526,7 @@
 												e="medium"
 											>
 												<nb-action
-													(click)="
-														removeLanguage(l.id)
-													"
+													(click)="removeLanguage(l)"
 													class="d-inline pr-0 block_style"
 													icon="close"
 												></nb-action>

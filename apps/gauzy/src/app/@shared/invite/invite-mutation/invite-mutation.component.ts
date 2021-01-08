@@ -7,13 +7,14 @@ import {
 	IOrganizationDepartment,
 	IOrganization
 } from '@gauzy/models';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { EmailInviteFormComponent } from '../forms/email-invite-form/email-invite-form.component';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-invite-mutation',
@@ -51,7 +52,7 @@ export class InviteMutationComponent
 		private organizationContactService: OrganizationContactService,
 		private organizationDepartmentsService: OrganizationDepartmentsService,
 		readonly translateService: TranslateService,
-		private toastrService: NbToastrService
+		private toastrService: ToastrService
 	) {
 		super(translateService);
 	}
@@ -62,10 +63,7 @@ export class InviteMutationComponent
 
 	async loadOrganizationData() {
 		if (!this.selectedOrganizationId) {
-			this.toastrService.warning(
-				this.getTranslation('TOASTR.MESSAGE.PROJECT_LOAD'),
-				this.getTranslation('TOASTR.TITLE.WARNING')
-			);
+			this.toastrService.warning('TOASTR.MESSAGE.PROJECT_LOAD');
 			return;
 		}
 
@@ -74,10 +72,7 @@ export class InviteMutationComponent
 			await this.loadOrganizationContacts();
 			await this.loadDepartments();
 		} catch (error) {
-			this.toastrService.danger(
-				error.error ? error.error.message : error.message,
-				this.getTranslation('TOASTR.TITLE.ERROR')
-			);
+			this.toastrService.danger(error);
 		}
 	}
 
@@ -127,26 +122,18 @@ export class InviteMutationComponent
 			} = await this.emailInviteForm.saveInvites();
 
 			if (ignored > 0) {
-				this.toastrService.warning(
-					this.getTranslation('INVITE_PAGE.IGNORED', {
-						total,
-						ignored
-					}),
-					this.getTranslation('TOASTR.TITLE.WARNING')
-				);
+				this.toastrService.warning('INVITE_PAGE.IGNORED', {
+					total,
+					ignored
+				});
 			} else {
-				this.toastrService.success(
-					this.getTranslation('INVITE_PAGE.SENT', { total }),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				);
+				this.toastrService.success('INVITE_PAGE.SENT', {
+					total
+				});
 			}
-
 			this.closeDialog(items);
 		} catch (error) {
-			this.toastrService.danger(
-				error.error ? error.error.message : error.message,
-				this.getTranslation('TOASTR.TITLE.ERROR')
-			);
+			this.toastrService.danger(error);
 		}
 	}
 }
