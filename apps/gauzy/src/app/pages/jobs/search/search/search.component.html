@@ -97,7 +97,7 @@
 										"
 										[value]="source?.value"
 										>{{
-											source.value | titlecase
+											'JOBS.' + source.value | translate
 										}}</nb-option
 									>
 								</nb-select>
@@ -121,7 +121,7 @@
 												| keyvalue
 										"
 										[value]="type.value"
-										>{{ type.value | titlecase }}
+										>{{ 'JOBS.' + type.key | translate }}
 									</nb-option>
 								</nb-select>
 							</div>
@@ -143,7 +143,10 @@
 												| keyvalue
 										"
 										[value]="type.value"
-										>{{ type.value | titlecase }}
+										>{{
+											'JOBS.STATUS_' + type.value
+												| translate
+										}}
 									</nb-option>
 								</nb-select>
 							</div>

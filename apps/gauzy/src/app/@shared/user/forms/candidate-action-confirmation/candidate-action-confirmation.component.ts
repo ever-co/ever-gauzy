@@ -31,7 +31,7 @@ import { NbDialogRef } from '@nebular/theme';
 					status="danger"
 					nbButton
 				>
-					OK
+					{{ 'BUTTONS.OK' | translate }}
 				</button>
 				<button (click)="close()" status="info" nbButton>
 					{{ 'BUTTONS.CANCEL' | translate }}
@@ -49,8 +49,8 @@ import { NbDialogRef } from '@nebular/theme';
 				align-items: center;
 				width: 300px;
 			}
-		`,
-	],
+		`
+	]
 })
 export class CandidateActionConfirmationComponent {
 	recordType: string;

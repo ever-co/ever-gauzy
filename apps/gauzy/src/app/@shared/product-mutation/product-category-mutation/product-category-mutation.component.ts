@@ -21,7 +21,8 @@ import { takeUntil } from 'rxjs/operators';
 	templateUrl: './product-category-mutation.component.html',
 	styleUrls: ['./product-category-mutation.component.scss']
 })
-export class ProductCategoryMutationComponent extends TranslationBaseComponent
+export class ProductCategoryMutationComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private ngDestroy$ = new Subject<void>();
 
@@ -160,7 +161,7 @@ export class ProductCategoryMutationComponent extends TranslationBaseComponent
 	handleImageUploadError(error: any) {
 		this.toastrService.danger(
 			error.error.message || error.message,
-			'Error'
+			'TOASTR.TITLE.ERROR'
 		);
 	}
 

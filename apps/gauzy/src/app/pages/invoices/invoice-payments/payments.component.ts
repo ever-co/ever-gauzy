@@ -57,6 +57,7 @@ export class InvoicePaymentsComponent
 	disableButton = true;
 	tenantId: string;
 	loading: boolean;
+	translatedText: any;
 
 	paymentsTable: Ng2SmartTableComponent;
 	@ViewChild('paymentsTable') set content(content: Ng2SmartTableComponent) {
@@ -252,14 +253,46 @@ export class InvoicePaymentsComponent
 			return;
 		}
 		pdfMake.vfs = pdfFonts.pdfMake.vfs;
+
+		this.translatedText = {
+			overdue: this.getTranslation('INVOICES_PAGE.PAYMENTS.OVERDUE'),
+			onTime: this.getTranslation('INVOICES_PAGE.PAYMENTS.ON_TIME'),
+			paymentDate: this.getTranslation(
+				'INVOICES_PAGE.PAYMENTS.PAYMENT_DATE'
+			),
+			amount: this.getTranslation('INVOICES_PAGE.PAYMENTS.AMOUNT'),
+			recordedBy: this.getTranslation(
+				'INVOICES_PAGE.PAYMENTS.RECORDED_BY'
+			),
+			note: this.getTranslation('INVOICES_PAGE.PAYMENTS.NOTE'),
+			status: this.getTranslation('INVOICES_PAGE.PAYMENTS.STATUS'),
+			paymentsForInvoice: this.getTranslation(
+				'INVOICES_PAGE.PAYMENTS.PAYMENTS_FOR_INVOICE'
+			),
+			dueDate: this.getTranslation('INVOICES_PAGE.DUE_DATE'),
+			totalValue: this.getTranslation(
+				'INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE'
+			),
+			totalPaid: this.getTranslation('INVOICES_PAGE.PAYMENTS.TOTAL_PAID'),
+			receivedFrom: this.getTranslation(
+				'INVOICES_PAGE.PAYMENTS.RECEIVED_FROM'
+			),
+			receiver: this.getTranslation('INVOICES_PAGE.PAYMENTS.RECEIVER')
+		};
+
 		const docDefinition = await generatePdf(
 			this.invoice,
 			this.payments,
 			this.invoice.fromOrganization,
 			this.invoice.toContact,
-			this.totalPaid
+			this.totalPaid,
+			this.translatedText
 		);
-		pdfMake.createPdf(docDefinition).download(`Payment.pdf`);
+		pdfMake
+			.createPdf(docDefinition)
+			.download(
+				`${this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT')}.pdf`
+			);
 		this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_DOWNLOAD');
 	}
 

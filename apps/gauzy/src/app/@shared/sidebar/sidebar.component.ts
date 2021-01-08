@@ -82,19 +82,30 @@ export class SidebarComponent
 
 		this.settingsContextMenu = [
 			{
-				title: 'Add Category'
+				title: this.getTranslation('HELP_PAGE.ADD_CATEGORY')
 			},
 			{
-				title: 'Edit Knowledge Base'
+				title: this.getTranslation('HELP_PAGE.EDIT_KNOWLAGE_BASE')
 			},
 			{
-				title: 'Delete Base'
+				title: this.getTranslation('HELP_PAGE.DELETE_BASE')
 			}
 		];
 		this.nbMenuService.onItemClick().subscribe((elem) => {
-			if (elem.item.title === 'Edit Knowledge Base') this.editBase();
-			if (elem.item.title === 'Add Category') this.addCategory();
-			if (elem.item.title === 'Delete Base') this.deleteBase();
+			if (
+				elem.item.title ===
+				this.getTranslation('HELP_PAGE.EDIT_KNOWLAGE_BASE')
+			)
+				this.editBase();
+			if (
+				elem.item.title ===
+				this.getTranslation('HELP_PAGE.ADD_CATEGORY')
+			)
+				this.addCategory();
+			if (
+				elem.item.title === this.getTranslation('HELP_PAGE.DELETE_BASE')
+			)
+				this.deleteBase();
 		});
 	}
 

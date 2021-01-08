@@ -20,18 +20,6 @@ import { OrganizationTeamsService } from '../../../@core/services/organization-t
 import { TasksService } from '../../../@core/services/tasks.service';
 import { ToastrService } from '../../../@core/services/toastr.service';
 
-const initialTaskValue = {
-	title: '',
-	project: null,
-	status: 'Todo',
-	members: null,
-	teams: null,
-	estimate: null,
-	dueDate: null,
-	description: '',
-	tags: null
-};
-
 @Component({
 	selector: 'ngx-add-task-dialog',
 	templateUrl: './add-task-dialog.component.html',
@@ -43,7 +31,12 @@ export class AddTaskDialogComponent
 	form: FormGroup;
 	selectedTaskId: string;
 	projects: IOrganizationProject[];
-	statuses: string[] = ['Todo', 'In Progress', 'For Testing', 'Completed'];
+	statuses: string[] = [
+		this.getTranslation('TASKS_PAGE.TODO'),
+		this.getTranslation('TASKS_PAGE.IN_PROGRESS'),
+		this.getTranslation('TASKS_PAGE.FOR_TESTING'),
+		this.getTranslation('TASKS_PAGE.COMPLETED')
+	];
 	employees: IEmployee[] = [];
 	teams: IOrganizationTeam[] = [];
 	selectedMembers: string[];
@@ -53,6 +46,17 @@ export class AddTaskDialogComponent
 	tenantId: string;
 	tags: ITag[] = [];
 	participants = 'employees';
+	initialTaskValue = {
+		title: '',
+		project: null,
+		status: this.getTranslation('TASKS_PAGE.TODO'),
+		members: null,
+		teams: null,
+		estimate: null,
+		dueDate: null,
+		description: '',
+		tags: null
+	};
 
 	@Input() createTask = false;
 	@Input() task: Partial<ITask> = {};
@@ -81,7 +85,11 @@ export class AddTaskDialogComponent
 		this.loadTeams();
 
 		this.initializeForm(
-			Object.assign({}, initialTaskValue, this.selectedTask || this.task)
+			Object.assign(
+				{},
+				this.initialTaskValue,
+				this.selectedTask || this.task
+			)
 		);
 	}
 

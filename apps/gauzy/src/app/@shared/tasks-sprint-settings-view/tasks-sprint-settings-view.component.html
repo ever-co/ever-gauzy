@@ -1,7 +1,9 @@
 <div class="sprints">
 	<div class="sprints__settings">
 		<nb-card>
-			<nb-card-header>Sprints Settings</nb-card-header>
+			<nb-card-header>{{
+				'TASKS_PAGE.SPRINTS_SETTINGS' | translate
+			}}</nb-card-header>
 			<nb-card-body *ngIf="sprints$ | async as sprints">
 				<ga-editable-grid
 					[itemTmpl]="item"
@@ -44,9 +46,11 @@
 						let-dialogRef="dialogRef"
 					>
 						<nb-card>
-							<nb-card-header>Delete Sprint</nb-card-header>
+							<nb-card-header>{{
+								'TASKS_PAGE.DELETE_SPRINT' | translate
+							}}</nb-card-header>
 							<nb-card-body
-								>Are you shure you want delete sprint:
+								>{{ 'TASKS_PAGE.ARE_YOU_SURE' | translate }}:
 								{{ sprint.name }}?</nb-card-body
 							>
 							<nb-card-footer>
@@ -56,14 +60,14 @@
 									class="mr-3"
 									(click)="dialogRef.close()"
 								>
-									No
+									{{ 'BUTTONS.NO' | translate }}
 								</button>
 								<button
 									nbButton
 									status="success"
 									(click)="dialogRef.close(sprint)"
 								>
-									Yes
+									{{ 'BUTTONS.YES' | translate }}
 								</button>
 							</nb-card-footer>
 						</nb-card>
@@ -77,7 +81,11 @@
 							<span class="col">{{ sprint.goal }}</span>
 							<span class="col d-flex flex-column">
 								<div class="row" *ngIf="sprint.startDate">
-									<span class="col-6">Date Start:</span>
+									<span class="col-6"
+										>{{
+											'TASKS_PAGE.DATE_START' | translate
+										}}:</span
+									>
 									<span class="col-6">{{
 										sprint.startDate
 											? moment(sprint.startDate).format(
@@ -87,7 +95,11 @@
 									}}</span>
 								</div>
 								<div class="row" *ngIf="sprint.startDate">
-									<span class="col-6">Date End:</span>
+									<span class="col-6"
+										>{{
+											'TASKS_PAGE.DATE_END' | translate
+										}}:</span
+									>
 									<span class="col-6">{{
 										sprint.startDate
 											? moment(sprint.endDate).format(

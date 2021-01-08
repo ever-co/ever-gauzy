@@ -25,7 +25,9 @@
 					bindName="id"
 					(change)="selectProject($event)"
 					[ngModel]="selectedProject$ | async"
-					placeholder="{{ 'FORM.PLACEHOLDERS.ALL_PROJECTS' }}"
+					placeholder="{{
+						'FORM.PLACEHOLDERS.ALL_PROJECTS' | translate
+					}}"
 				>
 					<ng-template
 						ng-option-tmp

@@ -23,7 +23,7 @@
 							*ngFor="let source of JobPostSourceEnum | keyvalue"
 							[value]="source.value"
 						>
-							{{ source.value | titlecase }}</nb-option
+							{{ 'JOBS.' + source.value | translate }}</nb-option
 						>
 					</nb-select>
 				</div>
@@ -73,7 +73,7 @@
 									>
 										<nb-icon icon="save-outline"></nb-icon>
 										{{ 'JOB_MATCHING.SAVE' | translate }}
-									</button>									
+									</button>
 								</ng-template>
 							</div>
 						</div>
@@ -180,11 +180,7 @@
 										"
 										[value]="type.value"
 									>
-										{{
-											type.key
-												| replace: '_':' '
-												| titlecase
-										}}
+										{{ 'JOBS.' + type.key | translate }}
 									</nb-radio>
 								</nb-radio-group>
 							</div>
