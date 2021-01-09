@@ -90,7 +90,11 @@
 		"BUY": "Buy",
 		"DELETE_ACCOUNT": "Delete your account",
 		"SELECT_AND_CONTINUE": "Select and Continue",
-		"ADD_KPI": "Add KPI"
+		"ADD_KPI": "Add KPI",
+		"PAID_DAYS_OFF": "Paid days off",
+		"UNPAID_DAYS_OFF": "Unpaid days off",
+		"CLEAR": "Clear",
+		"SET": "Set"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -297,6 +301,11 @@
 			"EMPLOYEE_LEVEL": "Employee Level",
 			"UNIT": "Unit",
 			"SELECT_EXISTING_OBJECTIVE": "Select Existing Objective",
+			"LENGTH": "Length",
+			"DATE_START": "Start date",
+			"END_DATE": "Крайна дата",
+			"GOAL": "Goal",
+			"DOWNLOAD_REQUEST_FORM": "Download Request Form",
 			"COORDINATE": {
 				"TITLE": "COORDINATES",
 				"LATITUDE": "Latitude",
@@ -456,7 +465,15 @@
 			"UPWORK_API_KEY": "Upwork API key",
 			"UPWORK_SECRET": "Upwork Secret",
 			"SELECT_COMPANY": "Select Company",
-			"TYPE_SEARCH_REQUEST": "Type your search request here..."
+			"TYPE_SEARCH_REQUEST": "Type your search request here...",
+			"SELECT_ICON": "Select Icon",
+			"SELECT": "Select",
+			"SPRINT_LENGTH": "Sprint length",
+			"SPRINT_START_DATE": "Sprint start date",
+			"SPRINT_END_DATE": "Sprint end date",
+			"SPRINT_GOAL": "Sprint goal",
+			"POLICY_NAME": "Policy Name",
+			"SELECT_DATE": "Select Date"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Норма по подразбиране",
@@ -1811,6 +1828,7 @@
 		"TIME_OFF_REQUEST": "Time off request",
 		"VIEW_REQUEST_DOCUMENT": "View Request Document",
 		"MULTIPLE_EMPLOYEES": "Multiple employees",
+		"UPLOAD_REQUEST_DOCUMENT": "Upload Request Document",
 		"STATUSES": {
 			"REQUESTED": "Requested",
 			"APPROVED": "Approved",
@@ -1830,7 +1848,8 @@
 			"EDIT_POLICY": "Edit Policy",
 			"NAME": "Име",
 			"REQUIRES_APPROVAL": "Requires Approval",
-			"PAID": "Paid"
+			"PAID": "Paid",
+			"NAME_IS_REQUIRED": "Name of Policy and selection of employees are required!"
 		},
 		"NOTIFICATIONS": {
 			"NO_CHANGES": "No changes",
@@ -2032,7 +2051,9 @@
 		"BACKLOG": "Backlog",
 		"EDIT_SPRINT": "Edit Sprint",
 		"DELETE_SPRINT": "Delete Sprint",
-		"SELECT": "Select"
+		"SELECT": "Select",
+		"SPRINTS_SETTINGS": "Sprints Settings",
+		"ARE_YOU_SURE": "Are you shure you want delete sprint"
 	},
 	"JOBS": {
 		"EMPLOYEE": "Служител",
@@ -2053,6 +2074,10 @@
 		"LOAD_MORE": "Load More",
 		"HIDE_ALL_CONFIRM": "Are you sure you want to Hide All jobs?",
 		"ACTIONS": "Actions",
+		"UPWORK": "Upwork",
+		"WEB": "Web",
+		"HOURLY": "Hourly",
+		"FIX_PRICE": "Fixed Price",
 		"FILTER": {
 			"TITLE": "Advanced Filter",
 			"SOURCE": "Source",
@@ -2107,7 +2132,9 @@
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Sprint added",
 		"SPRINT_UPDATED": "Sprint updated",
-		"SPRINT_DELETED": "Sprint deleted"
+		"SPRINT_DELETED": "Sprint deleted",
+		"SPRINT": "Sprint",
+		"ADD_SPRINT_NAME": "Add sprint name"
 	},
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
@@ -2353,7 +2380,8 @@
 			"SELECT_ESTIMATE_TO_VIEW_HISTORY": "Select an estimate to view it's history",
 			"ESTIMATE_ACCEPTED": "Estimate accepted",
 			"ESTEIMATE_REJECTED": "Estimate rejected",
-			"ERROR": "An error occured"
+			"ERROR": "An error occured",
+			"CONVERTED_TO_INVOICE": "Estimate converted to invoice"
 		},
 		"PAYMENTS": {
 			"HEADER": "Payments for Invoice",
@@ -2385,7 +2413,10 @@
 			"CHEQUE": "Cheque",
 			"CREDIT_CARD": "Credit Card",
 			"DEBIT": "Debit",
-			"ONLINE": "Online"
+			"ONLINE": "Online",
+			"PAYMENTS_FOR_INVOICE": "Payments for invoice",
+			"RECEIVED_FROM": "Received from",
+			"RECEIVER": "Receiver"
 		},
 		"INTERNAL_NOTE": {
 			"NOTE_SAVED": "Internal Note was added",
@@ -2459,6 +2490,8 @@
 		"EDIT_ARTICLE": "Edit Article",
 		"MANAGE_CATEGORY": "Manage Category",
 		"ADD_CATEGORY": "Add Category",
+		"EDIT_KNOWLAGE_BASE": "Edit Knowledge Base",
+		"DELETE_BASE": "Delete Base",
 		"LANGUAGE": "Език (Language)",
 		"PUBLISH_STATUS": "Publish Status",
 		"PRIVATE_STATUS": "Private Status",
@@ -2934,12 +2967,21 @@
 		"MEMBER_INFO": "Member info",
 		"THIS_WEEK": "This week",
 		"NO_MEMBER_ACTIVITY": "No member activity for the week",
+		"TITLE": "Title",
+		"URL": "Url",
+		"TIME_SPENT": "Time spent (hours)",
+		"ACTIVITY_LEVEL": "Activity Level",
 		"VALIDATION": {
 			"DESCRIPTION": "Description is required",
 			"TASK": "Please select task",
 			"PROJECT": "Please select project",
 			"EMPLOYEE": "Please select employee",
 			"REASON": "Please select reason"
+		},
+		"SCREENSHOTS": {
+			"SCREENSHOTS": "Screenshots",
+			"OF": "of",
+			"TIME_LOG": "TimeLog"
 		}
 	},
 	"ACTIVITY": {
@@ -3148,5 +3190,10 @@
 			}
 		}
 	},
-	"GAUZY_MAINTAINANCE": "Gauzy @ Maintenance"
+	"GAUZY_MAINTAINANCE": "Gauzy @ Maintenance",
+	"LEGAL": {
+		"PRIVACY_POLICY": "Privacy Policy",
+		"TERMS_AND_CONDITIONS": "Terms & Conditions"
+	},
+	"LOADING": "Loading, please hold...."
 }
