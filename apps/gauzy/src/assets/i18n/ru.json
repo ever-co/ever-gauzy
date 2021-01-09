@@ -90,7 +90,11 @@
 		"BUY": "Купить",
 		"DELETE_ACCOUNT": "Удалить учетную запись",
 		"SELECT_AND_CONTINUE": "Выбрать и продолжить",
-		"ADD_KPI": "Добавить KPI"
+		"ADD_KPI": "Добавить KPI",
+		"PAID_DAYS_OFF": "Выплаченные дни",
+		"UNPAID_DAYS_OFF": "Скидка неоплаченных дней",
+		"CLEAR": "Очистить",
+		"SET": "Задать"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -297,6 +301,11 @@
 			"EMPLOYEE_LEVEL": "Уровень сотрудника",
 			"UNIT": "Единица измерения",
 			"SELECT_EXISTING_OBJECTIVE": "Выбрать существующую цель",
+			"LENGTH": "Длина",
+			"DATE_START": "Начальная дата",
+			"END_DATE": "Дата окончания",
+			"GOAL": "Цель",
+			"DOWNLOAD_REQUEST_FORM": "Форма запроса на загрузку",
 			"COORDINATE": {
 				"TITLE": "КУРДИНАТ",
 				"LATITUDE": "Широта",
@@ -456,7 +465,15 @@
 			"UPWORK_API_KEY": "API ключ обновления",
 			"UPWORK_SECRET": "Секрет обхода",
 			"SELECT_COMPANY": "Выберите компанию",
-			"TYPE_SEARCH_REQUEST": "Введите ваш запрос на поиск..."
+			"TYPE_SEARCH_REQUEST": "Введите ваш запрос на поиск...",
+			"SELECT_ICON": "Выберите иконку",
+			"SELECT": "Выбрать",
+			"SPRINT_LENGTH": "Длина спринта",
+			"SPRINT_START_DATE": "Дата начала спринта",
+			"SPRINT_END_DATE": "Дата окончания спринта",
+			"SPRINT_GOAL": "Цель спринта",
+			"POLICY_NAME": "Название Политики",
+			"SELECT_DATE": "Выберите дату"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -1811,6 +1828,7 @@
 		"TIME_OFF_REQUEST": "Время отключения запроса",
 		"VIEW_REQUEST_DOCUMENT": "Просмотр запроса документа",
 		"MULTIPLE_EMPLOYEES": "Несколько сотрудников",
+		"UPLOAD_REQUEST_DOCUMENT": "Загрузить документ запроса",
 		"STATUSES": {
 			"REQUESTED": "Запрошено",
 			"APPROVED": "Одобрено",
@@ -1830,7 +1848,8 @@
 			"EDIT_POLICY": "Изменить политику",
 			"NAME": "Имя",
 			"REQUIRES_APPROVAL": "Требует одобрения",
-			"PAID": "Оплачено"
+			"PAID": "Оплачено",
+			"NAME_IS_REQUIRED": "Необходимо указать название политики и выбор сотрудников!"
 		},
 		"NOTIFICATIONS": {
 			"NO_CHANGES": "Нет изменений",
@@ -2032,7 +2051,9 @@
 		"BACKLOG": "Отложенные",
 		"EDIT_SPRINT": "Изменить спринт",
 		"DELETE_SPRINT": "Удалить спринт",
-		"SELECT": "Выбрать"
+		"SELECT": "Выбрать",
+		"SPRINTS_SETTINGS": "Настройки спринта",
+		"ARE_YOU_SURE": "Вы уверены, что хотите удалить спринт"
 	},
 	"JOBS": {
 		"EMPLOYEE": "Сотрудник",
@@ -2053,6 +2074,10 @@
 		"LOAD_MORE": "Загрузить больше",
 		"HIDE_ALL_CONFIRM": "Вы уверены, что хотите скрыть все работы?",
 		"ACTIONS": "Действия",
+		"UPWORK": "Обновления",
+		"WEB": "Веб",
+		"HOURLY": "Почасовой",
+		"FIX_PRICE": "Фиксированная цена",
 		"FILTER": {
 			"TITLE": "Расширенный фильтр",
 			"SOURCE": "Источник",
@@ -2107,7 +2132,9 @@
 	"SPRINTS_PAGE": {
 		"SPRINT_ADDED": "Спринт добавлен",
 		"SPRINT_UPDATED": "Спринт обновлен",
-		"SPRINT_DELETED": "Спринт удален"
+		"SPRINT_DELETED": "Спринт удален",
+		"SPRINT": "Спринт",
+		"ADD_SPRINT_NAME": "Добавить имя спринта"
 	},
 	"USERS_PAGE": {
 		"HEADER": "Управление пользователями для ",
@@ -2353,7 +2380,8 @@
 			"SELECT_ESTIMATE_TO_VIEW_HISTORY": "Выберите оценку, чтобы просмотреть её историю",
 			"ESTIMATE_ACCEPTED": "Принято оценивание",
 			"ESTEIMATE_REJECTED": "Оценка отклонена",
-			"ERROR": "Произошла ошибка"
+			"ERROR": "Произошла ошибка",
+			"CONVERTED_TO_INVOICE": "Преобразовано в счет"
 		},
 		"PAYMENTS": {
 			"HEADER": "Платежи за счет",
@@ -2385,7 +2413,10 @@
 			"CHEQUE": "Чек",
 			"CREDIT_CARD": "Кредитная карта",
 			"DEBIT": "Дебет",
-			"ONLINE": "Онлайн"
+			"ONLINE": "Онлайн",
+			"PAYMENTS_FOR_INVOICE": "Платежи за счет",
+			"RECEIVED_FROM": "Получено от",
+			"RECEIVER": "Приемник"
 		},
 		"INTERNAL_NOTE": {
 			"NOTE_SAVED": "Внутренняя заметка была добавлена",
@@ -2459,6 +2490,8 @@
 		"EDIT_ARTICLE": "Изменить статью",
 		"MANAGE_CATEGORY": "Управление категорией",
 		"ADD_CATEGORY": "Добавить категорию",
+		"EDIT_KNOWLAGE_BASE": "Редактировать базу знаний",
+		"DELETE_BASE": "Удалить базу",
 		"LANGUAGE": "Язык",
 		"PUBLISH_STATUS": "Статус публикации",
 		"PRIVATE_STATUS": "Частный статус",
@@ -2934,12 +2967,21 @@
 		"MEMBER_INFO": "Информация о участнике",
 		"THIS_WEEK": "Эта неделя",
 		"NO_MEMBER_ACTIVITY": "Нет активности членов за неделю",
+		"TITLE": "Заголовок",
+		"URL": "Url",
+		"TIME_SPENT": "Проведенное время (в часах)",
+		"ACTIVITY_LEVEL": "Уровень активности",
 		"VALIDATION": {
 			"DESCRIPTION": "Описание обязательно",
 			"TASK": "Пожалуйста, выберите задачу",
 			"PROJECT": "Пожалуйста, выберите проект",
 			"EMPLOYEE": "Пожалуйста, выберите сотрудника",
 			"REASON": "Пожалуйста, выберите причину"
+		},
+		"SCREENSHOTS": {
+			"SCREENSHOTS": "Скриншот",
+			"OF": "из",
+			"TIME_LOG": "Журнал времени"
 		}
 	},
 	"ACTIVITY": {
@@ -3148,5 +3190,10 @@
 			}
 		}
 	},
-	"GAUZY_MAINTAINANCE": "Обслуживание Gauzy @"
+	"GAUZY_MAINTAINANCE": "Обслуживание Gauzy @",
+	"LEGAL": {
+		"PRIVACY_POLICY": "Политика конфиденциальности",
+		"TERMS_AND_CONDITIONS": "Условия использования"
+	},
+	"LOADING": "Загрузка, пожалуйста удерживайте...."
 }
