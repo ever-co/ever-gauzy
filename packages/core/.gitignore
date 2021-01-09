@@ -1,0 +1,17 @@
+# dependencies
+node_modules/
+
+# sqlite3 database
+*.sqlite3
+
+# IDEs and editors
+/.idea
+
+# misc
+npm-debug.log
+dist
+
+# Typeorm Logs
+ormlogs.log
+
+.env

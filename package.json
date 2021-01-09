@@ -139,7 +139,8 @@
 	"workspaces": [
 		"libs/*",
 		"apps/*",
-		"tools"
+		"tools",
+		"packages/*"
 	],
 	"resolutions": {
 		"uglify-js": "npm:terser"

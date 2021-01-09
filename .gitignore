@@ -4,13 +4,14 @@
 /dist
 /tmp
 /out-tsc
+/packages/**/dist
 
 # dependencies
-/node_modules
-/apps/api/node_modules
+node_modules/
 
 # sqlite3 database
 /apps/api/data
+*.sqlite3
 
 # IDEs and editors
 /.idea
@@ -35,6 +36,7 @@
 /libpeerconnection.log
 npm-debug.log
 yarn-error.log
+lerna-debug.log
 testem.log
 /typings
 
