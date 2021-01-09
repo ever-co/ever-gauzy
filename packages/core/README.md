@@ -1,6 +1,6 @@
 # `@gauzy/core`
 
-> TODO: description
+Gauzy - A headless ERP/CRM/HRM framework.
 
 ## Usage
 

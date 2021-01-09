@@ -1,10 +1,10 @@
 # `@gauzy/common`
 
-> TODO: description
+Common code used internally in different Gauzy API packages.
 
 ## Usage
 
 ```
-const common = require('@plugin/common');
+const common = require('@gauzy/common');
 
 ```
