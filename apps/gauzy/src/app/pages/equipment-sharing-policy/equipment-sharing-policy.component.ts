@@ -9,7 +9,7 @@ import {
 } from '@gauzy/models';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { filter, first, tap } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { Store } from '../../@core/services/store.service';
@@ -18,6 +18,7 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sharing-policy.service';
 import { EquipmentSharingPolicyMutationComponent } from '../../@shared/equipment-sharing-policy/equipment-sharing-policy-mutation.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './equipment-sharing-policy.component.html',
@@ -51,7 +52,7 @@ export class EquipmentSharingPolicyComponent
 		readonly translateService: TranslateService,
 		private equipmentSharingPolicyService: EquipmentSharingPolicyService,
 		private dialogService: NbDialogService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private store: Store,
 		private router: Router
 	) {
@@ -150,11 +151,11 @@ export class EquipmentSharingPolicyComponent
 		this.disableButton = true;
 
 		if (equipmentSharingPolicy) {
-			this.toastrService.primary(
-				this.getTranslation(
-					'EQUIPMENT_SHARING_POLICY_PAGE.REQUEST_SAVED'
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'EQUIPMENT_SHARING_POLICY_PAGE.MESSAGES.EQUIPMENT_REQUEST_SAVED',
+				{
+					name: equipmentSharingPolicy.name
+				}
 			);
 		}
 
@@ -178,13 +179,14 @@ export class EquipmentSharingPolicyComponent
 			await this.equipmentSharingPolicyService.delete(
 				this.selectedEquipmentSharingPolicy.id
 			);
+
 			this.loadSettings();
 			this.clearItem();
-			this.toastrService.primary(
-				this.getTranslation(
-					'EQUIPMENT_SHARING_POLICY_PAGE.REQUEST_DELETED'
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'EQUIPMENT_SHARING_POLICY_PAGE.MESSAGES.EQUIPMENT_REQUEST_DELETED',
+				{
+					name: this.selectedEquipmentSharingPolicy.name
+				}
 			);
 		}
 	}

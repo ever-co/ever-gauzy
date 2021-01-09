@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { IInvoice, ITag, InvoiceStatusTypesEnum } from '@gauzy/models';
 import { InvoicesService } from '../../../@core/services/invoices.service';
 import { Store } from '../../../@core/services/store.service';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-invoice-send',
@@ -23,7 +24,7 @@ export class InvoiceSendMutationComponent
 		protected dialogRef: NbDialogRef<InvoiceSendMutationComponent>,
 		private invoicesService: InvoicesService,
 		readonly translateService: TranslateService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
 		private store: Store
 	) {
@@ -49,8 +50,12 @@ export class InvoiceSendMutationComponent
 
 		await this.invoiceEstimateHistoryService.add({
 			action: this.isEstimate
-				? `Estimate sent to ${this.invoice.toContact.name}`
-				: `Invoice sent to ${this.invoice.toContact.name}`,
+				? this.getTranslation('INVOICES_PAGE.ESTIMATE_SENT_TO', {
+						name: this.invoice.toContact.name
+				  })
+				: this.getTranslation('INVOICES_PAGE.INVOICE_SENT_TO', {
+						name: this.invoice.toContact.name
+				  }),
 			invoice: this.invoice,
 			invoiceId: this.invoice.id,
 			user: this.store.user,
@@ -59,11 +64,10 @@ export class InvoiceSendMutationComponent
 			organizationId: this.invoice.fromOrganization.id
 		});
 
-		this.toastrService.primary(
+		this.toastrService.success(
 			this.isEstimate
-				? this.getTranslation('INVOICES_PAGE.SEND_ESTIMATE')
-				: this.getTranslation('INVOICES_PAGE.SEND_INVOICE'),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
+				? 'INVOICES_PAGE.SEND_ESTIMATE'
+				: 'INVOICES_PAGE.SEND_INVOICE'
 		);
 	}
 }

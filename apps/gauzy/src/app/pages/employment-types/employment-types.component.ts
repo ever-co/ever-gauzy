@@ -9,7 +9,7 @@ import {
 	ComponentLayoutStyleEnum
 } from '@gauzy/models';
 import { first, takeUntil } from 'rxjs/operators';
-import { NbToastrService, NbDialogService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { Store } from '../../@core/services/store.service';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
@@ -18,6 +18,7 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { Subject } from 'rxjs/internal/Subject';
+import { ToastrService } from '../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-employment-types',
@@ -42,7 +43,7 @@ export class EmploymentTypesComponent
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private fb: FormBuilder,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		private dialogService: NbDialogService,
 		private store: Store,
 		private organizationEmploymentTypesService: OrganizationEmploymentTypesService,
@@ -134,24 +135,18 @@ export class EmploymentTypesComponent
 				.subscribe((data) => {
 					this.organizationEmploymentTypes.push(data);
 				});
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ADD_EMPLOYMENT_TYPE',
-					{
-						name: this.form.get('name').value
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ADD_EMPLOYMENT_TYPE',
+				{
+					name: this.form.get('name').value
+				}
 			);
 			this.showAddCard = !this.showAddCard;
 		} else {
-			this.toastrService.danger(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.INVALID_EMPLOYMENT_TYPE'
-				),
-				this.getTranslation(
-					'TOASTR.MESSAGE.NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE'
-				)
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.INVALID_EMPLOYMENT_TYPE',
+				null,
+				'TOASTR.MESSAGE.NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE'
 			);
 		}
 	}
@@ -171,7 +166,7 @@ export class EmploymentTypesComponent
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
-					recordType: 'Employment Type'
+					recordType: 'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE'
 				}
 			})
 			.onClose.pipe(first())
@@ -181,14 +176,11 @@ export class EmploymentTypesComponent
 			await this.organizationEmploymentTypesService.deleteEmploymentType(
 				id
 			);
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.DELETE_EMPLOYMENT_TYPE',
-					{
-						name: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.DELETE_EMPLOYMENT_TYPE',
+				{
+					name: name
+				}
 			);
 			this.organizationEmploymentTypes = this.organizationEmploymentTypes.filter(
 				(t) => t['id'] !== id
@@ -233,14 +225,11 @@ export class EmploymentTypesComponent
 			id,
 			orgEmpTypeForEdit
 		);
-		this.toastrService.primary(
-			this.getTranslation(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.UPDATE_EMPLOYMENT_TYPE',
-				{
-					name: name
-				}
-			),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		this.toastrService.success(
+			'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.UPDATE_EMPLOYMENT_TYPE',
+			{
+				name: name
+			}
 		);
 		this.cancel();
 	}

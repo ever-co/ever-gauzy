@@ -10,7 +10,8 @@ export async function generatePdf(
 	payments: IPayment[],
 	organization: IOrganization,
 	organizationContact: IOrganizationContact,
-	totalPaid: number
+	totalPaid: number,
+	translatedText?: any
 ) {
 	const body = [];
 
@@ -24,32 +25,36 @@ export async function generatePdf(
 				payment.recordedBy.lastName ? payment.recordedBy.lastName : ''
 			}`,
 			`${payment.note}`,
-			`${payment.overdue ? 'Overdue' : 'On time'}`
+			`${
+				payment.overdue ? translatedText.overdue : translatedText.onTime
+			}`
 		];
 		body.push(currentPayment);
 	}
 
 	const widths = ['20%', '20%', '20%', '20%', '20%'];
 	const tableHeader = [
-		'Payment Date',
-		'Amount',
-		'Recorded By',
-		'Note',
-		'Status'
+		translatedText.paymentDate,
+		translatedText.amount,
+		translatedText.recordedBy,
+		translatedText.note,
+		translatedText.status
 	];
 
 	const docDefinition = {
 		content: [
 			{
 				width: '*',
-				text: `Payments for invoice ${invoice.invoiceNumber}`,
+				text: `${translatedText.paymentsForInvoice} ${invoice.invoiceNumber}`,
 				fontSize: 20
 			},
 			' ',
 			' ',
 			{
 				width: '*',
-				text: `Due date: ${invoice.dueDate.toString().slice(0, 10)}`
+				text: `${
+					translatedText.dueDate
+				}: ${invoice.dueDate.toString().slice(0, 10)}`
 			},
 			' ',
 			' ',
@@ -57,11 +62,11 @@ export async function generatePdf(
 				columns: [
 					{
 						width: '50%',
-						text: `Total value: ${invoice.totalValue} ${invoice.currency}`
+						text: `${translatedText.totalValue}: ${invoice.totalValue} ${invoice.currency}`
 					},
 					{
 						width: '50%',
-						text: `Total paid: ${totalPaid} ${invoice.currency}`
+						text: `${translatedText.totalPaid}: ${totalPaid} ${invoice.currency}`
 					}
 				]
 			},
@@ -71,11 +76,11 @@ export async function generatePdf(
 				columns: [
 					{
 						width: '50%',
-						text: `Received from: ${organizationContact.name}`
+						text: `${translatedText.receivedFrom}: ${organizationContact.name}`
 					},
 					{
 						width: '50%',
-						text: `Receiver: ${organization.name}`
+						text: `${translatedText.receiver}: ${organization.name}`
 					}
 				]
 			},

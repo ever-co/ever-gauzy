@@ -1,13 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject } from 'rxjs';
 import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
-import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { CandidatePersonalQualitiesService } from 'apps/gauzy/src/app/@core/services/candidate-personal-qualities.service';
 import { ICandidatePersonalQualities, IOrganization } from '@gauzy/models';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-candidate-personal-qualities',
@@ -26,7 +26,7 @@ export class CandidatePersonalQualitiesComponent
 	organization: IOrganization;
 	constructor(
 		private fb: FormBuilder,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService,
 		private readonly store: Store
@@ -117,17 +117,19 @@ export class CandidatePersonalQualitiesComponent
 					}
 				);
 				this.editId = null;
-				this.toastrSuccess('UPDATED');
+				this.toastrService.success(
+					'TOASTR.MESSAGE.PERSONAL_QUALITIES_UPDATED',
+					{
+						name: formValue.name
+					}
+				);
 				this.loadQualities();
 			} catch (error) {
 				this.toastrError(error);
 			}
 		} else {
 			this.toastrService.danger(
-				this.getTranslation(
-					'CANDIDATES_PAGE.CRITERIONS.TOASTR_ALREADY_EXIST'
-				),
-				this.getTranslation('TOASTR.TITLE.ERROR')
+				'CANDIDATES_PAGE.CRITERIONS.TOASTR_ALREADY_EXIST'
 			);
 		}
 	}
@@ -138,17 +140,19 @@ export class CandidatePersonalQualitiesComponent
 				await this.candidatePersonalQualitiesService.create({
 					...formValue
 				});
-				this.toastrSuccess('CREATED');
+				this.toastrService.success(
+					'TOASTR.MESSAGE.PERSONAL_QUALITIES_CREATED',
+					{
+						name: formValue.name
+					}
+				);
 				this.loadQualities();
 			} catch (error) {
 				this.toastrError(error);
 			}
 		} else {
 			this.toastrService.danger(
-				this.getTranslation(
-					'CANDIDATES_PAGE.CRITERIONS.TOASTR_ALREADY_EXIST'
-				),
-				this.getTranslation('TOASTR.TITLE.ERROR')
+				'CANDIDATES_PAGE.CRITERIONS.TOASTR_ALREADY_EXIST'
 			);
 		}
 	}
@@ -159,11 +163,16 @@ export class CandidatePersonalQualitiesComponent
 			this.personalQualitiesList[index]
 		]);
 	}
-	async remove(id: string) {
+	async remove(quantity: ICandidatePersonalQualities) {
 		try {
-			await this.candidatePersonalQualitiesService.delete(id);
+			await this.candidatePersonalQualitiesService.delete(quantity.id);
 			this.loadQualities();
-			this.toastrSuccess('DELETED');
+			this.toastrService.success(
+				'TOASTR.MESSAGE.PERSONAL_QUALITIES_DELETED',
+				{
+					name: quantity.name
+				}
+			);
 		} catch (error) {
 			this.toastrError(error);
 		}
@@ -173,18 +182,13 @@ export class CandidatePersonalQualitiesComponent
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
 	}
+
 	private toastrError(error) {
 		this.toastrService.danger(
 			this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
 				error: error.error ? error.error.message : error.message
 			}),
 			this.getTranslation('TOASTR.TITLE.ERROR')
-		);
-	}
-	private toastrSuccess(text: string) {
-		this.toastrService.success(
-			this.getTranslation('TOASTR.TITLE.SUCCESS'),
-			this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_EDIT_${text}`)
 		);
 	}
 

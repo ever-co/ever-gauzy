@@ -181,7 +181,9 @@ export class ProposalTemplateComponent
 						cell,
 						row: IEmployeeProposalTemplate
 					) => {
-						return row.isDefault ? 'Yes' : 'No';
+						return row.isDefault
+							? this.getTranslation('PROPOSAL_TEMPLATE.YES')
+							: this.getTranslation('PROPOSAL_TEMPLATE.NO');
 					}
 				}
 			}

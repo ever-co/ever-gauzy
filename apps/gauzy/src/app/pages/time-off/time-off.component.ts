@@ -299,7 +299,11 @@ export class TimeOffComponent
 		}
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
-				context: { recordType: 'Time off request' }
+				context: {
+					recordType: this.getTranslation(
+						'TIME_OFF_PAGE.TIME_OFF_REQUEST'
+					)
+				}
 			})
 			.onClose.pipe(first())
 			.subscribe((res) => {
@@ -468,7 +472,9 @@ export class TimeOffComponent
 						let extendedDescription = '';
 
 						if (result.employees.length !== 1) {
-							employeeName = 'Multiple employees';
+							employeeName = this.getTranslation(
+								'TIME_OFF_PAGE.MULTIPLE_EMPLOYEES'
+							);
 							employeeImage =
 								'assets/images/avatars/people-outline.svg';
 						} else {
@@ -477,7 +483,11 @@ export class TimeOffComponent
 						}
 
 						if (result.documentUrl) {
-							extendedDescription = `<a href=${result.documentUrl} target="_blank">View Request Document</a><br>${result.description}`;
+							extendedDescription = `<a href=${
+								result.documentUrl
+							} target="_blank">${this.getTranslation(
+								'TIME_OFF_PAGE.VIEW_REQUEST_DOCUMENT'
+							)}</a><br>${result.description}`;
 						} else {
 							extendedDescription = result.description;
 						}

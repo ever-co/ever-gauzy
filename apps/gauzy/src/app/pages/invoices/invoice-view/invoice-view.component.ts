@@ -7,7 +7,6 @@ import { IInvoice, InvoiceTypeEnum, IUser } from '@gauzy/models';
 import * as pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 import { generatePdf } from '../../../@shared/invoice/generate-pdf';
-import { NbToastrService } from '@nebular/theme';
 import { EmployeesService } from '../../../@core/services';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { TasksService } from '../../../@core/services/tasks.service';
@@ -16,6 +15,7 @@ import { ExpensesService } from '../../../@core/services/expenses.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '../../../@core/services/store.service';
 import { filter } from 'rxjs/operators';
+import { ToastrService } from '../../../@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-invoice-view',
@@ -35,7 +35,7 @@ export class InvoiceViewComponent
 		readonly translateService: TranslateService,
 		private route: ActivatedRoute,
 		private invoicesService: InvoicesService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private employeeService: EmployeesService,
 		private projectService: OrganizationProjectsService,
 		private taskService: TasksService,
@@ -121,20 +121,17 @@ export class InvoiceViewComponent
 		pdfMake
 			.createPdf(docDefinition)
 			.download(
-				`${this.isEstimate ? 'Estimate' : 'Invoice'}-${
-					this.invoice.invoiceNumber
-				}.pdf`
+				`${
+					this.isEstimate
+						? this.getTranslation('INVOICES_PAGE.ESTIMATE')
+						: this.getTranslation('INVOICES_PAGE.INVOICE')
+				}-${this.invoice.invoiceNumber}.pdf`
 			);
 
-		this.toastrService.primary(
+		this.toastrService.success(
 			this.isEstimate
-				? this.getTranslation(
-						'INVOICES_PAGE.DOWNLOAD.ESTIMATE_DOWNLOAD'
-				  )
-				: this.getTranslation(
-						'INVOICES_PAGE.DOWNLOAD.INVOICE_DOWNLOAD'
-				  ),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
+				? 'INVOICES_PAGE.DOWNLOAD.ESTIMATE_DOWNLOAD'
+				: 'INVOICES_PAGE.DOWNLOAD.INVOICE_DOWNLOAD'
 		);
 	}
 

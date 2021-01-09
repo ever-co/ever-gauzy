@@ -4,6 +4,8 @@ import { NbThemeService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { monthNames } from 'apps/gauzy/src/app/@core/utils/date';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ga-employee-horizontal-bar-chart',
@@ -27,6 +29,7 @@ import { monthNames } from 'apps/gauzy/src/app/@core/utils/date';
 	`
 })
 export class EmployeeHorizontalBarChartComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy, OnChanges {
 	private _ngDestroy$ = new Subject<void>();
 	data: any;
@@ -41,7 +44,12 @@ export class EmployeeHorizontalBarChartComponent
 	@Input()
 	employeeStatistics: IMonthAggregatedEmployeeStatistics[];
 
-	constructor(private themeService: NbThemeService) {}
+	constructor(
+		private themeService: NbThemeService,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this._loadData();
@@ -70,30 +78,46 @@ export class EmployeeHorizontalBarChartComponent
 					datasets: [
 						{
 							label: this.selectedDate
-								? `Revenue: ${this.incomeStatistics}`
-								: `Revenue`,
+								? `${this.getTranslation(
+										'DASHBOARD_PAGE.CHARTS.REVENUE'
+								  )}: ${this.incomeStatistics}`
+								: this.getTranslation(
+										'DASHBOARD_PAGE.CHARTS.REVENUE'
+								  ),
 							backgroundColor: '#089c17',
 							borderWidth: 1,
 							data: this.incomeStatistics
 						},
 						{
 							label: this.selectedDate
-								? `Expenses: ${this.expenseStatistics}`
-								: `Expenses`,
+								? `${this.getTranslation(
+										'DASHBOARD_PAGE.CHARTS.EXPENSES'
+								  )}: ${this.expenseStatistics}`
+								: this.getTranslation(
+										'DASHBOARD_PAGE.CHARTS.EXPENSES'
+								  ),
 							backgroundColor: '#dbc300',
 							data: this.expenseStatistics
 						},
 						{
 							label: this.selectedDate
-								? `Profit: ${this.profitStatistics}`
-								: `Profit`,
+								? `${this.getTranslation(
+										'DASHBOARD_PAGE.CHARTS.PROFIT'
+								  )}: ${this.profitStatistics}`
+								: this.getTranslation(
+										'DASHBOARD_PAGE.CHARTS.PROFIT'
+								  ),
 							backgroundColor: profitColors,
 							data: this.profitStatistics
 						},
 						{
 							label: this.selectedDate
-								? `Bonus: ${this.bonusStatistics}`
-								: `Bonus`,
+								? `${this.getTranslation(
+										'DASHBOARD_PAGE.CHARTS.BONUS'
+								  )}: ${this.bonusStatistics}`
+								: this.getTranslation(
+										'DASHBOARD_PAGE.CHARTS.BONUS'
+								  ),
 							backgroundColor: bonusColors,
 							data: this.bonusStatistics
 						}

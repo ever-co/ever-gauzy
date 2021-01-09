@@ -99,19 +99,19 @@ export interface IJobPost {
 }
 
 export enum JobPostSourceEnum {
-	UPWORK = 'Upwork',
-	WEB = 'Web'
+	UPWORK = 'UPWORK',
+	WEB = 'WEB'
 }
 
 export enum JobPostStatusEnum {
-	OPEN = 'Open',
-	APPLIED = 'Applied',
-	CLOSED = 'Closed'
+	OPEN = 'OPEN',
+	APPLIED = 'APPLIED',
+	CLOSED = 'CLOSED'
 }
 
 export enum JobPostTypeEnum {
-	HOURLY = 'Hourly',
-	FIX_PRICE = 'Fixed Price'
+	HOURLY = 'HOURLY',
+	FIX_PRICE = 'FIX_PRICE'
 }
 
 export interface IUpdateEmployeeJobPostAppliedResult {

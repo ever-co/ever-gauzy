@@ -10,7 +10,7 @@ export class RoleService {
 
 	getRoleByName(findInput?: {
 		name: RolesEnum;
-		tenant: ITenant;
+		tenantId: ITenant['id'];
 	}): Observable<IRole> {
 		const data = JSON.stringify({ findInput });
 		return this.http.get<IRole>(`/api/role`, {

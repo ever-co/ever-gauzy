@@ -7,7 +7,7 @@ import {
 	ITag
 } from '@gauzy/models';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { Store } from '../../../@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,18 +18,7 @@ import { EmployeesService } from '../../../@core/services';
 import { first } from 'rxjs/operators';
 import { OrganizationTeamsService } from '../../../@core/services/organization-teams.service';
 import { TasksService } from '../../../@core/services/tasks.service';
-
-const initialTaskValue = {
-	title: '',
-	project: null,
-	status: 'Todo',
-	members: null,
-	teams: null,
-	estimate: null,
-	dueDate: null,
-	description: '',
-	tags: null
-};
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ngx-add-task-dialog',
@@ -42,7 +31,12 @@ export class AddTaskDialogComponent
 	form: FormGroup;
 	selectedTaskId: string;
 	projects: IOrganizationProject[];
-	statuses: string[] = ['Todo', 'In Progress', 'For Testing', 'Completed'];
+	statuses: string[] = [
+		this.getTranslation('TASKS_PAGE.TODO'),
+		this.getTranslation('TASKS_PAGE.IN_PROGRESS'),
+		this.getTranslation('TASKS_PAGE.FOR_TESTING'),
+		this.getTranslation('TASKS_PAGE.COMPLETED')
+	];
 	employees: IEmployee[] = [];
 	teams: IOrganizationTeam[] = [];
 	selectedMembers: string[];
@@ -52,6 +46,17 @@ export class AddTaskDialogComponent
 	tenantId: string;
 	tags: ITag[] = [];
 	participants = 'employees';
+	initialTaskValue = {
+		title: '',
+		project: null,
+		status: this.getTranslation('TASKS_PAGE.TODO'),
+		members: null,
+		teams: null,
+		estimate: null,
+		dueDate: null,
+		description: '',
+		tags: null
+	};
 
 	@Input() createTask = false;
 	@Input() task: Partial<ITask> = {};
@@ -62,7 +67,7 @@ export class AddTaskDialogComponent
 		private store: Store,
 		private organizationProjectsService: OrganizationProjectsService,
 		readonly translateService: TranslateService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		private errorHandler: ErrorHandlingService,
 		private employeesService: EmployeesService,
 		private tasksService: TasksService,
@@ -80,7 +85,11 @@ export class AddTaskDialogComponent
 		this.loadTeams();
 
 		this.initializeForm(
-			Object.assign({}, initialTaskValue, this.selectedTask || this.task)
+			Object.assign(
+				{},
+				this.initialTaskValue,
+				this.selectedTask || this.task
+			)
 		);
 	}
 
@@ -138,14 +147,11 @@ export class AddTaskDialogComponent
 		this.organizationId = this.store.selectedOrganization.id;
 		this.tenantId = this.store.user.tenantId;
 		try {
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
-					{
-						name: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
+				{
+					name: name
+				}
 			);
 			return this.organizationProjectsService.create({
 				name,

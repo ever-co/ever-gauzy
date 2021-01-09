@@ -5,7 +5,6 @@ import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
-import { NbToastrService } from '@nebular/theme';
 import { CandidateExperienceService } from 'apps/gauzy/src/app/@core/services/candidate-experience.service';
 import {
 	ICandidateExperience,
@@ -15,6 +14,7 @@ import {
 import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { LocalDataSource } from 'ng2-smart-table';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-edit-candidate-experience-form',
@@ -39,7 +39,7 @@ export class EditCandidateExperienceFormComponent
 	loading: boolean;
 	@ViewChild('experienceTable') experienceTable;
 	constructor(
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private candidateStore: CandidateStore,
 		private fb: FormBuilder,
@@ -115,10 +115,8 @@ export class EditCandidateExperienceFormComponent
 		const experienceForm = this.experiences;
 		if (experienceForm.invalid) {
 			this.toastrService.danger(
-				this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.INVALID_FORM'),
-				this.getTranslation(
-					'TOASTR.MESSAGE.CANDIDATE_EXPERIENCE_REQUIRED'
-				)
+				'TOASTR.MESSAGE.CANDIDATE_EXPERIENCE_REQUIRED',
+				'NOTES.CANDIDATE.EXPERIENCE.INVALID_FORM'
 			);
 			return;
 		}
@@ -136,7 +134,12 @@ export class EditCandidateExperienceFormComponent
 					}
 				);
 				this.loadExperience();
-				this.toastrSuccess('UPDATED');
+				this.toastrService.success(
+					'TOASTR.MESSAGE.CANDIDATE_EXPERIENCE_UPDATED',
+					{
+						name: formValue.occupation
+					}
+				);
 			} catch (error) {
 				this.toastrError(error);
 			}
@@ -149,7 +152,12 @@ export class EditCandidateExperienceFormComponent
 					organizationId,
 					tenantId
 				});
-				this.toastrSuccess('CREATED');
+				this.toastrService.success(
+					'TOASTR.MESSAGE.CANDIDATE_EXPERIENCE_CREATED',
+					{
+						name: formValue.occupation
+					}
+				);
 				this.loadExperience();
 			} catch (error) {
 				this.toastrError(error);
@@ -164,7 +172,12 @@ export class EditCandidateExperienceFormComponent
 			await this.candidateExperienceService.delete(selectedItem.id);
 			this.selectedExperience = null;
 			this.disableButton = true;
-			this.toastrSuccess('DELETED');
+			this.toastrService.success(
+				'TOASTR.MESSAGE.CANDIDATE_EXPERIENCE_DELETED',
+				{
+					name: selectedItem.occupation
+				}
+			);
 			this.loadExperience();
 		} catch (error) {
 			this.toastrError(error);
@@ -245,12 +258,7 @@ export class EditCandidateExperienceFormComponent
 						: this.selectedExperience;
 			});
 	}
-	private toastrSuccess(text: string) {
-		this.toastrService.success(
-			this.getTranslation('TOASTR.TITLE.SUCCESS'),
-			this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_EDIT_${text}`)
-		);
-	}
+
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange.subscribe(() => {
 			this.loadSmartTable();

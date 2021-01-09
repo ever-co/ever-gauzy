@@ -78,59 +78,59 @@ export interface IInvoiceFindInput
 }
 
 export enum InvoiceTypeEnum {
-	BY_EMPLOYEE_HOURS = 'By Employee Hours',
-	BY_PROJECT_HOURS = 'By Project Hours',
-	BY_TASK_HOURS = 'By Task Hours',
-	BY_PRODUCTS = 'By Products',
-	BY_EXPENSES = 'By Expenses',
-	DETAILS_INVOICE_ITEMS = 'Details Invoice Items'
+	BY_EMPLOYEE_HOURS = 'BY_EMPLOYEE_HOURS',
+	BY_PROJECT_HOURS = 'BY_PROJECT_HOURS',
+	BY_TASK_HOURS = 'BY_TASK_HOURS',
+	BY_PRODUCTS = 'BY_PRODUCTS',
+	BY_EXPENSES = 'BY_EXPENSES',
+	DETAILED_ITEMS = 'DETAILED_ITEMS'
 }
 
 export enum DiscountTaxTypeEnum {
-	PERCENT = 'Percent',
-	FLAT_VALUE = 'Flat'
+	PERCENT = 'PERCENT',
+	FLAT_VALUE = 'FLAT'
 }
 
 export enum InvoiceStatusTypesEnum {
-	DRAFT = 'Draft',
-	SENT = 'Sent',
-	VIEWED = 'Viewed',
-	FULLY_PAID = 'Fully Paid',
-	PARTIALLY_PAID = 'Partially Paid',
-	OVERPAID = 'Overpaid',
-	VOID = 'Void'
+	DRAFT = 'DRAFT',
+	SENT = 'SENT',
+	VIEWED = 'VIEWED',
+	FULLY_PAID = 'FULLY_PAID',
+	PARTIALLY_PAID = 'PARTIALLY_PAID',
+	OVERPAID = 'OVERPAID',
+	VOID = 'VOID'
 }
 
 export enum EstimateStatusTypesEnum {
-	DRAFT = 'Draft',
-	SENT = 'Sent',
-	VIEWED = 'Viewed',
-	ACCEPTED = 'Accepted',
-	REJECTED = 'Rejected',
-	VOID = 'Void'
+	DRAFT = 'DRAFT',
+	SENT = 'SENT',
+	VIEWED = 'VIEWED',
+	ACCEPTED = 'ACCEPTED',
+	REJECTED = 'REJECTED',
+	VOID = 'VOID'
 }
 
 export enum InvoiceColumnsEnum {
-	INVOICE_DATE = 'Invoice Date',
-	DUE_DATE = 'Due Date',
-	STATUS = 'Status',
-	TOTAL_VALUE = 'Total Value',
-	CURRENCY = 'Currency',
-	TAX = 'Tax',
-	TAX_2 = 'Tax 2',
-	DISCOUNT = 'Discount',
-	CONTACT = 'Contact',
-	PAID_STATUS = 'Paid Status'
+	INVOICE_DATE = 'INVOICE_DATE',
+	DUE_DATE = 'DUE_DATE',
+	STATUS = 'STATUS',
+	TOTAL_VALUE = 'TOTAL_VALUE',
+	CURRENCY = 'CURRENCY',
+	TAX = 'TAX',
+	TAX_2 = 'TAX_2',
+	DISCOUNT = 'DISCOUNT',
+	CONTACT = 'CONTACT',
+	PAID_STATUS = 'PAID_STATUS'
 }
 
 export enum EstimateColumnsEnum {
-	INVOICE_DATE = 'Invoice Date',
-	DUE_DATE = 'Due Date',
-	STATUS = 'Status',
-	TOTAL_VALUE = 'Total Value',
-	CURRENCY = 'Currency',
-	TAX = 'Tax',
-	TAX_2 = 'Tax 2',
-	DISCOUNT = 'Discount',
-	CONTACT = 'Contact'
+	ESTIMATE_DATE = 'ESTIMATE_DATE',
+	DUE_DATE = 'DUE_DATE',
+	STATUS = 'STATUS',
+	TOTAL_VALUE = 'TOTAL_VALUE',
+	CURRENCY = 'CURRENCY',
+	TAX = 'TAX',
+	TAX_2 = 'TAX_2',
+	DISCOUNT = 'DISCOUNT',
+	CONTACT = 'CONTACT'
 }

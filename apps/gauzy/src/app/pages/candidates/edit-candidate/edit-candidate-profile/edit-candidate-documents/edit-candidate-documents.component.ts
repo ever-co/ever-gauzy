@@ -2,7 +2,6 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Subject } from 'rxjs';
 import { FormBuilder, Validators, FormGroup, FormArray } from '@angular/forms';
-import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 import { takeUntil } from 'rxjs/operators';
@@ -18,13 +17,15 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { DocumentUrlTableComponent } from 'apps/gauzy/src/app/@shared/table-components/document-url/document-url.component';
 import { DocumentDateTableComponent } from 'apps/gauzy/src/app/@shared/table-components/document-date/document-date.component';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-edit-candidate-documents',
 	templateUrl: './edit-candidate-documents.component.html',
 	styleUrls: ['./edit-candidate-documents.component.scss']
 })
-export class EditCandidateDocumentsComponent extends TranslationBaseComponent
+export class EditCandidateDocumentsComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	@ViewChild('candidateCv')
 	candidateCv: CandidateCvComponent;
@@ -44,7 +45,7 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly candidateDocumentsService: CandidateDocumentsService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private candidateStore: CandidateStore,
 		private store: Store
@@ -173,7 +174,12 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 				tenantId
 			});
 			this.loadDocuments();
-			this.toastrSuccess('UPDATED');
+			this.toastrService.success(
+				'TOASTR.MESSAGE.CANDIDATE_DOCUMENT_UPDATED',
+				{
+					name: formValue.name
+				}
+			);
 			this.showAddCard = !this.showAddCard;
 			this.form.controls.documents.reset();
 		} catch (error) {
@@ -191,7 +197,12 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 				organizationId,
 				tenantId
 			});
-			this.toastrSuccess('CREATED');
+			this.toastrService.success(
+				'TOASTR.MESSAGE.CANDIDATE_DOCUMENT_CREATED',
+				{
+					name: formValue.name
+				}
+			);
 			this.loadDocuments();
 			this.showAddCard = !this.showAddCard;
 			this.documents.reset();
@@ -200,10 +211,15 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 		}
 	}
 
-	async removeDocument(id: string) {
+	async removeDocument(document) {
 		try {
-			await this.candidateDocumentsService.delete(id);
-			this.toastrSuccess('DELETED');
+			await this.candidateDocumentsService.delete(document.id);
+			this.toastrService.success(
+				'TOASTR.MESSAGE.CANDIDATE_DOCUMENT_DELETED',
+				{
+					name: document.name
+				}
+			);
 			this.loadDocuments();
 		} catch (error) {
 			this.toastrError(error);
@@ -212,23 +228,22 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 
 	private toastrError(error) {
 		this.toastrService.danger(
-			this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
+			'NOTES.CANDIDATE.EXPERIENCE.ERROR',
+			'TOASTR.TITLE.ERROR',
+			{
 				error: error.error ? error.error.message : error.message
-			}),
-			this.getTranslation('TOASTR.TITLE.ERROR')
+			}
 		);
 	}
 
 	private toastrSuccess(text: string) {
-		this.toastrService.success(
-			this.getTranslation('TOASTR.TITLE.SUCCESS'),
-			this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_EDIT_${text}`)
-		);
+		this.toastrService.success(`TOASTR.MESSAGE.CANDIDATE_EDIT_${text}`);
 	}
 	private toastrInvalid() {
 		this.toastrService.danger(
-			this.getTranslation('NOTES.CANDIDATE.INVALID_FORM'),
-			this.getTranslation('TOASTR.MESSAGE.CANDIDATE_DOCUMENT_REQUIRED')
+			'NOTES.CANDIDATE.INVALID_FORM',
+			'TOASTR.TITLE.ERROR',
+			'TOASTR.MESSAGE.CANDIDATE_DOCUMENT_REQUIRED'
 		);
 	}
 	_applyTranslationOnSmartTable() {

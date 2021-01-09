@@ -20,8 +20,10 @@ import {
 	ITag
 } from '@gauzy/models';
 import { NbDialogService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { OrganizationsMutationComponent } from '../../../@shared/organizations/organizations-mutation/organizations-mutation.component';
 
 @Component({
@@ -29,7 +31,9 @@ import { OrganizationsMutationComponent } from '../../../@shared/organizations/o
 	templateUrl: 'accept-client-invite-form.component.html',
 	styleUrls: ['accept-client-invite-form.component.scss']
 })
-export class AcceptClientInviteFormComponent implements OnInit, OnDestroy {
+export class AcceptClientInviteFormComponent
+	extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	private ngDestroy$ = new Subject<void>();
 
 	@Input()
@@ -86,15 +90,20 @@ export class AcceptClientInviteFormComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private readonly fb: FormBuilder,
-		private readonly dialogService: NbDialogService
-	) {}
+		private readonly dialogService: NbDialogService,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit(): void {
 		this.loadFormData();
 	}
 
 	passwordDoNotMatch() {
-		return 'Password Do Not Match!';
+		return this.getTranslation(
+			'ACCEPT_INVITE.ACCEPT_INVITE_FORM.PASSWORDS_DO_NOT_MATCH'
+		);
 	}
 
 	loadFormData = async () => {

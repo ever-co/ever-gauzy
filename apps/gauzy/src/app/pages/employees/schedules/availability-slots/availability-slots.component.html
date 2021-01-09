@@ -43,8 +43,8 @@
 		<div class="col-auto">
 			{{
 				organization?.startWeekOn?.toLowerCase() == 'monday'
-					? 'Monday - Friday'
-					: 'Sunday - Thursday'
+					? mondayFriday
+					: sundayThursday
 			}}
 		</div>
 		<div class="col-sm-2">
@@ -57,7 +57,7 @@
 		</div>
 		<div class="col-auto">
 			<button nbButton status="primary" (click)="setSchedule()">
-				Set
+				{{ 'BUTTONS.SET' | translate }}
 			</button>
 		</div>
 	</div>

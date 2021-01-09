@@ -75,8 +75,8 @@ export class TasksSprintViewComponent
 	ngOnInit(): void {
 		this.backlogTasks = this.tasks;
 		this.sprintActions = [
-			{ title: 'Edit sprint' },
-			{ title: 'Delete Sprint' }
+			{ title: this.getTranslation('TASKS_PAGE.EDIT_SPRINT') },
+			{ title: this.getTranslation('TASKS_PAGE.DELETE_SPRINT') }
 		];
 	}
 

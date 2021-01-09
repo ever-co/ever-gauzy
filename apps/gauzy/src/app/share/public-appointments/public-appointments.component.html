@@ -25,8 +25,13 @@
 			</div>
 		</div>
 
-		<div class="body-header">
+		<div class="body-header" *ngIf="eventTypesExist">
 			<h5>{{ 'PUBLIC_APPOINTMENTS.SELECT_EVENT_TYPES' | translate }}</h5>
+		</div>
+		<div class="body-header" *ngIf="!eventTypesExist">
+			<h5>
+				{{ 'PUBLIC_APPOINTMENTS.NO_ACTIVE_EVENT_TYpES' | translate }}
+			</h5>
 		</div>
 		<div>
 			<div class="row block-content" *ngFor="let eventType of eventTypes">

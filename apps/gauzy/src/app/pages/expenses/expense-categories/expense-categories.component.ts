@@ -115,7 +115,7 @@ export class ExpenseCategoriesComponent
 			const result = await this.dialogService
 				.open(DeleteConfirmationComponent, {
 					context: {
-						recordType: 'Expense Category'
+						recordType: 'EXPENSES_PAGE.EXPENSE_CATEGORY'
 					}
 				})
 				.onClose.pipe(first())

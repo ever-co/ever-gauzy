@@ -5,7 +5,7 @@ import {
 	FormGroup,
 	AbstractControl
 } from '@angular/forms';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import {
 	IIncome,
 	ITag,
@@ -22,6 +22,7 @@ import { ErrorHandlingService } from '../../../@core/services/error-handling.ser
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { debounceTime, filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -85,7 +86,7 @@ export class IncomeMutationComponent
 		protected dialogRef: NbDialogRef<IncomeMutationComponent>,
 		private store: Store,
 		private organizationContactService: OrganizationContactService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private errorHandler: ErrorHandlingService
 	) {
@@ -151,14 +152,11 @@ export class IncomeMutationComponent
 					tenantId: this.selectedOrganization.id
 				})
 				.then((contact) => {
-					this.toastrService.primary(
-						this.getTranslation(
-							'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
-							{
-								name: name
-							}
-						),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					this.toastrService.success(
+						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
+						{
+							name
+						}
 					);
 					return contact;
 				});

@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
-import { NbDialogRef, NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { ICandidateInterview, ICandidate, IOrganization } from '@gauzy/models';
 import { CandidateInterviewersService } from '../../../@core/services/candidate-interviewers.service';
 import { EmployeesService } from '../../../@core/services';
@@ -11,12 +11,14 @@ import { CandidateInterviewMutationComponent } from '../candidate-interview-muta
 import { first } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { Store } from '../../../@core/services/store.service';
+import { ToastrService } from '../../../@core/services/toastr.service';
 @Component({
 	selector: 'ga-candidate-interview-info',
 	templateUrl: './candidate-interview-info.component.html',
 	styleUrls: ['./candidate-interview-info.component.scss']
 })
-export class CandidateInterviewInfoComponent extends TranslationBaseComponent
+export class CandidateInterviewInfoComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	@Input() interviewId: any; //from calendar
 	@Input() interviewList: ICandidateInterview[];
@@ -40,7 +42,7 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 		private candidatesService: CandidatesService,
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private candidateInterviewService: CandidateInterviewService,
 		private store: Store
 	) {
@@ -194,12 +196,11 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 			return true;
 		}
 	}
+
 	private toastrSuccess(text: string) {
-		this.toastrService.success(
-			this.getTranslation('TOASTR.TITLE.SUCCESS'),
-			this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_EDIT_${text}`)
-		);
+		this.toastrService.success(`TOASTR.MESSAGE.CANDIDATE_EDIT_${text}`);
 	}
+
 	closeDialog() {
 		this.dialogRef.close();
 	}

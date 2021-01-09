@@ -10,7 +10,7 @@ import {
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing/equipment-sharing-mutation.component';
 import { first, distinctUntilChanged, tap } from 'rxjs/operators';
 import { DatePipe } from '@angular/common';
@@ -23,6 +23,7 @@ import { Router, NavigationEnd, RouterEvent } from '@angular/router';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { EquipmentSharingPolicyComponent } from './table-components/equipment-sharing-policy/equipment-sharing-policy.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './equipment-sharing.component.html',
@@ -59,7 +60,7 @@ export class EquipmentSharingComponent
 		readonly translateService: TranslateService,
 		private equipmentSharingService: EquipmentSharingService,
 		private dialogService: NbDialogService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private store: Store,
 		private router: Router
 	) {
@@ -213,11 +214,11 @@ export class EquipmentSharingComponent
 				params.data.id
 			);
 			if (request) {
-				this.toastrService.primary(
-					this.getTranslation(
-						'EQUIPMENT_SHARING_PAGE.APPROVAL_SUCCESS'
-					),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				this.toastrService.success(
+					'EQUIPMENT_SHARING_PAGE.APPROVAL_SUCCESS',
+					{
+						name: params.data.name
+					}
 				);
 			}
 		} else {
@@ -225,11 +226,11 @@ export class EquipmentSharingComponent
 				params.data.id
 			);
 			if (request) {
-				this.toastrService.primary(
-					this.getTranslation(
-						'EQUIPMENT_SHARING_PAGE.REFUSE_SUCCESS'
-					),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				this.toastrService.success(
+					'EQUIPMENT_SHARING_PAGE.REFUSE_SUCCESS',
+					{
+						name: params.data.name
+					}
 				);
 			}
 		}
@@ -258,10 +259,7 @@ export class EquipmentSharingComponent
 
 		const equipmentSharing = await dialog.onClose.pipe(first()).toPromise();
 		if (equipmentSharing) {
-			this.toastrService.primary(
-				this.getTranslation('EQUIPMENT_SHARING_PAGE.REQUEST_SAVED'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('EQUIPMENT_SHARING_PAGE.REQUEST_SAVED');
 		}
 		this.loadSettings();
 		this.clearItem();
@@ -285,9 +283,8 @@ export class EquipmentSharingComponent
 			);
 			this.loadSettings();
 			this.clearItem();
-			this.toastrService.primary(
-				this.getTranslation('EQUIPMENT_SHARING_PAGE.REQUEST_DELETED'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'EQUIPMENT_SHARING_PAGE.REQUEST_DELETED'
 			);
 		}
 	}

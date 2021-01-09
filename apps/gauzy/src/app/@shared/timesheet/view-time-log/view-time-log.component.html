@@ -1,5 +1,5 @@
 <div class="p-3 time-log-view-contiainer">
-	<h6>Time logs</h6>
+	<h6>{{ 'TIMESHEET.VIEW_TIME_LOGS' | translate }}</h6>
 
 	<nb-list class="time-span custom-scroll">
 		<nb-list-item
@@ -58,7 +58,8 @@
 			status="primary"
 			(click)="openAddByDateProject($event)"
 		>
-			<nb-icon icon="plus-outline"></nb-icon> Add Time
+			<nb-icon icon="plus-outline"></nb-icon>
+			{{ 'TIMESHEET.ADD_TIME' | translate }}
 		</button>
 	</div>
 </div>

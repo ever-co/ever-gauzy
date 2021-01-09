@@ -200,13 +200,19 @@ export class ApprovalsComponent
 					valuePrepareFunction: (cell, row) => {
 						switch (cell) {
 							case RequestApprovalStatusTypesEnum.APPROVED:
-								cell = 'Approved';
+								cell = this.getTranslation(
+									'APPROVAL_REQUEST_PAGE.APPROVED'
+								);
 								break;
 							case RequestApprovalStatusTypesEnum.REFUSED:
-								cell = 'Refused';
+								cell = this.getTranslation(
+									'APPROVAL_REQUEST_PAGE.REFUSED'
+								);
 								break;
 							default:
-								cell = 'Requested';
+								cell = this.getTranslation(
+									'APPROVAL_REQUEST_PAGE.REQUESTED'
+								);
 								break;
 						}
 						const badgeClass = ['approved'].includes(

@@ -43,7 +43,7 @@ export class SearchComponent
 	settingsSmartTable: any = {
 		editable: false,
 		actions: {
-			columnTitle: 'Actions',
+			columnTitle: this.getTranslation('JOBS.ACTIONS'),
 			add: false,
 			edit: false,
 			delete: false,
@@ -224,7 +224,7 @@ export class SearchComponent
 					providerJobId: $event.data.jobPost.providerJobId
 				};
 				this.jobService.applyJob(applyRequest).then(async (resp) => {
-					this.toastrService.success('Job Applied successfully');
+					this.toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
 					this.smartTableSource.refresh();
 
 					if (resp.isRedirectRequired) {
@@ -249,7 +249,7 @@ export class SearchComponent
 					providerJobId: $event.data.jobPost.providerJobId
 				};
 				this.jobService.hideJob(hideRequest).then(() => {
-					this.toastrService.success('Job Hidden successfully');
+					this.toastrService.success('TOASTR.MESSAGE.JOB_HIDDEN');
 					this.smartTableSource.refresh();
 				});
 				break;
@@ -428,7 +428,7 @@ export class SearchComponent
 				: {})
 		};
 		this.jobService.hideJob(request).then(() => {
-			this.toastrService.success('Job Hidden successfully');
+			this.toastrService.success('TOASTR.MESSAGE.JOB_HIDDEN');
 			this.smartTableSource.refresh();
 		});
 	}

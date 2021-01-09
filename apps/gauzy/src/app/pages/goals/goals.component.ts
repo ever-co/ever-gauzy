@@ -46,15 +46,35 @@ export class GoalsComponent
 	goalGeneralSettings: IGoalGeneralSetting;
 	goalTimeFrames: Array<string> = [];
 	filters = [
-		{ title: 'All Objectives', value: 'all' },
-		{ title: "My Team's Objectives", value: 'team' },
-		{ title: 'My Organization Objectives', value: 'organization' },
-		{ title: 'My Objectives', value: 'employee' }
+		{
+			title: this.getTranslation('GOALS_PAGE.ALL_OBJECTIVES'),
+			value: 'all'
+		},
+		{
+			title: this.getTranslation('GOALS_PAGE.MY_TEAMS_OBJECTIVES'),
+			value: 'team'
+		},
+		{
+			title: this.getTranslation(
+				'GOALS_PAGE.MY_ORGANIZATIONS_OBJECTIVES'
+			),
+			value: 'organization'
+		},
+		{
+			title: this.getTranslation('GOALS_PAGE.MY_OBJECTIVES'),
+			value: 'employee'
+		}
 	];
 	goalLevels = [...Object.values(GoalLevelEnum)];
 	groupObjectivesBy = [
-		{ title: 'Objective Level', value: 'level' },
-		{ title: 'Time Frames', value: 'timeFrames' }
+		{
+			title: this.getTranslation('GOALS_PAGE.OBJECTIVE_LEVEL'),
+			value: 'level'
+		},
+		{
+			title: this.getTranslation('GOALS_PAGE.TIME_FRAME'),
+			value: 'timeFrames'
+		}
 	];
 	goals: IGoal[];
 	allGoals: IGoal[];

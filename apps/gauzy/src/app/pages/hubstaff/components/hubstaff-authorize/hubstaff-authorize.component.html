@@ -24,10 +24,10 @@
 			</div>
 			<div class="hint">
 				<nb-icon icon="info-outline"></nb-icon>
-				Next you will be taken to Hubstaff to grant permission to Gauzy.
+				{{ 'INTEGRATIONS.HUBSTAFF_PAGE.GRANT_PERMISSION' | translate }}
 			</div>
 			<button nbButton status="primary" [disabled]="!authorizeForm.valid">
-				next
+				{{ 'BUTTONS.NEXT' | translate }}
 			</button>
 		</form>
 
@@ -48,14 +48,17 @@
 				</div>
 				<div class="hint">
 					<nb-icon icon="info-outline"></nb-icon>
-					Enter client secret to get access token.
+					{{
+						'INTEGRATIONS.HUBSTAFF_PAGE.ENTER_CLIENT_SECRET'
+							| translate
+					}}
 				</div>
 				<button
 					nbButton
 					status="primary"
 					[disabled]="!clientSecretForm.valid"
 				>
-					next
+					{{ 'BUTTONS.NEXT' | translate }}
 				</button>
 			</form>
 		</ng-template>

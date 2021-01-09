@@ -1,7 +1,9 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { IMonthAggregatedEmployeeStatistics } from '@gauzy/models';
 import { NbThemeService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 import { monthNames } from 'apps/gauzy/src/app/@core/utils/date';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -27,6 +29,7 @@ import { takeUntil } from 'rxjs/operators';
 	`
 })
 export class EmployeeStackedBarChartComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy, OnChanges {
 	private _ngDestroy$ = new Subject<void>();
 	data: any;
@@ -43,7 +46,12 @@ export class EmployeeStackedBarChartComponent
 	@Input()
 	employeeStatistics: IMonthAggregatedEmployeeStatistics[];
 
-	constructor(private themeService: NbThemeService) {}
+	constructor(
+		private themeService: NbThemeService,
+		translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this._loadData();
@@ -72,40 +80,52 @@ export class EmployeeStackedBarChartComponent
 					datasets: [
 						{
 							label: this.selectedDate
-								? `Expenses: ${
+								? `${this.getTranslation(
+										'DASHBOARD_PAGE.CHARTS.EXPENSES'
+								  )}: ${
 										Math.round(
 											+this.expenseStatistics *
 												this.proportion *
 												100
 										) / 100
 								  }`
-								: 'Expenses',
+								: this.getTranslation(
+										'DASHBOARD_PAGE.CHARTS.EXPENSES'
+								  ),
 							backgroundColor: '#dbc300',
 							data: this.expenseStatistics
 						},
 						{
 							label: this.selectedDate
-								? `Bonus: ${
+								? `${this.getTranslation(
+										'DASHBOARD_PAGE.CHARTS.BONUS'
+								  )}: ${
 										Math.round(
 											+this.bonusStatistics *
 												this.proportion *
 												100
 										) / 100
 								  }`
-								: 'Bonus',
+								: this.getTranslation(
+										'DASHBOARD_PAGE.CHARTS.BONUS'
+								  ),
 							backgroundColor: bonusColors,
 							data: this.bonusStatistics
 						},
 						{
 							label: this.selectedDate
-								? `Profit: ${
+								? `${this.getTranslation(
+										'DASHBOARD_PAGE.CHARTS.PROFIT'
+								  )}: ${
 										Math.round(
 											+this.profitStatistics *
 												this.proportion *
 												100
 										) / 100
 								  }`
-								: 'Profit',
+								: this.getTranslation(
+										'DASHBOARD_PAGE.CHARTS.PROFIT'
+								  ),
 							backgroundColor: profitColors,
 							data: this.profitStatistics
 						}

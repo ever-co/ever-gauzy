@@ -19,7 +19,9 @@
 					[(ngModel)]="name"
 					nbInput
 					fullWidth
-					placeholder="Policy Name"
+					placeholder="{{
+						'FORM.PLACEHOLDERS.POLICY_NAME' | translate
+					}}"
 				/>
 			</div>
 			<nb-card accent="warning" class="p-3" *ngIf="showWarning">
@@ -29,7 +31,7 @@
 					icon="close-outline"
 				></nb-icon>
 				<p>
-					Name of Policy and selection of employees are required!
+					{{ 'TIME_OFF_PAGE.POLICY.NAME_IS_REQUIRED' | translate }}
 				</p>
 			</nb-card>
 			<div class="form-group col-6">
@@ -38,7 +40,9 @@
 					[selected]="selectedEmployees"
 					(selectedChange)="onEmployeesSelected($event)"
 					fullWidth
-					placeholder="Add or remove employees"
+					placeholder="{{
+						'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES' | translate
+					}}"
 				>
 					<nb-option
 						*ngFor="let employee of employees"
@@ -59,14 +63,14 @@
 					class="my-auto align-center"
 					status="primary"
 					[checked]="requiresApproval"
-					>Requires approval
+					>{{ 'TIME_OFF_PAGE.POLICY.REQUIRES_APPROVAL' | translate }}
 				</nb-checkbox>
 				<nb-checkbox
 					(checkedChange)="changePaidStatus($event)"
 					class="my-auto align-center"
 					status="primary"
 					[checked]="paid"
-					>Paid
+					>{{ 'TIME_OFF_PAGE.POLICY.PAID' | translate }}
 				</nb-checkbox>
 			</div>
 		</form>

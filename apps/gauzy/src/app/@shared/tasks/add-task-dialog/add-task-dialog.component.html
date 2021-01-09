@@ -61,10 +61,10 @@
 						[value]="participants"
 					>
 						<nb-radio class="nb-radio" [value]="'employees'"
-							>Employees
+							>{{ 'TASKS_PAGE.TASK_MEMBERS' | translate }}
 						</nb-radio>
 						<nb-radio class="nb-radio" [value]="'teams'"
-							>Teams
+							>{{ 'TASKS_PAGE.TASK_TEAMS' | translate }}
 						</nb-radio>
 					</nb-radio-group>
 				</div>
@@ -111,7 +111,9 @@
 						formControlName="title"
 						type="text"
 						nbInput
-						placeholder="Add title"
+						placeholder="{{
+							'FORM.PLACEHOLDERS.ADD_TITLE' | translate
+						}}"
 					/>
 				</div>
 				<div class="col-sm-12">
@@ -202,7 +204,9 @@
 						nbInput
 						fullWidth
 						class="description"
-						placeholder="Description"
+						placeholder="{{
+							'FORM.PLACEHOLDERS.DESCRIPTION' | translate
+						}}"
 					></textarea>
 				</div>
 			</div>

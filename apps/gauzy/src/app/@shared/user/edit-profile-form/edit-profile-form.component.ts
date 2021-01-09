@@ -21,11 +21,11 @@ import {
 	ITag,
 	LanguagesEnum
 } from '@gauzy/models';
-import { NbToastrService } from '@nebular/theme';
 import { RoleService } from '../../../@core/services/role.service';
 import { Subject } from 'rxjs';
 import { takeUntil, first } from 'rxjs/operators';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ngx-profile',
@@ -69,7 +69,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		private fb: FormBuilder,
 		private userService: UsersService,
 		private store: Store,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private errorHandler: ErrorHandlingService,
 		private roleService: RoleService
 	) {}
@@ -136,22 +136,24 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	}
 
 	handleImageUploadError(error: any) {
-		this.toastrService.danger(
-			error.error.message || error.message,
-			'Error'
-		);
+		this.toastrService.danger(error);
 	}
 
 	async submitForm() {
+		const {
+			email,
+			firstName,
+			lastName,
+			tags,
+			preferredLanguage
+		} = this.form.value;
 		this.accountInfo = {
-			email: this.form.value['email'],
-			firstName: this.form.value['firstName'],
-			imageUrl: this.form.value['imageUrl'],
-			lastName: this.form.value['lastName'],
-			tags: this.form.value['tags'],
-			preferredLanguage: this.form.value['preferredLanguage']
+			email,
+			firstName,
+			lastName,
+			tags,
+			preferredLanguage
 		};
-
 		if (this.form.value['password']) {
 			this.accountInfo = {
 				...this.accountInfo,
@@ -160,10 +162,11 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		}
 
 		if (this.allowRoleChange) {
+			const { tenantId } = this.store.user;
 			const role = await this.roleService
 				.getRoleByName({
 					name: this.form.value['roleName'],
-					tenant: this.store.user.tenant
+					tenantId
 				})
 				.pipe(first())
 				.toPromise();
@@ -179,10 +182,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 				this.selectedUser ? this.selectedUser.id : this.store.userId,
 				this.accountInfo
 			);
-			this.toastrService.primary(
-				'Your profile has been updated successfully.',
-				'Success'
-			);
+			this.toastrService.success('TOASTR.MESSAGE.PROFILE_UPDATED');
 			this.userSubmitted.emit();
 
 			/**

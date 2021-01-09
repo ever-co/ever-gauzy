@@ -12,7 +12,6 @@ import {
 	ITag,
 	OrganizationAction
 } from '@gauzy/models';
-import { NbToastrService } from '@nebular/theme';
 import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
 import { filter, first } from 'rxjs/operators';
 import { EmployeesService } from '../../../../../@core/services';
@@ -23,6 +22,7 @@ import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '../../../../../@core/services/store.service';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -47,7 +47,7 @@ export class EditOrganizationMainComponent
 		private fb: FormBuilder,
 		private employeesService: EmployeesService,
 		private organizationService: OrganizationsService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private organizationEditStore: OrganizationEditStore,
 		readonly translateService: TranslateService,
 		private store: Store,
@@ -107,10 +107,11 @@ export class EditOrganizationMainComponent
 						organization,
 						action: OrganizationAction.UPDATED
 					};
-					this.toastrService.primary(
-						this.organization.name +
-							' organization main info updated.',
-						'Success'
+					this.toastrService.success(
+						`TOASTR.MESSAGE.MAIN_ORGANIZATION_UPDATED`,
+						{
+							name: this.organization.name
+						}
 					);
 					this.goBack();
 				})

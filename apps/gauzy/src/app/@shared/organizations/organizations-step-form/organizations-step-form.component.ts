@@ -29,7 +29,6 @@ import {
 	IUser,
 	CurrenciesEnum
 } from '@gauzy/models';
-import { NbToastrService } from '@nebular/theme';
 import { LocationFormComponent } from '../../forms/location';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LatLng } from 'leaflet';
@@ -38,6 +37,7 @@ import { Store } from '../../../@core/services/store.service';
 import { filter, tap } from 'rxjs/operators';
 import { retrieveNameFromEmail } from '@gauzy/utils';
 import { environment as ENV } from 'apps/gauzy/src/environments/environment';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -84,7 +84,7 @@ export class OrganizationsStepFormComponent
 
 	constructor(
 		private fb: FormBuilder,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private readonly cdr: ChangeDetectorRef,
 		private readonly store: Store
 	) {}
@@ -175,7 +175,7 @@ export class OrganizationsStepFormComponent
 	}
 
 	handleImageUploadError(error) {
-		this.toastrService.danger(error, 'Error');
+		this.toastrService.danger(error);
 	}
 
 	loadDefaultBonusPercentage(bonusType: BonusTypeEnum) {

@@ -63,7 +63,10 @@ export class EditRolesPermissionsComponent
 
 	async updateOrganizationSettings() {
 		this.toastrService.success(
-			this.organization.name + ' organization settings updated.'
+			this.getTranslation(
+				'TOASTR.MESSAGE.ORGANIZATION_SETTINGS_UPDATED',
+				{ name: this.organization.name }
+			)
 		);
 		this.goBack();
 	}
@@ -79,10 +82,12 @@ export class EditRolesPermissionsComponent
 	async loadPermissionsForSelectedRole() {
 		this.enabledPermissions = {};
 		this.loading = true;
+
+		const { tenantId } = this.currentUser;
 		const role = await this.rolesService
 			.getRoleByName({
 				name: this.selectedRole,
-				tenant: this.currentUser.tenant
+				tenantId
 			})
 			.pipe(first())
 			.toPromise();

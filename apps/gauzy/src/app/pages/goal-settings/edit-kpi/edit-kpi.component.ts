@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import { EmployeesService } from '../../../@core/services';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -16,6 +16,7 @@ import {
 } from '@gauzy/models';
 import { Store } from '../../../@core/services/store.service';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-edit-kpi',
@@ -42,7 +43,7 @@ export class EditKpiComponent
 		private employeeService: EmployeesService,
 		private store: Store,
 		private goalSettingsService: GoalSettingsService,
-		private readonly toastrService: NbToastrService
+		private readonly toastrService: ToastrService
 	) {
 		super(translate);
 	}
@@ -100,10 +101,7 @@ export class EditKpiComponent
 		if (this.type === 'add') {
 			await this.goalSettingsService.createKPI(kpiData).then((res) => {
 				if (res) {
-					this.toastrService.primary(
-						this.getTranslation('TOASTR.MESSAGE.KPI_CREATED'),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
-					);
+					this.toastrService.success('TOASTR.MESSAGE.KPI_CREATED');
 					this.closeDialog(res);
 				}
 			});
@@ -112,9 +110,8 @@ export class EditKpiComponent
 				.updateKPI(this.selectedKPI.id, kpiData)
 				.then((res) => {
 					if (res) {
-						this.toastrService.primary(
-							this.getTranslation('TOASTR.MESSAGE.KPI_UPDATED'),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						this.toastrService.success(
+							'TOASTR.MESSAGE.KPI_UPDATED'
 						);
 						this.closeDialog(res);
 					}

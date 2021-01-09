@@ -40,7 +40,8 @@ export interface RequestEmployee {
 	templateUrl: './equipment-sharing-mutation.component.html',
 	styleUrls: ['./equipment-sharing-mutation.component.scss']
 })
-export class EquipmentSharingMutationComponent extends TranslationBaseComponent
+export class EquipmentSharingMutationComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	constructor(
 		public dialogRef: NbDialogRef<EquipmentSharingMutationComponent>,
@@ -435,11 +436,11 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	getStatus(id: number) {
 		switch (id) {
 			case RequestApprovalStatusTypesEnum.REQUESTED:
-				return 'Request';
+				return this.getTranslation('APPROVAL_REQUEST_PAGE.REQUESTED');
 			case RequestApprovalStatusTypesEnum.REFUSED:
-				return 'Refused';
+				return this.getTranslation('APPROVAL_REQUEST_PAGE.REFUSED');
 			case RequestApprovalStatusTypesEnum.APPROVED:
-				return 'Approved';
+				return this.getTranslation('APPROVAL_REQUEST_PAGE.APPROVED');
 		}
 	}
 }

@@ -13,7 +13,8 @@ import { NbDialogService } from '@nebular/theme';
 @Component({
 	templateUrl: './confirm-appointment.component.html'
 })
-export class ConfirmAppointmentComponent extends TranslationBaseComponent
+export class ConfirmAppointmentComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	loading: boolean = true;
@@ -75,8 +76,12 @@ export class ConfirmAppointmentComponent extends TranslationBaseComponent
 		const dialog = this.dialogService.open(AlertModalComponent, {
 			context: {
 				alertOptions: {
-					title: 'Cancel Appointment',
-					message: 'Are you sure? This action is irreversible.',
+					title: this.getTranslation(
+						'APPOINTMENTS_PAGE.CANCEL_APPOINTMENT'
+					),
+					message: this.getTranslation(
+						'APPOINTMENTS_PAGE.ARE_YOU_SURE'
+					),
 					status: 'danger'
 				}
 			}

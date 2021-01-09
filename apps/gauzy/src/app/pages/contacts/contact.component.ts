@@ -14,7 +14,7 @@ import {
 	RouterEvent,
 	NavigationEnd
 } from '@angular/router';
-import { NbToastrService, NbDialogService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	debounceTime,
@@ -37,6 +37,7 @@ import { PictureNameTagsComponent } from '../../@shared/table-components/picture
 import { ContactActionComponent } from './table-components/contact-action/contact-action.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { CountryService } from '../../@core/services/country.service';
+import { ToastrService } from '../../@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-contact',
@@ -77,7 +78,7 @@ export class ContactComponent
 	constructor(
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		private readonly store: Store,
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
@@ -239,16 +240,13 @@ export class ContactComponent
 				this.selectedContact ? this.selectedContact.id : id
 			);
 
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.REMOVE_CONTACT',
-					{
-						name: this.selectedContact
-							? this.selectedContact.name
-							: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.REMOVE_CONTACT',
+				{
+					name: this.selectedContact
+						? this.selectedContact.name
+						: name
+				}
 			);
 
 			this.loadOrganizationContacts();
@@ -305,22 +303,14 @@ export class ContactComponent
 				toasterMessage =
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.UPDATE_CONTACT';
 			}
-			this.toastrService.primary(
-				this.getTranslation(toasterMessage, {
-					name: organizationContact.name
-				}),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success(toasterMessage, {
+				name: organizationContact.name
+			});
 
 			this.loadOrganizationContacts();
 		} else {
 			this.toastrService.danger(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.INVALID_CONTACT_DATA'
-				),
-				this.getTranslation(
-					'TOASTR.MESSAGE.NEW_ORGANIZATION_CONTACT_INVALID_DATA'
-				)
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.INVALID_CONTACT_DATA'
 			);
 		}
 	}
@@ -440,22 +430,16 @@ export class ContactComponent
 
 			if (result) {
 				await this.loadOrganizationContacts();
-				this.toastrService.primary(
-					this.getTranslation(
-						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.INVITE_CONTACT',
-						{
-							name: result.name
-						}
-					),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				this.toastrService.success(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.INVITE_CONTACT',
+					{
+						name: result.name
+					}
 				);
 			}
 		} catch (error) {
 			this.toastrService.danger(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.INVITE_CONTACT_ERROR'
-				),
-				this.getTranslation('TOASTR.TITLE.ERROR')
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.INVITE_CONTACT_ERROR'
 			);
 		}
 	}

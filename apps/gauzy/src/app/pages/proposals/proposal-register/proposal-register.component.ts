@@ -19,7 +19,6 @@ import {
 	ContactType
 } from '@gauzy/models';
 import { ProposalsService } from '../../../@core/services/proposals.service';
-import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
@@ -27,6 +26,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
+import { ToastrService } from '../../../@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-proposal-register',
@@ -57,7 +57,7 @@ export class ProposalRegisterComponent
 		private store: Store,
 		private router: Router,
 		private proposalsService: ProposalsService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private cdRef: ChangeDetectorRef,
 		private organizationContactService: OrganizationContactService,
@@ -137,34 +137,20 @@ export class ProposalRegisterComponent
 					});
 
 					// TODO translate
-					this.toastrService.primary(
-						this.getTranslation(
-							'NOTES.PROPOSALS.REGISTER_PROPOSAL'
-						),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					this.toastrService.success(
+						'NOTES.PROPOSALS.REGISTER_PROPOSAL'
 					);
 
 					this.router.navigate(['/pages/sales/proposals']);
 				} else {
-					this.toastrService.primary(
-						this.getTranslation(
-							'NOTES.PROPOSALS.REGISTER_PROPOSAL_NO_EMPLOYEE_SELECTED'
-						),
-						this.getTranslation(
-							'TOASTR.MESSAGE.REGISTER_PROPOSAL_NO_EMPLOYEE_MSG'
-						)
+					this.toastrService.success(
+						'NOTES.PROPOSALS.REGISTER_PROPOSAL_NO_EMPLOYEE_SELECTED',
+						null,
+						'TOASTR.MESSAGE.REGISTER_PROPOSAL_NO_EMPLOYEE_MSG'
 					);
 				}
 			} catch (error) {
-				this.toastrService.danger(
-					this.getTranslation(
-						'NOTES.PROPOSALS.REGISTER_PROPOSAL_ERROR',
-						{
-							error: error.message
-						}
-					),
-					this.getTranslation('TOASTR.TITLE.ERROR')
-				);
+				this.toastrService.danger(error);
 			}
 		}
 	}
@@ -182,14 +168,11 @@ export class ProposalRegisterComponent
 		name: string
 	): Promise<IOrganizationContact> => {
 		try {
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
-					{
-						name: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
+				{
+					name: name
+				}
 			);
 			return this.organizationContactService.create({
 				name,

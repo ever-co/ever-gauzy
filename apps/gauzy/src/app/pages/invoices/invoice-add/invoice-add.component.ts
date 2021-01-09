@@ -62,6 +62,7 @@ export class InvoiceAddComponent
 	createdInvoice: IInvoice;
 	formInvoiceNumber: number;
 	invoiceTypes = Object.values(InvoiceTypeEnum);
+	discountTaxTypes = Object.values(DiscountTaxTypeEnum);
 	smartTableSource = new LocalDataSource();
 	generatedTask: string;
 	organization: IOrganization;
@@ -92,6 +93,12 @@ export class InvoiceAddComponent
 	subtotal = 0;
 	total = 0;
 	tags: ITag[] = [];
+	invoiceTypePlaceholder = this.getTranslation(
+		'INVOICES_PAGE.INVOICE_TYPE.INVOICE_TYPE'
+	);
+	estimateTypePlaceholder = this.getTranslation(
+		'INVOICES_PAGE.INVOICE_TYPE.ESTIMATE_TYPE'
+	);
 	get currency() {
 		return this.form.get('currency');
 	}
@@ -327,7 +334,7 @@ export class InvoiceAddComponent
 				width: '13%'
 			};
 		} else if (
-			this.invoiceType === InvoiceTypeEnum.DETAILS_INVOICE_ITEMS ||
+			this.invoiceType === InvoiceTypeEnum.DETAILED_ITEMS ||
 			this.invoiceType === InvoiceTypeEnum.BY_PRODUCTS ||
 			this.invoiceType === InvoiceTypeEnum.BY_EXPENSES
 		) {
@@ -507,7 +514,9 @@ export class InvoiceAddComponent
 			);
 
 			await this.invoiceEstimateHistoryService.add({
-				action: this.isEstimate ? 'Estimate added' : 'Invoice added',
+				action: this.isEstimate
+					? this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE')
+					: this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
 				invoice: createdInvoice,
 				invoiceId: createdInvoice.id,
 				user: this.store.user,
@@ -550,8 +559,12 @@ export class InvoiceAddComponent
 			);
 			await this.invoiceEstimateHistoryService.add({
 				action: this.isEstimate
-					? `Estimate sent to ${this.form.value.organizationContact.name}`
-					: `Invoice sent to ${this.form.value.organizationContact.name}`,
+					? this.getTranslation('INVOICES_PAGE.ESTIMATE_SENT_TO', {
+							name: this.form.value.organizationContact.name
+					  })
+					: this.getTranslation('INVOICES_PAGE.INVOICE_SENT_TO', {
+							name: this.form.value.organizationContact.name
+					  }),
 				invoice: this.createdInvoice,
 				invoiceId: this.createdInvoice.id,
 				user: this.store.user,
@@ -1047,8 +1060,7 @@ export class InvoiceAddComponent
 			event.newData.price &&
 			event.newData.description &&
 			(event.newData.selectedItem ||
-				this.selectedInvoiceType ===
-					InvoiceTypeEnum.DETAILS_INVOICE_ITEMS)
+				this.selectedInvoiceType === InvoiceTypeEnum.DETAILED_ITEMS)
 		) {
 			const newData = event.newData;
 			const itemTotal = +event.newData.quantity * +event.newData.price;
@@ -1073,8 +1085,7 @@ export class InvoiceAddComponent
 			event.newData.price &&
 			event.newData.description &&
 			(event.newData.selectedItem ||
-				this.selectedInvoiceType ===
-					InvoiceTypeEnum.DETAILS_INVOICE_ITEMS)
+				this.selectedInvoiceType === InvoiceTypeEnum.DETAILED_ITEMS)
 		) {
 			const newData = event.newData;
 			const oldValue = +event.data.quantity * +event.data.price;

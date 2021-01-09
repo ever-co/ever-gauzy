@@ -5,7 +5,7 @@
 		bindLabel="name"
 		(change)="selectOrganization($event)"
 		[(ngModel)]="selectedOrganization"
-		placeholder="Select Company"
+		placeholder="{{ 'FORM.PLACEHOLDERS.SELECT_COMPANY' | translate }}"
 	>
 		<ng-template ng-option-tmp let-item="item" let-index="index">
 			<img

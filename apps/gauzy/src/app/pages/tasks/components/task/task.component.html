@@ -25,7 +25,9 @@
 					bindName="id"
 					(change)="selectProject($event)"
 					[ngModel]="selectedProject$ | async"
-					placeholder="All Projects"
+					placeholder="{{
+						'FORM.PLACEHOLDERS.ALL_PROJECTS' | translate
+					}}"
 				>
 					<ng-template
 						ng-option-tmp
@@ -84,7 +86,7 @@
 						[settings]="settingsSmartTable"
 						[source]="availableTasks$ | async"
 						(userRowSelect)="selectTask($event)"
-						style="cursor: pointer;"
+						style="cursor: pointer"
 						#tasksTable
 						*ngIf="dataLayoutStyle === 'TABLE'"
 					>

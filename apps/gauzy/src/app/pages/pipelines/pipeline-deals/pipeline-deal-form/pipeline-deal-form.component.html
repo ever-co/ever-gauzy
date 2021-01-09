@@ -45,7 +45,12 @@
 
 			<nb-form-field>
 				<div class="form-group">
-					<label class="label" for="client"> Select Client </label>
+					<label class="label" for="client">
+						{{
+							'PIPELINE_DEAL_CREATE_PAGE.SELECT_CLIENT'
+								| translate
+						}}
+					</label>
 					<nb-select
 						formControlName="clientId"
 						placeholder="Clients"

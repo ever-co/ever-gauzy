@@ -4,13 +4,14 @@ import { OnInit } from '@angular/core';
 import { IInvoice, InvoiceStatusTypesEnum, IInvoiceItem } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import { InvoicesService } from '../../../@core/services/invoices.service';
 import * as pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 import { Store } from '../../../@core/services/store.service';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 import { InvoiceItemService } from '../../../@core/services/invoice-item.service';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-invoice-email',
@@ -31,7 +32,7 @@ export class InvoiceEmailMutationComponent
 		readonly translateService: TranslateService,
 		protected dialogRef: NbDialogRef<InvoiceEmailMutationComponent>,
 		private fb: FormBuilder,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private invoiceService: InvoicesService,
 		private store: Store,
 		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
@@ -65,7 +66,9 @@ export class InvoiceEmailMutationComponent
 				await this.invoiceItemService.add(item);
 			});
 			await this.invoiceEstimateHistoryService.add({
-				action: this.isEstimate ? 'Estimate added' : 'Invoice added',
+				action: this.isEstimate
+					? this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE')
+					: this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
 				invoice: createdInvoice,
 				invoiceId: createdInvoice.id,
 				user: this.store.user,
@@ -98,8 +101,12 @@ export class InvoiceEmailMutationComponent
 
 		await this.invoiceEstimateHistoryService.add({
 			action: this.isEstimate
-				? `Estimate sent to ${this.form.value.email}`
-				: `Invoice sent to ${this.form.value.email}`,
+				? this.getTranslation('INVOICES_PAGE.ESTIMATE_SENT_TO', {
+						name: this.form.value.email
+				  })
+				: this.getTranslation('INVOICES_PAGE.INVOICE_SENT_TO', {
+						name: this.form.value.email
+				  }),
 			invoice: this.createdInvoice ? this.createdInvoice : this.invoice,
 			invoiceId: this.createdInvoice
 				? this.createdInvoice.id
@@ -111,10 +118,7 @@ export class InvoiceEmailMutationComponent
 			tenantId
 		});
 
-		this.toastrService.primary(
-			this.getTranslation('INVOICES_PAGE.EMAIL.EMAIL_SENT'),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
-		);
+		this.toastrService.success('INVOICES_PAGE.EMAIL.EMAIL_SENT');
 		this.dialogRef.close('ok');
 	}
 

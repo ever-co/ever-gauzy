@@ -6,7 +6,9 @@ import {
 } from '@angular/core';
 import { IGetExpenseInput, IOrganization } from '@gauzy/models';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import * as moment from 'moment';
@@ -20,7 +22,9 @@ import { pluck } from 'underscore';
 	templateUrl: './amounts-owed-report.component.html',
 	styleUrls: ['./amounts-owed-report.component.scss']
 })
-export class AmountsOwedReportComponent implements OnInit, AfterViewInit {
+export class AmountsOwedReportComponent
+	extends TranslationBaseComponent
+	implements OnInit, AfterViewInit {
 	logRequest: IGetExpenseInput = {
 		startDate: moment().startOf('week').toDate(),
 		endDate: moment().endOf('week').toDate()
@@ -45,8 +49,11 @@ export class AmountsOwedReportComponent implements OnInit, AfterViewInit {
 	constructor(
 		private timesheetService: TimesheetService,
 		private cd: ChangeDetectorRef,
-		private store: Store
-	) {}
+		private store: Store,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this.updateLogs$
@@ -104,7 +111,7 @@ export class AmountsOwedReportComponent implements OnInit, AfterViewInit {
 			.then((logs: any[]) => {
 				const datasets = [
 					{
-						label: 'Amount',
+						label: this.getTranslation('REPORT_PAGE.AMOUNT'),
 						data: logs.map((log) => log.value)
 					}
 				];

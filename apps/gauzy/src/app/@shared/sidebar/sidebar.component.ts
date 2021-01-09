@@ -11,12 +11,7 @@ import { TreeComponent, ITreeOptions } from '@circlon/angular-tree-component';
 import { Subject } from 'rxjs';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import {
-	NbDialogService,
-	NbToastrService,
-	NbMenuItem,
-	NbMenuService
-} from '@nebular/theme';
+import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { AddIconComponent } from './add-icon/add-icon.component';
 import { first, takeUntil } from 'rxjs/operators';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
@@ -26,6 +21,7 @@ import { DeleteCategoryComponent } from './delete-category/delete-category.compo
 import { DeleteBaseComponent } from './delete-base/delete-base.component';
 import { HelpCenterService } from '../../@core/services/help-center.service';
 import { Store } from '../../@core/services/store.service';
+import { ToastrService } from '../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-sidebar',
@@ -40,7 +36,7 @@ export class SidebarComponent
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private dialogService: NbDialogService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		private helpService: HelpCenterService,
 		readonly translateService: TranslateService,
 		private errorHandler: ErrorHandlingService,
@@ -86,19 +82,30 @@ export class SidebarComponent
 
 		this.settingsContextMenu = [
 			{
-				title: 'Add Category'
+				title: this.getTranslation('HELP_PAGE.ADD_CATEGORY')
 			},
 			{
-				title: 'Edit Knowledge Base'
+				title: this.getTranslation('HELP_PAGE.EDIT_KNOWLAGE_BASE')
 			},
 			{
-				title: 'Delete Base'
+				title: this.getTranslation('HELP_PAGE.DELETE_BASE')
 			}
 		];
 		this.nbMenuService.onItemClick().subscribe((elem) => {
-			if (elem.item.title === 'Edit Knowledge Base') this.editBase();
-			if (elem.item.title === 'Add Category') this.addCategory();
-			if (elem.item.title === 'Delete Base') this.deleteBase();
+			if (
+				elem.item.title ===
+				this.getTranslation('HELP_PAGE.EDIT_KNOWLAGE_BASE')
+			)
+				this.editBase();
+			if (
+				elem.item.title ===
+				this.getTranslation('HELP_PAGE.ADD_CATEGORY')
+			)
+				this.addCategory();
+			if (
+				elem.item.title === this.getTranslation('HELP_PAGE.DELETE_BASE')
+			)
+				this.deleteBase();
 		});
 	}
 
@@ -124,12 +131,9 @@ export class SidebarComponent
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
-			this.toastrService.success(
-				this.getTranslation('TOASTR.MESSAGE.CREATED_BASE', {
-					name: data.name
-				}),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('TOASTR.MESSAGE.CREATED_BASE', {
+				name: data.name
+			});
 			this.loadMenu();
 			this.tree.treeModel.update();
 		}
@@ -147,12 +151,9 @@ export class SidebarComponent
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
-			this.toastrService.success(
-				this.getTranslation('TOASTR.MESSAGE.EDITED_BASE', {
-					name: someNode.data.name
-				}),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('TOASTR.MESSAGE.EDITED_BASE', {
+				name: someNode.data.name
+			});
 			this.loadMenu();
 			this.tree.treeModel.update();
 		}
@@ -171,12 +172,9 @@ export class SidebarComponent
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
-			this.toastrService.success(
-				this.getTranslation('TOASTR.MESSAGE.EDIT_ADD_CATEGORY', {
-					name: data.name
-				}),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('TOASTR.MESSAGE.EDIT_ADD_CATEGORY', {
+				name: data.name
+			});
 			this.loadMenu();
 			this.tree.treeModel.update();
 		}
@@ -196,12 +194,9 @@ export class SidebarComponent
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
-			this.toastrService.success(
-				this.getTranslation('TOASTR.MESSAGE.EDITED_CATEGORY', {
-					name: someNode.data.name
-				}),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('TOASTR.MESSAGE.EDITED_CATEGORY', {
+				name: someNode.data.name
+			});
 			this.loadMenu();
 			this.tree.treeModel.update();
 		}
@@ -216,12 +211,9 @@ export class SidebarComponent
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
 			this.deletedNode.emit();
-			this.toastrService.success(
-				this.getTranslation('TOASTR.MESSAGE.DELETED_CATEGORY', {
-					name: data.name
-				}),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('TOASTR.MESSAGE.DELETED_CATEGORY', {
+				name: data.name
+			});
 			this.loadMenu();
 			this.tree.treeModel.update();
 		}
@@ -236,12 +228,9 @@ export class SidebarComponent
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
-			this.toastrService.success(
-				this.getTranslation('TOASTR.MESSAGE.DELETED_BASE', {
-					name: data.data.name
-				}),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('TOASTR.MESSAGE.DELETED_BASE', {
+				name: data.data.name
+			});
 			await this.loadMenu();
 			this.tree.treeModel.update();
 		}

@@ -17,7 +17,8 @@ import { TranslateService } from '@ngx-translate/core';
 	templateUrl: './goal-details.component.html',
 	styleUrls: ['./goal-details.component.scss']
 })
-export class GoalDetailsComponent extends TranslationBaseComponent
+export class GoalDetailsComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	goal: IGoal;
 	src: string;
@@ -59,8 +60,8 @@ export class GoalDetailsComponent extends TranslationBaseComponent
 		const dialog = this.dialogService.open(AlertModalComponent, {
 			context: {
 				alertOptions: {
-					title: 'Delete Objective',
-					message: 'Are you sure? This action is irreversible.',
+					title: this.getTranslation('GOALS_PAGE.DELETE_OBJECTIVE'),
+					message: this.getTranslation('GOALS_PAGE.ARE_YOU_SURE'),
 					status: 'danger'
 				}
 			},

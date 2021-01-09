@@ -1,16 +1,17 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IInvite, RolesEnum, IUserRegistrationInput } from '@gauzy/models';
-import { NbToastrService } from '@nebular/theme';
 import { InviteService } from '../../@core/services/invite.service';
 import { TranslateService } from '@ngx-translate/core';
 import { SetLanguageBaseComponent } from '../../@shared/language-base/set-language-base.component';
+import { ToastrService } from '../../@core/services/toastr.service';
 
 @Component({
 	styleUrls: ['./accept-invite.component.scss'],
 	templateUrl: 'accept-invite.component.html'
 })
-export class AcceptInvitePage extends SetLanguageBaseComponent
+export class AcceptInvitePage
+	extends SetLanguageBaseComponent
 	implements OnInit, OnDestroy {
 	invitation: IInvite;
 	loading = true;
@@ -18,7 +19,7 @@ export class AcceptInvitePage extends SetLanguageBaseComponent
 
 	constructor(
 		private readonly router: Router,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private inviteService: InviteService,
 		private route: ActivatedRoute,
 		private translate: TranslateService
@@ -43,7 +44,9 @@ export class AcceptInvitePage extends SetLanguageBaseComponent
 			);
 			this.inviteLoadErrorMessage = '';
 		} catch (error) {
-			this.inviteLoadErrorMessage = 'This invitation is no longer valid';
+			this.inviteLoadErrorMessage = this.getTranslation(
+				'ACCEPT_INVITE.INVITATION_NO_LONGER_VALID'
+			);
 		}
 		this.loading = false;
 	};
@@ -67,16 +70,14 @@ export class AcceptInvitePage extends SetLanguageBaseComponent
 					inviteId: this.invitation.id
 				});
 			}
-
-			this.toastrService.success(
-				'Your account has been created, please login',
-				'Success'
-			);
+      
+			this.toastrService.success('TOASTR.MESSAGE.PROFILE_UPDATED');
 
 			this.router.navigate(['/auth/login']);
 		} catch (error) {
 			this.toastrService.danger(
-				error.error ? error.error.message : error.message,
+				error,
+				null,
 				'Could not create your account'
 			);
 		}

@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { debounceTime, filter, tap, withLatestFrom } from 'rxjs/operators';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { NbToastrService, NbDialogService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import {
 	IProposal,
 	ComponentLayoutStyleEnum,
@@ -21,6 +21,7 @@ import { NotesWithTagsComponent } from '../../@shared/table-components/notes-wit
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -62,7 +63,7 @@ export class ProposalsComponent
 		private store: Store,
 		private router: Router,
 		private proposalsService: ProposalsService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private dialogService: NbDialogService,
 		private errorHandler: ErrorHandlingService,
 		readonly translateService: TranslateService
@@ -179,11 +180,8 @@ export class ProposalsComponent
 							this.selectedProposal.id
 						);
 
-						this.toastrService.primary(
-							this.getTranslation(
-								'NOTES.PROPOSALS.DELETE_PROPOSAL'
-							),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						this.toastrService.success(
+							'NOTES.PROPOSALS.DELETE_PROPOSAL'
 						);
 						this._loadTableData();
 						this.clearItem();
@@ -217,11 +215,8 @@ export class ProposalsComponent
 							{ status: 'ACCEPTED', tenantId }
 						);
 						// TODO translate
-						this.toastrService.primary(
-							this.getTranslation(
-								'NOTES.PROPOSALS.PROPOSAL_ACCEPTED'
-							),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						this.toastrService.success(
+							'NOTES.PROPOSALS.PROPOSAL_ACCEPTED'
 						);
 						this.clearItem();
 						this._loadTableData();
@@ -255,11 +250,8 @@ export class ProposalsComponent
 							{ status: 'SENT', tenantId }
 						);
 
-						this.toastrService.primary(
-							this.getTranslation(
-								'NOTES.PROPOSALS.PROPOSAL_SENT'
-							),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						this.toastrService.success(
+							'NOTES.PROPOSALS.PROPOSAL_SENT'
 						);
 						this.clearItem();
 						this._loadTableData();
@@ -274,7 +266,7 @@ export class ProposalsComponent
 		this.smartTableSettings = {
 			actions: false,
 			editable: true,
-			noDataMessage: 'No data',
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA_MESSAGE'),
 			columns: {
 				valueDate: {
 					title: this.getTranslation('SM_TABLE.DATE'),
@@ -451,16 +443,16 @@ export class ProposalsComponent
 			this.showTable = true;
 
 			this.chartData[0] = {
-				name: 'Accepted Proposals',
+				name: this.getTranslation('PROPOSALS_PAGE.ACCEPTED_PROPOSALS'),
 				value: this.countAccepted
 			};
 
 			this.chartData[1] = {
-				name: 'Total Proposals',
+				name: this.getTranslation('PROPOSALS_PAGE.TOTAL_PROPOSALS'),
 				value: this.totalProposals
 			};
 		} catch (error) {
-			this.toastrService.danger(error.message, 'Error');
+			this.toastrService.danger(error);
 		}
 		this.loading = false;
 	}

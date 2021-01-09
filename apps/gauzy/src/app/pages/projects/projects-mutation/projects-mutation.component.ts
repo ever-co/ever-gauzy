@@ -13,7 +13,6 @@ import {
 	ICurrency,
 	OrganizationProjectBudgetTypeEnum
 } from '@gauzy/models';
-import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
@@ -21,6 +20,7 @@ import { ErrorHandlingService } from '../../../@core/services/error-handling.ser
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { patterns } from '../../../@shared/regex/regex-patterns.const';
 import { environment as ENV } from 'apps/gauzy/src/environments/environment';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-projects-mutation',
@@ -66,7 +66,7 @@ export class ProjectsMutationComponent
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly organizationContactService: OrganizationContactService,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private errorHandler: ErrorHandlingService,
 		private readonly router: Router
@@ -234,14 +234,11 @@ export class ProjectsMutationComponent
 		name: string
 	): Promise<IOrganizationContact> => {
 		try {
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
-					{
-						name: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
+				{
+					name: name
+				}
 			);
 			return this.organizationContactService.create({
 				name,

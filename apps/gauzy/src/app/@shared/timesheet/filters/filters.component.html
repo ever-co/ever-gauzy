@@ -11,7 +11,7 @@
 				class="date-range-input"
 				type="text"
 				nbInput
-				placeholder="Select Date"
+				placeholder="{{ 'FORM.PLACEHOLDERS.SELECT_DATE' | translate }}"
 				[(ngModel)]="selectedDateRange"
 				[nbDatepicker]="formRangePicker"
 			/>
@@ -37,7 +37,9 @@
 					<input
 						type="text"
 						nbInput
-						placeholder="Select Date"
+						placeholder="{{
+							'FORM.PLACEHOLDERS.SELECT_DATE' | translate
+						}}"
 						[(ngModel)]="selectedDate"
 						[nbDatepicker]="formpicker"
 					/>
@@ -142,8 +144,8 @@
 							else selectLable
 						"
 					>
-						Activity Level : {{ activityLevel?.start }}% -
-						{{ activityLevel?.end }}%
+						{{ 'TIMESHEET.ACTIVITY_LEVEL' | translate }} :
+						{{ activityLevel?.start }}% - {{ activityLevel?.end }}%
 					</span>
 					<ng-template #selectLable>
 						{{ 'TIMESHEET.SELECT_ACTIVITY_LEVEL' | translate }}
@@ -185,7 +187,7 @@
 				*ngIf="hasFilterApplies"
 			>
 				<button nbButton status="danger" (click)="clearFilters()">
-					Clear
+					{{ 'BUTTONS.CLEAR' | translate }}
 				</button>
 			</div>
 		</div>

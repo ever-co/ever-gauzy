@@ -23,7 +23,7 @@ import {
 	ActivatedRoute
 } from '@angular/router';
 import { PaymentMutationComponent } from '../invoices/invoice-payments/payment-mutation/payment-mutation.component';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
@@ -32,6 +32,7 @@ import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.co
 import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-estimate-history.service';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '../../@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -73,7 +74,7 @@ export class PaymentsComponent
 		private router: Router,
 		private invoicesService: InvoicesService,
 		private organizationProjectsService: OrganizationProjectsService,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
 		private _errorHandlingService: ErrorHandlingService,
 		private route: ActivatedRoute
@@ -207,7 +208,13 @@ export class PaymentsComponent
 			await this.loadSettings();
 			if (result.invoice) {
 				await this.invoiceEstimateHistoryService.add({
-					action: `Payment of ${result.amount} ${result.currency} added`,
+					action: this.getTranslation(
+						'INVOICES_PAGE.PAYMENT.PAYMENT_AMOUNT_ADDED',
+						{
+							amount: result.amount,
+							currency: result.currency
+						}
+					),
 					invoice: result.invoice,
 					invoiceId: result.invoice.id,
 					user: this.store.user,
@@ -247,7 +254,9 @@ export class PaymentsComponent
 
 			const { tenantId } = this.store.user;
 			await this.invoiceEstimateHistoryService.add({
-				action: `Payment edited`,
+				action: this.getTranslation(
+					'INVOICES_PAGE.PAYMENT.PAYMENT_EDIT'
+				),
 				invoice: result.invoice,
 				invoiceId: result.invoice.id,
 				user: this.store.user,
@@ -279,7 +288,9 @@ export class PaymentsComponent
 
 			const { tenantId } = this.store.user;
 			await this.invoiceEstimateHistoryService.add({
-				action: `Payment deleted`,
+				action: this.getTranslation(
+					'INVOICES_PAGE.PAYMENT.PAYMENT_DELETE'
+				),
 				invoice: this.selectedPayment.invoice,
 				invoiceId: this.selectedPayment.invoice
 					? this.selectedPayment.invoice.id
@@ -290,10 +301,7 @@ export class PaymentsComponent
 				organizationId: this.organization.id,
 				tenantId
 			});
-			this.toastrService.primary(
-				this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE');
 			this.clearItem();
 		}
 	}
@@ -320,7 +328,7 @@ export class PaymentsComponent
 					}
 				},
 				paymentMethod: {
-					title: 'Payment Method',
+					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_METHOD'),
 					type: 'text',
 					width: '10%'
 				},
@@ -356,7 +364,7 @@ export class PaymentsComponent
 					}
 				},
 				projectName: {
-					title: 'Project',
+					title: this.getTranslation('PAYMENTS_PAGE.PROJECT'),
 					type: 'text',
 					width: '10%',
 					valuePrepareFunction: (cell, row) => {
@@ -366,7 +374,7 @@ export class PaymentsComponent
 					}
 				},
 				tags: {
-					title: 'Tags',
+					title: this.getTranslation('PAYMENTS_PAGE.TAGS'),
 					type: 'custom',
 					width: '10%',
 					renderComponent: NotesWithTagsComponent

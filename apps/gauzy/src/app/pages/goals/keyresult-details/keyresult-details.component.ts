@@ -27,13 +27,17 @@ import { TasksStoreService } from '../../../@core/services/tasks-store.service';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { KeyResultUpdateService } from '../../../@core/services/keyresult-update.service';
 import { AddTaskDialogComponent } from '../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ga-keyresult-details',
 	templateUrl: './keyresult-details.component.html',
 	styleUrls: ['./keyresult-details.component.scss']
 })
-export class KeyResultDetailsComponent implements OnInit, OnDestroy {
+export class KeyResultDetailsComponent
+	extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	src: string;
 	keyResult: IKeyResult;
 	updates: IKeyResultUpdate[];
@@ -61,8 +65,11 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 		private taskService: TasksService,
 		private _store: TasksStoreService,
 		private organizationProject: OrganizationProjectsService,
-		private keyResultUpdateService: KeyResultUpdateService
-	) {}
+		private keyResultUpdateService: KeyResultUpdateService,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	async ngOnInit() {
 		this.organization = this.store.selectedOrganization;
@@ -265,8 +272,8 @@ export class KeyResultDetailsComponent implements OnInit, OnDestroy {
 		const dialog = this.dialogService.open(AlertModalComponent, {
 			context: {
 				alertOptions: {
-					title: 'Delete Key Result',
-					message: 'Are you sure? This action is irreversible.',
+					title: this.getTranslation('GOALS_PAGE.DELETE_KEY_RESULT'),
+					message: this.getTranslation('GOALS_PAGE.ARE_YOU_SURE'),
 					status: 'danger'
 				}
 			},

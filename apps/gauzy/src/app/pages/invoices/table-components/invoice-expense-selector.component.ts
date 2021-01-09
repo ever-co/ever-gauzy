@@ -9,7 +9,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	template: `
 		<nb-select
 			fullWidth
-			placeholder="Select Expense"
+			placeholder="{{ 'FORM.PLACEHOLDERS.SELECT_EXPENSE' | translate }}"
 			[(ngModel)]="expense"
 			(selectedChange)="selectExpense($event)"
 		>

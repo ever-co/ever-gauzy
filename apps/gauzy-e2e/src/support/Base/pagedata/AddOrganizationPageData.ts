@@ -1,5 +1,5 @@
 export const AddOrganizationPageData = {
-	currency: 'US Dollar',
+	currency: 'US Dollar (USD)',
 	dashboardCardText: 'Go to dashboard',
 	country: 'Bulgaria',
 	city: 'Sofia',

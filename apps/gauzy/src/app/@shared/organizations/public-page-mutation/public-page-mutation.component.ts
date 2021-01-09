@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Validators, FormBuilder, FormGroup } from '@angular/forms';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import {
 	IIncome,
 	IOrganization,
@@ -17,6 +17,7 @@ import { OrganizationLanguagesService } from '../../../@core/services/organizati
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import * as moment from 'moment';
 import { Store } from '../../../@core/services/store.service';
+import { ToastrService } from '../../../@core/services/toastr.service';
 @Component({
 	selector: 'ngx-public-page-mutation',
 	templateUrl: './public-page-mutation.component.html',
@@ -74,7 +75,7 @@ export class PublicPageMutationComponent
 	constructor(
 		private fb: FormBuilder,
 		protected dialogRef: NbDialogRef<PublicPageMutationComponent>,
-		private readonly toastrService: NbToastrService,
+		private readonly toastrService: ToastrService,
 		private readonly organizationAwardsService: OrganizationAwardsService,
 		private readonly organizationLanguagesService: OrganizationLanguagesService,
 		readonly translateService: TranslateService,
@@ -168,14 +169,11 @@ export class PublicPageMutationComponent
 				year
 			});
 
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_AWARDS.ADD_AWARD',
-					{
-						name: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_AWARDS.ADD_AWARD',
+				{
+					name
+				}
 			);
 
 			this.showAddAward = !this.showAddAward;
@@ -183,12 +181,8 @@ export class PublicPageMutationComponent
 		} else {
 			// TODO translate
 			this.toastrService.danger(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_AWARDS.INVALID_AWARD_NAME_YEAR'
-				),
-				this.getTranslation(
-					'TOASTR.MESSAGE.NEW_ORGANIZATION_AWARD_INVALID_NAME'
-				)
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_AWARDS.INVALID_AWARD_NAME_YEAR',
+				'TOASTR.MESSAGE.NEW_ORGANIZATION_AWARD_INVALID_NAME'
 			);
 		}
 	}
@@ -209,14 +203,11 @@ export class PublicPageMutationComponent
 				name
 			});
 
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_LANGUAGES.ADD_LANGUAGE',
-					{
-						name: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_LANGUAGES.ADD_LANGUAGE',
+				{
+					name
+				}
 			);
 
 			this.showAddLanguage = !this.showAddLanguage;
@@ -224,40 +215,30 @@ export class PublicPageMutationComponent
 		} else {
 			// TODO translate
 			this.toastrService.danger(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_LANGUAGES.INVALID_LANGUAGE_NAME_LEVEL'
-				),
-				this.getTranslation(
-					'TOASTR.MESSAGE.NEW_ORGANIZATION_LANGUAGE_INVALID_NAME'
-				)
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_LANGUAGES.INVALID_LANGUAGE_NAME_LEVEL',
+				'TOASTR.MESSAGE.NEW_ORGANIZATION_LANGUAGE_INVALID_NAME'
 			);
 		}
 	}
 
-	async removeAward(id: string) {
-		await this.organizationAwardsService.delete(id);
-		this.toastrService.primary(
-			this.getTranslation(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_AWARDS.REMOVE_AWARD',
-				{
-					name: name
-				}
-			),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
+	async removeAward(award) {
+		await this.organizationAwardsService.delete(award.id);
+		this.toastrService.success(
+			'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_AWARDS.REMOVE_AWARD',
+			{
+				name: award.name
+			}
 		);
 		this.loadAwards();
 	}
 
-	async removeLanguage(id: string) {
-		await this.organizationLanguagesService.delete(id);
-		this.toastrService.primary(
-			this.getTranslation(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_LANGUAGES.REMOVE_LANGUAGE',
-				{
-					name: name
-				}
-			),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
+	async removeLanguage(language) {
+		await this.organizationLanguagesService.delete(language.id);
+		this.toastrService.success(
+			'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_LANGUAGES.REMOVE_LANGUAGE',
+			{
+				name: language.name
+			}
 		);
 		this.loadLanguages();
 	}

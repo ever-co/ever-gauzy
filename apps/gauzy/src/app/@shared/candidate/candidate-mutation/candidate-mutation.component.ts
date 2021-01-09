@@ -57,12 +57,14 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 	ngOnInit(): void {}
 
 	async ngAfterViewInit() {
+		const { tenantId } = this.store.user;
+
 		this.form = this.userBasicInfo.form;
 		this.formCV = this.candidateCv.form;
 		this.role = await this.roleService
 			.getRoleByName({
 				name: RolesEnum.CANDIDATE,
-				tenant: this.store.user.tenant
+				tenantId
 			})
 			.pipe(first())
 			.toPromise();

@@ -14,7 +14,7 @@ import {
 } from '@gauzy/models';
 import { takeUntil, first } from 'rxjs/operators';
 import { Router } from '@angular/router';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { CandidateInterviewMutationComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
 import { DeleteInterviewComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-confirmation/delete-interview/delete-interview.component';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
@@ -33,13 +33,15 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ArchiveConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/archive-confirmation/archive-confirmation.component';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { CandidateInterviewFeedbackComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-interview-panel',
 	templateUrl: './interview-panel.component.html',
 	styleUrls: ['./interview-panel.component.scss']
 })
-export class InterviewPanelComponent extends TranslationBaseComponent
+export class InterviewPanelComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	interviewList: ICandidateInterview[];
@@ -67,7 +69,7 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService,
 		private readonly store: Store,
-		private toastrService: NbToastrService,
+		private toastrService: ToastrService,
 		private candidateInterviewService: CandidateInterviewService,
 		private router: Router,
 		private errorHandler: ErrorHandlingService,
@@ -377,10 +379,7 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	async addFeedback(interview: ICandidateInterview) {
 		if (!this.isPastInterview(interview)) {
 			this.toastrService.warning(
-				this.getTranslation('TOASTR.TITLE.WARNING'),
-				this.getTranslation(
-					'CANDIDATES_PAGE.MANAGE_INTERVIEWS.FEEDBACK_PROHIBIT'
-				)
+				'CANDIDATES_PAGE.MANAGE_INTERVIEWS.FEEDBACK_PROHIBIT'
 			);
 		} else {
 			if (interview.feedbacks.length !== interview.interviewers.length) {
@@ -397,24 +396,23 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 				const data = await dialog.onClose.pipe(first()).toPromise();
 				if (data) {
 					this.loadInterviews();
-					this.toastrSuccess('CREATED');
+					this.toastrService.success(
+						'TOASTR.MESSAGE.INTERVIEW_FEEDBACK_CREATED',
+						{
+							name: interview.title
+						}
+					);
 				}
 			} else {
-				this.toastrService.primary(
-					this.getTranslation('TOASTR.TITLE.WARNING'),
-					this.getTranslation(
-						'TOASTR.MESSAGE.CANDIDATE_FEEDBACK_ABILITY'
-					)
+				this.toastrService.warning(
+					'TOASTR.MESSAGE.CANDIDATE_FEEDBACK_ABILITY'
 				);
 			}
 		}
 	}
 	archive(interview: ICandidateInterview) {
 		if (interview.isArchived) {
-			this.toastrService.warning(
-				this.getTranslation('TOASTR.TITLE.WARNING'),
-				this.getTranslation('TOASTR.MESSAGE.ARCHIVE_INTERVIEW')
-			);
+			this.toastrService.warning('TOASTR.MESSAGE.ARCHIVE_INTERVIEW');
 		} else {
 			this.dialogService
 				.open(ArchiveConfirmationComponent, {
@@ -429,9 +427,11 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 							await this.candidateInterviewService.setInterviewAsArchived(
 								interview.id
 							);
-							this.toastrService.primary(
-								`${interview.title}` + '  set as archived.',
-								'Success'
+							this.toastrService.success(
+								'TOASTR.MESSAGE.ARCHIVE_INTERVIEW_SET',
+								{
+									name: interview.title
+								}
 							);
 							this.loadInterviews();
 						} catch (error) {
@@ -446,10 +446,7 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 			(item) => item.id === id
 		);
 		if (this.isPastInterview(currentInterview)) {
-			this.toastrService.warning(
-				this.getTranslation('TOASTR.TITLE.WARNING'),
-				this.getTranslation('TOASTR.MESSAGE.EDIT_PAST_INTERVIEW')
-			);
+			this.toastrService.warning('TOASTR.MESSAGE.EDIT_PAST_INTERVIEW');
 		} else {
 			const { id: organizationId, tenantId } = this.organization;
 			const candidate = await this.candidatesService
@@ -476,7 +473,9 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 			);
 			const data = await dialog.onClose.pipe(first()).toPromise();
 			if (data) {
-				this.toastrSuccess('UPDATED');
+				this.toastrService.success('TOASTR.MESSAGE.INTERVIEW_UPDATED', {
+					name: data.title
+				});
 				this.loadInterviews();
 			}
 		}
@@ -486,10 +485,7 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 			(item) => item.id === id
 		);
 		if (this.isPastInterview(currentInterview)) {
-			this.toastrService.warning(
-				this.getTranslation('TOASTR.TITLE.WARNING'),
-				this.getTranslation('TOASTR.MESSAGE.DELETE_PAST_INTERVIEW')
-			);
+			this.toastrService.warning('TOASTR.MESSAGE.DELETE_PAST_INTERVIEW');
 		} else {
 			const dialog = this.dialogService.open(DeleteInterviewComponent, {
 				context: {
@@ -498,7 +494,9 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 			});
 			const data = await dialog.onClose.pipe(first()).toPromise();
 			if (data) {
-				this.toastrSuccess('DELETED');
+				this.toastrService.success('TOASTR.MESSAGE.INTERVIEW_DELETED', {
+					name: data.title
+				});
 				this.loadInterviews();
 			}
 		}
@@ -519,12 +517,7 @@ export class InterviewPanelComponent extends TranslationBaseComponent
 	openEmployees(id: string) {
 		this.router.navigate([`/pages/employees/edit/${id}`]);
 	}
-	private toastrSuccess(text: string) {
-		this.toastrService.success(
-			this.getTranslation('TOASTR.TITLE.SUCCESS'),
-			this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_EDIT_${text}`)
-		);
-	}
+
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();

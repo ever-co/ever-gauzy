@@ -9,7 +9,8 @@ export async function generatePdf(
 	invoice: IInvoice,
 	organization: IOrganization,
 	organizationContact: IOrganizationContact,
-	service?: any
+	service?: any,
+	translatedText?: any
 ) {
 	const body = [];
 
@@ -77,17 +78,22 @@ export async function generatePdf(
 
 	let widths;
 	let tableHeader;
-	if (invoice.invoiceType === InvoiceTypeEnum.DETAILS_INVOICE_ITEMS) {
+	if (invoice.invoiceType === InvoiceTypeEnum.DETAILED_ITEMS) {
 		widths = ['25%', '25%', '25%', '25%'];
-		tableHeader = ['Description', 'Quantity', 'Price', 'Total Value'];
+		tableHeader = [
+			translatedText.description,
+			translatedText.quantity,
+			translatedText.price,
+			translatedText.totalValue
+		];
 	} else {
 		widths = ['20%', '20%', '20%', '20%', '20%'];
 		tableHeader = [
-			'Item',
-			'Description',
-			'Quantity',
-			'Price',
-			'Total Value'
+			translatedText.item,
+			translatedText.description,
+			translatedText.quantity,
+			translatedText.price,
+			translatedText.totalValue
 		];
 	}
 	const docDefinition = {
@@ -97,8 +103,10 @@ export async function generatePdf(
 					{
 						width: '*',
 						text: `${
-							invoice.isEstimate ? 'Estimate' : 'Invoice'
-						} Number: ${invoice.invoiceNumber}`
+							invoice.isEstimate
+								? translatedText.estimate
+								: translatedText.invoice
+						} ${translatedText.number}: ${invoice.invoiceNumber}`
 					}
 				]
 			},
@@ -108,11 +116,11 @@ export async function generatePdf(
 				columns: [
 					{
 						width: '50%',
-						text: `FROM: ${organization.name}`
+						text: `${translatedText.from}: ${organization.name}`
 					},
 					{
 						width: '50%',
-						text: `TO: ${organizationContact.name}`
+						text: `${translatedText.to}: ${organizationContact.name}`
 					}
 				]
 			},
@@ -123,14 +131,18 @@ export async function generatePdf(
 					{
 						width: '50%',
 						text: `${
-							invoice.isEstimate ? 'Estimate' : 'Invoice'
-						} Date: ${invoice.invoiceDate.toString().slice(0, 10)}`
+							invoice.isEstimate
+								? translatedText.estimate
+								: translatedText.invoice
+						} ${
+							translatedText.date
+						}: ${invoice.invoiceDate.toString().slice(0, 10)}`
 					},
 					{
 						width: '50%',
-						text: `Due Date: ${invoice.dueDate
-							.toString()
-							.slice(0, 10)}`
+						text: `${
+							translatedText.dueDate
+						}: ${invoice.dueDate.toString().slice(0, 10)}`
 					}
 				]
 			},
@@ -140,11 +152,11 @@ export async function generatePdf(
 				columns: [
 					{
 						width: '50%',
-						text: `Discount Value: ${invoice.discountValue}`
+						text: `${translatedText.discountValue}: ${invoice.discountValue}`
 					},
 					{
 						width: '50%',
-						text: `Discount Type: ${invoice.discountType}`
+						text: `${translatedText.discountType}: ${invoice.discountType}`
 					}
 				]
 			},
@@ -154,11 +166,11 @@ export async function generatePdf(
 				columns: [
 					{
 						width: '50%',
-						text: `Tax Value: ${invoice.tax}`
+						text: `${translatedText.taxValue}: ${invoice.tax}`
 					},
 					{
 						width: '50%',
-						text: `Tax Type: ${invoice.taxType}`
+						text: `${translatedText.taxType}: ${invoice.taxType}`
 					}
 				]
 			},
@@ -168,20 +180,22 @@ export async function generatePdf(
 				columns: [
 					{
 						width: '50%',
-						text: `Total Value: ${invoice.currency} ${invoice.totalValue}`
+						text: `${translatedText.totalValue}: ${invoice.currency} ${invoice.totalValue}`
 					},
 					{
 						width: '50%',
-						text: `Currency: ${invoice.currency}`
+						text: `${translatedText.currency}: ${invoice.currency}`
 					}
 				]
 			},
 			' ',
 			' ',
-			`Paid: ${invoice.paid ? 'Yes' : 'No'}`,
+			`${translatedText.paid}: ${
+				invoice.paid ? translatedText.yes : translatedText.no
+			}`,
 			' ',
 			' ',
-			`Terms: ${invoice.terms}`,
+			`${translatedText.terms}: ${invoice.terms}`,
 			' ',
 			' ',
 			{

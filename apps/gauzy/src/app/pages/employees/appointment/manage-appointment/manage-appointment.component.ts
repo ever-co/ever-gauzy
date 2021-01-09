@@ -251,8 +251,12 @@ export class ManageAppointmentComponent
 			const dialog = this.dialogService.open(AlertModalComponent, {
 				context: {
 					alertOptions: {
-						title: 'Cancel Appointment',
-						message: 'Are you sure? This action is irreversible.',
+						title: this.getTranslation(
+							'APPOINTMENTS_PAGE.CANCEL_APPOINTMENT'
+						),
+						message: this.getTranslation(
+							'APPOINTMENTS_PAGE.ARE_YOU_SURE'
+						),
 						status: 'danger'
 					}
 				}

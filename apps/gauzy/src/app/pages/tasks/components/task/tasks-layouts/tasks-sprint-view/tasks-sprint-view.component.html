@@ -23,7 +23,7 @@
 							*ngIf="sprint.isActive"
 							(click)="completeSprint(sprint, $event)"
 						>
-							Complete Sprint
+							{{ 'TASKS_PAGE.COMPLETE_SPRINT' | translate }}
 						</button>
 						<!-- <button
 							nbButton
@@ -40,11 +40,12 @@
 				<div class="sprint__details">
 					<span class="col">Tasks: {{ sprint.tasks?.length }}</span>
 					<span class="col" *ngIf="sprint.startDate"
-						>Date Start:
+						>{{ 'TASKS_PAGE.DATE_START' | translate }}:
 						{{ sprint.startDate | date: 'short' }}</span
 					>
 					<span class="col" *ngIf="sprint.endDate"
-						>Date End: {{ sprint.endDate | date: 'short' }}</span
+						>{{ 'TASKS_PAGE.DATE_END' | translate }}:
+						{{ sprint.endDate | date: 'short' }}</span
 					>
 				</div>
 			</nb-accordion-item-header>
@@ -65,7 +66,9 @@
 			</nb-accordion-item-body>
 		</nb-accordion-item>
 		<nb-accordion-item [expanded]="true">
-			<nb-accordion-item-header>Backlog</nb-accordion-item-header>
+			<nb-accordion-item-header>{{
+				'TASKS_PAGE.BACKLOG' | translate
+			}}</nb-accordion-item-header>
 			<nb-accordion-item-body
 				id="backlog"
 				cdkDropList

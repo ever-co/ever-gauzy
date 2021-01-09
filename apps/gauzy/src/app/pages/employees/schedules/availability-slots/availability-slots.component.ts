@@ -70,6 +70,9 @@ export class AvailabilitySlotsComponent
 		endTime: '00:00'
 	};
 
+	mondayFriday = this.getTranslation('SCHEDULE.MONDAY_FRIDAY');
+	sundayThursday = this.getTranslation('SCHEDULE.SUNDAY_THURSDAY');
+
 	constructor(
 		private store: Store,
 		private route: ActivatedRoute,

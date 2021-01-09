@@ -24,6 +24,7 @@ export class PublicAppointmentsComponent
 	timeOff: ITimeOff[] = timeOff;
 	loading = true;
 	_selectedOrganizationId: string;
+	eventTypesExist: boolean;
 
 	constructor(
 		private router: Router,
@@ -68,7 +69,8 @@ export class PublicAppointmentsComponent
 			{
 				employee: {
 					id: this.employee.id
-				}
+				},
+				isActive: true
 			}
 		);
 
@@ -77,9 +79,20 @@ export class PublicAppointmentsComponent
 			items = (
 				await this.eventTypeService.getAll(['tags'], {
 					organizationId: this._selectedOrganizationId,
-					tenantId
+					tenantId,
+					isActive: true
 				})
 			).items;
+		}
+
+		if (items.length === 1) {
+			this.router.navigate([
+				`/share/employee/${this.employee.id}/${items[0].id}`
+			]);
+		}
+
+		if (items.length !== 0) {
+			this.eventTypesExist = true;
 		}
 
 		const eventTypesOrder = ['Minute(s)', 'Hour(s)', 'Day(s)'];
