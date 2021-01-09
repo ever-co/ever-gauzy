@@ -3,12 +3,12 @@ import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class ProductReview {
-  @PrimaryGeneratedColumn('uuid')
-  id?: string;
+	@PrimaryGeneratedColumn('uuid')
+	id?: string;
 
-  @Column('text')
-  body: string;
+	@Column('text')
+	body: string;
 
-  @Column()
-  rating: number;
+	@Column()
+	rating: number;
 }
