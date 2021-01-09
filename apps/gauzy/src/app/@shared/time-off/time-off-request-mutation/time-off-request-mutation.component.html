@@ -69,7 +69,7 @@
 								alt="Smiley face"
 								height="40"
 								width="40"
-								style="margin-right: 10px;"
+								style="margin-right: 10px"
 							/>
 							{{ employee.user.firstName }}
 							{{ employee.user.lastName }}</nb-option
@@ -162,9 +162,9 @@
 			<div class="row" *ngIf="!isHoliday">
 				<div class="form-group col-6">
 					<div>
-						<label class="label" for="end"
-							>Download Request Form</label
-						>
+						<label class="label" for="end">{{
+							'FORM.LABELS.DOWNLOAD_REQUEST_FORM' | translate
+						}}</label>
 					</div>
 					<button
 						nbButton
@@ -172,7 +172,7 @@
 						class="download-btn mr-4"
 						(click)="getRequestForm('paid')"
 					>
-						Paid Days off
+						{{ 'BUTTONS.PAID_DAYS_OFF' | translate }}
 					</button>
 					<button
 						nbButton
@@ -180,12 +180,14 @@
 						class="download-btn"
 						(click)="getRequestForm('unpaid')"
 					>
-						Unpaid Days off
+						{{ 'BUTTONS.UNPAID_DAYS_OFF' | translate }}
 					</button>
 				</div>
 				<div class="form-group col-6">
 					<div class="label">
-						Upload Request Document
+						{{
+							'TIME_OFF_PAGE.UPLOAD_REQUEST_DOCUMENT' | translate
+						}}
 					</div>
 					<ngx-file-uploader-input
 						[placeholder]="

@@ -1,6 +1,8 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex">
-		<h5>{{ action | titlecase }} Sprint</h5>
+		<h5>
+			{{ action | titlecase }} {{ 'SPRINTS_PAGE.SPRINT' | translate }}
+		</h5>
 		<nb-icon
 			class="ml-auto mt-1 close"
 			icon="close-outline"
@@ -13,7 +15,9 @@
 				<div class="row">
 					<div class="col-sm-12">
 						<div class="form-group">
-							<label class="label">Name</label>
+							<label class="label">{{
+								'FORMS.LABELS.NAME' | translate
+							}}</label>
 							<input
 								fullWidth
 								status="basic"
@@ -22,7 +26,9 @@
 								formControlName="name"
 								type="text"
 								nbInput
-								placeholder="Add sprint name"
+								placeholder="{{
+									'SPRINTS_PAGE.ADD_SPRINT_NAME' | translate
+								}}"
 							/>
 						</div>
 					</div>
@@ -31,11 +37,16 @@
 				<div class="row">
 					<div class="col">
 						<div class="form-group">
-							<label class="label">Length</label>
+							<label class="label">{{
+								'FORM.LABELS.LENGTH' | translate
+							}}</label>
 							<input
 								nbInput
 								class="sprint__length"
-								placeholder="Sprint length"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.SPRINT_LENGTH'
+										| translate
+								}}"
 								formControlName="length"
 							/>
 							<nb-datepicker #startDate></nb-datepicker>
@@ -43,11 +54,16 @@
 					</div>
 					<div class="col">
 						<div class="form-group">
-							<label class="label">Start date</label>
+							<label class="label">{{
+								'FORMS.LABELS.DATE_START' | translate
+							}}</label>
 							<input
 								nbInput
 								class="sprint__start-date"
-								placeholder="Sprint start date"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.SPRINT_START_DATE'
+										| translate
+								}}"
 								[nbDatepicker]="startDate"
 								formControlName="startDate"
 							/>
@@ -56,11 +72,16 @@
 					</div>
 					<div class="col">
 						<div class="form-group">
-							<label class="label">End date</label>
+							<label class="label">{{
+								'FORMS.LABELS.END_DATE' | translate
+							}}</label>
 							<input
 								nbInput
 								class="sprint__end-date"
-								placeholder="Sprint end date"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.SPRINT_END_DATE'
+										| translate
+								}}"
 								[nbDatepicker]="endDate"
 								formControlName="endDate"
 							/>
@@ -72,13 +93,17 @@
 				<div class="row">
 					<div class="col-sm-12">
 						<div class="form-group">
-							<label class="label">Goal</label>
+							<label class="label">{{
+								'FORMS.LABELS.GOAL' | translate
+							}}</label>
 							<textarea
 								formControlName="goal"
 								nbInput
 								fullWidth
 								class="sprint__goal"
-								placeholder="Sprint goal"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.SPRINT_GOAL' | translate
+								}}"
 							></textarea>
 						</div>
 					</div>

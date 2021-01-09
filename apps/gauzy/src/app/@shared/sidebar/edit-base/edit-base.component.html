@@ -18,7 +18,7 @@
 				</p>
 				<nb-select
 					class="ml-3"
-					placeholder="Select"
+					placeholder="{{ 'FORM.PLACEHOLDERS.SELECT' | translate }}"
 					[(selected)]="selectedLang"
 				>
 					<nb-option *ngFor="let lang of languages" [value]="lang">{{
@@ -42,7 +42,7 @@
 			<p class="label">{{ 'HELP_PAGE.CHOSE_ICON' | translate }}:</p>
 			<nb-select
 				class="main-buttons"
-				placeholder="Select Icon"
+				placeholder="{{ 'FORM.PLACEHOLDERS.SELECT_ICON' | translate }}"
 				[(selected)]="selectedIcon"
 			>
 				<nb-select-label *ngIf="selectedIcon">
@@ -64,7 +64,7 @@
 			<input
 				class="select-color"
 				nbInput
-				placeholder="Color"
+				placeholder="{{ 'FORM.PLACEHOLDERS.COUNT' | translate }}"
 				formControlName="color"
 				[(colorPicker)]="color"
 				[value]="color"

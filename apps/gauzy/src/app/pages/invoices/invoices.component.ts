@@ -374,8 +374,12 @@ export class InvoicesComponent
 
 		await this.invoiceEstimateHistoryService.add({
 			action: this.isEstimate
-				? 'Estimate duplicated'
-				: 'Invoice duplicated',
+				? this.getTranslation(
+						'INVOICES_PAGE.INVOICES_DUPLICATE_ESTIMATE'
+				  )
+				: this.getTranslation(
+						'INVOICES_PAGE.INVOICES_DUPLICATE_INVOICE'
+				  ),
 			invoice: this.selectedInvoice,
 			invoiceId: this.selectedInvoice.id,
 			user: this.store.user,
@@ -454,7 +458,9 @@ export class InvoicesComponent
 			status: InvoiceStatusTypesEnum.DRAFT
 		});
 		await this.invoiceEstimateHistoryService.add({
-			action: 'Estimate converted to invoice',
+			action: this.getTranslation(
+				'INVOICES_PAGE.ESTIMATES.CONVERTED_TO_INVOICE'
+			),
 			invoice: this.selectedInvoice,
 			invoiceId: this.selectedInvoice.id,
 			user: this.store.user,

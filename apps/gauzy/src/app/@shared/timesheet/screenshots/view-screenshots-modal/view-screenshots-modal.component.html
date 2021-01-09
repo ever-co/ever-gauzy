@@ -26,7 +26,8 @@
 			></nb-progress-bar>
 
 			<div class="activity-count">
-				{{ timeSlot.overall || 0 }}% of
+				{{ timeSlot.overall || 0 }}%
+				{{ 'TIMESHEET.SCREENSHOTS.OF' | translate }}
 				{{
 					timeSlot.duration
 						| amFromUnix
@@ -38,7 +39,7 @@
 		</div>
 
 		<ng-template [ngIf]="timeSlot.screenshots?.length > 0">
-			<h6>Screenshots</h6>
+			<h6>{{ 'TIMESHEET.SCREENSHOTS.SCREENSHOTS' | translate }}</h6>
 			<div class="row mb-3 justify-content-center">
 				<div
 					class="col-sm-4"
@@ -56,7 +57,7 @@
 			</div>
 		</ng-template>
 
-		<h6>TimeLog</h6>
+		<h6>{{ 'TIMESHEET.SCREENSHOTS.TIME_LOG' | translate }}</h6>
 		<div *ngFor="let timeLog of timeSlot.timeLogs" class="mt-3 p-3 card">
 			<div
 				class="row"

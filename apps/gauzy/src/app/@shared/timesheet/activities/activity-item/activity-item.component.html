@@ -31,9 +31,11 @@
 </div>
 <div *ngIf="item?.childItems?.length && childOpen" class="child-items">
 	<div class="row pt-2 pb-2 border-bottom font-weight-bold">
-		<div class="col-sm-2">Title</div>
-		<div class="col-sm-8">Url</div>
-		<div class="col-sm-2 text-right">Time spent (hours)</div>
+		<div class="col-sm-2">{{ 'TIMESHEET.TITLE' | translate }}</div>
+		<div class="col-sm-8">{{ 'TIMESHEET.URL' | translate }}</div>
+		<div class="col-sm-2 text-right">
+			{{ 'TIMESHEET.TIME_SPENT' | translate }}
+		</div>
 	</div>
 	<div
 		class="row pt-2 pb-2 border-top"
