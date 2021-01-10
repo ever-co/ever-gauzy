@@ -695,6 +695,69 @@
 					}
 				}
 			}
+		},
+		"wakatime": {
+			"root": "libs/wakatime",
+			"sourceRoot": "libs/wakatime/src",
+			"projectType": "library",
+			"schematics": {},
+			"architect": {
+				"lint": {
+					"builder": "@nrwl/linter:eslint",
+					"options": {
+						"lintFilePatterns": ["libs/wakatime/**/*.ts"]
+					}
+				},
+				"test": {
+					"builder": "@nrwl/jest:jest",
+					"options": {
+						"jestConfig": "libs/wakatime/jest.config.js",
+						"passWithNoTests": true
+					}
+				}
+			}
+		},
+		"desktop-timer": {
+			"root": "libs/desktop-timer",
+			"sourceRoot": "libs/desktop-timer/src",
+			"projectType": "library",
+			"schematics": {},
+			"architect": {
+				"lint": {
+					"builder": "@nrwl/linter:eslint",
+					"options": {
+						"lintFilePatterns": ["libs/desktop-timer/**/*.ts"]
+					}
+				},
+				"test": {
+					"builder": "@nrwl/jest:jest",
+					"options": {
+						"jestConfig": "libs/desktop-timer/jest.config.js",
+						"passWithNoTests": true
+					}
+				}
+			}
+		},
+		"desktop-window": {
+			"root": "libs/desktop-window",
+			"sourceRoot": "libs/desktop-window/src",
+			"projectType": "library",
+			"schematics": {},
+			"architect": {
+				"lint": {
+					"builder": "@nrwl/linter:eslint",
+					"options": {
+						"lintFilePatterns": ["libs/desktop-window/**/*.ts"]
+					}
+				},
+				"test": {
+					"builder": "@nrwl/jest:jest",
+					"options": {
+						"jestConfig": "libs/desktop-window/jest.config.js",
+						"passWithNoTests": true
+					}
+				}
+			}
 		}
 	},
 	"schematics": {

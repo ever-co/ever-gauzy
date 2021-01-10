@@ -1,8 +1,9 @@
 import { Entity, Column, PrimaryGeneratedColumn, Unique } from 'typeorm';
+import { IWakatime } from '@gauzy/models';
 
 @Entity({ name: 'heartbeats' })
 @Unique(['time', 'entities']) // named; multiple fields
-export class Wakatime {
+export class Wakatime implements IWakatime {
 	@PrimaryGeneratedColumn()
 	id: number;
 

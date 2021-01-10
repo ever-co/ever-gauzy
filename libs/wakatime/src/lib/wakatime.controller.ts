@@ -9,10 +9,9 @@ import {
 	HttpException,
 	HttpStatus
 } from '@nestjs/common';
-
 import { WakatimeService } from './wakatime.service';
 
-@Controller()
+@Controller('wakatime')
 export class WakatimeController {
 	constructor(private readonly wakatimeService: WakatimeService) {}
 

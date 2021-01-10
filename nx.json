@@ -40,6 +40,15 @@
 		},
 		"integration-hubstaff": {
 			"tags": []
+		},
+		"wakatime": {
+			"tags": []
+		},
+		"desktop-timer": {
+			"tags": []
+		},
+		"desktop-window": {
+			"tags": []
 		}
 	}
 }
