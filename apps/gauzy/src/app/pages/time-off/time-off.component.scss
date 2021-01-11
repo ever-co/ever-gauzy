@@ -34,6 +34,10 @@ nb-radio-group {
   justify-content: space-between;
 }
 
+.radio-group {
+  margin: 0;
+}
+
 /* Card grid */
 
 .flex-container {
@@ -94,7 +98,7 @@ nb-radio-group {
   justify-content: space-around;
 }
 
-.aditional-actions{
+.aditional-actions {
   margin-top: 0.5rem;
   display: flex;
   justify-content: space-around;

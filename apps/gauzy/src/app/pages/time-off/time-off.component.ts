@@ -49,6 +49,7 @@ export class TimeOffComponent
 	showActions = false;
 	private _selectedOrganizationId: string;
 	organization: IOrganization;
+	includeArchived = false;
 
 	timeOffTable: Ng2SmartTableComponent;
 	@ViewChild('timeOffTable') set content(content: Ng2SmartTableComponent) {
@@ -373,6 +374,18 @@ export class TimeOffComponent
 			});
 	}
 
+	archive() {
+		const requestId = this.selectedTimeOffRecord.id;
+		this.selectedTimeOffRecord.isArchived = true;
+		this.timeOffRequest = this.selectedTimeOffRecord;
+		this._updateRecord(requestId);
+	}
+
+	changeIncludeArchived($event) {
+		this.includeArchived = $event;
+		this._loadTableData(this._selectedOrganizationId);
+	}
+
 	private _loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			actions: false,
@@ -492,13 +505,15 @@ export class TimeOffComponent
 							extendedDescription = result.description;
 						}
 
-						this.tableData.push({
-							...result,
-							fullName: employeeName,
-							imageUrl: employeeImage,
-							policyName: result.policy.name,
-							description: extendedDescription
-						});
+						if (!result.isArchived || this.includeArchived) {
+							this.tableData.push({
+								...result,
+								fullName: employeeName,
+								imageUrl: employeeImage,
+								policyName: result.policy.name,
+								description: extendedDescription
+							});
+						}
 					});
 					this.timeOffData = this.tableData;
 					this.sourceSmartTable.load(this.tableData);
