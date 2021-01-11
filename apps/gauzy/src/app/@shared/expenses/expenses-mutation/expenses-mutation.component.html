@@ -29,7 +29,7 @@
 					*ngFor="let expenseType of expenseTypes"
 					[value]="expenseType"
 					(valueChange)="changeExpenseType($event)"
-					>{{ expenseType }}
+					>{{ 'EXPENSES_PAGE.MUTATION.' + expenseType | translate }}
 				</nb-radio>
 			</nb-radio-group>
 			<div
@@ -283,7 +283,10 @@
 									*ngFor="let status of expenseStatuses"
 									[value]="status"
 								>
-									{{ status }}
+									{{
+										'EXPENSES_PAGE.MUTATION.' + status
+											| translate
+									}}
 								</nb-option>
 							</nb-select>
 						</div>
@@ -333,8 +336,9 @@
 					<div class="col-sm-6">
 						<div class="form-group">
 							<ng-select
-								[items]="taxTypes"
-								bindLabel="taxType"
+								[items]="translatedTaxTypes"
+								bindLabel="label"
+								bindValue="value"
 								formControlName="taxType"
 								fullWidth
 								[clearable]="false"

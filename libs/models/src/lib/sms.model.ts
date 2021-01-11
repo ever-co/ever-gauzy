@@ -1,3 +1,3 @@
 export enum SMSProviderEnum {
-	TWILIO = 'Twilio'
+	TWILIO = 'TWILIO'
 }

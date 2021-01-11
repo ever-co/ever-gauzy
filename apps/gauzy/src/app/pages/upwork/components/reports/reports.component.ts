@@ -108,7 +108,9 @@ export class ReportsComponent
 						if (item.hasOwnProperty('category')) {
 							return item.category ? item.category.name : null;
 						}
-						return IncomeTypeEnum.HOURLY;
+						return this.getTranslation(
+							`INTEGRATIONS.UPWORK_PAGE.${IncomeTypeEnum.HOURLY.toUpperCase()}`
+						);
 					}
 				},
 				clientName: {
