@@ -1,5 +1,5 @@
 {
-	"name": "@gauzy/common",
+	"name": "@gauzy/plugins",
 	"version": "0.1.0",
 	"description": "",
 	"author": "",
@@ -7,8 +7,7 @@
 	"private": true,
 	"main": "src/index.ts",
 	"directories": {
-		"lib": "dist",
-		"test": "__tests__"
+		"lib": "dist"
 	},
 	"files": [
 		"dist/**/*"
@@ -22,6 +21,7 @@
 		"build": "rimraf dist && tsc",
 		"tsc": "yarn build"
 	},
+	"keywords": [],
 	"devDependencies": {
 		"@types/node": "^14.14.20",
 		"rimraf": "^3.0.2",
@@ -41,7 +41,7 @@
 		"collectCoverageFrom": [
 			"**/*.(t|j)s"
 		],
-		"coverageDirectory": "../coverage/packages/common",
+		"coverageDirectory": "../coverage/packages/plugin",
 		"testEnvironment": "node"
 	}
 }

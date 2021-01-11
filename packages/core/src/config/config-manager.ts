@@ -1,10 +1,10 @@
-import { deepMergeObject } from '@gauzy/common';
+import { deepMerge } from '@gauzy/common';
 import { defaultConfiguration } from './default-configuration';
 
 let defaultConfig = defaultConfiguration;
 
 export function setConfig(config: any): void {
-  defaultConfig = deepMergeObject(defaultConfig, config);
+  defaultConfig = deepMerge(defaultConfig, config);
 }
 
 export function getConfig(): Readonly<any> {

@@ -1,15 +1,70 @@
-//checks if is object, null val returns false
-export function isObject(val: any) {
-	if (val === null) {
+/**
+ * Check is function .
+ * @param item
+ * @returns {boolean}
+ */
+export function isFunction(item: any): boolean {
+	if (isEmpty(item)) {
 		return false;
 	}
-	return typeof val === 'function' || typeof val === 'object';
+	return item instanceof Function;
 }
 
+/**
+ * Check is object.
+ * @param item
+ * @returns {boolean}
+ */
+export function isObject(item: any): boolean {
+	if (isEmpty(item)) {
+		return false;
+	}
+	return item instanceof Object;
+}
+
+/**
+ * Check is object or function.
+ * @param item
+ * @returns {boolean}
+ */
+export function isMixObjectFunction(item: any): boolean {
+	if (isEmpty(item)) {
+		return false;
+	}
+	return isFunction(item) || isObject(item);
+}
+
+/**
+ * Check is class instance.
+ * @param item
+ * @returns {boolean}
+ */
 export function isClassInstance(item: any): boolean {
 	return isObject(item) && item.constructor.name !== 'Object';
 }
 
-export function notEmpty<T>(val: T | undefined | null): val is T {
-	return val !== undefined && val !== null;
+/**
+ * Check value not empty.
+ * @param item
+ * @returns {boolean}
+ */
+export function notEmpty(item: any): boolean {
+	return !isEmpty(item);
+}
+
+/**
+ * Check value empty.
+ * @param item
+ * @returns {boolean}
+ */
+export function isEmpty(item: any): boolean {
+	switch (item) {
+		case 0:
+		case null:
+		case false:
+		case undefined:
+			return true;
+		default:
+			return false;
+	}
 }

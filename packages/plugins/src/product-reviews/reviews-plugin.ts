@@ -1,4 +1,4 @@
-import { ExtensionPlugin } from '../../extension-plugin';
+import { ExtensionPlugin } from '@gauzy/plugin';
 import { ProductReview } from './entities/product-review.entity';
 import { schemaExtensions } from './graphql/schema-extensions';
 
@@ -11,7 +11,5 @@ import { schemaExtensions } from './graphql/schema-extensions';
 	}
 })
 export class ReviewsPlugin {
-	onPluginBootstrap() {
-		console.log('plugin bootstraped successfully');
-	}
+	onPluginBootstrap() {}
 }

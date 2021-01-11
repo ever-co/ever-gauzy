@@ -1,5 +1,5 @@
 import { PluginConfig } from '@gauzy/common';
-import { ReviewsPlugin } from './plugin/default/reviews/reviews-plugin';
+import { ReviewsPlugin } from '@gauzy/plugins';
 
 export const config: PluginConfig = {
   apiConfig: {

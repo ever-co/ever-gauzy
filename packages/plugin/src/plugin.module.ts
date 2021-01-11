@@ -5,15 +5,12 @@ import {
 	OnModuleInit
 } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { ConfigModule, ConfigService } from '../config';
-import { getConfig } from '../config/config-manager';
-import { Logger } from '../logger/logger';
+import { getConfig } from '@gauzy/core';
+import { Logger } from '@gauzy/core';
 import { PluginLifecycleMethods } from './extension-plugin';
 import { getPluginModules, hasLifecycleMethod } from './plugin-helper';
 
-@Module({
-	imports: [ConfigModule]
-})
+@Module({})
 export class PluginModule implements OnModuleInit, OnModuleDestroy {
 	static forRoot(): DynamicModule {
 		return {
@@ -23,10 +20,7 @@ export class PluginModule implements OnModuleInit, OnModuleDestroy {
 		};
 	}
 
-	constructor(
-		private configService: ConfigService,
-		private moduleRef: ModuleRef
-	) {}
+	constructor(private readonly moduleRef: ModuleRef) {}
 
 	async onModuleInit() {
 		await this.bootstrapPluginLifecycleMethods(
@@ -47,7 +41,7 @@ export class PluginModule implements OnModuleInit, OnModuleDestroy {
 		lifecycleMethod: keyof PluginLifecycleMethods,
 		closure?: (instance: any) => void
 	): Promise<void> {
-		for (const plugin of getPluginModules(this.configService.plugins)) {
+		for (const plugin of getPluginModules(getConfig().plugins)) {
 			let classInstance: ClassDecorator;
 			try {
 				classInstance = this.moduleRef.get(plugin, { strict: false });

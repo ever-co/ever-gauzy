@@ -1,6 +1,6 @@
 import { notEmpty } from '@gauzy/common';
 import { DynamicModule, Type } from '@nestjs/common';
-import { PLUGIN_METADATA } from '../constants';
+import { PLUGIN_METADATA } from './constants';
 import { PluginLifecycleMethods } from './extension-plugin';
 
 export function getEntitiesFromPlugins(

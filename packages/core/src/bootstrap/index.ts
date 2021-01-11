@@ -1,11 +1,11 @@
 import { INestApplication, Type } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { PluginConfig } from '@gauzy/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { getConfig, setConfig } from '../config/config-manager';
+import { PluginConfig } from '@gauzy/common';
+import { getConfig, setConfig } from '@gauzy/core';
+import { getEntitiesFromPlugins } from '@gauzy/plugin';
 import { coreEntities } from '../entities';
 import { Logger } from '../logger/logger';
-import { getEntitiesFromPlugins } from '../plugin/plugin-helper';
 
 export async function bootstrap(pluginConfig?: Partial<PluginConfig>): Promise<INestApplication> {
   const config = await registerPluginConfig(pluginConfig);

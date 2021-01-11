@@ -6,7 +6,7 @@ import {
 	OnPluginDestroy,
 	PluginMetaData
 } from '@gauzy/common';
-import { PLUGIN_METADATA } from '../constants';
+import { PLUGIN_METADATA } from './constants';
 
 export function ExtensionPlugin(
 	pluginMetadata: PluginMetaData

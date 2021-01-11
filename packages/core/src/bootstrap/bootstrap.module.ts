@@ -1,14 +1,13 @@
 import { MiddlewareConsumer, Module, NestModule, OnApplicationShutdown } from '@nestjs/common';
-import { ConfigModule } from '../config/config.module';
-import { LoggerModule } from '../logger/logger.module';
-import { Logger } from '../logger/logger';
-import { ApiModule } from '../api/api.module';
-import { PluginModule } from '../plugin/plugin.module';
-import { ConfigService } from '../config';
-import { HealthIndicatorModule } from '../health-indicator/health-indicator.module';
+import { ConfigModule, ConfigService } from '@gauzy/core';
+import { PluginModule } from '@gauzy/plugin';
+import { ApiModule } from '../api';
+import { HealthIndicatorModule } from '../health-indicator';
+import { Logger, LoggerModule } from '../logger';
 
 @Module({
-  imports: [ConfigModule, LoggerModule.forRoot(), ApiModule, PluginModule.forRoot(), HealthIndicatorModule],
+  imports: [ConfigModule, LoggerModule.forRoot(), ApiModule, HealthIndicatorModule, PluginModule.forRoot()],
+  exports: [ConfigModule],
 })
 export class BootstrapModule implements NestModule, OnApplicationShutdown {
   constructor(private configService: ConfigService) {}
