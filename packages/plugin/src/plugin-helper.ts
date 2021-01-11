@@ -1,4 +1,4 @@
-import { notEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/common';
 import { DynamicModule, Type } from '@nestjs/common';
 import { PLUGIN_METADATA } from './constants';
 import { PluginLifecycleMethods } from './extension-plugin';
@@ -20,7 +20,7 @@ export function getPluginExtensions(plugins: Array<Type<any> | DynamicModule>) {
 	}
 	return plugins
 		.map((plugin) => reflectMetadata(plugin, PLUGIN_METADATA.EXTENSIONS))
-		.filter(notEmpty);
+		.filter(isNotEmpty);
 }
 
 export function getPluginModules(

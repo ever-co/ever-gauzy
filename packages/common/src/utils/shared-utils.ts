@@ -7,7 +7,7 @@ export function isFunction(item: any): boolean {
 	if (isEmpty(item)) {
 		return false;
 	}
-	return item instanceof Function;
+	return typeof item === 'function';
 }
 
 /**
@@ -19,7 +19,7 @@ export function isObject(item: any): boolean {
 	if (isEmpty(item)) {
 		return false;
 	}
-	return item instanceof Object;
+	return typeof item === 'object';
 }
 
 /**
@@ -27,7 +27,7 @@ export function isObject(item: any): boolean {
  * @param item
  * @returns {boolean}
  */
-export function isMixObjectFunction(item: any): boolean {
+export function isObjectOrFunction(item: any): boolean {
 	if (isEmpty(item)) {
 		return false;
 	}
@@ -48,7 +48,7 @@ export function isClassInstance(item: any): boolean {
  * @param item
  * @returns {boolean}
  */
-export function notEmpty(item: any): boolean {
+export function isNotEmpty(item: any): boolean {
 	return !isEmpty(item);
 }
 

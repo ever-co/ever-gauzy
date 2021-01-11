@@ -27,9 +27,6 @@
   },
   "keywords": [],
   "dependencies": {
-    "@gauzy/common": "^0.1.0",
-    "@gauzy/plugin": "^0.1.0",
-    "@gauzy/plugins": "^0.1.0",
     "@godaddy/terminus": "^4.5.0",
     "@nestjs/common": "^7.6.5",
     "@nestjs/config": "^0.6.1",
@@ -63,6 +60,9 @@
     "underscore": "^1.12.0"
   },
   "devDependencies": {
+    "@gauzy/common": "^0.1.0",
+    "@gauzy/plugin": "^0.1.0",
+    "@gauzy/plugins": "^0.1.0",
     "@nestjs/cli": "^7.5.4",
     "@nestjs/schematics": "^7.2.6",
     "@nestjs/testing": "^7.6.5",
