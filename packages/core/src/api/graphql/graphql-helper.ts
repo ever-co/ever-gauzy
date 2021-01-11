@@ -1,4 +1,4 @@
-import { GraphQLApiOptions, notEmpty } from '@gauzy/common';
+import { GraphQLApiOptions, isNotEmpty } from '@gauzy/common';
 import { GqlModuleOptions, GraphQLTypesLoader } from '@nestjs/graphql';
 import { buildSchema, extendSchema, printSchema } from 'graphql';
 import * as path from 'path';
@@ -30,7 +30,7 @@ async function createTypeDefs(
 
   getPluginExtensions(configService.plugins)
     .map((e) => (typeof e.schema === 'function' ? e.schema() : e.schema))
-    .filter(notEmpty)
+    .filter(isNotEmpty)
     .forEach((documentNode) => (schema = extendSchema(schema, documentNode)));
 
   return printSchema(schema);
