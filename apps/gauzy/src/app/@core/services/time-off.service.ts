@@ -7,8 +7,7 @@ import {
 	ITimeOffPolicyUpdateInput,
 	ITimeOffCreateInput,
 	ITimeOff,
-	ITimeOffFindInput,
-	ITimeOffUpdateInput
+	ITimeOffFindInput
 } from '@gauzy/models';
 import { Observable } from 'rxjs';
 
