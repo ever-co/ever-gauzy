@@ -69,11 +69,8 @@ export class TimeOffService {
 		);
 	}
 
-	updateRequestStatus(
-		id: string,
-		request: ITimeOffUpdateInput
-	): Observable<ITimeOff> {
-		return this.http.put(`/api/time-off-request/${id}`, request);
+	updateRequestStatus(id: string, action: string): Observable<ITimeOff> {
+		return this.http.put(`/api/time-off-request/${action}/${id}`, {});
 	}
 
 	deleteDaysOffRequest(id: string): Observable<ITimeOff> {
