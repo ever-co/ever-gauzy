@@ -7,12 +7,12 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="row mb-3">
-			<div class="col-2">
+			<div class="col-4">
 				<button
 					nbButton
 					status="primary"
 					(click)="requestDaysOff()"
-					class="my-2"
+					class="mr-3"
 				>
 					<nb-icon class="mr-1" icon="calendar-outline"></nb-icon>
 					{{ 'TIME_OFF_PAGE.REQUEST' | translate }}
@@ -23,8 +23,41 @@
 					{{ 'TIME_OFF_PAGE.ADD_HOLIDAYS' | translate }}
 				</button>
 			</div>
+
+			<nb-checkbox
+				(checkedChange)="changeDisplayHolidays($event)"
+				class="my-auto align-center ml-auto mr-5"
+				status="primary"
+				checked
+				>{{ 'TIME_OFF_PAGE.DISPLAY_HOLIDAYS' | translate }}
+			</nb-checkbox>
+
+			<div>
+				<button
+					(click)="showHideFilter()"
+					nbButton
+					status="info"
+					class="mr-3"
+				>
+					<nb-icon icon="funnel-outline"></nb-icon>
+					{{ 'BUTTONS.FILTER' | translate }}
+				</button>
+
+				<ng-template ngxPermissionsOnly="POLICY_VIEW">
+					<button
+						(click)="openTimeOffSettings()"
+						nbButton
+						status="primary"
+						class="mr-3"
+					>
+						<nb-icon icon="settings-outline"></nb-icon>
+					</button>
+				</ng-template>
+			</div>
+		</div>
+		<div class="row mb-3 justify-content-end" *ngIf="showFilter">
 			<nb-radio-group
-				class="align-center radio-group"
+				class="align-center radio-group mr-5"
 				[(ngModel)]="selectedStatus"
 				(ngModelChange)="detectStatusChange($event)"
 			>
@@ -39,35 +72,10 @@
 			<nb-checkbox
 				(checkedChange)="changeIncludeArchived($event)"
 				status="warning"
-				class="my-auto align-center"
+				class="my-auto align-center mr-3"
 			>
 				{{ 'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate }}
 			</nb-checkbox>
-
-			<nb-checkbox
-				(checkedChange)="changeDisplayHolidays($event)"
-				class="my-auto align-center"
-				status="primary"
-				checked
-				>{{ 'TIME_OFF_PAGE.DISPLAY_HOLIDAYS' | translate }}
-			</nb-checkbox>
-
-			<ng-template ngxPermissionsOnly="POLICY_VIEW">
-				<button
-					(click)="openTimeOffSettings()"
-					nbButton
-					status="primary"
-					style="border-radius: 5px 20px 5px"
-					class="mr-3"
-				>
-					<nb-icon
-						class="mr-1"
-						style="font-size: 2em"
-						icon="settings-outline"
-					></nb-icon>
-					{{ 'TIME_OFF_PAGE.SETTINGS' | translate }}
-				</button>
-			</ng-template>
 		</div>
 		<ng-template ngxPermissionsOnly="TIME_OFF_EDIT">
 			<div class="row actions-container" *ngIf="isRecordSelected">

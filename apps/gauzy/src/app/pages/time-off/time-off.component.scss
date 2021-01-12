@@ -1,7 +1,6 @@
 nb-radio-group {
   display: flex;
   flex-direction: row;
-  margin: 0em 5em 0 5em;
 }
 
 .row {
@@ -32,10 +31,6 @@ nb-radio-group {
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.radio-group {
-  margin: 0;
 }
 
 /* Card grid */
