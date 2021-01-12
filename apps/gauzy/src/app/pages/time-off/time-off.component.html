@@ -12,18 +12,13 @@
 					nbButton
 					status="primary"
 					(click)="requestDaysOff()"
-					class="ml-2"
+					class="my-2"
 				>
 					<nb-icon class="mr-1" icon="calendar-outline"></nb-icon>
 					{{ 'TIME_OFF_PAGE.REQUEST' | translate }}
 				</button>
 
-				<button
-					nbButton
-					status="info"
-					(click)="addHolidays()"
-					class="ml-2"
-				>
+				<button nbButton status="info" (click)="addHolidays()">
 					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
 					{{ 'TIME_OFF_PAGE.ADD_HOLIDAYS' | translate }}
 				</button>
@@ -34,6 +29,7 @@
 				(ngModelChange)="detectStatusChange($event)"
 			>
 				<nb-radio
+					class="d-flex"
 					*ngFor="let status of timeOffStatuses"
 					[value]="status"
 					>{{ 'TIME_OFF_PAGE.STATUSES.' + status | translate }}
