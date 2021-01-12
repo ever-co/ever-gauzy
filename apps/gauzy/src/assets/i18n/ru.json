@@ -942,7 +942,8 @@
 			"SELECT_DATE": "Выберите дату",
 			"ONLY_CONTRACTS": "Только контракты",
 			"CONTRACTS_RELATED_DATA": "Синхронизированные Контракты",
-			"DATE_RANGE_PLACEHOLDER": "Выберите дату между"
+			"DATE_RANGE_PLACEHOLDER": "Выберите дату между",
+			"HOURLY": "Почасовой"
 		},
 		"COMING_SOON": "Скоро появится",
 		"RE_INTEGRATE": "Переинтегрировать",
@@ -1031,7 +1032,18 @@
 			"ASSIGN_TO": "Назначить",
 			"INCLUDE_TAXES": "Включить налоги",
 			"ATTACH_A_RECEIPT": "Добавить квитанцию",
-			"EMPLOYEES_GENERATE_EXPENSE": "Сотрудники, которые производят расходы"
+			"EMPLOYEES_GENERATE_EXPENSE": "Сотрудники, которые производят расходы",
+			"TAX_DEDUCTIBLE": "Налоговый вычитаемый",
+			"NOT_TAX_DEDUCTIBLE": "Не облагаемый налогом",
+			"BILLABLE_TO_CONTACT": "Оплачиваемый контакту",
+			"PERCENTAGE": "Процент",
+			"VALUE": "Стоимость",
+			"TAX_AMOUNT": "Сумма налога",
+			"TAX_RATE": "Ставка налога",
+			"INVOICED": "Счет выставлен",
+			"UNINVOICED": "Невыставленный счет",
+			"PAID": "Оплачено",
+			"NOT_BILLABLE": "Не оплачивается"
 		},
 		"DEFAULT_CATEGORY": {
 			"SALARY": "Зарплата",
@@ -3166,7 +3178,8 @@
 		}
 	},
 	"SMS_GATEWAY_PAGE": {
-		"HEADER": "Поставщик SMS"
+		"HEADER": "Поставщик SMS",
+		"TWILIO": "Твилио"
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "Управление функциями для '{{ name }}'"
