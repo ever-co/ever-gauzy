@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import * as path from 'path';
-import { ConfigService } from '../config';
+import { ConfigService } from '@gauzy/config';
 import { ServiceModule } from '../service/service.module';
 import { GraphqlApiModule, SharedModule } from './shared.module';
 import { GraphqlModule } from './graphql';

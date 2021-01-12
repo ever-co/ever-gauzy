@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '../config';
+import { ConfigModule } from '@gauzy/config';
 import { SeedModule } from '../seed/seed.module';
 import { ServiceModule } from '../service/service.module';
 

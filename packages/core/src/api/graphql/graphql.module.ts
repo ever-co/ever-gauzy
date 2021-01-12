@@ -1,7 +1,7 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { GraphQLModule, GraphQLTypesLoader } from '@nestjs/graphql';
 import { GraphQLApiOptions } from '@gauzy/common';
-import { ConfigService } from '../../config';
+import { ConfigService } from '@gauzy/config';
 import { createGraphqlModuleOptions } from './graphql-helper';
 import { SharedModule } from '../shared.module';
 
