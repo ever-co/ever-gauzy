@@ -2,26 +2,22 @@ import { INestApplication, Type } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { PluginConfig } from '@gauzy/common';
-import { getConfig, setConfig } from '@gauzy/core';
+import { getConfig, setConfig } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
 import { coreEntities } from '../entities';
-import { Logger } from '../logger/logger';
+// import { Logger } from '../logger/logger';
 
 export async function bootstrap(pluginConfig?: Partial<PluginConfig>): Promise<INestApplication> {
   const config = await registerPluginConfig(pluginConfig);
 
-  Logger.setLogger(config.logger);
-  Logger.info(`Bootstrapping Server (pid: ${process.pid})...`);
+  // Logger.setLogger(config.logger);
+  // Logger.info(`Bootstrapping Server (pid: ${process.pid})...`);
 
   const bootstrapModule = await import('./bootstrap.module');
   const [classname] = Object.keys(bootstrapModule);
 
   const { hostname, port } = config.apiConfig;
-  const app = await NestFactory.create<NestExpressApplication>(bootstrapModule[classname], {
-    logger: new Logger(),
-  });
-
-  app.useLogger(app.get(Logger));
+  const app = await NestFactory.create<NestExpressApplication>(bootstrapModule[classname]);
 
   await app.listen(port || 3000, hostname, () => {
     console.log(`Listening at http://${hostname}:${port}`);

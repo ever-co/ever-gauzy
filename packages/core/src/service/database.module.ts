@@ -1,6 +1,6 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule, ConfigService } from '../config';
+import { ConfigModule, ConfigService } from '@gauzy/config';
 
 let defaultTypeOrmModule: DynamicModule;
 @Module({

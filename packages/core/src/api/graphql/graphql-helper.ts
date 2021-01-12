@@ -2,8 +2,8 @@ import { GraphQLApiOptions, isNotEmpty } from '@gauzy/common';
 import { GqlModuleOptions, GraphQLTypesLoader } from '@nestjs/graphql';
 import { buildSchema, extendSchema, printSchema } from 'graphql';
 import * as path from 'path';
+import { ConfigService } from '@gauzy/config';
 import { getPluginExtensions } from '@gauzy/plugin';
-import { ConfigService } from '../../config';
 
 export async function createGraphqlModuleOptions(
   configService: ConfigService,

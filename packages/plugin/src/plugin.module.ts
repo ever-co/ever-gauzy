@@ -5,17 +5,18 @@ import {
 	OnModuleInit
 } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { Logger, getConfig } from '@gauzy/core';
+import { ConfigService } from '@gauzy/config';
+import { PluginConfig } from '@gauzy/common';
 import { PluginLifecycleMethods } from './extension-plugin';
 import { getPluginModules, hasLifecycleMethod } from './plugin-helper';
 
 @Module({})
 export class PluginModule implements OnModuleInit, OnModuleDestroy {
-	static forRoot(): DynamicModule {
+	static forRoot(options: PluginConfig): DynamicModule {
 		return {
 			module: PluginModule,
 			providers: [],
-			imports: [...getConfig().plugins]
+			imports: [...options.plugins]
 		};
 	}
 
@@ -27,7 +28,7 @@ export class PluginModule implements OnModuleInit, OnModuleDestroy {
 			(instance: any) => {
 				const pluginName =
 					instance.constructor.name || '(anonymous plugin)';
-				Logger.verbose(`Bootstrapped plugin ${pluginName}`);
+				// Logger.verbose(`Bootstrapped plugin ${pluginName}`);
 			}
 		);
 	}
@@ -40,12 +41,13 @@ export class PluginModule implements OnModuleInit, OnModuleDestroy {
 		lifecycleMethod: keyof PluginLifecycleMethods,
 		closure?: (instance: any) => void
 	): Promise<void> {
-		for (const plugin of getPluginModules(getConfig().plugins)) {
+		const configService = new ConfigService();
+		for (const plugin of getPluginModules(configService.plugins)) {
 			let classInstance: ClassDecorator;
 			try {
 				classInstance = this.moduleRef.get(plugin, { strict: false });
 			} catch (e) {
-				Logger.error(
+				console.log(
 					`Could not find ${plugin.name}`,
 					undefined,
 					e.stack
