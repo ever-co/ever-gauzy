@@ -121,20 +121,20 @@ export interface ISplitExpenseFindInput {
 }
 
 export enum ExpenseTypesEnum {
-	TAX_DEDUCTIBLE = 'Tax Deductible',
-	NOT_TAX_DEDUCTIBLE = 'Not Tax Deductible',
-	BILLABLE_TO_CONTACT = 'Billable to Contact'
+	TAX_DEDUCTIBLE = 'TAX_DEDUCTIBLE',
+	NOT_TAX_DEDUCTIBLE = 'NOT_TAX_DEDUCTIBLE',
+	BILLABLE_TO_CONTACT = 'BILLABLE_TO_CONTACT'
 }
 
 export enum TaxTypesEnum {
-	PERCENTAGE = 'Percentage',
-	VALUE = 'Value'
+	PERCENTAGE = 'PERCENTAGE',
+	VALUE = 'VALUE'
 }
 
 export enum ExpenseStatusesEnum {
-	INVOICED = 'Invoiced',
-	UNINVOICED = 'Uninvoiced',
-	PAID = 'Paid'
+	INVOICED = 'INVOICED',
+	UNINVOICED = 'UNINVOICED',
+	PAID = 'PAID'
 }
 
 export interface IExpenseViewModel {
