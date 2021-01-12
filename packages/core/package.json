@@ -5,29 +5,32 @@
   "author": "",
   "license": "",
   "private": true,
-  "main": "src/index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "directories": {
     "lib": "dist",
-    "test": "__tests__"
+    "test": "__test__"
   },
-  "files": [
-    "dist/**/*"
-  ],
   "publishConfig": {
     "access": "restricted"
   },
   "scripts": {
-    "bootstrap": "lerna bootstrap",
-    "build": "rimraf dist && tsc",
     "lint": "tslint -p tsconfig.json",
     "test": "jest",
     "test:e2e": "jest --config ./__test__/jest.config.json",
-    "tsc": "yarn build",
+    "build": "rimraf dist && yarn run compile",
+    "compile": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "yarn run build",
     "start": "ts-node ./src/index.ts"
   },
   "keywords": [],
   "dependencies": {
     "@godaddy/terminus": "^4.5.0",
+    "@gauzy/common": "^0.1.0",
+    "@gauzy/plugin": "^0.1.0",
     "@nestjs/common": "^7.6.5",
     "@nestjs/config": "^0.6.1",
     "@nestjs/core": "^7.6.5",
@@ -41,6 +44,7 @@
     "@nestjsx/crud": "^4.6.2",
     "@nestjsx/crud-typeorm": "^4.6.2",
     "apollo-server-express": "^2.19.1",
+    "@ntegral/nestjs-sentry": "https://github.com/ever-co/nestjs-sentry",
     "bcrypt": "^5.0.0",
     "class-transformer": "^0.3.1",
     "class-validator": "^0.12.2",
@@ -60,9 +64,6 @@
     "underscore": "^1.12.0"
   },
   "devDependencies": {
-    "@gauzy/common": "^0.1.0",
-    "@gauzy/plugin": "^0.1.0",
-    "@gauzy/plugins": "^0.1.0",
     "@nestjs/cli": "^7.5.4",
     "@nestjs/schematics": "^7.2.6",
     "@nestjs/testing": "^7.6.5",

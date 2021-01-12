@@ -5,22 +5,23 @@
 	"author": "",
 	"license": "",
 	"private": true,
-	"main": "src/index.ts",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"files": [
+		"dist"
+	],
 	"directories": {
 		"lib": "dist",
-		"test": "__tests__"
+		"test": "__test__"
 	},
-	"files": [
-		"dist/**/*"
-	],
 	"publishConfig": {
 		"access": "restricted"
 	},
 	"scripts": {
 		"test": "jest",
 		"test:e2e": "jest --config ./__test__/jest.config.json",
-		"build": "rimraf dist && tsc",
-		"tsc": "yarn build"
+		"build": "rimraf dist && yarn run compile",
+		"compile": "tsc -p tsconfig.build.json"
 	},
 	"devDependencies": {
 		"@types/node": "^14.14.20",
