@@ -5,8 +5,7 @@ import {
 	OnModuleInit
 } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { getConfig } from '@gauzy/core';
-import { Logger } from '@gauzy/core';
+import { Logger, getConfig } from '@gauzy/core';
 import { PluginLifecycleMethods } from './extension-plugin';
 import { getPluginModules, hasLifecycleMethod } from './plugin-helper';
 
