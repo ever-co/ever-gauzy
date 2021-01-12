@@ -50,6 +50,7 @@ export class TimeOffComponent
 	private _selectedOrganizationId: string;
 	organization: IOrganization;
 	includeArchived = false;
+	showFilter = false;
 
 	timeOffTable: Ng2SmartTableComponent;
 	@ViewChild('timeOffTable') set content(content: Ng2SmartTableComponent) {
@@ -384,6 +385,10 @@ export class TimeOffComponent
 	changeIncludeArchived($event) {
 		this.includeArchived = $event;
 		this._loadTableData(this._selectedOrganizationId);
+	}
+
+	showHideFilter() {
+		this.showFilter = !this.showFilter;
 	}
 
 	private _loadSmartTableSettings() {
