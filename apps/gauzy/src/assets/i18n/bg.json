@@ -942,7 +942,8 @@
 			"SELECT_DATE": "Select Date",
 			"ONLY_CONTRACTS": "Only Contracts",
 			"CONTRACTS_RELATED_DATA": "Synced Contracts related entities",
-			"DATE_RANGE_PLACEHOLDER": "Choose date between"
+			"DATE_RANGE_PLACEHOLDER": "Choose date between",
+			"HOURLY": "Hourly"
 		},
 		"COMING_SOON": "Coming soon",
 		"RE_INTEGRATE": "Re-integrate",
@@ -1031,7 +1032,18 @@
 			"ASSIGN_TO": "Възложи на",
 			"INCLUDE_TAXES": "Включете такси",
 			"ATTACH_A_RECEIPT": "Приложете разписка",
-			"EMPLOYEES_GENERATE_EXPENSE": "Employees that generate expense"
+			"EMPLOYEES_GENERATE_EXPENSE": "Employees that generate expense",
+			"TAX_DEDUCTIBLE": "Tax Deductible",
+			"NOT_TAX_DEDUCTIBLE": "Not Tax Deductible",
+			"BILLABLE_TO_CONTACT": "Billable to Contact",
+			"PERCENTAGE": "Percentage",
+			"VALUE": "Стойност",
+			"TAX_AMOUNT": "Tax Amount",
+			"TAX_RATE": "Tax Rate",
+			"INVOICED": "Invoiced",
+			"UNINVOICED": "Uninvoiced",
+			"PAID": "Paid",
+			"NOT_BILLABLE": "Not Billable"
 		},
 		"DEFAULT_CATEGORY": {
 			"SALARY": "Заплата",
@@ -3166,7 +3178,8 @@
 		}
 	},
 	"SMS_GATEWAY_PAGE": {
-		"HEADER": "SMS Provider"
+		"HEADER": "SMS Provider",
+		"TWILIO": "Twilio"
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "Manage Features for '{{ name }}'"
