@@ -7,33 +7,29 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="row mb-3">
-			<div class="col-3">
+			<div class="col-2">
 				<button
 					nbButton
 					status="primary"
 					(click)="requestDaysOff()"
-					class="ml-2"
+					class="my-2"
 				>
 					<nb-icon class="mr-1" icon="calendar-outline"></nb-icon>
 					{{ 'TIME_OFF_PAGE.REQUEST' | translate }}
 				</button>
 
-				<button
-					nbButton
-					status="info"
-					(click)="addHolidays()"
-					class="ml-2"
-				>
+				<button nbButton status="info" (click)="addHolidays()">
 					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
 					{{ 'TIME_OFF_PAGE.ADD_HOLIDAYS' | translate }}
 				</button>
 			</div>
 			<nb-radio-group
-				class="align-center"
+				class="align-center radio-group"
 				[(ngModel)]="selectedStatus"
 				(ngModelChange)="detectStatusChange($event)"
 			>
 				<nb-radio
+					class="d-flex"
 					*ngFor="let status of timeOffStatuses"
 					[value]="status"
 					>{{ 'TIME_OFF_PAGE.STATUSES.' + status | translate }}
@@ -41,8 +37,16 @@
 			</nb-radio-group>
 
 			<nb-checkbox
+				(checkedChange)="changeIncludeArchived($event)"
+				status="warning"
+				class="my-auto align-center"
+			>
+				{{ 'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate }}
+			</nb-checkbox>
+
+			<nb-checkbox
 				(checkedChange)="changeDisplayHolidays($event)"
-				class="my-auto mx-3 align-center"
+				class="my-auto align-center"
 				status="primary"
 				checked
 				>{{ 'TIME_OFF_PAGE.DISPLAY_HOLIDAYS' | translate }}
@@ -198,6 +202,21 @@
 		>
 			<nb-icon class="mr-2" icon="edit-outline"></nb-icon>
 			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+
+		<button
+			nbButton
+			(click)="archive()"
+			#archiveButton
+			status="primary"
+			class="ml-2"
+			[size]="buttonSize || 'medium'"
+			[disabled]="
+				selectedTimeOffRecord ? selectedTimeOffRecord.isArchived : true
+			"
+		>
+			<nb-icon class="mr-2" icon="archive-outline"></nb-icon
+			>{{ 'BUTTONS.ARCHIVE' | translate }}
 		</button>
 
 		<button
