@@ -1,12 +1,12 @@
-import { PluginConfig } from '@gauzy/common';
+import { PluginConfig, API_PORT, GRAPHQL_API_PATH } from '@gauzy/common';
 import { ReviewsPlugin } from '@gauzy/plugins';
 
-export const config: PluginConfig = {
+export const devConfig: PluginConfig = {
 	apiConfig: {
-		port: 3001,
+		port: API_PORT,
 		middleware: [],
 		graphqlConfig: {
-			path: 'graphql',
+			path: GRAPHQL_API_PATH,
 			playground: true,
 			debug: true,
 			apolloServerPlugins: []

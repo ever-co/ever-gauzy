@@ -1,0 +1,185 @@
+import {
+	IInvoice,
+	CurrenciesEnum,
+	InvoiceTypeEnum,
+	DiscountTaxTypeEnum
+} from '@gauzy/common';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+	IsString,
+	IsNumber,
+	IsBoolean,
+	IsDate,
+	IsOptional,
+	IsEnum
+} from 'class-validator';
+import {
+	Entity,
+	Column,
+	JoinColumn,
+	OneToMany,
+	ManyToOne,
+	Unique,
+	ManyToMany,
+	JoinTable
+} from 'typeorm';
+import { Organization } from '../organization/organization.entity';
+import { OrganizationContact } from '../organization-contact/organization-contact.entity';
+import { InvoiceItem } from '../invoice-item/invoice-item.entity';
+import { Tag } from '../tags/tag.entity';
+import { Payment } from '../payment/payment.entity';
+import { InvoiceEstimateHistory } from '../invoice-estimate-history/invoice-estimate-history.entity';
+import { TenantOrganizationBase } from '../tenant-organization-base';
+
+@Entity('invoice')
+@Unique(['invoiceNumber'])
+export class Invoice extends TenantOrganizationBase implements IInvoice {
+	@ApiProperty({ type: Tag })
+	@ManyToMany((type) => Tag, (tag) => tag.invoice)
+	@JoinTable({
+		name: 'tag_invoice'
+	})
+	tags?: Tag[];
+
+	@ApiProperty({ type: Date })
+	@IsDate()
+	@Column({ nullable: true })
+	invoiceDate: Date;
+
+	@ApiProperty({ type: Number })
+	@IsNumber()
+	@Column({ name: 'invoiceNumber', nullable: true, type: 'numeric' })
+	invoiceNumber: number;
+
+	@ApiProperty({ type: Date })
+	@IsDate()
+	@Column({ nullable: true })
+	dueDate: Date;
+
+	@ApiProperty({ type: String, enum: CurrenciesEnum })
+	@IsEnum(CurrenciesEnum)
+	@Column()
+	currency: string;
+
+	@ApiProperty({ type: Number })
+	@IsNumber()
+	@Column({ type: 'numeric' })
+	discountValue: number;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	paid: boolean;
+
+	@ApiProperty({ type: Number })
+	@IsNumber()
+	@Column({ nullable: true, type: 'numeric' })
+	tax: number;
+
+	@ApiProperty({ type: Number })
+	@IsNumber()
+	@Column({ nullable: true, type: 'numeric' })
+	tax2: number;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column()
+	terms?: string;
+
+	@ApiPropertyOptional({ type: Number })
+	@IsNumber()
+	@IsOptional()
+	@Column({ nullable: true, type: 'numeric' })
+	totalValue?: number;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column()
+	status?: string;
+
+	@ApiPropertyOptional({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	isEstimate?: boolean;
+
+	@ApiPropertyOptional({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	isAccepted?: boolean;
+
+	@ApiProperty({ type: String, enum: DiscountTaxTypeEnum })
+	@IsEnum(DiscountTaxTypeEnum)
+	@Column({ nullable: true })
+	discountType: string;
+
+	@ApiProperty({ type: String, enum: DiscountTaxTypeEnum })
+	@IsEnum(DiscountTaxTypeEnum)
+	@Column({ nullable: true })
+	taxType: string;
+
+	@ApiProperty({ type: String, enum: DiscountTaxTypeEnum })
+	@IsEnum(DiscountTaxTypeEnum)
+	@Column({ nullable: true })
+	tax2Type: string;
+
+	@ApiPropertyOptional({ type: String, enum: InvoiceTypeEnum })
+	@IsEnum(InvoiceTypeEnum)
+	@IsOptional()
+	@Column({ nullable: true })
+	invoiceType?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	sentTo?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	organizationContactId?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	internalNote?: string;
+
+	@ApiPropertyOptional({ type: Organization })
+	@ManyToOne((type) => Organization)
+	@JoinColumn()
+	fromOrganization?: Organization;
+
+	@ApiPropertyOptional({ type: OrganizationContact })
+	@ManyToOne((type) => OrganizationContact)
+	@JoinColumn()
+	toContact?: OrganizationContact;
+
+	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
+	@OneToMany((type) => InvoiceItem, (invoiceItem) => invoiceItem.invoice, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	invoiceItems?: InvoiceItem[];
+
+	@ApiPropertyOptional({ type: Payment, isArray: true })
+	@OneToMany((type) => Payment, (payment) => payment.invoice, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	payments?: Payment[];
+
+	@ApiPropertyOptional({ type: InvoiceEstimateHistory, isArray: true })
+	@OneToMany(
+		(type) => InvoiceEstimateHistory,
+		(invoiceEstimateHistory) => invoiceEstimateHistory.invoice,
+		{
+			onDelete: 'SET NULL'
+		}
+	)
+	@JoinColumn()
+	historyRecords?: InvoiceEstimateHistory[];
+}
