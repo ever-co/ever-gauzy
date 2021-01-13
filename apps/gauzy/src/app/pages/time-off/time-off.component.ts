@@ -230,9 +230,7 @@ export class TimeOffComponent
 			const requestId = this.selectedTimeOffRecord.id;
 			this.selectedTimeOffRecord.status = 'Approved';
 			this.timeOffService
-				.updateRequestStatus(requestId, {
-					status: this.selectedTimeOffRecord.status
-				})
+				.updateRequestStatus(requestId, 'approval')
 				.pipe(untilDestroyed(this), first())
 				.subscribe(
 					() => {
@@ -267,9 +265,7 @@ export class TimeOffComponent
 			const requestId = this.selectedTimeOffRecord.id;
 			this.selectedTimeOffRecord.status = 'Denied';
 			this.timeOffService
-				.updateRequestStatus(requestId, {
-					status: this.selectedTimeOffRecord.status
-				})
+				.updateRequestStatus(requestId, 'denied')
 				.pipe(untilDestroyed(this), first())
 				.subscribe(
 					() => {

@@ -1,7 +1,12 @@
 import { Component, OnInit, ViewChild, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import * as Holidays from 'date-holidays';
-import { IEmployee, ITimeOffPolicy, ITimeOff } from '@gauzy/models';
+import {
+	IEmployee,
+	ITimeOffPolicy,
+	ITimeOff,
+	IOrganization
+} from '@gauzy/models';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { Store } from '../../../@core/services/store.service';
 import { TimeOffService } from '../../../@core/services/time-off.service';
@@ -11,6 +16,7 @@ import { EmployeesService } from '../../../@core/services';
 import { OrganizationDocumentsService } from '../../../@core/services/organization-documents.service';
 import * as moment from 'moment';
 import { ToastrService } from '../../../@core/services/toastr.service';
+import { OrganizationsService } from '../../../@core/services/organizations.service';
 @Component({
 	selector: 'ngx-time-off-request-mutation',
 	templateUrl: './time-off-request-mutation.component.html',
@@ -24,7 +30,8 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		private timeOffService: TimeOffService,
 		private employeesService: EmployeesService,
 		private documentsService: OrganizationDocumentsService,
-		private store: Store
+		private store: Store,
+		private organizationService: OrganizationsService
 	) {}
 
 	@ViewChild('employeeSelector')
@@ -54,44 +61,39 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	isHoliday = false;
 	isEditMode = false;
 	minDate = new Date(moment().format('YYYY-MM-DD'));
+	organization: IOrganization;
+	organizationCountryCode: string;
+	currentUserCountryCode: string;
+	employeeIds: string[];
 
 	ngOnInit() {
-		if (this.type === 'holiday') {
-			this.isHoliday = true;
-			this._getAllHolidays();
-		} else if (this.type.hasOwnProperty('id')) {
-			this.isEditMode = true;
-			this.selectedEmployee = this.type['employees'][0];
-			this.policy = this.type['policy'];
-			this.startDate = this.type['start'];
-			this.endDate = this.type['end'];
-			this.description = this.type['description'];
-			this.employeesArr = this.type['employees'];
-		}
-
 		this._initializeForm();
 	}
 
 	private async _getAllHolidays() {
 		const holidays = new Holidays();
 		const currentMoment = new Date();
+		const countryCode = this.currentUserCountryCode
+			? this.currentUserCountryCode
+			: this.organizationCountryCode;
 
-		fetch('https://extreme-ip-lookup.com/json/')
-			.then((res) => res.json())
-			.then((response) => {
-				holidays.init(response.countryCode);
-				this.holidays = holidays
-					.getHolidays(currentMoment.getFullYear())
-					.filter((holiday) => holiday.type === 'public');
-			})
-			.catch(() => {
-				this.toastrService.danger('TOASTR.MESSAGE.HOLIDAY_ERROR');
-			});
+		if (countryCode) {
+			holidays.init(countryCode);
+			this.holidays = holidays
+				.getHolidays(currentMoment.getFullYear())
+				.filter((holiday) => holiday.type === 'public');
+		} else {
+			this.toastrService.danger('TOASTR.MESSAGE.HOLIDAY_ERROR');
+		}
 	}
 
 	private async _initializeForm() {
 		await this._getFormData();
 
+		this.setForm();
+	}
+
+	setForm() {
 		this.form = this.fb.group({
 			description: [this.description],
 			start: [this.startDate, Validators.required],
@@ -133,6 +135,10 @@ export class TimeOffRequestMutationComponent implements OnInit {
 
 	addHolidays() {
 		this._checkFormData();
+		this.employeeIds.forEach((element) => {
+			const employee = this.orgEmployees.find((e) => e.id === element);
+			this.employeesArr.push(employee);
+		});
 		this._createNewRecord();
 	}
 
@@ -173,6 +179,39 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		this.organizationId = this.store.selectedOrganization.id;
 		this.tenantId = this.store.selectedOrganization.tenantId;
 
+		const { items } = await this.organizationService.getAll(['contact'], {
+			id: this.organizationId,
+			tenantId: this.tenantId
+		});
+		this.organization = items[0];
+
+		if (this.organization.contact) {
+			this.organizationCountryCode = this.organization.contact.country;
+		}
+
+		if (this.store.user.employeeId) {
+			this.employeesService
+				.getEmployeeById(this.store.user.employeeId, ['contact'])
+				.then((data) => {
+					if (data.contact) {
+						this.currentUserCountryCode = data.contact.country;
+					}
+				});
+		}
+
+		if (this.type === 'holiday') {
+			this.isHoliday = true;
+			this._getAllHolidays();
+		} else if (this.type.hasOwnProperty('id')) {
+			this.isEditMode = true;
+			this.selectedEmployee = this.type['employees'][0];
+			this.policy = this.type['policy'];
+			this.startDate = this.type['start'];
+			this.endDate = this.type['end'];
+			this.description = this.type['description'];
+			this.employeesArr = this.type['employees'];
+		}
+
 		this._getPolicies();
 		this._getOrganizationEmployees();
 	}
@@ -191,7 +230,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 				.pipe(first())
 				.subscribe((res) => {
 					this.policies = res.items;
-					this.policy = this.policies[res.items.length - 1];
+					this.policy = this.policies[0];
 				});
 		}
 	}
@@ -214,8 +253,8 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		this.policy = policy;
 	}
 
-	onEmployeesSelected(employees: IEmployee[]) {
-		this.employeesArr = employees;
+	onEmployeesSelected(employees: string[]) {
+		this.employeeIds = employees;
 	}
 
 	onHolidaySelected(holiday) {
@@ -223,7 +262,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		this.endDate = holiday.end || null;
 		this.description = holiday.name;
 
-		this._initializeForm();
+		this.setForm();
 	}
 
 	close() {
