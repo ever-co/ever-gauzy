@@ -547,6 +547,18 @@
 	<button
 		*ngIf="dataLayoutStyle === 'TABLE'"
 		nbButton
+		status="info"
+		(click)="exportToCsv(selectedItem)"
+		class="mr-2"
+		[size]="buttonSize || 'medium'"
+		[disabled]="!selectedItem && disableButton"
+	>
+		<nb-icon class="mr-1" icon="file-text-outline"> </nb-icon>
+		{{ 'BUTTONS.EXPORT_TO_CSV' | translate }}
+	</button>
+	<button
+		*ngIf="dataLayoutStyle === 'TABLE'"
+		nbButton
 		status="danger"
 		(click)="delete(selectedItem)"
 		class="mr-2"

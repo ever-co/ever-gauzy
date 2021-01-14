@@ -44,6 +44,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
 import { ToastrService } from '../../@core/services/toastr.service';
+import { saveAs } from 'file-saver';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -565,6 +566,75 @@ export class InvoicesComponent
 				this.clearItem();
 				await this.loadSettings();
 			});
+	}
+
+	exportToCsv(selectedItem) {
+		if (selectedItem) {
+			this.selectInvoice({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+
+		let fileName;
+
+		if (this.selectedInvoice.isEstimate) {
+			fileName = this.getTranslation('INVOICES_PAGE.ESTIMATE');
+		} else {
+			fileName = this.getTranslation('INVOICES_PAGE.INVOICE');
+		}
+
+		const data = [
+			{
+				invoiceNumber: this.selectedInvoice.invoiceNumber,
+				invoiceDate: this.selectedInvoice.invoiceDate,
+				dueDate: this.selectedInvoice.dueDate,
+				status: `${this.getTranslation(
+					`INVOICES_PAGE.STATUSES.${this.selectedInvoice.status}`
+				)}`,
+				totalValue: this.selectedInvoice.totalValue,
+				tax: this.selectedInvoice.tax,
+				tax2: this.selectedInvoice.tax2,
+				discountValue: this.selectedInvoice.discountValue,
+				contact: this.selectedInvoice.toContact.name
+			}
+		];
+
+		const replacer = (key, value) => (value === null ? 'N/A' : value);
+
+		const header = Object.keys(data[0]);
+
+		const csv = data.map((row) =>
+			header
+				.map((fieldName) => JSON.stringify(row[fieldName], replacer))
+				.join(',')
+		);
+
+		const headers = [
+			this.selectedInvoice.isEstimate
+				? this.getTranslation('INVOICES_PAGE.ESTIMATE_NUMBER')
+				: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
+			this.selectedInvoice.isEstimate
+				? this.getTranslation('INVOICES_PAGE.ESTIMATE_DATE')
+				: this.getTranslation('INVOICES_PAGE.INVOICE_DATE'),
+			this.getTranslation('INVOICES_PAGE.DUE_DATE'),
+			this.getTranslation('INVOICES_PAGE.STATUS'),
+			this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
+			this.getTranslation('INVOICES_PAGE.TAX'),
+			this.getTranslation('INVOICES_PAGE.TAX_2'),
+			this.getTranslation('INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE'),
+			this.getTranslation('INVOICES_PAGE.CONTACT')
+		].join(',');
+
+		csv.unshift(headers);
+
+		var BOM = '\uFEFF';
+
+		const csvArray = BOM + csv.join('\r\n');
+
+		var blob = new Blob([csvArray], { type: 'text/csv;charset=utf-8' });
+
+		saveAs(blob, `${fileName}-${this.selectedInvoice.invoiceNumber}.csv`);
 	}
 
 	async loadSettings() {
