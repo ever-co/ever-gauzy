@@ -357,7 +357,7 @@ export class InvoicePaymentsComponent
 							cell = this.getTranslation(
 								'INVOICES_PAGE.PAYMENTS.OVERDUE'
 							);
-						} else if (cell) {
+						} else if (!cell) {
 							badgeClass = 'success';
 							cell = this.getTranslation(
 								'INVOICES_PAGE.PAYMENTS.ON_TIME'
