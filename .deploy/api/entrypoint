@@ -1,5 +1,5 @@
-#!/usr/bin/env sh
-set -eux
+#!/bin/sh
+set -ex
 
 # This Entrypoint used inside Docker Compose only
 
