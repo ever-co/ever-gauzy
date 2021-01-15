@@ -343,7 +343,12 @@ export class InvoicePaymentsComponent
 					title: this.getTranslation(
 						'INVOICES_PAGE.PAYMENTS.PAYMENT_METHOD'
 					),
-					type: 'text'
+					type: 'text',
+					valuePrepareFunction: (cell, row) => {
+						return this.getTranslation(
+							`INVOICES_PAGE.PAYMENTS.${cell}`
+						);
+					}
 				},
 				overdue: {
 					title: this.getTranslation('INVOICES_PAGE.PAYMENTS.STATUS'),
@@ -357,7 +362,7 @@ export class InvoicePaymentsComponent
 							cell = this.getTranslation(
 								'INVOICES_PAGE.PAYMENTS.OVERDUE'
 							);
-						} else if (cell) {
+						} else if (!cell) {
 							badgeClass = 'success';
 							cell = this.getTranslation(
 								'INVOICES_PAGE.PAYMENTS.ON_TIME'
