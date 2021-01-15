@@ -125,15 +125,15 @@ services:
         env_file:
             - .env
         entrypoint: './entrypoint'
-        command: ['pm2-runtime', 'main.js']
+        command: ['node', 'main.js']
         restart: on-failure
         depends_on:
             - db
         links:
             - db:${DB_HOST:-db}
-        volumes:
-            - webapp_node_modules:/srv/gauzy/node_modules
-            - api_node_modules:/srv/gauzy/apps/api/node_modules
+        # volumes:
+        # - webapp_node_modules:/srv/gauzy/node_modules
+        # - api_node_modules:/srv/gauzy/apps/api/node_modules
         ports:
             - 3000:3000:${API_PORT:-3000}
         networks:
@@ -166,16 +166,16 @@ services:
         depends_on:
             - db
             - api
-        volumes:
-            - webapp_node_modules:/srv/gauzy/node_modules
+        # volumes:
+        # - webapp_node_modules:/srv/gauzy/node_modules
         ports:
             - 4200:${HOST:-4200}
         networks:
             - overlay
 
 volumes:
-    webapp_node_modules:
-    api_node_modules:
+    # webapp_node_modules:
+    # api_node_modules:
     postgres_data:
     certificates:
 

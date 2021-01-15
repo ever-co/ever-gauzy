@@ -125,10 +125,10 @@ services:
         links:
             - db:${DB_HOST:-db}
         entrypoint: './entrypoint'
-        command: ['pm2-runtime', 'main.js']
-        volumes:
-            - webapp_node_modules:/srv/gauzy/node_modules
-            - api_node_modules:/srv/gauzy/apps/api/node_modules
+        command: ['node', 'main.js']
+        # volumes:
+        # - webapp_node_modules:/srv/gauzy/node_modules
+        # - api_node_modules:/srv/gauzy/apps/api/node_modules
         ports:
             - 3000:3000:${API_PORT:-3000}
         networks:
@@ -153,16 +153,16 @@ services:
             - api
         entrypoint: './entrypoint'
         command: ['nginx', '-g', 'daemon off;']
-        volumes:
-            - webapp_node_modules:/srv/gauzy/node_modules
+        # volumes:
+        # - webapp_node_modules:/srv/gauzy/node_modules
         ports:
             - 4200:${HOST:-4200}
         networks:
             - overlay
 
 volumes:
-    webapp_node_modules:
-    api_node_modules:
+    # webapp_node_modules:
+    # api_node_modules:
     postgres_data:
     certificates:
 
