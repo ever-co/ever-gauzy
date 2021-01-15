@@ -94,7 +94,9 @@
 		"PAID_DAYS_OFF": "Выплаченные дни",
 		"UNPAID_DAYS_OFF": "Скидка неоплаченных дней",
 		"CLEAR": "Очистить",
-		"SET": "Задать"
+		"SET": "Задать",
+		"RECORD_FULL_PAYMENT": "Запись полной оплаты",
+		"EXPORT_TO_CSV": "Экспорт в CSV"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
