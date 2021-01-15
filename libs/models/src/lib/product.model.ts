@@ -88,6 +88,7 @@ export interface IProductVariant
 	quantity: number;
 	billingInvoicingPolicy: string;
 	internalReference: string;
+	imageUrl: string;
 	options: IProductOption[];
 	settings: IProductVariantSetting;
 	product?: IProduct;
