@@ -572,7 +572,7 @@
 
 <ng-template #settingsPopover>
 	<div class="popover-container">
-		<div class="show-columns">
+		<div class="show-columns" *ngIf="columns">
 			<label class="show-columns-label label">
 				{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}
 			</label>

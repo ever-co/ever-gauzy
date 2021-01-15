@@ -72,7 +72,7 @@ export class InvoicesComponent
 	status: string;
 	settingsContextMenu: NbMenuItem[];
 	menuArray = [];
-	columns = Object.values(InvoiceColumnsEnum);
+	columns: any;
 	form: FormGroup;
 	organizationContacts: IOrganizationContact[];
 	duplicate: boolean;
@@ -113,6 +113,9 @@ export class InvoicesComponent
 		if (!this.isEstimate) {
 			this.isEstimate = false;
 		}
+		this.columns = this.isEstimate
+			? Object.values(EstimateColumnsEnum)
+			: Object.values(InvoiceColumnsEnum);
 		this._applyTranslationOnSmartTable();
 		this.loadSettingsSmartTable();
 		this.initializeForm();
@@ -738,9 +741,14 @@ export class InvoicesComponent
 			}
 		};
 
-		if (this.columns.includes(InvoiceColumnsEnum.INVOICE_DATE)) {
+		if (
+			this.columns.includes(InvoiceColumnsEnum.INVOICE_DATE) ||
+			this.columns.includes(EstimateColumnsEnum.ESTIMATE_DATE)
+		) {
 			this.settingsSmartTable['columns']['invoiceDate'] = {
-				title: this.getTranslation('INVOICES_PAGE.INVOICE_DATE'),
+				title: this.isEstimate
+					? this.getTranslation('INVOICES_PAGE.ESTIMATE_DATE')
+					: this.getTranslation('INVOICES_PAGE.INVOICE_DATE'),
 				type: 'date',
 				width: '10%',
 				filter: false,
