@@ -7,16 +7,18 @@
 
 Gauzy™ Platform - **Open-Source Business Management Platform** focused on **Fairness** and **Transparency**.
 
-You are welcome to check more information about the platform at our official website - **<https://ever.co/features-gauzy-platform>**.
+Gauzy Platform is an Enterprise Resource Planning (ERP), Customer Relationship Management (CRM) and Human Resource Management (HRM) software.
+
+You are welcome to check more information about the platform at our official website - **<https://gauzy.co>**.
 
 ![overview](https://gauzy.co/wp-content/themes/gauzy/assets/img/home/home-1.png)
 
 Gauzy Platform main features:
 
--   Human Resources Management (HRM), Time Management and Employees Performance Monitoring
+-   Human Resources Management (HRM) with Time Management / Tracking and Employees Performance Monitoring
 -   Customer Relationship Management (CRM)
 -   Enterprise Resource Planning (ERP)
--   Project Management
+-   Projects / Tasks Management
 -   Sales Management
 -   Financial and Cost Management (including _Accounting_, _Invoicing_, etc)
 -   Inventory, Supply Chain Management and Production Management

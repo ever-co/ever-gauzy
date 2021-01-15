@@ -40,8 +40,12 @@ import { ServerConnectionService } from './@core/services/server-connection.serv
 import { Store } from './@core/services/store.service';
 import { AppModuleGuard } from './app.module.guards';
 import { DangerZoneMutationModule } from './@shared/settings/danger-zone-mutation.module';
-import * as Sentry from '@sentry/angular';
-import { Integrations } from '@sentry/tracing';
+import {
+	init as sentryInit,
+	routingInstrumentation as sentryRoutingInstrumentation,
+	TraceService as SentryTraceService
+} from '@sentry/angular';
+import { Integrations as TrackingIntegrations } from '@sentry/tracing';
 import { SentryErrorHandler } from './@core/sentry-error.handler';
 import { TimeTrackerModule } from './@shared/time-tracker/time-tracker.module';
 import { SharedModule } from './@shared/shared.module';
@@ -70,13 +74,13 @@ export const cloudinary = {
 };
 
 if (environment.SENTRY_DSN) {
-	Sentry.init({
+	sentryInit({
 		dsn: environment.SENTRY_DSN,
 		environment: environment.production ? 'production' : 'development',
 		// this enables automatic instrumentation
 		integrations: [
-			new Integrations.BrowserTracing({
-				routingInstrumentation: Sentry.routingInstrumentation
+			new TrackingIntegrations.BrowserTracing({
+				routingInstrumentation: sentryRoutingInstrumentation
 			})
 		],
 		// TODO: we should use some internal function which returns version of Gauzy
@@ -129,7 +133,7 @@ if (environment.SENTRY_DSN) {
 	bootstrap: [AppComponent],
 	providers: [
 		{
-			provide: Sentry.TraceService,
+			provide: SentryTraceService,
 			deps: [Router]
 		},
 		{ provide: APP_BASE_HREF, useValue: '/' },
