@@ -80,6 +80,7 @@ export class ExpensesMutationComponent
 	showTooltip = false;
 	disableStatuses = false;
 	averageExpense = 0;
+	translatedTaxTypes = [];
 
 	public get showTaxesInput(): boolean {
 		return this._showTaxesInput;
@@ -105,6 +106,7 @@ export class ExpensesMutationComponent
 	}
 
 	ngOnInit() {
+		this.getTranslatedTaxTypes();
 		this._initializeForm();
 		this.getDefaultData();
 		this.loadOrganizationContacts();
@@ -147,7 +149,8 @@ export class ExpensesMutationComponent
 
 	async addOrEditExpense() {
 		if (
-			this.form.value.typeOfExpense === 'Billable to Contact' &&
+			this.form.value.typeOfExpense ===
+				ExpenseTypesEnum.BILLABLE_TO_CONTACT &&
 			!this.form.value.organizationContact
 		) {
 			this.showWarning = true;
@@ -176,8 +179,13 @@ export class ExpensesMutationComponent
 		if (this.employeeSelector.selectedEmployee === ALL_EMPLOYEES_SELECTED)
 			this.form.value.splitExpense = true;
 
-		if (this.form.value.typeOfExpense !== 'Billable to Contact') {
-			this.form.value.status = 'Not Billable';
+		if (
+			this.form.value.typeOfExpense !==
+			ExpenseTypesEnum.BILLABLE_TO_CONTACT
+		) {
+			this.form.value.status = this.getTranslation(
+				'EXPENSES_PAGE.MUTATION.NOT_BILLABLE'
+			);
 		}
 
 		this.dialogRef.close(
@@ -347,14 +355,24 @@ export class ExpensesMutationComponent
 			const rate = val.rateValue;
 			const oldNotes = val.notes;
 
-			if (val.taxType === 'Percentage') {
+			if (val.taxType === TaxTypesEnum.PERCENTAGE) {
 				const result = (amount / (rate + 100)) * 100 * (rate / 100);
 
 				this.calculatedValue =
-					'Tax Amount: ' + result.toFixed(2) + ' ' + val.currency;
+					`${this.getTranslation(
+						'EXPENSES_PAGE.MUTATION.TAX_AMOUNT'
+					)}: ` +
+					result.toFixed(2) +
+					' ' +
+					val.currency;
 			} else {
 				const result = (rate / (amount - rate)) * 100;
-				this.calculatedValue = 'Tax Rate: ' + result.toFixed(2) + ' %';
+				this.calculatedValue =
+					`${this.getTranslation(
+						'EXPENSES_PAGE.MUTATION.TAX_RATE'
+					)}: ` +
+					result.toFixed(2) +
+					' %';
 			}
 
 			if (rate !== 0) {
@@ -424,11 +442,20 @@ export class ExpensesMutationComponent
 	}
 
 	changeExpenseType($event) {
-		if ($event !== 'Billable to Contact') {
+		if ($event !== ExpenseTypesEnum.BILLABLE_TO_CONTACT) {
 			this.disableStatuses = true;
 		} else {
 			this.disableStatuses = false;
 		}
+	}
+
+	getTranslatedTaxTypes() {
+		this.taxTypes.forEach((element) => {
+			this.translatedTaxTypes.push({
+				value: `${element}`,
+				label: this.getTranslation(`EXPENSES_PAGE.MUTATION.${element}`)
+			});
+		});
 	}
 
 	close() {

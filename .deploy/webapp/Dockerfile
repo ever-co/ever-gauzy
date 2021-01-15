@@ -1,15 +1,17 @@
 # devependecies
 FROM node:alpine AS dependencies
 
+ENV CI=true
+
 RUN apk --update add bash && \
     apk add --no-cache dos2unix g++ git make python
 
 RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
-COPY wait .deploy/webapp/entrypoint /
-RUN chmod +x /wait /entrypoint
+COPY wait .deploy/webapp/entrypoint .deploy/webapp/entrypoint.prod.sh /
+RUN chmod +x /wait /entrypoint /entrypoint.prod.sh
 
-RUN dos2unix /entrypoint
+RUN dos2unix /entrypoint && dos2unix /entrypoint.prod.sh
 
 USER node:node
 
@@ -19,7 +21,7 @@ COPY --chown=node:node apps/desktop/package.json ./apps/desktop/
 COPY --chown=node:node apps/api/package.json ./apps/api/
 COPY --chown=node:node package.json yarn.lock ./
 
-RUN yarn install
+RUN yarn install --frozen-lockfile
 
 # development
 FROM node:alpine AS development
@@ -28,7 +30,7 @@ USER node:node
 
 WORKDIR /srv/gauzy
 
-COPY --chown=node:node --from=dependencies /wait /entrypoint /
+COPY --chown=node:node --from=dependencies /wait /entrypoint /entrypoint.prod.sh /
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
@@ -53,10 +55,11 @@ FROM nginx:alpine AS production
 
 WORKDIR /srv/gauzy
 
-COPY --chown=nginx:nginx --from=dependencies /wait /entrypoint ./
-COPY --chown=nginx:nginx .deploy/webapp/nginx.conf /etc/nginx
+COPY --chown=nginx:nginx --from=dependencies /wait /entrypoint /entrypoint.prod.sh ./
+COPY .deploy/webapp/nginx.conf /etc/nginx/default.conf.template
 COPY --chown=nginx:nginx --from=build /srv/gauzy/dist/apps/gauzy .
-COPY --chown=nginx:nginx --from=development /srv/gauzy/.deploy/webapp/entrypoint.prod.sh ./
+
+RUN chmod +x wait entrypoint
 RUN chmod +x wait entrypoint.prod.sh
 
 ARG API_BASE_URL=${API_BASE_URL:-http://localhost:3000}
