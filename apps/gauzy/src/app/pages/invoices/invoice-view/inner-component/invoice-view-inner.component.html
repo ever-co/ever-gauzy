@@ -80,7 +80,10 @@
 		>
 		</ng2-smart-table>
 	</div>
-	<div *ngIf="invoice && invoice.internalNote" class="internal-note-label">
+	<div
+		*ngIf="invoice && invoice.internalNote && showInternalNote"
+		class="internal-note-label"
+	>
 		{{ 'INVOICES_PAGE.INTERNAL_NOTE.INTERNAL_NOTE' | translate }}:
 		{{ invoice.internalNote }}
 	</div>

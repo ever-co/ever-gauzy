@@ -71,7 +71,7 @@ export class PaymentMutationComponent
 			],
 			currency: [''],
 			paymentDate: [new Date(), Validators.required],
-			note: ['', Validators.required],
+			note: [''],
 			paymentMethod: ['', Validators.required],
 			invoiceId: [],
 			contact: [],

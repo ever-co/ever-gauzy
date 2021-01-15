@@ -1,6 +1,8 @@
 # devependecies
 FROM node:alpine AS dependencies
 
+ENV CI=true
+
 RUN apk --update add bash && \
     apk add --no-cache dos2unix g++ git make python vips-dev
 
@@ -19,7 +21,7 @@ COPY --chown=node:node apps/desktop/package.json ./apps/desktop/
 COPY --chown=node:node apps/api/package.json ./apps/api/
 COPY --chown=node:node package.json yarn.lock ./
 
-RUN yarn install
+RUN yarn install --frozen-lockfile
 
 # development
 FROM node:alpine AS development
