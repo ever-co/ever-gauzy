@@ -95,7 +95,8 @@
 		"UNPAID_DAYS_OFF": "Unpaid days off",
 		"CLEAR": "Clear",
 		"SET": "Set",
-		"RECORD_FULL_PAYMENT": "Record Full Payment"
+		"RECORD_FULL_PAYMENT": "Record Full Payment",
+		"EXPORT_TO_CSV": "Export to CSV"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",
