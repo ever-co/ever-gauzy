@@ -353,9 +353,13 @@ export class InvoicePaymentsComponent
 					),
 					type: 'text',
 					valuePrepareFunction: (cell, row) => {
-						return this.getTranslation(
-							`INVOICES_PAGE.PAYMENTS.${cell}`
-						);
+						if (cell) {
+							return this.getTranslation(
+								`INVOICES_PAGE.PAYMENTS.${cell}`
+							);
+						} else {
+							return '';
+						}
 					}
 				},
 				overdue: {
