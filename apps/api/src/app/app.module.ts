@@ -123,14 +123,14 @@ import { ReportModule } from './reports/report.module';
 import { EmployeeProposalTemplateModule } from './employee-proposal-template/employee-proposal-template.module';
 import { CustomSmtpModule } from './custom-smtp/custom-smtp.module';
 import { FeatureModule } from './feature/feature.module';
-import * as unleash from 'unleash-client';
 import { Integrations as SentryIntegrations } from '@sentry/node';
 import { Integrations as TrackingIntegrations } from '@sentry/tracing';
+import { initialize as initializeUnleash } from 'unleash-client';
 
 const { unleashConfig } = environment;
 
 if (unleashConfig.url) {
-	const instance = unleash.initialize({
+	const instance = initializeUnleash({
 		appName: unleashConfig.appName,
 		url: unleashConfig.url,
 		instanceId: unleashConfig.instanceId,

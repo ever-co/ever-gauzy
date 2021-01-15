@@ -10,8 +10,8 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Feature } from './feature.entity';
 import { FeatureService } from './feature.service';
-import * as unleash from 'unleash-client';
 import { FeatureInterface } from 'unleash-client/lib/feature';
+import { getFeatureToggleDefinitions } from 'unleash-client';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 import { AuthGuard } from '@nestjs/passport';
 import { FeatureEnum, IFeatureOrganizationUpdateInput } from '@gauzy/models';
@@ -28,7 +28,7 @@ export class FeaturesToggleController {
 
 	@Get()
 	async get() {
-		let featureToggles: FeatureInterface[] = unleash.getFeatureToggleDefinitions();
+		let featureToggles: FeatureInterface[] = getFeatureToggleDefinitions();
 
 		//only support gauzy feature and removed other
 		const featureEnums: string[] = Object.values(FeatureEnum);
