@@ -6,7 +6,8 @@ import {
 	LanguagesEnum,
 	IProductTypeTranslation,
 	IProductTypeTranslatable,
-	IOrganization
+	IOrganization,
+	ILanguage
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductTypeService } from '../../../@core/services/product-type.service';
@@ -20,7 +21,8 @@ import { takeUntil } from 'rxjs/operators';
 	templateUrl: './product-type-mutation.component.html',
 	styleUrls: ['./product-type-mutation.component.scss']
 })
-export class ProductTypeMutationComponent extends TranslationBaseComponent
+export class ProductTypeMutationComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	form: FormGroup;
 	@Input() productType: IProductTypeTranslatable;
@@ -28,7 +30,8 @@ export class ProductTypeMutationComponent extends TranslationBaseComponent
 
 	selectedIcon: string = ProductTypesIconsEnum.STAR;
 	selectedLanguage: string;
-	languages: Array<string>;
+
+	languages: ILanguage[];
 	private _ngDestroy$ = new Subject<void>();
 
 	translations = [];
@@ -49,13 +52,20 @@ export class ProductTypeMutationComponent extends TranslationBaseComponent
 		this.organization = this.store.selectedOrganization;
 		this.selectedLanguage =
 			this.store.preferredLanguage || LanguagesEnum.ENGLISH;
+
 		this.translations = this.productType
 			? this.productType.translations
 			: [];
 		this.setActiveTranslation();
 
 		this._initializeForm();
-		this.languages = this.translateService.getLangs();
+
+		this.languages = this.store.systemLanguages.map((item) => {
+			return {
+				value: item.code,
+				name: item.name
+			};
+		});
 
 		this.form.valueChanges
 			.pipe(takeUntil(this._ngDestroy$))

@@ -11,6 +11,7 @@ import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/for
 import { ProductVariantService } from 'apps/gauzy/src/app/@core/services/product-variant.service';
 import { EnabledStatusComponent } from '../../table-components/enabled-row.component';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { ImageRowComponent } from '../../table-components/image-row.component';
 
 export interface SelectedProductVariant {
 	data: IProductVariant;
@@ -65,6 +66,11 @@ export class VariantTableComponent
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
+				image: {
+					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
+					type: 'custom',
+					renderComponent: ImageRowComponent
+				},
 				options: {
 					title: this.getTranslation('INVENTORY_PAGE.OPTIONS'),
 					type: 'string',
