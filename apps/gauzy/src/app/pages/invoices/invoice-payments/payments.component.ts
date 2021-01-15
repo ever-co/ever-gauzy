@@ -422,6 +422,8 @@ export class InvoicePaymentsComponent
 
 		await this.paymentService.add(payment);
 		await this.getInvoice();
+
+		this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD');
 	}
 
 	_applyTranslationOnSmartTable() {
