@@ -58,6 +58,7 @@ export class InvoicePaymentsComponent
 	tenantId: string;
 	loading: boolean;
 	translatedText: any;
+	disableFullPaymentButton: boolean;
 
 	paymentsTable: Ng2SmartTableComponent;
 	@ViewChild('paymentsTable') set content(content: Ng2SmartTableComponent) {
@@ -142,6 +143,13 @@ export class InvoicePaymentsComponent
 		if (this.leftToPay < 0) {
 			this.leftToPay = 0;
 		}
+
+		if (this.leftToPay === 0) {
+			this.disableFullPaymentButton = true;
+		} else {
+			this.disableFullPaymentButton = false;
+		}
+
 		this.loading = false;
 	}
 
@@ -396,6 +404,31 @@ export class InvoicePaymentsComponent
 				status: InvoiceStatusTypesEnum.OVERPAID
 			});
 		}
+	}
+
+	async recordFullPayment() {
+		const payment = {
+			amount: this.leftToPay,
+			paymentDate: new Date(),
+			currency: this.invoice.currency,
+			invoice: this.invoice,
+			invoiceId: this.invoice.id,
+			organization: this.invoice.fromOrganization,
+			organizationId: this.invoice.fromOrganization.id,
+			recordedBy: this.store.user,
+			userId: this.store.userId
+		};
+
+		if (this.invoice.dueDate >= new Date()) {
+			payment['overdue'] = true;
+		} else {
+			payment['overdue'] = false;
+		}
+
+		await this.paymentService.add(payment);
+		await this.getInvoice();
+
+		this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD');
 	}
 
 	_applyTranslationOnSmartTable() {
