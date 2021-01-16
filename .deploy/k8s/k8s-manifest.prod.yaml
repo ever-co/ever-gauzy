@@ -1,0 +1,90 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+    name: gauzy-prod-web-lb
+    annotations:
+        service.beta.kubernetes.io/do-loadbalancer-name: 'app.gauzy.co'
+        service.beta.kubernetes.io/do-loadbalancer-protocol: 'http' # http2
+        # service.beta.kubernetes.io/do-loadbalancer-http2-ports: "443"
+        # service.beta.kubernetes.io/do-loadbalancer-certificate-id: "gauzy.co"
+        service.beta.kubernetes.io/do-loadbalancer-size-slug: 'lb-small'
+        service.beta.kubernetes.io/do-loadbalancer-hostname: 'app.gauzy.co'
+spec:
+    type: LoadBalancer
+    selector:
+        app: gauzy-prod-webapp
+    ports:
+        - name: http
+          protocol: TCP
+          port: 80 # 443
+          targetPort: 4200
+---
+kind: Service
+apiVersion: v1
+metadata:
+    name: gauzy-prod-api-lb
+    annotations:
+        service.beta.kubernetes.io/do-loadbalancer-name: 'api.gauzy.co'
+        service.beta.kubernetes.io/do-loadbalancer-protocol: 'http' # http2
+        # service.beta.kubernetes.io/do-loadbalancer-http2-ports: "443,80"
+        service.beta.kubernetes.io/do-loadbalancer-size-slug: 'lb-small'
+        service.beta.kubernetes.io/do-loadbalancer-hostname: 'api.gauzy.co'
+spec:
+    type: LoadBalancer
+    selector:
+        app: gauzy-prod-api
+    ports:
+        - name: http
+          protocol: TCP
+          port: 80
+          targetPort: 3000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: gauzy-prod-api
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: gauzy-prod-api
+    template:
+        metadata:
+            labels:
+                app: gauzy-prod-api
+        spec:
+            containers:
+                - name: gauzy-prod-api
+                  image: ghcr.io/ever-co/gauzy-api:latest
+                  ports:
+                      - containerPort: 3000
+                        protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: gauzy-prod-webapp
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: gauzy-prod-webapp
+    template:
+        metadata:
+            labels:
+                app: gauzy-prod-webapp
+        spec:
+            containers:
+                - name: gauzy-prod-webapp
+                  image: ghcr.io/ever-co/gauzy-webapp:latest
+                  env:
+                      - name: API_BASE_URL
+                        value: 'http://api.gauzy.co'
+                      - name: API_HOST
+                        value: '10.244.1.41'
+                      - name: API_PORT
+                        value: '3000'
+                  ports:
+                      - containerPort: 4200
+                        protocol: TCP
