@@ -29,18 +29,32 @@ jobs:
               uses: digitalocean/action-doctl@v2
               with:
                   token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
             - name: Log in to DigitalOcean Container Registry with short-lived credentials
               run: doctl registry login --expiry-seconds 3600
-            - name: Build and push
+
+            - name: Build
               uses: docker/build-push-action@v2
               with:
                   context: .
                   file: ./.deploy/api/Dockerfile
-                  push: true
+                  load: true
                   tags: |
                       ghcr.io/ever-co/gauzy-api:latest
-                      everco/gauzy-api:latest
+                      everco/gauzy-api:latest                     
                       registry.digitalocean.com/ever/gauzy-api:latest
+
+            - name: Push to DigitalOcean Registry
+              run: |
+                  docker push registry.digitalocean.com/ever/gauzy-api:latest
+
+            - name: Push to Github Registry
+              run: |
+                  docker push ghcr.io/ever-co/gauzy-api:latest
+
+            - name: Push to Docker Hub Registry
+              run: |
+                  docker push everco/gauzy-api:latest
 
     gauzy-webapp:
         runs-on: ubuntu-latest
