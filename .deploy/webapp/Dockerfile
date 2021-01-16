@@ -59,9 +59,6 @@ RUN chmod +x wait entrypoint.compose.sh entrypoint.prod.sh && \
     chmod a+rw /etc/nginx/conf.d/compose.conf.template /etc/nginx/conf.d/prod.conf.template
 
 ARG API_BASE_URL=${API_BASE_URL:-http://localhost:3000}
-ENV NODE_OPTIONS="--max-old-space-size=2048"
-ENV NODE_ENV production
-ENV API_PORT 3000
 
 EXPOSE ${PORT:-4200}
 ENTRYPOINT [ "./entrypoint.prod.sh" ]
