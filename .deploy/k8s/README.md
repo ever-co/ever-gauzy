@@ -40,3 +40,10 @@ Note: change password after login!
 `kubectl --kubeconfig="k8s-ever-kubeconfig.yaml" port-forward svc/kube-prometheus-stack-prometheus 9090 -n kube-prometheus-stack`
 
 Your Prometheus instance will now be available at http://localhost:9090.
+
+## Links
+
+-   [Load Balancers Configs in DO](https://www.digitalocean.com/docs/kubernetes/how-to/configure-load-balancers)
+-   [K8s Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-controllers)
+-   [K8s Ingress with Nginx + SSL LetsEncrypt](https://www.digitalocean.com/community/tutorials/how-to-set-up-an-nginx-ingress-with-cert-manager-on-digitalocean-kubernetes)
+-   [Github Actions with DO](https://github.com/do-community/example-doctl-action/blob/master/.github/workflows/workflow.yaml)
