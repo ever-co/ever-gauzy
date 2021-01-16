@@ -124,7 +124,7 @@ services:
             - db
         links:
             - db:${DB_HOST:-db}
-        entrypoint: './entrypoint'
+        entrypoint: './entrypoint.sh'
         command: ['node', 'main.js']
         # volumes:
         # - webapp_node_modules:/srv/gauzy/node_modules
@@ -151,7 +151,7 @@ services:
         depends_on:
             - db
             - api
-        entrypoint: './entrypoint'
+        entrypoint: './entrypoint.compose.sh'
         command: ['nginx', '-g', 'daemon off;']
         # volumes:
         # - webapp_node_modules:/srv/gauzy/node_modules

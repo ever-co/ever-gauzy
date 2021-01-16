@@ -6,8 +6,8 @@ RUN apk --update add bash && \
     apk add --no-cache dos2unix g++ git make python vips-dev && \
     mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
-COPY wait .deploy/api/entrypoint /
-RUN chmod +x /wait /entrypoint && dos2unix /entrypoint
+COPY wait .deploy/api/entrypoint.sh /
+RUN chmod +x /wait /entrypoint.sh && dos2unix /entrypoint.sh
 
 USER node:node
 
@@ -25,7 +25,7 @@ USER node:node
 
 WORKDIR /srv/gauzy
 
-COPY --chown=node:node --from=dependencies /wait /entrypoint /
+COPY --chown=node:node --from=dependencies /wait /entrypoint.sh /
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
@@ -47,7 +47,7 @@ FROM node:alpine AS production
 WORKDIR /srv/gauzy
 
 COPY --chown=node:node --from=dependencies /wait ./wait
-COPY --chown=node:node --from=dependencies /entrypoint .
+COPY --chown=node:node --from=dependencies /entrypoint.sh .
 COPY --chown=node:node --from=dependencies /srv/gauzy/node_modules ./node_modules/
 COPY --chown=node:node apps/api/src/app/core/seeds/data/default-email-templates apps/api/src/app/core/seeds/data/default-email-templates
 COPY --chown=node:node apps/api/src/assets apps/api/src/assets

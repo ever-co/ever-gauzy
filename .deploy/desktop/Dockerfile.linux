@@ -13,15 +13,13 @@ COPY --chown=node:node package.json yarn.lock ./
 
 USER node:node
 
-RUN yarn install
+RUN yarn install --frozen-lockfile
 
 COPY --chown=node:node . .
 
 RUN yarn bootstrap
 
 RUN yarn build:desktop:linux
-
-#=========================================================================#
 
 FROM debian:buster-slim
 
