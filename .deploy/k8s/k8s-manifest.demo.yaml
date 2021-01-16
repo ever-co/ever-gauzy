@@ -81,10 +81,6 @@ spec:
                   env:
                       - name: API_BASE_URL
                         value: 'http://apidemo.gauzy.co'
-                      - name: API_HOST
-                        value: '10.244.1.41'
-                      - name: API_PORT
-                        value: '3000'
                   ports:
                       - containerPort: 4200
                         protocol: TCP
