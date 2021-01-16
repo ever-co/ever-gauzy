@@ -86,7 +86,7 @@ export class InventoryVariantFormComponent
 
 	private _initializeForm() {
 		this.form = this.fb.group({
-			imageUrl: [],
+			imageUrl: [this.itemVariant ? this.itemVariant.imageUrl : null],
 			internationalReference: [
 				this.itemVariant ? this.itemVariant.internalReference : '',
 				[Validators.required]
@@ -182,6 +182,7 @@ export class InventoryVariantFormComponent
 				taxes: formValue['taxes'],
 				enabled: formValue['enabled'],
 				notes: formValue['notes'],
+				imageUrl: formValue['imageUrl'],
 				organizationId,
 				tenantId
 			},
@@ -235,5 +236,7 @@ export class InventoryVariantFormComponent
 	}
 
 	//tstodo
-	handleImageUploadError(event: any) {}
+	handleImageUploadError(event: any) {
+		alert('error upload image');
+	}
 }

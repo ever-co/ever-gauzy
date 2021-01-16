@@ -18,7 +18,8 @@ import { IsNumber, IsString, IsOptional, IsEnum } from 'class-validator';
 import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
 
 @Entity('product_variant')
-export class ProductVariant extends TenantOrganizationBase
+export class ProductVariant
+	extends TenantOrganizationBase
 	implements IProductVariant {
 	@ApiProperty({ type: Number })
 	@IsNumber()
@@ -87,4 +88,9 @@ export class ProductVariant extends TenantOrganizationBase
 	})
 	@JoinColumn()
 	product: Product;
+
+	@ApiPropertyOptional({ type: String })
+	@IsOptional()
+	@Column({ nullable: true })
+	imageUrl: string;
 }

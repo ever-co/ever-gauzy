@@ -32,7 +32,7 @@ services:
             test:
                 [
                     'CMD-SHELL',
-                    'psql postgres://$${POSTGRES_USER}:$${POSTGRES_PASSWORD}@localhost:5432/$${POSTGRES_DB} || exit 1',
+                    'psql postgres://$${POSTGRES_USER}:$${POSTGRES_PASSWORD}@localhost:5432/$${POSTGRES_DB} || exit 1'
                 ]
         volumes:
             - postgres_data:/var/lib/postgresql/data
@@ -117,21 +117,23 @@ services:
         build:
             context: .
             dockerfile: .deploy/api/Dockerfile
+            args:
+                NODE_ENV: ${NODE_ENV:-development}
         environment:
             NODE_ENV: ${NODE_ENV:-development}
             DB_HOST: db
         env_file:
             - .env
         entrypoint: './entrypoint'
-        command: ['pm2-runtime', 'main.js']
+        command: ['node', 'main.js']
         restart: on-failure
         depends_on:
             - db
         links:
             - db:${DB_HOST:-db}
-        volumes:
-            - webapp_node_modules:/srv/gauzy/node_modules
-            - api_node_modules:/srv/gauzy/apps/api/node_modules
+        # volumes:
+        # - webapp_node_modules:/srv/gauzy/node_modules
+        # - api_node_modules:/srv/gauzy/apps/api/node_modules
         ports:
             - 3000:3000:${API_PORT:-3000}
         networks:
@@ -144,9 +146,15 @@ services:
             context: .
             dockerfile: .deploy/webapp/Dockerfile
             args:
+                NODE_ENV: ${NODE_ENV:-development}
                 API_BASE_URL: ${API_BASE_URL:-http://localhost:3000}
+                API_HOST: ${API_HOST:-api}
+                API_PORT: ${API_PORT:-3000}
         environment:
             NODE_ENV: ${NODE_ENV:-development}
+            API_BASE_URL: ${API_BASE_URL:-http://localhost:3000}
+            API_HOST: ${API_HOST:-api}
+            API_PORT: ${API_PORT:-3000}
         entrypoint: './entrypoint'
         command: ['nginx', '-g', 'daemon off;']
         env_file:
@@ -158,16 +166,16 @@ services:
         depends_on:
             - db
             - api
-        volumes:
-            - webapp_node_modules:/srv/gauzy/node_modules
+        # volumes:
+        # - webapp_node_modules:/srv/gauzy/node_modules
         ports:
             - 4200:${HOST:-4200}
         networks:
             - overlay
 
 volumes:
-    webapp_node_modules:
-    api_node_modules:
+    # webapp_node_modules:
+    # api_node_modules:
     postgres_data:
     certificates:
 

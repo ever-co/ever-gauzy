@@ -1,15 +1,13 @@
-# devependecies
 FROM node:alpine AS dependencies
 
-RUN apk --update add bash && \
-    apk add --no-cache dos2unix g++ git make python vips-dev
+ENV CI=true
 
-RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
+RUN apk --update add bash && \
+    apk add --no-cache dos2unix g++ git make python vips-dev && \
+    mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 COPY wait .deploy/api/entrypoint /
-RUN chmod +x /wait /entrypoint
-
-RUN dos2unix /entrypoint
+RUN chmod +x /wait /entrypoint && dos2unix /entrypoint
 
 USER node:node
 
@@ -19,9 +17,8 @@ COPY --chown=node:node apps/desktop/package.json ./apps/desktop/
 COPY --chown=node:node apps/api/package.json ./apps/api/
 COPY --chown=node:node package.json yarn.lock ./
 
-RUN yarn install
+RUN yarn install --frozen-lockfile
 
-# development
 FROM node:alpine AS development
 
 USER node:node
@@ -32,7 +29,6 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint /
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-# build
 FROM node:alpine AS build
 
 WORKDIR /srv/gauzy
@@ -46,7 +42,6 @@ ENV NODE_ENV production
 
 RUN yarn build:api:prod
 
-# production
 FROM node:alpine AS production
 
 WORKDIR /srv/gauzy
@@ -55,11 +50,13 @@ COPY --chown=node:node --from=dependencies /wait ./wait
 COPY --chown=node:node --from=dependencies /entrypoint .
 COPY --chown=node:node --from=dependencies /srv/gauzy/node_modules ./node_modules/
 COPY --chown=node:node apps/api/src/app/core/seeds/data/default-email-templates apps/api/src/app/core/seeds/data/default-email-templates
+COPY --chown=node:node apps/api/src/assets apps/api/src/assets
 COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api .
 
-RUN npm install pm2 -g && mkdir /import && chown node:node /import
-RUN touch ormlogs.log && chown node:node ormlogs.log
-RUN chown node:node wait && chmod +x wait && chown -R node:node apps/
+RUN npm install pm2 -g && mkdir /import && chown node:node /import && \
+    touch ormlogs.log && chown node:node ormlogs.log && chown node:node wait && \
+    chmod +x wait && chown -R node:node apps/
+    
 USER node:node
 
 ENV NODE_OPTIONS="--max-old-space-size=2048"

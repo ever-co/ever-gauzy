@@ -96,6 +96,7 @@
 						'TIME_OFF_PAGE.POLICY.POLICY' | translate
 					}}</label>
 					<nb-select
+						[selected]="policy"
 						formControlName="policy"
 						(selectedChange)="onPolicySelected($event)"
 						fullWidth

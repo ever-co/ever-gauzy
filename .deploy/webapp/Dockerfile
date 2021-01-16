@@ -1,15 +1,15 @@
 # devependecies
 FROM node:alpine AS dependencies
 
+ENV CI=true
+
 RUN apk --update add bash && \
-    apk add --no-cache dos2unix g++ git make python
+    apk add --no-cache dos2unix g++ git make python && \
+    mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
-RUN mkdir /srv/gauzy && chown -R node:node /srv/gauzy
+COPY wait .deploy/webapp/entrypoint .deploy/webapp/entrypoint.prod.sh /
 
-COPY wait .deploy/webapp/entrypoint /
-RUN chmod +x /wait /entrypoint
-
-RUN dos2unix /entrypoint
+RUN chmod +x /wait /entrypoint /entrypoint.prod.sh && dos2unix /entrypoint && dos2unix /entrypoint.prod.sh
 
 USER node:node
 
@@ -19,20 +19,18 @@ COPY --chown=node:node apps/desktop/package.json ./apps/desktop/
 COPY --chown=node:node apps/api/package.json ./apps/api/
 COPY --chown=node:node package.json yarn.lock ./
 
-RUN yarn install
+RUN yarn install --frozen-lockfile
 
-# development
 FROM node:alpine AS development
 
 USER node:node
 
 WORKDIR /srv/gauzy
 
-COPY --chown=node:node --from=dependencies /wait /entrypoint /
+COPY --chown=node:node --from=dependencies /wait /entrypoint /entrypoint.prod.sh /
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-# build
 FROM node:alpine AS build
 
 WORKDIR /srv/gauzy
@@ -46,18 +44,17 @@ ENV NODE_ENV production
 
 RUN yarn build:prod
 
-# production
 FROM nginx:alpine AS production
 
 # USER nginx:nginx
 
 WORKDIR /srv/gauzy
 
-COPY --chown=nginx:nginx --from=dependencies /wait /entrypoint ./
-COPY --chown=nginx:nginx .deploy/webapp/nginx.conf /etc/nginx
+COPY --chown=nginx:nginx --from=dependencies /wait /entrypoint /entrypoint.prod.sh ./
+COPY --chown=nginx:nginx .deploy/webapp/nginx.conf /etc/nginx/conf.d/default.conf.template
 COPY --chown=nginx:nginx --from=build /srv/gauzy/dist/apps/gauzy .
-COPY --chown=nginx:nginx --from=development /srv/gauzy/.deploy/webapp/entrypoint.prod.sh ./
-RUN chmod +x wait entrypoint.prod.sh
+
+RUN chmod +x wait entrypoint entrypoint.prod.sh && chmod a+rw /etc/nginx/conf.d/default.conf.template
 
 ARG API_BASE_URL=${API_BASE_URL:-http://localhost:3000}
 ENV NODE_OPTIONS="--max-old-space-size=2048"

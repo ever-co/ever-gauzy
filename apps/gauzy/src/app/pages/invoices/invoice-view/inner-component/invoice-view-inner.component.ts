@@ -4,6 +4,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { IInvoice, InvoiceTypeEnum } from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { UsersOrganizationsService } from 'apps/gauzy/src/app/@core/services/users-organizations.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-invoice-view-inner',
@@ -19,15 +21,21 @@ export class InvoiceViewInnerComponent
 	isTableLoaded = false;
 	smartTableSource = new LocalDataSource();
 	loading: boolean;
+	showInternalNote: boolean;
 
 	@Input() invoice: IInvoice;
 	@Input() isEstimate: boolean;
 
-	constructor(readonly translateService: TranslateService) {
+	constructor(
+		readonly translateService: TranslateService,
+		private store: Store,
+		private userOrganizationService: UsersOrganizationsService
+	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
+		this.checkUser();
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.invoiceDate = this.invoice.invoiceDate.toString().slice(0, 10);
@@ -148,6 +156,17 @@ export class InvoiceViewInnerComponent
 		this.smartTableSource.load(items);
 		this.isTableLoaded = true;
 		this.loading = false;
+	}
+
+	async checkUser() {
+		const userOrg = await this.userOrganizationService.getAll([], {
+			userId: this.store.user.id,
+			organizationId: this.invoice.organizationId
+		});
+
+		if (userOrg.items.length !== 0) {
+			this.showInternalNote = true;
+		}
 	}
 
 	_applyTranslationOnSmartTable() {

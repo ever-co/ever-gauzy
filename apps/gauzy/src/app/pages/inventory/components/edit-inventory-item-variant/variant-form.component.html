@@ -73,10 +73,18 @@
 						></div>
 
 						<img
-							*ngIf="!!form"
+							*ngIf="form && !form.get('imageUrl').value"
 							[src]="
 								'https://afostats.imagead.net/uploads/afo/no_img.png'
 							"
+							alt="Product Item Photo"
+							(mouseenter)="hoverState = true"
+							(mouseleave)="hoverState = false"
+						/>
+
+						<img
+							*ngIf="form && form.get('imageUrl').value"
+							[src]="form.get('imageUrl').value"
 							alt="Product Item Photo"
 							(mouseenter)="hoverState = true"
 							(mouseleave)="hoverState = false"

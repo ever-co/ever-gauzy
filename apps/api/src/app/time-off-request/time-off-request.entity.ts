@@ -12,7 +12,7 @@ import {
 	ITimeOffPolicy,
 	StatusTypesEnum
 } from '@gauzy/models';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsString,
 	IsEnum,
@@ -34,10 +34,10 @@ export class TimeOffRequest
 	})
 	employees?: IEmployee[];
 
-	@ApiProperty({ type: String })
+	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@IsOptional()
-	@Column()
+	@Column({ nullable: true })
 	documentUrl?: string;
 
 	@ApiProperty({ type: String })
@@ -79,4 +79,10 @@ export class TimeOffRequest
 	@IsBoolean()
 	@Column()
 	isHoliday?: boolean;
+
+	@ApiPropertyOptional({ type: Boolean })
+	@IsBoolean()
+	@IsOptional()
+	@Column({ nullable: true })
+	isArchived?: boolean;
 }

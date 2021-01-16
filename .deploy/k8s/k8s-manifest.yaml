@@ -3,15 +3,18 @@ kind: Service
 apiVersion: v1
 metadata:
     name: gauzy-lb
+    annotations:
+        service.beta.kubernetes.io/do-loadbalancer-protocol: 'http'
+        service.beta.kubernetes.io/do-loadbalancer-size-slug: 'lb-small'
 spec:
     type: LoadBalancer
     selector:
-        app: gauzy-lb
+        app: gauzy-webapp
     ports:
         - name: http
           protocol: TCP
           port: 80
-          targetPort: 8080
+          targetPort: 4200
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -71,6 +74,13 @@ spec:
             containers:
                 - name: gauzy-webapp
                   image: ghcr.io/ever-co/gauzy-webapp:latest
+                  env:
+                      - name: API_BASE_URL
+                        value: 'http://134.209.140.243'
+                      - name: API_HOST
+                        value: '10.244.1.41'
+                      - name: API_PORT
+                        value: '3000'
                   ports:
                       - containerPort: 4200
                         protocol: TCP

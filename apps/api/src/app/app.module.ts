@@ -49,8 +49,6 @@ import { EquipmentModule } from './equipment/equipment.module';
 import { EmployeeLevelModule } from './organization_employee-level/organization-employee-level.module';
 import { ExportAllModule } from './export_import/export-all.module';
 import { ImportAllModule } from './export_import/import/import-all.module';
-import * as Sentry from '@sentry/node';
-import * as Tracing from '@sentry/tracing';
 import { SentryModule } from '@ntegral/nestjs-sentry';
 import { environment } from '@env-api/environment';
 import { LogLevel } from '@sentry/types';
@@ -125,12 +123,14 @@ import { ReportModule } from './reports/report.module';
 import { EmployeeProposalTemplateModule } from './employee-proposal-template/employee-proposal-template.module';
 import { CustomSmtpModule } from './custom-smtp/custom-smtp.module';
 import { FeatureModule } from './feature/feature.module';
-import * as unleash from 'unleash-client';
+import { Integrations as SentryIntegrations } from '@sentry/node';
+import { Integrations as TrackingIntegrations } from '@sentry/tracing';
+import { initialize as initializeUnleash } from 'unleash-client';
 
 const { unleashConfig } = environment;
 
 if (unleashConfig.url) {
-	const instance = unleash.initialize({
+	const instance = initializeUnleash({
 		appName: unleashConfig.appName,
 		url: unleashConfig.url,
 		instanceId: unleashConfig.instanceId,
@@ -146,11 +146,11 @@ const sentryIntegrations = [];
 
 sentryIntegrations.push(
 	// enable HTTP calls tracing
-	new Sentry.Integrations.Http({ tracing: true })
+	new SentryIntegrations.Http({ tracing: true })
 );
 
 if (process.env.DB_TYPE === 'postgres') {
-	sentryIntegrations.push(new Tracing.Integrations.Postgres());
+	sentryIntegrations.push(new TrackingIntegrations.Postgres());
 }
 
 @Module({

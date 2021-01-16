@@ -2,6 +2,7 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import {
+	ILanguage,
 	IOrganization,
 	IProductCategoryTranslatable,
 	IProductCategoryTranslation,
@@ -34,7 +35,7 @@ export class ProductCategoryMutationComponent
 
 	private _ngDestroy$ = new Subject<void>();
 
-	languages: Array<object>;
+	languages: ILanguage[];
 	translations = [];
 	activeTranslation: IProductCategoryTranslation;
 	organization: IOrganization;
@@ -54,18 +55,21 @@ export class ProductCategoryMutationComponent
 		this.organization = this.store.selectedOrganization;
 		this.selectedLanguage =
 			this.store.preferredLanguage || LanguagesEnum.ENGLISH;
+
 		this.translations = this.productCategory
 			? this.productCategory.translations
 			: [];
 		this.setActiveTranslation();
 
 		this._initializeForm();
-		this.languages = this.translateService.getLangs().map((l) => ({
-			code: l,
-			title: Object.keys(LanguagesEnum).find(
-				(lang) => LanguagesEnum[lang] === l
-			)
-		}));
+
+		this.languages = this.store.systemLanguages.map((item) => {
+			return {
+				value: item.code,
+				name: item.name
+			};
+		});
+
 		this.form.valueChanges
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((formValue) => {

@@ -94,7 +94,9 @@
 		"PAID_DAYS_OFF": "Paid days off",
 		"UNPAID_DAYS_OFF": "Unpaid days off",
 		"CLEAR": "Clear",
-		"SET": "Set"
+		"SET": "Set",
+		"RECORD_FULL_PAYMENT": "Record Full Payment",
+		"EXPORT_TO_CSV": "Export to CSV"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",
@@ -942,7 +944,8 @@
 			"SELECT_DATE": "Select Date",
 			"ONLY_CONTRACTS": "Only Contracts",
 			"CONTRACTS_RELATED_DATA": "Synced Contracts related entities",
-			"DATE_RANGE_PLACEHOLDER": "Choose date between"
+			"DATE_RANGE_PLACEHOLDER": "Choose date between",
+			"HOURLY": "Hourly"
 		},
 		"COMING_SOON": "Coming soon",
 		"RE_INTEGRATE": "Re-integrate",
@@ -1031,7 +1034,18 @@
 			"ASSIGN_TO": "Assign to",
 			"INCLUDE_TAXES": "Include Taxes",
 			"ATTACH_A_RECEIPT": "Attach a receipt",
-			"EMPLOYEES_GENERATE_EXPENSE": "Employees that generate expense"
+			"EMPLOYEES_GENERATE_EXPENSE": "Employees that generate expense",
+			"TAX_DEDUCTIBLE": "Tax Deductible",
+			"NOT_TAX_DEDUCTIBLE": "Not Tax Deductible",
+			"BILLABLE_TO_CONTACT": "Billable to Contact",
+			"PERCENTAGE": "Percentage",
+			"VALUE": "Value",
+			"TAX_AMOUNT": "Tax Amount",
+			"TAX_RATE": "Tax Rate",
+			"INVOICED": "Invoiced",
+			"UNINVOICED": "Uninvoiced",
+			"PAID": "Paid",
+			"NOT_BILLABLE": "Not Billable"
 		},
 		"DEFAULT_CATEGORY": {
 			"SALARY": "Salary",
@@ -3166,7 +3180,8 @@
 		}
 	},
 	"SMS_GATEWAY_PAGE": {
-		"HEADER": "SMS Provider"
+		"HEADER": "SMS Provider",
+		"TWILIO": "Twilio"
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "Manage Features for '{{ name }}'"
