@@ -20,7 +20,7 @@ jobs:
               run: doctl registry login --expiry-seconds 600
 
             - name: Save DigitalOcean kubeconfig with short-lived credentials
-              run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 k8s-ever-kubeconfig
+              run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 k8s-ever
 
             - name: Apply k8s manifests changes in DigitalOcean k8s cluster (if any)
               run: |
