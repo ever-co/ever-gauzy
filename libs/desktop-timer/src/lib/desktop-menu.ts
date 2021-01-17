@@ -1,8 +1,8 @@
 import { app, Menu, remote } from 'electron';
-import { LocalStore } from './getSetStore';
-import { TimerData } from '../local-data/timer';
-import { createSettingsWindow } from '../window/settings';
-export default class AppMenu {
+import { LocalStore } from './desktop-store';
+import { TimerData } from './desktop-timer-activity';
+import { createSettingsWindow } from '../../../desktop-window/src';
+export class AppMenu {
 	constructor(timeTrackerWindow, settingsWindow, updaterWindow, knex) {
 		const menu = Menu.buildFromTemplate([
 			{

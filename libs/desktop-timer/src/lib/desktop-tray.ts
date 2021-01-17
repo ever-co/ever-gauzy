@@ -5,9 +5,12 @@ import TimerHandler from './desktop-timer';
 import { LocalStore } from './desktop-store';
 import { ipcMain } from 'electron';
 import { TimerData } from './desktop-timer-activity';
-import { createSettingsWindow } from '@gauzy/desktop-window';
-import { loginPage, timeTrackerPage } from '@gauzy/desktop-window';
-import { getApiBaseUrl } from '@gauzy/desktop-window';
+import {
+	createSettingsWindow,
+	loginPage,
+	timeTrackerPage,
+	getApiBaseUrl
+} from '../../../desktop-window/src';
 
 export class TrayIcon {
 	tray: Tray;
@@ -19,6 +22,11 @@ export class TrayIcon {
 		const iconPath = path.join(
 			__dirname,
 			'..',
+			'..',
+			'..',
+			'..',
+			'apps',
+			'desktop',
 			'assets',
 			'icons',
 			'icon_16x16.png'

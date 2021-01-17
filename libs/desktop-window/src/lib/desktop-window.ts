@@ -2,8 +2,8 @@ import log from 'electron-log';
 import { screen, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
 import * as url from 'url';
-import { environment } from '@env-desktop/environment';
-import { LocalStore } from '@gauzy/desktop-timer';
+import { environment } from '../../../../apps/desktop/src/environments/environment';
+import { LocalStore } from '../../../desktop-timer/src';
 export function createGauzyWindow(gauzyWindow, serve) {
 	log.info('createGauzyWindow started');
 
@@ -26,7 +26,10 @@ export function createGauzyWindow(gauzyWindow, serve) {
 		gauzyWindow.loadURL(launchPath);
 	} else {
 		launchPath = url.format({
-			pathname: path.join(__dirname, '../index.html'),
+			pathname: path.join(
+				__dirname,
+				'../../../../apps/desktop/index.html'
+			),
 			protocol: 'file:',
 			slashes: true
 		});
@@ -93,7 +96,7 @@ export function getApiBaseUrl(configs) {
 
 export function gauzyPage() {
 	return url.format({
-		pathname: path.join(__dirname, '../index.html'),
+		pathname: path.join(__dirname, '../../../../apps/desktop/index.html'),
 		protocol: 'file:',
 		slashes: true
 	});

@@ -43,17 +43,23 @@ import * as path from 'path';
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
 const Store = require('electron-store');
-import { ipcMainHandler, ipcTimer } from './libs/ipc';
-import TrayIcon from './libs/tray-icon';
-import AppMenu from './libs/menu';
-import DataModel from './local-data/local-table';
-import { LocalStore } from './libs/getSetStore';
-import { createGauzyWindow, gauzyPage } from './window/gauzy';
-import { createSetupWindow } from './window/setup';
-import { createTimeTrackerWindow } from './window/timeTracker';
-import { createSettingsWindow } from './window/settings';
-import { createUpdaterWindow } from './window/updater';
-import { createImageViewerWindow } from './window/imageView';
+import {
+	ipcMainHandler,
+	ipcTimer,
+	TrayIcon,
+	LocalStore,
+	DataModel,
+	AppMenu
+} from '../../../libs/desktop-timer/src';
+import {
+	createGauzyWindow,
+	gauzyPage,
+	createSetupWindow,
+	createTimeTrackerWindow,
+	createSettingsWindow,
+	createUpdaterWindow,
+	createImageViewerWindow
+} from '../../../libs/desktop-window/src';
 import { fork } from 'child_process';
 import { autoUpdater, CancellationToken } from 'electron-updater';
 
@@ -120,7 +126,7 @@ function startServer(value, restart = false) {
 			value.port || environment.API_DEFAULT_PORT
 		}`;
 		// require(path.join(__dirname, 'api/main.js'));
-		serverGauzy = fork(path.join(__dirname, 'api/main.js'), {
+		serverGauzy = fork(path.join(__dirname, '../api/main.js'), {
 			silent: true
 		});
 		serverGauzy.stdout.on('data', (data) => {
@@ -296,7 +302,7 @@ ipcMain.on('server_is_ready', () => {
 	});
 	onWaitingServer = false;
 	if (!isAlreadyRun) {
-		serverDesktop = fork(path.join(__dirname, 'desktop-api/main.js'));
+		serverDesktop = fork(path.join(__dirname, '../desktop-api/main.js'));
 		gauzyWindow.loadURL(gauzyPage());
 		ipcTimer(
 			store,

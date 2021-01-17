@@ -8,7 +8,10 @@ export function createSetupWindow(setupWindow, value) {
 	setupWindow = new BrowserWindow(mainWindowSettings);
 
 	const launchPath = url.format({
-		pathname: path.join(__dirname, '../ui/index.html'),
+		pathname: path.join(
+			__dirname,
+			'../../../../apps/desktop/ui/index.html'
+		),
 		protocol: 'file:',
 		slashes: true
 	});

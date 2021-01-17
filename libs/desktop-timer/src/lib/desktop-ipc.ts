@@ -5,7 +5,7 @@ import TimerHandler from './desktop-timer';
 import moment from 'moment';
 import { LocalStore } from './desktop-store';
 import { takeshot, captureScreen } from './desktop-screenchot';
-import { environment } from '@env-desktop/environment';
+import { environment } from '../../../../apps/desktop/src/environments/environment';
 import {
 	hasPromptedForPermission,
 	hasScreenCapturePermission,

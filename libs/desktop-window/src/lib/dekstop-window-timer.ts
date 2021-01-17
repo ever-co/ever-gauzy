@@ -8,7 +8,10 @@ export function createTimeTrackerWindow(timeTrackerWindow) {
 	timeTrackerWindow = new BrowserWindow(mainWindowSettings);
 
 	const launchPath = url.format({
-		pathname: path.join(__dirname, '../ui/index.html'),
+		pathname: path.join(
+			__dirname,
+			'../../../../apps/desktop/ui/index.html'
+		),
 		protocol: 'file:',
 		slashes: true,
 		hash: '/time-tracker'
@@ -35,7 +38,10 @@ const windowSetting = () => {
 			nodeIntegration: true,
 			webSecurity: false,
 			enableRemoteModule: true,
-			preload: path.join(__dirname, '../preload/loginPage.js')
+			preload: path.join(
+				__dirname,
+				'../../../../apps/desktop/src/preload/loginPage.js'
+			)
 		},
 		width: 400,
 		height: 900,
@@ -47,7 +53,7 @@ const windowSetting = () => {
 
 export function loginPage() {
 	return url.format({
-		pathname: path.join(__dirname, '../index.html'),
+		pathname: path.join(__dirname, '../../../../apps/desktop/index.html'),
 		protocol: 'file:',
 		slashes: true,
 		hash: '/login'
@@ -56,7 +62,10 @@ export function loginPage() {
 
 export function timeTrackerPage() {
 	return url.format({
-		pathname: path.join(__dirname, '../ui/index.html'),
+		pathname: path.join(
+			__dirname,
+			'../../../../apps/desktop/ui/index.html'
+		),
 		protocol: 'file:',
 		slashes: true,
 		hash: '/time-tracker'

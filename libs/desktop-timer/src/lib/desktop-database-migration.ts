@@ -1,4 +1,4 @@
-export default class DataModel {
+export class DataModel {
 	createNewTable(knex) {
 		knex.schema.hasTable('window-events').then(function (exists) {
 			if (!exists) {
