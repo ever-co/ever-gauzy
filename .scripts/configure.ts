@@ -73,7 +73,8 @@ export const environment: Environment = {
   GOOGLE_PLACE_AUTOCOMPLETE: ${env.GOOGLE_PLACE_AUTOCOMPLETE},
   DEFAULT_LATITUDE: ${env.DEFAULT_LATITUDE},
   DEFAULT_LONGITUDE: ${env.DEFAULT_LONGITUDE},
-  DEFAULT_CURRENCY: '${env.DEFAULT_CURRENCY}'
+  DEFAULT_CURRENCY: '${env.DEFAULT_CURRENCY}',
+  DEMO: ${env.DEMO}
 };
 
 export const cloudinaryConfiguration: CloudinaryConfiguration = {

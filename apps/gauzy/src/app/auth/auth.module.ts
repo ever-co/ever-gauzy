@@ -8,11 +8,13 @@ import { NbAuthModule } from '@nebular/auth';
 import {
 	NbAlertModule,
 	NbButtonModule,
+	NbCardModule,
 	NbCheckboxModule,
 	NbIconModule,
 	NbInputModule
 } from '@nebular/theme';
 import { NgxRegisterComponent } from './register/register.component';
+import { NgxLoginComponent } from './login/login.component';
 
 @NgModule({
 	imports: [
@@ -25,8 +27,9 @@ import { NgxRegisterComponent } from './register/register.component';
 		NbCheckboxModule,
 		NgxAuthRoutingModule,
 		NbAuthModule,
-		NbIconModule
+		NbIconModule,
+		NbCardModule
 	],
-	declarations: [NgxRegisterComponent]
+	declarations: [NgxRegisterComponent, NgxLoginComponent]
 })
 export class NgxAuthModule {}

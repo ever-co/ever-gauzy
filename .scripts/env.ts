@@ -13,6 +13,7 @@ export type Env = Readonly<{
 	DEFAULT_LATITUDE: number;
 	DEFAULT_LONGITUDE: number;
 	DEFAULT_CURRENCY: string;
+	DEMO: boolean;
 }>;
 
 export const env: Env = cleanEnv(
@@ -26,7 +27,8 @@ export const env: Env = cleanEnv(
 		SENTRY_DSN: str({ default: '' }),
 		DEFAULT_LATITUDE: num({ default: 42.6459136 }),
 		DEFAULT_LONGITUDE: num({ default: 23.3332736 }),
-		DEFAULT_CURRENCY: str({ default: 'USD' })
+		DEFAULT_CURRENCY: str({ default: 'USD' }),
+		DEMO: bool({ default: false })
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
 );
