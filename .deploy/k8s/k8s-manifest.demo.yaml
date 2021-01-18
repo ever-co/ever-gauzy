@@ -57,6 +57,9 @@ spec:
             containers:
                 - name: gauzy-demo-api
                   image: ghcr.io/ever-co/gauzy-api:latest
+                  env:
+                      - name: DEMO
+                        value: true
                   ports:
                       - containerPort: 3000
                         protocol: TCP
@@ -81,6 +84,8 @@ spec:
                   env:
                       - name: API_BASE_URL
                         value: 'http://apidemo.gauzy.co'
+                      - name: DEMO
+                        value: true
                   ports:
                       - containerPort: 4200
                         protocol: TCP
