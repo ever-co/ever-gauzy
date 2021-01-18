@@ -31,4 +31,6 @@ export interface Environment {
 	DEFAULT_CURRENCY: string;
 
 	IS_INTEGRATED_DESKTOP: boolean;
+
+	DEMO: boolean;
 }
