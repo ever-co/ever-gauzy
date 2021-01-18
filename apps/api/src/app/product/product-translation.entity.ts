@@ -20,7 +20,7 @@ export class ProductTranslation
 	description: string;
 
 	@ApiProperty({ type: Product })
-	@ManyToOne((type) => Product, (product) => Product.translations, {
+	@ManyToOne((type) => Product, (product) => product.translations, {
 		onDelete: 'CASCADE',
 		onUpdate: 'CASCADE'
 	})

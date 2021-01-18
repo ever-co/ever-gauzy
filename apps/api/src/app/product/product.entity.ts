@@ -78,15 +78,10 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@JoinColumn()
 	invoiceItems?: InvoiceItem[];
 
-	@ApiProperty({ type: String, readOnly: true })
-	@IsString()
-	@Column({ nullable: true })
-	language?: string;
-
 	@ApiProperty({ type: ProductTranslation, isArray: true })
 	@OneToMany(
 		(type) => ProductTranslation,
-		(productCategoryTranslation) => productCategoryTranslation.reference,
+		(productTranslation) => productTranslation.reference,
 		{
 			eager: true,
 			cascade: true

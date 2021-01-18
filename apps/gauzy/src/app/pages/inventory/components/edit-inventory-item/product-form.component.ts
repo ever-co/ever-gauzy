@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import {
-	IProduct,
 	IProductOption,
 	ITag,
 	IProductTypeTranslated,
@@ -161,8 +160,8 @@ export class ProductFormComponent
 		this.options = this.inventoryItem ? this.inventoryItem.options : [];
 		this.tags = this.inventoryItem ? this.inventoryItem.tags : [];
 
-		this._initializeForm();
 		this.setTranslationSettings();
+		this._initializeForm();
 
 		this.form.valueChanges
 			.pipe(takeUntil(this.ngDestroy$))
@@ -223,9 +222,6 @@ export class ProductFormComponent
 			organizationId: organizationId
 		};
 
-		//tstodo
-		console.log(productRequest, 'product request');
-
 		if (this.inventoryItem) {
 			productRequest['id'] = this.inventoryItem.id;
 		}
@@ -243,9 +239,6 @@ export class ProductFormComponent
 				);
 			}
 
-			//tstodo
-			console.log('result', productResult);
-
 			await this.productVariantService.createProductVariants({
 				product: productResult,
 				optionCombinations: this.optionsCombinations
@@ -257,10 +250,8 @@ export class ProductFormComponent
 				`/pages/organization/inventory/edit/${this.inventoryItem.id}`
 			]);
 
-			//tstodo
 			this.toastrService.success('INVENTORY_PAGE.INVENTORY_ITEM_SAVED', {
-				// name: productResult.name
-				name: 'translated result'
+				name: this.activeTranslation.name
 			});
 		} catch (err) {
 			this.toastrService.danger('TOASTR.MESSAGE.SOMETHING_BAD_HAPPENED');

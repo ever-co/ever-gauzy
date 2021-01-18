@@ -1,6 +1,6 @@
 import {
 	IBasePerTenantAndOrganizationEntityModel,
-	IProduct,
+	IProductTranslatable,
 	IOrganizationProject,
 	IEmployee,
 	ITask,
@@ -22,7 +22,7 @@ export interface IInvoiceItem extends IBasePerTenantAndOrganizationEntityModel {
 	expenseId?: string;
 	applyTax?: boolean;
 	applyDiscount?: boolean;
-	product?: IProduct;
+	product?: IProductTranslatable;
 	project?: IOrganizationProject;
 	employee?: IEmployee;
 	task?: ITask;

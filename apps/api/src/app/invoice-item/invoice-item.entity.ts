@@ -5,7 +5,7 @@ import {
 	IInvoice,
 	IInvoiceItem,
 	IOrganizationProject,
-	IProduct,
+	IProductTranslatable,
 	ITask
 } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -115,7 +115,7 @@ export class InvoiceItem
 	@ApiPropertyOptional({ type: Product })
 	@ManyToOne((type) => Product, (product) => product.invoiceItems)
 	@JoinColumn()
-	product?: IProduct;
+	product?: IProductTranslatable;
 
 	@ApiPropertyOptional({ type: Boolean })
 	@IsBoolean()
