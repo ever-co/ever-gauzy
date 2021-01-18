@@ -1,5 +1,18 @@
-# devependecies
+ARG NODE_OPTIONS
+ARG NODE_ENV
+ARG API_BASE_URL
+ARG SENTRY_DSN
+ARG GOOGLE_MAPS_API_KEY
+ARG DEMO
+ARG API_HOST
+ARG API_PORT
+ARG HOST
+ARG PORT
+ARG API_BASE_URL
+
 FROM node:alpine AS dependencies
+
+LABEL maintainer="ever@ever.co"
 
 ENV CI=true
 
@@ -39,8 +52,13 @@ RUN mkdir dist
 
 COPY --chown=node:node --from=development /srv/gauzy .
 
-ARG NODE_OPTIONS="--max-old-space-size=2048"
-ENV NODE_ENV production
+
+ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=2048"}
+ENV NODE_ENV=${NODE_ENV:-production}
+ENV API_BASE_URL=${API_BASE_URL:-http://localhost:3000}
+ENV SENTRY_DSN=${SENTRY_DSN}
+ENV GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
+ENV DEMO=${DEMO:-false}
 
 RUN yarn build:prod
 
@@ -58,8 +76,14 @@ COPY --chown=nginx:nginx --from=build /srv/gauzy/dist/apps/gauzy .
 RUN chmod +x wait entrypoint.compose.sh entrypoint.prod.sh && \
     chmod a+rw /etc/nginx/conf.d/compose.conf.template /etc/nginx/conf.d/prod.conf.template
 
-ARG API_BASE_URL=${API_BASE_URL:-http://localhost:3000}
+ENV API_HOST=${API_HOST:-api}
+ENV API_PORT=${API_PORT:-3000}
+ENV HOST=${HOST:-0.0.0.0}
+ENV PORT=${PORT:-4200}
+ENV API_BASE_URL=${API_BASE_URL:-http://localhost:3000}
 
-EXPOSE ${PORT:-4200}
+EXPOSE ${PORT}
+
 ENTRYPOINT [ "./entrypoint.prod.sh" ]
+
 CMD [ "nginx", "-g", "daemon off;" ]
