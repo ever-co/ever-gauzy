@@ -59,7 +59,7 @@ spec:
                   image: ghcr.io/ever-co/gauzy-api:latest
                   env:
                       - name: DEMO
-                        value: true
+                        value: 'true'
                   ports:
                       - containerPort: 3000
                         protocol: TCP
@@ -82,10 +82,29 @@ spec:
                 - name: gauzy-demo-webapp
                   image: ghcr.io/ever-co/gauzy-webapp:latest
                   env:
+                      - name: DEMO
+                        value: 'true'
                       - name: API_BASE_URL
                         value: 'http://apidemo.gauzy.co'
-                      - name: DEMO
-                        value: true
+                      - name: CLIENT_BASE_URL
+                        value: 'http://demo.gauzy.co'
+                      - name: SENTRY_DSN
+                        value: 'https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292'
+                      - name: CLOUDINARY_API_KEY
+                        value: '256868982483961'
+                      - name: CLOUDINARY_CLOUD_NAME
+                        value: 'dv6ezkfxg'
+                      - name: GOOGLE_MAPS_API_KEY
+                        value: ''
+                      - name: GOOGLE_PLACE_AUTOCOMPLETE
+                        value: 'false'
+                      - name: DEFAULT_LATITUDE
+                        value: '42.6459136'
+                      - name: DEFAULT_LONGITUDE
+                        value: '23.3332736'
+                      - name: DEFAULT_CURRENCY
+                        value: 'USD'
+
                   ports:
                       - containerPort: 4200
                         protocol: TCP
