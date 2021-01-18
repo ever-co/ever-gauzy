@@ -127,6 +127,7 @@ export class InvoiceViewInnerComponent
 						data['name'] = task.title;
 					}
 					break;
+				//tstodo
 				case InvoiceTypeEnum.BY_PRODUCTS:
 					if (item.productId) {
 						const { product } = item;

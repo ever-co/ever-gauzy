@@ -1,13 +1,15 @@
 import { ITranslation, ITranslatable } from '@gauzy/models';
 import { TenantOrganizationBase } from './tenant-organization-base';
 
-export abstract class TranslationBase extends TenantOrganizationBase
+export abstract class TranslationBase
+	extends TenantOrganizationBase
 	implements ITranslation<TranslatableBase> {
 	reference: ITranslatable<TranslatableBase>;
 	languageCode: string;
 }
 
-export abstract class TranslatableBase extends TenantOrganizationBase
+export abstract class TranslatableBase
+	extends TenantOrganizationBase
 	implements ITranslatable<TranslationBase> {
 	translations: ITranslation<TranslationBase>[];
 
@@ -29,4 +31,6 @@ export abstract class TranslatableBase extends TenantOrganizationBase
 		delete this.translations;
 		return this;
 	}
+
+	translateNested(langCode: string): any {}
 }

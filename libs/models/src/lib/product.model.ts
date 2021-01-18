@@ -30,7 +30,14 @@ export interface IProductTranslatable
 	type?: IProductTypeTranslatable;
 	category?: IProductCategoryTranslatable;
 	tags?: ITag[];
-	language?: string;
+}
+
+export interface IProductTranslated {
+	imageUrl: string;
+	productType: string;
+	productCategory: string;
+	name: string;
+	description: string;
 }
 
 export interface IProductTranslation

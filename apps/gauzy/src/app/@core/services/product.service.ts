@@ -5,7 +5,8 @@ import {
 	IProduct,
 	IProductFindInput,
 	IProductTranslatableCreateInput,
-	IProductTranslatable
+	IProductTranslatable,
+	IProductTranslated
 } from '@gauzy/models';
 
 @Injectable()
@@ -26,6 +27,21 @@ export class ProductService {
 				{
 					params: { data }
 				}
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	getAllTranslated(
+		relations?: string[],
+		findInput?: IProductFindInput,
+		languageCode?: string
+	) {
+		const data = JSON.stringify({ relations, findInput });
+		return this.http
+			.get<{ items: IProductTranslated[] }>(
+				`${this.PRODUCTS_URL}/local/${languageCode}`,
+				{ params: { data } }
 			)
 			.pipe(first())
 			.toPromise();
