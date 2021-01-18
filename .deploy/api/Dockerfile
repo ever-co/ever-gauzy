@@ -1,4 +1,16 @@
+ARG NODE_OPTIONS
+ARG NODE_ENV
+ARG API_HOST
+ARG API_PORT
+ARG DB_HOST
+ARG DB_NAME
+ARG DB_PORT
+ARG HOST
+ARG PORT
+
 FROM node:alpine AS dependencies
+
+LABEL maintainer="ever@ever.co"
 
 ENV CI=true
 
@@ -37,8 +49,8 @@ RUN mkdir dist
 
 COPY --chown=node:node --from=development /srv/gauzy .
 
-ARG NODE_OPTIONS="--max-old-space-size=2048"
-ENV NODE_ENV production
+ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=2048"}
+ENV NODE_ENV=${NODE_ENV:-production}
 
 RUN yarn build:api:prod
 
@@ -59,11 +71,16 @@ RUN npm install pm2 -g && mkdir /import && chown node:node /import && \
     
 USER node:node
 
-ENV NODE_OPTIONS="--max-old-space-size=2048"
-ENV NODE_ENV production
-ENV DB_NAME postgres
-ENV API_PORT 3000
-ENV DB_PORT 5432
+ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=2048"}
+ENV NODE_ENV=${NODE_ENV:-production}
+ENV API_HOST=${API_HOST:-api}
+ENV API_PORT=${API_PORT:-3000}
+ENV DB_HOST=${DB_HOST:-db}
+ENV DB_NAME=${DB_NAME:-postgres}
+ENV DB_PORT=${DB_PORT:-5432}
+ENV HOST=${HOST:-0.0.0.0}
+ENV PORT=${PORT:-3000}
 
-EXPOSE ${API_PORT:-3000}
+EXPOSE ${PORT}
+
 CMD [ "pm2-runtime", "main.js" ]
