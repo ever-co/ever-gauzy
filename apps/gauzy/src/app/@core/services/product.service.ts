@@ -4,7 +4,8 @@ import { first } from 'rxjs/operators';
 import {
 	IProduct,
 	IProductFindInput,
-	IProductCreateInput
+	IProductTranslatableCreateInput,
+	IProductTranslatable
 } from '@gauzy/models';
 
 @Injectable()
@@ -40,16 +41,21 @@ export class ProductService {
 			.toPromise();
 	}
 
-	create(product: IProductCreateInput): Promise<IProduct> {
+	create(
+		product: IProductTranslatableCreateInput
+	): Promise<IProductTranslatable> {
 		return this.http
-			.post<IProduct>(`${this.PRODUCTS_URL}/create`, product)
+			.post<IProductTranslatable>(`${this.PRODUCTS_URL}/create`, product)
 			.pipe(first())
 			.toPromise();
 	}
 
-	update(product: IProduct): Promise<IProduct> {
+	update(product: IProductTranslatable): Promise<IProductTranslatable> {
 		return this.http
-			.put<IProduct>(`${this.PRODUCTS_URL}/${product.id}`, product)
+			.put<IProductTranslatable>(
+				`${this.PRODUCTS_URL}/${product.id}`,
+				product
+			)
 			.pipe(first())
 			.toPromise();
 	}

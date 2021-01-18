@@ -9,20 +9,23 @@ import {
 	IProductCategoryTranslated,
 	IProductVariant,
 	LanguagesEnum,
-	IOrganization
+	IOrganization,
+	ILanguage,
+	IProductTranslation,
+	IProductTranslatable
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
-import { ProductTypeService } from 'apps/gauzy/src/app/@core/services/product-type.service';
-import { ProductCategoryService } from 'apps/gauzy/src/app/@core/services/product-category.service';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { ProductTypeService } from '../../../../@core/services/product-type.service';
+import { ProductCategoryService } from '../../../../@core/services/product-category.service';
+import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { Subject, BehaviorSubject } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntil } from 'rxjs/operators';
-import { ProductService } from 'apps/gauzy/src/app/@core/services/product.service';
+import { ProductService } from '../../../../@core/services/product.service';
 import { Location } from '@angular/common';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { ProductVariantService } from 'apps/gauzy/src/app/@core/services/product-variant.service';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { Store } from '../../../../@core/services/store.service';
+import { ProductVariantService } from '../../../../@core/services/product-variant.service';
+import { ToastrService } from '../../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ngx-product-form',
@@ -33,7 +36,7 @@ export class ProductFormComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	form: FormGroup;
-	inventoryItem: IProduct;
+	inventoryItem: IProductTranslatable;
 
 	hoverState: boolean;
 	selectedOrganizationId = '';
@@ -46,7 +49,11 @@ export class ProductFormComponent
 	optionsCombinations: Array<IVariantOptionCombination> = [];
 	variants$: BehaviorSubject<IProductVariant[]> = new BehaviorSubject([]);
 
-	languages: any[];
+	languages: ILanguage[];
+	selectedLanguage: string;
+	translations = [];
+	activeTranslation: IProductTranslation;
+
 	tags: ITag[] = [];
 	organization: IOrganization;
 	productId: string;
@@ -97,6 +104,8 @@ export class ProductFormComponent
 					});
 				}
 			});
+
+		this.setTranslationSettings();
 	}
 
 	ngOnDestroy(): void {
@@ -108,7 +117,7 @@ export class ProductFormComponent
 		this.form = this.fb.group({
 			tags: [this.inventoryItem ? this.inventoryItem.tags : ''],
 			name: [
-				this.inventoryItem ? this.inventoryItem.name : '',
+				this.activeTranslation ? this.activeTranslation.name : '',
 				Validators.required
 			],
 			code: [
@@ -126,12 +135,10 @@ export class ProductFormComponent
 			],
 			enabled: [this.inventoryItem ? this.inventoryItem.enabled : true],
 			description: [
-				this.inventoryItem ? this.inventoryItem.description : ''
+				this.activeTranslation ? this.activeTranslation.description : ''
 			],
-			language: [
-				this.inventoryItem && this.inventoryItem.language
-					? this.inventoryItem.language
-					: '',
+			languageCode: [
+				this.translateService.currentLang,
 				Validators.required
 			]
 		});
@@ -155,6 +162,13 @@ export class ProductFormComponent
 		this.tags = this.inventoryItem ? this.inventoryItem.tags : [];
 
 		this._initializeForm();
+		this.setTranslationSettings();
+
+		this.form.valueChanges
+			.pipe(takeUntil(this.ngDestroy$))
+			.subscribe((formValue) => {
+				this.updateTranslations();
+			});
 	}
 
 	async loadProductTypes() {
@@ -191,13 +205,12 @@ export class ProductFormComponent
 		const { id: organizationId, tenantId } = this.organization;
 		const productRequest = {
 			tags: this.form.get('tags').value,
-			name: this.form.get('name').value,
+			translations: this.translations,
 			code: this.form.get('code').value,
 			imageUrl: this.form.get('imageUrl').value,
 			productTypeId: this.form.get('productTypeId').value,
 			productCategoryId: this.form.get('productCategoryId').value,
 			enabled: this.form.get('enabled').value,
-			description: this.form.get('description').value,
 			optionCreateInputs: this.options,
 			optionDeleteInputs: this.deletedOptions,
 			category: this.productCategories.find((c) => {
@@ -207,16 +220,18 @@ export class ProductFormComponent
 				return p.id === this.form.get('productTypeId').value;
 			}),
 			tenantId: tenantId,
-			organizationId: organizationId,
-			language: this.form.get('language').value
+			organizationId: organizationId
 		};
+
+		//tstodo
+		console.log(productRequest, 'product request');
 
 		if (this.inventoryItem) {
 			productRequest['id'] = this.inventoryItem.id;
 		}
 
 		try {
-			let productResult: IProduct;
+			let productResult: IProductTranslatable;
 
 			if (!productRequest['id']) {
 				productResult = await this.productService.create(
@@ -227,6 +242,9 @@ export class ProductFormComponent
 					productRequest
 				);
 			}
+
+			//tstodo
+			console.log('result', productResult);
 
 			await this.productVariantService.createProductVariants({
 				product: productResult,
@@ -239,12 +257,61 @@ export class ProductFormComponent
 				`/pages/organization/inventory/edit/${this.inventoryItem.id}`
 			]);
 
+			//tstodo
 			this.toastrService.success('INVENTORY_PAGE.INVENTORY_ITEM_SAVED', {
-				name: productResult.name
+				// name: productResult.name
+				name: 'translated result'
 			});
 		} catch (err) {
 			this.toastrService.danger('TOASTR.MESSAGE.SOMETHING_BAD_HAPPENED');
 		}
+	}
+
+	onLangChange(langCode: string) {
+		this.selectedLanguage = langCode;
+		this.setActiveTranslation();
+
+		this.form.patchValue({
+			name: this.activeTranslation.name,
+			description: this.activeTranslation.description
+		});
+	}
+
+	setTranslationSettings(): void {
+		this.selectedLanguage =
+			this.translateService.currentLang ||
+			this.store.preferredLanguage ||
+			LanguagesEnum.ENGLISH;
+
+		this.translations = this.inventoryItem
+			? this.inventoryItem.translations
+			: [];
+
+		this.setActiveTranslation();
+	}
+
+	setActiveTranslation() {
+		this.activeTranslation = this.translations.find((tr) => {
+			return tr.languageCode === this.selectedLanguage;
+		});
+
+		if (!this.activeTranslation) {
+			const { id: organizationId, tenantId } = this.organization;
+			this.activeTranslation = {
+				languageCode: this.selectedLanguage,
+				name: '',
+				description: '',
+				organizationId,
+				tenantId
+			};
+
+			this.translations.push(this.activeTranslation);
+		}
+	}
+
+	updateTranslations() {
+		this.activeTranslation.name = this.form.get('name').value;
+		this.activeTranslation.description = this.form.get('description').value;
 	}
 
 	onOptionsUpdated(options: IProductOption[]) {
