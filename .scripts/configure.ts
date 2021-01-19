@@ -98,7 +98,9 @@ if (!env.IS_DOCKER) {
 		DEFAULT_LONGITUDE: ${env.DEFAULT_LONGITUDE},
 		DEFAULT_CURRENCY: '${env.DEFAULT_CURRENCY}',
 
-		DEMO: ${env.DEMO}
+		DEMO: ${env.DEMO},
+
+		CHATWOOT_SDK_TOKEN: '${env.CHATWOOT_SDK_TOKEN}'
 	};	
 	`;
 } else {
@@ -169,7 +171,9 @@ if (!env.IS_DOCKER) {
 		DEFAULT_CURRENCY: 'DOCKER_DEFAULT_CURRENCY',
 
 		// @ts-ignore
-		DEMO: 'DOCKER_DEMO' == 'true'		
+		DEMO: 'DOCKER_DEMO' == 'true',
+
+		CHATWOOT_SDK_TOKEN: '${env.CHATWOOT_SDK_TOKEN}'
 	};
 `;
 }

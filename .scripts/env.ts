@@ -29,6 +29,8 @@ export type Env = Readonly<{
 	DEFAULT_CURRENCY: string;
 
 	DEMO: boolean;
+
+	CHATWOOT_SDK_TOKEN: string;
 }>;
 
 export const env: Env = cleanEnv(
@@ -54,7 +56,9 @@ export const env: Env = cleanEnv(
 		DEFAULT_LONGITUDE: num({ default: 23.3332736 }),
 		DEFAULT_CURRENCY: str({ default: 'USD' }),
 
-		DEMO: bool({ default: false })
+		DEMO: bool({ default: false }),
+
+		CHATWOOT_SDK_TOKEN: str({ default: '' })
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
 );
