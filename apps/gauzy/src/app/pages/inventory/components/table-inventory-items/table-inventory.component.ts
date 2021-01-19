@@ -3,14 +3,15 @@ import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
-import { first, take, tap } from 'rxjs/operators';
+import { first, tap } from 'rxjs/operators';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import {
 	IProduct,
 	IProductTypeTranslated,
 	IProductCategoryTranslated,
 	ComponentLayoutStyleEnum,
-	IOrganization
+	IOrganization,
+	IProductTranslated
 } from '@gauzy/models';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { PictureNameTagsComponent } from '../../../../@shared/table-components/picture-name-tags/picture-name-tags.component';
@@ -35,7 +36,7 @@ export class TableInventoryComponent
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
 	selectedLanguage: string;
-	inventoryData: IProduct[];
+	inventoryData: IProductTranslated[];
 	disableButton = true;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.CARDS_GRID;
@@ -69,6 +70,7 @@ export class TableInventoryComponent
 			.pipe(untilDestroyed(this))
 			.subscribe((languageEvent) => {
 				this.selectedLanguage = languageEvent.lang;
+				this.loadSettings();
 			});
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
@@ -221,7 +223,7 @@ export class TableInventoryComponent
 		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const { items } = await this.productService.getAll(
+		const { items } = await this.productService.getAllTranslated(
 			['type', 'category', 'tags'],
 			{ organizationId, tenantId },
 			this.selectedLanguage

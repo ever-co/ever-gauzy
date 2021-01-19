@@ -3,8 +3,13 @@ import { IPagination } from '../core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './product.entity';
-import { IProductCreateInput, IProductFindInput } from '@gauzy/models';
+import {
+	IProductCreateInput,
+	IProductFindInput,
+	IProductTranslated
+} from '@gauzy/models';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { TranslatePropertyInput } from '../core/entities/translate-base';
 
 @Injectable()
 export class ProductService extends TenantAwareCrudService<Product> {
@@ -19,27 +24,43 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		langCode?: string,
 		relations?: string[],
 		findInput?: IProductFindInput
-	): Promise<IPagination<Product>> {
+	): Promise<IPagination<Product | IProductTranslated>> {
 		const total = await this.productRepository.count(findInput);
 		const items = await this.productRepository.find({
 			relations: relations,
 			where: findInput
 		});
 
-		if (langCode) {
-			//tstodo write method
-			items.forEach((product) => {
-				if (product.type) {
-					product.type = product.type.translate(langCode);
-				}
+		const propsTranslate: Array<TranslatePropertyInput> = [
+			{
+				prop: 'root',
+				propsTranslate: [
+					{ key: 'name', alias: 'name' },
+					{ key: 'description', alias: 'description' }
+				]
+			},
+			{
+				prop: 'category',
+				propsTranslate: [{ key: 'name', alias: 'category' }]
+			},
+			{ prop: 'type', propsTranslate: [{ key: 'name', alias: 'type' }] }
+		];
 
-				if (product.category) {
-					product.category = product.category.translate(langCode);
-				}
-			});
-		}
+		const mapData = async () => {
+			if (langCode) {
+				return Promise.all(
+					items.map((product) =>
+						product.translateNested(langCode, propsTranslate)
+					)
+				);
+			} else {
+				return items;
+			}
+		};
 
-		return { items, total };
+		return mapData().then((items) => {
+			return { items, total };
+		});
 	}
 
 	async findById(id: string, options: any): Promise<Product> {
