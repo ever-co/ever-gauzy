@@ -12,6 +12,17 @@ import { ComponentLayoutStyleEnum } from '@gauzy/models';
 			<div *ngIf="rowData?.imageUrl" class="image-container">
 				<img [src]="rowData?.imageUrl" />
 			</div>
+			<div *ngIf="!rowData?.imageUrl" class="image-container">
+				<img
+					[src]="
+						'https://afostats.imagead.net/uploads/afo/no_img.png'
+					"
+					alt="Product Item Photo"
+					(mouseenter)="hoverState = true"
+					(mouseleave)="hoverState = false"
+				/>
+			</div>
+
 			<div class="d-block" style="margin-left:15px;">
 				{{ value || '-' }}
 			</div>

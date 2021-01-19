@@ -1,11 +1,11 @@
 import {
 	IBasePerTenantAndOrganizationEntityModel,
-	IProductTranslatable,
 	IOrganizationProject,
 	IEmployee,
 	ITask,
 	IInvoice,
-	IExpense
+	IExpense,
+	IProduct
 } from '@gauzy/models';
 
 export interface IInvoiceItem extends IBasePerTenantAndOrganizationEntityModel {
@@ -22,7 +22,7 @@ export interface IInvoiceItem extends IBasePerTenantAndOrganizationEntityModel {
 	expenseId?: string;
 	applyTax?: boolean;
 	applyDiscount?: boolean;
-	product?: IProductTranslatable;
+	product?: IProduct;
 	project?: IOrganizationProject;
 	employee?: IEmployee;
 	task?: ITask;

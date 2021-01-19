@@ -6,6 +6,7 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { UsersOrganizationsService } from 'apps/gauzy/src/app/@core/services/users-organizations.service';
+import { TranslatableService } from 'apps/gauzy/src/app/@core/services/translatable.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-invoice-view-inner',
@@ -29,7 +30,8 @@ export class InvoiceViewInnerComponent
 	constructor(
 		readonly translateService: TranslateService,
 		private store: Store,
-		private userOrganizationService: UsersOrganizationsService
+		private userOrganizationService: UsersOrganizationsService,
+		private translatableService: TranslatableService
 	) {
 		super(translateService);
 	}
@@ -127,11 +129,15 @@ export class InvoiceViewInnerComponent
 						data['name'] = task.title;
 					}
 					break;
-				//tstodo
 				case InvoiceTypeEnum.BY_PRODUCTS:
 					if (item.productId) {
 						const { product } = item;
-						data['name'] = product.name;
+						data[
+							'name'
+						] = this.translatableService.getTranslatedProperty(
+							product,
+							'name'
+						);
 					}
 					break;
 				case InvoiceTypeEnum.BY_EXPENSES:

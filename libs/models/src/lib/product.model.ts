@@ -44,9 +44,6 @@ export interface IProductTranslation
 	extends ITranslation<IProductTranslatable> {
 	name: string;
 	description: string;
-	//tstodo
-	// type: string;
-	// category: string;
 }
 export interface IProductCreateInput
 	extends IBasePerTenantAndOrganizationEntityModel {

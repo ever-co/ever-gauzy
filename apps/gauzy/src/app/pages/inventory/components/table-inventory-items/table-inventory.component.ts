@@ -227,10 +227,6 @@ export class TableInventoryComponent
 			{ organizationId, tenantId },
 			this.selectedLanguage
 		);
-
-		//tstodo
-
-		console.log(items, 'items');
 		this.loading = false;
 		this.inventoryData = items;
 		this.smartTableSource.load(items);
