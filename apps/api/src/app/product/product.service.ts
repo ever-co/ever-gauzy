@@ -43,7 +43,11 @@ export class ProductService extends TenantAwareCrudService<Product> {
 				prop: 'category',
 				propsTranslate: [{ key: 'name', alias: 'category' }]
 			},
-			{ prop: 'type', propsTranslate: [{ key: 'name', alias: 'type' }] }
+			{ prop: 'type', propsTranslate: [{ key: 'name', alias: 'type' }] },
+			{
+				prop: 'description',
+				propsTranslate: [{ key: 'description', alias: 'description' }]
+			}
 		];
 
 		const mapData = async () => {

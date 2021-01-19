@@ -44,9 +44,10 @@ export abstract class TranslatableBase
 		return this;
 	}
 
-	//  translate product object keeping all root elements
-	// and adding translation prop up to two nested levels
-	//
+	/*
+	 * translate product object keeping all root elements
+	 * and adding translated prop up to two nested levels
+	 */
 	translateNested(
 		languageCode: string,
 		translatePropsInput: Array<TranslatePropertyInput>
@@ -62,7 +63,7 @@ export abstract class TranslatableBase
 			(translateObj: TranslatePropertyInput) => {
 				return {
 					...translateObj,
-					keysAsArr: translateObj.prop.split('.')
+					propAsArr: translateObj.prop.split('.')
 				};
 			}
 		);

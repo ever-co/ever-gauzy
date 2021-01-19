@@ -7,20 +7,18 @@ import { first, tap } from 'rxjs/operators';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import {
 	IProduct,
-	IProductTypeTranslated,
-	IProductCategoryTranslated,
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	IProductTranslated
 } from '@gauzy/models';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
-import { PictureNameTagsComponent } from '../../../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ProductService } from '../../../../@core/services/product.service';
 import { ComponentEnum } from '../../../../@core/constants/layout.constants';
 import { Store } from '../../../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { ItemImgTagsComponent } from '../table-components/item-img-tags-row.component';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-table-inventory',
@@ -120,7 +118,10 @@ export class TableInventoryComponent
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
 					type: 'custom',
-					renderComponent: PictureNameTagsComponent
+					renderComponent: ItemImgTagsComponent,
+					valuePrepareFunction: (name: string) => {
+						return name || '-';
+					}
 				},
 				code: {
 					title: this.getTranslation('INVENTORY_PAGE.CODE'),
@@ -129,8 +130,8 @@ export class TableInventoryComponent
 				type: {
 					title: this.getTranslation('INVENTORY_PAGE.PRODUCT_TYPE'),
 					type: 'string',
-					valuePrepareFunction: (type: IProductTypeTranslated) => {
-						return type ? type.name : '';
+					valuePrepareFunction: (type: string) => {
+						return type ? type : '-';
 					}
 				},
 				category: {
@@ -138,10 +139,8 @@ export class TableInventoryComponent
 						'INVENTORY_PAGE.PRODUCT_CATEGORY'
 					),
 					type: 'string',
-					valuePrepareFunction: (
-						category: IProductCategoryTranslated
-					) => {
-						return category ? category.name : '';
+					valuePrepareFunction: (category: string) => {
+						return category ? category : '-';
 					}
 				},
 				description: {
@@ -228,6 +227,10 @@ export class TableInventoryComponent
 			{ organizationId, tenantId },
 			this.selectedLanguage
 		);
+
+		//tstodo
+
+		console.log(items, 'items');
 		this.loading = false;
 		this.inventoryData = items;
 		this.smartTableSource.load(items);
