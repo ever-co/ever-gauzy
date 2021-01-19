@@ -42,4 +42,6 @@ export interface Environment {
 	IS_INTEGRATED_DESKTOP: boolean;
 
 	DEMO: boolean;
+
+	CHATWOOT_SDK_TOKEN: string;
 }

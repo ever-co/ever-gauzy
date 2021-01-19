@@ -45,7 +45,7 @@ export interface PersistState {
 	clientId?: string;
 	token: string;
 	userId: string;
-	serverConnection: string;
+	serverConnection: number;
 	preferredLanguage: LanguagesEnum;
 	preferredComponentLayout: ComponentLayoutStyleEnum;
 	componentLayout: any[]; //This would be a Map but since Maps can't be serialized/deserialized it is stored as an array
@@ -65,7 +65,8 @@ export function createInitialPersistState(): PersistState {
 	const token = localStorage.getItem('token') || null;
 	const userId = localStorage.getItem('_userId') || null;
 	const organizationId = localStorage.getItem('_organizationId') || null;
-	const serverConnection = localStorage.getItem('serverConnection') || null;
+	const serverConnection =
+		parseInt(localStorage.getItem('serverConnection')) || null;
 	const preferredLanguage = localStorage.getItem('preferredLanguage') || null;
 	const componentLayout = localStorage.getItem('componentLayout') || [];
 
@@ -407,7 +408,7 @@ export class Store {
 		return serverConnection;
 	}
 
-	set serverConnection(val: string) {
+	set serverConnection(val: number) {
 		this.persistStore.update({
 			serverConnection: val
 		});

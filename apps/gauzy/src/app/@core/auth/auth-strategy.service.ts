@@ -290,7 +290,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		await this._preLogout();
 
 		this.store.clear();
-		this.store.serverConnection = '200';
+		this.store.serverConnection = 200;
 		if (this.electronService.isElectronApp) {
 			try {
 				this.electronService.ipcRenderer.send('logout');

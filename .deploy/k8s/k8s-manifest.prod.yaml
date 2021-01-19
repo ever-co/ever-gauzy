@@ -87,6 +87,8 @@ spec:
                         value: 'http://app.gauzy.co'
                       - name: SENTRY_DSN
                         value: 'https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292'
+                      - name: CHATWOOT_SDK_TOKEN
+                        value: 'fPgSSzSQoAWRuDqYyNXmpGLM'
                       - name: CLOUDINARY_API_KEY
                         value: '256868982483961'
                       - name: CLOUDINARY_CLOUD_NAME
