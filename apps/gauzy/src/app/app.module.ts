@@ -170,7 +170,7 @@ if (environment.SENTRY_DSN) {
 		{
 			provide: APP_INITIALIZER,
 			useFactory: serverConnectionFactory,
-			deps: [ServerConnectionService, Store],
+			deps: [ServerConnectionService, Store, Router],
 			multi: true
 		},
 		GoogleMapsLoaderService,
@@ -209,9 +209,15 @@ export class AppModule {
 
 export function serverConnectionFactory(
 	provider: ServerConnectionService,
-	store: Store
+	store: Store,
+	router: Router
 ) {
-	return () => provider.load(environment.API_BASE_URL, store);
+	return () =>
+		provider.checkServerConnection(environment.API_BASE_URL).finally(() => {
+			if (store.serverConnection !== 200) {
+				router.navigate(['server-down']);
+			}
+		});
 }
 
 export function googleMapsLoaderFactory(provider: GoogleMapsLoaderService) {

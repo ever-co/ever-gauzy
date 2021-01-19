@@ -1,26 +1,26 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { first } from 'rxjs/operators';
+import { Store } from './store.service';
 
 @Injectable()
 export class ServerConnectionService {
-	constructor(private readonly httpClient: HttpClient) {}
+	constructor(
+		private readonly httpClient: HttpClient,
+		private readonly store: Store
+	) {}
 
-	load(endPoint: string, store: { serverConnection: string }) {
-		return new Promise(async (resolve, reject) => {
-			await this.checkServerConnection(endPoint, store);
-			resolve(true);
+	async checkServerConnection(endPoint: string) {
+		return new Promise((resolve, reject) => {
+			this.httpClient.get(`${endPoint}/api`).subscribe(
+				(resp: any) => {
+					this.store.serverConnection = resp.status;
+					resolve(true);
+				},
+				(err) => {
+					this.store.serverConnection = err.status;
+					reject();
+				}
+			);
 		});
-	}
-
-	async checkServerConnection(
-		endPoint: string,
-		store: { serverConnection: string }
-	) {
-		try {
-			await this.httpClient.get(endPoint).pipe(first()).toPromise();
-		} catch (error) {
-			store.serverConnection = error.status;
-		}
 	}
 }
