@@ -20,7 +20,11 @@ import { ProductCreateCommand } from './commands/product.create.command';
 import { ProductUpdateCommand } from './commands/product.update.command';
 import { AuthGuard } from '@nestjs/passport';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { PermissionsEnum, IProductCreateInput } from '@gauzy/models';
+import {
+	PermissionsEnum,
+	IProductCreateInput,
+	IProductTranslated
+} from '@gauzy/models';
 import { Permissions } from '../shared/decorators/permissions';
 import { ProductDeleteCommand } from './commands';
 import { DeleteResult } from 'typeorm';
@@ -73,7 +77,9 @@ export class ProductController extends CrudController<Product> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllProducts(): Promise<IPagination<Product>> {
+	async findAllProducts(): Promise<
+		IPagination<Product | IProductTranslated>
+	> {
 		return this.productService.findAllProducts();
 	}
 
@@ -93,7 +99,7 @@ export class ProductController extends CrudController<Product> {
 	async findAllProductsTranslated(
 		@Param('langCode') langCode: string,
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<Product>> {
+	): Promise<IPagination<Product | IProductTranslated>> {
 		const { relations = [], findInput = null } = data;
 		return this.productService.findAllProducts(
 			langCode,
