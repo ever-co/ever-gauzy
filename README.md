@@ -7,16 +7,18 @@
 
 Gauzy™ Platform - **Open-Source Business Management Platform** focused on **Fairness** and **Transparency**.
 
-You are welcome to check more information about the platform at our official website - **<https://ever.co/features-gauzy-platform>**.
+Gauzy Platform is an Enterprise Resource Planning (ERP), Customer Relationship Management (CRM) and Human Resource Management (HRM) software.
+
+You are welcome to check more information about the platform at our official website - **<https://gauzy.co>**.
 
 ![overview](https://gauzy.co/wp-content/themes/gauzy/assets/img/home/home-1.png)
 
 Gauzy Platform main features:
 
--   Human Resources Management (HRM), Time Management and Employees Performance Monitoring
+-   Human Resources Management (HRM) with Time Management / Tracking and Employees Performance Monitoring
 -   Customer Relationship Management (CRM)
 -   Enterprise Resource Planning (ERP)
--   Project Management
+-   Projects / Tasks Management
 -   Sales Management
 -   Financial and Cost Management (including _Accounting_, _Invoicing_, etc)
 -   Inventory, Supply Chain Management and Production Management
@@ -59,11 +61,11 @@ Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [
 
 ## Demos, Testing and Production
 
+-   Gauzy Platform Demo at <http://demo.gauzy.co> (login `admin@ever.co` and password: `admin`)
 <!--
--   Gauzy Platform Demo at <https://demo.gauzy.co> (login `admin@ever.co` and password: `admin`)
 -   Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) at <https://app.gauzy.dev> (temporary deployed manually)
--   Gauzy Platform SaaS at <https://app.gauzy.co> (not used yet in production, it's same as demo.gauzy.co for now)
--->
+    -->
+-   Gauzy Platform SaaS at <http://app.gauzy.co> (not used yet in production, it's same as <http://demo.gauzy.co> for now)
 
 ### Desktop App
 
@@ -104,7 +106,7 @@ Please refer to our official [Platform Documentation](https://docs.gauzy.co) and
 -   Clone repo
 -   Make sure you have Docker Compose [installed locally](https://docs.docker.com/compose/install)
 -   Run `docker-compose -f docker-compose.demo.yml up`, if you want to run the platform using our prebuild Docker images _(note: images build automatically from head of `master` branch)_
--   Run `docker-compose up`, if you want to build everything (code and Docker images) locally.  _(note: this is extremely long process, option above is much faster)_
+-   Run `docker-compose up`, if you want to build everything (code and Docker images) locally. _(note: this is extremely long process, option above is much faster)_
 -   :coffee: time...
 -   Open <http://localhost:8080> in your browser
 -   Login with email `admin@ever.co` and password: `admin`

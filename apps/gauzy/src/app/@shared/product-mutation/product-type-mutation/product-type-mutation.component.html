@@ -30,8 +30,11 @@
 					[selected]="selectedLanguage"
 					(selectedChange)="onLangChange($event)"
 				>
-					<nb-option *ngFor="let lang of languages" [value]="lang">
-						{{ lang }}
+					<nb-option
+						*ngFor="let lang of languages"
+						[value]="lang.value"
+					>
+						{{ lang.name }}
 					</nb-option>
 				</nb-select>
 			</div>

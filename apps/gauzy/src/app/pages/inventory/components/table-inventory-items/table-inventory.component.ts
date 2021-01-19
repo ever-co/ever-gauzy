@@ -66,7 +66,7 @@ export class TableInventoryComponent
 		this._applyTranslationOnSmartTable();
 		this.selectedLanguage = this.translateService.currentLang;
 		this.translateService.onLangChange
-			.pipe(take(1))
+			.pipe(untilDestroyed(this))
 			.subscribe((languageEvent) => {
 				this.selectedLanguage = languageEvent.lang;
 			});

@@ -69,6 +69,16 @@
 			<button
 				class="mr-2"
 				status="info"
+				(click)="recordFullPayment()"
+				[disabled]="disableFullPaymentButton"
+				nbButton
+			>
+				<nb-icon class="mr-1" icon="credit-card-outline"></nb-icon>
+				{{ 'BUTTONS.RECORD_FULL_PAYMENT' | translate }}
+			</button>
+			<button
+				class="mr-2"
+				status="info"
 				(click)="editPayment()"
 				[disabled]="disableButton"
 				nbButton

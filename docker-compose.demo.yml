@@ -21,7 +21,7 @@ services:
             - overlay
 
     db:
-        image: postgres:11-alpine
+        image: postgres:12-alpine
         container_name: db
         restart: always
         environment:
@@ -32,7 +32,7 @@ services:
             test:
                 [
                     'CMD-SHELL',
-                    'psql postgres://$${POSTGRES_USER}:$${POSTGRES_PASSWORD}@localhost:5432/$${POSTGRES_DB} || exit 1',
+                    'psql postgres://$${POSTGRES_USER}:$${POSTGRES_PASSWORD}@localhost:5432/$${POSTGRES_DB} || exit 1'
                 ]
         volumes:
             - postgres_data:/var/lib/postgresql/data
@@ -124,11 +124,11 @@ services:
             - db
         links:
             - db:${DB_HOST:-db}
-        entrypoint: './entrypoint'
-        command: ['pm2-runtime', 'main.js']
-        volumes:
-            - webapp_node_modules:/srv/gauzy/node_modules
-            - api_node_modules:/srv/gauzy/apps/api/node_modules
+        entrypoint: './entrypoint.sh'
+        command: ['node', 'main.js']
+        # volumes:
+        # - webapp_node_modules:/srv/gauzy/node_modules
+        # - api_node_modules:/srv/gauzy/apps/api/node_modules
         ports:
             - 3000:3000:${API_PORT:-3000}
         networks:
@@ -139,6 +139,18 @@ services:
         image: ghcr.io/ever-co/gauzy-webapp:latest
         environment:
             NODE_ENV: ${NODE_ENV:-development}
+            API_BASE_URL: ${API_BASE_URL:-http://localhost:3000}
+            CLIENT_BASE_URL: ${CLIENT_BASE_URL:-http://localhost:4200}
+            SENTRY_DSN: ${SENTRY_DSN}
+            GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
+            GOOGLE_PLACE_AUTOCOMPLETE: ${GOOGLE_PLACE_AUTOCOMPLETE}
+            DEFAULT_LATITUDE: ${DEFAULT_LATITUDE}
+            DEFAULT_LONGITUDE: ${DEFAULT_LONGITUDE}
+            DEFAULT_CURRENCY: ${DEFAULT_CURRENCY}
+            DEMO: true
+            API_HOST: ${API_HOST:-api}
+            API_PORT: ${API_PORT:-3000}
+
         env_file:
             - .env
         restart: on-failure
@@ -148,18 +160,18 @@ services:
         depends_on:
             - db
             - api
-        entrypoint: './entrypoint'
+        entrypoint: './entrypoint.compose.sh'
         command: ['nginx', '-g', 'daemon off;']
-        volumes:
-            - webapp_node_modules:/srv/gauzy/node_modules
+        # volumes:
+        # - webapp_node_modules:/srv/gauzy/node_modules
         ports:
             - 4200:${HOST:-4200}
         networks:
             - overlay
 
 volumes:
-    webapp_node_modules:
-    api_node_modules:
+    # webapp_node_modules:
+    # api_node_modules:
     postgres_data:
     certificates:
 

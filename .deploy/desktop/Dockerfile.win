@@ -6,15 +6,13 @@ COPY apps/desktop/package.json ./apps/desktop/
 COPY apps/api/package.json ./apps/api/
 COPY package.json yarn.lock ./
 
-RUN yarn install
+RUN yarn install --frozen-lockfile
 
 COPY . .
 
 RUN yarn bootstrap
 
 RUN yarn build:desktop:windows
-
-#=========================================================================#
 
 FROM debian:buster-slim
 
