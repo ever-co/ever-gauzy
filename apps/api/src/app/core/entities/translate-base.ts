@@ -1,5 +1,4 @@
 import { ITranslation, ITranslatable } from '@gauzy/models';
-import { string0To1000 } from 'aws-sdk/clients/customerprofiles';
 import { TenantOrganizationBase } from './tenant-organization-base';
 
 export abstract class TranslationBase
