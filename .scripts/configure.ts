@@ -173,7 +173,7 @@ if (!env.IS_DOCKER) {
 		// @ts-ignore
 		DEMO: 'DOCKER_DEMO' == 'true',
 
-		CHATWOOT_SDK_TOKEN: '${env.CHATWOOT_SDK_TOKEN}'
+		CHATWOOT_SDK_TOKEN: 'DOCKER_CHATWOOT_SDK_TOKEN'
 	};
 `;
 }
