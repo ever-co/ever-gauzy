@@ -66,6 +66,16 @@
 			{{ 'INVOICES_PAGE.INVOICES_SELECT_PAID' | translate }}:
 			{{ invoice ? (invoice?.paid ? 'Yes' : 'No') : '' }}
 		</div>
+		<div *ngIf="invoice.hasRemainingAmountInvoiced" class="grid-item">
+			{{ 'INVOICES_PAGE.ALREADY_PAID' | translate }}:
+			{{ invoice ? invoice?.currency : '' }}
+			{{ invoice ? invoice?.alreadyPaid : '' }}
+		</div>
+		<div *ngIf="invoice.hasRemainingAmountInvoiced" class="grid-item">
+			{{ 'INVOICES_PAGE.AMOUNT_DUE' | translate }}:
+			{{ invoice ? invoice?.currency : '' }}
+			{{ invoice ? invoice?.amountDue : '' }}
+		</div>
 	</div>
 	<div class="item">
 		{{ 'INVOICES_PAGE.INVOICES_SELECT_TERMS' | translate }}:

@@ -104,7 +104,9 @@ export class InvoicePdfComponent
 			terms: this.getTranslation('INVOICES_PAGE.INVOICES_SELECT_TERMS'),
 			paid: this.getTranslation('INVOICES_PAGE.PAID'),
 			yes: this.getTranslation('INVOICES_PAGE.YES'),
-			no: this.getTranslation('INVOICES_PAGE.NO')
+			no: this.getTranslation('INVOICES_PAGE.NO'),
+			alreadyPaid: this.getTranslation('INVOICES_PAGE.ALREADY_PAID'),
+			amountDue: this.getTranslation('INVOICES_PAGE.AMOUNT_DUE')
 		};
 
 		docDefinition = await generatePdf(

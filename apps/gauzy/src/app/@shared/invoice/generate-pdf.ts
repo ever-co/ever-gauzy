@@ -188,6 +188,22 @@ export async function generatePdf(
 					}
 				]
 			},
+			invoice.hasRemainingAmountInvoiced ? ' ' : '',
+			invoice.hasRemainingAmountInvoiced ? ' ' : '',
+			{
+				columns: invoice.hasRemainingAmountInvoiced
+					? [
+							{
+								width: '50%',
+								text: `${translatedText.alreadyPaid}: ${invoice.currency} ${invoice.alreadyPaid}`
+							},
+							{
+								width: '50%',
+								text: `${translatedText.amountDue}: ${invoice.currency} ${invoice.amountDue}`
+							}
+					  ]
+					: []
+			},
 			' ',
 			' ',
 			`${translatedText.paid}: ${

@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { InvoicesService } from '../../../@core/services/invoices.service';
 import {
 	IInvoice,
@@ -40,7 +40,8 @@ export class InvoicePaymentsComponent
 		private paymentService: PaymentService,
 		private toastrService: ToastrService,
 		private store: Store,
-		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService
+		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
+		private router: Router
 	) {
 		super(translateService);
 	}
@@ -58,7 +59,7 @@ export class InvoicePaymentsComponent
 	tenantId: string;
 	loading: boolean;
 	translatedText: any;
-	disableFullPaymentButton: boolean;
+	isDisabled: boolean;
 
 	paymentsTable: Ng2SmartTableComponent;
 	@ViewChild('paymentsTable') set content(content: Ng2SmartTableComponent) {
@@ -145,10 +146,15 @@ export class InvoicePaymentsComponent
 		}
 
 		if (this.leftToPay === 0) {
-			this.disableFullPaymentButton = true;
+			this.isDisabled = true;
 		} else {
-			this.disableFullPaymentButton = false;
+			this.isDisabled = false;
 		}
+
+		await this.invoicesService.update(this.invoice.id, {
+			alreadyPaid: this.totalPaid,
+			amountDue: this.leftToPay
+		});
 
 		this.loading = false;
 	}
@@ -433,6 +439,16 @@ export class InvoicePaymentsComponent
 		await this.getInvoice();
 
 		this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD');
+	}
+
+	async invoiceRemainingAmount() {
+		this.invoicesService.update(this.invoice.id, {
+			alreadyPaid: +this.totalPaid
+		});
+		this.router.navigate(
+			[`/pages/accounting/invoices/edit/${this.invoice.id}`],
+			{ queryParams: { remainingAmount: true } }
+		);
 	}
 
 	_applyTranslationOnSmartTable() {
