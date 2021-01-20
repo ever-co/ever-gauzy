@@ -382,14 +382,30 @@
 				(deleteConfirm)="onDeleteConfirm($event)"
 			>
 			</ng2-smart-table>
-			<div class="total">
-				<div class="total-item">
-					{{ 'INVOICES_PAGE.SUBTOTAL' | translate }}:
-					{{ currency.value }} {{ subtotal.toFixed(2) }}
+			<div class="total d-flex">
+				<div>
+					<div class="total-item">
+						{{ 'INVOICES_PAGE.SUBTOTAL' | translate }}:
+						{{ currency.value }} {{ subtotal.toFixed(2) }}
+					</div>
+					<div class="total-item">
+						{{ 'INVOICES_PAGE.TOTAL' | translate }}:
+						{{ currency.value }} {{ total.toFixed(2) }}
+					</div>
 				</div>
-				<div class="total-item">
-					{{ 'INVOICES_PAGE.TOTAL' | translate }}:
-					{{ currency.value }} {{ total.toFixed(2) }}
+				<div
+					*ngIf="
+						isRemainingAmount || invoice.hasRemainingAmountInvoiced
+					"
+				>
+					<div class="total-item">
+						{{ 'INVOICES_PAGE.ALREADY_PAID' | translate }}:
+						{{ currency.value }} {{ alreadyPaid.toFixed(2) }}
+					</div>
+					<div class="total-item">
+						{{ 'INVOICES_PAGE.AMOUNT_DUE' | translate }}:
+						{{ currency.value }} {{ amountDue.toFixed(2) }}
+					</div>
 				</div>
 			</div>
 		</div>
