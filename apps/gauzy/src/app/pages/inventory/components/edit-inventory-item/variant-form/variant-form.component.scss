@@ -1,3 +1,5 @@
+@import 'themes';
+
 .d-bottom {
   display: flex;
   align-items: flex-end;
@@ -9,4 +11,34 @@
 
 .variants-container {
   min-height: 100px;
+}
+
+.btn-variant {
+  margin-bottom: 10px;
+}
+
+.btn-variant-icon {
+  background: transparent !important;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.35s all ease-in-out;
+  margin-right: 5px;
+}
+
+.variant-stored-btn {
+  background: nb-theme(color-success-default) !important;
+  color: white;
+  cursor: pointer;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+
+  svg {
+    fill: white !important;
+  }
 }
