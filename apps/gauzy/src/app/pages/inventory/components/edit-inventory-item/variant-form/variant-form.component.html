@@ -37,7 +37,15 @@
 			*ngFor="let productVariant of variantCreateInputs"
 			(click)="onEditProductVariant(productVariant)"
 		>
-			<nb-icon icon="edit-outline"></nb-icon>
+			<span
+				class="btn-variant-icon"
+				[ngClass]="{
+					'variant-stored-btn': productVariant.isStored
+				}"
+				(click)="onVariantBtnClick(productVariant)"
+			>
+				<nb-icon icon="edit-outline"></nb-icon
+			></span>
 			{{ getVariantDisplayName(productVariant) }}
 		</button>
 	</div>

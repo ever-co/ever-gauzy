@@ -25,6 +25,7 @@ import { Location } from '@angular/common';
 import { Store } from '../../../../@core/services/store.service';
 import { ProductVariantService } from '../../../../@core/services/product-variant.service';
 import { ToastrService } from '../../../../@core/services/toastr.service';
+import { VariantCreateInput } from './variant-form/variant-form.component';
 
 @Component({
 	selector: 'ngx-product-form',
@@ -47,6 +48,7 @@ export class ProductFormComponent
 
 	optionsCombinations: Array<IVariantOptionCombination> = [];
 	variants$: BehaviorSubject<IProductVariant[]> = new BehaviorSubject([]);
+	variantsDb: VariantCreateInput[];
 
 	languages: ILanguage[];
 	selectedLanguage: string;
@@ -159,6 +161,18 @@ export class ProductFormComponent
 
 		this.options = this.inventoryItem ? this.inventoryItem.options : [];
 		this.tags = this.inventoryItem ? this.inventoryItem.tags : [];
+		this.variantsDb = this.inventoryItem
+			? this.inventoryItem.variants.map((variant: IProductVariant) => {
+					return {
+						options: variant.options.map(
+							(option: IProductOption) => option.name
+						),
+						isStored: true,
+						id: variant.id,
+						productId: this.inventoryItem.id || null
+					};
+			  })
+			: [];
 
 		this.setTranslationSettings();
 		this._initializeForm();
