@@ -18,11 +18,13 @@ import { ProductVariantSettingService } from '../product-settings/product-settin
 import { ProductVariantPriceService } from '../product-variant-price/product-variant-price.service';
 import { ProductVariantPrice } from '../product-variant-price/product-variant-price.entity';
 import { TenantModule } from '../tenant/tenant.module';
+import { ProductTranslation } from './product-translation.entity';
 
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([
 			Product,
+			ProductTranslation,
 			ProductOption,
 			User,
 			ProductVariant,

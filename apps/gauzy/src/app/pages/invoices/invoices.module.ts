@@ -71,6 +71,7 @@ import { InvoicePdfComponent } from './invoice-pdf/invoice-pdf.component';
 import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
 import { CurrencyModule } from '../../@shared/currency/currency.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslatableService } from '../../@core/services/translatable.service';
 
 @NgModule({
 	imports: [
@@ -121,7 +122,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		ProductService,
 		PaymentService,
 		TasksStoreService,
-		InvoiceEstimateHistoryService
+		InvoiceEstimateHistoryService,
+		TranslatableService
 	],
 	entryComponents: [
 		InvoicesComponent,
