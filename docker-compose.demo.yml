@@ -1,25 +1,6 @@
 version: '3.7'
 
 services:
-    nginx:
-        image: nginx:latest
-        container_name: production_nginx
-        volumes:
-            - .deploy/nginx/nginx.conf:/etc/nginx/nginx.conf
-            - .deploy/nginx/log/:/etc/nginx/logs
-            - .deploy/nginx/cache/:/etc/nginx/cache
-            - /etc/letsencrypt/:/etc/letsencrypt/
-        ports:
-            - '8080:8080'
-        depends_on:
-            - api
-            - webapp
-        links:
-            - api:${API_HOST:-api}
-            - webapp:${HOST:-webapp}
-        networks:
-            - overlay
-
     db:
         image: postgres:12-alpine
         container_name: db
@@ -141,13 +122,16 @@ services:
             NODE_ENV: ${NODE_ENV:-development}
             API_BASE_URL: ${API_BASE_URL:-http://localhost:3000}
             CLIENT_BASE_URL: ${CLIENT_BASE_URL:-http://localhost:4200}
-            SENTRY_DSN: ${SENTRY_DSN}
-            GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
-            GOOGLE_PLACE_AUTOCOMPLETE: ${GOOGLE_PLACE_AUTOCOMPLETE}
-            DEFAULT_LATITUDE: ${DEFAULT_LATITUDE}
-            DEFAULT_LONGITUDE: ${DEFAULT_LONGITUDE}
-            DEFAULT_CURRENCY: ${DEFAULT_CURRENCY}
-            DEMO: true
+            SENTRY_DSN: ${SENTRY_DSN:-}
+            CHATWOOT_SDK_TOKEN: ${CHATWOOT_SDK_TOKEN:-}
+            CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+            CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+            GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
+            GOOGLE_PLACE_AUTOCOMPLETE: ${GOOGLE_PLACE_AUTOCOMPLETE:-false}
+            DEFAULT_LATITUDE: ${DEFAULT_LATITUDE:-42.6459136}
+            DEFAULT_LONGITUDE: ${DEFAULT_LONGITUDE:-23.3332736}
+            DEFAULT_CURRENCY: ${DEFAULT_CURRENCY:-USD}
+            DEMO: 'true'
             API_HOST: ${API_HOST:-api}
             API_PORT: ${API_PORT:-3000}
 

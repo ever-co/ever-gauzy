@@ -1,4 +1,3 @@
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -14,7 +13,6 @@ import {
 	NbTooltipModule,
 	NbActionsModule
 } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { RecurringExpenseDeleteConfirmationModule } from '../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.module';
 import { RecurringExpenseMutationModule } from '../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.module';
@@ -22,7 +20,7 @@ import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader
 import { OrganizationsMutationModule } from '../../@shared/organizations/organizations-mutation/organizations-mutation.module';
 import { RemoveLodashModule } from '../../@shared/remove-lodash/remove-lodash.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { EditOrganizationSettingsModule } from './edit-organization/edit-organization-settings/edit-organization-settings.module';
 import { EditOrganizationComponent } from './edit-organization/edit-organization.component';
 import { OrganizationsRoutingModule } from './organizations-routing.module';
@@ -37,6 +35,7 @@ import { RecurringExpenseHistoryModule } from '../../@shared/expenses/recurring-
 import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -62,13 +61,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 		RecurringExpenseMutationModule,
 		RecurringExpenseDeleteConfirmationModule,
 		NbTooltipModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslateModule,
 		NbSpinnerModule,
 		NbActionsModule,
 		RecurringExpenseHistoryModule,

@@ -843,7 +843,7 @@
 		"COSMIC": "Космический",
 		"CORPORATE": "Корпоративный",
 		"LANGUAGE": "Язык",
-		"ENGLISH": "Английский",
+		"ENGLISH": "Russian",
 		"BULGARIAN": "Болгарский",
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Русский",
@@ -3205,7 +3205,7 @@
 			}
 		}
 	},
-	"GAUZY_MAINTAINANCE": "Обслуживание Gauzy @",
+	"GAUZY_MAINTENANCE": "Обслуживание Gauzy @",
 	"LEGAL": {
 		"PRIVACY_POLICY": "Политика конфиденциальности",
 		"TERMS_AND_CONDITIONS": "Условия использования"

@@ -3,8 +3,6 @@ import { CommonModule } from '@angular/common';
 import { TaskComponent } from './components/task/task.component';
 import { TasksRoutingModule } from './tasks-routing.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import {
 	NbSpinnerModule,
 	NbCardModule,
@@ -22,7 +20,7 @@ import {
 	NbActionsModule,
 	NbContextMenuModule
 } from '@nebular/theme';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
@@ -41,6 +39,7 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { AddTaskDialogModule } from '../../@shared/tasks/add-task-dialog/add-task-dialog.module';
 import { TasksSprintSettingsViewModule } from '../../@shared/tasks-sprint-settings-view/tasks-sprint-settings-view.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	declarations: [
@@ -78,13 +77,7 @@ import { TasksSprintSettingsViewModule } from '../../@shared/tasks-sprint-settin
 		UserFormsModule,
 		CardGridModule,
 		AddTaskDialogModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslateModule,
 		NbSpinnerModule,
 		NbDatepickerModule,
 		EmployeeMultiSelectModule,

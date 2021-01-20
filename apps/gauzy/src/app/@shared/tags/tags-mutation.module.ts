@@ -1,4 +1,3 @@
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -10,11 +9,11 @@ import {
 	NbCheckboxModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TagsService } from '../../@core/services/tags.service';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { TagsMutationComponent } from './tags-mutation.component';
 import { ColorPickerModule } from 'ngx-color-picker';
+import { TranslateModule } from '../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -29,13 +28,7 @@ import { ColorPickerModule } from 'ngx-color-picker';
 		NbInputModule,
 		NbSelectModule,
 		ColorPickerModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslateModule
 	],
 	declarations: [TagsMutationComponent],
 	entryComponents: [TagsMutationComponent],

@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -9,8 +9,6 @@ import {
 	NbActionsModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { OrganizationPositionsService } from '../../@core/services/organization-positions';
@@ -19,6 +17,7 @@ import { PositionsRoutingModule } from './positions-routing.module';
 import { PositionsComponent } from './positions.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -38,13 +37,7 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 		TagsColorInputModule,
 		NbActionsModule,
 		NbDialogModule.forChild(),
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslateModule
 	],
 	declarations: [PositionsComponent],
 	entryComponents: [],

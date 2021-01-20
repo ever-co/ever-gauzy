@@ -1,12 +1,8 @@
 import { NgModule } from '@angular/core';
 import { NbCardModule, NbIconModule, NbButtonModule } from '@nebular/theme';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
-import {
-	ThemeModule,
-	HttpLoaderFactory
-} from '../../../../@theme/theme.module';
+import { ThemeModule } from '../../../../@theme/theme.module';
 import { DeleteFeedbackComponent } from './delete-feedback.component';
+import { TranslateModule } from '../../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -14,13 +10,7 @@ import { DeleteFeedbackComponent } from './delete-feedback.component';
 		NbCardModule,
 		NbIconModule,
 		NbButtonModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslateModule
 	],
 	entryComponents: [DeleteFeedbackComponent],
 	declarations: [DeleteFeedbackComponent],

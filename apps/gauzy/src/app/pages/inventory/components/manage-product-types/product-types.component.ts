@@ -18,7 +18,7 @@ import { Store } from '../../../../@core/services/store.service';
 import { ComponentEnum } from '../../../../@core/constants/layout.constants';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { ToastrService } from '../../../../@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-product-type',

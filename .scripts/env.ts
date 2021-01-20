@@ -24,11 +24,15 @@ export type Env = Readonly<{
 	GOOGLE_MAPS_API_KEY: string;
 	GOOGLE_PLACE_AUTOCOMPLETE: boolean;
 
+	HUBSTAFF_REDIRECT_URI: string;
+
 	DEFAULT_LATITUDE: number;
 	DEFAULT_LONGITUDE: number;
 	DEFAULT_CURRENCY: string;
 
 	DEMO: boolean;
+
+	CHATWOOT_SDK_TOKEN: string;
 }>;
 
 export const env: Env = cleanEnv(
@@ -50,11 +54,15 @@ export const env: Env = cleanEnv(
 		GOOGLE_MAPS_API_KEY: str({ default: '' }),
 		GOOGLE_PLACE_AUTOCOMPLETE: bool({ default: false }),
 
+		HUBSTAFF_REDIRECT_URI: str({ default: '' }),
+
 		DEFAULT_LATITUDE: num({ default: 42.6459136 }),
 		DEFAULT_LONGITUDE: num({ default: 23.3332736 }),
 		DEFAULT_CURRENCY: str({ default: 'USD' }),
 
-		DEMO: bool({ default: false })
+		DEMO: bool({ default: false }),
+
+		CHATWOOT_SDK_TOKEN: str({ default: '' })
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
 );

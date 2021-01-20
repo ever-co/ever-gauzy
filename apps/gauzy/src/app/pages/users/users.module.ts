@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -25,8 +25,6 @@ import { EditUserProfileComponent } from './edit-user-profile/edit-user-profile.
 import { EditUserMutationComponent } from './edit-user-mutation/edit-user-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
 import { EditProfileFormModule } from '../../@shared/user/edit-profile-form/edit-profile-form.module';
 import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invite-mutation.module';
@@ -44,6 +42,7 @@ import { UserIdService } from '../../@core/services/edit-user-data.service';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 const COMPONENTS = [
 	UsersComponent,
@@ -82,13 +81,7 @@ const COMPONENTS = [
 		ImageUploaderModule,
 		NbBadgeModule,
 		NbRouteTabsetModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslateModule,
 		NbSpinnerModule,
 		EditProfileFormModule,
 		InviteMutationModule,

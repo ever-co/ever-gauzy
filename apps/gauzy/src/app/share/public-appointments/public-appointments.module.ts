@@ -1,13 +1,13 @@
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { PublicAppointmentsComponent } from './public-appointments.component';
 import { NbCardModule, NbSpinnerModule, NbButtonModule } from '@nebular/theme';
 import { PublicAppointmentRoutingModule } from './public-appointment.routing.module';
 import { EventTypeService } from '../../@core/services/event-type.service';
 import { CreateAppointmentModule } from './create-appointment/create-appointment.module';
 import { AppointmentModule } from '../../pages/employees/appointment/appointment.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
+
 @NgModule({
 	imports: [
 		PublicAppointmentRoutingModule,
@@ -17,13 +17,7 @@ import { AppointmentModule } from '../../pages/employees/appointment/appointment
 		NbCardModule,
 		AppointmentModule,
 		CreateAppointmentModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslateModule
 	],
 	declarations: [PublicAppointmentsComponent],
 	entryComponents: [PublicAppointmentsComponent],

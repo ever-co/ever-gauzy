@@ -1,6 +1,4 @@
 import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import {
 	NbIconModule,
@@ -12,11 +10,11 @@ import {
 	NbRadioModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { ApprovalPolicyMutationComponent } from './approval-policy-mutation.component';
 import { Store } from '../../@core/services/store.service';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { TranslateModule } from '../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -31,13 +29,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 		NbSelectModule,
 		NbRadioModule,
 		NgSelectModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslateModule
 	],
 	declarations: [ApprovalPolicyMutationComponent],
 	entryComponents: [],

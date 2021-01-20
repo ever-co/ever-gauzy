@@ -105,11 +105,12 @@ Please refer to our official [Platform Documentation](https://docs.gauzy.co) and
 
 -   Clone repo
 -   Make sure you have Docker Compose [installed locally](https://docs.docker.com/compose/install)
--   Run `docker-compose -f docker-compose.demo.yml up`, if you want to run the platform using our prebuild Docker images _(note: images build automatically from head of `master` branch)_
+-   Run `docker-compose -f docker-compose.demo.yml up`, if you want to run the platform using our prebuild Docker images _(note: it uses latest images pre-build automatically from head of `master` branch using Github CI/CD)_
 -   Run `docker-compose up`, if you want to build everything (code and Docker images) locally. _(note: this is extremely long process, option above is much faster)_
 -   :coffee: time...
--   Open <http://localhost:8080> in your browser
--   Login with email `admin@ever.co` and password: `admin`
+-   Open <http://localhost:4200> in your browser
+-   Login with email `admin@ever.co` and password: `admin` for Super Admin user
+-   Login with email `ruslan@ever.co` and password: `123456` for Employee user
 -   Enjoy
 
 Note: together with Gauzy, Docker Compose will run following:
