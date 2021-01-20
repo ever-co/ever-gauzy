@@ -29,8 +29,10 @@ import { TimeSlot } from './time-slot.entity';
 import { Employee } from '../employee/employee.entity';
 import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { Task } from '../tasks/task.entity';
-// import { environment as env } from '@env-api/environment';
+import { getConfig } from '@gauzy/config';
 import { TenantOrganizationBase } from '../tenant-organization-base';
+
+const config = getConfig();
 
 @Entity('activity')
 export class Activity extends TenantOrganizationBase implements IActivity {
@@ -88,8 +90,7 @@ export class Activity extends TenantOrganizationBase implements IActivity {
 	@IsDateString()
 	@Column({
 		nullable: true,
-		// type: env.database.type === 'sqlite' ? 'text' : 'json'
-		type: 'json'
+		type: config.dbConnectionConfig.type === 'sqlite' ? 'text' : 'json'
 	})
 	metaData?: string | IURLMetaData;
 
