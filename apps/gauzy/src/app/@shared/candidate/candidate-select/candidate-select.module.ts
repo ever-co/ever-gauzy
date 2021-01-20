@@ -1,11 +1,11 @@
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { NbSelectModule } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
+import { ThemeModule } from '../../../@theme/theme.module';
 import { CandidateSelectComponent } from './candidate-select.component';
 import { SharedModule } from '../../shared.module';
+import { TranslateModule } from '../../translate/translate.module';
+
 @NgModule({
 	imports: [
 		ThemeModule,
@@ -13,13 +13,7 @@ import { SharedModule } from '../../shared.module';
 		SharedModule,
 		FormsModule,
 		ReactiveFormsModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslateModule
 	],
 	declarations: [CandidateSelectComponent],
 	entryComponents: [CandidateSelectComponent],

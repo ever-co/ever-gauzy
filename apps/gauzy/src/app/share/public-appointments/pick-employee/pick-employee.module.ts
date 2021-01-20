@@ -1,7 +1,5 @@
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
+import { ThemeModule } from '../../../@theme/theme.module';
 import { PickEmployeeComponent } from './pick-employee.component';
 import { PickEmployeeRoutingModule } from './pick-employee.routing.module';
 import {
@@ -13,6 +11,8 @@ import {
 import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';
 import { BackNavigationModule } from '../../../@shared/back-navigation/back-navigation.module';
 import { EventTypeService } from '../../../@core/services/event-type.service';
+import { TranslateModule } from '../../../@shared/translate/translate.module';
+
 @NgModule({
 	imports: [
 		ThemeModule,
@@ -23,13 +23,7 @@ import { EventTypeService } from '../../../@core/services/event-type.service';
 		EmployeeSelectorsModule,
 		BackNavigationModule,
 		PickEmployeeRoutingModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslateModule
 	],
 	declarations: [PickEmployeeComponent],
 	entryComponents: [PickEmployeeComponent],

@@ -1,4 +1,4 @@
-import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
+import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import {
@@ -12,12 +12,12 @@ import {
 import { EditProfileFormComponent } from './edit-profile-form.component';
 import { UserFormsModule } from '../forms/user-forms.module';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { UsersService } from '../../../@core/services';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
 import { RoleService } from '../../../@core/services/role.service';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
+import { TranslateModule } from '../../translate/translate.module';
+
 @NgModule({
 	imports: [
 		TagsColorInputModule,
@@ -32,13 +32,7 @@ import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-inp
 		ReactiveFormsModule,
 		NbInputModule,
 		NbBadgeModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslateModule
 	],
 	exports: [EditProfileFormComponent],
 	declarations: [EditProfileFormComponent],

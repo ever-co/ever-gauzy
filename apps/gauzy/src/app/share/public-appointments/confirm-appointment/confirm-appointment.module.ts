@@ -1,7 +1,5 @@
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
+import { ThemeModule } from '../../../@theme/theme.module';
 import {
 	NbCardModule,
 	NbSpinnerModule,
@@ -14,6 +12,8 @@ import { ManageAppointmentModule } from '../../../pages/employees/appointment/ma
 import { EmployeesService } from '../../../@core/services';
 import { EmployeeAppointmentService } from '../../../@core/services/employee-appointment.service';
 import { AlertModalModule } from '../../../@shared/alert-modal/alert-modal.module';
+import { TranslateModule } from '../../../@shared/translate/translate.module';
+
 @NgModule({
 	imports: [
 		ThemeModule,
@@ -25,13 +25,7 @@ import { AlertModalModule } from '../../../@shared/alert-modal/alert-modal.modul
 		NbIconModule,
 		ConfirmAppointmentRoutingModule,
 		ManageAppointmentModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslateModule
 	],
 	declarations: [ConfirmAppointmentComponent],
 	entryComponents: [ConfirmAppointmentComponent],

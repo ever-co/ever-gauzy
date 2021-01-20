@@ -1,10 +1,9 @@
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbSelectModule } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { CountryService } from '../../@core/services/country.service';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
+import { TranslateModule } from '../translate/translate.module';
 import { CountryComponent } from './country.component';
 
 @NgModule({
@@ -14,13 +13,7 @@ import { CountryComponent } from './country.component';
 		FormsModule,
 		ReactiveFormsModule,
 		NbSelectModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslateModule
 	],
 	providers: [CountryService],
 	exports: [CountryComponent]

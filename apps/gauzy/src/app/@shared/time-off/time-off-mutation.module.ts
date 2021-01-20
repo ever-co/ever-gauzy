@@ -11,14 +11,12 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
-
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { TimeOffSettingsMutationComponent } from './settings-mutation/time-off-settings-mutation.component';
 import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
 import { TimeOffRequestMutationComponent } from './time-off-request-mutation/time-off-request-mutation.component';
 import { FileUploaderModule } from '../file-uploader-input/file-uploader-input.module';
+import { TranslateModule } from '../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -36,13 +34,7 @@ import { FileUploaderModule } from '../file-uploader-input/file-uploader-input.m
 		NbTooltipModule,
 		EmployeeSelectorsModule,
 		FileUploaderModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslateModule
 	],
 	declarations: [
 		TimeOffSettingsMutationComponent,

@@ -1,4 +1,3 @@
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -19,7 +18,6 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { EmployeeStore } from '../../../../@core/services/employee-store.service';
 import { OrganizationContactService } from '../../../../@core/services/organization-contact.service';
 import { OrganizationDepartmentsService } from '../../../../@core/services/organization-departments.service';
@@ -35,10 +33,7 @@ import { UserFormsModule } from '../../../../@shared/user/forms/user-forms.modul
 import { EmployeeSelectorsModule } from '../../../../@theme/components/header/selectors/employee/employee.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { ColorPickerModule } from 'ngx-color-picker';
-import {
-	HttpLoaderFactory,
-	ThemeModule
-} from '../../../../@theme/theme.module';
+import { ThemeModule } from '../../../../@theme/theme.module';
 import { OrganizationListComponent } from '../organization-list/organization-list.component';
 import { EditOrganizationLocationComponent } from './edit-organization-location/edit-organization-location.component';
 import { EditOrganizationMainComponent } from './edit-organization-main/edit-organization-main.component';
@@ -53,7 +48,9 @@ import { SharedModule } from '../../../../@shared/shared.module';
 import { TimerPickerModule } from '../../../../@shared/timer-picker/timer-picker.module';
 import { CurrencyModule } from '../../../../@shared/currency/currency.module';
 import { LocationFormModule } from '../../../../@shared/forms/location';
-import { LeafletMapModule } from 'apps/gauzy/src/app/@shared/forms/maps/leaflet/leaflet.module';
+import { LeafletMapModule } from '../../../../@shared/forms/maps/leaflet/leaflet.module';
+import { TranslateModule } from '../../../../@shared/translate/translate.module';
+
 @NgModule({
 	imports: [
 		NbBadgeModule,
@@ -72,13 +69,7 @@ import { LeafletMapModule } from 'apps/gauzy/src/app/@shared/forms/maps/leaflet/
 		ColorPickerModule,
 		NbTooltipModule,
 		NbDialogModule.forChild(),
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslateModule,
 		Ng2SmartTableModule,
 		OrganizationsMutationModule,
 		UserFormsModule,

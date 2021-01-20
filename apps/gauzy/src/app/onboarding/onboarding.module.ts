@@ -1,10 +1,9 @@
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { NbLayoutModule, NbSpinnerModule } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { RoleGuard } from '../@core/role/role.guard';
 import { AuthService } from '../@core/services/auth.service';
-import { HttpLoaderFactory, ThemeModule } from '../@theme/theme.module';
+import { TranslateModule } from '../@shared/translate/translate.module';
+import { ThemeModule } from '../@theme/theme.module';
 import { OnboardingRoutingModule } from './onboarding-routing.module';
 import { OnboardingComponent } from './onboarding.component';
 
@@ -13,13 +12,7 @@ import { OnboardingComponent } from './onboarding.component';
 		OnboardingRoutingModule,
 		ThemeModule,
 		NbLayoutModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslateModule,
 		NbSpinnerModule
 	],
 	entryComponents: [],

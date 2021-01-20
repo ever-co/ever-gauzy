@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { ThemeModule, HttpLoaderFactory } from '../../../@theme/theme.module';
+import { ThemeModule } from '../../../@theme/theme.module';
 import {
 	NbCardModule,
 	NbIconModule,
@@ -8,11 +8,10 @@ import {
 	NbSelectModule,
 	NbToggleModule
 } from '@nebular/theme';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { EditCategoryComponent } from './edit-category.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ColorPickerModule, ColorPickerService } from 'ngx-color-picker';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -26,13 +25,7 @@ import { ColorPickerModule, ColorPickerService } from 'ngx-color-picker';
 		FormsModule,
 		ReactiveFormsModule,
 		ColorPickerModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslateModule
 	],
 	entryComponents: [EditCategoryComponent],
 	declarations: [EditCategoryComponent],

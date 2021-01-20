@@ -1,5 +1,3 @@
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import {
 	NbIconModule,
@@ -11,11 +9,11 @@ import {
 	NbRadioModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EquipmentSharingPolicyMutationComponent } from './equipment-sharing-policy-mutation.component';
 import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sharing-policy.service';
+import { TranslateModule } from '../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -30,13 +28,7 @@ import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sh
 		NbSelectModule,
 		NbRadioModule,
 		NgSelectModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslateModule
 	],
 	declarations: [EquipmentSharingPolicyMutationComponent],
 	entryComponents: [],

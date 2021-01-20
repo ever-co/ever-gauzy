@@ -1,26 +1,18 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
-enum DASHBOARD_TYPES {
-	LOADING = 'LOADING',
-	ORGANIZATION_EMPLOYEES = 'ORGANIZATION_EMPLOYEES',
-	EMPLOYEE_STATISTICS = 'EMPLOYEE_STATISTICS',
-	DATA_ENTRY_SHORTCUTS = 'DATA_ENTRY_SHORTCUTS'
-}
-
+@UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './dashboard.component.html',
 	styleUrls: ['./dashboard.component.scss']
 })
-export class DashboardComponent extends TranslationBaseComponent
+export class DashboardComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
-
 	tabs: {
 		title: string;
 		icon: string;
@@ -29,6 +21,7 @@ export class DashboardComponent extends TranslationBaseComponent
 	}[] = [];
 
 	loading = true;
+	selectedEmployee;
 
 	constructor(
 		private store: Store,
@@ -38,12 +31,14 @@ export class DashboardComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
+		this._applyTranslation();
 		this.store.userRolePermissions$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.store.selectedEmployee$
-					.pipe(takeUntil(this._ngDestroy$))
+					.pipe(untilDestroyed(this))
 					.subscribe((emp) => {
+						this.selectedEmployee = emp;
 						this.loadTabs(emp);
 					});
 			});
@@ -97,8 +92,13 @@ export class DashboardComponent extends TranslationBaseComponent
 		this.loading = false;
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
+	_applyTranslation() {
+		this.translateService.onLangChange
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loadTabs(this.selectedEmployee);
+			});
 	}
+
+	ngOnDestroy() {}
 }

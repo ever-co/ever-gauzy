@@ -1,4 +1,3 @@
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -9,12 +8,12 @@ import {
 	NbSelectModule,
 	NbInputModule
 } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
+import { ThemeModule } from '../../../@theme/theme.module';
 import { EmployeeRatesComponent } from './employee-rates.component';
 import { CandidateStore } from '../../../@core/services/candidate-store.service';
 import { EmployeeStore } from '../../../@core/services/employee-store.service';
 import { CurrencyModule } from '../../currency/currency.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -28,13 +27,7 @@ import { CurrencyModule } from '../../currency/currency.module';
 		NbIconModule,
 		ThemeModule,
 		NbActionsModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslateModule,
 		CurrencyModule
 	],
 	exports: [EmployeeRatesComponent],

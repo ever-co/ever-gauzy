@@ -1,5 +1,5 @@
 import { CandidateInterviewFormComponent } from './candidate-interview-form/candidate-interview-form.component';
-import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
+import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import {
@@ -15,8 +15,6 @@ import {
 	NbRadioModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { CandidateInterviewMutationComponent } from './candidate-interview-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TimerPickerModule } from '../../timer-picker/timer-picker.module';
@@ -28,6 +26,7 @@ import { CandidateNotificationFormComponent } from './candidate-notification-for
 import { CandidateEmailComponent } from './candidate-notification-form/candidate-email/candidate-email.component';
 import { CandidateTechnologiesService } from '../../../@core/services/candidate-technologies.service';
 import { CKEditorModule } from 'ng2-ckeditor';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -51,13 +50,7 @@ import { CKEditorModule } from 'ng2-ckeditor';
 		EmployeeMultiSelectModule,
 		CandidateSelectModule,
 		CandidateCalendarInfoModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslateModule
 	],
 	exports: [
 		CandidateInterviewMutationComponent,

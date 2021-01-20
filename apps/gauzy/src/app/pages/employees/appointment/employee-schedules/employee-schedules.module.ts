@@ -1,26 +1,11 @@
-import {
-	HttpLoaderFactory,
-	ThemeModule
-} from '../../../../@theme/theme.module';
+import { ThemeModule } from '../../../../@theme/theme.module';
 import { NgModule } from '@angular/core';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { EmployeeSchedulesComponent } from './employee-schedules.component';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
+import { TranslateModule } from 'apps/gauzy/src/app/@shared/translate/translate.module';
 
 @NgModule({
-	imports: [
-		ThemeModule,
-		NbCardModule,
-		NbButtonModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
-	],
+	imports: [ThemeModule, NbCardModule, NbButtonModule, TranslateModule],
 	exports: [EmployeeSchedulesComponent],
 	declarations: [EmployeeSchedulesComponent],
 	entryComponents: [EmployeeSchedulesComponent],
