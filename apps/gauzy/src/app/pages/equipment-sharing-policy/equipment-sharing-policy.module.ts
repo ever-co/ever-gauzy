@@ -1,7 +1,5 @@
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { NgModule } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -17,13 +15,14 @@ import {
 	NbRadioModule
 } from '@nebular/theme';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { SharedModule } from '../../@shared/shared.module';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { EquipmentSharingPolicyComponent } from './equipment-sharing-policy.component';
 import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sharing-policy.service';
 import { EquipmentSharingPolicyRoutingModule } from './equipment-sharing-policy.routing.module';
 import { EquipmentSharingPolicyMutationModule } from '../../@shared/equipment-sharing-policy/equipment-sharing-policy-mutation.module';
+import { TranslaterModule } from '../../@shared/translater/translater.module';
 
 @NgModule({
 	imports: [
@@ -46,13 +45,7 @@ import { EquipmentSharingPolicyMutationModule } from '../../@shared/equipment-sh
 		EquipmentSharingPolicyMutationModule,
 		BackNavigationModule,
 		EquipmentSharingPolicyRoutingModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslaterModule
 	],
 	declarations: [EquipmentSharingPolicyComponent],
 	entryComponents: [],

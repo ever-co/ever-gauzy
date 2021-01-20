@@ -1,4 +1,3 @@
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import {
@@ -7,8 +6,7 @@ import {
 	NbSpinnerModule,
 	NbIconModule
 } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
+import { ThemeModule } from '../../../@theme/theme.module';
 import { AppointmentRoutingModule } from './appointment-routing.module';
 import { AppointmentComponent } from './appointment.component';
 import { EmployeeAppointmentService } from '../../../@core/services/employee-appointment.service';
@@ -17,6 +15,7 @@ import { AppointmentEmployeesService } from '../../../@core/services/appointment
 import { AvailabilitySlotsService } from '../../../@core/services/availability-slots.service';
 import { TimezoneSelectorModule } from './timezone-selector/timezone-selector.module';
 import { TimeOffService } from '../../../@core/services/time-off.service';
+import { TranslaterModule } from '../../../@shared/translater/translater.module';
 
 @NgModule({
 	imports: [
@@ -28,13 +27,7 @@ import { TimeOffService } from '../../../@core/services/time-off.service';
 		NbButtonModule,
 		NbIconModule,
 		NbSpinnerModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslaterModule,
 		SharedModule
 	],
 	exports: [AppointmentComponent],

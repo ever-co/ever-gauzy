@@ -1,4 +1,4 @@
-import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
+import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import {
@@ -10,8 +10,8 @@ import {
 } from '@nebular/theme';
 import { UserFormsModule } from '../../user/forms/user-forms.module';
 import { EmployeeEndWorkComponent } from './employee-end-work.component';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
+import { TranslaterModule } from '../../translater/translater.module';
+
 @NgModule({
 	imports: [
 		ThemeModule,
@@ -22,13 +22,7 @@ import { HttpClient } from '@angular/common/http';
 		NbIconModule,
 		NbDatepickerModule,
 		NbInputModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslaterModule
 	],
 	exports: [EmployeeEndWorkComponent],
 	declarations: [EmployeeEndWorkComponent],

@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbCardModule,
@@ -16,8 +16,7 @@ import { AuthService } from '../../@core/services/auth.service';
 import { RoleService } from '../../@core/services/role.service';
 import { IncomeService } from '../../@core/services/income.service';
 import { DangerZoneMutationComponent } from './danger-zone-mutation/danger-zone-mutation.component';
-import { HttpClient } from '@angular/common/http';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
+import { TranslaterModule } from '../translater/translater.module';
 
 @NgModule({
 	imports: [
@@ -33,13 +32,7 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 		NbSelectModule,
 		NbToastrModule,
 		NbListModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslaterModule
 	],
 	exports: [DangerZoneMutationComponent],
 	declarations: [DangerZoneMutationComponent],

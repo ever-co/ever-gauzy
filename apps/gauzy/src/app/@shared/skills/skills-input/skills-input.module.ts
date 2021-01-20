@@ -4,9 +4,7 @@ import { SkillsInputComponent } from './skills-input.component';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NbBadgeModule } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpLoaderFactory } from '../../../@theme/components/header/selectors/employee/employee.module';
-import { HttpClient } from '@angular/common/http';
+import { TranslaterModule } from '../../translater/translater.module';
 
 @NgModule({
 	imports: [
@@ -15,13 +13,7 @@ import { HttpClient } from '@angular/common/http';
 		NbBadgeModule,
 		FormsModule,
 		ReactiveFormsModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslaterModule
 	],
 	exports: [SkillsInputComponent],
 	declarations: [SkillsInputComponent]

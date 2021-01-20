@@ -1,4 +1,3 @@
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
@@ -15,14 +14,13 @@ import {
 	NbRouteTabsetModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../@core/services/auth.service';
 import { ExpensesService } from '../../@core/services/expenses.service';
 import { IncomeService } from '../../@core/services/income.service';
 import { ProfitHistoryModule } from '../../@shared/dashboard/profit-history/profit-history.module';
 import { RecordsHistoryModule } from '../../@shared/dashboard/records-history/records-history.module';
 import { SingleStatisticModule } from '../../@shared/single-statistic/single-statistic.module';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { DashboardRoutingModule } from './dashboard-routing.module';
 import { DashboardComponent } from './dashboard.component';
 import { DataEntryShortcutsComponent } from './data-entry-shortcuts/data-entry-shortcuts.component';
@@ -32,6 +30,7 @@ import { InfoBlockModule } from '../../@shared/dashboard/info-block/info-block.m
 import { ProjectManagementComponent } from './project-management/project-management.component';
 import { EmployeeChartsModule } from './human-resources/employee-charts/employee-charts.module';
 import { TimeTrackingModule } from './time-tracking/time-tracking.module';
+import { TranslaterModule } from '../../@shared/translater/translater.module';
 
 @NgModule({
 	imports: [
@@ -51,13 +50,7 @@ import { TimeTrackingModule } from './time-tracking/time-tracking.module';
 		NbSelectModule,
 		NbAlertModule,
 		ProfitHistoryModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslaterModule,
 		EmployeeChartsModule,
 		NbSpinnerModule,
 		SingleStatisticModule,

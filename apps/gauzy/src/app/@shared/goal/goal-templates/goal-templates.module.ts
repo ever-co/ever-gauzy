@@ -8,10 +8,8 @@ import {
 	NbSelectModule
 } from '@nebular/theme';
 import { ReactiveFormsModule } from '@angular/forms';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { GoalCustomUnitModule } from '../goal-custom-unit/goal-custom-unit.module';
-import { HttpLoaderFactory } from '../../../@theme/theme.module';
+import { TranslaterModule } from '../../translater/translater.module';
 
 @NgModule({
 	declarations: [GoalTemplatesComponent],
@@ -23,13 +21,7 @@ import { HttpLoaderFactory } from '../../../@theme/theme.module';
 		NbSelectModule,
 		NbButtonModule,
 		GoalCustomUnitModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslaterModule
 	],
 	exports: [GoalTemplatesComponent],
 	entryComponents: [GoalTemplatesComponent]

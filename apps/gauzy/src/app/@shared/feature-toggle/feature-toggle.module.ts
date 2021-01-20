@@ -12,9 +12,8 @@ import {
 	NbSpinnerModule,
 	NbToggleModule
 } from '@nebular/theme';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
+import { ThemeModule } from '../../@theme/theme.module';
+import { TranslaterModule } from '../translater/translater.module';
 
 @NgModule({
 	imports: [
@@ -27,13 +26,7 @@ import { HttpClient } from '@angular/common/http';
 		NbSpinnerModule,
 		NbToggleModule,
 		ThemeModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslaterModule
 	],
 	declarations: [FeatureToggleComponent],
 	exports: [FeatureToggleComponent],

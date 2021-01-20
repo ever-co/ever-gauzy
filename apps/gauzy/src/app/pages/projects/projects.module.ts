@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -14,8 +14,6 @@ import {
 	NbTabsetModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { ProjectsRoutingModule } from './projects-routing.module';
 import { ProjectsComponent } from './projects.component';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
@@ -39,6 +37,7 @@ import { TasksSprintSettingsViewModule } from '../../@shared/tasks-sprint-settin
 import { CommonModule } from '@angular/common';
 import { CKEditorModule } from 'ng2-ckeditor';
 import { CurrencyModule } from '../../@shared/currency/currency.module';
+import { TranslaterModule } from '../../@shared/translater/translater.module';
 
 @NgModule({
 	imports: [
@@ -59,13 +58,7 @@ import { CurrencyModule } from '../../@shared/currency/currency.module';
 		RemoveLodashModule,
 		EntityWithMembersModule,
 		NbDialogModule.forChild(),
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslaterModule,
 		NgSelectModule,
 		OrganizationsMutationModule,
 		UserFormsModule,

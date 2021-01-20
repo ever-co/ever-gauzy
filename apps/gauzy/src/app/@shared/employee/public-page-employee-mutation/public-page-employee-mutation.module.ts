@@ -1,4 +1,4 @@
-import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
+import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import {
@@ -18,14 +18,12 @@ import {
 } from '@nebular/theme';
 import { PublicPageEmployeeMutationComponent } from './public-page-employee-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
-
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { SkillsInputModule } from '../../skills/skills-input/skills-input.module';
 import { LanguageInputModule } from '../../language/language-input/language-input.module';
 import { CKEditorModule } from 'ng2-ckeditor';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { CurrencyModule } from '../../currency/currency.module';
+import { TranslaterModule } from '../../translater/translater.module';
 
 @NgModule({
 	imports: [
@@ -46,13 +44,7 @@ import { CurrencyModule } from '../../currency/currency.module';
 		NbCheckboxModule,
 		NbTooltipModule,
 		SkillsInputModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslaterModule,
 		NbBadgeModule,
 		NbToggleModule,
 		NbTabsetModule,

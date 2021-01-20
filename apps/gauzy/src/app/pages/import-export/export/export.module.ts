@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
+import { ThemeModule } from '../../../@theme/theme.module';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -11,11 +11,9 @@ import {
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ExportComponent } from './export.component';
 import { ExportRoutingModule } from './export-routing.module';
-
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { ExportAllService } from '../../../@core/services/exportAll.service';
 import { FileUploaderModule } from '../../../@shared/file-uploader-input/file-uploader-input.module';
+import { TranslaterModule } from '../../../@shared/translater/translater.module';
 
 @NgModule({
 	imports: [
@@ -31,13 +29,7 @@ import { FileUploaderModule } from '../../../@shared/file-uploader-input/file-up
 		NbCheckboxModule,
 		ReactiveFormsModule,
 		FormsModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslaterModule
 	],
 	declarations: [ExportComponent],
 	exports: [ExportComponent],

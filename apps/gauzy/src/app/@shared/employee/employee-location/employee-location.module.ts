@@ -1,4 +1,3 @@
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -9,13 +8,14 @@ import {
 	NbSelectModule,
 	NbInputModule
 } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
+import { ThemeModule } from '../../../@theme/theme.module';
 import { EmployeeLocationComponent } from './employee-location.component';
 import { CandidateStore } from '../../../@core/services/candidate-store.service';
 import { EmployeeStore } from '../../../@core/services/employee-store.service';
 import { LeafletMapModule } from '../../forms/maps/leaflet/leaflet.module';
 import { LocationFormModule } from '../../forms/location';
+import { TranslaterModule } from '../../translater/translater.module';
+
 @NgModule({
 	imports: [
 		ThemeModule,
@@ -28,13 +28,7 @@ import { LocationFormModule } from '../../forms/location';
 		NbIconModule,
 		ThemeModule,
 		NbActionsModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslaterModule,
 		LocationFormModule,
 		LeafletMapModule
 	],

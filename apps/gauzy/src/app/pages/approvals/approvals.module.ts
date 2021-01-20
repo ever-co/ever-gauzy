@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -16,7 +14,7 @@ import {
 	NbRadioModule
 } from '@nebular/theme';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { ApprovalsComponent } from './approvals.component';
 import { SharedModule } from '../../@shared/shared.module';
 import { ApprovalsRoutingModule } from './approvals-routing.module';
@@ -26,6 +24,7 @@ import { RequestApprovalActionComponent } from './table-components/request-appro
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { CommonModule } from '@angular/common';
 import { NgxPermissionsModule } from 'ngx-permissions';
+import { TranslaterModule } from '../../@shared/translater/translater.module';
 
 @NgModule({
 	imports: [
@@ -48,13 +47,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 		NbRadioModule,
 		ApprovalsRoutingModule,
 		RequestApprovalMutationModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslaterModule,
 		NgxPermissionsModule.forChild()
 	],
 	declarations: [ApprovalsComponent, RequestApprovalActionComponent],

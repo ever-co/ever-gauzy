@@ -1,4 +1,3 @@
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -10,11 +9,12 @@ import {
 	NbDatepickerModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { InviteService } from '../../../@core/services/invite.service';
 import { RoleService } from '../../../@core/services/role.service';
-import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
+import { ThemeModule } from '../../../@theme/theme.module';
+import { TranslaterModule } from '../../translater/translater.module';
 import { EmailInviteFormComponent } from './email-invite-form/email-invite-form.component';
+
 @NgModule({
 	imports: [
 		ThemeModule,
@@ -27,13 +27,7 @@ import { EmailInviteFormComponent } from './email-invite-form/email-invite-form.
 		NgSelectModule,
 		NbSelectModule,
 		NbAlertModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslaterModule
 	],
 	exports: [EmailInviteFormComponent],
 	declarations: [EmailInviteFormComponent],

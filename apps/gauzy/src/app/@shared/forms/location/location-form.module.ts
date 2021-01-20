@@ -1,8 +1,7 @@
 import { NgModule } from '@angular/core';
 import { LocationFormComponent } from './location-form.component';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { AgmCoreModule } from '@agm/core';
-import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
+import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbCheckboxModule,
@@ -11,9 +10,10 @@ import {
 	NbInputModule,
 	NbSelectModule
 } from '@nebular/theme';
-import { HttpClient } from '@angular/common/http';
 import { CountryModule } from '../../country/country.module';
 import { LeafletMapModule } from '../maps/leaflet/leaflet.module';
+import { TranslaterModule } from '../../translater/translater.module';
+
 @NgModule({
 	imports: [
 		ThemeModule,
@@ -24,13 +24,7 @@ import { LeafletMapModule } from '../maps/leaflet/leaflet.module';
 		NbCheckboxModule,
 		NbFormFieldModule,
 		NbIconModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslaterModule,
 		AgmCoreModule,
 		CountryModule,
 		LeafletMapModule

@@ -14,10 +14,8 @@ import {
 } from '@nebular/theme';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { ProductMutationModule } from '../../@shared/product-mutation/product-mutation.module';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { ProductTypesComponent } from './components/manage-product-types/product-types.component';
 import { ProductTypeMutationComponent } from '../../@shared/product-mutation/product-type-mutation/product-type-mutation.component';
@@ -47,6 +45,7 @@ import { InventoryVariantFormComponent } from './components/edit-inventory-item-
 import { EnabledStatusComponent } from './components/table-components/enabled-row.component';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { CurrencyModule } from '../../@shared/currency/currency.module';
+import { TranslaterModule } from '../../@shared/translater/translater.module';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -91,13 +90,7 @@ const NB_MODULES = [
 		ImageUploaderModule,
 		CardGridModule,
 		NbDialogModule.forChild(),
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslaterModule,
 		...NB_MODULES,
 		CurrencyModule
 	],

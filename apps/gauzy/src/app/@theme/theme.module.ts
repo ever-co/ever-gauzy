@@ -40,9 +40,6 @@ import { ThemeSettingsComponent } from './components/theme-settings/theme-settin
 import { UsersService } from '../@core/services/users.service';
 import { HeaderSelectorsModule } from './components/header/selectors/selectors.module';
 
-import { HttpClient } from '@angular/common/http';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { EmployeeSelectorsModule } from './components/header/selectors/employee/employee.module';
 import { SelectorService } from '../@core/utils/selector.service';
 import { UsersOrganizationsService } from '../@core/services/users-organizations.service';
@@ -52,10 +49,7 @@ import { LanguagesService } from '../@core/services/languages.service';
 import { LayoutSelectorComponent } from './components/layout-selector/layout-selector.component';
 import { ProjectSelectModule } from '../@shared/project-select/project-select.module';
 import { RouterModule } from '@angular/router';
-
-export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
-}
+import { TranslaterModule } from '../@shared/translater/translater.module';
 
 const NB_MODULES = [
 	NbLayoutModule,
@@ -76,15 +70,10 @@ const NB_MODULES = [
 	EmployeeSelectorsModule,
 	ProjectSelectModule,
 	TimeTrackerModule,
-	TranslateModule.forChild({
-		loader: {
-			provide: TranslateLoader,
-			useFactory: HttpLoaderFactory,
-			deps: [HttpClient]
-		}
-	}),
+	TranslaterModule,
 	RouterModule
 ];
+
 const COMPONENTS = [
 	HeaderComponent,
 	FooterComponent,
@@ -97,6 +86,7 @@ const COMPONENTS = [
 	ThemeSettingsComponent,
 	LayoutSelectorComponent
 ];
+
 const PIPES = [...Pipes];
 
 @NgModule({

@@ -1,12 +1,8 @@
 import { NgModule } from '@angular/core';
 import { NbCardModule, NbIconModule, NbButtonModule } from '@nebular/theme';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { DeleteInterviewComponent } from './delete-interview.component';
-import {
-	ThemeModule,
-	HttpLoaderFactory
-} from '../../../../@theme/theme.module';
+import { ThemeModule } from '../../../../@theme/theme.module';
+import { TranslaterModule } from '../../../translater/translater.module';
 
 @NgModule({
 	imports: [
@@ -14,13 +10,7 @@ import {
 		NbCardModule,
 		NbIconModule,
 		NbButtonModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslaterModule
 	],
 	entryComponents: [DeleteInterviewComponent],
 	declarations: [DeleteInterviewComponent],

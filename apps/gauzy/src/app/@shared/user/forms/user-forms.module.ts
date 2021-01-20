@@ -1,5 +1,5 @@
 import { ArchiveConfirmationComponent } from './archive-confirmation/archive-confirmation.component';
-import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
+import { ThemeModule } from '../../../@theme/theme.module';
 import { NgModule } from '@angular/core';
 import { BasicInfoFormComponent } from './basic-info/basic-info-form.component';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -16,14 +16,13 @@ import { AuthService } from '../../../@core/services/auth.service';
 import { RoleService } from '../../../@core/services/role.service';
 import { DeleteConfirmationComponent } from './delete-confirmation/delete-confirmation.component';
 import { IncomeService } from '../../../@core/services/income.service';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { ActionConfirmationComponent } from './action-confirmation/action-confirmation.component';
 import { FileUploaderModule } from '../../file-uploader-input/file-uploader-input.module';
 import { TagsService } from '../../../@core/services/tags.service';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { CandidateActionConfirmationComponent } from './candidate-action-confirmation/candidate-action-confirmation.component';
+import { TranslaterModule } from '../../translater/translater.module';
 
 @NgModule({
 	imports: [
@@ -40,13 +39,7 @@ import { CandidateActionConfirmationComponent } from './candidate-action-confirm
 		NbBadgeModule,
 		NbCheckboxModule,
 		TagsColorInputModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslaterModule
 	],
 	exports: [
 		BasicInfoFormComponent,

@@ -1,4 +1,3 @@
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
@@ -11,8 +10,7 @@ import {
 	NbDialogModule,
 	NbToastrModule
 } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
+import { ThemeModule } from '../../../@theme/theme.module';
 import { EventTypeRoutingModule } from './event-type.routing.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { EventTypeComponent } from './event-type.component';
@@ -24,6 +22,8 @@ import { TagsColorInputModule } from '../../../@shared/tags/tags-color-input/tag
 import { TableComponentsModule } from '../../../@shared/table-components/table-components.module';
 import { CardGridModule } from '../../../@shared/card-grid/card-grid.module';
 import { BackNavigationModule } from '../../../@shared/back-navigation/back-navigation.module';
+import { TranslaterModule } from '../../../@shared/translater/translater.module';
+
 @NgModule({
 	imports: [
 		TableComponentsModule,
@@ -45,13 +45,7 @@ import { BackNavigationModule } from '../../../@shared/back-navigation/back-navi
 		CardGridModule,
 		BackNavigationModule,
 		NbDialogModule.forChild(),
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslaterModule
 	],
 	declarations: [EventTypeComponent],
 	providers: [EventTypeService]

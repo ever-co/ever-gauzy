@@ -1,4 +1,3 @@
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -8,9 +7,10 @@ import {
 	NbIconModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
+import { ThemeModule } from '../../../@theme/theme.module';
+import { TranslaterModule } from '../../translater/translater.module';
 import { EditEmployeeMembershipFormComponent } from './edit-employee-membership-form.component';
+
 @NgModule({
 	imports: [
 		ThemeModule,
@@ -21,13 +21,7 @@ import { EditEmployeeMembershipFormComponent } from './edit-employee-membership-
 		NgSelectModule,
 		NbIconModule,
 		NbActionsModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslaterModule
 	],
 	exports: [EditEmployeeMembershipFormComponent],
 	declarations: [EditEmployeeMembershipFormComponent],

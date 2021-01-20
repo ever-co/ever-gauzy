@@ -1,6 +1,4 @@
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { PaymentsComponent } from './payments.component';
 import {
 	NbCardModule,
@@ -14,20 +12,15 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { PaymentService } from '../../@core/services/payment.service';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-estimate-history.service';
 import { NgxPermissionsModule } from 'ngx-permissions';
+import { TranslaterModule } from '../../@shared/translater/translater.module';
 
 @NgModule({
 	imports: [
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslaterModule,
 		NbCardModule,
 		PaymentsRoutingModule,
 		Ng2SmartTableModule,

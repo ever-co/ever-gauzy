@@ -10,11 +10,9 @@ import {
 	NbSelectModule,
 	NbIconModule
 } from '@nebular/theme';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { GoalLevelSelectModule } from '../goal-level-select/goal-level-select.module';
-import { HttpLoaderFactory } from '../../../@theme/theme.module';
+import { TranslaterModule } from '../../translater/translater.module';
 
 @NgModule({
 	declarations: [GoalTemplateSelectComponent],
@@ -31,13 +29,7 @@ import { HttpLoaderFactory } from '../../../@theme/theme.module';
 		NbIconModule,
 		NbStepperModule,
 		GoalLevelSelectModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslaterModule
 	],
 	exports: [GoalTemplateSelectComponent],
 	entryComponents: [GoalTemplateSelectComponent]

@@ -1,4 +1,3 @@
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -12,8 +11,7 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { SharedModule } from '../../@shared/shared.module';
 import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploader-input.module';
 import { EntityWithMembersModule } from '../../@shared/entity-with-members-card/entity-with-members-card.module';
@@ -25,6 +23,7 @@ import { DepartmentsMutationComponent } from './departments-mutation/departments
 import { OrganizationDepartmentsService } from '../../@core/services/organization-departments.service';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { TranslaterModule } from '../../@shared/translater/translater.module';
 
 const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 
@@ -51,13 +50,7 @@ const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 		TagsColorInputModule,
 		EmployeeMultiSelectModule,
 		NbSpinnerModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslaterModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [],

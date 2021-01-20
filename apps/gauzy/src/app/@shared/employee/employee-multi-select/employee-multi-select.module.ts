@@ -1,11 +1,10 @@
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
+import { ThemeModule } from '../../../@theme/theme.module';
 import { EmployeeSelectComponent } from './employee-multi-select.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SharedModule } from '../../shared.module';
 import { NbSelectModule } from '@nebular/theme';
+import { TranslaterModule } from '../../translater/translater.module';
 
 @NgModule({
 	imports: [
@@ -14,13 +13,7 @@ import { NbSelectModule } from '@nebular/theme';
 		ReactiveFormsModule,
 		FormsModule,
 		SharedModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslaterModule
 	],
 	declarations: [EmployeeSelectComponent],
 	entryComponents: [EmployeeSelectComponent],

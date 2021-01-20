@@ -1,12 +1,11 @@
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { NbIconModule } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
-import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
+import { ThemeModule } from '../../../@theme/theme.module';
 import { DateViewComponent } from '../../table-components/date-view/date-view.component';
 import { IncomeExpenseAmountComponent } from '../../table-components/income-amount/income-amount.component';
 import { TableComponentsModule } from '../../table-components/table-components.module';
+import { TranslaterModule } from '../../translater/translater.module';
 import { RecurringExpenseHistoryComponent } from './recurring-expense-history.component';
 
 @NgModule({
@@ -15,13 +14,7 @@ import { RecurringExpenseHistoryComponent } from './recurring-expense-history.co
 		Ng2SmartTableModule,
 		TableComponentsModule,
 		NbIconModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslaterModule
 	],
 	exports: [RecurringExpenseHistoryComponent],
 	declarations: [RecurringExpenseHistoryComponent],

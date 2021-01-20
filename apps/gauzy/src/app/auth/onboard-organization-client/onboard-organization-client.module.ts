@@ -1,5 +1,4 @@
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -13,15 +12,16 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { InviteService } from '../../@core/services/invite.service';
 import { RoleService } from '../../@core/services/role.service';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { AcceptClientInviteFormComponent } from './accept-client-invite-form/accept-client-invite-form.component';
 import { AcceptClientInvitePage } from './accept-client-invite.component';
 import { OrganizationsMutationComponent } from '../../@shared/organizations/organizations-mutation/organizations-mutation.component';
 import { OrganizationsMutationModule } from '../../@shared/organizations/organizations-mutation/organizations-mutation.module';
 import { OrganizationsService } from '../../@core/services/organizations.service';
+import { TranslaterModule } from '../../@shared/translater/translater.module';
+
 @NgModule({
 	imports: [
 		CommonModule,
@@ -37,14 +37,7 @@ import { OrganizationsService } from '../../@core/services/organizations.service
 		NbSpinnerModule,
 		NbCardModule,
 		NbCheckboxModule,
-		// RouterModule.forChild(routes),
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslaterModule,
 		OrganizationsMutationModule
 	],
 	declarations: [AcceptClientInvitePage, AcceptClientInviteFormComponent],

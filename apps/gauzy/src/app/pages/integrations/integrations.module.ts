@@ -2,8 +2,6 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IntegrationsRoutingModule } from './integrations-routing.module';
 import { IntegrationsComponent } from './components/integrations/integrations.component';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import {
 	NbCardModule,
 	NbSelectModule,
@@ -13,7 +11,7 @@ import {
 } from '@nebular/theme';
 import { IntegrationsListComponent } from './components/integrations-list/integrations-list.component';
 import { SharedModule } from '../../@shared/shared.module';
-import { HttpLoaderFactory } from '../../@theme/theme.module';
+import { TranslaterModule } from '../../@shared/translater/translater.module';
 
 @NgModule({
 	declarations: [IntegrationsComponent, IntegrationsListComponent],
@@ -26,13 +24,7 @@ import { HttpLoaderFactory } from '../../@theme/theme.module';
 		NbInputModule,
 		NbSpinnerModule,
 		NbButtonModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslaterModule
 	]
 })
 export class IntegrationsModule {}

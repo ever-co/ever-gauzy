@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -10,8 +10,6 @@ import {
 	NbBadgeModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { VendorsComponent } from './vendors.component';
 import { OrganizationVendorsService } from '../../@core/services/organization-vendors.service';
 import { VendorsRoutingModule } from './vendors-routing.module';
@@ -20,6 +18,8 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { SharedModule } from '../../@shared/shared.module';
+import { TranslaterModule } from '../../@shared/translater/translater.module';
+
 @NgModule({
 	imports: [
 		ThemeModule,
@@ -39,13 +39,7 @@ import { SharedModule } from '../../@shared/shared.module';
 		SharedModule,
 		Ng2SmartTableModule,
 		NbDialogModule.forChild(),
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslaterModule
 	],
 	declarations: [VendorsComponent],
 	entryComponents: [],

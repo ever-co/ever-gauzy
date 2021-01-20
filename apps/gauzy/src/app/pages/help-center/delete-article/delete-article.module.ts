@@ -1,9 +1,8 @@
 import { NgModule } from '@angular/core';
-import { ThemeModule, HttpLoaderFactory } from '../../../@theme/theme.module';
+import { ThemeModule } from '../../../@theme/theme.module';
 import { NbCardModule, NbIconModule, NbButtonModule } from '@nebular/theme';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { DeleteArticleComponent } from './delete-article.component';
+import { TranslaterModule } from '../../../@shared/translater/translater.module';
 
 @NgModule({
 	imports: [
@@ -11,13 +10,7 @@ import { DeleteArticleComponent } from './delete-article.component';
 		NbCardModule,
 		NbIconModule,
 		NbButtonModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslaterModule
 	],
 	entryComponents: [DeleteArticleComponent],
 	declarations: [DeleteArticleComponent],

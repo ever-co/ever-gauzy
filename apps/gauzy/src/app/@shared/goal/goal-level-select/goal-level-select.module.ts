@@ -1,12 +1,10 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GoalLevelSelectComponent } from './goal-level-select.component';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { NbInputModule, NbSelectModule } from '@nebular/theme';
 import { ReactiveFormsModule } from '@angular/forms';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
-import { HttpLoaderFactory } from '../../../@theme/theme.module';
+import { TranslaterModule } from '../../translater/translater.module';
 
 @NgModule({
 	declarations: [GoalLevelSelectComponent],
@@ -16,13 +14,7 @@ import { HttpLoaderFactory } from '../../../@theme/theme.module';
 		ReactiveFormsModule,
 		NbSelectModule,
 		EmployeeMultiSelectModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslaterModule
 	],
 	exports: [GoalLevelSelectComponent],
 	entryComponents: [GoalLevelSelectComponent]

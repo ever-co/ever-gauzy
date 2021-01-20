@@ -1,6 +1,4 @@
 import { EquipmentService } from '../../@core/services/equipment.service';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import {
 	NbIconModule,
@@ -11,11 +9,13 @@ import {
 	NbCheckboxModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { EquipmentMutationComponent } from './equipment-mutation.component';
 import { Store } from '../../@core/services/store.service';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
 import { CurrencyModule } from '../currency/currency.module';
+import { TranslaterModule } from '../translater/translater.module';
+
 @NgModule({
 	imports: [
 		TagsColorInputModule,
@@ -28,13 +28,7 @@ import { CurrencyModule } from '../currency/currency.module';
 		NbButtonModule,
 		NbInputModule,
 		NbSelectModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslaterModule,
 		CurrencyModule
 	],
 	declarations: [EquipmentMutationComponent],

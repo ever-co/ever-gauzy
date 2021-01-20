@@ -1,4 +1,4 @@
-import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
+import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import {
@@ -12,8 +12,7 @@ import { UserFormsModule } from '../../user/forms/user-forms.module';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { EmployeesService } from '../../../@core/services/employees.service';
 import { RoleService } from '../../../@core/services/role.service';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
+import { TranslaterModule } from '../../translater/translater.module';
 
 @NgModule({
 	imports: [
@@ -24,13 +23,7 @@ import { HttpClient } from '@angular/common/http';
 		NbButtonModule,
 		NbIconModule,
 		NbStepperModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslaterModule
 	],
 	exports: [EmployeeMutationComponent],
 	declarations: [EmployeeMutationComponent],

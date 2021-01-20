@@ -1,4 +1,3 @@
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -13,8 +12,7 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { SharedModule } from '../../@shared/shared.module';
 import { DocumentsComponent } from './documents.component';
 import { DocumentsRoutingModule } from './documents-routing.module';
@@ -23,6 +21,7 @@ import { UploadDocumentComponent } from './upload-document/upload-document.compo
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TranslaterModule } from '../../@shared/translater/translater.module';
 
 const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 
@@ -47,13 +46,7 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 		FileUploaderModule,
 		NgSelectModule,
 		NbSpinnerModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslaterModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [],

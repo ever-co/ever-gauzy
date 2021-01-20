@@ -1,4 +1,4 @@
-import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
+import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import {
@@ -18,9 +18,8 @@ import { OrganizationsMutationComponent } from './organizations-mutation.compone
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
 import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
 import { RemoveLodashModule } from '../../remove-lodash/remove-lodash.module';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { OrganizationsStepFormModule } from '../organizations-step-form/organizations-step-form.module';
+import { TranslaterModule } from '../../translater/translater.module';
 
 @NgModule({
 	imports: [
@@ -41,13 +40,7 @@ import { OrganizationsStepFormModule } from '../organizations-step-form/organiza
 		NbToggleModule,
 		RemoveLodashModule,
 		OrganizationsStepFormModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslaterModule
 	],
 	declarations: [OrganizationsMutationComponent],
 	entryComponents: [OrganizationsMutationComponent],

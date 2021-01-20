@@ -1,7 +1,7 @@
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { NgModule } from '@angular/core';
 import { EquipmentRoutingModule } from './equipment-routing.module';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -13,14 +13,14 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { EquipmentComponent } from './equipment.component';
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { EquipmentMutationModule } from '../../@shared/equipment/equipment-mutation.module';
 import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mutation.component';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';
+import { TranslaterModule } from '../../@shared/translater/translater.module';
+
 @NgModule({
 	imports: [
 		EquipmentRoutingModule,
@@ -36,13 +36,7 @@ import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 		EquipmentMutationModule,
 		TableComponentsModule,
 		CardGridModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslaterModule,
 		NbSpinnerModule
 	],
 	providers: [EquipmentService],

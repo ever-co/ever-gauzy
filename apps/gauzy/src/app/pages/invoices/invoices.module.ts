@@ -21,11 +21,9 @@ import {
 	NbFormFieldModule,
 	NbListModule
 } from '@nebular/theme';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { InvoiceAddComponent } from './invoice-add/invoice-add.component';
@@ -72,6 +70,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { InvoicePdfComponent } from './invoice-pdf/invoice-pdf.component';
 import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
 import { CurrencyModule } from '../../@shared/currency/currency.module';
+import { TranslaterModule } from '../../@shared/translater/translater.module';
 
 @NgModule({
 	imports: [
@@ -107,13 +106,7 @@ import { CurrencyModule } from '../../@shared/currency/currency.module';
 		NbPopoverModule,
 		NbFormFieldModule,
 		NbListModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslaterModule,
 		NgxPermissionsModule.forChild(),
 		CurrencyModule
 	],

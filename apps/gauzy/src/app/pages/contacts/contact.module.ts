@@ -1,4 +1,3 @@
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -14,8 +13,7 @@ import {
 	NbStepperModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { SharedModule } from '../../@shared/shared.module';
 import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploader-input.module';
 import { EntityWithMembersModule } from '../../@shared/entity-with-members-card/entity-with-members-card.module';
@@ -37,6 +35,7 @@ import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader
 import { ContactActionComponent } from './table-components/contact-action/contact-action.component';
 import { LocationFormModule } from '../../@shared/forms/location';
 import { LeafletMapModule } from '../../@shared/forms/maps/leaflet/leaflet.module';
+import { TranslaterModule } from '../../@shared/translater/translater.module';
 
 const COMPONENTS = [
 	ContactComponent,
@@ -74,13 +73,7 @@ const COMPONENTS = [
 		ImageUploaderModule,
 		EmployeeMultiSelectModule,
 		NbSpinnerModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslaterModule,
 		NbToggleModule,
 		LocationFormModule,
 		LeafletMapModule

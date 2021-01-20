@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -13,14 +13,14 @@ import {
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { EmailTemplatesRoutingModule } from './email-templates-routing.module';
 import { EmailTemplatesComponent } from './email-templates.component';
 import { EmailTemplateService } from '../../@core/services/email-template.service';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { CommonModule } from '@angular/common';
+import { TranslaterModule } from '../../@shared/translater/translater.module';
+
 @NgModule({
 	imports: [
 		NbLayoutModule,
@@ -38,13 +38,7 @@ import { CommonModule } from '@angular/common';
 		Ng2SmartTableModule,
 		NbDialogModule.forChild(),
 		TableComponentsModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslaterModule,
 		NbSpinnerModule,
 		AceEditorModule
 	],

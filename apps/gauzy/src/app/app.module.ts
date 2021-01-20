@@ -9,7 +9,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule, APP_INITIALIZER, ErrorHandler } from '@angular/core';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { CoreModule } from './@core/core.module';
-import { HttpLoaderFactory, ThemeModule } from './@theme/theme.module';
+import { ThemeModule } from './@theme/theme.module';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import {
@@ -65,6 +65,7 @@ import { Router } from '@angular/router';
 import { FeatureToggleModule } from 'ngx-feature-toggle';
 import { FeatureService } from './@core/services/feature/feature.service';
 import { IFeatureToggle } from '@gauzy/models';
+import { HttpLoaderFactory } from './@shared/translater/translater.module';
 
 // TODO: we should use some internal function which returns version of Gauzy;
 const version = '0.1.0';
