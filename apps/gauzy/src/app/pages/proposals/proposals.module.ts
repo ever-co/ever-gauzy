@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -25,8 +25,6 @@ import { ProposalDetailsComponent } from './proposal-details/proposal-details.co
 import { ProposalEditComponent } from './proposal-edit/proposal-edit.component';
 import { ProposalsPieChartComponent } from './proposals-pie-chart/proposals-pie-chart.component';
 import { ChartModule } from 'angular2-chartjs';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { JobTitleComponent } from './table-components/job-title/job-title.component';
 import { SharedModule } from '../../@shared/shared.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
@@ -34,6 +32,7 @@ import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { ProposalTemplateSelectModule } from '../../@shared/proposal-template-select/proposal-template-select.module';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -60,13 +59,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 		CKEditorModule,
 		ChartModule,
 		CardGridModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslateModule,
 		NgxPermissionsModule.forChild(),
 		ProposalTemplateSelectModule
 	],

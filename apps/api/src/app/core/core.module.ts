@@ -129,6 +129,7 @@ import { CustomSmtp } from '../custom-smtp/custom-smtp.entity';
 import { Currency } from '../currency';
 import { Feature } from '../feature/feature.entity';
 import { FeatureOrganization } from '../feature/feature_organization.entity';
+import { ProductTranslation } from '../product/product-translation.entity';
 
 const entities = [
 	Activity,
@@ -218,6 +219,7 @@ const entities = [
 	Pipeline,
 	PipelineStage,
 	Product,
+	ProductTranslation,
 	ProductCategory,
 	ProductCategoryTranslation,
 	ProductOption,

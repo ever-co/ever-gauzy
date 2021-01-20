@@ -4,7 +4,9 @@ import { first } from 'rxjs/operators';
 import {
 	IProduct,
 	IProductFindInput,
-	IProductCreateInput
+	IProductTranslatableCreateInput,
+	IProductTranslatable,
+	IProductTranslated
 } from '@gauzy/models';
 
 @Injectable()
@@ -30,6 +32,21 @@ export class ProductService {
 			.toPromise();
 	}
 
+	getAllTranslated(
+		relations?: string[],
+		findInput?: IProductFindInput,
+		languageCode?: string
+	) {
+		const data = JSON.stringify({ relations, findInput });
+		return this.http
+			.get<{ items: IProductTranslated[] }>(
+				`${this.PRODUCTS_URL}/local/${languageCode}`,
+				{ params: { data } }
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
 	getById(id: string, relations?: string[], findInput?: IProductFindInput) {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
@@ -40,16 +57,21 @@ export class ProductService {
 			.toPromise();
 	}
 
-	create(product: IProductCreateInput): Promise<IProduct> {
+	create(
+		product: IProductTranslatableCreateInput
+	): Promise<IProductTranslatable> {
 		return this.http
-			.post<IProduct>(`${this.PRODUCTS_URL}/create`, product)
+			.post<IProductTranslatable>(`${this.PRODUCTS_URL}/create`, product)
 			.pipe(first())
 			.toPromise();
 	}
 
-	update(product: IProduct): Promise<IProduct> {
+	update(product: IProductTranslatable): Promise<IProductTranslatable> {
 		return this.http
-			.put<IProduct>(`${this.PRODUCTS_URL}/${product.id}`, product)
+			.put<IProductTranslatable>(
+				`${this.PRODUCTS_URL}/${product.id}`,
+				product
+			)
 			.pipe(first())
 			.toPromise();
 	}

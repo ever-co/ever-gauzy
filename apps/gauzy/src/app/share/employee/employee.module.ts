@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -9,12 +9,12 @@ import {
 	NbUserModule,
 	NbTabsetModule
 } from '@nebular/theme';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { EmployeeRoutingModule } from './employee-routing.module';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { EmployeeComponent } from './employee.component';
 import { PublicPageEmployeeMutationModule } from '../../@shared/employee/public-page-employee-mutation/public-page-employee-mutation.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
+
 @NgModule({
 	imports: [
 		ThemeModule,
@@ -25,13 +25,7 @@ import { PublicPageEmployeeMutationModule } from '../../@shared/employee/public-
 		NbInputModule,
 		ImageUploaderModule,
 		PublicPageEmployeeMutationModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslateModule,
 		NbListModule,
 		NbUserModule,
 		NbTabsetModule

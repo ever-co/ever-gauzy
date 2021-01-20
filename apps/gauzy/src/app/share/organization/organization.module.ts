@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -14,10 +14,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { OrganizationComponent } from './organization.component';
 import { OrganizationRoutingModule } from './organization-routing.module';
 import { PublicPageMutationModule } from '../../@shared/organizations/public-page-mutation/public-page-mutation.module';
-
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -32,13 +30,7 @@ import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader
 		NbIconModule,
 		NbInputModule,
 		PublicPageMutationModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslateModule,
 		NbListModule,
 		NbUserModule,
 		NbTabsetModule

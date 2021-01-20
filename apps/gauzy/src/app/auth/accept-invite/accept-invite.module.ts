@@ -1,5 +1,4 @@
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -13,12 +12,13 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { InviteService } from '../../@core/services/invite.service';
 import { RoleService } from '../../@core/services/role.service';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { AcceptInviteFormComponent } from './accept-invite-form/accept-invite-form.component';
 import { AcceptInvitePage } from './accept-invite.component';
+
 @NgModule({
 	imports: [
 		CommonModule,
@@ -34,14 +34,7 @@ import { AcceptInvitePage } from './accept-invite.component';
 		NbSpinnerModule,
 		NbCardModule,
 		NbCheckboxModule,
-		// RouterModule.forChild(routes),
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslateModule
 	],
 	declarations: [AcceptInvitePage, AcceptInviteFormComponent],
 	entryComponents: [AcceptInvitePage, AcceptInviteFormComponent],

@@ -1,5 +1,4 @@
 import { CandidatesService } from './../../@core/services/candidates.service';
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -18,7 +17,6 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
 import { OrganizationsService } from '../../@core/services/organizations.service';
@@ -30,7 +28,7 @@ import { RecurringExpenseMutationModule } from '../../@shared/expenses/recurring
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invite-mutation.module';
 import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { InviteGuard } from './../../@core/role/invite.guard';
 import { EditEmployeeContactComponent } from './edit-employee/edit-employee-profile/edit-employee-contact/edit-employee-contact.component';
 import { EditEmployeeEmploymentComponent } from './edit-employee/edit-employee-profile/edit-employee-employment/edit-employee-employment.component';
@@ -59,6 +57,7 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { SkillsService } from '../../@core/services/skills.service';
 import { CKEditorModule } from 'ng2-ckeditor';
 import { EditEmployeeNetworksComponent } from './edit-employee/edit-employee-profile/edit-employee-networks/edit-employee-networks.component';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 const COMPONENTS = [
 	EmployeesComponent,
@@ -104,13 +103,7 @@ const COMPONENTS = [
 		NbBadgeModule,
 		NbRouteTabsetModule,
 		NbCheckboxModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslateModule,
 		NbSpinnerModule,
 		InviteMutationModule,
 		InviteTableModule,

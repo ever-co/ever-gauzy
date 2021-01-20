@@ -1,16 +1,16 @@
 import { NgModule } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { CandidateInterviewInfoComponent } from './candidate-interview-info.component';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import {
 	NbIconModule,
 	NbButtonModule,
 	NbCardModule,
 	NbTabsetModule
 } from '@nebular/theme';
-import { HttpLoaderFactory, ThemeModule } from '../../../@theme/theme.module';
+import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule } from '@angular/forms';
 import { CandidateInterviewMutationModule } from '../candidate-interview-mutation/candidate-interview-mutation.module';
+import { TranslateModule } from '../../translate/translate.module';
+
 @NgModule({
 	imports: [
 		ThemeModule,
@@ -20,13 +20,7 @@ import { CandidateInterviewMutationModule } from '../candidate-interview-mutatio
 		NbIconModule,
 		NbTabsetModule,
 		CandidateInterviewMutationModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslateModule
 	],
 	exports: [CandidateInterviewInfoComponent],
 	declarations: [CandidateInterviewInfoComponent],

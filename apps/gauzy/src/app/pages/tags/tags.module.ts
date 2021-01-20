@@ -15,9 +15,7 @@ import {
 	NbListModule
 } from '@nebular/theme';
 import { TagsComponent } from './tags.component';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
@@ -27,6 +25,7 @@ import { TagsMutationModule } from '../../@shared/tags/tags-mutation.module';
 import { ColorPickerModule } from 'ngx-color-picker';
 import { TagsColorComponent } from './tags-color/tags-color.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -52,13 +51,7 @@ import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 		TagsMutationModule,
 		ColorPickerModule,
 		CardGridModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslateModule,
 		NbSpinnerModule
 	],
 

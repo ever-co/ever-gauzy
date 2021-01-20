@@ -124,7 +124,11 @@
 												class="d-block"
 												size="medium"
 												fullWidth="true"
-												formControlName="language"
+												formControlName="languageCode"
+												[selected]="selectedLanguage"
+												(selectedChange)="
+													onLangChange($event)
+												"
 											>
 												<nb-option
 													*ngFor="

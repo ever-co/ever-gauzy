@@ -9,9 +9,7 @@ import {
 } from '@nebular/theme';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CurrencyModule } from '../../currency/currency.module';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
-import { HttpLoaderFactory } from '../../../@theme/theme.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	declarations: [GoalCustomUnitSelectComponent],
@@ -26,13 +24,7 @@ import { HttpLoaderFactory } from '../../../@theme/theme.module';
 		FormsModule,
 		NbInputModule,
 		CurrencyModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslateModule
 	]
 })
 export class GoalCustomUnitModule {}

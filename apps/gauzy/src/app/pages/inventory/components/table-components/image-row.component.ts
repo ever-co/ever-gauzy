@@ -10,6 +10,13 @@ import { IProductCategoryTranslated } from '@gauzy/models';
 				[src]="rowData.imageUrl"
 				alt="feature img"
 			/>
+
+			<img
+				*ngIf="!rowData.imageUrl"
+				[src]="'https://afostats.imagead.net/uploads/afo/no_img.png'"
+				alt="Product Item Photo"
+				class="variant-table-img"
+			/>
 		</div>
 	`,
 	styles: [
@@ -22,6 +29,10 @@ import { IProductCategoryTranslated } from '@gauzy/models';
 			img {
 				width: 50px;
 				border-radius: 5px;
+			}
+
+			.variant-table-img {
+				border-radius: 50%;
 			}
 		`
 	]
