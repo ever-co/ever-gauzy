@@ -10,7 +10,8 @@ import {
 	NbCheckboxModule,
 	NbSelectModule,
 	NbTabsetModule,
-	NbInputModule
+	NbInputModule,
+	NbBadgeModule
 } from '@nebular/theme';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
@@ -47,6 +48,7 @@ import { InventoryVariantFormComponent } from './components/edit-inventory-item-
 import { EnabledStatusComponent } from './components/table-components/enabled-row.component';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { CurrencyModule } from '../../@shared/currency/currency.module';
+import { ItemImgTagsComponent } from './components/table-components/item-img-tags-row.component';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -67,6 +69,7 @@ const NB_MODULES = [
 		ProductCategoriesComponent,
 		ImageRowComponent,
 		IconRowComponent,
+		ItemImgTagsComponent,
 		ProductFormComponent,
 		VariantFormComponent,
 		InventoryComponent,
@@ -90,6 +93,7 @@ const NB_MODULES = [
 		SharedModule,
 		ImageUploaderModule,
 		CardGridModule,
+		NbBadgeModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({
 			loader: {

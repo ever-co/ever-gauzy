@@ -72,6 +72,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { InvoicePdfComponent } from './invoice-pdf/invoice-pdf.component';
 import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
 import { CurrencyModule } from '../../@shared/currency/currency.module';
+import { TranslatableService } from '../../@core/services/translatable.service';
 
 @NgModule({
 	imports: [
@@ -128,7 +129,8 @@ import { CurrencyModule } from '../../@shared/currency/currency.module';
 		ProductService,
 		PaymentService,
 		TasksStoreService,
-		InvoiceEstimateHistoryService
+		InvoiceEstimateHistoryService,
+		TranslatableService
 	],
 	entryComponents: [
 		InvoicesComponent,

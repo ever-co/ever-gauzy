@@ -3,8 +3,9 @@ import { Product } from './product.entity';
 import { ProductType } from '../product-type/product-type.entity';
 import { ProductCategory } from '../product-category/product-category.entity';
 import * as faker from 'faker';
-import { IOrganization } from '@gauzy/models';
+import { IOrganization, LanguagesEnum } from '@gauzy/models';
 import { Tenant } from '../tenant/tenant.entity';
+import { ProductTranslation } from './product-translation.entity';
 
 export const createDefaultProducts = async (
 	connection: Connection,
@@ -15,9 +16,19 @@ export const createDefaultProducts = async (
 	const productCategories = await connection.manager.find(ProductCategory);
 	const products = [];
 
+	let translation;
+
 	for (let i = 0; i <= 30; i++) {
 		const product = new Product();
-		product.name = faker.commerce.productName();
+
+		translation = new ProductTranslation();
+		translation.organization = organization;
+		translation.tenant = tenant;
+		translation.languageCode = LanguagesEnum.ENGLISH;
+
+		translation.name = faker.commerce.productName();
+		translation.description = faker.lorem.words();
+
 		product.code = faker.lorem.word();
 		product.type =
 			productTypes[Math.floor(Math.random() * productTypes.length)];
@@ -25,7 +36,7 @@ export const createDefaultProducts = async (
 			productCategories[
 				Math.floor(Math.random() * productCategories.length)
 			];
-		product.description = faker.lorem.words();
+		product.translations = [translation];
 		product.organization = organization;
 		product.tenant = tenant;
 
@@ -69,7 +80,16 @@ export const createRandomProduct = async (
 				where: [{ organization: tenantOrg }]
 			});
 			const product = new Product();
-			product.name = faker.commerce.productName();
+
+			let translation = new ProductTranslation();
+			translation.organization = tenantOrg;
+			translation.tenant = tenant;
+			translation.languageCode = LanguagesEnum.ENGLISH;
+
+			translation.name = faker.commerce.productName();
+			translation.description = faker.lorem.words();
+
+			product.translations = [translation];
 			product.code = faker.lorem.word();
 			product.type =
 				productTypes[Math.floor(Math.random() * productTypes.length)];
@@ -77,7 +97,6 @@ export const createRandomProduct = async (
 				productCategories[
 					Math.floor(Math.random() * productCategories.length)
 				];
-			product.description = faker.lorem.words();
 			product.tenant = tenant;
 			product.organization = tenantOrg;
 

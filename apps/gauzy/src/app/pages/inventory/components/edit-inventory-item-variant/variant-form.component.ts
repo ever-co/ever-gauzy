@@ -235,8 +235,7 @@ export class InventoryVariantFormComponent
 		}
 	}
 
-	//tstodo
-	handleImageUploadError(event: any) {
-		alert('error upload image');
+	handleImageUploadError(error: any) {
+		this.toastrService.danger(error);
 	}
 }

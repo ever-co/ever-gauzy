@@ -48,9 +48,9 @@ export class ProductVariantCreateHandler
 
 			newProductVariant.settings = await this.productVariantSettingsService.createDefaultVariantSettings();
 			newProductVariant.price = await this.productVariantPriceService.createDefaultProductVariantPrice();
-			newProductVariant.product = await this.productService.findOne({
-				id: variantCreateInput.product.id
-			});
+			newProductVariant.product = await this.productService.findOne(
+				variantCreateInput.product.id
+			);
 
 			arrVariants.push(
 				await this.productVariantService.createVariant(
