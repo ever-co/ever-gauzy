@@ -3,7 +3,7 @@ import { IEmployee } from './employee.model';
 import { IExpense } from './expense.model';
 import { IInvoice } from './invoice.model';
 import { IOrganizationProject } from './organization-projects.model';
-import { IProduct } from './product.model';
+import { IProductTranslatable } from './product.model';
 import { ITask } from './task-entity.model';
 
 export interface IInvoiceItem extends IBasePerTenantAndOrganizationEntityModel {
@@ -20,7 +20,7 @@ export interface IInvoiceItem extends IBasePerTenantAndOrganizationEntityModel {
 	expenseId?: string;
 	applyTax?: boolean;
 	applyDiscount?: boolean;
-	product?: IProduct;
+	product?: IProductTranslatable;
 	project?: IOrganizationProject;
 	employee?: IEmployee;
 	task?: ITask;

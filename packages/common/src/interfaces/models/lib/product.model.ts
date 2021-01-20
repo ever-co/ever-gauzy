@@ -18,6 +18,33 @@ export interface IProduct extends IBasePerTenantAndOrganizationEntityModel {
 	language?: string;
 }
 
+export interface IProductTranslatable
+	extends ITranslatable<IProductTranslation> {
+	enabled: boolean;
+	code: string;
+	imageUrl: string;
+	variants?: IProductVariant[];
+	options?: IProductOption[];
+	productTypeId: string;
+	productCategoryId: string;
+	type?: IProductTypeTranslatable;
+	category?: IProductCategoryTranslatable;
+	tags?: ITag[];
+}
+
+export interface IProductTranslated {
+	imageUrl: string;
+	productType: string;
+	productCategory: string;
+	name: string;
+	description: string;
+}
+
+export interface IProductTranslation
+	extends ITranslation<IProductTranslatable> {
+	name: string;
+	description: string;
+}
 export interface IProductCreateInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
@@ -33,6 +60,18 @@ export interface IProductCreateInput
 	language?: string;
 }
 
+export interface IProductTranslatableCreateInput
+	extends ITranslatable<IProductTranslation> {
+	enabled: boolean;
+	code: string;
+	imageUrl: string;
+	type?: IProductTypeTranslatable;
+	category?: IProductCategoryTranslatable;
+	tags?: ITag[];
+	optionCreateInputs?: IProductOption[];
+	optionDeleteInputs?: IProductOption[];
+}
+
 export interface IProductFindInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
@@ -42,7 +81,7 @@ export interface IProductTypeTranslatable
 	extends ITranslatable<IProductTypeTranslation> {
 	icon: string;
 	name?: string;
-	products?: IProduct[];
+	products?: IProductTranslatable[];
 }
 
 export interface IProductTypeTranslation
@@ -62,7 +101,7 @@ export interface IProductCategoryTranslatable
 	extends ITranslatable<IProductCategoryTranslation> {
 	imageUrl: string;
 	name?: string;
-	products?: IProduct[];
+	products?: IProductTranslatable[];
 }
 
 export interface IProductCategoryTranslation
@@ -88,13 +127,14 @@ export interface IProductVariant
 	quantity: number;
 	billingInvoicingPolicy: string;
 	internalReference: string;
+	imageUrl: string;
 	options: IProductOption[];
 	settings: IProductVariantSetting;
-	product?: IProduct;
+	product?: IProductTranslatable;
 }
 
 export interface IVariantCreateInput {
-	product: IProduct;
+	product: IProductTranslatable;
 	optionCombinations: IVariantOptionCombination[];
 }
 
@@ -128,7 +168,7 @@ export interface IProductOption
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	code: string;
-	product?: IProduct;
+	product?: IProductTranslatable;
 }
 
 export enum BillingInvoicingPolicyEnum {

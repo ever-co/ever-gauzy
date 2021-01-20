@@ -116,6 +116,7 @@ import { TimeSlot } from './timesheet/time-slot.entity';
 import { TimeSlotMinute } from './timesheet/time-slot-minute.entity';
 import { User } from './user/user.entity';
 import { UserOrganization } from './user-organization/user-organization.entity';
+import { ProductTranslation } from './product/product-translation.entity';
 
 export const coreEntities = [
 	Activity,
@@ -205,6 +206,7 @@ export const coreEntities = [
 	Pipeline,
 	PipelineStage,
 	Product,
+	ProductTranslation,
 	ProductCategory,
 	ProductCategoryTranslation,
 	ProductOption,
