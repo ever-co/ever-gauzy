@@ -42,7 +42,7 @@ import { UserIdService } from '../../@core/services/edit-user-data.service';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 const COMPONENTS = [
 	UsersComponent,
@@ -81,7 +81,7 @@ const COMPONENTS = [
 		ImageUploaderModule,
 		NbBadgeModule,
 		NbRouteTabsetModule,
-		TranslaterModule,
+		TranslateModule,
 		NbSpinnerModule,
 		EditProfileFormModule,
 		InviteMutationModule,

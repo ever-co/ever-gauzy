@@ -9,7 +9,7 @@ import {
 import { Store } from '../../../@core/services/store.service';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { GauzyEditableGridComponent } from './gauzy-editable-grid.component';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 const NbModules = [
 	NbButtonModule,
@@ -20,7 +20,7 @@ const NbModules = [
 ];
 
 @NgModule({
-	imports: [ThemeModule, ...NbModules, TranslaterModule],
+	imports: [ThemeModule, ...NbModules, TranslateModule],
 	declarations: [GauzyEditableGridComponent],
 	exports: [GauzyEditableGridComponent],
 	entryComponents: [],

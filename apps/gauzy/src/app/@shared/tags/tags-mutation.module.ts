@@ -13,7 +13,7 @@ import { TagsService } from '../../@core/services/tags.service';
 import { ThemeModule } from '../../@theme/theme.module';
 import { TagsMutationComponent } from './tags-mutation.component';
 import { ColorPickerModule } from 'ngx-color-picker';
-import { TranslaterModule } from '../translater/translater.module';
+import { TranslateModule } from '../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -28,7 +28,7 @@ import { TranslaterModule } from '../translater/translater.module';
 		NbInputModule,
 		NbSelectModule,
 		ColorPickerModule,
-		TranslaterModule
+		TranslateModule
 	],
 	declarations: [TagsMutationComponent],
 	entryComponents: [TagsMutationComponent],

@@ -9,7 +9,7 @@ import {
 import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule } from '@angular/forms';
 import { CandidateInterviewMutationModule } from '../candidate-interview-mutation/candidate-interview-mutation.module';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -20,7 +20,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		NbIconModule,
 		NbTabsetModule,
 		CandidateInterviewMutationModule,
-		TranslaterModule
+		TranslateModule
 	],
 	exports: [CandidateInterviewInfoComponent],
 	declarations: [CandidateInterviewInfoComponent],

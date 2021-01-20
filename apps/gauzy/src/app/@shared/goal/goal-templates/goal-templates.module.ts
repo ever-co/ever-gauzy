@@ -9,7 +9,7 @@ import {
 } from '@nebular/theme';
 import { ReactiveFormsModule } from '@angular/forms';
 import { GoalCustomUnitModule } from '../goal-custom-unit/goal-custom-unit.module';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	declarations: [GoalTemplatesComponent],
@@ -21,7 +21,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		NbSelectModule,
 		NbButtonModule,
 		GoalCustomUnitModule,
-		TranslaterModule
+		TranslateModule
 	],
 	exports: [GoalTemplatesComponent],
 	entryComponents: [GoalTemplatesComponent]

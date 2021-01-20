@@ -6,7 +6,7 @@ import { EventTypeService } from '../../../@core/services/event-type.service';
 import { CreateAppointmentRoutingModule } from './create-appointment.routing.module';
 import { AppointmentModule } from '../../../pages/employees/appointment/appointment.module';
 import { AvailabilitySlotsService } from '../../../@core/services/availability-slots.service';
-import { TranslaterModule } from '../../../@shared/translater/translater.module';
+import { TranslateModule } from '../../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -16,7 +16,7 @@ import { TranslaterModule } from '../../../@shared/translater/translater.module'
 		NbCardModule,
 		CreateAppointmentRoutingModule,
 		AppointmentModule,
-		TranslaterModule
+		TranslateModule
 	],
 	declarations: [CreateAppointmentComponent],
 	entryComponents: [CreateAppointmentComponent],

@@ -22,7 +22,7 @@ import { TagsService } from '../../../@core/services/tags.service';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { CandidateActionConfirmationComponent } from './candidate-action-confirmation/candidate-action-confirmation.component';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -39,7 +39,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		NbBadgeModule,
 		NbCheckboxModule,
 		TagsColorInputModule,
-		TranslaterModule
+		TranslateModule
 	],
 	exports: [
 		BasicInfoFormComponent,

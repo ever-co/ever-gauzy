@@ -8,7 +8,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ThemeModule } from '../../../@theme/theme.module';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 import { EditEmployeeMembershipFormComponent } from './edit-employee-membership-form.component';
 
 @NgModule({
@@ -21,7 +21,7 @@ import { EditEmployeeMembershipFormComponent } from './edit-employee-membership-
 		NgSelectModule,
 		NbIconModule,
 		NbActionsModule,
-		TranslaterModule
+		TranslateModule
 	],
 	exports: [EditEmployeeMembershipFormComponent],
 	declarations: [EditEmployeeMembershipFormComponent],

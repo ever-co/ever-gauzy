@@ -12,7 +12,7 @@ import {
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { GoalLevelSelectModule } from '../goal-level-select/goal-level-select.module';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	declarations: [GoalTemplateSelectComponent],
@@ -29,7 +29,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		NbIconModule,
 		NbStepperModule,
 		GoalLevelSelectModule,
-		TranslaterModule
+		TranslateModule
 	],
 	exports: [GoalTemplateSelectComponent],
 	entryComponents: [GoalTemplateSelectComponent]

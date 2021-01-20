@@ -25,7 +25,7 @@ import { TagsMutationModule } from '../../@shared/tags/tags-mutation.module';
 import { ColorPickerModule } from 'ngx-color-picker';
 import { TagsColorComponent } from './tags-color/tags-color.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -51,7 +51,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		TagsMutationModule,
 		ColorPickerModule,
 		CardGridModule,
-		TranslaterModule,
+		TranslateModule,
 		NbSpinnerModule
 	],
 

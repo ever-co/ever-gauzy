@@ -13,7 +13,7 @@ import {
 import { AddArticleComponent } from './add-article.component';
 import { CKEditorModule } from 'ng2-ckeditor';
 import { HelpCenterArticleService } from '../../../@core/services/help-center-article.service';
-import { TranslaterModule } from '../../../@shared/translater/translater.module';
+import { TranslateModule } from '../../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -28,7 +28,7 @@ import { TranslaterModule } from '../../../@shared/translater/translater.module'
 		FormsModule,
 		ReactiveFormsModule,
 		EmployeeMultiSelectModule,
-		TranslaterModule
+		TranslateModule
 	],
 	providers: [HelpCenterArticleService],
 	entryComponents: [AddArticleComponent],

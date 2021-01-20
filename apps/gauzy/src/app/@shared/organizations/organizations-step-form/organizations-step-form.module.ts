@@ -24,7 +24,7 @@ import { CurrencyModule } from '../../currency/currency.module';
 import { CountryModule } from '../../country/country.module';
 import { LocationFormModule } from '../../forms/location';
 import { LeafletMapModule } from '../../forms/maps/leaflet/leaflet.module';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -46,7 +46,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		NbToggleModule,
 		RemoveLodashModule,
 		NbTooltipModule,
-		TranslaterModule,
+		TranslateModule,
 		CurrencyModule,
 		CountryModule,
 		LocationFormModule,

@@ -4,7 +4,7 @@ import { ThemeModule } from '../../../@theme/theme.module';
 import { FeatureRoutingModule } from './feature-routing.module';
 import { FeatureComponent } from './feature.component';
 import { FeatureToggleModule } from '../../../@shared/feature-toggle/feature-toggle.module';
-import { TranslaterModule } from '../../../@shared/translater/translater.module';
+import { TranslateModule } from '../../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -12,7 +12,7 @@ import { TranslaterModule } from '../../../@shared/translater/translater.module'
 		ThemeModule,
 		NbCardModule,
 		NbRouteTabsetModule,
-		TranslaterModule,
+		TranslateModule,
 		FeatureToggleModule
 	],
 	declarations: [FeatureComponent],

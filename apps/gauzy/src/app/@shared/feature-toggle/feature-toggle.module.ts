@@ -13,7 +13,7 @@ import {
 	NbToggleModule
 } from '@nebular/theme';
 import { ThemeModule } from '../../@theme/theme.module';
-import { TranslaterModule } from '../translater/translater.module';
+import { TranslateModule } from '../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -26,7 +26,7 @@ import { TranslaterModule } from '../translater/translater.module';
 		NbSpinnerModule,
 		NbToggleModule,
 		ThemeModule,
-		TranslaterModule
+		TranslateModule
 	],
 	declarations: [FeatureToggleComponent],
 	exports: [FeatureToggleComponent],

@@ -15,7 +15,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { ExportAllService } from '../../../@core/services/exportAll.service';
 import { FileUploaderModule } from '../../../@shared/file-uploader-input/file-uploader-input.module';
 import { FileUploadModule } from 'ng2-file-upload';
-import { TranslaterModule } from '../../../@shared/translater/translater.module';
+import { TranslateModule } from '../../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -31,7 +31,7 @@ import { TranslaterModule } from '../../../@shared/translater/translater.module'
 		FileUploadModule,
 		HttpClientModule,
 		NbToastrModule.forRoot(),
-		TranslaterModule
+		TranslateModule
 	],
 	declarations: [ImportComponent],
 	exports: [ImportComponent],

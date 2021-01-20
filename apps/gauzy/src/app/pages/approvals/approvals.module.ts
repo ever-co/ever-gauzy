@@ -24,7 +24,7 @@ import { RequestApprovalActionComponent } from './table-components/request-appro
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { CommonModule } from '@angular/common';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -47,7 +47,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		NbRadioModule,
 		ApprovalsRoutingModule,
 		RequestApprovalMutationModule,
-		TranslaterModule,
+		TranslateModule,
 		NgxPermissionsModule.forChild()
 	],
 	declarations: [ApprovalsComponent, RequestApprovalActionComponent],

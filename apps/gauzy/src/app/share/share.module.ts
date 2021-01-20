@@ -6,7 +6,7 @@ import { ShareRoutingModule } from './share-routing.module';
 import { MiscellaneousModule } from '../pages/miscellaneous/miscellaneous.module';
 import { AuthService } from '../@core/services/auth.service';
 import { RoleGuard } from '../@core/role/role.guard';
-import { TranslaterModule } from '../@shared/translater/translater.module';
+import { TranslateModule } from '../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -15,7 +15,7 @@ import { TranslaterModule } from '../@shared/translater/translater.module';
 		NbMenuModule,
 		MiscellaneousModule,
 		NbToastrModule.forRoot(),
-		TranslaterModule,
+		TranslateModule,
 		NbSpinnerModule
 	],
 	entryComponents: [],

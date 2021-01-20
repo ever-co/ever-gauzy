@@ -25,7 +25,7 @@ import { ClientNamesComponent } from './client-names/client-names.component';
 import { DepartmentNamesComponent } from './department-names/department-names.component';
 import { SharedModule } from '../../shared.module';
 import { CardGridModule } from '../../card-grid/card-grid.module';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 const COMPONENTS = [
 	InvitesComponent,
@@ -53,7 +53,7 @@ const COMPONENTS = [
 		NbBadgeModule,
 		NbRouteTabsetModule,
 		NbCheckboxModule,
-		TranslaterModule,
+		TranslateModule,
 		NbSpinnerModule,
 		InviteMutationModule,
 		UserFormsModule,

@@ -23,7 +23,7 @@ import { ApprovalPolicyService } from '../../@core/services/approval-policy.serv
 import { ApprovalPolicyMutationModule } from '../../@shared/approval-policy/approval-policy-mutation.module';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -46,7 +46,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		ApprovalPolicyMutationModule,
 		ApprovalPolicyRoutingModule,
 		BackNavigationModule,
-		TranslaterModule,
+		TranslateModule,
 		NgxPermissionsModule.forChild()
 	],
 	declarations: [ApprovalPolicyComponent],

@@ -20,7 +20,7 @@ import { AcceptClientInvitePage } from './accept-client-invite.component';
 import { OrganizationsMutationComponent } from '../../@shared/organizations/organizations-mutation/organizations-mutation.component';
 import { OrganizationsMutationModule } from '../../@shared/organizations/organizations-mutation/organizations-mutation.module';
 import { OrganizationsService } from '../../@core/services/organizations.service';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -37,7 +37,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		NbSpinnerModule,
 		NbCardModule,
 		NbCheckboxModule,
-		TranslaterModule,
+		TranslateModule,
 		OrganizationsMutationModule
 	],
 	declarations: [AcceptClientInvitePage, AcceptClientInviteFormComponent],

@@ -7,7 +7,7 @@ import { MiscellaneousModule } from './miscellaneous/miscellaneous.module';
 import { AuthService } from '../@core/services/auth.service';
 import { RoleGuard } from '../@core/role/role.guard';
 import { FeatureToggleModule as NgxFeatureToggleModule } from 'ngx-feature-toggle';
-import { TranslaterModule } from '../@shared/translater/translater.module';
+import { TranslateModule } from '../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -16,7 +16,7 @@ import { TranslaterModule } from '../@shared/translater/translater.module';
 		NbMenuModule,
 		MiscellaneousModule,
 		NbToastrModule.forRoot(),
-		TranslaterModule,
+		TranslateModule,
 		NbSpinnerModule,
 		NgxFeatureToggleModule
 	],

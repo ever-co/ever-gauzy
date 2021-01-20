@@ -14,7 +14,7 @@ import {
 import { OrganizationSelectorComponent } from './organization/organization.component';
 import { OrganizationsService } from 'apps/gauzy/src/app/@core/services/organizations.service';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
-import { TranslaterModule } from 'apps/gauzy/src/app/@shared/translater/translater.module';
+import { TranslateModule } from 'apps/gauzy/src/app/@shared/translate/translate.module';
 
 const COMPONENTS = [OrganizationSelectorComponent, DateSelectorComponent];
 
@@ -29,7 +29,7 @@ const COMPONENTS = [OrganizationSelectorComponent, DateSelectorComponent];
 		NbDatepickerModule,
 		NbInputModule,
 		NbButtonModule,
-		TranslaterModule
+		TranslateModule
 	],
 	exports: [...COMPONENTS],
 	declarations: [...COMPONENTS],

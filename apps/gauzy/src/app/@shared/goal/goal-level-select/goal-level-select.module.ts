@@ -4,7 +4,7 @@ import { GoalLevelSelectComponent } from './goal-level-select.component';
 import { NbInputModule, NbSelectModule } from '@nebular/theme';
 import { ReactiveFormsModule } from '@angular/forms';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	declarations: [GoalLevelSelectComponent],
@@ -14,7 +14,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		ReactiveFormsModule,
 		NbSelectModule,
 		EmployeeMultiSelectModule,
-		TranslaterModule
+		TranslateModule
 	],
 	exports: [GoalLevelSelectComponent],
 	entryComponents: [GoalLevelSelectComponent]

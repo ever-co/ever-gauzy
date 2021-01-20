@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BackNavigationComponent } from './back-navigation.component';
 import { NbIconModule, NbButtonModule } from '@nebular/theme';
-import { TranslaterModule } from '../translater/translater.module';
+import { TranslateModule } from '../translate/translate.module';
 
 @NgModule({
 	declarations: [BackNavigationComponent],
@@ -12,7 +12,7 @@ import { TranslaterModule } from '../translater/translater.module';
 		CommonModule,
 		NbIconModule,
 		NbButtonModule,
-		TranslaterModule
+		TranslateModule
 	]
 })
 export class BackNavigationModule {}

@@ -13,7 +13,7 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EquipmentSharingPolicyMutationComponent } from './equipment-sharing-policy-mutation.component';
 import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sharing-policy.service';
-import { TranslaterModule } from '../translater/translater.module';
+import { TranslateModule } from '../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -28,7 +28,7 @@ import { TranslaterModule } from '../translater/translater.module';
 		NbSelectModule,
 		NbRadioModule,
 		NgSelectModule,
-		TranslaterModule
+		TranslateModule
 	],
 	declarations: [EquipmentSharingPolicyMutationComponent],
 	entryComponents: [],

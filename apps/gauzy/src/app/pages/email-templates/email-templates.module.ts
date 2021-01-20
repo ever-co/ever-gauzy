@@ -19,7 +19,7 @@ import { EmailTemplatesComponent } from './email-templates.component';
 import { EmailTemplateService } from '../../@core/services/email-template.service';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { CommonModule } from '@angular/common';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -38,7 +38,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		Ng2SmartTableModule,
 		NbDialogModule.forChild(),
 		TableComponentsModule,
-		TranslaterModule,
+		TranslateModule,
 		NbSpinnerModule,
 		AceEditorModule
 	],

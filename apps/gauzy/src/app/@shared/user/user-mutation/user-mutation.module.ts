@@ -5,7 +5,7 @@ import { NbCardModule, NbButtonModule, NbIconModule } from '@nebular/theme';
 import { UserMutationComponent } from './user-mutation.component';
 import { UserFormsModule } from '../forms/user-forms.module';
 import { UsersService } from '../../../@core/services';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -15,7 +15,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		UserFormsModule,
 		NbButtonModule,
 		NbIconModule,
-		TranslaterModule
+		TranslateModule
 	],
 	exports: [UserMutationComponent],
 	declarations: [UserMutationComponent],

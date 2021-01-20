@@ -4,7 +4,7 @@ import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { TimezoneSelectorComponent } from './timezone-selector.component';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { TranslaterModule } from 'apps/gauzy/src/app/@shared/translater/translater.module';
+import { TranslateModule } from 'apps/gauzy/src/app/@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -14,7 +14,7 @@ import { TranslaterModule } from 'apps/gauzy/src/app/@shared/translater/translat
 		FormsModule,
 		NbButtonModule,
 		NgSelectModule,
-		TranslaterModule
+		TranslateModule
 	],
 	exports: [TimezoneSelectorComponent],
 	declarations: [TimezoneSelectorComponent],

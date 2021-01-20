@@ -11,7 +11,7 @@ import {
 import { EditBaseComponent } from './edit-base.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ColorPickerModule, ColorPickerService } from 'ngx-color-picker';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -25,7 +25,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		FormsModule,
 		ReactiveFormsModule,
 		ColorPickerModule,
-		TranslaterModule
+		TranslateModule
 	],
 	entryComponents: [EditBaseComponent],
 	declarations: [EditBaseComponent],

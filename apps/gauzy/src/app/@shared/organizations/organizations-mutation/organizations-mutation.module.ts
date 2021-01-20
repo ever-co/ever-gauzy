@@ -19,7 +19,7 @@ import { ImageUploaderModule } from '../../image-uploader/image-uploader.module'
 import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
 import { RemoveLodashModule } from '../../remove-lodash/remove-lodash.module';
 import { OrganizationsStepFormModule } from '../organizations-step-form/organizations-step-form.module';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -40,7 +40,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		NbToggleModule,
 		RemoveLodashModule,
 		OrganizationsStepFormModule,
-		TranslaterModule
+		TranslateModule
 	],
 	declarations: [OrganizationsMutationComponent],
 	entryComponents: [OrganizationsMutationComponent],

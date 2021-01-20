@@ -15,7 +15,7 @@ import { AppointmentEmployeesService } from '../../../@core/services/appointment
 import { AvailabilitySlotsService } from '../../../@core/services/availability-slots.service';
 import { TimezoneSelectorModule } from './timezone-selector/timezone-selector.module';
 import { TimeOffService } from '../../../@core/services/time-off.service';
-import { TranslaterModule } from '../../../@shared/translater/translater.module';
+import { TranslateModule } from '../../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -27,7 +27,7 @@ import { TranslaterModule } from '../../../@shared/translater/translater.module'
 		NbButtonModule,
 		NbIconModule,
 		NbSpinnerModule,
-		TranslaterModule,
+		TranslateModule,
 		SharedModule
 	],
 	exports: [AppointmentComponent],

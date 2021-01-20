@@ -22,7 +22,7 @@ import { TagsColorInputModule } from '../../../@shared/tags/tags-color-input/tag
 import { TableComponentsModule } from '../../../@shared/table-components/table-components.module';
 import { CardGridModule } from '../../../@shared/card-grid/card-grid.module';
 import { BackNavigationModule } from '../../../@shared/back-navigation/back-navigation.module';
-import { TranslaterModule } from '../../../@shared/translater/translater.module';
+import { TranslateModule } from '../../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -45,7 +45,7 @@ import { TranslaterModule } from '../../../@shared/translater/translater.module'
 		CardGridModule,
 		BackNavigationModule,
 		NbDialogModule.forChild(),
-		TranslaterModule
+		TranslateModule
 	],
 	declarations: [EventTypeComponent],
 	providers: [EventTypeService]

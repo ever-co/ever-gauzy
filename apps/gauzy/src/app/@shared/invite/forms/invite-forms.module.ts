@@ -12,7 +12,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { InviteService } from '../../../@core/services/invite.service';
 import { RoleService } from '../../../@core/services/role.service';
 import { ThemeModule } from '../../../@theme/theme.module';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 import { EmailInviteFormComponent } from './email-invite-form/email-invite-form.component';
 
 @NgModule({
@@ -27,7 +27,7 @@ import { EmailInviteFormComponent } from './email-invite-form/email-invite-form.
 		NgSelectModule,
 		NbSelectModule,
 		NbAlertModule,
-		TranslaterModule
+		TranslateModule
 	],
 	exports: [EmailInviteFormComponent],
 	declarations: [EmailInviteFormComponent],

@@ -35,7 +35,7 @@ import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader
 import { ContactActionComponent } from './table-components/contact-action/contact-action.component';
 import { LocationFormModule } from '../../@shared/forms/location';
 import { LeafletMapModule } from '../../@shared/forms/maps/leaflet/leaflet.module';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 const COMPONENTS = [
 	ContactComponent,
@@ -73,7 +73,7 @@ const COMPONENTS = [
 		ImageUploaderModule,
 		EmployeeMultiSelectModule,
 		NbSpinnerModule,
-		TranslaterModule,
+		TranslateModule,
 		NbToggleModule,
 		LocationFormModule,
 		LeafletMapModule

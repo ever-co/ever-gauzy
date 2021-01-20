@@ -22,7 +22,7 @@ import { TeamsMutationComponent } from './teams-mutation/teams-mutation.componen
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -44,7 +44,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		Ng2SmartTableModule,
 		TeamsRoutingModule,
 		NbDialogModule.forChild(),
-		TranslaterModule
+		TranslateModule
 	],
 	declarations: [TeamsComponent, TeamsMutationComponent],
 	entryComponents: [],

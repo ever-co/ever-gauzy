@@ -21,7 +21,7 @@ import { IncomeMutationModule } from '../../@shared/income/income-mutation/incom
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -42,7 +42,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		IncomeMutationModule,
 		TableComponentsModule,
 		CardGridModule,
-		TranslaterModule,
+		TranslateModule,
 		NbSpinnerModule,
 		NgxPermissionsModule.forChild()
 	],

@@ -12,7 +12,7 @@ import { UserFormsModule } from '../../user/forms/user-forms.module';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { EmployeesService } from '../../../@core/services/employees.service';
 import { RoleService } from '../../../@core/services/role.service';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -23,7 +23,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		NbButtonModule,
 		NbIconModule,
 		NbStepperModule,
-		TranslaterModule
+		TranslateModule
 	],
 	exports: [EmployeeMutationComponent],
 	declarations: [EmployeeMutationComponent],

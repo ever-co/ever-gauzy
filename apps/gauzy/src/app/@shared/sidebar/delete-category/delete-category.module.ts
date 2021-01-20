@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { NbCardModule, NbIconModule, NbButtonModule } from '@nebular/theme';
 import { DeleteCategoryComponent } from './delete-category.component';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -10,7 +10,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		NbCardModule,
 		NbIconModule,
 		NbButtonModule,
-		TranslaterModule
+		TranslateModule
 	],
 	entryComponents: [DeleteCategoryComponent],
 	declarations: [DeleteCategoryComponent],

@@ -5,7 +5,7 @@ import { NbBadgeModule, NbSelectModule } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TagsService } from '../../../@core/services/tags.service';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -14,7 +14,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		NbBadgeModule,
 		FormsModule,
 		NgSelectModule,
-		TranslaterModule
+		TranslateModule
 	],
 	exports: [TagsColorInputComponent],
 	declarations: [TagsColorInputComponent],

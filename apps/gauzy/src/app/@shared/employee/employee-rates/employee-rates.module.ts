@@ -13,7 +13,7 @@ import { EmployeeRatesComponent } from './employee-rates.component';
 import { CandidateStore } from '../../../@core/services/candidate-store.service';
 import { EmployeeStore } from '../../../@core/services/employee-store.service';
 import { CurrencyModule } from '../../currency/currency.module';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -27,7 +27,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		NbIconModule,
 		ThemeModule,
 		NbActionsModule,
-		TranslaterModule,
+		TranslateModule,
 		CurrencyModule
 	],
 	exports: [EmployeeRatesComponent],

@@ -37,7 +37,7 @@ import { TasksSprintSettingsViewModule } from '../../@shared/tasks-sprint-settin
 import { CommonModule } from '@angular/common';
 import { CKEditorModule } from 'ng2-ckeditor';
 import { CurrencyModule } from '../../@shared/currency/currency.module';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -58,7 +58,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		RemoveLodashModule,
 		EntityWithMembersModule,
 		NbDialogModule.forChild(),
-		TranslaterModule,
+		TranslateModule,
 		NgSelectModule,
 		OrganizationsMutationModule,
 		UserFormsModule,

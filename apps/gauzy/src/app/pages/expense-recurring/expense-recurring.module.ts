@@ -11,7 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { ExpenseRecurringRoutingModule } from './expense-recurring-routing.module';
 import { ExpenseRecurringComponent } from './expense-recurring.component';
 import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -23,7 +23,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		NbInputModule,
 		NbIconModule,
 		NbDialogModule.forChild(),
-		TranslaterModule,
+		TranslateModule,
 		RecurringExpenseBlockModule
 	],
 	declarations: [ExpenseRecurringComponent],

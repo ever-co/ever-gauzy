@@ -9,7 +9,7 @@ import { InviteFormsModule } from '../forms/invite-forms.module';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -18,7 +18,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		NbCardModule,
 		NbButtonModule,
 		NbIconModule,
-		TranslaterModule,
+		TranslateModule,
 		InviteFormsModule
 	],
 	exports: [InviteMutationComponent],

@@ -18,7 +18,7 @@ import { EmployeeMultiSelectModule } from 'apps/gauzy/src/app/@shared/employee/e
 import { AlertModalModule } from 'apps/gauzy/src/app/@shared/alert-modal/alert-modal.module';
 import { AppointmentEmployeesService } from 'apps/gauzy/src/app/@core/services/appointment-employees.service';
 import { EmployeeSchedulesModule } from '../employee-schedules/employee-schedules.module';
-import { TranslaterModule } from 'apps/gauzy/src/app/@shared/translater/translater.module';
+import { TranslateModule } from 'apps/gauzy/src/app/@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -38,7 +38,7 @@ import { TranslaterModule } from 'apps/gauzy/src/app/@shared/translater/translat
 		SharedModule,
 		EmployeeMultiSelectModule,
 		NgSelectModule,
-		TranslaterModule
+		TranslateModule
 	],
 	exports: [ManageAppointmentComponent],
 	declarations: [ManageAppointmentComponent],

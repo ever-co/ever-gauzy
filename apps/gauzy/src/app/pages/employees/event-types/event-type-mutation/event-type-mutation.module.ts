@@ -16,7 +16,7 @@ import { EventTypeMutationComponent } from './event-type-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EmployeeSelectorsModule } from '../../../../@theme/components/header/selectors/employee/employee.module';
 import { TagsColorInputModule } from '../../../../@shared/tags/tags-color-input/tags-color-input.module';
-import { TranslaterModule } from '../../../../@shared/translater/translater.module';
+import { TranslateModule } from '../../../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -35,7 +35,7 @@ import { TranslaterModule } from '../../../../@shared/translater/translater.modu
 		EmployeeSelectorsModule,
 		NbCheckboxModule,
 		NbTooltipModule,
-		TranslaterModule
+		TranslateModule
 	],
 	exports: [EventTypeMutationComponent],
 	declarations: [EventTypeMutationComponent],

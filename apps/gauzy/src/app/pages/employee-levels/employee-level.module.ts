@@ -16,7 +16,7 @@ import { EmployeeLevelComponent } from './employee-level.component';
 import { EmployeeLevelRoutingModule } from './employee-level-routing.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -37,7 +37,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		TagsColorInputModule,
 		NbActionsModule,
 		NbDialogModule.forChild(),
-		TranslaterModule
+		TranslateModule
 	],
 	declarations: [EmployeeLevelComponent],
 	entryComponents: [],

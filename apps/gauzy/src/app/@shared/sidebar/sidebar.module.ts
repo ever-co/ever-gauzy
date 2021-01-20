@@ -21,7 +21,7 @@ import { EditBaseModule } from './edit-base/edit-base.module';
 import { EditCategoryModule } from './edit-category/edit-category.module';
 import { DeleteCategoryModule } from './delete-category/delete-category.module';
 import { DeleteBaseModule } from './delete-base/delete-base.module';
-import { TranslaterModule } from '../translater/translater.module';
+import { TranslateModule } from '../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -44,7 +44,7 @@ import { TranslaterModule } from '../translater/translater.module';
 		NbInputModule,
 		NbLayoutModule,
 		NbSidebarModule.forRoot(),
-		TranslaterModule
+		TranslateModule
 	],
 	providers: [HelpCenterService],
 	declarations: [SidebarComponent],

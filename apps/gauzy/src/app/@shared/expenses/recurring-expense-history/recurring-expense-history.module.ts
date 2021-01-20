@@ -5,7 +5,7 @@ import { ThemeModule } from '../../../@theme/theme.module';
 import { DateViewComponent } from '../../table-components/date-view/date-view.component';
 import { IncomeExpenseAmountComponent } from '../../table-components/income-amount/income-amount.component';
 import { TableComponentsModule } from '../../table-components/table-components.module';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 import { RecurringExpenseHistoryComponent } from './recurring-expense-history.component';
 
 @NgModule({
@@ -14,7 +14,7 @@ import { RecurringExpenseHistoryComponent } from './recurring-expense-history.co
 		Ng2SmartTableModule,
 		TableComponentsModule,
 		NbIconModule,
-		TranslaterModule
+		TranslateModule
 	],
 	exports: [RecurringExpenseHistoryComponent],
 	declarations: [RecurringExpenseHistoryComponent],

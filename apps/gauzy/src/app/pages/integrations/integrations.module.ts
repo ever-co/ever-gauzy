@@ -11,7 +11,7 @@ import {
 } from '@nebular/theme';
 import { IntegrationsListComponent } from './components/integrations-list/integrations-list.component';
 import { SharedModule } from '../../@shared/shared.module';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	declarations: [IntegrationsComponent, IntegrationsListComponent],
@@ -24,7 +24,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		NbInputModule,
 		NbSpinnerModule,
 		NbButtonModule,
-		TranslaterModule
+		TranslateModule
 	]
 })
 export class IntegrationsModule {}

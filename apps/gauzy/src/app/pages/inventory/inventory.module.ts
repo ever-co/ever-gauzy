@@ -45,7 +45,7 @@ import { InventoryVariantFormComponent } from './components/edit-inventory-item-
 import { EnabledStatusComponent } from './components/table-components/enabled-row.component';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { CurrencyModule } from '../../@shared/currency/currency.module';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -90,7 +90,7 @@ const NB_MODULES = [
 		ImageUploaderModule,
 		CardGridModule,
 		NbDialogModule.forChild(),
-		TranslaterModule,
+		TranslateModule,
 		...NB_MODULES,
 		CurrencyModule
 	],

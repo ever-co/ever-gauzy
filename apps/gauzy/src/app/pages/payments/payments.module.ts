@@ -16,11 +16,11 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-estimate-history.service';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
-		TranslaterModule,
+		TranslateModule,
 		NbCardModule,
 		PaymentsRoutingModule,
 		Ng2SmartTableModule,

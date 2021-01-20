@@ -49,7 +49,7 @@ import { TimerPickerModule } from '../../../../@shared/timer-picker/timer-picker
 import { CurrencyModule } from '../../../../@shared/currency/currency.module';
 import { LocationFormModule } from '../../../../@shared/forms/location';
 import { LeafletMapModule } from '../../../../@shared/forms/maps/leaflet/leaflet.module';
-import { TranslaterModule } from '../../../../@shared/translater/translater.module';
+import { TranslateModule } from '../../../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -69,7 +69,7 @@ import { TranslaterModule } from '../../../../@shared/translater/translater.modu
 		ColorPickerModule,
 		NbTooltipModule,
 		NbDialogModule.forChild(),
-		TranslaterModule,
+		TranslateModule,
 		Ng2SmartTableModule,
 		OrganizationsMutationModule,
 		UserFormsModule,

@@ -18,7 +18,7 @@ import { OrganizationsService } from '../../../@core/services/organizations.serv
 import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { CurrencyModule } from '../../currency/currency.module';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -36,7 +36,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		NbCheckboxModule,
 		NbTooltipModule,
 		EmployeeSelectorsModule,
-		TranslaterModule,
+		TranslateModule,
 		CurrencyModule
 	],
 	declarations: [IncomeMutationComponent],

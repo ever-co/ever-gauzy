@@ -57,7 +57,7 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { SkillsService } from '../../@core/services/skills.service';
 import { CKEditorModule } from 'ng2-ckeditor';
 import { EditEmployeeNetworksComponent } from './edit-employee/edit-employee-profile/edit-employee-networks/edit-employee-networks.component';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 const COMPONENTS = [
 	EmployeesComponent,
@@ -103,7 +103,7 @@ const COMPONENTS = [
 		NbBadgeModule,
 		NbRouteTabsetModule,
 		NbCheckboxModule,
-		TranslaterModule,
+		TranslateModule,
 		NbSpinnerModule,
 		InviteMutationModule,
 		InviteTableModule,

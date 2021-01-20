@@ -18,7 +18,7 @@ import { ThemeModule } from '../../../@theme/theme.module';
 import { RecurringExpenseMutationComponent } from './recurring-expense-mutation.component';
 import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';
 import { CurrencyModule } from '../../currency/currency.module';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -37,7 +37,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		NbAlertModule,
 		NbSpinnerModule,
 		EmployeeSelectorsModule,
-		TranslaterModule,
+		TranslateModule,
 		CurrencyModule
 	],
 	exports: [RecurringExpenseMutationComponent],

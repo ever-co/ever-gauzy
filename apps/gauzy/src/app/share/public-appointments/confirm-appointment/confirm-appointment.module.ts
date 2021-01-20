@@ -12,7 +12,7 @@ import { ManageAppointmentModule } from '../../../pages/employees/appointment/ma
 import { EmployeesService } from '../../../@core/services';
 import { EmployeeAppointmentService } from '../../../@core/services/employee-appointment.service';
 import { AlertModalModule } from '../../../@shared/alert-modal/alert-modal.module';
-import { TranslaterModule } from '../../../@shared/translater/translater.module';
+import { TranslateModule } from '../../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -25,7 +25,7 @@ import { TranslaterModule } from '../../../@shared/translater/translater.module'
 		NbIconModule,
 		ConfirmAppointmentRoutingModule,
 		ManageAppointmentModule,
-		TranslaterModule
+		TranslateModule
 	],
 	declarations: [ConfirmAppointmentComponent],
 	entryComponents: [ConfirmAppointmentComponent],

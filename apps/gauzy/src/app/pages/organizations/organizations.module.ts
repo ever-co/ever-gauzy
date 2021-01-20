@@ -35,7 +35,7 @@ import { RecurringExpenseHistoryModule } from '../../@shared/expenses/recurring-
 import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -61,7 +61,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		RecurringExpenseMutationModule,
 		RecurringExpenseDeleteConfirmationModule,
 		NbTooltipModule,
-		TranslaterModule,
+		TranslateModule,
 		NbSpinnerModule,
 		NbActionsModule,
 		RecurringExpenseHistoryModule,

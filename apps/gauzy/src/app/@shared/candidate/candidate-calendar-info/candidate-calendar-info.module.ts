@@ -4,7 +4,7 @@ import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule } from '@angular/forms';
 import { CandidateCalendarInfoComponent } from './candidate-calendar-info.component';
 import { FullCalendarModule } from '@fullcalendar/angular';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -14,7 +14,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		NbButtonModule,
 		NbIconModule,
 		FullCalendarModule,
-		TranslaterModule
+		TranslateModule
 	],
 	exports: [CandidateCalendarInfoComponent],
 	declarations: [CandidateCalendarInfoComponent],

@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
-import { TranslaterModule } from '../translater/translater.module';
+import { TranslateModule } from '../translate/translate.module';
 import { PrivacyPolicyComponent } from './privacy-policy/privacy-policy.component';
 import { TermsAndConditionsComponent } from './terms-and-conditions/terms-and-conditions.component';
 
 @NgModule({
-	imports: [TranslaterModule],
+	imports: [TranslateModule],
 	declarations: [TermsAndConditionsComponent, PrivacyPolicyComponent],
 	exports: [TermsAndConditionsComponent, PrivacyPolicyComponent]
 })

@@ -27,7 +27,7 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { GoalCustomUnitModule } from '../../@shared/goal/goal-custom-unit/goal-custom-unit.module';
 import { GoalTemplatesModule } from '../../@shared/goal/goal-templates/goal-templates.module';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	declarations: [
@@ -60,7 +60,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		NbFormFieldModule,
 		NbSpinnerModule,
 		NbDialogModule.forChild(),
-		TranslaterModule
+		TranslateModule
 	]
 })
 export class GoalSettingsModule {}

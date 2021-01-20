@@ -24,7 +24,7 @@ import { OrganizationsService } from '../../@core/services/organizations.service
 import { ProductCategoryMutationComponent } from './product-category-mutation/product-category-mutation.component';
 import { ImageUploaderModule } from '../image-uploader/image-uploader.module';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
-import { TranslaterModule } from '../translater/translater.module';
+import { TranslateModule } from '../translate/translate.module';
 
 @NgModule({
 	declarations: [
@@ -47,7 +47,7 @@ import { TranslaterModule } from '../translater/translater.module';
 		NbToastrModule,
 		UserFormsModule,
 		ImageUploaderModule,
-		TranslaterModule
+		TranslateModule
 	],
 	providers: [
 		ProductTypeService,

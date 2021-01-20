@@ -49,7 +49,7 @@ import { LanguagesService } from '../@core/services/languages.service';
 import { LayoutSelectorComponent } from './components/layout-selector/layout-selector.component';
 import { ProjectSelectModule } from '../@shared/project-select/project-select.module';
 import { RouterModule } from '@angular/router';
-import { TranslaterModule } from '../@shared/translater/translater.module';
+import { TranslateModule } from '../@shared/translate/translate.module';
 
 const NB_MODULES = [
 	NbLayoutModule,
@@ -70,7 +70,7 @@ const NB_MODULES = [
 	EmployeeSelectorsModule,
 	ProjectSelectModule,
 	TimeTrackerModule,
-	TranslaterModule,
+	TranslateModule,
 	RouterModule
 ];
 

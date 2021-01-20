@@ -5,12 +5,12 @@ import { FormsModule } from '@angular/forms';
 import { EmployeeSelectorComponent } from './employee.component';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
 import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
-import { TranslaterModule } from 'apps/gauzy/src/app/@shared/translater/translater.module';
+import { TranslateModule } from 'apps/gauzy/src/app/@shared/translate/translate.module';
 
 const COMPONENTS = [EmployeeSelectorComponent];
 
 @NgModule({
-	imports: [CommonModule, NgSelectModule, FormsModule, TranslaterModule],
+	imports: [CommonModule, NgSelectModule, FormsModule, TranslateModule],
 	exports: [...COMPONENTS],
 	declarations: [...COMPONENTS],
 	providers: [EmployeesService, EmployeeStore]

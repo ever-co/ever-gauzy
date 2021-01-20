@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { ImportExportRoutingModule } from './import-export-routing.module';
 import { ImportExportComponent } from './import-export.component';
 import { NbButtonModule, NbCardModule, NbIconModule } from '@nebular/theme';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -10,7 +10,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		NbCardModule,
 		NbButtonModule,
 		NbIconModule,
-		TranslaterModule
+		TranslateModule
 	],
 
 	declarations: [ImportExportComponent],

@@ -14,7 +14,7 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { ApprovalPolicyMutationComponent } from './approval-policy-mutation.component';
 import { Store } from '../../@core/services/store.service';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslaterModule } from '../translater/translater.module';
+import { TranslateModule } from '../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -29,7 +29,7 @@ import { TranslaterModule } from '../translater/translater.module';
 		NbSelectModule,
 		NbRadioModule,
 		NgSelectModule,
-		TranslaterModule
+		TranslateModule
 	],
 	declarations: [ApprovalPolicyMutationComponent],
 	entryComponents: [],

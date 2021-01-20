@@ -14,7 +14,7 @@ import { CandidateStore } from '../../../@core/services/candidate-store.service'
 import { EmployeeStore } from '../../../@core/services/employee-store.service';
 import { LeafletMapModule } from '../../forms/maps/leaflet/leaflet.module';
 import { LocationFormModule } from '../../forms/location';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -28,7 +28,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		NbIconModule,
 		ThemeModule,
 		NbActionsModule,
-		TranslaterModule,
+		TranslateModule,
 		LocationFormModule,
 		LeafletMapModule
 	],

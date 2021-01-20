@@ -29,7 +29,7 @@ import { EmailTemplatesModule } from '../email-templates/email-templates.module'
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { FileStorageComponent } from './file-storage/file-storage.component';
 import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -51,7 +51,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		ReactiveFormsModule,
 		NbTooltipModule,
 		NbBadgeModule,
-		TranslaterModule,
+		TranslateModule,
 		NgSelectModule,
 		BackNavigationModule
 	],

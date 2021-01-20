@@ -12,7 +12,7 @@ import {
 } from '@nebular/theme';
 import { CountryModule } from '../../country/country.module';
 import { LeafletMapModule } from '../maps/leaflet/leaflet.module';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -24,7 +24,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		NbCheckboxModule,
 		NbFormFieldModule,
 		NbIconModule,
-		TranslaterModule,
+		TranslateModule,
 		AgmCoreModule,
 		CountryModule,
 		LeafletMapModule

@@ -12,7 +12,7 @@ import {
 import { ThemeModule } from '../../@theme/theme.module';
 import { EntityWithMembersCardComponent } from './entity-with-members-card.component';
 import { TableComponentsModule } from '../table-components/table-components.module';
-import { TranslaterModule } from '../translater/translater.module';
+import { TranslateModule } from '../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -26,7 +26,7 @@ import { TranslaterModule } from '../translater/translater.module';
 		NbSelectModule,
 		NbTooltipModule,
 		NbToastrModule.forRoot(),
-		TranslaterModule
+		TranslateModule
 	],
 	declarations: [EntityWithMembersCardComponent],
 	entryComponents: [EntityWithMembersCardComponent],

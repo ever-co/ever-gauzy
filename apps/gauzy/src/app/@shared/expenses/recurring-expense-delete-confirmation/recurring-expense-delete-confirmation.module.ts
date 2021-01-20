@@ -3,7 +3,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import { NbRadioModule, NbCardModule, NbButtonModule } from '@nebular/theme';
 import { RecurringExpenseDeleteConfirmationComponent } from './recurring-expense-delete-confirmation.component';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -13,7 +13,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		NbRadioModule,
 		NbCardModule,
 		NbButtonModule,
-		TranslaterModule
+		TranslateModule
 	],
 	exports: [RecurringExpenseDeleteConfirmationComponent],
 	declarations: [RecurringExpenseDeleteConfirmationComponent],

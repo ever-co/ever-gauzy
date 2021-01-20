@@ -13,7 +13,7 @@ import { ExportComponent } from './export.component';
 import { ExportRoutingModule } from './export-routing.module';
 import { ExportAllService } from '../../../@core/services/exportAll.service';
 import { FileUploaderModule } from '../../../@shared/file-uploader-input/file-uploader-input.module';
-import { TranslaterModule } from '../../../@shared/translater/translater.module';
+import { TranslateModule } from '../../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -29,7 +29,7 @@ import { TranslaterModule } from '../../../@shared/translater/translater.module'
 		NbCheckboxModule,
 		ReactiveFormsModule,
 		FormsModule,
-		TranslaterModule
+		TranslateModule
 	],
 	declarations: [ExportComponent],
 	exports: [ExportComponent],

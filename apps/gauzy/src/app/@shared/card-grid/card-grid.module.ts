@@ -4,10 +4,10 @@ import { Store } from '../../@core/services/store.service';
 import { ThemeModule } from '../../@theme/theme.module';
 import { CardGridComponent } from './card-grid.component';
 import { CustomViewComponent } from './card-grid-custom.component';
-import { TranslaterModule } from '../translater/translater.module';
+import { TranslateModule } from '../translate/translate.module';
 
 @NgModule({
-	imports: [ThemeModule, NbCardModule, TranslaterModule],
+	imports: [ThemeModule, NbCardModule, TranslateModule],
 	declarations: [CardGridComponent, CustomViewComponent],
 	exports: [CardGridComponent],
 	entryComponents: [],

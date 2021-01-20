@@ -23,7 +23,7 @@ import { EquipmentSharingStatusComponent } from './table-components/equipment-sh
 import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -42,7 +42,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		NbDatepickerModule,
 		CardGridModule,
 		BackNavigationModule,
-		TranslaterModule,
+		TranslateModule,
 		NbSpinnerModule
 	],
 	providers: [EquipmentSharingService, ApprovalPolicyService],

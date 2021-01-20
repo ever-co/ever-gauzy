@@ -20,7 +20,7 @@ import { AttachReceiptComponent } from './attach-receipt/attach-receipt.componen
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { CurrencyModule } from '../../currency/currency.module';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -40,7 +40,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		EmployeeSelectorsModule,
 		NbCheckboxModule,
 		NbTooltipModule,
-		TranslaterModule,
+		TranslateModule,
 		CurrencyModule
 	],
 	exports: [ExpensesMutationComponent],

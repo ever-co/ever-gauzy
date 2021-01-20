@@ -4,7 +4,7 @@ import { SkillsInputComponent } from './skills-input.component';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NbBadgeModule } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -13,7 +13,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		NbBadgeModule,
 		FormsModule,
 		ReactiveFormsModule,
-		TranslaterModule
+		TranslateModule
 	],
 	exports: [SkillsInputComponent],
 	declarations: [SkillsInputComponent]

@@ -4,14 +4,14 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { MiscellaneousRoutingModule } from './miscellaneous-routing.module';
 import { MiscellaneousComponent } from './miscellaneous.component';
 import { NotFoundComponent } from './not-found/not-found.component';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
 		ThemeModule,
 		NbCardModule,
 		MiscellaneousRoutingModule,
-		TranslaterModule
+		TranslateModule
 	],
 	declarations: [MiscellaneousComponent, NotFoundComponent]
 })

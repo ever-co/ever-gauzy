@@ -65,7 +65,7 @@ import { Router } from '@angular/router';
 import { FeatureToggleModule } from 'ngx-feature-toggle';
 import { FeatureService } from './@core/services/feature/feature.service';
 import { IFeatureToggle } from '@gauzy/models';
-import { HttpLoaderFactory } from './@shared/translater/translater.module';
+import { HttpLoaderFactory } from './@shared/translate/translate.module';
 
 // TODO: we should use some internal function which returns version of Gauzy;
 const version = '0.1.0';

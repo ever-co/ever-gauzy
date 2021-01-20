@@ -5,7 +5,7 @@ import { Routes, RouterModule } from '@angular/router';
 import { ServerDownPage } from './server-down.page';
 import { ThemeModule } from '../@theme/theme.module';
 import { NbSidebarModule, NbLayoutModule } from '@nebular/theme';
-import { TranslaterModule } from '../@shared/translater/translater.module';
+import { TranslateModule } from '../@shared/translate/translate.module';
 
 const routes: Routes = [
 	{
@@ -22,7 +22,7 @@ const routes: Routes = [
 		NbSidebarModule,
 		NbLayoutModule,
 		RouterModule.forChild(routes),
-		TranslaterModule
+		TranslateModule
 	],
 	declarations: [ServerDownPage]
 })

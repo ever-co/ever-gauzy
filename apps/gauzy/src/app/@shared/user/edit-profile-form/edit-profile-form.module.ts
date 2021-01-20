@@ -16,7 +16,7 @@ import { UsersService } from '../../../@core/services';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
 import { RoleService } from '../../../@core/services/role.service';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -32,7 +32,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		ReactiveFormsModule,
 		NbInputModule,
 		NbBadgeModule,
-		TranslaterModule
+		TranslateModule
 	],
 	exports: [EditProfileFormComponent],
 	declarations: [EditProfileFormComponent],

@@ -8,7 +8,7 @@ import { TableComponentsModule } from '../../table-components/table-components.m
 import { RecurringExpenseHistoryModule } from '../recurring-expense-history/recurring-expense-history.module';
 import { RecurringExpenseBlockComponent } from './recurring-expense-block.component';
 import { PictureNameTagsComponent } from '../../table-components/picture-name-tags/picture-name-tags.component';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -18,7 +18,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		NbIconModule,
 		NbTooltipModule,
 		RecurringExpenseHistoryModule,
-		TranslaterModule
+		TranslateModule
 	],
 	exports: [RecurringExpenseBlockComponent],
 	declarations: [RecurringExpenseBlockComponent],

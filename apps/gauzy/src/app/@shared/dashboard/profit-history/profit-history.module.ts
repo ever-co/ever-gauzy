@@ -5,7 +5,7 @@ import { NbIconModule, NbCardModule, NbSpinnerModule } from '@nebular/theme';
 import { ProfitHistoryComponent } from './profit-history.component';
 import { ExpenseTableComponent } from './table-components/expense-table.component';
 import { IncomeTableComponent } from './table-components/income-table.component';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -14,7 +14,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		NbIconModule,
 		NbCardModule,
 		NbSpinnerModule,
-		TranslaterModule
+		TranslateModule
 	],
 	exports: [ProfitHistoryComponent],
 	declarations: [

@@ -39,7 +39,7 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { AddTaskDialogModule } from '../../@shared/tasks/add-task-dialog/add-task-dialog.module';
 import { TasksSprintSettingsViewModule } from '../../@shared/tasks-sprint-settings-view/tasks-sprint-settings-view.module';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	declarations: [
@@ -77,7 +77,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		UserFormsModule,
 		CardGridModule,
 		AddTaskDialogModule,
-		TranslaterModule,
+		TranslateModule,
 		NbSpinnerModule,
 		NbDatepickerModule,
 		EmployeeMultiSelectModule,

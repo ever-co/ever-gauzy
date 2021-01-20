@@ -10,7 +10,7 @@ import {
 } from '@nebular/theme';
 import { UserFormsModule } from '../../user/forms/user-forms.module';
 import { EmployeeEndWorkComponent } from './employee-end-work.component';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -22,7 +22,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		NbIconModule,
 		NbDatepickerModule,
 		NbInputModule,
-		TranslaterModule
+		TranslateModule
 	],
 	exports: [EmployeeEndWorkComponent],
 	declarations: [EmployeeEndWorkComponent],

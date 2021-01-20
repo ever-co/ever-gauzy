@@ -11,7 +11,7 @@ import {
 import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';
 import { BackNavigationModule } from '../../../@shared/back-navigation/back-navigation.module';
 import { EventTypeService } from '../../../@core/services/event-type.service';
-import { TranslaterModule } from '../../../@shared/translater/translater.module';
+import { TranslateModule } from '../../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -23,7 +23,7 @@ import { TranslaterModule } from '../../../@shared/translater/translater.module'
 		EmployeeSelectorsModule,
 		BackNavigationModule,
 		PickEmployeeRoutingModule,
-		TranslaterModule
+		TranslateModule
 	],
 	declarations: [PickEmployeeComponent],
 	entryComponents: [PickEmployeeComponent],

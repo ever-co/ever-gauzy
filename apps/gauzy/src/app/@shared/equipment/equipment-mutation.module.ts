@@ -14,7 +14,7 @@ import { EquipmentMutationComponent } from './equipment-mutation.component';
 import { Store } from '../../@core/services/store.service';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
 import { CurrencyModule } from '../currency/currency.module';
-import { TranslaterModule } from '../translater/translater.module';
+import { TranslateModule } from '../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -28,7 +28,7 @@ import { TranslaterModule } from '../translater/translater.module';
 		NbButtonModule,
 		NbInputModule,
 		NbSelectModule,
-		TranslaterModule,
+		TranslateModule,
 		CurrencyModule
 	],
 	declarations: [EquipmentMutationComponent],

@@ -3,7 +3,7 @@ import { NgModule } from '@angular/core';
 import { LeafletModule } from '@asymmetrik/ngx-leaflet';
 import { NbCardModule } from '@nebular/theme';
 import { ThemeModule } from '../../../../@theme/theme.module';
-import { TranslaterModule } from '../../../translater/translater.module';
+import { TranslateModule } from '../../../translate/translate.module';
 import { LeafletMapComponent } from './leaflet.component';
 
 @NgModule({
@@ -13,7 +13,7 @@ import { LeafletMapComponent } from './leaflet.component';
 		CommonModule,
 		ThemeModule,
 		NbCardModule,
-		TranslaterModule,
+		TranslateModule,
 		LeafletModule
 	]
 })

@@ -13,7 +13,7 @@ import { EmployeeRoutingModule } from './employee-routing.module';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { EmployeeComponent } from './employee.component';
 import { PublicPageEmployeeMutationModule } from '../../@shared/employee/public-page-employee-mutation/public-page-employee-mutation.module';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -25,7 +25,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		NbInputModule,
 		ImageUploaderModule,
 		PublicPageEmployeeMutationModule,
-		TranslaterModule,
+		TranslateModule,
 		NbListModule,
 		NbUserModule,
 		NbTabsetModule

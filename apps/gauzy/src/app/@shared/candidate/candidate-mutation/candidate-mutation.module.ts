@@ -13,7 +13,7 @@ import { RoleService } from '../../../@core/services/role.service';
 import { CandidateMutationComponent } from './candidate-mutation.component';
 import { CandidateCvComponent } from '../candidate-cv/candidate-cv.component';
 import { FileUploaderModule } from '../../file-uploader-input/file-uploader-input.module';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -25,7 +25,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		NbIconModule,
 		NbStepperModule,
 		FileUploaderModule,
-		TranslaterModule
+		TranslateModule
 	],
 	exports: [CandidateMutationComponent, CandidateCvComponent],
 	declarations: [CandidateMutationComponent, CandidateCvComponent],

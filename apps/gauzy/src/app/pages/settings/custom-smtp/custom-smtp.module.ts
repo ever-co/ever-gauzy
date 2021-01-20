@@ -4,7 +4,7 @@ import { ThemeModule } from '../../../@theme/theme.module';
 import { CustomSmtpComponent } from './custom-smtp.component';
 import { CustomSmtpRoutingModule } from './custom-smtp-routing.module';
 import { SMTPModule } from '../../../@shared/smtp/smtp.module';
-import { TranslaterModule } from '../../../@shared/translater/translater.module';
+import { TranslateModule } from '../../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -12,7 +12,7 @@ import { TranslaterModule } from '../../../@shared/translater/translater.module'
 		ThemeModule,
 		NbCardModule,
 		NbRouteTabsetModule,
-		TranslaterModule,
+		TranslateModule,
 		SMTPModule
 	],
 	declarations: [CustomSmtpComponent],

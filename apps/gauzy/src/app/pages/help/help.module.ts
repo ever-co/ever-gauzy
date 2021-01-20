@@ -4,7 +4,7 @@ import { NbCardModule, NbButtonModule, NbInputModule } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { HelpComponent } from './help.component';
 import { HelpRoutingModule } from './help-routing.module';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -14,7 +14,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		FormsModule,
 		NbButtonModule,
 		NbInputModule,
-		TranslaterModule
+		TranslateModule
 	],
 	declarations: [HelpComponent]
 })

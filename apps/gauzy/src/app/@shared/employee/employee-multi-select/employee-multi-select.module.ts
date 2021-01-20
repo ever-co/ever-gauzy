@@ -4,7 +4,7 @@ import { EmployeeSelectComponent } from './employee-multi-select.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SharedModule } from '../../shared.module';
 import { NbSelectModule } from '@nebular/theme';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -13,7 +13,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		ReactiveFormsModule,
 		FormsModule,
 		SharedModule,
-		TranslaterModule
+		TranslateModule
 	],
 	declarations: [EmployeeSelectComponent],
 	entryComponents: [EmployeeSelectComponent],

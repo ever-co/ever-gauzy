@@ -16,7 +16,7 @@ import { AuthService } from '../../@core/services/auth.service';
 import { RoleService } from '../../@core/services/role.service';
 import { IncomeService } from '../../@core/services/income.service';
 import { DangerZoneMutationComponent } from './danger-zone-mutation/danger-zone-mutation.component';
-import { TranslaterModule } from '../translater/translater.module';
+import { TranslateModule } from '../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -32,7 +32,7 @@ import { TranslaterModule } from '../translater/translater.module';
 		NbSelectModule,
 		NbToastrModule,
 		NbListModule,
-		TranslaterModule
+		TranslateModule
 	],
 	exports: [DangerZoneMutationComponent],
 	declarations: [DangerZoneMutationComponent],

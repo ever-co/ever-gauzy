@@ -92,7 +92,7 @@ import { InterviewActionsTableComponent } from './manage-candidate-interviews/in
 import { FeedbackStatusTableComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-feedbacks/table-components/status/status.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 const COMPONENTS = [
 	CandidatesComponent,
@@ -163,7 +163,7 @@ const COMPONENTS = [
 		NbRadioModule,
 		NbActionsModule,
 		NbAccordionModule,
-		TranslaterModule,
+		TranslateModule,
 		NbSpinnerModule,
 		NbDatepickerModule,
 		TagsColorInputModule,

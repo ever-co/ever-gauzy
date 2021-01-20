@@ -44,7 +44,7 @@ import { GoalCustomUnitModule } from '../../@shared/goal/goal-custom-unit/goal-c
 import { KeyresultTypeSelectModule } from '../../@shared/goal/keyresult-type-select/keyresult-type-select.module';
 import { GoalLevelSelectModule } from '../../@shared/goal/goal-level-select/goal-level-select.module';
 import { GoalTemplateSelectModule } from '../../@shared/goal/goal-template-select/goal-template-select.module';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	declarations: [
@@ -91,7 +91,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		GoalLevelSelectModule,
 		TaskSelectModule,
 		NbDialogModule.forChild(),
-		TranslaterModule,
+		TranslateModule,
 		EmployeeSelectorsModule,
 		EmployeeMultiSelectModule
 	]

@@ -3,7 +3,7 @@ import { ThemeModule } from '../../@theme/theme.module'; // deepscan-disable-lin
 import { NbCardModule, NbIconModule } from '@nebular/theme';
 import { WorkInProgressComponent } from './work-in-progress.component';
 import { WorkInProgressRoutingModule } from './work-in-progress-routing.module';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -11,7 +11,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		ThemeModule,
 		NbCardModule,
 		NbIconModule,
-		TranslaterModule
+		TranslateModule
 	],
 	declarations: [WorkInProgressComponent]
 })

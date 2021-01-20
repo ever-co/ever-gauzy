@@ -9,7 +9,7 @@ import {
 } from '@nebular/theme';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CurrencyModule } from '../../currency/currency.module';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	declarations: [GoalCustomUnitSelectComponent],
@@ -24,7 +24,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		FormsModule,
 		NbInputModule,
 		CurrencyModule,
-		TranslaterModule
+		TranslateModule
 	]
 })
 export class GoalCustomUnitModule {}

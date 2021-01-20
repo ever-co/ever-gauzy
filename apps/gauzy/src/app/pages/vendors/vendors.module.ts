@@ -18,7 +18,7 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { SharedModule } from '../../@shared/shared.module';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -39,7 +39,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		SharedModule,
 		Ng2SmartTableModule,
 		NbDialogModule.forChild(),
-		TranslaterModule
+		TranslateModule
 	],
 	declarations: [VendorsComponent],
 	entryComponents: [],

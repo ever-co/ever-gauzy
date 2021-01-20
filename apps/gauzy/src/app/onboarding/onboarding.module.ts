@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { NbLayoutModule, NbSpinnerModule } from '@nebular/theme';
 import { RoleGuard } from '../@core/role/role.guard';
 import { AuthService } from '../@core/services/auth.service';
-import { TranslaterModule } from '../@shared/translater/translater.module';
+import { TranslateModule } from '../@shared/translate/translate.module';
 import { ThemeModule } from '../@theme/theme.module';
 import { OnboardingRoutingModule } from './onboarding-routing.module';
 import { OnboardingComponent } from './onboarding.component';
@@ -12,7 +12,7 @@ import { OnboardingComponent } from './onboarding.component';
 		OnboardingRoutingModule,
 		ThemeModule,
 		NbLayoutModule,
-		TranslaterModule,
+		TranslateModule,
 		NbSpinnerModule
 	],
 	entryComponents: [],

@@ -12,7 +12,7 @@ import { RecurringExpensesEmployeeRoutingModule } from './recurring-expense-empl
 import { RecurringExpensesEmployeeComponent } from './recurring-expense-employee.component';
 import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -25,7 +25,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		NbIconModule,
 		RecurringExpenseBlockModule,
 		NbDialogModule.forChild(),
-		TranslaterModule,
+		TranslateModule,
 		NgxPermissionsModule.forChild()
 	],
 	declarations: [RecurringExpensesEmployeeComponent],

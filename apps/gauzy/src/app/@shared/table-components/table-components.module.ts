@@ -13,7 +13,7 @@ import { StatusViewComponent } from './status-view/status-view.component';
 import { ValueWithUnitComponent } from './value-with-units/value-with-units.component';
 import { DocumentUrlTableComponent } from './document-url/document-url.component';
 import { DocumentDateTableComponent } from './document-date/document-date.component';
-import { TranslaterModule } from '../translater/translater.module';
+import { TranslateModule } from '../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -21,7 +21,7 @@ import { TranslaterModule } from '../translater/translater.module';
 		NbIconModule,
 		NbTooltipModule,
 		NbBadgeModule,
-		TranslaterModule
+		TranslateModule
 	],
 	entryComponents: [
 		DateViewComponent,

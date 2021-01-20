@@ -27,7 +27,7 @@ import { SyncDataSelectionComponent } from './components/sync-data-selection/syn
 import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
 import { ReportsComponent } from './components/reports/reports.component';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	declarations: [
@@ -60,7 +60,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		NbActionsModule,
 		NbContextMenuModule,
 		BackNavigationModule,
-		TranslaterModule
+		TranslateModule
 	],
 	entryComponents: [SyncDataSelectionComponent]
 })

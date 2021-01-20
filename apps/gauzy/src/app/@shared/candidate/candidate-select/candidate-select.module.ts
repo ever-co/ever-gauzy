@@ -4,7 +4,7 @@ import { NbSelectModule } from '@nebular/theme';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { CandidateSelectComponent } from './candidate-select.component';
 import { SharedModule } from '../../shared.module';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -13,7 +13,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		SharedModule,
 		FormsModule,
 		ReactiveFormsModule,
-		TranslaterModule
+		TranslateModule
 	],
 	declarations: [CandidateSelectComponent],
 	entryComponents: [CandidateSelectComponent],

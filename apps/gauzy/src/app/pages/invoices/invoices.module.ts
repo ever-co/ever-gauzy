@@ -70,7 +70,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { InvoicePdfComponent } from './invoice-pdf/invoice-pdf.component';
 import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
 import { CurrencyModule } from '../../@shared/currency/currency.module';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -106,7 +106,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		NbPopoverModule,
 		NbFormFieldModule,
 		NbListModule,
-		TranslaterModule,
+		TranslateModule,
 		NgxPermissionsModule.forChild(),
 		CurrencyModule
 	],

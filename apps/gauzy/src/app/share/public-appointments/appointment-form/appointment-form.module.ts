@@ -5,7 +5,7 @@ import { AppointmentModule } from '../../../pages/employees/appointment/appointm
 import { AppointmentFormRoutingModule } from './appointment-form.routing.module';
 import { AppointmentFormComponent } from './appointment-form.component';
 import { ManageAppointmentModule } from '../../../pages/employees/appointment/manage-appointment/manage-appointment.module';
-import { TranslaterModule } from '../../../@shared/translater/translater.module';
+import { TranslateModule } from '../../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -16,7 +16,7 @@ import { TranslaterModule } from '../../../@shared/translater/translater.module'
 		AppointmentFormRoutingModule,
 		AppointmentModule,
 		ManageAppointmentModule,
-		TranslaterModule
+		TranslateModule
 	],
 	declarations: [AppointmentFormComponent],
 	entryComponents: [AppointmentFormComponent],

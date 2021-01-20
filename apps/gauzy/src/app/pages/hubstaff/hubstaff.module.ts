@@ -24,7 +24,7 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { SettingsDialogComponent } from './components/settings-dialog/settings-dialog.component';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	declarations: [
@@ -54,7 +54,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		NbDatepickerModule,
 		BackNavigationModule,
 		NbDialogModule.forChild(),
-		TranslaterModule
+		TranslateModule
 	],
 	entryComponents: [SettingsDialogComponent]
 })

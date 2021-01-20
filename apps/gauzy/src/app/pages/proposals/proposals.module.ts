@@ -32,7 +32,7 @@ import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { ProposalTemplateSelectModule } from '../../@shared/proposal-template-select/proposal-template-select.module';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslaterModule } from '../../@shared/translater/translater.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -59,7 +59,7 @@ import { TranslaterModule } from '../../@shared/translater/translater.module';
 		CKEditorModule,
 		ChartModule,
 		CardGridModule,
-		TranslaterModule,
+		TranslateModule,
 		NgxPermissionsModule.forChild(),
 		ProposalTemplateSelectModule
 	],

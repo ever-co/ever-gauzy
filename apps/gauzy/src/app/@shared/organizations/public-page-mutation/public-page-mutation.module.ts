@@ -23,7 +23,7 @@ import { LanguageInputModule } from '../../language/language-input/language-inpu
 import { SkillsService } from '../../../@core/services/skills.service';
 import { LanguagesService } from '../../../@core/services/languages.service';
 import { CKEditorModule } from 'ng2-ckeditor';
-import { TranslaterModule } from '../../translater/translater.module';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -43,7 +43,7 @@ import { TranslaterModule } from '../../translater/translater.module';
 		NbSelectModule,
 		NbCheckboxModule,
 		NbTooltipModule,
-		TranslaterModule,
+		TranslateModule,
 		NbBadgeModule,
 		NbToggleModule,
 		NbTabsetModule,
