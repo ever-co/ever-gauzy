@@ -68,7 +68,7 @@ export class ProductFormComponent
 
 	@ViewChild('inventoryTabset') inventoryTabset: NbTabsetComponent;
 
-	@ViewChild('mainTab') addTabEl: NbTabComponent;
+	@ViewChild('mainTab') mainTab: NbTabComponent;
 	@ViewChild('optionsTab') optionsTab: NbTabComponent;
 	@ViewChild('variantsTab') variantsTab: NbTabComponent;
 
