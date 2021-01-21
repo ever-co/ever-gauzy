@@ -1,4 +1,7 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import {
+	IBasePerTenantAndOrganizationEntityModel,
+	IBasePerTenantEntityModel
+} from './base-entity.model';
 import { ITranslation, ITranslatable } from './translation.model';
 import { ITag } from './tag-entity.model';
 
@@ -169,6 +172,14 @@ export interface IProductOption
 	name: string;
 	code: string;
 	product?: IProductTranslatable;
+}
+
+export interface IProductAsset extends IBasePerTenantEntityModel {
+	name: string;
+	url: string;
+	width: number;
+	height: number;
+	isFeatured: boolean;
 }
 
 export enum BillingInvoicingPolicyEnum {
