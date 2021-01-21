@@ -104,6 +104,9 @@ export class InvoiceEditComponent
 	loading: boolean;
 	selectedLanguage: string;
 	discountTaxTypes = Object.values(DiscountTaxTypeEnum);
+	isRemainingAmount: string;
+	alreadyPaid: number;
+	amountDue: number;
 	get currency() {
 		return this.form.get('currency');
 	}
@@ -116,6 +119,14 @@ export class InvoiceEditComponent
 		this.route.paramMap.pipe(untilDestroyed(this)).subscribe((params) => {
 			this.invoiceId = params.get('id');
 		});
+		this.route.queryParamMap
+			.pipe(untilDestroyed(this))
+			.subscribe((params) => {
+				const paramsObj = params['params'];
+				if (Object.keys(paramsObj).length) {
+					this.isRemainingAmount = params.get('remainingAmount');
+				}
+			});
 		this.invoicesService.currentData
 			.pipe(untilDestroyed(this))
 			.subscribe((response) => {
@@ -570,7 +581,14 @@ export class InvoiceEditComponent
 				tenantId,
 				tags: this.tags,
 				status: status,
-				sentTo: sendTo
+				sentTo: sendTo,
+				hasRemainingAmountInvoiced:
+					this.isRemainingAmount ||
+					this.invoice.hasRemainingAmountInvoiced
+						? true
+						: false,
+				alreadyPaid: this.invoice.alreadyPaid,
+				amountDue: this.invoice.amountDue
 			});
 
 			const invoiceItems: IInvoiceItemCreateInput[] = [];
@@ -632,6 +650,20 @@ export class InvoiceEditComponent
 				tenantId
 			});
 
+			if (this.isRemainingAmount) {
+				await this.invoiceEstimateHistoryService.add({
+					action: this.getTranslation(
+						'INVOICES_PAGE.INVOICED_REMAINING_AMOUNT'
+					),
+					invoice: this.invoice,
+					invoiceId: this.invoice.id,
+					user: this.store.user,
+					userId: this.store.userId,
+					organization: this.invoice.fromOrganization,
+					organizationId: this.invoice.fromOrganization.id
+				});
+			}
+
 			if (this.isEstimate) {
 				this.toastrService.success(
 					'INVOICES_PAGE.INVOICES_EDIT_ESTIMATE'
@@ -651,7 +683,7 @@ export class InvoiceEditComponent
 	async sendToContact() {
 		if (this.form.value.organizationContact.id) {
 			await this.updateInvoice(
-				'Sent',
+				'SENT',
 				this.form.value.organizationContact.id
 			);
 			await this.invoiceEstimateHistoryService.add({
@@ -729,6 +761,13 @@ export class InvoiceEditComponent
 				invoiceType: this.invoice.invoiceType,
 				tags: this.tags,
 				isEstimate: this.isEstimate,
+				alreadyPaid: this.invoice.alreadyPaid,
+				amountDue: this.invoice.amountDue,
+				hasRemainingAmountInvoiced:
+					this.isRemainingAmount ||
+					this.invoice.hasRemainingAmountInvoiced
+						? true
+						: false,
 				invoiceItems: []
 			};
 
@@ -780,7 +819,7 @@ export class InvoiceEditComponent
 				.toPromise();
 
 			if (result) {
-				await this.updateInvoice('Sent');
+				await this.updateInvoice('SENT');
 			}
 		} else {
 			this.toastrService.danger('INVOICES_PAGE.INVOICE_ITEM.NO_ITEMS');
@@ -905,6 +944,9 @@ export class InvoiceEditComponent
 		if (this.total < 0) {
 			this.total = 0;
 		}
+
+		this.alreadyPaid = +this.invoice.alreadyPaid;
+		this.amountDue = +this.total - +this.alreadyPaid;
 	}
 
 	compareDate(date1: Date, date2: Date): boolean {

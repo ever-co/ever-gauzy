@@ -96,7 +96,8 @@
 		"CLEAR": "Очистить",
 		"SET": "Задать",
 		"RECORD_FULL_PAYMENT": "Запись полной оплаты",
-		"EXPORT_TO_CSV": "Экспорт в CSV"
+		"EXPORT_TO_CSV": "Экспорт в CSV",
+		"INVOICE_REMAINING_AMOUNT": "Оставшаяся сумма"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -2317,6 +2318,9 @@
 		"DATE": "Дата",
 		"YES": "Да",
 		"NO": "Нет",
+		"ALREADY_PAID": "Уже оплачено",
+		"AMOUNT_DUE": "Сумма к оплате",
+		"INVOICED_REMAINING_AMOUNT": "Оставшаяся сумма",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"ESTIMATE_TYPE": "Тип оценки",

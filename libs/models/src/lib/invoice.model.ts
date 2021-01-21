@@ -34,6 +34,9 @@ export interface IInvoice extends IBasePerTenantAndOrganizationEntityModel {
 	isAccepted?: boolean;
 	historyRecords?: IInvoiceEstimateHistory[];
 	internalNote?: string;
+	alreadyPaid?: number;
+	amountDue?: number;
+	hasRemainingAmountInvoiced?: boolean;
 }
 
 export interface IInvoiceCreateInput
@@ -66,6 +69,9 @@ export interface IInvoiceCreateInput
 export interface IInvoiceUpdateInput extends IInvoiceCreateInput {
 	id?: string;
 	internalNote?: string;
+	alreadyPaid?: number;
+	amountDue?: number;
+	hasRemainingAmountInvoiced?: boolean;
 }
 export interface IInvoiceFindInput
 	extends IBasePerTenantAndOrganizationEntityModel {
