@@ -1,5 +1,11 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import {
+	FormGroup,
+	FormBuilder,
+	Validators,
+	AbstractControl,
+	ValidationErrors
+} from '@angular/forms';
 import {
 	IProductOption,
 	ITag,
@@ -26,6 +32,7 @@ import { Store } from '../../../../@core/services/store.service';
 import { ProductVariantService } from '../../../../@core/services/product-variant.service';
 import { ToastrService } from '../../../../@core/services/toastr.service';
 import { VariantCreateInput } from './variant-form/variant-form.component';
+import { NbTabComponent, NbTabsetComponent } from '@nebular/theme';
 
 @Component({
 	selector: 'ngx-product-form',
@@ -58,6 +65,13 @@ export class ProductFormComponent
 	tags: ITag[] = [];
 	organization: IOrganization;
 	productId: string;
+
+	@ViewChild('inventoryTabset') inventoryTabset: NbTabsetComponent;
+
+	@ViewChild('mainTab') addTabEl: NbTabComponent;
+	@ViewChild('optionsTab') optionsTab: NbTabComponent;
+	@ViewChild('variantsTab') variantsTab: NbTabComponent;
+
 	private ngDestroy$ = new Subject<void>();
 
 	constructor(
@@ -119,7 +133,7 @@ export class ProductFormComponent
 			tags: [this.inventoryItem ? this.inventoryItem.tags : ''],
 			name: [
 				this.activeTranslation ? this.activeTranslation.name : '',
-				Validators.required
+				this.validateTranslationProperty('name')
 			],
 			code: [
 				this.inventoryItem ? this.inventoryItem.code : '',
@@ -144,6 +158,16 @@ export class ProductFormComponent
 			]
 		});
 	}
+
+	validateTranslationProperty = (propertyName: string) => (
+		control: AbstractControl
+	): null | ValidationErrors => {
+		return this.translations.every((translation: IProductTranslation) => {
+			return !translation[propertyName] && !control.value;
+		})
+			? { required: true }
+			: null;
+	};
 
 	async loadProduct(id: string) {
 		if (id) {
@@ -259,6 +283,8 @@ export class ProductFormComponent
 			});
 
 			await this.loadProduct(productResult.id);
+
+			this.inventoryTabset.selectTab(this.variantsTab);
 
 			this.router.navigate([
 				`/pages/organization/inventory/edit/${this.inventoryItem.id}`
