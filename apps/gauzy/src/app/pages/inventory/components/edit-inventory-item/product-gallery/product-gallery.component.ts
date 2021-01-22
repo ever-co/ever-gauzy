@@ -19,7 +19,7 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
 import { Subject } from 'rxjs';
-import { take } from 'rxjs/operators';
+import { first, take } from 'rxjs/operators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -100,14 +100,15 @@ export class ProductGalleryComponent
 		this.availableImages = (await this.imageAssetService.getAll({})).items;
 	}
 
-	onAddImageClick() {
-		//tstodo
-		// const dialog = this.dialogService.open(SelectAssetComponent, {
-		// 	context: {
-		// 		gallery: this.availableImages,
-		// 		newImageUploadedEvent: this.newImageUploadedEvent$
-		// 	}
-		// });
+	async onAddImageClick() {
+		const dialog = this.dialogService.open(SelectAssetComponent, {
+			context: {
+				gallery: this.availableImages,
+				newImageUploadedEvent: this.newImageUploadedEvent$
+			}
+		});
+
+		await dialog.onClose.pipe(first()).toPromise();
 	}
 
 	ngOnDestroy(): void {}
