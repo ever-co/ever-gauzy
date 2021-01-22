@@ -174,7 +174,7 @@ export interface IProductOption
 	product?: IProductTranslatable;
 }
 
-export interface IProductAsset extends IBasePerTenantEntityModel {
+export interface IImageAsset extends IBasePerTenantEntityModel {
 	name: string;
 	url: string;
 	width: number;

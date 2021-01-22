@@ -1,0 +1,64 @@
+<nb-card class="main" size="large">
+	<nb-card-header class="d-flex">
+		<h5>
+			<!-- {{
+                'INVENTORY_PAGE.SELECT_OR_UPLOAD_IMAGE' | translate
+            }} -->
+			Select or upload image
+		</h5>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="dialogRef.close()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="row">
+			<div class="col-md-8">
+				<div class="row mb-2">
+					<input
+						type="file"
+						nbInput
+						fullWidth
+						placeholder="Full width"
+					/>
+					<button
+						class="button-import"
+						outline
+						status="primary"
+						size="medium"
+						nbButton
+						(click)="({})"
+						*ngIf=""
+					>
+						{{ 'INVENTORY_PAGE.BROWSE' | translate }}
+					</button>
+				</div>
+				<div class="row image-assets-container">
+					<div
+						class="col-lg-3 col-md-4 col-sm-6 mb-3"
+						*ngFor="let image of testImages"
+					>
+						<ngx-img-asset
+							[imageAsset]="image"
+							(imageClicked)="onSelectImage($event)"
+						></ngx-img-asset>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-4">
+				<div class="row pl-3">
+					<ngx-img-preview></ngx-img-preview>
+				</div>
+			</div>
+		</div>
+	</nb-card-body>
+	<nb-card-footer>
+		<button class="button-home" status="primary" nbButton nbStepperNext>
+			<!-- {{
+                'INVENTORY_PAGE.SELECT_IMAGE' | translate
+            }} -->
+			Select image
+		</button>
+	</nb-card-footer>
+</nb-card>
