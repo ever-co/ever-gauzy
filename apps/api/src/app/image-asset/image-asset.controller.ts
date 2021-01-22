@@ -15,33 +15,34 @@ import { PermissionsEnum } from '@gauzy/models';
 import { Permissions } from '../shared/decorators/permissions';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
-import { ProductAsset } from './product-asset.entity';
-import { ProductAssetService } from './product-asset.service';
+import { ImageAsset } from './image-asset.entity';
+import { ImageAssetService } from './image-asset.service';
 
-@ApiTags('ProductAsset')
+@ApiTags('ImageAsset')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
-export class ProductAssetController extends CrudController<ProductAsset> {
-	constructor(private readonly productAssetService: ProductAssetService) {
+export class ImageAssetController extends CrudController<ImageAsset> {
+	constructor(private readonly productAssetService: ImageAssetService) {
 		super(productAssetService);
 	}
 
 	@Get('/:id')
-	async findById(@Param('id') id: string): Promise<ProductAsset> {
+	async findById(@Param('id') id: string): Promise<ImageAsset> {
 		return this.productAssetService.findOne(id);
 	}
 
+	//tstodo organization permission
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TAGS_EDIT)
 	@Post()
-	async createRecord(@Body() entity: ProductAsset): Promise<ProductAsset> {
+	async createRecord(@Body() entity: ImageAsset): Promise<ImageAsset> {
 		return this.productAssetService.create(entity);
 	}
 
 	@Get()
 	async getAllAssets(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<ProductAsset>> {
+	): Promise<IPagination<ImageAsset>> {
 		const { relations, findInput } = data;
 		return this.productAssetService.findAll({
 			where: findInput,

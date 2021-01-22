@@ -19,6 +19,7 @@ import { Tag } from '../tags/tag.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { TranslatableBase } from '../core/entities/translate-base';
 import { ProductTranslation } from './product-translation.entity';
+import { ImageAsset } from '../image-asset/image-asset.entity';
 
 @Entity('product')
 export class Product extends TranslatableBase implements IProductTranslatable {
@@ -88,4 +89,10 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 		}
 	)
 	translations: ProductTranslation[];
+
+	@ManyToMany((type) => ImageAsset)
+	@JoinTable({
+		name: 'product_gallery_item'
+	})
+	gallery: [];
 }
