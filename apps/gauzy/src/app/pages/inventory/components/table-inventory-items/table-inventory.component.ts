@@ -62,11 +62,6 @@ export class TableInventoryComponent
 	}
 
 	ngOnInit(): void {
-		//tstodo test
-		const dialog = this.dialogService.open(SelectAssetComponent, {
-			context: {}
-		});
-
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.selectedLanguage = this.translateService.currentLang;

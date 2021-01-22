@@ -8,5 +8,5 @@ import { IImageAsset } from '@gauzy/models';
 })
 export class ImagePreviewComponent {
 	@Input()
-	imageAsset: IImageAsset;
+	selectedImage: IImageAsset;
 }

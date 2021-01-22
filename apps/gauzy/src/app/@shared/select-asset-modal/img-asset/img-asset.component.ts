@@ -12,9 +12,11 @@ export class ImageAssetComponent implements OnInit {
 
 	@Output() imageClicked = new EventEmitter<any>();
 
-	onImageClick($event) {}
-
 	ngOnInit(): void {
-		console.log('image asset', this.imageAsset);
+		
+	}
+
+	onImageClick($event) {
+		this.imageClicked.emit(this.imageAsset);
 	}
 }
