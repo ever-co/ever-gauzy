@@ -51,7 +51,7 @@
 		"aws-sdk": "^2.761.0",
 		"bcrypt": "^5.0.0",
 		"cache-manager": "^3.4.0",
-		"class-transformer": "^0.3.1",
+		"class-transformer": "0.3.1",
 		"class-validator": "^0.12.2",
 		"cli-ux": "^5.5.0",
 		"cls-hooked": "^4.2.2",

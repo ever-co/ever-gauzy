@@ -3604,9 +3604,9 @@
   integrity sha512-4UJAH3ryJvT+SDeuB5ls1OpJsPr3xqsyiuWCfVd1oyzCLazuxl04t/xup005HtWdxczwLgaAau7SIAb+XZotBQ==
 
 "@nestjs/graphql@^7.7.0", "@nestjs/graphql@^7.9.4":
-  version "7.9.7"
-  resolved "https://registry.yarnpkg.com/@nestjs/graphql/-/graphql-7.9.7.tgz#9dd32ec58e72983348ae2633dc71101f86ba96af"
-  integrity sha512-opRLzQw6gwq4pbA8l6CewIH2Kr6hZy9VnHPu6jbrBc2WUrk+l0N9+uqZbWcnAxvthzfSxFTukgJKlepDv4yJAw==
+  version "7.9.8"
+  resolved "https://registry.yarnpkg.com/@nestjs/graphql/-/graphql-7.9.8.tgz#76d621ad9d6300d6fa027ddb3366adbc0a32dd73"
+  integrity sha512-z8zkiiRSJ4f4FsLVK3usnXcyAytTuLL34MGNSVJqrrTaLB1t/M/sWv+N4C6v9ZbQ3Ev1GUdAaGyeAp+B7J051w==
   dependencies:
     "@graphql-tools/merge" "6.2.7"
     "@graphql-tools/schema" "6.2.4"
@@ -9450,10 +9450,10 @@ ckeditor@^4.12.1:
   resolved "https://registry.yarnpkg.com/ckeditor/-/ckeditor-4.12.1.tgz#954a7b028dd611e44ba51cc7c2fe051cf1052186"
   integrity sha512-pH2Su4oi0D4iN/3U8nUcwI7/lXHoOJi0aiN8e2zxnm4Ow5kq8eZP2ZGmpYyuqRyKZ2tHaU8+OyYi7laXcjiq9Q==
 
-class-transformer@^0.3.1:
-  version "0.3.2"
-  resolved "https://registry.yarnpkg.com/class-transformer/-/class-transformer-0.3.2.tgz#779ef5f124784324b40f8e927c774bd96cdecd4b"
-  integrity sha512-9QY6QXBH/+Gt1C3HBmJCrgY6+EFpIa6aLjfDnlXFx0zQl/HjrCE7qoaI0srNrxpMIfsobCpgUdDG5JYtJOpVsw==
+class-transformer@0.3.1:
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/class-transformer/-/class-transformer-0.3.1.tgz#ee681a5439ff2230fc57f5056412d3befa70d597"
+  integrity sha512-cKFwohpJbuMovS8xVLmn8N2AUbAuc8pVo4zEfsUVo8qgECOogns1WVk/FkOZoxhOPTyTYFckuoH+13FO+MQ8GA==
 
 class-utils@^0.3.5:
   version "0.3.6"

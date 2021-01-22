@@ -39,7 +39,7 @@
 		"@ntegral/nestjs-sentry": "https://github.com/ever-co/nestjs-sentry",
 		"apollo-server-express": "^2.19.1",
 		"bcrypt": "^5.0.0",
-		"class-transformer": "^0.3.1",
+		"class-transformer": "0.3.1",
 		"class-validator": "^0.12.2",
 		"cls-hooked": "^4.2.2",
 		"express-session": "^1.17.1",
