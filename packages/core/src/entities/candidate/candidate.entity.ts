@@ -1,5 +1,3 @@
-import { CandidateSkill } from './../candidate-skill/candidate-skill.entity';
-import { CandidateExperience } from './../candidate-experience/candidate-experience.entity';
 import {
 	ICandidate,
 	ICandidateInterview,
@@ -15,7 +13,8 @@ import {
 	IOrganizationEmploymentType,
 	IOrganizationDepartment,
 	IContact,
-	ITag
+	ITag,
+	DeepPartial
 } from '@gauzy/common';
 import { average } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -32,22 +31,32 @@ import {
 	OneToMany,
 	AfterLoad
 } from 'typeorm';
-import { OrganizationDepartment } from '../organization-department/organization-department.entity';
-import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
-import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
-import { Tag } from '../tags/tag.entity';
-import { User } from '../user/user.entity';
-import { CandidateEducation } from '../candidate-education/candidate-education.entity';
-import { CandidateSource } from '../candidate-source/candidate-source.entity';
-import { CandidateDocument } from '../candidate-documents/candidate-documents.entity';
-import { CandidateFeedback } from '../candidate-feedbacks/candidate-feedbacks.entity';
-import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
-import { Contact } from '../contact/contact.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import {
+	CandidateDocument,
+	CandidateEducation,
+	CandidateExperience,
+	CandidateFeedback,
+	CandidateInterview,
+	CandidateSkill,
+	CandidateSource,
+	Contact,
+	OrganizationDepartment,
+	OrganizationEmploymentType,
+	OrganizationPositions,
+	Tag,
+	TenantOrganizationBaseEntity,
+	User
+} from '../internal';
 
 @Entity('candidate')
-export class Candidate extends TenantOrganizationBase implements ICandidate {
-	@ManyToMany((type) => Tag, (tag) => tag.candidate)
+export class Candidate
+	extends TenantOrganizationBaseEntity
+	implements ICandidate {
+	constructor(input?: DeepPartial<Candidate>) {
+		super(input);
+	}
+
+	@ManyToMany(() => Tag, (tag) => tag.candidate)
 	@JoinTable({
 		name: 'tag_candidate'
 	})
@@ -95,7 +104,7 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 	skills: ICandidateSkill[];
 
 	@ApiProperty({ type: CandidateSource })
-	@OneToOne((type) => CandidateSource, {
+	@OneToOne(() => CandidateSource, {
 		cascade: true,
 		onDelete: 'CASCADE'
 	})
@@ -115,7 +124,7 @@ export class Candidate extends TenantOrganizationBase implements ICandidate {
 	feedbacks?: ICandidateFeedback[];
 
 	@ApiProperty({ type: User })
-	@OneToOne((type) => User, {
+	@OneToOne(() => User, {
 		cascade: true,
 		onDelete: 'CASCADE'
 	})

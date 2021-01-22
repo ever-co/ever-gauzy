@@ -1,14 +1,21 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { IAppointmentEmployee, IEmployeeAppointment } from '@gauzy/common';
+import {
+	DeepPartial,
+	IAppointmentEmployee,
+	IEmployeeAppointment
+} from '@gauzy/common';
 import { IsString, IsNotEmpty } from 'class-validator';
-import { EmployeeAppointment } from '../employee-appointment/employee-appointment.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { EmployeeAppointment, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('appointment_employee')
 export class AppointmentEmployee
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IAppointmentEmployee {
+	constructor(input?: DeepPartial<AppointmentEmployee>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -23,7 +30,7 @@ export class AppointmentEmployee
 
 	@ApiProperty({ type: EmployeeAppointment })
 	@ManyToOne(
-		(type) => EmployeeAppointment,
+		() => EmployeeAppointment,
 		(employeeAppointment) => employeeAppointment,
 		{ onDelete: 'SET NULL' }
 	)

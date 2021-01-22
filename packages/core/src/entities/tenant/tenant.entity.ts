@@ -1,19 +1,26 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Base } from '../base';
+import {
+	BaseEntity,
+	FeatureOrganization,
+	Organization,
+	RolePermissions
+} from '../internal';
 import { Entity, Column, Index, OneToMany, JoinColumn } from 'typeorm';
 import { IsNotEmpty, IsString } from 'class-validator';
 import {
 	ITenant,
 	IOrganization,
 	IRolePermission,
-	IFeatureOrganization
+	IFeatureOrganization,
+	DeepPartial
 } from '@gauzy/common';
-import { Organization } from '../organization/organization.entity';
-import { RolePermissions } from '../role-permissions/role-permissions.entity';
-import { FeatureOrganization } from '../feature/feature_organization.entity';
 
 @Entity('tenant')
-export class Tenant extends Base implements ITenant {
+export class Tenant extends BaseEntity implements ITenant {
+	constructor(input?: DeepPartial<Tenant>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@Index()
 	@IsString()
@@ -27,15 +34,12 @@ export class Tenant extends Base implements ITenant {
 	organizations?: IOrganization[];
 
 	@ApiProperty({ type: RolePermissions })
-	@OneToMany(
-		(type) => RolePermissions,
-		(rolePermission) => rolePermission.tenant
-	)
+	@OneToMany(() => RolePermissions, (rolePermission) => rolePermission.tenant)
 	rolePermissions?: IRolePermission[];
 
 	@ApiProperty({ type: FeatureOrganization })
 	@OneToMany(
-		(type) => FeatureOrganization,
+		() => FeatureOrganization,
 		(featureOrganization) => featureOrganization.tenant
 	)
 	featureOrganizations?: IFeatureOrganization[];

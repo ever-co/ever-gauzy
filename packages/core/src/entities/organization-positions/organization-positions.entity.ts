@@ -1,16 +1,19 @@
 import { Column, Entity, Index, ManyToMany, JoinTable } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { IOrganizationPosition } from '@gauzy/common';
-import { Tag } from '../tags/tag.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { DeepPartial, IOrganizationPosition } from '@gauzy/common';
+import { Tag, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('organization_position')
 export class OrganizationPositions
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IOrganizationPosition {
+	constructor(input?: DeepPartial<OrganizationPositions>) {
+		super(input);
+	}
+
 	@ApiProperty()
-	@ManyToMany((type) => Tag, (tag) => tag.organizationPosition)
+	@ManyToMany(() => Tag, (tag) => tag.organizationPosition)
 	@JoinTable({
 		name: 'tag_organization_position'
 	})

@@ -1,5 +1,6 @@
 import { Entity, Column, JoinColumn, ManyToOne } from 'typeorm';
 import {
+	DeepPartial,
 	IEmployee,
 	IExpense,
 	IInvoice,
@@ -10,18 +11,24 @@ import {
 } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNumber, IsString, IsOptional, IsBoolean } from 'class-validator';
-import { Invoice } from '../invoice/invoice.entity';
-import { Task } from '../tasks/task.entity';
-import { Employee } from '../employee/employee.entity';
-import { OrganizationProject } from '../organization-projects/organization-projects.entity';
-import { Product } from '../product/product.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
-import { Expense } from '../expense/expense.entity';
+import {
+	Employee,
+	Expense,
+	Invoice,
+	OrganizationProject,
+	Product,
+	Task,
+	TenantOrganizationBaseEntity
+} from '../internal';
 
 @Entity('invoice_item')
 export class InvoiceItem
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IInvoiceItem {
+	constructor(input?: DeepPartial<InvoiceItem>) {
+		super(input);
+	}
+
 	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@IsOptional()
@@ -84,36 +91,36 @@ export class InvoiceItem
 	expenseId?: string;
 
 	@ApiPropertyOptional({ type: Expense })
-	@ManyToOne((type) => Expense, (expense) => expense.invoiceItems, {
+	@ManyToOne(() => Expense, (expense) => expense.invoiceItems, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	expense?: IExpense;
 
 	@ApiPropertyOptional({ type: Invoice })
-	@ManyToOne((type) => Invoice, (invoice) => invoice.invoiceItems, {
+	@ManyToOne(() => Invoice, (invoice) => invoice.invoiceItems, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	invoice?: IInvoice;
 
 	@ApiPropertyOptional({ type: Task })
-	@ManyToOne((type) => Task, (task) => task.invoiceItems)
+	@ManyToOne(() => Task, (task) => task.invoiceItems)
 	@JoinColumn()
 	task?: ITask;
 
 	@ApiPropertyOptional({ type: Employee })
-	@ManyToOne((type) => Employee, (employee) => employee.invoiceItems)
+	@ManyToOne(() => Employee, (employee) => employee.invoiceItems)
 	@JoinColumn()
 	employee?: IEmployee;
 
 	@ApiPropertyOptional({ type: OrganizationProject })
-	@ManyToOne((type) => OrganizationProject, (project) => project.invoiceItems)
+	@ManyToOne(() => OrganizationProject, (project) => project.invoiceItems)
 	@JoinColumn()
 	project?: IOrganizationProject;
 
 	@ApiPropertyOptional({ type: Product })
-	@ManyToOne((type) => Product, (product) => product.invoiceItems)
+	@ManyToOne(() => Product, (product) => product.invoiceItems)
 	@JoinColumn()
 	product?: IProduct;
 

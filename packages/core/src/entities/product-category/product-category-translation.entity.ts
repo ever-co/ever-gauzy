@@ -1,17 +1,21 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import {
+	DeepPartial,
 	IProductTypeTranslation as IProductCategoryTranslation,
 	LanguagesEnum
 } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsOptional, IsEnum } from 'class-validator';
-import { TranslationBase } from '../translate-base';
-import { ProductCategory } from './product-category.entity';
+import { ProductCategory, TranslationBase } from '../internal';
 
 @Entity('product_category_translation')
 export class ProductCategoryTranslation
 	extends TranslationBase
 	implements IProductCategoryTranslation {
+	constructor(input?: DeepPartial<ProductCategoryTranslation>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column()
@@ -24,9 +28,12 @@ export class ProductCategoryTranslation
 
 	@ApiProperty({ type: ProductCategory })
 	@ManyToOne(
-		(type) => ProductCategory,
+		() => ProductCategory,
 		(productCategory) => productCategory.translations,
-		{ onDelete: 'CASCADE', onUpdate: 'CASCADE' }
+		{
+			onDelete: 'CASCADE',
+			onUpdate: 'CASCADE'
+		}
 	)
 	@JoinColumn()
 	reference: ProductCategory;

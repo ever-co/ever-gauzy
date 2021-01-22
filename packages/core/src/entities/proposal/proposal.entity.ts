@@ -14,22 +14,31 @@ import {
 	IProposal,
 	IEmployee,
 	ITag,
-	IOrganizationContact
+	IOrganizationContact,
+	DeepPartial
 } from '@gauzy/common';
-import { Employee } from '../employee/employee.entity';
-import { Tag } from '../tags/tag.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
-import { OrganizationContact } from '../organization-contact/organization-contact.entity';
+import {
+	Employee,
+	OrganizationContact,
+	Tag,
+	TenantOrganizationBaseEntity
+} from '../internal';
 
 @Entity('proposal')
-export class Proposal extends TenantOrganizationBase implements IProposal {
+export class Proposal
+	extends TenantOrganizationBaseEntity
+	implements IProposal {
+	constructor(input?: DeepPartial<Proposal>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: Tag })
-	@ManyToMany((type) => Tag, (tag) => tag.proposal)
+	@ManyToMany(() => Tag, (tag) => tag.proposal)
 	@JoinTable({ name: 'tag_proposal' })
 	tags: ITag[];
 
 	@ApiProperty({ type: Employee })
-	@ManyToOne((type) => Employee, { nullable: true, onDelete: 'CASCADE' })
+	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	employee: IEmployee;
 

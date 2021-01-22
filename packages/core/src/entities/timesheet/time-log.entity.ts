@@ -17,21 +17,28 @@ import {
 	ITask,
 	IOrganizationProject,
 	IOrganizationContact,
-	ITimeSlot
+	ITimeSlot,
+	DeepPartial
 } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsBoolean, IsDateString, IsEnum } from 'class-validator';
-import { Employee } from '../employee/employee.entity';
-import { Timesheet } from './timesheet.entity';
-import { OrganizationProject } from '../organization-projects/organization-projects.entity';
-import { OrganizationContact } from '../organization-contact/organization-contact.entity';
-import { Task } from '../tasks/task.entity';
 import * as moment from 'moment';
-import { TimeSlot } from './time-slot.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import {
+	Employee,
+	OrganizationContact,
+	OrganizationProject,
+	Task,
+	TenantOrganizationBaseEntity,
+	Timesheet,
+	TimeSlot
+} from '../internal';
 
 @Entity('time_log')
-export class TimeLog extends TenantOrganizationBase implements ITimeLog {
+export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
+	constructor(input?: DeepPartial<TimeLog>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee, { nullable: true })
 	@JoinColumn()

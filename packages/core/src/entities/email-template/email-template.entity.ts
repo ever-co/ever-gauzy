@@ -1,13 +1,17 @@
-import { IEmailTemplate } from '@gauzy/common';
+import { DeepPartial, IEmailTemplate } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 import { Column, Entity, Index } from 'typeorm';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('email_template')
 export class EmailTemplate
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IEmailTemplate {
+	constructor(input?: DeepPartial<EmailTemplate>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

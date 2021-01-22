@@ -2,7 +2,8 @@ import {
 	IEquipment,
 	CurrenciesEnum,
 	IEquipmentSharing,
-	ITag
+	ITag,
+	DeepPartial
 } from '@gauzy/common';
 import { Entity, Column, OneToMany, ManyToMany, JoinTable } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -14,14 +15,22 @@ import {
 	IsEnum,
 	IsBoolean
 } from 'class-validator';
-import { EquipmentSharing } from '../equipment-sharing/equipment-sharing.entity';
-import { Tag } from '../tags/tag.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import {
+	EquipmentSharing,
+	Tag,
+	TenantOrganizationBaseEntity
+} from '../internal';
 
 @Entity('equipment')
-export class Equipment extends TenantOrganizationBase implements IEquipment {
+export class Equipment
+	extends TenantOrganizationBaseEntity
+	implements IEquipment {
+	constructor(input?: DeepPartial<Equipment>) {
+		super(input);
+	}
+
 	@ApiProperty()
-	@ManyToMany((type) => Tag, (tag) => tag.equipment)
+	@ManyToMany(() => Tag, (tag) => tag.equipment)
 	@JoinTable({ name: 'tag_equipment' })
 	tags: ITag[];
 
@@ -73,7 +82,7 @@ export class Equipment extends TenantOrganizationBase implements IEquipment {
 	autoApproveShare: boolean;
 
 	@OneToMany(
-		(type) => EquipmentSharing,
+		() => EquipmentSharing,
 		(equipmentSharing) => equipmentSharing.equipment
 	)
 	equipmentSharings: IEquipmentSharing[];

@@ -16,19 +16,29 @@ import {
 	ManyToMany,
 	JoinTable
 } from 'typeorm';
-import { IRequestApproval, ApprovalPolicyTypesStringEnum } from '@gauzy/common';
+import {
+	IRequestApproval,
+	ApprovalPolicyTypesStringEnum,
+	DeepPartial
+} from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsNumber, IsEnum } from 'class-validator';
-import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
-import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
-import { RequestApprovalTeam } from '../request-approval-team/request-approval-team.entity';
-import { Tag } from '../tags/tag.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import {
+	ApprovalPolicy,
+	RequestApprovalEmployee,
+	RequestApprovalTeam,
+	Tag,
+	TenantOrganizationBaseEntity
+} from '../internal';
 
 @Entity('request_approval')
 export class RequestApproval
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IRequestApproval {
+	constructor(input?: DeepPartial<RequestApproval>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -37,7 +47,7 @@ export class RequestApproval
 	name: string;
 
 	@ApiProperty({ type: ApprovalPolicy })
-	@ManyToOne((type) => ApprovalPolicy, {
+	@ManyToOne(() => ApprovalPolicy, {
 		nullable: true,
 		onDelete: 'CASCADE'
 	})
@@ -51,7 +61,7 @@ export class RequestApproval
 	approvalPolicyId: string;
 
 	@OneToMany(
-		(type) => RequestApprovalEmployee,
+		() => RequestApprovalEmployee,
 		(employeeApprovals) => employeeApprovals.requestApproval,
 		{
 			cascade: true
@@ -60,7 +70,7 @@ export class RequestApproval
 	employeeApprovals?: RequestApprovalEmployee[];
 
 	@OneToMany(
-		(type) => RequestApprovalTeam,
+		() => RequestApprovalTeam,
 		(teamApprovals) => teamApprovals.requestApproval,
 		{
 			cascade: true
@@ -94,7 +104,7 @@ export class RequestApproval
 	requestId: string;
 
 	@ApiProperty()
-	@ManyToMany((type) => Tag, (tag) => tag.requestApproval)
+	@ManyToMany(() => Tag, (tag) => tag.requestApproval)
 	@JoinTable({
 		name: 'tag_request_approval'
 	})

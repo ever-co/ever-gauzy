@@ -1,16 +1,19 @@
 import { Column, Entity, ManyToMany, JoinTable } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { IExpenseCategory } from '@gauzy/common';
-import { Tag } from '../tags/tag.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { DeepPartial, IExpenseCategory } from '@gauzy/common';
+import { Tag, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('expense_category')
 export class ExpenseCategory
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IExpenseCategory {
+	constructor(input?: DeepPartial<ExpenseCategory>) {
+		super(input);
+	}
+
 	@ApiProperty()
-	@ManyToMany((type) => Tag, (tag) => tag.expenseCategory)
+	@ManyToMany(() => Tag, (tag) => tag.expenseCategory)
 	@JoinTable({
 		name: 'tag_organization_expense_category'
 	})

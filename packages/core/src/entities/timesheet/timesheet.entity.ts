@@ -6,7 +6,7 @@ import {
 	JoinColumn,
 	OneToMany
 } from 'typeorm';
-import { ITimesheet, TimesheetStatus } from '@gauzy/common';
+import { DeepPartial, ITimesheet, TimesheetStatus } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsString,
@@ -15,12 +15,16 @@ import {
 	IsDateString,
 	IsEnum
 } from 'class-validator';
-import { Employee } from '../employee/employee.entity';
-import { TimeLog } from './time-log.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { Employee, TenantOrganizationBaseEntity, TimeLog } from '../internal';
 
 @Entity('timesheet')
-export class Timesheet extends TenantOrganizationBase implements ITimesheet {
+export class Timesheet
+	extends TenantOrganizationBaseEntity
+	implements ITimesheet {
+	constructor(input?: DeepPartial<Timesheet>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee, { nullable: true })
 	@JoinColumn()

@@ -1,12 +1,16 @@
 import { Entity, Column } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { IHelpCenterArticle } from '@gauzy/common';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { DeepPartial, IHelpCenterArticle } from '@gauzy/common';
+import { TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('knowledge_base_article')
 export class HelpCenterArticle
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IHelpCenterArticle {
+	constructor(input?: DeepPartial<HelpCenterArticle>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;

@@ -9,16 +9,20 @@ import {
 } from 'class-validator';
 import {
 	AvailabilitySlotType,
+	DeepPartial,
 	IAvailabilitySlot,
 	IEmployee
 } from '@gauzy/common';
-import { Employee } from '../employee/employee.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { Employee, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('availability_slot')
 export class AvailabilitySlot
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IAvailabilitySlot {
+	constructor(input?: DeepPartial<AvailabilitySlot>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()

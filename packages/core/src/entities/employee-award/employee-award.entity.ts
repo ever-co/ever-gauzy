@@ -1,14 +1,17 @@
 import { Column, Entity, Index, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { Employee } from '../employee/employee.entity';
-import { IEmployeeAward } from '@gauzy/common';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { DeepPartial, IEmployeeAward } from '@gauzy/common';
+import { Employee, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('employee_award')
 export class EmployeeAward
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IEmployeeAward {
+	constructor(input?: DeepPartial<EmployeeAward>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

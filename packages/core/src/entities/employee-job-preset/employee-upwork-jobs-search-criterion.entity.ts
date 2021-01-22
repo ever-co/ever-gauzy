@@ -2,6 +2,7 @@ import { Column, Entity, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import {
+	DeepPartial,
 	IEmployee,
 	IEmployeeUpworkJobsSearchCriterion,
 	IJobPreset,
@@ -9,16 +10,22 @@ import {
 	IJobSearchOccupation,
 	JobPostTypeEnum
 } from '@gauzy/common';
-import { TenantOrganizationBase } from '../tenant-organization-base';
-import { JobPreset } from './job-preset.entity';
-import { Employee } from '../employee/employee.entity';
-import { JobSearchOccupation } from './job-search-occupation/job-search-occupation.entity';
-import { JobSearchCategory } from './job-search-category/job-search-category.entity';
+import {
+	Employee,
+	JobPreset,
+	JobSearchCategory,
+	JobSearchOccupation,
+	TenantOrganizationBaseEntity
+} from '../internal';
 
 @Entity('employee_upwork_job_search_criterion')
 export class EmployeeUpworkJobsSearchCriterion
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IEmployeeUpworkJobsSearchCriterion {
+	constructor(input?: DeepPartial<EmployeeUpworkJobsSearchCriterion>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

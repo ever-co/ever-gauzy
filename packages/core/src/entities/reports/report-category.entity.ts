@@ -1,12 +1,15 @@
 import { Entity, Index, Column, OneToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
-import { IReport, IReportCategory } from '@gauzy/common';
-import { Report } from './report.entity';
-import { Base } from '../base';
+import { DeepPartial, IReport, IReportCategory } from '@gauzy/common';
+import { BaseEntity, Report } from '../internal';
 
 @Entity('report_category')
-export class ReportCategory extends Base implements IReportCategory {
+export class ReportCategory extends BaseEntity implements IReportCategory {
+	constructor(input?: DeepPartial<ReportCategory>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

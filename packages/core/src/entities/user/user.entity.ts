@@ -1,14 +1,14 @@
 // Modified code from https://github.com/xmlking/ngx-starter-kit.
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
-
 import {
 	IUser,
 	IRole,
 	LanguagesEnum,
 	ComponentLayoutStyleEnum,
 	ITag,
-	IEmployee
+	IEmployee,
+	DeepPartial
 } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -33,13 +33,14 @@ import {
 	OneToOne,
 	AfterLoad
 } from 'typeorm';
-import { Role } from '../role/role.entity';
-import { Tag } from '../tags/tag.entity';
-import { Employee } from '../employee/employee.entity';
-import { TenantBase } from '../tenant-base';
+import { Employee, Role, Tag, TenantBaseEntity } from '../internal';
 
 @Entity('user')
-export class User extends TenantBase implements IUser {
+export class User extends TenantBaseEntity implements IUser {
+	constructor(input?: DeepPartial<User>) {
+		super(input);
+	}
+
 	@ManyToMany(() => Tag)
 	@JoinTable({
 		name: 'tag_user'

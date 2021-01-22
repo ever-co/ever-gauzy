@@ -1,18 +1,26 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, JoinColumn, RelationId, ManyToOne } from 'typeorm';
 import {
+	DeepPartial,
 	IIntegrationEntitySetting,
 	IIntegrationEntitySettingTied
 } from '@gauzy/common';
-import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import {
+	IntegrationEntitySetting,
+	TenantOrganizationBaseEntity
+} from '../internal';
+
 @Entity('integration_entity_setting_tied_entity')
 export class IntegrationEntitySettingTiedEntity
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IIntegrationEntitySettingTied {
+	constructor(input?: DeepPartial<IntegrationEntitySettingTiedEntity>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: IntegrationEntitySetting })
 	@ManyToOne(
-		(type) => IntegrationEntitySetting,
+		() => IntegrationEntitySetting,
 		(integrationEntitySetting) => integrationEntitySetting.tiedEntities
 	)
 	@JoinColumn()

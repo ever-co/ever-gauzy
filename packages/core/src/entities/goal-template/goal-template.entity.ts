@@ -2,18 +2,22 @@ import {
 	IGoalTemplate,
 	GoalLevelEnum,
 	GoalTemplateCategoriesEnum,
-	IKeyResultTemplate
+	IKeyResultTemplate,
+	DeepPartial
 } from '@gauzy/common';
 import { Entity, Column, OneToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum } from 'class-validator';
-import { KeyResultTemplate } from '../keyresult-template/keyresult-template.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { KeyResultTemplate, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('goal_template')
 export class GoalTemplate
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IGoalTemplate {
+	constructor(input?: DeepPartial<GoalTemplate>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;
@@ -29,7 +33,7 @@ export class GoalTemplate
 	category: string;
 
 	@ApiProperty({ type: KeyResultTemplate })
-	@OneToMany((type) => KeyResultTemplate, (keyResult) => keyResult.goal)
+	@OneToMany(() => KeyResultTemplate, (keyResult) => keyResult.goal)
 	@IsOptional()
 	keyResults?: IKeyResultTemplate[];
 }

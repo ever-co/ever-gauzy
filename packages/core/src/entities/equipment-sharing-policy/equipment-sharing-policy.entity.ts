@@ -1,18 +1,22 @@
 /*
-  Approval Policy is predefined approval types for the organization.
-E.g. for example, "Business Trip", "Borrow Items", ...
-  Approval Policy table has the many to one relationship to the Organization table and Tenant by organizationId and tenantId
-*/
+ *  Approval Policy is predefined approval types for the organization.
+ * E.g. for example, "Business Trip", "Borrow Items", ...
+ * Approval Policy table has the many to one relationship to the Organization table and Tenant by organizationId and tenantId
+ */
 import { Entity, Index, Column } from 'typeorm';
-import { IEquipmentSharingPolicy } from '@gauzy/common';
+import { DeepPartial, IEquipmentSharingPolicy } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('equipment_sharing_policy')
 export class EquipmentSharingPolicy
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IEquipmentSharingPolicy {
+	constructor(input?: DeepPartial<EquipmentSharingPolicy>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

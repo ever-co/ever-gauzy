@@ -30,24 +30,31 @@ import {
 	IEmployee,
 	IOrganizationSprint,
 	IPayment,
-	OrganizationProjectBudgetTypeEnum
+	OrganizationProjectBudgetTypeEnum,
+	DeepPartial
 } from '@gauzy/common';
-import { OrganizationContact } from '../organization-contact/organization-contact.entity';
-import { Employee } from '../employee/employee.entity';
-import { InvoiceItem } from '../invoice-item/invoice-item.entity';
-import { Tag } from '../tags/tag.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
-import { Task } from '../tasks/task.entity';
-import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
-import { Payment } from '../payment/payment.entity';
-import { TimeLog } from '../timesheet/time-log.entity';
+import {
+	Employee,
+	InvoiceItem,
+	OrganizationContact,
+	OrganizationSprint,
+	Payment,
+	Tag,
+	Task,
+	TenantOrganizationBaseEntity,
+	TimeLog
+} from '../internal';
 
 @Entity('organization_project')
 export class OrganizationProject
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IOrganizationProject {
+	constructor(input?: DeepPartial<OrganizationProject>) {
+		super(input);
+	}
+
 	@ApiProperty()
-	@ManyToMany((type) => Tag, (tag) => tag.organizationProject)
+	@ManyToMany(() => Tag, (tag) => tag.organizationProject)
 	@JoinTable({
 		name: 'tag_organization_project'
 	})
@@ -62,7 +69,7 @@ export class OrganizationProject
 
 	@ApiPropertyOptional({ type: OrganizationContact })
 	@ManyToOne(
-		(type) => OrganizationContact,
+		() => OrganizationContact,
 		(organizationContact) => organizationContact.projects,
 		{
 			nullable: true,
@@ -78,11 +85,11 @@ export class OrganizationProject
 	organizationContactId?: string;
 
 	@ApiProperty({ type: Task })
-	@OneToMany((type) => Task, (task) => task.project)
+	@OneToMany(() => Task, (task) => task.project)
 	@JoinColumn()
 	tasks?: ITask[];
 
-	@OneToMany((type) => TimeLog, (timeLog) => timeLog.project)
+	@OneToMany(() => TimeLog, (timeLog) => timeLog.project)
 	timeLogs?: ITimeLog[];
 
 	@ApiPropertyOptional({ type: Date })
@@ -115,14 +122,14 @@ export class OrganizationProject
 	@Column({ nullable: true })
 	public: boolean;
 
-	@ManyToMany((type) => Employee, { cascade: ['update'] })
+	@ManyToMany(() => Employee, { cascade: ['update'] })
 	@JoinTable({
 		name: 'organization_project_employee'
 	})
 	members?: IEmployee[];
 
 	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
-	@OneToMany((type) => InvoiceItem, (invoiceItem) => invoiceItem.project, {
+	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.project, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -135,7 +142,7 @@ export class OrganizationProject
 	owner: string;
 
 	@ApiPropertyOptional({ type: OrganizationSprint })
-	@OneToMany((type) => OrganizationSprint, (sprints) => sprints.project)
+	@OneToMany(() => OrganizationSprint, (sprints) => sprints.project)
 	@JoinColumn()
 	organizationSprints?: IOrganizationSprint[];
 
@@ -145,7 +152,7 @@ export class OrganizationProject
 	taskListType: string;
 
 	@ApiPropertyOptional({ type: Payment, isArray: true })
-	@OneToMany((type) => Payment, (payment) => payment.project, {
+	@OneToMany(() => Payment, (payment) => payment.project, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()

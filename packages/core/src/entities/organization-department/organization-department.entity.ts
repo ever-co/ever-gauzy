@@ -2,35 +2,26 @@ import {
 	IOrganizationDepartment,
 	ITag,
 	IEmployee,
-	IOrganization,
-	ICandidate
+	ICandidate,
+	DeepPartial
 } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
+import { Column, Entity, Index, JoinTable, ManyToMany } from 'typeorm';
 import {
-	Column,
-	Entity,
-	Index,
-	JoinTable,
-	ManyToMany,
-	ManyToOne
-} from 'typeorm';
-import { Employee } from '../employee/employee.entity';
-import { Tag } from '../tags/tag.entity';
-import { Organization } from '../organization/organization.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
-import { Candidate } from '../candidate/candidate.entity';
+	Candidate,
+	Employee,
+	Tag,
+	TenantOrganizationBaseEntity
+} from '../internal';
 
 @Entity('organization_department')
 export class OrganizationDepartment
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IOrganizationDepartment {
-	@ApiProperty()
-	@ManyToMany((type) => Tag, (tag) => tag.organizationDepartment)
-	@JoinTable({
-		name: 'tag_organization_department'
-	})
-	tags: ITag[];
+	constructor(input?: DeepPartial<OrganizationDepartment>) {
+		super(input);
+	}
 
 	@ApiProperty({ type: String })
 	@IsString()
@@ -39,29 +30,31 @@ export class OrganizationDepartment
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String })
-	@IsString()
-	@IsNotEmpty()
-	@Column()
-	organizationId: string;
+	@ApiProperty()
+	@ManyToMany(() => Tag, (tag) => tag.organizationDepartment)
+	@JoinTable({
+		name: 'tag_organization_department'
+	})
+	tags: ITag[];
 
 	@ManyToMany(
-		(type) => Employee,
+		() => Employee,
 		(employee) => employee.organizationDepartments,
-		{ cascade: ['update'] }
+		{
+			cascade: ['update']
+		}
 	)
 	@JoinTable({
 		name: 'organization_department_employee'
 	})
 	members?: IEmployee[];
 
-	@ManyToOne((type) => Organization, (organization) => organization.id)
-	organization?: IOrganization;
-
 	@ManyToMany(
-		(type) => Candidate,
+		() => Candidate,
 		(candidate) => candidate.organizationDepartments,
-		{ cascade: ['update'] }
+		{
+			cascade: ['update']
+		}
 	)
 	@JoinTable({
 		name: 'candidate_department'

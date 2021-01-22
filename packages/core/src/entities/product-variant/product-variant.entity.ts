@@ -9,18 +9,28 @@ import {
 	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IProductVariant, BillingInvoicingPolicyEnum } from '@gauzy/common';
-import { ProductVariantPrice } from '../product-variant-price/product-variant-price.entity';
-import { ProductOption } from '../product-option/product-option.entity';
-import { ProductVariantSettings } from '../product-settings/product-settings.entity';
-import { Product } from '../product/product.entity';
+import {
+	IProductVariant,
+	BillingInvoicingPolicyEnum,
+	DeepPartial
+} from '@gauzy/common';
 import { IsNumber, IsString, IsOptional, IsEnum } from 'class-validator';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import {
+	Product,
+	ProductOption,
+	ProductVariantPrice,
+	ProductVariantSettings,
+	TenantOrganizationBaseEntity
+} from '../internal';
 
 @Entity('product_variant')
 export class ProductVariant
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IProductVariant {
+	constructor(input?: DeepPartial<ProductVariant>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ default: 0 })
@@ -75,10 +85,7 @@ export class ProductVariant
 	@OneToOne(
 		() => ProductVariantPrice,
 		(variantPrice) => variantPrice.productVariant,
-		{
-			eager: true,
-			onDelete: 'CASCADE'
-		}
+		{ eager: true, onDelete: 'CASCADE' }
 	)
 	@JoinColumn()
 	price: ProductVariantPrice;

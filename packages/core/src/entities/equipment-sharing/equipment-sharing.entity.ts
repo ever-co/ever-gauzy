@@ -8,28 +8,35 @@ import {
 	ManyToOne
 } from 'typeorm';
 import {
+	DeepPartial,
 	IEquipmentSharing,
 	RequestApprovalStatusTypesEnum
 } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNotEmpty, IsString } from 'class-validator';
-import { Equipment } from '../equipment/equipment.entity';
-import { Employee } from '../employee/employee.entity';
-import { OrganizationTeam } from '../organization-team/organization-team.entity';
-import { EquipmentSharingPolicy } from '../equipment-sharing-policy/equipment-sharing-policy.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import {
+	Employee,
+	Equipment,
+	EquipmentSharingPolicy,
+	OrganizationTeam,
+	TenantOrganizationBaseEntity
+} from '../internal';
 
 @Entity('equipment_sharing')
 export class EquipmentSharing
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IEquipmentSharing {
+	constructor(input?: DeepPartial<EquipmentSharing>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column({ nullable: true })
 	name: string;
 
 	@ApiProperty({ type: Equipment })
-	@ManyToOne((type) => Equipment, (equipment) => equipment.equipmentSharings)
+	@ManyToOne(() => Equipment, (equipment) => equipment.equipmentSharings)
 	@JoinColumn()
 	equipment: Equipment;
 
@@ -60,13 +67,13 @@ export class EquipmentSharing
 	@Column()
 	status: number;
 
-	@ManyToMany((type) => Employee, { cascade: true })
+	@ManyToMany(() => Employee, { cascade: true })
 	@JoinTable({
 		name: 'equipment_shares_employees'
 	})
 	employees: Employee[];
 
-	@ManyToMany((type) => OrganizationTeam, { cascade: true })
+	@ManyToMany(() => OrganizationTeam, { cascade: true })
 	@JoinTable({
 		name: 'equipment_shares_teams'
 	})
@@ -83,7 +90,7 @@ export class EquipmentSharing
 	createdByName: string;
 
 	@ApiProperty({ type: EquipmentSharingPolicy })
-	@ManyToOne((type) => EquipmentSharingPolicy, {
+	@ManyToOne(() => EquipmentSharingPolicy, {
 		nullable: true,
 		onDelete: 'CASCADE'
 	})

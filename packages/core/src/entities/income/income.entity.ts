@@ -18,21 +18,23 @@ import {
 	IsEnum,
 	IsBoolean
 } from 'class-validator';
-import { IIncome, CurrenciesEnum } from '@gauzy/common';
-import { Employee } from '../employee/employee.entity';
-import { Tag } from '../tags/tag.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { IIncome, CurrenciesEnum, DeepPartial } from '@gauzy/common';
+import { Employee, Tag, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('income')
-export class Income extends TenantOrganizationBase implements IIncome {
-	@ManyToMany((type) => Tag, (tag) => tag.income)
+export class Income extends TenantOrganizationBaseEntity implements IIncome {
+	constructor(input?: DeepPartial<Income>) {
+		super(input);
+	}
+
+	@ManyToMany(() => Tag, (tag) => tag.income)
 	@JoinTable({
 		name: 'tag_income'
 	})
 	tags: Tag[];
 
 	@ApiProperty({ type: Employee })
-	@ManyToOne((type) => Employee, { nullable: true, onDelete: 'CASCADE' })
+	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	employee: Employee;
 

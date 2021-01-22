@@ -3,17 +3,23 @@
   - Request Approval Employee table has the many to one relationship to the RequestApproval table and the Employee table by requestApprovalId and employeeId
 */
 import { Entity, Column, ManyToOne } from 'typeorm';
-import { IRequestApprovalTeam } from '@gauzy/common';
+import { DeepPartial, IRequestApprovalTeam } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
-import { RequestApproval } from '../request-approval/request-approval.entity';
-import { OrganizationTeam } from '../organization-team/organization-team.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import {
+	OrganizationTeam,
+	RequestApproval,
+	TenantOrganizationBaseEntity
+} from '../internal';
 
 @Entity('request_approval_team')
 export class RequestApprovalTeam
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IRequestApprovalTeam {
+	constructor(input?: DeepPartial<RequestApprovalTeam>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -27,7 +33,7 @@ export class RequestApprovalTeam
 	public teamId!: string;
 
 	@ManyToOne(
-		(type) => RequestApproval,
+		() => RequestApproval,
 		(requestApproval) => requestApproval.teamApprovals,
 		{
 			onDelete: 'CASCADE'
@@ -35,7 +41,7 @@ export class RequestApprovalTeam
 	)
 	public requestApproval!: RequestApproval;
 
-	@ManyToOne((type) => OrganizationTeam, (team) => team.requestApprovals, {
+	@ManyToOne(() => OrganizationTeam, (team) => team.requestApprovals, {
 		onDelete: 'CASCADE'
 	})
 	public team!: OrganizationTeam;

@@ -1,27 +1,33 @@
 import { Entity, Column, OneToMany } from 'typeorm';
-import { TranslatableBase } from '../translate-base';
-import { ProductCategoryTranslation } from './product-category-translation.entity';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
-import { Product } from '../product/product.entity';
-import { IProductCategoryTranslatable } from '@gauzy/common';
+import { DeepPartial, IProductCategoryTranslatable } from '@gauzy/common';
+import {
+	Product,
+	ProductCategoryTranslation,
+	TranslatableBase
+} from '../internal';
 
 @Entity('product_category')
 export class ProductCategory
 	extends TranslatableBase
 	implements IProductCategoryTranslatable {
+	constructor(input?: DeepPartial<ProductCategory>) {
+		super(input);
+	}
+
 	@ApiPropertyOptional({ type: String })
 	@IsOptional()
 	@Column({ nullable: true })
 	imageUrl: string;
 
-	@OneToMany((type) => Product, (product) => product.category)
+	@OneToMany(() => Product, (product) => product.category)
 	products: Product[];
 
 	@ApiProperty({ type: ProductCategoryTranslation, isArray: true })
 	@OneToMany(
-		(type) => ProductCategoryTranslation,
-		(productCategoryTranslation) => productCategoryTranslation.reference,
+		() => ProductCategoryTranslation,
+		(instance) => instance.reference,
 		{
 			eager: true,
 			cascade: true

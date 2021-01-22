@@ -9,20 +9,29 @@ import {
 import {
 	IKeyResult,
 	KeyResultTypeEnum,
-	KeyResultDeadlineEnum
+	KeyResultDeadlineEnum,
+	DeepPartial
 } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum } from 'class-validator';
-import { Goal } from '../goal/goal.entity';
-import { KeyResultUpdate } from '../keyresult-update/keyresult-update.entity';
-import { Employee } from '../employee/employee.entity';
-import { OrganizationProject } from '../organization-projects/organization-projects.entity';
-import { Task } from '../tasks/task.entity';
-import { GoalKPI } from '../goal-kpi/goal-kpi.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import {
+	Employee,
+	Goal,
+	GoalKPI,
+	KeyResultUpdate,
+	OrganizationProject,
+	Task,
+	TenantOrganizationBaseEntity
+} from '../internal';
 
 @Entity('key_result')
-export class KeyResult extends TenantOrganizationBase implements IKeyResult {
+export class KeyResult
+	extends TenantOrganizationBaseEntity
+	implements IKeyResult {
+	constructor(input?: DeepPartial<KeyResult>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;
@@ -61,18 +70,18 @@ export class KeyResult extends TenantOrganizationBase implements IKeyResult {
 	progress: number;
 
 	@ApiProperty({ type: Employee })
-	@ManyToOne((type) => Employee)
+	@ManyToOne(() => Employee)
 	@JoinColumn()
 	owner: Employee;
 
 	@ApiProperty({ type: Employee })
-	@ManyToOne((type) => Employee, { nullable: true })
+	@ManyToOne(() => Employee, { nullable: true })
 	@JoinColumn()
 	@IsOptional()
 	lead?: Employee;
 
 	@ApiProperty({ type: OrganizationProject })
-	@ManyToOne((type) => OrganizationProject, { nullable: true })
+	@ManyToOne(() => OrganizationProject, { nullable: true })
 	@JoinColumn({ name: 'projectId' })
 	@IsOptional()
 	project?: OrganizationProject;
@@ -83,7 +92,7 @@ export class KeyResult extends TenantOrganizationBase implements IKeyResult {
 	readonly projectId?: string;
 
 	@ApiProperty({ type: Task })
-	@ManyToOne((type) => Task, { nullable: true })
+	@ManyToOne(() => Task, { nullable: true })
 	@JoinColumn({ name: 'taskId' })
 	@IsOptional()
 	task?: Task;
@@ -94,7 +103,7 @@ export class KeyResult extends TenantOrganizationBase implements IKeyResult {
 	readonly taskId?: string;
 
 	@ApiProperty({ type: GoalKPI })
-	@ManyToOne((type) => GoalKPI, { nullable: true })
+	@ManyToOne(() => GoalKPI, { nullable: true })
 	@JoinColumn({ name: 'kpiId' })
 	@IsOptional()
 	kpi?: GoalKPI;
@@ -130,7 +139,7 @@ export class KeyResult extends TenantOrganizationBase implements IKeyResult {
 	weight?: string;
 
 	@ApiProperty({ type: Goal })
-	@ManyToOne((type) => Goal, (goal) => goal.keyResults, {
+	@ManyToOne(() => Goal, (goal) => goal.keyResults, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn({ name: 'goalId' })
@@ -143,7 +152,7 @@ export class KeyResult extends TenantOrganizationBase implements IKeyResult {
 
 	@ApiProperty({ type: KeyResultUpdate })
 	@OneToMany(
-		(type) => KeyResultUpdate,
+		() => KeyResultUpdate,
 		(keyResultUpdate) => keyResultUpdate.keyResult
 	)
 	@IsOptional()

@@ -8,14 +8,17 @@ import {
 	Max,
 	IsEnum
 } from 'class-validator';
-import { IEmployeeSetting, CurrenciesEnum } from '@gauzy/common';
-import { Employee } from '../employee/employee.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { IEmployeeSetting, CurrenciesEnum, DeepPartial } from '@gauzy/common';
+import { Employee, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('employee_setting')
 export class EmployeeSetting
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IEmployeeSetting {
+	constructor(input?: DeepPartial<EmployeeSetting>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -58,6 +61,6 @@ export class EmployeeSetting
 	@Column()
 	currency: string;
 
-	@ManyToOne((type) => Employee, (employee) => employee.id)
+	@ManyToOne(() => Employee, (employee) => employee.id)
 	employee: Employee;
 }

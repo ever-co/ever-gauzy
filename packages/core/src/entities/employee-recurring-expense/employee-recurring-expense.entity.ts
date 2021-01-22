@@ -1,4 +1,8 @@
-import { CurrenciesEnum, IEmployeeRecurringExpense } from '@gauzy/common';
+import {
+	CurrenciesEnum,
+	DeepPartial,
+	IEmployeeRecurringExpense
+} from '@gauzy/common';
 import { Optional } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -12,13 +16,16 @@ import {
 	IsOptional
 } from 'class-validator';
 import { Column, Entity, Index, ManyToOne } from 'typeorm';
-import { Employee } from '../employee/employee.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { Employee, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('employee_recurring_expense')
 export class EmployeeRecurringExpense
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IEmployeeRecurringExpense {
+	constructor(input?: DeepPartial<EmployeeRecurringExpense>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -109,6 +116,6 @@ export class EmployeeRecurringExpense
 	@Column({ nullable: true })
 	parentRecurringExpenseId?: string;
 
-	@ManyToOne((type) => Employee, (employee) => employee.id)
+	@ManyToOne(() => Employee, (employee) => employee.id)
 	employee: Employee;
 }

@@ -5,19 +5,20 @@ import {
 	RelationId,
 	ManyToOne,
 	JoinColumn,
-	AfterLoad,
 	OneToMany
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
-import { IReport, IReportCategory } from '@gauzy/common';
-import { ReportCategory } from './report-category.entity';
-import { Base } from '../base';
+import { DeepPartial, IReport, IReportCategory } from '@gauzy/common';
 // import { FileStorage } from '../core/file-storage';
-import { ReportOrganization } from './report-organization.entity';
+import { BaseEntity, ReportCategory, ReportOrganization } from '../internal';
 
 @Entity('report')
-export class Report extends Base implements IReport {
+export class Report extends BaseEntity implements IReport {
+	constructor(input?: DeepPartial<Report>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: ReportOrganization })
 	@OneToMany(
 		() => ReportOrganization,

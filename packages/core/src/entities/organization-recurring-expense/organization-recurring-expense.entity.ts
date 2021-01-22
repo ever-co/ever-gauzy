@@ -1,4 +1,8 @@
-import { CurrenciesEnum, IOrganizationRecurringExpense } from '@gauzy/common';
+import {
+	CurrenciesEnum,
+	DeepPartial,
+	IOrganizationRecurringExpense
+} from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsDate,
@@ -12,12 +16,16 @@ import {
 	IsBoolean
 } from 'class-validator';
 import { Column, Entity, Index } from 'typeorm';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('organization_recurring_expense')
 export class OrganizationRecurringExpense
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IOrganizationRecurringExpense {
+	constructor(input?: DeepPartial<OrganizationRecurringExpense>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: Number, minimum: 1, maximum: 31 })
 	@IsNumber()
 	@IsNotEmpty()

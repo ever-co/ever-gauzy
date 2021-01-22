@@ -1,16 +1,19 @@
 import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { IOrganizationLanguages } from '@gauzy/common';
-import { Language } from '../language/language.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { DeepPartial, IOrganizationLanguages } from '@gauzy/common';
+import { Language, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('organization_language')
 export class OrganizationLanguages
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IOrganizationLanguages {
+	constructor(input?: DeepPartial<OrganizationLanguages>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: Language })
-	@ManyToOne((type) => Language, { nullable: false, onDelete: 'CASCADE' })
+	@ManyToOne(() => Language, { nullable: false, onDelete: 'CASCADE' })
 	@JoinColumn()
 	language: Language;
 

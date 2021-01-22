@@ -14,21 +14,30 @@ import {
 	IActivity,
 	IScreenshot,
 	IEmployee,
-	ITimeLog
+	ITimeLog,
+	DeepPartial
 } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsDateString } from 'class-validator';
-import { Employee } from '../employee/employee.entity';
 import * as moment from 'moment';
-import { Screenshot } from './screenshot.entity';
-import { TimeSlotMinute } from './time-slot-minute.entity';
-import { TimeLog } from './time-log.entity';
-import { Activity } from './activity.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import {
+	Activity,
+	Employee,
+	Screenshot,
+	TenantOrganizationBaseEntity,
+	TimeLog,
+	TimeSlotMinute
+} from '../internal';
 
 @Entity('time_slot')
 // @Unique(['employeeId', 'startedAt'])
-export class TimeSlot extends TenantOrganizationBase implements ITimeSlot {
+export class TimeSlot
+	extends TenantOrganizationBaseEntity
+	implements ITimeSlot {
+	constructor(input?: DeepPartial<TimeSlot>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee)
 	@JoinColumn()

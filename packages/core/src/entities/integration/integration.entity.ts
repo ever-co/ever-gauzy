@@ -1,13 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, ManyToMany, JoinTable } from 'typeorm';
-import { IIntegration, IIntegrationType, ITag } from '@gauzy/common';
-import { IntegrationType } from './integration-type.entity';
+import {
+	DeepPartial,
+	IIntegration,
+	IIntegrationType,
+	ITag
+} from '@gauzy/common';
 import { IsNumber } from 'class-validator';
-import { Tag } from '../tags/tag.entity';
-import { Base } from '../base';
+import { BaseEntity, IntegrationType, Tag } from '../internal';
 
 @Entity('integration')
-export class Integration extends Base implements IIntegration {
+export class Integration extends BaseEntity implements IIntegration {
+	constructor(input?: DeepPartial<Integration>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@Column({ nullable: false })
 	name: string;
@@ -45,7 +52,7 @@ export class Integration extends Base implements IIntegration {
 	@Column({ nullable: true })
 	order?: number;
 
-	@ManyToMany((type) => IntegrationType)
+	@ManyToMany(() => IntegrationType)
 	@JoinTable({
 		name: 'integration_integration_type'
 	})

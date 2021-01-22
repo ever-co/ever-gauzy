@@ -1,16 +1,22 @@
-import { IOrganizationTeamEmployee } from '@gauzy/common';
+import { DeepPartial, IOrganizationTeamEmployee } from '@gauzy/common';
 import { Entity, Column, ManyToOne, JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
-import { OrganizationTeam } from '../organization-team/organization-team.entity';
-import { Employee } from '../employee/employee.entity';
-import { Role } from '../role/role.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import {
+	Employee,
+	OrganizationTeam,
+	Role,
+	TenantOrganizationBaseEntity
+} from '../internal';
 
 @Entity('organization_team_employee')
 export class OrganizationTeamEmployee
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IOrganizationTeamEmployee {
+	constructor(input?: DeepPartial<OrganizationTeamEmployee>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -24,7 +30,7 @@ export class OrganizationTeamEmployee
 	public employeeId!: string;
 
 	@ManyToOne(
-		(type) => OrganizationTeam,
+		() => OrganizationTeam,
 		(organizationTeam) => organizationTeam.members,
 		{
 			onDelete: 'CASCADE'
@@ -32,14 +38,14 @@ export class OrganizationTeamEmployee
 	)
 	public organizationTeam!: OrganizationTeam;
 
-	@ManyToOne((type) => Employee, (employee) => employee.teams, {
+	@ManyToOne(() => Employee, (employee) => employee.teams, {
 		onDelete: 'CASCADE'
 	})
 	public employee!: Employee;
 
 	@ApiProperty({ type: String })
 	@IsString()
-	@ManyToOne((type) => Role, { nullable: true })
+	@ManyToOne(() => Role, { nullable: true })
 	@JoinColumn()
 	role?: Role;
 

@@ -1,13 +1,20 @@
 import { Entity, Column, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { ICandidateInterviewers, ICandidateInterview } from '@gauzy/common';
-import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import {
+	ICandidateInterviewers,
+	ICandidateInterview,
+	DeepPartial
+} from '@gauzy/common';
+import { CandidateInterview, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('candidate_interviewer')
 export class CandidateInterviewers
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements ICandidateInterviewers {
+	constructor(input?: DeepPartial<CandidateInterviewers>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@Column()
 	interviewId: string;

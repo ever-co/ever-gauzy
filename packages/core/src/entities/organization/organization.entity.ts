@@ -40,26 +40,33 @@ import {
 	IInvoiceEstimateHistory,
 	IOrganizationAwards,
 	IOrganizationLanguages,
-	IFeatureOrganization
+	IFeatureOrganization,
+	DeepPartial
 } from '@gauzy/common';
-import { Contact } from '../contact/contact.entity';
-import { Deal } from '../deal/deal.entity';
-import { Employee } from '../employee/employee.entity';
-import { FeatureOrganization } from '../feature/feature_organization.entity';
-import { Invoice } from '../invoice/invoice.entity';
-import { InvoiceEstimateHistory } from '../invoice-estimate-history/invoice-estimate-history.entity';
-import { OrganizationAwards } from '../organization-awards/organization-awards.entity';
-import { OrganizationLanguages } from '../organization-languages/organization-languages.entity';
-import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
-import { Payment } from '../payment/payment.entity';
-import { Skill } from '../skills/skill.entity';
-import { Tag } from '../tags/tag.entity';
-import { TenantBase } from '../tenant-base';
+import {
+	Contact,
+	Deal,
+	Employee,
+	FeatureOrganization,
+	Invoice,
+	InvoiceEstimateHistory,
+	OrganizationAwards,
+	OrganizationLanguages,
+	OrganizationSprint,
+	Payment,
+	Skill,
+	Tag,
+	TenantBaseEntity
+} from '../internal';
 
 @Entity('organization')
-export class Organization extends TenantBase implements IOrganization {
+export class Organization extends TenantBaseEntity implements IOrganization {
+	constructor(input?: DeepPartial<Organization>) {
+		super(input);
+	}
+
 	@ApiProperty()
-	@ManyToMany((type) => Tag)
+	@ManyToMany(() => Tag)
 	@JoinTable({
 		name: 'tag_organization'
 	})
@@ -79,7 +86,7 @@ export class Organization extends TenantBase implements IOrganization {
 	readonly contactId?: string;
 
 	@ApiPropertyOptional({ type: Invoice, isArray: true })
-	@OneToMany((type) => Invoice, (invoices) => invoices.fromOrganization)
+	@OneToMany(() => Invoice, (invoices) => invoices.fromOrganization)
 	@JoinColumn()
 	invoices?: IInvoice[];
 
@@ -382,14 +389,14 @@ export class Organization extends TenantBase implements IOrganization {
 	timeFormat?: 12 | 24;
 
 	@ApiProperty({ type: Skill })
-	@ManyToMany((type) => Skill, (skill) => skill.organization)
+	@ManyToMany(() => Skill, (skill) => skill.organization)
 	@JoinTable({
 		name: 'skill_organization'
 	})
 	skills: ISkill[];
 
 	@ApiPropertyOptional({ type: Payment, isArray: true })
-	@OneToMany((type) => Payment, (payment) => payment.organization, {
+	@OneToMany(() => Payment, (payment) => payment.organization, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -401,13 +408,13 @@ export class Organization extends TenantBase implements IOrganization {
 	separateInvoiceItemTaxAndDiscount?: boolean;
 
 	@ApiPropertyOptional({ type: OrganizationSprint, isArray: true })
-	@OneToMany((type) => OrganizationSprint, (sprints) => sprints.organization)
+	@OneToMany(() => OrganizationSprint, (sprints) => sprints.organization)
 	@JoinColumn()
 	organizationSprints?: IOrganizationSprint[];
 
 	@ApiPropertyOptional({ type: InvoiceEstimateHistory, isArray: true })
 	@OneToMany(
-		(type) => InvoiceEstimateHistory,
+		() => InvoiceEstimateHistory,
 		(invoiceEstimateHistory) => invoiceEstimateHistory.organization,
 		{
 			onDelete: 'SET NULL'

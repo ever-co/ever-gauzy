@@ -27,23 +27,30 @@ import {
 	IInvoice,
 	IEmployee,
 	IPayment,
-	OrganizationContactBudgetTypeEnum
+	OrganizationContactBudgetTypeEnum,
+	DeepPartial
 } from '@gauzy/common';
-import { OrganizationProject } from '../organization-projects/organization-projects.entity';
-import { Employee } from '../employee/employee.entity';
-import { Invoice } from '../invoice/invoice.entity';
-import { Tag } from '../tags/tag.entity';
-import { Contact } from '../contact/contact.entity';
-import { Payment } from '../payment/payment.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
-import { Proposal } from '../proposal/proposal.entity';
+import {
+	Contact,
+	Employee,
+	Invoice,
+	OrganizationProject,
+	Payment,
+	Proposal,
+	Tag,
+	TenantOrganizationBaseEntity
+} from '../internal';
 
 @Entity('organization_contact')
 export class OrganizationContact
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IOrganizationContact {
+	constructor(input?: DeepPartial<OrganizationContact>) {
+		super(input);
+	}
+
 	@ApiProperty()
-	@ManyToMany((type) => Tag, (tag) => tag.organizationContact)
+	@ManyToMany(() => Tag, (tag) => tag.organizationContact)
 	@JoinTable({
 		name: 'tag_organization_contact'
 	})
@@ -97,7 +104,7 @@ export class OrganizationContact
 
 	@ApiPropertyOptional({ type: OrganizationProject, isArray: true })
 	@OneToMany(
-		(type) => OrganizationProject,
+		() => OrganizationProject,
 		(project) => project.organizationContact
 	)
 	@JoinColumn()
@@ -139,7 +146,7 @@ export class OrganizationContact
 	payments?: IPayment[];
 
 	@ApiPropertyOptional({ type: Proposal, isArray: true })
-	@OneToMany((type) => Proposal, (proposal) => proposal.organizationContact)
+	@OneToMany(() => Proposal, (proposal) => proposal.organizationContact)
 	@JoinColumn()
 	proposals?: IOrganizationProject[];
 

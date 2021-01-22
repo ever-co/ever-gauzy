@@ -2,7 +2,8 @@ import {
 	IInvoice,
 	CurrenciesEnum,
 	InvoiceTypeEnum,
-	DiscountTaxTypeEnum
+	DiscountTaxTypeEnum,
+	DeepPartial
 } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -23,17 +24,23 @@ import {
 	ManyToMany,
 	JoinTable
 } from 'typeorm';
-import { Organization } from '../organization/organization.entity';
-import { OrganizationContact } from '../organization-contact/organization-contact.entity';
-import { InvoiceItem } from '../invoice-item/invoice-item.entity';
-import { Tag } from '../tags/tag.entity';
-import { Payment } from '../payment/payment.entity';
-import { InvoiceEstimateHistory } from '../invoice-estimate-history/invoice-estimate-history.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import {
+	InvoiceEstimateHistory,
+	InvoiceItem,
+	Organization,
+	OrganizationContact,
+	Payment,
+	Tag,
+	TenantOrganizationBaseEntity
+} from '../internal';
 
 @Entity('invoice')
 @Unique(['invoiceNumber'])
-export class Invoice extends TenantOrganizationBase implements IInvoice {
+export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
+	constructor(input?: DeepPartial<Invoice>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: Tag })
 	@ManyToMany((type) => Tag, (tag) => tag.invoice)
 	@JoinTable({
@@ -166,24 +173,24 @@ export class Invoice extends TenantOrganizationBase implements IInvoice {
 	hasRemainingAmountInvoiced?: boolean;
 
 	@ApiPropertyOptional({ type: Organization })
-	@ManyToOne((type) => Organization)
+	@ManyToOne(() => Organization)
 	@JoinColumn()
 	fromOrganization?: Organization;
 
 	@ApiPropertyOptional({ type: OrganizationContact })
-	@ManyToOne((type) => OrganizationContact)
+	@ManyToOne(() => OrganizationContact)
 	@JoinColumn()
 	toContact?: OrganizationContact;
 
 	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
-	@OneToMany((type) => InvoiceItem, (invoiceItem) => invoiceItem.invoice, {
+	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.invoice, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	invoiceItems?: InvoiceItem[];
 
 	@ApiPropertyOptional({ type: Payment, isArray: true })
-	@OneToMany((type) => Payment, (payment) => payment.invoice, {
+	@OneToMany(() => Payment, (payment) => payment.invoice, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -191,7 +198,7 @@ export class Invoice extends TenantOrganizationBase implements IInvoice {
 
 	@ApiPropertyOptional({ type: InvoiceEstimateHistory, isArray: true })
 	@OneToMany(
-		(type) => InvoiceEstimateHistory,
+		() => InvoiceEstimateHistory,
 		(invoiceEstimateHistory) => invoiceEstimateHistory.invoice,
 		{
 			onDelete: 'SET NULL'

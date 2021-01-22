@@ -1,33 +1,65 @@
 import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { ITag } from '@gauzy/common';
-import { Candidate } from '../candidate/candidate.entity';
-import { Employee } from '../employee/employee.entity';
-import { Equipment } from '../equipment/equipment.entity';
-import { EventType } from '../event-types/event-type.entity';
-import { Income } from '../income/income.entity';
-import { Expense } from '../expense/expense.entity';
-import { Invoice } from '../invoice/invoice.entity';
-import { Task } from '../tasks/task.entity';
-import { Proposal } from '../proposal/proposal.entity';
-import { OrganizationVendor } from '../organization-vendors/organization-vendors.entity';
-import { OrganizationTeam } from '../organization-team/organization-team.entity';
-import { OrganizationProject } from '../organization-projects/organization-projects.entity';
-import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
-import { ExpenseCategory } from '../expense-categories/expense-category.entity';
-import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
-import { EmployeeLevel } from '../organization_employee-level/organization-employee-level.entity';
-import { OrganizationDepartment } from '../organization-department/organization-department.entity';
-import { OrganizationContact } from '../organization-contact/organization-contact.entity';
-import { Product } from '../product/product.entity';
-import { Payment } from '../payment/payment.entity';
-import { RequestApproval } from '../request-approval/request-approval.entity';
-import { User } from '../user/user.entity';
-import { Integration } from '../integration/integration.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import {
+	DeepPartial,
+	ICandidate,
+	IEmployee,
+	IEmployeeLevel,
+	IEquipment,
+	IEventType,
+	IExpense,
+	IExpenseCategory,
+	IIncome,
+	IIntegration,
+	IInvoice,
+	IOrganizationContact,
+	IOrganizationDepartment,
+	IOrganizationEmploymentType,
+	IOrganizationPosition,
+	IOrganizationProject,
+	IOrganizationTeam,
+	IOrganizationVendor,
+	IPayment,
+	IProduct,
+	IProposal,
+	IRequestApproval,
+	ITag,
+	ITask,
+	IUser
+} from '@gauzy/common';
+import {
+	Candidate,
+	Employee,
+	EmployeeLevel,
+	Equipment,
+	EventType,
+	Expense,
+	ExpenseCategory,
+	Income,
+	Integration,
+	Invoice,
+	OrganizationContact,
+	OrganizationDepartment,
+	OrganizationEmploymentType,
+	OrganizationPositions,
+	OrganizationProject,
+	OrganizationTeam,
+	OrganizationVendor,
+	Payment,
+	Product,
+	Proposal,
+	RequestApproval,
+	Task,
+	TenantOrganizationBaseEntity,
+	User
+} from '../internal';
 
 @Entity('tag')
-export class Tag extends TenantOrganizationBase implements ITag {
+export class Tag extends TenantOrganizationBaseEntity implements ITag {
+	constructor(input?: DeepPartial<Tag>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@Column()
 	name?: string;
@@ -44,105 +76,105 @@ export class Tag extends TenantOrganizationBase implements ITag {
 	@Column({ default: false })
 	isSystem?: boolean;
 
-	@ManyToMany((type) => Candidate, (candidate) => candidate.tags)
-	candidate?: Candidate[];
+	@ManyToMany(() => Candidate, (candidate) => candidate.tags)
+	candidate?: ICandidate[];
 
-	@ManyToMany((type) => Employee, (employee) => employee.tags)
-	employee?: Employee[];
+	@ManyToMany(() => Employee, (employee) => employee.tags)
+	employee?: IEmployee[];
 
-	@ManyToMany((type) => Equipment, (equipment) => equipment.tags)
-	equipment?: Equipment[];
+	@ManyToMany(() => Equipment, (equipment) => equipment.tags)
+	equipment?: IEquipment[];
 
-	@ManyToMany((type) => EventType, (eventType) => eventType.tags)
-	eventType?: EventType[];
+	@ManyToMany(() => EventType, (eventType) => eventType.tags)
+	eventType?: IEventType[];
 
-	@ManyToMany((type) => Income, (income) => income.tags)
-	income?: Income[];
+	@ManyToMany(() => Income, (income) => income.tags)
+	income?: IIncome[];
 
-	@ManyToMany((type) => Expense, (expense) => expense.tags)
-	expense?: Expense[];
+	@ManyToMany(() => Expense, (expense) => expense.tags)
+	expense?: IExpense[];
 
-	@ManyToMany((type) => Invoice, (invoice) => invoice.tags)
-	invoice?: Invoice[];
+	@ManyToMany(() => Invoice, (invoice) => invoice.tags)
+	invoice?: IInvoice[];
 
-	@ManyToMany((type) => Task, (task) => task.tags)
-	task?: Task[];
+	@ManyToMany(() => Task, (task) => task.tags)
+	task?: ITask[];
 
-	@ManyToMany((type) => Proposal, (proposal) => proposal.tags)
-	proposal?: Proposal[];
+	@ManyToMany(() => Proposal, (proposal) => proposal.tags)
+	proposal?: IProposal[];
 
 	@ManyToMany(
-		(type) => OrganizationVendor,
+		() => OrganizationVendor,
 		(organizationVendor) => organizationVendor.tags
 	)
-	organizationVendor?: OrganizationVendor[];
+	organizationVendor?: IOrganizationVendor[];
 
 	@ManyToMany(
-		(type) => OrganizationTeam,
+		() => OrganizationTeam,
 		(organizationTeam) => organizationTeam.tags
 	)
-	organizationTeam?: OrganizationTeam[];
+	organizationTeam?: IOrganizationTeam[];
 
 	@ManyToMany(
-		(type) => OrganizationProject,
+		() => OrganizationProject,
 		(organizationProject) => organizationProject.tags
 	)
-	organizationProject?: OrganizationProject[];
+	organizationProject?: IOrganizationProject[];
 
 	@ManyToMany(
-		(type) => OrganizationPositions,
+		() => OrganizationPositions,
 		(organizationPosition) => organizationPosition.tags
 	)
-	organizationPosition?: OrganizationPositions[];
+	organizationPosition?: IOrganizationPosition[];
 
 	@ManyToMany(
-		(type) => ExpenseCategory,
+		() => ExpenseCategory,
 		(expenseCategory) => expenseCategory.tags
 	)
-	expenseCategory?: ExpenseCategory[];
+	expenseCategory?: IExpenseCategory[];
 
 	@ManyToMany(
-		(type) => OrganizationEmploymentType,
+		() => OrganizationEmploymentType,
 		(organizationEmploymentType) => organizationEmploymentType.tags
 	)
-	organizationEmploymentType?: OrganizationEmploymentType[];
+	organizationEmploymentType?: IOrganizationEmploymentType[];
 
-	@ManyToMany((type) => EmployeeLevel, (employeeLevel) => employeeLevel.tags)
-	employeeLevel?: EmployeeLevel[];
+	@ManyToMany(() => EmployeeLevel, (employeeLevel) => employeeLevel.tags)
+	employeeLevel?: IEmployeeLevel[];
 
 	@ManyToMany(
-		(type) => OrganizationDepartment,
+		() => OrganizationDepartment,
 		(organizationDepartment) => organizationDepartment.tags
 	)
-	organizationDepartment?: OrganizationDepartment[];
+	organizationDepartment?: IOrganizationDepartment[];
 
 	@ManyToMany(
-		(type) => OrganizationContact,
+		() => OrganizationContact,
 		(organizationContact) => organizationContact.tags
 	)
-	organizationContact?: OrganizationContact[];
+	organizationContact?: IOrganizationContact[];
 
-	@ManyToMany((type) => Product, (product) => product.tags)
-	product?: Product[];
+	@ManyToMany(() => Product, (product) => product.tags)
+	product?: IProduct[];
 
-	@ManyToMany((type) => Payment, (payment) => payment.tags)
-	payment?: Payment[];
+	@ManyToMany(() => Payment, (payment) => payment.tags)
+	payment?: IPayment[];
 
 	@ManyToMany(
-		(type) => RequestApproval,
+		() => RequestApproval,
 		(requestApproval) => requestApproval.tags
 	)
-	requestApproval?: RequestApproval[];
+	requestApproval?: IRequestApproval[];
 
 	@ManyToMany(() => User)
 	@JoinTable({
 		name: 'tag_user'
 	})
-	users?: User[];
+	users?: IUser[];
 
 	@ManyToMany(() => Integration)
 	@JoinTable({
 		name: 'tag_integration'
 	})
-	integrations?: Integration[];
+	integrations?: IIntegration[];
 }

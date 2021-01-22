@@ -16,20 +16,24 @@ import {
 	IsOptional,
 	IsBoolean
 } from 'class-validator';
-import { IEventType } from '@gauzy/common';
-import { Employee } from '../employee/employee.entity';
-import { Tag } from '../tags/tag.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { DeepPartial, IEventType } from '@gauzy/common';
+import { Employee, Tag, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('event_type')
-export class EventType extends TenantOrganizationBase implements IEventType {
+export class EventType
+	extends TenantOrganizationBaseEntity
+	implements IEventType {
+	constructor(input?: DeepPartial<EventType>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: Tag })
-	@ManyToMany((type) => Tag, (tag) => tag.eventType)
+	@ManyToMany(() => Tag, (tag) => tag.eventType)
 	@JoinTable({ name: 'tag_event_type' })
 	tags?: Tag[];
 
 	@ApiProperty({ type: Employee })
-	@ManyToOne((type) => Employee, { nullable: true, onDelete: 'CASCADE' })
+	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	employee?: Employee;
 

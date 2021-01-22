@@ -1,14 +1,17 @@
 import { Column, Entity, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
-import { ICandidateEducation, ICandidate } from '@gauzy/common';
-import { Candidate } from '../candidate/candidate.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { ICandidateEducation, ICandidate, DeepPartial } from '@gauzy/common';
+import { Candidate, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('candidate_education')
 export class CandidateEducation
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements ICandidateEducation {
+	constructor(input?: DeepPartial<CandidateEducation>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@Column()
 	schoolName: string;
@@ -35,7 +38,7 @@ export class CandidateEducation
 	@Column({ nullable: true })
 	candidateId?: string;
 
-	@ManyToOne((type) => Candidate, (candidate) => candidate.educations, {
+	@ManyToOne(() => Candidate, (candidate) => candidate.educations, {
 		onDelete: 'CASCADE'
 	})
 	candidate: ICandidate;

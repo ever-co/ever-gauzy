@@ -14,7 +14,7 @@ import {
 } from '@gauzy/common';
 
 export abstract class Model {
-	constructor(input?: any) {
+	constructor(input?: DeepPartial<Model>) {
 		if (input) {
 			for (const [key, value] of Object.entries(input)) {
 				(this as any)[key] = value;
@@ -22,13 +22,9 @@ export abstract class Model {
 		}
 	}
 }
-export abstract class Base implements IBaseEntityModel {
-	constructor(input?: DeepPartial<Base>) {
-		if (input) {
-			for (const [key, value] of Object.entries(input)) {
-				(this as any)[key] = value;
-			}
-		}
+export abstract class BaseEntity extends Model implements IBaseEntityModel {
+	constructor(input?: DeepPartial<BaseEntity>) {
+		super(input);
 	}
 
 	@ApiPropertyOptional({ type: String })

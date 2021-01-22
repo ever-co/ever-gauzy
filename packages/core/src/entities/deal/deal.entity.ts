@@ -2,9 +2,9 @@ import {
 	IDeal,
 	IUser,
 	IPipelineStage,
-	IOrganizationContact
+	IOrganizationContact,
+	DeepPartial
 } from '@gauzy/common';
-import { User } from '../user/user.entity';
 import {
 	Column,
 	Entity,
@@ -22,12 +22,19 @@ import {
 	IsInt,
 	IsOptional
 } from 'class-validator';
-import { PipelineStage } from '../pipeline-stage/pipeline-stage.entity';
-import { OrganizationContact } from '../organization-contact/organization-contact.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import {
+	OrganizationContact,
+	PipelineStage,
+	TenantOrganizationBaseEntity,
+	User
+} from '../internal';
 
 @Entity('deal')
-export class Deal extends TenantOrganizationBase implements IDeal {
+export class Deal extends TenantOrganizationBaseEntity implements IDeal {
+	constructor(input?: DeepPartial<Deal>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@IsNotEmpty()
 	@IsString()

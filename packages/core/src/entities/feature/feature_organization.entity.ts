@@ -1,13 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
-import { Feature } from './feature.entity';
-import { IFeature, IFeatureOrganization } from '@gauzy/common';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { DeepPartial, IFeature, IFeatureOrganization } from '@gauzy/common';
+import { Feature, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('feature_organization')
 export class FeatureOrganization
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IFeatureOrganization {
+	constructor(input?: DeepPartial<FeatureOrganization>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: Feature })
 	@ManyToOne(() => Feature)
 	@JoinColumn()

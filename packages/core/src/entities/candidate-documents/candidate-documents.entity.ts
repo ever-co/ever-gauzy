@@ -1,13 +1,16 @@
 import { Column, Entity, ManyToOne } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ICandidateDocument, ICandidate } from '@gauzy/common';
-import { Candidate } from '../candidate/candidate.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { ICandidateDocument, ICandidate, DeepPartial } from '@gauzy/common';
+import { Candidate, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('candidate_document')
 export class CandidateDocument
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements ICandidateDocument {
+	constructor(input?: DeepPartial<CandidateDocument>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;
@@ -20,7 +23,7 @@ export class CandidateDocument
 	@Column({ nullable: true })
 	documentUrl: string;
 
-	@ManyToOne((type) => Candidate, (candidate) => candidate.documents, {
+	@ManyToOne(() => Candidate, (candidate) => candidate.documents, {
 		onDelete: 'CASCADE'
 	})
 	candidate: ICandidate;

@@ -1,14 +1,17 @@
 import { Column, Entity, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
-import { ICandidateCriterionsRating } from '@gauzy/common';
-import { CandidateFeedback } from '../candidate-feedbacks/candidate-feedbacks.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { DeepPartial, ICandidateCriterionsRating } from '@gauzy/common';
+import { CandidateFeedback, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('candidate_criterion_rating')
 export class CandidateCriterionsRating
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements ICandidateCriterionsRating {
+	constructor(input?: DeepPartial<CandidateCriterionsRating>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@Column()
 	rating: number;
@@ -28,9 +31,6 @@ export class CandidateCriterionsRating
 	@Column({ nullable: true })
 	feedbackId: string;
 
-	@ManyToOne(
-		(type) => CandidateFeedback,
-		(feedback) => feedback.criterionsRating
-	)
+	@ManyToOne(() => CandidateFeedback, (feedback) => feedback.criterionsRating)
 	feedback: CandidateFeedback;
 }

@@ -11,7 +11,8 @@ import {
 	IPayment,
 	CurrenciesEnum,
 	PaymentMethodEnum,
-	IEmployee
+	IEmployee,
+	DeepPartial
 } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -22,16 +23,22 @@ import {
 	IsNumber,
 	IsBoolean
 } from 'class-validator';
-import { Tag } from '../tags/tag.entity';
-import { User } from '../user/user.entity';
-import { Invoice } from '../invoice/invoice.entity';
-import { OrganizationProject } from '../organization-projects/organization-projects.entity';
-import { OrganizationContact } from '../organization-contact/organization-contact.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
-import { Employee } from '../employee/employee.entity';
+import {
+	Employee,
+	Invoice,
+	OrganizationContact,
+	OrganizationProject,
+	Tag,
+	TenantOrganizationBaseEntity,
+	User
+} from '../internal';
 
 @Entity('payment')
-export class Payment extends TenantOrganizationBase implements IPayment {
+export class Payment extends TenantOrganizationBaseEntity implements IPayment {
+	constructor(input?: DeepPartial<Payment>) {
+		super(input);
+	}
+
 	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@IsOptional()
@@ -39,7 +46,7 @@ export class Payment extends TenantOrganizationBase implements IPayment {
 	invoiceId?: string;
 
 	@ApiPropertyOptional({ type: Invoice })
-	@ManyToOne((type) => Invoice, (invoice) => invoice.payments, {
+	@ManyToOne(() => Invoice, (invoice) => invoice.payments, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -51,14 +58,14 @@ export class Payment extends TenantOrganizationBase implements IPayment {
 	employeeId?: string;
 
 	@ApiProperty({ type: Employee })
-	@ManyToOne((type) => Employee, {
+	@ManyToOne(() => Employee, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	employee?: IEmployee;
 
 	@ApiPropertyOptional({ type: User })
-	@ManyToOne((type) => User)
+	@ManyToOne(() => User)
 	@JoinColumn()
 	recordedBy?: User;
 
@@ -96,7 +103,7 @@ export class Payment extends TenantOrganizationBase implements IPayment {
 	overdue?: boolean;
 
 	@ApiPropertyOptional({ type: OrganizationProject })
-	@ManyToOne((type) => OrganizationProject, (project) => project.payments, {
+	@ManyToOne(() => OrganizationProject, (project) => project.payments, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -109,7 +116,7 @@ export class Payment extends TenantOrganizationBase implements IPayment {
 	projectId?: string;
 
 	@ApiPropertyOptional({ type: OrganizationContact })
-	@ManyToOne((type) => OrganizationContact, (contact) => contact.payments, {
+	@ManyToOne(() => OrganizationContact, (contact) => contact.payments, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()

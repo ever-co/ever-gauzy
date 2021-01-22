@@ -1,14 +1,17 @@
 import { Entity, Index, Column, ManyToMany, JoinTable } from 'typeorm';
-import { ITimeOffPolicy } from '@gauzy/common';
+import { DeepPartial, ITimeOffPolicy } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsBoolean } from 'class-validator';
-import { Employee } from '../employee/employee.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { Employee, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('time_off_policy')
 export class TimeOffPolicy
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements ITimeOffPolicy {
+	constructor(input?: DeepPartial<TimeOffPolicy>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -26,7 +29,7 @@ export class TimeOffPolicy
 	@Column()
 	paid: boolean;
 
-	@ManyToMany((type) => Employee, { cascade: ['update'] })
+	@ManyToMany(() => Employee, { cascade: ['update'] })
 	@JoinTable({
 		name: 'time_off_policy_employee'
 	})

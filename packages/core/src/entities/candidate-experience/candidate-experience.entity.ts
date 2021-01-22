@@ -1,14 +1,17 @@
 import { Column, Entity, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
-import { ICandidateExperience, ICandidate } from '@gauzy/common';
-import { Candidate } from '../candidate/candidate.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { ICandidateExperience, ICandidate, DeepPartial } from '@gauzy/common';
+import { Candidate, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('candidate_experience')
 export class CandidateExperience
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements ICandidateExperience {
+	constructor(input?: DeepPartial<CandidateExperience>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@Column()
 	occupation: string;

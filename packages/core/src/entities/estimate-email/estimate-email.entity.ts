@@ -1,13 +1,17 @@
-import { IEstimateEmail } from '@gauzy/common';
+import { DeepPartial, IEstimateEmail } from '@gauzy/common';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsEmail, IsString } from 'class-validator';
 import { Column, Entity } from 'typeorm';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('estimate_email')
 export class EstimateEmail
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IEstimateEmail {
+	constructor(input?: DeepPartial<EstimateEmail>) {
+		super(input);
+	}
+
 	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@Column()

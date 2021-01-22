@@ -15,7 +15,8 @@ import {
 	IEmployee,
 	ITask,
 	ITimeSlot,
-	IOrganizationProject
+	IOrganizationProject,
+	DeepPartial
 } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -25,17 +26,25 @@ import {
 	IsNumber,
 	IsDateString
 } from 'class-validator';
-import { TimeSlot } from './time-slot.entity';
-import { Employee } from '../employee/employee.entity';
-import { OrganizationProject } from '../organization-projects/organization-projects.entity';
-import { Task } from '../tasks/task.entity';
 import { getConfig } from '@gauzy/config';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import {
+	Employee,
+	OrganizationProject,
+	Task,
+	TenantOrganizationBaseEntity,
+	TimeSlot
+} from '../internal';
 
 const config = getConfig();
 
 @Entity('activity')
-export class Activity extends TenantOrganizationBase implements IActivity {
+export class Activity
+	extends TenantOrganizationBaseEntity
+	implements IActivity {
+	constructor(input?: DeepPartial<Activity>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee)
 	@JoinColumn()

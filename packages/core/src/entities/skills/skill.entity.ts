@@ -1,12 +1,15 @@
 import { Entity, Column, Unique, ManyToMany, JoinTable } from 'typeorm';
-import { IEmployee, ISkill } from '@gauzy/common';
+import { DeepPartial, IEmployee, ISkill } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
-import { Employee } from '../employee/employee.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { Employee, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('skill')
 @Unique(['name'])
-export class Skill extends TenantOrganizationBase implements ISkill {
+export class Skill extends TenantOrganizationBaseEntity implements ISkill {
+	constructor(input?: DeepPartial<Skill>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@Column()
 	name?: string;

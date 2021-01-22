@@ -2,18 +2,25 @@ import { Column, Entity, OneToMany } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber } from 'class-validator';
 import {
+	DeepPartial,
 	ICandidate,
 	IContact,
 	IEmployee,
 	IOrganizationContact
 } from '@gauzy/common';
-import { TenantOrganizationBase } from '../tenant-organization-base';
-import { OrganizationContact } from '../organization-contact/organization-contact.entity';
-import { Employee } from '../employee/employee.entity';
-import { Candidate } from '../candidate/candidate.entity';
+import {
+	Candidate,
+	Employee,
+	OrganizationContact,
+	TenantOrganizationBaseEntity
+} from '../internal';
 
 @Entity('contact')
-export class Contact extends TenantOrganizationBase implements IContact {
+export class Contact extends TenantOrganizationBaseEntity implements IContact {
+	constructor(input?: DeepPartial<Contact>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsOptional()

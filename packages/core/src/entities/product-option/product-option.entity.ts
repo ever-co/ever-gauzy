@@ -1,14 +1,17 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { IProductOption } from '@gauzy/common';
+import { DeepPartial, IProductOption } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
-import { Product } from '../product/product.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { Product, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('product_option')
 export class ProductOption
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IProductOption {
+	constructor(input?: DeepPartial<ProductOption>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column()

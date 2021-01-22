@@ -1,17 +1,27 @@
-import { ICandidate, IOrganizationEmploymentType } from '@gauzy/common';
+import {
+	DeepPartial,
+	ICandidate,
+	IOrganizationEmploymentType
+} from '@gauzy/common';
 import { Column, Entity, JoinTable, ManyToMany } from 'typeorm';
-import { Employee } from '../employee/employee.entity';
-import { Tag } from '../tags/tag.entity';
 import { ApiProperty } from '@nestjs/swagger';
-import { TenantOrganizationBase } from '../tenant-organization-base';
-import { Candidate } from '../candidate/candidate.entity';
+import {
+	Candidate,
+	Employee,
+	Tag,
+	TenantOrganizationBaseEntity
+} from '../internal';
 
 @Entity('organization_employment_type')
 export class OrganizationEmploymentType
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IOrganizationEmploymentType {
+	constructor(input?: DeepPartial<OrganizationEmploymentType>) {
+		super(input);
+	}
+
 	@ApiProperty()
-	@ManyToMany((type) => Tag, (tag) => tag.organizationEmploymentType)
+	@ManyToMany(() => Tag, (tag) => tag.organizationEmploymentType)
 	@JoinTable({
 		name: 'tag_organization_employment_type'
 	})
@@ -21,9 +31,11 @@ export class OrganizationEmploymentType
 	name: string;
 
 	@ManyToMany(
-		(type) => Employee,
+		() => Employee,
 		(employee) => employee.organizationEmploymentTypes,
-		{ cascade: ['update'] }
+		{
+			cascade: ['update']
+		}
 	)
 	@JoinTable({
 		name: 'organization_employment_type_employee'
@@ -31,9 +43,11 @@ export class OrganizationEmploymentType
 	members?: Employee[];
 
 	@ManyToMany(
-		(type) => Candidate,
+		() => Candidate,
 		(candidate) => candidate.organizationEmploymentTypes,
-		{ cascade: ['update'] }
+		{
+			cascade: ['update']
+		}
 	)
 	@JoinTable({
 		name: 'candidate_employment_type'

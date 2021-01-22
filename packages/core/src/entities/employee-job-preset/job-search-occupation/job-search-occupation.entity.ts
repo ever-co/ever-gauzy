@@ -5,16 +5,23 @@ import {
 	JobPostSourceEnum,
 	IJobSearchOccupation,
 	IJobPresetUpworkJobSearchCriterion,
-	IEmployeeUpworkJobsSearchCriterion
+	IEmployeeUpworkJobsSearchCriterion,
+	DeepPartial
 } from '@gauzy/common';
-import { TenantOrganizationBase } from '../../tenant-organization-base';
-import { JobPresetUpworkJobSearchCriterion } from '../job-preset-upwork-job-search-criterion.entity';
-import { EmployeeUpworkJobsSearchCriterion } from '../employee-upwork-jobs-search-criterion.entity';
+import {
+	EmployeeUpworkJobsSearchCriterion,
+	JobPresetUpworkJobSearchCriterion,
+	TenantOrganizationBaseEntity
+} from '../../internal';
 
 @Entity('job_search_occupation')
 export class JobSearchOccupation
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IJobSearchOccupation {
+	constructor(input?: DeepPartial<JobSearchOccupation>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

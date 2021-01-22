@@ -4,13 +4,17 @@ import { IsOptional, IsString } from 'class-validator';
 import {
 	IOrganization,
 	IBasePerTenantAndOrganizationEntityModel,
-	ITenant
+	DeepPartial
 } from '@gauzy/common';
-import { Base, Organization, Tenant } from './internal';
+import { Organization, TenantBaseEntity } from '../internal';
 
-export abstract class TenantOrganizationBase
-	extends Base
+export abstract class TenantOrganizationBaseEntity
+	extends TenantBaseEntity
 	implements IBasePerTenantAndOrganizationEntityModel {
+	constructor(input?: DeepPartial<TenantOrganizationBaseEntity>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: Organization, readOnly: true })
 	@ManyToOne(() => Organization, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
@@ -18,24 +22,10 @@ export abstract class TenantOrganizationBase
 	organization?: IOrganization;
 
 	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((it: TenantOrganizationBase) => it.organization)
+	@RelationId((it: TenantOrganizationBaseEntity) => it.organization)
 	@IsString()
 	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	organizationId?: string;
-
-	@ApiProperty({ type: Tenant, readOnly: true })
-	@ManyToOne(() => Tenant, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	@IsOptional()
-	tenant?: ITenant;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((t: TenantOrganizationBase) => t.tenant)
-	@IsString()
-	@IsOptional()
-	@Index()
-	@Column({ nullable: true })
-	tenantId?: string;
 }

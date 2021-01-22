@@ -10,21 +10,27 @@ import {
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
-import { ITask, TaskStatusEnum } from '@gauzy/common';
-import { OrganizationProject } from '../organization-projects/organization-projects.entity';
-import { InvoiceItem } from '../invoice-item/invoice-item.entity';
-import { Tag } from '../tags/tag.entity';
-import { Employee } from '../employee/employee.entity';
-import { OrganizationTeam } from '../organization-team/organization-team.entity';
-import { User } from '../user/user.entity';
-import { OrganizationSprint } from '../organization-sprint/organization-sprint.entity';
-import { TimeLog } from '../timesheet/time-log.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { DeepPartial, ITask, TaskStatusEnum } from '@gauzy/common';
+import {
+	Employee,
+	InvoiceItem,
+	OrganizationProject,
+	OrganizationSprint,
+	OrganizationTeam,
+	Tag,
+	TenantOrganizationBaseEntity,
+	TimeLog,
+	User
+} from '../internal';
 
 @Entity('task')
-export class Task extends TenantOrganizationBase implements ITask {
+export class Task extends TenantOrganizationBaseEntity implements ITask {
+	constructor(input?: DeepPartial<Task>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: Tag })
-	@ManyToMany((type) => Tag, (tag) => tag.task)
+	@ManyToMany(() => Tag, (tag) => tag.task)
 	@JoinTable({
 		name: 'tag_task'
 	})
@@ -60,7 +66,7 @@ export class Task extends TenantOrganizationBase implements ITask {
 	@JoinColumn()
 	project?: OrganizationProject;
 
-	@OneToMany((type) => TimeLog, (timeLog) => timeLog.task)
+	@OneToMany(() => TimeLog, (timeLog) => timeLog.task)
 	timeLogs?: TimeLog[];
 
 	@ApiProperty({ type: String, readOnly: true })
@@ -68,13 +74,13 @@ export class Task extends TenantOrganizationBase implements ITask {
 	@Column({ nullable: true })
 	readonly projectId?: string;
 
-	@ManyToMany((type) => Employee, { cascade: ['update'] })
+	@ManyToMany(() => Employee, { cascade: ['update'] })
 	@JoinTable({
 		name: 'task_employee'
 	})
 	readonly members?: Employee[];
 
-	@ManyToMany((type) => OrganizationTeam, { cascade: ['update'] })
+	@ManyToMany(() => OrganizationTeam, { cascade: ['update'] })
 	@JoinTable({
 		name: 'task_team'
 	})
@@ -86,7 +92,7 @@ export class Task extends TenantOrganizationBase implements ITask {
 	invoiceItems?: InvoiceItem[];
 
 	@ApiProperty({ type: User })
-	@ManyToOne((type) => User, {
+	@ManyToOne(() => User, {
 		nullable: true,
 		onDelete: 'CASCADE'
 	})
@@ -99,7 +105,7 @@ export class Task extends TenantOrganizationBase implements ITask {
 	readonly creatorId?: string;
 
 	@ApiProperty({ type: OrganizationSprint })
-	@ManyToOne((type) => OrganizationSprint, {
+	@ManyToOne(() => OrganizationSprint, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()

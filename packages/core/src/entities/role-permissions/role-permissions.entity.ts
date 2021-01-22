@@ -2,37 +2,20 @@ import {
 	PermissionsEnum,
 	IRolePermission as IRolePermissions,
 	RolesEnum,
-	ITenant
+	DeepPartial
 } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import {
-	Column,
-	Entity,
-	Index,
-	ManyToOne,
-	JoinColumn,
-	RelationId
-} from 'typeorm';
-import { Role } from '../role/role.entity';
-import { Base } from '../base';
-import { Tenant } from '../tenant/tenant.entity';
+import { IsEnum, IsNotEmpty } from 'class-validator';
+import { Column, Entity, Index, ManyToOne } from 'typeorm';
+import { Role, TenantBaseEntity } from '../internal';
 
 @Entity('role_permission')
-export class RolePermissions extends Base implements IRolePermissions {
-	@ApiProperty({ type: Tenant, readOnly: true })
-	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	@IsOptional()
-	tenant?: ITenant;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((t: RolePermissions) => t.tenant)
-	@IsString()
-	@IsOptional()
-	@Index()
-	@Column({ nullable: true })
-	tenantId?: string;
+export class RolePermissions
+	extends TenantBaseEntity
+	implements IRolePermissions {
+	constructor(input?: DeepPartial<RolePermissions>) {
+		super(input);
+	}
 
 	@ApiProperty({ type: String, enum: RolesEnum })
 	@IsEnum(RolesEnum)
@@ -52,6 +35,6 @@ export class RolePermissions extends Base implements IRolePermissions {
 	@Column({ nullable: true, default: false })
 	enabled: boolean;
 
-	@ManyToOne((type) => Role, (role) => role.rolePermissions)
+	@ManyToOne(() => Role, (role) => role.rolePermissions)
 	role!: Role;
 }

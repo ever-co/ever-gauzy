@@ -6,16 +6,19 @@ import {
 	RelationId,
 	ManyToOne
 } from 'typeorm';
-import { IUserOrganization } from '@gauzy/common';
+import { DeepPartial, IUserOrganization } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
-import { User } from '../user/user.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { TenantOrganizationBaseEntity, User } from '../internal';
 
 @Entity('user_organization')
 export class UserOrganization
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IUserOrganization {
+	constructor(input?: DeepPartial<UserOrganization>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: User })
 	@ManyToOne((type) => User, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()

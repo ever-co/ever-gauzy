@@ -1,4 +1,4 @@
-import { IPipeline } from '@gauzy/common';
+import { DeepPartial, IPipeline } from '@gauzy/common';
 import {
 	AfterInsert,
 	AfterLoad,
@@ -10,11 +10,16 @@ import {
 } from 'typeorm';
 import { IsNotEmpty, IsString, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { PipelineStage } from '../pipeline-stage/pipeline-stage.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { PipelineStage, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('pipeline')
-export class Pipeline extends TenantOrganizationBase implements IPipeline {
+export class Pipeline
+	extends TenantOrganizationBaseEntity
+	implements IPipeline {
+	constructor(input?: DeepPartial<Pipeline>) {
+		super(input);
+	}
+
 	@OneToMany(() => PipelineStage, ({ pipeline }) => pipeline, {
 		cascade: ['insert']
 	})

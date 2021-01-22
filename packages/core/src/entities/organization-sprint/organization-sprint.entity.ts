@@ -1,5 +1,9 @@
 import { Entity, Column, OneToMany, JoinColumn, ManyToOne } from 'typeorm';
-import { IOrganizationSprint, SprintStartDayEnum } from '@gauzy/common';
+import {
+	DeepPartial,
+	IOrganizationSprint,
+	SprintStartDayEnum
+} from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsBoolean,
@@ -9,14 +13,20 @@ import {
 	IsOptional,
 	IsString
 } from 'class-validator';
-import { Task } from '../tasks/task.entity';
-import { OrganizationProject } from '../organization-projects/organization-projects.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import {
+	OrganizationProject,
+	Task,
+	TenantOrganizationBaseEntity
+} from '../internal';
 
 @Entity('organization_sprint')
 export class OrganizationSprint
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IOrganizationSprint {
+	constructor(input?: DeepPartial<OrganizationSprint>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -59,7 +69,7 @@ export class OrganizationSprint
 
 	@ApiProperty({ type: OrganizationProject })
 	@ManyToOne(
-		(type) => OrganizationProject,
+		() => OrganizationProject,
 		(project) => project.organizationSprints,
 		{
 			nullable: true,
@@ -75,7 +85,7 @@ export class OrganizationSprint
 	isActive?: boolean;
 
 	@ApiProperty({ type: Task })
-	@OneToMany((type) => Task, (task) => task.organizationSprint)
+	@OneToMany(() => Task, (task) => task.organizationSprint)
 	@JoinColumn()
 	tasks?: Task[];
 }

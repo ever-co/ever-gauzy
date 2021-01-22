@@ -13,19 +13,26 @@ import {
 	ICandidateInterviewers,
 	ICandidateCriterionsRating,
 	ICandidate,
-	ICandidateInterview
+	ICandidateInterview,
+	DeepPartial
 } from '@gauzy/common';
 import { IsEnum, IsOptional } from 'class-validator';
-import { CandidateInterviewers } from '../candidate-interviewers/candidate-interviewers.entity';
-import { CandidateCriterionsRating } from '../candidate-criterions-rating/candidate-criterion-rating.entity';
-import { Candidate } from '../candidate/candidate.entity';
-import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import {
+	Candidate,
+	CandidateCriterionsRating,
+	CandidateInterview,
+	CandidateInterviewers,
+	TenantOrganizationBaseEntity
+} from '../internal';
 
 @Entity('candidate_feedback')
 export class CandidateFeedback
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements ICandidateFeedback {
+	constructor(input?: DeepPartial<CandidateFeedback>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@Column()
 	description: string;
@@ -49,12 +56,12 @@ export class CandidateFeedback
 	status?: string;
 
 	@ApiProperty({ type: CandidateInterviewers })
-	@OneToOne((type) => CandidateInterviewers)
+	@OneToOne(() => CandidateInterviewers)
 	@JoinColumn()
 	interviewer?: ICandidateInterviewers;
 
 	@OneToMany(
-		(type) => CandidateCriterionsRating,
+		() => CandidateCriterionsRating,
 		(criterionsRating) => criterionsRating.feedback,
 		{
 			cascade: true
@@ -64,7 +71,7 @@ export class CandidateFeedback
 	criterionsRating?: ICandidateCriterionsRating[];
 
 	@ManyToOne(
-		(type) => CandidateInterview,
+		() => CandidateInterview,
 		(candidateInterview) => candidateInterview.feedbacks,
 		{
 			onDelete: 'CASCADE'
@@ -72,7 +79,7 @@ export class CandidateFeedback
 	)
 	interview: ICandidateInterview;
 
-	@ManyToOne((type) => Candidate, (candidate) => candidate.feedbacks, {
+	@ManyToOne(() => Candidate, (candidate) => candidate.feedbacks, {
 		onDelete: 'CASCADE'
 	})
 	candidate: ICandidate;

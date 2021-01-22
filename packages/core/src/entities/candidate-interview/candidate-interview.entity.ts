@@ -1,5 +1,3 @@
-import { CandidatePersonalQualities } from './../candidate-personal-qualities/candidate-personal-qualities.entity';
-import { CandidateTechnologies } from './../candidate-technologies/candidate-technologies.entity';
 import { Column, Entity, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -8,17 +6,26 @@ import {
 	ICandidateInterviewers,
 	ICandidateTechnologies,
 	ICandidatePersonalQualities,
-	ICandidate
+	ICandidate,
+	DeepPartial
 } from '@gauzy/common';
-import { CandidateInterviewers } from '../candidate-interviewers/candidate-interviewers.entity';
-import { CandidateFeedback } from '../candidate-feedbacks/candidate-feedbacks.entity';
-import { Candidate } from '../candidate/candidate.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import {
+	Candidate,
+	CandidateFeedback,
+	CandidateInterviewers,
+	CandidatePersonalQualities,
+	CandidateTechnologies,
+	TenantOrganizationBaseEntity
+} from '../internal';
 
 @Entity('candidate_interview')
 export class CandidateInterview
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements ICandidateInterview {
+	constructor(input?: DeepPartial<CandidateInterview>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@Column()
 	title: string;

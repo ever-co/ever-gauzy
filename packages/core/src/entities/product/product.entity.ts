@@ -8,21 +8,27 @@ import {
 	ManyToMany,
 	JoinTable
 } from 'typeorm';
-import { IProductTranslatable } from '@gauzy/common';
-import { ProductVariant } from '../product-variant/product-variant.entity';
-import { ProductType } from '../product-type/product-type.entity';
-import { ProductCategory } from '../product-category/product-category.entity';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional } from 'class-validator';
-import { ProductOption } from '../product-option/product-option.entity';
-import { Tag } from '../tags/tag.entity';
-import { InvoiceItem } from '../invoice-item/invoice-item.entity';
-import { TranslatableBase } from '../translate-base';
-import { ProductTranslation } from './product-translation.entity';
+import { DeepPartial, IProductTranslatable } from '@gauzy/common';
+import {
+	InvoiceItem,
+	ProductCategory,
+	ProductOption,
+	ProductTranslation,
+	ProductType,
+	ProductVariant,
+	Tag,
+	TranslatableBase
+} from '../internal';
 
 @Entity('product')
 export class Product extends TranslatableBase implements IProductTranslatable {
-	@ManyToMany((type) => Tag, (tag) => tag.product)
+	constructor(input?: DeepPartial<Product>) {
+		super(input);
+	}
+
+	@ManyToMany(() => Tag, (tag) => tag.product)
 	@JoinTable({
 		name: 'tag_product'
 	})
@@ -45,7 +51,9 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@OneToMany(
 		() => ProductVariant,
 		(productVariant) => productVariant.product,
-		{ onDelete: 'CASCADE' }
+		{
+			onDelete: 'CASCADE'
+		}
 	)
 	variants: ProductVariant[];
 
@@ -65,14 +73,11 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@JoinColumn()
 	category: ProductCategory;
 
-	@OneToMany(
-		(type) => ProductOption,
-		(productOption) => productOption.product
-	)
+	@OneToMany(() => ProductOption, (productOption) => productOption.product)
 	options: ProductOption[];
 
 	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
-	@OneToMany((type) => InvoiceItem, (invoiceItem) => invoiceItem.product, {
+	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.product, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -80,7 +85,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 
 	@ApiProperty({ type: ProductTranslation, isArray: true })
 	@OneToMany(
-		(type) => ProductTranslation,
+		() => ProductTranslation,
 		(productTranslation) => productTranslation.reference,
 		{
 			eager: true,

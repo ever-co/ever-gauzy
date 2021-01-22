@@ -5,7 +5,8 @@ import {
 	IOrganizationContact,
 	IOrganizationProject,
 	IUser,
-	IRole
+	IRole,
+	DeepPartial
 } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsEmail, IsEnum, IsNotEmpty, IsString } from 'class-validator';
@@ -19,15 +20,20 @@ import {
 	ManyToOne,
 	RelationId
 } from 'typeorm';
-import { OrganizationProject } from '../organization-projects/organization-projects.entity';
-import { Role } from '../role/role.entity';
-import { User } from '../user/user.entity';
-import { OrganizationContact } from '../organization-contact/organization-contact.entity';
-import { OrganizationDepartment } from '../organization-department/organization-department.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
-
+import {
+	OrganizationContact,
+	OrganizationDepartment,
+	OrganizationProject,
+	Role,
+	TenantOrganizationBaseEntity,
+	User
+} from '../internal';
 @Entity('invite')
-export class Invite extends TenantOrganizationBase implements IInvite {
+export class Invite extends TenantOrganizationBaseEntity implements IInvite {
+	constructor(input?: DeepPartial<Invite>) {
+		super(input);
+	}
+
 	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@Index({ unique: true })
@@ -63,28 +69,28 @@ export class Invite extends TenantOrganizationBase implements IInvite {
 	expireDate: Date;
 
 	@ApiPropertyOptional({ type: Role })
-	@ManyToOne((type) => Role, { nullable: true, onDelete: 'CASCADE' })
+	@ManyToOne(() => Role, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	role?: IRole;
 
 	@ApiPropertyOptional({ type: User })
-	@ManyToOne((type) => User, { nullable: true, onDelete: 'CASCADE' })
+	@ManyToOne(() => User, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	invitedBy?: IUser;
 
-	@ManyToMany((type) => OrganizationProject)
+	@ManyToMany(() => OrganizationProject)
 	@JoinTable({
 		name: 'invite_organization_project'
 	})
 	projects?: IOrganizationProject[];
 
-	@ManyToMany((type) => OrganizationContact)
+	@ManyToMany(() => OrganizationContact)
 	@JoinTable({
 		name: 'invite_organization_contact'
 	})
 	organizationContact?: IOrganizationContact[];
 
-	@ManyToMany((type) => OrganizationDepartment)
+	@ManyToMany(() => OrganizationDepartment)
 	@JoinTable({
 		name: 'invite_organization_department'
 	})

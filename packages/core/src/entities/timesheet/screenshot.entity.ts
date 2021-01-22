@@ -6,15 +6,20 @@ import {
 	JoinColumn,
 	AfterLoad
 } from 'typeorm';
-import { IScreenshot, ITimeSlot } from '@gauzy/common';
+import { DeepPartial, IScreenshot, ITimeSlot } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber, IsDateString } from 'class-validator';
-import { TimeSlot } from './time-slot.entity';
 // import { FileStorage } from '../core/file-storage';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { TenantOrganizationBaseEntity, TimeSlot } from '../internal';
 
 @Entity('screenshot')
-export class Screenshot extends TenantOrganizationBase implements IScreenshot {
+export class Screenshot
+	extends TenantOrganizationBaseEntity
+	implements IScreenshot {
+	constructor(input?: DeepPartial<Screenshot>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: TimeSlot })
 	@ManyToOne(() => TimeSlot, (timeSlot) => timeSlot.screenshots, {
 		onDelete: 'CASCADE'

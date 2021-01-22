@@ -2,18 +2,25 @@ import { Entity, Column, ManyToOne, RelationId, JoinColumn } from 'typeorm';
 import {
 	IKeyResultTemplate,
 	KeyResultTypeEnum,
-	KeyResultDeadlineEnum
+	KeyResultDeadlineEnum,
+	DeepPartial
 } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum } from 'class-validator';
-import { GoalTemplate } from '../goal-template/goal-template.entity';
-import { GoalKPITemplate } from '../goal-kpi-template/goal-kpi-template.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import {
+	GoalKPITemplate,
+	GoalTemplate,
+	TenantOrganizationBaseEntity
+} from '../internal';
 
 @Entity('key_result_template')
 export class KeyResultTemplate
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IKeyResultTemplate {
+	constructor(input?: DeepPartial<KeyResultTemplate>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;
@@ -44,7 +51,7 @@ export class KeyResultTemplate
 	deadline: string;
 
 	@ApiProperty({ type: GoalKPITemplate })
-	@ManyToOne((type) => GoalKPITemplate, { nullable: true })
+	@ManyToOne(() => GoalKPITemplate, { nullable: true })
 	@JoinColumn({ name: 'kpiId' })
 	@IsOptional()
 	kpi?: GoalKPITemplate;
@@ -55,13 +62,9 @@ export class KeyResultTemplate
 	kpiId?: string;
 
 	@ApiProperty({ type: GoalTemplate })
-	@ManyToOne(
-		(type) => GoalTemplate,
-		(goalTemplate) => goalTemplate.keyResults,
-		{
-			onDelete: 'CASCADE'
-		}
-	)
+	@ManyToOne(() => GoalTemplate, (goalTemplate) => goalTemplate.keyResults, {
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn({ name: 'goalId' })
 	goal: GoalTemplate;
 

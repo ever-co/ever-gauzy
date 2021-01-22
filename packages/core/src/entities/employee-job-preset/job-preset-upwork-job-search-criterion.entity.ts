@@ -2,18 +2,25 @@ import { Column, Entity, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import {
+	DeepPartial,
 	IJobPresetUpworkJobSearchCriterion,
 	JobPostTypeEnum
 } from '@gauzy/common';
-import { TenantOrganizationBase } from '../tenant-organization-base';
-import { JobPreset } from './job-preset.entity';
-import { JobSearchCategory } from './job-search-category/job-search-category.entity';
-import { JobSearchOccupation } from './job-search-occupation/job-search-occupation.entity';
+import {
+	JobPreset,
+	JobSearchCategory,
+	JobSearchOccupation,
+	TenantOrganizationBaseEntity
+} from '../internal';
 
 @Entity('job_preset_upwork_job_search_criterion')
 export class JobPresetUpworkJobSearchCriterion
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IJobPresetUpworkJobSearchCriterion {
+	constructor(input?: DeepPartial<JobPresetUpworkJobSearchCriterion>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

@@ -8,18 +8,24 @@ import {
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { IOrganizationTeam } from '@gauzy/common';
-import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
-import { Tag } from '../tags/tag.entity';
-import { RequestApprovalTeam } from '../request-approval-team/request-approval-team.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { DeepPartial, IOrganizationTeam } from '@gauzy/common';
+import {
+	OrganizationTeamEmployee,
+	RequestApprovalTeam,
+	Tag,
+	TenantOrganizationBaseEntity
+} from '../internal';
 
 @Entity('organization_team')
 export class OrganizationTeam
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IOrganizationTeam {
+	constructor(input?: DeepPartial<OrganizationTeam>) {
+		super(input);
+	}
+
 	@ApiProperty()
-	@ManyToMany((type) => Tag, (tag) => tag.organizationTeam)
+	@ManyToMany(() => Tag, (tag) => tag.organizationTeam)
 	@JoinTable({
 		name: 'tag_organization_team'
 	})
@@ -33,7 +39,7 @@ export class OrganizationTeam
 	name: string;
 
 	@OneToMany(
-		(type) => OrganizationTeamEmployee,
+		() => OrganizationTeamEmployee,
 		(organizationTeamEmployee) => organizationTeamEmployee.organizationTeam,
 		{
 			cascade: true
@@ -42,7 +48,7 @@ export class OrganizationTeam
 	members?: OrganizationTeamEmployee[];
 
 	@OneToMany(
-		(type) => RequestApprovalTeam,
+		() => RequestApprovalTeam,
 		(requestApprovals) => requestApprovals.team
 	)
 	requestApprovals?: RequestApprovalTeam[];

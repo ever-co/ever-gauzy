@@ -7,6 +7,7 @@ import {
 	ManyToOne
 } from 'typeorm';
 import {
+	DeepPartial,
 	IEmployee,
 	ITimeOff as ITimeOffRequest,
 	ITimeOffPolicy,
@@ -20,15 +21,21 @@ import {
 	IsDate,
 	IsBoolean
 } from 'class-validator';
-import { Employee } from '../employee/employee.entity';
-import { TimeOffPolicy } from '../time-off-policy/time-off-policy.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import {
+	Employee,
+	TenantOrganizationBaseEntity,
+	TimeOffPolicy
+} from '../internal';
 
 @Entity('time_off_request')
 export class TimeOffRequest
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements ITimeOffRequest {
-	@ManyToMany((type) => Employee, { cascade: true })
+	constructor(input?: DeepPartial<TimeOffRequest>) {
+		super(input);
+	}
+
+	@ManyToMany(() => Employee, { cascade: true })
 	@JoinTable({
 		name: 'time_off_request_employee'
 	})
@@ -48,7 +55,7 @@ export class TimeOffRequest
 
 	@ApiProperty({ type: TimeOffPolicy })
 	@IsOptional()
-	@ManyToOne((type) => TimeOffPolicy, {
+	@ManyToOne(() => TimeOffPolicy, {
 		nullable: false,
 		onDelete: 'CASCADE'
 	})

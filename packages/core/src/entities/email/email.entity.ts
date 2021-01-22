@@ -1,15 +1,17 @@
-import { IEmail, IEmailTemplate, IUser } from '@gauzy/common';
+import { DeepPartial, IEmail, IEmailTemplate, IUser } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsString } from 'class-validator';
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
-import { EmailTemplate } from '../email-template/email-template.entity';
-import { User } from '../user/user.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { EmailTemplate, TenantOrganizationBaseEntity, User } from '../internal';
 
 @Entity('email_sent')
-export class Email extends TenantOrganizationBase implements IEmail {
+export class Email extends TenantOrganizationBaseEntity implements IEmail {
+	constructor(input?: DeepPartial<Email>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: EmailTemplate })
-	@ManyToOne((type) => EmailTemplate, {
+	@ManyToOne(() => EmailTemplate, {
 		nullable: false,
 		cascade: true,
 		onDelete: 'CASCADE'
@@ -47,7 +49,7 @@ export class Email extends TenantOrganizationBase implements IEmail {
 	isArchived?: boolean;
 
 	@ApiProperty({ type: User })
-	@ManyToOne((type) => User, {
+	@ManyToOne(() => User, {
 		nullable: true,
 		cascade: true,
 		onDelete: 'CASCADE'

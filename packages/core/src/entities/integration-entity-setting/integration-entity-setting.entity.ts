@@ -8,21 +8,28 @@ import {
 	OneToMany
 } from 'typeorm';
 import {
+	DeepPartial,
 	IIntegrationEntitySetting,
 	IIntegrationEntitySettingTied,
 	IIntegrationTenant
 } from '@gauzy/common';
-import { IntegrationTenant } from '../integration-tenant/integration-tenant.entity';
-import { IntegrationEntitySettingTiedEntity } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import {
+	IntegrationEntitySettingTiedEntity,
+	IntegrationTenant,
+	TenantOrganizationBaseEntity
+} from '../internal';
 
 @Entity('integration_entity_setting')
 export class IntegrationEntitySetting
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IIntegrationEntitySetting {
+	constructor(input?: DeepPartial<IntegrationEntitySetting>) {
+		super(input);
+	}
+
 	@ApiPropertyOptional({ type: IntegrationTenant })
 	@ManyToOne(
-		(type) => IntegrationTenant,
+		() => IntegrationTenant,
 		(integration) => integration.entitySettings
 	)
 	@JoinColumn()
@@ -40,9 +47,11 @@ export class IntegrationEntitySetting
 		isArray: true
 	})
 	@OneToMany(
-		(type) => IntegrationEntitySettingTiedEntity,
+		() => IntegrationEntitySettingTiedEntity,
 		(tiedEntity) => tiedEntity.integrationEntitySetting,
-		{ cascade: true }
+		{
+			cascade: true
+		}
 	)
 	@JoinColumn()
 	tiedEntities?: IIntegrationEntitySettingTied[];

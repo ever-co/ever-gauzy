@@ -1,14 +1,21 @@
 import { Entity, Column, ManyToOne, RelationId, JoinColumn } from 'typeorm';
-import { IKeyResultUpdate, KeyResultUpdateStatusEnum } from '@gauzy/common';
+import {
+	DeepPartial,
+	IKeyResultUpdate,
+	KeyResultUpdateStatusEnum
+} from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
-import { KeyResult } from '../keyresult/keyresult.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { KeyResult, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('key_result_update')
 export class KeyResultUpdate
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IKeyResultUpdate {
+	constructor(input?: DeepPartial<KeyResultUpdate>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: Number })
 	@Column()
 	update: number;
@@ -27,7 +34,7 @@ export class KeyResultUpdate
 	status: string;
 
 	@ApiProperty({ type: KeyResult })
-	@ManyToOne((type) => KeyResult, (keyResult) => keyResult.update, {
+	@ManyToOne(() => KeyResult, (keyResult) => keyResult.update, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn({ name: 'keyResultId' })

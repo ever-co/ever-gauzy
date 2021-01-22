@@ -26,27 +26,34 @@ import {
 	IExpenseCategory,
 	ITag,
 	IEmployee,
-	IOrganizationProject
+	IOrganizationProject,
+	DeepPartial
 } from '@gauzy/common';
-import { Employee } from '../employee/employee.entity';
-import { Tag } from '../tags/tag.entity';
-import { ExpenseCategory } from '../expense-categories/expense-category.entity';
-import { OrganizationVendor } from '../organization-vendors/organization-vendors.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
-import { InvoiceItem } from '../invoice-item/invoice-item.entity';
-import { OrganizationProject } from '../organization-projects/organization-projects.entity';
+import {
+	Employee,
+	ExpenseCategory,
+	InvoiceItem,
+	OrganizationProject,
+	OrganizationVendor,
+	Tag,
+	TenantOrganizationBaseEntity
+} from '../internal';
 
 @Entity('expense')
-export class Expense extends TenantOrganizationBase implements IExpense {
+export class Expense extends TenantOrganizationBaseEntity implements IExpense {
+	constructor(input?: DeepPartial<Expense>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: Tag })
-	@ManyToMany((type) => Tag, (tag) => tag.expense)
+	@ManyToMany(() => Tag, (tag) => tag.expense)
 	@JoinTable({
 		name: 'tag_expense'
 	})
 	tags: ITag[];
 
 	@ApiProperty({ type: Employee })
-	@ManyToOne((type) => Employee, { nullable: true, onDelete: 'CASCADE' })
+	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	employee?: IEmployee;
 
@@ -70,7 +77,7 @@ export class Expense extends TenantOrganizationBase implements IExpense {
 	typeOfExpense: string;
 
 	@ApiProperty({ type: OrganizationVendor })
-	@ManyToOne((type) => OrganizationVendor, {
+	@ManyToOne(() => OrganizationVendor, {
 		nullable: false
 	})
 	@JoinColumn()
@@ -81,7 +88,7 @@ export class Expense extends TenantOrganizationBase implements IExpense {
 	readonly vendorId: string;
 
 	@ApiProperty({ type: ExpenseCategory })
-	@ManyToOne((type) => ExpenseCategory, {
+	@ManyToOne(() => ExpenseCategory, {
 		nullable: false
 	})
 	@JoinColumn()
@@ -111,7 +118,7 @@ export class Expense extends TenantOrganizationBase implements IExpense {
 	projectId?: string;
 
 	@ApiProperty({ type: OrganizationProject })
-	@ManyToOne((type) => OrganizationProject, {
+	@ManyToOne(() => OrganizationProject, {
 		nullable: false
 	})
 	@JoinColumn()
@@ -190,7 +197,7 @@ export class Expense extends TenantOrganizationBase implements IExpense {
 	status?: string;
 
 	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
-	@OneToMany((type) => InvoiceItem, (invoiceItem) => invoiceItem.expense, {
+	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.expense, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()

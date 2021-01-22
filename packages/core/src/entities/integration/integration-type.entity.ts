@@ -1,9 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity } from 'typeorm';
-import { IIntegrationType } from '@gauzy/common';
-import { Base } from '../base';
+import { DeepPartial, IIntegrationType } from '@gauzy/common';
+import { BaseEntity } from '../internal';
+
 @Entity('integration_type')
-export class IntegrationType extends Base implements IIntegrationType {
+export class IntegrationType extends BaseEntity implements IIntegrationType {
+	constructor(input?: DeepPartial<IntegrationType>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@Column({ nullable: false })
 	name: string;

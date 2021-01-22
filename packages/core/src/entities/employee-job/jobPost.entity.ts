@@ -4,7 +4,7 @@ import {
 	JobPostStatusEnum,
 	JobPostTypeEnum
 } from '@gauzy/common';
-import { Model } from '../base';
+import { Model } from '../internal';
 
 export class JobPost extends Model implements IJobPost {
 	jobPostId: string;

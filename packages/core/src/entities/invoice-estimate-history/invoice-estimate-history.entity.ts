@@ -1,15 +1,17 @@
-import { IInvoiceEstimateHistory } from '@gauzy/common';
+import { DeepPartial, IInvoiceEstimateHistory } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { Entity, Column, JoinColumn, ManyToOne } from 'typeorm';
-import { User } from '../user/user.entity';
-import { Invoice } from '../invoice/invoice.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { Invoice, TenantOrganizationBaseEntity, User } from '../internal';
 
 @Entity('invoice_estimate_history')
 export class InvoiceEstimateHistory
-	extends TenantOrganizationBase
+	extends TenantOrganizationBaseEntity
 	implements IInvoiceEstimateHistory {
+	constructor(input?: DeepPartial<InvoiceEstimateHistory>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column()
@@ -20,7 +22,7 @@ export class InvoiceEstimateHistory
 	userId: string;
 
 	@ApiProperty({ type: User })
-	@ManyToOne((type) => User)
+	@ManyToOne(() => User)
 	@JoinColumn()
 	user: User;
 
@@ -29,7 +31,7 @@ export class InvoiceEstimateHistory
 	invoiceId: string;
 
 	@ApiProperty({ type: Invoice })
-	@ManyToOne((type) => Invoice, (invoice) => invoice.invoiceItems, {
+	@ManyToOne(() => Invoice, (invoice) => invoice.invoiceItems, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()

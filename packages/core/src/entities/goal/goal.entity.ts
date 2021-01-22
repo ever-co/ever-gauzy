@@ -1,14 +1,20 @@
-import { IGoal, GoalLevelEnum } from '@gauzy/common';
+import { IGoal, GoalLevelEnum, DeepPartial } from '@gauzy/common';
 import { Entity, Column, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum } from 'class-validator';
-import { KeyResult } from '../keyresult/keyresult.entity';
-import { Employee } from '../employee/employee.entity';
-import { OrganizationTeam } from '../organization-team/organization-team.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import {
+	Employee,
+	KeyResult,
+	OrganizationTeam,
+	TenantOrganizationBaseEntity
+} from '../internal';
 
 @Entity('goal')
-export class Goal extends TenantOrganizationBase implements IGoal {
+export class Goal extends TenantOrganizationBaseEntity implements IGoal {
+	constructor(input?: DeepPartial<Goal>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;
@@ -18,16 +24,18 @@ export class Goal extends TenantOrganizationBase implements IGoal {
 	@IsOptional()
 	description?: string;
 
-	@ManyToOne((type) => OrganizationTeam)
+	@ManyToOne(() => OrganizationTeam)
 	@JoinColumn()
 	ownerTeam?: OrganizationTeam;
 
-	@ManyToOne((type) => Employee)
+	@ManyToOne(() => Employee)
 	@JoinColumn()
 	ownerEmployee?: Employee;
 
 	@ApiProperty({ type: Employee })
-	@ManyToOne((type) => Employee, { nullable: true })
+	@ManyToOne(() => Employee, {
+		nullable: true
+	})
 	@JoinColumn()
 	@IsOptional()
 	lead?: Employee;
@@ -46,11 +54,11 @@ export class Goal extends TenantOrganizationBase implements IGoal {
 	progress: number;
 
 	@ApiProperty({ type: KeyResult })
-	@OneToMany((type) => KeyResult, (keyResult) => keyResult.goal)
+	@OneToMany(() => KeyResult, (keyResult) => keyResult.goal)
 	@IsOptional()
 	keyResults?: KeyResult[];
 
-	@ManyToOne((type) => KeyResult, (keyResult) => keyResult.id)
+	@ManyToOne(() => KeyResult, (keyResult) => keyResult.id)
 	alignedKeyResult?: KeyResult;
 
 	@ApiProperty({ type: String })

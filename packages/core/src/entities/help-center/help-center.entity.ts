@@ -1,11 +1,16 @@
 import { Entity, Column, ManyToOne, OneToMany, JoinTable } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { IHelpCenter, IHelpCenterArticle } from '@gauzy/common';
-import { HelpCenterArticle } from '../help-center-article/help-center-article.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
+import { DeepPartial, IHelpCenter, IHelpCenterArticle } from '@gauzy/common';
+import { HelpCenterArticle, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('knowledge_base')
-export class HelpCenter extends TenantOrganizationBase implements IHelpCenter {
+export class HelpCenter
+	extends TenantOrganizationBaseEntity
+	implements IHelpCenter {
+	constructor(input?: DeepPartial<HelpCenter>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;
@@ -42,19 +47,19 @@ export class HelpCenter extends TenantOrganizationBase implements IHelpCenter {
 	@Column({ nullable: true })
 	index: number;
 
-	@ManyToOne((type) => HelpCenter, (children) => children.children, {
+	@ManyToOne(() => HelpCenter, (children) => children.children, {
 		cascade: ['insert'],
 		nullable: true
 	})
 	parent?: IHelpCenter;
 
-	@OneToMany((type) => HelpCenter, (children) => children.parent, {
+	@OneToMany(() => HelpCenter, (children) => children.parent, {
 		cascade: ['insert'],
 		nullable: true
 	})
 	children?: IHelpCenter[];
 
-	@ManyToOne((type) => HelpCenterArticle, { cascade: true })
+	@ManyToOne(() => HelpCenterArticle, { cascade: true })
 	@JoinTable({
 		name: 'HelpCenterArticle'
 	})

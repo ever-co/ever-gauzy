@@ -8,20 +8,24 @@ import {
 	OneToMany
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import * as _ from 'underscore';
-import { Base } from '../base';
-import { FeatureOrganization } from './feature_organization.entity';
 import {
 	IFeature,
 	IFeatureOrganization,
-	FeatureStatusEnum
+	FeatureStatusEnum,
+	DeepPartial
 } from '@gauzy/common';
 import { IsNotEmpty, IsString } from 'class-validator';
+import * as _ from 'underscore';
+import { BaseEntity, FeatureOrganization } from '../internal';
 // import { FileStorage } from '../core/file-storage';
 // import { gauzyToggleFeatures } from '@env-api/environment';
 
 @Entity('feature')
-export class Feature extends Base implements IFeature {
+export class Feature extends BaseEntity implements IFeature {
+	constructor(input?: DeepPartial<Feature>) {
+		super(input);
+	}
+
 	@ApiProperty({ type: FeatureOrganization })
 	@OneToMany(
 		() => FeatureOrganization,

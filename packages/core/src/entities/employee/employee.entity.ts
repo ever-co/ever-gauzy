@@ -13,7 +13,8 @@ import {
 	IOrganizationEmploymentType,
 	IInvoiceItem,
 	IRequestApprovalEmployee,
-	IPayment
+	IPayment,
+	DeepPartial
 } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -34,24 +35,32 @@ import {
 	RelationId,
 	OneToMany
 } from 'typeorm';
-import { OrganizationDepartment } from '../organization-department/organization-department.entity';
-import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
-import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
-import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
-import { Tag } from '../tags/tag.entity';
-import { User } from '../user/user.entity';
-import { InvoiceItem } from '../invoice-item/invoice-item.entity';
-import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
-import { Skill } from '../skills/skill.entity';
-import { Contact } from '../contact/contact.entity';
-import { TimeLog } from '../timesheet/time-log.entity';
-import { TenantOrganizationBase } from '../tenant-organization-base';
-import { Payment } from '../payment/payment.entity';
-import { JobPreset } from '../employee-job-preset/job-preset.entity';
+import {
+	Contact,
+	InvoiceItem,
+	JobPreset,
+	OrganizationDepartment,
+	OrganizationEmploymentType,
+	OrganizationPositions,
+	OrganizationTeamEmployee,
+	Payment,
+	RequestApprovalEmployee,
+	Skill,
+	Tag,
+	TenantOrganizationBaseEntity,
+	TimeLog,
+	User
+} from '../internal';
 
 @Entity('employee')
-export class Employee extends TenantOrganizationBase implements IEmployee {
-	@ManyToMany((type) => Tag, (tag) => tag.employee)
+export class Employee
+	extends TenantOrganizationBaseEntity
+	implements IEmployee {
+	constructor(input?: DeepPartial<Employee>) {
+		super(input);
+	}
+
+	@ManyToMany(() => Tag, (tag) => tag.employee)
 	@JoinTable({
 		name: 'tag_employee'
 	})
@@ -70,14 +79,14 @@ export class Employee extends TenantOrganizationBase implements IEmployee {
 	@RelationId((employee: Employee) => employee.contact)
 	readonly contactId?: string;
 
-	@ManyToMany((type) => Skill, (skill) => skill.employees)
+	@ManyToMany(() => Skill, (skill) => skill.employees)
 	@JoinTable({
 		name: 'skill_employee'
 	})
 	skills: ISkill[];
 
 	@ApiProperty({ type: User })
-	@OneToOne((type) => User, {
+	@OneToOne(() => User, {
 		nullable: false,
 		cascade: true,
 		onDelete: 'CASCADE'
@@ -91,7 +100,7 @@ export class Employee extends TenantOrganizationBase implements IEmployee {
 	readonly userId: string;
 
 	@ApiProperty({ type: OrganizationPositions })
-	@ManyToOne((type) => OrganizationPositions, { nullable: true })
+	@ManyToOne(() => OrganizationPositions, { nullable: true })
 	@JoinColumn()
 	organizationPosition?: IOrganizationPosition;
 
@@ -156,12 +165,12 @@ export class Employee extends TenantOrganizationBase implements IEmployee {
 	reWeeklyLimit?: number;
 
 	@OneToMany(
-		(type) => OrganizationTeamEmployee,
+		() => OrganizationTeamEmployee,
 		(organizationTeamEmployee) => organizationTeamEmployee.employee
 	)
 	teams?: IOrganizationTeam[];
 
-	@OneToMany((type) => TimeLog, (timeLog) => timeLog.employee)
+	@OneToMany(() => TimeLog, (timeLog) => timeLog.employee)
 	timeLogs?: ITimeLog[];
 
 	@ApiPropertyOptional({ type: Date })
@@ -183,16 +192,20 @@ export class Employee extends TenantOrganizationBase implements IEmployee {
 	rejectDate?: Date;
 
 	@ManyToMany(
-		(type) => OrganizationDepartment,
+		() => OrganizationDepartment,
 		(organizationDepartment) => organizationDepartment.members,
-		{ cascade: true }
+		{
+			cascade: true
+		}
 	)
 	organizationDepartments?: IOrganizationDepartment[];
 
 	@ManyToMany(
-		(type) => OrganizationEmploymentType,
+		() => OrganizationEmploymentType,
 		(organizationEmploymentType) => organizationEmploymentType.members,
-		{ cascade: true }
+		{
+			cascade: true
+		}
 	)
 	organizationEmploymentTypes?: IOrganizationEmploymentType[];
 
@@ -209,19 +222,19 @@ export class Employee extends TenantOrganizationBase implements IEmployee {
 	anonymousBonus?: boolean;
 
 	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
-	@OneToMany((type) => InvoiceItem, (invoiceItem) => invoiceItem.employee, {
+	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.employee, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	invoiceItems?: IInvoiceItem[];
 
 	@ApiPropertyOptional({ type: Payment, isArray: true })
-	@OneToMany((type) => Payment, (payments) => payments.recordedBy)
+	@OneToMany(() => Payment, (payments) => payments.recordedBy)
 	@JoinColumn()
 	payments?: IPayment[];
 
 	@OneToMany(
-		(type) => RequestApprovalEmployee,
+		() => RequestApprovalEmployee,
 		(requestApprovals) => requestApprovals.employee
 	)
 	requestApprovals?: IRequestApprovalEmployee[];
