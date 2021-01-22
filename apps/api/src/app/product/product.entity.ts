@@ -94,5 +94,5 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@JoinTable({
 		name: 'product_gallery_item'
 	})
-	gallery: [];
+	gallery: ImageAsset[];
 }

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { IImageAsset, IProductCategoryTranslated } from '@gauzy/models';
+import { IImageAsset } from '@gauzy/models';
 
 @Component({
 	selector: 'ngx-img-asset',
@@ -12,9 +12,7 @@ export class ImageAssetComponent implements OnInit {
 
 	@Output() imageClicked = new EventEmitter<any>();
 
-	ngOnInit(): void {
-		
-	}
+	ngOnInit(): void {}
 
 	onImageClick($event) {
 		this.imageClicked.emit(this.imageAsset);

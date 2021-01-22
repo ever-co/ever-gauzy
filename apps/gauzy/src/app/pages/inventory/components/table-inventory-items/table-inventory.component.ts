@@ -19,7 +19,6 @@ import { Store } from '../../../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { ItemImgTagsComponent } from '../table-components/item-img-tags-row.component';
-import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-table-inventory',

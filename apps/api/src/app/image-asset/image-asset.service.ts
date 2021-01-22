@@ -8,8 +8,8 @@ import { ImageAsset } from './image-asset.entity';
 export class ImageAssetService extends CrudService<ImageAsset> {
 	constructor(
 		@InjectRepository(ImageAsset)
-		private readonly productAssetRepository: Repository<ImageAsset>
+		private readonly imageAssetRepository: Repository<ImageAsset>
 	) {
-		super(productAssetRepository);
+		super(imageAssetRepository);
 	}
 }

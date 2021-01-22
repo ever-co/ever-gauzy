@@ -101,12 +101,13 @@ export class ProductGalleryComponent
 	}
 
 	onAddImageClick() {
-		const dialog = this.dialogService.open(SelectAssetComponent, {
-			context: {
-				gallery: this.availableImages,
-				newImageUploadedEvent: this.newImageUploadedEvent$
-			}
-		});
+		//tstodo
+		// const dialog = this.dialogService.open(SelectAssetComponent, {
+		// 	context: {
+		// 		gallery: this.availableImages,
+		// 		newImageUploadedEvent: this.newImageUploadedEvent$
+		// 	}
+		// });
 	}
 
 	ngOnDestroy(): void {}
