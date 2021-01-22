@@ -1,10 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
-import { Tenant } from './tenant/tenant.entity';
-import { Base } from './base';
 import { IsString, IsOptional } from 'class-validator';
 import { IBasePerTenantEntityModel, ITenant } from '@gauzy/common';
-
+import { Base, Tenant } from './internal';
 export abstract class TenantBase
 	extends Base
 	implements IBasePerTenantEntityModel {

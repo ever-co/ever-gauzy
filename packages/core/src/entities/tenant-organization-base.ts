@@ -6,16 +6,13 @@ import {
 	IBasePerTenantAndOrganizationEntityModel,
 	ITenant
 } from '@gauzy/common';
-import { Base } from './base';
-import { TenantBase } from './tenant-base';
-import { Organization } from './organization/organization.entity';
-import { Tenant } from './tenant/tenant.entity';
+import { Base, Organization, Tenant } from './internal';
 
 export abstract class TenantOrganizationBase
 	extends Base
 	implements IBasePerTenantAndOrganizationEntityModel {
 	@ApiProperty({ type: Organization, readOnly: true })
-	@ManyToOne((type) => Organization, { nullable: true, onDelete: 'CASCADE' })
+	@ManyToOne(() => Organization, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	@IsOptional()
 	organization?: IOrganization;
@@ -29,13 +26,13 @@ export abstract class TenantOrganizationBase
 	organizationId?: string;
 
 	@ApiProperty({ type: Tenant, readOnly: true })
-	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
+	@ManyToOne(() => Tenant, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	@IsOptional()
 	tenant?: ITenant;
 
 	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((t: TenantBase) => t.tenant)
+	@RelationId((t: TenantOrganizationBase) => t.tenant)
 	@IsString()
 	@IsOptional()
 	@Index()

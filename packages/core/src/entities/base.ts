@@ -8,7 +8,10 @@ import {
 	CreateDateColumn
 } from 'typeorm';
 import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
-import { BaseEntityModel as IBaseEntityModel } from '@gauzy/common';
+import {
+	BaseEntityModel as IBaseEntityModel,
+	DeepPartial
+} from '@gauzy/common';
 
 export abstract class Model {
 	constructor(input?: any) {
@@ -19,7 +22,15 @@ export abstract class Model {
 		}
 	}
 }
-export abstract class Base extends Model implements IBaseEntityModel {
+export abstract class Base implements IBaseEntityModel {
+	constructor(input?: DeepPartial<Base>) {
+		if (input) {
+			for (const [key, value] of Object.entries(input)) {
+				(this as any)[key] = value;
+			}
+		}
+	}
+
 	@ApiPropertyOptional({ type: String })
 	@PrimaryGeneratedColumn('uuid')
 	id?: string;
