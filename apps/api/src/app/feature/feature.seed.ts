@@ -1,7 +1,7 @@
 import { Connection } from 'typeorm';
 import * as path from 'path';
 import { copyFileSync, mkdirSync } from 'fs';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import * as rimraf from 'rimraf';
 import { environment as env } from '@env-api/environment';
 import {

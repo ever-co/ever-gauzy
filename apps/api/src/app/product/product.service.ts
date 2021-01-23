@@ -72,6 +72,6 @@ export class ProductService extends TenantAwareCrudService<Product> {
 	}
 
 	async saveProduct(productRequest: IProductCreateInput): Promise<Product> {
-		return await this.productRepository.save(productRequest);
+		return await this.productRepository.save(<any>productRequest);
 	}
 }

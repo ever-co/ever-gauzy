@@ -144,7 +144,7 @@ export class ProductController extends CrudController<Product> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	async update(
+	async updateProduct(
 		@Param('id') id: string,
 		@Body() entity: IProductCreateInput
 	): Promise<any> {
