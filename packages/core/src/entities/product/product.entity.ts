@@ -12,6 +12,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional } from 'class-validator';
 import { DeepPartial, IProductTranslatable } from '@gauzy/common';
 import {
+	ImageAsset,
 	InvoiceItem,
 	ProductCategory,
 	ProductOption,
@@ -93,4 +94,10 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 		}
 	)
 	translations: ProductTranslation[];
+
+	@ManyToMany(() => ImageAsset)
+	@JoinTable({
+		name: 'product_gallery_item'
+	})
+	gallery: ImageAsset[];
 }

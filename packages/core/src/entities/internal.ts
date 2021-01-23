@@ -58,6 +58,7 @@ export * from './goal/goal.entity';
 export * from './help-center-article/help-center-article.entity';
 export * from './help-center-author/help-center-author.entity';
 export * from './help-center/help-center.entity';
+export * from './image-asset/image-asset.entity';
 export * from './income/income.entity';
 export * from './integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.entity';
 export * from './integration-entity-setting/integration-entity-setting.entity';

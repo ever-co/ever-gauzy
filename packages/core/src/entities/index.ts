@@ -48,6 +48,7 @@ import {
 	HelpCenter,
 	HelpCenterArticle,
 	HelpCenterAuthor,
+	ImageAsset,
 	Income,
 	Integration,
 	IntegrationEntitySetting,
@@ -86,10 +87,10 @@ import {
 	Pipeline,
 	PipelineStage,
 	Product,
-	ProductTranslation,
 	ProductCategory,
 	ProductCategoryTranslation,
 	ProductOption,
+	ProductTranslation,
 	ProductType,
 	ProductTypeTranslation,
 	ProductVariant,
@@ -116,8 +117,8 @@ import {
 	Timesheet,
 	TimeSlot,
 	TimeSlotMinute,
-	UserOrganization,
-	User
+	User,
+	UserOrganization
 } from './internal';
 
 export const coreEntities = [
@@ -170,6 +171,7 @@ export const coreEntities = [
 	HelpCenter,
 	HelpCenterArticle,
 	HelpCenterAuthor,
+	ImageAsset,
 	Income,
 	Integration,
 	IntegrationEntitySetting,
@@ -208,10 +210,10 @@ export const coreEntities = [
 	Pipeline,
 	PipelineStage,
 	Product,
-	ProductTranslation,
 	ProductCategory,
 	ProductCategoryTranslation,
 	ProductOption,
+	ProductTranslation,
 	ProductType,
 	ProductTypeTranslation,
 	ProductVariant,
