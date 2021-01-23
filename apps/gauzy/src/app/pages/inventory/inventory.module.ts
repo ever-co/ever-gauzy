@@ -48,6 +48,10 @@ import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { CurrencyModule } from '../../@shared/currency/currency.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { ItemImgTagsComponent } from './components/table-components/item-img-tags-row.component';
+import { SelectAssetModule } from '../../@shared/select-asset-modal/select-asset.module';
+import { SelectAssetComponent } from '../../@shared/select-asset-modal/select-asset.component';
+import { ProductGalleryComponent } from './components/edit-inventory-item/product-gallery/product-gallery.component';
+import { ImageAssetService } from '../../@core/services/image-asset.service';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -75,7 +79,8 @@ const NB_MODULES = [
 		VariantTableComponent,
 		OptionsFormComponent,
 		InventoryVariantFormComponent,
-		EnabledStatusComponent
+		EnabledStatusComponent,
+		ProductGalleryComponent
 	],
 	imports: [
 		UserFormsModule,
@@ -96,14 +101,16 @@ const NB_MODULES = [
 		NbDialogModule.forChild(),
 		TranslateModule,
 		...NB_MODULES,
-		CurrencyModule
+		CurrencyModule,
+		SelectAssetModule
 	],
 	entryComponents: [
 		ProductTypeMutationComponent,
 		ProductCategoryMutationComponent,
 		ImageRowComponent,
 		IconRowComponent,
-		EnabledStatusComponent
+		EnabledStatusComponent,
+		SelectAssetComponent
 	],
 	providers: [
 		ProductTypeService,
@@ -112,7 +119,8 @@ const NB_MODULES = [
 		ProductVariantService,
 		ProductVariantSettingsService,
 		ProductVariantPriceService,
-		OrganizationsService
+		OrganizationsService,
+		ImageAssetService
 	]
 })
 export class InventoryModule {}

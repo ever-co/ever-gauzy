@@ -150,7 +150,7 @@ export class ProductFormComponent
 			const { id: organizationId, tenantId } = this.organization;
 			this.inventoryItem = await this.productService.getById(
 				id,
-				['category', 'type', 'options', 'variants', 'tags'],
+				['category', 'type', 'options', 'variants', 'tags', 'gallery'],
 				{ organizationId, tenantId }
 			);
 		}
