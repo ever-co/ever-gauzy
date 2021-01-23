@@ -5,7 +5,7 @@
 import { SeedDataService } from './app/core/seeds/seed-data.service';
 
 import yargs from 'yargs';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 
 /**
  * Usage:
