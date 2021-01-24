@@ -28,9 +28,8 @@ export const fadeInOutAnimation = trigger('fadeInOut', [
 export class ImageViewerComponent implements OnInit {
 	active_index: any;
 
-	@ViewChild('customScroll', { static: true }) customScroll: ElementRef<
-		HTMLElement
-	>;
+	@ViewChild('customScroll', { static: true })
+	customScroll: ElementRef<HTMLElement>;
 
 	items = [];
 

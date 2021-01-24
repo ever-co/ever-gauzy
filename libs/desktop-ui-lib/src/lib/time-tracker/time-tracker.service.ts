@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
+// import { environment } from '../../../environments/environment';
 import * as moment from 'moment';
 @Injectable({
 	providedIn: 'root'
 })
 export class TimeTrackerService {
-	AW_HOST = environment.AWHost;
+	AW_HOST = 'http://localhost:5600';
 	token = '';
 	userId = '';
 	employeeId = '';

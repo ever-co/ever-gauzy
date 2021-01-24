@@ -8,9 +8,8 @@ import {
 } from '@angular/core';
 import { ElectronService } from 'ngx-electron';
 import { SetupService } from './setup.service';
-import { environment } from '../../../environments/environment';
 import { NbDialogService } from '@nebular/theme';
-import { AlertComponent } from '../../@shared/dialogs/alert/alert.component';
+import { AlertComponent } from '../../lib/dialogs/alert/alert.component';
 
 @Component({
 	selector: 'ngx-setup',
@@ -85,7 +84,7 @@ export class SetupComponent implements OnInit {
 	iconAw = './assets/icons/toggle-left.svg';
 	statusIcon = 'success';
 	awCheck = false;
-	awAPI: String = environment.AWHost;
+	awAPI: String = 'http://localhost:5600';
 	buttonSave = false;
 	desktopFeatures: any = {
 		gauzyPlatform: true,
@@ -198,7 +197,7 @@ export class SetupComponent implements OnInit {
 		) {
 			return {
 				aw: this.thirdParty.activitywatch,
-				awHost: environment.AWHost
+				awHost: this.awAPI
 			};
 		}
 

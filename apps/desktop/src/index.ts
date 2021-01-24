@@ -50,7 +50,7 @@ import {
 	LocalStore,
 	DataModel,
 	AppMenu
-} from '../../../libs/desktop-timer/src';
+} from '../../../libs/desktop-libs/src';
 import {
 	createGauzyWindow,
 	gauzyPage,

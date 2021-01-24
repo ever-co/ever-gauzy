@@ -36,7 +36,8 @@
 			"@gauzy/desktop-window": ["libs/desktop-window/src/index.ts"],
 			"@env-desktop/environment": [
 				"apps/desktop/src/environments/environment.ts"
-			]
+			],
+			"@gauzy/desktop-ui-lib": ["libs/desktop-ui-lib/src/index.ts"]
 		},
 		"preserveConstEnums": true,
 		"allowSyntheticDefaultImports": true,

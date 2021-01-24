@@ -7,5 +7,5 @@ module.exports = {
 	moduleFileExtensions: ['ts', 'js', 'html'],
 	collectCoverage: true,
 	coverageReporters: ['html'],
-	projects: '<rootDir>/libs/desktop-window'
+	projects: '<rootDir>/libs/desktop-ui-lib'
 };
