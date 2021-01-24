@@ -6,7 +6,8 @@ import {
 	RelationId,
 	ManyToOne
 } from 'typeorm';
-import { DeepPartial, IUserOrganization } from '@gauzy/common';
+import { IUserOrganization } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { TenantOrganizationBaseEntity, User } from '../internal';

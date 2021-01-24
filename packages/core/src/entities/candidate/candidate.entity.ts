@@ -13,10 +13,9 @@ import {
 	IOrganizationEmploymentType,
 	IOrganizationDepartment,
 	IContact,
-	ITag,
-	DeepPartial
-} from '@gauzy/common';
-import { average } from '@gauzy/common';
+	ITag
+} from '@gauzy/contracts';
+import { average, DeepPartial } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsOptional, IsEnum } from 'class-validator';
 import {

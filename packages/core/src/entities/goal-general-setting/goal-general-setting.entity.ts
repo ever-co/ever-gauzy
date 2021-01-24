@@ -1,8 +1,5 @@
-import {
-	IGoalGeneralSetting,
-	GoalOwnershipEnum,
-	DeepPartial
-} from '@gauzy/common';
+import { IGoalGeneralSetting, GoalOwnershipEnum } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { Entity, Column } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';

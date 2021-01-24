@@ -1,7 +1,8 @@
 import { Column, Entity, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
-import { ICandidateEducation, ICandidate, DeepPartial } from '@gauzy/common';
+import { ICandidateEducation, ICandidate } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { Candidate, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('candidate_education')

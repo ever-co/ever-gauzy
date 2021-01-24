@@ -2,9 +2,9 @@ import {
 	IDeal,
 	IUser,
 	IPipelineStage,
-	IOrganizationContact,
-	DeepPartial
-} from '@gauzy/common';
+	IOrganizationContact
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import {
 	Column,
 	Entity,

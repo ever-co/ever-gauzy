@@ -6,7 +6,8 @@ import {
 	JoinColumn,
 	Unique
 } from 'typeorm';
-import { DeepPartial, ITimeSlotMinute } from '@gauzy/common';
+import { ITimeSlotMinute } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsDateString } from 'class-validator';
 import { TenantOrganizationBaseEntity, TimeSlot } from '../internal';

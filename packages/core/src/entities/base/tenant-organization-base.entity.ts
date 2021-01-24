@@ -3,9 +3,9 @@ import { Column, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { IsOptional, IsString } from 'class-validator';
 import {
 	IOrganization,
-	IBasePerTenantAndOrganizationEntityModel,
-	DeepPartial
-} from '@gauzy/common';
+	IBasePerTenantAndOrganizationEntityModel
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { Organization, TenantBaseEntity } from '../internal';
 
 export abstract class TenantOrganizationBaseEntity

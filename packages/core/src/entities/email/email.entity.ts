@@ -1,7 +1,8 @@
-import { DeepPartial, IEmail, IEmailTemplate, IUser } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsString } from 'class-validator';
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
+import { IEmail, IEmailTemplate, IUser } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { EmailTemplate, TenantOrganizationBaseEntity, User } from '../internal';
 
 @Entity('email_sent')

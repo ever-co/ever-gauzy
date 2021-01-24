@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
-import { DeepPartial, IFeature, IFeatureOrganization } from '@gauzy/common';
+import { IFeature, IFeatureOrganization } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { Feature, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('feature_organization')

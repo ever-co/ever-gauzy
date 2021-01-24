@@ -18,9 +18,9 @@ import {
 } from 'typeorm';
 import {
 	IRequestApproval,
-	ApprovalPolicyTypesStringEnum,
-	DeepPartial
-} from '@gauzy/common';
+	ApprovalPolicyTypesStringEnum
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsNumber, IsEnum } from 'class-validator';
 import {

@@ -1,9 +1,6 @@
 import { Entity, Column, OneToMany, JoinColumn, ManyToOne } from 'typeorm';
-import {
-	DeepPartial,
-	IOrganizationSprint,
-	SprintStartDayEnum
-} from '@gauzy/common';
+import { IOrganizationSprint, SprintStartDayEnum } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsBoolean,

@@ -1,4 +1,5 @@
-import { DeepPartial, IEstimateEmail } from '@gauzy/common';
+import { IEstimateEmail } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsEmail, IsString } from 'class-validator';
 import { Column, Entity } from 'typeorm';

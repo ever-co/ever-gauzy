@@ -1,4 +1,5 @@
-import { DeepPartial, IPipeline } from '@gauzy/common';
+import { IPipeline } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import {
 	AfterInsert,
 	AfterLoad,

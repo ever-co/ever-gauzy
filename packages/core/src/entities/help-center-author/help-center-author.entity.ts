@@ -1,6 +1,7 @@
 import { Entity, Column } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { DeepPartial, IHelpCenterAuthor } from '@gauzy/common';
+import { IHelpCenterAuthor } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('knowledge_base_author')

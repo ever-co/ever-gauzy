@@ -5,9 +5,9 @@ import {
 	IOrganizationContact,
 	IOrganizationProject,
 	IUser,
-	IRole,
-	DeepPartial
-} from '@gauzy/common';
+	IRole
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsEmail, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import {

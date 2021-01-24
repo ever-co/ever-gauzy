@@ -14,9 +14,9 @@ import {
 	IActivity,
 	IScreenshot,
 	IEmployee,
-	ITimeLog,
-	DeepPartial
-} from '@gauzy/common';
+	ITimeLog
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsDateString } from 'class-validator';
 import * as moment from 'moment';

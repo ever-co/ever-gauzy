@@ -1,7 +1,8 @@
 import { Column, Entity, ManyToMany, JoinTable } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { DeepPartial, IExpenseCategory } from '@gauzy/common';
+import { IExpenseCategory } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { Tag, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('expense_category')

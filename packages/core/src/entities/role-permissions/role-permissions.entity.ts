@@ -1,9 +1,9 @@
 import {
 	PermissionsEnum,
 	IRolePermission as IRolePermissions,
-	RolesEnum,
-	DeepPartial
-} from '@gauzy/common';
+	RolesEnum
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty } from 'class-validator';
 import { Column, Entity, Index, ManyToOne } from 'typeorm';

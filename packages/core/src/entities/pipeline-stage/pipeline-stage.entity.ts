@@ -1,4 +1,5 @@
-import { DeepPartial, IPipelineStage as IStage } from '@gauzy/common';
+import { IPipelineStage as IStage } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { IsNotEmpty, IsNumber, IsString, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';

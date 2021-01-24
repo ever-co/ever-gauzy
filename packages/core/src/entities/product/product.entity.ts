@@ -10,7 +10,8 @@ import {
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional } from 'class-validator';
-import { DeepPartial, IProductTranslatable } from '@gauzy/common';
+import { IProductTranslatable } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import {
 	ImageAsset,
 	InvoiceItem,

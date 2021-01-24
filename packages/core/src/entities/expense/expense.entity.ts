@@ -26,9 +26,9 @@ import {
 	IExpenseCategory,
 	ITag,
 	IEmployee,
-	IOrganizationProject,
-	DeepPartial
-} from '@gauzy/common';
+	IOrganizationProject
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import {
 	Employee,
 	ExpenseCategory,

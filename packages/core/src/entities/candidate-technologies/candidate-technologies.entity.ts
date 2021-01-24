@@ -1,10 +1,7 @@
 import { Column, Entity, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import {
-	ICandidateTechnologies,
-	ICandidateInterview,
-	DeepPartial
-} from '@gauzy/common';
+import { ICandidateTechnologies, ICandidateInterview } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { CandidateInterview, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('candidate_technology')

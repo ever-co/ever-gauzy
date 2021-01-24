@@ -7,9 +7,9 @@ import {
 	LanguagesEnum,
 	ComponentLayoutStyleEnum,
 	ITag,
-	IEmployee,
-	DeepPartial
-} from '@gauzy/common';
+	IEmployee
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsAscii,

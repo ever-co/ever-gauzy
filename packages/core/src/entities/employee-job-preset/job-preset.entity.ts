@@ -11,9 +11,9 @@ import { IsNotEmpty, IsString } from 'class-validator';
 import {
 	IEmployeeUpworkJobsSearchCriterion,
 	IJobPresetUpworkJobSearchCriterion,
-	IJobPreset,
-	DeepPartial
-} from '@gauzy/common';
+	IJobPreset
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import {
 	Employee,
 	EmployeeUpworkJobsSearchCriterion,

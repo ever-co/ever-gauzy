@@ -16,7 +16,8 @@ import {
 	IsOptional,
 	IsBoolean
 } from 'class-validator';
-import { DeepPartial, IEventType } from '@gauzy/common';
+import { IEventType } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { Employee, Tag, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('event_type')

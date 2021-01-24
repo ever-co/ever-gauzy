@@ -40,9 +40,9 @@ import {
 	IInvoiceEstimateHistory,
 	IOrganizationAwards,
 	IOrganizationLanguages,
-	IFeatureOrganization,
-	DeepPartial
-} from '@gauzy/common';
+	IFeatureOrganization
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import {
 	Contact,
 	Deal,

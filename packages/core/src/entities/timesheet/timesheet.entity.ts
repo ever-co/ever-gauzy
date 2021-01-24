@@ -6,7 +6,8 @@ import {
 	JoinColumn,
 	OneToMany
 } from 'typeorm';
-import { DeepPartial, ITimesheet, TimesheetStatus } from '@gauzy/common';
+import { ITimesheet, TimesheetStatus } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsString,

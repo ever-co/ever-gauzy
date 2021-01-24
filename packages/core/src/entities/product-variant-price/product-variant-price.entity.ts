@@ -1,9 +1,6 @@
 import { Entity, Column, OneToOne } from 'typeorm';
-import {
-	IProductVariantPrice,
-	CurrenciesEnum,
-	DeepPartial
-} from '@gauzy/common';
+import { IProductVariantPrice, CurrenciesEnum } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsEnum } from 'class-validator';
 import { ProductVariant, TenantOrganizationBaseEntity } from '../internal';

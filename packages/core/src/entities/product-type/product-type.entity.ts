@@ -1,5 +1,6 @@
 import { Entity, Column, OneToMany } from 'typeorm';
-import { DeepPartial, ProductTypesIconsEnum } from '@gauzy/common';
+import { ProductTypesIconsEnum } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum } from 'class-validator';
 import { Product, ProductTypeTranslation, TranslatableBase } from '../internal';

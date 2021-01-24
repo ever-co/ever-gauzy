@@ -1,7 +1,8 @@
 import { Column, Entity, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
-import { DeepPartial, ICandidateCriterionsRating } from '@gauzy/common';
+import { ICandidateCriterionsRating } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { CandidateFeedback, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('candidate_criterion_rating')

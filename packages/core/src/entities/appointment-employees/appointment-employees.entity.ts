@@ -1,10 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
-import {
-	DeepPartial,
-	IAppointmentEmployee,
-	IEmployeeAppointment
-} from '@gauzy/common';
+import { IAppointmentEmployee, IEmployeeAppointment } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { EmployeeAppointment, TenantOrganizationBaseEntity } from '../internal';
 

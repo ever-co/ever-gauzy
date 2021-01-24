@@ -1,4 +1,5 @@
-import { DeepPartial, IEmployeeAppointment } from '@gauzy/common';
+import { DeepPartial } from '@gauzy/common';
+import { IEmployeeAppointment } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsNotEmpty,

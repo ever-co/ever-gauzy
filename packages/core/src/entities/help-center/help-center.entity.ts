@@ -1,6 +1,7 @@
 import { Entity, Column, ManyToOne, OneToMany, JoinTable } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { DeepPartial, IHelpCenter, IHelpCenterArticle } from '@gauzy/common';
+import { IHelpCenter, IHelpCenterArticle } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { HelpCenterArticle, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('knowledge_base')

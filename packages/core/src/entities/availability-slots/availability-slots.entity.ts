@@ -9,10 +9,10 @@ import {
 } from 'class-validator';
 import {
 	AvailabilitySlotType,
-	DeepPartial,
 	IAvailabilitySlot,
 	IEmployee
-} from '@gauzy/common';
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { Employee, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('availability_slot')

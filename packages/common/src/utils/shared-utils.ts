@@ -61,15 +61,18 @@ export function isNotEmpty(item: any): boolean {
  * @param item
  * @returns {boolean}
  */
-export function isEmpty(item: any): boolean {
-	switch (item) {
-		case 0:
-		case null:
-		case false:
-		case undefined:
-			return true;
-		default:
-			return false;
+export function isEmpty(item: any) {
+	if (item instanceof Array) {
+		item = item.filter((val) => !isEmpty(val));
+		return item.length === 0;
+	} else if (item && typeof item === 'object') {
+		return Object.keys(item).length === 0;
+	} else {
+		return (
+			!item ||
+			(item + '').toLocaleLowerCase() === 'null' ||
+			(item + '').toLocaleLowerCase() === 'undefined'
+		);
 	}
 }
 

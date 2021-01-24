@@ -1,10 +1,7 @@
-import {
-	CurrenciesEnum,
-	DefaultValueDateTypeEnum,
-	ICandidateSource,
-	IUser
-} from '..';
-import { LanguagesEnum } from './user.model';
+import { CurrenciesEnum } from './currency.model';
+import { DefaultValueDateTypeEnum } from './organization.model';
+import { ICandidateSource } from './candidate-source.model';
+import { IUser, LanguagesEnum } from './user.model';
 
 export interface IDefaultUser {
 	email: string;

@@ -1,11 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, ManyToMany, JoinTable } from 'typeorm';
-import {
-	DeepPartial,
-	IIntegration,
-	IIntegrationType,
-	ITag
-} from '@gauzy/common';
+import { IIntegration, IIntegrationType, ITag } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { IsNumber } from 'class-validator';
 import { BaseEntity, IntegrationType, Tag } from '../internal';
 

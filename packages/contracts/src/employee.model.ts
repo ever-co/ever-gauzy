@@ -1,18 +1,15 @@
-import {
-	IUser,
-	ITag,
-	ISkill,
-	IOrganizationDepartment,
-	IOrganizationPosition,
-	IEmployeeJobsStatistics
-} from '..';
-import { IOrganizationFindInput } from './organization.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { IUserFindInput } from './user.model';
-import { IOrganizationTeam } from './organization-team-model';
 import { IContact } from './contact.model';
+import { IEmployeeJobsStatistics } from './employee-job.model';
+import { IOrganizationDepartment } from './organization-department.model';
 import { IOrganizationEmploymentType } from './organization-employment-type.model';
+import { IOrganizationFindInput } from './organization.model';
+import { IOrganizationPosition } from './organization-positions.model';
+import { IOrganizationTeam } from './organization-team-model';
 import { IRequestApprovalEmployee } from './request-approval-employee.model';
+import { ISkill } from './skill-entity.model';
+import { ITag } from './tag-entity.model';
+import { IUser, IUserFindInput } from './user.model';
 
 export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	[x: string]: any;

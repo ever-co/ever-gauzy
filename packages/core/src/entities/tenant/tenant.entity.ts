@@ -11,9 +11,9 @@ import {
 	ITenant,
 	IOrganization,
 	IRolePermission,
-	IFeatureOrganization,
-	DeepPartial
-} from '@gauzy/common';
+	IFeatureOrganization
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 
 @Entity('tenant')
 export class Tenant extends BaseEntity implements ITenant {

@@ -1,9 +1,6 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
-import {
-	DeepPartial,
-	IProductTypeTranslation,
-	LanguagesEnum
-} from '@gauzy/common';
+import { IProductTypeTranslation, LanguagesEnum } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsOptional, IsEnum } from 'class-validator';
 import { ProductType, TranslationBase } from '../internal';

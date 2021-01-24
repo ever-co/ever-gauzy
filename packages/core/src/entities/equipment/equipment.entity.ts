@@ -2,9 +2,9 @@ import {
 	IEquipment,
 	CurrenciesEnum,
 	IEquipmentSharing,
-	ITag,
-	DeepPartial
-} from '@gauzy/common';
+	ITag
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { Entity, Column, OneToMany, ManyToMany, JoinTable } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {

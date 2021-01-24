@@ -1,5 +1,6 @@
 import { Column, Entity } from 'typeorm';
-import { DeepPartial, ICandidateSource } from '@gauzy/common';
+import { ICandidateSource } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { TenantOrganizationBaseEntity } from '../internal';

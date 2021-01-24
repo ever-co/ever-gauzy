@@ -1,4 +1,5 @@
-import { IGoal, GoalLevelEnum, DeepPartial } from '@gauzy/common';
+import { IGoal, GoalLevelEnum, IKeyResult } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { Entity, Column, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum } from 'class-validator';
@@ -56,10 +57,10 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@ApiProperty({ type: KeyResult })
 	@OneToMany(() => KeyResult, (keyResult) => keyResult.goal)
 	@IsOptional()
-	keyResults?: KeyResult[];
+	keyResults?: IKeyResult[];
 
 	@ManyToOne(() => KeyResult, (keyResult) => keyResult.id)
-	alignedKeyResult?: KeyResult;
+	alignedKeyResult?: IKeyResult;
 
 	@ApiProperty({ type: String })
 	@Column({ nullable: true })

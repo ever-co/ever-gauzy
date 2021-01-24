@@ -1,5 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { IEmployee } from '..';
+import { IEmployee } from './employee.model';
 
 export interface IHelpCenterArticle
 	extends IBasePerTenantAndOrganizationEntityModel {

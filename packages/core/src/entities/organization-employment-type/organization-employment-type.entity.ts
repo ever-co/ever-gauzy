@@ -1,8 +1,5 @@
-import {
-	DeepPartial,
-	ICandidate,
-	IOrganizationEmploymentType
-} from '@gauzy/common';
+import { ICandidate, IOrganizationEmploymentType } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { Column, Entity, JoinTable, ManyToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {

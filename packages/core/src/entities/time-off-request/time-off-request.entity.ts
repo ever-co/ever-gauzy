@@ -7,12 +7,12 @@ import {
 	ManyToOne
 } from 'typeorm';
 import {
-	DeepPartial,
 	IEmployee,
 	ITimeOff as ITimeOffRequest,
 	ITimeOffPolicy,
 	StatusTypesEnum
-} from '@gauzy/common';
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsString,

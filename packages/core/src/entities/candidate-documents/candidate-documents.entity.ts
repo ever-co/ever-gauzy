@@ -1,6 +1,7 @@
-import { Column, Entity, ManyToOne } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ICandidateDocument, ICandidate, DeepPartial } from '@gauzy/common';
+import { Column, Entity, ManyToOne } from 'typeorm';
+import { ICandidateDocument, ICandidate } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { Candidate, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('candidate_document')

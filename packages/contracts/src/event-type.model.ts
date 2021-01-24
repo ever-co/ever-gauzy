@@ -1,6 +1,6 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IEmployee, IEmployeeFindInput } from './employee.model';
-import { ITag } from '..';
+import { ITag } from './tag-entity.model';
 
 export interface IEventType extends IBasePerTenantAndOrganizationEntityModel {
 	title: string;

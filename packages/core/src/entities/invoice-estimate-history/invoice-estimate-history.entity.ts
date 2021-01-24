@@ -1,4 +1,5 @@
-import { DeepPartial, IInvoiceEstimateHistory } from '@gauzy/common';
+import { IInvoice, IInvoiceEstimateHistory } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { Entity, Column, JoinColumn, ManyToOne } from 'typeorm';
@@ -35,5 +36,5 @@ export class InvoiceEstimateHistory
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	invoice: Invoice;
+	invoice: IInvoice;
 }

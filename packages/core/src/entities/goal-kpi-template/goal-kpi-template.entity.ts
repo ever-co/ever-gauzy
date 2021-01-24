@@ -2,9 +2,9 @@ import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import {
 	IGoalKPITemplate as IKPITemplate,
 	KpiMetricEnum,
-	IEmployee,
-	DeepPartial
-} from '@gauzy/common';
+	IEmployee
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional } from 'class-validator';
 import { Employee, TenantOrganizationBaseEntity } from '../internal';

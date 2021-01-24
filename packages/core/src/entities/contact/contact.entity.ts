@@ -2,12 +2,12 @@ import { Column, Entity, OneToMany } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber } from 'class-validator';
 import {
-	DeepPartial,
 	ICandidate,
 	IContact,
 	IEmployee,
 	IOrganizationContact
-} from '@gauzy/common';
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import {
 	Candidate,
 	Employee,

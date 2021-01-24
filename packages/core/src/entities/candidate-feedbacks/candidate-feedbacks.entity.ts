@@ -13,9 +13,9 @@ import {
 	ICandidateInterviewers,
 	ICandidateCriterionsRating,
 	ICandidate,
-	ICandidateInterview,
-	DeepPartial
-} from '@gauzy/common';
+	ICandidateInterview
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { IsEnum, IsOptional } from 'class-validator';
 import {
 	Candidate,

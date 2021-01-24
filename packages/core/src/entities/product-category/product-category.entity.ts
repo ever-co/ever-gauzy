@@ -1,7 +1,8 @@
 import { Entity, Column, OneToMany } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
-import { DeepPartial, IProductCategoryTranslatable } from '@gauzy/common';
+import { IProductCategoryTranslatable } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import {
 	Product,
 	ProductCategoryTranslation,

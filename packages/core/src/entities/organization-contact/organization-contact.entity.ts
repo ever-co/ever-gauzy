@@ -27,9 +27,9 @@ import {
 	IInvoice,
 	IEmployee,
 	IPayment,
-	OrganizationContactBudgetTypeEnum,
-	DeepPartial
-} from '@gauzy/common';
+	OrganizationContactBudgetTypeEnum
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import {
 	Contact,
 	Employee,

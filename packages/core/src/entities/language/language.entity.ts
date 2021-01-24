@@ -1,8 +1,10 @@
 import { Entity, Column, Unique } from 'typeorm';
-import { DeepPartial, ILanguage } from '@gauzy/common';
+import { ILanguage } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
 import { BaseEntity } from '../internal';
+
 @Entity('language')
 @Unique(['name'])
 export class Language extends BaseEntity implements ILanguage {

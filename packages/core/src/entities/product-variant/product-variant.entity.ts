@@ -9,11 +9,8 @@ import {
 	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	IProductVariant,
-	BillingInvoicingPolicyEnum,
-	DeepPartial
-} from '@gauzy/common';
+import { IProductVariant, BillingInvoicingPolicyEnum } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { IsNumber, IsString, IsOptional, IsEnum } from 'class-validator';
 import {
 	Product,

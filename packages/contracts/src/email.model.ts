@@ -1,6 +1,8 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { IEmailTemplateFindInput } from '..';
-import { IEmailTemplate } from './email-template.model';
+import {
+	IEmailTemplate,
+	IEmailTemplateFindInput
+} from './email-template.model';
 import { IUser } from './user.model';
 
 export interface IEmail extends IBasePerTenantAndOrganizationEntityModel {

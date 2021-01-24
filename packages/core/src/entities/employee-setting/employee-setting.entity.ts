@@ -8,7 +8,8 @@ import {
 	Max,
 	IsEnum
 } from 'class-validator';
-import { IEmployeeSetting, CurrenciesEnum, DeepPartial } from '@gauzy/common';
+import { IEmployeeSetting, CurrenciesEnum } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { Employee, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('employee_setting')

@@ -33,7 +33,7 @@ export interface IProductTranslatable
 	type?: IProductTypeTranslatable;
 	category?: IProductCategoryTranslatable;
 	tags?: ITag[];
-	gallery: IImageAsset[];
+	gallery?: IImageAsset[];
 }
 
 export interface IProductTranslated {

@@ -1,12 +1,10 @@
-import {
-	IBasePerTenantAndOrganizationEntityModel,
-	ICandidate,
-	ICandidateFeedback,
-	ICandidateInterviewers,
-	ICandidatePersonalQualities,
-	ICandidateTechnologies,
-	IEmployee
-} from '..';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { ICandidate } from './candidate.model';
+import { ICandidateFeedback } from './candidate-feedback.model';
+import { ICandidateInterviewers } from './candidate-interviewers.model';
+import { ICandidatePersonalQualities } from './candidate-personal-qualities.model';
+import { ICandidateTechnologies } from './candidate-technologies.model';
+import { IEmployee } from './employee.model';
 
 export interface ICandidateInterview
 	extends IBasePerTenantAndOrganizationEntityModel {

@@ -8,11 +8,11 @@ import {
 	OneToMany
 } from 'typeorm';
 import {
-	DeepPartial,
 	IIntegrationEntitySetting,
 	IIntegrationEntitySettingTied,
 	IIntegrationTenant
-} from '@gauzy/common';
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import {
 	IntegrationEntitySettingTiedEntity,
 	IntegrationTenant,

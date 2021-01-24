@@ -11,9 +11,9 @@ import {
 	IPayment,
 	CurrenciesEnum,
 	PaymentMethodEnum,
-	IEmployee,
-	DeepPartial
-} from '@gauzy/common';
+	IEmployee
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsEnum,

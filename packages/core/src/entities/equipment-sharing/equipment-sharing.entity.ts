@@ -8,10 +8,10 @@ import {
 	ManyToOne
 } from 'typeorm';
 import {
-	DeepPartial,
 	IEquipmentSharing,
 	RequestApprovalStatusTypesEnum
-} from '@gauzy/common';
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import {

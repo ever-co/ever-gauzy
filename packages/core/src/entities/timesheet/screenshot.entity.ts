@@ -6,7 +6,8 @@ import {
 	JoinColumn,
 	AfterLoad
 } from 'typeorm';
-import { DeepPartial, IScreenshot, ITimeSlot } from '@gauzy/common';
+import { IScreenshot, ITimeSlot } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber, IsDateString } from 'class-validator';
 // import { FileStorage } from '../core/file-storage';

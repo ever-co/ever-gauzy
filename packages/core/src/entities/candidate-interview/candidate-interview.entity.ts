@@ -6,9 +6,9 @@ import {
 	ICandidateInterviewers,
 	ICandidateTechnologies,
 	ICandidatePersonalQualities,
-	ICandidate,
-	DeepPartial
-} from '@gauzy/common';
+	ICandidate
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import {
 	Candidate,
 	CandidateFeedback,

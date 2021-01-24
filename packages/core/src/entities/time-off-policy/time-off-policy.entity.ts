@@ -1,5 +1,6 @@
 import { Entity, Index, Column, ManyToMany, JoinTable } from 'typeorm';
-import { DeepPartial, ITimeOffPolicy } from '@gauzy/common';
+import { ITimeOffPolicy } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsBoolean } from 'class-validator';
 import { Employee, TenantOrganizationBaseEntity } from '../internal';

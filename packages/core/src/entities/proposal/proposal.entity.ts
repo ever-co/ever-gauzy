@@ -14,9 +14,9 @@ import {
 	IProposal,
 	IEmployee,
 	ITag,
-	IOrganizationContact,
-	DeepPartial
-} from '@gauzy/common';
+	IOrganizationContact
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import {
 	Employee,
 	OrganizationContact,

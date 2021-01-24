@@ -1,4 +1,4 @@
-import { ITranslation, ITranslatable } from '@gauzy/common';
+import { ITranslation, ITranslatable } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from '../internal';
 
 export abstract class TranslationBase

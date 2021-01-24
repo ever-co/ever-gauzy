@@ -10,7 +10,8 @@ import {
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
-import { DeepPartial, ITask, TaskStatusEnum } from '@gauzy/common';
+import { ITask, TaskStatusEnum } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import {
 	Employee,
 	InvoiceItem,

@@ -1,9 +1,6 @@
 import { Entity, Column, ManyToOne, RelationId, JoinColumn } from 'typeorm';
-import {
-	DeepPartial,
-	IKeyResultUpdate,
-	KeyResultUpdateStatusEnum
-} from '@gauzy/common';
+import { IKeyResultUpdate, KeyResultUpdateStatusEnum } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
 import { KeyResult, TenantOrganizationBaseEntity } from '../internal';

@@ -8,10 +8,8 @@ import {
 	CreateDateColumn
 } from 'typeorm';
 import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
-import {
-	BaseEntityModel as IBaseEntityModel,
-	DeepPartial
-} from '@gauzy/common';
+import { BaseEntityModel as IBaseEntityModel } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 
 export abstract class Model {
 	constructor(input?: DeepPartial<Model>) {

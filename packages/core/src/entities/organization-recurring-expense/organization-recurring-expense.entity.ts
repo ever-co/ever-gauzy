@@ -1,8 +1,8 @@
 import {
 	CurrenciesEnum,
-	DeepPartial,
 	IOrganizationRecurringExpense
-} from '@gauzy/common';
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsDate,

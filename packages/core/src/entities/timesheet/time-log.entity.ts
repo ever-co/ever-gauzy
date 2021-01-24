@@ -17,9 +17,9 @@ import {
 	ITask,
 	IOrganizationProject,
 	IOrganizationContact,
-	ITimeSlot,
-	DeepPartial
-} from '@gauzy/common';
+	ITimeSlot
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsBoolean, IsDateString, IsEnum } from 'class-validator';
 import * as moment from 'moment';

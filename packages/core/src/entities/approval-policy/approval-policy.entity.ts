@@ -6,9 +6,9 @@
 import { Entity, Index, Column } from 'typeorm';
 import {
 	IApprovalPolicy,
-	ApprovalPolicyTypesStringEnum,
-	DeepPartial
-} from '@gauzy/common';
+	ApprovalPolicyTypesStringEnum
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsEnum } from 'class-validator';
 import { TenantOrganizationBaseEntity } from '../internal';

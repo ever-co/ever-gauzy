@@ -1,5 +1,6 @@
 import { Entity, Column, OneToOne } from 'typeorm';
-import { DeepPartial, IProductVariantSetting } from '@gauzy/common';
+import { IProductVariantSetting } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ProductVariant, TenantOrganizationBaseEntity } from '../internal';
 

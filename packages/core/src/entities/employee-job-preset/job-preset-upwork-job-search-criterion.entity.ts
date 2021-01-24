@@ -2,10 +2,10 @@ import { Column, Entity, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import {
-	DeepPartial,
 	IJobPresetUpworkJobSearchCriterion,
 	JobPostTypeEnum
-} from '@gauzy/common';
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import {
 	JobPreset,
 	JobSearchCategory,

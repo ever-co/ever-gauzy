@@ -1,4 +1,4 @@
-import { IOrganizationContact } from '..';
+import { IOrganizationContact } from './organization-contact.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IEmployee, IEmployeeFindInput } from './employee.model';
 import { ITag } from './tag-entity.model';

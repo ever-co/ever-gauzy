@@ -8,7 +8,8 @@ import {
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { DeepPartial, IOrganizationTeam } from '@gauzy/common';
+import { IOrganizationTeam } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import {
 	OrganizationTeamEmployee,
 	RequestApprovalTeam,

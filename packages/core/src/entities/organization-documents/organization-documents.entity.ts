@@ -1,6 +1,7 @@
-import { Column, DeepPartial, Entity } from 'typeorm';
+import { Column, Entity } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IOrganizationDocument } from '@gauzy/common';
+import { IOrganizationDocument } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('organization_document')

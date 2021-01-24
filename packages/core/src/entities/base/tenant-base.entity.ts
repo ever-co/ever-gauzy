@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { IsString, IsOptional } from 'class-validator';
-import { DeepPartial, IBasePerTenantEntityModel, ITenant } from '@gauzy/common';
+import { IBasePerTenantEntityModel, ITenant } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { BaseEntity, Tenant } from '../internal';
 
 export abstract class TenantBaseEntity

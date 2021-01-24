@@ -13,9 +13,9 @@ import {
 	IOrganizationEmploymentType,
 	IInvoiceItem,
 	IRequestApprovalEmployee,
-	IPayment,
-	DeepPartial
-} from '@gauzy/common';
+	IPayment
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsDate,

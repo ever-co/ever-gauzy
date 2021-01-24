@@ -1,5 +1,6 @@
 import { Entity, Column, Unique, ManyToMany, JoinTable } from 'typeorm';
-import { DeepPartial, IEmployee, ISkill } from '@gauzy/common';
+import { IEmployee, ISkill } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { Employee, TenantOrganizationBaseEntity } from '../internal';
 

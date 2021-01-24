@@ -18,7 +18,8 @@ import {
 	IsEnum,
 	IsBoolean
 } from 'class-validator';
-import { IIncome, CurrenciesEnum, DeepPartial } from '@gauzy/common';
+import { IIncome, CurrenciesEnum } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { Employee, Tag, TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('income')

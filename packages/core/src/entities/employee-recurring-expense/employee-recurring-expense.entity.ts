@@ -1,8 +1,5 @@
-import {
-	CurrenciesEnum,
-	DeepPartial,
-	IEmployeeRecurringExpense
-} from '@gauzy/common';
+import { CurrenciesEnum, IEmployeeRecurringExpense } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { Optional } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 import {

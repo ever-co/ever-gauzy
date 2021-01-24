@@ -1,12 +1,10 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import {
-	IOrganizationProject,
-	ITag,
-	IInvoiceItem,
-	IOrganizationSprint
-} from '..';
 import { IEmployee } from './employee.model';
+import { IInvoiceItem } from './invoice-item.model';
+import { IOrganizationProject } from './organization-projects.model';
+import { IOrganizationSprint } from './organization-sprint.model';
 import { IOrganizationTeam } from './organization-team-model';
+import { ITag } from './tag-entity.model';
 
 export interface ITask extends IBasePerTenantAndOrganizationEntityModel {
 	title: string;

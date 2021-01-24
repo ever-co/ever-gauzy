@@ -1,4 +1,5 @@
-import { DeepPartial, IOrganizationTeamEmployee } from '@gauzy/common';
+import { IOrganizationTeamEmployee } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { Entity, Column, ManyToOne, JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';

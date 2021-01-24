@@ -1,5 +1,6 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { DeepPartial, IKPI, KpiMetricEnum } from '@gauzy/common';
+import { IKPI, KpiMetricEnum } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional } from 'class-validator';
 import { Employee, TenantOrganizationBaseEntity } from '../internal';

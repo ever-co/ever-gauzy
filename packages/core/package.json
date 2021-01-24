@@ -23,6 +23,7 @@
 	"dependencies": {
 		"@gauzy/common": "^0.1.0",
 		"@gauzy/config": "^0.1.0",
+		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
 		"@godaddy/terminus": "^4.5.0",
 		"@nestjs/common": "^7.6.5",

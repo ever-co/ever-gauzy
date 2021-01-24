@@ -2,9 +2,9 @@ import {
 	IGoalTemplate,
 	GoalLevelEnum,
 	GoalTemplateCategoriesEnum,
-	IKeyResultTemplate,
-	DeepPartial
-} from '@gauzy/common';
+	IKeyResultTemplate
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { Entity, Column, OneToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum } from 'class-validator';

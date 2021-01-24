@@ -1,14 +1,15 @@
 import { Entity, Column, JoinColumn, ManyToOne } from 'typeorm';
 import {
-	DeepPartial,
 	IEmployee,
 	IExpense,
 	IInvoice,
 	IInvoiceItem,
 	IOrganizationProject,
 	IProduct,
+	IProductTranslatable,
 	ITask
-} from '@gauzy/common';
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNumber, IsString, IsOptional, IsBoolean } from 'class-validator';
 import {
@@ -122,7 +123,7 @@ export class InvoiceItem
 	@ApiPropertyOptional({ type: Product })
 	@ManyToOne(() => Product, (product) => product.invoiceItems)
 	@JoinColumn()
-	product?: IProduct;
+	product?: IProductTranslatable;
 
 	@ApiPropertyOptional({ type: Boolean })
 	@IsBoolean()

@@ -1,6 +1,7 @@
 import { Entity, Column } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { DeepPartial, ICustomSmtp } from '@gauzy/common';
+import { ICustomSmtp } from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { TenantOrganizationBaseEntity } from '../internal';
 
 @Entity('custom_smtp')

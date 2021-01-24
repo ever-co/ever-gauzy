@@ -1,7 +1,6 @@
 import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
-	DeepPartial,
 	ICandidate,
 	IEmployee,
 	IEmployeeLevel,
@@ -26,7 +25,8 @@ import {
 	ITag,
 	ITask,
 	IUser
-} from '@gauzy/common';
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import {
 	Candidate,
 	Employee,

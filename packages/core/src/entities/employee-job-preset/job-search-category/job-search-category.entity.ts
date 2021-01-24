@@ -5,9 +5,9 @@ import {
 	JobPostSourceEnum,
 	IJobPreset,
 	IEmployeeUpworkJobsSearchCriterion,
-	IJobPresetUpworkJobSearchCriterion,
-	DeepPartial
-} from '@gauzy/common';
+	IJobPresetUpworkJobSearchCriterion
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import {
 	EmployeeUpworkJobsSearchCriterion,
 	JobPresetUpworkJobSearchCriterion,

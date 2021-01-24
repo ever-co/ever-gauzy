@@ -3,7 +3,7 @@ import {
 	JobPostSourceEnum,
 	JobPostStatusEnum,
 	JobPostTypeEnum
-} from '@gauzy/common';
+} from '@gauzy/contracts';
 import { Model } from '../internal';
 
 export class JobPost extends Model implements IJobPost {

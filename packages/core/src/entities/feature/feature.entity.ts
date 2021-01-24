@@ -11,9 +11,9 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
 	IFeature,
 	IFeatureOrganization,
-	FeatureStatusEnum,
-	DeepPartial
-} from '@gauzy/common';
+	FeatureStatusEnum
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { IsNotEmpty, IsString } from 'class-validator';
 import * as _ from 'underscore';
 import { BaseEntity, FeatureOrganization } from '../internal';

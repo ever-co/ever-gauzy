@@ -9,9 +9,9 @@ import {
 import {
 	IKeyResult,
 	KeyResultTypeEnum,
-	KeyResultDeadlineEnum,
-	DeepPartial
-} from '@gauzy/common';
+	KeyResultDeadlineEnum
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum } from 'class-validator';
 import {

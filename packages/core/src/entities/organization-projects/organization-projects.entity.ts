@@ -30,9 +30,9 @@ import {
 	IEmployee,
 	IOrganizationSprint,
 	IPayment,
-	OrganizationProjectBudgetTypeEnum,
-	DeepPartial
-} from '@gauzy/common';
+	OrganizationProjectBudgetTypeEnum
+} from '@gauzy/contracts';
+import { DeepPartial } from '@gauzy/common';
 import {
 	Employee,
 	InvoiceItem,
