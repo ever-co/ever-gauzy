@@ -129,6 +129,8 @@ import { CustomSmtp } from '../custom-smtp/custom-smtp.entity';
 import { Currency } from '../currency';
 import { Feature } from '../feature/feature.entity';
 import { FeatureOrganization } from '../feature/feature_organization.entity';
+import { ProductTranslation } from '../product/product-translation.entity';
+import { ImageAsset } from '../image-asset/image-asset.entity';
 
 const entities = [
 	Activity,
@@ -180,6 +182,7 @@ const entities = [
 	HelpCenter,
 	HelpCenterArticle,
 	HelpCenterAuthor,
+	ImageAsset,
 	Income,
 	Integration,
 	IntegrationEntitySetting,
@@ -218,6 +221,7 @@ const entities = [
 	Pipeline,
 	PipelineStage,
 	Product,
+	ProductTranslation,
 	ProductCategory,
 	ProductCategoryTranslation,
 	ProductOption,

@@ -1,7 +1,5 @@
 import { Component, OnDestroy } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Location } from '@angular/common';
-import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../@core/services/store.service';
 import { ServerConnectionService } from '../@core/services/server-connection.service';
 import { environment } from '../../environments/environment';
@@ -12,27 +10,24 @@ import { environment } from '../../environments/environment';
 })
 export class ServerDownPage implements OnDestroy {
 	noInternetLogo: string;
-	interval;
+	interval: any;
 
 	constructor(
 		private store: Store,
-		private readonly http: HttpClient,
 		private location: Location,
-		private translate: TranslateService,
 		private serverConnectionService: ServerConnectionService
 	) {
 		this.noInternetLogo = environment['NO_INTERNET_LOGO'];
-		this.testConnection();
+		this.checkConnection();
 	}
 
-	private async testConnection() {
+	private async checkConnection() {
 		this.interval = setInterval(async () => {
 			await this.serverConnectionService.checkServerConnection(
-				environment.API_BASE_URL,
-				this.store
+				environment.API_BASE_URL
 			);
 
-			if (Number(this.store.serverConnection) !== 0) {
+			if (Number(this.store.serverConnection) === 200) {
 				clearInterval(this.interval);
 				this.location.back();
 			}

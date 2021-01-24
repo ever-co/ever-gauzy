@@ -61,11 +61,11 @@ Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [
 
 ## Demos, Testing and Production
 
+-   Gauzy Platform Demo at <http://demo.gauzy.co> (login `admin@ever.co` and password: `admin`)
 <!--
--   Gauzy Platform Demo at <https://demo.gauzy.co> (login `admin@ever.co` and password: `admin`)
 -   Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) at <https://app.gauzy.dev> (temporary deployed manually)
--   Gauzy Platform SaaS at <https://app.gauzy.co> (not used yet in production, it's same as demo.gauzy.co for now)
--->
+    -->
+-   Gauzy Platform SaaS at <http://app.gauzy.co> (not used yet in production, it's same as <http://demo.gauzy.co> for now)
 
 ### Desktop App
 
@@ -105,11 +105,12 @@ Please refer to our official [Platform Documentation](https://docs.gauzy.co) and
 
 -   Clone repo
 -   Make sure you have Docker Compose [installed locally](https://docs.docker.com/compose/install)
--   Run `docker-compose -f docker-compose.demo.yml up`, if you want to run the platform using our prebuild Docker images _(note: images build automatically from head of `master` branch)_
--   Run `docker-compose up`, if you want to build everything (code and Docker images) locally.  _(note: this is extremely long process, option above is much faster)_
+-   Run `docker-compose -f docker-compose.demo.yml up`, if you want to run the platform using our prebuild Docker images _(note: it uses latest images pre-build automatically from head of `master` branch using Github CI/CD)_
+-   Run `docker-compose up`, if you want to build everything (code and Docker images) locally. _(note: this is extremely long process, option above is much faster)_
 -   :coffee: time...
--   Open <http://localhost:8080> in your browser
--   Login with email `admin@ever.co` and password: `admin`
+-   Open <http://localhost:4200> in your browser
+-   Login with email `admin@ever.co` and password: `admin` for Super Admin user
+-   Login with email `ruslan@ever.co` and password: `123456` for Employee user
 -   Enjoy
 
 Note: together with Gauzy, Docker Compose will run following:

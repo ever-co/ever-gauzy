@@ -1,14 +1,13 @@
 import { NgModule } from '@angular/core';
 import { NbMenuModule, NbToastrModule, NbSpinnerModule } from '@nebular/theme';
-import { HttpLoaderFactory, ThemeModule } from '../@theme/theme.module';
+import { ThemeModule } from '../@theme/theme.module';
 import { PagesComponent } from './pages.component';
 import { PagesRoutingModule } from './pages-routing.module';
 import { MiscellaneousModule } from './miscellaneous/miscellaneous.module';
 import { AuthService } from '../@core/services/auth.service';
 import { RoleGuard } from '../@core/role/role.guard';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { FeatureToggleModule as NgxFeatureToggleModule } from 'ngx-feature-toggle';
+import { TranslateModule } from '../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -17,13 +16,7 @@ import { FeatureToggleModule as NgxFeatureToggleModule } from 'ngx-feature-toggl
 		NbMenuModule,
 		MiscellaneousModule,
 		NbToastrModule.forRoot(),
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslateModule,
 		NbSpinnerModule,
 		NgxFeatureToggleModule
 	],

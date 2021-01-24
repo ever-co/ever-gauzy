@@ -1,4 +1,3 @@
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import {
 	NbButtonModule,
@@ -10,10 +9,10 @@ import {
 	NbTooltipModule,
 	NbBadgeModule
 } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { EntityWithMembersCardComponent } from './entity-with-members-card.component';
 import { TableComponentsModule } from '../table-components/table-components.module';
+import { TranslateModule } from '../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -27,13 +26,7 @@ import { TableComponentsModule } from '../table-components/table-components.modu
 		NbSelectModule,
 		NbTooltipModule,
 		NbToastrModule.forRoot(),
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslateModule
 	],
 	declarations: [EntityWithMembersCardComponent],
 	entryComponents: [EntityWithMembersCardComponent],

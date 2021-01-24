@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
 import { GoalsRoutingModule } from './goals-routing.module';
 import { GoalsComponent } from './goals.component';
 import {
@@ -26,8 +25,6 @@ import {
 	NbFormFieldModule,
 	NbBadgeModule
 } from '@nebular/theme';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { EditObjectiveComponent } from './edit-objective/edit-objective.component';
 import { EditKeyResultsComponent } from './edit-keyresults/edit-keyresults.component';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -47,7 +44,7 @@ import { GoalCustomUnitModule } from '../../@shared/goal/goal-custom-unit/goal-c
 import { KeyresultTypeSelectModule } from '../../@shared/goal/keyresult-type-select/keyresult-type-select.module';
 import { GoalLevelSelectModule } from '../../@shared/goal/goal-level-select/goal-level-select.module';
 import { GoalTemplateSelectModule } from '../../@shared/goal/goal-template-select/goal-template-select.module';
-import { HttpLoaderFactory } from '../../@theme/theme.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	declarations: [
@@ -94,13 +91,7 @@ import { HttpLoaderFactory } from '../../@theme/theme.module';
 		GoalLevelSelectModule,
 		TaskSelectModule,
 		NbDialogModule.forChild(),
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslateModule,
 		EmployeeSelectorsModule,
 		EmployeeMultiSelectModule
 	]

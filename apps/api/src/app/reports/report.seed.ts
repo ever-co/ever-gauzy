@@ -5,7 +5,7 @@ import { indexBy } from 'underscore';
 import * as path from 'path';
 import { copyFileSync, mkdirSync } from 'fs';
 import * as rimraf from 'rimraf';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { environment as env } from '@env-api/environment';
 
 export const createDefaultReport = async (

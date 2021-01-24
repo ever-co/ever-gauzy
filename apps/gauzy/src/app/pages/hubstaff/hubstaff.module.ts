@@ -18,14 +18,13 @@ import {
 	NbContextMenuModule
 } from '@nebular/theme';
 import { HubstaffRoutingModule } from './hubstaff-routing.module';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { HubstaffComponent } from './components/hubstaff/hubstaff.component';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { SettingsDialogComponent } from './components/settings-dialog/settings-dialog.component';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	declarations: [
@@ -55,13 +54,7 @@ import { BackNavigationModule } from '../../@shared/back-navigation/back-navigat
 		NbDatepickerModule,
 		BackNavigationModule,
 		NbDialogModule.forChild(),
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+		TranslateModule
 	],
 	entryComponents: [SettingsDialogComponent]
 })

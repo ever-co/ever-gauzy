@@ -1,4 +1,3 @@
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import {
@@ -15,10 +14,9 @@ import {
 	NbTooltipModule,
 	NbBadgeModule
 } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { RolePermissionsService } from '../../@core/services/role-permissions.service';
 import { RoleService } from '../../@core/services/role.service';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { EditRolesPermissionsComponent } from './edit-roles-permissions/edit-roles-permissions.component';
 import { SettingsRoutingModule } from './settings-routing.module';
 import { SettingsComponent } from './settings.component';
@@ -31,6 +29,7 @@ import { EmailTemplatesModule } from '../email-templates/email-templates.module'
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { FileStorageComponent } from './file-storage/file-storage.component';
 import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -52,13 +51,7 @@ import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
 		ReactiveFormsModule,
 		NbTooltipModule,
 		NbBadgeModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslateModule,
 		NgSelectModule,
 		BackNavigationModule
 	],

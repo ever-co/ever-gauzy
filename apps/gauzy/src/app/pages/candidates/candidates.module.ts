@@ -7,7 +7,6 @@ import { EditCandidateHistoryComponent } from './edit-candidate/edit-candidate-p
 import { EditCandidateExperienceComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-experience.component';
 import { EditCandidateComponent } from './edit-candidate/edit-candidate.component';
 import { CandidatesService } from './../../@core/services/candidates.service';
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -31,12 +30,11 @@ import {
 	NbAccordionModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import { InviteGuard } from './../../@core/role/invite.guard';
 import { SharedModule } from '../../@shared/shared.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
@@ -94,6 +92,7 @@ import { InterviewActionsTableComponent } from './manage-candidate-interviews/in
 import { FeedbackStatusTableComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-feedbacks/table-components/status/status.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 const COMPONENTS = [
 	CandidatesComponent,
@@ -164,13 +163,7 @@ const COMPONENTS = [
 		NbRadioModule,
 		NbActionsModule,
 		NbAccordionModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslateModule,
 		NbSpinnerModule,
 		NbDatepickerModule,
 		TagsColorInputModule,

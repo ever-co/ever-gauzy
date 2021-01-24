@@ -9,7 +9,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule, APP_INITIALIZER, ErrorHandler } from '@angular/core';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { CoreModule } from './@core/core.module';
-import { HttpLoaderFactory, ThemeModule } from './@theme/theme.module';
+import { ThemeModule } from './@theme/theme.module';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import {
@@ -65,6 +65,7 @@ import { Router } from '@angular/router';
 import { FeatureToggleModule } from 'ngx-feature-toggle';
 import { FeatureService } from './@core/services/feature/feature.service';
 import { IFeatureToggle } from '@gauzy/models';
+import { HttpLoaderFactory } from './@shared/translate/translate.module';
 
 // TODO: we should use some internal function which returns version of Gauzy;
 const version = '0.1.0';
@@ -170,7 +171,7 @@ if (environment.SENTRY_DSN) {
 		{
 			provide: APP_INITIALIZER,
 			useFactory: serverConnectionFactory,
-			deps: [ServerConnectionService, Store],
+			deps: [ServerConnectionService, Store, Router],
 			multi: true
 		},
 		GoogleMapsLoaderService,
@@ -209,9 +210,15 @@ export class AppModule {
 
 export function serverConnectionFactory(
 	provider: ServerConnectionService,
-	store: Store
+	store: Store,
+	router: Router
 ) {
-	return () => provider.load(environment.API_BASE_URL, store);
+	return () =>
+		provider.checkServerConnection(environment.API_BASE_URL).finally(() => {
+			if (store.serverConnection !== 200) {
+				router.navigate(['server-down']);
+			}
+		});
 }
 
 export function googleMapsLoaderFactory(provider: GoogleMapsLoaderService) {

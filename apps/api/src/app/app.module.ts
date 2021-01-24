@@ -126,6 +126,7 @@ import { FeatureModule } from './feature/feature.module';
 import { Integrations as SentryIntegrations } from '@sentry/node';
 import { Integrations as TrackingIntegrations } from '@sentry/tracing';
 import { initialize as initializeUnleash } from 'unleash-client';
+import { ImageAssetModule } from './image-asset/image-asset.module';
 
 const { unleashConfig } = environment;
 
@@ -457,6 +458,10 @@ if (process.env.DB_TYPE === 'postgres') {
 						module: ProductVariantSettingsModule
 					},
 					{
+						path: '/image-assets',
+						module: ImageAssetModule
+					},
+					{
 						path: '/event-type',
 						module: EventTypeModule
 					},
@@ -653,6 +658,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		ProductCategoriesModule,
 		ProductTypesModule,
 		ProductModule,
+		ImageAssetModule,
 		IntegrationModule,
 		IntegrationSettingModule,
 		IntegrationTenantModule,

@@ -8,7 +8,7 @@ import {
 	ManyToMany,
 	JoinTable
 } from 'typeorm';
-import { IProduct } from '@gauzy/models';
+import { IProductTranslatable } from '@gauzy/models';
 import { ProductVariant } from '../product-variant/product-variant.entity';
 import { ProductType } from '../product-type/product-type.entity';
 import { ProductCategory } from '../product-category/product-category.entity';
@@ -17,25 +17,17 @@ import { IsString, IsOptional } from 'class-validator';
 import { ProductOption } from '../product-option/product-option.entity';
 import { Tag } from '../tags/tag.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
-import { TenantOrganizationBase } from '../core/entities/tenant-organization-base';
+import { TranslatableBase } from '../core/entities/translate-base';
+import { ProductTranslation } from './product-translation.entity';
+import { ImageAsset } from '../image-asset/image-asset.entity';
 
 @Entity('product')
-export class Product extends TenantOrganizationBase implements IProduct {
+export class Product extends TranslatableBase implements IProductTranslatable {
 	@ManyToMany((type) => Tag, (tag) => tag.product)
 	@JoinTable({
 		name: 'tag_product'
 	})
 	tags?: Tag[];
-
-	@ApiProperty({ type: String })
-	@IsString()
-	@Column()
-	name: string;
-
-	@ApiProperty({ type: String })
-	@IsString()
-	@Column()
-	description: string;
 
 	@ApiPropertyOptional({ type: Boolean })
 	@Column({ default: true })
@@ -87,8 +79,20 @@ export class Product extends TenantOrganizationBase implements IProduct {
 	@JoinColumn()
 	invoiceItems?: InvoiceItem[];
 
-	@ApiProperty({ type: String, readOnly: true })
-	@IsString()
-	@Column({ nullable: true })
-	language?: string;
+	@ApiProperty({ type: ProductTranslation, isArray: true })
+	@OneToMany(
+		(type) => ProductTranslation,
+		(productTranslation) => productTranslation.reference,
+		{
+			eager: true,
+			cascade: true
+		}
+	)
+	translations: ProductTranslation[];
+
+	@ManyToMany((type) => ImageAsset)
+	@JoinTable({
+		name: 'product_gallery_item'
+	})
+	gallery: ImageAsset[];
 }

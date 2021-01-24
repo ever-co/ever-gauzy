@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { EquipmentSharingRoutingModule } from './equipment-sharing-routing.module';
-import { HttpLoaderFactory, ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule } from '../../@theme/theme.module';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -13,8 +13,6 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { EquipmentSharingComponent } from './equipment-sharing.component';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';
@@ -25,6 +23,7 @@ import { EquipmentSharingStatusComponent } from './table-components/equipment-sh
 import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
+import { TranslateModule } from '../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -43,13 +42,7 @@ import { BackNavigationModule } from '../../@shared/back-navigation/back-navigat
 		NbDatepickerModule,
 		CardGridModule,
 		BackNavigationModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
+		TranslateModule,
 		NbSpinnerModule
 	],
 	providers: [EquipmentSharingService, ApprovalPolicyService],

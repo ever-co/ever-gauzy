@@ -1,0 +1,26 @@
+<nb-card>
+	<nb-card-body>
+		<img
+			*ngIf="selectedImage"
+			class="img-asset-preview"
+			[src]="selectedImage.url"
+			[alt]="selectedImage.name"
+		/>
+		<img
+			*ngIf="!selectedImage"
+			class="img-asset-preview"
+			[src]="'https://afostats.imagead.net/uploads/afo/no_img.png'"
+			alt="No image"
+		/>
+	</nb-card-body>
+	<nb-card-footer>
+		<div *ngIf="!selectedImage" class="img-preview-info">
+			No image selected
+		</div>
+		<div *ngIf="selectedImage" class="img-preview-info">
+			<div>{{ selectedImage.name }}</div>
+			<div>{{ selectedImage.url }}</div>
+			<div>{{ selectedImage.width }}x{{ selectedImage.height }}</div>
+		</div>
+	</nb-card-footer>
+</nb-card>

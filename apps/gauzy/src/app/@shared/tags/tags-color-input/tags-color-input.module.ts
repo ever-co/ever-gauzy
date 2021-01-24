@@ -3,11 +3,9 @@ import { CommonModule } from '@angular/common';
 import { TagsColorInputComponent } from './tags-color-input.component';
 import { NbBadgeModule, NbSelectModule } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpLoaderFactory } from '../../../@theme/components/header/selectors/employee/employee.module';
-import { HttpClient } from '@angular/common/http';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TagsService } from '../../../@core/services/tags.service';
+import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -16,16 +14,10 @@ import { TagsService } from '../../../@core/services/tags.service';
 		NbBadgeModule,
 		FormsModule,
 		NgSelectModule,
-		TranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient],
-			},
-		}),
+		TranslateModule
 	],
 	exports: [TagsColorInputComponent],
 	declarations: [TagsColorInputComponent],
-	providers: [TagsService],
+	providers: [TagsService]
 })
 export class TagsColorInputModule {}
