@@ -1,18 +1,17 @@
-import { PluginConfig, API_PORT, GRAPHQL_API_PATH } from '@gauzy/common';
-import { ReviewsPlugin } from '@gauzy/plugins';
+import { IPluginConfig, API_PORT, GRAPHQL_API_PATH } from '@gauzy/common';
 
-export const devConfig: PluginConfig = {
-	apiConfig: {
+export const devConfig: IPluginConfig = {
+	apiConfigOptions: {
 		port: API_PORT,
 		middleware: [],
-		graphqlConfig: {
+		graphqlConfigOptions: {
 			path: GRAPHQL_API_PATH,
 			playground: true,
 			debug: true,
 			apolloServerPlugins: []
 		}
 	},
-	dbConnectionConfig: {
+	dbConnectionOptions: {
 		type: 'mysql',
 		port: 3306,
 		synchronize: true,
@@ -21,5 +20,5 @@ export const devConfig: PluginConfig = {
 		username: 'root',
 		password: 'root'
 	},
-	plugins: [ReviewsPlugin]
+	plugins: []
 };

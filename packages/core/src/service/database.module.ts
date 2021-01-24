@@ -4,27 +4,27 @@ import { ConfigModule, ConfigService } from '@gauzy/config';
 
 let defaultTypeOrmModule: DynamicModule;
 @Module({
-  imports: [],
-  exports: [],
+	imports: [],
+	exports: []
 })
 export class DatabaseModule {
-  static forRoot(): DynamicModule {
-    if (!defaultTypeOrmModule) {
-      defaultTypeOrmModule = TypeOrmModule.forRootAsync({
-        imports: [ConfigModule],
-        useFactory: (configService: ConfigService) => {
-          const { dbConnectionConfig } = configService.config;
-          return {
-            name: 'default',
-            ...dbConnectionConfig,
-          };
-        },
-        inject: [ConfigService],
-      });
-    }
-    return {
-      module: DatabaseModule,
-      imports: [defaultTypeOrmModule],
-    };
-  }
+	static forRoot(): DynamicModule {
+		if (!defaultTypeOrmModule) {
+			defaultTypeOrmModule = TypeOrmModule.forRootAsync({
+				imports: [ConfigModule],
+				useFactory: (configService: ConfigService) => {
+					const { dbConnectionOptions } = configService.config;
+					return {
+						name: 'default',
+						...dbConnectionOptions
+					};
+				},
+				inject: [ConfigService]
+			});
+		}
+		return {
+			module: DatabaseModule,
+			imports: [defaultTypeOrmModule]
+		};
+	}
 }

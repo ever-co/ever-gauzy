@@ -1,24 +1,29 @@
 require('dotenv').config();
 
-import { PluginConfig } from '@gauzy/common';
-// import { DefaultLogger } from '@gauzy/core/src/logger/default-logger';
+import { IPluginConfig } from '@gauzy/common';
 import { dbConnectionConfig } from './database';
 
 /**
  * The default configurations.
  */
-export const defaultConfiguration: PluginConfig = {
-	apiConfig: {
-		hostname: '127.0.0.1',
-		port: 3001,
+export const defaultConfiguration: IPluginConfig = {
+	apiConfigOptions: {
+		hostname: process.env.host || 'http://localhost',
+		port: parseInt(process.env.port) || 3000,
+		baseUrl: process.env.BASE_URL || 'http://localhost:3000',
 		middleware: [],
-		graphqlConfig: {
+		graphqlConfigOptions: {
 			path: 'graphql',
 			playground: true,
 			debug: true,
 			apolloServerPlugins: []
 		}
 	},
-	dbConnectionConfig,
-	plugins: []
+	dbConnectionOptions: dbConnectionConfig,
+	plugins: [],
+	authOptions: {
+		expressSessionSecret: 'gauzy',
+		userPasswordBcryptSaltRounds: 12,
+		jwtSecret: 'secretKey'
+	}
 };

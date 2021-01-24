@@ -4,17 +4,17 @@ export { bootstrap } from './bootstrap';
 export * from './logger/index';
 
 bootstrap({
-	apiConfig: {
+	apiConfigOptions: {
 		port: 3001,
 		middleware: [],
-		graphqlConfig: {
+		graphqlConfigOptions: {
 			path: 'graphql',
 			playground: true,
 			debug: true,
 			apolloServerPlugins: []
 		}
 	},
-	dbConnectionConfig: {
+	dbConnectionOptions: {
 		type: 'postgres',
 		port: 5432,
 		synchronize: true,

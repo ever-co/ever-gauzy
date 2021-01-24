@@ -622,8 +622,8 @@
 			}
 		},
 		"integration-ai": {
-			"root": "libs/integration-ai",
-			"sourceRoot": "libs\\integration-ai\\src",
+			"root": "packages/plugins/integration-ai",
+			"sourceRoot": "packages\\plugins\\integration-ai\\src",
 			"projectType": "library",
 			"schematics": {},
 			"architect": {
@@ -631,8 +631,8 @@
 					"builder": "@angular-devkit/build-angular:tslint",
 					"options": {
 						"tsConfig": [
-							"libs\\integration-ai\\tsconfig.lib.json",
-							"libs/integration-ai/tsconfig.spec.json"
+							"packages\\plugins\\integration-ai\\tsconfig.lib.json",
+							"packages/plugins/integration-ai/tsconfig.spec.json"
 						],
 						"exclude": ["**/node_modules/**"]
 					}
@@ -640,15 +640,15 @@
 				"test": {
 					"builder": "@nrwl/jest:jest",
 					"options": {
-						"jestConfig": "libs/integration-ai/jest.config.js",
-						"tsConfig": "libs/integration-ai/tsconfig.spec.json"
+						"jestConfig": "packages/plugins/integration-ai/jest.config.js",
+						"tsConfig": "packages/plugins/integration-ai/tsconfig.spec.json"
 					}
 				}
 			}
 		},
 		"integration-upwork": {
-			"root": "libs/integration-upwork",
-			"sourceRoot": "libs\\integration-upwork\\src",
+			"root": "packages/plugins/integration-upwork",
+			"sourceRoot": "packages\\plugins\\integration-upwork\\src",
 			"projectType": "library",
 			"schematics": {},
 			"architect": {
@@ -656,8 +656,8 @@
 					"builder": "@angular-devkit/build-angular:tslint",
 					"options": {
 						"tsConfig": [
-							"libs\\integration-upwork\\tsconfig.lib.json",
-							"libs/integration-upwork/tsconfig.spec.json"
+							"packages\\plugins\\integration-upwork\\tsconfig.lib.json",
+							"packages/plugins/integration-upwork/tsconfig.spec.json"
 						],
 						"exclude": ["**/node_modules/**"]
 					}
@@ -665,15 +665,15 @@
 				"test": {
 					"builder": "@nrwl/jest:jest",
 					"options": {
-						"jestConfig": "libs/integration-upwork/jest.config.js",
-						"tsConfig": "libs/integration-upwork/tsconfig.spec.json"
+						"jestConfig": "packages/plugins/integration-upwork/jest.config.js",
+						"tsConfig": "packages/plugins/integration-upwork/tsconfig.spec.json"
 					}
 				}
 			}
 		},
 		"integration-hubstaff": {
-			"root": "libs/integration-hubstaff",
-			"sourceRoot": "libs\\integration-hubstaff\\src",
+			"root": "packages/plugins/integration-hubstaff",
+			"sourceRoot": "packages\\plugins\\integration-hubstaff\\src",
 			"projectType": "library",
 			"schematics": {},
 			"architect": {
@@ -681,8 +681,8 @@
 					"builder": "@angular-devkit/build-angular:tslint",
 					"options": {
 						"tsConfig": [
-							"libs\\integration-hubstaff\\tsconfig.lib.json",
-							"libs/integration-hubstaff/tsconfig.spec.json"
+							"packages\\plugins\\integration-hubstaff\\tsconfig.lib.json",
+							"packages/plugins/integration-hubstaff/tsconfig.spec.json"
 						],
 						"exclude": ["**/node_modules/**"]
 					}
@@ -690,8 +690,8 @@
 				"test": {
 					"builder": "@nrwl/jest:jest",
 					"options": {
-						"jestConfig": "libs/integration-hubstaff/jest.config.js",
-						"tsConfig": "libs/integration-hubstaff/tsconfig.spec.json"
+						"jestConfig": "packages/plugins/integration-hubstaff/jest.config.js",
+						"tsConfig": "packages/plugins/integration-hubstaff/tsconfig.spec.json"
 					}
 				}
 			}

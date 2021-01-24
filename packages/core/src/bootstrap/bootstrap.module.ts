@@ -4,15 +4,17 @@ import {
 	NestModule,
 	OnApplicationShutdown
 } from '@nestjs/common';
-import { PluginModule } from '@gauzy/plugin';
-import { ApiModule } from '../api';
 import { ConfigModule, ConfigService, getConfig } from '@gauzy/config';
+import { PluginModule } from '@gauzy/plugin';
+import { AppModule } from '../app/app.module';
+import { ApiModule } from '../api';
 import { HealthIndicatorModule } from '../health-indicator';
 import { Logger, LoggerModule } from '../logger';
 
 @Module({
 	imports: [
 		ConfigModule,
+		AppModule,
 		LoggerModule.forRoot(),
 		ApiModule,
 		PluginModule.forRoot(getConfig()),

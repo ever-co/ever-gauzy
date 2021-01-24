@@ -1,3 +1,3 @@
-export interface OnPluginDestroy {
+export interface IOnPluginDestroy {
 	onPluginDestroy(): void | Promise<void>;
 }

@@ -6,18 +6,18 @@ import { GraphqlApiModule, SharedModule } from './shared.module';
 import { GraphqlModule } from './graphql';
 
 @Module({
-  imports: [
-    ServiceModule.forRoot(),
-    SharedModule,
-    GraphqlApiModule,
-    GraphqlModule.registerAsync((configService: ConfigService) => ({
-      path: configService.graphqlConfig.path,
-      playground: configService.graphqlConfig.playground,
-      debug: configService.graphqlConfig.debug,
-      typePaths: [path.join(__dirname, 'graphql', 'schema', '*.gql')],
-      resolverModule: GraphqlApiModule,
-    })),
-  ],
-  providers: [],
+	imports: [
+		ServiceModule.forRoot(),
+		SharedModule,
+		GraphqlApiModule,
+		GraphqlModule.registerAsync((configService: ConfigService) => ({
+			path: configService.graphqlConfigOptions.path,
+			playground: configService.graphqlConfigOptions.playground,
+			debug: configService.graphqlConfigOptions.debug,
+			typePaths: [path.join(__dirname, 'graphql', 'schema', '*.gql')],
+			resolverModule: GraphqlApiModule
+		}))
+	],
+	providers: []
 })
 export class ApiModule {}

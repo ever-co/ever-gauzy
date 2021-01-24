@@ -11681,9 +11681,9 @@ date-holidays-parser@^1.6.0:
     moment-timezone "^0.5.32"
 
 date-holidays@^1.6.1:
-  version "1.8.7"
-  resolved "https://registry.yarnpkg.com/date-holidays/-/date-holidays-1.8.7.tgz#c7613d63a9454588a67fb160eeb9f115a17e0307"
-  integrity sha512-5mkQF+Pc4A7Biz5yS0NahzbG5iR5Iud5YWGgzNNi64z0mSIFelEGT2xbfdSV6VqSdTdI9mOE5lL73HdVlrewsg==
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/date-holidays/-/date-holidays-1.9.0.tgz#20c222fdfd300fb7f5494c1863dc34de240a9593"
+  integrity sha512-1vT8YfKiUMSorjWmTRjwWKqfDNs2LHJbE1aogIUk+Yxr4ZKPWXVj/uFpyBpQZRhdYU8HMxKUWWi62eBOFZy98Q==
   dependencies:
     date-holidays-parser "^1.6.0"
     js-yaml "^4.0.0"

@@ -1,0 +1,53 @@
+<mjml>
+	<mj-body background-color="#fff">
+		<mj-section>
+			<mj-column>
+				<mj-image
+					width="100px"
+					src="{{host}}/assets/images/logos/logo_Gauzy.svg"
+				></mj-image>
+				<mj-divider
+					border-color="#1B005D"
+					border-width="1px"
+				></mj-divider>
+				<mj-text font-size="20px" font-family="helvetica"
+					><bold>Equipment Details</bold></mj-text
+				>
+
+				<mj-text
+					padding="20px 0px 20px 50px"
+					font-size="16px"
+					font-family="helvetica"
+				>
+					<p><bold>Name:</bold> {{equipment_name}}</p>
+					<p><bold>Type:</bold> {{equipment_type}}</p>
+					<p>
+						<bold>Serial Number:</bold> {{equipment_serial_number}}
+					</p>
+					<p><bold>Manufactured Year:</bold> {{manufactured_year}}</p>
+					<p><bold>Initial Cost:</bold> {{initial_cost}}</p>
+					<p><bold>Currency:</bold> {{currency}}</p>
+					<p><bold>Max Share Period:</bold> {{max_share_period}}</p>
+				</mj-text>
+				<mj-text font-size="12px" font-family="helvetica"
+					>** Your share auto approved: {{autoApproveShare}}</mj-text
+				>
+				<mj-divider
+					border-color="#1B005D"
+					border-width="1px"
+				></mj-divider>
+				<mj-text align="center" font-size="12px" font-family="helvetica"
+					>© 2019,
+					<a href="https://app.gauzy.co/." style="color: #598bff"
+						>Gauzy</a
+					>
+					by
+					<a href="https://ever.co/" style="color: #598bff"
+						>Ever Co. LTD.</a
+					>
+					All rights reserved.
+				</mj-text>
+			</mj-column>
+		</mj-section>
+	</mj-body>
+</mjml>

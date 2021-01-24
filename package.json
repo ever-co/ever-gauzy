@@ -102,8 +102,7 @@
 		"build:package:contracts": "yarn --cwd ./packages/contracts build",
 		"build:package:config": "yarn --cwd ./packages/config build",
 		"build:package:plugin": "yarn --cwd ./packages/plugin build",
-		"build:package:plugins": "yarn --cwd ./packages/plugins build",
-		"build:package:all": "yarn run build:package:common && yarn run build:package:contracts && yarn run build:package:config && yarn run build:package:plugin && yarn run build:package:plugins",
+		"build:package:all": "yarn run build:package:contracts && yarn run build:package:common && yarn run build:package:config && yarn run build:package:plugin",
 		"start:package": "yarn --cwd ./packages/core run start"
 	},
 	"config": {
@@ -147,7 +146,8 @@
 		"libs/*",
 		"apps/*",
 		"tools",
-		"packages/*"
+		"packages/**",
+		"packages/plugins/**"
 	],
 	"resolutions": {
 		"uglify-js": "npm:terser"

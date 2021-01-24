@@ -1,17 +1,16 @@
 import { INestApplication, Type } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { PluginConfig } from '@gauzy/common';
+import { IPluginConfig } from '@gauzy/common';
 import { getConfig, setConfig } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
-import { coreEntities } from '../entities';
+import { coreEntities } from '../app/core/entities';
 // import { Logger } from '../logger/logger';
 
 export async function bootstrap(
-	pluginConfig?: Partial<PluginConfig>
+	pluginConfig?: Partial<IPluginConfig>
 ): Promise<INestApplication> {
 	const config = await registerPluginConfig(pluginConfig);
-	console.log(config);
 
 	// Logger.setLogger(config.logger);
 	// Logger.info(`Bootstrapping Server (pid: ${process.pid})...`);
@@ -19,7 +18,7 @@ export async function bootstrap(
 	const bootstrapModule = await import('./bootstrap.module');
 	const [classname] = Object.keys(bootstrapModule);
 
-	const { hostname, port } = config.apiConfig;
+	const { hostname, port } = config.apiConfigOptions;
 	const app = await NestFactory.create<NestExpressApplication>(
 		bootstrapModule[classname]
 	);
@@ -34,7 +33,7 @@ export async function bootstrap(
  * Setting the global config must be done prior to loading the Bootstrap Module.
  */
 export async function registerPluginConfig(
-	pluginConfig: Partial<PluginConfig>
+	pluginConfig: Partial<IPluginConfig>
 ) {
 	if (Object.keys(pluginConfig).length > 0) {
 		setConfig(pluginConfig);
@@ -42,7 +41,7 @@ export async function registerPluginConfig(
 
 	const entities = await registerAllEntities(pluginConfig);
 	setConfig({
-		dbConnectionConfig: {
+		dbConnectionOptions: {
 			entities
 		}
 	});
@@ -54,7 +53,9 @@ export async function registerPluginConfig(
 /**
  * Returns an array of core entities and any additional entities defined in plugins.
  */
-export async function registerAllEntities(pluginConfig: Partial<PluginConfig>) {
+export async function registerAllEntities(
+	pluginConfig: Partial<IPluginConfig>
+) {
 	const allEntities = coreEntities as Array<Type<any>>;
 	const pluginEntities = getEntitiesFromPlugins(pluginConfig.plugins);
 

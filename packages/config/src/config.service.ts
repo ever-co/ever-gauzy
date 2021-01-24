@@ -1,26 +1,26 @@
 import { DynamicModule, Injectable, Type } from '@nestjs/common';
-import { PluginConfig } from '@gauzy/common';
+import { IPluginConfig } from '@gauzy/common';
 import { ConnectionOptions } from 'typeorm/connection/ConnectionOptions';
 import { getConfig } from './config-manager';
 
 @Injectable()
 export class ConfigService {
-	public config: Partial<PluginConfig>;
+	public config: Partial<IPluginConfig>;
 
 	constructor() {
 		this.config = getConfig();
 	}
 
-	get apiConfig() {
-		return this.config.apiConfig;
+	get apiConfigOptions() {
+		return this.config.apiConfigOptions;
 	}
 
-	get graphqlConfig() {
-		return this.config.apiConfig.graphqlConfig;
+	get graphqlConfigOptions() {
+		return this.config.apiConfigOptions.graphqlConfigOptions;
 	}
 
-	get dbConnectionConfig(): ConnectionOptions {
-		return this.config.dbConnectionConfig;
+	get dbConnectionOptions(): ConnectionOptions {
+		return this.config.dbConnectionOptions;
 	}
 
 	get plugins(): Array<DynamicModule | Type<any>> {

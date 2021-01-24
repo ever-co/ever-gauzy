@@ -1,6 +1,10 @@
 import * as path from 'path';
+import { ConnectionOptions } from 'typeorm';
 
-let defaultConnection = process.env.DB_TYPE || 'postgres';
+const defaultConnection =
+	process.env.DB_TYPE && process.env.DB_TYPE === 'postgres'
+		? 'postgres'
+		: 'sqlite';
 
 export const connnections = {
 	postgres: {
@@ -16,18 +20,6 @@ export const connnections = {
 		synchronize: true,
 		uuidExtension: 'pgcrypto'
 	},
-	mysql: {
-		type: 'mysql',
-		host: process.env.DB_HOST || 'localhost',
-		port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306,
-		database: process.env.DB_NAME || 'mysql',
-		username: process.env.DB_USER || 'root',
-		password: process.env.DB_PASS || 'root',
-		keepConnectionAlive: true,
-		logging: true,
-		logger: 'file',
-		synchronize: true
-	},
 	sqlite: {
 		type: 'sqlite',
 		database:
@@ -40,7 +32,9 @@ export const connnections = {
 };
 
 export function getConnectionOptions(connection: string) {
-	return connnections[defaultConnection];
+	return connnections[connection];
 }
 
-export let dbConnectionConfig = getConnectionOptions(defaultConnection);
+export const dbConnectionConfig = getConnectionOptions(
+	defaultConnection
+) as ConnectionOptions;

@@ -6,13 +6,13 @@ import {
 } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { ConfigService } from '@gauzy/config';
-import { PluginConfig } from '@gauzy/common';
+import { IPluginConfig } from '@gauzy/common';
 import { PluginLifecycleMethods } from './extension-plugin';
 import { getPluginModules, hasLifecycleMethod } from './plugin-helper';
 
 @Module({})
 export class PluginModule implements OnModuleInit, OnModuleDestroy {
-	static forRoot(options: PluginConfig): DynamicModule {
+	static forRoot(options: IPluginConfig): DynamicModule {
 		return {
 			module: PluginModule,
 			providers: [],

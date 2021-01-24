@@ -1,3 +1,3 @@
-export interface OnPluginBootstrap {
+export interface IOnPluginBootstrap {
 	onPluginBootstrap(): void | Promise<void>;
 }

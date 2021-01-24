@@ -2,18 +2,18 @@ import { Module } from '@nestjs/common';
 import { MODULE_METADATA } from '@nestjs/common/constants';
 import * as _ from 'underscore';
 import {
-	OnPluginBootstrap,
-	OnPluginDestroy,
-	PluginMetaData
+	IOnPluginBootstrap,
+	IOnPluginDestroy,
+	IPluginMetaData
 } from '@gauzy/common';
 import { PLUGIN_METADATA } from './constants';
 
 export function ExtensionPlugin(
-	pluginMetadata: PluginMetaData
+	pluginMetadata: IPluginMetaData
 ): ClassDecorator {
 	return (target) => {
 		for (const metadataProperty of Object.values(PLUGIN_METADATA)) {
-			const property = metadataProperty as keyof PluginMetaData;
+			const property = metadataProperty as keyof IPluginMetaData;
 			if (property in pluginMetadata && property !== null) {
 				Reflect.defineMetadata(
 					property,
@@ -30,4 +30,4 @@ export function ExtensionPlugin(
 	};
 }
 
-export type PluginLifecycleMethods = OnPluginBootstrap & OnPluginDestroy;
+export type PluginLifecycleMethods = IOnPluginBootstrap & IOnPluginDestroy;
