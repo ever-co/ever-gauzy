@@ -8,10 +8,7 @@ export function createSettingsWindow(settingsWindow) {
 	settingsWindow = new BrowserWindow(mainWindowSettings);
 
 	const launchPath = url.format({
-		pathname: path.join(
-			__dirname,
-			'../../../../apps/desktop/ui/index.html'
-		),
+		pathname: path.join(__dirname, '../../../../ui/index.html'),
 		protocol: 'file:',
 		slashes: true,
 		hash: '/settings'

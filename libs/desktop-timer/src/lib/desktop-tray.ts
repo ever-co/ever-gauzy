@@ -25,8 +25,6 @@ export class TrayIcon {
 			'..',
 			'..',
 			'..',
-			'apps',
-			'desktop',
 			'assets',
 			'icons',
 			'icon_16x16.png'

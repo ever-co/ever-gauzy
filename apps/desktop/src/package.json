@@ -12,7 +12,7 @@
 	"bugs": {
 		"url": "https://github.com/ever-co/gauzy/issues"
 	},
-	"main": "src/index.js",
+	"main": "apps/desktop/src/index.js",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",

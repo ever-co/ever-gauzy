@@ -126,7 +126,7 @@ function startServer(value, restart = false) {
 			value.port || environment.API_DEFAULT_PORT
 		}`;
 		// require(path.join(__dirname, 'api/main.js'));
-		serverGauzy = fork(path.join(__dirname, '../api/main.js'), {
+		serverGauzy = fork(path.join(__dirname, '../../../api/main.js'), {
 			silent: true
 		});
 		serverGauzy.stdout.on('data', (data) => {
@@ -302,7 +302,9 @@ ipcMain.on('server_is_ready', () => {
 	});
 	onWaitingServer = false;
 	if (!isAlreadyRun) {
-		serverDesktop = fork(path.join(__dirname, '../desktop-api/main.js'));
+		serverDesktop = fork(
+			path.join(__dirname, '../../../desktop-api/main.js')
+		);
 		gauzyWindow.loadURL(gauzyPage());
 		ipcTimer(
 			store,

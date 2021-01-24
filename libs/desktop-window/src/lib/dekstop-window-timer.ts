@@ -8,10 +8,7 @@ export function createTimeTrackerWindow(timeTrackerWindow) {
 	timeTrackerWindow = new BrowserWindow(mainWindowSettings);
 
 	const launchPath = url.format({
-		pathname: path.join(
-			__dirname,
-			'../../../../apps/desktop/ui/index.html'
-		),
+		pathname: path.join(__dirname, '../../../../ui/index.html'),
 		protocol: 'file:',
 		slashes: true,
 		hash: '/time-tracker'
@@ -53,7 +50,7 @@ const windowSetting = () => {
 
 export function loginPage() {
 	return url.format({
-		pathname: path.join(__dirname, '../../../../apps/desktop/index.html'),
+		pathname: path.join(__dirname, '../../../../index.html'),
 		protocol: 'file:',
 		slashes: true,
 		hash: '/login'
@@ -62,10 +59,7 @@ export function loginPage() {
 
 export function timeTrackerPage() {
 	return url.format({
-		pathname: path.join(
-			__dirname,
-			'../../../../apps/desktop/ui/index.html'
-		),
+		pathname: path.join(__dirname, '../../../../ui/index.html'),
 		protocol: 'file:',
 		slashes: true,
 		hash: '/time-tracker'

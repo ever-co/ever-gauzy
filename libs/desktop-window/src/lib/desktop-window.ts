@@ -26,10 +26,7 @@ export function createGauzyWindow(gauzyWindow, serve) {
 		gauzyWindow.loadURL(launchPath);
 	} else {
 		launchPath = url.format({
-			pathname: path.join(
-				__dirname,
-				'../../../../apps/desktop/index.html'
-			),
+			pathname: path.join(__dirname, '../../../../index.html'),
 			protocol: 'file:',
 			slashes: true
 		});
@@ -96,7 +93,7 @@ export function getApiBaseUrl(configs) {
 
 export function gauzyPage() {
 	return url.format({
-		pathname: path.join(__dirname, '../../../../apps/desktop/index.html'),
+		pathname: path.join(__dirname, '../../../../index.html'),
 		protocol: 'file:',
 		slashes: true
 	});
