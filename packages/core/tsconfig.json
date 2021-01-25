@@ -8,6 +8,5 @@
 		"outDir": "./dist",
 		"types": ["node", "reflect-metadata", "jest"]
 	},
-	"include": ["./src/**/*.ts"],
-	"exclude": ["node_modules", "**/*.spec.ts"]
+	"include": ["./src/**/*"]
 }

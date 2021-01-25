@@ -1,0 +1,10 @@
+{
+	"language": "ts",
+	"collection": "@nestjs/schematics",
+	"sourceRoot": "src",
+	"root": "src",
+	"compilerOptions": {
+		"deleteOutDir": true,
+		"assets": ["src/assets/i18n/**/*"]
+	}
+}

@@ -185,8 +185,7 @@
 						"sourceMap": true,
 						"maxWorkers": 4,
 						"memoryLimit": 4000,
-						"tsConfig": "apps/api/tsconfig.app.json",
-						"assets": ["apps/api/src/assets"]
+						"tsConfig": "apps/api/tsconfig.app.json"
 					},
 					"configurations": {
 						"production": {

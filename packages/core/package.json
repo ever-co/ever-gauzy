@@ -21,9 +21,8 @@
 		"lint": "tslint -p tsconfig.json",
 		"test": "jest",
 		"test:e2e": "jest --config ./__test__/jest.config.json",
-		"build": "rimraf dist && yarn run compile",
+		"build": "rimraf dist && tsc -p tsconfig.build.json",
 		"postbuild": "yarn copy-files",
-		"compile": "tsc -p tsconfig.build.json",
 		"copy-files": "copyfiles -u 1 src/**/**/*.gql dist/",
 		"prepublishOnly": "yarn run build",
 		"start": "ts-node ./src/index.ts"
