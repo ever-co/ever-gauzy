@@ -4,6 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './product.entity';
 import {
+	IImageAsset,
 	IProductCreateInput,
 	IProductFindInput,
 	IProductTranslated
@@ -73,5 +74,33 @@ export class ProductService extends TenantAwareCrudService<Product> {
 
 	async saveProduct(productRequest: IProductCreateInput): Promise<Product> {
 		return await this.productRepository.save(<any>productRequest);
+	}
+
+	async addGalleryImage(
+		productId: string,
+		image: IImageAsset
+	): Promise<Product> {
+		let product = await this.productRepository.findOne({
+			where: { id: productId },
+			relations: ['gallery']
+		});
+
+		product.gallery.push(image);
+		return await this.productRepository.save(product);
+	}
+
+	async setFeaturedImage(
+		productId: string,
+		image: IImageAsset
+	): Promise<Product> {
+		let product = await this.productRepository.findOne({
+			where: { id: productId },
+			relations: ['gallery']
+		});
+
+		//tstodo
+		product.imageUrl = image.url;
+
+		return await this.productRepository.save(product);
 	}
 }

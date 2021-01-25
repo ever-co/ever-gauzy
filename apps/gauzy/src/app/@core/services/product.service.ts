@@ -6,7 +6,8 @@ import {
 	IProductFindInput,
 	IProductTranslatableCreateInput,
 	IProductTranslatable,
-	IProductTranslated
+	IProductTranslated,
+	IImageAsset
 } from '@gauzy/models';
 
 @Injectable()
@@ -82,4 +83,24 @@ export class ProductService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	addGalleryImage(
+		id: string,
+		image: IImageAsset
+	): Promise<IProductTranslatable> {
+		return this.http
+			.post<IProductTranslatable>(
+				`${this.PRODUCTS_URL}/add-image/${id}`,
+				image
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	// setAsFeatured(id: string, image: IImageAsset): Promise<IProductTranslatable> {
+	// 	return this.http
+	// 	.post<IProductTranslatable>(`${this.PRODUCTS_URL}/${id}`, image)
+	// 	.pipe(first())
+	// 	.toPromise();
+	// }
 }

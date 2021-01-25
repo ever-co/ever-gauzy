@@ -2,8 +2,10 @@ import {
 	Component,
 	EventEmitter,
 	Input,
+	OnChanges,
 	OnDestroy,
-	OnInit
+	OnInit,
+	SimpleChanges
 } from '@angular/core';
 import {
 	IImageAsset,
@@ -14,6 +16,7 @@ import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { ImageAssetService } from 'apps/gauzy/src/app/@core/services/image-asset.service';
+import { ProductService } from 'apps/gauzy/src/app/@core/services/product.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
@@ -29,8 +32,10 @@ import { first } from 'rxjs/operators';
 })
 export class ProductGalleryComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit, OnChanges, OnDestroy {
 	@Input('inventoryItem') inventoryItem: IProductTranslatable;
+
+	selectedImage: IImageAsset;
 	gallery: IImageAsset[] = [];
 	availableImages: IImageAsset[] = [];
 
@@ -44,13 +49,23 @@ export class ProductGalleryComponent
 		private dialogService: NbDialogService,
 		private imageAssetService: ImageAssetService,
 		private toastrService: ToastrService,
-		private store: Store
+		private store: Store,
+		private productService: ProductService
 	) {
 		super(translationService);
 	}
 
+	ngOnChanges(changes: SimpleChanges): void {
+		if (changes.inventoryItem && changes.inventoryItem.currentValue) {
+			this.inventoryItem = changes.inventoryItem.currentValue;
+			this.gallery = this.inventoryItem.gallery;
+		}
+	}
+
 	ngOnInit(): void {
 		this.gallery = this.inventoryItem ? this.inventoryItem.gallery : [];
+		//tstodo refactor product model
+		// this.selectedImage = this.inventoryItem
 
 		this.getAvailableImages();
 
@@ -108,8 +123,18 @@ export class ProductGalleryComponent
 			}
 		});
 
-		await dialog.onClose.pipe(first()).toPromise();
+		let selectedImage = await dialog.onClose.pipe(first()).toPromise();
+
+		if (selectedImage) {
+			let resultProduct = await this.productService.addGalleryImage(
+				this.inventoryItem.id,
+				selectedImage
+			);
+			this.gallery = resultProduct.gallery;
+		}
 	}
+
+	onSmallImgPreviewClick($event: IImageAsset) {}
 
 	ngOnDestroy(): void {}
 }

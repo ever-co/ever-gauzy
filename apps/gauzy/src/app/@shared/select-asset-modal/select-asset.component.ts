@@ -30,9 +30,11 @@ export class SelectAssetComponent
 		this.selectedImage = $event;
 	}
 
+	onSelectImageClick() {
+		this.dialogRef.close(this.selectedImage);
+	}
+
 	onImageUploaded($event) {
-		//tstodo
-		console.log('on image uploaded', $event);
 		this.newImageUploadedEvent.next($event);
 	}
 }

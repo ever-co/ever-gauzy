@@ -226,6 +226,7 @@ export class ProductFormComponent
 			enabled: this.form.get('enabled').value,
 			optionCreateInputs: this.options,
 			optionDeleteInputs: this.deletedOptions,
+			gallery: [],
 			category: this.productCategories.find((c) => {
 				return c.id === this.form.get('productCategoryId').value;
 			}),

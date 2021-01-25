@@ -15,7 +15,6 @@
 	<nb-card-body>
 		<div class="row">
 			<div class="col-md-8">
-				<!-- [fileUrl]="imageUrl?.value" -->
 				<div class="row mb-2">
 					<ngx-file-uploader-input
 						class="browse-image"
@@ -58,7 +57,13 @@
 		</div>
 	</nb-card-body>
 	<nb-card-footer>
-		<button class="button-home" status="primary" nbButton nbStepperNext>
+		<button
+			class="button-home"
+			status="primary"
+			nbButton
+			nbStepperNext
+			(click)="onSelectImageClick()"
+		>
 			<!-- {{
                 'INVENTORY_PAGE.SELECT_IMAGE' | translate
             }} -->

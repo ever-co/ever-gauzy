@@ -23,7 +23,8 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import {
 	PermissionsEnum,
 	IProductCreateInput,
-	IProductTranslated
+	IProductTranslated,
+	IImageAsset
 } from '@gauzy/models';
 import { Permissions } from '../shared/decorators/permissions';
 import { ProductDeleteCommand } from './commands';
@@ -167,5 +168,26 @@ export class ProductController extends CrudController<Product> {
 		...options: any[]
 	): Promise<DeleteResult> {
 		return this.commandBus.execute(new ProductDeleteCommand(id));
+	}
+
+	//tstodo fix permission
+	@ApiOperation({ summary: 'Create gallery image' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The gallery image has been stored.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
+	@Post('/add-image/:productId')
+	async addGalleryImage(
+		@Param('productId') productId: string,
+		@Body() image: IImageAsset
+	) {
+		return this.productService.addGalleryImage(productId, image);
 	}
 }
