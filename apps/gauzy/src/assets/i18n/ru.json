@@ -2028,12 +2028,12 @@
 		"EDIT_VARIANT": "Изменить вариант",
 		"NO_OPTIONS_LABEL": "(нет опций)",
 		"OPTIONS": "Варианты",
-		"SELECT_OR_UPLOAD_IMAGE": "Выберите или загрузите изображение",
+		"SELECT_OR_UPLOAD_IMAGE": "Выбрать или загрузить изображение",
 		"SELECT_IMAGE": "Выбрать изображение",
 		"NO_IMAGE_SELECTED": "Изображение не выбрано",
 		"URL": "Url",
-		"DIMENSIONS": "Габаритные размеры",
-		"FEATURED_IMAGE_WAS_SAVED": "Лучшее изображение сохранено!",
+		"DIMENSIONS": "Размеры",
+		"FEATURED_IMAGE_WAS_SAVED": "Избранное изображение было сохранено!",
 		"IMAGE_SAVED": "Изображение сохранено!"
 	},
 	"TASKS_PAGE": {
