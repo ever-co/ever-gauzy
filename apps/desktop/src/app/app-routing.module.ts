@@ -1,11 +1,13 @@
 import { RouterModule, Routes, ExtraOptions } from '@angular/router';
 import { NgModule } from '@angular/core';
-import { SetupComponent } from './pages/setup/setup.component';
-import { TimeTrackerComponent } from './pages/time-tracker/time-tracker.component';
-import { ScreenCaptureComponent } from './pages/screen-capture/screen-capture.component';
-import { SettingsComponent } from './pages/settings/settings.component';
-import { UpdaterComponent } from './pages/updater/updater.component';
-import { ImageViewerComponent } from './pages/image-viewer/image-viewer.component';
+import {
+	ImageViewerComponent,
+	SettingsComponent,
+	ScreenCaptureComponent,
+	TimeTrackerComponent,
+	SetupComponent,
+	UpdaterComponent
+} from '../../../../libs/desktop-ui-lib/src/index';
 
 const routes: Routes = [
 	{

@@ -98,6 +98,7 @@ export * from './lib/tree-node.model';
 export * from './lib/upwork.model';
 export * from './lib/user-organization.model';
 export * from './lib/user.model';
+export * from './lib/wakatime.model';
 
 export { IRole, RolesEnum } from './lib/role.model';
 export { IBaseEntityModel as BaseEntityModel } from './lib/base-entity.model';

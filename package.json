@@ -74,7 +74,7 @@
 		"postinstall": "install-app-deps",
 		"postinstall.electron": "node tools/electron/postinstall",
 		"postinstall.web": "node tools/web/postinstall",
-		"build:desktop": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn run prepare:desktop && ng build desktop --prod --base-href ./ && ng build desktop-api --prod && ng build api-desktop --prod && ng build desktop-ui --prod --base-href ./",
+		"build:desktop": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod  && ng build desktop --prod --base-href ./ && yarn run prepare:desktop && ng build desktop-api --prod && ng build api-desktop --prod && ng build desktop-ui --prod --base-href ./",
 		"build:desktop:local": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn run build:desktop && electron dist/apps/desktop",
 		"build:desktop:linux": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn run build:desktop && npm config set cache .cache && cd dist/apps/desktop && npx electron-builder@22.9.1 -c.electronVersion=10.1.3 build --linux",
 		"build:desktop:windows": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn run build:desktop && npm config set cache .cache && cd dist/apps/desktop && npx electron-builder@22.9.1 -c.electronVersion=10.1.3 build --windows",

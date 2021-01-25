@@ -7,23 +7,31 @@ import {
 	NbDialogModule,
 	NbThemeModule,
 	NbToastrModule,
-	NbDialogService
+	NbDialogService,
+	NbLayoutModule
 } from '@nebular/theme';
-import { SetupModule } from './pages/setup/setup.module';
 import { NgxElectronModule } from 'ngx-electron';
 import { AppService } from './app.service';
 import { HttpClientModule } from '@angular/common/http';
-import { TimeTrackerModule } from './pages/time-tracker/time-tracker.module';
-import { ScreenCaptureModule } from './pages/screen-capture/screen-capture.module';
-import { SettingsModule } from './pages/settings/settings.module';
-import { UpdaterModule } from './pages/updater/updater.module';
-import { ImageViewerModule } from './pages/image-viewer/image-viewer.module';
-import { AlertComponent } from './@shared/dialogs/alert/alert.component';
+import {
+	AlertComponent,
+	ImageViewerModule,
+	UpdaterModule,
+	SettingsModule,
+	ScreenCaptureModule,
+	TimeTrackerModule,
+	SetupModule
+} from '../../../../libs/desktop-ui-lib/src';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 
 @NgModule({
 	declarations: [AppComponent, AlertComponent],
 	imports: [
+		NbLayoutModule,
+		NbDialogModule.forRoot(),
+		NbToastrModule.forRoot(),
+		NbCardModule,
+		NbButtonModule,
 		BrowserModule,
 		BrowserAnimationsModule,
 		AppRoutingModule,
@@ -35,11 +43,7 @@ import { NbCardModule, NbButtonModule } from '@nebular/theme';
 		ScreenCaptureModule,
 		SettingsModule,
 		UpdaterModule,
-		ImageViewerModule,
-		NbDialogModule.forRoot(),
-		NbToastrModule.forRoot(),
-		NbCardModule,
-		NbButtonModule
+		ImageViewerModule
 	],
 	providers: [AppService, HttpClientModule, NbDialogService],
 	bootstrap: [AppComponent]
