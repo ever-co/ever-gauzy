@@ -6,7 +6,7 @@ import { ProductCategoriesComponent } from './components/manage-product-categori
 import { ProductFormComponent } from './components/edit-inventory-item/product-form.component';
 import { TableInventoryComponent } from './components/table-inventory-items/table-inventory.component';
 import { InventoryVariantFormComponent } from './components/edit-inventory-item-variant/variant-form.component';
-import { PermissionsEnum } from '@gauzy/models';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { NgxPermissionsGuard } from 'ngx-permissions';
 
 const ALL_ORG_PERMISSIONS = {

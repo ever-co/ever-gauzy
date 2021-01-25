@@ -8,8 +8,8 @@ import {
 	IUpdateEmployeeJobPostAppliedResult,
 	IApplyJobPostInput,
 	IVisibilityJobPostInput
-} from '@gauzy/models';
-import { toParams } from '@gauzy/utils';
+} from '@gauzy/contracts';
+import { toParams } from '@gauzy/common';
 
 @Injectable({
 	providedIn: 'root'

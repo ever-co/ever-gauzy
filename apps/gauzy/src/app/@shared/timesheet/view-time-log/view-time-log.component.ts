@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
-import { ITimeLog, OrganizationPermissionsEnum } from '@gauzy/models';
+import { ITimeLog, OrganizationPermissionsEnum } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { NbDialogService } from '@nebular/theme';
 import { EditTimeLogModalComponent } from '../edit-time-log-modal/edit-time-log-modal.component';

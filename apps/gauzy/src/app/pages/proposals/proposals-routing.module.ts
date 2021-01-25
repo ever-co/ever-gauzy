@@ -4,7 +4,7 @@ import { ProposalsComponent } from './proposals.component';
 import { ProposalRegisterComponent } from './proposal-register/proposal-register.component';
 import { ProposalDetailsComponent } from './proposal-details/proposal-details.component';
 import { ProposalEditComponent } from './proposal-edit/proposal-edit.component';
-import { PermissionsEnum } from '@gauzy/models';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { NgxPermissionsGuard } from 'ngx-permissions';
 
 export function redirectTo() {

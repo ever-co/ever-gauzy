@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Params } from '@angular/router';
-import { IEmployee, IOrganization, LanguagesEnum } from '@gauzy/models';
+import { IEmployee, IOrganization, LanguagesEnum } from '@gauzy/contracts';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { Subject, Subscription } from 'rxjs';

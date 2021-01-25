@@ -7,7 +7,7 @@ import {
 	IOrganizationEmploymentType,
 	ITag,
 	ComponentLayoutStyleEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { first, takeUntil } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { Store } from '../../@core/services/store.service';

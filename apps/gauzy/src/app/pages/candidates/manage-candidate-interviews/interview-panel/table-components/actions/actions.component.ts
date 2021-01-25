@@ -6,7 +6,7 @@ import {
 	OnInit,
 	OnDestroy
 } from '@angular/core';
-import { ICandidateInterview } from '@gauzy/models';
+import { ICandidateInterview } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '../../../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 

@@ -7,7 +7,7 @@ import {
 	PayPeriodEnum,
 	ICandidate,
 	ICurrency
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';

@@ -5,7 +5,7 @@ import {
 	IRolePermission,
 	RolesEnum,
 	IUser
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { RolePermissionsService } from '../../../@core/services/role-permissions.service';
 import { RoleService } from '../../../@core/services/role.service';

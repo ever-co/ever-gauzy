@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
 import { ImageAssetComponent } from './img-asset/img-asset.component';
-import { IImageAsset } from '@gauzy/models';
+import { IImageAsset } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 
 @Component({

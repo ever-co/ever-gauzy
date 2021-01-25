@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { IOrganizationCreateInput, ITenant } from '@gauzy/models';
+import { IOrganizationCreateInput, ITenant } from '@gauzy/contracts';
 import { User } from '@sentry/browser';
 import { UsersService } from '../../@core/services/users.service';
 import { OrganizationsService } from '../../@core/services/organizations.service';

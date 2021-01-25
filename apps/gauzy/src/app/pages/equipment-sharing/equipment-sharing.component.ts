@@ -6,7 +6,7 @@ import {
 	IApprovalPolicy,
 	ComponentLayoutStyleEnum,
 	ISelectedEquipmentSharing
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';

@@ -3,7 +3,7 @@ import {
 	IOrganization,
 	IUserOrganizationCreateInput,
 	RolesEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { first, filter } from 'rxjs/operators';
 import { FormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';

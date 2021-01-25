@@ -4,7 +4,7 @@ import {
 	PermissionsEnum,
 	ICandidate,
 	ICandidateInterview
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { Store } from '../../../@core/services/store.service';
@@ -23,7 +23,8 @@ import { CandidateInterviewService } from '../../../@core/services/candidate-int
 		'./edit-candidate.component.scss'
 	]
 })
-export class EditCandidateComponent extends TranslationBaseComponent
+export class EditCandidateComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	selectedCandidate: ICandidate;

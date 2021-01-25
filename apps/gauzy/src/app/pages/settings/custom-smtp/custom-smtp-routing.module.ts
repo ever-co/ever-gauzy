@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { PermissionsEnum } from '@gauzy/models';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { NgxPermissionsGuard } from 'ngx-permissions';
 import { SMTPComponent } from '../../../@shared/smtp/smtp.component';
 import { CustomSmtpComponent } from './custom-smtp.component';

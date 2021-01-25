@@ -7,7 +7,7 @@ import {
 	IUserUpdateInput,
 	ICandidateInterview,
 	IOrganization
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { CandidatesService } from '../../../../@core/services/candidates.service';

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { IImageAsset } from '@gauzy/models';
+import { IImageAsset } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ngx-img-asset',

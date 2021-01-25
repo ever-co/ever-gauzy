@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { IOrganization, ITask } from '@gauzy/models';
+import { IOrganization, ITask } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { DefaultEditor } from 'ng2-smart-table';
 import { TasksStoreService } from '../../../@core/services/tasks-store.service';

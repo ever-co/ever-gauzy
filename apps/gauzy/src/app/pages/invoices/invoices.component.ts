@@ -24,7 +24,7 @@ import {
 	PermissionsEnum,
 	ICurrency,
 	IInvoiceItemCreateInput
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { first, map, filter, tap } from 'rxjs/operators';

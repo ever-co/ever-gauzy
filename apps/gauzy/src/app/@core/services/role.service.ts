@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IRole, RolesEnum, ITenant } from '@gauzy/models';
+import { IRole, RolesEnum, ITenant } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { first } from 'rxjs/operators';
 

@@ -23,7 +23,7 @@ import {
 	IGoalGeneralSetting,
 	KeyResultNumberUnitsEnum,
 	IOrganization
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { TasksService } from '../../../@core/services/tasks.service';
 import { OrganizationTeamsService } from '../../../@core/services/organization-teams.service';
 import { Store } from '../../../@core/services/store.service';

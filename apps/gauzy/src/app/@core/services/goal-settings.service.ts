@@ -9,7 +9,7 @@ import {
 	IGoalTimeFrameResponse,
 	IKpiResponse,
 	IGeneralSettingResponse
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { throwError } from 'rxjs';
 import { catchError, first } from 'rxjs/operators';
 import { ToastrService } from './toastr.service';

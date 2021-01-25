@@ -1,4 +1,4 @@
-import { ITimeOff } from '@gauzy/models';
+import { ITimeOff } from '@gauzy/contracts';
 import * as moment from 'moment';
 
 export const timeOff: ITimeOff[] = [

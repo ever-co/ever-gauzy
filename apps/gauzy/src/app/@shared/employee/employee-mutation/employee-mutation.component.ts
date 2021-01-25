@@ -8,7 +8,7 @@ import {
 	IRole,
 	IEmployeeCreateInput,
 	EmployeeAction
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { EmployeesService } from '../../../@core/services/employees.service';
 import { RoleService } from '../../../@core/services/role.service';

@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
-import { RequestApprovalStatusTypesEnum } from '@gauzy/models';
+import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ngx-equipment-sharing-status',

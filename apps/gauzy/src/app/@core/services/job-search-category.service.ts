@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IJobSearchCategory, IPagination } from '@gauzy/models';
-import { toParams } from '@gauzy/utils';
+import { IJobSearchCategory, IPagination } from '@gauzy/contracts';
+import { toParams } from '@gauzy/common';
 
 @Injectable({
 	providedIn: 'root'

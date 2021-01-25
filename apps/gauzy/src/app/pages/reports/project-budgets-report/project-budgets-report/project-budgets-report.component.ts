@@ -10,7 +10,7 @@ import {
 	IOrganization,
 	IProjectBudgetLimitReport,
 	OrganizationProjectBudgetTypeEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';

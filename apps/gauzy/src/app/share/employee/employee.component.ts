@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, Subject, of } from 'rxjs';
 import { map, tap, takeUntil } from 'rxjs/operators';
-import { PermissionsEnum, IEmployee, IEmployeeAward } from '@gauzy/models';
+import { PermissionsEnum, IEmployee, IEmployeeAward } from '@gauzy/contracts';
 import { Store } from '../../@core/services/store.service';
 import * as moment from 'moment';
 import { NbDialogService } from '@nebular/theme';

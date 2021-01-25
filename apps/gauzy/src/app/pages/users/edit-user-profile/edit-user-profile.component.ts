@@ -2,7 +2,7 @@ import { Location } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { ActivatedRoute, Params } from '@angular/router';
-import { IUser, ITag } from '@gauzy/models';
+import { IUser, ITag } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
@@ -16,7 +16,8 @@ import { UsersOrganizationsService } from '../../../@core/services/users-organiz
 		'../../../@shared/user/edit-profile-form/edit-profile-form.component.scss'
 	]
 })
-export class EditUserProfileComponent extends TranslationBaseComponent
+export class EditUserProfileComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;

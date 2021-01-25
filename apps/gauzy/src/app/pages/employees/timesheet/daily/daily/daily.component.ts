@@ -8,8 +8,8 @@ import {
 	PermissionsEnum,
 	ITimeLogFilters,
 	OrganizationPermissionsEnum
-} from '@gauzy/models';
-import { toUTC } from '@gauzy/utils';
+} from '@gauzy/contracts';
+import { toUTC } from '@gauzy/common';
 import {
 	NbCheckboxComponent,
 	NbDialogService,

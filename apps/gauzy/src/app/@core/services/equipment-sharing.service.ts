@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
-import { IEquipmentSharing } from '@gauzy/models';
+import { IEquipmentSharing } from '@gauzy/contracts';
 
 @Injectable()
 export class EquipmentSharingService {

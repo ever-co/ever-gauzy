@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
-import { ComponentLayoutStyleEnum } from '@gauzy/models';
+import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ngx-contact-action',

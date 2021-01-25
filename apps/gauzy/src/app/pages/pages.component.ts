@@ -5,7 +5,7 @@ import {
 	IOrganization,
 	IUser,
 	PermissionsEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter } from 'rxjs/operators';

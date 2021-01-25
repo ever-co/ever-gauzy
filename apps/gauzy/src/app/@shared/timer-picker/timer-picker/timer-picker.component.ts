@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import * as moment from 'moment';
-import { IOrganization } from '@gauzy/models';
+import { IOrganization } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ga-timer-picker',

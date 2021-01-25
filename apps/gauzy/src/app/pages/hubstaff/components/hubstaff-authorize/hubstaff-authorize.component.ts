@@ -9,7 +9,7 @@ import {
 	PersistStore,
 	Store
 } from 'apps/gauzy/src/app/@core/services/store.service';
-import { IOrganization } from '@gauzy/models';
+import { IOrganization } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ngx-hubstaff-authorize',

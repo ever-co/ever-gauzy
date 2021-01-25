@@ -13,7 +13,7 @@ import {
 	IFeatureToggle,
 	IOrganization,
 	IUser
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { FeatureStoreService } from '../../@core/services/feature/feature-store.service';
 import { Store } from '../../@core/services/store.service';
 import { Observable } from 'rxjs/Observable';

@@ -6,7 +6,7 @@ import {
 	ITimeOffPolicy,
 	ITimeOff,
 	IOrganization
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { Store } from '../../../@core/services/store.service';
 import { TimeOffService } from '../../../@core/services/time-off.service';

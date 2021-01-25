@@ -4,7 +4,7 @@ import {
 	IOrganizationAwardsCreateInput,
 	IOrganizationAwards,
 	IOrganizationAwardsFindInput
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 
 @Injectable({

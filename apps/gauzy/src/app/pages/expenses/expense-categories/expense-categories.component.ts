@@ -9,7 +9,7 @@ import {
 	ITag,
 	IOrganizationExpenseCategory,
 	ComponentLayoutStyleEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { Store } from '../../../@core/services/store.service';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';

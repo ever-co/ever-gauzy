@@ -1,6 +1,6 @@
 import { OnInit, OnDestroy, Component, Input, ViewChild } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { IEmployee, ICandidate } from '@gauzy/models';
+import { IEmployee, ICandidate } from '@gauzy/contracts';
 import { CandidateStore } from '../../../@core/services/candidate-store.service';
 import { EmployeeStore } from '../../../@core/services/employee-store.service';
 import { LocationFormComponent } from '../../forms/location';

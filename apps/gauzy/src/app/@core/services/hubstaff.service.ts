@@ -11,7 +11,7 @@ import {
 	IIntegrationMap,
 	IntegrationEntity,
 	IntegrationEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { v4 as uuid } from 'uuid';
 import { Store } from './store.service';
 import { switchMap, tap } from 'rxjs/operators';
@@ -41,23 +41,19 @@ interface IDateRangeActivityFilter {
 })
 export class HubstaffService {
 	private ACCESS_TOKEN: string;
-	private _entitiesToSync$: BehaviorSubject<
-		IEntitiesSettings
-	> = new BehaviorSubject({
-		previousValue: [],
-		currentValue: []
-	});
-	private _dateRangeActivity$: BehaviorSubject<
-		IDateRangeActivityFilter
-	> = new BehaviorSubject(DEFAULT_DATE_RANGE);
+	private _entitiesToSync$: BehaviorSubject<IEntitiesSettings> = new BehaviorSubject(
+		{
+			previousValue: [],
+			currentValue: []
+		}
+	);
+	private _dateRangeActivity$: BehaviorSubject<IDateRangeActivityFilter> = new BehaviorSubject(
+		DEFAULT_DATE_RANGE
+	);
 
-	public entitiesToSync$: Observable<
-		IEntitiesSettings
-	> = this._entitiesToSync$.asObservable();
+	public entitiesToSync$: Observable<IEntitiesSettings> = this._entitiesToSync$.asObservable();
 
-	public dateRangeActivity$: Observable<
-		IDateRangeActivityFilter
-	> = this._dateRangeActivity$.asObservable();
+	public dateRangeActivity$: Observable<IDateRangeActivityFilter> = this._dateRangeActivity$.asObservable();
 
 	integrationId: string;
 

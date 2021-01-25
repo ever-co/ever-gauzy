@@ -20,8 +20,8 @@ import {
 	ITimeLog,
 	ITimeLogFilters,
 	OrganizationPermissionsEnum
-} from '@gauzy/models';
-import { toUTC, toLocal } from '@gauzy/utils';
+} from '@gauzy/contracts';
+import { toUTC, toLocal } from '@gauzy/common';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';

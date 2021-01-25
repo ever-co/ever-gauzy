@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { filter } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { IPipeline, IContact } from '@gauzy/models';
+import { IPipeline, IContact } from '@gauzy/contracts';
 import { PipelinesService } from '../../../../@core/services/pipelines.service';
 import { DealsService } from '../../../../@core/services/deals.service';
 import { AppStore, Store } from '../../../../@core/services/store.service';

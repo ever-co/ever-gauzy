@@ -7,7 +7,7 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { UpworkService } from 'apps/gauzy/src/app/@core/services/upwork.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { untilDestroyed } from '@ngneat/until-destroy';
-import { IOrganization } from '@gauzy/models';
+import { IOrganization } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ngx-transactions',

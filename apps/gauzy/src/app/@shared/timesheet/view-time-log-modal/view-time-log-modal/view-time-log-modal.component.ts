@@ -4,7 +4,7 @@ import {
 	ITimeLog,
 	PermissionsEnum,
 	OrganizationPermissionsEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { EditTimeLogModalComponent } from '../../edit-time-log-modal/edit-time-log-modal.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TimesheetService } from '../../timesheet.service';

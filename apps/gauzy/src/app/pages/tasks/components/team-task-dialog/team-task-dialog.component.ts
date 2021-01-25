@@ -5,7 +5,7 @@ import {
 	IEmployee,
 	IOrganizationTeam,
 	ITag
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { OrganizationProjectsService } from '../../../../@core/services/organization-projects.service';

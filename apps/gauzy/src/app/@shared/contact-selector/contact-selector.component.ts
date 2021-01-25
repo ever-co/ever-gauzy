@@ -4,7 +4,7 @@ import {
 	ContactType,
 	IOrganizationContact,
 	PermissionsEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { merge, Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';

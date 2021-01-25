@@ -10,7 +10,7 @@ import {
 	RegionsEnum,
 	BonusTypeEnum,
 	CurrencyPosition
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
 import { formatDate } from '@angular/common';

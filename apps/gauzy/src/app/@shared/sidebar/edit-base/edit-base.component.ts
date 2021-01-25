@@ -3,7 +3,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { IHelpCenter, IOrganization } from '@gauzy/models';
+import { IHelpCenter, IOrganization } from '@gauzy/contracts';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { HelpCenterService } from '../../../@core/services/help-center.service';
 
@@ -12,7 +12,8 @@ import { HelpCenterService } from '../../../@core/services/help-center.service';
 	templateUrl: 'edit-base.component.html',
 	styleUrls: ['edit-base.component.scss']
 })
-export class EditBaseComponent extends TranslationBaseComponent
+export class EditBaseComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	@Input() base?: IHelpCenter;
 	@Input() editType: string;

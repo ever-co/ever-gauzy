@@ -5,7 +5,7 @@ import {
 	ICandidateExperience,
 	IExperienceCreateInput,
 	IExperienceFindInput
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 
 @Injectable({
 	providedIn: 'root'

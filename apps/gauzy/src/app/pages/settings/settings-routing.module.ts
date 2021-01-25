@@ -7,7 +7,7 @@ import { EmailHistoryComponent } from './email-history/email-history.component';
 import { EmailTemplatesComponent } from '../email-templates/email-templates.component';
 import { FileStorageComponent } from './file-storage/file-storage.component';
 import { NgxPermissionsGuard } from 'ngx-permissions';
-import { PermissionsEnum } from '@gauzy/models';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
 
 const routes: Routes = [

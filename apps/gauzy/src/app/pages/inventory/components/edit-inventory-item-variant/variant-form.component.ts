@@ -3,7 +3,7 @@ import {
 	BillingInvoicingPolicyEnum,
 	IProductVariant,
 	IOrganization
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';

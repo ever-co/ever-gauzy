@@ -10,7 +10,7 @@ import {
 	IJobSearchOccupation,
 	IMatchingCriterions,
 	JobPostTypeEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { JobPresetService } from 'apps/gauzy/src/app/@core/services/job-preset.service';
 import { JobSearchCategoryService } from 'apps/gauzy/src/app/@core/services/job-search-category.service';

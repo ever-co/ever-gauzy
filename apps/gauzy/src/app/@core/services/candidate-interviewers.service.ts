@@ -6,7 +6,7 @@ import {
 	ICandidateInterviewersCreateInput,
 	ICandidateInterviewers,
 	ICandidateInterviewersDeleteInput
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 
 @Injectable()
 export class CandidateInterviewersService {

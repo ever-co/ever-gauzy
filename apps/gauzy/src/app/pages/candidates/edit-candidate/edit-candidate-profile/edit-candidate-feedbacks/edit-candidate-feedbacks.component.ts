@@ -23,7 +23,7 @@ import {
 	IEmployee,
 	ComponentLayoutStyleEnum,
 	IOrganization
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';

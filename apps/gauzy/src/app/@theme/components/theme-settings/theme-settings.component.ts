@@ -8,7 +8,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { LanguagesEnum, IUser, ComponentLayoutStyleEnum } from '@gauzy/models';
+import {
+	LanguagesEnum,
+	IUser,
+	ComponentLayoutStyleEnum
+} from '@gauzy/contracts';
 import { LanguagesService } from '../../../@core/services/languages.service';
 import { UsersService } from '../../../@core/services';
 

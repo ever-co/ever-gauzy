@@ -1,5 +1,9 @@
 import { Component } from '@angular/core';
-import { ITask, IOrganizationProject, TaskListTypeEnum } from '@gauzy/models';
+import {
+	ITask,
+	IOrganizationProject,
+	TaskListTypeEnum
+} from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { map, tap, switchMap, take } from 'rxjs/operators';
 import { TasksStoreService } from '../../../../../@core/services/tasks-store.service';

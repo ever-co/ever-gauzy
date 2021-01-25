@@ -1,5 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { ICandidate, ICandidateInterview, IEmployee } from '@gauzy/models';
+import { ICandidate, ICandidateInterview, IEmployee } from '@gauzy/contracts';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { CandidatesService } from '../../../../../@core/services/candidates.service';
 

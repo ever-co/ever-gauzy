@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IImageAsset } from '@gauzy/models';
+import { IImageAsset } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 
 @Injectable()

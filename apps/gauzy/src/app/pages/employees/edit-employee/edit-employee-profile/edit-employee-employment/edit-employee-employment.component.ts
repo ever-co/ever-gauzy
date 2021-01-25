@@ -9,7 +9,7 @@ import {
 	IOrganizationPosition,
 	ITag,
 	ISkill
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { EmployeeLevelService } from 'apps/gauzy/src/app/@core/services/employee-level.service';
 import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
 import { OrganizationEmploymentTypesService } from 'apps/gauzy/src/app/@core/services/organization-employment-types.service';

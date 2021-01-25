@@ -6,7 +6,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	IEventTypeViewModel
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import {
 	ActivatedRoute,
 	Router,

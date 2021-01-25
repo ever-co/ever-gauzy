@@ -1,5 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { ComponentLayoutStyleEnum } from '@gauzy/models';
+import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ga-status-badge',

@@ -7,7 +7,7 @@ import {
 	IApprovalPolicyCreateInput,
 	ApprovalPolicyTypesEnum,
 	IOrganization
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,7 +22,8 @@ export interface SelectedApprovalPolicy {
 	selector: 'ngx-approval-policy-mutation',
 	templateUrl: './approval-policy-mutation.component.html'
 })
-export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
+export class ApprovalPolicyMutationComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	form: FormGroup;
 	approvalPolicy: IApprovalPolicy;

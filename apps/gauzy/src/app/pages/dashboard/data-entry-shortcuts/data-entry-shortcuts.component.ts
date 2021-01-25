@@ -3,7 +3,7 @@ import { Subject } from 'rxjs';
 import { Router } from '@angular/router';
 import { Store } from '../../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
-import { PermissionsEnum } from '@gauzy/models';
+import { PermissionsEnum } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ga-data-entry-shortcuts',

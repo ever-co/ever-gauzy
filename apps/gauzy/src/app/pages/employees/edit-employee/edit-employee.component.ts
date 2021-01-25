@@ -5,7 +5,7 @@ import {
 	IEmployeeRecurringExpense,
 	IOrganization,
 	PermissionsEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
@@ -22,7 +22,8 @@ import { SelectedEmployee } from '../../../@theme/components/header/selectors/em
 		'../../dashboard/dashboard.component.scss'
 	]
 })
-export class EditEmployeeComponent extends TranslationBaseComponent
+export class EditEmployeeComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	selectedEmployee: IEmployee;

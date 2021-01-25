@@ -7,7 +7,7 @@ import {
 	IProductTranslatableCreateInput,
 	IProductTranslatable,
 	IProductTranslated
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 
 @Injectable()
 export class ProductService {

@@ -4,7 +4,7 @@ import { ContactComponent } from './contact.component';
 import { ClientsComponent } from './clients/clients.component';
 import { LeadsComponent } from './leads/leads.component';
 import { CustomersComponent } from './customers/customers.component';
-import { PermissionsEnum } from '@gauzy/models';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { NgxPermissionsGuard } from 'ngx-permissions';
 
 const CONTACT_VIEW_PERMISSION = {

@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { IOrganization, IProduct } from '@gauzy/models';
+import { IOrganization, IProduct } from '@gauzy/contracts';
 import { Store } from '../../../@core/services/store.service';
 import { filter } from 'rxjs/operators';
 import { ProductService } from '../../../@core/services/product.service';

@@ -5,7 +5,7 @@ import {
 	IOrganization,
 	IUpworkApiConfig,
 	IUpworkDateRange
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { UpworkService } from './upwork.service';
 import { tap, switchMap, map } from 'rxjs/operators';
 import { Store } from './store.service';
@@ -68,25 +68,21 @@ export class UpworkStoreService {
 		IEngagement[]
 	> = this._contracts$.asObservable();
 
-	private _selectedIntegrationId$: BehaviorSubject<
-		string
-	> = new BehaviorSubject(null);
+	private _selectedIntegrationId$: BehaviorSubject<string> = new BehaviorSubject(
+		null
+	);
 
 	private _contractsSettings$: BehaviorSubject<any> = new BehaviorSubject(
 		contractSettings
 	);
-	public contractsSettings$: Observable<
-		any
-	> = this._contractsSettings$.asObservable();
+	public contractsSettings$: Observable<any> = this._contractsSettings$.asObservable();
 
 	private employeeId: string;
 
-	private _dateRangeActivity$: BehaviorSubject<
-		IUpworkDateRange
-	> = new BehaviorSubject(DEFAULT_DATE_RANGE);
-	public dateRangeActivity$: Observable<
-		IUpworkDateRange
-	> = this._dateRangeActivity$.asObservable();
+	private _dateRangeActivity$: BehaviorSubject<IUpworkDateRange> = new BehaviorSubject(
+		DEFAULT_DATE_RANGE
+	);
+	public dateRangeActivity$: Observable<IUpworkDateRange> = this._dateRangeActivity$.asObservable();
 
 	private _reports$: BehaviorSubject<any[]> = new BehaviorSubject(null);
 	public reports$: Observable<any> = this._reports$.asObservable();

@@ -9,9 +9,9 @@ import {
 	ActivityType,
 	IDailyActivity,
 	IActivity
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { debounceTime } from 'rxjs/operators';
-import { toUTC, toLocal } from '@gauzy/utils';
+import { toUTC, toLocal } from '@gauzy/common';
 import { ActivityService } from 'apps/gauzy/src/app/@shared/timesheet/activity.service';
 import { ActivatedRoute } from '@angular/router';
 import * as _ from 'underscore';

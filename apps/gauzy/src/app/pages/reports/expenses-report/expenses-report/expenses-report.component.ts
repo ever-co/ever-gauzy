@@ -4,7 +4,7 @@ import {
 	Component,
 	OnInit
 } from '@angular/core';
-import { IGetExpenseInput, IOrganization } from '@gauzy/models';
+import { IGetExpenseInput, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { ExpensesService } from 'apps/gauzy/src/app/@core/services/expenses.service';

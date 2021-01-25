@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { FormGroup, Validators } from '@angular/forms';
-import { KeyResultTypeEnum, IGoalGeneralSetting, IKPI } from '@gauzy/models';
+import { KeyResultTypeEnum, IGoalGeneralSetting, IKPI } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { EditKpiComponent } from '../../../pages/goal-settings/edit-kpi/edit-kpi.component';
 import { first } from 'rxjs/operators';

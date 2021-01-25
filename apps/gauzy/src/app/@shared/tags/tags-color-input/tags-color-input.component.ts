@@ -7,8 +7,8 @@ import {
 	OnDestroy
 } from '@angular/core';
 import { TagsService } from '../../../@core/services/tags.service';
-import { ITag, IOrganization } from '@gauzy/models';
-import { getContrastColor } from '@gauzy/utils';
+import { ITag, IOrganization } from '@gauzy/contracts';
+import { getContrastColor } from '@gauzy/common';
 import { Store } from '../../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter } from 'rxjs/operators';

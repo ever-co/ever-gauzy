@@ -1,6 +1,6 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { LanguagesService } from '../../../@core/services/languages.service';
-import { ILanguage } from '@gauzy/models';
+import { ILanguage } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ngx-language-input',

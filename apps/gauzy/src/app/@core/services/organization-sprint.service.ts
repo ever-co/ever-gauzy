@@ -1,7 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { ITask, IOrganizationSprint, IGetSprintsOptions } from '@gauzy/models';
+import {
+	ITask,
+	IOrganizationSprint,
+	IGetSprintsOptions
+} from '@gauzy/contracts';
 import { tap, catchError, first } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';

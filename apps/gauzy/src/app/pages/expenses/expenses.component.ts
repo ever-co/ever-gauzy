@@ -4,7 +4,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	IExpenseViewModel
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { debounceTime, filter, tap, withLatestFrom } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ITimeLogFilters } from '@gauzy/models';
+import { ITimeLogFilters } from '@gauzy/contracts';
 import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-filter.service';
 
 @Component({

@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { IApprovalPolicy, ComponentLayoutStyleEnum } from '@gauzy/models';
+import { IApprovalPolicy, ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { first, filter, tap } from 'rxjs/operators';

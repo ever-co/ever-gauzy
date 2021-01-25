@@ -8,8 +8,8 @@ import {
 	IPagination,
 	IReport,
 	UpdateReportMenuInput
-} from '@gauzy/models';
-import { toParams } from '@gauzy/utils';
+} from '@gauzy/contracts';
+import { toParams } from '@gauzy/common';
 import { Query, Store, StoreConfig } from '@datorama/akita';
 
 export function initialTimesheetFilterState(): IReport[] {

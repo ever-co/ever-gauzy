@@ -4,7 +4,7 @@ import {
 	IOrganizationProject,
 	OrganizationProjectAction,
 	PermissionsEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';

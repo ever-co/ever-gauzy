@@ -5,7 +5,7 @@ import {
 	OrganizationSelectInput,
 	IOrganizationCreateInput,
 	IOrganizationFindInput
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { first } from 'rxjs/operators';
 

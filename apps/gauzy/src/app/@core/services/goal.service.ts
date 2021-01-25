@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { IGoal, IGoalFindInput, IGoalResponse } from '@gauzy/models';
+import { IGoal, IGoalFindInput, IGoalResponse } from '@gauzy/contracts';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { throwError } from 'rxjs';
 import { catchError, first } from 'rxjs/operators';

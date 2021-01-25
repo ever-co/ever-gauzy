@@ -9,7 +9,7 @@ import {
 	IMonthAggregatedEmployeeStatistics,
 	IEmployeeStatisticsHistoryFindInput,
 	IEmployeeStatisticsHistory
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
 

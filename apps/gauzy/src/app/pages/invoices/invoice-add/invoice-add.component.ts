@@ -20,7 +20,7 @@ import {
 	ContactType,
 	InvoiceStatusTypesEnum,
 	IInvoiceItemCreateInput
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { filter, first, tap } from 'rxjs/operators';
 import { InvoicesService } from '../../../@core/services/invoices.service';
 import { InvoiceItemService } from '../../../@core/services/invoice-item.service';

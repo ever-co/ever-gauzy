@@ -13,7 +13,7 @@ import {
 	ICandidatePersonalQualities,
 	ICandidateInterview,
 	IOrganization
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { CandidateCriterionsRatingService } from '../../../@core/services/candidate-criterions-rating.service';
 import { Store } from '../../../@core/services/store.service';

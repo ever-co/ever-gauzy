@@ -4,7 +4,7 @@ import {
 	IIntegrationFilter,
 	IntegrationTypeNameEnum,
 	IntegrationTypeGroupEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { IntegrationsService } from './integrations.service';
 import {
@@ -48,23 +48,19 @@ export class IntegrationsStoreService {
 	private _isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	public isLoading$: Observable<boolean> = this._isLoading$.asObservable();
 
-	private _selectedIntegrationTypeId$: BehaviorSubject<
-		string
-	> = new BehaviorSubject(InitialFilter.integrationTypeId);
-	public selectedIntegrationTypeId$: Observable<
-		string
-	> = this._selectedIntegrationTypeId$.asObservable();
+	private _selectedIntegrationTypeId$: BehaviorSubject<string> = new BehaviorSubject(
+		InitialFilter.integrationTypeId
+	);
+	public selectedIntegrationTypeId$: Observable<string> = this._selectedIntegrationTypeId$.asObservable();
 
-	private _selectedIntegrationFilter$: BehaviorSubject<
-		string
-	> = new BehaviorSubject(InitialFilter.filter);
-	public selectedIntegrationFilter$: Observable<
-		string
-	> = this._selectedIntegrationFilter$.asObservable();
+	private _selectedIntegrationFilter$: BehaviorSubject<string> = new BehaviorSubject(
+		InitialFilter.filter
+	);
+	public selectedIntegrationFilter$: Observable<string> = this._selectedIntegrationFilter$.asObservable();
 
-	private _filters$: BehaviorSubject<
-		IIntegrationFilter
-	> = new BehaviorSubject(InitialFilter);
+	private _filters$: BehaviorSubject<IIntegrationFilter> = new BehaviorSubject(
+		InitialFilter
+	);
 
 	constructor(
 		private sanitizer: DomSanitizer,

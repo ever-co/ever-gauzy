@@ -18,7 +18,7 @@ import {
 	ContactType,
 	IExpenseViewModel,
 	ICurrency
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { Store } from '../../../@core/services/store.service';
 import {
 	EmployeeSelectorComponent,

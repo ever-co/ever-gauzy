@@ -5,10 +5,10 @@ import {
 	IInvoiceCreateInput,
 	IInvoiceFindInput,
 	IInvoiceUpdateInput
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs';
-import { toParams } from '@gauzy/utils';
+import { toParams } from '@gauzy/common';
 
 @Injectable()
 export class InvoicesService {

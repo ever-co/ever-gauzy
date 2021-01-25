@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, EventEmitter, Output } from '@angular/core';
-import { IOrganizationProject, TaskListTypeEnum } from '@gauzy/models';
+import { IOrganizationProject, TaskListTypeEnum } from '@gauzy/contracts';
 import { OrganizationProjectsService } from '../../../../../../@core/services/organization-projects.service';
 import { Store } from '../../../../../../@core/services/store.service';
 

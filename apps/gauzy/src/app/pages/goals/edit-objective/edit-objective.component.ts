@@ -12,7 +12,7 @@ import {
 	IGoalGeneralSetting,
 	GoalOwnershipEnum,
 	IOrganization
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { EmployeesService } from '../../../@core/services';
 import { takeUntil, first } from 'rxjs/operators';
 import { Subject } from 'rxjs';

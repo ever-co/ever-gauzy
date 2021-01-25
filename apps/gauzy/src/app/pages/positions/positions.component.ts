@@ -4,7 +4,7 @@ import {
 	ITag,
 	ComponentLayoutStyleEnum,
 	IOrganization
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { OrganizationPositionsService } from '../../@core/services/organization-positions';
 import { TranslateService } from '@ngx-translate/core';

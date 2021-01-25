@@ -14,7 +14,11 @@ import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-ba
 import { IncomeExpenseAmountComponent } from 'apps/gauzy/src/app/@shared/table-components/income-amount/income-amount.component';
 import { DateViewComponent } from 'apps/gauzy/src/app/@shared/table-components/date-view/date-view.component';
 import { UpworkStoreService } from '../../../../@core/services/upwork-store.service';
-import { IncomeTypeEnum, IOrganization, IUpworkDateRange } from '@gauzy/models';
+import {
+	IncomeTypeEnum,
+	IOrganization,
+	IUpworkDateRange
+} from '@gauzy/contracts';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({

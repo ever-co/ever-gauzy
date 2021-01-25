@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { IOrganization, ITask } from '@gauzy/models';
+import { IOrganization, ITask } from '@gauzy/contracts';
 import { map, tap } from 'rxjs/operators';
 import { TasksService } from './tasks.service';
 
@@ -14,9 +14,7 @@ export class TeamTasksStoreService {
 		.pipe(map(this._mapToViewModel.bind(this)));
 
 	private _selectedTask$: BehaviorSubject<ITask> = new BehaviorSubject(null);
-	public selectedTask$: Observable<
-		ITask
-	> = this._selectedTask$.asObservable();
+	public selectedTask$: Observable<ITask> = this._selectedTask$.asObservable();
 
 	get tasks(): ITask[] {
 		return this._tasks$.getValue();

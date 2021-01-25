@@ -15,7 +15,7 @@ import {
 	IEmployee,
 	ICandidateFeedback,
 	IOrganization
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { EmployeesService } from '../../../../../@core/services';
 import { CandidateInterviewFeedbackComponent } from '../../../../../@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
 import { DeleteInterviewComponent } from '../../../../../@shared/candidate/candidate-confirmation/delete-interview/delete-interview.component';

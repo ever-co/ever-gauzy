@@ -154,6 +154,8 @@
 		"uglify-js": "npm:terser"
 	},
 	"dependencies": {
+		"@gauzy/common": "^0.1.0",
+		"@gauzy/contracts": "^0.1.0",
 		"@agm/core": "^3.0.0-beta.0",
 		"@akveo/ng2-completer": "^9.0.1",
 		"@angular/animations": "^10.1.3",

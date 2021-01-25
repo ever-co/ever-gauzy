@@ -4,8 +4,8 @@ import {
 	IEventType,
 	IEventTypeFindInput,
 	IEventTypeCreateInput,
-	IEventTypeUpdateInput,
-} from '@gauzy/models';
+	IEventTypeUpdateInput
+} from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 
 @Injectable()
@@ -25,7 +25,7 @@ export class EventTypeService {
 		const data = JSON.stringify({ relations });
 		return this.http
 			.get<IEventType>(`${this.EVENT_TYPE_BASE_URI}/${id}`, {
-				params: { data },
+				params: { data }
 			})
 			.pipe(first())
 			.toPromise();
@@ -40,7 +40,7 @@ export class EventTypeService {
 			.get<{ items: IEventType[]; total: number }>(
 				this.EVENT_TYPE_BASE_URI,
 				{
-					params: { data },
+					params: { data }
 				}
 			)
 			.pipe(first())

@@ -4,7 +4,7 @@ import {
 	IFeatureOrganization,
 	IFeatureOrganizationUpdateInput,
 	IFeatureOrganizationFindInput
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { BehaviorSubject, EMPTY, from, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import * as _ from 'underscore';

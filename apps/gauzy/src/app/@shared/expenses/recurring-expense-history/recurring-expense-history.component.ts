@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { IRecurringExpenseModel } from '@gauzy/models';
+import { IRecurringExpenseModel } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { monthNames } from '../../../@core/utils/date';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';

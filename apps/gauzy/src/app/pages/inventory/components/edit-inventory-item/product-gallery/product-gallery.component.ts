@@ -9,7 +9,7 @@ import {
 	IImageAsset,
 	IOrganization,
 	IProductTranslatable
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';

@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, Input } from '@angular/core';
 import { Subject } from 'rxjs';
 import './layout-selector.component.scss';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
-import { ComponentLayoutStyleEnum } from '@gauzy/models';
+import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { Store } from '../../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
 
