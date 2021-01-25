@@ -170,7 +170,6 @@ export class ProductController extends CrudController<Product> {
 		return this.commandBus.execute(new ProductDeleteCommand(id));
 	}
 
-	//tstodo fix permission
 	@ApiOperation({ summary: 'Create gallery image' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,

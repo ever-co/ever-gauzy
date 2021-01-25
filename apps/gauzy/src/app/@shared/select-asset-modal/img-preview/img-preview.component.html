@@ -15,7 +15,7 @@
 	</nb-card-body>
 	<nb-card-footer>
 		<div *ngIf="!selectedImage" class="img-preview-info">
-			No image selected
+			{{ 'INVENTORY_PAGE.NO_IMAGE_SELECTED' | translate }}
 		</div>
 		<div *ngIf="selectedImage" class="img-preview-info">
 			<div>
