@@ -2027,14 +2027,14 @@
 		"ADD_VARIANT": "Add variant",
 		"EDIT_VARIANT": "Edit variant",
 		"NO_OPTIONS_LABEL": "(no options)",
-		"OPTIONS": "אפשרויות",
-		"SELECT_OR_UPLOAD_IMAGE": "בחר או העלה תמונה",
-		"SELECT_IMAGE": "בחר תמונה",
-		"NO_IMAGE_SELECTED": "לא נבחרה תמונה",
-		"URL": "כתובת אתר",
-		"DIMENSIONS": "ממדים",
-		"FEATURED_IMAGE_WAS_SAVED": "התמונה המוצגת נשמרה!",
-		"IMAGE_SAVED": "התמונה נשמרה!"
+		"OPTIONS": "Options",
+		"SELECT_OR_UPLOAD_IMAGE": "Select or upload image",
+		"SELECT_IMAGE": "Select image",
+		"NO_IMAGE_SELECTED": "No image selected",
+		"URL": "Url",
+		"DIMENSIONS": "Dimensions",
+		"FEATURED_IMAGE_WAS_SAVED": "Featured image was saved!",
+		"IMAGE_SAVED": "Image was saved!"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
