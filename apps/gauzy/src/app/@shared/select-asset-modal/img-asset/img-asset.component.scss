@@ -6,3 +6,16 @@
   background-repeat: no-repeat;
   background-size: cover;
 }
+
+.image-asset-list-item {
+  transition: 0.1s all ease-in-out;
+  cursor: pointer;
+
+  &:hover {
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+  }
+
+  &.selected {
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+  }
+}

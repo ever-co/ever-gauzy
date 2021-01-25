@@ -43,6 +43,11 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@Column({ nullable: true })
 	imageUrl: string;
 
+	@ApiProperty({ type: ImageAsset })
+	@ManyToOne(() => ImageAsset, { onDelete: 'SET NULL' })
+	@JoinColumn()
+	featuredImage: ImageAsset;
+
 	@OneToMany(
 		() => ProductVariant,
 		(productVariant) => productVariant.product,
@@ -90,7 +95,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	)
 	translations: ProductTranslation[];
 
-	@ManyToMany((type) => ImageAsset)
+	@ManyToMany((type) => ImageAsset, { cascade: true })
 	@JoinTable({
 		name: 'product_gallery_item'
 	})

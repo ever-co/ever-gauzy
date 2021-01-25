@@ -2027,7 +2027,14 @@
 		"ADD_VARIANT": "Добавить вариант",
 		"EDIT_VARIANT": "Изменить вариант",
 		"NO_OPTIONS_LABEL": "(нет опций)",
-		"OPTIONS": "Варианты"
+		"OPTIONS": "Варианты",
+		"SELECT_OR_UPLOAD_IMAGE": "Выберите или загрузите изображение",
+		"SELECT_IMAGE": "Выбрать изображение",
+		"NO_IMAGE_SELECTED": "Изображение не выбрано",
+		"URL": "Url",
+		"DIMENSIONS": "Габаритные размеры",
+		"FEATURED_IMAGE_WAS_SAVED": "Лучшее изображение сохранено!",
+		"IMAGE_SAVED": "Изображение сохранено!"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",

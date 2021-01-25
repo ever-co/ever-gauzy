@@ -6,7 +6,8 @@ import {
 	IProductFindInput,
 	IProductTranslatableCreateInput,
 	IProductTranslatable,
-	IProductTranslated
+	IProductTranslated,
+	IImageAsset
 } from '@gauzy/models';
 
 @Injectable()
@@ -19,10 +20,10 @@ export class ProductService {
 		relations?: string[],
 		findInput?: IProductFindInput,
 		languageCode?: string
-	): Promise<{ items: IProduct[] }> {
+	): Promise<{ items: IProductTranslatable[] }> {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
-			.get<{ items: IProduct[] }>(
+			.get<{ items: IProductTranslatable[] }>(
 				`${this.PRODUCTS_URL}/local/${languageCode}`,
 				{
 					params: { data }
@@ -79,6 +80,32 @@ export class ProductService {
 	delete(id: string): Promise<any> {
 		return this.http
 			.delete(`${this.PRODUCTS_URL}/${id}`)
+			.pipe(first())
+			.toPromise();
+	}
+
+	addGalleryImage(
+		id: string,
+		image: IImageAsset
+	): Promise<IProductTranslatable> {
+		return this.http
+			.post<IProductTranslatable>(
+				`${this.PRODUCTS_URL}/add-image/${id}`,
+				image
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	setAsFeatured(
+		id: string,
+		image: IImageAsset
+	): Promise<IProductTranslatable> {
+		return this.http
+			.post<IProductTranslatable>(
+				`${this.PRODUCTS_URL}/set-as-featured/${id}`,
+				image
+			)
 			.pipe(first())
 			.toPromise();
 	}

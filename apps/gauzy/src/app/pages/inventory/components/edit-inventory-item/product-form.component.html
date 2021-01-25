@@ -26,6 +26,10 @@
 					<div class="product-container">
 						<ngx-product-gallery
 							[inventoryItem]="inventoryItem"
+							(featuredImageUpdated)="
+								onFeaturedImageUpdated($event)
+							"
+							(galleryUpdated)="onGalleryUpdated($event)"
 						></ngx-product-gallery>
 					</div>
 				</div>

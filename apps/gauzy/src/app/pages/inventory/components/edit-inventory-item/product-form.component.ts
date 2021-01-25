@@ -11,7 +11,8 @@ import {
 	IOrganization,
 	ILanguage,
 	IProductTranslation,
-	IProductTranslatable
+	IProductTranslatable,
+	IImageAsset
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductTypeService } from '../../../../@core/services/product-type.service';
@@ -37,6 +38,8 @@ export class ProductFormComponent
 	implements OnInit, OnDestroy {
 	form: FormGroup;
 	inventoryItem: IProductTranslatable;
+	featuredImage: IImageAsset;
+	gallery: IImageAsset[];
 
 	hoverState: boolean;
 	selectedOrganizationId = '';
@@ -125,7 +128,6 @@ export class ProductFormComponent
 				this.inventoryItem ? this.inventoryItem.code : '',
 				Validators.required
 			],
-			imageUrl: [this.inventoryItem ? this.inventoryItem.imageUrl : null],
 			productTypeId: [
 				this.inventoryItem ? this.inventoryItem.productTypeId : '',
 				Validators.required
@@ -150,7 +152,15 @@ export class ProductFormComponent
 			const { id: organizationId, tenantId } = this.organization;
 			this.inventoryItem = await this.productService.getById(
 				id,
-				['category', 'type', 'options', 'variants', 'tags', 'gallery'],
+				[
+					'category',
+					'type',
+					'options',
+					'variants',
+					'tags',
+					'gallery',
+					'featuredImage'
+				],
 				{ organizationId, tenantId }
 			);
 		}
@@ -220,12 +230,13 @@ export class ProductFormComponent
 			tags: this.form.get('tags').value,
 			translations: this.translations,
 			code: this.form.get('code').value,
-			imageUrl: this.form.get('imageUrl').value,
+			featuredImage: this.featuredImage || null,
 			productTypeId: this.form.get('productTypeId').value,
 			productCategoryId: this.form.get('productCategoryId').value,
 			enabled: this.form.get('enabled').value,
 			optionCreateInputs: this.options,
 			optionDeleteInputs: this.deletedOptions,
+			gallery: this.gallery || [],
 			category: this.productCategories.find((c) => {
 				return c.id === this.form.get('productCategoryId').value;
 			}),
@@ -325,6 +336,14 @@ export class ProductFormComponent
 
 	onOptionDeleted(option: IProductOption) {
 		this.deletedOptions.push(option);
+	}
+
+	onFeaturedImageUpdated(image: IImageAsset) {
+		this.featuredImage = image;
+	}
+
+	onGalleryUpdated(gallery: IImageAsset[]) {
+		this.gallery = gallery;
 	}
 
 	handleImageUploadError(error: any) {
