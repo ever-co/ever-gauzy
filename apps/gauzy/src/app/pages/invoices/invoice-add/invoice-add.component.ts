@@ -19,7 +19,8 @@ import {
 	ExpenseStatusesEnum,
 	ContactType,
 	InvoiceStatusTypesEnum,
-	IInvoiceItemCreateInput
+	IInvoiceItemCreateInput,
+	IProductTranslatable
 } from '@gauzy/models';
 import { filter, first, tap } from 'rxjs/operators';
 import { InvoicesService } from '../../../@core/services/invoices.service';
@@ -45,6 +46,7 @@ import { InvoiceExpensesSelectorComponent } from '../table-components/invoice-ex
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../../@core/services/toastr.service';
+import { TranslatableService } from '../../../@core/services/translatable.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -75,8 +77,8 @@ export class InvoiceAddComponent
 	projects: IOrganizationProject[];
 	employees: IEmployee[];
 	selectedEmployeeIds: string[];
-	products: IProduct[];
-	selectedProducts: IProduct[];
+	products: IProductTranslatable[];
+	selectedProducts: IProductTranslatable[];
 	expenses: IExpense[];
 	selectedExpenses: IExpense[];
 	invoiceType: string;
@@ -122,7 +124,8 @@ export class InvoiceAddComponent
 		private productService: ProductService,
 		private dialogService: NbDialogService,
 		private expensesService: ExpensesService,
-		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService
+		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
+		private translatableService: TranslatableService
 	) {
 		super(translateService);
 	}
@@ -283,7 +286,10 @@ export class InvoiceAddComponent
 						const product = this.products.find(
 							(p) => p.id === cell
 						);
-						return `${product.name}`;
+						return `${this.translatableService.getTranslatedProperty(
+							product,
+							'name'
+						)}`;
 					}
 				};
 				break;

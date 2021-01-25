@@ -1,12 +1,12 @@
 <div>
 	<img
-		*ngIf="inventoryItem && inventoryItem.imageUrl"
+		*ngIf="selectedImage && selectedImage.url"
 		class="featured-image"
-		[src]="inventoryItem.imageUrl"
+		[src]="selectedImage.url"
 		alt="Feature image"
 	/>
 	<img
-		*ngIf="!inventoryItem || !inventoryItem.imageUrl"
+		*ngIf="!selectedImage || !selectedImage.url"
 		class="featured-image"
 		[src]="'https://afostats.imagead.net/uploads/afo/no_img.png'"
 		alt="Feature image"
@@ -17,7 +17,13 @@
 	<button nbButton ghost status="primary" (click)="onAddImageClick()">
 		<nb-icon icon="plus-circle-outline"></nb-icon>
 	</button>
-	<button nbButton ghost status="primary">
+	<button
+		nbButton
+		ghost
+		status="primary"
+		[disabled]="!selectedImage"
+		(click)="onSetFeaturedClick()"
+	>
 		<nb-icon icon="image-outline"></nb-icon>
 	</button>
 	<button nbButton ghost status="primary">

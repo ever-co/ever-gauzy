@@ -59,13 +59,12 @@ export class ProductGalleryComponent
 		if (changes.inventoryItem && changes.inventoryItem.currentValue) {
 			this.inventoryItem = changes.inventoryItem.currentValue;
 			this.gallery = this.inventoryItem.gallery;
+			this.selectedImage = this.inventoryItem.featuredImage;
 		}
 	}
 
 	ngOnInit(): void {
 		this.gallery = this.inventoryItem ? this.inventoryItem.gallery : [];
-		//tstodo refactor product model
-		// this.selectedImage = this.inventoryItem
 
 		this.getAvailableImages();
 
@@ -134,7 +133,26 @@ export class ProductGalleryComponent
 		}
 	}
 
-	onSmallImgPreviewClick($event: IImageAsset) {}
+	onSmallImgPreviewClick($event: IImageAsset) {
+		this.selectedImage = $event;
+	}
+
+	async onSetFeaturedClick() {
+		try {
+			let result = await this.productService.setAsFeatured(
+				this.inventoryItem.id,
+				this.selectedImage
+			);
+
+			if (result) {
+				this.toastrService.success(
+					'INVENTORY_PAGE.FEATURED_IMAGE_WAS_SAVED'
+				);
+			}
+		} catch (err) {
+			this.toastrService.danger('Something bad happened!');
+		}
+	}
 
 	ngOnDestroy(): void {}
 }

@@ -20,10 +20,10 @@ export class ProductService {
 		relations?: string[],
 		findInput?: IProductFindInput,
 		languageCode?: string
-	): Promise<{ items: IProduct[] }> {
+	): Promise<{ items: IProductTranslatable[] }> {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
-			.get<{ items: IProduct[] }>(
+			.get<{ items: IProductTranslatable[] }>(
 				`${this.PRODUCTS_URL}/local/${languageCode}`,
 				{
 					params: { data }
@@ -97,10 +97,16 @@ export class ProductService {
 			.toPromise();
 	}
 
-	// setAsFeatured(id: string, image: IImageAsset): Promise<IProductTranslatable> {
-	// 	return this.http
-	// 	.post<IProductTranslatable>(`${this.PRODUCTS_URL}/${id}`, image)
-	// 	.pipe(first())
-	// 	.toPromise();
-	// }
+	setAsFeatured(
+		id: string,
+		image: IImageAsset
+	): Promise<IProductTranslatable> {
+		return this.http
+			.post<IProductTranslatable>(
+				`${this.PRODUCTS_URL}/set-as-featured/${id}`,
+				image
+			)
+			.pipe(first())
+			.toPromise();
+	}
 }

@@ -190,4 +190,24 @@ export class ProductController extends CrudController<Product> {
 	) {
 		return this.productService.addGalleryImage(productId, image);
 	}
+
+	@ApiOperation({ summary: 'Set featured image' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The featured image has been saved.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
+	@Post('/set-as-featured/:productId')
+	async setAsFeatured(
+		@Param('productId') productId: string,
+		@Body() image: IImageAsset
+	) {
+		return this.productService.setAsFeatured(productId, image);
+	}
 }

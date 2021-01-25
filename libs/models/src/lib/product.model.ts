@@ -10,7 +10,7 @@ export interface IProduct extends IBasePerTenantAndOrganizationEntityModel {
 	description: string;
 	enabled: boolean;
 	code: string;
-	imageUrl: string;
+	featuredImage?: IImageAsset;
 	variants?: IProductVariant[];
 	options?: IProductOption[];
 	productTypeId: string;
@@ -25,7 +25,7 @@ export interface IProductTranslatable
 	extends ITranslatable<IProductTranslation> {
 	enabled: boolean;
 	code: string;
-	imageUrl: string;
+	featuredImage?: IImageAsset;
 	variants?: IProductVariant[];
 	options?: IProductOption[];
 	productTypeId: string;
@@ -68,7 +68,8 @@ export interface IProductTranslatableCreateInput
 	extends ITranslatable<IProductTranslation> {
 	enabled: boolean;
 	code: string;
-	imageUrl: string;
+	featuredImage?: IImageAsset;
+	gallery: IImageAsset[];
 	type?: IProductTypeTranslatable;
 	category?: IProductCategoryTranslatable;
 	tags?: ITag[];
