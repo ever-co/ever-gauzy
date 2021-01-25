@@ -1,7 +1,3 @@
-// Modified code from https://github.com/xmlking/ngx-starter-kit.
-// MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
-// Copyright (c) 2018 Sumanth Chinthagunta
-
 export interface IWakatime {
 	id: number;
 	user_agent: string;
