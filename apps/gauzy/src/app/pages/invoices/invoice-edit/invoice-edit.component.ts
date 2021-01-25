@@ -14,7 +14,6 @@ import {
 	ITag,
 	ITask,
 	IOrganizationProject,
-	IProduct,
 	IExpense,
 	ExpenseTypesEnum,
 	IInvoiceItemCreateInput,

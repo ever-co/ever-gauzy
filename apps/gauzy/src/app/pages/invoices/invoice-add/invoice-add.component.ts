@@ -12,7 +12,6 @@ import {
 	IEmployee,
 	InvoiceTypeEnum,
 	DiscountTaxTypeEnum,
-	IProduct,
 	ITag,
 	IExpense,
 	ExpenseTypesEnum,

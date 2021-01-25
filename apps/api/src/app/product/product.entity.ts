@@ -95,7 +95,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	)
 	translations: ProductTranslation[];
 
-	@ManyToMany((type) => ImageAsset)
+	@ManyToMany((type) => ImageAsset, { cascade: true })
 	@JoinTable({
 		name: 'product_gallery_item'
 	})
