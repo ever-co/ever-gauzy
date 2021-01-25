@@ -17,15 +17,13 @@ export const createDefaultEmailTemplates = async (
 ): Promise<any> => {
 	try {
 		const templatePath = [
-			'apps',
-			'api',
-			'src',
 			'app',
 			'core',
 			'seeds',
 			'data',
 			'default-email-templates'
 		];
+
 		const files = [];
 		let FOLDER_PATH = path.resolve('.', ...templatePath);
 

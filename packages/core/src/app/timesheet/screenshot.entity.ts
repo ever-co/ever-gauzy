@@ -9,7 +9,7 @@ import {
 import { IScreenshot, ITimeSlot } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber, IsDateString } from 'class-validator';
-// import { FileStorage } from '../core/file-storage';
+import { FileStorage } from '../core/file-storage';
 import {
 	TenantOrganizationBaseEntity,
 	TimeSlot
@@ -58,7 +58,7 @@ export class Screenshot
 
 	@AfterLoad()
 	afterLoad?() {
-		// this.fullUrl = new FileStorage().getProvider().url(this.file);
-		// this.thumbUrl = new FileStorage().getProvider().url(this.thumb);
+		this.fullUrl = new FileStorage().getProvider().url(this.file);
+		this.thumbUrl = new FileStorage().getProvider().url(this.thumb);
 	}
 }

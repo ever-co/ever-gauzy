@@ -16,8 +16,8 @@ import {
 import { IsNotEmpty, IsString } from 'class-validator';
 import * as _ from 'underscore';
 import { BaseEntity, FeatureOrganization } from '../core/entities/internal';
-// import { FileStorage } from '../core/file-storage';
-// import { gauzyToggleFeatures } from '@gauzy/config';
+import { FileStorage } from '../core/file-storage';
+import { gauzyToggleFeatures } from '@gauzy/config';
 
 @Entity('feature')
 export class Feature extends BaseEntity implements IFeature {
@@ -103,19 +103,19 @@ export class Feature extends BaseEntity implements IFeature {
 	isEnabled?: boolean;
 	@AfterLoad()
 	afterLoadEnabled?() {
-		// if (gauzyToggleFeatures.hasOwnProperty(this.code)) {
-		// 	const feature = gauzyToggleFeatures[this.code];
-		// 	this.isEnabled = feature;
-		// } else {
-		this.isEnabled = true;
-		// }
+		if (gauzyToggleFeatures.hasOwnProperty(this.code)) {
+			const feature = gauzyToggleFeatures[this.code];
+			this.isEnabled = feature;
+		} else {
+			this.isEnabled = true;
+		}
 	}
 
 	imageUrl?: string;
 	@AfterLoad()
 	afterLoad?() {
 		if (this.image) {
-			// this.imageUrl = new FileStorage().getProvider().url(this.image);
+			this.imageUrl = new FileStorage().getProvider().url(this.image);
 		}
 	}
 }
