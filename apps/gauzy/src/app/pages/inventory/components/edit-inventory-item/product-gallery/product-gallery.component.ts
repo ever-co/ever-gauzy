@@ -5,6 +5,7 @@ import {
 	OnChanges,
 	OnDestroy,
 	OnInit,
+	Output,
 	SimpleChanges
 } from '@angular/core';
 import {
@@ -41,7 +42,8 @@ export class ProductGalleryComponent
 
 	organization: IOrganization;
 
-	newImageUploadedEvent = new EventEmitter<any>();
+	@Output() galleryUpdated = new EventEmitter<IImageAsset[]>();
+	@Output() featuredImageUpdated = new EventEmitter<IImageAsset>();
 	private newImageUploadedEvent$ = new Subject<any>();
 
 	constructor(
@@ -124,7 +126,12 @@ export class ProductGalleryComponent
 
 		let selectedImage = await dialog.onClose.pipe(first()).toPromise();
 
-		if (selectedImage) {
+		if (selectedImage && !this.inventoryItem) {
+			this.gallery.push(selectedImage);
+			this.galleryUpdated.emit(this.gallery);
+		}
+
+		if (selectedImage && this.inventoryItem) {
 			let resultProduct = await this.productService.addGalleryImage(
 				this.inventoryItem.id,
 				selectedImage
@@ -138,6 +145,11 @@ export class ProductGalleryComponent
 	}
 
 	async onSetFeaturedClick() {
+		if (this.selectedImage && !this.inventoryItem) {
+			this.featuredImageUpdated.emit(this.selectedImage);
+			return;
+		}
+
 		try {
 			let result = await this.productService.setAsFeatured(
 				this.inventoryItem.id,
