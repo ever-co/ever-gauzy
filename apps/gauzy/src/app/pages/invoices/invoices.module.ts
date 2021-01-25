@@ -72,6 +72,7 @@ import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.
 import { CurrencyModule } from '../../@shared/currency/currency.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { TranslatableService } from '../../@core/services/translatable.service';
+import { PublicLinkComponent } from './public-link/public-link.component';
 
 @NgModule({
 	imports: [
@@ -150,7 +151,8 @@ import { TranslatableService } from '../../@core/services/translatable.service';
 		InvoiceApplyTaxDiscountComponent,
 		InvoiceExpensesSelectorComponent,
 		InvoicePdfComponent,
-		AddInternalNoteComponent
+		AddInternalNoteComponent,
+		PublicLinkComponent
 	],
 	declarations: [
 		InvoicesComponent,
@@ -177,7 +179,9 @@ import { TranslatableService } from '../../@core/services/translatable.service';
 		InvoiceApplyTaxDiscountComponent,
 		InvoiceExpensesSelectorComponent,
 		InvoicePdfComponent,
-		AddInternalNoteComponent
-	]
+		AddInternalNoteComponent,
+		PublicLinkComponent
+	],
+	exports: [InvoiceViewInnerComponent]
 })
 export class InvoicesModule {}

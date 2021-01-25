@@ -61,6 +61,18 @@ export class InvoiceService extends CrudService<Invoice> {
 		);
 	}
 
+	async generateLink(invoiceId: string, isEstimate: boolean) {
+		const token = this.createToken(invoiceId);
+		const result = `localhost:4200/#/share/${
+			isEstimate ? 'estimates' : 'invoices'
+		}/${invoiceId}/${token}`;
+		await this.invoiceRepository.update(invoiceId, {
+			token: token,
+			publicLink: result
+		});
+		return await this.invoiceRepository.findOne(invoiceId);
+	}
+
 	createToken(email): string {
 		const token: string = sign({ email }, env.JWT_SECRET, {});
 		return token;

@@ -97,7 +97,9 @@
 		"SET": "Set",
 		"RECORD_FULL_PAYMENT": "Record Full Payment",
 		"EXPORT_TO_CSV": "Export to CSV",
-		"INVOICE_REMAINING_AMOUNT": "Invoice Remaining Amount"
+		"INVOICE_REMAINING_AMOUNT": "Invoice Remaining Amount",
+		"PUBLIC_LINK": "Public Link",
+		"GENERATE": "Generate"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",
@@ -313,7 +315,8 @@
 				"TITLE": "COORDINATES",
 				"LATITUDE": "Latitude",
 				"LONGITUDE": "Longitude"
-			}
+			},
+			"PUBLIC_LINK": "Public Link"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -2469,6 +2472,11 @@
 			"DELETE": "Delete",
 			"NOTE": "Note",
 			"PAYMENTS": "Payments"
+		},
+		"PUBLIC_LINK": {
+			"HEADER": "Generate Public Link",
+			"GENERATE": "Generate a link to the {{ text }} that anyone with the link can view.",
+			"ACCESS": "Anyone with access to this link can view the {{ text }}."
 		}
 	},
 	"PAYMENTS_PAGE": {
