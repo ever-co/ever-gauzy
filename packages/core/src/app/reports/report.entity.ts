@@ -10,7 +10,6 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { IReport, IReportCategory } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 // import { FileStorage } from '../core/file-storage';
 import {
 	BaseEntity,
@@ -20,10 +19,6 @@ import {
 
 @Entity('report')
 export class Report extends BaseEntity implements IReport {
-	constructor(input?: DeepPartial<Report>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: ReportOrganization })
 	@OneToMany(
 		() => ReportOrganization,

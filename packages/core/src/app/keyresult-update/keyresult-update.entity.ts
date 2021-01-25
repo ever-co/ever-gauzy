@@ -1,6 +1,5 @@
 import { Entity, Column, ManyToOne, RelationId, JoinColumn } from 'typeorm';
 import { IKeyResultUpdate, KeyResultUpdateStatusEnum } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
 import {
@@ -12,10 +11,6 @@ import {
 export class KeyResultUpdate
 	extends TenantOrganizationBaseEntity
 	implements IKeyResultUpdate {
-	constructor(input?: DeepPartial<KeyResultUpdate>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: Number })
 	@Column()
 	update: number;

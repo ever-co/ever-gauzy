@@ -17,7 +17,6 @@ import {
 	IsBoolean
 } from 'class-validator';
 import { IEventType } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import {
 	Employee,
 	Tag,
@@ -28,10 +27,6 @@ import {
 export class EventType
 	extends TenantOrganizationBaseEntity
 	implements IEventType {
-	constructor(input?: DeepPartial<EventType>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: Tag })
 	@ManyToMany(() => Tag, (tag) => tag.eventType)
 	@JoinTable({ name: 'tag_event_type' })

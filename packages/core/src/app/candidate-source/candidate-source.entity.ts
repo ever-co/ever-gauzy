@@ -1,6 +1,5 @@
 import { Column, Entity } from 'typeorm';
 import { ICandidateSource } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
@@ -9,10 +8,6 @@ import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 export class CandidateSource
 	extends TenantOrganizationBaseEntity
 	implements ICandidateSource {
-	constructor(input?: DeepPartial<CandidateSource>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;

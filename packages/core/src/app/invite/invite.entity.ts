@@ -7,7 +7,6 @@ import {
 	IUser,
 	IRole
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsEmail, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import {
@@ -30,10 +29,6 @@ import {
 } from '../core/entities/internal';
 @Entity('invite')
 export class Invite extends TenantOrganizationBaseEntity implements IInvite {
-	constructor(input?: DeepPartial<Invite>) {
-		super(input);
-	}
-
 	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@Index({ unique: true })

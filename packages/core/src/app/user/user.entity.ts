@@ -9,7 +9,6 @@ import {
 	ITag,
 	IEmployee
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsAscii,
@@ -42,10 +41,6 @@ import {
 
 @Entity('user')
 export class User extends TenantBaseEntity implements IUser {
-	constructor(input?: DeepPartial<User>) {
-		super(input);
-	}
-
 	@ManyToMany(() => Tag)
 	@JoinTable({
 		name: 'tag_user'

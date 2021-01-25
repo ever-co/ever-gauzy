@@ -13,7 +13,6 @@ import {
 	IFeatureOrganization,
 	FeatureStatusEnum
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { IsNotEmpty, IsString } from 'class-validator';
 import * as _ from 'underscore';
 import { BaseEntity, FeatureOrganization } from '../core/entities/internal';
@@ -22,10 +21,6 @@ import { BaseEntity, FeatureOrganization } from '../core/entities/internal';
 
 @Entity('feature')
 export class Feature extends BaseEntity implements IFeature {
-	constructor(input?: DeepPartial<Feature>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: FeatureOrganization })
 	@OneToMany(
 		() => FeatureOrganization,

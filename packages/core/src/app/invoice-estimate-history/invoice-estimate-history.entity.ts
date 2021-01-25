@@ -1,5 +1,4 @@
 import { IInvoice, IInvoiceEstimateHistory } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { Entity, Column, JoinColumn, ManyToOne } from 'typeorm';
@@ -13,10 +12,6 @@ import {
 export class InvoiceEstimateHistory
 	extends TenantOrganizationBaseEntity
 	implements IInvoiceEstimateHistory {
-	constructor(input?: DeepPartial<InvoiceEstimateHistory>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column()

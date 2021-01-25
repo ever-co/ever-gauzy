@@ -1,5 +1,4 @@
 import { ICandidate, IOrganizationEmploymentType } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { Column, Entity, JoinTable, ManyToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -13,10 +12,6 @@ import {
 export class OrganizationEmploymentType
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationEmploymentType {
-	constructor(input?: DeepPartial<OrganizationEmploymentType>) {
-		super(input);
-	}
-
 	@ApiProperty()
 	@ManyToMany(() => Tag, (tag) => tag.organizationEmploymentType)
 	@JoinTable({

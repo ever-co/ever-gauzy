@@ -14,7 +14,7 @@ import {
 } from 'typeorm';
 import * as chalk from 'chalk';
 import { IPluginConfig } from '@gauzy/common';
-import { environment as env } from '@gauzy/config';
+import { environment as env, getConfig } from '@gauzy/config';
 import { Role } from '../../role/role.entity';
 import { createRoles } from '../../role/role.seed';
 import { createDefaultSkills } from '../../skills/skill.seed';
@@ -307,6 +307,7 @@ export class SeedDataService {
 	superAdminUsers: User[];
 	defaultCandidateUsers: User[];
 	defaultEmployees: Employee[];
+	config: IPluginConfig = getConfig();
 
 	constructor() {}
 
@@ -1908,10 +1909,7 @@ export class SeedDataService {
 						path.resolve(env.gauzyUserPath, ...['public']),
 						'screenshots'
 				  )
-				: path.join(
-						path.resolve('.', ...['apps', 'api', 'public']),
-						'screenshots'
-				  );
+				: path.join(path.resolve('.', ...['public']), 'screenshots');
 
 			// delete old generated screenshots
 			rimraf(dir, () => {
@@ -1929,13 +1927,12 @@ export class SeedDataService {
 				'NOTE: DATABASE CONNECTION DOES NOT EXIST YET. NEW ONE WILL BE CREATED!'
 			);
 		}
-
+		const database = this.config.dbConnectionOptions;
 		if (!this.connection || !this.connection.isConnected) {
 			try {
 				this.log(chalk.green(`CONNECTING TO DATABASE...`));
-
 				this.connection = await createConnection({
-					...env.database,
+					...database,
 					...this.overrideDbConfig,
 					entities: [
 						path.resolve(
@@ -2000,12 +1997,13 @@ export class SeedDataService {
 				const repository = getRepository(entity.name);
 				let truncateSql: string;
 
-				switch (env.database.type) {
+				const database = this.config.dbConnectionOptions;
+				switch (database.type) {
 					case 'postgres':
-						truncateSql = `TRUNCATE  "${entity.tableName}" RESTART IDENTITY CASCADE;`;
+						truncateSql = `TRUNCATE "${entity.tableName}" RESTART IDENTITY CASCADE;`;
 						break;
 					default:
-						truncateSql = `DELETE FROM  "${entity.tableName}";`;
+						truncateSql = `DELETE FROM "${entity.tableName}";`;
 						await repository.query('PRAGMA foreign_keys = OFF;');
 				}
 				await repository.query(truncateSql);

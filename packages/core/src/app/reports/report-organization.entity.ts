@@ -1,17 +1,12 @@
 import { Entity, Column, RelationId, ManyToOne, JoinColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IOrganization, IReport, IReportOrganization } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { BaseEntity, Organization, Report } from '../core/entities/internal';
 
 @Entity('report_organization')
 export class ReportOrganization
 	extends BaseEntity
 	implements IReportOrganization {
-	constructor(input?: DeepPartial<ReportOrganization>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: Report })
 	@ManyToOne(() => Report)
 	@JoinColumn()

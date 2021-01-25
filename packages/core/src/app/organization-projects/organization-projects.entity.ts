@@ -32,7 +32,6 @@ import {
 	IPayment,
 	OrganizationProjectBudgetTypeEnum
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import {
 	Employee,
 	InvoiceItem,
@@ -49,10 +48,6 @@ import {
 export class OrganizationProject
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationProject {
-	constructor(input?: DeepPartial<OrganizationProject>) {
-		super(input);
-	}
-
 	@ApiProperty()
 	@ManyToMany(() => Tag, (tag) => tag.organizationProject)
 	@JoinTable({

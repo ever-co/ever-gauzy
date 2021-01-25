@@ -1,6 +1,6 @@
 import { IPluginConfig, API_PORT, GRAPHQL_API_PATH } from '@gauzy/common';
 
-export const devConfig: IPluginConfig = {
+export const pluginConfig: IPluginConfig = {
 	apiConfigOptions: {
 		port: API_PORT,
 		middleware: [],
@@ -12,12 +12,12 @@ export const devConfig: IPluginConfig = {
 		}
 	},
 	dbConnectionOptions: {
-		type: 'mysql',
-		port: 3306,
+		type: 'postgres',
+		port: 5432,
 		synchronize: true,
 		logging: true,
 		database: 'plugin-dev',
-		username: 'root',
+		username: 'postgres',
 		password: 'root'
 	},
 	plugins: []

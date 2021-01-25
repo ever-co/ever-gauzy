@@ -1,6 +1,5 @@
 import { Entity, Column, OneToMany } from 'typeorm';
 import { ProductTypesIconsEnum } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum } from 'class-validator';
 import {
@@ -11,10 +10,6 @@ import {
 
 @Entity('product_type')
 export class ProductType extends TranslatableBase {
-	constructor(input?: DeepPartial<ProductType>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String, enum: ProductTypesIconsEnum })
 	@IsOptional()
 	@IsEnum(ProductTypesIconsEnum)

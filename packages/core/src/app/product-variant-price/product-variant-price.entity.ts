@@ -1,6 +1,5 @@
 import { Entity, Column, OneToOne } from 'typeorm';
 import { IProductVariantPrice, CurrenciesEnum } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsEnum } from 'class-validator';
 import {
@@ -12,10 +11,6 @@ import {
 export class ProductVariantPrice
 	extends TenantOrganizationBaseEntity
 	implements IProductVariantPrice {
-	constructor(input?: DeepPartial<ProductVariantPrice>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ default: 0 })

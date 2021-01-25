@@ -5,16 +5,11 @@ import {
 	IOrganization,
 	IBasePerTenantAndOrganizationEntityModel
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { Organization, TenantBaseEntity } from '../entities/internal';
 
 export abstract class TenantOrganizationBaseEntity
 	extends TenantBaseEntity
 	implements IBasePerTenantAndOrganizationEntityModel {
-	constructor(input?: DeepPartial<TenantOrganizationBaseEntity>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: Organization, readOnly: true })
 	@ManyToOne(() => Organization, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()

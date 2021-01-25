@@ -13,7 +13,6 @@ import {
 	PaymentMethodEnum,
 	IEmployee
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsEnum,
@@ -35,10 +34,6 @@ import {
 
 @Entity('payment')
 export class Payment extends TenantOrganizationBaseEntity implements IPayment {
-	constructor(input?: DeepPartial<Payment>) {
-		super(input);
-	}
-
 	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@IsOptional()

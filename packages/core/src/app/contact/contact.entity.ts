@@ -7,7 +7,6 @@ import {
 	IEmployee,
 	IOrganizationContact
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import {
 	Candidate,
 	Employee,
@@ -17,10 +16,6 @@ import {
 
 @Entity('contact')
 export class Contact extends TenantOrganizationBaseEntity implements IContact {
-	constructor(input?: DeepPartial<Contact>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsOptional()

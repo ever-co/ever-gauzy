@@ -1,6 +1,5 @@
 import { Entity, Column, OneToMany, JoinColumn, ManyToOne } from 'typeorm';
 import { IOrganizationSprint, SprintStartDayEnum } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsBoolean,
@@ -20,10 +19,6 @@ import {
 export class OrganizationSprint
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationSprint {
-	constructor(input?: DeepPartial<OrganizationSprint>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

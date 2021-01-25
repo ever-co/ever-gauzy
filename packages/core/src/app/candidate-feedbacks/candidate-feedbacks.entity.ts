@@ -15,7 +15,6 @@ import {
 	ICandidate,
 	ICandidateInterview
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { IsEnum, IsOptional } from 'class-validator';
 import {
 	Candidate,
@@ -29,10 +28,6 @@ import {
 export class CandidateFeedback
 	extends TenantOrganizationBaseEntity
 	implements ICandidateFeedback {
-	constructor(input?: DeepPartial<CandidateFeedback>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@Column()
 	description: string;

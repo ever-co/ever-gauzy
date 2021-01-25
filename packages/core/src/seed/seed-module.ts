@@ -1,11 +1,10 @@
 // Modified code from https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit.
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
-
-import { SeedDataService } from './app/core/seeds/seed-data.service';
-
 import yargs from 'yargs';
 import * as chalk from 'chalk';
+
+import { SeedDataService } from '../app/core/seeds/seed-data.service';
 
 /**
  * Usage:

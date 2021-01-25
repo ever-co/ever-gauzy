@@ -4,14 +4,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as moment from 'moment';
 import { IGetConflictTimeLogCommand } from '../get-conflict-time-log.command';
-import { environment as env } from '@gauzy/config';
+import { ConfigService } from '@gauzy/config';
 
 @CommandHandler(IGetConflictTimeLogCommand)
 export class GetConflictTimeLogHandler
 	implements ICommandHandler<IGetConflictTimeLogCommand> {
 	constructor(
 		@InjectRepository(TimeLog)
-		private readonly timeLogRepository: Repository<TimeLog>
+		private readonly timeLogRepository: Repository<TimeLog>,
+		private readonly configService: ConfigService
 	) {}
 
 	public async execute(
@@ -29,7 +30,7 @@ export class GetConflictTimeLogHandler
 			})
 			.andWhere(`"${conflictQuery.alias}"."deletedAt" IS null`)
 			.andWhere(
-				env.database.type === 'sqlite'
+				this.configService.dbConnectionOptions.type === 'sqlite'
 					? `'${startedAt}' >= "${conflictQuery.alias}"."startedAt" and '${startedAt}' <= "${conflictQuery.alias}"."stoppedAt"`
 					: `("${conflictQuery.alias}"."startedAt", "${conflictQuery.alias}"."stoppedAt") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`
 			);

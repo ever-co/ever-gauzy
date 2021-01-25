@@ -1,6 +1,5 @@
 import { Entity, Column, OneToOne } from 'typeorm';
 import { IProductVariantSetting } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	ProductVariant,
@@ -11,10 +10,6 @@ import {
 export class ProductVariantSettings
 	extends TenantOrganizationBaseEntity
 	implements IProductVariantSetting {
-	constructor(input?: DeepPartial<ProductVariantSettings>) {
-		super(input);
-	}
-
 	@ApiPropertyOptional({ type: Boolean })
 	@Column({ default: false })
 	isSubscription: boolean;

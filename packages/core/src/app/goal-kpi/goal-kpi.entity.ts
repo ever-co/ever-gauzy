@@ -1,6 +1,5 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { IKPI, KpiMetricEnum } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional } from 'class-validator';
 import {
@@ -10,10 +9,6 @@ import {
 
 @Entity('goal_kpi')
 export class GoalKPI extends TenantOrganizationBaseEntity implements IKPI {
-	constructor(input?: DeepPartial<GoalKPI>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;

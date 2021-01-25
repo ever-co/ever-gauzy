@@ -4,8 +4,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
 import { TimeLog } from '../../../timesheet/time-log.entity';
-import { environment } from '@gauzy/config';
-
+import { getConfig } from '@gauzy/config';
+const config = getConfig();
 @CommandHandler(UpdateEmployeeTotalWorkedHoursCommand)
 export class UpdateEmployeeTotalWorkedHoursHandler
 	implements ICommandHandler<UpdateEmployeeTotalWorkedHoursCommand> {
@@ -25,7 +25,7 @@ export class UpdateEmployeeTotalWorkedHoursHandler
 				.createQueryBuilder()
 				.select(
 					`${
-						environment.database.type === 'sqlite'
+						config.dbConnectionOptions.type === 'sqlite'
 							? 'SUM((julianday("stoppedAt") - julianday("startedAt")) * 86400)'
 							: 'SUM(extract(epoch from ("stoppedAt" - "startedAt")))'
 					}`,

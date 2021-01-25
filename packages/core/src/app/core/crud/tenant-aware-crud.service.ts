@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { User } from '../../user/user.entity';
 import { RequestContext } from '../context';
-import { TenantBase } from '../entities/tenant-base';
+import { TenantBaseEntity } from '../entities/internal';
 import { CrudService } from './crud.service';
 import { ICrudService } from './icrud.service';
 import { IPagination } from './pagination';
@@ -18,7 +18,7 @@ import { ITryRequest } from './try-request';
  * This abstract class adds tenantId to all query filters if a user is available in the current RequestContext
  * If a user is not available in RequestContext, then it behaves exactly the same as CrudService
  */
-export abstract class TenantAwareCrudService<T extends TenantBase>
+export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	extends CrudService<T>
 	implements ICrudService<T> {
 	protected constructor(protected readonly repository: Repository<T>) {

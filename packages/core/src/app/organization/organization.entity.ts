@@ -42,7 +42,6 @@ import {
 	IOrganizationLanguages,
 	IFeatureOrganization
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import {
 	Contact,
 	Deal,
@@ -61,10 +60,6 @@ import {
 
 @Entity('organization')
 export class Organization extends TenantBaseEntity implements IOrganization {
-	constructor(input?: DeepPartial<Organization>) {
-		super(input);
-	}
-
 	@ApiProperty()
 	@ManyToMany(() => Tag)
 	@JoinTable({

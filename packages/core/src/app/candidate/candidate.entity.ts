@@ -15,7 +15,7 @@ import {
 	IContact,
 	ITag
 } from '@gauzy/contracts';
-import { average, DeepPartial } from '@gauzy/common';
+import { average } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsOptional, IsEnum } from 'class-validator';
 import {
@@ -51,10 +51,6 @@ import {
 export class Candidate
 	extends TenantOrganizationBaseEntity
 	implements ICandidate {
-	constructor(input?: DeepPartial<Candidate>) {
-		super(input);
-	}
-
 	@ManyToMany(() => Tag, (tag) => tag.candidate)
 	@JoinTable({
 		name: 'tag_candidate'

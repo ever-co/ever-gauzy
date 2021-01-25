@@ -9,10 +9,9 @@ import {
 } from 'typeorm';
 import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
 import { BaseEntityModel as IBaseEntityModel } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 
 export abstract class Model {
-	constructor(input?: DeepPartial<Model>) {
+	constructor(input?: any) {
 		if (input) {
 			for (const [key, value] of Object.entries(input)) {
 				(this as any)[key] = value;
@@ -21,10 +20,6 @@ export abstract class Model {
 	}
 }
 export abstract class BaseEntity extends Model implements IBaseEntityModel {
-	constructor(input?: DeepPartial<BaseEntity>) {
-		super(input);
-	}
-
 	@ApiPropertyOptional({ type: String })
 	@PrimaryGeneratedColumn('uuid')
 	id?: string;

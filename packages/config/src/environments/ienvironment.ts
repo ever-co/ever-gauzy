@@ -2,7 +2,6 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { ConnectionOptions } from 'typeorm';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 import {
 	IAuth0Config,
@@ -50,8 +49,6 @@ export interface IEnvironment {
 	envName: string;
 
 	env?: Env;
-
-	database: ConnectionOptions;
 
 	EXPRESS_SESSION_SECRET: string;
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS?: number;

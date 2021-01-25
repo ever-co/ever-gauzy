@@ -13,7 +13,7 @@ import {
 	HttpCode
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { Base } from '../entities/base';
+import { BaseEntity } from '../entities/internal';
 import { DeepPartial } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ICrudService } from './icrud.service';
@@ -23,7 +23,7 @@ import { PaginationParams } from './pagination-params';
 @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized' })
 @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Forbidden' })
 @ApiBearerAuth()
-export abstract class CrudController<T extends Base> {
+export abstract class CrudController<T extends BaseEntity> {
 	protected constructor(private readonly crudService: ICrudService<T>) {}
 
 	@ApiOperation({ summary: 'find all' })

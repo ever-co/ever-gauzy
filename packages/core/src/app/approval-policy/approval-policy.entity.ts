@@ -8,7 +8,6 @@ import {
 	IApprovalPolicy,
 	ApprovalPolicyTypesStringEnum
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsEnum } from 'class-validator';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
@@ -17,10 +16,6 @@ import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 export class ApprovalPolicy
 	extends TenantOrganizationBaseEntity
 	implements IApprovalPolicy {
-	constructor(input?: DeepPartial<ApprovalPolicy>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

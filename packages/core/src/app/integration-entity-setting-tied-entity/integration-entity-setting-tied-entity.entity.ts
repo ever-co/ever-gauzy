@@ -4,7 +4,6 @@ import {
 	IIntegrationEntitySetting,
 	IIntegrationEntitySettingTied
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import {
 	IntegrationEntitySetting,
 	TenantOrganizationBaseEntity
@@ -14,10 +13,6 @@ import {
 export class IntegrationEntitySettingTiedEntity
 	extends TenantOrganizationBaseEntity
 	implements IIntegrationEntitySettingTied {
-	constructor(input?: DeepPartial<IntegrationEntitySettingTiedEntity>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: IntegrationEntitySetting })
 	@ManyToOne(
 		() => IntegrationEntitySetting,

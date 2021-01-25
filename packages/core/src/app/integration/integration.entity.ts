@@ -1,16 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, ManyToMany, JoinTable } from 'typeorm';
 import { IIntegration, IIntegrationType, ITag } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { IsNumber } from 'class-validator';
 import { BaseEntity, IntegrationType, Tag } from '../core/entities/internal';
 
 @Entity('integration')
 export class Integration extends BaseEntity implements IIntegration {
-	constructor(input?: DeepPartial<Integration>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@Column({ nullable: false })
 	name: string;

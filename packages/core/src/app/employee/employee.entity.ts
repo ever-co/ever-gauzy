@@ -15,7 +15,6 @@ import {
 	IRequestApprovalEmployee,
 	IPayment
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsDate,
@@ -56,10 +55,6 @@ import {
 export class Employee
 	extends TenantOrganizationBaseEntity
 	implements IEmployee {
-	constructor(input?: DeepPartial<Employee>) {
-		super(input);
-	}
-
 	@ManyToMany(() => Tag, (tag) => tag.employee)
 	@JoinTable({
 		name: 'tag_employee'

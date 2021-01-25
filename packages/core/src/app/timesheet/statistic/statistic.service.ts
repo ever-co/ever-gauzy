@@ -27,7 +27,8 @@ import { Task } from '../../tasks/task.entity';
 import { Activity } from '../activity.entity';
 import * as moment from 'moment';
 import { TimeLog } from '../time-log.entity';
-import { environment } from '@gauzy/config';
+import { getConfig } from '@gauzy/config';
+const config = getConfig();
 
 @Injectable()
 export class StatisticService {
@@ -198,7 +199,7 @@ export class StatisticService {
 			.addSelect(`"user"."imageUrl"`, 'user_image_url')
 			.addSelect(
 				`${
-					environment.database.type === 'sqlite'
+					config.dbConnectionOptions.type === 'sqlite'
 						? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
 						: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
 				}`,
@@ -292,7 +293,7 @@ export class StatisticService {
 				member.weekHours = await weekHoursQuery
 					.select(
 						`${
-							environment.database.type === 'sqlite'
+							config.dbConnectionOptions.type === 'sqlite'
 								? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
 								: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
 						}`,
@@ -300,7 +301,7 @@ export class StatisticService {
 					)
 					.addSelect(
 						`${
-							environment.database.type === 'sqlite'
+							config.dbConnectionOptions.type === 'sqlite'
 								? `(strftime('%w', timeLogs.startedAt))`
 								: 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
 						}`,
@@ -321,7 +322,7 @@ export class StatisticService {
 					.innerJoin(`${weekHoursQuery.alias}.timeLogs`, 'timeLogs')
 					.addGroupBy(
 						`${
-							environment.database.type === 'sqlite'
+							config.dbConnectionOptions.type === 'sqlite'
 								? `(strftime('%w', timeLogs.startedAt))`
 								: 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
 						}`
@@ -345,7 +346,7 @@ export class StatisticService {
 			.select(`"${query.alias}".*`)
 			.addSelect(
 				`${
-					environment.database.type === 'sqlite'
+					config.dbConnectionOptions.type === 'sqlite'
 						? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
 						: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
 				}`,
@@ -386,7 +387,7 @@ export class StatisticService {
 		totalDurationQuery
 			.select(
 				`${
-					environment.database.type === 'sqlite'
+					config.dbConnectionOptions.type === 'sqlite'
 						? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
 						: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
 				}`,
@@ -475,7 +476,7 @@ export class StatisticService {
 				.select(`"${query.alias}".*`)
 				.addSelect(
 					`${
-						environment.database.type === 'sqlite'
+						config.dbConnectionOptions.type === 'sqlite'
 							? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
 							: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
 					}`,
@@ -501,7 +502,7 @@ export class StatisticService {
 			const totalDuration = await totalDurationQuery
 				.select(
 					`${
-						environment.database.type === 'sqlite'
+						config.dbConnectionOptions.type === 'sqlite'
 							? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
 							: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
 					}`,

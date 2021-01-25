@@ -19,7 +19,6 @@ import {
 	IOrganizationContact,
 	ITimeSlot
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsBoolean, IsDateString, IsEnum } from 'class-validator';
 import * as moment from 'moment';
@@ -35,10 +34,6 @@ import {
 
 @Entity('time_log')
 export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
-	constructor(input?: DeepPartial<TimeLog>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee, { nullable: true })
 	@JoinColumn()

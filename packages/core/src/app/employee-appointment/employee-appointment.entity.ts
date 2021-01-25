@@ -1,4 +1,3 @@
-import { DeepPartial } from '@gauzy/common';
 import { IEmployeeAppointment } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -26,10 +25,6 @@ import {
 export class EmployeeAppointment
 	extends TenantOrganizationBaseEntity
 	implements IEmployeeAppointment {
-	constructor(input?: DeepPartial<EmployeeAppointment>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()

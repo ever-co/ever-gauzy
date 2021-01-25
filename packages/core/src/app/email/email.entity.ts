@@ -2,7 +2,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsString } from 'class-validator';
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { IEmail, IEmailTemplate, IUser } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import {
 	EmailTemplate,
 	TenantOrganizationBaseEntity,
@@ -11,10 +10,6 @@ import {
 
 @Entity('email_sent')
 export class Email extends TenantOrganizationBaseEntity implements IEmail {
-	constructor(input?: DeepPartial<Email>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: EmailTemplate })
 	@ManyToOne(() => EmailTemplate, {
 		nullable: false,

@@ -1,3 +1,17 @@
+import { Module } from '@nestjs/common';
+import { RouterModule } from 'nest-router';
+import { MulterModule } from '@nestjs/platform-express';
+import { SentryModule } from '@ntegral/nestjs-sentry';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { HeaderResolver, I18nJsonParser, I18nModule } from 'nestjs-i18n';
+import { LogLevel } from '@sentry/types';
+import { Integrations as SentryIntegrations } from '@sentry/node';
+import { Integrations as TrackingIntegrations } from '@sentry/tracing';
+import { initialize as initializeUnleash } from 'unleash-client';
+import { LanguagesEnum } from '@gauzy/contracts';
+import { environment } from '@gauzy/config';
+import * as path from 'path';
+import * as moment from 'moment';
 import { CandidateInterviewersModule } from './candidate-interviewers/candidate-interviewers.module';
 import { CandidateSkillModule } from './candidate-skill/candidate-skill.module';
 import { InvoiceModule } from './invoice/invoice.module';
@@ -5,8 +19,6 @@ import { InvoiceItemModule } from './invoice-item/invoice-item.module';
 import { TagModule } from './tags/tag.module';
 import { SkillModule } from './skills/skill.module';
 import { LanguageModule } from './language/language.module';
-import { Module } from '@nestjs/common';
-import { RouterModule } from 'nest-router';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
@@ -49,9 +61,6 @@ import { EquipmentModule } from './equipment/equipment.module';
 import { EmployeeLevelModule } from './organization_employee-level/organization-employee-level.module';
 import { ExportAllModule } from './export_import/export-all.module';
 import { ImportAllModule } from './export_import/import/import-all.module';
-import { SentryModule } from '@ntegral/nestjs-sentry';
-import { environment } from '@gauzy/config';
-import { LogLevel } from '@sentry/types';
 import { TaskModule } from './tasks/task.module';
 import { EquipmentSharingModule } from './equipment-sharing/equipment-sharing.module';
 import { OrganizationEmploymentTypeModule } from './organization-employment-type/organization-employment-type.module';
@@ -82,9 +91,6 @@ import { AppointmentEmployeesModule } from './appointment-employees/appointment-
 import { ApprovalPolicyModule } from './approval-policy/approval-policy.module';
 import { RequestApprovalEmployeeModule } from './request-approval-employee/request-approval-employee.module';
 import { RequestApprovalModule } from './request-approval/request-approval.module';
-import * as path from 'path';
-import { HeaderResolver, I18nJsonParser, I18nModule } from 'nestjs-i18n';
-import { LanguagesEnum } from '@gauzy/contracts';
 import { EventTypeModule } from './event-types/event-type.module';
 import { AvailabilitySlotsModule } from './availability-slots/availability-slots.module';
 import { HelpCenterModule } from './help-center/help-center.module';
@@ -100,20 +106,16 @@ import { KeyResultUpdateModule } from './keyresult-update/keyresult-update.modul
 import { CandidateCriterionsRatingModule } from './candidate-criterions-rating/candidate-criterion-rating.module';
 import { HelpCenterArticleModule } from './help-center-article/help-center-article.module';
 import { GoalTimeFrameModule } from './goal-time-frame/goal-time-frame.module';
-import { EstimateEmail } from './estimate-email/estimate-email.entity';
 import { EstimateEmailModule } from './estimate-email/estimate-email.module';
-import { ServeStaticModule } from '@nestjs/serve-static';
 import { TimeOffRequestModule } from './time-off-request/time-off-request.module';
 import { DealModule } from './deal/deal.module';
 import { HelpCenterAuthorModule } from './help-center-author/help-center-author.module';
 import { OrganizationSprintModule } from './organization-sprint/organization-sprint.module';
 import { GoalKpiModule } from './goal-kpi/goal-kpi.module';
-import { MulterModule } from '@nestjs/platform-express';
 import { GoalGeneralSettingModule } from './goal-general-setting/goal-general-setting.module';
 import { EquipmentSharingPolicyModule } from './equipment-sharing-policy/equipment-sharing-policy.module';
 import { GoalTemplateModule } from './goal-template/goal-template.module';
 import { KeyresultTemplateModule } from './keyresult-template/keyresult-template.module';
-import * as moment from 'moment';
 import { EmployeeAwardModule } from './employee-award/employee-award.module';
 import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice-estimate-history.module';
 import { GoalKpiTemplateModule } from './goal-kpi-template/goal-kpi-template.module';
@@ -123,9 +125,6 @@ import { ReportModule } from './reports/report.module';
 import { EmployeeProposalTemplateModule } from './employee-proposal-template/employee-proposal-template.module';
 import { CustomSmtpModule } from './custom-smtp/custom-smtp.module';
 import { FeatureModule } from './feature/feature.module';
-import { Integrations as SentryIntegrations } from '@sentry/node';
-import { Integrations as TrackingIntegrations } from '@sentry/tracing';
-import { initialize as initializeUnleash } from 'unleash-client';
 import { ImageAssetModule } from './image-asset/image-asset.module';
 
 const { unleashConfig } = environment;
@@ -159,7 +158,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		ServeStaticModule.forRoot({
 			rootPath: environment.isElectron
 				? path.resolve(environment.gauzyUserPath, 'public')
-				: path.resolve(process.cwd(), 'apps', 'api', 'public'),
+				: path.resolve(process.cwd(), 'public'),
 			serveRoot: '/public/'
 		}),
 		MulterModule.register(),
@@ -540,7 +539,7 @@ if (process.env.DB_TYPE === 'postgres') {
 			fallbackLanguage: LanguagesEnum.ENGLISH,
 			parser: I18nJsonParser,
 			parserOptions: {
-				path: path.join(__dirname, '/assets/i18n/'),
+				path: path.resolve(__dirname, '../', 'assets/i18n/'),
 				watch: !environment.production
 			},
 			resolvers: [new HeaderResolver(['language'])]
@@ -564,114 +563,114 @@ if (process.env.DB_TYPE === 'postgres') {
 		CoreModule,
 		AuthModule,
 		UserModule,
-		HomeModule
-		// EmployeeModule,
-		// EmployeeRecurringExpenseModule,
-		// EmployeeAwardModule,
-		// CandidateModule,
-		// CandidateDocumentsModule,
-		// CandidateSourceModule,
-		// CandidateEducationModule,
-		// CandidateExperienceModule,
-		// CandidateSkillModule,
-		// CandidateFeedbacksModule,
-		// CandidateInterviewModule,
-		// CandidateInterviewersModule,
-		// CandidatePersonalQualitiesModule,
-		// CandidateTechnologiesModule,
-		// CandidateCriterionsRatingModule,
-		// CustomSmtpModule,
-		// ExportAllModule,
-		// ImportAllModule,
-		// EmployeeSettingModule,
-		// EmployeeJobPresetModule,
-		// EmployeeJobPostModule,
-		// EmployeeProposalTemplateModule,
-		// EmployeeStatisticsModule,
-		// EmployeeAppointmentModule,
-		// AppointmentEmployeesModule,
-		// RoleModule,
-		// OrganizationModule,
-		// IncomeModule,
-		// ExpenseModule,
-		// UserOrganizationModule,
-		// OrganizationDepartmentModule,
-		// OrganizationRecurringExpenseModule,
-		// OrganizationContactModule,
-		// OrganizationPositionsModule,
-		// OrganizationProjectsModule,
-		// OrganizationVendorsModule,
-		// OrganizationAwardsModule,
-		// OrganizationLanguagesModule,
-		// OrganizationSprintModule,
-		// OrganizationTeamModule,
-		// OrganizationTeamEmployeeModule,
-		// OrganizationDocumentsModule,
-		// RequestApprovalEmployeeModule,
-		// RequestApprovalTeamModule,
-		// ProposalModule,
-		// EmailModule,
-		// EmailTemplateModule,
-		// CountryModule,
-		// CurrencyModule,
-		// InviteModule,
-		// TimeOffPolicyModule,
-		// TimeOffRequestModule,
-		// ApprovalPolicyModule,
-		// EquipmentSharingPolicyModule,
-		// RequestApprovalModule,
-		// RolePermissionsModule,
-		// HelpCenterArticleModule,
-		// TenantModule,
-		// TenantSettingModule,
-		// TagModule,
-		// SkillModule,
-		// LanguageModule,
-		// InvoiceModule,
-		// InvoiceItemModule,
-		// PaymentModule,
-		// EstimateEmail,
-		// GoalModule,
-		// GoalTimeFrameModule,
-		// GoalGeneralSettingModule,
-		// KeyResultModule,
-		// KeyResultUpdateModule,
-		// EmployeeLevelModule,
-		// EventTypeModule,
-		// AvailabilitySlotsModule,
-		// PipelineModule,
-		// StageModule,
-		// DealModule,
-		// InvoiceEstimateHistoryModule,
-		// HelpCenterModule,
-		// HelpCenterAuthorModule,
-		// EquipmentModule,
-		// EquipmentSharingModule,
-		// TaskModule,
-		// OrganizationEmploymentTypeModule,
-		// TimesheetModule,
-		// FeatureModule,
-		// ReportModule,
-		// UpworkModule,
-		// HubstaffModule,
-		// ExpenseCategoriesModule,
-		// ProductCategoriesModule,
-		// ProductTypesModule,
-		// ProductModule,
-		// ImageAssetModule,
-		// IntegrationModule,
-		// IntegrationSettingModule,
-		// IntegrationTenantModule,
-		// IntegrationMapModule,
-		// ProductVariantPriceModule,
-		// ProductVariantModule,
-		// ProductVariantSettingsModule,
-		// IntegrationEntitySettingModule,
-		// IntegrationEntitySettingTiedEntityModule,
-		// GoalKpiModule,
-		// GoalTemplateModule,
-		// KeyresultTemplateModule,
-		// GoalKpiTemplateModule
+		HomeModule,
+		EmployeeModule,
+		EmployeeRecurringExpenseModule,
+		EmployeeAwardModule,
+		CandidateModule,
+		CandidateDocumentsModule,
+		CandidateSourceModule,
+		CandidateEducationModule,
+		CandidateExperienceModule,
+		CandidateSkillModule,
+		CandidateFeedbacksModule,
+		CandidateInterviewModule,
+		CandidateInterviewersModule,
+		CandidatePersonalQualitiesModule,
+		CandidateTechnologiesModule,
+		CandidateCriterionsRatingModule,
+		CustomSmtpModule,
+		ExportAllModule,
+		ImportAllModule,
+		EmployeeSettingModule,
+		EmployeeJobPresetModule,
+		EmployeeJobPostModule,
+		EmployeeProposalTemplateModule,
+		EmployeeStatisticsModule,
+		EmployeeAppointmentModule,
+		AppointmentEmployeesModule,
+		RoleModule,
+		OrganizationModule,
+		IncomeModule,
+		ExpenseModule,
+		UserOrganizationModule,
+		OrganizationDepartmentModule,
+		OrganizationRecurringExpenseModule,
+		OrganizationContactModule,
+		OrganizationPositionsModule,
+		OrganizationProjectsModule,
+		OrganizationVendorsModule,
+		OrganizationAwardsModule,
+		OrganizationLanguagesModule,
+		OrganizationSprintModule,
+		OrganizationTeamModule,
+		OrganizationTeamEmployeeModule,
+		OrganizationDocumentsModule,
+		RequestApprovalEmployeeModule,
+		RequestApprovalTeamModule,
+		ProposalModule,
+		EmailModule,
+		EmailTemplateModule,
+		CountryModule,
+		CurrencyModule,
+		InviteModule,
+		TimeOffPolicyModule,
+		TimeOffRequestModule,
+		ApprovalPolicyModule,
+		EquipmentSharingPolicyModule,
+		RequestApprovalModule,
+		RolePermissionsModule,
+		HelpCenterArticleModule,
+		TenantModule,
+		TenantSettingModule,
+		TagModule,
+		SkillModule,
+		LanguageModule,
+		InvoiceModule,
+		InvoiceItemModule,
+		PaymentModule,
+		EstimateEmailModule,
+		GoalModule,
+		GoalTimeFrameModule,
+		GoalGeneralSettingModule,
+		KeyResultModule,
+		KeyResultUpdateModule,
+		EmployeeLevelModule,
+		EventTypeModule,
+		AvailabilitySlotsModule,
+		PipelineModule,
+		StageModule,
+		DealModule,
+		InvoiceEstimateHistoryModule,
+		HelpCenterModule,
+		HelpCenterAuthorModule,
+		EquipmentModule,
+		EquipmentSharingModule,
+		TaskModule,
+		OrganizationEmploymentTypeModule,
+		TimesheetModule,
+		FeatureModule,
+		ReportModule,
+		UpworkModule,
+		HubstaffModule,
+		ExpenseCategoriesModule,
+		ProductCategoriesModule,
+		ProductTypesModule,
+		ProductModule,
+		ImageAssetModule,
+		IntegrationModule,
+		IntegrationSettingModule,
+		IntegrationTenantModule,
+		IntegrationMapModule,
+		ProductVariantPriceModule,
+		ProductVariantModule,
+		ProductVariantSettingsModule,
+		IntegrationEntitySettingModule,
+		IntegrationEntitySettingTiedEntityModule,
+		GoalKpiModule,
+		GoalTemplateModule,
+		KeyresultTemplateModule,
+		GoalKpiTemplateModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

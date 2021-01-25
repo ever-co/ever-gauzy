@@ -6,7 +6,8 @@ import * as path from 'path';
 import { copyFileSync, mkdirSync } from 'fs';
 import * as rimraf from 'rimraf';
 import * as chalk from 'chalk';
-import { environment as env } from '@gauzy/config';
+import { getConfig, environment as env } from '@gauzy/config';
+const config = getConfig();
 
 export const createDefaultReport = async (
 	connection: Connection
@@ -138,7 +139,7 @@ export const createDefaultReport = async (
 };
 
 async function cleanReport(connection) {
-	if (env.database.type === 'sqlite') {
+	if (config.dbConnectionOptions.type === 'sqlite') {
 		await connection.query('DELETE FROM report_category');
 		await connection.query('DELETE FROM report');
 	} else {
@@ -151,11 +152,12 @@ async function cleanReport(connection) {
 	}
 
 	console.log(chalk.green(`CLEANING UP REPORT IMAGES...`));
+	const destDir = 'reports';
 
 	await new Promise((resolve, reject) => {
 		const dir = env.isElectron
-			? path.resolve(env.gauzyUserPath, ...['public', 'reports'])
-			: path.resolve('.', ...['apps', 'api', 'public', 'reports']);
+			? path.resolve(env.gauzyUserPath, ...['public', destDir])
+			: path.join(path.resolve('.', ...['public']), destDir);
 
 		// delete old generated report image
 		rimraf(dir, () => {
@@ -166,21 +168,21 @@ async function cleanReport(connection) {
 }
 
 function copyImage(fileName: string) {
+	const destDir = 'reports';
 	const dir = env.isElectron
 		? path.resolve(
 				env.gauzyUserPath,
 				...['src', 'assets', 'seed', 'reports']
 		  )
 		: path.resolve(
-				'.',
-				...['apps', 'api', 'src', 'assets', 'seed', 'reports']
+				__dirname,
+				'../../../',
+				...['src', 'assets', 'seed', 'reports']
 		  );
 
 	const baseDir = env.isElectron
 		? path.resolve(env.gauzyUserPath, ...['public'])
-		: path.resolve('.', ...['apps', 'api', 'public']);
-
-	const destDir = 'reports';
+		: path.resolve(__dirname, '../../../', ...['public']);
 
 	mkdirSync(path.join(baseDir, destDir), { recursive: true });
 

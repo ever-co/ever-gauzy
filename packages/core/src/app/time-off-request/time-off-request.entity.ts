@@ -12,7 +12,6 @@ import {
 	ITimeOffPolicy,
 	StatusTypesEnum
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsString,
@@ -31,10 +30,6 @@ import {
 export class TimeOffRequest
 	extends TenantOrganizationBaseEntity
 	implements ITimeOffRequest {
-	constructor(input?: DeepPartial<TimeOffRequest>) {
-		super(input);
-	}
-
 	@ManyToMany(() => Employee, { cascade: true })
 	@JoinTable({
 		name: 'time_off_request_employee'

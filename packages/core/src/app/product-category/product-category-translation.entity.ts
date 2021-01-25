@@ -3,7 +3,6 @@ import {
 	IProductTypeTranslation as IProductCategoryTranslation,
 	LanguagesEnum
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsOptional, IsEnum } from 'class-validator';
 import { ProductCategory, TranslationBase } from '../core/entities/internal';
@@ -12,10 +11,6 @@ import { ProductCategory, TranslationBase } from '../core/entities/internal';
 export class ProductCategoryTranslation
 	extends TranslationBase
 	implements IProductCategoryTranslation {
-	constructor(input?: DeepPartial<ProductCategoryTranslation>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column()

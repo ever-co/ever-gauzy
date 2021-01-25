@@ -8,9 +8,9 @@ import { dbConnectionConfig } from './database';
  */
 export const defaultConfiguration: IPluginConfig = {
 	apiConfigOptions: {
-		hostname: process.env.host || 'http://localhost',
+		hostname: process.env.host || '127.0.0.1',
 		port: parseInt(process.env.port) || 3000,
-		baseUrl: process.env.BASE_URL || 'http://localhost:3000',
+		baseUrl: process.env.BASE_URL || 'http://127.0.0.1:3000',
 		middleware: [],
 		graphqlConfigOptions: {
 			path: 'graphql',

@@ -4,7 +4,6 @@
 */
 import { Entity, Column, ManyToOne } from 'typeorm';
 import { IRequestApprovalTeam } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
 import {
@@ -17,10 +16,6 @@ import {
 export class RequestApprovalTeam
 	extends TenantOrganizationBaseEntity
 	implements IRequestApprovalTeam {
-	constructor(input?: DeepPartial<RequestApprovalTeam>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

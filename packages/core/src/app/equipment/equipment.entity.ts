@@ -4,7 +4,6 @@ import {
 	IEquipmentSharing,
 	ITag
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { Entity, Column, OneToMany, ManyToMany, JoinTable } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -25,10 +24,6 @@ import {
 export class Equipment
 	extends TenantOrganizationBaseEntity
 	implements IEquipment {
-	constructor(input?: DeepPartial<Equipment>) {
-		super(input);
-	}
-
 	@ApiProperty()
 	@ManyToMany(() => Tag, (tag) => tag.equipment)
 	@JoinTable({ name: 'tag_equipment' })

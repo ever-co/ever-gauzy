@@ -4,7 +4,6 @@ import {
 	KpiMetricEnum,
 	IEmployee
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional } from 'class-validator';
 import {
@@ -16,10 +15,6 @@ import {
 export class GoalKPITemplate
 	extends TenantOrganizationBaseEntity
 	implements IKPITemplate {
-	constructor(input?: DeepPartial<GoalKPITemplate>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;

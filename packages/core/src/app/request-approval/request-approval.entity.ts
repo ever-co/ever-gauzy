@@ -20,7 +20,6 @@ import {
 	IRequestApproval,
 	ApprovalPolicyTypesStringEnum
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsNumber, IsEnum } from 'class-validator';
 import {
@@ -35,10 +34,6 @@ import {
 export class RequestApproval
 	extends TenantOrganizationBaseEntity
 	implements IRequestApproval {
-	constructor(input?: DeepPartial<RequestApproval>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

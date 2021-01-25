@@ -1,5 +1,4 @@
 import { IImageAsset } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsString } from 'class-validator';
 import { Column, Entity } from 'typeorm';
@@ -9,10 +8,6 @@ import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 export class ImageAsset
 	extends TenantOrganizationBaseEntity
 	implements IImageAsset {
-	constructor(input?: DeepPartial<ImageAsset>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column({ nullable: true })

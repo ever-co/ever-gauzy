@@ -10,7 +10,6 @@ import {
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IProductVariant, BillingInvoicingPolicyEnum } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { IsNumber, IsString, IsOptional, IsEnum } from 'class-validator';
 import {
 	Product,
@@ -24,10 +23,6 @@ import {
 export class ProductVariant
 	extends TenantOrganizationBaseEntity
 	implements IProductVariant {
-	constructor(input?: DeepPartial<ProductVariant>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ default: 0 })

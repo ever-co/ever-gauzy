@@ -16,7 +16,8 @@ import { BulkActivitiesSaveCommand } from './commands/bulk-activities-save.comma
 import { Employee } from '../../employee/employee.entity';
 import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
 import { indexBy, pluck } from 'underscore';
-import { environment } from '@gauzy/config';
+import { getConfig } from '@gauzy/config';
+const config = getConfig();
 
 @Injectable()
 export class ActivityService extends CrudService<Activity> {
@@ -40,7 +41,7 @@ export class ActivityService extends CrudService<Activity> {
 		query.addSelect(`SUM("${query.alias}"."duration")`, `duration`);
 		query.addSelect(`"${query.alias}"."employeeId"`, `employeeId`);
 		query.addSelect(`"${query.alias}"."date"`, `date`);
-		if (environment.database.type === 'sqlite') {
+		if (config.dbConnectionOptions.type === 'sqlite') {
 			query.addSelect(`time("${query.alias}"."time")`, `time`);
 		} else {
 			query.addSelect(
@@ -51,7 +52,7 @@ export class ActivityService extends CrudService<Activity> {
 		query.addSelect(`"${query.alias}"."title"`, `title`);
 		query.addGroupBy(`"${query.alias}"."date"`);
 
-		if (environment.database.type === 'sqlite') {
+		if (config.dbConnectionOptions.type === 'sqlite') {
 			query.addGroupBy(`time("${query.alias}"."time")`);
 		} else {
 			query.addGroupBy(
@@ -182,7 +183,7 @@ export class ActivityService extends CrudService<Activity> {
 			if (request.startDate && request.endDate) {
 				const startDate = moment.utc(request.startDate).toDate();
 				const endDate = moment.utc(request.endDate).toDate();
-				if (environment.database.type === 'sqlite') {
+				if (config.dbConnectionOptions.type === 'sqlite') {
 					qb.andWhere(
 						`datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :startDate AND :endDate`,
 						{

@@ -5,6 +5,15 @@
 	"author": "",
 	"license": "",
 	"private": true,
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"files": [
+		"dist"
+	],
+	"directories": {
+		"lib": "dist",
+		"test": "__test__"
+	},
 	"publishConfig": {
 		"access": "restricted"
 	},
@@ -15,7 +24,7 @@
 		"build": "rimraf dist && yarn run compile",
 		"postbuild": "yarn copy-files",
 		"compile": "tsc -p tsconfig.build.json",
-		"copy-files": "copyfiles -u 1 src/**/*.gql dist/",
+		"copy-files": "copyfiles -u 1 src/**/**/*.gql dist/",
 		"prepublishOnly": "yarn run build",
 		"start": "ts-node ./src/index.ts"
 	},

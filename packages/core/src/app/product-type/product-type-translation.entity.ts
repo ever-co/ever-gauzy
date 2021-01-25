@@ -1,6 +1,5 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { IProductTypeTranslation, LanguagesEnum } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsOptional, IsEnum } from 'class-validator';
 import { ProductType, TranslationBase } from '../core/entities/internal';
@@ -9,10 +8,6 @@ import { ProductType, TranslationBase } from '../core/entities/internal';
 export class ProductTypeTranslation
 	extends TranslationBase
 	implements IProductTypeTranslation {
-	constructor(input?: DeepPartial<ProductTypeTranslation>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column()

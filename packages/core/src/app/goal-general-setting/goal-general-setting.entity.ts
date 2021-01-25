@@ -1,5 +1,4 @@
 import { IGoalGeneralSetting, GoalOwnershipEnum } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { Entity, Column } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
@@ -9,10 +8,6 @@ import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 export class GoalGeneralSetting
 	extends TenantOrganizationBaseEntity
 	implements IGoalGeneralSetting {
-	constructor(input?: DeepPartial<GoalGeneralSetting>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: Number })
 	@Column()
 	maxObjectives: number;

@@ -11,7 +11,6 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional } from 'class-validator';
 import { IProductTranslatable } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import {
 	ImageAsset,
 	InvoiceItem,
@@ -26,10 +25,6 @@ import {
 
 @Entity('product')
 export class Product extends TranslatableBase implements IProductTranslatable {
-	constructor(input?: DeepPartial<Product>) {
-		super(input);
-	}
-
 	@ManyToMany(() => Tag, (tag) => tag.product)
 	@JoinTable({
 		name: 'tag_product'

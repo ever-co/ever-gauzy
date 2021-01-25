@@ -11,7 +11,6 @@ import {
 	KeyResultTypeEnum,
 	KeyResultDeadlineEnum
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum } from 'class-validator';
 import {
@@ -28,10 +27,6 @@ import {
 export class KeyResult
 	extends TenantOrganizationBaseEntity
 	implements IKeyResult {
-	constructor(input?: DeepPartial<KeyResult>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;

@@ -28,7 +28,6 @@ import {
 	IEmployee,
 	IOrganizationProject
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import {
 	Employee,
 	ExpenseCategory,
@@ -41,10 +40,6 @@ import {
 
 @Entity('expense')
 export class Expense extends TenantOrganizationBaseEntity implements IExpense {
-	constructor(input?: DeepPartial<Expense>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: Tag })
 	@ManyToMany(() => Tag, (tag) => tag.expense)
 	@JoinTable({

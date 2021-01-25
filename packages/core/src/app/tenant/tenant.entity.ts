@@ -13,14 +13,9 @@ import {
 	IRolePermission,
 	IFeatureOrganization
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 
 @Entity('tenant')
 export class Tenant extends BaseEntity implements ITenant {
-	constructor(input?: DeepPartial<Tenant>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@Index()
 	@IsString()

@@ -17,7 +17,6 @@ import {
 	ITimeSlot,
 	IOrganizationProject
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsString,
@@ -26,7 +25,6 @@ import {
 	IsNumber,
 	IsDateString
 } from 'class-validator';
-import { environment as env } from '@gauzy/config';
 import {
 	Employee,
 	OrganizationProject,
@@ -34,15 +32,13 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeSlot
 } from '../core/entities/internal';
+import { getConfig } from '@gauzy/config';
+const config = getConfig();
 
 @Entity('activity')
 export class Activity
 	extends TenantOrganizationBaseEntity
 	implements IActivity {
-	constructor(input?: DeepPartial<Activity>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee)
 	@JoinColumn()
@@ -97,7 +93,7 @@ export class Activity
 	@IsDateString()
 	@Column({
 		nullable: true,
-		type: env.database.type === 'sqlite' ? 'text' : 'json'
+		type: config.dbConnectionOptions.type === 'sqlite' ? 'text' : 'json'
 	})
 	metaData?: string | IURLMetaData;
 

@@ -1,6 +1,5 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { IProductOption } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import {
@@ -12,10 +11,6 @@ import {
 export class ProductOption
 	extends TenantOrganizationBaseEntity
 	implements IProductOption {
-	constructor(input?: DeepPartial<ProductOption>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column()

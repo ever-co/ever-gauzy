@@ -7,7 +7,6 @@ import {
 	OneToMany
 } from 'typeorm';
 import { ITimesheet, TimesheetStatus } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsString,
@@ -26,10 +25,6 @@ import {
 export class Timesheet
 	extends TenantOrganizationBaseEntity
 	implements ITimesheet {
-	constructor(input?: DeepPartial<Timesheet>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee, { nullable: true })
 	@JoinColumn()

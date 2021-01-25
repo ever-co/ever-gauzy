@@ -2,7 +2,6 @@ import {
 	CurrenciesEnum,
 	IOrganizationRecurringExpense
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsDate,
@@ -22,10 +21,6 @@ import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 export class OrganizationRecurringExpense
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationRecurringExpense {
-	constructor(input?: DeepPartial<OrganizationRecurringExpense>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: Number, minimum: 1, maximum: 31 })
 	@IsNumber()
 	@IsNotEmpty()

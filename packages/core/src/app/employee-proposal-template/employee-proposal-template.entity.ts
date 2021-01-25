@@ -2,7 +2,6 @@ import { Column, Entity, Index, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { IEmployee, IEmployeeProposalTemplate } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import {
 	Employee,
 	TenantOrganizationBaseEntity
@@ -12,10 +11,6 @@ import {
 export class EmployeeProposalTemplate
 	extends TenantOrganizationBaseEntity
 	implements IEmployeeProposalTemplate {
-	constructor(input?: DeepPartial<EmployeeProposalTemplate>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, JoinColumn, RelationId, ManyToOne } from 'typeorm';
 import { IIntegrationMap } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import {
 	IntegrationTenant,
 	TenantOrganizationBaseEntity
@@ -11,10 +10,6 @@ import {
 export class IntegrationMap
 	extends TenantOrganizationBaseEntity
 	implements IIntegrationMap {
-	constructor(input?: DeepPartial<IntegrationMap>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: IntegrationTenant })
 	@ManyToOne(() => IntegrationTenant, {
 		nullable: false

@@ -4,7 +4,6 @@ import {
 	IPipelineStage,
 	IOrganizationContact
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import {
 	Column,
 	Entity,
@@ -31,10 +30,6 @@ import {
 
 @Entity('deal')
 export class Deal extends TenantOrganizationBaseEntity implements IDeal {
-	constructor(input?: DeepPartial<Deal>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@IsNotEmpty()
 	@IsString()

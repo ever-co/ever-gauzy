@@ -2,7 +2,6 @@ import { Entity, Column, OneToMany } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
 import { IProductCategoryTranslatable } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import {
 	Product,
 	ProductCategoryTranslation,
@@ -13,10 +12,6 @@ import {
 export class ProductCategory
 	extends TranslatableBase
 	implements IProductCategoryTranslatable {
-	constructor(input?: DeepPartial<ProductCategory>) {
-		super(input);
-	}
-
 	@ApiPropertyOptional({ type: String })
 	@IsOptional()
 	@Column({ nullable: true })

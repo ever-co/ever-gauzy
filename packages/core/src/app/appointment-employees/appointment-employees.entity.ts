@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { IAppointmentEmployee, IEmployeeAppointment } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { IsString, IsNotEmpty } from 'class-validator';
 import {
 	EmployeeAppointment,
@@ -12,10 +11,6 @@ import {
 export class AppointmentEmployee
 	extends TenantOrganizationBaseEntity
 	implements IAppointmentEmployee {
-	constructor(input?: DeepPartial<AppointmentEmployee>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

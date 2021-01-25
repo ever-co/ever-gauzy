@@ -11,8 +11,8 @@ import { Repository } from 'typeorm';
 import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { RequestApproval } from '../request-approval/request-approval.entity';
-import { environment as env } from '@gauzy/config';
-
+import { getConfig } from '@gauzy/config';
+const config = getConfig();
 @Injectable()
 export class EquipmentSharingService extends CrudService<EquipmentSharing> {
 	constructor(
@@ -38,7 +38,7 @@ export class EquipmentSharingService extends CrudService<EquipmentSharing> {
 					'equipmentSharingPolicy'
 				);
 
-			if (env.database.type === 'sqlite') {
+			if (config.dbConnectionOptions.type === 'sqlite') {
 				query.leftJoinAndSelect(
 					'request_approval',
 					'request_approval',

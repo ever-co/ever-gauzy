@@ -9,7 +9,6 @@ import {
 	IProductTranslatable,
 	ITask
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNumber, IsString, IsOptional, IsBoolean } from 'class-validator';
 import {
@@ -26,10 +25,6 @@ import {
 export class InvoiceItem
 	extends TenantOrganizationBaseEntity
 	implements IInvoiceItem {
-	constructor(input?: DeepPartial<InvoiceItem>) {
-		super(input);
-	}
-
 	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@IsOptional()

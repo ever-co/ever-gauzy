@@ -1,7 +1,6 @@
 import { Column, Entity, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { ICandidateTechnologies, ICandidateInterview } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import {
 	CandidateInterview,
 	TenantOrganizationBaseEntity
@@ -11,10 +10,6 @@ import {
 export class CandidateTechnologies
 	extends TenantOrganizationBaseEntity
 	implements ICandidateTechnologies {
-	constructor(input?: DeepPartial<CandidateTechnologies>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;

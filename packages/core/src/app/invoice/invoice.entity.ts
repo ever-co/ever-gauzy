@@ -4,7 +4,6 @@ import {
 	InvoiceTypeEnum,
 	DiscountTaxTypeEnum
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsString,
@@ -37,10 +36,6 @@ import {
 @Entity('invoice')
 @Unique(['invoiceNumber'])
 export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
-	constructor(input?: DeepPartial<Invoice>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: Tag })
 	@ManyToMany((type) => Tag, (tag) => tag.invoice)
 	@JoinTable({

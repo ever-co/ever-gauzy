@@ -11,7 +11,6 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
 import { ITask, TaskStatusEnum } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import {
 	Employee,
 	InvoiceItem,
@@ -26,10 +25,6 @@ import {
 
 @Entity('task')
 export class Task extends TenantOrganizationBaseEntity implements ITask {
-	constructor(input?: DeepPartial<Task>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: Tag })
 	@ManyToMany(() => Tag, (tag) => tag.task)
 	@JoinTable({

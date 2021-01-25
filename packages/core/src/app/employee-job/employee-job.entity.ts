@@ -4,7 +4,6 @@ import {
 	JobPostStatusEnum,
 	JobPostTypeEnum
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { Employee, JobPost, Model } from '../core/entities/internal';
 
 export class EmployeeJobPost extends Model implements IEmployeeJobPost {

@@ -9,7 +9,6 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { IOrganizationTeam } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import {
 	OrganizationTeamEmployee,
 	RequestApprovalTeam,
@@ -21,10 +20,6 @@ import {
 export class OrganizationTeam
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationTeam {
-	constructor(input?: DeepPartial<OrganizationTeam>) {
-		super(input);
-	}
-
 	@ApiProperty()
 	@ManyToMany(() => Tag, (tag) => tag.organizationTeam)
 	@JoinTable({

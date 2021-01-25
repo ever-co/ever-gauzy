@@ -1,5 +1,4 @@
 import { CurrenciesEnum, IEmployeeRecurringExpense } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { Optional } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -22,10 +21,6 @@ import {
 export class EmployeeRecurringExpense
 	extends TenantOrganizationBaseEntity
 	implements IEmployeeRecurringExpense {
-	constructor(input?: DeepPartial<EmployeeRecurringExpense>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

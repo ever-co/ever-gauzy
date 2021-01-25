@@ -11,7 +11,6 @@ import {
 	IEquipmentSharing,
 	RequestApprovalStatusTypesEnum
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import {
@@ -26,10 +25,6 @@ import {
 export class EquipmentSharing
 	extends TenantOrganizationBaseEntity
 	implements IEquipmentSharing {
-	constructor(input?: DeepPartial<EquipmentSharing>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column({ nullable: true })

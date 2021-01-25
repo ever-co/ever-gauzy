@@ -1,5 +1,4 @@
 import { IPipeline } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import {
 	AfterInsert,
 	AfterLoad,
@@ -20,10 +19,6 @@ import {
 export class Pipeline
 	extends TenantOrganizationBaseEntity
 	implements IPipeline {
-	constructor(input?: DeepPartial<Pipeline>) {
-		super(input);
-	}
-
 	@OneToMany(() => PipelineStage, ({ pipeline }) => pipeline, {
 		cascade: ['insert']
 	})

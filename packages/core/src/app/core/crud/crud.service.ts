@@ -15,14 +15,15 @@ import {
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { mergeMap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
-import { Base } from '../entities/base';
-import { ICrudService } from './icrud.service';
-import { IPagination } from './pagination';
 import { environment as env } from '@gauzy/config';
 import * as bcrypt from 'bcryptjs';
+import { BaseEntity } from '../entities/internal';
+import { ICrudService } from './icrud.service';
+import { IPagination } from './pagination';
 import { ITryRequest } from './try-request';
 
-export abstract class CrudService<T extends Base> implements ICrudService<T> {
+export abstract class CrudService<T extends BaseEntity>
+	implements ICrudService<T> {
 	saltRounds: number;
 
 	protected constructor(protected readonly repository: Repository<T>) {

@@ -14,6 +14,8 @@ import { DEFAULT_FEATURES } from './default-features';
 import { Tenant } from '../tenant/tenant.entity';
 import { Feature } from './feature.entity';
 import { FeatureOrganization } from './feature_organization.entity';
+import { getConfig } from '@gauzy/config';
+const config = getConfig();
 
 export const createDefaultFeatureToggle = async (
 	connection: Connection,
@@ -95,7 +97,7 @@ function createFeature(item: IFeature, tenant: Tenant) {
 }
 
 async function cleanFeature(connection) {
-	if (env.database.type === 'sqlite') {
+	if (config.dbConnectionOptions.type === 'sqlite') {
 		await connection.query('DELETE FROM feature');
 		await connection.query('DELETE FROM feature_organization');
 	} else {
@@ -113,7 +115,7 @@ async function cleanFeature(connection) {
 	await new Promise((resolve, reject) => {
 		const dir = env.isElectron
 			? path.resolve(env.gauzyUserPath, ...['public', destDir])
-			: path.resolve('.', ...['apps', 'api', 'public', destDir]);
+			: path.join(path.resolve('.', ...['public']), destDir);
 
 		// delete old generated report image
 		rimraf(
@@ -138,12 +140,13 @@ function copyImage(fileName: string) {
 					...['src', 'assets', 'seed', destDir]
 			  )
 			: path.resolve(
-					'.',
-					...['apps', 'api', 'src', 'assets', 'seed', destDir]
+					__dirname,
+					'../../../',
+					...['src', 'assets', 'seed', destDir]
 			  );
 		const baseDir = env.isElectron
 			? path.resolve(env.gauzyUserPath, ...['public'])
-			: path.resolve('.', ...['apps', 'api', 'public']);
+			: path.resolve(__dirname, '../../../', ...['public']);
 
 		mkdirSync(path.join(baseDir, destDir), { recursive: true });
 

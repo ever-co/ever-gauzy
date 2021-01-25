@@ -1,6 +1,5 @@
 import { Entity, Index, Column, ManyToMany, JoinTable } from 'typeorm';
 import { ITimeOffPolicy } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsBoolean } from 'class-validator';
 import {
@@ -12,10 +11,6 @@ import {
 export class TimeOffPolicy
 	extends TenantOrganizationBaseEntity
 	implements ITimeOffPolicy {
-	constructor(input?: DeepPartial<TimeOffPolicy>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

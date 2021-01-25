@@ -1,6 +1,5 @@
 import { Entity, Column } from 'typeorm';
 import { IGoalTimeFrame, TimeFrameStatusEnum } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
@@ -9,10 +8,6 @@ import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 export class GoalTimeFrame
 	extends TenantOrganizationBaseEntity
 	implements IGoalTimeFrame {
-	constructor(input?: DeepPartial<GoalTimeFrame>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;

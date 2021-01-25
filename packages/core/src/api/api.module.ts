@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import * as path from 'path';
 import { ConfigService } from '@gauzy/config';
-import { ServiceModule } from '../service/service.module';
+import { ServiceModule } from './service.module';
 import { GraphqlApiModule, SharedModule } from './shared.module';
 import { GraphqlModule } from './graphql';
 
@@ -14,7 +14,9 @@ import { GraphqlModule } from './graphql';
 			path: configService.graphqlConfigOptions.path,
 			playground: configService.graphqlConfigOptions.playground,
 			debug: configService.graphqlConfigOptions.debug,
-			typePaths: [path.join(__dirname, 'graphql', 'schema', '*.gql')],
+			typePaths: [
+				path.join(path.resolve(__dirname, '../**/', 'schema'), '*.gql')
+			],
 			resolverModule: GraphqlApiModule
 		}))
 	],

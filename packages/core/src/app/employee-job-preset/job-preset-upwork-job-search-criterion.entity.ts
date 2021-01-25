@@ -5,7 +5,6 @@ import {
 	IJobPresetUpworkJobSearchCriterion,
 	JobPostTypeEnum
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import {
 	JobPreset,
 	JobSearchCategory,
@@ -17,10 +16,6 @@ import {
 export class JobPresetUpworkJobSearchCriterion
 	extends TenantOrganizationBaseEntity
 	implements IJobPresetUpworkJobSearchCriterion {
-	constructor(input?: DeepPartial<JobPresetUpworkJobSearchCriterion>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

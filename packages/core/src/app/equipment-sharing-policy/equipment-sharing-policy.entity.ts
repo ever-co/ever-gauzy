@@ -5,7 +5,6 @@
  */
 import { Entity, Index, Column } from 'typeorm';
 import { IEquipmentSharingPolicy } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
@@ -14,10 +13,6 @@ import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 export class EquipmentSharingPolicy
 	extends TenantOrganizationBaseEntity
 	implements IEquipmentSharingPolicy {
-	constructor(input?: DeepPartial<EquipmentSharingPolicy>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

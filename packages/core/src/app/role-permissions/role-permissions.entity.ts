@@ -3,7 +3,6 @@ import {
 	IRolePermission as IRolePermissions,
 	RolesEnum
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty } from 'class-validator';
 import { Column, Entity, Index, ManyToOne } from 'typeorm';
@@ -13,10 +12,6 @@ import { Role, TenantBaseEntity } from '../core/entities/internal';
 export class RolePermissions
 	extends TenantBaseEntity
 	implements IRolePermissions {
-	constructor(input?: DeepPartial<RolePermissions>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String, enum: RolesEnum })
 	@IsEnum(RolesEnum)
 	@IsNotEmpty()

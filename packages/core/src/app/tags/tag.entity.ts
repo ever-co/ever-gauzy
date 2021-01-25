@@ -26,7 +26,6 @@ import {
 	ITask,
 	IUser
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import {
 	Candidate,
 	Employee,
@@ -56,10 +55,6 @@ import {
 
 @Entity('tag')
 export class Tag extends TenantOrganizationBaseEntity implements ITag {
-	constructor(input?: DeepPartial<Tag>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@Column()
 	name?: string;

@@ -9,7 +9,6 @@ import {
 	IsEnum
 } from 'class-validator';
 import { IEmployeeSetting, CurrenciesEnum } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import {
 	Employee,
 	TenantOrganizationBaseEntity
@@ -19,10 +18,6 @@ import {
 export class EmployeeSetting
 	extends TenantOrganizationBaseEntity
 	implements IEmployeeSetting {
-	constructor(input?: DeepPartial<EmployeeSetting>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

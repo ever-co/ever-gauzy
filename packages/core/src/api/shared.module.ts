@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@gauzy/config';
-import { ServiceModule } from '../service/service.module';
+import { ServiceModule } from './service.module';
 
-import { Resolvers } from './graphql/resolvers';
+import { RoleEntityResolver } from '../app/role/role-entity.resolver';
+
+const Resolvers = [RoleEntityResolver];
 
 @Module({
 	imports: [ConfigModule],

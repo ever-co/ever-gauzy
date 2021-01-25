@@ -1,7 +1,6 @@
 import { Entity, Column, ManyToOne, OneToMany, JoinTable } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IHelpCenter, IHelpCenterArticle } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import {
 	HelpCenterArticle,
 	TenantOrganizationBaseEntity
@@ -11,10 +10,6 @@ import {
 export class HelpCenter
 	extends TenantOrganizationBaseEntity
 	implements IHelpCenter {
-	constructor(input?: DeepPartial<HelpCenter>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;

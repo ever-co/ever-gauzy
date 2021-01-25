@@ -12,7 +12,6 @@ import {
 	IAvailabilitySlot,
 	IEmployee
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import {
 	Employee,
 	TenantOrganizationBaseEntity
@@ -22,10 +21,6 @@ import {
 export class AvailabilitySlot
 	extends TenantOrganizationBaseEntity
 	implements IAvailabilitySlot {
-	constructor(input?: DeepPartial<AvailabilitySlot>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()

@@ -2,16 +2,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Column, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { IsString, IsOptional } from 'class-validator';
 import { IBasePerTenantEntityModel, ITenant } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import { BaseEntity, Tenant } from '../entities/internal';
 
 export abstract class TenantBaseEntity
 	extends BaseEntity
 	implements IBasePerTenantEntityModel {
-	constructor(input?: DeepPartial<TenantBaseEntity>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: Tenant, readOnly: true })
 	@ManyToOne(() => Tenant, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()

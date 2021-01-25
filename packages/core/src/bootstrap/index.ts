@@ -1,10 +1,17 @@
+// import * as csurf from 'csurf';
 import { INestApplication, Type } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { SentryService } from '@ntegral/nestjs-sentry';
+import * as expressSession from 'express-session';
+import * as helmet from 'helmet';
+// import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { IPluginConfig } from '@gauzy/common';
-import { getConfig, setConfig } from '@gauzy/config';
+import { getConfig, setConfig, environment as env } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
 import { coreEntities } from '../app/core/entities';
+import { AppService } from '../app/app.service';
+import { AppModule } from '../app/app.module';
 // import { Logger } from '../logger/logger';
 
 export async function bootstrap(
@@ -18,13 +25,48 @@ export async function bootstrap(
 	const bootstrapModule = await import('./bootstrap.module');
 	const [classname] = Object.keys(bootstrapModule);
 
-	const { hostname, port } = config.apiConfigOptions;
 	const app = await NestFactory.create<NestExpressApplication>(
-		bootstrapModule[classname]
+		bootstrapModule[classname],
+		{
+			logger: ['error', 'warn']
+		}
 	);
 
+	app.useLogger(app.get(SentryService));
+	app.enableCors();
+
+	// TODO: enable csurf
+	// As explained on the csurf middleware page https://github.com/expressjs/csurf#csurf,
+	// the csurf module requires either a session middleware or cookie-parser to be initialized first.
+	// app.use(csurf());
+
+	app.use(
+		expressSession({
+			secret: env.EXPRESS_SESSION_SECRET,
+			resave: true,
+			saveUninitialized: true
+		})
+	);
+
+	app.use(helmet());
+	const globalPrefix = 'api';
+	app.setGlobalPrefix(globalPrefix);
+
+	const service = app.select(AppModule).get(AppService);
+	await service.seedDBIfEmpty();
+
+	// const options = new DocumentBuilder()
+	// 	.setTitle('Gauzy API')
+	// 	.setVersion('1.0')
+	// 	.addBearerAuth()
+	// 	.build();
+
+	// const document = SwaggerModule.createDocument(app, options);
+	// SwaggerModule.setup('swg', app, document);
+
+	const { hostname, port } = config.apiConfigOptions;
 	await app.listen(port || 3000, hostname, () => {
-		console.log(`Listening at http://${hostname}:${port}`);
+		console.log(`Listening at http://${hostname}:${port}/${globalPrefix}`);
 	});
 	return app;
 }

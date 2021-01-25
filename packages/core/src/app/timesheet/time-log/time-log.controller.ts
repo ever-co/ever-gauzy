@@ -88,7 +88,9 @@ export class TimeLogController extends CrudController<ITimeLog> {
 		description: 'Record not found'
 	})
 	@Get('report/daily-chart')
-	async getDailyReportChartData(@Query() options: IGetTimeLogReportInput) {
+	async getDailyReportChartData(
+		@Query() options: IGetTimeLogReportInput
+	): Promise<any> {
 		return this.timeLogService.getDailyReportChartData(options);
 	}
 

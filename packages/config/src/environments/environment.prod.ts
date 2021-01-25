@@ -2,13 +2,10 @@ require('dotenv').config();
 
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { IEnvironment, IGauzyFeatures } from './ienvironment';
-import { dbConnectionConfig } from '../database';
 
 if (process.env.IS_ELECTRON && process.env.GAUZY_USER_PATH) {
 	require('app-root-path').setPath(process.env.GAUZY_USER_PATH);
 }
-
-console.log(`DB Config: ${JSON.stringify(dbConnectionConfig)}`);
 
 export const environmentProd: IEnvironment = {
 	port: process.env.port || 3000,
@@ -17,8 +14,6 @@ export const environmentProd: IEnvironment = {
 
 	production: true,
 	envName: 'prod',
-
-	database: dbConnectionConfig,
 
 	env: {
 		LOG_LEVEL: 'debug'

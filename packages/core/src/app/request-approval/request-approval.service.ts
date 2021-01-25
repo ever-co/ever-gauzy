@@ -19,7 +19,8 @@ import { RequestApprovalEmployee } from '../request-approval-employee/request-ap
 import { RequestContext } from '../core/context';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 import { RequestApprovalTeam } from '../request-approval-team/request-approval-team.entity';
-import { environment as env } from '@gauzy/config';
+import { getConfig } from '@gauzy/config';
+const config = getConfig();
 
 @Injectable()
 export class RequestApprovalService extends CrudService<RequestApproval> {
@@ -47,7 +48,7 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 			'approvalPolicy'
 		);
 
-		if (env.database.type === 'sqlite') {
+		if (config.dbConnectionOptions.type === 'sqlite') {
 			query.leftJoinAndSelect(
 				'time_off_request',
 				'time_off_request',

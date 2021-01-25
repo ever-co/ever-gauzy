@@ -8,7 +8,6 @@ import {
 	ICandidatePersonalQualities,
 	ICandidate
 } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import {
 	Candidate,
 	CandidateFeedback,
@@ -22,10 +21,6 @@ import {
 export class CandidateInterview
 	extends TenantOrganizationBaseEntity
 	implements ICandidateInterview {
-	constructor(input?: DeepPartial<CandidateInterview>) {
-		super(input);
-	}
-
 	@ApiProperty({ type: String })
 	@Column()
 	title: string;

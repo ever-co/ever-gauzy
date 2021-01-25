@@ -19,7 +19,6 @@ import {
 	IsBoolean
 } from 'class-validator';
 import { IIncome, CurrenciesEnum } from '@gauzy/contracts';
-import { DeepPartial } from '@gauzy/common';
 import {
 	Employee,
 	Tag,
@@ -28,10 +27,6 @@ import {
 
 @Entity('income')
 export class Income extends TenantOrganizationBaseEntity implements IIncome {
-	constructor(input?: DeepPartial<Income>) {
-		super(input);
-	}
-
 	@ManyToMany(() => Tag, (tag) => tag.income)
 	@JoinTable({
 		name: 'tag_income'
