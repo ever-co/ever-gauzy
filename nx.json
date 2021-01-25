@@ -17,9 +17,6 @@
 		"api": {
 			"tags": []
 		},
-		"utils": {
-			"tags": []
-		},
 		"desktop": {
 			"tags": []
 		},

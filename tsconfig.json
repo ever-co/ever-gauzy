@@ -18,18 +18,6 @@
 		"skipDefaultLibCheck": true,
 		"baseUrl": ".",
 		"paths": {
-			"@gauzy/utils": ["libs/utils/src/index.ts"],
-			"@gauzy/models": ["libs/models/src/index.ts"],
-			"@gauzy/integration-ai": ["libs/integration-ai/src/index.ts"],
-			"@gauzy/integration-hubstaff": [
-				"libs/integration-hubstaff/src/index.ts"
-			],
-			"@gauzy/integration-upwork": [
-				"libs/integration-upwork/src/index.ts"
-			],
-			"@env-api/environment": [
-				"apps/api/src/environments/environment.ts"
-			],
 			"ng2-completer": ["node_modules/@akveo/ng2-completer"]
 		},
 		"preserveConstEnums": true,

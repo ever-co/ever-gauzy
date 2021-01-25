@@ -4,11 +4,5 @@
 	"repository": "https://github.com/ever-co/gauzy.git",
 	"private": true,
 	"resolutions": {},
-	"workspaces": [
-		"libs/*",
-		"apps/*",
-		"tools",
-		"packages/**",
-		"packages/plugins/**"
-	]
+	"workspaces": ["apps/*", "tools", "packages/**", "packages/plugins/**"]
 }

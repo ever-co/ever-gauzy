@@ -144,7 +144,6 @@
 		"npmPublish": false
 	},
 	"workspaces": [
-		"libs/*",
 		"apps/*",
 		"tools",
 		"packages/**",
