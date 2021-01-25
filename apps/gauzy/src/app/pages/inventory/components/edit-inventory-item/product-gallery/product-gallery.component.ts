@@ -19,7 +19,7 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
 import { Subject } from 'rxjs';
-import { first, take } from 'rxjs/operators';
+import { first } from 'rxjs/operators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -64,7 +64,7 @@ export class ProductGalleryComponent
 			});
 
 		this.newImageUploadedEvent$
-			.pipe(take(1))
+			.pipe(untilDestroyed(this))
 			.subscribe(async (resultData) => {
 				const newAsset = {
 					name: resultData['original_filename'],

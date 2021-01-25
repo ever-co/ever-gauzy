@@ -31,6 +31,8 @@ export class SelectAssetComponent
 	}
 
 	onImageUploaded($event) {
+		//tstodo
+		console.log('on image uploaded', $event);
 		this.newImageUploadedEvent.next($event);
 	}
 }

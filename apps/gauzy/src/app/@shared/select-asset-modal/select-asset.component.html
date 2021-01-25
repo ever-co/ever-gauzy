@@ -37,11 +37,12 @@
 				</div>
 				<div class="row image-assets-container">
 					<div
-						class="col-lg-3 col-md-4 col-sm-6 mb-3"
+						class="col-lg-3 col-md-4 col-sm-6 mb-3 image-item"
 						*ngFor="let image of gallery"
 					>
 						<ngx-img-asset
 							[imageAsset]="image"
+							[selectedImage]="selectedImage"
 							(imageClicked)="onSelectImage($event)"
 						></ngx-img-asset>
 					</div>
