@@ -33,6 +33,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import {
 	InvoiceCreateCommand,
 	InvoiceDeleteCommand,
+	InvoiceGenerateLinkCommand,
 	InvoiceUpdateCommand
 } from './commands';
 import { DeleteResult } from 'typeorm';
@@ -78,6 +79,29 @@ export class InvoiceController extends CrudController<Invoice> {
 		const { relations = [], findInput = null } = data;
 		return this.invoiceService.findOne(id, {
 			where: findInput,
+			relations
+		});
+	}
+
+	@ApiOperation({ summary: 'Find invoice by id ' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found one record',
+		type: Invoice
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('public/:id/:token')
+	async findWithoutGuard(
+		@Param('id') id: string,
+		@Param('token') token: string,
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IInvoice> {
+		const { relations = [] } = data;
+		return this.invoiceService.findOne(id, {
+			where: { token: token },
 			relations
 		});
 	}
@@ -167,6 +191,18 @@ export class InvoiceController extends CrudController<Invoice> {
 				request.body.params,
 				request.get('Origin')
 			)
+		);
+	}
+
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(AuthGuard('jwt'))
+	@Put('generate/:id')
+	async generateLink(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Req() request
+	): Promise<any> {
+		return this.commandBus.execute(
+			new InvoiceGenerateLinkCommand(id, request.body.params)
 		);
 	}
 

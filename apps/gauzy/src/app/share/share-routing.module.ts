@@ -64,6 +64,20 @@ const routes: Routes = [
 					).then((m) => m.CreateAppointmentModule)
 			},
 			{
+				path: 'invoices/:id/:token',
+				loadChildren: () =>
+					import('./invoices-estimates/invoice-estimate.module').then(
+						(m) => m.InvoiceEstimateModule
+					)
+			},
+			{
+				path: 'estimates/:id/:token',
+				loadChildren: () =>
+					import('./invoices-estimates/invoice-estimate.module').then(
+						(m) => m.InvoiceEstimateModule
+					)
+			},
+			{
 				path: '**',
 				component: NotFoundComponent
 			}

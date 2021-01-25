@@ -165,6 +165,18 @@ export class Invoice extends TenantOrganizationBase implements IInvoice {
 	@Column({ nullable: true })
 	hasRemainingAmountInvoiced?: boolean;
 
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	publicLink?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	token?: string;
+
 	@ApiPropertyOptional({ type: Organization })
 	@ManyToOne((type) => Organization)
 	@JoinColumn()
