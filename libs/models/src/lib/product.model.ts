@@ -1,4 +1,7 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import {
+	IBasePerTenantAndOrganizationEntityModel,
+	IBasePerTenantEntityModel
+} from './base-entity.model';
 import { ITranslation, ITranslatable } from './translation.model';
 import { ITag } from './tag-entity.model';
 
@@ -7,7 +10,7 @@ export interface IProduct extends IBasePerTenantAndOrganizationEntityModel {
 	description: string;
 	enabled: boolean;
 	code: string;
-	imageUrl: string;
+	featuredImage?: IImageAsset;
 	variants?: IProductVariant[];
 	options?: IProductOption[];
 	productTypeId: string;
@@ -22,7 +25,7 @@ export interface IProductTranslatable
 	extends ITranslatable<IProductTranslation> {
 	enabled: boolean;
 	code: string;
-	imageUrl: string;
+	featuredImage?: IImageAsset;
 	variants?: IProductVariant[];
 	options?: IProductOption[];
 	productTypeId: string;
@@ -30,6 +33,7 @@ export interface IProductTranslatable
 	type?: IProductTypeTranslatable;
 	category?: IProductCategoryTranslatable;
 	tags?: ITag[];
+	gallery?: IImageAsset[];
 }
 
 export interface IProductTranslated {
@@ -64,7 +68,8 @@ export interface IProductTranslatableCreateInput
 	extends ITranslatable<IProductTranslation> {
 	enabled: boolean;
 	code: string;
-	imageUrl: string;
+	featuredImage?: IImageAsset;
+	gallery: IImageAsset[];
 	type?: IProductTypeTranslatable;
 	category?: IProductCategoryTranslatable;
 	tags?: ITag[];
@@ -169,6 +174,14 @@ export interface IProductOption
 	name: string;
 	code: string;
 	product?: IProductTranslatable;
+}
+
+export interface IImageAsset extends IBasePerTenantEntityModel {
+	name: string;
+	url: string;
+	width: number;
+	height: number;
+	isFeatured: boolean;
 }
 
 export enum BillingInvoicingPolicyEnum {

@@ -14,10 +14,10 @@ import {
 	ITag,
 	ITask,
 	IOrganizationProject,
-	IProduct,
 	IExpense,
 	ExpenseTypesEnum,
-	IInvoiceItemCreateInput
+	IInvoiceItemCreateInput,
+	IProductTranslatable
 } from '@gauzy/models';
 import { filter, first } from 'rxjs/operators';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
@@ -42,6 +42,7 @@ import { ExpensesService } from '../../../@core/services/expenses.service';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../../@core/services/toastr.service';
+import { TranslatableService } from '../../../@core/services/translatable.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -68,7 +69,8 @@ export class InvoiceEditComponent
 		private tasksStore: TasksStoreService,
 		private dialogService: NbDialogService,
 		private expensesService: ExpensesService,
-		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService
+		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
+		private translatableService: TranslatableService
 	) {
 		super(translate);
 		this.observableTasks = this.tasksStore.tasks$;
@@ -90,7 +92,7 @@ export class InvoiceEditComponent
 	organizationContacts: IOrganizationContact[];
 	employees: IEmployee[];
 	projects: IOrganizationProject[];
-	products: IProduct[];
+	products: IProductTranslatable[];
 	invoiceDate: Date;
 	dueDate: Date;
 	tags: ITag[] = [];
@@ -331,7 +333,10 @@ export class InvoiceEditComponent
 								(p) => p.id === cell
 							);
 							if (product) {
-								return `${product.name}`;
+								return `${this.translatableService.getTranslatedProperty(
+									product,
+									'name'
+								)}`;
 							}
 						}
 					}

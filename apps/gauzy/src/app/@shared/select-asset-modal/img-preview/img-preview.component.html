@@ -1,0 +1,39 @@
+<nb-card>
+	<nb-card-body>
+		<img
+			*ngIf="selectedImage"
+			class="img-asset-preview"
+			[src]="selectedImage.url"
+			[alt]="selectedImage.name"
+		/>
+		<img
+			*ngIf="!selectedImage"
+			class="img-asset-preview"
+			[src]="'https://afostats.imagead.net/uploads/afo/no_img.png'"
+			alt="No image"
+		/>
+	</nb-card-body>
+	<nb-card-footer>
+		<div *ngIf="!selectedImage" class="img-preview-info">
+			{{ 'INVENTORY_PAGE.NO_IMAGE_SELECTED' | translate }}
+		</div>
+		<div *ngIf="selectedImage" class="img-preview-info">
+			<div>
+				<span class="img-desc-text"
+					>{{ 'INVENTORY_PAGE.NAME' | translate }}:</span
+				>{{ selectedImage.name }}
+			</div>
+			<div>
+				<span class="img-desc-text"
+					>{{ 'INVENTORY_PAGE.URL' | translate }}:</span
+				>{{ selectedImage.url }}
+			</div>
+			<div>
+				<span class="img-desc-text"
+					>{{ 'INVENTORY_PAGE.DIMENSIONS' | translate }}:</span
+				>
+				{{ selectedImage.width }}x{{ selectedImage.height }}
+			</div>
+		</div>
+	</nb-card-footer>
+</nb-card>

@@ -1,0 +1,12 @@
+<div
+	class="image-asset-list-item"
+	(click)="onImageClick($event)"
+	[ngClass]="{ selected: selected }"
+>
+	<div
+		class="image-item"
+		[ngStyle]="{
+			backgroundImage: 'url(' + imageAsset.url + ')'
+		}"
+	></div>
+</div>

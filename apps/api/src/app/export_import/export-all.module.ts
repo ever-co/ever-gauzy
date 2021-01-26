@@ -230,6 +230,7 @@ import { JobSearchCategoryService } from '../employee-job-preset/job-search-cate
 import { KeyresultTemplateService } from '../keyresult-template/keyresult-template.service';
 import { ReportService } from '../reports/report.service';
 import { ReportCategoryService } from '../reports/report-category.service';
+import { ImageAsset } from '../image-asset/image-asset.entity';
 
 @Module({
 	imports: [
@@ -288,6 +289,7 @@ import { ReportCategoryService } from '../reports/report-category.service';
 			HelpCenterArticle,
 			HelpCenterAuthor,
 
+			ImageAsset,
 			Income,
 			Integration,
 			IntegrationEntitySetting,

@@ -97,7 +97,9 @@
 		"SET": "Set",
 		"RECORD_FULL_PAYMENT": "Record Full Payment",
 		"EXPORT_TO_CSV": "Export to CSV",
-		"INVOICE_REMAINING_AMOUNT": "Invoice Remaining Amount"
+		"INVOICE_REMAINING_AMOUNT": "Invoice Remaining Amount",
+		"PUBLIC_LINK": "Public Link",
+		"GENERATE": "Generate"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "סוג",
@@ -313,7 +315,8 @@
 				"TITLE": "COORDINATES",
 				"LATITUDE": "Latitude",
 				"LONGITUDE": "Longitude"
-			}
+			},
+			"PUBLIC_LINK": "Public Link"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -2021,13 +2024,20 @@
 		"PRODUCT_CATEGORY_SAVED": "קטגוריית מוצר '{{ name }}' נשמר",
 		"PRODUCT_CATEGORY_DELETED": "קטגוריית מוצר '{{ name }}' הוסר",
 		"IMAGE": "תמונה",
-		"LANGUAGE": "שפה",
-		"PRODUCT_VARIANT_DELETED": "גרסת המוצר נמחקה!",
-		"ICON": "אייקון",
-		"ADD_VARIANT": "הוסף גרסה",
-		"EDIT_VARIANT": "ערוך גרסה",
-		"NO_OPTIONS_LABEL": "(אין אפשרויות)",
-		"OPTIONS": "אפשרויות"
+		"LANGUAGE": "Language",
+		"PRODUCT_VARIANT_DELETED": "Product variant deleted!",
+		"ICON": "Icon",
+		"ADD_VARIANT": "Add variant",
+		"EDIT_VARIANT": "Edit variant",
+		"NO_OPTIONS_LABEL": "(no options)",
+		"OPTIONS": "Options",
+		"SELECT_OR_UPLOAD_IMAGE": "Select or upload image",
+		"SELECT_IMAGE": "Select image",
+		"NO_IMAGE_SELECTED": "No image selected",
+		"URL": "Url",
+		"DIMENSIONS": "Dimensions",
+		"FEATURED_IMAGE_WAS_SAVED": "Featured image was saved!",
+		"IMAGE_SAVED": "Image was saved!"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
@@ -2462,6 +2472,11 @@
 			"DELETE": "מחק",
 			"NOTE": "Note",
 			"PAYMENTS": "Payments"
+		},
+		"PUBLIC_LINK": {
+			"HEADER": "Generate Public Link",
+			"GENERATE": "Generate a link to the {{ text }} that anyone with the link can view.",
+			"ACCESS": "Anyone with access to this link can view the {{ text }}."
 		}
 	},
 	"PAYMENTS_PAGE": {

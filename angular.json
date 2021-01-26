@@ -695,6 +695,102 @@
 					}
 				}
 			}
+		},
+		"wakatime": {
+			"root": "libs/wakatime",
+			"sourceRoot": "libs/wakatime/src",
+			"projectType": "library",
+			"schematics": {},
+			"architect": {
+				"lint": {
+					"builder": "@nrwl/linter:eslint",
+					"options": {
+						"lintFilePatterns": ["libs/wakatime/**/*.ts"]
+					}
+				},
+				"test": {
+					"builder": "@nrwl/jest:jest",
+					"options": {
+						"jestConfig": "libs/wakatime/jest.config.js",
+						"passWithNoTests": true
+					}
+				}
+			}
+		},
+		"desktop-libs": {
+			"root": "libs/desktop-libs",
+			"sourceRoot": "libs/desktop-libs/src",
+			"projectType": "library",
+			"schematics": {},
+			"architect": {
+				"lint": {
+					"builder": "@nrwl/linter:eslint",
+					"options": {
+						"lintFilePatterns": ["libs/desktop-libs/**/*.ts"]
+					}
+				},
+				"test": {
+					"builder": "@nrwl/jest:jest",
+					"options": {
+						"jestConfig": "libs/desktop-libs/jest.config.js",
+						"passWithNoTests": true
+					}
+				}
+			}
+		},
+		"desktop-window": {
+			"root": "libs/desktop-window",
+			"sourceRoot": "libs/desktop-window/src",
+			"projectType": "library",
+			"schematics": {},
+			"architect": {
+				"lint": {
+					"builder": "@nrwl/linter:eslint",
+					"options": {
+						"lintFilePatterns": ["libs/desktop-window/**/*.ts"]
+					}
+				},
+				"test": {
+					"builder": "@nrwl/jest:jest",
+					"options": {
+						"jestConfig": "libs/desktop-window/jest.config.js",
+						"passWithNoTests": true
+					}
+				}
+			}
+		},
+		"desktop-ui-lib": {
+			"projectType": "library",
+			"root": "libs/desktop-ui-lib",
+			"sourceRoot": "libs/desktop-ui-lib/src",
+			"prefix": "gauzy",
+			"architect": {
+				"lint": {
+					"builder": "@angular-devkit/build-angular:tslint",
+					"options": {
+						"tsConfig": [
+							"libs/desktop-ui-lib/tsconfig.lib.json",
+							"libs/desktop-ui-lib/tsconfig.spec.json"
+						],
+						"exclude": [
+							"**/node_modules/**",
+							"!libs/desktop-ui-lib/**/*"
+						]
+					}
+				},
+				"test": {
+					"builder": "@nrwl/jest:jest",
+					"options": {
+						"jestConfig": "libs/desktop-ui-lib/jest.config.js",
+						"passWithNoTests": true
+					}
+				}
+			},
+			"schematics": {
+				"@schematics/angular:component": {
+					"style": "scss"
+				}
+			}
 		}
 	},
 	"schematics": {

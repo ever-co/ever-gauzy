@@ -11,7 +11,7 @@ import * as moment from 'moment';
 import * as _ from 'underscore';
 import { createRandomTimeLogs } from '../time-log/time-log.seed';
 import { createRandomActivities } from '../activity/activities.seed';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { Tenant } from '../../tenant/tenant.entity';
 
 export const createDefaultTimeSheet = async (

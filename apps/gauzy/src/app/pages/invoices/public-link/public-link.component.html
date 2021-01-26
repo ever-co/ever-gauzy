@@ -1,0 +1,52 @@
+<nb-card>
+	<nb-card-header>
+		<h5>
+			{{ 'INVOICES_PAGE.PUBLIC_LINK.HEADER' | translate }}
+		</h5>
+	</nb-card-header>
+	<nb-card-body>
+		<div *ngIf="show" class="mb-3">
+			{{
+				'INVOICES_PAGE.PUBLIC_LINK.GENERATE'
+					| translate
+						: { text: invoice.isEstimate ? 'estimate' : 'invoice' }
+			}}
+		</div>
+		<div *ngIf="!show" class="mb-3">
+			{{
+				'INVOICES_PAGE.PUBLIC_LINK.ACCESS'
+					| translate
+						: { text: invoice.isEstimate ? 'estimate' : 'invoice' }
+			}}
+		</div>
+		<div>
+			<label for="inputDiscountValue" class="label">
+				{{ 'FORM.LABELS.PUBLIC_LINK' | translate }}
+			</label>
+			<input [ngModel]="invoice.publicLink" disabled nbInput fullWidth />
+		</div>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button status="danger" class="mr-3" nbButton (click)="cancel()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			*ngIf="show"
+			class="mr-3"
+			(click)="generateLink()"
+			status="success"
+			nbButton
+		>
+			{{ 'BUTTONS.GENERATE' | translate }}
+		</button>
+		<button
+			*ngIf="!show"
+			(click)="copyToClipboard()"
+			class="mr-3"
+			status="success"
+			nbButton
+		>
+			{{ 'BUTTONS.COPY_LINK' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>
