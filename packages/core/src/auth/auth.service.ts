@@ -1,4 +1,4 @@
-import { environment } from '@gauzy/config';
+import { environment as env } from '@gauzy/config';
 import {
 	IUserRegistrationInput,
 	LanguagesEnum,
@@ -321,7 +321,7 @@ export class AuthService {
 			}
 
 			const { access_token } = JSON.parse(body);
-			const { host, port } = environment;
+			const { host, port } = env;
 
 			post(
 				{
