@@ -44,7 +44,9 @@ export class ProductGalleryComponent
 
 	@Output() galleryUpdated = new EventEmitter<IImageAsset[]>();
 	@Output() featuredImageUpdated = new EventEmitter<IImageAsset>();
+
 	private newImageUploadedEvent$ = new Subject<any>();
+	private newImageStoredEvent$ = new Subject<any>();
 
 	constructor(
 		readonly translationService: TranslateService,
@@ -68,14 +70,11 @@ export class ProductGalleryComponent
 	ngOnInit(): void {
 		this.gallery = this.inventoryItem ? this.inventoryItem.gallery : [];
 
-		this.getAvailableImages();
-
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
 			.subscribe((organization: IOrganization) => {
 				if (organization) {
 					this.organization = organization;
-					this.getAvailableImages();
 				}
 			});
 
@@ -87,7 +86,9 @@ export class ProductGalleryComponent
 					url: resultData.url,
 					width: resultData.width,
 					height: resultData.height,
-					isFeatured: false
+					isFeatured: false,
+					organizationId: this.organization.id,
+					tenantId: this.store.user.tenantId
 				};
 
 				let result = await this.imageAssetService.createImageAsset(
@@ -97,30 +98,19 @@ export class ProductGalleryComponent
 				if (result) {
 					this.toastrService.success('INVENTORY_PAGE.IMAGE_SAVED');
 
+					this.newImageStoredEvent$.next(result);
+
 					this.availableImages.push(result);
 				}
 			});
-	}
-
-	async getAvailableImages() {
-		//tstodo save image with tenant and organization
-
-		// const { tenantId } = this.store.user;
-
-		// let searchInput: any = { tenantId };
-
-		// if (this.organization && this.organization.id) {
-		// 	searchInput.organizationId = this.organization.id;
-		// }
-
-		this.availableImages = (await this.imageAssetService.getAll({})).items;
 	}
 
 	async onAddImageClick() {
 		const dialog = this.dialogService.open(SelectAssetComponent, {
 			context: {
 				gallery: this.availableImages,
-				newImageUploadedEvent: this.newImageUploadedEvent$
+				newImageUploadedEvent: this.newImageUploadedEvent$,
+				newImageStoredEvent: this.newImageStoredEvent$
 			}
 		});
 
@@ -129,6 +119,7 @@ export class ProductGalleryComponent
 		if (selectedImage && !this.inventoryItem) {
 			this.gallery.push(selectedImage);
 			this.galleryUpdated.emit(this.gallery);
+			this.toastrService.success('INVENTORY_PAGE.IMAGE_ADDED_TO_GALLERY');
 		}
 
 		if (selectedImage && this.inventoryItem) {
@@ -137,6 +128,7 @@ export class ProductGalleryComponent
 				selectedImage
 			);
 			this.gallery = resultProduct.gallery;
+			this.toastrService.success('INVENTORY_PAGE.IMAGE_ADDED_TO_GALLERY');
 		}
 	}
 
