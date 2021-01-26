@@ -158,5 +158,38 @@ export class ProductGalleryComponent
 		}
 	}
 
+	async onDeleteImageClick() {
+		if (!this.selectedImage) return;
+
+		if (this.selectedImage && !this.inventoryItem) {
+			this.featuredImageUpdated.emit(this.selectedImage);
+			this.deleteGalleryImage();
+			return;
+		}
+
+		if (this.selectedImage && this.inventoryItem) {
+			try {
+				let result = await this.productService.deleteGalleryImage(
+					this.inventoryItem.id,
+					this.selectedImage
+				);
+
+				if (result) {
+					this.deleteGalleryImage();
+				}
+			} catch (err) {
+				this.toastrService.danger('Something bad happened!');
+			}
+		}
+	}
+
+	private deleteGalleryImage() {
+		this.gallery = this.gallery.filter(
+			(img) => img.id !== this.selectedImage.id
+		);
+		this.selectedImage = null;
+		this.toastrService.success('INVENTORY_PAGE.IMAGE_WAS_DELETED');
+	}
+
 	ngOnDestroy(): void {}
 }

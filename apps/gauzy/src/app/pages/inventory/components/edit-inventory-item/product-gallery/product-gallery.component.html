@@ -44,19 +44,21 @@
 		[nbTooltip]="'INVENTORY_PAGE.VIEW_GALLERY' | translate"
 		nbTooltipPlacement="top"
 		nbTooltipStatus="primary"
+		[disabled]="!gallery.length"
 	>
 		<nb-icon icon="eye-outline"></nb-icon>
 	</button>
-	<button
+	<!-- <button
 		nbButton
 		ghost
 		status="primary"
 		[nbTooltip]="'INVENTORY_PAGE.EDIT_IMAGE' | translate"
 		nbTooltipPlacement="top"
 		nbTooltipStatus="primary"
+		[disabled]="!selectedImage"
 	>
 		<nb-icon icon="edit-outline"></nb-icon>
-	</button>
+	</button> -->
 	<button
 		nbButton
 		ghost
@@ -65,6 +67,8 @@
 		[nbTooltip]="'INVENTORY_PAGE.DELETE_IMAGE' | translate"
 		nbTooltipPlacement="top"
 		nbTooltipStatus="danger"
+		[disabled]="!selectedImage"
+		(click)="onDeleteImageClick()"
 	>
 		<nb-icon icon="trash-outline"></nb-icon>
 	</button>
