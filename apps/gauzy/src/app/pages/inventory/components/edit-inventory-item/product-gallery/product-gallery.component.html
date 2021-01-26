@@ -29,7 +29,7 @@
 		nbButton
 		ghost
 		status="primary"
-		[disabled]="!selectedImage"
+		[disabled]="!gallery.length || !selectedImage"
 		(click)="onSetFeaturedClick()"
 		[nbTooltip]="'INVENTORY_PAGE.SET_FEATURED_IMAGE' | translate"
 		nbTooltipPlacement="top"
@@ -68,7 +68,7 @@
 		[nbTooltip]="'INVENTORY_PAGE.DELETE_IMAGE' | translate"
 		nbTooltipPlacement="top"
 		nbTooltipStatus="danger"
-		[disabled]="!selectedImage"
+		[disabled]="!gallery.length && !selectedImage"
 		(click)="onDeleteImageClick()"
 	>
 		<nb-icon icon="trash-outline"></nb-icon>
@@ -76,8 +76,9 @@
 </div>
 
 <div class="gallery-preview-items mt-3">
-	<div class="row">
+	<div *ngIf="gallery.length" class="row">
 		<div
+			[ngClass]="{ selected: isSelected(galleryItem) }"
 			class="col-sm-3 col-md-4 gallery-sm-preview"
 			*ngFor="let galleryItem of gallery"
 			(click)="onSmallImgPreviewClick(galleryItem)"
@@ -88,6 +89,15 @@
 					backgroundImage: 'url(' + galleryItem.url + ')'
 				}"
 			></div>
+			<div class="featured-icon" *ngIf="isFeaturedImage(galleryItem)">
+				<div class="interview-info">
+					<nb-icon
+						icon="checkmark-circle-2-outline"
+						status="sucess"
+						class="icons"
+					></nb-icon>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>

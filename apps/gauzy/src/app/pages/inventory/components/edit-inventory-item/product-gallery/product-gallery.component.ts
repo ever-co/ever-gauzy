@@ -153,6 +153,7 @@ export class ProductGalleryComponent
 			);
 
 			if (result) {
+				this.inventoryItem.featuredImage = this.selectedImage;
 				this.toastrService.success(
 					'INVENTORY_PAGE.FEATURED_IMAGE_WAS_SAVED'
 				);
@@ -204,6 +205,19 @@ export class ProductGalleryComponent
 			},
 			dialogClass: 'fullscreen'
 		});
+	}
+
+	isSelected(image: IImageAsset) {
+		if (!this.selectedImage || !image) return false;
+
+		return image.url == this.selectedImage.url;
+	}
+
+	isFeaturedImage(image: IImageAsset) {
+		if (!image || !this.inventoryItem || !this.inventoryItem.featuredImage)
+			return false;
+
+		return this.inventoryItem.featuredImage.url == image.url;
 	}
 
 	private deleteGalleryImage() {
