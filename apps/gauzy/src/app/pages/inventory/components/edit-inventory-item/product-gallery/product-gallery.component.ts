@@ -50,6 +50,16 @@ export class ProductGalleryComponent
 	private newImageUploadedEvent$ = new Subject<any>();
 	private newImageStoredEvent$ = new Subject<any>();
 
+	get displayImageUrl() {
+		if (this.selectedImage) return this.selectedImage.url;
+
+		if (this.inventoryItem && this.inventoryItem.featuredImage) {
+			return this.inventoryItem.featuredImage.url;
+		}
+
+		return null;
+	}
+
 	constructor(
 		readonly translationService: TranslateService,
 		private dialogService: NbDialogService,
@@ -132,6 +142,7 @@ export class ProductGalleryComponent
 				selectedImage
 			);
 			this.gallery = resultProduct.gallery;
+			this.galleryUpdated.emit(this.gallery);
 			this.toastrService.success('INVENTORY_PAGE.IMAGE_ADDED_TO_GALLERY');
 		}
 	}
@@ -154,6 +165,8 @@ export class ProductGalleryComponent
 
 			if (result) {
 				this.inventoryItem.featuredImage = this.selectedImage;
+				this.featuredImageUpdated.emit(this.selectedImage);
+
 				this.toastrService.success(
 					'INVENTORY_PAGE.FEATURED_IMAGE_WAS_SAVED'
 				);
@@ -167,7 +180,6 @@ export class ProductGalleryComponent
 		if (!this.selectedImage) return;
 
 		if (this.selectedImage && !this.inventoryItem) {
-			this.featuredImageUpdated.emit(this.selectedImage);
 			this.deleteGalleryImage();
 			return;
 		}
@@ -224,6 +236,7 @@ export class ProductGalleryComponent
 		this.gallery = this.gallery.filter(
 			(img) => img.id !== this.selectedImage.id
 		);
+		this.galleryUpdated.emit(this.gallery);
 		this.selectedImage = null;
 		this.toastrService.success('INVENTORY_PAGE.IMAGE_WAS_DELETED');
 	}

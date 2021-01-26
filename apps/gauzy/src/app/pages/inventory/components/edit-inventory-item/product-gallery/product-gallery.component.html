@@ -1,12 +1,12 @@
 <div>
 	<img
-		*ngIf="selectedImage && selectedImage.url"
+		*ngIf="displayImageUrl"
 		class="featured-image"
-		[src]="selectedImage.url"
+		[src]="displayImageUrl"
 		alt="Feature image"
 	/>
 	<img
-		*ngIf="!selectedImage || !selectedImage.url"
+		*ngIf="!displayImageUrl"
 		class="featured-image"
 		[src]="'https://afostats.imagead.net/uploads/afo/no_img.png'"
 		alt="Feature image"
@@ -68,7 +68,7 @@
 		[nbTooltip]="'INVENTORY_PAGE.DELETE_IMAGE' | translate"
 		nbTooltipPlacement="top"
 		nbTooltipStatus="danger"
-		[disabled]="!gallery.length && !selectedImage"
+		[disabled]="!gallery.length || !selectedImage"
 		(click)="onDeleteImageClick()"
 	>
 		<nb-icon icon="trash-outline"></nb-icon>
