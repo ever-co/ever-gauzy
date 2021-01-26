@@ -7,7 +7,7 @@ if (process.env.IS_ELECTRON && process.env.GAUZY_USER_PATH) {
 	require('app-root-path').setPath(process.env.GAUZY_USER_PATH);
 }
 
-export const environmentProd: IEnvironment = {
+export const environment: IEnvironment = {
 	port: process.env.port || 3000,
 	host: process.env.host || 'http://localhost',
 	baseUrl: process.env.BASE_URL || 'http://localhost:3000',
@@ -138,7 +138,7 @@ export const environmentProd: IEnvironment = {
 	}
 };
 
-export const gauzyToggleFeaturesProd: IGauzyFeatures = {
+export const gauzyToggleFeatures: IGauzyFeatures = {
 	FEATURE_DASHBOARD: process.env.FEATURE_DASHBOARD === 'false' ? false : true,
 	FEATURE_TIME_TRACKING:
 		process.env.FEATURE_TIME_TRACKING === 'false' ? false : true,

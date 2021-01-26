@@ -13,6 +13,11 @@ export interface IGraphqlOptions {
 	apolloServerPlugins?: PluginDefinition[];
 }
 
+export interface IAssetOptions {
+	assetPath: string;
+
+	assetPublicPath: string;
+}
 export interface IApiServerOptions {
 	hostname?: string;
 
@@ -43,4 +48,6 @@ export interface IPluginConfig {
 	logger?: ILogger;
 
 	authOptions?: IAuthOptions;
+
+	assetOptions?: IAssetOptions;
 }

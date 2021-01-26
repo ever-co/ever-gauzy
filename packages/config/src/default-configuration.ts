@@ -1,6 +1,13 @@
 require('dotenv').config();
 
-import { IPluginConfig } from '@gauzy/common';
+import {
+	API_HOST,
+	API_PORT,
+	BASE_URL,
+	GRAPHQL_API_PATH,
+	IPluginConfig
+} from '@gauzy/common';
+import * as path from 'path';
 import { dbConnectionConfig } from './database';
 
 /**
@@ -8,12 +15,12 @@ import { dbConnectionConfig } from './database';
  */
 export const defaultConfiguration: IPluginConfig = {
 	apiConfigOptions: {
-		hostname: process.env.host || '127.0.0.1',
-		port: parseInt(process.env.port) || 3000,
-		baseUrl: process.env.BASE_URL || 'http://127.0.0.1:3000',
+		hostname: API_HOST,
+		port: API_PORT,
+		baseUrl: BASE_URL,
 		middleware: [],
 		graphqlConfigOptions: {
-			path: 'graphql',
+			path: GRAPHQL_API_PATH,
 			playground: true,
 			debug: true,
 			apolloServerPlugins: []
@@ -25,5 +32,21 @@ export const defaultConfiguration: IPluginConfig = {
 		expressSessionSecret: 'gauzy',
 		userPasswordBcryptSaltRounds: 12,
 		jwtSecret: 'secretKey'
+	},
+	assetOptions: {
+		assetPath: path.join(
+			path.resolve(
+				__dirname,
+				'../../../',
+				...['packages', 'core', 'src', 'assets']
+			)
+		),
+		assetPublicPath: path.join(
+			path.resolve(
+				__dirname,
+				'../../../',
+				...['packages', 'core', 'public']
+			)
+		)
 	}
 };

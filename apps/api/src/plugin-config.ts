@@ -17,6 +17,18 @@ export const pluginConfig: IPluginConfig = {
 		synchronize: true,
 		...getDbConfig()
 	},
+	assetOptions: {
+		assetPath: path.join(
+			path.resolve(
+				__dirname,
+				'../../../',
+				...['apps', 'api', 'src', 'assets']
+			)
+		),
+		assetPublicPath: path.join(
+			path.resolve(__dirname, '../../../', ...['apps', 'api', 'public'])
+		)
+	},
 	plugins: []
 };
 

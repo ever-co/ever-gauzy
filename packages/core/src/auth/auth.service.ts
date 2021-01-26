@@ -1,4 +1,4 @@
-import { environment as env, environment } from '@gauzy/config';
+import { environment } from '@gauzy/config';
 import {
 	IUserRegistrationInput,
 	LanguagesEnum,
