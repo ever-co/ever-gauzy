@@ -2037,7 +2037,12 @@
 		"URL": "Url",
 		"DIMENSIONS": "Dimensions",
 		"FEATURED_IMAGE_WAS_SAVED": "Featured image was saved!",
-		"IMAGE_SAVED": "Image was saved!"
+		"IMAGE_SAVED": "Image was saved!",
+		"ADD_GALLERY_IMAGE": "Add gallery image",
+		"SET_FEATURED_IMAGE": "Set featured image",
+		"VIEW_GALLERY": "View gallery",
+		"EDIT_IMAGE": "Edit gallery image",
+		"DELETE_IMAGE": "Delete image"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

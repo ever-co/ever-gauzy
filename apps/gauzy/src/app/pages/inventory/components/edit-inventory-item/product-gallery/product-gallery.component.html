@@ -1,12 +1,12 @@
 <div>
 	<img
-		*ngIf="selectedImage && selectedImage.url"
+		*ngIf="displayImageUrl"
 		class="featured-image"
-		[src]="selectedImage.url"
+		[src]="displayImageUrl"
 		alt="Feature image"
 	/>
 	<img
-		*ngIf="!selectedImage || !selectedImage.url"
+		*ngIf="!displayImageUrl"
 		class="featured-image"
 		[src]="'https://afostats.imagead.net/uploads/afo/no_img.png'"
 		alt="Feature image"
@@ -14,32 +14,71 @@
 </div>
 
 <div class="actions-container mt-2">
-	<button nbButton ghost status="primary" (click)="onAddImageClick()">
+	<button
+		nbButton
+		ghost
+		status="primary"
+		(click)="onAddImageClick()"
+		[nbTooltip]="'INVENTORY_PAGE.ADD_GALLERY_IMAGE' | translate"
+		nbTooltipPlacement="top"
+		nbTooltipStatus="primary"
+	>
 		<nb-icon icon="plus-circle-outline"></nb-icon>
 	</button>
 	<button
 		nbButton
 		ghost
 		status="primary"
-		[disabled]="!selectedImage"
+		[disabled]="!gallery.length || !selectedImage"
 		(click)="onSetFeaturedClick()"
+		[nbTooltip]="'INVENTORY_PAGE.SET_FEATURED_IMAGE' | translate"
+		nbTooltipPlacement="top"
+		nbTooltipStatus="primary"
 	>
 		<nb-icon icon="image-outline"></nb-icon>
 	</button>
-	<button nbButton ghost status="primary">
+	<button
+		nbButton
+		ghost
+		status="primary"
+		[nbTooltip]="'INVENTORY_PAGE.VIEW_GALLERY' | translate"
+		nbTooltipPlacement="top"
+		nbTooltipStatus="primary"
+		[disabled]="!gallery.length"
+		(click)="onViewGalleryClick()"
+	>
 		<nb-icon icon="eye-outline"></nb-icon>
 	</button>
-	<button nbButton ghost status="primary">
+	<!-- <button
+		nbButton
+		ghost
+		status="primary"
+		[nbTooltip]="'INVENTORY_PAGE.EDIT_IMAGE' | translate"
+		nbTooltipPlacement="top"
+		nbTooltipStatus="primary"
+		[disabled]="!selectedImage"
+	>
 		<nb-icon icon="edit-outline"></nb-icon>
-	</button>
-	<button nbButton ghost status="danger" class="ml-3">
+	</button> -->
+	<button
+		nbButton
+		ghost
+		status="danger"
+		class="ml-3"
+		[nbTooltip]="'INVENTORY_PAGE.DELETE_IMAGE' | translate"
+		nbTooltipPlacement="top"
+		nbTooltipStatus="danger"
+		[disabled]="!gallery.length || !selectedImage"
+		(click)="onDeleteImageClick()"
+	>
 		<nb-icon icon="trash-outline"></nb-icon>
 	</button>
 </div>
 
 <div class="gallery-preview-items mt-3">
-	<div class="row">
+	<div *ngIf="gallery.length" class="row">
 		<div
+			[ngClass]="{ selected: isSelected(galleryItem) }"
 			class="col-sm-3 col-md-4 gallery-sm-preview"
 			*ngFor="let galleryItem of gallery"
 			(click)="onSmallImgPreviewClick(galleryItem)"
@@ -50,6 +89,15 @@
 					backgroundImage: 'url(' + galleryItem.url + ')'
 				}"
 			></div>
+			<div class="featured-icon" *ngIf="isFeaturedImage(galleryItem)">
+				<div class="interview-info">
+					<nb-icon
+						icon="checkmark-circle-2-outline"
+						status="sucess"
+						class="icons"
+					></nb-icon>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>

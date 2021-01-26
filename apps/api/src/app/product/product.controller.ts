@@ -209,4 +209,22 @@ export class ProductController extends CrudController<Product> {
 	) {
 		return this.productService.setAsFeatured(productId, image);
 	}
+
+	@ApiOperation({ summary: 'Delete image from gallery' })
+	@ApiResponse({
+		status: HttpStatus.NO_CONTENT,
+		description: 'The record has been successfully deleted'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Delete('/:productId/delete-gallery-image/:imageId')
+	async deleteGaleryImage(
+		@Param('productId') productId: string,
+		@Param('imageId') imageId: string
+	): Promise<Product> {
+		return this.productService.deleteGalleryImage(productId, imageId);
+	}
 }

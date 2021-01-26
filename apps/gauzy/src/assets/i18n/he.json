@@ -2037,7 +2037,12 @@
 		"URL": "Url",
 		"DIMENSIONS": "Dimensions",
 		"FEATURED_IMAGE_WAS_SAVED": "Featured image was saved!",
-		"IMAGE_SAVED": "Image was saved!"
+		"IMAGE_SAVED": "Image was saved!",
+		"ADD_GALLERY_IMAGE": "הוסף תמונת גלריה",
+		"SET_FEATURED_IMAGE": "הגדר תמונה מוצגת",
+		"VIEW_GALLERY": "הצג גלריה",
+		"EDIT_IMAGE": "ערוך את תמונת הגלריה",
+		"DELETE_IMAGE": "מחק תמונה"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

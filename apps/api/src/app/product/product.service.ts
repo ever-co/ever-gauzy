@@ -108,4 +108,23 @@ export class ProductService extends TenantAwareCrudService<Product> {
 			throw new BadRequestException(err);
 		}
 	}
+
+	async deleteGalleryImage(
+		productId: string,
+		imageId: string
+	): Promise<Product> {
+		try {
+			let product = await this.productRepository.findOne({
+				where: { id: productId },
+				relations: ['gallery']
+			});
+
+			product.gallery = product.gallery.filter(
+				(image) => image.id !== imageId
+			);
+			return await this.productRepository.save(product);
+		} catch (err) {
+			throw new BadRequestException(err);
+		}
+	}
 }
