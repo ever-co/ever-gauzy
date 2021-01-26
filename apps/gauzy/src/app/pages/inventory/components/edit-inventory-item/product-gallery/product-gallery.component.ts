@@ -20,6 +20,8 @@ import { ImageAssetService } from 'apps/gauzy/src/app/@core/services/image-asset
 import { ProductService } from 'apps/gauzy/src/app/@core/services/product.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { GalleryComponent } from 'apps/gauzy/src/app/@shared/gallery/gallery.component';
+import { GalleryService } from 'apps/gauzy/src/app/@shared/gallery/gallery.service';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
 import { Subject } from 'rxjs';
@@ -54,7 +56,9 @@ export class ProductGalleryComponent
 		private imageAssetService: ImageAssetService,
 		private toastrService: ToastrService,
 		private store: Store,
-		private productService: ProductService
+		private productService: ProductService,
+		private nbDialogService: NbDialogService,
+		private galleryService: GalleryService
 	) {
 		super(translationService);
 	}
@@ -181,6 +185,25 @@ export class ProductGalleryComponent
 				this.toastrService.danger('Something bad happened!');
 			}
 		}
+	}
+
+	onViewGalleryClick() {
+		const mappedImages = this.gallery.map((image) => {
+			return {
+				thumbUrl: image.url,
+				fullUrl: image.url
+			};
+		});
+
+		this.galleryService.appendItems(mappedImages);
+
+		this.nbDialogService.open(GalleryComponent, {
+			context: {
+				items: mappedImages,
+				item: mappedImages[0]
+			},
+			dialogClass: 'fullscreen'
+		});
 	}
 
 	private deleteGalleryImage() {
