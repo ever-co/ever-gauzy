@@ -24,7 +24,7 @@
 		"build": "rimraf dist && tsc -p tsconfig.build.json",
 		"postbuild": "yarn run copy-files && yarn run copy-assets",
 		"copy-files": "copyfiles -u 1 src/**/**/*.gql dist/",
-		"copy-assets": "mkdirp dist/assets && cp -rv src/assets/** dist/assets",
+		"copy-assets": "mkdirp dist/i18n && cp -rv src/i18n/** dist/i18n",
 		"prepublishOnly": "yarn run build",
 		"start": "ts-node ./src/main.ts"
 	},

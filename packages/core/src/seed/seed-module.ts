@@ -4,7 +4,7 @@
 import yargs from 'yargs';
 import * as chalk from 'chalk';
 
-import { SeedDataService } from '../app/core/seeds/seed-data.service';
+import { SeedDataService } from 'core/seeds/seed-data.service';
 
 /**
  * Usage:

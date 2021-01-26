@@ -6,8 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigModule, ConfigService, getConfig } from '@gauzy/config';
 import { PluginModule } from '@gauzy/plugin';
-import { AppModule } from '../app/app.module';
-import { ApiModule } from '../api';
+import { AppModule } from './../app.module';
 import { HealthIndicatorModule } from '../health-indicator';
 import { Logger, LoggerModule } from '../logger';
 
@@ -16,7 +15,6 @@ import { Logger, LoggerModule } from '../logger';
 		ConfigModule,
 		AppModule,
 		LoggerModule.forRoot(),
-		ApiModule,
 		PluginModule.forRoot(getConfig()),
 		HealthIndicatorModule
 	]

@@ -2,7 +2,7 @@
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
 
-import { SeedDataService } from '../app/core/seeds/seed-data.service';
+import { SeedDataService } from 'core/seeds/seed-data.service';
 
 /**
  * WARNING: Running this file will DELETE all data in your database

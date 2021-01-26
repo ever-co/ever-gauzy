@@ -9,9 +9,9 @@ import * as helmet from 'helmet';
 import { IPluginConfig } from '@gauzy/common';
 import { getConfig, setConfig, environment as env } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
-import { coreEntities } from '../app/core/entities';
-import { AppService } from '../app/app.service';
-import { AppModule } from '../app/app.module';
+import { coreEntities } from '../core/entities';
+import { AppService } from '../app.service';
+import { AppModule } from '../app.module';
 // import { Logger } from '../logger/logger';
 
 export async function bootstrap(

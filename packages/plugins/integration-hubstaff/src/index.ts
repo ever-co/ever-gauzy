@@ -1,1 +1,1 @@
-export * from './lib/hubstaff-entity-settings';
+export * from './hubstaff-entity-settings';
