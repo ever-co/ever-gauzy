@@ -18,7 +18,14 @@
 		"skipDefaultLibCheck": true,
 		"baseUrl": ".",
 		"paths": {
-			"ng2-completer": ["node_modules/@akveo/ng2-completer"]
+			"ng2-completer": ["node_modules/@akveo/ng2-completer"],
+			"@gauzy/wakatime": ["libs/wakatime/src/index.ts"],
+			"@gauzy/desktop-timer": ["libs/desktop-timer/src/index.ts"],
+			"@gauzy/desktop-window": ["libs/desktop-window/src/index.ts"],
+			"@env-desktop/environment": [
+				"apps/desktop/src/environments/environment.ts"
+			],
+			"@gauzy/desktop-ui-lib": ["libs/desktop-ui-lib/src/index.ts"]
 		},
 		"preserveConstEnums": true,
 		"allowSyntheticDefaultImports": true,

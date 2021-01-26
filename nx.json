@@ -37,6 +37,18 @@
 		},
 		"integration-hubstaff": {
 			"tags": []
+		},
+		"wakatime": {
+			"tags": []
+		},
+		"desktop-libs": {
+			"tags": []
+		},
+		"desktop-window": {
+			"tags": []
+		},
+		"desktop-ui-lib": {
+			"tags": []
 		}
 	}
 }

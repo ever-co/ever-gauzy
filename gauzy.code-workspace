@@ -2,6 +2,9 @@
 	"folders": [
 		{
 			"path": "apps"
+		},
+		{
+			"path": "libs"
 		}
 	],
 	"settings": {

@@ -2,9 +2,8 @@ import { Module } from '@nestjs/common';
 import { RouterModule } from 'nest-router';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { WakatimeModule } from './wakatime/wakatime.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Wakatime } from './wakatime/wakatime.entity';
+import { Wakatime, WakatimeModule } from '@gauzy/wakatime';
 
 require('app-root-path').setPath(process.env.GAUZY_USER_PATH);
 
@@ -19,8 +18,7 @@ require('app-root-path').setPath(process.env.GAUZY_USER_PATH);
 			logging: true,
 			logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
 			synchronize: true,
-			entities: [Wakatime],
-			
+			entities: [Wakatime]
 		}),
 		RouterModule.forRoutes([
 			{
