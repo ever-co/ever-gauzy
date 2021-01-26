@@ -559,6 +559,18 @@
 	<button
 		*ngIf="dataLayoutStyle === 'TABLE'"
 		nbButton
+		status="info"
+		(click)="generatePublicLink(selectedItem)"
+		class="mr-2"
+		[size]="buttonSize || 'medium'"
+		[disabled]="!selectedItem && disableButton"
+	>
+		<nb-icon class="mr-1" icon="link-2-outline"> </nb-icon>
+		{{ 'BUTTONS.PUBLIC_LINK' | translate }}
+	</button>
+	<button
+		*ngIf="dataLayoutStyle === 'TABLE'"
+		nbButton
 		status="danger"
 		(click)="delete(selectedItem)"
 		class="mr-2"

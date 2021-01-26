@@ -15,12 +15,25 @@
 	</nb-card-body>
 	<nb-card-footer>
 		<div *ngIf="!selectedImage" class="img-preview-info">
-			No image selected
+			{{ 'INVENTORY_PAGE.NO_IMAGE_SELECTED' | translate }}
 		</div>
 		<div *ngIf="selectedImage" class="img-preview-info">
-			<div>{{ selectedImage.name }}</div>
-			<div>{{ selectedImage.url }}</div>
-			<div>{{ selectedImage.width }}x{{ selectedImage.height }}</div>
+			<div>
+				<span class="img-desc-text"
+					>{{ 'INVENTORY_PAGE.NAME' | translate }}:</span
+				>{{ selectedImage.name }}
+			</div>
+			<div>
+				<span class="img-desc-text"
+					>{{ 'INVENTORY_PAGE.URL' | translate }}:</span
+				>{{ selectedImage.url }}
+			</div>
+			<div>
+				<span class="img-desc-text"
+					>{{ 'INVENTORY_PAGE.DIMENSIONS' | translate }}:</span
+				>
+				{{ selectedImage.width }}x{{ selectedImage.height }}
+			</div>
 		</div>
 	</nb-card-footer>
 </nb-card>

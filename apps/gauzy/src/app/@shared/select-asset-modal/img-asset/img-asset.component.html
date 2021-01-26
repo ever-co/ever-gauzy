@@ -1,4 +1,8 @@
-<div class="image-asset-list-item" (click)="onImageClick($event)">
+<div
+	class="image-asset-list-item"
+	(click)="onImageClick($event)"
+	[ngClass]="{ selected: selected }"
+>
 	<div
 		class="image-item"
 		[ngStyle]="{

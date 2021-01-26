@@ -45,6 +45,7 @@ import { NgxPermissionsService } from 'ngx-permissions';
 import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
 import { ToastrService } from '../../@core/services/toastr.service';
 import { saveAs } from 'file-saver';
+import { PublicLinkComponent } from './public-link/public-link.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -638,6 +639,20 @@ export class InvoicesComponent
 		var blob = new Blob([csvArray], { type: 'text/csv;charset=utf-8' });
 
 		saveAs(blob, `${fileName}-${this.selectedInvoice.invoiceNumber}.csv`);
+	}
+
+	async generatePublicLink(selectedItem) {
+		if (selectedItem) {
+			this.selectInvoice({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+		this.dialogService.open(PublicLinkComponent, {
+			context: {
+				invoice: this.selectedInvoice
+			}
+		});
 	}
 
 	async loadSettings() {

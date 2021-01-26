@@ -1,9 +1,10 @@
 import { Repository } from 'typeorm';
 import { IPagination } from '../core';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './product.entity';
 import {
+	IImageAsset,
 	IProductCreateInput,
 	IProductFindInput,
 	IProductTranslated
@@ -73,5 +74,38 @@ export class ProductService extends TenantAwareCrudService<Product> {
 
 	async saveProduct(productRequest: IProductCreateInput): Promise<Product> {
 		return await this.productRepository.save(<any>productRequest);
+	}
+
+	async addGalleryImage(
+		productId: string,
+		image: IImageAsset
+	): Promise<Product> {
+		try {
+			let product = await this.productRepository.findOne({
+				where: { id: productId },
+				relations: ['gallery']
+			});
+
+			product.gallery.push(image);
+			return await this.productRepository.save(product);
+		} catch (err) {
+			throw new BadRequestException(err);
+		}
+	}
+
+	async setAsFeatured(
+		productId: string,
+		image: IImageAsset
+	): Promise<Product> {
+		try {
+			let product = await this.productRepository.findOne({
+				where: { id: productId }
+			});
+
+			product.featuredImage = image;
+			return await this.productRepository.save(product);
+		} catch (err) {
+			throw new BadRequestException(err);
+		}
 	}
 }

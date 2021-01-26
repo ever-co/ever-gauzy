@@ -1,5 +1,11 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import {
+	FormGroup,
+	FormBuilder,
+	Validators,
+	AbstractControl,
+	ValidationErrors
+} from '@angular/forms';
 import {
 	IProductOption,
 	ITag,
@@ -11,7 +17,8 @@ import {
 	IOrganization,
 	ILanguage,
 	IProductTranslation,
-	IProductTranslatable
+	IProductTranslatable,
+	IImageAsset
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductTypeService } from '../../../../@core/services/product-type.service';
@@ -26,6 +33,7 @@ import { Store } from '../../../../@core/services/store.service';
 import { ProductVariantService } from '../../../../@core/services/product-variant.service';
 import { ToastrService } from '../../../../@core/services/toastr.service';
 import { VariantCreateInput } from './variant-form/variant-form.component';
+import { NbTabComponent, NbTabsetComponent } from '@nebular/theme';
 
 @Component({
 	selector: 'ngx-product-form',
@@ -37,6 +45,8 @@ export class ProductFormComponent
 	implements OnInit, OnDestroy {
 	form: FormGroup;
 	inventoryItem: IProductTranslatable;
+	featuredImage: IImageAsset;
+	gallery: IImageAsset[];
 
 	hoverState: boolean;
 	selectedOrganizationId = '';
@@ -58,6 +68,13 @@ export class ProductFormComponent
 	tags: ITag[] = [];
 	organization: IOrganization;
 	productId: string;
+
+	@ViewChild('inventoryTabset') inventoryTabset: NbTabsetComponent;
+
+	@ViewChild('mainTab') mainTab: NbTabComponent;
+	@ViewChild('optionsTab') optionsTab: NbTabComponent;
+	@ViewChild('variantsTab') variantsTab: NbTabComponent;
+
 	private ngDestroy$ = new Subject<void>();
 
 	constructor(
@@ -119,13 +136,12 @@ export class ProductFormComponent
 			tags: [this.inventoryItem ? this.inventoryItem.tags : ''],
 			name: [
 				this.activeTranslation ? this.activeTranslation.name : '',
-				Validators.required
+				this.validateTranslationProperty('name')
 			],
 			code: [
 				this.inventoryItem ? this.inventoryItem.code : '',
 				Validators.required
 			],
-			imageUrl: [this.inventoryItem ? this.inventoryItem.imageUrl : null],
 			productTypeId: [
 				this.inventoryItem ? this.inventoryItem.productTypeId : '',
 				Validators.required
@@ -145,12 +161,30 @@ export class ProductFormComponent
 		});
 	}
 
+	validateTranslationProperty = (propertyName: string) => (
+		control: AbstractControl
+	): null | ValidationErrors => {
+		return this.translations.every((translation: IProductTranslation) => {
+			return !translation[propertyName] && !control.value;
+		})
+			? { required: true }
+			: null;
+	};
+
 	async loadProduct(id: string) {
 		if (id) {
 			const { id: organizationId, tenantId } = this.organization;
 			this.inventoryItem = await this.productService.getById(
 				id,
-				['category', 'type', 'options', 'variants', 'tags', 'gallery'],
+				[
+					'category',
+					'type',
+					'options',
+					'variants',
+					'tags',
+					'gallery',
+					'featuredImage'
+				],
 				{ organizationId, tenantId }
 			);
 		}
@@ -220,12 +254,13 @@ export class ProductFormComponent
 			tags: this.form.get('tags').value,
 			translations: this.translations,
 			code: this.form.get('code').value,
-			imageUrl: this.form.get('imageUrl').value,
+			featuredImage: this.featuredImage || null,
 			productTypeId: this.form.get('productTypeId').value,
 			productCategoryId: this.form.get('productCategoryId').value,
 			enabled: this.form.get('enabled').value,
 			optionCreateInputs: this.options,
 			optionDeleteInputs: this.deletedOptions,
+			gallery: this.gallery || [],
 			category: this.productCategories.find((c) => {
 				return c.id === this.form.get('productCategoryId').value;
 			}),
@@ -259,6 +294,8 @@ export class ProductFormComponent
 			});
 
 			await this.loadProduct(productResult.id);
+
+			this.inventoryTabset.selectTab(this.variantsTab);
 
 			this.router.navigate([
 				`/pages/organization/inventory/edit/${this.inventoryItem.id}`
@@ -325,6 +362,14 @@ export class ProductFormComponent
 
 	onOptionDeleted(option: IProductOption) {
 		this.deletedOptions.push(option);
+	}
+
+	onFeaturedImageUpdated(image: IImageAsset) {
+		this.featuredImage = image;
+	}
+
+	onGalleryUpdated(gallery: IImageAsset[]) {
+		this.gallery = gallery;
 	}
 
 	handleImageUploadError(error: any) {

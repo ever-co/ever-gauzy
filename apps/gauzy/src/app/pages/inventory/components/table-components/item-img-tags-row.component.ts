@@ -9,10 +9,16 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 			style="display: flex; align-items: center;"
 			class="{{ layout === 'CARDS_GRID' ? 'tags-right' : '' }}"
 		>
-			<div *ngIf="rowData?.imageUrl" class="image-container">
-				<img [src]="rowData?.imageUrl" />
+			<div
+				*ngIf="rowData.featuredImage && rowData.featuredImage.url"
+				class="image-container"
+			>
+				<img [src]="rowData?.featuredImage.url" />
 			</div>
-			<div *ngIf="!rowData?.imageUrl" class="image-container">
+			<div
+				*ngIf="!rowData.featuredImage || !rowData.featuredImage.url"
+				class="image-container"
+			>
 				<img
 					[src]="
 						'https://afostats.imagead.net/uploads/afo/no_img.png'

@@ -1,11 +1,12 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { IOrganization, IProduct } from '@gauzy/contracts';
+import { IOrganization, IProductTranslatable } from '@gauzy/contracts';
 import { Store } from '../../../@core/services/store.service';
 import { filter } from 'rxjs/operators';
 import { ProductService } from '../../../@core/services/product.service';
 import { DefaultEditor } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslatableService } from '../../../@core/services/translatable.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	template: `
@@ -16,7 +17,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 			(selectedChange)="selectProduct($event)"
 		>
 			<nb-option *ngFor="let product of products" [value]="product">
-				{{ product.name }}
+				{{ geProductTranslatedName(product) }}
 			</nb-option>
 		</nb-select>
 	`,
@@ -25,15 +26,16 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 export class InvoiceProductsSelectorComponent
 	extends DefaultEditor
 	implements OnInit, OnDestroy {
-	product: IProduct;
-	products: IProduct[];
+	product: IProductTranslatable;
+	products: IProductTranslatable[];
 	selectedLanguage: string;
 	organization: IOrganization;
 
 	constructor(
 		private store: Store,
 		private productService: ProductService,
-		private translateService: TranslateService
+		private translateService: TranslateService,
+		private translatableService: TranslatableService
 	) {
 		super();
 	}
@@ -49,6 +51,10 @@ export class InvoiceProductsSelectorComponent
 				this.organization = organization;
 				this._loadProducts();
 			});
+	}
+
+	geProductTranslatedName(product: IProductTranslatable) {
+		return this.translatableService.getTranslatedProperty(product, 'name');
 	}
 
 	private async _loadProducts() {

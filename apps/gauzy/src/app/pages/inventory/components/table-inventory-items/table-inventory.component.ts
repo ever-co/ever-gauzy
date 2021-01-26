@@ -223,7 +223,7 @@ export class TableInventoryComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 		const { items } = await this.productService.getAllTranslated(
-			['type', 'category', 'tags'],
+			['type', 'category', 'tags', 'featuredImage'],
 			{ organizationId, tenantId },
 			this.selectedLanguage
 		);
