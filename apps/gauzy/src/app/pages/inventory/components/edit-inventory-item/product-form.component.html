@@ -34,8 +34,8 @@
 					</div>
 				</div>
 				<div class="col-md-9">
-					<nb-tabset>
-						<nb-tab tabTitle="Main">
+					<nb-tabset #inventoryTabset>
+						<nb-tab tabTitle="Main" #mainTab>
 							<div class="">
 								<form
 									[formGroup]="form"
@@ -370,7 +370,7 @@
 								</form>
 							</div>
 						</nb-tab>
-						<nb-tab tabTitle="Tags & Options">
+						<nb-tab tabTitle="Tags & Options" #optionsTab>
 							<div class="row mb-4">
 								<div class="col-sm-12">
 									<ga-tags-color-input
@@ -397,7 +397,7 @@
 								"
 							></ngx-variant-form>
 						</nb-tab>
-						<nb-tab tabTitle="Variants">
+						<nb-tab tabTitle="Variants" #variantsTab>
 							<ngx-variant-table
 								[productId]="productId"
 								[variants$]="variants$"
