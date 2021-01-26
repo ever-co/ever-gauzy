@@ -2037,7 +2037,12 @@
 		"URL": "Url",
 		"DIMENSIONS": "Dimensions",
 		"FEATURED_IMAGE_WAS_SAVED": "Featured image was saved!",
-		"IMAGE_SAVED": "Image was saved!"
+		"IMAGE_SAVED": "Image was saved!",
+		"ADD_GALLERY_IMAGE": "Добави изображение към галерията",
+		"SET_FEATURED_IMAGE": "Направи главно изображение",
+		"VIEW_GALLERY": "Виж галерия",
+		"EDIT_IMAGE": "Редактирай изображение",
+		"DELETE_IMAGE": "Изтрий изображение"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

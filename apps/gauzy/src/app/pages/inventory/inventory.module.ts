@@ -11,7 +11,8 @@ import {
 	NbSelectModule,
 	NbTabsetModule,
 	NbInputModule,
-	NbBadgeModule
+	NbBadgeModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
@@ -98,6 +99,7 @@ const NB_MODULES = [
 		ImageUploaderModule,
 		CardGridModule,
 		NbBadgeModule,
+		NbTooltipModule,
 		NbDialogModule.forChild(),
 		TranslateModule,
 		...NB_MODULES,

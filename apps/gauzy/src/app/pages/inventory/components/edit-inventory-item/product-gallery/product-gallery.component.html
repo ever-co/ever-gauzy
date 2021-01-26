@@ -14,7 +14,15 @@
 </div>
 
 <div class="actions-container mt-2">
-	<button nbButton ghost status="primary" (click)="onAddImageClick()">
+	<button
+		nbButton
+		ghost
+		status="primary"
+		(click)="onAddImageClick()"
+		[nbTooltip]="'INVENTORY_PAGE.ADD_GALLERY_IMAGE' | translate"
+		nbTooltipPlacement="top"
+		nbTooltipStatus="primary"
+	>
 		<nb-icon icon="plus-circle-outline"></nb-icon>
 	</button>
 	<button
@@ -23,16 +31,41 @@
 		status="primary"
 		[disabled]="!selectedImage"
 		(click)="onSetFeaturedClick()"
+		[nbTooltip]="'INVENTORY_PAGE.SET_FEATURED_IMAGE' | translate"
+		nbTooltipPlacement="top"
+		nbTooltipStatus="primary"
 	>
 		<nb-icon icon="image-outline"></nb-icon>
 	</button>
-	<button nbButton ghost status="primary">
+	<button
+		nbButton
+		ghost
+		status="primary"
+		[nbTooltip]="'INVENTORY_PAGE.VIEW_GALLERY' | translate"
+		nbTooltipPlacement="top"
+		nbTooltipStatus="primary"
+	>
 		<nb-icon icon="eye-outline"></nb-icon>
 	</button>
-	<button nbButton ghost status="primary">
+	<button
+		nbButton
+		ghost
+		status="primary"
+		[nbTooltip]="'INVENTORY_PAGE.EDIT_IMAGE' | translate"
+		nbTooltipPlacement="top"
+		nbTooltipStatus="primary"
+	>
 		<nb-icon icon="edit-outline"></nb-icon>
 	</button>
-	<button nbButton ghost status="danger" class="ml-3">
+	<button
+		nbButton
+		ghost
+		status="danger"
+		class="ml-3"
+		[nbTooltip]="'INVENTORY_PAGE.DELETE_IMAGE' | translate"
+		nbTooltipPlacement="top"
+		nbTooltipStatus="danger"
+	>
 		<nb-icon icon="trash-outline"></nb-icon>
 	</button>
 </div>
