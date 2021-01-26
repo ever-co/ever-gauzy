@@ -179,24 +179,22 @@ export class ProductGalleryComponent
 	async onDeleteImageClick() {
 		if (!this.selectedImage) return;
 
-		if (this.selectedImage && !this.inventoryItem) {
+		if (!this.inventoryItem) {
 			this.deleteGalleryImage();
 			return;
 		}
 
-		if (this.selectedImage && this.inventoryItem) {
-			try {
-				let result = await this.productService.deleteGalleryImage(
-					this.inventoryItem.id,
-					this.selectedImage
-				);
+		try {
+			let result = await this.productService.deleteGalleryImage(
+				this.inventoryItem.id,
+				this.selectedImage
+			);
 
-				if (result) {
-					this.deleteGalleryImage();
-				}
-			} catch (err) {
-				this.toastrService.danger('Something bad happened!');
+			if (result) {
+				this.deleteGalleryImage();
 			}
+		} catch (err) {
+			this.toastrService.danger('Something bad happened!');
 		}
 	}
 
