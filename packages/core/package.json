@@ -91,7 +91,7 @@
 		"pg": "^8.5.1",
 		"reflect-metadata": "^0.1.13",
 		"rxjs": "^6.6.3",
-		"sqlite3": "^5.0.0",
+		"sqlite3": "https://github.com/ever-co/node-sqlite3",
 		"swagger-ui-express": "^4.1.4",
 		"typeorm": "^0.2.29",
 		"typeorm-express-query-builder": "^1.2.0",
