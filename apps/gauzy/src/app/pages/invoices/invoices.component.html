@@ -32,11 +32,7 @@
 									(click)="add()"
 									class="mr-2"
 								>
-									<nb-icon
-										class="mr-1"
-										icon="plus-outline"
-									></nb-icon
-									>{{ 'BUTTONS.ADD' | translate }}
+									<nb-icon icon="plus-outline"> </nb-icon>
 								</button>
 								<ng-container
 									*ngIf="dataLayoutStyle === 'TABLE'"
@@ -54,10 +50,7 @@
 									class="mr-2"
 									[disabled]="disableButton"
 								>
-									<nb-icon
-										class="mr-1"
-										icon="edit-outline"
-									></nb-icon>
+									<nb-icon icon="file-outline"></nb-icon>
 									{{ 'BUTTONS.VIEW' | translate }}
 								</button>
 							</ng-template>
@@ -65,9 +58,22 @@
 								<button
 									nbButton
 									nbPopoverPlacement="bottom"
+									[nbPopover]="actionsPopover"
+									nbPopoverTrigger="noop"
+									(click)="toggleActionsPopover()"
+								>
+									<nb-icon
+										icon="more-vertical-outline"
+									></nb-icon>
+								</button>
+							</div>
+							<div>
+								<button
+									nbButton
+									nbPopoverPlacement="bottom"
 									[nbPopover]="settingsPopover"
 									nbPopoverTrigger="noop"
-									(click)="openPopover()"
+									(click)="toggleTableSettingsPopover()"
 								>
 									<nb-icon
 										icon="settings-2-outline"
@@ -404,24 +410,22 @@
 			<button
 				nbButton
 				status="info"
-				(click)="download(selectedItem)"
-				class="mr-2"
-				[disabled]="!selectedItem && disableButton"
-				[size]="buttonSize || 'medium'"
-			>
-				<nb-icon class="mr-1" icon="download-outline"> </nb-icon>
-				{{ 'BUTTONS.DOWNLOAD' | translate }}
-			</button>
-			<button
-				nbButton
-				status="info"
 				(click)="edit(selectedItem)"
 				class="mr-2"
 				[disabled]="!selectedItem && disableButton"
 				[size]="buttonSize || 'medium'"
 			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
+				<nb-icon icon="edit-outline"></nb-icon>
+			</button>
+			<button
+				nbButton
+				status="info"
+				(click)="download(selectedItem)"
+				class="mr-2"
+				[disabled]="!selectedItem && disableButton"
+				[size]="buttonSize || 'medium'"
+			>
+				<nb-icon icon="download-outline"> </nb-icon>
 			</button>
 			<nb-select
 				filled
@@ -481,32 +485,8 @@
 		[disabled]="!selectedItem && disableButton"
 		[size]="buttonSize || 'medium'"
 	>
-		<nb-icon class="mr-1" icon="clipboard-outline"></nb-icon>
+		<nb-icon icon="clipboard-outline"></nb-icon>
 		{{ 'BUTTONS.PAYMENTS' | translate }}
-	</button>
-	<button
-		*ngIf="dataLayoutStyle === 'TABLE'"
-		nbButton
-		status="info"
-		(click)="duplicated(selectedItem)"
-		class="mr-2"
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="copy-outline"></nb-icon>
-		{{ 'BUTTONS.DUPLICATE' | translate }}
-	</button>
-	<button
-		*ngIf="dataLayoutStyle === 'TABLE'"
-		nbButton
-		status="info"
-		(click)="send(selectedItem)"
-		class="mr-2"
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="upload-outline"> </nb-icon>
-		{{ 'BUTTONS.SEND' | translate }}
 	</button>
 	<button
 		*ngIf="isEstimate && dataLayoutStyle === 'TABLE'"
@@ -517,68 +497,8 @@
 		[disabled]="!selectedItem && disableButton"
 		[size]="buttonSize || 'medium'"
 	>
-		<nb-icon class="mr-1" icon="swap"> </nb-icon>
+		<nb-icon icon="swap"> </nb-icon>
 		{{ 'BUTTONS.CONVERT_TO_INVOICE' | translate }}
-	</button>
-	<button
-		*ngIf="dataLayoutStyle === 'TABLE'"
-		nbButton
-		status="info"
-		(click)="email(selectedItem)"
-		class="mr-2"
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="email-outline"> </nb-icon>
-		{{ 'BUTTONS.EMAIL' | translate }}
-	</button>
-	<button
-		*ngIf="dataLayoutStyle === 'TABLE'"
-		nbButton
-		status="info"
-		(click)="addInternalNote()"
-		class="mr-2"
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="book-open-outline"> </nb-icon>
-		{{ 'BUTTONS.NOTE' | translate }}
-	</button>
-	<button
-		*ngIf="dataLayoutStyle === 'TABLE'"
-		nbButton
-		status="info"
-		(click)="exportToCsv(selectedItem)"
-		class="mr-2"
-		[size]="buttonSize || 'medium'"
-		[disabled]="!selectedItem && disableButton"
-	>
-		<nb-icon class="mr-1" icon="file-text-outline"> </nb-icon>
-		{{ 'BUTTONS.EXPORT_TO_CSV' | translate }}
-	</button>
-	<button
-		*ngIf="dataLayoutStyle === 'TABLE'"
-		nbButton
-		status="info"
-		(click)="generatePublicLink(selectedItem)"
-		class="mr-2"
-		[size]="buttonSize || 'medium'"
-		[disabled]="!selectedItem && disableButton"
-	>
-		<nb-icon class="mr-1" icon="link-2-outline"> </nb-icon>
-		{{ 'BUTTONS.PUBLIC_LINK' | translate }}
-	</button>
-	<button
-		*ngIf="dataLayoutStyle === 'TABLE'"
-		nbButton
-		status="danger"
-		(click)="delete(selectedItem)"
-		class="mr-2"
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-	>
-		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-		{{ 'BUTTONS.DELETE' | translate }}
 	</button>
 </ng-template>
 
@@ -645,5 +565,84 @@
 				</button>
 			</div>
 		</div>
+	</div>
+</ng-template>
+
+<ng-template #actionsPopover>
+	<div class="popover-container d-flex flex-column">
+		<button
+			*ngIf="dataLayoutStyle === 'TABLE'"
+			nbButton
+			status="info"
+			(click)="addInternalNote()"
+			[disabled]="disableButton"
+		>
+			<nb-icon icon="book-open-outline"> </nb-icon>
+			<span class="icon-text">{{ 'BUTTONS.NOTE' | translate }}</span>
+		</button>
+		<button
+			*ngIf="dataLayoutStyle === 'TABLE'"
+			nbButton
+			status="info"
+			(click)="duplicated()"
+			[disabled]="disableButton"
+		>
+			<nb-icon icon="copy-outline"></nb-icon>
+			<span class="icon-text">{{ 'BUTTONS.DUPLICATE' | translate }}</span>
+		</button>
+		<button
+			*ngIf="dataLayoutStyle === 'TABLE'"
+			nbButton
+			status="info"
+			(click)="send()"
+			[disabled]="disableButton"
+		>
+			<nb-icon icon="upload-outline"> </nb-icon>
+			<span class="icon-text">{{ 'BUTTONS.SEND' | translate }}</span>
+		</button>
+		<button
+			*ngIf="dataLayoutStyle === 'TABLE'"
+			nbButton
+			status="info"
+			(click)="generatePublicLink()"
+			[disabled]="disableButton"
+		>
+			<nb-icon icon="link-2-outline"> </nb-icon>
+			<span class="icon-text">{{
+				'BUTTONS.PUBLIC_LINK' | translate
+			}}</span>
+		</button>
+		<button
+			*ngIf="dataLayoutStyle === 'TABLE'"
+			nbButton
+			status="info"
+			(click)="email()"
+			[disabled]="disableButton"
+		>
+			<nb-icon icon="email-outline"> </nb-icon>
+			<span class="icon-text">{{ 'BUTTONS.EMAIL' | translate }}</span>
+		</button>
+		<button
+			*ngIf="dataLayoutStyle === 'TABLE'"
+			nbButton
+			status="info"
+			(click)="exportToCsv()"
+			[disabled]="disableButton"
+		>
+			<nb-icon icon="file-text-outline"> </nb-icon>
+			<span class="icon-text">{{
+				'BUTTONS.EXPORT_TO_CSV' | translate
+			}}</span>
+		</button>
+		<button
+			*ngIf="dataLayoutStyle === 'TABLE'"
+			nbButton
+			status="danger"
+			(click)="delete()"
+			[disabled]="disableButton"
+		>
+			<nb-icon icon="trash-2-outline"> </nb-icon>
+			<span class="icon-text">{{ 'BUTTONS.DELETE' | translate }}</span>
+		</button>
 	</div>
 </ng-template>

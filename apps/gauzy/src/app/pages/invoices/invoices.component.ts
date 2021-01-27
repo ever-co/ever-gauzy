@@ -1,4 +1,12 @@
-import { Component, OnInit, ViewChild, OnDestroy, Input } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	ViewChild,
+	OnDestroy,
+	Input,
+	QueryList,
+	ViewChildren
+} from '@angular/core';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
@@ -90,7 +98,9 @@ export class InvoicesComponent
 			this.onChangedSource();
 		}
 	}
-	@ViewChild(NbPopoverDirective) popover: NbPopoverDirective;
+
+	@ViewChildren(NbPopoverDirective)
+	public popups: QueryList<NbPopoverDirective>;
 
 	constructor(
 		private fb: FormBuilder,
@@ -998,12 +1008,33 @@ export class InvoicesComponent
 		this.loadSettingsSmartTable();
 	}
 
-	openPopover() {
-		if (this.popover.isShown) {
-			this.popover.hide();
+	toggleActionsPopover() {
+		const actionsPopup = this.popups.first;
+		const tableSettingsPopup = this.popups.last;
+
+		if (actionsPopup.isShown) {
+			actionsPopup.hide();
 		} else {
-			this.popover.show();
-			document.getElementsByClassName('arrow')[0].remove();
+			actionsPopup.show();
+		}
+
+		if (tableSettingsPopup.isShown) {
+			tableSettingsPopup.hide();
+		}
+	}
+
+	toggleTableSettingsPopover() {
+		const actionsPopup = this.popups.first;
+		const tableSettingsPopup = this.popups.last;
+
+		if (tableSettingsPopup.isShown) {
+			tableSettingsPopup.hide();
+		} else {
+			tableSettingsPopup.show();
+		}
+
+		if (actionsPopup.isShown) {
+			actionsPopup.hide();
 		}
 	}
 
