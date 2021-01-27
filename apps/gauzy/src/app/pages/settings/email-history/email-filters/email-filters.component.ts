@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { EmailTemplateService } from 'apps/gauzy/src/app/@core/services/email-template.service';
-import { IEmailTemplate, IEmail, IOrganization } from '@gauzy/models';
+import { IEmailTemplate, IEmail, IOrganization } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { EmailService } from 'apps/gauzy/src/app/@core/services/email.service';
 

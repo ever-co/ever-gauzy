@@ -1,7 +1,11 @@
 import { Component } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { OnInit } from '@angular/core';
-import { IInvoice, InvoiceStatusTypesEnum, IInvoiceItem } from '@gauzy/models';
+import {
+	IInvoice,
+	InvoiceStatusTypesEnum,
+	IInvoiceItem
+} from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';

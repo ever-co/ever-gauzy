@@ -3,7 +3,11 @@ import { TagsMutationComponent } from '../../@shared/tags/tags-mutation.componen
 import { NbDialogService } from '@nebular/theme';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TagsService } from '../../@core/services/tags.service';
-import { ITag, IOrganization, ComponentLayoutStyleEnum } from '@gauzy/models';
+import {
+	ITag,
+	IOrganization,
+	ComponentLayoutStyleEnum
+} from '@gauzy/contracts';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { filter, first, tap } from 'rxjs/operators';
 import { FormGroup } from '@angular/forms';

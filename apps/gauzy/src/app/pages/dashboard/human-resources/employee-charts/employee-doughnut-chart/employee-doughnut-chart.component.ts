@@ -4,7 +4,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { monthNames } from 'apps/gauzy/src/app/@core/utils/date';
 import { TranslateService } from '@ngx-translate/core';
-import { IMonthAggregatedEmployeeStatistics } from '@gauzy/models';
+import { IMonthAggregatedEmployeeStatistics } from '@gauzy/contracts';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 
 @Component({
@@ -29,7 +29,8 @@ import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-ba
 		></chart>
 	`
 })
-export class EmployeeDoughnutChartComponent extends TranslationBaseComponent
+export class EmployeeDoughnutChartComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy, OnChanges {
 	private _ngDestroy$ = new Subject<void>();
 	data: any;

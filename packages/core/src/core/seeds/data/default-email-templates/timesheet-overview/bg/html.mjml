@@ -1,0 +1,69 @@
+<mjml>
+	<mj-body background-color="#fff">
+		<mj-section>
+			<mj-column>
+				<mj-image
+					width="100px"
+					src="{{host}}/assets/images/logos/logo_Gauzy.svg"
+				></mj-image>
+				<mj-divider
+					border-color="#1B005D"
+					border-width="1px"
+				></mj-divider>
+				<mj-text font-size="20px" font-family="helvetica"
+					><bold>Преглед на хронологията</bold></mj-text
+				>
+
+				<mj-text
+					padding="20px 0px 20px 50px"
+					font-size="16px"
+					font-family="helvetica"
+				>
+					<p><bold>Общо часове:</bold> {{total_hours}}</p>
+					<p>
+						<bold>Средно се активира:</bold> {{average_activates}}
+					</p>
+					<p><bold>Проекти:</bold> {{projects}}</p>
+					<p><bold>Тип журнал:</bold> {{log_type}}</p>
+					<p><bold>източник:</bold> {{source}}</p>
+				</mj-text>
+				<mj-text font-size="12px" font-family="helvetica"
+					>** Изпратен е и имейл до клиента и служителя.</mj-text
+				>
+
+				<mj-text
+					font-size="16px"
+					padding="20px 0px 20px 50px"
+					font-family="helvetica"
+				>
+					<p>
+						<bold>Разсрочване на назначаване:</bold>
+						{{rescheduleAppointment}}
+					</p>
+				</mj-text>
+				<mj-button
+					href="{{cancleAppointmentUrl}}"
+					background-color="#3366ff"
+					color="white"
+				>
+					НАЗНАЧАВАНЕ НА ОТМЕНА
+				</mj-button>
+				<mj-divider
+					border-color="#1B005D"
+					border-width="1px"
+				></mj-divider>
+				<mj-text align="center" font-size="12px" font-family="helvetica"
+					>© 2019,
+					<a href="https://app.gauzy.co/." style="color: #598bff"
+						>Gauzy</a
+					>
+					by
+					<a href="https://ever.co/" style="color: #598bff"
+						>Ever Co. LTD.</a
+					>
+					All rights reserved.
+				</mj-text>
+			</mj-column>
+		</mj-section>
+	</mj-body>
+</mjml>

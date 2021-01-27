@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { IPipeline, ComponentLayoutStyleEnum } from '@gauzy/models';
+import { IPipeline, ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { Store } from '../../@core/services/store.service';
 import { PipelinesService } from '../../@core/services/pipelines.service';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';

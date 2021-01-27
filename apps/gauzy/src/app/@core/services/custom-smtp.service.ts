@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { ICustomSmtp, ICustomSmtpFindInput } from '@gauzy/models';
-import { toParams } from '@gauzy/utils';
+import { ICustomSmtp, ICustomSmtpFindInput } from '@gauzy/contracts';
+import { toParams } from '@gauzy/common';
 
 @Injectable()
 export class CustomSmtpService {

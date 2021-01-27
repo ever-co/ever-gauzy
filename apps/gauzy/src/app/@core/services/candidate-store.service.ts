@@ -3,7 +3,7 @@ import {
 	ICandidate,
 	ICandidateUpdateInput,
 	ICandidateInterview
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Injectable } from '@angular/core';
 
@@ -21,9 +21,9 @@ export class CandidateStore {
 	userForm$: BehaviorSubject<IUserFindInput> = new BehaviorSubject(
 		this.userForm
 	);
-	candidateForm$: BehaviorSubject<
-		ICandidateUpdateInput
-	> = new BehaviorSubject(this.candidateForm);
+	candidateForm$: BehaviorSubject<ICandidateUpdateInput> = new BehaviorSubject(
+		this.candidateForm
+	);
 	private _interviewList$: BehaviorSubject<
 		ICandidateInterview[]
 	> = new BehaviorSubject([]);

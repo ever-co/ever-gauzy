@@ -7,7 +7,7 @@ import {
 	AfterViewInit
 } from '@angular/core';
 import { Validators, FormBuilder } from '@angular/forms';
-import { RolesEnum, ITag, ITenant, IUser } from '@gauzy/models';
+import { RolesEnum, ITag, ITenant, IUser } from '@gauzy/contracts';
 import { AuthService } from 'apps/gauzy/src/app/@core/services/auth.service';
 import { first } from 'rxjs/operators';
 import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';

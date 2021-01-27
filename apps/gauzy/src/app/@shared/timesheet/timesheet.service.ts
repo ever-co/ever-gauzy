@@ -18,8 +18,8 @@ import {
 	IProjectBudgetLimitReport,
 	IProjectBudgetLimitReportInput,
 	IClientBudgetLimitReportInput
-} from '@gauzy/models';
-import { toParams } from '@gauzy/utils';
+} from '@gauzy/contracts';
+import { toParams } from '@gauzy/common';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { Observable } from 'rxjs/Observable';
 

@@ -3,7 +3,7 @@ import {
 	IOrganization,
 	IOrganizationContact,
 	IInvoice
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 
 export async function generatePdf(
 	invoice: IInvoice,

@@ -10,7 +10,7 @@ import {
 	IInviteResendInput,
 	IOrganizationContact,
 	IOrganizationContactAcceptInviteInput
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 
 @Injectable()

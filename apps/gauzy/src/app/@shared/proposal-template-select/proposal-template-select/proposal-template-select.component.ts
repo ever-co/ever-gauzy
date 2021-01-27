@@ -7,7 +7,7 @@ import {
 	Output
 } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { IEmployeeProposalTemplate, IOrganization } from '@gauzy/models';
+import { IEmployeeProposalTemplate, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';

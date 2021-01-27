@@ -8,7 +8,7 @@ import {
 	PermissionsEnum,
 	ComponentLayoutStyleEnum,
 	OrganizationProjectAction
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, first, tap } from 'rxjs/operators';

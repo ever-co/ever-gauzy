@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { IExpenseCategory } from '@gauzy/models';
+import { IExpenseCategory } from '@gauzy/contracts';
 
 @Injectable({
 	providedIn: 'root'

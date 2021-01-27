@@ -11,7 +11,7 @@ import {
 	IOrganizationLanguages,
 	PermissionsEnum,
 	IOrganizationContact
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { first, tap } from 'rxjs/operators';
 import { PublicPageMutationComponent } from '../../@shared/organizations/public-page-mutation/public-page-mutation.component';

@@ -1,5 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { IEmployeeJobsStatisticsResponse, IOrganization } from '@gauzy/models';
+import {
+	IEmployeeJobsStatisticsResponse,
+	IOrganization
+} from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';

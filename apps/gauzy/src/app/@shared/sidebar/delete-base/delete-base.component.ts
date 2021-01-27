@@ -3,7 +3,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { IHelpCenter } from '@gauzy/models';
+import { IHelpCenter } from '@gauzy/contracts';
 import { HelpCenterArticleService } from '../../../@core/services/help-center-article.service';
 import { HelpCenterService } from '../../../@core/services/help-center.service';
 import { HelpCenterAuthorService } from '../../../@core/services/help-center-author.service';
@@ -13,7 +13,8 @@ import { HelpCenterAuthorService } from '../../../@core/services/help-center-aut
 	templateUrl: 'delete-base.component.html',
 	styleUrls: ['delete-base.component.scss']
 })
-export class DeleteBaseComponent extends TranslationBaseComponent
+export class DeleteBaseComponent
+	extends TranslationBaseComponent
 	implements OnDestroy {
 	@Input() base: IHelpCenter;
 	private _ngDestroy$ = new Subject<void>();

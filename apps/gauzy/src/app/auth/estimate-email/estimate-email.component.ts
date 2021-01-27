@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { InvoicesService } from '../../@core/services/invoices.service';
-import { IEstimateEmail, EstimateStatusTypesEnum } from '@gauzy/models';
+import { IEstimateEmail, EstimateStatusTypesEnum } from '@gauzy/contracts';
 import { EstimateEmailService } from '../../@core/services/estimate-email.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';

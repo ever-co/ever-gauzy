@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { IEmployee } from '@gauzy/models';
+import { IEmployee } from '@gauzy/contracts';
 import { EmployeesService } from '../../../@core/services';
 import { DefaultEditor } from 'ng2-smart-table';
 import { Store } from '../../../@core/services/store.service';

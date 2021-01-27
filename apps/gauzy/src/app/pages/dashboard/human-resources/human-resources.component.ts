@@ -5,7 +5,7 @@ import {
 	EmployeeStatisticsHistoryEnum,
 	IMonthAggregatedEmployeeStatistics,
 	IOrganization
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';

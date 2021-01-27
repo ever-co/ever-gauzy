@@ -13,7 +13,7 @@ import {
 	IOrganizationSprint,
 	IOrganizationProject,
 	IOrganization
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { map, tap, filter, take } from 'rxjs/operators';
 import {

@@ -3,7 +3,7 @@ import {
 	RecurringExpenseDefaultCategoriesEnum,
 	EmployeeStatisticsHistoryEnum as HistoryType,
 	IEmployeeStatisticsHistory
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';

@@ -19,7 +19,7 @@ import {
 	IProductTranslation,
 	IProductTranslatable,
 	IImageAsset
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductTypeService } from '../../../../@core/services/product-type.service';
 import { ProductCategoryService } from '../../../../@core/services/product-category.service';

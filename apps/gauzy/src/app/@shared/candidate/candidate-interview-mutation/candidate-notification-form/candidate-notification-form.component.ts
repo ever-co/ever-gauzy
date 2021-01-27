@@ -2,7 +2,7 @@ import { Component, OnDestroy, Input, ViewChild } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { Subject } from 'rxjs';
 
-import { ICandidateInterview, ICandidate } from '@gauzy/models';
+import { ICandidateInterview, ICandidate } from '@gauzy/contracts';
 import { CandidateEmailComponent } from './candidate-email/candidate-email.component';
 @Component({
 	selector: 'ga-candidate-notification-form',

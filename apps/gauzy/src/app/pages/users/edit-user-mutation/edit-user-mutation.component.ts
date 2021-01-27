@@ -7,7 +7,7 @@ import {
 	ViewChild
 } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { IOrganization, IUserOrganization, RolesEnum } from '@gauzy/models';
+import { IOrganization, IUserOrganization, RolesEnum } from '@gauzy/contracts';
 import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';

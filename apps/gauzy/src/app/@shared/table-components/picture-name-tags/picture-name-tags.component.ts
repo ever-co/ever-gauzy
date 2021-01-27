@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
-import { getContrastColor } from '@gauzy/utils';
+import { getContrastColor } from '@gauzy/common';
 import { ViewCell } from 'ng2-smart-table';
-import { ComponentLayoutStyleEnum } from '@gauzy/models';
+import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ga-picture-name-tags',

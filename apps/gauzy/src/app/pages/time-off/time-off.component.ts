@@ -5,7 +5,7 @@ import {
 	ITimeOff,
 	ComponentLayoutStyleEnum,
 	IOrganization
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { Store } from '../../@core/services/store.service';
 import { filter, first, tap } from 'rxjs/operators';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';

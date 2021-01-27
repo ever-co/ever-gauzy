@@ -24,7 +24,7 @@ import {
 	IEmployee,
 	IEmployeeAppointment,
 	IAvailabilitySlot
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeesService } from '../../../../@core/services';

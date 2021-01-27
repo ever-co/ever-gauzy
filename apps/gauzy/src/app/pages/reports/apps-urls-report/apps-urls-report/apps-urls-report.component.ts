@@ -4,7 +4,7 @@ import {
 	Component,
 	OnInit
 } from '@angular/core';
-import { IGetActivitiesInput, IOrganization } from '@gauzy/models';
+import { IGetActivitiesInput, IOrganization } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { Subject } from 'rxjs';
 

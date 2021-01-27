@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { IOrganization, OrganizationAction } from '@gauzy/models';
+import { IOrganization, OrganizationAction } from '@gauzy/contracts';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { filter, tap } from 'rxjs/operators';
 import { UsersOrganizationsService } from 'apps/gauzy/src/app/@core/services/users-organizations.service';

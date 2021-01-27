@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { IGoal, IKeyResult, IKeyResultUpdate } from '@gauzy/models';
+import { IGoal, IKeyResult, IKeyResultUpdate } from '@gauzy/contracts';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { EmployeesService } from '../../../@core/services';
 import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';

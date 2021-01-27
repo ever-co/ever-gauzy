@@ -12,7 +12,7 @@ import {
 	ContactType,
 	ICurrency,
 	OrganizationProjectBudgetTypeEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';

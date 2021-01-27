@@ -3,7 +3,7 @@ import { Routes, RouterModule } from '@angular/router';
 import { ExpensesComponent } from './expenses.component';
 import { ExpenseCategoriesComponent } from './expense-categories/expense-categories.component';
 import { NgxPermissionsGuard } from 'ngx-permissions';
-import { PermissionsEnum } from '@gauzy/models';
+import { PermissionsEnum } from '@gauzy/contracts';
 
 export function redirectTo() {
 	return '/pages/dashboard';

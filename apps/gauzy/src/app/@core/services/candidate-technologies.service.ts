@@ -5,7 +5,7 @@ import {
 	ICandidateTechnologies,
 	ICandidateTechnologiesCreateInput,
 	ICandidateTechnologiesFindInput
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 
 @Injectable()
 export class CandidateTechnologiesService {

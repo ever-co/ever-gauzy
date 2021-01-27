@@ -13,13 +13,13 @@ import {
 import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
 import { FormHelpers } from '../helpers';
 import { pick, isEmpty } from 'lodash';
-import { ICountry, IGeoLocationCreateObject } from '@gauzy/models';
+import { ICountry, IGeoLocationCreateObject } from '@gauzy/contracts';
 import { environment as env } from '../../../../environments/environment';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { CountryService } from '../../../@core/services/country.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { convertPrecisionFloatDigit } from '@gauzy/utils';
+import { convertPrecisionFloatDigit } from '@gauzy/common';
 import { DOCUMENT } from '@angular/common';
 
 @UntilDestroy({ checkProperties: true })

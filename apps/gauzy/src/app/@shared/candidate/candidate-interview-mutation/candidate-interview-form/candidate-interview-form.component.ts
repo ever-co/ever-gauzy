@@ -15,7 +15,7 @@ import {
 	IDateRange,
 	ICandidateInterview,
 	IOrganization
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { EmployeesService } from '../../../../@core/services';
 import { NbDialogService } from '@nebular/theme';
 import { CandidateCalendarInfoComponent } from '../../candidate-calendar-info/candidate-calendar-info.component';

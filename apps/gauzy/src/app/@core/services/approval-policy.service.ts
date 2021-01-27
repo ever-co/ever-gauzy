@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IApprovalPolicy, IApprovalPolicyCreateInput } from '@gauzy/models';
+import { IApprovalPolicy, IApprovalPolicyCreateInput } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 
 @Injectable()

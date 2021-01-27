@@ -7,7 +7,7 @@
 		"cacheDir": ".changelog",
 		"labels": {}
 	},
-	"packages": ["libs/*", "apps/*"],
+	"packages": ["libs/*", "apps/*", "packages/**", "packages/plugins/**"],
 	"useWorkspaces": true,
 	"command": {
 		"exec": {

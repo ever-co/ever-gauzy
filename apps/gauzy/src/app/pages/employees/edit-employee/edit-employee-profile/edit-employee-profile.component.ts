@@ -5,7 +5,7 @@ import {
 	IEmployee,
 	IEmployeeUpdateInput,
 	IUserUpdateInput
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeeStore } from '../../../../@core/services/employee-store.service';
 import { EmployeesService } from '../../../../@core/services/employees.service';

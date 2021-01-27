@@ -7,7 +7,7 @@ import {
 	IProductCategoryTranslatable,
 	IProductCategoryTranslation,
 	LanguagesEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogRef } from '@nebular/theme';

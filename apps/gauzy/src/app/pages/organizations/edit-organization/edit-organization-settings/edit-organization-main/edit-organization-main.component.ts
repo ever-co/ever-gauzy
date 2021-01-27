@@ -11,7 +11,7 @@ import {
 	IOrganization,
 	ITag,
 	OrganizationAction
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
 import { filter, first } from 'rxjs/operators';
 import { EmployeesService } from '../../../../../@core/services';

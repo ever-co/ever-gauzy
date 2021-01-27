@@ -10,7 +10,7 @@ import {
 	IOrganizationProject,
 	ITag,
 	ICurrency
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { Store } from '../../../../@core/services/store.service';

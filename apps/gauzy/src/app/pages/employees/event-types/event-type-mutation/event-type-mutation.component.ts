@@ -4,7 +4,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeeSelectorComponent } from '../../../../@theme/components/header/selectors/employee/employee.component';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
-import { IEventTypeViewModel, ITag } from '@gauzy/models';
+import { IEventTypeViewModel, ITag } from '@gauzy/contracts';
 
 export enum COMPONENT_TYPE {
 	EMPLOYEE = 'EMPLOYEE',

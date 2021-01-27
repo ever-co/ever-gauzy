@@ -12,7 +12,7 @@ import {
 	EmailTemplateNameEnum,
 	IOrganization,
 	LanguagesEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';

@@ -97,7 +97,19 @@
 		"build:desktop:ui": "yarn run postinstall.web && cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 && yarn ng build desktop-ui --prod --base-href ./",
 		"prepare:desktop:dev": "yarn run postinstall.electron && tsc -p apps/desktop/tsconfig.dev.json",
 		"start:api:desktop": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn ng serve api-desktop",
-		"deploy:desktop:mac": "npm config set cache .cache && cd dist/apps/desktop && npx electron-builder@22.9.1 -c.electronVersion=10.1.3 build --mac --publish always"
+		"deploy:desktop:mac": "npm config set cache .cache && cd dist/apps/desktop && npx electron-builder@22.9.1 -c.electronVersion=10.1.3 build --mac --publish always",
+		"build:package:core": "yarn --cwd ./packages/core build",
+		"build:package:common": "yarn --cwd ./packages/common build",
+		"build:package:contracts": "yarn --cwd ./packages/contracts build",
+		"build:package:config": "yarn --cwd ./packages/config build",
+		"build:package:plugin": "yarn --cwd ./packages/plugin build",
+		"build:package:plugins": "yarn run build:package:plugin:integration-ai && yarn run build:package:plugin:integration-hubstaff && yarn run build:package:plugin:integration-upwork && yarn run build:package:plugin:product-reviews",
+		"build:package:plugin:integration-ai": "yarn --cwd ./packages/plugins/integration-ai build",
+		"build:package:plugin:integration-hubstaff": "yarn --cwd ./packages/plugins/integration-hubstaff build",
+		"build:package:plugin:integration-upwork": "yarn --cwd ./packages/plugins/integration-upwork build",
+		"build:package:plugin:product-reviews": "yarn --cwd ./packages/plugins/product-reviews build",
+		"build:package:all": "yarn run build:package:contracts && yarn run build:package:common && yarn run build:package:config && yarn run build:package:plugin && yarn run build:package:plugins && yarn run build:package:core",
+		"start:package": "yarn --cwd ./packages/core run start"
 	},
 	"config": {
 		"commitizen": {
@@ -108,13 +120,7 @@
 		"extends": [
 			"@commitlint/config-conventional"
 		]
-	},
-	"husky": {
-		"hooks": {
-			"commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
-			"pre-commit": "pretty-quick --no-verify --staged"
-		}
-	},
+	},	
 	"lint-staged": {},
 	"release": {
 		"verifyConditions": [
@@ -139,12 +145,16 @@
 	"workspaces": [
 		"libs/*",
 		"apps/*",
-		"tools"
+		"tools",
+		"packages/**",
+		"packages/plugins/**"
 	],
 	"resolutions": {
 		"uglify-js": "npm:terser"
 	},
 	"dependencies": {
+		"@gauzy/common": "^0.1.0",
+		"@gauzy/contracts": "^0.1.0",
 		"@agm/core": "^3.0.0-beta.0",
 		"@akveo/ng2-completer": "^9.0.1",
 		"@angular/animations": "^10.1.3",

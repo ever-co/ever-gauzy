@@ -18,7 +18,7 @@ import {
 	ExpenseTypesEnum,
 	IInvoiceItemCreateInput,
 	IProductTranslatable
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { filter, first } from 'rxjs/operators';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { Observable } from 'rxjs';

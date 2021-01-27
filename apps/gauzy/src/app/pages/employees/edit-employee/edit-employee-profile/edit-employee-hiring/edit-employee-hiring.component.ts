@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
 import { Subject } from 'rxjs';
-import { IEmployee } from '@gauzy/models';
+import { IEmployee } from '@gauzy/contracts';
 import { takeUntil } from 'rxjs/operators';
 import { ValidationService } from 'apps/gauzy/src/app/@core/services/validation.service';
 

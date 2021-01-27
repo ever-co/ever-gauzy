@@ -7,7 +7,7 @@ import {
 	IUserRegistrationInput,
 	PermissionsEnum,
 	IAuthResponse
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 
 @Injectable()

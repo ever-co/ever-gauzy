@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { IOrganization, ITask, TaskListTypeEnum } from '@gauzy/models';
+import { IOrganization, ITask, TaskListTypeEnum } from '@gauzy/contracts';
 import { map, tap } from 'rxjs/operators';
 import { TasksService } from './tasks.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -15,9 +15,7 @@ export class TasksStoreService {
 		.pipe(map(this._mapToViewModel));
 
 	private _selectedTask$: BehaviorSubject<ITask> = new BehaviorSubject(null);
-	public selectedTask$: Observable<
-		ITask
-	> = this._selectedTask$.asObservable();
+	public selectedTask$: Observable<ITask> = this._selectedTask$.asObservable();
 
 	get tasks(): ITask[] {
 		return this._tasks$.getValue();

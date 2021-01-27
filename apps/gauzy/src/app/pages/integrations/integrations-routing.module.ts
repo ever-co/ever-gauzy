@@ -3,7 +3,7 @@ import { Routes, RouterModule } from '@angular/router';
 import { IntegrationsListComponent } from './components/integrations-list/integrations-list.component';
 import { WorkspaceComponent } from '../../@shared/components/workspace/workspace.component';
 import { NgxPermissionsGuard } from 'ngx-permissions';
-import { PermissionsEnum } from '@gauzy/models';
+import { PermissionsEnum } from '@gauzy/contracts';
 
 const routes: Routes = [
 	{

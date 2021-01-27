@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { ICandidate } from '@gauzy/models';
+import { ICandidate } from '@gauzy/contracts';
 import { FormControl } from '@angular/forms';
 
 @Component({

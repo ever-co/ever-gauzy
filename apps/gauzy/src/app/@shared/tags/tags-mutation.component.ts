@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { TagsService } from '../../@core/services/tags.service';
-import { ITag } from '@gauzy/models';
+import { ITag } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
 import { Store } from '../../@core/services/store.service';
@@ -12,7 +12,8 @@ import { Store } from '../../@core/services/store.service';
 	templateUrl: './tags-mutation.component.html',
 	styleUrls: ['./tags-mutation.component.scss']
 })
-export class TagsMutationComponent extends TranslationBaseComponent
+export class TagsMutationComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	selectedColor: string[] = [];
 	form: FormGroup;

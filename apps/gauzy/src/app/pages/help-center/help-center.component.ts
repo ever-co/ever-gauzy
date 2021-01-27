@@ -5,7 +5,7 @@ import {
 	IHelpCenterAuthor,
 	IEmployee,
 	IOrganization
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';

@@ -6,7 +6,11 @@ import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-stor
 import { takeUntil } from 'rxjs/operators';
 import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
 import { CandidateSkillsService } from 'apps/gauzy/src/app/@core/services/candidate-skills.service';
-import { ISkill, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/models';
+import {
+	ISkill,
+	ComponentLayoutStyleEnum,
+	IOrganization
+} from '@gauzy/contracts';
 import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { LocalDataSource } from 'ng2-smart-table';

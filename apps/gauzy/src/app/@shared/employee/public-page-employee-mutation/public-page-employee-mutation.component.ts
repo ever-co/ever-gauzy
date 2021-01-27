@@ -12,7 +12,7 @@ import {
 	PayPeriodEnum,
 	LanguagesEnum,
 	IEmployeeAward
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { OrganizationEmploymentTypesService } from '../../../@core/services/organization-employment-types.service';
 import {
 	switchMap,

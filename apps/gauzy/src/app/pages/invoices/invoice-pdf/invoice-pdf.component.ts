@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { IInvoice, InvoiceTypeEnum } from '@gauzy/models';
+import { IInvoice, InvoiceTypeEnum } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import * as pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';

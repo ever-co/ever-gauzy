@@ -7,7 +7,7 @@ import { Component, OnInit } from '@angular/core';
 import { AnalyticsService } from './@core/utils/analytics.service';
 import { Store } from './@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
-import { LanguagesEnum } from '@gauzy/models';
+import { LanguagesEnum } from '@gauzy/contracts';
 import { LanguagesService } from './@core/services/languages.service';
 import { environment } from '../environments/environment';
 

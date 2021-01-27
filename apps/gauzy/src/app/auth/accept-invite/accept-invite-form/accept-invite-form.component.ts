@@ -12,7 +12,12 @@ import {
 	FormGroup,
 	Validators
 } from '@angular/forms';
-import { IInvite, IUserRegistrationInput, ITag, ITenant } from '@gauzy/models';
+import {
+	IInvite,
+	IUserRegistrationInput,
+	ITag,
+	ITenant
+} from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { InviteService } from 'apps/gauzy/src/app/@core/services/invite.service';
 import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';

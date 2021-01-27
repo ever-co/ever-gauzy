@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { IInvoice } from '@gauzy/models';
+import { IInvoice } from '@gauzy/contracts';
 import * as pdfMake from 'pdfmake/build/pdfmake';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 import { Store } from '../../../@core/services/store.service';

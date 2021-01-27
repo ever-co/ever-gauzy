@@ -12,7 +12,7 @@ import {
 	first,
 	map
 } from 'rxjs/operators';
-import { IHubstaffOrganization, IHubstaffProject } from '@gauzy/models';
+import { IHubstaffOrganization, IHubstaffProject } from '@gauzy/contracts';
 import { Observable, of } from 'rxjs';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';

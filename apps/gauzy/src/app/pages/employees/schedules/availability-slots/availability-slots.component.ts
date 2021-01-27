@@ -13,7 +13,7 @@ import {
 	IOrganization,
 	IRolePermission,
 	AvailabilitySlotType
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { Store } from '../../../../@core/services/store.service';
 import { AvailabilitySlotsService } from '../../../../@core/services/availability-slots.service';
 import { first, filter } from 'rxjs/operators';

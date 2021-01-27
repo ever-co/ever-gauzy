@@ -1,4 +1,4 @@
-import { ComponentLayoutStyleEnum } from '@gauzy/models';
+import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 
 export enum ComponentEnum {
 	ALL_TASKS = 'ALL_TASKS',

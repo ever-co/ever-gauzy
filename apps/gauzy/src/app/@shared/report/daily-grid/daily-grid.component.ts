@@ -12,7 +12,7 @@ import {
 	ITimeLogFilters,
 	OrganizationPermissionsEnum,
 	PermissionsEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';

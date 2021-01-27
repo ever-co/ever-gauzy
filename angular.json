@@ -185,8 +185,7 @@
 						"sourceMap": true,
 						"maxWorkers": 4,
 						"memoryLimit": 4000,
-						"tsConfig": "apps/api/tsconfig.app.json",
-						"assets": ["apps/api/src/assets"]
+						"tsConfig": "apps/api/tsconfig.app.json"
 					},
 					"configurations": {
 						"production": {
@@ -196,8 +195,8 @@
 							"sourceMap": false,
 							"fileReplacements": [
 								{
-									"replace": "apps/api/src/environments/environment.ts",
-									"with": "apps/api/src/environments/environment.prod.ts"
+									"replace": "packages/config/src/environments/environment.ts",
+									"with": "packages/config/src/environments/environment.prod.ts"
 								}
 							]
 						}
@@ -252,8 +251,8 @@
 							"sourceMap": false,
 							"fileReplacements": [
 								{
-									"replace": "apps/api/src/environments/environment.ts",
-									"with": "apps/api/src/environments/environment.prod.ts"
+									"replace": "packages/config/src/environments/environment.ts",
+									"with": "packages/config/src/environments/environment.prod.ts"
 								}
 							]
 						}
@@ -278,36 +277,11 @@
 							"sourceMap": false,
 							"fileReplacements": [
 								{
-									"replace": "apps/api/src/environments/environment.ts",
-									"with": "apps/api/src/environments/environment.prod.ts"
+									"replace": "packages/config/src/environments/environment.ts",
+									"with": "packages/config/src/environments/environment.prod.ts"
 								}
 							]
 						}
-					}
-				}
-			}
-		},
-		"utils": {
-			"root": "libs/utils",
-			"sourceRoot": "libs\\utils\\src",
-			"projectType": "library",
-			"schematics": {},
-			"architect": {
-				"lint": {
-					"builder": "@angular-devkit/build-angular:tslint",
-					"options": {
-						"tsConfig": [
-							"libs\\utils\\tsconfig.lib.json",
-							"libs/utils/tsconfig.spec.json"
-						],
-						"exclude": ["**/node_modules/**"]
-					}
-				},
-				"test": {
-					"builder": "@nrwl/jest:jest",
-					"options": {
-						"jestConfig": "libs/utils/jest.config.js",
-						"tsConfig": "libs/utils/tsconfig.spec.json"
 					}
 				}
 			}
@@ -442,8 +416,8 @@
 							"sourceMap": false,
 							"fileReplacements": [
 								{
-									"replace": "apps/api/src/environments/environment.ts",
-									"with": "apps/api/src/environments/environment.prod.ts"
+									"replace": "packages/config/src/environments/environment.ts",
+									"with": "packages/config/src/environments/environment.prod.ts"
 								}
 							]
 						}
@@ -621,78 +595,99 @@
 				}
 			}
 		},
-		"integration-ai": {
-			"root": "libs/integration-ai",
-			"sourceRoot": "libs\\integration-ai\\src",
+		"wakatime": {
+			"root": "libs/wakatime",
+			"sourceRoot": "libs/wakatime/src",
 			"projectType": "library",
 			"schematics": {},
 			"architect": {
 				"lint": {
-					"builder": "@angular-devkit/build-angular:tslint",
+					"builder": "@nrwl/linter:eslint",
 					"options": {
-						"tsConfig": [
-							"libs\\integration-ai\\tsconfig.lib.json",
-							"libs/integration-ai/tsconfig.spec.json"
-						],
-						"exclude": ["**/node_modules/**"]
+						"lintFilePatterns": ["libs/wakatime/**/*.ts"]
 					}
 				},
 				"test": {
 					"builder": "@nrwl/jest:jest",
 					"options": {
-						"jestConfig": "libs/integration-ai/jest.config.js",
-						"tsConfig": "libs/integration-ai/tsconfig.spec.json"
+						"jestConfig": "libs/wakatime/jest.config.js",
+						"passWithNoTests": true
 					}
 				}
 			}
 		},
-		"integration-upwork": {
-			"root": "libs/integration-upwork",
-			"sourceRoot": "libs\\integration-upwork\\src",
+		"desktop-libs": {
+			"root": "libs/desktop-libs",
+			"sourceRoot": "libs/desktop-libs/src",
 			"projectType": "library",
 			"schematics": {},
 			"architect": {
 				"lint": {
-					"builder": "@angular-devkit/build-angular:tslint",
+					"builder": "@nrwl/linter:eslint",
 					"options": {
-						"tsConfig": [
-							"libs\\integration-upwork\\tsconfig.lib.json",
-							"libs/integration-upwork/tsconfig.spec.json"
-						],
-						"exclude": ["**/node_modules/**"]
+						"lintFilePatterns": ["libs/desktop-libs/**/*.ts"]
 					}
 				},
 				"test": {
 					"builder": "@nrwl/jest:jest",
 					"options": {
-						"jestConfig": "libs/integration-upwork/jest.config.js",
-						"tsConfig": "libs/integration-upwork/tsconfig.spec.json"
+						"jestConfig": "libs/desktop-libs/jest.config.js",
+						"passWithNoTests": true
 					}
 				}
 			}
 		},
-		"integration-hubstaff": {
-			"root": "libs/integration-hubstaff",
-			"sourceRoot": "libs\\integration-hubstaff\\src",
+		"desktop-window": {
+			"root": "libs/desktop-window",
+			"sourceRoot": "libs/desktop-window/src",
 			"projectType": "library",
 			"schematics": {},
 			"architect": {
 				"lint": {
-					"builder": "@angular-devkit/build-angular:tslint",
+					"builder": "@nrwl/linter:eslint",
 					"options": {
-						"tsConfig": [
-							"libs\\integration-hubstaff\\tsconfig.lib.json",
-							"libs/integration-hubstaff/tsconfig.spec.json"
-						],
-						"exclude": ["**/node_modules/**"]
+						"lintFilePatterns": ["libs/desktop-window/**/*.ts"]
 					}
 				},
 				"test": {
 					"builder": "@nrwl/jest:jest",
 					"options": {
-						"jestConfig": "libs/integration-hubstaff/jest.config.js",
-						"tsConfig": "libs/integration-hubstaff/tsconfig.spec.json"
+						"jestConfig": "libs/desktop-window/jest.config.js",
+						"passWithNoTests": true
 					}
+				}
+			}
+		},
+		"desktop-ui-lib": {
+			"projectType": "library",
+			"root": "libs/desktop-ui-lib",
+			"sourceRoot": "libs/desktop-ui-lib/src",
+			"prefix": "gauzy",
+			"architect": {
+				"lint": {
+					"builder": "@angular-devkit/build-angular:tslint",
+					"options": {
+						"tsConfig": [
+							"libs/desktop-ui-lib/tsconfig.lib.json",
+							"libs/desktop-ui-lib/tsconfig.spec.json"
+						],
+						"exclude": [
+							"**/node_modules/**",
+							"!libs/desktop-ui-lib/**/*"
+						]
+					}
+				},
+				"test": {
+					"builder": "@nrwl/jest:jest",
+					"options": {
+						"jestConfig": "libs/desktop-ui-lib/jest.config.js",
+						"passWithNoTests": true
+					}
+				}
+			},
+			"schematics": {
+				"@schematics/angular:component": {
+					"style": "scss"
 				}
 			}
 		},

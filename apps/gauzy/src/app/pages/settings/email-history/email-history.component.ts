@@ -6,7 +6,7 @@ import {
 	IEmployee,
 	IOrganization,
 	IOrganizationContact
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Store } from '../../../@core/services/store.service';
 import { first, filter } from 'rxjs/operators';

@@ -13,7 +13,7 @@ import {
 	ITag,
 	ContactType,
 	IOrganization
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { NbStepperComponent } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';

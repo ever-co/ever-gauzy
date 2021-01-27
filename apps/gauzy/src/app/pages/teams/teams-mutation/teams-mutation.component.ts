@@ -1,5 +1,5 @@
 import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
-import { IEmployee, IOrganization, ITag } from '@gauzy/models';
+import { IEmployee, IOrganization, ITag } from '@gauzy/contracts';
 import { Store } from '../../../@core/services/store.service';
 
 @Component({

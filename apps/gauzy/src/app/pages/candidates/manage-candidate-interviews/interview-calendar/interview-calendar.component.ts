@@ -15,7 +15,7 @@ import {
 	IDateRange,
 	ICandidateInterview,
 	IOrganization
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import * as moment from 'moment';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';

@@ -10,7 +10,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	IProductTranslated
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ProductService } from '../../../../@core/services/product.service';

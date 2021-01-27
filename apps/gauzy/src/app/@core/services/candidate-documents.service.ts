@@ -5,7 +5,7 @@ import {
 	ICandidateDocumentCreateInput,
 	ICandidateDocument,
 	ICandidateDocumentFindInput
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 
 @Injectable({
 	providedIn: 'root'

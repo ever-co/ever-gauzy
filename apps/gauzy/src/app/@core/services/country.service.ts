@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { ICountry, IPagination } from '@gauzy/models';
+import { ICountry, IPagination } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, EMPTY, Observable, Subject } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';

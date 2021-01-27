@@ -6,11 +6,11 @@ import {
 	Output,
 	EventEmitter
 } from '@angular/core';
-import { OrganizationPermissionsEnum, ITimeSlot } from '@gauzy/models';
+import { OrganizationPermissionsEnum, ITimeSlot } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TimesheetService } from '../../timesheet.service';
 import { GalleryItem } from '../../../gallery/gallery.directive';
-import { toLocal } from '@gauzy/utils';
+import { toLocal } from '@gauzy/common';
 import { ViewScreenshotsModalComponent } from '../view-screenshots-modal/view-screenshots-modal.component';
 
 @Component({

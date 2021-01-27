@@ -12,7 +12,7 @@ import { EstimatesReceivedComponent } from './invoice-estimates/estimates-receiv
 import { EstimateViewComponent } from './invoice-estimates/estimate-view/estimate-view.component';
 import { InvoicePaymentsComponent } from './invoice-payments/payments.component';
 import { NgxPermissionsGuard } from 'ngx-permissions';
-import { PermissionsEnum } from '@gauzy/models';
+import { PermissionsEnum } from '@gauzy/contracts';
 
 export function redirectTo() {
 	return '/pages/dashboard';

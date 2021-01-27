@@ -7,8 +7,8 @@ import {
 	IExpenseReportData,
 	IExpenseUpdateInput,
 	ISplitExpenseOutput
-} from '@gauzy/models';
-import { toParams } from '@gauzy/utils';
+} from '@gauzy/contracts';
+import { toParams } from '@gauzy/common';
 import { first } from 'rxjs/operators';
 
 @Injectable({

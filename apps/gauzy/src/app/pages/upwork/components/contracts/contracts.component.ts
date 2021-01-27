@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { UpworkStoreService } from 'apps/gauzy/src/app/@core/services/upwork-store.service';
-import { IEngagement } from '@gauzy/models';
+import { IEngagement } from '@gauzy/contracts';
 import { Observable, of, EMPTY } from 'rxjs';
 import { DateViewComponent } from 'apps/gauzy/src/app/@shared/table-components/date-view/date-view.component';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';

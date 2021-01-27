@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IEmployeeSetting, IEmployeeSettingFindInput } from '@gauzy/models';
+import { IEmployeeSetting, IEmployeeSettingFindInput } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 
 @Injectable({

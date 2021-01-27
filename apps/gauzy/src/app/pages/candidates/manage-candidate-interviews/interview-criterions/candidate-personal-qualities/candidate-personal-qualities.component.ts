@@ -4,7 +4,7 @@ import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { CandidatePersonalQualitiesService } from 'apps/gauzy/src/app/@core/services/candidate-personal-qualities.service';
-import { ICandidatePersonalQualities, IOrganization } from '@gauzy/models';
+import { ICandidatePersonalQualities, IOrganization } from '@gauzy/contracts';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';

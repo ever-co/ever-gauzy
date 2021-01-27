@@ -5,10 +5,10 @@ import {
 	IEmployeeFindInput,
 	IEmployeeCreateInput,
 	IEmployeeUpdateInput
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { first } from 'rxjs/operators';
-import { toParams } from '@gauzy/utils';
+import { toParams } from '@gauzy/common';
 
 @Injectable()
 export class EmployeesService {

@@ -1,6 +1,10 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { IOrganizationSprint, IGetSprintsOptions, ITask } from '@gauzy/models';
+import {
+	IOrganizationSprint,
+	IGetSprintsOptions,
+	ITask
+} from '@gauzy/contracts';
 import { SprintService } from 'apps/gauzy/src/app/@core/services/organization-sprint.service';
 import { tap, take, map, switchMap } from 'rxjs/operators';
 

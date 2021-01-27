@@ -6,7 +6,7 @@ import {
 	RecurringExpenseDeletionEnum,
 	IEmployeeRecurringExpense,
 	IEmployee
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { first, debounceTime, filter, withLatestFrom } from 'rxjs/operators';

@@ -2,7 +2,7 @@ import { Component, OnInit, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { IOrganization, IOrganizationContact } from '@gauzy/models';
+import { IOrganization, IOrganizationContact } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { UsersService } from '../../../@core/services';
@@ -119,7 +119,7 @@ export class InviteContactComponent
 					...this.form.getRawValue()
 				});
 			}
-		} catch (error) {			
+		} catch (error) {
 			this.toastrService.danger(error);
 		}
 		return null;

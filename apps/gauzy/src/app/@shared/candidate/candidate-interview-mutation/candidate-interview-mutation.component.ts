@@ -17,7 +17,7 @@ import {
 	ICandidatePersonalQualities,
 	ICandidateTechnologies,
 	IOrganization
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { Store } from '../../../@core/services/store.service';
 import { FormGroup } from '@angular/forms';
 import { CandidatesService } from '../../../@core/services/candidates.service';

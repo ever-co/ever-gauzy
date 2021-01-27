@@ -3,7 +3,7 @@ import { Store } from '../../../@core/services/store.service';
 import { EmployeeStatisticsService } from '../../../@core/services/employee-statistics.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
-import { IAggregatedEmployeeStatistic, IOrganization } from '@gauzy/models';
+import { IAggregatedEmployeeStatistic, IOrganization } from '@gauzy/contracts';
 import {
 	SelectedEmployee,
 	ALL_EMPLOYEES_SELECTED
