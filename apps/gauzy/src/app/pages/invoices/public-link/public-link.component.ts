@@ -17,7 +17,9 @@ export class PublicLinkComponent implements OnInit {
 	) {}
 
 	ngOnInit() {
-		this.toggleShow();
+		if (!this.invoice.publicLink) {
+			this.generateLink();
+		}
 	}
 
 	async generateLink() {
@@ -26,7 +28,6 @@ export class PublicLinkComponent implements OnInit {
 			this.invoice.isEstimate
 		);
 		this.invoice = updatedInvoice;
-		this.toggleShow();
 	}
 
 	copyToClipboard() {
@@ -36,12 +37,6 @@ export class PublicLinkComponent implements OnInit {
 		textField.select();
 		document.execCommand('copy');
 		textField.remove();
-	}
-
-	toggleShow() {
-		if (this.invoice.publicLink) {
-			this.show = false;
-		}
 	}
 
 	cancel() {

@@ -5,14 +5,7 @@
 		</h5>
 	</nb-card-header>
 	<nb-card-body>
-		<div *ngIf="show" class="mb-3">
-			{{
-				'INVOICES_PAGE.PUBLIC_LINK.GENERATE'
-					| translate
-						: { text: invoice.isEstimate ? 'estimate' : 'invoice' }
-			}}
-		</div>
-		<div *ngIf="!show" class="mb-3">
+		<div class="mb-3">
 			{{
 				'INVOICES_PAGE.PUBLIC_LINK.ACCESS'
 					| translate
@@ -31,16 +24,6 @@
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
-			*ngIf="show"
-			class="mr-3"
-			(click)="generateLink()"
-			status="success"
-			nbButton
-		>
-			{{ 'BUTTONS.GENERATE' | translate }}
-		</button>
-		<button
-			*ngIf="!show"
 			(click)="copyToClipboard()"
 			class="mr-3"
 			status="success"

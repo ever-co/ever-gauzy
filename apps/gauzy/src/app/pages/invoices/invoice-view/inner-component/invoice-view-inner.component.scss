@@ -1,21 +1,15 @@
-.grid {
-  display: grid;
-  grid-template-columns: 0.4fr 0.4fr;
-
-  &-item {
-    margin: 15px;
-  }
-}
-
-.item {
-  margin: 15px;
-}
-
 .table {
   margin-top: 50px;
+  padding: 0 3rem;
 }
 
-.internal-note-label {
-  margin: 15px;
-  margin-top: 25px;
+.bottom-data-container {
+  width: 25%;
+  justify-content: space-between;
+  margin-left: auto;
+}
+
+::ng-deep ga-invoice-view-inner {
+  padding: 0 100px;
+  padding-top: 25px;
 }

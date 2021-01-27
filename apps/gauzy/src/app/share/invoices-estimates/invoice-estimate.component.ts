@@ -9,7 +9,8 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 
 @Component({
 	selector: 'ga-invoice-estimate',
-	templateUrl: './invoice-estimate.component.html'
+	templateUrl: './invoice-estimate.component.html',
+	styleUrls: ['./invoice-estimate.component.scss']
 })
 export class InvoiceEstimateComponent
 	extends TranslationBaseComponent

@@ -1,7 +1,11 @@
 import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { IInvoice, InvoiceTypeEnum } from '@gauzy/contracts';
+import {
+	DiscountTaxTypeEnum,
+	IInvoice,
+	InvoiceTypeEnum
+} from '@gauzy/contracts';
 import { LocalDataSource } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
@@ -23,6 +27,10 @@ export class InvoiceViewInnerComponent
 	smartTableSource = new LocalDataSource();
 	loading: boolean;
 	showInternalNote: boolean;
+	isTaxFlatValue: boolean;
+	isTax2FlatValue: boolean;
+	isDiscountFlatValue: boolean;
+	discountTaxTypes = DiscountTaxTypeEnum;
 
 	@Input() invoice: IInvoice;
 	@Input() isEstimate: boolean;
