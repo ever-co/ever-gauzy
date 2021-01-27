@@ -1,6 +1,6 @@
 # `@gauzy/contracts`
 
-Common contracts used internally in different Gauzy API packages.
+Common contracts used internally in different Gauzy API and UI packages.
 
 ## Usage
 

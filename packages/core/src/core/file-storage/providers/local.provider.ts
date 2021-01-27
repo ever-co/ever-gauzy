@@ -91,10 +91,7 @@ export class LocalProvider extends Provider<LocalProvider> {
 		return await fs.promises.unlink(this.path(file));
 	}
 
-	async putFile(
-		fileContent: string | Buffer | URL,
-		path: string = ''
-	): Promise<UploadedFile> {
+	async putFile(fileContent: any, path: string = ''): Promise<UploadedFile> {
 		return new Promise((putFileResolve, reject) => {
 			const fullPath = join(this.config.rootPath, path);
 			fs.writeFile(fullPath, fileContent, (err) => {
@@ -106,10 +103,10 @@ export class LocalProvider extends Provider<LocalProvider> {
 				const stats = fs.statSync(fullPath);
 				const baseName = basename(path);
 				const file = {
-					originalname: baseName, // orignal file name
-					size: stats.size, // files in bytes
+					originalname: baseName,
+					size: stats.size,
 					filename: baseName,
-					path: fullPath // Full path of the file
+					path: fullPath
 				};
 				putFileResolve(this.mapUploadedFile(file));
 			});
@@ -117,10 +114,12 @@ export class LocalProvider extends Provider<LocalProvider> {
 	}
 
 	mapUploadedFile(file): UploadedFile {
-		const saparator = process.platform === 'win32' ? '\\' : '/';
+		const separator = process.platform === 'win32' ? '\\' : '/';
+
 		if (file.path) {
-			file.key = file.path.replace(this.config.rootPath + saparator, '');
+			file.key = file.path.replace(this.config.rootPath + separator, '');
 		}
+
 		file.url = this.url(file.key);
 		return file;
 	}

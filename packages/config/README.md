@@ -1,1 +1,3 @@
-# Gauzy Configuration Module
+# `@gauzy/config`
+
+Gauzy Configuration Module

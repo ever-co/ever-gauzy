@@ -23,37 +23,14 @@
 		"seed:prod:build": "yarn ng run api:seed -c=production"
 	},
 	"dependencies": {
-		"@apollo/client": "^3.2.1",
-		"@gauzy/common": "^0.1.0",
-		"@gauzy/core": "^0.1.0",
-		"app-root-path": "^3.0.0",
-		"aws-sdk": "^2.761.0",
-		"cli-ux": "^5.5.0",
-		"cls-hooked": "^4.2.2",
-		"cross-fetch": "^3.0.6",
-		"currency.js": "^2.0.3",
-		"faker": "^5.1.0",
-		"fastify-swagger": "^3.3.0",
-		"grpc": "^1.24.3",
-		"kafkajs": "^1.14.0",
-		"mqtt": "^4.2.1",
-		"nats": "^1.4.12",
-		"nodemon": "^2.0.4",
-		"pm2": "^4.4.1",
-		"redis": "^3.0.2",
-		"request": "^2.88.2",
-		"rimraf": "^3.0.2",
-		"rxjs": "^6.6.3",
-		"sharp": "^0.26.1",
-		"supertest": "^5.0.0",
-		"web-push": "^3.4.4"
+		"@gauzy/core": "^0.1.0"
 	},
 	"devDependencies": {
 		"@nestjs/schematics": "^7.1.2",
 		"@nestjs/testing": "^7.4.4",
-		"@types/supertest": "^2.0.10",
-		"@types/web-push": "^3.3.0",
+		"nodemon": "^2.0.7",
+		"pm2": "^4.5.1",
 		"dotenv": "^8.2.0",
-		"ts-node": "^9.0.0"
+		"ts-node": "^9.1.1"
 	}
 }

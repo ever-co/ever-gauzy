@@ -112,7 +112,7 @@
 		"build:package:plugin:integration-hubstaff": "yarn --cwd ./packages/plugins/integration-hubstaff build",
 		"build:package:plugin:integration-upwork": "yarn --cwd ./packages/plugins/integration-upwork build",
 		"build:package:plugin:product-reviews": "yarn --cwd ./packages/plugins/product-reviews build",
-		"build:package:all": "yarn run build:package:contracts && yarn run build:package:common && yarn run build:package:config && yarn run build:package:core && yarn run build:package:plugin && yarn run build:package:plugins"
+		"build:package:all": "yarn run build:package:contracts && yarn run build:package:common && yarn run build:package:config && yarn run build:package:plugin && yarn run build:package:plugins && yarn run build:package:core"
 	},
 	"config": {
 		"commitizen": {
@@ -270,7 +270,7 @@
 		"normalize.css": "^8.0.1",
 		"pace-js": "^1.0.2",
 		"pdfmake": "^0.1.68",
-		"pm2": "^4.4.1",
+		"pm2": "^4.5.1",
 		"pug": "^2.0.4",
 		"reflect-metadata": "^0.1.13",
 		"roboto-fontface": "^0.10.0",
@@ -336,7 +336,7 @@
 		"@types/leaflet": "^1.5.19",
 		"@types/multer": "^1.4.4",
 		"@types/multer-s3": "^2.7.7",
-		"@types/node": "^12.12.2",
+		"@types/node": "^14.14.22",
 		"@types/underscore": "^1.9.4",
 		"@types/uuid": "^3.4.4",
 		"@types/yargs": "^15.0.9",
@@ -382,7 +382,7 @@
 		"terser-webpack-plugin": "^3.0.1",
 		"ts-jest": "^26.4.0",
 		"ts-loader": "^8.0.4",
-		"ts-node": "^9.0.0",
+		"ts-node": "^9.1.1",
 		"tsconfig-paths": "^3.9.0",
 		"tslint": "^6.1.2",
 		"tslint-config-prettier": "^1.18.0",

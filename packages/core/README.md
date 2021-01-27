@@ -1,10 +1,10 @@
 # `@gauzy/core`
 
-Gauzy - A headless ERP/CRM/HRM framework.
+Gauzy Core - A headless ERP/CRM/HRM framework.
 
 ## Usage
 
 ```
-const core = require('@plugin/core');
+const core = require('@gauzy/core');
 
 ```
