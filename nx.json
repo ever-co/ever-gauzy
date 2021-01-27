@@ -29,15 +29,6 @@
 		"api-desktop": {
 			"tags": []
 		},
-		"integration-ai": {
-			"tags": []
-		},
-		"integration-upwork": {
-			"tags": []
-		},
-		"integration-hubstaff": {
-			"tags": []
-		},
 		"wakatime": {
 			"tags": []
 		},

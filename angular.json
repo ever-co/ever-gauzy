@@ -195,8 +195,8 @@
 							"sourceMap": false,
 							"fileReplacements": [
 								{
-									"replace": "apps/api/src/environments/environment.ts",
-									"with": "apps/api/src/environments/environment.prod.ts"
+									"replace": "packages/config/src/environments/environment.ts",
+									"with": "packages/config/src/environments/environment.prod.ts"
 								}
 							]
 						}
@@ -251,8 +251,8 @@
 							"sourceMap": false,
 							"fileReplacements": [
 								{
-									"replace": "apps/api/src/environments/environment.ts",
-									"with": "apps/api/src/environments/environment.prod.ts"
+									"replace": "packages/config/src/environments/environment.ts",
+									"with": "packages/config/src/environments/environment.prod.ts"
 								}
 							]
 						}
@@ -277,8 +277,8 @@
 							"sourceMap": false,
 							"fileReplacements": [
 								{
-									"replace": "apps/api/src/environments/environment.ts",
-									"with": "apps/api/src/environments/environment.prod.ts"
+									"replace": "packages/config/src/environments/environment.ts",
+									"with": "packages/config/src/environments/environment.prod.ts"
 								}
 							]
 						}
@@ -416,8 +416,8 @@
 							"sourceMap": false,
 							"fileReplacements": [
 								{
-									"replace": "apps/api/src/environments/environment.ts",
-									"with": "apps/api/src/environments/environment.prod.ts"
+									"replace": "packages/config/src/environments/environment.ts",
+									"with": "packages/config/src/environments/environment.prod.ts"
 								}
 							]
 						}
@@ -591,81 +591,6 @@
 						"jestConfig": "apps/desktop/desktop-api/jest.config.js",
 						"tsConfig": "apps/desktop/desktop-api/tsconfig.spec.json",
 						"passWithNoTests": true
-					}
-				}
-			}
-		},
-		"integration-ai": {
-			"root": "packages/plugins/integration-ai",
-			"sourceRoot": "packages\\plugins\\integration-ai\\src",
-			"projectType": "library",
-			"schematics": {},
-			"architect": {
-				"lint": {
-					"builder": "@angular-devkit/build-angular:tslint",
-					"options": {
-						"tsConfig": [
-							"packages\\plugins\\integration-ai\\tsconfig.lib.json",
-							"packages/plugins/integration-ai/tsconfig.spec.json"
-						],
-						"exclude": ["**/node_modules/**"]
-					}
-				},
-				"test": {
-					"builder": "@nrwl/jest:jest",
-					"options": {
-						"jestConfig": "packages/plugins/integration-ai/jest.config.js",
-						"tsConfig": "packages/plugins/integration-ai/tsconfig.spec.json"
-					}
-				}
-			}
-		},
-		"integration-upwork": {
-			"root": "packages/plugins/integration-upwork",
-			"sourceRoot": "packages\\plugins\\integration-upwork\\src",
-			"projectType": "library",
-			"schematics": {},
-			"architect": {
-				"lint": {
-					"builder": "@angular-devkit/build-angular:tslint",
-					"options": {
-						"tsConfig": [
-							"packages\\plugins\\integration-upwork\\tsconfig.lib.json",
-							"packages/plugins/integration-upwork/tsconfig.spec.json"
-						],
-						"exclude": ["**/node_modules/**"]
-					}
-				},
-				"test": {
-					"builder": "@nrwl/jest:jest",
-					"options": {
-						"jestConfig": "packages/plugins/integration-upwork/jest.config.js",
-						"tsConfig": "packages/plugins/integration-upwork/tsconfig.spec.json"
-					}
-				}
-			}
-		},
-		"integration-hubstaff": {
-			"root": "packages/plugins/integration-hubstaff",
-			"sourceRoot": "packages\\plugins\\integration-hubstaff\\src",
-			"projectType": "library",
-			"schematics": {},
-			"architect": {
-				"lint": {
-					"builder": "@angular-devkit/build-angular:tslint",
-					"options": {
-						"tsConfig": [
-							"packages\\plugins\\integration-hubstaff\\tsconfig.lib.json",
-							"packages/plugins/integration-hubstaff/tsconfig.spec.json"
-						],
-						"exclude": ["**/node_modules/**"]
-					}
-				},
-				"test": {
-					"builder": "@nrwl/jest:jest",
-					"options": {
-						"jestConfig": "packages/plugins/integration-hubstaff/jest.config.js",
-						"tsConfig": "packages/plugins/integration-hubstaff/tsconfig.spec.json"
 					}
 				}
 			}
