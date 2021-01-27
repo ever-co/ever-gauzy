@@ -47,6 +47,7 @@
 		"build:gauzy:prod:ci": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=7000 yarn run config:prod && yarn --frozen-lockfile --cache-folder ~/.cache/yarn ng:ci build gauzy -c=production --prod",
 		"build:api": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn ng build api",
 		"build:api:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn ng build api -c=production --prod",
+		"build:api:prod:ci": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=7000 yarn --frozen-lockfile --cache-folder ~/.cache/yarn ng:ci build api -c=production --prod",
 		"bundle-report": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn ng build -c=production --stats-json && webpack-bundle-analyzer dist/apps/gauzy/stats.json",
 		"commit": "git-cz",
 		"commit:lint": "commitlint -E HUSKY_GIT_PARAMS",
