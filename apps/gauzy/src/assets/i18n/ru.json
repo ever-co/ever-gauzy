@@ -2336,6 +2336,8 @@
 		"ALREADY_PAID": "Уже оплачено",
 		"AMOUNT_DUE": "Сумма к оплате",
 		"INVOICED_REMAINING_AMOUNT": "Оставшаяся сумма",
+		"INVOICE#": "Счет #",
+		"ESTIMATE#": "Приблизительно #",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"ESTIMATE_TYPE": "Тип оценки",
