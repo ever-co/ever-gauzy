@@ -2,14 +2,17 @@ import { Module } from '@nestjs/common';
 import { RouterModule } from 'nest-router';
 import { MulterModule } from '@nestjs/platform-express';
 import { SentryModule } from '@ntegral/nestjs-sentry';
-import { ServeStaticModule } from '@nestjs/serve-static';
+import {
+	ServeStaticModule,
+	ServeStaticModuleOptions
+} from '@nestjs/serve-static';
 import { HeaderResolver, I18nJsonParser, I18nModule } from 'nestjs-i18n';
 import { LogLevel } from '@sentry/types';
 import { Integrations as SentryIntegrations } from '@sentry/node';
 import { Integrations as TrackingIntegrations } from '@sentry/tracing';
 import { initialize as initializeUnleash } from 'unleash-client';
 import { LanguagesEnum } from '@gauzy/contracts';
-import { environment } from '@gauzy/config';
+import { ConfigService, environment } from '@gauzy/config';
 import * as path from 'path';
 import * as moment from 'moment';
 import { CandidateInterviewersModule } from './candidate-interviewers/candidate-interviewers.module';
@@ -126,9 +129,9 @@ import { EmployeeProposalTemplateModule } from './employee-proposal-template/emp
 import { CustomSmtpModule } from './custom-smtp/custom-smtp.module';
 import { FeatureModule } from './feature/feature.module';
 import { ImageAssetModule } from './image-asset/image-asset.module';
+import { resolveServeStaticPath } from './helper';
 
 const { unleashConfig } = environment;
-
 if (unleashConfig.url) {
 	const instance = initializeUnleash({
 		appName: unleashConfig.appName,
@@ -143,7 +146,6 @@ if (unleashConfig.url) {
 }
 
 const sentryIntegrations = [];
-
 sentryIntegrations.push(
 	// enable HTTP calls tracing
 	new SentryIntegrations.Http({ tracing: true })
@@ -155,11 +157,14 @@ if (process.env.DB_TYPE === 'postgres') {
 
 @Module({
 	imports: [
-		ServeStaticModule.forRoot({
-			rootPath: environment.isElectron
-				? path.resolve(environment.gauzyUserPath, 'public')
-				: path.resolve(process.cwd(), 'public'),
-			serveRoot: '/public/'
+		ServeStaticModule.forRootAsync({
+			useFactory: async (
+				configService: ConfigService
+			): Promise<ServeStaticModuleOptions[]> => {
+				return await resolveServeStaticPath(configService);
+			},
+			inject: [ConfigService],
+			imports: []
 		}),
 		MulterModule.register(),
 		RouterModule.forRoutes([
