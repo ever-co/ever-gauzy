@@ -2331,6 +2331,8 @@
 		"ALREADY_PAID": "Already Paid",
 		"AMOUNT_DUE": "Amount Due",
 		"INVOICED_REMAINING_AMOUNT": "Invoiced Remaining Amount",
+		"INVOICE#": "Invoice#",
+		"ESTIMATE#": "Estimate#",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",

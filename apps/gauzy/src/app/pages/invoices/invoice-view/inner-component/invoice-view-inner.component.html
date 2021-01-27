@@ -3,98 +3,186 @@
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
+	*ngIf="invoice && invoiceDate && dueDate"
 >
-	<div class="item">
-		<span *ngIf="!isEstimate"
-			>{{ 'INVOICES_PAGE.INVOICE_NUMBER' | translate }}:</span
-		>
-		<span *ngIf="isEstimate"
-			>{{ 'INVOICES_PAGE.ESTIMATES.ESTIMATE_NUMBER' | translate }}:</span
-		>
-		{{ invoice ? invoice?.invoiceNumber : '' }}
-	</div>
-	<div class="grid">
-		<div class="grid-item">
-			{{ 'INVOICES_PAGE.VIEW.FROM' | translate }}:
-			{{ invoice ? invoice?.fromOrganization?.name : '' }}
+	<div class="shadow py-5 mb-5">
+		<div class="d-flex justify-content-between">
+			<div class="ml-5">
+				<div class="mb-5">
+					<div class="font-weight-bold">
+						{{ 'INVOICES_PAGE.VIEW.FROM' | translate }}:
+					</div>
+					<div>{{ invoice?.fromOrganization?.name }}</div>
+				</div>
+				<div>
+					<div class="font-weight-bold">
+						{{ 'INVOICES_PAGE.VIEW.TO' | translate }}:
+					</div>
+					<div>{{ invoice?.toContact?.name }}</div>
+				</div>
+			</div>
+			<div class="mr-5">
+				<div class="mb-5 font-weight-bold">
+					<h4 class="d-inline mr-2" *ngIf="!isEstimate">
+						{{ 'INVOICES_PAGE.INVOICE#' | translate }}
+					</h4>
+					<h4 class="d-inline mr-2" *ngIf="isEstimate">
+						{{ 'INVOICES_PAGE.ESTIMATE#' | translate }}
+					</h4>
+					<h4 class="d-inline">
+						{{ invoice?.invoiceNumber }}
+					</h4>
+				</div>
+				<div class="d-flex">
+					<div>
+						<div *ngIf="!isEstimate" class="font-weight-bold">
+							{{ 'INVOICES_PAGE.INVOICE_DATE' | translate }}:
+						</div>
+						<div *ngIf="isEstimate" class="font-weight-bold">
+							{{
+								'INVOICES_PAGE.ESTIMATES.ESTIMATE_DATE'
+									| translate
+							}}:
+						</div>
+						<div class="font-weight-bold text-right">
+							{{ 'INVOICES_PAGE.DUE_DATE' | translate }}:
+						</div>
+					</div>
+					<div class="ml-5">
+						<div>{{ invoiceDate }}</div>
+						<div>{{ dueDate }}</div>
+					</div>
+				</div>
+			</div>
 		</div>
-		<div class="grid-item">
-			{{ 'INVOICES_PAGE.VIEW.TO' | translate }}:
-			{{ invoice ? invoice?.toContact?.name : '' }}
-		</div>
-		<div class="grid-item">
-			<span *ngIf="!isEstimate"
-				>{{ 'INVOICES_PAGE.INVOICE_DATE' | translate }}:</span
+
+		<div class="table">
+			<ng2-smart-table
+				*ngIf="isTableLoaded"
+				[settings]="settingsSmartTable"
+				[source]="smartTableSource"
+				style="cursor: pointer"
 			>
-			<span *ngIf="isEstimate"
-				>{{
-					'INVOICES_PAGE.ESTIMATES.ESTIMATE_DATE' | translate
-				}}:</span
+			</ng2-smart-table>
+		</div>
+
+		<div class="d-flex justify-content-between">
+			<div
+				*ngIf="invoice.internalNote && showInternalNote"
+				class="mt-5 ml-5"
 			>
-			{{ invoiceDate ? invoiceDate : '' }}
+				<h5 class="font-weight-bold">
+					{{
+						'INVOICES_PAGE.INTERNAL_NOTE.INTERNAL_NOTE' | translate
+					}}:
+				</h5>
+				{{ invoice.internalNote }}
+			</div>
+			<div class="d-flex bottom-data-container mt-5">
+				<div class="d-flex flex-column text-right font-weight-bold">
+					<div class="mt-2">
+						{{ 'INVOICES_PAGE.TAX' | translate }}:
+					</div>
+					<div class="mt-2">
+						{{ 'INVOICES_PAGE.TAX_2' | translate }}:
+					</div>
+					<div class="mt-2">
+						{{
+							'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE'
+								| translate
+						}}:
+					</div>
+					<div class="mt-2">
+						{{ 'INVOICES_PAGE.TOTAL_VALUE' | translate }}:
+					</div>
+					<div
+						*ngIf="invoice.hasRemainingAmountInvoiced"
+						class="mt-2"
+					>
+						{{ 'INVOICES_PAGE.ALREADY_PAID' | translate }}:
+					</div>
+					<div
+						*ngIf="invoice.hasRemainingAmountInvoiced"
+						class="mt-2"
+					>
+						{{ 'INVOICES_PAGE.AMOUNT_DUE' | translate }}:
+					</div>
+				</div>
+				<div class="d-flex flex-column mr-5 text-right">
+					<div class="mt-2">
+						<span
+							*ngIf="
+								invoice.taxType === discountTaxTypes.FLAT_VALUE
+							"
+						>
+							{{ invoice.currency }}
+						</span>
+						{{ invoice?.tax }}
+						<span
+							*ngIf="invoice.taxType === discountTaxTypes.PERCENT"
+						>
+							%
+						</span>
+					</div>
+					<div class="mt-2">
+						<span
+							*ngIf="
+								invoice.taxType === discountTaxTypes.FLAT_VALUE
+							"
+						>
+							{{ invoice.currency }}
+						</span>
+						{{ invoice?.tax2 }}
+						<span
+							*ngIf="invoice.taxType === discountTaxTypes.PERCENT"
+						>
+							%
+						</span>
+					</div>
+					<div class="mt-2">
+						<span
+							*ngIf="
+								invoice.discountType ===
+								discountTaxTypes.FLAT_VALUE
+							"
+						>
+							{{ invoice.currency }}
+						</span>
+						<span>
+							{{ invoice?.discountValue }}
+						</span>
+						<span
+							*ngIf="
+								invoice.discountType ===
+								discountTaxTypes.PERCENT
+							"
+						>
+							%
+						</span>
+					</div>
+					<div class="mt-2">
+						<span>
+							{{ invoice?.currency }} {{ invoice?.totalValue }}
+						</span>
+					</div>
+					<div
+						*ngIf="invoice.hasRemainingAmountInvoiced"
+						class="mt-2"
+					>
+						<span>
+							{{ invoice?.currency }} {{ invoice?.alreadyPaid }}
+						</span>
+					</div>
+					<div
+						*ngIf="invoice.hasRemainingAmountInvoiced"
+						class="mt-2"
+					>
+						<span>
+							{{ invoice?.currency }} {{ invoice?.amountDue }}
+						</span>
+					</div>
+				</div>
+			</div>
 		</div>
-		<div class="grid-item">
-			{{ 'INVOICES_PAGE.DUE_DATE' | translate }}:
-			{{ dueDate ? dueDate : '' }}
-		</div>
-		<div class="grid-item">
-			{{ 'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE' | translate }}:
-			{{ invoice ? invoice?.discountValue : '' }}
-		</div>
-		<div class="grid-item">
-			{{ 'INVOICES_PAGE.DISCOUNT_TYPE' | translate }}:
-			{{ invoice ? invoice?.discountType : '' }}
-		</div>
-		<div class="grid-item">
-			{{ 'INVOICES_PAGE.TAX' | translate }}:
-			{{ invoice ? invoice?.tax : '' }}
-		</div>
-		<div class="grid-item">
-			{{ 'INVOICES_PAGE.TAX_TYPE' | translate }}:
-			{{ invoice ? invoice?.taxType : '' }}
-		</div>
-		<div class="grid-item">
-			{{ 'INVOICES_PAGE.CURRENCY' | translate }}:
-			{{ invoice ? invoice?.currency : '' }}
-		</div>
-		<div class="grid-item">
-			{{ 'INVOICES_PAGE.TOTAL_VALUE' | translate }}:
-			{{ invoice ? invoice?.currency : '' }}
-			{{ invoice ? invoice?.totalValue : '' }}
-		</div>
-		<div class="grid-item">
-			{{ 'INVOICES_PAGE.INVOICES_SELECT_PAID' | translate }}:
-			{{ invoice ? (invoice?.paid ? 'Yes' : 'No') : '' }}
-		</div>
-		<div *ngIf="invoice.hasRemainingAmountInvoiced" class="grid-item">
-			{{ 'INVOICES_PAGE.ALREADY_PAID' | translate }}:
-			{{ invoice ? invoice?.currency : '' }}
-			{{ invoice ? invoice?.alreadyPaid : '' }}
-		</div>
-		<div *ngIf="invoice.hasRemainingAmountInvoiced" class="grid-item">
-			{{ 'INVOICES_PAGE.AMOUNT_DUE' | translate }}:
-			{{ invoice ? invoice?.currency : '' }}
-			{{ invoice ? invoice?.amountDue : '' }}
-		</div>
-	</div>
-	<div class="item">
-		{{ 'INVOICES_PAGE.INVOICES_SELECT_TERMS' | translate }}:
-		{{ invoice ? invoice?.terms : '' }}
-	</div>
-	<div class="table">
-		<ng2-smart-table
-			*ngIf="isTableLoaded"
-			[settings]="settingsSmartTable"
-			[source]="smartTableSource"
-			style="cursor: pointer"
-		>
-		</ng2-smart-table>
-	</div>
-	<div
-		*ngIf="invoice && invoice.internalNote && showInternalNote"
-		class="internal-note-label"
-	>
-		{{ 'INVOICES_PAGE.INTERNAL_NOTE.INTERNAL_NOTE' | translate }}:
-		{{ invoice.internalNote }}
 	</div>
 </nb-card-body>
