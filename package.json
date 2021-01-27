@@ -104,6 +104,7 @@
 		"deploy:desktop:mac": "npm config set cache .cache && cd dist/apps/desktop && npx electron-builder@22.9.1 -c.electronVersion=10.1.3 build --mac --publish always",
 		"build:package:core": "yarn --cwd ./packages/core build",
 		"build:package:common": "yarn --cwd ./packages/common build",
+		"build:package:common-angular": "yarn --cwd ./packages/common-angular build",
 		"build:package:contracts": "yarn --cwd ./packages/contracts build",
 		"build:package:config": "yarn --cwd ./packages/config build",
 		"build:package:plugin": "yarn --cwd ./packages/plugin build",
@@ -112,7 +113,7 @@
 		"build:package:plugin:integration-hubstaff": "yarn --cwd ./packages/plugins/integration-hubstaff build",
 		"build:package:plugin:integration-upwork": "yarn --cwd ./packages/plugins/integration-upwork build",
 		"build:package:plugin:product-reviews": "yarn --cwd ./packages/plugins/product-reviews build",
-		"build:package:all": "yarn run build:package:contracts && yarn run build:package:common && yarn run build:package:config && yarn run build:package:plugin && yarn run build:package:plugins && yarn run build:package:core"
+		"build:package:all": "yarn run build:package:contracts && yarn run build:package:common && yarn run build:package:common-angular && yarn run build:package:config && yarn run build:package:plugin && yarn run build:package:plugins && yarn run build:package:core"
 	},
 	"config": {
 		"commitizen": {
