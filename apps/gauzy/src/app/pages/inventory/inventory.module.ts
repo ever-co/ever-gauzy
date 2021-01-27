@@ -11,7 +11,8 @@ import {
 	NbSelectModule,
 	NbTabsetModule,
 	NbInputModule,
-	NbBadgeModule
+	NbBadgeModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
@@ -52,6 +53,7 @@ import { SelectAssetModule } from '../../@shared/select-asset-modal/select-asset
 import { SelectAssetComponent } from '../../@shared/select-asset-modal/select-asset.component';
 import { ProductGalleryComponent } from './components/edit-inventory-item/product-gallery/product-gallery.component';
 import { ImageAssetService } from '../../@core/services/image-asset.service';
+import { GalleryModule } from '../../@shared/gallery/gallery.module';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -96,8 +98,10 @@ const NB_MODULES = [
 		FormsModule,
 		SharedModule,
 		ImageUploaderModule,
+		GalleryModule,
 		CardGridModule,
 		NbBadgeModule,
+		NbTooltipModule,
 		NbDialogModule.forChild(),
 		TranslateModule,
 		...NB_MODULES,

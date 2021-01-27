@@ -97,6 +97,18 @@ export class ProductService {
 			.toPromise();
 	}
 
+	deleteGalleryImage(
+		id: string,
+		image: IImageAsset
+	): Promise<IProductTranslatable> {
+		return this.http
+			.delete<IProductTranslatable>(
+				`${this.PRODUCTS_URL}/${id}/delete-gallery-image/${image.id}`
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
 	setAsFeatured(
 		id: string,
 		image: IImageAsset
