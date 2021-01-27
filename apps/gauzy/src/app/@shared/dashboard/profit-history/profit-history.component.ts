@@ -4,7 +4,7 @@ import { DateViewComponent } from '../../table-components/date-view/date-view.co
 import { Store } from '../../../@core/services/store.service';
 import { ExpenseTableComponent } from './table-components/expense-table.component';
 import { IncomeTableComponent } from './table-components/income-table.component';
-import { IEmployeeStatisticsHistory } from '@gauzy/models';
+import { IEmployeeStatisticsHistory } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';

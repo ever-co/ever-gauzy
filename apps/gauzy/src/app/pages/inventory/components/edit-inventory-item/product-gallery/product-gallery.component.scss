@@ -1,0 +1,49 @@
+@import './themes';
+
+.actions-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.featured-image {
+  width: 100%;
+}
+
+.gallery-sm-preview-item {
+  width: 100%;
+  padding-bottom: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.gallery-sm-preview {
+  transition: 0.1s all ease-in-out;
+  cursor: pointer;
+  margin-bottom: 10px;
+
+  &.selected {
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+  }
+
+  &:hover {
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+  }
+}
+
+button {
+  margin-right: 3px;
+  margin-left: 3px;
+}
+
+.featured-icon {
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  top: -3px;
+  left: 0px;
+  border-radius: 50%;
+  background: white;
+  color: nb-theme(text-success-color);
+}

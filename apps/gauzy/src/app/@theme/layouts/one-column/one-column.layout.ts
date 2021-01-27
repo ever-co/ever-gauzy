@@ -15,7 +15,7 @@ import {
 import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
 import { Router } from '@angular/router';
 import { Store } from '../../../@core/services/store.service';
-import { IUser } from '@gauzy/models';
+import { IUser } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 
 @Component({

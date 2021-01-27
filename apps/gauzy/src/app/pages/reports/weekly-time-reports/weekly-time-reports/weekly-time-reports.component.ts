@@ -13,7 +13,7 @@ import {
 	ITimeLogFilters,
 	OrganizationPermissionsEnum,
 	PermissionsEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { TimesheetStatisticsService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-statistics.service';

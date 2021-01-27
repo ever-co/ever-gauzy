@@ -7,7 +7,7 @@ import {
 	forwardRef,
 	OnDestroy
 } from '@angular/core';
-import { IEmployee, IOrganization } from '@gauzy/models';
+import { IEmployee, IOrganization } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';

@@ -5,7 +5,7 @@ import {
 	GoalLevelEnum,
 	KeyResultTypeEnum,
 	KeyResultNumberUnitsEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 
 @Component({

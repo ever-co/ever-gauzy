@@ -8,7 +8,7 @@ import {
 	IOrganizationRecurringExpenseForEmployeeOutput,
 	IRecurringExpenseDeleteInput,
 	IRecurringExpenseOrderFields
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 
 @Injectable({

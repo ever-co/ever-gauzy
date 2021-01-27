@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IEquipment, IEquipmentFindInput } from '@gauzy/models';
+import { IEquipment, IEquipmentFindInput } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 
 @Injectable()

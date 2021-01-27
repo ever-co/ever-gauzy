@@ -17,7 +17,7 @@ import {
 	IEmployeeProposalTemplate,
 	IOrganizationContact,
 	ContactType
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { ProposalsService } from '../../../@core/services/proposals.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';

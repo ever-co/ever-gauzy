@@ -1,4 +1,4 @@
-import { IHelpCenter, IHelpCenterFind } from '@gauzy/models';
+import { IHelpCenter, IHelpCenterFind } from '@gauzy/contracts';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';

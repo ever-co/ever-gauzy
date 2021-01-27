@@ -1,4 +1,4 @@
-import { IHelpCenter, IOrganization } from '@gauzy/models';
+import { IHelpCenter, IOrganization } from '@gauzy/contracts';
 import {
 	Component,
 	ViewChild,

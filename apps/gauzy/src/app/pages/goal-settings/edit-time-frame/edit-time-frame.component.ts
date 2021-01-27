@@ -6,7 +6,7 @@ import {
 	IGoalTimeFrame,
 	IOrganization,
 	TimeFrameStatusEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';

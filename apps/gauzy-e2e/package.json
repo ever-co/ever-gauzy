@@ -1,0 +1,6 @@
+{
+	"name": "@gauzy/e2e",
+	"version": "0.1.0",
+	"description": "Gauzy e2e tests",
+	"license": "GPL-3.0"
+}

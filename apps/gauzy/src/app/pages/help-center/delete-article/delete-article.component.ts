@@ -1,4 +1,4 @@
-import { IHelpCenterArticle } from '@gauzy/models';
+import { IHelpCenterArticle } from '@gauzy/contracts';
 import { Component, OnDestroy, Input, ErrorHandler } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';
@@ -12,7 +12,8 @@ import { HelpCenterAuthorService } from '../../../@core/services/help-center-aut
 	templateUrl: 'delete-article.component.html',
 	styleUrls: ['delete-article.component.scss']
 })
-export class DeleteArticleComponent extends TranslationBaseComponent
+export class DeleteArticleComponent
+	extends TranslationBaseComponent
 	implements OnDestroy {
 	@Input() article: IHelpCenterArticle;
 	private _ngDestroy$ = new Subject<void>();

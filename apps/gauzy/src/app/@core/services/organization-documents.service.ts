@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import {
 	IOrganizationDocument,
 	IOrganizationDocumentFindInput
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 
 @Injectable({
 	providedIn: 'root'

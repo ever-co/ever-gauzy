@@ -7,7 +7,7 @@ import {
 	ICandidateInterview,
 	IEmployee,
 	ICandidateFeedback
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { CandidateFeedbacksService } from '../../../../../@core/services/candidate-feedbacks.service';
 
 @Component({

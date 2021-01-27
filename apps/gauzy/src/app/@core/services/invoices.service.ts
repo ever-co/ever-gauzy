@@ -5,10 +5,10 @@ import {
 	IInvoiceCreateInput,
 	IInvoiceFindInput,
 	IInvoiceUpdateInput
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs';
-import { toParams } from '@gauzy/utils';
+import { toParams } from '@gauzy/common';
 
 @Injectable()
 export class InvoicesService {
@@ -49,6 +49,16 @@ export class InvoicesService {
 			.toPromise();
 	}
 
+	getWithoutAuth(id: string, token: string, relations?: string[]) {
+		const data = JSON.stringify({ relations });
+		return this.http
+			.get<IInvoice>(`/api/invoices/public/${id}/${token}`, {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
+
 	add(invoice: IInvoiceCreateInput): Promise<IInvoice> {
 		return this.http
 			.post<IInvoice>('/api/invoices', invoice)
@@ -76,6 +86,17 @@ export class InvoicesService {
 	edit(invoice: IInvoice): Promise<IInvoice> {
 		return this.http
 			.put<IInvoice>(`/api/invoices/${invoice.id}`, invoice)
+			.pipe(first())
+			.toPromise();
+	}
+
+	generateLink(id: string, isEstimate: boolean): Promise<any> {
+		return this.http
+			.put<any>(`/api/invoices/generate/${id}`, {
+				params: {
+					isEstimate
+				}
+			})
 			.pipe(first())
 			.toPromise();
 	}

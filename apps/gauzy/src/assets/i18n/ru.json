@@ -96,7 +96,10 @@
 		"CLEAR": "Очистить",
 		"SET": "Задать",
 		"RECORD_FULL_PAYMENT": "Запись полной оплаты",
-		"EXPORT_TO_CSV": "Экспорт в CSV"
+		"EXPORT_TO_CSV": "Экспорт в CSV",
+		"INVOICE_REMAINING_AMOUNT": "Оставшаяся сумма",
+		"PUBLIC_LINK": "Публичная ссылка",
+		"GENERATE": "Сгенерировать"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -312,7 +315,8 @@
 				"TITLE": "КУРДИНАТ",
 				"LATITUDE": "Широта",
 				"LONGITUDE": "Долгота"
-			}
+			},
+			"PUBLIC_LINK": "Публичная ссылка"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -2026,7 +2030,19 @@
 		"ADD_VARIANT": "Добавить вариант",
 		"EDIT_VARIANT": "Изменить вариант",
 		"NO_OPTIONS_LABEL": "(нет опций)",
-		"OPTIONS": "Варианты"
+		"OPTIONS": "Варианты",
+		"SELECT_OR_UPLOAD_IMAGE": "Выбрать или загрузить изображение",
+		"SELECT_IMAGE": "Выбрать изображение",
+		"NO_IMAGE_SELECTED": "Изображение не выбрано",
+		"URL": "Url",
+		"DIMENSIONS": "Размеры",
+		"FEATURED_IMAGE_WAS_SAVED": "Избранное изображение было сохранено!",
+		"IMAGE_SAVED": "Изображение сохранено!",
+		"ADD_GALLERY_IMAGE": "Добавить изображение галереи",
+		"SET_FEATURED_IMAGE": "Установка избранного изображения",
+		"VIEW_GALLERY": "Просмотреть галерею",
+		"EDIT_IMAGE": "Изменить изображение галереи",
+		"DELETE_IMAGE": "Удалить изображение"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
@@ -2317,6 +2333,11 @@
 		"DATE": "Дата",
 		"YES": "Да",
 		"NO": "Нет",
+		"ALREADY_PAID": "Уже оплачено",
+		"AMOUNT_DUE": "Сумма к оплате",
+		"INVOICED_REMAINING_AMOUNT": "Оставшаяся сумма",
+		"INVOICE#": "Счет #",
+		"ESTIMATE#": "Приблизительно #",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"ESTIMATE_TYPE": "Тип оценки",
@@ -2458,6 +2479,11 @@
 			"DELETE": "Удалить",
 			"NOTE": "Примечание",
 			"PAYMENTS": "Платежи"
+		},
+		"PUBLIC_LINK": {
+			"HEADER": "Сгенерировать публичную ссылку",
+			"GENERATE": "Генерировать ссылку на {{ text }} , которую могут просматривать любой, кто имеет ссылку.",
+			"ACCESS": "Любой, у кого есть доступ к этой ссылке, может просмотреть {{ text }}."
 		}
 	},
 	"PAYMENTS_PAGE": {

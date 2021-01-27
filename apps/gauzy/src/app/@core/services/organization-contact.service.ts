@@ -5,9 +5,9 @@ import {
 	IOrganizationContact,
 	IOrganizationContactFindInput,
 	IEditEntityByMemberInput
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
-import { toParams } from '@gauzy/utils';
+import { toParams } from '@gauzy/common';
 
 @Injectable({
 	providedIn: 'root'

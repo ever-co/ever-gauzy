@@ -9,8 +9,8 @@ import {
 	IOrganizationProject,
 	ITimeLogFilters,
 	OrganizationPermissionsEnum
-} from '@gauzy/models';
-import { toUTC } from '@gauzy/utils';
+} from '@gauzy/contracts';
+import { toUTC } from '@gauzy/common';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';

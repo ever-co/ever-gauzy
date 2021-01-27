@@ -9,7 +9,7 @@ import {
 	TimesheetStatus,
 	OrganizationPermissionsEnum,
 	PermissionsEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import * as _ from 'underscore';
 import * as moment from 'moment';
 import { ActivatedRoute } from '@angular/router';

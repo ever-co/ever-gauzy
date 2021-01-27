@@ -4,7 +4,7 @@ import {
 	IInvoiceItem,
 	IInvoiceItemCreateInput,
 	IInvoiceItemFindInput
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 @Injectable()
 export class InvoiceItemService {

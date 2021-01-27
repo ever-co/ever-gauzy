@@ -11,7 +11,8 @@ import {
 	NbSelectModule,
 	NbTabsetModule,
 	NbInputModule,
-	NbBadgeModule
+	NbBadgeModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
@@ -48,6 +49,11 @@ import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { CurrencyModule } from '../../@shared/currency/currency.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { ItemImgTagsComponent } from './components/table-components/item-img-tags-row.component';
+import { SelectAssetModule } from '../../@shared/select-asset-modal/select-asset.module';
+import { SelectAssetComponent } from '../../@shared/select-asset-modal/select-asset.component';
+import { ProductGalleryComponent } from './components/edit-inventory-item/product-gallery/product-gallery.component';
+import { ImageAssetService } from '../../@core/services/image-asset.service';
+import { GalleryModule } from '../../@shared/gallery/gallery.module';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -75,7 +81,8 @@ const NB_MODULES = [
 		VariantTableComponent,
 		OptionsFormComponent,
 		InventoryVariantFormComponent,
-		EnabledStatusComponent
+		EnabledStatusComponent,
+		ProductGalleryComponent
 	],
 	imports: [
 		UserFormsModule,
@@ -91,19 +98,23 @@ const NB_MODULES = [
 		FormsModule,
 		SharedModule,
 		ImageUploaderModule,
+		GalleryModule,
 		CardGridModule,
 		NbBadgeModule,
+		NbTooltipModule,
 		NbDialogModule.forChild(),
 		TranslateModule,
 		...NB_MODULES,
-		CurrencyModule
+		CurrencyModule,
+		SelectAssetModule
 	],
 	entryComponents: [
 		ProductTypeMutationComponent,
 		ProductCategoryMutationComponent,
 		ImageRowComponent,
 		IconRowComponent,
-		EnabledStatusComponent
+		EnabledStatusComponent,
+		SelectAssetComponent
 	],
 	providers: [
 		ProductTypeService,
@@ -112,7 +123,8 @@ const NB_MODULES = [
 		ProductVariantService,
 		ProductVariantSettingsService,
 		ProductVariantPriceService,
-		OrganizationsService
+		OrganizationsService,
+		ImageAssetService
 	]
 })
 export class InventoryModule {}

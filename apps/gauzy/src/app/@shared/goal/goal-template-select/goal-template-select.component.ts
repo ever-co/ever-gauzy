@@ -10,7 +10,7 @@ import {
 	KeyResultWeightEnum,
 	KeyResultTypeEnum,
 	IOrganization
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import { Store } from '../../../@core/services/store.service';
 import { isFuture } from 'date-fns';

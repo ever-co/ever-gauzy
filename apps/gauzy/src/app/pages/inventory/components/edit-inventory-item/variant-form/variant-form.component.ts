@@ -7,7 +7,7 @@ import {
 	OnChanges,
 	SimpleChanges
 } from '@angular/core';
-import { IProductOption } from '@gauzy/models';
+import { IProductOption } from '@gauzy/contracts';
 import { Router } from '@angular/router';
 
 export interface OptionCreateInput {

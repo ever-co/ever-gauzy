@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { SMSProviderEnum } from '@gauzy/models';
+import { SMSProviderEnum } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ga-sms-gateway',

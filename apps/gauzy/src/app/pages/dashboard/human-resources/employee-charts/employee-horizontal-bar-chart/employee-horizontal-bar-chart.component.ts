@@ -1,5 +1,5 @@
 import { Component, Input, OnDestroy, OnInit, OnChanges } from '@angular/core';
-import { IMonthAggregatedEmployeeStatistics } from '@gauzy/models';
+import { IMonthAggregatedEmployeeStatistics } from '@gauzy/contracts';
 import { NbThemeService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';

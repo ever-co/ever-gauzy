@@ -10,14 +10,14 @@ import { Observable } from 'rxjs/Observable';
 import { HubstaffService } from './services/hubstaff.service';
 import { catchError, filter, take, switchMap, finalize } from 'rxjs/operators';
 import { BehaviorSubject, throwError } from 'rxjs';
-import { HttpStatus } from '@gauzy/models';
+import { HttpStatus } from '@gauzy/contracts';
 
 @Injectable()
 export class HubstaffTokenInterceptor implements HttpInterceptor {
 	private refreshTokenInProgress = false;
-	private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<
-		any
-	>(null);
+	private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(
+		null
+	);
 
 	constructor(private injector: Injector) {}
 	intercept(

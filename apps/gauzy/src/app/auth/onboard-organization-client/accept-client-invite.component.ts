@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IInvite, IOrganizationContactRegistrationInput } from '@gauzy/models';
+import {
+	IInvite,
+	IOrganizationContactRegistrationInput
+} from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { InviteService } from '../../@core/services/invite.service';
 import { ToastrService } from '../../@core/services/toastr.service';

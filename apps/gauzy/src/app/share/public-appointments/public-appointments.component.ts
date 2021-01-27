@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { Router, ActivatedRoute } from '@angular/router';
-import { ITimeOff, IEmployee, IEventType } from '@gauzy/models';
+import { ITimeOff, IEmployee, IEventType } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { timeOff } from './test-data';
 import { filter } from 'rxjs/operators';

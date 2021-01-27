@@ -1,4 +1,4 @@
-import { TimeLogType } from '@gauzy/models';
+import { TimeLogType } from '@gauzy/contracts';
 
 export const TimeLogsLable = {
 	[TimeLogType.TRACKED]: {

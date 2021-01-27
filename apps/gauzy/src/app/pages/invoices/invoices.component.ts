@@ -1,4 +1,12 @@
-import { Component, OnInit, ViewChild, OnDestroy, Input } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	ViewChild,
+	OnDestroy,
+	Input,
+	QueryList,
+	ViewChildren
+} from '@angular/core';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
@@ -24,7 +32,7 @@ import {
 	PermissionsEnum,
 	ICurrency,
 	IInvoiceItemCreateInput
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { first, map, filter, tap } from 'rxjs/operators';
@@ -45,6 +53,7 @@ import { NgxPermissionsService } from 'ngx-permissions';
 import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
 import { ToastrService } from '../../@core/services/toastr.service';
 import { saveAs } from 'file-saver';
+import { PublicLinkComponent } from './public-link/public-link.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -89,7 +98,9 @@ export class InvoicesComponent
 			this.onChangedSource();
 		}
 	}
-	@ViewChild(NbPopoverDirective) popover: NbPopoverDirective;
+
+	@ViewChildren(NbPopoverDirective)
+	public popups: QueryList<NbPopoverDirective>;
 
 	constructor(
 		private fb: FormBuilder,
@@ -640,6 +651,20 @@ export class InvoicesComponent
 		saveAs(blob, `${fileName}-${this.selectedInvoice.invoiceNumber}.csv`);
 	}
 
+	async generatePublicLink(selectedItem) {
+		if (selectedItem) {
+			this.selectInvoice({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+		this.dialogService.open(PublicLinkComponent, {
+			context: {
+				invoice: this.selectedInvoice
+			}
+		});
+	}
+
 	async loadSettings() {
 		this.store.selectedOrganization$
 			.pipe(
@@ -983,12 +1008,33 @@ export class InvoicesComponent
 		this.loadSettingsSmartTable();
 	}
 
-	openPopover() {
-		if (this.popover.isShown) {
-			this.popover.hide();
+	toggleActionsPopover() {
+		const actionsPopup = this.popups.first;
+		const tableSettingsPopup = this.popups.last;
+
+		if (actionsPopup.isShown) {
+			actionsPopup.hide();
 		} else {
-			this.popover.show();
-			document.getElementsByClassName('arrow')[0].remove();
+			actionsPopup.show();
+		}
+
+		if (tableSettingsPopup.isShown) {
+			tableSettingsPopup.hide();
+		}
+	}
+
+	toggleTableSettingsPopover() {
+		const actionsPopup = this.popups.first;
+		const tableSettingsPopup = this.popups.last;
+
+		if (tableSettingsPopup.isShown) {
+			tableSettingsPopup.hide();
+		} else {
+			tableSettingsPopup.show();
+		}
+
+		if (actionsPopup.isShown) {
+			actionsPopup.hide();
 		}
 	}
 

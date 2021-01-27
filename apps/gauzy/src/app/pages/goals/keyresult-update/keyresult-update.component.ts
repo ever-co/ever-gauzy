@@ -8,7 +8,7 @@ import {
 	KeyResultUpdateStatusEnum,
 	IKPI,
 	KpiOperatorEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { KeyResultUpdateService } from '../../../@core/services/keyresult-update.service';
@@ -20,7 +20,8 @@ import { Store } from '../../../@core/services/store.service';
 	templateUrl: './keyresult-update.component.html',
 	styleUrls: ['./keyresult-update.component.scss']
 })
-export class KeyResultUpdateComponent extends TranslationBaseComponent
+export class KeyResultUpdateComponent
+	extends TranslationBaseComponent
 	implements OnInit {
 	keyResultUpdateForm: FormGroup;
 	keyResult: IKeyResult;

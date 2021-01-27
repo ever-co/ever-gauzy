@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { ISkill } from '@gauzy/models';
+import { ISkill } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 
 @Injectable()

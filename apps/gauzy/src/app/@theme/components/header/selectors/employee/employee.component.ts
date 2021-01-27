@@ -13,7 +13,7 @@ import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.se
 import { takeUntil, filter, debounceTime } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
-import { IOrganization, ITag, ISkill } from '@gauzy/models';
+import { IOrganization, ITag, ISkill } from '@gauzy/contracts';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';

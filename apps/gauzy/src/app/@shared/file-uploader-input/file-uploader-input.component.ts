@@ -31,6 +31,9 @@ export class FileUploaderInputComponent {
 	@Output()
 	uploadedImgUrl: EventEmitter<string> = new EventEmitter<string>();
 
+	@Output()
+	uploadedImgData: EventEmitter<any> = new EventEmitter<any>();
+
 	uploader: FileUploader;
 	loading = false;
 
@@ -81,6 +84,7 @@ export class FileUploaderInputComponent {
 
 			this.loading = false;
 			this.uploadedImgUrl.emit(data.url);
+			this.uploadedImgData.emit(data);
 			this.oldValue = this.fileUrl;
 		};
 	}

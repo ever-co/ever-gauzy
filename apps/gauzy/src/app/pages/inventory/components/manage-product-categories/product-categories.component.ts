@@ -3,7 +3,7 @@ import {
 	IOrganization,
 	LanguagesEnum,
 	ComponentLayoutStyleEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';

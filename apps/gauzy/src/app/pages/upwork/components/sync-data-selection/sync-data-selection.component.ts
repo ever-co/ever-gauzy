@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { UpworkStoreService } from 'apps/gauzy/src/app/@core/services/upwork-store.service';
 import { Observable, of } from 'rxjs';
 import { NbDialogRef } from '@nebular/theme';
-import { IEngagement } from '@gauzy/models';
+import { IEngagement } from '@gauzy/contracts';
 import { tap, catchError } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';

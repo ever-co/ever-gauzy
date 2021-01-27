@@ -17,9 +17,6 @@
 		"api": {
 			"tags": []
 		},
-		"utils": {
-			"tags": []
-		},
 		"desktop": {
 			"tags": []
 		},
@@ -32,13 +29,16 @@
 		"api-desktop": {
 			"tags": []
 		},
-		"integration-ai": {
+		"wakatime": {
 			"tags": []
 		},
-		"integration-upwork": {
+		"desktop-libs": {
 			"tags": []
 		},
-		"integration-hubstaff": {
+		"desktop-window": {
+			"tags": []
+		},
+		"desktop-ui-lib": {
 			"tags": []
 		}
 	}

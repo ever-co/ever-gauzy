@@ -7,8 +7,12 @@
 
 .popover-container {
   border: solid 1px #919191;
-  padding: 0 50px;
-  padding-bottom: 20px;
+  padding: 20px 30px;
+  border-radius: 10px;
+}
+
+::ng-deep nb-popover {
+  border-radius: 10px !important;
 }
 
 .per-page {
@@ -89,4 +93,12 @@ button {
 
 .content-active {
   padding-left: 0;
+}
+
+::ng-deep .arrow {
+  display: none;
+}
+
+.icon-text {
+  margin-right: 0.5rem;
 }

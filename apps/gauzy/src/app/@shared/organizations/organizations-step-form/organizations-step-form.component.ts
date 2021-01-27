@@ -28,14 +28,14 @@ import {
 	ICurrency,
 	IUser,
 	CurrenciesEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { LocationFormComponent } from '../../forms/location';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LatLng } from 'leaflet';
 import { LeafletMapComponent } from '../../forms/maps/leaflet/leaflet.component';
 import { Store } from '../../../@core/services/store.service';
 import { filter, tap } from 'rxjs/operators';
-import { retrieveNameFromEmail } from '@gauzy/utils';
+import { retrieveNameFromEmail } from '@gauzy/common';
 import { environment as ENV } from 'apps/gauzy/src/environments/environment';
 import { ToastrService } from '../../../@core/services/toastr.service';
 

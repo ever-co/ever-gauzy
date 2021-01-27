@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, EventEmitter, Output } from '@angular/core';
-import { IOrganization } from '@gauzy/models';
+import { IOrganization } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
 import { FormGroup, FormBuilder } from '@angular/forms';

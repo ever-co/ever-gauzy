@@ -8,7 +8,7 @@ import {
 	IOrganizationContact,
 	IOrganizationDepartment,
 	IOrganization
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { InviteService } from '../../../../@core/services/invite.service';
 import { RoleService } from '../../../../@core/services/role.service';
 import { first } from 'rxjs/operators';

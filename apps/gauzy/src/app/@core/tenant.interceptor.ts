@@ -9,7 +9,7 @@ import { Observable } from 'rxjs/Observable';
 import { Store } from './services/store.service';
 import { filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { RequestMethodEnum } from '@gauzy/models';
+import { RequestMethodEnum } from '@gauzy/contracts';
 
 @UntilDestroy()
 @Injectable()

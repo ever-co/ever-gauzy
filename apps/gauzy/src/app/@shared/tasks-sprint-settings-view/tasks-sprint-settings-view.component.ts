@@ -7,7 +7,7 @@ import {
 	IOrganizationSprint,
 	IOrganizationProject,
 	IOrganization
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { SprintStoreService } from '../../@core/services/organization-sprint-store.service';
 import { Store } from '../../@core/services/store.service';

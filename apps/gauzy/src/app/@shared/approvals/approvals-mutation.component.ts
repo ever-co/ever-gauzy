@@ -9,7 +9,7 @@ import {
 	IRequestApprovalCreateInput,
 	ApprovalPolicyTypesStringEnum,
 	ITag
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../@core/services/store.service';

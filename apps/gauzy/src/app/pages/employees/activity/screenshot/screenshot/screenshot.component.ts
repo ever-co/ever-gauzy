@@ -5,12 +5,12 @@ import {
 	ITimeSlot,
 	IGetTimeSlotInput,
 	IScreenshotMap
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { debounceTime, filter } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
-import { toUTC, toLocal } from '@gauzy/utils';
+import { toUTC, toLocal } from '@gauzy/common';
 import * as _ from 'underscore';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';

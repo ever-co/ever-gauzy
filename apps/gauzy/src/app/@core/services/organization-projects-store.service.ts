@@ -2,7 +2,7 @@ import {
 	IOrganizationProject,
 	IOrganizationProjectStoreState,
 	OrganizationProjectAction
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { Injectable } from '@angular/core';
 import { Query, Store as AkitaStore, StoreConfig } from '@datorama/akita';
 

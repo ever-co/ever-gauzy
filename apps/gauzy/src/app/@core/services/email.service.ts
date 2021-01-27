@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IEmail, IEmailFindInput, IEmailUpdateInput } from '@gauzy/models';
+import { IEmail, IEmailFindInput, IEmailUpdateInput } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 
 @Injectable({

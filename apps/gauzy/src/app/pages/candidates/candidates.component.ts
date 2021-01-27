@@ -4,7 +4,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	ICandidateViewModel
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { first, filter, tap, debounceTime } from 'rxjs/operators';

@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { UpworkStoreService } from 'apps/gauzy/src/app/@core/services/upwork-store.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { IOrganization } from '@gauzy/models';
+import { IOrganization } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ngx-upwork',

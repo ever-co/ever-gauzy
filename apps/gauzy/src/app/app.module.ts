@@ -64,7 +64,7 @@ import { GoogleMapsLoaderService } from './@core/services/google-maps-loader.ser
 import { Router } from '@angular/router';
 import { FeatureToggleModule } from 'ngx-feature-toggle';
 import { FeatureService } from './@core/services/feature/feature.service';
-import { IFeatureToggle } from '@gauzy/models';
+import { IFeatureToggle } from '@gauzy/contracts';
 import { HttpLoaderFactory } from './@shared/translate/translate.module';
 
 // TODO: we should use some internal function which returns version of Gauzy;

@@ -6,7 +6,7 @@ import {
 	IOrganizationContact,
 	IOrganizationDepartment,
 	IOrganization
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';

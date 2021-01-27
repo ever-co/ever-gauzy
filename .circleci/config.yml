@@ -109,10 +109,6 @@ jobs:
                   keys:
                       - yarn-packages-monorepo-root-{{ checksum "yarn.lock" }}
             - run:
-                  name: Install Dependencies
-                  command: yarn install
-                  no_output_timeout: 60m
-            - run:
                   name: Run Bootstrap
                   command: yarn bootstrap
                   no_output_timeout: 60m
@@ -139,10 +135,6 @@ jobs:
                   name: Restore Yarn Package Cache
                   keys:
                       - yarn-packages-desktop-{{ checksum "yarn.lock" }}
-            - run:
-                  name: Install Dependencies
-                  command: yarn install
-                  no_output_timeout: 60m
             - run:
                   name: Run Bootstrap
                   command: yarn bootstrap
@@ -175,16 +167,16 @@ jobs:
                   keys:
                       - yarn-packages-api-{{ checksum "yarn.lock" }}
             - run:
-                  name: Install Dependencies
-                  command: yarn install
-                  no_output_timeout: 60m
-            - run:
                   name: Run Bootstrap
                   command: yarn bootstrap
                   no_output_timeout: 60m
             - run:
+                  name: Run Packages Build
+                  command: yarn build:package:all
+                  no_output_timeout: 60m
+            - run:
                   name: Run Build
-                  command: yarn build:api:prod
+                  command: yarn build:api:prod:ci
                   no_output_timeout: 60m
             - save_cache:
                   name: Save Yarn Package Cache
@@ -210,16 +202,16 @@ jobs:
                   keys:
                       - yarn-packages-web-{{ checksum "yarn.lock" }}
             - run:
-                  name: Install Dependencies
-                  command: yarn install
-                  no_output_timeout: 60m
-            - run:
                   name: Run Bootstrap
                   command: yarn bootstrap
                   no_output_timeout: 60m
             - run:
+                  name: Run Packages Build
+                  command: yarn build:package:all
+                  no_output_timeout: 60m
+            - run:
                   name: Run Build
-                  command: yarn build:prod:ci
+                  command: yarn build:gauzy:prod:ci
                   no_output_timeout: 60m
             - save_cache:
                   name: Save Yarn Package Cache
@@ -248,11 +240,6 @@ jobs:
                       - yarn-packages-test-e2e-{{ checksum "yarn.lock" }}
 
             - run:
-                  name: Install Dependencies
-                  command: yarn install
-                  no_output_timeout: 60m
-
-            - run:
                   name: Run Bootstrap
                   command: yarn bootstrap
                   no_output_timeout: 60m
@@ -273,7 +260,7 @@ jobs:
                   paths:
                       - ~/.cache/yarn
 
-            - run: 
+            - run:
                   name: Kill API Background Process
                   command: killall -w node
 
@@ -300,7 +287,7 @@ jobs:
             - run:
                   name: 'Installing NPM Packages'
                   command: |
-                      yarn install
+                      yarn bootstrap
                   no_output_timeout: 60m
             - pulumi/update:
                   stack: dev

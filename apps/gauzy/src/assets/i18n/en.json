@@ -97,7 +97,9 @@
 		"SET": "Set",
 		"RECORD_FULL_PAYMENT": "Record Full Payment",
 		"EXPORT_TO_CSV": "Export to CSV",
-		"INVOICE_REMAINING_AMOUNT": "Invoice Remaining Amount"
+		"INVOICE_REMAINING_AMOUNT": "Invoice Remaining Amount",
+		"PUBLIC_LINK": "Public Link",
+		"GENERATE": "Generate"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",
@@ -313,7 +315,8 @@
 				"TITLE": "COORDINATES",
 				"LATITUDE": "Latitude",
 				"LONGITUDE": "Longitude"
-			}
+			},
+			"PUBLIC_LINK": "Public Link"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -2027,7 +2030,19 @@
 		"ADD_VARIANT": "Add variant",
 		"EDIT_VARIANT": "Edit variant",
 		"NO_OPTIONS_LABEL": "(no options)",
-		"OPTIONS": "Options"
+		"OPTIONS": "Options",
+		"SELECT_OR_UPLOAD_IMAGE": "Select or upload image",
+		"SELECT_IMAGE": "Select image",
+		"NO_IMAGE_SELECTED": "No image selected",
+		"URL": "Url",
+		"DIMENSIONS": "Dimensions",
+		"FEATURED_IMAGE_WAS_SAVED": "Featured image was saved!",
+		"IMAGE_SAVED": "Image was saved!",
+		"ADD_GALLERY_IMAGE": "Add gallery image",
+		"SET_FEATURED_IMAGE": "Set featured image",
+		"VIEW_GALLERY": "View gallery",
+		"EDIT_IMAGE": "Edit gallery image",
+		"DELETE_IMAGE": "Delete image"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
@@ -2321,6 +2336,8 @@
 		"ALREADY_PAID": "Already Paid",
 		"AMOUNT_DUE": "Amount Due",
 		"INVOICED_REMAINING_AMOUNT": "Invoiced Remaining Amount",
+		"INVOICE#": "Invoice#",
+		"ESTIMATE#": "Estimate#",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"ESTIMATE_TYPE": "Estimate Type",
@@ -2462,6 +2479,11 @@
 			"DELETE": "Delete",
 			"NOTE": "Note",
 			"PAYMENTS": "Payments"
+		},
+		"PUBLIC_LINK": {
+			"HEADER": "Generate Public Link",
+			"GENERATE": "Generate a link to the {{ text }} that anyone with the link can view.",
+			"ACCESS": "Anyone with access to this link can view the {{ text }}."
 		}
 	},
 	"PAYMENTS_PAGE": {

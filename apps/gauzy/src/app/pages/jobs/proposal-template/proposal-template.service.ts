@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { IEmployeeProposalTemplate, IPagination } from '@gauzy/models';
-import { toParams } from '@gauzy/utils';
+import { IEmployeeProposalTemplate, IPagination } from '@gauzy/contracts';
+import { toParams } from '@gauzy/common';
 import { first } from 'rxjs/operators';
 
 @Injectable({

@@ -27,9 +27,22 @@ WORKDIR /srv/gauzy
 
 COPY --chown=node:node apps/desktop/package.json ./apps/desktop/
 COPY --chown=node:node apps/api/package.json ./apps/api/
+COPY --chown=node:node apps/gauzy/package.json ./apps/gauzy/
+
+COPY --chown=node:node packages/common/package.json ./packages/common/
+COPY --chown=node:node packages/common-angular/package.json ./packages/common-angular/
+COPY --chown=node:node packages/config/package.json ./packages/config/
+COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
+COPY --chown=node:node packages/core/package.json ./packages/core/
+COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
+COPY --chown=node:node packages/plugins/integration-ai/package.json ./packages/plugins/integration-ai/
+COPY --chown=node:node packages/plugins/integration-hubstaff/package.json ./packages/plugins/integration-hubstaff/
+COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packages/plugins/integration-upwork/
+COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/plugins/product-reviews/
+
 COPY --chown=node:node package.json yarn.lock ./
 
-RUN yarn install --frozen-lockfile
+RUN yarn bootstrap
 
 FROM node:alpine AS development
 
@@ -52,6 +65,7 @@ COPY --chown=node:node --from=development /srv/gauzy .
 ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=2048"}
 ENV NODE_ENV=${NODE_ENV:-production}
 
+RUN yarn build:package:all
 RUN yarn build:api:prod
 
 FROM node:alpine AS production

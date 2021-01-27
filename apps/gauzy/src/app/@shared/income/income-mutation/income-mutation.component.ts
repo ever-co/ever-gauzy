@@ -13,7 +13,7 @@ import {
 	ContactType,
 	IOrganization,
 	ICurrency
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { Store } from '../../../@core/services/store.service';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';

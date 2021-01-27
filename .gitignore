@@ -5,12 +5,15 @@
 /tmp
 /out-tsc
 
+/packages/**/dist
+/packages/**/.cache
+
 # dependencies
-/node_modules
-/apps/api/node_modules
+node_modules/
 
 # sqlite3 database
 /apps/api/data
+*.sqlite3
 
 # IDEs and editors
 /.idea
@@ -35,6 +38,7 @@
 /libpeerconnection.log
 npm-debug.log
 yarn-error.log
+lerna-debug.log
 testem.log
 /typings
 
@@ -52,8 +56,8 @@ ormlogs.log
 /apps/api/.cache
 
 /.deploy/nginx/log
-/apps/api/src/app/integrations/upwork/csv
 /apps/gauzy/src/environments/environment.prod.ts
 /apps/gauzy/src/environments/environment.ts
+
 /export
 /import

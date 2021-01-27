@@ -20,7 +20,7 @@ import {
 	RolesEnum,
 	ITag,
 	LanguagesEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { RoleService } from '../../../@core/services/role.service';
 import { Subject } from 'rxjs';
 import { takeUntil, first } from 'rxjs/operators';

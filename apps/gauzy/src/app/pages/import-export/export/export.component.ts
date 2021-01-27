@@ -3,7 +3,7 @@ import { ExportAllService } from '../../../@core/services/exportAll.service';
 import { saveAs } from 'file-saver';
 import * as _ from 'lodash';
 import { Store } from '../../../@core/services/store.service';
-import { IOrganization } from '@gauzy/models';
+import { IOrganization } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';

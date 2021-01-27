@@ -10,7 +10,7 @@ import {
 	AfterViewInit
 } from '@angular/core';
 import { NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
-import { IDateRange } from '@gauzy/models';
+import { IDateRange } from '@gauzy/contracts';
 import { merge } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 

@@ -7,7 +7,7 @@ import {
 	IOrganization,
 	IContact,
 	ICountry
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import {
 	ActivatedRoute,
 	Router,

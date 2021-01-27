@@ -1,7 +1,7 @@
 {
 	"name": "@gauzy/desktop",
 	"version": "0.1.0",
-	"description": "Gauzy Desktop",
+	"description": "Gauzy Desktop App",
 	"license": "AGPL-3.0",
 	"homepage": "https://gauzy.co",
 	"repository": {

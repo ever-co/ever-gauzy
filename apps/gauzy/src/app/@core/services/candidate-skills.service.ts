@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
-import { ISkillCreateInput, ISkill, ISkillFindInput } from '@gauzy/models';
+import { ISkillCreateInput, ISkill, ISkillFindInput } from '@gauzy/contracts';
 
 @Injectable({
 	providedIn: 'root'

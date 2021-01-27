@@ -11,7 +11,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	ITimeOffPolicyVM
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { filter, first, tap } from 'rxjs/operators';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';

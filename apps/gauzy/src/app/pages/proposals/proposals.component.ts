@@ -7,7 +7,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	IProposalViewModel
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { Store } from '../../@core/services/store.service';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { ProposalsService } from '../../@core/services/proposals.service';

@@ -6,7 +6,7 @@ import {
 	IProposalCreateInput,
 	IProposalFindInput,
 	IProposalViewModel
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 
 @Injectable()
 export class ProposalsService {

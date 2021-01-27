@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { IExpenseCategory } from '@gauzy/models';
+import { IExpenseCategory } from '@gauzy/contracts';
 import { tap } from 'rxjs/operators';
 import { ExpenseCategoriesService } from './expense-categories.service';
 

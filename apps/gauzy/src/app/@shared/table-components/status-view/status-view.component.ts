@@ -1,7 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { NbComponentStatus } from '@nebular/theme';
 import { ViewCell } from 'ng2-smart-table';
-import { TaskStatusEnum } from '@gauzy/models';
+import { TaskStatusEnum } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ngx-status-view',

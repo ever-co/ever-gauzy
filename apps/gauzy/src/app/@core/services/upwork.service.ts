@@ -10,7 +10,7 @@ import {
 	IIntegrationMap,
 	IntegrationEnum,
 	IUpworkClientSecretPair
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 
 @Injectable({
 	providedIn: 'root'

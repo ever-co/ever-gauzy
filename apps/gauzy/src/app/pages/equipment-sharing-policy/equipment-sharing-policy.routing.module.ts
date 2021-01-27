@@ -2,7 +2,7 @@ import { Routes, RouterModule } from '@angular/router';
 import { NgModule } from '@angular/core';
 import { EquipmentSharingPolicyComponent } from './equipment-sharing-policy.component';
 import { NgxPermissionsGuard } from 'ngx-permissions';
-import { PermissionsEnum } from '@gauzy/models';
+import { PermissionsEnum } from '@gauzy/contracts';
 
 const routes: Routes = [
 	{

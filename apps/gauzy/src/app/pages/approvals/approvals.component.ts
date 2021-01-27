@@ -7,7 +7,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	IApprovalsData
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { RequestApprovalService } from '../../@core/services/request-approval.service';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { filter, first, tap } from 'rxjs/operators';
@@ -18,7 +18,7 @@ import { RequestApprovalMutationComponent } from '../../@shared/approvals/approv
 import { RequestApprovalActionComponent } from './table-components/request-approval-action/request-approval-action.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
-import { RequestApprovalStatusTypesEnum } from '@gauzy/models';
+import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../@core/services/toastr.service';

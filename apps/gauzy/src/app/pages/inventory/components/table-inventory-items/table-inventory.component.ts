@@ -10,7 +10,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	IProductTranslated
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ProductService } from '../../../../@core/services/product.service';
@@ -223,7 +223,7 @@ export class TableInventoryComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 		const { items } = await this.productService.getAllTranslated(
-			['type', 'category', 'tags'],
+			['type', 'category', 'tags', 'featuredImage'],
 			{ organizationId, tenantId },
 			this.selectedLanguage
 		);

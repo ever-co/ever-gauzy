@@ -468,6 +468,7 @@
 										*ngFor="
 											let discountTaxType of discountTaxTypes
 										"
+										value="{{ discountTaxType }}"
 									>
 										{{
 											'INVOICES_PAGE.' + discountTaxType
@@ -515,15 +516,15 @@
 										(ngModelChange)="calculateTotal()"
 										fullWidth
 									>
-										<nb-option value="Percent">
+										<nb-option
+											*ngFor="
+												let discountTaxType of discountTaxTypes
+											"
+											value="{{ discountTaxType }}"
+										>
 											{{
-												'INVOICES_PAGE.PERCENT'
-													| translate
-											}}
-										</nb-option>
-										<nb-option value="Flat">
-											{{
-												'INVOICES_PAGE.FLAT' | translate
+												'INVOICES_PAGE.' +
+													discountTaxType | translate
 											}}
 										</nb-option>
 									</nb-select>
@@ -562,15 +563,15 @@
 										(ngModelChange)="calculateTotal()"
 										fullWidth
 									>
-										<nb-option value="Percent">
+										<nb-option
+											*ngFor="
+												let discountTaxType of discountTaxTypes
+											"
+											value="{{ discountTaxType }}"
+										>
 											{{
-												'INVOICES_PAGE.PERCENT'
-													| translate
-											}}
-										</nb-option>
-										<nb-option value="Flat">
-											{{
-												'INVOICES_PAGE.FLAT' | translate
+												'INVOICES_PAGE.' +
+													discountTaxType | translate
 											}}
 										</nb-option>
 									</nb-select>

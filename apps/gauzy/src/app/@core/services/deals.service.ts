@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Service } from './service';
-import { IDeal, IDealCreateInput, IDealFindInput } from '@gauzy/models';
+import { IDeal, IDealCreateInput, IDealFindInput } from '@gauzy/contracts';
 import { HttpClient } from '@angular/common/http';
 
 @Injectable()

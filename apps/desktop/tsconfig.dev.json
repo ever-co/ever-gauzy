@@ -1,6 +1,7 @@
 {
+	"extends": "../../tsconfig.json",
 	"compilerOptions": {
-		"outDir": "../../dist/apps/desktop",
+		"outDir": "../..",
 		"sourceMap": true,
 		"declaration": false,
 		"moduleResolution": "node",

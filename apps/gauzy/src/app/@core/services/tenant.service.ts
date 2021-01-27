@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
-import { ITenant, ITenantCreateInput, ITenantSetting } from '@gauzy/models';
+import { ITenant, ITenantCreateInput, ITenantSetting } from '@gauzy/contracts';
 
 @Injectable()
 export class TenantService {

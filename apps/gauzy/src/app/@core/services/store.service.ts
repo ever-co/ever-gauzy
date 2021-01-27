@@ -12,7 +12,7 @@ import {
 	IFeatureToggle,
 	IFeatureOrganization,
 	FeatureEnum
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { Injectable } from '@angular/core';
 import { StoreConfig, Store as AkitaStore, Query } from '@datorama/akita';
@@ -21,7 +21,7 @@ import {
 	ComponentEnum,
 	SYSTEM_DEFAULT_LAYOUT
 } from '../constants/layout.constants';
-import { ComponentLayoutStyleEnum } from '@gauzy/models';
+import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { map } from 'rxjs/operators';
 import { merge, Subject } from 'rxjs';
 import * as _ from 'underscore';

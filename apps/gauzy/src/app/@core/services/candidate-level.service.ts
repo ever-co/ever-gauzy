@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { ICandidateLevelInput } from '@gauzy/models';
+import { ICandidateLevelInput } from '@gauzy/contracts';
 
 @Injectable({
 	providedIn: 'root'

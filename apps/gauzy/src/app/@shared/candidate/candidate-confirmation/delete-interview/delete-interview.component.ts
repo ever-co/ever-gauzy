@@ -1,4 +1,4 @@
-import { ICandidateInterview } from '@gauzy/models';
+import { ICandidateInterview } from '@gauzy/contracts';
 import { Component, OnDestroy, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';

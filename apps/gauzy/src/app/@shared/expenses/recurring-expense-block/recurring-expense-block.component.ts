@@ -4,7 +4,7 @@ import {
 	RecurringExpenseDefaultCategoriesEnum,
 	IRecurringExpenseModel,
 	IEmployee
-} from '@gauzy/models';
+} from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { defaultDateFormat } from '../../../@core/utils/date';

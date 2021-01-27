@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { IUser } from '@gauzy/models';
+import { IUser } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { UsersOrganizationsService } from '../../../../@core/services/users-organizations.service';
@@ -13,7 +13,8 @@ import { UserIdService } from 'apps/gauzy/src/app/@core/services/edit-user-data.
 	selector: 'ngx-edit-user-data',
 	templateUrl: './edit-user-data.component.html'
 })
-export class EditUserDataComponent extends TranslationBaseComponent
+export class EditUserDataComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;

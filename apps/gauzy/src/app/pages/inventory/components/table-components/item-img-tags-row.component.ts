@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
-import { getContrastColor } from '@gauzy/utils';
+import { getContrastColor } from '@gauzy/common';
 import { ViewCell } from 'ng2-smart-table';
-import { ComponentLayoutStyleEnum } from '@gauzy/models';
+import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 
 @Component({
 	template: `
@@ -9,10 +9,16 @@ import { ComponentLayoutStyleEnum } from '@gauzy/models';
 			style="display: flex; align-items: center;"
 			class="{{ layout === 'CARDS_GRID' ? 'tags-right' : '' }}"
 		>
-			<div *ngIf="rowData?.imageUrl" class="image-container">
-				<img [src]="rowData?.imageUrl" />
+			<div
+				*ngIf="rowData.featuredImage && rowData.featuredImage.url"
+				class="image-container"
+			>
+				<img [src]="rowData?.featuredImage.url" />
 			</div>
-			<div *ngIf="!rowData?.imageUrl" class="image-container">
+			<div
+				*ngIf="!rowData.featuredImage || !rowData.featuredImage.url"
+				class="image-container"
+			>
 				<img
 					[src]="
 						'https://afostats.imagead.net/uploads/afo/no_img.png'
