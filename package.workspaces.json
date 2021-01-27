@@ -8,7 +8,7 @@
 		"libs/*",
 		"apps/*",
 		"tools",
-		"packages/**",
-		"packages/plugins/**"
+		"packages/*",
+		"packages/plugins/*"
 	]
 }

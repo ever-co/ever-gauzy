@@ -2,8 +2,12 @@
 	"name": "@gauzy/plugin",
 	"version": "0.1.0",
 	"description": "",
-	"author": "",
-	"license": "",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"license": "AGPL-3.0",
 	"private": true,
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -26,8 +30,7 @@
 	"keywords": [],
 	"dependencies": {
 		"@gauzy/common": "^0.1.0",
-		"@gauzy/config": "^0.1.0",
-		"@gauzy/core": "^0.1.0"
+		"@gauzy/config": "^0.1.0"
 	},
 	"devDependencies": {
 		"@types/node": "^14.14.20",
