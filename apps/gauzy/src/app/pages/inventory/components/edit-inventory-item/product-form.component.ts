@@ -34,6 +34,7 @@ import { ProductVariantService } from '../../../../@core/services/product-varian
 import { ToastrService } from '../../../../@core/services/toastr.service';
 import { VariantCreateInput } from './variant-form/variant-form.component';
 import { NbTabComponent, NbTabsetComponent } from '@nebular/theme';
+import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
 
 @Component({
 	selector: 'ngx-product-form',
@@ -88,7 +89,8 @@ export class ProductFormComponent
 		private location: Location,
 		private router: Router,
 		private toastrService: ToastrService,
-		private productVariantService: ProductVariantService
+		private productVariantService: ProductVariantService,
+		private inventoryStore: InventoryStore
 	) {
 		super(translationService);
 	}
@@ -187,8 +189,9 @@ export class ProductFormComponent
 				],
 				{ organizationId, tenantId }
 			);
-		}
 
+			this.inventoryStore.activeProduct = this.inventoryItem;
+		}
 		this.variants$.next(
 			this.inventoryItem ? this.inventoryItem.variants : []
 		);
@@ -362,14 +365,6 @@ export class ProductFormComponent
 
 	onOptionDeleted(option: IProductOption) {
 		this.deletedOptions.push(option);
-	}
-
-	onFeaturedImageUpdated(image: IImageAsset) {
-		this.featuredImage = image;
-	}
-
-	onGalleryUpdated(gallery: IImageAsset[]) {
-		this.gallery = gallery;
 	}
 
 	handleImageUploadError(error: any) {

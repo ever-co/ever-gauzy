@@ -121,4 +121,13 @@ export class ProductService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	deleteFeaturedImage(id: string): Promise<IProductTranslatable> {
+		return this.http
+			.delete<IProductTranslatable>(
+				`${this.PRODUCTS_URL}/delete-featured-image/${id}`
+			)
+			.pipe(first())
+			.toPromise();
+	}
 }
