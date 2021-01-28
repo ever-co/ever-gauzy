@@ -75,7 +75,7 @@
 		"doc:build": "compodoc -p tsconfig.json -d dist/docs",
 		"doc:serve": "compodoc -s -d dist/docs",
 		"doc:build-serve": "compodoc -p tsconfig.json -d docs -s",		
-		"postinstall": "yarn electron-builder install-app-deps",
+		"postinstall": "yarn npx electron-builder@22.9.1 install-app-deps",
 		"postinstall.electron": "yarn node tools/electron/postinstall",
 		"postinstall.web": "yarn node tools/web/postinstall",
 		"build:desktop": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn build:package:all && yarn run config:prod && ng build desktop --prod --base-href ./ && yarn run prepare:desktop && ng build desktop-api --prod && ng build api-desktop --prod && ng build desktop-ui --prod --base-href ./",
