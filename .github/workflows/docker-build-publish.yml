@@ -46,12 +46,8 @@ jobs:
                   load: true
                   tags: |
                       ghcr.io/ever-co/gauzy-api:latest
-                      everco/gauzy-api:latest                     
+                      everco/gauzy-api:latest
                       registry.digitalocean.com/ever/gauzy-api:latest
-
-            - name: Push to DigitalOcean Registry
-              run: |
-                  docker push registry.digitalocean.com/ever/gauzy-api:latest
 
             - name: Push to Github Registry
               run: |
@@ -60,6 +56,10 @@ jobs:
             - name: Push to Docker Hub Registry
               run: |
                   docker push everco/gauzy-api:latest
+
+            - name: Push to DigitalOcean Registry
+              run: |
+                  docker push registry.digitalocean.com/ever/gauzy-api:latest
 
     gauzy-webapp:
         runs-on: ubuntu-latest
@@ -99,8 +99,20 @@ jobs:
               with:
                   context: .
                   file: ./.deploy/webapp/Dockerfile
-                  push: true
+                  load: true
                   tags: |
                       ghcr.io/ever-co/gauzy-webapp:latest
                       everco/gauzy-webapp:latest
                       registry.digitalocean.com/ever/gauzy-webapp:latest
+
+            - name: Push to Github Registry
+              run: |
+                  docker push ghcr.io/ever-co/gauzy-webapp:latest
+
+            - name: Push to Docker Hub Registry
+              run: |
+                  docker push everco/gauzy-webapp:latest
+
+            - name: Push to DigitalOcean Registry
+              run: |
+                  docker push registry.digitalocean.com/ever/gauzy-webapp:latest
