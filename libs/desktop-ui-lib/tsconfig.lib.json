@@ -4,6 +4,7 @@
 		"outDir": "../../dist/out-tsc",
 		"target": "es2015",
 		"declaration": true,
+		"experimentalDecorators": true,
 		"declarationMap": true,
 		"inlineSources": true,
 		"types": [],
