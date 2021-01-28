@@ -4,6 +4,7 @@ import * as faker from 'faker';
 import { IOrganization, IEmployee } from '@gauzy/contracts';
 import * as fs from 'fs';
 import * as csv from 'csv-parser';
+import * as path from 'path';
 import { Tenant } from '../tenant/tenant.entity';
 import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
@@ -15,17 +16,20 @@ export const createDefaultIncomes = async (
 		employees: IEmployee[];
 	}
 ): Promise<Income[]> => {
-	const incomeFromFile = [];
-	let defaultIncomes = [];
-	let filePath = './src/app/income/income-seed-data/income-data.csv';
-
+	let filePath = path.join(
+		__dirname,
+		...['income-seed-data', 'income-data.csv']
+	);
 	try {
 		filePath = fs.existsSync(filePath)
 			? filePath
-			: `./apps/api/${filePath.slice(2)}`;
+			: `./income-seed-data/income-data.csv`;
 	} catch (error) {
 		console.error('Cannot find income data csv');
 	}
+
+	const incomeFromFile = [];
+	let defaultIncomes = [];
 
 	for (const organization of defaultData.organizations) {
 		fs.createReadStream(filePath)

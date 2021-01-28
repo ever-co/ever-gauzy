@@ -5,9 +5,6 @@
 /tmp
 /out-tsc
 
-/packages/**/dist
-/packages/**/.cache
-
 # dependencies
 node_modules/
 
@@ -53,7 +50,9 @@ ormlogs.log
  
 # Cache File
 /.cache
-/apps/api/.cache
+/apps/**/.cache
+/packages/**/.cache
+/packages/**/dist
 
 /.deploy/nginx/log
 /apps/gauzy/src/environments/environment.prod.ts

@@ -8,7 +8,7 @@ import {
 } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs';
-import { toParams } from '@gauzy/common';
+import { toParams } from '@gauzy/common-angular';
 
 @Injectable()
 export class InvoicesService {

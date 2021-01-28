@@ -6,7 +6,7 @@ import * as path from 'path';
 import { copyFileSync, mkdirSync } from 'fs';
 import * as rimraf from 'rimraf';
 import * as chalk from 'chalk';
-import { getConfig, environment as env } from '@gauzy/config';
+import { getConfig, environment as env, ConfigService } from '@gauzy/config';
 const config = getConfig();
 
 export const createDefaultReport = async (
@@ -152,12 +152,13 @@ async function cleanReport(connection) {
 	}
 
 	console.log(chalk.green(`CLEANING UP REPORT IMAGES...`));
-	const destDir = 'reports';
 
 	await new Promise((resolve, reject) => {
+		const destDir = 'reports';
+		const configService = new ConfigService();
 		const dir = env.isElectron
 			? path.resolve(env.gauzyUserPath, ...['public', destDir])
-			: path.join(path.resolve('.', ...['public']), destDir);
+			: path.join(configService.assetOptions.assetPublicPath, destDir);
 
 		// delete old generated report image
 		rimraf(dir, () => {
@@ -168,26 +169,44 @@ async function cleanReport(connection) {
 }
 
 function copyImage(fileName: string) {
-	const destDir = 'reports';
-	const dir = env.isElectron
-		? path.resolve(
-				env.gauzyUserPath,
-				...['src', 'assets', 'seed', 'reports']
-		  )
-		: path.resolve(
-				__dirname,
-				'../../../',
-				...['src', 'assets', 'seed', 'reports']
-		  );
+	try {
+		const configService = new ConfigService();
+		const destDir = 'reports';
 
-	const baseDir = env.isElectron
-		? path.resolve(env.gauzyUserPath, ...['public'])
-		: path.resolve(__dirname, '../../../', ...['public']);
+		const dir = env.isElectron
+			? path.resolve(
+					env.gauzyUserPath,
+					...['src', 'assets', 'seed', destDir]
+			  )
+			: path.join(
+					configService.assetOptions.assetPath,
+					...['seed', destDir]
+			  ) ||
+			  path.resolve(
+					__dirname,
+					'../../../',
+					...['apps', 'api', 'src', 'assets', 'seed', destDir]
+			  );
 
-	mkdirSync(path.join(baseDir, destDir), { recursive: true });
+		const baseDir = env.isElectron
+			? path.resolve(env.gauzyUserPath, ...['public'])
+			: configService.assetOptions.assetPublicPath ||
+			  path.resolve(
+					__dirname,
+					'../../../',
+					...['apps', 'api', 'public']
+			  );
 
-	const destFilePath = path.join(destDir, fileName);
-	copyFileSync(path.join(dir, fileName), path.join(baseDir, destFilePath));
+		mkdirSync(path.join(baseDir, destDir), { recursive: true });
 
-	return destFilePath;
+		const destFilePath = path.join(destDir, fileName);
+		copyFileSync(
+			path.join(dir, fileName),
+			path.join(baseDir, destFilePath)
+		);
+
+		return destFilePath;
+	} catch (err) {
+		console.log(err);
+	}
 }

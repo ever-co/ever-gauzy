@@ -6,7 +6,7 @@ import {
 	IFeatureOrganizationUpdateInput,
 	IFeatureOrganizationFindInput
 } from '@gauzy/contracts';
-import { toParams } from '@gauzy/common';
+import { toParams } from '@gauzy/common-angular';
 import { Observable } from 'rxjs';
 
 @Injectable()

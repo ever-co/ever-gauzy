@@ -9,7 +9,7 @@ import {
 	IReport,
 	UpdateReportMenuInput
 } from '@gauzy/contracts';
-import { toParams } from '@gauzy/common';
+import { toParams } from '@gauzy/common-angular';
 import { Query, Store, StoreConfig } from '@datorama/akita';
 
 export function initialTimesheetFilterState(): IReport[] {

@@ -3,7 +3,7 @@ import * as path from 'path';
 import { copyFileSync, mkdirSync } from 'fs';
 import * as chalk from 'chalk';
 import * as rimraf from 'rimraf';
-import { environment as env, getConfig } from '@gauzy/config';
+import { ConfigService, environment as env, getConfig } from '@gauzy/config';
 import {
 	IFeature,
 	IFeatureCreateInput,
@@ -109,12 +109,13 @@ async function cleanFeature(connection) {
 	}
 
 	console.log(chalk.green(`CLEANING UP FEATURE IMAGES...`));
-	const destDir = 'features';
 
 	await new Promise((resolve, reject) => {
+		const destDir = 'features';
+		const configService = new ConfigService();
 		const dir = env.isElectron
 			? path.resolve(env.gauzyUserPath, ...['public', destDir])
-			: path.join(path.resolve('.', ...['public']), destDir);
+			: path.join(configService.assetOptions.assetPublicPath, destDir);
 
 		// delete old generated report image
 		rimraf(
@@ -132,20 +133,32 @@ async function cleanFeature(connection) {
 
 function copyImage(fileName: string) {
 	try {
+		const configService = new ConfigService();
 		const destDir = 'features';
+
 		const dir = env.isElectron
 			? path.resolve(
 					env.gauzyUserPath,
 					...['src', 'assets', 'seed', destDir]
 			  )
-			: path.resolve(
+			: path.join(
+					configService.assetOptions.assetPath,
+					...['seed', destDir]
+			  ) ||
+			  path.resolve(
 					__dirname,
 					'../../../',
-					...['src', 'assets', 'seed', destDir]
+					...['apps', 'api', 'src', 'assets', 'seed', destDir]
 			  );
+
 		const baseDir = env.isElectron
 			? path.resolve(env.gauzyUserPath, ...['public'])
-			: path.resolve(__dirname, '../../../', ...['public']);
+			: configService.assetOptions.assetPublicPath ||
+			  path.resolve(
+					__dirname,
+					'../../../',
+					...['apps', 'api', 'public']
+			  );
 
 		mkdirSync(path.join(baseDir, destDir), { recursive: true });
 

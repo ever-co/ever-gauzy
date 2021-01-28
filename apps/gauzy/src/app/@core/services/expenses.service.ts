@@ -8,7 +8,7 @@ import {
 	IExpenseUpdateInput,
 	ISplitExpenseOutput
 } from '@gauzy/contracts';
-import { toParams } from '@gauzy/common';
+import { toParams } from '@gauzy/common-angular';
 import { first } from 'rxjs/operators';
 
 @Injectable({

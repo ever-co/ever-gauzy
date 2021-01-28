@@ -25,12 +25,9 @@ USER node:node
 
 WORKDIR /srv/gauzy
 
-COPY --chown=node:node apps/desktop/package.json ./apps/desktop/
 COPY --chown=node:node apps/api/package.json ./apps/api/
-COPY --chown=node:node apps/gauzy/package.json ./apps/gauzy/
 
 COPY --chown=node:node packages/common/package.json ./packages/common/
-COPY --chown=node:node packages/common-angular/package.json ./packages/common-angular/
 COPY --chown=node:node packages/config/package.json ./packages/config/
 COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
 COPY --chown=node:node packages/core/package.json ./packages/core/
@@ -42,7 +39,7 @@ COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/
 
 COPY --chown=node:node lerna.json package.json yarn.lock ./
 
-RUN yarn bootstrap
+RUN yarn install --frozen-lockfile && yarn cache clean
 
 FROM node:alpine AS development
 
@@ -65,7 +62,7 @@ COPY --chown=node:node --from=development /srv/gauzy .
 ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=2048"}
 ENV NODE_ENV=${NODE_ENV:-production}
 
-RUN yarn build:package:all
+RUN yarn build:package:api
 RUN yarn build:api:prod
 
 FROM node:alpine AS production
