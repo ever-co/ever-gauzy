@@ -38,15 +38,11 @@ export const defaultConfiguration: IPluginConfig = {
 			path.resolve(
 				__dirname,
 				'../../../',
-				...['packages', 'core', 'src', 'assets']
+				...['apps', 'api', 'src', 'assets']
 			)
 		),
 		assetPublicPath: path.join(
-			path.resolve(
-				__dirname,
-				'../../../',
-				...['packages', 'core', 'public']
-			)
+			path.resolve(__dirname, '../../../', ...['apps', 'api', 'public'])
 		)
 	}
 };

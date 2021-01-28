@@ -8,6 +8,7 @@ import {
 	IOrganizationVendor
 } from '@gauzy/contracts';
 import * as fs from 'fs';
+import * as path from 'path';
 import * as csv from 'csv-parser';
 import { Tenant } from '../tenant/tenant.entity';
 import { OrganizationVendor } from '../organization-vendors/organization-vendors.entity';
@@ -39,17 +40,20 @@ export const createDefaultExpenses = async (
 		return;
 	}
 
-	const expensesFromFile = [];
-	let defaultExpenses: Expense[] = [];
-	let filePath = './src/app/expense/expense-seed-data/expenses-data.csv';
-
+	let filePath = path.join(
+		__dirname,
+		...['expense-seed-data', 'expenses-data.csv']
+	);
 	try {
 		filePath = fs.existsSync(filePath)
 			? filePath
-			: `./apps/api/${filePath.slice(2)}`;
+			: `./expense-seed-data/expenses-data.csv`;
 	} catch (error) {
-		console.error('Cannot find income data csv');
+		console.error('Cannot find expense data csv');
 	}
+
+	const expensesFromFile = [];
+	let defaultExpenses: Expense[] = [];
 
 	for (const organization of defaultData.organizations) {
 		fs.createReadStream(filePath)

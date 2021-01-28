@@ -23,7 +23,7 @@ export const createDefaultEmailTemplates = async (
 			'default-email-templates'
 		];
 		const files = [];
-		let FOLDER_PATH = path.resolve(__dirname, '../', ...templatePath);
+		let FOLDER_PATH = path.join(__dirname, '../', ...templatePath);
 		FOLDER_PATH = fs.existsSync(FOLDER_PATH)
 			? FOLDER_PATH
 			: path.resolve('.', ...templatePath.slice(2));
