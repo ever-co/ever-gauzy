@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as url from 'url';
 import { environment } from '../../../../apps/desktop/src/environments/environment';
 import { LocalStore } from '../../../desktop-libs/src';
+
 export function createGauzyWindow(gauzyWindow, serve) {
 	log.info('createGauzyWindow started');
 

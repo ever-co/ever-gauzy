@@ -1,5 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, Unique } from 'typeorm';
-import { IWakatime } from '@gauzy/models';
+import { IWakatime } from '@gauzy/contracts';
 
 @Entity({ name: 'heartbeats' })
 @Unique(['time', 'entities']) // named; multiple fields
