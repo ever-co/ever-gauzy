@@ -1,4 +1,3 @@
-import { SafeResourceUrl } from '@angular/platform-browser';
 import {
 	IBaseEntityModel,
 	IBasePerTenantAndOrganizationEntityModel,
@@ -40,7 +39,7 @@ export interface IIntegrationMap
 
 export interface IIntegrationViewModel {
 	name: string;
-	imgSrc: string | SafeResourceUrl;
+	imgSrc: string;
 	navigation_url: string;
 	isComingSoon?: boolean;
 }

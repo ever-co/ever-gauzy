@@ -9,7 +9,7 @@ import {
 import { tap, catchError, first } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { toParams } from '@gauzy/common';
+import { toParams } from '@gauzy/common-angular';
 import { ToastrService } from './toastr.service';
 
 interface ITaskResponse {

@@ -8,7 +8,7 @@ import {
 	TaskListTypeEnum
 } from '@gauzy/contracts';
 import { first, take } from 'rxjs/operators';
-import { toParams } from '@gauzy/common';
+import { toParams } from '@gauzy/common-angular';
 
 @Injectable({
 	providedIn: 'root'

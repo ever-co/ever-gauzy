@@ -9,7 +9,7 @@ import {
 	IApplyJobPostInput,
 	IVisibilityJobPostInput
 } from '@gauzy/contracts';
-import { toParams } from '@gauzy/common';
+import { toParams } from '@gauzy/common-angular';
 
 @Injectable({
 	providedIn: 'root'

@@ -2,6 +2,7 @@ import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { ICandidate } from './candidate.model';
 import { IEmployee } from './employee.model';
 import { IOrganizationContact } from './organization-contact.model';
+
 export interface IContact extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 	name?: string;

@@ -7,7 +7,7 @@ import {
 	IEditEntityByMemberInput
 } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
-import { toParams } from '@gauzy/common';
+import { toParams } from '@gauzy/common-angular';
 
 @Injectable({
 	providedIn: 'root'

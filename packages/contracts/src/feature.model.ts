@@ -1,4 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+
 export interface IFeature extends IBasePerTenantAndOrganizationEntityModel {
 	code: string;
 	description: string;
