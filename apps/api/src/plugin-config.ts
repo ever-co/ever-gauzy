@@ -33,7 +33,10 @@ export const pluginConfig: IPluginConfig = {
 };
 
 function getDbConfig(): ConnectionOptions {
-	const dbType = process.env.DB_TYPE || 'postgres';
+	const dbType =
+		process.env.DB_TYPE && process.env.DB_TYPE === 'postgres'
+			? 'postgres'
+			: 'sqlite';
 	switch (dbType) {
 		case 'postgres':
 			return {
@@ -55,7 +58,10 @@ function getDbConfig(): ConnectionOptions {
 				type: dbType,
 				database:
 					process.env.DB_PATH ||
-					path.join(__dirname, 'data/gauzy.sqlite3'),
+					path.join(
+						path.resolve('.', ...['apps', 'api', 'data']),
+						'gauzy.sqlite3'
+					),
 				logging: true,
 				logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
 				synchronize: true
