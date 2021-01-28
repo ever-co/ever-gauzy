@@ -1904,12 +1904,13 @@ export class SeedDataService {
 		this.log(chalk.green(`CLEANING UP FROM PREVIOUS RUNS...`));
 
 		await new Promise((resolve, reject) => {
+			const assetOptions = this.config.assetOptions;
 			const dir = env.isElectron
 				? path.join(
 						path.resolve(env.gauzyUserPath, ...['public']),
 						'screenshots'
 				  )
-				: path.join(path.resolve('.', ...['public']), 'screenshots');
+				: path.join(assetOptions.assetPublicPath, 'screenshots');
 
 			// delete old generated screenshots
 			rimraf(dir, () => {

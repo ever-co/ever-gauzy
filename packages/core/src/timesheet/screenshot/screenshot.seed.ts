@@ -1,39 +1,46 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as faker from 'faker';
-import { TimeSlot } from '../time-slot.entity';
-import { Screenshot } from '../screenshot.entity';
 import * as moment from 'moment';
-import { environment as env } from '@gauzy/config';
-import { Tenant } from '../../tenant/tenant.entity';
+import { ConfigService, environment as env } from '@gauzy/config';
+import { Screenshot, Tenant, TimeSlot } from '../../core/entities/internal';
 
 let fileList: string[] = [];
-
-let dir: string;
-let baseDir: string;
-if (env.isElectron) {
-	dir = path.join(
-		path.resolve(env.gauzyUserPath, ...['src', 'assets', 'seed']),
-		'screenshots'
-	);
-	baseDir = path.join(path.resolve(env.gauzyUserPath));
-} else {
-	dir = path.join(
-		path.resolve('.', ...['apps', 'api', 'src', 'assets', 'seed']),
-		'screenshots'
-	);
-	baseDir = path.join(path.resolve('.', ...['apps']), 'api');
-}
-
-const fileDir = path.join('screenshots', moment().format('YYYY/MM/DD'));
-
-const destDir = path.join('public', fileDir);
 
 export const createRandomScreenshot = async (
 	timeSlot: TimeSlot,
 	tenant: Tenant
 ): Promise<Screenshot[]> => {
-	await getList();
+	const configService = new ConfigService();
+
+	let dir: string;
+	let baseDir: string;
+	if (env.isElectron) {
+		dir = path.join(
+			path.resolve(env.gauzyUserPath, ...['src', 'assets', 'seed']),
+			'screenshots'
+		);
+		baseDir = path.join(path.resolve(env.gauzyUserPath));
+	} else {
+		dir =
+			path.join(
+				configService.assetOptions.assetPath,
+				...['seed', 'screenshots']
+			) ||
+			path.resolve(
+				__dirname,
+				'../../../',
+				...['apps', 'api', 'src', 'assets', 'seed', 'screenshots']
+			);
+		baseDir =
+			path.join(configService.assetOptions.assetPublicPath, '../') ||
+			path.resolve(__dirname, '../../../', ...['apps', 'api']);
+	}
+
+	const fileDir = path.join('screenshots', moment().format('YYYY/MM/DD'));
+	const destDir = path.join('public', fileDir);
+
+	await getList(dir);
 
 	const screenshots: Screenshot[] = [];
 	for (
@@ -83,7 +90,7 @@ export const createRandomScreenshot = async (
 	return screenshots;
 };
 
-const getList = () => {
+const getList = (dir) => {
 	return new Promise((resolve, reject) => {
 		fs.readdir(dir, (err, items) => {
 			if (err) {

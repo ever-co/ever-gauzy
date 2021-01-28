@@ -9,12 +9,12 @@ type Mutation {
 }
 
 input CreateRoleInput {
-	code: String!
-	description: String!
+	name: String!
+	tenantId: String!
 }
 
 input UpdateRoleInput {
 	id: ID!
-	code: String
-	description: String
+	name: String
+	tenantId: String!
 }

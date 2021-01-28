@@ -6,9 +6,10 @@ import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-ba
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { UpworkService } from 'apps/gauzy/src/app/@core/services/upwork.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { untilDestroyed } from '@ngneat/until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IOrganization } from '@gauzy/contracts';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-transactions',
 	templateUrl: './transactions.component.html',

@@ -27,7 +27,7 @@
 		"test:e2e": "jest --config ./__test__/jest.config.json",
 		"build": "nest build",
 		"postbuild": "yarn run copy-files",
-		"copy-files": "copyfiles -u 1 src/**/**/*.gql dist/",
+		"copy-files": "copyfiles -u 1 src/**/**/*.gql src/**/**/*.hbs src/**/**/*.mjml src/**/*.csv dist/",
 		"prepublishOnly": "yarn run build",
 		"start": "ts-node ./src/main.ts"
 	},
