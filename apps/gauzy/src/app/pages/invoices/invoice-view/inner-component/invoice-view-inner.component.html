@@ -24,10 +24,10 @@
 			<div class="mr-5">
 				<div class="mb-5 font-weight-bold">
 					<h4 class="d-inline mr-2" *ngIf="!isEstimate">
-						{{ 'INVOICES_PAGE.INVOICE#' | translate }}
+						{{ 'INVOICES_PAGE.INVOICE_NUMBER' | translate }}:
 					</h4>
 					<h4 class="d-inline mr-2" *ngIf="isEstimate">
-						{{ 'INVOICES_PAGE.ESTIMATE#' | translate }}
+						{{ 'INVOICES_PAGE.ESTIMATE_NUMBER' | translate }}:
 					</h4>
 					<h4 class="d-inline">
 						{{ invoice?.invoiceNumber }}

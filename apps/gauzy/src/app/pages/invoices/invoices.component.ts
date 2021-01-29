@@ -88,6 +88,7 @@ export class InvoicesComponent
 	perPage = 10;
 	histories: IInvoiceEstimateHistory[] = [];
 	currency: string = '';
+	includeArchived = false;
 
 	@Input() isEstimate: boolean;
 
@@ -665,7 +666,15 @@ export class InvoicesComponent
 		});
 	}
 
+	async archive() {
+		await this.invoicesService.update(this.selectedInvoice.id, {
+			isArchived: true
+		});
+		this.loadSettings();
+	}
+
 	async loadSettings() {
+		this.loading = true;
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
@@ -696,7 +705,8 @@ export class InvoicesComponent
 							{
 								organizationId: org.id,
 								tenantId,
-								isEstimate: this.isEstimate
+								isEstimate: this.isEstimate,
+								isArchived: this.includeArchived
 							}
 						);
 						const invoiceVM: IInvoice[] = items.map((i) => {
@@ -972,6 +982,11 @@ export class InvoicesComponent
 		}
 
 		this.smartTableSource.load(result);
+	}
+
+	toggleIncludeArchived(event) {
+		this.includeArchived = event;
+		this.loadSettings();
 	}
 
 	reset() {

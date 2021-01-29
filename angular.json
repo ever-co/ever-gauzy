@@ -54,16 +54,10 @@
 							"node_modules/socicon/css/socicon.css",
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
 							"apps/gauzy/node_modules/@circlon/angular-tree-component/css/angular-tree-component.css",
-							"node_modules/pace-js/templates/pace-theme-flash.tmpl.css",
 							"node_modules/leaflet/dist/leaflet.css",
 							"apps/gauzy/src/app/@theme/styles/styles.scss"
 						],
 						"scripts": [
-							"node_modules/pace-js/pace.min.js",
-							"node_modules/tinymce/tinymce.min.js",
-							"node_modules/tinymce/plugins/link/plugin.min.js",
-							"node_modules/tinymce/plugins/paste/plugin.min.js",
-							"node_modules/tinymce/plugins/table/plugin.min.js",
 							"node_modules/echarts/dist/echarts.min.js",
 							"node_modules/echarts/dist/extension/bmap.min.js",
 							"node_modules/chart.js/dist/Chart.min.js"
@@ -329,16 +323,10 @@
 							"node_modules/socicon/css/socicon.css",
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
 							"node_modules/@circlon/angular-tree-component/css/angular-tree-component.css",
-							"node_modules/pace-js/templates/pace-theme-flash.tmpl.css",
 							"node_modules/leaflet/dist/leaflet.css",
 							"apps/gauzy/src/app/@theme/styles/styles.scss"
 						],
 						"scripts": [
-							"node_modules/pace-js/pace.min.js",
-							"node_modules/tinymce/tinymce.min.js",
-							"node_modules/tinymce/plugins/link/plugin.min.js",
-							"node_modules/tinymce/plugins/paste/plugin.min.js",
-							"node_modules/tinymce/plugins/table/plugin.min.js",
 							"node_modules/echarts/dist/echarts.min.js",
 							"node_modules/echarts/dist/extension/bmap.min.js",
 							"node_modules/chart.js/dist/Chart.min.js"
@@ -458,7 +446,6 @@
 							"node_modules/socicon/css/socicon.css",
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
 							"node_modules/@circlon/angular-tree-component/css/angular-tree-component.css",
-							"node_modules/pace-js/templates/pace-theme-flash.tmpl.css",
 							"node_modules/leaflet/dist/leaflet.css",
 							"apps/desktop/src/assets/styles/styles.scss"
 						],

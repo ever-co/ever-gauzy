@@ -473,7 +473,8 @@ export class InvoiceAddComponent
 				tags: this.tags,
 				isEstimate: this.isEstimate,
 				status: status,
-				sentTo: sendTo
+				sentTo: sendTo,
+				isArchived: false
 			});
 
 			this.createdInvoice = createdInvoice;

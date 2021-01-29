@@ -3,7 +3,7 @@
 // Copyright (c) 2019 Alexi Taylor
 
 import { Connection } from 'typeorm';
-import * as bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcrypt';
 import { environment as env } from '@gauzy/config';
 import * as faker from 'faker';
 import {

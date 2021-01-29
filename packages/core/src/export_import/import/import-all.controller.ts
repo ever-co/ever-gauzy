@@ -9,7 +9,6 @@ import {
 	UploadedFile
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { OnDestroy } from '@angular/core';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ImportAllService } from '.';
 import * as path from 'path';
@@ -18,7 +17,7 @@ import { FileStorage } from '../../core/file-storage';
 @Injectable()
 @ApiTags('Import')
 @Controller()
-export class ImportAllController implements OnDestroy {
+export class ImportAllController {
 	constructor(private importAllService: ImportAllService) {}
 
 	@ApiOperation({ summary: 'Find all exports.' })
@@ -51,6 +50,4 @@ export class ImportAllController implements OnDestroy {
 
 		return;
 	}
-
-	ngOnDestroy() {}
 }

@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as fse from 'fs-extra';
 import * as archiver from 'archiver';
 import { v4 as uuidv4 } from 'uuid';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { CountryService } from '../country';
 import * as csv from 'csv-writer';
 import { UserService } from '../user/user.service';
@@ -11,8 +11,6 @@ import { UserOrganizationService } from '../user-organization/user-organization.
 import { EmailService } from '../email';
 import { EmailTemplateService } from '../email-template';
 import { EmployeeService } from '../employee/employee.service';
-import { OnDestroy } from '@angular/core';
-import { takeUntil } from 'rxjs/operators';
 import { EmployeeRecurringExpenseService } from '../employee-recurring-expense';
 import { EmployeeSettingService } from '../employee-setting';
 import { EquipmentSharingService } from '../equipment-sharing';
@@ -112,10 +110,10 @@ import { ReportService } from '../reports/report.service';
 import { ReportCategoryService } from '../reports/report-category.service';
 
 @Injectable()
-export class ExportAllService implements OnDestroy {
+export class ExportAllService {
 	public idZip = new BehaviorSubject<string>('');
 	public idCsv = new BehaviorSubject<string>('');
-	private _ngDestroy$ = new Subject<void>();
+
 	private services = [];
 
 	constructor(
@@ -296,11 +294,9 @@ export class ExportAllService implements OnDestroy {
 				});
 
 				let id$ = '';
-				this.idCsv
-					.pipe(takeUntil(this._ngDestroy$))
-					.subscribe((idCsv) => {
-						id$ = idCsv;
-					});
+				this.idCsv.subscribe((idCsv) => {
+					id$ = idCsv;
+				});
 
 				archive.pipe(output);
 				archive.directory(`./export/${id$}/csv`, false);
@@ -340,7 +336,7 @@ export class ExportAllService implements OnDestroy {
 				}
 
 				let id$ = '';
-				this.idCsv.pipe(takeUntil(this._ngDestroy$)).subscribe((id) => {
+				this.idCsv.subscribe((id) => {
 					id$ = id;
 				});
 
@@ -363,11 +359,9 @@ export class ExportAllService implements OnDestroy {
 		return new Promise((resolve, reject) => {
 			let fileName = '';
 
-			this.idZip
-				.pipe(takeUntil(this._ngDestroy$))
-				.subscribe((filename) => {
-					fileName = filename;
-				});
+			this.idZip.subscribe((filename) => {
+				fileName = filename;
+			});
 			res.download(`./export/${fileName}`);
 			resolve('');
 		});
@@ -384,7 +378,7 @@ export class ExportAllService implements OnDestroy {
 		return new Promise((resolve, reject) => {
 			let id$ = '';
 
-			this.idCsv.pipe(takeUntil(this._ngDestroy$)).subscribe((id) => {
+			this.idCsv.subscribe((id) => {
 				id$ = id;
 			});
 
@@ -401,11 +395,9 @@ export class ExportAllService implements OnDestroy {
 	async deleteArchive(): Promise<any> {
 		return new Promise((resolve, reject) => {
 			let fileName = '';
-			this.idZip
-				.pipe(takeUntil(this._ngDestroy$))
-				.subscribe((fileName$) => {
-					fileName = fileName$;
-				});
+			this.idZip.subscribe((fileName$) => {
+				fileName = fileName$;
+			});
 
 			fs.access(`./export/${fileName}`, (error) => {
 				if (!error) {
@@ -784,10 +776,5 @@ export class ExportAllService implements OnDestroy {
 				nameFile: 'user_organization'
 			}
 		];
-	}
-
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
 	}
 }
