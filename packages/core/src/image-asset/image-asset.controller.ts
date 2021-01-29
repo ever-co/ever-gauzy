@@ -5,7 +5,10 @@ import {
 	Post,
 	Body,
 	UseGuards,
-	Query
+	Query,
+	HttpCode,
+	HttpStatus,
+	Delete
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -22,13 +25,13 @@ import { ImageAssetService } from './image-asset.service';
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class ImageAssetController extends CrudController<ImageAsset> {
-	constructor(private readonly productAssetService: ImageAssetService) {
-		super(productAssetService);
+	constructor(private readonly imageAssetService: ImageAssetService) {
+		super(imageAssetService);
 	}
 
 	@Get('/:id')
 	async findById(@Param('id') id: string): Promise<ImageAsset> {
-		return this.productAssetService.findOne(id);
+		return this.imageAssetService.findOne(id);
 	}
 
 	//tstodo organization permission
@@ -36,7 +39,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	@Permissions(PermissionsEnum.ORG_TAGS_EDIT)
 	@Post()
 	async createRecord(@Body() entity: ImageAsset): Promise<ImageAsset> {
-		return this.productAssetService.create(entity);
+		return this.imageAssetService.create(entity);
 	}
 
 	@Get()
@@ -44,9 +47,15 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<ImageAsset>> {
 		const { relations, findInput } = data;
-		return this.productAssetService.findAll({
+		return this.imageAssetService.findAll({
 			where: findInput,
 			relations
 		});
+	}
+
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Delete(':id')
+	async delete(@Param('id') id: string): Promise<any> {
+		return this.imageAssetService.deleteAsset(id);
 	}
 }

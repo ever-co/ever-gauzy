@@ -24,4 +24,11 @@ export class ImageAssetService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	deleteImageAsset(imageAsset: IImageAsset): Promise<IImageAsset> {
+		return this.http
+			.delete<IImageAsset>(`/api/image-assets/${imageAsset.id}`)
+			.pipe(first())
+			.toPromise();
+	}
 }

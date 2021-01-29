@@ -116,11 +116,15 @@ export class ProductGalleryComponent
 				);
 
 				this.inventoryStore.activeProduct = resultProduct;
+				this.toastrService.success(
+					'INVENTORY_PAGE.IMAGE_ADDED_TO_GALLERY'
+				);
 			} else if (selectedImage && !this.inventoryStore.activeProduct.id) {
 				this.inventoryStore.addGalleryImage(selectedImage);
+				this.toastrService.success(
+					'INVENTORY_PAGE.IMAGE_ADDED_TO_GALLERY'
+				);
 			}
-
-			this.toastrService.success('INVENTORY_PAGE.IMAGE_ADDED_TO_GALLERY');
 		} catch (err) {
 			this.toastrService.danger('Something bad happened');
 		}

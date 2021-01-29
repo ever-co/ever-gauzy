@@ -5,9 +5,11 @@ import {
 	NbIconModule,
 	NbInputModule,
 	NbButtonModule,
-	NbToastrModule
+	NbToastrModule,
+	NbDialogModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
+import { ImageAssetService } from '../../@core/services/image-asset.service';
 import { FileUploaderModule } from '../file-uploader-input/file-uploader-input.module';
 import { ImageUploaderModule } from '../image-uploader/image-uploader.module';
 import { ImageAssetComponent } from './img-asset/img-asset.component';
@@ -29,8 +31,10 @@ import { SelectAssetComponent } from './select-asset.component';
 		TranslateModule,
 		NbToastrModule,
 		ImageUploaderModule,
-		FileUploaderModule
+		FileUploaderModule,
+		NbToastrModule,
+		NbDialogModule
 	],
-	providers: []
+	providers: [ImageAssetService]
 })
 export class SelectAssetModule {}
