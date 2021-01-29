@@ -153,6 +153,21 @@ export class InventoryStore {
 		this.activeProduct$.next(this._activeProduct);
 	}
 
+	clearCurrentProduct() {
+		this.activeProduct = this.inventoryItemBlank;
+		this.activeProduct$.next(this.activeProduct);
+	}
+
+	resetDeletedOptions() {
+		this._deleteOptions = [];
+		this.deleteOptions$.next(this._deleteOptions);
+	}
+
+	resetCreateVariants() {
+		this.variantCreateInputs = [];
+		this.variantCreateInputs$.next(this.variantCreateInputs);
+	}
+
 	get inventoryItemBlank() {
 		return {
 			tags: [],

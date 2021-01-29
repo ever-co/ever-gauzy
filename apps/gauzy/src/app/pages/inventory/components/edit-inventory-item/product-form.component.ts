@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import {
 	FormGroup,
 	FormBuilder,
@@ -14,16 +14,13 @@ import {
 	IOrganization,
 	ILanguage,
 	IProductTranslation,
-	IProductTranslatable,
-	IImageAsset
+	IProductTranslatable
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductTypeService } from '../../../../@core/services/product-type.service';
 import { ProductCategoryService } from '../../../../@core/services/product-category.service';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
-import { Subject } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
-import { takeUntil } from 'rxjs/operators';
 import { ProductService } from '../../../../@core/services/product.service';
 import { Location } from '@angular/common';
 import { Store } from '../../../../@core/services/store.service';
@@ -41,7 +38,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 })
 export class ProductFormComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit {
 	form: FormGroup;
 	inventoryItem: IProductTranslatable;
 
@@ -64,8 +61,6 @@ export class ProductFormComponent
 	@ViewChild('mainTab') mainTab: NbTabComponent;
 	@ViewChild('optionsTab') optionsTab: NbTabComponent;
 	@ViewChild('variantsTab') variantsTab: NbTabComponent;
-
-	private ngDestroy$ = new Subject<void>();
 
 	constructor(
 		readonly translationService: TranslateService,
@@ -91,23 +86,23 @@ export class ProductFormComponent
 		this.setTranslationSettings();
 	}
 
-	ngOnDestroy(): void {
-		this.ngDestroy$.next();
-		this.ngDestroy$.complete();
-	}
-
 	private setRouteSubscription() {
 		this.route.params
-			.pipe(takeUntil(this.ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(async (params) => {
-				this.productId = params.id || null;
-				this.loadProduct(params.id);
+				if (!params.id) {
+					this.inventoryStore.clearCurrentProduct();
+					return;
+				} else if (params.id) {
+					this.productId = params.id;
+					this.loadProduct(this.productId);
+				}
 			});
 	}
 
 	private setOrganizationSubscription() {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this.ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((organization: IOrganization) => {
 				if (organization) {
 					this.organization = organization;
@@ -121,7 +116,7 @@ export class ProductFormComponent
 
 	private setLanguageSubsctiption() {
 		this.store.systemLanguages$
-			.pipe(takeUntil(this.ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((systemLanguages) => {
 				if (systemLanguages && systemLanguages.length > 0) {
 					this.languages = systemLanguages.map((item) => {
@@ -281,16 +276,22 @@ export class ProductFormComponent
 					.createoOptionCombinations
 			});
 
-			await this.loadProduct(productResult.id);
+			this.inventoryStore.resetDeletedOptions();
+			this.inventoryStore.resetCreateVariants();
 
-			this.inventoryTabset.selectTab(this.variantsTab);
+			await this.loadProduct(productResult.id).then(() => {
+				this.inventoryTabset.selectTab(this.variantsTab);
 
-			this.router.navigate([
-				`/pages/organization/inventory/edit/${this.inventoryItem.id}`
-			]);
+				this.router.navigate([
+					`/pages/organization/inventory/edit/${this.inventoryItem.id}`
+				]);
 
-			this.toastrService.success('INVENTORY_PAGE.INVENTORY_ITEM_SAVED', {
-				name: this.activeTranslation.name
+				this.toastrService.success(
+					'INVENTORY_PAGE.INVENTORY_ITEM_SAVED',
+					{
+						name: this.activeTranslation.name
+					}
+				);
 			});
 		} catch (err) {
 			this.toastrService.danger('TOASTR.MESSAGE.SOMETHING_BAD_HAPPENED');
