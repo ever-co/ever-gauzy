@@ -2,5 +2,23 @@
 	"name": "@gauzy/e2e",
 	"version": "0.1.0",
 	"description": "Gauzy e2e tests",
-	"license": "GPL-3.0"
+	"license": "GPL-3.0",
+	"dependencies": {},
+	"devDependencies": {
+		"@nrwl/angular": "^11.2.0",
+		"@nrwl/cypress": "^11.2.0",
+		"@nrwl/jest": "^11.2.0",
+		"@types/jest": "^24.0.15",
+		"cypress": "^5.2.0",
+		"jasmine-core": "^3.6.0",
+		"jasmine-spec-reporter": "^6.0.0",
+		"jest": "^26.4.2",
+		"jest-preset-angular": "^8.3.0",
+		"karma": "^5.2.3",
+		"karma-chrome-launcher": "^3.1.0",
+		"karma-cli": "^2.0.0",
+		"karma-coverage-istanbul-reporter": "^3.0.3",
+		"karma-jasmine": "^4.0.1",
+		"karma-jasmine-html-reporter": "^1.5.4"
+	}
 }

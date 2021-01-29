@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { Store } from '../../@core/services/store.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import 'rxjs/add/operator/filter';
+import { filter } from 'rxjs/operators';
 
 @Component({
 	selector: 'ga-sign-in-success',
@@ -14,7 +14,7 @@ export class SignInSuccessComponent {
 		private readonly _router: Router
 	) {
 		this._route.queryParams
-			.filter((params) => params.jwt)
+			.pipe(filter((params) => params.jwt))
 			.subscribe(async ({ jwt, userId }) => {
 				this._store.token = jwt;
 				this._store.userId = userId;

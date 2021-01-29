@@ -13,6 +13,9 @@ if (isCircleEnv) {
 }
 
 module.exports = {
+	resolve: {
+		mainFields: ['es2016', 'browser', 'module', 'main']
+	},
 	optimization: {
 		concatenateModules: false,
 		// for now let's disable minimize in CircleCI
@@ -20,7 +23,10 @@ module.exports = {
 		minimizer: [
 			new TerserPlugin({
 				parallel: isCircleEnv ? 2 : true,
-				sourceMap: !isCircleEnv,
+				terserOptions: {
+					sourceMap: !isCircleEnv,
+					compress: true
+				},
 				extractComments: !isCircleEnv
 			})
 		]
