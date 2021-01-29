@@ -34,9 +34,8 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 		return this.imageAssetService.findOne(id);
 	}
 
-	//tstodo organization permission
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_TAGS_EDIT)
+	@Permissions(PermissionsEnum.INVENTORY_GALLERY_EDIT)
 	@Post()
 	async createRecord(@Body() entity: ImageAsset): Promise<ImageAsset> {
 		return this.imageAssetService.create(entity);
