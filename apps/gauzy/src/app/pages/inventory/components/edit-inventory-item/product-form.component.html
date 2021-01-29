@@ -24,13 +24,7 @@
 			<div class="row">
 				<div class="col-md-3">
 					<div class="product-container">
-						<ngx-product-gallery
-							[inventoryItem]="inventoryItem"
-							(featuredImageUpdated)="
-								onFeaturedImageUpdated($event)
-							"
-							(galleryUpdated)="onGalleryUpdated($event)"
-						></ngx-product-gallery>
+						<ngx-product-gallery></ngx-product-gallery>
 					</div>
 				</div>
 				<div class="col-md-9">
@@ -383,26 +377,11 @@
 									</ga-tags-color-input>
 								</div>
 							</div>
-							<ngx-options-form
-								[options]="options"
-								(optionsUpdated)="onOptionsUpdated($event)"
-								(optionDeleted)="onOptionDeleted($event)"
-							>
-							</ngx-options-form>
-							<ngx-variant-form
-								[options]="options"
-								[variantsDb]="variantsDb"
-								(variantCreateInputsUpdated)="
-									onOptionCombinationsInputsUpdate($event)
-								"
-							></ngx-variant-form>
+							<ngx-options-form></ngx-options-form>
+							<ngx-variant-form></ngx-variant-form>
 						</nb-tab>
 						<nb-tab tabTitle="Variants" #variantsTab>
-							<ngx-variant-table
-								[productId]="productId"
-								[variants$]="variants$"
-							>
-							</ngx-variant-table>
+							<ngx-variant-table></ngx-variant-table>
 						</nb-tab>
 					</nb-tabset>
 				</div>

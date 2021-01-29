@@ -1,11 +1,14 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { IProductOption } from '@gauzy/contracts';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
 
 export interface OptionCreateInput {
 	name: string;
 	code: string;
 }
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-options-form',
 	templateUrl: './options-form.component.html',
@@ -16,12 +19,18 @@ export class OptionsFormComponent implements OnInit {
 	activeOptionName: string;
 	optionMode = 'create';
 
-	@Input() options: IProductOption[];
-	@Output() optionsUpdated = new EventEmitter<IProductOption[]>();
-	@Output() optionDeleted = new EventEmitter<IProductOption>();
+	options: IProductOption[] = [];
+
+	constructor(private inventoryStore: InventoryStore) {}
 
 	ngOnInit(): void {
 		this.resetOptionForm();
+
+		this.inventoryStore.activeProduct$
+			.pipe(untilDestroyed(this))
+			.subscribe((activeProduct) => {
+				this.options = activeProduct.options;
+			});
 	}
 
 	onSaveOption() {
@@ -41,7 +50,7 @@ export class OptionsFormComponent implements OnInit {
 			this.options.push(this.activeOption);
 		}
 
-		this.optionsUpdated.emit(this.options);
+		this.inventoryStore.options = this.options;
 		this.resetOptionForm();
 	}
 
@@ -51,8 +60,8 @@ export class OptionsFormComponent implements OnInit {
 		this.options = this.options.filter(
 			(option) => option.name !== optionInput.name
 		);
-		this.optionDeleted.emit(optionInput);
-		this.optionsUpdated.emit(this.options);
+
+		this.inventoryStore.deleteOption(optionInput);
 		this.resetOptionForm();
 	}
 

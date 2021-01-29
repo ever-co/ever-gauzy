@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import {
 	FormGroup,
 	FormBuilder,
@@ -7,34 +7,30 @@ import {
 	ValidationErrors
 } from '@angular/forms';
 import {
-	IProductOption,
 	ITag,
 	IProductTypeTranslated,
-	IVariantOptionCombination,
 	IProductCategoryTranslated,
-	IProductVariant,
 	LanguagesEnum,
 	IOrganization,
 	ILanguage,
 	IProductTranslation,
-	IProductTranslatable,
-	IImageAsset
+	IProductTranslatable
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductTypeService } from '../../../../@core/services/product-type.service';
 import { ProductCategoryService } from '../../../../@core/services/product-category.service';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
-import { Subject, BehaviorSubject } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
-import { takeUntil } from 'rxjs/operators';
 import { ProductService } from '../../../../@core/services/product.service';
 import { Location } from '@angular/common';
 import { Store } from '../../../../@core/services/store.service';
 import { ProductVariantService } from '../../../../@core/services/product-variant.service';
 import { ToastrService } from '../../../../@core/services/toastr.service';
-import { VariantCreateInput } from './variant-form/variant-form.component';
 import { NbTabComponent, NbTabsetComponent } from '@nebular/theme';
+import { InventoryStore } from '../../../../@core/services/inventory-store.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy()
 @Component({
 	selector: 'ngx-product-form',
 	templateUrl: './product-form.component.html',
@@ -42,23 +38,14 @@ import { NbTabComponent, NbTabsetComponent } from '@nebular/theme';
 })
 export class ProductFormComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit {
 	form: FormGroup;
 	inventoryItem: IProductTranslatable;
-	featuredImage: IImageAsset;
-	gallery: IImageAsset[];
 
 	hoverState: boolean;
 	selectedOrganizationId = '';
 	productTypes: IProductTypeTranslated[];
 	productCategories: IProductCategoryTranslated[];
-
-	options: Array<IProductOption> = [];
-	deletedOptions: Array<IProductOption> = [];
-
-	optionsCombinations: Array<IVariantOptionCombination> = [];
-	variants$: BehaviorSubject<IProductVariant[]> = new BehaviorSubject([]);
-	variantsDb: VariantCreateInput[];
 
 	languages: ILanguage[];
 	selectedLanguage: string;
@@ -75,8 +62,6 @@ export class ProductFormComponent
 	@ViewChild('optionsTab') optionsTab: NbTabComponent;
 	@ViewChild('variantsTab') variantsTab: NbTabComponent;
 
-	private ngDestroy$ = new Subject<void>();
-
 	constructor(
 		readonly translationService: TranslateService,
 		private fb: FormBuilder,
@@ -88,19 +73,36 @@ export class ProductFormComponent
 		private location: Location,
 		private router: Router,
 		private toastrService: ToastrService,
-		private productVariantService: ProductVariantService
+		private productVariantService: ProductVariantService,
+		private inventoryStore: InventoryStore
 	) {
 		super(translationService);
 	}
 
 	ngOnInit() {
+		this.setRouteSubscription();
+		this.setOrganizationSubscription();
+		this.setLanguageSubsctiption();
+		this.setTranslationSettings();
+	}
+
+	private setRouteSubscription() {
 		this.route.params
-			.pipe(takeUntil(this.ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(async (params) => {
-				this.productId = params.id || null;
+				if (!params.id) {
+					this.inventoryStore.clearCurrentProduct();
+					return;
+				} else if (params.id) {
+					this.productId = params.id;
+					this.loadProduct(this.productId);
+				}
 			});
+	}
+
+	private setOrganizationSubscription() {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this.ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((organization: IOrganization) => {
 				if (organization) {
 					this.organization = organization;
@@ -110,8 +112,11 @@ export class ProductFormComponent
 					this.loadProduct(this.productId);
 				}
 			});
+	}
+
+	private setLanguageSubsctiption() {
 		this.store.systemLanguages$
-			.pipe(takeUntil(this.ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((systemLanguages) => {
 				if (systemLanguages && systemLanguages.length > 0) {
 					this.languages = systemLanguages.map((item) => {
@@ -122,13 +127,6 @@ export class ProductFormComponent
 					});
 				}
 			});
-
-		this.setTranslationSettings();
-	}
-
-	ngOnDestroy(): void {
-		this.ngDestroy$.next();
-		this.ngDestroy$.complete();
 	}
 
 	private _initializeForm() {
@@ -187,35 +185,18 @@ export class ProductFormComponent
 				],
 				{ organizationId, tenantId }
 			);
+
+			this.inventoryStore.activeProduct = this.inventoryItem;
 		}
 
-		this.variants$.next(
-			this.inventoryItem ? this.inventoryItem.variants : []
-		);
-
-		this.options = this.inventoryItem ? this.inventoryItem.options : [];
 		this.tags = this.inventoryItem ? this.inventoryItem.tags : [];
-		this.variantsDb = this.inventoryItem
-			? this.inventoryItem.variants.map((variant: IProductVariant) => {
-					return {
-						options: variant.options.map(
-							(option: IProductOption) => option.name
-						),
-						isStored: true,
-						id: variant.id,
-						productId: this.inventoryItem.id || null
-					};
-			  })
-			: [];
 
 		this.setTranslationSettings();
 		this._initializeForm();
 
-		this.form.valueChanges
-			.pipe(takeUntil(this.ngDestroy$))
-			.subscribe((formValue) => {
-				this.updateTranslations();
-			});
+		this.form.valueChanges.pipe(untilDestroyed(this)).subscribe(() => {
+			this.updateTranslations();
+		});
 	}
 
 	async loadProductTypes() {
@@ -250,17 +231,18 @@ export class ProductFormComponent
 
 	async onSaveRequest() {
 		const { id: organizationId, tenantId } = this.organization;
+
 		const productRequest = {
 			tags: this.form.get('tags').value,
 			translations: this.translations,
 			code: this.form.get('code').value,
-			featuredImage: this.featuredImage || null,
+			featuredImage: this.inventoryStore.featuredImage || null,
 			productTypeId: this.form.get('productTypeId').value,
 			productCategoryId: this.form.get('productCategoryId').value,
 			enabled: this.form.get('enabled').value,
-			optionCreateInputs: this.options,
-			optionDeleteInputs: this.deletedOptions,
-			gallery: this.gallery || [],
+			optionCreateInputs: this.inventoryStore.createOptions,
+			optionDeleteInputs: this.inventoryStore.deleteOptions,
+			gallery: this.inventoryStore.gallery || [],
 			category: this.productCategories.find((c) => {
 				return c.id === this.form.get('productCategoryId').value;
 			}),
@@ -290,19 +272,26 @@ export class ProductFormComponent
 
 			await this.productVariantService.createProductVariants({
 				product: productResult,
-				optionCombinations: this.optionsCombinations
+				optionCombinations: this.inventoryStore
+					.createoOptionCombinations
 			});
 
-			await this.loadProduct(productResult.id);
+			this.inventoryStore.resetDeletedOptions();
+			this.inventoryStore.resetCreateVariants();
 
-			this.inventoryTabset.selectTab(this.variantsTab);
+			await this.loadProduct(productResult.id).then(() => {
+				this.inventoryTabset.selectTab(this.variantsTab);
 
-			this.router.navigate([
-				`/pages/organization/inventory/edit/${this.inventoryItem.id}`
-			]);
+				this.router.navigate([
+					`/pages/organization/inventory/edit/${this.inventoryItem.id}`
+				]);
 
-			this.toastrService.success('INVENTORY_PAGE.INVENTORY_ITEM_SAVED', {
-				name: this.activeTranslation.name
+				this.toastrService.success(
+					'INVENTORY_PAGE.INVENTORY_ITEM_SAVED',
+					{
+						name: this.activeTranslation.name
+					}
+				);
 			});
 		} catch (err) {
 			this.toastrService.danger('TOASTR.MESSAGE.SOMETHING_BAD_HAPPENED');
@@ -356,22 +345,6 @@ export class ProductFormComponent
 		this.activeTranslation.description = this.form.get('description').value;
 	}
 
-	onOptionsUpdated(options: IProductOption[]) {
-		this.options = options;
-	}
-
-	onOptionDeleted(option: IProductOption) {
-		this.deletedOptions.push(option);
-	}
-
-	onFeaturedImageUpdated(image: IImageAsset) {
-		this.featuredImage = image;
-	}
-
-	onGalleryUpdated(gallery: IImageAsset[]) {
-		this.gallery = gallery;
-	}
-
 	handleImageUploadError(error: any) {
 		this.toastrService.danger(error.error.message || error.message);
 	}
@@ -382,11 +355,5 @@ export class ProductFormComponent
 
 	selectedTagsEvent(currentSelection: ITag[]) {
 		this.form.get('tags').setValue(currentSelection);
-	}
-
-	onOptionCombinationsInputsUpdate(
-		optionsCombinations: IVariantOptionCombination[]
-	) {
-		this.optionsCombinations = optionsCombinations;
 	}
 }

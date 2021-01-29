@@ -1,22 +1,10 @@
-import {
-	Component,
-	EventEmitter,
-	Input,
-	OnChanges,
-	OnDestroy,
-	OnInit,
-	Output,
-	SimpleChanges
-} from '@angular/core';
-import {
-	IImageAsset,
-	IOrganization,
-	IProductTranslatable
-} from '@gauzy/contracts';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { IImageAsset, IOrganization } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { ImageAssetService } from 'apps/gauzy/src/app/@core/services/image-asset.service';
+import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
 import { ProductService } from 'apps/gauzy/src/app/@core/services/product.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
@@ -35,17 +23,12 @@ import { first } from 'rxjs/operators';
 })
 export class ProductGalleryComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnChanges, OnDestroy {
-	@Input('inventoryItem') inventoryItem: IProductTranslatable;
-
+	implements OnInit, OnDestroy {
 	selectedImage: IImageAsset;
 	gallery: IImageAsset[] = [];
-	availableImages: IImageAsset[] = [];
+	featuredImage: IImageAsset;
 
 	organization: IOrganization;
-
-	@Output() galleryUpdated = new EventEmitter<IImageAsset[]>();
-	@Output() featuredImageUpdated = new EventEmitter<IImageAsset>();
 
 	private newImageUploadedEvent$ = new Subject<any>();
 	private newImageStoredEvent$ = new Subject<any>();
@@ -53,8 +36,8 @@ export class ProductGalleryComponent
 	get displayImageUrl() {
 		if (this.selectedImage) return this.selectedImage.url;
 
-		if (this.inventoryItem && this.inventoryItem.featuredImage) {
-			return this.inventoryItem.featuredImage.url;
+		if (this.featuredImage) {
+			return this.featuredImage.url;
 		}
 
 		return null;
@@ -68,21 +51,19 @@ export class ProductGalleryComponent
 		private store: Store,
 		private productService: ProductService,
 		private nbDialogService: NbDialogService,
-		private galleryService: GalleryService
+		private galleryService: GalleryService,
+		private inventoryStore: InventoryStore
 	) {
 		super(translationService);
 	}
 
-	ngOnChanges(changes: SimpleChanges): void {
-		if (changes.inventoryItem && changes.inventoryItem.currentValue) {
-			this.inventoryItem = changes.inventoryItem.currentValue;
-			this.gallery = this.inventoryItem.gallery;
-			this.selectedImage = this.inventoryItem.featuredImage;
-		}
-	}
-
-	ngOnInit(): void {
-		this.gallery = this.inventoryItem ? this.inventoryItem.gallery : [];
+	async ngOnInit() {
+		this.inventoryStore.activeProduct$
+			.pipe(untilDestroyed(this))
+			.subscribe((activeProduct) => {
+				this.gallery = activeProduct.gallery;
+				this.featuredImage = activeProduct.featuredImage;
+			});
 
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
@@ -113,8 +94,6 @@ export class ProductGalleryComponent
 					this.toastrService.success('INVENTORY_PAGE.IMAGE_SAVED');
 
 					this.newImageStoredEvent$.next(result);
-
-					this.availableImages.push(result);
 				}
 			});
 	}
@@ -122,7 +101,6 @@ export class ProductGalleryComponent
 	async onAddImageClick() {
 		const dialog = this.dialogService.open(SelectAssetComponent, {
 			context: {
-				gallery: this.availableImages,
 				newImageUploadedEvent: this.newImageUploadedEvent$,
 				newImageStoredEvent: this.newImageStoredEvent$
 			}
@@ -130,20 +108,21 @@ export class ProductGalleryComponent
 
 		let selectedImage = await dialog.onClose.pipe(first()).toPromise();
 
-		if (selectedImage && !this.inventoryItem) {
-			this.gallery.push(selectedImage);
-			this.galleryUpdated.emit(this.gallery);
-			this.toastrService.success('INVENTORY_PAGE.IMAGE_ADDED_TO_GALLERY');
-		}
+		try {
+			if (selectedImage && this.inventoryStore.activeProduct.id) {
+				let resultProduct = await this.productService.addGalleryImage(
+					this.inventoryStore.activeProduct.id,
+					selectedImage
+				);
 
-		if (selectedImage && this.inventoryItem) {
-			let resultProduct = await this.productService.addGalleryImage(
-				this.inventoryItem.id,
-				selectedImage
-			);
-			this.gallery = resultProduct.gallery;
-			this.galleryUpdated.emit(this.gallery);
+				this.inventoryStore.activeProduct = resultProduct;
+			} else if (selectedImage && !this.inventoryStore.activeProduct.id) {
+				this.inventoryStore.addGalleryImage(selectedImage);
+			}
+
 			this.toastrService.success('INVENTORY_PAGE.IMAGE_ADDED_TO_GALLERY');
+		} catch (err) {
+			this.toastrService.danger('Something bad happened');
 		}
 	}
 
@@ -152,20 +131,22 @@ export class ProductGalleryComponent
 	}
 
 	async onSetFeaturedClick() {
-		if (this.selectedImage && !this.inventoryItem) {
-			this.featuredImageUpdated.emit(this.selectedImage);
+		if (this.selectedImage && !this.inventoryStore.activeProduct.id) {
+			this.inventoryStore.updateFeaturedImage(this.selectedImage);
+			this.toastrService.success(
+				'INVENTORY_PAGE.FEATURED_IMAGE_WAS_SAVED'
+			);
 			return;
 		}
 
 		try {
 			let result = await this.productService.setAsFeatured(
-				this.inventoryItem.id,
+				this.inventoryStore.activeProduct.id,
 				this.selectedImage
 			);
 
 			if (result) {
-				this.inventoryItem.featuredImage = this.selectedImage;
-				this.featuredImageUpdated.emit(this.selectedImage);
+				this.inventoryStore.updateFeaturedImage(this.selectedImage);
 
 				this.toastrService.success(
 					'INVENTORY_PAGE.FEATURED_IMAGE_WAS_SAVED'
@@ -179,20 +160,23 @@ export class ProductGalleryComponent
 	async onDeleteImageClick() {
 		if (!this.selectedImage) return;
 
-		if (!this.inventoryItem) {
-			this.deleteGalleryImage();
-			return;
-		}
-
 		try {
-			let result = await this.productService.deleteGalleryImage(
-				this.inventoryItem.id,
-				this.selectedImage
-			);
+			if (!this.inventoryStore.activeProduct.id) {
+				this.inventoryStore.deleteGalleryImage(this.selectedImage);
+			} else {
+				let result = await this.productService.deleteGalleryImage(
+					this.inventoryStore.activeProduct.id,
+					this.selectedImage
+				);
 
-			if (result) {
-				this.deleteGalleryImage();
+				if (result) {
+					this.onDeleteGalleryImage();
+					this.inventoryStore.activeProduct = result;
+				}
 			}
+
+			this.selectedImage = null;
+			this.toastrService.success('INVENTORY_PAGE.IMAGE_WAS_DELETED');
 		} catch (err) {
 			this.toastrService.danger('Something bad happened!');
 		}
@@ -224,19 +208,21 @@ export class ProductGalleryComponent
 	}
 
 	isFeaturedImage(image: IImageAsset) {
-		if (!image || !this.inventoryItem || !this.inventoryItem.featuredImage)
-			return false;
-
-		return this.inventoryItem.featuredImage.url == image.url;
+		if (!this.inventoryStore.activeProduct.featuredImage) return false;
+		return this.inventoryStore.activeProduct.featuredImage.id == image.id;
 	}
 
-	private deleteGalleryImage() {
-		this.gallery = this.gallery.filter(
-			(img) => img.id !== this.selectedImage.id
-		);
-		this.galleryUpdated.emit(this.gallery);
-		this.selectedImage = null;
-		this.toastrService.success('INVENTORY_PAGE.IMAGE_WAS_DELETED');
+	async onDeleteGalleryImage() {
+		const { activeProduct } = this.inventoryStore;
+		if (
+			activeProduct.featuredImage &&
+			activeProduct.featuredImage.id == this.selectedImage.id
+		) {
+			let result = await this.productService.deleteFeaturedImage(
+				activeProduct.id
+			);
+			console.log(result, 'after featured image set to null');
+		}
 	}
 
 	ngOnDestroy(): void {}
