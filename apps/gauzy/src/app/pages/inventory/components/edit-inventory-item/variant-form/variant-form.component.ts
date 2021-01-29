@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { IProductOption } from '@gauzy/contracts';
 import { Router } from '@angular/router';
 import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
