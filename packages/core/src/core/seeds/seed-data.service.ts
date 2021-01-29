@@ -10,7 +10,8 @@ import {
 	createConnection,
 	getRepository,
 	ConnectionOptions,
-	getConnection
+	getConnection,
+	getManager
 } from 'typeorm';
 import * as chalk from 'chalk';
 import { IPluginConfig } from '@gauzy/common';
@@ -1994,20 +1995,26 @@ export class SeedDataService {
 	 */
 	private async cleanAll(entities) {
 		try {
-			for (const entity of entities) {
-				const repository = getRepository(entity.name);
-				let truncateSql: string;
+			const manager = getManager();
 
-				const database = this.config.dbConnectionOptions;
-				switch (database.type) {
-					case 'postgres':
-						truncateSql = `TRUNCATE "${entity.tableName}" RESTART IDENTITY CASCADE;`;
-						break;
-					default:
-						truncateSql = `DELETE FROM "${entity.tableName}";`;
-						await repository.query('PRAGMA foreign_keys = OFF;');
-				}
-				await repository.query(truncateSql);
+			const database = this.config.dbConnectionOptions;
+			switch (database.type) {
+				case 'postgres':
+					const tables = entities.map(
+						(entity) => '"' + entity.tableName + '"'
+					);
+					const truncateSql = `TRUNCATE TABLE ${tables.join(
+						','
+					)} RESTART IDENTITY CASCADE;`;
+					await manager.query(truncateSql);
+					break;
+				default:
+					await manager.query(`PRAGMA foreign_keys = OFF;`);
+					for (const entity of entities) {
+						await manager.query(
+							`DELETE FROM "${entity.tableName}";`
+						);
+					}
 			}
 		} catch (error) {
 			this.handleError(error, 'Unable to clean database');

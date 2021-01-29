@@ -11,6 +11,7 @@ node_modules/
 # sqlite3 database
 /apps/api/data
 *.sqlite3
+*.sqlite
 
 # IDEs and editors
 /.idea
