@@ -316,7 +316,8 @@
 				"LATITUDE": "Широта",
 				"LONGITUDE": "Долгота"
 			},
-			"PUBLIC_LINK": "Публичная ссылка"
+			"PUBLIC_LINK": "Публичная ссылка",
+			"DEFAULT_TERMS": "Условия по умолчанию для счетов и оценок"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
