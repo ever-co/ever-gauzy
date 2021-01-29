@@ -69,6 +69,8 @@ COPY --chown=node:node package.json yarn.lock ./
 
 RUN yarn install --frozen-lockfile --production && yarn cache clean
 
+RUN rm -r node_modules/@angular
+
 FROM node:alpine AS development
 
 USER node:node
