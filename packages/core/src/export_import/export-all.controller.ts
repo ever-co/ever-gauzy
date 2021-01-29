@@ -8,13 +8,12 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ExportAllService } from './export-all.service';
-import { OnDestroy } from '@angular/core';
 import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Download')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
-export class ExportAllController implements OnDestroy {
+export class ExportAllController {
 	constructor(private readonly exportService: ExportAllService) {}
 
 	@ApiTags('Download')
@@ -65,6 +64,4 @@ export class ExportAllController implements OnDestroy {
 		await this.exportService.deleteCsvFiles();
 		this.exportService.deleteArchive();
 	}
-
-	ngOnDestroy() {}
 }

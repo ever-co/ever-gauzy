@@ -75,10 +75,9 @@
 		"doc:build": "compodoc -p tsconfig.json -d dist/docs",
 		"doc:serve": "compodoc -s -d dist/docs",
 		"doc:build-serve": "compodoc -p tsconfig.json -d docs -s",
-		"postinstall": "yarn electron-builder install-app-deps",
-		"postinstall.electron": "yarn node tools/electron/postinstall",
+		"postinstall.electron": "yarn electron-builder install-app-deps && yarn node tools/electron/postinstall",
 		"postinstall.web": "yarn node tools/web/postinstall",
-		"build:desktop": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn build:package:all && yarn run config:prod && ng build desktop --prod --base-href ./ && yarn run prepare:desktop && ng build desktop-api --prod && ng build api-desktop --prod && ng build desktop-ui --prod --base-href ./",
+		"build:desktop": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run postinstall.electron && yarn build:package:all && yarn run config:prod && ng build desktop --prod --base-href ./ && yarn run prepare:desktop && ng build desktop-api --prod && ng build api-desktop --prod && ng build desktop-ui --prod --base-href ./",
 		"build:desktop:local": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn run build:desktop && electron dist/apps/desktop",
 		"build:desktop:linux": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn run build:desktop && npm config set cache .cache && cd dist/apps/desktop && npx electron-builder@22.9.1 -c.electronVersion=10.1.3 build --linux",
 		"build:desktop:windows": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn run build:desktop && npm config set cache .cache && cd dist/apps/desktop && npx electron-builder@22.9.1 -c.electronVersion=10.1.3 build --windows",
@@ -170,6 +169,7 @@
 		]
 	},
 	"dependencies": {
+		"echarts": "^5.0.1",
 		"@angular/core": "^11.1.1",
 		"@angular/common": "^11.1.1",
 		"@angular/forms": "^11.1.1",

@@ -6,13 +6,14 @@ import {
 	IAuthResponse
 } from '@gauzy/contracts';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import * as bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcrypt';
 import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
 import { get, post, Response } from 'request';
 import { EmailService } from '../email/email.service';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
+
 @Injectable()
 export class AuthService {
 	saltRounds: number;

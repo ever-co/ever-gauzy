@@ -16,7 +16,7 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 import { mergeMap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { environment as env } from '@gauzy/config';
-import * as bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcrypt';
 import { BaseEntity } from '../entities/internal';
 import { ICrudService } from './icrud.service';
 import { IPagination } from './pagination';

@@ -43,6 +43,32 @@ COPY --chown=node:node lerna.json package.json yarn.lock ./
 
 RUN yarn install --frozen-lockfile && yarn cache clean
 
+FROM node:alpine AS prodDependencies
+
+RUN apk --update add bash && \
+    apk add --no-cache dos2unix g++ git make python vips-dev && \
+    mkdir /srv/gauzy && chown -R node:node /srv/gauzy
+
+USER node:node
+
+WORKDIR /srv/gauzy
+
+COPY --chown=node:node apps/api/package.json ./apps/api/
+
+COPY --chown=node:node packages/common/package.json ./packages/common/
+COPY --chown=node:node packages/config/package.json ./packages/config/
+COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
+COPY --chown=node:node packages/core/package.json ./packages/core/
+COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
+COPY --chown=node:node packages/plugins/integration-ai/package.json ./packages/plugins/integration-ai/
+COPY --chown=node:node packages/plugins/integration-hubstaff/package.json ./packages/plugins/integration-hubstaff/
+COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packages/plugins/integration-upwork/
+COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/plugins/product-reviews/
+
+COPY --chown=node:node package.json yarn.lock ./
+
+RUN yarn install --frozen-lockfile --production && yarn cache clean
+
 FROM node:alpine AS development
 
 USER node:node
@@ -73,8 +99,8 @@ WORKDIR /srv/gauzy
 
 COPY --chown=node:node --from=dependencies /wait ./wait
 COPY --chown=node:node --from=dependencies /entrypoint.sh .
+COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules/ ./node_modules/
 COPY --chown=node:node --from=build /srv/gauzy/packages/ ./packages/
-COPY --chown=node:node --from=build /srv/gauzy/node_modules ./node_modules/
 COPY --chown=node:node apps/api/src/assets apps/api/src/assets
 COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api .
 

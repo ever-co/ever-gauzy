@@ -1,5 +1,7 @@
 dist
+
 tmp
+.cache
 .github
 .circle
 .npmrc
@@ -10,8 +12,13 @@ docker-compose*.yml
 .git/
 .gitignore
 Jenkinsfile
+
 node_modules
 apps/api/node_modules
+apps/desktop/node_modules
+apps/gauzy/node_modules
+apps/gauzy-e2e/node_modules
+packages/**/node_modules
 
 # IDEs and editors
 .idea
