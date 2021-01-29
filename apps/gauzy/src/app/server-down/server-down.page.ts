@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { Store } from '../@core/services/store.service';
 import { ServerConnectionService } from '../@core/services/server-connection.service';
@@ -8,7 +8,7 @@ import { environment } from '../../environments/environment';
 	styleUrls: ['./server-down.page.scss'],
 	templateUrl: 'server-down.page.html'
 })
-export class ServerDownPage implements OnDestroy {
+export class ServerDownPage implements OnInit, OnDestroy {
 	noInternetLogo: string;
 	interval: any;
 
@@ -18,6 +18,9 @@ export class ServerDownPage implements OnDestroy {
 		private serverConnectionService: ServerConnectionService
 	) {
 		this.noInternetLogo = environment['NO_INTERNET_LOGO'];
+	}
+
+	ngOnInit(): void {
 		this.checkConnection();
 	}
 
