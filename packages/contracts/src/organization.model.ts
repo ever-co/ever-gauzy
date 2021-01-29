@@ -90,6 +90,7 @@ export interface IOrganization extends IBasePerTenantEntityModel {
 	awards?: IOrganizationAwards[];
 	languages?: IOrganizationLanguages[];
 	featureOrganizations?: IFeatureOrganization[];
+	defaultInvoiceEstimateTerms?: string;
 }
 
 export interface IOrganizationFindInput {
@@ -139,6 +140,7 @@ export interface IOrganizationCreateInput extends IContact {
 	show_clients?: boolean;
 	website?: string;
 	fiscalInformation?: string;
+	defaultInvoiceEstimateTerms?: string;
 }
 
 export interface IOrganizationUpdateInput extends IOrganizationCreateInput {

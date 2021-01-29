@@ -448,4 +448,10 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@ApiPropertyOptional({ type: String })
 	@Column({ nullable: true })
 	defaultEndTime?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	defaultInvoiceEstimateTerms?: string;
 }
