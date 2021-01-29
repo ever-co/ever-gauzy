@@ -170,7 +170,7 @@ export class ProductFormComponent
 	};
 
 	async loadProduct(id: string) {
-		if (id) {
+		if (id && this.organization) {
 			const { id: organizationId, tenantId } = this.organization;
 			this.inventoryItem = await this.productService.getById(
 				id,
@@ -326,7 +326,7 @@ export class ProductFormComponent
 			return tr.languageCode === this.selectedLanguage;
 		});
 
-		if (!this.activeTranslation) {
+		if (!this.activeTranslation && this.organization) {
 			const { id: organizationId, tenantId } = this.organization;
 			this.activeTranslation = {
 				languageCode: this.selectedLanguage,

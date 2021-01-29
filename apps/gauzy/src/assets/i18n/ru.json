@@ -316,7 +316,8 @@
 				"LATITUDE": "Широта",
 				"LONGITUDE": "Долгота"
 			},
-			"PUBLIC_LINK": "Публичная ссылка"
+			"PUBLIC_LINK": "Публичная ссылка",
+			"DEFAULT_TERMS": "Условия по умолчанию для счетов и оценок"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -2042,7 +2043,8 @@
 		"SET_FEATURED_IMAGE": "Установка избранного изображения",
 		"VIEW_GALLERY": "Просмотреть галерею",
 		"EDIT_IMAGE": "Изменить изображение галереи",
-		"DELETE_IMAGE": "Удалить изображение"
+		"DELETE_IMAGE": "Удалить изображение",
+		"IMAGE_ASSET_DELETED": "Изображение актива удалено"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",

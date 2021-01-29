@@ -1,3 +1,5 @@
+@import './themes';
+
 .image-item {
   height: 100px;
   width: 100%;
@@ -13,9 +15,30 @@
 
   &:hover {
     box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+
+    .delete-asset-btn {
+      opacity: 1;
+    }
   }
 
   &.selected {
     box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
   }
+}
+
+.delete-asset-btn {
+  position: absolute;
+  width: 35px;
+  height: 35px;
+  top: -5px;
+  left: 3px;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  opacity: 0;
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+  color: nb-theme(text-danger-color);
 }

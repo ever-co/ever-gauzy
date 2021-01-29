@@ -75,4 +75,10 @@ export class SelectAssetComponent
 	onImageUploaded(image: IImageAsset) {
 		this.newImageUploadedEvent.next(image);
 	}
+
+	onImageAssetDeleted(imageDeleted: IImageAsset) {
+		this.gallery = this.gallery.filter(
+			(image) => image.id != imageDeleted.id
+		);
+	}
 }

@@ -3,6 +3,9 @@
 	(click)="onImageClick($event)"
 	[ngClass]="{ selected: selected }"
 >
+	<div class="delete-asset-btn" (click)="onDeleteAsset($event)">
+		<nb-icon icon="trash-outline"></nb-icon>
+	</div>
 	<div
 		class="image-item"
 		[ngStyle]="{
