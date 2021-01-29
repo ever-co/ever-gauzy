@@ -1,15 +1,48 @@
 import { Injectable } from '@angular/core';
 
-import { IImageAsset, IProductTranslatable } from '@gauzy/contracts';
+import {
+	IImageAsset,
+	IProductOption,
+	IProductTranslatable,
+	IProductVariant,
+	IVariantOptionCombination
+} from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject } from 'rxjs';
+import { VariantCreateInput } from '../../pages/inventory/components/edit-inventory-item/variant-form/variant-form.component';
 
 @Injectable()
 export class InventoryStore {
 	private _activeProduct: IProductTranslatable = this.inventoryItemBlank;
 
+	//tstodo
+	private _storedVariants: VariantCreateInput[] = [];
+	private _varintCreateInputs: VariantCreateInput[] = [];
+	private _optionsCombinations: IVariantOptionCombination[] = [];
+	private _deleteOptions: IProductOption[] = [];
+
 	activeProduct$: BehaviorSubject<IProductTranslatable> = new BehaviorSubject(
 		this.activeProduct
+	);
+
+	// storedVariants$: BehaviorSubject<
+	// 	VariantCreateInput[]
+	// > = new BehaviorSubject(this.storedVariants);
+
+	variantCreateInputs$: BehaviorSubject<
+		VariantCreateInput[]
+	> = new BehaviorSubject(this.variantCreateInputs);
+
+	optionsCombinations$: BehaviorSubject<
+		IVariantOptionCombination[]
+	> = new BehaviorSubject(this.optionsCombinations);
+
+	deleteOptions$: BehaviorSubject<IProductOption[]> = new BehaviorSubject(
+		this.deleteOptions
+	);
+
+	createOptions$: BehaviorSubject<IProductOption[]> = new BehaviorSubject(
+		this.createOptions
 	);
 
 	constructor(private translateService: TranslateService) {}
@@ -26,9 +59,55 @@ export class InventoryStore {
 		return this.activeProduct.featuredImage;
 	}
 
+	get storedVariants() {
+		return this._storedVariants;
+	}
+
+	get variantCreateInputs() {
+		return this._varintCreateInputs;
+	}
+
+	get optionsCombinations() {
+		return this._optionsCombinations;
+	}
+
+	get createoOptionCombinations() {
+		return this._varintCreateInputs
+			.filter((variant) => !variant.isStored)
+			.map((variant) => ({ options: variant.options }));
+	}
+
+	get deleteOptions() {
+		return this._deleteOptions;
+	}
+
+	get createOptions() {
+		return this.activeProduct.options.filter((option) => !option.id);
+	}
+
 	set activeProduct(product: IProductTranslatable) {
 		this._activeProduct = { ...this.activeProduct, ...product };
 		this.activeProduct$.next(this._activeProduct);
+	}
+
+	// set storedVariants(variants: VariantCreateInput[]) {
+	// 	this._storedVariants = variants;
+	// 	this.storedVariants$.next(this._storedVariants);
+	// }
+
+	set variantCreateInputs(variantCreateInput: VariantCreateInput[]) {
+		this._varintCreateInputs = variantCreateInput;
+		this.variantCreateInputs$.next(this._varintCreateInputs);
+	}
+
+	set optionsCombinations(optionsCombinations: IVariantOptionCombination[]) {
+		this._optionsCombinations = optionsCombinations;
+		this.optionsCombinations$.next(optionsCombinations);
+	}
+
+	set options(options: IProductOption[]) {
+		this.activeProduct.options = options;
+		this.activeProduct$.next(this.activeProduct);
 	}
 
 	updateGallery(gallery: IImageAsset[]) {
@@ -56,6 +135,13 @@ export class InventoryStore {
 		this.activeProduct$.next(this.activeProduct);
 	}
 
+	deleteVariant(variantDeleted: IProductVariant) {
+		this.activeProduct.variants = this.activeProduct.variants.filter(
+			(variant) => variant.id != variantDeleted.id
+		);
+		this.activeProduct$.next(this.activeProduct);
+	}
+
 	updateFeaturedImage(image: IImageAsset) {
 		this.activeProduct.featuredImage = image;
 		this.activeProduct$.next(this.activeProduct);
@@ -65,6 +151,17 @@ export class InventoryStore {
 		if (!this.activeProduct.featuredImage) return false;
 
 		return this.activeProduct.featuredImage.id == image.id;
+	}
+
+	deleteOption(optionDeleted: IProductOption) {
+		this._deleteOptions.push(optionDeleted);
+		this._activeProduct.options = this.activeProduct.options.filter(
+			(option) =>
+				option.name !== optionDeleted.name &&
+				option.code !== optionDeleted.code
+		);
+		this.deleteOptions$.next(this._deleteOptions);
+		this.activeProduct$.next(this._activeProduct);
 	}
 
 	get inventoryItemBlank() {
