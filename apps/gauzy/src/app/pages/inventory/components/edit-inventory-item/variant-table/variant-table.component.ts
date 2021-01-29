@@ -1,10 +1,9 @@
-import { Component, ViewChild, OnInit, Input } from '@angular/core';
+import { Component, ViewChild, OnInit } from '@angular/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { IProductVariant } from '@gauzy/contracts';
-import { Subject, BehaviorSubject } from 'rxjs';
-import { takeUntil, first } from 'rxjs/operators';
+import { first } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -12,12 +11,15 @@ import { ProductVariantService } from 'apps/gauzy/src/app/@core/services/product
 import { EnabledStatusComponent } from '../../table-components/enabled-row.component';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { ImageRowComponent } from '../../table-components/image-row.component';
+import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 export interface SelectedProductVariant {
 	data: IProductVariant;
 	isSelected: false;
 }
 
+@UntilDestroy()
 @Component({
 	selector: 'ngx-variant-table',
 	templateUrl: './variant-table.component.html'
@@ -26,8 +28,7 @@ export class VariantTableComponent
 	extends TranslationBaseComponent
 	implements OnInit {
 	@ViewChild('variantTable') variantTable;
-	@Input() variants$: BehaviorSubject<any[]>;
-	@Input() productId: string;
+
 	variants: IProductVariant[];
 
 	selectedItem: IProductVariant;
@@ -36,14 +37,13 @@ export class VariantTableComponent
 	loading = true;
 	disableButton = true;
 
-	private _ngDestroy$ = new Subject<void>();
-
 	constructor(
 		readonly translateService: TranslateService,
 		private router: Router,
 		private dialogService: NbDialogService,
 		private productVariantService: ProductVariantService,
-		private toastrService: ToastrService
+		private toastrService: ToastrService,
+		private inventoryStore: InventoryStore
 	) {
 		super(translateService);
 	}
@@ -51,11 +51,11 @@ export class VariantTableComponent
 	ngOnInit(): void {
 		this.loadSmartTable();
 
-		this.variants$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((variants) => {
-				this.variants = variants;
-				this.smartTableSource.load(variants);
+		this.inventoryStore.activeProduct$
+			.pipe(untilDestroyed(this))
+			.subscribe((activeProduct) => {
+				this.variants = activeProduct.variants;
+				this.smartTableSource.load(this.variants);
 			});
 
 		this.loading = false;
@@ -103,7 +103,7 @@ export class VariantTableComponent
 
 	onEditVariant() {
 		this.router.navigate([
-			`/pages/organization/inventory/${this.productId}/variants/${this.selectedItem.id}`
+			`/pages/organization/inventory/${this.inventoryStore.activeProduct.id}/variants/${this.selectedItem.id}`
 		]);
 	}
 
@@ -130,11 +130,7 @@ export class VariantTableComponent
 			);
 
 			if (res.affected > 0) {
-				this.variants$.next(
-					this.variants.filter(
-						(variant) => variant.id !== this.selectedItem.id
-					)
-				);
+				this.inventoryStore.deleteVariant(this.selectedItem);
 
 				if (this.selectedItem) {
 					this.selectItem({

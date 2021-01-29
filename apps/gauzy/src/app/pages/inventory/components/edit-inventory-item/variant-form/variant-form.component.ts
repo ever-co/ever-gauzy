@@ -1,14 +1,9 @@
-import {
-	Component,
-	Input,
-	Output,
-	EventEmitter,
-	OnInit,
-	OnChanges,
-	SimpleChanges
-} from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { IProductOption } from '@gauzy/contracts';
 import { Router } from '@angular/router';
+import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { IProductVariant } from 'packages/contracts/dist';
 
 export interface OptionCreateInput {
 	name: string;
@@ -22,17 +17,14 @@ export interface VariantCreateInput {
 	productId?: string;
 }
 
+@UntilDestroy()
 @Component({
 	selector: 'ngx-variant-form',
 	templateUrl: './variant-form.component.html',
 	styleUrls: ['./variant-form.component.scss']
 })
-export class VariantFormComponent implements OnInit, OnChanges {
-	@Input() options: IProductOption[];
-	@Input() variantsDb: VariantCreateInput[];
-	@Output() variantCreateInputsUpdated = new EventEmitter<
-		VariantCreateInput[]
-	>();
+export class VariantFormComponent implements OnInit {
+	options: IProductOption[];
 
 	variantCreateInputs: VariantCreateInput[] = [];
 	editVariantCreateInput: VariantCreateInput = {
@@ -41,20 +33,30 @@ export class VariantFormComponent implements OnInit, OnChanges {
 	};
 	mode = 'create';
 
-	constructor(private router: Router) {}
+	constructor(
+		private router: Router,
+		private inventoryStore: InventoryStore
+	) {}
 
 	ngOnInit(): void {
-		if (this.variantsDb) {
-			this.variantCreateInputs = this.variantsDb;
-		}
-	}
+		this.inventoryStore.activeProduct$
+			.pipe(untilDestroyed(this))
+			.subscribe((activeProduct) => {
+				this.options = activeProduct.options;
 
-	ngOnChanges(changesInput: SimpleChanges): void {
-		const { currentValue } = changesInput.variantsDb || {};
-
-		if (currentValue) {
-			this.variantCreateInputs = currentValue;
-		}
+				this.variantCreateInputs = activeProduct.variants.map(
+					(variant: IProductVariant) => {
+						return {
+							options: variant.options.map(
+								(option: IProductOption) => option.name
+							),
+							isStored: true,
+							id: variant.id,
+							productId: this.inventoryStore.activeProduct.id
+						};
+					}
+				);
+			});
 	}
 
 	onSelectOption(selectedOptions: string[]) {
@@ -86,7 +88,7 @@ export class VariantFormComponent implements OnInit, OnChanges {
 		);
 
 		//tstodo same for update
-		this.variantCreateInputsUpdated.emit(variantCreateInputs);
+		this.inventoryStore.variantCreateInputs = variantCreateInputs;
 		this.resetCreateVariantInputForm();
 	}
 

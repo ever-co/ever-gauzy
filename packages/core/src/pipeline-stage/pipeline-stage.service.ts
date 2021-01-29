@@ -2,7 +2,7 @@ import { CrudService } from '../core/crud';
 import { PipelineStage } from './pipeline-stage.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Injectable } from '@angular/core';
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class StageService extends CrudService<PipelineStage> {

@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { OnDestroy } from '@angular/core';
 import * as fs from 'fs';
 import * as unzipper from 'unzipper';
 import * as csv from 'csv-parser';
@@ -118,7 +117,7 @@ import { ReportCategory } from '../../reports/report-category.entity';
 import { ReportOrganization } from '../../reports/report-organization.entity';
 
 @Injectable()
-export class ImportAllService implements OnDestroy {
+export class ImportAllService {
 	constructor(
 		@InjectRepository(Activity)
 		private readonly activityRepository: Repository<Activity>,
@@ -686,6 +685,4 @@ export class ImportAllService implements OnDestroy {
 		}
 		return data;
 	}
-
-	ngOnDestroy() {}
 }

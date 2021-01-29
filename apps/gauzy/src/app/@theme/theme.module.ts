@@ -21,8 +21,7 @@ import { NbSecurityModule } from '@nebular/security';
 import {
 	FooterComponent,
 	HeaderComponent,
-	SearchInputComponent,
-	TinyMCEComponent
+	SearchInputComponent
 } from './components';
 import { Pipes } from './pipes';
 import {
@@ -39,7 +38,6 @@ import { DARK_THEME } from './styles/theme.dark';
 import { ThemeSettingsComponent } from './components/theme-settings/theme-settings.component';
 import { UsersService } from '../@core/services/users.service';
 import { HeaderSelectorsModule } from './components/header/selectors/selectors.module';
-
 import { EmployeeSelectorsModule } from './components/header/selectors/employee/employee.module';
 import { SelectorService } from '../@core/utils/selector.service';
 import { UsersOrganizationsService } from '../@core/services/users-organizations.service';
@@ -78,7 +76,6 @@ const COMPONENTS = [
 	HeaderComponent,
 	FooterComponent,
 	SearchInputComponent,
-	TinyMCEComponent,
 	OneColumnLayoutComponent,
 	ThreeColumnsLayoutComponent,
 	TwoColumnsLayoutComponent,

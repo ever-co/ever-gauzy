@@ -565,6 +565,15 @@
 				</button>
 			</div>
 		</div>
+		<div class="mt-3 text-center">
+			<nb-checkbox
+				(checkedChange)="toggleIncludeArchived($event)"
+				status="warning"
+				class="mr-3"
+			>
+				{{ 'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate }}
+			</nb-checkbox>
+		</div>
 	</div>
 </ng-template>
 
@@ -633,6 +642,16 @@
 			<span class="icon-text">{{
 				'BUTTONS.EXPORT_TO_CSV' | translate
 			}}</span>
+		</button>
+		<button
+			*ngIf="dataLayoutStyle === 'TABLE'"
+			nbButton
+			status="info"
+			(click)="archive()"
+			[disabled]="disableButton || selectedInvoice.isArchived"
+		>
+			<nb-icon icon="archive-outline"> </nb-icon>
+			<span class="icon-text">{{ 'BUTTONS.ARCHIVE' | translate }}</span>
 		</button>
 		<button
 			*ngIf="dataLayoutStyle === 'TABLE'"

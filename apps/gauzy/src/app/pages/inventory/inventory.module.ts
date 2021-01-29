@@ -54,6 +54,7 @@ import { SelectAssetComponent } from '../../@shared/select-asset-modal/select-as
 import { ProductGalleryComponent } from './components/edit-inventory-item/product-gallery/product-gallery.component';
 import { ImageAssetService } from '../../@core/services/image-asset.service';
 import { GalleryModule } from '../../@shared/gallery/gallery.module';
+import { InventoryStore } from '../../@core/services/inventory-store.service';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -124,7 +125,8 @@ const NB_MODULES = [
 		ProductVariantSettingsService,
 		ProductVariantPriceService,
 		OrganizationsService,
-		ImageAssetService
+		ImageAssetService,
+		InventoryStore
 	]
 })
 export class InventoryModule {}
