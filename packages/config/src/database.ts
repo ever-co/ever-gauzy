@@ -27,7 +27,7 @@ export const connections = {
 			path.join(
 				process.cwd(),
 				...['apps', 'api', 'data'],
-				'gauzy.sqlite'
+				'gauzy.sqlite3'
 			),
 		keepConnectionAlive: true,
 		logging: true,
