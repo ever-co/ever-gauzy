@@ -8,7 +8,6 @@ import { Injectable } from '@nestjs/common';
 import {
 	Connection,
 	createConnection,
-	getRepository,
 	ConnectionOptions,
 	getConnection,
 	getManager

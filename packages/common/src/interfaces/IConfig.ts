@@ -1,5 +1,5 @@
 import { DynamicModule, Type } from '@nestjs/common';
-import { ConnectionOptions } from 'typeorm';
+import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { PluginDefinition } from 'apollo-server-core';
 import { ILogger } from './ILogger';
 
@@ -19,9 +19,9 @@ export interface IAssetOptions {
 	assetPublicPath: string;
 }
 export interface IApiServerOptions {
-	hostname?: string;
+	host?: string;
 
-	port: number;
+	port: number | string;
 
 	baseUrl?: string;
 
@@ -41,7 +41,7 @@ export interface IAuthOptions {
 export interface IPluginConfig {
 	apiConfigOptions: IApiServerOptions;
 
-	dbConnectionOptions: ConnectionOptions;
+	dbConnectionOptions: TypeOrmModuleOptions;
 
 	plugins?: Array<DynamicModule | Type<any>>;
 

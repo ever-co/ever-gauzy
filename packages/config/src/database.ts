@@ -1,12 +1,12 @@
 import * as path from 'path';
-import { ConnectionOptions } from 'typeorm';
+import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 const defaultConnection =
 	process.env.DB_TYPE && process.env.DB_TYPE === 'postgres'
 		? 'postgres'
 		: 'sqlite';
 
-export const connnections = {
+export const connections = {
 	postgres: {
 		type: 'postgres',
 		host: process.env.DB_HOST || 'localhost',
@@ -16,25 +16,30 @@ export const connnections = {
 		password: process.env.DB_PASS || 'root',
 		keepConnectionAlive: true,
 		logging: true,
-		logger: 'file',
+		logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
 		synchronize: true,
 		uuidExtension: 'pgcrypto'
 	},
 	sqlite: {
 		type: 'sqlite',
 		database:
-			process.env.DB_PATH || path.join(process.cwd(), 'gauzy.sqlite'),
+			process.env.DB_PATH ||
+			path.join(
+				process.cwd(),
+				...['apps', 'api', 'data'],
+				'gauzy.sqlite'
+			),
 		keepConnectionAlive: true,
 		logging: true,
-		logger: 'file',
+		logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
 		synchronize: true
 	}
 };
 
 export function getConnectionOptions(connection: string) {
-	return connnections[connection];
+	return connections[connection];
 }
 
 export const dbConnectionConfig = getConnectionOptions(
 	defaultConnection
-) as ConnectionOptions;
+) as TypeOrmModuleOptions;
