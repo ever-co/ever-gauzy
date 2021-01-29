@@ -133,7 +133,6 @@ export class InvoiceAddComponent
 		if (!this.isEstimate) {
 			this.isEstimate = false;
 		}
-		this.initializeForm();
 		this.selectedLanguage = this.translateService.currentLang;
 		this.store.selectedOrganization$
 			.pipe(
@@ -147,6 +146,7 @@ export class InvoiceAddComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.initializeForm();
 		this.observableTasks.pipe(untilDestroyed(this)).subscribe((data) => {
 			this.tasks = data;
 		});
@@ -178,7 +178,11 @@ export class InvoiceAddComponent
 				0,
 				Validators.compose([Validators.required, Validators.min(0)])
 			],
-			terms: [''],
+			terms: [
+				this.organization
+					? this.organization.defaultInvoiceEstimateTerms || ''
+					: ''
+			],
 			organizationContact: ['', Validators.required],
 			discountType: [''],
 			taxType: [''],
