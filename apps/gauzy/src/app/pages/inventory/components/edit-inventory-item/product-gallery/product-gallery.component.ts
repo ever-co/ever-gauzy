@@ -225,7 +225,6 @@ export class ProductGalleryComponent
 			let result = await this.productService.deleteFeaturedImage(
 				activeProduct.id
 			);
-			console.log(result, 'after featured image set to null');
 		}
 	}
 

@@ -2042,7 +2042,8 @@
 		"SET_FEATURED_IMAGE": "Set featured image",
 		"VIEW_GALLERY": "View gallery",
 		"EDIT_IMAGE": "Edit gallery image",
-		"DELETE_IMAGE": "Delete image"
+		"DELETE_IMAGE": "Delete image",
+		"IMAGE_ASSET_DELETED": "Изображението е изтрито"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
