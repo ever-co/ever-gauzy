@@ -5,7 +5,7 @@
 		"outDir": "../../dist/out-tsc",
 		"declaration": true,
 		"types": ["node"],
-		"target": "es6"
+		"target": "es2016"
 	},
 	"exclude": ["**/*.spec.ts"],
 	"include": ["**/*.ts"]

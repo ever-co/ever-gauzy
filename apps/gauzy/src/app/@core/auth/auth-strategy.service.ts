@@ -1,7 +1,6 @@
 import { Observable, from, of } from 'rxjs';
 import { NbAuthResult, NbAuthStrategy } from '@nebular/auth';
 import { ActivatedRoute, Router } from '@angular/router';
-import 'rxjs/add/observable/of';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
 import { IUser, ITag, ITenant, IAuthResponse } from '@gauzy/contracts';
@@ -118,7 +117,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		} = args;
 
 		if (password !== confirmPassword) {
-			return Observable.of(
+			return of(
 				new NbAuthResult(false, null, null, [
 					"The passwords don't match."
 				])
@@ -240,7 +239,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		const id = this.router.url.substring(indexId + 1);
 
 		if (password !== confirmPassword) {
-			return Observable.of(
+			return of(
 				new NbAuthResult(false, null, null, [
 					"The passwords don't match."
 				])
