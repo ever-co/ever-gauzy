@@ -1,13 +1,21 @@
-import { IPluginConfig, API_PORT, GRAPHQL_API_PATH } from '@gauzy/common';
+import {
+	IPluginConfig,
+	DEFAULT_API_PORT,
+	DEFAULT_GRAPHQL_API_PATH,
+	DEFAULT_API_HOST,
+	DEFAULT_BASE_URL
+} from '@gauzy/common';
 import { ConnectionOptions } from 'typeorm';
 import * as path from 'path';
 
 export const pluginConfig: IPluginConfig = {
 	apiConfigOptions: {
-		port: API_PORT,
+		host: process.env.host || DEFAULT_API_HOST,
+		port: process.env.port || DEFAULT_API_PORT,
+		baseUrl: process.env.BASE_URL || DEFAULT_BASE_URL,
 		middleware: [],
 		graphqlConfigOptions: {
-			path: GRAPHQL_API_PATH,
+			path: DEFAULT_GRAPHQL_API_PATH,
 			playground: true,
 			debug: true,
 			apolloServerPlugins: []

@@ -316,7 +316,8 @@
 				"LATITUDE": "Latitude",
 				"LONGITUDE": "Longitude"
 			},
-			"PUBLIC_LINK": "Public Link"
+			"PUBLIC_LINK": "Public Link",
+			"DEFAULT_TERMS": "Default terms for invoices and estimates"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",

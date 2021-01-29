@@ -214,11 +214,14 @@ export function serverConnectionFactory(
 	router: Router
 ) {
 	return () =>
-		provider.checkServerConnection(environment.API_BASE_URL).finally(() => {
-			if (store.serverConnection !== 200) {
-				router.navigate(['server-down']);
-			}
-		});
+		provider
+			.checkServerConnection(environment.API_BASE_URL)
+			.finally(() => {
+				if (store.serverConnection !== 200) {
+					router.navigate(['server-down']);
+				}
+			})
+			.catch(() => {});
 }
 
 export function googleMapsLoaderFactory(provider: GoogleMapsLoaderService) {
@@ -230,8 +233,11 @@ export function featureToggleLoaderFactory(
 	store: Store
 ) {
 	return () =>
-		provider.getFeatureToggles().then((features: IFeatureToggle[]) => {
-			store.featureToggles = features || [];
-			return features;
-		});
+		provider
+			.getFeatureToggles()
+			.then((features: IFeatureToggle[]) => {
+				store.featureToggles = features || [];
+				return features;
+			})
+			.catch(() => {});
 }

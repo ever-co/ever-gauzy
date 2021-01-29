@@ -3,7 +3,7 @@
  * Copyright Akveo. All Rights Reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  */
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { AnalyticsService } from './@core/utils/analytics.service';
 import { Store } from './@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -15,7 +15,7 @@ import { environment } from '../environments/environment';
 	selector: 'ga-app',
 	template: '<router-outlet *ngIf="!loading"></router-outlet>'
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, AfterViewInit {
 	constructor(
 		private analytics: AnalyticsService,
 		private store: Store,
@@ -30,23 +30,28 @@ export class AppComponent implements OnInit {
 			this.loadChatwoot(document, 'script');
 		}
 		this.analytics.trackPageViews();
+
+		this.translate.setDefaultLang(LanguagesEnum.ENGLISH);
+		this.translate.use(
+			this.translate.getBrowserLang() || LanguagesEnum.ENGLISH
+		);
 		this.translate.onLangChange.subscribe(() => {
 			this.loading = false;
 		});
-		this.loadLanguages();
 
 		if (Number(this.store.serverConnection) === 0) {
 			this.loading = false;
 		}
 	}
 
+	ngAfterViewInit() {
+		this.loadLanguages();
+	}
+
 	private async loadLanguages() {
-		const res = await this.languagesService.getSystemLanguages();
-		this.store.systemLanguages = res.items;
-		this.translate.setDefaultLang(LanguagesEnum.ENGLISH);
-		this.translate.use(
-			this.translate.getBrowserLang() || LanguagesEnum.ENGLISH
-		);
+		this.languagesService.getSystemLanguages().then(({ items }) => {
+			this.store.systemLanguages = items;
+		});
 	}
 
 	private loadChatwoot(d, t) {

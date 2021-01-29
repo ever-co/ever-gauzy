@@ -1,25 +1,31 @@
-import { API_PORT, GRAPHQL_API_PATH } from '@gauzy/common';
+import {
+	DEFAULT_API_HOST,
+	DEFAULT_API_PORT,
+	DEFAULT_BASE_URL,
+	DEFAULT_GRAPHQL_API_PATH
+} from '@gauzy/common';
+import { dbConnectionConfig } from '@gauzy/config';
 import { bootstrap } from './bootstrap';
 
 bootstrap({
 	apiConfigOptions: {
-		port: API_PORT,
+		host: process.env.host || DEFAULT_API_HOST,
+		port: process.env.port || DEFAULT_API_PORT,
+		baseUrl: process.env.BASE_URL || DEFAULT_BASE_URL,
 		middleware: [],
 		graphqlConfigOptions: {
-			path: GRAPHQL_API_PATH,
+			path: DEFAULT_GRAPHQL_API_PATH,
 			playground: true,
 			debug: true,
 			apolloServerPlugins: []
 		}
 	},
 	dbConnectionOptions: {
-		type: 'postgres',
-		port: 5432,
 		synchronize: true,
-		logging: true,
-		database: 'plugin-dev',
-		username: 'postgres',
-		password: 'root'
+		...dbConnectionConfig
 	},
 	plugins: []
+}).catch((error) => {
+	console.log(error);
+	process.exit(1);
 });

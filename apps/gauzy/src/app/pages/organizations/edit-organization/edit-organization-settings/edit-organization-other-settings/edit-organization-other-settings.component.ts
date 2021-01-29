@@ -216,6 +216,9 @@ export class EditOrganizationOtherSettingsComponent
 			separateInvoiceItemTaxAndDiscount: [
 				this.organization.separateInvoiceItemTaxAndDiscount
 			],
+			defaultInvoiceEstimateTerms: [
+				this.organization.defaultInvoiceEstimateTerms || ''
+			],
 			fiscalInformation: [this.organization.fiscalInformation || ''],
 			currencyPosition: [this.organization.currencyPosition || 'LEFT'],
 			discountAfterTax: [this.organization.discountAfterTax]
