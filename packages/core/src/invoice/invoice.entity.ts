@@ -179,6 +179,11 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@Column({ nullable: true })
 	token?: string;
 
+	@ApiPropertyOptional({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	isArchived?: boolean;
+
 	@ApiPropertyOptional({ type: Organization })
 	@ManyToOne(() => Organization)
 	@JoinColumn()
