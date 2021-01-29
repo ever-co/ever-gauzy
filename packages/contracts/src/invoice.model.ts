@@ -39,6 +39,7 @@ export interface IInvoice extends IBasePerTenantAndOrganizationEntityModel {
 	hasRemainingAmountInvoiced?: boolean;
 	publicLink?: string;
 	token?: string;
+	isArchived?: boolean;
 }
 
 export interface IInvoiceCreateInput
@@ -66,6 +67,7 @@ export interface IInvoiceCreateInput
 	status?: string;
 	isAccepted?: boolean;
 	isEstimate?: boolean;
+	isArchived?: boolean;
 }
 
 export interface IInvoiceUpdateInput extends IInvoiceCreateInput {
@@ -74,6 +76,7 @@ export interface IInvoiceUpdateInput extends IInvoiceCreateInput {
 	alreadyPaid?: number;
 	amountDue?: number;
 	hasRemainingAmountInvoiced?: boolean;
+	isArchived?: boolean;
 }
 export interface IInvoiceFindInput
 	extends IBasePerTenantAndOrganizationEntityModel {
@@ -83,6 +86,7 @@ export interface IInvoiceFindInput
 	invoiceNumber?: string;
 	tags?: ITag[];
 	isEstimate?: boolean;
+	isArchived?: boolean;
 }
 
 export enum InvoiceTypeEnum {
