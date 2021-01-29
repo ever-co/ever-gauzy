@@ -96,7 +96,8 @@ export enum PermissionsEnum {
 	IMPORT_EXPORT_VIEW = 'IMPORT_EXPORT_VIEW',
 	ORG_JOB_EMPLOYEE_VIEW = 'ORG_JOB_EMPLOYEE_VIEW',
 	ORG_JOB_MATCHING_VIEW = 'ORG_JOB_MATCHING_VIEW',
-	PRODUCT_GALLERY_VIEW = 'PRODUCT_GALLERY_VIEW'
+	INVENTORY_GALLERY_VIEW = 'INVENTORY_GALLERY_VIEW',
+	INVENTORY_GALLERY_EDIT = 'INVENTORY_GALLERY_EDIT'
 }
 
 export const PermissionGroups = {
@@ -151,7 +152,8 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_CONTACT_VIEW,
 		PermissionsEnum.ORG_TEAM_EDIT,
 		PermissionsEnum.ORG_CONTRACT_EDIT,
-		PermissionsEnum.EVENT_TYPES_VIEW
+		PermissionsEnum.EVENT_TYPES_VIEW,
+		PermissionsEnum.INVENTORY_GALLERY_VIEW
 	],
 
 	//Readonly permissions, are only enabled for admin role
@@ -184,6 +186,8 @@ export const PermissionGroups = {
 		PermissionsEnum.CUSTOM_SMTP_VIEW,
 		PermissionsEnum.IMPORT_EXPORT_VIEW,
 		PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW,
-		PermissionsEnum.ORG_JOB_MATCHING_VIEW
+		PermissionsEnum.ORG_JOB_MATCHING_VIEW,
+		PermissionsEnum.INVENTORY_GALLERY_VIEW,
+		PermissionsEnum.INVENTORY_GALLERY_EDIT
 	]
 };
