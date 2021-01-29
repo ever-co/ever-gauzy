@@ -85,7 +85,6 @@ export class ProductFormComponent
 	}
 
 	ngOnInit() {
-		//tstodo see what route does
 		this.setRouteSubscription();
 		this.setOrganizationSubscription();
 		this.setLanguageSubsctiption();
@@ -102,6 +101,7 @@ export class ProductFormComponent
 			.pipe(takeUntil(this.ngDestroy$))
 			.subscribe(async (params) => {
 				this.productId = params.id || null;
+				this.loadProduct(params.id);
 			});
 	}
 
@@ -193,41 +193,15 @@ export class ProductFormComponent
 
 			this.inventoryStore.activeProduct = this.inventoryItem;
 		}
-		//tstodo
-		// this.variants$.next(
-		// 	this.inventoryItem ? this.inventoryItem.variants : []
-		// );
 
-		//tstodo
-		// this.options = this.inventoryItem ? this.inventoryItem.options : [];
 		this.tags = this.inventoryItem ? this.inventoryItem.tags : [];
 
-		//tstodo
-		// this.updateStoredVariants();
 		this.setTranslationSettings();
 		this._initializeForm();
 
-		this.form.valueChanges
-			.pipe(untilDestroyed(this))
-			.subscribe((formValue) => {
-				this.updateTranslations();
-			});
-	}
-
-	updateStoredVariants() {
-		//tstodo
-		// this.inventoryStore.storedVariants = this.inventoryItem
-		// 	? this.inventoryItem.variants.map((variant: IProductVariant) => {
-		// 			return {
-		// 				options: variant.options.map(
-		// 					(option: IProductOption) => option.name
-		// 				),
-		// 				isStored: true,
-		// 				id: variant.id,
-		// 				productId: this.inventoryItem.id || null
-		// 			};
-		// 	  })
-		// 	: [];
+		this.form.valueChanges.pipe(untilDestroyed(this)).subscribe(() => {
+			this.updateTranslations();
+		});
 	}
 
 	async loadProductTypes() {
@@ -262,8 +236,7 @@ export class ProductFormComponent
 
 	async onSaveRequest() {
 		const { id: organizationId, tenantId } = this.organization;
-		//tstodo
-		debugger;
+
 		const productRequest = {
 			tags: this.form.get('tags').value,
 			translations: this.translations,
@@ -301,9 +274,6 @@ export class ProductFormComponent
 					productRequest
 				);
 			}
-
-			//tstodo
-			debugger;
 
 			await this.productVariantService.createProductVariants({
 				product: productResult,

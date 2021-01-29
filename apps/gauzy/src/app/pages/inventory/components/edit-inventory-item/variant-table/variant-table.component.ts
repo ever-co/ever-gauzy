@@ -30,8 +30,6 @@ export class VariantTableComponent
 	implements OnInit {
 	@ViewChild('variantTable') variantTable;
 
-	//tstodo
-	// @Input() productId: string;
 	variants: IProductVariant[];
 
 	selectedItem: IProductVariant;
@@ -134,12 +132,6 @@ export class VariantTableComponent
 
 			if (res.affected > 0) {
 				this.inventoryStore.deleteVariant(this.selectedItem);
-				//tstodo
-				// this.variants$.next(
-				// 	this.variants.filter(
-				// 		(variant) => variant.id !== this.selectedItem.id
-				// 	)
-				// );
 
 				if (this.selectedItem) {
 					this.selectItem({

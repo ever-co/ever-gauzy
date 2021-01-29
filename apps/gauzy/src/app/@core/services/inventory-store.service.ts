@@ -15,8 +15,6 @@ import { VariantCreateInput } from '../../pages/inventory/components/edit-invent
 export class InventoryStore {
 	private _activeProduct: IProductTranslatable = this.inventoryItemBlank;
 
-	//tstodo
-	private _storedVariants: VariantCreateInput[] = [];
 	private _varintCreateInputs: VariantCreateInput[] = [];
 	private _optionsCombinations: IVariantOptionCombination[] = [];
 	private _deleteOptions: IProductOption[] = [];
@@ -24,10 +22,6 @@ export class InventoryStore {
 	activeProduct$: BehaviorSubject<IProductTranslatable> = new BehaviorSubject(
 		this.activeProduct
 	);
-
-	// storedVariants$: BehaviorSubject<
-	// 	VariantCreateInput[]
-	// > = new BehaviorSubject(this.storedVariants);
 
 	variantCreateInputs$: BehaviorSubject<
 		VariantCreateInput[]
@@ -56,11 +50,11 @@ export class InventoryStore {
 	}
 
 	get featuredImage() {
-		return this.activeProduct.featuredImage;
+		return this._activeProduct.featuredImage;
 	}
 
 	get storedVariants() {
-		return this._storedVariants;
+		return this._activeProduct.variants;
 	}
 
 	get variantCreateInputs() {
@@ -82,18 +76,13 @@ export class InventoryStore {
 	}
 
 	get createOptions() {
-		return this.activeProduct.options.filter((option) => !option.id);
+		return this.activeProduct.options;
 	}
 
 	set activeProduct(product: IProductTranslatable) {
 		this._activeProduct = { ...this.activeProduct, ...product };
 		this.activeProduct$.next(this._activeProduct);
 	}
-
-	// set storedVariants(variants: VariantCreateInput[]) {
-	// 	this._storedVariants = variants;
-	// 	this.storedVariants$.next(this._storedVariants);
-	// }
 
 	set variantCreateInputs(variantCreateInput: VariantCreateInput[]) {
 		this._varintCreateInputs = variantCreateInput;

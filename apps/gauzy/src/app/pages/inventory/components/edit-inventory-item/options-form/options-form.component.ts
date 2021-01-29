@@ -20,8 +20,6 @@ export class OptionsFormComponent implements OnInit {
 	optionMode = 'create';
 
 	options: IProductOption[] = [];
-	// @Output() optionsUpdated = new EventEmitter<IProductOption[]>();
-	// @Output() optionDeleted = new EventEmitter<IProductOption>();
 
 	constructor(private inventoryStore: InventoryStore) {}
 
@@ -52,8 +50,6 @@ export class OptionsFormComponent implements OnInit {
 			this.options.push(this.activeOption);
 		}
 
-		//tstodo
-		// this.optionsUpdated.emit(this.options);
 		this.inventoryStore.options = this.options;
 		this.resetOptionForm();
 	}
@@ -66,9 +62,6 @@ export class OptionsFormComponent implements OnInit {
 		);
 
 		this.inventoryStore.deleteOption(optionInput);
-		//tstodo
-		// this.optionDeleted.emit(optionInput);
-		// this.optionsUpdated.emit(this.options);
 		this.resetOptionForm();
 	}
 

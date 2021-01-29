@@ -26,8 +26,6 @@ export interface VariantCreateInput {
 export class VariantFormComponent implements OnInit {
 	options: IProductOption[];
 
-	variantsDb: VariantCreateInput[];
-
 	variantCreateInputs: VariantCreateInput[] = [];
 	editVariantCreateInput: VariantCreateInput = {
 		options: [],
@@ -41,16 +39,12 @@ export class VariantFormComponent implements OnInit {
 	) {}
 
 	ngOnInit(): void {
-		if (this.variantsDb) {
-			this.variantCreateInputs = this.variantsDb;
-		}
-
 		this.inventoryStore.activeProduct$
 			.pipe(untilDestroyed(this))
 			.subscribe((activeProduct) => {
 				this.options = activeProduct.options;
 
-				this.variantsDb = activeProduct.variants.map(
+				this.variantCreateInputs = activeProduct.variants.map(
 					(variant: IProductVariant) => {
 						return {
 							options: variant.options.map(
