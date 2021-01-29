@@ -25,6 +25,7 @@ USER node:node
 
 WORKDIR /srv/gauzy
 
+COPY --chown=node:node apps/gauzy/package.json ./apps/gauzy/
 COPY --chown=node:node apps/api/package.json ./apps/api/
 
 COPY --chown=node:node packages/common/package.json ./packages/common/
