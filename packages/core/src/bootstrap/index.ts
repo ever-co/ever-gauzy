@@ -19,9 +19,6 @@ export async function bootstrap(
 ): Promise<INestApplication> {
 	const config = await registerPluginConfig(pluginConfig);
 
-	// Logger.setLogger(config.logger);
-	// Logger.info(`Bootstrapping Server (pid: ${process.pid})...`);
-
 	const bootstrapModule = await import('./bootstrap.module');
 	const [classname] = Object.keys(bootstrapModule);
 
@@ -64,9 +61,9 @@ export async function bootstrap(
 	// const document = SwaggerModule.createDocument(app, options);
 	// SwaggerModule.setup('swg', app, document);
 
-	const { hostname, port } = config.apiConfigOptions;
-	await app.listen(port || 3000, hostname, () => {
-		console.log(`Listening at http://${hostname}:${port}/${globalPrefix}`);
+	const { port } = config.apiConfigOptions;
+	await app.listen(port || 3000, () => {
+		console.log(`Listening at http://localhost:${port}/${globalPrefix}`);
 	});
 	return app;
 }
@@ -80,6 +77,10 @@ export async function registerPluginConfig(
 	if (Object.keys(pluginConfig).length > 0) {
 		setConfig(pluginConfig);
 	}
+
+	console.log(
+		`DB Config: ${JSON.stringify(getConfig().dbConnectionOptions)}`
+	);
 
 	const entities = await registerAllEntities(pluginConfig);
 	setConfig({

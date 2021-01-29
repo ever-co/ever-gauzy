@@ -831,7 +831,7 @@ export class InvoicesComponent
 					}
 					return {
 						text: this.getTranslation(
-							`INVOICES_PAGE.STATUSES.${cell}`
+							`INVOICES_PAGE.STATUSES.${cell.toUpperCase()}`
 						),
 						class: badgeClass
 					};
