@@ -98,7 +98,6 @@
 		"node-fetch": "^2.6.1",
 		"screenshot-desktop": "^1.12.2",
 		"electron-updater": "~4.3.5",
-		"pg": "^8.3.3",
-		"@gauzy/core": "^0.1.0"
+		"pg": "^8.3.3"
 	}
 }
