@@ -292,8 +292,11 @@
 			"prefix": "gauzy",
 			"architect": {
 				"build": {
-					"builder": "@angular-devkit/build-angular:browser",
+					"builder": "./apps/gauzy/node_modules/@angular-builders/custom-webpack:browser",
 					"options": {
+						"customWebpackConfig": {
+							"path": "apps/gauzy/config/custom-webpack.config.js"
+						},
 						"outputPath": "dist/apps/desktop",
 						"index": "apps/gauzy/src/index.html",
 						"main": "apps/gauzy/src/main.ts",
@@ -322,7 +325,7 @@
 							"node_modules/@fortawesome/fontawesome-free/css/all.css",
 							"node_modules/socicon/css/socicon.css",
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
-							"node_modules/@circlon/angular-tree-component/css/angular-tree-component.css",
+							"apps/gauzy/node_modules/@circlon/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
 							"apps/gauzy/src/app/@theme/styles/styles.scss"
 						],
@@ -385,7 +388,6 @@
 				"build": {
 					"builder": "@nrwl/node:build",
 					"options": {
-						"webpackConfig": "tools/build/webpack.config.js",
 						"outputPath": "dist/apps/desktop/api",
 						"main": "apps/api/src/main.ts",
 						"showCircularDependencies": false,
@@ -424,7 +426,10 @@
 			"prefix": "gauzy",
 			"architect": {
 				"build": {
-					"builder": "@angular-devkit/build-angular:browser",
+					"builder": "./apps/gauzy/node_modules/@angular-builders/custom-webpack:browser",
+					"customWebpackConfig": {
+						"path": "apps/gauzy/config/custom-webpack.config.js"
+					},
 					"options": {
 						"outputPath": "dist/apps/desktop/ui",
 						"index": "apps/desktop/src/index.html",
@@ -445,7 +450,7 @@
 							"node_modules/@fortawesome/fontawesome-free/css/all.css",
 							"node_modules/socicon/css/socicon.css",
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
-							"node_modules/@circlon/angular-tree-component/css/angular-tree-component.css",
+							"apps/gauzy/node_modules/@circlon/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
 							"apps/desktop/src/assets/styles/styles.scss"
 						],

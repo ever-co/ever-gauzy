@@ -150,6 +150,11 @@ function startServer(value, restart = false) {
 				dialogMessage(msg);
 			}
 		});
+
+		serverGauzy.stderr.on('data', (data) => {
+			const msgData = data.toString();
+			console.log('log error--', msgData);
+		});
 	}
 
 	try {
