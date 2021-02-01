@@ -3,7 +3,7 @@ import * as path from 'path';
 import { copyFileSync, mkdirSync } from 'fs';
 import * as chalk from 'chalk';
 import * as rimraf from 'rimraf';
-import { ConfigService, environment as env, getConfig } from '@gauzy/config';
+import { ConfigService, environment as env } from '@gauzy/config';
 import {
 	IFeature,
 	IFeatureCreateInput,
