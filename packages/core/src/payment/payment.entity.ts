@@ -79,7 +79,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@IsOptional()
-	@Column()
+	@Column({ nullable: true })
 	note?: string;
 
 	@ApiPropertyOptional({ type: String, enum: CurrenciesEnum })
@@ -89,7 +89,8 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 
 	@ApiPropertyOptional({ type: String, enum: PaymentMethodEnum })
 	@IsEnum(PaymentMethodEnum)
-	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
 	paymentMethod?: string;
 
 	@ApiPropertyOptional({ type: Boolean })
