@@ -31,21 +31,21 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	})
 	tags?: Tag[];
 
-	@ApiPropertyOptional({ type: Boolean })
+	@ApiPropertyOptional({ type: () => Boolean })
 	@Column({ default: true })
 	enabled: boolean;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()
 	code: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Column({ nullable: true })
 	imageUrl: string;
 
-	@ApiProperty({ type: ImageAsset })
+	@ApiProperty({ type: () => ImageAsset })
 	@ManyToOne(
 		() => ImageAsset,
 		(imageAsset) => imageAsset.productFeaturedImage,
@@ -63,11 +63,11 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	)
 	variants: ProductVariant[];
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((product: Product) => product.type)
 	productTypeId: string;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((product: Product) => product.category)
 	productCategoryId: string;
 
@@ -82,14 +82,14 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@OneToMany(() => ProductOption, (productOption) => productOption.product)
 	options: ProductOption[];
 
-	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
+	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
 	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.product, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	invoiceItems?: InvoiceItem[];
 
-	@ApiProperty({ type: ProductTranslation, isArray: true })
+	@ApiProperty({ type: () => ProductTranslation, isArray: true })
 	@OneToMany(
 		() => ProductTranslation,
 		(productTranslation) => productTranslation.reference,

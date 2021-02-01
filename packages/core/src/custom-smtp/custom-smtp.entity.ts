@@ -7,27 +7,27 @@ import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 export class CustomSmtp
 	extends TenantOrganizationBaseEntity
 	implements ICustomSmtp {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	host: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@Column()
 	port: number;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@Column()
 	secure: boolean;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	username: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	password: string;
 
-	@ApiProperty({ type: Boolean, default: false })
+	@ApiProperty({ type: () => Boolean, default: false })
 	@Column({ default: false })
 	isValidate?: boolean;
 }

@@ -20,7 +20,7 @@ import {
 
 @Entity('report')
 export class Report extends BaseEntity implements IReport {
-	@ApiProperty({ type: ReportOrganization })
+	@ApiProperty({ type: () => ReportOrganization })
 	@OneToMany(
 		() => ReportOrganization,
 		(reportOrganization) => reportOrganization.report
@@ -28,46 +28,46 @@ export class Report extends BaseEntity implements IReport {
 	@JoinColumn()
 	reportOrganizations?: ReportOrganization[];
 
-	@ApiProperty({ type: ReportCategory })
+	@ApiProperty({ type: () => ReportCategory })
 	@ManyToOne(() => ReportCategory)
 	@JoinColumn()
 	category?: IReportCategory;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((report: Report) => report.category)
 	@Column()
 	categoryId?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	name?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column({ nullable: true })
 	slug?: string;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@IsString()
 	@Column({ nullable: true })
 	description?: string;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@IsString()
 	@Column({ nullable: true })
 	image?: string;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@IsString()
 	@Column({ nullable: true })
 	iconClass?: string;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@IsString()
 	@Column({ default: false })
 	showInMenu?: boolean;

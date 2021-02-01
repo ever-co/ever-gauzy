@@ -1,11 +1,11 @@
 // import * as csurf from 'csurf';
-import { INestApplication, Type } from '@nestjs/common';
+import { ConflictException, INestApplication, Type } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { SentryService } from '@ntegral/nestjs-sentry';
 import * as expressSession from 'express-session';
 import * as helmet from 'helmet';
-// import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { IPluginConfig } from '@gauzy/common';
 import { getConfig, setConfig, environment as env } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
@@ -52,14 +52,14 @@ export async function bootstrap(
 	const service = app.select(AppModule).get(AppService);
 	await service.seedDBIfEmpty();
 
-	// const options = new DocumentBuilder()
-	// 	.setTitle('Gauzy API')
-	// 	.setVersion('1.0')
-	// 	.addBearerAuth()
-	// 	.build();
+	const options = new DocumentBuilder()
+		.setTitle('Gauzy API')
+		.setVersion('1.0')
+		.addBearerAuth()
+		.build();
 
-	// const document = SwaggerModule.createDocument(app, options);
-	// SwaggerModule.setup('swg', app, document);
+	const document = SwaggerModule.createDocument(app, options);
+	SwaggerModule.setup('swg', app, document);
 
 	const { port } = config.apiConfigOptions;
 	await app.listen(port || 3000, () => {
@@ -103,7 +103,13 @@ export async function registerAllEntities(
 	const pluginEntities = getEntitiesFromPlugins(pluginConfig.plugins);
 
 	for (const pluginEntity of pluginEntities) {
-		allEntities.push(pluginEntity);
+		if (allEntities.find((e) => e.name === pluginEntity.name)) {
+			throw new ConflictException({
+				message: `error.${pluginEntity.name} conflict by default entities`
+			});
+		} else {
+			allEntities.push(pluginEntity);
+		}
 	}
 	return allEntities;
 }

@@ -27,7 +27,7 @@ export class OrganizationTeam
 	})
 	tags?: Tag[];
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()

@@ -12,12 +12,12 @@ export class PipelineStage
 	extends TenantOrganizationBaseEntity
 	implements IStage {
 	@ManyToOne(() => Pipeline, { onDelete: 'CASCADE' })
-	@ApiProperty({ type: Pipeline })
+	@ApiProperty({ type: () => Pipeline })
 	@JoinColumn()
 	public pipeline: Pipeline;
 
 	@RelationId(({ pipeline }: PipelineStage) => pipeline)
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
 	@Column()
@@ -27,14 +27,14 @@ export class PipelineStage
 	@IsString()
 	public description: string;
 
-	@ApiProperty({ type: Number, minimum: 1 })
+	@ApiProperty({ type: () => Number, minimum: 1 })
 	@Column({ type: 'int' })
 	@Min(1)
 	@IsNotEmpty()
 	@IsNumber()
 	public index: number;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
 	@Column()

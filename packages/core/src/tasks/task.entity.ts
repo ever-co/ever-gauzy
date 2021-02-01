@@ -25,36 +25,36 @@ import {
 
 @Entity('task')
 export class Task extends TenantOrganizationBaseEntity implements ITask {
-	@ApiProperty({ type: Tag })
+	@ApiProperty({ type: () => Tag })
 	@ManyToMany(() => Tag, (tag) => tag.task)
 	@JoinTable({
 		name: 'tag_task'
 	})
 	tags?: Tag[];
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	title: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: true })
 	description?: string;
 
-	@ApiProperty({ type: String, enum: TaskStatusEnum })
+	@ApiProperty({ type: () => String, enum: TaskStatusEnum })
 	@Column()
 	status?: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@Column({ nullable: true })
 	@IsOptional()
 	estimate?: number;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@Column({ nullable: true })
 	@IsOptional()
 	dueDate?: Date;
 
-	@ApiProperty({ type: OrganizationProject })
+	@ApiProperty({ type: () => OrganizationProject })
 	@ManyToOne((type) => OrganizationProject, {
 		nullable: true,
 		onDelete: 'CASCADE'
@@ -65,7 +65,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@OneToMany(() => TimeLog, (timeLog) => timeLog.task)
 	timeLogs?: TimeLog[];
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((task: Task) => task.project)
 	@Column({ nullable: true })
 	readonly projectId?: string;
@@ -82,12 +82,12 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	})
 	teams?: OrganizationTeam[];
 
-	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
+	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
 	@OneToMany((type) => InvoiceItem, (invoiceItem) => invoiceItem.task)
 	@JoinColumn()
 	invoiceItems?: InvoiceItem[];
 
-	@ApiProperty({ type: User })
+	@ApiProperty({ type: () => User })
 	@ManyToOne(() => User, {
 		nullable: true,
 		onDelete: 'CASCADE'
@@ -95,12 +95,12 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@JoinColumn()
 	creator?: User;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((task: Task) => task.creator)
 	@Column()
 	readonly creatorId?: string;
 
-	@ApiProperty({ type: OrganizationSprint })
+	@ApiProperty({ type: () => OrganizationSprint })
 	@ManyToOne(() => OrganizationSprint, {
 		onDelete: 'SET NULL'
 	})

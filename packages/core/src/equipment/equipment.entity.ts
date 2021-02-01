@@ -29,48 +29,48 @@ export class Equipment
 	@JoinTable({ name: 'tag_equipment' })
 	tags: ITag[];
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column()
 	type: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Column()
 	serialNumber?: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
 	@Column({ nullable: true, type: 'numeric' })
 	manufacturedYear: number;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
 	@Column({ nullable: true, type: 'numeric' })
 	initialCost: number;
 
-	@ApiProperty({ type: String, enum: CurrenciesEnum })
+	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@IsOptional()
 	@Column()
 	currency: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
 	@Column({ nullable: true, type: 'numeric' })
 	maxSharePeriod: number;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@IsOptional()
 	@Column()

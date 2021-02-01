@@ -34,22 +34,22 @@ import {
 
 @Entity('time_log')
 export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
-	@ApiProperty({ type: Employee })
+	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, { nullable: true })
 	@JoinColumn()
 	employee: IEmployee;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((timeLog: TimeLog) => timeLog.employee)
 	@Column()
 	readonly employeeId: string;
 
-	@ApiProperty({ type: Timesheet })
+	@ApiProperty({ type: () => Timesheet })
 	@ManyToOne(() => Timesheet, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	timesheet?: ITimesheet;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((timeLog: TimeLog) => timeLog.timesheet)
 	@Column({ nullable: true })
 	readonly timesheetId?: string;
@@ -62,74 +62,74 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	})
 	timeSlots?: ITimeSlot[];
 
-	@ApiProperty({ type: OrganizationProject })
+	@ApiProperty({ type: () => OrganizationProject })
 	@ManyToOne(() => OrganizationProject, { nullable: true })
 	@JoinColumn()
 	project?: IOrganizationProject;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((timeLog: TimeLog) => timeLog.project)
 	@Column({ nullable: true })
 	readonly projectId?: string;
 
-	@ApiProperty({ type: Task })
+	@ApiProperty({ type: () => Task })
 	@ManyToOne(() => Task, { nullable: true })
 	@JoinColumn()
 	task?: ITask;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((timeLog: TimeLog) => timeLog.task)
 	@Column({ nullable: true })
 	readonly taskId?: string;
 
-	@ApiProperty({ type: OrganizationContact })
+	@ApiProperty({ type: () => OrganizationContact })
 	@ManyToOne(() => OrganizationContact, { nullable: true })
 	@JoinColumn()
 	organizationContact?: IOrganizationContact;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((timeLog: TimeLog) => timeLog.organizationContact)
 	@Column({ nullable: true })
 	readonly organizationContactId?: string;
 
-	@ApiProperty({ type: 'timestamptz' })
+	@ApiProperty({ type: () => 'timestamptz' })
 	@IsDateString()
 	@Column({ nullable: true, default: null })
 	startedAt?: Date;
 
-	@ApiProperty({ type: 'timestamptz' })
+	@ApiProperty({ type: () => 'timestamptz' })
 	@IsDateString()
 	@Column({ nullable: true, default: null })
 	stoppedAt?: Date;
 
-	@ApiProperty({ type: String, enum: TimeLogType })
+	@ApiProperty({ type: () => String, enum: TimeLogType })
 	@IsEnum(TimeLogType)
 	@IsString()
 	@Column({ default: TimeLogType.TRACKED })
 	logType: string;
 
-	@ApiProperty({ type: String, enum: TimeLogSourceEnum })
+	@ApiProperty({ type: () => String, enum: TimeLogSourceEnum })
 	@IsEnum(TimeLogSourceEnum)
 	@IsString()
 	@Column({ default: TimeLogSourceEnum.BROWSER })
 	source?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsBoolean()
 	@Column({ default: null, nullable: true })
 	description?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsBoolean()
 	@Column({ default: null, nullable: true })
 	reason?: string;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ default: false })
 	isBillable: boolean;
 
-	@ApiProperty({ type: 'timestamptz' })
+	@ApiProperty({ type: () => 'timestamptz' })
 	@IsDateString()
 	@Column({ nullable: true, default: null })
 	deletedAt?: Date;

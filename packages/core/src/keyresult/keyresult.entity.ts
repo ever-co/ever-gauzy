@@ -27,125 +27,125 @@ import {
 export class KeyResult
 	extends TenantOrganizationBaseEntity
 	implements IKeyResult {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	@IsOptional()
 	description?: string;
 
-	@ApiProperty({ type: String, enum: KeyResultTypeEnum })
+	@ApiProperty({ type: () => String, enum: KeyResultTypeEnum })
 	@IsEnum(KeyResultTypeEnum)
 	@Column()
 	type: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@Column({ nullable: true })
 	@IsOptional()
 	targetValue?: number;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@Column({ nullable: true })
 	@IsOptional()
 	initialValue: number;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: true })
 	@IsOptional()
 	unit?: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@Column()
 	update: number;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@Column()
 	progress: number;
 
-	@ApiProperty({ type: Employee })
+	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee)
 	@JoinColumn()
 	owner: Employee;
 
-	@ApiProperty({ type: Employee })
+	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, { nullable: true })
 	@JoinColumn()
 	@IsOptional()
 	lead?: Employee;
 
-	@ApiProperty({ type: OrganizationProject })
+	@ApiProperty({ type: () => OrganizationProject })
 	@ManyToOne(() => OrganizationProject, { nullable: true })
 	@JoinColumn({ name: 'projectId' })
 	@IsOptional()
 	project?: OrganizationProject;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((keyResult: KeyResult) => keyResult.project)
 	@Column({ nullable: true })
 	readonly projectId?: string;
 
-	@ApiProperty({ type: Task })
+	@ApiProperty({ type: () => Task })
 	@ManyToOne(() => Task, { nullable: true })
 	@JoinColumn({ name: 'taskId' })
 	@IsOptional()
 	task?: Task;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((keyResult: KeyResult) => keyResult.task)
 	@Column({ nullable: true })
 	readonly taskId?: string;
 
-	@ApiProperty({ type: GoalKPI })
+	@ApiProperty({ type: () => GoalKPI })
 	@ManyToOne(() => GoalKPI, { nullable: true })
 	@JoinColumn({ name: 'kpiId' })
 	@IsOptional()
 	kpi?: GoalKPI;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((keyResult: KeyResult) => keyResult.kpi)
 	@Column({ nullable: true })
 	kpiId?: string;
 
-	@ApiProperty({ type: String, enum: KeyResultDeadlineEnum })
+	@ApiProperty({ type: () => String, enum: KeyResultDeadlineEnum })
 	@IsEnum(KeyResultDeadlineEnum)
 	@Column()
 	deadline: string;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@Column({ nullable: true })
 	@IsOptional()
 	hardDeadline?: Date;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@Column({ nullable: true })
 	@IsOptional()
 	softDeadline?: Date;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	@IsOptional()
 	status?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: true })
 	@IsOptional()
 	weight?: string;
 
-	@ApiProperty({ type: Goal })
+	@ApiProperty({ type: () => Goal })
 	@ManyToOne(() => Goal, (goal) => goal.keyResults, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn({ name: 'goalId' })
 	goal: Goal;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((keyResult: KeyResult) => keyResult.goal)
 	@Column({ nullable: true })
 	readonly goalId?: string;
 
-	@ApiProperty({ type: KeyResultUpdate })
+	@ApiProperty({ type: () => KeyResultUpdate })
 	@OneToMany(
 		() => KeyResultUpdate,
 		(keyResultUpdate) => keyResultUpdate.keyResult

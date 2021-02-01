@@ -21,35 +21,35 @@ import {
 export class CandidateInterview
 	extends TenantOrganizationBaseEntity
 	implements ICandidateInterview {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	title: string;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@Column({ nullable: true })
 	startTime: Date;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@Column({ nullable: true })
 	endTime: Date;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: true })
 	candidateId?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@Column({ nullable: true })
 	location: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	note?: string;
 
-	@ApiPropertyOptional({ type: Boolean, default: false })
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@Column({ nullable: true, default: false })
 	isArchived?: boolean;
 
-	@ApiPropertyOptional({ type: Number })
+	@ApiPropertyOptional({ type: () => Number })
 	@Column({ nullable: true, type: 'numeric' })
 	rating?: number;
 

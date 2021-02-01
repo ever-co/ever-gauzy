@@ -36,19 +36,19 @@ export class TimeOffRequest
 	})
 	employees?: IEmployee[];
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
 	documentUrl?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
 	description?: string;
 
-	@ApiProperty({ type: TimeOffPolicy })
+	@ApiProperty({ type: () => TimeOffPolicy })
 	@IsOptional()
 	@ManyToOne(() => TimeOffPolicy, {
 		nullable: false,
@@ -57,32 +57,32 @@ export class TimeOffRequest
 	@JoinColumn()
 	policy?: ITimeOffPolicy;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@Column()
 	start: Date;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@Column()
 	end: Date;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@Column()
 	requestDate: Date;
 
-	@ApiProperty({ type: String, enum: StatusTypesEnum })
+	@ApiProperty({ type: () => String, enum: StatusTypesEnum })
 	@IsEnum(StatusTypesEnum)
 	@Column({ nullable: false })
 	status?: string;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column()
 	isHoliday?: boolean;
 
-	@ApiPropertyOptional({ type: Boolean })
+	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
 	@IsOptional()
 	@Column({ nullable: true })

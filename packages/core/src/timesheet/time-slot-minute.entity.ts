@@ -19,27 +19,27 @@ import {
 export class TimeSlotMinute
 	extends TenantOrganizationBaseEntity
 	implements ITimeSlotMinute {
-	@ApiProperty({ type: TimeSlot })
+	@ApiProperty({ type: () => TimeSlot })
 	@ManyToOne(() => TimeSlot, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	timeSlot?: TimeSlot;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((activity: TimeSlotMinute) => activity.timeSlot)
 	@Column()
 	timeSlotId?: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ default: 0 })
 	keyboard?: number;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ default: 0 })
 	mouse?: number;
 
-	@ApiProperty({ type: 'timestamptz' })
+	@ApiProperty({ type: () => 'timestamptz' })
 	@IsDateString()
 	@Column()
 	datetime?: Date;

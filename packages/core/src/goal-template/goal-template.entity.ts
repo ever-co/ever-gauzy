@@ -16,21 +16,21 @@ import {
 export class GoalTemplate
 	extends TenantOrganizationBaseEntity
 	implements IGoalTemplate {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String, enum: GoalLevelEnum })
+	@ApiProperty({ type: () => String, enum: GoalLevelEnum })
 	@IsEnum(GoalLevelEnum)
 	@Column()
 	level: string;
 
-	@ApiProperty({ type: String, enum: GoalTemplateCategoriesEnum })
+	@ApiProperty({ type: () => String, enum: GoalTemplateCategoriesEnum })
 	@IsEnum(GoalTemplateCategoriesEnum)
 	@Column()
 	category: string;
 
-	@ApiProperty({ type: KeyResultTemplate })
+	@ApiProperty({ type: () => KeyResultTemplate })
 	@OneToMany(() => KeyResultTemplate, (keyResult) => keyResult.goal)
 	@IsOptional()
 	keyResults?: IKeyResultTemplate[];

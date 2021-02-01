@@ -21,7 +21,7 @@ import { gauzyToggleFeatures } from '@gauzy/config';
 
 @Entity('feature')
 export class Feature extends BaseEntity implements IFeature {
-	@ApiProperty({ type: FeatureOrganization })
+	@ApiProperty({ type: () => FeatureOrganization })
 	@OneToMany(
 		() => FeatureOrganization,
 		(featureOrganization) => featureOrganization.feature,
@@ -33,16 +33,16 @@ export class Feature extends BaseEntity implements IFeature {
 	@JoinColumn()
 	featureOrganizations?: IFeatureOrganization[];
 
-	@ApiProperty({ type: Feature })
+	@ApiProperty({ type: () => Feature })
 	@ManyToOne((type) => Feature, (feature) => feature.children)
 	parent: Feature;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column({ nullable: true })
 	parentId?: string;
 
-	@ApiProperty({ type: Feature })
+	@ApiProperty({ type: () => Feature })
 	@OneToMany((type) => Feature, (feature) => feature.parent, {
 		cascade: true,
 		onDelete: 'CASCADE'
@@ -50,40 +50,40 @@ export class Feature extends BaseEntity implements IFeature {
 	@JoinColumn({ name: 'parentId' })
 	children: Feature[];
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	code: string;
 
-	@ApiProperty({ type: Boolean, default: false })
+	@ApiProperty({ type: () => Boolean, default: false })
 	@Column({ default: false })
 	isPaid?: boolean;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@IsString()
 	@Column({ nullable: true })
 	description: string;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@IsString()
 	@Column({ nullable: true })
 	image: string;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@IsString()
 	@Column()
 	link: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column({ nullable: true })
 	status: string;
@@ -95,7 +95,7 @@ export class Feature extends BaseEntity implements IFeature {
 		}
 	}
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column({ nullable: true })
 	icon: string;

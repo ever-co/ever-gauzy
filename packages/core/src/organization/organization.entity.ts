@@ -67,7 +67,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	})
 	tags: ITag[];
 
-	@ApiProperty({ type: Contact })
+	@ApiProperty({ type: () => Contact })
 	@ManyToOne(() => Contact, (contact) => contact.organization, {
 		nullable: true,
 		cascade: true,
@@ -76,304 +76,304 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@JoinColumn()
 	contact: IContact;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((organization: Organization) => organization.contact)
 	readonly contactId?: string;
 
-	@ApiPropertyOptional({ type: Invoice, isArray: true })
+	@ApiPropertyOptional({ type: () => Invoice, isArray: true })
 	@OneToMany(() => Invoice, (invoices) => invoices.fromOrganization)
 	@JoinColumn()
 	invoices?: IInvoice[];
 
-	@ApiProperty({ type: Employee })
+	@ApiProperty({ type: () => Employee })
 	@OneToMany(() => Employee, (employee) => employee.organization)
 	@JoinColumn()
 	employees?: IEmployee[];
 
-	@ApiProperty({ type: Deal })
+	@ApiProperty({ type: () => Deal })
 	@OneToMany(() => Deal, (deal) => deal.organization)
 	@JoinColumn()
 	deals?: IDeal[];
 
-	@ApiProperty({ type: OrganizationAwards })
+	@ApiProperty({ type: () => OrganizationAwards })
 	@OneToMany(() => OrganizationAwards, (award) => award.organization)
 	@JoinColumn()
 	awards?: IOrganizationAwards[];
 
-	@ApiProperty({ type: OrganizationLanguages })
+	@ApiProperty({ type: () => OrganizationLanguages })
 	@OneToMany(() => OrganizationLanguages, (language) => language.organization)
 	@JoinColumn()
 	languages?: IOrganizationLanguages[];
 
-	@ApiProperty({ type: FeatureOrganization })
+	@ApiProperty({ type: () => FeatureOrganization })
 	@OneToMany(
 		() => FeatureOrganization,
 		(featureOrganization) => featureOrganization.organization
 	)
 	featureOrganizations?: IFeatureOrganization[];
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String, minLength: 3, maxLength: 100 })
+	@ApiProperty({ type: () => String, minLength: 3, maxLength: 100 })
 	@IsString()
 	@Index({ unique: true })
 	@IsOptional()
 	@Column({ nullable: true })
 	profile_link: string;
 
-	@ApiProperty({ type: String, maxLength: 300 })
+	@ApiProperty({ type: () => String, maxLength: 300 })
 	@IsString()
 	@Index()
 	@IsOptional()
 	@Column({ nullable: true })
 	banner: string;
 
-	@ApiProperty({ type: Number, maxLength: 4 })
+	@ApiProperty({ type: () => Number, maxLength: 4 })
 	@IsString()
 	@Index()
 	@Column({ nullable: true })
 	totalEmployees: number;
 
-	@ApiProperty({ type: String, maxLength: 600 })
+	@ApiProperty({ type: () => String, maxLength: 600 })
 	@IsString()
 	@Index()
 	@IsOptional()
 	@Column({ nullable: true })
 	short_description: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Index()
 	@IsOptional()
 	@Column({ nullable: true })
 	client_focus: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Index()
 	@IsOptional()
 	@Column({ nullable: true })
 	overview: string;
 
-	@ApiPropertyOptional({ type: String, maxLength: 500 })
+	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	imageUrl?: string;
 
-	@ApiProperty({ type: String, enum: CurrenciesEnum })
+	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	currency: string;
 
-	@ApiPropertyOptional({ type: Date })
+	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
 	valueDate?: Date;
 
-	@ApiProperty({ type: String, enum: DefaultValueDateTypeEnum })
+	@ApiProperty({ type: () => String, enum: DefaultValueDateTypeEnum })
 	@IsEnum(DefaultValueDateTypeEnum)
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	defaultValueDateType: string;
 
-	@ApiProperty({ type: Boolean, default: true })
+	@ApiProperty({ type: () => Boolean, default: true })
 	@Column({ default: true })
 	isActive: boolean;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	defaultAlignmentType?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	timeZone?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	regionCode?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	brandColor?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	dateFormat?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	officialName?: string;
 
-	@ApiProperty({ type: String, enum: WeekDaysEnum })
+	@ApiProperty({ type: () => String, enum: WeekDaysEnum })
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	startWeekOn?: string;
 
-	@ApiProperty({ type: String, maxLength: 256 })
+	@ApiProperty({ type: () => String, maxLength: 256 })
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	taxId?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	numberFormat?: string;
 
-	@ApiProperty({ type: String, enum: MinimumProjectSizeEnum })
+	@ApiProperty({ type: () => String, enum: MinimumProjectSizeEnum })
 	@IsEnum(BonusTypeEnum)
 	@Column({ nullable: true })
 	minimumProjectSize?: string;
 
-	@ApiProperty({ type: String, enum: BonusTypeEnum })
+	@ApiProperty({ type: () => String, enum: BonusTypeEnum })
 	@IsEnum(BonusTypeEnum)
 	@Column({ nullable: true })
 	bonusType?: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Min(0)
 	@Max(100)
 	@Column({ nullable: true })
 	bonusPercentage?: number;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	invitesAllowed?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	show_income?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	show_profits?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	show_bonuses_paid?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	show_total_hours?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	show_minimum_project_size?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	show_projects_count?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	show_clients_count?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	show_clients?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	show_employees_count?: boolean;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ nullable: true })
 	inviteExpiryPeriod?: number;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@Column({ nullable: true })
 	@IsOptional()
 	@IsDate()
 	fiscalStartDate?: Date;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@Column({ nullable: true })
 	@IsOptional()
 	@IsDate()
 	fiscalEndDate?: Date;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@Column({ nullable: true })
 	@IsOptional()
 	@IsDate()
 	registrationDate?: Date;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	futureDateAllowed?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ default: true })
 	allowManualTime?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ default: true })
 	allowModifyTime?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ default: true })
 	allowDeleteTime?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ default: false })
 	requireReason?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ default: false })
 	requireDescription?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ default: false })
 	requireProject?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ default: false })
 	requireTask?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ default: false })
 	requireClient?: boolean;
@@ -383,31 +383,31 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@Column({ default: 12 })
 	timeFormat?: 12 | 24;
 
-	@ApiProperty({ type: Skill })
+	@ApiProperty({ type: () => Skill })
 	@ManyToMany(() => Skill, (skill) => skill.organization)
 	@JoinTable({
 		name: 'skill_organization'
 	})
 	skills: ISkill[];
 
-	@ApiPropertyOptional({ type: Payment, isArray: true })
+	@ApiPropertyOptional({ type: () => Payment, isArray: true })
 	@OneToMany(() => Payment, (payment) => payment.organization, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	payments?: IPayment[];
 
-	@ApiPropertyOptional({ type: Boolean })
+	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	separateInvoiceItemTaxAndDiscount?: boolean;
 
-	@ApiPropertyOptional({ type: OrganizationSprint, isArray: true })
+	@ApiPropertyOptional({ type: () => OrganizationSprint, isArray: true })
 	@OneToMany(() => OrganizationSprint, (sprints) => sprints.organization)
 	@JoinColumn()
 	organizationSprints?: IOrganizationSprint[];
 
-	@ApiPropertyOptional({ type: InvoiceEstimateHistory, isArray: true })
+	@ApiPropertyOptional({ type: () => InvoiceEstimateHistory, isArray: true })
 	@OneToMany(
 		() => InvoiceEstimateHistory,
 		(invoiceEstimateHistory) => invoiceEstimateHistory.organization,
@@ -418,38 +418,38 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@JoinColumn()
 	invoiceEstimateHistories?: IInvoiceEstimateHistory[];
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	website?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	fiscalInformation?: string;
 
-	@ApiPropertyOptional({ type: String, enum: CurrencyPosition })
+	@ApiPropertyOptional({ type: () => String, enum: CurrencyPosition })
 	@IsEnum(CurrencyPosition)
 	@IsOptional()
 	@Column({ default: 'LEFT' })
 	currencyPosition?: string;
 
-	@ApiPropertyOptional({ type: Boolean })
+	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	discountAfterTax?: boolean;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@Column({ nullable: true })
 	defaultStartTime?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@Column({ nullable: true })
 	defaultEndTime?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })

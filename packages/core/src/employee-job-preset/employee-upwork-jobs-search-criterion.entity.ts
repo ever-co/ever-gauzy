@@ -21,7 +21,7 @@ import {
 export class EmployeeUpworkJobsSearchCriterion
 	extends TenantOrganizationBaseEntity
 	implements IEmployeeUpworkJobsSearchCriterion {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
@@ -30,7 +30,7 @@ export class EmployeeUpworkJobsSearchCriterion
 	@ManyToOne(() => JobPreset, (jobPreset) => jobPreset.employeeCriterions)
 	jobPreset?: IJobPreset;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()
@@ -39,7 +39,7 @@ export class EmployeeUpworkJobsSearchCriterion
 	@ManyToOne(() => Employee, (employee) => employee.id)
 	employee?: IEmployee;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
@@ -51,7 +51,7 @@ export class EmployeeUpworkJobsSearchCriterion
 	)
 	occupation?: IJobSearchOccupation;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
@@ -63,13 +63,13 @@ export class EmployeeUpworkJobsSearchCriterion
 	)
 	category?: IJobSearchCategory;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
 	keyword?: string;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ type: 'text', nullable: true })

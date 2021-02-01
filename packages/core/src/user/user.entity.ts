@@ -47,28 +47,28 @@ export class User extends TenantBaseEntity implements IUser {
 	})
 	tags?: ITag[];
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@Index()
 	@IsOptional()
 	@Column({ nullable: true })
 	thirdPartyId?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@Index()
 	@IsOptional()
 	@Column({ nullable: true })
 	firstName?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@Index()
 	@IsOptional()
 	@Column({ nullable: true })
 	lastName?: string;
 
-	@ApiProperty({ type: String, minLength: 3, maxLength: 100 })
+	@ApiProperty({ type: () => String, minLength: 3, maxLength: 100 })
 	@IsEmail()
 	@IsNotEmpty()
 	@Index({ unique: true })
@@ -76,7 +76,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@Column({ nullable: true })
 	email?: string;
 
-	@ApiPropertyOptional({ type: String, minLength: 3, maxLength: 20 })
+	@ApiPropertyOptional({ type: () => String, minLength: 3, maxLength: 20 })
 	@IsAscii()
 	@MinLength(3)
 	@MaxLength(20)
@@ -88,33 +88,33 @@ export class User extends TenantBaseEntity implements IUser {
 	@OneToOne('Employee', (employee: Employee) => employee.user)
 	employee?: IEmployee;
 
-	@ApiPropertyOptional({ type: Role })
+	@ApiPropertyOptional({ type: () => Role })
 	@ManyToOne(() => Role, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	role?: IRole;
 
-	@ApiPropertyOptional({ type: String, readOnly: true })
+	@ApiPropertyOptional({ type: () => String, readOnly: true })
 	@RelationId((user: User) => user.role)
 	readonly roleId?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	hash?: string;
 
-	@ApiPropertyOptional({ type: String, maxLength: 500 })
+	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	imageUrl?: string;
 
-	@ApiProperty({ type: String, enum: LanguagesEnum })
+	@ApiProperty({ type: () => String, enum: LanguagesEnum })
 	@IsEnum(LanguagesEnum)
 	@Column({ nullable: true })
 	preferredLanguage?: string;
 
-	@ApiProperty({ type: String, enum: ComponentLayoutStyleEnum })
+	@ApiProperty({ type: () => String, enum: ComponentLayoutStyleEnum })
 	@IsEnum(ComponentLayoutStyleEnum)
 	@Column({ nullable: true })
 	preferredComponentLayout?: string;

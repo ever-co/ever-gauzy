@@ -8,20 +8,20 @@ import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 export class GoalTimeFrame
 	extends TenantOrganizationBaseEntity
 	implements IGoalTimeFrame {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String, enum: TimeFrameStatusEnum })
+	@ApiProperty({ type: () => String, enum: TimeFrameStatusEnum })
 	@IsEnum(TimeFrameStatusEnum)
 	@Column()
 	status: string;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@Column()
 	startDate: Date;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@Column()
 	endDate: Date;
 }
