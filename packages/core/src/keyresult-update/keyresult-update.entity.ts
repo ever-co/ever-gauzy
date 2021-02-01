@@ -11,31 +11,31 @@ import {
 export class KeyResultUpdate
 	extends TenantOrganizationBaseEntity
 	implements IKeyResultUpdate {
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@Column()
 	update: number;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@Column()
 	progress: number;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	owner: string;
 
-	@ApiProperty({ type: String, enum: KeyResultUpdateStatusEnum })
+	@ApiProperty({ type: () => String, enum: KeyResultUpdateStatusEnum })
 	@IsEnum(KeyResultUpdateStatusEnum)
 	@Column()
 	status: string;
 
-	@ApiProperty({ type: KeyResult })
+	@ApiProperty({ type: () => KeyResult })
 	@ManyToOne(() => KeyResult, (keyResult) => keyResult.update, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn({ name: 'keyResultId' })
 	keyResult: KeyResult;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((keyResult: KeyResultUpdate) => keyResult.keyResult)
 	@Column({ nullable: true })
 	keyResultId?: string;

@@ -39,57 +39,57 @@ const config = getConfig();
 export class Activity
 	extends TenantOrganizationBaseEntity
 	implements IActivity {
-	@ApiProperty({ type: Employee })
+	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee)
 	@JoinColumn()
 	employee?: IEmployee;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((activity: Activity) => activity.employee)
 	@Column()
 	employeeId?: string;
 
-	@ApiProperty({ type: OrganizationProject })
+	@ApiProperty({ type: () => OrganizationProject })
 	@ManyToOne(() => OrganizationProject, { nullable: true })
 	@JoinColumn()
 	project?: IOrganizationProject;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((activity: Activity) => activity.project)
 	@Column({ nullable: true })
 	projectId?: string;
 
-	@ApiProperty({ type: TimeSlot })
+	@ApiProperty({ type: () => TimeSlot })
 	@ManyToOne(() => TimeSlot, { nullable: true })
 	@JoinColumn()
 	timeSlot?: ITimeSlot;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((activity: Activity) => activity.timeSlot)
 	@Column({ nullable: true })
 	timeSlotId?: string;
 
-	@ApiProperty({ type: Task })
+	@ApiProperty({ type: () => Task })
 	@ManyToOne(() => Task, { nullable: true })
 	@JoinColumn()
 	task?: ITask;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((activity: Activity) => activity.task)
 	@Column({ nullable: true })
 	taskId?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()
 	title: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column({ nullable: true })
 	description?: string;
 
-	@ApiProperty({ type: 'json' })
+	@ApiProperty({ type: () => 'json' })
 	@IsDateString()
 	@Column({
 		nullable: true,
@@ -97,35 +97,35 @@ export class Activity
 	})
 	metaData?: string | IURLMetaData;
 
-	@ApiProperty({ type: 'date' })
+	@ApiProperty({ type: () => 'date' })
 	@IsDateString()
 	@CreateDateColumn({ type: 'date' })
 	date: string;
 
-	@ApiProperty({ type: 'time' })
+	@ApiProperty({ type: () => 'time' })
 	@IsDateString()
 	@CreateDateColumn({ type: 'time' })
 	time: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
 	@Column({ default: 0 })
 	duration?: number;
 
-	@ApiProperty({ type: String, enum: ActivityType })
+	@ApiProperty({ type: () => String, enum: ActivityType })
 	@IsEnum(ActivityType)
 	@IsOptional()
 	@Column({ nullable: true })
 	type?: string;
 
-	@ApiProperty({ type: String, enum: TimeLogSourceEnum })
+	@ApiProperty({ type: () => String, enum: TimeLogSourceEnum })
 	@IsEnum(TimeLogSourceEnum)
 	@IsString()
 	@Column({ default: TimeLogSourceEnum.BROWSER })
 	source?: string;
 
-	@ApiProperty({ type: 'timestamptz' })
+	@ApiProperty({ type: () => 'timestamptz' })
 	@IsDateString()
 	@Column({ nullable: true, default: null })
 	deletedAt?: Date;

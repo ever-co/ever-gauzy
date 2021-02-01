@@ -55,14 +55,14 @@ export class OrganizationProject
 	})
 	tags: ITag[];
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	name: string;
 
-	@ApiPropertyOptional({ type: OrganizationContact })
+	@ApiPropertyOptional({ type: () => OrganizationContact })
 	@ManyToOne(
 		() => OrganizationContact,
 		(organizationContact) => organizationContact.projects,
@@ -74,12 +74,12 @@ export class OrganizationProject
 	@JoinColumn()
 	organizationContact?: IOrganizationContact;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@RelationId((contact: OrganizationProject) => contact.organizationContact)
 	@Column({ nullable: true })
 	organizationContactId?: string;
 
-	@ApiProperty({ type: Task })
+	@ApiProperty({ type: () => Task })
 	@OneToMany(() => Task, (task) => task.project)
 	@JoinColumn()
 	tasks?: ITask[];
@@ -87,32 +87,32 @@ export class OrganizationProject
 	@OneToMany(() => TimeLog, (timeLog) => timeLog.project)
 	timeLogs?: ITimeLog[];
 
-	@ApiPropertyOptional({ type: Date })
+	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
 	startDate?: Date;
 
-	@ApiPropertyOptional({ type: Date })
+	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
 	endDate?: Date;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
 	billing: string;
 
-	@ApiProperty({ type: String, enum: CurrenciesEnum })
+	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@IsNotEmpty()
 	@Index()
 	@Column({ nullable: true })
 	currency: string;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	public: boolean;
@@ -123,90 +123,90 @@ export class OrganizationProject
 	})
 	members?: IEmployee[];
 
-	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
+	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
 	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.project, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	invoiceItems?: IInvoiceItem[];
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
 	owner: string;
 
-	@ApiPropertyOptional({ type: OrganizationSprint })
+	@ApiPropertyOptional({ type: () => OrganizationSprint })
 	@OneToMany(() => OrganizationSprint, (sprints) => sprints.project)
 	@JoinColumn()
 	organizationSprints?: IOrganizationSprint[];
 
-	@ApiProperty({ type: String, enum: TaskListTypeEnum })
+	@ApiProperty({ type: () => String, enum: TaskListTypeEnum })
 	@IsEnum(TaskListTypeEnum)
 	@Column({ default: TaskListTypeEnum.GRID })
 	taskListType: string;
 
-	@ApiPropertyOptional({ type: Payment, isArray: true })
+	@ApiPropertyOptional({ type: () => Payment, isArray: true })
 	@OneToMany(() => Payment, (payment) => payment.project, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	payments?: IPayment[];
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
 	code?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
 	description?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
 	color?: string;
 
-	@ApiPropertyOptional({ type: Boolean })
+	@ApiPropertyOptional({ type: () => Boolean })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
 	billable?: boolean;
 
-	@ApiPropertyOptional({ type: Boolean })
+	@ApiPropertyOptional({ type: () => Boolean })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
 	billingFlat?: boolean;
 
-	@ApiPropertyOptional({ type: Boolean })
+	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@Column({ nullable: true })
 	openSource?: boolean;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
 	projectUrl?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
 	openSourceProjectUrl?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
 	budget?: number;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({

@@ -10,7 +10,7 @@ import {
 
 @Entity('email_sent')
 export class Email extends TenantOrganizationBaseEntity implements IEmail {
-	@ApiProperty({ type: EmailTemplate })
+	@ApiProperty({ type: () => EmailTemplate })
 	@ManyToOne(() => EmailTemplate, {
 		nullable: false,
 		cascade: true,
@@ -19,36 +19,36 @@ export class Email extends TenantOrganizationBaseEntity implements IEmail {
 	@JoinColumn()
 	emailTemplate: IEmailTemplate;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
 	emailTemplateId: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()
 	content: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()
 	email: string;
 
-	@ApiPropertyOptional({ type: Boolean })
+	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	isArchived?: boolean;
 
-	@ApiProperty({ type: User })
+	@ApiProperty({ type: () => User })
 	@ManyToOne(() => User, {
 		nullable: true,
 		cascade: true,

@@ -21,7 +21,7 @@ import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 export class OrganizationRecurringExpense
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationRecurringExpense {
-	@ApiProperty({ type: Number, minimum: 1, maximum: 31 })
+	@ApiProperty({ type: () => Number, minimum: 1, maximum: 31 })
 	@IsNumber()
 	@IsNotEmpty()
 	@Min(1)
@@ -29,7 +29,7 @@ export class OrganizationRecurringExpense
 	@Column()
 	startDay: number;
 
-	@ApiProperty({ type: Number, minimum: 1, maximum: 12 })
+	@ApiProperty({ type: () => Number, minimum: 1, maximum: 12 })
 	@IsNumber()
 	@IsNotEmpty()
 	@Min(1)
@@ -37,19 +37,19 @@ export class OrganizationRecurringExpense
 	@Column()
 	startMonth: number;
 
-	@ApiProperty({ type: Number, minimum: 1 })
+	@ApiProperty({ type: () => Number, minimum: 1 })
 	@IsNumber()
 	@IsNotEmpty()
 	@Min(0)
 	@Column()
 	startYear: number;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@Column()
 	startDate: Date;
 
-	@ApiProperty({ type: Number, minimum: 1, maximum: 31 })
+	@ApiProperty({ type: () => Number, minimum: 1, maximum: 31 })
 	@IsNumber()
 	@IsOptional()
 	@Min(1)
@@ -57,7 +57,7 @@ export class OrganizationRecurringExpense
 	@Column({ nullable: true })
 	endDay: number;
 
-	@ApiProperty({ type: Number, minimum: 1, maximum: 12 })
+	@ApiProperty({ type: () => Number, minimum: 1, maximum: 12 })
 	@IsNumber()
 	@IsOptional()
 	@Min(1)
@@ -65,46 +65,46 @@ export class OrganizationRecurringExpense
 	@Column({ nullable: true })
 	endMonth: number;
 
-	@ApiProperty({ type: Number, minimum: 1 })
+	@ApiProperty({ type: () => Number, minimum: 1 })
 	@IsNumber()
 	@IsOptional()
 	@Min(0)
 	@Column({ nullable: true })
 	endYear: number;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
 	endDate?: Date;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	categoryName: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsNotEmpty()
 	@Column({ type: 'numeric' })
 	value: number;
 
-	@ApiProperty({ type: String, enum: CurrenciesEnum })
+	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	currency: string;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@IsOptional()
 	@Column({ nullable: true })
 	splitExpense: boolean;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Index()
 	@Column({ nullable: true })

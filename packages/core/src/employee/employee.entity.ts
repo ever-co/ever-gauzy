@@ -61,7 +61,7 @@ export class Employee
 	})
 	tags: ITag[];
 
-	@ApiProperty({ type: Contact })
+	@ApiProperty({ type: () => Contact })
 	@ManyToOne(() => Contact, (contact) => contact.employees, {
 		nullable: true,
 		cascade: true,
@@ -70,7 +70,7 @@ export class Employee
 	@JoinColumn()
 	contact: IContact;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((employee: Employee) => employee.contact)
 	readonly contactId?: string;
 
@@ -80,7 +80,7 @@ export class Employee
 	})
 	skills: ISkill[];
 
-	@ApiProperty({ type: User })
+	@ApiProperty({ type: () => User })
 	@OneToOne(() => User, {
 		nullable: false,
 		cascade: true,
@@ -89,71 +89,71 @@ export class Employee
 	@JoinColumn()
 	user: IUser;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((employee: Employee) => employee.user)
 	@Column()
 	readonly userId: string;
 
-	@ApiProperty({ type: OrganizationPositions })
+	@ApiProperty({ type: () => OrganizationPositions })
 	@ManyToOne(() => OrganizationPositions, { nullable: true })
 	@JoinColumn()
 	organizationPosition?: IOrganizationPosition;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((employee: Employee) => employee.organizationPosition)
 	readonly organizationPositionId?: string;
 
-	@ApiPropertyOptional({ type: Date })
+	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
 	valueDate?: Date;
 
-	@ApiPropertyOptional({ type: Boolean, default: true })
+	@ApiPropertyOptional({ type: () => Boolean, default: true })
 	@Column({ nullable: true, default: true })
 	isActive: boolean;
 
-	@ApiPropertyOptional({ type: String, maxLength: 200 })
+	@ApiPropertyOptional({ type: () => String, maxLength: 200 })
 	@IsOptional()
 	@Column({ length: 200, nullable: true })
 	short_description?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Column({ nullable: true })
 	description?: string;
 
-	@ApiPropertyOptional({ type: Date })
+	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
 	startedWorkOn?: Date;
 
-	@ApiPropertyOptional({ type: Date })
+	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
 	endWork?: Date;
 
-	@ApiProperty({ type: String, enum: PayPeriodEnum })
+	@ApiProperty({ type: () => String, enum: PayPeriodEnum })
 	@IsEnum(PayPeriodEnum)
 	@IsOptional()
 	@Column({ nullable: true })
 	payPeriod?: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
 	@Column({ type: 'numeric', nullable: true })
 	billRateValue?: number;
 
-	@ApiProperty({ type: String, enum: CurrenciesEnum })
+	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@IsOptional()
 	@Column({ nullable: true })
 	billRateCurrency?: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
 	@Column({ nullable: true })
@@ -168,19 +168,19 @@ export class Employee
 	@OneToMany(() => TimeLog, (timeLog) => timeLog.employee)
 	timeLogs?: ITimeLog[];
 
-	@ApiPropertyOptional({ type: Date })
+	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
 	offerDate?: Date;
 
-	@ApiPropertyOptional({ type: Date })
+	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
 	acceptDate?: Date;
 
-	@ApiPropertyOptional({ type: Date })
+	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
@@ -207,23 +207,23 @@ export class Employee
 	@ManyToMany(() => JobPreset, (jobPreset) => jobPreset.employees)
 	jobPresets?: JobPreset[];
 
-	@ApiPropertyOptional({ type: String, maxLength: 500 })
+	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	employeeLevel?: string;
 
-	@ApiPropertyOptional({ type: Boolean })
+	@ApiPropertyOptional({ type: () => Boolean })
 	@Column({ nullable: true })
 	anonymousBonus?: boolean;
 
-	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
+	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
 	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.employee, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	invoiceItems?: IInvoiceItem[];
 
-	@ApiPropertyOptional({ type: Payment, isArray: true })
+	@ApiPropertyOptional({ type: () => Payment, isArray: true })
 	@OneToMany(() => Payment, (payments) => payments.recordedBy)
 	@JoinColumn()
 	payments?: IPayment[];
@@ -234,122 +234,122 @@ export class Employee
 	)
 	requestApprovals?: IRequestApprovalEmployee[];
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
 	@Column({ type: 'numeric', nullable: true })
 	averageIncome?: number;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
 	@Column({ type: 'numeric', nullable: true })
 	averageBonus?: number;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
 	@Column({ type: 'numeric', default: 0 })
 	totalWorkHours?: number;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
 	@Column({ type: 'numeric', nullable: true })
 	averageExpenses?: number;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	show_anonymous_bonus?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	show_average_bonus?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	show_average_expenses?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	show_average_income?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	show_billrate?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	show_payperiod?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	show_start_work_on?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	isJobSearchActive?: boolean;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Column({ nullable: true })
 	linkedInUrl?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Column({ nullable: true })
 	facebookUrl?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Column({ nullable: true })
 	instagramUrl?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Column({ nullable: true })
 	twitterUrl?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Column({ nullable: true })
 	githubUrl?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Column({ nullable: true })
 	gitlabUrl?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Column({ nullable: true })
 	upworkUrl?: string;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	isVerified?: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	isVetted?: boolean;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
 	@Column({ type: 'numeric', nullable: true })
 	totalJobs?: number;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
 	@Column({ type: 'numeric', nullable: true })

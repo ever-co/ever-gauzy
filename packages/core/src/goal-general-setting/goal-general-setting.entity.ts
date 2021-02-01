@@ -8,33 +8,33 @@ import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 export class GoalGeneralSetting
 	extends TenantOrganizationBaseEntity
 	implements IGoalGeneralSetting {
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@Column()
 	maxObjectives: number;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@Column()
 	maxKeyResults: number;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@Column()
 	employeeCanCreateObjective: boolean;
 
-	@ApiProperty({ type: String, enum: GoalOwnershipEnum })
+	@ApiProperty({ type: () => String, enum: GoalOwnershipEnum })
 	@IsEnum(GoalOwnershipEnum)
 	@Column()
 	canOwnObjectives: string;
 
-	@ApiProperty({ type: String, enum: GoalOwnershipEnum })
+	@ApiProperty({ type: () => String, enum: GoalOwnershipEnum })
 	@IsEnum(GoalOwnershipEnum)
 	@Column()
 	canOwnKeyResult: string;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@Column()
 	krTypeKPI: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@Column()
 	krTypeTask: boolean;
 }

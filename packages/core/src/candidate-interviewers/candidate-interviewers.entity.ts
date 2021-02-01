@@ -10,11 +10,11 @@ import {
 export class CandidateInterviewers
 	extends TenantOrganizationBaseEntity
 	implements ICandidateInterviewers {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	interviewId: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	employeeId: string;
 

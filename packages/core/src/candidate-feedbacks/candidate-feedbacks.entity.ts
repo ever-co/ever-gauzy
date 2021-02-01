@@ -28,29 +28,29 @@ import {
 export class CandidateFeedback
 	extends TenantOrganizationBaseEntity
 	implements ICandidateFeedback {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	description: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: true })
 	candidateId?: string;
 
-	@ApiPropertyOptional({ type: Number })
+	@ApiPropertyOptional({ type: () => Number })
 	@Column({ nullable: true, type: 'numeric' })
 	rating: number;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: true })
 	interviewId?: string;
 
-	@ApiProperty({ type: String, enum: CandidateStatus })
+	@ApiProperty({ type: () => String, enum: CandidateStatus })
 	@IsEnum(CandidateStatus)
 	@IsOptional()
 	@Column({ nullable: true })
 	status?: string;
 
-	@ApiProperty({ type: CandidateInterviewers })
+	@ApiProperty({ type: () => CandidateInterviewers })
 	@OneToOne(() => CandidateInterviewers)
 	@JoinColumn()
 	interviewer?: ICandidateInterviewers;

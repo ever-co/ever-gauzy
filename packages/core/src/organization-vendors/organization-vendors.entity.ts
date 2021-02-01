@@ -15,26 +15,26 @@ export class OrganizationVendor
 	})
 	tags?: ITag[];
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
 	email?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
 	phone?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })

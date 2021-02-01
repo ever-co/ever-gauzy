@@ -17,7 +17,7 @@ import {
 export class JobSearchOccupation
 	extends TenantOrganizationBaseEntity
 	implements IJobSearchOccupation {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
@@ -25,13 +25,13 @@ export class JobSearchOccupation
 	name?: string;
 
 	// Id of occupation in the job source (e.g. Upwork)
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Index()
 	@Column({ nullable: true })
 	jobSourceOccupationId?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()

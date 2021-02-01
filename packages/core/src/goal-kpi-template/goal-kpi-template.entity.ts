@@ -15,40 +15,40 @@ import {
 export class GoalKPITemplate
 	extends TenantOrganizationBaseEntity
 	implements IKPITemplate {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	description: string;
 
-	@ApiProperty({ type: String, enum: KpiMetricEnum })
+	@ApiProperty({ type: () => String, enum: KpiMetricEnum })
 	@Column()
 	@IsEnum(KpiMetricEnum)
 	type: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: true })
 	@IsOptional()
 	unit?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	operator: string;
 
-	@ApiProperty({ type: Employee })
+	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, { nullable: true })
 	@JoinColumn()
 	@IsOptional()
 	lead: IEmployee;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@Column()
 	@IsOptional()
 	currentValue?: number;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@Column()
 	@IsOptional()
 	targetValue?: number;

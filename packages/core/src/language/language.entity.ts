@@ -7,25 +7,25 @@ import { BaseEntity } from '../core/entities/internal';
 @Entity('language')
 @Unique(['name'])
 export class Language extends BaseEntity implements ILanguage {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	name?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: true })
 	@IsOptional()
 	code?: string;
 
-	@ApiProperty({ type: Boolean, default: false })
+	@ApiProperty({ type: () => Boolean, default: false })
 	@Column({ default: true, nullable: true })
 	@IsOptional()
 	is_system?: boolean;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	description?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	color?: string;
 }

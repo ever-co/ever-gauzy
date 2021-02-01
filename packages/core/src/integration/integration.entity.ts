@@ -6,40 +6,40 @@ import { BaseEntity, IntegrationType, Tag } from '../core/entities/internal';
 
 @Entity('integration')
 export class Integration extends BaseEntity implements IIntegration {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: false })
 	name: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: true })
 	imgSrc: string;
 
-	@ApiProperty({ type: Boolean, default: false })
+	@ApiProperty({ type: () => Boolean, default: false })
 	@Column({ default: false })
 	isComingSoon?: boolean;
 
-	@ApiProperty({ type: Boolean, default: false })
+	@ApiProperty({ type: () => Boolean, default: false })
 	@Column({ default: false })
 	isPaid?: boolean;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: true })
 	version?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: true })
 	docUrl?: string;
 
-	@ApiProperty({ type: Boolean, default: false })
+	@ApiProperty({ type: () => Boolean, default: false })
 	@Column({ default: false })
 	isFreeTrial?: boolean;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ default: 0, type: 'numeric' })
 	freeTrialPeriod?: number;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@Column({ nullable: true })
 	order?: number;
 

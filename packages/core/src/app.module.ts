@@ -142,7 +142,7 @@ if (unleashConfig.url) {
 	});
 
 	// metrics hooks
-	instance.on('registered', (client) => console.log('registered', client));
+	instance.on('registered', (client) => {});
 }
 
 const sentryIntegrations = [];

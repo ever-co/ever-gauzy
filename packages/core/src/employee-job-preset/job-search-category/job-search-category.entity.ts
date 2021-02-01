@@ -17,7 +17,7 @@ import {
 export class JobSearchCategory
 	extends TenantOrganizationBaseEntity
 	implements IJobPreset {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
@@ -25,13 +25,13 @@ export class JobSearchCategory
 	name?: string;
 
 	// Id of category in the job source (e.g. Upwork)
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Index()
 	@Column({ nullable: true })
 	jobSourceCategoryId?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()

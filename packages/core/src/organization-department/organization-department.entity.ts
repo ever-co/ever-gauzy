@@ -18,7 +18,7 @@ import {
 export class OrganizationDepartment
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationDepartment {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()

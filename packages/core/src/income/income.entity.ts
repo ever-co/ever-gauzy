@@ -33,62 +33,62 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	})
 	tags: Tag[];
 
-	@ApiProperty({ type: Employee })
+	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	employee: Employee;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((income: Income) => income.employee)
 	@Column({ nullable: true })
 	readonly employeeId?: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsNotEmpty()
 	@Index()
 	@Column({ type: 'numeric' })
 	amount: number;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@IsOptional()
 	@Column({ nullable: true })
 	clientId?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	clientName: string;
 
-	@ApiProperty({ type: String, enum: CurrenciesEnum })
+	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	currency: string;
 
-	@ApiPropertyOptional({ type: Date })
+	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
 	valueDate?: Date;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@IsOptional()
 	@Column({ nullable: true })
 	notes?: string;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@IsOptional()
 	@Column({ nullable: true })
 	isBonus: boolean;
 
-	@ApiPropertyOptional({ type: String, maxLength: 256 })
+	@ApiPropertyOptional({ type: () => String, maxLength: 256 })
 	@IsOptional()
 	@Column({ nullable: true })
 	reference?: string;

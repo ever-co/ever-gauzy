@@ -13,13 +13,13 @@ import {
 export class OrganizationTeamEmployee
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationTeamEmployee {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()
 	public organizationTeamId!: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()
@@ -39,7 +39,7 @@ export class OrganizationTeamEmployee
 	})
 	public employee!: Employee;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@ManyToOne(() => Role, { nullable: true })
 	@JoinColumn()

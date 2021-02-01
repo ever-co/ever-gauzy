@@ -22,21 +22,21 @@ export class Pipeline
 	@OneToMany(() => PipelineStage, ({ pipeline }) => pipeline, {
 		cascade: ['insert']
 	})
-	@ApiProperty({ type: PipelineStage })
+	@ApiProperty({ type: () => PipelineStage })
 	public stages: PipelineStage[];
 
 	@Column({ nullable: true, type: 'text' })
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	public description: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
 	@Column()
 	public name: string;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column()
 	public isActive: boolean;

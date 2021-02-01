@@ -13,15 +13,15 @@ import {
 export class CandidatePersonalQualities
 	extends TenantOrganizationBaseEntity
 	implements ICandidatePersonalQualities {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: true })
 	interviewId?: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@Column({ nullable: true, type: 'numeric' })
 	rating?: number;
 

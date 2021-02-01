@@ -5,11 +5,11 @@ import { TenantBaseEntity } from '../../core/entities/internal';
 
 @Entity('tenant_setting')
 export class TenantSetting extends TenantBaseEntity implements ITenant {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: false })
 	name?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: true })
 	value?: string;
 }

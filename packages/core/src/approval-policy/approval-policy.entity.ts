@@ -16,19 +16,19 @@ import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 export class ApprovalPolicy
 	extends TenantOrganizationBaseEntity
 	implements IApprovalPolicy {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column({ nullable: true })
 	description: string;
 
-	@ApiProperty({ type: String, enum: ApprovalPolicyTypesStringEnum })
+	@ApiProperty({ type: () => String, enum: ApprovalPolicyTypesStringEnum })
 	@IsEnum(ApprovalPolicyTypesStringEnum)
 	@Column({ nullable: true })
 	approvalType: string;

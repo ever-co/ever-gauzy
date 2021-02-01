@@ -16,13 +16,13 @@ import {
 export class RequestApprovalTeam
 	extends TenantOrganizationBaseEntity
 	implements IRequestApprovalTeam {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()
 	public requestApprovalId!: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()
@@ -42,7 +42,7 @@ export class RequestApprovalTeam
 	})
 	public team!: OrganizationTeam;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ nullable: true })
 	status: number;

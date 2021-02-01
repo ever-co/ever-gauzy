@@ -8,17 +8,17 @@ import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 export class EstimateEmail
 	extends TenantOrganizationBaseEntity
 	implements IEstimateEmail {
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@Column()
 	token?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsEmail()
 	@Column()
 	email?: string;
 
-	@ApiPropertyOptional({ type: Date })
+	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@Column()
 	expireDate?: Date;

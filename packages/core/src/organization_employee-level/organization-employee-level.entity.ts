@@ -12,7 +12,7 @@ export class EmployeeLevel extends TenantOrganizationBaseEntity {
 	})
 	tags: Tag[];
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()

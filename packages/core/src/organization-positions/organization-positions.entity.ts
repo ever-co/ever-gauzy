@@ -15,7 +15,7 @@ export class OrganizationPositions
 	})
 	tags: Tag[];
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
