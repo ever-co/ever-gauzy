@@ -23,6 +23,7 @@ import { Store } from '../../../@core/services/store.service';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../../@core/services/toastr.service';
+import { generateCsv } from '../../../@shared/invoice/generate-csv';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-payments',
@@ -449,6 +450,45 @@ export class InvoicePaymentsComponent
 			[`/pages/accounting/invoices/edit/${this.invoice.id}`],
 			{ queryParams: { remainingAmount: true } }
 		);
+	}
+
+	exportToCsv() {
+		let data = [];
+
+		this.payments.forEach((payment) => {
+			data.push({
+				invoiceNumber: this.invoice.invoiceNumber,
+				contact: this.invoice.toContact.name,
+				paymentDate: payment.paymentDate.toString().slice(0, 10),
+				amount: payment.amount,
+				recordedBy:
+					payment.recordedBy.firstName + payment.recordedBy.lastName,
+				note: payment.note || '',
+				paymentMethod: payment.paymentMethod
+					? this.getTranslation(
+							`INVOICES_PAGE.PAYMENTS.${payment.paymentMethod}`
+					  )
+					: '',
+				status: payment.overdue
+					? this.getTranslation('INVOICES_PAGE.PAYMENTS.OVERDUE')
+					: this.getTranslation('INVOICES_PAGE.PAYMENTS.ON_TIME')
+			});
+		});
+
+		const headers = [
+			this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
+			this.getTranslation('INVOICES_PAGE.CONTACT'),
+			this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_DATE'),
+			this.getTranslation('INVOICES_PAGE.PAYMENTS.AMOUNT'),
+			this.getTranslation('INVOICES_PAGE.PAYMENTS.RECORDED_BY'),
+			this.getTranslation('INVOICES_PAGE.PAYMENTS.NOTE'),
+			this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_METHOD'),
+			this.getTranslation('INVOICES_PAGE.PAYMENTS.STATUS')
+		];
+
+		const fileName = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT');
+
+		generateCsv(data, headers, fileName);
 	}
 
 	_applyTranslationOnSmartTable() {
