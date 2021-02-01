@@ -14,23 +14,28 @@ import { DEFAULT_FEATURES } from './default-features';
 import { Tenant } from '../tenant/tenant.entity';
 import { Feature } from './feature.entity';
 import { FeatureOrganization } from './feature_organization.entity';
-const config = getConfig();
+import { IPluginConfig } from '@gauzy/common';
 
 export const createDefaultFeatureToggle = async (
 	connection: Connection,
+	config: IPluginConfig,
 	tenant: Tenant
 ) => {
-	await cleanFeature(connection);
+	await cleanFeature(connection, config);
 
 	DEFAULT_FEATURES.forEach(async (item: IFeatureCreateInput) => {
-		const feature: IFeature = createFeature(item, tenant);
+		const feature: IFeature = createFeature(item, tenant, config);
 		const parent = await connection.manager.save(feature);
 
 		const { children = [] } = item;
 		if (children.length > 0) {
 			const featureChildren: IFeature[] = [];
 			children.forEach((child: IFeature) => {
-				const childFeature: IFeature = createFeature(child, tenant);
+				const childFeature: IFeature = createFeature(
+					child,
+					tenant,
+					config
+				);
 				childFeature.parent = parent;
 				featureChildren.push(childFeature);
 			});
@@ -66,7 +71,7 @@ export const createRandomFeatureToggle = async (
 	return features;
 };
 
-function createFeature(item: IFeature, tenant: Tenant) {
+function createFeature(item: IFeature, tenant: Tenant, config: IPluginConfig) {
 	const {
 		name,
 		code,
@@ -81,7 +86,7 @@ function createFeature(item: IFeature, tenant: Tenant) {
 		name,
 		code,
 		description,
-		image: copyImage(image),
+		image: copyImage(image, config),
 		link,
 		status,
 		icon,
@@ -95,7 +100,7 @@ function createFeature(item: IFeature, tenant: Tenant) {
 	return feature;
 }
 
-async function cleanFeature(connection) {
+async function cleanFeature(connection, config) {
 	if (config.dbConnectionOptions.type === 'sqlite') {
 		await connection.query('DELETE FROM feature');
 		await connection.query('DELETE FROM feature_organization');
@@ -124,27 +129,22 @@ async function cleanFeature(connection) {
 				console.log(chalk.green(`CLEANED UP FEATURE IMAGES`));
 				resolve(null);
 			},
-			(error) => {
+			() => {
 				reject(null);
 			}
 		);
 	});
 }
 
-function copyImage(fileName: string) {
+function copyImage(fileName: string, config: IPluginConfig) {
 	try {
-		const configService = new ConfigService();
 		const destDir = 'features';
-
 		const dir = env.isElectron
 			? path.resolve(
 					env.gauzyUserPath,
 					...['src', 'assets', 'seed', destDir]
 			  )
-			: path.join(
-					configService.assetOptions.assetPath,
-					...['seed', destDir]
-			  ) ||
+			: path.join(config.assetOptions.assetPath, ...['seed', destDir]) ||
 			  path.resolve(
 					__dirname,
 					'../../../',
@@ -153,7 +153,7 @@ function copyImage(fileName: string) {
 
 		const baseDir = env.isElectron
 			? path.resolve(env.gauzyUserPath, ...['public'])
-			: configService.assetOptions.assetPublicPath ||
+			: config.assetOptions.assetPublicPath ||
 			  path.resolve(
 					__dirname,
 					'../../../',

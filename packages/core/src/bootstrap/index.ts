@@ -12,7 +12,6 @@ import { getEntitiesFromPlugins } from '@gauzy/plugin';
 import { coreEntities } from '../core/entities';
 import { AppService } from '../app.service';
 import { AppModule } from '../app.module';
-// import { Logger } from '../logger/logger';
 
 export async function bootstrap(
 	pluginConfig?: Partial<IPluginConfig>

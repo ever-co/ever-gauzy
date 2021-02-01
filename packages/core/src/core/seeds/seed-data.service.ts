@@ -15,23 +15,19 @@ import {
 import * as chalk from 'chalk';
 import { IPluginConfig } from '@gauzy/common';
 import { environment as env, getConfig } from '@gauzy/config';
-import { Role } from '../../role/role.entity';
 import { createRoles } from '../../role/role.seed';
 import { createDefaultSkills } from '../../skills/skill.seed';
 import { createLanguages } from '../../language/language.seed';
-import { User } from '../../user/user.entity';
 import {
 	createDefaultSuperAdminUsers,
 	createDefaultUsers,
 	createRandomSuperAdminUsers,
 	createRandomUsers
 } from '../../user/user.seed';
-import { Employee } from '../../employee/employee.entity';
 import {
 	createDefaultEmployees,
 	createRandomEmployees
 } from '../../employee/employee.seed';
-import { Organization } from '../../organization/organization.entity';
 import {
 	createDefaultOrganizations,
 	createRandomOrganizations,
@@ -82,12 +78,10 @@ import {
 	createOrganizationVendors,
 	createRandomOrganizationVendors
 } from '../../organization-vendors/organization-vendors.seed';
-import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
 import {
 	createDefaultCandidates,
 	createRandomCandidates
 } from '../../candidate/candidate.seed';
-import { Tenant } from '../../tenant/tenant.entity';
 import {
 	createCandidateSources,
 	createRandomCandidateSources
@@ -295,6 +289,14 @@ import {
 	createDefaultFeatureToggle,
 	createRandomFeatureToggle
 } from '../../feature/feature.seed';
+import {
+	Employee,
+	Organization,
+	OrganizationProject,
+	Role,
+	Tenant,
+	User
+} from './../../core/entities/internal';
 
 @Injectable()
 export class SeedDataService {
@@ -409,7 +411,7 @@ export class SeedDataService {
 			if (isDefault) {
 				await this.tryExecute(
 					'Default Report Category & Report',
-					createDefaultReport(this.connection)
+					createDefaultReport(this.connection, this.config)
 				);
 			}
 
@@ -560,7 +562,11 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Feature Toggle',
-			createDefaultFeatureToggle(this.connection, this.tenant)
+			createDefaultFeatureToggle(
+				this.connection,
+				this.config,
+				this.tenant
+			)
 		);
 
 		await this.tryExecute(
@@ -976,6 +982,7 @@ export class SeedDataService {
 			'Default TimeSheets',
 			createDefaultTimeSheet(
 				this.connection,
+				this.config,
 				this.tenant,
 				this.defaultEmployees,
 				this.defaultProjects,
@@ -1594,6 +1601,7 @@ export class SeedDataService {
 			'Random TimeSheets',
 			createRandomTimesheet(
 				this.connection,
+				this.config,
 				this.tenant,
 				this.defaultProjects,
 				randomSeedConfig.noOfTimeLogsPerTimeSheet

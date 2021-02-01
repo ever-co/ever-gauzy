@@ -4,7 +4,7 @@ import {
 	NestModule,
 	OnApplicationShutdown
 } from '@nestjs/common';
-import { ConfigModule, ConfigService, getConfig } from '@gauzy/config';
+import { ConfigModule, getConfig } from '@gauzy/config';
 import { PluginModule } from '@gauzy/plugin';
 import { AppModule } from './../app.module';
 import { HealthIndicatorModule } from '../health-indicator';
@@ -20,10 +20,9 @@ import { Logger, LoggerModule } from '../logger';
 	]
 })
 export class BootstrapModule implements NestModule, OnApplicationShutdown {
-	constructor(private configService: ConfigService) {}
+	constructor() {}
 
 	configure(consumer: MiddlewareConsumer) {
-		// const { middleware } = this.configService.apiConfig;
 		consumer.apply().forRoutes('*');
 	}
 
