@@ -58,6 +58,8 @@ spec:
                 - name: gauzy-demo-api
                   image: ghcr.io/ever-co/gauzy-api:latest
                   env:
+                      - name: HOST
+                        value: 0.0.0.0
                       - name: DEMO
                         value: 'true'
                   ports:
