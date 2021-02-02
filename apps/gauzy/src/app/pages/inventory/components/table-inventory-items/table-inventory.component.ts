@@ -183,6 +183,18 @@ export class TableInventoryComponent
 		]);
 	}
 
+	onViewInventoryItem(selectedItem?: IProduct) {
+		if (selectedItem) {
+			this.selectProduct({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+		this.router.navigate([
+			`/pages/organization/inventory/view/${this.selectedProduct.id}`
+		]);
+	}
+
 	async delete(selectedItem?: IProduct) {
 		if (selectedItem) {
 			this.selectProduct({

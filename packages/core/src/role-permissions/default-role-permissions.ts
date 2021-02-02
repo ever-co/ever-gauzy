@@ -76,7 +76,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.SMS_GATEWAY_VIEW,
 			PermissionsEnum.CUSTOM_SMTP_VIEW,
 			PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW,
-			PermissionsEnum.ORG_JOB_MATCHING_VIEW
+			PermissionsEnum.ORG_JOB_MATCHING_VIEW,
+			PermissionsEnum.INVENTORY_GALLERY_EDIT,
+			PermissionsEnum.INVENTORY_GALLERY_EDIT
 		]
 	},
 	{
@@ -153,7 +155,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.SMS_GATEWAY_VIEW,
 			PermissionsEnum.CUSTOM_SMTP_VIEW,
 			PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW,
-			PermissionsEnum.ORG_JOB_MATCHING_VIEW
+			PermissionsEnum.ORG_JOB_MATCHING_VIEW,
+			PermissionsEnum.INVENTORY_GALLERY_EDIT,
+			PermissionsEnum.INVENTORY_GALLERY_EDIT
 		]
 	},
 	{
@@ -199,7 +203,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ESTIMATES_EDIT,
 			PermissionsEnum.ORG_CONTACT_VIEW,
 			PermissionsEnum.EMPLOYEE_EXPENSES_VIEW,
-			PermissionsEnum.EMPLOYEE_EXPENSES_EDIT
+			PermissionsEnum.EMPLOYEE_EXPENSES_EDIT,
+			PermissionsEnum.INVENTORY_GALLERY_VIEW
 		]
 	},
 	{

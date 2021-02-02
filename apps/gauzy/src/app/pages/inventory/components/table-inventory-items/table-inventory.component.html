@@ -121,6 +121,17 @@
 		{{ 'BUTTONS.EDIT' | translate }}
 	</button>
 	<button
+		(click)="onViewInventoryItem(selectedItem)"
+		nbButton
+		status="warning"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+		{{ 'BUTTONS.VIEW' | translate }}
+	</button>
+	<button
 		(click)="delete(selectedItem)"
 		nbButton
 		status="danger"

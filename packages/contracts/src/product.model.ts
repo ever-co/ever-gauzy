@@ -42,6 +42,17 @@ export interface IProductTranslated {
 	productCategory: string;
 	name: string;
 	description: string;
+	category?: string;
+	type?: string;
+	featuredImage?: IImageAsset;
+	code: string;
+	enabled: boolean;
+	gallery?: IImageAsset[];
+	options?: IProductOption[];
+	tags?: ITag[];
+	variants?: IProductVariant[];
+	productTypeId: string;
+	productCategoryId: string;
 }
 
 export interface IProductTranslation

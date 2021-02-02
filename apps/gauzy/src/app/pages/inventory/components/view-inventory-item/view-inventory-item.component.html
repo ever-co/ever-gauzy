@@ -1,0 +1,151 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<div class="navigate">
+			<ngx-back-navigation></ngx-back-navigation>
+		</div>
+		<h5>
+			{{ 'INVENTORY_PAGE.VIEW_INVENTORY_ITEM' | translate }}
+		</h5>
+	</nb-card-header>
+
+	<nb-card-body *ngIf="inventoryItem">
+		<div class="row">
+			<div class="col-md-3">
+				<div class="product-container">
+					<div>
+						<img
+							*ngIf="
+								inventoryItem.featuredImage &&
+								inventoryItem.featuredImage.url
+							"
+							class="featured-image"
+							[src]="inventoryItem.featuredImage.url"
+							alt="Feature image"
+						/>
+						<img
+							*ngIf="
+								inventoryItem.featuredImage &&
+								!inventoryItem.featuredImage.url
+							"
+							class="featured-image"
+							[src]="
+								'https://afostats.imagead.net/uploads/afo/no_img.png'
+							"
+							alt="Feature image"
+						/>
+					</div>
+					<div
+						*ngIf="inventoryItem.gallery"
+						class="gallery-preview-items mt-3"
+					>
+						<div class="row">
+							<div
+								class="col-sm-3 col-md-4 gallery-sm-preview"
+								*ngFor="
+									let galleryItem of inventoryItem.gallery
+								"
+								(click)="onGalleryItemClick(galleryItem)"
+							>
+								<div
+									class="gallery-sm-preview-item"
+									[ngStyle]="{
+										backgroundImage:
+											'url(' + galleryItem.url + ')'
+									}"
+								></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-9">
+				<div class="container">
+					<div class="row mb-1">
+						<div class="col-md-6 col-sm-12">
+							<p>
+								<span class="key-description mr-2"
+									>{{
+										'INVENTORY_PAGE.NAME' | translate
+									}}:</span
+								>{{ inventoryItem.name }}
+							</p>
+							<p>
+								<span class="key-description mr-2"
+									>{{
+										'INVENTORY_PAGE.DESCRIPTION'
+											| translate
+									}}:</span
+								>{{ inventoryItem.description }}
+							</p>
+							<p>
+								<span class="key-description mr-2"
+									>{{
+										'INVENTORY_PAGE.TYPE' | translate
+									}}:</span
+								>{{ inventoryItem.type }}
+							</p>
+							<p>
+								<span class="key-description mr-2"
+									>{{
+										'INVENTORY_PAGE.CATEGORY' | translate
+									}}:</span
+								>{{ inventoryItem.category }}
+							</p>
+							<p>
+								<span class="key-description mr-2"
+									>{{
+										'INVENTORY_PAGE.ENABLED' | translate
+									}}:</span
+								>{{ inventoryItem.enabled }}
+							</p>
+							<div>
+								<span class="key-description mr-2"
+									>{{
+										'INVENTORY_PAGE.OPTIONS' | translate
+									}}:</span
+								>
+								<div class="row options" *ngIf="inventoryItem">
+									<div
+										*ngFor="
+											let option of inventoryItem.options
+										"
+										class="option-item"
+									>
+										{{ option.name }}
+									</div>
+								</div>
+							</div>
+						</div>
+						<div
+							class="col-md-6 col-sm-12"
+							*ngIf="inventoryItem.tags"
+						>
+							<span class="key-description mr-2 mb-1"
+								>{{ 'INVENTORY_PAGE.TAGS' | translate }}:</span
+							>
+							<div
+								*ngFor="let tag of inventoryItem.tags"
+								class="tag-item"
+								[ngStyle]="{
+									background: tag.color
+								}"
+							>
+								{{ tag.name }}
+							</div>
+						</div>
+					</div>
+					<div class="row mt-5">
+						<ng2-smart-table
+							class="tags-table"
+							[settings]="settingsSmartTable"
+							[source]="smartTableSource"
+							#variantTable
+						>
+						</ng2-smart-table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</nb-card-body>
+	<nb-card-footer class="text-right"> footer </nb-card-footer>
+</nb-card>

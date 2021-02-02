@@ -153,7 +153,8 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_TEAM_EDIT,
 		PermissionsEnum.ORG_CONTRACT_EDIT,
 		PermissionsEnum.EVENT_TYPES_VIEW,
-		PermissionsEnum.INVENTORY_GALLERY_VIEW
+		PermissionsEnum.INVENTORY_GALLERY_VIEW,
+		PermissionsEnum.INVENTORY_GALLERY_EDIT
 	],
 
 	//Readonly permissions, are only enabled for admin role

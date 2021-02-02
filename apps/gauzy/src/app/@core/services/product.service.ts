@@ -48,6 +48,21 @@ export class ProductService {
 			.toPromise();
 	}
 
+	getOneTranslated(
+		id: string,
+		relations?: string[],
+		languageCode?: string
+	): Promise<IProductTranslated> {
+		const data = JSON.stringify({ relations });
+		return this.http
+			.get<IProductTranslated>(
+				`${this.PRODUCTS_URL}/local/${languageCode}/${id}`,
+				{ params: { data } }
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
 	getById(id: string, relations?: string[], findInput?: IProductFindInput) {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
