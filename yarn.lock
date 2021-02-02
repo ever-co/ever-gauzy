@@ -36,12 +36,12 @@
     ts-node "^9.0.0"
     webpack-merge "^5.7.3"
 
-"@angular-devkit/architect@0.1002.0", "@angular-devkit/architect@0.1100.7", "@angular-devkit/architect@0.1101.2", "@angular-devkit/architect@>=0.1100.0 < 0.1200.0", "@angular-devkit/architect@^0.1101.2", "@angular-devkit/architect@~0.1100.1", "@angular-devkit/architect@~0.1100.2":
-  version "0.1100.7"
-  resolved "https://registry.yarnpkg.com/@angular-devkit/architect/-/architect-0.1100.7.tgz#6c39b886bbdb5d0e5a2d9921aa5816209041e105"
-  integrity sha512-b2zv2yiRbdhJ7hJfZsAvGYcqgh2DVtc7gRIPo1eDPvOAKrenmZ4zo/v0PRYScrTsPzqmoCokNA5nIwufwUEnuA==
+"@angular-devkit/architect@0.1002.0", "@angular-devkit/architect@0.1100.7", "@angular-devkit/architect@0.1101.2", "@angular-devkit/architect@>=0.1100.0 < 0.1200.0", "@angular-devkit/architect@^0.1101.2", "@angular-devkit/architect@~0.1100.1", "@angular-devkit/architect@~0.1101.2":
+  version "0.1101.2"
+  resolved "https://registry.yarnpkg.com/@angular-devkit/architect/-/architect-0.1101.2.tgz#deb80545133d62e7a09ea6dda120ce9abec66421"
+  integrity sha512-MLmBfHiiyPhbFSSAX4oMecPjEuBauOui5uBpI6BKNnk/7783fznbkbAKjXlOco7M81gkNeEoHMR8c+mOfcvv7g==
   dependencies:
-    "@angular-devkit/core" "11.0.7"
+    "@angular-devkit/core" "11.1.2"
     rxjs "6.6.3"
 
 "@angular-devkit/build-angular@>=0.1100.0 < 0.1200.0", "@angular-devkit/build-angular@^0.1101.2", "@angular-devkit/build-angular@~0.1101.2":
