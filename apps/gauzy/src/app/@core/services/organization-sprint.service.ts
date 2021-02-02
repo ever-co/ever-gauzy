@@ -30,11 +30,11 @@ export class SprintService extends TranslationBaseComponent {
 		const data = JSON.stringify({
 			relations: [
 				// 'tasks'
-				// 'project`,
-				// 'tags`,
-				// 'members`,
-				// 'members.user`,
-				// 'teams`,
+				// 'project',
+				// 'tags',
+				// 'members',
+				// 'members.user',
+				// 'teams',
 				// 'creator'
 			],
 			findInput
