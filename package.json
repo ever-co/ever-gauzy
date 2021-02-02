@@ -171,7 +171,7 @@
 	},
 	"resolutions": {
 		"@angular-devkit/build-angular": "~0.1101.2",
-		"@angular-devkit/architect": "~0.1100.2",
+		"@angular-devkit/architect": "~0.1101.2",
 		"@angular-devkit/core": "^11.1.1"
 	},
 	"dependencies": {
