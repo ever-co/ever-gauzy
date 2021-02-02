@@ -9,6 +9,7 @@ import {
 import { Observable } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { toParams } from '@gauzy/common-angular';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class EmployeesService {
@@ -21,7 +22,7 @@ export class EmployeesService {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http.get<{ items: IEmployee[]; total: number }>(
-			`/api/employee/public`,
+			`${API_PREFIX}/employee/public`,
 			{
 				params: { data }
 			}
@@ -31,7 +32,7 @@ export class EmployeesService {
 	getPublicById(id: string, relations?: string[]): Observable<IEmployee> {
 		const data = JSON.stringify({ relations });
 
-		return this.http.get<IEmployee>(`/api/employee/public/${id}`, {
+		return this.http.get<IEmployee>(`${API_PREFIX}/employee/public/${id}`, {
 			params: { data }
 		});
 	}
@@ -43,7 +44,7 @@ export class EmployeesService {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http.get<{ items: IEmployee[]; total: number }>(
-			`/api/employee`,
+			`${API_PREFIX}/employee`,
 			{
 				params: { data }
 			}
@@ -65,7 +66,7 @@ export class EmployeesService {
 		const data = JSON.stringify({ findInput: query });
 		return this.http
 			.get<{ items: IEmployee[]; total: number }>(
-				`/api/employee/working`,
+				`${API_PREFIX}/employee/working`,
 				{
 					params: { data }
 				}
@@ -87,7 +88,7 @@ export class EmployeesService {
 			.get<{
 				success: boolean;
 				result: IEmployee;
-			}>(`/api/employee/user/${userId}`, {
+			}>(`${API_PREFIX}/employee/user/${userId}`, {
 				params: { data }
 			})
 			.pipe(first())
@@ -97,7 +98,7 @@ export class EmployeesService {
 	getEmployeeById(id: string, relations?: string[], useTenant?: boolean) {
 		const data = JSON.stringify({ relations, useTenant });
 		return this.http
-			.get<IEmployee>(`/api/employee/${id}`, {
+			.get<IEmployee>(`${API_PREFIX}/employee/${id}`, {
 				params: { data }
 			})
 			.pipe(first())
@@ -106,28 +107,30 @@ export class EmployeesService {
 
 	setEmployeeAsInactive(id: string): Promise<IEmployee> {
 		return this.http
-			.put<IEmployee>(`/api/employee/${id}`, { isActive: false })
+			.put<IEmployee>(`${API_PREFIX}/employee/${id}`, { isActive: false })
 			.pipe(first())
 			.toPromise();
 	}
 
 	setEmployeeEndWork(id: string, date: Date): Promise<IEmployee> {
 		return this.http
-			.put<IEmployee>(`/api/employee/${id}`, { endWork: date })
+			.put<IEmployee>(`${API_PREFIX}/employee/${id}`, { endWork: date })
 			.pipe(first())
 			.toPromise();
 	}
 
 	update(id: string, updateInput: IEmployeeUpdateInput): Promise<any> {
 		return this.http
-			.put(`/api/employee/${id}`, updateInput)
+			.put(`${API_PREFIX}/employee/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	getEmployeeJobsStatistics(request): Promise<any> {
 		return this.http
-			.get(`/api/employee/job-statistics`, { params: toParams(request) })
+			.get(`${API_PREFIX}/employee/job-statistics`, {
+				params: toParams(request)
+			})
 			.pipe(first())
 			.toPromise();
 	}
@@ -137,18 +140,23 @@ export class EmployeesService {
 		isJobSearchActive: boolean
 	): Promise<any> {
 		return this.http
-			.put(`/api/employee/${id}/job-search-status`, { isJobSearchActive })
+			.put(`${API_PREFIX}/employee/${id}/job-search-status`, {
+				isJobSearchActive
+			})
 			.pipe(first())
 			.toPromise();
 	}
 
 	create(createInput: IEmployeeCreateInput): Observable<IEmployee> {
-		return this.http.post<IEmployee>('/api/employee/create', createInput);
+		return this.http.post<IEmployee>(
+			`${API_PREFIX}/employee/create`,
+			createInput
+		);
 	}
 
 	createBulk(createInput: IEmployeeCreateInput[]): Observable<IEmployee[]> {
 		return this.http.post<IEmployee[]>(
-			'/api/employee/createBulk',
+			`${API_PREFIX}/employee/createBulk`,
 			createInput
 		);
 	}

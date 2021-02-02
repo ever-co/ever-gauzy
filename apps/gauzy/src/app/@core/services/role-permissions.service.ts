@@ -6,6 +6,7 @@ import {
 	IRolePermissionUpdateInput
 } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class RolePermissionsService {
@@ -16,7 +17,7 @@ export class RolePermissionsService {
 	): Promise<{ items: IRolePermission[]; total: number }> {
 		const data = JSON.stringify({ findInput });
 		return this.http
-			.get<any>(`/api/role-permissions`, {
+			.get<any>(`${API_PREFIX}/role-permissions`, {
 				params: { data }
 			})
 			.pipe(first())
@@ -25,14 +26,17 @@ export class RolePermissionsService {
 
 	create(createInput: IRolePermissionCreateInput): Promise<IRolePermission> {
 		return this.http
-			.post<IRolePermission>('/api/role-permissions', createInput)
+			.post<IRolePermission>(
+				`${API_PREFIX}/role-permissions`,
+				createInput
+			)
 			.pipe(first())
 			.toPromise();
 	}
 
 	update(id: string, updateInput: IRolePermissionUpdateInput): Promise<any> {
 		return this.http
-			.put(`/api/role-permissions/${id}`, updateInput)
+			.put(`${API_PREFIX}/role-permissions/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}

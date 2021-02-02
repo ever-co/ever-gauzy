@@ -7,6 +7,7 @@ import {
 	IProposalFindInput,
 	IProposalViewModel
 } from '@gauzy/contracts';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class ProposalsService {
@@ -14,21 +15,21 @@ export class ProposalsService {
 
 	create(createInput: IProposalCreateInput): Promise<any> {
 		return this.http
-			.post<IProposal>('/api/proposal/create', createInput)
+			.post<IProposal>(`${API_PREFIX}/proposal/create`, createInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	update(id: string, updateInput: IProposalCreateInput): Promise<any> {
 		return this.http
-			.put(`/api/proposal/${id}`, updateInput)
+			.put(`${API_PREFIX}/proposal/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/proposal/${id}`)
+			.delete(`${API_PREFIX}/proposal/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
@@ -41,9 +42,12 @@ export class ProposalsService {
 		const data = JSON.stringify({ relations, findInput, filterDate });
 
 		return this.http
-			.get<{ items: IProposal[]; total: number }>(`/api/proposal`, {
-				params: { data }
-			})
+			.get<{ items: IProposal[]; total: number }>(
+				`${API_PREFIX}/proposal`,
+				{
+					params: { data }
+				}
+			)
 			.pipe(first())
 			.toPromise();
 	}
@@ -51,7 +55,7 @@ export class ProposalsService {
 	getById(id: string, findInput?: IProposalFindInput, relations?: string[]) {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
-			.get<IProposalViewModel>(`/api/proposal/${id}`, {
+			.get<IProposalViewModel>(`${API_PREFIX}/proposal/${id}`, {
 				params: { data }
 			})
 			.pipe(first())

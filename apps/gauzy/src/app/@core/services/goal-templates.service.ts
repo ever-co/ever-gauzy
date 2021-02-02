@@ -9,6 +9,7 @@ import {
 import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 import { ToastrService } from './toastr.service';
+import { API_PREFIX } from '../constants/app.constants';
 
 interface IGoalTemplateResponse {
 	items: IGoalTemplate[];
@@ -19,9 +20,9 @@ interface IGoalTemplateResponse {
 	providedIn: 'root'
 })
 export class GoalTemplatesService {
-	private readonly GOAL_URL = '/api/goal-templates';
-	private readonly KEYRESULT_URL = '/api/key-result-templates';
-	private readonly GOAL_KPI_URL = '/api/goal-kpi-templates';
+	private readonly GOAL_URL = `${API_PREFIX}/goal-templates`;
+	private readonly KEYRESULT_URL = `${API_PREFIX}/key-result-templates`;
+	private readonly GOAL_KPI_URL = `${API_PREFIX}/goal-kpi-templates`;
 
 	constructor(
 		private _http: HttpClient,

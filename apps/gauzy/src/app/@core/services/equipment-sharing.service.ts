@@ -2,10 +2,11 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import { IEquipmentSharing } from '@gauzy/contracts';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class EquipmentSharingService {
-	EQUIPMENT_SHARING_URL = '/api/equipment-sharing';
+	EQUIPMENT_SHARING_URL = `${API_PREFIX}/equipment-sharing`;
 
 	constructor(private http: HttpClient) {}
 

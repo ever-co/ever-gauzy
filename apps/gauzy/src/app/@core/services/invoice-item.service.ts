@@ -6,6 +6,7 @@ import {
 	IInvoiceItemFindInput
 } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 @Injectable()
 export class InvoiceItemService {
 	constructor(private http: HttpClient) {}
@@ -16,7 +17,7 @@ export class InvoiceItemService {
 	): Promise<{ items: IInvoiceItem[] }> {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
-			.get<{ items: IInvoiceItem[] }>('/api/invoice-item', {
+			.get<{ items: IInvoiceItem[] }>(`${API_PREFIX}/invoice-item`, {
 				params: { data }
 			})
 			.pipe(first())
@@ -25,21 +26,21 @@ export class InvoiceItemService {
 
 	add(invoiceItem: IInvoiceItem): Promise<IInvoiceItem> {
 		return this.http
-			.post<IInvoiceItem>('/api/invoice-item', invoiceItem)
+			.post<IInvoiceItem>(`${API_PREFIX}/invoice-item`, invoiceItem)
 			.pipe(first())
 			.toPromise();
 	}
 
 	update(id: string, invoiceItem: IInvoiceItem): Promise<IInvoiceItem> {
 		return this.http
-			.put<IInvoiceItem>(`/api/invoice-item/${id}`, invoiceItem)
+			.put<IInvoiceItem>(`${API_PREFIX}/invoice-item/${id}`, invoiceItem)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/invoice-item/${id}`)
+			.delete(`${API_PREFIX}/invoice-item/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
@@ -50,7 +51,7 @@ export class InvoiceItemService {
 	): Promise<IInvoiceItem[]> {
 		return this.http
 			.post<IInvoiceItem[]>(
-				`/api/invoice-item/createBulk/${invoiceId}`,
+				`${API_PREFIX}/invoice-item/createBulk/${invoiceId}`,
 				invoiceItem
 			)
 			.pipe(first())

@@ -7,6 +7,7 @@ import {
 	IIncomeUpdateInput
 } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class IncomeService {
@@ -14,7 +15,7 @@ export class IncomeService {
 
 	create(createInput: IIncomeCreateInput): Promise<IIncome> {
 		return this.http
-			.post<IIncome>('/api/income/create', createInput)
+			.post<IIncome>(`${API_PREFIX}/income/create`, createInput)
 			.pipe(first())
 			.toPromise();
 	}
@@ -27,9 +28,12 @@ export class IncomeService {
 		const data = JSON.stringify({ relations, findInput, filterDate });
 
 		return this.http
-			.get<{ items: IIncome[]; total: number }>(`/api/income/me`, {
-				params: { data }
-			})
+			.get<{ items: IIncome[]; total: number }>(
+				`${API_PREFIX}/income/me`,
+				{
+					params: { data }
+				}
+			)
 			.pipe(first())
 			.toPromise();
 	}
@@ -42,7 +46,7 @@ export class IncomeService {
 		const data = JSON.stringify({ relations, findInput, filterDate });
 
 		return this.http
-			.get<{ items: IIncome[]; total: number }>(`/api/income`, {
+			.get<{ items: IIncome[]; total: number }>(`${API_PREFIX}/income`, {
 				params: { data }
 			})
 			.pipe(first())
@@ -51,7 +55,7 @@ export class IncomeService {
 
 	update(id: string, updateInput: IIncomeUpdateInput): Promise<any> {
 		return this.http
-			.put(`/api/income/${id}`, updateInput)
+			.put(`${API_PREFIX}/income/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
@@ -59,7 +63,7 @@ export class IncomeService {
 	delete(incomeId: string, employeeId: string): Promise<any> {
 		const data = JSON.stringify({ incomeId, employeeId });
 		return this.http
-			.delete('/api/income/deleteIncome', {
+			.delete(`${API_PREFIX}/income/deleteIncome`, {
 				params: { data }
 			})
 			.pipe(first())

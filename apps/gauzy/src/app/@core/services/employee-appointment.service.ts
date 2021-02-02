@@ -8,10 +8,11 @@ import {
 	IEmployeeAppointmentFindInput,
 	IEmployeeAppointmentUpdateInput
 } from '@gauzy/contracts';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class EmployeeAppointmentService {
-	EMPLOYEE_APPOINTMENT_URL = '/api/employee-appointment';
+	EMPLOYEE_APPOINTMENT_URL = `${API_PREFIX}/employee-appointment`;
 
 	constructor(private http: HttpClient) {}
 

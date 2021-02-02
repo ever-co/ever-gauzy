@@ -11,6 +11,7 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 import { TranslateService } from '@ngx-translate/core';
 import { toParams } from '@gauzy/common-angular';
 import { ToastrService } from './toastr.service';
+import { API_PREFIX } from '../constants/app.constants';
 
 interface ITaskResponse {
 	items: ITask[];
@@ -21,7 +22,7 @@ interface ITaskResponse {
 	providedIn: 'root'
 })
 export class TasksService extends TranslationBaseComponent {
-	private readonly API_URL = '/api/tasks';
+	private readonly API_URL = `${API_PREFIX}/tasks`;
 
 	constructor(
 		private _http: HttpClient,

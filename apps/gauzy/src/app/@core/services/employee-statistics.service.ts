@@ -12,6 +12,7 @@ import {
 } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -31,7 +32,7 @@ export class EmployeeStatisticsService {
 
 		return this.http
 			.get<IAggregatedEmployeeStatistic>(
-				`/api/employee-statistics/aggregate`,
+				`${API_PREFIX}/employee-statistics/aggregate`,
 				{
 					params: { data }
 				}
@@ -55,7 +56,7 @@ export class EmployeeStatisticsService {
 
 		return this.http
 			.get<IEmployeeStatistics>(
-				`/api/employee-statistics/months/${employeeId}`,
+				`${API_PREFIX}/employee-statistics/months/${employeeId}`,
 				{
 					params: { data }
 				}
@@ -76,7 +77,7 @@ export class EmployeeStatisticsService {
 
 		return this.http
 			.get<IMonthAggregatedEmployeeStatistics[]>(
-				`/api/employee-statistics/months`,
+				`${API_PREFIX}/employee-statistics/months`,
 				{
 					params: { data }
 				}
@@ -97,7 +98,7 @@ export class EmployeeStatisticsService {
 
 		return this.http
 			.get<IEmployeeStatisticsHistory[]>(
-				`/api/employee-statistics/history`,
+				`${API_PREFIX}/employee-statistics/history`,
 				{
 					params: { data }
 				}

@@ -6,6 +6,7 @@ import {
 	ICandidatePersonalQualitiesCreateInput,
 	ICandidatePersonalQualitiesFindInput
 } from '@gauzy/contracts';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class CandidatePersonalQualitiesService {
@@ -16,7 +17,7 @@ export class CandidatePersonalQualitiesService {
 	): Promise<ICandidatePersonalQualities> {
 		return this.http
 			.post<ICandidatePersonalQualities>(
-				'/api/candidate-personal-qualities',
+				`${API_PREFIX}/candidate-personal-qualities`,
 				createInput
 			)
 			.pipe(first())
@@ -29,7 +30,7 @@ export class CandidatePersonalQualitiesService {
 	): Promise<ICandidatePersonalQualities[]> {
 		return this.http
 			.post<ICandidatePersonalQualities[]>(
-				'/api/candidate-personal-qualities/createBulk',
+				`${API_PREFIX}/candidate-personal-qualities/createBulk`,
 				{ interviewId, personalQualities }
 			)
 			.pipe(first())
@@ -43,7 +44,7 @@ export class CandidatePersonalQualitiesService {
 
 		return this.http
 			.get<{ items: ICandidatePersonalQualities[]; total: number }>(
-				`/api/candidate-personal-qualities`,
+				`${API_PREFIX}/candidate-personal-qualities`,
 				{
 					params: { data }
 				}
@@ -57,7 +58,7 @@ export class CandidatePersonalQualitiesService {
 	): Promise<ICandidatePersonalQualities[]> {
 		return this.http
 			.get<ICandidatePersonalQualities[]>(
-				`/api/candidate-personal-qualities/getByInterviewId/${interviewId}`
+				`${API_PREFIX}/candidate-personal-qualities/getByInterviewId/${interviewId}`
 			)
 			.pipe(first())
 			.toPromise();
@@ -65,14 +66,17 @@ export class CandidatePersonalQualitiesService {
 
 	update(id: string, updateInput: any): Promise<any> {
 		return this.http
-			.put(`/api/candidate-personal-qualities/${id}`, updateInput)
+			.put(
+				`${API_PREFIX}/candidate-personal-qualities/${id}`,
+				updateInput
+			)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/candidate-personal-qualities/${id}`)
+			.delete(`${API_PREFIX}/candidate-personal-qualities/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
@@ -83,9 +87,12 @@ export class CandidatePersonalQualitiesService {
 	): Promise<any> {
 		const data = JSON.stringify({ personalQualities });
 		return this.http
-			.delete(`/api/candidate-personal-qualities/deleteBulk/${id}`, {
-				params: { data }
-			})
+			.delete(
+				`${API_PREFIX}/candidate-personal-qualities/deleteBulk/${id}`,
+				{
+					params: { data }
+				}
+			)
 			.pipe(first())
 			.toPromise();
 	}

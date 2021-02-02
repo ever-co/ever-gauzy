@@ -6,6 +6,7 @@ import {
 	IOrganizationTeamCreateInput
 } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -25,7 +26,7 @@ export class OrganizationTeamsService {
 	): Promise<IOrganizationTeam> {
 		return this.http
 			.post<IOrganizationTeam>(
-				'/api/organization-team/create',
+				`${API_PREFIX}/organization-team/create`,
 				createInput
 			)
 			.pipe(first())
@@ -40,7 +41,7 @@ export class OrganizationTeamsService {
 
 		return this.http
 			.get<{ items: IOrganizationTeam[]; total: number }>(
-				`/api/organization-team`,
+				`${API_PREFIX}/organization-team`,
 				{
 					params: { data }
 				}
@@ -54,14 +55,14 @@ export class OrganizationTeamsService {
 		updateInput: IOrganizationTeamCreateInput
 	): Promise<any> {
 		return this.http
-			.put(`/api/organization-team/${id}`, updateInput)
+			.put(`${API_PREFIX}/organization-team/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/organization-team/${id}`)
+			.delete(`${API_PREFIX}/organization-team/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
@@ -75,7 +76,7 @@ export class OrganizationTeamsService {
 
 		return this.http
 			.get<{ items: IOrganizationTeam[]; total: number }>(
-				`/api/organization-team/me`,
+				`${API_PREFIX}/organization-team/me`,
 				{
 					params: { data }
 				}

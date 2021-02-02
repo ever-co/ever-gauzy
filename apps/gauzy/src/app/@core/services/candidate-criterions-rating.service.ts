@@ -6,6 +6,7 @@ import {
 	ICandidateCriterionsRating,
 	ICandidateTechnologies
 } from '@gauzy/contracts';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class CandidateCriterionsRatingService {
@@ -18,7 +19,7 @@ export class CandidateCriterionsRatingService {
 	): Promise<ICandidateCriterionsRating[]> {
 		return this.http
 			.post<ICandidateCriterionsRating[]>(
-				'/api/candidate-criterions-rating/createBulk',
+				`${API_PREFIX}/candidate-criterions-rating/createBulk`,
 				{
 					feedbackId,
 					technologies,
@@ -32,7 +33,7 @@ export class CandidateCriterionsRatingService {
 	getAll(): Promise<{ items: any[]; total: number }> {
 		return this.http
 			.get<{ items: ICandidateCriterionsRating[]; total: number }>(
-				`/api/candidate-criterions-rating`
+				`${API_PREFIX}/candidate-criterions-rating`
 			)
 			.pipe(first())
 			.toPromise();
@@ -43,7 +44,7 @@ export class CandidateCriterionsRatingService {
 		personalQualities: number[]
 	): Promise<any> {
 		return this.http
-			.put('/api/candidate-criterions-rating/updateBulk', {
+			.put(`${API_PREFIX}/candidate-criterions-rating/updateBulk`, {
 				criterionsRating,
 				technologies,
 				personalQualities
@@ -55,7 +56,7 @@ export class CandidateCriterionsRatingService {
 	deleteBulk(id: string): Promise<any> {
 		const data = JSON.stringify({ id });
 		return this.http
-			.delete('/api/candidate-criterions-rating/deleteBulk', {
+			.delete(`${API_PREFIX}/candidate-criterions-rating/deleteBulk`, {
 				params: { data }
 			})
 			.pipe(first())

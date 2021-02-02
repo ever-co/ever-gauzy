@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { IEmail, IEmailFindInput, IEmailUpdateInput } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -17,7 +18,7 @@ export class EmailService {
 		const data = JSON.stringify({ relations, findInput, take });
 
 		return this.http
-			.get<{ items: IEmail[]; total: number }>(`/api/email`, {
+			.get<{ items: IEmail[]; total: number }>(`${API_PREFIX}/email`, {
 				params: { data }
 			})
 			.pipe(first())
