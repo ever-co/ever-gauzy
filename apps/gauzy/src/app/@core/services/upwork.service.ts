@@ -11,6 +11,7 @@ import {
 	IntegrationEnum,
 	IUpworkClientSecretPair
 } from '@gauzy/contracts';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -20,7 +21,7 @@ export class UpworkService {
 
 	uploadTransaction(formData: FormData): Observable<any> {
 		return this.http.post(
-			'/api/integrations/upwork/transactions',
+			`${API_PREFIX}/integrations/upwork/transactions`,
 			formData
 		);
 	}
@@ -30,7 +31,7 @@ export class UpworkService {
 		organizationId: string
 	): Observable<IAccessTokenSecretPair> {
 		return this.http.post<IAccessTokenSecretPair>(
-			`/api/integrations/upwork/token-secret-pair/${organizationId}`,
+			`${API_PREFIX}/integrations/upwork/token-secret-pair/${organizationId}`,
 			config
 		);
 	}
@@ -40,7 +41,7 @@ export class UpworkService {
 		organizationId: string
 	): Observable<IAccessToken> {
 		return this.http.post<IAccessToken>(
-			`/api/integrations/upwork/access-token/${organizationId}`,
+			`${API_PREFIX}/integrations/upwork/access-token/${organizationId}`,
 			accessTokenDto
 		);
 	}
@@ -48,7 +49,7 @@ export class UpworkService {
 	getContracts(config): Observable<IEngagement[]> {
 		const data = JSON.stringify({ config });
 		return this.http.get<IEngagement[]>(
-			'/api/integrations/upwork/freelancer-contracts',
+			`${API_PREFIX}/integrations/upwork/freelancer-contracts`,
 			{ params: { data } }
 		);
 	}
@@ -56,21 +57,21 @@ export class UpworkService {
 	getConfig(dto): Observable<IUpworkApiConfig> {
 		const { integrationId, data } = dto;
 		return this.http.get<IUpworkApiConfig>(
-			`/api/integrations/upwork/config/${integrationId}`,
+			`${API_PREFIX}/integrations/upwork/config/${integrationId}`,
 			{ params: { data } }
 		);
 	}
 
 	syncContracts(syncContractsDto): Observable<IIntegrationMap[]> {
 		return this.http.post<IIntegrationMap[]>(
-			`/api/integrations/upwork/sync-contracts`,
+			`${API_PREFIX}/integrations/upwork/sync-contracts`,
 			syncContractsDto
 		);
 	}
 
 	syncContractsRelatedData(dto) {
 		return this.http.post<IIntegrationMap[]>(
-			`/api/integrations/upwork/sync-contracts-related-data`,
+			`${API_PREFIX}/integrations/upwork/sync-contracts-related-data`,
 			dto
 		);
 	}
@@ -78,7 +79,7 @@ export class UpworkService {
 	getAllReports(dto): Observable<any> {
 		const { integrationId, data } = dto;
 		return this.http.get<any>(
-			`/api/integrations/upwork/report/${integrationId}`,
+			`${API_PREFIX}/integrations/upwork/report/${integrationId}`,
 			{ params: { data } }
 		);
 	}
@@ -88,7 +89,7 @@ export class UpworkService {
 	 */
 	checkRemeberState(organizationId: string) {
 		return this.http.get<any>(
-			`/api/integration/check/state/${IntegrationEnum.UPWORK}/${organizationId}`
+			`${API_PREFIX}/integration/check/state/${IntegrationEnum.UPWORK}/${organizationId}`
 		);
 	}
 }

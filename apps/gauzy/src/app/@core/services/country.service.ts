@@ -4,6 +4,8 @@ import { ICountry, IPagination } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, EMPTY, Observable, Subject } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
+
 @UntilDestroy()
 @Injectable()
 export class CountryService {
@@ -32,7 +34,7 @@ export class CountryService {
 			return EMPTY;
 		}
 		return this.http
-			.get<IPagination<ICountry>>(`api/country`)
+			.get<IPagination<ICountry>>(`${API_PREFIX}/country`)
 			.pipe(
 				map(({ items, total }) => {
 					this._countries$.next(items);

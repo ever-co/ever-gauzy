@@ -2,6 +2,7 @@ import { IHelpCenter, IHelpCenterFind } from '@gauzy/contracts';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -11,7 +12,7 @@ export class HelpCenterService {
 
 	create(createInput: IHelpCenter): Promise<IHelpCenter> {
 		return this.http
-			.post<IHelpCenter>('/api/help-center', createInput)
+			.post<IHelpCenter>(`${API_PREFIX}/help-center`, createInput)
 			.pipe(first())
 			.toPromise();
 	}
@@ -22,9 +23,12 @@ export class HelpCenterService {
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
-			.get<{ items: IHelpCenter[]; total: number }>(`/api/help-center`, {
-				params: { data }
-			})
+			.get<{ items: IHelpCenter[]; total: number }>(
+				`${API_PREFIX}/help-center`,
+				{
+					params: { data }
+				}
+			)
 			.pipe(first())
 			.toPromise();
 	}
@@ -34,7 +38,7 @@ export class HelpCenterService {
 		newChildren: IHelpCenter[]
 	): Promise<IHelpCenter[]> {
 		return this.http
-			.post<IHelpCenter[]>('/api/help-center/updateBulk', {
+			.post<IHelpCenter[]>(`${API_PREFIX}/help-center/updateBulk`, {
 				oldChildren,
 				newChildren
 			})
@@ -44,21 +48,21 @@ export class HelpCenterService {
 
 	update(id: string, updateInput: any): Promise<any> {
 		return this.http
-			.put(`/api/help-center/${id}`, updateInput)
+			.put(`${API_PREFIX}/help-center/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/help-center/${id}`)
+			.delete(`${API_PREFIX}/help-center/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
 
 	findByBaseId(parentId: string): Promise<IHelpCenter[]> {
 		return this.http
-			.get<IHelpCenter[]>(`/api/help-center/${parentId}`)
+			.get<IHelpCenter[]>(`${API_PREFIX}/help-center/${parentId}`)
 			.pipe(first())
 			.toPromise();
 	}
@@ -66,7 +70,7 @@ export class HelpCenterService {
 	deleteBulkByBaseId(id: string): Promise<any> {
 		const data = JSON.stringify({ id });
 		return this.http
-			.delete('/api/help-center/deleteBulkByBaseId', {
+			.delete(`${API_PREFIX}/help-center/deleteBulkByBaseId`, {
 				params: { data }
 			})
 			.pipe(first())

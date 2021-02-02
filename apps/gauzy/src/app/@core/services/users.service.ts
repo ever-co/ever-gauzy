@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { IUser, IUserFindInput } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class UsersService {
 	constructor(private http: HttpClient) {}
 
-	API_URL = '/api/user';
+	API_URL = `${API_PREFIX}/user`;
 
 	getMe(relations?: string[]): Promise<IUser> {
 		const data = JSON.stringify({ relations });

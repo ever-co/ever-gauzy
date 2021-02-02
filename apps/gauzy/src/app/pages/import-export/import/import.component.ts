@@ -3,8 +3,9 @@ import { FileUploader } from 'ng2-file-upload';
 import { NbToastrService, NbGlobalPhysicalPosition } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { API_PREFIX } from '../../../@core/constants/app.constants';
 
-const URL = '/api/import';
+const URL = `${API_PREFIX}/import`;
 @Component({
 	selector: 'ngx-download',
 	templateUrl: './import.component.html',

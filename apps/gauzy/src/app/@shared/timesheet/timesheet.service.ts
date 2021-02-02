@@ -22,6 +22,7 @@ import {
 import { toParams } from '@gauzy/common-angular';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { Observable } from 'rxjs/Observable';
+import { API_PREFIX } from '../../@core/constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -40,7 +41,7 @@ export class TimesheetService {
 
 	addTime(request: IManualTimeInput): Promise<ITimeLog> {
 		return this.http
-			.post<ITimeLog>('/api/timesheet/time-log', request)
+			.post<ITimeLog>(`${API_PREFIX}/timesheet/time-log`, request)
 			.toPromise();
 	}
 
@@ -49,13 +50,13 @@ export class TimesheetService {
 		request: ITimeLog | Partial<ITimeLog>
 	): Promise<ITimeLog> {
 		return this.http
-			.put<ITimeLog>('/api/timesheet/time-log/' + id, request)
+			.put<ITimeLog>(`${API_PREFIX}/timesheet/time-log/` + id, request)
 			.toPromise();
 	}
 
 	checkOverlaps(request: IGetTimeLogConflictInput): Promise<ITimeLog[]> {
 		return this.http
-			.get<ITimeLog[]>('/api/timesheet/time-log/conflict', {
+			.get<ITimeLog[]>(`${API_PREFIX}/timesheet/time-log/conflict`, {
 				params: toParams(request)
 			})
 			.toPromise();
@@ -63,7 +64,7 @@ export class TimesheetService {
 
 	getTimeSheet(id: string) {
 		return this.http
-			.get('/api/timesheet/' + id)
+			.get(`${API_PREFIX}/timesheet/` + id)
 			.toPromise()
 			.then((data: ITimesheet) => {
 				return data;
@@ -72,7 +73,7 @@ export class TimesheetService {
 
 	getTimeSheets(request?: IGetTimesheetInput) {
 		return this.http
-			.get('/api/timesheet', { params: toParams(request) })
+			.get(`${API_PREFIX}/timesheet`, { params: toParams(request) })
 			.toPromise()
 			.then((data: ITimesheet[]) => {
 				return data;
@@ -81,7 +82,7 @@ export class TimesheetService {
 
 	getTimeSheetCount(request?: IGetTimesheetInput) {
 		return this.http
-			.get('/api/timesheet/count', { params: toParams(request) })
+			.get(`${API_PREFIX}/timesheet/count`, { params: toParams(request) })
 			.toPromise()
 			.then((data: number) => {
 				return data;
@@ -90,7 +91,7 @@ export class TimesheetService {
 
 	updateStatus(ids: string | string[], status: TimesheetStatus) {
 		return this.http
-			.put(`/api/timesheet/status`, { ids, status })
+			.put(`${API_PREFIX}/timesheet/status`, { ids, status })
 			.toPromise()
 			.then((data: any) => {
 				return data;
@@ -99,7 +100,7 @@ export class TimesheetService {
 
 	submitTimesheet(ids: string | string[], status: 'submit' | 'unsubmit') {
 		return this.http
-			.put(`/api/timesheet/submit`, { ids, status })
+			.put(`${API_PREFIX}/timesheet/submit`, { ids, status })
 			.toPromise()
 			.then((data: any) => {
 				return data;
@@ -109,14 +110,14 @@ export class TimesheetService {
 	getTimeLogs(request?: IGetTimeLogInput) {
 		const params = toParams(request);
 		return this.http
-			.get<ITimeLog[]>('/api/timesheet/time-log', { params })
+			.get<ITimeLog[]>(`${API_PREFIX}/timesheet/time-log`, { params })
 			.toPromise();
 	}
 
 	getDailyReport(request?: IGetTimeLogInput) {
 		const params = toParams(request);
 		return this.http
-			.get('/api/timesheet/time-log/report/daily', { params })
+			.get(`${API_PREFIX}/timesheet/time-log/report/daily`, { params })
 			.toPromise();
 	}
 
@@ -124,7 +125,7 @@ export class TimesheetService {
 		const params = toParams(request);
 		return this.http
 			.get<IAmountOwedReport[]>(
-				'/api/timesheet/time-log/report/owed-report',
+				`${API_PREFIX}/timesheet/time-log/report/owed-report`,
 				{ params }
 			)
 			.toPromise();
@@ -133,36 +134,43 @@ export class TimesheetService {
 	getOwedAmountReportChartData(request?: IGetTimeLogInput) {
 		const params = toParams(request);
 		return this.http
-			.get('/api/timesheet/time-log/report/owed-chart-data', { params })
+			.get(`${API_PREFIX}/timesheet/time-log/report/owed-chart-data`, {
+				params
+			})
 			.toPromise();
 	}
 
 	getDailyReportChartData(request: IGetTimeLogReportInput) {
 		const params = toParams(request);
 		return this.http
-			.get('/api/timesheet/time-log/report/daily-chart', { params })
+			.get(`${API_PREFIX}/timesheet/time-log/report/daily-chart`, {
+				params
+			})
 			.toPromise();
 	}
 
 	getWeeklyReport(request?: IGetTimeLogInput) {
 		const params = toParams(request);
 		return this.http
-			.get('/api/timesheet/time-log/report/weekly', { params })
+			.get(`${API_PREFIX}/timesheet/time-log/report/weekly`, { params })
 			.toPromise();
 	}
 
 	getTimeLimit(request: IGetTimeLimitReportInput) {
 		return this.http
-			.get<ITimeLimitReport[]>('/api/timesheet/time-log/time-limit', {
-				params: toParams(request)
-			})
+			.get<ITimeLimitReport[]>(
+				`${API_PREFIX}/timesheet/time-log/time-limit`,
+				{
+					params: toParams(request)
+				}
+			)
 			.toPromise();
 	}
 
 	getProjectBudgetLimit(request: IProjectBudgetLimitReportInput) {
 		return this.http
 			.get<IProjectBudgetLimitReport[]>(
-				'/api/timesheet/time-log/project-budget-limit',
+				`${API_PREFIX}/timesheet/time-log/project-budget-limit`,
 				{
 					params: toParams(request)
 				}
@@ -173,7 +181,7 @@ export class TimesheetService {
 	getClientBudgetLimit(request: IClientBudgetLimitReportInput) {
 		return this.http
 			.get<IClientBudgetLimitReport[]>(
-				'/api/timesheet/time-log/client-budget-limit',
+				`${API_PREFIX}/timesheet/time-log/client-budget-limit`,
 				{
 					params: toParams(request)
 				}
@@ -184,7 +192,7 @@ export class TimesheetService {
 	getTimeLog(id: string, findOptions) {
 		const params = toParams(findOptions);
 		return this.http
-			.get(`/api/timesheet/time-log/${id}`, { params })
+			.get(`${API_PREFIX}/timesheet/time-log/${id}`, { params })
 			.toPromise()
 			.then((data: ITimeLog) => {
 				return data;
@@ -194,21 +202,23 @@ export class TimesheetService {
 	getTimeSlot(id, request?: IGetTimeSlotInput) {
 		const params = toParams(request);
 		return this.http
-			.get<ITimeSlot>(`/api/timesheet/time-slot/${id}`, { params })
+			.get<ITimeSlot>(`${API_PREFIX}/timesheet/time-slot/${id}`, {
+				params
+			})
 			.toPromise();
 	}
 
 	getTimeSlots(request?: IGetTimeSlotInput) {
 		const params = toParams(request);
 		return this.http
-			.get<ITimeSlot[]>('/api/timesheet/time-slot', { params })
+			.get<ITimeSlot[]>(`${API_PREFIX}/timesheet/time-slot`, { params })
 			.toPromise();
 	}
 
 	deleteTimeSlots(ids?: string[]) {
 		const params = toParams({ ids });
 		return this.http
-			.delete('/api/timesheet/time-slot', { params })
+			.delete(`${API_PREFIX}/timesheet/time-slot`, { params })
 			.toPromise();
 	}
 
@@ -221,7 +231,7 @@ export class TimesheetService {
 			payload = payload.append(`logIds[]`, id);
 		});
 		return this.http
-			.delete('/api/timesheet/time-log', { params: payload })
+			.delete(`${API_PREFIX}/timesheet/time-log`, { params: payload })
 			.toPromise();
 	}
 }

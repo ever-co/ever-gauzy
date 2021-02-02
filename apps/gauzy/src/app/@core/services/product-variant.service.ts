@@ -2,10 +2,11 @@ import { Injectable } from '@angular/core';
 import { IProductVariant, IVariantCreateInput } from '@gauzy/contracts';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class ProductVariantService {
-	PRODUCT_VARIANTS_URL = '/api/product-variants';
+	PRODUCT_VARIANTS_URL = `${API_PREFIX}/product-variants`;
 
 	constructor(private http: HttpClient) {}
 

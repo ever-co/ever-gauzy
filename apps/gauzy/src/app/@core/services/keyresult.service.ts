@@ -4,6 +4,7 @@ import { IKeyResult } from '@gauzy/contracts';
 import { Observable, throwError } from 'rxjs';
 import { catchError, first } from 'rxjs/operators';
 import { ToastrService } from './toastr.service';
+import { API_PREFIX } from '../constants/app.constants';
 
 interface IKeyResultResponse {
 	items: IKeyResult[];
@@ -14,7 +15,8 @@ interface IKeyResultResponse {
 	providedIn: 'root'
 })
 export class KeyResultService {
-	private readonly API_URL = '/api/key-results';
+	private readonly API_URL = `${API_PREFIX}/key-results`;
+
 	constructor(
 		private _http: HttpClient,
 		private toastrService: ToastrService

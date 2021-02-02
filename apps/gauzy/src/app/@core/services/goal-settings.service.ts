@@ -13,14 +13,16 @@ import {
 import { throwError } from 'rxjs';
 import { catchError, first } from 'rxjs/operators';
 import { ToastrService } from './toastr.service';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class GoalSettingsService {
-	private readonly TIME_FRAME_URL = '/api/goal-time-frame';
-	private readonly KPI_URL = '/api/goal-kpi';
-	private readonly GENERAL_SETTINGS_URL = '/api/goal-general-settings';
+	private readonly TIME_FRAME_URL = `${API_PREFIX}/goal-time-frame`;
+	private readonly KPI_URL = `${API_PREFIX}/goal-kpi`;
+	private readonly GENERAL_SETTINGS_URL = `${API_PREFIX}/goal-general-settings`;
+
 	constructor(
 		private _http: HttpClient,
 		private toastrService: ToastrService

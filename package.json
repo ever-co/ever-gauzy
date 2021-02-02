@@ -75,7 +75,7 @@
 		"doc:build": "compodoc -p tsconfig.json -d dist/docs",
 		"doc:serve": "compodoc -s -d dist/docs",
 		"doc:build-serve": "compodoc -p tsconfig.json -d docs -s",
-		"postinstall": "yarn node ./decorate-angular-cli.js && ngcc --properties es2016 browser module main --first-only --create-ivy-entry-points",
+		"postinstall": "yarn node ./decorate-angular-cli.js && yarn ngcc --properties es2016 browser module main --first-only --create-ivy-entry-points",
 		"postinstall.electron": "yarn electron-builder install-app-deps && yarn node tools/electron/postinstall",
 		"postinstall.web": "yarn node tools/web/postinstall",
 		"build:desktop": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run postinstall.electron && yarn build:package:all && yarn run config:prod && yarn nx build desktop --prod --base-href ./ && yarn run prepare:desktop && yarn nx build desktop-api --prod && yarn nx build api-desktop --prod && yarn nx build desktop-ui --prod --base-href ./",

@@ -5,6 +5,7 @@ import {
 	IOrganizationDocument,
 	IOrganizationDocumentFindInput
 } from '@gauzy/contracts';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -16,7 +17,7 @@ export class OrganizationDocumentsService {
 		newDocument: IOrganizationDocument
 	): Observable<IOrganizationDocument> {
 		return this.http.post<IOrganizationDocument>(
-			'/api/organization-documents',
+			`${API_PREFIX}/organization-documents`,
 			newDocument
 		);
 	}
@@ -26,21 +27,21 @@ export class OrganizationDocumentsService {
 	): Observable<{ items: IOrganizationDocument[]; total: number }> {
 		const data = JSON.stringify({ findInput });
 		return this.http.get<{ items: IOrganizationDocument[]; total: number }>(
-			'/api/organization-documents',
+			`${API_PREFIX}/organization-documents`,
 			{ params: { data } }
 		);
 	}
 
 	update(id: string, updateInput: IOrganizationDocument) {
 		return this.http.put<IOrganizationDocument>(
-			`/api/organization-documents/${id}`,
+			`${API_PREFIX}/organization-documents/${id}`,
 			updateInput
 		);
 	}
 
 	delete(id: string): Observable<IOrganizationDocument> {
 		return this.http.delete<IOrganizationDocument>(
-			`/api/organization-documents/${id}`
+			`${API_PREFIX}/organization-documents/${id}`
 		);
 	}
 }

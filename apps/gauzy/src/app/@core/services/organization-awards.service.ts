@@ -6,6 +6,7 @@ import {
 	IOrganizationAwardsFindInput
 } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -17,7 +18,10 @@ export class OrganizationAwardsService {
 		createInput: IOrganizationAwardsCreateInput
 	): Promise<IOrganizationAwards> {
 		return this.http
-			.post<IOrganizationAwards>('/api/organization-awards', createInput)
+			.post<IOrganizationAwards>(
+				`${API_PREFIX}/organization-awards`,
+				createInput
+			)
 			.pipe(first())
 			.toPromise();
 	}
@@ -30,7 +34,7 @@ export class OrganizationAwardsService {
 
 		return this.http
 			.get<{ items: IOrganizationAwards[]; total: number }>(
-				`/api/organization-awards`,
+				`${API_PREFIX}/organization-awards`,
 				{
 					params: { data }
 				}
@@ -41,14 +45,14 @@ export class OrganizationAwardsService {
 
 	update(id: string, updateInput: any): Promise<any> {
 		return this.http
-			.put(`/api/organization-awards/${id}`, updateInput)
+			.put(`${API_PREFIX}/organization-awards/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/organization-awards/${id}`)
+			.delete(`${API_PREFIX}/organization-awards/${id}`)
 			.pipe(first())
 			.toPromise();
 	}

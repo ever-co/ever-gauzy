@@ -8,6 +8,7 @@ import {
 } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class OrganizationsService {
@@ -15,21 +16,21 @@ export class OrganizationsService {
 
 	create(createInput: IOrganizationCreateInput): Promise<IOrganization> {
 		return this.http
-			.post<IOrganization>('/api/organization', createInput)
+			.post<IOrganization>(`${API_PREFIX}/organization`, createInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	update(id: string, updateInput: IOrganizationCreateInput): Promise<any> {
 		return this.http
-			.put(`/api/organization/${id}`, updateInput)
+			.put(`${API_PREFIX}/organization/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/organization/${id}`)
+			.delete(`${API_PREFIX}/organization/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
@@ -41,7 +42,7 @@ export class OrganizationsService {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
 			.get<{ items: IOrganization[]; total: number }>(
-				`/api/organization`,
+				`${API_PREFIX}/organization`,
 				{
 					params: { data }
 				}
@@ -57,7 +58,7 @@ export class OrganizationsService {
 	): Observable<IOrganization> {
 		const data = JSON.stringify({ relations });
 		return this.http.get<IOrganization>(
-			`/api/organization/${id}/${JSON.stringify(select || '')}`,
+			`${API_PREFIX}/organization/${id}/${JSON.stringify(select || '')}`,
 			{
 				params: { data }
 			}
@@ -71,7 +72,7 @@ export class OrganizationsService {
 	): Observable<IOrganization> {
 		const option = JSON.stringify(relations || '');
 		return this.http.get<IOrganization>(
-			`/api/organization/profile/${profile_link}/${JSON.stringify(
+			`${API_PREFIX}/organization/profile/${profile_link}/${JSON.stringify(
 				select || ''
 			)}/${option}`
 		);

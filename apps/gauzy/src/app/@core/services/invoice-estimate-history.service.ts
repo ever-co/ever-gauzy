@@ -5,6 +5,7 @@ import {
 	IInvoiceEstimateHistoryFindInput
 } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class InvoiceEstimateHistoryService {
@@ -17,7 +18,7 @@ export class InvoiceEstimateHistoryService {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
 			.get<{ items: IInvoiceEstimateHistory[] }>(
-				'/api/invoice-estimate-history',
+				`${API_PREFIX}/invoice-estimate-history`,
 				{
 					params: { data }
 				}
@@ -31,7 +32,7 @@ export class InvoiceEstimateHistoryService {
 	): Promise<IInvoiceEstimateHistory> {
 		return this.http
 			.post<IInvoiceEstimateHistory>(
-				'/api/invoice-estimate-history',
+				`${API_PREFIX}/invoice-estimate-history`,
 				invoiceEstimateHistory
 			)
 			.pipe(first())
@@ -40,7 +41,7 @@ export class InvoiceEstimateHistoryService {
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/invoice-estimate-history/${id}`)
+			.delete(`${API_PREFIX}/invoice-estimate-history/${id}`)
 			.pipe(first())
 			.toPromise();
 	}

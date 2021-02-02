@@ -2,6 +2,7 @@ import { IHelpCenterArticle } from '@gauzy/contracts';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -11,28 +12,33 @@ export class HelpCenterArticleService {
 
 	create(createInput: IHelpCenterArticle): Promise<IHelpCenterArticle> {
 		return this.http
-			.post<IHelpCenterArticle>('/api/help-center-article', createInput)
+			.post<IHelpCenterArticle>(
+				`${API_PREFIX}/help-center-article`,
+				createInput
+			)
 			.pipe(first())
 			.toPromise();
 	}
 
 	findByCategoryId(categoryId: string): Promise<IHelpCenterArticle[]> {
 		return this.http
-			.get<IHelpCenterArticle[]>(`/api/help-center-article/${categoryId}`)
+			.get<IHelpCenterArticle[]>(
+				`${API_PREFIX}/help-center-article/${categoryId}`
+			)
 			.pipe(first())
 			.toPromise();
 	}
 
 	update(id: string, updateInput: any): Promise<any> {
 		return this.http
-			.put(`/api/help-center-article/${id}`, updateInput)
+			.put(`${API_PREFIX}/help-center-article/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/help-center-article/${id}`)
+			.delete(`${API_PREFIX}/help-center-article/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
@@ -40,9 +46,12 @@ export class HelpCenterArticleService {
 	deleteBulkByCategoryId(id: string): Promise<any> {
 		const data = JSON.stringify({ id });
 		return this.http
-			.delete('/api/help-center-article/deleteBulkByCategoryId', {
-				params: { data }
-			})
+			.delete(
+				`${API_PREFIX}/help-center-article/deleteBulkByCategoryId`,
+				{
+					params: { data }
+				}
+			)
 			.pipe(first())
 			.toPromise();
 	}

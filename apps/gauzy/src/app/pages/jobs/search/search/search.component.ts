@@ -28,6 +28,7 @@ import * as moment from 'moment';
 import { Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { ProposalTemplateService } from '../../proposal-template/proposal-template.service';
+import { API_PREFIX } from 'apps/gauzy/src/app/@core/constants/app.constants';
 
 @UntilDestroy()
 @Component({
@@ -261,7 +262,7 @@ export class SearchComponent
 
 	public getInstance(): ServerDataSource {
 		return new ServerDataSource(this.http, {
-			endPoint: '/api/employee-job',
+			endPoint: `${API_PREFIX}/employee-job`,
 			sortFieldKey: 'orderBy',
 			sortDirKey: 'order',
 			filterFieldKey: 'filters',

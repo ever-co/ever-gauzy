@@ -6,6 +6,7 @@ import {
 	IEmployeeAwardCreateInput
 } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -15,7 +16,7 @@ export class EmployeeAwardService {
 
 	create(createInput: IEmployeeAwardCreateInput): Observable<IEmployeeAward> {
 		return this.http.post<IEmployeeAward>(
-			'/api/employee-award',
+			`${API_PREFIX}/employee-award`,
 			createInput
 		);
 	}
@@ -27,7 +28,7 @@ export class EmployeeAwardService {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http.get<{ items: IEmployeeAward[]; total: number }>(
-			`/api/employee-award`,
+			`${API_PREFIX}/employee-award`,
 			{
 				params: { data }
 			}
@@ -35,10 +36,10 @@ export class EmployeeAwardService {
 	}
 
 	update(id: string, updateInput: any): Observable<any> {
-		return this.http.put(`/api/employee-award/${id}`, updateInput);
+		return this.http.put(`${API_PREFIX}/employee-award/${id}`, updateInput);
 	}
 
 	delete(id: string): Observable<any> {
-		return this.http.delete(`/api/employee-award/${id}`);
+		return this.http.delete(`${API_PREFIX}/employee-award/${id}`);
 	}
 }
