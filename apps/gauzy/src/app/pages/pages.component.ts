@@ -13,7 +13,7 @@ import { Store } from '../@core/services/store.service';
 import { SelectorService } from '../@core/utils/selector.service';
 import { EmployeesService, UsersService } from '../@core/services';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { ReportService } from './reports/all-report/report.server';
+import { ReportService } from './reports/all-report/report.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { chain } from 'underscore';
 import { AuthStrategy } from '../@core/auth/auth-strategy.service';

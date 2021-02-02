@@ -7,11 +7,13 @@ import {
 	IOrganizationEmploymentTypeFindInput,
 	IOrganizationEmploymentTypeCreateInput
 } from '@gauzy/contracts';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class OrganizationEmploymentTypesService {
+	private readonly API_URL = `${API_PREFIX}/organization-employment-type`;
+
 	constructor(private http: HttpClient) {}
-	private readonly API_URL = '/api/organization-employment-type';
 
 	getAll(
 		relations?: string[],
@@ -45,7 +47,10 @@ export class OrganizationEmploymentTypesService {
 
 	editEmploymentType(id: string, updateInput: any): Promise<any> {
 		return this.http
-			.put(`/api/organization-employment-type/${id}`, updateInput)
+			.put(
+				`${API_PREFIX}/organization-employment-type/${id}`,
+				updateInput
+			)
 			.pipe(first())
 			.toPromise();
 	}

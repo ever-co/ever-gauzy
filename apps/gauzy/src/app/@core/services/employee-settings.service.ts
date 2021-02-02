@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { IEmployeeSetting, IEmployeeSettingFindInput } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -11,7 +12,10 @@ export class EmployeeSettingService {
 
 	create(createInput: IEmployeeSetting): Promise<any> {
 		return this.http
-			.post<IEmployeeSetting>('/api/employee-setting', createInput)
+			.post<IEmployeeSetting>(
+				`${API_PREFIX}/employee-setting`,
+				createInput
+			)
 			.pipe(first())
 			.toPromise();
 	}
@@ -29,7 +33,7 @@ export class EmployeeSettingService {
 			.get<{
 				items: IEmployeeSetting[];
 				total: number;
-			}>('/api/employee-setting', {
+			}>(`${API_PREFIX}/employee-setting`, {
 				params: { data }
 			})
 			.pipe(first())
@@ -38,14 +42,14 @@ export class EmployeeSettingService {
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/employee-setting/${id}`)
+			.delete(`${API_PREFIX}/employee-setting/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
 
 	update(id: string, updateInput: IEmployeeSetting): Promise<any> {
 		return this.http
-			.put(`/api/employee-setting/${id}`, updateInput)
+			.put(`${API_PREFIX}/employee-setting/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}

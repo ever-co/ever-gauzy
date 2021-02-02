@@ -10,6 +10,7 @@ import {
 	IVisibilityJobPostInput
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -19,7 +20,7 @@ export class JobService {
 
 	getJobs(request?: IGetEmployeeJobPostInput) {
 		return this.http
-			.get<IPagination<IEmployeeJobPost>>(`/api/employee-job`, {
+			.get<IPagination<IEmployeeJobPost>>(`${API_PREFIX}/employee-job`, {
 				params: request ? toParams(request) : {}
 			})
 			.pipe(first())
@@ -28,7 +29,7 @@ export class JobService {
 
 	hideJob(request: IVisibilityJobPostInput) {
 		return this.http
-			.post<boolean>(`/api/employee-job/hide`, request)
+			.post<boolean>(`${API_PREFIX}/employee-job/hide`, request)
 			.pipe(first())
 			.toPromise();
 	}
@@ -36,7 +37,7 @@ export class JobService {
 	applyJob(request: IApplyJobPostInput) {
 		return this.http
 			.post<IUpdateEmployeeJobPostAppliedResult>(
-				`/api/employee-job/applied`,
+				`${API_PREFIX}/employee-job/applied`,
 				request
 			)
 			.pipe(first())

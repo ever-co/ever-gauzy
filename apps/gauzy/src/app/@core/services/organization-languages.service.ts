@@ -6,6 +6,7 @@ import {
 	IOrganizationLanguagesFindInput
 } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -18,7 +19,7 @@ export class OrganizationLanguagesService {
 	): Promise<IOrganizationLanguages> {
 		return this.http
 			.post<IOrganizationLanguages>(
-				'/api/organization-languages',
+				`${API_PREFIX}/organization-languages`,
 				createInput
 			)
 			.pipe(first())
@@ -33,7 +34,7 @@ export class OrganizationLanguagesService {
 
 		return this.http
 			.get<{ items: IOrganizationLanguages[]; total: number }>(
-				`/api/organization-languages`,
+				`${API_PREFIX}/organization-languages`,
 				{
 					params: { data }
 				}
@@ -44,14 +45,14 @@ export class OrganizationLanguagesService {
 
 	update(id: string, updateInput: any): Promise<any> {
 		return this.http
-			.put(`/api/organization-languages/${id}`, updateInput)
+			.put(`${API_PREFIX}/organization-languages/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/organization-languages/${id}`)
+			.delete(`${API_PREFIX}/organization-languages/${id}`)
 			.pipe(first())
 			.toPromise();
 	}

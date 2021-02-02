@@ -3,6 +3,7 @@ import { IIntegration } from '@gauzy/contracts';
 import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -20,13 +21,13 @@ export class IntegrationsService {
 			searchQuery,
 			filter
 		});
-		return this._http.get<IIntegration[]>('/api/integration', {
+		return this._http.get<IIntegration[]>(`${API_PREFIX}/integration`, {
 			params: { filters }
 		});
 	}
 
 	fetchIntegrationGroups() {
-		return this._http.get<any[]>('/api/integration/types').pipe(
+		return this._http.get<any[]>(`${API_PREFIX}/integration/types`).pipe(
 			map((groups) =>
 				groups.reduce((prev, current) => {
 					const index = prev.findIndex(

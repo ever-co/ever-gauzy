@@ -9,10 +9,11 @@ import {
 	IProductTranslated,
 	IImageAsset
 } from '@gauzy/contracts';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class ProductService {
-	PRODUCTS_URL = '/api/products';
+	PRODUCTS_URL = `${API_PREFIX}/products`;
 
 	constructor(private http: HttpClient) {}
 

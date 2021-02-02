@@ -9,13 +9,16 @@ import {
 } from '@gauzy/contracts';
 import { first, take } from 'rxjs/operators';
 import { toParams } from '@gauzy/common-angular';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class OrganizationProjectsService {
+	private readonly API_URL = `${API_PREFIX}/organization-projects`;
+
 	constructor(private http: HttpClient) {}
-	private readonly API_URL = '/api/organization-projects';
+
 	create(
 		createInput: IOrganizationProjectsCreateInput
 	): Promise<IOrganizationProject> {

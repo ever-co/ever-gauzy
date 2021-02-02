@@ -7,6 +7,7 @@ import {
 	IOrganizationDepartmentFindInput
 } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -19,7 +20,7 @@ export class OrganizationDepartmentsService {
 	): Promise<IOrganizationDepartment> {
 		return this.http
 			.post<IOrganizationDepartment>(
-				'/api/organization-department',
+				`${API_PREFIX}/organization-department`,
 				createInput
 			)
 			.pipe(first())
@@ -29,7 +30,7 @@ export class OrganizationDepartmentsService {
 	getAllByEmployee(id: string): Promise<IOrganizationDepartment[]> {
 		return this.http
 			.get<IOrganizationDepartment[]>(
-				`/api/organization-department/employee/${id}`
+				`${API_PREFIX}/organization-department/employee/${id}`
 			)
 			.pipe(first())
 			.toPromise();
@@ -43,7 +44,7 @@ export class OrganizationDepartmentsService {
 
 		return this.http
 			.get<{ items: IOrganizationDepartment[]; total: number }>(
-				`/api/organization-department`,
+				`${API_PREFIX}/organization-department`,
 				{
 					params: { data }
 				}
@@ -57,21 +58,21 @@ export class OrganizationDepartmentsService {
 		updateInput: IOrganizationDepartmentCreateInput
 	): Promise<any> {
 		return this.http
-			.put(`/api/organization-department/${id}`, updateInput)
+			.put(`${API_PREFIX}/organization-department/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	updateByEmployee(updateInput: IEditEntityByMemberInput): Promise<any> {
 		return this.http
-			.put(`/api/organization-department/employee`, updateInput)
+			.put(`${API_PREFIX}/organization-department/employee`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/organization-department/${id}`)
+			.delete(`${API_PREFIX}/organization-department/${id}`)
 			.pipe(first())
 			.toPromise();
 	}

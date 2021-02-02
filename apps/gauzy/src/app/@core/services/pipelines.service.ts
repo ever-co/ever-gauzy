@@ -8,6 +8,7 @@ import {
 	IPipelineFindInput
 } from '@gauzy/contracts';
 import { Injectable } from '@angular/core';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class PipelinesService extends Service<
@@ -16,7 +17,7 @@ export class PipelinesService extends Service<
 	IPipelineCreateInput
 > {
 	public constructor(protected store: Store, protected http: HttpClient) {
-		super({ http, basePath: '/api/pipelines' });
+		super({ http, basePath: `${API_PREFIX}/pipelines` });
 	}
 
 	getAll(

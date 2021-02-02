@@ -6,6 +6,7 @@ import {
 	ICandidateEducation,
 	IEducationFindInput
 } from '@gauzy/contracts';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -15,7 +16,10 @@ export class CandidateEducationsService {
 
 	create(createInput: IEducationCreateInput): Promise<ICandidateEducation> {
 		return this.http
-			.post<ICandidateEducation>('/api/candidate-educations', createInput)
+			.post<ICandidateEducation>(
+				`${API_PREFIX}/candidate-educations`,
+				createInput
+			)
 			.pipe(first())
 			.toPromise();
 	}
@@ -26,7 +30,7 @@ export class CandidateEducationsService {
 		const data = JSON.stringify({ findInput });
 		return this.http
 			.get<{ items: ICandidateEducation[]; total: number }>(
-				`/api/candidate-educations`,
+				`${API_PREFIX}/candidate-educations`,
 				{
 					params: { data }
 				}
@@ -37,14 +41,14 @@ export class CandidateEducationsService {
 
 	update(id: string, updateInput: any): Promise<any> {
 		return this.http
-			.put(`/api/candidate-educations/${id}`, updateInput)
+			.put(`${API_PREFIX}/candidate-educations/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/candidate-educations/${id}`)
+			.delete(`${API_PREFIX}/candidate-educations/${id}`)
 			.pipe(first())
 			.toPromise();
 	}

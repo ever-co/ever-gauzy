@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Service } from './service';
 import { IDeal, IDealCreateInput, IDealFindInput } from '@gauzy/contracts';
 import { HttpClient } from '@angular/common/http';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class DealsService extends Service<
@@ -10,7 +11,7 @@ export class DealsService extends Service<
 	IDealCreateInput
 > {
 	public constructor(protected http: HttpClient) {
-		super({ http, basePath: '/api/deals' });
+		super({ http, basePath: `${API_PREFIX}/deals` });
 	}
 
 	getAll(findInput?: IDealFindInput, relations?: string[]): Promise<IDeal[]> {
