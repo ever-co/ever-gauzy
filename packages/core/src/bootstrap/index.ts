@@ -58,12 +58,26 @@ export async function bootstrap(
 		.build();
 
 	const document = SwaggerModule.createDocument(app, options);
+
 	SwaggerModule.setup('swg', app, document);
 
-	const { port } = config.apiConfigOptions;
-	await app.listen(port || 3000, () => {
-		console.log(`Listening at http://localhost:${port}/${globalPrefix}`);
+	let { port, host } = config.apiConfigOptions;
+
+	if (!port) {
+		port = 3000;
+	}
+
+	if (!host) {
+		host = '0.0.0.0';
+	}
+
+	console.log(`Configured Host: ${host}`);
+	console.log(`Configured Port: ${port}`);
+
+	await app.listen(port, host, () => {
+		console.log(`Listening at http://${host}:${port}/${globalPrefix}`);
 	});
+
 	return app;
 }
 
