@@ -27,7 +27,7 @@ export class EmailService {
 
 	update(id: string, updateInput: IEmailUpdateInput): Promise<any> {
 		return this.http
-			.put<IEmail>(`api/email/${id}`, updateInput)
+			.put<IEmail>(`${API_PREFIX}/email/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}

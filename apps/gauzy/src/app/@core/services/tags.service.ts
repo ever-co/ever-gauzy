@@ -82,7 +82,7 @@ export class TagsService {
 	getTagUsageCount(organizationId: any): Promise<any> {
 		const data = JSON.stringify({ organizationId });
 		return this.http
-			.get<any>(`api/tags/getTagsWithCount`, {
+			.get<any>(`${API_PREFIX}/tags/getTagsWithCount`, {
 				params: { data }
 			})
 			.pipe(first())
