@@ -6,8 +6,8 @@
 	"resolutions": {
 		"uglify-js": "npm:terser",
 		"webpack": "^5.18.0",
-		"@angular-devkit/build-angular": "~0.1101.1",
-		"@angular-devkit/architect": "~0.1100.1",
+		"@angular-devkit/build-angular": "~0.1101.2",
+		"@angular-devkit/architect": "~0.1100.2",
 		"@angular-devkit/core": "^11.1.1",
 		"webpack-cli": "^4.4.0"
 	},
@@ -136,9 +136,9 @@
 	},
 	"devDependencies": {
 		"@angular-builders/custom-webpack": "^11.0.0",
-		"@angular-devkit/build-angular": "^0.1101.1",
+		"@angular-devkit/build-angular": "^0.1101.2",
 		"@angular-devkit/build-ng-packagr": "^0.1002.0",
-		"@angular-devkit/architect": "^0.1101.1",
+		"@angular-devkit/architect": "^0.1101.2",
 		"@angular-devkit/core": "^11.1.1",
 		"@angular-devkit/schematics": "^11.1.1",
 		"@angular/cli": "^11.1.1",
