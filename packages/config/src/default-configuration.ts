@@ -15,8 +15,8 @@ import { dbConnectionConfig } from './database';
  */
 export const defaultConfiguration: IPluginConfig = {
 	apiConfigOptions: {
-		host: process.env.host || DEFAULT_API_HOST,
-		port: process.env.port || DEFAULT_API_PORT,
+		host: process.env.HOST || DEFAULT_API_HOST,
+		port: process.env.PORT || DEFAULT_API_PORT,
 		baseUrl: process.env.BASE_URL || DEFAULT_BASE_URL,
 		middleware: [],
 		graphqlConfigOptions: {
