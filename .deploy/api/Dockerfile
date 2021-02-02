@@ -39,7 +39,7 @@ COPY --chown=node:node packages/plugins/integration-hubstaff/package.json ./pack
 COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packages/plugins/integration-upwork/
 COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/plugins/product-reviews/
 
-COPY --chown=node:node lerna.json package.json yarn.lock ./
+COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 
 RUN yarn install --frozen-lockfile && yarn cache clean
 
@@ -65,7 +65,7 @@ COPY --chown=node:node packages/plugins/integration-hubstaff/package.json ./pack
 COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packages/plugins/integration-upwork/
 COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/plugins/product-reviews/
 
-COPY --chown=node:node package.json yarn.lock ./
+COPY --chown=node:node decorate-angular-cli.js package.json yarn.lock ./
 
 RUN yarn install --frozen-lockfile --production && yarn cache clean
 
