@@ -1,9 +1,8 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
-import { UntilDestroy } from '@ngneat/until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
 import { ProductService } from 'apps/gauzy/src/app/@core/services/product.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { GalleryComponent } from 'apps/gauzy/src/app/@shared/gallery/gallery.component';
@@ -12,7 +11,6 @@ import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-ba
 import { LocalDataSource } from 'ng2-smart-table';
 import { IImageAsset, IProductTranslated } from 'packages/contracts/dist';
 import { combineLatest } from 'rxjs';
-import { take } from 'rxjs/operators';
 import { EnabledStatusComponent } from '../table-components/enabled-row.component';
 import { ImageRowComponent } from '../table-components/image-row.component';
 
@@ -24,12 +22,8 @@ import { ImageRowComponent } from '../table-components/image-row.component';
 })
 export class InventoryItemViewComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit {
 	inventoryItem: IProductTranslated;
-	//tstodo
-
-	selectedLanguage: string;
-	productId: string;
 
 	@ViewChild('variantTable') variantTable;
 
@@ -49,11 +43,8 @@ export class InventoryItemViewComponent
 
 	ngOnInit(): void {
 		combineLatest([this.route.params, this.store.preferredLanguage$])
-			.pipe(take(1))
+			.pipe(untilDestroyed(this))
 			.subscribe(async ([params, languageCode]) => {
-				//tstodo
-				console.log(params, languageCode, 'params and language code');
-
 				this.inventoryItem = await this.productService.getOneTranslated(
 					params.id,
 					[
@@ -71,23 +62,6 @@ export class InventoryItemViewComponent
 				this.loadSmartTable();
 				this.smartTableSource.load(this.inventoryItem.variants);
 			});
-	}
-
-	ngOnDestroy(): void {}
-
-	async loadPermissions() {
-		//tstodo
-		// this.ngxPermissionsService.permissions$
-		// .pipe(untilDestroyed(this))
-		// .subscribe(() => {
-		// 	this.ngxPermissionsService
-		// 		.hasPermission(
-		// 			OrganizationPermissionsEnum.ALLOW_FUTURE_DATE
-		// 		)
-		// 		.then((hasPermission) => {
-		// 			this.allowFutureDate = hasPermission;
-		// 		});
-		// });
 	}
 
 	onGalleryItemClick(galleryItem: IImageAsset) {

@@ -110,6 +110,7 @@
 	let-selectedItem="selectedItem"
 >
 	<button
+		*ngIf="editProductAllowed"
 		(click)="onEditInventoryItem(selectedItem)"
 		nbButton
 		status="info"
@@ -132,6 +133,7 @@
 		{{ 'BUTTONS.VIEW' | translate }}
 	</button>
 	<button
+		*ngIf="editProductAllowed"
 		(click)="delete(selectedItem)"
 		nbButton
 		status="danger"

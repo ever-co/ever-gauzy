@@ -9,7 +9,8 @@ import {
 	IProduct,
 	ComponentLayoutStyleEnum,
 	IOrganization,
-	IProductTranslated
+	IProductTranslated,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -19,6 +20,7 @@ import { Store } from '../../../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { ItemImgTagsComponent } from '../table-components/item-img-tags-row.component';
+import { NgxPermissionsService } from 'ngx-permissions';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-table-inventory',
@@ -27,7 +29,7 @@ import { ItemImgTagsComponent } from '../table-components/item-img-tags-row.comp
 })
 export class TableInventoryComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit {
 	settingsSmartTable: object;
 	loading: boolean;
 	selectedProduct: IProduct;
@@ -48,13 +50,21 @@ export class TableInventoryComponent
 		}
 	}
 
+	get editProductAllowed() {
+		return async () =>
+			await this.ngxPermissionsService.hasPermission(
+				PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT
+			);
+	}
+
 	constructor(
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
 		private toastrService: ToastrService,
 		private productService: ProductService,
 		private router: Router,
-		private store: Store
+		private store: Store,
+		private ngxPermissionsService: NgxPermissionsService
 	) {
 		super(translateService);
 		this.setView();
@@ -64,6 +74,7 @@ export class TableInventoryComponent
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.selectedLanguage = this.translateService.currentLang;
+
 		this.translateService.onLangChange
 			.pipe(untilDestroyed(this))
 			.subscribe((languageEvent) => {
@@ -86,8 +97,6 @@ export class TableInventoryComponent
 				}
 			});
 	}
-
-	ngOnDestroy(): void {}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.INVENTORY;
