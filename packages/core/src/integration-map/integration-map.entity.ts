@@ -10,29 +10,29 @@ import {
 export class IntegrationMap
 	extends TenantOrganizationBaseEntity
 	implements IIntegrationMap {
-	@ApiProperty({ type: IntegrationTenant })
+	@ApiProperty({ type: () => IntegrationTenant })
 	@ManyToOne(() => IntegrationTenant, {
 		nullable: false
 	})
 	@JoinColumn()
 	integration: IntegrationTenant;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@Column()
 	@RelationId(
 		(integrationSetting: IntegrationMap) => integrationSetting.integration
 	)
 	readonly integrationId: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: false })
 	entity: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: false })
 	sourceId: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: false })
 	gauzyId: string;
 }

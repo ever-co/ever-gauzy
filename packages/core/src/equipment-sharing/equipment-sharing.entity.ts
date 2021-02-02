@@ -25,34 +25,34 @@ import {
 export class EquipmentSharing
 	extends TenantOrganizationBaseEntity
 	implements IEquipmentSharing {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column({ nullable: true })
 	name: string;
 
-	@ApiProperty({ type: Equipment })
+	@ApiProperty({ type: () => Equipment })
 	@ManyToOne(() => Equipment, (equipment) => equipment.equipmentSharings)
 	@JoinColumn()
 	equipment: Equipment;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@RelationId(
 		(equipmentSharing: EquipmentSharing) => equipmentSharing.equipment
 	)
 	@Column({ nullable: true })
 	equipmentId: string;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@Column({ nullable: true })
 	shareRequestDay: Date;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@Column({ nullable: true })
 	shareStartDay: Date;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@Column({ nullable: true })
 	shareEndDay: Date;
@@ -74,17 +74,17 @@ export class EquipmentSharing
 	})
 	teams: OrganizationTeam[];
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@IsString()
 	@Column({ nullable: true })
 	createdBy: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column({ nullable: true })
 	createdByName: string;
 
-	@ApiProperty({ type: EquipmentSharingPolicy })
+	@ApiProperty({ type: () => EquipmentSharingPolicy })
 	@ManyToOne(() => EquipmentSharingPolicy, {
 		nullable: true,
 		onDelete: 'CASCADE'
@@ -92,7 +92,7 @@ export class EquipmentSharing
 	@JoinColumn()
 	equipmentSharingPolicy: EquipmentSharingPolicy;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((policy: EquipmentSharing) => policy.equipmentSharingPolicy)
 	@IsString()
 	@Column({ nullable: true })

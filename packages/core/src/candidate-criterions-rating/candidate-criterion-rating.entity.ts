@@ -11,21 +11,21 @@ import {
 export class CandidateCriterionsRating
 	extends TenantOrganizationBaseEntity
 	implements ICandidateCriterionsRating {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	rating: number;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column({ nullable: true })
 	technologyId?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column({ nullable: true })
 	personalQualityId?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column({ nullable: true })
 	feedbackId: string;

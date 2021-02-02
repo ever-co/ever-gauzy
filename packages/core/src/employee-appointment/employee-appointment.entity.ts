@@ -25,12 +25,12 @@ import {
 export class EmployeeAppointment
 	extends TenantOrganizationBaseEntity
 	implements IEmployeeAppointment {
-	@ApiProperty({ type: Employee })
+	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	employee?: Employee;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId(
 		(employeeAppointment: EmployeeAppointment) =>
 			employeeAppointment.employee
@@ -38,70 +38,70 @@ export class EmployeeAppointment
 	@Column({ nullable: true })
 	readonly employeeId?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()
 	agenda: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
 	description?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
 	location?: string;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@Column()
 	startDateTime: Date;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@Column()
 	endDateTime: Date;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	bufferTimeStart?: Boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	bufferTimeEnd?: Boolean;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ nullable: true })
 	bufferTimeInMins?: Number;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ nullable: true })
 	breakTimeInMins?: Number;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@Column({ nullable: true })
 	breakStartTime?: Date;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column({ nullable: true })
 	emails?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column({ nullable: true })
 	status?: string;
 
-	@ApiProperty({ type: AppointmentEmployee, isArray: true })
+	@ApiProperty({ type: () => AppointmentEmployee, isArray: true })
 	@OneToMany(
 		() => AppointmentEmployee,
 		(entity) => entity.employeeAppointment,

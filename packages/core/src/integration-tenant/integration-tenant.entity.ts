@@ -10,12 +10,15 @@ import {
 export class IntegrationTenant
 	extends TenantOrganizationBaseEntity
 	implements IIntegrationTenant {
-	@ApiPropertyOptional({ type: IntegrationEntitySetting, isArray: true })
+	@ApiPropertyOptional({
+		type: () => IntegrationEntitySetting,
+		isArray: true
+	})
 	@OneToMany(() => IntegrationEntitySetting, (setting) => setting.integration)
 	@JoinColumn()
 	entitySettings?: IntegrationEntitySetting[];
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: false })
 	name: string;
 }

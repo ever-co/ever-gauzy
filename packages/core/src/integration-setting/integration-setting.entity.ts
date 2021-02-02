@@ -10,25 +10,25 @@ import {
 export class IntegrationSetting
 	extends TenantOrganizationBaseEntity
 	implements IIntegrationSetting {
-	@ApiProperty({ type: IntegrationTenant })
+	@ApiProperty({ type: () => IntegrationTenant })
 	@ManyToOne(() => IntegrationTenant, {
 		nullable: false
 	})
 	@JoinColumn()
 	integration: IntegrationTenant;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId(
 		(integrationSetting: IntegrationSetting) =>
 			integrationSetting.integration
 	)
 	readonly integrationId: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: false })
 	settingsName: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: false })
 	settingsValue: string;
 }

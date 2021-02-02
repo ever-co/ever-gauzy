@@ -34,90 +34,91 @@ import {
 
 @Entity('payment')
 export class Payment extends TenantOrganizationBaseEntity implements IPayment {
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
 	invoiceId?: string;
 
-	@ApiPropertyOptional({ type: Invoice })
+	@ApiPropertyOptional({ type: () => Invoice })
 	@ManyToOne(() => Invoice, (invoice) => invoice.payments, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	invoice?: Invoice;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@RelationId((expense: Payment) => expense.employee)
 	@Column({ nullable: true })
 	employeeId?: string;
 
-	@ApiProperty({ type: Employee })
+	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	employee?: IEmployee;
 
-	@ApiPropertyOptional({ type: User })
+	@ApiPropertyOptional({ type: () => User })
 	@ManyToOne(() => User)
 	@JoinColumn()
 	recordedBy?: User;
 
-	@ApiPropertyOptional({ type: Date })
+	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
 	paymentDate?: Date;
 
-	@ApiPropertyOptional({ type: Number })
+	@ApiPropertyOptional({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
 	@Column({ nullable: true, type: 'numeric' })
 	amount?: number;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column()
+	@Column({ nullable: true })
 	note?: string;
 
-	@ApiPropertyOptional({ type: String, enum: CurrenciesEnum })
+	@ApiPropertyOptional({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@Column()
 	currency?: string;
 
-	@ApiPropertyOptional({ type: String, enum: PaymentMethodEnum })
+	@ApiPropertyOptional({ type: () => String, enum: PaymentMethodEnum })
 	@IsEnum(PaymentMethodEnum)
-	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
 	paymentMethod?: string;
 
-	@ApiPropertyOptional({ type: Boolean })
+	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	overdue?: boolean;
 
-	@ApiPropertyOptional({ type: OrganizationProject })
+	@ApiPropertyOptional({ type: () => OrganizationProject })
 	@ManyToOne(() => OrganizationProject, (project) => project.payments, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	project?: OrganizationProject;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
 	projectId?: string;
 
-	@ApiPropertyOptional({ type: OrganizationContact })
+	@ApiPropertyOptional({ type: () => OrganizationContact })
 	@ManyToOne(() => OrganizationContact, (contact) => contact.payments, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	contact?: OrganizationContact;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })

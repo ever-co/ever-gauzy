@@ -11,11 +11,11 @@ import {
 export class CandidateSkill
 	extends TenantOrganizationBaseEntity
 	implements ICandidateSkill {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })

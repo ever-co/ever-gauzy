@@ -6,8 +6,8 @@
 	"resolutions": {
 		"uglify-js": "npm:terser",
 		"webpack": "^5.18.0",
-		"@angular-devkit/build-angular": "~0.1101.1",
-		"@angular-devkit/architect": "~0.1100.1",
+		"@angular-devkit/build-angular": "~0.1101.2",
+		"@angular-devkit/architect": "~0.1100.2",
 		"@angular-devkit/core": "^11.1.1",
 		"webpack-cli": "^4.4.0"
 	},
@@ -136,9 +136,9 @@
 	},
 	"devDependencies": {
 		"@angular-builders/custom-webpack": "^11.0.0",
-		"@angular-devkit/build-angular": "^0.1101.1",
+		"@angular-devkit/build-angular": "^0.1101.2",
 		"@angular-devkit/build-ng-packagr": "^0.1002.0",
-		"@angular-devkit/architect": "^0.1101.1",
+		"@angular-devkit/architect": "^0.1101.2",
 		"@angular-devkit/core": "^11.1.1",
 		"@angular-devkit/schematics": "^11.1.1",
 		"@angular/cli": "^11.1.1",
@@ -166,7 +166,7 @@
 		"jasmine-core": "^3.6.0",
 		"jasmine-spec-reporter": "^6.0.0",
 		"jest": "^26.4.2",
-		"jest-preset-angular": "^8.3.0",
+		"jest-preset-angular": "^8.3.2",
 		"karma": "^5.2.3",
 		"karma-chrome-launcher": "^3.1.0",
 		"karma-cli": "^2.0.0",

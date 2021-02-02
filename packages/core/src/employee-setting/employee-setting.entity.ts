@@ -18,14 +18,14 @@ import {
 export class EmployeeSetting
 	extends TenantOrganizationBaseEntity
 	implements IEmployeeSetting {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	employeeId: string;
 
-	@ApiProperty({ type: Number, minimum: 1, maximum: 12 })
+	@ApiProperty({ type: () => Number, minimum: 1, maximum: 12 })
 	@IsNumber()
 	@IsNotEmpty()
 	@Min(1)
@@ -33,27 +33,27 @@ export class EmployeeSetting
 	@Column()
 	month: number;
 
-	@ApiProperty({ type: Number, minimum: 1 })
+	@ApiProperty({ type: () => Number, minimum: 1 })
 	@IsNumber()
 	@IsNotEmpty()
 	@Min(0)
 	@Column()
 	year: number;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	settingType: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsNotEmpty()
 	@Column()
 	value: number;
 
-	@ApiProperty({ type: String, enum: CurrenciesEnum })
+	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@IsNotEmpty()
 	@Index()

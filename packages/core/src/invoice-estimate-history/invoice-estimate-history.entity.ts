@@ -12,25 +12,25 @@ import {
 export class InvoiceEstimateHistory
 	extends TenantOrganizationBaseEntity
 	implements IInvoiceEstimateHistory {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()
 	action: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	userId: string;
 
-	@ApiProperty({ type: User })
+	@ApiProperty({ type: () => User })
 	@ManyToOne(() => User)
 	@JoinColumn()
 	user: User;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	invoiceId: string;
 
-	@ApiProperty({ type: Invoice })
+	@ApiProperty({ type: () => Invoice })
 	@ManyToOne(() => Invoice, (invoice) => invoice.invoiceItems, {
 		onDelete: 'SET NULL'
 	})

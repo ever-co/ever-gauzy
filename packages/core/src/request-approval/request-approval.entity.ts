@@ -34,14 +34,14 @@ import {
 export class RequestApproval
 	extends TenantOrganizationBaseEntity
 	implements IRequestApproval {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: ApprovalPolicy })
+	@ApiProperty({ type: () => ApprovalPolicy })
 	@ManyToOne(() => ApprovalPolicy, {
 		nullable: true,
 		onDelete: 'CASCADE'
@@ -49,7 +49,7 @@ export class RequestApproval
 	@JoinColumn()
 	approvalPolicy: ApprovalPolicy;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((policy: RequestApproval) => policy.approvalPolicy)
 	@IsString()
 	@Column({ nullable: true })
@@ -73,27 +73,27 @@ export class RequestApproval
 	)
 	teamApprovals?: RequestApprovalTeam[];
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ nullable: true })
 	status: number;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@IsString()
 	@Column({ nullable: true })
 	createdBy: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ nullable: true })
 	min_count: number;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column({ nullable: true })
 	createdByName: string;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@IsString()
 	@Column({ nullable: true })
 	requestId: string;
@@ -105,7 +105,7 @@ export class RequestApproval
 	})
 	tags?: Tag[];
 
-	@ApiProperty({ type: String, enum: ApprovalPolicyTypesStringEnum })
+	@ApiProperty({ type: () => String, enum: ApprovalPolicyTypesStringEnum })
 	@IsEnum(ApprovalPolicyTypesStringEnum)
 	@Column({ nullable: true })
 	requestType: string;

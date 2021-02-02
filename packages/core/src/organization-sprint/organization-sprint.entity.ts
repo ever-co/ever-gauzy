@@ -19,47 +19,47 @@ import {
 export class OrganizationSprint
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationSprint {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()
 	projectId: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
 	goal?: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ default: 7 })
 	length: number;
 
-	@ApiPropertyOptional({ type: Date })
+	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
 	startDate?: Date;
 
-	@ApiPropertyOptional({ type: Date })
+	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
 	endDate?: Date;
 
-	@ApiProperty({ type: Number, enum: SprintStartDayEnum })
+	@ApiProperty({ type: () => Number, enum: SprintStartDayEnum })
 	@IsNumber()
 	@Column({ nullable: true })
 	dayStart?: number;
 
-	@ApiProperty({ type: OrganizationProject })
+	@ApiProperty({ type: () => OrganizationProject })
 	@ManyToOne(
 		() => OrganizationProject,
 		(project) => project.organizationSprints,
@@ -71,12 +71,12 @@ export class OrganizationSprint
 	@JoinColumn()
 	project?: OrganizationProject;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	isActive?: boolean;
 
-	@ApiProperty({ type: Task })
+	@ApiProperty({ type: () => Task })
 	@OneToMany(() => Task, (task) => task.organizationSprint)
 	@JoinColumn()
 	tasks?: Task[];

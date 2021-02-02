@@ -7,11 +7,11 @@ import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 export class OrganizationDocuments
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationDocument {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@Column()
 	documentUrl: string;
 }

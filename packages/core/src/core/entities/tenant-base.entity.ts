@@ -7,13 +7,13 @@ import { BaseEntity, Tenant } from '../entities/internal';
 export abstract class TenantBaseEntity
 	extends BaseEntity
 	implements IBasePerTenantEntityModel {
-	@ApiProperty({ type: Tenant, readOnly: true })
+	@ApiProperty({ type: () => Tenant, readOnly: true })
 	@ManyToOne(() => Tenant, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	@IsOptional()
 	tenant?: ITenant;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((t: TenantBaseEntity) => t.tenant)
 	@IsString()
 	@IsOptional()

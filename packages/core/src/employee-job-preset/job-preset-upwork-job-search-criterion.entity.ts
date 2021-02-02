@@ -16,7 +16,7 @@ import {
 export class JobPresetUpworkJobSearchCriterion
 	extends TenantOrganizationBaseEntity
 	implements IJobPresetUpworkJobSearchCriterion {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()
@@ -25,7 +25,7 @@ export class JobPresetUpworkJobSearchCriterion
 	@ManyToOne(() => JobPreset, (jobPreset) => jobPreset.jobPresetCriterions)
 	jobPreset?: JobPreset;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
@@ -37,7 +37,7 @@ export class JobPresetUpworkJobSearchCriterion
 	)
 	occupation?: JobSearchOccupation;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
@@ -49,13 +49,13 @@ export class JobPresetUpworkJobSearchCriterion
 	)
 	category?: JobSearchCategory;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
 	keyword?: string;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ type: 'text', nullable: true })

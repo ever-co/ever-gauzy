@@ -21,12 +21,12 @@ import {
 export class AvailabilitySlot
 	extends TenantOrganizationBaseEntity
 	implements IAvailabilitySlot {
-	@ApiProperty({ type: Employee })
+	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	employee?: IEmployee;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@IsOptional()
 	@RelationId(
 		(availabilitySlot: AvailabilitySlot) => availabilitySlot.employee
@@ -34,22 +34,22 @@ export class AvailabilitySlot
 	@Column({ nullable: true })
 	readonly employeeId?: string;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@Column()
 	startTime: Date;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@Column()
 	endTime: Date;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column()
 	allDay: boolean;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ type: 'text', nullable: true })

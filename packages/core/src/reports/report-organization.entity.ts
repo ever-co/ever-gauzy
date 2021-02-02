@@ -7,22 +7,22 @@ import { BaseEntity, Organization, Report } from '../core/entities/internal';
 export class ReportOrganization
 	extends BaseEntity
 	implements IReportOrganization {
-	@ApiProperty({ type: Report })
+	@ApiProperty({ type: () => Report })
 	@ManyToOne(() => Report)
 	@JoinColumn()
 	report?: IReport;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((report: ReportOrganization) => report.report)
 	@Column()
 	reportId?: string;
 
-	@ApiProperty({ type: Organization })
+	@ApiProperty({ type: () => Organization })
 	@ManyToOne(() => Organization)
 	@JoinColumn()
 	organization?: IOrganization;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((report: ReportOrganization) => report.organization)
 	@Column()
 	organizationId?: string;

@@ -11,7 +11,7 @@ import {
 export class EmployeeProposalTemplate
 	extends TenantOrganizationBaseEntity
 	implements IEmployeeProposalTemplate {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()
@@ -20,21 +20,21 @@ export class EmployeeProposalTemplate
 	@ManyToOne(() => Employee, (employee) => employee.id)
 	employee?: IEmployee;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	name?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column({ nullable: true })
 	content?: string;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsString()
 	@IsNotEmpty()
 	@Index()

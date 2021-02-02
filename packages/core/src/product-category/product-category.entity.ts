@@ -12,7 +12,7 @@ import {
 export class ProductCategory
 	extends TranslatableBase
 	implements IProductCategoryTranslatable {
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Column({ nullable: true })
 	imageUrl: string;
@@ -20,7 +20,7 @@ export class ProductCategory
 	@OneToMany(() => Product, (product) => product.category)
 	products: Product[];
 
-	@ApiProperty({ type: ProductCategoryTranslation, isArray: true })
+	@ApiProperty({ type: () => ProductCategoryTranslation, isArray: true })
 	@OneToMany(
 		() => ProductCategoryTranslation,
 		(instance) => instance.reference,

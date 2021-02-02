@@ -10,7 +10,7 @@ import {
 
 @Entity('product_type')
 export class ProductType extends TranslatableBase {
-	@ApiProperty({ type: String, enum: ProductTypesIconsEnum })
+	@ApiProperty({ type: () => String, enum: ProductTypesIconsEnum })
 	@IsOptional()
 	@IsEnum(ProductTypesIconsEnum)
 	@Column({ nullable: true })
@@ -19,7 +19,7 @@ export class ProductType extends TranslatableBase {
 	@OneToMany(() => Product, (product) => product.type)
 	products: Product[];
 
-	@ApiProperty({ type: ProductTypeTranslation, isArray: true })
+	@ApiProperty({ type: () => ProductTypeTranslation, isArray: true })
 	@OneToMany(
 		() => ProductTypeTranslation,
 		(productTypeTranslation) => productTypeTranslation.reference,

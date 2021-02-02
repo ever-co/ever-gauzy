@@ -18,9 +18,9 @@ export class APIInterceptor implements HttpInterceptor {
 		request: HttpRequest<any>,
 		next: HttpHandler
 	): Observable<HttpEvent<any>> {
-		if (request.url.startsWith('/api')) {
+		if (baseUrl && request.url.startsWith('/api')) {
 			const url = baseUrl + request.url;
-			// console.log(`API Request: ${request.url} -> ${url}`);
+			console.log(`API Request: ${request.url} -> ${url}`);
 			request = request.clone({
 				url: url
 			});

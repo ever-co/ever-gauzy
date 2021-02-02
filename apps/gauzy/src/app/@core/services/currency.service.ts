@@ -37,7 +37,7 @@ export class CurrencyService {
 			return EMPTY;
 		}
 		return this.http
-			.get<IPagination<ICurrency>>(`api/currency`)
+			.get<IPagination<ICurrency>>(`/api/currency`)
 			.pipe(
 				map(({ items, total }) => {
 					this._currencies$.next(items);

@@ -27,46 +27,46 @@ import {
 export class EventType
 	extends TenantOrganizationBaseEntity
 	implements IEventType {
-	@ApiProperty({ type: Tag })
+	@ApiProperty({ type: () => Tag })
 	@ManyToMany(() => Tag, (tag) => tag.eventType)
 	@JoinTable({ name: 'tag_event_type' })
 	tags?: Tag[];
 
-	@ApiProperty({ type: Employee })
+	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	employee?: Employee;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((eventType: EventType) => eventType.employee)
 	@Column({ nullable: true })
 	readonly employeeId?: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsNotEmpty()
 	@Index()
 	@Column({ type: 'numeric' })
 	duration: number;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Index()
 	@Column({ nullable: true })
 	durationUnit: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Index()
 	@Column({ nullable: true })
 	title: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@IsOptional()
 	@Column({ nullable: true })
 	description?: string;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	isActive: boolean;

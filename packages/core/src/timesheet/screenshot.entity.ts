@@ -19,36 +19,36 @@ import {
 export class Screenshot
 	extends TenantOrganizationBaseEntity
 	implements IScreenshot {
-	@ApiProperty({ type: TimeSlot })
+	@ApiProperty({ type: () => TimeSlot })
 	@ManyToOne(() => TimeSlot, (timeSlot) => timeSlot.screenshots, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	timeSlot?: ITimeSlot;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((screenshot: Screenshot) => screenshot.timeSlot)
 	@Column({ nullable: true })
 	readonly timeSlotId?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()
 	file: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ default: null, nullable: true })
 	thumb?: string;
 
-	@ApiProperty({ type: 'timestamptz' })
+	@ApiProperty({ type: () => 'timestamptz' })
 	@IsNumber()
 	@IsOptional()
 	@Column({ default: null, nullable: true })
 	recordedAt?: Date;
 
-	@ApiProperty({ type: 'timestamptz' })
+	@ApiProperty({ type: () => 'timestamptz' })
 	@IsDateString()
 	@Column({ nullable: true, default: null })
 	deletedAt?: Date;
