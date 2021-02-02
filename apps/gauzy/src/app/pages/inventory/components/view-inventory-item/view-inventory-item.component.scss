@@ -23,6 +23,7 @@
   margin-right: 10px;
   display: flex;
   align-items: center;
+  margin-bottom: 10px;
 }
 
 .tag-item {
@@ -37,4 +38,13 @@
   color: white;
   font-weight: bold;
   width: 60%;
+}
+
+.d-flex {
+  display: flex;
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
 }

@@ -92,7 +92,8 @@ export class InventoryItemViewComponent
 				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
 					type: 'custom',
-					renderComponent: ImageRowComponent
+					renderComponent: ImageRowComponent,
+					filter: false
 				},
 				options: {
 					title: this.getTranslation('INVENTORY_PAGE.OPTIONS'),
@@ -105,20 +106,32 @@ export class InventoryItemViewComponent
 							: this.getTranslation(
 									'INVENTORY_PAGE.NO_OPTIONS_LABEL'
 							  );
-					}
+					},
+					filter: false
 				},
 				internalReference: {
 					title: this.getTranslation('INVENTORY_PAGE.CODE'),
-					type: 'string'
+					type: 'string',
+					filter: false
 				},
 				quantity: {
 					title: this.getTranslation('INVENTORY_PAGE.QUANTITY'),
-					type: 'string'
+					type: 'string',
+					filter: false
+				},
+				price: {
+					title: this.getTranslation('INVENTORY_PAGE.PRICE'),
+					type: 'number',
+					valuePrepareFunction: (_, price) => {
+						return `${_.unitCostCurrency} ${_.unitCost}`;
+					},
+					filter: false
 				},
 				enabled: {
 					title: this.getTranslation('INVENTORY_PAGE.ENABLED'),
 					type: 'custom',
-					renderComponent: EnabledStatusComponent
+					renderComponent: EnabledStatusComponent,
+					filter: false
 				}
 			}
 		};

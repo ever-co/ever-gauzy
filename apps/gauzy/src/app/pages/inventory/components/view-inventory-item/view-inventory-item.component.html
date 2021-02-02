@@ -98,13 +98,11 @@
 									}}:</span
 								>{{ inventoryItem.enabled }}
 							</p>
-							<div>
-								<span class="key-description mr-2"
-									>{{
-										'INVENTORY_PAGE.OPTIONS' | translate
-									}}:</span
-								>
-								<div class="row options" *ngIf="inventoryItem">
+							<div class="d-flex">
+								<div class="key-description mr-2">
+									{{ 'INVENTORY_PAGE.OPTIONS' | translate }}:
+								</div>
+								<div class="options" *ngIf="inventoryItem">
 									<div
 										*ngFor="
 											let option of inventoryItem.options

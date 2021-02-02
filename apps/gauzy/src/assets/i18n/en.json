@@ -2048,7 +2048,8 @@
 		"CATEGORY": "Category",
 		"TYPE": "Type",
 		"VIEW_INVENTORY_ITEM": "View inventory item",
-		"TAGS": "Tags"
+		"TAGS": "Tags",
+		"PRICE": "Price"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

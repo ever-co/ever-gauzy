@@ -24,6 +24,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_CANDIDATES_TASK_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT,
+			PermissionsEnum.ORG_INVENTORY_VIEW,
 			PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_DOCUMENTS_VIEW,
 			PermissionsEnum.ORG_HELP_CENTER_EDIT,
@@ -204,7 +205,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_CONTACT_VIEW,
 			PermissionsEnum.EMPLOYEE_EXPENSES_VIEW,
 			PermissionsEnum.EMPLOYEE_EXPENSES_EDIT,
-			PermissionsEnum.INVENTORY_GALLERY_VIEW
+			PermissionsEnum.INVENTORY_GALLERY_VIEW,
+			PermissionsEnum.ORG_INVENTORY_VIEW
 		]
 	},
 	{
