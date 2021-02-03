@@ -7,9 +7,9 @@ import {
 	clickElementByText,
 	clickElementIfVisible,
 	clickKeyboardBtnByKeycode,
-	getLastElement,
 	verifyText,
-	waitElementToHide
+	waitElementToHide,
+	clickTableRowByText
 } from '../utils/util';
 import { EditUserPage } from '../pageobjects/EditUserPageObject';
 
@@ -25,8 +25,8 @@ export const tableRowVisible = () => {
 	verifyElementIsVisible(EditUserPage.selectTableRowCss);
 };
 
-export const selectLastTableRow = () => {
-	getLastElement(EditUserPage.selectTableRowCss);
+export const selectTableRow = (text) => {
+	clickTableRowByText(EditUserPage.selectTableRowCss, text);
 };
 
 export const editButtonVisible = () => {

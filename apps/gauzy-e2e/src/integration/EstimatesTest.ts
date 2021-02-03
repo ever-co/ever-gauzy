@@ -99,8 +99,8 @@ describe('Estimates test', () => {
 		estimatesPage.backButtonVisible();
 		estimatesPage.clickBackButton();
 		estimatesPage.selectTableRow(0);
-		estimatesPage.editButtonVisible();
-		estimatesPage.clickEditButton(EstimatesPageData.editButton);
+		estimatesPage.infoButtonVisible();
+		estimatesPage.clickInfoButton(0);
 		estimatesPage.discountInputVisible();
 		estimatesPage.enterDiscountData(EstimatesPageData.editDiscountValue);
 		estimatesPage.discountTypeDropdownVisible();
@@ -125,6 +125,8 @@ describe('Estimates test', () => {
 		estimatesPage.waitMessageToHide();
 		estimatesPage.selectTableRow(0);
 		estimatesPage.selectTableRow(0);
+		estimatesPage.moreButtonVisible();
+		estimatesPage.clickMoreButton();
 		estimatesPage.actionButtonVisible();
 		estimatesPage.clickActionButtonByText(
 			EstimatesPageData.duplicateButton
@@ -138,22 +140,27 @@ describe('Estimates test', () => {
 			return false;
 		});
 		estimatesPage.selectTableRow(0);
+		estimatesPage.moreButtonVisible();
+		estimatesPage.clickMoreButton();
 		estimatesPage.actionButtonVisible();
 		estimatesPage.clickActionButtonByText(EstimatesPageData.sendButton);
 		estimatesPage.confirmButtonVisible();
 		estimatesPage.clickConfirmButton();
 		estimatesPage.waitMessageToHide();
+		estimatesPage.clickMoreButton();
 		estimatesPage.verifySentBadgeClass();
 	});
 	it('Should be able to view estimate', () => {
 		estimatesPage.selectTableRow(0);
-		estimatesPage.actionButtonVisible();
-		estimatesPage.clickActionButtonByText(EstimatesPageData.viewButton);
+		estimatesPage.infoButtonVisible();
+		estimatesPage.clickInfoButton(0);
 		estimatesPage.backButtonVisible();
 		estimatesPage.clickBackButton();
 	});
 	it('Should be able to send estimate by email', () => {
 		estimatesPage.selectTableRow(0);
+		estimatesPage.moreButtonVisible();
+		estimatesPage.clickMoreButton();
 		estimatesPage.actionButtonVisible();
 		estimatesPage.clickActionButtonByText(EstimatesPageData.emailButton);
 		estimatesPage.scrollEmailInviteTemplate();
@@ -162,14 +169,13 @@ describe('Estimates test', () => {
 		estimatesPage.confirmButtonVisible();
 		estimatesPage.clickConfirmButton();
 		estimatesPage.waitMessageToHide();
+		estimatesPage.clickMoreButton();
 		estimatesPage.verifySentBadgeClass();
 	});
 	it('Should be able to convert estimate to invoice', () => {
 		estimatesPage.selectTableRow(0);
-		estimatesPage.actionButtonVisible();
-		estimatesPage.clickActionButtonByText(
-			EstimatesPageData.convertToInvoiceButton
-		);
+		estimatesPage.infoButtonVisible();
+		estimatesPage.clickInfoButton(3);
 	});
 	it('Should be able to delete estimate', () => {
 		estimatesPage.waitMessageToHide();
