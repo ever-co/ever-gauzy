@@ -8,8 +8,7 @@ import {
 	clickKeyboardBtnByKeycode,
 	waitElementToHide,
 	verifyText,
-	verifyElementNotExist,
-	verifyElementIsNotVisible
+	verifyElementNotExist
 } from '../utils/util';
 import { ApprovalRequestPage } from '../pageobjects/ApprovalRequestPageObject';
 

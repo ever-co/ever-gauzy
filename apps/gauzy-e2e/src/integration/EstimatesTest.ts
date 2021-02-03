@@ -94,10 +94,6 @@ describe('Estimates test', () => {
 		estimatesPage.verifyDraftBadgeClass();
 	});
 	it('Should be able to edit estimate', () => {
-		estimatesPage.addButtonVisible();
-		estimatesPage.clickAddButton();
-		estimatesPage.backButtonVisible();
-		estimatesPage.clickBackButton();
 		estimatesPage.selectTableRow(0);
 		estimatesPage.infoButtonVisible();
 		estimatesPage.clickInfoButton(0);
