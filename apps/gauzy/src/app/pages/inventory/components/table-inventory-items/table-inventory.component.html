@@ -14,6 +14,7 @@
 	<nb-card-body>
 		<div class="mb-3">
 			<button
+				*ngIf="editProductAllowed"
 				(click)="onAddInventoryItem()"
 				nbButton
 				status="success"
@@ -26,6 +27,7 @@
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
 			<button
+				*ngIf="editProductAllowed"
 				class="float-right"
 				nbButton
 				status="primary"
@@ -35,6 +37,7 @@
 				{{ 'INVENTORY_PAGE.PRODUCT_TYPES' | translate }}
 			</button>
 			<button
+				*ngIf="editProductAllowed"
 				class="float-right"
 				style="margin-right: 9px"
 				nbButton

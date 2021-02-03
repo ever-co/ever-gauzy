@@ -12,7 +12,11 @@ import { InventoryItemViewComponent } from './components/view-inventory-item/vie
 
 const ALL_ORG_PERMISSIONS = {
 	permissions: {
-		only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ALL_ORG_EDIT],
+		only: [
+			PermissionsEnum.ALL_ORG_VIEW,
+			PermissionsEnum.ALL_ORG_EDIT,
+			PermissionsEnum.ORG_INVENTORY_VIEW
+		],
 		redirectTo: '/pages/dashboard'
 	}
 };
