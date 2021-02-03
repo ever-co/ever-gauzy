@@ -16,6 +16,8 @@ export const environment: IEnvironment = {
 	host: process.env.HOST || 'http://localhost',
 	baseUrl: process.env.BASE_URL || 'http://localhost:3000',
 
+	clientBaseUrl: process.env.CLIENT_BASE_URL || 'http://localhost:4200',
+
 	production: false,
 	envName: 'dev',
 
@@ -47,7 +49,8 @@ export const environment: IEnvironment = {
 		accessTokenUri: 'https://graph.facebook.com/v2.12/oauth/access_token',
 		clientId: process.env.FacebookClientId,
 		clientSecret: process.env.FacebookClientSecret,
-		oauthRedirectUri: `${process.env.host}:${process.env.port}/api/auth/facebook/callback`,
+		fbGraphVersion: process.env.FacebookGraphVersion,
+		oauthRedirectUri: `${process.env.HOST}:${process.env.PORT}/api/auth/facebook/callback`,
 		state: '{fbstate}'
 	},
 

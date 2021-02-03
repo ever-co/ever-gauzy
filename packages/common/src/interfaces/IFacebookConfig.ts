@@ -5,4 +5,5 @@ export interface IFacebookConfig {
 	readonly clientSecret: string;
 	readonly oauthRedirectUri: string;
 	readonly state: string;
+	readonly fbGraphVersion: string;
 }

@@ -5,6 +5,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { SentryService } from '@ntegral/nestjs-sentry';
 import * as expressSession from 'express-session';
 import * as helmet from 'helmet';
+import * as chalk from 'chalk';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { IPluginConfig } from '@gauzy/common';
 import { getConfig, setConfig, environment as env } from '@gauzy/config';
@@ -71,8 +72,8 @@ export async function bootstrap(
 		host = '0.0.0.0';
 	}
 
-	console.log(`Configured Host: ${host}`);
-	console.log(`Configured Port: ${port}`);
+	console.log(chalk.green(`Configured Host: ${host}`));
+	console.log(chalk.green(`Configured Port: ${port}`));
 
 	await app.listen(port, host, () => {
 		console.log(`Listening at http://${host}:${port}/${globalPrefix}`);
@@ -92,7 +93,9 @@ export async function registerPluginConfig(
 	}
 
 	console.log(
-		`DB Config: ${JSON.stringify(getConfig().dbConnectionOptions)}`
+		chalk.green(
+			`DB Config: ${JSON.stringify(getConfig().dbConnectionOptions)}`
+		)
 	);
 
 	const entities = await registerAllEntities(pluginConfig);

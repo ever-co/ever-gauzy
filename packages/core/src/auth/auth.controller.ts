@@ -23,19 +23,27 @@ import {
 	LanguagesEnum
 } from '@gauzy/contracts';
 import { getUserDummyImage } from '../core';
-import { environment as env } from '@gauzy/config';
+import { ConfigService, IEnvironment } from '@gauzy/config';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { I18nLang } from 'nestjs-i18n';
 import { AuthLoginCommand } from './commands/auth.login.command';
+import { IIncomingRequest, RequestCtx } from '@gauzy/auth';
 
 @ApiTags('Auth')
 @Controller()
 export class AuthController {
+	clientBaseUrl: string;
+
 	constructor(
 		private readonly authService: AuthService,
-		private readonly commandBus: CommandBus
-	) {}
+		private readonly commandBus: CommandBus,
+		private readonly configService: ConfigService
+	) {
+		this.clientBaseUrl = this.configService.get(
+			'clientBaseUrl'
+		) as keyof IEnvironment;
+	}
 
 	@ApiOperation({ summary: 'Is authenticated' })
 	@ApiResponse({ status: HttpStatus.OK })
@@ -43,7 +51,6 @@ export class AuthController {
 	@Get('/authenticated')
 	async authenticated(): Promise<boolean> {
 		const token = RequestContext.currentToken();
-
 		return this.authService.isAuthenticated(token);
 	}
 
@@ -112,69 +119,81 @@ export class AuthController {
 
 	@Get('google')
 	@UseGuards(AuthGuard('google'))
-	googleLogin() {}
+	googleLogin(@Req() req) {}
 
 	@Get('google/callback')
 	@UseGuards(AuthGuard('google'))
-	googleLoginCallback(@Req() req, @Res() res) {
+	async googleLoginCallback(
+		@RequestCtx() requestCtx: IIncomingRequest,
+		@Res() res
+	) {
+		const { user } = requestCtx;
 		const {
 			success,
 			authData: { jwt, userId }
-		} = req.user;
+		} = await this.authService.validateOAuthLoginEmail(user.emails);
 
 		if (success) {
 			return res.redirect(
-				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+				`${this.clientBaseUrl}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
 			);
 		} else {
-			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
+			return res.redirect(`${this.clientBaseUrl}/#/auth/register`);
 		}
 	}
 
 	@Get('linkedin')
 	@UseGuards(AuthGuard('linkedin'))
-	linkedinLogin() {}
+	linkedinLogin(@Req() req) {}
 
 	@Get('linkedin/callback')
 	@UseGuards(AuthGuard('linkedin'))
-	linkedinLoginCallback(@Req() req, @Res() res) {
+	async linkedinLoginCallback(
+		@RequestCtx() requestCtx: IIncomingRequest,
+		@Res() res
+	) {
+		const { user } = requestCtx;
 		const {
 			success,
 			authData: { jwt, userId }
-		} = req.user;
+		} = await this.authService.validateOAuthLoginEmail(user.emails);
 
 		if (success) {
 			return res.redirect(
-				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+				`${this.clientBaseUrl}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
 			);
 		} else {
-			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
+			return res.redirect(`${this.clientBaseUrl}/#/auth/register`);
 		}
 	}
 
 	@Get('github')
 	@UseGuards(AuthGuard('github'))
-	githubLogin() {}
+	githubLogin(@Req() req) {}
 
 	@Get('github/callback')
 	@UseGuards(AuthGuard('github'))
-	githubLoginCallback(@Req() req, @Res() res) {
+	async githubLoginCallback(
+		@RequestCtx() requestCtx: IIncomingRequest,
+		@Res() res
+	) {
+		const { user } = requestCtx;
 		const {
 			success,
 			authData: { jwt, userId }
-		} = req.user;
+		} = await this.authService.validateOAuthLoginEmail(user.emails);
 
 		if (success) {
 			return res.redirect(
-				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+				`${this.clientBaseUrl}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
 			);
 		} else {
-			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
+			return res.redirect(`${this.clientBaseUrl}/#/auth/register`);
 		}
 	}
 
 	@Get('facebook')
-	async requestFacebookRedirectUrl(@Res() res) {
+	async requestFacebookRedirectUrl(@Req() req, @Res() res) {
 		const {
 			redirectUri
 		} = await this.authService.requestFacebookRedirectUri();
@@ -182,24 +201,31 @@ export class AuthController {
 	}
 
 	@Get('facebook/callback')
-	async facebookCallback(@Req() req, @Res() res): Promise<any> {
-		const { code } = req.query;
+	async facebookCallback(
+		@RequestCtx() requestCtx: IIncomingRequest,
+		@Res() res
+	): Promise<any> {
+		const { code } = requestCtx.query;
 		return await this.authService.facebookSignIn(code, res);
 	}
 
 	@Post('facebook/token')
-	requestJsonWebTokenAfterFacebookSignIn(@Req() req, @Res() res) {
+	async requestJsonWebTokenAfterFacebookSignIn(
+		@RequestCtx() requestCtx: IIncomingRequest,
+		@Res() res
+	) {
+		const { user } = requestCtx;
 		const {
 			success,
 			authData: { jwt, userId }
-		} = req.user;
+		} = await this.authService.validateOAuthLoginEmail(user.emails);
 
 		if (success) {
 			return res.redirect(
-				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+				`${this.clientBaseUrl}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
 			);
 		} else {
-			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
+			return res.redirect(`${this.clientBaseUrl}/#/auth/register`);
 		}
 	}
 
@@ -209,18 +235,22 @@ export class AuthController {
 
 	@Get('twitter/callback')
 	@UseGuards(AuthGuard('twitter'))
-	twitterLoginCallback(@Req() req, @Res() res) {
+	async twitterLoginCallback(
+		@RequestCtx() requestCtx: IIncomingRequest,
+		@Res() res
+	) {
+		const { user } = requestCtx;
 		const {
 			success,
 			authData: { jwt, userId }
-		} = req.user;
+		} = await this.authService.validateOAuthLoginEmail(user.emails);
 
 		if (success) {
 			return res.redirect(
-				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+				`${this.clientBaseUrl}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
 			);
 		} else {
-			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
+			return res.redirect(`${this.clientBaseUrl}/#/auth/register`);
 		}
 	}
 
@@ -230,18 +260,22 @@ export class AuthController {
 
 	@Get('microsoft/callback')
 	@UseGuards(AuthGuard('microsoft'))
-	microsoftLoginCallback(@Req() req, @Res() res) {
+	async microsoftLoginCallback(
+		@RequestCtx() requestCtx: IIncomingRequest,
+		@Res() res
+	) {
+		const { user } = requestCtx;
 		const {
 			success,
 			authData: { jwt, userId }
-		} = req.user;
+		} = await this.authService.validateOAuthLoginEmail(user.emails);
 
 		if (success) {
 			return res.redirect(
-				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+				`${this.clientBaseUrl}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
 			);
 		} else {
-			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
+			return res.redirect(`${this.clientBaseUrl}/#/auth/register`);
 		}
 	}
 
@@ -251,18 +285,22 @@ export class AuthController {
 
 	@Get('auth0/callback')
 	@UseGuards(AuthGuard('auth0'))
-	auth0LoginCallback(@Req() req, @Res() res) {
+	async auth0LoginCallback(
+		@RequestCtx() requestCtx: IIncomingRequest,
+		@Res() res
+	) {
+		const { user } = requestCtx;
 		const {
 			success,
 			authData: { jwt, userId }
-		} = req.user;
+		} = await this.authService.validateOAuthLoginEmail(user.emails);
 
 		if (success) {
 			return res.redirect(
-				`${env.host}:${env.port}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+				`${this.clientBaseUrl}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
 			);
 		} else {
-			return res.redirect(`${env.host}:${env.port}/#/auth/register`);
+			return res.redirect(`${this.clientBaseUrl}/#/auth/register`);
 		}
 	}
 }

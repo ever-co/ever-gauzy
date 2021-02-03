@@ -5,17 +5,17 @@ import {
 	IRolePermission,
 	IAuthResponse
 } from '@gauzy/contracts';
+import { SocialAuthService } from '@gauzy/auth';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
-import { get, post, Response } from 'request';
 import { EmailService } from '../email/email.service';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 
 @Injectable()
-export class AuthService {
+export class AuthService extends SocialAuthService {
 	saltRounds: number;
 
 	constructor(
@@ -23,6 +23,7 @@ export class AuthService {
 		private emailService: EmailService,
 		private userOrganizationService: UserOrganizationService
 	) {
+		super();
 		this.saltRounds = env.USER_PASSWORD_BCRYPT_SALT_ROUNDS;
 	}
 
@@ -275,79 +276,5 @@ export class AuthService {
 
 		const token: string = sign(payload, env.JWT_SECRET, {});
 		return { token };
-	}
-
-	async requestFacebookRedirectUri(): Promise<{ redirectUri: string }> {
-		const {
-			clientId,
-			oauthRedirectUri,
-			state,
-			loginDialogUri
-		} = env.facebookConfig;
-
-		const queryParams: string[] = [
-			`client_id=${clientId}`,
-			`redirect_uri=${oauthRedirectUri}`,
-			`state=${state}`
-		];
-
-		const redirectUri = `${loginDialogUri}?${queryParams.join('&')}`;
-
-		return { redirectUri };
-	}
-
-	async facebookSignIn(code: string, responseRedirectUse: any): Promise<any> {
-		const {
-			clientId,
-			oauthRedirectUri,
-			clientSecret,
-			accessTokenUri
-		} = env.facebookConfig;
-
-		const queryParams: string[] = [
-			`client_id=${clientId}`,
-			`redirect_uri=${oauthRedirectUri}`,
-			`client_secret=${clientSecret}`,
-			`code=${code}`
-		];
-
-		const uri = `${accessTokenUri}?${queryParams.join('&')}`;
-		get(uri, (error: Error, res: Response, body: any) => {
-			if (error) {
-				console.error(error);
-				throw error;
-			} else if (body.error) {
-				console.error(body.error);
-				throw body.error;
-			}
-
-			const { access_token } = JSON.parse(body);
-			const { host, port } = env;
-
-			post(
-				{
-					url: `${host}:${port}/api/auth/facebook/token`,
-					headers: {
-						'Content-Type': 'application/x-www-form-urlencoded'
-					},
-					form: { access_token }
-				},
-				async (innerError: Error) => {
-					if (innerError) {
-						console.error(innerError);
-						throw innerError;
-					} else if (body.error) {
-						console.error(body.error);
-						throw body.error;
-					}
-
-					const redirectSuccessUrl = body.replace(
-						'Found. Redirecting to ',
-						''
-					);
-					return responseRedirectUse.redirect(redirectSuccessUrl);
-				}
-			);
-		});
 	}
 }
