@@ -317,7 +317,9 @@
 				"LONGITUDE": "Longitude"
 			},
 			"PUBLIC_LINK": "Public Link",
-			"DEFAULT_TERMS": "Default terms for invoices and estimates"
+			"DEFAULT_TERMS": "Default terms for invoices and estimates",
+			"CONVERT_ESTIMATES": "Convert Estimates",
+			"ALLOW_CONVERTING": "Automatically convert accepted estimate to invoice"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",

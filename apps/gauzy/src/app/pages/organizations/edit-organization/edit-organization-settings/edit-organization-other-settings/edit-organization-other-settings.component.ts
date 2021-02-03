@@ -221,7 +221,10 @@ export class EditOrganizationOtherSettingsComponent
 			],
 			fiscalInformation: [this.organization.fiscalInformation || ''],
 			currencyPosition: [this.organization.currencyPosition || 'LEFT'],
-			discountAfterTax: [this.organization.discountAfterTax]
+			discountAfterTax: [this.organization.discountAfterTax],
+			convertAcceptedEstimates: [
+				this.organization.convertAcceptedEstimates || false
+			]
 		});
 	}
 
@@ -236,6 +239,10 @@ export class EditOrganizationOtherSettingsComponent
 
 	toggleDiscountAfterTax($event) {
 		this.organization.discountAfterTax = $event;
+	}
+
+	toggleEstimateConverting($event) {
+		this.organization.convertAcceptedEstimates = $event;
 	}
 
 	private async _loadOrganizationData(organization) {

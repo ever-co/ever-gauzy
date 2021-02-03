@@ -5,6 +5,7 @@ export interface IEstimateEmail
 	token?: string;
 	email?: string;
 	expireDate?: Date;
+	convertAcceptedEstimates?: boolean;
 }
 
 export interface IEstimateEmailFindInput {

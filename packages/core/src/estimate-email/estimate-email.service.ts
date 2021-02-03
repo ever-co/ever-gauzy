@@ -39,6 +39,8 @@ export class EstimateEmailService extends CrudService<EstimateEmail> {
 		estimateEmail.email = email;
 		estimateEmail.token = token;
 		estimateEmail.expireDate = expireDate;
+		estimateEmail.convertAcceptedEstimates =
+			organization.convertAcceptedEstimates;
 
 		await this.repository.save(estimateEmail);
 	}

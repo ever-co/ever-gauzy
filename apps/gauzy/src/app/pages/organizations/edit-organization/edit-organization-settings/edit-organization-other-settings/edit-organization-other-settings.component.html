@@ -390,9 +390,27 @@
 								}}
 							</nb-toggle>
 						</div>
+						<div class="form-group invite-toggle">
+							<label class="label">
+								{{
+									'FORM.LABELS.CONVERT_ESTIMATES' | translate
+								}}
+							</label>
+							<nb-toggle
+								class="d-block"
+								formControlName="convertAcceptedEstimates"
+								status="primary"
+								labelPosition="start"
+								(checkedChange)="
+									toggleEstimateConverting($event)
+								"
+							>
+								{{ 'FORM.LABELS.ALLOW_CONVERTING' | translate }}
+							</nb-toggle>
+						</div>
 					</div>
 					<div class="col-6">
-						<div class="form-group invite-toggle">
+						<div class="form-group h-75">
 							<label class="label">
 								{{ 'FORM.LABELS.DEFAULT_TERMS' | translate }}
 							</label>
@@ -405,7 +423,7 @@
 								formControlName="defaultInvoiceEstimateTerms"
 								id="inputTerms"
 								fullWidth
-								class="terms-textarea"
+								class="terms-textarea h-100"
 							>
 							</textarea>
 						</div>
