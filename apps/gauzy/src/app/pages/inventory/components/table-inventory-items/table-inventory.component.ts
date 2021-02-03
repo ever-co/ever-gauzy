@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
