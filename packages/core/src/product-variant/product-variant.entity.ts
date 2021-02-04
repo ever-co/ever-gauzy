@@ -12,6 +12,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IProductVariant, BillingInvoicingPolicyEnum } from '@gauzy/contracts';
 import { IsNumber, IsString, IsOptional, IsEnum } from 'class-validator';
 import {
+	ImageAsset,
 	Product,
 	ProductOption,
 	ProductVariantPrice,
@@ -87,6 +88,13 @@ export class ProductVariant
 	})
 	@JoinColumn()
 	product: Product;
+
+	@ApiPropertyOptional({ type: ImageAsset })
+	@ManyToOne(() => ImageAsset, {
+		eager: true
+	})
+	@JoinColumn()
+	image: ImageAsset;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

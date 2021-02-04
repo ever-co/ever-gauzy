@@ -241,3 +241,19 @@ export const verifyLeadExists = (text) => {
 export const verifyElementIsDeleted = (text) => {
 	verifyTextNotExisting(ContactsLeadsPage.verifyLeadCss, text);
 };
+
+export const verifyNextButtonVisible = () => {
+	verifyElementIsVisible(ContactsLeadsPage.nextButtonCss);
+};
+
+export const clickNextButton = () => {
+	clickButton(ContactsLeadsPage.nextButtonCss);
+};
+
+export const verifyFinishButtonVisible = () => {
+	verifyElementIsVisible(ContactsLeadsPage.finishButtonCss);
+};
+
+export const clickFinishButton = () => {
+	clickButton(ContactsLeadsPage.finishButtonCss);
+};

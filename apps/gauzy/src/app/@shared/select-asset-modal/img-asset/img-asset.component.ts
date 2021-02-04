@@ -15,7 +15,9 @@ export class ImageAssetComponent implements OnInit {
 	imageAsset: IImageAsset;
 
 	@Input()
-	selectedImage: IImageAsset;
+	selectedImages: IImageAsset[] = [];
+	@Input()
+	deleteImageEnabled: boolean;
 
 	@Output() imageClicked = new EventEmitter<any>();
 	@Output() assetDeleted = new EventEmitter<any>();
@@ -29,9 +31,11 @@ export class ImageAssetComponent implements OnInit {
 	) {}
 
 	get selected() {
-		if (!this.imageAsset || !this.selectedImage) return;
+		if (!this.imageAsset || !this.selectedImages) return;
 
-		return this.imageAsset.url == this.selectedImage.url;
+		return this.selectedImages.find(
+			(image) => image.url == this.imageAsset.url
+		);
 	}
 
 	onImageClick($event) {

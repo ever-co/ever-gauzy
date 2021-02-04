@@ -92,6 +92,7 @@ export interface IOrganization extends IBasePerTenantEntityModel {
 	featureOrganizations?: IFeatureOrganization[];
 	defaultInvoiceEstimateTerms?: string;
 	convertAcceptedEstimates?: boolean;
+	daysUntilDue?: number;
 }
 
 export interface IOrganizationFindInput {
@@ -143,6 +144,7 @@ export interface IOrganizationCreateInput extends IContact {
 	fiscalInformation?: string;
 	defaultInvoiceEstimateTerms?: string;
 	convertAcceptedEstimates?: boolean;
+	daysUntilDue?: number;
 }
 
 export interface IOrganizationUpdateInput extends IOrganizationCreateInput {

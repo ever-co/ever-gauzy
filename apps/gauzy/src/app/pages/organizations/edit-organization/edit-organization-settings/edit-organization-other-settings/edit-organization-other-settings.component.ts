@@ -224,7 +224,8 @@ export class EditOrganizationOtherSettingsComponent
 			discountAfterTax: [this.organization.discountAfterTax],
 			convertAcceptedEstimates: [
 				this.organization.convertAcceptedEstimates || false
-			]
+			],
+			daysUntilDue: [this.organization.daysUntilDue || null]
 		});
 	}
 

@@ -156,11 +156,11 @@ export const selectTableRow = (index) => {
 };
 
 export const actionButtonVisible = () => {
-	verifyElementIsVisible(EstimatesPage.infoButtonCss);
+	verifyElementIsVisible(EstimatesPage.popoverButtonCss);
 };
 
 export const clickActionButtonByText = (text) => {
-	clickElementByText(EstimatesPage.infoButtonCss, text);
+	clickElementByText(EstimatesPage.popoverButtonCss, text);
 };
 
 export const backButtonVisible = () => {
@@ -187,12 +187,12 @@ export const enterEmailData = (data) => {
 	enterInput(EstimatesPage.emailInputCss, data);
 };
 
-export const editButtonVisible = () => {
-	verifyElementIsVisible(EstimatesPage.editButtonCss);
+export const infoButtonVisible = () => {
+	verifyElementIsVisible(EstimatesPage.infoButtonCss);
 };
 
-export const clickEditButton = (text) => {
-	clickElementByText(EstimatesPage.editButtonCss, text);
+export const clickInfoButton = (index) => {
+	clickButtonByIndex(EstimatesPage.infoButtonCss, index);
 };
 
 export const deleteButtonVisible = () => {
@@ -229,4 +229,12 @@ export const verifyElementIsDeleted = (text) => {
 
 export const scrollEmailInviteTemplate = () => {
 	scrollDown(EstimatesPage.emailCardCss);
+};
+
+export const moreButtonVisible = () => {
+	verifyElementIsVisible(EstimatesPage.moreButtonCss);
+};
+
+export const clickMoreButton = () => {
+	clickButton(EstimatesPage.moreButtonCss);
 };

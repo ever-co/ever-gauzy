@@ -317,7 +317,8 @@
 				"LONGITUDE": "Longitude"
 			},
 			"PUBLIC_LINK": "Public Link",
-			"DEFAULT_TERMS": "Default terms for invoices and estimates"
+			"DEFAULT_TERMS": "Default terms for invoices and estimates",
+			"DEFAULT_DAYS": "Default days until invoices and estimates are due."
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -480,7 +481,8 @@
 			"SPRINT_END_DATE": "Sprint end date",
 			"SPRINT_GOAL": "Sprint goal",
 			"POLICY_NAME": "Policy Name",
-			"SELECT_DATE": "Select Date"
+			"SELECT_DATE": "Select Date",
+			"DAYS_UNTIL_DUE": "Days Until Due"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -2044,7 +2046,12 @@
 		"VIEW_GALLERY": "View gallery",
 		"EDIT_IMAGE": "Edit gallery image",
 		"DELETE_IMAGE": "Delete image",
-		"IMAGE_ASSET_DELETED": "Image asset deleted"
+		"IMAGE_ASSET_DELETED": "Image asset deleted",
+		"CATEGORY": "Category",
+		"TYPE": "Type",
+		"VIEW_INVENTORY_ITEM": "View inventory item",
+		"TAGS": "Tags",
+		"PRICE": "Price"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

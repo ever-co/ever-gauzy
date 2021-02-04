@@ -6,7 +6,8 @@ import {
 	NbInputModule,
 	NbButtonModule,
 	NbToastrModule,
-	NbDialogModule
+	NbDialogModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { ImageAssetService } from '../../@core/services/image-asset.service';
@@ -33,7 +34,8 @@ import { SelectAssetComponent } from './select-asset.component';
 		ImageUploaderModule,
 		FileUploaderModule,
 		NbToastrModule,
-		NbDialogModule
+		NbDialogModule,
+		NbSpinnerModule
 	],
 	providers: [ImageAssetService]
 })

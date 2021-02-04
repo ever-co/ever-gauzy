@@ -1,0 +1,50 @@
+.featured-image {
+  width: 100%;
+}
+
+.key-description {
+  font-weight: bold;
+}
+
+.gallery-sm-preview-item {
+  width: 50px;
+  height: 50px;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.option-item {
+  padding: 5px 10px;
+  font-size: 12px;
+  background: #3366ff;
+  border-radius: 7px;
+  color: #fff;
+  margin-right: 10px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.tag-item {
+  padding: 5px 7px;
+  font-size: 12px;
+  border-radius: 7px;
+  margin-right: 10px;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: white;
+  font-weight: bold;
+  width: 60%;
+}
+
+.d-flex {
+  display: flex;
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+}

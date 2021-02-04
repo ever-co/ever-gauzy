@@ -460,4 +460,10 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@IsOptional()
 	@Column({ nullable: true })
 	convertAcceptedEstimates?: boolean;
+
+	@ApiPropertyOptional({ type: () => Number })
+	@IsNumber()
+	@IsOptional()
+	@Column({ nullable: true })
+	daysUntilDue?: number;
 }

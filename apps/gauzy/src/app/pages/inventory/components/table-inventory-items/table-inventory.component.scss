@@ -26,6 +26,14 @@
   list-style: none;
 }
 
+.card-image {
+  width: 100px;
+  height: 100px;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
 .flex-item {
   border: 0.0625rem solid #e4e9f2;
   border-radius: 0.25rem;
