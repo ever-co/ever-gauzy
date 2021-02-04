@@ -59,8 +59,16 @@ export class InventoryItemViewComponent
 					languageCode
 				);
 
+				let variants = this.inventoryItem.variants.map((variant) => {
+					return {
+						...variant,
+						...variant.settings,
+						...variant.price
+					};
+				});
+
 				this.loadSmartTable();
-				this.smartTableSource.load(this.inventoryItem.variants);
+				this.smartTableSource.load(variants);
 			});
 	}
 
@@ -125,6 +133,25 @@ export class InventoryItemViewComponent
 					valuePrepareFunction: (_, price) => {
 						return `${_.unitCostCurrency} ${_.unitCost}`;
 					},
+					filter: false
+				},
+				isEquipment: {
+					title: this.getTranslation('INVENTORY_PAGE.IS_EQUIPMENT'),
+					type: 'custom',
+					renderComponent: EnabledStatusComponent,
+					filter: false
+				},
+				canBePurchased: {
+					title: this.getTranslation(
+						'INVENTORY_PAGE.CAN_BE_PURCHASED'
+					),
+					type: 'custom',
+					renderComponent: EnabledStatusComponent,
+					filter: false
+				},
+				notes: {
+					title: this.getTranslation('INVENTORY_PAGE.NOTES'),
+					type: 'string',
 					filter: false
 				},
 				enabled: {

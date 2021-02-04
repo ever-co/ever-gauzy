@@ -96,7 +96,15 @@
 									>{{
 										'INVENTORY_PAGE.ENABLED' | translate
 									}}:</span
-								>{{ inventoryItem.enabled }}
+								>
+								<nb-icon
+									*ngIf="inventoryItem.enabled"
+									icon="checkmark"
+								></nb-icon>
+								<nb-icon
+									*ngIf="!inventoryItem.enabled"
+									icon="close"
+								></nb-icon>
 							</p>
 							<div class="d-flex">
 								<div class="key-description mr-2">
