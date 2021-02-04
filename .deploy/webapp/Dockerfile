@@ -41,6 +41,7 @@ COPY --chown=node:node packages/common/package.json ./packages/common/
 COPY --chown=node:node packages/common-angular/package.json ./packages/common-angular/
 COPY --chown=node:node packages/config/package.json ./packages/config/
 COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
+COPY --chown=node:node packages/auth/package.json ./packages/auth/
 COPY --chown=node:node packages/core/package.json ./packages/core/
 COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
 COPY --chown=node:node packages/plugins/integration-ai/package.json ./packages/plugins/integration-ai/
