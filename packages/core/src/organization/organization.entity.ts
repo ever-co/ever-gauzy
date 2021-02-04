@@ -455,6 +455,12 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@Column({ nullable: true })
 	defaultInvoiceEstimateTerms?: string;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsBoolean()
+	@IsOptional()
+	@Column({ nullable: true })
+	convertAcceptedEstimates?: boolean;
+
 	@ApiPropertyOptional({ type: () => Number })
 	@IsNumber()
 	@IsOptional()

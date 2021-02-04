@@ -318,6 +318,8 @@
 			},
 			"PUBLIC_LINK": "Public Link",
 			"DEFAULT_TERMS": "Default terms for invoices and estimates",
+			"CONVERT_ESTIMATES": "Convert Estimates",
+			"ALLOW_CONVERTING": "Automatically convert accepted estimate to invoice",
 			"DEFAULT_DAYS": "Default days until invoices and estimates are due."
 		},
 		"PLACEHOLDERS": {
