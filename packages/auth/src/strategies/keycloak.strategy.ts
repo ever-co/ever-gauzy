@@ -1,4 +1,4 @@
-import { ConfigService, environment as env, IEnvironment } from '@gauzy/config';
+import { ConfigService, IEnvironment } from '@gauzy/config';
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-google-oauth20';
