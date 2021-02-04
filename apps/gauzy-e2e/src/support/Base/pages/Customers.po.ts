@@ -241,3 +241,19 @@ export const verifyCustomerExists = (text) => {
 export const verifyElementIsDeleted = (text) => {
 	verifyTextNotExisting(CustomersPage.verifyCustomerCss, text);
 };
+
+export const verifyNextButtonVisible = () => {
+	verifyElementIsVisible(CustomersPage.nextButtonCss);
+};
+
+export const clickNextButton = () => {
+	clickButton(CustomersPage.nextButtonCss);
+};
+
+export const verifyFinishButtonVisible = () => {
+	verifyElementIsVisible(CustomersPage.finishButtonCss);
+};
+
+export const clickFinishButton = () => {
+	clickButton(CustomersPage.finishButtonCss);
+};

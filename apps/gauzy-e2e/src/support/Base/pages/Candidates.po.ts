@@ -10,7 +10,7 @@ import {
 	getLastElement,
 	waitElementToHide,
 	verifyText,
-	verifyTextNotExisting
+	verifyElementNotExist
 } from '../utils/util';
 import { CandidatesPage } from '../pageobjects/CandidatesPageObject';
 
@@ -381,8 +381,8 @@ export const verifyCandidateExists = (text) => {
 	verifyText(CandidatesPage.verifyCandidateCss, text);
 };
 
-export const verifyElementIsDeleted = (text) => {
-	verifyTextNotExisting(CandidatesPage.verifyCandidateCss, text);
+export const verifyElementIsDeleted = () => {
+	verifyElementNotExist(CandidatesPage.verifyCandidateCss);
 };
 
 export const verifyBadgeClass = () => {

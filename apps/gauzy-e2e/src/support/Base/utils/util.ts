@@ -118,3 +118,11 @@ export const scrollDown = (loc) => {
 export const verifyElementIsNotVisible = (loc) => {
 	cy.get(loc, { timeout: 40000 }).should('not.be.visible');
 };
+
+export const verifyElementNotExist = (loc) => {
+	cy.get(loc, { timeout: 40000 }).should('not.exist');
+};
+
+export const clickTableRowByText = (loc, text) => {
+	cy.get(loc, { timeout: 40000 }).contains(text).click();
+};

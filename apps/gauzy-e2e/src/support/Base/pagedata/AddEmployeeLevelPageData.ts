@@ -1,4 +1,5 @@
 export const AddEmployeeLevelPageData = {
 	levelE: 'Level E',
-	levelF: 'Level F'
+	levelF: 'Level F',
+	levelD: 'Level D'
 };

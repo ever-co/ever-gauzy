@@ -17,7 +17,7 @@ describe('Add SMTP server test', () => {
 		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 	it('Should be able to add new transfer protocol', () => {
-		cy.visit('/#/pages/organization/custom-smtp');
+		cy.visit('/#/pages/settings/custom-smtp/tenant');
 		customSMTPPage.hostInputVisible();
 		customSMTPPage.enterHostInputData(CustomSMTPPageData.host);
 		customSMTPPage.portInputVisible();

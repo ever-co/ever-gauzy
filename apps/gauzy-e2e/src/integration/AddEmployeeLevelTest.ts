@@ -57,12 +57,28 @@ describe('Add employee level test', () => {
 		addEmployeeLevelPage.clickCancelButton();
 	});
 	it('Should be able to delete employee level', () => {
+		addEmployeeLevelPage.addNewLevelButtonVisible();
+		addEmployeeLevelPage.clickAddNewLevelButton();
+		addEmployeeLevelPage.newLevelInputVisible();
+		addEmployeeLevelPage.enterNewLevelData(AddEmployeeLevelPageData.levelE);
+		addEmployeeLevelPage.tagsMultyselectVisible();
+		addEmployeeLevelPage.clickTagsMultyselect();
+		addEmployeeLevelPage.selectTagsFromDropdown(0);
+		addEmployeeLevelPage.clickKeyboardButtonByKeyCode(9);
+		addEmployeeLevelPage.saveNewLevelButtonVisible();
+		addEmployeeLevelPage.clickSaveNewLevelButton();
+		addEmployeeLevelPage.waitMessageToHide();
 		addEmployeeLevelPage.deleteLevelButtonVisible();
 		addEmployeeLevelPage.clickDeleteLevelButton();
 		addEmployeeLevelPage.confirmDeleteButtonVisible();
 		addEmployeeLevelPage.clickConfirmDeleteLevelButton();
 		addEmployeeLevelPage.verifyElementIsDeleted(
-			AddEmployeeLevelPageData.levelF
+			AddEmployeeLevelPageData.levelE
 		);
+		addEmployeeLevelPage.waitMessageToHide();
+		addEmployeeLevelPage.deleteLevelButtonVisible();
+		addEmployeeLevelPage.clickDeleteLevelButton();
+		addEmployeeLevelPage.confirmDeleteButtonVisible();
+		addEmployeeLevelPage.clickConfirmDeleteLevelButton();
 	});
 });

@@ -8,7 +8,7 @@ import {
 	clickKeyboardBtnByKeycode,
 	waitElementToHide,
 	verifyText,
-	verifyTextNotExisting
+	verifyElementNotExist
 } from '../utils/util';
 import { ApprovalRequestPage } from '../pageobjects/ApprovalRequestPageObject';
 
@@ -146,6 +146,6 @@ export const verifyRequestExists = (text) => {
 	verifyText(ApprovalRequestPage.verifyRequestCss, text);
 };
 
-export const verifyElementIsDeleted = (text) => {
-	verifyTextNotExisting(ApprovalRequestPage.verifyRequestCss, text);
+export const verifyElementIsDeleted = () => {
+	verifyElementNotExist(ApprovalRequestPage.verifyRequestCss);
 };

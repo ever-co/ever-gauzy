@@ -60,7 +60,7 @@ describe('Edit user test', () => {
 		editUserPage.gridButtonVisible();
 		editUserPage.clickGridButton();
 		editUserPage.tableRowVisible();
-		editUserPage.selectLastTableRow();
+		editUserPage.selectTableRow(`${firstName} ${lastName}`);
 		editUserPage.editButtonVisible();
 		editUserPage.clickEditButton();
 		editUserPage.orgTabButtonVisible();
