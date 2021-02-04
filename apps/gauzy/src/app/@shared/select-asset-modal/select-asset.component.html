@@ -9,7 +9,11 @@
 			(click)="dialogRef.close()"
 		></nb-icon>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body
+		[nbSpinner]="loading"
+		nbSpinnerStatus="primary"
+		nbSpinnerSize="large"
+	>
 		<div class="row">
 			<div class="col-md-8">
 				<div class="row mb-2" *ngIf="settings.uploadImageEnabled">

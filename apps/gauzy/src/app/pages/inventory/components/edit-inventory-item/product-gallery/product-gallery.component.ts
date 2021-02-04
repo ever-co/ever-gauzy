@@ -103,13 +103,15 @@ export class ProductGalleryComponent
 			context: {
 				newImageUploadedEvent: this.newImageUploadedEvent$,
 				newImageStoredEvent: this.newImageStoredEvent$,
-				settings: { selectMultiple: true, deleteImageEnabled: true }
+				settings: {
+					selectMultiple: true,
+					deleteImageEnabled: true,
+					uploadImageEnabled: true
+				}
 			}
 		});
 
 		let selectedImages = await dialog.onClose.pipe(first()).toPromise();
-
-		debugger;
 
 		try {
 			if (selectedImages.length && this.inventoryStore.activeProduct.id) {

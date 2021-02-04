@@ -108,7 +108,7 @@ export class ProductService extends TenantAwareCrudService<Product> {
 				relations: ['gallery']
 			});
 
-			product.gallery.push(...images);
+			product.gallery = product.gallery.concat(images);
 			return await this.productRepository.save(product);
 		} catch (err) {
 			throw new BadRequestException(err);

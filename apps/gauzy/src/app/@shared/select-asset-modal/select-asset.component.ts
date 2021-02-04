@@ -25,6 +25,7 @@ export class SelectAssetComponent
 	implements OnInit {
 	activeImage: IImageAsset;
 	selectedImages: IImageAsset[] = [];
+	loading = true;
 
 	gallery: IImageAsset[] = [];
 
@@ -64,6 +65,7 @@ export class SelectAssetComponent
 	async getAvailableImages() {
 		if (this.galleryInput) {
 			this.gallery = this.galleryInput;
+			this.loading = false;
 			return;
 		}
 
@@ -75,6 +77,7 @@ export class SelectAssetComponent
 		};
 
 		this.gallery = (await this.imageAssetService.getAll(searchInput)).items;
+		this.loading = false;
 	}
 
 	onSelectImage(selectedImage: IImageAsset) {
