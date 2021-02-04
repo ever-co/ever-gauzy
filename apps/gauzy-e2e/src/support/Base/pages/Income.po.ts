@@ -8,7 +8,7 @@ import {
 	clickButtonByIndex,
 	waitElementToHide,
 	verifyText,
-	verifyTextNotExisting
+	verifyElementNotExist
 } from '../utils/util';
 import { IncomePage } from '../pageobjects/IncomePageObject';
 
@@ -144,8 +144,8 @@ export const waitMessageToHide = () => {
 	waitElementToHide(IncomePage.toastrMessageCss);
 };
 
-export const verifyElementIsDeleted = (text) => {
-	verifyTextNotExisting(IncomePage.verifyIncomeCss, text);
+export const verifyElementIsDeleted = () => {
+	verifyElementNotExist(IncomePage.verifyIncomeCss);
 };
 
 export const verifyIncomeExists = (text) => {

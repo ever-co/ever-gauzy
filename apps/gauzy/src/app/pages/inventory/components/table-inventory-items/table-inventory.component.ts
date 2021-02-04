@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
@@ -9,7 +9,8 @@ import {
 	IProduct,
 	ComponentLayoutStyleEnum,
 	IOrganization,
-	IProductTranslated
+	IProductTranslated,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -19,6 +20,7 @@ import { Store } from '../../../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { ItemImgTagsComponent } from '../table-components/item-img-tags-row.component';
+import { NgxPermissionsService } from 'ngx-permissions';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-table-inventory',
@@ -27,7 +29,7 @@ import { ItemImgTagsComponent } from '../table-components/item-img-tags-row.comp
 })
 export class TableInventoryComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit {
 	settingsSmartTable: object;
 	loading: boolean;
 	selectedProduct: IProduct;
@@ -39,6 +41,7 @@ export class TableInventoryComponent
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.CARDS_GRID;
 	organization: IOrganization;
+	editProductAllowed = false;
 
 	inventoryTable: Ng2SmartTableComponent;
 	@ViewChild('inventoryTable') set content(content: Ng2SmartTableComponent) {
@@ -54,16 +57,19 @@ export class TableInventoryComponent
 		private toastrService: ToastrService,
 		private productService: ProductService,
 		private router: Router,
-		private store: Store
+		private store: Store,
+		private ngxPermissionsService: NgxPermissionsService
 	) {
 		super(translateService);
 		this.setView();
 	}
 
-	ngOnInit(): void {
+	async ngOnInit() {
+		this.setEditPermission();
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.selectedLanguage = this.translateService.currentLang;
+
 		this.translateService.onLangChange
 			.pipe(untilDestroyed(this))
 			.subscribe((languageEvent) => {
@@ -86,8 +92,6 @@ export class TableInventoryComponent
 				}
 			});
 	}
-
-	ngOnDestroy(): void {}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.INVENTORY;
@@ -183,6 +187,18 @@ export class TableInventoryComponent
 		]);
 	}
 
+	onViewInventoryItem(selectedItem?: IProduct) {
+		if (selectedItem) {
+			this.selectProduct({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+		this.router.navigate([
+			`/pages/organization/inventory/view/${this.selectedProduct.id}`
+		]);
+	}
+
 	async delete(selectedItem?: IProduct) {
 		if (selectedItem) {
 			this.selectProduct({
@@ -263,5 +279,13 @@ export class TableInventoryComponent
 			this.inventoryTable.grid.dataSet['willSelect'] = 'false';
 			this.inventoryTable.grid.dataSet.deselectAll();
 		}
+	}
+
+	setEditPermission() {
+		this.ngxPermissionsService
+			.hasPermission(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
+			.then((result) => {
+				this.editProductAllowed = result;
+			});
 	}
 }

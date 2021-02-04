@@ -30,7 +30,7 @@ export const OrganizationEquipmentPage = {
 	policyDescriptionInputCss: '[formcontrolname="description"]',
 	backButtonCss: 'g[data-name="arrow-back"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	verifyPolicyCss: 'div.ng-star-inserted',
+	verifyPolicyCss: 'tr.ng2-smart-row',
 	verifySharingCss: 'div.ng-star-inserted',
 	verifyEquipmentCss: 'ga-picture-name-tags > div > div.d-block'
 };

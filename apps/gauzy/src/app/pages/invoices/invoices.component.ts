@@ -702,6 +702,7 @@ export class InvoicesComponent
 						});
 						this.invoices = invoiceVM;
 						this.smartTableSource.load(invoiceVM);
+						this.closeActionsPopover();
 						this.loading = false;
 					} catch (error) {
 						this.toastrService.danger(
@@ -1033,6 +1034,14 @@ export class InvoicesComponent
 		} else {
 			tableSettingsPopup.show();
 		}
+
+		if (actionsPopup.isShown) {
+			actionsPopup.hide();
+		}
+	}
+
+	closeActionsPopover() {
+		const actionsPopup = this.popups.first;
 
 		if (actionsPopup.isShown) {
 			actionsPopup.hide();

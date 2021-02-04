@@ -8,10 +8,15 @@ import { TableInventoryComponent } from './components/table-inventory-items/tabl
 import { InventoryVariantFormComponent } from './components/edit-inventory-item-variant/variant-form.component';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { NgxPermissionsGuard } from 'ngx-permissions';
+import { InventoryItemViewComponent } from './components/view-inventory-item/view-inventory-item.component';
 
 const ALL_ORG_PERMISSIONS = {
 	permissions: {
-		only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ALL_ORG_EDIT],
+		only: [
+			PermissionsEnum.ALL_ORG_VIEW,
+			PermissionsEnum.ALL_ORG_EDIT,
+			PermissionsEnum.ORG_INVENTORY_VIEW
+		],
 		redirectTo: '/pages/dashboard'
 	}
 };
@@ -39,6 +44,10 @@ const routes: Routes = [
 			{
 				path: 'edit/:id',
 				component: ProductFormComponent
+			},
+			{
+				path: 'view/:id',
+				component: InventoryItemViewComponent
 			},
 			{
 				path: ':itemId/variants/:itemVariantId',

@@ -6,8 +6,8 @@ import {
 	clickButtonByIndex,
 	waitElementToHide,
 	clickElementByText,
-	verifyTextNotExisting,
-	verifyText
+	verifyText,
+	verifyElementNotExist
 } from '../utils/util';
 import { GoalsPage } from '../pageobjects/GoalsPageObject';
 
@@ -212,8 +212,8 @@ export const clickProgressBar = (index) => {
 	clickButtonByIndex(GoalsPage.progressBarCss, index);
 };
 
-export const verifyElementIsDeleted = (text) => {
-	verifyTextNotExisting(GoalsPage.verifyGoalCss, text);
+export const verifyElementIsDeleted = () => {
+	verifyElementNotExist(GoalsPage.verifyGoalCss);
 };
 
 export const verifyGoalExists = (text) => {

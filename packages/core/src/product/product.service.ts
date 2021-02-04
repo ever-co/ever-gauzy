@@ -14,6 +14,25 @@ import { TranslatePropertyInput } from '../core/entities/translate-base';
 
 @Injectable()
 export class ProductService extends TenantAwareCrudService<Product> {
+	propsTranslate: Array<TranslatePropertyInput> = [
+		{
+			prop: 'root',
+			propsTranslate: [
+				{ key: 'name', alias: 'name' },
+				{ key: 'description', alias: 'description' }
+			]
+		},
+		{
+			prop: 'category',
+			propsTranslate: [{ key: 'name', alias: 'category' }]
+		},
+		{ prop: 'type', propsTranslate: [{ key: 'name', alias: 'type' }] },
+		{
+			prop: 'description',
+			propsTranslate: [{ key: 'description', alias: 'description' }]
+		}
+	];
+
 	constructor(
 		@InjectRepository(Product)
 		private readonly productRepository: Repository<Product>
@@ -32,30 +51,11 @@ export class ProductService extends TenantAwareCrudService<Product> {
 			where: findInput
 		});
 
-		const propsTranslate: Array<TranslatePropertyInput> = [
-			{
-				prop: 'root',
-				propsTranslate: [
-					{ key: 'name', alias: 'name' },
-					{ key: 'description', alias: 'description' }
-				]
-			},
-			{
-				prop: 'category',
-				propsTranslate: [{ key: 'name', alias: 'category' }]
-			},
-			{ prop: 'type', propsTranslate: [{ key: 'name', alias: 'type' }] },
-			{
-				prop: 'description',
-				propsTranslate: [{ key: 'description', alias: 'description' }]
-			}
-		];
-
 		const mapData = async () => {
 			if (langCode) {
 				return Promise.all(
 					items.map((product) =>
-						product.translateNested(langCode, propsTranslate)
+						product.translateNested(langCode, this.propsTranslate)
 					)
 				);
 			} else {
@@ -68,6 +68,28 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		});
 	}
 
+	async findByIdTranslated(
+		langCode: string,
+		id: string,
+		relations?: string[]
+	): Promise<Product | IProductTranslated> {
+		return await this.productRepository
+			.findOne({
+				where: { id: id },
+				relations: relations
+			})
+			.then((result) => {
+				if (result) {
+					return result.translateNested(
+						langCode,
+						this.propsTranslate
+					);
+				}
+
+				return result;
+			});
+	}
+
 	async findById(id: string, options: any): Promise<Product> {
 		return await this.productRepository.findOne(id, options);
 	}
@@ -76,9 +98,9 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		return await this.productRepository.save(<any>productRequest);
 	}
 
-	async addGalleryImage(
+	async addGalleryImages(
 		productId: string,
-		image: IImageAsset
+		images: IImageAsset[]
 	): Promise<Product> {
 		try {
 			let product = await this.productRepository.findOne({
@@ -86,7 +108,7 @@ export class ProductService extends TenantAwareCrudService<Product> {
 				relations: ['gallery']
 			});
 
-			product.gallery.push(image);
+			product.gallery = product.gallery.concat(images);
 			return await this.productRepository.save(product);
 		} catch (err) {
 			throw new BadRequestException(err);

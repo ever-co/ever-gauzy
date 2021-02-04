@@ -1184,11 +1184,11 @@ export class InvoiceAddComponent
 	}
 
 	getNextMonth() {
-		const date = new Date();
-		const d = date.getDate();
-		date.setMonth(date.getMonth() + 1);
-		if (date.getDate() !== d) {
-			date.setDate(0);
+		var date = new Date();
+		if (this.organization.daysUntilDue !== null) {
+			date.setDate(date.getDate() + this.organization.daysUntilDue);
+		} else {
+			date.setMonth(date.getMonth() + 1);
 		}
 		return date;
 	}

@@ -55,6 +55,8 @@ import { ProductGalleryComponent } from './components/edit-inventory-item/produc
 import { ImageAssetService } from '../../@core/services/image-asset.service';
 import { GalleryModule } from '../../@shared/gallery/gallery.module';
 import { InventoryStore } from '../../@core/services/inventory-store.service';
+import { InventoryItemViewComponent } from './components/view-inventory-item/view-inventory-item.component';
+import { TranslatableService } from '../../@core/services/translatable.service';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -83,7 +85,8 @@ const NB_MODULES = [
 		OptionsFormComponent,
 		InventoryVariantFormComponent,
 		EnabledStatusComponent,
-		ProductGalleryComponent
+		ProductGalleryComponent,
+		InventoryItemViewComponent
 	],
 	imports: [
 		UserFormsModule,
@@ -126,7 +129,8 @@ const NB_MODULES = [
 		ProductVariantPriceService,
 		OrganizationsService,
 		ImageAssetService,
-		InventoryStore
+		InventoryStore,
+		TranslatableService
 	]
 })
 export class InventoryModule {}

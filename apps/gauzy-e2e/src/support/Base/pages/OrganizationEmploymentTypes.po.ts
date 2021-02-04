@@ -7,7 +7,7 @@ import {
 	clickButtonByIndex,
 	waitElementToHide,
 	verifyText,
-	verifyTextNotExisting
+	verifyElementNotExist
 } from '../utils/util';
 import { OrganizationEmploymentTypesPage } from '../pageobjects/OrganizationEmploymentTypesPageObject';
 
@@ -101,6 +101,6 @@ export const verifyTypeExists = (text) => {
 	verifyText(OrganizationEmploymentTypesPage.verifyTextCss, text);
 };
 
-export const verifyTypeIsDeleted = (text) => {
-	verifyTextNotExisting(OrganizationEmploymentTypesPage.verifyTextCss, text);
+export const verifyTypeIsDeleted = () => {
+	verifyElementNotExist(OrganizationEmploymentTypesPage.verifyTextCss);
 };

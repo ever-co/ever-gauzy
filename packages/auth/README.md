@@ -1,0 +1,3 @@
+# `@gauzy/auth`
+
+Gauzy Auth

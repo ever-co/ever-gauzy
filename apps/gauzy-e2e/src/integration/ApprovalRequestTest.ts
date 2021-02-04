@@ -101,7 +101,7 @@ describe('Approval request test', () => {
 		approvalRequestPage.clickEditApprovalRequestButton();
 		approvalRequestPage.nameInputVisible();
 		approvalRequestPage.enterNameInputData(
-			ApprovalRequestPageData.dafaultName
+			ApprovalRequestPageData.editName
 		);
 		approvalRequestPage.minCountInputVisible();
 		approvalRequestPage.enterMinCountInputData(
@@ -111,7 +111,7 @@ describe('Approval request test', () => {
 		approvalRequestPage.clickSaveButton();
 		approvalRequestPage.waitMessageToHide();
 		approvalRequestPage.verifyRequestExists(
-			ApprovalRequestPageData.dafaultName
+			ApprovalRequestPageData.editName
 		);
 	});
 	it('Should be able to delete approval request', () => {
@@ -120,8 +120,6 @@ describe('Approval request test', () => {
 		approvalRequestPage.deleteApprovalRequestButtonVisible();
 		approvalRequestPage.clickDeleteApprovalRequestButton();
 		approvalRequestPage.waitMessageToHide();
-		approvalRequestPage.verifyElementIsDeleted(
-			ApprovalRequestPageData.dafaultName
-		);
+		approvalRequestPage.verifyElementIsDeleted();
 	});
 });

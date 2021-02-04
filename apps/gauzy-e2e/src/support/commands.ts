@@ -80,6 +80,19 @@ export const CustomCommands = {
 		contactsLeadsPage.enterPhoneInputData(
 			ContactsLeadsPageData.defaultPhone
 		);
+		contactsLeadsPage.projectDropdownVisible();
+		contactsLeadsPage.clickProjectDropdown();
+		contactsLeadsPage.selectProjectFromDropdown(
+			ContactsLeadsPageData.defaultProject
+		);
+		contactsLeadsPage.tagsMultyselectVisible();
+		contactsLeadsPage.clickTagsMultyselect();
+		contactsLeadsPage.selectTagsFromDropdown(0);
+		contactsLeadsPage.clickCardBody();
+		contactsLeadsPage.websiteInputVisible();
+		contactsLeadsPage.enterWebsiteInputData(website);
+		contactsLeadsPage.saveButtonVisible();
+		contactsLeadsPage.clickSaveButton();
 		contactsLeadsPage.countryDropdownVisible();
 		contactsLeadsPage.clickCountryDropdown();
 		contactsLeadsPage.selectCountryFromDropdown(
@@ -91,23 +104,14 @@ export const CustomCommands = {
 		contactsLeadsPage.enterPostcodeInputData(postcode);
 		contactsLeadsPage.streetInputVisible();
 		contactsLeadsPage.enterStreetInputData(street);
-		contactsLeadsPage.projectDropdownVisible();
-		contactsLeadsPage.clickProjectDropdown();
-		contactsLeadsPage.selectProjectFromDropdown(
-			ContactsLeadsPageData.defaultProject
-		);
+		contactsLeadsPage.verifyNextButtonVisible();
+		contactsLeadsPage.clickNextButton();
 		contactsLeadsPage.selectEmployeeDropdownVisible();
 		contactsLeadsPage.clickSelectEmployeeDropdown();
 		contactsLeadsPage.selectEmployeeDropdownOption(0);
 		contactsLeadsPage.clickKeyboardButtonByKeyCode(9);
-		contactsLeadsPage.tagsMultyselectVisible();
-		contactsLeadsPage.clickTagsMultyselect();
-		contactsLeadsPage.selectTagsFromDropdown(0);
-		contactsLeadsPage.clickCardBody();
-		contactsLeadsPage.websiteInputVisible();
-		contactsLeadsPage.enterWebsiteInputData(website);
-		contactsLeadsPage.saveButtonVisible();
-		contactsLeadsPage.clickSaveButton();
+		contactsLeadsPage.verifyFinishButtonVisible();
+		contactsLeadsPage.clickFinishButton();
 	},
 	addTeam: (organizationTeamsPage, OrganizationTeamsPageData) => {
 		cy.visit('/#/pages/organization/teams');

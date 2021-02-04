@@ -73,6 +73,6 @@ describe('Income test', () => {
 		incomePage.confirmDeleteButtonVisible();
 		incomePage.clickConfirmDeleteButton();
 		incomePage.waitMessageToHide();
-		incomePage.verifyElementIsDeleted(IncomePageData.defaultNote);
+		incomePage.verifyElementIsDeleted();
 	});
 });

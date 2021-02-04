@@ -23,17 +23,20 @@ describe('Organization projects test', () => {
 		organizationProjectsPage.clickSelectEmployeeDropdown();
 		organizationProjectsPage.selectEmployeeDropdownOption(0);
 		organizationProjectsPage.clickKeyboardButtonByKeyCode(9);
+		organizationProjectsPage.clickTabButton(1);
 		organizationProjectsPage.tagsMultyselectVisible();
 		organizationProjectsPage.clickTagsMultyselect();
 		organizationProjectsPage.selectTagsFromDropdown(0);
 		organizationProjectsPage.clickCardBody();
+		organizationProjectsPage.clickTabButton(3);
+		organizationProjectsPage.budgetHoursInputVisible();
+		organizationProjectsPage.enterBudgetHoursInputData(
+			OrganizationProjectsPageData.hours
+		);
+		organizationProjectsPage.clickTabButton(5);
 		organizationProjectsPage.colorInputVisible();
 		organizationProjectsPage.enterColorInputData(
 			OrganizationProjectsPageData.color
-		);
-		organizationProjectsPage.descriptionInputVisible();
-		organizationProjectsPage.enterDescriptionInputData(
-			OrganizationProjectsPageData.description
 		);
 		organizationProjectsPage.saveProjectButtonVisible();
 		organizationProjectsPage.clickSaveProjectButton();
@@ -51,13 +54,15 @@ describe('Organization projects test', () => {
 		organizationProjectsPage.enterNameInputData(
 			OrganizationProjectsPageData.editName
 		);
+		organizationProjectsPage.clickTabButton(3);
+		organizationProjectsPage.budgetHoursInputVisible();
+		organizationProjectsPage.enterBudgetHoursInputData(
+			OrganizationProjectsPageData.hours
+		);
+		organizationProjectsPage.clickTabButton(5);
 		organizationProjectsPage.colorInputVisible();
 		organizationProjectsPage.enterColorInputData(
 			OrganizationProjectsPageData.color
-		);
-		organizationProjectsPage.descriptionInputVisible();
-		organizationProjectsPage.enterDescriptionInputData(
-			OrganizationProjectsPageData.description
 		);
 		organizationProjectsPage.saveProjectButtonVisible();
 		organizationProjectsPage.clickSaveProjectButton();

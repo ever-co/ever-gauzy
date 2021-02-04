@@ -175,9 +175,7 @@ describe('Organization equipment test', () => {
 		organizationEquipmentPage.confirmDeleteButtonVisible();
 		organizationEquipmentPage.clickConfirmDeleteButton();
 		organizationEquipmentPage.waitMessageToHide();
-		organizationEquipmentPage.verifyEquipmentIsDeleted(
-			OrganizationEquipmentPageData.name
-		);
+		organizationEquipmentPage.verifyEquipmentIsDeleted();
 	});
 	it('Should be able to edit policy', () => {
 		organizationEquipmentPage.sharingpolicyButtonVisible();
@@ -197,6 +195,9 @@ describe('Organization equipment test', () => {
 		organizationEquipmentPage.clickSaveButton();
 	});
 	it('Should be able to delete policy', () => {
+		cy.on('uncaught:exception', (err, runnable) => {
+			return false;
+		});
 		organizationEquipmentPage.waitMessageToHide();
 		organizationEquipmentPage.selectTableRow(0);
 		organizationEquipmentPage.deleteButtonVisible();
@@ -204,8 +205,6 @@ describe('Organization equipment test', () => {
 		organizationEquipmentPage.confirmDeleteButtonVisible();
 		organizationEquipmentPage.clickConfirmDeleteButton();
 		organizationEquipmentPage.waitMessageToHide();
-		organizationEquipmentPage.verifyPolicyIsDeleted(
-			OrganizationEquipmentPageData.policy
-		);
+		organizationEquipmentPage.verifyPolicyIsDeleted();
 	});
 });

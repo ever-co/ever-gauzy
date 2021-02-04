@@ -95,15 +95,15 @@ describe('Add tasks test', () => {
 		addTaskPage.confirmDuplicateOrEditTaskButtonVisible();
 		addTaskPage.clickConfirmDuplicateOrEditTaskButton();
 	});
-	it('Should be able to delete task', () => {
-		addTaskPage.waitMessageToHide();
-		addTaskPage.tasksTableVisible();
-		addTaskPage.selectTasksTableRow(0);
-		addTaskPage.deleteTaskButtonVisible();
-		addTaskPage.clickDeleteTaskButton();
-		addTaskPage.confirmDeleteTaskButtonVisible();
-		addTaskPage.clickConfirmDeleteTaskButton();
-	});
+	// it('Should be able to delete task', () => {
+	// 	addTaskPage.waitMessageToHide();
+	// 	addTaskPage.tasksTableVisible();
+	// 	addTaskPage.selectTasksTableRow(0);
+	// 	addTaskPage.deleteTaskButtonVisible();
+	// 	addTaskPage.clickDeleteTaskButton();
+	// 	addTaskPage.confirmDeleteTaskButtonVisible();
+	// 	addTaskPage.clickConfirmDeleteTaskButton();
+	// });
 	it('Should be able to edit task', () => {
 		addTaskPage.waitMessageToHide();
 		addTaskPage.tasksTableVisible();
@@ -142,16 +142,25 @@ describe('Add tasks test', () => {
 		addTaskPage.verifyTaskExists(AddTasksPageData.editTaskTitle);
 	});
 	it('Should be able to delete task', () => {
-		addTaskPage.waitMessageToHide();
-		addTaskPage.tasksTableVisible();
+		cy.on('uncaught:exception', (err, runnable) => {
+			return false;
+		});
+		addTaskPage.selectTasksTableRow(0);
+		addTaskPage.duplicateOrEditTaskButtonVisible();
+		addTaskPage.clickDuplicateOrEditTaskButton(1);
+		addTaskPage.confirmDuplicateOrEditTaskButtonVisible();
+		addTaskPage.clickConfirmDuplicateOrEditTaskButton();
 		addTaskPage.selectTasksTableRow(0);
 		addTaskPage.deleteTaskButtonVisible();
 		addTaskPage.clickDeleteTaskButton();
 		addTaskPage.confirmDeleteTaskButtonVisible();
 		addTaskPage.clickConfirmDeleteTaskButton();
 		addTaskPage.waitMessageToHide();
-		addTaskPage.verifyElementIsDeleted(
-			` ${AddTasksPageData.defaultTaskDescription} ${AddTasksPageData.defaultTaskTitle}`
-		);
+		addTaskPage.verifyElementIsDeleted(AddTasksPageData.editTaskTitle);
+		addTaskPage.selectTasksTableRow(0);
+		addTaskPage.deleteTaskButtonVisible();
+		addTaskPage.clickDeleteTaskButton();
+		addTaskPage.confirmDeleteTaskButtonVisible();
+		addTaskPage.clickConfirmDeleteTaskButton();
 	});
 });

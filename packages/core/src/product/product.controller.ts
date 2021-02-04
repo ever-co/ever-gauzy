@@ -31,6 +31,7 @@ import { ProductDeleteCommand } from './commands';
 import { DeleteResult } from 'typeorm';
 import { ParseJsonPipe } from '../shared';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ImageAssetService } from 'image-asset/image-asset.service';
 
 @ApiTags('Product')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -110,6 +111,28 @@ export class ProductController extends CrudController<Product> {
 		);
 	}
 
+	@ApiOperation({
+		summary: 'Find one product translated'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found product',
+		type: Product
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('local/:langCode/:id/')
+	async findOneProductTranslated(
+		@Param('id') id: string,
+		@Param('langCode') langCode: string,
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<Product | IProductTranslated> {
+		const { relations = [] } = data;
+		return this.productService.findByIdTranslated(langCode, id, relations);
+	}
+
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -183,12 +206,12 @@ export class ProductController extends CrudController<Product> {
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
-	@Post('/add-image/:productId')
+	@Post('/add-images/:productId')
 	async addGalleryImage(
 		@Param('productId') productId: string,
-		@Body() image: IImageAsset
+		@Body() images: IImageAsset[]
 	) {
-		return this.productService.addGalleryImage(productId, image);
+		return this.productService.addGalleryImages(productId, images);
 	}
 
 	@ApiOperation({ summary: 'Set featured image' })

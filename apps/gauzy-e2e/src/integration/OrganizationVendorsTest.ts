@@ -85,8 +85,6 @@ describe('Organization vendors test', () => {
 		organizationVendorsPage.confirmDeletebuttonVisible();
 		organizationVendorsPage.clickConfirmDeleteButton();
 		organizationVendorsPage.waitMessageToHide();
-		organizationVendorsPage.verifyVendorIsDeleted(
-			OrganizationVendorsPageData.editVendorName
-		);
+		organizationVendorsPage.verifyVendorIsDeleted();
 	});
 });

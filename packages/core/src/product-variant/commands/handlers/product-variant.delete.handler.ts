@@ -19,9 +19,9 @@ export class ProductVariantDeleteHandler
 	): Promise<DeleteResult> {
 		const { productVariantId } = command;
 
-		const productVariant = await this.productVariantService.findOne({
-			where: { id: productVariantId }
-		});
+		const productVariant = await this.productVariantService.findOne(
+			productVariantId
+		);
 
 		const deleteRes = [
 			await this.productVariantService.delete(productVariant.id),

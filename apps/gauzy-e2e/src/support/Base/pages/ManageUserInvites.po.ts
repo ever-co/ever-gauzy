@@ -1,7 +1,8 @@
 import {
 	verifyElementIsVisible,
 	clickButton,
-	clickButtonByIndex
+	clickButtonByIndex,
+	waitElementToHide
 } from '../utils/util';
 import { ManageUserInvitesPage } from '../pageobjects/ManageUserInvitesPageObject';
 
@@ -83,4 +84,8 @@ export const confirmDeleteInviteButtonVisible = () => {
 
 export const clickConfirmDeleteInviteButton = () => {
 	clickButton(ManageUserInvitesPage.confirmDeleteInviteButtonCss);
+};
+
+export const waitMessageToHide = () => {
+	waitElementToHide(ManageUserInvitesPage.toastrMessageCss);
 };
