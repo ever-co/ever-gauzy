@@ -2046,7 +2046,12 @@
 		"VIEW_GALLERY": "Просмотреть галерею",
 		"EDIT_IMAGE": "Изменить изображение галереи",
 		"DELETE_IMAGE": "Удалить изображение",
-		"IMAGE_ASSET_DELETED": "Изображение актива удалено"
+		"IMAGE_ASSET_DELETED": "Изображение актива удалено",
+		"CATEGORY": "Категория",
+		"TYPE": "Тип",
+		"VIEW_INVENTORY_ITEM": "Просмотреть предмет инвентаря",
+		"TAGS": "Теги",
+		"PRICE": "Цена"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",

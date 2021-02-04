@@ -2046,7 +2046,12 @@
 		"VIEW_GALLERY": "View gallery",
 		"EDIT_IMAGE": "Edit gallery image",
 		"DELETE_IMAGE": "Delete image",
-		"IMAGE_ASSET_DELETED": "Image asset deleted"
+		"IMAGE_ASSET_DELETED": "Image asset deleted",
+		"CATEGORY": "Category",
+		"TYPE": "Type",
+		"VIEW_INVENTORY_ITEM": "View inventory item",
+		"TAGS": "Tags",
+		"PRICE": "Price"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

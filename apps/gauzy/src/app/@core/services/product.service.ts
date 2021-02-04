@@ -49,6 +49,21 @@ export class ProductService {
 			.toPromise();
 	}
 
+	getOneTranslated(
+		id: string,
+		relations?: string[],
+		languageCode?: string
+	): Promise<IProductTranslated> {
+		const data = JSON.stringify({ relations });
+		return this.http
+			.get<IProductTranslated>(
+				`${this.PRODUCTS_URL}/local/${languageCode}/${id}`,
+				{ params: { data } }
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
 	getById(id: string, relations?: string[], findInput?: IProductFindInput) {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
@@ -85,14 +100,14 @@ export class ProductService {
 			.toPromise();
 	}
 
-	addGalleryImage(
+	addGalleryImages(
 		id: string,
-		image: IImageAsset
+		images: IImageAsset[]
 	): Promise<IProductTranslatable> {
 		return this.http
 			.post<IProductTranslatable>(
-				`${this.PRODUCTS_URL}/add-image/${id}`,
-				image
+				`${this.PRODUCTS_URL}/add-images/${id}`,
+				images
 			)
 			.pipe(first())
 			.toPromise();
