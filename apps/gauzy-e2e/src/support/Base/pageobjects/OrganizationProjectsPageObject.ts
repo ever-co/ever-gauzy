@@ -11,7 +11,7 @@ export const OrganizationProjectsPage = {
 	codeInputCss: '#code',
 	budgetInputCss: '[formcontrolname="budget"]',
 	projectDescriptionCss: '[formcontrolname="description"]',
-	tabButtonCss: 'a.tab-link',
+	tabButtonCss: 'span.tab-text',
 	saveProjectButtonCss: 'div.form-group > button[status="success"]',
 	editProjectButtonCss: 'div.mb-3 > button[status="info"]',
 	deleteProjectButtonCss: 'div.mb-3 > button[status="danger"]',

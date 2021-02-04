@@ -8,7 +8,8 @@ import {
 	clickElementByText,
 	getLastElement,
 	verifyText,
-	verifyTextNotExisting
+	verifyElementNotExist,
+	clickButtonMultipleTimes
 } from '../utils/util';
 import { OrganizationHelpCenterPage } from '../pageobjects/OrganizationHelpCenterPageObject';
 
@@ -129,6 +130,13 @@ export const clickDeleteButton = () => {
 	getLastElement(OrganizationHelpCenterPage.deleteButtonCss);
 };
 
+export const clickCloseDeleteButton = (times) => {
+	clickButtonMultipleTimes(
+		OrganizationHelpCenterPage.closeDeleteButtonCss,
+		times
+	);
+};
+
 export const waitMessageToHide = () => {
 	waitElementToHide(OrganizationHelpCenterPage.toastrMessageCss);
 };
@@ -137,6 +145,6 @@ export const verifybaseExists = (text) => {
 	verifyText(OrganizationHelpCenterPage.verifyBaseCss, text);
 };
 
-export const verifyBaseIsDeleted = (text) => {
-	verifyTextNotExisting(OrganizationHelpCenterPage.verifyBaseCss, text);
+export const verifyBaseIsDeleted = () => {
+	verifyElementNotExist(OrganizationHelpCenterPage.verifyBaseCss);
 };

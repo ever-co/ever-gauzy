@@ -9,5 +9,6 @@ export const ManageUserInvitesPage = {
 	cancelResendInviteButtonCss: 'nb-card-footer > button[status="danger"]',
 	confirmResendInviteButtonCss: 'nb-card-footer > button[status="success"]',
 	cancelDeleteInviteButtonCss: 'nb-card-footer > button[status="info"]',
-	confirmDeleteInviteButtonCss: 'nb-card-footer > button[status="danger"]'
+	confirmDeleteInviteButtonCss: 'nb-card-footer > button[status="danger"]',
+	toastrMessageCss: 'nb-toast.ng-trigger'
 };

@@ -50,8 +50,6 @@ describe('Organization employment types test', () => {
 		organizationEmploymentTypePage.confirmDeleteButtonVisible();
 		organizationEmploymentTypePage.clickConfirmDeleteButton();
 		organizationEmploymentTypePage.waitMessageToHide();
-		organizationEmploymentTypePage.verifyTypeIsDeleted(
-			OrganizationEmploymentTypesPageData.name
-		);
+		organizationEmploymentTypePage.verifyTypeIsDeleted();
 	});
 });

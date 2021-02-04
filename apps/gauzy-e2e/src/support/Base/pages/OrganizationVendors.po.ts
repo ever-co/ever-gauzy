@@ -6,8 +6,8 @@ import {
 	enterInput,
 	clickKeyboardBtnByKeycode,
 	verifyText,
-	verifyTextNotExisting,
-	waitElementToHide
+	waitElementToHide,
+	verifyElementNotExist
 } from '../utils/util';
 import { OrganizationVendorsPage } from '../pageobjects/OrganizationVendorsPageObject';
 
@@ -119,6 +119,6 @@ export const verifyVendorExists = (text) => {
 	verifyText(OrganizationVendorsPage.verifyVendorCss, text);
 };
 
-export const verifyVendorIsDeleted = (text) => {
-	verifyTextNotExisting(OrganizationVendorsPage.verifyVendorCss, text);
+export const verifyVendorIsDeleted = () => {
+	verifyElementNotExist(OrganizationVendorsPage.verifyVendorCss);
 };

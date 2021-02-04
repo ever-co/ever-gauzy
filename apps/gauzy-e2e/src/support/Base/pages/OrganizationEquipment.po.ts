@@ -7,7 +7,8 @@ import {
 	clickButtonByIndex,
 	waitElementToHide,
 	verifyText,
-	verifyTextNotExisting
+	verifyTextNotExisting,
+	verifyElementNotExist
 } from '../utils/util';
 import { OrganizationEquipmentPage } from '../pageobjects/OrganizationEquipmentPageObject';
 
@@ -309,22 +310,22 @@ export const verifyPolicyExists = (text) => {
 	verifyText(OrganizationEquipmentPage.verifyPolicyCss, text);
 };
 
-export const verifyPolicyIsDeleted = (text) => {
-	verifyTextNotExisting(OrganizationEquipmentPage.verifyPolicyCss, text);
+export const verifyPolicyIsDeleted = () => {
+	verifyElementNotExist(OrganizationEquipmentPage.verifyPolicyCss);
 };
 
 export const verifySharingExists = (text) => {
 	verifyText(OrganizationEquipmentPage.verifySharingCss, text);
 };
 
-export const verifySharingIsDeleted = (text) => {
-	verifyTextNotExisting(OrganizationEquipmentPage.verifySharingCss, text);
+export const verifySharingIsDeleted = () => {
+	verifyElementNotExist(OrganizationEquipmentPage.verifySharingCss);
 };
 
 export const verifyEquipmentExists = (text) => {
 	verifyText(OrganizationEquipmentPage.verifyEquipmentCss, text);
 };
 
-export const verifyEquipmentIsDeleted = (text) => {
-	verifyTextNotExisting(OrganizationEquipmentPage.verifyEquipmentCss, text);
+export const verifyEquipmentIsDeleted = () => {
+	verifyElementNotExist(OrganizationEquipmentPage.verifyEquipmentCss);
 };

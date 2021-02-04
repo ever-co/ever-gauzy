@@ -20,6 +20,7 @@ describe('Manage invites test', () => {
 		manageUserInvitesPage.clickCopyLinkButton();
 	});
 	it('Should be able to resend invite', () => {
+		manageUserInvitesPage.waitMessageToHide();
 		manageUserInvitesPage.clickTableRow(0);
 		manageUserInvitesPage.resendInviteButtonVisible();
 		manageUserInvitesPage.clickResendInviteButton();
@@ -30,6 +31,7 @@ describe('Manage invites test', () => {
 		manageUserInvitesPage.clickConfirmResendInviteButton();
 	});
 	it('Should be able to delete invite', () => {
+		manageUserInvitesPage.waitMessageToHide();
 		manageUserInvitesPage.clickTableRow(0);
 		manageUserInvitesPage.deleteInviteButtonVisible();
 		manageUserInvitesPage.clickDeleteInviteButton();
