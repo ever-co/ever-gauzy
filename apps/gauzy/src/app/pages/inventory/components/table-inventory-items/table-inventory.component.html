@@ -63,6 +63,31 @@
 			<li class="flex-item" *ngFor="let x of inventoryData">
 				<div class="info-line">
 					<span class="info-meta">{{
+						'INVENTORY_PAGE.IMAGE' | translate
+					}}</span>
+					<div class="card-image">
+						<div
+							class="card-image"
+							*ngIf="!x.featuredImage || !x.featuredImage.url"
+							[ngStyle]="{
+								backgroundImage:
+									'url(https://afostats.imagead.net/uploads/afo/no_img.png)'
+							}"
+							alt="Product Item Photo"
+						></div>
+						<div
+							class="card-image"
+							*ngIf="x.featuredImage && x.featuredImage.url"
+							[ngStyle]="{
+								backgroundImage:
+									'url(' + x.featuredImage.url + ')'
+							}"
+							alt="Product Item Photo"
+						></div>
+					</div>
+				</div>
+				<div class="info-line">
+					<span class="info-meta">{{
 						'INVENTORY_PAGE.NAME' | translate
 					}}</span>
 					<span class="info-value">{{ x.name }}</span>
