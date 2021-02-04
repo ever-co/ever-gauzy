@@ -1,18 +1,13 @@
 import { Component, Input } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
-import { IProductCategoryTranslated } from '@gauzy/contracts';
 
 @Component({
 	template: `
 		<div class="img-container">
-			<img
-				*ngIf="rowData.imageUrl"
-				[src]="rowData.imageUrl"
-				alt="feature img"
-			/>
+			<img *ngIf="imageUrl" [src]="imageUrl" alt="feature img" />
 
 			<img
-				*ngIf="!rowData.imageUrl"
+				*ngIf="!imageUrl"
 				[src]="'https://afostats.imagead.net/uploads/afo/no_img.png'"
 				alt="Product Item Photo"
 				class="variant-table-img"
@@ -39,6 +34,14 @@ import { IProductCategoryTranslated } from '@gauzy/contracts';
 })
 export class ImageRowComponent implements ViewCell {
 	@Input()
-	value: string | number;
-	rowData: IProductCategoryTranslated;
+	value: any;
+	rowData: any;
+
+	get imageUrl() {
+		if (!this.value) return false;
+
+		if (this.value.imageUrl) return this.value.imageUrl;
+
+		if (this.value.url) return this.value.url;
+	}
 }

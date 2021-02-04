@@ -22,6 +22,8 @@ export class SelectAssetComponent
 
 	gallery: IImageAsset[] = [];
 
+	@Input() settings = { uploadImageEnabled: true, deleteImageEnabled: true };
+	@Input() galleryInput: IImageAsset[];
 	@Input() newImageUploadedEvent: Subject<any>;
 	@Input() newImageStoredEvent: Subject<IImageAsset>;
 
@@ -46,14 +48,15 @@ export class SelectAssetComponent
 				}
 			});
 
-		this.newImageStoredEvent
-			.pipe(untilDestroyed(this))
-			.subscribe((image: IImageAsset) => {
-				this.gallery.push(image);
-			});
+		this.setImageStoredEvent();
 	}
 
 	async getAvailableImages() {
+		if (this.galleryInput) {
+			this.gallery = this.galleryInput;
+			return;
+		}
+
 		const { tenantId } = this.store.user;
 
 		let searchInput: any = {
@@ -80,5 +83,15 @@ export class SelectAssetComponent
 		this.gallery = this.gallery.filter(
 			(image) => image.id != imageDeleted.id
 		);
+	}
+
+	setImageStoredEvent() {
+		if (!this.newImageStoredEvent) return;
+
+		this.newImageStoredEvent
+			.pipe(untilDestroyed(this))
+			.subscribe((image: IImageAsset) => {
+				this.gallery.push(image);
+			});
 	}
 }

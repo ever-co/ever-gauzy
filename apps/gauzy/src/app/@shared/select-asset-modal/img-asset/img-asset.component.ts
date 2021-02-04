@@ -16,6 +16,8 @@ export class ImageAssetComponent implements OnInit {
 
 	@Input()
 	selectedImage: IImageAsset;
+	@Input()
+	deleteImageEnabled: boolean;
 
 	@Output() imageClicked = new EventEmitter<any>();
 	@Output() assetDeleted = new EventEmitter<any>();

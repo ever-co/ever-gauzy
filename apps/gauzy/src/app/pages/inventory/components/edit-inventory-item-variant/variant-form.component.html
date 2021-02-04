@@ -23,14 +23,20 @@
 		<div class="row">
 			<div class="col-md-3 col-sm-12">
 				<div class="product-variant-container">
-					<div class="product-variant-photo">
-						<ngx-image-uploader
+					<div
+						class="product-variant-photo"
+						(mouseenter)="hoverState = true"
+						(mouseleave)="hoverState = false"
+						(click)="onVariantImageSelect()"
+					>
+						<!-- <ngx-image-uploader
 							(changeHoverState)="hoverState = $event"
 							(uploadedImageUrl)="
 								form.get('imageUrl').setValue($event)
 							"
 							(uploadImageError)="handleImageUploadError($event)"
-						></ngx-image-uploader>
+						></ngx-image-uploader> -->
+
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -73,21 +79,17 @@
 						></div>
 
 						<img
-							*ngIf="form && !form.get('imageUrl').value"
+							*ngIf="!image || !image.url"
 							[src]="
 								'https://afostats.imagead.net/uploads/afo/no_img.png'
 							"
 							alt="Product Item Photo"
-							(mouseenter)="hoverState = true"
-							(mouseleave)="hoverState = false"
 						/>
 
 						<img
-							*ngIf="form && form.get('imageUrl').value"
-							[src]="form.get('imageUrl').value"
+							*ngIf="image && image.url"
+							[src]="image.url"
 							alt="Product Item Photo"
-							(mouseenter)="hoverState = true"
-							(mouseleave)="hoverState = false"
 						/>
 					</div>
 				</div>
