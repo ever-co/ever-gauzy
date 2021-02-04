@@ -98,9 +98,9 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		return await this.productRepository.save(<any>productRequest);
 	}
 
-	async addGalleryImage(
+	async addGalleryImages(
 		productId: string,
-		image: IImageAsset
+		images: IImageAsset[]
 	): Promise<Product> {
 		try {
 			let product = await this.productRepository.findOne({
@@ -108,7 +108,7 @@ export class ProductService extends TenantAwareCrudService<Product> {
 				relations: ['gallery']
 			});
 
-			product.gallery.push(image);
+			product.gallery.push(...images);
 			return await this.productRepository.save(product);
 		} catch (err) {
 			throw new BadRequestException(err);

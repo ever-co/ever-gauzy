@@ -259,7 +259,8 @@ export class InventoryVariantFormComponent
 				galleryInput: this.inventoryStore.gallery,
 				settings: {
 					uploadImageEnabled: false,
-					deleteImageEnabled: false
+					deleteImageEnabled: false,
+					selectMultiple: false
 				}
 			}
 		});

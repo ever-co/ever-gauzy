@@ -104,8 +104,8 @@ export class InventoryStore {
 		this.activeProduct$.next(this.activeProduct);
 	}
 
-	addGalleryImage(image: IImageAsset) {
-		this.activeProduct.gallery.push(image);
+	addGalleryImages(images: IImageAsset[]) {
+		this.activeProduct.gallery.push(...images);
 		this.activeProduct$.next(this.activeProduct);
 	}
 

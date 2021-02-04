@@ -38,7 +38,7 @@
 					>
 						<ngx-img-asset
 							[imageAsset]="image"
-							[selectedImage]="selectedImage"
+							[selectedImages]="selectedImages"
 							[deleteImageEnabled]="settings.deleteImageEnabled"
 							(imageClicked)="onSelectImage($event)"
 							(assetDeleted)="onImageAssetDeleted($event)"
@@ -49,7 +49,7 @@
 			<div class="col-md-4">
 				<div class="row pl-3">
 					<ngx-img-preview
-						[selectedImage]="selectedImage"
+						[selectedImage]="activeImage"
 					></ngx-img-preview>
 				</div>
 			</div>

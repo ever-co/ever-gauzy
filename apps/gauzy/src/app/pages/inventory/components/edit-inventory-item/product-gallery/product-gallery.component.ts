@@ -102,25 +102,31 @@ export class ProductGalleryComponent
 		const dialog = this.dialogService.open(SelectAssetComponent, {
 			context: {
 				newImageUploadedEvent: this.newImageUploadedEvent$,
-				newImageStoredEvent: this.newImageStoredEvent$
+				newImageStoredEvent: this.newImageStoredEvent$,
+				settings: { selectMultiple: true, deleteImageEnabled: true }
 			}
 		});
 
-		let selectedImage = await dialog.onClose.pipe(first()).toPromise();
+		let selectedImages = await dialog.onClose.pipe(first()).toPromise();
+
+		debugger;
 
 		try {
-			if (selectedImage && this.inventoryStore.activeProduct.id) {
-				let resultProduct = await this.productService.addGalleryImage(
+			if (selectedImages.length && this.inventoryStore.activeProduct.id) {
+				let resultProduct = await this.productService.addGalleryImages(
 					this.inventoryStore.activeProduct.id,
-					selectedImage
+					selectedImages
 				);
 
 				this.inventoryStore.activeProduct = resultProduct;
 				this.toastrService.success(
 					'INVENTORY_PAGE.IMAGE_ADDED_TO_GALLERY'
 				);
-			} else if (selectedImage && !this.inventoryStore.activeProduct.id) {
-				this.inventoryStore.addGalleryImage(selectedImage);
+			} else if (
+				selectedImages.length &&
+				!this.inventoryStore.activeProduct.id
+			) {
+				this.inventoryStore.addGalleryImages(selectedImages);
 				this.toastrService.success(
 					'INVENTORY_PAGE.IMAGE_ADDED_TO_GALLERY'
 				);

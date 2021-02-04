@@ -99,14 +99,14 @@ export class ProductService {
 			.toPromise();
 	}
 
-	addGalleryImage(
+	addGalleryImages(
 		id: string,
-		image: IImageAsset
+		images: IImageAsset[]
 	): Promise<IProductTranslatable> {
 		return this.http
 			.post<IProductTranslatable>(
-				`${this.PRODUCTS_URL}/add-image/${id}`,
-				image
+				`${this.PRODUCTS_URL}/add-images/${id}`,
+				images
 			)
 			.pipe(first())
 			.toPromise();

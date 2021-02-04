@@ -31,6 +31,7 @@ import { ProductDeleteCommand } from './commands';
 import { DeleteResult } from 'typeorm';
 import { ParseJsonPipe } from '../shared';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ImageAssetService } from 'image-asset/image-asset.service';
 
 @ApiTags('Product')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -205,12 +206,12 @@ export class ProductController extends CrudController<Product> {
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
-	@Post('/add-image/:productId')
+	@Post('/add-images/:productId')
 	async addGalleryImage(
 		@Param('productId') productId: string,
-		@Body() image: IImageAsset
+		@Body() images: IImageAsset[]
 	) {
-		return this.productService.addGalleryImage(productId, image);
+		return this.productService.addGalleryImages(productId, images);
 	}
 
 	@ApiOperation({ summary: 'Set featured image' })
