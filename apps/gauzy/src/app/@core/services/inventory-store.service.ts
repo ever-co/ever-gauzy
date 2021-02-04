@@ -180,6 +180,7 @@ export class InventoryStore {
 			languageCode: this.translateService.currentLang,
 			variants: [],
 			options: [],
+			featuredImage: null,
 			gallery: [],
 			id: null
 		};
