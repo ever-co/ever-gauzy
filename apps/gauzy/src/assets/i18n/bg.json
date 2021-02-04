@@ -318,6 +318,8 @@
 			},
 			"PUBLIC_LINK": "Public Link",
 			"DEFAULT_TERMS": "Default terms for invoices and estimates",
+			"CONVERT_ESTIMATES": "Convert Estimates",
+			"ALLOW_CONVERTING": "Automatically convert accepted estimate to invoice",
 			"DEFAULT_DAYS": "Default days until invoices and estimates are due."
 		},
 		"PLACEHOLDERS": {
@@ -2049,9 +2051,9 @@
 		"IMAGE_ASSET_DELETED": "Image asset deleted",
 		"CATEGORY": "Категория",
 		"TYPE": "Тип",
-		"VIEW_INVENTORY_ITEM": "Виж продукт",
-		"TAGS": "Теги",
-		"PRICE": "Цена"
+		"VIEW_INVENTORY_ITEM": "View inventory item",
+		"TAGS": "Тагове",
+		"PRICE": "Price"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

@@ -318,6 +318,8 @@
 			},
 			"PUBLIC_LINK": "Public Link",
 			"DEFAULT_TERMS": "Default terms for invoices and estimates",
+			"CONVERT_ESTIMATES": "Convert Estimates",
+			"ALLOW_CONVERTING": "Automatically convert accepted estimate to invoice",
 			"DEFAULT_DAYS": "Default days until invoices and estimates are due."
 		},
 		"PLACEHOLDERS": {
@@ -2047,8 +2049,8 @@
 		"EDIT_IMAGE": "Edit gallery image",
 		"DELETE_IMAGE": "Delete image",
 		"IMAGE_ASSET_DELETED": "Image asset deleted",
-		"CATEGORY": "Category",
-		"TYPE": "Type",
+		"CATEGORY": "קטגוריה",
+		"TYPE": "סוג",
 		"VIEW_INVENTORY_ITEM": "View inventory item",
 		"TAGS": "Tags",
 		"PRICE": "Price"
