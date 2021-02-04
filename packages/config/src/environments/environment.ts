@@ -65,8 +65,11 @@ export const environment: IEnvironment = {
 	},
 
 	githubConfig: {
-		clientId: process.env.GithubClientId,
-		clientSecret: process.env.GithubClientSecret
+		clientId: process.env.GITHUB_CLIENT_ID,
+		clientSecret: process.env.GITHUB_CLIENT_SECRET,
+		callbackUrl:
+			process.env.GITHUB_CALLBACK_URL ||
+			`http://${process.env.HOST}:${process.env.PORT}/api/auth/google/callback`
 	},
 
 	microsoftConfig: {
