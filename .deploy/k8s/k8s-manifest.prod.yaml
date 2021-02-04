@@ -87,9 +87,9 @@ spec:
                       - name: DEMO
                         value: 'false'
                       - name: API_BASE_URL
-                        value: 'http://api.gauzy.co'
+                        value: 'https://api.gauzy.co'
                       - name: CLIENT_BASE_URL
-                        value: 'http://app.gauzy.co'
+                        value: 'https://app.gauzy.co'
                       - name: SENTRY_DSN
                         value: 'https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292'
                       - name: CHATWOOT_SDK_TOKEN
