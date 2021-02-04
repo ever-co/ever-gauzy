@@ -1,53 +1,47 @@
-import { ConfigService } from '@gauzy/config';
+import { IApiServerOptions } from '@gauzy/common';
+import { ConfigService, IEnvironment } from '@gauzy/config';
 import { Injectable } from '@nestjs/common';
-import { IFacebookConfig } from '@gauzy/common';
-import * as FacebookTokenStrategy from 'passport-facebook-token';
-import { use } from 'passport';
+import { PassportStrategy } from '@nestjs/passport';
+import { Profile, Strategy } from 'passport-facebook';
 
 @Injectable()
-export class FacebookStrategy {
+export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
 	constructor(private readonly configService: ConfigService) {
-		this.init();
+		super(config(configService));
 	}
 
-	private init(): void {
-		const {
-			clientId,
-			clientSecret,
-			fbGraphVersion
-		} = this.configService.get('facebookConfig') as IFacebookConfig;
-
-		use(
-			'facebook',
-			new FacebookTokenStrategy(
-				{
-					clientID: clientId || 'disabled',
-					clientSecret: clientSecret || 'disabled',
-					profileFields: ['emails', 'name'],
-					fbGraphVersion: fbGraphVersion
-				},
-				async (
-					accessToken: string,
-					refreshToken: string,
-					profile: any,
-					done: Function
-				) => {
-					try {
-						const { name, emails } = profile;
-						console.log(profile, 'profile');
-						console.log(accessToken, 'accessToken');
-						console.log(refreshToken, 'refreshToken');
-
-						const user = {
-							emails,
-							accessToken
-						};
-						done(null, user);
-					} catch (err) {
-						done(err, false);
-					}
-				}
-			)
-		);
+	async validate(
+		accessToken: string,
+		refreshToken: string,
+		profile: Profile,
+		done: (err: any, user: any, info?: any) => void
+	): Promise<any> {
+		try {
+			const { emails } = profile;
+			const user = {
+				emails,
+				accessToken
+			};
+			done(null, user);
+		} catch (err) {
+			done(err, false);
+		}
 	}
 }
+
+export const config = (configService: ConfigService) => {
+	const FACEBOOK_CONFIG = configService.get(
+		'facebookConfig'
+	) as IEnvironment['facebookConfig'];
+	const { baseUrl } = configService.apiConfigOptions as IApiServerOptions;
+
+	return {
+		clientID: FACEBOOK_CONFIG.clientId || 'disabled',
+		clientSecret: FACEBOOK_CONFIG.clientSecret || 'disabled',
+		callbackURL:
+			FACEBOOK_CONFIG.oauthRedirectUri ||
+			`${baseUrl}/api/auth/google/callback`,
+		scope: 'email',
+		profileFields: ['emails', 'name']
+	};
+};

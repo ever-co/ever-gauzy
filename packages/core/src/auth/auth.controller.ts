@@ -193,24 +193,12 @@ export class AuthController {
 	}
 
 	@Get('facebook')
-	async requestFacebookRedirectUrl(@Req() req, @Res() res) {
-		const {
-			redirectUri
-		} = await this.authService.requestFacebookRedirectUri();
-		return res.redirect(redirectUri);
-	}
+	@UseGuards(AuthGuard('facebook'))
+	facebookLogin(@Req() req) {}
 
 	@Get('facebook/callback')
-	async facebookCallback(
-		@RequestCtx() requestCtx: IIncomingRequest,
-		@Res() res
-	): Promise<any> {
-		const { code } = requestCtx.query;
-		return await this.authService.facebookSignIn(code, res);
-	}
-
-	@Post('facebook/token')
-	async requestJsonWebTokenAfterFacebookSignIn(
+	@UseGuards(AuthGuard('facebook'))
+	async facebookLoginCallback(
 		@RequestCtx() requestCtx: IIncomingRequest,
 		@Res() res
 	) {

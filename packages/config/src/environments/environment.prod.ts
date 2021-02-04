@@ -43,16 +43,21 @@ export const environment: IEnvironment = {
 	facebookConfig: {
 		loginDialogUri: 'https://www.facebook.com/v2.12/dialog/oauth',
 		accessTokenUri: 'https://graph.facebook.com/v2.12/oauth/access_token',
-		clientId: process.env.FacebookClientId,
-		clientSecret: process.env.FacebookClientSecret,
-		fbGraphVersion: process.env.FacebookGraphVersion,
-		oauthRedirectUri: `${process.env.HOST}:${process.env.PORT}/api/auth/facebook/callback`,
+		clientId: process.env.FACEBOOK_CLIENT_ID,
+		clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
+		fbGraphVersion: process.env.FACEBOOK_GRAPH_VERSION,
+		oauthRedirectUri:
+			process.env.FACEBOOK_CALLBACK_URL ||
+			`${process.env.HOST}:${process.env.PORT}/api/auth/facebook/callback`,
 		state: '{fbstate}'
 	},
 
 	googleConfig: {
-		clientId: process.env.GoogleClientId,
-		clientSecret: process.env.GoogleClientSecret
+		clientId: process.env.GOOGLE_CLIENT_ID,
+		clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+		callbackUrl:
+			process.env.GOOGLE_CALLBACK_URL ||
+			`${process.env.HOST}:${process.env.PORT}/api/auth/google/callback`
 	},
 
 	githubConfig: {
@@ -73,8 +78,11 @@ export const environment: IEnvironment = {
 	},
 
 	twitterConfig: {
-		clientId: process.env.TwitterClientId,
-		clientSecret: process.env.TwitterClientSecret
+		clientId: process.env.TWITTER_CLIENT_ID,
+		clientSecret: process.env.TWITTER_CLIENT_SECRET,
+		callbackUrl:
+			process.env.TWITTER_CALLBACK_URL ||
+			`http://${process.env.HOST}:${process.env.PORT}/api/auth/twitter/callback`
 	},
 
 	fiverrConfig: {

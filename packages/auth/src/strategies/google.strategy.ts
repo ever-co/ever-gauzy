@@ -44,7 +44,8 @@ export const config = (configService: ConfigService) => {
 	return {
 		clientID: GOOGLE_CONFIG.clientId || 'disabled',
 		clientSecret: GOOGLE_CONFIG.clientSecret || 'disabled',
-		callbackURL: `${baseUrl}/api/auth/google/callback`,
+		callbackURL:
+			GOOGLE_CONFIG.callbackUrl || `${baseUrl}/api/auth/google/callback`,
 		passReqToCallback: true,
 		scope: ['email', 'profile']
 	};

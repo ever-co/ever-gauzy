@@ -10,6 +10,25 @@ export class TwitterStrategy extends PassportStrategy(Strategy, 'twitter') {
 	constructor(private readonly configService: ConfigService) {
 		super(config(configService));
 	}
+
+	async validate(
+		request: any,
+		accessToken: string,
+		refreshToken: string,
+		profile: any,
+		done: (err: any, user: any, info?: any) => void
+	) {
+		try {
+			const { emails } = profile;
+			const user = {
+				emails,
+				accessToken
+			};
+			done(null, user);
+		} catch (err) {
+			done(err, false);
+		}
+	}
 }
 
 export const config = (configService: ConfigService) => {
@@ -22,7 +41,9 @@ export const config = (configService: ConfigService) => {
 	return {
 		consumerKey: TWITTER_CONFIG.clientId || 'disabled',
 		consumerSecret: TWITTER_CONFIG.clientSecret || 'disabled',
-		callbackURL: `${baseUrl}/api/auth/twitter/callback`,
+		callbackURL:
+			TWITTER_CONFIG.callbackUrl ||
+			`${baseUrl}/api/auth/twitter/callback`,
 		passReqToCallback: true,
 		includeEmail: true,
 		secretOrKey: JWT_SECRET,

@@ -5,7 +5,6 @@ import {
 	IRolePermission,
 	IAuthResponse
 } from '@gauzy/contracts';
-import { SocialAuthService } from '@gauzy/auth';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
@@ -15,7 +14,7 @@ import { UserService } from '../user/user.service';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 
 @Injectable()
-export class AuthService extends SocialAuthService {
+export class AuthService {
 	saltRounds: number;
 
 	constructor(
@@ -23,7 +22,6 @@ export class AuthService extends SocialAuthService {
 		private emailService: EmailService,
 		private userOrganizationService: UserOrganizationService
 	) {
-		super();
 		this.saltRounds = env.USER_PASSWORD_BCRYPT_SALT_ROUNDS;
 	}
 
