@@ -8,7 +8,8 @@ import {
 	waitElementToHide,
 	clickButtonByText,
 	verifyText,
-	verifyTextNotExisting
+	verifyTextNotExisting,
+	verifyElementNotExist
 } from '../utils/util';
 import { OrganizationInventoryPage } from '../pageobjects/OrganizationInventoryPageObject';
 
@@ -111,6 +112,16 @@ export const clickBackFromCategodyButton = () => {
 	clickButton(OrganizationInventoryPage.backFromCategoryButtonCss);
 };
 
+export const backFromInventoryButtonVisible = () => {
+	verifyElementIsVisible(
+		OrganizationInventoryPage.backFromInventoryButtonCss
+	);
+};
+
+export const clickBackFromInventoryButton = () => {
+	clickButton(OrganizationInventoryPage.backFromInventoryButtonCss);
+};
+
 export const saveButtonVisible = () => {
 	verifyElementIsVisible(OrganizationInventoryPage.saveButtonCss);
 };
@@ -175,6 +186,6 @@ export const verifyInventoryExists = (text) => {
 	verifyText(OrganizationInventoryPage.verifyInventoryCss, text);
 };
 
-export const verifyInventoryIsDeleted = (text) => {
-	verifyTextNotExisting(OrganizationInventoryPage.verifyInventoryCss, text);
+export const verifyInventoryIsDeleted = () => {
+	verifyElementNotExist(OrganizationInventoryPage.verifyInventoryCss);
 };

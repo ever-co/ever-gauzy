@@ -126,3 +126,9 @@ export const verifyElementNotExist = (loc) => {
 export const clickTableRowByText = (loc, text) => {
 	cy.get(loc, { timeout: 40000 }).contains(text).click();
 };
+
+export const clickButtonMultipleTimes = (loc, n) => {
+	for (let i = 0; i < n; i++) {
+		cy.get(loc, { timeout: 40000 }).click();
+	}
+};

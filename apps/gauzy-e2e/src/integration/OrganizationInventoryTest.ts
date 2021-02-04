@@ -93,7 +93,8 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.saveButtonVisible();
 		organizationInventoryPage.clickSaveButton();
 		organizationInventoryPage.waitMessageToHide();
-		organizationInventoryPage.clickBackButton();
+		organizationInventoryPage.backFromInventoryButtonVisible();
+		organizationInventoryPage.clickBackFromInventoryButton();
 		organizationInventoryPage.verifyInventoryExists(
 			OrganizationInventoryPageData.inventoryName
 		);
@@ -118,7 +119,8 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.saveButtonVisible();
 		organizationInventoryPage.clickSaveButton();
 		organizationInventoryPage.waitMessageToHide();
-		organizationInventoryPage.clickBackButton();
+		organizationInventoryPage.backFromInventoryButtonVisible();
+		organizationInventoryPage.clickBackFromInventoryButton();
 	});
 	it('Should be able to delete inventory', () => {
 		organizationInventoryPage.selectTableRow(0);
@@ -127,9 +129,7 @@ describe('Organization inventory test', () => {
 		organizationInventoryPage.confirmDeleteButtonVisible();
 		organizationInventoryPage.clickConfirmDeleteButton();
 		organizationInventoryPage.waitMessageToHide();
-		organizationInventoryPage.verifyInventoryIsDeleted(
-			OrganizationInventoryPageData.inventoryName
-		);
+		organizationInventoryPage.verifyInventoryIsDeleted();
 	});
 	it('Should be able to edit product category', () => {
 		organizationInventoryPage.addCategoryOrTypeButtonVisible();

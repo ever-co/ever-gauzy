@@ -15,10 +15,11 @@ export const OrganizationInventoryPage = {
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	addCategoryOrTypeButtonCss: 'div.mb-3 > button[status="primary"]',
 	backButtonCss: 'g[data-name="arrow-back"]',
+	backFromInventoryButtonCss: 'div.navigate > button[status="primary"]',
 	backFromCategoryButtonCss:
 		'nb-card-header.d-flex div.navigate button[status="primary"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	verifyTypeCss: 'div.ng-star-inserted',
 	verifyCategorieCss: 'div.ng-star-inserted',
-	verifyInventoryCss: 'ga-picture-name-tags > div > div.d-block'
+	verifyInventoryCss: 'ng-component > div > div.d-block'
 };

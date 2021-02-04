@@ -96,7 +96,6 @@ describe('Manage employees test', () => {
 	it('Should be able to edit employee', () => {
 		manageEmployeesPage.tableRowVisible();
 		manageEmployeesPage.selectTableRow(0);
-		manageEmployeesPage.selectTableRow(0);
 		manageEmployeesPage.editButtonVisible();
 		manageEmployeesPage.clickEditButton();
 		manageEmployeesPage.usernameEditInputVisible();

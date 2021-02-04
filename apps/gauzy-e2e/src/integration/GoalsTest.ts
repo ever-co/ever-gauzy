@@ -100,6 +100,8 @@ describe('Goals test', () => {
 		goalsPage.clickConfirmButton();
 		goalsPage.waitMessageToHide();
 		cy.reload();
-		goalsPage.verifyElementIsDeleted(GoalsPageData.name);
+		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
+		cy.visit('/#/pages/goals');
+		goalsPage.verifyElementIsDeleted();
 	});
 });

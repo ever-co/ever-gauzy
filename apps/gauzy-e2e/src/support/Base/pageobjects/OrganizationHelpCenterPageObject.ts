@@ -1,9 +1,9 @@
 export const OrganizationHelpCenterPage = {
 	addButtonCss: 'div.add-icon-field > button[status="success"]',
-	languageDropdownCss: '[placeholder="Select"]',
+	languageDropdownCss: 'div.select-wrap > div.select > nb-select',
 	dropdownOptionCss: '.option-list nb-option',
 	toggleButtonCss: 'div.toggle',
-	iconDropdownCss: '[placeholder="Select Icon"]',
+	iconDropdownCss: 'div.mb-1 > nb-select',
 	colorInputCss: '#inputColor',
 	nameInputCss: '[formcontrolname="name"]',
 	descriptioninputCss: '[formcontrolname="desc"]',
@@ -12,5 +12,6 @@ export const OrganizationHelpCenterPage = {
 	deleteButtonCss: 'div.save-button > button[status="warning"]',
 	settingsDropdownOptionCss: '.menu-items li',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	verifyBaseCss: 'div.base > div > span.text'
+	verifyBaseCss: 'div.base > div > span.text',
+	closeDeleteButtonCss: 'g[data-name="close"]'
 };
