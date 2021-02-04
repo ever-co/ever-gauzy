@@ -221,7 +221,8 @@ export class EditOrganizationOtherSettingsComponent
 			],
 			fiscalInformation: [this.organization.fiscalInformation || ''],
 			currencyPosition: [this.organization.currencyPosition || 'LEFT'],
-			discountAfterTax: [this.organization.discountAfterTax]
+			discountAfterTax: [this.organization.discountAfterTax],
+			daysUntilDue: [this.organization.daysUntilDue || null]
 		});
 	}
 

@@ -6,7 +6,7 @@ import { RolePermissions, TenantBaseEntity } from '../core/entities/internal';
 
 @Entity('role')
 export class Role extends TenantBaseEntity implements IRole {
-	@ApiProperty({ type: String, enum: RolesEnum })
+	@ApiProperty({ type: () => String, enum: RolesEnum })
 	@IsEnum(RolesEnum)
 	@IsNotEmpty()
 	@Index()

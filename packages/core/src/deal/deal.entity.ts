@@ -30,7 +30,7 @@ import {
 
 @Entity('deal')
 export class Deal extends TenantOrganizationBaseEntity implements IDeal {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
 	@Column()
@@ -38,39 +38,39 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 
 	@JoinColumn({ name: 'createdByUserId' })
 	@ManyToOne(() => User)
-	@ApiProperty({ type: User })
+	@ApiProperty({ type: () => User })
 	public createdBy: IUser;
 
 	@RelationId(({ stage }: Deal) => stage)
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
 	@Column()
 	public stageId: string;
 
 	@ManyToOne(() => PipelineStage, { onDelete: 'CASCADE' })
-	@ApiProperty({ type: PipelineStage })
+	@ApiProperty({ type: () => PipelineStage })
 	@JoinColumn()
 	public stage: IPipelineStage;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@Column({ nullable: true })
 	public clientId: string;
 
 	@OneToOne(() => OrganizationContact, { onDelete: 'CASCADE' })
-	@ApiProperty({ type: OrganizationContact })
+	@ApiProperty({ type: () => OrganizationContact })
 	@JoinColumn()
 	public client: IOrganizationContact;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
 	@Column()
 	public title: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsOptional()
 	@IsInt()
 	@Min(0)

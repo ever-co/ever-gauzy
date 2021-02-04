@@ -8,11 +8,11 @@ import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 export class CandidateSource
 	extends TenantOrganizationBaseEntity
 	implements ICandidateSource {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })

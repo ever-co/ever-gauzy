@@ -10,6 +10,7 @@ import {
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -19,7 +20,7 @@ export class ExpensesService {
 
 	create(createInput: IExpenseCreateInput): Promise<any> {
 		return this.http
-			.post<IExpense>('/api/expense/create', createInput)
+			.post<IExpense>(`${API_PREFIX}/expense/create`, createInput)
 			.pipe(first())
 			.toPromise();
 	}
@@ -32,7 +33,7 @@ export class ExpensesService {
 
 		return this.http
 			.get<{ items: ISplitExpenseOutput[]; total: number }>(
-				`/api/expense/me`,
+				`${API_PREFIX}/expense/me`,
 				{
 					params: { data }
 				}
@@ -43,7 +44,7 @@ export class ExpensesService {
 
 	getById(id: string) {
 		return this.http
-			.get<IExpense>(`/api/expense/${id}`)
+			.get<IExpense>(`${API_PREFIX}/expense/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
@@ -57,7 +58,7 @@ export class ExpensesService {
 
 		return this.http
 			.get<{ items: ISplitExpenseOutput[]; total: number }>(
-				`/api/expense/include-split/${employeeId}`,
+				`${API_PREFIX}/expense/include-split/${employeeId}`,
 				{
 					params: { data }
 				}
@@ -74,16 +75,19 @@ export class ExpensesService {
 		const data = JSON.stringify({ relations, findInput, filterDate });
 
 		return this.http
-			.get<{ items: IExpense[]; total: number }>(`/api/expense`, {
-				params: { data }
-			})
+			.get<{ items: IExpense[]; total: number }>(
+				`${API_PREFIX}/expense`,
+				{
+					params: { data }
+				}
+			)
 			.pipe(first())
 			.toPromise();
 	}
 
 	update(id: string, updateInput: IExpenseUpdateInput): Promise<any> {
 		return this.http
-			.put(`/api/expense/${id}`, updateInput)
+			.put(`${API_PREFIX}/expense/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
@@ -91,7 +95,7 @@ export class ExpensesService {
 	delete(expenseId: string, employeeId: string): Promise<any> {
 		const data = JSON.stringify({ expenseId, employeeId });
 		return this.http
-			.delete('/api/expense/deleteExpense', {
+			.delete(`${API_PREFIX}/expense/deleteExpense`, {
 				params: { data }
 			})
 			.pipe(first())
@@ -100,7 +104,7 @@ export class ExpensesService {
 
 	getDailyExpensesReport(request: any = {}) {
 		return this.http
-			.get<IExpenseReportData[]>(`/api/expense/report`, {
+			.get<IExpenseReportData[]>(`${API_PREFIX}/expense/report`, {
 				params: toParams(request)
 			})
 			.pipe(first())
@@ -109,9 +113,12 @@ export class ExpensesService {
 
 	getReportChartData(request: any = {}) {
 		return this.http
-			.get<IExpenseReportData[]>(`/api/expense/report/daily-chart`, {
-				params: toParams(request)
-			})
+			.get<IExpenseReportData[]>(
+				`${API_PREFIX}/expense/report/daily-chart`,
+				{
+					params: toParams(request)
+				}
+			)
 			.pipe(first())
 			.toPromise();
 	}

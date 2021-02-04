@@ -6,6 +6,7 @@ import {
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -16,7 +17,7 @@ export class HelpCenterAuthorService {
 	createBulk(input: IHelpCenterAuthorCreate): Promise<IHelpCenterAuthor[]> {
 		return this.http
 			.post<IHelpCenterAuthor[]>(
-				'/api/help-center-author/createBulk',
+				`${API_PREFIX}/help-center-author/createBulk`,
 				input
 			)
 			.pipe(first())
@@ -25,7 +26,9 @@ export class HelpCenterAuthorService {
 
 	findByArticleId(articleId: string): Promise<IHelpCenterAuthor[]> {
 		return this.http
-			.get<IHelpCenterAuthor[]>(`/api/help-center-author/${articleId}`)
+			.get<IHelpCenterAuthor[]>(
+				`${API_PREFIX}/help-center-author/${articleId}`
+			)
 			.pipe(first())
 			.toPromise();
 	}
@@ -33,7 +36,7 @@ export class HelpCenterAuthorService {
 	deleteBulkByArticleId(id: string): Promise<any> {
 		const data = JSON.stringify({ id });
 		return this.http
-			.delete('/api/help-center-author/deleteBulkByArticleId', {
+			.delete(`${API_PREFIX}/help-center-author/deleteBulkByArticleId`, {
 				params: { data }
 			})
 			.pipe(first())
@@ -47,7 +50,7 @@ export class HelpCenterAuthorService {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
 			.get<{ items: IHelpCenterAuthor[]; total: number }>(
-				`/api/help-center-author`,
+				`${API_PREFIX}/help-center-author`,
 				{
 					params: { data }
 				}

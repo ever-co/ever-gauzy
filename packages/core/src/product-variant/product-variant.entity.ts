@@ -24,39 +24,39 @@ import {
 export class ProductVariant
 	extends TenantOrganizationBaseEntity
 	implements IProductVariant {
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ default: 0 })
 	taxes: number;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
 	notes: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@RelationId((productVariant: ProductVariant) => productVariant.product)
 	@IsString()
 	@Column({ nullable: true })
 	productId: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ default: 0 })
 	quantity: number;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsEnum(BillingInvoicingPolicyEnum)
 	@Column({ default: BillingInvoicingPolicyEnum.QUANTITY_ORDERED })
 	billingInvoicingPolicy: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column({ nullable: true })
 	internalReference: string;
 
-	@ApiPropertyOptional({ type: Boolean })
+	@ApiPropertyOptional({ type: () => Boolean })
 	@Column({ default: true })
 	enabled: boolean;
 
@@ -95,4 +95,9 @@ export class ProductVariant
 	})
 	@JoinColumn()
 	image: ImageAsset;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@Column({ nullable: true })
+	imageUrl: string;
 }

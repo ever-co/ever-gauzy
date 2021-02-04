@@ -7,11 +7,11 @@ import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 export class HelpCenterAuthor
 	extends TenantOrganizationBaseEntity
 	implements IHelpCenterAuthor {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	employeeId: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	articleId: string;
 }

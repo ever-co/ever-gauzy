@@ -11,19 +11,19 @@ import {
 export class AppointmentEmployee
 	extends TenantOrganizationBaseEntity
 	implements IAppointmentEmployee {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()
 	public appointmentId!: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()
 	public employeeId!: string;
 
-	@ApiProperty({ type: EmployeeAppointment })
+	@ApiProperty({ type: () => EmployeeAppointment })
 	@ManyToOne(
 		() => EmployeeAppointment,
 		(employeeAppointment) => employeeAppointment,

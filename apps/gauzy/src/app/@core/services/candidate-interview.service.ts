@@ -6,6 +6,7 @@ import {
 	ICandidateInterviewCreateInput,
 	ICandidateInterview
 } from '@gauzy/contracts';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -17,7 +18,10 @@ export class CandidateInterviewService {
 		createInput: ICandidateInterviewCreateInput
 	): Promise<ICandidateInterview> {
 		return this.http
-			.post<ICandidateInterview>('/api/candidate-interview', createInput)
+			.post<ICandidateInterview>(
+				`${API_PREFIX}/candidate-interview`,
+				createInput
+			)
 			.pipe(first())
 			.toPromise();
 	}
@@ -29,7 +33,7 @@ export class CandidateInterviewService {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
 			.get<{ items: ICandidateInterview[]; total: number }>(
-				`/api/candidate-interview`,
+				`${API_PREFIX}/candidate-interview`,
 				{
 					params: { data }
 				}
@@ -41,9 +45,12 @@ export class CandidateInterviewService {
 	findById(id: string, relations?: string[]): Promise<ICandidateInterview> {
 		const data = JSON.stringify({ relations });
 		return this.http
-			.get<ICandidateInterview>(`/api/candidate-interview/${id}`, {
-				params: { data }
-			})
+			.get<ICandidateInterview>(
+				`${API_PREFIX}/candidate-interview/${id}`,
+				{
+					params: { data }
+				}
+			)
 			.pipe(first())
 			.toPromise();
 	}
@@ -51,29 +58,32 @@ export class CandidateInterviewService {
 	findByCandidateId(candidateId: string): Promise<ICandidateInterview[]> {
 		return this.http
 			.get<ICandidateInterview[]>(
-				`/api/candidate-interview/findByCandidateId/${candidateId}`
+				`${API_PREFIX}/candidate-interview/findByCandidateId/${candidateId}`
 			)
 			.pipe(first())
 			.toPromise();
 	}
 	update(id: string, updateInput: any): Promise<any> {
 		return this.http
-			.put(`/api/candidate-interview/${id}`, updateInput)
+			.put(`${API_PREFIX}/candidate-interview/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	setInterviewAsArchived(id: string): Promise<ICandidateInterview> {
 		return this.http
-			.put<ICandidateInterview>(`/api/candidate-interview/${id}`, {
-				isArchived: true
-			})
+			.put<ICandidateInterview>(
+				`${API_PREFIX}/candidate-interview/${id}`,
+				{
+					isArchived: true
+				}
+			)
 			.pipe(first())
 			.toPromise();
 	}
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/candidate-interview/${id}`)
+			.delete(`${API_PREFIX}/candidate-interview/${id}`)
 			.pipe(first())
 			.toPromise();
 	}

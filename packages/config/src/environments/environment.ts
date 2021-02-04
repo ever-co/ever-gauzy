@@ -12,8 +12,8 @@ if (process.env.IS_ELECTRON && process.env.GAUZY_USER_PATH) {
 }
 
 export const environment: IEnvironment = {
-	port: process.env.port || 3000,
-	host: process.env.host || 'http://localhost',
+	port: process.env.PORT || 3000,
+	host: process.env.HOST || 'http://localhost',
 	baseUrl: process.env.BASE_URL || 'http://localhost:3000',
 
 	production: false,

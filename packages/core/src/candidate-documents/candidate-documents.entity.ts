@@ -10,15 +10,15 @@ import {
 export class CandidateDocument
 	extends TenantOrganizationBaseEntity
 	implements ICandidateDocument {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: true })
 	candidateId?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@Column({ nullable: true })
 	documentUrl: string;
 

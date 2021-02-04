@@ -8,10 +8,11 @@ import {
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { Observable } from 'rxjs';
+import { API_PREFIX } from '../../constants/app.constants';
 
 @Injectable()
 export class FeatureService {
-	API_URL = '/api/feature/toggle';
+	API_URL = `${API_PREFIX}/feature/toggle`;
 
 	constructor(private http: HttpClient) {}
 

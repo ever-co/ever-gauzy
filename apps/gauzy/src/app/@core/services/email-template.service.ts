@@ -8,6 +8,7 @@ import {
 	IEmailTemplateSaveInput
 } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -23,7 +24,7 @@ export class EmailTemplateService {
 
 		return this.http
 			.get<{ items: IEmailTemplate[]; total: number }>(
-				`/api/email-template`,
+				`${API_PREFIX}/email-template`,
 				{
 					params: { data }
 				}
@@ -38,7 +39,7 @@ export class EmailTemplateService {
 
 		return this.http
 			.get<ICustomizableEmailTemplate>(
-				`/api/email-template/findTemplate`,
+				`${API_PREFIX}/email-template/findTemplate`,
 				{
 					params: { data }
 				}
@@ -49,16 +50,19 @@ export class EmailTemplateService {
 
 	generateTemplatePreview(data: string): Promise<{ html: string }> {
 		return this.http
-			.post<{ html: string }>(`/api/email-template/emailPreview`, {
-				data
-			})
+			.post<{ html: string }>(
+				`${API_PREFIX}/email-template/emailPreview`,
+				{
+					data
+				}
+			)
 			.pipe(first())
 			.toPromise();
 	}
 
 	saveEmailTemplate(data: IEmailTemplateSaveInput): Promise<IEmailTemplate> {
 		return this.http
-			.post<IEmailTemplate>(`/api/email-template/saveTemplate`, {
+			.post<IEmailTemplate>(`${API_PREFIX}/email-template/saveTemplate`, {
 				data
 			})
 			.pipe(first())

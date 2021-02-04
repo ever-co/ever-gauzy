@@ -13,9 +13,11 @@ import { createRandomTimeLogs } from '../time-log/time-log.seed';
 import { createRandomActivities } from '../activity/activities.seed';
 import * as chalk from 'chalk';
 import { Tenant } from '../../tenant/tenant.entity';
+import { IPluginConfig } from '@gauzy/common';
 
 export const createDefaultTimeSheet = async (
 	connection: Connection,
+	config: IPluginConfig,
 	tenant: Tenant,
 	employees: Employee[],
 	defaultProjects: IOrganizationProject[] | void,
@@ -84,6 +86,7 @@ export const createDefaultTimeSheet = async (
 		console.log(chalk.green(`SEEDING Default TimeLogs`));
 		timeSlots = await createRandomTimeLogs(
 			connection,
+			config,
 			tenant,
 			createdTimesheets,
 			defaultProjects,
@@ -105,6 +108,7 @@ export const createDefaultTimeSheet = async (
 
 export const createRandomTimesheet = async (
 	connection: Connection,
+	config: IPluginConfig,
 	tenant: Tenant,
 	defaultProjects: IOrganizationProject[] | void,
 	noOfTimeLogsPerTimeSheet
@@ -183,6 +187,7 @@ export const createRandomTimesheet = async (
 		console.log(chalk.green(`SEEDING Random TimeLogs`));
 		timeSlots = await createRandomTimeLogs(
 			connection,
+			config,
 			tenant,
 			createdTimesheets,
 			defaultProjects,

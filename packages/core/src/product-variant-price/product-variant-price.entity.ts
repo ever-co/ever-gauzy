@@ -11,22 +11,22 @@ import {
 export class ProductVariantPrice
 	extends TenantOrganizationBaseEntity
 	implements IProductVariantPrice {
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ default: 0 })
 	unitCost: number;
 
-	@ApiProperty({ type: String, enum: CurrenciesEnum })
+	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@Column({ default: CurrenciesEnum.USD })
 	unitCostCurrency: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ default: 0 })
 	retailPrice: number;
 
-	@ApiProperty({ type: String, enum: CurrenciesEnum })
+	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@Column({ default: CurrenciesEnum.USD })
 	retailPriceCurrency: string;

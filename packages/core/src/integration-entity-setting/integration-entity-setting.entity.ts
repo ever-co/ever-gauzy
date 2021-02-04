@@ -22,7 +22,7 @@ import {
 export class IntegrationEntitySetting
 	extends TenantOrganizationBaseEntity
 	implements IIntegrationEntitySetting {
-	@ApiPropertyOptional({ type: IntegrationTenant })
+	@ApiPropertyOptional({ type: () => IntegrationTenant })
 	@ManyToOne(
 		() => IntegrationTenant,
 		(integration) => integration.entitySettings
@@ -30,7 +30,7 @@ export class IntegrationEntitySetting
 	@JoinColumn()
 	integration?: IIntegrationTenant;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId(
 		(integrationEntity: IntegrationEntitySetting) =>
 			integrationEntity.integration
@@ -51,11 +51,11 @@ export class IntegrationEntitySetting
 	@JoinColumn()
 	tiedEntities?: IIntegrationEntitySettingTied[];
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: false })
 	entity: string;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@Column({ nullable: false })
 	sync: boolean;
 }

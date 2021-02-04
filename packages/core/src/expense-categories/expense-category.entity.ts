@@ -15,7 +15,7 @@ export class ExpenseCategory
 	})
 	tags?: Tag[];
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()

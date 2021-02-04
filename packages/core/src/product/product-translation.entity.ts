@@ -8,17 +8,17 @@ import { Product, TranslationBase } from '../core/entities/internal';
 export class ProductTranslation
 	extends TranslationBase
 	implements IProductTranslation {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsOptional()
 	@Column({ nullable: true })
 	description: string;
 
-	@ApiProperty({ type: Product })
+	@ApiProperty({ type: () => Product })
 	@ManyToOne(() => Product, (product) => product.translations, {
 		onDelete: 'CASCADE',
 		onUpdate: 'CASCADE'
@@ -26,7 +26,7 @@ export class ProductTranslation
 	@JoinColumn()
 	reference: Product;
 
-	@ApiProperty({ type: String, enum: LanguagesEnum })
+	@ApiProperty({ type: () => String, enum: LanguagesEnum })
 	@IsEnum(LanguagesEnum)
 	@Column({ nullable: false })
 	languageCode: string;

@@ -12,21 +12,21 @@ import { Role, TenantBaseEntity } from '../core/entities/internal';
 export class RolePermissions
 	extends TenantBaseEntity
 	implements IRolePermissions {
-	@ApiProperty({ type: String, enum: RolesEnum })
+	@ApiProperty({ type: () => String, enum: RolesEnum })
 	@IsEnum(RolesEnum)
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	roleId: string;
 
-	@ApiProperty({ type: String, enum: RolesEnum })
+	@ApiProperty({ type: () => String, enum: RolesEnum })
 	@IsEnum(PermissionsEnum)
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	permission: string;
 
-	@ApiPropertyOptional({ type: Boolean, default: false })
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@Column({ nullable: true, default: false })
 	enabled: boolean;
 

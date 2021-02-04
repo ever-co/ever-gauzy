@@ -6,10 +6,11 @@ import {
 	IAvailabilitySlotsFindInput
 } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class AvailabilitySlotsService {
-	AVAILABILITY_SLOTS_BASE_URI = '/api/availability-slots';
+	AVAILABILITY_SLOTS_BASE_URI = `${API_PREFIX}/availability-slots`;
 
 	constructor(private http: HttpClient) {}
 

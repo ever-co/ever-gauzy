@@ -24,7 +24,7 @@ import {
 export class JobPreset
 	extends TenantOrganizationBaseEntity
 	implements IJobPreset {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()

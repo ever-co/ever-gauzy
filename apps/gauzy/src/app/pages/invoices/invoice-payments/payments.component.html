@@ -59,12 +59,44 @@
 				(click)="recordPayment()"
 				nbButton
 			>
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
-				{{ 'INVOICES_PAGE.PAYMENTS.RECORD_PAYMENT' | translate }}
+				<nb-icon icon="plus-outline"></nb-icon>
 			</button>
-			<button nbButton status="info" (click)="download()" class="mr-2">
-				<nb-icon class="mr-1" icon="download-outline"> </nb-icon>
-				{{ 'BUTTONS.DOWNLOAD' | translate }}
+			<button
+				class="mr-2"
+				status="info"
+				(click)="editPayment()"
+				[disabled]="disableButton"
+				nbButton
+			>
+				<nb-icon icon="edit-outline"></nb-icon>
+			</button>
+			<button
+				nbButton
+				status="info"
+				(click)="download()"
+				class="mr-2"
+				[disabled]="disableButton"
+			>
+				<nb-icon icon="download-outline"></nb-icon>
+			</button>
+			<button
+				class="mr-2"
+				status="danger"
+				(click)="deletePayment()"
+				[disabled]="disableButton"
+				nbButton
+			>
+				<nb-icon icon="trash-2-outline"></nb-icon>
+			</button>
+			<button
+				class="mr-2"
+				nbButton
+				status="info"
+				(click)="exportToCsv()"
+				[disabled]="payments ? payments.length <= 0 : true"
+			>
+				<nb-icon icon="file-text-outline"></nb-icon>
+				{{ 'BUTTONS.EXPORT_TO_CSV' | translate }}
 			</button>
 			<button
 				class="mr-2"
@@ -73,7 +105,7 @@
 				[disabled]="isDisabled"
 				nbButton
 			>
-				<nb-icon class="mr-1" icon="credit-card-outline"></nb-icon>
+				<nb-icon icon="credit-card-outline"></nb-icon>
 				{{ 'BUTTONS.RECORD_FULL_PAYMENT' | translate }}
 			</button>
 			<button
@@ -83,28 +115,8 @@
 				[disabled]="isDisabled"
 				nbButton
 			>
-				<nb-icon class="mr-1" icon="file-text-outline"></nb-icon>
+				<nb-icon icon="file-text-outline"></nb-icon>
 				{{ 'BUTTONS.INVOICE_REMAINING_AMOUNT' | translate }}
-			</button>
-			<button
-				class="mr-2"
-				status="info"
-				(click)="editPayment()"
-				[disabled]="disableButton"
-				nbButton
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'INVOICES_PAGE.PAYMENTS.EDIT_PAYMENT' | translate }}
-			</button>
-			<button
-				class="mr-2"
-				status="danger"
-				(click)="deletePayment()"
-				[disabled]="disableButton"
-				nbButton
-			>
-				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-				{{ 'INVOICES_PAGE.PAYMENTS.DELETE_PAYMENT' | translate }}
 			</button>
 		</div>
 		<ng2-smart-table

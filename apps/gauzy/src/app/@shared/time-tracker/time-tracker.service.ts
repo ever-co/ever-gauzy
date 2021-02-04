@@ -17,6 +17,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { Observable } from 'rxjs/Observable';
+import { API_PREFIX } from '../../@core/constants/app.constants';
 
 export function createInitialTimerState(): TimerState {
 	let timerConfig = {
@@ -187,7 +188,7 @@ export class TimeTrackerService implements OnDestroy {
 
 	getTimerStatus(tenantId: string): Promise<ITimerStatus> {
 		return this.http
-			.get<ITimerStatus>('/api/timesheet/timer/status', {
+			.get<ITimerStatus>(`${API_PREFIX}/timesheet/timer/status`, {
 				params: {
 					source: TimeLogSourceEnum.BROWSER,
 					tenantId
@@ -198,7 +199,7 @@ export class TimeTrackerService implements OnDestroy {
 
 	// toggleTimer(request: ITimerToggleInput): Promise<ITimeLog> {
 	// 	return this.http
-	// 		.post<ITimeLog>('/api/timesheet/timer/toggle', request)
+	// 		.post<ITimeLog>(`${API_PREFIX}/timesheet/timer/toggle`, request)
 	// 		.toPromise();
 	// }
 
@@ -216,13 +217,19 @@ export class TimeTrackerService implements OnDestroy {
 		if (this.interval) {
 			this.turnOffTimer();
 			return this.http
-				.post<ITimeLog>('/api/timesheet/timer/stop', this.timerConfig)
+				.post<ITimeLog>(
+					`${API_PREFIX}/timesheet/timer/stop`,
+					this.timerConfig
+				)
 				.toPromise();
 		} else {
 			this.current_session_duration = 0;
 			this.turnOnTimer();
 			return this.http
-				.post<ITimeLog>('/api/timesheet/timer/start', this.timerConfig)
+				.post<ITimeLog>(
+					`${API_PREFIX}/timesheet/timer/start`,
+					this.timerConfig
+				)
 				.toPromise();
 		}
 	}

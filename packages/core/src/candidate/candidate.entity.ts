@@ -57,7 +57,7 @@ export class Candidate
 	})
 	tags: ITag[];
 
-	@ApiProperty({ type: Contact })
+	@ApiProperty({ type: () => Contact })
 	@ManyToOne(() => Contact, (contact) => contact.candidates, {
 		nullable: true,
 		cascade: true,
@@ -66,7 +66,7 @@ export class Candidate
 	@JoinColumn()
 	contact: IContact;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((candidate: Candidate) => candidate.contact)
 	readonly contactId?: string;
 
@@ -98,7 +98,7 @@ export class Candidate
 	@JoinColumn()
 	skills: ICandidateSkill[];
 
-	@ApiProperty({ type: CandidateSource })
+	@ApiProperty({ type: () => CandidateSource })
 	@OneToOne(() => CandidateSource, {
 		cascade: true,
 		onDelete: 'CASCADE'
@@ -118,7 +118,7 @@ export class Candidate
 	@JoinColumn()
 	feedbacks?: ICandidateFeedback[];
 
-	@ApiProperty({ type: User })
+	@ApiProperty({ type: () => User })
 	@OneToOne(() => User, {
 		cascade: true,
 		onDelete: 'CASCADE'
@@ -126,49 +126,49 @@ export class Candidate
 	@JoinColumn()
 	user: User;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((candidate: Candidate) => candidate.user)
 	readonly userId: string;
 
-	@ApiPropertyOptional({ type: Number })
+	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@Column({ nullable: true, type: 'numeric' })
 	rating?: number;
 
-	@ApiProperty({ type: OrganizationPositions })
+	@ApiProperty({ type: () => OrganizationPositions })
 	@ManyToOne((type) => OrganizationPositions, { nullable: true })
 	@JoinColumn()
 	organizationPosition?: IOrganizationPosition;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((candidate: Candidate) => candidate.organizationPosition)
 	readonly organizationPositionId?: string;
 
-	@ApiPropertyOptional({ type: Date })
+	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
 	valueDate?: Date;
 
-	@ApiPropertyOptional({ type: Date })
+	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
 	appliedDate?: Date;
 
-	@ApiPropertyOptional({ type: Date })
+	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
 	hiredDate?: Date;
 
-	@ApiProperty({ type: String, enum: CandidateStatus })
+	@ApiProperty({ type: () => String, enum: CandidateStatus })
 	@IsEnum(CandidateStatus)
 	@IsOptional()
 	@Column({ nullable: true, default: CandidateStatus.APPLIED })
 	status?: string;
 
-	@ApiPropertyOptional({ type: Date })
+	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
@@ -198,39 +198,39 @@ export class Candidate
 	})
 	organizationEmploymentTypes?: IOrganizationEmploymentType[];
 
-	@ApiPropertyOptional({ type: String, maxLength: 500 })
+	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	candidateLevel?: string;
 
-	@ApiPropertyOptional({ type: Number })
+	@ApiPropertyOptional({ type: () => Number })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
 	reWeeklyLimit?: number; //Recurring Weekly Limit (hours)
 
-	@ApiPropertyOptional({ type: String, maxLength: 255 })
+	@ApiPropertyOptional({ type: () => String, maxLength: 255 })
 	@IsOptional()
 	@Column({ length: 255, nullable: true })
 	billRateCurrency?: string;
 
-	@ApiPropertyOptional({ type: Number })
+	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@Column({ nullable: true })
 	billRateValue?: number;
 
-	@ApiProperty({ type: String, enum: PayPeriodEnum })
+	@ApiProperty({ type: () => String, enum: PayPeriodEnum })
 	@IsEnum(PayPeriodEnum)
 	@IsOptional()
 	@Column({ nullable: true })
 	payPeriod?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Column({ nullable: true })
 	cvUrl?: string;
 
-	@ApiPropertyOptional({ type: Boolean, default: false })
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@Column({ nullable: true, default: false })
 	isArchived?: boolean;
 

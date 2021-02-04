@@ -5,10 +5,11 @@ import {
 	IProductTypeTranslatable,
 	IProductTypeTranslated
 } from '@gauzy/contracts';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class ProductTypeService {
-	PRODUCT_TYPES_URL = '/api/product-types';
+	PRODUCT_TYPES_URL = `${API_PREFIX}/product-types`;
 
 	constructor(private http: HttpClient) {}
 

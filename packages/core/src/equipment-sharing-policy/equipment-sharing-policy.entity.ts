@@ -13,14 +13,14 @@ import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 export class EquipmentSharingPolicy
 	extends TenantOrganizationBaseEntity
 	implements IEquipmentSharingPolicy {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column({ nullable: true })
 	description: string;

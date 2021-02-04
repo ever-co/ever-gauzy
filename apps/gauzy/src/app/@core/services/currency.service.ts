@@ -5,6 +5,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, EMPTY, Subject } from 'rxjs';
 import { Observable } from 'rxjs/Observable';
 import { filter, map, tap } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 @UntilDestroy()
 @Injectable()
 export class CurrencyService {
@@ -37,7 +38,7 @@ export class CurrencyService {
 			return EMPTY;
 		}
 		return this.http
-			.get<IPagination<ICurrency>>(`api/currency`)
+			.get<IPagination<ICurrency>>(`${API_PREFIX}/currency`)
 			.pipe(
 				map(({ items, total }) => {
 					this._currencies$.next(items);

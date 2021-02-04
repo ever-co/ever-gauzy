@@ -8,14 +8,14 @@ import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 export class OrganizationAwards
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationAwards {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()

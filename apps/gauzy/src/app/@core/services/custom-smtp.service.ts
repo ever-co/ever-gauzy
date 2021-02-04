@@ -2,10 +2,11 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ICustomSmtp, ICustomSmtpFindInput } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class CustomSmtpService {
-	API_URL = '/api/smtp';
+	API_URL = `${API_PREFIX}/smtp`;
 
 	constructor(private http: HttpClient) {}
 

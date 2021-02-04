@@ -20,7 +20,7 @@ export abstract class Model {
 	}
 }
 export abstract class BaseEntity extends Model implements IBaseEntityModel {
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@PrimaryGeneratedColumn('uuid')
 	id?: string;
 

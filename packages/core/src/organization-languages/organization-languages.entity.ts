@@ -11,25 +11,25 @@ import {
 export class OrganizationLanguages
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationLanguages {
-	@ApiProperty({ type: Language })
+	@ApiProperty({ type: () => Language })
 	@ManyToOne(() => Language, { nullable: false, onDelete: 'CASCADE' })
 	@JoinColumn()
 	language: Language;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId(
 		(organization_language: OrganizationLanguages) =>
 			organization_language.language
 	)
 	readonly languageId: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()

@@ -6,6 +6,7 @@ import {
 	ICandidateFeedbackFindInput,
 	ICandidateFeedbackCreateInput
 } from '@gauzy/contracts';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -17,7 +18,10 @@ export class CandidateFeedbacksService {
 		createInput: ICandidateFeedbackCreateInput
 	): Promise<ICandidateFeedback> {
 		return this.http
-			.post<ICandidateFeedback>('/api/candidate-feedbacks', createInput)
+			.post<ICandidateFeedback>(
+				`${API_PREFIX}/candidate-feedbacks`,
+				createInput
+			)
 			.pipe(first())
 			.toPromise();
 	}
@@ -29,7 +33,7 @@ export class CandidateFeedbacksService {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
 			.get<{ items: ICandidateFeedback[]; total: number }>(
-				`/api/candidate-feedbacks`,
+				`${API_PREFIX}/candidate-feedbacks`,
 				{
 					params: { data }
 				}
@@ -39,7 +43,7 @@ export class CandidateFeedbacksService {
 	}
 	findById(id: string): Promise<ICandidateFeedback> {
 		return this.http
-			.get<ICandidateFeedback>(`/api/candidate-feedbacks/${id}`)
+			.get<ICandidateFeedback>(`${API_PREFIX}/candidate-feedbacks/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
@@ -47,14 +51,14 @@ export class CandidateFeedbacksService {
 	findByInterviewId(interviewId: string): Promise<ICandidateFeedback[]> {
 		return this.http
 			.get<ICandidateFeedback[]>(
-				`/api/candidate-feedbacks/getByInterviewId/${interviewId}`
+				`${API_PREFIX}/candidate-feedbacks/getByInterviewId/${interviewId}`
 			)
 			.pipe(first())
 			.toPromise();
 	}
 	update(id: string, updateInput: any): Promise<any> {
 		return this.http
-			.put(`/api/candidate-feedbacks/${id}`, updateInput)
+			.put(`${API_PREFIX}/candidate-feedbacks/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
@@ -62,7 +66,7 @@ export class CandidateFeedbacksService {
 	delete(feedbackId: string, interviewId?: string): Promise<any> {
 		const data = JSON.stringify({ feedbackId, interviewId });
 		return this.http
-			.delete('/api/candidate-feedbacks/deleteFeedback', {
+			.delete(`${API_PREFIX}/candidate-feedbacks/deleteFeedback`, {
 				params: { data }
 			})
 			.pipe(first())

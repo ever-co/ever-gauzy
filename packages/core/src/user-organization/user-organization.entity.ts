@@ -15,12 +15,12 @@ import { TenantOrganizationBaseEntity, User } from '../core/entities/internal';
 export class UserOrganization
 	extends TenantOrganizationBaseEntity
 	implements IUserOrganization {
-	@ApiProperty({ type: User })
+	@ApiProperty({ type: () => User })
 	@ManyToOne((type) => User, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	user?: User;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
@@ -28,12 +28,12 @@ export class UserOrganization
 	@RelationId((userOrganization: UserOrganization) => userOrganization.user)
 	userId: string;
 
-	@ApiProperty({ type: Boolean, default: true })
+	@ApiProperty({ type: () => Boolean, default: true })
 	@Index()
 	@Column({ default: true })
 	isDefault: boolean;
 
-	@ApiProperty({ type: Boolean, default: true })
+	@ApiProperty({ type: () => Boolean, default: true })
 	@Index()
 	@Column({ default: true })
 	isActive: boolean;

@@ -2,17 +2,17 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as faker from 'faker';
 import * as moment from 'moment';
-import { ConfigService, environment as env } from '@gauzy/config';
+import { environment as env } from '@gauzy/config';
 import { Screenshot, Tenant, TimeSlot } from '../../core/entities/internal';
+import { IPluginConfig } from '@gauzy/common';
 
 let fileList: string[] = [];
 
 export const createRandomScreenshot = async (
 	timeSlot: TimeSlot,
-	tenant: Tenant
+	tenant: Tenant,
+	config: IPluginConfig
 ): Promise<Screenshot[]> => {
-	const configService = new ConfigService();
-
 	let dir: string;
 	let baseDir: string;
 	if (env.isElectron) {
@@ -24,7 +24,7 @@ export const createRandomScreenshot = async (
 	} else {
 		dir =
 			path.join(
-				configService.assetOptions.assetPath,
+				config.assetOptions.assetPath,
 				...['seed', 'screenshots']
 			) ||
 			path.resolve(
@@ -33,7 +33,7 @@ export const createRandomScreenshot = async (
 				...['apps', 'api', 'src', 'assets', 'seed', 'screenshots']
 			);
 		baseDir =
-			path.join(configService.assetOptions.assetPublicPath, '../') ||
+			path.join(config.assetOptions.assetPublicPath, '../') ||
 			path.resolve(__dirname, '../../../', ...['apps', 'api']);
 	}
 

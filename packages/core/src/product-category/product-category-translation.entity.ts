@@ -11,17 +11,17 @@ import { ProductCategory, TranslationBase } from '../core/entities/internal';
 export class ProductCategoryTranslation
 	extends TranslationBase
 	implements IProductCategoryTranslation {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsOptional()
 	@Column({ nullable: true })
 	description: string;
 
-	@ApiProperty({ type: ProductCategory })
+	@ApiProperty({ type: () => ProductCategory })
 	@ManyToOne(
 		() => ProductCategory,
 		(productCategory) => productCategory.translations,
@@ -33,7 +33,7 @@ export class ProductCategoryTranslation
 	@JoinColumn()
 	reference: ProductCategory;
 
-	@ApiProperty({ type: String, enum: LanguagesEnum })
+	@ApiProperty({ type: () => String, enum: LanguagesEnum })
 	@IsEnum(LanguagesEnum)
 	@Column({ nullable: false })
 	languageCode: string;

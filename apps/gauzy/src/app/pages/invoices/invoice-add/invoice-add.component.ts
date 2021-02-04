@@ -94,6 +94,7 @@ export class InvoiceAddComponent
 	subtotal = 0;
 	total = 0;
 	tags: ITag[] = [];
+	currencyString: string;
 	invoiceTypePlaceholder = this.getTranslation(
 		'INVOICES_PAGE.INVOICE_TYPE.INVOICE_TYPE'
 	);
@@ -139,8 +140,7 @@ export class InvoiceAddComponent
 				filter((organization) => !!organization),
 				tap((organization) => (this.organization = organization)),
 				tap(({ currency }) => {
-					this.currency.setValue(currency);
-					this.currency.updateValueAndValidity();
+					this.currencyString = currency;
 				}),
 				tap(() => this._loadOrganizationData()),
 				untilDestroyed(this)
@@ -155,6 +155,8 @@ export class InvoiceAddComponent
 			.subscribe((languageEvent) => {
 				this.selectedLanguage = languageEvent.lang;
 			});
+		this.currency.setValue(this.currencyString);
+		this.currency.updateValueAndValidity();
 	}
 
 	initializeForm() {
@@ -1182,11 +1184,11 @@ export class InvoiceAddComponent
 	}
 
 	getNextMonth() {
-		const date = new Date();
-		const d = date.getDate();
-		date.setMonth(date.getMonth() + 1);
-		if (date.getDate() !== d) {
-			date.setDate(0);
+		var date = new Date();
+		if (this.organization.daysUntilDue !== null) {
+			date.setDate(date.getDate() + this.organization.daysUntilDue);
+		} else {
+			date.setMonth(date.getMonth() + 1);
 		}
 		return date;
 	}

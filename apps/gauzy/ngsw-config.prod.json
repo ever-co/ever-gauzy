@@ -1,5 +1,5 @@
 {
-	"$schema": "../../node_modules/@angular/service-worker/config/schema.json",
+	"$schema": "./node_modules/@angular/service-worker/config/schema.json",
 	"index": "/index.html",
 	"assetGroups": [
 		{
@@ -22,7 +22,7 @@
 		{
 			"name": "gauzy-api",
 			"version": 1,
-			"urls": ["http://localhost:8080/api/**"],
+			"urls": ["http://localhost:4200/api/**"],
 			"cacheConfig": {
 				"strategy": "freshness",
 				"maxSize": 100,

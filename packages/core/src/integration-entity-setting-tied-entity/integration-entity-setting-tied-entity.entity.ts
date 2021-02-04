@@ -13,7 +13,7 @@ import {
 export class IntegrationEntitySettingTiedEntity
 	extends TenantOrganizationBaseEntity
 	implements IIntegrationEntitySettingTied {
-	@ApiProperty({ type: IntegrationEntitySetting })
+	@ApiProperty({ type: () => IntegrationEntitySetting })
 	@ManyToOne(
 		() => IntegrationEntitySetting,
 		(integrationEntitySetting) => integrationEntitySetting.tiedEntities
@@ -21,18 +21,18 @@ export class IntegrationEntitySettingTiedEntity
 	@JoinColumn()
 	integrationEntitySetting?: IIntegrationEntitySetting;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId(
 		(integrationEntityTiedSetting: IntegrationEntitySettingTiedEntity) =>
 			integrationEntityTiedSetting.integrationEntitySetting
 	)
 	readonly integrationEntitySettingId?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: false })
 	entity: string;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@Column({ nullable: false })
 	sync: boolean;
 }

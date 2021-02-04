@@ -16,54 +16,54 @@ import {
 export class KeyResultTemplate
 	extends TenantOrganizationBaseEntity
 	implements IKeyResultTemplate {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String, enum: KeyResultTypeEnum })
+	@ApiProperty({ type: () => String, enum: KeyResultTypeEnum })
 	@IsEnum(KeyResultTypeEnum)
 	@Column()
 	type: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: true })
 	@IsOptional()
 	unit?: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@Column({ nullable: true })
 	@IsOptional()
 	targetValue?: number;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@Column({ nullable: true })
 	@IsOptional()
 	initialValue: number;
 
-	@ApiProperty({ type: String, enum: KeyResultDeadlineEnum })
+	@ApiProperty({ type: () => String, enum: KeyResultDeadlineEnum })
 	@IsEnum(KeyResultDeadlineEnum)
 	@Column()
 	deadline: string;
 
-	@ApiProperty({ type: GoalKPITemplate })
+	@ApiProperty({ type: () => GoalKPITemplate })
 	@ManyToOne(() => GoalKPITemplate, { nullable: true })
 	@JoinColumn({ name: 'kpiId' })
 	@IsOptional()
 	kpi?: GoalKPITemplate;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((keyResult: KeyResultTemplate) => keyResult.kpi)
 	@Column({ nullable: true })
 	kpiId?: string;
 
-	@ApiProperty({ type: GoalTemplate })
+	@ApiProperty({ type: () => GoalTemplate })
 	@ManyToOne(() => GoalTemplate, (goalTemplate) => goalTemplate.keyResults, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn({ name: 'goalId' })
 	goal: GoalTemplate;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((keyResult: KeyResultTemplate) => keyResult.goal)
 	@Column({ nullable: true })
 	readonly goalId?: string;

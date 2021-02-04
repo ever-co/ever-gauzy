@@ -18,7 +18,7 @@ export abstract class PaginationParams<T> {
 	/**
 	 * Pagination limit
 	 */
-	@ApiPropertyOptional({ type: Number, minimum: 0, maximum: 50 })
+	@ApiPropertyOptional({ type: () => Number, minimum: 0, maximum: 50 })
 	@IsOptional()
 	@Min(0)
 	@Max(50)
@@ -28,7 +28,7 @@ export abstract class PaginationParams<T> {
 	/**
 	 * Pagination offset
 	 */
-	@ApiPropertyOptional({ type: Number, minimum: 0 })
+	@ApiPropertyOptional({ type: () => Number, minimum: 0 })
 	@IsOptional()
 	@Min(0)
 	@Transform((val: string) => parseInt(val, 10))

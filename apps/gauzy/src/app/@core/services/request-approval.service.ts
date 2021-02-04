@@ -6,10 +6,11 @@ import {
 	IRequestApprovalFindInput
 } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class RequestApprovalService {
-	REQUETS_APPROVAL_URL = '/api/request-approval';
+	REQUETS_APPROVAL_URL = `${API_PREFIX}/request-approval`;
 
 	constructor(private http: HttpClient) {}
 

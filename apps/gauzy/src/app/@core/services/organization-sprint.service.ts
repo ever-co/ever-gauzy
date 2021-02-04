@@ -10,12 +10,13 @@ import { tap, catchError, first } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { ToastrService } from './toastr.service';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class SprintService extends TranslationBaseComponent {
-	private readonly API_URL = '/api/organization-sprint';
+	private readonly API_URL = `${API_PREFIX}/organization-sprint`;
 
 	constructor(
 		private _http: HttpClient,

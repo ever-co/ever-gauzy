@@ -3,10 +3,11 @@ import { HttpClient } from '@angular/common/http';
 import { IAppointmentEmployee } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 import { Observable } from 'rxjs';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class AppointmentEmployeesService {
-	URI = '/api/appointment-employees';
+	URI = `${API_PREFIX}/appointment-employees`;
 
 	constructor(private http: HttpClient) {}
 

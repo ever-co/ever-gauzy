@@ -10,6 +10,7 @@ import {
 	ITimeOffFindInput
 } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({ providedIn: 'root' })
 export class TimeOffService {
@@ -19,7 +20,7 @@ export class TimeOffService {
 		createInput: ITimeOffPolicyCreateInput
 	): Observable<ITimeOffPolicy> {
 		return this.http.post<ITimeOffPolicy>(
-			'/api/time-off-policy/create',
+			`${API_PREFIX}/time-off-policy/create`,
 			createInput
 		);
 	}
@@ -31,7 +32,7 @@ export class TimeOffService {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http.get<{ items: ITimeOffPolicy[]; total: number }>(
-			`/api/time-off-policy`,
+			`${API_PREFIX}/time-off-policy`,
 			{ params: { data } }
 		);
 	}
@@ -40,19 +41,25 @@ export class TimeOffService {
 		id: string,
 		updateInput: ITimeOffPolicyUpdateInput
 	): Observable<ITimeOffPolicy> {
-		return this.http.put(`/api/time-off-policy/${id}`, updateInput);
+		return this.http.put(
+			`${API_PREFIX}/time-off-policy/${id}`,
+			updateInput
+		);
 	}
 
 	deletePolicy(id: string): Observable<ITimeOffPolicy> {
-		return this.http.delete(`/api/time-off-policy/${id}`);
+		return this.http.delete(`${API_PREFIX}/time-off-policy/${id}`);
 	}
 
 	createRequest(timeOffRequest: ITimeOffCreateInput): Observable<ITimeOff> {
-		return this.http.post('/api/time-off-request', timeOffRequest);
+		return this.http.post(`${API_PREFIX}/time-off-request`, timeOffRequest);
 	}
 
 	updateRequest(id: string, timeOffRequest: ITimeOff): Observable<ITimeOff> {
-		return this.http.put(`/api/time-off-request/${id}`, timeOffRequest);
+		return this.http.put(
+			`${API_PREFIX}/time-off-request/${id}`,
+			timeOffRequest
+		);
 	}
 
 	getAllTimeOffRecords(
@@ -63,16 +70,19 @@ export class TimeOffService {
 		const data = JSON.stringify({ relations, findInput, filterDate });
 
 		return this.http.get<{ items: ITimeOff[]; total: number }>(
-			'/api/time-off-request',
+			`${API_PREFIX}/time-off-request`,
 			{ params: { data } }
 		);
 	}
 
 	updateRequestStatus(id: string, action: string): Observable<ITimeOff> {
-		return this.http.put(`/api/time-off-request/${action}/${id}`, {});
+		return this.http.put(
+			`${API_PREFIX}/time-off-request/${action}/${id}`,
+			{}
+		);
 	}
 
 	deleteDaysOffRequest(id: string): Observable<ITimeOff> {
-		return this.http.delete(`/api/time-off-request/${id}`);
+		return this.http.delete(`${API_PREFIX}/time-off-request/${id}`);
 	}
 }

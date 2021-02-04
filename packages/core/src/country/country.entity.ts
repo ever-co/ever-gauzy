@@ -6,14 +6,14 @@ import { BaseEntity } from '../core/entities/internal';
 
 @Entity('country')
 export class Country extends BaseEntity implements ICountry {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Index()
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: false })
 	isoCode: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: false })

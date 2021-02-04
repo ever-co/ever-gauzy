@@ -11,12 +11,12 @@ import {
 export class ProductOption
 	extends TenantOrganizationBaseEntity
 	implements IProductOption {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()
 	code: string;
