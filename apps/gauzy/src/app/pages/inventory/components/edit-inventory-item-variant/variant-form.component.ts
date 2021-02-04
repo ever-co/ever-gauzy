@@ -45,6 +45,7 @@ export class InventoryVariantFormComponent
 	form: FormGroup;
 	organization: IOrganization;
 	image: IImageAsset;
+	loading = true;
 	private ngDestroy$ = new Subject<void>();
 	private newImageUploadedEvent$ = new Subject<any>();
 
@@ -90,6 +91,8 @@ export class InventoryVariantFormComponent
 						if (result && result.image) {
 							this.image = result.image;
 						}
+
+						this.loading = false;
 					});
 			});
 	}

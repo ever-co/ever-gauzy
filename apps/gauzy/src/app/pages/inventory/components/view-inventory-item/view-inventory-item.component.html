@@ -8,8 +8,12 @@
 		</h5>
 	</nb-card-header>
 
-	<nb-card-body *ngIf="inventoryItem">
-		<div class="row">
+	<nb-card-body
+		[nbSpinner]="loading"
+		nbSpinnerStatus="primary"
+		nbSpinnerSize="large"
+	>
+		<div class="row" *ngIf="inventoryItem">
 			<div class="col-md-3">
 				<div class="product-container">
 					<div>

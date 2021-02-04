@@ -24,6 +24,7 @@ export class InventoryItemViewComponent
 	extends TranslationBaseComponent
 	implements OnInit {
 	inventoryItem: IProductTranslated;
+	loading = true;
 
 	@ViewChild('variantTable') variantTable;
 
@@ -67,6 +68,7 @@ export class InventoryItemViewComponent
 					};
 				});
 
+				this.loading = false;
 				this.loadSmartTable();
 				this.smartTableSource.load(variants);
 			});

@@ -19,7 +19,11 @@
 			(click)="onCancel()"
 		></nb-icon>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body
+		[nbSpinner]="loading"
+		nbSpinnerStatus="primary"
+		nbSpinnerSize="large"
+	>
 		<div class="row">
 			<div class="col-md-3 col-sm-12">
 				<div class="product-variant-container">
