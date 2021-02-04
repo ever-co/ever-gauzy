@@ -7,7 +7,6 @@ import {
 	clickButtonByIndex,
 	waitElementToHide,
 	verifyText,
-	verifyTextNotExisting,
 	verifyElementNotExist
 } from '../utils/util';
 import { OrganizationEquipmentPage } from '../pageobjects/OrganizationEquipmentPageObject';
