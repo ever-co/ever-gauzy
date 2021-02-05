@@ -5,10 +5,8 @@ import {
 	HttpCode,
 	Body,
 	Get,
-	Res,
 	Req,
-	Query,
-	UseGuards
+	Query
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -23,26 +21,19 @@ import {
 	LanguagesEnum
 } from '@gauzy/contracts';
 import { getUserDummyImage } from '../core';
-import { ConfigService, IEnvironment } from '@gauzy/config';
-import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { I18nLang } from 'nestjs-i18n';
 import { AuthLoginCommand } from './commands/auth.login.command';
-import { IIncomingRequest, RequestCtx } from '@gauzy/auth';
+import { SocialAuthController } from '@gauzy/auth';
 
 @ApiTags('Auth')
 @Controller()
-export class AuthController {
-	clientBaseUrl: string;
-
+export class AuthController extends SocialAuthController {
 	constructor(
 		private readonly authService: AuthService,
-		private readonly commandBus: CommandBus,
-		private readonly configService: ConfigService
+		private readonly commandBus: CommandBus
 	) {
-		this.clientBaseUrl = this.configService.get(
-			'clientBaseUrl'
-		) as keyof IEnvironment;
+		super(authService);
 	}
 
 	@ApiOperation({ summary: 'Is authenticated' })
@@ -77,8 +68,7 @@ export class AuthController {
 	async create(
 		@Body() entity: IUserRegistrationInput,
 		@Req() request: Request,
-		@I18nLang() languageCode: LanguagesEnum,
-		...options: any[]
+		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IUser> {
 		if (!entity.user.imageUrl) {
 			entity.user.imageUrl = getUserDummyImage(entity.user);
@@ -92,14 +82,13 @@ export class AuthController {
 	@HttpCode(HttpStatus.OK)
 	@Post('/login')
 	async login(
-		@Body() entity: IAuthLoginInput,
-		...options: any[]
+		@Body() entity: IAuthLoginInput
 	): Promise<IAuthResponse | null> {
 		return this.commandBus.execute(new AuthLoginCommand(entity));
 	}
 
 	@Post('/reset-password')
-	async resetPassword(@Body() findObject, ...options: any[]) {
+	async resetPassword(@Body() findObject) {
 		return await this.authService.resetPassword(findObject);
 	}
 
@@ -107,188 +96,12 @@ export class AuthController {
 	async requestPass(
 		@Body() findObj,
 		@Req() request: Request,
-		@I18nLang() languageCode: LanguagesEnum,
-		...options: any[]
+		@I18nLang() languageCode: LanguagesEnum
 	): Promise<{ id: string; token: string } | null> {
 		return await this.authService.requestPassword(
 			findObj,
 			languageCode,
 			request.get('Origin')
 		);
-	}
-
-	@Get('google')
-	@UseGuards(AuthGuard('google'))
-	googleLogin(@Req() req) {}
-
-	@Get('google/callback')
-	@UseGuards(AuthGuard('google'))
-	async googleLoginCallback(
-		@RequestCtx() requestCtx: IIncomingRequest,
-		@Res() res
-	) {
-		const { user } = requestCtx;
-		const {
-			success,
-			authData: { jwt, userId }
-		} = await this.authService.validateOAuthLoginEmail(user.emails);
-
-		if (success) {
-			return res.redirect(
-				`${this.clientBaseUrl}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
-			);
-		} else {
-			return res.redirect(`${this.clientBaseUrl}/#/auth/register`);
-		}
-	}
-
-	@Get('linkedin')
-	@UseGuards(AuthGuard('linkedin'))
-	linkedinLogin(@Req() req) {}
-
-	@Get('linkedin/callback')
-	@UseGuards(AuthGuard('linkedin'))
-	async linkedinLoginCallback(
-		@RequestCtx() requestCtx: IIncomingRequest,
-		@Res() res
-	) {
-		const { user } = requestCtx;
-		const {
-			success,
-			authData: { jwt, userId }
-		} = await this.authService.validateOAuthLoginEmail(user.emails);
-
-		if (success) {
-			return res.redirect(
-				`${this.clientBaseUrl}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
-			);
-		} else {
-			return res.redirect(`${this.clientBaseUrl}/#/auth/register`);
-		}
-	}
-
-	@Get('github')
-	@UseGuards(AuthGuard('github'))
-	githubLogin(@Req() req) {}
-
-	@Get('github/callback')
-	@UseGuards(AuthGuard('github'))
-	async githubLoginCallback(
-		@RequestCtx() requestCtx: IIncomingRequest,
-		@Res() res
-	) {
-		const { user } = requestCtx;
-		const {
-			success,
-			authData: { jwt, userId }
-		} = await this.authService.validateOAuthLoginEmail(user.emails);
-
-		if (success) {
-			return res.redirect(
-				`${this.clientBaseUrl}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
-			);
-		} else {
-			return res.redirect(`${this.clientBaseUrl}/#/auth/register`);
-		}
-	}
-
-	@Get('facebook')
-	@UseGuards(AuthGuard('facebook'))
-	facebookLogin(@Req() req) {}
-
-	@Get('facebook/callback')
-	@UseGuards(AuthGuard('facebook'))
-	async facebookLoginCallback(
-		@RequestCtx() requestCtx: IIncomingRequest,
-		@Res() res
-	) {
-		const { user } = requestCtx;
-		const {
-			success,
-			authData: { jwt, userId }
-		} = await this.authService.validateOAuthLoginEmail(user.emails);
-
-		if (success) {
-			return res.redirect(
-				`${this.clientBaseUrl}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
-			);
-		} else {
-			return res.redirect(`${this.clientBaseUrl}/#/auth/register`);
-		}
-	}
-
-	@Get('twitter')
-	@UseGuards(AuthGuard('twitter'))
-	twitterLogin() {}
-
-	@Get('twitter/callback')
-	@UseGuards(AuthGuard('twitter'))
-	async twitterLoginCallback(
-		@RequestCtx() requestCtx: IIncomingRequest,
-		@Res() res
-	) {
-		const { user } = requestCtx;
-		const {
-			success,
-			authData: { jwt, userId }
-		} = await this.authService.validateOAuthLoginEmail(user.emails);
-
-		if (success) {
-			return res.redirect(
-				`${this.clientBaseUrl}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
-			);
-		} else {
-			return res.redirect(`${this.clientBaseUrl}/#/auth/register`);
-		}
-	}
-
-	@Get('microsoft')
-	@UseGuards(AuthGuard('microsoft'))
-	microsoftLogin() {}
-
-	@Get('microsoft/callback')
-	@UseGuards(AuthGuard('microsoft'))
-	async microsoftLoginCallback(
-		@RequestCtx() requestCtx: IIncomingRequest,
-		@Res() res
-	) {
-		const { user } = requestCtx;
-		const {
-			success,
-			authData: { jwt, userId }
-		} = await this.authService.validateOAuthLoginEmail(user.emails);
-
-		if (success) {
-			return res.redirect(
-				`${this.clientBaseUrl}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
-			);
-		} else {
-			return res.redirect(`${this.clientBaseUrl}/#/auth/register`);
-		}
-	}
-
-	@Get('auth0')
-	@UseGuards(AuthGuard('auth0'))
-	auth0Login() {}
-
-	@Get('auth0/callback')
-	@UseGuards(AuthGuard('auth0'))
-	async auth0LoginCallback(
-		@RequestCtx() requestCtx: IIncomingRequest,
-		@Res() res
-	) {
-		const { user } = requestCtx;
-		const {
-			success,
-			authData: { jwt, userId }
-		} = await this.authService.validateOAuthLoginEmail(user.emails);
-
-		if (success) {
-			return res.redirect(
-				`${this.clientBaseUrl}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
-			);
-		} else {
-			return res.redirect(`${this.clientBaseUrl}/#/auth/register`);
-		}
 	}
 }

@@ -69,15 +69,21 @@ export const environment: IEnvironment = {
 	},
 
 	microsoftConfig: {
-		clientId: process.env.MicrosoftClientId,
-		clientSecret: process.env.MicrosoftConfig,
-		resource: process.env.MicrosoftResource,
-		tenant: process.env.MicrosoftTenant
+		clientId: process.env.MICROSOFT_CLIENT_ID,
+		clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
+		resource: process.env.MICROSOFT_RESOURCE,
+		tenant: process.env.MICROSOFT_TENANT,
+		callbackUrl:
+			process.env.MICROSOFT_CALLBACK_URL ||
+			`http://${process.env.HOST}:${process.env.PORT}/api/auth/microsoft/callback`
 	},
 
 	linkedinConfig: {
-		clientId: process.env.LinkedinClientId,
-		clientSecret: process.env.LinkedinClientSecret
+		clientId: process.env.LINKEDIN_CLIENT_ID,
+		clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
+		callbackUrl:
+			process.env.LINKEDIN_CALLBACK_URL ||
+			`http://${process.env.HOST}:${process.env.PORT}/api/auth/linked/callback`
 	},
 
 	twitterConfig: {
@@ -89,22 +95,22 @@ export const environment: IEnvironment = {
 	},
 
 	fiverrConfig: {
-		clientId: process.env.FiverrClientId,
-		clientSecret: process.env.FiverrClientSecret
+		clientId: process.env.FIVERR_CLIENT_ID,
+		clientSecret: process.env.FIVERR_CLIENT_SECRET
 	},
 
 	keycloakConfig: {
-		realm: process.env.KeycloakRealm,
-		clientId: process.env.KeycloakClientId,
-		secret: process.env.KeycloakSecret,
-		authServerUrl: process.env.KeycloakAuthServerURL,
-		cookieKey: process.env.KeycloakCookieKey
+		realm: process.env.KEYCLOAK_REALM,
+		clientId: process.env.KEYCLOAK_CLIENT_ID,
+		secret: process.env.KEYCLOAK_SECRET,
+		authServerUrl: process.env.KEYCLOAK_AUTH_SERVER_URL,
+		cookieKey: process.env.KEYCLOAK_COOKIE_KEY
 	},
 
 	auth0Config: {
-		clientID: process.env.Auth0ClientId,
-		clientSecret: process.env.Auth0ClientSecret,
-		domain: process.env.Auth0Domanin
+		clientID: process.env.AUTH0_CLIENT_ID,
+		clientSecret: process.env.AUTH0_CLIENT_SECRET,
+		domain: process.env.AUTH0_DOMAIN
 	},
 
 	sentry: {
@@ -117,13 +123,13 @@ export const environment: IEnvironment = {
 	upworkConfig: {
 		callbackUrl:
 			process.env.UPWORK_CALLBACK_URL ||
-			'http://localhost:4200/#/pages/integrations/upwork'
+			`http://${process.env.HOST}:${process.env.PORT}/api/integrations/upwork`
 	},
 
 	isElectron: process.env.IS_ELECTRON === 'true' ? true : false,
 	gauzyUserPath: process.env.GAUZY_USER_PATH,
 	allowSuperAdminRole:
-		process.env.AllowSuperAdminRole === 'false' ? false : true,
+		process.env.ALLOW_SUPER_ADMIN_ROLE === 'false' ? false : true,
 
 	/**
 	 * Endpoint for Gauzy AI API (optional), e.g.: http://localhost:3005/graphql
