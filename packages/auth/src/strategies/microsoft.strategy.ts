@@ -9,6 +9,25 @@ export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
 	constructor(private readonly configService: ConfigService) {
 		super(config(configService));
 	}
+
+	async validate(
+		accessToken,
+		refresh_token,
+		params,
+		profile,
+		done: (err: any, user: any, info?: any) => void
+	) {
+		try {
+			const { emails } = profile;
+			const user = {
+				emails,
+				accessToken
+			};
+			done(null, user);
+		} catch (err) {
+			done(err, false);
+		}
+	}
 }
 
 export const config = (configService: ConfigService) => {
@@ -23,6 +42,8 @@ export const config = (configService: ConfigService) => {
 		resource: MICROSOFT_CONFIG.resource || 'disabled',
 		tenant: MICROSOFT_CONFIG.tenant || 'disabled',
 		useCommonEndpoint: false,
-		callbackURL: `${baseUrl}/api/auth/microsoft/callback`
+		callbackURL:
+			MICROSOFT_CONFIG.callbackUrl ||
+			`${baseUrl}/api/auth/microsoft/callback`
 	};
 };
