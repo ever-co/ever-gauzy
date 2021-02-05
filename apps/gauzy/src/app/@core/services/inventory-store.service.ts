@@ -7,6 +7,7 @@ import {
 	IProductVariant,
 	IVariantOptionCombination
 } from '@gauzy/contracts';
+import { NbTabComponent } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject } from 'rxjs';
 import { VariantCreateInput } from '../../pages/inventory/components/edit-inventory-item/variant-form/variant-form.component';
@@ -18,6 +19,8 @@ export class InventoryStore {
 	private _varintCreateInputs: VariantCreateInput[] = [];
 	private _optionsCombinations: IVariantOptionCombination[] = [];
 	private _deleteOptions: IProductOption[] = [];
+
+	private _activeTab: NbTabComponent = null;
 
 	activeProduct$: BehaviorSubject<IProductTranslatable> = new BehaviorSubject(
 		this.activeProduct
@@ -37,6 +40,10 @@ export class InventoryStore {
 
 	createOptions$: BehaviorSubject<IProductOption[]> = new BehaviorSubject(
 		this.createOptions
+	);
+
+	activeTab$: BehaviorSubject<NbTabComponent> = new BehaviorSubject(
+		this.activeTab
 	);
 
 	constructor(private translateService: TranslateService) {}
@@ -79,6 +86,10 @@ export class InventoryStore {
 		return this.activeProduct.options;
 	}
 
+	get activeTab() {
+		return this._activeTab;
+	}
+
 	set activeProduct(product: IProductTranslatable) {
 		this._activeProduct = { ...this.activeProduct, ...product };
 		this.activeProduct$.next(this._activeProduct);
@@ -97,6 +108,11 @@ export class InventoryStore {
 	set options(options: IProductOption[]) {
 		this.activeProduct.options = options;
 		this.activeProduct$.next(this.activeProduct);
+	}
+
+	set activeTab(tab: NbTabComponent) {
+		this._activeTab = tab;
+		this.activeTab$.next(this._activeTab);
 	}
 
 	updateGallery(gallery: IImageAsset[]) {
