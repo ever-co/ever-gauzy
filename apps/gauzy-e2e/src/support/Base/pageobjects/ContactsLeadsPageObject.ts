@@ -20,6 +20,8 @@ export const ContactsLeadsPage = {
 	websiteInputCss: '[formcontrolname="website"]',
 	cardBodyCss: 'div.contact-container',
 	saveButtonCss: 'div.form-group > button[status="success"]',
+	nextButtonCss: 'div.fields > div > button[status="success"]',
+	finishButtonCss: 'div.fields > div > button[status="success"]',
 	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	contactNameCss: '[formcontrolname="name"]',

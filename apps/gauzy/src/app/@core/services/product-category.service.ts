@@ -5,10 +5,11 @@ import {
 	IProductCategoryTranslated
 } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class ProductCategoryService {
-	PRODUCT_CATEGORY_URL = '/api/product-categories';
+	PRODUCT_CATEGORY_URL = `${API_PREFIX}/product-categories`;
 
 	constructor(private http: HttpClient) {}
 

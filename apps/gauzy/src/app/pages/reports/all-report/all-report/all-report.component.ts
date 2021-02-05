@@ -11,7 +11,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import * as moment from 'moment';
 import { chain } from 'underscore';
-import { ReportService } from '../report.server';
+import { ReportService } from '../report.service';
 
 @UntilDestroy()
 @Component({

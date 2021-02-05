@@ -120,8 +120,8 @@ function startServer(value, restart = false) {
 		process.env.DB_PASS = value.dbPassword;
 	}
 	if (value.isLocalServer) {
-		process.env.port = value.port || environment.API_DEFAULT_PORT;
-		process.env.host = 'http://localhost';
+		process.env.PORT = value.port || environment.API_DEFAULT_PORT;
+		process.env.HOST = 'http://localhost';
 		process.env.BASE_URL = `http://localhost:${
 			value.port || environment.API_DEFAULT_PORT
 		}`;

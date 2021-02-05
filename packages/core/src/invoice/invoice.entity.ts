@@ -36,179 +36,179 @@ import {
 @Entity('invoice')
 @Unique(['invoiceNumber'])
 export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
-	@ApiProperty({ type: Tag })
+	@ApiProperty({ type: () => Tag })
 	@ManyToMany((type) => Tag, (tag) => tag.invoice)
 	@JoinTable({
 		name: 'tag_invoice'
 	})
 	tags?: Tag[];
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@Column({ nullable: true })
 	invoiceDate: Date;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ name: 'invoiceNumber', nullable: true, type: 'numeric' })
 	invoiceNumber: number;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@Column({ nullable: true })
 	dueDate: Date;
 
-	@ApiProperty({ type: String, enum: CurrenciesEnum })
+	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@Column()
 	currency: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ type: 'numeric' })
 	discountValue: number;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	paid: boolean;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ nullable: true, type: 'numeric' })
 	tax: number;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ nullable: true, type: 'numeric' })
 	tax2: number;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column()
 	terms?: string;
 
-	@ApiPropertyOptional({ type: Number })
+	@ApiPropertyOptional({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
 	@Column({ nullable: true, type: 'numeric' })
 	totalValue?: number;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column()
 	status?: string;
 
-	@ApiPropertyOptional({ type: Boolean })
+	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	isEstimate?: boolean;
 
-	@ApiPropertyOptional({ type: Boolean })
+	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	isAccepted?: boolean;
 
-	@ApiProperty({ type: String, enum: DiscountTaxTypeEnum })
+	@ApiProperty({ type: () => String, enum: DiscountTaxTypeEnum })
 	@IsEnum(DiscountTaxTypeEnum)
 	@Column({ nullable: true })
 	discountType: string;
 
-	@ApiProperty({ type: String, enum: DiscountTaxTypeEnum })
+	@ApiProperty({ type: () => String, enum: DiscountTaxTypeEnum })
 	@IsEnum(DiscountTaxTypeEnum)
 	@Column({ nullable: true })
 	taxType: string;
 
-	@ApiProperty({ type: String, enum: DiscountTaxTypeEnum })
+	@ApiProperty({ type: () => String, enum: DiscountTaxTypeEnum })
 	@IsEnum(DiscountTaxTypeEnum)
 	@Column({ nullable: true })
 	tax2Type: string;
 
-	@ApiPropertyOptional({ type: String, enum: InvoiceTypeEnum })
+	@ApiPropertyOptional({ type: () => String, enum: InvoiceTypeEnum })
 	@IsEnum(InvoiceTypeEnum)
 	@IsOptional()
 	@Column({ nullable: true })
 	invoiceType?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
 	sentTo?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
 	organizationContactId?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
 	internalNote?: string;
 
-	@ApiPropertyOptional({ type: Number })
+	@ApiPropertyOptional({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
 	@Column({ nullable: true, type: 'numeric' })
 	alreadyPaid?: number;
 
-	@ApiPropertyOptional({ type: Number })
+	@ApiPropertyOptional({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
 	@Column({ nullable: true, type: 'numeric' })
 	amountDue?: number;
 
-	@ApiPropertyOptional({ type: Boolean })
+	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	hasRemainingAmountInvoiced?: boolean;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
 	publicLink?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
 	token?: string;
 
-	@ApiPropertyOptional({ type: Boolean })
+	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
 	isArchived?: boolean;
 
-	@ApiPropertyOptional({ type: Organization })
+	@ApiPropertyOptional({ type: () => () => Organization })
 	@ManyToOne(() => Organization)
 	@JoinColumn()
 	fromOrganization?: Organization;
 
-	@ApiPropertyOptional({ type: OrganizationContact })
+	@ApiPropertyOptional({ type: () => () => OrganizationContact })
 	@ManyToOne(() => OrganizationContact)
 	@JoinColumn()
 	toContact?: OrganizationContact;
 
-	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
+	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
 	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.invoice, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	invoiceItems?: InvoiceItem[];
 
-	@ApiPropertyOptional({ type: Payment, isArray: true })
+	@ApiPropertyOptional({ type: () => Payment, isArray: true })
 	@OneToMany(() => Payment, (payment) => payment.invoice, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	payments?: Payment[];
 
-	@ApiPropertyOptional({ type: InvoiceEstimateHistory, isArray: true })
+	@ApiPropertyOptional({ type: () => InvoiceEstimateHistory, isArray: true })
 	@OneToMany(
 		() => InvoiceEstimateHistory,
 		(invoiceEstimateHistory) => invoiceEstimateHistory.invoice,

@@ -2,10 +2,11 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { IApprovalPolicy, IApprovalPolicyCreateInput } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class ApprovalPolicyService {
-	APPROVAL_POLICY_URL = '/api/approval-policy';
+	APPROVAL_POLICY_URL = `${API_PREFIX}/approval-policy`;
 
 	constructor(private http: HttpClient) {}
 

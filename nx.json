@@ -1,15 +1,26 @@
 {
 	"npmScope": "gauzy",
+	"affected": { "defaultBase": "master" },
 	"implicitDependencies": {
 		"angular.json": "*",
-		"package.json": "*",
+		"package.json": { "dependencies": "*", "devDependencies": "*" },
 		"tsconfig.json": "*",
 		"tslint.json": "*",
+		".eslintrc.json": "*",
 		"nx.json": "*"
+	},
+	"tasksRunnerOptions": {
+		"default": {
+			"runner": "@nrwl/workspace/tasks-runners/default",
+			"options": {
+				"cacheableOperations": ["build", "lint", "test", "e2e"]
+			}
+		}
 	},
 	"projects": {
 		"gauzy-e2e": {
-			"tags": []
+			"tags": [],
+			"implicitDependencies": ["gauzy"]
 		},
 		"gauzy": {
 			"tags": []

@@ -7,10 +7,11 @@ import {
 	IEventTypeUpdateInput
 } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class EventTypeService {
-	EVENT_TYPE_BASE_URI = '/api/event-type';
+	EVENT_TYPE_BASE_URI = `${API_PREFIX}/event-type`;
 
 	constructor(private http: HttpClient) {}
 

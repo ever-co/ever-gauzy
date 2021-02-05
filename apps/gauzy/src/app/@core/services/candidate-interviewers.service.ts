@@ -7,6 +7,7 @@ import {
 	ICandidateInterviewers,
 	ICandidateInterviewersDeleteInput
 } from '@gauzy/contracts';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class CandidateInterviewersService {
@@ -17,7 +18,7 @@ export class CandidateInterviewersService {
 	): Promise<ICandidateInterviewers> {
 		return this.http
 			.post<ICandidateInterviewers>(
-				'/api/candidate-interviewers',
+				`${API_PREFIX}/candidate-interviewers`,
 				createInput
 			)
 			.pipe(first())
@@ -29,7 +30,7 @@ export class CandidateInterviewersService {
 	): Promise<ICandidateInterviewers[]> {
 		return this.http
 			.post<ICandidateInterviewers[]>(
-				'/api/candidate-interviewers/createBulk',
+				`${API_PREFIX}/candidate-interviewers/createBulk`,
 				createInput
 			)
 			.pipe(first())
@@ -42,7 +43,7 @@ export class CandidateInterviewersService {
 		const data = JSON.stringify({ findInput });
 		return this.http
 			.get<{ items: ICandidateInterviewers[]; total: number }>(
-				`/api/candidate-interviewers`,
+				`${API_PREFIX}/candidate-interviewers`,
 				{
 					params: { data }
 				}
@@ -53,31 +54,36 @@ export class CandidateInterviewersService {
 
 	update(id: string, updateInput: any): Promise<any> {
 		return this.http
-			.put(`/api/candidate-interviewers/${id}`, updateInput)
+			.put(`${API_PREFIX}/candidate-interviewers/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/candidate-interviewers/${id}`)
+			.delete(`${API_PREFIX}/candidate-interviewers/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
+
 	findByInterviewId(interviewId: string): Promise<ICandidateInterviewers[]> {
 		return this.http
 			.get<ICandidateInterviewers[]>(
-				`/api/candidate-interviewers/getByInterviewId/${interviewId}`
+				`${API_PREFIX}/candidate-interviewers/getByInterviewId/${interviewId}`
 			)
 			.pipe(first())
 			.toPromise();
 	}
+
 	deleteBulkByInterviewId(id: string): Promise<any> {
 		const data = JSON.stringify({ id });
 		return this.http
-			.delete('/api/candidate-interviewers/deleteBulkByInterviewId', {
-				params: { data }
-			})
+			.delete(
+				`${API_PREFIX}/candidate-interviewers/deleteBulkByInterviewId`,
+				{
+					params: { data }
+				}
+			)
 			.pipe(first())
 			.toPromise();
 	}
@@ -88,9 +94,12 @@ export class CandidateInterviewersService {
 		const data = JSON.stringify({ deleteInput });
 
 		return this.http
-			.delete('/api/candidate-interviewers/deleteBulkByEmployeeId', {
-				params: { data }
-			})
+			.delete(
+				`${API_PREFIX}/candidate-interviewers/deleteBulkByEmployeeId`,
+				{
+					params: { data }
+				}
+			)
 			.pipe(first())
 			.toPromise();
 	}

@@ -2,7 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
 	BillingInvoicingPolicyEnum,
 	IProductVariant,
-	IOrganization
+	IOrganization,
+	IImageAsset
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
@@ -12,10 +13,13 @@ import { ProductVariantPriceService } from 'apps/gauzy/src/app/@core/services/pr
 import { ProductVariantSettingsService } from 'apps/gauzy/src/app/@core/services/product-variant-settings.service';
 import { Subject } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { takeUntil } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { Location } from '@angular/common';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
+import { NbDialogService } from '@nebular/theme';
+import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
 
 export interface IOptionCreateInput {
 	name: string;
@@ -40,7 +44,10 @@ export class InventoryVariantFormComponent
 	defaultCurrency: string;
 	form: FormGroup;
 	organization: IOrganization;
+	image: IImageAsset;
+	loading = true;
 	private ngDestroy$ = new Subject<void>();
+	private newImageUploadedEvent$ = new Subject<any>();
 
 	constructor(
 		translationService: TranslateService,
@@ -51,7 +58,9 @@ export class InventoryVariantFormComponent
 		private productVariantSettingsService: ProductVariantSettingsService,
 		private location: Location,
 		private route: ActivatedRoute,
-		private readonly store: Store
+		private readonly store: Store,
+		private inventoryStore: InventoryStore,
+		private dialogService: NbDialogService
 	) {
 		super(translationService);
 	}
@@ -69,13 +78,22 @@ export class InventoryVariantFormComponent
 		this.route.params
 			.pipe(takeUntil(this.ngDestroy$))
 			.subscribe(async (params) => {
-				this.itemVariant = params.itemVariantId
-					? await this.productVariantService.getProductVariant(
-							params.itemVariantId
-					  )
-					: null;
+				if (!params.itemVariantId) return;
 
-				this._initializeForm();
+				this.productVariantService
+					.getProductVariant(params.itemVariantId)
+					.then((result) => {
+						if (result) {
+							this.itemVariant = result;
+							this._initializeForm();
+						}
+
+						if (result && result.image) {
+							this.image = result.image;
+						}
+
+						this.loading = false;
+					});
 			});
 	}
 
@@ -86,7 +104,6 @@ export class InventoryVariantFormComponent
 
 	private _initializeForm() {
 		this.form = this.fb.group({
-			imageUrl: [this.itemVariant ? this.itemVariant.imageUrl : null],
 			internationalReference: [
 				this.itemVariant ? this.itemVariant.internalReference : '',
 				[Validators.required]
@@ -182,7 +199,7 @@ export class InventoryVariantFormComponent
 				taxes: formValue['taxes'],
 				enabled: formValue['enabled'],
 				notes: formValue['notes'],
-				imageUrl: formValue['imageUrl'],
+				image: this.image,
 				organizationId,
 				tenantId
 			},
@@ -235,7 +252,23 @@ export class InventoryVariantFormComponent
 		}
 	}
 
-	handleImageUploadError(error: any) {
-		this.toastrService.danger(error);
+	async onVariantImageSelect() {
+		const dialog = this.dialogService.open(SelectAssetComponent, {
+			context: {
+				newImageUploadedEvent: this.newImageUploadedEvent$,
+				galleryInput: this.inventoryStore.gallery,
+				settings: {
+					uploadImageEnabled: false,
+					deleteImageEnabled: false,
+					selectMultiple: false
+				}
+			}
+		});
+
+		let selectedImage = await dialog.onClose.pipe(first()).toPromise();
+
+		if (selectedImage) {
+			this.image = selectedImage;
+		}
 	}
 }

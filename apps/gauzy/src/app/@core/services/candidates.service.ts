@@ -9,6 +9,7 @@ import {
 } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class CandidatesService {
@@ -20,7 +21,7 @@ export class CandidatesService {
 	): Observable<{ items: ICandidate[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http.get<{ items: ICandidate[]; total: number }>(
-			`/api/candidate`,
+			`${API_PREFIX}/candidate`,
 			{
 				params: { data }
 			}
@@ -34,7 +35,7 @@ export class CandidatesService {
 	): Promise<ICandidate> {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
-			.get<ICandidate>(`/api/candidate/${id}`, {
+			.get<ICandidate>(`${API_PREFIX}/candidate/${id}`, {
 				params: { data }
 			})
 			.pipe(first())
@@ -43,39 +44,44 @@ export class CandidatesService {
 
 	delete(id: string): Promise<ICandidate> {
 		return this.http
-			.delete<ICandidate>(`/api/candidate/${id}`)
+			.delete<ICandidate>(`${API_PREFIX}/candidate/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
 
 	update(id: string, updateInput: ICandidateUpdateInput): Promise<any> {
 		return this.http
-			.put(`/api/candidate/${id}`, updateInput)
+			.put(`${API_PREFIX}/candidate/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	create(createInput: ICandidateCreateInput): Observable<ICandidate> {
-		return this.http.post<ICandidate>('/api/candidate/create', createInput);
+		return this.http.post<ICandidate>(
+			`${API_PREFIX}/candidate/create`,
+			createInput
+		);
 	}
 
 	createBulk(createInput: ICandidateCreateInput[]): Observable<ICandidate[]> {
 		return this.http.post<ICandidate[]>(
-			'/api/candidate/createBulk',
+			`${API_PREFIX}/candidate/createBulk`,
 			createInput
 		);
 	}
 
 	setCandidateAsArchived(id: string): Promise<ICandidate> {
 		return this.http
-			.put<ICandidate>(`/api/candidate/${id}`, { isArchived: true })
+			.put<ICandidate>(`${API_PREFIX}/candidate/${id}`, {
+				isArchived: true
+			})
 			.pipe(first())
 			.toPromise();
 	}
 
 	setCandidateAsHired(id: string): Promise<ICandidate> {
 		return this.http
-			.put<ICandidate>(`/api/candidate/${id}`, {
+			.put<ICandidate>(`${API_PREFIX}/candidate/${id}`, {
 				status: CandidateStatus.HIRED
 			})
 			.pipe(first())
@@ -84,7 +90,7 @@ export class CandidatesService {
 
 	setCandidateAsRejected(id: string): Promise<ICandidate> {
 		return this.http
-			.put<ICandidate>(`/api/candidate/${id}`, {
+			.put<ICandidate>(`${API_PREFIX}/candidate/${id}`, {
 				status: CandidateStatus.REJECTED
 			})
 			.pipe(first())
@@ -93,7 +99,7 @@ export class CandidatesService {
 
 	setCandidateAsApplied(id: string): Promise<ICandidate> {
 		return this.http
-			.put<ICandidate>(`/api/candidate/${id}`, {
+			.put<ICandidate>(`${API_PREFIX}/candidate/${id}`, {
 				status: CandidateStatus.APPLIED
 			})
 			.pipe(first())

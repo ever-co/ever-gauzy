@@ -3,7 +3,7 @@ export const OrganizationRecurringExpensesPage = {
 	expenseDropdownCss: '#positionInput',
 	dropdownOptionCss: 'div.ng-option',
 	valueInputCss: '#valueInput',
-	saveButtonCss: 'div.actions > button[status="success"]',
+	saveButtonCss: 'nb-card-footer.text-right > button[status="success"]',
 	settingsButtonCss: 'g[data-name="settings-2"]',
 	editButtonCss: 'div.block-settings g[data-name="edit"]',
 	deleteButtonCss: 'g[data-name="close"]',

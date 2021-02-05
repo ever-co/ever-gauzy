@@ -11,19 +11,19 @@ import {
 export class TimeOffPolicy
 	extends TenantOrganizationBaseEntity
 	implements ITimeOffPolicy {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column()
 	requiresApproval: boolean;
 
-	@ApiProperty({ type: Boolean })
+	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@Column()
 	paid: boolean;

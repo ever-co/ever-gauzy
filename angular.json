@@ -1,5 +1,5 @@
 {
-	"$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+	"$schema": "./apps/gauzy/node_modules/@angular/cli/lib/config/schema.json",
 	"cli": {
 		"warnings": {
 			"typescriptMismatch": false,
@@ -71,7 +71,7 @@
 									"with": "apps/gauzy/src/environments/environment.prod.ts"
 								}
 							],
-							"optimization": false,
+							"optimization": true,
 							"outputHashing": "all",
 							"serviceWorker": false,
 							"sourceMap": false,
@@ -79,9 +79,9 @@
 							"ngswConfigPath": "apps/gauzy/ngsw-config.prod.json",
 							"showCircularDependencies": false,
 							"aot": true,
-							"extractLicenses": false,
+							"extractLicenses": true,
 							"vendorChunk": true,
-							"buildOptimizer": false,
+							"buildOptimizer": true,
 							"statsJson": false,
 							"progress": true,
 							"budgets": [
@@ -92,7 +92,8 @@
 								},
 								{
 									"type": "anyComponentStyle",
-									"maximumWarning": "100kb"
+									"maximumWarning": "100kb",
+									"maximumError": "1mb"
 								}
 							]
 						}
@@ -156,9 +157,9 @@
 					}
 				},
 				"lint": {
-					"builder": "@angular-devkit/build-angular:tslint",
+					"builder": "@nrwl/linter:eslint",
 					"options": {
-						"tsConfig": "apps/gauzy-e2e/tsconfig.e2e.json"
+						"lintFilePatterns": ["apps/gauzy-e2e/**/*.{js,ts}"]
 					}
 				}
 			}
@@ -683,18 +684,33 @@
 		}
 	},
 	"schematics": {
+		"@nrwl/angular": {
+			"application": {
+				"linter": "eslint"
+			},
+			"library": {
+				"linter": "eslint"
+			},
+			"storybook-configuration": {
+				"linter": "eslint"
+			}
+		},
 		"@nrwl/angular:application": {
+			"style": "scss",
+			"linter": "eslint",
 			"unitTestRunner": "jest",
 			"e2eTestRunner": "cypress"
 		},
 		"@nrwl/angular:component": {
 			"prefix": "ngx",
-			"styleext": "scss"
+			"style": "scss"
 		},
 		"@nrwl/angular:directive": {
 			"prefix": "ngx"
 		},
 		"@nrwl/angular:library": {
+			"style": "scss",
+			"linter": "eslint",
 			"unitTestRunner": "jest"
 		}
 	},

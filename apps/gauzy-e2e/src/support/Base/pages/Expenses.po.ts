@@ -8,8 +8,8 @@ import {
 	clickButtonByIndex,
 	clickElementByText,
 	waitElementToHide,
-	verifyElementIsNotVisible,
-	verifyText
+	verifyText,
+	verifyElementNotExist
 } from '../utils/util';
 import { ExpensesPage } from '../pageobjects/ExpensesPageObject';
 
@@ -235,7 +235,7 @@ export const verifyExpenseExists = () => {
 };
 
 export const verifyElementIsDeleted = () => {
-	verifyElementIsNotVisible(ExpensesPage.notBillableBadgeCss);
+	verifyElementNotExist(ExpensesPage.notBillableBadgeCss);
 };
 
 export const verifyCategoryExists = (text) => {

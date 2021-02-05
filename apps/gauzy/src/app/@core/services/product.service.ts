@@ -9,10 +9,11 @@ import {
 	IProductTranslated,
 	IImageAsset
 } from '@gauzy/contracts';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class ProductService {
-	PRODUCTS_URL = '/api/products';
+	PRODUCTS_URL = `${API_PREFIX}/products`;
 
 	constructor(private http: HttpClient) {}
 
@@ -42,6 +43,21 @@ export class ProductService {
 		return this.http
 			.get<{ items: IProductTranslated[] }>(
 				`${this.PRODUCTS_URL}/local/${languageCode}`,
+				{ params: { data } }
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	getOneTranslated(
+		id: string,
+		relations?: string[],
+		languageCode?: string
+	): Promise<IProductTranslated> {
+		const data = JSON.stringify({ relations });
+		return this.http
+			.get<IProductTranslated>(
+				`${this.PRODUCTS_URL}/local/${languageCode}/${id}`,
 				{ params: { data } }
 			)
 			.pipe(first())
@@ -84,14 +100,14 @@ export class ProductService {
 			.toPromise();
 	}
 
-	addGalleryImage(
+	addGalleryImages(
 		id: string,
-		image: IImageAsset
+		images: IImageAsset[]
 	): Promise<IProductTranslatable> {
 		return this.http
 			.post<IProductTranslatable>(
-				`${this.PRODUCTS_URL}/add-image/${id}`,
-				image
+				`${this.PRODUCTS_URL}/add-images/${id}`,
+				images
 			)
 			.pipe(first())
 			.toPromise();

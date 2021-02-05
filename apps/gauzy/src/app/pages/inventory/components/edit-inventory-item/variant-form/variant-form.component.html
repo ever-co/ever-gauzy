@@ -35,14 +35,13 @@
 			class="mr-2 btn-variant"
 			nbButton
 			*ngFor="let productVariant of variantCreateInputs"
-			(click)="onEditProductVariant(productVariant)"
+			(click)="onVariantBtnClick(productVariant)"
 		>
 			<span
 				class="btn-variant-icon"
 				[ngClass]="{
 					'variant-stored-btn': productVariant.isStored
 				}"
-				(click)="onVariantBtnClick(productVariant)"
 			>
 				<nb-icon icon="edit-outline"></nb-icon
 			></span>

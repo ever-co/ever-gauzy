@@ -6,6 +6,7 @@ import {
 	IDailyActivity
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
+import { API_PREFIX } from '../../@core/constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -15,7 +16,7 @@ export class ActivityService {
 
 	getActivities(request: IGetActivitiesInput) {
 		return this.http
-			.get<IActivity[]>('/api/timesheet/activity', {
+			.get<IActivity[]>(`${API_PREFIX}/timesheet/activity`, {
 				params: toParams(request)
 			})
 			.toPromise();
@@ -23,7 +24,7 @@ export class ActivityService {
 
 	getDailyActivities(request: IGetActivitiesInput) {
 		return this.http
-			.get<IDailyActivity[]>('/api/timesheet/activity/daily', {
+			.get<IDailyActivity[]>(`${API_PREFIX}/timesheet/activity/daily`, {
 				params: toParams(request)
 			})
 			.toPromise();
@@ -31,7 +32,7 @@ export class ActivityService {
 
 	getDailyActivitiesReport(request: IGetActivitiesInput) {
 		return this.http
-			.get<IDailyActivity[]>('/api/timesheet/activity/report', {
+			.get<IDailyActivity[]>(`${API_PREFIX}/timesheet/activity/report`, {
 				params: toParams(request)
 			})
 			.toPromise();

@@ -33,21 +33,17 @@ import {
 export class TimeSlot
 	extends TenantOrganizationBaseEntity
 	implements ITimeSlot {
-	constructor(input?: Partial<ITimeSlot>) {
-		super(input);
-	}
-
-	@ApiProperty({ type: Employee })
+	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee)
 	@JoinColumn()
 	employee?: IEmployee;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((timeSlot: TimeSlot) => timeSlot.employee)
 	@Column()
 	employeeId: string;
 
-	@ApiProperty({ type: Screenshot })
+	@ApiProperty({ type: () => Screenshot })
 	@OneToMany(() => Screenshot, (screenshot) => screenshot.timeSlot, {
 		cascade: true,
 		onDelete: 'CASCADE'
@@ -55,7 +51,7 @@ export class TimeSlot
 	@JoinColumn()
 	screenshots?: IScreenshot[];
 
-	@ApiProperty({ type: Activity })
+	@ApiProperty({ type: () => Activity })
 	@OneToMany(() => Activity, (activities) => activities.timeSlot, {
 		cascade: true,
 		onDelete: 'CASCADE'
@@ -63,7 +59,7 @@ export class TimeSlot
 	@JoinColumn()
 	activities?: IActivity[];
 
-	@ApiProperty({ type: TimeSlotMinute })
+	@ApiProperty({ type: () => TimeSlotMinute })
 	@OneToMany(
 		() => TimeSlotMinute,
 		(timeSlotMinute) => timeSlotMinute.timeSlot,
@@ -78,27 +74,27 @@ export class TimeSlot
 	@ManyToMany(() => TimeLog, (timeLogs) => timeLogs.timeSlots)
 	timeLogs?: ITimeLog[];
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ default: 0 })
 	duration?: number;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ default: 0 })
 	keyboard?: number;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ default: 0 })
 	mouse?: number;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ default: 0 })
 	overall?: number;
 
-	@ApiProperty({ type: 'timestamptz' })
+	@ApiProperty({ type: () => 'timestamptz' })
 	@IsDateString()
 	@Column()
 	startedAt: Date;

@@ -5,15 +5,15 @@ import { BaseEntity } from '../core/entities/internal';
 
 @Entity('integration_type')
 export class IntegrationType extends BaseEntity implements IIntegrationType {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: false })
 	name: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: false })
 	groupName: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@Column({ nullable: false })
 	order: number;
 }

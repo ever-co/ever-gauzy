@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
-
 import {
 	IOrganizationExpenseCategoryCreateInput,
 	IOrganizationExpenseCategory,
 	IOrganizationExpenseCategoryFindInput
 } from '@gauzy/contracts';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -19,7 +19,7 @@ export class OrganizationExpenseCategoriesService {
 	): Promise<IOrganizationExpenseCategory> {
 		return this.http
 			.post<IOrganizationExpenseCategory>(
-				'/api/expense-categories',
+				`${API_PREFIX}/expense-categories`,
 				createInput
 			)
 			.pipe(first())
@@ -34,7 +34,7 @@ export class OrganizationExpenseCategoriesService {
 
 		return this.http
 			.get<{ items: IOrganizationExpenseCategory[]; total: number }>(
-				`/api/expense-categories`,
+				`${API_PREFIX}/expense-categories`,
 				{
 					params: { data }
 				}
@@ -45,14 +45,14 @@ export class OrganizationExpenseCategoriesService {
 
 	update(id: string, updateInput: any): Promise<any> {
 		return this.http
-			.put(`/api/expense-categories/${id}`, updateInput)
+			.put(`${API_PREFIX}/expense-categories/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/expense-categories/${id}`)
+			.delete(`${API_PREFIX}/expense-categories/${id}`)
 			.pipe(first())
 			.toPromise();
 	}

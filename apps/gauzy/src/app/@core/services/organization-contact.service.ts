@@ -8,6 +8,7 @@ import {
 } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 import { toParams } from '@gauzy/common-angular';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -20,7 +21,7 @@ export class OrganizationContactService {
 	): Promise<IOrganizationContact> {
 		return this.http
 			.post<IOrganizationContact>(
-				'/api/organization-contact',
+				`${API_PREFIX}/organization-contact`,
 				createInput
 			)
 			.pipe(first())
@@ -34,7 +35,7 @@ export class OrganizationContactService {
 		const data = JSON.stringify({ findInput });
 		return this.http
 			.get<IOrganizationContact[]>(
-				`/api/organization-contact/employee/${id}`,
+				`${API_PREFIX}/organization-contact/employee/${id}`,
 				{
 					params: toParams({ data })
 				}
@@ -45,9 +46,12 @@ export class OrganizationContactService {
 
 	getById(id: string, tenantId: string) {
 		return this.http
-			.get<IOrganizationContact>(`/api/organization-contact/${id}`, {
-				params: toParams({ tenantId })
-			})
+			.get<IOrganizationContact>(
+				`${API_PREFIX}/organization-contact/${id}`,
+				{
+					params: toParams({ tenantId })
+				}
+			)
 			.pipe(first())
 			.toPromise();
 	}
@@ -60,7 +64,7 @@ export class OrganizationContactService {
 
 		return this.http
 			.get<{ items: IOrganizationContact[]; total: number }>(
-				`/api/organization-contact`,
+				`${API_PREFIX}/organization-contact`,
 				{ params: toParams({ data }) }
 			)
 			.pipe(first())
@@ -73,21 +77,21 @@ export class OrganizationContactService {
 	): Promise<IOrganizationContactFindInput> {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
-			.get(`/api/organization-contact`, { params: { data } })
+			.get(`${API_PREFIX}/organization-contact`, { params: { data } })
 			.pipe(first())
 			.toPromise();
 	}
 
 	updateByEmployee(updateInput: IEditEntityByMemberInput): Promise<any> {
 		return this.http
-			.put(`/api/organization-contact/employee`, updateInput)
+			.put(`${API_PREFIX}/organization-contact/employee`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/organization-contact/${id}`)
+			.delete(`${API_PREFIX}/organization-contact/${id}`)
 			.pipe(first())
 			.toPromise();
 	}

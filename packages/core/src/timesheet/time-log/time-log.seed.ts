@@ -15,9 +15,11 @@ import { createRandomScreenshot } from '../screenshot/screenshot.seed';
 import { createTimeSlots } from '../time-slot/time-slot.seed';
 import { Screenshot } from '../screenshot.entity';
 import { Tenant } from '../../tenant/tenant.entity';
+import { IPluginConfig } from '@gauzy/common';
 
 export const createRandomTimeLogs = async (
 	connection: Connection,
+	config: IPluginConfig,
 	tenant: Tenant,
 	timeSheets: Timesheet[],
 	defaultProjects: IOrganizationProject[],
@@ -143,7 +145,7 @@ export const createRandomTimeLogs = async (
 				for await (const timeSlot of filterTimeSlots) {
 					for (let i = 0; i < noOfTimeLogsPerTimeSheet; i++) {
 						screenshotsPromise.push(
-							createRandomScreenshot(timeSlot, tenant)
+							createRandomScreenshot(timeSlot, tenant, config)
 						);
 					}
 				}

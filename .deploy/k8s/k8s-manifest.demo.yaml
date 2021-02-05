@@ -5,9 +5,9 @@ metadata:
     name: gauzy-demo-lb
     annotations:
         service.beta.kubernetes.io/do-loadbalancer-name: 'demo.gauzy.co'
-        service.beta.kubernetes.io/do-loadbalancer-protocol: 'http' # http2
-        # service.beta.kubernetes.io/do-loadbalancer-http2-ports: "443"
-        # service.beta.kubernetes.io/do-loadbalancer-certificate-id: "gauzy.co"
+        service.beta.kubernetes.io/do-loadbalancer-protocol: 'http2'
+        service.beta.kubernetes.io/do-loadbalancer-http2-ports: '443'
+        service.beta.kubernetes.io/do-loadbalancer-certificate-id: '3e7e0327-dd2d-4ffc-9b98-5c79eb4592d5'
         service.beta.kubernetes.io/do-loadbalancer-size-slug: 'lb-small'
         service.beta.kubernetes.io/do-loadbalancer-hostname: 'demo.gauzy.co'
 spec:
@@ -17,7 +17,7 @@ spec:
     ports:
         - name: http
           protocol: TCP
-          port: 80 # 443
+          port: 80
           targetPort: 4200
 ---
 kind: Service
@@ -26,8 +26,9 @@ metadata:
     name: gauzy-demo-api-lb
     annotations:
         service.beta.kubernetes.io/do-loadbalancer-name: 'apidemo.gauzy.co'
-        service.beta.kubernetes.io/do-loadbalancer-protocol: 'http' # http2
-        # service.beta.kubernetes.io/do-loadbalancer-http2-ports: "443,80"
+        service.beta.kubernetes.io/do-loadbalancer-protocol: 'http2'
+        service.beta.kubernetes.io/do-loadbalancer-http2-ports: '443'
+        service.beta.kubernetes.io/do-loadbalancer-certificate-id: '3e7e0327-dd2d-4ffc-9b98-5c79eb4592d5'
         service.beta.kubernetes.io/do-loadbalancer-size-slug: 'lb-small'
         service.beta.kubernetes.io/do-loadbalancer-hostname: 'apidemo.gauzy.co'
 spec:
@@ -58,6 +59,8 @@ spec:
                 - name: gauzy-demo-api
                   image: ghcr.io/ever-co/gauzy-api:latest
                   env:
+                      - name: HOST
+                        value: 0.0.0.0
                       - name: DEMO
                         value: 'true'
                   ports:
@@ -85,9 +88,9 @@ spec:
                       - name: DEMO
                         value: 'true'
                       - name: API_BASE_URL
-                        value: 'http://apidemo.gauzy.co'
+                        value: 'https://apidemo.gauzy.co'
                       - name: CLIENT_BASE_URL
-                        value: 'http://demo.gauzy.co'
+                        value: 'https://demo.gauzy.co'
                       - name: SENTRY_DSN
                         value: 'https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292'
                       - name: CHATWOOT_SDK_TOKEN

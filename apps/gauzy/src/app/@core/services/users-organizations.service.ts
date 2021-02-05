@@ -7,6 +7,7 @@ import {
 } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class UsersOrganizationsService {
@@ -20,7 +21,7 @@ export class UsersOrganizationsService {
 
 		return this.http
 			.get<{ items: IUserOrganization[]; total: number }>(
-				`/api/user-organization`,
+				`${API_PREFIX}/user-organization`,
 				{
 					params: { data }
 				}
@@ -31,7 +32,7 @@ export class UsersOrganizationsService {
 
 	setUserAsInactive(id: string): Promise<IUserOrganization> {
 		return this.http
-			.put<IUserOrganization>(`/api/user-organization/${id}`, {
+			.put<IUserOrganization>(`${API_PREFIX}/user-organization/${id}`, {
 				isActive: false
 			})
 			.pipe(first())
@@ -40,14 +41,14 @@ export class UsersOrganizationsService {
 
 	getUserOrganizationCount(id: string): Promise<number> {
 		return this.http
-			.get<number>(`/api/user-organization/${id}`)
+			.get<number>(`${API_PREFIX}/user-organization/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
 
 	removeUserFromOrg(id: string): Promise<IUserOrganization> {
 		return this.http
-			.delete<IUserOrganization>(`/api/user-organization/${id}`)
+			.delete<IUserOrganization>(`${API_PREFIX}/user-organization/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
@@ -56,7 +57,7 @@ export class UsersOrganizationsService {
 		createInput: IUserOrganizationCreateInput
 	): Observable<IUserOrganization> {
 		return this.http.post<IUserOrganization>(
-			'/api/user-organization',
+			`${API_PREFIX}/user-organization`,
 			createInput
 		);
 	}

@@ -11,11 +11,11 @@ import {
 
 @Entity('goal')
 export class Goal extends TenantOrganizationBaseEntity implements IGoal {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	@IsOptional()
 	description?: string;
@@ -28,7 +28,7 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@JoinColumn()
 	ownerEmployee?: Employee;
 
-	@ApiProperty({ type: Employee })
+	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, {
 		nullable: true
 	})
@@ -36,20 +36,20 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@IsOptional()
 	lead?: Employee;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column()
 	deadline: string;
 
-	@ApiProperty({ type: String, enum: GoalLevelEnum })
+	@ApiProperty({ type: () => String, enum: GoalLevelEnum })
 	@IsEnum(GoalLevelEnum)
 	@Column()
 	level: string;
 
-	@ApiProperty({ type: Number })
+	@ApiProperty({ type: () => Number })
 	@Column()
 	progress: number;
 
-	@ApiProperty({ type: KeyResult })
+	@ApiProperty({ type: () => KeyResult })
 	@OneToMany(() => KeyResult, (keyResult) => keyResult.goal)
 	@IsOptional()
 	keyResults?: IKeyResult[];
@@ -57,7 +57,7 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@ManyToOne(() => KeyResult, (keyResult) => keyResult.id)
 	alignedKeyResult?: IKeyResult;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Column({ nullable: true })
 	alignedKeyResultId: string;
 }

@@ -74,8 +74,6 @@ describe('Organization help center test', () => {
 		organizationHelpCenterPage.deleteButtonVisible();
 		organizationHelpCenterPage.clickDeleteButton();
 		organizationHelpCenterPage.waitMessageToHide();
-		organizationHelpCenterPage.verifyBaseIsDeleted(
-			OrganizationHelpCenterPageData.defaultBaseName
-		);
+		organizationHelpCenterPage.verifyBaseIsDeleted();
 	});
 });

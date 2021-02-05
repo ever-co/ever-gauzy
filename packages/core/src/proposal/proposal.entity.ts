@@ -27,53 +27,53 @@ import {
 export class Proposal
 	extends TenantOrganizationBaseEntity
 	implements IProposal {
-	@ApiProperty({ type: Tag })
+	@ApiProperty({ type: () => Tag })
 	@ManyToMany(() => Tag, (tag) => tag.proposal)
 	@JoinTable({ name: 'tag_proposal' })
 	tags: ITag[];
 
-	@ApiProperty({ type: Employee })
+	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	employee: IEmployee;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((proposal: Proposal) => proposal.employee)
 	@IsString()
 	@Column({ nullable: true })
 	readonly employeeId?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Index()
 	@IsString()
 	@Column({ nullable: true })
 	jobPostUrl: string;
 
-	@ApiPropertyOptional({ type: Date })
+	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
 	valueDate?: Date;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column()
 	jobPostContent?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column()
 	proposalContent?: string;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column()
 	status?: string;
 
-	@ApiPropertyOptional({ type: OrganizationContact })
+	@ApiPropertyOptional({ type: () => OrganizationContact })
 	@ManyToOne(
 		(type) => OrganizationContact,
 		(organizationContact) => organizationContact.proposals,
@@ -85,7 +85,7 @@ export class Proposal
 	@JoinColumn()
 	organizationContact?: IOrganizationContact;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@RelationId((contact: Proposal) => contact.organizationContact)
 	@Column({ nullable: true })
 	organizationContactId?: string;

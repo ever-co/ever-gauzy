@@ -10,12 +10,13 @@ import {
 	IRecurringExpenseOrderFields
 } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class EmployeeRecurringExpenseService {
-	private readonly API_URL = '/api/employee-recurring-expense';
+	private readonly API_URL = `${API_PREFIX}/employee-recurring-expense`;
 
 	constructor(private http: HttpClient) {}
 

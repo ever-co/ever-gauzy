@@ -2,10 +2,11 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { IEquipmentSharingPolicy } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class EquipmentSharingPolicyService {
-	EQUIPMENT_SHARING_POLICY_URL = '/api/equipment-sharing-policy';
+	EQUIPMENT_SHARING_POLICY_URL = `${API_PREFIX}/equipment-sharing-policy`;
 
 	constructor(private http: HttpClient) {}
 

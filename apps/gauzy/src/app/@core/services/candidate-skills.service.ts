@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import { ISkillCreateInput, ISkill, ISkillFindInput } from '@gauzy/contracts';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -11,7 +12,7 @@ export class CandidateSkillsService {
 
 	create(createInput: ISkillCreateInput): Promise<ISkill> {
 		return this.http
-			.post<ISkill>('/api/candidate-skills', createInput)
+			.post<ISkill>(`${API_PREFIX}/candidate-skills`, createInput)
 			.pipe(first())
 			.toPromise();
 	}
@@ -21,23 +22,26 @@ export class CandidateSkillsService {
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ findInput });
 		return this.http
-			.get<{ items: ISkill[]; total: number }>(`/api/candidate-skills`, {
-				params: { data }
-			})
+			.get<{ items: ISkill[]; total: number }>(
+				`${API_PREFIX}/candidate-skills`,
+				{
+					params: { data }
+				}
+			)
 			.pipe(first())
 			.toPromise();
 	}
 
 	update(id: string, updateInput: any): Promise<any> {
 		return this.http
-			.put(`/api/candidate-skills/${id}`, updateInput)
+			.put(`${API_PREFIX}/candidate-skills/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/candidate-skills/${id}`)
+			.delete(`${API_PREFIX}/candidate-skills/${id}`)
 			.pipe(first())
 			.toPromise();
 	}

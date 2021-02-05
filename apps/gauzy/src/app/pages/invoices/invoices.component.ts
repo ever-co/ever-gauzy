@@ -52,8 +52,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
 import { ToastrService } from '../../@core/services/toastr.service';
-import { saveAs } from 'file-saver';
 import { PublicLinkComponent } from './public-link/public-link.component';
+import { generateCsv } from '../../@shared/invoice/generate-csv';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -594,9 +594,13 @@ export class InvoicesComponent
 		let fileName;
 
 		if (this.selectedInvoice.isEstimate) {
-			fileName = this.getTranslation('INVOICES_PAGE.ESTIMATE');
+			fileName = `${this.getTranslation('INVOICES_PAGE.ESTIMATE')}-${
+				this.selectedInvoice.invoiceNumber
+			}`;
 		} else {
-			fileName = this.getTranslation('INVOICES_PAGE.INVOICE');
+			fileName = `${this.getTranslation('INVOICES_PAGE.INVOICE')}-${
+				this.selectedInvoice.invoiceNumber
+			}`;
 		}
 
 		const data = [
@@ -615,16 +619,6 @@ export class InvoicesComponent
 			}
 		];
 
-		const replacer = (key, value) => (value === null ? 'N/A' : value);
-
-		const header = Object.keys(data[0]);
-
-		const csv = data.map((row) =>
-			header
-				.map((fieldName) => JSON.stringify(row[fieldName], replacer))
-				.join(',')
-		);
-
 		const headers = [
 			this.selectedInvoice.isEstimate
 				? this.getTranslation('INVOICES_PAGE.ESTIMATE_NUMBER')
@@ -641,15 +635,7 @@ export class InvoicesComponent
 			this.getTranslation('INVOICES_PAGE.CONTACT')
 		].join(',');
 
-		csv.unshift(headers);
-
-		var BOM = '\uFEFF';
-
-		const csvArray = BOM + csv.join('\r\n');
-
-		var blob = new Blob([csvArray], { type: 'text/csv;charset=utf-8' });
-
-		saveAs(blob, `${fileName}-${this.selectedInvoice.invoiceNumber}.csv`);
+		generateCsv(data, headers, fileName);
 	}
 
 	async generatePublicLink(selectedItem) {
@@ -716,6 +702,7 @@ export class InvoicesComponent
 						});
 						this.invoices = invoiceVM;
 						this.smartTableSource.load(invoiceVM);
+						this.closeActionsPopover();
 						this.loading = false;
 					} catch (error) {
 						this.toastrService.danger(
@@ -1047,6 +1034,14 @@ export class InvoicesComponent
 		} else {
 			tableSettingsPopup.show();
 		}
+
+		if (actionsPopup.isShown) {
+			actionsPopup.hide();
+		}
+	}
+
+	closeActionsPopover() {
+		const actionsPopup = this.popups.first;
 
 		if (actionsPopup.isShown) {
 			actionsPopup.hide();

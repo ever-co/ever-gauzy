@@ -1,7 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { InvoicesService } from '../../@core/services/invoices.service';
-import { IEstimateEmail, EstimateStatusTypesEnum } from '@gauzy/contracts';
+import {
+	IEstimateEmail,
+	EstimateStatusTypesEnum,
+	InvoiceStatusTypesEnum
+} from '@gauzy/contracts';
 import { EstimateEmailService } from '../../@core/services/estimate-email.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -42,7 +46,11 @@ export class EstimateEmailComponent
 				);
 				this.errorMessage = '';
 				if (estimateEmail) {
-					await this.updateEstimate(params['id'], this.isAccepted);
+					await this.updateEstimate(
+						params['id'],
+						this.isAccepted,
+						estimateEmail.convertAcceptedEstimates
+					);
 				}
 			} catch (error) {
 				this.errorMessage = this.getTranslation(
@@ -53,11 +61,24 @@ export class EstimateEmailComponent
 		});
 	}
 
-	async updateEstimate(id: string, isAccepted: boolean) {
+	async updateEstimate(
+		id: string,
+		isAccepted: boolean,
+		convertAcceptedEstimates: boolean
+	) {
+		let status;
+		if (isAccepted) {
+			if (convertAcceptedEstimates) {
+				status = InvoiceStatusTypesEnum.DRAFT;
+			} else {
+				status = EstimateStatusTypesEnum.ACCEPTED;
+			}
+		} else {
+			status = EstimateStatusTypesEnum.REJECTED;
+		}
 		await this.invoicesService.updateWithoutAuth(id, {
-			status: isAccepted
-				? EstimateStatusTypesEnum.ACCEPTED
-				: EstimateStatusTypesEnum.REJECTED
+			status: status,
+			isEstimate: convertAcceptedEstimates ? false : true
 		});
 	}
 

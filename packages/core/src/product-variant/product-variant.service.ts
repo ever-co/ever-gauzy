@@ -16,10 +16,16 @@ export class ProductVariantService extends CrudService<ProductVariant> {
 	async findAllProductVariants(): Promise<IPagination<ProductVariant>> {
 		const total = await this.productVariantRepository.count();
 		const items = await this.productVariantRepository.find({
-			relations: ['settings', 'price']
+			relations: ['settings', 'price', 'image']
 		});
 
 		return { items, total };
+	}
+
+	async findOne(id: string): Promise<ProductVariant> {
+		return this.productVariantRepository.findOne(id, {
+			relations: ['settings', 'price', 'image']
+		});
 	}
 
 	async createBulk(

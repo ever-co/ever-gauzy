@@ -51,7 +51,7 @@ export class OrganizationContact
 	})
 	tags: ITag[];
 
-	@ApiProperty({ type: Contact })
+	@ApiProperty({ type: () => Contact })
 	@ManyToOne(() => Contact, (contact) => contact.organization_contacts, {
 		cascade: true,
 		onDelete: 'SET NULL'
@@ -59,45 +59,45 @@ export class OrganizationContact
 	@JoinColumn()
 	contact: IContact;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId(
 		(organizationContact: OrganizationContact) =>
 			organizationContact.contact
 	)
 	readonly contactId?: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsEmail()
 	@IsNotEmpty()
 	@Column({ nullable: true })
 	primaryEmail: string;
 
-	@ApiPropertyOptional({ type: String, isArray: true })
+	@ApiPropertyOptional({ type: () => String, isArray: true })
 	emailAddresses?: string[];
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
 	primaryPhone: string;
 
-	@ApiPropertyOptional({ type: String, isArray: true })
+	@ApiPropertyOptional({ type: () => String, isArray: true })
 	phones?: string[];
 
-	@ApiProperty({ type: String, enum: ContactOrganizationInviteStatus })
+	@ApiProperty({ type: () => String, enum: ContactOrganizationInviteStatus })
 	@IsEnum(ContactOrganizationInviteStatus)
 	@IsOptional()
 	@Column({ nullable: true })
 	inviteStatus?: string;
 
-	@ApiPropertyOptional({ type: OrganizationProject, isArray: true })
+	@ApiPropertyOptional({ type: () => OrganizationProject, isArray: true })
 	@OneToMany(
 		() => OrganizationProject,
 		(project) => project.organizationContact
@@ -105,12 +105,12 @@ export class OrganizationContact
 	@JoinColumn()
 	projects?: IOrganizationProject[];
 
-	@ApiPropertyOptional({ type: Invoice, isArray: true })
+	@ApiPropertyOptional({ type: () => Invoice, isArray: true })
 	@OneToMany((type) => Invoice, (invoices) => invoices.toContact)
 	@JoinColumn()
 	invoices?: IInvoice[];
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
@@ -122,36 +122,36 @@ export class OrganizationContact
 	})
 	members?: IEmployee[];
 
-	@ApiProperty({ type: String, enum: ContactType })
+	@ApiProperty({ type: () => String, enum: ContactType })
 	@IsEnum(ContactType)
 	@IsOptional()
 	@Column({ nullable: false })
 	contactType: string;
 
-	@ApiPropertyOptional({ type: String, maxLength: 500 })
+	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	imageUrl?: string;
 
-	@ApiPropertyOptional({ type: Payment, isArray: true })
+	@ApiPropertyOptional({ type: () => Payment, isArray: true })
 	@OneToMany((type) => Payment, (payment) => payment.contact, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	payments?: IPayment[];
 
-	@ApiPropertyOptional({ type: Proposal, isArray: true })
+	@ApiPropertyOptional({ type: () => Proposal, isArray: true })
 	@OneToMany(() => Proposal, (proposal) => proposal.organizationContact)
 	@JoinColumn()
 	proposals?: IOrganizationProject[];
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
 	budget?: number;
 
-	@ApiPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
 	@Column({
@@ -161,7 +161,7 @@ export class OrganizationContact
 	})
 	budgetType?: OrganizationContactBudgetTypeEnum;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsOptional()
 	@Column({ nullable: true })
 	createdBy?: string;

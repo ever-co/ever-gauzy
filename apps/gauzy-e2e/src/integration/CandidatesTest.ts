@@ -111,6 +111,6 @@ describe('Invite candidate test', () => {
 		inviteCandidatePage.confirmActionButtonVisible();
 		inviteCandidatePage.clickConfirmActionButton();
 		inviteCandidatePage.waitMessageToHide();
-		inviteCandidatePage.verifyElementIsDeleted(`${firstName} ${lastName}`);
+		inviteCandidatePage.verifyElementIsDeleted();
 	});
 });

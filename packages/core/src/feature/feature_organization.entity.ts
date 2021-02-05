@@ -10,12 +10,12 @@ import {
 export class FeatureOrganization
 	extends TenantOrganizationBaseEntity
 	implements IFeatureOrganization {
-	@ApiProperty({ type: Feature })
+	@ApiProperty({ type: () => Feature })
 	@ManyToOne(() => Feature)
 	@JoinColumn()
 	feature: IFeature;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((feature: FeatureOrganization) => feature.feature)
 	@Column()
 	readonly featureId: string;

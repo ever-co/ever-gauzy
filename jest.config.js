@@ -7,5 +7,10 @@ module.exports = {
 	moduleFileExtensions: ['ts', 'js', 'html'],
 	collectCoverage: true,
 	coverageReporters: ['html'],
-	projects: '<rootDir>/libs/desktop-ui-lib'
+	projects: [
+		'<rootDir>/apps/gauzy',
+		'<rootDir>/apps/api',
+		'<rootDir>/apps/desktop',
+		'<rootDir>/libs/desktop-ui-lib'
+	]
 };

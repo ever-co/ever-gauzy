@@ -44,6 +44,7 @@ export interface IEnvironment {
 	port: number | string;
 	host: string;
 	baseUrl: string;
+	clientBaseUrl: string;
 
 	production: boolean;
 	envName: string;

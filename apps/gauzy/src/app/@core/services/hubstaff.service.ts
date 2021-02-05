@@ -18,6 +18,7 @@ import { switchMap, tap } from 'rxjs/operators';
 import { environment } from 'apps/gauzy/src/environments/environment';
 import { cloneDeep } from 'lodash';
 import * as moment from 'moment';
+import { API_PREFIX } from '../constants/app.constants';
 
 const TODAY = new Date();
 
@@ -64,9 +65,12 @@ export class HubstaffService {
 			relations: ['integration']
 		});
 		return this._http
-			.get<any>(`/api/integration-entity-setting/${integrationId}`, {
-				params: { data }
-			})
+			.get<any>(
+				`${API_PREFIX}/integration-entity-setting/${integrationId}`,
+				{
+					params: { data }
+				}
+			)
 			.pipe(tap(({ items }) => this._setSettingsValue(items)));
 	}
 
@@ -92,7 +96,7 @@ export class HubstaffService {
 
 		return this._http
 			.put<IIntegrationEntitySetting[]>(
-				`/api/integration-entity-setting/${integrationId}`,
+				`${API_PREFIX}/integration-entity-setting/${integrationId}`,
 				settingsData.currentValue
 			)
 			.pipe(
@@ -104,7 +108,7 @@ export class HubstaffService {
 		this.integrationId = integrationId;
 		return this._http
 			.get<IIntegrationSetting>(
-				`/api/integrations/hubstaff/get-token/${integrationId}`
+				`${API_PREFIX}/integrations/hubstaff/get-token/${integrationId}`
 			)
 			.pipe(
 				tap(({ settingsValue }) => (this.ACCESS_TOKEN = settingsValue))
@@ -114,7 +118,7 @@ export class HubstaffService {
 	refreshToken() {
 		return this._http
 			.get<any>(
-				`/api/integrations/hubstaff/refresh-token/${this.integrationId}`
+				`${API_PREFIX}/integrations/hubstaff/refresh-token/${this.integrationId}`
 			)
 			.pipe(
 				tap(({ access_token }) => (this.ACCESS_TOKEN = access_token))
@@ -144,14 +148,14 @@ export class HubstaffService {
 		};
 
 		return this._http.post<IIntegrationTenant>(
-			'/api/integrations/hubstaff/add-integration',
+			`${API_PREFIX}/integrations/hubstaff/add-integration`,
 			{ ...getAccessTokensDto }
 		);
 	}
 
 	getOrganizations(integrationId): Observable<IHubstaffOrganization[]> {
 		return this._http.post<IHubstaffOrganization[]>(
-			`/api/integrations/hubstaff/organizations/${integrationId}`,
+			`${API_PREFIX}/integrations/hubstaff/organizations/${integrationId}`,
 			{
 				token: this.ACCESS_TOKEN
 			}
@@ -160,14 +164,14 @@ export class HubstaffService {
 
 	getProjects(organizationId, integrationId): Observable<IHubstaffProject[]> {
 		return this._http.post<IHubstaffProject[]>(
-			`/api/integrations/hubstaff/projects/${organizationId}`,
+			`${API_PREFIX}/integrations/hubstaff/projects/${organizationId}`,
 			{ token: this.ACCESS_TOKEN, integrationId }
 		);
 	}
 
 	syncProjects(projects, integrationId, organizationId) {
 		return this._http.post(
-			`/api/integrations/hubstaff/sync-projects/${integrationId}`,
+			`${API_PREFIX}/integrations/hubstaff/sync-projects/${integrationId}`,
 			{
 				projects: this._mapProjectPayload(projects),
 				organizationId
@@ -202,7 +206,7 @@ export class HubstaffService {
 
 		if (organizationSetting.sync) {
 			const organizationsMap$ = this._http.post<IIntegrationMap[]>(
-				`/api/integrations/hubstaff/sync-organizations/${integrationId}`,
+				`${API_PREFIX}/integrations/hubstaff/sync-organizations/${integrationId}`,
 				{
 					organizations: hubstaffOrganizations.map(
 						({ name, id }) => ({
@@ -246,7 +250,7 @@ export class HubstaffService {
 		return forkJoin(
 			organizations.map((organization) =>
 				this._http.post(
-					`/api/integrations/hubstaff/auto-sync/${integrationId}`,
+					`${API_PREFIX}/integrations/hubstaff/auto-sync/${integrationId}`,
 					{
 						entitiesToSync,
 						dateRange,
@@ -280,7 +284,7 @@ export class HubstaffService {
 	 */
 	checkRemeberState(organizationId: string) {
 		return this._http.get<any>(
-			`/api/integration/check/state/${IntegrationEnum.HUBSTAFF}/${organizationId}`
+			`${API_PREFIX}/integration/check/state/${IntegrationEnum.HUBSTAFF}/${organizationId}`
 		);
 	}
 }

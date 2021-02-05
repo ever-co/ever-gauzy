@@ -6,13 +6,14 @@ import * as path from 'path';
 import { copyFileSync, mkdirSync } from 'fs';
 import * as rimraf from 'rimraf';
 import * as chalk from 'chalk';
-import { getConfig, environment as env, ConfigService } from '@gauzy/config';
-const config = getConfig();
+import { environment as env } from '@gauzy/config';
+import { IPluginConfig } from '@gauzy/common';
 
 export const createDefaultReport = async (
-	connection: Connection
+	connection: Connection,
+	config: IPluginConfig
 ): Promise<Report[]> => {
-	await cleanReport(connection);
+	await cleanReport(connection, config);
 
 	const defaultCategories: ReportCategory[] = [
 		new ReportCategory({
@@ -41,7 +42,7 @@ export const createDefaultReport = async (
 		new Report({
 			name: 'Time & Activity',
 			slug: 'time-activity',
-			image: copyImage('time-activity.png'),
+			image: copyImage('time-activity.png', config),
 			category: categoryByName['Time Tracking'],
 			showInMenu: true,
 			iconClass: 'clock-outline',
@@ -51,7 +52,7 @@ export const createDefaultReport = async (
 		new Report({
 			name: 'Weekly',
 			slug: 'weekly',
-			image: copyImage('weekly.png'),
+			image: copyImage('weekly.png', config),
 			category: categoryByName['Time Tracking'],
 			iconClass: 'calendar-outline',
 			showInMenu: true,
@@ -61,7 +62,7 @@ export const createDefaultReport = async (
 		new Report({
 			name: 'Apps & URLs',
 			slug: 'apps-urls',
-			image: copyImage('apps-urls.png'),
+			image: copyImage('apps-urls.png', config),
 			category: categoryByName['Time Tracking'],
 			description:
 				"See team members' apps used and URLs visited while working"
@@ -69,7 +70,7 @@ export const createDefaultReport = async (
 		new Report({
 			name: 'Manual time edits',
 			slug: 'manual-time-edits',
-			image: copyImage('manual-time-edits.png'),
+			image: copyImage('manual-time-edits.png', config),
 			category: categoryByName['Time Tracking'],
 			iconClass: 'browser-outline',
 			description:
@@ -78,7 +79,7 @@ export const createDefaultReport = async (
 		new Report({
 			name: 'Expense',
 			slug: 'expense',
-			image: copyImage('expense.png'),
+			image: copyImage('expense.png', config),
 			category: categoryByName['Time Tracking'],
 			iconClass: 'credit-card-outline',
 			description:
@@ -87,7 +88,7 @@ export const createDefaultReport = async (
 		new Report({
 			name: 'Amounts owed',
 			slug: 'amounts-owed',
-			image: copyImage('amounts-owed.png'),
+			image: copyImage('amounts-owed.png', config),
 			category: categoryByName['Payments'],
 			iconClass: 'credit-card-outline',
 			description: 'See how much team members are currently owed'
@@ -95,7 +96,7 @@ export const createDefaultReport = async (
 		new Report({
 			name: 'Payments',
 			slug: 'payments',
-			image: copyImage('payments.png'),
+			image: copyImage('payments.png', config),
 			category: categoryByName['Payments'],
 			iconClass: 'credit-card-outline',
 			description:
@@ -104,14 +105,14 @@ export const createDefaultReport = async (
 		new Report({
 			name: 'Weekly limits',
 			slug: 'weekly-limits',
-			image: copyImage('blank.png'),
+			image: copyImage('blank.png', config),
 			category: categoryByName['Time Off'],
 			description: "See team members' weekly limits usage"
 		}),
 		new Report({
 			name: 'Daily limits',
 			slug: 'daily-limits',
-			image: copyImage('blank.png'),
+			image: copyImage('blank.png', config),
 			category: categoryByName['Time Off'],
 			iconClass: 'clock-outline',
 			description: "See team members' daily limits usage"
@@ -119,7 +120,7 @@ export const createDefaultReport = async (
 		new Report({
 			name: 'Project budgets',
 			slug: 'project-budgets',
-			image: copyImage('blank.png'),
+			image: copyImage('blank.png', config),
 			category: categoryByName['Invoicing'],
 			iconClass: 'credit-card-outline',
 			description:
@@ -128,7 +129,7 @@ export const createDefaultReport = async (
 		new Report({
 			name: 'Client budgets',
 			slug: 'client-budgets',
-			image: copyImage('blank.png'),
+			image: copyImage('blank.png', config),
 			category: categoryByName['Invoicing'],
 			iconClass: 'credit-card-outline',
 			description: "See how much of your clients' budgets have been spent"
@@ -138,7 +139,7 @@ export const createDefaultReport = async (
 	return await connection.manager.save(reports);
 };
 
-async function cleanReport(connection) {
+async function cleanReport(connection, config) {
 	if (config.dbConnectionOptions.type === 'sqlite') {
 		await connection.query('DELETE FROM report_category');
 		await connection.query('DELETE FROM report');
@@ -155,10 +156,9 @@ async function cleanReport(connection) {
 
 	await new Promise((resolve, reject) => {
 		const destDir = 'reports';
-		const configService = new ConfigService();
 		const dir = env.isElectron
 			? path.resolve(env.gauzyUserPath, ...['public', destDir])
-			: path.join(configService.assetOptions.assetPublicPath, destDir);
+			: path.join(config.assetOptions.assetPublicPath, destDir);
 
 		// delete old generated report image
 		rimraf(dir, () => {
@@ -168,9 +168,8 @@ async function cleanReport(connection) {
 	});
 }
 
-function copyImage(fileName: string) {
+function copyImage(fileName: string, config: IPluginConfig) {
 	try {
-		const configService = new ConfigService();
 		const destDir = 'reports';
 
 		const dir = env.isElectron
@@ -178,10 +177,7 @@ function copyImage(fileName: string) {
 					env.gauzyUserPath,
 					...['src', 'assets', 'seed', destDir]
 			  )
-			: path.join(
-					configService.assetOptions.assetPath,
-					...['seed', destDir]
-			  ) ||
+			: path.join(config.assetOptions.assetPath, ...['seed', destDir]) ||
 			  path.resolve(
 					__dirname,
 					'../../../',
@@ -190,7 +186,7 @@ function copyImage(fileName: string) {
 
 		const baseDir = env.isElectron
 			? path.resolve(env.gauzyUserPath, ...['public'])
-			: configService.assetOptions.assetPublicPath ||
+			: config.assetOptions.assetPublicPath ||
 			  path.resolve(
 					__dirname,
 					'../../../',

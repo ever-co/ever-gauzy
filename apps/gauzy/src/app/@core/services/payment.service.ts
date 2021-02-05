@@ -10,6 +10,7 @@ import {
 } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 import { toParams } from '@gauzy/common-angular';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -23,7 +24,7 @@ export class PaymentService {
 	): Promise<{ items: IPayment[] }> {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
-			.get<{ items: IPayment[] }>('/api/payments', {
+			.get<{ items: IPayment[] }>(`${API_PREFIX}/payments`, {
 				params: { data }
 			})
 			.pipe(first())
@@ -32,28 +33,28 @@ export class PaymentService {
 
 	add(payment: IPayment): Promise<IPayment> {
 		return this.http
-			.post<IPayment>('/api/payments', payment)
+			.post<IPayment>(`${API_PREFIX}/payments`, payment)
 			.pipe(first())
 			.toPromise();
 	}
 
 	update(id: string, updateInput: IPaymentUpdateInput): Promise<IPayment> {
 		return this.http
-			.put<IPayment>(`/api/payments/${id}`, updateInput)
+			.put<IPayment>(`${API_PREFIX}/payments/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/payments/${id}`)
+			.delete(`${API_PREFIX}/payments/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
 
 	getReportData(request: IGetPaymentInput) {
 		return this.http
-			.get<IPaymentReportData[]>('/api/payments/report', {
+			.get<IPaymentReportData[]>(`${API_PREFIX}/payments/report`, {
 				params: toParams(request)
 			})
 			.pipe(first())
@@ -61,9 +62,12 @@ export class PaymentService {
 	}
 	getReportChartData(request: IGetPaymentInput) {
 		return this.http
-			.get<IPaymentReportChartData[]>('/api/payments/report/chart-data', {
-				params: toParams(request)
-			})
+			.get<IPaymentReportChartData[]>(
+				`${API_PREFIX}/payments/report/chart-data`,
+				{
+					params: toParams(request)
+				}
+			)
 			.pipe(first())
 			.toPromise();
 	}

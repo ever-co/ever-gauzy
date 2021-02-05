@@ -6,14 +6,14 @@ import { BaseEntity } from '../core/entities/internal';
 
 @Entity('currency')
 export class Currency extends BaseEntity implements ICurrency {
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@Index()
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: false })
 	isoCode: string;
 
-	@ApiProperty({ type: String })
+	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: false })

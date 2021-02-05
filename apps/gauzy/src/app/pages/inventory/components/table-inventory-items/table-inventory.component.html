@@ -14,6 +14,7 @@
 	<nb-card-body>
 		<div class="mb-3">
 			<button
+				*ngIf="editProductAllowed"
 				(click)="onAddInventoryItem()"
 				nbButton
 				status="success"
@@ -26,6 +27,7 @@
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
 			<button
+				*ngIf="editProductAllowed"
 				class="float-right"
 				nbButton
 				status="primary"
@@ -35,6 +37,7 @@
 				{{ 'INVENTORY_PAGE.PRODUCT_TYPES' | translate }}
 			</button>
 			<button
+				*ngIf="editProductAllowed"
 				class="float-right"
 				style="margin-right: 9px"
 				nbButton
@@ -58,6 +61,31 @@
 		</ng2-smart-table>
 		<ul class="flex-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
 			<li class="flex-item" *ngFor="let x of inventoryData">
+				<div class="info-line">
+					<span class="info-meta">{{
+						'INVENTORY_PAGE.IMAGE' | translate
+					}}</span>
+					<div class="card-image">
+						<div
+							class="card-image"
+							*ngIf="!x.featuredImage || !x.featuredImage.url"
+							[ngStyle]="{
+								backgroundImage:
+									'url(https://afostats.imagead.net/uploads/afo/no_img.png)'
+							}"
+							alt="Product Item Photo"
+						></div>
+						<div
+							class="card-image"
+							*ngIf="x.featuredImage && x.featuredImage.url"
+							[ngStyle]="{
+								backgroundImage:
+									'url(' + x.featuredImage.url + ')'
+							}"
+							alt="Product Item Photo"
+						></div>
+					</div>
+				</div>
 				<div class="info-line">
 					<span class="info-meta">{{
 						'INVENTORY_PAGE.NAME' | translate
@@ -110,6 +138,7 @@
 	let-selectedItem="selectedItem"
 >
 	<button
+		*ngIf="editProductAllowed"
 		(click)="onEditInventoryItem(selectedItem)"
 		nbButton
 		status="info"
@@ -121,6 +150,18 @@
 		{{ 'BUTTONS.EDIT' | translate }}
 	</button>
 	<button
+		(click)="onViewInventoryItem(selectedItem)"
+		nbButton
+		status="warning"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
+		{{ 'BUTTONS.VIEW' | translate }}
+	</button>
+	<button
+		*ngIf="editProductAllowed"
 		(click)="delete(selectedItem)"
 		nbButton
 		status="danger"

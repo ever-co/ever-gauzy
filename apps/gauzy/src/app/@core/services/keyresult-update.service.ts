@@ -4,12 +4,14 @@ import { IKeyResultUpdate } from '@gauzy/contracts';
 import { throwError } from 'rxjs';
 import { catchError, first } from 'rxjs/operators';
 import { ToastrService } from './toastr.service';
+import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class KeyResultUpdateService {
-	private readonly API_URL = '/api/key-result-updates';
+	private readonly API_URL = `${API_PREFIX}/key-result-updates`;
+
 	constructor(
 		private _http: HttpClient,
 		private toastrService: ToastrService
