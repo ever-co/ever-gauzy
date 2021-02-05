@@ -1,6 +1,6 @@
 export const OnboardingPage = {
-	organisationNameFieldCss: '[placeholder="Organization Name"]',
-	currencyFieldCss: '[class="select-button placeholder"]',
+	organisationNameFieldCss: '#nameInput',
+	currencyFieldCss: '#currencySelect',
 	currencyOptionCss: '.option-list nb-option',
 	officialNameFieldCss: '#officialNameInput',
 	taxFieldCss: '#taxIdInput',

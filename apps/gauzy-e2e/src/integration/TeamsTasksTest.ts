@@ -140,8 +140,6 @@ describe('Add teams tasks test', () => {
 		teamsTasksPage.confirmDeleteTaskButtonVisible();
 		teamsTasksPage.clickConfirmDeleteTaskButton();
 		teamsTasksPage.waitMessageToHide();
-		teamsTasksPage.verifyTaskIsDeleted(
-			` ${TeamsTasksPageData.defaultTaskDescription} ${TeamsTasksPageData.defaultTaskTitle}`
-		);
+		teamsTasksPage.verifyTaskIsDeleted();
 	});
 });

@@ -8,7 +8,7 @@ import {
 	clickElementByText,
 	waitElementToHide,
 	verifyText,
-	verifyTextNotExisting
+	verifyElementNotExist
 } from '../utils/util';
 import { TeamsTasksPage } from '../pageobjects/TeamsTasksPageObject';
 
@@ -203,6 +203,6 @@ export const verifyTaskExists = (text) => {
 	verifyText(TeamsTasksPage.verifyTextCss, text);
 };
 
-export const verifyTaskIsDeleted = (text) => {
-	verifyTextNotExisting(TeamsTasksPage.verifyTextCss, text);
+export const verifyTaskIsDeleted = () => {
+	verifyElementNotExist(TeamsTasksPage.verifyTextCss);
 };
