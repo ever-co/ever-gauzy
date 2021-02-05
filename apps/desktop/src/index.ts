@@ -121,7 +121,7 @@ function startServer(value, restart = false) {
 	}
 	if (value.isLocalServer) {
 		process.env.PORT = value.port || environment.API_DEFAULT_PORT;
-		process.env.HOST = 'http://localhost';
+		process.env.HOST = '0.0.0.0';
 		process.env.BASE_URL = `http://localhost:${
 			value.port || environment.API_DEFAULT_PORT
 		}`;

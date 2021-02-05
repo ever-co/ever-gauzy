@@ -77,7 +77,7 @@
 		"doc:build-serve": "compodoc -p tsconfig.json -d docs -s",
 		"postinstall.electron": "yarn electron-builder install-app-deps && yarn node tools/electron/postinstall",
 		"postinstall.web": "yarn node ./decorate-angular-cli.js && yarn npx ngcc --properties es2016 browser module main --first-only --create-ivy-entry-points && yarn node tools/web/postinstall",
-		"build:desktop": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run postinstall.electron && yarn build:package:all && yarn run config:prod && yarn nx build desktop --prod --base-href ./ && yarn run prepare:desktop && yarn nx build desktop-api --prod && yarn nx build api-desktop --prod && yarn nx build desktop-ui --prod --base-href ./",
+		"build:desktop": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run postinstall.electron && yarn build:package:all && yarn run config:prod && yarn nx build desktop --prod --base-href ./ && yarn run prepare:desktop && yarn nx build desktop-api --prod && yarn nx build api-desktop --prod && yarn nx build desktop-ui --prod --base-href ./ && yarn run copy-files-desktop",
 		"build:desktop:local": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn run build:desktop && electron dist/apps/desktop",
 		"build:desktop:linux": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn run build:desktop && npm config set cache .cache && cd dist/apps/desktop && npx electron-builder@22.9.1 -c.electronVersion=10.1.3 build --linux",
 		"build:desktop:windows": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn run build:desktop && npm config set cache .cache && cd dist/apps/desktop && npx electron-builder@22.9.1 -c.electronVersion=10.1.3 build --windows",
@@ -114,7 +114,8 @@
 		"build:package:plugin:product-reviews": "yarn --cwd ./packages/plugins/product-reviews build",
 		"build:package:all": "yarn run build:package:contracts && yarn run build:package:common && yarn run build:package:common-angular && yarn run build:package:config && yarn run build:package:plugin && yarn run build:package:plugins && yarn run build:package:auth && yarn run build:package:core",
 		"build:package:api": "yarn run build:package:contracts && yarn run build:package:common && yarn run build:package:config && yarn run build:package:plugin && yarn run build:package:plugins && yarn run build:package:auth && yarn run build:package:core",
-		"build:package:gauzy": "yarn run build:package:contracts && yarn run build:package:common && yarn run build:package:common-angular && yarn run build:package:config && yarn run build:package:plugin && yarn run build:package:plugins && yarn run build:package:auth && yarn run build:package:core"
+		"build:package:gauzy": "yarn run build:package:contracts && yarn run build:package:common && yarn run build:package:common-angular && yarn run build:package:config && yarn run build:package:plugin && yarn run build:package:plugins && yarn run build:package:auth && yarn run build:package:core",
+		"copy-files-desktop": "copyfiles -f  packages/core/src/**/*.gql dist/apps/desktop/data/"
 	},
 	"config": {
 		"commitizen": {

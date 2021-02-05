@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import * as path from 'path';
-import { ConfigModule, ConfigService } from '@gauzy/config';
+import { ConfigModule, ConfigService, environment } from '@gauzy/config';
 import { RequestContextMiddleware } from './context';
 import { FileStorageModule } from './file-storage';
 import { GraphqlModule } from '../graphql/graphql.module';
@@ -37,7 +37,15 @@ import { GraphqlApiModule } from '../graphql/graphql-api.module';
 			playground: configService.graphqlConfigOptions.playground,
 			debug: configService.graphqlConfigOptions.debug,
 			typePaths: [
-				path.join(path.resolve(__dirname, '../**/', 'schema'), '*.gql')
+				environment.isElectron
+					? path.join(
+							path.resolve(__dirname, '../../../../../../data/'),
+							'*.gql'
+					  )
+					: path.join(
+							path.resolve(__dirname, '../**/', 'schema'),
+							'*.gql'
+					  )
 			],
 			resolverModule: GraphqlApiModule
 		})) as DynamicModule,

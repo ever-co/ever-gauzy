@@ -401,7 +401,7 @@
 					"configurations": {
 						"production": {
 							"optimization": true,
-							"extractLicenses": true,
+							"extractLicenses": false,
 							"inspect": false,
 							"sourceMap": false,
 							"fileReplacements": [
@@ -428,10 +428,10 @@
 			"architect": {
 				"build": {
 					"builder": "./apps/gauzy/node_modules/@angular-builders/custom-webpack:browser",
-					"customWebpackConfig": {
-						"path": "apps/gauzy/config/custom-webpack.config.js"
-					},
 					"options": {
+						"customWebpackConfig": {
+							"path": "apps/gauzy/config/custom-webpack.config.js"
+						},
 						"outputPath": "dist/apps/desktop/ui",
 						"index": "apps/desktop/src/index.html",
 						"main": "apps/desktop/src/main.ts",
@@ -526,8 +526,8 @@
 			}
 		},
 		"api-desktop": {
-			"root": "apps/desktop/desktop-api",
-			"sourceRoot": "apps/desktop/desktop-api/src",
+			"root": "libs/desktop-api",
+			"sourceRoot": "libs/desktop-api/src",
 			"projectType": "application",
 			"prefix": "api-desktop",
 			"schematics": {},
@@ -539,19 +539,19 @@
 						"memoryLimit": 4000,
 						"webpackConfig": "tools/build/webpack.config.js",
 						"outputPath": "dist/apps/desktop/desktop-api",
-						"main": "apps/desktop/desktop-api/src/main.ts",
-						"tsConfig": "apps/desktop/desktop-api/tsconfig.app.json",
-						"assets": ["apps/desktop/desktop-api/src/assets"]
+						"main": "libs/desktop-api/src/main.ts",
+						"tsConfig": "libs/desktop-api/tsconfig.app.json",
+						"assets": ["libs/desktop-api/src/assets"]
 					},
 					"configurations": {
 						"production": {
 							"optimization": true,
-							"extractLicenses": true,
+							"extractLicenses": false,
 							"inspect": false,
 							"fileReplacements": [
 								{
-									"replace": "apps/desktop/desktop-api/src/environments/environment.ts",
-									"with": "apps/desktop/desktop-api/src/environments/environment.prod.ts"
+									"replace": "libs/desktop-api/src/environments/environment.ts",
+									"with": "libs/desktop-api/src/environments/environment.prod.ts"
 								}
 							]
 						}
@@ -567,20 +567,20 @@
 					"builder": "@angular-devkit/build-angular:tslint",
 					"options": {
 						"tsConfig": [
-							"apps/desktop/desktop-api/tsconfig.app.json",
-							"apps/desktop/desktop-api/tsconfig.spec.json"
+							"libs/desktop-api/tsconfig.app.json",
+							"libs/desktop-api/tsconfig.spec.json"
 						],
 						"exclude": [
 							"**/node_modules/**",
-							"!apps/desktop/desktop-api/**"
+							"!libs/desktop-api/**"
 						]
 					}
 				},
 				"test": {
 					"builder": "@nrwl/jest:jest",
 					"options": {
-						"jestConfig": "apps/desktop/desktop-api/jest.config.js",
-						"tsConfig": "apps/desktop/desktop-api/tsconfig.spec.json",
+						"jestConfig": "libs/desktop-api/jest.config.js",
+						"tsConfig": "libs/desktop-api/tsconfig.spec.json",
 						"passWithNoTests": true
 					}
 				}
