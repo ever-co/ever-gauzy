@@ -7,7 +7,8 @@ import {
 	waitElementToHide,
 	clickElementByText,
 	verifyTextNotExisting,
-	verifyText
+	verifyText,
+	typeOverTextarea
 } from '../utils/util';
 import { JobsProposalsPage } from '../pageobjects/JobsProposalsPageObject';
 
@@ -48,8 +49,7 @@ export const contentInputVisible = () => {
 };
 
 export const enterContentInputData = (data) => {
-	clearField(JobsProposalsPage.contentInputCss);
-	enterInput(JobsProposalsPage.contentInputCss, data);
+	typeOverTextarea(JobsProposalsPage.contentInputCss, data);
 };
 
 export const saveButtonVisible = () => {

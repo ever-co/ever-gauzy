@@ -1,7 +1,7 @@
 export const TimeOffPage = {
-	requestButtonCss: 'div.col-3 > button[status="primary"]',
+	requestButtonCss: 'div.col-4 > button[status="primary"]',
 	employeeDropdownCss:
-		'ga-employee-selector.employees > ng-select[role="listbox"]',
+		'ngx-time-off-request-mutation > nb-card.main ga-employee-selector.employees',
 	employeeDropdownOptionCss: 'div.ng-option[role="option"]',
 	timeOffPolicyDropdownCss: '[formControlName="policy"]',
 	timeOffPolicyDropdownOptionCss: '.option-list nb-option',
@@ -10,7 +10,7 @@ export const TimeOffPage = {
 	descriptionInputCss: '[formControlName="description"]',
 	saveRequestButtonCss:
 		'nb-card-footer.text-right > button[status="success"]',
-	addHolidayButtonCss: 'div.col-3 > button[status="info"]',
+	addHolidayButtonCss: 'div.col-4 > button[status="info"]',
 	selectHolidayDropdownOptionCss: '.option-list nb-option',
 	selectEmloyeeCss: 'button[class="select-button placeholder"]',
 	selectEmployeeDropdownOptionCss: '.option-list nb-option',
@@ -27,7 +27,7 @@ export const TimeOffPage = {
 		'div.actions-container > button[status="warning"]',
 	approveTimeOffRequestButtonCss:
 		'div.actions-container > button[status="success"]',
-	timeOffSettingsButtonCss: 'div.mb-3 > button[status="primary"]',
+	timeOffSettingsButtonCss: 'div.mb-3 > div > button[status="primary"]',
 	addNewPolicyButtonCss: 'div.mb-3 > button[status="success"]',
 	editPolicyButtonCss: 'div.mb-3 > button[status="info"]',
 	deletePolicyButtonCss: 'div.mb-3 > button[status="danger"]',

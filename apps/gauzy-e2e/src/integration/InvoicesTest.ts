@@ -92,13 +92,9 @@ describe('Invoices test', () => {
 		invoicesPage.verifyDraftBadgeClass();
 	});
 	it('Should be able to edit invoice', () => {
-		invoicesPage.addButtonVisible();
-		invoicesPage.clickAddButton();
-		invoicesPage.backButtonVisible();
-		invoicesPage.clickBackButton();
 		invoicesPage.selectTableRow(0);
 		invoicesPage.editButtonVisible();
-		invoicesPage.clickEditButton(InvoicesPageData.editButton);
+		invoicesPage.clickEditButton(0);
 		invoicesPage.discountInputVisible();
 		invoicesPage.enterDiscountData(InvoicesPageData.editDiscountValue);
 		invoicesPage.discountTypeDropdownVisible();
@@ -121,6 +117,8 @@ describe('Invoices test', () => {
 	});
 	it('Should be able to send invoice', () => {
 		invoicesPage.selectTableRow(0);
+		invoicesPage.moreButtonVisible();
+		invoicesPage.clickMoreButton();
 		invoicesPage.actionButtonVisible();
 		invoicesPage.clickActionButtonByText(InvoicesPageData.sendButton);
 		invoicesPage.confirmButtonVisible();
@@ -130,8 +128,8 @@ describe('Invoices test', () => {
 	});
 	it('Should be able to view invoice', () => {
 		invoicesPage.selectTableRow(0);
-		invoicesPage.actionButtonVisible();
-		invoicesPage.clickActionButtonByText(InvoicesPageData.viewButton);
+		invoicesPage.viewButtonVisible();
+		invoicesPage.clickViewButton(1);
 		invoicesPage.backButtonVisible();
 		invoicesPage.clickBackButton();
 	});
@@ -140,6 +138,8 @@ describe('Invoices test', () => {
 			return false;
 		});
 		invoicesPage.selectTableRow(0);
+		invoicesPage.moreButtonVisible();
+		invoicesPage.clickMoreButton();
 		invoicesPage.actionButtonVisible();
 		invoicesPage.clickActionButtonByText(InvoicesPageData.emailButton);
 		invoicesPage.scrollEmailInviteTemplate();
@@ -160,6 +160,8 @@ describe('Invoices test', () => {
 	it('Should be able to delete invoice', () => {
 		invoicesPage.waitMessageToHide();
 		invoicesPage.selectTableRow(0);
+		invoicesPage.moreButtonVisible();
+		invoicesPage.clickMoreButton();
 		invoicesPage.deleteButtonVisible();
 		invoicesPage.clickDeleteButton();
 		invoicesPage.confirmDeleteButtonVisible();

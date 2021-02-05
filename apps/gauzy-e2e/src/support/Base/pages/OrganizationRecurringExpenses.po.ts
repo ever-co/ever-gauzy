@@ -8,7 +8,7 @@ import {
 	getLastElement,
 	waitElementToHide,
 	verifyText,
-	verifyTextNotExisting
+	verifyElementNotExist
 } from '../utils/util';
 import { OrganizationRecurringExpensesPage } from '../pageobjects/OrganizationRecurringExpensesPageObject';
 
@@ -112,9 +112,6 @@ export const verifyExpenseExists = (text) => {
 	verifyText(OrganizationRecurringExpensesPage.verifyExpenseCss, text);
 };
 
-export const verifyExpenseIsDeleted = (text) => {
-	verifyTextNotExisting(
-		OrganizationRecurringExpensesPage.verifyExpenseCss,
-		text
-	);
+export const verifyExpenseIsDeleted = () => {
+	verifyElementNotExist(OrganizationRecurringExpensesPage.verifyExpenseCss);
 };

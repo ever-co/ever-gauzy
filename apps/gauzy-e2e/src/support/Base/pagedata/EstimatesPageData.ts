@@ -10,7 +10,7 @@ export const EstimatesPageData = {
 	setStatusButton: 'SET STATUS',
 	duplicateButton: 'Duplicate',
 	sendButton: 'Send',
-	convertToInvoiceButton: 'Export to CSV',
+	convertToInvoiceButton: ' Convert to invoice ',
 	viewButton: 'View',
 	emailButton: 'Email'
 };

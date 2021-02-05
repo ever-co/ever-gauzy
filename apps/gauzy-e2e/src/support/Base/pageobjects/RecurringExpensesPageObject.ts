@@ -1,10 +1,11 @@
 export const RecurringExpensesPage = {
-	addNewExpenseButtonCss: 'div.ng-star-inserted > button[status="success"]',
+	addNewExpenseButtonCss: 'div.body-header > button[status="success"]',
 	employeeDropdownCss: '[placeholder="Employee"]',
 	dropdownOptionCss: 'div.ng-option',
 	expenseDropdownCss: '#positionInput',
 	valueInputCss: '#valueInput',
-	saveExpenseButtonCss: 'div.actions > button[status="success"]',
+	saveExpenseButtonCss:
+		'nb-card-footer.text-right > button[status="success"]',
 	settingsButtonCss: 'g[data-name="settings-2"]',
 	editExpenseButtonCss: 'div.block-settings g[data-name="edit"]',
 	deleteExpenseButtonCss: 'g[data-name="close"]',
