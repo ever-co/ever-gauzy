@@ -241,5 +241,57 @@ export const CustomCommands = {
 		manageEmployeesPage.clickNextStepButton();
 		manageEmployeesPage.lastStepButtonVisible();
 		manageEmployeesPage.clickLastStepButton();
+	},
+	addClient: (
+		clientsPage,
+		fullName,
+		email,
+		website,
+		city,
+		postcode,
+		street,
+		ClientsData
+	) => {
+		cy.visit('/#/pages/contacts/clients');
+		clientsPage.gridBtnExists();
+		clientsPage.gridBtnClick(1);
+		clientsPage.addButtonVisible();
+		clientsPage.clickAddButton();
+		clientsPage.nameInputVisible();
+		clientsPage.enterNameInputData(fullName);
+		clientsPage.emailInputVisible();
+		clientsPage.enterEmailInputData(email);
+		clientsPage.phoneInputVisible();
+		clientsPage.enterPhoneInputData(ClientsData.defaultPhone);
+		clientsPage.projectDropdownVisible();
+		clientsPage.clickProjectDropdown();
+		clientsPage.selectProjectFromDropdown(ClientsData.defaultProject);
+		clientsPage.tagsMultyselectVisible();
+		clientsPage.clickTagsMultyselect();
+		clientsPage.selectTagsFromDropdown(0);
+		clientsPage.clickCardBody();
+		clientsPage.websiteInputVisible();
+		clientsPage.enterWebsiteInputData(website);
+		clientsPage.saveButtonVisible();
+		clientsPage.clickSaveButton();
+		clientsPage.countryDropdownVisible();
+		clientsPage.clickCountryDropdown();
+		clientsPage.selectCountryFromDropdown(ClientsData.country);
+		clientsPage.cityInputVisible();
+		clientsPage.enterCityInputData(city);
+		clientsPage.postcodeInputVisible();
+		clientsPage.enterPostcodeInputData(postcode);
+		clientsPage.streetInputVisible();
+		clientsPage.enterStreetInputData(street);
+		clientsPage.nextButtonVisible();
+		clientsPage.clickNextButton();
+		clientsPage.selectEmployeeDropdownVisible();
+		clientsPage.clickSelectEmployeeDropdown();
+		clientsPage.selectEmployeeDropdownOption(0);
+		clientsPage.clickKeyboardButtonByKeyCode(9);
+		clientsPage.nextButtonVisible();
+		clientsPage.clickNextButton();
+		clientsPage.waitMessageToHide();
+		clientsPage.verifyClientExists(fullName);
 	}
 };

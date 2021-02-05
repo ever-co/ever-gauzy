@@ -3,4 +3,5 @@ export interface IMicrosoftConfig {
 	readonly clientSecret: string;
 	readonly resource: string;
 	readonly tenant: string;
+	readonly callbackUrl?: string;
 }

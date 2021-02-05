@@ -41,7 +41,9 @@ export const config = (configService: ConfigService) => {
 	return {
 		clientID: LINKEDIN_CONFIG.clientId || 'disabled',
 		clientSecret: LINKEDIN_CONFIG.clientSecret || 'disabled',
-		callbackURL: `${baseUrl}/api/auth/linkedin/callback`,
+		callbackURL:
+			LINKEDIN_CONFIG.callbackUrl ||
+			`${baseUrl}/api/auth/linkedin/callback`,
 		scope: ['r_liteprofile', 'r_emailaddress'],
 		passReqToCallback: true,
 		secretOrKey: JWT_SECRET,

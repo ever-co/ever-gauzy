@@ -132,3 +132,7 @@ export const clickButtonMultipleTimes = (loc, n) => {
 		cy.get(loc, { timeout: 40000 }).click();
 	}
 };
+
+export const typeOverTextarea = (loc, text) => {
+	cy.get(loc, { timeout: 40000 }).type(text);
+};
