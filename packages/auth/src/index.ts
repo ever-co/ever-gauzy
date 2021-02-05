@@ -1,5 +1,3 @@
-import { from } from 'rxjs';
-
 export * from './social-auth.module';
 export * from './social-auth.controller';
 export * from './social-auth.service';
