@@ -81,7 +81,7 @@
 		]
 	},
 	"dependencies": {
-		"sqlite3": "5.0.0",
+		"sqlite3": "https://github.com/ever-co/node-sqlite3",
 		"electron-store": "^6.0.0",
 		"electron-log": "^4.2.4",
 		"node-notifier": "^8.0.0",
