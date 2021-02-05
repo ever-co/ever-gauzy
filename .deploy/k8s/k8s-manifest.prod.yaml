@@ -5,9 +5,9 @@ metadata:
     name: gauzy-prod-web-lb
     annotations:
         service.beta.kubernetes.io/do-loadbalancer-name: 'app.gauzy.co'
-        service.beta.kubernetes.io/do-loadbalancer-protocol: 'http' # http2
-        # service.beta.kubernetes.io/do-loadbalancer-http2-ports: "443"
-        # service.beta.kubernetes.io/do-loadbalancer-certificate-id: "gauzy.co"
+        service.beta.kubernetes.io/do-loadbalancer-protocol: 'http2'
+        service.beta.kubernetes.io/do-loadbalancer-http2-ports: '443'
+        service.beta.kubernetes.io/do-loadbalancer-certificate-id: '3e7e0327-dd2d-4ffc-9b98-5c79eb4592d5'
         service.beta.kubernetes.io/do-loadbalancer-size-slug: 'lb-small'
         service.beta.kubernetes.io/do-loadbalancer-hostname: 'app.gauzy.co'
 spec:
@@ -26,8 +26,9 @@ metadata:
     name: gauzy-prod-api-lb
     annotations:
         service.beta.kubernetes.io/do-loadbalancer-name: 'api.gauzy.co'
-        service.beta.kubernetes.io/do-loadbalancer-protocol: 'http' # http2
-        # service.beta.kubernetes.io/do-loadbalancer-http2-ports: "443,80"
+        service.beta.kubernetes.io/do-loadbalancer-protocol: 'http2'
+        service.beta.kubernetes.io/do-loadbalancer-http2-ports: '443'
+        service.beta.kubernetes.io/do-loadbalancer-certificate-id: '3e7e0327-dd2d-4ffc-9b98-5c79eb4592d5'
         service.beta.kubernetes.io/do-loadbalancer-size-slug: 'lb-small'
         service.beta.kubernetes.io/do-loadbalancer-hostname: 'api.gauzy.co'
 spec:
