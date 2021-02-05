@@ -43,7 +43,8 @@ module.exports = (config) => {
 		fsevents: 'fsevents',
 		bcrypt: 'bcrypt',
 		sqlite3: 'commonjs sqlite3',
-		sharp: 'commonjs sharp'
+		sharp: 'commonjs sharp',
+		'@gauzy/core': '@gauzy/core'
 	};
 
 	return config;

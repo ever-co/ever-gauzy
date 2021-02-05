@@ -76,10 +76,8 @@
 			"deleteAppDataOnUninstall": true,
 			"menuCategory": true
 		},
-		"files": [
-			"./**/*",
-			"./node_modules/**/*",
-			"../libs/**/*"
+		"extraResources": [
+			"./data/*"
 		]
 	},
 	"dependencies": {
@@ -98,6 +96,9 @@
 		"node-fetch": "^2.6.1",
 		"screenshot-desktop": "^1.12.2",
 		"electron-updater": "~4.3.5",
-		"pg": "^8.3.3"
+		"pg": "^8.3.3",
+		"@nestjs/platform-express": "^7.6.5",
+		"@gauzy/core": "file:../../../node_modules/@gauzy",
+		"@gauzy/auth": "file:../../../node_modules/@gauzy"
 	}
 }
