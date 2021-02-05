@@ -7,9 +7,7 @@ import {
 } from './decorators/request-context.decorator';
 
 export abstract class SocialAuthController {
-	constructor(protected readonly service: SocialAuthService) {
-		console.log(this.service);
-	}
+	constructor(protected readonly service: SocialAuthService) {}
 
 	@Get('google')
 	@UseGuards(AuthGuard('google'))
