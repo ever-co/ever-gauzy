@@ -64,8 +64,6 @@ describe('Recurring expenses test', () => {
 		recurringExpensesPage.confirmDeleteButtonVisible();
 		recurringExpensesPage.clickConfirmDeleteButton();
 		recurringExpensesPage.waitMessageToHide();
-		recurringExpensesPage.verifyExpenseIsDeleted(
-			`BGN${RecurringExpensesPageData.editExpenseValue}`
-		);
+		recurringExpensesPage.verifyExpenseIsDeleted();
 	});
 });

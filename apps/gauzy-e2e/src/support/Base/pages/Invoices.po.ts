@@ -156,11 +156,11 @@ export const selectTableRow = (index) => {
 };
 
 export const actionButtonVisible = () => {
-	verifyElementIsVisible(InvoicesPage.infoButtonCss);
+	verifyElementIsVisible(InvoicesPage.popoverButtonCss);
 };
 
 export const clickActionButtonByText = (text) => {
-	clickElementByText(InvoicesPage.infoButtonCss, text);
+	clickElementByText(InvoicesPage.popoverButtonCss, text);
 };
 
 export const backButtonVisible = () => {
@@ -191,8 +191,16 @@ export const editButtonVisible = () => {
 	verifyElementIsVisible(InvoicesPage.editButtonCss);
 };
 
-export const clickEditButton = (text) => {
-	clickElementByText(InvoicesPage.editButtonCss, text);
+export const clickEditButton = (index) => {
+	clickButtonByIndex(InvoicesPage.editButtonCss, index);
+};
+
+export const viewButtonVisible = () => {
+	verifyElementIsVisible(InvoicesPage.viewButtonCss);
+};
+
+export const clickViewButton = (index) => {
+	clickButtonByIndex(InvoicesPage.viewButtonCss, index);
 };
 
 export const deleteButtonVisible = () => {
@@ -241,4 +249,12 @@ export const verifyElementIsDeleted = (text) => {
 
 export const scrollEmailInviteTemplate = () => {
 	scrollDown(InvoicesPage.emailCardCss);
+};
+
+export const moreButtonVisible = () => {
+	verifyElementIsVisible(InvoicesPage.moreButtonCss);
+};
+
+export const clickMoreButton = () => {
+	clickButton(InvoicesPage.moreButtonCss);
 };

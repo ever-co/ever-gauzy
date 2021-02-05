@@ -187,12 +187,28 @@ export const enterEmailData = (data) => {
 	enterInput(EstimatesPage.emailInputCss, data);
 };
 
-export const infoButtonVisible = () => {
-	verifyElementIsVisible(EstimatesPage.infoButtonCss);
+export const convertToInvoiceButtonVisible = () => {
+	verifyElementIsVisible(EstimatesPage.convertToInvoiceButton);
 };
 
-export const clickInfoButton = (index) => {
-	clickButtonByIndex(EstimatesPage.infoButtonCss, index);
+export const clickConvertToInvoiceButton = (index) => {
+	clickButtonByIndex(EstimatesPage.convertToInvoiceButton, index);
+};
+
+export const editButtonVisible = () => {
+	verifyElementIsVisible(EstimatesPage.editButtonCss);
+};
+
+export const clickEditButton = (index) => {
+	clickButtonByIndex(EstimatesPage.editButtonCss, index);
+};
+
+export const viewButtonVisible = () => {
+	verifyElementIsVisible(EstimatesPage.viewButtonCss);
+};
+
+export const clickViewButton = (index) => {
+	clickButtonByIndex(EstimatesPage.viewButtonCss, index);
 };
 
 export const deleteButtonVisible = () => {

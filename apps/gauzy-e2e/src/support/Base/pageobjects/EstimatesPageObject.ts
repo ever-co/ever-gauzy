@@ -1,7 +1,9 @@
 export const EstimatesPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	addButtonCss: 'div.actions-container > button[status="success"]',
-	infoButtonCss: 'div.actions-container > button[status="info"]',
+	editButtonCss: 'div.btn-group > button[status="info"]',
+	convertToInvoiceButton: 'div.actions-container > button[status="info"]',
+	viewButtonCss: 'div.actions-container > button[status="info"]',
 	popoverButtonCss: 'div.popover-container > button[status="info"]',
 	deleteButtonCss: 'div.popover-container > button[status="danger"]',
 	addTagsDropdownCss: '#addTags',

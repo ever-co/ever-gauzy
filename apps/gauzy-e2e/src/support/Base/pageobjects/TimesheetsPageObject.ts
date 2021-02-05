@@ -1,6 +1,7 @@
 export const TimesheetsPage = {
 	addTimeButtonCss: 'div.text-left > button[status="primary"]',
-	selectEmloyeeCss: 'ga-employee-multi-select nb-select',
+	selectEmloyeeCss:
+		'ga-employee-multi-select[formcontrolname="employeeId"] > nb-select',
 	selectEmployeeDropdownOptionCss: '.option-list nb-option',
 	dateInputCss: '[name="date"]',
 	projectDropdownCss: '[formcontrolname="projectId"]',

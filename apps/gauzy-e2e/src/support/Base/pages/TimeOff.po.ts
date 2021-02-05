@@ -212,8 +212,8 @@ export const timeOffSettingsButtonVisible = () => {
 	verifyElementIsVisible(TimeOffPage.timeOffSettingsButtonCss);
 };
 
-export const clickTimeOffSettingsButton = () => {
-	clickButton(TimeOffPage.timeOffSettingsButtonCss);
+export const clickTimeOffSettingsButton = (index) => {
+	clickButtonByIndex(TimeOffPage.timeOffSettingsButtonCss, index);
 };
 
 export const addNewPolicyButtonVisible = () => {

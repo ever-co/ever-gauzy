@@ -65,41 +65,16 @@ describe('Timesheets test', () => {
 			password,
 			imgUrl
 		);
-		cy.visit('/#/pages/contacts/clients');
-		clientsPage.gridBtnExists();
-		clientsPage.gridBtnClick(1);
-		clientsPage.addButtonVisible();
-		clientsPage.clickAddButton();
-		clientsPage.nameInputVisible();
-		clientsPage.enterNameInputData(fullName);
-		clientsPage.emailInputVisible();
-		clientsPage.enterEmailInputData(email);
-		clientsPage.phoneInputVisible();
-		clientsPage.enterPhoneInputData(ClientsData.defaultPhone);
-		clientsPage.countryDropdownVisible();
-		clientsPage.clickCountryDropdown();
-		clientsPage.selectCountryFromDropdown(ClientsData.country);
-		clientsPage.cityInputVisible();
-		clientsPage.enterCityInputData(city);
-		clientsPage.postcodeInputVisible();
-		clientsPage.enterPostcodeInputData(postcode);
-		clientsPage.streetInputVisible();
-		clientsPage.enterStreetInputData(street);
-		clientsPage.projectDropdownVisible();
-		clientsPage.clickProjectDropdown();
-		clientsPage.selectProjectFromDropdown(ClientsData.defaultProject);
-		clientsPage.selectEmployeeDropdownVisible();
-		clientsPage.clickSelectEmployeeDropdown();
-		clientsPage.selectEmployeeDropdownOption(0);
-		clientsPage.clickKeyboardButtonByKeyCode(9);
-		clientsPage.tagsMultyselectVisible();
-		clientsPage.clickTagsMultyselect();
-		clientsPage.selectTagsFromDropdown(0);
-		clientsPage.clickCardBody();
-		clientsPage.websiteInputVisible();
-		clientsPage.enterWebsiteInputData(website);
-		clientsPage.saveButtonVisible();
-		clientsPage.clickSaveButton();
+		CustomCommands.addClient(
+			clientsPage,
+			fullName,
+			email,
+			website,
+			city,
+			postcode,
+			street,
+			ClientsData
+		);
 		CustomCommands.addTask(addTaskPage, AddTasksPageData);
 		cy.visit('/#/pages/employees/timesheets/daily');
 		timesheetsPage.addTimeButtonVisible();

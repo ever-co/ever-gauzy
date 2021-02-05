@@ -95,8 +95,8 @@ describe('Estimates test', () => {
 	});
 	it('Should be able to edit estimate', () => {
 		estimatesPage.selectTableRow(0);
-		estimatesPage.infoButtonVisible();
-		estimatesPage.clickInfoButton(0);
+		estimatesPage.editButtonVisible();
+		estimatesPage.clickEditButton(0);
 		estimatesPage.discountInputVisible();
 		estimatesPage.enterDiscountData(EstimatesPageData.editDiscountValue);
 		estimatesPage.discountTypeDropdownVisible();
@@ -119,7 +119,6 @@ describe('Estimates test', () => {
 	});
 	it('Should be able to duplicate estimate', () => {
 		estimatesPage.waitMessageToHide();
-		estimatesPage.selectTableRow(0);
 		estimatesPage.selectTableRow(0);
 		estimatesPage.moreButtonVisible();
 		estimatesPage.clickMoreButton();
@@ -148,8 +147,8 @@ describe('Estimates test', () => {
 	});
 	it('Should be able to view estimate', () => {
 		estimatesPage.selectTableRow(0);
-		estimatesPage.infoButtonVisible();
-		estimatesPage.clickInfoButton(0);
+		estimatesPage.viewButtonVisible();
+		estimatesPage.clickViewButton(1);
 		estimatesPage.backButtonVisible();
 		estimatesPage.clickBackButton();
 	});
@@ -170,12 +169,52 @@ describe('Estimates test', () => {
 	});
 	it('Should be able to convert estimate to invoice', () => {
 		estimatesPage.selectTableRow(0);
-		estimatesPage.infoButtonVisible();
-		estimatesPage.clickInfoButton(3);
+		estimatesPage.actionButtonVisible();
+		estimatesPage.convertToInvoiceButtonVisible();
+		estimatesPage.clickConvertToInvoiceButton(0);
 	});
 	it('Should be able to delete estimate', () => {
+		estimatesPage.addButtonVisible();
+		estimatesPage.clickAddButton();
+		estimatesPage.tagsDropdownVisible();
+		estimatesPage.clickTagsDropdwon();
+		estimatesPage.selectTagFromDropdown(0);
+		estimatesPage.clickCardBody();
+		estimatesPage.discountInputVisible();
+		estimatesPage.enterDiscountData(EstimatesPageData.discountValue);
+		estimatesPage.discountTypeDropdownVisible();
+		estimatesPage.clickDiscountDropdown();
+		estimatesPage.selectDiscountTypeFromDropdown(
+			EstimatesPageData.discountType
+		);
+		estimatesPage.contactDropdownVisible();
+		estimatesPage.clickContactDropdown();
+		estimatesPage.selectContactFromDropdwon(0);
+		estimatesPage.taxInputVisible();
+		estimatesPage.enterTaxData(EstimatesPageData.taxValue);
+		estimatesPage.taxTypeDropdownVisible();
+		estimatesPage.clickTaxTypeDropdown();
+		estimatesPage.selectTaxTypeFromDropdown(EstimatesPageData.taxType);
+		estimatesPage.invoiceTypeDropdownVisible();
+		estimatesPage.clickInvoiceTypeDropdown();
+		estimatesPage.selectInvoiceTypeFromDropdown(
+			EstimatesPageData.invoiceType
+		);
+		estimatesPage.employeeDropdownVisible();
+		estimatesPage.clickEmployeeDropdown();
+		estimatesPage.selectEmployeeFromDropdown(0);
+		estimatesPage.clickKeyboardButtonByKeyCode(9);
+		estimatesPage.generateItemsButtonVisible();
+		estimatesPage.clickGenerateItemsButton();
+		estimatesPage.saveAsDraftButtonVisible();
+		estimatesPage.clickSaveAsDraftButton(
+			EstimatesPageData.saveAsDraftButton
+		);
 		estimatesPage.waitMessageToHide();
+		estimatesPage.verifyDraftBadgeClass();
 		estimatesPage.selectTableRow(0);
+		estimatesPage.moreButtonVisible();
+		estimatesPage.clickMoreButton();
 		estimatesPage.deleteButtonVisible();
 		estimatesPage.clickDeleteButton();
 		estimatesPage.confirmDeleteButtonVisible();

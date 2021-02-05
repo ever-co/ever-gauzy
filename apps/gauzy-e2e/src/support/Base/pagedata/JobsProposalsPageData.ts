@@ -1,5 +1,6 @@
 export const JobsProposalsPageData = {
 	name: 'Web Developer',
+	editName: 'Full Stack Developer',
 	editButton: 'Edit',
 	makeDefaultButton: 'Make Default',
 	content:

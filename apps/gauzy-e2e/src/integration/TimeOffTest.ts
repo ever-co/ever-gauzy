@@ -124,7 +124,7 @@ describe('Time Off test', () => {
 	});
 	it('Should be able to add new policy', () => {
 		timeOffPage.timeOffSettingsButtonVisible();
-		timeOffPage.clickTimeOffSettingsButton();
+		timeOffPage.clickTimeOffSettingsButton(1);
 		timeOffPage.addNewPolicyButtonVisible();
 		timeOffPage.clickAddNewPolicyButton();
 		timeOffPage.policyInputFieldVisible();
