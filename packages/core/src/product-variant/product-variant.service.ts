@@ -1,6 +1,6 @@
 import { Repository } from 'typeorm';
 import { CrudService, IPagination } from '../core';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductVariant } from './product-variant.entity';
 
@@ -48,5 +48,15 @@ export class ProductVariantService extends CrudService<ProductVariant> {
 
 	deleteMany(productVariants: ProductVariant[]): Promise<ProductVariant[]> {
 		return this.productVariantRepository.remove(productVariants);
+	}
+
+	async deleteFeaturedImage(id: string): Promise<ProductVariant> {
+		try {
+			let variant = await this.productVariantRepository.findOne(id);
+			variant.image = null;
+			return await this.productVariantRepository.save(variant);
+		} catch (err) {
+			throw new BadRequestException(err);
+		}
 	}
 }
