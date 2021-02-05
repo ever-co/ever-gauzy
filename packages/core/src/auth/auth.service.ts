@@ -5,6 +5,7 @@ import {
 	IRolePermission,
 	IAuthResponse
 } from '@gauzy/contracts';
+import { SocialAuthService } from '@gauzy/auth';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
@@ -14,19 +15,13 @@ import { UserService } from '../user/user.service';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 
 @Injectable()
-export class AuthService {
-	saltRounds: number;
-
+export class AuthService extends SocialAuthService {
 	constructor(
 		private readonly userService: UserService,
 		private emailService: EmailService,
 		private userOrganizationService: UserOrganizationService
 	) {
-		this.saltRounds = env.USER_PASSWORD_BCRYPT_SALT_ROUNDS;
-	}
-
-	async getPasswordHash(password: string): Promise<string> {
-		return bcrypt.hash(password, this.saltRounds);
+		super();
 	}
 
 	async login(findObj: any, password: string): Promise<IAuthResponse | null> {
