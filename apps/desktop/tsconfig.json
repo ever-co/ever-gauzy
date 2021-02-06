@@ -8,7 +8,8 @@
 		"experimentalDecorators": true,
 		"downlevelIteration": true,
 		"esModuleInterop": true,
-		"target": "es5",
+		"module": "commonjs",
+		"target": "es2016",
 		"typeRoots": ["../../node_modules/@types"]
 	},
 	"files": ["global.d.ts"],
