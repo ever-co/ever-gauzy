@@ -36,6 +36,10 @@ import { GraphqlApiModule } from '../graphql/graphql-api.module';
 			path: configService.graphqlConfigOptions.path,
 			playground: configService.graphqlConfigOptions.playground,
 			debug: configService.graphqlConfigOptions.debug,
+			cors: {
+				credentials: true,
+				origin: true
+			},
 			typePaths: [
 				environment.isElectron
 					? path.join(
