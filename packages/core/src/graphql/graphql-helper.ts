@@ -18,7 +18,9 @@ export async function createGraphqlModuleOptions(
 		cors: {
 			methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
 			credentials: true,
-			origin: '*'
+			origin: '*',
+			allowedHeaders:
+				'Authorization, Language, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
 		},
 		include: [options.resolverModule]
 	} as GqlModuleOptions;
