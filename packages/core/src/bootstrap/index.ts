@@ -32,7 +32,7 @@ export async function bootstrap(
 	app.useLogger(app.get(SentryService));
 
 	app.enableCors({
-		origin: true,
+		origin: '*',
 		methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
 		credentials: true
 	});
