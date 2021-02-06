@@ -95,7 +95,7 @@
 		"nodemailer-handlebars": "^1.0.1",
 		"handlebars": "^4.7.6",
 		"email-templates": "^7.1.1",
-		"date-fns": "~2.16.1",
+		"date-fns": "^2.16.1",
 		"passport": "^0.4.1",
 		"passport-jwt": "^4.0.0",
 		"pg": "^8.5.1",
