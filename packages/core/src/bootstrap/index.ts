@@ -30,7 +30,12 @@ export async function bootstrap(
 	);
 
 	app.useLogger(app.get(SentryService));
-	app.enableCors();
+
+	app.enableCors({
+		origin: true,
+		methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+		credentials: true
+	});
 
 	// TODO: enable csurf
 	// As explained on the csurf middleware page https://github.com/expressjs/csurf#csurf,
