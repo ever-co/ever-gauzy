@@ -15,6 +15,10 @@ export async function createGraphqlModuleOptions(
 		typeDefs: await createTypeDefs(configService, options, typesLoader),
 		playground: options.playground || false,
 		debug: options.debug || false,
+		cors: {
+			credentials: true,
+			origin: true
+		},
 		include: [options.resolverModule]
 	} as GqlModuleOptions;
 }
