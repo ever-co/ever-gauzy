@@ -37,7 +37,6 @@
 		"node-fetch": "^2.6.1",
 		"node-notifier": "^8.0.0",
 		"screenshot-desktop": "^1.12.2",
-		"sharp": "^0.26.1",
 		"app-root-path": "^3.0.0",
 		"consolidate": "^0.16.0",
 		"squirrelly": "^8.0.8",
