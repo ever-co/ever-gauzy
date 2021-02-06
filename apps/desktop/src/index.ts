@@ -483,7 +483,9 @@ app.on('before-quit', (e) => {
 			});
 		}, 1000);
 	} else {
-		cancellationToken.cancel();
+		if (cancellationToken) {
+			cancellationToken.cancel();
+		}
 		app.exit(0);
 		if (serverDesktop) serverDesktop.kill();
 		if (serverGauzy) serverGauzy.kill();
