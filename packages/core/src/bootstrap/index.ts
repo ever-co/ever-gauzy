@@ -34,7 +34,9 @@ export async function bootstrap(
 	app.enableCors({
 		origin: '*',
 		methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-		credentials: true
+		credentials: true,
+		allowedHeaders:
+			'Authorization, Language, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
 	});
 
 	// TODO: enable csurf
