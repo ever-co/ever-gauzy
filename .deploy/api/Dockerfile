@@ -108,7 +108,10 @@ COPY --chown=node:node --from=build /srv/gauzy/packages/ ./packages/
 COPY --chown=node:node apps/api/src/assets apps/api/src/assets
 COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api .
 
-RUN npm install pm2 -g && mkdir /import && chown node:node /import && \
+RUN npm install pm2 -g && \ 
+    mkdir /import && chown node:node /import && \
+    mkdir /apps/api/public/features && chown node:node /apps/api/public/features && \
+    mkdir /apps/api/public/reports && chown node:node /apps/api/public/reports && \
     touch ormlogs.log && chown node:node ormlogs.log && chown node:node wait && \
     chmod +x wait && chown -R node:node apps/
     
