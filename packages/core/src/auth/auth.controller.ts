@@ -28,7 +28,7 @@ import { SocialAuthController } from '@gauzy/auth';
 
 @ApiTags('Auth')
 @Controller()
-export class AuthController extends SocialAuthController {
+export class AuthController extends SocialAuthController<AuthService> {
 	constructor(
 		private readonly authService: AuthService,
 		private readonly commandBus: CommandBus
