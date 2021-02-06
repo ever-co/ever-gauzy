@@ -5,7 +5,11 @@ import { environment } from './environments/environment';
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule);
 
-	app.enableCors();
+	app.enableCors({
+		origin: '*',
+		methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+		credentials: true
+	});
 
 	const globalPrefix = 'api';
 

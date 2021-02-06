@@ -37,8 +37,9 @@ import { GraphqlApiModule } from '../graphql/graphql-api.module';
 			playground: configService.graphqlConfigOptions.playground,
 			debug: configService.graphqlConfigOptions.debug,
 			cors: {
+				methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
 				credentials: true,
-				origin: true
+				origin: '*'
 			},
 			typePaths: [
 				environment.isElectron

@@ -16,8 +16,9 @@ export async function createGraphqlModuleOptions(
 		playground: options.playground || false,
 		debug: options.debug || false,
 		cors: {
+			methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
 			credentials: true,
-			origin: true
+			origin: '*'
 		},
 		include: [options.resolverModule]
 	} as GqlModuleOptions;
