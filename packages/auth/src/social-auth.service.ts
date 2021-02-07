@@ -2,13 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService, IEnvironment } from '@gauzy/config';
 import * as bcrypt from 'bcrypt';
 
-//ABSTRACT
-export abstract class SocialAuthCoreService {
+export abstract class BaseSocialAuth {
 	public abstract validateOAuthLoginEmail(args: []): any;
 }
 
 @Injectable()
-export class SocialAuthService extends SocialAuthCoreService {
+export class SocialAuthService extends BaseSocialAuth {
 	protected readonly configService: ConfigService;
 	protected readonly saltRounds: number;
 	protected readonly clientBaseUrl: string;
@@ -40,7 +39,6 @@ export class SocialAuthService extends SocialAuthCoreService {
 		res: any
 	) {
 		const { userId, jwt } = auth;
-
 		if (success) {
 			return res.redirect(
 				`${this.clientBaseUrl}/#/sign-in/success?jwt=${jwt}&userId=${userId}`

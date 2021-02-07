@@ -1,21 +1,19 @@
-import { Get, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { SocialAuthService } from './../social-auth.service';
-import {
-	IIncomingRequest,
-	RequestCtx
-} from './../decorators/request-context.decorator';
+import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
 
-export abstract class TwitterController<T> {
+@Controller('facebook')
+export class FacebookController {
 	constructor(public readonly service: SocialAuthService) {}
 
-	@Get('twitter')
-	@UseGuards(AuthGuard('twitter'))
-	twitterLogin?(@Req() req) {}
+	@Get('')
+	@UseGuards(AuthGuard('facebook'))
+	facebooLogin(@Req() req: any) {}
 
-	@Get('twitter/callback')
-	@UseGuards(AuthGuard('twitter'))
-	async twitterLoginCallback?(
+	@Get('callback')
+	@UseGuards(AuthGuard('facebook'))
+	async facebooLoginCallback(
 		@RequestCtx() requestCtx: IIncomingRequest,
 		@Res() res
 	) {

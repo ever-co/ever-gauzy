@@ -1,21 +1,19 @@
-import { Get, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { SocialAuthService } from './../social-auth.service';
-import {
-	IIncomingRequest,
-	RequestCtx
-} from './../decorators/request-context.decorator';
+import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
 
-export abstract class MicrosoftController<T> {
+@Controller()
+export class MicrosoftController {
 	constructor(public readonly service: SocialAuthService) {}
 
 	@Get('microsoft')
 	@UseGuards(AuthGuard('microsoft'))
-	microsoftLogin?(@Req() req) {}
+	microsoftLogin(@Req() req: any) {}
 
 	@Get('microsoft/callback')
 	@UseGuards(AuthGuard('microsoft'))
-	async microsoftLoginCallback?(
+	async microsoftLoginCallback(
 		@RequestCtx() requestCtx: IIncomingRequest,
 		@Res() res
 	) {

@@ -1,25 +1,22 @@
-import { Get, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { SocialAuthService } from './../social-auth.service';
-import {
-	IIncomingRequest,
-	RequestCtx
-} from './../decorators/request-context.decorator';
+import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
 
-export abstract class GoogleController<T> {
+@Controller('github')
+export class GithubController {
 	constructor(public readonly service: SocialAuthService) {}
 
-	@Get('google')
-	@UseGuards(AuthGuard('google'))
-	googleLogin?(@Req() req) {}
+	@Get('')
+	@UseGuards(AuthGuard('github'))
+	githubLogin(@Req() req: any) {}
 
-	@Get('google/callback')
-	@UseGuards(AuthGuard('google'))
-	async googleLoginCallback?(
+	@Get('callback')
+	@UseGuards(AuthGuard('github'))
+	async githubLoginCallback(
 		@RequestCtx() requestCtx: IIncomingRequest,
-		@Res() res
+		@Res() res: any
 	) {
-		console.log(requestCtx);
 		const { user } = requestCtx;
 		const {
 			success,

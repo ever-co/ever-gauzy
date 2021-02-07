@@ -1,21 +1,19 @@
-import { Get, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { SocialAuthService } from './../social-auth.service';
-import {
-	IIncomingRequest,
-	RequestCtx
-} from './../decorators/request-context.decorator';
+import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
 
-export abstract class LinkedinController<T> {
+@Controller('linkedin')
+export class LinkedinController {
 	constructor(public readonly service: SocialAuthService) {}
 
-	@Get('linkedin')
+	@Get('')
 	@UseGuards(AuthGuard('linkedin'))
-	linkedinLogin?(@Req() req) {}
+	linkedinLogin(@Req() req: any) {}
 
-	@Get('linkedin/callback')
+	@Get('callback')
 	@UseGuards(AuthGuard('linkedin'))
-	async linkedinLoginCallback?(
+	async linkedinLoginCallback(
 		@RequestCtx() requestCtx: IIncomingRequest,
 		@Res() res
 	) {

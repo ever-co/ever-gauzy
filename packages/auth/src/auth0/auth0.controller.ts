@@ -1,21 +1,19 @@
-import { Get, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { SocialAuthService } from './../social-auth.service';
-import {
-	IIncomingRequest,
-	RequestCtx
-} from './../decorators/request-context.decorator';
+import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
 
-export abstract class Auth0Controller<T> {
+@Controller('auth0')
+export class Auth0Controller {
 	constructor(public readonly service: SocialAuthService) {}
 
-	@Get('auth0')
+	@Get('')
 	@UseGuards(AuthGuard('auth0'))
-	auth0Login?(@Req() req) {}
+	auth0Login(@Req() req: any) {}
 
-	@Get('auth0/callback')
+	@Get('callback')
 	@UseGuards(AuthGuard('auth0'))
-	async auth0LoginCallback?(
+	async auth0LoginCallback(
 		@RequestCtx() requestCtx: IIncomingRequest,
 		@Res() res
 	) {
