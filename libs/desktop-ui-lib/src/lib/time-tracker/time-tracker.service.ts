@@ -19,7 +19,7 @@ export class TimeTrackerService {
 	getTasks(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-ID': values.tenantId
+			'Tenant-Id': values.tenantId
 		});
 		return this.http
 			.get(`${values.apiHost}/api/tasks/employee/${values.employeeId}`, {
@@ -32,7 +32,7 @@ export class TimeTrackerService {
 	getProjects(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-ID': values.tenantId
+			'Tenant-Id': values.tenantId
 		});
 		return this.http
 			.get(
@@ -48,7 +48,7 @@ export class TimeTrackerService {
 	getClient(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-ID': values.tenantId
+			'Tenant-Id': values.tenantId
 		});
 		return this.http
 			.get(
@@ -64,7 +64,7 @@ export class TimeTrackerService {
 	getUserDetail(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-ID': values.tenantId
+			'Tenant-Id': values.tenantId
 		});
 		return this.http
 			.get(
@@ -80,7 +80,7 @@ export class TimeTrackerService {
 	getTimeLogs(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-ID': values.tenantId
+			'Tenant-Id': values.tenantId
 		});
 
 		return this.http
@@ -98,7 +98,7 @@ export class TimeTrackerService {
 	getTimeSlot(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
-			'Tenant-ID': values.tenantId
+			'Tenant-Id': values.tenantId
 		});
 		return this.http
 			.get(

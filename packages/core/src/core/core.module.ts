@@ -41,7 +41,7 @@ import { GraphqlApiModule } from '../graphql/graphql-api.module';
 				credentials: true,
 				origin: '*',
 				allowedHeaders:
-					'Authorization, Language, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
+					'Authorization, Language, Tenant-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
 			},
 			typePaths: [
 				environment.isElectron

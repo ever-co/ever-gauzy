@@ -105,7 +105,7 @@ const uploadScreenShot = async (
 				body: form,
 				headers: {
 					Authorization: `Bearer ${appInfo.token}`,
-					'Tenant-ID': appInfo.tenantId
+					'Tenant-Id': appInfo.tenantId
 				}
 			}
 		);
