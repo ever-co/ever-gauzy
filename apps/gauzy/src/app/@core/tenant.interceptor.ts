@@ -37,7 +37,7 @@ export class TenantInterceptor implements HttpInterceptor {
 
 				request = request.clone({
 					setHeaders: {
-						'Tenant-ID': `${tenantId}`
+						'Tenant-Id': `${tenantId}`
 					}
 				});
 			});
