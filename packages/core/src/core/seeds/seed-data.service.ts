@@ -88,7 +88,7 @@ import {
 } from '../../candidate-source/candidate-source.seed';
 import { createDefaultIntegrationTypes } from '../../integration/integration-type.seed';
 import { createDefaultIntegrations } from '../../integration/integration.seed';
-import { createHelpCenter } from '../../help-center/help-center.seed';
+// import { createHelpCenter } from '../../help-center/help-center.seed';
 import {
 	createDefaultProducts,
 	createRandomProduct
@@ -228,11 +228,11 @@ import {
 	createDefaultOrganizationRecurringExpense,
 	createRandomOrganizationRecurringExpense
 } from '../../organization-recurring-expense/organization-recurring-expense.seed';
-import {
-	createDefaultHelpCenterAuthor,
-	createRandomHelpCenterAuthor
-} from '../../help-center-author/help-center-author.seed';
-import { createHelpCenterArticle } from '../../help-center-article/help-center-article.seed';
+// import {
+// 	createDefaultHelpCenterAuthor,
+// 	createRandomHelpCenterAuthor
+// } from '../../help-center-author/help-center-author.seed';
+// import { createHelpCenterArticle } from '../../help-center-article/help-center-article.seed';
 import {
 	createDefaultOrganizationLanguage,
 	createRandomOrganizationLanguage
@@ -801,13 +801,13 @@ export class SeedDataService {
 			createOrganizationVendors(this.connection, this.organizations)
 		);
 
-		await this.tryExecute(
-			'Help Centers',
-			createHelpCenter(this.connection, {
-				tenant: this.tenant,
-				org: this.organizations[0]
-			})
-		);
+		// await this.tryExecute(
+		// 	'Help Centers',
+		// 	createHelpCenter(this.connection, {
+		// 		tenant: this.tenant,
+		// 		org: this.organizations[0]
+		// 	})
+		// );
 
 		const defaultCandidates = await this.tryExecute(
 			'Default Candidates',
@@ -1156,22 +1156,22 @@ export class SeedDataService {
 			)
 		);
 
-		await this.tryExecute(
-			'Default Help Center Articles',
-			createHelpCenterArticle(
-				this.connection,
-				this.organizations,
-				randomSeedConfig.noOfHelpCenterArticle || 5
-			)
-		);
+		// await this.tryExecute(
+		// 	'Default Help Center Articles',
+		// 	createHelpCenterArticle(
+		// 		this.connection,
+		// 		this.organizations,
+		// 		randomSeedConfig.noOfHelpCenterArticle || 5
+		// 	)
+		// );
 
-		await this.tryExecute(
-			'Default Help Center Author',
-			createDefaultHelpCenterAuthor(
-				this.connection,
-				this.defaultEmployees
-			)
-		);
+		// await this.tryExecute(
+		// 	'Default Help Center Author',
+		// 	createDefaultHelpCenterAuthor(
+		// 		this.connection,
+		// 		this.defaultEmployees
+		// 	)
+		// );
 
 		await this.tryExecute(
 			'Default Availability Slots',
@@ -1756,14 +1756,14 @@ export class SeedDataService {
 			)
 		);
 
-		await this.tryExecute(
-			'Random Help Center Articles',
-			createHelpCenterArticle(
-				this.connection,
-				this.organizations,
-				randomSeedConfig.noOfHelpCenterArticle || 5
-			)
-		);
+		// await this.tryExecute(
+		// 	'Random Help Center Articles',
+		// 	createHelpCenterArticle(
+		// 		this.connection,
+		// 		this.organizations,
+		// 		randomSeedConfig.noOfHelpCenterArticle || 5
+		// 	)
+		// );
 
 		await this.tryExecute(
 			'Random Organization Sprints',
@@ -1784,14 +1784,14 @@ export class SeedDataService {
 			)
 		);
 
-		await this.tryExecute(
-			'Random Help Center Authors',
-			createRandomHelpCenterAuthor(
-				this.connection,
-				tenants,
-				tenantEmployeeMap
-			)
-		);
+		// await this.tryExecute(
+		// 	'Random Help Center Authors',
+		// 	createRandomHelpCenterAuthor(
+		// 		this.connection,
+		// 		tenants,
+		// 		tenantEmployeeMap
+		// 	)
+		// );
 
 		await this.tryExecute(
 			'Random Appointment Employees',

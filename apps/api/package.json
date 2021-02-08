@@ -37,7 +37,8 @@
 		"seed:prod:build": "yarn ng run api:seed -c=production"
 	},
 	"dependencies": {
-		"@gauzy/core": "^0.1.0"
+		"@gauzy/core": "^0.1.0",
+		"@gauzy/knowledge-base": "^0.1.0"
 	},
 	"devDependencies": {
 		"@nestjs/schematics": "^7.1.2",

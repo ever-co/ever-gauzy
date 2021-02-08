@@ -96,7 +96,6 @@ import { RequestApprovalEmployeeModule } from './request-approval-employee/reque
 import { RequestApprovalModule } from './request-approval/request-approval.module';
 import { EventTypeModule } from './event-types/event-type.module';
 import { AvailabilitySlotsModule } from './availability-slots/availability-slots.module';
-import { HelpCenterModule } from './help-center/help-center.module';
 import { PipelineModule } from './pipeline/pipeline.module';
 import { PaymentModule } from './payment/payment.module';
 import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities/candidate-personal-qualities.module';
@@ -107,12 +106,10 @@ import { KeyResultModule } from './keyresult/keyresult.module';
 import { RequestApprovalTeamModule } from './request-approval-team/request-approval-team.module';
 import { KeyResultUpdateModule } from './keyresult-update/keyresult-update.module';
 import { CandidateCriterionsRatingModule } from './candidate-criterions-rating/candidate-criterion-rating.module';
-import { HelpCenterArticleModule } from './help-center-article/help-center-article.module';
 import { GoalTimeFrameModule } from './goal-time-frame/goal-time-frame.module';
 import { EstimateEmailModule } from './estimate-email/estimate-email.module';
 import { TimeOffRequestModule } from './time-off-request/time-off-request.module';
 import { DealModule } from './deal/deal.module';
-import { HelpCenterAuthorModule } from './help-center-author/help-center-author.module';
 import { OrganizationSprintModule } from './organization-sprint/organization-sprint.module';
 import { GoalKpiModule } from './goal-kpi/goal-kpi.module';
 import { GoalGeneralSettingModule } from './goal-general-setting/goal-general-setting.module';
@@ -231,15 +228,6 @@ if (process.env.DB_TYPE === 'postgres') {
 					{ path: '/organization', module: OrganizationModule },
 					{ path: '/income', module: IncomeModule },
 					{ path: '/expense', module: ExpenseModule },
-					{ path: '/help-center', module: HelpCenterModule },
-					{
-						path: '/help-center-article',
-						module: HelpCenterArticleModule
-					},
-					{
-						path: '/help-center-author',
-						module: HelpCenterAuthorModule
-					},
 					{ path: '/equipment', module: EquipmentModule },
 					{ path: '/employee-level', module: EmployeeLevelModule },
 					{
@@ -630,7 +618,6 @@ if (process.env.DB_TYPE === 'postgres') {
 		EquipmentSharingPolicyModule,
 		RequestApprovalModule,
 		RolePermissionsModule,
-		HelpCenterArticleModule,
 		TenantModule,
 		TenantSettingModule,
 		TagModule,
@@ -652,8 +639,6 @@ if (process.env.DB_TYPE === 'postgres') {
 		StageModule,
 		DealModule,
 		InvoiceEstimateHistoryModule,
-		HelpCenterModule,
-		HelpCenterAuthorModule,
 		EquipmentModule,
 		EquipmentSharingModule,
 		TaskModule,

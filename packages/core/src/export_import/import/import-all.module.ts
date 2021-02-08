@@ -76,9 +76,9 @@ import { EmployeeLevel } from '../../organization_employee-level/organization-em
 import { EmployeeRecurringExpense } from '../../employee-recurring-expense/employee-recurring-expense.entity';
 import { EmployeeSetting } from '../../employee-setting/employee-setting.entity';
 import { EquipmentSharing } from '../../equipment-sharing';
-import { HelpCenter } from '../../help-center/help-center.entity';
-import { HelpCenterAuthor } from '../../help-center-author/help-center-author.entity';
-import { HelpCenterArticle } from '../../help-center-article/help-center-article.entity';
+// import { HelpCenter } from '../../help-center/help-center.entity';
+// import { HelpCenterAuthor } from '../../help-center-author/help-center-author.entity';
+// import { HelpCenterArticle } from '../../help-center-article/help-center-article.entity';
 import { IntegrationSetting } from '../../integration-setting/integration-setting.entity';
 import { IntegrationMap } from '../../integration-map/integration-map.entity';
 import { IntegrationEntitySettingTiedEntity } from '../../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.entity';
@@ -173,9 +173,9 @@ import { JobPreset } from '../../employee-job-preset/job-preset.entity';
 			GoalTemplate,
 			GoalTimeFrame,
 
-			HelpCenter,
-			HelpCenterArticle,
-			HelpCenterAuthor,
+			// HelpCenter,
+			// HelpCenterArticle,
+			// HelpCenterAuthor,
 
 			Income,
 			Integration,

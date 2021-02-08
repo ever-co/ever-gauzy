@@ -11,5 +11,5 @@ export interface IGraphQLApiOptions {
 
 export interface IAPIExtensionDefinition {
 	schema?: DocumentNode | (() => DocumentNode);
-	resolvers: Array<Type<any>> | (() => Array<Type<any>>);
+	resolvers?: Array<Type<any>> | (() => Array<Type<any>>);
 }

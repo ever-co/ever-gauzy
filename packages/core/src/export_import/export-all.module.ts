@@ -120,9 +120,9 @@ import { EventType } from '../event-types/event-type.entity';
 import { GoalKPI } from '../goal-kpi/goal-kpi.entity';
 import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
 import { Goal } from '../goal/goal.entity';
-import { HelpCenterArticle } from '../help-center-article/help-center-article.entity';
-import { HelpCenterAuthor } from '../help-center-author/help-center-author.entity';
-import { HelpCenter } from '../help-center/help-center.entity';
+// import { HelpCenterArticle } from '../help-center-article/help-center-article.entity';
+// import { HelpCenterAuthor } from '../help-center-author/help-center-author.entity';
+// import { HelpCenter } from '../help-center/help-center.entity';
 import { IntegrationEntitySettingTiedEntity } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.entity';
 import { Integration } from '../integration/integration.entity';
 import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
@@ -160,9 +160,9 @@ import { GoalService } from '../goal/goal.service';
 import { GoalKpiService } from '../goal-kpi/goal-kpi.service';
 import { GoalTimeFrameService } from '../goal-time-frame/goal-time-frame.service';
 import { EventTypeService } from '../event-types/event-type.service';
-import { HelpCenterService } from '../help-center/help-center.service';
-import { HelpCenterArticleService } from '../help-center-article/help-center-article.service';
-import { HelpCenterAuthorService } from '../help-center-author/help-center-author.service';
+// import { HelpCenterService } from '../help-center/help-center.service';
+// import { HelpCenterArticleService } from '../help-center-article/help-center-article.service';
+// import { HelpCenterAuthorService } from '../help-center-author/help-center-author.service';
 import { TimerService } from '../timesheet/timer/timer.service';
 import { StageService } from '../pipeline-stage/pipeline-stage.service';
 import { SkillService } from '../skills/skill.service';
@@ -285,9 +285,9 @@ import { ImageAsset } from '../image-asset/image-asset.entity';
 			GoalTemplate,
 			GoalTimeFrame,
 
-			HelpCenter,
-			HelpCenterArticle,
-			HelpCenterAuthor,
+			// HelpCenter,
+			// HelpCenterArticle,
+			// HelpCenterAuthor,
 
 			ImageAsset,
 			Income,
@@ -416,9 +416,9 @@ import { ImageAsset } from '../image-asset/image-asset.entity';
 		GoalKpiTemplateService,
 		GoalTimeFrameService,
 
-		HelpCenterService,
-		HelpCenterArticleService,
-		HelpCenterAuthorService,
+		// HelpCenterService,
+		// HelpCenterArticleService,
+		// HelpCenterAuthorService,
 
 		IncomeService,
 		IntegrationService,
@@ -544,9 +544,9 @@ import { ImageAsset } from '../image-asset/image-asset.entity';
 		GoalKpiTemplateService,
 		GoalTimeFrameService,
 
-		HelpCenterService,
-		HelpCenterArticleService,
-		HelpCenterAuthorService,
+		// HelpCenterService,
+		// HelpCenterArticleService,
+		// HelpCenterAuthorService,
 
 		IncomeService,
 		IntegrationService,
