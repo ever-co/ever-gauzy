@@ -1,4 +1,4 @@
-export const InvoicesPageData = {
+export const SalesInvoicesPageData = {
 	invoiceType: 'By Employee Hours',
 	discountValue: 5,
 	editDiscountValue: 3,

@@ -167,6 +167,6 @@ describe('Invoices test', () => {
 		invoicesPage.confirmDeleteButtonVisible();
 		invoicesPage.clickConfirmDeleteButton();
 		invoicesPage.waitMessageToHide();
-		invoicesPage.verifyElementIsDeleted(InvoicesPageData.discountValue);
+		invoicesPage.verifyElementIsDeleted(InvoicesPageData.emptyTableText);
 	});
 });
