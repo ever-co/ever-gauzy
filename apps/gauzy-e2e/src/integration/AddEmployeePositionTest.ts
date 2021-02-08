@@ -4,12 +4,18 @@ import * as addEmployeePositionPage from '../support/Base/pages/AddEmployeePosit
 import { AddEmployeePositionPageData } from '../support/Base/pagedata/AddEmployeePositionPageData';
 import * as dashboradPage from '../support/Base/pages/Dashboard.po';
 import { CustomCommands } from '../support/commands';
+import * as organizationTagsUserPage from '../support/Base/pages/OrganizationTags.po';
+import { OrganizationTagsPageData } from '../support/Base/pagedata/OrganizationTagsPageData';
 
 describe('Add employee position test', () => {
 	before(() => {
 		CustomCommands.login(loginPage, LoginPageData, dashboradPage);
 	});
 	it('Should be able to add new employee position', () => {
+		CustomCommands.addTag(
+			organizationTagsUserPage,
+			OrganizationTagsPageData
+		);
 		cy.visit('/#/pages/employees/positions');
 		addEmployeePositionPage.gridBtnExists();
 		addEmployeePositionPage.gridBtnClick(1);

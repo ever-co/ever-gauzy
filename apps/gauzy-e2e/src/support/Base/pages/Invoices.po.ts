@@ -10,7 +10,7 @@ import {
 	clickButtonByText,
 	verifyValue,
 	scrollDown,
-	verifyTextNotExisting
+	verifyText
 } from '../utils/util';
 import { InvoicesPage } from '../pageobjects/InvoicesPageObject';
 
@@ -244,7 +244,7 @@ export const verifySentBadgeClass = () => {
 };
 
 export const verifyElementIsDeleted = (text) => {
-	verifyTextNotExisting(InvoicesPage.verifyInvoiceCss, text);
+	verifyText(InvoicesPage.verifyInvoiceCss, text);
 };
 
 export const scrollEmailInviteTemplate = () => {

@@ -1,8 +1,8 @@
-export const InvoicesPage = {
+export const SalesEstimatesPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	addButtonCss: 'div.actions-container > button[status="success"]',
 	editButtonCss: 'div.btn-group > button[status="info"]',
-	setStatusButtonCss: 'div.btn-group > nb-select[status="info"]',
+	convertToInvoiceButton: 'div.actions-container > button[status="info"]',
 	viewButtonCss: 'div.actions-container > button[status="info"]',
 	popoverButtonCss: 'div.popover-container > button[status="info"]',
 	deleteButtonCss: 'div.popover-container > button[status="danger"]',
@@ -20,16 +20,16 @@ export const InvoicesPage = {
 	selectEmloyeeCss: 'div.form-group ga-employee-multi-select nb-select',
 	saveAsDraftButtonCss: 'nb-card-footer > button[status="success"]',
 	emailInputCss: '#email',
+	tableRowCss: 'table > tbody > tr.ng2-smart-row',
 	moreButtonCss:
 		'div.actions-container > div > button > nb-icon[icon="more-vertical-outline"]',
-	tableRowCss: 'table > tbody > tr.ng2-smart-row',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	cardBodyCss: 'nb-card-header.d-flex',
 	backButtonCss: 'g[data-name="arrow-back"]',
 	deleteItemCss: 'i.nb-trash',
 	confirmButtonCss: 'nb-card-footer.text-right > button[status="success"]',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
-	verifyInvoiceCss: 'tr.ng-star-inserted > td',
+	verifyEstimateCss: 'div.ng-star-inserted',
 	draftBadgeCss: 'div.badge-warning',
 	successBadgeCss: 'div.badge-success',
 	emailCardCss: 'nb-card-body.invoice-email-body'
