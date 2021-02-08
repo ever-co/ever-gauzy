@@ -240,7 +240,7 @@ export class ProductGalleryComponent
 	}
 
 	onEditImageClick() {
-		const dialog = this.dialogService
+		this.dialogService
 			.open(ImageAssetComponent, {
 				context: {
 					imageAsset: this.selectedImage
