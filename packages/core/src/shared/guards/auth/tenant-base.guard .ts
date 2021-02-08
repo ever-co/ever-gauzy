@@ -12,19 +12,15 @@ export class TenantBaseGuard implements CanActivate {
 		const { tenantId: currentTenantId } = RequestContext.currentUser();
 		const request: any = context.switchToHttp().getRequest();
 		const method: RequestMethodEnum = request.method;
-		const query: any = request.query;
+		const { query, headers, rawHeaders } = request;
 
 		let isAuthorized = false;
 		if (!currentTenantId) {
 			return isAuthorized;
 		}
 
-		// Get Tenant-Id from request headers
-		const headerTenantId = context.switchToHttp().getRequest().headers[
-			'Tenant-Id'
-		];
-
-		const rawHeaders = context.switchToHttp().getRequest().rawHeaders;
+		// Get tenant-id from request headers
+		const headerTenantId = headers['tenant-id'];
 		if (
 			headerTenantId &&
 			(rawHeaders.includes('tenant-id') ||
