@@ -2060,7 +2060,8 @@
 		"HEIGHT": "Височина",
 		"IMAGE_ADDED_TO_GALLERY": "Изображението беше добавено към галерията",
 		"IMAGES_ADDED_TO_GALLERY": "Изображенията бяха добавени към галерията",
-		"IMAGE_ASSET_UPDATED": "Изображението беше променено"
+		"IMAGE_ASSET_UPDATED": "Изображението беше променено",
+		"EDIT_IMAGE_ASSET": "Редактирай изображение"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
