@@ -1,11 +1,12 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { IImageAsset } from '@gauzy/contracts';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { ImageAssetService } from '../../@core/services/image-asset.service';
+import { ToastrService } from '../../@core/services/toastr.service';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
 
 @UntilDestroy()
@@ -25,7 +26,7 @@ export class ImageAssetComponent
 		readonly translateService: TranslateService,
 		private imageAssetService: ImageAssetService,
 		private dialogRef: NbDialogRef<ImageAssetComponent>,
-		private toastrService: NbToastrService
+		private toastrService: ToastrService
 	) {
 		super(translateService);
 	}
@@ -48,15 +49,13 @@ export class ImageAssetComponent
 			.updateImageAsset(request)
 			.then((res) => {
 				this.toastrService.success(
-					'INVENTORY_PAGE.IMAGE_ASSET.UPDATED'
+					'INVENTORY_PAGE.IMAGE_ASSET_UPDATED'
 				);
 
 				this.dialogRef.close(request);
 			})
 			.catch((err) => {
-				this.toastrService.success(
-					'INVENTORY_PAGE.IMAGE_ASSET.UPDATED'
-				);
+				this.toastrService.success('Could not save image');
 			});
 	}
 

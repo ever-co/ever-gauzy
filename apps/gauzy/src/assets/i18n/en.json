@@ -2053,7 +2053,14 @@
 		"TYPE": "Type",
 		"VIEW_INVENTORY_ITEM": "View inventory item",
 		"TAGS": "Tags",
-		"PRICE": "Price"
+		"PRICE": "Price",
+		"SAVE": "Save",
+		"CANCEL": "Cancel",
+		"WIDTH": "Width",
+		"HEIGHT": "Height",
+		"IMAGE_ADDED_TO_GALLERY": "Image was added to the gallery",
+		"IMAGES_ADDED_TO_GALLERY": "The Images were added to the gallery",
+		"IMAGE_ASSET_UPDATED": "The image asset was updated"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
