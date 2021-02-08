@@ -191,7 +191,9 @@ export class ProductGalleryComponent
 			this.selectedImage = null;
 			this.toastrService.success('INVENTORY_PAGE.IMAGE_WAS_DELETED');
 		} catch (err) {
-			this.toastrService.danger('Something bad happened!');
+			this.toastrService.danger(
+				err.error.message || 'Something bad happened!'
+			);
 		}
 	}
 
