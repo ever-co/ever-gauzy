@@ -15,22 +15,24 @@ import { CommandHandlers } from './commands/handlers';
 import { JwtStrategy } from './jwt.strategy';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 
+const providers = [
+	AuthService,
+	UserService,
+	UserOrganizationService,
+	EmailService
+];
 @Module({
 	imports: [
-		SocialAuthModule,
+		SocialAuthModule.registerAsync({
+			imports: [AuthModule],
+			useClass: AuthService
+		}),
 		TypeOrmModule.forFeature([User, UserOrganization, Organization]),
 		EmailModule,
 		CqrsModule
 	],
 	controllers: [AuthController],
-	providers: [
-		AuthService,
-		UserService,
-		UserOrganizationService,
-		EmailService,
-		...CommandHandlers,
-		JwtStrategy
-	],
-	exports: [AuthService, UserService]
+	providers: [...providers, ...CommandHandlers, JwtStrategy],
+	exports: [...providers]
 })
 export class AuthModule {}

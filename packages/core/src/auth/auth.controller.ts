@@ -24,17 +24,14 @@ import { getUserDummyImage } from '../core';
 import { Request } from 'express';
 import { I18nLang } from 'nestjs-i18n';
 import { AuthLoginCommand } from './commands/auth.login.command';
-import { SocialAuthController } from '@gauzy/auth';
 
 @ApiTags('Auth')
 @Controller()
-export class AuthController extends SocialAuthController {
+export class AuthController {
 	constructor(
 		private readonly authService: AuthService,
 		private readonly commandBus: CommandBus
-	) {
-		super(authService);
-	}
+	) {}
 
 	@ApiOperation({ summary: 'Is authenticated' })
 	@ApiResponse({ status: HttpStatus.OK })

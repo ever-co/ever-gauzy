@@ -1,14 +1,20 @@
+import { Injectable } from '@nestjs/common';
 import { ConfigService, IEnvironment } from '@gauzy/config';
 import * as bcrypt from 'bcrypt';
 
-export abstract class SocialAuthService {
+export abstract class BaseSocialAuth {
+	public abstract validateOAuthLoginEmail(args: []): any;
+}
+
+@Injectable()
+export class SocialAuthService extends BaseSocialAuth {
 	protected readonly configService: ConfigService;
 	protected readonly saltRounds: number;
 	protected readonly clientBaseUrl: string;
 
 	constructor() {
+		super();
 		this.configService = new ConfigService();
-
 		this.saltRounds = this.configService.get(
 			'USER_PASSWORD_BCRYPT_SALT_ROUNDS'
 		) as number;
@@ -17,8 +23,7 @@ export abstract class SocialAuthService {
 		) as keyof IEnvironment;
 	}
 
-	// The abstract method the subclass will have to call
-	public abstract validateOAuthLoginEmail(args: []): any;
+	public validateOAuthLoginEmail(args: []): any {}
 
 	public async getPasswordHash(password: string): Promise<string> {
 		return bcrypt.hash(password, this.saltRounds);
@@ -34,7 +39,6 @@ export abstract class SocialAuthService {
 		res: any
 	) {
 		const { userId, jwt } = auth;
-
 		if (success) {
 			return res.redirect(
 				`${this.clientBaseUrl}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
