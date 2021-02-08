@@ -1,10 +1,11 @@
 export const InvoicesPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	addButtonCss: 'div.actions-container > button[status="success"]',
-	infoButtonCss: 'div.actions-container > button[status="info"]',
 	editButtonCss: 'div.btn-group > button[status="info"]',
 	setStatusButtonCss: 'div.btn-group > nb-select[status="info"]',
-	deleteButtonCss: 'div.actions-container > button[status="danger"]',
+	viewButtonCss: 'div.actions-container > button[status="info"]',
+	popoverButtonCss: 'div.popover-container > button[status="info"]',
+	deleteButtonCss: 'div.popover-container > button[status="danger"]',
 	addTagsDropdownCss: '#addTags',
 	tagsDropdownOption: 'div.ng-option',
 	discountInputCss: '#inputDiscountValue',
@@ -19,6 +20,8 @@ export const InvoicesPage = {
 	selectEmloyeeCss: 'div.form-group ga-employee-multi-select nb-select',
 	saveAsDraftButtonCss: 'nb-card-footer > button[status="success"]',
 	emailInputCss: '#email',
+	moreButtonCss:
+		'div.actions-container > div > button > nb-icon[icon="more-vertical-outline"]',
 	tableRowCss: 'table > tbody > tr.ng2-smart-row',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	cardBodyCss: 'nb-card-header.d-flex',

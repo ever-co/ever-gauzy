@@ -3,6 +3,20 @@
 	"version": "0.1.0",
 	"description": "Gauzy e2e tests",
 	"license": "GPL-3.0",
+	"homepage": "https://gauzy.co",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ever-co/gauzy.git"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/gauzy/issues"
+	},
+	"private": true,
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
 	"dependencies": {},
 	"resolutions": {
 		"@angular-devkit/build-angular": "~0.1101.2"

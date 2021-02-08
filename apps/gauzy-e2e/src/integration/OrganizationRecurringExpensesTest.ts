@@ -57,8 +57,6 @@ describe('Organization recurring expenses test', () => {
 		organizationRecurringExpensesPage.confirmDeleteButtonVisible();
 		organizationRecurringExpensesPage.clickConfirmDeleteButton();
 		organizationRecurringExpensesPage.waitMessageToHide();
-		organizationRecurringExpensesPage.verifyExpenseIsDeleted(
-			OrganizationRecurringExpensesPageData.editExpense
-		);
+		organizationRecurringExpensesPage.verifyExpenseIsDeleted();
 	});
 });

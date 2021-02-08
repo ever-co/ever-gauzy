@@ -15,6 +15,13 @@ export async function createGraphqlModuleOptions(
 		typeDefs: await createTypeDefs(configService, options, typesLoader),
 		playground: options.playground || false,
 		debug: options.debug || false,
+		cors: {
+			methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+			credentials: true,
+			origin: '*',
+			allowedHeaders:
+				'Authorization, Language, Tenant-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
+		},
 		include: [options.resolverModule]
 	} as GqlModuleOptions;
 }

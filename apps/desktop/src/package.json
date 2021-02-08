@@ -12,12 +12,13 @@
 	"bugs": {
 		"url": "https://github.com/ever-co/gauzy/issues"
 	},
-	"main": "apps/desktop/src/index.js",
+	"private": true,
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
+	"main": "apps/desktop/src/index.js",
 	"build": {
 		"appId": "com.company.gauzydesktop",
 		"productName": "Gauzy Desktop",
@@ -76,10 +77,8 @@
 			"deleteAppDataOnUninstall": true,
 			"menuCategory": true
 		},
-		"files": [
-			"./**/*",
-			"./node_modules/**/*",
-			"../libs/**/*"
+		"extraResources": [
+			"./data/*"
 		]
 	},
 	"dependencies": {
@@ -89,7 +88,6 @@
 		"node-notifier": "^8.0.0",
 		"moment": "^2.29.0",
 		"knex": "^0.21.6",
-		"sharp": "^0.26.1",
 		"consolidate": "^0.16.0",
 		"squirrelly": "^8.0.8",
 		"twing": "^5.0.2",
@@ -98,6 +96,9 @@
 		"node-fetch": "^2.6.1",
 		"screenshot-desktop": "^1.12.2",
 		"electron-updater": "~4.3.5",
-		"pg": "^8.3.3"
+		"pg": "^8.3.3",
+		"@nestjs/platform-express": "^7.6.5",
+		"@gauzy/core": "file:../../../node_modules/@gauzy",
+		"@gauzy/auth": "file:../../../node_modules/@gauzy"
 	}
 }

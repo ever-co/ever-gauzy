@@ -3,6 +3,20 @@
 	"version": "0.1.0",
 	"description": "Gauzy UI",
 	"license": "AGPL-3.0",
+	"homepage": "https://gauzy.co",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ever-co/gauzy.git"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/gauzy/issues"
+	},
+	"private": true,
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
 	"resolutions": {
 		"uglify-js": "npm:terser",
 		"webpack": "^5.18.0",
@@ -61,8 +75,8 @@
 		"cloudinary-core": "^2.11.3",
 		"core-js": "^3.8.3",
 		"d3": "^6.5.0",
-		"d3-selection-multi": "1.0.1",
-		"date-fns": "~2.16.1",
+		"d3-selection-multi": "^1.0.1",
+		"date-fns": "^2.16.1",
 		"date-holidays": "^1.6.1",
 		"detect-passive-events": "^1.0.4",
 		"echarts": "^5.0.1",

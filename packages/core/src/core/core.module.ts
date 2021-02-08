@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import * as path from 'path';
-import { ConfigModule, ConfigService } from '@gauzy/config';
+import { ConfigModule, ConfigService, environment } from '@gauzy/config';
 import { RequestContextMiddleware } from './context';
 import { FileStorageModule } from './file-storage';
 import { GraphqlModule } from '../graphql/graphql.module';
@@ -36,8 +36,23 @@ import { GraphqlApiModule } from '../graphql/graphql-api.module';
 			path: configService.graphqlConfigOptions.path,
 			playground: configService.graphqlConfigOptions.playground,
 			debug: configService.graphqlConfigOptions.debug,
+			cors: {
+				methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+				credentials: true,
+				origin: '*',
+				allowedHeaders:
+					'Authorization, Language, Tenant-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
+			},
 			typePaths: [
-				path.join(path.resolve(__dirname, '../**/', 'schema'), '*.gql')
+				environment.isElectron
+					? path.join(
+							path.resolve(__dirname, '../../../../../../data/'),
+							'*.gql'
+					  )
+					: path.join(
+							path.resolve(__dirname, '../**/', 'schema'),
+							'*.gql'
+					  )
 			],
 			resolverModule: GraphqlApiModule
 		})) as DynamicModule,

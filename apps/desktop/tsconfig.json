@@ -8,6 +8,7 @@
 		"experimentalDecorators": true,
 		"downlevelIteration": true,
 		"esModuleInterop": true,
+		"module": "commonjs",
 		"target": "es2016",
 		"typeRoots": ["../../node_modules/@types"]
 	},

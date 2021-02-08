@@ -121,7 +121,7 @@ function startServer(value, restart = false) {
 	}
 	if (value.isLocalServer) {
 		process.env.PORT = value.port || environment.API_DEFAULT_PORT;
-		process.env.HOST = 'http://localhost';
+		process.env.HOST = '0.0.0.0';
 		process.env.BASE_URL = `http://localhost:${
 			value.port || environment.API_DEFAULT_PORT
 		}`;
@@ -149,6 +149,11 @@ function startServer(value, restart = false) {
 				const msg = 'Unable to connect to the database';
 				dialogMessage(msg);
 			}
+		});
+
+		serverGauzy.stderr.on('data', (data) => {
+			const msgData = data.toString();
+			console.log('log error--', msgData);
 		});
 	}
 
@@ -478,7 +483,9 @@ app.on('before-quit', (e) => {
 			});
 		}, 1000);
 	} else {
-		cancellationToken.cancel();
+		if (cancellationToken) {
+			cancellationToken.cancel();
+		}
 		app.exit(0);
 		if (serverDesktop) serverDesktop.kill();
 		if (serverGauzy) serverGauzy.kill();

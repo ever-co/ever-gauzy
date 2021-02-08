@@ -105,10 +105,17 @@ COPY --chown=node:node --from=dependencies /wait ./wait
 COPY --chown=node:node --from=dependencies /entrypoint.sh .
 COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules/ ./node_modules/
 COPY --chown=node:node --from=build /srv/gauzy/packages/ ./packages/
+
+# copy static assets files which used for example in the seeds (e.g. images for features, reports, screenshots)
 COPY --chown=node:node apps/api/src/assets apps/api/src/assets
+
+# copy folder to which we later move static assets (e.g. images for features, reports, screenshots)
+COPY --chown=node:node apps/api/public apps/api/public
+
 COPY --chown=node:node --from=build /srv/gauzy/dist/apps/api .
 
-RUN npm install pm2 -g && mkdir /import && chown node:node /import && \
+RUN npm install pm2 -g && \
+    mkdir /import && chown node:node /import && \
     touch ormlogs.log && chown node:node ormlogs.log && chown node:node wait && \
     chmod +x wait && chown -R node:node apps/
     

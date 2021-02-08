@@ -28,17 +28,14 @@ describe('Job proposals test', () => {
 	});
 	it('Should be able to edit job proposal', () => {
 		jobProposalsPage.selectTableRow(0);
-		jobProposalsPage.selectTableRow(0);
 		jobProposalsPage.editButtonVisible();
 		jobProposalsPage.clickEditButton(JobsProposalsPageData.editButton);
 		jobProposalsPage.nameInputVisible();
-		jobProposalsPage.enterNameInputData(JobsProposalsPageData.name);
-		jobProposalsPage.contentInputVisible();
-		jobProposalsPage.enterContentInputData(JobsProposalsPageData.content);
+		jobProposalsPage.enterNameInputData(JobsProposalsPageData.editName);
 		jobProposalsPage.saveButtonVisible();
 		jobProposalsPage.clickSaveButton();
 		jobProposalsPage.waitMessageToHide();
-		jobProposalsPage.verifyProposalExists(JobsProposalsPageData.name);
+		jobProposalsPage.verifyProposalExists(JobsProposalsPageData.editName);
 	});
 	it('Should be able to make proposal default', () => {
 		jobProposalsPage.makeDefaultButtonVisible();
@@ -53,6 +50,6 @@ describe('Job proposals test', () => {
 		jobProposalsPage.confirmDeleteButtonVisible();
 		jobProposalsPage.clickConfirmDeleteButton();
 		jobProposalsPage.waitMessageToHide();
-		jobProposalsPage.verifyElementIsDeleted(JobsProposalsPageData.name);
+		jobProposalsPage.verifyElementIsDeleted(JobsProposalsPageData.editName);
 	});
 });
