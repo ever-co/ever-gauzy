@@ -2056,12 +2056,12 @@
 		"PRICE": "Цена",
 		"SAVE": "Сохранить",
 		"CANCEL": "Отменить",
-		"WIDTH": "ширина",
-		"HEIGHT": "Рост",
-		"IMAGE_ADDED_TO_GALLERY": "Изображение добавлено в галерею",
-		"IMAGES_ADDED_TO_GALLERY": "Изображения добавлены в галерею",
-		"IMAGE_ASSET_UPDATED": "Ресурс изображения был обновлен",
-		"EDIT_IMAGE_ASSET": "Редактировать изображени"
+		"WIDTH": "Width",
+		"HEIGHT": "Высота",
+		"IMAGE_ADDED_TO_GALLERY": "Изображение было добавлено в галерею",
+		"IMAGES_ADDED_TO_GALLERY": "Изображения были добавлены в галерею",
+		"IMAGE_ASSET_UPDATED": "Медиафайл изображения был обновлен",
+		"EDIT_IMAGE_ASSET": "Редактировать актив изображения"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
