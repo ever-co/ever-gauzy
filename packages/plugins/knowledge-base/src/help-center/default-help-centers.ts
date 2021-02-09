@@ -9,7 +9,6 @@ export const DEFAULT_HELP_CENTER_MENUS: IHelpCenter[] = [
 		language: 'en',
 		color: '#d53636',
 		index: 0,
-		tenant: {},
 		children: [
 			{
 				name: 'Cookies',
@@ -19,7 +18,7 @@ export const DEFAULT_HELP_CENTER_MENUS: IHelpCenter[] = [
 				description: 'Information',
 				language: 'en',
 				color: '#d53636',
-				tenant: {},
+
 				index: 0
 			},
 			{
@@ -30,7 +29,7 @@ export const DEFAULT_HELP_CENTER_MENUS: IHelpCenter[] = [
 				description: 'Device Information',
 				language: 'en',
 				color: '#d53636',
-				tenant: {},
+
 				index: 1
 			},
 			{
@@ -42,7 +41,7 @@ export const DEFAULT_HELP_CENTER_MENUS: IHelpCenter[] = [
 				data: 'Usage Information',
 				language: 'en',
 				color: '#d53636',
-				tenant: {},
+
 				index: 2
 			},
 			{
@@ -53,7 +52,7 @@ export const DEFAULT_HELP_CENTER_MENUS: IHelpCenter[] = [
 				description: 'Gauzy Testing',
 				language: 'en',
 				color: '#d53636',
-				tenant: {},
+
 				index: 3
 			}
 		]
@@ -66,7 +65,6 @@ export const DEFAULT_HELP_CENTER_MENUS: IHelpCenter[] = [
 		language: 'en',
 		color: '#d53636',
 		index: 1,
-		tenant: {},
 		children: [
 			{
 				name: 'Cookies',
@@ -76,7 +74,7 @@ export const DEFAULT_HELP_CENTER_MENUS: IHelpCenter[] = [
 				description: 'Information',
 				language: 'en',
 				color: '#d53636',
-				tenant: {},
+
 				index: 0
 			}
 		]
@@ -89,7 +87,6 @@ export const DEFAULT_HELP_CENTER_MENUS: IHelpCenter[] = [
 		language: 'en',
 		color: '#d53636',
 		index: 2,
-		tenant: {},
 		children: [
 			{
 				name: 'Cookies',
@@ -99,7 +96,7 @@ export const DEFAULT_HELP_CENTER_MENUS: IHelpCenter[] = [
 				description: 'Information',
 				language: 'en',
 				color: '#d53636',
-				tenant: {},
+
 				index: 0
 			}
 		]

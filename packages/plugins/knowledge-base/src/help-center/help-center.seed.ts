@@ -16,11 +16,10 @@ export const createHelpCenter = async (
 ): Promise<IHelpCenter[]> => {
 	const helpCenterMenuList: IHelpCenter[] = DEFAULT_HELP_CENTER_MENUS;
 	for (const node of helpCenterMenuList) {
-		const helpCenter: HelpCenter = {
+		const helpCenter: IHelpCenter = {
 			...node,
 			tenant,
-			organization: org,
-			organizationId: org.id
+			organization: org
 		};
 		helpCenter.children.forEach((child: HelpCenter) => {
 			child.organization = org;

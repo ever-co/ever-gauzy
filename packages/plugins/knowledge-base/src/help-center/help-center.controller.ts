@@ -51,11 +51,10 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findMenu(
+	async findAll(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<HelpCenter>> {
 		const { relations = [], findInput = null } = data;
-		console.log(relations, 'relations');
 		return this.helpCenterService.findAll({
 			relations,
 			where: findInput
@@ -73,7 +72,7 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_HELP_CENTER_EDIT)
 	@Post()
-	async createNode(@Body() entity: IHelpCenter): Promise<any> {
+	async create(@Body() entity: IHelpCenter): Promise<any> {
 		return this.helpCenterService.create(entity);
 	}
 
