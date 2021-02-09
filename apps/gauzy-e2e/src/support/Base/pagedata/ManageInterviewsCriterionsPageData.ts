@@ -1,6 +1,6 @@
 export const ManageInterviewsCriterionsPageData = {
 	technology: 'Node/Express JS',
-	qualitites: 'Loyalty',
+	quality: 'Loyalty',
 	editTechnology: 'Angular 2-10',
-	editQualitites: 'Communicative'
+	editQuality: 'Communicative'
 };

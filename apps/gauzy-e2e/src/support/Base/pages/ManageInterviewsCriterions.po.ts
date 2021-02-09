@@ -2,14 +2,11 @@ import {
 	enterInput,
 	verifyElementIsVisible,
 	clickButton,
-	clickElementByText,
-	enterInputConditionally,
 	clearField,
-	clickKeyboardBtnByKeycode,
 	clickButtonByIndex,
 	waitElementToHide,
 	verifyText,
-	verifyTextNotExisting
+	verifyElementNotExist
 } from '../utils/util';
 import { ManageInterviewsCriterionsPage } from '../pageobjects/ManageInterviewsCriterionsPageObject';
 
@@ -34,6 +31,12 @@ export const verifyTechnologyTextExist = (text) => {
 	verifyText(ManageInterviewsCriterionsPage.verifyTechnologyTextCss, text);
 };
 
+export const verifyTechnologyIsDeleted = () => {
+	verifyElementNotExist(
+		ManageInterviewsCriterionsPage.verifyTechnologyTextCss
+	);
+};
+
 export const editTechnologyButtonVisible = () => {
 	verifyElementIsVisible(
 		ManageInterviewsCriterionsPage.editTechnologyButtonCss
@@ -56,4 +59,39 @@ export const clickDeleteTechnologyButton = () => {
 
 export const waitMessageToHide = () => {
 	waitElementToHide(ManageInterviewsCriterionsPage.toastrMessageCss);
+};
+
+export const qualityInputVisible = () => {
+	verifyElementIsVisible(ManageInterviewsCriterionsPage.qualityInputCss);
+};
+
+export const enterQualityInputData = (data) => {
+	clearField(ManageInterviewsCriterionsPage.qualityInputCss);
+	enterInput(ManageInterviewsCriterionsPage.qualityInputCss, data);
+};
+
+export const verifyQualityTextExist = (text) => {
+	verifyText(ManageInterviewsCriterionsPage.verifyQualityTextCss, text);
+};
+
+export const editQualityButtonVisible = () => {
+	verifyElementIsVisible(ManageInterviewsCriterionsPage.editQualityButtonCss);
+};
+
+export const clickEditQualityButton = () => {
+	clickButton(ManageInterviewsCriterionsPage.editQualityButtonCss);
+};
+
+export const deleteQualityButtonVisible = () => {
+	verifyElementIsVisible(
+		ManageInterviewsCriterionsPage.deleteQualityButtonCss
+	);
+};
+
+export const clickDeleteQualityButton = () => {
+	clickButton(ManageInterviewsCriterionsPage.deleteQualityButtonCss);
+};
+
+export const verifyQualityIsDeleted = () => {
+	verifyElementNotExist(ManageInterviewsCriterionsPage.verifyQualityTextCss);
 };
