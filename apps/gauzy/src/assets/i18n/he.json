@@ -2053,7 +2053,15 @@
 		"TYPE": "סוג",
 		"VIEW_INVENTORY_ITEM": "View inventory item",
 		"TAGS": "Tags",
-		"PRICE": "Price"
+		"PRICE": "Price",
+		"SAVE": "לשמור",
+		"CANCEL": "בטל",
+		"WIDTH": "רוֹחַב",
+		"HEIGHT": "גוֹבַה",
+		"IMAGE_ADDED_TO_GALLERY": "תמונה נוספה לגלריה",
+		"IMAGES_ADDED_TO_GALLERY": "התמונות נוספו לגלריה",
+		"IMAGE_ASSET_UPDATED": "נכס התמונה עודכן",
+		"EDIT_IMAGE_ASSET": "ערוך נכס תמונה"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

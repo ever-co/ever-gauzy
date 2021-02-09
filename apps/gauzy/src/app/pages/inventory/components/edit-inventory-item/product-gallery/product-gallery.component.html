@@ -49,7 +49,7 @@
 	>
 		<nb-icon icon="eye-outline"></nb-icon>
 	</button>
-	<!-- <button
+	<button
 		nbButton
 		ghost
 		status="primary"
@@ -57,9 +57,10 @@
 		nbTooltipPlacement="top"
 		nbTooltipStatus="primary"
 		[disabled]="!selectedImage"
+		(click)="onEditImageClick()"
 	>
 		<nb-icon icon="edit-outline"></nb-icon>
-	</button> -->
+	</button>
 	<button
 		nbButton
 		ghost

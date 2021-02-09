@@ -271,4 +271,16 @@ export class InventoryVariantFormComponent
 			this.image = selectedImage;
 		}
 	}
+
+	onDeleteImageClick() {
+		this.productVariantService
+			.deleteFeaturedImage(this.itemVariant.id)
+			.then((res) => {
+				this.image = null;
+				this.toastrService.success('INVENTORY_PAGE.IMAGE_DELETED');
+			})
+			.catch((err) => {
+				this.toastrService.danger('INVENTORY_PAGE.ERROR');
+			});
+	}
 }
