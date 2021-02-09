@@ -11,7 +11,6 @@ import {
 	clickElementByText
 } from '../utils/util';
 import { ManageCandidatesInvitesPage } from '../pageobjects/ManageCandidatesInvitesPageObject';
-import { verifyLastName } from './EditProfile.po';
 
 export const inviteButtonVisible = () => {
 	verifyElementIsVisible(ManageCandidatesInvitesPage.inviteButtonCss);

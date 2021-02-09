@@ -8,7 +8,6 @@ import * as inviteCandidatePage from '../support/Base/pages/Candidates.po';
 import * as faker from 'faker';
 
 let email = ' ';
-let secondEmail = ' ';
 let firstName = ' ';
 let lastName = ' ';
 let username = ' ';
@@ -18,7 +17,6 @@ let imgUrl = ' ';
 describe('Manage interviews test', () => {
 	before(() => {
 		email = faker.internet.email();
-		secondEmail = faker.internet.email();
 		firstName = faker.name.firstName();
 		lastName = faker.name.lastName();
 		username = faker.internet.userName();
