@@ -57,6 +57,8 @@ import { GalleryModule } from '../../@shared/gallery/gallery.module';
 import { InventoryStore } from '../../@core/services/inventory-store.service';
 import { InventoryItemViewComponent } from './components/view-inventory-item/view-inventory-item.component';
 import { TranslatableService } from '../../@core/services/translatable.service';
+import { ImageAssetComponent } from '../../@shared/select-asset-modal/img-asset/img-asset.component';
+import { ImageAssetModule } from '../../@shared/image-asset/image-asset.module';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -110,7 +112,8 @@ const NB_MODULES = [
 		TranslateModule,
 		...NB_MODULES,
 		CurrencyModule,
-		SelectAssetModule
+		SelectAssetModule,
+		ImageAssetModule
 	],
 	entryComponents: [
 		ProductTypeMutationComponent,
@@ -118,7 +121,8 @@ const NB_MODULES = [
 		ImageRowComponent,
 		IconRowComponent,
 		EnabledStatusComponent,
-		SelectAssetComponent
+		SelectAssetComponent,
+		ImageAssetComponent
 	],
 	providers: [
 		ProductTypeService,

@@ -28,8 +28,15 @@
 					</div>
 				</div>
 				<div class="col-md-9">
-					<nb-tabset #inventoryTabset>
-						<nb-tab tabTitle="Main" #mainTab>
+					<nb-tabset
+						#inventoryTabset
+						(changeTab)="onChangeTab($event)"
+					>
+						<nb-tab
+							tabTitle="Main"
+							#mainTab
+							[active]="isActive(mainTab)"
+						>
 							<div class="">
 								<form
 									[formGroup]="form"
@@ -364,7 +371,11 @@
 								</form>
 							</div>
 						</nb-tab>
-						<nb-tab tabTitle="Tags & Options" #optionsTab>
+						<nb-tab
+							tabTitle="Tags & Options"
+							#optionsTab
+							[active]="isActive(optionsTab)"
+						>
 							<div class="row mb-4">
 								<div class="col-sm-12">
 									<ga-tags-color-input
@@ -380,7 +391,11 @@
 							<ngx-options-form></ngx-options-form>
 							<ngx-variant-form></ngx-variant-form>
 						</nb-tab>
-						<nb-tab tabTitle="Variants" #variantsTab>
+						<nb-tab
+							tabTitle="Variants"
+							#variantsTab
+							[active]="isActive(variantsTab)"
+						>
 							<ngx-variant-table></ngx-variant-table>
 						</nb-tab>
 					</nb-tabset>

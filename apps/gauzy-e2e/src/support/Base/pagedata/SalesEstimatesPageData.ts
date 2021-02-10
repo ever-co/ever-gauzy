@@ -1,7 +1,7 @@
-export const InvoicesPageData = {
+export const SalesEstimatesPageData = {
 	invoiceType: 'By Employee Hours',
-	discountValue: 5,
-	editDiscountValue: 3,
+	discountValue: 2,
+	editDiscountValue: 4,
 	discountType: 'Percent',
 	taxValue: 5,
 	taxType: 'Percent',
@@ -10,8 +10,7 @@ export const InvoicesPageData = {
 	setStatusButton: 'SET STATUS',
 	duplicateButton: 'Duplicate',
 	sendButton: 'Send',
+	convertToInvoiceButton: ' Convert to invoice ',
 	viewButton: 'View',
-	emailButton: 'Email',
-	status: 'Fully Paid',
-	emptyTableText: 'No data for the currently selected employee.'
+	emailButton: 'Email'
 };

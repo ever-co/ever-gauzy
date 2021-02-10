@@ -2053,7 +2053,15 @@
 		"TYPE": "Тип",
 		"VIEW_INVENTORY_ITEM": "Просмотр инвентаря",
 		"TAGS": "Теги",
-		"PRICE": "Цена"
+		"PRICE": "Цена",
+		"SAVE": "Сохранить",
+		"CANCEL": "Отменить",
+		"WIDTH": "Width",
+		"HEIGHT": "Высота",
+		"IMAGE_ADDED_TO_GALLERY": "Изображение было добавлено в галерею",
+		"IMAGES_ADDED_TO_GALLERY": "Изображения были добавлены в галерею",
+		"IMAGE_ASSET_UPDATED": "Медиафайл изображения был обновлен",
+		"EDIT_IMAGE_ASSET": "Редактировать актив изображения"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
