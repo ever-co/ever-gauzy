@@ -2,6 +2,7 @@ import { GauzyAIService } from '@gauzy/integration-ai';
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RouterModule } from 'nest-router';
 import { Employee } from '../employee/employee.entity';
 import { EmployeeService } from '../employee/employee.service';
 import { Handlers } from './commands/handlers';
@@ -20,6 +21,9 @@ import { JobSearchPresetController } from './job-search-preset.controller';
 
 @Module({
 	imports: [
+		RouterModule.forRoutes([
+			{ path: '/job-preset', module: EmployeeJobPresetModule }
+		]),
 		TypeOrmModule.forFeature([
 			JobPreset,
 			JobPresetUpworkJobSearchCriterion,

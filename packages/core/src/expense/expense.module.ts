@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RouterModule } from 'nest-router';
+import { CqrsModule } from '@nestjs/cqrs';
 import { Expense } from './expense.entity';
 import { ExpenseService } from './expense.service';
 import { ExpenseController } from './expense.controller';
 import { CommandHandlers } from './commands/handlers';
-import { CqrsModule } from '@nestjs/cqrs';
 import { Employee } from '../employee/employee.entity';
 import { EmployeeService } from '../employee/employee.service';
 import { Organization } from '../organization/organization.entity';
@@ -30,6 +31,7 @@ import { ExpenseMapService } from './expense.map.service';
 
 @Module({
 	imports: [
+		RouterModule.forRoutes([{ path: '/expense', module: ExpenseModule }]),
 		UserModule,
 		EmployeeStatisticsModule,
 		IncomeModule,

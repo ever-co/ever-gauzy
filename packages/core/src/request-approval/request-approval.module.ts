@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RouterModule } from 'nest-router';
 import { RequestApproval } from './request-approval.entity';
 import { RequestApprovalControler } from './request-approval.controller';
 import { RequestApprovalService } from './request-approval.service';
@@ -26,6 +27,9 @@ import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
+		RouterModule.forRoutes([
+			{ path: '/request-approval', module: RequestApprovalModule }
+		]),
 		TypeOrmModule.forFeature([
 			User,
 			RequestApproval,

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RouterModule } from 'nest-router';
 import { Payment } from './payment.entity';
 import { PaymentController } from './payment.controller';
 import { PaymentService } from './payment.service';
@@ -9,7 +10,11 @@ import { TenantModule } from '../tenant/tenant.module';
 import { PaymentMapService } from './payment.map.service';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([User, Payment]), TenantModule],
+	imports: [
+		RouterModule.forRoutes([{ path: '/payments', module: PaymentModule }]),
+		TypeOrmModule.forFeature([User, Payment]),
+		TenantModule
+	],
 	controllers: [PaymentController],
 	providers: [PaymentService, UserService, PaymentMapService],
 	exports: [PaymentService, UserService, PaymentMapService]

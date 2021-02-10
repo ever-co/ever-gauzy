@@ -73,6 +73,7 @@ export const createDefaultInvoice = async (
 			invoice.status = 'ACTIVE';
 			invoice.totalValue = faker.random.number(99999);
 			invoice.tenant = tenant;
+			invoice.isArchived = false;
 			invoices.push(invoice);
 		}
 		await connection.manager.save(invoices);

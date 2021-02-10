@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RouterModule } from 'nest-router';
 import { ReportCategory } from './report-category.entity';
 import { Report } from './report.entity';
 import { ReportController } from './report.controller';
@@ -11,6 +12,7 @@ import { ReportOrganization } from './report-organization.entity';
 
 @Module({
 	imports: [
+		RouterModule.forRoutes([{ path: '/report', module: ReportModule }]),
 		TypeOrmModule.forFeature([Report, ReportCategory, ReportOrganization]),
 		TenantModule
 	],

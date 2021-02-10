@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RouterModule } from 'nest-router';
 import { Employee } from '../employee/employee.entity';
 import { EmployeeService } from '../employee/employee.service';
 import { OrganizationTeamEmployeeModule } from '../organization-team-employee/organization-team-employee.module';
@@ -16,6 +17,9 @@ import { OrganizationTeamService } from './organization-team.service';
 
 @Module({
 	imports: [
+		RouterModule.forRoutes([
+			{ path: '/organization-team', module: OrganizationTeamModule }
+		]),
 		TypeOrmModule.forFeature([
 			OrganizationTeam,
 			Employee,

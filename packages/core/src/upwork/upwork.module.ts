@@ -30,9 +30,13 @@ import {
 	UpworkJobService,
 	UpworkOffersService
 } from '@gauzy/integration-upwork';
+import { RouterModule } from 'nest-router';
 
 @Module({
 	imports: [
+		RouterModule.forRoutes([
+			{ path: '/integrations/upwork', module: UpworkModule }
+		]),
 		TypeOrmModule.forFeature([
 			User,
 			Employee,

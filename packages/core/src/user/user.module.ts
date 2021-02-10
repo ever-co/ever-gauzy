@@ -4,8 +4,9 @@
 
 import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { CommandHandlers } from './commands/handlers';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RouterModule } from 'nest-router';
+import { CommandHandlers } from './commands/handlers';
 import { User } from './user.entity';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
@@ -14,6 +15,7 @@ import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
+		RouterModule.forRoutes([{ path: '/user', module: UserModule }]),
 		forwardRef(() => TypeOrmModule.forFeature([User])),
 		forwardRef(() => TenantModule),
 		SharedModule,

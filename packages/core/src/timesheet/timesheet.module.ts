@@ -37,6 +37,7 @@ import { ActivityCommandHandlers } from './activity/commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
 import { ActivityMapService } from './activity/activity.map.service';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
+import { RouterModule } from 'nest-router';
 
 @Module({
 	controllers: [
@@ -49,6 +50,9 @@ import { OrganizationContact } from '../organization-contact/organization-contac
 		TimeSheetController
 	],
 	imports: [
+		RouterModule.forRoutes([
+			{ path: '/timesheet', module: TimesheetModule }
+		]),
 		TypeOrmModule.forFeature([
 			TimeSlot,
 			Activity,

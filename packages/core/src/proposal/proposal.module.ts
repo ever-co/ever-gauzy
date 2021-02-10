@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RouterModule } from 'nest-router';
 import { Proposal } from './proposal.entity';
 import { ProposalController } from './proposal.controller';
 import { ProposalService } from './proposal.service';
@@ -11,6 +12,7 @@ import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
+		RouterModule.forRoutes([{ path: '/proposal', module: ProposalModule }]),
 		TypeOrmModule.forFeature([User, Proposal, Employee]),
 		TenantModule
 	],

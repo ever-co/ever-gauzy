@@ -1,8 +1,8 @@
 import { SetMetadata, createParamDecorator } from '@nestjs/common';
-import { PermissionsEnum } from '@gauzy/contracts';
-import { RequestContext } from '../../core/context/request-context';
 import { verify } from 'jsonwebtoken';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
+import { RequestContext } from '../../core/context';
 
 export const Permissions = (...permissions: string[]) =>
 	SetMetadata('permissions', permissions);

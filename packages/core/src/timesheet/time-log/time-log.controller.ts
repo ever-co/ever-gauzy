@@ -30,7 +30,7 @@ import { OrganizationPermissionGuard } from '../../shared/guards/auth/organizati
 import { RequestContext } from '../../core/context';
 import { CrudController } from '../../core';
 import { FindOneOptions } from 'typeorm';
-import { TenantBaseGuard } from '../../shared/guards/auth/tenant-base.guard ';
+import { TenantBaseGuard } from '../../shared/guards/auth/tenant-base.guard';
 
 @ApiTags('TimeLog')
 @UseGuards(AuthGuard('jwt'), TenantBaseGuard)
