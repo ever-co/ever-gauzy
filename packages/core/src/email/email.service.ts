@@ -91,6 +91,43 @@ export class EmailService extends CrudService<IEmail> {
 		}
 	});
 
+	async sendPaymentReceipt(
+		languageCode: LanguagesEnum,
+		email: string,
+		contactName: string,
+		invoiceNumber: number,
+		amount: number,
+		currency: string,
+		organizationName: string,
+		originUrl: string
+	) {
+		this.email
+			.send({
+				template: 'payment-receipt',
+				message: {
+					to: `${email}`
+				},
+				locals: {
+					locale: languageCode,
+					host: originUrl || environment.host,
+					contactName,
+					invoiceNumber,
+					amount,
+					currency,
+					organizationName
+				}
+			})
+			.then((res) => {
+				this.createEmailRecord({
+					templateName: 'payment-receipt',
+					email,
+					languageCode,
+					message: res.originalMessage
+				});
+			})
+			.catch(console.error);
+	}
+
 	emailInvoice(
 		languageCode: LanguagesEnum,
 		email: string,

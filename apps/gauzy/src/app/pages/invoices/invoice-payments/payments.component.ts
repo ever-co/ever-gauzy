@@ -491,6 +491,13 @@ export class InvoicePaymentsComponent
 		generateCsv(data, headers, fileName);
 	}
 
+	async sendReceipt() {
+		await this.paymentService.sendReceipt(
+			this.selectedPayment,
+			this.invoice
+		);
+	}
+
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
 			.pipe(untilDestroyed(this))
