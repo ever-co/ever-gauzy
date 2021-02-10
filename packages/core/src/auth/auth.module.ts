@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
+import { RouterModule } from 'nest-router';
 import { SocialAuthModule } from '@gauzy/auth';
 import {
 	Organization,
@@ -23,6 +24,13 @@ const providers = [
 ];
 @Module({
 	imports: [
+		RouterModule.forRoutes([
+			{
+				path: '/auth',
+				module: AuthModule,
+				children: [{ path: '/', module: SocialAuthModule }]
+			}
+		]),
 		SocialAuthModule.registerAsync({
 			imports: [AuthModule],
 			useClass: AuthService

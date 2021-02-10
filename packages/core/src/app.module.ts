@@ -127,7 +127,6 @@ import { CustomSmtpModule } from './custom-smtp/custom-smtp.module';
 import { FeatureModule } from './feature/feature.module';
 import { ImageAssetModule } from './image-asset/image-asset.module';
 import { resolveServeStaticPath } from './helper';
-import { SocialAuthModule } from '@gauzy/auth';
 
 const { unleashConfig } = environment;
 if (unleashConfig.url) {
@@ -168,14 +167,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		RouterModule.forRoutes([
 			{
 				path: '',
-				children: [
-					{ path: '/', module: HomeModule },
-					{
-						path: '/auth',
-						module: AuthModule,
-						children: [{ path: '/', module: SocialAuthModule }]
-					}
-				]
+				children: [{ path: '/', module: HomeModule }]
 			}
 		]),
 		I18nModule.forRoot({

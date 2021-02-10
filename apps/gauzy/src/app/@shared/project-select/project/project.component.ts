@@ -8,11 +8,12 @@ import {
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '../../../@core/services/store.service';
 import { ToastrService } from '../../../@core/services/toastr.service';
 import { OrganizationProjectStore } from '../../../@core/services/organization-projects-store.service';
+import { isNotEmpty } from '@gauzy/common-angular';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -115,7 +116,10 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 				}
 			});
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((organization) => {
 				if (organization) {
 					this.organization = organization;
@@ -199,7 +203,8 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 		const projects: IOrganizationProject[] = this.projects;
 		projects.push(project);
 
-		this.projects = [...projects];
+		this.projects = [...projects].filter(isNotEmpty);
+		console.log(this.projects);
 	}
 
 	/*
@@ -214,7 +219,8 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 			return item;
 		});
 
-		this.projects = [...projects];
+		this.projects = [...projects].filter(isNotEmpty);
+		console.log(this.projects);
 	}
 
 	/*
@@ -226,7 +232,8 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 			(item: IOrganizationProject) => item.id !== project.id
 		);
 
-		this.projects = [...projects];
+		this.projects = [...projects].filter(isNotEmpty);
+		console.log(this.projects);
 	}
 
 	ngOnDestroy() {}
