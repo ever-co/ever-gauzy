@@ -8,9 +8,11 @@ import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.g
 
 @ApiTags('IntegrationSetting')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
-@Controller()
+@Controller('integration-setting')
 export class IntegrationSettingController extends CrudController<IntegrationSetting> {
-	constructor(private integrationSettingService: IntegrationSettingService) {
+	constructor(
+		private readonly integrationSettingService: IntegrationSettingService
+	) {
 		super(integrationSettingService);
 	}
 }

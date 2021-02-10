@@ -30,12 +30,5 @@ export const createHelpCenterArticle = async (
 		});
 	}
 
-	return await insertRandomHelpCenterArticle(connection, helpCenterArticles);
-};
-
-const insertRandomHelpCenterArticle = async (
-	connection: Connection,
-	data: HelpCenterArticle[]
-): Promise<HelpCenterArticle[]> => {
-	return await connection.manager.save(data);
+	return await connection.manager.save(helpCenterArticles);
 };

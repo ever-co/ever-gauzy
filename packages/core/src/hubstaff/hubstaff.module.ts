@@ -26,9 +26,13 @@ import { UserService } from '../user/user.service';
 import { UserModule } from '../user/user.module';
 import { RoleModule } from '../role/role.module';
 import { RolePermissionsModule } from '../role-permissions/role-permissions.module';
+import { RouterModule } from 'nest-router';
 
 @Module({
 	imports: [
+		RouterModule.forRoutes([
+			{ path: '/integrations/hubstaff', module: HubstaffModule }
+		]),
 		HttpModule,
 		TypeOrmModule.forFeature([
 			IntegrationTenant,

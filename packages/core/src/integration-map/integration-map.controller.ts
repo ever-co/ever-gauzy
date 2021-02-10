@@ -6,9 +6,9 @@ import { AuthGuard } from '@nestjs/passport';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
-@Controller()
+@Controller('integration-map')
 export class IntegrationMapController extends CrudController<IntegrationMap> {
-	constructor(private integrationMapService: IntegrationMapService) {
+	constructor(private readonly integrationMapService: IntegrationMapService) {
 		super(integrationMapService);
 	}
 }

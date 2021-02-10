@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RouterModule } from 'nest-router';
 import { AuthModule } from '../../auth/auth.module';
 import { RolePermissionsModule } from '../../role-permissions/role-permissions.module';
 import { RoleModule } from '../../role/role.module';
@@ -10,6 +11,9 @@ import { TenantSettingService } from './tenant-setting.service';
 
 @Module({
 	imports: [
+		RouterModule.forRoutes([
+			{ path: '/tenant-setting', module: TenantSettingModule }
+		]),
 		TypeOrmModule.forFeature([TenantSetting]),
 		AuthModule,
 		UserModule,

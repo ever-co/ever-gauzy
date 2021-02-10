@@ -26,16 +26,9 @@ export const createHelpCenter = async (
 			child.tenant = tenant;
 		});
 		const entity = await createEntity(connection, helpCenter);
-		await save(connection, entity);
+		await connection.manager.save(entity);
 	}
 	return helpCenterMenuList;
-};
-
-const save = async (
-	connection: Connection,
-	node: IHelpCenter
-): Promise<void> => {
-	await connection.manager.save(node);
 };
 
 const createEntity = async (connection: Connection, node: HelpCenter) => {
