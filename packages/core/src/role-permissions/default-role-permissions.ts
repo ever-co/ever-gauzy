@@ -79,7 +79,17 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW,
 			PermissionsEnum.ORG_JOB_MATCHING_VIEW,
 			PermissionsEnum.INVENTORY_GALLERY_EDIT,
-			PermissionsEnum.INVENTORY_GALLERY_EDIT
+			PermissionsEnum.INVENTORY_GALLERY_EDIT,
+			PermissionsEnum.ORG_EQUIPMENT_VIEW,
+			PermissionsEnum.ORG_EQUIPMENT_EDIT,
+			PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW,
+			PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT,
+			PermissionsEnum.EQUIPMENT_MAKE_REQUEST,
+			PermissionsEnum.EQUIPMENT_APPROVE_REQUEST,
+			PermissionsEnum.ORG_PRODUCT_TYPES_VIEW,
+			PermissionsEnum.ORG_PRODUCT_TYPES_EDIT,
+			PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW,
+			PermissionsEnum.ORG_PRODUCT_CATEOGIES_EDIT
 		]
 	},
 	{
@@ -158,7 +168,16 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW,
 			PermissionsEnum.ORG_JOB_MATCHING_VIEW,
 			PermissionsEnum.INVENTORY_GALLERY_EDIT,
-			PermissionsEnum.INVENTORY_GALLERY_EDIT
+			PermissionsEnum.INVENTORY_GALLERY_EDIT,
+			PermissionsEnum.ORG_EQUIPMENT_VIEW,
+			PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW,
+			PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT,
+			PermissionsEnum.EQUIPMENT_MAKE_REQUEST,
+			PermissionsEnum.EQUIPMENT_APPROVE_REQUEST,
+			PermissionsEnum.ORG_PRODUCT_TYPES_VIEW,
+			PermissionsEnum.ORG_PRODUCT_TYPES_EDIT,
+			PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW,
+			PermissionsEnum.ORG_PRODUCT_CATEOGIES_EDIT
 		]
 	},
 	{
@@ -206,7 +225,12 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.EMPLOYEE_EXPENSES_VIEW,
 			PermissionsEnum.EMPLOYEE_EXPENSES_EDIT,
 			PermissionsEnum.INVENTORY_GALLERY_VIEW,
-			PermissionsEnum.ORG_INVENTORY_VIEW
+			PermissionsEnum.ORG_INVENTORY_VIEW,
+			PermissionsEnum.ORG_EQUIPMENT_VIEW,
+			PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW,
+			PermissionsEnum.EQUIPMENT_MAKE_REQUEST,
+			PermissionsEnum.ORG_PRODUCT_TYPES_VIEW,
+			PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW
 		]
 	},
 	{
