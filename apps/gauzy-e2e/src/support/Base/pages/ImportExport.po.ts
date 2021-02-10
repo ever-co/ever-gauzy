@@ -1,8 +1,4 @@
-import {
-	verifyElementIsVisible,
-	verifyText,
-	verifyTextByIndex
-} from '../utils/util';
+import { verifyElementIsVisible, verifyText } from '../utils/util';
 import { ImportExportPage } from '../pageobjects/ImportExportPageObject';
 
 export const headerTextExist = (text) => {
