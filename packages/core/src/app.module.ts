@@ -96,7 +96,6 @@ import { RequestApprovalEmployeeModule } from './request-approval-employee/reque
 import { RequestApprovalModule } from './request-approval/request-approval.module';
 import { EventTypeModule } from './event-types/event-type.module';
 import { AvailabilitySlotsModule } from './availability-slots/availability-slots.module';
-import { HelpCenterModule } from './help-center/help-center.module';
 import { PipelineModule } from './pipeline/pipeline.module';
 import { PaymentModule } from './payment/payment.module';
 import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities/candidate-personal-qualities.module';
@@ -107,12 +106,10 @@ import { KeyResultModule } from './keyresult/keyresult.module';
 import { RequestApprovalTeamModule } from './request-approval-team/request-approval-team.module';
 import { KeyResultUpdateModule } from './keyresult-update/keyresult-update.module';
 import { CandidateCriterionsRatingModule } from './candidate-criterions-rating/candidate-criterion-rating.module';
-import { HelpCenterArticleModule } from './help-center-article/help-center-article.module';
 import { GoalTimeFrameModule } from './goal-time-frame/goal-time-frame.module';
 import { EstimateEmailModule } from './estimate-email/estimate-email.module';
 import { TimeOffRequestModule } from './time-off-request/time-off-request.module';
 import { DealModule } from './deal/deal.module';
-import { HelpCenterAuthorModule } from './help-center-author/help-center-author.module';
 import { OrganizationSprintModule } from './organization-sprint/organization-sprint.module';
 import { GoalKpiModule } from './goal-kpi/goal-kpi.module';
 import { GoalGeneralSettingModule } from './goal-general-setting/goal-general-setting.module';
@@ -130,7 +127,6 @@ import { CustomSmtpModule } from './custom-smtp/custom-smtp.module';
 import { FeatureModule } from './feature/feature.module';
 import { ImageAssetModule } from './image-asset/image-asset.module';
 import { resolveServeStaticPath } from './helper';
-import { SocialAuthModule } from '@gauzy/auth';
 
 const { unleashConfig } = environment;
 if (unleashConfig.url) {
@@ -171,378 +167,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		RouterModule.forRoutes([
 			{
 				path: '',
-				children: [
-					{ path: '/', module: HomeModule },
-					{
-						path: '/auth',
-						module: AuthModule,
-						children: [{ path: '/', module: SocialAuthModule }]
-					},
-					{ path: '/user', module: UserModule },
-					{ path: '/employee', module: EmployeeModule },
-					{ path: '/candidate', module: CandidateModule },
-					{
-						path: '/candidate-educations',
-						module: CandidateEducationModule
-					},
-					{
-						path: '/candidate-documents',
-						module: CandidateDocumentsModule
-					},
-					{
-						path: '/candidate-feedbacks',
-						module: CandidateFeedbacksModule
-					},
-					{
-						path: '/candidate-interview',
-						module: CandidateInterviewModule
-					},
-					{
-						path: '/candidate-interviewers',
-						module: CandidateInterviewersModule
-					},
-					{
-						path: '/candidate-experience',
-						module: CandidateExperienceModule
-					},
-					{
-						path: '/candidate-skills',
-						module: CandidateSkillModule
-					},
-					{
-						path: '/candidate-source',
-						module: CandidateSourceModule
-					},
-					{
-						path: '/candidate-personal-qualities',
-						module: CandidatePersonalQualitiesModule
-					},
-					{
-						path: '/candidate-technologies',
-						module: CandidateTechnologiesModule
-					},
-					{
-						path: '/candidate-criterions-rating',
-						module: CandidateCriterionsRatingModule
-					},
-					{ path: '/download', module: ExportAllModule },
-					{ path: '/import', module: ImportAllModule },
-					{ path: '/role', module: RoleModule },
-					{ path: '/organization', module: OrganizationModule },
-					{ path: '/income', module: IncomeModule },
-					{ path: '/expense', module: ExpenseModule },
-					{ path: '/help-center', module: HelpCenterModule },
-					{
-						path: '/help-center-article',
-						module: HelpCenterArticleModule
-					},
-					{
-						path: '/help-center-author',
-						module: HelpCenterAuthorModule
-					},
-					{ path: '/equipment', module: EquipmentModule },
-					{ path: '/employee-level', module: EmployeeLevelModule },
-					{
-						path: '/job-preset',
-						module: EmployeeJobPresetModule
-					},
-					{
-						path: '/employee-job',
-						module: EmployeeJobPostModule
-					},
-					{
-						path: '/employee-settings',
-						module: EmployeeSettingModule
-					},
-					{
-						path: '/employee-statistics',
-						module: EmployeeStatisticsModule
-					},
-					{
-						path: '/employee-appointment',
-						module: EmployeeAppointmentModule
-					},
-					{
-						path: '/employee-award',
-						module: EmployeeAwardModule
-					},
-					{
-						path: '/appointment-employees',
-						module: AppointmentEmployeesModule
-					},
-					{
-						path: '/user-organization',
-						module: UserOrganizationModule
-					},
-					{
-						path: '/organization-department',
-						module: OrganizationDepartmentModule
-					},
-					{
-						path: '/organization-contact',
-						module: OrganizationContactModule
-					},
-					{
-						path: '/organization-positions',
-						module: OrganizationPositionsModule
-					},
-					{
-						path: '/organization-awards',
-						module: OrganizationAwardsModule
-					},
-					{
-						path: '/organization-languages',
-						module: OrganizationLanguagesModule
-					},
-					{
-						path: '/organization-projects',
-						module: OrganizationProjectsModule
-					},
-					{
-						path: '/organization-vendors',
-						module: OrganizationVendorsModule
-					},
-					{
-						path: '/organization-recurring-expense',
-						module: OrganizationRecurringExpenseModule
-					},
-					{
-						path: '/organization-documents',
-						module: OrganizationDocumentsModule
-					},
-					{
-						path: '/employee-recurring-expense',
-						module: EmployeeRecurringExpenseModule
-					},
-					{
-						path: '/organization-team',
-						module: OrganizationTeamModule
-					},
-					{
-						path: '/organization-sprint',
-						module: OrganizationSprintModule
-					},
-					{
-						path: '/proposal',
-						module: ProposalModule
-					},
-					{
-						path: '/country',
-						module: CountryModule
-					},
-					{
-						path: '/currency',
-						module: CurrencyModule
-					},
-					{
-						path: '/invite',
-						module: InviteModule
-					},
-					{
-						path: '/email',
-						module: EmailModule
-					},
-					{
-						path: '/email-template',
-						module: EmailTemplateModule
-					},
-					{
-						path: '/estimate-email',
-						module: EstimateEmailModule
-					},
-					{
-						path: 'time-off-request',
-						module: TimeOffRequestModule
-					},
-					{
-						path: 'time-off-policy',
-						module: TimeOffPolicyModule
-					},
-					{
-						path: '/approval-policy',
-						module: ApprovalPolicyModule
-					},
-					{
-						path: '/request-approval',
-						module: RequestApprovalModule
-					},
-					{
-						path: 'role-permissions',
-						module: RolePermissionsModule
-					},
-					{
-						path: '/tenant-setting',
-						module: TenantSettingModule
-					},
-					{
-						path: '/tenant',
-						module: TenantModule
-					},
-					{
-						path: '/tags',
-						module: TagModule
-					},
-					{
-						path: '/skills',
-						module: SkillModule
-					},
-					{
-						path: '/languages',
-						module: LanguageModule
-					},
-					{
-						path: '/tasks',
-						module: TaskModule
-					},
-					{
-						path: '/equipment-sharing',
-						module: EquipmentSharingModule
-					},
-					{
-						path: '/equipment-sharing-policy',
-						module: EquipmentSharingPolicyModule
-					},
-					{
-						path: '/organization-employment-type',
-						module: OrganizationEmploymentTypeModule
-					},
-					{
-						path: '/expense-categories',
-						module: ExpenseCategoriesModule
-					},
-					{
-						path: '/timesheet',
-						module: TimesheetModule
-					},
-					{
-						path: '/integrations/upwork',
-						module: UpworkModule
-					},
-					{
-						path: '/integrations/hubstaff',
-						module: HubstaffModule
-					},
-					{
-						path: '/integration-tenant',
-						module: IntegrationTenantModule
-					},
-					{
-						path: '/integration-entity-setting',
-						module: IntegrationEntitySettingModule
-					},
-					{
-						path: '/integration',
-						module: IntegrationModule
-					},
-					{
-						path: '/invoices',
-						module: InvoiceModule
-					},
-					{
-						path: '/invoice-item',
-						module: InvoiceItemModule
-					},
-					{
-						path: '/products',
-						module: ProductModule
-					},
-					{
-						path: '/product-categories',
-						module: ProductCategoriesModule
-					},
-					{
-						path: '/product-types',
-						module: ProductTypesModule
-					},
-					{
-						path: '/product-variant-prices',
-						module: ProductVariantPriceModule
-					},
-					{
-						path: '/product-variants',
-						module: ProductVariantModule
-					},
-					{
-						path: '/product-variant-settings',
-						module: ProductVariantSettingsModule
-					},
-					{
-						path: '/image-assets',
-						module: ImageAssetModule
-					},
-					{
-						path: '/event-type',
-						module: EventTypeModule
-					},
-					{
-						path: '/availability-slots',
-						module: AvailabilitySlotsModule
-					},
-					{
-						path: '/pipelines',
-						module: PipelineModule
-					},
-					{
-						path: '/deals',
-						module: DealModule
-					},
-					{
-						path: '/payments',
-						module: PaymentModule
-					},
-					{
-						path: '/goals',
-						module: GoalModule
-					},
-					{
-						path: '/goal-time-frame',
-						module: GoalTimeFrameModule
-					},
-					{
-						path: '/goal-general-settings',
-						module: GoalGeneralSettingModule
-					},
-					{
-						path: '/goal-kpi',
-						module: GoalKpiModule
-					},
-					{
-						path: '/goal-kpi-template',
-						module: GoalKpiTemplateModule
-					},
-					{
-						path: '/goal-templates',
-						module: GoalTemplateModule
-					},
-					{
-						path: '/key-results',
-						module: KeyResultModule
-					},
-					{
-						path: '/key-result-updates',
-						module: KeyResultUpdateModule
-					},
-					{
-						path: '/key-result-templates',
-						module: KeyresultTemplateModule
-					},
-					{
-						path: '/invoice-estimate-history',
-						module: InvoiceEstimateHistoryModule
-					},
-					{
-						path: '/report',
-						module: ReportModule
-					},
-					{
-						path: '/smtp',
-						module: CustomSmtpModule
-					},
-					{
-						path: '/feature/toggle',
-						module: FeatureModule
-					}
-				]
+				children: [{ path: '/', module: HomeModule }]
 			}
 		]),
 		I18nModule.forRoot({
@@ -630,7 +255,6 @@ if (process.env.DB_TYPE === 'postgres') {
 		EquipmentSharingPolicyModule,
 		RequestApprovalModule,
 		RolePermissionsModule,
-		HelpCenterArticleModule,
 		TenantModule,
 		TenantSettingModule,
 		TagModule,
@@ -652,8 +276,6 @@ if (process.env.DB_TYPE === 'postgres') {
 		StageModule,
 		DealModule,
 		InvoiceEstimateHistoryModule,
-		HelpCenterModule,
-		HelpCenterAuthorModule,
 		EquipmentModule,
 		EquipmentSharingModule,
 		TaskModule,

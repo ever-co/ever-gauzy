@@ -1,5 +1,6 @@
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
+import { RouterModule } from 'nest-router';
 import { ProductVariant } from './product-variant.entity';
 import { ProductVariantController } from './product-variant.controller';
 import { ProductVariantService } from './product-variant.service';
@@ -16,6 +17,9 @@ import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
+		RouterModule.forRoutes([
+			{ path: '/product-variants', module: ProductVariantModule }
+		]),
 		TypeOrmModule.forFeature([
 			ProductVariant,
 			ProductVariantPrice,

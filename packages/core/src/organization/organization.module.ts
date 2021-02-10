@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RouterModule } from 'nest-router';
 import { Role } from '../role/role.entity';
 import { RoleService } from '../role/role.service';
 import { TenantModule } from '../tenant/tenant.module';
@@ -15,6 +16,9 @@ import { OrganizationService } from './organization.service';
 
 @Module({
 	imports: [
+		RouterModule.forRoutes([
+			{ path: '/organization', module: OrganizationModule }
+		]),
 		TypeOrmModule.forFeature([Organization, User, UserOrganization, Role]),
 		CqrsModule,
 		TenantModule

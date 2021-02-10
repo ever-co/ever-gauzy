@@ -136,3 +136,7 @@ export const clickButtonMultipleTimes = (loc, n) => {
 export const typeOverTextarea = (loc, text) => {
 	cy.get(loc, { timeout: 40000 }).type(text);
 };
+
+export const verifyStateByIndex = (loc, index, state) => {
+	cy.get(loc, { timeout: 40000 }).eq(index).should(`${state}`);
+};

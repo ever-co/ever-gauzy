@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RouterModule } from 'nest-router';
 import { CommandHandlers } from './commands/handlers';
 import { OrganizationRecurringExpenseController } from './organization-recurring-expense.controller';
 import { OrganizationRecurringExpense } from './organization-recurring-expense.entity';
@@ -14,6 +15,12 @@ import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
+		RouterModule.forRoutes([
+			{
+				path: '/organization-recurring-expense',
+				module: OrganizationRecurringExpenseModule
+			}
+		]),
 		TypeOrmModule.forFeature([
 			OrganizationRecurringExpense,
 			Organization,

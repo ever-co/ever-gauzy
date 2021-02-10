@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CqrsModule } from '@nestjs/cqrs';
+import { RouterModule } from 'nest-router';
 import { InvoiceController } from './invoice.controller';
 import { InvoiceService } from './invoice.service';
 import { Invoice } from './invoice.entity';
@@ -12,10 +14,10 @@ import { EstimateEmailController } from '../estimate-email/estimate-email.contro
 import { EstimateEmail } from '../estimate-email/estimate-email.entity';
 import { TenantModule } from '../tenant/tenant.module';
 import { CommandHandlers } from './commands';
-import { CqrsModule } from '@nestjs/cqrs';
 
 @Module({
 	imports: [
+		RouterModule.forRoutes([{ path: '/invoices', module: InvoiceModule }]),
 		TypeOrmModule.forFeature([User, Invoice, EstimateEmail]),
 		EmailModule,
 		EstimateEmailModule,

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RouterModule } from 'nest-router';
 import { AuthService } from '../auth/auth.service';
 import { EmailModule } from '../email/email.module';
 import { EmailService } from '../email/email.service';
@@ -33,6 +34,7 @@ import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
+		RouterModule.forRoutes([{ path: '/invite', module: InviteModule }]),
 		TypeOrmModule.forFeature([
 			Role,
 			Invite,
