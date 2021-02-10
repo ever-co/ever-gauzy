@@ -25,7 +25,7 @@
 // Cypress.Commands.overwrite("visit", (originalFn, url, options) => { ... })
 
 export const CustomCommands = {
-	login: (loginPage, LoginPageData, dashboradPage) => {
+	login: (loginPage: any, LoginPageData: any, dashboradPage: any) => {
 		cy.visit('/');
 		loginPage.verifyTitle();
 		loginPage.verifyLoginText();
@@ -36,7 +36,7 @@ export const CustomCommands = {
 		loginPage.clickLoginButton();
 		dashboradPage.verifyCreateButton();
 	},
-	addTag: (organizationTagsUserPage, OrganizationTagsPageData) => {
+	addTag: (organizationTagsUserPage: any, OrganizationTagsPageData: any) => {
 		cy.visit('/#/pages/organization/tags');
 		organizationTagsUserPage.gridButtonVisible();
 		organizationTagsUserPage.clickGridButton(1);
@@ -58,14 +58,14 @@ export const CustomCommands = {
 		organizationTagsUserPage.clickSaveTagButton();
 	},
 	addContact: (
-		fullName,
-		email,
-		city,
-		postcode,
-		street,
-		website,
-		contactsLeadsPage,
-		ContactsLeadsPageData
+		fullName: string,
+		email: string,
+		city: string,
+		postcode: string,
+		street: string,
+		website: string,
+		contactsLeadsPage: any,
+		ContactsLeadsPageData: any
 	) => {
 		cy.visit('/#/pages/contacts/leads');
 		contactsLeadsPage.gridBtnExists();
@@ -113,7 +113,7 @@ export const CustomCommands = {
 		contactsLeadsPage.verifyFinishButtonVisible();
 		contactsLeadsPage.clickFinishButton();
 	},
-	addTeam: (organizationTeamsPage, OrganizationTeamsPageData) => {
+	addTeam: (organizationTeamsPage: any, OrganizationTeamsPageData: any) => {
 		cy.visit('/#/pages/organization/teams');
 		organizationTeamsPage.gridBtnExists();
 		organizationTeamsPage.gridBtnClick(1);
@@ -136,7 +136,10 @@ export const CustomCommands = {
 		organizationTeamsPage.saveButtonVisible();
 		organizationTeamsPage.clickSaveButton();
 	},
-	addProject: (organizationProjectsPage, OrganizationProjectsPageData) => {
+	addProject: (
+		organizationProjectsPage: any,
+		OrganizationProjectsPageData: any
+	) => {
 		cy.visit('/#/pages/organization/projects');
 		organizationProjectsPage.gridBtnExists();
 		organizationProjectsPage.gridBtnClick(1);
@@ -163,7 +166,7 @@ export const CustomCommands = {
 		organizationProjectsPage.saveProjectButtonVisible();
 		organizationProjectsPage.clickSaveProjectButton();
 	},
-	addTask: (addTaskPage, AddTasksPageData) => {
+	addTask: (addTaskPage: any, AddTasksPageData: any) => {
 		cy.visit('/#/pages/tasks/dashboard');
 		addTaskPage.gridBtnExists();
 		addTaskPage.gridBtnClick(1);
@@ -204,13 +207,13 @@ export const CustomCommands = {
 		addTaskPage.clickSaveTaskButton();
 	},
 	addEmployee: (
-		manageEmployeesPage,
-		firstName,
-		lastName,
-		username,
-		employeeEmail,
-		password,
-		imgUrl
+		manageEmployeesPage: any,
+		firstName: string,
+		lastName: string,
+		username: string,
+		employeeEmail: string,
+		password: string,
+		imgUrl: string
 	) => {
 		cy.visit('/#/pages/employees');
 		cy.wait(3000);
@@ -243,14 +246,14 @@ export const CustomCommands = {
 		manageEmployeesPage.clickLastStepButton();
 	},
 	addClient: (
-		clientsPage,
-		fullName,
-		email,
-		website,
-		city,
-		postcode,
-		street,
-		ClientsData
+		clientsPage: any,
+		fullName: string,
+		email: string,
+		website: string,
+		city: string,
+		postcode: string,
+		street: string,
+		ClientsData: any
 	) => {
 		cy.visit('/#/pages/contacts/clients');
 		clientsPage.gridBtnExists();
@@ -293,5 +296,123 @@ export const CustomCommands = {
 		clientsPage.clickNextButton();
 		clientsPage.waitMessageToHide();
 		clientsPage.verifyClientExists(fullName);
+	},
+	addOrganization: (
+		addOrganizationPage: any,
+		organizationName: string,
+		AddOrganizationPageData: any,
+		taxId: any,
+		street: string
+	) => {
+		cy.visit('/#/pages/organizations');
+		addOrganizationPage.addBtnExists();
+		addOrganizationPage.addBtnClick();
+		addOrganizationPage.enterOrganizationName(organizationName);
+		addOrganizationPage.selectCurrency(AddOrganizationPageData.currency);
+		addOrganizationPage.enterOfficialName(organizationName);
+		addOrganizationPage.enterTaxId(taxId);
+		addOrganizationPage.clickOnNextButton();
+		addOrganizationPage.countryDropdownVisible();
+		addOrganizationPage.clickCountryDropdown();
+		addOrganizationPage.selectCountryFromDropdown(
+			AddOrganizationPageData.country
+		);
+		addOrganizationPage.cityInputVisible();
+		addOrganizationPage.enterCityInputData(AddOrganizationPageData.city);
+		addOrganizationPage.postcodeInputVisible();
+		addOrganizationPage.enterPostcodeInputData(
+			AddOrganizationPageData.postcode
+		);
+		addOrganizationPage.streetInputVisible();
+		addOrganizationPage.enterStreetInputData(street);
+		addOrganizationPage.clickOnNextButton();
+		addOrganizationPage.bonusTypeDropdownVisible();
+		addOrganizationPage.clickBonusTypeDropdown();
+		addOrganizationPage.selectBonusTypeFromDropdown(
+			AddOrganizationPageData.bonusType
+		);
+		addOrganizationPage.bonusPercentageInputVisible();
+		addOrganizationPage.enterBonusPercentageInputData(
+			AddOrganizationPageData.bonusPercentage
+		);
+		addOrganizationPage.clickOnNextButton();
+		addOrganizationPage.timeZoneDropdownVisible();
+		addOrganizationPage.clickTimeZoneDropdown();
+		addOrganizationPage.selectTimeZoneFromDropdown(
+			AddOrganizationPageData.timeZone
+		);
+		addOrganizationPage.startOfWeekDropdownVisible();
+		addOrganizationPage.clickStartOfWeekDropdown();
+		addOrganizationPage.selectStartOfWeekFromDropdown(
+			AddOrganizationPageData.startOfWeek
+		);
+		addOrganizationPage.dateTypeDropdownVisible();
+		addOrganizationPage.clickDateTypeDropdown();
+		addOrganizationPage.selectDateTypeFromDropdown(
+			AddOrganizationPageData.dateType
+		);
+		addOrganizationPage.regionDropdownVisible();
+		addOrganizationPage.clickRegionDropdown();
+		addOrganizationPage.selectRegionFromDropdown(
+			AddOrganizationPageData.region
+		);
+		addOrganizationPage.numberFormatDropdownVisible();
+		addOrganizationPage.clickNumberFormatDropdown();
+		addOrganizationPage.selectNumberFormatFromDropdown(
+			AddOrganizationPageData.numberFormat
+		);
+		addOrganizationPage.dateFormatDropdownVisible();
+		addOrganizationPage.clickDateFormatDropdown();
+		addOrganizationPage.selectDateFormatFromDropdown();
+		addOrganizationPage.expiryPeriodInputVisible();
+		addOrganizationPage.enterExpiryPeriodInputData(
+			AddOrganizationPageData.expiryPeriod
+		);
+		addOrganizationPage.clickOnNextButton();
+		addOrganizationPage.waitMessageToHide();
+		addOrganizationPage.verifyOrganizationExists(organizationName);
+	},
+	addCandidate: (
+		inviteCandidatePage: any,
+		firstName: string,
+		lastName: string,
+		username: string,
+		email: string,
+		password: string,
+		imgUrl: string
+	) => {
+		cy.visit('/#/pages/employees/candidates');
+		cy.on('uncaught:exception', (err, runnable) => {
+			return false;
+		});
+		inviteCandidatePage.addCandidateButtonVisible();
+		inviteCandidatePage.clickAddCandidateButton(0);
+		inviteCandidatePage.firstNameInputVisible();
+		inviteCandidatePage.enterFirstNameInputData(firstName);
+		inviteCandidatePage.lastNameInputVisible();
+		inviteCandidatePage.enterLastNameInputData(lastName);
+		inviteCandidatePage.usernameInputVisible();
+		inviteCandidatePage.enterUsernameInputData(username);
+		inviteCandidatePage.candidateEmailInputVisible();
+		inviteCandidatePage.enterCandidateEmailInputData(email);
+		inviteCandidatePage.passwordInputVisible();
+		inviteCandidatePage.enterPasswordInputData(password);
+		inviteCandidatePage.candidateDateInputVisible();
+		inviteCandidatePage.enterCandidateDateInputData();
+		inviteCandidatePage.clickKeyboardButtonByKeyCode(9);
+		inviteCandidatePage.tagsDropdownVisible();
+		inviteCandidatePage.clickAddTagsDropdown();
+		inviteCandidatePage.selectTagsFromDrodpwon(0);
+		inviteCandidatePage.clickKeyboardButtonByKeyCode(9);
+		inviteCandidatePage.imageInputvisible();
+		inviteCandidatePage.enterImageInputData(imgUrl);
+		inviteCandidatePage.nextButtonVisible();
+		inviteCandidatePage.clickNextButton();
+		inviteCandidatePage.nextStepButtonVisible();
+		inviteCandidatePage.clickNextStepButton();
+		inviteCandidatePage.allCurrentCandidatesButtonVisible();
+		inviteCandidatePage.clickAllCurrentCandidatesButton();
+		inviteCandidatePage.waitMessageToHide();
+		inviteCandidatePage.verifyCandidateExists(`${firstName} ${lastName}`);
 	}
 };

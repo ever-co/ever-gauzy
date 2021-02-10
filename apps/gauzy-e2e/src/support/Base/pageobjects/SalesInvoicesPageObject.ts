@@ -1,4 +1,4 @@
-export const InvoicesPage = {
+export const SalesInvoicesPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	addButtonCss: 'div.actions-container > button[status="success"]',
 	editButtonCss: 'div.btn-group > button[status="info"]',
