@@ -48,9 +48,9 @@ import { Timesheet } from '../../timesheet/timesheet.entity';
 import { Tenant } from '../../tenant/tenant.entity';
 import { Task } from '../../tasks/task.entity';
 import { Screenshot } from '../../timesheet/screenshot.entity';
-import { HelpCenterAuthor } from '../../help-center-author/help-center-author.entity';
-import { HelpCenterArticle } from '../../help-center-article/help-center-article.entity';
-import { HelpCenter } from '../../help-center/help-center.entity';
+// import { HelpCenterAuthor } from '../../help-center-author/help-center-author.entity';
+// import { HelpCenterArticle } from '../../help-center-article/help-center-article.entity';
+// import { HelpCenter } from '../../help-center/help-center.entity';
 import { GoalTimeFrame } from '../../goal-time-frame/goal-time-frame.entity';
 import { GoalKPI } from '../../goal-kpi/goal-kpi.entity';
 import { GoalGeneralSetting } from '../../goal-general-setting/goal-general-setting.entity';
@@ -244,14 +244,14 @@ export class ImportAllService {
 		@InjectRepository(GoalTimeFrame)
 		private readonly goalTimeFrameRepository: Repository<GoalTimeFrame>,
 
-		@InjectRepository(HelpCenter)
-		private readonly HelpCenterRepository: Repository<HelpCenter>,
+		// @InjectRepository(HelpCenter)
+		// private readonly helpCenterRepository: Repository<HelpCenter>,
 
-		@InjectRepository(HelpCenterArticle)
-		private readonly HelpCenterArticleRepository: Repository<HelpCenterArticle>,
+		// @InjectRepository(HelpCenterArticle)
+		// private readonly HelpCenterArticleRepository: Repository<HelpCenterArticle>,
 
-		@InjectRepository(HelpCenterAuthor)
-		private readonly HelpCenterAuthorRepository: Repository<HelpCenterAuthor>,
+		// @InjectRepository(HelpCenterAuthor)
+		// private readonly HelpCenterAuthorRepository: Repository<HelpCenterAuthor>,
 
 		@InjectRepository(Income)
 		private readonly incomeRepository: Repository<Income>,
@@ -547,9 +547,10 @@ export class ImportAllService {
 		key_result: this.keyResultRepository,
 		key_result_template: this.keyResultTemplateRepository,
 		key_result_update: this.keyResultUpdateRepository,
-		knowledge_base: this.HelpCenterRepository,
-		knowledge_base_article: this.HelpCenterArticleRepository,
-		knowledge_base_author: this.HelpCenterAuthorRepository,
+
+		// knowledge_base: this.HelpCenterRepository,
+		// knowledge_base_article: this.HelpCenterArticleRepository,
+		// knowledge_base_author: this.HelpCenterAuthorRepository,
 
 		organization_award: this.organizationAwardsRepository,
 		organization_contact: this.organizationContactRepository,

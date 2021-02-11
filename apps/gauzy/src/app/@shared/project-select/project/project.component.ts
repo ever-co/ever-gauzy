@@ -8,11 +8,12 @@ import {
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '../../../@core/services/store.service';
 import { ToastrService } from '../../../@core/services/toastr.service';
 import { OrganizationProjectStore } from '../../../@core/services/organization-projects-store.service';
+import { isNotEmpty } from '@gauzy/common-angular';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -52,6 +53,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	public get organizationContactId(): string {
 		return this._organizationContactId;
 	}
+
 	public set organizationContactId(value: string) {
 		this._organizationContactId = value;
 		if (this._organizationContactId) {
@@ -75,6 +77,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 		this.onChange(val);
 		this.onTouched(val);
 	}
+
 	get projectId(): string | string[] {
 		return this._projectId;
 	}
@@ -87,11 +90,13 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 					PermissionsEnum.ORG_PROJECT_EDIT
 				);
 			});
+
 		this.loadProjects$
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(async () => {
 				const { tenantId } = this.store.user;
 				const { id: organizationId } = this.organization;
+
 				if (this.employeeId) {
 					this.projects = await this.organizationProjects.getAllByEmployee(
 						this.employeeId,
@@ -114,8 +119,12 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 					this.projects = items;
 				}
 			});
+
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((organization) => {
 				if (organization) {
 					this.organization = organization;
@@ -152,6 +161,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 			const member: any = {
 				id: this.employeeId || this.store.user.employeeId
 			};
+
 			const request = {
 				name,
 				organizationId: this.organizationId,
@@ -160,9 +170,13 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 					? { contactId: this.organizationContactId }
 					: {})
 			};
+
 			const project = await this.organizationProjects.create(request);
+
 			this.projects = this.projects.concat([project]);
+
 			this.projectId = project.id;
+
 			this.toastrService.success(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
 				{ name }
@@ -197,9 +211,10 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	 */
 	createOrganizationProject(project: IOrganizationProject) {
 		const projects: IOrganizationProject[] = this.projects;
+
 		projects.push(project);
 
-		this.projects = [...projects];
+		this.projects = [...projects].filter(isNotEmpty);
 	}
 
 	/*
@@ -207,6 +222,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	 */
 	updateOrganizationProject(project: IOrganizationProject) {
 		let projects: IOrganizationProject[] = this.projects;
+
 		projects = projects.map((item: IOrganizationProject) => {
 			if (item.id === project.id) {
 				return Object.assign({}, item, project);
@@ -214,7 +230,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 			return item;
 		});
 
-		this.projects = [...projects];
+		this.projects = [...projects].filter(isNotEmpty);
 	}
 
 	/*
@@ -222,11 +238,12 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	 */
 	deleteOrganizationProject(project: IOrganizationProject) {
 		let projects: IOrganizationProject[] = this.projects;
+
 		projects = projects.filter(
 			(item: IOrganizationProject) => item.id !== project.id
 		);
 
-		this.projects = [...projects];
+		this.projects = [...projects].filter(isNotEmpty);
 	}
 
 	ngOnDestroy() {}

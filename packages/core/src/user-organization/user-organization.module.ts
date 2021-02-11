@@ -12,9 +12,13 @@ import { SharedModule } from '../shared';
 import { Role } from '../role/role.entity';
 import { RoleService } from '../role/role.service';
 import { TenantModule } from '../tenant/tenant.module';
+import { RouterModule } from 'nest-router';
 
 @Module({
 	imports: [
+		RouterModule.forRoutes([
+			{ path: '/user-organization', module: UserOrganizationModule }
+		]),
 		forwardRef(() =>
 			TypeOrmModule.forFeature([
 				UserOrganization,

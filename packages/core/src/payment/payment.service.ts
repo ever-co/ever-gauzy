@@ -7,12 +7,14 @@ import { RequestContext } from '../core/context';
 import { IGetPaymentInput } from '@gauzy/contracts';
 import { chain } from 'underscore';
 import * as moment from 'moment';
+import { EmailService } from '../email';
 
 @Injectable()
 export class PaymentService extends CrudService<Payment> {
 	constructor(
 		@InjectRepository(Payment)
-		private readonly paymentRepository: Repository<Payment>
+		private readonly paymentRepository: Repository<Payment>,
+		private readonly emailService: EmailService
 	) {
 		super(paymentRepository);
 	}
@@ -154,5 +156,20 @@ export class PaymentService extends CrudService<Payment> {
 		});
 
 		return query;
+	}
+
+	async sendReceipt(languageCode, params, origin) {
+		const payment = params.payment;
+		const invoice = params.invoice;
+		await this.emailService.sendPaymentReceipt(
+			languageCode,
+			invoice.toContact.primaryEmail,
+			invoice.toContact.name,
+			invoice.invoiceNumber,
+			payment.amount,
+			payment.currency,
+			invoice.fromOrganization.name,
+			origin
+		);
 	}
 }

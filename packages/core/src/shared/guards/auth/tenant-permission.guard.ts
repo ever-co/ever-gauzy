@@ -4,7 +4,8 @@ import { RequestContext } from '../../../core/context';
 import { RolesEnum } from '@gauzy/contracts';
 import { TenantService } from '../../../tenant/tenant.service';
 import { environment as env } from '@gauzy/config';
-import { TenantBaseGuard } from './tenant-base.guard ';
+import { TenantBaseGuard } from './tenant-base.guard';
+
 @Injectable()
 export class TenantPermissionGuard
 	extends TenantBaseGuard

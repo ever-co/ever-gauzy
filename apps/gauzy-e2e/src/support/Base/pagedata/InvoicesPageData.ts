@@ -12,5 +12,6 @@ export const InvoicesPageData = {
 	sendButton: 'Send',
 	viewButton: 'View',
 	emailButton: 'Email',
-	status: 'Fully Paid'
+	status: 'Fully Paid',
+	emptyTableText: 'No data for the currently selected employee.'
 };

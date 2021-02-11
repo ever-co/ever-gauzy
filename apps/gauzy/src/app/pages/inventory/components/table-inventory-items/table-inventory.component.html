@@ -27,7 +27,7 @@
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
 			<button
-				*ngIf="editProductAllowed"
+				*ngIf="viewTypesAllowed"
 				class="float-right"
 				nbButton
 				status="primary"
@@ -37,7 +37,7 @@
 				{{ 'INVENTORY_PAGE.PRODUCT_TYPES' | translate }}
 			</button>
 			<button
-				*ngIf="editProductAllowed"
+				*ngIf="viewCategoriesAllowed"
 				class="float-right"
 				style="margin-right: 9px"
 				nbButton

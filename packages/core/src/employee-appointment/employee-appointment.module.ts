@@ -1,5 +1,6 @@
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
+import { RouterModule } from 'nest-router';
 import { EmployeeAppointment } from './employee-appointment.entity';
 import { EmployeeAppointmentController } from './employee-appointment.controller';
 import { EmployeeAppointmentService } from './employee-appointment.service';
@@ -15,6 +16,9 @@ import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
+		RouterModule.forRoutes([
+			{ path: '/employee-appointment', module: EmployeeAppointmentModule }
+		]),
 		TypeOrmModule.forFeature([EmployeeAppointment]),
 		EmailModule,
 		EmployeeModule,

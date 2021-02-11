@@ -32,4 +32,14 @@ export class ImageAssetService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	updateImageAsset(imageAsset: IImageAsset): Promise<IImageAsset> {
+		return this.http
+			.put<IImageAsset>(
+				`${API_PREFIX}/image-assets/${imageAsset.id}`,
+				imageAsset
+			)
+			.pipe(first())
+			.toPromise();
+	}
 }

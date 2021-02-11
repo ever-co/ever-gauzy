@@ -8,12 +8,11 @@ import {
 	EventEmitter
 } from '@angular/core';
 import { TreeComponent, ITreeOptions } from '@circlon/angular-tree-component';
-import { Subject } from 'rxjs';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { AddIconComponent } from './add-icon/add-icon.component';
-import { first, takeUntil } from 'rxjs/operators';
+import { filter, first } from 'rxjs/operators';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { EditBaseComponent } from './edit-base/edit-base.component';
 import { EditCategoryComponent } from './edit-category/edit-category.component';
@@ -22,7 +21,9 @@ import { DeleteBaseComponent } from './delete-base/delete-base.component';
 import { HelpCenterService } from '../../@core/services/help-center.service';
 import { Store } from '../../@core/services/store.service';
 import { ToastrService } from '../../@core/services/toastr.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-sidebar',
 	templateUrl: './sidebar.component.html',
@@ -33,7 +34,7 @@ export class SidebarComponent
 	implements OnInit, OnDestroy {
 	@Output() clickedNode = new EventEmitter<IHelpCenter>();
 	@Output() deletedNode = new EventEmitter<any>();
-	private _ngDestroy$ = new Subject<void>();
+
 	constructor(
 		private dialogService: NbDialogService,
 		private readonly toastrService: ToastrService,
@@ -45,6 +46,7 @@ export class SidebarComponent
 	) {
 		super(translateService);
 	}
+
 	public tempNodes: IHelpCenter[] = [];
 	public nodeId = '';
 	public isChosenNode = false;
@@ -57,7 +59,7 @@ export class SidebarComponent
 			return res;
 		},
 		allowDrag: true,
-		allowDrop: (el, { parent, index }) => {
+		allowDrop: (el, { parent }) => {
 			if (parent.data.flag === 'category') {
 				return false;
 			} else {
@@ -66,12 +68,15 @@ export class SidebarComponent
 		},
 		childrenField: 'children'
 	};
-	@ViewChild(TreeComponent)
-	private tree: TreeComponent;
+	@ViewChild(TreeComponent) private tree: TreeComponent;
 	organization: IOrganization;
+
 	ngOnInit() {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((organization) => {
 				if (organization) {
 					this.organization = organization;
@@ -79,7 +84,6 @@ export class SidebarComponent
 					this.loadMenu();
 				}
 			});
-
 		this.settingsContextMenu = [
 			{
 				title: this.getTranslation('HELP_PAGE.ADD_CATEGORY')
@@ -328,8 +332,5 @@ export class SidebarComponent
 		}
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

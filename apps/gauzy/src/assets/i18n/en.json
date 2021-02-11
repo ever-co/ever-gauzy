@@ -99,7 +99,8 @@
 		"EXPORT_TO_CSV": "Export to CSV",
 		"INVOICE_REMAINING_AMOUNT": "Invoice Remaining Amount",
 		"PUBLIC_LINK": "Public Link",
-		"GENERATE": "Generate"
+		"GENERATE": "Generate",
+		"SEND_RECEIPT": "Send Receipt"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",
@@ -2053,7 +2054,15 @@
 		"TYPE": "Type",
 		"VIEW_INVENTORY_ITEM": "View inventory item",
 		"TAGS": "Tags",
-		"PRICE": "Price"
+		"PRICE": "Price",
+		"SAVE": "Save",
+		"CANCEL": "Cancel",
+		"WIDTH": "Width",
+		"HEIGHT": "Height",
+		"IMAGE_ADDED_TO_GALLERY": "Image was added to the gallery",
+		"IMAGES_ADDED_TO_GALLERY": "The Images were added to the gallery",
+		"IMAGE_ASSET_UPDATED": "The image asset was updated",
+		"EDIT_IMAGE_ASSET": "Edit image asset"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
@@ -2460,7 +2469,11 @@
 			"ONLINE": "Online",
 			"PAYMENTS_FOR_INVOICE": "Payments for invoice",
 			"RECEIVED_FROM": "Received from",
-			"RECEIVER": "Receiver"
+			"RECEIVER": "Receiver",
+			"SEND_RECEIPT": "Send this receipt to {{ name }} ?",
+			"CONTACT_GREETING": "Hi {{ name }},",
+			"RECEIPT_FOR": "This is your receipt for Invoice {{ invoiceNumber }} for {{ amount }} {{ currency }}.",
+			"BEST_REGARDS": "Best regards the {{ name }} team."
 		},
 		"INTERNAL_NOTE": {
 			"NOTE_SAVED": "Internal Note was added",

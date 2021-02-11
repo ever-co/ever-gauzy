@@ -1,0 +1,91 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h4>{{ 'INVENTORY_PAGE.EDIT_IMAGE_ASSET' | translate }}</h4>
+	</nb-card-header>
+	<nb-card-body class="body">
+		<div class="row">
+			<div class="col-md-4 col-sm-12">
+				<img
+					*ngIf="imageAsset && imageAsset.url"
+					[src]="imageAsset.url"
+				/>
+				<img
+					*ngIf="!imageAsset || !imageAsset.url"
+					src="https://afostats.imagead.net/uploads/afo/no_img.png"
+				/>
+			</div>
+			<div class="col md-8 col-sm-12">
+				<form [formGroup]="form" *ngIf="form">
+					<div class="form-group">
+						<label class="label" for="nameInput">
+							{{ 'INVENTORY_PAGE.NAME' | translate }}
+						</label>
+						<input
+							fullWidth
+							id="nameInput"
+							type="text"
+							nbInput
+							formControlName="name"
+							[placeholder]="'INVENTORY_PAGE.NAME' | translate"
+						/>
+					</div>
+					<div class="form-group">
+						<label class="label" for="urlInput">
+							{{ 'INVENTORY_PAGE.URL' | translate }}
+						</label>
+						<input
+							fullWidth
+							id="urlInput"
+							type="text"
+							nbInput
+							formControlName="url"
+							[attr.disabled]="true"
+							[placeholder]="'INVENTORY_PAGE.NAME' | translate"
+						/>
+					</div>
+					<div class="form-group">
+						<label class="label" for="widthInput">
+							{{ 'INVENTORY_PAGE.WIDTH' | translate }}
+						</label>
+						<input
+							fullWidth
+							id="widthInput"
+							type="text"
+							nbInput
+							formControlName="width"
+							[attr.disabled]="true"
+							[placeholder]="'INVENTORY_PAGE.WIDTH' | translate"
+						/>
+					</div>
+					<div class="form-group">
+						<label class="label" for="heightInput">
+							{{ 'INVENTORY_PAGE.HEIGHT' | translate }}
+						</label>
+						<input
+							fullWidth
+							id="heightInput"
+							type="text"
+							nbInput
+							formControlName="height"
+							[attr.disabled]="true"
+							[placeholder]="'INVENTORY_PAGE.HEIGHT' | translate"
+						/>
+					</div>
+				</form>
+			</div>
+		</div>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button (click)="onCancel()" status="danger" class="mr-3" nbButton>
+			{{ 'INVENTORY_PAGE.CANCEL' | translate }}
+		</button>
+		<button
+			(click)="onSaveRequest()"
+			status="success"
+			nbButton
+			[disabled]="!imageAsset"
+		>
+			{{ 'INVENTORY_PAGE.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

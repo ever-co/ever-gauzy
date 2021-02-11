@@ -8,9 +8,13 @@ import { UserService } from '../user/user.service';
 import { TenantModule } from '../tenant/tenant.module';
 import { CommandHandlers } from './commands/handlers';
 import { CqrsModule } from '@nestjs/cqrs';
+import { RouterModule } from 'nest-router';
 
 @Module({
 	imports: [
+		RouterModule.forRoutes([
+			{ path: '/approval-policy', module: ApprovalPolicyModule }
+		]),
 		TypeOrmModule.forFeature([User, ApprovalPolicy]),
 		TenantModule,
 		CqrsModule
