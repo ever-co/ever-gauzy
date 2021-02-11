@@ -5,20 +5,21 @@ import {
 	IEquipmentSharing,
 	IApprovalPolicy,
 	ComponentLayoutStyleEnum,
-	ISelectedEquipmentSharing
+	ISelectedEquipmentSharing,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';
 import { NbDialogService } from '@nebular/theme';
 import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing/equipment-sharing-mutation.component';
-import { first, distinctUntilChanged, tap } from 'rxjs/operators';
+import { first, tap } from 'rxjs/operators';
 import { DatePipe } from '@angular/common';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { EquipmentSharingActionComponent } from './table-components/equipment-sharing-action/equipment-sharing-action.component';
 import { EquipmentSharingStatusComponent } from './table-components/equipment-sharing-status/equipment-sharing-status.component';
 import { Store } from '../../@core/services/store.service';
-import { Subject } from 'rxjs';
+import { combineLatest, of, Subject } from 'rxjs';
 import { Router, NavigationEnd, RouterEvent } from '@angular/router';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { EquipmentSharingPolicyComponent } from './table-components/equipment-sharing-policy/equipment-sharing-policy.component';
@@ -38,7 +39,7 @@ export class EquipmentSharingComponent
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
 	disableButton = true;
-	selectedEmployeeId: string;
+	selectedEmployeeUserId: string;
 	ngDestroy$ = new Subject<void>();
 	approvalPolicies: IApprovalPolicy[] = [];
 	selectedOrgId: string;
@@ -71,25 +72,35 @@ export class EquipmentSharingComponent
 	ngOnInit(): void {
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
-		this.store.selectedEmployee$
-			.pipe(distinctUntilChanged(), untilDestroyed(this))
-			.subscribe((employee) => {
-				if (employee && employee.id) {
-					this.selectedEmployeeId = employee.id;
-					this.loadSettings();
-				} else {
-					this.selectedEmployeeId = null;
-					this.loadSettings();
-				}
+
+		combineLatest([
+			this.store.user$,
+			this.store.selectedEmployee$,
+			this.store.selectedOrganization$
+		])
+			.pipe(
+				untilDestroyed(this),
+				tap(([currentUser, selectedEmployee, selectedOrg]) => {
+					if (currentUser.employee) {
+						this.selectedEmployeeUserId = currentUser.id;
+					} else {
+						if (
+							!this.store.hasPermission(
+								PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW
+							)
+						)
+							return;
+
+						//tstodo get userId by employee id
+						this.selectedEmployeeUserId = selectedEmployee.id;
+						this.selectedOrgId = selectedOrg.id;
+					}
+				})
+			)
+			.subscribe((res) => {
+				this.loadSettings();
 			});
-		this.store.selectedOrganization$
-			.pipe(distinctUntilChanged(), untilDestroyed(this))
-			.subscribe((org) => {
-				if (org) {
-					this.selectedOrgId = org.id;
-					this.loadSettings();
-				}
-			});
+
 		this.router.events
 			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
@@ -300,13 +311,13 @@ export class EquipmentSharingComponent
 	async loadSettings() {
 		this.loading = true;
 		let equipmentItems = [];
-		if (this.selectedEmployeeId) {
-			equipmentItems = await this.equipmentSharingService.getEmployee(
-				this.selectedEmployeeId
+		if (this.selectedEmployeeUserId) {
+			equipmentItems = await this.equipmentSharingService.getByAuthorUserId(
+				this.selectedEmployeeUserId
 			);
 		} else {
 			if (this.selectedOrgId) {
-				equipmentItems = await this.equipmentSharingService.getOrganization(
+				equipmentItems = await this.equipmentSharingService.getByOrganizationId(
 					this.selectedOrgId
 				);
 			}

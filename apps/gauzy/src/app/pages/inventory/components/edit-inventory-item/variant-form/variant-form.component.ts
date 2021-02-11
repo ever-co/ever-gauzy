@@ -87,7 +87,6 @@ export class VariantFormComponent implements OnInit {
 			(variantCreateInput) => !variantCreateInput.isStored
 		);
 
-		//tstodo same for update
 		this.inventoryStore.variantCreateInputs = variantCreateInputs;
 		this.resetCreateVariantInputForm();
 	}
