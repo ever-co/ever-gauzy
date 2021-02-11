@@ -13,7 +13,7 @@ import { FormGroup } from '@angular/forms';
 import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';
 import { NbDialogService } from '@nebular/theme';
 import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing/equipment-sharing-mutation.component';
-import { first, tap } from 'rxjs/operators';
+import { first, switchMap, tap } from 'rxjs/operators';
 import { DatePipe } from '@angular/common';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { EquipmentSharingActionComponent } from './table-components/equipment-sharing-action/equipment-sharing-action.component';
@@ -25,6 +25,7 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { EquipmentSharingPolicyComponent } from './table-components/equipment-sharing-policy/equipment-sharing-policy.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../@core/services/toastr.service';
+import { EmployeesService } from '../../@core/services';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './equipment-sharing.component.html',
@@ -62,6 +63,7 @@ export class EquipmentSharingComponent
 		private equipmentSharingService: EquipmentSharingService,
 		private dialogService: NbDialogService,
 		private toastrService: ToastrService,
+		private employeesService: EmployeesService,
 		private store: Store,
 		private router: Router
 	) {
@@ -80,24 +82,20 @@ export class EquipmentSharingComponent
 		])
 			.pipe(
 				untilDestroyed(this),
-				tap(([currentUser, selectedEmployee, selectedOrg]) => {
-					if (currentUser.employee) {
-						this.selectedEmployeeUserId = currentUser.id;
-					} else {
-						if (
-							!this.store.hasPermission(
-								PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW
-							)
-						)
-							return;
+				switchMap(
+					async ([currentUser, selectedEmployee, selectedOrg]) => {
+						if (currentUser.employee) {
+							this.selectedEmployeeUserId = currentUser.id;
+						} else {
+							if (!this.hasPermission) return;
 
-						//tstodo get userId by employee id
-						this.selectedEmployeeUserId = selectedEmployee.id;
-						this.selectedOrgId = selectedOrg.id;
+							await this.loadEmployeeUser(selectedEmployee?.id);
+							this.selectedOrgId = selectedOrg.id;
+						}
 					}
-				})
+				)
 			)
-			.subscribe((res) => {
+			.subscribe(() => {
 				this.loadSettings();
 			});
 
@@ -367,5 +365,28 @@ export class EquipmentSharingComponent
 
 	manageAppropvalPolicy() {
 		this.router.navigate(['/pages/organization/equipment-sharing-policy']);
+	}
+
+	hasPermission() {
+		return this.store.hasPermission(
+			PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW
+		);
+	}
+
+	async loadEmployeeUser(employeeId: string) {
+		this.selectedEmployeeUserId = null;
+
+		if (!employeeId) return;
+
+		await this.employeesService
+			.getEmployeeById(employeeId, [])
+			.then((res) => {
+				if (res && res.userId) {
+					this.selectedEmployeeUserId = res.userId;
+				}
+			})
+			.catch((err) => {
+				this.toastrService.danger('Could not load employee');
+			});
 	}
 }
