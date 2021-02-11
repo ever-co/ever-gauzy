@@ -17,7 +17,7 @@ export class PluginModule implements OnModuleInit, OnModuleDestroy {
 			module: PluginModule,
 			providers: [],
 			imports: [...options.plugins]
-		};
+		} as DynamicModule;
 	}
 
 	constructor(private readonly moduleRef: ModuleRef) {}
@@ -26,16 +26,13 @@ export class PluginModule implements OnModuleInit, OnModuleDestroy {
 		await this.bootstrapPluginLifecycleMethods(
 			'onPluginBootstrap',
 			(instance: any) => {
-				const pluginName =
-					instance.constructor.name || '(anonymous plugin)';
+				// const pluginName = instance.constructor.name || '(anonymous plugin)';
 				// Logger.verbose(`Bootstrapped plugin ${pluginName}`);
 			}
 		);
 	}
 
-	async onModuleDestroy() {
-		await this.bootstrapPluginLifecycleMethods('onPluginDestroy');
-	}
+	async onModuleDestroy() {}
 
 	private async bootstrapPluginLifecycleMethods(
 		lifecycleMethod: keyof PluginLifecycleMethods,

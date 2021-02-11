@@ -12,7 +12,12 @@ import { Integrations as SentryIntegrations } from '@sentry/node';
 import { Integrations as TrackingIntegrations } from '@sentry/tracing';
 import { initialize as initializeUnleash } from 'unleash-client';
 import { LanguagesEnum } from '@gauzy/contracts';
-import { ConfigService, environment } from '@gauzy/config';
+import {
+	ConfigModule,
+	ConfigService,
+	environment,
+	getConfig
+} from '@gauzy/config';
 import * as path from 'path';
 import * as moment from 'moment';
 import { CandidateInterviewersModule } from './candidate-interviewers/candidate-interviewers.module';
@@ -36,7 +41,6 @@ import { EmployeeJobPostModule } from './employee-job';
 import { EmployeeAppointmentModule } from './employee-appointment';
 import { CoreModule } from './core';
 import { AuthModule } from './auth/auth.module';
-import { SeedDataService } from './core/seeds/seed-data.service';
 import { UserOrganizationModule } from './user-organization/user-organization.module';
 import { EmployeeStatisticsModule } from './employee-statistics/employee-statistics.module';
 import { OrganizationDepartmentModule } from './organization-department/organization-department.module';
@@ -127,6 +131,7 @@ import { CustomSmtpModule } from './custom-smtp/custom-smtp.module';
 import { FeatureModule } from './feature/feature.module';
 import { ImageAssetModule } from './image-asset/image-asset.module';
 import { resolveServeStaticPath } from './helper';
+import { SeederModule } from './core/seeds/seeder.module';
 
 const { unleashConfig } = environment;
 if (unleashConfig.url) {
@@ -302,10 +307,11 @@ if (process.env.DB_TYPE === 'postgres') {
 		GoalKpiModule,
 		GoalTemplateModule,
 		KeyresultTemplateModule,
-		GoalKpiTemplateModule
+		GoalKpiTemplateModule,
+		SeederModule
 	],
 	controllers: [AppController],
-	providers: [AppService, SeedDataService],
+	providers: [AppService],
 	exports: []
 })
 export class AppModule {

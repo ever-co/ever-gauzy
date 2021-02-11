@@ -297,6 +297,12 @@ import {
 	Tenant,
 	User
 } from './../../core/entities/internal';
+import {
+	getPluginModules,
+	hasLifecycleMethod,
+	PluginLifecycleMethods
+} from '@gauzy/plugin';
+import { ModuleRef } from '@nestjs/core';
 
 @Injectable()
 export class SeedDataService {
@@ -311,7 +317,7 @@ export class SeedDataService {
 	defaultEmployees: Employee[];
 	config: IPluginConfig = getConfig();
 
-	constructor() {}
+	constructor(private readonly moduleRef: ModuleRef) {}
 
 	/**
 	 * This config is applied only for `yarn seed:*` type calls because
@@ -432,7 +438,6 @@ export class SeedDataService {
 	 */
 	public async runJobsSeed() {
 		const isDefault = true;
-
 		try {
 			// Connect to database
 			await this.createConnection();
@@ -801,14 +806,6 @@ export class SeedDataService {
 			createOrganizationVendors(this.connection, this.organizations)
 		);
 
-		// await this.tryExecute(
-		// 	'Help Centers',
-		// 	createHelpCenter(this.connection, {
-		// 		tenant: this.tenant,
-		// 		org: this.organizations[0]
-		// 	})
-		// );
-
 		const defaultCandidates = await this.tryExecute(
 			'Default Candidates',
 			createDefaultCandidates(this.connection, {
@@ -1156,23 +1153,6 @@ export class SeedDataService {
 			)
 		);
 
-		// await this.tryExecute(
-		// 	'Default Help Center Articles',
-		// 	createHelpCenterArticle(
-		// 		this.connection,
-		// 		this.organizations,
-		// 		randomSeedConfig.noOfHelpCenterArticle || 5
-		// 	)
-		// );
-
-		// await this.tryExecute(
-		// 	'Default Help Center Author',
-		// 	createDefaultHelpCenterAuthor(
-		// 		this.connection,
-		// 		this.defaultEmployees
-		// 	)
-		// );
-
 		await this.tryExecute(
 			'Default Availability Slots',
 			createDefaultAvailabilitySlots(
@@ -1192,6 +1172,14 @@ export class SeedDataService {
 				this.organizations[0],
 				randomSeedConfig.emailsPerOrganization || 20
 			)
+		);
+
+		//run all plugins default seed method
+		await this.bootstrapPluginSeedMethods(
+			'onDefaultPluginSeed',
+			(instance: any) => {
+				console.log(instance);
+			}
 		);
 	}
 
@@ -1756,15 +1744,6 @@ export class SeedDataService {
 			)
 		);
 
-		// await this.tryExecute(
-		// 	'Random Help Center Articles',
-		// 	createHelpCenterArticle(
-		// 		this.connection,
-		// 		this.organizations,
-		// 		randomSeedConfig.noOfHelpCenterArticle || 5
-		// 	)
-		// );
-
 		await this.tryExecute(
 			'Random Organization Sprints',
 			createRandomOrganizationSprint(
@@ -1783,15 +1762,6 @@ export class SeedDataService {
 				tenantOrganizationsMap
 			)
 		);
-
-		// await this.tryExecute(
-		// 	'Random Help Center Authors',
-		// 	createRandomHelpCenterAuthor(
-		// 		this.connection,
-		// 		tenants,
-		// 		tenantEmployeeMap
-		// 	)
-		// );
 
 		await this.tryExecute(
 			'Random Appointment Employees',
@@ -1906,12 +1876,20 @@ export class SeedDataService {
 				tenantOrganizationsMap
 			)
 		);
+
+		//run all plugins default seed method
+		await this.bootstrapPluginSeedMethods(
+			'onRandomPluginSeed',
+			(instance: any) => {
+				console.log(instance);
+			}
+		);
 	}
 
 	private async cleanUpPreviousRuns() {
 		this.log(chalk.green(`CLEANING UP FROM PREVIOUS RUNS...`));
 
-		await new Promise((resolve, reject) => {
+		await new Promise((resolve) => {
 			const assetOptions = this.config.assetOptions;
 			const dir = env.isElectron
 				? path.join(
@@ -1963,7 +1941,10 @@ export class SeedDataService {
 	 * Use this wrapper function for all seed functions which are not essential.
 	 * Essentials seeds are ONLY those which are required to start the UI/login
 	 */
-	tryExecute<T>(name: string, p: Promise<T>): Promise<T> | Promise<void> {
+	public tryExecute<T>(
+		name: string,
+		p: Promise<T>
+	): Promise<T> | Promise<void> {
 		this.log(chalk.green(`SEEDING ${name}`));
 
 		return (p as any).then(
@@ -2049,5 +2030,34 @@ export class SeedDataService {
 			)
 		);
 		throw error;
+	}
+
+	private async bootstrapPluginSeedMethods(
+		lifecycleMethod: keyof PluginLifecycleMethods,
+		closure?: (instance: any) => void
+	): Promise<void> {
+		const plugins = getPluginModules(this.config.plugins);
+		console.log(plugins);
+		for (const plugin of plugins) {
+			console.log(plugin);
+			let classInstance: ClassDecorator;
+			try {
+				classInstance = this.moduleRef.get(plugin, { strict: false });
+			} catch (e) {
+				console.log(
+					`Could not find ${plugin.name}`,
+					undefined,
+					e.stack
+				);
+			}
+			if (classInstance) {
+				if (hasLifecycleMethod(classInstance, lifecycleMethod)) {
+					await classInstance[lifecycleMethod]();
+				}
+				if (typeof closure === 'function') {
+					closure(classInstance);
+				}
+			}
+		}
 	}
 }

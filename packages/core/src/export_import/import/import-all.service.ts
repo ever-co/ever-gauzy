@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { DynamicModule, Injectable, OnModuleInit, Type } from '@nestjs/common';
 import * as fs from 'fs';
 import * as unzipper from 'unzipper';
 import * as csv from 'csv-parser';
@@ -115,9 +115,160 @@ import { KeyResultTemplate } from '../../keyresult-template/keyresult-template.e
 import { Report } from '../../reports/report.entity';
 import { ReportCategory } from '../../reports/report-category.entity';
 import { ReportOrganization } from '../../reports/report-organization.entity';
+import { ConfigService } from '@gauzy/config';
+import { getPluginModules } from '@gauzy/plugin';
+import { ModuleRef } from '@nestjs/core';
 
 @Injectable()
-export class ImportAllService {
+export class ImportAllService implements OnModuleInit {
+	__dirname = './import/csv/';
+
+	connection: Connection;
+
+	plugins: Array<DynamicModule | Type<any>> = [];
+
+	/**
+	 * Warning: Changing position here can be FATAL
+	 */
+	orderedRepositories = {
+		/**
+		 * These entities do not have any other dependency so need to be imported first
+		 */
+		countries: this.countryRepository,
+		currencies: this.currencyRepository,
+		skill: this.skillRepository, //TODO: This should be organization level but currently does not have any org detail
+		language: this.languageRepository,
+		tenant: this.tenantRepository,
+		report_category: this.reportCategoryRepository,
+		report: this.reportRepository,
+
+		/**
+		 * These entities need TENANT
+		 */
+		role: this.roleRepository,
+		role_permission: this.RolePermissionsRepository,
+		organization: this.organizationRepository,
+
+		/**
+		 * These entities need TENANT and ORGANIZATION
+		 */
+		users: this.userRepository,
+		candidate: this.candidateRepository,
+		user_organization: this.userOrganizationRepository,
+		contact: this.contactRepository,
+		report_organization: this.reportOrganizationRepository,
+		job_preset: this.jobPresetRepository,
+		job_search_category: this.jobSearchCategoryRepository,
+		job_search_occupation: this.jobSearchOccupationRepository,
+		job_preset_upwork_job_search_criterion: this
+			.jobPresetUpworkJobSearchCriterionRepository,
+
+		/**
+		 * These entities need TENANT, ORGANIZATION & USER
+		 */
+		employee: this.employeeRepository,
+
+		/**
+		 * These entities need TENANT, ORGANIZATION & CANDIDATE
+		 */
+		candidate_documents: this.candidateDocumentRepository,
+		candidate_education: this.candidateEducationRepository,
+		candidate_experience: this.candidateExperienceRepository,
+		candidate_feedbacks: this.candidateFeedbackRepository,
+		candidate_interview: this.candidateInterviewRepository,
+		candidate_interviews: this.candidateInterviewersRepository,
+		candidate_personal_qualities: this.candidatePersonalQualitiesRepository,
+		candidate_creation_rating: this.candidateCriterionsRatingRepository,
+		candidate_skill: this.candidateSkillRepository,
+		candidate_source: this.candidateSourceRepository,
+		candidate_technologies: this.candidateTechnologiesRepository,
+
+		activity: this.activityRepository,
+		approval_policy: this.approvalPolicyRepository,
+		availability_slot: this.availabilitySlotsRepository,
+		appointment_employee: this.appointmentEmployeesRepository,
+
+		deal: this.dealRepository,
+		email_template: this.emailTemplateRepository,
+		estimate_email: this.estimateEmailRepository,
+		email: this.emailRepository,
+
+		employee_appointment: this.employeeAppointmentRepository,
+		employee_award: this.employeeAwardRepository,
+		employee_proposal_template: this.employeeProposalTemplateRepository,
+		employee_recurring_expense: this.employeeRecurringExpenseRepository,
+		employee_setting: this.employeeSettingRepository,
+		employee_upwork_job_search_criterion: this
+			.employeeUpworkJobsSearchCriterionRepository,
+		equipment: this.equipmentRepository,
+		equipment_sharing: this.equipmentSharingRepository,
+		equipment_sharing_policy: this.equipmentSharingPolicyRepository,
+		event_types: this.eventTypeRepository,
+		expense_category: this.expenseCategoryRepository,
+		expense: this.expenseRepository,
+		goal_kpi: this.goalKpiRepository,
+		gosl_kpi_template: this.goalKpiTemplateRepository,
+		goal_time_frame: this.goalTimeFrameRepository,
+		goal: this.goalRepository,
+		goal_template: this.goalTemplateRepository,
+		goal_general_setting: this.goalGeneralSettingRepository,
+		income: this.incomeRepository,
+		integration_tenant: this.integrationTenantRepository,
+		integration_entity_setting: this.integrationEntitySettingRepository,
+		integration_entity_setting_tied_entity: this
+			.integrationEntitySettingTiedEntityRepository,
+		integration_map: this.IntegrationMapRepository,
+		integration_setting: this.IntegrationSettingRepository,
+		integration: this.integrationRepository,
+		invite: this.inviteRepository,
+		invoice_item: this.invoiceItemRepository,
+		invoice: this.invoiceRepository,
+		invoise_estimate_history: this.invoiceEstimateHistoryRepository,
+		key_result: this.keyResultRepository,
+		key_result_template: this.keyResultTemplateRepository,
+		key_result_update: this.keyResultUpdateRepository,
+
+		organization_award: this.organizationAwardsRepository,
+		organization_contact: this.organizationContactRepository,
+		organization_department: this.organizationDepartmentRepository,
+		organization_document: this.organizationDocumentRepository,
+		organization_employee_level: this.employeeLevelRepository,
+		organization_employment_type: this.organizationEmploymentTypeRepository,
+		organization_language: this.organizationLanguagesRepository,
+		organization_position: this.organizationPositionsRepository,
+		organization_project: this.organizationProjectsRepository,
+		organization_recurring_expense: this
+			.organizationRecurringExpenseRepository,
+		organization_sprint: this.sprintRepository,
+		organization_team_employee: this.OrganizationTeamEmployeeRepository,
+		organization_team: this.organizationTeamRepository,
+		organization_vendor: this.organizationVendorsRepository,
+
+		pipeline: this.pipelineRepository,
+		product_category: this.productCategoryRepository,
+		product_option: this.productOptionRepository,
+		product_settings: this.productVariantSettingsRepository,
+		product_type: this.productTypeRepository,
+		product_variant_price: this.productVariantPriceRepository,
+		product_variant: this.productVariantRepository,
+		product: this.productRepository,
+		proposal: this.proposalRepository,
+		payment: this.paymentRepository,
+		request_approval: this.requestApprovalRepository,
+
+		screenshot: this.screenShotRepository,
+
+		stage: this.stageRepository,
+		tag: this.tagRepository,
+		task: this.taskRepository,
+
+		time_log: this.timeLogRepository,
+		time_slot: this.timeSlotRepository,
+		time_off_policy: this.timeOffPolicyRepository,
+		time_off_request: this.timeOffRequestRepository,
+		timesheet: this.timeSheetRepository
+	};
+
 	constructor(
 		@InjectRepository(Activity)
 		private readonly activityRepository: Repository<Activity>,
@@ -243,15 +394,6 @@ export class ImportAllService {
 
 		@InjectRepository(GoalTimeFrame)
 		private readonly goalTimeFrameRepository: Repository<GoalTimeFrame>,
-
-		// @InjectRepository(HelpCenter)
-		// private readonly helpCenterRepository: Repository<HelpCenter>,
-
-		// @InjectRepository(HelpCenterArticle)
-		// private readonly HelpCenterArticleRepository: Repository<HelpCenterArticle>,
-
-		// @InjectRepository(HelpCenterAuthor)
-		// private readonly HelpCenterAuthorRepository: Repository<HelpCenterAuthor>,
 
 		@InjectRepository(Income)
 		private readonly incomeRepository: Repository<Income>,
@@ -440,158 +582,27 @@ export class ImportAllService {
 		private readonly userRepository: Repository<User>,
 
 		@InjectRepository(UserOrganization)
-		private readonly userOrganizationRepository: Repository<UserOrganization>
+		private readonly userOrganizationRepository: Repository<UserOrganization>,
+
+		private readonly configService: ConfigService,
+		private readonly moduleRef: ModuleRef
 	) {}
 
-	__dirname = './import/csv/';
-
-	connection: Connection;
-
-	/**
-	 * Warning: Changing position here can be FATAL
-	 */
-	orderedRepositories = {
-		/**
-		 * These entities do not have any other dependency so need to be imported first
-		 */
-		countries: this.countryRepository,
-		currencies: this.currencyRepository,
-		skill: this.skillRepository, //TODO: This should be organization level but currently does not have any org detail
-		language: this.languageRepository,
-		tenant: this.tenantRepository,
-		report_category: this.reportCategoryRepository,
-		report: this.reportRepository,
-
-		/**
-		 * These entities need TENANT
-		 */
-		role: this.roleRepository,
-		role_permission: this.RolePermissionsRepository,
-		organization: this.organizationRepository,
-
-		/**
-		 * These entities need TENANT and ORGANIZATION
-		 */
-		users: this.userRepository,
-		candidate: this.candidateRepository,
-		user_organization: this.userOrganizationRepository,
-		contact: this.contactRepository,
-		report_organization: this.reportOrganizationRepository,
-		job_preset: this.jobPresetRepository,
-		job_search_category: this.jobSearchCategoryRepository,
-		job_search_occupation: this.jobSearchOccupationRepository,
-		job_preset_upwork_job_search_criterion: this
-			.jobPresetUpworkJobSearchCriterionRepository,
-
-		/**
-		 * These entities need TENANT, ORGANIZATION & USER
-		 */
-		employee: this.employeeRepository,
-
-		/**
-		 * These entities need TENANT, ORGANIZATION & CANDIDATE
-		 */
-		candidate_documents: this.candidateDocumentRepository,
-		candidate_education: this.candidateEducationRepository,
-		candidate_experience: this.candidateExperienceRepository,
-		candidate_feedbacks: this.candidateFeedbackRepository,
-		candidate_interview: this.candidateInterviewRepository,
-		candidate_interviews: this.candidateInterviewersRepository,
-		candidate_personal_qualities: this.candidatePersonalQualitiesRepository,
-		candidate_creation_rating: this.candidateCriterionsRatingRepository,
-		candidate_skill: this.candidateSkillRepository,
-		candidate_source: this.candidateSourceRepository,
-		candidate_technologies: this.candidateTechnologiesRepository,
-
-		activity: this.activityRepository,
-		approval_policy: this.approvalPolicyRepository,
-		availability_slot: this.availabilitySlotsRepository,
-		appointment_employee: this.appointmentEmployeesRepository,
-
-		deal: this.dealRepository,
-		email_template: this.emailTemplateRepository,
-		estimate_email: this.estimateEmailRepository,
-		email: this.emailRepository,
-
-		employee_appointment: this.employeeAppointmentRepository,
-		employee_award: this.employeeAwardRepository,
-		employee_proposal_template: this.employeeProposalTemplateRepository,
-		employee_recurring_expense: this.employeeRecurringExpenseRepository,
-		employee_setting: this.employeeSettingRepository,
-		employee_upwork_job_search_criterion: this
-			.employeeUpworkJobsSearchCriterionRepository,
-		equipment: this.equipmentRepository,
-		equipment_sharing: this.equipmentSharingRepository,
-		equipment_sharing_policy: this.equipmentSharingPolicyRepository,
-		event_types: this.eventTypeRepository,
-		expense_category: this.expenseCategoryRepository,
-		expense: this.expenseRepository,
-		goal_kpi: this.goalKpiRepository,
-		gosl_kpi_template: this.goalKpiTemplateRepository,
-		goal_time_frame: this.goalTimeFrameRepository,
-		goal: this.goalRepository,
-		goal_template: this.goalTemplateRepository,
-		goal_general_setting: this.goalGeneralSettingRepository,
-		income: this.incomeRepository,
-		integration_tenant: this.integrationTenantRepository,
-		integration_entity_setting: this.integrationEntitySettingRepository,
-		integration_entity_setting_tied_entity: this
-			.integrationEntitySettingTiedEntityRepository,
-		integration_map: this.IntegrationMapRepository,
-		integration_setting: this.IntegrationSettingRepository,
-		integration: this.integrationRepository,
-		invite: this.inviteRepository,
-		invoice_item: this.invoiceItemRepository,
-		invoice: this.invoiceRepository,
-		invoise_estimate_history: this.invoiceEstimateHistoryRepository,
-		key_result: this.keyResultRepository,
-		key_result_template: this.keyResultTemplateRepository,
-		key_result_update: this.keyResultUpdateRepository,
-
-		// knowledge_base: this.HelpCenterRepository,
-		// knowledge_base_article: this.HelpCenterArticleRepository,
-		// knowledge_base_author: this.HelpCenterAuthorRepository,
-
-		organization_award: this.organizationAwardsRepository,
-		organization_contact: this.organizationContactRepository,
-		organization_department: this.organizationDepartmentRepository,
-		organization_document: this.organizationDocumentRepository,
-		organization_employee_level: this.employeeLevelRepository,
-		organization_employment_type: this.organizationEmploymentTypeRepository,
-		organization_language: this.organizationLanguagesRepository,
-		organization_position: this.organizationPositionsRepository,
-		organization_project: this.organizationProjectsRepository,
-		organization_recurring_expense: this
-			.organizationRecurringExpenseRepository,
-		organization_sprint: this.sprintRepository,
-		organization_team_employee: this.OrganizationTeamEmployeeRepository,
-		organization_team: this.organizationTeamRepository,
-		organization_vendor: this.organizationVendorsRepository,
-
-		pipeline: this.pipelineRepository,
-		product_category: this.productCategoryRepository,
-		product_option: this.productOptionRepository,
-		product_settings: this.productVariantSettingsRepository,
-		product_type: this.productTypeRepository,
-		product_variant_price: this.productVariantPriceRepository,
-		product_variant: this.productVariantRepository,
-		product: this.productRepository,
-		proposal: this.proposalRepository,
-		payment: this.paymentRepository,
-		request_approval: this.requestApprovalRepository,
-
-		screenshot: this.screenShotRepository,
-
-		stage: this.stageRepository,
-		tag: this.tagRepository,
-		task: this.taskRepository,
-
-		time_log: this.timeLogRepository,
-		time_slot: this.timeSlotRepository,
-		time_off_policy: this.timeOffPolicyRepository,
-		time_off_request: this.timeOffRequestRepository,
-		timesheet: this.timeSheetRepository
-	};
+	async onModuleInit() {
+		this.plugins = this.configService.plugins;
+		for (const plugin of getPluginModules(this.plugins)) {
+			let classInstance: ClassDecorator;
+			try {
+				classInstance = this.moduleRef.get(plugin, { strict: false });
+			} catch (e) {
+				console.log(
+					`Could not find ${plugin.name}`,
+					undefined,
+					e.stack
+				);
+			}
+		}
+	}
 
 	async createFolder(): Promise<any> {
 		return new Promise((resolve, reject) => {

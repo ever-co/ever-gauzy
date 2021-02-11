@@ -4,9 +4,11 @@
 import yargs from 'yargs';
 import * as chalk from 'chalk';
 
-import { SeedDataService } from './../core/seeds/seed-data.service';
+import { NestFactory } from '@nestjs/core';
 import { IPluginConfig } from '@gauzy/common';
 import { setConfig } from '@gauzy/config';
+import { SeedDataService } from './../core/seeds/seed-data.service';
+import { SeederModule } from './../core/seeds/seeder.module';
 
 /**
  * Usage:
@@ -14,26 +16,36 @@ import { setConfig } from '@gauzy/config';
  * yarn db:seed Default
  * yarn db:seed Jobs
  * yarn db:seed Reports
- * */
-export async function seedModule(
-	devConfig: Partial<IPluginConfig>
-): Promise<void> {
+ *
+ */
+export async function seedModule(devConfig: Partial<IPluginConfig>) {
 	if (Object.keys(devConfig).length > 0) {
 		setConfig(devConfig);
 	}
 
-	(async () => {
-		const seedDataService = new SeedDataService();
-		const argv: any = yargs(process.argv).argv;
-		const module = argv.name;
-		const methodName = `run${module}Seed`;
-		if (seedDataService[methodName]) {
-			await seedDataService[methodName]();
-		} else {
-			console.log(
-				chalk.red(`Method ${methodName} not found in SeedDataService`)
-			);
-		}
-		process.exit(0);
-	})();
+	NestFactory.createApplicationContext(SeederModule)
+		.then((appContext) => {
+			const seeder = appContext.get(SeedDataService);
+			const argv: any = yargs(process.argv).argv;
+			const module = argv.name;
+			const methodName = `run${module}Seed`;
+
+			if (seeder[methodName]) {
+				seeder[methodName]()
+					.catch((error) => {
+						throw error;
+					})
+					.finally(() => appContext.close());
+			} else {
+				console.log(
+					chalk.red(
+						`Method ${methodName} not found in SeedDataService`
+					)
+				);
+				appContext.close();
+			}
+		})
+		.catch((error) => {
+			throw error;
+		});
 }

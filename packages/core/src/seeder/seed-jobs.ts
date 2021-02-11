@@ -2,8 +2,10 @@
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
 
+import { NestFactory } from '@nestjs/core';
 import { IPluginConfig } from '@gauzy/common';
 import { setConfig } from '@gauzy/config';
+import { SeederModule } from './../core/seeds/seeder.module';
 import { SeedDataService } from './../core/seeds/seed-data.service';
 
 /**
@@ -14,16 +16,23 @@ import { SeedDataService } from './../core/seeds/seed-data.service';
  * SeedData checks if environment is in production or not by checking src/environments/environment.ts file configs.
  * If environment.production config is set to true, then the seeding process will only generate default roles and 2 default users.
  * */
-export async function seedJob(
-	devConfig: Partial<IPluginConfig>
-): Promise<void> {
+export async function seedJob(devConfig: Partial<IPluginConfig>) {
 	if (Object.keys(devConfig).length > 0) {
 		setConfig(devConfig);
 	}
 
-	(async () => {
-		const seedDataService = new SeedDataService();
-		await seedDataService.runJobsSeed();
-		process.exit(0);
-	})();
+	NestFactory.createApplicationContext(SeederModule)
+		.then((appContext) => {
+			const seeder = appContext.get(SeedDataService);
+			seeder
+				.runJobsSeed()
+				.then(() => {})
+				.catch((error) => {
+					throw error;
+				})
+				.finally(() => appContext.close());
+		})
+		.catch((error) => {
+			throw error;
+		});
 }

@@ -8,6 +8,13 @@ import {
 } from '@gauzy/common';
 import { PLUGIN_METADATA } from './constants';
 
+export interface OnDefaultPluginSeed {
+	onDefaultPluginSeed(): void | Promise<void>;
+}
+export interface OnRandomPluginSeed {
+	onRandomPluginSeed(): void | Promise<void>;
+}
+
 export function ExtensionPlugin(
 	pluginMetadata: IPluginMetaData
 ): ClassDecorator {
@@ -30,4 +37,7 @@ export function ExtensionPlugin(
 	};
 }
 
-export type PluginLifecycleMethods = IOnPluginBootstrap & IOnPluginDestroy;
+export type PluginLifecycleMethods = IOnPluginBootstrap &
+	IOnPluginDestroy &
+	OnDefaultPluginSeed &
+	OnRandomPluginSeed;
