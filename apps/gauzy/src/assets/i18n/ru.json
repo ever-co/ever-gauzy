@@ -99,7 +99,8 @@
 		"EXPORT_TO_CSV": "Экспорт в CSV",
 		"INVOICE_REMAINING_AMOUNT": "Оставшаяся сумма",
 		"PUBLIC_LINK": "Публичная ссылка",
-		"GENERATE": "Сгенерировать"
+		"GENERATE": "Сгенерировать",
+		"SEND_RECEIPT": "Отправить квитанцию"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -2468,7 +2469,11 @@
 			"ONLINE": "Онлайн",
 			"PAYMENTS_FOR_INVOICE": "Платежи за счет",
 			"RECEIVED_FROM": "Получено от",
-			"RECEIVER": "Приемник"
+			"RECEIVER": "Приемник",
+			"SEND_RECEIPT": "Отправить квитанцию {{ name }}?",
+			"CONTACT_GREETING": "Hi {{ name }},",
+			"RECEIPT_FOR": "Это квитанция по счету {{ invoiceNumber }} для {{ amount }} {{ currency }}.",
+			"BEST_REGARDS": "С уважением относится к команде {{ name }}."
 		},
 		"INTERNAL_NOTE": {
 			"NOTE_SAVED": "Внутренняя заметка была добавлена",
