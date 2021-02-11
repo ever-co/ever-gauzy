@@ -11,7 +11,8 @@ import {
 	Param,
 	Body,
 	Post,
-	Delete
+	Delete,
+	Req
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Payment } from './payment.entity';
@@ -20,6 +21,7 @@ import {
 	IGetPaymentInput,
 	IPayment,
 	IPaymentReportData,
+	LanguagesEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { ParseJsonPipe } from '../shared';
@@ -27,6 +29,7 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 import { PaymentMapService } from './payment.map.service';
+import { I18nLang } from 'nestjs-i18n';
 
 @ApiTags('Payment')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -103,6 +106,21 @@ export class PaymentController extends CrudController<Payment> {
 	@Post()
 	async createPayment(@Body() entity: IPayment): Promise<any> {
 		return this.paymentService.create(entity);
+	}
+
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_PAYMENT_ADD_EDIT)
+	@Post('receipt')
+	async sendReceipt(
+		@Req() request,
+		@I18nLang() languageCode: LanguagesEnum
+	): Promise<any> {
+		return this.paymentService.sendReceipt(
+			languageCode,
+			request.body.params,
+			request.get('Origin')
+		);
 	}
 
 	@HttpCode(HttpStatus.ACCEPTED)
