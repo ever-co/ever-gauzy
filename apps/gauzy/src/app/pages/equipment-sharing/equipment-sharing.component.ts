@@ -19,7 +19,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 import { EquipmentSharingActionComponent } from './table-components/equipment-sharing-action/equipment-sharing-action.component';
 import { EquipmentSharingStatusComponent } from './table-components/equipment-sharing-status/equipment-sharing-status.component';
 import { Store } from '../../@core/services/store.service';
-import { combineLatest, of, Subject } from 'rxjs';
+import { combineLatest, Subject } from 'rxjs';
 import { Router, NavigationEnd, RouterEvent } from '@angular/router';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { EquipmentSharingPolicyComponent } from './table-components/equipment-sharing-policy/equipment-sharing-policy.component';
