@@ -118,7 +118,6 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 					});
 					this.projects = items;
 				}
-
 			});
 
 		this.store.selectedOrganization$
@@ -182,7 +181,6 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
 				{ name }
 			);
-
 		} catch (error) {
 			this.toastrService.error(error);
 		}
@@ -216,7 +214,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 
 		projects.push(project);
 
-		this.projects = [...projects].filter(isNotEmpty);		
+		this.projects = [...projects].filter(isNotEmpty);
 	}
 
 	/*
@@ -232,7 +230,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 			return item;
 		});
 
-		this.projects = [...projects].filter(isNotEmpty);		
+		this.projects = [...projects].filter(isNotEmpty);
 	}
 
 	/*
@@ -245,7 +243,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 			(item: IOrganizationProject) => item.id !== project.id
 		);
 
-		this.projects = [...projects].filter(isNotEmpty);		
+		this.projects = [...projects].filter(isNotEmpty);
 	}
 
 	ngOnDestroy() {}
