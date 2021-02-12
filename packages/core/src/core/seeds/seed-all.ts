@@ -4,9 +4,9 @@
 
 import { IPluginConfig } from '@gauzy/common';
 import { NestFactory } from '@nestjs/core';
-import { setConfig } from '@gauzy/config';
-import { CoreModule } from './../core/core.module';
-import { SeedDataService } from './../core/seeds/seed-data.service';
+import { registerPluginConfig } from './../../bootstrap';
+import { SeedDataService } from './seed-data.service';
+import { SeederModule } from './seeder.module';
 
 /**
  * WARNING: Running this file will DELETE all data in your database
@@ -17,17 +17,16 @@ import { SeedDataService } from './../core/seeds/seed-data.service';
  * If environment.production config is set to true, then the seeding process will only generate default roles and 2 default users.
  * */
 
-export async function seedDefault(devConfig: Partial<IPluginConfig>) {
-	if (Object.keys(devConfig).length > 0) {
-		setConfig(devConfig);
-	}
+export async function seedAll(devConfig: Partial<IPluginConfig>) {
+	await registerPluginConfig(devConfig);
 
-	NestFactory.createApplicationContext(CoreModule)
+	NestFactory.createApplicationContext(SeederModule.forPluings(), {
+		logger: false
+	})
 		.then((appContext) => {
 			const seeder = appContext.get(SeedDataService);
-			console.log(seeder, 'seeder');
 			seeder
-				.runDefaultSeed()
+				.runAllSeed()
 				.then(() => {})
 				.catch((error) => {
 					throw error;

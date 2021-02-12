@@ -5,9 +5,14 @@ import {
 	OnRandomPluginSeed
 } from '@gauzy/plugin';
 import * as chalk from 'chalk';
-import { HelpCenterAuthor, HelpCenterAuthorModule } from './help-center-author';
-import { HelpCenter, HelpCenterModule } from './help-center';
 import {
+	createDefaultHelpCenterAuthor,
+	HelpCenterAuthor,
+	HelpCenterAuthorModule
+} from './help-center-author';
+import { createHelpCenter, HelpCenter, HelpCenterModule } from './help-center';
+import {
+	createHelpCenterArticle,
 	HelpCenterArticle,
 	HelpCenterArticleModule
 } from './help-center-article';
@@ -44,11 +49,7 @@ export class KnowledgeBasePlugin
 		);
 	}
 
-	onDefaultPluginSeed() {
-		console.log('run default seed');
-	}
+	onDefaultPluginSeed() {}
 
-	onRandomPluginSeed() {
-		console.log('run random seed');
-	}
+	onRandomPluginSeed() {}
 }

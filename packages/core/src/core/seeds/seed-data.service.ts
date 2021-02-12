@@ -88,7 +88,6 @@ import {
 } from '../../candidate-source/candidate-source.seed';
 import { createDefaultIntegrationTypes } from '../../integration/integration-type.seed';
 import { createDefaultIntegrations } from '../../integration/integration.seed';
-// import { createHelpCenter } from '../../help-center/help-center.seed';
 import {
 	createDefaultProducts,
 	createRandomProduct
@@ -1178,7 +1177,7 @@ export class SeedDataService {
 		await this.bootstrapPluginSeedMethods(
 			'onDefaultPluginSeed',
 			(instance: any) => {
-				console.log(instance);
+				console.log('External plugins default seeded completed!');
 			}
 		);
 	}
@@ -1881,7 +1880,7 @@ export class SeedDataService {
 		await this.bootstrapPluginSeedMethods(
 			'onRandomPluginSeed',
 			(instance: any) => {
-				console.log(instance);
+				console.log('External plugins random seeded completed!');
 			}
 		);
 	}
@@ -2037,9 +2036,7 @@ export class SeedDataService {
 		closure?: (instance: any) => void
 	): Promise<void> {
 		const plugins = getPluginModules(this.config.plugins);
-		console.log(plugins);
 		for (const plugin of plugins) {
-			console.log(plugin);
 			let classInstance: ClassDecorator;
 			try {
 				classInstance = this.moduleRef.get(plugin, { strict: false });

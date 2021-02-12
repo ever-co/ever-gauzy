@@ -12,12 +12,7 @@ import { Integrations as SentryIntegrations } from '@sentry/node';
 import { Integrations as TrackingIntegrations } from '@sentry/tracing';
 import { initialize as initializeUnleash } from 'unleash-client';
 import { LanguagesEnum } from '@gauzy/contracts';
-import {
-	ConfigModule,
-	ConfigService,
-	environment,
-	getConfig
-} from '@gauzy/config';
+import { ConfigService, environment } from '@gauzy/config';
 import * as path from 'path';
 import * as moment from 'moment';
 import { CandidateInterviewersModule } from './candidate-interviewers/candidate-interviewers.module';

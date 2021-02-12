@@ -6,9 +6,9 @@ import * as chalk from 'chalk';
 
 import { NestFactory } from '@nestjs/core';
 import { IPluginConfig } from '@gauzy/common';
-import { setConfig } from '@gauzy/config';
-import { SeedDataService } from './../core/seeds/seed-data.service';
-import { SeederModule } from './../core/seeds/seeder.module';
+import { registerPluginConfig } from './../../bootstrap';
+import { SeedDataService } from './seed-data.service';
+import { SeederModule } from './seeder.module';
 
 /**
  * Usage:
@@ -19,11 +19,11 @@ import { SeederModule } from './../core/seeds/seeder.module';
  *
  */
 export async function seedModule(devConfig: Partial<IPluginConfig>) {
-	if (Object.keys(devConfig).length > 0) {
-		setConfig(devConfig);
-	}
+	await registerPluginConfig(devConfig);
 
-	NestFactory.createApplicationContext(SeederModule)
+	NestFactory.createApplicationContext(SeederModule.forPluings(), {
+		logger: false
+	})
 		.then((appContext) => {
 			const seeder = appContext.get(SeedDataService);
 			const argv: any = yargs(process.argv).argv;
