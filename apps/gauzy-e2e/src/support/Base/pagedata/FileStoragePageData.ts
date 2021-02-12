@@ -1,8 +1,8 @@
 export const FileStoragePageData = {
 	header: 'Settings',
 	subheader: 'S3 details',
-	accessKeyId: '12345678911234567892',
-	secretAccessKey: '12345678911234567892',
+	accessKeyId: 'replace_me',
+	secretAccessKey: 'replace_me',
 	region: 'Europe',
 	bucket: 'my-eu-bucket-3'
 };
