@@ -16,8 +16,8 @@ import { VariantCreateInput } from '../../pages/inventory/components/edit-invent
 export class InventoryStore {
 	private _activeProduct: IProductTranslatable = this.inventoryItemBlank;
 
-	private _varintCreateInputs: VariantCreateInput[] = [];
-	private _optionsCombinations: IVariantOptionCombination[] = [];
+	private _variantCreateInputs: VariantCreateInput[] = [];
+
 	private _deleteOptions: IProductOption[] = [];
 
 	private _activeTab: NbTabComponent = null;
@@ -30,16 +30,8 @@ export class InventoryStore {
 		VariantCreateInput[]
 	> = new BehaviorSubject(this.variantCreateInputs);
 
-	optionsCombinations$: BehaviorSubject<
-		IVariantOptionCombination[]
-	> = new BehaviorSubject(this.optionsCombinations);
-
 	deleteOptions$: BehaviorSubject<IProductOption[]> = new BehaviorSubject(
 		this.deleteOptions
-	);
-
-	createOptions$: BehaviorSubject<IProductOption[]> = new BehaviorSubject(
-		this.createOptions
 	);
 
 	activeTab$: BehaviorSubject<NbTabComponent> = new BehaviorSubject(
@@ -65,15 +57,11 @@ export class InventoryStore {
 	}
 
 	get variantCreateInputs() {
-		return this._varintCreateInputs;
-	}
-
-	get optionsCombinations() {
-		return this._optionsCombinations;
+		return this._variantCreateInputs;
 	}
 
 	get createoOptionCombinations() {
-		return this._varintCreateInputs
+		return this._variantCreateInputs
 			.filter((variant) => !variant.isStored)
 			.map((variant) => ({ options: variant.options }));
 	}
@@ -95,14 +83,9 @@ export class InventoryStore {
 		this.activeProduct$.next(this._activeProduct);
 	}
 
-	set variantCreateInputs(variantCreateInput: VariantCreateInput[]) {
-		this._varintCreateInputs = variantCreateInput;
-		this.variantCreateInputs$.next(this._varintCreateInputs);
-	}
-
-	set optionsCombinations(optionsCombinations: IVariantOptionCombination[]) {
-		this._optionsCombinations = optionsCombinations;
-		this.optionsCombinations$.next(optionsCombinations);
+	set variantCreateInputs(variantCreateInputs: VariantCreateInput[]) {
+		this._variantCreateInputs = variantCreateInputs;
+		this.variantCreateInputs$.next(this._variantCreateInputs);
 	}
 
 	set options(options: IProductOption[]) {
@@ -140,6 +123,47 @@ export class InventoryStore {
 		this.activeProduct$.next(this.activeProduct);
 	}
 
+	initVariantCreateInputs() {
+		this._variantCreateInputs = this.activeProduct.variants.map(
+			(variant: IProductVariant) => {
+				return {
+					options: variant.options.map(
+						(option: IProductOption) => option.name
+					),
+					isStored: true,
+					id: variant.id,
+					productId: this.activeProduct.id
+				};
+			}
+		);
+
+		this.variantCreateInputs$.next(this._variantCreateInputs);
+	}
+
+	addVariantCreateInput(variantCreateInput: VariantCreateInput) {
+		this._variantCreateInputs.push(variantCreateInput);
+		this.variantCreateInputs$.next(this.variantCreateInputs);
+	}
+
+	updateVariantInputsOnDeletedOption(deletedOption: IProductOption) {
+		let variantsUsingOption = this.variantCreateInputs.filter((variant) =>
+			variant.options.find((option) => {
+				option == deletedOption.name;
+			})
+		);
+
+		variantsUsingOption.forEach((variant) => {
+			variant.options = variant.options.filter(
+				(option) => option != deletedOption.name
+			);
+		});
+
+		this._variantCreateInputs = this.variantCreateInputs.filter(
+			(variantCreateInput) => variantCreateInput.options.length
+		);
+		this.variantCreateInputs$.next(this._variantCreateInputs);
+	}
+
 	deleteVariant(variantDeleted: IProductVariant) {
 		this.activeProduct.variants = this.activeProduct.variants.filter(
 			(variant) => variant.id != variantDeleted.id
@@ -162,14 +186,19 @@ export class InventoryStore {
 		this._deleteOptions.push(optionDeleted);
 		this._activeProduct.options = this.activeProduct.options.filter(
 			(option) =>
-				option.name !== optionDeleted.name &&
-				option.code !== optionDeleted.code
+				!(
+					option.name == optionDeleted.name &&
+					option.code == optionDeleted.code
+				)
 		);
+
+		this.updateVariantInputsOnDeletedOption(optionDeleted);
 		this.deleteOptions$.next(this._deleteOptions);
 		this.activeProduct$.next(this._activeProduct);
 	}
 
 	clearCurrentProduct() {
+		this.resetCreateVariants();
 		this.activeProduct = this.inventoryItemBlank;
 		this.activeProduct$.next(this.activeProduct);
 	}

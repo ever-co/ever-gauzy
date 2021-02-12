@@ -96,8 +96,9 @@ export class ProductVariant
 	@JoinColumn()
 	image: ImageAsset;
 
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@Column({ nullable: true })
-	imageUrl: string;
+	//tstodo
+	// @ApiPropertyOptional({ type: () => String })
+	// @IsOptional()
+	// @Column({ nullable: true })
+	// imageUrl: string;
 }

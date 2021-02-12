@@ -3,8 +3,6 @@ import { IProductOption } from '@gauzy/contracts';
 import { Router } from '@angular/router';
 import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IProductVariant } from 'packages/contracts/dist';
-
 export interface OptionCreateInput {
 	name: string;
 	code: string;
@@ -43,19 +41,12 @@ export class VariantFormComponent implements OnInit {
 			.pipe(untilDestroyed(this))
 			.subscribe((activeProduct) => {
 				this.options = activeProduct.options;
+			});
 
-				this.variantCreateInputs = activeProduct.variants.map(
-					(variant: IProductVariant) => {
-						return {
-							options: variant.options.map(
-								(option: IProductOption) => option.name
-							),
-							isStored: true,
-							id: variant.id,
-							productId: this.inventoryStore.activeProduct.id
-						};
-					}
-				);
+		this.inventoryStore.variantCreateInputs$
+			.pipe(untilDestroyed(this))
+			.subscribe((variantCreateInputs) => {
+				this.variantCreateInputs = variantCreateInputs;
 			});
 	}
 
@@ -80,15 +71,12 @@ export class VariantFormComponent implements OnInit {
 			this.mode === 'create' &&
 			!this.optionCombinationAlreadySelected()
 		) {
-			this.variantCreateInputs.push(this.editVariantCreateInput);
+			this.inventoryStore.addVariantCreateInput(
+				this.editVariantCreateInput
+			);
+		} else {
 		}
 
-		let variantCreateInputs = this.variantCreateInputs.filter(
-			(variantCreateInput) => !variantCreateInput.isStored
-		);
-
-		//tstodo same for update
-		this.inventoryStore.variantCreateInputs = variantCreateInputs;
 		this.resetCreateVariantInputForm();
 	}
 
@@ -123,6 +111,11 @@ export class VariantFormComponent implements OnInit {
 
 	onVariantBtnClick(variantCreateInput: VariantCreateInput) {
 		const { id, productId } = variantCreateInput;
+
+		if (!variantCreateInput.isStored) {
+			this.onEditProductVariant(variantCreateInput);
+			return;
+		}
 
 		if (productId && id) {
 			this.router.navigate([

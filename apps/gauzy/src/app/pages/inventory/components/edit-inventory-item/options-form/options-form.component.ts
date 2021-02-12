@@ -37,6 +37,13 @@ export class OptionsFormComponent implements OnInit {
 		if (!(this.activeOption.name && this.activeOption.code)) return;
 
 		if (this.optionMode === 'create') {
+			if (
+				this.options.find(
+					(option) => option.name == this.activeOption.name
+				)
+			)
+				return;
+
 			this.options = this.options.concat([
 				{
 					name: this.activeOption.name,
