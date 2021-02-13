@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
+import { RouterModule } from 'nest-router';
 import { ImportAllController } from './import-all.controller';
 import { ImportAllService } from './import-all.service';
 import { MulterModule } from '@nestjs/platform-express';
@@ -76,9 +77,6 @@ import { EmployeeLevel } from '../../organization_employee-level/organization-em
 import { EmployeeRecurringExpense } from '../../employee-recurring-expense/employee-recurring-expense.entity';
 import { EmployeeSetting } from '../../employee-setting/employee-setting.entity';
 import { EquipmentSharing } from '../../equipment-sharing';
-import { HelpCenter } from '../../help-center/help-center.entity';
-import { HelpCenterAuthor } from '../../help-center-author/help-center-author.entity';
-import { HelpCenterArticle } from '../../help-center-article/help-center-article.entity';
 import { IntegrationSetting } from '../../integration-setting/integration-setting.entity';
 import { IntegrationMap } from '../../integration-map/integration-map.entity';
 import { IntegrationEntitySettingTiedEntity } from '../../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.entity';
@@ -116,13 +114,14 @@ import { Report } from '../../reports/report.entity';
 import { ReportCategory } from '../../reports/report-category.entity';
 import { ReportOrganization } from '../../reports/report-organization.entity';
 import { JobPreset } from '../../employee-job-preset/job-preset.entity';
+
 @Module({
 	imports: [
+		RouterModule.forRoutes([{ path: '/import', module: ImportAllModule }]),
 		CqrsModule,
 		MulterModule.register({
 			dest: './import'
 		}),
-
 		TypeOrmModule.forFeature([
 			Activity,
 			AppointmentEmployee,
@@ -172,10 +171,6 @@ import { JobPreset } from '../../employee-job-preset/job-preset.entity';
 			GoalKPITemplate,
 			GoalTemplate,
 			GoalTimeFrame,
-
-			HelpCenter,
-			HelpCenterArticle,
-			HelpCenterAuthor,
 
 			Income,
 			Integration,

@@ -72,9 +72,9 @@ import { IntegrationEntitySettingTiedEntityService } from '../integration-entity
 import { IntegrationMapService } from '../integration-map/integration-map.service';
 import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
 import { IntegrationTenantService } from '../integration-tenant/integration-tenant.service';
-import { HelpCenterService } from '../help-center/help-center.service';
-import { HelpCenterArticleService } from '../help-center-article/help-center-article.service';
-import { HelpCenterAuthorService } from '../help-center-author/help-center-author.service';
+// import { HelpCenterService } from '../help-center/help-center.service';
+// import { HelpCenterArticleService } from '../help-center-article/help-center-article.service';
+// import { HelpCenterAuthorService } from '../help-center-author/help-center-author.service';
 import { GoalService } from '../goal/goal.service';
 import { GoalTimeFrameService } from '../goal-time-frame/goal-time-frame.service';
 import { GoalKpiService } from '../goal-kpi/goal-kpi.service';
@@ -162,9 +162,9 @@ export class ExportAllService {
 		private goalKpiTemplateService: GoalKpiTemplateService,
 		private goalTimeFrameService: GoalTimeFrameService,
 
-		private helpCenterService: HelpCenterService,
-		private helpCenterArticleService: HelpCenterArticleService,
-		private helpCenterAuthorService: HelpCenterAuthorService,
+		// private helpCenterService: HelpCenterService,
+		// private helpCenterArticleService: HelpCenterArticleService,
+		// private helpCenterAuthorService: HelpCenterAuthorService,
 
 		private incomeService: IncomeService,
 		private integrationService: IntegrationService,
@@ -561,15 +561,11 @@ export class ExportAllService {
 				nameFile: 'goal_kpi_template'
 			},
 			{ service: this.goalTimeFrameService, nameFile: 'goal_time_frame' },
-			{ service: this.helpCenterService, nameFile: 'knowledge_base' },
-			{
-				service: this.helpCenterArticleService,
-				nameFile: 'knowledge_base_article'
-			},
-			{
-				service: this.helpCenterAuthorService,
-				nameFile: 'knowledge_base_author'
-			},
+
+			// { service: this.helpCenterService, nameFile: 'knowledge_base' },
+			// { service: this.helpCenterArticleService, nameFile: 'knowledge_base_article' },
+			// { service: this.helpCenterAuthorService, nameFile: 'knowledge_base_author' },
+
 			{ service: this.incomeService, nameFile: 'income' },
 			{
 				service: this.integrationService,

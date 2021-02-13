@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RouterModule } from 'nest-router';
 import { RoleModule } from '../role/role.module';
 import { UserModule } from '../user/user.module';
 import { RolePermissionsModule } from '../role-permissions/role-permissions.module';
@@ -12,8 +13,15 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { UserService } from '../user/user.service';
 import { User } from '../user/user.entity';
 import { TenantModule } from '../tenant/tenant.module';
+
 @Module({
 	imports: [
+		RouterModule.forRoutes([
+			{
+				path: '/candidate-personal-qualities',
+				module: CandidatePersonalQualitiesModule
+			}
+		]),
 		TypeOrmModule.forFeature([CandidatePersonalQualities, User]),
 		UserModule,
 		RoleModule,

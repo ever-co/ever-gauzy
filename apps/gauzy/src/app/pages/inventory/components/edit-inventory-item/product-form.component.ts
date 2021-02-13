@@ -280,8 +280,6 @@ export class ProductFormComponent
 			this.inventoryStore.resetCreateVariants();
 
 			await this.loadProduct(productResult.id).then(() => {
-				this.inventoryTabset.selectTab(this.variantsTab);
-
 				this.router.navigate([
 					`/pages/organization/inventory/edit/${this.inventoryItem.id}`
 				]);
@@ -355,5 +353,17 @@ export class ProductFormComponent
 
 	selectedTagsEvent(currentSelection: ITag[]) {
 		this.form.get('tags').setValue(currentSelection);
+	}
+
+	isActive(tab: NbTabComponent) {
+		if (!this.inventoryStore.activeTab) {
+			return tab.tabTitle == 'Main';
+		} else {
+			return this.inventoryStore.activeTab.tabTitle == tab.tabTitle;
+		}
+	}
+
+	onChangeTab(tab: NbTabComponent) {
+		this.inventoryStore.activeTab = tab;
 	}
 }

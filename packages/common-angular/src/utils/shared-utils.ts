@@ -19,6 +19,35 @@ function isJsObject(object: any) {
 	);
 }
 
+/**
+ * Check value not empty.
+ * @param item
+ * @returns {boolean}
+ */
+export function isNotEmpty(item: any): boolean {
+	return !isEmpty(item);
+}
+
+/**
+ * Check value empty.
+ * @param item
+ * @returns {boolean}
+ */
+export function isEmpty(item: any) {
+	if (item instanceof Array) {
+		item = item.filter((val) => !isEmpty(val));
+		return item.length === 0;
+	} else if (item && typeof item === 'object') {
+		return Object.keys(item).length === 0;
+	} else {
+		return (
+			!item ||
+			(item + '').toLocaleLowerCase() === 'null' ||
+			(item + '').toLocaleLowerCase() === 'undefined'
+		);
+	}
+}
+
 function toSubParams(params: HttpParams, key: string, object: any) {
 	Object.keys(object).forEach((childKey) => {
 		if (isJsObject(object[childKey])) {

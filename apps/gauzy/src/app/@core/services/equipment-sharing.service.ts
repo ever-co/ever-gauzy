@@ -17,7 +17,7 @@ export class EquipmentSharingService {
 			.toPromise();
 	}
 
-	getOrganization(id): Promise<IEquipmentSharing[]> {
+	getByOrganizationId(id): Promise<IEquipmentSharing[]> {
 		return this.http
 			.get<IEquipmentSharing[]>(
 				`${this.EQUIPMENT_SHARING_URL}/organization/` + id
@@ -26,7 +26,7 @@ export class EquipmentSharingService {
 			.toPromise();
 	}
 
-	getEmployee(id): Promise<IEquipmentSharing[]> {
+	getByAuthorUserId(id): Promise<IEquipmentSharing[]> {
 		return this.http
 			.get<IEquipmentSharing[]>(
 				`${this.EQUIPMENT_SHARING_URL}/employee/` + id

@@ -92,6 +92,16 @@
 				class="mr-2"
 				nbButton
 				status="info"
+				[disabled]="disableButton"
+				(click)="sendReceipt()"
+			>
+				<nb-icon icon="email-outline"></nb-icon>
+				{{ 'BUTTONS.SEND_RECEIPT' | translate }}
+			</button>
+			<button
+				class="mr-2"
+				nbButton
+				status="info"
 				(click)="exportToCsv()"
 				[disabled]="payments ? payments.length <= 0 : true"
 			>

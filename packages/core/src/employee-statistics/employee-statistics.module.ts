@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RouterModule } from 'nest-router';
 import { Employee } from '../employee/employee.entity';
 import { EmployeeService } from '../employee/employee.service';
 import { EmployeeRecurringExpense } from '../employee-recurring-expense/employee-recurring-expense.entity';
@@ -20,6 +21,9 @@ import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
+		RouterModule.forRoutes([
+			{ path: '/employee-statistics', module: EmployeeStatisticsModule }
+		]),
 		TypeOrmModule.forFeature([
 			Income,
 			Expense,

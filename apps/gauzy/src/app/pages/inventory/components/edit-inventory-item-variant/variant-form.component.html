@@ -97,6 +97,19 @@
 						/>
 					</div>
 				</div>
+				<button
+					nbButton
+					ghost
+					status="danger"
+					class="mt-3"
+					[nbTooltip]="'INVENTORY_PAGE.DELETE_IMAGE' | translate"
+					nbTooltipPlacement="top"
+					nbTooltipStatus="danger"
+					[disabled]="!image"
+					(click)="onDeleteImageClick()"
+				>
+					<nb-icon icon="trash-outline"></nb-icon>
+				</button>
 			</div>
 			<div class="col-md-9 col-sm-12">
 				<form [formGroup]="form" *ngIf="form">

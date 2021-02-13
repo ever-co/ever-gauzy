@@ -61,11 +61,17 @@ Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [
 
 ## Demos, Testing and Production
 
--   Gauzy Platform Demo at <http://demo.gauzy.co> (login `admin@ever.co` and password: `admin`)
-<!--
--   Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) at <https://app.gauzy.dev> (temporary deployed manually)
-    -->
--   Gauzy Platform SaaS at <http://app.gauzy.co> (not used yet in production, it's same as <http://demo.gauzy.co> for now)
+### Demo
+
+-   Gauzy Platform Demo at <https://demo.gauzy.co> (login `admin@ever.co` and password: `admin`)
+
+### Dev Builds
+
+-   Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) will be available later at <https://app.gauzy.dev>
+
+### Production (SaaS, WIP)
+
+-   Gauzy Platform SaaS at <https://app.gauzy.co> (not used yet in production, it's same as <https://demo.gauzy.co> for now and may be not available yet)
 
 ### Desktop App
 

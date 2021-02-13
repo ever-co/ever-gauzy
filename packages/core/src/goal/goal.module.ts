@@ -1,12 +1,17 @@
 import { Module } from '@nestjs/common';
-import { GoalController } from './goal.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RouterModule } from 'nest-router';
+import { GoalController } from './goal.controller';
 import { Goal } from './goal.entity';
 import { GoalService } from './goal.service';
 import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([Goal]), TenantModule],
+	imports: [
+		RouterModule.forRoutes([{ path: '/goals', module: GoalModule }]),
+		TypeOrmModule.forFeature([Goal]),
+		TenantModule
+	],
 	controllers: [GoalController],
 	providers: [GoalService],
 	exports: [GoalService]

@@ -1,0 +1,45 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h5>
+			{{
+				'INVOICES_PAGE.PAYMENTS.SEND_RECEIPT'
+					| translate: { name: invoice.toContact.name }
+			}}
+		</h5>
+	</nb-card-header>
+	<nb-card-body class="py-5 px-5">
+		<div class="shadow py-5 px-5">
+			<p>
+				{{
+					'INVOICES_PAGE.PAYMENTS.CONTACT_GREETING'
+						| translate: { name: invoice.toContact.name }
+				}}
+			</p>
+			<p>
+				{{
+					'INVOICES_PAGE.PAYMENTS.RECEIPT_FOR'
+						| translate
+							: {
+									invoiceNumber: invoice.invoiceNumber,
+									amount: payment.amount,
+									currency: payment.currency
+							  }
+				}}
+			</p>
+			<p>
+				{{
+					'INVOICES_PAGE.PAYMENTS.BEST_REGARDS'
+						| translate: { name: invoice.fromOrganization.name }
+				}}
+			</p>
+		</div>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button status="danger" class="mr-3" (click)="cancel()" nbButton>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button status="success" nbButton (click)="send()">
+			{{ 'BUTTONS.SEND' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

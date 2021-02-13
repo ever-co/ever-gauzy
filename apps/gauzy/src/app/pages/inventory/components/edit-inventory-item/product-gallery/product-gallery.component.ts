@@ -10,10 +10,11 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { GalleryComponent } from 'apps/gauzy/src/app/@shared/gallery/gallery.component';
 import { GalleryService } from 'apps/gauzy/src/app/@shared/gallery/gallery.service';
+import { ImageAssetComponent } from 'apps/gauzy/src/app/@shared/image-asset/image-asset.component';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
 import { Subject } from 'rxjs';
-import { first } from 'rxjs/operators';
+import { first, take } from 'rxjs/operators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -190,7 +191,9 @@ export class ProductGalleryComponent
 			this.selectedImage = null;
 			this.toastrService.success('INVENTORY_PAGE.IMAGE_WAS_DELETED');
 		} catch (err) {
-			this.toastrService.danger('Something bad happened!');
+			this.toastrService.danger(
+				err.error.message || 'Something bad happened!'
+			);
 		}
 	}
 
@@ -234,6 +237,23 @@ export class ProductGalleryComponent
 				activeProduct.id
 			);
 		}
+	}
+
+	onEditImageClick() {
+		this.dialogService
+			.open(ImageAssetComponent, {
+				context: {
+					imageAsset: this.selectedImage
+				}
+			})
+			.onClose.pipe(take(1))
+			.subscribe((res) => {
+				if (!res || !res.id) return;
+
+				let idx = this.gallery.indexOf(this.selectedImage);
+				this.gallery[idx] = res;
+				this.selectedImage = res;
+			});
 	}
 
 	ngOnDestroy(): void {}

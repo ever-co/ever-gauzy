@@ -47,4 +47,11 @@ export class ProductVariantService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	deleteFeaturedImage(id: string): Promise<any> {
+		return this.http
+			.delete(`${this.PRODUCT_VARIANTS_URL}/delete-featured-image/${id}`)
+			.pipe(first())
+			.toPromise();
+	}
 }

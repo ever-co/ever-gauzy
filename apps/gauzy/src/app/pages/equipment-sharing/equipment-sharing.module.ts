@@ -24,6 +24,7 @@ import { ApprovalPolicyService } from '../../@core/services/approval-policy.serv
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { EmployeesService } from '../../@core/services';
 
 @NgModule({
 	imports: [
@@ -45,7 +46,11 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		TranslateModule,
 		NbSpinnerModule
 	],
-	providers: [EquipmentSharingService, ApprovalPolicyService],
+	providers: [
+		EquipmentSharingService,
+		ApprovalPolicyService,
+		EmployeesService
+	],
 	entryComponents: [EquipmentSharingMutationComponent],
 	declarations: [
 		EquipmentSharingComponent,

@@ -10,17 +10,18 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { AddArticleComponent } from './add-article/add-article.component';
-import { Subject } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { DeleteArticleComponent } from './delete-article/delete-article.component';
 import { HelpCenterArticleService } from '../../@core/services/help-center-article.service';
-import { first, takeUntil } from 'rxjs/operators';
+import { filter, first } from 'rxjs/operators';
 import { HelpCenterAuthorService } from '../../@core/services/help-center-author.service';
 import { EmployeesService } from '../../@core/services';
 import { FormControl } from '@angular/forms';
 import { Store } from '../../@core/services/store.service';
 import { ToastrService } from '../../@core/services/toastr.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-help-center',
 	templateUrl: './help-center.component.html',
@@ -29,7 +30,6 @@ import { ToastrService } from '../../@core/services/toastr.service';
 export class HelpCenterComponent
 	extends TranslationBaseComponent
 	implements OnDestroy, OnInit {
-	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService,
@@ -42,6 +42,7 @@ export class HelpCenterComponent
 	) {
 		super(translateService);
 	}
+
 	public showData: boolean[] = [];
 	public dataArray: SafeHtml[] = [];
 	public employees: IEmployee[] = [];
@@ -55,24 +56,28 @@ export class HelpCenterComponent
 	filterParams = { name: '', authorId: '' };
 	loading: boolean;
 	organization: IOrganization;
+
 	ngOnInit() {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((organization) => {
 				if (organization) {
-					const { id: organizationId, tenantId } = organization;
+					const { tenantId } = this.store.user;
+					const { id: organizationId } = organization;
 					this.organization = organization;
 					this.employeeService
 						.getAll(['user'], { organizationId, tenantId })
-						.pipe(takeUntil(this._ngDestroy$))
+						.pipe(untilDestroyed(this))
 						.subscribe((employees) => {
 							this.employees = employees.items;
 						});
 				}
 			});
-
 		this.search.valueChanges
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((item) => {
 				this.filterByName(item);
 			});
@@ -242,8 +247,5 @@ export class HelpCenterComponent
 		}
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

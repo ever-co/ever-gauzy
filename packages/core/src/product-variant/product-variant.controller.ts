@@ -130,4 +130,21 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 	): Promise<DeleteResult> {
 		return this.commandBus.execute(new ProductVariantDeleteCommand(id));
 	}
+
+	@ApiOperation({ summary: 'Delete featured image' })
+	@ApiResponse({
+		status: HttpStatus.NO_CONTENT,
+		description: 'The record has been successfully deleted'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Delete('/delete-featured-image/:variantId')
+	async deleteFeaturedImage(
+		@Param('variantId') variantId: string
+	): Promise<ProductVariant> {
+		return this.productVariantService.deleteFeaturedImage(variantId);
+	}
 }

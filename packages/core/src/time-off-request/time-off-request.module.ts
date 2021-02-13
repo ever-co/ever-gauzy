@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RouterModule } from 'nest-router';
 import { TimeOffRequestService } from './time-off-request.service';
 import { TimeOffRequest } from './time-off-request.entity';
 import { Employee } from '../employee/employee.entity';
@@ -12,8 +13,12 @@ import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TenantModule } from '../tenant/tenant.module';
 import { CommandHandlers } from './commands/handlers';
+
 @Module({
 	imports: [
+		RouterModule.forRoutes([
+			{ path: 'time-off-request', module: TimeOffRequestModule }
+		]),
 		TypeOrmModule.forFeature([
 			TimeOffRequest,
 			Employee,

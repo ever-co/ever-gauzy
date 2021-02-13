@@ -1,6 +1,11 @@
 import { Repository } from 'typeorm';
 import { IPagination } from '../core';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+	BadRequestException,
+	HttpException,
+	HttpStatus,
+	Injectable
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './product.entity';
 import {
@@ -138,8 +143,17 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		try {
 			let product = await this.productRepository.findOne({
 				where: { id: productId },
-				relations: ['gallery']
+				relations: ['gallery', 'variants']
 			});
+
+			if (
+				product.variants.find((variant) => variant.image.id == imageId)
+			) {
+				throw new HttpException(
+					'Image is used in product variants',
+					HttpStatus.BAD_REQUEST
+				);
+			}
 
 			product.gallery = product.gallery.filter(
 				(image) => image.id !== imageId

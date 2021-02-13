@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RouterModule } from 'nest-router';
+import { CqrsModule } from '@nestjs/cqrs';
 import { RoleModule } from '../role/role.module';
 import { UserModule } from '../user/user.module';
 import { RolePermissionsModule } from '../role-permissions/role-permissions.module';
@@ -8,9 +10,15 @@ import { CandidateCriterionsRating } from './candidate-criterion-rating.entity';
 import { CandidateCriterionsRatingService } from './candidate-criterion-rating.service';
 import { CandidateCriterionsRatingController } from './candidate-criterion-rating.controller';
 import { CommandHandlers } from './commands/handlers';
-import { CqrsModule } from '@nestjs/cqrs';
+
 @Module({
 	imports: [
+		RouterModule.forRoutes([
+			{
+				path: '/candidate-criterions-rating',
+				module: CandidateCriterionsRatingModule
+			}
+		]),
 		TypeOrmModule.forFeature([CandidateCriterionsRating]),
 		UserModule,
 		RoleModule,
