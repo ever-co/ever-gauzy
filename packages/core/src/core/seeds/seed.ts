@@ -23,15 +23,15 @@ export async function seedDefault(devConfig: Partial<IPluginConfig>) {
 	NestFactory.createApplicationContext(SeederModule.forPluings(), {
 		logger: false
 	})
-		.then((appContext) => {
-			const seeder = appContext.get(SeedDataService);
+		.then((app) => {
+			const seeder = app.get(SeedDataService);
 			seeder
 				.runDefaultSeed()
 				.then(() => {})
 				.catch((error) => {
 					throw error;
 				})
-				.finally(() => appContext.close());
+				.finally(() => app.close());
 		})
 		.catch((error) => {
 			throw error;

@@ -5,23 +5,18 @@ import { DEFAULT_HELP_CENTER_MENUS } from './default-help-centers';
 
 export const createHelpCenter = async (
 	connection: Connection,
-	{
-		tenant,
-		org
-	}: {
-		tenant: ITenant;
-		org: IOrganization;
-	}
+	tenant: ITenant,
+	organization: IOrganization
 ): Promise<IHelpCenter[]> => {
 	const helpCenterMenuList: IHelpCenter[] = DEFAULT_HELP_CENTER_MENUS;
 	for (const node of helpCenterMenuList) {
 		const helpCenter: IHelpCenter = {
 			...node,
 			tenant,
-			organization: org
+			organization
 		};
 		helpCenter.children.forEach((child: IHelpCenter) => {
-			child.organization = org;
+			child.organization = organization;
 			child.tenant = tenant;
 		});
 		const entity = await createEntity(connection, helpCenter);

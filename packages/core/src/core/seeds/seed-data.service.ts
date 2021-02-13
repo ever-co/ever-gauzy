@@ -5,6 +5,7 @@
 import * as rimraf from 'rimraf';
 import * as path from 'path';
 import { Injectable } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import {
 	Connection,
 	createConnection,
@@ -15,6 +16,19 @@ import {
 import * as chalk from 'chalk';
 import { IPluginConfig } from '@gauzy/common';
 import { environment as env, getConfig } from '@gauzy/config';
+import {
+	IEmployee,
+	IOrganization,
+	IOrganizationProject,
+	IRole,
+	ITenant,
+	IUser
+} from '@gauzy/contracts';
+import {
+	getPluginModules,
+	hasLifecycleMethod,
+	PluginLifecycleMethods
+} from '@gauzy/plugin';
 import { createRoles } from '../../role/role.seed';
 import { createDefaultSkills } from '../../skills/skill.seed';
 import { createLanguages } from '../../language/language.seed';
@@ -227,11 +241,6 @@ import {
 	createDefaultOrganizationRecurringExpense,
 	createRandomOrganizationRecurringExpense
 } from '../../organization-recurring-expense/organization-recurring-expense.seed';
-// import {
-// 	createDefaultHelpCenterAuthor,
-// 	createRandomHelpCenterAuthor
-// } from '../../help-center-author/help-center-author.seed';
-// import { createHelpCenterArticle } from '../../help-center-article/help-center-article.seed';
 import {
 	createDefaultOrganizationLanguage,
 	createRandomOrganizationLanguage
@@ -288,32 +297,23 @@ import {
 	createDefaultFeatureToggle,
 	createRandomFeatureToggle
 } from '../../feature/feature.seed';
-import {
-	Employee,
-	Organization,
-	OrganizationProject,
-	Role,
-	Tenant,
-	User
-} from './../../core/entities/internal';
-import {
-	getPluginModules,
-	hasLifecycleMethod,
-	PluginLifecycleMethods
-} from '@gauzy/plugin';
-import { ModuleRef } from '@nestjs/core';
 
 @Injectable()
 export class SeedDataService {
 	connection: Connection;
 	log = console.log;
-	organizations: Organization[];
-	defaultProjects: OrganizationProject[] | void;
-	tenant: Tenant;
-	roles: Role[];
-	superAdminUsers: User[];
-	defaultCandidateUsers: User[];
-	defaultEmployees: Employee[];
+
+	organizations: IOrganization[];
+	defaultProjects: IOrganizationProject[] | void;
+	tenant: ITenant;
+	roles: IRole[];
+	superAdminUsers: IUser[];
+	defaultCandidateUsers: IUser[];
+	defaultEmployees: IEmployee[];
+
+	randomTenants: ITenant[];
+	randomTenantEmployeeMap: Map<ITenant, IEmployee[]>;
+
 	config: IPluginConfig = getConfig();
 
 	constructor(private readonly moduleRef: ModuleRef) {}
@@ -1174,12 +1174,7 @@ export class SeedDataService {
 		);
 
 		//run all plugins default seed method
-		await this.bootstrapPluginSeedMethods(
-			'onDefaultPluginSeed',
-			(instance: any) => {
-				console.log('External plugins default seeded completed!');
-			}
-		);
+		await this.bootstrapPluginSeedMethods('onDefaultPluginSeed');
 	}
 
 	/**
@@ -1192,13 +1187,15 @@ export class SeedDataService {
 			randomSeedConfig.tenants || 1
 		);
 
+		this.randomTenants = tenants;
+
 		await this.tryExecute(
 			'Random Feature Toggle',
 			createRandomFeatureToggle(this.connection, tenants)
 		);
 
 		// Independent roles and role permissions for each tenant
-		const roles: Role[] = await createRoles(this.connection, tenants);
+		const roles: IRole[] = await createRoles(this.connection, tenants);
 
 		await createRolePermissions(this.connection, roles, tenants);
 
@@ -1245,6 +1242,8 @@ export class SeedDataService {
 			tenantUsersMap,
 			randomSeedConfig.employeesPerOrganization || 1
 		);
+
+		this.randomTenantEmployeeMap = tenantEmployeeMap;
 
 		await this.tryExecute(
 			'Random Categories',
@@ -1877,12 +1876,7 @@ export class SeedDataService {
 		);
 
 		//run all plugins default seed method
-		await this.bootstrapPluginSeedMethods(
-			'onRandomPluginSeed',
-			(instance: any) => {
-				console.log('External plugins random seeded completed!');
-			}
-		);
+		await this.bootstrapPluginSeedMethods('onRandomPluginSeed');
 	}
 
 	private async cleanUpPreviousRuns() {

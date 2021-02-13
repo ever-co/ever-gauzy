@@ -1,3 +1,4 @@
+import { SeedDataService } from '@gauzy/core';
 import { IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/common';
 import {
 	ExtensionPlugin,
@@ -5,17 +6,13 @@ import {
 	OnRandomPluginSeed
 } from '@gauzy/plugin';
 import * as chalk from 'chalk';
+import { HelpCenterAuthor, HelpCenterAuthorModule } from './help-center-author';
+import { HelpCenter, HelpCenterModule } from './help-center';
 import {
-	createDefaultHelpCenterAuthor,
-	HelpCenterAuthor,
-	HelpCenterAuthorModule
-} from './help-center-author';
-import { createHelpCenter, HelpCenter, HelpCenterModule } from './help-center';
-import {
-	createHelpCenterArticle,
 	HelpCenterArticle,
 	HelpCenterArticleModule
 } from './help-center-article';
+import { HelpCenterSeederService } from './help-center-seeder.service';
 
 @ExtensionPlugin({
 	imports: [
@@ -23,7 +20,8 @@ import {
 		HelpCenterArticleModule,
 		HelpCenterAuthorModule
 	],
-	entities: [HelpCenter, HelpCenterArticle, HelpCenterAuthor]
+	entities: [HelpCenter, HelpCenterArticle, HelpCenterAuthor],
+	providers: [SeedDataService, HelpCenterSeederService]
 })
 export class KnowledgeBasePlugin
 	implements
@@ -31,7 +29,9 @@ export class KnowledgeBasePlugin
 		IOnPluginDestroy,
 		OnDefaultPluginSeed,
 		OnRandomPluginSeed {
-	constructor() {}
+	constructor(
+		private readonly helpCenterSeederService: HelpCenterSeederService
+	) {}
 
 	onPluginBootstrap() {
 		console.log(
@@ -49,7 +49,11 @@ export class KnowledgeBasePlugin
 		);
 	}
 
-	onDefaultPluginSeed() {}
+	onDefaultPluginSeed() {
+		this.helpCenterSeederService.createDefault();
+	}
 
-	onRandomPluginSeed() {}
+	onRandomPluginSeed() {
+		this.helpCenterSeederService.createRandom();
+	}
 }

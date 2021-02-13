@@ -24,8 +24,8 @@ export async function seedModule(devConfig: Partial<IPluginConfig>) {
 	NestFactory.createApplicationContext(SeederModule.forPluings(), {
 		logger: false
 	})
-		.then((appContext) => {
-			const seeder = appContext.get(SeedDataService);
+		.then((app) => {
+			const seeder = app.get(SeedDataService);
 			const argv: any = yargs(process.argv).argv;
 			const module = argv.name;
 			const methodName = `run${module}Seed`;
@@ -35,14 +35,14 @@ export async function seedModule(devConfig: Partial<IPluginConfig>) {
 					.catch((error) => {
 						throw error;
 					})
-					.finally(() => appContext.close());
+					.finally(() => app.close());
 			} else {
 				console.log(
 					chalk.red(
 						`Method ${methodName} not found in SeedDataService`
 					)
 				);
-				appContext.close();
+				app.close();
 			}
 		})
 		.catch((error) => {
