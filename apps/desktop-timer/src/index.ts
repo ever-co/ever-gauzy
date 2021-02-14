@@ -95,7 +95,6 @@ let NotificationWindow: BrowserWindow = null;
 let settingsWindow: BrowserWindow = null;
 let updaterWindow: BrowserWindow = null;
 let imageView: BrowserWindow = null;
-
 let tray = null;
 let appMenu = null;
 let isAlreadyRun = false;
@@ -106,6 +105,10 @@ let serverGauzy = null;
 let serverDesktop = null;
 let dialogErr = false;
 let cancellationToken = new CancellationToken();
+
+const pathWindow = {
+	timeTrackerUi: path.join(__dirname, '../../../ui/index.html')
+};
 
 function startServer(value, restart = false) {
 	process.env.IS_ELECTRON = 'true';
@@ -133,14 +136,19 @@ function startServer(value, restart = false) {
 		serverGauzy.stdout.on('data', (data) => {
 			const msgData = data.toString();
 			console.log('log -- ', msgData);
-			setupWindow.webContents.send('setup-progress', {
-				msg: msgData
-			});
+			// setupWindow.webContents.send('setup-progress', {
+			// 	msg: msgData
+			// });
 			if (!value.isSetup && !value.serverConfigConnected) {
 				if (msgData.indexOf('Listening at http') > -1) {
-					setupWindow.hide();
+					// setupWindow.hide();
 					// isAlreadyRun = true;
-					gauzyWindow = createGauzyWindow(gauzyWindow, serve);
+					gauzyWindow = createGauzyWindow(
+						gauzyWindow,
+						serve,
+						{ ...environment },
+						pathWindow.timeTrackerUi
+					);
 				}
 			}
 			if (
@@ -170,8 +178,13 @@ function startServer(value, restart = false) {
 
 	/* create main window */
 	if (value.serverConfigConnected || !value.isLocalServer) {
-		setupWindow.hide();
-		gauzyWindow = createGauzyWindow(gauzyWindow, serve);
+		// setupWindow.hide();
+		gauzyWindow = createGauzyWindow(
+			gauzyWindow,
+			serve,
+			{ ...environment },
+			pathWindow.timeTrackerUi
+		);
 	}
 	const auth = store.get('auth');
 	tray = new TrayIcon(
@@ -179,16 +192,18 @@ function startServer(value, restart = false) {
 		knex,
 		timeTrackerWindow,
 		auth,
-		settingsWindow
+		settingsWindow,
+		{ ...environment },
+		pathWindow
 	);
 
 	/* ping server before launch the ui */
 	ipcMain.on('app_is_init', () => {
 		if (!isAlreadyRun && value && !restart) {
 			onWaitingServer = true;
-			setupWindow.webContents.send('server_ping', {
-				host: getApiBaseUrl(value)
-			});
+			// setupWindow.webContents.send('server_ping', {
+			// 	host: getApiBaseUrl(value)
+			// });
 		}
 	});
 
@@ -213,7 +228,10 @@ const dialogMessage = (msg) => {
 				const appSetting = LocalStore.getStore('appSetting');
 				const config = LocalStore.getStore('configs');
 				if (!settingsWindow) {
-					settingsWindow = createSettingsWindow(settingsWindow);
+					settingsWindow = createSettingsWindow(
+						settingsWindow,
+						pathWindow.timeTrackerUi
+					);
 				}
 				settingsWindow.show();
 				setTimeout(() => {
@@ -246,10 +264,13 @@ app.on('ready', async () => {
 	// require(path.join(__dirname, 'desktop-api/main.js'));
 	/* set menu */
 	const launchPath = url.format({
-		pathname: path.join(__dirname, '../../../../index.html'),
+		pathname: path.join(__dirname, '../../../index.html'),
 		protocol: 'file:',
-		slashes: true
+		slashes: true,
+		hash: '/time-tracker'
 	});
+
+	console.log(launchPath);
 
 	timeTrackerWindow = new BrowserWindow({
 		frame: true,
@@ -284,7 +305,6 @@ ipcMain.on('server_is_ready', () => {
 		serverDesktop = fork(
 			path.join(__dirname, '../../../desktop-api/main.js')
 		);
-		gauzyWindow.loadURL(gauzyPage());
 		ipcTimer(
 			store,
 			knex,
@@ -292,7 +312,8 @@ ipcMain.on('server_is_ready', () => {
 			timeTrackerWindow,
 			NotificationWindow,
 			settingsWindow,
-			imageView
+			imageView,
+			{ ...environment }
 		);
 		isAlreadyRun = true;
 	}
@@ -327,16 +348,21 @@ ipcMain.on('restart_app', (event, arg) => {
 				IS_INTEGRATED_DESKTOP: configs.isLocalServer
 			};
 			startServer(configs, tray ? true : false);
-			setupWindow.webContents.send('server_ping_restart', {
-				host: getApiBaseUrl(configs)
-			});
+			// setupWindow.webContents.send('server_ping_restart', {
+			// 	host: getApiBaseUrl(configs, { ...environment })
+			// });
 		}
 	}, 100);
 });
 
 ipcMain.on('server_already_start', () => {
 	if (!gauzyWindow && !isAlreadyRun) {
-		gauzyWindow = createGauzyWindow(gauzyWindow, serve);
+		gauzyWindow = createGauzyWindow(
+			gauzyWindow,
+			serve,
+			{ ...environment },
+			pathWindow.timeTrackerUi
+		);
 		isAlreadyRun = true;
 	}
 });
@@ -437,7 +463,12 @@ app.on('activate', () => {
 	) {
 		// On macOS it's common to re-create a window in the app when the
 		// dock icon is clicked and there are no other windows open.
-		createGauzyWindow(gauzyWindow, serve);
+		createGauzyWindow(
+			gauzyWindow,
+			serve,
+			{ ...environment },
+			pathWindow.timeTrackerUi
+		);
 	} else {
 		if (setupWindow) {
 			setupWindow.show();

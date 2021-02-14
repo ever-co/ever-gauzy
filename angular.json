@@ -730,6 +730,10 @@
 								{
 									"replace": "apps/desktop-timer/src/environments/environment.ts",
 									"with": "apps/desktop-timer/src/environments/environment.prod.ts"
+								},
+								{
+									"replace": "apps/gauzy/src/environments/environment.ts",
+									"with": "apps/gauzy/src/environments/environment.prod.ts"
 								}
 							],
 							"optimization": true,
@@ -743,7 +747,7 @@
 								{
 									"type": "initial",
 									"maximumWarning": "2mb",
-									"maximumError": "9mb"
+									"maximumError": "10mb"
 								},
 								{
 									"type": "anyComponentStyle",

@@ -23,10 +23,12 @@ import {
 	SetupModule
 } from '../../../../libs/desktop-ui-lib/src';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
+import { NgxAuthModule } from '../../../gauzy/src/app/auth/auth.module';
 
 @NgModule({
 	declarations: [AppComponent, AlertComponent],
 	imports: [
+		NgxAuthModule,
 		NbLayoutModule,
 		NbDialogModule.forRoot(),
 		NbToastrModule.forRoot(),
