@@ -74,7 +74,6 @@ export class VariantFormComponent implements OnInit {
 			this.inventoryStore.addVariantCreateInput(
 				this.editVariantCreateInput
 			);
-		} else {
 		}
 
 		this.resetCreateVariantInputForm();
