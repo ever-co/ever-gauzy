@@ -42,6 +42,7 @@ log.catchErrors({
 import * as path from 'path';
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
+import * as url from 'url';
 const Store = require('electron-store');
 import {
 	ipcMainHandler,
@@ -94,12 +95,6 @@ let NotificationWindow: BrowserWindow = null;
 let settingsWindow: BrowserWindow = null;
 let updaterWindow: BrowserWindow = null;
 let imageView: BrowserWindow = null;
-
-const pathWindow = {
-	gauzyWindow: path.join(__dirname, '../../../index.html'),
-	timeTrackerUi: path.join(__dirname, '../../../ui/index.html')
-};
-
 let tray = null;
 let appMenu = null;
 let isAlreadyRun = false;
@@ -110,6 +105,10 @@ let serverGauzy = null;
 let serverDesktop = null;
 let dialogErr = false;
 let cancellationToken = new CancellationToken();
+
+const pathWindow = {
+	timeTrackerUi: path.join(__dirname, '../../../ui/index.html')
+};
 
 function startServer(value, restart = false) {
 	process.env.IS_ELECTRON = 'true';
@@ -137,18 +136,18 @@ function startServer(value, restart = false) {
 		serverGauzy.stdout.on('data', (data) => {
 			const msgData = data.toString();
 			console.log('log -- ', msgData);
-			setupWindow.webContents.send('setup-progress', {
-				msg: msgData
-			});
+			// setupWindow.webContents.send('setup-progress', {
+			// 	msg: msgData
+			// });
 			if (!value.isSetup && !value.serverConfigConnected) {
 				if (msgData.indexOf('Listening at http') > -1) {
-					setupWindow.hide();
+					// setupWindow.hide();
 					// isAlreadyRun = true;
 					gauzyWindow = createGauzyWindow(
 						gauzyWindow,
 						serve,
 						{ ...environment },
-						pathWindow.gauzyWindow
+						pathWindow.timeTrackerUi
 					);
 				}
 			}
@@ -179,12 +178,12 @@ function startServer(value, restart = false) {
 
 	/* create main window */
 	if (value.serverConfigConnected || !value.isLocalServer) {
-		setupWindow.hide();
+		// setupWindow.hide();
 		gauzyWindow = createGauzyWindow(
 			gauzyWindow,
 			serve,
 			{ ...environment },
-			pathWindow.gauzyWindow
+			pathWindow.timeTrackerUi
 		);
 	}
 	const auth = store.get('auth');
@@ -202,9 +201,9 @@ function startServer(value, restart = false) {
 	ipcMain.on('app_is_init', () => {
 		if (!isAlreadyRun && value && !restart) {
 			onWaitingServer = true;
-			setupWindow.webContents.send('server_ping', {
-				host: getApiBaseUrl(value)
-			});
+			// setupWindow.webContents.send('server_ping', {
+			// 	host: getApiBaseUrl(value)
+			// });
 		}
 	});
 
@@ -264,78 +263,32 @@ const getApiBaseUrl = (configs) => {
 app.on('ready', async () => {
 	// require(path.join(__dirname, 'desktop-api/main.js'));
 	/* set menu */
-	Menu.setApplicationMenu(
-		Menu.buildFromTemplate([
-			{
-				label: app.getName(),
-				submenu: [
-					{ role: 'about', label: 'About' },
-					{ type: 'separator' },
-					{ type: 'separator' },
-					{ role: 'quit', label: 'Exit' }
-				]
-			}
-		])
-	);
+	const launchPath = url.format({
+		pathname: path.join(__dirname, '../../../index.html'),
+		protocol: 'file:',
+		slashes: true,
+		hash: '/time-tracker'
+	});
 
-	/* create window */
-	timeTrackerWindow = createTimeTrackerWindow(
-		timeTrackerWindow,
-		pathWindow.timeTrackerUi
-	);
-	settingsWindow = createSettingsWindow(
-		settingsWindow,
-		pathWindow.timeTrackerUi
-	);
-	updaterWindow = createUpdaterWindow(
-		updaterWindow,
-		pathWindow.timeTrackerUi
-	);
-	imageView = createImageViewerWindow(imageView, pathWindow.timeTrackerUi);
+	console.log(launchPath);
 
-	/* Set Menu */
-	appMenu = new AppMenu(
-		timeTrackerWindow,
-		settingsWindow,
-		updaterWindow,
-		knex,
-		pathWindow
-	);
+	timeTrackerWindow = new BrowserWindow({
+		frame: true,
+		resizable: false,
+		focusable: true,
+		fullscreenable: false,
+		webPreferences: {
+			nodeIntegration: true,
+			webSecurity: false,
+			enableRemoteModule: true
+		},
+		width: 400,
+		height: 900,
+		title: 'Time Tracker'
+	});
 
-	const configs: any = store.get('configs');
-	if (configs && configs.isSetup) {
-		if (!configs.serverConfigConnected) {
-			setupWindow = createSetupWindow(
-				setupWindow,
-				false,
-				pathWindow.timeTrackerUi
-			);
-			setTimeout(() => {
-				setupWindow.webContents.send('setup-data', {
-					...configs
-				});
-			}, 1000);
-		} else {
-			global.variableGlobal = {
-				API_BASE_URL: getApiBaseUrl(configs),
-				IS_INTEGRATED_DESKTOP: configs.isLocalServer
-			};
-			setupWindow = createSetupWindow(
-				setupWindow,
-				true,
-				pathWindow.timeTrackerUi
-			);
-			startServer(configs);
-		}
-	} else {
-		setupWindow = createSetupWindow(
-			setupWindow,
-			false,
-			pathWindow.timeTrackerUi
-		);
-	}
-
-	ipcMainHandler(store, startServer, knex, { ...environment });
+	timeTrackerWindow.loadURL(launchPath);
+	timeTrackerWindow.webContents.toggleDevTools();
 });
 
 app.on('window-all-closed', quit);
@@ -352,7 +305,6 @@ ipcMain.on('server_is_ready', () => {
 		serverDesktop = fork(
 			path.join(__dirname, '../../../desktop-api/main.js')
 		);
-		gauzyWindow.loadURL(gauzyPage(pathWindow.gauzyWindow));
 		ipcTimer(
 			store,
 			knex,
@@ -396,9 +348,9 @@ ipcMain.on('restart_app', (event, arg) => {
 				IS_INTEGRATED_DESKTOP: configs.isLocalServer
 			};
 			startServer(configs, tray ? true : false);
-			setupWindow.webContents.send('server_ping_restart', {
-				host: getApiBaseUrl(configs)
-			});
+			// setupWindow.webContents.send('server_ping_restart', {
+			// 	host: getApiBaseUrl(configs, { ...environment })
+			// });
 		}
 	}, 100);
 });
@@ -409,7 +361,7 @@ ipcMain.on('server_already_start', () => {
 			gauzyWindow,
 			serve,
 			{ ...environment },
-			pathWindow.gauzyWindow
+			pathWindow.timeTrackerUi
 		);
 		isAlreadyRun = true;
 	}
