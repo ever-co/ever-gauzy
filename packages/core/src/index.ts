@@ -1,4 +1,11 @@
-export { seedAll, seedDefault, seedJob, seedModule } from './seeder';
+export {
+	seedAll,
+	seedDefault,
+	seedJob,
+	seedModule,
+	SeedDataService
+} from './core/seeds';
+
 export { bootstrap } from './bootstrap';
 export * from './logger/index';
 

@@ -1,5 +1,7 @@
 import { isNotEmpty } from '@gauzy/common';
+import { getConfig } from '@gauzy/config';
 import { DynamicModule, Type } from '@nestjs/common';
+import { MODULE_METADATA } from '@nestjs/common/constants';
 import { PLUGIN_METADATA } from './constants';
 import { PluginLifecycleMethods } from './extension-plugin';
 
@@ -50,4 +52,31 @@ export function isDynamicModule(
 	type: Type<any> | DynamicModule
 ): type is DynamicModule {
 	return !!(type as DynamicModule).module;
+}
+
+export function reflectDynamicModuleMetadata(module: Type<any>) {
+	return {
+		controllers: reflectMetadata(module, MODULE_METADATA.CONTROLLERS) || [],
+		providers: reflectMetadata(module, MODULE_METADATA.PROVIDERS) || [],
+		imports: reflectMetadata(module, MODULE_METADATA.IMPORTS) || [],
+		exports: reflectMetadata(module, MODULE_METADATA.EXPORTS) || []
+	};
+}
+
+export function getDynamicPluginsModules(): DynamicModule[] {
+	return getConfig()
+		.plugins.map((plugin) => {
+			const pluginModule = isDynamicModule(plugin)
+				? plugin.module
+				: plugin;
+			const { imports, providers } = reflectDynamicModuleMetadata(
+				pluginModule
+			);
+			return {
+				module: pluginModule,
+				imports,
+				providers: [...providers]
+			};
+		})
+		.filter(isNotEmpty);
 }

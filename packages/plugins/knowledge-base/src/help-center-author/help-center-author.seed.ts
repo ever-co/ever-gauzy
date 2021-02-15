@@ -1,8 +1,8 @@
 import { Connection } from 'typeorm';
+import * as faker from 'faker';
+import { IEmployee, IHelpCenterAuthor, ITenant } from '@gauzy/contracts';
 import { HelpCenterAuthor } from './help-center-author.entity';
 import { HelpCenterArticle } from '../help-center-article/help-center-article.entity';
-import * as faker from 'faker';
-import { IEmployee, ITenant } from '@gauzy/contracts';
 
 export const createDefaultHelpCenterAuthor = async (
 	connection: Connection,
@@ -15,7 +15,7 @@ export const createDefaultHelpCenterAuthor = async (
 		return;
 	}
 
-	let mapEmployeeToArticles: HelpCenterAuthor[] = [];
+	let mapEmployeeToArticles: IHelpCenterAuthor[] = [];
 
 	const allArticle = await connection.manager.find(HelpCenterArticle, {});
 
@@ -41,7 +41,7 @@ export const createRandomHelpCenterAuthor = async (
 		return;
 	}
 
-	let mapEmployeeToArticles: HelpCenterAuthor[] = [];
+	let mapEmployeeToArticles: IHelpCenterAuthor[] = [];
 	const employees: IEmployee[] = [];
 
 	const allArticle = await connection.manager.find(HelpCenterArticle, {});
@@ -64,7 +64,7 @@ export const createRandomHelpCenterAuthor = async (
 
 const insertRandomHelpCenterAuthor = async (
 	connection: Connection,
-	data: HelpCenterAuthor[]
+	data: IHelpCenterAuthor[]
 ) => {
 	await connection.manager.save(data);
 };
