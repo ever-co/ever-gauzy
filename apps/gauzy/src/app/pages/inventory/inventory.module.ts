@@ -59,6 +59,9 @@ import { InventoryItemViewComponent } from './components/view-inventory-item/vie
 import { TranslatableService } from '../../@core/services/translatable.service';
 import { ImageAssetComponent } from '../../@shared/select-asset-modal/img-asset/img-asset.component';
 import { ImageAssetModule } from '../../@shared/image-asset/image-asset.module';
+import { WarehousesComponent } from './components/manage-warehouses/warehouses.component';
+import { WarehouseMutationModule } from '../../@shared/warehouse-mutation/warehouse-mutation.module';
+import { WarehouseMutationComponent } from '../../@shared/warehouse-mutation/warehouse-mutation.component';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -88,7 +91,8 @@ const NB_MODULES = [
 		InventoryVariantFormComponent,
 		EnabledStatusComponent,
 		ProductGalleryComponent,
-		InventoryItemViewComponent
+		InventoryItemViewComponent,
+		WarehousesComponent
 	],
 	imports: [
 		UserFormsModule,
@@ -113,7 +117,8 @@ const NB_MODULES = [
 		...NB_MODULES,
 		CurrencyModule,
 		SelectAssetModule,
-		ImageAssetModule
+		ImageAssetModule,
+		WarehouseMutationModule
 	],
 	entryComponents: [
 		ProductTypeMutationComponent,
@@ -122,7 +127,8 @@ const NB_MODULES = [
 		IconRowComponent,
 		EnabledStatusComponent,
 		SelectAssetComponent,
-		ImageAssetComponent
+		ImageAssetComponent,
+		WarehouseMutationComponent
 	],
 	providers: [
 		ProductTypeService,

@@ -9,6 +9,7 @@ import { InventoryVariantFormComponent } from './components/edit-inventory-item-
 import { PermissionsEnum } from '@gauzy/contracts';
 import { NgxPermissionsGuard } from 'ngx-permissions';
 import { InventoryItemViewComponent } from './components/view-inventory-item/view-inventory-item.component';
+import { WarehousesComponent } from './components/manage-warehouses/warehouses.component';
 
 const ALL_ORG_PERMISSIONS = {
 	permissions: {
@@ -64,6 +65,12 @@ const routes: Routes = [
 	{
 		path: 'product-categories',
 		component: ProductCategoriesComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: ALL_ORG_PERMISSIONS
+	},
+	{
+		path: 'warehouses',
+		component: WarehousesComponent,
 		canActivate: [NgxPermissionsGuard],
 		data: ALL_ORG_PERMISSIONS
 	}

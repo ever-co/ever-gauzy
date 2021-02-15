@@ -47,6 +47,17 @@
 				<nb-icon icon="edit-outline"></nb-icon>
 				{{ 'INVENTORY_PAGE.PRODUCT_CATEGORIES' | translate }}
 			</button>
+			<button
+				*ngIf="editProductAllowed"
+				class="float-right"
+				style="margin-right: 9px"
+				nbButton
+				status="warning"
+				(click)="manageWarehouses()"
+			>
+				<nb-icon icon="home-outline"></nb-icon>
+				{{ 'INVENTORY_PAGE.WAREHOUSES' | translate }}
+			</button>
 		</div>
 
 		<ng2-smart-table

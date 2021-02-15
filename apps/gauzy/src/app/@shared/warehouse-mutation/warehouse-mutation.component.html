@@ -1,0 +1,90 @@
+<nb-card>
+	<nb-card-header>
+		<div class="main-header">
+			<div class="top-nav">
+				<h4>title</h4>
+			</div>
+			<!-- <div>
+				<ga-layout-selector
+					componentName="{{ viewComponentName }}"
+				></ga-layout-selector>
+			</div> -->
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<form>
+			<div class="row">
+				<div class="col-md-3 col-sm-12">
+					<img
+						alt=""
+						[src]="
+							'https://afostats.imagead.net/uploads/afo/no_img.png'
+						"
+					/>
+				</div>
+				<div>
+					<div class="form-group">
+						<label class="label" for="name">{{
+							'INVENTORY_PAGE.NAME' | translate
+						}}</label>
+						<input
+							fullWidth
+							id="name"
+							type="text"
+							nbInput
+							[placeholder]="'INVENTORY_PAGE.NAME' | translate"
+						/>
+					</div>
+
+					<div class="form-group">
+						<ga-tags-color-input
+							[selectedTags]="tags"
+							(selectedTagsEvent)="selectedTagsEvent($event)"
+							[isOrgLevel]="true"
+						>
+						</ga-tags-color-input>
+					</div>
+
+					<div class="form-group">
+						<label class="label" for="code">{{
+							'INVENTORY_PAGE.CODE' | translate
+						}}</label>
+						<input
+							fullWidth
+							id="code"
+							type="text"
+							nbInput
+							[placeholder]="'INVENTORY_PAGE.CODE' | translate"
+						/>
+					</div>
+
+					<div class="form-group">
+						<label class="label" for="email">{{
+							'INVENTORY_PAGE.EMAIL' | translate
+						}}</label>
+						<input
+							fullWidth
+							id="email"
+							type="text"
+							nbInput
+							[placeholder]="'INVENTORY_PAGE.EMAIL' | translate"
+						/>
+					</div>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer>
+		<button
+			(click)="dialogRef.close()"
+			status="danger"
+			class="mr-2"
+			nbButton
+		>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button status="success" nbButton (click)="onSaveRequest()">
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>
