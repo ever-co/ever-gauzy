@@ -2,13 +2,13 @@ import { BrowserWindow, Menu, app } from 'electron';
 import * as path from 'path';
 import * as url from 'url';
 
-export function createSetupWindow(setupWindow, value) {
+export function createSetupWindow(setupWindow, value, filePath) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
 
 	setupWindow = new BrowserWindow(mainWindowSettings);
 
 	const launchPath = url.format({
-		pathname: path.join(__dirname, '../../../../ui/index.html'),
+		pathname: filePath,
 		protocol: 'file:',
 		slashes: true
 	});
