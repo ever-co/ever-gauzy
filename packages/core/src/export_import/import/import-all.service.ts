@@ -591,9 +591,9 @@ export class ImportAllService implements OnModuleInit {
 	async onModuleInit() {
 		this.plugins = this.configService.plugins;
 		for (const plugin of getPluginModules(this.plugins)) {
-			let classInstance: ClassDecorator;
+			// let classInstance: ClassDecorator;
 			try {
-				classInstance = this.moduleRef.get(plugin, { strict: false });
+				this.moduleRef.get(plugin, { strict: false });
 			} catch (e) {
 				console.log(
 					`Could not find ${plugin.name}`,
@@ -601,6 +601,7 @@ export class ImportAllService implements OnModuleInit {
 					e.stack
 				);
 			}
+			// console.log(classInstance);
 		}
 	}
 
