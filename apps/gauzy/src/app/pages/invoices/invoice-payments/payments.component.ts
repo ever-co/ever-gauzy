@@ -181,7 +181,7 @@ export class InvoicePaymentsComponent
 			);
 			await this.invoiceEstimateHistoryService.add({
 				action: this.getTranslation(
-					'INVOICES_PAGE.PAYMENT.PAYMENT_AMOUNT_ADDED',
+					'INVOICES_PAGE.PAYMENTS.PAYMENT_AMOUNT_ADDED',
 					{
 						amount: result.amount,
 						currency: result.currency

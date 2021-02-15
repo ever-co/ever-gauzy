@@ -1,6 +1,6 @@
 import { IInvoice, IInvoiceEstimateHistory } from '@gauzy/contracts';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsString } from 'class-validator';
 import { Entity, Column, JoinColumn, ManyToOne } from 'typeorm';
 import {
 	Invoice,
