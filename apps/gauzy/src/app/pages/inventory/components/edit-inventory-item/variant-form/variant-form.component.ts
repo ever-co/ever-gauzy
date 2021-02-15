@@ -106,6 +106,7 @@ export class VariantFormComponent implements OnInit {
 	}
 
 	getVariantDisplayName(variantCreateInput: VariantCreateInput) {
+		if (!variantCreateInput.options.length) return '-';
 		return variantCreateInput.options.join(' ');
 	}
 

@@ -182,6 +182,18 @@ export class InventoryStore {
 		return this.activeProduct.featuredImage.id == image.id;
 	}
 
+	createOption(option: IProductOption) {
+		this._activeProduct.options.push(option);
+		this.activeProduct$.next(this._activeProduct);
+	}
+
+	updateOption(optionOld: IProductOption, optionNew: IProductOption) {
+		let idx = this._activeProduct.options.indexOf(optionOld);
+		if (!idx) return;
+		this._activeProduct.options[idx] = optionNew;
+		this.activeProduct$.next(this._activeProduct);
+	}
+
 	deleteOption(optionDeleted: IProductOption) {
 		this._deleteOptions.push(optionDeleted);
 		this._activeProduct.options = this.activeProduct.options.filter(
