@@ -1174,7 +1174,12 @@ export class SeedDataService {
 		);
 
 		//run all plugins default seed method
-		await this.bootstrapPluginSeedMethods('onDefaultPluginSeed');
+		await this.bootstrapPluginSeedMethods(
+			'onDefaultPluginSeed',
+			(instance: any) => {
+				console.log(chalk.green(`SEEDED Default Plugins`));
+			}
+		);
 	}
 
 	/**
@@ -1875,8 +1880,13 @@ export class SeedDataService {
 			)
 		);
 
-		//run all plugins default seed method
-		await this.bootstrapPluginSeedMethods('onRandomPluginSeed');
+		//run all plugins random seed method
+		await this.bootstrapPluginSeedMethods(
+			'onRandomPluginSeed',
+			(instance: any) => {
+				console.log(chalk.green(`SEEDED Random Plugins`));
+			}
+		);
 	}
 
 	private async cleanUpPreviousRuns() {

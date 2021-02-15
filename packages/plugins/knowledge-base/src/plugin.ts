@@ -5,7 +5,6 @@ import {
 	OnDefaultPluginSeed,
 	OnRandomPluginSeed
 } from '@gauzy/plugin';
-import * as chalk from 'chalk';
 import { HelpCenterAuthor, HelpCenterAuthorModule } from './help-center-author';
 import { HelpCenter, HelpCenterModule } from './help-center';
 import {
@@ -33,21 +32,9 @@ export class KnowledgeBasePlugin
 		private readonly helpCenterSeederService: HelpCenterSeederService
 	) {}
 
-	onPluginBootstrap() {
-		console.log(
-			chalk.green(
-				`The plugin ${this.constructor.name} has been boostraped.`
-			)
-		);
-	}
+	onPluginBootstrap() {}
 
-	onPluginDestroy() {
-		console.log(
-			chalk.green(
-				`The plugin ${this.constructor.name} has been destroyed.`
-			)
-		);
-	}
+	onPluginDestroy() {}
 
 	onDefaultPluginSeed() {
 		this.helpCenterSeederService.createDefault();
