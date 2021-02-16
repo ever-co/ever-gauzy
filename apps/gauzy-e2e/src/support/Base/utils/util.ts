@@ -140,3 +140,7 @@ export const typeOverTextarea = (loc, text) => {
 export const verifyStateByIndex = (loc, index, state) => {
 	cy.get(loc, { timeout: 40000 }).eq(index).should(`${state}`);
 };
+
+export const clickOutsideElement = () => {
+	cy.get('body').click(0, 0);
+};
