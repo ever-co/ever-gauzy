@@ -1,28 +1,22 @@
-import { IHelpCenter } from '@gauzy/contracts';
+import { IHelpCenter, IOrganization, ITenant } from '@gauzy/contracts';
 import { Connection } from 'typeorm';
 import { HelpCenter } from './help-center.entity';
 import { DEFAULT_HELP_CENTER_MENUS } from './default-help-centers';
-import { Organization, Tenant } from '@gauzy/core';
 
 export const createHelpCenter = async (
 	connection: Connection,
-	{
-		tenant,
-		org
-	}: {
-		tenant: Tenant;
-		org: Organization;
-	}
+	tenant: ITenant,
+	organization: IOrganization
 ): Promise<IHelpCenter[]> => {
 	const helpCenterMenuList: IHelpCenter[] = DEFAULT_HELP_CENTER_MENUS;
 	for (const node of helpCenterMenuList) {
 		const helpCenter: IHelpCenter = {
 			...node,
 			tenant,
-			organization: org
+			organization
 		};
-		helpCenter.children.forEach((child: HelpCenter) => {
-			child.organization = org;
+		helpCenter.children.forEach((child: IHelpCenter) => {
+			child.organization = organization;
 			child.tenant = tenant;
 		});
 		const entity = await createEntity(connection, helpCenter);
@@ -31,7 +25,7 @@ export const createHelpCenter = async (
 	return helpCenterMenuList;
 };
 
-const createEntity = async (connection: Connection, node: HelpCenter) => {
+const createEntity = async (connection: Connection, node: IHelpCenter) => {
 	if (!node) {
 		return;
 	}

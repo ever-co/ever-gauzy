@@ -1,0 +1,19 @@
+nb-sidebar nb-menu {
+  height: 93%;
+
+  .menu-items {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow-y: scroll !important;
+
+    .menu-item.menu-group {
+      margin-top: auto;
+    }
+
+    .menu-item a {
+      padding-right: 0rem;
+      padding-left: 0.5rem;
+    }
+  }
+}

@@ -41,7 +41,10 @@ export class TableInventoryComponent
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.CARDS_GRID;
 	organization: IOrganization;
+
 	editProductAllowed = false;
+	viewCategoriesAllowed = false;
+	viewTypesAllowed = false;
 
 	inventoryTable: Ng2SmartTableComponent;
 	@ViewChild('inventoryTable') set content(content: Ng2SmartTableComponent) {
@@ -65,7 +68,7 @@ export class TableInventoryComponent
 	}
 
 	async ngOnInit() {
-		this.setEditPermission();
+		this.setPermissions();
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.selectedLanguage = this.translateService.currentLang;
@@ -281,11 +284,15 @@ export class TableInventoryComponent
 		}
 	}
 
-	setEditPermission() {
-		this.ngxPermissionsService
-			.hasPermission(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
-			.then((result) => {
-				this.editProductAllowed = result;
-			});
+	async setPermissions() {
+		this.editProductAllowed = await this.ngxPermissionsService.hasPermission(
+			PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT
+		);
+		this.viewCategoriesAllowed = await this.ngxPermissionsService.hasPermission(
+			PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW
+		);
+		this.viewTypesAllowed = await this.ngxPermissionsService.hasPermission(
+			PermissionsEnum.ORG_PRODUCT_TYPES_VIEW
+		);
 	}
 }
