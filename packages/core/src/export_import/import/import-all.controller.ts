@@ -10,8 +10,8 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ImportAllService } from '.';
 import * as path from 'path';
+import { ImportAllService } from './import-all.service';
 import { FileStorage } from '../../core/file-storage';
 
 @Injectable()

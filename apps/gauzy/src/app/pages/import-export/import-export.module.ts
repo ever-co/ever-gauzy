@@ -12,7 +12,6 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		NbIconModule,
 		TranslateModule
 	],
-
 	declarations: [ImportExportComponent],
 	providers: []
 })

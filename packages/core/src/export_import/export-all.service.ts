@@ -72,9 +72,6 @@ import { IntegrationEntitySettingTiedEntityService } from '../integration-entity
 import { IntegrationMapService } from '../integration-map/integration-map.service';
 import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
 import { IntegrationTenantService } from '../integration-tenant/integration-tenant.service';
-// import { HelpCenterService } from '../help-center/help-center.service';
-// import { HelpCenterArticleService } from '../help-center-article/help-center-article.service';
-// import { HelpCenterAuthorService } from '../help-center-author/help-center-author.service';
 import { GoalService } from '../goal/goal.service';
 import { GoalTimeFrameService } from '../goal-time-frame/goal-time-frame.service';
 import { GoalKpiService } from '../goal-kpi/goal-kpi.service';
@@ -162,10 +159,6 @@ export class ExportAllService {
 		private goalKpiTemplateService: GoalKpiTemplateService,
 		private goalTimeFrameService: GoalTimeFrameService,
 
-		// private helpCenterService: HelpCenterService,
-		// private helpCenterArticleService: HelpCenterArticleService,
-		// private helpCenterAuthorService: HelpCenterAuthorService,
-
 		private incomeService: IncomeService,
 		private integrationService: IntegrationService,
 		private integrationEntitySettingService: IntegrationEntitySettingService,
@@ -238,6 +231,8 @@ export class ExportAllService {
 	) {
 		this.services = this.loadServices();
 	}
+
+	async onModuleInit() {}
 
 	async createFolders(): Promise<any> {
 		return new Promise((resolve, reject) => {
@@ -326,7 +321,7 @@ export class ExportAllService {
 		).items;
 
 		if (incomingData.length > 0) {
-			return new Promise((resolve, reject) => {
+			return new Promise((resolve) => {
 				const createCsvWriter = csv.createObjectCsvWriter;
 				const dataIn = [];
 				const dataKeys = Object.keys(incomingData[0]);
@@ -356,7 +351,7 @@ export class ExportAllService {
 	}
 
 	async downloadToUser(res): Promise<any> {
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve) => {
 			let fileName = '';
 
 			this.idZip.subscribe((filename) => {
@@ -368,7 +363,7 @@ export class ExportAllService {
 	}
 
 	async downloadTemplate(res) {
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve) => {
 			res.download('./export/template.zip');
 			resolve('');
 		});
@@ -393,7 +388,7 @@ export class ExportAllService {
 		});
 	}
 	async deleteArchive(): Promise<any> {
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve) => {
 			let fileName = '';
 			this.idZip.subscribe((fileName$) => {
 				fileName = fileName$;
@@ -414,7 +409,8 @@ export class ExportAllService {
 		organizationId: string;
 		tenantId: string;
 	}) {
-		return new Promise(async (resolve, reject) => {
+		console.log(this.services);
+		return new Promise(async (resolve) => {
 			for (const [i] of this.services.entries()) {
 				await this.getAsCsv(i, findInput);
 			}
@@ -429,7 +425,7 @@ export class ExportAllService {
 			tenantId: string;
 		}
 	) {
-		return new Promise(async (resolve, reject) => {
+		return new Promise(async (resolve) => {
 			for (let i = 0; i < this.services.length; i++) {
 				const name = names.find((n) => this.services[i].nameFile === n);
 				if (name) {
@@ -523,10 +519,7 @@ export class ExportAllService {
 				service: this.employeeAppointmentService,
 				nameFile: 'employee_appointment'
 			},
-			{
-				service: this.employeeAwardService,
-				nameFile: 'employee_award'
-			},
+			{ service: this.employeeAwardService, nameFile: 'employee_award' },
 			{
 				service: this.employeeProposalTemplateService,
 				nameFile: 'employee_proposal_template'
@@ -551,21 +544,13 @@ export class ExportAllService {
 				nameFile: 'expense_category'
 			},
 			{ service: this.goalService, nameFile: 'goal' },
-			{
-				service: this.goalTemplateService,
-				nameFile: 'goal_template'
-			},
+			{ service: this.goalTemplateService, nameFile: 'goal_template' },
 			{ service: this.goalKpiService, nameFile: 'goal_kpi' },
 			{
 				service: this.goalKpiTemplateService,
 				nameFile: 'goal_kpi_template'
 			},
 			{ service: this.goalTimeFrameService, nameFile: 'goal_time_frame' },
-
-			// { service: this.helpCenterService, nameFile: 'knowledge_base' },
-			// { service: this.helpCenterArticleService, nameFile: 'knowledge_base_article' },
-			// { service: this.helpCenterAuthorService, nameFile: 'knowledge_base_author' },
-
 			{ service: this.incomeService, nameFile: 'income' },
 			{
 				service: this.integrationService,
@@ -599,11 +584,7 @@ export class ExportAllService {
 				service: this.invoiceEstimateHistoryService,
 				nameFile: 'invoice_estimate_history'
 			},
-
-			{
-				service: this.jobPresetService,
-				nameFile: 'job_preset'
-			},
+			{ service: this.jobPresetService, nameFile: 'job_preset' },
 			{
 				service: this.jobSearchOccupationService,
 				nameFile: 'job_search_occupation'
@@ -612,7 +593,6 @@ export class ExportAllService {
 				service: this.jobSearchCategoryService,
 				nameFile: 'job_search_category'
 			},
-
 			{ service: this.keyResultService, nameFile: 'key_result' },
 			{
 				service: this.keyResultTemplateService,
@@ -622,13 +602,11 @@ export class ExportAllService {
 				service: this.keyResultUpdateService,
 				nameFile: 'key_result_update'
 			},
-
 			{
 				service: this.languageService,
 				nameFile: 'language',
 				tenantOrganizationBase: false
 			},
-
 			{
 				service: this.organizationService,
 				nameFile: 'organization',
@@ -691,7 +669,6 @@ export class ExportAllService {
 				service: this.organizationVendorsService,
 				nameFile: 'organization_vendor'
 			},
-
 			{ service: this.paymentService, nameFile: 'payment' },
 			{ service: this.pipelineService, nameFile: 'pipeline' },
 			{ service: this.productService, nameFile: 'product' },
@@ -714,11 +691,7 @@ export class ExportAllService {
 				nameFile: 'product_variant_setting'
 			},
 			{ service: this.proposalService, nameFile: 'proposal' },
-
-			{
-				service: this.reportService,
-				nameFile: 'report'
-			},
+			{ service: this.reportService, nameFile: 'report' },
 			{
 				service: this.reportCategoryService,
 				nameFile: 'report_category'
@@ -737,7 +710,6 @@ export class ExportAllService {
 				nameFile: 'role_permission',
 				tenantOrganizationBase: false
 			},
-
 			{ service: this.screenShotService, nameFile: 'screenshot' },
 			{
 				service: this.skillService,
@@ -745,7 +717,6 @@ export class ExportAllService {
 				tenantOrganizationBase: false
 			},
 			{ service: this.stageService, nameFile: 'pipeline_stage' },
-
 			{ service: this.tagService, nameFile: 'tag' },
 			{ service: this.taskService, nameFile: 'task' },
 			{

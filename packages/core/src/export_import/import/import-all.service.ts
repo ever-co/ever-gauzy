@@ -1,132 +1,128 @@
-import { DynamicModule, Injectable, OnModuleInit, Type } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Connection, getConnection, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 import * as fs from 'fs';
 import * as unzipper from 'unzipper';
 import * as csv from 'csv-parser';
 import * as rimraf from 'rimraf';
-import { Connection, Repository } from 'typeorm';
-import { Country } from '../../country/country.entity';
-import { User } from '../../user/user.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Tag } from '../../tags/tag.entity';
-import { Activity } from '../../timesheet/activity.entity';
-import { AvailabilitySlot } from '../../availability-slots/availability-slots.entity';
-import { ApprovalPolicy } from '../../approval-policy/approval-policy.entity';
-import { AppointmentEmployee } from '../../appointment-employees/appointment-employees.entity';
-import { CandidateTechnologies } from '../../candidate-technologies/candidate-technologies.entity';
-import { CandidateSource } from '../../candidate-source/candidate-source.entity';
-import { CandidateSkill } from '../../candidate-skill/candidate-skill.entity';
-import { CandidatePersonalQualities } from '../../candidate-personal-qualities/candidate-personal-qualities.entity';
-import { CandidateInterviewers } from '../../candidate-interviewers/candidate-interviewers.entity';
-import { CandidateInterview } from '../../candidate-interview/candidate-interview.entity';
-import { CandidateFeedback } from '../../candidate-feedbacks/candidate-feedbacks.entity';
-import { CandidateExperience } from '../../candidate-experience/candidate-experience.entity';
-import { CandidateEducation } from '../../candidate-education/candidate-education.entity';
-import { CandidateDocument } from '../../candidate-documents/candidate-documents.entity';
-import { CandidateCriterionsRating } from '../../candidate-criterions-rating/candidate-criterion-rating.entity';
-import { Candidate } from '../../candidate/candidate.entity';
-import { Contact } from '../../contact/contact.entity';
-import { Deal } from '../../deal/deal.entity';
-import { EmailTemplate } from '../../email-template/email-template.entity';
-import { Email } from '../../email/email.entity';
-import { Employee } from '../../employee/employee.entity';
-import { EmployeeAppointment } from '../../employee-appointment/employee-appointment.entity';
-import { EmployeeRecurringExpense } from '../../employee-recurring-expense/employee-recurring-expense.entity';
-import { EmployeeSetting } from '../../employee-setting/employee-setting.entity';
-import { Equipment } from '../../equipment/equipment.entity';
-import { EquipmentSharing } from '../../equipment-sharing/equipment-sharing.entity';
-import { EquipmentSharingPolicy } from '../../equipment-sharing-policy/equipment-sharing-policy.entity';
-import { EstimateEmail } from '../../estimate-email/estimate-email.entity';
-import { EventType } from '../../event-types/event-type.entity';
-import { Expense } from '../../expense/expense.entity';
-import { ExpenseCategory } from '../../expense-categories/expense-category.entity';
-import { UserOrganization } from '../../user-organization/user-organization.entity';
-import { TimeOffPolicy } from '../../time-off-policy/time-off-policy.entity';
-import { TimeOffRequest } from '../../time-off-request/time-off-request.entity';
-import { TimeSlot } from '../../timesheet/time-slot.entity';
-import { TimeLog } from '../../timesheet/time-log.entity';
-import { Timesheet } from '../../timesheet/timesheet.entity';
-import { Tenant } from '../../tenant/tenant.entity';
-import { Task } from '../../tasks/task.entity';
-import { Screenshot } from '../../timesheet/screenshot.entity';
-// import { HelpCenterAuthor } from '../../help-center-author/help-center-author.entity';
-// import { HelpCenterArticle } from '../../help-center-article/help-center-article.entity';
-// import { HelpCenter } from '../../help-center/help-center.entity';
-import { GoalTimeFrame } from '../../goal-time-frame/goal-time-frame.entity';
-import { GoalKPI } from '../../goal-kpi/goal-kpi.entity';
-import { GoalGeneralSetting } from '../../goal-general-setting/goal-general-setting.entity';
-import { Goal } from '../../goal/goal.entity';
-import { Skill } from '../../skills/skill.entity';
-import { Language } from '../../language/language.entity';
-import { KeyResultUpdate } from '../../keyresult-update/keyresult-update.entity';
-import { KeyResult } from '../../keyresult/keyresult.entity';
-import { InvoiceItem } from '../../invoice-item/invoice-item.entity';
-import { Invoice } from '../../invoice/invoice.entity';
-import { Invite } from '../../invite/invite.entity';
-import { IntegrationTenant } from '../../integration-tenant/integration-tenant.entity';
-import { IntegrationSetting } from '../../integration-setting/integration-setting.entity';
-import { IntegrationMap } from '../../integration-map/integration-map.entity';
-import { Income } from '../../income/income.entity';
-import { Integration } from '../../integration/integration.entity';
-import { IntegrationEntitySetting } from '../../integration-entity-setting/integration-entity-setting.entity';
-import { IntegrationEntitySettingTiedEntity } from '../../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.entity';
-import { Organization } from '../../organization/organization.entity';
-import { EmployeeLevel } from '../../organization_employee-level/organization-employee-level.entity';
-import { OrganizationAwards } from '../../organization-awards/organization-awards.entity';
-import { OrganizationContact } from '../../organization-contact/organization-contact.entity';
-import { OrganizationDepartment } from '../../organization-department/organization-department.entity';
-import { OrganizationDocuments } from '../../organization-documents/organization-documents.entity';
-import { OrganizationEmploymentType } from '../../organization-employment-type/organization-employment-type.entity';
-import { OrganizationLanguages } from '../../organization-languages/organization-languages.entity';
-import { OrganizationPositions } from '../../organization-positions/organization-positions.entity';
-import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
-import { OrganizationRecurringExpense } from '../../organization-recurring-expense/organization-recurring-expense.entity';
-import { OrganizationSprint } from '../../organization-sprint/organization-sprint.entity';
-import { OrganizationTeam } from '../../organization-team/organization-team.entity';
-import { OrganizationTeamEmployee } from '../../organization-team-employee/organization-team-employee.entity';
-import { OrganizationVendor } from '../../organization-vendors/organization-vendors.entity';
-import { RolePermissions } from '../../role-permissions/role-permissions.entity';
-import { Role } from '../../role/role.entity';
-import { RequestApproval } from '../../request-approval/request-approval.entity';
-import { Payment } from '../../payment/payment.entity';
-import { Pipeline } from '../../pipeline/pipeline.entity';
-import { PipelineStage } from '../../pipeline-stage/pipeline-stage.entity';
-import { Proposal } from '../../proposal/proposal.entity';
-import { ProductVariantPrice } from '../../product-variant-price/product-variant-price.entity';
-import { ProductVariant } from '../../product-variant/product-variant.entity';
-import { ProductType } from '../../product-type/product-type.entity';
-import { ProductVariantSettings } from '../../product-settings/product-settings.entity';
-import { ProductOption } from '../../product-option/product-option.entity';
-import { ProductCategory } from '../../product-category/product-category.entity';
-import { Product } from '../../product/product.entity';
-import { convertToDatetime } from '../../core/utils';
-import { FileStorage } from '../../core/file-storage';
-import { Currency } from '../../currency/currency.entity';
-import { EmployeeAward } from '../../employee-award/employee-award.entity';
-import { EmployeeProposalTemplate } from '../../employee-proposal-template/employee-proposal-template.entity';
-import { EmployeeUpworkJobsSearchCriterion } from '../../employee-job-preset/employee-upwork-jobs-search-criterion.entity';
-import { GoalTemplate } from '../../goal-template/goal-template.entity';
-import { GoalKPITemplate } from '../../goal-kpi-template/goal-kpi-template.entity';
-import { InvoiceEstimateHistory } from '../../invoice-estimate-history/invoice-estimate-history.entity';
-import { JobSearchOccupation } from '../../employee-job-preset/job-search-occupation/job-search-occupation.entity';
-import { JobPresetUpworkJobSearchCriterion } from '../../employee-job-preset/job-preset-upwork-job-search-criterion.entity';
-import { JobSearchCategory } from '../../employee-job-preset/job-search-category/job-search-category.entity';
-import { JobPreset } from '../../employee-job-preset/job-preset.entity';
-import { KeyResultTemplate } from '../../keyresult-template/keyresult-template.entity';
-import { Report } from '../../reports/report.entity';
-import { ReportCategory } from '../../reports/report-category.entity';
-import { ReportOrganization } from '../../reports/report-organization.entity';
+import * as _ from 'lodash';
 import { ConfigService } from '@gauzy/config';
-import { getPluginModules } from '@gauzy/plugin';
-import { ModuleRef } from '@nestjs/core';
+import { getEntitiesFromPlugins } from '@gauzy/plugin';
+import { isClassInstance } from '@gauzy/common';
+import { convertToDatetime } from './../../core/utils';
+import { FileStorage } from './../../core/file-storage';
+import {
+	Activity,
+	AppointmentEmployee,
+	ApprovalPolicy,
+	AvailabilitySlot,
+	Candidate,
+	CandidateCriterionsRating,
+	CandidateDocument,
+	CandidateEducation,
+	CandidateExperience,
+	CandidateFeedback,
+	CandidateInterview,
+	CandidateInterviewers,
+	CandidatePersonalQualities,
+	CandidateSkill,
+	CandidateSource,
+	CandidateTechnologies,
+	Contact,
+	Country,
+	Currency,
+	Deal,
+	Email,
+	EmailTemplate,
+	Employee,
+	EmployeeAppointment,
+	EmployeeAward,
+	EmployeeLevel,
+	EmployeeProposalTemplate,
+	EmployeeRecurringExpense,
+	EmployeeSetting,
+	EmployeeUpworkJobsSearchCriterion,
+	Equipment,
+	EquipmentSharing,
+	EquipmentSharingPolicy,
+	EstimateEmail,
+	EventType,
+	Expense,
+	ExpenseCategory,
+	Goal,
+	GoalGeneralSetting,
+	GoalKPI,
+	GoalKPITemplate,
+	GoalTemplate,
+	GoalTimeFrame,
+	Income,
+	Integration,
+	IntegrationEntitySetting,
+	IntegrationEntitySettingTiedEntity,
+	IntegrationMap,
+	IntegrationSetting,
+	IntegrationTenant,
+	Invite,
+	Invoice,
+	InvoiceEstimateHistory,
+	InvoiceItem,
+	JobPreset,
+	JobPresetUpworkJobSearchCriterion,
+	JobSearchCategory,
+	JobSearchOccupation,
+	KeyResult,
+	KeyResultTemplate,
+	KeyResultUpdate,
+	Language,
+	Organization,
+	OrganizationAwards,
+	OrganizationContact,
+	OrganizationDepartment,
+	OrganizationDocuments,
+	OrganizationEmploymentType,
+	OrganizationLanguages,
+	OrganizationPositions,
+	OrganizationProject,
+	OrganizationRecurringExpense,
+	OrganizationSprint,
+	OrganizationTeam,
+	OrganizationTeamEmployee,
+	OrganizationVendor,
+	Payment,
+	Pipeline,
+	PipelineStage,
+	Product,
+	ProductCategory,
+	ProductOption,
+	ProductType,
+	ProductVariant,
+	ProductVariantPrice,
+	ProductVariantSettings,
+	Proposal,
+	Report,
+	ReportCategory,
+	ReportOrganization,
+	RequestApproval,
+	Role,
+	RolePermissions,
+	Screenshot,
+	Skill,
+	Tag,
+	Task,
+	Tenant,
+	TimeLog,
+	TimeOffPolicy,
+	TimeOffRequest,
+	Timesheet,
+	TimeSlot,
+	User,
+	UserOrganization
+} from './../../core/entities/internal';
 
 @Injectable()
 export class ImportAllService implements OnModuleInit {
 	__dirname = './import/csv/';
-
 	connection: Connection;
-
-	plugins: Array<DynamicModule | Type<any>> = [];
-
 	/**
 	 * Warning: Changing position here can be FATAL
 	 */
@@ -584,25 +580,11 @@ export class ImportAllService implements OnModuleInit {
 		@InjectRepository(UserOrganization)
 		private readonly userOrganizationRepository: Repository<UserOrganization>,
 
-		private readonly configService: ConfigService,
-		private readonly moduleRef: ModuleRef
+		private readonly configService: ConfigService
 	) {}
 
 	async onModuleInit() {
-		this.plugins = this.configService.plugins;
-		for (const plugin of getPluginModules(this.plugins)) {
-			// let classInstance: ClassDecorator;
-			try {
-				this.moduleRef.get(plugin, { strict: false });
-			} catch (e) {
-				console.log(
-					`Could not find ${plugin.name}`,
-					undefined,
-					e.stack
-				);
-			}
-			// console.log(classInstance);
-		}
+		this.createDynamicInstanceForPluginEntities();
 	}
 
 	async createFolder(): Promise<any> {
@@ -697,5 +679,23 @@ export class ImportAllService implements OnModuleInit {
 			data['deletedAt'] = convertToDatetime(data['deletedAt']);
 		}
 		return data;
+	}
+
+	//load plugins entities for import data
+	private createDynamicInstanceForPluginEntities() {
+		for (const entity of getEntitiesFromPlugins(
+			this.configService.plugins
+		)) {
+			if (!isClassInstance(entity)) {
+				return;
+			}
+
+			const className = _.camelCase(entity.name);
+			const repository = getConnection().getRepository(entity);
+			const tableName = repository.metadata.tableName;
+
+			this[className] = repository;
+			this.orderedRepositories[tableName] = this[className];
+		}
 	}
 }

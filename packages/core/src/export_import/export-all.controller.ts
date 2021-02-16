@@ -9,6 +9,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ExportAllService } from './export-all.service';
 import { AuthGuard } from '@nestjs/passport';
+import { ParseJsonPipe } from './../shared/pipes/parse-json.pipe';
 
 @ApiTags('Download')
 @UseGuards(AuthGuard('jwt'))
@@ -27,8 +28,8 @@ export class ExportAllController {
 		description: 'Record not found'
 	})
 	@Get()
-	async exportAll(@Query('data') data: string, @Res() res) {
-		const { findInput = null } = JSON.parse(data);
+	async exportAll(@Query('data', ParseJsonPipe) data: any, @Res() res) {
+		const { findInput = null } = data;
 		await this.exportService.createFolders();
 		await this.exportService.exportTables(findInput);
 		await this.exportService.archiveAndDownload();
