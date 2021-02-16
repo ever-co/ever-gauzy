@@ -121,7 +121,7 @@ import {
 
 @Injectable()
 export class ImportAllService implements OnModuleInit {
-	private __dirname = './import/csv/';
+	private __dirname = '/import/csv/';
 	private dynamicEntitiesClassMap: { [name: string]: Type<any> } = {};
 
 	/**

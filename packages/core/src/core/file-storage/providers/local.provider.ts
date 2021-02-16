@@ -73,6 +73,9 @@ export class LocalProvider extends Provider<LocalProvider> {
 						fileNameString = filename(file, ext);
 					}
 				} else {
+					if (!prefix) {
+						prefix = 'file';
+					}
 					fileNameString = `${prefix}-${moment().unix()}-${parseInt(
 						'' + Math.random() * 1000,
 						10

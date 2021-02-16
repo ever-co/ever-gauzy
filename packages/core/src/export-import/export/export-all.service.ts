@@ -112,7 +112,7 @@ import {
 	TimeSlot,
 	User,
 	UserOrganization
-} from './../core/entities/internal';
+} from './../../core/entities/internal';
 
 export interface IRepositoryModel {
 	repository: any;
