@@ -2063,7 +2063,12 @@
 		"IMAGE_ADDED_TO_GALLERY": "Image was added to the gallery",
 		"IMAGES_ADDED_TO_GALLERY": "The Images were added to the gallery",
 		"IMAGE_ASSET_UPDATED": "The image asset was updated",
-		"EDIT_IMAGE_ASSET": "Edit image asset"
+		"EDIT_IMAGE_ASSET": "Edit image asset",
+		"WAREHOUSES": "מחסנים",
+		"EMAIL": "אימייל",
+		"ACTIVE": "פָּעִיל",
+		"LOCATION": "מקום",
+		"ADDRESS": "כתובת"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

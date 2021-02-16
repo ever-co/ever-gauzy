@@ -62,6 +62,7 @@ import { ImageAssetModule } from '../../@shared/image-asset/image-asset.module';
 import { WarehousesComponent } from './components/manage-warehouses/warehouses.component';
 import { WarehouseMutationModule } from '../../@shared/warehouse-mutation/warehouse-mutation.module';
 import { WarehouseMutationComponent } from '../../@shared/warehouse-mutation/warehouse-mutation.component';
+import { WarehouseService } from '../../@core/services/warehouse.service';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -140,7 +141,8 @@ const NB_MODULES = [
 		OrganizationsService,
 		ImageAssetService,
 		InventoryStore,
-		TranslatableService
+		TranslatableService,
+		WarehouseService
 	]
 })
 export class InventoryModule {}

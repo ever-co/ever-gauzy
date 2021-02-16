@@ -25,7 +25,7 @@ export class WarehouseMutationComponent
 		super(translateService);
 	}
 
-	ngOnInit() {}
+	ngOnInit(): void {}
 
 	onSaveRequest() {}
 

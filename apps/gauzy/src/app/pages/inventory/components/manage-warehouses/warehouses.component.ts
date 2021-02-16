@@ -17,6 +17,7 @@ import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../../../@core/services/toastr.service';
 import { WarehouseMutationComponent } from 'apps/gauzy/src/app/@shared/warehouse-mutation/warehouse-mutation.component';
+import { WarehouseService } from 'apps/gauzy/src/app/@core/services/warehouse.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-warehouses',
@@ -47,7 +48,7 @@ export class WarehousesComponent
 	constructor(
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
-		private productTypeService: ProductTypeService,
+		private warehouseService: WarehouseService,
 		private toastrService: ToastrService,
 		private router: Router,
 		private store: Store
@@ -89,6 +90,7 @@ export class WarehousesComponent
 
 	async loadSmartTable() {
 		this.settingsSmartTable = {
+			actions: false,
 			columns: {
 				//tstodo
 				// logo: {
@@ -100,7 +102,7 @@ export class WarehousesComponent
 					type: 'string'
 				},
 				name: {
-					title: this.getTranslation('INVENTORY_PAGE.TITLE'),
+					title: this.getTranslation('INVENTORY_PAGE.NAME'),
 					type: 'string'
 				},
 				email: {
@@ -120,21 +122,9 @@ export class WarehousesComponent
 	}
 
 	async loadSettings() {
-		//tstodo
-		const data = [
-			{
-				description: '',
-				active: true,
-				address: 'hjkl',
-				code: 'jkl',
-				name: 'name',
-				logo: '',
-				email: 'test@abv.gh',
-				tags: [{}]
-			}
-		];
+		const warehouses = (await this.warehouseService.getAll()).items;
 
-		this.smartTableSource.load(data);
+		this.smartTableSource.load(warehouses);
 	}
 
 	_applyTranslationOnSmartTable() {
