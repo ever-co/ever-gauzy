@@ -1,238 +1,440 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { getConnection, Repository } from 'typeorm';
+import { BehaviorSubject } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
+import * as _ from 'lodash';
+import * as archiver from 'archiver';
+import * as csv from 'csv-writer';
 import * as fs from 'fs';
 import * as fse from 'fs-extra';
-import * as archiver from 'archiver';
-import { v4 as uuidv4 } from 'uuid';
-import { BehaviorSubject } from 'rxjs';
-import { CountryService } from '../country';
-import * as csv from 'csv-writer';
-import { UserService } from '../user/user.service';
-import { UserOrganizationService } from '../user-organization/user-organization.services';
-import { EmailService } from '../email';
-import { EmailTemplateService } from '../email-template';
-import { EmployeeService } from '../employee/employee.service';
-import { EmployeeRecurringExpenseService } from '../employee-recurring-expense';
-import { EmployeeSettingService } from '../employee-setting';
-import { EquipmentSharingService } from '../equipment-sharing';
-import { ExpenseService } from '../expense/expense.service';
-import { ExpenseCategoriesService } from '../expense-categories/expense-categories.service';
-import { IncomeService } from '../income/income.service';
-import { InviteService } from '../invite/invite.service';
-import { InvoiceService } from '../invoice/invoice.service';
-import { InvoiceItemService } from '../invoice-item/invoice-item.service';
-import { OrganizationService } from '../organization/organization.service';
-import { EmployeeLevelService } from '../organization_employee-level/organization-employee-level.service';
-import { OrganizationContactService } from '../organization-contact/organization-contact.service';
-import { OrganizationDepartmentService } from '../organization-department/organization-department.service';
-import { OrganizationEmploymentTypeService } from '../organization-employment-type/organization-employment-type.service';
-import { OrganizationPositionsService } from '../organization-positions/organization-positions.service';
-import { OrganizationProjectsService } from '../organization-projects/organization-projects.service';
-import { OrganizationRecurringExpenseService } from '../organization-recurring-expense/organization-recurring-expense.service';
-import { OrganizationTeamService } from '../organization-team/organization-team.service';
-import { OrganizationVendorsService } from '../organization-vendors/organization-vendors.service';
-import { ProposalService } from '../proposal/proposal.service';
-import { RoleService } from '../role/role.service';
-import { RolePermissionsService } from '../role-permissions/role-permissions.service';
-import { TagService } from '../tags/tag.service';
-import { TaskService } from '../tasks/task.service';
-import { TenantService } from '../tenant/tenant.service';
-import { TimeOffPolicyService } from '../time-off-policy/time-off-policy.service';
-import { TimeSheetService } from '../timesheet/timesheet/timesheet.service';
-import { ActivityService } from '../timesheet/activity/activity.service';
-import { ScreenshotService } from '../timesheet/screenshot/screenshot.service';
-import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
-import { TimeLogService } from '../timesheet/time-log/time-log.service';
-import { AppointmentEmployeesService } from '../appointment-employees/appointment-employees.service';
-import { ApprovalPolicyService } from '../approval-policy/approval-policy.service';
-import { CandidateService } from '../candidate/candidate.service';
-import { OrganizationTeamEmployeeService } from '../organization-team-employee/organization-team-employee.service';
-import { EquipmentService } from '../equipment/equipment.service';
-import { ContactService } from '../contact/contact.service';
-import { TimeOffRequestService } from '../time-off-request/time-off-request.service';
-import { StageService } from '../pipeline-stage/pipeline-stage.service';
-import { SkillService } from '../skills/skill.service';
-import { RequestApprovalService } from '../request-approval/request-approval.service';
-import { ProductVariantService } from '../product-variant/product-variant.service';
-import { ProductVariantPriceService } from '../product-variant-price/product-variant-price.service';
-import { PaymentService } from '../payment/payment.service';
-import { PipelineService } from '../pipeline/pipeline.service';
-import { ProductService } from '../product/product.service';
-import { ProductCategoryService } from '../product-category/product-category.service';
-import { ProductOptionService } from '../product-option/product-option.service';
-import { ProductVariantSettingService } from '../product-settings/product-settings.service';
-import { ProductTypeService } from '../product-type/product-type.service';
-import { OrganizationSprintService } from '../organization-sprint/organization-sprint.service';
-import { OrganizationLanguagesService } from '../organization-languages/organization-languages.service';
-import { OrganizationAwardsService } from '../organization-awards/organization-awards.service';
-import { KeyResultService } from '../keyresult/keyresult.service';
-import { KeyResultUpdateService } from '../keyresult-update/keyresult-update.service';
-import { IntegrationService } from '../integration/integration.service';
-import { IntegrationEntitySettingService } from '../integration-entity-setting/integration-entity-setting.service';
-import { IntegrationEntitySettingTiedEntityService } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.service';
-import { IntegrationMapService } from '../integration-map/integration-map.service';
-import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
-import { IntegrationTenantService } from '../integration-tenant/integration-tenant.service';
-import { GoalService } from '../goal/goal.service';
-import { GoalTimeFrameService } from '../goal-time-frame/goal-time-frame.service';
-import { GoalKpiService } from '../goal-kpi/goal-kpi.service';
-import { EventTypeService } from '../event-types/event-type.service';
-import { EstimateEmailService } from '../estimate-email/estimate-email.service';
-import { EmployeeAppointmentService } from '../employee-appointment';
-import { DealService } from '../deal/deal.service';
-import { AvailabilitySlotsService } from '../availability-slots/availability-slots.service';
-import { CandidateCriterionsRatingService } from '../candidate-criterions-rating/candidate-criterion-rating.service';
-import { CandidateDocumentsService } from '../candidate-documents/candidate-documents.service';
-import { CandidateEducationService } from '../candidate-education/candidate-education.service';
-import { CandidateExperienceService } from '../candidate-experience/candidate-experience.service';
-import { CandidateFeedbacksService } from '../candidate-feedbacks/candidate-feedbacks.service';
-import { CandidateInterviewService } from '../candidate-interview/candidate-interview.service';
-import { CandidateInterviewersService } from '../candidate-interviewers/candidate-interviewers.service';
-import { CandidatePersonalQualitiesService } from '../candidate-personal-qualities/candidate-personal-qualities.service';
-import { CandidateSkillService } from '../candidate-skill/candidate-skill.service';
-import { CandidateTechnologiesService } from '../candidate-technologies/candidate-technologies.service';
-import { CandidateSourceService } from '../candidate-source/candidate-source.service';
-import { LanguageService } from '../language/language.service';
-import { OrganizationDocumentsService } from '../organization-documents/organization-documents.service';
-import { CurrencyService } from '../currency';
-import { EmployeeAwardService } from '../employee-award/employee-award.service';
-import { EmployeeProposalTemplateService } from '../employee-proposal-template/employee-proposal-template.service';
-import { GoalTemplateService } from '../goal-template/goal-template.service';
-import { GoalKpiTemplateService } from '../goal-kpi-template/goal-kpi-template.service';
-import { InvoiceEstimateHistoryService } from '../invoice-estimate-history/invoice-estimate-history.service';
-import { JobSearchOccupationService } from '../employee-job-preset/job-search-occupation/job-search-occupation.service';
-import { JobPresetService } from '../employee-job-preset/job-preset.service';
-import { JobSearchCategoryService } from '../employee-job-preset/job-search-category/job-search-category.service';
-import { KeyresultTemplateService } from '../keyresult-template/keyresult-template.service';
-import { ReportService } from '../reports/report.service';
-import { ReportCategoryService } from '../reports/report-category.service';
+import { ConfigService } from '@gauzy/config';
+import { getEntitiesFromPlugins } from '@gauzy/plugin';
+import { isFunction } from '@gauzy/common';
+import {
+	Activity,
+	AppointmentEmployee,
+	ApprovalPolicy,
+	AvailabilitySlot,
+	Candidate,
+	CandidateCriterionsRating,
+	CandidateDocument,
+	CandidateEducation,
+	CandidateExperience,
+	CandidateFeedback,
+	CandidateInterview,
+	CandidateInterviewers,
+	CandidatePersonalQualities,
+	CandidateSkill,
+	CandidateSource,
+	CandidateTechnologies,
+	Contact,
+	Country,
+	Currency,
+	Deal,
+	Email,
+	EmailTemplate,
+	Employee,
+	EmployeeAppointment,
+	EmployeeAward,
+	EmployeeLevel,
+	EmployeeProposalTemplate,
+	EmployeeRecurringExpense,
+	EmployeeSetting,
+	Equipment,
+	EquipmentSharing,
+	EstimateEmail,
+	EventType,
+	Expense,
+	ExpenseCategory,
+	Goal,
+	GoalKPI,
+	GoalKPITemplate,
+	GoalTemplate,
+	GoalTimeFrame,
+	Income,
+	Integration,
+	IntegrationEntitySetting,
+	IntegrationEntitySettingTiedEntity,
+	IntegrationMap,
+	IntegrationSetting,
+	IntegrationTenant,
+	Invite,
+	Invoice,
+	InvoiceEstimateHistory,
+	InvoiceItem,
+	JobPreset,
+	JobSearchCategory,
+	JobSearchOccupation,
+	KeyResult,
+	KeyResultTemplate,
+	KeyResultUpdate,
+	Language,
+	Organization,
+	OrganizationAwards,
+	OrganizationContact,
+	OrganizationDepartment,
+	OrganizationDocuments,
+	OrganizationEmploymentType,
+	OrganizationLanguages,
+	OrganizationPositions,
+	OrganizationProject,
+	OrganizationRecurringExpense,
+	OrganizationSprint,
+	OrganizationTeam,
+	OrganizationTeamEmployee,
+	OrganizationVendor,
+	Payment,
+	Pipeline,
+	PipelineStage,
+	Product,
+	ProductCategory,
+	ProductOption,
+	ProductType,
+	ProductVariant,
+	ProductVariantPrice,
+	ProductVariantSettings,
+	Proposal,
+	Report,
+	ReportCategory,
+	RequestApproval,
+	Role,
+	RolePermissions,
+	Screenshot,
+	Skill,
+	Tag,
+	Task,
+	Tenant,
+	TimeLog,
+	TimeOffPolicy,
+	TimeOffRequest,
+	Timesheet,
+	TimeSlot,
+	User,
+	UserOrganization
+} from './../core/entities/internal';
+
+export interface IRepositoryModel {
+	repository: any;
+	nameFile: string;
+	tenantOrganizationBase?: boolean;
+	tenantBase?: boolean;
+}
 
 @Injectable()
-export class ExportAllService {
+export class ExportAllService implements OnModuleInit {
 	public idZip = new BehaviorSubject<string>('');
 	public idCsv = new BehaviorSubject<string>('');
 
-	private services = [];
+	private dynamicEntitiesClassMap: IRepositoryModel[] = [];
+	private repositories: IRepositoryModel[] = [];
 
 	constructor(
-		private activityService: ActivityService,
-		private appointmentEmployeeService: AppointmentEmployeesService,
-		private approvalPolicyService: ApprovalPolicyService,
-		private availabilitySlotsService: AvailabilitySlotsService,
+		@InjectRepository(Activity)
+		private readonly activityRepository: Repository<Activity>,
 
-		private candidateService: CandidateService,
-		private candidateCriterionsRatingService: CandidateCriterionsRatingService,
-		private candidateDocumentsService: CandidateDocumentsService,
-		private candidateEducationService: CandidateEducationService,
-		private candidateExperienceService: CandidateExperienceService,
-		private candidateFeedbacksService: CandidateFeedbacksService,
-		private candidateInterviewService: CandidateInterviewService,
-		private candidateInterviewsService: CandidateInterviewersService,
-		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService,
-		private candidateSkillService: CandidateSkillService,
-		private candidateSourceService: CandidateSourceService,
-		private candidateTechnologiesService: CandidateTechnologiesService,
-		private contactService: ContactService,
-		private countryService: CountryService,
-		private currencyService: CurrencyService,
+		@InjectRepository(AppointmentEmployee)
+		private readonly appointmentEmployeesRepository: Repository<AppointmentEmployee>,
 
-		private dealService: DealService,
+		@InjectRepository(ApprovalPolicy)
+		private readonly approvalPolicyRepository: Repository<ApprovalPolicy>,
 
-		private emailService: EmailService,
-		private emailTemplate: EmailTemplateService,
-		private employeeService: EmployeeService,
-		private employeeAppointmentService: EmployeeAppointmentService,
-		private employeeAwardService: EmployeeAwardService,
-		private employeeProposalTemplateService: EmployeeProposalTemplateService,
-		private employeeRecurringExpensesService: EmployeeRecurringExpenseService,
-		private employeeSettingService: EmployeeSettingService,
-		private equipmentService: EquipmentService,
-		private equipmentSharingService: EquipmentSharingService,
-		private estimateEmailService: EstimateEmailService,
-		private eventTypesService: EventTypeService,
-		private expenseService: ExpenseService,
-		private expenseCategoriesService: ExpenseCategoriesService,
-		private employeeLevelService: EmployeeLevelService,
+		@InjectRepository(AvailabilitySlot)
+		private readonly availabilitySlotsRepository: Repository<AvailabilitySlot>,
 
-		private goalService: GoalService,
-		private goalTemplateService: GoalTemplateService,
-		private goalKpiService: GoalKpiService,
-		private goalKpiTemplateService: GoalKpiTemplateService,
-		private goalTimeFrameService: GoalTimeFrameService,
+		@InjectRepository(Candidate)
+		private readonly candidateRepository: Repository<Candidate>,
 
-		private incomeService: IncomeService,
-		private integrationService: IntegrationService,
-		private integrationEntitySettingService: IntegrationEntitySettingService,
-		private integrationEntitySettingTiedEntityService: IntegrationEntitySettingTiedEntityService,
-		private integrationMapService: IntegrationMapService,
-		private integrationSettingService: IntegrationSettingService,
-		private integrationTenantService: IntegrationTenantService,
-		private inviteService: InviteService,
-		private invoiceService: InvoiceService,
-		private invoiceItemService: InvoiceItemService,
-		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
+		@InjectRepository(CandidateCriterionsRating)
+		private readonly candidateCriterionsRatingRepository: Repository<CandidateCriterionsRating>,
 
-		private jobPresetService: JobPresetService,
-		private jobSearchOccupationService: JobSearchOccupationService,
-		private jobSearchCategoryService: JobSearchCategoryService,
+		@InjectRepository(CandidateDocument)
+		private readonly candidateDocumentRepository: Repository<CandidateDocument>,
 
-		private keyResultService: KeyResultService,
-		private keyResultTemplateService: KeyresultTemplateService,
-		private keyResultUpdateService: KeyResultUpdateService,
+		@InjectRepository(CandidateEducation)
+		private readonly candidateEducationRepository: Repository<CandidateEducation>,
 
-		private languageService: LanguageService,
+		@InjectRepository(CandidateExperience)
+		private readonly candidateExperienceRepository: Repository<CandidateExperience>,
 
-		private organizationService: OrganizationService,
-		private organizationAwardsService: OrganizationAwardsService,
-		private organizationContactService: OrganizationContactService,
-		private organizationDepartmentService: OrganizationDepartmentService,
-		private organizationDocumentService: OrganizationDocumentsService,
-		private organizationEmploymentTypeService: OrganizationEmploymentTypeService,
-		private organizationLanguagesService: OrganizationLanguagesService,
-		private organizationPositionsService: OrganizationPositionsService,
-		private organizationProjectsService: OrganizationProjectsService,
-		private organizationRecurringExpenseService: OrganizationRecurringExpenseService,
-		private organizationSprintService: OrganizationSprintService,
-		private organizationTeamService: OrganizationTeamService,
-		private organizationTeamEmployeeService: OrganizationTeamEmployeeService,
-		private organizationVendorsService: OrganizationVendorsService,
+		@InjectRepository(CandidateFeedback)
+		private readonly candidateFeedbackRepository: Repository<CandidateFeedback>,
 
-		private paymentService: PaymentService,
-		private pipelineService: PipelineService,
-		private productService: ProductService,
-		private productCategoryService: ProductCategoryService,
-		private productOptionService: ProductOptionService,
-		private productSettingsService: ProductVariantSettingService,
-		private productTypeService: ProductTypeService,
-		private productVariantService: ProductVariantService,
-		private productVariantPriceService: ProductVariantPriceService,
-		private proposalService: ProposalService,
+		@InjectRepository(CandidateInterview)
+		private readonly candidateInterviewRepository: Repository<CandidateInterview>,
+		@InjectRepository(CandidateInterviewers)
+		private readonly candidateInterviewersRepository: Repository<CandidateInterviewers>,
 
-		private reportService: ReportService,
-		private reportCategoryService: ReportCategoryService,
-		private requestApprovalService: RequestApprovalService,
-		private roleService: RoleService,
-		private rolePermissionsService: RolePermissionsService,
+		@InjectRepository(CandidatePersonalQualities)
+		private readonly candidatePersonalQualitiesRepository: Repository<CandidatePersonalQualities>,
 
-		private screenShotService: ScreenshotService,
-		private skillService: SkillService,
-		private stageService: StageService,
+		@InjectRepository(CandidateSkill)
+		private readonly candidateSkillRepository: Repository<CandidateSkill>,
 
-		private tagService: TagService,
-		private taskService: TaskService,
-		private tenantService: TenantService,
-		private timeOffPolicyService: TimeOffPolicyService,
-		private timeOffRequestService: TimeOffRequestService,
-		private timeSheetService: TimeSheetService,
-		private timeLogService: TimeLogService,
-		private timeSlotService: TimeSlotService,
+		@InjectRepository(CandidateSource)
+		private readonly candidateSourceRepository: Repository<CandidateSource>,
 
-		private userService: UserService,
-		private userOrganizationService: UserOrganizationService
-	) {
-		this.services = this.loadServices();
+		@InjectRepository(CandidateTechnologies)
+		private readonly candidateTechnologiesRepository: Repository<CandidateTechnologies>,
+
+		@InjectRepository(Contact)
+		private readonly contactRepository: Repository<Contact>,
+
+		@InjectRepository(Country)
+		private readonly countryRepository: Repository<Country>,
+
+		@InjectRepository(Currency)
+		private readonly currencyRepository: Repository<Currency>,
+
+		@InjectRepository(Deal)
+		private readonly dealRepository: Repository<Deal>,
+
+		@InjectRepository(Email)
+		private readonly emailRepository: Repository<Email>,
+
+		@InjectRepository(EmailTemplate)
+		private readonly emailTemplateRepository: Repository<EmailTemplate>,
+
+		@InjectRepository(Employee)
+		private readonly employeeRepository: Repository<Employee>,
+
+		@InjectRepository(EmployeeAppointment)
+		private readonly employeeAppointmentRepository: Repository<EmployeeAppointment>,
+
+		@InjectRepository(EmployeeAward)
+		private readonly employeeAwardRepository: Repository<EmployeeAward>,
+
+		@InjectRepository(EmployeeProposalTemplate)
+		private readonly employeeProposalTemplateRepository: Repository<EmployeeProposalTemplate>,
+
+		@InjectRepository(EmployeeRecurringExpense)
+		private readonly employeeRecurringExpenseRepository: Repository<EmployeeRecurringExpense>,
+
+		@InjectRepository(EmployeeSetting)
+		private readonly employeeSettingRepository: Repository<EmployeeSetting>,
+
+		@InjectRepository(Equipment)
+		private readonly equipmentRepository: Repository<Equipment>,
+
+		@InjectRepository(EquipmentSharing)
+		private readonly equipmentSharingRepository: Repository<EquipmentSharing>,
+
+		@InjectRepository(EstimateEmail)
+		private readonly estimateEmailRepository: Repository<EstimateEmail>,
+
+		@InjectRepository(EventType)
+		private readonly eventTypeRepository: Repository<EventType>,
+
+		@InjectRepository(Expense)
+		private readonly expenseRepository: Repository<Expense>,
+
+		@InjectRepository(ExpenseCategory)
+		private readonly expenseCategoryRepository: Repository<ExpenseCategory>,
+
+		@InjectRepository(Goal)
+		private readonly goalRepository: Repository<Goal>,
+
+		@InjectRepository(GoalTemplate)
+		private readonly goalTemplateRepository: Repository<GoalTemplate>,
+
+		@InjectRepository(GoalKPI)
+		private readonly goalKpiRepository: Repository<GoalKPI>,
+
+		@InjectRepository(GoalKPITemplate)
+		private readonly goalKpiTemplateRepository: Repository<GoalKPITemplate>,
+
+		@InjectRepository(GoalTimeFrame)
+		private readonly goalTimeFrameRepository: Repository<GoalTimeFrame>,
+
+		@InjectRepository(Income)
+		private readonly incomeRepository: Repository<Income>,
+
+		@InjectRepository(Integration)
+		private readonly integrationRepository: Repository<Integration>,
+
+		@InjectRepository(IntegrationEntitySetting)
+		private readonly integrationEntitySettingRepository: Repository<IntegrationEntitySetting>,
+
+		@InjectRepository(IntegrationEntitySettingTiedEntity)
+		private readonly integrationEntitySettingTiedEntityRepository: Repository<IntegrationEntitySettingTiedEntity>,
+
+		@InjectRepository(IntegrationMap)
+		private readonly integrationMapRepository: Repository<IntegrationMap>,
+
+		@InjectRepository(IntegrationSetting)
+		private readonly integrationSettingRepository: Repository<IntegrationSetting>,
+
+		@InjectRepository(IntegrationTenant)
+		private readonly integrationTenantRepository: Repository<IntegrationTenant>,
+
+		@InjectRepository(Invite)
+		private readonly inviteRepository: Repository<Invite>,
+
+		@InjectRepository(Invoice)
+		private readonly invoiceRepository: Repository<Invoice>,
+
+		@InjectRepository(InvoiceEstimateHistory)
+		private readonly invoiceEstimateHistoryRepository: Repository<InvoiceEstimateHistory>,
+
+		@InjectRepository(InvoiceItem)
+		private readonly invoiceItemRepository: Repository<InvoiceItem>,
+
+		@InjectRepository(JobPreset)
+		private readonly jobPresetRepository: Repository<JobPreset>,
+
+		@InjectRepository(JobSearchCategory)
+		private readonly jobSearchCategoryRepository: Repository<JobSearchCategory>,
+
+		@InjectRepository(JobSearchOccupation)
+		private readonly jobSearchOccupationRepository: Repository<JobSearchOccupation>,
+
+		@InjectRepository(KeyResult)
+		private readonly keyResultRepository: Repository<KeyResult>,
+
+		@InjectRepository(KeyResultTemplate)
+		private readonly keyResultTemplateRepository: Repository<KeyResultTemplate>,
+
+		@InjectRepository(KeyResultUpdate)
+		private readonly keyResultUpdateRepository: Repository<KeyResultUpdate>,
+
+		@InjectRepository(Language)
+		private readonly languageRepository: Repository<Language>,
+
+		@InjectRepository(Organization)
+		private readonly organizationRepository: Repository<Organization>,
+
+		@InjectRepository(EmployeeLevel)
+		private readonly employeeLevelRepository: Repository<EmployeeLevel>,
+
+		@InjectRepository(OrganizationAwards)
+		private readonly organizationAwardsRepository: Repository<OrganizationAwards>,
+
+		@InjectRepository(OrganizationContact)
+		private readonly organizationContactRepository: Repository<OrganizationContact>,
+
+		@InjectRepository(OrganizationDepartment)
+		private readonly organizationDepartmentRepository: Repository<OrganizationDepartment>,
+
+		@InjectRepository(OrganizationDocuments)
+		private readonly organizationDocumentRepository: Repository<OrganizationDocuments>,
+
+		@InjectRepository(OrganizationEmploymentType)
+		private readonly organizationEmploymentTypeRepository: Repository<OrganizationEmploymentType>,
+
+		@InjectRepository(OrganizationLanguages)
+		private readonly organizationLanguagesRepository: Repository<OrganizationLanguages>,
+
+		@InjectRepository(OrganizationPositions)
+		private readonly organizationPositionsRepository: Repository<OrganizationPositions>,
+
+		@InjectRepository(OrganizationProject)
+		private readonly organizationProjectsRepository: Repository<OrganizationProject>,
+
+		@InjectRepository(OrganizationRecurringExpense)
+		private readonly organizationRecurringExpenseRepository: Repository<OrganizationRecurringExpense>,
+
+		@InjectRepository(OrganizationSprint)
+		private readonly organizationSprintRepository: Repository<OrganizationSprint>,
+
+		@InjectRepository(OrganizationTeam)
+		private readonly organizationTeamRepository: Repository<OrganizationTeam>,
+
+		@InjectRepository(OrganizationTeamEmployee)
+		private readonly organizationTeamEmployeeRepository: Repository<OrganizationTeamEmployee>,
+
+		@InjectRepository(OrganizationVendor)
+		private readonly organizationVendorsRepository: Repository<OrganizationVendor>,
+
+		@InjectRepository(Payment)
+		private readonly paymentRepository: Repository<Payment>,
+
+		@InjectRepository(Pipeline)
+		private readonly pipelineRepository: Repository<Pipeline>,
+
+		@InjectRepository(PipelineStage)
+		private readonly stageRepository: Repository<PipelineStage>,
+
+		@InjectRepository(Product)
+		private readonly productRepository: Repository<Product>,
+
+		@InjectRepository(ProductCategory)
+		private readonly productCategoryRepository: Repository<ProductCategory>,
+
+		@InjectRepository(ProductOption)
+		private readonly productOptionRepository: Repository<ProductOption>,
+
+		@InjectRepository(ProductVariantSettings)
+		private readonly productVariantSettingsRepository: Repository<ProductVariantSettings>,
+
+		@InjectRepository(ProductType)
+		private readonly productTypeRepository: Repository<ProductType>,
+
+		@InjectRepository(ProductVariant)
+		private readonly productVariantRepository: Repository<ProductVariant>,
+
+		@InjectRepository(ProductVariantPrice)
+		private readonly productVariantPriceRepository: Repository<ProductVariantPrice>,
+
+		@InjectRepository(Proposal)
+		private readonly proposalRepository: Repository<Proposal>,
+
+		@InjectRepository(Skill)
+		private readonly skillRepository: Repository<Skill>,
+
+		@InjectRepository(Screenshot)
+		private readonly screenShotRepository: Repository<Screenshot>,
+
+		@InjectRepository(RequestApproval)
+		private readonly requestApprovalRepository: Repository<RequestApproval>,
+
+		@InjectRepository(Role)
+		private readonly roleRepository: Repository<Role>,
+
+		@InjectRepository(RolePermissions)
+		private readonly rolePermissionsRepository: Repository<RolePermissions>,
+
+		@InjectRepository(Report)
+		private readonly reportRepository: Repository<Report>,
+
+		@InjectRepository(ReportCategory)
+		private readonly reportCategoryRepository: Repository<ReportCategory>,
+
+		@InjectRepository(Tag)
+		private readonly tagRepository: Repository<Tag>,
+
+		@InjectRepository(Task)
+		private readonly taskRepository: Repository<Task>,
+
+		@InjectRepository(Tenant)
+		private readonly tenantRepository: Repository<Tenant>,
+
+		@InjectRepository(Timesheet)
+		private readonly timeSheetRepository: Repository<Timesheet>,
+
+		@InjectRepository(TimeLog)
+		private readonly timeLogRepository: Repository<TimeLog>,
+
+		@InjectRepository(TimeSlot)
+		private readonly timeSlotRepository: Repository<TimeSlot>,
+
+		@InjectRepository(TimeOffRequest)
+		private readonly timeOffRequestRepository: Repository<TimeOffRequest>,
+
+		@InjectRepository(TimeOffPolicy)
+		private readonly timeOffPolicyRepository: Repository<TimeOffPolicy>,
+
+		@InjectRepository(User)
+		private readonly userRepository: Repository<User>,
+
+		@InjectRepository(UserOrganization)
+		private readonly userOrganizationRepository: Repository<UserOrganization>,
+		private readonly configService: ConfigService
+	) {}
+
+	async onModuleInit() {
+		this.createDynamicInstanceForPluginEntities();
+		this.registerCoreRepositories();
 	}
-
-	async onModuleInit() {}
 
 	async createFolders(): Promise<any> {
 		return new Promise((resolve, reject) => {
@@ -307,20 +509,22 @@ export class ExportAllService {
 			tenantId: string;
 		}
 	): Promise<any> {
-		const whereClause = {};
-		if (this.services[service_count]['tenantOrganizationBase'] !== false) {
-			whereClause['where'] = findInput;
+		const conditions = {};
+		if (
+			this.repositories[service_count]['tenantOrganizationBase'] !== false
+		) {
+			conditions['where'] = findInput;
 		}
-		if (this.services[service_count]['tenantBase'] === true) {
-			whereClause['where'] = {
+		if (this.repositories[service_count]['tenantBase'] === true) {
+			conditions['where'] = {
 				tenantId: findInput['tenantId']
 			};
 		}
-		const incomingData: Array<any> = (
-			await this.services[service_count].service.findAll(whereClause)
-		).items;
 
-		if (incomingData.length > 0) {
+		const [incomingData, count] = await this.repositories[
+			service_count
+		].repository.findAndCount(conditions);
+		if (count > 0) {
 			return new Promise((resolve) => {
 				const createCsvWriter = csv.createObjectCsvWriter;
 				const dataIn = [];
@@ -336,7 +540,7 @@ export class ExportAllService {
 				});
 
 				const csvWriter = createCsvWriter({
-					path: `./export/${id$}/csv/${this.services[service_count].nameFile}.csv`,
+					path: `./export/${id$}/csv/${this.repositories[service_count].nameFile}.csv`,
 					header: dataIn
 				});
 
@@ -363,14 +567,21 @@ export class ExportAllService {
 	}
 
 	async downloadTemplate(res) {
-		return new Promise((resolve) => {
-			res.download('./export/template.zip');
-			resolve('');
+		return new Promise((resolve, reject) => {
+			const path = './export/template.zip';
+			try {
+				if (fs.existsSync(path)) {
+					res.download(path);
+				}
+				resolve('');
+			} catch (err) {
+				reject(err);
+			}
 		});
 	}
 
 	async deleteCsvFiles(): Promise<any> {
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve) => {
 			let id$ = '';
 
 			this.idCsv.subscribe((id) => {
@@ -409,9 +620,8 @@ export class ExportAllService {
 		organizationId: string;
 		tenantId: string;
 	}) {
-		console.log(this.services);
 		return new Promise(async (resolve) => {
-			for (const [i] of this.services.entries()) {
+			for (const [i] of this.repositories.entries()) {
 				await this.getAsCsv(i, findInput);
 			}
 			resolve('');
@@ -426,8 +636,10 @@ export class ExportAllService {
 		}
 	) {
 		return new Promise(async (resolve) => {
-			for (let i = 0; i < this.services.length; i++) {
-				const name = names.find((n) => this.services[i].nameFile === n);
+			for (let i = 0; i < this.repositories.length; i++) {
+				const name = names.find(
+					(n) => this.repositories[i].nameFile === n
+				);
 				if (name) {
 					await this.getAsCsv(i, findInput);
 				}
@@ -437,311 +649,367 @@ export class ExportAllService {
 	}
 
 	/*
-	 * Load all services after create instance
+	 * Load all plugins entities for export data
 	 */
-	loadServices() {
-		return [
-			{ service: this.activityService, nameFile: 'activity' },
+	private createDynamicInstanceForPluginEntities() {
+		for (const entity of getEntitiesFromPlugins(
+			this.configService.plugins
+		)) {
+			if (!isFunction(entity)) {
+				continue;
+			}
+
+			const className = _.camelCase(entity.name);
+			const repository = getConnection().getRepository(entity);
+			const tableName = repository.metadata.tableName;
+
+			this[className] = repository;
+			this.dynamicEntitiesClassMap.push({
+				repository,
+				nameFile: tableName
+			});
+		}
+	}
+
+	/*
+	 * Load all entities repository after create instance
+	 */
+	private registerCoreRepositories() {
+		this.repositories = [
+			{ repository: this.activityRepository, nameFile: 'activity' },
 			{
-				service: this.appointmentEmployeeService,
+				repository: this.appointmentEmployeesRepository,
 				nameFile: 'appointment_employee'
 			},
 			{
-				service: this.approvalPolicyService,
+				repository: this.approvalPolicyRepository,
 				nameFile: 'approval_policy'
 			},
 			{
-				service: this.availabilitySlotsService,
+				repository: this.availabilitySlotsRepository,
 				nameFile: 'availability_slot'
 			},
-			{ service: this.candidateService, nameFile: 'candidate' },
 			{
-				service: this.candidateCriterionsRatingService,
+				repository: this.candidateCriterionsRatingRepository,
 				nameFile: 'candidate_creation_rating'
 			},
 			{
-				service: this.candidateDocumentsService,
+				repository: this.candidateDocumentRepository,
 				nameFile: 'candidate_document'
 			},
 			{
-				service: this.candidateEducationService,
+				repository: this.candidateEducationRepository,
 				nameFile: 'candidate_education'
 			},
 			{
-				service: this.candidateExperienceService,
+				repository: this.candidateExperienceRepository,
 				nameFile: 'candidate_experience'
 			},
 			{
-				service: this.candidateFeedbacksService,
+				repository: this.candidateFeedbackRepository,
 				nameFile: 'candidate_feedback'
 			},
 			{
-				service: this.candidateInterviewService,
-				nameFile: 'candidate_interview'
-			},
-			{
-				service: this.candidateInterviewsService,
+				repository: this.candidateInterviewersRepository,
 				nameFile: 'candidate_interviewer'
 			},
 			{
-				service: this.candidatePersonalQualitiesService,
-				nameFile: 'candidate_personal_quality'
+				repository: this.candidateInterviewRepository,
+				nameFile: 'candidate_interview'
 			},
 			{
-				service: this.candidateSkillService,
+				repository: this.candidatePersonalQualitiesRepository,
+				nameFile: 'candidate_personal_quality'
+			},
+			{ repository: this.candidateRepository, nameFile: 'candidate' },
+			{
+				repository: this.candidateSkillRepository,
 				nameFile: 'candidate_skill'
 			},
 			{
-				service: this.candidateSourceService,
+				repository: this.candidateSourceRepository,
 				nameFile: 'candidate_source'
 			},
 			{
-				service: this.candidateTechnologiesService,
+				repository: this.candidateTechnologiesRepository,
 				nameFile: 'candidate_technology'
 			},
-			{ service: this.contactService, nameFile: 'contact' },
+			{ repository: this.contactRepository, nameFile: 'contact' },
 			{
-				service: this.countryService,
+				repository: this.countryRepository,
 				nameFile: 'country',
 				tenantOrganizationBase: false
 			},
 			{
-				service: this.currencyService,
+				repository: this.currencyRepository,
 				nameFile: 'currency',
 				tenantOrganizationBase: false
 			},
-			{ service: this.dealService, nameFile: 'deal' },
-			{ service: this.emailService, nameFile: 'email' },
-			{ service: this.emailTemplate, nameFile: 'email_template' },
-			{ service: this.estimateEmailService, nameFile: 'estimate_email' },
-			{ service: this.employeeService, nameFile: 'employee' },
+			{ repository: this.dealRepository, nameFile: 'deal' },
+			{ repository: this.emailRepository, nameFile: 'email' },
 			{
-				service: this.employeeAppointmentService,
+				repository: this.emailTemplateRepository,
+				nameFile: 'email_template'
+			},
+			{
+				repository: this.employeeAppointmentRepository,
 				nameFile: 'employee_appointment'
 			},
-			{ service: this.employeeAwardService, nameFile: 'employee_award' },
 			{
-				service: this.employeeProposalTemplateService,
+				repository: this.employeeAwardRepository,
+				nameFile: 'employee_award'
+			},
+			{
+				repository: this.employeeLevelRepository,
+				nameFile: 'organization_employee_level'
+			},
+			{
+				repository: this.employeeProposalTemplateRepository,
 				nameFile: 'employee_proposal_template'
 			},
 			{
-				service: this.employeeRecurringExpensesService,
+				repository: this.employeeRecurringExpenseRepository,
 				nameFile: 'employee_recurring_expense'
 			},
+			{ repository: this.employeeRepository, nameFile: 'employee' },
 			{
-				service: this.employeeSettingService,
+				repository: this.employeeSettingRepository,
 				nameFile: 'employee_setting'
 			},
-			{ service: this.equipmentService, nameFile: 'equipment' },
+			{ repository: this.equipmentRepository, nameFile: 'equipment' },
 			{
-				service: this.equipmentSharingService,
+				repository: this.equipmentSharingRepository,
 				nameFile: 'equipment_sharing'
 			},
-			{ service: this.eventTypesService, nameFile: 'event_types' },
-			{ service: this.expenseService, nameFile: 'expense' },
 			{
-				service: this.expenseCategoriesService,
+				repository: this.estimateEmailRepository,
+				nameFile: 'estimate_email'
+			},
+			{ repository: this.eventTypeRepository, nameFile: 'event_types' },
+			{
+				repository: this.expenseCategoryRepository,
 				nameFile: 'expense_category'
 			},
-			{ service: this.goalService, nameFile: 'goal' },
-			{ service: this.goalTemplateService, nameFile: 'goal_template' },
-			{ service: this.goalKpiService, nameFile: 'goal_kpi' },
+			{ repository: this.expenseRepository, nameFile: 'expense' },
+			{ repository: this.goalKpiRepository, nameFile: 'goal_kpi' },
 			{
-				service: this.goalKpiTemplateService,
+				repository: this.goalKpiTemplateRepository,
 				nameFile: 'goal_kpi_template'
 			},
-			{ service: this.goalTimeFrameService, nameFile: 'goal_time_frame' },
-			{ service: this.incomeService, nameFile: 'income' },
+			{ repository: this.goalRepository, nameFile: 'goal' },
 			{
-				service: this.integrationService,
+				repository: this.goalTemplateRepository,
+				nameFile: 'goal_template'
+			},
+			{
+				repository: this.goalTimeFrameRepository,
+				nameFile: 'goal_time_frame'
+			},
+			{ repository: this.incomeRepository, nameFile: 'income' },
+			{
+				repository: this.integrationEntitySettingRepository,
+				nameFile: 'integration_entity_setting'
+			},
+			{
+				repository: this.integrationEntitySettingTiedEntityRepository,
+				nameFile: 'integration_entity_setting_tied_entity'
+			},
+			{
+				repository: this.integrationMapRepository,
+				nameFile: 'integration_map'
+			},
+			{
+				repository: this.integrationRepository,
 				nameFile: 'integration',
 				tenantOrganizationBase: false
 			},
 			{
-				service: this.integrationEntitySettingService,
-				nameFile: 'integration_entity_setting'
-			},
-			{
-				service: this.integrationEntitySettingTiedEntityService,
-				nameFile: 'integration_entity_setting_tied_entity'
-			},
-			{
-				service: this.integrationMapService,
-				nameFile: 'integration_map'
-			},
-			{
-				service: this.integrationSettingService,
+				repository: this.integrationSettingRepository,
 				nameFile: 'integration_setting'
 			},
 			{
-				service: this.integrationTenantService,
+				repository: this.integrationTenantRepository,
 				nameFile: 'integration_tenant'
 			},
-			{ service: this.inviteService, nameFile: 'invite' },
-			{ service: this.invoiceService, nameFile: 'invoice' },
-			{ service: this.invoiceItemService, nameFile: 'invoice_item' },
+			{ repository: this.inviteRepository, nameFile: 'invite' },
 			{
-				service: this.invoiceEstimateHistoryService,
+				repository: this.invoiceEstimateHistoryRepository,
 				nameFile: 'invoice_estimate_history'
 			},
-			{ service: this.jobPresetService, nameFile: 'job_preset' },
 			{
-				service: this.jobSearchOccupationService,
-				nameFile: 'job_search_occupation'
+				repository: this.invoiceItemRepository,
+				nameFile: 'invoice_item'
 			},
+			{ repository: this.invoiceRepository, nameFile: 'invoice' },
+			{ repository: this.jobPresetRepository, nameFile: 'job_preset' },
 			{
-				service: this.jobSearchCategoryService,
+				repository: this.jobSearchCategoryRepository,
 				nameFile: 'job_search_category'
 			},
-			{ service: this.keyResultService, nameFile: 'key_result' },
 			{
-				service: this.keyResultTemplateService,
+				repository: this.jobSearchOccupationRepository,
+				nameFile: 'job_search_occupation'
+			},
+			{ repository: this.keyResultRepository, nameFile: 'key_result' },
+			{
+				repository: this.keyResultTemplateRepository,
 				nameFile: 'key_result_template'
 			},
 			{
-				service: this.keyResultUpdateService,
+				repository: this.keyResultUpdateRepository,
 				nameFile: 'key_result_update'
 			},
 			{
-				service: this.languageService,
+				repository: this.languageRepository,
 				nameFile: 'language',
 				tenantOrganizationBase: false
 			},
 			{
-				service: this.organizationService,
+				repository: this.organizationAwardsRepository,
+				nameFile: 'organization_award'
+			},
+			{
+				repository: this.organizationContactRepository,
+				nameFile: 'organization_contact'
+			},
+			{
+				repository: this.organizationDepartmentRepository,
+				nameFile: 'organization_department'
+			},
+			{
+				repository: this.organizationDocumentRepository,
+				nameFile: 'organization_document'
+			},
+			{
+				repository: this.organizationEmploymentTypeRepository,
+				nameFile: 'organization_employment_type'
+			},
+			{
+				repository: this.organizationLanguagesRepository,
+				nameFile: 'organization_languages'
+			},
+			{
+				repository: this.organizationPositionsRepository,
+				nameFile: 'organization_position'
+			},
+			{
+				repository: this.organizationProjectsRepository,
+				nameFile: 'organization_project'
+			},
+			{
+				repository: this.organizationRecurringExpenseRepository,
+				nameFile: 'organization_recurring_expense'
+			},
+			{
+				repository: this.organizationRepository,
 				nameFile: 'organization',
 				tenantOrganizationBase: false,
 				tenantBase: true
 			},
 			{
-				service: this.organizationAwardsService,
-				nameFile: 'organization_award'
-			},
-			{
-				service: this.organizationContactService,
-				nameFile: 'organization_contact'
-			},
-			{
-				service: this.organizationDepartmentService,
-				nameFile: 'organization_department'
-			},
-			{
-				service: this.organizationDocumentService,
-				nameFile: 'organization_document'
-			},
-			{
-				service: this.employeeLevelService,
-				nameFile: 'organization_employee_level'
-			},
-			{
-				service: this.organizationEmploymentTypeService,
-				nameFile: 'organization_employment_type'
-			},
-			{
-				service: this.organizationLanguagesService,
-				nameFile: 'organization_languages'
-			},
-			{
-				service: this.organizationPositionsService,
-				nameFile: 'organization_position'
-			},
-			{
-				service: this.organizationProjectsService,
-				nameFile: 'organization_project'
-			},
-			{
-				service: this.organizationRecurringExpenseService,
-				nameFile: 'organization_recurring_expense'
-			},
-			{
-				service: this.organizationSprintService,
+				repository: this.organizationSprintRepository,
 				nameFile: 'organization_sprint'
 			},
 			{
-				service: this.organizationTeamService,
-				nameFile: 'organization_team'
-			},
-			{
-				service: this.organizationTeamEmployeeService,
+				repository: this.organizationTeamEmployeeRepository,
 				nameFile: 'organization_team_employee'
 			},
 			{
-				service: this.organizationVendorsService,
+				repository: this.organizationTeamRepository,
+				nameFile: 'organization_team'
+			},
+			{
+				repository: this.organizationVendorsRepository,
 				nameFile: 'organization_vendor'
 			},
-			{ service: this.paymentService, nameFile: 'payment' },
-			{ service: this.pipelineService, nameFile: 'pipeline' },
-			{ service: this.productService, nameFile: 'product' },
+			{ repository: this.paymentRepository, nameFile: 'payment' },
+			{ repository: this.pipelineRepository, nameFile: 'pipeline' },
 			{
-				service: this.productCategoryService,
+				repository: this.productCategoryRepository,
 				nameFile: 'product_category'
 			},
-			{ service: this.productOptionService, nameFile: 'product_option' },
-			{ service: this.productTypeService, nameFile: 'product_type' },
 			{
-				service: this.productVariantService,
-				nameFile: 'product_variant'
+				repository: this.productOptionRepository,
+				nameFile: 'product_option'
+			},
+			{ repository: this.productRepository, nameFile: 'product' },
+			{
+				repository: this.productTypeRepository,
+				nameFile: 'product_type'
 			},
 			{
-				service: this.productVariantPriceService,
+				repository: this.productVariantPriceRepository,
 				nameFile: 'product_variant_price'
 			},
 			{
-				service: this.productSettingsService,
+				repository: this.productVariantRepository,
+				nameFile: 'product_variant'
+			},
+			{
+				repository: this.productVariantSettingsRepository,
 				nameFile: 'product_variant_setting'
 			},
-			{ service: this.proposalService, nameFile: 'proposal' },
-			{ service: this.reportService, nameFile: 'report' },
+			{ repository: this.proposalRepository, nameFile: 'proposal' },
 			{
-				service: this.reportCategoryService,
-				nameFile: 'report_category'
+				repository: this.reportCategoryRepository,
+				nameFile: 'report_category',
+				tenantOrganizationBase: false
 			},
 			{
-				service: this.requestApprovalService,
+				repository: this.reportRepository,
+				nameFile: 'report',
+				tenantOrganizationBase: false
+			},
+			{
+				repository: this.requestApprovalRepository,
 				nameFile: 'request_approval'
 			},
 			{
-				service: this.roleService,
-				nameFile: 'role',
-				tenantOrganizationBase: false
-			},
-			{
-				service: this.rolePermissionsService,
+				repository: this.rolePermissionsRepository,
 				nameFile: 'role_permission',
 				tenantOrganizationBase: false
 			},
-			{ service: this.screenShotService, nameFile: 'screenshot' },
 			{
-				service: this.skillService,
+				repository: this.roleRepository,
+				nameFile: 'role',
+				tenantOrganizationBase: false
+			},
+			{ repository: this.screenShotRepository, nameFile: 'screenshot' },
+			{
+				repository: this.skillRepository,
 				nameFile: 'skill',
 				tenantOrganizationBase: false
 			},
-			{ service: this.stageService, nameFile: 'pipeline_stage' },
-			{ service: this.tagService, nameFile: 'tag' },
-			{ service: this.taskService, nameFile: 'task' },
+			{ repository: this.stageRepository, nameFile: 'pipeline_stage' },
+			{ repository: this.tagRepository, nameFile: 'tag' },
+			{ repository: this.taskRepository, nameFile: 'task' },
 			{
-				service: this.tenantService,
+				repository: this.tenantRepository,
 				nameFile: 'tenant',
 				tenantOrganizationBase: false
 			},
-			{ service: this.timeOffPolicyService, nameFile: 'time_off_policy' },
+			{ repository: this.timeLogRepository, nameFile: 'time_log' },
 			{
-				service: this.timeOffRequestService,
+				repository: this.timeOffPolicyRepository,
+				nameFile: 'time_off_policy'
+			},
+			{
+				repository: this.timeOffRequestRepository,
 				nameFile: 'time_off_request'
 			},
-			{ service: this.timeSheetService, nameFile: 'timesheet' },
-			{ service: this.timeLogService, nameFile: 'time_log' },
-			{ service: this.timeSlotService, nameFile: 'time_slot' },
+			{ repository: this.timeSheetRepository, nameFile: 'timesheet' },
+			{ repository: this.timeSlotRepository, nameFile: 'time_slot' },
 			{
-				service: this.userService,
+				repository: this.userOrganizationRepository,
+				nameFile: 'user_organization'
+			},
+			{
+				repository: this.userRepository,
 				nameFile: 'user',
 				tenantOrganizationBase: false,
 				tenantBase: true
 			},
-			{
-				service: this.userOrganizationService,
-				nameFile: 'user_organization'
-			}
-		];
+			...this.dynamicEntitiesClassMap
+		] as IRepositoryModel[];
 	}
 }

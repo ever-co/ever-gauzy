@@ -1,5 +1,5 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { Connection, getConnection, Repository } from 'typeorm';
+import { Injectable, OnModuleInit, Type } from '@nestjs/common';
+import { getConnection, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as fs from 'fs';
 import * as unzipper from 'unzipper';
@@ -8,7 +8,7 @@ import * as rimraf from 'rimraf';
 import * as _ from 'lodash';
 import { ConfigService } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
-import { isClassInstance } from '@gauzy/common';
+import { isFunction } from '@gauzy/common';
 import { convertToDatetime } from './../../core/utils';
 import { FileStorage } from './../../core/file-storage';
 import {
@@ -121,12 +121,13 @@ import {
 
 @Injectable()
 export class ImportAllService implements OnModuleInit {
-	__dirname = './import/csv/';
-	connection: Connection;
+	private __dirname = './import/csv/';
+	private dynamicEntitiesClassMap: { [name: string]: Type<any> } = {};
+
 	/**
 	 * Warning: Changing position here can be FATAL
 	 */
-	orderedRepositories = {
+	private orderedRepositories = {
 		/**
 		 * These entities do not have any other dependency so need to be imported first
 		 */
@@ -298,6 +299,7 @@ export class ImportAllService implements OnModuleInit {
 
 		@InjectRepository(CandidateInterview)
 		private readonly candidateInterviewRepository: Repository<CandidateInterview>,
+
 		@InjectRepository(CandidateInterviewers)
 		private readonly candidateInterviewersRepository: Repository<CandidateInterviewers>,
 
@@ -686,8 +688,8 @@ export class ImportAllService implements OnModuleInit {
 		for (const entity of getEntitiesFromPlugins(
 			this.configService.plugins
 		)) {
-			if (!isClassInstance(entity)) {
-				return;
+			if (!isFunction(entity)) {
+				continue;
 			}
 
 			const className = _.camelCase(entity.name);
@@ -696,6 +698,8 @@ export class ImportAllService implements OnModuleInit {
 
 			this[className] = repository;
 			this.orderedRepositories[tableName] = this[className];
+
+			this.dynamicEntitiesClassMap[tableName] = this[className];
 		}
 	}
 }

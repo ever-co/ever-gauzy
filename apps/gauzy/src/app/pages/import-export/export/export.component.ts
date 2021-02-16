@@ -1,13 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { ExportAllService } from '../../../@core/services/exportAll.service';
-import { saveAs } from 'file-saver';
-import * as _ from 'lodash';
-import { Store } from '../../../@core/services/store.service';
-import { IOrganization } from '@gauzy/contracts';
 import { filter } from 'rxjs/operators';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { IOrganization } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common-angular';
+import { saveAs } from 'file-saver';
+import { Store } from '../../../@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import * as _ from 'lodash';
 
 export interface IEntityModel {
 	name: string;
@@ -72,7 +73,6 @@ export class ExportComponent
 	}
 
 	selectedCheckboxes() {
-		this.selectedEntities = [];
 		const singleArray = JSON.parse(
 			JSON.stringify(
 				_.filter(
@@ -90,18 +90,16 @@ export class ExportComponent
 			)
 		);
 
-		this.selectedEntities = [].concat(...singleArray);
+		this.selectedEntities = [];
+		this.selectedEntities.push(...singleArray);
 
 		multipleArray.forEach((item: any) => {
-			console.log(item);
-			this.selectedEntities = this.selectedEntities.concat(
-				...item.entities
-			);
+			this.selectedEntities.push(...item.entities);
 			if (item.hasOwnProperty('entities')) {
 				delete item.entities;
 			}
 
-			this.selectedEntities = this.selectedEntities.concat(...item);
+			this.selectedEntities.push(item);
 		});
 
 		this.selectedEntities = _.map(
@@ -119,8 +117,9 @@ export class ExportComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
+		const entities = this.selectedEntities.filter(isNotEmpty);
 		this.exportAll
-			.downloadSpecificData(this.selectedEntities, {
+			.downloadSpecificData(entities, {
 				organizationId,
 				tenantId
 			})
@@ -270,11 +269,11 @@ export class ExportComponent
 			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.JOB'),
+				value: null,
 				checked: true,
 				isGroup: true,
 				entities: this.getJobEntities()
 			},
-
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.KEY_RESULT'),
 				value: 'key_result',

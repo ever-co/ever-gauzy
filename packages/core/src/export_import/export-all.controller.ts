@@ -28,13 +28,18 @@ export class ExportAllController {
 		description: 'Record not found'
 	})
 	@Get()
-	async exportAll(@Query('data', ParseJsonPipe) data: any, @Res() res) {
+	async exportAll(
+		@Query('data', ParseJsonPipe) data: any,
+		@Res() res
+	): Promise<any> {
 		const { findInput = null } = data;
+
 		await this.exportService.createFolders();
 		await this.exportService.exportTables(findInput);
 		await this.exportService.archiveAndDownload();
 		await this.exportService.downloadToUser(res);
 		await this.exportService.deleteCsvFiles();
+
 		this.exportService.deleteArchive();
 	}
 	@Get('template')
@@ -52,17 +57,21 @@ export class ExportAllController {
 		description: 'Record not found'
 	})
 	@Get('filter')
-	async exportByName(@Query('data') data: string, @Res() res): Promise<any> {
+	async exportByName(
+		@Query('data', ParseJsonPipe) data: any,
+		@Res() res
+	): Promise<any> {
 		const {
 			entities: { names },
 			findInput = null
-		} = JSON.parse(data);
+		} = data;
 
 		await this.exportService.createFolders();
 		await this.exportService.exportSpecificTables(names, findInput);
 		await this.exportService.archiveAndDownload();
 		await this.exportService.downloadToUser(res);
 		await this.exportService.deleteCsvFiles();
+
 		this.exportService.deleteArchive();
 	}
 }
