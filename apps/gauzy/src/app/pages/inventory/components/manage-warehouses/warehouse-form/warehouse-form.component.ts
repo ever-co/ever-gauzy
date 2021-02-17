@@ -1,21 +1,31 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import {
+	Component,
+	OnChanges,
+	OnInit,
+	SimpleChanges,
+	ViewChild
+} from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../language-base/translation-base.component';
-import { ITag } from '@gauzy/contracts';
-import { LocationFormComponent } from '../forms/location';
-import { LeafletMapComponent } from '../forms/maps/leaflet/leaflet.component';
-import { IWarehouse } from 'packages/contracts/dist';
-import { WarehouseService } from '../../@core/services/warehouse.service';
-import { ToastrService } from '../../@core/services/toastr.service';
+import { ComponentLayoutStyleEnum, ITag, IWarehouse } from '@gauzy/contracts';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { LocationFormComponent } from 'apps/gauzy/src/app/@shared/forms/location';
+import { LeafletMapComponent } from 'apps/gauzy/src/app/@shared/forms/maps/leaflet/leaflet.component';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { WarehouseService } from 'apps/gauzy/src/app/@core/services/warehouse.service';
+import { ActivatedRoute } from '@angular/router';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
+@UntilDestroy()
 @Component({
-	selector: 'ga-warehouse-mutation',
-	templateUrl: './warehouse-mutation.component.html',
-	styleUrls: ['./warehouse-mutation.component.scss']
+	selector: 'ga-warehouse-form',
+	templateUrl: './warehouse-form.component.html',
+	styleUrls: ['./warehouse-form.component.scss']
 })
-export class WarehouseMutationComponent
+export class WarehouseFormComponent
 	extends TranslationBaseComponent
 	implements OnInit {
 	form: FormGroup;
@@ -34,16 +44,27 @@ export class WarehouseMutationComponent
 	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
 
 	constructor(
-		public dialogRef: NbDialogRef<WarehouseMutationComponent>,
 		private toastrService: ToastrService,
 		private warehouseService: WarehouseService,
 		readonly translateService: TranslateService,
-		private fb: FormBuilder
+		private route: ActivatedRoute,
+		private fb: FormBuilder,
+		private store: Store
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
+		this.route.params
+			.pipe(untilDestroyed(this))
+			.subscribe(async (params) => {
+				if (params.id) {
+					this.warehouse = await this.warehouseService.getById(
+						params.id
+					);
+				}
+			});
+
 		this._initializeForm();
 		this._initializeLocationForm();
 	}
@@ -120,8 +141,6 @@ export class WarehouseMutationComponent
 					this.toastrService.success(
 						'INVENTORY_PAGE.WAREHOUSE_CREATED'
 					);
-
-					this.dialogRef.close(res);
 				})
 				.catch((err) => {
 					this.toastrService.danger(
@@ -132,7 +151,18 @@ export class WarehouseMutationComponent
 		}
 	}
 
+	cancel() {}
+
 	selectedTagsEvent(currentSelection: ITag[]) {
 		this.form.get('tags').setValue(currentSelection);
 	}
+
+	onCoordinatesChanges(coord) {}
+
+	onGeometrySend(coord) {
+		//tstodo
+		console.log(coord, 'on geometry send');
+	}
+
+	onMapClicked($event) {}
 }

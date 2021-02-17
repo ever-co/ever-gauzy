@@ -60,9 +60,11 @@ import { TranslatableService } from '../../@core/services/translatable.service';
 import { ImageAssetComponent } from '../../@shared/select-asset-modal/img-asset/img-asset.component';
 import { ImageAssetModule } from '../../@shared/image-asset/image-asset.module';
 import { WarehousesComponent } from './components/manage-warehouses/warehouses.component';
-import { WarehouseMutationModule } from '../../@shared/warehouse-mutation/warehouse-mutation.module';
-import { WarehouseMutationComponent } from '../../@shared/warehouse-mutation/warehouse-mutation.component';
 import { WarehouseService } from '../../@core/services/warehouse.service';
+import { LocationFormModule } from '../../@shared/forms/location';
+import { LeafletMapModule } from '../../@shared/forms/maps/leaflet/leaflet.module';
+import { WarehouseFormComponent } from './components/manage-warehouses/warehouse-form/warehouse-form.component';
+import { WarehousesTableComponent } from './components/manage-warehouses/warehouses-table/warehouses-table.component';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -93,6 +95,8 @@ const NB_MODULES = [
 		EnabledStatusComponent,
 		ProductGalleryComponent,
 		InventoryItemViewComponent,
+		WarehousesTableComponent,
+		WarehouseFormComponent,
 		WarehousesComponent
 	],
 	imports: [
@@ -119,7 +123,9 @@ const NB_MODULES = [
 		CurrencyModule,
 		SelectAssetModule,
 		ImageAssetModule,
-		WarehouseMutationModule
+		ImageUploaderModule,
+		LocationFormModule,
+		LeafletMapModule
 	],
 	entryComponents: [
 		ProductTypeMutationComponent,
@@ -128,8 +134,7 @@ const NB_MODULES = [
 		IconRowComponent,
 		EnabledStatusComponent,
 		SelectAssetComponent,
-		ImageAssetComponent,
-		WarehouseMutationComponent
+		ImageAssetComponent
 	],
 	providers: [
 		ProductTypeService,

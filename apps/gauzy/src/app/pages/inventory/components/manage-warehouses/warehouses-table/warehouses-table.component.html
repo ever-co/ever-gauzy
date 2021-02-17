@@ -5,17 +5,22 @@
 				<ngx-back-navigation></ngx-back-navigation>
 				<h4>{{ 'INVENTORY_PAGE.WAREHOUSES' | translate }}</h4>
 			</div>
-			<!-- <div>
+			<div>
 				<ga-layout-selector
 					componentName="{{ viewComponentName }}"
 				></ga-layout-selector>
-			</div> -->
+			</div>
 		</div>
 	</nb-card-header>
 
 	<nb-card-body>
 		<div class="mb-3">
-			<button (click)="save()" nbButton status="success" class="mr-2">
+			<button
+				(click)="onCreateWarehouse()"
+				nbButton
+				status="success"
+				class="mr-2"
+			>
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
@@ -23,23 +28,22 @@
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
 		</div>
-
-		<!-- //tstodo dif views -->
 		<ng2-smart-table
 			class="tags-table"
 			[settings]="settingsSmartTable"
 			(userRowSelect)="selectWarehouse($event)"
 			[source]="smartTableSource"
 			style="cursor: pointer"
+			*ngIf="dataLayoutStyle === 'TABLE'"
 			#warehousesTable
 		>
 		</ng2-smart-table>
-		<!-- <ga-card-grid
+		<ga-card-grid
 			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
 			[settings]="settingsSmartTable"
-			[source]="smartTableSource"
+			[source]="warehousesList"
 			[buttonTemplate]="actionButtons"
-		></ga-card-grid> -->
+		></ga-card-grid>
 	</nb-card-body>
 </nb-card>
 <ng-template
@@ -48,7 +52,7 @@
 	let-selectedItem="selectedItem"
 >
 	<button
-		(click)="save(selectedItem)"
+		(click)="onCreateWarehouse()"
 		nbButton
 		status="info"
 		class="mr-2"

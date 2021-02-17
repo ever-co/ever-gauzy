@@ -30,19 +30,21 @@ export class WarehouseService {
 			.toPromise();
 	}
 
-	getById(id: string, relations?: string[], findInput?: IProductFindInput) {
+	getById(id: string, relations?: string[], findInput?: any) {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
-			.get<IProduct>(`${this.WAREHOUSES_URL}/${id}`, {
+			.get<IWarehouse>(`${this.WAREHOUSES_URL}/${id}`, {
 				params: { data }
 			})
 			.pipe(first())
 			.toPromise();
 	}
 
-	deleteFeaturedImage(id: string): Promise<IWarehouse> {
+	deleteFeaturedImage(id: string): Promise<{ raw: any; affected: number }> {
 		return this.http
-			.delete<IWarehouse>(`${this.WAREHOUSES_URL}/${id}`)
+			.delete<{ raw: any; affected: number }>(
+				`${this.WAREHOUSES_URL}/${id}`
+			)
 			.pipe(first())
 			.toPromise();
 	}

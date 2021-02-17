@@ -2,24 +2,21 @@
 	<nb-card-header>
 		<div class="main-header">
 			<div class="top-nav">
-				<h4 *ngIf="warehouse">
+				<h4 *ngIf="!warehouse">
+					<ngx-back-navigation></ngx-back-navigation>
+
 					{{ 'INVENTORY_PAGE.CREATE_WAREHOUSE' | translate }}
 				</h4>
-				<h4 *ngIf="!warehouse">
+				<h4 *ngIf="warehouse">
 					{{ 'INVENTORY_PAGE.EDIT_WAREHOUSE' | translate }}
 				</h4>
 			</div>
-			<!-- <div>
-				<ga-layout-selector
-					componentName="{{ viewComponentName }}"
-				></ga-layout-selector>
-			</div> -->
 		</div>
 	</nb-card-header>
 	<nb-card-body>
 		<form [formGroup]="form" *ngIf="form">
 			<div class="row">
-				<div class="col-md-3 col-sm-12">
+				<div class="col-md-2 col-sm-12">
 					<div class="warehouse-image">
 						<ngx-image-uploader
 							(changeHoverState)="hoverState = $event"
@@ -79,67 +76,80 @@
 						/>
 					</div>
 				</div>
-				<div class="col-md-9 col-sm-12">
+				<div class="col-md-10 col-sm-12">
 					<nb-tabset>
 						<nb-tab tabTitle="Main">
-							<div class="form-group">
-								<label class="label" for="name">{{
-									'INVENTORY_PAGE.NAME' | translate
-								}}</label>
-								<input
-									fullWidth
-									id="name"
-									type="text"
-									formControlName="name"
-									nbInput
-									[placeholder]="
-										'INVENTORY_PAGE.NAME' | translate
-									"
-								/>
+							<div class="row">
+								<div class="col-md-6 col-sm-12">
+									<div class="form-group">
+										<label class="label" for="name">{{
+											'INVENTORY_PAGE.NAME' | translate
+										}}</label>
+										<input
+											fullWidth
+											id="name"
+											type="text"
+											formControlName="name"
+											nbInput
+											[placeholder]="
+												'INVENTORY_PAGE.NAME'
+													| translate
+											"
+										/>
+									</div>
+								</div>
+								<div class="col-md-6 col-sm-12">
+									<div class="form-group">
+										<ga-tags-color-input
+											[selectedTags]="tags"
+											(selectedTagsEvent)="
+												selectedTagsEvent($event)
+											"
+											[isOrgLevel]="true"
+										>
+										</ga-tags-color-input>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-6 col-sm-12">
+									<div class="form-group">
+										<label class="label" for="code">{{
+											'INVENTORY_PAGE.CODE' | translate
+										}}</label>
+										<input
+											fullWidth
+											id="code"
+											type="text"
+											formControlName="code"
+											nbInput
+											[placeholder]="
+												'INVENTORY_PAGE.CODE'
+													| translate
+											"
+										/>
+									</div>
+								</div>
+								<div class="col-md-6 col-sm-12">
+									<div class="form-group">
+										<label class="label" for="email">{{
+											'INVENTORY_PAGE.EMAIL' | translate
+										}}</label>
+										<input
+											fullWidth
+											id="email"
+											type="text"
+											formControlName="email"
+											nbInput
+											[placeholder]="
+												'INVENTORY_PAGE.EMAIL'
+													| translate
+											"
+										/>
+									</div>
+								</div>
 							</div>
 
-							<div class="form-group">
-								<ga-tags-color-input
-									[selectedTags]="tags"
-									(selectedTagsEvent)="
-										selectedTagsEvent($event)
-									"
-									[isOrgLevel]="true"
-								>
-								</ga-tags-color-input>
-							</div>
-
-							<div class="form-group">
-								<label class="label" for="code">{{
-									'INVENTORY_PAGE.CODE' | translate
-								}}</label>
-								<input
-									fullWidth
-									id="code"
-									type="text"
-									formControlName="code"
-									nbInput
-									[placeholder]="
-										'INVENTORY_PAGE.CODE' | translate
-									"
-								/>
-							</div>
-
-							<div class="form-group">
-								<label class="label" for="email">{{
-									'INVENTORY_PAGE.EMAIL' | translate
-								}}</label>
-								<input
-									fullWidth
-									id="email"
-									type="text"
-									formControlName="email"
-									nbInput
-									[placeholder]="
-										'INVENTORY_PAGE.EMAIL' | translate
-									"
-								/>
-							</div>
 							<div class="form-group">
 								<label class="label" for="email">{{
 									'INVENTORY_PAGE.DESCRIPTION' | translate
@@ -179,12 +189,7 @@
 		</form>
 	</nb-card-body>
 	<nb-card-footer>
-		<button
-			(click)="dialogRef.close()"
-			status="danger"
-			class="mr-2"
-			nbButton
-		>
+		<button (click)="cancel()" status="danger" class="mr-2" nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button status="success" nbButton (click)="onSaveRequest()">

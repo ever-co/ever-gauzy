@@ -2068,7 +2068,11 @@
 		"EMAIL": "Email",
 		"ACTIVE": "Active",
 		"LOCATION": "Location",
-		"ADDRESS": "Address"
+		"ADDRESS": "Address",
+		"CREATE_WAREHOUSE": "Create warehouse",
+		"EDIT_WAREHOUSE": "Edit warehouse",
+		"WAREHOUSE_CREATED": "Warehouse created",
+		"COULD_NOT_CREATE_WAREHOUSE": "Could not create warehouse"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

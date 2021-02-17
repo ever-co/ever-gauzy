@@ -10,6 +10,8 @@ import { PermissionsEnum } from '@gauzy/contracts';
 import { NgxPermissionsGuard } from 'ngx-permissions';
 import { InventoryItemViewComponent } from './components/view-inventory-item/view-inventory-item.component';
 import { WarehousesComponent } from './components/manage-warehouses/warehouses.component';
+import { WarehouseFormComponent } from './components/manage-warehouses/warehouse-form/warehouse-form.component';
+import { WarehousesTableComponent } from './components/manage-warehouses/warehouses-table/warehouses-table.component';
 
 const ALL_ORG_PERMISSIONS = {
 	permissions: {
@@ -72,7 +74,21 @@ const routes: Routes = [
 		path: 'warehouses',
 		component: WarehousesComponent,
 		canActivate: [NgxPermissionsGuard],
-		data: ALL_ORG_PERMISSIONS
+		data: ALL_ORG_PERMISSIONS,
+		children: [
+			{
+				path: 'all',
+				component: WarehousesTableComponent
+			},
+			{
+				path: 'create',
+				component: WarehouseFormComponent
+			},
+			{
+				path: 'edit/:id',
+				component: WarehouseFormComponent
+			}
+		]
 	}
 ];
 
