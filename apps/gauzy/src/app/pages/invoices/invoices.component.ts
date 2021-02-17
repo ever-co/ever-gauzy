@@ -164,7 +164,8 @@ export class InvoicesComponent
 			dueDate: [],
 			totalValue: [],
 			currency: [],
-			status: []
+			status: [],
+			comment: []
 		});
 	}
 
@@ -636,6 +637,61 @@ export class InvoicesComponent
 		].join(',');
 
 		generateCsv(data, headers, fileName);
+	}
+
+	async addComment() {
+		const { comment } = this.form.value;
+
+		if (comment) {
+			await this.invoiceEstimateHistoryService.add({
+				action: comment,
+				invoice: this.selectedInvoice,
+				invoiceId: this.selectedInvoice.id,
+				user: this.store.user,
+				userId: this.store.userId,
+				organization: this.organization,
+				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId
+			});
+
+			const selectedInvoiceId = this.selectedInvoice.id;
+
+			const { tenantId } = this.store.user;
+			const { items } = await this.invoicesService.getAll(
+				[
+					'invoiceItems',
+					'invoiceItems.employee',
+					'invoiceItems.employee.user',
+					'invoiceItems.project',
+					'invoiceItems.product',
+					'invoiceItems.invoice',
+					'invoiceItems.expense',
+					'invoiceItems.task',
+					'tags',
+					'payments',
+					'fromOrganization',
+					'toContact',
+					'historyRecords',
+					'historyRecords.user'
+				],
+				{
+					organizationId: this.organization.id,
+					tenantId,
+					id: selectedInvoiceId
+				}
+			);
+
+			this.selectInvoice({
+				isSelected: true,
+				data: items[0]
+			});
+
+			this.histories.sort(function (a, b) {
+				return +new Date(b.createdAt) - +new Date(a.createdAt);
+			});
+
+			this.form.reset();
+		}
 	}
 
 	async generatePublicLink(selectedItem) {

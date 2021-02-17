@@ -345,6 +345,27 @@
 				tabTitle="{{ 'INVOICES_PAGE.HISTORY' | translate }}"
 				tabId="history"
 			>
+				<form [formGroup]="form" *ngIf="selectedInvoice">
+					<div class="col-3 px-0">
+						<textarea
+							nbInput
+							placeholder="Comment"
+							fullWidth
+							formControlName="comment"
+						></textarea>
+					</div>
+					<div class="mt-3">
+						<button
+							class="mx-0"
+							nbButton
+							status="info"
+							(click)="addComment()"
+							[disabled]="disableButton"
+						>
+							{{ 'BUTTONS.ADD_COMMENT' | translate }}
+						</button>
+					</div>
+				</form>
 				<nb-list-item
 					*ngIf="disableButton && !isEstimate"
 					class="history-list-select"
@@ -365,16 +386,21 @@
 					<nb-list-item
 						*ngFor="let history of histories"
 						class="history-list-item"
+						style="align-items: baseline"
 					>
-						<div class="history-item">
-							<span class="history-action">{{
-								history.action
-							}}</span>
-							- {{ history.user.firstName }}
-							{{ history.user.lastName }}
-						</div>
-						<div class="history-date history-item">
-							{{ history.createdAt }}
+						<div class="d-flex">
+							<div>
+								<div class="history-item">
+									<span class="history-action">{{
+										history.action
+									}}</span>
+									- {{ history.user.firstName }}
+									{{ history.user.lastName }}
+								</div>
+								<div class="history-date history-item">
+									{{ history.createdAt }}
+								</div>
+							</div>
 						</div>
 					</nb-list-item>
 				</nb-list>
