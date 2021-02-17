@@ -3,7 +3,8 @@ import {
 	clickButton,
 	verifyText,
 	clickKeyboardBtnByKeycode,
-	clickElementByText
+	clickElementByText,
+	clickOutsideElement
 } from '../utils/util';
 import { HumanResourcesPage } from '../pageobjects/HumanResourcesPageObject';
 
@@ -48,7 +49,7 @@ export const verifyPopupTableHeaderText = (text) => {
 };
 
 export const clickCardBody = () => {
-	clickButton(HumanResourcesPage.cardBodyCss);
+	clickOutsideElement();
 };
 
 export const clickKeyboardButtonByKeyCode = (keycode) => {

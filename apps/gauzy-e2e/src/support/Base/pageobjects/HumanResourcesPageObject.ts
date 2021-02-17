@@ -7,5 +7,5 @@ export const HumanResourcesPage = {
 	popupHeaderCss: 'div.records > h5',
 	popupProfitHeaderCss: 'div.profit-history > h5',
 	popupTableHederCss: 'div.ng2-smart-title > ng2-smart-table-title',
-	cardBodyCss: 'nb-card-body.body'
+	cardBodyCss: 'nb-layout-column.ng-star-inserted'
 };

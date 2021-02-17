@@ -7,8 +7,9 @@ import {
 	Query
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { ExportAllService } from './export-all.service';
 import { AuthGuard } from '@nestjs/passport';
+import { ExportAllService } from './export-all.service';
+import { ParseJsonPipe } from './../../shared/pipes/parse-json.pipe';
 
 @ApiTags('Download')
 @UseGuards(AuthGuard('jwt'))
@@ -27,13 +28,18 @@ export class ExportAllController {
 		description: 'Record not found'
 	})
 	@Get()
-	async exportAll(@Query('data') data: string, @Res() res) {
-		const { findInput = null } = JSON.parse(data);
+	async exportAll(
+		@Query('data', ParseJsonPipe) data: any,
+		@Res() res
+	): Promise<any> {
+		const { findInput = null } = data;
+
 		await this.exportService.createFolders();
 		await this.exportService.exportTables(findInput);
 		await this.exportService.archiveAndDownload();
 		await this.exportService.downloadToUser(res);
 		await this.exportService.deleteCsvFiles();
+
 		this.exportService.deleteArchive();
 	}
 	@Get('template')
@@ -51,17 +57,21 @@ export class ExportAllController {
 		description: 'Record not found'
 	})
 	@Get('filter')
-	async exportByName(@Query('data') data: string, @Res() res): Promise<any> {
+	async exportByName(
+		@Query('data', ParseJsonPipe) data: any,
+		@Res() res
+	): Promise<any> {
 		const {
 			entities: { names },
 			findInput = null
-		} = JSON.parse(data);
+		} = data;
 
 		await this.exportService.createFolders();
 		await this.exportService.exportSpecificTables(names, findInput);
 		await this.exportService.archiveAndDownload();
 		await this.exportService.downloadToUser(res);
 		await this.exportService.deleteCsvFiles();
+
 		this.exportService.deleteArchive();
 	}
 }

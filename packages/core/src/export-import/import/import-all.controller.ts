@@ -5,14 +5,14 @@ import {
 	Post,
 	UseInterceptors,
 	Injectable,
-	Body,
-	UploadedFile
+	Body
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ImportAllService } from '.';
 import * as path from 'path';
+import { ImportAllService } from './import-all.service';
 import { FileStorage } from '../../core/file-storage';
+import { UploadedFileStorage } from 'core/file-storage/uploaded-file-storage';
 
 @Injectable()
 @ApiTags('Import')
@@ -20,7 +20,7 @@ import { FileStorage } from '../../core/file-storage';
 export class ImportAllController {
 	constructor(private importAllService: ImportAllService) {}
 
-	@ApiOperation({ summary: 'Find all exports.' })
+	@ApiOperation({ summary: 'Find all imports.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found tables'
@@ -40,14 +40,26 @@ export class ImportAllController {
 			})
 		})
 	)
+	@ApiOperation({ summary: 'Imports templates records.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found tables'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
 	@Post()
-	async parse(@Body() { importType }, @UploadedFile() file) {
-		this.importAllService.removeExtractedFiles();
-		await this.importAllService.unzipAndParse(
-			file.key,
-			importType === 'clean'
-		);
-
-		return;
+	async parse(@Body() { importType }, @UploadedFileStorage() file) {
+		try {
+			this.importAllService.removeExtractedFiles();
+			await this.importAllService.unzipAndParse(
+				file.key,
+				importType === 'clean'
+			);
+			return true;
+		} catch (error) {
+			return false;
+		}
 	}
 }

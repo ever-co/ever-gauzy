@@ -2,10 +2,12 @@ import { FileStorageOption, UploadedFile } from '@gauzy/contracts';
 import * as multer from 'multer';
 import * as fs from 'fs';
 import * as moment from 'moment';
-import { environment } from '@gauzy/config';
+import { environment, getConfig } from '@gauzy/config';
 import { Provider } from './provider';
 import { basename, join, resolve } from 'path';
 import { RequestContext } from '../../context';
+
+const config = getConfig();
 
 export class LocalProvider extends Provider<LocalProvider> {
 	static instance: LocalProvider;
@@ -14,7 +16,8 @@ export class LocalProvider extends Provider<LocalProvider> {
 	config = {
 		rootPath: environment.isElectron
 			? resolve(environment.gauzyUserPath, 'public')
-			: resolve(process.cwd(), 'apps', 'api', 'public'),
+			: config.assetOptions.assetPublicPath ||
+			  resolve(process.cwd(), 'apps', 'api', 'public'),
 		baseUrl: environment.baseUrl + '/public'
 	};
 
@@ -73,6 +76,9 @@ export class LocalProvider extends Provider<LocalProvider> {
 						fileNameString = filename(file, ext);
 					}
 				} else {
+					if (!prefix) {
+						prefix = 'file';
+					}
 					fileNameString = `${prefix}-${moment().unix()}-${parseInt(
 						'' + Math.random() * 1000,
 						10

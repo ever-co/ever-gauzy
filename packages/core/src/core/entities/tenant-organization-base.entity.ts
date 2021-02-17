@@ -11,7 +11,10 @@ export abstract class TenantOrganizationBaseEntity
 	extends TenantBaseEntity
 	implements IBasePerTenantAndOrganizationEntityModel {
 	@ApiProperty({ type: () => Organization, readOnly: true })
-	@ManyToOne(() => Organization, { nullable: true, onDelete: 'CASCADE' })
+	@ManyToOne(() => Organization, {
+		nullable: true,
+		onUpdate: 'CASCADE'
+	})
 	@JoinColumn()
 	@IsOptional()
 	organization?: IOrganization;

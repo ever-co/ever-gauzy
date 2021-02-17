@@ -144,3 +144,7 @@ export const verifyStateByIndex = (loc, index, state) => {
 export const verifyClassExist = (loc, someClass) => {
 	cy.get(loc, { timeout: 40000 }).should('have.class', `${someClass}`);
 };
+
+export const clickOutsideElement = () => {
+	cy.get('body').click(0, 0);
+};

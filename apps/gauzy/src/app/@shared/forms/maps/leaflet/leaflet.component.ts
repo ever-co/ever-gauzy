@@ -8,7 +8,8 @@ import {
 } from '@angular/core';
 import { environment } from '../../../../../environments/environment';
 import L, { icon, LatLng, latLng, Layer, marker, tileLayer } from 'leaflet';
-import { convertPrecisionFloatDigit } from '@gauzy/common';
+import { convertPrecisionFloatDigit } from '@gauzy/common-angular';
+
 @Component({
 	selector: 'ga-leaflet-map',
 	templateUrl: './leaflet.component.html',

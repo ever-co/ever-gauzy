@@ -26,7 +26,9 @@ export class ProductVariantCreateHandler
 			variantCreateInput.product.id,
 			{ relations: ['options'] }
 		);
-		const productOptions = product.options;
+		const productOptions = product.options.map((option) => {
+			return { ...option, productId: product.id };
+		});
 		const optionCombinations = variantCreateInput.optionCombinations;
 		const { organizationId, tenantId } = variantCreateInput.product;
 
@@ -38,7 +40,7 @@ export class ProductVariantCreateHandler
 				return optionCombination.options.includes(option.name);
 			});
 
-			newProductVariant.options = variantOptions;
+			newProductVariant.options = productOptions;
 			newProductVariant.internalReference = variantOptions
 				.map((option) => option.name)
 				.join('-');
