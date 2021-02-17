@@ -5,11 +5,11 @@
 				<ngx-back-navigation></ngx-back-navigation>
 				<h4>{{ 'INVENTORY_PAGE.WAREHOUSES' | translate }}</h4>
 			</div>
-			<div>
+			<!-- <div>
 				<ga-layout-selector
 					componentName="{{ viewComponentName }}"
 				></ga-layout-selector>
-			</div>
+			</div> -->
 		</div>
 	</nb-card-header>
 
@@ -24,22 +24,22 @@
 			</ng-container>
 		</div>
 
+		<!-- //tstodo dif views -->
 		<ng2-smart-table
 			class="tags-table"
 			[settings]="settingsSmartTable"
 			(userRowSelect)="selectWarehouse($event)"
-			[source]="warehousesTable"
+			[source]="smartTableSource"
 			style="cursor: pointer"
-			*ngIf="dataLayoutStyle === 'TABLE'"
-			#ware
+			#warehousesTable
 		>
 		</ng2-smart-table>
-		<ga-card-grid
+		<!-- <ga-card-grid
 			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
 			[settings]="settingsSmartTable"
 			[source]="smartTableSource"
 			[buttonTemplate]="actionButtons"
-		></ga-card-grid>
+		></ga-card-grid> -->
 	</nb-card-body>
 </nb-card>
 <ng-template

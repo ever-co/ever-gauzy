@@ -201,11 +201,11 @@ export interface IWarehouse extends IBasePerTenantEntityModel {
 	active: boolean;
 	contact: IContact;
 	code: string;
-	products: IProductTranslatable[];
+	products?: IProductTranslatable[];
 	name: string;
-	logo: string;
+	logo?: string;
 	email: string;
-	tags: ITag[];
+	tags?: ITag[];
 }
 
 export enum BillingInvoicingPolicyEnum {

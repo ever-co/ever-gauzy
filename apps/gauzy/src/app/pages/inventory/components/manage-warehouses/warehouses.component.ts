@@ -122,9 +122,13 @@ export class WarehousesComponent
 	}
 
 	async loadSettings() {
-		const warehouses = (await this.warehouseService.getAll()).items;
+		const warehousesResult = await this.warehouseService.getAll();
+		//tstodo
+		console.log(warehousesResult.items, 'warehouses result');
 
-		this.smartTableSource.load(warehouses);
+		if (!warehousesResult || !warehousesResult.items) return;
+
+		this.smartTableSource.load(warehousesResult.items);
 	}
 
 	_applyTranslationOnSmartTable() {
@@ -142,7 +146,12 @@ export class WarehousesComponent
 			}
 		});
 
-		const result = await dialog.onClose.pipe(first()).toPromise();
+		await dialog.onClose
+			.pipe(first())
+			.toPromise()
+			.then((res) => {
+				this.loadSettings();
+			});
 	}
 
 	async delete(selectedItem?: any) {}

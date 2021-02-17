@@ -5,10 +5,14 @@ import {
 	NbButtonModule,
 	NbCardModule,
 	NbIconModule,
-	NbInputModule
+	NbInputModule,
+	NbTabsetModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { ThemeModule } from '../../@theme/theme.module';
+import { LocationFormModule } from '../forms/location';
+import { LeafletMapModule } from '../forms/maps/leaflet/leaflet.module';
+import { ImageUploaderModule } from '../image-uploader/image-uploader.module';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
 import { WarehouseMutationComponent } from './warehouse-mutation.component';
 
@@ -23,7 +27,11 @@ import { WarehouseMutationComponent } from './warehouse-mutation.component';
 		NbButtonModule,
 		NbInputModule,
 		ThemeModule,
-		TagsColorInputModule
+		TagsColorInputModule,
+		LocationFormModule,
+		LeafletMapModule,
+		NbTabsetModule,
+		ImageUploaderModule
 	],
 	declarations: [WarehouseMutationComponent],
 	entryComponents: [WarehouseMutationComponent],

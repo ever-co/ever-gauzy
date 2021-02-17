@@ -23,6 +23,13 @@ export class WarehouseService {
 			.toPromise();
 	}
 
+	create(warehouseRequest: IWarehouse): Promise<IWarehouse> {
+		return this.http
+			.post<IWarehouse>(`${this.WAREHOUSES_URL}`, warehouseRequest)
+			.pipe(first())
+			.toPromise();
+	}
+
 	getById(id: string, relations?: string[], findInput?: IProductFindInput) {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
