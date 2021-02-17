@@ -34,7 +34,7 @@ describe('Human resources page test', () => {
 			imgUrl
 		);
 	});
-	it('Shoulb be able to verify chart options', () => {
+	it('Should be able to verify chart options', () => {
 		cy.visit('/#/pages/dashboard/accounting');
 		humanResourcesPage.selectEmployeeByName(`${firstName} ${lastName}`);
 		humanResourcesPage.verifyEmployeeName(`${firstName} ${lastName}`);
