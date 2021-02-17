@@ -26,7 +26,6 @@
 		"webpack-cli": "^4.4.0"
 	},
 	"dependencies": {
-		"@gauzy/common": "^0.1.0",
 		"@gauzy/common-angular": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@agm/core": "^3.0.0-beta.0",

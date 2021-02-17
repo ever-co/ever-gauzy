@@ -21,7 +21,7 @@ import {
 	ITimeLogFilters,
 	OrganizationPermissionsEnum
 } from '@gauzy/contracts';
-import { toUTC, toLocal } from '@gauzy/common';
+import { toUTC, toLocal } from '@gauzy/common-angular';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';

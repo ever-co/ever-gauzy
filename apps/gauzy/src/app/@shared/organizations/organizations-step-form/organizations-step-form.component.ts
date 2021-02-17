@@ -35,7 +35,7 @@ import { LatLng } from 'leaflet';
 import { LeafletMapComponent } from '../../forms/maps/leaflet/leaflet.component';
 import { Store } from '../../../@core/services/store.service';
 import { filter, tap } from 'rxjs/operators';
-import { retrieveNameFromEmail } from '@gauzy/common';
+import { retrieveNameFromEmail } from '@gauzy/common-angular';
 import { environment as ENV } from 'apps/gauzy/src/environments/environment';
 import { ToastrService } from '../../../@core/services/toastr.service';
 

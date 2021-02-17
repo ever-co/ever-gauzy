@@ -9,7 +9,7 @@ import {
 	ITimeLogFilters,
 	OrganizationPermissionsEnum
 } from '@gauzy/contracts';
-import { toUTC } from '@gauzy/common';
+import { toUTC } from '@gauzy/common-angular';
 import {
 	NbCheckboxComponent,
 	NbDialogService,
