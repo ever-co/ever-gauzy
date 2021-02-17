@@ -1,5 +1,3 @@
-import * as timezone from 'moment-timezone';
-
 /**
  * Check is function .
  * @param item
