@@ -140,3 +140,7 @@ export const typeOverTextarea = (loc, text) => {
 export const verifyStateByIndex = (loc, index, state) => {
 	cy.get(loc, { timeout: 40000 }).eq(index).should(`${state}`);
 };
+
+export const verifyClassExist = (loc, someClass) => {
+	cy.get(loc, { timeout: 40000 }).should('have.class', `${someClass}`);
+};

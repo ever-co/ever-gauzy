@@ -12,5 +12,7 @@ export const EstimatesPageData = {
 	sendButton: 'Send',
 	convertToInvoiceButton: ' Convert to invoice ',
 	viewButton: 'View',
-	emailButton: 'Email'
+	emailButton: 'Email',
+	estimateNumber: 1,
+	secondEstimateNumber: 2
 };
