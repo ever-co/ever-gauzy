@@ -100,7 +100,8 @@
 		"INVOICE_REMAINING_AMOUNT": "Оставшаяся сумма",
 		"PUBLIC_LINK": "Публичная ссылка",
 		"GENERATE": "Сгенерировать",
-		"SEND_RECEIPT": "Отправить квитанцию"
+		"SEND_RECEIPT": "Отправить квитанцию",
+		"ADD_COMMENT": "Добавить комментарий"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
