@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { TagsService } from '../../../@core/services/tags.service';
 import { ITag, IOrganization } from '@gauzy/contracts';
-import { getContrastColor } from '@gauzy/common';
+import { getContrastColor } from '@gauzy/common-angular';
 import { Store } from '../../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter } from 'rxjs/operators';

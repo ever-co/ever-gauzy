@@ -6,9 +6,10 @@ import * as unzipper from 'unzipper';
 import * as csv from 'csv-parser';
 import * as rimraf from 'rimraf';
 import * as _ from 'lodash';
+import * as path from 'path';
 import { ConfigService } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
-import { isFunction } from '@gauzy/common';
+import { isFunction, isNotEmpty } from '@gauzy/common';
 import { convertToDatetime } from './../../core/utils';
 import { FileStorage } from './../../core/file-storage';
 import {
@@ -121,7 +122,10 @@ import {
 
 @Injectable()
 export class ImportAllService implements OnModuleInit {
-	private __dirname = '/import/csv/';
+	private _dirname: string;
+	private _extractPath: string;
+	private _basename = '/import/csv/';
+
 	private dynamicEntitiesClassMap: { [name: string]: Type<any> } = {};
 
 	/**
@@ -587,6 +591,15 @@ export class ImportAllService implements OnModuleInit {
 
 	async onModuleInit() {
 		this.createDynamicInstanceForPluginEntities();
+
+		const public_path =
+			this.configService.assetOptions.assetPublicPath || __dirname;
+
+		//base import csv directory path
+		this._dirname = path.join(public_path, this._basename);
+
+		//extracted import csv directory path
+		this._extractPath = path.join(this._dirname, 'import/');
 	}
 
 	async createFolder(): Promise<any> {
@@ -606,7 +619,7 @@ export class ImportAllService implements OnModuleInit {
 
 	public removeExtractedFiles() {
 		try {
-			rimraf.sync(this.__dirname);
+			rimraf.sync(this._dirname);
 		} catch (error) {
 			console.log(error);
 		}
@@ -614,19 +627,11 @@ export class ImportAllService implements OnModuleInit {
 
 	public async unzipAndParse(filePath, cleanup: boolean = false) {
 		const file = await new FileStorage().getProvider().getFile(filePath);
-
 		await unzipper.Open.buffer(file).then((d) =>
-			d.extract({ path: this.__dirname })
+			d.extract({ path: this._dirname })
 		);
 
 		this.parse(cleanup);
-
-		// fs.createReadStream(file)
-		// 	.pipe(unzipper.Extract({ path: this.__dirname }))
-		// 	.on('close', () => {
-		// 		console.log('Starting Import');
-		// 		this.parse(cleanup);
-		// 	});
 	}
 
 	parse(cleanup: boolean = false) {
@@ -634,32 +639,33 @@ export class ImportAllService implements OnModuleInit {
 		 * Can only run in a particular order
 		 */
 		for (const i of Object.keys(this.orderedRepositories)) {
-			if (!fs.existsSync(this.__dirname + i + '.csv')) {
-				// console.log('File Does Not Exist, Skipping: ', i);
+			if (!fs.existsSync(this._extractPath + i + '.csv')) {
+				console.log('File Does Not Exist, Skipping: ', i);
 				continue;
 			}
 
-			console.log('File Exists:', this.__dirname + i + '.csv');
-
-			const results = [];
-
+			// console.log('File Exists:', this._extractPath + i + '.csv');
+			let results = [];
 			/**
 			 * This will first collect all the data and then insert
 			 * If cleanup flag is set then it will also truncate the database table with CASCADE
 			 */
-			fs.createReadStream(this.__dirname + i + '.csv')
+			fs.createReadStream(this._extractPath + i + '.csv')
 				.pipe(csv())
 				.on('data', (data) => {
 					data = this.mappedTimestampsFields(data);
 					results.push(data);
 				})
 				.on('end', async () => {
-					if (cleanup) {
-						await this.orderedRepositories[i].query(
-							`TRUNCATE  "${this.orderedRepositories[i].metadata.tableName}" RESTART IDENTITY CASCADE;`
-						);
+					results = results.filter(isNotEmpty);
+					if (results.length) {
+						if (cleanup) {
+							await this.orderedRepositories[i].query(
+								`TRUNCATE  "${this.orderedRepositories[i].metadata.tableName}" RESTART IDENTITY CASCADE;`
+							);
+						}
+						this.orderedRepositories[i].insert(results);
 					}
-					this.orderedRepositories[i].insert(results);
 				});
 		}
 	}

@@ -8,7 +8,10 @@ export abstract class TenantBaseEntity
 	extends BaseEntity
 	implements IBasePerTenantEntityModel {
 	@ApiProperty({ type: () => Tenant, readOnly: true })
-	@ManyToOne(() => Tenant, { nullable: true, onDelete: 'CASCADE' })
+	@ManyToOne(() => Tenant, {
+		nullable: true,
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	@IsOptional()
 	tenant?: ITenant;

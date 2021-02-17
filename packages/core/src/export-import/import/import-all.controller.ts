@@ -51,12 +51,15 @@ export class ImportAllController {
 	})
 	@Post()
 	async parse(@Body() { importType }, @UploadedFileStorage() file) {
-		this.importAllService.removeExtractedFiles();
-		await this.importAllService.unzipAndParse(
-			file.key,
-			importType === 'clean'
-		);
-
-		return;
+		try {
+			this.importAllService.removeExtractedFiles();
+			await this.importAllService.unzipAndParse(
+				file.key,
+				importType === 'clean'
+			);
+			return true;
+		} catch (error) {
+			return false;
+		}
 	}
 }
