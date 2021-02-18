@@ -251,6 +251,16 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		return false;
 	}
 
+	toggleChangelogMenu(): boolean {
+		if (this.showExtraActions) {
+			this.toggleExtraActions(false);
+			this.sidebarService.expand('changelog-sidebar');
+		} else {
+			this.sidebarService.toggle(false, 'changelog-sidebar');
+		}
+		return false;
+	}
+
 	navigateHome() {
 		//this.menuService.navigateHome();
 		return false;

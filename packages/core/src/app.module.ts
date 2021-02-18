@@ -127,6 +127,7 @@ import { FeatureModule } from './feature/feature.module';
 import { ImageAssetModule } from './image-asset/image-asset.module';
 import { resolveServeStaticPath } from './helper';
 import { SeederModule } from './core/seeds/seeder.module';
+import { ChangelogModule } from 'changelog/changelog.module';
 
 const { unleashConfig } = environment;
 if (unleashConfig.url) {
@@ -302,6 +303,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		GoalKpiModule,
 		GoalTemplateModule,
 		KeyresultTemplateModule,
+		ChangelogModule,
 		GoalKpiTemplateModule,
 		SeederModule
 	],

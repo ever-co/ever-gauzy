@@ -297,6 +297,7 @@ import {
 	createDefaultFeatureToggle,
 	createRandomFeatureToggle
 } from '../../feature/feature.seed';
+import { createChangelog } from '../../changelog/changelog.seed';
 
 @Injectable()
 export class SeedDataService {
@@ -523,6 +524,11 @@ export class SeedDataService {
 			await this.tryExecute(
 				'Currencies',
 				createCurrencies(this.connection)
+			);
+
+			await this.tryExecute(
+				'Default Changelog',
+				createChangelog(this.connection)
 			);
 
 			await this.seedBasicDefaultData();
