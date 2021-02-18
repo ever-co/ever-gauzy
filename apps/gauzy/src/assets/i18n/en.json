@@ -100,7 +100,8 @@
 		"INVOICE_REMAINING_AMOUNT": "Invoice Remaining Amount",
 		"PUBLIC_LINK": "Public Link",
 		"GENERATE": "Generate",
-		"SEND_RECEIPT": "Send Receipt"
+		"SEND_RECEIPT": "Send Receipt",
+		"ADD_COMMENT": "Add Comment"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",
@@ -844,7 +845,8 @@
 		"INVENTORY": "Inventory",
 		"SALES": "Sales",
 		"PAYMENTS": "Payments",
-		"FEATURES": "Features"
+		"FEATURES": "Features",
+		"ACCOUNTING_TEMPLATES": "Accounting Templates"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -3258,5 +3260,18 @@
 		"PRIVACY_POLICY": "Privacy Policy",
 		"TERMS_AND_CONDITIONS": "Terms & Conditions"
 	},
-	"LOADING": "Loading, please hold...."
+	"LOADING": "Loading, please hold....",
+	"ACCOUNTING_TEMPLATES_PAGE": {
+		"HEADER": "Accounting Templates",
+		"LANGUAGE_CODES": {
+			"en": "English",
+			"ru": "Russian",
+			"he": "Hebrew",
+			"bg": "Bulgarian"
+		},
+		"TEMPLATE_NAMES": {
+			"invoice": "Invoice",
+			"estimate": "Estimate"
+		}
+	}
 }

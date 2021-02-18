@@ -16,14 +16,14 @@ export class ProductUpdateHandler
 	public async execute(command?: ProductUpdateCommand): Promise<Product> {
 		const { productUpdateRequest } = command;
 
-		const optionsCreate = productUpdateRequest.optionCreateInputs.map(
-			(optionInput) => {
+		const optionsCreate = productUpdateRequest.optionCreateInputs
+			.filter((option) => !option.id)
+			.map((optionInput) => {
 				const option = new ProductOption();
 				option.name = optionInput.name;
 				option.code = optionInput.code;
 				return option;
-			}
-		);
+			});
 
 		await this.productOptionService.deleteBulk(
 			productUpdateRequest.optionDeleteInputs
@@ -33,7 +33,13 @@ export class ProductUpdateHandler
 			optionsCreate
 		);
 
-		productUpdateRequest['options'] = savedOptions;
+		const updatedOptions = await this.productOptionService.saveBulk(
+			productUpdateRequest.optionCreateInputs.filter(
+				(option) => option.id
+			) as any
+		);
+
+		productUpdateRequest['options'] = [...savedOptions, ...updatedOptions];
 
 		const product = await this.productService.saveProduct(
 			productUpdateRequest

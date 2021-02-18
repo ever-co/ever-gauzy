@@ -93,7 +93,36 @@ describe('Estimates test', () => {
 		estimatesPage.waitMessageToHide();
 		estimatesPage.verifyDraftBadgeClass();
 	});
+	it('Should be able to search estimate', () => {
+		estimatesPage.verifyTabButtonVisible();
+		estimatesPage.clickTabButton(1);
+		estimatesPage.veirifyEstimateNumberInputVisible();
+		estimatesPage.enterEstimateNumberInputData(
+			EstimatesPageData.estimateNumber
+		);
+		estimatesPage.verifyCurrencuDropdownVisible();
+		estimatesPage.verifyEstimateDateInput();
+		estimatesPage.verifyEstimateDueDateInput();
+		estimatesPage.verifyTotalValueInputVisible();
+		estimatesPage.verifyCurrencuDropdownVisible();
+		estimatesPage.verifyStatusInputVisible();
+		estimatesPage.searchButtonVisible();
+		estimatesPage.clickSearchButton();
+		estimatesPage.resetButtonVisible();
+		estimatesPage.clickResetButton();
+		estimatesPage.clickSearchButton();
+		estimatesPage.verifyDraftBadgeClass();
+		estimatesPage.enterEstimateNumberInputData(
+			EstimatesPageData.secondEstimateNumber
+		);
+		estimatesPage.clickSearchButton();
+		estimatesPage.clickResetButton();
+		estimatesPage.verifyDraftBadgeClass();
+		estimatesPage.clickTabButton(2);
+		estimatesPage.verifyDraftBadgeClass();
+	});
 	it('Should be able to edit estimate', () => {
+		estimatesPage.clickTabButton(0);
 		estimatesPage.selectTableRow(0);
 		estimatesPage.editButtonVisible();
 		estimatesPage.clickEditButton(0);
@@ -119,6 +148,7 @@ describe('Estimates test', () => {
 	});
 	it('Should be able to duplicate estimate', () => {
 		estimatesPage.waitMessageToHide();
+		estimatesPage.selectTableRow(0);
 		estimatesPage.selectTableRow(0);
 		estimatesPage.moreButtonVisible();
 		estimatesPage.clickMoreButton();

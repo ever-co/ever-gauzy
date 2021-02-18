@@ -100,7 +100,8 @@
 		"INVOICE_REMAINING_AMOUNT": "Оставшаяся сумма",
 		"PUBLIC_LINK": "Публичная ссылка",
 		"GENERATE": "Сгенерировать",
-		"SEND_RECEIPT": "Отправить квитанцию"
+		"SEND_RECEIPT": "Отправить квитанцию",
+		"ADD_COMMENT": "Добавить комментарий"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Тип",
@@ -844,7 +845,8 @@
 		"INVENTORY": "Инвентаризация",
 		"SALES": "Продажи",
 		"PAYMENTS": "Платежи",
-		"FEATURES": "Возможности"
+		"FEATURES": "Возможности",
+		"ACCOUNTING_TEMPLATES": "Шаблоны счетов"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Темы",
@@ -3258,5 +3260,18 @@
 		"PRIVACY_POLICY": "Политика конфиденциальности",
 		"TERMS_AND_CONDITIONS": "Условия использования"
 	},
-	"LOADING": "Загрузка, пожалуйста удерживайте...."
+	"LOADING": "Загрузка, пожалуйста удерживайте....",
+	"ACCOUNTING_TEMPLATES_PAGE": {
+		"HEADER": "Шаблоны счетов",
+		"LANGUAGE_CODES": {
+			"en": "Russian",
+			"ru": "Русский",
+			"he": "Иврит",
+			"bg": "Болгарский"
+		},
+		"TEMPLATE_NAMES": {
+			"invoice": "Счет",
+			"estimate": "Оценить"
+		}
+	}
 }

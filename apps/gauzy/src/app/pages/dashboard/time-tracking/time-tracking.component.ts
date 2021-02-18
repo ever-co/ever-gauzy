@@ -23,8 +23,9 @@ import {
 import { Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import _ from 'underscore';
-import { progressStatus } from '@gauzy/common';
+import { progressStatus } from '@gauzy/common-angular';
 import * as moment from 'moment';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-time-tracking',

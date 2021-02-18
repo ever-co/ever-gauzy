@@ -5,6 +5,7 @@ export * from './tenant-organization-base.entity';
 export * from './translate-base';
 
 //core entities
+export * from '../../accounting-template/accounting-template.entity';
 export * from '../../appointment-employees/appointment-employees.entity';
 export * from '../../approval-policy/approval-policy.entity';
 export * from '../../availability-slots/availability-slots.entity';

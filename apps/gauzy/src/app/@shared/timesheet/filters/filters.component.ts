@@ -31,7 +31,7 @@ import {
 	TimesheetFilterService
 } from '../timesheet-filter.service';
 import { debounceTime, filter, take, tap } from 'rxjs/operators';
-import { isEmpty } from '@gauzy/common';
+import { isEmpty } from '@gauzy/common-angular';
 import { NbCalendarRange } from '@nebular/theme';
 
 @UntilDestroy({ checkProperties: true })

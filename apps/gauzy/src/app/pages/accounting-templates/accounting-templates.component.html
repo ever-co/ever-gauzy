@@ -1,0 +1,102 @@
+<form [formGroup]="form" *ngIf="form">
+	<nb-card>
+		<nb-card-header>
+			<div class="row">
+				<div class="col-6">
+					<h4>
+						{{ 'ACCOUNTING_TEMPLATES_PAGE.HEADER' | translate }}
+					</h4>
+				</div>
+				<div class="col-2 select-block">
+					<label class="label" for="languageCode"> Language </label>
+					<nb-select
+						id="languageCode"
+						class="d-block"
+						size="small"
+						formControlName="languageCode"
+						(selectedChange)="getTemplate()"
+					>
+						<nb-option
+							*ngFor="let language of languageCodes"
+							[value]="language"
+						>
+							{{
+								'ACCOUNTING_TEMPLATES_PAGE.LANGUAGE_CODES.' +
+									language | translate
+							}}
+						</nb-option>
+					</nb-select>
+				</div>
+				<div class="col-2 select-block">
+					<label class="label" for="templateName">
+						Template Name
+					</label>
+					<nb-select
+						id="templateName"
+						class="d-block"
+						size="small"
+						placeholder="Templates"
+						formControlName="name"
+						(selectedChange)="getTemplate()"
+					>
+						<nb-option
+							*ngFor="let name of templateNames"
+							[value]="name"
+						>
+							{{
+								'ACCOUNTING_TEMPLATES_PAGE.TEMPLATE_NAMES.' +
+									name | translate
+							}}
+						</nb-option>
+					</nb-select>
+				</div>
+				<div
+					class="col-2 d-flex justify-content-end align-items-center"
+				>
+					<button nbButton status="success">
+						{{ 'EMAIL_TEMPLATES_PAGE.SAVE' | translate }}
+					</button>
+				</div>
+			</div>
+		</nb-card-header>
+		<nb-card-body>
+			<nb-layout>
+				<nb-layout-column class="p-0">
+					<nb-card>
+						<nb-card-body>
+							<div class="form-group">
+								<label class="label" for="template">
+									Template
+								</label>
+								<ace-editor
+									#templateEditor
+									id="template"
+									[mode]="'handlebars'"
+									style="height: 80vh; font-size: medium"
+									[durationBeforeCallback]="400"
+								>
+								</ace-editor>
+							</div>
+						</nb-card-body>
+					</nb-card>
+				</nb-layout-column>
+
+				<nb-layout-column>
+					<nb-card>
+						<nb-card-body>
+							<div class="form-group">
+								<label class="label" for="previewTemplate">
+									Template
+								</label>
+								<div
+									id="previewTemplate"
+									[innerHtml]="previewTemplate"
+								></div>
+							</div>
+						</nb-card-body>
+					</nb-card>
+				</nb-layout-column>
+			</nb-layout>
+		</nb-card-body>
+	</nb-card>
+</form>

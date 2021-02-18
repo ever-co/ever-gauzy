@@ -7,7 +7,7 @@ import {
 	OrganizationPermissionsEnum
 } from '@gauzy/contracts';
 import * as moment from 'moment';
-import { toUTC } from '@gauzy/common';
+import { toUTC } from '@gauzy/common-angular';
 import { ToastrService } from '../../../@core/services/toastr.service';
 import { Store } from '../../../@core/services/store.service';
 import { NgForm } from '@angular/forms';

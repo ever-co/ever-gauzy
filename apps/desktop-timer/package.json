@@ -1,7 +1,7 @@
 {
-	"name": "@gauzy/dekstop-timer",
+	"name": "@gauzy/desktop-timer",
 	"version": "0.1.0",
-	"description": "Gauzy Desktop App",
+	"description": "Gauzy Desktop Timer App",
 	"license": "AGPL-3.0",
 	"homepage": "https://gauzy.co",
 	"repository": {

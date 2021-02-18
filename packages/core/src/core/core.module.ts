@@ -10,27 +10,17 @@ import {
 	Module,
 	NestModule
 } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import * as path from 'path';
-import { ConfigModule, ConfigService, environment } from '@gauzy/config';
+import { ConfigService, environment } from '@gauzy/config';
 import { RequestContextMiddleware } from './context';
 import { FileStorageModule } from './file-storage';
 import { GraphqlModule } from '../graphql/graphql.module';
 import { GraphqlApiModule } from '../graphql/graphql-api.module';
+import { DatabaseProviderModule } from './database-provider.module';
 
 @Module({
 	imports: [
-		TypeOrmModule.forRootAsync({
-			imports: [ConfigModule],
-			useFactory: (configService: ConfigService) => {
-				const { dbConnectionOptions } = configService.config;
-				return {
-					name: 'default',
-					...dbConnectionOptions
-				};
-			},
-			inject: [ConfigService]
-		}),
+		DatabaseProviderModule,
 		GraphqlApiModule,
 		GraphqlModule.registerAsync((configService: ConfigService) => ({
 			path: configService.graphqlConfigOptions.path,

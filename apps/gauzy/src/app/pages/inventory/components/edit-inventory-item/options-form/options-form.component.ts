@@ -15,6 +15,7 @@ export interface OptionCreateInput {
 	styleUrls: ['./options-form.component.scss']
 })
 export class OptionsFormComponent implements OnInit {
+	editOption: IProductOption;
 	activeOption: IProductOption;
 	activeOptionName: string;
 	optionMode = 'create';
@@ -36,21 +37,15 @@ export class OptionsFormComponent implements OnInit {
 	onSaveOption() {
 		if (!(this.activeOption.name && this.activeOption.code)) return;
 
-		if (this.optionMode === 'create') {
-			this.options = this.options.concat([
-				{
-					name: this.activeOption.name,
-					code: this.activeOption.code
-				}
-			]);
+		if (this.optionMode == 'create') {
+			this.inventoryStore.createOption(this.activeOption);
 		} else {
-			this.options = this.options.filter((option) => {
-				return option.name !== this.activeOptionName;
-			});
-			this.options.push(this.activeOption);
+			this.inventoryStore.updateOption(
+				this.editOption,
+				this.activeOption
+			);
 		}
 
-		this.inventoryStore.options = this.options;
 		this.resetOptionForm();
 	}
 
@@ -65,17 +60,15 @@ export class OptionsFormComponent implements OnInit {
 		this.resetOptionForm();
 	}
 
-	onEditOption(optionTarget: IProductOption) {
-		if (!optionTarget) return;
-
-		this.optionMode = 'edit';
-		this.activeOptionName = optionTarget.name;
-		this.activeOption = { ...optionTarget };
-	}
-
 	resetOptionForm() {
 		this.activeOption = { name: '', code: '' };
 		this.activeOptionName = '';
 		this.optionMode = 'create';
+	}
+
+	onEditOption(option: IProductOption) {
+		this.editOption = option;
+		this.activeOption = option;
+		this.optionMode = 'edit';
 	}
 }
