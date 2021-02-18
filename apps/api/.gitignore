@@ -1,3 +1,5 @@
-# public/*
+public/features/*.png
+public/reports/*.png
+public/screenshots/*.png
 data/*
 report.*.json
