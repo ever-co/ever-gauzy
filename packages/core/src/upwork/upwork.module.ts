@@ -23,7 +23,7 @@ import { RoleService } from '../role/role.service';
 import { TimeSlotService } from '../timesheet/time-slot/time-slot.service';
 import { TimeSlot } from '../timesheet/time-slot.entity';
 import { TimeSlotMinute } from '../timesheet/time-slot-minute.entity';
-import { ExportAllModule } from '../export_import/export-all.module';
+import { ExportAllModule } from '../export-import/export/export-all.module';
 import { Activity } from '../timesheet/activity.entity';
 import { TimeLog } from '../timesheet/time-log.entity';
 import {

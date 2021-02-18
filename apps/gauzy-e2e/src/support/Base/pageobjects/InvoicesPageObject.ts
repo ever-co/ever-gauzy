@@ -1,5 +1,6 @@
 export const InvoicesPage = {
 	gridButtonCss: 'div.layout-switch > button',
+	tabButtonCss: 'ul.tabset > li.tab  > a.tab-link',
 	addButtonCss: 'div.actions-container > button[status="success"]',
 	editButtonCss: 'div.btn-group > button[status="info"]',
 	setStatusButtonCss: 'div.btn-group > nb-select[status="info"]',
@@ -32,5 +33,13 @@ export const InvoicesPage = {
 	verifyInvoiceCss: 'tr.ng-star-inserted > td',
 	draftBadgeCss: 'div.badge-warning',
 	successBadgeCss: 'div.badge-success',
-	emailCardCss: 'nb-card-body.invoice-email-body'
+	emailCardCss: 'nb-card-body.invoice-email-body',
+	inputInvoicenumberCss: '#inputInvoiceNumber',
+	estimateDateCss: '#inputInvoiceDate',
+	dueDateInputCss: '#inputDueDate',
+	totalValueInputCss: '#inputTotalValue',
+	currencySelectCss: '#currencySelect',
+	inputStatusCss: '#inputStatus',
+	searchButtonCss: 'div.col-sm-4 > button[status="success"]',
+	resetButtonCss: 'div.col-sm-4 > button[status="info"]'
 };

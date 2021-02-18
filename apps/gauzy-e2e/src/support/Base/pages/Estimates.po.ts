@@ -10,7 +10,8 @@ import {
 	clickButtonByText,
 	verifyValue,
 	verifyTextNotExisting,
-	scrollDown
+	scrollDown,
+	verifyElementIsNotVisible
 } from '../utils/util';
 import { EstimatesPage } from '../pageobjects/EstimatesPageObject';
 
@@ -253,4 +254,61 @@ export const moreButtonVisible = () => {
 
 export const clickMoreButton = () => {
 	clickButton(EstimatesPage.moreButtonCss);
+};
+
+export const verifyTabButtonVisible = () => {
+	verifyElementIsVisible(EstimatesPage.tabButtonCss);
+};
+
+export const clickTabButton = (index) => {
+	clickButtonByIndex(EstimatesPage.tabButtonCss, index);
+};
+
+export const veirifyEstimateNumberInputVisible = () => {
+	verifyElementIsVisible(EstimatesPage.inputInvoicenumberCss);
+};
+
+export const enterEstimateNumberInputData = (data) => {
+	clearField(EstimatesPage.inputInvoicenumberCss);
+	enterInput(EstimatesPage.inputInvoicenumberCss, data);
+};
+
+export const verifyEstimateDateInput = () => {
+	verifyElementIsVisible(EstimatesPage.estimateDateCss);
+};
+
+export const verifyEstimateDueDateInput = () => {
+	verifyElementIsVisible(EstimatesPage.dueDateInputCss);
+};
+
+export const verifyTotalValueInputVisible = () => {
+	verifyElementIsVisible(EstimatesPage.totalValueInputCss);
+};
+
+export const verifyCurrencuDropdownVisible = () => {
+	verifyElementIsVisible(EstimatesPage.currencySelectCss);
+};
+
+export const verifyStatusInputVisible = () => {
+	verifyElementIsVisible(EstimatesPage.inputStatusCss);
+};
+
+export const searchButtonVisible = () => {
+	verifyElementIsVisible(EstimatesPage.searchButtonCss);
+};
+
+export const clickSearchButton = () => {
+	clickButton(EstimatesPage.searchButtonCss);
+};
+
+export const verifyDraftBadgeNotVisible = () => {
+	verifyElementIsNotVisible(EstimatesPage.draftBadgeCss);
+};
+
+export const resetButtonVisible = () => {
+	verifyElementIsVisible(EstimatesPage.resetButtonCss);
+};
+
+export const clickResetButton = () => {
+	clickButton(EstimatesPage.resetButtonCss);
 };

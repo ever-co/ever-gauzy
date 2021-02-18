@@ -99,7 +99,9 @@
 		"EXPORT_TO_CSV": "Export to CSV",
 		"INVOICE_REMAINING_AMOUNT": "Invoice Remaining Amount",
 		"PUBLIC_LINK": "Public Link",
-		"GENERATE": "Generate"
+		"GENERATE": "Generate",
+		"SEND_RECEIPT": "Send Receipt",
+		"ADD_COMMENT": "Add Comment"
 	},
 	"SM_TABLE": {
 		"TRANSACTION_TYPE": "Type",

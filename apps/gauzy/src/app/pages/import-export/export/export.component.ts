@@ -1,13 +1,14 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ExportAllService } from '../../../@core/services/exportAll.service';
-import { saveAs } from 'file-saver';
-import * as _ from 'lodash';
-import { Store } from '../../../@core/services/store.service';
+import { filter } from 'rxjs/operators';
 import { IOrganization } from '@gauzy/contracts';
-import { Subject } from 'rxjs';
-import { filter, takeUntil } from 'rxjs/operators';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { isNotEmpty } from '@gauzy/common-angular';
+import { saveAs } from 'file-saver';
+import { Store } from '../../../@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import * as _ from 'lodash';
 
 export interface IEntityModel {
 	name: string;
@@ -17,6 +18,7 @@ export interface IEntityModel {
 	entities?: IEntityModel[];
 }
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-download',
 	templateUrl: './export.component.html',
@@ -24,12 +26,11 @@ export interface IEntityModel {
 })
 export class ExportComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit {
 	entities: Array<IEntityModel> = [];
 	selectedEntities: string[] = [];
 	checkedAll = true;
 	organization: IOrganization;
-	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
 		private exportAll: ExportAllService,
@@ -42,19 +43,15 @@ export class ExportComponent
 	ngOnInit() {
 		this.getEntities();
 		this.onCheckboxChangeAll(this.checkedAll);
+
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe((organization) => {
 				this.organization = organization;
 			});
-	}
-
-	ngOnDestroy(): void {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
 	}
 
 	onCheckboxChangeAll(checked: boolean) {
@@ -69,14 +66,13 @@ export class ExportComponent
 	onCheckboxChange(checked: boolean, entity) {
 		entity.checked = checked;
 		if (entity.isGroup && entity.entities.length > 0) {
-			entity.entities.forEach((t) => (t.checked = checked));
+			entity.entities.forEach((t: IEntityModel) => (t.checked = checked));
 		}
 
 		this.selectedCheckboxes();
 	}
 
 	selectedCheckboxes() {
-		this.selectedEntities = [];
 		const singleArray = JSON.parse(
 			JSON.stringify(
 				_.filter(
@@ -94,14 +90,16 @@ export class ExportComponent
 			)
 		);
 
-		this.selectedEntities = [].concat(...singleArray);
+		this.selectedEntities = [];
+		this.selectedEntities.push(...singleArray);
 
 		multipleArray.forEach((item: any) => {
-			this.selectedEntities = this.selectedEntities.concat(
-				...item.entities
-			);
-			delete item.entities;
-			this.selectedEntities = this.selectedEntities.concat(...item);
+			this.selectedEntities.push(...item.entities);
+			if (item.hasOwnProperty('entities')) {
+				delete item.entities;
+			}
+
+			this.selectedEntities.push(item);
 		});
 
 		this.selectedEntities = _.map(
@@ -116,21 +114,26 @@ export class ExportComponent
 	}
 
 	onSubmit() {
-		const { id: organizationId, tenantId } = this.organization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		const entities = this.selectedEntities.filter(isNotEmpty);
 		this.exportAll
-			.downloadSpecificData(this.selectedEntities, {
+			.downloadSpecificData(entities, {
 				organizationId,
 				tenantId
 			})
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((data) => saveAs(data, `export.zip`));
 	}
 
 	onDownloadAll() {
-		const { id: organizationId, tenantId } = this.organization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
 		this.exportAll
 			.downloadAllData({ organizationId, tenantId })
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((data) => saveAs(data, `export.zip`));
 	}
 
@@ -266,11 +269,11 @@ export class ExportComponent
 			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.JOB'),
+				value: null,
 				checked: true,
 				isGroup: true,
 				entities: this.getJobEntities()
 			},
-
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.KEY_RESULT'),
 				value: 'key_result',

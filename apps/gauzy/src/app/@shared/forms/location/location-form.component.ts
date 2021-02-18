@@ -19,7 +19,7 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 import { TranslateService } from '@ngx-translate/core';
 import { CountryService } from '../../../@core/services/country.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { convertPrecisionFloatDigit } from '@gauzy/common';
+import { convertPrecisionFloatDigit } from '@gauzy/common-angular';
 import { DOCUMENT } from '@angular/common';
 
 @UntilDestroy({ checkProperties: true })

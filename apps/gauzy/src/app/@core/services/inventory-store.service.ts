@@ -4,8 +4,7 @@ import {
 	IImageAsset,
 	IProductOption,
 	IProductTranslatable,
-	IProductVariant,
-	IVariantOptionCombination
+	IProductVariant
 } from '@gauzy/contracts';
 import { NbTabComponent } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -147,9 +146,7 @@ export class InventoryStore {
 
 	updateVariantInputsOnDeletedOption(deletedOption: IProductOption) {
 		let variantsUsingOption = this.variantCreateInputs.filter((variant) =>
-			variant.options.find((option) => {
-				option == deletedOption.name;
-			})
+			variant.options.find((option) => option == deletedOption.name)
 		);
 
 		variantsUsingOption.forEach((variant) => {
