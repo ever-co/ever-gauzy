@@ -845,7 +845,8 @@
 		"INVENTORY": "Inventory",
 		"SALES": "Sales",
 		"PAYMENTS": "Payments",
-		"FEATURES": "Features"
+		"FEATURES": "Features",
+		"ACCOUNTING_TEMPLATES": "Accounting Templates"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Теми",
@@ -3259,5 +3260,18 @@
 		"PRIVACY_POLICY": "Privacy Policy",
 		"TERMS_AND_CONDITIONS": "Terms & Conditions"
 	},
-	"LOADING": "Loading, please hold...."
+	"LOADING": "Loading, please hold....",
+	"ACCOUNTING_TEMPLATES_PAGE": {
+		"HEADER": "Accounting Templates",
+		"LANGUAGE_CODES": {
+			"en": "English",
+			"ru": "Руски",
+			"he": "Иврит",
+			"bg": "Български"
+		},
+		"TEMPLATE_NAMES": {
+			"invoice": "Фактура",
+			"estimate": "Estimate"
+		}
+	}
 }
