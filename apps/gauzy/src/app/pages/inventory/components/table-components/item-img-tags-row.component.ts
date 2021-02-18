@@ -9,16 +9,10 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 			style="display: flex; align-items: center;"
 			class="{{ layout === 'CARDS_GRID' ? 'tags-right' : '' }}"
 		>
-			<div
-				*ngIf="rowData.featuredImage && rowData.featuredImage.url"
-				class="image-container"
-			>
-				<img [src]="rowData?.featuredImage.url" />
+			<div *ngIf="imageUrl" class="image-container">
+				<img [src]="imageUrl" />
 			</div>
-			<div
-				*ngIf="!rowData.featuredImage || !rowData.featuredImage.url"
-				class="image-container"
-			>
+			<div *ngIf="!imageUrl" class="image-container">
 				<img
 					[src]="
 						'https://afostats.imagead.net/uploads/afo/no_img.png'
@@ -93,6 +87,19 @@ export class ItemImgTagsComponent implements ViewCell {
 
 	@Input()
 	layout?: ComponentLayoutStyleEnum | undefined;
+
+	get imageUrl() {
+		if (this.rowData.logo) {
+			return this.rowData.logo;
+		} else if (
+			this.rowData.featuredImage &&
+			this.rowData.featuredImage.url
+		) {
+			return this.rowData.featuredImage.url;
+		}
+
+		return null;
+	}
 
 	backgroundContrast(bgColor: string) {
 		return getContrastColor(bgColor);

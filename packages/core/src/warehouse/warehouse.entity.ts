@@ -54,6 +54,7 @@ export class Warehouse extends TenantBaseEntity implements IWarehouse {
 
 	@ApiProperty({ type: () => Contact })
 	@OneToOne(() => Contact, {
+		eager: true,
 		cascade: true,
 		onDelete: 'CASCADE'
 	})

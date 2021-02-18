@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
+import { ComponentLayoutStyleEnum, IContact } from '@gauzy/contracts';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
@@ -12,6 +12,8 @@ import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constan
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { ItemImgTagsComponent } from '../../table-components/item-img-tags-row.component';
+import { EnabledStatusComponent } from '../../table-components/enabled-row.component';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-warehouses',
@@ -77,37 +79,39 @@ export class WarehousesTableComponent
 			.subscribe();
 	}
 
-	// title: this.getTranslation('INVENTORY_PAGE.NAME'),
-	// type: 'string',
-	// width: '40%'
-
 	async loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
-				// logo: {
-				// 	title: this.getTranslation('INVENTORY_PAGE.LOGO'),
-				// 	type: 'custom'
-				// },
+				name: {
+					title: this.getTranslation('INVENTORY_PAGE.LOGO'),
+					type: 'custom',
+					renderComponent: ItemImgTagsComponent
+				},
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
-					type: 'string'
-				},
-				name: {
-					title: this.getTranslation('INVENTORY_PAGE.NAME'),
 					type: 'string'
 				},
 				email: {
 					title: this.getTranslation('INVENTORY_PAGE.EMAIL'),
 					type: 'string'
 				},
-				address: {
-					title: this.getTranslation('INVENTORY_PAGE.ADDRESS'),
-					type: 'string'
+				contact: {
+					title: this.getTranslation('INVENTORY_PAGE.CONTACT'),
+					type: 'string',
+					valuePrepareFunction: (contact: IContact, row) => {
+						//tstodo
+						return `country: ${contact?.country || '-'}, city:${
+							contact?.city || '-'
+						}, address: ${contact?.address || '-'}, address 2: ${
+							contact?.address2 || '-'
+						}`;
+					}
 				},
 				active: {
 					title: this.getTranslation('INVENTORY_PAGE.ACTIVE'),
-					type: 'boolean'
+					type: 'custom',
+					renderComponent: EnabledStatusComponent
 				}
 			}
 		};

@@ -1,14 +1,7 @@
-import {
-	Component,
-	OnChanges,
-	OnInit,
-	SimpleChanges,
-	ViewChild
-} from '@angular/core';
-import { NbDialogRef } from '@nebular/theme';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { ITag, IWarehouse } from '@gauzy/contracts';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { ComponentLayoutStyleEnum, ITag, IWarehouse } from '@gauzy/contracts';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { LocationFormComponent } from 'apps/gauzy/src/app/@shared/forms/location';
 import { LeafletMapComponent } from 'apps/gauzy/src/app/@shared/forms/maps/leaflet/leaflet.component';
@@ -16,8 +9,9 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 import { WarehouseService } from 'apps/gauzy/src/app/@core/services/warehouse.service';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { LatLng } from 'leaflet';
+import { Location } from '@angular/common';
 
 @UntilDestroy()
 @Component({
@@ -49,7 +43,8 @@ export class WarehouseFormComponent
 		readonly translateService: TranslateService,
 		private route: ActivatedRoute,
 		private fb: FormBuilder,
-		private store: Store
+		private store: Store,
+		private location: Location
 	) {
 		super(translateService);
 	}
@@ -124,12 +119,15 @@ export class WarehouseFormComponent
 
 		let request = {
 			...this.form.value,
-			location: {
+			contact: {
 				...locationFormValue,
 				latitude: coordinates[0],
 				longitude: coordinates[1]
 			}
 		};
+
+		//tstodo
+		console.log(request, 'request');
 
 		let result;
 
@@ -141,6 +139,11 @@ export class WarehouseFormComponent
 					this.toastrService.success(
 						'INVENTORY_PAGE.WAREHOUSE_CREATED'
 					);
+
+					//tstodo
+					console.log(res, 'res from create warehouse');
+
+					this.location.back();
 				})
 				.catch((err) => {
 					this.toastrService.danger(
@@ -151,18 +154,33 @@ export class WarehouseFormComponent
 		}
 	}
 
-	cancel() {}
+	cancel() {
+		this.location.back();
+	}
 
 	selectedTagsEvent(currentSelection: ITag[]) {
 		this.form.get('tags').setValue(currentSelection);
 	}
 
-	onCoordinatesChanges(coord) {}
-
-	onGeometrySend(coord) {
-		//tstodo
-		console.log(coord, 'on geometry send');
+	onCoordinatesChanges($event) {
+		const {
+			loc: { coordinates }
+		} = this.locationFormDirective.getValue();
+		const [lat, lng] = coordinates;
+		this.leafletTemplate.addMarker(new LatLng(lat, lng));
 	}
 
-	onMapClicked($event) {}
+	onMapClicked(latlng: LatLng) {
+		const { lat, lng } = latlng;
+		const location = this.locationFormDirective.getValue();
+
+		this.locationFormDirective.setValue({
+			...location,
+			country: '',
+			loc: {
+				type: 'Point',
+				coordinates: [lat, lng]
+			}
+		});
+	}
 }
