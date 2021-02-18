@@ -4,7 +4,8 @@ import {
 	UseGuards,
 	Query,
 	HttpStatus,
-	Post
+	Post,
+	Body
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
@@ -16,7 +17,7 @@ import { ParseJsonPipe } from '../shared';
 import { IPagination } from '../core';
 import { IAccountingTemplate } from '@gauzy/contracts';
 
-@ApiTags('AccountingTemplate')
+@ApiTags('Accounting Template')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class AccountingTemplateController extends CrudController<AccountingTemplate> {
@@ -49,7 +50,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get('findTemplate')
+	@Get('template')
 	async findAccountingTemplate(
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IAccountingTemplate> {
@@ -65,8 +66,8 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 		description: 'text converted to html',
 		type: AccountingTemplate
 	})
-	@Post('templatePreview')
-	async generateTemplatePreview(@Query('data') data: any): Promise<any> {
-		return this.accountingTemplateService.generatePreview(data);
+	@Post('template/preview')
+	async generateTemplatePreview(@Body() input: any): Promise<any> {
+		return this.accountingTemplateService.generatePreview(input);
 	}
 }
