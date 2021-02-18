@@ -34,10 +34,10 @@ import {
 	InvoiceCreateCommand,
 	InvoiceDeleteCommand,
 	InvoiceGenerateLinkCommand,
+	InvoiceSendEmailCommand,
 	InvoiceUpdateCommand
 } from './commands';
 import { DeleteResult } from 'typeorm';
-import { InvoiceSendEmailCommand } from './commands/invoice.send.email.command';
 
 @ApiTags('Invoice')
 @Controller()
@@ -120,7 +120,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Post()
-	async createInvoice(@Body() entity: IInvoiceCreateInput): Promise<Invoice> {
+	async create(@Body() entity: IInvoiceCreateInput): Promise<Invoice> {
 		return this.commandBus.execute(new InvoiceCreateCommand(entity));
 	}
 
@@ -142,7 +142,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Put(':id')
-	async updateInvoice(
+	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IInvoiceUpdateInput
 	): Promise<Invoice> {
@@ -221,5 +221,24 @@ export class InvoiceController extends CrudController<Invoice> {
 		@Param('id', UUIDValidationPipe) id: string
 	): Promise<DeleteResult> {
 		return this.commandBus.execute(new InvoiceDeleteCommand(id));
+	}
+
+	@ApiOperation({ summary: 'Download Invoice' })
+	@ApiResponse({
+		status: HttpStatus.NO_CONTENT,
+		description: 'The invoice has been successfully downloaded'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Invoice not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Post('download/:id')
+	async downloadInvoice(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Body() body
+	): Promise<any> {
+		console.log(body);
+		console.log(id);
 	}
 }

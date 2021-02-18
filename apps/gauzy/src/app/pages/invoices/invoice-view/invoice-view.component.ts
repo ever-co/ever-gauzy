@@ -1,21 +1,24 @@
 import { Component, OnInit, OnDestroy, Input } from '@angular/core';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
-import { InvoicesService } from '../../../@core/services/invoices.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IInvoice, InvoiceTypeEnum, IUser } from '@gauzy/contracts';
+import { filter } from 'rxjs/operators';
 import * as pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { generatePdf } from '../../../@shared/invoice/generate-pdf';
-import { EmployeesService } from '../../../@core/services';
-import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
-import { TasksService } from '../../../@core/services/tasks.service';
-import { ProductService } from '../../../@core/services/product.service';
-import { ExpensesService } from '../../../@core/services/expenses.service';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from '../../../@core/services/store.service';
-import { filter } from 'rxjs/operators';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import {
+	EmployeesService,
+	ExpensesService,
+	InvoicesService,
+	OrganizationProjectsService,
+	ProductService,
+	Store,
+	TasksService,
+	ToastrService
+} from '../../../@core/services';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-invoice-view',
@@ -32,16 +35,16 @@ export class InvoiceViewComponent
 	@Input() isEstimate: boolean;
 
 	constructor(
-		readonly translateService: TranslateService,
-		private route: ActivatedRoute,
-		private invoicesService: InvoicesService,
-		private toastrService: ToastrService,
-		private employeeService: EmployeesService,
-		private projectService: OrganizationProjectsService,
-		private taskService: TasksService,
-		private productService: ProductService,
-		private expensesService: ExpensesService,
-		private store: Store
+		public readonly translateService: TranslateService,
+		private readonly route: ActivatedRoute,
+		private readonly invoicesService: InvoicesService,
+		private readonly toastrService: ToastrService,
+		private readonly employeeService: EmployeesService,
+		private readonly projectService: OrganizationProjectsService,
+		private readonly taskService: TasksService,
+		private readonly productService: ProductService,
+		private readonly expensesService: ExpensesService,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}

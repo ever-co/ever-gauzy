@@ -33,11 +33,8 @@ import {
 	ICurrency,
 	IInvoiceItemCreateInput
 } from '@gauzy/contracts';
-import { InvoicesService } from '../../@core/services/invoices.service';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { first, map, filter, tap } from 'rxjs/operators';
-import { Store } from '../../@core/services/store.service';
-import { InvoiceItemService } from '../../@core/services/invoice-item.service';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import { InvoicePaidComponent } from './table-components/invoice-paid.component';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
@@ -45,15 +42,20 @@ import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mut
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
-import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-estimate-history.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
-import { ToastrService } from '../../@core/services/toastr.service';
 import { PublicLinkComponent } from './public-link/public-link.component';
 import { generateCsv } from '../../@shared/invoice/generate-csv';
+import { Store } from '../../@core/services/store.service';
+import {
+	InvoiceEstimateHistoryService,
+	InvoiceItemService,
+	InvoicesService,
+	OrganizationContactService,
+	ToastrService
+} from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -104,18 +106,18 @@ export class InvoicesComponent
 	public popups: QueryList<NbPopoverDirective>;
 
 	constructor(
-		private fb: FormBuilder,
+		private readonly fb: FormBuilder,
 		readonly translateService: TranslateService,
-		private store: Store,
-		private dialogService: NbDialogService,
-		private toastrService: ToastrService,
-		private invoicesService: InvoicesService,
-		private invoiceItemService: InvoiceItemService,
-		private router: Router,
-		private nbMenuService: NbMenuService,
-		private organizationContactService: OrganizationContactService,
-		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
-		private ngxPermissionsService: NgxPermissionsService
+		private readonly store: Store,
+		private readonly dialogService: NbDialogService,
+		private readonly toastrService: ToastrService,
+		private readonly invoicesService: InvoicesService,
+		private readonly invoiceItemService: InvoiceItemService,
+		private readonly router: Router,
+		private readonly nbMenuService: NbMenuService,
+		private readonly organizationContactService: OrganizationContactService,
+		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
+		private readonly ngxPermissionsService: NgxPermissionsService
 	) {
 		super(translateService);
 		this.setView();
@@ -641,6 +643,8 @@ export class InvoicesComponent
 
 	async addComment() {
 		const { comment } = this.form.value;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 
 		if (comment) {
 			await this.invoiceEstimateHistoryService.add({
@@ -650,13 +654,11 @@ export class InvoicesComponent
 				user: this.store.user,
 				userId: this.store.userId,
 				organization: this.organization,
-				organizationId: this.organization.id,
-				tenantId: this.organization.tenantId
+				organizationId,
+				tenantId
 			});
 
 			const selectedInvoiceId = this.selectedInvoice.id;
-
-			const { tenantId } = this.store.user;
 			const { items } = await this.invoicesService.getAll(
 				[
 					'invoiceItems',
@@ -674,11 +676,7 @@ export class InvoicesComponent
 					'historyRecords',
 					'historyRecords.user'
 				],
-				{
-					organizationId: this.organization.id,
-					tenantId,
-					id: selectedInvoiceId
-				}
+				{ organizationId, tenantId, id: selectedInvoiceId }
 			);
 
 			this.selectInvoice({
@@ -856,6 +854,7 @@ export class InvoicesComponent
 				renderComponent: StatusBadgeComponent,
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
+					console.log(cell.toUpperCase());
 					let badgeClass;
 					if (cell) {
 						badgeClass = [
