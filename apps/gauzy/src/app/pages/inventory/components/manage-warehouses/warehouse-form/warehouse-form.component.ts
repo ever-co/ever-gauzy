@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { ITag, IWarehouse } from '@gauzy/contracts';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,7 +21,7 @@ import { Location } from '@angular/common';
 })
 export class WarehouseFormComponent
 	extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit, AfterViewInit {
 	form: FormGroup;
 	tags: ITag[] = [];
 
@@ -47,6 +47,11 @@ export class WarehouseFormComponent
 		private location: Location
 	) {
 		super(translateService);
+	}
+
+	ngAfterViewInit(): void {
+		// fix for google map loading partially
+		setTimeout(() => window.dispatchEvent(new Event('resize')), 1500);
 	}
 
 	ngOnInit(): void {
