@@ -1,7 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
-import { progressStatus } from '@gauzy/common';
+import { progressStatus } from '@gauzy/common-angular';
 import { TimeLogsLable } from 'apps/gauzy/src/app/static-data/timesheet';
 import { TimesheetService } from '../../timesheet.service';
 import { ViewTimeLogModalComponent } from '../../view-time-log-modal/view-time-log-modal/view-time-log-modal.component';

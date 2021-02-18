@@ -36,7 +36,6 @@ import { EmployeeJobPostModule } from './employee-job';
 import { EmployeeAppointmentModule } from './employee-appointment';
 import { CoreModule } from './core';
 import { AuthModule } from './auth/auth.module';
-import { SeedDataService } from './core/seeds/seed-data.service';
 import { UserOrganizationModule } from './user-organization/user-organization.module';
 import { EmployeeStatisticsModule } from './employee-statistics/employee-statistics.module';
 import { OrganizationDepartmentModule } from './organization-department/organization-department.module';
@@ -62,8 +61,8 @@ import { TenantModule } from './tenant/tenant.module';
 import { EmailTemplateModule } from './email-template/email-template.module';
 import { EquipmentModule } from './equipment/equipment.module';
 import { EmployeeLevelModule } from './organization_employee-level/organization-employee-level.module';
-import { ExportAllModule } from './export_import/export-all.module';
-import { ImportAllModule } from './export_import/import/import-all.module';
+import { ExportAllModule } from './export-import/export/export-all.module';
+import { ImportAllModule } from './export-import/import/import-all.module';
 import { TaskModule } from './tasks/task.module';
 import { EquipmentSharingModule } from './equipment-sharing/equipment-sharing.module';
 import { OrganizationEmploymentTypeModule } from './organization-employment-type/organization-employment-type.module';
@@ -128,6 +127,7 @@ import { FeatureModule } from './feature/feature.module';
 import { ImageAssetModule } from './image-asset/image-asset.module';
 import { resolveServeStaticPath } from './helper';
 import { AccountingTemplateModule } from './accounting-template/accounting-template.module';
+import { SeederModule } from './core/seeds/seeder.module';
 
 const { unleashConfig } = environment;
 if (unleashConfig.url) {
@@ -304,10 +304,11 @@ if (process.env.DB_TYPE === 'postgres') {
 		GoalTemplateModule,
 		KeyresultTemplateModule,
 		GoalKpiTemplateModule,
-		AccountingTemplateModule
+		AccountingTemplateModule,
+		SeederModule
 	],
 	controllers: [AppController],
-	providers: [AppService, SeedDataService],
+	providers: [AppService],
 	exports: []
 })
 export class AppModule {

@@ -1,24 +1,18 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import { ExportAllService } from '../../@core/services/exportAll.service';
+import { Component, OnInit } from '@angular/core';
 import { saveAs } from 'file-saver';
 import { Router } from '@angular/router';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ExportAllService } from '../../@core/services/exportAll.service';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-import-export',
 	templateUrl: './import-export.html'
 })
-export class ImportExportComponent implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
+export class ImportExportComponent implements OnInit {
 	constructor(private exportAll: ExportAllService, private router: Router) {}
 
 	ngOnInit() {}
-
-	ngOnDestroy(): void {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
 
 	importPage() {
 		this.router.navigate(['/pages/settings/import-export/import']);
@@ -31,7 +25,7 @@ export class ImportExportComponent implements OnInit, OnDestroy {
 	onDownloadTemplates() {
 		this.exportAll
 			.downloadTemplates()
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((data) => saveAs(data, `template.zip`));
 	}
 }

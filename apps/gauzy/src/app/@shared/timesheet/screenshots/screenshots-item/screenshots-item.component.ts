@@ -10,7 +10,7 @@ import { OrganizationPermissionsEnum, ITimeSlot } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TimesheetService } from '../../timesheet.service';
 import { GalleryItem } from '../../../gallery/gallery.directive';
-import { toLocal } from '@gauzy/common';
+import { toLocal } from '@gauzy/common-angular';
 import { ViewScreenshotsModalComponent } from '../view-screenshots-modal/view-screenshots-modal.component';
 
 @Component({

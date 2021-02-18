@@ -91,7 +91,36 @@ describe('Invoices test', () => {
 		invoicesPage.waitMessageToHide();
 		invoicesPage.verifyDraftBadgeClass();
 	});
+	it('Should be able to search invoice', () => {
+		invoicesPage.verifyTabButtonVisible();
+		invoicesPage.clickTabButton(1);
+		invoicesPage.veirifyEstimateNumberInputVisible();
+		invoicesPage.enterEstimateNumberInputData(
+			InvoicesPageData.invoiceNumber
+		);
+		invoicesPage.verifyCurrencuDropdownVisible();
+		invoicesPage.verifyEstimateDateInput();
+		invoicesPage.verifyEstimateDueDateInput();
+		invoicesPage.verifyTotalValueInputVisible();
+		invoicesPage.verifyCurrencuDropdownVisible();
+		invoicesPage.verifyStatusInputVisible();
+		invoicesPage.searchButtonVisible();
+		invoicesPage.clickSearchButton();
+		invoicesPage.resetButtonVisible();
+		invoicesPage.clickResetButton();
+		invoicesPage.clickSearchButton();
+		invoicesPage.verifyDraftBadgeClass();
+		invoicesPage.enterEstimateNumberInputData(
+			InvoicesPageData.secondInvoiceNumber
+		);
+		invoicesPage.clickSearchButton();
+		invoicesPage.clickResetButton();
+		invoicesPage.verifyDraftBadgeClass();
+		invoicesPage.clickTabButton(2);
+		invoicesPage.verifyDraftBadgeClass();
+	});
 	it('Should be able to edit invoice', () => {
+		invoicesPage.clickTabButton(0);
 		invoicesPage.selectTableRow(0);
 		invoicesPage.editButtonVisible();
 		invoicesPage.clickEditButton(0);

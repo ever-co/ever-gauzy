@@ -3,8 +3,10 @@
 // Copyright (c) 2019 Alexi Taylor
 
 import { IPluginConfig } from '@gauzy/common';
-import { setConfig } from '@gauzy/config';
-import { SeedDataService } from './../core/seeds/seed-data.service';
+import { NestFactory } from '@nestjs/core';
+import { registerPluginConfig } from './../../bootstrap';
+import { SeedDataService } from './seed-data.service';
+import { SeederModule } from './seeder.module';
 
 /**
  * WARNING: Running this file will DELETE all data in your database
@@ -13,17 +15,25 @@ import { SeedDataService } from './../core/seeds/seed-data.service';
  * BE CAREFUL running this file in production env. It's possible to delete all production data.
  * SeedData checks if environment is in production or not by checking src/environments/environment.ts file configs.
  * If environment.production config is set to true, then the seeding process will only generate default roles and 2 default users.
- * */
-export async function seedDefault(
-	devConfig: Partial<IPluginConfig>
-): Promise<void> {
-	if (Object.keys(devConfig).length > 0) {
-		setConfig(devConfig);
-	}
+ *
+ */
+export async function seedDefault(devConfig: Partial<IPluginConfig>) {
+	await registerPluginConfig(devConfig);
 
-	(async () => {
-		const seedDataService = new SeedDataService();
-		await seedDataService.runDefaultSeed();
-		process.exit(0);
-	})();
+	NestFactory.createApplicationContext(SeederModule.forPluings(), {
+		logger: false
+	})
+		.then((app) => {
+			const seeder = app.get(SeedDataService);
+			seeder
+				.runDefaultSeed()
+				.then(() => {})
+				.catch((error) => {
+					throw error;
+				})
+				.finally(() => app.close());
+		})
+		.catch((error) => {
+			throw error;
+		});
 }

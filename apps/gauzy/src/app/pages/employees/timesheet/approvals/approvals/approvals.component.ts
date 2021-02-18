@@ -7,7 +7,7 @@ import {
 	TimesheetStatus,
 	IGetTimesheetInput
 } from '@gauzy/contracts';
-import { toUTC } from '@gauzy/common';
+import { toUTC } from '@gauzy/common-angular';
 import {
 	NbCheckboxComponent,
 	NbDialogRef,
