@@ -1,4 +1,4 @@
-import { CrudController, IPagination } from '../core';
+import { CrudController, IPagination, RequestContext } from '../core';
 import { Invoice } from './invoice.entity';
 import { InvoiceService } from './invoice.service';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -35,7 +35,8 @@ import {
 	InvoiceDeleteCommand,
 	InvoiceGenerateLinkCommand,
 	InvoiceSendEmailCommand,
-	InvoiceUpdateCommand
+	InvoiceUpdateCommand,
+	InvoiceGeneratePdfCommand
 } from './commands';
 import { DeleteResult } from 'typeorm';
 
@@ -233,12 +234,14 @@ export class InvoiceController extends CrudController<Invoice> {
 		description: 'Invoice not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Post('download/:id')
+	@Get('download/:id')
 	async downloadInvoice(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() body
+		@I18nLang() locale: LanguagesEnum
 	): Promise<any> {
-		console.log(body);
-		console.log(id);
+		console.log(RequestContext.currentUser());
+		return this.commandBus.execute(
+			new InvoiceGeneratePdfCommand(id, locale)
+		);
 	}
 }

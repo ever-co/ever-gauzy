@@ -89,7 +89,14 @@ export class InvoiceViewComponent
 		this.invoice = invoice;
 	}
 
+	async downloadInvoice() {
+		const { id: invoiceId } = this.invoice;
+		this.invoicesService.downloadInvoicePdf(invoiceId);
+	}
+
 	async download() {
+		this.downloadInvoice();
+
 		pdfMake.vfs = pdfFonts.pdfMake.vfs;
 		let docDefinition;
 		let service;
@@ -120,7 +127,6 @@ export class InvoiceViewComponent
 			this.invoice.toContact,
 			service
 		);
-
 		pdfMake
 			.createPdf(docDefinition)
 			.download(

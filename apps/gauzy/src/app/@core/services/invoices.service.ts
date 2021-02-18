@@ -136,4 +136,11 @@ export class InvoicesService {
 	changeValue(message: boolean) {
 		this.source.next(message);
 	}
+
+	downloadInvoicePdf(invoiceId: string) {
+		return this.http
+			.get<IInvoice>(`${API_PREFIX}/invoices/download/${invoiceId}`)
+			.pipe(first())
+			.toPromise();
+	}
 }

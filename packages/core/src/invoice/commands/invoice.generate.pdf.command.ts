@@ -5,6 +5,6 @@ export class InvoiceGeneratePdfCommand implements ICommand {
 
 	constructor(
 		public readonly invoiceId: string,
-		public readonly isEstimate: any
+		public readonly locale: string
 	) {}
 }

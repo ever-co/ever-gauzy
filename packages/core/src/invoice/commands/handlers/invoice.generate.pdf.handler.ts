@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InvoiceService } from '../../invoice.service';
+import { InvoiceService } from './../../../invoice';
 import { InvoiceGeneratePdfCommand } from './../invoice.generate.pdf.command';
 
 @CommandHandler(InvoiceGeneratePdfCommand)
@@ -8,10 +8,7 @@ export class InvoiceGeneratePdfHandler
 	constructor(private readonly invoiceService: InvoiceService) {}
 
 	public async execute(command: InvoiceGeneratePdfCommand): Promise<any> {
-		const { invoiceId, isEstimate } = command;
-		return this.invoiceService.generateLink(
-			invoiceId,
-			isEstimate.isEstimate
-		);
+		const { invoiceId, locale } = command;
+		return await this.invoiceService.generatePdf(invoiceId, locale);
 	}
 }

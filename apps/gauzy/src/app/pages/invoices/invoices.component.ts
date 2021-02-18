@@ -854,7 +854,6 @@ export class InvoicesComponent
 				renderComponent: StatusBadgeComponent,
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
-					console.log(cell.toUpperCase());
 					let badgeClass;
 					if (cell) {
 						badgeClass = [
