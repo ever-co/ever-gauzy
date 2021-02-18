@@ -88,10 +88,6 @@ export class WarehousesTableComponent
 					type: 'custom',
 					renderComponent: ItemImgTagsComponent
 				},
-				description: {
-					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
-					type: 'string'
-				},
 				email: {
 					title: this.getTranslation('INVENTORY_PAGE.EMAIL'),
 					type: 'string'
@@ -110,6 +106,10 @@ export class WarehousesTableComponent
 							'INVENTORY_PAGE.ADDRESS'
 						)} 2: ${contact?.address2 || '-'}`;
 					}
+				},
+				description: {
+					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
+					type: 'string'
 				},
 				active: {
 					title: this.getTranslation('INVENTORY_PAGE.ACTIVE'),
