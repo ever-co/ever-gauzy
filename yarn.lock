@@ -2119,9 +2119,6 @@
     "@fullcalendar/daygrid" "~5.5.0"
     tslib "^2.0.3"
 
-"@gauzy/xplat-scss@file:libs/xplat/scss/src":
-  version "1.0.0"
-
 "@godaddy/terminus@^4.5.0":
   version "4.6.0"
   resolved "https://registry.yarnpkg.com/@godaddy/terminus/-/terminus-4.6.0.tgz#1e746cf1715cf39866fd4a25569deb88774dda27"
@@ -3737,14 +3734,14 @@
     enhanced-resolve "5.6.0"
     webpack-sources "2.2.0"
 
-"@ngx-translate/core@^13.0.0", "@ngx-translate/core@~13.0.0":
+"@ngx-translate/core@^13.0.0":
   version "13.0.0"
   resolved "https://registry.yarnpkg.com/@ngx-translate/core/-/core-13.0.0.tgz#60547cb8a0845a2a0abfde6b0bf5ec6516a63fd6"
   integrity sha512-+tzEp8wlqEnw0Gc7jtVRAJ6RteUjXw6JJR4O65KlnxOmJrCGPI0xjV/lKRnQeU0w4i96PQs/jtpL921Wrb7PWg==
   dependencies:
     tslib "^2.0.0"
 
-"@ngx-translate/http-loader@^6.0.0", "@ngx-translate/http-loader@~6.0.0":
+"@ngx-translate/http-loader@^6.0.0":
   version "6.0.0"
   resolved "https://registry.yarnpkg.com/@ngx-translate/http-loader/-/http-loader-6.0.0.tgz#041393ab5753f50ecf64262d624703046b8c7570"
   integrity sha512-LCekn6qCbeXWlhESCxU1rAbZz33WzDG0lI7Ig0pYC1o5YxJWrkU9y3Y4tNi+jakQ7R6YhTR2D3ox6APxDtA0wA==
@@ -32872,7 +32869,7 @@ zip-stream@^2.1.2:
     compress-commons "^2.1.1"
     readable-stream "^3.4.0"
 
-zone.js@^0.10.2, zone.js@~0.10.3:
+zone.js@~0.10.3:
   version "0.10.3"
   resolved "https://registry.yarnpkg.com/zone.js/-/zone.js-0.10.3.tgz#3e5e4da03c607c9dcd92e37dd35687a14a140c16"
   integrity sha512-LXVLVEq0NNOqK/fLJo3d0kfzd4sxwn2/h67/02pjCjfKDxgx1i9QqpvtHD8CrBnSSwMw5+dy11O7FRX5mkO7Cg==

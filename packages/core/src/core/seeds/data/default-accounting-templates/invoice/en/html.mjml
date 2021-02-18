@@ -1,0 +1,89 @@
+<mjml>
+	<mj-body background-color="#fff">
+		<mj-section>
+			<mj-column>
+				<mj-text font-weight="bold" padding="0 0 5px 0">
+					FROM:
+				</mj-text>
+				<mj-text padding="0"> Ever Technologies LTD </mj-text>
+				<mj-spacer height="40px"></mj-spacer>
+				<mj-text font-weight="bold" padding="0 0 5px 0"> TO: </mj-text>
+				<mj-text padding="0"> Sample Client </mj-text>
+			</mj-column>
+			<mj-column padding-left="40%">
+				<mj-text
+					font-size="20px"
+					font-weight="bold"
+					padding="0 0 5px 0"
+				>
+					Invoice Number: {{invoiceNumber}}
+				</mj-text>
+				<mj-spacer height="40px"></mj-spacer>
+				<mj-text padding="0 0 5px 0">
+					<span style="font-weight: bold">Invoice Date:</span>
+					<span style="padding-left: 20px">2021-02-17</span>
+				</mj-text>
+				<mj-text padding="0 0 5px 0">
+					<span style="font-weight: bold">Due Date:</span>
+					<span style="padding-left: 40px">2021-03-17</span>
+				</mj-text>
+			</mj-column>
+		</mj-section>
+		<mj-section>
+			<mj-column>
+				<mj-table>
+					<tr
+						style="
+							border-bottom: 1px solid #ecedee;
+							text-align: left;
+							padding: 15px 0;
+						"
+					>
+						<th>Item</th>
+						<th>Description</th>
+						<th>Quantity</th>
+						<th>Price</th>
+						<th>Total Value</th>
+					</tr>
+					<tr style="border-bottom: 1px solid #ecedee">
+						<td>Item 1</td>
+						<td>Desc 1</td>
+						<td>1</td>
+						<td>10</td>
+						<td>10 BGN</td>
+					</tr>
+					<tr style="border-bottom: 1px solid #ecedee">
+						<td>Item 2</td>
+						<td>Desc 2</td>
+						<td>2</td>
+						<td>20</td>
+						<td>40 BGN</td>
+					</tr>
+					<tr>
+						<td>Item 3</td>
+						<td>Desc 3</td>
+						<td>3</td>
+						<td>30</td>
+						<td>90 BGN</td>
+					</tr>
+				</mj-table>
+			</mj-column>
+		</mj-section>
+		<mj-section>
+			<mj-column padding-left="70%">
+				<mj-text padding="0 0 5px 0">
+					<span style="font-weight: bold">Tax:</span>
+					<span style="padding-left: 65%">20%</span>
+				</mj-text>
+				<mj-text padding="0 0 5px 0">
+					<span style="font-weight: bold">Discount Value:</span>
+					<span style="padding-left: 30%">0%</span>
+				</mj-text>
+				<mj-text padding="0 0 5px 0">
+					<span style="font-weight: bold">Total Value:</span>
+					<span style="padding-left: 25%">BGN 128</span>
+				</mj-text>
+			</mj-column>
+		</mj-section>
+	</mj-body>
+</mjml>

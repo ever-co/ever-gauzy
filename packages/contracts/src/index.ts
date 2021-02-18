@@ -99,6 +99,7 @@ export * from './upwork.model';
 export * from './user-organization.model';
 export * from './user.model';
 export * from './wakatime.model';
+export * from './accounting-template.model';
 
 export { IRole, RolesEnum } from './role.model';
 export { IBaseEntityModel as BaseEntityModel } from './base-entity.model';
