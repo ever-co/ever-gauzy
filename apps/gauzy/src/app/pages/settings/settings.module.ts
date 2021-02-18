@@ -30,11 +30,13 @@ import { BackNavigationModule } from '../../@shared/back-navigation/back-navigat
 import { FileStorageComponent } from './file-storage/file-storage.component';
 import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { AccountingTemplatesModule } from '../accounting-templates/accounting-templates.module';
 
 @NgModule({
 	imports: [
 		SettingsRoutingModule,
 		EmailTemplatesModule,
+		AccountingTemplatesModule,
 		ThemeModule,
 		NbCardModule,
 		UserFormsModule,

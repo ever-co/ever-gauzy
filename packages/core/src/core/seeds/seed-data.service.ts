@@ -297,6 +297,7 @@ import {
 	Tenant,
 	User
 } from './../../core/entities/internal';
+import { createDefaultAccountingTemplates } from 'accounting-template/accounting-template.seed';
 
 @Injectable()
 export class SeedDataService {
@@ -572,6 +573,11 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Default Email Templates',
 			createDefaultEmailTemplates(this.connection)
+		);
+
+		await this.tryExecute(
+			'Default Accounting Templates',
+			createDefaultAccountingTemplates(this.connection)
 		);
 
 		await this.tryExecute(

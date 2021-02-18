@@ -9,6 +9,7 @@ import { FileStorageComponent } from './file-storage/file-storage.component';
 import { NgxPermissionsGuard } from 'ngx-permissions';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
+import { AccountingTemplatesComponent } from '../accounting-templates/accounting-templates.component';
 
 const routes: Routes = [
 	{
@@ -44,6 +45,17 @@ const routes: Routes = [
 				data: {
 					permissions: {
 						only: [PermissionsEnum.VIEW_ALL_EMAIL_TEMPLATES],
+						redirectTo: '/pages/settings'
+					}
+				}
+			},
+			{
+				path: 'accounting-templates',
+				component: AccountingTemplatesComponent,
+				canActivate: [NgxPermissionsGuard],
+				data: {
+					permissions: {
+						only: [PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES],
 						redirectTo: '/pages/settings'
 					}
 				}

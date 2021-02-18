@@ -89,7 +89,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PRODUCT_TYPES_VIEW,
 			PermissionsEnum.ORG_PRODUCT_TYPES_EDIT,
 			PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW,
-			PermissionsEnum.ORG_PRODUCT_CATEOGIES_EDIT
+			PermissionsEnum.ORG_PRODUCT_CATEOGIES_EDIT,
+			PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES
 		]
 	},
 	{
@@ -177,7 +178,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PRODUCT_TYPES_VIEW,
 			PermissionsEnum.ORG_PRODUCT_TYPES_EDIT,
 			PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW,
-			PermissionsEnum.ORG_PRODUCT_CATEOGIES_EDIT
+			PermissionsEnum.ORG_PRODUCT_CATEOGIES_EDIT,
+			PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES
 		]
 	},
 	{
