@@ -1,4 +1,5 @@
 import {
+	AccountingTemplate,
 	Activity,
 	AppointmentEmployee,
 	ApprovalPolicy,
@@ -119,6 +120,7 @@ import {
 } from './internal';
 
 export const coreEntities = [
+	AccountingTemplate,
 	Activity,
 	AppointmentEmployee,
 	ApprovalPolicy,

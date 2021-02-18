@@ -1,0 +1,9 @@
+<mjml>
+	<mj-body background-color="#fff">
+		<mj-section>
+			<mj-column>
+				<mj-text> This is an estimate </mj-text>
+			</mj-column>
+		</mj-section>
+	</mj-body>
+</mjml>
