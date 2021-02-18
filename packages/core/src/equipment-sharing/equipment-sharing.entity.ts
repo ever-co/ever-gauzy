@@ -93,10 +93,7 @@ export class EquipmentSharing
 	equipmentSharingPolicy: EquipmentSharingPolicy;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId(
-		(equipmentSharingPolicy: EquipmentSharing) =>
-			equipmentSharingPolicy.equipmentSharingPolicy
-	)
+	@RelationId((policy: EquipmentSharing) => policy.equipmentSharingPolicy)
 	@IsString()
 	@Column({ nullable: true })
 	equipmentSharingPolicyId: string;

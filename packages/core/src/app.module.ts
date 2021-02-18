@@ -36,6 +36,7 @@ import { EmployeeJobPostModule } from './employee-job';
 import { EmployeeAppointmentModule } from './employee-appointment';
 import { CoreModule } from './core';
 import { AuthModule } from './auth/auth.module';
+import { SeedDataService } from './core/seeds/seed-data.service';
 import { UserOrganizationModule } from './user-organization/user-organization.module';
 import { EmployeeStatisticsModule } from './employee-statistics/employee-statistics.module';
 import { OrganizationDepartmentModule } from './organization-department/organization-department.module';
@@ -128,6 +129,7 @@ import { ImageAssetModule } from './image-asset/image-asset.module';
 import { resolveServeStaticPath } from './helper';
 import { AccountingTemplateModule } from './accounting-template/accounting-template.module';
 import { SeederModule } from './core/seeds/seeder.module';
+import { WarehouseModule } from 'warehouse/warehouse.module';
 
 const { unleashConfig } = environment;
 if (unleashConfig.url) {
@@ -305,10 +307,11 @@ if (process.env.DB_TYPE === 'postgres') {
 		KeyresultTemplateModule,
 		GoalKpiTemplateModule,
 		AccountingTemplateModule,
-		SeederModule
+		SeederModule,
+		WarehouseModule
 	],
 	controllers: [AppController],
-	providers: [AppService],
+	providers: [AppService, SeedDataService],
 	exports: []
 })
 export class AppModule {

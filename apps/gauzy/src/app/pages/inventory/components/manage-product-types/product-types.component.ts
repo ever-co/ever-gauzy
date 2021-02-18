@@ -3,8 +3,7 @@ import {
 	IOrganization,
 	IProductTypeTranslated,
 	LanguagesEnum,
-	ComponentLayoutStyleEnum,
-	PermissionsEnum
+	ComponentLayoutStyleEnum
 } from '@gauzy/contracts';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
@@ -20,7 +19,6 @@ import { ComponentEnum } from '../../../../@core/constants/layout.constants';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../../../@core/services/toastr.service';
-import { NgxPermissionsService } from 'ngx-permissions';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-product-type',
@@ -39,7 +37,6 @@ export class ProductTypesComponent
 	disableButton = true;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	editTypesAllowed = false;
 
 	productTypesTable: Ng2SmartTableComponent;
 	@ViewChild('productTypesTable') set content(
@@ -56,7 +53,6 @@ export class ProductTypesComponent
 		private dialogService: NbDialogService,
 		private productTypeService: ProductTypeService,
 		private toastrService: ToastrService,
-		private ngxPermissionsService: NgxPermissionsService,
 		private router: Router,
 		private store: Store
 	) {
@@ -65,7 +61,6 @@ export class ProductTypesComponent
 	}
 
 	ngOnInit(): void {
-		this.setPermissions();
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
 			.subscribe((org) => {
@@ -240,12 +235,6 @@ export class ProductTypesComponent
 			this.productTypesTable.grid.dataSet['willSelect'] = 'false';
 			this.productTypesTable.grid.dataSet.deselectAll();
 		}
-	}
-
-	async setPermissions() {
-		this.editTypesAllowed = await this.ngxPermissionsService.hasPermission(
-			PermissionsEnum.ORG_PRODUCT_TYPES_EDIT
-		);
 	}
 
 	ngOnDestroy() {}

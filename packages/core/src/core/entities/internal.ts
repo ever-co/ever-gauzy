@@ -125,3 +125,4 @@ export * from '../../timesheet/time-slot.entity';
 export * from '../../timesheet/timesheet.entity';
 export * from '../../user-organization/user-organization.entity';
 export * from '../../user/user.entity';
+export * from '../../warehouse/warehouse.entity';

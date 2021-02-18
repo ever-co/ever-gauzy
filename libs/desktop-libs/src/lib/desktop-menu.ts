@@ -3,13 +3,7 @@ import { LocalStore } from './desktop-store';
 import { TimerData } from './desktop-timer-activity';
 import { createSettingsWindow } from '../../../desktop-window/src';
 export class AppMenu {
-	constructor(
-		timeTrackerWindow,
-		settingsWindow,
-		updaterWindow,
-		knex,
-		windowPath
-	) {
+	constructor(timeTrackerWindow, settingsWindow, updaterWindow, knex) {
 		const menu = Menu.buildFromTemplate([
 			{
 				label: 'Gauzy',
@@ -25,8 +19,7 @@ export class AppMenu {
 							const config = LocalStore.getStore('configs');
 							if (!settingsWindow) {
 								settingsWindow = createSettingsWindow(
-									settingsWindow,
-									windowPath.timeTrackerUi
+									settingsWindow
 								);
 							}
 							settingsWindow.show();
@@ -86,8 +79,7 @@ export class AppMenu {
 							const config = LocalStore.getStore('configs');
 							if (!settingsWindow) {
 								settingsWindow = createSettingsWindow(
-									settingsWindow,
-									windowPath.timeTrackerUi
+									settingsWindow
 								);
 							}
 							settingsWindow.show();

@@ -5,7 +5,6 @@ import {
 	OnModuleInit
 } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import * as chalk from 'chalk';
 import { ConfigService } from '@gauzy/config';
 import { IPluginConfig } from '@gauzy/common';
 import { PluginLifecycleMethods } from './extension-plugin';
@@ -18,13 +17,10 @@ export class PluginModule implements OnModuleInit, OnModuleDestroy {
 			module: PluginModule,
 			providers: [],
 			imports: [...options.plugins]
-		} as DynamicModule;
+		};
 	}
 
-	constructor(
-		private readonly moduleRef: ModuleRef,
-		private readonly configService: ConfigService
-	) {}
+	constructor(private readonly moduleRef: ModuleRef) {}
 
 	async onModuleInit() {
 		await this.bootstrapPluginLifecycleMethods(
@@ -32,27 +28,21 @@ export class PluginModule implements OnModuleInit, OnModuleDestroy {
 			(instance: any) => {
 				const pluginName =
 					instance.constructor.name || '(anonymous plugin)';
-				console.log(chalk.green(`Bootstrapped plugin ${pluginName}`));
+				// Logger.verbose(`Bootstrapped plugin ${pluginName}`);
 			}
 		);
 	}
 
 	async onModuleDestroy() {
-		await this.bootstrapPluginLifecycleMethods(
-			'onPluginDestroy',
-			(instance: any) => {
-				const pluginName =
-					instance.constructor.name || '(anonymous plugin)';
-				console.log(chalk.green(`Destroyed plugin ${pluginName}`));
-			}
-		);
+		await this.bootstrapPluginLifecycleMethods('onPluginDestroy');
 	}
 
 	private async bootstrapPluginLifecycleMethods(
 		lifecycleMethod: keyof PluginLifecycleMethods,
 		closure?: (instance: any) => void
 	): Promise<void> {
-		for (const plugin of getPluginModules(this.configService.plugins)) {
+		const configService = new ConfigService();
+		for (const plugin of getPluginModules(configService.plugins)) {
 			let classInstance: ClassDecorator;
 			try {
 				classInstance = this.moduleRef.get(plugin, { strict: false });

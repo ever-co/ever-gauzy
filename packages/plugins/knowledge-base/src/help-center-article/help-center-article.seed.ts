@@ -1,14 +1,14 @@
 import { Connection } from 'typeorm';
-import * as faker from 'faker';
-import { IHelpCenterArticle, IOrganization } from '@gauzy/contracts';
 import { HelpCenterArticle } from './help-center-article.entity';
+import * as faker from 'faker';
+import { IOrganization } from '@gauzy/contracts';
 
 export const createHelpCenterArticle = async (
 	connection: Connection,
 	organizations: IOrganization[],
 	numberOfHelpCenterArticle
-): Promise<IHelpCenterArticle[]> => {
-	const helpCenterArticles: IHelpCenterArticle[] = [];
+): Promise<HelpCenterArticle[]> => {
+	const helpCenterArticles: HelpCenterArticle[] = [];
 
 	const booleanAry = [true, false];
 	for (let i = 0; i <= numberOfHelpCenterArticle; i++) {

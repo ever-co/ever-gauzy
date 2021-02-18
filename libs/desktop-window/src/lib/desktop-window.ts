@@ -2,9 +2,10 @@ import log from 'electron-log';
 import { screen, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
 import * as url from 'url';
+import { environment } from '../../../../apps/desktop/src/environments/environment';
 import { LocalStore } from '../../../desktop-libs/src';
 
-export function createGauzyWindow(gauzyWindow, serve, config, filePath) {
+export function createGauzyWindow(gauzyWindow, serve) {
 	log.info('createGauzyWindow started');
 
 	let mainWindowSettings: Electron.BrowserWindowConstructorOptions = null;
@@ -21,12 +22,12 @@ export function createGauzyWindow(gauzyWindow, serve, config, filePath) {
 			electron: require(`${__dirname}/../../../../node_modules/electron`)
 		});
 
-		launchPath = `http://localhost:${config.GAUZY_UI_DEFAULT_PORT}`;
+		launchPath = `http://localhost:${environment.GAUZY_UI_DEFAULT_PORT}`;
 
 		gauzyWindow.loadURL(launchPath);
 	} else {
 		launchPath = url.format({
-			pathname: filePath,
+			pathname: path.join(__dirname, '../../../../index.html'),
 			protocol: 'file:',
 			slashes: true
 		});
@@ -82,18 +83,18 @@ function initMainListener() {
 	});
 }
 
-export function getApiBaseUrl(configs, envConfig) {
+export function getApiBaseUrl(configs) {
 	if (configs.serverUrl) return configs.serverUrl;
 	else {
 		return configs.port
 			? `http://localhost:${configs.port}`
-			: `http://localhost:${envConfig.API_DEFAULT_PORT}`;
+			: `http://localhost:${environment.API_DEFAULT_PORT}`;
 	}
 }
 
-export function gauzyPage(filePath) {
+export function gauzyPage() {
 	return url.format({
-		pathname: filePath,
+		pathname: path.join(__dirname, '../../../../index.html'),
 		protocol: 'file:',
 		slashes: true
 	});

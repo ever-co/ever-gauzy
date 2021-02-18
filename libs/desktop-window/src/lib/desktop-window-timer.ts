@@ -2,13 +2,13 @@ import { BrowserWindow } from 'electron';
 import * as path from 'path';
 import * as url from 'url';
 
-export function createTimeTrackerWindow(timeTrackerWindow, filePath) {
+export function createTimeTrackerWindow(timeTrackerWindow) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
 
 	timeTrackerWindow = new BrowserWindow(mainWindowSettings);
 
 	const launchPath = url.format({
-		pathname: filePath,
+		pathname: path.join(__dirname, '../../../../ui/index.html'),
 		protocol: 'file:',
 		slashes: true,
 		hash: '/time-tracker'
@@ -48,18 +48,18 @@ const windowSetting = () => {
 	return mainWindowSettings;
 };
 
-export function loginPage(filePath) {
+export function loginPage() {
 	return url.format({
-		pathname: filePath,
+		pathname: path.join(__dirname, '../../../../index.html'),
 		protocol: 'file:',
 		slashes: true,
 		hash: '/login'
 	});
 }
 
-export function timeTrackerPage(filePath) {
+export function timeTrackerPage() {
 	return url.format({
-		pathname: filePath,
+		pathname: path.join(__dirname, '../../../../ui/index.html'),
 		protocol: 'file:',
 		slashes: true,
 		hash: '/time-tracker'

@@ -73,7 +73,6 @@ import { CurrencyModule } from '../../@shared/currency/currency.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { TranslatableService } from '../../@core/services/translatable.service';
 import { PublicLinkComponent } from './public-link/public-link.component';
-import { InvoicePaymentReceiptMutatonComponent } from './invoice-payments/payment-receipt-mutation/payment-receipt-mutation.component';
 
 @NgModule({
 	imports: [
@@ -153,8 +152,7 @@ import { InvoicePaymentReceiptMutatonComponent } from './invoice-payments/paymen
 		InvoiceExpensesSelectorComponent,
 		InvoicePdfComponent,
 		AddInternalNoteComponent,
-		PublicLinkComponent,
-		InvoicePaymentReceiptMutatonComponent
+		PublicLinkComponent
 	],
 	declarations: [
 		InvoicesComponent,
@@ -182,8 +180,7 @@ import { InvoicePaymentReceiptMutatonComponent } from './invoice-payments/paymen
 		InvoiceExpensesSelectorComponent,
 		InvoicePdfComponent,
 		AddInternalNoteComponent,
-		PublicLinkComponent,
-		InvoicePaymentReceiptMutatonComponent
+		PublicLinkComponent
 	],
 	exports: [InvoiceViewInnerComponent]
 })

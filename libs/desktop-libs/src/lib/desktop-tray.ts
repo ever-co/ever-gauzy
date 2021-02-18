@@ -14,15 +14,7 @@ import {
 
 export class TrayIcon {
 	tray: Tray;
-	constructor(
-		setupWindow,
-		knex,
-		timeTrackerWindow,
-		auth,
-		settingsWindow,
-		config,
-		windowPath
-	) {
+	constructor(setupWindow, knex, timeTrackerWindow, auth, settingsWindow) {
 		const timerHandler = new TimerHandler();
 		let loginPageAlreadyShow = false;
 		const appConfig = LocalStore.getStore('configs');
@@ -48,10 +40,7 @@ export class TrayIcon {
 					const appSetting = LocalStore.getStore('appSetting');
 					const config = LocalStore.getStore('configs');
 					if (!settingsWindow) {
-						settingsWindow = createSettingsWindow(
-							settingsWindow,
-							windowPath.timeTrackerUi
-						);
+						settingsWindow = createSettingsWindow(settingsWindow);
 					}
 					settingsWindow.show();
 					setTimeout(() => {
@@ -70,10 +59,7 @@ export class TrayIcon {
 					const appSetting = LocalStore.getStore('appSetting');
 					const config = LocalStore.getStore('configs');
 					if (!settingsWindow) {
-						settingsWindow = createSettingsWindow(
-							settingsWindow,
-							windowPath.timeTrackerUi
-						);
+						settingsWindow = createSettingsWindow(settingsWindow);
 					}
 					settingsWindow.show();
 					setTimeout(() => {
@@ -103,10 +89,7 @@ export class TrayIcon {
 					const appSetting = LocalStore.getStore('appSetting');
 					const config = LocalStore.getStore('configs');
 					if (!settingsWindow) {
-						settingsWindow = createSettingsWindow(
-							settingsWindow,
-							windowPath.timeTrackerUi
-						);
+						settingsWindow = createSettingsWindow(settingsWindow);
 					}
 					settingsWindow.show();
 					setTimeout(() => {
@@ -125,10 +108,7 @@ export class TrayIcon {
 					const appSetting = LocalStore.getStore('appSetting');
 					const config = LocalStore.getStore('configs');
 					if (!settingsWindow) {
-						settingsWindow = createSettingsWindow(
-							settingsWindow,
-							windowPath.timeTrackerUi
-						);
+						settingsWindow = createSettingsWindow(settingsWindow);
 					}
 					settingsWindow.show();
 					setTimeout(() => {
@@ -241,10 +221,7 @@ export class TrayIcon {
 					const appSetting = LocalStore.getStore('appSetting');
 					const config = LocalStore.getStore('configs');
 					if (!settingsWindow) {
-						settingsWindow = createSettingsWindow(
-							settingsWindow,
-							windowPath.timeTrackerUi
-						);
+						settingsWindow = createSettingsWindow(settingsWindow);
 					}
 					settingsWindow.show();
 					setTimeout(() => {
@@ -265,10 +242,7 @@ export class TrayIcon {
 					const appSetting = LocalStore.getStore('appSetting');
 					const config = LocalStore.getStore('configs');
 					if (!settingsWindow) {
-						settingsWindow = createSettingsWindow(
-							settingsWindow,
-							windowPath.timeTrackerUi
-						);
+						settingsWindow = createSettingsWindow(settingsWindow);
 					}
 					settingsWindow.show();
 					setTimeout(() => {
@@ -352,9 +326,7 @@ export class TrayIcon {
 			}
 
 			if (!appConfig.gauzyWindow) {
-				timeTrackerWindow.loadURL(
-					timeTrackerPage(windowPath.timeTrackerUi)
-				);
+				timeTrackerWindow.loadURL(timeTrackerPage());
 				timeTrackerWindow.show();
 				setTimeout(async () => {
 					const lastTime: any = await TimerData.getLastTimer(
@@ -388,12 +360,10 @@ export class TrayIcon {
 				if (!loginPageAlreadyShow) {
 					const serverConfig = LocalStore.getStore('configs');
 					global.variableGlobal = {
-						API_BASE_URL: getApiBaseUrl(serverConfig, config),
+						API_BASE_URL: getApiBaseUrl(serverConfig),
 						IS_INTEGRATED_DESKTOP: serverConfig.isLocalServer
 					};
-					timeTrackerWindow.loadURL(
-						loginPage(windowPath.gauzyWindow)
-					);
+					timeTrackerWindow.loadURL(loginPage());
 					timeTrackerWindow.webContents.once(
 						'did-finish-load',
 						() => {

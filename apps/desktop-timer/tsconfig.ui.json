@@ -1,8 +1,0 @@
-{
-	"extends": "../../tsconfig.json",
-	"compilerOptions": {
-		"types": ["node", "jest", "googlemaps"],
-		"target": "es2016"
-	},
-	"include": ["**/*.ts"]
-}

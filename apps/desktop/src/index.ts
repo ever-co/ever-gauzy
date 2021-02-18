@@ -95,11 +95,6 @@ let settingsWindow: BrowserWindow = null;
 let updaterWindow: BrowserWindow = null;
 let imageView: BrowserWindow = null;
 
-const pathWindow = {
-	gauzyWindow: path.join(__dirname, '../../../index.html'),
-	timeTrackerUi: path.join(__dirname, '../../../ui/index.html')
-};
-
 let tray = null;
 let appMenu = null;
 let isAlreadyRun = false;
@@ -144,12 +139,7 @@ function startServer(value, restart = false) {
 				if (msgData.indexOf('Listening at http') > -1) {
 					setupWindow.hide();
 					// isAlreadyRun = true;
-					gauzyWindow = createGauzyWindow(
-						gauzyWindow,
-						serve,
-						{ ...environment },
-						pathWindow.gauzyWindow
-					);
+					gauzyWindow = createGauzyWindow(gauzyWindow, serve);
 				}
 			}
 			if (
@@ -180,12 +170,7 @@ function startServer(value, restart = false) {
 	/* create main window */
 	if (value.serverConfigConnected || !value.isLocalServer) {
 		setupWindow.hide();
-		gauzyWindow = createGauzyWindow(
-			gauzyWindow,
-			serve,
-			{ ...environment },
-			pathWindow.gauzyWindow
-		);
+		gauzyWindow = createGauzyWindow(gauzyWindow, serve);
 	}
 	const auth = store.get('auth');
 	tray = new TrayIcon(
@@ -193,9 +178,7 @@ function startServer(value, restart = false) {
 		knex,
 		timeTrackerWindow,
 		auth,
-		settingsWindow,
-		{ ...environment },
-		pathWindow
+		settingsWindow
 	);
 
 	/* ping server before launch the ui */
@@ -229,10 +212,7 @@ const dialogMessage = (msg) => {
 				const appSetting = LocalStore.getStore('appSetting');
 				const config = LocalStore.getStore('configs');
 				if (!settingsWindow) {
-					settingsWindow = createSettingsWindow(
-						settingsWindow,
-						pathWindow.timeTrackerUi
-					);
+					settingsWindow = createSettingsWindow(settingsWindow);
 				}
 				settingsWindow.show();
 				setTimeout(() => {
@@ -279,37 +259,23 @@ app.on('ready', async () => {
 	);
 
 	/* create window */
-	timeTrackerWindow = createTimeTrackerWindow(
-		timeTrackerWindow,
-		pathWindow.timeTrackerUi
-	);
-	settingsWindow = createSettingsWindow(
-		settingsWindow,
-		pathWindow.timeTrackerUi
-	);
-	updaterWindow = createUpdaterWindow(
-		updaterWindow,
-		pathWindow.timeTrackerUi
-	);
-	imageView = createImageViewerWindow(imageView, pathWindow.timeTrackerUi);
+	timeTrackerWindow = createTimeTrackerWindow(timeTrackerWindow);
+	settingsWindow = createSettingsWindow(settingsWindow);
+	updaterWindow = createUpdaterWindow(updaterWindow);
+	imageView = createImageViewerWindow(imageView);
 
 	/* Set Menu */
 	appMenu = new AppMenu(
 		timeTrackerWindow,
 		settingsWindow,
 		updaterWindow,
-		knex,
-		pathWindow
+		knex
 	);
 
 	const configs: any = store.get('configs');
 	if (configs && configs.isSetup) {
 		if (!configs.serverConfigConnected) {
-			setupWindow = createSetupWindow(
-				setupWindow,
-				false,
-				pathWindow.timeTrackerUi
-			);
+			setupWindow = createSetupWindow(setupWindow, false);
 			setTimeout(() => {
 				setupWindow.webContents.send('setup-data', {
 					...configs
@@ -320,22 +286,14 @@ app.on('ready', async () => {
 				API_BASE_URL: getApiBaseUrl(configs),
 				IS_INTEGRATED_DESKTOP: configs.isLocalServer
 			};
-			setupWindow = createSetupWindow(
-				setupWindow,
-				true,
-				pathWindow.timeTrackerUi
-			);
+			setupWindow = createSetupWindow(setupWindow, true);
 			startServer(configs);
 		}
 	} else {
-		setupWindow = createSetupWindow(
-			setupWindow,
-			false,
-			pathWindow.timeTrackerUi
-		);
+		setupWindow = createSetupWindow(setupWindow, false);
 	}
 
-	ipcMainHandler(store, startServer, knex, { ...environment });
+	ipcMainHandler(store, startServer, knex);
 });
 
 app.on('window-all-closed', quit);
@@ -352,7 +310,7 @@ ipcMain.on('server_is_ready', () => {
 		serverDesktop = fork(
 			path.join(__dirname, '../../../desktop-api/main.js')
 		);
-		gauzyWindow.loadURL(gauzyPage(pathWindow.gauzyWindow));
+		gauzyWindow.loadURL(gauzyPage());
 		ipcTimer(
 			store,
 			knex,
@@ -360,8 +318,7 @@ ipcMain.on('server_is_ready', () => {
 			timeTrackerWindow,
 			NotificationWindow,
 			settingsWindow,
-			imageView,
-			{ ...environment }
+			imageView
 		);
 		isAlreadyRun = true;
 	}
@@ -405,12 +362,7 @@ ipcMain.on('restart_app', (event, arg) => {
 
 ipcMain.on('server_already_start', () => {
 	if (!gauzyWindow && !isAlreadyRun) {
-		gauzyWindow = createGauzyWindow(
-			gauzyWindow,
-			serve,
-			{ ...environment },
-			pathWindow.gauzyWindow
-		);
+		gauzyWindow = createGauzyWindow(gauzyWindow, serve);
 		isAlreadyRun = true;
 	}
 });
@@ -511,12 +463,7 @@ app.on('activate', () => {
 	) {
 		// On macOS it's common to re-create a window in the app when the
 		// dock icon is clicked and there are no other windows open.
-		createGauzyWindow(
-			gauzyWindow,
-			serve,
-			{ ...environment },
-			pathWindow.timeTrackerUi
-		);
+		createGauzyWindow(gauzyWindow, serve);
 	} else {
 		if (setupWindow) {
 			setupWindow.show();

@@ -5,7 +5,6 @@
 import * as rimraf from 'rimraf';
 import * as path from 'path';
 import { Injectable } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
 import {
 	Connection,
 	createConnection,
@@ -16,19 +15,6 @@ import {
 import * as chalk from 'chalk';
 import { IPluginConfig } from '@gauzy/common';
 import { environment as env, getConfig } from '@gauzy/config';
-import {
-	IEmployee,
-	IOrganization,
-	IOrganizationProject,
-	IRole,
-	ITenant,
-	IUser
-} from '@gauzy/contracts';
-import {
-	getPluginModules,
-	hasLifecycleMethod,
-	PluginLifecycleMethods
-} from '@gauzy/plugin';
 import { createRoles } from '../../role/role.seed';
 import { createDefaultSkills } from '../../skills/skill.seed';
 import { createLanguages } from '../../language/language.seed';
@@ -102,6 +88,7 @@ import {
 } from '../../candidate-source/candidate-source.seed';
 import { createDefaultIntegrationTypes } from '../../integration/integration-type.seed';
 import { createDefaultIntegrations } from '../../integration/integration.seed';
+// import { createHelpCenter } from '../../help-center/help-center.seed';
 import {
 	createDefaultProducts,
 	createRandomProduct
@@ -298,26 +285,29 @@ import {
 	createRandomFeatureToggle
 } from '../../feature/feature.seed';
 import { createDefaultAccountingTemplates } from 'accounting-template/accounting-template.seed';
+import {
+	Employee,
+	Organization,
+	OrganizationProject,
+	Role,
+	Tenant,
+	User
+} from './../../core/entities/internal';
 
 @Injectable()
 export class SeedDataService {
 	connection: Connection;
 	log = console.log;
-
-	organizations: IOrganization[];
-	defaultProjects: IOrganizationProject[] | void;
-	tenant: ITenant;
-	roles: IRole[];
-	superAdminUsers: IUser[];
-	defaultCandidateUsers: IUser[];
-	defaultEmployees: IEmployee[];
-
-	randomTenants: ITenant[];
-	randomTenantEmployeeMap: Map<ITenant, IEmployee[]>;
-
+	organizations: Organization[];
+	defaultProjects: OrganizationProject[] | void;
+	tenant: Tenant;
+	roles: Role[];
+	superAdminUsers: User[];
+	defaultCandidateUsers: User[];
+	defaultEmployees: Employee[];
 	config: IPluginConfig = getConfig();
 
-	constructor(private readonly moduleRef: ModuleRef) {}
+	constructor() {}
 
 	/**
 	 * This config is applied only for `yarn seed:*` type calls because
@@ -438,6 +428,7 @@ export class SeedDataService {
 	 */
 	public async runJobsSeed() {
 		const isDefault = true;
+
 		try {
 			// Connect to database
 			await this.createConnection();
@@ -811,6 +802,14 @@ export class SeedDataService {
 			createOrganizationVendors(this.connection, this.organizations)
 		);
 
+		// await this.tryExecute(
+		// 	'Help Centers',
+		// 	createHelpCenter(this.connection, {
+		// 		tenant: this.tenant,
+		// 		org: this.organizations[0]
+		// 	})
+		// );
+
 		const defaultCandidates = await this.tryExecute(
 			'Default Candidates',
 			createDefaultCandidates(this.connection, {
@@ -1158,6 +1157,23 @@ export class SeedDataService {
 			)
 		);
 
+		// await this.tryExecute(
+		// 	'Default Help Center Articles',
+		// 	createHelpCenterArticle(
+		// 		this.connection,
+		// 		this.organizations,
+		// 		randomSeedConfig.noOfHelpCenterArticle || 5
+		// 	)
+		// );
+
+		// await this.tryExecute(
+		// 	'Default Help Center Author',
+		// 	createDefaultHelpCenterAuthor(
+		// 		this.connection,
+		// 		this.defaultEmployees
+		// 	)
+		// );
+
 		await this.tryExecute(
 			'Default Availability Slots',
 			createDefaultAvailabilitySlots(
@@ -1178,14 +1194,6 @@ export class SeedDataService {
 				randomSeedConfig.emailsPerOrganization || 20
 			)
 		);
-
-		//run all plugins default seed method
-		await this.bootstrapPluginSeedMethods(
-			'onDefaultPluginSeed',
-			(instance: any) => {
-				console.log(chalk.green(`SEEDED Default Plugins`));
-			}
-		);
 	}
 
 	/**
@@ -1198,15 +1206,13 @@ export class SeedDataService {
 			randomSeedConfig.tenants || 1
 		);
 
-		this.randomTenants = tenants;
-
 		await this.tryExecute(
 			'Random Feature Toggle',
 			createRandomFeatureToggle(this.connection, tenants)
 		);
 
 		// Independent roles and role permissions for each tenant
-		const roles: IRole[] = await createRoles(this.connection, tenants);
+		const roles: Role[] = await createRoles(this.connection, tenants);
 
 		await createRolePermissions(this.connection, roles, tenants);
 
@@ -1253,8 +1259,6 @@ export class SeedDataService {
 			tenantUsersMap,
 			randomSeedConfig.employeesPerOrganization || 1
 		);
-
-		this.randomTenantEmployeeMap = tenantEmployeeMap;
 
 		await this.tryExecute(
 			'Random Categories',
@@ -1753,6 +1757,15 @@ export class SeedDataService {
 			)
 		);
 
+		// await this.tryExecute(
+		// 	'Random Help Center Articles',
+		// 	createHelpCenterArticle(
+		// 		this.connection,
+		// 		this.organizations,
+		// 		randomSeedConfig.noOfHelpCenterArticle || 5
+		// 	)
+		// );
+
 		await this.tryExecute(
 			'Random Organization Sprints',
 			createRandomOrganizationSprint(
@@ -1771,6 +1784,15 @@ export class SeedDataService {
 				tenantOrganizationsMap
 			)
 		);
+
+		// await this.tryExecute(
+		// 	'Random Help Center Authors',
+		// 	createRandomHelpCenterAuthor(
+		// 		this.connection,
+		// 		tenants,
+		// 		tenantEmployeeMap
+		// 	)
+		// );
 
 		await this.tryExecute(
 			'Random Appointment Employees',
@@ -1885,20 +1907,12 @@ export class SeedDataService {
 				tenantOrganizationsMap
 			)
 		);
-
-		//run all plugins random seed method
-		await this.bootstrapPluginSeedMethods(
-			'onRandomPluginSeed',
-			(instance: any) => {
-				console.log(chalk.green(`SEEDED Random Plugins`));
-			}
-		);
 	}
 
 	private async cleanUpPreviousRuns() {
 		this.log(chalk.green(`CLEANING UP FROM PREVIOUS RUNS...`));
 
-		await new Promise((resolve) => {
+		await new Promise((resolve, reject) => {
 			const assetOptions = this.config.assetOptions;
 			const dir = env.isElectron
 				? path.join(
@@ -1950,10 +1964,7 @@ export class SeedDataService {
 	 * Use this wrapper function for all seed functions which are not essential.
 	 * Essentials seeds are ONLY those which are required to start the UI/login
 	 */
-	public tryExecute<T>(
-		name: string,
-		p: Promise<T>
-	): Promise<T> | Promise<void> {
+	tryExecute<T>(name: string, p: Promise<T>): Promise<T> | Promise<void> {
 		this.log(chalk.green(`SEEDING ${name}`));
 
 		return (p as any).then(
@@ -2039,32 +2050,5 @@ export class SeedDataService {
 			)
 		);
 		throw error;
-	}
-
-	private async bootstrapPluginSeedMethods(
-		lifecycleMethod: keyof PluginLifecycleMethods,
-		closure?: (instance: any) => void
-	): Promise<void> {
-		const plugins = getPluginModules(this.config.plugins);
-		for (const plugin of plugins) {
-			let classInstance: ClassDecorator;
-			try {
-				classInstance = this.moduleRef.get(plugin, { strict: false });
-			} catch (e) {
-				console.log(
-					`Could not find ${plugin.name}`,
-					undefined,
-					e.stack
-				);
-			}
-			if (classInstance) {
-				if (hasLifecycleMethod(classInstance, lifecycleMethod)) {
-					await classInstance[lifecycleMethod]();
-				}
-				if (typeof closure === 'function') {
-					closure(classInstance);
-				}
-			}
-		}
 	}
 }

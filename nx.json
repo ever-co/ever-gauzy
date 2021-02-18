@@ -51,9 +51,6 @@
 		},
 		"desktop-ui-lib": {
 			"tags": []
-		},
-		"desktop-timer": {
-			"tags": []
 		}
 	}
 }

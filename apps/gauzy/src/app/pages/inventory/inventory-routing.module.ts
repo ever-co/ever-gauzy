@@ -9,23 +9,27 @@ import { InventoryVariantFormComponent } from './components/edit-inventory-item-
 import { PermissionsEnum } from '@gauzy/contracts';
 import { NgxPermissionsGuard } from 'ngx-permissions';
 import { InventoryItemViewComponent } from './components/view-inventory-item/view-inventory-item.component';
+import { WarehousesComponent } from './components/manage-warehouses/warehouses.component';
+import { WarehouseFormComponent } from './components/manage-warehouses/warehouse-form/warehouse-form.component';
+import { WarehousesTableComponent } from './components/manage-warehouses/warehouses-table/warehouses-table.component';
 
-const ORG_PERMISSIONS = [
-	PermissionsEnum.ALL_ORG_VIEW,
-	PermissionsEnum.ALL_ORG_EDIT
-];
+const ALL_ORG_PERMISSIONS = {
+	permissions: {
+		only: [
+			PermissionsEnum.ALL_ORG_VIEW,
+			PermissionsEnum.ALL_ORG_EDIT,
+			PermissionsEnum.ORG_INVENTORY_VIEW
+		],
+		redirectTo: '/pages/dashboard'
+	}
+};
 
 const routes: Routes = [
 	{
 		path: '',
 		component: InventoryComponent,
 		canActivate: [NgxPermissionsGuard],
-		data: {
-			permissions: {
-				only: [...ORG_PERMISSIONS, PermissionsEnum.ORG_INVENTORY_VIEW],
-				redirectTo: '/pages/dashboard'
-			}
-		},
+		data: ALL_ORG_PERMISSIONS,
 		children: [
 			{
 				path: '',
@@ -58,29 +62,33 @@ const routes: Routes = [
 		path: 'product-types',
 		component: ProductTypesComponent,
 		canActivate: [NgxPermissionsGuard],
-		data: {
-			permissions: {
-				only: [
-					...ORG_PERMISSIONS,
-					PermissionsEnum.ORG_PRODUCT_TYPES_VIEW
-				],
-				redirectTo: '/pages/dashboard'
-			}
-		}
+		data: ALL_ORG_PERMISSIONS
 	},
 	{
 		path: 'product-categories',
 		component: ProductCategoriesComponent,
 		canActivate: [NgxPermissionsGuard],
-		data: {
-			permissions: {
-				only: [
-					...ORG_PERMISSIONS,
-					PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW
-				],
-				redirectTo: '/pages/dashboard'
+		data: ALL_ORG_PERMISSIONS
+	},
+	{
+		path: 'warehouses',
+		component: WarehousesComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: ALL_ORG_PERMISSIONS,
+		children: [
+			{
+				path: 'all',
+				component: WarehousesTableComponent
+			},
+			{
+				path: 'create',
+				component: WarehouseFormComponent
+			},
+			{
+				path: 'edit/:id',
+				component: WarehouseFormComponent
 			}
-		}
+		]
 	}
 ];
 

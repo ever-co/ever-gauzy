@@ -5,19 +5,20 @@ import TimerHandler from './desktop-timer';
 import moment from 'moment';
 import { LocalStore } from './desktop-store';
 import { takeshot, captureScreen } from './desktop-screenshot';
+import { environment } from '../../../../apps/desktop/src/environments/environment';
 import {
 	hasPromptedForPermission,
 	hasScreenCapturePermission,
 	openSystemPreferences
 } from 'mac-screen-capture-permissions';
-export function ipcMainHandler(store, startServer, knex, config) {
+export function ipcMainHandler(store, startServer, knex) {
 	ipcMain.on('start_server', (event, arg) => {
 		global.variableGlobal = {
 			API_BASE_URL: arg.serverUrl
 				? arg.serverUrl
 				: arg.port
 				? `http://localhost:${arg.port}`
-				: `http://localhost:${config.API_DEFAULT_PORT}`,
+				: `http://localhost:${environment.API_DEFAULT_PORT}`,
 			IS_INTEGRATED_DESKTOP: arg.isLocalServer
 		};
 		startServer(arg);
@@ -150,8 +151,7 @@ export function ipcTimer(
 	timeTrackerWindow,
 	NotificationWindow,
 	SettingWindow,
-	imageView,
-	config
+	imageView
 ) {
 	const timerHandler = new TimerHandler();
 	ipcMain.on('start_timer', (event, arg) => {
@@ -202,7 +202,7 @@ export function ipcTimer(
 		const appSetting = LocalStore.getStore('appSetting');
 		switch (
 			appSetting.SCREENSHOTS_ENGINE_METHOD ||
-			config.SCREENSHOTS_ENGINE_METHOD
+			environment.SCREENSHOTS_ENGINE_METHOD
 		) {
 			case 'ElectronDesktopCapturer':
 				timeTrackerWindow.webContents.send('take_screenshot', {

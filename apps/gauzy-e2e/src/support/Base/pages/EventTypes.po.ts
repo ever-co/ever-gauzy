@@ -1,6 +1,8 @@
 import {
 	verifyElementIsVisible,
 	clickButton,
+	clickElementByText,
+	compareTwoTexts,
 	clickButtonByIndex,
 	clearField,
 	enterInput,

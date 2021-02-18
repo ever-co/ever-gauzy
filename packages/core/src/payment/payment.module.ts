@@ -8,17 +8,15 @@ import { UserService } from '../user/user.service';
 import { User } from '../user/user.entity';
 import { TenantModule } from '../tenant/tenant.module';
 import { PaymentMapService } from './payment.map.service';
-import { EmailModule, EmailService } from 'email';
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([{ path: '/payments', module: PaymentModule }]),
 		TypeOrmModule.forFeature([User, Payment]),
-		TenantModule,
-		EmailModule
+		TenantModule
 	],
 	controllers: [PaymentController],
-	providers: [PaymentService, UserService, PaymentMapService, EmailService],
-	exports: [PaymentService, UserService, PaymentMapService, EmailService]
+	providers: [PaymentService, UserService, PaymentMapService],
+	exports: [PaymentService, UserService, PaymentMapService]
 })
 export class PaymentModule {}

@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
 	IGetPaymentInput,
-	IInvoice,
 	IPayment,
 	IPaymentFindInput,
 	IPaymentReportChartData,
@@ -69,18 +68,6 @@ export class PaymentService {
 					params: toParams(request)
 				}
 			)
-			.pipe(first())
-			.toPromise();
-	}
-
-	sendReceipt(payment: IPayment, invoice: IInvoice): Promise<any> {
-		return this.http
-			.post<any>(`${API_PREFIX}/payments/receipt`, {
-				params: {
-					payment,
-					invoice
-				}
-			})
 			.pipe(first())
 			.toPromise();
 	}

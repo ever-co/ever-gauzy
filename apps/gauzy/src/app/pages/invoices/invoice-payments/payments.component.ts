@@ -24,7 +24,6 @@ import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-e
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../../@core/services/toastr.service';
 import { generateCsv } from '../../../@shared/invoice/generate-csv';
-import { InvoicePaymentReceiptMutatonComponent } from './payment-receipt-mutation/payment-receipt-mutation.component';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-payments',
@@ -490,18 +489,6 @@ export class InvoicePaymentsComponent
 		const fileName = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT');
 
 		generateCsv(data, headers, fileName);
-	}
-
-	async sendReceipt() {
-		await this.dialogService
-			.open(InvoicePaymentReceiptMutatonComponent, {
-				context: {
-					invoice: this.invoice,
-					payment: this.selectedPayment
-				}
-			})
-			.onClose.pipe(first())
-			.toPromise();
 	}
 
 	_applyTranslationOnSmartTable() {

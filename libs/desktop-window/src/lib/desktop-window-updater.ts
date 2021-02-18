@@ -2,13 +2,13 @@ import { BrowserWindow } from 'electron';
 import * as path from 'path';
 import * as url from 'url';
 
-export function createUpdaterWindow(updaterWindow, filePath) {
+export function createUpdaterWindow(updaterWindow) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
 
 	updaterWindow = new BrowserWindow(mainWindowSettings);
 
 	const launchPath = url.format({
-		pathname: filePath,
+		pathname: path.join(__dirname, '../../../../ui/index.html'),
 		protocol: 'file:',
 		slashes: true,
 		hash: '/updater'

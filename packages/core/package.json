@@ -1,6 +1,6 @@
 {
 	"name": "@gauzy/core",
-	"version": "0.1.0",
+	"version": "0.1.4",
 	"description": "Gauzy Core - a headless ERP/CRM/HRM framework",
 	"author": {
 		"name": "Ever Co. LTD",

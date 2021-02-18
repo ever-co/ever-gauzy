@@ -15,13 +15,7 @@
 
 	<nb-card-body>
 		<div class="mb-3">
-			<button
-				*ngIf="editCategoriesAllowed"
-				(click)="save()"
-				nbButton
-				status="success"
-				class="mr-2"
-			>
+			<button (click)="save()" nbButton status="success" class="mr-2">
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
@@ -35,7 +29,7 @@
 			[settings]="settingsSmartTable"
 			(userRowSelect)="selectProductCategory($event)"
 			[source]="smartTableSource"
-			style="cursor: pointer"
+			style="cursor: pointer;"
 			*ngIf="dataLayoutStyle === 'TABLE'"
 			#productCategoriesTable
 		>
@@ -54,7 +48,6 @@
 	let-selectedItem="selectedItem"
 >
 	<button
-		*ngIf="editCategoriesAllowed"
 		(click)="save(selectedItem)"
 		nbButton
 		status="info"
@@ -66,7 +59,6 @@
 		{{ 'BUTTONS.EDIT' | translate }}
 	</button>
 	<button
-		*ngIf="editCategoriesAllowed"
 		(click)="delete(selectedItem)"
 		nbButton
 		status="danger"

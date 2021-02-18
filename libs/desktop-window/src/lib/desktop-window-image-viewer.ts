@@ -2,13 +2,13 @@ import { BrowserWindow } from 'electron';
 import * as path from 'path';
 import * as url from 'url';
 
-export function createImageViewerWindow(imageViewWindow, filePath) {
+export function createImageViewerWindow(imageViewWindow) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
 
 	imageViewWindow = new BrowserWindow(mainWindowSettings);
 
 	const launchPath = url.format({
-		pathname: filePath,
+		pathname: path.join(__dirname, '../../../../ui/index.html'),
 		protocol: 'file:',
 		slashes: true,
 		hash: '/viewer'

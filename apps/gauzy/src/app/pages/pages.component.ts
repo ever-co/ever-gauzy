@@ -900,18 +900,16 @@ export class PagesComponent implements OnInit, OnDestroy {
 	}
 
 	async ngOnInit() {
-		await this._createEntryPoint();
+		this._createEntryPoint();
 		this._applyTranslationOnSmartTable();
-
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
 				untilDestroyed(this)
 			)
 			.subscribe(async (org) => {
-				this.checkForEmployee();
 				this._selectedOrganization = org;
-
+				await this.checkForEmployee();
 				if (org) {
 					await this.reportService.getReportMenuItems({
 						organizationId: org.id
@@ -1074,13 +1072,15 @@ export class PagesComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	checkForEmployee() {
-		const { tenantId, id: userId } = this.store.user;
-		this.employeeService
-			.getEmployeeByUserId(userId, [], { tenantId })
-			.then(({ success }) => {
-				this.isEmployee = success;
-			});
+	async checkForEmployee() {
+		const { tenantId } = this.store.user;
+		this.isEmployee = (
+			await this.employeeService.getEmployeeByUserId(
+				this.store.userId,
+				[],
+				{ tenantId }
+			)
+		).success;
 	}
 
 	getTranslation(prefix: string) {

@@ -2,12 +2,12 @@ import {
 	IProductCategoryTranslated,
 	IOrganization,
 	LanguagesEnum,
-	ComponentLayoutStyleEnum,
-	PermissionsEnum
+	ComponentLayoutStyleEnum
 } from '@gauzy/contracts';
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { ProductCategoryService } from '../../../../@core/services/product-category.service';
@@ -20,7 +20,6 @@ import { ComponentEnum } from '../../../../@core/constants/layout.constants';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { NgxPermissionsService } from 'ngx-permissions';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-product-categories',
@@ -29,7 +28,7 @@ import { NgxPermissionsService } from 'ngx-permissions';
 })
 export class ProductCategoriesComponent
 	extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	loading = true;
 	selectedProductCategory: IProductCategoryTranslated;
@@ -39,7 +38,7 @@ export class ProductCategoriesComponent
 	disableButton = true;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	editCategoriesAllowed = false;
+	private _ngDestroy$ = new Subject<void>();
 
 	productCategoriesTable: Ng2SmartTableComponent;
 	@ViewChild('productCategoriesTable') set content(
@@ -56,7 +55,6 @@ export class ProductCategoriesComponent
 		private dialogService: NbDialogService,
 		private productCategoryService: ProductCategoryService,
 		private toastrService: ToastrService,
-		private ngxPermissionsService: NgxPermissionsService,
 		private router: Router,
 		private store: Store
 	) {
@@ -65,7 +63,6 @@ export class ProductCategoriesComponent
 	}
 
 	ngOnInit(): void {
-		this.setPermissions();
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.store.selectedOrganization$
@@ -257,9 +254,5 @@ export class ProductCategoriesComponent
 		}
 	}
 
-	async setPermissions() {
-		this.editCategoriesAllowed = await this.ngxPermissionsService.hasPermission(
-			PermissionsEnum.ORG_PRODUCT_CATEOGIES_EDIT
-		);
-	}
+	ngOnDestroy(): void {}
 }

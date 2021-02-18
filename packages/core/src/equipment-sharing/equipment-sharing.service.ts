@@ -41,24 +41,27 @@ export class EquipmentSharingService extends CrudService<EquipmentSharing> {
 			if (config.dbConnectionOptions.type === 'sqlite') {
 				query.leftJoinAndSelect(
 					'request_approval',
-					'requestApproval',
+					'request_approval',
 					'"equipment_sharing"."id" = "request_approval"."requestId"'
 				);
 			} else {
 				query.leftJoinAndSelect(
 					'request_approval',
-					'requestApproval',
-					'uuid(equipment_sharing.id) = uuid(requestApproval.requestId)'
+					'request_approval',
+					'"equipment_sharing"."id"::"varchar" = "request_approval"."requestId"'
 				);
 			}
 			return await query
 				.leftJoinAndSelect(
-					'requestApproval.approvalPolicy',
+					'request_approval.approvalPolicy',
 					'approvalPolicy'
 				)
-				.where('equipment_sharing.organizationId =:organizationId', {
-					organizationId
-				})
+				.where(
+					'equipmentSharingPolicy.organizationId =:organizationId',
+					{
+						organizationId
+					}
+				)
 				.getMany();
 		} catch (err) {
 			throw new BadRequestException(err);
