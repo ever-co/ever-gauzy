@@ -127,6 +127,8 @@ import { CustomSmtpModule } from './custom-smtp/custom-smtp.module';
 import { FeatureModule } from './feature/feature.module';
 import { ImageAssetModule } from './image-asset/image-asset.module';
 import { resolveServeStaticPath } from './helper';
+import { AccountingTemplateModule } from './accounting-template/accounting-template.module';
+import { SeederModule } from './core/seeds/seeder.module';
 import { WarehouseModule } from 'warehouse/warehouse.module';
 
 const { unleashConfig } = environment;
@@ -304,6 +306,8 @@ if (process.env.DB_TYPE === 'postgres') {
 		GoalTemplateModule,
 		KeyresultTemplateModule,
 		GoalKpiTemplateModule,
+		AccountingTemplateModule,
+		SeederModule,
 		WarehouseModule
 	],
 	controllers: [AppController],

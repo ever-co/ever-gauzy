@@ -228,11 +228,6 @@ import {
 	createDefaultOrganizationRecurringExpense,
 	createRandomOrganizationRecurringExpense
 } from '../../organization-recurring-expense/organization-recurring-expense.seed';
-// import {
-// 	createDefaultHelpCenterAuthor,
-// 	createRandomHelpCenterAuthor
-// } from '../../help-center-author/help-center-author.seed';
-// import { createHelpCenterArticle } from '../../help-center-article/help-center-article.seed';
 import {
 	createDefaultOrganizationLanguage,
 	createRandomOrganizationLanguage
@@ -289,6 +284,7 @@ import {
 	createDefaultFeatureToggle,
 	createRandomFeatureToggle
 } from '../../feature/feature.seed';
+import { createDefaultAccountingTemplates } from 'accounting-template/accounting-template.seed';
 import {
 	Employee,
 	Organization,
@@ -572,6 +568,11 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Default Email Templates',
 			createDefaultEmailTemplates(this.connection)
+		);
+
+		await this.tryExecute(
+			'Default Accounting Templates',
+			createDefaultAccountingTemplates(this.connection)
 		);
 
 		await this.tryExecute(

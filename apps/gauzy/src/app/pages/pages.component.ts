@@ -811,6 +811,17 @@ export class PagesComponent implements OnInit, OnDestroy {
 						}
 					},
 					{
+						title: 'Accounting Templates',
+						icon: 'clipboard-outline',
+						link: '/pages/settings/accounting-templates',
+						data: {
+							translationKey: 'MENU.ACCOUNTING_TEMPLATES',
+							permissionKeys: [
+								PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES
+							]
+						}
+					},
+					{
 						title: 'Import/Export',
 						icon: 'flip-outline',
 						link: '/pages/settings/import-export',
