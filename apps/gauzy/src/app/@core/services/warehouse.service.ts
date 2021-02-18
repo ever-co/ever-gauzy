@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
-import { IProduct, IProductFindInput, IWarehouse } from '@gauzy/contracts';
+import { IProductFindInput, IWarehouse } from '@gauzy/contracts';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
