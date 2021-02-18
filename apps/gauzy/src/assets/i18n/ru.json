@@ -2068,7 +2068,18 @@
 		"EMAIL": "Электронное письмо",
 		"ACTIVE": "Активный",
 		"LOCATION": "Место расположения",
-		"ADDRESS": "Адрес"
+		"ADDRESS": "Адрес",
+		"CREATE_WAREHOUSE": "Создать склад",
+		"EDIT_WAREHOUSE": "Изменить склад",
+		"WAREHOUSE_CREATED": "Склад создан",
+		"COULD_NOT_CREATE_WAREHOUSE": "Не удалось создать склад",
+		"WAREHOUSE_WAS_CREATED": "Склад '{{ name }}' был создан",
+		"WAREHOUSE_WAS_DELETED": "Склад '{{ name }}' был удален",
+		"WAREHOUSE_WAS_UPDATED": "Склад '{{ name }}' был обновлен",
+		"CITY": "Город",
+		"LOGO": "Логотип",
+		"CONTACT": "Контакт",
+		"COUNTRY": "Страна"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",

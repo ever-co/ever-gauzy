@@ -126,28 +126,24 @@ export class WarehouseFormComponent
 			}
 		};
 
-		//tstodo
-		console.log(request, 'request');
-
 		let result;
 
 		if (!this.warehouse) {
 			result = await this.warehouseService
 				.create(request)
 				.then((res) => {
-					//tstodo
 					this.toastrService.success(
-						'INVENTORY_PAGE.WAREHOUSE_CREATED'
+						'INVENTORY_PAGE.WAREHOUSE_WAS_CREATED',
+						{ name: request.name }
 					);
-
-					//tstodo
-					console.log(res, 'res from create warehouse');
 
 					this.location.back();
 				})
 				.catch((err) => {
 					this.toastrService.danger(
-						'INVENTORY_PAGE.COULD_NOT_CREATE_WAREHOUSE'
+						'INVENTORY_PAGE.COULD_NOT_CREATE_WAREHOUSE',
+						null,
+						{ name: request.name }
 					);
 				});
 		} else {

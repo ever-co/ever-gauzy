@@ -2068,7 +2068,18 @@
 		"EMAIL": "אימייל",
 		"ACTIVE": "פָּעִיל",
 		"LOCATION": "מקום",
-		"ADDRESS": "כתובת"
+		"ADDRESS": "כתובת",
+		"CREATE_WAREHOUSE": "צור מחסן",
+		"EDIT_WAREHOUSE": "ערוך מחסן",
+		"WAREHOUSE_CREATED": "ערוך מחסן",
+		"COULD_NOT_CREATE_WAREHOUSE": "לא ניתן היה ליצור מחסן",
+		"WAREHOUSE_WAS_CREATED": "מַחסָן '{{ name }}' נוצר",
+		"WAREHOUSE_WAS_DELETED": "מַחסָן '{{ name }}' נמחק",
+		"WAREHOUSE_WAS_UPDATED": "מַחסָן '{{ name }}' התעדכן",
+		"CITY": "עִיר",
+		"LOGO": "סֵמֶל",
+		"CONTACT": "איש קשר",
+		"COUNTRY": "מדינה"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

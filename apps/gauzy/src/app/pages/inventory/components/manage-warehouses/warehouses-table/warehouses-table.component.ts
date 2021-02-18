@@ -100,12 +100,15 @@ export class WarehousesTableComponent
 					title: this.getTranslation('INVENTORY_PAGE.CONTACT'),
 					type: 'string',
 					valuePrepareFunction: (contact: IContact, row) => {
-						//tstodo
-						return `country: ${contact?.country || '-'}, city:${
-							contact?.city || '-'
-						}, address: ${contact?.address || '-'}, address 2: ${
-							contact?.address2 || '-'
-						}`;
+						return `${this.getTranslation(
+							'INVENTORY_PAGE.COUNTRY'
+						)}: ${contact?.country || '-'}, ${this.getTranslation(
+							'INVENTORY_PAGE.CITY'
+						)}:${contact?.city || '-'}, ${this.getTranslation(
+							'INVENTORY_PAGE.ADDRESS'
+						)}: ${contact?.address || '-'}, ${this.getTranslation(
+							'INVENTORY_PAGE.ADDRESS'
+						)} 2: ${contact?.address2 || '-'}`;
 					}
 				},
 				active: {
@@ -150,10 +153,9 @@ export class WarehousesTableComponent
 			await this.warehouseService
 				.deleteFeaturedImage(this.selectedWarehouse.id)
 				.then((res) => {
-					//tstodo
 					if (res && res.affected == 1) {
 						this.toastrService.success(
-							'INVENTORY_PAGE.WAREHOUSE_DELETED',
+							'INVENTORY_PAGE.WAREHOUSE_WAS_CREATED',
 							{
 								name: this.selectedWarehouse.name
 							}
@@ -164,9 +166,9 @@ export class WarehousesTableComponent
 					}
 				})
 				.catch((err) => {
-					//tstodo
 					this.toastrService.danger(
-						'INVENTORY_PAGE.WAREHOUSE_DELETED'
+						'INVENTORY_PAGE.WAREHOUSE_WAS_DELETED',
+						this.selectedWarehouse.name
 					);
 				});
 		}

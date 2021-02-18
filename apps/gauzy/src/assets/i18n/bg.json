@@ -2068,7 +2068,18 @@
 		"EMAIL": "Имейл",
 		"ACTIVE": "Активен",
 		"LOCATION": "Локация",
-		"ADDRESS": "Адрес"
+		"ADDRESS": "Адрес",
+		"CREATE_WAREHOUSE": "Създай склад",
+		"EDIT_WAREHOUSE": "Промени склад",
+		"WAREHOUSE_CREATED": "Сладът е създаден",
+		"COULD_NOT_CREATE_WAREHOUSE": "Възникна грешка при създаване на склад",
+		"WAREHOUSE_WAS_CREATED": "Склад '{{ name }}' е създаден",
+		"WAREHOUSE_WAS_DELETED": "Склад '{{ name }}' е изтрит",
+		"WAREHOUSE_WAS_UPDATED": "Склад '{{ name }}' е променен",
+		"CITY": "Град",
+		"LOGO": "Лого",
+		"CONTACT": "Контакт",
+		"COUNTRY": "Държава"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

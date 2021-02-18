@@ -2069,10 +2069,17 @@
 		"ACTIVE": "Active",
 		"LOCATION": "Location",
 		"ADDRESS": "Address",
-		"CREATE_WAREHOUSE": "Create warehouse",
-		"EDIT_WAREHOUSE": "Edit warehouse",
+		"CREATE_WAREHOUSE": "Create Warehouse",
+		"EDIT_WAREHOUSE": "Edit Warehouse",
 		"WAREHOUSE_CREATED": "Warehouse created",
-		"COULD_NOT_CREATE_WAREHOUSE": "Could not create warehouse"
+		"COULD_NOT_CREATE_WAREHOUSE": "Could not create warehouse",
+		"WAREHOUSE_WAS_CREATED": "Warehouse '{{ name }}' was created",
+		"WAREHOUSE_WAS_DELETED": "Warehouse '{{ name }}' was deleted",
+		"WAREHOUSE_WAS_UPDATED": "Warehouse '{{ name }}' was updated",
+		"CITY": "City",
+		"LOGO": "Logo",
+		"CONTACT": "Contact",
+		"COUNTRY": "Country"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
