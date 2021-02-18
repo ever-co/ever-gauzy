@@ -15,16 +15,18 @@ export class AccountingTemplateService extends CrudService<IAccountingTemplate> 
 		super(accountingRepository);
 	}
 
-	generatePreview(data): string {
+	generatePreview(input) {
+		const { data } = input;
 		let textToHtml = data;
 		try {
 			const mjmlTohtml = mjml2html(data);
 			textToHtml = mjmlTohtml.errors.length ? data : mjmlTohtml.html;
 		} catch (error) {}
+
 		const handlebarsTemplate = Handlebars.compile(textToHtml);
 		const html = handlebarsTemplate({
-			invoiceNumber: '55'
+			invoiceNumber: '556'
 		});
-		return html;
+		return { html };
 	}
 }

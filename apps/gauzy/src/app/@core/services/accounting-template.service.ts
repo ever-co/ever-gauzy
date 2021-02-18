@@ -37,7 +37,7 @@ export class AccountingTemplateService {
 
 		return this.http
 			.get<IAccountingTemplate>(
-				`${API_PREFIX}/accounting-template/findTemplate`,
+				`${API_PREFIX}/accounting-template/template`,
 				{
 					params: { data }
 				}
@@ -48,7 +48,7 @@ export class AccountingTemplateService {
 
 	generateTemplatePreview(data: string): Promise<any> {
 		return this.http
-			.post<any>(`${API_PREFIX}/email-template/emailPreview`, {
+			.post<any>(`${API_PREFIX}/accounting-template/template/preview`, {
 				data
 			})
 			.pipe(first())
