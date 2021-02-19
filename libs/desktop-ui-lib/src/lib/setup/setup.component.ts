@@ -143,6 +143,7 @@ export class SetupComponent implements OnInit {
 		'CLEANED UP',
 		'RESET DATABASE SUCCESSFUL',
 		'SEEDING PRODUCTION DATABASE...',
+		'SEEDING Changelog',
 		'SEEDING Countries',
 		'SEEDING Currencies',
 		'SEEDING Languages',

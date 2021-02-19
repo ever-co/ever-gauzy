@@ -1,0 +1,38 @@
+<div aria-hidden="false" class="whats-new-panel">
+	<div class="d-flex align-items-center justify-content-between">
+		<h4 class="m-0">{{ 'CHANGELOG_MENU.HEADER' | translate }}</h4>
+	</div>
+	<div class="content">
+		<div
+			*ngFor="let item of items"
+			class="content d-flex whats-new-item has-popup"
+		>
+			<div class="content-text">
+				<div class="content-header">
+					<div class="holder">
+						<nb-icon [icon]="item.icon" class="icon"></nb-icon>
+						<h6 class="ml-2 mt-0">{{ item.title }}</h6>
+					</div>
+					<div class="d-flex align-items-start">
+						<p class="mt-0 mb-10 small">
+							<time>{{ item.date | date }}</time>
+						</p>
+					</div>
+				</div>
+				<div class="content-body">
+					<p class="text">
+						{{ item.content }}
+					</p>
+					<a
+						*ngIf="item.learnMoreUrl"
+						href="{{ item.learnMoreUrl }}"
+						class="link"
+						target="_blank"
+						>{{ 'CHANGELOG_MENU.LEARN_MORE_URL' | translate }}</a
+					>
+				</div>
+				<div class="content-break"></div>
+			</div>
+		</div>
+	</div>
+</div>

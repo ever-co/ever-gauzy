@@ -867,6 +867,10 @@
 		"CARDS_GRID": "Сетка карт",
 		"SPRINT_VIEW": "Просмотр спринта"
 	},
+	"CHANGELOG_MENU": {
+		"HEADER": "Какие новости?",
+		"LEARN_MORE_URL": "Узнать больше"
+	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Участники Раболи",
 		"MANUAL_TIME_EDIT_REPORT": "Отчет о времени вручную",
