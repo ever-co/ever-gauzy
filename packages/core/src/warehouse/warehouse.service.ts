@@ -4,6 +4,7 @@ import { CrudService } from '../core/crud/crud.service';
 import { Repository } from 'typeorm';
 import { Warehouse } from './warehouse.entity';
 import { Contact } from 'contact/contact.entity';
+import { IPagination, IWarehouse } from '@gauzy/contracts';
 
 @Injectable()
 export class WarehouseService extends CrudService<Warehouse> {
@@ -22,5 +23,24 @@ export class WarehouseService extends CrudService<Warehouse> {
 		Object.assign(warehouse, { ...warehouseInput, contact });
 
 		return this.warehouseRepository.save(warehouse);
+	}
+
+	updateWarehouse(id: string, warehouse: Warehouse): Promise<Warehouse> {
+		return this.warehouseRepository.save({ id, ...warehouse });
+	}
+
+	async findAllWarehouses(
+		relations?: string[],
+		findInput?: any
+	): Promise<IPagination<IWarehouse>> {
+		const warehouses = await this.warehouseRepository.find({
+			where: findInput,
+			relations
+		});
+
+		return {
+			items: warehouses,
+			total: warehouses.length
+		};
 	}
 }

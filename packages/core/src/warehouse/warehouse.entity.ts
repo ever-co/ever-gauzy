@@ -61,7 +61,9 @@ export class Warehouse extends TenantBaseEntity implements IWarehouse {
 	@JoinColumn()
 	contact: IContact;
 
-	@ManyToMany(() => Tag)
+	@ManyToMany(() => Tag, {
+		eager: true
+	})
 	@JoinTable({
 		name: 'tag_warehouse'
 	})

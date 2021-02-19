@@ -57,6 +57,11 @@ export class WarehouseFormComponent
 					this.warehouse = await this.warehouseService.getById(
 						params.id
 					);
+
+					this.tags = this.warehouse?.tags || [];
+
+					this._initializeLocationForm();
+					this._initializeForm();
 				}
 			});
 
@@ -70,10 +75,7 @@ export class WarehouseFormComponent
 				this.warehouse ? this.warehouse.name : '',
 				Validators.required
 			],
-			tags:
-				this.warehouse && this.warehouse.tags
-					? [this.warehouse.tags]
-					: [],
+			tags: this.tags,
 			code: [
 				this.warehouse ? this.warehouse.code : '',
 				Validators.required
@@ -126,10 +128,8 @@ export class WarehouseFormComponent
 			}
 		};
 
-		let result;
-
 		if (!this.warehouse) {
-			result = await this.warehouseService
+			await this.warehouseService
 				.create(request)
 				.then((res) => {
 					this.toastrService.success(
@@ -147,6 +147,16 @@ export class WarehouseFormComponent
 					);
 				});
 		} else {
+			await this.warehouseService
+				.update(this.warehouse.id, request)
+				.then((res) => {
+					this.toastrService.success(
+						'INVENTORY_PAGE.WAREHOUSE_WAS_UPDATED',
+						{ name: request.name }
+					);
+
+					this.location.back();
+				});
 		}
 	}
 

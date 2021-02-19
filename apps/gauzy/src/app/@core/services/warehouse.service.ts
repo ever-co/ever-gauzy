@@ -30,6 +30,13 @@ export class WarehouseService {
 			.toPromise();
 	}
 
+	update(id: string, warehouseRequest: IWarehouse): Promise<IWarehouse> {
+		return this.http
+			.put<IWarehouse>(`${this.WAREHOUSES_URL}/${id}`, warehouseRequest)
+			.pipe(first())
+			.toPromise();
+	}
+
 	getById(id: string, relations?: string[], findInput?: any) {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http

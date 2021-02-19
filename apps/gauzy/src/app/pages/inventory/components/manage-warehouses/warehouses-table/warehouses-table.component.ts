@@ -143,6 +143,13 @@ export class WarehousesTableComponent
 		]);
 	}
 
+	onUpdateWarehouse() {
+		this.router.navigate([
+			'/pages/organization/inventory/warehouses/edit/' +
+				this.selectedWarehouse?.id
+		]);
+	}
+
 	async delete() {
 		let res = await this.dialogService
 			.open(DeleteConfirmationComponent)
