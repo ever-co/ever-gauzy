@@ -8,6 +8,8 @@
 					{{ 'INVENTORY_PAGE.CREATE_WAREHOUSE' | translate }}
 				</h4>
 				<h4 *ngIf="warehouse">
+					<ngx-back-navigation></ngx-back-navigation>
+
 					{{ 'INVENTORY_PAGE.EDIT_WAREHOUSE' | translate }}
 				</h4>
 			</div>
@@ -147,6 +149,14 @@
 											"
 										/>
 									</div>
+								</div>
+							</div>
+
+							<div class="row mb-3">
+								<div class="col-md-6 col-sm-12">
+									<nb-checkbox formControlName="active">{{
+										'INVENTORY_PAGE.ACTIVE' | translate
+									}}</nb-checkbox>
 								</div>
 							</div>
 

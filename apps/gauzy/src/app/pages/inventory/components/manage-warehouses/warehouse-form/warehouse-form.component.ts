@@ -84,6 +84,7 @@ export class WarehouseFormComponent
 				this.warehouse ? this.warehouse.email : '',
 				Validators.required
 			],
+			active: [this.warehouse ? this.warehouse.active : false],
 			logo: [this.warehouse ? this.warehouse.logo : ''],
 			description: [this.warehouse ? this.warehouse.description : '']
 		});
