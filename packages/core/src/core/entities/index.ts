@@ -116,7 +116,8 @@ import {
 	TimeSlot,
 	TimeSlotMinute,
 	User,
-	UserOrganization
+	UserOrganization,
+	Warehouse
 } from './internal';
 
 export const coreEntities = [
@@ -237,5 +238,6 @@ export const coreEntities = [
 	TimeSlot,
 	TimeSlotMinute,
 	User,
-	UserOrganization
+	UserOrganization,
+	Warehouse
 ];

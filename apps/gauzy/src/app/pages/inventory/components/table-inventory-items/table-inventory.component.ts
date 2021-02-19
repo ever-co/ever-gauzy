@@ -174,6 +174,10 @@ export class TableInventoryComponent
 		]);
 	}
 
+	manageWarehouses() {
+		this.router.navigate(['/pages/organization/inventory/warehouses/all']);
+	}
+
 	onAddInventoryItem() {
 		this.router.navigate([`/pages/organization/inventory/create`]);
 	}

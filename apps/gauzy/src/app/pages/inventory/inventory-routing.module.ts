@@ -9,6 +9,9 @@ import { InventoryVariantFormComponent } from './components/edit-inventory-item-
 import { PermissionsEnum } from '@gauzy/contracts';
 import { NgxPermissionsGuard } from 'ngx-permissions';
 import { InventoryItemViewComponent } from './components/view-inventory-item/view-inventory-item.component';
+import { WarehousesComponent } from './components/manage-warehouses/warehouses.component';
+import { WarehouseFormComponent } from './components/manage-warehouses/warehouse-form/warehouse-form.component';
+import { WarehousesTableComponent } from './components/manage-warehouses/warehouses-table/warehouses-table.component';
 
 const ORG_PERMISSIONS = [
 	PermissionsEnum.ALL_ORG_VIEW,
@@ -81,6 +84,31 @@ const routes: Routes = [
 				redirectTo: '/pages/dashboard'
 			}
 		}
+	},
+	{
+		path: 'warehouses',
+		component: WarehousesComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: {
+			permissions: {
+				only: [...ORG_PERMISSIONS, PermissionsEnum.ORG_INVENTORY_VIEW],
+				redirectTo: '/pages/dashboard'
+			}
+		},
+		children: [
+			{
+				path: 'all',
+				component: WarehousesTableComponent
+			},
+			{
+				path: 'create',
+				component: WarehouseFormComponent
+			},
+			{
+				path: 'edit/:id',
+				component: WarehouseFormComponent
+			}
+		]
 	}
 ];
 
