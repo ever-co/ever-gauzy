@@ -1,6 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { IChangelog } from '@gauzy/contracts';
-import { LanguagesService } from '../../../@core/services/languages.service';
 import { ChangelogService } from '../../../@core/services/changelog.service';
 
 @Component({
