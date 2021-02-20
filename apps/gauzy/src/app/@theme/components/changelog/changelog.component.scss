@@ -1,0 +1,62 @@
+::ng-deep.changelog-sidebar {
+  .main-container {
+    width: 33rem !important;
+  }
+}
+
+.whats-new-panel {
+  display: block;
+
+  .content {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .whats-new-item {
+    width: 100%;
+    margin-top: 25px;
+    overflow: hidden;
+  }
+
+  .d-flex {
+    display: flex !important;
+  }
+
+  .content-text {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    margin-left: 10px;
+    border-bottom: 1px solid #eff1f5;
+    padding-bottom: 20px;
+  }
+
+  .content-header {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .content-body {
+    .text {
+      margin-bottom: 0;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+  }
+
+  .link {
+    display: block;
+    margin: 10px 0 0 0;
+    font-size: 14px;
+    text-decoration: none;
+  }
+
+  .holder {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .icon {
+    transform: translateY(3px);
+  }
+}

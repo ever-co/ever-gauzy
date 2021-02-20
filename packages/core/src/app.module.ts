@@ -88,6 +88,7 @@ import { CandidateFeedbacksModule } from './candidate-feedbacks/candidate-feedba
 import { ProductVariantSettingsModule } from './product-settings/product-settings.module';
 import { IntegrationModule } from './integration/integration.module';
 import { IntegrationTenantModule } from './integration-tenant/integration-tenant.module';
+import { ChangelogModule } from 'changelog/changelog.module';
 import { CandidateInterviewModule } from './candidate-interview/candidate-interview.module';
 import { AppointmentEmployeesModule } from './appointment-employees/appointment-employees.module';
 import { ApprovalPolicyModule } from './approval-policy/approval-policy.module';
@@ -128,6 +129,7 @@ import { ImageAssetModule } from './image-asset/image-asset.module';
 import { resolveServeStaticPath } from './helper';
 import { AccountingTemplateModule } from './accounting-template/accounting-template.module';
 import { SeederModule } from './core/seeds/seeder.module';
+import { WarehouseModule } from 'warehouse/warehouse.module';
 
 const { unleashConfig } = environment;
 if (unleashConfig.url) {
@@ -294,6 +296,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		IntegrationModule,
 		IntegrationSettingModule,
 		IntegrationTenantModule,
+		ChangelogModule,
 		IntegrationMapModule,
 		ProductVariantPriceModule,
 		ProductVariantModule,
@@ -305,7 +308,8 @@ if (process.env.DB_TYPE === 'postgres') {
 		KeyresultTemplateModule,
 		GoalKpiTemplateModule,
 		AccountingTemplateModule,
-		SeederModule
+		SeederModule,
+		WarehouseModule
 	],
 	controllers: [AppController],
 	providers: [AppService],

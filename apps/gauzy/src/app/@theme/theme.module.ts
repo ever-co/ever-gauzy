@@ -48,6 +48,7 @@ import { LayoutSelectorComponent } from './components/layout-selector/layout-sel
 import { ProjectSelectModule } from '../@shared/project-select/project-select.module';
 import { RouterModule } from '@angular/router';
 import { TranslateModule } from '../@shared/translate/translate.module';
+import { ChangelogComponent } from './components/changelog/changelog.component';
 
 const NB_MODULES = [
 	NbLayoutModule,
@@ -81,7 +82,8 @@ const COMPONENTS = [
 	TwoColumnsLayoutComponent,
 	PublicLayoutComponent,
 	ThemeSettingsComponent,
-	LayoutSelectorComponent
+	LayoutSelectorComponent,
+	ChangelogComponent
 ];
 
 const PIPES = [...Pipes];
