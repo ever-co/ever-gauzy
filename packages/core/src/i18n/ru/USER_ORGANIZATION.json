@@ -2,19 +2,30 @@
 	"CANNOT_DELETE_ALL_SUPER_ADMINS": "Должно быть как минимум {count} суперадминистратора на каждого клиента",
 	"SOME_TEST_KEY": "Некоторые тестовые значения для перевода",
 	"INVOICES_PAGE": {
+		"ALREADY_PAID": "Уже оплачено",
+		"AMOUNT_DUE": "Сумма к оплате",
+		"CURRENCY": "Валюта",
+		"DATE": "Дата",
+		"DISCOUNT_TYPE": "Тип скидки",
+		"DUE_DATE": "Срок сдачи",
+		"ESTIMATE": "Оценить",
+		"FROM": "ИЗ",
+		"INVOICE": "Счет",
+		"INVOICES_SELECT_DISCOUNT_VALUE": "Значение скидки",
+		"INVOICES_SELECT_TERMS": "Условия",
+		"NO": "Нет",
+		"NUMBER": "Номер",
+		"PAID": "Оплачено",
+		"TAX_TYPE": "Тип налога",
+		"TAX_VALUE": "Сумма налога",
+		"TO": "К",
+		"YES": "Да",
 		"INVOICE_ITEM": {
-			"ITEM_NUMBER": "Item Number",
-			"TASK": "Task",
-			"NAME": "Name",
-			"DESCRIPTION": "Description",
-			"PRICE": "Price",
-			"QUANTITY": "Quantity",
-			"TOTAL_VALUE": "Total Value",
-			"EMPLOYEE": "Employee",
-			"PROJECT": "Project",
-			"PRODUCT": "Product",
-			"EXPENSE": "Expense",
-			"ITEM": "Item"
+			"DESCRIPTION": "Описание",
+			"ITEM": "Пункт 1",
+			"PRICE": "Цена",
+			"QUANTITY": "Количество",
+			"TOTAL_VALUE": "Общая стоимость"
 		}
 	}
 }

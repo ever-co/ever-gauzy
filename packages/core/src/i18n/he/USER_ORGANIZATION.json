@@ -2,19 +2,30 @@
 	"CANNOT_DELETE_ALL_SUPER_ADMINS": "There must be at least {count} Super Admin per Tenant",
 	"SOME_TEST_KEY": "Some test value to translate",
 	"INVOICES_PAGE": {
+		"ALREADY_PAID": "Already Paid",
+		"AMOUNT_DUE": "Amount Due",
+		"CURRENCY": "מטבע",
+		"DATE": "תאריך",
+		"DISCOUNT_TYPE": "Discount Type",
+		"DUE_DATE": "Due Date",
+		"ESTIMATE": "Estimate",
+		"FROM": "FROM",
+		"INVOICE": "Invoice",
+		"INVOICES_SELECT_DISCOUNT_VALUE": "Discount Value",
+		"INVOICES_SELECT_TERMS": "Terms",
+		"NO": "No",
+		"NUMBER": "Number",
+		"PAID": "Paid",
+		"TAX_TYPE": "Tax Type",
+		"TAX_VALUE": "Tax Value",
+		"TO": "TO",
+		"YES": "Yes",
 		"INVOICE_ITEM": {
-			"ITEM_NUMBER": "Item Number",
-			"TASK": "Task",
-			"NAME": "Name",
 			"DESCRIPTION": "Description",
+			"ITEM": "Item",
 			"PRICE": "Price",
 			"QUANTITY": "Quantity",
-			"TOTAL_VALUE": "Total Value",
-			"EMPLOYEE": "Employee",
-			"PROJECT": "Project",
-			"PRODUCT": "Product",
-			"EXPENSE": "Expense",
-			"ITEM": "Item"
+			"TOTAL_VALUE": "Total Value"
 		}
 	}
 }

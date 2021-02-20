@@ -92,7 +92,6 @@ export async function generateInvoicePdfDefinition(
 		];
 	}
 
-	console.log(tableHeader);
 	const docDefinition = {
 		content: [
 			{

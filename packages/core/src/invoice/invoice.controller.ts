@@ -1,4 +1,4 @@
-import { CrudController, IPagination, RequestContext } from '../core';
+import { CrudController, IPagination } from '../core';
 import { Invoice } from './invoice.entity';
 import { InvoiceService } from './invoice.service';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -14,8 +14,11 @@ import {
 	Get,
 	Req,
 	Post,
-	Delete
+	Delete,
+	Res
 } from '@nestjs/common';
+import { DeleteResult } from 'typeorm';
+import { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
@@ -38,7 +41,6 @@ import {
 	InvoiceUpdateCommand,
 	InvoiceGeneratePdfCommand
 } from './commands';
-import { DeleteResult } from 'typeorm';
 
 @ApiTags('Invoice')
 @Controller()
@@ -234,14 +236,22 @@ export class InvoiceController extends CrudController<Invoice> {
 		description: 'Invoice not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Get('download/:id')
+	@Get('download/:uuid')
 	async downloadInvoice(
-		@Param('id', UUIDValidationPipe) id: string,
-		@I18nLang() locale: LanguagesEnum
+		@Param('uuid', UUIDValidationPipe) id: string,
+		@I18nLang() locale: LanguagesEnum,
+		@Res() res: Response
 	): Promise<any> {
-		console.log(RequestContext.currentUser());
-		return this.commandBus.execute(
+		const buffer = await this.commandBus.execute(
 			new InvoiceGeneratePdfCommand(id, locale)
 		);
+		const stream = this.invoiceService.getReadableStream(buffer);
+
+		res.set({
+			'Content-Type': 'application/pdf',
+			'Content-Length': buffer.length
+		});
+
+		stream.pipe(res);
 	}
 }

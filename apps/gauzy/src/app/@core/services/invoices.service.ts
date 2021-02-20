@@ -138,9 +138,8 @@ export class InvoicesService {
 	}
 
 	downloadInvoicePdf(invoiceId: string) {
-		return this.http
-			.get<IInvoice>(`${API_PREFIX}/invoices/download/${invoiceId}`)
-			.pipe(first())
-			.toPromise();
+		return this.http.get(`${API_PREFIX}/invoices/download/${invoiceId}`, {
+			responseType: 'blob'
+		});
 	}
 }
