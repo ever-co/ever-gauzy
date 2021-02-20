@@ -868,7 +868,7 @@
 		"SPRINT_VIEW": "Просмотр спринта"
 	},
 	"CHANGELOG_MENU": {
-		"HEADER": "Какие новости?",
+		"HEADER": "Что нового?",
 		"LEARN_MORE_URL": "Узнать больше"
 	},
 	"REPORT_PAGE": {
@@ -2070,9 +2070,9 @@
 		"IMAGE_ASSET_UPDATED": "Медиафайл изображения был обновлен",
 		"EDIT_IMAGE_ASSET": "Редактировать актив изображения",
 		"WAREHOUSES": "Склады",
-		"EMAIL": "Электронное письмо",
+		"EMAIL": "Электронная почта",
 		"ACTIVE": "Активный",
-		"LOCATION": "Место расположения",
+		"LOCATION": "Местоположение",
 		"ADDRESS": "Адрес",
 		"CREATE_WAREHOUSE": "Создать склад",
 		"EDIT_WAREHOUSE": "Изменить склад",

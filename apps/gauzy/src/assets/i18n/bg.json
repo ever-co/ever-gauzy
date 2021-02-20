@@ -868,8 +868,8 @@
 		"SPRINT_VIEW": "Sprint View"
 	},
 	"CHANGELOG_MENU": {
-		"HEADER": "Какво ново?",
-		"LEARN_MORE_URL": "Научете повече"
+		"HEADER": "What's new?",
+		"LEARN_MORE_URL": "Learn more"
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Members Worked",
@@ -2069,21 +2069,21 @@
 		"IMAGES_ADDED_TO_GALLERY": "The Images were added to the gallery",
 		"IMAGE_ASSET_UPDATED": "The image asset was updated",
 		"EDIT_IMAGE_ASSET": "Edit image asset",
-		"WAREHOUSES": "Складове",
-		"EMAIL": "Имейл",
+		"WAREHOUSES": "Warehouses",
+		"EMAIL": "Eлектронна поща",
 		"ACTIVE": "Активен",
 		"LOCATION": "Локация",
-		"ADDRESS": "Адрес",
-		"CREATE_WAREHOUSE": "Създай склад",
-		"EDIT_WAREHOUSE": "Промени склад",
-		"WAREHOUSE_CREATED": "Сладът е създаден",
-		"COULD_NOT_CREATE_WAREHOUSE": "Възникна грешка при създаване на склад",
-		"WAREHOUSE_WAS_CREATED": "Склад '{{ name }}' е създаден",
-		"WAREHOUSE_WAS_DELETED": "Склад '{{ name }}' е изтрит",
-		"WAREHOUSE_WAS_UPDATED": "Склад '{{ name }}' е променен",
+		"ADDRESS": "Address",
+		"CREATE_WAREHOUSE": "Create Warehouse",
+		"EDIT_WAREHOUSE": "Edit Warehouse",
+		"WAREHOUSE_CREATED": "Warehouse created",
+		"COULD_NOT_CREATE_WAREHOUSE": "Could not create warehouse",
+		"WAREHOUSE_WAS_CREATED": "Warehouse '{{ name }}' was created",
+		"WAREHOUSE_WAS_DELETED": "Warehouse '{{ name }}' was deleted",
+		"WAREHOUSE_WAS_UPDATED": "Warehouse '{{ name }}' was updated",
 		"CITY": "Град",
-		"LOGO": "Лого",
-		"CONTACT": "Контакт",
+		"LOGO": "Logo",
+		"CONTACT": "Contact",
 		"COUNTRY": "Държава"
 	},
 	"TASKS_PAGE": {
