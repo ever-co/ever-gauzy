@@ -868,8 +868,8 @@
 		"SPRINT_VIEW": "Sprint View"
 	},
 	"CHANGELOG_MENU": {
-		"HEADER": "מה חדש?",
-		"LEARN_MORE_URL": "למד עוד"
+		"HEADER": "What's new?",
+		"LEARN_MORE_URL": "Learn more"
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Members Worked",
@@ -2069,21 +2069,21 @@
 		"IMAGES_ADDED_TO_GALLERY": "The Images were added to the gallery",
 		"IMAGE_ASSET_UPDATED": "The image asset was updated",
 		"EDIT_IMAGE_ASSET": "Edit image asset",
-		"WAREHOUSES": "מחסנים",
+		"WAREHOUSES": "Warehouses",
 		"EMAIL": "אימייל",
-		"ACTIVE": "פָּעִיל",
-		"LOCATION": "מקום",
-		"ADDRESS": "כתובת",
-		"CREATE_WAREHOUSE": "צור מחסן",
-		"EDIT_WAREHOUSE": "ערוך מחסן",
-		"WAREHOUSE_CREATED": "ערוך מחסן",
-		"COULD_NOT_CREATE_WAREHOUSE": "לא ניתן היה ליצור מחסן",
-		"WAREHOUSE_WAS_CREATED": "מַחסָן '{{ name }}' נוצר",
-		"WAREHOUSE_WAS_DELETED": "מַחסָן '{{ name }}' נמחק",
-		"WAREHOUSE_WAS_UPDATED": "מַחסָן '{{ name }}' התעדכן",
-		"CITY": "עִיר",
-		"LOGO": "סֵמֶל",
-		"CONTACT": "איש קשר",
+		"ACTIVE": "פעיל",
+		"LOCATION": "Location",
+		"ADDRESS": "Address",
+		"CREATE_WAREHOUSE": "Create Warehouse",
+		"EDIT_WAREHOUSE": "Edit Warehouse",
+		"WAREHOUSE_CREATED": "Warehouse created",
+		"COULD_NOT_CREATE_WAREHOUSE": "Could not create warehouse",
+		"WAREHOUSE_WAS_CREATED": "Warehouse '{{ name }}' was created",
+		"WAREHOUSE_WAS_DELETED": "Warehouse '{{ name }}' was deleted",
+		"WAREHOUSE_WAS_UPDATED": "Warehouse '{{ name }}' was updated",
+		"CITY": "עיר",
+		"LOGO": "Logo",
+		"CONTACT": "Contact",
 		"COUNTRY": "מדינה"
 	},
 	"TASKS_PAGE": {
