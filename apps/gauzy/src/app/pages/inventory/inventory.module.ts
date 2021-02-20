@@ -59,6 +59,12 @@ import { InventoryItemViewComponent } from './components/view-inventory-item/vie
 import { TranslatableService } from '../../@core/services/translatable.service';
 import { ImageAssetComponent } from '../../@shared/select-asset-modal/img-asset/img-asset.component';
 import { ImageAssetModule } from '../../@shared/image-asset/image-asset.module';
+import { WarehouseService } from '../../@core/services/warehouse.service';
+import { LocationFormModule } from '../../@shared/forms/location';
+import { LeafletMapModule } from '../../@shared/forms/maps/leaflet/leaflet.module';
+import { WarehousesComponent } from './components/manage-warehouses/warehouses.component';
+import { WarehouseFormComponent } from './components/manage-warehouses/warehouse-form/warehouse-form.component';
+import { WarehousesTableComponent } from './components/manage-warehouses/warehouses-table/warehouses-table.component';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -88,7 +94,10 @@ const NB_MODULES = [
 		InventoryVariantFormComponent,
 		EnabledStatusComponent,
 		ProductGalleryComponent,
-		InventoryItemViewComponent
+		InventoryItemViewComponent,
+		WarehousesTableComponent,
+		WarehouseFormComponent,
+		WarehousesComponent
 	],
 	imports: [
 		UserFormsModule,
@@ -113,7 +122,10 @@ const NB_MODULES = [
 		...NB_MODULES,
 		CurrencyModule,
 		SelectAssetModule,
-		ImageAssetModule
+		ImageAssetModule,
+		ImageUploaderModule,
+		LocationFormModule,
+		LeafletMapModule
 	],
 	entryComponents: [
 		ProductTypeMutationComponent,
@@ -134,7 +146,8 @@ const NB_MODULES = [
 		OrganizationsService,
 		ImageAssetService,
 		InventoryStore,
-		TranslatableService
+		TranslatableService,
+		WarehouseService
 	]
 })
 export class InventoryModule {}

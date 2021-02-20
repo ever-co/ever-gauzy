@@ -4,6 +4,7 @@ import {
 } from './base-entity.model';
 import { ITranslation, ITranslatable } from './translation.model';
 import { ITag } from './tag-entity.model';
+import { IContact } from 'index';
 
 export interface IProduct extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
@@ -193,6 +194,18 @@ export interface IImageAsset extends IBasePerTenantEntityModel {
 	width: number;
 	height: number;
 	isFeatured: boolean;
+}
+
+export interface IWarehouse extends IBasePerTenantEntityModel {
+	description: string;
+	active: boolean;
+	contact: IContact;
+	code: string;
+	products?: IProductTranslatable[];
+	name: string;
+	logo?: string;
+	email: string;
+	tags?: ITag[];
 }
 
 export enum BillingInvoicingPolicyEnum {

@@ -867,6 +867,10 @@
 		"CARDS_GRID": "Cards Grid",
 		"SPRINT_VIEW": "Sprint View"
 	},
+	"CHANGELOG_MENU": {
+		"HEADER": "What's new?",
+		"LEARN_MORE_URL": "Learn more"
+	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Members Worked",
 		"MANUAL_TIME_EDIT_REPORT": "Manual Time Edit Report",
@@ -2064,7 +2068,23 @@
 		"IMAGE_ADDED_TO_GALLERY": "Image was added to the gallery",
 		"IMAGES_ADDED_TO_GALLERY": "The Images were added to the gallery",
 		"IMAGE_ASSET_UPDATED": "The image asset was updated",
-		"EDIT_IMAGE_ASSET": "Edit image asset"
+		"EDIT_IMAGE_ASSET": "Edit image asset",
+		"WAREHOUSES": "Warehouses",
+		"EMAIL": "Eлектронна поща",
+		"ACTIVE": "Активен",
+		"LOCATION": "Локация",
+		"ADDRESS": "Address",
+		"CREATE_WAREHOUSE": "Create Warehouse",
+		"EDIT_WAREHOUSE": "Edit Warehouse",
+		"WAREHOUSE_CREATED": "Warehouse created",
+		"COULD_NOT_CREATE_WAREHOUSE": "Could not create warehouse",
+		"WAREHOUSE_WAS_CREATED": "Warehouse '{{ name }}' was created",
+		"WAREHOUSE_WAS_DELETED": "Warehouse '{{ name }}' was deleted",
+		"WAREHOUSE_WAS_UPDATED": "Warehouse '{{ name }}' was updated",
+		"CITY": "Град",
+		"LOGO": "Logo",
+		"CONTACT": "Contact",
+		"COUNTRY": "Държава"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

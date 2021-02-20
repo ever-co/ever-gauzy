@@ -14,6 +14,7 @@ import {
 	CandidateInterviewers,
 	CandidatePersonalQualities,
 	CandidateSkill,
+	Changelog,
 	CandidateSource,
 	CandidateTechnologies,
 	Contact,
@@ -116,7 +117,8 @@ import {
 	TimeSlot,
 	TimeSlotMinute,
 	User,
-	UserOrganization
+	UserOrganization,
+	Warehouse
 } from './internal';
 
 export const coreEntities = [
@@ -137,6 +139,7 @@ export const coreEntities = [
 	CandidateSkill,
 	CandidateSource,
 	CandidateTechnologies,
+	Changelog,
 	Contact,
 	Country,
 	Currency,
@@ -237,5 +240,6 @@ export const coreEntities = [
 	TimeSlot,
 	TimeSlotMinute,
 	User,
-	UserOrganization
+	UserOrganization,
+	Warehouse
 ];

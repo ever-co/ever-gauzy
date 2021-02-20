@@ -20,6 +20,7 @@ export * from '../../candidate-personal-qualities/candidate-personal-qualities.e
 export * from '../../candidate-skill/candidate-skill.entity';
 export * from '../../candidate-source/candidate-source.entity';
 export * from '../../candidate-technologies/candidate-technologies.entity';
+export * from '../../changelog/changelog.entity';
 export * from '../../candidate/candidate.entity';
 export * from '../../contact/contact.entity';
 export * from '../../country/country.entity';
@@ -125,3 +126,4 @@ export * from '../../timesheet/time-slot.entity';
 export * from '../../timesheet/timesheet.entity';
 export * from '../../user-organization/user-organization.entity';
 export * from '../../user/user.entity';
+export * from '../../warehouse/warehouse.entity';
