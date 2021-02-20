@@ -3,38 +3,42 @@
 @import '~@nebular/theme/styles/global/breakpoints';
 
 @include nb-install-component() {
-	.menu-sidebar ::ng-deep .scrollable {
-		display: flex;
-		flex-direction: column;
-		padding-bottom: 0rem !important;
-		padding-top: 0.1rem !important;
-	}
+  .menu-sidebar ::ng-deep .scrollable {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 0rem !important;
+    padding-top: 0.1rem !important;
+  }
 
-	.settings-sidebar.expanded {
-		width: 10.5rem !important;
-	}
+  .settings-sidebar.expanded {
+    width: 10.5rem !important;
+  }
 
-	nb-user {
-		cursor: pointer;
-	}
+  .changelog-sidebar.expanded {
+    width: 33rem !important;
+  }
 
-	.user-container {
-		margin-top: auto;
-		border-top: 1px solid nb-theme(divider-color);
-		padding-top: 0.65rem;
-		padding-bottom: 0.65rem;
-		margin-left: -1.25rem;
-		margin-right: -1.25rem;
-		padding-left: 8px;
-		z-index: 2;
-		background-color: nb-theme(background-basic-color-1);
-	}
+  nb-user {
+    cursor: pointer;
+  }
 
-	.menu-sidebar-rtl {
-		order: 2 !important;
-	}
+  .user-container {
+    margin-top: auto;
+    border-top: 1px solid nb-theme(divider-color);
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+    margin-left: -1.25rem;
+    margin-right: -1.25rem;
+    padding-left: 8px;
+    z-index: 2;
+    background-color: nb-theme(background-basic-color-1);
+  }
 
-	.menu-sidebar {
-		order: 0 !important;
-	}
+  .menu-sidebar-rtl {
+    order: 2 !important;
+  }
+
+  .menu-sidebar {
+    order: 0 !important;
+  }
 }

@@ -867,6 +867,10 @@
 		"CARDS_GRID": "Cards Grid",
 		"SPRINT_VIEW": "Sprint View"
 	},
+	"CHANGELOG_MENU": {
+		"HEADER": "Какво ново?",
+		"LEARN_MORE_URL": "Научете повече"
+	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Members Worked",
 		"MANUAL_TIME_EDIT_REPORT": "Manual Time Edit Report",

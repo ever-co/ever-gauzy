@@ -26,6 +26,17 @@
 	<nb-layout-footer fixed>
 		<ngx-footer></ngx-footer>
 	</nb-layout-footer>
+
+	<nb-sidebar
+		class="changelog-sidebar"
+		tag="changelog-sidebar"
+		state="collapsed"
+		fixed
+		[end]="true"
+	>
+		<ngx-changelog></ngx-changelog>
+	</nb-sidebar>
+
 	<nb-sidebar
 		class="settings-sidebar"
 		tag="settings-sidebar"

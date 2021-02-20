@@ -867,6 +867,10 @@
 		"CARDS_GRID": "Cards Grid",
 		"SPRINT_VIEW": "Sprint View"
 	},
+	"CHANGELOG_MENU": {
+		"HEADER": "מה חדש?",
+		"LEARN_MORE_URL": "למד עוד"
+	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Members Worked",
 		"MANUAL_TIME_EDIT_REPORT": "Manual Time Edit Report",
