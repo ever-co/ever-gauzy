@@ -26,6 +26,19 @@
 			"PRICE": "Price",
 			"QUANTITY": "Quantity",
 			"TOTAL_VALUE": "Total Value"
+		},
+		"PAYMENTS": {
+			"RECEIVER": "Receiver",
+			"RECEIVED_FROM": "Received from",
+			"TOTAL_PAID": "Total Paid",
+			"STATUS": "Status",
+			"NOTE": "Note",
+			"RECORDED_BY": "Recorded By",
+			"AMOUNT": "Amount",
+			"PAYMENT_DATE": "Payment Date",
+			"ON_TIME": "On time",
+			"OVERDUE": "Overdue",
+			"PAYMENTS_FOR_INVOICE": "Payments for invoice"
 		}
 	}
 }

@@ -10,9 +10,12 @@ import { sign } from 'jsonwebtoken';
 import { ConfigService, IEnvironment } from '@gauzy/config';
 import { I18nService } from 'nestjs-i18n';
 import { EstimateEmailService } from '../estimate-email/estimate-email.service';
-import { generateInvoicePdfDefinition } from './generate-invoice-pdf';
 import { PdfmakerService } from './pdfmaker.service';
 import { Readable } from 'stream';
+import {
+	generateInvoicePdfDefinition,
+	generateInvoicePaymentPdfDefinition
+} from './index';
 
 @Injectable()
 export class InvoiceService extends CrudService<Invoice> {
@@ -92,7 +95,7 @@ export class InvoiceService extends CrudService<Invoice> {
 		return token;
 	}
 
-	async generatePdf(invoiceId: string, langulage: string) {
+	async generateInvoicePdf(invoiceId: string, langulage: string) {
 		const invoice: IInvoice = await this.findOne(invoiceId, {
 			relations: [
 				'fromOrganization',
@@ -205,6 +208,85 @@ export class InvoiceService extends CrudService<Invoice> {
 			invoice,
 			invoice.fromOrganization,
 			invoice.toContact,
+			translatedText
+		);
+
+		return await this.pdfmakerServier.generatePdf(docDefinition);
+	}
+
+	async generateInvoicePaymentPdf(invoiceId: string, langulage: string) {
+		const invoice: IInvoice = await this.findOne(invoiceId, {
+			relations: [
+				'invoiceItems',
+				'fromOrganization',
+				'toContact',
+				'payments',
+				'payments.invoice',
+				'payments.recordedBy'
+			]
+		});
+
+		const translatedText = {
+			overdue: await this.i18n.translate(
+				'USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.OVERDUE',
+				{ lang: langulage }
+			),
+			onTime: await this.i18n.translate(
+				'USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.ON_TIME',
+				{ lang: langulage }
+			),
+			paymentDate: await this.i18n.translate(
+				'USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.PAYMENT_DATE',
+				{ lang: langulage }
+			),
+			amount: await this.i18n.translate(
+				'USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.AMOUNT',
+				{ lang: langulage }
+			),
+			recordedBy: await this.i18n.translate(
+				'USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.RECORDED_BY',
+				{ lang: langulage }
+			),
+			note: await this.i18n.translate(
+				'USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.NOTE',
+				{ lang: langulage }
+			),
+			status: await this.i18n.translate(
+				'USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.STATUS',
+				{ lang: langulage }
+			),
+			paymentsForInvoice: await this.i18n.translate(
+				'USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.PAYMENTS_FOR_INVOICE',
+				{ lang: langulage }
+			),
+			dueDate: await this.i18n.translate(
+				'USER_ORGANIZATION.INVOICES_PAGE.DUE_DATE',
+				{ lang: langulage }
+			),
+			totalValue: await this.i18n.translate(
+				'USER_ORGANIZATION.INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE',
+				{ lang: langulage }
+			),
+			totalPaid: await this.i18n.translate(
+				'USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.TOTAL_PAID',
+				{ lang: langulage }
+			),
+			receivedFrom: await this.i18n.translate(
+				'USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.RECEIVED_FROM',
+				{ lang: langulage }
+			),
+			receiver: await this.i18n.translate(
+				'USER_ORGANIZATION.INVOICES_PAGE.PAYMENTS.RECEIVER',
+				{ lang: langulage }
+			)
+		};
+
+		const docDefinition = await generateInvoicePaymentPdfDefinition(
+			invoice,
+			invoice.payments,
+			invoice.fromOrganization,
+			invoice.toContact,
+			invoice.alreadyPaid,
 			translatedText
 		);
 

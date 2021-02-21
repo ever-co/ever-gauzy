@@ -7,8 +7,8 @@ export class InvoiceGeneratePdfHandler
 	implements ICommandHandler<InvoiceGeneratePdfCommand> {
 	constructor(private readonly invoiceService: InvoiceService) {}
 
-	public async execute(command: InvoiceGeneratePdfCommand): Promise<any> {
+	public async execute(command: InvoiceGeneratePdfCommand): Promise<Buffer> {
 		const { invoiceId, locale } = command;
-		return await this.invoiceService.generatePdf(invoiceId, locale);
+		return await this.invoiceService.generateInvoicePdf(invoiceId, locale);
 	}
 }

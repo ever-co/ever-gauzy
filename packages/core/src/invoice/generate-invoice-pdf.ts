@@ -18,7 +18,7 @@ export async function generateInvoicePdfDefinition(
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
 				const employee = item.employee;
 				currentItem = [
-					`${employee.user.firstName} ${employee.user.lastName}`,
+					`${employee.user.name}`,
 					`${item.description}`,
 					`${item.quantity}`,
 					`${invoice.currency} ${item.price}`,

@@ -39,7 +39,8 @@ import {
 	InvoiceGenerateLinkCommand,
 	InvoiceSendEmailCommand,
 	InvoiceUpdateCommand,
-	InvoiceGeneratePdfCommand
+	InvoiceGeneratePdfCommand,
+	InvoicePaymentGeneratePdfCommand
 } from './commands';
 
 @ApiTags('Invoice')
@@ -237,13 +238,42 @@ export class InvoiceController extends CrudController<Invoice> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Get('download/:uuid')
-	async downloadInvoice(
-		@Param('uuid', UUIDValidationPipe) id: string,
+	async downloadInvoicePdf(
+		@Param('uuid', UUIDValidationPipe) uuid: string,
 		@I18nLang() locale: LanguagesEnum,
 		@Res() res: Response
 	): Promise<any> {
 		const buffer = await this.commandBus.execute(
-			new InvoiceGeneratePdfCommand(id, locale)
+			new InvoiceGeneratePdfCommand(uuid, locale)
+		);
+		const stream = this.invoiceService.getReadableStream(buffer);
+
+		res.set({
+			'Content-Type': 'application/pdf',
+			'Content-Length': buffer.length
+		});
+
+		stream.pipe(res);
+	}
+
+	@ApiOperation({ summary: 'Download Invoice' })
+	@ApiResponse({
+		status: HttpStatus.NO_CONTENT,
+		description: 'The invoice has been successfully downloaded'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Invoice not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Get('payment/download/:uuid')
+	async downloadInvoicePaymentPdf(
+		@Param('uuid', UUIDValidationPipe) uuid: string,
+		@I18nLang() locale: LanguagesEnum,
+		@Res() res: Response
+	): Promise<any> {
+		const buffer = await this.commandBus.execute(
+			new InvoicePaymentGeneratePdfCommand(uuid, locale)
 		);
 		const stream = this.invoiceService.getReadableStream(buffer);
 

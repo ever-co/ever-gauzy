@@ -142,4 +142,13 @@ export class InvoicesService {
 			responseType: 'blob'
 		});
 	}
+
+	downloadInvoicePaymentPdf(invoiceId: string) {
+		return this.http.get(
+			`${API_PREFIX}/invoices/payment/download/${invoiceId}`,
+			{
+				responseType: 'blob'
+			}
+		);
+	}
 }

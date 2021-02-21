@@ -11,7 +11,12 @@ import {
 	IPayment,
 	CurrenciesEnum,
 	PaymentMethodEnum,
-	IEmployee
+	IEmployee,
+	IInvoice,
+	ITag,
+	IOrganizationContact,
+	IOrganizationProject,
+	IUser
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -45,7 +50,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	invoice?: Invoice;
+	invoice?: IInvoice;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((expense: Payment) => expense.employee)
@@ -62,7 +67,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@ApiPropertyOptional({ type: () => User })
 	@ManyToOne(() => User)
 	@JoinColumn()
-	recordedBy?: User;
+	recordedBy?: IUser;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
@@ -103,7 +108,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	project?: OrganizationProject;
+	project?: IOrganizationProject;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
@@ -116,7 +121,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	contact?: OrganizationContact;
+	contact?: IOrganizationContact;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
@@ -128,5 +133,5 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@JoinTable({
 		name: 'tag_payment'
 	})
-	tags?: Tag[];
+	tags?: ITag[];
 }

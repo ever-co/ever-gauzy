@@ -5,3 +5,4 @@ export * from './invoice.seed';
 export * from './invoice.service';
 export * from './pdfmaker.service';
 export * from './generate-invoice-pdf';
+export * from './generate-invoice-payment-pdf';
