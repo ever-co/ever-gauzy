@@ -385,7 +385,10 @@ export class TrayIcon {
 			if (LocalStore.getStore('configs').gauzyWindow) {
 				timeTrackerWindow.hide();
 			} else {
-				if (!loginPageAlreadyShow) {
+				if (
+					!loginPageAlreadyShow &&
+					app.getName() !== 'gauzy-desktop-timer'
+				) {
 					const serverConfig = LocalStore.getStore('configs');
 					global.variableGlobal = {
 						API_BASE_URL: getApiBaseUrl(serverConfig, config),
