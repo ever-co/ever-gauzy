@@ -2,7 +2,12 @@ import {
 	IInvoice,
 	CurrenciesEnum,
 	InvoiceTypeEnum,
-	DiscountTaxTypeEnum
+	DiscountTaxTypeEnum,
+	IInvoiceEstimateHistory,
+	IPayment,
+	IInvoiceItem,
+	IOrganizationContact,
+	IOrganization
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -37,7 +42,7 @@ import {
 @Unique(['invoiceNumber'])
 export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@ApiProperty({ type: () => Tag })
-	@ManyToMany((type) => Tag, (tag) => tag.invoice)
+	@ManyToMany(() => Tag, (tag) => tag.invoice)
 	@JoinTable({
 		name: 'tag_invoice'
 	})
@@ -187,26 +192,26 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@ApiPropertyOptional({ type: () => () => Organization })
 	@ManyToOne(() => Organization)
 	@JoinColumn()
-	fromOrganization?: Organization;
+	fromOrganization?: IOrganization;
 
 	@ApiPropertyOptional({ type: () => () => OrganizationContact })
 	@ManyToOne(() => OrganizationContact)
 	@JoinColumn()
-	toContact?: OrganizationContact;
+	toContact?: IOrganizationContact;
 
 	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
 	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.invoice, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	invoiceItems?: InvoiceItem[];
+	invoiceItems?: IInvoiceItem[];
 
 	@ApiPropertyOptional({ type: () => Payment, isArray: true })
 	@OneToMany(() => Payment, (payment) => payment.invoice, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	payments?: Payment[];
+	payments?: IPayment[];
 
 	@ApiPropertyOptional({ type: () => InvoiceEstimateHistory, isArray: true })
 	@OneToMany(
@@ -217,5 +222,5 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 		}
 	)
 	@JoinColumn()
-	historyRecords?: InvoiceEstimateHistory[];
+	historyRecords?: IInvoiceEstimateHistory[];
 }

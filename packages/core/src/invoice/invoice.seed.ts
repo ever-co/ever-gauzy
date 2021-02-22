@@ -4,7 +4,11 @@ import * as faker from 'faker';
 import { Tenant } from '../tenant/tenant.entity';
 import { Organization } from '../organization/organization.entity';
 import { Tag } from '../tags/tag.entity';
-import { DiscountTaxTypeEnum, InvoiceTypeEnum } from '@gauzy/contracts';
+import {
+	DiscountTaxTypeEnum,
+	InvoiceStatusTypesEnum,
+	InvoiceTypeEnum
+} from '@gauzy/contracts';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import * as _ from 'underscore';
 
@@ -70,7 +74,9 @@ export const createDefaultInvoice = async (
 				Object.values(InvoiceTypeEnum)
 			);
 			invoice.organizationId = organization.id;
-			invoice.status = 'ACTIVE';
+			invoice.status = faker.random.arrayElement(
+				Object.values(InvoiceStatusTypesEnum)
+			);
 			invoice.totalValue = faker.random.number(99999);
 			invoice.tenant = tenant;
 			invoice.isArchived = false;
@@ -147,7 +153,9 @@ export const createRandomInvoice = async (
 					Object.values(InvoiceTypeEnum)
 				);
 				invoice.organizationId = organization.id;
-				invoice.status = 'ACTIVE';
+				invoice.status = faker.random.arrayElement(
+					Object.values(InvoiceStatusTypesEnum)
+				);
 				invoice.totalValue = faker.random.number(99999);
 				invoice.tenant = tenant;
 				invoices.push(invoice);

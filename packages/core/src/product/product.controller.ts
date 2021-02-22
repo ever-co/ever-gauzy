@@ -31,7 +31,6 @@ import { ProductDeleteCommand } from './commands';
 import { DeleteResult } from 'typeorm';
 import { ParseJsonPipe } from '../shared';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
-import { ImageAssetService } from 'image-asset/image-asset.service';
 
 @ApiTags('Product')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)

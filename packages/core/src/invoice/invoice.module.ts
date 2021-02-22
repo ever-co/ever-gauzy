@@ -14,6 +14,7 @@ import { EstimateEmailController } from '../estimate-email/estimate-email.contro
 import { EstimateEmail } from '../estimate-email/estimate-email.entity';
 import { TenantModule } from '../tenant/tenant.module';
 import { CommandHandlers } from './commands';
+import { PdfmakerService } from './pdfmaker.service';
 
 @Module({
 	imports: [
@@ -27,11 +28,17 @@ import { CommandHandlers } from './commands';
 	controllers: [InvoiceController, EstimateEmailController],
 	providers: [
 		InvoiceService,
+		PdfmakerService,
 		UserService,
 		EmailService,
 		EstimateEmailService,
 		...CommandHandlers
 	],
-	exports: [InvoiceService, UserService, EstimateEmailService]
+	exports: [
+		InvoiceService,
+		PdfmakerService,
+		UserService,
+		EstimateEmailService
+	]
 })
 export class InvoiceModule {}

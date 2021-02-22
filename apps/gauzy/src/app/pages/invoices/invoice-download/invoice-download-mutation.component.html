@@ -8,10 +8,7 @@
 		</h5>
 	</nb-card-header>
 	<nb-card-body>
-		<ga-invoice-pdf
-			[invoice]="invoice"
-			(docDef)="getDocDef($event)"
-		></ga-invoice-pdf>
+		<ga-invoice-pdf [invoice]="invoice"></ga-invoice-pdf>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
 		<button (click)="closeDialog()" status="danger" class="mr-3" nbButton>

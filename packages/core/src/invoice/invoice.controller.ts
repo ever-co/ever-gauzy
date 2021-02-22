@@ -14,8 +14,11 @@ import {
 	Get,
 	Req,
 	Post,
-	Delete
+	Delete,
+	Res
 } from '@nestjs/common';
+import { DeleteResult } from 'typeorm';
+import { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
@@ -34,10 +37,11 @@ import {
 	InvoiceCreateCommand,
 	InvoiceDeleteCommand,
 	InvoiceGenerateLinkCommand,
-	InvoiceUpdateCommand
+	InvoiceSendEmailCommand,
+	InvoiceUpdateCommand,
+	InvoiceGeneratePdfCommand,
+	InvoicePaymentGeneratePdfCommand
 } from './commands';
-import { DeleteResult } from 'typeorm';
-import { InvoiceSendEmailCommand } from './commands/invoice.send.email.command';
 
 @ApiTags('Invoice')
 @Controller()
@@ -120,7 +124,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Post()
-	async createInvoice(@Body() entity: IInvoiceCreateInput): Promise<Invoice> {
+	async create(@Body() entity: IInvoiceCreateInput): Promise<Invoice> {
 		return this.commandBus.execute(new InvoiceCreateCommand(entity));
 	}
 
@@ -142,7 +146,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Put(':id')
-	async updateInvoice(
+	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IInvoiceUpdateInput
 	): Promise<Invoice> {
@@ -221,5 +225,63 @@ export class InvoiceController extends CrudController<Invoice> {
 		@Param('id', UUIDValidationPipe) id: string
 	): Promise<DeleteResult> {
 		return this.commandBus.execute(new InvoiceDeleteCommand(id));
+	}
+
+	@ApiOperation({ summary: 'Download Invoice' })
+	@ApiResponse({
+		status: HttpStatus.NO_CONTENT,
+		description: 'The invoice has been successfully downloaded'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Invoice not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Get('download/:uuid')
+	async downloadInvoicePdf(
+		@Param('uuid', UUIDValidationPipe) uuid: string,
+		@I18nLang() locale: LanguagesEnum,
+		@Res() res: Response
+	): Promise<any> {
+		const buffer = await this.commandBus.execute(
+			new InvoiceGeneratePdfCommand(uuid, locale)
+		);
+		const stream = this.invoiceService.getReadableStream(buffer);
+
+		res.set({
+			'Content-Type': 'application/pdf',
+			'Content-Length': buffer.length
+		});
+
+		stream.pipe(res);
+	}
+
+	@ApiOperation({ summary: 'Download Invoice' })
+	@ApiResponse({
+		status: HttpStatus.NO_CONTENT,
+		description: 'The invoice has been successfully downloaded'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Invoice not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Get('payment/download/:uuid')
+	async downloadInvoicePaymentPdf(
+		@Param('uuid', UUIDValidationPipe) uuid: string,
+		@I18nLang() locale: LanguagesEnum,
+		@Res() res: Response
+	): Promise<any> {
+		const buffer = await this.commandBus.execute(
+			new InvoicePaymentGeneratePdfCommand(uuid, locale)
+		);
+		const stream = this.invoiceService.getReadableStream(buffer);
+
+		res.set({
+			'Content-Type': 'application/pdf',
+			'Content-Length': buffer.length
+		});
+
+		stream.pipe(res);
 	}
 }

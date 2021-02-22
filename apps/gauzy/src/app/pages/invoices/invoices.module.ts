@@ -127,35 +127,6 @@ import { InvoicePaymentReceiptMutatonComponent } from './invoice-payments/paymen
 		InvoiceEstimateHistoryService,
 		TranslatableService
 	],
-	entryComponents: [
-		InvoicesComponent,
-		InvoiceAddComponent,
-		InvoiceTasksSelectorComponent,
-		InvoiceProjectsSelectorComponent,
-		InvoiceEmployeesSelectorComponent,
-		InvoiceEditComponent,
-		InvoicesReceivedComponent,
-		InvoiceSendMutationComponent,
-		InvoiceViewComponent,
-		InvoiceProductsSelectorComponent,
-		InvoicePaidComponent,
-		InvoiceEmailMutationComponent,
-		InvoiceViewInnerComponent,
-		InvoiceDownloadMutationComponent,
-		EstimatesComponent,
-		EstimateAddComponent,
-		EstimateEditComponent,
-		EstimatesReceivedComponent,
-		EstimateViewComponent,
-		InvoicePaymentsComponent,
-		PaymentMutationComponent,
-		InvoiceApplyTaxDiscountComponent,
-		InvoiceExpensesSelectorComponent,
-		InvoicePdfComponent,
-		AddInternalNoteComponent,
-		PublicLinkComponent,
-		InvoicePaymentReceiptMutatonComponent
-	],
 	declarations: [
 		InvoicesComponent,
 		InvoiceAddComponent,
@@ -185,6 +156,6 @@ import { InvoicePaymentReceiptMutatonComponent } from './invoice-payments/paymen
 		PublicLinkComponent,
 		InvoicePaymentReceiptMutatonComponent
 	],
-	exports: [InvoiceViewInnerComponent]
+	exports: []
 })
 export class InvoicesModule {}
