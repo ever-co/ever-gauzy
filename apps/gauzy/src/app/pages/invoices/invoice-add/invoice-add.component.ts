@@ -760,7 +760,7 @@ export class InvoiceAddComponent
 		this.organizationContacts = contacts.items;
 
 		const products = await this.productService.getAll(
-			[],
+			['translations'],
 			{ organizationId, tenantId },
 			this.selectedLanguage
 		);

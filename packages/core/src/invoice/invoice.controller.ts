@@ -246,13 +246,15 @@ export class InvoiceController extends CrudController<Invoice> {
 		const buffer = await this.commandBus.execute(
 			new InvoiceGeneratePdfCommand(uuid, locale)
 		);
-		const stream = this.invoiceService.getReadableStream(buffer);
+		if (!buffer) {
+			return;
+		}
 
+		const stream = this.invoiceService.getReadableStream(buffer);
 		res.set({
 			'Content-Type': 'application/pdf',
 			'Content-Length': buffer.length
 		});
-
 		stream.pipe(res);
 	}
 
@@ -275,13 +277,15 @@ export class InvoiceController extends CrudController<Invoice> {
 		const buffer = await this.commandBus.execute(
 			new InvoicePaymentGeneratePdfCommand(uuid, locale)
 		);
-		const stream = this.invoiceService.getReadableStream(buffer);
+		if (!buffer) {
+			return;
+		}
 
+		const stream = this.invoiceService.getReadableStream(buffer);
 		res.set({
 			'Content-Type': 'application/pdf',
 			'Content-Length': buffer.length
 		});
-
 		stream.pipe(res);
 	}
 }

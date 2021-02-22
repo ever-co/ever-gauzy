@@ -13,57 +13,32 @@ export async function generateInvoicePdfDefinition(
 ) {
 	const body = [];
 	for (const item of invoice.invoiceItems) {
-		let currentItem = [];
+		const currentItem = [
+			`${item.description}`,
+			`${item.quantity}`,
+			`${invoice.currency} ${item.price}`,
+			`${invoice.currency} ${item.totalValue}`
+		];
 		switch (invoice.invoiceType) {
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
 				const employee = item.employee;
-				currentItem = [
-					`${employee.user.name}`,
-					`${item.description}`,
-					`${item.quantity}`,
-					`${invoice.currency} ${item.price}`,
-					`${invoice.currency} ${item.totalValue}`
-				];
+				currentItem.unshift(`${employee.user.name}`);
 				break;
 			case InvoiceTypeEnum.BY_PROJECT_HOURS:
 				const project = item.project;
-				currentItem = [
-					`${project.name}`,
-					`${item.description}`,
-					`${item.quantity}`,
-					`${invoice.currency} ${item.price}`,
-					`${invoice.currency} ${item.totalValue}`
-				];
+				currentItem.unshift(`${project.name}`);
 				break;
 			case InvoiceTypeEnum.BY_TASK_HOURS:
 				const task = item.task;
-				currentItem = [
-					`${task.title}`,
-					`${item.description}`,
-					`${item.quantity}`,
-					`${invoice.currency} ${item.price}`,
-					`${invoice.currency} ${item.totalValue}`
-				];
+				currentItem.unshift(`${task.title}`);
 				break;
 			case InvoiceTypeEnum.BY_PRODUCTS:
 				const product: any = item.product;
-				currentItem = [
-					`${product.name}`,
-					`${item.description}`,
-					`${item.quantity}`,
-					`${invoice.currency} ${item.price}`,
-					`${invoice.currency} ${item.totalValue}`
-				];
+				currentItem.unshift(`${product.name}`);
 				break;
 			case InvoiceTypeEnum.BY_EXPENSES:
 				const expense = item.expense;
-				currentItem = [
-					`${expense.purpose}`,
-					`${item.description}`,
-					`${item.quantity}`,
-					`${invoice.currency} ${item.price}`,
-					`${invoice.currency} ${item.totalValue}`
-				];
+				currentItem.unshift(`${expense.purpose}`);
 				break;
 			default:
 				break;
@@ -72,24 +47,18 @@ export async function generateInvoicePdfDefinition(
 	}
 
 	let widths;
-	let tableHeader;
+	const tableHeader = [
+		translatedText.description,
+		translatedText.quantity,
+		translatedText.price,
+		translatedText.totalValue
+	];
+
 	if (invoice.invoiceType === InvoiceTypeEnum.DETAILED_ITEMS) {
 		widths = ['25%', '25%', '25%', '25%'];
-		tableHeader = [
-			translatedText.description,
-			translatedText.quantity,
-			translatedText.price,
-			translatedText.totalValue
-		];
 	} else {
 		widths = ['20%', '20%', '20%', '20%', '20%'];
-		tableHeader = [
-			translatedText.item,
-			translatedText.description,
-			translatedText.quantity,
-			translatedText.price,
-			translatedText.totalValue
-		];
+		tableHeader.unshift(`${translatedText.item}`);
 	}
 
 	const docDefinition = {
