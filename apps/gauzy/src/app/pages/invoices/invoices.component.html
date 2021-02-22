@@ -536,7 +536,6 @@
 			</label>
 			<nb-select
 				class="show-columns-select"
-				*ngIf="!isEstimate"
 				[multiple]="true"
 				[(selected)]="columns"
 				(selectedChange)="selectColumn($event)"
@@ -544,23 +543,7 @@
 			>
 				<nb-option
 					class="column"
-					*ngFor="let column of invoiceColumns"
-					[value]="column"
-				>
-					{{ 'INVOICES_PAGE.' + column | translate }}
-				</nb-option>
-			</nb-select>
-			<nb-select
-				class="show-columns-select"
-				*ngIf="isEstimate"
-				[multiple]="true"
-				[(selected)]="columns"
-				(selectedChange)="selectColumn($event)"
-				placeholder="{{ 'INVOICES_PAGE.SHOW_COLUMNS' | translate }}"
-			>
-				<nb-option
-					class="column"
-					*ngFor="let column of estimateColumns"
+					*ngFor="let column of getColumns()"
 					[value]="column"
 				>
 					{{ 'INVOICES_PAGE.' + column | translate }}

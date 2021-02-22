@@ -78,8 +78,6 @@ export class InvoicesComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	invoiceStatusTypes = Object.values(InvoiceStatusTypesEnum);
 	estimateStatusTypes = Object.values(EstimateStatusTypesEnum);
-	invoiceColumns = Object.values(InvoiceColumnsEnum);
-	estimateColumns = Object.values(EstimateColumnsEnum);
 	status: string;
 	settingsContextMenu: NbMenuItem[];
 	menuArray = [];
@@ -1065,33 +1063,13 @@ export class InvoicesComponent
 	}
 
 	toggleActionsPopover() {
-		const actionsPopup = this.popups.first;
-		const tableSettingsPopup = this.popups.last;
-
-		if (actionsPopup.isShown) {
-			actionsPopup.hide();
-		} else {
-			actionsPopup.show();
-		}
-
-		if (tableSettingsPopup.isShown) {
-			tableSettingsPopup.hide();
-		}
+		this.popups.first.toggle();
+		this.popups.last.hide();
 	}
 
 	toggleTableSettingsPopover() {
-		const actionsPopup = this.popups.first;
-		const tableSettingsPopup = this.popups.last;
-
-		if (tableSettingsPopup.isShown) {
-			tableSettingsPopup.hide();
-		} else {
-			tableSettingsPopup.show();
-		}
-
-		if (actionsPopup.isShown) {
-			actionsPopup.hide();
-		}
+		this.popups.last.toggle();
+		this.popups.first.hide();
 	}
 
 	closeActionsPopover() {
@@ -1141,6 +1119,13 @@ export class InvoicesComponent
 			this.invoicesTable.grid.dataSet['willSelect'] = 'false';
 			this.invoicesTable.grid.dataSet.deselectAll();
 		}
+	}
+
+	getColumns(): string[] {
+		if (this.isEstimate) {
+			return Object.values(EstimateColumnsEnum);
+		}
+		return Object.values(InvoiceColumnsEnum);
 	}
 
 	/*

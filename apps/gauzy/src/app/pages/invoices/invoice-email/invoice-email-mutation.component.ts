@@ -10,8 +10,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { InvoicesService } from '../../../@core/services/invoices.service';
-import * as pdfMake from 'pdfmake/build/pdfmake';
-import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 import { Store } from '../../../@core/services/store.service';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 import { InvoiceItemService } from '../../../@core/services/invoice-item.service';
@@ -30,28 +28,23 @@ export class InvoiceEmailMutationComponent
 	saveAndSend: boolean;
 	invoiceItems: IInvoiceItem[];
 	createdInvoice: IInvoice;
-	docDefinition: any;
 
 	constructor(
-		readonly translateService: TranslateService,
-		protected dialogRef: NbDialogRef<InvoiceEmailMutationComponent>,
-		private fb: FormBuilder,
-		private toastrService: ToastrService,
-		private invoiceService: InvoicesService,
-		private store: Store,
-		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
-		private invoicesService: InvoicesService,
-		private invoiceItemService: InvoiceItemService
+		public readonly translateService: TranslateService,
+		protected readonly dialogRef: NbDialogRef<InvoiceEmailMutationComponent>,
+		private readonly fb: FormBuilder,
+		private readonly toastrService: ToastrService,
+		private readonly invoiceService: InvoicesService,
+		private readonly store: Store,
+		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
+		private readonly invoicesService: InvoicesService,
+		private readonly invoiceItemService: InvoiceItemService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
 		this.initializeForm();
-	}
-
-	getDocDef(event) {
-		this.docDefinition = event;
 	}
 
 	initializeForm() {
@@ -65,43 +58,56 @@ export class InvoiceEmailMutationComponent
 		if (this.saveAndSend) {
 			const createdInvoice = await this.invoicesService.add(this.invoice);
 			this.createdInvoice = createdInvoice;
-			this.invoiceItems.forEach(async (item) => {
-				item['invoiceId'] = createdInvoice.id;
-				await this.invoiceItemService.add(item);
-			});
-			await this.invoiceEstimateHistoryService.add({
-				action: this.isEstimate
-					? this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE')
-					: this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
-				invoice: createdInvoice,
-				invoiceId: createdInvoice.id,
-				user: this.store.user,
-				userId: this.store.userId,
-				organization: this.invoice.fromOrganization,
-				organizationId,
-				tenantId
-			});
+			this.invoiceItemService
+				.createBulk(createdInvoice.id, this.invoiceItems)
+				.then(async () => {
+					await this.createInvoiceEstimateHistory();
+				});
 		}
-		pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
-		const pdfDocGenerator = pdfMake.createPdf(this.docDefinition);
-		pdfDocGenerator.getBase64(async (data) => {
-			await this.invoiceService.sendEmail(
-				this.form.value.email,
-				data,
-				this.invoice.invoiceNumber,
-				this.invoice.id ? this.invoice.id : this.createdInvoice.id,
-				this.isEstimate,
-				organizationId,
-				tenantId
-			);
-		});
+		const { email } = this.form.value;
+		await this.invoiceService.sendEmail(
+			email,
+			this.invoice.invoiceNumber,
+			this.invoice.id ? this.invoice.id : this.createdInvoice.id,
+			this.isEstimate,
+			organizationId,
+			tenantId
+		);
 
 		if (this.invoice.id) {
 			await this.invoiceService.update(this.invoice.id, {
 				status: InvoiceStatusTypesEnum.SENT
 			});
 		}
+
+		await this.invoiceEstimateSendHistory();
+
+		this.toastrService.success('INVOICES_PAGE.EMAIL.EMAIL_SENT');
+		this.dialogRef.close('ok');
+	}
+
+	async createInvoiceEstimateHistory() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization;
+
+		await this.invoiceEstimateHistoryService.add({
+			action: this.isEstimate
+				? this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE')
+				: this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
+			invoice: this.createdInvoice,
+			invoiceId: this.createdInvoice.id,
+			user: this.store.user,
+			userId: this.store.userId,
+			organization: this.invoice.fromOrganization,
+			organizationId,
+			tenantId
+		});
+	}
+
+	async invoiceEstimateSendHistory() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization;
 
 		await this.invoiceEstimateHistoryService.add({
 			action: this.isEstimate
@@ -121,9 +127,6 @@ export class InvoiceEmailMutationComponent
 			organizationId,
 			tenantId
 		});
-
-		this.toastrService.success('INVOICES_PAGE.EMAIL.EMAIL_SENT');
-		this.dialogRef.close('ok');
 	}
 
 	cancel() {

@@ -111,7 +111,6 @@ export class InvoicesService {
 
 	sendEmail(
 		email: string,
-		base64: string,
 		invoiceNumber: number,
 		invoiceId: string,
 		isEstimate: boolean,
@@ -122,7 +121,6 @@ export class InvoicesService {
 			.put<any>(`${API_PREFIX}/invoices/email/${email}`, {
 				params: {
 					isEstimate,
-					base64,
 					invoiceNumber,
 					invoiceId,
 					organizationId,

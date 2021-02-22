@@ -43,7 +43,6 @@ export class InvoiceService extends CrudService<Invoice> {
 	async sendEmail(
 		languageCode: LanguagesEnum,
 		email: string,
-		base64: string,
 		invoiceNumber: number,
 		invoiceId: string,
 		isEstimate: boolean,
@@ -57,6 +56,14 @@ export class InvoiceService extends CrudService<Invoice> {
 			email,
 			token
 		);
+
+		//generate estimate/invoice pdf and attached in email
+		const buffer: Buffer = await this.generateInvoicePdf(
+			invoiceId,
+			languageCode
+		);
+		const base64 = buffer.toString('base64');
+
 		this.emailService.emailInvoice(
 			languageCode,
 			email,
