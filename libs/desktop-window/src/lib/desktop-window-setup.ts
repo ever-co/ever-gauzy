@@ -10,7 +10,8 @@ export function createSetupWindow(setupWindow, value, filePath) {
 	const launchPath = url.format({
 		pathname: filePath,
 		protocol: 'file:',
-		slashes: true
+		slashes: true,
+		hash: '/setup'
 	});
 
 	if (value) {
@@ -45,7 +46,8 @@ const windowSetting = () => {
 		fullscreenable: false,
 		webPreferences: {
 			nodeIntegration: true,
-			webSecurity: false
+			webSecurity: false,
+			enableRemoteModule: true
 		},
 		width: 960,
 		height: 680,

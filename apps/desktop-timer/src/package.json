@@ -1,8 +1,8 @@
 {
-	"name": "gauzy-timer",
-	"productName": "gauzy",
+	"name": "gauzy-desktop-timer",
+	"productName": "gauzy-desktop-timer",
 	"version": "0.1.0",
-	"description": "Gauzy Desktop",
+	"description": "Gauzy Desktop Timer",
 	"license": "AGPL-3.0",
 	"homepage": "https://gauzy.co",
 	"repository": {
@@ -18,10 +18,10 @@
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
-	"main": "apps/desktop/src/index.js",
+	"main": "apps/desktop-timer/src/index.js",
 	"build": {
-		"appId": "com.company.gauzydesktop",
-		"productName": "Gauzy Desktop",
+		"appId": "com.company.gauzydesktoptimer",
+		"productName": "Gauzy Desktop Timer",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
 		"asar": true,
 		"npmRebuild": true,
@@ -60,8 +60,8 @@
 				"deb",
 				"tar.gz"
 			],
-			"executableName": "gauzy",
-			"artifactName": "gauzy-${version}.${ext}",
+			"executableName": "gauzy-desktop-timer",
+			"artifactName": "gauzy-desktop-timer${version}.${ext}",
 			"synopsis": "Desktop",
 			"category": "Development"
 		},
@@ -73,7 +73,7 @@
 			"allowToChangeInstallationDirectory": true,
 			"allowElevation": true,
 			"installerIcon": "icon.ico",
-			"artifactName": "Gauzy-${version}.${ext}",
+			"artifactName": "Gauzy-desktop-timer${version}.${ext}",
 			"deleteAppDataOnUninstall": true,
 			"menuCategory": true
 		},
@@ -96,9 +96,6 @@
 		"node-fetch": "^2.6.1",
 		"screenshot-desktop": "^1.12.2",
 		"electron-updater": "~4.3.5",
-		"pg": "^8.3.3",
-		"@nestjs/platform-express": "^7.6.5",
-		"@gauzy/core": "file:../../../node_modules/@gauzy",
-		"@gauzy/auth": "file:../../../node_modules/@gauzy"
+		"pg": "^8.3.3"
 	}
 }

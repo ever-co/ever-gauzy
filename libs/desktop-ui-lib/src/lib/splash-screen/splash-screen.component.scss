@@ -1,0 +1,25 @@
+.screen-capture-img {
+  width: 100%;
+}
+
+.top-bottom-space {
+  padding: 1px !important;
+}
+
+.icon-logo {
+  position: relative;
+  left: -5px;
+  top: 10px;
+}
+
+.title-window {
+  font-weight: bolder;
+}
+
+.margin-p {
+  margin-bottom: 6px;
+}
+
+::ng-deep body {
+  overflow: hidden !important;
+}

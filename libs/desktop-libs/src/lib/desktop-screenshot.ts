@@ -203,7 +203,12 @@ const showCapturedToRenderer = (NotificationWindow, thumbUrl, quitApp) => {
 		y: 0 + 15
 	});
 	const urlpath = url.format({
-		pathname: path.join(__dirname, '../../../../ui/index.html'),
+		pathname: path.join(
+			__dirname,
+			app.getName() !== 'gauzy-desktop-timer'
+				? '../../../../ui/index.html'
+				: '../../../../index.html'
+		),
 		protocol: 'file:',
 		slashes: true,
 		hash: '/screen-capture'

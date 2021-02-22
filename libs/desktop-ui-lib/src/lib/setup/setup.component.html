@@ -7,10 +7,7 @@
 						<ng-template #labelOne>WELCOME</ng-template>
 						<div class="row content-body">
 							<div class="col-12 text-center margin-content">
-								<img
-									src="../assets/images/logos/logo_Gauzy.svg"
-									class="margin-icon"
-								/>
+								<img [src]="gauzyIcon" class="margin-icon" />
 							</div>
 							<div class="col-12 text-center margin-content">
 								<h4>WELCOME TO</h4>
@@ -44,7 +41,10 @@
 							</div>
 						</div>
 					</nb-step>
-					<nb-step [label]="labelTwo">
+					<nb-step
+						[label]="labelTwo"
+						*ngIf="appName !== 'gauzy-desktop-timer'"
+					>
 						<ng-template #labelTwo>FUNCTIONALITIES</ng-template>
 						<div class="row content-body">
 							<div class="col-12 text-center margin-content">
@@ -177,7 +177,12 @@
 							>
 								<div class="row">
 									<!-- <nb-radio-group> -->
-									<div class="col-4">
+									<div
+										class="col-4 col-center"
+										*ngIf="
+											appName !== 'gauzy-desktop-timer'
+										"
+									>
 										<nb-card class="card-small-item">
 											<nb-card-body>
 												<div class="row">
@@ -220,7 +225,7 @@
 											</nb-card-body>
 										</nb-card>
 									</div>
-									<div class="col-4">
+									<div class="col-4 col-center">
 										<nb-card class="card-small-item">
 											<nb-card-body>
 												<div class="row">
@@ -264,7 +269,7 @@
 											</nb-card-body>
 										</nb-card>
 									</div>
-									<div class="col-4">
+									<div class="col-4 col-center">
 										<nb-card class="card-small-item">
 											<nb-card-body>
 												<div class="row">

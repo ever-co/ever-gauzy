@@ -6,7 +6,8 @@ import {
 	ScreenCaptureComponent,
 	TimeTrackerComponent,
 	SetupComponent,
-	UpdaterComponent
+	UpdaterComponent,
+	SplashScreenComponent
 } from '../../../../libs/desktop-ui-lib/src/index';
 import {
 	NbAuthComponent,
@@ -16,10 +17,14 @@ import {
 	NbRequestPasswordComponent,
 	NbResetPasswordComponent
 } from '@nebular/auth';
+import { AuthGuard } from './auth/auth.guard';
+import { NoAuthGuard } from './auth/no-auth.guard';
+import { ServerDownPage } from './server-down/server-down.page';
+import { AppModuleGuard } from './app.module.guards';
 
 const routes: Routes = [
 	{
-		path: '',
+		path: 'setup',
 		component: SetupComponent
 	},
 	{
@@ -28,15 +33,18 @@ const routes: Routes = [
 		children: [
 			{
 				path: '',
-				component: NbLoginComponent
+				component: NbLoginComponent,
+				canActivate: [AppModuleGuard, NoAuthGuard]
 			},
 			{
 				path: 'login',
-				component: NbLoginComponent
+				component: NbLoginComponent,
+				canActivate: [AppModuleGuard, NoAuthGuard]
 			},
 			{
 				path: 'register',
-				component: NbRegisterComponent
+				component: NbRegisterComponent,
+				canActivate: [NoAuthGuard]
 			},
 			{
 				path: 'logout',
@@ -54,7 +62,8 @@ const routes: Routes = [
 	},
 	{
 		path: 'time-tracker',
-		component: TimeTrackerComponent
+		component: TimeTrackerComponent,
+		canActivate: [AppModuleGuard, AuthGuard]
 	},
 	{
 		path: 'screen-capture',
@@ -71,6 +80,19 @@ const routes: Routes = [
 	{
 		path: 'viewer',
 		component: ImageViewerComponent
+	},
+	{
+		path: 'splash',
+		component: SplashScreenComponent
+	},
+	{
+		path: 'server-down',
+		component: ServerDownPage
+	},
+	{
+		path: '',
+		component: TimeTrackerComponent,
+		canActivate: [AppModuleGuard, AuthGuard]
 	}
 ];
 
