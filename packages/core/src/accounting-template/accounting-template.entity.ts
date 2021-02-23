@@ -27,4 +27,11 @@ export class AccountingTemplate
 	@Column({ nullable: true })
 	@IsOptional()
 	mjml: string;
+
+	@ApiProperty({ type: () => String })
+	@IsString()
+	@IsNotEmpty()
+	@Column({ nullable: true })
+	@IsOptional()
+	hbs: string;
 }
