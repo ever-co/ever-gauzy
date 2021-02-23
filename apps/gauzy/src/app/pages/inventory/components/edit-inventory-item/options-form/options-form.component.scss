@@ -1,3 +1,5 @@
+@import 'themes';
+
 .options-wrap {
   display: flex;
   min-height: 20px;
@@ -37,4 +39,35 @@
 
 .width-100 {
   width: 100%;
+}
+
+//tstodo new styles
+
+.row.text-option {
+  border-bottom: 1px solid nb-theme(color-basic-300);
+}
+
+.text-option {
+  font-size: 16px;
+  color: nb-theme(color-basic-600);
+}
+
+.option-row-icon {
+  color: nb-theme(color-basic-300);
+}
+
+.edit-option-group {
+  display: none;
+}
+
+.view-option-group {
+  display: flex;
+}
+
+.active.edit-option-group {
+  display: flex;
+}
+
+.active.view-option-group {
+  display: none;
 }

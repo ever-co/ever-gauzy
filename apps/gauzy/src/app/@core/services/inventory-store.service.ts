@@ -70,7 +70,9 @@ export class InventoryStore {
 	}
 
 	get createOptions() {
-		return this.activeProduct.options;
+		//tstodo
+		return [];
+		// return this.activeProduct.options;
 	}
 
 	get activeTab() {
@@ -88,7 +90,9 @@ export class InventoryStore {
 	}
 
 	set options(options: IProductOption[]) {
-		this.activeProduct.options = options;
+		//tstodo
+		// this.activeProduct.options = options;
+		this.activeProduct.optionGroups = [];
 		this.activeProduct$.next(this.activeProduct);
 	}
 
@@ -179,27 +183,30 @@ export class InventoryStore {
 		return this.activeProduct.featuredImage.id == image.id;
 	}
 
+	//tstodo
 	createOption(option: IProductOption) {
-		this._activeProduct.options.push(option);
+		// this._activeProduct.options.push(option);
 		this.activeProduct$.next(this._activeProduct);
 	}
 
+	//tstodo
 	updateOption(optionOld: IProductOption, optionNew: IProductOption) {
-		let idx = this._activeProduct.options.indexOf(optionOld);
-		if (!idx) return;
-		this._activeProduct.options[idx] = optionNew;
+		// let idx = this._activeProduct.options.indexOf(optionOld);
+		// if (!idx) return;
+		// this._activeProduct.options[idx] = optionNew;
 		this.activeProduct$.next(this._activeProduct);
 	}
 
+	//tstodo
 	deleteOption(optionDeleted: IProductOption) {
 		this._deleteOptions.push(optionDeleted);
-		this._activeProduct.options = this.activeProduct.options.filter(
-			(option) =>
-				!(
-					option.name == optionDeleted.name &&
-					option.code == optionDeleted.code
-				)
-		);
+		// this._activeProduct.options = this.activeProduct.options.filter(
+		// 	(option) =>
+		// 		!(
+		// 			option.name == optionDeleted.name &&
+		// 			option.code == optionDeleted.code
+		// 		)
+		// );
 
 		this.updateVariantInputsOnDeletedOption(optionDeleted);
 		this.deleteOptions$.next(this._deleteOptions);
