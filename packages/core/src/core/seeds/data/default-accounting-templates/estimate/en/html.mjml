@@ -2,7 +2,108 @@
 	<mj-body background-color="#fff">
 		<mj-section>
 			<mj-column>
-				<mj-text> This is an estimate </mj-text>
+				<mj-text font-weight="bold">FROM:</mj-text>
+				<mj-text> {{from}} </mj-text>
+				<mj-spacer height="10px"></mj-spacer>
+				<mj-text font-weight="bold"> TO: </mj-text>
+				<mj-text> {{to}} </mj-text>
+			</mj-column>
+			<mj-column>
+				<mj-text font-size="20px" font-weight="bold">
+					<div style="display: flex; justify-content: space-between">
+						<span>Estimate Number:</span>
+						<span>{{estimateNumber}}</span>
+					</div>
+				</mj-text>
+				<mj-spacer height="40px"></mj-spacer>
+				<mj-text>
+					<div style="display: flex; justify-content: space-between">
+						<span style="font-weight: bold">Estimate Date:</span>
+						<span>{{estimateDate}}</span>
+					</div>
+				</mj-text>
+				<mj-text>
+					<div style="display: flex; justify-content: space-between">
+						<span style="font-weight: bold">Due Date:</span>
+						<span>{{estimateDueDate}}</span>
+					</div>
+				</mj-text>
+			</mj-column>
+		</mj-section>
+		<mj-section>
+			<mj-column>
+				<mj-table>
+					<tr
+						style="
+							border-bottom: 1px solid #ecedee;
+							text-align: left;
+							padding: 15px 0;
+						"
+					>
+						<th>Item</th>
+						<th>Description</th>
+						<th>Quantity</th>
+						<th>Price</th>
+						<th>Total Value</th>
+					</tr>
+					{{#each estimateItems}}
+					<tr
+						style="
+							border-bottom: 1px solid #ecedee;
+							text-align: left;
+							padding: 15px 0;
+						"
+					>
+						<td>{{this.name}}</td>
+						<td>{{this.description}}</td>
+						<td>{{this.quantity}}</td>
+						<td>{{../currency}} {{this.price}}</td>
+						<td>{{../currency}} {{this.totalValue}}</td>
+					</tr>
+					{{/each}}
+				</mj-table>
+			</mj-column>
+		</mj-section>
+		<mj-section padding-left="50%">
+			<mj-column>
+				{{#if tax}}
+				<mj-text>
+					<div style="display: flex; justify-content: space-between">
+						<span style="font-weight: bold">Tax:</span>
+						<span>
+							{{#if_eq taxType 'FLAT'}} {{currency}} {{/if_eq}}
+							{{tax}} {{#if_eq taxType 'PERCENT'}} % {{/if_eq}}
+						</span>
+					</div>
+				</mj-text>
+				{{/if}} {{#if tax2}}
+				<mj-text>
+					<div style="display: flex; justify-content: space-between">
+						<span style="font-weight: bold">Tax 2:</span>
+						<span>
+							{{#if_eq tax2Type 'FLAT'}} {{currency}} {{/if_eq}}
+							{{tax2}} {{#if_eq tax2Type 'PERCENT'}} % {{/if_eq}}
+						</span>
+					</div>
+				</mj-text>
+				{{/if}} {{#if discountValue}}
+				<mj-text>
+					<div style="display: flex; justify-content: space-between">
+						<span style="font-weight: bold">Discount Value:</span>
+						<span>
+							{{#if_eq discountType 'FLAT'}} {{currency}}
+							{{/if_eq}} {{discountValue}} {{#if_eq discountType
+							'PERCENT'}} % {{/if_eq}}
+						</span>
+					</div>
+				</mj-text>
+				{{/if}}
+				<mj-text>
+					<div style="display: flex; justify-content: space-between">
+						<span style="font-weight: bold">Total Value:</span>
+						<span>{{currency}} {{totalValue}}</span>
+					</div>
+				</mj-text>
 			</mj-column>
 		</mj-section>
 	</mj-body>

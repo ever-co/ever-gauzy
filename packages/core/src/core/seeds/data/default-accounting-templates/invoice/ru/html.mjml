@@ -4,7 +4,7 @@
 			<mj-column>
 				<mj-text font-weight="bold">FROM:</mj-text>
 				<mj-text> {{from}} </mj-text>
-				<mj-spacer height="10px"></mj-spacer>
+				<mj-spacer height="40px"></mj-spacer>
 				<mj-text font-weight="bold"> TO: </mj-text>
 				<mj-text> {{to}} </mj-text>
 			</mj-column>
