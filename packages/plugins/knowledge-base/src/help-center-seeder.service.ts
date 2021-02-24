@@ -1,11 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { SeedDataService } from '@gauzy/core';
+import { Connection, getConnection } from 'typeorm';
+import {
+	getDefaultBulgarianOrganization,
+	getDefaultOrganizations,
+	getDefaultTenant,
+	SeedDataService
+} from '@gauzy/core';
 import { createHelpCenter } from './help-center';
 import { createHelpCenterArticle } from './help-center-article/help-center-article.seed';
 import {
 	createDefaultHelpCenterAuthor,
 	createRandomHelpCenterAuthor
 } from './help-center-author';
+import { IOrganization, ITenant } from '@gauzy/contracts';
 
 /**
  * Service dealing with help center based operations.
@@ -14,6 +21,11 @@ import {
  */
 @Injectable()
 export class HelpCenterSeederService {
+	connection: Connection;
+	tenant: ITenant;
+	organization: IOrganization;
+	organizations: IOrganization[];
+
 	/**
 	 * Create an instance of class.
 	 *
@@ -28,21 +40,28 @@ export class HelpCenterSeederService {
 	 * @function
 	 */
 	async createDefault() {
+		this.connection = getConnection();
+		this.tenant = await getDefaultTenant(this.connection);
+		this.organization = await getDefaultBulgarianOrganization(
+			this.connection,
+			this.tenant
+		);
+		this.organizations = await getDefaultOrganizations(
+			this.connection,
+			this.tenant
+		);
+
 		await this.seeder.tryExecute(
 			'Default Help Centers',
-			createHelpCenter(
-				this.seeder.connection,
-				this.seeder.tenant,
-				this.seeder.organizations[0]
-			)
+			createHelpCenter(this.connection, this.tenant, this.organization)
 		);
 
 		const noOfHelpCenterArticle = 5;
 		await this.seeder.tryExecute(
 			'Default Help Center Articles',
 			createHelpCenterArticle(
-				this.seeder.connection,
-				this.seeder.organizations,
+				this.connection,
+				this.organizations,
 				noOfHelpCenterArticle
 			)
 		);
@@ -50,7 +69,7 @@ export class HelpCenterSeederService {
 		await this.seeder.tryExecute(
 			'Default Help Center Author',
 			createDefaultHelpCenterAuthor(
-				this.seeder.connection,
+				this.connection,
 				this.seeder.defaultEmployees
 			)
 		);
@@ -66,8 +85,8 @@ export class HelpCenterSeederService {
 		await this.seeder.tryExecute(
 			'Random Help Center Articles',
 			createHelpCenterArticle(
-				this.seeder.connection,
-				this.seeder.organizations,
+				this.connection,
+				this.organizations,
 				noOfHelpCenterArticle
 			)
 		);

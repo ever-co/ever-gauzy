@@ -9,21 +9,24 @@ import {
 	Param,
 	Put
 } from '@nestjs/common';
-import { UUIDValidationPipe } from '../shared/pipes/uuid-validation.pipe';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
-import { Changelog } from './changelog.entity';
-import { ChangelogService } from './changelog.service';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
-import { IPagination } from '../core';
 import { CommandBus } from '@nestjs/cqrs';
 import {
 	IChangelog,
 	IChangelogCreateInput,
-	IChangelogUpdateInput
+	IChangelogUpdateInput,
+	IPagination
 } from '@gauzy/contracts';
-import { ChangelogCreateCommand, ChangelogUpdateCommand } from './commands';
+import {
+	CrudController,
+	TenantPermissionGuard,
+	UUIDValidationPipe
+} from '@gauzy/core';
+import { Changelog } from './changelog.entity';
+import { ChangelogService } from './changelog.service';
+import { ChangelogUpdateCommand } from './commands/changelog.update.command';
+import { ChangelogCreateCommand } from './commands/changelog.create.command';
 
 @ApiTags('Changelog')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
