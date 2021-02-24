@@ -10,7 +10,8 @@ import {
 	BonusTypeEnum,
 	WeekDaysEnum,
 	AlignmentOptions,
-	IOrganizationCreateInput
+	IOrganizationCreateInput,
+	IOrganization
 } from '@gauzy/contracts';
 import { Tenant } from './../tenant/tenant.entity';
 import { Skill } from '../skills/skill.entity';
@@ -21,12 +22,23 @@ import { environment as env } from '@gauzy/config';
 export const getDefaultBulgarianOrganization = async (
 	connection: Connection,
 	tenant: Tenant
-): Promise<Organization> => {
+): Promise<IOrganization> => {
 	const repo = connection.getRepository(Organization);
 	const existedOrganization = await repo.findOne({
 		where: { tenantId: tenant.id, name: 'Ever Technologies LTD' }
 	});
 	return existedOrganization;
+};
+
+export const getDefaultOrganizations = async (
+	connection: Connection,
+	tenant: Tenant
+): Promise<IOrganization[]> => {
+	const repo = connection.getRepository(Organization);
+	const orgnaizations = await repo.find({
+		where: { tenantId: tenant.id }
+	});
+	return orgnaizations;
 };
 
 let defaultOrganizationsInserted = [];

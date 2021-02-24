@@ -298,7 +298,6 @@ import {
 	createRandomFeatureToggle
 } from '../../feature/feature.seed';
 import { createDefaultAccountingTemplates } from 'accounting-template/accounting-template.seed';
-import { createChangelog } from '../../changelog/changelog.seed';
 
 @Injectable()
 export class SeedDataService {
@@ -318,7 +317,9 @@ export class SeedDataService {
 
 	config: IPluginConfig = getConfig();
 
-	constructor(private readonly moduleRef: ModuleRef) {}
+	constructor(private readonly moduleRef: ModuleRef) {
+		console.log(chalk.blue('Instance created'));
+	}
 
 	/**
 	 * This config is applied only for `yarn seed:*` type calls because
@@ -527,11 +528,6 @@ export class SeedDataService {
 				createCurrencies(this.connection)
 			);
 
-			await this.tryExecute(
-				'Default Changelog',
-				createChangelog(this.connection)
-			);
-
 			await this.seedBasicDefaultData();
 
 			if (!isDefault) {
@@ -570,6 +566,7 @@ export class SeedDataService {
 		);
 
 		this.organizations = defaultOrganizations;
+		console.log(this.organizations);
 
 		await this.tryExecute(
 			'Default Feature Toggle',
@@ -986,17 +983,17 @@ export class SeedDataService {
 			})
 		);
 
-		await this.tryExecute(
-			'Default TimeSheets',
-			createDefaultTimeSheet(
-				this.connection,
-				this.config,
-				this.tenant,
-				this.defaultEmployees,
-				this.defaultProjects,
-				randomSeedConfig.noOfTimeLogsPerTimeSheet
-			)
-		);
+		// await this.tryExecute(
+		// 	'Default TimeSheets',
+		// 	createDefaultTimeSheet(
+		// 		this.connection,
+		// 		this.config,
+		// 		this.tenant,
+		// 		this.defaultEmployees,
+		// 		this.defaultProjects,
+		// 		randomSeedConfig.noOfTimeLogsPerTimeSheet
+		// 	)
+		// );
 
 		await this.tryExecute(
 			'Default Proposals',

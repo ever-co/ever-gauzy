@@ -1,4 +1,4 @@
-import { SeedDataService } from '@gauzy/core';
+import { SeederModule } from '@gauzy/core';
 import { IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/common';
 import {
 	ExtensionPlugin,
@@ -17,10 +17,11 @@ import { HelpCenterSeederService } from './help-center-seeder.service';
 	imports: [
 		HelpCenterModule,
 		HelpCenterArticleModule,
-		HelpCenterAuthorModule
+		HelpCenterAuthorModule,
+		SeederModule
 	],
 	entities: [HelpCenter, HelpCenterArticle, HelpCenterAuthor],
-	providers: [SeedDataService, HelpCenterSeederService]
+	providers: [HelpCenterSeederService]
 })
 export class KnowledgeBasePlugin
 	implements

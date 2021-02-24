@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Changelog } from './changelog.entity';
 import { CqrsModule } from '@nestjs/cqrs';
-import { TenantModule } from '../tenant/tenant.module';
+import { RouterModule } from 'nest-router';
+import { TenantModule } from '@gauzy/core';
+import { Changelog } from './changelog.entity';
 import { ChangelogController } from './changelog.controller';
 import { ChangelogService } from './changelog.service';
-import { RouterModule } from 'nest-router';
 
 @Module({
 	imports: [

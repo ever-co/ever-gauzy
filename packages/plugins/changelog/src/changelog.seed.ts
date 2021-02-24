@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
-import { Changelog } from './changelog.entity';
 import { IChangelog } from '@gauzy/contracts';
+import { Changelog } from './changelog.entity';
 import { INITIAL_CHANGELOG_TEMPLATE } from './initial-changelog-template';
 
 export const createChangelog = async (
@@ -8,7 +8,7 @@ export const createChangelog = async (
 ): Promise<IChangelog[]> => {
 	return await new Promise<IChangelog[]>(async (resolve, reject) => {
 		try {
-			const changelog: IChangelog[] = [];
+			const changelogs: IChangelog[] = [];
 			const entries = INITIAL_CHANGELOG_TEMPLATE;
 			for (const key of Object.keys(entries)) {
 				if (entries.hasOwnProperty(key)) {
@@ -19,11 +19,11 @@ export const createChangelog = async (
 						content: entries[key].content,
 						learnMoreUrl: entries[key].learnMoreUrl
 					};
-					changelog.push(entry);
+					changelogs.push(entry);
 				}
 			}
-			await insertChangelog(connection, changelog);
-			resolve(changelog);
+			await insertChangelog(connection, changelogs);
+			resolve(changelogs);
 		} catch (err) {
 			console.log('Error parsing changelog:', err);
 			reject(null);
@@ -34,12 +34,12 @@ export const createChangelog = async (
 
 const insertChangelog = async (
 	connection: Connection,
-	changelog: IChangelog[]
+	changelogs: IChangelog[]
 ): Promise<void> => {
 	await connection
 		.createQueryBuilder()
 		.insert()
 		.into(Changelog)
-		.values(changelog)
+		.values(changelogs)
 		.execute();
 };

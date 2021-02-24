@@ -10,7 +10,9 @@ export class ChangelogCreateHandler
 
 	public async execute(command: ChangelogCreateCommand): Promise<IChangelog> {
 		const { input } = command;
-		delete input['id'];
+		if (input.hasOwnProperty('id')) {
+			delete input['id'];
+		}
 		return this.changelogService.create(input);
 	}
 }
