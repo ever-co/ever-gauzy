@@ -707,7 +707,13 @@
 						"aot": true,
 						"assets": [
 							"apps/desktop-timer/src/favicon.ico",
-							"apps/desktop-timer/src/assets"
+							"apps/desktop-timer/src/assets",
+							{
+								"glob": "**/*",
+								"input": "apps/desktop-timer/src/",
+								"ignore": ["**/*.ts"],
+								"output": ""
+							}
 						],
 						"styles": [
 							"node_modules/@nebular/theme/styles/prebuilt/default.css",

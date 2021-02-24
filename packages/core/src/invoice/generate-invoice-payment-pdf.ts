@@ -5,7 +5,7 @@ import {
 	IInvoice
 } from '@gauzy/contracts';
 
-export async function generatePdf(
+export async function generateInvoicePaymentPdfDefinition(
 	invoice: IInvoice,
 	payments: IPayment[],
 	organization: IOrganization,
@@ -19,11 +19,7 @@ export async function generatePdf(
 		const currentPayment = [
 			`${payment.paymentDate.toString().slice(0, 10)}`,
 			`${payment.amount}`,
-			`${
-				payment.recordedBy.firstName ? payment.recordedBy.firstName : ''
-			} ${
-				payment.recordedBy.lastName ? payment.recordedBy.lastName : ''
-			}`,
+			`${payment.recordedBy.name}`,
 			`${payment.note}`,
 			`${
 				payment.overdue ? translatedText.overdue : translatedText.onTime

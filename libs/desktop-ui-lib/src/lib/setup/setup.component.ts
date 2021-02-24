@@ -80,20 +80,25 @@ export class SetupComponent implements OnInit {
 			this._cdr.detectChanges();
 		});
 	}
+	appName: string = this.electronService.remote.app.getName();
 	loading: Boolean = false;
 	iconAw = './assets/icons/toggle-left.svg';
 	statusIcon = 'success';
 	awCheck = false;
 	awAPI: String = 'http://localhost:5600';
 	buttonSave = false;
+	gauzyIcon =
+		this.appName === 'gauzy-desktop-timer'
+			? './assets/images/logos/logo_Gauzy.svg'
+			: '../assets/images/logos/logo_Gauzy.svg';
 	desktopFeatures: any = {
-		gauzyPlatform: true,
+		gauzyPlatform: this.appName === 'gauzy-desktop-timer' ? false : true,
 		timeTracking: true
 	};
 
 	connectivity: any = {
-		integrated: true,
-		localNetwork: false,
+		integrated: this.appName === 'gauzy-desktop-timer' ? false : true,
+		localNetwork: this.appName === 'gauzy-desktop-timer' ? true : false,
 		live: false
 	};
 

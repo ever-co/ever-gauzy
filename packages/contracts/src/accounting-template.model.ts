@@ -5,6 +5,7 @@ export interface IAccountingTemplate
 	name: string;
 	mjml?: string;
 	languageCode: string;
+	hbs?: string;
 }
 
 export interface IAccountingTemplateFindInput

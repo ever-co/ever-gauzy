@@ -17,3 +17,5 @@ export * from './lib/time-tracker/time-tracker.component';
 export * from './lib/time-tracker/time-tracker.service';
 export * from './lib/updater/updater.component';
 export * from './lib/updater/updater.module';
+export * from './lib/splash-screen/splash-screen.module';
+export * from './lib/splash-screen/splash-screen.component';

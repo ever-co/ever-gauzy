@@ -132,7 +132,7 @@ export class InvoiceViewInnerComponent
 					}
 					break;
 				case InvoiceTypeEnum.BY_TASK_HOURS:
-					if (item.projectId) {
+					if (item.taskId) {
 						const { task } = item;
 						data['name'] = task.title;
 					}

@@ -111,7 +111,6 @@ export class InvoicesService {
 
 	sendEmail(
 		email: string,
-		base64: string,
 		invoiceNumber: number,
 		invoiceId: string,
 		isEstimate: boolean,
@@ -122,7 +121,6 @@ export class InvoicesService {
 			.put<any>(`${API_PREFIX}/invoices/email/${email}`, {
 				params: {
 					isEstimate,
-					base64,
 					invoiceNumber,
 					invoiceId,
 					organizationId,
@@ -135,5 +133,20 @@ export class InvoicesService {
 
 	changeValue(message: boolean) {
 		this.source.next(message);
+	}
+
+	downloadInvoicePdf(invoiceId: string) {
+		return this.http.get(`${API_PREFIX}/invoices/download/${invoiceId}`, {
+			responseType: 'blob'
+		});
+	}
+
+	downloadInvoicePaymentPdf(invoiceId: string) {
+		return this.http.get(
+			`${API_PREFIX}/invoices/payment/download/${invoiceId}`,
+			{
+				responseType: 'blob'
+			}
+		);
 	}
 }

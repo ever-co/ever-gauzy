@@ -75,7 +75,7 @@
 				status="info"
 				(click)="download()"
 				class="mr-2"
-				[disabled]="disableButton"
+				[disabled]="!payments?.length"
 			>
 				<nb-icon icon="download-outline"></nb-icon>
 			</button>

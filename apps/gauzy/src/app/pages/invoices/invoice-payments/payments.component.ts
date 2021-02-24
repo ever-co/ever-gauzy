@@ -15,9 +15,7 @@ import { NbDialogService } from '@nebular/theme';
 import { PaymentService } from '../../../@core/services/payment.service';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { filter, first, tap } from 'rxjs/operators';
-import * as pdfMake from 'pdfmake/build/pdfmake';
-import * as pdfFonts from 'pdfmake/build/vfs_fonts';
-import { generatePdf } from '../../../@shared/payment/generate-pdf';
+import { saveAs } from 'file-saver';
 import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge.component';
 import { Store } from '../../../@core/services/store.service';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
@@ -25,6 +23,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../../@core/services/toastr.service';
 import { generateCsv } from '../../../@shared/invoice/generate-csv';
 import { InvoicePaymentReceiptMutatonComponent } from './payment-receipt-mutation/payment-receipt-mutation.component';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-payments',
@@ -268,48 +267,26 @@ export class InvoicePaymentsComponent
 			);
 			return;
 		}
-		pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
-		this.translatedText = {
-			overdue: this.getTranslation('INVOICES_PAGE.PAYMENTS.OVERDUE'),
-			onTime: this.getTranslation('INVOICES_PAGE.PAYMENTS.ON_TIME'),
-			paymentDate: this.getTranslation(
-				'INVOICES_PAGE.PAYMENTS.PAYMENT_DATE'
-			),
-			amount: this.getTranslation('INVOICES_PAGE.PAYMENTS.AMOUNT'),
-			recordedBy: this.getTranslation(
-				'INVOICES_PAGE.PAYMENTS.RECORDED_BY'
-			),
-			note: this.getTranslation('INVOICES_PAGE.PAYMENTS.NOTE'),
-			status: this.getTranslation('INVOICES_PAGE.PAYMENTS.STATUS'),
-			paymentsForInvoice: this.getTranslation(
-				'INVOICES_PAGE.PAYMENTS.PAYMENTS_FOR_INVOICE'
-			),
-			dueDate: this.getTranslation('INVOICES_PAGE.DUE_DATE'),
-			totalValue: this.getTranslation(
-				'INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE'
-			),
-			totalPaid: this.getTranslation('INVOICES_PAGE.PAYMENTS.TOTAL_PAID'),
-			receivedFrom: this.getTranslation(
-				'INVOICES_PAGE.PAYMENTS.RECEIVED_FROM'
-			),
-			receiver: this.getTranslation('INVOICES_PAGE.PAYMENTS.RECEIVER')
-		};
+		const { id: invoiceId } = this.invoice;
+		this.invoicesService
+			.downloadInvoicePaymentPdf(invoiceId)
+			.pipe(
+				tap((data) => this.downloadFile(data)),
+				untilDestroyed(this)
+			)
+			.subscribe(() => {
+				this.toastrService.success(
+					'INVOICES_PAGE.PAYMENTS.PAYMENT_DOWNLOAD'
+				);
+			});
+	}
 
-		const docDefinition = await generatePdf(
-			this.invoice,
-			this.payments,
-			this.invoice.fromOrganization,
-			this.invoice.toContact,
-			this.totalPaid,
-			this.translatedText
-		);
-		pdfMake
-			.createPdf(docDefinition)
-			.download(
-				`${this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT')}.pdf`
-			);
-		this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_DOWNLOAD');
+	downloadFile(data) {
+		const filename = `${this.getTranslation(
+			'INVOICES_PAGE.PAYMENTS.PAYMENT'
+		)}.pdf`;
+		saveAs(data, filename);
 	}
 
 	selectPayment($event: ISelectedPayment) {

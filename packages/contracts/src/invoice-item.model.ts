@@ -38,7 +38,7 @@ export interface IInvoiceItemCreateInput
 	price: number;
 	quantity: number;
 	totalValue: number;
-	invoiceId: string;
+	invoiceId?: string;
 	taskId?: string;
 	employeeId?: string;
 	projectId?: string;

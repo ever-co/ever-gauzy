@@ -30,6 +30,7 @@ import { OrganizationProjectsService } from '../../organization-projects/organiz
 import { OrganizationDepartmentService } from '../../organization-department/organization-department.service';
 import { RoleService } from '../../role/role.service';
 import { InvoiceService } from '../../invoice/invoice.service';
+import { PdfmakerService } from './../../invoice/pdfmaker.service';
 import { InvoiceItemService } from '../../invoice-item/invoice-item.service';
 import { EmployeeLevelService } from '../../organization_employee-level/organization-employee-level.service';
 import { OrganizationContactService } from '../../organization-contact/organization-contact.service';
@@ -187,6 +188,7 @@ import { ReportCategoryService } from '../../reports/report-category.service';
 		IntegrationTenantService,
 		InviteService,
 		InvoiceService,
+		PdfmakerService,
 		InvoiceItemService,
 		InvoiceEstimateHistoryService,
 
@@ -311,6 +313,7 @@ import { ReportCategoryService } from '../../reports/report-category.service';
 		IntegrationTenantService,
 		InviteService,
 		InvoiceService,
+		PdfmakerService,
 		InvoiceItemService,
 		InvoiceEstimateHistoryService,
 

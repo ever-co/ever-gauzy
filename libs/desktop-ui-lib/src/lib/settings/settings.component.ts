@@ -16,6 +16,11 @@ import { ElectronService } from 'ngx-electron';
 export class SettingsComponent implements OnInit {
 	@ViewChild('selectRef') selectProjectElement: ElementRef;
 	menus = ['Screen Capture', 'Timer', 'Update', 'Advanced Setting'];
+	appName: string = this.electronService.remote.app.getName();
+	gauzyIcon =
+		this.appName === 'gauzy-desktop-timer'
+			? './assets/images/logos/logo_Gauzy.svg'
+			: '../assets/images/logos/logo_Gauzy.svg';
 
 	montorsOption = [
 		{

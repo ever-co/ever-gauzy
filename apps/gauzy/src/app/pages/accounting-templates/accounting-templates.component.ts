@@ -1,4 +1,10 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+	AfterViewInit,
+	Component,
+	OnDestroy,
+	OnInit,
+	ViewChild
+} from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
@@ -8,12 +14,15 @@ import {
 } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { AccountingTemplateService } from '../../@core/services/accounting-template.service';
-
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { NbThemeService } from '@nebular/theme';
+@UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './accounting-templates.component.html',
 	styleUrls: ['./accounting-templates.component.scss']
 })
-export class AccountingTemplatesComponent implements OnInit, OnDestroy {
+export class AccountingTemplatesComponent
+	implements OnInit, AfterViewInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;
 	previewTemplate: SafeHtml;
@@ -26,12 +35,46 @@ export class AccountingTemplatesComponent implements OnInit, OnDestroy {
 	constructor(
 		private accountingTemplateService: AccountingTemplateService,
 		private fb: FormBuilder,
-		private sanitizer: DomSanitizer
+		private sanitizer: DomSanitizer,
+		private themeService: NbThemeService
 	) {}
 
 	ngOnInit() {
 		this.getTemplate();
 		this._initializeForm();
+	}
+
+	ngAfterViewInit() {
+		this.themeService
+			.getJsTheme()
+			.pipe(untilDestroyed(this))
+			.subscribe(
+				({
+					name
+				}: {
+					name: 'dark' | 'cosmic' | 'corporate' | 'default';
+				}) => {
+					switch (name) {
+						case 'dark':
+						case 'cosmic':
+							this.templateEditor.setTheme('tomorrow_night');
+							break;
+						default:
+							this.templateEditor.setTheme('sqlserver');
+							break;
+					}
+				}
+			);
+
+		const editorOptions = {
+			enableBasicAutocompletion: true,
+			enableLiveAutocompletion: true,
+			printMargin: false,
+			showLineNumbers: true,
+			tabSize: 2
+		};
+
+		this.templateEditor.getEditor().setOptions(editorOptions);
 	}
 
 	async getTemplate() {
@@ -49,18 +92,32 @@ export class AccountingTemplatesComponent implements OnInit, OnDestroy {
 		const html = await this.accountingTemplateService.generateTemplatePreview(
 			result.mjml
 		);
+		console.log(html);
 		this.previewTemplate = this.sanitizer.bypassSecurityTrustHtml(
 			html.html
 		);
 	}
 
-	async getPreview() {}
+	async onTemplateChange(code: string) {
+		this.form.get('mjml').setValue(code);
+		const html = await this.accountingTemplateService.generateTemplatePreview(
+			code
+		);
+		this.previewTemplate = this.sanitizer.bypassSecurityTrustHtml(
+			html.html
+		);
+	}
+
+	async onSave() {
+		await this.accountingTemplateService.saveTemplate({
+			...this.form.value
+		});
+	}
 
 	private _initializeForm() {
 		this.form = this.fb.group({
 			name: [AccountingTemplateNameEnum.INVOICE],
 			languageCode: [LanguagesEnum.ENGLISH],
-			subject: [''],
 			mjml: ['']
 		});
 	}

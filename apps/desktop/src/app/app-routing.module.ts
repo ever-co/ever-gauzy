@@ -12,6 +12,10 @@ import {
 const routes: Routes = [
 	{
 		path: '',
+		component: TimeTrackerComponent
+	},
+	{
+		path: 'setup',
 		component: SetupComponent
 	},
 	{
