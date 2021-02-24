@@ -1,16 +1,17 @@
 <mjml>
-	<mj-body background-color="#fff">
+	<mj-body>
 		<mj-section>
-			<mj-column padding-top="30px">
-				<mj-text font-weight="bold" font-size="28px">
-					ESTIMATE
+			<mj-column>
+				<mj-text font-size="20px" font-weight="bold"> RECEIPT </mj-text>
+				<mj-text font-size="16px" font-weight="bold">
+					{{from}}
 				</mj-text>
 			</mj-column>
 			<mj-column>
 				<mj-image
-					src="{{imgPath}}"
 					width="90px"
 					height="90px"
+					src="{{imgPath}}"
 					align="right"
 					border-radius="50%"
 				/>
@@ -18,30 +19,26 @@
 		</mj-section>
 		<mj-section>
 			<mj-column>
-				<mj-text font-weight="bold">FROM:</mj-text>
-				<mj-text> {{from}} </mj-text>
-				<mj-spacer height="10px"></mj-spacer>
-				<mj-text font-weight="bold"> TO: </mj-text>
+				<mj-text font-size="16px" font-weight="bold"> Bill to </mj-text>
 				<mj-text> {{to}} </mj-text>
 			</mj-column>
 			<mj-column>
-				<mj-text font-weight="bold">
+				<mj-text align="right">
 					<div style="display: flex; justify-content: space-between">
-						<span>Estimate Number:</span>
-						<span>{{estimateNumber}}</span>
-					</div>
-				</mj-text>
-				<mj-spacer height="10px"></mj-spacer>
-				<mj-text>
-					<div style="display: flex; justify-content: space-between">
-						<span style="font-weight: bold">Estimate Date:</span>
-						<span>{{estimateDate}}</span>
+						<span style="font-weight: bold">Receipt Number:</span>
+						<span>{{receiptNumber}}</span>
 					</div>
 				</mj-text>
 				<mj-text>
 					<div style="display: flex; justify-content: space-between">
-						<span style="font-weight: bold">Due Date:</span>
-						<span>{{estimateDueDate}}</span>
+						<span style="font-weight: bold">Payment Date:</span>
+						<span>{{paymentDate}}</span>
+					</div>
+				</mj-text>
+				<mj-text align="right">
+					<div style="display: flex; justify-content: space-between">
+						<span style="font-weight: bold">Payment Method:</span>
+						<span>{{paymentMethod}}</span>
 					</div>
 				</mj-text>
 			</mj-column>
@@ -62,7 +59,7 @@
 						<th>Price</th>
 						<th>Total Value</th>
 					</tr>
-					{{#each estimateItems}}
+					{{#each receiptItems}}
 					<tr
 						style="
 							border-bottom: 1px solid #ecedee;
@@ -82,6 +79,12 @@
 		</mj-section>
 		<mj-section padding-left="50%">
 			<mj-column>
+				<mj-text>
+					<div style="display: flex; justify-content: space-between">
+						<span style="font-weight: bold">Subtotal:</span>
+						<span>{{currency}} {{subtotal}}</span>
+					</div>
+				</mj-text>
 				{{#if tax}}
 				<mj-text>
 					<div style="display: flex; justify-content: space-between">
@@ -118,6 +121,14 @@
 					<div style="display: flex; justify-content: space-between">
 						<span style="font-weight: bold">Total Value:</span>
 						<span>{{currency}} {{totalValue}}</span>
+					</div>
+				</mj-text>
+				<mj-text>
+					<div style="display: flex; justify-content: space-between">
+						<span style="font-weight: bold">Total Paid:</span>
+						<span>
+							<span>{{currency}} {{totalPaid}}</span>
+						</span>
 					</div>
 				</mj-text>
 			</mj-column>

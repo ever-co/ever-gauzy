@@ -1,6 +1,20 @@
 <mjml>
 	<mj-body background-color="#fff">
 		<mj-section>
+			<mj-column padding-top="30px">
+				<mj-text font-weight="bold" font-size="28px"> INVOICE </mj-text>
+			</mj-column>
+			<mj-column>
+				<mj-image
+					src="{{imgPath}}"
+					width="90px"
+					height="90px"
+					align="right"
+					border-radius="50%"
+				/>
+			</mj-column>
+		</mj-section>
+		<mj-section>
 			<mj-column>
 				<mj-text font-weight="bold">FROM:</mj-text>
 				<mj-text> {{from}} </mj-text>
@@ -9,13 +23,13 @@
 				<mj-text> {{to}} </mj-text>
 			</mj-column>
 			<mj-column>
-				<mj-text font-size="20px" font-weight="bold">
+				<mj-text font-weight="bold">
 					<div style="display: flex; justify-content: space-between">
 						<span>Invoice Number:</span>
 						<span>{{invoiceNumber}}</span>
 					</div>
 				</mj-text>
-				<mj-spacer height="40px"></mj-spacer>
+				<mj-spacer height="10px"></mj-spacer>
 				<mj-text>
 					<div style="display: flex; justify-content: space-between">
 						<span style="font-weight: bold">Invoice Date:</span>

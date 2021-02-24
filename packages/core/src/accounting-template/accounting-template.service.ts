@@ -41,15 +41,15 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 			dueDate: '2021-03-23',
 			currency: 'BGN',
 			tax: '20',
-			tax2: '12',
-			discountValue: '20',
-			totalValue: '144',
+			tax2: '0',
+			discountValue: '0',
+			totalValue: '168',
 			taxType: 'PERCENT',
 			tax2Type: 'FLAT',
 			discountType: 'PERCENT',
 			hasRemainingAmountInvoiced: true,
 			alreadyPaid: '0',
-			amountDue: '144',
+			amountDue: '168',
 			invoiceItems: [
 				{
 					name: 'Item 1',
@@ -98,7 +98,36 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 					price: '30',
 					totalValue: '90'
 				}
-			]
+			],
+			imgPath: 'assets/images/logos/ever-large.jpg',
+			receiptNumber: '1',
+			paymentDate: '2021-02-24',
+			paymentMethod: 'Bank Transfer',
+			receiptItems: [
+				{
+					name: 'Item 1',
+					description: 'Desc 1',
+					quantity: '1',
+					price: '10',
+					totalValue: '10'
+				},
+				{
+					name: 'Item 2',
+					description: 'Desc 2',
+					quantity: '2',
+					price: '20',
+					totalValue: '40'
+				},
+				{
+					name: 'Item 3',
+					description: 'Desc 3',
+					quantity: '3',
+					price: '30',
+					totalValue: '90'
+				}
+			],
+			subtotal: '140',
+			totalPaid: '168'
 		});
 		return { html };
 	}
