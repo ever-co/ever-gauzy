@@ -60,7 +60,14 @@ export class ProductService extends TenantAwareCrudService<Product> {
 			if (langCode) {
 				return Promise.all(
 					items.map((product) =>
-						product.translateNested(langCode, this.propsTranslate)
+						Object.assign(
+							{},
+							product,
+							product.translateNested(
+								langCode,
+								this.propsTranslate
+							)
+						)
 					)
 				);
 			} else {
