@@ -91,7 +91,13 @@ export class InvoicesComponent
 	currency: string = '';
 	includeArchived = false;
 
-	@Input() isEstimate: boolean;
+	private _isEstimate: boolean = false;
+	@Input() set isEstimate(val: boolean) {
+		this._isEstimate = val;
+	}
+	get isEstimate() {
+		return this._isEstimate;
+	}
 
 	invoicesTable: Ng2SmartTableComponent;
 	@ViewChild('invoicesTable') set content(content: Ng2SmartTableComponent) {
@@ -119,18 +125,17 @@ export class InvoicesComponent
 		private readonly ngxPermissionsService: NgxPermissionsService
 	) {
 		super(translateService);
-		this.setView();
 	}
 
 	ngOnInit() {
-		if (!this.isEstimate) {
-			this.isEstimate = false;
-		}
 		this.columns = this.getColumns();
 
+		this.setView();
 		this._applyTranslationOnSmartTable();
 		this.loadSettingsSmartTable();
 		this.initializeForm();
+		this.loadMenu();
+		this.loadSettings();
 
 		this.router.events
 			.pipe(untilDestroyed(this))
@@ -139,9 +144,6 @@ export class InvoicesComponent
 					this.setView();
 				}
 			});
-
-		this.loadMenu();
-		this.loadSettings();
 	}
 
 	/*
@@ -170,7 +172,9 @@ export class InvoicesComponent
 	}
 
 	setView() {
-		this.viewComponentName = ComponentEnum.ESTIMATES;
+		this.viewComponentName = this.isEstimate
+			? ComponentEnum.ESTIMATES
+			: ComponentEnum.INVOICES;
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(untilDestroyed(this))
