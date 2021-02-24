@@ -16,5 +16,6 @@ export interface IAccountingTemplateFindInput
 
 export enum AccountingTemplateNameEnum {
 	INVOICE = 'invoice',
-	ESTIMATE = 'estimate'
+	ESTIMATE = 'estimate',
+	RECEIPT = 'receipt'
 }
