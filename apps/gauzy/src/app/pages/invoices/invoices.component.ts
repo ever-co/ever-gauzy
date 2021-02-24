@@ -33,6 +33,7 @@ import {
 	ICurrency,
 	IInvoiceItemCreateInput
 } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common-angular';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { first, map, filter, tap } from 'rxjs/operators';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
@@ -125,9 +126,8 @@ export class InvoicesComponent
 		if (!this.isEstimate) {
 			this.isEstimate = false;
 		}
-		this.columns = this.isEstimate
-			? Object.values(EstimateColumnsEnum)
-			: Object.values(InvoiceColumnsEnum);
+		this.columns = this.getColumns();
+
 		this._applyTranslationOnSmartTable();
 		this.loadSettingsSmartTable();
 		this.initializeForm();
@@ -950,7 +950,10 @@ export class InvoicesComponent
 				width: '12%',
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
-					return row.toContact.name;
+					if (isNotEmpty(row.toContact)) {
+						return row.toContact.name;
+					}
+					return '';
 				}
 			};
 		}

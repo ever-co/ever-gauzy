@@ -139,9 +139,11 @@ export class InvoiceAddComponent
 			.pipe(
 				filter((organization) => !!organization),
 				tap((organization) => (this.organization = organization)),
-				tap(({ currency }) => {
-					this.currencyString = currency;
-				}),
+				tap(({ currency }) => (this.currencyString = currency)),
+				tap(
+					(organization) =>
+						(this.discountAfterTax = organization.discountAfterTax)
+				),
 				tap(() => this._loadOrganizationData()),
 				untilDestroyed(this)
 			)
@@ -736,8 +738,17 @@ export class InvoiceAddComponent
 		const { organization } = this;
 		if (!organization) return;
 
-		this.discountAfterTax = organization.discountAfterTax;
-		const { id: organizationId } = organization;
+		this.getEmployess();
+		this.getAllProjects();
+		this.getAllContacts();
+		this.getAllProducts();
+		this.getAllExpenses();
+		this.createInvoiceNumber();
+		this._loadTasks();
+	}
+
+	private getEmployess() {
+		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 
 		this.employeeService
@@ -746,35 +757,61 @@ export class InvoiceAddComponent
 			.subscribe(({ items }) => {
 				this.employees = items;
 			});
+	}
 
-		const projects = await this.organizationProjectsService.getAll([], {
-			organizationId,
-			tenantId
-		});
-		this.projects = projects.items;
+	private getAllProjects() {
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
 
-		const contacts = await this.organizationContactService.getAll(
-			['projects'],
-			{ organizationId, tenantId }
-		);
-		this.organizationContacts = contacts.items;
+		this.organizationProjectsService
+			.getAll([], {
+				organizationId,
+				tenantId
+			})
+			.then(({ items }) => {
+				this.projects = items;
+			});
+	}
 
-		const products = await this.productService.getAll(
-			['translations'],
-			{ organizationId, tenantId },
-			this.selectedLanguage
-		);
-		this.products = products.items;
+	private getAllContacts() {
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
 
-		const expenses = await this.expensesService.getAll([], {
-			typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,
-			organizationId,
-			tenantId
-		});
-		this.expenses = expenses.items;
+		this.organizationContactService
+			.getAll(['projects'], { organizationId, tenantId })
+			.then(({ items }) => {
+				this.organizationContacts = items;
+			});
+	}
 
-		this.createInvoiceNumber();
-		this._loadTasks();
+	private getAllProducts() {
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+
+		this.productService
+			.getAll(
+				['translations'],
+				{ organizationId, tenantId },
+				this.selectedLanguage
+			)
+			.then(({ items }) => {
+				this.products = items;
+			});
+	}
+
+	private getAllExpenses() {
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+
+		this.expensesService
+			.getAll([], {
+				typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,
+				organizationId,
+				tenantId
+			})
+			.then(({ items }) => {
+				this.expenses = items;
+			});
 	}
 
 	onTypeChange($event) {
@@ -1143,6 +1180,7 @@ export class InvoiceAddComponent
 	): Promise<IOrganizationContact> => {
 		const { tenantId } = this.store.user;
 		this.organizationId = this.store.selectedOrganization.id;
+
 		try {
 			this.toastrService.success(
 				this.getTranslation(
