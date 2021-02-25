@@ -5,23 +5,26 @@
 	nbSpinnerSize="large"
 >
 	<nb-card-header>
-		<div class="header-selector-wrapper" *ngIf="duplicate; else headerAdd">
+		<div
+			class="header-selector-wrapper"
+			*ngIf="duplicate; else headerTemplate"
+		>
 			<div class="header-selector-wrapper">
 				<ngx-back-navigation></ngx-back-navigation>
-				<h4>
-					{{ 'POP_UPS.DUPLICATE' | translate }}
-				</h4>
+				<h4>{{ 'POP_UPS.DUPLICATE' | translate }}</h4>
 			</div>
 		</div>
-		<ng-template #headerAdd>
+		<ng-template #headerTemplate>
 			<div class="header-selector-wrapper">
 				<div class="header-selector-wrapper">
 					<ngx-back-navigation></ngx-back-navigation>
-					<h4 *ngIf="!isEstimate">
-						{{ 'INVOICES_PAGE.EDIT_INVOICE' | translate }}
-					</h4>
-					<h4 *ngIf="isEstimate">
-						{{ 'INVOICES_PAGE.EDIT_ESTIMATE' | translate }}
+					<h4>
+						{{
+							(isEstimate
+								? 'INVOICES_PAGE.EDIT_ESTIMATE'
+								: 'INVOICES_PAGE.EDIT_INVOICE'
+							) | translate
+						}}
 					</h4>
 				</div>
 				<div *ngIf="!isEstimate">
@@ -41,35 +44,24 @@
 						<div class="col-sm-6">
 							<div class="form-group">
 								<label for="inputInvoiceNumber" class="label">
-									<span *ngIf="!isEstimate">{{
-										'INVOICES_PAGE.INVOICE_NUMBER'
-											| translate
-									}}</span>
-									<span *ngIf="isEstimate">{{
-										'INVOICES_PAGE.ESTIMATE_NUMBER'
-											| translate
-									}}</span>
+									<span>
+										{{
+											(isEstimate
+												? 'INVOICES_PAGE.ESTIMATE_NUMBER'
+												: 'INVOICES_PAGE.INVOICE_NUMBER'
+											) | translate
+										}}
+									</span>
 								</label>
 								<input
-									*ngIf="!isEstimate"
 									type="number"
 									nbInput
-									placeholder="{{
-										'INVOICES_PAGE.INVOICE_NUMBER'
-											| translate
-									}}"
-									formControlName="invoiceNumber"
-									id="inputInvoiceNumber"
-									fullWidth
-								/>
-								<input
-									*ngIf="isEstimate"
-									type="number"
-									nbInput
-									placeholder="{{
-										'INVOICES_PAGE.ESTIMATE_NUMBER'
-											| translate
-									}}"
+									[placeholder]="
+										(isEstimate
+											? 'INVOICES_PAGE.ESTIMATE_NUMBER'
+											: 'INVOICES_PAGE.INVOICE_NUMBER'
+										) | translate
+									"
 									formControlName="invoiceNumber"
 									id="inputInvoiceNumber"
 									fullWidth
@@ -88,44 +80,36 @@
 					<div class="row">
 						<div class="col-sm-6">
 							<div class="form-group">
-								<label for="inputInvoiceDate" class="label">
-									<span *ngIf="!isEstimate">{{
-										'INVOICES_PAGE.INVOICE_DATE' | translate
-									}}</span>
-									<span *ngIf="isEstimate">{{
-										'INVOICES_PAGE.ESTIMATE_DATE'
-											| translate
-									}}</span>
+								<label
+									for="inputInvoiceEstimateDate"
+									class="label"
+								>
+									<span>
+										{{
+											(isEstimate
+												? 'INVOICES_PAGE.ESTIMATE_DATE'
+												: 'INVOICES_PAGE.INVOICE_DATE'
+											) | translate
+										}}</span
+									>
 								</label>
 								<input
-									*ngIf="!isEstimate"
 									formControlName="invoiceDate"
 									type="text"
 									nbInput
-									placeholder="{{
-										'INVOICES_PAGE.INVOICE_DATE' | translate
-									}}"
-									[nbDatepicker]="invoiceDatePicker"
-									id="inputInvoiceDate"
-									fullWidth
-									required
-								/>
-								<input
-									*ngIf="isEstimate"
-									formControlName="invoiceDate"
-									type="text"
-									nbInput
-									placeholder="{{
-										'INVOICES_PAGE.ESTIMATE_DATE'
-											| translate
-									}}"
-									[nbDatepicker]="invoiceDatePicker"
-									id="inputInvoiceDate"
+									[placeholder]="
+										(isEstimate
+											? 'INVOICES_PAGE.ESTIMATE_DATE'
+											: 'INVOICES_PAGE.INVOICE_DATE'
+										) | translate
+									"
+									[nbDatepicker]="invoiceEstimateDatePicker"
+									id="inputInvoiceEstimateDate"
 									fullWidth
 									required
 								/>
 								<nb-datepicker
-									#invoiceDatePicker
+									#invoiceEstimateDatePicker
 								></nb-datepicker>
 							</div>
 						</div>
@@ -156,7 +140,7 @@
 							></ga-currency>
 						</div>
 						<div class="col-sm-6">
-							<label for="inputInvoiceNumber" class="label"
+							<label for="inputOrganizationContact" class="label"
 								>{{ 'INVOICES_PAGE.CONTACT' | translate }}
 							</label>
 							<ng-select
@@ -244,6 +228,7 @@
 											| translate
 									}}"
 									(ngModelChange)="calculateTotal()"
+									id="inputDiscountType"
 									fullWidth
 								>
 									<nb-option
@@ -296,6 +281,7 @@
 											'INVOICES_PAGE.TAX_TYPE' | translate
 										}}"
 										(ngModelChange)="calculateTotal()"
+										id="inputTaxType"
 										fullWidth
 									>
 										<nb-option
@@ -343,6 +329,7 @@
 											'INVOICES_PAGE.TAX_TYPE' | translate
 										}}"
 										(ngModelChange)="calculateTotal()"
+										id="inputTaxType"
 										fullWidth
 									>
 										<nb-option

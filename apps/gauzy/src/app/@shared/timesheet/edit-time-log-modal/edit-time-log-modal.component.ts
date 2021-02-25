@@ -12,7 +12,8 @@ import {
 	IEmployee,
 	PermissionsEnum,
 	OrganizationPermissionsEnum,
-	IGetTimeLogConflictInput
+	IGetTimeLogConflictInput,
+	ISelectedEmployee
 } from '@gauzy/contracts';
 import { toUTC, toLocal } from '@gauzy/common-angular';
 import { TimesheetService } from '../timesheet.service';
@@ -21,7 +22,6 @@ import { NbDialogRef } from '@nebular/theme';
 import { Store } from '../../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../../@core/services/toastr.service';
-import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { EmployeesService } from '../../../@core/services';
 import * as moment from 'moment';
 import * as _ from 'underscore';
@@ -47,7 +47,7 @@ export class EditTimeLogModalComponent
 	selectedRange: IDateRange = { start: null, end: null };
 	organization: IOrganization;
 
-	employee: SelectedEmployee;
+	employee: ISelectedEmployee;
 	employees: IEmployee[];
 	futureDateAllowed: boolean;
 	loadEmployees$: Subject<any> = new Subject();

@@ -4,7 +4,8 @@ import {
 	BonusTypeEnum,
 	EmployeeStatisticsHistoryEnum,
 	IMonthAggregatedEmployeeStatistics,
-	IOrganization
+	IOrganization,
+	ISelectedEmployee
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -13,7 +14,7 @@ import { EmployeeStatisticsService } from '../../../@core/services/employee-stat
 import { Store } from '../../../@core/services/store.service';
 import { ProfitHistoryComponent } from '../../../@shared/dashboard/profit-history/profit-history.component';
 import { RecordsHistoryComponent } from '../../../@shared/dashboard/records-history/records-history.component';
-import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-human-resources',
@@ -24,7 +25,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	loading: boolean;
 
 	selectedDate: Date;
-	selectedEmployee: SelectedEmployee;
+	selectedEmployee: ISelectedEmployee;
 	selectedOrganization: IOrganization;
 
 	defaultCurrency: string;

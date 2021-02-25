@@ -11,9 +11,9 @@ import {
 	IProposalViewModel,
 	IFeatureToggle,
 	IFeatureOrganization,
-	FeatureEnum
+	FeatureEnum,
+	ISelectedEmployee
 } from '@gauzy/contracts';
-import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { Injectable } from '@angular/core';
 import { StoreConfig, Store as AkitaStore, Query } from '@datorama/akita';
 import { NgxPermissionsService, NgxRolesService } from 'ngx-permissions';
@@ -30,7 +30,7 @@ export interface AppState {
 	user: IUser;
 	userRolePermissions: IRolePermission[];
 	selectedOrganization: IOrganization;
-	selectedEmployee: SelectedEmployee;
+	selectedEmployee: ISelectedEmployee;
 	selectedProposal: IProposalViewModel;
 	selectedProject: IOrganizationProject;
 	selectedDate: Date;
@@ -194,13 +194,13 @@ export class Store {
 		return selectedOrganization;
 	}
 
-	set selectedEmployee(employee: SelectedEmployee) {
+	set selectedEmployee(employee: ISelectedEmployee) {
 		this.appStore.update({
 			selectedEmployee: employee
 		});
 	}
 
-	get selectedEmployee(): SelectedEmployee {
+	get selectedEmployee(): ISelectedEmployee {
 		const { selectedEmployee } = this.appQuery.getValue();
 		return selectedEmployee;
 	}

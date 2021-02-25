@@ -9,12 +9,12 @@ import {
 	ICountsStatistics,
 	IGetCountsStatistics,
 	IOrganization,
+	ISelectedEmployee,
 	ITimeLogFilters,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import * as moment from 'moment';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -78,7 +78,7 @@ export class DailyStatisticsComponent implements OnInit, AfterViewInit {
 
 		this.store.selectedEmployee$
 			.pipe(untilDestroyed(this))
-			.subscribe((employee: SelectedEmployee) => {
+			.subscribe((employee: ISelectedEmployee) => {
 				if (employee && employee.id) {
 					this.logRequest.employeeIds = [employee.id];
 				} else {
