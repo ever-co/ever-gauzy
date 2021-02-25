@@ -127,3 +127,6 @@ export * from '../../timesheet/timesheet.entity';
 export * from '../../user-organization/user-organization.entity';
 export * from '../../user/user.entity';
 export * from '../../warehouse/warehouse.entity';
+export * from '../../product-option/product-option-group.entity';
+export * from '../../product-option/product-option-group-translation.entity';
+export * from '../../product-option/product-option-translation.entity';

@@ -206,6 +206,7 @@ export interface IProductOptionTranslatable
 	product?: IProductTranslatable;
 	name?: string;
 	description?: string;
+	group?: IProductOptionGroupTranslatable;
 }
 
 export interface IProductOptionTranslation
