@@ -301,11 +301,11 @@ export class ContactMutationComponent
 
 	async submitForm() {
 		if (this.contMainForm.valid) {
-			let contactType = this.contMainForm.value['contactType']
-				.$ngOptionLabel;
+			let contactType = this.contMainForm.value['contactType'];
 			if (isEmpty(contactType)) {
 				contactType = this.defaultSelectedType;
 			}
+
 			let imgUrl = this.contMainForm.value.imageUrl;
 			imgUrl = imgUrl
 				? this.contMainForm.value['imageUrl']
