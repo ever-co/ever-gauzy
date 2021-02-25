@@ -134,7 +134,7 @@
 					<div class="row">
 						<div class="col-sm-6">
 							<ga-currency
-								formControlName="currency"
+								[formControl]="form.get('currency')"
 								(optionChange)="onCurrencyChange($event)"
 							></ga-currency>
 						</div>

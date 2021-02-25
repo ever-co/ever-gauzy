@@ -155,8 +155,10 @@ export class InvoiceAddComponent
 					this._initializeMethods();
 				}),
 				tap(() => {
-					this.currency.setValue(this.currencyString);
-					this.currency.updateValueAndValidity();
+					if (this.currencyString) {
+						this.currency.setValue(this.currencyString);
+						this.currency.updateValueAndValidity();
+					}
 				}),
 				untilDestroyed(this)
 			)
@@ -530,7 +532,7 @@ export class InvoiceAddComponent
 			invoiceItems.push(itemToAdd);
 		}
 
-		await this.invoiceItemService.createBulk(
+		return await this.invoiceItemService.createBulk(
 			createdInvoice.id,
 			invoiceItems
 		);
@@ -555,8 +557,8 @@ export class InvoiceAddComponent
 	}
 
 	async addInvoice(status: string, sendTo?: string) {
-		const tableData = await this.smartTableSource.getAll();
-		if (isEmpty(tableData)) {
+		const tableSources = await this.smartTableSource.getAll();
+		if (isEmpty(tableSources)) {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.NO_ITEMS'),
 				this.getTranslation('TOASTR.TITLE.WARNING')
@@ -619,7 +621,10 @@ export class InvoiceAddComponent
 		const { organizationContact } = this.form.value;
 
 		if (organizationContact.id) {
-			await this.addInvoice('Sent', organizationContact.id);
+			await this.addInvoice(
+				InvoiceStatusTypesEnum.SENT,
+				organizationContact.id
+			);
 			await this.invoiceEstimateHistoryService.add({
 				action: this.isEstimate
 					? this.getTranslation('INVOICES_PAGE.ESTIMATE_SENT_TO', {
@@ -645,125 +650,67 @@ export class InvoiceAddComponent
 	}
 
 	async sendViaEmail() {
-		const tableData = await this.smartTableSource.getAll();
-		if (tableData.length) {
-			const invoiceData = this.form.value;
-			if (
-				!invoiceData.invoiceDate ||
-				!invoiceData.dueDate ||
-				this.compareDate(invoiceData.invoiceDate, invoiceData.dueDate)
-			) {
-				this.toastrService.danger(
-					this.getTranslation('INVOICES_PAGE.INVALID_DATES'),
-					this.getTranslation('TOASTR.TITLE.WARNING')
-				);
-				return;
-			}
-
-			const invoiceExists = await this.invoicesService.getAll([], {
-				invoiceNumber: invoiceData.invoiceNumber
-			});
-
-			if (invoiceExists.items.length) {
-				this.toastrService.danger(
-					this.getTranslation(
-						'INVOICES_PAGE.INVOICE_NUMBER_DUPLICATE'
-					),
-					this.getTranslation('TOASTR.TITLE.WARNING')
-				);
-				return;
-			}
-
-			const invoice = {
-				invoiceNumber: invoiceData.invoiceNumber,
-				invoiceDate: invoiceData.invoiceDate,
-				dueDate: invoiceData.dueDate,
-				currency: this.currency.value,
-				discountValue: invoiceData.discountValue,
-				discountType: invoiceData.discountType,
-				tax: invoiceData.tax,
-				tax2: invoiceData.tax2,
-				taxType: invoiceData.taxType,
-				tax2Type: invoiceData.tax2Type,
-				terms: invoiceData.terms,
-				paid: false,
-				totalValue: +this.total.toFixed(2),
-				toContact: invoiceData.organizationContact,
-				organizationContactId: invoiceData.organizationContact.id,
-				fromOrganization: this.organization,
-				organizationId: this.organization.id,
-				invoiceType: this.selectedInvoiceType,
-				tags: this.tags,
-				isEstimate: this.isEstimate,
-				status: InvoiceStatusTypesEnum.SENT,
-				invoiceItems: []
-			};
-
-			const invoiceItems = [];
-
-			for (const invoiceItem of tableData) {
-				const itemToAdd = {
-					description: invoiceItem.description,
-					price: invoiceItem.price,
-					quantity: invoiceItem.quantity,
-					totalValue: invoiceItem.totalValue,
-					applyTax: invoiceItem.applyTax,
-					applyDiscount: invoiceItem.applyDiscount
-				};
-				switch (this.selectedInvoiceType) {
-					case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
-						itemToAdd['employeeId'] = invoiceItem.selectedItem;
-						break;
-					case InvoiceTypeEnum.BY_PROJECT_HOURS:
-						itemToAdd['projectId'] = invoiceItem.selectedItem;
-						break;
-					case InvoiceTypeEnum.BY_TASK_HOURS:
-						itemToAdd['taskId'] = invoiceItem.selectedItem;
-						break;
-					case InvoiceTypeEnum.BY_PRODUCTS:
-						itemToAdd['productId'] = invoiceItem.selectedItem;
-						break;
-					case InvoiceTypeEnum.BY_EXPENSES:
-						itemToAdd['expenseId'] = invoiceItem.selectedItem;
-						break;
-					default:
-						break;
-				}
-				invoiceItems.push(itemToAdd);
-			}
-
-			invoice.invoiceItems = invoiceItems;
-
-			await this.dialogService
-				.open(InvoiceEmailMutationComponent, {
-					context: {
-						invoice: invoice,
-						isEstimate: this.isEstimate,
-						saveAndSend: true,
-						invoiceItems: invoiceItems
-					}
-				})
-				.onClose.pipe(first())
-				.toPromise();
-
-			if (this.isEstimate) {
-				this.toastrService.success(
-					this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE'),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				);
-				this.router.navigate(['/pages/accounting/invoices/estimates']);
-			} else {
-				this.toastrService.success(
-					this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				);
-				this.router.navigate(['/pages/accounting/invoices']);
-			}
-		} else {
+		const tableSources = await this.smartTableSource.getAll();
+		if (isEmpty(tableSources)) {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.NO_ITEMS'),
 				this.getTranslation('TOASTR.TITLE.WARNING')
 			);
+			return;
+		}
+
+		const { invoiceNumber, invoiceDate, dueDate } = this.form.value;
+		if (
+			!invoiceDate ||
+			!dueDate ||
+			this.compareDate(invoiceDate, dueDate)
+		) {
+			this.toastrService.danger(
+				this.getTranslation('INVOICES_PAGE.INVALID_DATES'),
+				this.getTranslation('TOASTR.TITLE.WARNING')
+			);
+			return;
+		}
+
+		const invoiceExists = await this.invoicesService.getAll([], {
+			invoiceNumber
+		});
+		if (invoiceExists.items.length) {
+			this.toastrService.danger(
+				this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER_DUPLICATE'),
+				this.getTranslation('TOASTR.TITLE.WARNING')
+			);
+			return;
+		}
+
+		const invoice = await this.createInvoiceEstimate(
+			InvoiceStatusTypesEnum.SENT
+		);
+		const invoiceItems = await this.createInvoiceEstimateItems();
+
+		await this.dialogService
+			.open(InvoiceEmailMutationComponent, {
+				context: {
+					invoice: invoice,
+					invoiceItems: invoiceItems,
+					isEstimate: this.isEstimate
+				}
+			})
+			.onClose.pipe(first())
+			.toPromise();
+
+		if (this.isEstimate) {
+			this.toastrService.success(
+				this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			this.router.navigate(['/pages/accounting/invoices/estimates']);
+		} else {
+			this.toastrService.success(
+				this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			this.router.navigate(['/pages/accounting/invoices']);
 		}
 	}
 
@@ -808,10 +755,7 @@ export class InvoiceAddComponent
 		const { tenantId } = this.store.user;
 
 		this.organizationProjectsService
-			.getAll([], {
-				organizationId,
-				tenantId
-			})
+			.getAll([], { organizationId, tenantId })
 			.then(({ items }) => {
 				this.projects = JSON.parse(JSON.stringify(items));
 			});
@@ -974,7 +918,6 @@ export class InvoiceAddComponent
 			case InvoiceTypeEnum.BY_PRODUCTS:
 				if (this.selectedProducts.length) {
 					for (const product of this.selectedProducts) {
-						console.log(product);
 						const data = {
 							description: 'Desc',
 							price: fakePrice,

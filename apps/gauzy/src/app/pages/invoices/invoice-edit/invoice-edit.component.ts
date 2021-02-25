@@ -349,13 +349,9 @@ export class InvoiceEditComponent
 						component: InvoiceExpensesSelectorComponent
 					},
 					valuePrepareFunction: (cell) => {
-						if (this.expenses) {
-							const expense = this.expenses.find(
-								(e) => e.id === cell
-							);
-							if (expense) {
-								return `${expense.purpose}`;
-							}
+						const expense = cell;
+						if (expense) {
+							return `${expense.purpose}`;
 						}
 					}
 				};
