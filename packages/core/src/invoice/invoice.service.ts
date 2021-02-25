@@ -110,6 +110,7 @@ export class InvoiceService extends CrudService<Invoice> {
 				'invoiceItems.employee',
 				'invoiceItems.expense',
 				'invoiceItems.product',
+				'invoiceItems.product.translations',
 				'invoiceItems.project',
 				'invoiceItems.task',
 				'invoiceItems',
@@ -215,7 +216,8 @@ export class InvoiceService extends CrudService<Invoice> {
 			invoice,
 			invoice.fromOrganization,
 			invoice.toContact,
-			translatedText
+			translatedText,
+			langulage
 		);
 
 		return await this.pdfmakerServier.generatePdf(docDefinition);

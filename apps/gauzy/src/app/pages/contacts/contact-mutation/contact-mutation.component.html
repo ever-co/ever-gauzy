@@ -1,4 +1,4 @@
-<nb-card *ngIf="contMainForm">
+<nb-card *ngIf="contMainForm" size="large">
 	<nb-card-header>{{
 		(organizationContact
 			? 'ORGANIZATIONS_PAGE.EDIT.EDIT_CONTACT'
@@ -150,18 +150,6 @@
 										class="caption status-danger mt-1"
 										*ngIf="
 											contMainForm.controls.primaryEmail
-												.errors?.required
-										"
-									>
-										{{
-											'TOASTR.MESSAGE.EMAIL_REQUIRED'
-												| translate
-										}}
-									</p>
-									<p
-										class="caption status-danger mt-1"
-										*ngIf="
-											contMainForm.controls.primaryEmail
 												.errors?.pattern
 										"
 									>
@@ -187,40 +175,7 @@
 										'ORGANIZATIONS_PAGE.EDIT.PHONE'
 											| translate
 									"
-									[status]="
-										isInvalidControl('primaryPhone')
-											? 'danger'
-											: 'basic'
-									"
 								/>
-								<ng-container
-									*ngIf="isInvalidControl('primaryPhone')"
-								>
-									<p
-										class="caption status-danger mt-1"
-										*ngIf="
-											contMainForm.controls.primaryPhone
-												.errors?.required
-										"
-									>
-										{{
-											'TOASTR.MESSAGE.PHONE_REQUIRED'
-												| translate
-										}}
-									</p>
-									<p
-										class="caption status-danger mt-1"
-										*ngIf="
-											contMainForm.controls.primaryPhone
-												.errors?.pattern
-										"
-									>
-										{{
-											'TOASTR.MESSAGE.PHONE_CONTAINS_ONLY_NUMBERS'
-												| translate
-										}}
-									</p>
-								</ng-container>
 							</div>
 							<div class="form-group col-4">
 								<label class="label">{{
@@ -264,33 +219,12 @@
 									[placeholder]="
 										'CONTACTS_PAGE.CONTACT_TYPE' | translate
 									"
-									[attr.aria-invalid]="
-										contMainForm.get('contactType')
-											.invalid &&
-										contMainForm.get('contactType').touched
-											? true
-											: null
-									"
 								>
 									<ng-option
 										*ngFor="let type of contactTypes"
 										>{{ type }}</ng-option
 									>
 								</ng-select>
-								<ng-container
-									*ngIf="
-										contMainForm.get('contactType')
-											.invalid &&
-										contMainForm.get('contactType').touched
-									"
-								>
-									<p class="caption status-danger mt-1">
-										{{
-											'TOASTR.MESSAGE.CONTACT_TYPE_REQUIRED'
-												| translate
-										}}
-									</p>
-								</ng-container>
 							</div>
 							<div class="form-group col-4">
 								<label class="label">{{
@@ -349,9 +283,17 @@
 									[disabled]="contMainForm.invalid"
 									nbButton
 									(click)="nextStep()"
+									class="mr-2"
 									status="success"
 								>
 									{{ 'BUTTONS.NEXT' | translate }}
+								</button>
+								<button
+									nbButton
+									(click)="cancel()"
+									status="danger"
+								>
+									{{ 'BUTTONS.CANCEL' | translate }}
 								</button>
 							</div>
 						</div>
@@ -409,9 +351,13 @@
 								[disabled]="this.locationForm.invalid"
 								nbButton
 								status="success"
+								class="mr-2"
 								nbStepperNext
 							>
 								{{ 'BUTTONS.NEXT' | translate }}
+							</button>
+							<button nbButton (click)="cancel()" status="danger">
+								{{ 'BUTTONS.CANCEL' | translate }}
 							</button>
 						</div>
 					</div>
@@ -458,25 +404,23 @@
 											/>
 										</a>
 									</div>
-									<span
-										>{{ member.user.firstName }}
-										{{ member.user.lastName }}
-									</span>
+									<span>{{ member.user.name }}</span>
 								</div>
 							</div>
 						</div>
 					</div>
 					<div>
-						<button nbButton nbStepperPrevious class="mr-2">
+						<button nbButton nbStepperPrevious>
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>
 						<button
 							(click)="submitForm()"
 							nbButton
 							status="success"
+							class="mr-2 ml-2"
 							nbStepperNext
 						>
-							{{ 'BUTTONS.NEXT' | translate }}
+							{{ 'BUTTONS.SAVE' | translate }}
 						</button>
 					</div>
 				</div>

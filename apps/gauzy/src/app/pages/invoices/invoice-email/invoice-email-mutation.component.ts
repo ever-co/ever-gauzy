@@ -12,7 +12,6 @@ import { NbDialogRef } from '@nebular/theme';
 import { InvoicesService } from '../../../@core/services/invoices.service';
 import { Store } from '../../../@core/services/store.service';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
-import { InvoiceItemService } from '../../../@core/services/invoice-item.service';
 import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
@@ -25,7 +24,6 @@ export class InvoiceEmailMutationComponent
 	invoice: IInvoice;
 	form: FormGroup;
 	isEstimate: boolean;
-	saveAndSend: boolean;
 	invoiceItems: IInvoiceItem[];
 	createdInvoice: IInvoice;
 
@@ -36,9 +34,7 @@ export class InvoiceEmailMutationComponent
 		private readonly toastrService: ToastrService,
 		private readonly invoiceService: InvoicesService,
 		private readonly store: Store,
-		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
-		private readonly invoicesService: InvoicesService,
-		private readonly invoiceItemService: InvoiceItemService
+		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService
 	) {
 		super(translateService);
 	}
@@ -55,17 +51,8 @@ export class InvoiceEmailMutationComponent
 
 	async sendEmail() {
 		const { id: organizationId, tenantId } = this.invoice.fromOrganization;
-		if (this.saveAndSend) {
-			const createdInvoice = await this.invoicesService.add(this.invoice);
-			this.createdInvoice = createdInvoice;
-			this.invoiceItemService
-				.createBulk(createdInvoice.id, this.invoiceItems)
-				.then(async () => {
-					await this.createInvoiceEstimateHistory();
-				});
-		}
-
 		const { email } = this.form.value;
+
 		await this.invoiceService.sendEmail(
 			email,
 			this.invoice.invoiceNumber,
@@ -85,24 +72,6 @@ export class InvoiceEmailMutationComponent
 
 		this.toastrService.success('INVOICES_PAGE.EMAIL.EMAIL_SENT');
 		this.dialogRef.close('ok');
-	}
-
-	async createInvoiceEstimateHistory() {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.store.selectedOrganization;
-
-		await this.invoiceEstimateHistoryService.add({
-			action: this.isEstimate
-				? this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE')
-				: this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
-			invoice: this.createdInvoice,
-			invoiceId: this.createdInvoice.id,
-			user: this.store.user,
-			userId: this.store.userId,
-			organization: this.invoice.fromOrganization,
-			organizationId,
-			tenantId
-		});
 	}
 
 	async invoiceEstimateSendHistory() {

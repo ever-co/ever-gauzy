@@ -9,7 +9,8 @@ export async function generateInvoicePdfDefinition(
 	invoice: IInvoice,
 	organization: IOrganization,
 	organizationContact: IOrganizationContact,
-	translatedText?: any
+	translatedText?: any,
+	langulage?: string
 ) {
 	const body = [];
 	for (const item of invoice.invoiceItems) {
@@ -33,7 +34,8 @@ export async function generateInvoicePdfDefinition(
 				currentItem.unshift(`${task.title}`);
 				break;
 			case InvoiceTypeEnum.BY_PRODUCTS:
-				const product: any = item.product;
+				let product: any = item.product;
+				product = product.translate(langulage);
 				currentItem.unshift(`${product.name}`);
 				break;
 			case InvoiceTypeEnum.BY_EXPENSES:

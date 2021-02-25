@@ -33,6 +33,7 @@ import {
 	ICurrency,
 	IInvoiceItemCreateInput
 } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common-angular';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { first, map, filter, tap } from 'rxjs/operators';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
@@ -90,7 +91,13 @@ export class InvoicesComponent
 	currency: string = '';
 	includeArchived = false;
 
-	@Input() isEstimate: boolean;
+	private _isEstimate: boolean = false;
+	@Input() set isEstimate(val: boolean) {
+		this._isEstimate = val;
+	}
+	get isEstimate() {
+		return this._isEstimate;
+	}
 
 	invoicesTable: Ng2SmartTableComponent;
 	@ViewChild('invoicesTable') set content(content: Ng2SmartTableComponent) {
@@ -105,7 +112,7 @@ export class InvoicesComponent
 
 	constructor(
 		private readonly fb: FormBuilder,
-		readonly translateService: TranslateService,
+		public readonly translateService: TranslateService,
 		private readonly store: Store,
 		private readonly dialogService: NbDialogService,
 		private readonly toastrService: ToastrService,
@@ -118,19 +125,16 @@ export class InvoicesComponent
 		private readonly ngxPermissionsService: NgxPermissionsService
 	) {
 		super(translateService);
-		this.setView();
 	}
 
 	ngOnInit() {
-		if (!this.isEstimate) {
-			this.isEstimate = false;
-		}
-		this.columns = this.isEstimate
-			? Object.values(EstimateColumnsEnum)
-			: Object.values(InvoiceColumnsEnum);
+		this.columns = this.getColumns();
+
+		this.setView();
 		this._applyTranslationOnSmartTable();
 		this.loadSettingsSmartTable();
 		this.initializeForm();
+		this.loadMenu();
 
 		this.router.events
 			.pipe(untilDestroyed(this))
@@ -139,9 +143,14 @@ export class InvoicesComponent
 					this.setView();
 				}
 			});
-
-		this.loadMenu();
-		this.loadSettings();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				tap((organization) => (this.organization = organization)),
+				tap(() => this.getAllInvoiceEstimate()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
@@ -170,7 +179,9 @@ export class InvoicesComponent
 	}
 
 	setView() {
-		this.viewComponentName = ComponentEnum.ESTIMATES;
+		this.viewComponentName = this.isEstimate
+			? ComponentEnum.ESTIMATES
+			: ComponentEnum.INVOICES;
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(untilDestroyed(this))
@@ -454,8 +465,8 @@ export class InvoicesComponent
 					}
 				})
 				.onClose.pipe(untilDestroyed(this))
-				.subscribe(async () => {
-					await this.loadSettings();
+				.subscribe(() => {
+					this.getAllInvoiceEstimate();
 				});
 			this.clearItem();
 		} else {
@@ -488,7 +499,7 @@ export class InvoicesComponent
 		});
 		this.toastrService.success('INVOICES_PAGE.ESTIMATES.ESTIMATE_CONVERT');
 		this.clearItem();
-		await this.loadSettings();
+		this.getAllInvoiceEstimate();
 	}
 
 	async delete(selectedItem?: IInvoice) {
@@ -516,7 +527,8 @@ export class InvoicesComponent
 			}
 
 			this.clearItem();
-			this.loadSettings();
+			this.getAllInvoiceEstimate();
+
 			if (this.isEstimate) {
 				this.toastrService.success(
 					'INVOICES_PAGE.INVOICES_DELETE_ESTIMATE'
@@ -553,14 +565,13 @@ export class InvoicesComponent
 			.open(InvoiceEmailMutationComponent, {
 				context: {
 					invoice: this.selectedInvoice,
-					isEstimate: this.isEstimate,
-					saveAndSend: false
+					isEstimate: this.isEstimate
 				}
 			})
 			.onClose.pipe(untilDestroyed(this))
-			.subscribe(async () => {
+			.subscribe(() => {
 				this.clearItem();
-				await this.loadSettings();
+				this.getAllInvoiceEstimate();
 			});
 	}
 
@@ -578,9 +589,9 @@ export class InvoicesComponent
 				}
 			})
 			.onClose.pipe(untilDestroyed(this))
-			.subscribe(async () => {
+			.subscribe(() => {
 				this.clearItem();
-				await this.loadSettings();
+				this.getAllInvoiceEstimate();
 			});
 	}
 
@@ -639,6 +650,60 @@ export class InvoicesComponent
 		generateCsv(data, headers, fileName);
 	}
 
+	async getAllInvoiceEstimate() {
+		try {
+			this.loading = true;
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+			this.invoicesService
+				.getAll(
+					[
+						'invoiceItems',
+						'invoiceItems.employee',
+						'invoiceItems.employee.user',
+						'invoiceItems.project',
+						'invoiceItems.product',
+						'invoiceItems.invoice',
+						'invoiceItems.expense',
+						'invoiceItems.task',
+						'tags',
+						'payments',
+						'fromOrganization',
+						'toContact',
+						'historyRecords',
+						'historyRecords.user'
+					],
+					{
+						organizationId,
+						tenantId,
+						isEstimate: this.isEstimate,
+						isArchived: this.includeArchived
+					}
+				)
+				.then(({ items }) => {
+					const invoiceVM: IInvoice[] = items.map((i) => {
+						return Object.assign({}, i, {
+							organizationContactName: i.toContact?.name
+						});
+					});
+					this.invoices = invoiceVM;
+					this.smartTableSource.load(invoiceVM);
+
+					this.closeActionsPopover();
+				})
+				.finally(() => {
+					this.loading = false;
+				});
+		} catch (error) {
+			this.toastrService.danger(
+				this.getTranslation('NOTES.INVOICE.INVOICE_ERROR', {
+					error: error.error.message || error.message
+				}),
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
+		}
+	}
+
 	async addComment() {
 		const { comment } = this.form.value;
 		const { tenantId } = this.store.user;
@@ -655,9 +720,11 @@ export class InvoicesComponent
 				organizationId,
 				tenantId
 			});
+			this.form.reset();
 
 			const selectedInvoiceId = this.selectedInvoice.id;
-			const { items } = await this.invoicesService.getAll(
+			const invoice = await this.invoicesService.getById(
+				selectedInvoiceId,
 				[
 					'invoiceItems',
 					'invoiceItems.employee',
@@ -673,20 +740,17 @@ export class InvoicesComponent
 					'toContact',
 					'historyRecords',
 					'historyRecords.user'
-				],
-				{ organizationId, tenantId, id: selectedInvoiceId }
+				]
 			);
+
+			await this.smartTableSource.update(this.selectedInvoice, {
+				...invoice
+			});
 
 			this.selectInvoice({
 				isSelected: true,
-				data: items[0]
+				data: invoice
 			});
-
-			this.histories.sort(function (a, b) {
-				return +new Date(b.createdAt) - +new Date(a.createdAt);
-			});
-
-			this.form.reset();
 		}
 	}
 
@@ -708,64 +772,7 @@ export class InvoicesComponent
 		await this.invoicesService.update(this.selectedInvoice.id, {
 			isArchived: true
 		});
-		this.loadSettings();
-	}
-
-	async loadSettings() {
-		this.loading = true;
-		this.store.selectedOrganization$
-			.pipe(
-				filter((organization) => !!organization),
-				tap((organization) => (this.organization = organization)),
-				untilDestroyed(this)
-			)
-			.subscribe(async (org) => {
-				if (org) {
-					try {
-						const { tenantId } = this.store.user;
-						const { items } = await this.invoicesService.getAll(
-							[
-								'invoiceItems',
-								'invoiceItems.employee',
-								'invoiceItems.employee.user',
-								'invoiceItems.project',
-								'invoiceItems.product',
-								'invoiceItems.invoice',
-								'invoiceItems.expense',
-								'invoiceItems.task',
-								'tags',
-								'payments',
-								'fromOrganization',
-								'toContact',
-								'historyRecords',
-								'historyRecords.user'
-							],
-							{
-								organizationId: org.id,
-								tenantId,
-								isEstimate: this.isEstimate,
-								isArchived: this.includeArchived
-							}
-						);
-						const invoiceVM: IInvoice[] = items.map((i) => {
-							return Object.assign({}, i, {
-								organizationContactName: i.toContact?.name
-							});
-						});
-						this.invoices = invoiceVM;
-						this.smartTableSource.load(invoiceVM);
-						this.closeActionsPopover();
-						this.loading = false;
-					} catch (error) {
-						this.toastrService.danger(
-							this.getTranslation('NOTES.INVOICE.INVOICE_ERROR', {
-								error: error.error.message || error.message
-							}),
-							this.getTranslation('TOASTR.TITLE.ERROR')
-						);
-					}
-				}
-			});
+		this.getAllInvoiceEstimate();
 	}
 
 	async selectInvoice({ isSelected, data }) {
@@ -784,6 +791,9 @@ export class InvoicesComponent
 					user: h.user
 				};
 				histories.push(history);
+			});
+			histories.sort(function (a, b) {
+				return +new Date(b.createdAt) - +new Date(a.createdAt);
 			});
 			this.histories = histories;
 		}
@@ -950,7 +960,10 @@ export class InvoicesComponent
 				width: '12%',
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
-					return row.toContact.name;
+					if (isNotEmpty(row.toContact)) {
+						return row.toContact.name;
+					}
+					return '';
 				}
 			};
 		}
@@ -1025,7 +1038,7 @@ export class InvoicesComponent
 
 	toggleIncludeArchived(event) {
 		this.includeArchived = event;
-		this.loadSettings();
+		this.getAllInvoiceEstimate();
 	}
 
 	reset() {
