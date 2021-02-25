@@ -55,19 +55,3 @@
 .option-row-icon {
   color: nb-theme(color-basic-300);
 }
-
-.edit-option-group {
-  display: none;
-}
-
-.view-option-group {
-  display: flex;
-}
-
-.active.edit-option-group {
-  display: flex;
-}
-
-.active.view-option-group {
-  display: none;
-}

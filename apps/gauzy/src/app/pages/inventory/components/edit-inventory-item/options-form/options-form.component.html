@@ -12,18 +12,23 @@
 	</div>
 
 	<form [formGroup]="form">
-		<ng-container *ngFor="let optionGroup of optionGroups">
+		<ng-container
+			*ngFor="let optionGroup of optionGroups; let idxGroup = index"
+		>
 			<ng-container
 				*ngTemplateOutlet="
 					optionGroupTemplate;
-					context: { optionGroup: optionGroup }
+					context: { optionGroup: optionGroup, idxGroup: idxGroup }
 				"
 			></ng-container>
 		</ng-container>
 
 		<!-- // template for option row -->
 		<ng-template #optionRowTemplate let-optionData="option">
-			<div class="row mb-2 p-2 text-option">
+			<div
+				class="row mb-2 p-2 text-option"
+				(click)="setActiveOption(optionData)"
+			>
 				<div class="col-md-1 d-flex">
 					<span>
 						<nb-icon
@@ -48,17 +53,19 @@
 		</ng-template>
 
 		<!-- //template for optionGroup row -->
-		<ng-template #optionGroupTemplate let-optionGroupData="optionGroup">
+		<ng-template
+			#optionGroupTemplate
+			let-optionGroupData="optionGroup"
+			let-idxGroup="idxGroup"
+		>
 			<div
 				class="row mb-2 edit-option-group"
-				[ngClass]="{ active: isActive(optionGroupData) }"
+				*ngIf="isActive(optionGroupData)"
 			>
 				<div class="col-md-3 col-sm-12">
 					<input
 						formControlName="activeOptionGroupName"
-						[value]="activeOptionGroup?.name"
 						fullWidth
-						id="optionCode"
 						type="text"
 						nbInput
 						[placeholder]="'INVENTORY_PAGE.NAME' | translate"
@@ -69,24 +76,17 @@
 						<div class="col-sm-12 col-md-5">
 							<input
 								fullWidth
-								id="addOption"
 								type="text"
 								nbInput
 								[placeholder]="
 									'INVENTORY_PAGE.NAME' | translate
 								"
 								formControlName="activeOptionName"
-								[ngClass]="{
-									'status-danger':
-										form.controls['activeOptionName']
-											.invalid
-								}"
 							/>
 						</div>
 						<div class="col-sm-12 col-md-5">
 							<input
 								fullWidth
-								id="optionCode"
 								type="text"
 								nbInput
 								[placeholder]="
@@ -120,7 +120,7 @@
 
 			<div
 				class="row mb-2 view-option-group"
-				[ngClass]="{ active: isActive(optionGroupData) }"
+				*ngIf="!isActive(optionGroupData)"
 				(click)="setActiveOptionGroup(optionGroupData)"
 			>
 				<div class="col-md-3 col-sm-12">

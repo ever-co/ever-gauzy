@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import {
 	IProductOption,
 	IProductOptionGroupTranslatable,
@@ -7,14 +7,19 @@ import {
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
-import { NgForm, FormGroup, FormBuilder } from '@angular/forms';
+import { FormGroup, FormBuilder } from '@angular/forms';
 import { debounceTime } from 'rxjs/operators';
-import { resolve } from 'dns';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface OptionCreateInput {
 	name: string;
 	code: string;
+}
+
+export enum OptionLevel {
+	SINGLE = 'SINGLE',
+	GROUP = 'GROUP'
 }
 
 @UntilDestroy({ checkProperties: true })
@@ -31,14 +36,17 @@ export class OptionsFormComponent implements OnInit {
 
 	options: IProductOption[] = [];
 
-	activeOptionGroup: IProductOptionGroupTranslatable = null;
-	activeOption: IProductOptionTranslatable = null;
+	activeOptionGroup: IProductOptionGroupTranslatable | any = null;
+	activeOption: IProductOptionTranslatable | any = null;
+
+	activeLanguageCode: string = LanguagesEnum.ENGLISH;
 
 	form: FormGroup;
 
 	//tstodo test option groups
-	optionGroups: IProductOptionGroupTranslatable[] = [
+	optionGroups: any[] = [
 		{
+			formOptionGroupId: '1',
 			name: 'color bg',
 			options: [
 				{
@@ -53,7 +61,7 @@ export class OptionsFormComponent implements OnInit {
 					]
 				},
 				{
-					name: 'red bg',
+					name: 'green bg',
 					code: '',
 					translations: [
 						{
@@ -65,14 +73,14 @@ export class OptionsFormComponent implements OnInit {
 				}
 			],
 			translations: [
-				{ languageCode: LanguagesEnum.ENGLISH, name: 'color bg' }
+				{ languageCode: LanguagesEnum.BULGARIAN, name: 'color bg' }
 			]
 		},
 		{
 			name: 'size bg',
 			options: [
 				{
-					name: 'red bg',
+					name: 'large bg',
 					code: '',
 					translations: [
 						{
@@ -83,7 +91,7 @@ export class OptionsFormComponent implements OnInit {
 					]
 				},
 				{
-					name: 'red bg',
+					name: 'small bg',
 					code: '',
 					translations: [
 						{
@@ -95,7 +103,7 @@ export class OptionsFormComponent implements OnInit {
 				}
 			],
 			translations: [
-				{ languageCode: LanguagesEnum.ENGLISH, name: 'size bg' }
+				{ languageCode: LanguagesEnum.BULGARIAN, name: 'size bg' }
 			]
 		}
 	];
@@ -103,46 +111,43 @@ export class OptionsFormComponent implements OnInit {
 	constructor(
 		private inventoryStore: InventoryStore,
 		private fb: FormBuilder,
-		private store: Store
+		private store: Store,
+		private translateService: TranslateService
 	) {}
 
 	async ngOnInit() {
 		this.initForm();
 
-		this.form
-			.get('activeOptionGroupName')
-			.valueChanges.pipe(untilDestroyed(this), debounceTime(500))
+		this.form.controls['activeOptionGroupName'].valueChanges
+			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe((value) => {
 				this.updateActiveOptionGroupName(value);
-				console.log(this.optionGroups, ' this option groups');
 			});
 
-		this.form
-			.get('activeOptionName')
-			.valueChanges.pipe(untilDestroyed(this))
-			.subscribe((value) => {
-				console.log(value, ' active option  name');
-			});
-
-		this.form
-			.get('activeOptionCode')
-			.valueChanges.pipe(untilDestroyed(this))
-			.subscribe((value) => {
-				console.log(value, ' active option code');
-			});
-
-		this.inventoryStore.activeProduct$
+		this.form.controls['activeOptionName'].valueChanges
 			.pipe(untilDestroyed(this))
-			.subscribe((activeProduct) => {
-				//tstodo
-				// this.options = activeProduct.options;
+			.subscribe((value) => {
+				console.log(value, ' value option name');
+				this.updateActiveOptionName(value);
 			});
 
-		this.store.preferredLanguage$
+		this.form.controls['activeOptionCode'].valueChanges
+			.pipe(untilDestroyed(this))
+			.subscribe((value) => {
+				this.updateActiveOptionCode(value);
+			});
+
+		// this.inventoryStore.activeProduct$
+		// 	.pipe(untilDestroyed(this))
+		// 	.subscribe((activeProduct) => {
+
+		// 	});
+
+		this.translateService.onLangChange
 			.pipe(untilDestroyed(this))
 			.subscribe((language) => {
-				//tstodo
-				console.log(language, ' language');
+				this.activeLanguageCode = language.lang;
+				this.resetActiveTranslations();
 			});
 	}
 
@@ -188,21 +193,145 @@ export class OptionsFormComponent implements OnInit {
 			});
 
 			return;
+		} else {
+			this.form.controls['activeOptionGroupName'].setErrors(null);
 		}
 
-		//or in the store
+		//tstodo or in the store
 		this.activeOptionGroup.name = value;
+		this.updateTranslationProperty(
+			this.activeOptionGroup,
+			'name',
+			OptionLevel.GROUP,
+			value
+		);
 	}
 
-	isActive(productOptionGroupInput: IProductOptionGroupTranslatable) {
-		if (!productOptionGroupInput || !this.activeOptionGroup) return;
-		return productOptionGroupInput.name == this.activeOptionGroup.name;
+	updateActiveOptionName(value: string) {
+		let checkDublicateOption = this.activeOptionGroup.options.find(
+			(option) => option.name == value
+		);
+
+		if (checkDublicateOption) {
+			this.form.controls['activeOptionName'].setErrors({
+				error: 'dublicate option'
+			});
+		} else {
+			this.form.controls['activeOptionName'].setErrors(null);
+		}
+
+		this.activeOption.name = value;
+		this.updateTranslationProperty(
+			this.activeOption,
+			'name',
+			OptionLevel.SINGLE,
+			value
+		);
+	}
+
+	updateActiveOptionCode(value: string) {
+		let checkDublicateCode = this.activeOptionGroup.options.find(
+			(option) => option.code == value
+		);
+
+		if (checkDublicateCode) {
+			this.form.controls['activeOptionCode'].setErrors({
+				error: 'dublicate code'
+			});
+		} else {
+			this.form.controls['activeOptionCode'].setErrors(null);
+		}
+
+		this.activeOption.code = value;
+		this.updateTranslationProperty(
+			this.activeOption,
+			'code',
+			OptionLevel.SINGLE,
+			value
+		);
+	}
+
+	updateTranslationProperty(
+		el: IProductOptionTranslatable | IProductOptionGroupTranslatable,
+		property: string,
+		optionLevel: OptionLevel,
+		value?: string
+	) {
+		let translation: any = el.translations.find(
+			(translation) => translation.languageCode == this.activeLanguageCode
+		);
+
+		if (!translation) {
+			switch (optionLevel) {
+				case OptionLevel.GROUP:
+					translation = {
+						languageCode: this.activeLanguageCode,
+						name: '',
+						description: ''
+					};
+					break;
+				case OptionLevel.SINGLE:
+					translation = {
+						languageCode: this.activeLanguageCode,
+						name: ''
+					};
+					break;
+			}
+
+			el.translations.push(translation);
+		}
+
+		if (value) {
+			translation[property] = value;
+		}
+		el[property] = translation[property];
+
+		//tstodo
+		console.log(
+			this.optionGroups,
+			'==== option group on update translation'
+		);
+	}
+
+	resetActiveTranslations() {
+		this.optionGroups.forEach((group: IProductOptionGroupTranslatable) => {
+			this.updateTranslationProperty(group, 'name', OptionLevel.GROUP);
+			this.updateTranslationProperty(
+				group,
+				'description',
+				OptionLevel.GROUP
+			);
+
+			group.options.forEach((option: IProductOptionTranslatable) => {
+				this.updateTranslationProperty(
+					option,
+					'name',
+					OptionLevel.SINGLE
+				);
+			});
+		});
+	}
+
+	isActive(productOptionGroupInput: IProductOptionGroupTranslatable | any) {
+		if (!productOptionGroupInput || !this.activeOptionGroup) return false;
+
+		return (
+			productOptionGroupInput.formOptionGroupId ==
+			this.activeOptionGroup.formOptionGroupId
+		);
 	}
 
 	setActiveOptionGroup(
 		productOptionGroupInput: IProductOptionGroupTranslatable
 	) {
 		this.activeOptionGroup = productOptionGroupInput;
+		this.activeOption = this.getEmptyOption();
+		this.updateFormValue();
+	}
+
+	setActiveOption(productOption: IProductOptionTranslatable) {
+		this.activeOption = productOption;
+		this.updateFormValue();
 	}
 
 	onActiveOptionGroupNameChange(input: string) {}
@@ -213,5 +342,37 @@ export class OptionsFormComponent implements OnInit {
 			activeOptionName: [''],
 			activeOptionCode: ['']
 		});
+	}
+
+	resetFormValue() {
+		this.form.patchValue({
+			activeOptionGroupName: '',
+			activeOptionName: '',
+			activeOptionCode: ''
+		});
+	}
+
+	updateFormValue() {
+		if (!this.activeOptionGroup || !this.activeOption) return;
+
+		this.form.patchValue({
+			activeOptionGroupName: this.activeOptionGroup.name,
+			activeOptionName: this.activeOption.name,
+			activeOptionCode: this.activeOption.code
+		});
+	}
+
+	getEmptyOption() {
+		return {
+			name: '',
+			code: '',
+			translations: [
+				{
+					name: '',
+					languageCode: this.activeLanguageCode,
+					description: ''
+				}
+			]
+		};
 	}
 }
