@@ -15,14 +15,12 @@ import {
 	ITask,
 	IOrganizationProject,
 	IExpense,
-	ExpenseTypesEnum,
 	IInvoiceItemCreateInput,
 	IProductTranslatable
 } from '@gauzy/contracts';
-import { filter, first } from 'rxjs/operators';
+import { filter, first, tap } from 'rxjs/operators';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { Observable } from 'rxjs';
-import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { InvoiceItemService } from '../../../@core/services/invoice-item.service';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -31,14 +29,10 @@ import { InvoicesService } from '../../../@core/services/invoices.service';
 import { InvoiceEmployeesSelectorComponent } from '../table-components/invoice-employees-selector.component';
 import { InvoiceProjectsSelectorComponent } from '../table-components/invoice-project-selector.component';
 import { InvoiceTasksSelectorComponent } from '../table-components/invoice-tasks-selector.component';
-import { EmployeesService } from '../../../@core/services';
 import { InvoiceProductsSelectorComponent } from '../table-components/invoice-product-selector.component';
-import { ProductService } from '../../../@core/services/product.service';
-import { TasksStoreService } from '../../../@core/services/tasks-store.service';
 import { InvoiceApplyTaxDiscountComponent } from '../table-components/invoice-apply-tax-discount.component';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
 import { InvoiceExpensesSelectorComponent } from '../table-components/invoice-expense-selector.component';
-import { ExpensesService } from '../../../@core/services/expenses.service';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../../@core/services/toastr.service';
@@ -53,29 +47,6 @@ import { TranslatableService } from '../../../@core/services/translatable.servic
 export class InvoiceEditComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	constructor(
-		private store: Store,
-		private router: Router,
-		private fb: FormBuilder,
-		private invoiceItemService: InvoiceItemService,
-		private translate: TranslateService,
-		private invoicesService: InvoicesService,
-		private toastrService: ToastrService,
-		private organizationContactService: OrganizationContactService,
-		private route: ActivatedRoute,
-		private employeeService: EmployeesService,
-		private projectService: OrganizationProjectsService,
-		private productService: ProductService,
-		private tasksStore: TasksStoreService,
-		private dialogService: NbDialogService,
-		private expensesService: ExpensesService,
-		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
-		private translatableService: TranslatableService
-	) {
-		super(translate);
-		this.observableTasks = this.tasksStore.tasks$;
-	}
-
 	invoiceLoaded = false;
 	loadedNumber: boolean;
 	shouldLoadTable = false;
@@ -109,11 +80,35 @@ export class InvoiceEditComponent
 	isRemainingAmount: string;
 	alreadyPaid: number;
 	amountDue: number;
+
 	get currency() {
 		return this.form.get('currency');
 	}
 
-	@Input() isEstimate: boolean;
+	private _isEstimate: boolean = false;
+	@Input() set isEstimate(val: boolean) {
+		this._isEstimate = val;
+	}
+	get isEstimate() {
+		return this._isEstimate;
+	}
+
+	constructor(
+		private store: Store,
+		private router: Router,
+		private fb: FormBuilder,
+		private invoiceItemService: InvoiceItemService,
+		private translate: TranslateService,
+		private invoicesService: InvoicesService,
+		private toastrService: ToastrService,
+		private organizationContactService: OrganizationContactService,
+		private route: ActivatedRoute,
+		private dialogService: NbDialogService,
+		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
+		private translatableService: TranslatableService
+	) {
+		super(translate);
+	}
 
 	ngOnInit() {
 		this._applyTranslationOnSmartTable();
@@ -143,33 +138,47 @@ export class InvoiceEditComponent
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
+				tap(() => (this.loading = true)),
+				tap((organization) => (this.organization = organization)),
+				tap(() => this.getInvoiceById()),
 				untilDestroyed(this)
 			)
-			.subscribe(async (organization) => {
-				this.organization = organization;
-				await this.loadData();
-			});
-		this.observableTasks.pipe(untilDestroyed(this)).subscribe((data) => {
-			this.tasks = data;
-		});
+			.subscribe();
 	}
 
-	async loadData() {
+	getInvoiceById() {
 		this.loading = true;
 		const { tenantId } = this.store.user;
-		const invoice = await this.invoicesService.getById(
-			this.invoiceId,
-			['invoiceItems', 'tags', 'toContact', 'fromOrganization'],
-			{ tenantId }
-		);
-		this.loading = false;
-		this.invoice = invoice;
-		this.invoiceItems = invoice.invoiceItems;
-		this.selectedOrganizationContact = invoice.toContact;
-		this.discountAfterTax = invoice.fromOrganization.discountAfterTax;
+		this.invoicesService
+			.getById(
+				this.invoiceId,
+				[
+					'invoiceItems',
+					'invoiceItems.employee',
+					'invoiceItems.employee.user',
+					'invoiceItems.project',
+					'invoiceItems.product',
+					'invoiceItems.expense',
+					'invoiceItems.task',
+					'tags',
+					'toContact',
+					'fromOrganization'
+				],
+				{ tenantId }
+			)
+			.then(async (invoice: IInvoice) => {
+				this.invoice = invoice;
+				this.invoiceItems = invoice.invoiceItems;
+				this.selectedOrganizationContact = invoice.toContact;
+				this.discountAfterTax =
+					invoice.fromOrganization.discountAfterTax;
 
-		await this._loadOrganizationData();
-		this.seedFormData(invoice);
+				await this._loadOrganizationData();
+				this.updateValueAndValidity(invoice);
+			})
+			.finally(() => {
+				this.loading = false;
+			});
 	}
 
 	initializeForm() {
@@ -203,7 +212,7 @@ export class InvoiceEditComponent
 		});
 	}
 
-	seedFormData(invoice: IInvoice) {
+	updateValueAndValidity(invoice: IInvoice) {
 		this.form.setValue({
 			id: invoice.id,
 			invoiceNumber: invoice.invoiceNumber,
@@ -221,6 +230,7 @@ export class InvoiceEditComponent
 			tags: invoice.tags
 		});
 		this.form.updateValueAndValidity();
+
 		this.invoiceLoaded = true;
 		this.tags = invoice.tags;
 	}
@@ -264,13 +274,9 @@ export class InvoiceEditComponent
 						component: InvoiceEmployeesSelectorComponent
 					},
 					valuePrepareFunction: (cell) => {
-						if (this.employees && this.employees.length) {
-							const employee = this.employees.find(
-								(e) => e.id === cell
-							);
-							if (employee) {
-								return `${employee.user.firstName} ${employee.user.lastName}`;
-							}
+						const employee = cell;
+						if (employee) {
+							return `${cell.user.name}`;
 						}
 					}
 				};
@@ -285,14 +291,10 @@ export class InvoiceEditComponent
 						type: 'custom',
 						component: InvoiceProjectsSelectorComponent
 					},
-					valuePrepareFunction: (cell) => {
-						if (this.projects) {
-							const project = this.projects.find(
-								(p) => p.id === cell
-							);
-							if (project) {
-								return `${project.name}`;
-							}
+					valuePrepareFunction: (cell, row) => {
+						const project = cell;
+						if (project) {
+							return `${project.name}`;
 						}
 					}
 				};
@@ -308,11 +310,9 @@ export class InvoiceEditComponent
 						component: InvoiceTasksSelectorComponent
 					},
 					valuePrepareFunction: (cell) => {
-						if (this.tasks) {
-							const task = this.tasks.find((t) => t.id === cell);
-							if (task) {
-								return `${task.title}`;
-							}
+						const task = cell;
+						if (task) {
+							return `${task.title}`;
 						}
 					}
 				};
@@ -328,16 +328,12 @@ export class InvoiceEditComponent
 						component: InvoiceProductsSelectorComponent
 					},
 					valuePrepareFunction: (cell) => {
-						if (this.products) {
-							const product = this.products.find(
-								(p) => p.id === cell
-							);
-							if (product) {
-								return `${this.translatableService.getTranslatedProperty(
-									product,
-									'name'
-								)}`;
-							}
+						const product = cell;
+						if (product) {
+							return `${this.translatableService.getTranslatedProperty(
+								product,
+								'name'
+							)}`;
 						}
 					}
 				};
@@ -476,60 +472,18 @@ export class InvoiceEditComponent
 		}
 	}
 
-	private _loadTasks() {
-		this.tasksStore.fetchTasks(this.organization);
-	}
-
 	private async _loadOrganizationData() {
 		if (!this.organization) {
 			return;
 		}
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		switch (this.invoice.invoiceType) {
-			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
-				this.employeeService
-					.getAll(['user'], { organizationId, tenantId })
-					.pipe(untilDestroyed(this))
-					.subscribe(({ items }) => {
-						this.employees = items;
-					});
-				break;
-			case InvoiceTypeEnum.BY_PROJECT_HOURS:
-				const projects = await this.projectService.getAll([], {
-					organizationId,
-					tenantId
-				});
-				this.projects = projects.items;
-				break;
-			case InvoiceTypeEnum.BY_TASK_HOURS:
-				this._loadTasks();
-				break;
-			case InvoiceTypeEnum.BY_PRODUCTS:
-				const products = await this.productService.getAll(
-					[],
-					{ organizationId, tenantId },
-					this.selectedLanguage
-				);
-				this.products = products.items;
-				break;
-			case InvoiceTypeEnum.BY_EXPENSES:
-				const expenses = await this.expensesService.getAll([], {
-					typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,
-					organizationId,
-					tenantId
-				});
-				this.expenses = expenses.items;
-				break;
-			default:
-				break;
-		}
 
-		const organizationContacts = await this.organizationContactService.getAll(
-			[],
-			{ organizationId, tenantId }
-		);
-		this.organizationContacts = organizationContacts.items;
+		this.organizationContactService
+			.getAll([], { organizationId, tenantId })
+			.then(({ items }) => {
+				this.organizationContacts = items;
+			});
 
 		this.loadSmartTable();
 		await this.loadInvoiceItemData();
@@ -848,27 +802,27 @@ export class InvoiceEditComponent
 
 			switch (this.invoice.invoiceType) {
 				case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
-					data['selectedItem'] = item.employeeId;
+					data['selectedItem'] = item.employee;
 					break;
 				case InvoiceTypeEnum.BY_PROJECT_HOURS:
-					data['selectedItem'] = item.projectId;
+					data['selectedItem'] = item.project;
 					break;
 				case InvoiceTypeEnum.BY_TASK_HOURS:
-					data['selectedItem'] = item.taskId;
+					data['selectedItem'] = item.task;
 					break;
 				case InvoiceTypeEnum.BY_PRODUCTS:
-					data['selectedItem'] = item.productId;
+					data['selectedItem'] = item.product;
 					break;
 				case InvoiceTypeEnum.BY_EXPENSES:
-					data['selectedItem'] = item.expenseId;
+					data['selectedItem'] = item.expense;
 					break;
 				default:
 					break;
 			}
-
 			subtotal += +item.totalValue;
 			items.push(data);
 		}
+
 		this.subtotal = subtotal;
 		this.smartTableSource.load(items);
 		this.shouldLoadTable = true;

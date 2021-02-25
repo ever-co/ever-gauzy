@@ -5,6 +5,7 @@ import { DefaultEditor } from 'ng2-smart-table';
 import { TasksStoreService } from '../../../@core/services/tasks-store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '../../../@core/services/store.service';
+import { filter, tap } from 'rxjs/operators';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	template: `
@@ -29,29 +30,31 @@ export class InvoiceTasksSelectorComponent
 	observableTasks: Observable<ITask[]> = this.tasksStore.tasks$;
 	organization: IOrganization;
 
-	constructor(
-		private tasksStore: TasksStoreService,
-		private storeService: Store
-	) {
+	constructor(private tasksStore: TasksStoreService, private store: Store) {
 		super();
 	}
 
 	ngOnInit() {
-		this.organization = this.storeService.selectedOrganization;
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				tap((organization) => (this.organization = organization)),
+				tap(() => this._loadTasks()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.observableTasks.pipe(untilDestroyed(this)).subscribe((data) => {
 			this.tasks = data;
-			const task = this.tasks.find((t) => t.id === this.cell.newValue);
-			this.task = task;
+			this.task = this.tasks.find((t) => t.id === this.cell.newValue.id);
 		});
-		this._loadTasks();
 	}
 
-	private async _loadTasks() {
+	private _loadTasks() {
 		this.tasksStore.fetchTasks(this.organization);
 	}
 
 	selectTask($event) {
-		this.cell.newValue = $event.id;
+		this.cell.newValue = $event;
 	}
 
 	ngOnDestroy() {}
