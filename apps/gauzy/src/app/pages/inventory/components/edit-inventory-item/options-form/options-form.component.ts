@@ -22,6 +22,11 @@ export enum OptionLevel {
 	GROUP = 'GROUP'
 }
 
+export interface IProductOptionGroupUI extends IProductOptionGroupTranslatable {
+	stored?: boolean;
+	formOptionGroupId?: string;
+}
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-options-form',
@@ -36,8 +41,8 @@ export class OptionsFormComponent implements OnInit {
 
 	options: IProductOption[] = [];
 
-	activeOptionGroup: IProductOptionGroupTranslatable | any = null;
-	activeOption: IProductOptionTranslatable | any = null;
+	activeOptionGroup: IProductOptionGroupUI | any = null;
+	activeOption: IProductOptionTranslatable | any = {};
 
 	activeLanguageCode: string = LanguagesEnum.ENGLISH;
 
@@ -46,7 +51,7 @@ export class OptionsFormComponent implements OnInit {
 	//tstodo test option groups
 	optionGroups: any[] = [
 		{
-			formOptionGroupId: '1',
+			formOptionGroupId: 0,
 			name: 'color bg',
 			options: [
 				{
@@ -77,6 +82,7 @@ export class OptionsFormComponent implements OnInit {
 			]
 		},
 		{
+			formOptionGroupId: 1,
 			name: 'size bg',
 			options: [
 				{
@@ -164,6 +170,34 @@ export class OptionsFormComponent implements OnInit {
 		// }
 
 		this.resetOptionForm();
+	}
+
+	onCreateOptionGroupClick() {
+		let newOptionGroup = this.getEmptyOptionGroup();
+		this.activeOptionGroup = newOptionGroup;
+		this.activeOption = {};
+		this.optionGroups.splice(0, 0, newOptionGroup);
+	}
+
+	onCreateOptionClick() {
+		if (!this.activeOptionGroup) return;
+
+		let formValue = this.form.value;
+
+		let newOption = {
+			name: formValue['activeOptionName'],
+			code: formValue['activeOptionCode'],
+			translations: [
+				{
+					name: formValue['activeOptionName'],
+					languageCode:
+						this.activeLanguageCode || LanguagesEnum.ENGLISH,
+					description: ''
+				}
+			]
+		};
+		this.activeOptionGroup.options.splice(0, 0, newOption);
+		this.activeOption = {};
 	}
 
 	onRemoveOption(optionInput: IProductOption) {
@@ -257,6 +291,8 @@ export class OptionsFormComponent implements OnInit {
 		optionLevel: OptionLevel,
 		value?: string
 	) {
+		if (!el.translations) return;
+
 		let translation: any = el.translations.find(
 			(translation) => translation.languageCode == this.activeLanguageCode
 		);
@@ -287,10 +323,7 @@ export class OptionsFormComponent implements OnInit {
 		el[property] = translation[property];
 
 		//tstodo
-		console.log(
-			this.optionGroups,
-			'==== option group on update translation'
-		);
+		console.log(this.optionGroups, 'option group on update translation');
 	}
 
 	resetActiveTranslations() {
@@ -334,8 +367,6 @@ export class OptionsFormComponent implements OnInit {
 		this.updateFormValue();
 	}
 
-	onActiveOptionGroupNameChange(input: string) {}
-
 	private initForm() {
 		this.form = this.fb.group({
 			activeOptionGroupName: [''],
@@ -375,4 +406,17 @@ export class OptionsFormComponent implements OnInit {
 			]
 		};
 	}
+
+	generateOptionGroupFormId() {
+		return this.optionGroups.length;
+	}
+
+	getEmptyOptionGroup = () => {
+		return {
+			name: 'new option group',
+			options: [],
+			translations: [],
+			formOptionGroupId: this.generateOptionGroupFormId()
+		};
+	};
 }

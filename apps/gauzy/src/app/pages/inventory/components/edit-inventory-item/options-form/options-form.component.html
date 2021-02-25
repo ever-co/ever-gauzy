@@ -4,7 +4,12 @@
 	</label>
 	<div class="row mb-3">
 		<div class="col-md-12">
-			<button status="primary" nbButton (click)="onSaveOption()" class="">
+			<button
+				status="primary"
+				nbButton
+				(click)="onCreateOptionGroupClick()"
+				class=""
+			>
 				<!-- //tstodo add translation -->
 				New option
 			</button>
@@ -99,7 +104,11 @@
 							<button class="mr-1" nbButton status="success">
 								<nb-icon icon="globe-outline"></nb-icon>
 							</button>
-							<button nbButton status="success">
+							<button
+								nbButton
+								status="success"
+								(click)="onCreateOptionClick()"
+							>
 								<nb-icon icon="plus-circle-outline"></nb-icon>
 							</button>
 						</div>
