@@ -1,10 +1,8 @@
 import { Component, Input } from '@angular/core';
-import {
-	SelectedEmployee,
-	ALL_EMPLOYEES_SELECTED
-} from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Router } from '@angular/router';
+import { ISelectedEmployee } from '@gauzy/contracts';
+import { ALL_EMPLOYEES_SELECTED } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({
 	selector: 'ga-interview-interviewers',
@@ -58,7 +56,7 @@ export class InterviewersTableComponent {
 	rowData: any;
 	constructor(private store: Store, private readonly router: Router) {}
 	selectEmployee(
-		employee: SelectedEmployee,
+		employee: ISelectedEmployee,
 		firstName: string,
 		lastName: string,
 		imageUrl: string

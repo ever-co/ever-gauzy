@@ -8,13 +8,13 @@ import { ActivatedRoute } from '@angular/router';
 import {
 	IGetTimeLimitReportInput,
 	IOrganization,
+	ISelectedEmployee,
 	ITimeLimitReport,
 	ITimeLogFilters
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
-import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import * as moment from 'moment';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -34,7 +34,7 @@ export class TimeLimitReportComponent implements OnInit, AfterViewInit {
 	updateLogs$: Subject<any> = new Subject();
 	filters: ITimeLogFilters;
 	organization: any;
-	selectedEmployee: SelectedEmployee;
+	selectedEmployee: ISelectedEmployee;
 	loading: boolean;
 	dailyData: any;
 	title: string;
@@ -71,7 +71,7 @@ export class TimeLimitReportComponent implements OnInit, AfterViewInit {
 
 		this.store.selectedEmployee$
 			.pipe(untilDestroyed(this))
-			.subscribe((employee: SelectedEmployee) => {
+			.subscribe((employee: ISelectedEmployee) => {
 				if (employee && employee.id) {
 					this.selectedEmployee = employee;
 				} else {

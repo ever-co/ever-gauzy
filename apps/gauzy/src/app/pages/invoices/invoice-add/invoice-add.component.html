@@ -6,11 +6,13 @@
 >
 	<nb-card-header class="d-flex">
 		<ngx-back-navigation></ngx-back-navigation>
-		<h4 *ngIf="!isEstimate">
-			{{ 'INVOICES_PAGE.ADD_INVOICE' | translate }}
-		</h4>
-		<h4 *ngIf="isEstimate">
-			{{ 'INVOICES_PAGE.ADD_ESTIMATE' | translate }}
+		<h4>
+			{{
+				(isEstimate
+					? 'INVOICES_PAGE.ADD_ESTIMATE'
+					: 'INVOICES_PAGE.ADD_INVOICE'
+				) | translate
+			}}
 		</h4>
 	</nb-card-header>
 
@@ -22,36 +24,24 @@
 						<div class="col-sm-6">
 							<div class="form-group">
 								<label for="inputInvoiceNumber" class="label">
-									<span *ngIf="!isEstimate">{{
-										'INVOICES_PAGE.INVOICE_NUMBER'
-											| translate
-									}}</span>
-									<span *ngIf="isEstimate">{{
-										'INVOICES_PAGE.ESTIMATE_NUMBER'
-											| translate
-									}}</span>
+									<span>
+										{{
+											(isEstimate
+												? 'INVOICES_PAGE.ESTIMATE_NUMBER'
+												: 'INVOICES_PAGE.INVOICE_NUMBER'
+											) | translate
+										}}
+									</span>
 								</label>
 								<input
-									*ngIf="!isEstimate"
 									type="number"
 									nbInput
-									placeholder="{{
-										'INVOICES_PAGE.INVOICE_NUMBER'
-											| translate
-									}}"
-									formControlName="invoiceNumber"
-									[(ngModel)]="formInvoiceNumber"
-									id="inputInvoiceNumber"
-									fullWidth
-								/>
-								<input
-									*ngIf="isEstimate"
-									type="number"
-									nbInput
-									placeholder="{{
-										'INVOICES_PAGE.ESTIMATE_NUMBER'
-											| translate
-									}}"
+									[placeholder]="
+										(isEstimate
+											? 'INVOICES_PAGE.ESTIMATE_NUMBER'
+											: 'INVOICES_PAGE.INVOICE_NUMBER'
+										) | translate
+									"
 									formControlName="invoiceNumber"
 									[(ngModel)]="formInvoiceNumber"
 									id="inputInvoiceNumber"
@@ -71,44 +61,36 @@
 					<div class="row">
 						<div class="col-sm-6">
 							<div class="form-group">
-								<label for="inputInvoiceDate" class="label">
-									<span *ngIf="!isEstimate">{{
-										'INVOICES_PAGE.INVOICE_DATE' | translate
-									}}</span>
-									<span *ngIf="isEstimate">{{
-										'INVOICES_PAGE.ESTIMATE_DATE'
-											| translate
-									}}</span>
+								<label
+									for="inputInvoiceEstimateDate"
+									class="label"
+								>
+									<span>
+										{{
+											(isEstimate
+												? 'INVOICES_PAGE.ESTIMATE_DATE'
+												: 'INVOICES_PAGE.INVOICE_DATE'
+											) | translate
+										}}</span
+									>
 								</label>
 								<input
-									*ngIf="!isEstimate"
 									formControlName="invoiceDate"
 									type="text"
 									nbInput
-									placeholder="{{
-										'INVOICES_PAGE.INVOICE_DATE' | translate
-									}}"
-									[nbDatepicker]="invoiceDatePicker"
-									id="inputInvoiceDate"
-									fullWidth
-									required
-								/>
-								<input
-									*ngIf="isEstimate"
-									formControlName="invoiceDate"
-									type="text"
-									nbInput
-									placeholder="{{
-										'INVOICES_PAGE.ESTIMATE_DATE'
-											| translate
-									}}"
-									[nbDatepicker]="invoiceDatePicker"
-									id="inputInvoiceDate"
+									[placeholder]="
+										(isEstimate
+											? 'INVOICES_PAGE.ESTIMATE_DATE'
+											: 'INVOICES_PAGE.INVOICE_DATE'
+										) | translate
+									"
+									[nbDatepicker]="invoiceEstimateDatePicker"
+									id="inputInvoiceEstimateDate"
 									fullWidth
 									required
 								/>
 								<nb-datepicker
-									#invoiceDatePicker
+									#invoiceEstimateDatePicker
 								></nb-datepicker>
 							</div>
 						</div>
@@ -139,7 +121,7 @@
 							></ga-currency>
 						</div>
 						<div class="col-sm-6">
-							<label for="inputInvoiceNumber" class="label"
+							<label for="inputOrganizationContact" class="label"
 								>{{ 'INVOICES_PAGE.CONTACT' | translate }}
 							</label>
 							<ng-select
@@ -195,26 +177,24 @@
 					<div class="row">
 						<div class="col-sm-6">
 							<div class="form-group">
-								<label class="label" *ngIf="!isEstimate">
+								<label for="invoiceType" class="label">
 									{{
-										'INVOICES_PAGE.INVOICE_TYPE.SELECT_INVOICE_TYPE'
-											| translate
-									}}
-								</label>
-								<label class="label" *ngIf="isEstimate">
-									{{
-										'INVOICES_PAGE.INVOICE_TYPE.SELECT_ESTIMATE_TYPE'
-											| translate
+										(isEstimate
+											? 'INVOICES_PAGE.INVOICE_TYPE.SELECT_ESTIMATE_TYPE'
+											: 'INVOICES_PAGE.INVOICE_TYPE.SELECT_INVOICE_TYPE'
+										) | translate
 									}}
 								</label>
 								<nb-select
 									(selectedChange)="onTypeChange($event)"
 									formControlName="invoiceType"
 									[placeholder]="
-										isEstimate
-											? estimateTypePlaceholder
-											: invoiceTypePlaceholder
+										(isEstimate
+											? 'INVOICES_PAGE.INVOICE_TYPE.ESTIMATE_TYPE'
+											: 'INVOICES_PAGE.INVOICE_TYPE.INVOICE_TYPE'
+										) | translate
 									"
+									id="invoiceType"
 									fullWidth
 								>
 									<nb-option
@@ -240,7 +220,7 @@
 						</div>
 						<div class="col-sm-6" *ngIf="isProjectHourTable">
 							<div class="form-group">
-								<label class="label">
+								<label for="inputProject" class="label">
 									{{
 										'INVOICES_PAGE.INVOICE_TYPE.SELECT_PROJECTS'
 											| translate
@@ -275,7 +255,7 @@
 						</div>
 						<div class="col-sm-6" *ngIf="isTaskHourTable">
 							<div class="form-group">
-								<label class="label">
+								<label for="inputTask" class="label">
 									{{
 										'INVOICES_PAGE.INVOICE_TYPE.SELECT_TASKS'
 											| translate
@@ -310,7 +290,7 @@
 						</div>
 						<div class="col-sm-6" *ngIf="isProductTable">
 							<div class="form-group">
-								<label class="label">
+								<label for="inputProduct" class="label">
 									{{
 										'INVOICES_PAGE.INVOICE_TYPE.SELECT_PRODUCTS'
 											| translate
@@ -345,7 +325,7 @@
 						</div>
 						<div class="col-sm-6" *ngIf="isExpenseTable">
 							<div class="form-group">
-								<label class="label">
+								<label for="inputExpense" class="label">
 									{{
 										'INVOICES_PAGE.INVOICE_TYPE.SELECT_EXPENSES'
 											| translate
@@ -387,24 +367,13 @@
 										(click)="generateTable()"
 										status="success"
 										[disabled]="!invoiceType"
-										*ngIf="!isEstimate"
 										nbButton
 									>
 										{{
-											'INVOICES_PAGE.INVOICE_TYPE.GENERATE_INVOICE_ITEMS'
-												| translate
-										}}
-									</button>
-									<button
-										(click)="generateTable()"
-										status="success"
-										[disabled]="!invoiceType"
-										*ngIf="isEstimate"
-										nbButton
-									>
-										{{
-											'INVOICES_PAGE.INVOICE_TYPE.GENERATE_ESTIMATE_ITEMS'
-												| translate
+											(isEstimate
+												? 'INVOICES_PAGE.INVOICE_TYPE.GENERATE_ESTIMATE_ITEMS'
+												: 'INVOICES_PAGE.INVOICE_TYPE.GENERATE_INVOICE_ITEMS'
+											) | translate
 										}}
 									</button>
 									<button
@@ -462,6 +431,7 @@
 											| translate
 									}}"
 									(ngModelChange)="calculateTotal()"
+									id="inputDiscountType"
 									fullWidth
 								>
 									<nb-option
@@ -505,15 +475,20 @@
 							</div>
 							<div class="col-sm-12 p-0">
 								<div class="form-group">
-									<label for="inputTaxType" class="label">{{
-										'INVOICES_PAGE.TAX_TYPE' | translate
-									}}</label>
+									<label
+										for="inputDiscountTaxType"
+										class="label"
+										>{{
+											'INVOICES_PAGE.TAX_TYPE' | translate
+										}}</label
+									>
 									<nb-select
 										formControlName="taxType"
 										placeholder="{{
 											'INVOICES_PAGE.TAX_TYPE' | translate
 										}}"
 										(ngModelChange)="calculateTotal()"
+										id="inputDiscountTaxType"
 										fullWidth
 									>
 										<nb-option
@@ -552,15 +527,20 @@
 							</div>
 							<div class="col-sm-12 p-0">
 								<div class="form-group">
-									<label for="inputTaxType" class="label">{{
-										'INVOICES_PAGE.TAX_TYPE' | translate
-									}}</label>
+									<label
+										for="inputDiscountTaxType2"
+										class="label"
+										>{{
+											'INVOICES_PAGE.TAX_TYPE' | translate
+										}}</label
+									>
 									<nb-select
 										formControlName="tax2Type"
 										placeholder="{{
 											'INVOICES_PAGE.TAX_TYPE' | translate
 										}}"
 										(ngModelChange)="calculateTotal()"
+										id="inputDiscountTaxType2"
 										fullWidth
 									>
 										<nb-option

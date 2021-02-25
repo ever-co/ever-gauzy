@@ -19,7 +19,8 @@ import {
 	ComponentLayoutStyleEnum,
 	TaskListTypeEnum,
 	IOrganization,
-	IOrganizationTeam
+	IOrganizationTeam,
+	ISelectedEmployee
 } from '@gauzy/contracts';
 import { TasksStoreService } from '../../../../@core/services/tasks-store.service';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
@@ -35,12 +36,12 @@ import { MyTaskDialogComponent } from './../my-task-dialog/my-task-dialog.compon
 import { TeamTasksStoreService } from '../../../../@core/services/team-tasks-store.service';
 import { Store } from '../../../../@core/services/store.service';
 import { OrganizationTeamsService } from '../../../../@core/services/organization-teams.service';
-import { SelectedEmployee } from '../../../../@theme/components/header/selectors/employee/employee.component';
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
 import { ComponentEnum } from '../../../../@core/constants/layout.constants';
 import { StatusViewComponent } from '../../../../@shared/table-components/status-view/status-view.component';
 import { AddTaskDialogComponent } from '../../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-task',
@@ -106,7 +107,7 @@ export class TaskComponent
 				filter((employee) => !!employee),
 				untilDestroyed(this)
 			)
-			.subscribe((selectedEmployee: SelectedEmployee) => {
+			.subscribe((selectedEmployee: ISelectedEmployee) => {
 				if (selectedEmployee.id && this.organization) {
 					this.loadTeams(selectedEmployee.id);
 					this.storeInstance.fetchTasks(

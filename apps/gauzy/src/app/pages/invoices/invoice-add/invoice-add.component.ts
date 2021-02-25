@@ -96,12 +96,6 @@ export class InvoiceAddComponent
 	total = 0;
 	tags: ITag[] = [];
 	currencyString: string;
-	invoiceTypePlaceholder = this.getTranslation(
-		'INVOICES_PAGE.INVOICE_TYPE.INVOICE_TYPE'
-	);
-	estimateTypePlaceholder = this.getTranslation(
-		'INVOICES_PAGE.INVOICE_TYPE.ESTIMATE_TYPE'
-	);
 	selectedLanguage: string;
 
 	get currency() {

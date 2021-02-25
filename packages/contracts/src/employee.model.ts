@@ -124,6 +124,21 @@ export interface IEmployeeCreateInput
 	isActive?: boolean;
 }
 
+export interface ISelectedEmployee {
+	id: string;
+	firstName: string;
+	lastName: string;
+	imageUrl: string;
+	defaultType?: DEFAULT_TYPE;
+	tags?: ITag[];
+	skills?: ISkill[];
+}
+
+export enum DEFAULT_TYPE {
+	ALL_EMPLOYEE = 'ALL_EMPLOYEE',
+	NO_EMPLOYEE = 'NO_EMPLOYEE'
+}
+
 export enum PayPeriodEnum {
 	NONE = 'NONE',
 	BI_WEEKLY = 'BI_WEEKLY',

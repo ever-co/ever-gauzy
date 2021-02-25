@@ -10,10 +10,13 @@ import {
 	ChangeDetectionStrategy
 } from '@angular/core';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
-import { takeUntil, filter, debounceTime } from 'rxjs/operators';
+import { filter, debounceTime } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { Subject } from 'rxjs';
-import { IOrganization, ITag, ISkill } from '@gauzy/contracts';
+import {
+	IOrganization,
+	ISelectedEmployee,
+	DEFAULT_TYPE
+} from '@gauzy/contracts';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
@@ -22,22 +25,7 @@ import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.
 //That should not be the case, sometimes due to permissions like CHANGE_SELECTED_EMPLOYEE not being available
 //we need to handle cases where No Employee is selected too
 
-export interface SelectedEmployee {
-	id: string;
-	firstName: string;
-	lastName: string;
-	imageUrl: string;
-	defaultType?: DEFAULT_TYPE;
-	tags?: ITag[];
-	skills?: ISkill[];
-}
-
-export enum DEFAULT_TYPE {
-	ALL_EMPLOYEE = 'ALL_EMPLOYEE',
-	NO_EMPLOYEE = 'NO_EMPLOYEE'
-}
-
-export const ALL_EMPLOYEES_SELECTED: SelectedEmployee = {
+export const ALL_EMPLOYEES_SELECTED: ISelectedEmployee = {
 	id: null,
 	firstName: 'All Employees',
 	lastName: '',
@@ -47,7 +35,7 @@ export const ALL_EMPLOYEES_SELECTED: SelectedEmployee = {
 	skills: []
 };
 
-export const NO_EMPLOYEE_SELECTED: SelectedEmployee = {
+export const NO_EMPLOYEE_SELECTED: ISelectedEmployee = {
 	id: null,
 	firstName: '',
 	lastName: '',
@@ -94,12 +82,10 @@ export class EmployeeSelectorComponent
 	private _selectedDate?: Date;
 
 	@Output()
-	selectionChanged: EventEmitter<SelectedEmployee> = new EventEmitter();
+	selectionChanged: EventEmitter<ISelectedEmployee> = new EventEmitter();
 
-	people: SelectedEmployee[] = [];
-	selectedEmployee: SelectedEmployee;
-
-	private _ngDestroy$ = new Subject<void>();
+	people: ISelectedEmployee[] = [];
+	selectedEmployee: ISelectedEmployee;
 
 	constructor(
 		private employeesService: EmployeesService,
@@ -149,7 +135,7 @@ export class EmployeeSelectorComponent
 		}
 	}
 
-	selectEmployee(employee: SelectedEmployee) {
+	selectEmployee(employee: ISelectedEmployee) {
 		if (!this.skipGlobalChange) {
 			this.store.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
 		} else {
@@ -160,7 +146,7 @@ export class EmployeeSelectorComponent
 
 	selectEmployeeById(employeeId: string) {
 		const employees = this.people.filter(
-			(employee: SelectedEmployee) => employeeId === employee.id
+			(employee: ISelectedEmployee) => employeeId === employee.id
 		);
 		if (employees.length > 0) {
 			this.selectEmployee(employees[0]);
@@ -182,7 +168,7 @@ export class EmployeeSelectorComponent
 
 	private _loadEmployeeId() {
 		this.store.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((emp) => {
 				this.selectedEmployee = emp;
 			});
@@ -297,8 +283,5 @@ export class EmployeeSelectorComponent
 			});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

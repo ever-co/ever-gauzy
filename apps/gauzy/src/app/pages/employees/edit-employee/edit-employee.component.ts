@@ -4,16 +4,17 @@ import {
 	IEmployee,
 	IEmployeeRecurringExpense,
 	IOrganization,
+	ISelectedEmployee,
 	PermissionsEnum
 } from '@gauzy/contracts';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
-import { first, takeUntil } from 'rxjs/operators';
+import { first } from 'rxjs/operators';
 import { EmployeesService } from '../../../@core/services/employees.service';
 import { Store } from '../../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-edit-employee',
 	templateUrl: './edit-employee.component.html',
@@ -25,10 +26,9 @@ import { SelectedEmployee } from '../../../@theme/components/header/selectors/em
 export class EditEmployeeComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
 	selectedEmployee: IEmployee;
 	selectedDate: Date;
-	selectedEmployeeFromHeader: SelectedEmployee;
+	selectedEmployeeFromHeader: ISelectedEmployee;
 	selectedEmployeeRecurringExpense: IEmployeeRecurringExpense[];
 	selectedRowIndexToShow: number;
 	employeeName = 'Employee';
@@ -48,13 +48,13 @@ export class EditEmployeeComponent
 
 	async ngOnInit() {
 		this.store.selectedDate$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((date) => {
 				this.selectedDate = date;
 			});
 
 		this.store.userRolePermissions$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.hasEditPermission = this.store.hasPermission(
 					PermissionsEnum.ORG_EMPLOYEES_EDIT
@@ -62,7 +62,7 @@ export class EditEmployeeComponent
 			});
 
 		this.route.params
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(async (params) => {
 				const id = params.id;
 
@@ -89,7 +89,7 @@ export class EditEmployeeComponent
 				this.employeeName = checkUsername ? checkUsername : 'Employee';
 
 				this.store.selectedEmployee$
-					.pipe(takeUntil(this._ngDestroy$))
+					.pipe(untilDestroyed(this))
 					.subscribe((employee) => {
 						this.selectedEmployeeFromHeader = employee;
 						if (employee.id) {
@@ -100,14 +100,12 @@ export class EditEmployeeComponent
 					});
 
 				this.store.selectedOrganization$
-					.pipe(takeUntil(this._ngDestroy$))
+					.pipe(untilDestroyed(this))
 					.subscribe((organization) => {
 						this.selectedOrganization = organization;
 					});
 			});
 	}
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+
+	ngOnDestroy() {}
 }

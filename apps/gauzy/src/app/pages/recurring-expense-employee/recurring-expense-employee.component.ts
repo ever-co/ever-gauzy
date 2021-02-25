@@ -5,7 +5,8 @@ import {
 	RecurringExpenseDefaultCategoriesEnum,
 	RecurringExpenseDeletionEnum,
 	IEmployeeRecurringExpense,
-	IEmployee
+	IEmployee,
+	ISelectedEmployee
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,7 +18,6 @@ import {
 	COMPONENT_TYPE
 } from '../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.component';
 import { Store } from '../../@core/services/store.service';
-import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { ActivatedRoute } from '@angular/router';
 import { EmployeesService } from '../../@core/services';
 import { EmployeeRecurringExpenseService } from '../../@core/services/employee-recurring-expense.service';
@@ -36,7 +36,7 @@ export class RecurringExpensesEmployeeComponent
 	selectedEmployee: IEmployee;
 	selectedDate: Date;
 	employeeList: IEmployee[] = [];
-	selectedEmployeeFromHeader: SelectedEmployee;
+	selectedEmployeeFromHeader: ISelectedEmployee;
 	selectedEmployeeRecurringExpense: IEmployeeRecurringExpense[] = [];
 	selectedRowIndexToShow: number;
 	employeeName = this.getTranslation('EMPLOYEES_PAGE.EMPLOYEE_NAME');

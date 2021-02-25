@@ -1,13 +1,16 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { IEmployeeProposalTemplate, IOrganization } from '@gauzy/contracts';
+import {
+	IEmployeeProposalTemplate,
+	IOrganization,
+	ISelectedEmployee
+} from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import { filter } from 'rxjs/operators';
 import { ProposalTemplateService } from '../proposal-template.service';
 
@@ -22,7 +25,7 @@ export class AddEditProposalTemplateComponent
 	implements OnInit {
 	mode: 'create' | 'update' = 'create';
 
-	@Input() selectedEmployee: SelectedEmployee;
+	@Input() selectedEmployee: ISelectedEmployee;
 	@Input() proposalTemplate: IEmployeeProposalTemplate = {};
 	form: FormGroup;
 	organization: IOrganization;
