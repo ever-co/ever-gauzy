@@ -38,6 +38,7 @@ import { ContactActionComponent } from './table-components/contact-action/contac
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { CountryService } from '../../@core/services/country.service';
 import { ToastrService } from '../../@core/services/toastr.service';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-contact',
@@ -80,10 +81,10 @@ export class ContactComponent
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly toastrService: ToastrService,
 		private readonly store: Store,
-		readonly translateService: TranslateService,
-		private dialogService: NbDialogService,
-		private route: ActivatedRoute,
-		private router: Router,
+		public readonly translateService: TranslateService,
+		private readonly dialogService: NbDialogService,
+		private readonly route: ActivatedRoute,
+		private readonly router: Router,
 		private readonly countryService: CountryService
 	) {
 		super(translateService);
@@ -221,10 +222,12 @@ export class ContactComponent
 			}
 		};
 	}
+
 	selectContact({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedContact = isSelected ? data : null;
 	}
+
 	async removeOrganizationContact(id?: string, name?: string) {
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent, {
@@ -252,6 +255,7 @@ export class ContactComponent
 			this.loadOrganizationContacts();
 		}
 	}
+
 	setView() {
 		this.viewComponentName = ComponentEnum.CONTACTS;
 		this.store
@@ -285,11 +289,7 @@ export class ContactComponent
 			...organizationContact,
 			contact
 		};
-		if (
-			organizationContact.name &&
-			organizationContact.primaryEmail &&
-			organizationContact.primaryPhone
-		) {
+		if (organizationContact.name) {
 			await this.organizationContactService.create(
 				organizationContactData
 			);

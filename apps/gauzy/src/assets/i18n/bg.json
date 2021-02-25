@@ -3296,7 +3296,8 @@
 		},
 		"TEMPLATE_NAMES": {
 			"invoice": "Фактура",
-			"estimate": "Estimate"
+			"estimate": "Estimate",
+			"receipt": "Receipt"
 		}
 	}
 }

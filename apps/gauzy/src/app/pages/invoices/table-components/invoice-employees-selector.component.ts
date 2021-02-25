@@ -1,9 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { IEmployee } from '@gauzy/contracts';
+import { IEmployee, IOrganization } from '@gauzy/contracts';
 import { EmployeesService } from '../../../@core/services';
 import { DefaultEditor } from 'ng2-smart-table';
 import { Store } from '../../../@core/services/store.service';
-import { filter } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,6 +34,7 @@ export class InvoiceEmployeesSelectorComponent
 	implements OnInit, OnDestroy {
 	employee: IEmployee;
 	employees: IEmployee[];
+	organization: IOrganization;
 
 	constructor(
 		readonly employeeService: EmployeesService,
@@ -43,38 +44,34 @@ export class InvoiceEmployeesSelectorComponent
 	}
 
 	ngOnInit() {
-		this.getEmployees();
-	}
-
-	async getEmployees() {
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
+				tap((organization) => (this.organization = organization)),
+				tap(() => this._loadEmployees()),
 				untilDestroyed(this)
 			)
-			.subscribe(async (organization) => {
-				if (organization) {
-					const tenantId = this.store.user.tenantId;
-					const { id: organizationId } = organization;
-					this.employeeService
-						.getAll(['user'], { organizationId, tenantId })
-						.pipe(untilDestroyed(this))
-						.subscribe((employees) => {
-							const filteredEmployees = employees.items;
-							this.employees = filteredEmployees;
-							if (this.employees.length) {
-								const employee = this.employees.find(
-									(e) => e.id === this.cell.newValue
-								);
-								this.employee = employee;
-							}
-						});
+			.subscribe();
+	}
+
+	private _loadEmployees() {
+		const tenantId = this.store.user.tenantId;
+		const { id: organizationId } = this.organization;
+		this.employeeService
+			.getAll(['user'], { organizationId, tenantId })
+			.pipe(untilDestroyed(this))
+			.subscribe(({ items }) => {
+				this.employees = items;
+				if (this.employees.length) {
+					this.employee = this.employees.find(
+						(e) => e.id === this.cell.newValue.id
+					);
 				}
 			});
 	}
 
 	selectEmployee($event) {
-		this.cell.newValue = $event.id;
+		this.cell.newValue = $event;
 	}
 
 	ngOnDestroy() {}

@@ -1,10 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { IOrganizationProject } from '@gauzy/contracts';
+import { IOrganization, IOrganizationProject } from '@gauzy/contracts';
 import { Store } from '../../../@core/services/store.service';
-import { filter } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { DefaultEditor } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	template: `
@@ -26,6 +27,7 @@ export class InvoiceProjectsSelectorComponent
 	implements OnInit, OnDestroy {
 	project: IOrganizationProject;
 	projects: IOrganizationProject[];
+	organization: IOrganization;
 
 	constructor(
 		private store: Store,
@@ -35,34 +37,31 @@ export class InvoiceProjectsSelectorComponent
 	}
 
 	ngOnInit() {
-		this._loadProjects();
-	}
-
-	private async _loadProjects() {
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
+				tap((organization) => (this.organization = organization)),
+				tap(() => this._loadProjects()),
 				untilDestroyed(this)
 			)
-			.subscribe(async (organization) => {
-				if (organization) {
-					const tenantId = this.store.user.tenantId;
-					const { id: organizationId } = organization;
-					const projects = await this.organizationProjectsService.getAll(
-						[],
-						{ organizationId, tenantId }
-					);
-					this.projects = projects.items;
-					const project = this.projects.find(
-						(p) => p.id === this.cell.newValue
-					);
-					this.project = project;
-				}
+			.subscribe();
+	}
+
+	private _loadProjects() {
+		const tenantId = this.store.user.tenantId;
+		const { id: organizationId } = this.organization;
+		this.organizationProjectsService
+			.getAll([], { organizationId, tenantId })
+			.then(({ items }) => {
+				this.projects = items;
+				this.project = this.projects.find(
+					(p) => p.id === this.cell.newValue.id
+				);
 			});
 	}
 
 	selectProject($event) {
-		this.cell.newValue = $event.id;
+		this.cell.newValue = $event;
 	}
 
 	ngOnDestroy() {}
