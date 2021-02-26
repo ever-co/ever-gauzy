@@ -84,12 +84,6 @@ export class InventoryStore {
 		return this._optionGroups.filter((optionGroup) => !optionGroup.id);
 	}
 
-	//tstodo
-	// get createOptions() {
-	// 	//tstodo
-	// 	return [];
-	// }
-
 	get activeTab() {
 		return this._activeTab;
 	}

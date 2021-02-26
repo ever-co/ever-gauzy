@@ -274,9 +274,6 @@ export class OptionsFormComponent implements OnInit {
 			translation[property] = value;
 		}
 		el[property] = translation[property];
-
-		//tstodo
-		console.log(this.optionGroups, 'option group on update translation');
 	}
 
 	resetActiveTranslations() {

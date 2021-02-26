@@ -190,9 +190,6 @@ export class ProductFormComponent
 				{ organizationId, tenantId }
 			);
 
-			//tstodo
-			console.log(this.inventoryItem, 'inventory item');
-
 			this.inventoryStore.activeProduct = this.inventoryItem;
 		}
 
