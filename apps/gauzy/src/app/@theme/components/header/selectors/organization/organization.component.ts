@@ -5,6 +5,7 @@ import { filter, tap } from 'rxjs/operators';
 import { UsersOrganizationsService } from 'apps/gauzy/src/app/@core/services/users-organizations.service';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { isNotEmpty } from '@gauzy/common-angular';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -108,7 +109,7 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
 		const organizations: IOrganization[] = this.organizations;
 		organizations.push(organization);
 
-		this.organizations = [...organizations];
+		this.organizations = [...organizations].filter(isNotEmpty);
 	}
 
 	/*
@@ -124,7 +125,7 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
 		});
 
 		this.store.selectedOrganization = organization;
-		this.organizations = [...organizations];
+		this.organizations = [...organizations].filter(isNotEmpty);
 	}
 
 	/*
@@ -136,7 +137,7 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
 			(item: IOrganization) => item.id !== organization.id
 		);
 
-		this.organizations = [...organizations];
+		this.organizations = [...organizations].filter(isNotEmpty);
 	}
 
 	ngOnDestroy() {}

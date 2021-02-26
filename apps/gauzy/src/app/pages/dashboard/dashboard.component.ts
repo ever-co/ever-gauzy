@@ -1,9 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Store } from '../../@core/services/store.service';
-import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ISelectedEmployee } from '@gauzy/contracts';
+import { Store } from '../../@core/services/store.service';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -21,7 +21,7 @@ export class DashboardComponent
 	}[] = [];
 
 	loading = true;
-	selectedEmployee;
+	selectedEmployee: ISelectedEmployee;
 
 	constructor(
 		private store: Store,
@@ -48,7 +48,7 @@ export class DashboardComponent
 		return `/pages/dashboard/${name}`;
 	}
 
-	loadTabs(selectedEmployee: SelectedEmployee) {
+	loadTabs(selectedEmployee: ISelectedEmployee) {
 		let conditionalTabs = [];
 
 		if (selectedEmployee && selectedEmployee.id) {

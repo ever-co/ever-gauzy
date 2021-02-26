@@ -70,4 +70,17 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 	async generateTemplatePreview(@Body() input: any): Promise<any> {
 		return this.accountingTemplateService.generatePreview(input);
 	}
+
+	@ApiOperation({
+		summary: 'Converts mjml or handlebar text to html for temaplate preview'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'text converted to html',
+		type: AccountingTemplate
+	})
+	@Post('template/save')
+	async saveTemplate(@Body() input: any): Promise<any> {
+		return this.accountingTemplateService.saveTemplate(input);
+	}
 }

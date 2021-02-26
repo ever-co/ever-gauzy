@@ -322,7 +322,11 @@
 			"DEFAULT_TERMS": "Default terms for invoices and estimates",
 			"CONVERT_ESTIMATES": "Convert Estimates",
 			"ALLOW_CONVERTING": "Automatically convert accepted estimate to invoice",
-			"DEFAULT_DAYS": "Default days until invoices and estimates are due."
+			"DEFAULT_DAYS": "Default days until invoices and estimates are due.",
+			"TEMPLATE_NAME": "Template Name",
+			"TEMPLATE_BODY": "Template Body",
+			"TEMPLATE_PREVIEW": "Template Preview",
+			"LANGUAGE": "Language"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -486,7 +490,8 @@
 			"SPRINT_GOAL": "Sprint goal",
 			"POLICY_NAME": "Policy Name",
 			"SELECT_DATE": "Select Date",
-			"DAYS_UNTIL_DUE": "Days Until Due"
+			"DAYS_UNTIL_DUE": "Days Until Due",
+			"TEMPLATES": "Templates"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -3291,7 +3296,8 @@
 		},
 		"TEMPLATE_NAMES": {
 			"invoice": "Invoice",
-			"estimate": "Estimate"
+			"estimate": "Estimate",
+			"receipt": "Receipt"
 		}
 	}
 }

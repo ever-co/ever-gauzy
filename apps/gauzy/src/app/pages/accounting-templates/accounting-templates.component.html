@@ -8,7 +8,9 @@
 					</h4>
 				</div>
 				<div class="col-2 select-block">
-					<label class="label" for="languageCode"> Language </label>
+					<label class="label" for="languageCode">
+						{{ 'FORM.LABELS.LANGUAGE' | translate }}
+					</label>
 					<nb-select
 						id="languageCode"
 						class="d-block"
@@ -29,13 +31,15 @@
 				</div>
 				<div class="col-2 select-block">
 					<label class="label" for="templateName">
-						Template Name
+						{{ 'FORM.PLACEHOLDERS.TEMPLATES' | translate }}
 					</label>
 					<nb-select
 						id="templateName"
 						class="d-block"
 						size="small"
-						placeholder="Templates"
+						placeholder="{{
+							'FORM.LABELS.TEMPLATE_NAME' | translate
+						}}"
 						formControlName="name"
 						(selectedChange)="getTemplate()"
 					>
@@ -53,7 +57,7 @@
 				<div
 					class="col-2 d-flex justify-content-end align-items-center"
 				>
-					<button nbButton status="success">
+					<button nbButton status="success" (click)="onSave()">
 						{{ 'EMAIL_TEMPLATES_PAGE.SAVE' | translate }}
 					</button>
 				</div>
@@ -66,7 +70,9 @@
 						<nb-card-body>
 							<div class="form-group">
 								<label class="label" for="template">
-									Template
+									{{
+										'FORM.LABELS.TEMPLATE_BODY' | translate
+									}}
 								</label>
 								<ace-editor
 									#templateEditor
@@ -74,6 +80,7 @@
 									[mode]="'handlebars'"
 									style="height: 80vh; font-size: medium"
 									[durationBeforeCallback]="400"
+									(textChange)="onTemplateChange($event)"
 								>
 								</ace-editor>
 							</div>
@@ -86,7 +93,10 @@
 						<nb-card-body>
 							<div class="form-group">
 								<label class="label" for="previewTemplate">
-									Template
+									{{
+										'FORM.LABELS.TEMPLATE_PREVIEW'
+											| translate
+									}}
 								</label>
 								<div
 									id="previewTemplate"

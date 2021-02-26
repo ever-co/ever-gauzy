@@ -27,6 +27,7 @@ import { NotesWithTagsComponent } from '../../@shared/table-components/notes-wit
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../@core/services/toastr.service';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './income.component.html',
@@ -236,10 +237,11 @@ export class IncomeComponent
 					try {
 						const { tenantId } = this.store.user;
 						const { id: organizationId } = this.organization;
+
 						await this.incomeService.create({
 							amount: result.amount,
 							clientName: result.organizationContact.name,
-							clientId: result.organizationContact.clientId,
+							clientId: result.organizationContact.id,
 							valueDate: result.valueDate,
 							employeeId: result.employee
 								? result.employee.id
@@ -289,9 +291,8 @@ export class IncomeComponent
 							this.selectedIncome.id,
 							{
 								amount: result.amount,
-								clientName:
-									result.organizationContact.clientName,
-								clientId: result.organizationContact.clientId,
+								clientName: result.organizationContact.name,
+								clientId: result.organizationContact.id,
 								valueDate: result.valueDate,
 								notes: result.notes,
 								currency: result.currency,
@@ -302,6 +303,7 @@ export class IncomeComponent
 									: null
 							}
 						);
+
 						this.toastrService.success('NOTES.INCOME.EDIT_INCOME', {
 							name: this.employeeName
 						});

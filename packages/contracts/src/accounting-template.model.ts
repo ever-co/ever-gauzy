@@ -5,6 +5,7 @@ export interface IAccountingTemplate
 	name: string;
 	mjml?: string;
 	languageCode: string;
+	hbs?: string;
 }
 
 export interface IAccountingTemplateFindInput
@@ -15,5 +16,6 @@ export interface IAccountingTemplateFindInput
 
 export enum AccountingTemplateNameEnum {
 	INVOICE = 'invoice',
-	ESTIMATE = 'estimate'
+	ESTIMATE = 'estimate',
+	RECEIPT = 'receipt'
 }

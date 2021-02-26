@@ -54,4 +54,13 @@ export class AccountingTemplateService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	saveTemplate(data: any): Promise<any> {
+		return this.http
+			.post<any>(`${API_PREFIX}/accounting-template/template/save`, {
+				data
+			})
+			.pipe(first())
+			.toPromise();
+	}
 }

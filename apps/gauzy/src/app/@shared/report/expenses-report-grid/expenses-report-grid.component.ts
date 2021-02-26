@@ -9,6 +9,7 @@ import {
 	IExpenseReportData,
 	IGetTimeLogReportInput,
 	IOrganization,
+	ISelectedEmployee,
 	ITimeLogFilters,
 	OrganizationPermissionsEnum,
 	PermissionsEnum
@@ -21,7 +22,6 @@ import { debounceTime } from 'rxjs/operators';
 import { pick } from 'underscore';
 import { ExpensesService } from '../../../@core/services/expenses.service';
 import { Store } from '../../../@core/services/store.service';
-import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
 
 @UntilDestroy()
 @Component({
@@ -47,7 +47,7 @@ export class ExpensesReportGridComponent implements OnInit, AfterViewInit {
 	private _selectedDate: Date = new Date();
 	futureDateAllowed: boolean;
 	groupBy: 'date' | 'employee' | 'project' = 'date';
-	selectedEmployee: SelectedEmployee;
+	selectedEmployee: ISelectedEmployee;
 
 	public get selectedDate(): Date {
 		return this._selectedDate;
@@ -87,7 +87,7 @@ export class ExpensesReportGridComponent implements OnInit, AfterViewInit {
 
 		this.store.selectedEmployee$
 			.pipe(untilDestroyed(this))
-			.subscribe((employee: SelectedEmployee) => {
+			.subscribe((employee: ISelectedEmployee) => {
 				if (employee && employee.id) {
 					this.selectedEmployee = employee;
 				} else {
