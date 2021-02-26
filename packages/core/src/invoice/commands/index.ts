@@ -1,19 +1,27 @@
-import { InvoiceCreateHandler } from './handlers/invoice.create.handler';
-import { InvoiceDeleteHandler } from './handlers/invoice.delete.handler';
-import { InvoiceGenerateLinkHandler } from './handlers/invoice.generate.link.handler';
-import { InvoiceSendEmailHandler } from './handlers/invoice.send.email.handler';
-import { InvoiceUpdateHandler } from './handlers/invoice.update.handler';
+import {
+	InvoiceCreateHandler,
+	InvoiceDeleteHandler,
+	InvoiceGenerateLinkHandler,
+	InvoiceGeneratePdfHandler,
+	InvoicePaymentGeneratePdfHandler,
+	InvoiceSendEmailHandler,
+	InvoiceUpdateHandler
+} from './handlers';
 
-export { InvoiceCreateCommand } from './invoice.create.command';
-export { InvoiceDeleteCommand } from './invoice.delete.command';
-export { InvoiceSendEmailCommand } from './invoice.send.email.command';
-export { InvoiceUpdateCommand } from './invoice.update.command';
-export { InvoiceGenerateLinkCommand } from './invoice.generate.link.command';
+export * from './invoice.create.command';
+export * from './invoice.delete.command';
+export * from './invoice.send.email.command';
+export * from './invoice.update.command';
+export * from './invoice.generate.link.command';
+export * from './invoice.generate.pdf.command';
+export * from './invoice-payment.generate.pdf.command';
 
 export const CommandHandlers = [
 	InvoiceCreateHandler,
 	InvoiceUpdateHandler,
 	InvoiceSendEmailHandler,
 	InvoiceDeleteHandler,
-	InvoiceGenerateLinkHandler
+	InvoiceGenerateLinkHandler,
+	InvoiceGeneratePdfHandler,
+	InvoicePaymentGeneratePdfHandler
 ];

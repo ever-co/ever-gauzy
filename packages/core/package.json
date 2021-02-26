@@ -109,6 +109,7 @@
 		"nodemailer-handlebars": "^1.0.1",
 		"passport": "^0.4.1",
 		"passport-jwt": "^4.0.0",
+		"pdfmake": "^0.1.70",
 		"pg": "^8.5.1",
 		"redis": "^3.0.2",
 		"reflect-metadata": "^0.1.13",

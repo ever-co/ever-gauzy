@@ -11,9 +11,9 @@ import {
 	IGoal,
 	IKeyResult,
 	IGoalGeneralSetting,
-	IOrganization
+	IOrganization,
+	ISelectedEmployee
 } from '@gauzy/contracts';
-import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { KeyResultUpdateComponent } from './keyresult-update/keyresult-update.component';
 import { GoalService } from '../../@core/services/goal.service';
 import { KeyResultService } from '../../@core/services/keyresult.service';
@@ -39,7 +39,7 @@ export class GoalsComponent
 	loading = true;
 	selectedOrganizationId: string;
 	organizationName: string;
-	employee: SelectedEmployee;
+	employee: ISelectedEmployee;
 	isEmployee = false;
 	selectedFilter = 'all';
 	objectiveGroup = 'timeFrames';

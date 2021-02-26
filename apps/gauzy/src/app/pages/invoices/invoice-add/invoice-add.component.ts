@@ -22,6 +22,7 @@ import {
 	IProductTranslatable
 } from '@gauzy/contracts';
 import { filter, first, tap } from 'rxjs/operators';
+import { isEmpty } from '@gauzy/common-angular';
 import { InvoicesService } from '../../../@core/services/invoices.service';
 import { InvoiceItemService } from '../../../@core/services/invoice-item.service';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -95,58 +96,67 @@ export class InvoiceAddComponent
 	total = 0;
 	tags: ITag[] = [];
 	currencyString: string;
-	invoiceTypePlaceholder = this.getTranslation(
-		'INVOICES_PAGE.INVOICE_TYPE.INVOICE_TYPE'
-	);
-	estimateTypePlaceholder = this.getTranslation(
-		'INVOICES_PAGE.INVOICE_TYPE.ESTIMATE_TYPE'
-	);
+	selectedLanguage: string;
+
 	get currency() {
 		return this.form.get('currency');
 	}
 
-	@Input() isEstimate: boolean;
-	selectedLanguage: string;
+	private _isEstimate: boolean = false;
+	@Input() set isEstimate(val: boolean) {
+		this._isEstimate = val;
+	}
+	get isEstimate() {
+		return this._isEstimate;
+	}
 
 	constructor(
-		private fb: FormBuilder,
+		private readonly fb: FormBuilder,
 		private readonly organizationContactService: OrganizationContactService,
-		readonly translateService: TranslateService,
-		private store: Store,
-		private router: Router,
-		private toastrService: ToastrService,
-		private invoicesService: InvoicesService,
-		private organizationProjectsService: OrganizationProjectsService,
-		private invoiceItemService: InvoiceItemService,
-		private tasksStore: TasksStoreService,
-		private errorHandler: ErrorHandlingService,
-		private employeeService: EmployeesService,
-		private productService: ProductService,
-		private dialogService: NbDialogService,
-		private expensesService: ExpensesService,
-		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
-		private translatableService: TranslatableService
+		public readonly translateService: TranslateService,
+		private readonly store: Store,
+		private readonly router: Router,
+		private readonly toastrService: ToastrService,
+		private readonly invoicesService: InvoicesService,
+		private readonly organizationProjectsService: OrganizationProjectsService,
+		private readonly invoiceItemService: InvoiceItemService,
+		private readonly tasksStore: TasksStoreService,
+		private readonly errorHandler: ErrorHandlingService,
+		private readonly employeeService: EmployeesService,
+		private readonly productService: ProductService,
+		private readonly dialogService: NbDialogService,
+		private readonly expensesService: ExpensesService,
+		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
+		private readonly translatableService: TranslatableService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
-		if (!this.isEstimate) {
-			this.isEstimate = false;
-		}
+		this._applyTranslationOnSmartTable();
 		this.selectedLanguage = this.translateService.currentLang;
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
 				tap((organization) => (this.organization = organization)),
-				tap(({ currency }) => {
-					this.currencyString = currency;
+				tap(({ currency }) => (this.currencyString = currency)),
+				tap(
+					(organization) =>
+						(this.discountAfterTax = organization.discountAfterTax)
+				),
+				tap(() => {
+					this.initializeForm();
+					this._initializeMethods();
 				}),
-				tap(() => this._loadOrganizationData()),
+				tap(() => {
+					if (this.currencyString) {
+						this.currency.setValue(this.currencyString);
+						this.currency.updateValueAndValidity();
+					}
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.initializeForm();
 		this.observableTasks.pipe(untilDestroyed(this)).subscribe((data) => {
 			this.tasks = data;
 		});
@@ -155,8 +165,6 @@ export class InvoiceAddComponent
 			.subscribe((languageEvent) => {
 				this.selectedLanguage = languageEvent.lang;
 			});
-		this.currency.setValue(this.currencyString);
-		this.currency.updateValueAndValidity();
 	}
 
 	initializeForm() {
@@ -236,10 +244,8 @@ export class InvoiceAddComponent
 						component: InvoiceEmployeesSelectorComponent
 					},
 					valuePrepareFunction: (cell) => {
-						const employee = this.employees.find(
-							(e) => e.id === cell
-						);
-						return `${employee.user.firstName} ${employee.user.lastName}`;
+						const employee = cell;
+						return `${employee.user.name}`;
 					}
 				};
 				break;
@@ -254,9 +260,7 @@ export class InvoiceAddComponent
 						component: InvoiceProjectsSelectorComponent
 					},
 					valuePrepareFunction: (cell) => {
-						const project = this.projects.find(
-							(p) => p.id === cell
-						);
+						const project = cell;
 						return `${project.name}`;
 					}
 				};
@@ -272,7 +276,7 @@ export class InvoiceAddComponent
 						component: InvoiceTasksSelectorComponent
 					},
 					valuePrepareFunction: (cell) => {
-						const task = this.tasks.find((t) => t.id === cell);
+						const task = cell;
 						return `${task.title}`;
 					}
 				};
@@ -288,9 +292,7 @@ export class InvoiceAddComponent
 						component: InvoiceProductsSelectorComponent
 					},
 					valuePrepareFunction: (cell) => {
-						const product = this.products.find(
-							(p) => p.id === cell
-						);
+						const product = cell;
 						return `${this.translatableService.getTranslatedProperty(
 							product,
 							'name'
@@ -309,9 +311,7 @@ export class InvoiceAddComponent
 						component: InvoiceExpensesSelectorComponent
 					},
 					valuePrepareFunction: (cell) => {
-						const expense = this.expenses.find(
-							(e) => e.id === cell
-						);
+						const expense = cell;
 						return `${expense.purpose}`;
 					}
 				};
@@ -425,137 +425,184 @@ export class InvoiceAddComponent
 		}
 	}
 
-	async addInvoice(status: string, sendTo?: string) {
-		const tableData = await this.smartTableSource.getAll();
-		if (tableData.length) {
-			const invoiceData = this.form.value;
-			if (
-				!invoiceData.invoiceDate ||
-				!invoiceData.dueDate ||
-				this.compareDate(invoiceData.invoiceDate, invoiceData.dueDate)
-			) {
-				this.toastrService.danger(
-					this.getTranslation('INVOICES_PAGE.INVALID_DATES'),
-					this.getTranslation('TOASTR.TITLE.WARNING')
-				);
-				return;
-			}
-			const { tenantId } = this.store.user;
-			const invoice = await this.invoicesService.getAll([], {
-				invoiceNumber: invoiceData.invoiceNumber,
-				tenantId
-			});
+	async createInvoiceEstimate(status: string, sendTo?: string) {
+		if (!this.organization) {
+			return;
+		}
 
-			if (invoice.items.length) {
-				this.toastrService.danger(
-					this.getTranslation(
-						'INVOICES_PAGE.INVOICE_NUMBER_DUPLICATE'
-					),
-					this.getTranslation('TOASTR.TITLE.WARNING')
-				);
-				return;
-			}
-			const { id: organizationId } = this.organization;
-			const createdInvoice = await this.invoicesService.add({
-				invoiceNumber: invoiceData.invoiceNumber,
-				invoiceDate: invoiceData.invoiceDate,
-				dueDate: invoiceData.dueDate,
-				currency: this.currency.value,
-				discountValue: invoiceData.discountValue,
-				discountType: invoiceData.discountType,
-				tax: invoiceData.tax,
-				tax2: invoiceData.tax2,
-				taxType: invoiceData.taxType,
-				tax2Type: invoiceData.tax2Type,
-				terms: invoiceData.terms,
-				paid: false,
-				totalValue: +this.total.toFixed(2),
-				toContact: invoiceData.organizationContact,
-				organizationContactId: invoiceData.organizationContact.id,
-				fromOrganization: this.organization,
-				organizationId,
-				tenantId,
-				invoiceType: this.selectedInvoiceType,
-				tags: this.tags,
-				isEstimate: this.isEstimate,
-				status: status,
-				sentTo: sendTo,
-				isArchived: false
-			});
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+		const { value: currency } = this.currency;
+		const {
+			invoiceNumber,
+			invoiceDate,
+			dueDate,
+			discountValue,
+			discountType,
+			tax,
+			tax2,
+			taxType,
+			tax2Type,
+			terms,
+			organizationContact
+		} = this.form.value;
 
-			this.createdInvoice = createdInvoice;
+		const createdInvoice = await this.invoicesService.add({
+			invoiceNumber,
+			invoiceDate,
+			dueDate,
+			currency,
+			discountValue,
+			discountType,
+			tax,
+			tax2,
+			taxType,
+			tax2Type,
+			terms,
+			paid: false,
+			totalValue: +this.total.toFixed(2),
+			toContact: organizationContact,
+			organizationContactId: organizationContact.id,
+			fromOrganization: this.organization,
+			organizationId,
+			tenantId,
+			invoiceType: this.selectedInvoiceType,
+			tags: this.tags,
+			isEstimate: this.isEstimate,
+			status: status,
+			sentTo: sendTo,
+			isArchived: false
+		});
+		this.createdInvoice = createdInvoice;
+		return createdInvoice;
+	}
 
-			const invoiceItems: IInvoiceItemCreateInput[] = [];
+	async createInvoiceEstimateItems() {
+		if (!this.organization) {
+			return;
+		}
 
-			for (const invoiceItem of tableData) {
-				const itemToAdd = {
-					description: invoiceItem.description,
-					price: invoiceItem.price,
-					quantity: invoiceItem.quantity,
-					totalValue: invoiceItem.totalValue,
-					invoiceId: createdInvoice.id,
-					applyTax: invoiceItem.applyTax,
-					applyDiscount: invoiceItem.applyDiscount,
-					organizationId,
-					tenantId
-				};
-				switch (this.selectedInvoiceType) {
-					case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
-						itemToAdd['employeeId'] = invoiceItem.selectedItem;
-						break;
-					case InvoiceTypeEnum.BY_PROJECT_HOURS:
-						itemToAdd['projectId'] = invoiceItem.selectedItem;
-						break;
-					case InvoiceTypeEnum.BY_TASK_HOURS:
-						itemToAdd['taskId'] = invoiceItem.selectedItem;
-						break;
-					case InvoiceTypeEnum.BY_PRODUCTS:
-						itemToAdd['productId'] = invoiceItem.selectedItem;
-						break;
-					case InvoiceTypeEnum.BY_EXPENSES:
-						itemToAdd['expenseId'] = invoiceItem.selectedItem;
-						break;
-					default:
-						break;
-				}
-				invoiceItems.push(itemToAdd);
-			}
-			await this.invoiceItemService.createBulk(
-				createdInvoice.id,
-				invoiceItems
-			);
+		const createdInvoice = this.createdInvoice;
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
 
-			await this.invoiceEstimateHistoryService.add({
-				action: this.isEstimate
-					? this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE')
-					: this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
-				invoice: createdInvoice,
+		const tableSources = await this.smartTableSource.getAll();
+
+		const invoiceItems: IInvoiceItemCreateInput[] = [];
+
+		for (const invoiceItem of tableSources) {
+			const { id } = invoiceItem.selectedItem;
+			const itemToAdd = {
+				description: invoiceItem.description,
+				price: invoiceItem.price,
+				quantity: invoiceItem.quantity,
+				totalValue: invoiceItem.totalValue,
 				invoiceId: createdInvoice.id,
-				user: this.store.user,
-				userId: this.store.userId,
-				organization: this.organization,
-				organizationId: this.organization.id,
+				applyTax: invoiceItem.applyTax,
+				applyDiscount: invoiceItem.applyDiscount,
+				organizationId,
 				tenantId
-			});
+			};
 
-			if (this.isEstimate) {
-				this.toastrService.success(
-					this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE'),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				);
-				this.router.navigate(['/pages/accounting/invoices/estimates']);
-			} else {
-				this.toastrService.success(
-					this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				);
-				this.router.navigate(['/pages/accounting/invoices']);
+			switch (this.selectedInvoiceType) {
+				case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
+					itemToAdd['employeeId'] = id;
+					break;
+				case InvoiceTypeEnum.BY_PROJECT_HOURS:
+					itemToAdd['projectId'] = id;
+					break;
+				case InvoiceTypeEnum.BY_TASK_HOURS:
+					itemToAdd['taskId'] = id;
+					break;
+				case InvoiceTypeEnum.BY_PRODUCTS:
+					itemToAdd['productId'] = id;
+					break;
+				case InvoiceTypeEnum.BY_EXPENSES:
+					itemToAdd['expenseId'] = id;
+					break;
+				default:
+					break;
 			}
-		} else {
+			invoiceItems.push(itemToAdd);
+		}
+
+		return await this.invoiceItemService.createBulk(
+			createdInvoice.id,
+			invoiceItems
+		);
+	}
+
+	async createInvoiceEstimateHistory() {
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+
+		await this.invoiceEstimateHistoryService.add({
+			action: this.isEstimate
+				? this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE')
+				: this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
+			invoice: this.createdInvoice,
+			invoiceId: this.createdInvoice.id,
+			user: this.store.user,
+			userId: this.store.userId,
+			organization: this.organization,
+			organizationId,
+			tenantId
+		});
+	}
+
+	async addInvoice(status: string, sendTo?: string) {
+		const tableSources = await this.smartTableSource.getAll();
+		if (isEmpty(tableSources)) {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.NO_ITEMS'),
 				this.getTranslation('TOASTR.TITLE.WARNING')
 			);
+			return;
+		}
+
+		const { invoiceNumber, invoiceDate, dueDate } = this.form.value;
+		if (
+			!invoiceDate ||
+			!dueDate ||
+			this.compareDate(invoiceDate, dueDate)
+		) {
+			this.toastrService.danger(
+				this.getTranslation('INVOICES_PAGE.INVALID_DATES'),
+				this.getTranslation('TOASTR.TITLE.WARNING')
+			);
+			return;
+		}
+
+		const { tenantId } = this.store.user;
+		const invoice = await this.invoicesService.getAll([], {
+			invoiceNumber,
+			tenantId
+		});
+
+		if (invoice.items.length) {
+			this.toastrService.danger(
+				this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER_DUPLICATE'),
+				this.getTranslation('TOASTR.TITLE.WARNING')
+			);
+			return;
+		}
+
+		await this.createInvoiceEstimate(status, sendTo);
+		await this.createInvoiceEstimateItems();
+		await this.createInvoiceEstimateHistory();
+
+		if (this.isEstimate) {
+			this.toastrService.success(
+				this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			this.router.navigate(['/pages/accounting/invoices/estimates']);
+		} else {
+			this.toastrService.success(
+				this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			this.router.navigate(['/pages/accounting/invoices']);
 		}
 	}
 
@@ -563,19 +610,22 @@ export class InvoiceAddComponent
 		if (!this.organization) {
 			return;
 		}
+
 		const { tenantId } = this.store.user;
-		if (this.form.value.organizationContact.id) {
+		const { organizationContact } = this.form.value;
+
+		if (organizationContact.id) {
 			await this.addInvoice(
-				'Sent',
-				this.form.value.organizationContact.id
+				InvoiceStatusTypesEnum.SENT,
+				organizationContact.id
 			);
 			await this.invoiceEstimateHistoryService.add({
 				action: this.isEstimate
 					? this.getTranslation('INVOICES_PAGE.ESTIMATE_SENT_TO', {
-							name: this.form.value.organizationContact.name
+							name: organizationContact.name
 					  })
 					: this.getTranslation('INVOICES_PAGE.INVOICE_SENT_TO', {
-							name: this.form.value.organizationContact.name
+							name: organizationContact.name
 					  }),
 				invoice: this.createdInvoice,
 				invoiceId: this.createdInvoice.id,
@@ -594,129 +644,71 @@ export class InvoiceAddComponent
 	}
 
 	async sendViaEmail() {
-		const tableData = await this.smartTableSource.getAll();
-		if (tableData.length) {
-			const invoiceData = this.form.value;
-			if (
-				!invoiceData.invoiceDate ||
-				!invoiceData.dueDate ||
-				this.compareDate(invoiceData.invoiceDate, invoiceData.dueDate)
-			) {
-				this.toastrService.danger(
-					this.getTranslation('INVOICES_PAGE.INVALID_DATES'),
-					this.getTranslation('TOASTR.TITLE.WARNING')
-				);
-				return;
-			}
-
-			const invoiceExists = await this.invoicesService.getAll([], {
-				invoiceNumber: invoiceData.invoiceNumber
-			});
-
-			if (invoiceExists.items.length) {
-				this.toastrService.danger(
-					this.getTranslation(
-						'INVOICES_PAGE.INVOICE_NUMBER_DUPLICATE'
-					),
-					this.getTranslation('TOASTR.TITLE.WARNING')
-				);
-				return;
-			}
-
-			const invoice = {
-				invoiceNumber: invoiceData.invoiceNumber,
-				invoiceDate: invoiceData.invoiceDate,
-				dueDate: invoiceData.dueDate,
-				currency: this.currency.value,
-				discountValue: invoiceData.discountValue,
-				discountType: invoiceData.discountType,
-				tax: invoiceData.tax,
-				tax2: invoiceData.tax2,
-				taxType: invoiceData.taxType,
-				tax2Type: invoiceData.tax2Type,
-				terms: invoiceData.terms,
-				paid: false,
-				totalValue: +this.total.toFixed(2),
-				toContact: invoiceData.organizationContact,
-				organizationContactId: invoiceData.organizationContact.id,
-				fromOrganization: this.organization,
-				organizationId: this.organization.id,
-				invoiceType: this.selectedInvoiceType,
-				tags: this.tags,
-				isEstimate: this.isEstimate,
-				status: InvoiceStatusTypesEnum.SENT,
-				invoiceItems: []
-			};
-
-			const invoiceItems = [];
-
-			for (const invoiceItem of tableData) {
-				const itemToAdd = {
-					description: invoiceItem.description,
-					price: invoiceItem.price,
-					quantity: invoiceItem.quantity,
-					totalValue: invoiceItem.totalValue,
-					applyTax: invoiceItem.applyTax,
-					applyDiscount: invoiceItem.applyDiscount
-				};
-				switch (this.selectedInvoiceType) {
-					case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
-						itemToAdd['employeeId'] = invoiceItem.selectedItem;
-						break;
-					case InvoiceTypeEnum.BY_PROJECT_HOURS:
-						itemToAdd['projectId'] = invoiceItem.selectedItem;
-						break;
-					case InvoiceTypeEnum.BY_TASK_HOURS:
-						itemToAdd['taskId'] = invoiceItem.selectedItem;
-						break;
-					case InvoiceTypeEnum.BY_PRODUCTS:
-						itemToAdd['productId'] = invoiceItem.selectedItem;
-						break;
-					case InvoiceTypeEnum.BY_EXPENSES:
-						itemToAdd['expenseId'] = invoiceItem.selectedItem;
-						break;
-					default:
-						break;
-				}
-				invoiceItems.push(itemToAdd);
-			}
-
-			invoice.invoiceItems = invoiceItems;
-
-			await this.dialogService
-				.open(InvoiceEmailMutationComponent, {
-					context: {
-						invoice: invoice,
-						isEstimate: this.isEstimate,
-						saveAndSend: true,
-						invoiceItems: invoiceItems
-					}
-				})
-				.onClose.pipe(first())
-				.toPromise();
-
-			if (this.isEstimate) {
-				this.toastrService.success(
-					this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE'),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				);
-				this.router.navigate(['/pages/accounting/invoices/estimates']);
-			} else {
-				this.toastrService.success(
-					this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				);
-				this.router.navigate(['/pages/accounting/invoices']);
-			}
-		} else {
+		const tableSources = await this.smartTableSource.getAll();
+		if (isEmpty(tableSources)) {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.NO_ITEMS'),
 				this.getTranslation('TOASTR.TITLE.WARNING')
 			);
+			return;
+		}
+
+		const { invoiceNumber, invoiceDate, dueDate } = this.form.value;
+		if (
+			!invoiceDate ||
+			!dueDate ||
+			this.compareDate(invoiceDate, dueDate)
+		) {
+			this.toastrService.danger(
+				this.getTranslation('INVOICES_PAGE.INVALID_DATES'),
+				this.getTranslation('TOASTR.TITLE.WARNING')
+			);
+			return;
+		}
+
+		const invoiceExists = await this.invoicesService.getAll([], {
+			invoiceNumber
+		});
+		if (invoiceExists.items.length) {
+			this.toastrService.danger(
+				this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER_DUPLICATE'),
+				this.getTranslation('TOASTR.TITLE.WARNING')
+			);
+			return;
+		}
+
+		const invoice = await this.createInvoiceEstimate(
+			InvoiceStatusTypesEnum.SENT
+		);
+		const invoiceItems = await this.createInvoiceEstimateItems();
+
+		await this.dialogService
+			.open(InvoiceEmailMutationComponent, {
+				context: {
+					invoice: invoice,
+					invoiceItems: invoiceItems,
+					isEstimate: this.isEstimate
+				}
+			})
+			.onClose.pipe(first())
+			.toPromise();
+
+		if (this.isEstimate) {
+			this.toastrService.success(
+				this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			this.router.navigate(['/pages/accounting/invoices/estimates']);
+		} else {
+			this.toastrService.success(
+				this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			this.router.navigate(['/pages/accounting/invoices']);
 		}
 	}
 
-	private async createInvoiceNumber() {
+	private async _getInvoiceNumber() {
 		const { tenantId } = this.store.user;
 		const invoiceNumber = await this.invoicesService.getHighestInvoiceNumber(
 			tenantId
@@ -728,16 +720,20 @@ export class InvoiceAddComponent
 		}
 	}
 
-	private _loadTasks() {
+	private getAllTasks() {
 		this.tasksStore.fetchTasks(this.organization);
 	}
 
-	private async _loadOrganizationData() {
+	private async _initializeMethods() {
 		const { organization } = this;
 		if (!organization) return;
 
-		this.discountAfterTax = organization.discountAfterTax;
-		const { id: organizationId } = organization;
+		this._getInvoiceNumber();
+		this._getAllContacts();
+	}
+
+	private getEmployess() {
+		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 
 		this.employeeService
@@ -746,76 +742,99 @@ export class InvoiceAddComponent
 			.subscribe(({ items }) => {
 				this.employees = items;
 			});
+	}
 
-		const projects = await this.organizationProjectsService.getAll([], {
-			organizationId,
-			tenantId
-		});
-		this.projects = projects.items;
+	private getAllProjects() {
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
 
-		const contacts = await this.organizationContactService.getAll(
-			['projects'],
-			{ organizationId, tenantId }
-		);
-		this.organizationContacts = contacts.items;
+		this.organizationProjectsService
+			.getAll([], { organizationId, tenantId })
+			.then(({ items }) => {
+				this.projects = JSON.parse(JSON.stringify(items));
+			});
+	}
 
-		const products = await this.productService.getAll(
-			[],
-			{ organizationId, tenantId },
-			this.selectedLanguage
-		);
-		this.products = products.items;
+	private _getAllContacts() {
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
 
-		const expenses = await this.expensesService.getAll([], {
-			typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,
-			organizationId,
-			tenantId
-		});
-		this.expenses = expenses.items;
+		this.organizationContactService
+			.getAll(['projects'], { organizationId, tenantId })
+			.then(({ items }) => {
+				this.organizationContacts = items;
+			});
+	}
 
-		this.createInvoiceNumber();
-		this._loadTasks();
+	private getAllProducts() {
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+
+		this.productService
+			.getAll(
+				['translations'],
+				{ organizationId, tenantId },
+				this.selectedLanguage
+			)
+			.then(({ items }) => {
+				this.products = items;
+			});
+	}
+
+	private getAllExpenses() {
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+
+		this.expensesService
+			.getAll([], {
+				typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT,
+				organizationId,
+				tenantId
+			})
+			.then(({ items }) => {
+				this.expenses = items;
+			});
 	}
 
 	onTypeChange($event) {
 		this.invoiceType = $event;
 
-		let isEmployeeHourTable = false;
-		let isProjectHourTable = false;
-		let isTaskHourTable = false;
-		let isProductTable = false;
-		let isExpenseTable = false;
+		this.isEmployeeHourTable = false;
+		this.isProjectHourTable = false;
+		this.isTaskHourTable = false;
+		this.isProductTable = false;
+		this.isExpenseTable = false;
 
 		switch ($event) {
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
-				isEmployeeHourTable = true;
+				this.isEmployeeHourTable = true;
+				this.getEmployess();
 				break;
 			case InvoiceTypeEnum.BY_PROJECT_HOURS:
-				isProjectHourTable = true;
+				this.isProjectHourTable = true;
+				this.getAllProjects();
 				break;
 			case InvoiceTypeEnum.BY_TASK_HOURS:
-				isTaskHourTable = true;
+				this.isTaskHourTable = true;
+				this.getAllTasks();
 				break;
 			case InvoiceTypeEnum.BY_PRODUCTS:
-				isProductTable = true;
+				this.isProductTable = true;
+				this.getAllProducts();
 				break;
 			case InvoiceTypeEnum.BY_EXPENSES:
-				isExpenseTable = true;
+				this.isExpenseTable = true;
+				this.getAllExpenses();
 				break;
 			default:
 				break;
 		}
-
-		this.isEmployeeHourTable = isEmployeeHourTable;
-		this.isProjectHourTable = isProjectHourTable;
-		this.isTaskHourTable = isTaskHourTable;
-		this.isProductTable = isProductTable;
-		this.isExpenseTable = isExpenseTable;
 	}
 
 	async generateTable(generateUninvoiced?: boolean) {
 		this.selectedInvoiceType = this.invoiceType;
 		this.smartTableSource.refresh();
+
 		const fakeData = [];
 		let fakePrice = 10;
 		let fakeQuantity = 5;
@@ -836,11 +855,14 @@ export class InvoiceAddComponent
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
 				if (this.selectedEmployeeIds.length) {
 					for (const employeeId of this.selectedEmployeeIds) {
+						const employee = this.employees.find(
+							(employee) => employee.id === employeeId
+						);
 						const data = {
 							description: 'Desc',
 							price: fakePrice,
 							quantity: fakeQuantity,
-							selectedItem: employeeId,
+							selectedItem: employee,
 							totalValue: fakePrice * fakeQuantity,
 							applyTax: true,
 							applyDiscount: true
@@ -858,7 +880,7 @@ export class InvoiceAddComponent
 							description: 'Desc',
 							price: fakePrice,
 							quantity: fakeQuantity,
-							selectedItem: project.id,
+							selectedItem: project,
 							totalValue: fakePrice * fakeQuantity,
 							applyTax: true,
 							applyDiscount: true
@@ -876,7 +898,7 @@ export class InvoiceAddComponent
 							description: 'Desc',
 							price: fakePrice,
 							quantity: fakeQuantity,
-							selectedItem: task.id,
+							selectedItem: task,
 							totalValue: fakePrice * fakeQuantity,
 							applyTax: true,
 							applyDiscount: true
@@ -894,7 +916,7 @@ export class InvoiceAddComponent
 							description: 'Desc',
 							price: fakePrice,
 							quantity: fakeQuantity,
-							selectedItem: product.id,
+							selectedItem: product,
 							totalValue: fakePrice * fakeQuantity,
 							applyTax: true,
 							applyDiscount: true
@@ -912,7 +934,7 @@ export class InvoiceAddComponent
 							description: 'Desc',
 							price: fakePrice,
 							quantity: fakeQuantity,
-							selectedItem: expense.id,
+							selectedItem: expense,
 							totalValue: fakePrice * fakeQuantity,
 							applyTax: true,
 							applyDiscount: true
@@ -941,9 +963,10 @@ export class InvoiceAddComponent
 
 		this.shouldLoadTable = true;
 		this.disableSaveButton = false;
+
 		this.loadSmartTable();
-		this._applyTranslationOnSmartTable();
-		this.smartTableSource.load(fakeData);
+		this.smartTableSource.load(JSON.parse(JSON.stringify(fakeData)));
+
 		this.calculateTotal();
 	}
 
@@ -1143,6 +1166,7 @@ export class InvoiceAddComponent
 	): Promise<IOrganizationContact> => {
 		const { tenantId } = this.store.user;
 		this.organizationId = this.store.selectedOrganization.id;
+
 		try {
 			this.toastrService.success(
 				this.getTranslation(
@@ -1179,6 +1203,7 @@ export class InvoiceAddComponent
 				this.loadSmartTable();
 			});
 	}
+
 	selectedTagsEvent(currentTagSelection: ITag[]) {
 		this.tags = currentTagSelection;
 	}

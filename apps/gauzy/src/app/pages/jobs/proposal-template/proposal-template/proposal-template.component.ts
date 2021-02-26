@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { IEmployeeProposalTemplate } from '@gauzy/contracts';
+import { IEmployeeProposalTemplate, ISelectedEmployee } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,7 +11,6 @@ import {
 	Nl2BrPipe,
 	TruncatePipe
 } from 'apps/gauzy/src/app/@shared/pipes/text.pipe';
-import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -34,7 +33,7 @@ export class ProposalTemplateComponent
 
 	disableButton = true;
 	smartTableSource: LocalDataSource = new LocalDataSource();
-	selectedEmployee: SelectedEmployee;
+	selectedEmployee: ISelectedEmployee;
 	proposalTemplateRequest: any = {
 		relations: ['employee', 'employee.user']
 	};

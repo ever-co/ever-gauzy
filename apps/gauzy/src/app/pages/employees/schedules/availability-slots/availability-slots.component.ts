@@ -12,7 +12,8 @@ import {
 	IAvailabilitySlotsView,
 	IOrganization,
 	IRolePermission,
-	AvailabilitySlotType
+	AvailabilitySlotType,
+	ISelectedEmployee
 } from '@gauzy/contracts';
 import { Store } from '../../../../@core/services/store.service';
 import { AvailabilitySlotsService } from '../../../../@core/services/availability-slots.service';
@@ -21,14 +22,12 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
-import {
-	EmployeeSelectorComponent,
-	SelectedEmployee
-} from '../../../../@theme/components/header/selectors/employee/employee.component';
+import { EmployeeSelectorComponent } from '../../../../@theme/components/header/selectors/employee/employee.component';
 import { TimeOffService } from '../../../../@core/services/time-off.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './availability-slots.component.html'
@@ -266,7 +265,7 @@ export class AvailabilitySlotsComponent
 		}
 	}
 
-	onEmployeeChange(selectedEmployee: SelectedEmployee) {
+	onEmployeeChange(selectedEmployee: ISelectedEmployee) {
 		if (this.firstLoad) return;
 		if (selectedEmployee && selectedEmployee.id) {
 			this.selectedEmployeeId = selectedEmployee.id;

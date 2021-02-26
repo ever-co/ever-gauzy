@@ -1,5 +1,7 @@
 public/features/*.png
 public/reports/*.png
-public/screenshots/*.png
+public/screenshots/**/*.jpg
+public/invoices/pdf/*.pdf
+
 data/*
 report.*.json

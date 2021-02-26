@@ -1,0 +1,137 @@
+<mjml>
+	<mj-body>
+		<mj-section>
+			<mj-column>
+				<mj-text font-size="20px" font-weight="bold"> RECEIPT </mj-text>
+				<mj-text font-size="16px" font-weight="bold">
+					{{from}}
+				</mj-text>
+			</mj-column>
+			<mj-column>
+				<mj-image
+					width="90px"
+					height="90px"
+					src="{{imgPath}}"
+					align="right"
+					border-radius="50%"
+				/>
+			</mj-column>
+		</mj-section>
+		<mj-section>
+			<mj-column>
+				<mj-text font-size="16px" font-weight="bold"> Bill to </mj-text>
+				<mj-text> {{to}} </mj-text>
+			</mj-column>
+			<mj-column>
+				<mj-text align="right">
+					<div style="display: flex; justify-content: space-between">
+						<span style="font-weight: bold">Receipt Number:</span>
+						<span>{{receiptNumber}}</span>
+					</div>
+				</mj-text>
+				<mj-text>
+					<div style="display: flex; justify-content: space-between">
+						<span style="font-weight: bold">Payment Date:</span>
+						<span>{{paymentDate}}</span>
+					</div>
+				</mj-text>
+				<mj-text align="right">
+					<div style="display: flex; justify-content: space-between">
+						<span style="font-weight: bold">Payment Method:</span>
+						<span>{{paymentMethod}}</span>
+					</div>
+				</mj-text>
+			</mj-column>
+		</mj-section>
+		<mj-section>
+			<mj-column>
+				<mj-table>
+					<tr
+						style="
+							border-bottom: 1px solid #ecedee;
+							text-align: left;
+							padding: 15px 0;
+						"
+					>
+						<th>Item</th>
+						<th>Description</th>
+						<th>Quantity</th>
+						<th>Price</th>
+						<th>Total Value</th>
+					</tr>
+					{{#each receiptItems}}
+					<tr
+						style="
+							border-bottom: 1px solid #ecedee;
+							text-align: left;
+							padding: 15px 0;
+						"
+					>
+						<td>{{this.name}}</td>
+						<td>{{this.description}}</td>
+						<td>{{this.quantity}}</td>
+						<td>{{../currency}} {{this.price}}</td>
+						<td>{{../currency}} {{this.totalValue}}</td>
+					</tr>
+					{{/each}}
+				</mj-table>
+			</mj-column>
+		</mj-section>
+		<mj-section padding-left="50%">
+			<mj-column>
+				<mj-text>
+					<div style="display: flex; justify-content: space-between">
+						<span style="font-weight: bold">Subtotal:</span>
+						<span>{{currency}} {{subtotal}}</span>
+					</div>
+				</mj-text>
+				{{#if tax}}
+				<mj-text>
+					<div style="display: flex; justify-content: space-between">
+						<span style="font-weight: bold">Tax:</span>
+						<span>
+							{{#if_eq taxType 'FLAT'}} {{currency}} {{/if_eq}}
+							{{tax}} {{#if_eq taxType 'PERCENT'}} % {{/if_eq}}
+						</span>
+					</div>
+				</mj-text>
+				{{/if}} {{#if tax2}}
+				<mj-text>
+					<div style="display: flex; justify-content: space-between">
+						<span style="font-weight: bold">Tax 2:</span>
+						<span>
+							{{#if_eq tax2Type 'FLAT'}} {{currency}} {{/if_eq}}
+							{{tax2}} {{#if_eq tax2Type 'PERCENT'}} % {{/if_eq}}
+						</span>
+					</div>
+				</mj-text>
+				{{/if}} {{#if discountValue}}
+				<mj-text>
+					<div style="display: flex; justify-content: space-between">
+						<span style="font-weight: bold">Discount Value:</span>
+						<span>
+							{{#if_eq discountType 'FLAT'}} {{currency}}
+							{{/if_eq}} {{discountValue}} {{#if_eq discountType
+							'PERCENT'}} % {{/if_eq}}
+						</span>
+					</div>
+				</mj-text>
+				{{/if}}
+				<mj-text>
+					<div style="display: flex; justify-content: space-between">
+						<span style="font-weight: bold">Total Value:</span>
+						<span>{{currency}} {{totalValue}}</span>
+					</div>
+				</mj-text>
+				<mj-text>
+					<div style="display: flex; justify-content: space-between">
+						<span style="font-weight: bold">Total Paid:</span>
+						<span>
+							<span>{{currency}} {{totalPaid}}</span>
+						</span>
+					</div>
+				</mj-text>
+			</mj-column>
+		</mj-section>
+	</mj-body>
+</mjml>

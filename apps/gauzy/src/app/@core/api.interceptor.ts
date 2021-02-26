@@ -21,7 +21,7 @@ export class APIInterceptor implements HttpInterceptor {
 	): Observable<HttpEvent<any>> {
 		if (baseUrl && request.url.startsWith(`${API_PREFIX}`)) {
 			const url = baseUrl + request.url;
-			console.log(`API Request: ${request.url} -> ${url}`);
+			// console.log(`API Request: ${request.url} -> ${url}`);
 			request = request.clone({
 				url: url
 			});

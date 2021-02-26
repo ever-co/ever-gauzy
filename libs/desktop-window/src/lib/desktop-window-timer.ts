@@ -34,11 +34,7 @@ const windowSetting = () => {
 		webPreferences: {
 			nodeIntegration: true,
 			webSecurity: false,
-			enableRemoteModule: true,
-			preload: path.join(
-				__dirname,
-				'../../../../apps/desktop/src/preload/loginPage.js'
-			)
+			enableRemoteModule: true
 		},
 		width: 400,
 		height: 900,
@@ -53,7 +49,7 @@ export function loginPage(filePath) {
 		pathname: filePath,
 		protocol: 'file:',
 		slashes: true,
-		hash: '/login'
+		hash: '/auth/login'
 	});
 }
 

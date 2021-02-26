@@ -28,6 +28,7 @@ import { FilterArrayPipe } from '../../../@shared/pipes/filter-array.pipe';
 import { LeafletMapComponent } from '../../../@shared/forms/maps/leaflet/leaflet.component';
 import { LatLng } from 'leaflet';
 import { ToastrService } from '../../../@core/services/toastr.service';
+import { isEmpty } from '@gauzy/common-angular';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -51,6 +52,7 @@ export class ContactMutationComponent
 
 	@ViewChild('leafletTemplate', { static: false })
 	leafletTemplate: LeafletMapComponent;
+
 	@ViewChild('locationFormDirective')
 	locationFormDirective: LocationFormComponent;
 
@@ -76,12 +78,12 @@ export class ContactMutationComponent
 
 	constructor(
 		private readonly fb: FormBuilder,
-		private store: Store,
-		private organizationProjectsService: OrganizationProjectsService,
+		private readonly store: Store,
+		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly toastrService: ToastrService,
-		readonly translateService: TranslateService,
-		private errorHandler: ErrorHandlingService,
-		private filterArrayPipe: FilterArrayPipe,
+		public readonly translateService: TranslateService,
+		private readonly errorHandler: ErrorHandlingService,
+		private readonly filterArrayPipe: FilterArrayPipe,
 		private readonly employeesService: EmployeesService
 	) {
 		super(translateService);
@@ -181,13 +183,12 @@ export class ContactMutationComponent
 				this.organizationContact
 					? this.organizationContact.primaryEmail
 					: '',
-				[Validators.required, Validators.email]
+				[Validators.email]
 			],
 			primaryPhone: [
 				this.organizationContact
 					? this.organizationContact.primaryPhone
-					: '',
-				Validators.required
+					: ''
 			],
 			projects: [
 				this.organizationContact
@@ -199,8 +200,7 @@ export class ContactMutationComponent
 			contactType: [
 				this.organizationContact
 					? this.organizationContact.contactType
-					: '',
-				Validators.required
+					: ''
 			],
 			fax: [
 				this.organizationContact
@@ -301,11 +301,11 @@ export class ContactMutationComponent
 
 	async submitForm() {
 		if (this.contMainForm.valid) {
-			let contactType = this.contMainForm.value['contactType']
-				.$ngOptionLabel;
-			if (contactType === undefined) {
+			let contactType = this.contMainForm.value['contactType'];
+			if (isEmpty(contactType)) {
 				contactType = this.defaultSelectedType;
 			}
+
 			let imgUrl = this.contMainForm.value.imageUrl;
 			imgUrl = imgUrl
 				? this.contMainForm.value['imageUrl']

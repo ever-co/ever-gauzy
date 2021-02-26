@@ -12,7 +12,6 @@ export class InvoiceSendEmailHandler
 		return this.invoiceService.sendEmail(
 			languageCode,
 			email,
-			params.base64,
 			params.invoiceNumber,
 			params.invoiceId,
 			params.isEstimate,

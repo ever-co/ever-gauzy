@@ -322,7 +322,11 @@
 			"DEFAULT_TERMS": "Условия по умолчанию для счетов и оценок",
 			"CONVERT_ESTIMATES": "Конвертировать оценки",
 			"ALLOW_CONVERTING": "Автоматически конвертировать принятые оценки в счет",
-			"DEFAULT_DAYS": "Дней по умолчанию до начисления счетов и оценок."
+			"DEFAULT_DAYS": "Дней по умолчанию до начисления счетов и оценок.",
+			"TEMPLATE_NAME": "Название шаблона",
+			"TEMPLATE_BODY": "Тело шаблона",
+			"TEMPLATE_PREVIEW": "Предпросмотр шаблона",
+			"LANGUAGE": "Язык"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -486,7 +490,8 @@
 			"SPRINT_GOAL": "Цель спринта",
 			"POLICY_NAME": "Название Политики",
 			"SELECT_DATE": "Выберите дату",
-			"DAYS_UNTIL_DUE": "Дней до окончания"
+			"DAYS_UNTIL_DUE": "Дней до окончания",
+			"TEMPLATES": "Шаблоны"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -3291,7 +3296,8 @@
 		},
 		"TEMPLATE_NAMES": {
 			"invoice": "Счет",
-			"estimate": "Оценить"
+			"estimate": "Оценить",
+			"receipt": "Квитанция"
 		}
 	}
 }

@@ -58,24 +58,24 @@ export class InvoiceProductsSelectorComponent
 	}
 
 	private async _loadProducts() {
-		if (this.organization) {
-			const organizationId = this.organization.id;
-			const tenantId = this.store.user.tenantId;
-			const products = await this.productService.getAll(
-				[],
+		const organizationId = this.organization.id;
+		const tenantId = this.store.user.tenantId;
+		this.productService
+			.getAll(
+				['translations'],
 				{ organizationId, tenantId },
 				this.selectedLanguage
-			);
-			this.products = products.items;
-			const product = this.products.find(
-				(p) => p.id === this.cell.newValue
-			);
-			this.product = product;
-		}
+			)
+			.then(({ items }) => {
+				this.products = items;
+				this.product = this.products.find(
+					(p) => p.id === this.cell.newValue.id
+				);
+			});
 	}
 
 	selectProduct($event) {
-		this.cell.newValue = $event.id;
+		this.cell.newValue = $event;
 	}
 
 	ngOnDestroy() {}
