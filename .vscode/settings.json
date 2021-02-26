@@ -59,11 +59,11 @@
 	"vsicons.presets.angular": true,
 	"deepscan.enable": true,
 	"files.exclude": {
-		"**/.git": true, // this is a default value
-		"**/.DS_Store": true, // this is a default value
-		"**/node_modules": false, // this excludes all folders named "node_modules" from the explore tree
-		"**/**.png": true, // this excludes all files named ".png" from the the explore tree
-		"**/**.jpg": true, // this excludes all files named ".jpg" from the the explore tree
-		"**/**.pdf": true // this excludes all files named ".pdf" from the the explore tree
+		"**/.git": true,
+		"**/.DS_Store": true,
+		"**/node_modules": false,
+		"**/public/**/**.png": true,
+		"**/public/**/**.jpg": true,
+		"**/public/**/**.pdf": true
 	}
 }
