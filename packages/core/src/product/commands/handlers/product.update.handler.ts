@@ -21,19 +21,17 @@ export class ProductUpdateHandler
 
 		const optionGroupsUpdate = productUpdateRequest.optionGroupCreateInputs;
 
-		const optionsGroupCreate = productUpdateRequest.optionGroupCreateInputs.map(
-			(group) => {
-				let newGroup = new ProductOptionGroup();
-				newGroup.name = group.name;
-				newGroup.options = group.options.map((option) =>
-					Object.assign(new ProductOption(), { ...option })
-				);
+		const optionsGroupCreate = optionGroupsUpdate.map((group) => {
+			let newGroup = new ProductOptionGroup();
+			newGroup.name = group.name;
+			newGroup.options = group.options.map((option) =>
+				Object.assign(new ProductOption(), { ...option })
+			);
 
-				newGroup.translations = group.translations as any;
+			newGroup.translations = group.translations as any;
 
-				return newGroup;
-			}
-		);
+			return newGroup;
+		});
 
 		let result = await this.productOptionsGroupService.saveBulk(
 			optionsGroupCreate

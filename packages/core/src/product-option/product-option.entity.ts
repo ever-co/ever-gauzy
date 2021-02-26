@@ -1,5 +1,5 @@
 import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
-import { IProductOptionTranslatable, LanguagesEnum } from '@gauzy/contracts';
+import { IProductOptionTranslatable } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import {

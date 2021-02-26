@@ -17,9 +17,9 @@ export class ProductCreateHandler
 
 		const optionsCreate = [];
 
-		const savedOptions = await this.productOptionService.saveBulk(
-			optionsCreate
-		);
+		// const savedOptions = await this.productOptionService.saveBulk(
+		// 	optionsCreate
+		// );
 
 		//tstodo
 		productInput['optionsGroups'] = [];
