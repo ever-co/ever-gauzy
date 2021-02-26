@@ -181,7 +181,7 @@ export class ProductFormComponent
 				[
 					'category',
 					'type',
-					'options',
+					'optionGroups',
 					'variants',
 					'tags',
 					'gallery',
@@ -189,6 +189,9 @@ export class ProductFormComponent
 				],
 				{ organizationId, tenantId }
 			);
+
+			//tstodo
+			console.log(this.inventoryItem, 'inventory item');
 
 			this.inventoryStore.activeProduct = this.inventoryItem;
 		}
@@ -246,7 +249,8 @@ export class ProductFormComponent
 			productTypeId: this.form.get('productTypeId').value,
 			productCategoryId: this.form.get('productCategoryId').value,
 			enabled: this.form.get('enabled').value,
-			optionCreateInputs: this.inventoryStore.createOptions,
+			//tstodo
+			optionCreateInputs: [],
 			optionDeleteInputs: this.inventoryStore.deleteOptions,
 			gallery: this.inventoryStore.gallery || [],
 			category: this.productCategories.find((c) => {

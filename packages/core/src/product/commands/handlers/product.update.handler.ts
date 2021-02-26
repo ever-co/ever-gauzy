@@ -29,17 +29,19 @@ export class ProductUpdateHandler
 			productUpdateRequest.optionDeleteInputs
 		);
 
-		const savedOptions = await this.productOptionService.saveBulk(
-			optionsCreate
-		);
+		//tstodo
+		// const savedOptions = await this.productOptionService.saveBulk(
+		// 	optionsCreate
+		// );
 
-		const updatedOptions = await this.productOptionService.saveBulk(
-			productUpdateRequest.optionCreateInputs.filter(
-				(option) => option.id
-			) as any
-		);
+		// const updatedOptions = await this.productOptionService.saveBulk(
+		// 	productUpdateRequest.optionCreateInputs.filter(
+		// 		(option) => option.id
+		// 	) as any
+		// );
 
-		productUpdateRequest['options'] = [...savedOptions, ...updatedOptions];
+		// productUpdateRequest['options'] = [...savedOptions, ...updatedOptions];
+		productUpdateRequest['optionGroups'] = [];
 
 		const product = await this.productService.saveProduct(
 			productUpdateRequest

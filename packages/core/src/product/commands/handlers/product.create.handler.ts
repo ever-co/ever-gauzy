@@ -29,7 +29,8 @@ export class ProductCreateHandler
 			optionsCreate
 		);
 
-		productInput['options'] = savedOptions;
+		//tstodo
+		productInput['optionsGroups'] = [];
 
 		const product = await this.productService.saveProduct(productInput);
 

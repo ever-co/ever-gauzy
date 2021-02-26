@@ -20,7 +20,7 @@ export class ProductOptionGroup
 	@Column()
 	name: string;
 
-	@ManyToOne(() => Product)
+	@ManyToOne(() => Product, (product) => product.optionGroups)
 	@JoinColumn()
 	product: Product;
 

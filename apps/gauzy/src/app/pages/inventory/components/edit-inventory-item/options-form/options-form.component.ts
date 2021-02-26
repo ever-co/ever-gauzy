@@ -8,7 +8,7 @@ import {
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
 import { FormGroup, FormBuilder } from '@angular/forms';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -20,6 +20,12 @@ export interface OptionCreateInput {
 export enum OptionLevel {
 	SINGLE = 'SINGLE',
 	GROUP = 'GROUP'
+}
+
+export enum OptionFormFields {
+	All = 'ALL',
+	OPTION = 'OPTION',
+	OPTION_GROUP = 'OPTION_GROUP'
 }
 
 export interface IProductOptionGroupUI extends IProductOptionGroupTranslatable {
@@ -35,7 +41,6 @@ export interface IProductOptionGroupUI extends IProductOptionGroupTranslatable {
 })
 export class OptionsFormComponent implements OnInit {
 	editOption: IProductOption;
-	// activeOption: IProductOption;
 	activeOptionName: string;
 	optionMode = 'create';
 
@@ -48,71 +53,7 @@ export class OptionsFormComponent implements OnInit {
 
 	form: FormGroup;
 
-	//tstodo test option groups
-	optionGroups: any[] = [
-		{
-			formOptionGroupId: 0,
-			name: 'color bg',
-			options: [
-				{
-					name: 'red bg',
-					code: '',
-					translations: [
-						{
-							name: 'red bg',
-							languageCode: LanguagesEnum.BULGARIAN,
-							description: 'description bg'
-						}
-					]
-				},
-				{
-					name: 'green bg',
-					code: '',
-					translations: [
-						{
-							name: 'green bg',
-							languageCode: LanguagesEnum.BULGARIAN,
-							description: 'description bg'
-						}
-					]
-				}
-			],
-			translations: [
-				{ languageCode: LanguagesEnum.BULGARIAN, name: 'color bg' }
-			]
-		},
-		{
-			formOptionGroupId: 1,
-			name: 'size bg',
-			options: [
-				{
-					name: 'large bg',
-					code: '',
-					translations: [
-						{
-							name: 'large bg',
-							languageCode: LanguagesEnum.BULGARIAN,
-							description: 'description bg'
-						}
-					]
-				},
-				{
-					name: 'small bg',
-					code: '',
-					translations: [
-						{
-							name: 'small bg',
-							languageCode: LanguagesEnum.BULGARIAN,
-							description: 'description bg'
-						}
-					]
-				}
-			],
-			translations: [
-				{ languageCode: LanguagesEnum.BULGARIAN, name: 'size bg' }
-			]
-		}
-	];
+	optionGroups: any[] = [];
 
 	constructor(
 		private inventoryStore: InventoryStore,
@@ -125,34 +66,49 @@ export class OptionsFormComponent implements OnInit {
 		this.initForm();
 
 		this.form.controls['activeOptionGroupName'].valueChanges
-			.pipe(untilDestroyed(this), debounceTime(500))
+			.pipe(
+				untilDestroyed(this),
+				debounceTime(500),
+				distinctUntilChanged()
+			)
 			.subscribe((value) => {
 				this.updateActiveOptionGroupName(value);
 			});
 
 		this.form.controls['activeOptionName'].valueChanges
-			.pipe(untilDestroyed(this))
+			.pipe(
+				untilDestroyed(this),
+				debounceTime(500),
+				distinctUntilChanged()
+			)
 			.subscribe((value) => {
-				console.log(value, ' value option name');
 				this.updateActiveOptionName(value);
 			});
 
 		this.form.controls['activeOptionCode'].valueChanges
-			.pipe(untilDestroyed(this))
+			.pipe(
+				untilDestroyed(this),
+				debounceTime(500),
+				distinctUntilChanged()
+			)
 			.subscribe((value) => {
 				this.updateActiveOptionCode(value);
 			});
 
-		// this.inventoryStore.activeProduct$
-		// 	.pipe(untilDestroyed(this))
-		// 	.subscribe((activeProduct) => {
-
-		// 	});
+		this.inventoryStore.activeProduct$
+			.pipe(untilDestroyed(this), debounceTime(500))
+			.subscribe((activeProduct) => {
+				this.optionGroups = activeProduct.optionGroups;
+				this.inventoryStore.optionGroups = activeProduct.optionGroups;
+			});
 
 		this.translateService.onLangChange
 			.pipe(untilDestroyed(this))
 			.subscribe((language) => {
 				this.activeLanguageCode = language.lang;
+				this.resetActiveTranslations();
+				this.activeOptionGroup = null;
+				this.activeOption = {};
 				this.resetActiveTranslations();
 			});
 	}
@@ -176,6 +132,7 @@ export class OptionsFormComponent implements OnInit {
 		let newOptionGroup = this.getEmptyOptionGroup();
 		this.activeOptionGroup = newOptionGroup;
 		this.activeOption = {};
+		this.resetFormValue(OptionFormFields.All);
 		this.optionGroups.splice(0, 0, newOptionGroup);
 	}
 
@@ -198,17 +155,12 @@ export class OptionsFormComponent implements OnInit {
 		};
 		this.activeOptionGroup.options.splice(0, 0, newOption);
 		this.activeOption = {};
+		this.resetFormValue(OptionFormFields.OPTION);
+		this.updateOptionGroupInStore();
 	}
 
 	onRemoveOption(optionInput: IProductOption) {
 		if (!optionInput) return;
-
-		this.options = this.options.filter(
-			(option) => option.name !== optionInput.name
-		);
-
-		this.inventoryStore.deleteOption(optionInput);
-		this.resetOptionForm();
 	}
 
 	resetOptionForm() {}
@@ -239,6 +191,7 @@ export class OptionsFormComponent implements OnInit {
 			OptionLevel.GROUP,
 			value
 		);
+		this.updateOptionGroupInStore();
 	}
 
 	updateActiveOptionName(value: string) {
@@ -375,15 +328,36 @@ export class OptionsFormComponent implements OnInit {
 		});
 	}
 
-	resetFormValue() {
-		this.form.patchValue({
-			activeOptionGroupName: '',
-			activeOptionName: '',
-			activeOptionCode: ''
-		});
+	private updateOptionGroupInStore() {
+		this.inventoryStore.optionGroups = this.optionGroups;
 	}
 
-	updateFormValue() {
+	private resetFormValue(
+		formFields: OptionFormFields = OptionFormFields.All
+	) {
+		switch (formFields) {
+			case OptionFormFields.All:
+				this.form.patchValue({
+					activeOptionGroupName: '',
+					activeOptionName: '',
+					activeOptionCode: ''
+				});
+				break;
+			case OptionFormFields.OPTION:
+				this.form.patchValue({
+					activeOptionName: '',
+					activeOptionCode: ''
+				});
+				break;
+			case OptionFormFields.OPTION_GROUP:
+				this.form.patchValue({
+					activeOptionGroupName: ''
+				});
+				break;
+		}
+	}
+
+	private updateFormValue() {
 		if (!this.activeOptionGroup || !this.activeOption) return;
 
 		this.form.patchValue({
@@ -393,7 +367,7 @@ export class OptionsFormComponent implements OnInit {
 		});
 	}
 
-	getEmptyOption() {
+	private getEmptyOption() {
 		return {
 			name: '',
 			code: '',
@@ -407,11 +381,11 @@ export class OptionsFormComponent implements OnInit {
 		};
 	}
 
-	generateOptionGroupFormId() {
+	private generateOptionGroupFormId() {
 		return this.optionGroups.length;
 	}
 
-	getEmptyOptionGroup = () => {
+	private getEmptyOptionGroup = () => {
 		return {
 			name: 'new option group',
 			options: [],

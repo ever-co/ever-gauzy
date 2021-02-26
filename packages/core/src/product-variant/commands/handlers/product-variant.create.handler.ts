@@ -24,11 +24,10 @@ export class ProductVariantCreateHandler
 
 		const product = await this.productService.findById(
 			variantCreateInput.product.id,
-			{ relations: ['options'] }
+			{ relations: [] }
 		);
-		const productOptions = product.options.map((option) => {
-			return { ...option, productId: product.id };
-		});
+
+		const productOptions = [];
 		const optionCombinations = variantCreateInput.optionCombinations;
 		const { organizationId, tenantId } = variantCreateInput.product;
 
@@ -40,7 +39,8 @@ export class ProductVariantCreateHandler
 				return optionCombination.options.includes(option.name);
 			});
 
-			newProductVariant.options = productOptions;
+			//tstodo
+			newProductVariant.options = [];
 			newProductVariant.internalReference = variantOptions
 				.map((option) => option.name)
 				.join('-');

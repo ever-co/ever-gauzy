@@ -20,7 +20,8 @@ import {
 	ProductType,
 	ProductVariant,
 	Tag,
-	TranslatableBase
+	TranslatableBase,
+	ProductOptionGroup
 } from '../core/entities/internal';
 
 @Entity('product')
@@ -81,6 +82,12 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 
 	@OneToMany(() => ProductOption, (productOption) => productOption.product)
 	options: ProductOption[];
+
+	@OneToMany(
+		() => ProductOptionGroup,
+		(productOptionGroup) => productOptionGroup.product
+	)
+	optionGroups: ProductOptionGroup[];
 
 	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
 	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.product, {

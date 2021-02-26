@@ -17,7 +17,7 @@ export interface IProduct extends IBasePerTenantAndOrganizationEntityModel {
 	code: string;
 	featuredImage?: IImageAsset;
 	variants?: IProductVariant[];
-	options?: IProductOption[];
+	optionGroups?: IProductOptionGroupTranslatable[];
 	productTypeId: string;
 	productCategoryId: string;
 	type?: IProductTypeTranslatable;
