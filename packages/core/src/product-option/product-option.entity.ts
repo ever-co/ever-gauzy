@@ -20,7 +20,7 @@ export class ProductOption
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column()
+	@Column({ nullable: true })
 	code: string;
 
 	@ManyToOne(() => Product, (product) => product.options, {
@@ -34,6 +34,8 @@ export class ProductOption
 	@JoinColumn()
 	group: ProductOptionGroup;
 
-	@OneToMany(() => ProductOption, (productOption) => productOption.group)
+	@OneToMany(() => ProductOption, (productOption) => productOption.group, {
+		cascade: true
+	})
 	translations: ProductOptionTranslation[];
 }

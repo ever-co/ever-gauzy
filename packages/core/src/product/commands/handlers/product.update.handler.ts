@@ -4,44 +4,46 @@ import { ProductOptionService } from '../../../product-option/product-option.ser
 import { Product } from '../../product.entity';
 import { ProductUpdateCommand } from '../product.update.command';
 import { ProductOption } from '../../../product-option/product-option.entity';
+import { ProductOptionGroup } from 'core';
+import { ProductOptionGroupService } from 'product-option/product-option-group.service';
 
 @CommandHandler(ProductUpdateCommand)
 export class ProductUpdateHandler
 	implements ICommandHandler<ProductUpdateCommand> {
 	constructor(
 		private productOptionService: ProductOptionService,
-		private productService: ProductService
+		private productService: ProductService,
+		private productOptionsGroupService: ProductOptionGroupService
 	) {}
 
 	public async execute(command?: ProductUpdateCommand): Promise<Product> {
 		const { productUpdateRequest } = command;
 
-		const optionsCreate = productUpdateRequest.optionCreateInputs
-			.filter((option) => !option.id)
-			.map((optionInput) => {
-				const option = new ProductOption();
-				option.name = optionInput.name;
-				option.code = optionInput.code;
-				return option;
-			});
+		const optionGroupsUpdate = productUpdateRequest.optionGroupCreateInputs;
+
+		const optionsGroupCreate = productUpdateRequest.optionGroupCreateInputs.map(
+			(group) => {
+				let newGroup = new ProductOptionGroup();
+				newGroup.name = group.name;
+				newGroup.options = group.options.map((option) =>
+					Object.assign(new ProductOption(), { ...option })
+				);
+
+				newGroup.translations = group.translations as any;
+
+				return newGroup;
+			}
+		);
+
+		let result = await this.productOptionsGroupService.saveBulk(
+			optionsGroupCreate
+		);
 
 		await this.productOptionService.deleteBulk(
 			productUpdateRequest.optionDeleteInputs
 		);
 
-		//tstodo
-		// const savedOptions = await this.productOptionService.saveBulk(
-		// 	optionsCreate
-		// );
-
-		// const updatedOptions = await this.productOptionService.saveBulk(
-		// 	productUpdateRequest.optionCreateInputs.filter(
-		// 		(option) => option.id
-		// 	) as any
-		// );
-
-		// productUpdateRequest['options'] = [...savedOptions, ...updatedOptions];
-		productUpdateRequest['optionGroups'] = [];
+		productUpdateRequest.optionGroupCreateInputs = result;
 
 		const product = await this.productService.saveProduct(
 			productUpdateRequest

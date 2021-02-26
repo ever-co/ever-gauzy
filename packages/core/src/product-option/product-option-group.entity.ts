@@ -27,6 +27,8 @@ export class ProductOptionGroup
 	@OneToMany(() => ProductOption, (productOption) => productOption.group)
 	options: ProductOption[];
 
-	@OneToMany(() => ProductOption, (productOption) => productOption.group)
+	@OneToMany(() => ProductOption, (productOption) => productOption.group, {
+		cascade: true
+	})
 	translations: ProductOptionGroupTranslation[];
 }

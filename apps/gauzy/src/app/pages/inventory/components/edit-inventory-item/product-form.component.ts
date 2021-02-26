@@ -249,8 +249,7 @@ export class ProductFormComponent
 			productTypeId: this.form.get('productTypeId').value,
 			productCategoryId: this.form.get('productCategoryId').value,
 			enabled: this.form.get('enabled').value,
-			//tstodo
-			optionCreateInputs: [],
+			optionGroupCreateInputs: this.inventoryStore.createOptionGroups,
 			optionDeleteInputs: this.inventoryStore.deleteOptions,
 			gallery: this.inventoryStore.gallery || [],
 			category: this.productCategories.find((c) => {
@@ -280,11 +279,11 @@ export class ProductFormComponent
 				);
 			}
 
-			await this.productVariantService.createProductVariants({
-				product: productResult,
-				optionCombinations: this.inventoryStore
-					.createoOptionCombinations
-			});
+			// await this.productVariantService.createProductVariants({
+			// 	product: productResult,
+			// 	optionCombinations: this.inventoryStore
+			// 		.createoOptionCombinations
+			// });
 
 			this.inventoryStore.resetDeletedOptions();
 			this.inventoryStore.resetCreateVariants();
