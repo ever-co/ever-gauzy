@@ -40,8 +40,8 @@ const windowSetting = () => {
 			devTools: true,
 			enableRemoteModule: true
 		},
-		width: 1024,
-		height: 768,
+		width: 1000,
+		height: 728,
 		title: '',
 		maximizable: false
 	};

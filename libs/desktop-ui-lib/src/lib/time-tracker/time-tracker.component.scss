@@ -31,6 +31,14 @@
   height: 100%;
 }
 
+.full-width {
+  margin-left: -6px !important;
+}
+
+.max-width {
+  width: 103%;
+}
+
 .no-padding {
   padding-left: 0;
   padding-right: 0;
@@ -42,10 +50,12 @@
 
 ::ng-deep body {
   overflow: hidden !important;
+  -webkit-app-region: drag;
 }
 
 .top-space {
-  padding-top: 5px !important;
+  padding-top: 0px !important;
+  padding-bottom: 0px !important;
 }
 
 .screen-capture-label-left {

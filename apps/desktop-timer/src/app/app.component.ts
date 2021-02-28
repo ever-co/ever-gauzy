@@ -5,7 +5,8 @@ import { AppService } from './app.service';
 
 @Component({
 	selector: 'gauzy-root',
-	template: '<router-outlet></router-outlet>'
+	template: '<router-outlet></router-outlet>',
+	styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
 	constructor(
