@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { Connection, getConnection } from 'typeorm';
+import { Connection, getConnection, Not } from 'typeorm';
+import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import {
 	getDefaultBulgarianOrganization,
 	getDefaultOrganizations,
 	getDefaultTenant,
-	SeedDataService
+	getDefaultEmployees,
+	SeedDataService,
+	Tenant,
+	Employee
 } from '@gauzy/core';
 import { createHelpCenter } from './help-center';
 import { createHelpCenterArticle } from './help-center-article/help-center-article.seed';
@@ -12,7 +16,6 @@ import {
 	createDefaultHelpCenterAuthor,
 	createRandomHelpCenterAuthor
 } from './help-center-author';
-import { IOrganization, ITenant } from '@gauzy/contracts';
 
 /**
  * Service dealing with help center based operations.
@@ -25,6 +28,7 @@ export class HelpCenterSeederService {
 	tenant: ITenant;
 	organization: IOrganization;
 	organizations: IOrganization[];
+	defaultEmployees: IEmployee[];
 
 	/**
 	 * Create an instance of class.
@@ -66,11 +70,13 @@ export class HelpCenterSeederService {
 			)
 		);
 
+		this.defaultEmployees = await getDefaultEmployees(this.connection);
+
 		await this.seeder.tryExecute(
 			'Default Help Center Author',
 			createDefaultHelpCenterAuthor(
 				this.connection,
-				this.seeder.defaultEmployees
+				this.defaultEmployees
 			)
 		);
 	}
@@ -91,12 +97,32 @@ export class HelpCenterSeederService {
 			)
 		);
 
+		const rendomTenants: Tenant[] = await this.connection
+			.getRepository(Tenant)
+			.find({
+				where: {
+					name: Not('Ever')
+				}
+			});
+
+		const employeeMap: Map<ITenant, IEmployee[]> = new Map();
+		for await (const tenant of rendomTenants) {
+			const employees: Employee[] = await this.connection
+				.getRepository(Employee)
+				.find({
+					where: {
+						tenantId: tenant.id
+					}
+				});
+			employeeMap.set(tenant, employees);
+		}
+
 		await this.seeder.tryExecute(
 			'Random Help Center Authors',
 			createRandomHelpCenterAuthor(
-				this.seeder.connection,
-				this.seeder.randomTenants,
-				this.seeder.randomTenantEmployeeMap
+				this.connection,
+				rendomTenants,
+				employeeMap
 			)
 		);
 	}

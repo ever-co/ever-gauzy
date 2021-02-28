@@ -66,9 +66,10 @@ export class PluginModule implements OnModuleInit, OnModuleDestroy {
 			if (classInstance) {
 				if (hasLifecycleMethod(classInstance, lifecycleMethod)) {
 					await classInstance[lifecycleMethod]();
-				}
-				if (typeof closure === 'function') {
-					closure(classInstance);
+
+					if (typeof closure === 'function') {
+						closure(classInstance);
+					}
 				}
 			}
 		}

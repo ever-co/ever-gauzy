@@ -37,11 +37,11 @@ export class KnowledgeBasePlugin
 
 	onPluginDestroy() {}
 
-	onDefaultPluginSeed() {
-		this.helpCenterSeederService.createDefault();
+	async onDefaultPluginSeed() {
+		await this.helpCenterSeederService.createDefault();
 	}
 
-	onRandomPluginSeed() {
-		this.helpCenterSeederService.createRandom();
+	async onRandomPluginSeed() {
+		await this.helpCenterSeederService.createRandom();
 	}
 }

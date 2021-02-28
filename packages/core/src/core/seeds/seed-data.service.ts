@@ -312,14 +312,9 @@ export class SeedDataService {
 	defaultCandidateUsers: IUser[];
 	defaultEmployees: IEmployee[];
 
-	randomTenants: ITenant[];
-	randomTenantEmployeeMap: Map<ITenant, IEmployee[]>;
-
 	config: IPluginConfig = getConfig();
 
-	constructor(private readonly moduleRef: ModuleRef) {
-		console.log(chalk.blue('Instance created'));
-	}
+	constructor(private readonly moduleRef: ModuleRef) {}
 
 	/**
 	 * This config is applied only for `yarn seed:*` type calls because
@@ -566,7 +561,6 @@ export class SeedDataService {
 		);
 
 		this.organizations = defaultOrganizations;
-		console.log(this.organizations);
 
 		await this.tryExecute(
 			'Default Feature Toggle',
@@ -704,6 +698,16 @@ export class SeedDataService {
 				this.organizations
 			)
 		);
+
+		//run all plugins random seed method
+		await this.bootstrapPluginSeedMethods(
+			'onBasicPluginSeed',
+			(instance: any) => {
+				const pluginName =
+					instance.constructor.name || '(anonymous plugin)';
+				console.log(chalk.green(`SEEDED Basic Plugin [${pluginName}]`));
+			}
+		);
 	}
 
 	/**
@@ -712,7 +716,7 @@ export class SeedDataService {
 	private async seedDefaultData() {
 		//Organization level inserts which need connection, tenant, role, organizations
 		const categories = await this.tryExecute(
-			'Expense Categories',
+			'Default Expense Categories',
 			createExpenseCategories(
 				this.connection,
 				this.tenant,
@@ -721,7 +725,7 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
-			'Employee Levels',
+			'Default Employee Levels',
 			createEmployeeLevels(this.connection, this.organizations)
 		);
 
@@ -983,17 +987,17 @@ export class SeedDataService {
 			})
 		);
 
-		// await this.tryExecute(
-		// 	'Default TimeSheets',
-		// 	createDefaultTimeSheet(
-		// 		this.connection,
-		// 		this.config,
-		// 		this.tenant,
-		// 		this.defaultEmployees,
-		// 		this.defaultProjects,
-		// 		randomSeedConfig.noOfTimeLogsPerTimeSheet
-		// 	)
-		// );
+		await this.tryExecute(
+			'Default TimeSheets',
+			createDefaultTimeSheet(
+				this.connection,
+				this.config,
+				this.tenant,
+				this.defaultEmployees,
+				this.defaultProjects,
+				randomSeedConfig.noOfTimeLogsPerTimeSheet
+			)
+		);
 
 		await this.tryExecute(
 			'Default Proposals',
@@ -1186,7 +1190,11 @@ export class SeedDataService {
 		await this.bootstrapPluginSeedMethods(
 			'onDefaultPluginSeed',
 			(instance: any) => {
-				console.log(chalk.green(`SEEDED Default Plugins`));
+				const pluginName =
+					instance.constructor.name || '(anonymous plugin)';
+				console.log(
+					chalk.green(`SEEDED Default Plugin [${pluginName}]`)
+				);
 			}
 		);
 	}
@@ -1200,8 +1208,6 @@ export class SeedDataService {
 			this.connection,
 			randomSeedConfig.tenants || 1
 		);
-
-		this.randomTenants = tenants;
 
 		await this.tryExecute(
 			'Random Feature Toggle',
@@ -1256,8 +1262,6 @@ export class SeedDataService {
 			tenantUsersMap,
 			randomSeedConfig.employeesPerOrganization || 1
 		);
-
-		this.randomTenantEmployeeMap = tenantEmployeeMap;
 
 		await this.tryExecute(
 			'Random Categories',
@@ -1893,7 +1897,11 @@ export class SeedDataService {
 		await this.bootstrapPluginSeedMethods(
 			'onRandomPluginSeed',
 			(instance: any) => {
-				console.log(chalk.green(`SEEDED Random Plugins`));
+				const pluginName =
+					instance.constructor.name || '(anonymous plugin)';
+				console.log(
+					chalk.green(`SEEDED Random Plugin [${pluginName}]`)
+				);
 			}
 		);
 	}
@@ -2063,9 +2071,9 @@ export class SeedDataService {
 			if (classInstance) {
 				if (hasLifecycleMethod(classInstance, lifecycleMethod)) {
 					await classInstance[lifecycleMethod]();
-				}
-				if (typeof closure === 'function') {
-					closure(classInstance);
+					if (typeof closure === 'function') {
+						closure(classInstance);
+					}
 				}
 			}
 		}

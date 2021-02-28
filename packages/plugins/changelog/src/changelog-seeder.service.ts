@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { SeedDataService } from '@gauzy/core';
 import { createChangelog } from './changelog.seed';
+import { Connection, getConnection } from 'typeorm';
 
 /**
  * Service dealing with help center based operations.
@@ -9,6 +10,8 @@ import { createChangelog } from './changelog.seed';
  */
 @Injectable()
 export class ChangelogSeederService {
+	connection: Connection;
+
 	/**
 	 * Create an instance of class.
 	 *
@@ -21,10 +24,11 @@ export class ChangelogSeederService {
 	 * Seed default change log.	 																																															*
 	 * @function
 	 */
-	async createDefault() {
+	async createBasicDefault() {
+		this.connection = getConnection();
 		await this.seeder.tryExecute(
 			'Default Changelog',
-			createChangelog(this.seeder.connection)
+			createChangelog(this.connection)
 		);
 	}
 }

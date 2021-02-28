@@ -2,9 +2,14 @@ import * as _ from 'underscore';
 import * as moment from 'moment';
 import * as timezone from 'moment-timezone';
 import { Connection } from 'typeorm';
-import { Organization } from './organization.entity';
 import * as faker from 'faker';
 import { getDummyImage } from '../core';
+import {
+	Contact,
+	Organization,
+	Skill,
+	Tenant
+} from '../core/entities/internal';
 import {
 	DefaultValueDateTypeEnum,
 	BonusTypeEnum,
@@ -13,9 +18,6 @@ import {
 	IOrganizationCreateInput,
 	IOrganization
 } from '@gauzy/contracts';
-import { Tenant } from './../tenant/tenant.entity';
-import { Skill } from '../skills/skill.entity';
-import { Contact } from '../contact/contact.entity';
 import { DEFAULT_ORGANIZATIONS } from './default-organizations';
 import { environment as env } from '@gauzy/config';
 

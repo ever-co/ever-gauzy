@@ -1,21 +1,27 @@
-import { Tenant } from '../tenant/tenant.entity';
 import { Connection } from 'typeorm';
-import { Employee } from './employee.entity';
-import { Organization } from '../organization/organization.entity';
-import { User } from '../user/user.entity';
 import { date as fakerDate } from 'faker';
-import { ISeedUsers, PayPeriodEnum } from '@gauzy/contracts';
+import {
+	IEmployee,
+	IOrganization,
+	ISeedUsers,
+	ITenant,
+	IUser,
+	PayPeriodEnum
+} from '@gauzy/contracts';
 import * as faker from 'faker';
-import { DEFAULT_EMPLOYEES } from './default-employees';
-import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
+import * as moment from 'moment';
+import { DEFAULT_EMPLOYEES } from './default-employees';
+import { Employee, Organization, Tenant } from './../core/entities/internal';
+import { getDefaultTenant } from './../tenant/tenant.seed';
+import { getDefaultBulgarianOrganization } from './../organization/organization.seed';
 
 export const createDefaultEmployees = async (
 	connection: Connection,
 	defaultData: {
-		tenant: Tenant;
-		org: Organization;
-		users: User[];
+		tenant: ITenant;
+		org: IOrganization;
+		users: IUser[];
 	}
 ): Promise<Employee[]> => {
 	const defaultEmployees = DEFAULT_EMPLOYEES;
@@ -23,7 +29,7 @@ export const createDefaultEmployees = async (
 	const defaultOrg = defaultData.org;
 	const defaultTenant = defaultData.tenant;
 
-	const employees: Employee[] = [];
+	const employees: IEmployee[] = [];
 	for (const user of defaultUsers) {
 		const employee = new Employee();
 		employee.organization = defaultOrg;
@@ -116,4 +122,25 @@ const getDate = (dateString: string): Date => {
 		return date;
 	}
 	return null;
+};
+
+/*
+ * Default employees
+ */
+export const getDefaultEmployees = async (
+	connection: Connection
+): Promise<IEmployee[]> => {
+	const tenant = await getDefaultTenant(connection);
+	const organization = await getDefaultBulgarianOrganization(
+		connection,
+		tenant
+	);
+	const employees = await connection.getRepository(Employee).find({
+		where: {
+			tenantId: tenant.id,
+			organizationId: organization.id
+		},
+		relations: ['tenant', 'organization']
+	});
+	return employees;
 };
