@@ -1,6 +1,6 @@
 import { SeederModule } from '@gauzy/core';
 import { IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/common';
-import { ExtensionPlugin, OnDefaultPluginSeed } from '@gauzy/plugin';
+import { ExtensionPlugin, OnBasicPluginSeed } from '@gauzy/plugin';
 import { ChangelogModule } from './changelog.module';
 import { Changelog } from './changelog.entity';
 import { ChangelogSeederService } from './changelog-seeder.service';
@@ -11,7 +11,7 @@ import { ChangelogSeederService } from './changelog-seeder.service';
 	providers: [ChangelogSeederService]
 })
 export class ChangelogPlugin
-	implements IOnPluginBootstrap, IOnPluginDestroy, OnDefaultPluginSeed {
+	implements IOnPluginBootstrap, IOnPluginDestroy, OnBasicPluginSeed {
 	constructor(
 		private readonly changelogSeederService: ChangelogSeederService
 	) {}
@@ -20,7 +20,7 @@ export class ChangelogPlugin
 
 	onPluginDestroy() {}
 
-	onDefaultPluginSeed() {
-		this.changelogSeederService.createDefault();
+	async onBasicPluginSeed() {
+		await this.changelogSeederService.createBasicDefault();
 	}
 }

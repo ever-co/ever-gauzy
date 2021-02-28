@@ -9,3 +9,4 @@ export * from './tenant';
 export * from './user';
 export * from './organization';
 export * from './core/seeds';
+export * from './employee';
