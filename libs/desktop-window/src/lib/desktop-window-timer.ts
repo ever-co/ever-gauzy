@@ -27,10 +27,11 @@ export function createTimeTrackerWindow(timeTrackerWindow, filePath) {
 
 const windowSetting = () => {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
-		frame: true,
+		frame: false,
 		resizable: false,
 		focusable: true,
 		fullscreenable: false,
+		titleBarStyle: 'hidden',
 		webPreferences: {
 			nodeIntegration: true,
 			webSecurity: false,
@@ -38,7 +39,8 @@ const windowSetting = () => {
 		},
 		width: 400,
 		height: 900,
-		title: 'Time Tracker'
+		title: 'Time Tracker',
+		maximizable: false
 	};
 
 	return mainWindowSettings;
