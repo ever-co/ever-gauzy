@@ -20,6 +20,12 @@ import { ProductVariantPriceService } from '../product-variant-price/product-var
 import { ProductVariantPrice } from '../product-variant-price/product-variant-price.entity';
 import { TenantModule } from '../tenant/tenant.module';
 import { ProductTranslation } from './product-translation.entity';
+import { ProductOptionGroupService } from 'product-option/product-option-group.service';
+import {
+	ProductOptionGroup,
+	ProductOptionGroupTranslation,
+	ProductOptionTranslation
+} from 'core';
 
 @Module({
 	imports: [
@@ -31,7 +37,10 @@ import { ProductTranslation } from './product-translation.entity';
 			User,
 			ProductVariant,
 			ProductVariantSettings,
-			ProductVariantPrice
+			ProductVariantPrice,
+			ProductOptionGroup,
+			ProductOptionGroupTranslation,
+			ProductOptionTranslation
 		]),
 		CqrsModule,
 		TenantModule
@@ -40,6 +49,7 @@ import { ProductTranslation } from './product-translation.entity';
 	providers: [
 		ProductService,
 		ProductOptionService,
+		ProductOptionGroupService,
 		ProductVariantService,
 		ProductVariantSettingService,
 		ProductVariantPriceService,

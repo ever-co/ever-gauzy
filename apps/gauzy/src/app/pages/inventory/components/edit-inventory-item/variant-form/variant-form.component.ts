@@ -40,7 +40,8 @@ export class VariantFormComponent implements OnInit {
 		this.inventoryStore.activeProduct$
 			.pipe(untilDestroyed(this))
 			.subscribe((activeProduct) => {
-				this.options = activeProduct.options;
+				//tstodo
+				// this.options = activeProduct.options;
 			});
 
 		this.inventoryStore.variantCreateInputs$

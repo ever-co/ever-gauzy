@@ -15,12 +15,12 @@ import {
 	ImageAsset,
 	InvoiceItem,
 	ProductCategory,
-	ProductOption,
 	ProductTranslation,
 	ProductType,
 	ProductVariant,
 	Tag,
-	TranslatableBase
+	TranslatableBase,
+	ProductOptionGroup
 } from '../core/entities/internal';
 
 @Entity('product')
@@ -79,8 +79,12 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@JoinColumn()
 	category: ProductCategory;
 
-	@OneToMany(() => ProductOption, (productOption) => productOption.product)
-	options: ProductOption[];
+	@OneToMany(
+		() => ProductOptionGroup,
+		(productOptionGroup) => productOptionGroup.product,
+		{ onDelete: 'CASCADE' }
+	)
+	optionGroups: ProductOptionGroup[];
 
 	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
 	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.product, {

@@ -1,65 +1,155 @@
-<div class="options-wrap mb-4">
-	<div *ngIf="options.length === 0">
-		<p class="text-primary">
-			{{ 'INVENTORY_PAGE.NO_OPTIONS_LABEL' | translate }}
-		</p>
+<div class="form-group">
+	<label class="label label-group">
+		{{ 'INVENTORY_PAGE.OPTIONS' | translate }}
+	</label>
+	<div class="row mb-3">
+		<div class="col-md-12">
+			<button
+				status="primary"
+				nbButton
+				(click)="onCreateOptionGroupClick()"
+				class=""
+			>
+				<!-- //tstodo add translation -->
+				New option
+			</button>
+		</div>
 	</div>
-	<div
-		*ngFor="let option of options"
-		class="option"
-		(click)="onEditOption(option)"
-	>
-		{{ option.name }}
-		<span class="option-delete">
-			<nb-icon
-				class="ml-auto mt-1 close"
-				icon="close-outline"
-				(click)="onRemoveOption(option)"
-			></nb-icon>
-		</span>
-	</div>
-</div>
-<div class="row d-bottom mb-4">
-	<div class="col-sm-5">
-		<label class="label" for="addOption">
-			{{ 'INVENTORY_PAGE.ADD_OPTION' | translate }}
-		</label>
-		<input
-			fullWidth
-			id="addOption"
-			type="text"
-			[(ngModel)]="activeOption.name"
-			[ngModelOptions]="{ standalone: true }"
-			nbInput
-			[placeholder]="'INVENTORY_PAGE.NAME' | translate"
-		/>
-	</div>
-	<div class="col-sm-4">
-		<label class="label" for="optionCode">
-			{{ 'INVENTORY_PAGE.CODE' | translate }}
-		</label>
-		<input
-			fullWidth
-			id="optionCode"
-			type="text"
-			[(ngModel)]="activeOption.code"
-			[ngModelOptions]="{ standalone: true }"
-			nbInput
-			[placeholder]="'INVENTORY_PAGE.CODE' | translate"
-		/>
-	</div>
-	<div class="col-sm-3">
-		<button
-			status="success"
-			nbButton
-			(click)="onSaveOption()"
-			class="width-100"
+
+	<form [formGroup]="form">
+		<ng-container
+			*ngFor="let optionGroup of optionGroups; let idxGroup = index"
 		>
-			{{
-				optionMode === 'create'
-					? ('INVENTORY_PAGE.ADD_OPTION' | translate)
-					: ('INVENTORY_PAGE.EDIT_OPTION' | translate)
-			}}
-		</button>
-	</div>
+			<ng-container
+				*ngTemplateOutlet="
+					optionGroupTemplate;
+					context: { optionGroup: optionGroup, idxGroup: idxGroup }
+				"
+			></ng-container>
+		</ng-container>
+
+		<!-- // template for option row -->
+		<ng-template #optionRowTemplate let-optionData="option">
+			<div
+				class="row mb-2 p-2 text-option"
+				(click)="setActiveOption(optionData)"
+			>
+				<div class="col-md-1 d-flex">
+					<span>
+						<nb-icon
+							class="option-row-icon"
+							icon="edit-outline"
+						></nb-icon>
+					</span>
+					<span>
+						<nb-icon
+							class="option-row-icon"
+							icon="close-outline"
+						></nb-icon>
+					</span>
+				</div>
+				<div class="col-sm-12 col-md-6 mb-1">
+					{{ optionData?.name }}
+				</div>
+				<div class="col-sm-12 col-md-5 mb-1">
+					{{ optionData?.code }}
+				</div>
+			</div>
+		</ng-template>
+
+		<!-- //template for optionGroup row -->
+		<ng-template
+			#optionGroupTemplate
+			let-optionGroupData="optionGroup"
+			let-idxGroup="idxGroup"
+		>
+			<div
+				class="row mb-2 edit-option-group"
+				*ngIf="isActive(optionGroupData)"
+			>
+				<div class="col-md-3 col-sm-12">
+					<input
+						formControlName="activeOptionGroupName"
+						fullWidth
+						type="text"
+						nbInput
+						[placeholder]="'INVENTORY_PAGE.NAME' | translate"
+					/>
+				</div>
+				<div class="col-md-9 col-sm-12">
+					<div class="row mb-2">
+						<div class="col-sm-12 col-md-5">
+							<input
+								fullWidth
+								type="text"
+								nbInput
+								[placeholder]="
+									'INVENTORY_PAGE.NAME' | translate
+								"
+								formControlName="activeOptionName"
+							/>
+						</div>
+						<div class="col-sm-12 col-md-5">
+							<input
+								fullWidth
+								type="text"
+								nbInput
+								[placeholder]="
+									'INVENTORY_PAGE.CODE' | translate
+								"
+								formControlName="activeOptionCode"
+							/>
+						</div>
+						<div class="col-md-2 d-flex">
+							<button class="mr-1" nbButton status="success">
+								<nb-icon icon="globe-outline"></nb-icon>
+							</button>
+							<button
+								nbButton
+								status="success"
+								(click)="onCreateOptionClick()"
+							>
+								<nb-icon icon="plus-circle-outline"></nb-icon>
+							</button>
+						</div>
+					</div>
+
+					<ng-container
+						*ngFor="let option of optionGroupData.options"
+					>
+						<ng-container
+							*ngTemplateOutlet="
+								optionRowTemplate;
+								context: { option: option }
+							"
+						></ng-container>
+					</ng-container>
+				</div>
+			</div>
+
+			<div
+				class="row mb-2 view-option-group"
+				*ngIf="!isActive(optionGroupData)"
+				(click)="setActiveOptionGroup(optionGroupData)"
+			>
+				<div class="col-md-3 col-sm-12">
+					{{ optionGroupData.name }}
+				</div>
+				<div class="col-md-9 col-sm-12">
+					<div class="row mb-2"></div>
+
+					<ng-container
+						*ngFor="let option of optionGroupData.options"
+					>
+						<ng-container
+							*ngTemplateOutlet="
+								optionRowTemplate;
+								context: { option: option }
+							"
+						></ng-container>
+					</ng-container>
+				</div>
+			</div>
+		</ng-template>
+	</form>
 </div>

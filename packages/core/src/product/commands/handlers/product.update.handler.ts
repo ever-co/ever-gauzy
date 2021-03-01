@@ -3,47 +3,24 @@ import { ProductService } from '../../../product/product.service';
 import { ProductOptionService } from '../../../product-option/product-option.service';
 import { Product } from '../../product.entity';
 import { ProductUpdateCommand } from '../product.update.command';
-import { ProductOption } from '../../../product-option/product-option.entity';
+import { ProductOptionGroupService } from 'product-option/product-option-group.service';
 
 @CommandHandler(ProductUpdateCommand)
 export class ProductUpdateHandler
 	implements ICommandHandler<ProductUpdateCommand> {
 	constructor(
 		private productOptionService: ProductOptionService,
-		private productService: ProductService
+		private productService: ProductService,
+		private productOptionsGroupService: ProductOptionGroupService
 	) {}
 
 	public async execute(command?: ProductUpdateCommand): Promise<Product> {
 		const { productUpdateRequest } = command;
 
-		const optionsCreate = productUpdateRequest.optionCreateInputs
-			.filter((option) => !option.id)
-			.map((optionInput) => {
-				const option = new ProductOption();
-				option.name = optionInput.name;
-				option.code = optionInput.code;
-				return option;
-			});
-
-		await this.productOptionService.deleteBulk(
-			productUpdateRequest.optionDeleteInputs
+		const updatedProduct = await this.productService.saveProduct(
+			productUpdateRequest as any
 		);
 
-		const savedOptions = await this.productOptionService.saveBulk(
-			optionsCreate
-		);
-
-		const updatedOptions = await this.productOptionService.saveBulk(
-			productUpdateRequest.optionCreateInputs.filter(
-				(option) => option.id
-			) as any
-		);
-
-		productUpdateRequest['options'] = [...savedOptions, ...updatedOptions];
-
-		const product = await this.productService.saveProduct(
-			productUpdateRequest
-		);
-		return product;
+		return updatedProduct;
 	}
 }

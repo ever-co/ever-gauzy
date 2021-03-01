@@ -13,7 +13,7 @@ export interface IProduct extends IBasePerTenantAndOrganizationEntityModel {
 	code: string;
 	featuredImage?: IImageAsset;
 	variants?: IProductVariant[];
-	options?: IProductOption[];
+	optionGroups?: IProductOptionGroupTranslatable[];
 	productTypeId: string;
 	productCategoryId: string;
 	type?: IProductTypeTranslatable;
@@ -28,7 +28,7 @@ export interface IProductTranslatable
 	code: string;
 	featuredImage?: IImageAsset;
 	variants?: IProductVariant[];
-	options?: IProductOption[];
+	optionGroups?: IProductOptionGroupTranslatable[];
 	productTypeId: string;
 	productCategoryId: string;
 	type?: IProductTypeTranslatable;
@@ -71,7 +71,7 @@ export interface IProductCreateInput
 	type?: IProductTypeTranslatable;
 	category?: IProductCategoryTranslatable;
 	tags?: ITag[];
-	optionCreateInputs?: IProductOption[];
+	optionGroupCreateInputs?: IProductOptionGroupTranslatable[];
 	optionDeleteInputs?: IProductOption[];
 	language?: string;
 }
@@ -186,6 +186,48 @@ export interface IProductOption
 	name: string;
 	code: string;
 	product?: IProductTranslatable;
+}
+
+export interface IProductOptionTranslated
+	extends IBasePerTenantAndOrganizationEntityModel {
+	langCode: string;
+	name: string;
+	code: string;
+	product?: IProductTranslatable;
+}
+
+export interface IProductOptionTranslatable
+	extends IBasePerTenantAndOrganizationEntityModel {
+	code: string;
+	product?: IProductTranslatable;
+	name?: string;
+	description?: string;
+	group?: IProductOptionGroupTranslatable;
+	translations: IProductOptionTranslation[];
+}
+
+export interface IProductOptionTranslation
+	extends IBasePerTenantAndOrganizationEntityModel {
+	name: string;
+	description: string;
+	reference: IProductOptionTranslatable;
+	languageCode: string;
+}
+
+export interface IProductOptionGroupTranslatable
+	extends IBasePerTenantAndOrganizationEntityModel {
+	name?: string;
+	product?: IProductTranslatable;
+	options: IProductOptionTranslatable[];
+	translatedOptions?: IProductOptionTranslated[];
+	translations: IProductOptionGroupTranslation[];
+}
+
+export interface IProductOptionGroupTranslation
+	extends IBasePerTenantAndOrganizationEntityModel {
+	name: string;
+	reference: IProductOptionGroupTranslatable;
+	languageCode: string;
 }
 
 export interface IImageAsset extends IBasePerTenantEntityModel {

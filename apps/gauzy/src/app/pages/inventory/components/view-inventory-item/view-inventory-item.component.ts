@@ -51,7 +51,7 @@ export class InventoryItemViewComponent
 					[
 						'category',
 						'type',
-						'options',
+						'optionGroups',
 						'variants',
 						'tags',
 						'gallery',
