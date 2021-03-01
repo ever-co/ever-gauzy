@@ -3,6 +3,7 @@ import { Location } from '@angular/common';
 import { Store } from '../auth/services/store.service';
 import { ServerConnectionService } from '../auth/services/server-connection.service';
 import { environment } from '../../../../gauzy/src/environments/environment';
+import { Router } from '@angular/router';
 
 @Component({
 	styleUrls: ['./server-down.page.scss'],
@@ -15,7 +16,8 @@ export class ServerDownPage implements OnInit, OnDestroy {
 	constructor(
 		private store: Store,
 		private location: Location,
-		private serverConnectionService: ServerConnectionService
+		private serverConnectionService: ServerConnectionService,
+		private readonly router: Router
 	) {
 		this.noInternetLogo = environment['NO_INTERNET_LOGO'];
 	}
@@ -32,7 +34,7 @@ export class ServerDownPage implements OnInit, OnDestroy {
 
 			if (Number(this.store.serverConnection) === 200) {
 				clearInterval(this.interval);
-				this.location.back();
+				this.router.navigate(['']);
 			}
 		}, 5000);
 	}
