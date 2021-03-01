@@ -321,7 +321,7 @@ export class EditOrganizationOtherSettingsComponent
 
 	async saveTemplate(template: IAccountingTemplate) {
 		if (template) {
-			const result = await this.accountingTemlateService.updateTemplate(
+			await this.accountingTemlateService.updateTemplate(
 				template.id,
 				template
 			);
@@ -361,7 +361,6 @@ export class EditOrganizationOtherSettingsComponent
 				}
 			});
 		}
-		console.log(this.selectedInvoiceTemplate);
 
 		this._initializedForm();
 	}
