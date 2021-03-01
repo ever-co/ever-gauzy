@@ -326,7 +326,10 @@
 			"TEMPLATE_NAME": "Название шаблона",
 			"TEMPLATE_BODY": "Тело шаблона",
 			"TEMPLATE_PREVIEW": "Предпросмотр шаблона",
-			"LANGUAGE": "Язык"
+			"LANGUAGE": "Язык",
+			"DEFAULT_INVOICE_TEMLPATE": "Шаблон счета по умолчанию",
+			"DEFAULT_ESTIMATE_TEMLPATE": "Стандартный шаблон оценки",
+			"DEFAULT_RECEIPT_TEMLPATE": "Шаблон чека по умолчанию"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -491,7 +494,10 @@
 			"POLICY_NAME": "Название Политики",
 			"SELECT_DATE": "Выберите дату",
 			"DAYS_UNTIL_DUE": "Дней до окончания",
-			"TEMPLATES": "Шаблоны"
+			"TEMPLATES": "Шаблоны",
+			"INVOICE_TEMPLATE": "Шаблон счета",
+			"ESTIMATE_TEMPLATE": "Расчет шаблона",
+			"RECEIPT_TEMPLATE": "Шаблон чека"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
