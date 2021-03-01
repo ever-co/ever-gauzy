@@ -6,7 +6,7 @@ import {
 	HttpInterceptor
 } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-import { Store } from './services/store.service';
+import { Store } from './../services/store.service';
 import { TranslateService } from '@ngx-translate/core';
 
 @Injectable()
