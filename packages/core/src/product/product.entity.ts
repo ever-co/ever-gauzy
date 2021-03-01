@@ -80,13 +80,10 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@JoinColumn()
 	category: ProductCategory;
 
-	@OneToMany(() => ProductOption, (productOption) => productOption.product)
-	options: ProductOption[];
-
 	@OneToMany(
 		() => ProductOptionGroup,
 		(productOptionGroup) => productOptionGroup.product,
-		{ cascade: true, onDelete: 'CASCADE' }
+		{ onDelete: 'CASCADE' }
 	)
 	optionGroups: ProductOptionGroup[];
 

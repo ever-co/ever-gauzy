@@ -23,19 +23,14 @@ export class ProductOption
 	@Column({ nullable: true })
 	code: string;
 
-	@ManyToOne(() => Product, (product) => product.options, {
-		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
-	})
-	@JoinColumn()
-	product: Product;
-
 	@ManyToOne(() => ProductOptionGroup, (group) => group.options)
 	@JoinColumn()
 	group: ProductOptionGroup;
 
-	@OneToMany(() => ProductOption, (productOption) => productOption.group, {
-		cascade: true
-	})
+	@OneToMany(
+		() => ProductOptionTranslation,
+		(translation) => translation.reference,
+		{ eager: true }
+	)
 	translations: ProductOptionTranslation[];
 }

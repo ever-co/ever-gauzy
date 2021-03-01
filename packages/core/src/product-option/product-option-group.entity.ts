@@ -24,11 +24,15 @@ export class ProductOptionGroup
 	@JoinColumn()
 	product: Product;
 
-	@OneToMany(() => ProductOption, (productOption) => productOption.group)
+	@OneToMany(() => ProductOption, (productOption) => productOption.group, {
+		eager: true
+	})
 	options: ProductOption[];
 
-	@OneToMany(() => ProductOption, (productOption) => productOption.group, {
-		cascade: true
-	})
+	@OneToMany(
+		() => ProductOptionGroupTranslation,
+		(translation) => translation.reference,
+		{ eager: true }
+	)
 	translations: ProductOptionGroupTranslation[];
 }

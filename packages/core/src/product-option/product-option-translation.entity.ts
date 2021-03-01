@@ -22,10 +22,7 @@ export class ProductOptionTranslation
 	description: string;
 
 	@ApiProperty({ type: () => ProductOption })
-	@ManyToOne(() => ProductOption, (option) => option.translations, {
-		onDelete: 'CASCADE',
-		onUpdate: 'CASCADE'
-	})
+	@ManyToOne(() => ProductOption, (option) => option.translations)
 	@JoinColumn()
 	reference: ProductOption;
 
