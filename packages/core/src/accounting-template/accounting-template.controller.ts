@@ -5,7 +5,9 @@ import {
 	Query,
 	HttpStatus,
 	Post,
-	Body
+	Body,
+	Put,
+	Param
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
@@ -13,7 +15,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 import { AccountingTemplate } from './accounting-template.entity';
 import { AccountingTemplateService } from './accounting-template.service';
-import { ParseJsonPipe } from '../shared';
+import { ParseJsonPipe, UUIDValidationPipe } from '../shared';
 import { IPagination } from '../core';
 import { IAccountingTemplate } from '@gauzy/contracts';
 
@@ -36,6 +38,21 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 			where: findInput,
 			relations
 		});
+	}
+
+	@ApiOperation({
+		summary: 'Gets template bu id'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'template found',
+		type: AccountingTemplate
+	})
+	@Get('template/:id')
+	async getTemplateById(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<any> {
+		return this.accountingTemplateService.findOne(id);
 	}
 
 	@ApiOperation({
@@ -82,5 +99,21 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 	@Post('template/save')
 	async saveTemplate(@Body() input: any): Promise<any> {
 		return this.accountingTemplateService.saveTemplate(input);
+	}
+
+	@ApiOperation({
+		summary: 'Updates template'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'template updated',
+		type: AccountingTemplate
+	})
+	@Put('template/update/:id')
+	async updateTemplate(
+		@Body() input: any,
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<any> {
+		return this.accountingTemplateService.create({ id, ...input });
 	}
 }

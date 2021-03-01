@@ -92,7 +92,7 @@ export class AccountingTemplatesComponent
 		const html = await this.accountingTemplateService.generateTemplatePreview(
 			result.mjml
 		);
-		console.log(html);
+
 		this.previewTemplate = this.sanitizer.bypassSecurityTrustHtml(
 			html.html
 		);
