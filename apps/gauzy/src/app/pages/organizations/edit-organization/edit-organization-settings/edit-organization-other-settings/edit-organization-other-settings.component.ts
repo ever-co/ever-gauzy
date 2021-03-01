@@ -9,7 +9,9 @@ import {
 	WeekDaysEnum,
 	RegionsEnum,
 	BonusTypeEnum,
-	CurrencyPosition
+	CurrencyPosition,
+	AccountingTemplateTypeEnum,
+	IAccountingTemplate
 } from '@gauzy/contracts';
 import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
@@ -21,6 +23,7 @@ import { filter } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { Store } from '../../../../../@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { AccountingTemplateService } from 'apps/gauzy/src/app/@core/services/accounting-template.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-org-other-settings',
@@ -41,6 +44,12 @@ export class EditOrganizationOtherSettingsComponent
 	);
 	defaultCurrencyPosition: string[] = Object.values(CurrencyPosition);
 	defaultBonusTypes: string[] = Object.values(BonusTypeEnum);
+	invoiceTemplates: IAccountingTemplate[] = [];
+	estimateTemplates: IAccountingTemplate[] = [];
+	receiptTemplates: IAccountingTemplate[] = [];
+	selectedInvoiceTemplate: IAccountingTemplate;
+	selectedEstimateTemplate: IAccountingTemplate;
+	selectedReceiptTemplate: IAccountingTemplate;
 
 	listOfZones = timezone.tz.names().filter((zone) => zone.includes('/'));
 	// todo: maybe its better to place listOfDateFormats somewhere more global for the app?
@@ -59,7 +68,8 @@ export class EditOrganizationOtherSettingsComponent
 		private toastrService: ToastrService,
 		private readonly organizationEditStore: OrganizationEditStore,
 		readonly translateService: TranslateService,
-		private store: Store
+		private store: Store,
+		private accountingTemlateService: AccountingTemplateService
 	) {
 		super(translateService);
 	}
@@ -113,6 +123,7 @@ export class EditOrganizationOtherSettingsComponent
 			)
 			.subscribe((organization) => {
 				this._loadOrganizationData(organization);
+				this.getTemplates();
 			});
 	}
 
@@ -121,6 +132,9 @@ export class EditOrganizationOtherSettingsComponent
 			this.organization.id,
 			this.form.getRawValue()
 		);
+		await this.saveTemplate(this.selectedInvoiceTemplate);
+		await this.saveTemplate(this.selectedEstimateTemplate);
+		await this.saveTemplate(this.selectedReceiptTemplate);
 		this.toastrService.success(
 			`TOASTR.MESSAGE.ORGANIZATION_SETTINGS_UPDATED`,
 			{
@@ -225,7 +239,22 @@ export class EditOrganizationOtherSettingsComponent
 			convertAcceptedEstimates: [
 				this.organization.convertAcceptedEstimates || false
 			],
-			daysUntilDue: [this.organization.daysUntilDue || null]
+			daysUntilDue: [this.organization.daysUntilDue || null],
+			invoiceTemplate: [
+				this.selectedInvoiceTemplate
+					? this.selectedInvoiceTemplate.id
+					: null
+			],
+			estimateTemplate: [
+				this.selectedEstimateTemplate
+					? this.selectedEstimateTemplate.id
+					: null
+			],
+			receiptTemplate: [
+				this.selectedReceiptTemplate
+					? this.selectedReceiptTemplate.id
+					: null
+			]
 		});
 	}
 
@@ -246,6 +275,59 @@ export class EditOrganizationOtherSettingsComponent
 		this.organization.convertAcceptedEstimates = $event;
 	}
 
+	async getTemplates() {
+		const result = await this.accountingTemlateService.getAll(
+			['organization'],
+			{
+				languageCode: this.store.preferredLanguage
+			}
+		);
+
+		result.items.forEach((item) => {
+			switch (item.templateType) {
+				case AccountingTemplateTypeEnum.INVOICE:
+					this.invoiceTemplates.push(item);
+					break;
+				case AccountingTemplateTypeEnum.ESTIMATE:
+					this.estimateTemplates.push(item);
+					break;
+				case AccountingTemplateTypeEnum.RECEIPT:
+					this.receiptTemplates.push(item);
+					break;
+				default:
+					break;
+			}
+		});
+	}
+
+	async selectTemplate(event) {
+		const template = await this.accountingTemlateService.getById(event);
+		template['organization'] = this.organization;
+		template['organizationId'] = this.organization.id;
+		switch (template.templateType) {
+			case AccountingTemplateTypeEnum.INVOICE:
+				this.selectedInvoiceTemplate = template;
+				break;
+			case AccountingTemplateTypeEnum.ESTIMATE:
+				this.selectedEstimateTemplate = template;
+				break;
+			case AccountingTemplateTypeEnum.RECEIPT:
+				this.selectedReceiptTemplate = template;
+				break;
+			default:
+				break;
+		}
+	}
+
+	async saveTemplate(template: IAccountingTemplate) {
+		if (template) {
+			await this.accountingTemlateService.updateTemplate(
+				template.id,
+				template
+			);
+		}
+	}
+
 	private async _loadOrganizationData(organization) {
 		if (!organization) {
 			return;
@@ -253,7 +335,7 @@ export class EditOrganizationOtherSettingsComponent
 		const id = organization.id;
 		const { tenantId } = this.store.user;
 		const { items } = await this.organizationService.getAll(
-			['contact', 'tags'],
+			['contact', 'tags', 'accountingTemplates'],
 			{
 				id,
 				tenantId
@@ -261,6 +343,24 @@ export class EditOrganizationOtherSettingsComponent
 		);
 		this.organization = items[0];
 		this.organizationEditStore.selectedOrganization = this.organization;
+
+		if (this.organization.accountingTemplates) {
+			this.organization.accountingTemplates.forEach((template) => {
+				switch (template.templateType) {
+					case AccountingTemplateTypeEnum.INVOICE:
+						this.selectedInvoiceTemplate = template;
+						break;
+					case AccountingTemplateTypeEnum.ESTIMATE:
+						this.selectedEstimateTemplate = template;
+						break;
+					case AccountingTemplateTypeEnum.RECEIPT:
+						this.selectedReceiptTemplate = template;
+						break;
+					default:
+						break;
+				}
+			});
+		}
 
 		this._initializedForm();
 	}

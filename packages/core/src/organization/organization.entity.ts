@@ -40,9 +40,11 @@ import {
 	IInvoiceEstimateHistory,
 	IOrganizationAwards,
 	IOrganizationLanguages,
-	IFeatureOrganization
+	IFeatureOrganization,
+	IAccountingTemplate
 } from '@gauzy/contracts';
 import {
+	AccountingTemplate,
 	Contact,
 	Deal,
 	Employee,
@@ -466,4 +468,14 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@IsOptional()
 	@Column({ nullable: true })
 	daysUntilDue?: number;
+
+	@OneToMany(
+		() => AccountingTemplate,
+		(accountingTemplate) => accountingTemplate.organization,
+		{
+			onDelete: 'SET NULL'
+		}
+	)
+	@JoinColumn()
+	accountingTemplates?: IAccountingTemplate[];
 }

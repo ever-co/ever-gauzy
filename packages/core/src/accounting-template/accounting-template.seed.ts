@@ -81,10 +81,13 @@ const pathToAccountingTemplate = async (
 
 		const templatePath = fullPath.replace(/\\/g, '/').split('/');
 		template.languageCode = templatePath[templatePath.length - 2];
-		template.name = `${templatePath[templatePath.length - 3]}`;
 		const fileContent = fs.readFileSync(fullPath, 'utf8');
+		const fileName = templatePath[templatePath.length - 1].split('.', 2);
+		const fileNameWithoutExtension = fileName[0];
+		template.name = `${templatePath[templatePath.length - 3]}`;
 		template.mjml = fileContent;
 		template.hbs = mjml2html(fileContent).html;
+		template.templateType = fileNameWithoutExtension;
 		return template;
 	} catch (error) {
 		console.log('Something went wrong', path, error);

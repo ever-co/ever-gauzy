@@ -1,3 +1,4 @@
+import { IAccountingTemplate } from 'index';
 import { IBasePerTenantEntityModel } from './base-entity.model';
 import { IContact } from './contact.model';
 import { CurrenciesEnum } from './currency.model';
@@ -93,6 +94,7 @@ export interface IOrganization extends IBasePerTenantEntityModel {
 	defaultInvoiceEstimateTerms?: string;
 	convertAcceptedEstimates?: boolean;
 	daysUntilDue?: number;
+	accountingTemplates?: IAccountingTemplate;
 }
 
 export interface IOrganizationFindInput {
@@ -145,6 +147,7 @@ export interface IOrganizationCreateInput extends IContact {
 	defaultInvoiceEstimateTerms?: string;
 	convertAcceptedEstimates?: boolean;
 	daysUntilDue?: number;
+	accountingTemplates?: IAccountingTemplate;
 }
 
 export interface IOrganizationUpdateInput extends IOrganizationCreateInput {
