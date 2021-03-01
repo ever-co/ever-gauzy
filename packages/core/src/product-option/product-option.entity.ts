@@ -3,7 +3,6 @@ import { IProductOptionTranslatable } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import {
-	Product,
 	TenantOrganizationBaseEntity,
 	ProductOptionTranslation
 } from '../core/entities/internal';

@@ -15,7 +15,6 @@ import {
 	ImageAsset,
 	InvoiceItem,
 	ProductCategory,
-	ProductOption,
 	ProductTranslation,
 	ProductType,
 	ProductVariant,
