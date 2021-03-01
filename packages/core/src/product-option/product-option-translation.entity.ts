@@ -18,7 +18,7 @@ export class ProductOptionTranslation
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column()
+	@Column({ nullable: true })
 	description: string;
 
 	@ApiProperty({ type: () => ProductOption })

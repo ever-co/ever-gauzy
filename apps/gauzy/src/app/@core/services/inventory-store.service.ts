@@ -98,13 +98,6 @@ export class InventoryStore {
 		this.variantCreateInputs$.next(this._variantCreateInputs);
 	}
 
-	set options(options: IProductOption[]) {
-		//tstodo
-		// this.activeProduct.options = options;
-		this.activeProduct.optionGroups = [];
-		this.activeProduct$.next(this.activeProduct);
-	}
-
 	set optionGroups(optionGroups: IProductOptionGroupTranslatable[]) {
 		this._optionGroups = optionGroups;
 		this.optionGroups$.next(this._optionGroups);

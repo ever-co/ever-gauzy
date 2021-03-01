@@ -98,8 +98,8 @@ export class OptionsFormComponent implements OnInit {
 		this.inventoryStore.activeProduct$
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe((activeProduct) => {
-				this.optionGroups = activeProduct.optionGroups;
-				this.inventoryStore.optionGroups = activeProduct.optionGroups;
+				this.optionGroups = activeProduct.optionGroups || [];
+				this.inventoryStore.optionGroups = this.optionGroups;
 			});
 
 		this.translateService.onLangChange
@@ -113,20 +113,7 @@ export class OptionsFormComponent implements OnInit {
 			});
 	}
 
-	onSaveOption() {
-		if (!(this.activeOption.name && this.activeOption.code)) return;
-
-		// if (this.optionMode == 'create') {
-		// 	this.inventoryStore.createOption(this.activeOption);
-		// } else {
-		// 	this.inventoryStore.updateOption(
-		// 		this.editOption,
-		// 		this.activeOption
-		// 	);
-		// }
-
-		this.resetOptionForm();
-	}
+	onSaveOption() {}
 
 	onCreateOptionGroupClick() {
 		let newOptionGroup = this.getEmptyOptionGroup();
@@ -239,7 +226,7 @@ export class OptionsFormComponent implements OnInit {
 	}
 
 	updateTranslationProperty(
-		el: IProductOptionTranslatable | IProductOptionGroupTranslatable,
+		el: IProductOptionTranslatable | IProductOptionGroupTranslatable | any,
 		property: string,
 		optionLevel: OptionLevel,
 		value?: string
@@ -379,6 +366,7 @@ export class OptionsFormComponent implements OnInit {
 	}
 
 	private generateOptionGroupFormId() {
+		if (!this.optionGroups) return 1;
 		return this.optionGroups.length;
 	}
 

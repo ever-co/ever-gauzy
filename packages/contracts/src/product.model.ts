@@ -2,11 +2,7 @@ import {
 	IBasePerTenantAndOrganizationEntityModel,
 	IBasePerTenantEntityModel
 } from './base-entity.model';
-import {
-	ITranslation,
-	ITranslatable,
-	IITranslatable
-} from './translation.model';
+import { ITranslation, ITranslatable } from './translation.model';
 import { ITag } from './tag-entity.model';
 import { IContact } from 'index';
 
@@ -201,31 +197,37 @@ export interface IProductOptionTranslated
 }
 
 export interface IProductOptionTranslatable
-	extends IITranslatable<IProductOptionTranslation> {
+	extends IBasePerTenantAndOrganizationEntityModel {
 	code: string;
 	product?: IProductTranslatable;
 	name?: string;
 	description?: string;
 	group?: IProductOptionGroupTranslatable;
+	translations: IProductOptionTranslation[];
 }
 
 export interface IProductOptionTranslation
-	extends ITranslation<IProductOptionTranslatable> {
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	description: string;
+	reference: IProductOptionTranslatable;
+	languageCode: string;
 }
 
 export interface IProductOptionGroupTranslatable
-	extends IITranslatable<IProductOptionGroupTranslation> {
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	product?: IProductTranslatable;
 	options: IProductOptionTranslatable[];
 	translatedOptions?: IProductOptionTranslated[];
+	translations: IProductOptionGroupTranslation[];
 }
 
 export interface IProductOptionGroupTranslation
-	extends ITranslation<IProductOptionGroupTranslatable> {
+	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
+	reference: IProductOptionGroupTranslatable;
+	languageCode: string;
 }
 
 export interface IImageAsset extends IBasePerTenantEntityModel {
