@@ -23,7 +23,13 @@ import {
 	NbCalendarModule,
 	NbCalendarKitModule
 } from '@nebular/theme';
-import { TokenInterceptor } from './@core/auth/token.interceptor';
+import {
+	APIInterceptor,
+	HubstaffTokenInterceptor,
+	LanguageInterceptor,
+	TenantInterceptor,
+	TokenInterceptor
+} from './@core/interceptors';
 
 import { HttpClient } from '@angular/common/http';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
@@ -35,7 +41,6 @@ import {
 	environment
 } from '../environments/environment';
 import { FileUploadModule } from 'ng2-file-upload';
-import { APIInterceptor } from './@core/api.interceptor';
 import { ServerConnectionService } from './@core/services/server-connection.service';
 import { Store } from './@core/services/store.service';
 import { AppModuleGuard } from './app.module.guards';
@@ -49,15 +54,12 @@ import { Integrations as TrackingIntegrations } from '@sentry/tracing';
 import { SentryErrorHandler } from './@core/sentry-error.handler';
 import { TimeTrackerModule } from './@shared/time-tracker/time-tracker.module';
 import { SharedModule } from './@shared/shared.module';
-import { HubstaffTokenInterceptor } from './@core/hubstaff-token-interceptor';
 import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
-import { LanguageInterceptor } from './@core/language.interceptor';
 import { NgxElectronModule } from 'ngx-electron';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { ColorPickerService } from 'ngx-color-picker';
 import { EstimateEmailModule } from './auth/estimate-email/estimate-email.module';
 import * as moment from 'moment';
-import { TenantInterceptor } from './@core/tenant.interceptor';
 import { NgxAuthModule } from './auth/auth.module';
 import { LegalModule } from './legal/legal.module';
 import { GoogleMapsLoaderService } from './@core/services/google-maps-loader.service';

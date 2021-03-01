@@ -1,5 +1,6 @@
 import { ModuleWithProviders, NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import {
 	NbActionsModule,
 	NbLayoutModule,
@@ -19,9 +20,12 @@ import {
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { NbSecurityModule } from '@nebular/security';
 import {
+	ChangelogComponent,
 	FooterComponent,
 	HeaderComponent,
-	SearchInputComponent
+	LayoutSelectorComponent,
+	SearchInputComponent,
+	ThemeSettingsComponent
 } from './components';
 import { Pipes } from './pipes';
 import {
@@ -30,12 +34,13 @@ import {
 	TwoColumnsLayoutComponent,
 	PublicLayoutComponent
 } from './layouts';
-import { WindowModeBlockScrollService } from './services/window-mode-block-scroll.service';
-import { DEFAULT_THEME } from './styles/theme.default';
-import { COSMIC_THEME } from './styles/theme.cosmic';
-import { CORPORATE_THEME } from './styles/theme.corporate';
-import { DARK_THEME } from './styles/theme.dark';
-import { ThemeSettingsComponent } from './components/theme-settings/theme-settings.component';
+import { WindowModeBlockScrollService } from './services';
+import {
+	DEFAULT_THEME,
+	COSMIC_THEME,
+	CORPORATE_THEME,
+	DARK_THEME
+} from './styles';
 import { UsersService } from '../@core/services/users.service';
 import { HeaderSelectorsModule } from './components/header/selectors/selectors.module';
 import { EmployeeSelectorsModule } from './components/header/selectors/employee/employee.module';
@@ -44,11 +49,8 @@ import { UsersOrganizationsService } from '../@core/services/users-organizations
 import { OrganizationsService } from '../@core/services/organizations.service';
 import { TimeTrackerModule } from '../@shared/time-tracker/time-tracker.module';
 import { LanguagesService } from '../@core/services/languages.service';
-import { LayoutSelectorComponent } from './components/layout-selector/layout-selector.component';
 import { ProjectSelectModule } from '../@shared/project-select/project-select.module';
-import { RouterModule } from '@angular/router';
 import { TranslateModule } from '../@shared/translate/translate.module';
-import { ChangelogComponent } from './components/changelog/changelog.component';
 
 const NB_MODULES = [
 	NbLayoutModule,

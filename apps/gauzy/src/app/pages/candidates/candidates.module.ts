@@ -35,7 +35,7 @@ import { OrganizationEmploymentTypesService } from '../../@core/services/organiz
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { ThemeModule } from '../../@theme/theme.module';
-import { InviteGuard } from './../../@core/role/invite.guard';
+import { InviteGuard } from './../../@core/guards';
 import { SharedModule } from '../../@shared/shared.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { CandidatesComponent } from './candidates.component';

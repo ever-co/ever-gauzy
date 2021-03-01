@@ -7,7 +7,7 @@ import {
 } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { environment } from 'apps/gauzy/src/environments/environment';
-import { API_PREFIX } from './constants/app.constants';
+import { API_PREFIX } from './../constants/app.constants';
 
 const baseUrl = environment.API_BASE_URL;
 

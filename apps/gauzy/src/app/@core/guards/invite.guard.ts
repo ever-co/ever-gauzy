@@ -3,11 +3,14 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router } from '@angular/router';
 import { first } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/contracts';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy()
 @Injectable()
 export class InviteGuard implements CanActivate {
 	hasPermission = false;
 	organizationInvitesAllowed = false;
+
 	constructor(
 		private readonly router: Router,
 		private readonly store: Store
@@ -22,20 +25,18 @@ export class InviteGuard implements CanActivate {
 			);
 		});
 		this.store.selectedOrganization$
-			.pipe(first())
+			.pipe(first(), untilDestroyed(this))
 			.subscribe((organization) => {
 				if (organization) {
 					this.organizationInvitesAllowed =
 						organization.invitesAllowed;
 				}
 			});
-
 		if (this.organizationInvitesAllowed && this.hasPermission) {
 			return true;
 		}
 
 		this.router.navigate(['/']);
-
 		return false;
 	}
 }

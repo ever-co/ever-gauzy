@@ -8,7 +8,7 @@ import { ManageEmployeeInviteComponent } from './manage-employee-invite/manage-e
 import { EditEmployeeProjectsComponent } from './edit-employee/edit-employee-profile/edit-employee-projects/edit-employee-projects.component';
 import { EditEmployeeContactComponent } from './edit-employee/edit-employee-profile/edit-employee-contact/edit-employee-contact.component';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { InviteGuard } from '../../@core/role/invite.guard';
+import { InviteGuard } from '../../@core/guards';
 import { EditEmployeeHiringComponent } from './edit-employee/edit-employee-profile/edit-employee-hiring/edit-employee-hiring.component';
 import { EditEmployeeLocationComponent } from './edit-employee/edit-employee-profile/edit-employee-location/edit-employee-location.component';
 import { EditEmployeeEmploymentComponent } from './edit-employee/edit-employee-profile/edit-employee-employment/edit-employee-employment.component';

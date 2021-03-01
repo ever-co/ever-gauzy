@@ -28,8 +28,8 @@ import { RecurringExpenseMutationModule } from '../../@shared/expenses/recurring
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invite-mutation.module';
 import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
-import { ThemeModule } from '../../@theme/theme.module';
-import { InviteGuard } from './../../@core/role/invite.guard';
+import { ThemeModule } from '../../@theme';
+import { InviteGuard } from './../../@core/guards';
 import { EditEmployeeContactComponent } from './edit-employee/edit-employee-profile/edit-employee-contact/edit-employee-contact.component';
 import { EditEmployeeEmploymentComponent } from './edit-employee/edit-employee-profile/edit-employee-employment/edit-employee-employment.component';
 import { EditEmployeeHiringComponent } from './edit-employee/edit-employee-profile/edit-employee-hiring/edit-employee-hiring.component';
