@@ -10,8 +10,7 @@
 				(click)="onCreateOptionGroupClick()"
 				class=""
 			>
-				<!-- //tstodo add translation -->
-				New option
+				{{ 'INVENTORY_PAGE.NEW_OPTION_GROUP' | translate }}
 			</button>
 		</div>
 	</div>
@@ -31,19 +30,20 @@
 		<!-- // template for option row -->
 		<ng-template #optionRowTemplate let-optionData="option">
 			<div
-				class="row mb-2 p-2 text-option"
+				class="row mb-2 p-2 text-option option-row"
 				(click)="setActiveOption(optionData)"
+				[ngClass]="{ active: isActiveOption(optionData) }"
 			>
 				<div class="col-md-1 d-flex">
 					<span>
 						<nb-icon
-							class="option-row-icon"
+							class="option-row-icon edit"
 							icon="edit-outline"
 						></nb-icon>
 					</span>
 					<span>
 						<nb-icon
-							class="option-row-icon"
+							class="option-row-icon delete"
 							icon="close-outline"
 						></nb-icon>
 					</span>
@@ -64,8 +64,9 @@
 			let-idxGroup="idxGroup"
 		>
 			<div
-				class="row mb-2 edit-option-group"
+				class="row mb-2 edit-option-group option-group-form"
 				*ngIf="isActive(optionGroupData)"
+				[ngClass]="{ 'active-group': isActive(optionGroupData) }"
 			>
 				<div class="col-md-3 col-sm-12">
 					<input

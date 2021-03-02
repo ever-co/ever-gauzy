@@ -2095,7 +2095,8 @@
 		"CITY": "Град",
 		"LOGO": "Logo",
 		"CONTACT": "Contact",
-		"COUNTRY": "Държава"
+		"COUNTRY": "Държава",
+		"NEW_OPTION_GROUP": "Нова група"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

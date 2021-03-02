@@ -300,9 +300,25 @@ export class OptionsFormComponent implements OnInit {
 	}
 
 	setActiveOption(productOption: IProductOptionTranslatable) {
+		if (
+			productOption.id == this.activeOption.id ||
+			productOption.name == this.activeOption.name
+		) {
+			this.activeOption = this.getEmptyOption();
+			this.resetFormValue(OptionFormFields.OPTION);
+			return;
+		}
+
 		this.activeOption = productOption;
 		this.updateFormValue();
 	}
+
+	isActiveOption(productOption: IProductOptionTranslatable) {
+		if (!this.activeOption) return false;
+		return productOption.name == this.activeOption.name;
+	}
+
+	onDeleteOption(productOption: IProductOptionTranslatable) {}
 
 	private initForm() {
 		this.form = this.fb.group({
