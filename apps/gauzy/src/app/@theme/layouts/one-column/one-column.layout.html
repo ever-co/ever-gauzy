@@ -28,7 +28,7 @@
 	</nb-layout-footer>
 
 	<nb-sidebar
-		*ngFor="let sidebar of this.availableSidebarWidgets$"
+		*ngFor="let sidebar of (navigationBuilderService.sidebars$ | async)"
 		[class]="sidebar.class"
 		[tag]="sidebar.id"
 		state="collapsed"

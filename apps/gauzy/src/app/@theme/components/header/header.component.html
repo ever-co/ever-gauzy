@@ -92,16 +92,14 @@
 		</nb-action>
 
 		<nb-action
-			icon="gift-outline"
-			class="toggle-layout"
-			(click)="toggleChangelogMenu()"
-		></nb-action>
-
-		<nb-action
-			icon="settings-2-outline"
-			class="toggle-layout"
-			(click)="toggleSettings()"
-		></nb-action>
+			*ngFor="
+				let action of navigationBuilderService.sidebarActions$ | async
+			"
+			[icon]="action.icon"
+			[class]="action.class"
+			(click)="toggleSidebarActions(action)"
+		>
+		</nb-action>
 	</nb-actions>
 </div>
 

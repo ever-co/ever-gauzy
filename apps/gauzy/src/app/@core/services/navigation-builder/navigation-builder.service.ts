@@ -1,21 +1,16 @@
-import {
-	APP_INITIALIZER,
-	FactoryProvider,
-	Injectable,
-	Type
-} from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Injectable, Type } from '@angular/core';
+import { Observable, of as ObservableOf } from 'rxjs';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { isEmpty } from '@gauzy/common-angular';
-import { PermissionsEnum } from '@gauzy/contracts';
 import { Store } from '../store.service';
 
-export interface ISidebarActionItem {
+export interface ISidebarActionConfig {
 	id: string;
 	label: string;
 	onClick?: (event: MouseEvent) => void;
 	icon?: string;
-	requiresPermission?: string | string[] | PermissionsEnum;
+	class?: string;
+	permissions?: string[];
 }
 
 export interface ISidebarConfig {
@@ -23,39 +18,8 @@ export interface ISidebarConfig {
 	id?: string;
 	class?: string;
 	title?: string;
-	permissions?: string | string[] | PermissionsEnum;
-	action?: ISidebarActionItem;
-}
-
-export function addSidebarActionItem(
-	config: ISidebarActionItem
-): FactoryProvider {
-	return {
-		provide: APP_INITIALIZER,
-		multi: true,
-		useFactory: (
-			navigationBuilderService: NavigationBuilderService
-		) => () => {
-			navigationBuilderService.addSidebarActionItem(config);
-		},
-		deps: [NavigationBuilderService]
-	};
-}
-
-export function registerSidebarWidget(
-	id: string,
-	config: ISidebarConfig
-): FactoryProvider {
-	return {
-		provide: APP_INITIALIZER,
-		multi: true,
-		useFactory: (
-			navigationBuilderService: NavigationBuilderService
-		) => () => {
-			navigationBuilderService.registerSidebar(id, config);
-		},
-		deps: [NavigationBuilderService]
-	};
+	permissions?: string[];
+	actionItem?: ISidebarActionConfig;
 }
 
 @UntilDestroy({ checkProperties: true })
@@ -63,58 +27,62 @@ export function registerSidebarWidget(
 	providedIn: 'root'
 })
 export class NavigationBuilderService {
-	private sidebars = new Map<string, ISidebarConfig>();
+	private sidebarMapper = new Map<string, ISidebarConfig>();
 
-	public nbActionConfig$: Observable<ISidebarActionItem[]>;
-	private addedActionBarItems: ISidebarActionItem[] = [];
+	public sidebars$: Observable<ISidebarConfig[]>;
+	private _sidebars: ISidebarConfig[] = [];
 
-	constructor(private readonly store: Store) {
-		this.nbActionConfig$ = of(this.addedActionBarItems);
+	public sidebarActions$: Observable<ISidebarActionConfig[]>;
+	private _addedActionBarItems: ISidebarActionConfig[] = [];
+
+	constructor(private readonly store: Store) {}
+
+	registerSidebar(id: string, config: ISidebarConfig): void {
+		if (this.sidebarMapper.has(id)) {
+			throw new Error(`A sidebar with the id "${id}" already exists`);
+		}
+		config = {
+			id,
+			...config
+		};
+		this.sidebarMapper.set(id, config);
 	}
 
-	addSidebarActionItem(config: ISidebarActionItem) {
-		this.addedActionBarItems.push({
+	addSidebarActionItem(config: ISidebarActionConfig) {
+		this._addedActionBarItems.push({
 			...config
 		});
 	}
 
-	registerSidebar(id: string, config: ISidebarConfig) {
-		if (this.sidebars.has(id)) {
-			throw new Error(`A sidebar with the id "${id}" already exists`);
-		}
-
-		this.sidebars.set(id, config);
-	}
-
 	getSidebarById(id: string) {
-		if (!this.sidebars.has(id)) {
+		if (!this.sidebarMapper.has(id)) {
 			throw new Error(`No sidebar was found with the id "${id}"`);
 		}
 
-		return this.sidebars.get(id);
+		return this.sidebarMapper.get(id);
 	}
 
 	getAvailableSidebarIds() {
-		return [...this.sidebars.entries()]
-			.filter(([id, config]) => {
+		return [...this.sidebarMapper.entries()]
+			.filter(([, config]) => {
 				return (
 					isEmpty(config.permissions) ||
-					this.hasAllPermissions(config.permissions)
+					this.hasPermissions(config.permissions)
 				);
 			})
 			.map(([id]) => id);
 	}
 
-	getSidebarWidgets(): ISidebarConfig[] {
-		return this.getAvailableSidebarIds().map((id) => {
-			return {
-				id,
-				...this.getSidebarById(id)
-			};
+	getSidebarWidgets() {
+		this._sidebars = this.getAvailableSidebarIds().map((id) => {
+			return this.getSidebarById(id);
 		});
+
+		this.sidebars$ = ObservableOf(this._sidebars);
+		this.sidebarActions$ = ObservableOf(this._addedActionBarItems);
 	}
 
-	hasAllPermissions = (permissions: any): boolean => {
+	hasPermissions = (permissions: any): boolean => {
 		return permissions.every((p: any) => this.store.hasPermission(p));
 	};
 }

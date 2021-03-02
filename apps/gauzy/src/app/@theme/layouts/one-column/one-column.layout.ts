@@ -7,20 +7,12 @@ import {
 	OnInit
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import {
-	NbLayoutComponent,
-	NbLayoutDirectionService,
-	NbLayoutDirection
-} from '@nebular/theme';
-import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
-import { Store } from '../../../@core/services/store.service';
-import { IUser } from '@gauzy/contracts';
+import { NbLayoutComponent } from '@nebular/theme';
 import { filter, tap } from 'rxjs/operators';
-import { DEFAULT_SIDEBARS } from '../../default-sidebars';
-import {
-	ISidebarConfig,
-	NavigationBuilderService
-} from '../../../@core/services';
+import { IUser } from '@gauzy/contracts';
+import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
+import { NavigationBuilderService, Store } from '../../../@core/services';
+import { DEFAULT_SIDEBARS } from '../../components/theme-sidebar/default-sidebars';
 
 @Component({
 	selector: 'ngx-one-column-layout',
@@ -28,21 +20,6 @@ import {
 	templateUrl: './one-column.layout.html'
 })
 export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
-	availableSidebarWidgets$: ISidebarConfig[] = [];
-
-	constructor(
-		@Inject(PLATFORM_ID) private platformId,
-		private readonly windowModeBlockScrollService: WindowModeBlockScrollService,
-		private readonly directionService: NbLayoutDirectionService,
-		private readonly store: Store,
-		public readonly navigationBuilderService: NavigationBuilderService
-	) {
-		Object.entries(DEFAULT_SIDEBARS).map(([id, config]) =>
-			navigationBuilderService.registerSidebar(id, config)
-		);
-		this.availableSidebarWidgets$ = navigationBuilderService.getSidebarWidgets();
-	}
-
 	@ViewChild(NbLayoutComponent) layout: NbLayoutComponent;
 
 	user: IUser;
@@ -51,14 +28,22 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 		{ title: 'Profile', link: '/pages/auth/profile' },
 		{ title: 'Log out', link: '/auth/logout' }
 	];
-	layoutDirection: NbLayoutDirection = this.directionService.getDirection();
-	sidebarClass = 'menu-sidebar';
+
+	constructor(
+		@Inject(PLATFORM_ID) private platformId,
+		private readonly windowModeBlockScrollService: WindowModeBlockScrollService,
+		private readonly store: Store,
+		public readonly navigationBuilderService: NavigationBuilderService
+	) {
+		Object.entries(DEFAULT_SIDEBARS).forEach(([id, config]) => {
+			navigationBuilderService.registerSidebar(id, config);
+			navigationBuilderService.addSidebarActionItem(config.actionItem);
+		});
+		navigationBuilderService.getSidebarWidgets();
+	}
 
 	ngOnInit() {
 		this.loading = true;
-		if (this.layoutDirection === NbLayoutDirection.RTL) {
-			this.sidebarClass = 'menu-sidebar-rtl';
-		}
 		this.store.user$
 			.pipe(
 				filter((user) => !!user),

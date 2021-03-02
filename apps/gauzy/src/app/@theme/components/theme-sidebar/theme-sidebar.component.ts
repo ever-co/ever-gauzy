@@ -14,11 +14,11 @@ import { ISidebarConfig } from '../../../@core/services';
 
 @Component({
 	selector: 'ngx-theme-sidebar',
-	templateUrl: './sidebar.component.html',
-	styleUrls: ['./sidebar.component.scss'],
+	templateUrl: './theme-sidebar.component.html',
+	styleUrls: ['./theme-sidebar.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SidebarComponent implements AfterViewInit, OnDestroy {
+export class ThemeSidebarComponent implements AfterViewInit, OnDestroy {
 	@Input() config: ISidebarConfig;
 
 	@ViewChild('container', { read: ViewContainerRef })

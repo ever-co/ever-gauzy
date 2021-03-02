@@ -2,20 +2,22 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
 	NbThemeService,
 	NbLayoutDirectionService,
-	NbLayoutDirection
+	NbLayoutDirection,
+	DEFAULT_THEME,
+	DARK_THEME,
+	COSMIC_THEME,
+	CORPORATE_THEME
 } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '../../../@core/services/store.service';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 import {
 	LanguagesEnum,
 	IUser,
 	ComponentLayoutStyleEnum
 } from '@gauzy/contracts';
-import { LanguagesService } from '../../../@core/services/languages.service';
-import { UsersService } from '../../../@core/services';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Store, UsersService } from './../../../../@core/services';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-theme-settings',
 	styleUrls: ['./theme-settings.component.scss'],
@@ -23,48 +25,33 @@ import { UsersService } from '../../../@core/services';
 })
 export class ThemeSettingsComponent implements OnInit, OnDestroy {
 	themes = [
-		{
-			value: 'default',
-			name: 'SETTINGS_MENU.LIGHT'
-		},
-		{
-			value: 'dark',
-			name: 'SETTINGS_MENU.DARK'
-		},
-		{
-			value: 'cosmic',
-			name: 'SETTINGS_MENU.COSMIC'
-		},
-		{
-			value: 'corporate',
-			name: 'SETTINGS_MENU.CORPORATE'
-		}
+		{ value: DEFAULT_THEME.name, name: 'SETTINGS_MENU.LIGHT' },
+		{ value: DARK_THEME.name, name: 'SETTINGS_MENU.DARK' },
+		{ value: COSMIC_THEME.name, name: 'SETTINGS_MENU.COSMIC' },
+		{ value: CORPORATE_THEME.name, name: 'SETTINGS_MENU.CORPORATE' }
 	];
 	componentLayouts = Object.keys(ComponentLayoutStyleEnum);
 
 	languages = [];
 	languagesEnum = {};
 
-	currentTheme = 'default';
+	currentTheme = DEFAULT_THEME.name;
 	currentLang: string = LanguagesEnum.ENGLISH;
 	currentLayout: string = ComponentLayoutStyleEnum.TABLE;
 
 	currentUser: IUser;
 
-	private _ngDestroy$ = new Subject<void>();
-
 	constructor(
-		private themeService: NbThemeService,
-		private translate: TranslateService,
-		private directionService: NbLayoutDirectionService,
-		private store: Store,
-		private readonly languagesService: LanguagesService,
+		private readonly themeService: NbThemeService,
+		private readonly translate: TranslateService,
+		private readonly directionService: NbLayoutDirectionService,
+		private readonly store: Store,
 		private readonly userService: UsersService
 	) {}
 
 	async ngOnInit() {
 		this.store.systemLanguages$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((systemLanguages) => {
 				if (systemLanguages && systemLanguages.length > 0) {
 					this.languages = systemLanguages.map((item) => {
@@ -76,7 +63,7 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 				}
 			});
 
-		this.store.user$.pipe(takeUntil(this._ngDestroy$)).subscribe((user) => {
+		this.store.user$.pipe(untilDestroyed(this)).subscribe((user) => {
 			if (user) {
 				this.currentUser = user;
 				if (
@@ -97,7 +84,7 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 		});
 
 		this.store.preferredLanguage$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((preferredLanguage) => {
 				if (
 					preferredLanguage &&
@@ -109,7 +96,7 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 			});
 
 		this.store.preferredComponentLayout$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((preferredLayout) => {
 				if (preferredLayout && preferredLayout !== this.currentLayout) {
 					this.currentLayout = preferredLayout;
@@ -162,8 +149,5 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 		} catch (error) {}
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy(): void {}
 }

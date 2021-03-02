@@ -20,12 +20,10 @@ import {
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { NbSecurityModule } from '@nebular/security';
 import {
-	ChangelogComponent,
 	FooterComponent,
 	HeaderComponent,
 	LayoutSelectorComponent,
-	SearchInputComponent,
-	ThemeSettingsComponent
+	SearchInputComponent
 } from './components';
 import { Pipes } from './pipes';
 import {
@@ -51,7 +49,7 @@ import { TimeTrackerModule } from '../@shared/time-tracker/time-tracker.module';
 import { LanguagesService } from '../@core/services/languages.service';
 import { ProjectSelectModule } from '../@shared/project-select/project-select.module';
 import { TranslateModule } from '../@shared/translate/translate.module';
-import { SidebarModule } from './components/sidebar/sidebar.module';
+import { ThemeSidebarModule } from './components/theme-sidebar/theme-sidebar.module';
 
 const NB_MODULES = [
 	NbLayoutModule,
@@ -75,8 +73,7 @@ const MODULES = [
 	EmployeeSelectorsModule,
 	ProjectSelectModule,
 	TimeTrackerModule,
-	TranslateModule,
-	SidebarModule
+	TranslateModule
 ];
 
 const COMPONENTS = [
@@ -87,16 +84,16 @@ const COMPONENTS = [
 	ThreeColumnsLayoutComponent,
 	TwoColumnsLayoutComponent,
 	PublicLayoutComponent,
-	ThemeSettingsComponent,
-	LayoutSelectorComponent,
-	ChangelogComponent
+	LayoutSelectorComponent
 ];
 
 const PIPES = [...Pipes];
 
+const EXPORT_IMPORT = [CommonModule, ThemeSidebarModule];
+
 @NgModule({
-	imports: [CommonModule, RouterModule, ...NB_MODULES, ...MODULES],
-	exports: [CommonModule, ...PIPES, ...COMPONENTS],
+	imports: [RouterModule, ...EXPORT_IMPORT, ...NB_MODULES, ...MODULES],
+	exports: [...EXPORT_IMPORT, ...PIPES, ...COMPONENTS],
 	declarations: [...COMPONENTS, ...PIPES],
 	providers: [
 		UsersService,
@@ -112,12 +109,12 @@ export class ThemeModule {
 		return {
 			ngModule: ThemeModule,
 			providers: [
-				...NbThemeModule.forRoot(
-					{
-						name: 'default'
-					},
-					[DEFAULT_THEME, COSMIC_THEME, CORPORATE_THEME, DARK_THEME]
-				).providers,
+				...NbThemeModule.forRoot({ name: DEFAULT_THEME.name }, [
+					DEFAULT_THEME,
+					COSMIC_THEME,
+					CORPORATE_THEME,
+					DARK_THEME
+				]).providers,
 				WindowModeBlockScrollService
 			]
 		};
