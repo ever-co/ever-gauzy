@@ -2096,7 +2096,8 @@
 		"LOGO": "Логотип",
 		"CONTACT": "Контакт",
 		"COUNTRY": "Страна",
-		"NEW_OPTION_GROUP": "Новая группа опций"
+		"NEW_OPTION_GROUP": "Новая группа опций",
+		"OPTION_GROUP_NAME": "Имя группы опций"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",

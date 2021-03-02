@@ -1,4 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	HostListener,
+	ElementRef,
+	AfterViewInit
+} from '@angular/core';
 import {
 	IProductOption,
 	IProductOptionGroupTranslatable,
@@ -60,11 +66,20 @@ export class OptionsFormComponent implements OnInit {
 
 	optionGroups: any[] = [];
 
+	@HostListener('document:click', ['$event'])
+	clickout(event) {
+		if (!this.eRef.nativeElement.contains(event.target)) {
+			this.activeOptionGroup = this.getEmptyOptionGroup();
+			this.activeOption = this.getEmptyOption();
+		}
+	}
+
 	constructor(
 		private inventoryStore: InventoryStore,
 		private fb: FormBuilder,
 		private store: Store,
-		private translateService: TranslateService
+		private translateService: TranslateService,
+		private eRef: ElementRef
 	) {}
 
 	async ngOnInit() {
@@ -173,7 +188,7 @@ export class OptionsFormComponent implements OnInit {
 
 		let formValue = this.form.value;
 
-		if (!formValue.name || !formValue.code) return;
+		if (!formValue.activeOptionName || !formValue.activeOptionCode) return;
 
 		let newOption = {
 			formOptionId: this.generateOptionId(),
@@ -335,8 +350,10 @@ export class OptionsFormComponent implements OnInit {
 	}
 
 	setActiveOptionGroup(
+		$event,
 		productOptionGroupInput: IProductOptionGroupTranslatable
 	) {
+		$event.stopPropagation();
 		this.activeOptionGroup = productOptionGroupInput;
 		this.activeOption = this.getEmptyOption();
 		this.updateFormValue();

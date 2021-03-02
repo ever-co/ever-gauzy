@@ -15,7 +15,7 @@
 		</div>
 	</div>
 
-	<form [formGroup]="form">
+	<form [formGroup]="form" #formGroupElement>
 		<ng-container
 			*ngFor="let optionGroup of optionGroups; let idxGroup = index"
 		>
@@ -34,7 +34,7 @@
 				(click)="setActiveOption(optionData)"
 				[ngClass]="{ active: isActiveOption(optionData) }"
 			>
-				<div class="col-md-1 d-flex mr-4">
+				<div class="col-md-2 d-flex pr-1">
 					<span>
 						<nb-icon
 							class="option-row-icon edit"
@@ -49,7 +49,7 @@
 						></nb-icon>
 					</span>
 				</div>
-				<div class="col-sm-12 col-md-6 mb-1">
+				<div class="col-sm-12 col-md-5 mb-1">
 					{{ optionData?.name }}
 				</div>
 				<div class="col-sm-12 col-md-5 mb-1">
@@ -75,7 +75,9 @@
 						fullWidth
 						type="text"
 						nbInput
-						[placeholder]="'INVENTORY_PAGE.NAME' | translate"
+						[placeholder]="
+							'INVENTORY_PAGE.OPTION_GROUP_NAME' | translate
+						"
 					/>
 				</div>
 				<div class="col-md-9 col-sm-12">
@@ -91,7 +93,7 @@
 								formControlName="activeOptionName"
 							/>
 						</div>
-						<div class="col-sm-12 col-md-5">
+						<div class="col-sm-12 col-md-4">
 							<input
 								fullWidth
 								type="text"
@@ -142,7 +144,7 @@
 			<div
 				class="row mb-2 view-option-group"
 				*ngIf="!isActive(optionGroupData)"
-				(click)="setActiveOptionGroup(optionGroupData)"
+				(click)="setActiveOptionGroup($event, optionGroupData)"
 			>
 				<div class="col-md-3 col-sm-12">
 					{{ optionGroupData.name }}

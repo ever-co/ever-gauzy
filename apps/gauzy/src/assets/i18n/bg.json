@@ -2096,7 +2096,8 @@
 		"LOGO": "Logo",
 		"CONTACT": "Contact",
 		"COUNTRY": "Държава",
-		"NEW_OPTION_GROUP": "Нова група"
+		"NEW_OPTION_GROUP": "Нова група",
+		"OPTION_GROUP_NAME": "Име на група"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
