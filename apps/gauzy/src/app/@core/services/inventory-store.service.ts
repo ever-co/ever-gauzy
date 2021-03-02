@@ -21,6 +21,8 @@ export class InventoryStore {
 
 	private _deleteOptions: IProductOptionTranslatable[] = [];
 
+	private _deletedOptionGrous: IProductOptionGroupTranslatable[] = [];
+
 	private _optionGroups: IProductOptionGroupTranslatable[] = [];
 
 	private _activeTab: NbTabComponent = null;
@@ -40,6 +42,10 @@ export class InventoryStore {
 	deleteOptions$: BehaviorSubject<
 		IProductOptionTranslatable[]
 	> = new BehaviorSubject(this.deleteOptions);
+
+	deletedOptionGroups$: BehaviorSubject<
+		IProductOptionGroupTranslatable[]
+	> = new BehaviorSubject(this.deletedOptionGroups);
 
 	activeTab$: BehaviorSubject<NbTabComponent> = new BehaviorSubject(
 		this.activeTab
@@ -75,6 +81,10 @@ export class InventoryStore {
 
 	get deleteOptions() {
 		return this._deleteOptions;
+	}
+
+	get deletedOptionGroups() {
+		return this._deletedOptionGrous;
 	}
 
 	get optionGroups() {
@@ -199,6 +209,10 @@ export class InventoryStore {
 
 	addDeletedOption(productOption: IProductOptionTranslatable) {
 		this._deleteOptions.push(productOption);
+	}
+
+	addDeletedOptionGroup(optionGroup: IProductOptionGroupTranslatable) {
+		this._deletedOptionGrous.push(optionGroup);
 	}
 
 	resetDeletedOptions() {

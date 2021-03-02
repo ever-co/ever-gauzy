@@ -138,7 +138,7 @@ export class OptionsFormComponent implements OnInit {
 				this.activeLanguageCode = language.lang;
 				this.resetActiveTranslations();
 				this.activeOptionGroup = null;
-				this.activeOption = {};
+				this.activeOption = this.getEmptyOption();
 				this.resetActiveTranslations();
 			});
 	}
@@ -153,12 +153,30 @@ export class OptionsFormComponent implements OnInit {
 		this.optionGroups.splice(0, 0, newOptionGroup);
 	}
 
+	onDeleteOptinGroupClick(optionGroupDeleted: IProductOptionGroupUI) {
+		optionGroupDeleted.options.forEach((option) => {
+			this.onDeleteOption(option);
+		});
+
+		this.optionGroups = this.optionGroups.filter(
+			(optinGroup) =>
+				optinGroup.formOptionGroupId !==
+				optionGroupDeleted.formOptionGroupId
+		);
+
+		this.inventoryStore.addDeletedOptionGroup(optionGroupDeleted);
+		this.updateOptionGroupInStore();
+	}
+
 	onCreateOptionClick() {
 		if (!this.activeOptionGroup) return;
 
 		let formValue = this.form.value;
 
+		if (!formValue.name || !formValue.code) return;
+
 		let newOption = {
+			formOptionId: this.generateOptionId(),
 			name: formValue['activeOptionName'],
 			code: formValue['activeOptionCode'],
 			translations: [
@@ -171,7 +189,7 @@ export class OptionsFormComponent implements OnInit {
 			]
 		};
 		this.activeOptionGroup.options.splice(0, 0, newOption);
-		this.activeOption = {};
+		this.activeOption = this.getEmptyOption();
 		this.resetFormValue(OptionFormFields.OPTION);
 		this.updateOptionGroupInStore();
 	}
@@ -196,7 +214,6 @@ export class OptionsFormComponent implements OnInit {
 			this.form.controls['activeOptionGroupName'].setErrors(null);
 		}
 
-		//tstodo or in the store
 		this.activeOptionGroup.name = value;
 		this.updateTranslationProperty(
 			this.activeOptionGroup,
@@ -423,12 +440,12 @@ export class OptionsFormComponent implements OnInit {
 	private generateOptionGroupFormId(optionGroups = this.optionGroups) {
 		if (!optionGroups) return 1;
 
-		return (
-			optionGroups.sort(
-				(group1, group2) =>
-					group2.formOptionGroupId - group1.formOptionGroupId
-			)[0].formOptionGroupId + 1
-		);
+		const lastEl = optionGroups.sort(
+			(group1, group2) =>
+				group2.formOptionGroupId - group1.formOptionGroupId
+		)[0];
+
+		return lastEl ? lastEl.formOptionGroupId + 1 : 1;
 	}
 
 	/**
@@ -439,12 +456,11 @@ export class OptionsFormComponent implements OnInit {
 	) {
 		if (!optionGroup.options) return 1;
 
-		return (
-			optionGroup.options.sort(
-				(option1, option2) =>
-					option2.formOptionId - option1.formOptionId
-			)[0].formOptionId + 1
-		);
+		const lastEl = optionGroup.options.sort(
+			(option1, option2) => option2.formOptionId - option1.formOptionId
+		)[0];
+
+		return lastEl ? lastEl.formOptionId + 1 : 1;
 	}
 
 	private generateOptionIdsForGroup(

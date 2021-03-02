@@ -107,11 +107,21 @@
 								<nb-icon icon="globe-outline"></nb-icon>
 							</button>
 							<button
+								class="mr-1"
 								nbButton
 								status="success"
 								(click)="onCreateOptionClick()"
 							>
 								<nb-icon icon="plus-circle-outline"></nb-icon>
+							</button>
+							<button
+								nbButton
+								status="danger"
+								(click)="
+									onDeleteOptinGroupClick(optionGroupData)
+								"
+							>
+								<nb-icon icon="trash-outline"></nb-icon>
 							</button>
 						</div>
 					</div>
