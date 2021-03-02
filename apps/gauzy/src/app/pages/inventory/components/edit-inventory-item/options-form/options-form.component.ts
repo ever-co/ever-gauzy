@@ -1,10 +1,4 @@
-import {
-	Component,
-	OnInit,
-	HostListener,
-	ElementRef,
-	AfterViewInit
-} from '@angular/core';
+import { Component, OnInit, HostListener, ElementRef } from '@angular/core';
 import {
 	IProductOption,
 	IProductOptionGroupTranslatable,
@@ -140,9 +134,6 @@ export class OptionsFormComponent implements OnInit {
 				} else {
 					this.optionGroups = [];
 				}
-
-				//tstodo
-				console.log(this.optionGroups, 'this option groups');
 
 				this.inventoryStore.optionGroups = this.optionGroups;
 			});
