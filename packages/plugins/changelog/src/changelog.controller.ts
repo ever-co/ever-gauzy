@@ -49,8 +49,8 @@ export class ChangelogController extends CrudController<Changelog> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No records found'
 	})
-	@Get('all')
-	async getAll(): Promise<IPagination<IChangelog>> {
+	@Get()
+	async findAll(): Promise<IPagination<IChangelog>> {
 		return this.changelogService.findAll();
 	}
 

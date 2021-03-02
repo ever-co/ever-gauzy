@@ -1,23 +1,29 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { IChangelog } from '@gauzy/contracts';
+import { IChangelog, IPagination } from '@gauzy/contracts';
 import { UntilDestroy } from '@ngneat/until-destroy';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { Observable } from 'rxjs/Observable';
+import { tap } from 'rxjs/operators';
 import { API_PREFIX } from '../constants/app.constants';
-import { Service } from './service';
 
 @UntilDestroy()
 @Injectable({
 	providedIn: 'root'
 })
-export class ChangelogService extends Service<IChangelog> {
-	constructor(protected http: HttpClient) {
-		super({ http, basePath: `${API_PREFIX}/changelog/all` });
-	}
+export class ChangelogService {
+	private _changelogs$: BehaviorSubject<IChangelog[]> = new BehaviorSubject(
+		[]
+	);
+	public changelogs$: Observable<
+		IChangelog[]
+	> = this._changelogs$.asObservable();
 
-	getAll(): Promise<{ items: IChangelog[] }> {
+	constructor(protected readonly http: HttpClient) {}
+
+	getAll(): Observable<IPagination<IChangelog>> {
 		return this.http
-			.get<{ items: IChangelog[] }>(`${this.basePath}`)
-			.pipe()
-			.toPromise();
+			.get<IPagination<IChangelog>>(`${API_PREFIX}/changelog`)
+			.pipe(tap(({ items }) => this._changelogs$.next(items)));
 	}
 }
