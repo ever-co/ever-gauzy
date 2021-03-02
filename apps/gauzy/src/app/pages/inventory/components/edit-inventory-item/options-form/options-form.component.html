@@ -34,7 +34,7 @@
 				(click)="setActiveOption(optionData)"
 				[ngClass]="{ active: isActiveOption(optionData) }"
 			>
-				<div class="col-md-1 d-flex">
+				<div class="col-md-1 d-flex mr-4">
 					<span>
 						<nb-icon
 							class="option-row-icon edit"
@@ -43,6 +43,7 @@
 					</span>
 					<span>
 						<nb-icon
+							(click)="onDeleteOption(optionData)"
 							class="option-row-icon delete"
 							icon="close-outline"
 						></nb-icon>
