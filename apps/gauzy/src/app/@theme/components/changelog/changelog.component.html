@@ -4,7 +4,7 @@
 	</div>
 	<div class="content">
 		<div
-			*ngFor="let item of items"
+			*ngFor="let item of items$ | async"
 			class="content d-flex whats-new-item has-popup"
 		>
 			<div class="content-text">
@@ -20,16 +20,15 @@
 					</div>
 				</div>
 				<div class="content-body">
-					<p class="text">
-						{{ item.content }}
-					</p>
-					<a
-						*ngIf="item.learnMoreUrl"
-						href="{{ item.learnMoreUrl }}"
-						class="link"
-						target="_blank"
-						>{{ 'CHANGELOG_MENU.LEARN_MORE_URL' | translate }}</a
-					>
+					<p class="text">{{ item.content }}</p>
+					<ng-container *ngIf="item.learnMoreUrl">
+						<a
+							[href]="item?.learnMoreUrl"
+							class="link"
+							target="_blank"
+							>{{ 'CHANGELOG_MENU.LEARN_MORE_URL' | translate }}
+						</a>
+					</ng-container>
 				</div>
 				<div class="content-break"></div>
 			</div>

@@ -1,25 +1,35 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { IChangelog } from '@gauzy/contracts';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Observable, Subject } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { ChangelogService } from '../../../@core/services/changelog.service';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-changelog',
 	templateUrl: './changelog.component.html',
 	styleUrls: ['./changelog.component.scss']
 })
 export class ChangelogComponent implements OnInit, OnDestroy {
-	constructor(private changelogService: ChangelogService) {}
+	updateLogs$: Subject<any> = new Subject();
+	items$: Observable<IChangelog[]> = this._changelogService.changelogs$;
 
-	items: IChangelog[] = [];
+	constructor(private readonly _changelogService: ChangelogService) {}
 
 	ngOnInit() {
-		this.getAll();
+		this.updateLogs$
+			.pipe(
+				tap(() => this.getLogs()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.updateLogs$.next();
 	}
 
-	async getAll() {
-		const { items } = await this.changelogService.getAll();
-		this.items = items;
+	getLogs() {
+		this._changelogService.getAll().pipe(untilDestroyed(this)).subscribe();
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy(): void {}
 }
