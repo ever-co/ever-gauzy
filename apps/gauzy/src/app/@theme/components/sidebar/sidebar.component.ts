@@ -13,13 +13,13 @@ import {
 import { ISidebarConfig } from '../../../@core/services';
 
 @Component({
-	selector: 'ngx-sidebar',
+	selector: 'ngx-theme-sidebar',
 	templateUrl: './sidebar.component.html',
 	styleUrls: ['./sidebar.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SidebarComponent implements AfterViewInit, OnDestroy {
-	@Input() sidebar: ISidebarConfig;
+	@Input() config: ISidebarConfig;
 
 	@ViewChild('container', { read: ViewContainerRef })
 	private container: ViewContainerRef;
@@ -37,7 +37,7 @@ export class SidebarComponent implements AfterViewInit, OnDestroy {
 	}
 
 	private async loadComponent() {
-		const renderComponent = this.sidebar.loadComponent();
+		const renderComponent = this.config.loadComponent();
 		const component =
 			renderComponent instanceof Promise
 				? await renderComponent

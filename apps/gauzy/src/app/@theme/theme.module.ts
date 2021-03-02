@@ -51,6 +51,7 @@ import { TimeTrackerModule } from '../@shared/time-tracker/time-tracker.module';
 import { LanguagesService } from '../@core/services/languages.service';
 import { ProjectSelectModule } from '../@shared/project-select/project-select.module';
 import { TranslateModule } from '../@shared/translate/translate.module';
+import { SidebarModule } from './components/sidebar/sidebar.module';
 
 const NB_MODULES = [
 	NbLayoutModule,
@@ -66,13 +67,16 @@ const NB_MODULES = [
 	NbIconModule,
 	NbTooltipModule,
 	NbPopoverModule,
-	NbEvaIconsModule,
+	NbEvaIconsModule
+];
+
+const MODULES = [
 	HeaderSelectorsModule,
 	EmployeeSelectorsModule,
 	ProjectSelectModule,
 	TimeTrackerModule,
 	TranslateModule,
-	RouterModule
+	SidebarModule
 ];
 
 const COMPONENTS = [
@@ -91,7 +95,7 @@ const COMPONENTS = [
 const PIPES = [...Pipes];
 
 @NgModule({
-	imports: [CommonModule, ...NB_MODULES],
+	imports: [CommonModule, RouterModule, ...NB_MODULES, ...MODULES],
 	exports: [CommonModule, ...PIPES, ...COMPONENTS],
 	declarations: [...COMPONENTS, ...PIPES],
 	providers: [

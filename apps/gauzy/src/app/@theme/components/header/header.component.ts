@@ -233,9 +233,9 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	toggleChangelogMenu(): boolean {
 		if (this.showExtraActions) {
 			this.toggleExtraActions(false);
-			this.sidebarService.expand('changelog-sidebar');
+			this.sidebarService.expand('changelog_sidebar');
 		} else {
-			this.sidebarService.toggle(false, 'changelog-sidebar');
+			this.sidebarService.toggle(false, 'changelog_sidebar');
 		}
 		return false;
 	}
@@ -254,9 +254,9 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	toggleSettings(): boolean {
 		if (this.showExtraActions) {
 			this.toggleExtraActions(false);
-			this.sidebarService.expand('settings-sidebar');
+			this.sidebarService.expand('settings_sidebar');
 		} else {
-			this.sidebarService.toggle(false, 'settings-sidebar');
+			this.sidebarService.toggle(false, 'settings_sidebar');
 		}
 		return false;
 	}

@@ -28,22 +28,13 @@
 	</nb-layout-footer>
 
 	<nb-sidebar
-		class="changelog-sidebar"
-		tag="changelog-sidebar"
+		*ngFor="let sidebar of this.availableSidebarWidgets$"
+		[class]="sidebar.class"
+		[tag]="sidebar.id"
 		state="collapsed"
 		fixed
 		[end]="true"
 	>
-		<ngx-changelog></ngx-changelog>
-	</nb-sidebar>
-
-	<nb-sidebar
-		class="settings-sidebar"
-		tag="settings-sidebar"
-		state="collapsed"
-		fixed
-		[end]="true"
-	>
-		<ngx-theme-settings></ngx-theme-settings>
+		<ngx-theme-sidebar [config]="sidebar"></ngx-theme-sidebar>
 	</nb-sidebar>
 </nb-layout>

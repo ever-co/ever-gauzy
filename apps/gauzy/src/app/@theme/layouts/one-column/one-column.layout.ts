@@ -13,10 +13,14 @@ import {
 	NbLayoutDirection
 } from '@nebular/theme';
 import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
-import { Router } from '@angular/router';
 import { Store } from '../../../@core/services/store.service';
 import { IUser } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
+import { DEFAULT_SIDEBARS } from '../../default-sidebars';
+import {
+	ISidebarConfig,
+	NavigationBuilderService
+} from '../../../@core/services';
 
 @Component({
 	selector: 'ngx-one-column-layout',
@@ -24,13 +28,21 @@ import { filter, tap } from 'rxjs/operators';
 	templateUrl: './one-column.layout.html'
 })
 export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
+	availableSidebarWidgets$: ISidebarConfig[] = [];
+
 	constructor(
 		@Inject(PLATFORM_ID) private platformId,
-		private windowModeBlockScrollService: WindowModeBlockScrollService,
-		private directionService: NbLayoutDirectionService,
-		private router: Router,
-		private store: Store
-	) {}
+		private readonly windowModeBlockScrollService: WindowModeBlockScrollService,
+		private readonly directionService: NbLayoutDirectionService,
+		private readonly store: Store,
+		public readonly navigationBuilderService: NavigationBuilderService
+	) {
+		Object.entries(DEFAULT_SIDEBARS).map(([id, config]) =>
+			navigationBuilderService.registerSidebar(id, config)
+		);
+		this.availableSidebarWidgets$ = navigationBuilderService.getSidebarWidgets();
+	}
+
 	@ViewChild(NbLayoutComponent) layout: NbLayoutComponent;
 
 	user: IUser;
