@@ -5,7 +5,8 @@ import {
 	IProductOption,
 	IProductTranslatable,
 	IProductVariant,
-	IProductOptionGroupTranslatable
+	IProductOptionGroupTranslatable,
+	IProductOptionTranslatable
 } from '@gauzy/contracts';
 import { NbTabComponent } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,7 +19,9 @@ export class InventoryStore {
 
 	private _variantCreateInputs: VariantCreateInput[] = [];
 
-	private _deleteOptions: IProductOption[] = [];
+	private _deleteOptions: IProductOptionTranslatable[] = [];
+
+	private _deletedOptionGrous: IProductOptionGroupTranslatable[] = [];
 
 	private _optionGroups: IProductOptionGroupTranslatable[] = [];
 
@@ -36,9 +39,13 @@ export class InventoryStore {
 		IProductOptionGroupTranslatable[]
 	> = new BehaviorSubject(this._optionGroups);
 
-	deleteOptions$: BehaviorSubject<IProductOption[]> = new BehaviorSubject(
-		this.deleteOptions
-	);
+	deleteOptions$: BehaviorSubject<
+		IProductOptionTranslatable[]
+	> = new BehaviorSubject(this.deleteOptions);
+
+	deletedOptionGroups$: BehaviorSubject<
+		IProductOptionGroupTranslatable[]
+	> = new BehaviorSubject(this.deletedOptionGroups);
 
 	activeTab$: BehaviorSubject<NbTabComponent> = new BehaviorSubject(
 		this.activeTab
@@ -74,6 +81,10 @@ export class InventoryStore {
 
 	get deleteOptions() {
 		return this._deleteOptions;
+	}
+
+	get deletedOptionGroups() {
+		return this._deletedOptionGrous;
 	}
 
 	get optionGroups() {
@@ -194,6 +205,14 @@ export class InventoryStore {
 		this.resetCreateVariants();
 		this.activeProduct = this.inventoryItemBlank;
 		this.activeProduct$.next(this.activeProduct);
+	}
+
+	addDeletedOption(productOption: IProductOptionTranslatable) {
+		this._deleteOptions.push(productOption);
+	}
+
+	addDeletedOptionGroup(optionGroup: IProductOptionGroupTranslatable) {
+		this._deletedOptionGrous.push(optionGroup);
 	}
 
 	resetDeletedOptions() {

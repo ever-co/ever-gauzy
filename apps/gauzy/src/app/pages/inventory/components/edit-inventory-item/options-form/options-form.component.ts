@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener, ElementRef } from '@angular/core';
 import {
 	IProductOption,
 	IProductOptionGroupTranslatable,
@@ -31,6 +31,11 @@ export enum OptionFormFields {
 export interface IProductOptionGroupUI extends IProductOptionGroupTranslatable {
 	stored?: boolean;
 	formOptionGroupId?: string;
+	options: IProductOptionUI | any;
+}
+
+export interface IProductOptionUI extends IProductOptionTranslatable {
+	formOptionId?: string;
 }
 
 @UntilDestroy({ checkProperties: true })
@@ -47,7 +52,7 @@ export class OptionsFormComponent implements OnInit {
 	options: IProductOption[] = [];
 
 	activeOptionGroup: IProductOptionGroupUI | any = null;
-	activeOption: IProductOptionTranslatable | any = {};
+	activeOption: IProductOptionUI | any = {};
 
 	activeLanguageCode: string = LanguagesEnum.ENGLISH;
 
@@ -55,11 +60,20 @@ export class OptionsFormComponent implements OnInit {
 
 	optionGroups: any[] = [];
 
+	@HostListener('document:click', ['$event'])
+	clickout(event) {
+		if (!this.eRef.nativeElement.contains(event.target)) {
+			this.activeOptionGroup = this.getEmptyOptionGroup();
+			this.activeOption = this.getEmptyOption();
+		}
+	}
+
 	constructor(
 		private inventoryStore: InventoryStore,
 		private fb: FormBuilder,
 		private store: Store,
-		private translateService: TranslateService
+		private translateService: TranslateService,
+		private eRef: ElementRef
 	) {}
 
 	async ngOnInit() {
@@ -99,6 +113,28 @@ export class OptionsFormComponent implements OnInit {
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe((activeProduct) => {
 				this.optionGroups = activeProduct.optionGroups || [];
+
+				if (activeProduct.optionGroups) {
+					this.optionGroups = activeProduct.optionGroups.map(
+						(optionGroup, i) => {
+							return {
+								...optionGroup,
+								formOptionGroupId: i,
+								options: optionGroup.options.map(
+									(option, k) => {
+										return {
+											...option,
+											formOptionId: k
+										};
+									}
+								)
+							};
+						}
+					);
+				} else {
+					this.optionGroups = [];
+				}
+
 				this.inventoryStore.optionGroups = this.optionGroups;
 			});
 
@@ -108,7 +144,7 @@ export class OptionsFormComponent implements OnInit {
 				this.activeLanguageCode = language.lang;
 				this.resetActiveTranslations();
 				this.activeOptionGroup = null;
-				this.activeOption = {};
+				this.activeOption = this.getEmptyOption();
 				this.resetActiveTranslations();
 			});
 	}
@@ -118,9 +154,24 @@ export class OptionsFormComponent implements OnInit {
 	onCreateOptionGroupClick() {
 		let newOptionGroup = this.getEmptyOptionGroup();
 		this.activeOptionGroup = newOptionGroup;
-		this.activeOption = {};
+		this.activeOption = this.getEmptyOption();
 		this.resetFormValue(OptionFormFields.All);
 		this.optionGroups.splice(0, 0, newOptionGroup);
+	}
+
+	onDeleteOptinGroupClick(optionGroupDeleted: IProductOptionGroupUI) {
+		optionGroupDeleted.options.forEach((option) => {
+			this.onDeleteOption(option);
+		});
+
+		this.optionGroups = this.optionGroups.filter(
+			(optinGroup) =>
+				optinGroup.formOptionGroupId !==
+				optionGroupDeleted.formOptionGroupId
+		);
+
+		this.inventoryStore.addDeletedOptionGroup(optionGroupDeleted);
+		this.updateOptionGroupInStore();
 	}
 
 	onCreateOptionClick() {
@@ -128,7 +179,10 @@ export class OptionsFormComponent implements OnInit {
 
 		let formValue = this.form.value;
 
+		if (!formValue.activeOptionName || !formValue.activeOptionCode) return;
+
 		let newOption = {
+			formOptionId: this.generateOptionId(),
 			name: formValue['activeOptionName'],
 			code: formValue['activeOptionCode'],
 			translations: [
@@ -141,13 +195,9 @@ export class OptionsFormComponent implements OnInit {
 			]
 		};
 		this.activeOptionGroup.options.splice(0, 0, newOption);
-		this.activeOption = {};
+		this.activeOption = this.getEmptyOption();
 		this.resetFormValue(OptionFormFields.OPTION);
 		this.updateOptionGroupInStore();
-	}
-
-	onRemoveOption(optionInput: IProductOption) {
-		if (!optionInput) return;
 	}
 
 	resetOptionForm() {}
@@ -170,7 +220,6 @@ export class OptionsFormComponent implements OnInit {
 			this.form.controls['activeOptionGroupName'].setErrors(null);
 		}
 
-		//tstodo or in the store
 		this.activeOptionGroup.name = value;
 		this.updateTranslationProperty(
 			this.activeOptionGroup,
@@ -292,16 +341,43 @@ export class OptionsFormComponent implements OnInit {
 	}
 
 	setActiveOptionGroup(
+		$event,
 		productOptionGroupInput: IProductOptionGroupTranslatable
 	) {
+		$event.stopPropagation();
 		this.activeOptionGroup = productOptionGroupInput;
 		this.activeOption = this.getEmptyOption();
 		this.updateFormValue();
 	}
 
-	setActiveOption(productOption: IProductOptionTranslatable) {
+	setActiveOption(productOption: IProductOptionUI) {
+		if (productOption.formOptionId === this.activeOption.formOptionId) {
+			this.activeOption = this.getEmptyOption();
+			this.resetFormValue(OptionFormFields.OPTION);
+			return;
+		}
+
 		this.activeOption = productOption;
 		this.updateFormValue();
+	}
+
+	isActiveOption(productOption: IProductOptionUI) {
+		if (!this.activeOption) return false;
+		return productOption.formOptionId == this.activeOption.formOptionId;
+	}
+
+	onDeleteOption(productOption: IProductOptionUI) {
+		if (!this.activeOptionGroup) return;
+
+		this.activeOptionGroup.options = this.activeOptionGroup.options.filter(
+			(option: any) => option.formOptionId !== productOption.formOptionId
+		);
+
+		if (productOption.id) {
+			this.inventoryStore.addDeletedOption(productOption);
+		}
+
+		this.updateOptionGroupInStore();
 	}
 
 	private initForm() {
@@ -353,6 +429,7 @@ export class OptionsFormComponent implements OnInit {
 
 	private getEmptyOption() {
 		return {
+			formOptionId: '',
 			name: '',
 			code: '',
 			translations: [
@@ -365,9 +442,44 @@ export class OptionsFormComponent implements OnInit {
 		};
 	}
 
-	private generateOptionGroupFormId() {
-		if (!this.optionGroups) return 1;
-		return this.optionGroups.length;
+	/**
+	 * unique id for generated/stored option groups
+	 */
+	private generateOptionGroupFormId(optionGroups = this.optionGroups) {
+		if (!optionGroups) return 1;
+
+		const lastEl = optionGroups.sort(
+			(group1, group2) =>
+				group2.formOptionGroupId - group1.formOptionGroupId
+		)[0];
+
+		return lastEl ? lastEl.formOptionGroupId + 1 : 1;
+	}
+
+	/**
+	 * unique id for generated/stored options
+	 */
+	private generateOptionId(
+		optionGroup: IProductOptionGroupUI = this.activeOptionGroup
+	) {
+		if (!optionGroup.options) return 1;
+
+		const lastEl = optionGroup.options.sort(
+			(option1, option2) => option2.formOptionId - option1.formOptionId
+		)[0];
+
+		return lastEl ? lastEl.formOptionId + 1 : 1;
+	}
+
+	private generateOptionIdsForGroup(
+		optionGroup: IProductOptionGroupTranslatable = this.activeOptionGroup
+	) {
+		optionGroup.options = optionGroup.options.map((option) => {
+			return {
+				...option,
+				formOptionId: this.generateOptionId()
+			};
+		});
 	}
 
 	private getEmptyOptionGroup = () => {

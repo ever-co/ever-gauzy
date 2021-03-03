@@ -10,13 +10,12 @@
 				(click)="onCreateOptionGroupClick()"
 				class=""
 			>
-				<!-- //tstodo add translation -->
-				New option
+				{{ 'INVENTORY_PAGE.NEW_OPTION_GROUP' | translate }}
 			</button>
 		</div>
 	</div>
 
-	<form [formGroup]="form">
+	<form [formGroup]="form" #formGroupElement>
 		<ng-container
 			*ngFor="let optionGroup of optionGroups; let idxGroup = index"
 		>
@@ -31,24 +30,26 @@
 		<!-- // template for option row -->
 		<ng-template #optionRowTemplate let-optionData="option">
 			<div
-				class="row mb-2 p-2 text-option"
+				class="row mb-2 p-2 text-option option-row"
 				(click)="setActiveOption(optionData)"
+				[ngClass]="{ active: isActiveOption(optionData) }"
 			>
-				<div class="col-md-1 d-flex">
+				<div class="col-md-2 d-flex pr-1">
 					<span>
 						<nb-icon
-							class="option-row-icon"
+							class="option-row-icon edit"
 							icon="edit-outline"
 						></nb-icon>
 					</span>
 					<span>
 						<nb-icon
-							class="option-row-icon"
+							(click)="onDeleteOption(optionData)"
+							class="option-row-icon delete"
 							icon="close-outline"
 						></nb-icon>
 					</span>
 				</div>
-				<div class="col-sm-12 col-md-6 mb-1">
+				<div class="col-sm-12 col-md-5 mb-1">
 					{{ optionData?.name }}
 				</div>
 				<div class="col-sm-12 col-md-5 mb-1">
@@ -64,8 +65,9 @@
 			let-idxGroup="idxGroup"
 		>
 			<div
-				class="row mb-2 edit-option-group"
+				class="row mb-2 edit-option-group option-group-form"
 				*ngIf="isActive(optionGroupData)"
+				[ngClass]="{ 'active-group': isActive(optionGroupData) }"
 			>
 				<div class="col-md-3 col-sm-12">
 					<input
@@ -73,7 +75,9 @@
 						fullWidth
 						type="text"
 						nbInput
-						[placeholder]="'INVENTORY_PAGE.NAME' | translate"
+						[placeholder]="
+							'INVENTORY_PAGE.OPTION_GROUP_NAME' | translate
+						"
 					/>
 				</div>
 				<div class="col-md-9 col-sm-12">
@@ -89,7 +93,7 @@
 								formControlName="activeOptionName"
 							/>
 						</div>
-						<div class="col-sm-12 col-md-5">
+						<div class="col-sm-12 col-md-4">
 							<input
 								fullWidth
 								type="text"
@@ -105,11 +109,21 @@
 								<nb-icon icon="globe-outline"></nb-icon>
 							</button>
 							<button
+								class="mr-1"
 								nbButton
 								status="success"
 								(click)="onCreateOptionClick()"
 							>
 								<nb-icon icon="plus-circle-outline"></nb-icon>
+							</button>
+							<button
+								nbButton
+								status="danger"
+								(click)="
+									onDeleteOptinGroupClick(optionGroupData)
+								"
+							>
+								<nb-icon icon="trash-outline"></nb-icon>
 							</button>
 						</div>
 					</div>
@@ -130,7 +144,7 @@
 			<div
 				class="row mb-2 view-option-group"
 				*ngIf="!isActive(optionGroupData)"
-				(click)="setActiveOptionGroup(optionGroupData)"
+				(click)="setActiveOptionGroup($event, optionGroupData)"
 			>
 				<div class="col-md-3 col-sm-12">
 					{{ optionGroupData.name }}

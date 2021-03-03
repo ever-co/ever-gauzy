@@ -21,8 +21,37 @@
 .text-option {
   font-size: 16px;
   color: nb-theme(color-basic-600);
+
+  &:hover {
+    cursor: pointer;
+  }
 }
 
 .option-row-icon {
   color: nb-theme(color-basic-300);
+}
+
+.option-group-form {
+  padding: 2em 0.5em;
+}
+
+.active-group {
+  box-shadow: rgba(17, 17, 26, 0.1) 0px 0px 16px;
+}
+
+.option-row {
+  .option-row-icon {
+    transition: 0.1s all ease-in-out;
+  }
+
+  &:hover,
+  &.active {
+    .option-row-icon.edit {
+      color: nb-theme(color-success-600);
+    }
+
+    .option-row-icon.delete {
+      color: nb-theme(color-danger-600);
+    }
+  }
 }
