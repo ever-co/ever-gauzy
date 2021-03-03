@@ -85,8 +85,8 @@ export interface IProductTranslatableCreateInput
 	type?: IProductTypeTranslatable;
 	category?: IProductCategoryTranslatable;
 	tags?: ITag[];
-	optionCreateInputs?: IProductOption[];
-	optionDeleteInputs?: IProductOption[];
+	optionCreateInputs?: IProductOptionTranslatable[];
+	optionDeleteInputs?: IProductOptionTranslatable[];
 }
 
 export interface IProductFindInput

@@ -276,9 +276,6 @@ export class ProductFormComponent
 				);
 			}
 
-			//tstodo
-			console.log(productResult, 'product result');
-
 			// await this.productVariantService.createProductVariants({
 			// 	product: productResult,
 			// 	optionCombinations: this.inventoryStore
