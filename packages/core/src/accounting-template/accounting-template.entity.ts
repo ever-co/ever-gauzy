@@ -1,14 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, Index } from 'typeorm';
 import { IsNotEmpty, IsString, IsEnum } from 'class-validator';
 import {
 	AccountingTemplateTypeEnum,
 	IAccountingTemplate
 } from '@gauzy/contracts';
-import {
-	Organization,
-	TenantOrganizationBaseEntity
-} from '../core/entities/internal';
+import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 
 @Entity('accounting_template')
 export class AccountingTemplate
@@ -45,11 +42,4 @@ export class AccountingTemplate
 	@IsNotEmpty()
 	@Column()
 	templateType: string;
-
-	@ApiProperty({ type: () => Organization })
-	@ManyToOne(() => Organization, {
-		onDelete: 'SET NULL'
-	})
-	@JoinColumn()
-	organization: Organization;
 }

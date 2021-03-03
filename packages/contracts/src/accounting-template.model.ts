@@ -1,4 +1,3 @@
-import { IOrganization } from 'index';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
 export interface IAccountingTemplate
@@ -8,7 +7,6 @@ export interface IAccountingTemplate
 	languageCode: string;
 	hbs?: string;
 	templateType: string;
-	organization?: IOrganization;
 }
 
 export interface IAccountingTemplateFindInput
@@ -23,7 +21,6 @@ export interface IAccountingTemplateUpdateInput
 	name?: string;
 	languageCode?: string;
 	templateType?: string;
-	organization?: IOrganization;
 }
 
 export enum AccountingTemplateNameEnum {
