@@ -32,7 +32,7 @@ export class PluginModule implements OnModuleInit, OnModuleDestroy {
 			(instance: any) => {
 				const pluginName =
 					instance.constructor.name || '(anonymous plugin)';
-				console.log(chalk.green(`Bootstrapped plugin ${pluginName}`));
+				console.log(chalk.green(`Bootstrapped Plugin [${pluginName}]`));
 			}
 		);
 	}
@@ -43,7 +43,7 @@ export class PluginModule implements OnModuleInit, OnModuleDestroy {
 			(instance: any) => {
 				const pluginName =
 					instance.constructor.name || '(anonymous plugin)';
-				console.log(chalk.green(`Destroyed plugin ${pluginName}`));
+				console.log(chalk.green(`Destroyed Plugin [${pluginName}]`));
 			}
 		);
 	}
@@ -66,9 +66,10 @@ export class PluginModule implements OnModuleInit, OnModuleDestroy {
 			if (classInstance) {
 				if (hasLifecycleMethod(classInstance, lifecycleMethod)) {
 					await classInstance[lifecycleMethod]();
-				}
-				if (typeof closure === 'function') {
-					closure(classInstance);
+
+					if (typeof closure === 'function') {
+						closure(classInstance);
+					}
 				}
 			}
 		}

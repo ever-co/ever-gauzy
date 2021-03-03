@@ -5,7 +5,7 @@ import { ShareComponent } from './share.component';
 import { ShareRoutingModule } from './share-routing.module';
 import { MiscellaneousModule } from '../pages/miscellaneous/miscellaneous.module';
 import { AuthService } from '../@core/services/auth.service';
-import { RoleGuard } from '../@core/role/role.guard';
+import { RoleGuard } from '../@core/guards';
 import { TranslateModule } from '../@shared/translate/translate.module';
 
 @NgModule({

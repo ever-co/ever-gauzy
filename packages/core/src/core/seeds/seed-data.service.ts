@@ -298,7 +298,6 @@ import {
 	createRandomFeatureToggle
 } from '../../feature/feature.seed';
 import { createDefaultAccountingTemplates } from 'accounting-template/accounting-template.seed';
-import { createChangelog } from '../../changelog/changelog.seed';
 
 @Injectable()
 export class SeedDataService {
@@ -312,9 +311,6 @@ export class SeedDataService {
 	superAdminUsers: IUser[];
 	defaultCandidateUsers: IUser[];
 	defaultEmployees: IEmployee[];
-
-	randomTenants: ITenant[];
-	randomTenantEmployeeMap: Map<ITenant, IEmployee[]>;
 
 	config: IPluginConfig = getConfig();
 
@@ -527,11 +523,6 @@ export class SeedDataService {
 				createCurrencies(this.connection)
 			);
 
-			await this.tryExecute(
-				'Default Changelog',
-				createChangelog(this.connection)
-			);
-
 			await this.seedBasicDefaultData();
 
 			if (!isDefault) {
@@ -707,6 +698,16 @@ export class SeedDataService {
 				this.organizations
 			)
 		);
+
+		//run all plugins random seed method
+		await this.bootstrapPluginSeedMethods(
+			'onBasicPluginSeed',
+			(instance: any) => {
+				const pluginName =
+					instance.constructor.name || '(anonymous plugin)';
+				console.log(chalk.green(`SEEDED Basic Plugin [${pluginName}]`));
+			}
+		);
 	}
 
 	/**
@@ -715,7 +716,7 @@ export class SeedDataService {
 	private async seedDefaultData() {
 		//Organization level inserts which need connection, tenant, role, organizations
 		const categories = await this.tryExecute(
-			'Expense Categories',
+			'Default Expense Categories',
 			createExpenseCategories(
 				this.connection,
 				this.tenant,
@@ -724,7 +725,7 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
-			'Employee Levels',
+			'Default Employee Levels',
 			createEmployeeLevels(this.connection, this.organizations)
 		);
 
@@ -1189,7 +1190,11 @@ export class SeedDataService {
 		await this.bootstrapPluginSeedMethods(
 			'onDefaultPluginSeed',
 			(instance: any) => {
-				console.log(chalk.green(`SEEDED Default Plugins`));
+				const pluginName =
+					instance.constructor.name || '(anonymous plugin)';
+				console.log(
+					chalk.green(`SEEDED Default Plugin [${pluginName}]`)
+				);
 			}
 		);
 	}
@@ -1203,8 +1208,6 @@ export class SeedDataService {
 			this.connection,
 			randomSeedConfig.tenants || 1
 		);
-
-		this.randomTenants = tenants;
 
 		await this.tryExecute(
 			'Random Feature Toggle',
@@ -1259,8 +1262,6 @@ export class SeedDataService {
 			tenantUsersMap,
 			randomSeedConfig.employeesPerOrganization || 1
 		);
-
-		this.randomTenantEmployeeMap = tenantEmployeeMap;
 
 		await this.tryExecute(
 			'Random Categories',
@@ -1896,7 +1897,11 @@ export class SeedDataService {
 		await this.bootstrapPluginSeedMethods(
 			'onRandomPluginSeed',
 			(instance: any) => {
-				console.log(chalk.green(`SEEDED Random Plugins`));
+				const pluginName =
+					instance.constructor.name || '(anonymous plugin)';
+				console.log(
+					chalk.green(`SEEDED Random Plugin [${pluginName}]`)
+				);
 			}
 		);
 	}
@@ -2066,9 +2071,9 @@ export class SeedDataService {
 			if (classInstance) {
 				if (hasLifecycleMethod(classInstance, lifecycleMethod)) {
 					await classInstance[lifecycleMethod]();
-				}
-				if (typeof closure === 'function') {
-					closure(classInstance);
+					if (typeof closure === 'function') {
+						closure(classInstance);
+					}
 				}
 			}
 		}

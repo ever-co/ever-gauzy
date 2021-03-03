@@ -8,6 +8,9 @@ import {
 } from '@gauzy/common';
 import { PLUGIN_METADATA } from './constants';
 
+export interface OnBasicPluginSeed {
+	onBasicPluginSeed(): void | Promise<void>;
+}
 export interface OnDefaultPluginSeed {
 	onDefaultPluginSeed(): void | Promise<void>;
 }
@@ -39,5 +42,6 @@ export function ExtensionPlugin(
 
 export type PluginLifecycleMethods = IOnPluginBootstrap &
 	IOnPluginDestroy &
+	OnBasicPluginSeed &
 	OnDefaultPluginSeed &
 	OnRandomPluginSeed;

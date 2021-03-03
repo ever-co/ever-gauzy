@@ -66,6 +66,7 @@ export * from './keyresult-update.service';
 export * from './keyresult.service';
 export * from './languages.service';
 export * from './my-tasks-store.service';
+export * from './navigation-builder';
 export * from './organization-awards.service';
 export * from './organization-contact.service';
 export * from './organization-departments.service';

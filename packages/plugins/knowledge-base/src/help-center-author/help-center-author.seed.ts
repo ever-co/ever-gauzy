@@ -70,20 +70,19 @@ const insertRandomHelpCenterAuthor = async (
 };
 
 const operateData = async (
-	connection,
+	connection: Connection,
 	mapEmployeeToArticles,
 	allArticle,
 	employees: IEmployee[]
 ) => {
 	for (let i = 0; i < allArticle.length; i++) {
 		const employee = faker.random.arrayElement(employees);
-
-		const employeeMap = new HelpCenterAuthor();
+		const employeeMap: IHelpCenterAuthor = new HelpCenterAuthor();
 
 		employeeMap.employeeId = employee.id;
 		employeeMap.articleId = allArticle[i].id;
-		employeeMap.organization = employee.organization;
-		employeeMap.tenant = employee.organization.tenant;
+		employeeMap.organizationId = employee.organizationId;
+		employeeMap.tenantId = employee.tenantId;
 
 		mapEmployeeToArticles.push(employeeMap);
 	}
