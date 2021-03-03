@@ -2096,8 +2096,8 @@
 		"LOGO": "Logo",
 		"CONTACT": "Contact",
 		"COUNTRY": "מדינה",
-		"NEW_OPTION_GROUP": "קבוצת אופציות חדשה",
-		"OPTION_GROUP_NAME": "שם קבוצת האופציות"
+		"NEW_OPTION_GROUP": "New option group",
+		"OPTION_GROUP_NAME": "Option group name"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
