@@ -10,6 +10,7 @@ import {
 	IGetTimeLogReportInput,
 	IOrganization,
 	IPaymentReportData,
+	ISelectedEmployee,
 	OrganizationPermissionsEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
@@ -21,7 +22,6 @@ import { debounceTime } from 'rxjs/operators';
 import { pick } from 'underscore';
 import { PaymentService } from '../../../@core/services/payment.service';
 import { Store } from '../../../@core/services/store.service';
-import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
 
 @UntilDestroy()
 @Component({
@@ -47,7 +47,7 @@ export class PaymentReportGridComponent implements OnInit, AfterViewInit {
 	private _selectedDate: Date = new Date();
 	futureDateAllowed: boolean;
 	groupBy: 'date' | 'employee' | 'project' = 'date';
-	selectedEmployee: SelectedEmployee;
+	selectedEmployee: ISelectedEmployee;
 
 	public get selectedDate(): Date {
 		return this._selectedDate;
@@ -87,7 +87,7 @@ export class PaymentReportGridComponent implements OnInit, AfterViewInit {
 
 		this.store.selectedEmployee$
 			.pipe(untilDestroyed(this))
-			.subscribe((employee: SelectedEmployee) => {
+			.subscribe((employee: ISelectedEmployee) => {
 				if (employee && employee.id) {
 					this.selectedEmployee = employee;
 				} else {

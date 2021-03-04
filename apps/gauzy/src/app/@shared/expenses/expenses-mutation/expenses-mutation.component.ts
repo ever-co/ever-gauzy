@@ -17,13 +17,13 @@ import {
 	IOrganizationExpenseCategory,
 	ContactType,
 	IExpenseViewModel,
-	ICurrency
+	ICurrency,
+	ISelectedEmployee
 } from '@gauzy/contracts';
 import { Store } from '../../../@core/services/store.service';
 import {
 	EmployeeSelectorComponent,
-	ALL_EMPLOYEES_SELECTED,
-	SelectedEmployee
+	ALL_EMPLOYEES_SELECTED
 } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { OrganizationVendorsService } from '../../../@core/services/organization-vendors.service';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
@@ -437,7 +437,7 @@ export class ExpensesMutationComponent
 		this.form.get('tags').setValue(currentSelection);
 	}
 
-	onEmployeeChange(selectedEmployee: SelectedEmployee) {
+	onEmployeeChange(selectedEmployee: ISelectedEmployee) {
 		this.showTooltip = selectedEmployee === ALL_EMPLOYEES_SELECTED;
 	}
 

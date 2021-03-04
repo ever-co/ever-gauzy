@@ -181,7 +181,7 @@ export class ProductFormComponent
 				[
 					'category',
 					'type',
-					'options',
+					'optionGroups',
 					'variants',
 					'tags',
 					'gallery',
@@ -246,7 +246,7 @@ export class ProductFormComponent
 			productTypeId: this.form.get('productTypeId').value,
 			productCategoryId: this.form.get('productCategoryId').value,
 			enabled: this.form.get('enabled').value,
-			optionCreateInputs: this.inventoryStore.createOptions,
+			optionGroupCreateInputs: this.inventoryStore.createOptionGroups,
 			optionDeleteInputs: this.inventoryStore.deleteOptions,
 			gallery: this.inventoryStore.gallery || [],
 			category: this.productCategories.find((c) => {
@@ -276,11 +276,11 @@ export class ProductFormComponent
 				);
 			}
 
-			await this.productVariantService.createProductVariants({
-				product: productResult,
-				optionCombinations: this.inventoryStore
-					.createoOptionCombinations
-			});
+			// await this.productVariantService.createProductVariants({
+			// 	product: productResult,
+			// 	optionCombinations: this.inventoryStore
+			// 		.createoOptionCombinations
+			// });
 
 			this.inventoryStore.resetDeletedOptions();
 			this.inventoryStore.resetCreateVariants();

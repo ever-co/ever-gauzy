@@ -5,6 +5,7 @@ import {
 	IEmployeeJobPost,
 	IGetEmployeeJobPostFilters,
 	IJobMatchings,
+	ISelectedEmployee,
 	IVisibilityJobPostInput,
 	JobPostSourceEnum,
 	JobPostStatusEnum,
@@ -23,7 +24,6 @@ import {
 	TruncatePipe
 } from 'apps/gauzy/src/app/@shared/pipes/text.pipe';
 import { StatusBadgeComponent } from 'apps/gauzy/src/app/@shared/status-badge/status-badge.component';
-import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import * as moment from 'moment';
 import { Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -88,7 +88,7 @@ export class SearchComponent
 	};
 
 	updateJobs$: Subject<any> = new Subject();
-	selectedEmployee: SelectedEmployee;
+	selectedEmployee: ISelectedEmployee;
 	smartTableSource: ServerDataSource;
 	autoRefreshTimer: Subscription;
 

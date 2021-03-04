@@ -326,7 +326,10 @@
 			"TEMPLATE_NAME": "Template Name",
 			"TEMPLATE_BODY": "Template Body",
 			"TEMPLATE_PREVIEW": "Template Preview",
-			"LANGUAGE": "Език (Language)"
+			"LANGUAGE": "Език (Language)",
+			"DEFAULT_INVOICE_TEMLPATE": "Default Invoice Template",
+			"DEFAULT_ESTIMATE_TEMLPATE": "Default Estimate Template",
+			"DEFAULT_RECEIPT_TEMLPATE": "Default Receipt Template"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -491,7 +494,10 @@
 			"POLICY_NAME": "Policy Name",
 			"SELECT_DATE": "Select Date",
 			"DAYS_UNTIL_DUE": "Days Until Due",
-			"TEMPLATES": "Templates"
+			"TEMPLATES": "Templates",
+			"INVOICE_TEMPLATE": "Invoice Template",
+			"ESTIMATE_TEMPLATE": "Estimate Template",
+			"RECEIPT_TEMPLATE": "Receipt Template"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Норма по подразбиране",
@@ -2089,7 +2095,9 @@
 		"CITY": "Град",
 		"LOGO": "Logo",
 		"CONTACT": "Contact",
-		"COUNTRY": "Държава"
+		"COUNTRY": "Държава",
+		"NEW_OPTION_GROUP": "New option group",
+		"OPTION_GROUP_NAME": "Option group name"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

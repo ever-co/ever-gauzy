@@ -9,6 +9,7 @@ import {
 	IGetTimeLogReportInput,
 	IOrganization,
 	IReportDayData,
+	ISelectedEmployee,
 	ITimeLogFilters,
 	OrganizationPermissionsEnum,
 	PermissionsEnum
@@ -20,7 +21,6 @@ import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { pick } from 'underscore';
 import { Store } from '../../../@core/services/store.service';
-import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { TimesheetService } from '../../timesheet/timesheet.service';
 
 @UntilDestroy()
@@ -86,7 +86,7 @@ export class DailyGridComponent implements OnInit, AfterViewInit {
 
 		this.store.selectedEmployee$
 			.pipe(untilDestroyed(this))
-			.subscribe((employee: SelectedEmployee) => {
+			.subscribe((employee: ISelectedEmployee) => {
 				if (employee && employee.id) {
 					this.logRequest.employeeIds = [employee.id];
 				} else {

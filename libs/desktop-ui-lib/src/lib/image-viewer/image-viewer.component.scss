@@ -1,6 +1,6 @@
 // @import 'themes';
 .top-bottom-space {
-  padding: 1px !important;
+  padding: 0px !important;
 }
 :host {
   .gallery-inner {
@@ -16,8 +16,6 @@
   }
   .gallery-content {
     flex-grow: 1;
-    height: 100%;
-    padding: 16px;
 
     position: relative;
     text-align: center;
@@ -41,7 +39,7 @@
     }
 
     .media-viewer {
-      max-width: 90%;
+      max-width: 100%;
       margin: 0 auto;
       img {
         max-width: 100%;
@@ -55,6 +53,7 @@
     left: 0;
     right: 0;
     background-color: rgba(122, 118, 118, 0.5);
+    height: 103px;
     .thumb-items {
       display: flex;
       flex-direction: row;
@@ -69,8 +68,8 @@
           background-color: #00d68f;
         }
         img {
-          width: 70px;
-          height: 70px;
+          width: 103px;
+          height: 103px;
           object-fit: cover;
         }
       }

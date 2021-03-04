@@ -2,31 +2,45 @@ import * as _ from 'underscore';
 import * as moment from 'moment';
 import * as timezone from 'moment-timezone';
 import { Connection } from 'typeorm';
-import { Organization } from './organization.entity';
 import * as faker from 'faker';
 import { getDummyImage } from '../core';
+import {
+	Contact,
+	Organization,
+	Skill,
+	Tenant
+} from '../core/entities/internal';
 import {
 	DefaultValueDateTypeEnum,
 	BonusTypeEnum,
 	WeekDaysEnum,
 	AlignmentOptions,
-	IOrganizationCreateInput
+	IOrganizationCreateInput,
+	IOrganization
 } from '@gauzy/contracts';
-import { Tenant } from './../tenant/tenant.entity';
-import { Skill } from '../skills/skill.entity';
-import { Contact } from '../contact/contact.entity';
 import { DEFAULT_ORGANIZATIONS } from './default-organizations';
 import { environment as env } from '@gauzy/config';
 
 export const getDefaultBulgarianOrganization = async (
 	connection: Connection,
 	tenant: Tenant
-): Promise<Organization> => {
+): Promise<IOrganization> => {
 	const repo = connection.getRepository(Organization);
 	const existedOrganization = await repo.findOne({
 		where: { tenantId: tenant.id, name: 'Ever Technologies LTD' }
 	});
 	return existedOrganization;
+};
+
+export const getDefaultOrganizations = async (
+	connection: Connection,
+	tenant: Tenant
+): Promise<IOrganization[]> => {
+	const repo = connection.getRepository(Organization);
+	const orgnaizations = await repo.find({
+		where: { tenantId: tenant.id }
+	});
+	return orgnaizations;
 };
 
 let defaultOrganizationsInserted = [];

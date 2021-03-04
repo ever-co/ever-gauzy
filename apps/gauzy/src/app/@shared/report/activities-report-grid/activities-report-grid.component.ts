@@ -9,6 +9,7 @@ import {
 	IGetTimeLogReportInput,
 	IOrganization,
 	IReportDayData,
+	ISelectedEmployee,
 	ITimeLogFilters,
 	OrganizationPermissionsEnum,
 	PermissionsEnum
@@ -20,7 +21,6 @@ import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { pick } from 'underscore';
 import { Store } from '../../../@core/services/store.service';
-import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { ActivityService } from '../../timesheet/activity.service';
 
 @UntilDestroy()
@@ -47,7 +47,7 @@ export class ActivitiesReportGridComponent implements OnInit, AfterViewInit {
 	private _selectedDate: Date = new Date();
 	futureDateAllowed: boolean;
 	groupBy: 'date' | 'employee' | 'project' | 'client' = 'date';
-	selectedEmployee: SelectedEmployee;
+	selectedEmployee: ISelectedEmployee;
 
 	public get selectedDate(): Date {
 		return this._selectedDate;
@@ -87,7 +87,7 @@ export class ActivitiesReportGridComponent implements OnInit, AfterViewInit {
 
 		this.store.selectedEmployee$
 			.pipe(untilDestroyed(this))
-			.subscribe((employee: SelectedEmployee) => {
+			.subscribe((employee: ISelectedEmployee) => {
 				if (employee && employee.id) {
 					this.selectedEmployee = employee;
 				} else {

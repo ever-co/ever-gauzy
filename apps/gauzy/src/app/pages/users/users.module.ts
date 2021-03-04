@@ -30,7 +30,7 @@ import { EditProfileFormModule } from '../../@shared/user/edit-profile-form/edit
 import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invite-mutation.module';
 import { ManageUserInviteComponent } from './manage-user-invite/manage-user-invite.component';
 import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
-import { InviteGuard } from '../../@core/role/invite.guard';
+import { InviteGuard } from '../../@core/guards';
 import { UserMultiSelectModule } from '../../@shared/user/user-multi-select/user-multi-select.module';
 import { OrganizationsModule } from '../organizations/organizations.module';
 import { EditUserOrganizationsComponent } from './edit-user-profile/edit-user-organizations/edit-user-organizations.component';

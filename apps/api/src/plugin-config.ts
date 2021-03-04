@@ -8,6 +8,7 @@ import {
 import { ConnectionOptions } from 'typeorm';
 import * as path from 'path';
 import { KnowledgeBasePlugin } from '@gauzy/knowledge-base';
+import { ChangelogPlugin } from '@gauzy/changelog';
 
 export const pluginConfig: IPluginConfig = {
 	apiConfigOptions: {
@@ -38,7 +39,7 @@ export const pluginConfig: IPluginConfig = {
 			path.resolve(__dirname, '../../../', ...['apps', 'api', 'public'])
 		)
 	},
-	plugins: [KnowledgeBasePlugin]
+	plugins: [KnowledgeBasePlugin, ChangelogPlugin]
 };
 
 function getDbConfig(): ConnectionOptions {

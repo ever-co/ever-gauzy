@@ -7,14 +7,14 @@ import {
 import {
 	IGetPaymentInput,
 	IOrganization,
-	IPaymentReportChartData
+	IPaymentReportChartData,
+	ISelectedEmployee
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { PaymentService } from 'apps/gauzy/src/app/@core/services/payment.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import * as moment from 'moment';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -77,7 +77,7 @@ export class PaymentReportComponent
 
 		this.store.selectedEmployee$
 			.pipe(untilDestroyed(this))
-			.subscribe((employee: SelectedEmployee) => {
+			.subscribe((employee: ISelectedEmployee) => {
 				if (employee && employee.id) {
 					this.logRequest.employeeIds = [employee.id];
 				} else {

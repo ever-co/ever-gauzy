@@ -1,16 +1,17 @@
-import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { IProductOption } from '@gauzy/contracts';
+import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { IProductOptionTranslatable } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import {
-	Product,
-	TenantOrganizationBaseEntity
+	TenantOrganizationBaseEntity,
+	ProductOptionTranslation
 } from '../core/entities/internal';
+import { ProductOptionGroup } from './product-option-group.entity';
 
 @Entity('product_option')
 export class ProductOption
 	extends TenantOrganizationBaseEntity
-	implements IProductOption {
+	implements IProductOptionTranslatable {
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()
@@ -18,13 +19,17 @@ export class ProductOption
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column()
+	@Column({ nullable: true })
 	code: string;
 
-	@ManyToOne(() => Product, (product) => product.options, {
-		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
-	})
+	@ManyToOne(() => ProductOptionGroup, (group) => group.options)
 	@JoinColumn()
-	product: Product;
+	group: ProductOptionGroup;
+
+	@OneToMany(
+		() => ProductOptionTranslation,
+		(translation) => translation.reference,
+		{ eager: true }
+	)
+	translations: ProductOptionTranslation[];
 }

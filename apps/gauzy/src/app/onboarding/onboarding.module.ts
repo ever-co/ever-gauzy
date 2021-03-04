@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { NbLayoutModule, NbSpinnerModule } from '@nebular/theme';
-import { RoleGuard } from '../@core/role/role.guard';
+import { RoleGuard } from '../@core/guards';
 import { AuthService } from '../@core/services/auth.service';
 import { TranslateModule } from '../@shared/translate/translate.module';
 import { ThemeModule } from '../@theme/theme.module';

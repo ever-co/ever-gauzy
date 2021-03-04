@@ -1,5 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { SeedDataService } from '@gauzy/core';
+import { Connection, getConnection, Not } from 'typeorm';
+import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
+import {
+	getDefaultBulgarianOrganization,
+	getDefaultOrganizations,
+	getDefaultTenant,
+	getDefaultEmployees,
+	SeedDataService,
+	Tenant,
+	Employee
+} from '@gauzy/core';
 import { createHelpCenter } from './help-center';
 import { createHelpCenterArticle } from './help-center-article/help-center-article.seed';
 import {
@@ -14,6 +24,12 @@ import {
  */
 @Injectable()
 export class HelpCenterSeederService {
+	connection: Connection;
+	tenant: ITenant;
+	organization: IOrganization;
+	organizations: IOrganization[];
+	defaultEmployees: IEmployee[];
+
 	/**
 	 * Create an instance of class.
 	 *
@@ -28,30 +44,39 @@ export class HelpCenterSeederService {
 	 * @function
 	 */
 	async createDefault() {
+		this.connection = getConnection();
+		this.tenant = await getDefaultTenant(this.connection);
+		this.organization = await getDefaultBulgarianOrganization(
+			this.connection,
+			this.tenant
+		);
+		this.organizations = await getDefaultOrganizations(
+			this.connection,
+			this.tenant
+		);
+
 		await this.seeder.tryExecute(
 			'Default Help Centers',
-			createHelpCenter(
-				this.seeder.connection,
-				this.seeder.tenant,
-				this.seeder.organizations[0]
-			)
+			createHelpCenter(this.connection, this.tenant, this.organization)
 		);
 
 		const noOfHelpCenterArticle = 5;
 		await this.seeder.tryExecute(
 			'Default Help Center Articles',
 			createHelpCenterArticle(
-				this.seeder.connection,
-				this.seeder.organizations,
+				this.connection,
+				this.organizations,
 				noOfHelpCenterArticle
 			)
 		);
 
+		this.defaultEmployees = await getDefaultEmployees(this.connection);
+
 		await this.seeder.tryExecute(
 			'Default Help Center Author',
 			createDefaultHelpCenterAuthor(
-				this.seeder.connection,
-				this.seeder.defaultEmployees
+				this.connection,
+				this.defaultEmployees
 			)
 		);
 	}
@@ -66,18 +91,38 @@ export class HelpCenterSeederService {
 		await this.seeder.tryExecute(
 			'Random Help Center Articles',
 			createHelpCenterArticle(
-				this.seeder.connection,
-				this.seeder.organizations,
+				this.connection,
+				this.organizations,
 				noOfHelpCenterArticle
 			)
 		);
 
+		const rendomTenants: Tenant[] = await this.connection
+			.getRepository(Tenant)
+			.find({
+				where: {
+					name: Not('Ever')
+				}
+			});
+
+		const employeeMap: Map<ITenant, IEmployee[]> = new Map();
+		for await (const tenant of rendomTenants) {
+			const employees: Employee[] = await this.connection
+				.getRepository(Employee)
+				.find({
+					where: {
+						tenantId: tenant.id
+					}
+				});
+			employeeMap.set(tenant, employees);
+		}
+
 		await this.seeder.tryExecute(
 			'Random Help Center Authors',
 			createRandomHelpCenterAuthor(
-				this.seeder.connection,
-				this.seeder.randomTenants,
-				this.seeder.randomTenantEmployeeMap
+				this.connection,
+				rendomTenants,
+				employeeMap
 			)
 		);
 	}

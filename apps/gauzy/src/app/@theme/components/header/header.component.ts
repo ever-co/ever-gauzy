@@ -27,6 +27,10 @@ import { OrganizationsService } from '../../../@core/services/organizations.serv
 import { EmployeesService } from '../../../@core/services/employees.service';
 import { NO_EMPLOYEE_SELECTED } from './selectors/employee/employee.component';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
+import {
+	ISidebarActionConfig,
+	NavigationBuilderService
+} from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -74,18 +78,19 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	timerDuration: string;
 
 	constructor(
-		private sidebarService: NbSidebarService,
-		private menuService: NbMenuService,
-		private layoutService: LayoutService,
-		private themeService: NbThemeService,
-		private router: Router,
-		private translate: TranslateService,
-		private store: Store,
-		private timeTrackerService: TimeTrackerService,
-		private usersOrganizationsService: UsersOrganizationsService,
-		private organizationsService: OrganizationsService,
-		private employeesService: EmployeesService,
-		private organizationProjectsService: OrganizationProjectsService
+		private readonly sidebarService: NbSidebarService,
+		private readonly menuService: NbMenuService,
+		private readonly layoutService: LayoutService,
+		private readonly themeService: NbThemeService,
+		private readonly router: Router,
+		private readonly translate: TranslateService,
+		private readonly store: Store,
+		private readonly timeTrackerService: TimeTrackerService,
+		private readonly usersOrganizationsService: UsersOrganizationsService,
+		private readonly organizationsService: OrganizationsService,
+		private readonly employeesService: EmployeesService,
+		private readonly organizationProjectsService: OrganizationProjectsService,
+		public readonly navigationBuilderService: NavigationBuilderService
 	) {}
 
 	ngOnInit() {
@@ -230,14 +235,14 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			.showTimerWindow;
 	}
 
-	toggleChangelogMenu(): boolean {
+	toggleSidebarActions(item: ISidebarActionConfig) {
+		const sidebar = this.navigationBuilderService.getSidebarById(item.id);
 		if (this.showExtraActions) {
 			this.toggleExtraActions(false);
-			this.sidebarService.expand('changelog-sidebar');
+			this.sidebarService.expand(sidebar.id);
 		} else {
-			this.sidebarService.toggle(false, 'changelog-sidebar');
+			this.sidebarService.toggle(false, sidebar.id);
 		}
-		return false;
 	}
 
 	toggleSidebar(): boolean {
@@ -247,16 +252,6 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		} else {
 			this.sidebarService.toggle(true, 'menu-sidebar');
 			this.layoutService.changeLayoutSize();
-		}
-		return false;
-	}
-
-	toggleSettings(): boolean {
-		if (this.showExtraActions) {
-			this.toggleExtraActions(false);
-			this.sidebarService.expand('settings-sidebar');
-		} else {
-			this.sidebarService.toggle(false, 'settings-sidebar');
 		}
 		return false;
 	}

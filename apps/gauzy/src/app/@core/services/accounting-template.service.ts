@@ -30,6 +30,15 @@ export class AccountingTemplateService {
 			.toPromise();
 	}
 
+	getById(id: string): Promise<IAccountingTemplate> {
+		return this.http
+			.get<IAccountingTemplate>(
+				`${API_PREFIX}/accounting-template/template/${id}`
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
 	getTemplate(
 		findInput?: IAccountingTemplateFindInput
 	): Promise<IAccountingTemplate> {
@@ -60,6 +69,16 @@ export class AccountingTemplateService {
 			.post<any>(`${API_PREFIX}/accounting-template/template/save`, {
 				data
 			})
+			.pipe(first())
+			.toPromise();
+	}
+
+	updateTemplate(id: string, data: any): Promise<any> {
+		return this.http
+			.put<any>(
+				`${API_PREFIX}/accounting-template/template/update/${id}`,
+				data
+			)
 			.pipe(first())
 			.toPromise();
 	}

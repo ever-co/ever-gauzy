@@ -28,6 +28,7 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../@core/services/toastr.service';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './expenses.component.html',

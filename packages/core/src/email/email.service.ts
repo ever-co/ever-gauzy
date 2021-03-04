@@ -33,63 +33,78 @@ export class EmailService extends CrudService<IEmail> {
 		private readonly organizationRepository: Repository<Organization>
 	) {
 		super(emailRepository);
+
+		const config: Email.EmailConfig<any> = {
+			message: {
+				from: env.smtpConfig.from || 'gauzy@ever.co'
+			},
+
+			// if you want to send emails in development or test environments, set options.send to true.
+			send: true,
+			transport: this.createSMTPTransporter(),
+			i18n: {},
+			views: {
+				options: {
+					extension: 'hbs'
+				}
+			},
+			render: this.render
+		};
+
+		if (!env.production) {
+			config.preview = {
+				open: {
+					app: 'firefox',
+					wait: false
+				}
+			};
+		}
+
+		this.email = new Email(config);
 	}
 
-	email = new Email({
-		message: {
-			from: env.smtpConfig.from || 'Gauzy@Ever.co'
-		},
-		//If you want to send emails in development or test environments, set options.send to true.
-		send: true,
-		transport: this.createSMTPTransporter(),
-		i18n: {},
-		views: {
-			options: {
-				extension: 'hbs'
-			}
-		},
-		preview: {
-			open: {
-				app: 'firefox',
-				wait: false
-			}
-		},
-		render: (view, locals) => {
-			return new Promise(async (resolve, reject) => {
-				view = view.replace('\\', '/');
-				let emailTemplate: EmailTemplate[];
-				// Find email template for customized for given organization
-				const customEmailTemplate = await this.emailTemplateRepository.find(
+	private render = (view, locals) => {
+		return new Promise(async (resolve, reject) => {
+			view = view.replace('\\', '/');
+
+			// Find email template for customized for given organization
+			const customEmailTemplate = await this.emailTemplateRepository.find(
+				{
+					name: view,
+					languageCode: locals.locale || 'en',
+					organizationId: locals.organizationId,
+					tenantId: locals.tenantId
+				}
+			);
+
+			let emailTemplate: EmailTemplate[] = customEmailTemplate;
+
+			// if no email template present for given organization, use default email template
+			if (!customEmailTemplate || customEmailTemplate.length < 1) {
+				const defaultEmailTemplate = await this.emailTemplateRepository.find(
 					{
 						name: view,
 						languageCode: locals.locale || 'en',
-						organizationId: locals.organizationId,
-						tenantId: locals.tenantId
+						organizationId: IsNull(),
+						tenantId: IsNull()
 					}
 				);
-				emailTemplate = customEmailTemplate;
-				// if no email template present for given organization, use default email template
-				if (!customEmailTemplate || customEmailTemplate.length < 1) {
-					const defaultEmailTemplate = await this.emailTemplateRepository.find(
-						{
-							name: view,
-							languageCode: locals.locale || 'en',
-							organizationId: IsNull(),
-							tenantId: IsNull()
-						}
-					);
-					emailTemplate = defaultEmailTemplate;
-				}
-				if (!emailTemplate || emailTemplate.length < 1) {
-					return resolve('');
-				}
-				const template = Handlebars.compile(emailTemplate[0].hbs);
-				const html = template(locals);
+				emailTemplate = defaultEmailTemplate;
+			}
 
-				return resolve(html);
-			});
-		}
-	});
+			if (!emailTemplate || emailTemplate.length < 1) {
+				return resolve('');
+			}
+
+			const template = Handlebars.compile(emailTemplate[0].hbs);
+
+			const html = template(locals);
+
+			return resolve(html);
+		});
+	};
+
+	private readonly email: Email;
 
 	async sendPaymentReceipt(
 		languageCode: LanguagesEnum,
@@ -387,46 +402,6 @@ export class EmailService extends CrudService<IEmail> {
 			.catch(console.error);
 	}
 
-	async createEmailRecord(createEmailOptions: {
-		templateName: string;
-		email: string;
-		languageCode: LanguagesEnum;
-		message: any;
-		organization?: Organization;
-		user?: User;
-	}): Promise<IEmail> {
-		const emailEntity = new IEmail();
-
-		const {
-			templateName: template,
-			email,
-			languageCode,
-			message,
-			organization,
-			user
-		} = createEmailOptions;
-
-		const emailTemplate = await this.emailTemplateRepository.findOne({
-			name: template + '/html',
-			languageCode
-		});
-
-		emailEntity.name = message.subject;
-		emailEntity.email = email;
-		emailEntity.content = message.html;
-		emailEntity.emailTemplate = emailTemplate;
-
-		if (organization) {
-			emailEntity.organizationId = organization.id;
-		}
-
-		if (user) {
-			emailEntity.user = user;
-		}
-
-		return this.emailRepository.save(emailEntity);
-	}
-
 	async sendAppointmentMail(
 		email: string,
 		languageCode: LanguagesEnum,
@@ -540,10 +515,50 @@ export class EmailService extends CrudService<IEmail> {
 			.catch(console.error);
 	}
 
+	private async createEmailRecord(createEmailOptions: {
+		templateName: string;
+		email: string;
+		languageCode: LanguagesEnum;
+		message: any;
+		organization?: Organization;
+		user?: User;
+	}): Promise<IEmail> {
+		const emailEntity = new IEmail();
+
+		const {
+			templateName: template,
+			email,
+			languageCode,
+			message,
+			organization,
+			user
+		} = createEmailOptions;
+
+		const emailTemplate = await this.emailTemplateRepository.findOne({
+			name: template + '/html',
+			languageCode
+		});
+
+		emailEntity.name = message.subject;
+		emailEntity.email = email;
+		emailEntity.content = message.html;
+		emailEntity.emailTemplate = emailTemplate;
+
+		if (organization) {
+			emailEntity.organizationId = organization.id;
+		}
+
+		if (user) {
+			emailEntity.user = user;
+		}
+
+		return this.emailRepository.save(emailEntity);
+	}
+
 	/*
 	 * This example would connect to a SMTP server separately for every single message
 	 */
-	createSMTPTransporter() {
+	public createSMTPTransporter() {
 		const smtp: ISMTPConfig = env.smtpConfig;
 		return {
 			host: smtp.host,
@@ -557,7 +572,7 @@ export class EmailService extends CrudService<IEmail> {
 	}
 
 	// tested e-mail send functionality
-	async nodemailerSendEmail(user: User, url: string) {
+	private async nodemailerSendEmail(user: User, url: string) {
 		const testAccount = await nodemailer.createTestAccount();
 
 		const transporter = nodemailer.createTransport({

@@ -9,6 +9,7 @@
 		"Grafana",
 		"HUBSTAFF",
 		"IKPI",
+		"ISMTP",
 		"IURL",
 		"Kubernetes",
 		"Orgs",
@@ -57,5 +58,13 @@
 		"websockets"
 	],
 	"vsicons.presets.angular": true,
-	"deepscan.enable": true
+	"deepscan.enable": true,
+	"files.exclude": {
+		"**/.git": true,
+		"**/.DS_Store": true,
+		"**/node_modules": false,
+		"**/public/**/*.png": true,
+		"**/public/**/*.jpg": true,
+		"**/public/**/*.pdf": true
+	}
 }

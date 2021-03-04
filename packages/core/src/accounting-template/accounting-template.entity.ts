@@ -1,7 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, Index } from 'typeorm';
-import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
-import { IAccountingTemplate } from '@gauzy/contracts';
+import { IsNotEmpty, IsString, IsEnum } from 'class-validator';
+import {
+	AccountingTemplateTypeEnum,
+	IAccountingTemplate
+} from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 
 @Entity('accounting_template')
@@ -24,14 +27,19 @@ export class AccountingTemplate
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column({ nullable: true })
-	@IsOptional()
+	@IsNotEmpty()
+	@Column()
 	mjml: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Column({ nullable: true })
-	@IsOptional()
+	@Column()
 	hbs: string;
+
+	@ApiProperty({ type: () => String, enum: AccountingTemplateTypeEnum })
+	@IsEnum(AccountingTemplateTypeEnum)
+	@IsNotEmpty()
+	@Column()
+	templateType: string;
 }

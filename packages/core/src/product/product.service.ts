@@ -107,7 +107,21 @@ export class ProductService extends TenantAwareCrudService<Product> {
 	}
 
 	async saveProduct(productRequest: IProductCreateInput): Promise<Product> {
-		return await this.productRepository.save(<any>productRequest);
+		let res = await this.productRepository.save(<any>productRequest);
+
+		let product = await this.productRepository.findOne({
+			where: { id: res.id },
+			relations: [
+				'variants',
+				'optionGroups',
+				'type',
+				'category',
+				'tags',
+				'gallery'
+			]
+		});
+
+		return product;
 	}
 
 	async addGalleryImages(

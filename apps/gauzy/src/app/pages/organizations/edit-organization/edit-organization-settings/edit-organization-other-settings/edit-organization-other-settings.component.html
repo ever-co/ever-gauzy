@@ -447,6 +447,90 @@
 							/>
 						</div>
 					</div>
+					<div *ngIf="invoiceTemplates" class="col-6">
+						<label class="label">
+							{{
+								'FORM.LABELS.DEFAULT_INVOICE_TEMLPATE'
+									| translate
+							}}
+						</label>
+						<nb-select
+							size="medium"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.INVOICE_TEMPLATE' | translate
+							}}"
+							fullWidth
+							(selectedChange)="selectTemplate($event)"
+							formControlName="invoiceTemplate"
+						>
+							<nb-option
+								*ngFor="let template of invoiceTemplates"
+								[value]="template.id"
+							>
+								{{
+									'ACCOUNTING_TEMPLATES_PAGE.TEMPLATE_NAMES.' +
+										template.name | translate
+								}}
+							</nb-option>
+						</nb-select>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-6">
+						<label class="label">
+							{{
+								'FORM.LABELS.DEFAULT_ESTIMATE_TEMLPATE'
+									| translate
+							}}
+						</label>
+						<nb-select
+							size="medium"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.ESTIMATE_TEMPLATE'
+									| translate
+							}}"
+							formControlName="estimateTemplate"
+							fullWidth
+							(selectedChange)="selectTemplate($event)"
+						>
+							<nb-option
+								[value]="template.id"
+								*ngFor="let template of estimateTemplates"
+							>
+								{{
+									'ACCOUNTING_TEMPLATES_PAGE.TEMPLATE_NAMES.' +
+										template.name | translate
+								}}
+							</nb-option>
+						</nb-select>
+					</div>
+					<div class="col-6">
+						<label class="label">
+							{{
+								'FORM.LABELS.DEFAULT_RECEIPT_TEMLPATE'
+									| translate
+							}}
+						</label>
+						<nb-select
+							size="medium"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.RECEIPT_TEMPLATE' | translate
+							}}"
+							formControlName="receiptTemplate"
+							fullWidth
+							(selectedChange)="selectTemplate($event)"
+						>
+							<nb-option
+								[value]="template.id"
+								*ngFor="let template of receiptTemplates"
+							>
+								{{
+									'ACCOUNTING_TEMPLATES_PAGE.TEMPLATE_NAMES.' +
+										template.name | translate
+								}}
+							</nb-option>
+						</nb-select>
+					</div>
 				</div>
 			</div>
 		</nb-card-body>
