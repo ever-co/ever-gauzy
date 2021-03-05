@@ -48,7 +48,8 @@ jobs:
               with:
                   context: .
                   file: ./.deploy/api/Dockerfile
-                  load: true
+                  # load: true
+                  platforms: linux/amd64,linux/arm64
                   tags: |
                       ghcr.io/ever-co/gauzy-api:latest
                       everco/gauzy-api:latest
