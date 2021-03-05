@@ -48,12 +48,20 @@ jobs:
               with:
                   context: .
                   file: ./.deploy/api/Dockerfile
-                  # load: true
+                  load: true
                   tags: |
                       ghcr.io/ever-co/gauzy-api:latest
                       everco/gauzy-api:latest
                       registry.digitalocean.com/ever/gauzy-api:latest
                   outputs: type=oci,dest=/tmp/image.tar
+
+            - name: Verify if image file created
+              run: | 
+                 sudo ls /tmp
+                 
+            - name: Docker images list
+              run: | 
+                 sudo docker image list
 
             - name: Import image in containerd
               run: |
