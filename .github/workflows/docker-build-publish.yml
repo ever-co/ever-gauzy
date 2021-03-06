@@ -11,6 +11,26 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v2
 
+            - name: Free disk space
+              run: |
+                df -h /
+                sudo swapoff -a
+                df -h /
+                ls -lh /swapfile
+                sudo rm -f /swapfile
+                df -h /
+                sudo apt clean
+                df -h /
+                docker image ls -aq
+                docker rmi $(docker image ls -aq)
+                df -h /
+                find ~/work/_temp -name "cache.tgz" -exec rm -f {} \;
+                df -h /
+                sudo rm -rf "/usr/local/share/boost"
+                df -h /
+                sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+                df -h /
+
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v1
 
