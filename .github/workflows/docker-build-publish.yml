@@ -16,6 +16,11 @@ jobs:
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v1
+              with:
+                buildkitd-flags: --debug
+
+            - name: Set up containerd
+              uses: crazy-max/ghaction-setup-containerd@v1
 
             - name: Login to DockerHub
               uses: docker/login-action@v1
@@ -44,14 +49,24 @@ jobs:
                   context: .
                   file: ./.deploy/api/Dockerfile
                   load: true
+                  # platforms: linux/amd64
                   tags: |
                       ghcr.io/ever-co/gauzy-api:latest
                       everco/gauzy-api:latest
                       registry.digitalocean.com/ever/gauzy-api:latest
+                  # outputs: type=oci,dest=/tmp/image.tar
 
-            - name: Push to Github Registry
-              run: |
-                  docker push ghcr.io/ever-co/gauzy-api:latest
+            - name: Docker images list
+              run: | 
+                 sudo docker image list
+
+            # - name: Import image in containerd
+            #  run: |
+            #     sudo ctr i import --base-name ghcr.io/ever-co/gauzy-api --digests --all-platforms /tmp/image.tar
+
+            # - name: Push image with containerd to Github Registry
+            #  run: |
+            #     sudo ctr --debug i push --user "${{ github.repository_owner }}:${{ secrets.GH_TOKEN }}" ghcr.io/ever-co/gauzy-api:latest
 
             - name: Push to Docker Hub Registry
               run: |
@@ -60,6 +75,10 @@ jobs:
             - name: Push to DigitalOcean Registry
               run: |
                   docker push registry.digitalocean.com/ever/gauzy-api:latest
+
+            - name: Push to Github Registry
+              run: |
+                  docker push ghcr.io/ever-co/gauzy-api:latest
 
     gauzy-webapp:
         runs-on: ubuntu-latest
@@ -105,10 +124,6 @@ jobs:
                       everco/gauzy-webapp:latest
                       registry.digitalocean.com/ever/gauzy-webapp:latest
 
-            - name: Push to Github Registry
-              run: |
-                  docker push ghcr.io/ever-co/gauzy-webapp:latest
-
             - name: Push to Docker Hub Registry
               run: |
                   docker push everco/gauzy-webapp:latest
@@ -116,3 +131,7 @@ jobs:
             - name: Push to DigitalOcean Registry
               run: |
                   docker push registry.digitalocean.com/ever/gauzy-webapp:latest
+
+            - name: Push to Github Registry
+              run: |
+                  docker push ghcr.io/ever-co/gauzy-webapp:latest

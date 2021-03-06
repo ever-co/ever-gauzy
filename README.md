@@ -9,7 +9,7 @@ Gauzy™ Platform - **Open-Source Business Management Platform** focused on **Fa
 
 Gauzy Platform is an Enterprise Resource Planning (ERP), Customer Relationship Management (CRM) and Human Resource Management (HRM) software.
 
-You are welcome to check more information about the platform at our official website - **<https://gauzy.co>**.
+You are welcome to check more information about the platform at our official websites - **<https://gauzy.co>** and **<https://ever.co>**.
 
 ![overview](https://gauzy.co/wp-content/themes/gauzy/assets/img/home/home-1.png)
 
