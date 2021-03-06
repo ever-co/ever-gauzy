@@ -16,9 +16,6 @@ jobs:
                 df -h /
                 sudo swapoff -a
                 df -h /
-                ls -lh /swapfile
-                sudo rm -f /swapfile
-                df -h /
                 sudo apt clean
                 df -h /
                 docker image ls -aq
