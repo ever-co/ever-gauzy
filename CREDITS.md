@@ -22,4 +22,4 @@ We acknowledge and are grateful to these developers for their contributions to o
 
 ## Sounds
 
-- https://freesound.org/people/Rvgerxini/sounds/455511/ licensed under [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0)
+- https://freesound.org/people/xef6/sounds/61059 licensed under [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0)
