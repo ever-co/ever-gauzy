@@ -1,0 +1,21 @@
+FROM electronuserland/builder:wine as windows
+
+WORKDIR /opt/src
+
+COPY apps/desktop-timer/package.json ./apps/desktop-timer/
+COPY apps/api/package.json ./apps/api/
+COPY package.json yarn.lock ./
+
+RUN yarn install --frozen-lockfile
+
+COPY . .
+
+RUN yarn bootstrap
+
+RUN yarn build:desktop-timer:windows
+
+FROM debian:buster-slim
+
+WORKDIR /opt/artifacts
+
+COPY --from=windows /opt/src/dist/apps/desktop-packages ./windows/
