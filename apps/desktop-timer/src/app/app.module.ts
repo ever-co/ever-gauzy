@@ -33,7 +33,7 @@ import { AuthService } from './auth/services/auth.service';
 import { Store } from './auth/services/store.service';
 import { NoAuthGuard } from './auth/no-auth.guard';
 import { AppModuleGuard } from './app.module.guards';
-import { APIInterceptor } from '../../../gauzy/src/app/@core/api.interceptor';
+import { APIInterceptor } from '../../../gauzy/src/app/@core/interceptors/api.interceptor';
 import { TokenInterceptor } from './auth/token.interceptor';
 import { ServerDownModule } from './server-down/server-down.module';
 import { ServerConnectionService } from './auth/services/server-connection.service';
@@ -104,13 +104,15 @@ export function serverConnectionFactory(
 	store: Store,
 	router: Router
 ) {
-	return () =>
-		provider
+	return () => {
+		return provider
 			.checkServerConnection(environment.API_BASE_URL)
 			.finally(() => {
-				if (store.serverConnection !== 200) {
-					router.navigate(['server-down']);
-				}
+				// if (store.serverConnection !== 200) {
+				// 	router.navigate(['server-down']);
+				// }
 			})
 			.catch(() => {});
+		// return true;
+	};
 }

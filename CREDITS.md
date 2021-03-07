@@ -19,3 +19,7 @@ We acknowledge and are grateful to these developers for their contributions to o
 ## Fonts
 
 - https://fonts.google.com/specimen/Crimson+Text ([OFL web license](https://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL_web))
+
+## Sounds
+
+- https://freesound.org/people/xef6/sounds/61059 licensed under [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0)

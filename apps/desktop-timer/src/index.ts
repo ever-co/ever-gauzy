@@ -78,6 +78,24 @@ const knex = require('knex')({
 	}
 });
 
+const AutoLaunch = require('auto-launch');
+
+let gauzyTimer: any;
+
+if (process.platform === 'darwin') {
+	gauzyTimer = new AutoLaunch({
+		name: 'Gauzy Desktop Timer',
+		path: '/Applications/Gauzy Desktop Timer.app'
+	});
+}
+
+if (process.platform === 'win32') {
+	gauzyTimer = new AutoLaunch({
+		name: 'Gauzy Desktop Timer',
+		path: app.getPath('exe')
+	});
+}
+
 const dataModel = new DataModel();
 dataModel.createNewTable(knex);
 
@@ -103,7 +121,11 @@ let alreadyQuit = false;
 let serverGauzy = null;
 let serverDesktop = null;
 let dialogErr = false;
-let cancellationToken = new CancellationToken();
+let cancellationToken = null;
+console.log('this is new');
+try {
+	cancellationToken = new CancellationToken();
+} catch (error) {}
 
 const pathWindow = {
 	timeTrackerUi: path.join(__dirname, '../../../index.html')
@@ -203,6 +225,11 @@ const getApiBaseUrl = (configs) => {
 app.on('ready', async () => {
 	// require(path.join(__dirname, 'desktop-api/main.js'));
 	/* set menu */
+	if (process.platform === 'win32' || process.platform === 'darwin') {
+		gauzyTimer.isEnabled().then((isEnabled) => {
+			if (!isEnabled) gauzyTimer.enable();
+		});
+	}
 	Menu.setApplicationMenu(
 		Menu.buildFromTemplate([
 			{
@@ -342,7 +369,8 @@ ipcMain.on('open_browser', (event, arg) => {
 
 ipcMain.on('check_for_update', (event, arg) => {
 	autoUpdater.checkForUpdatesAndNotify().then((downloadPromise) => {
-		cancellationToken = downloadPromise.cancellationToken;
+		if (cancellationToken)
+			cancellationToken = downloadPromise.cancellationToken;
 	});
 });
 
