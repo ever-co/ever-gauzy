@@ -62,6 +62,23 @@ import {
 } from '../../../libs/desktop-window/src';
 import { fork } from 'child_process';
 import { autoUpdater, CancellationToken } from 'electron-updater';
+const AutoLaunch = require('auto-launch');
+
+let gauzyAPP: any;
+
+if (process.platform === 'darwin') {
+	gauzyAPP = new AutoLaunch({
+		name: 'Gauzy Desktop',
+		path: '/Applications/Gauzy Desktop.app'
+	});
+}
+
+if (process.platform === 'win32') {
+	gauzyAPP = new AutoLaunch({
+		name: 'Gauzy Desktop',
+		path: app.getPath('exe')
+	});
+}
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
 // C:\Users\USERNAME\AppData\Roaming\gauzy-desktop
@@ -264,6 +281,11 @@ const getApiBaseUrl = (configs) => {
 app.on('ready', async () => {
 	// require(path.join(__dirname, 'desktop-api/main.js'));
 	/* set menu */
+	if (process.platform === 'win32' || process.platform === 'darwin') {
+		gauzyAPP.isEnabled().then((isEnabled) => {
+			if (!isEnabled) gauzyAPP.enable();
+		});
+	}
 	Menu.setApplicationMenu(
 		Menu.buildFromTemplate([
 			{
