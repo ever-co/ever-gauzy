@@ -11,16 +11,23 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v2
 
+            - name: Free disk space
+              run: |
+                df -h /
+                sudo swapoff -a                
+                sudo apt clean                
+                docker image ls -aq
+                docker rmi $(docker image ls -aq)                
+                find ~/work/_temp -name "cache.tgz" -exec rm -f {} \;                
+                sudo rm -rf "/usr/local/share/boost"                
+                sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+                df -h /
+
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v1
 
             - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v1
-              with:
-                buildkitd-flags: --debug
-
-            - name: Set up containerd
-              uses: crazy-max/ghaction-setup-containerd@v1
+              uses: docker/setup-buildx-action@v1              
 
             - name: Login to DockerHub
               uses: docker/login-action@v1
@@ -49,24 +56,17 @@ jobs:
                   context: .
                   file: ./.deploy/api/Dockerfile
                   load: true
-                  # platforms: linux/amd64
+                  platforms: linux/amd64
                   tags: |
                       ghcr.io/ever-co/gauzy-api:latest
                       everco/gauzy-api:latest
                       registry.digitalocean.com/ever/gauzy-api:latest
-                  # outputs: type=oci,dest=/tmp/image.tar
+                  cache-from: type=registry,ref=everco/gauzy-api:latest
+                  cache-to: type=inline
 
             - name: Docker images list
               run: | 
                  sudo docker image list
-
-            # - name: Import image in containerd
-            #  run: |
-            #     sudo ctr i import --base-name ghcr.io/ever-co/gauzy-api --digests --all-platforms /tmp/image.tar
-
-            # - name: Push image with containerd to Github Registry
-            #  run: |
-            #     sudo ctr --debug i push --user "${{ github.repository_owner }}:${{ secrets.GH_TOKEN }}" ghcr.io/ever-co/gauzy-api:latest
 
             - name: Push to Docker Hub Registry
               run: |
@@ -85,6 +85,18 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v2
+
+            - name: Free disk space
+              run: |
+                df -h /
+                sudo swapoff -a                
+                sudo apt clean                
+                docker image ls -aq
+                docker rmi $(docker image ls -aq)                
+                find ~/work/_temp -name "cache.tgz" -exec rm -f {} \;                
+                sudo rm -rf "/usr/local/share/boost"                
+                sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+                df -h /
 
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v1
@@ -123,6 +135,8 @@ jobs:
                       ghcr.io/ever-co/gauzy-webapp:latest
                       everco/gauzy-webapp:latest
                       registry.digitalocean.com/ever/gauzy-webapp:latest
+                  cache-from: type=registry,ref=everco/gauzy-webapp:latest
+                  cache-to: type=inline
 
             - name: Push to Docker Hub Registry
               run: |

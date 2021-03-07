@@ -59,7 +59,7 @@ More detailed list of the features available in the Gauzy Platform:
 
 Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [How to use it](https://github.com/ever-co/gauzy/wiki/How-to-use-Gauzy) at your company, freelance business, agency, studio or in-house teams.
 
-## Demos, Testing and Production
+## Demo, Testing and Production
 
 ### Demo
 
