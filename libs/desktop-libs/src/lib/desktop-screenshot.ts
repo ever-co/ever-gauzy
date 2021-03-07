@@ -195,7 +195,7 @@ const showCapturedToRenderer = (NotificationWindow, thumbUrl, quitApp) => {
 		'..',
 		'data',
 		'sound',
-		'snapshot-sound.mp3'
+		'snapshot-sound.wav'
 	);
 	const sizes = screen.getPrimaryDisplay().size;
 	// preparing window screenshot

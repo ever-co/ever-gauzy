@@ -127,8 +127,8 @@
 		"build:desktop-timer:linux:release": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn run build:desktop-timer && npm config set cache .cache && cd dist/apps/desktop-timer && npx electron-builder@22.9.1 -c.electronVersion=10.1.3 build --linux --publish=always",
 		"build:desktop-timer:windows:release": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn run build:desktop-timer && npm config set cache .cache && cd dist/apps/desktop-timer && npx electron-builder@22.9.1 -c.electronVersion=10.1.3 build --windows --publish=always",
 		"build:desktop-timer:mac:release": "yarn run build:desktop-timer && npm config set cache .cache && cd dist/apps/desktop-timer && npx electron-builder@22.9.1 -c.electronVersion=10.1.3 build --mac --publish=always",
-		"copy-assets-gauzy": "copyfiles -f  apps/desktop/src/assets/snapshot-sound.mp3 dist/apps/desktop/data/sound/",
-		"copy-assets-gauzy-timer": "copyfiles -f  apps/desktop/src/assets/snapshot-sound.mp3 dist/apps/desktop-timer/data/sound/"
+		"copy-assets-gauzy": "copyfiles -f  apps/desktop/src/assets/snapshot-sound.wav dist/apps/desktop/data/sound/",
+		"copy-assets-gauzy-timer": "copyfiles -f  apps/desktop/src/assets/snapshot-sound.wav dist/apps/desktop-timer/data/sound/"
 	},
 	"config": {
 		"commitizen": {
