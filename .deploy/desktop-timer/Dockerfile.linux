@@ -1,0 +1,28 @@
+FROM node:buster-slim as linux
+
+RUN mkdir -p /opt/src && chown -R node:node /opt/src && \
+    apt update && apt install -y --no-install-recommends \ 
+    curl gnupg git libappindicator3-1 ca-certificates binutils \
+    icnsutils graphicsmagick
+
+WORKDIR /opt/src
+
+COPY --chown=node:node apps/desktop-timer/package.json ./apps/desktop-timer/
+COPY --chown=node:node apps/api/package.json ./apps/api/
+COPY --chown=node:node package.json yarn.lock ./
+
+USER node:node
+
+RUN yarn install --frozen-lockfile
+
+COPY --chown=node:node . .
+
+RUN yarn bootstrap
+
+RUN yarn build:desktop-timer:linux
+
+FROM debian:buster-slim
+
+WORKDIR /opt/artifacts
+
+COPY --from=linux /opt/src/dist/apps/desktop-packages ./linux/

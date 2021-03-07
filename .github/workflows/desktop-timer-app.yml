@@ -1,0 +1,101 @@
+name: Desktop Timer App Build
+
+on:
+    push:
+        branches: [master]
+
+jobs:
+    release-linux:
+        runs-on: ${{ matrix.os }}
+
+        strategy:
+            matrix:
+                os: [ubuntu-latest]
+
+        steps:
+            - name: Check out Git repository
+              uses: actions/checkout@v1
+
+            - name: Install Node.js, NPM and Yarn
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 14.5
+
+            - name: Change permissions
+              run: 'sudo chown -R $(whoami) ./*'
+
+            - name: Install system dependencies
+              run: 'sudo apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick'
+
+            - name: Install Yarn dependencies
+              run: 'yarn install --network-timeout 1000000'
+
+            - name: Bootstrap Yarn
+              run: 'yarn bootstrap'
+
+            - name: Bump version and push tag
+              uses: mathieudutour/github-tag-action@v4.5
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Build Desktop Timer App
+              run: 'yarn build:desktop-timer:linux:release'
+              env:
+                  GH_TOKEN: ${{ secrets.GH_TOKEN }}
+                  EP_GH_IGNORE_TIME: true
+
+    release-mac:
+        runs-on: ${{ matrix.os }}
+
+        strategy:
+            matrix:
+                os: [macos-latest]
+
+        steps:
+            - name: Check out Git repository
+              uses: actions/checkout@v1
+
+            - name: Install Node.js, NPM and Yarn
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 14.5
+
+            - name: Install Yarn dependencies
+              run: 'yarn install --network-timeout 1000000'
+
+            - name: Bootstrap Yarn
+              run: 'yarn bootstrap'
+
+            - name: Build Desktop Timer App
+              run: 'yarn build:desktop-timer:mac:release'
+              env:
+                  GH_TOKEN: ${{ secrets.GH_TOKEN }}
+                  EP_GH_IGNORE_TIME: true
+
+    release-windows:
+        runs-on: ${{ matrix.os }}
+
+        strategy:
+            matrix:
+                os: [windows-latest]
+
+        steps:
+            - name: Check out Git repository
+              uses: actions/checkout@v1
+
+            - name: Install Node.js, NPM and Yarn
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 14.5
+
+            - name: Install Yarn dependencies
+              run: 'yarn install --network-timeout 1000000'
+
+            - name: Bootstrap Yarn
+              run: 'yarn bootstrap'
+
+            - name: Build Desktop Timer App
+              run: 'yarn build:desktop-timer:windows:release'
+              env:
+                  GH_TOKEN: ${{ secrets.GH_TOKEN }}
+                  EP_GH_IGNORE_TIME: true
