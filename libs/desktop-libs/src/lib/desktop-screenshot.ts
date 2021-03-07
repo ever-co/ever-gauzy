@@ -235,7 +235,9 @@ const showCapturedToRenderer = (NotificationWindow, thumbUrl, quitApp) => {
 			imgUrl: thumbUrl,
 			note: LocalStore.beforeRequestParams().note
 		});
-		sound.play(soundCamera, 0.4);
+		try {
+			sound.play(soundCamera, 0.4);
+		} catch (error) {}
 	}, 1000);
 	setTimeout(() => {
 		NotificationWindow.close();
