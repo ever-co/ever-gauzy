@@ -8,6 +8,7 @@ import Form from 'form-data';
 import fetch from 'node-fetch';
 import { BrowserWindow, screen } from 'electron';
 import screenshot from 'screenshot-desktop';
+const sound = require('sound-play');
 
 const captureOnlyActiveWindow = async (
 	displays,
@@ -185,6 +186,17 @@ const showCapture = (timeTrackerWindow, url) => {
 };
 
 const showCapturedToRenderer = (NotificationWindow, thumbUrl, quitApp) => {
+	const soundCamera = path.join(
+		__dirname,
+		'..',
+		'..',
+		'..',
+		'..',
+		'..',
+		'data',
+		'sound',
+		'snapshot-sound.wav'
+	);
 	const sizes = screen.getPrimaryDisplay().size;
 	// preparing window screenshot
 	const screenCaptureWindow = {
@@ -223,6 +235,9 @@ const showCapturedToRenderer = (NotificationWindow, thumbUrl, quitApp) => {
 			imgUrl: thumbUrl,
 			note: LocalStore.beforeRequestParams().note
 		});
+		try {
+			sound.play(soundCamera, 0.4);
+		} catch (error) {}
 	}, 1000);
 	setTimeout(() => {
 		NotificationWindow.close();

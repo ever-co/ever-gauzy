@@ -78,7 +78,7 @@
 			"menuCategory": true
 		},
 		"extraResources": [
-			"./data/*"
+			"./data/**/*"
 		]
 	},
 	"dependencies": {
@@ -99,6 +99,8 @@
 		"pg": "^8.3.3",
 		"@nestjs/platform-express": "^7.6.5",
 		"@gauzy/core": "file:../../../node_modules/@gauzy",
-		"@gauzy/auth": "file:../../../node_modules/@gauzy"
+		"@gauzy/auth": "file:../../../node_modules/@gauzy",
+		"sound-play": "1.1.0",
+		"auto-launch": "5.0.5"
 	}
 }
