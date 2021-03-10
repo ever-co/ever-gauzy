@@ -1,0 +1,7 @@
+icon: https://docs.ever.co/img/ever.png
+deploy:
+    - okteto build -t registry.cloud.okteto.net/everco/gauzy-api:${OKTETO_GIT_COMMIT} -f .deploy/api/Dockerfile .
+    - okteto build -t registry.cloud.okteto.net/everco/gauzy-webapp:${OKTETO_GIT_COMMIT} -f .deploy/webapp/Dockerfile .
+devs:
+    - apps/api/okteto.yml
+    - apps/gauzy/okteto.yml
