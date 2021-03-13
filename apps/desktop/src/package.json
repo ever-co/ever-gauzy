@@ -1,6 +1,6 @@
 {
 	"name": "gauzy-desktop",
-	"productName": "gauzy",
+	"productName": "gauzy-dekstop",
 	"version": "0.1.0",
 	"description": "Gauzy Desktop",
 	"license": "AGPL-3.0",
@@ -21,7 +21,7 @@
 	"main": "apps/desktop/src/index.js",
 	"build": {
 		"appId": "com.company.gauzydesktop",
-		"productName": "Gauzy Desktop",
+		"productName": "gauzy-desktop",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
 		"asar": true,
 		"npmRebuild": true,
@@ -39,7 +39,8 @@
 			"target": [
 				"zip",
 				"dmg"
-			]
+			],
+			"artifactName": "gauzy-desktop-${version}.${ext}"
 		},
 		"win": {
 			"publisherName": "Ever",
@@ -61,7 +62,7 @@
 				"tar.gz"
 			],
 			"executableName": "gauzy",
-			"artifactName": "gauzy-${version}.${ext}",
+			"artifactName": "gauzy-desktop-${version}.${ext}",
 			"synopsis": "Desktop",
 			"category": "Development"
 		},
@@ -73,7 +74,7 @@
 			"allowToChangeInstallationDirectory": true,
 			"allowElevation": true,
 			"installerIcon": "icon.ico",
-			"artifactName": "Gauzy-${version}.${ext}",
+			"artifactName": "gauzy-dekstop-${version}.${ext}",
 			"deleteAppDataOnUninstall": true,
 			"menuCategory": true
 		},

@@ -1,4 +1,4 @@
-import { app, Menu, remote } from 'electron';
+import { app, Menu, shell } from 'electron';
 import { LocalStore } from './desktop-store';
 import { TimerData } from './desktop-timer-activity';
 import { createSettingsWindow } from '../../../desktop-window/src';
@@ -114,7 +114,14 @@ export class AppMenu {
 			},
 			{
 				label: 'Help',
-				submenu: [{ label: 'Learn More' }]
+				submenu: [
+					{
+						label: 'Learn More',
+						click() {
+							shell.openExternal('https://gauzy.co/');
+						}
+					}
+				]
 			}
 		]);
 		Menu.setApplicationMenu(menu);
