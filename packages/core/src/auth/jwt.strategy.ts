@@ -16,25 +16,32 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
 	async validate(payload, done: Function) {
 		try {
-			//We use this to also attach the user object to the request context.
+			// We use this to also attach the user object to the request context.
 			const user: IUser = await this.authService.getAuthenticatedUser(
 				payload.id,
 				payload.thirdPartyId
 			);
 
-			user.employeeId = payload.employeeId;
+			if (!user) {
+				return done(new UnauthorizedException('unauthorized'), false);
+			} else {
+				user.employeeId = payload.employeeId;
 
-			// You could add a function to the authService to verify the claims of the token:
-			// i.e. does the user still have the roles that are claimed by the token
-			//const validClaims = await this.authService.verifyTokenClaims(payload);
+				// You could add a function to the authService to verify the claims of the token:
+				// i.e. does the user still have the roles that are claimed by the token
+				// const validClaims = await this.authService.verifyTokenClaims(payload);
 
-			//if (!validClaims)
-			//    return done(new UnauthorizedException('invalid token claims'), false);
+				// if (!validClaims)
+				//    return done(new UnauthorizedException('invalid token claims'), false);
 
-			done(null, user);
+				done(null, user);
+			}
 		} catch (err) {
-			console.log({ err });
-			throw new UnauthorizedException('unauthorized', err.message);
+			console.error(err);
+			return done(
+				new UnauthorizedException('unauthorized', err.message),
+				false
+			);
 		}
 	}
 }
