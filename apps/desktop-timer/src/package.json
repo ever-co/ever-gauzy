@@ -27,7 +27,7 @@
 		"npmRebuild": true,
 		"directories": {
 			"buildResources": "icons",
-			"output": "../desktop-packages"
+			"output": "../desktop-timer-packages"
 		},
 		"publish": {
 			"provider": "github",
@@ -39,7 +39,8 @@
 			"target": [
 				"zip",
 				"dmg"
-			]
+			],
+			"artifactName": "gauzy-desktop-timer-${version}.${ext}"
 		},
 		"win": {
 			"publisherName": "Ever",
@@ -61,7 +62,7 @@
 				"tar.gz"
 			],
 			"executableName": "gauzy-desktop-timer",
-			"artifactName": "gauzy-desktop-timer${version}.${ext}",
+			"artifactName": "gauzy-desktop-timer-${version}.${ext}",
 			"synopsis": "Desktop",
 			"category": "Development"
 		},
@@ -73,7 +74,7 @@
 			"allowToChangeInstallationDirectory": true,
 			"allowElevation": true,
 			"installerIcon": "icon.ico",
-			"artifactName": "Gauzy-desktop-timer${version}.${ext}",
+			"artifactName": "gauzy-desktop-timer-${version}.${ext}",
 			"deleteAppDataOnUninstall": true,
 			"menuCategory": true
 		},
