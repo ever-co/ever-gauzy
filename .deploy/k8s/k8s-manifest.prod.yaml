@@ -65,6 +65,8 @@ spec:
                         value: 0.0.0.0
                       - name: DEMO
                         value: 'false'
+                      - name: API_BASE_URL
+                        value: 'https://api.gauzy.co'
                   ports:
                       - containerPort: 3000
                         protocol: TCP

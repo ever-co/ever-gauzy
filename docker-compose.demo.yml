@@ -98,6 +98,7 @@ services:
         environment:
             NODE_ENV: ${NODE_ENV:-development}
             DB_HOST: db
+            API_BASE_URL: ${API_BASE_URL:-http://localhost:3000}
         env_file:
             - .env
         restart: on-failure
