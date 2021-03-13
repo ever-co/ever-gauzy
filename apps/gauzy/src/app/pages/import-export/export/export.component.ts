@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ExportAllService } from '../../../@core/services/exportAll.service';
+import { ExportAllService } from '../../../@core/services/export-all.service';
 import { filter } from 'rxjs/operators';
 import { IOrganization } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common-angular';

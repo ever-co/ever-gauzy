@@ -1,9 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { Router, ActivatedRoute } from '@angular/router';
-import { ITimeOff, IEmployee, IEventType } from '@gauzy/contracts';
+import { IEmployee, IEventType } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { timeOff } from './test-data';
 import { filter } from 'rxjs/operators';
 import { EmployeesService } from '../../@core/services';
 import { EventTypeService } from '../../@core/services/event-type.service';
@@ -21,7 +20,6 @@ export class PublicAppointmentsComponent
 	implements OnInit, OnDestroy {
 	employee: IEmployee;
 	eventTypes: IEventType[];
-	timeOff: ITimeOff[] = timeOff;
 	loading = true;
 	_selectedOrganizationId: string;
 	eventTypesExist: boolean;

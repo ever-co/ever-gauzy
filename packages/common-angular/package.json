@@ -47,7 +47,7 @@
 		"collectCoverageFrom": [
 			"**/*.(t|j)s"
 		],
-		"coverageDirectory": "../coverage/packages/common",
+		"coverageDirectory": "../coverage/packages/common-angular",
 		"testEnvironment": "node"
 	}
 }

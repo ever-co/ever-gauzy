@@ -11,7 +11,7 @@ import {
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ExportComponent } from './export.component';
 import { ExportRoutingModule } from './export-routing.module';
-import { ExportAllService } from '../../../@core/services/exportAll.service';
+import { ExportAllService } from '../../../@core/services/export-all.service';
 import { FileUploaderModule } from '../../../@shared/file-uploader-input/file-uploader-input.module';
 import { TranslateModule } from '../../../@shared/translate/translate.module';
 
