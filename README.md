@@ -57,7 +57,7 @@ More detailed list of the features available in the Gauzy Platform:
 -   Multi-language
 -   Dark / Light / Corporate and other Themes
 
-Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [How to use it](https://github.com/ever-co/gauzy/wiki/How-to-use-Gauzy) at your company, freelance business, agency, studio or in-house teams.
+Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [How to use it](https://github.com/ever-co/gauzy/wiki/How-to-use-Gauzy) at your company, on-demand business, freelance business, agency, studio or in-house teams.
 
 ## Demo, Testing and Production
 
@@ -157,32 +157,7 @@ Note: it currently supports AWS EKS (Kubernetes) for development and production 
 -   You are more than welcome to submit feature requests
 -   Pull requests are always welcome! Please base pull requests against the _develop_ branch and follow the [contributing guide](.github/CONTRIBUTING.md).
 
-## Collaborators and Contributors
-
-### Development Team
-
-#### Core
-
--   Ruslan Konviser ([Evereq](https://github.com/evereq))
-
-#### Developers (alphabetical order)
-
--   Alish Meklyov ([Alish](https://github.com/AlishMekliov931))
--   Blagovest Gerov ([BlagovestGerov](https://github.com/BlagovestGerov))
--   Elvis Arabadjiyski ([Dreemsuncho](https://github.com/Dreemsuncho))
--   Hristo Hristov ([hrimar](https://github.com/hrimar))
--   Pavel Denchev ([PavelDenchev](https://github.com/PavelDenchev))
--   Rachit Magon ([rmagon](https://github.com/rmagon))
--   Tsvetelina Yordanova ([tsvetelina-e-y](https://github.com/tsvetelina-e-y))
--   Valentin Peshev ([valiopld](https://github.com/valiopld))
--   Yavor Grancharov ([YavorGrancharov](https://github.com/YavorGrancharov))
-
-#### Designers & QA
-
--   [Julia Konviser](https://www.linkedin.com/in/julia-konviser-8b917552) (Graphic Designer, QA)
--   [Yordan Genovski](https://services.ever.co/teammembers/yordan-genovski) (UX/UI/Product Designer)
-
-### Contributors
+## Contributors
 
 View full list of our [contributors](https://github.com/ever-co/gauzy/graphs/contributors).
 
@@ -240,7 +215,7 @@ All other brand and product names are trademarks, registered trademarks or servi
 [![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/ever-co/gauzy.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/ever-co/gauzy/context:javascript)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fever-co%2Fgauzy.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fever-co%2Fgauzy?ref=badge_shield)
 
-## P.S.
+## P.S. (because why not?)
 
 -   If you interested to run on-demand (delivery) or digital marketplace business, check open-source [Ever Platform](https://github.com/ever-co/ever)
 -   [We are Hiring: remote TypeScript / NestJS / Angular developers](https://github.com/ever-co/jobs#available-positions)
