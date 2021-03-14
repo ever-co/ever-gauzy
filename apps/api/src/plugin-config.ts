@@ -10,6 +10,27 @@ import * as path from 'path';
 import { KnowledgeBasePlugin } from '@gauzy/knowledge-base';
 import { ChangelogPlugin } from '@gauzy/changelog';
 
+let assetPath;
+let assetPublicPath;
+
+// for Docker
+if (__dirname.startsWith('/srv/gauzy/')) {
+	assetPath = '/srv/gauzy/apps/api/src/assets';
+	assetPublicPath = '/srv/gauzy/apps/api/public';
+} else {
+	assetPath = path.join(
+		path.resolve(
+			__dirname,
+			'../../../',
+			...['apps', 'api', 'src', 'assets']
+		)
+	);
+
+	assetPublicPath = path.join(
+		path.resolve(__dirname, '../../../', ...['apps', 'api', 'public'])
+	);
+}
+
 export const pluginConfig: IPluginConfig = {
 	apiConfigOptions: {
 		host: process.env.HOST || DEFAULT_API_HOST,
@@ -28,16 +49,8 @@ export const pluginConfig: IPluginConfig = {
 		...getDbConfig()
 	},
 	assetOptions: {
-		assetPath: path.join(
-			path.resolve(
-				__dirname,
-				'../../../',
-				...['apps', 'api', 'src', 'assets']
-			)
-		),
-		assetPublicPath: path.join(
-			path.resolve(__dirname, '../../../', ...['apps', 'api', 'public'])
-		)
+		assetPath: assetPath,
+		assetPublicPath: assetPublicPath
 	},
 	plugins: [KnowledgeBasePlugin, ChangelogPlugin]
 };
@@ -47,8 +60,11 @@ function getDbConfig(): ConnectionOptions {
 		process.env.DB_TYPE && process.env.DB_TYPE === 'postgres'
 			? 'postgres'
 			: 'sqlite';
+
 	switch (dbType) {
 		case 'postgres':
+			const ssl = process.env.DB_SSL_MODE == 'true' ? true : undefined;
+
 			return {
 				type: dbType,
 				host: process.env.DB_HOST || 'localhost',
@@ -59,7 +75,9 @@ function getDbConfig(): ConnectionOptions {
 				username: process.env.DB_USER || 'postgres',
 				password: process.env.DB_PASS || 'root',
 				logging: true,
-				logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
+				ssl: ssl,
+				// Removes console logging, instead logs all queries in a file ormlogs.log
+				logger: 'file',
 				synchronize: true,
 				uuidExtension: 'pgcrypto'
 			};
@@ -73,7 +91,8 @@ function getDbConfig(): ConnectionOptions {
 						'gauzy.sqlite3'
 					),
 				logging: true,
-				logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
+				// Removes console logging, instead logs all queries in a file ormlogs.log
+				logger: 'file',
 				synchronize: true
 			};
 	}

@@ -129,9 +129,16 @@ async function cleanFeature(connection, config) {
 		);
 		console.log('FEATURE SEED -> __dirname: ' + __dirname);
 
-		const dir = env.isElectron
-			? path.resolve(env.gauzyUserPath, ...['public', destDir])
-			: path.join(configService.assetOptions.assetPublicPath, destDir);
+		let dir;
+
+		if (env.isElectron) {
+			dir = path.resolve(env.gauzyUserPath, ...['public', destDir]);
+		} else {
+			dir = path.join(
+				configService.assetOptions.assetPublicPath,
+				destDir
+			);
+		}
 
 		// delete old generated report image
 		rimraf(
