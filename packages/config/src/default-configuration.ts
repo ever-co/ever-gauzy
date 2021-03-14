@@ -13,6 +13,8 @@ import { dbConnectionConfig } from './database';
 let assetPath;
 let assetPublicPath;
 
+console.log('Default Config -> __dirname: ' + __dirname);
+
 // for Docker
 if (__dirname.startsWith('/srv/gauzy/')) {
 	assetPath = '/srv/gauzy/apps/api/src/assets';
@@ -30,6 +32,9 @@ if (__dirname.startsWith('/srv/gauzy/')) {
 		path.resolve(__dirname, '../../../', ...['apps', 'api', 'public'])
 	);
 }
+
+console.log('Default Config -> assetPath: ' + assetPath);
+console.log('Default Config -> assetPublicPath: ' + assetPublicPath);
 
 /**
  * The default configurations.
@@ -52,9 +57,9 @@ export const defaultConfiguration: IPluginConfig = {
 	},
 	plugins: [],
 	authOptions: {
-		expressSessionSecret: 'gauzy',
+		expressSessionSecret: process.env.SESSION_SECRET || 'gauzy',
 		userPasswordBcryptSaltRounds: 12,
-		jwtSecret: 'secretKey'
+		jwtSecret: process.env.JWT_SECRET || 'secretKey'
 	},
 	assetOptions: {
 		assetPath: assetPath,

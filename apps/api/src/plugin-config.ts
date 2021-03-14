@@ -13,6 +13,8 @@ import { ChangelogPlugin } from '@gauzy/changelog';
 let assetPath;
 let assetPublicPath;
 
+console.log('Plugin Config -> __dirname: ' + __dirname);
+
 // for Docker
 if (__dirname.startsWith('/srv/gauzy/')) {
 	assetPath = '/srv/gauzy/apps/api/src/assets';
@@ -30,6 +32,9 @@ if (__dirname.startsWith('/srv/gauzy/')) {
 		path.resolve(__dirname, '../../../', ...['apps', 'api', 'public'])
 	);
 }
+
+console.log('Plugin Config -> assetPath: ' + assetPath);
+console.log('Plugin Config -> assetPublicPath: ' + assetPublicPath);
 
 export const pluginConfig: IPluginConfig = {
 	apiConfigOptions: {
