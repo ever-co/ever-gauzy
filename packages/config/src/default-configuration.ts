@@ -10,10 +10,15 @@ import {
 import * as path from 'path';
 import { dbConnectionConfig } from './database';
 
+process.cwd();
+
 let assetPath;
 let assetPublicPath;
 
 console.log('Default Config -> __dirname: ' + __dirname);
+console.log('Plugin Config -> process.cwd: ' + process.cwd());
+
+// TODO: maybe better to use process.cwd() instead of __dirname?
 
 // for Docker
 if (__dirname.startsWith('/srv/gauzy')) {

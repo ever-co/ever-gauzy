@@ -14,6 +14,9 @@ let assetPath;
 let assetPublicPath;
 
 console.log('Plugin Config -> __dirname: ' + __dirname);
+console.log('Plugin Config -> process.cwd: ' + process.cwd());
+
+// TODO: maybe better to use process.cwd() instead of __dirname?
 
 // for Docker
 if (__dirname.startsWith('/srv/gauzy')) {
@@ -68,7 +71,7 @@ function getDbConfig(): ConnectionOptions {
 
 	switch (dbType) {
 		case 'postgres':
-			const ssl = process.env.DB_SSL_MODE == 'true' ? true : undefined;
+			const ssl = process.env.DB_SSL_MODE === 'true' ? true : undefined;
 
 			return {
 				type: dbType,
@@ -86,15 +89,18 @@ function getDbConfig(): ConnectionOptions {
 				synchronize: true,
 				uuidExtension: 'pgcrypto'
 			};
+
 		case 'sqlite':
+			const sqlitePath =
+				process.env.DB_PATH ||
+				path.join(
+					path.resolve('.', ...['apps', 'api', 'data']),
+					'gauzy.sqlite3'
+				);
+
 			return {
 				type: dbType,
-				database:
-					process.env.DB_PATH ||
-					path.join(
-						path.resolve('.', ...['apps', 'api', 'data']),
-						'gauzy.sqlite3'
-					),
+				database: sqlitePath,
 				logging: true,
 				// Removes console logging, instead logs all queries in a file ormlogs.log
 				logger: 'file',
