@@ -10,6 +10,27 @@ import {
 import * as path from 'path';
 import { dbConnectionConfig } from './database';
 
+let assetPath;
+let assetPublicPath;
+
+// for Docker
+if (__dirname.startsWith('/srv/gauzy/')) {
+	assetPath = '/srv/gauzy/apps/api/src/assets';
+	assetPublicPath = '/srv/gauzy/apps/api/public';
+} else {
+	assetPath = path.join(
+		path.resolve(
+			__dirname,
+			'../../../',
+			...['apps', 'api', 'src', 'assets']
+		)
+	);
+
+	assetPublicPath = path.join(
+		path.resolve(__dirname, '../../../', ...['apps', 'api', 'public'])
+	);
+}
+
 /**
  * The default configurations.
  */
@@ -36,15 +57,7 @@ export const defaultConfiguration: IPluginConfig = {
 		jwtSecret: 'secretKey'
 	},
 	assetOptions: {
-		assetPath: path.join(
-			path.resolve(
-				__dirname,
-				'../../../',
-				...['apps', 'api', 'src', 'assets']
-			)
-		),
-		assetPublicPath: path.join(
-			path.resolve(__dirname, '../../../', ...['apps', 'api', 'public'])
-		)
+		assetPath: assetPath,
+		assetPublicPath: assetPublicPath
 	}
 };
