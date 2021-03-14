@@ -16,7 +16,7 @@ let assetPublicPath;
 console.log('Plugin Config -> __dirname: ' + __dirname);
 
 // for Docker
-if (__dirname.startsWith('/srv/gauzy/')) {
+if (__dirname.startsWith('/srv/gauzy')) {
 	assetPath = '/srv/gauzy/apps/api/src/assets';
 	assetPublicPath = '/srv/gauzy/apps/api/public';
 } else {
