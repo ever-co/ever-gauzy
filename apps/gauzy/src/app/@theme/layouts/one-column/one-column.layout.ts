@@ -4,7 +4,8 @@ import {
 	Inject,
 	PLATFORM_ID,
 	ViewChild,
-	OnInit
+	OnInit,
+	OnDestroy
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { NbLayoutComponent } from '@nebular/theme';
@@ -19,7 +20,8 @@ import { DEFAULT_SIDEBARS } from '../../components/theme-sidebar/default-sidebar
 	styleUrls: ['./one-column.layout.scss'],
 	templateUrl: './one-column.layout.html'
 })
-export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
+export class OneColumnLayoutComponent
+	implements OnInit, AfterViewInit, OnDestroy {
 	@ViewChild(NbLayoutComponent) layout: NbLayoutComponent;
 
 	user: IUser;
@@ -57,5 +59,9 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 		if (isPlatformBrowser(this.platformId)) {
 			this.windowModeBlockScrollService.register(this.layout);
 		}
+	}
+
+	ngOnDestroy() {
+		this.navigationBuilderService.clearSidebars();
 	}
 }
