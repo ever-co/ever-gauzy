@@ -1,4 +1,11 @@
-import { Component, OnInit, ViewChild, Input, OnDestroy } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	ViewChild,
+	Input,
+	OnDestroy,
+	ChangeDetectorRef
+} from '@angular/core';
 import {
 	IOrganizationContact,
 	IOrganizationContactCreateInput,
@@ -85,7 +92,8 @@ export class ContactComponent
 		private readonly dialogService: NbDialogService,
 		private readonly route: ActivatedRoute,
 		private readonly router: Router,
-		private readonly countryService: CountryService
+		private readonly countryService: CountryService,
+		private readonly cd: ChangeDetectorRef
 	) {
 		super(translateService);
 		this.setView();
@@ -321,6 +329,7 @@ export class ContactComponent
 		}
 
 		this.loading = true;
+		this.cd.detectChanges();
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.selectedOrganization;
 
@@ -370,11 +379,13 @@ export class ContactComponent
 			})
 			.finally(() => {
 				this.loading = false;
+				this.cd.detectChanges();
 			});
 	}
 
 	private async loadProjectsWithoutOrganizationContacts() {
 		this.loading = true;
+		this.cd.detectChanges();
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.selectedOrganization;
 		this.organizationProjectsService
@@ -393,6 +404,7 @@ export class ContactComponent
 			})
 			.finally(() => {
 				this.loading = false;
+				this.cd.detectChanges();
 			});
 	}
 
