@@ -85,4 +85,8 @@ export class NavigationBuilderService {
 	hasPermissions = (permissions: any): boolean => {
 		return permissions.every((p: any) => this.store.hasPermission(p));
 	};
+
+	clearSidebars() {
+		this.sidebarMapper.clear();
+	}
 }
