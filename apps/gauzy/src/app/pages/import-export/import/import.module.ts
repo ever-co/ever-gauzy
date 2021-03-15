@@ -12,7 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { ImportComponent } from './import.component';
 import { ImportRoutingModule } from './import-routing.module';
 import { HttpClientModule } from '@angular/common/http';
-import { ExportAllService } from '../../../@core/services/exportAll.service';
+import { ExportAllService } from '../../../@core/services/export-all.service';
 import { FileUploaderModule } from '../../../@shared/file-uploader-input/file-uploader-input.module';
 import { FileUploadModule } from 'ng2-file-upload';
 import { TranslateModule } from '../../../@shared/translate/translate.module';

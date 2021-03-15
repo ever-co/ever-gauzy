@@ -13,21 +13,21 @@ import { toParams } from '@gauzy/common-angular';
 import { Query, Store, StoreConfig } from '@datorama/akita';
 import { API_PREFIX } from '../../../@core/constants/app.constants';
 
-export function initialTimesheetFilterState(): IReport[] {
+export function initialReportFilterState(): IReport[] {
 	return [];
 }
 
 @Injectable({ providedIn: 'root' })
 @StoreConfig({ name: 'report-category', resettable: true })
-export class TimesheetFilterStore extends Store<IReport[]> {
+export class ReportFilterStore extends Store<IReport[]> {
 	constructor() {
-		super(initialTimesheetFilterState());
+		super(initialReportFilterState());
 	}
 }
 
 @Injectable({ providedIn: 'root' })
-export class TimesheetFilterQuery extends Query<IReport[]> {
-	constructor(protected store: TimesheetFilterStore) {
+export class ReportFilterQuery extends Query<IReport[]> {
+	constructor(protected store: ReportFilterStore) {
 		super(store);
 	}
 }
@@ -47,8 +47,8 @@ export class ReportService {
 
 	constructor(
 		private http: HttpClient,
-		protected reportStore: TimesheetFilterStore,
-		protected reportQuery: TimesheetFilterQuery
+		protected reportStore: ReportFilterStore,
+		protected reportQuery: ReportFilterQuery
 	) {}
 
 	getReportMenuItems(request: GetReportMenuItemsInput = {}) {

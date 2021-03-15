@@ -1,17 +1,24 @@
-import { TimeFormatPipe } from './time-format.pipe';
 import { DurationFormatPipe } from './duration-format.pipe';
-import { UtcToLocalPipe } from './utc-to-local.pipe';
-import { ReplacePipe } from './replace.pipe';
-import { Nl2BrPipe, SafeHtmlPipe, TruncatePipe } from './text.pipe';
 import { FilterArrayPipe } from './filter-array.pipe';
+import { Nl2BrPipe, SafeHtmlPipe, TruncatePipe } from './text.pipe';
+import { ReplacePipe } from './replace.pipe';
+import { TimeFormatPipe } from './time-format.pipe';
+import { UtcToLocalPipe } from './utc-to-local.pipe';
+
+export * from './duration-format.pipe';
+export * from './filter-array.pipe';
+export * from './replace.pipe';
+export * from './text.pipe';
+export * from './time-format.pipe';
+export * from './utc-to-local.pipe';
 
 export const Pipes = [
-	TimeFormatPipe,
 	DurationFormatPipe,
-	UtcToLocalPipe,
+	FilterArrayPipe,
+	Nl2BrPipe,
 	ReplacePipe,
 	SafeHtmlPipe,
-	Nl2BrPipe,
+	TimeFormatPipe,
 	TruncatePipe,
-	FilterArrayPipe
+	UtcToLocalPipe
 ];
