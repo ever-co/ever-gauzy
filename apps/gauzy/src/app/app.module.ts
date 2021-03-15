@@ -68,6 +68,7 @@ import { FeatureToggleModule } from 'ngx-feature-toggle';
 import { FeatureService } from './@core/services/feature/feature.service';
 import { IFeatureToggle } from '@gauzy/contracts';
 import { HttpLoaderFactory } from './@shared/translate/translate.module';
+import { AppInitService } from './@core/services/app-init-service';
 
 // TODO: we should use some internal function which returns version of Gauzy;
 const version = '0.1.0';
@@ -188,6 +189,14 @@ if (environment.SENTRY_DSN) {
 			provide: APP_INITIALIZER,
 			useFactory: featureToggleLoaderFactory,
 			deps: [FeatureService, Store],
+			multi: true
+		},
+		{
+			provide: APP_INITIALIZER,
+			useFactory: (appInitService: AppInitService) => () => {
+				return appInitService.init();
+			},
+			deps: [AppInitService],
 			multi: true
 		},
 		{
