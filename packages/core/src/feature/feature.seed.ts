@@ -119,7 +119,9 @@ async function cleanFeature(connection, config) {
 		const destDir = 'features';
 		const configService = new ConfigService();
 
-		console.log('FEATURE SEED -> IS ELECTRON: ' + env.isElectron);
+		// console.log('FEATURE SEED -> IS ELECTRON: ' + env.isElectron);
+
+		/*
 		console.log(
 			'FEATURE SEED -> assetPath: ' + config.assetOptions.assetPath
 		);
@@ -128,6 +130,7 @@ async function cleanFeature(connection, config) {
 				config.assetOptions.assetPublicPath
 		);
 		console.log('FEATURE SEED -> __dirname: ' + __dirname);
+		*/
 
 		let dir;
 
@@ -193,12 +196,12 @@ function copyImage(fileName: string, config: IPluginConfig) {
 			}
 		}
 
-		console.log('FEATURE SEED -> dir: ' + dir);
-		console.log('FEATURE SEED -> baseDir: ' + baseDir);
+		// console.log('FEATURE SEED -> dir: ' + dir);
+		// console.log('FEATURE SEED -> baseDir: ' + baseDir);
 
 		const finalDir = path.join(baseDir, destDir);
 
-		console.log('FEATURE SEED -> finalDir: ' + finalDir);
+		// console.log('FEATURE SEED -> finalDir: ' + finalDir);
 
 		mkdirSync(finalDir, { recursive: true });
 

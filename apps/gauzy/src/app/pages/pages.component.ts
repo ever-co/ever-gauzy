@@ -995,39 +995,9 @@ export class PagesComponent implements OnInit, OnDestroy {
 		const id = this.store.userId;
 		if (!id) return;
 
-		this.user = await this.usersService.getMe([
-			'employee',
-			'role',
-			'role.rolePermissions',
-			'tenant',
-			'tenant.featureOrganizations',
-			'tenant.featureOrganizations.feature'
-		]);
-
-		this.authStrategy.electronAuthentication({
-			user: this.user,
-			token: this.store.token
+		this.store.user$.subscribe((user) => {
+			this.user = user;
 		});
-
-		//When a new user registers & logs in for the first time, he/she does not have tenantId.
-		//In this case, we have to redirect the user to the onboarding page to create their first organization, tenant, role.
-		if (!this.user.tenantId) {
-			this.router.navigate(['/onboarding/tenant']);
-			return;
-		}
-
-		this.store.user = this.user;
-
-		//tenant enabled/disabled features for relatives organizations
-		const { tenant } = this.user;
-		this.store.featureTenant = tenant.featureOrganizations.filter(
-			(item) => !item.organizationId
-		);
-
-		//only enabled permissions assign to logged in user
-		this.store.userRolePermissions = this.user.role.rolePermissions.filter(
-			(permission) => permission.enabled
-		);
 	}
 
 	loadItems(withOrganizationShortcuts: boolean) {
