@@ -68,14 +68,14 @@ let gauzyAPP: any;
 
 if (process.platform === 'darwin') {
 	gauzyAPP = new AutoLaunch({
-		name: 'Gauzy Desktop',
-		path: '/Applications/Gauzy Desktop.app'
+		name: 'gauzy-dekstop',
+		path: '/Applications/gauzy-desktop.app'
 	});
 }
 
 if (process.platform === 'win32') {
 	gauzyAPP = new AutoLaunch({
-		name: 'Gauzy Desktop',
+		name: 'gauzy-dekstop',
 		path: app.getPath('exe')
 	});
 }
@@ -126,7 +126,11 @@ let alreadyQuit = false;
 let serverGauzy = null;
 let serverDesktop = null;
 let dialogErr = false;
-let cancellationToken = new CancellationToken();
+let cancellationToken = null;
+
+try {
+	cancellationToken = new CancellationToken();
+} catch (error) {}
 
 function startServer(value, restart = false) {
 	process.env.IS_ELECTRON = 'true';

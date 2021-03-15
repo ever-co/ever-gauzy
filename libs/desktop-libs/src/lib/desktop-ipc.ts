@@ -127,6 +127,10 @@ export function ipcMainHandler(store, startServer, knex, config) {
 		LocalStore.updateApplicationSetting(arg.values);
 	});
 
+	ipcMain.on('update_project_on', (event, arg) => {
+		LocalStore.updateConfigProject(arg);
+	});
+
 	ipcMain.on('request_permission', async (event) => {
 		try {
 			if (process.platform === 'darwin') {

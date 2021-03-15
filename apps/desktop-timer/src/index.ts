@@ -84,14 +84,14 @@ let gauzyTimer: any;
 
 if (process.platform === 'darwin') {
 	gauzyTimer = new AutoLaunch({
-		name: 'Gauzy Desktop Timer',
-		path: '/Applications/Gauzy Desktop Timer.app'
+		name: 'gauzy-dekstop-timer',
+		path: '/Applications/gauzy-dekstop-timer.app'
 	});
 }
 
 if (process.platform === 'win32') {
 	gauzyTimer = new AutoLaunch({
-		name: 'Gauzy Desktop Timer',
+		name: 'gauzy-dekstop-timer',
 		path: app.getPath('exe')
 	});
 }

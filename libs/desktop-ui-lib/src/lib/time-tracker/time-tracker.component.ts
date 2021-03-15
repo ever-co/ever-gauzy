@@ -319,6 +319,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	async setProject(item) {
 		this.projectSelect = item;
+		this.electronService.ipcRenderer.send('update_project_on', {
+			projectId: this.projectSelect
+		});
 		if (item) {
 			this.tasks = this.tasks.filter((t) => t.projectId === item);
 			this.taskSelect = null;
@@ -334,11 +337,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	setTask(item) {
 		this.taskSelect = item;
+		this.electronService.ipcRenderer.send('update_project_on', {
+			taskId: this.taskSelect
+		});
 		if (item) this.errors.task = false;
 	}
 
 	descriptionChange(e) {
 		if (e) this.errors.note = false;
+		this.electronService.ipcRenderer.send('update_project_on', {
+			note: this.note
+		});
 	}
 
 	setAW(event) {

@@ -58,7 +58,6 @@
 									bindValue="id"
 									bindLabel="name"
 									(ngModelChange)="setProject($event)"
-									[disabled]="start"
 								>
 								</ng-select>
 							</div>
@@ -73,12 +72,11 @@
 									bindValue="id"
 									bindLabel="title"
 									(ngModelChange)="setTask($event)"
-									[disabled]="start"
 								>
 								</ng-select>
 							</div>
 							<div class="col-12 form-group">
-								<label>Work ON:</label>
+								<label>Working ON:</label>
 								<textarea
 									nbInput
 									fullWidth
@@ -87,7 +85,6 @@
 									[(ngModel)]="note"
 									[status]="errors.note ? 'danger' : 'basic'"
 									(ngModelChange)="descriptionChange($event)"
-									[disabled]="start"
 								></textarea>
 							</div>
 							<div class="col-12 form-group tp-padding">
