@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import { readdir, mkdirSync, copyFileSync } from 'fs';
 import * as path from 'path';
 import * as faker from 'faker';
 import * as moment from 'moment';
@@ -13,8 +13,11 @@ export const createRandomScreenshot = async (
 	tenant: Tenant,
 	config: IPluginConfig
 ): Promise<Screenshot[]> => {
+	const destDirName = 'screenshots';
+
 	let dir: string;
 	let baseDir: string;
+
 	if (env.isElectron) {
 		dir = path.join(
 			path.resolve(env.gauzyUserPath, ...['src', 'assets', 'seed']),
@@ -22,69 +25,76 @@ export const createRandomScreenshot = async (
 		);
 		baseDir = path.join(path.resolve(env.gauzyUserPath));
 	} else {
-		dir =
-			path.join(
+		if (config.assetOptions.assetPath) {
+			dir = path.join(
 				config.assetOptions.assetPath,
-				...['seed', 'screenshots']
-			) ||
-			path.resolve(
+				...['seed', destDirName]
+			);
+		} else {
+			dir = path.resolve(
 				__dirname,
 				'../../../',
-				...['apps', 'api', 'src', 'assets', 'seed', 'screenshots']
+				...['apps', 'api', 'src', 'assets', 'seed', destDirName]
 			);
-		baseDir =
-			path.join(config.assetOptions.assetPublicPath, '../') ||
-			path.resolve(__dirname, '../../../', ...['apps', 'api']);
+		}
+
+		if (config.assetOptions.assetPublicPath) {
+			baseDir = path.join(config.assetOptions.assetPublicPath, '../');
+		} else {
+			baseDir = path.resolve(__dirname, '../../../', ...['apps', 'api']);
+		}
 	}
 
-	const fileDir = path.join('screenshots', moment().format('YYYY/MM/DD'));
+	console.log('SCREENSHOT SEED -> dir: ' + dir);
+	console.log('SCREENSHOT SEED -> baseDir: ' + baseDir);
+
+	const fileDir = path.join(destDirName, moment().format('YYYY/MM/DD'));
 	const destDir = path.join('public', fileDir);
+
+	const finalDir = path.join(baseDir, destDir);
+
+	console.log('SCREENSHOT SEED -> finalDir: ' + finalDir);
+
+	mkdirSync(finalDir, { recursive: true });
 
 	await getList(dir);
 
 	const screenshots: Screenshot[] = [];
+
 	for (
 		let index = 0;
 		index < faker.random.number({ min: 1, max: 2 });
 		index++
 	) {
 		const sourceFile = faker.random.arrayElement(fileList);
+
 		const sourceName =
 			'screenshot-' + moment().unix() + faker.random.number(999) + '.jpg';
 
 		const destFile = path.join(destDir, sourceName);
 
-		fs.mkdirSync(path.join(baseDir, destDir), { recursive: true });
+		const sourceFilePath = path.join(dir, sourceFile);
+		const destFilePath = path.join(baseDir, destFile);
 
-		const file = await new Promise<string>((resolve, reject) => {
-			const sourceFilePath = path.join(dir, sourceFile);
-			const destFilePath = path.join(baseDir, destFile);
+		copyFileSync(sourceFilePath, destFilePath);
 
-			fs.copyFile(sourceFilePath, destFilePath, (err) => {
-				if (err) {
-					resolve('');
-				}
-				resolve(path.join(fileDir, sourceName));
-			});
-		});
+		const file = path.join(fileDir, sourceName);
 
-		if (file) {
-			const screenshot = new Screenshot();
-			screenshot.tenant = tenant;
-			screenshot.organizationId = timeSlot.organizationId;
+		const screenshot = new Screenshot();
 
-			screenshot.fullUrl = file;
-			screenshot.file = file;
-			screenshot.thumb = file;
-			screenshot.timeSlot = timeSlot;
-			screenshot.thumbUrl = file;
-			screenshot.recordedAt = faker.date.between(
-				timeSlot.startedAt,
-				timeSlot.stoppedAt
-			);
-			screenshot.deletedAt = null;
-			screenshots.push(screenshot);
-		}
+		screenshot.tenant = tenant;
+		screenshot.organizationId = timeSlot.organizationId;
+		screenshot.fullUrl = file;
+		screenshot.file = file;
+		screenshot.thumb = file;
+		screenshot.timeSlot = timeSlot;
+		screenshot.thumbUrl = file;
+		screenshot.recordedAt = faker.date.between(
+			timeSlot.startedAt,
+			timeSlot.stoppedAt
+		);
+		screenshot.deletedAt = null;
+		screenshots.push(screenshot);
 	}
 
 	return screenshots;
@@ -92,7 +102,7 @@ export const createRandomScreenshot = async (
 
 const getList = (dir) => {
 	return new Promise((resolve, reject) => {
-		fs.readdir(dir, (err, items) => {
+		readdir(dir, (err, items) => {
 			if (err) {
 				reject();
 			} else {

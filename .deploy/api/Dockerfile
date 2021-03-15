@@ -1,10 +1,16 @@
 ARG NODE_OPTIONS
 ARG NODE_ENV
+ARG API_BASE_URL
 ARG API_HOST
 ARG API_PORT
 ARG DB_HOST
 ARG DB_NAME
 ARG DB_PORT
+ARG DB_USER
+ARG DB_PASS
+ARG DB_TYPE
+ARG DB_SSL_MODE
+ARG DEMO
 ARG HOST
 ARG PORT
 
@@ -97,6 +103,9 @@ COPY --chown=node:node --from=development /srv/gauzy .
 
 ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=2048"}
 ENV NODE_ENV=${NODE_ENV:-production}
+ENV DEMO=${DEMO:-false}
+
+ENV IS_DOCKER=true
 
 RUN yarn build:package:api
 RUN yarn build:api:prod
@@ -129,11 +138,17 @@ ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=2048"}
 ENV NODE_ENV=${NODE_ENV:-production}
 ENV API_HOST=${API_HOST:-api}
 ENV API_PORT=${API_PORT:-3000}
+ENV API_BASE_URL=${API_BASE_URL:-http://localhost:3000}
 ENV DB_HOST=${DB_HOST:-db}
 ENV DB_NAME=${DB_NAME:-postgres}
 ENV DB_PORT=${DB_PORT:-5432}
+ENV DB_USER=${DB_USER}
+ENV DB_PASS=${DB_PASS}
+ENV DB_TYPE=${DB_TYPE:-sqlite}
+ENV DB_SSL_MODE=${DB_SSL_MODE}
 ENV HOST=${HOST:-0.0.0.0}
 ENV PORT=${PORT:-3000}
+ENV DEMO=${DEMO:-false}
 
 EXPOSE ${PORT}
 

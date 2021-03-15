@@ -118,9 +118,27 @@ async function cleanFeature(connection, config) {
 	await new Promise((resolve, reject) => {
 		const destDir = 'features';
 		const configService = new ConfigService();
-		const dir = env.isElectron
-			? path.resolve(env.gauzyUserPath, ...['public', destDir])
-			: path.join(configService.assetOptions.assetPublicPath, destDir);
+
+		console.log('FEATURE SEED -> IS ELECTRON: ' + env.isElectron);
+		console.log(
+			'FEATURE SEED -> assetPath: ' + config.assetOptions.assetPath
+		);
+		console.log(
+			'FEATURE SEED -> assetPublicPath: ' +
+				config.assetOptions.assetPublicPath
+		);
+		console.log('FEATURE SEED -> __dirname: ' + __dirname);
+
+		let dir;
+
+		if (env.isElectron) {
+			dir = path.resolve(env.gauzyUserPath, ...['public', destDir]);
+		} else {
+			dir = path.join(
+				configService.assetOptions.assetPublicPath,
+				destDir
+			);
+		}
 
 		// delete old generated report image
 		rimraf(
@@ -139,30 +157,53 @@ async function cleanFeature(connection, config) {
 function copyImage(fileName: string, config: IPluginConfig) {
 	try {
 		const destDir = 'features';
-		const dir = env.isElectron
-			? path.resolve(
-					env.gauzyUserPath,
-					...['src', 'assets', 'seed', destDir]
-			  )
-			: path.join(config.assetOptions.assetPath, ...['seed', destDir]) ||
-			  path.resolve(
+
+		let dir;
+		let baseDir;
+
+		if (env.isElectron) {
+			dir = path.resolve(
+				env.gauzyUserPath,
+				...['src', 'assets', 'seed', destDir]
+			);
+
+			baseDir = path.resolve(env.gauzyUserPath, ...['public']);
+		} else {
+			if (config.assetOptions.assetPath) {
+				dir = path.join(
+					config.assetOptions.assetPath,
+					...['seed', destDir]
+				);
+			} else {
+				dir = path.resolve(
 					__dirname,
 					'../../../',
 					...['apps', 'api', 'src', 'assets', 'seed', destDir]
-			  );
+				);
+			}
 
-		const baseDir = env.isElectron
-			? path.resolve(env.gauzyUserPath, ...['public'])
-			: config.assetOptions.assetPublicPath ||
-			  path.resolve(
+			if (config.assetOptions.assetPublicPath) {
+				baseDir = config.assetOptions.assetPublicPath;
+			} else {
+				baseDir = path.resolve(
 					__dirname,
 					'../../../',
 					...['apps', 'api', 'public']
-			  );
+				);
+			}
+		}
 
-		mkdirSync(path.join(baseDir, destDir), { recursive: true });
+		console.log('FEATURE SEED -> dir: ' + dir);
+		console.log('FEATURE SEED -> baseDir: ' + baseDir);
+
+		const finalDir = path.join(baseDir, destDir);
+
+		console.log('FEATURE SEED -> finalDir: ' + finalDir);
+
+		mkdirSync(finalDir, { recursive: true });
 
 		const destFilePath = path.join(destDir, fileName);
+
 		copyFileSync(
 			path.join(dir, fileName),
 			path.join(baseDir, destFilePath)
