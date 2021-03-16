@@ -2,6 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 // import { environment } from '../../../environments/environment';
 import * as moment from 'moment';
+
+// Import logging for electron and override default console logging
+import log from 'electron-log';
+console.log = log.log;
+Object.assign(console, log.functions);
+
 @Injectable({
 	providedIn: 'root'
 })
@@ -10,6 +16,7 @@ export class TimeTrackerService {
 	token = '';
 	userId = '';
 	employeeId = '';
+
 	constructor(private http: HttpClient) {}
 
 	createAuthorizationHeader(headers: Headers) {
@@ -100,6 +107,16 @@ export class TimeTrackerService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
+
+		console.log(`Get Time Slot Headers: ${moment().format()}`);
+		console.log(
+			{
+				Authorization: `Bearer ${values.token}`,
+				'Tenant-Id': values.tenantId
+			},
+			values
+		);
+
 		return this.http
 			.get(
 				`${values.apiHost}/api/timesheet/time-slot/${values.timeSlotId}?relations[]=screenshots&relations[]=activities&relations[]=employee`,
@@ -118,6 +135,19 @@ export class TimeTrackerService {
 	toggleApiStart(values) {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`
+		});
+
+		log.info(`Toggle Timer Request: ${moment().format()}`, {
+			description: values.note,
+			isBillable: true,
+			logType: 'TRACKED',
+			projectId: values.projectId,
+			taskId: values.taskId,
+			source: 'DESKTOP',
+			manualTimeSlot: values.manualTimeSlot,
+			organizationId: values.organizationId,
+			tenantId: values.tenantId,
+			organizationContactId: values.organizationContactId
 		});
 
 		return this.http

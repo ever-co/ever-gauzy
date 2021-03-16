@@ -1,6 +1,8 @@
 public/features/*.png
 public/reports/*.png
 public/screenshots/**/*.jpg
+public/**/*.png
+public/**/*.jpg
 public/invoices/pdf/*.pdf
 
 data/*
