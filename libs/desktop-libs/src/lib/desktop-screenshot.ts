@@ -236,8 +236,12 @@ const showCapturedToRenderer = (NotificationWindow, thumbUrl, quitApp) => {
 			note: LocalStore.beforeRequestParams().note
 		});
 		try {
-			sound.play(soundCamera, 0.4);
-		} catch (error) {}
+			if (existsSync(soundCamera)) {
+				sound.play(soundCamera, 0.4);
+			}
+		} catch (err) {
+			console.error('sound camera not found');
+		}
 	}, 1000);
 	setTimeout(() => {
 		NotificationWindow.close();
