@@ -49,7 +49,6 @@ export class TimeSlotController extends CrudController<TimeSlot> {
 		@Param() { id },
 		@Query() option: FindOneOptions
 	): Promise<TimeSlot> {
-		console.log(`Get Screenshot By ID:`, option);
 		return this.timeSlotService.findOne(id, option);
 	}
 

@@ -133,7 +133,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 		);
 
 		this.electronService.ipcRenderer.on('take_screenshot', (event, arg) => {
-			log.info(`Take Screenshot:`, event, arg);
+			log.info(`Take Screenshot:`, arg);
 
 			const thumbSize = this.determineScreenshot(arg.screensize);
 			this.electronService.desktopCapturer

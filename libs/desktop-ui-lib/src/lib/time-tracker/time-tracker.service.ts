@@ -109,13 +109,6 @@ export class TimeTrackerService {
 		});
 
 		log.info(`Get Time Slot: ${moment().format()}`);
-		log.info(
-			{
-				Authorization: `Bearer ${values.token}`,
-				'Tenant-Id': values.tenantId
-			},
-			values
-		);
 
 		return this.http
 			.get(
