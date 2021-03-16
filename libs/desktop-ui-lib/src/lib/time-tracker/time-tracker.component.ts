@@ -69,6 +69,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	screenshots = [];
 	selectedTimeSlot: any = null;
 	lastTimeSlot = null;
+	invalidTimeLog = null;
 	constructor(
 		private electronService: ElectronService,
 		private _cdr: ChangeDetectorRef,
@@ -100,16 +101,26 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				if (arg.timeSlotId) {
 					this.getLastTimeSlotImage(arg);
 				}
+
+				setTimeout(() => {
+					if (!this.start) {
+						this.removeInvalidTimeLog(arg);
+					}
+				}, 2000);
 			}
 		);
 
-		this.electronService.ipcRenderer.on('start_from_tray', (event, arg) => {
-			this.taskSelect = arg.taskId;
-			this.projectSelect = arg.projectId;
-			this.note = arg.note;
-			this.aw = arg.aw && arg.aw.isAw ? arg.aw.isAw : false;
-			this.getUserInfo(arg, true);
-		});
+		this.electronService.ipcRenderer.on(
+			'start_from_tray',
+			async (event, arg) => {
+				await this.removeInvalidTimeLog(arg);
+				this.taskSelect = arg.taskId;
+				this.projectSelect = arg.projectId;
+				this.note = arg.note;
+				this.aw = arg.aw && arg.aw.isAw ? arg.aw.isAw : false;
+				this.getUserInfo(arg, true);
+			}
+		);
 
 		this.electronService.ipcRenderer.on('stop_from_tray', (event, arg) => {
 			if (arg && arg.quitApp) this.quitApp = true;
@@ -563,6 +574,29 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.toastrService.show(`${e.statusText}`, `Warning`, {
 					status: 'danger'
 				});
+			});
+	}
+
+	removeInvalidTimeLog(arg) {
+		return this.timeTrackerService
+			.getInvalidTimeLog(arg)
+			.then(async (res: any) => {
+				if (res && res.length > 0) {
+					this.invalidTimeLog = res.filter((x) => !x.stoppedAt);
+					if (this.invalidTimeLog && this.invalidTimeLog.length > 0) {
+						await Promise.all(
+							this.invalidTimeLog.map(async (x) => {
+								await this.timeTrackerService.deleteInvalidTimeLog(
+									{ ...arg, timeLogId: x.id }
+								);
+								return x;
+							})
+						);
+						return res;
+					}
+					return res;
+				}
+				return res;
 			});
 	}
 }

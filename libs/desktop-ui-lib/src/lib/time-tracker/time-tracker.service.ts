@@ -195,4 +195,40 @@ export class TimeTrackerService {
 
 		return params;
 	}
+
+	getInvalidTimeLog(values) {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
+		});
+
+		return this.http
+			.get(`${values.apiHost}/api/timesheet/time-log/`, {
+				headers: headers,
+				params: {
+					tenantId: values.tenantId,
+					organizationId: values.organizationId,
+					source: 'DESKTOP'
+				}
+			})
+			.pipe()
+			.toPromise();
+	}
+
+	deleteInvalidTimeLog(values) {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
+		});
+
+		return this.http
+			.delete(
+				`${values.apiHost}/api/timesheet/time-log/${values.timeLogId}`,
+				{
+					headers: headers
+				}
+			)
+			.pipe()
+			.toPromise();
+	}
 }

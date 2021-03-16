@@ -145,6 +145,11 @@ function startServer(value, restart = false) {
 	/* create main window */
 	if (value.serverConfigConnected || !value.isLocalServer) {
 		setupWindow.hide();
+		timeTrackerWindow.destroy();
+		timeTrackerWindow = createTimeTrackerWindow(
+			timeTrackerWindow,
+			pathWindow.timeTrackerUi
+		);
 		gauzyWindow = timeTrackerWindow;
 		gauzyWindow.show();
 	}
