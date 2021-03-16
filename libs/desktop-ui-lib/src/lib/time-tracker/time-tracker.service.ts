@@ -108,8 +108,8 @@ export class TimeTrackerService {
 			'Tenant-Id': values.tenantId
 		});
 
-		console.log(`Get Time Slot Headers: ${moment().format()}`);
-		console.log(
+		log.info(`Get Time Slot: ${moment().format()}`);
+		log.info(
 			{
 				Authorization: `Bearer ${values.token}`,
 				'Tenant-Id': values.tenantId
@@ -137,7 +137,7 @@ export class TimeTrackerService {
 			Authorization: `Bearer ${values.token}`
 		});
 
-		log.info(`Toggle Timer Request: ${moment().format()}`, {
+		const request = {
 			description: values.note,
 			isBillable: true,
 			logType: 'TRACKED',
@@ -148,26 +148,15 @@ export class TimeTrackerService {
 			organizationId: values.organizationId,
 			tenantId: values.tenantId,
 			organizationContactId: values.organizationContactId
-		});
+		};
+
+		log.info(`Toggle Timer Request: ${moment().format()}`, request);
 
 		return this.http
 			.post(
 				`${values.apiHost}/api/timesheet/timer/toggle`,
-				{
-					description: values.note,
-					isBillable: true,
-					logType: 'TRACKED',
-					projectId: values.projectId,
-					taskId: values.taskId,
-					source: 'DESKTOP',
-					manualTimeSlot: values.manualTimeSlot,
-					organizationId: values.organizationId,
-					tenantId: values.tenantId,
-					organizationContactId: values.organizationContactId
-				},
-				{
-					headers: headers
-				}
+				{ ...request },
+				{ headers: headers }
 			)
 			.pipe()
 			.toPromise();

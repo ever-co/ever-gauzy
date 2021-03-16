@@ -163,7 +163,7 @@ export function ipcTimer(
 ) {
 	const timerHandler = new TimerHandler();
 	ipcMain.on('start_timer', (event, arg) => {
-		log.info(`Timer Starts: ${moment().format()}`);
+		log.info(`Timer Start: ${moment().format()}`);
 		store.set({
 			project: {
 				projectId: arg.projectId,
