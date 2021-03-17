@@ -68,14 +68,14 @@ let gauzyAPP: any;
 
 if (process.platform === 'darwin') {
 	gauzyAPP = new AutoLaunch({
-		name: 'gauzy-dekstop',
+		name: 'Gauzy Desktop',
 		path: '/Applications/gauzy-desktop.app'
 	});
 }
 
 if (process.platform === 'win32') {
 	gauzyAPP = new AutoLaunch({
-		name: 'gauzy-dekstop',
+		name: 'Gauzy Desktop',
 		path: app.getPath('exe')
 	});
 }
