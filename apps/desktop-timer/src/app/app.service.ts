@@ -141,7 +141,7 @@ export class AppService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
-		console.log('values: 144', values);
+
 		return this.http
 			.post(
 				`${values.apiHost}/api/timesheet/time-slot`,

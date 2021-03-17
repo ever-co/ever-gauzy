@@ -94,7 +94,7 @@ export class CreateTimeSlotHandler
 			timeSlot.organizationId = employee.organizationId;
 		}
 
-		console.log({ timeSlot });
+		console.log('Create Time Slot', { timeSlot });
 
 		await this.timeSlotRepository.save(timeSlot);
 

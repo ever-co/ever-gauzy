@@ -127,7 +127,8 @@ export class TimeTrackerService {
 
 	toggleApiStart(values) {
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
 		});
 
 		const request = {
@@ -161,8 +162,10 @@ export class TimeTrackerService {
 			tenantId: values.tenantId
 		});
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
 		});
+
 		return this.http
 			.delete(`${values.apiHost}/api/timesheet/time-slot`, {
 				params,
