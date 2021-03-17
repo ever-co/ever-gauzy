@@ -91,7 +91,7 @@ if (process.platform === 'darwin') {
 
 if (process.platform === 'win32') {
 	gauzyTimer = new AutoLaunch({
-		name: 'gauzy-desktop-timer',
+		name: 'Gauzy Desktop Timer',
 		path: app.getPath('exe')
 	});
 }
