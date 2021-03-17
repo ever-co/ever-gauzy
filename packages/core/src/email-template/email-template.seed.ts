@@ -3,6 +3,7 @@ import { Connection } from 'typeorm';
 import { EmailTemplate } from './email-template.entity';
 import * as mjml2html from 'mjml';
 import * as path from 'path';
+
 /**
  * Note: This seed file assumes the following directory structure in seeds/data/email/default-email-templates/ folder
  *
@@ -22,14 +23,17 @@ export const createDefaultEmailTemplates = async (
 			'data',
 			'default-email-templates'
 		];
+
 		const files = [];
+
 		let FOLDER_PATH = path.join(__dirname, '../', ...templatePath);
+
 		FOLDER_PATH = fs.existsSync(FOLDER_PATH)
 			? FOLDER_PATH
 			: path.resolve('.', ...templatePath.slice(2));
 
 		findInDir(FOLDER_PATH, files);
-		console.log(files);
+
 		await fileToTemplate(connection, files);
 	} catch (error) {
 		// it's not a big issue for now if we can't create email templates
@@ -78,16 +82,18 @@ const pathToEmailTemplate = async (
 ): Promise<EmailTemplate> => {
 	try {
 		const template = new EmailTemplate();
-		//default template access for tenant organizations
-
+		// default template access for tenant organizations
 		const templatePath = fullPath.replace(/\\/g, '/').split('/');
 		const fileName = templatePath[templatePath.length - 1].split('.', 2);
 		const fileExtension = fileName[1];
 		const fileNameWithoutExtension = fileName[0];
+
 		template.languageCode = templatePath[templatePath.length - 2];
+
 		template.name = `${
 			templatePath[templatePath.length - 3]
 		}/${fileNameWithoutExtension}`;
+
 		const fileContent = fs.readFileSync(fullPath, 'utf8');
 
 		switch (fileExtension) {
@@ -104,9 +110,11 @@ const pathToEmailTemplate = async (
 				);
 				break;
 		}
+
 		if (!template.hbs) {
 			return;
 		}
+
 		return template;
 	} catch (error) {
 		console.log('Something went wrong', path, error);

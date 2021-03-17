@@ -10,6 +10,12 @@ import {
 	hasScreenCapturePermission,
 	openSystemPreferences
 } from 'mac-screen-capture-permissions';
+
+// Import logging for electron and override default console logging
+import log from 'electron-log';
+console.log = log.log;
+Object.assign(console, log.functions);
+
 export function ipcMainHandler(store, startServer, knex, config) {
 	ipcMain.on('start_server', (event, arg) => {
 		global.variableGlobal = {
@@ -116,10 +122,12 @@ export function ipcMainHandler(store, startServer, knex, config) {
 	});
 
 	ipcMain.on('screen_shoot', (event, arg) => {
+		log.info(`Taken Screenshot: ${moment().format()}`);
 		event.sender.send('take_screen_shoot');
 	});
 
 	ipcMain.on('get_last_screen_capture', (event, arg) => {
+		log.info(`Get Last Screenshot: ${moment().format()}`);
 		event.sender.send('get_last_screen');
 	});
 
@@ -159,6 +167,7 @@ export function ipcTimer(
 ) {
 	const timerHandler = new TimerHandler();
 	ipcMain.on('start_timer', (event, arg) => {
+		log.info(`Timer Start: ${moment().format()}`);
 		store.set({
 			project: {
 				projectId: arg.projectId,
@@ -181,6 +190,7 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('stop_timer', (event, arg) => {
+		log.info(`Timer Stop: ${moment().format()}`);
 		timerHandler.stopTime(
 			setupWindow,
 			timeTrackerWindow,
@@ -204,6 +214,9 @@ export function ipcTimer(
 		// after update time slot do upload screenshot
 		// check config
 		const appSetting = LocalStore.getStore('appSetting');
+		log.info(`App Setting: ${moment().format()}`, appSetting);
+		log.info(`Config: ${moment().format()}`, config);
+
 		switch (
 			appSetting.SCREENSHOTS_ENGINE_METHOD ||
 			config.SCREENSHOTS_ENGINE_METHOD

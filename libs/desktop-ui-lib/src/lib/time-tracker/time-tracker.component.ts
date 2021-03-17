@@ -1,6 +1,5 @@
 import {
 	Component,
-	OnInit,
 	ChangeDetectionStrategy,
 	ChangeDetectorRef,
 	AfterViewInit,
@@ -12,6 +11,11 @@ import { ElectronService } from 'ngx-electron';
 import { TimeTrackerService } from './time-tracker.service';
 import * as moment from 'moment';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
+
+// Import logging for electron and override default console logging
+import log from 'electron-log';
+console.log = log.log;
+Object.assign(console, log.functions);
 
 @Component({
 	selector: 'ngx-time-tracker',
@@ -26,7 +30,7 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 		}
 	]
 })
-export class TimeTrackerComponent implements OnInit, AfterViewInit {
+export class TimeTrackerComponent implements AfterViewInit {
 	start: Boolean = false;
 	timeRun: any = {
 		second: '00',
@@ -70,7 +74,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	selectedTimeSlot: any = null;
 	lastTimeSlot = null;
 	invalidTimeLog = null;
-	constructor(
+
+  constructor(
 		private electronService: ElectronService,
 		private _cdr: ChangeDetectorRef,
 		private timeTrackerService: TimeTrackerService,
@@ -139,6 +144,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		);
 
 		this.electronService.ipcRenderer.on('take_screenshot', (event, arg) => {
+			log.info(`Take Screenshot:`, arg);
+
 			const thumbSize = this.determineScreenshot(arg.screensize);
 			this.electronService.desktopCapturer
 				.getSources({
@@ -194,12 +201,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		});
 	}
 
-	ngOnInit(): void {
-		// this.getTask()
-		// console.log('init', this.projectSelect);
-		this.electronService.ipcRenderer.send('time_tracker_ready');
-	}
-
 	ngAfterViewInit(): void {
 		this.electronService.ipcRenderer.send('time_tracker_ready');
 	}
@@ -221,6 +222,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					.then((res) => {
 						this.start = val;
 						this.startTime(res);
+					})
+					.catch((error) => {
+						log.info(
+							`Timer Toggle Catch: ${moment().format()}`,
+							error
+						);
 					});
 			} else {
 				this.start = val;
@@ -505,23 +512,29 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	getLastTimeSlotImage(arg) {
-		this.timeTrackerService.getTimeSlot(arg).then((res: any) => {
-			if (res.screenshots && res.screenshots.length > 0) {
-				this.lastScreenCapture = res.screenshots[0];
-				this.screenshots = res.screenshots;
-				this.lastTimeSlot = res;
-			} else {
-				this.lastScreenCapture = {};
-			}
-			if (this.lastScreenCapture.createdAt) {
-				this.lastScreenCapture.textTime = moment(
-					this.lastScreenCapture.createdAt
-				).fromNow();
-			} else {
-				this.lastScreenCapture = {};
-			}
-			this._cdr.detectChanges();
-		});
+		console.log('get last timeslot image');
+		this.timeTrackerService
+			.getTimeSlot(arg)
+			.then((res: any) => {
+				if (res.screenshots && res.screenshots.length > 0) {
+					this.lastScreenCapture = res.screenshots[0];
+					this.screenshots = res.screenshots;
+					this.lastTimeSlot = res;
+				} else {
+					this.lastScreenCapture = {};
+				}
+				if (this.lastScreenCapture.createdAt) {
+					this.lastScreenCapture.textTime = moment(
+						this.lastScreenCapture.createdAt
+					).fromNow();
+				} else {
+					this.lastScreenCapture = {};
+				}
+				this._cdr.detectChanges();
+			})
+			.catch((error) => {
+				console.log('get last timeslot image error', error);
+			});
 	}
 
 	getUserInfo(arg, start) {

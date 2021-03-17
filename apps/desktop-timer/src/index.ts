@@ -5,8 +5,10 @@ import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
 
+import * as path from 'path';
 import { app, dialog, BrowserWindow, ipcMain, shell, Menu } from 'electron';
 import { environment } from './environments/environment';
+
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 log.catchErrors({
 	showDialog: false,
@@ -39,10 +41,9 @@ log.catchErrors({
 	}
 });
 
-import * as path from 'path';
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
-import * as url from 'url';
+
 const Store = require('electron-store');
 import {
 	ipcMainHandler,
@@ -63,7 +64,8 @@ import { fork } from 'child_process';
 import { autoUpdater, CancellationToken } from 'electron-updater';
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
-// C:\Users\USERNAME\AppData\Roaming\gauzy-desktop
+// C:\Users\USERNAME\AppData\Roaming\gauzy-desktop-timer
+
 app.setName('gauzy-desktop-timer');
 process.env.GAUZY_USER_PATH = app.getPath('userData');
 log.info(`GAUZY_USER_PATH: ${process.env.GAUZY_USER_PATH}`);
@@ -101,9 +103,8 @@ dataModel.createNewTable(knex);
 
 const store = new Store();
 
-let serve: boolean;
 const args = process.argv.slice(1);
-serve = args.some((val) => val === '--serve');
+const serve: boolean = args.some((val) => val === '--serve');
 
 let gauzyWindow: BrowserWindow = null;
 let setupWindow: BrowserWindow = null;
@@ -122,7 +123,7 @@ let serverGauzy = null;
 let serverDesktop = null;
 let dialogErr = false;
 let cancellationToken = null;
-console.log('this is new');
+
 try {
 	cancellationToken = new CancellationToken();
 } catch (error) {}

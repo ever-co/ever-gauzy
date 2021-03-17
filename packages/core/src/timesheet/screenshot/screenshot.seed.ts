@@ -45,15 +45,15 @@ export const createRandomScreenshot = async (
 		}
 	}
 
-	console.log('SCREENSHOT SEED -> dir: ' + dir);
-	console.log('SCREENSHOT SEED -> baseDir: ' + baseDir);
+	// console.log('SCREENSHOT SEED -> dir: ' + dir);
+	// console.log('SCREENSHOT SEED -> baseDir: ' + baseDir);
 
 	const fileDir = path.join(destDirName, moment().format('YYYY/MM/DD'));
 	const destDir = path.join('public', fileDir);
 
 	const finalDir = path.join(baseDir, destDir);
 
-	console.log('SCREENSHOT SEED -> finalDir: ' + finalDir);
+	// console.log('SCREENSHOT SEED -> finalDir: ' + finalDir);
 
 	mkdirSync(finalDir, { recursive: true });
 
