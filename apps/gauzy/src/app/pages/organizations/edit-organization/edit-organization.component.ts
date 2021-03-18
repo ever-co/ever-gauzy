@@ -23,6 +23,7 @@ export class EditOrganizationComponent
 	selectedOrg: IOrganization;
 	selectedOrgFromHeader: IOrganization;
 	employeesCount: number;
+	params: any;
 
 	constructor(
 		private router: Router,
@@ -37,37 +38,33 @@ export class EditOrganizationComponent
 	}
 
 	async ngOnInit() {
-		this.route.params
-			.pipe(
-				switchMap((params) =>
-					this.organizationsService.getById(params.id, null, ['tags'])
-				),
-				tap((selectedOrg) => {
-					this.selectedOrg = selectedOrg;
-					this.store.selectedOrganization = this.selectedOrg;
-					this.selectedOrgFromHeader = this.selectedOrg;
-					this.store.selectedEmployee = null;
-				}),
-				switchMap(() => this.store.selectedOrganization$),
-				tap((selectedOrg) => {
-					this.selectedOrgFromHeader = selectedOrg;
-					this.selectedOrg = selectedOrg;
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		this.route.params.pipe(untilDestroyed(this)).subscribe((params) => {
+			if (params.id) {
+				this.organizationsService
+					.getById(params.id, null, ['tags'])
+					.toPromise()
+					.then((selectedOrg) => {
+						this.setSelectedOrg(selectedOrg);
+					});
+			}
+		});
+
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
 				untilDestroyed(this)
 			)
 			.subscribe((organization) => {
-				if (organization) {
-					this.selectedOrg = organization;
-					this.organizationEditStore.selectedOrganization = this.selectedOrg;
-					this.loadEmployeesCount();
-				}
+				this.setSelectedOrg(organization);
 			});
+	}
+
+	setSelectedOrg(selectedOrg) {
+		this.store.selectedEmployee = null;
+		this.selectedOrg = selectedOrg;
+		this.store.selectedOrganization = this.selectedOrg;
+		this.store.organizationId = this.selectedOrg.id;
+		this.selectedOrgFromHeader = this.selectedOrg;
 	}
 
 	canEditPublicPage() {

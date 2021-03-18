@@ -114,6 +114,9 @@ export class EditOrganizationLocationComponent
 						coordinates: [contact.latitude, contact.longitude]
 					}
 				});
+				this.leafletTemplate.addMarker(
+					new LatLng(contact.latitude, contact.longitude)
+				);
 			}
 		}, 200);
 	}
