@@ -74,8 +74,9 @@ export class TimeTrackerComponent implements AfterViewInit {
 	selectedTimeSlot: any = null;
 	lastTimeSlot = null;
 	invalidTimeLog = null;
+	loading = false;
 
-  constructor(
+	constructor(
 		private electronService: ElectronService,
 		private _cdr: ChangeDetectorRef,
 		private timeTrackerService: TimeTrackerService,
@@ -118,7 +119,6 @@ export class TimeTrackerComponent implements AfterViewInit {
 		this.electronService.ipcRenderer.on(
 			'start_from_tray',
 			async (event, arg) => {
-				await this.removeInvalidTimeLog(arg);
 				this.taskSelect = arg.taskId;
 				this.projectSelect = arg.projectId;
 				this.note = arg.note;
@@ -205,9 +205,16 @@ export class TimeTrackerComponent implements AfterViewInit {
 		this.electronService.ipcRenderer.send('time_tracker_ready');
 	}
 
-	toggleStart(val) {
+	async toggleStart(val) {
+		this.loading = true;
 		if (this.validationField()) {
 			if (val) {
+				await this.removeInvalidTimeLog({
+					token: this.token,
+					organizationId: this.userOrganization.id,
+					tenantId: this.userData.tenantId,
+					apiHost: this.apiHost
+				});
 				this.timeTrackerService
 					.toggleApiStart({
 						token: this.token,
@@ -222,14 +229,17 @@ export class TimeTrackerComponent implements AfterViewInit {
 					.then((res) => {
 						this.start = val;
 						this.startTime(res);
+						this.loading = false;
 					})
 					.catch((error) => {
+						this.loading = false;
 						log.info(
 							`Timer Toggle Catch: ${moment().format()}`,
 							error
 						);
 					});
 			} else {
+				this.loading = false;
 				this.start = val;
 				this.stopTimer();
 				this._cdr.detectChanges();
