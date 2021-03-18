@@ -182,6 +182,10 @@ export class TimerService {
 
 	async toggleTimeLog(request: ITimerToggleInput): Promise<TimeLog> {
 		const user = RequestContext.currentUser();
+
+		console.log(`Timer Started/Stop Request API:`, request);
+		console.log(`Current User EmployeeId API:`, user.employeeId);
+
 		const lastLog = await this.timeLogRepository.findOne({
 			where: {
 				deletedAt: IsNull(),

@@ -69,7 +69,7 @@ export class AppComponent implements OnInit {
 		);
 
 		this.electronService.ipcRenderer.on('set_time_sheet', (event, arg) => {
-			appService.pushTotimesheet(arg).then((res: any) => {
+			appService.pushToTimesheet(arg).then((res: any) => {
 				arg.timesheetId = res.id;
 				appService.setTimeLog(arg).then((result: any) => {
 					event.sender.send('return_time_sheet', {
@@ -96,7 +96,7 @@ export class AppComponent implements OnInit {
 		);
 
 		this.electronService.ipcRenderer.on('set_time_slot', (event, arg) => {
-			appService.pushTotimeslot(arg).then((res: any) => {
+			appService.pushToTimeslot(arg).then((res: any) => {
 				event.sender.send('remove_aw_local_data', {
 					idsAw: arg.idsAw
 				});

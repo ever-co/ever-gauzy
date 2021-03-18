@@ -11,6 +11,11 @@ import { SetupService } from './setup.service';
 import { NbDialogService } from '@nebular/theme';
 import { AlertComponent } from '../../lib/dialogs/alert/alert.component';
 
+// Import logging for electron and override default console logging
+import log from 'electron-log';
+console.log = log.log;
+Object.assign(console, log.functions);
+
 @Component({
 	selector: 'ngx-setup',
 	templateUrl: './setup.component.html',
@@ -239,6 +244,7 @@ export class SetupComponent implements OnInit {
 			};
 		}
 
+		log.info(`Server Config:`, this.serverConfig);
 		if (this.connectivity.live) {
 			return {
 				serverUrl: this.serverConfig.live.url,

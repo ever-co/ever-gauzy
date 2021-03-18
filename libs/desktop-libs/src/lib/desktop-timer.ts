@@ -29,10 +29,13 @@ export default class Timerhandler {
 
 		this.notificationDesktop.startTimeNotification(true);
 		this.configs = LocalStore.getStore('configs');
+
 		const ProjectInfo = LocalStore.getStore('project');
 		const appInfo = LocalStore.beforeRequestParams();
+
 		this.timeStart = moment();
 		this.timeSlotStart = moment();
+
 		this.lastTimer = await TimerData.createTimer(knex, {
 			day: moment().format('YYYY-MM-DD'),
 			updated_at: moment(),
@@ -116,6 +119,7 @@ export default class Timerhandler {
 		const params: any = {
 			...LocalStore.beforeRequestParams()
 		};
+
 		if (isStop) params.manualTimeSlot = true;
 		setupWindow.webContents.send('update_toggle_timer', params);
 	}
@@ -220,10 +224,13 @@ export default class Timerhandler {
 	stopTime(setupWindow, timeTrackerWindow, knex, quitApp) {
 		const appSetting = LocalStore.getStore('appSetting');
 		appSetting.timerStarted = false;
+
 		LocalStore.updateApplicationSetting(appSetting);
 		this.notificationDesktop.startTimeNotification(false);
+
 		this.updateToggle(setupWindow, knex, true);
 		this.getSetActivity(knex, setupWindow, this.timeSlotStart, quitApp);
+
 		clearInterval(this.intevalTimer);
 		clearInterval(this.intervalUpdateTime);
 	}

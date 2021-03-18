@@ -10,6 +10,11 @@ import { BrowserWindow, screen } from 'electron';
 import screenshot from 'screenshot-desktop';
 const sound = require('sound-play');
 
+// Import logging for electron and override default console logging
+import log from 'electron-log';
+console.log = log.log;
+Object.assign(console, log.functions);
+
 const captureOnlyActiveWindow = async (
 	displays,
 	timeSlotId,
@@ -76,6 +81,7 @@ const uploadScreenShot = async (
 		'YYYYMMDDHHmmss'
 	)}-${name}.png`;
 	writeScreenshotLocally(img, fileName);
+
 	const appSetting = LocalStore.getStore('appSetting');
 	if (show && appSetting && appSetting.screenshotNotification) {
 		showCapturedToRenderer(
@@ -84,10 +90,12 @@ const uploadScreenShot = async (
 			quitApp
 		);
 	}
+
 	showCapture(
 		timeTrackerWindow,
 		path.join(app.getPath('userData'), `/public/temp/${fileName}`)
 	);
+
 	try {
 		const appInfo = LocalStore.beforeRequestParams();
 		const form = new Form();
@@ -99,6 +107,7 @@ const uploadScreenShot = async (
 		form.append('timeSlotId', timeSlotId);
 		form.append('tenantId', appInfo.tenantId);
 		form.append('organizationId', appInfo.organizationId);
+
 		const response = await fetch(
 			`${appInfo.apiHost}/api/timesheet/screenshot`,
 			{
@@ -110,26 +119,34 @@ const uploadScreenShot = async (
 				}
 			}
 		);
-		console.log('upload success');
+
+		console.log(`Send Screenshot to API: ${moment().format()}`);
 		const res = await response.json();
+		console.log(
+			`Get Screenshot Response From API: ${moment().format()}`,
+			res
+		);
+
 		setTimeout(() => {
 			removeScreenshotLocally(fileName);
 		}, 4000);
 		return res;
 	} catch (e) {
 		console.log('upload screenshot error', e.message);
+		// remove file on local directory if upload got error
 		setTimeout(() => {
 			removeScreenshotLocally(fileName);
 		}, 4000);
-		// write file on local directory if upload got error
 	}
 };
 
 const writeScreenshotLocally = (img, fileName) => {
 	const imgLocation = path.join(app.getPath('userData'), '/public/temp');
 	readOrCreateTempDir(imgLocation);
+
 	const filePath = path.join(imgLocation, `/${fileName}`);
 	writeFileSync(filePath, img);
+
 	return filePath;
 };
 
@@ -236,8 +253,12 @@ const showCapturedToRenderer = (NotificationWindow, thumbUrl, quitApp) => {
 			note: LocalStore.beforeRequestParams().note
 		});
 		try {
-			sound.play(soundCamera, 0.4);
-		} catch (error) {}
+			if (existsSync(soundCamera)) {
+				sound.play(soundCamera, 0.4);
+			}
+		} catch (err) {
+			console.error('sound camera not found');
+		}
 	}, 1000);
 	setTimeout(() => {
 		NotificationWindow.close();

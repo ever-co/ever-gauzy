@@ -17,11 +17,13 @@ export class TokenInterceptor implements HttpInterceptor {
 	): Observable<HttpEvent<any>> {
 		const token = this.store.token;
 
-		request = request.clone({
-			setHeaders: {
-				Authorization: `Bearer ${token}`
-			}
-		});
+		if (token) {
+			request = request.clone({
+				setHeaders: {
+					Authorization: `Bearer ${token}`
+				}
+			});
+		}
 		return next.handle(request);
 	}
 }

@@ -42,7 +42,6 @@ const windowSetting = () => {
 		},
 		width: 1000,
 		height: 728,
-		title: '',
 		maximizable: false
 	};
 

@@ -11,6 +11,7 @@
 									icon="play-circle"
 									*ngIf="!start"
 									(click)="toggleStart(true)"
+									[disabled]="loading"
 								>
 								</nb-icon>
 								<nb-icon
@@ -18,6 +19,7 @@
 									icon="stop-circle-outline"
 									*ngIf="start"
 									(click)="toggleStart(false)"
+									[disabled]="loading"
 								>
 								</nb-icon>
 							</div>
@@ -58,7 +60,6 @@
 									bindValue="id"
 									bindLabel="name"
 									(ngModelChange)="setProject($event)"
-									[disabled]="start"
 								>
 								</ng-select>
 							</div>
@@ -73,12 +74,11 @@
 									bindValue="id"
 									bindLabel="title"
 									(ngModelChange)="setTask($event)"
-									[disabled]="start"
 								>
 								</ng-select>
 							</div>
 							<div class="col-12 form-group">
-								<label>Work ON:</label>
+								<label>Working on:</label>
 								<textarea
 									nbInput
 									fullWidth
@@ -87,7 +87,6 @@
 									[(ngModel)]="note"
 									[status]="errors.note ? 'danger' : 'basic'"
 									(ngModelChange)="descriptionChange($event)"
-									[disabled]="start"
 								></textarea>
 							</div>
 							<div class="col-12 form-group tp-padding">
@@ -98,7 +97,7 @@
 												<nb-checkbox
 													[checked]="aw"
 													(change)="setAW($event)"
-													>Activitywatch</nb-checkbox
+													>ActivityWatch</nb-checkbox
 												>
 											</div>
 											<div class="col-4">

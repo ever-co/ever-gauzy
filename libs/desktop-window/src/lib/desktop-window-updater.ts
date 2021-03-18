@@ -42,7 +42,6 @@ const windowSetting = () => {
 		},
 		width: 700,
 		height: 600,
-		title: 'Gauzy Updater',
 		maximizable: false
 	};
 
