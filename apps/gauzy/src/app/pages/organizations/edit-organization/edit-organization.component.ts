@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IOrganization, PermissionsEnum } from '@gauzy/contracts';
-import { filter, first, switchMap, tap } from 'rxjs/operators';
+import { filter, first } from 'rxjs/operators';
 import { EmployeesService } from '../../../@core/services';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
