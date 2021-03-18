@@ -31,9 +31,9 @@ export class EditOrganizationSettingsComponent
 	ngOnInit() {
 		this.route.params.pipe(untilDestroyed(this)).subscribe((params) => {
 			this.routeParams = params;
+			this.loadTabs();
+			this._applyTranslationOnTabs();
 		});
-		this.loadTabs();
-		this._applyTranslationOnTabs();
 	}
 
 	getRoute(tabName: string) {

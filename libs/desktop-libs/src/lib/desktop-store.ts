@@ -80,5 +80,12 @@ export const LocalStore = {
 		store.set({
 			configs: configs
 		});
+	},
+
+	updateConfigProject: (values) => {
+		let projects = store.get('project');
+		store.set({
+			project: { ...projects, ...values }
+		});
 	}
 };

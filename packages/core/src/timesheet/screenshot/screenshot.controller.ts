@@ -95,7 +95,9 @@ export class ScreenshotController extends CrudController<Screenshot> {
 		entity.file = file.key;
 		entity.thumb = thumb.key;
 		entity.recordedAt = entity.recordedAt ? entity.recordedAt : new Date();
+
 		const screenshot = await this.screenshotService.create(entity);
+		console.log(`Screenshot Created API:`, screenshot);
 
 		return this.screenshotService.findOne(screenshot.id);
 	}

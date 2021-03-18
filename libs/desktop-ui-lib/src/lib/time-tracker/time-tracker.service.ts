@@ -2,6 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 // import { environment } from '../../../environments/environment';
 import * as moment from 'moment';
+
+// Import logging for electron and override default console logging
+import log from 'electron-log';
+console.log = log.log;
+Object.assign(console, log.functions);
+
 @Injectable({
 	providedIn: 'root'
 })
@@ -10,6 +16,7 @@ export class TimeTrackerService {
 	token = '';
 	userId = '';
 	employeeId = '';
+
 	constructor(private http: HttpClient) {}
 
 	createAuthorizationHeader(headers: Headers) {
@@ -100,6 +107,9 @@ export class TimeTrackerService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
+
+		log.info(`Get Time Slot: ${moment().format()}`);
+
 		return this.http
 			.get(
 				`${values.apiHost}/api/timesheet/time-slot/${values.timeSlotId}?relations[]=screenshots&relations[]=activities&relations[]=employee`,
@@ -117,27 +127,30 @@ export class TimeTrackerService {
 
 	toggleApiStart(values) {
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
 		});
+
+		const request = {
+			description: values.note,
+			isBillable: true,
+			logType: 'TRACKED',
+			projectId: values.projectId,
+			taskId: values.taskId,
+			source: 'DESKTOP',
+			manualTimeSlot: values.manualTimeSlot,
+			organizationId: values.organizationId,
+			tenantId: values.tenantId,
+			organizationContactId: values.organizationContactId
+		};
+
+		log.info(`Toggle Timer Request: ${moment().format()}`, request);
 
 		return this.http
 			.post(
 				`${values.apiHost}/api/timesheet/timer/toggle`,
-				{
-					description: values.note,
-					isBillable: true,
-					logType: 'TRACKED',
-					projectId: values.projectId,
-					taskId: values.taskId,
-					source: 'DESKTOP',
-					manualTimeSlot: values.manualTimeSlot,
-					organizationId: values.organizationId,
-					tenantId: values.tenantId,
-					organizationContactId: values.organizationContactId
-				},
-				{
-					headers: headers
-				}
+				{ ...request },
+				{ headers: headers }
 			)
 			.pipe()
 			.toPromise();
@@ -149,8 +162,10 @@ export class TimeTrackerService {
 			tenantId: values.tenantId
 		});
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
 		});
+
 		return this.http
 			.delete(`${values.apiHost}/api/timesheet/time-slot`, {
 				params,
@@ -194,5 +209,41 @@ export class TimeTrackerService {
 		});
 
 		return params;
+	}
+
+	getInvalidTimeLog(values) {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
+		});
+
+		return this.http
+			.get(`${values.apiHost}/api/timesheet/time-log/`, {
+				headers: headers,
+				params: {
+					tenantId: values.tenantId,
+					organizationId: values.organizationId,
+					source: 'DESKTOP'
+				}
+			})
+			.pipe()
+			.toPromise();
+	}
+
+	deleteInvalidTimeLog(values) {
+		const headers = new HttpHeaders({
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
+		});
+
+		return this.http
+			.delete(
+				`${values.apiHost}/api/timesheet/time-log/${values.timeLogId}`,
+				{
+					headers: headers
+				}
+			)
+			.pipe()
+			.toPromise();
 	}
 }

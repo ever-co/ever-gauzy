@@ -106,7 +106,7 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
 	 * After created new organization pushed on dropdown
 	 */
 	createOrganization(organization: IOrganization) {
-		const organizations: IOrganization[] = this.organizations;
+		const organizations: IOrganization[] = this.organizations || [];
 		organizations.push(organization);
 
 		this.organizations = [...organizations].filter(isNotEmpty);

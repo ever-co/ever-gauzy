@@ -1,6 +1,5 @@
 import {
 	Component,
-	OnInit,
 	ChangeDetectionStrategy,
 	ChangeDetectorRef,
 	AfterViewInit,
@@ -12,6 +11,11 @@ import { ElectronService } from 'ngx-electron';
 import { TimeTrackerService } from './time-tracker.service';
 import * as moment from 'moment';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
+
+// Import logging for electron and override default console logging
+import log from 'electron-log';
+console.log = log.log;
+Object.assign(console, log.functions);
 
 @Component({
 	selector: 'ngx-time-tracker',
@@ -26,7 +30,7 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 		}
 	]
 })
-export class TimeTrackerComponent implements OnInit, AfterViewInit {
+export class TimeTrackerComponent implements AfterViewInit {
 	start: Boolean = false;
 	timeRun: any = {
 		second: '00',
@@ -69,6 +73,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	screenshots = [];
 	selectedTimeSlot: any = null;
 	lastTimeSlot = null;
+	invalidTimeLog = null;
+	loading = false;
+
 	constructor(
 		private electronService: ElectronService,
 		private _cdr: ChangeDetectorRef,
@@ -100,16 +107,25 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				if (arg.timeSlotId) {
 					this.getLastTimeSlotImage(arg);
 				}
+
+				setTimeout(() => {
+					if (!this.start) {
+						this.removeInvalidTimeLog(arg);
+					}
+				}, 2000);
 			}
 		);
 
-		this.electronService.ipcRenderer.on('start_from_tray', (event, arg) => {
-			this.taskSelect = arg.taskId;
-			this.projectSelect = arg.projectId;
-			this.note = arg.note;
-			this.aw = arg.aw && arg.aw.isAw ? arg.aw.isAw : false;
-			this.getUserInfo(arg, true);
-		});
+		this.electronService.ipcRenderer.on(
+			'start_from_tray',
+			async (event, arg) => {
+				this.taskSelect = arg.taskId;
+				this.projectSelect = arg.projectId;
+				this.note = arg.note;
+				this.aw = arg.aw && arg.aw.isAw ? arg.aw.isAw : false;
+				this.getUserInfo(arg, true);
+			}
+		);
 
 		this.electronService.ipcRenderer.on('stop_from_tray', (event, arg) => {
 			if (arg && arg.quitApp) this.quitApp = true;
@@ -128,6 +144,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		);
 
 		this.electronService.ipcRenderer.on('take_screenshot', (event, arg) => {
+			log.info(`Take Screenshot:`, arg);
+
 			const thumbSize = this.determineScreenshot(arg.screensize);
 			this.electronService.desktopCapturer
 				.getSources({
@@ -183,19 +201,20 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		});
 	}
 
-	ngOnInit(): void {
-		// this.getTask()
-		// console.log('init', this.projectSelect);
-		this.electronService.ipcRenderer.send('time_tracker_ready');
-	}
-
 	ngAfterViewInit(): void {
 		this.electronService.ipcRenderer.send('time_tracker_ready');
 	}
 
-	toggleStart(val) {
+	async toggleStart(val) {
+		this.loading = true;
 		if (this.validationField()) {
 			if (val) {
+				await this.removeInvalidTimeLog({
+					token: this.token,
+					organizationId: this.userOrganization.id,
+					tenantId: this.userData.tenantId,
+					apiHost: this.apiHost
+				});
 				this.timeTrackerService
 					.toggleApiStart({
 						token: this.token,
@@ -210,8 +229,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					.then((res) => {
 						this.start = val;
 						this.startTime(res);
+						this.loading = false;
+					})
+					.catch((error) => {
+						this.loading = false;
+						log.info(
+							`Timer Toggle Catch: ${moment().format()}`,
+							error
+						);
 					});
 			} else {
+				this.loading = false;
 				this.start = val;
 				this.stopTimer();
 				this._cdr.detectChanges();
@@ -319,6 +347,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	async setProject(item) {
 		this.projectSelect = item;
+		this.electronService.ipcRenderer.send('update_project_on', {
+			projectId: this.projectSelect
+		});
 		if (item) {
 			this.tasks = this.tasks.filter((t) => t.projectId === item);
 			this.taskSelect = null;
@@ -334,11 +365,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	setTask(item) {
 		this.taskSelect = item;
+		this.electronService.ipcRenderer.send('update_project_on', {
+			taskId: this.taskSelect
+		});
 		if (item) this.errors.task = false;
 	}
 
 	descriptionChange(e) {
 		if (e) this.errors.note = false;
+		this.electronService.ipcRenderer.send('update_project_on', {
+			note: this.note
+		});
 	}
 
 	setAW(event) {
@@ -485,23 +522,29 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	getLastTimeSlotImage(arg) {
-		this.timeTrackerService.getTimeSlot(arg).then((res: any) => {
-			if (res.screenshots && res.screenshots.length > 0) {
-				this.lastScreenCapture = res.screenshots[0];
-				this.screenshots = res.screenshots;
-				this.lastTimeSlot = res;
-			} else {
-				this.lastScreenCapture = {};
-			}
-			if (this.lastScreenCapture.createdAt) {
-				this.lastScreenCapture.textTime = moment(
-					this.lastScreenCapture.createdAt
-				).fromNow();
-			} else {
-				this.lastScreenCapture = {};
-			}
-			this._cdr.detectChanges();
-		});
+		console.log('get last timeslot image');
+		this.timeTrackerService
+			.getTimeSlot(arg)
+			.then((res: any) => {
+				if (res.screenshots && res.screenshots.length > 0) {
+					this.lastScreenCapture = res.screenshots[0];
+					this.screenshots = res.screenshots;
+					this.lastTimeSlot = res;
+				} else {
+					this.lastScreenCapture = {};
+				}
+				if (this.lastScreenCapture.createdAt) {
+					this.lastScreenCapture.textTime = moment(
+						this.lastScreenCapture.createdAt
+					).fromNow();
+				} else {
+					this.lastScreenCapture = {};
+				}
+				this._cdr.detectChanges();
+			})
+			.catch((error) => {
+				console.log('get last timeslot image error', error);
+			});
 	}
 
 	getUserInfo(arg, start) {
@@ -554,6 +597,29 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this.toastrService.show(`${e.statusText}`, `Warning`, {
 					status: 'danger'
 				});
+			});
+	}
+
+	removeInvalidTimeLog(arg) {
+		return this.timeTrackerService
+			.getInvalidTimeLog(arg)
+			.then(async (res: any) => {
+				if (res && res.length > 0) {
+					this.invalidTimeLog = res.filter((x) => !x.stoppedAt);
+					if (this.invalidTimeLog && this.invalidTimeLog.length > 0) {
+						await Promise.all(
+							this.invalidTimeLog.map(async (x) => {
+								await this.timeTrackerService.deleteInvalidTimeLog(
+									{ ...arg, timeLogId: x.id }
+								);
+								return x;
+							})
+						);
+						return res;
+					}
+					return res;
+				}
+				return res;
 			});
 	}
 }

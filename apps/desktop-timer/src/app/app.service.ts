@@ -136,10 +136,12 @@ export class AppService {
 			.toPromise();
 	}
 
-	pushTotimeslot(values) {
+	pushToTimeslot(values) {
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
 		});
+
 		return this.http
 			.post(
 				`${values.apiHost}/api/timesheet/time-slot`,
@@ -165,9 +167,10 @@ export class AppService {
 			.toPromise();
 	}
 
-	pushTotimesheet(values) {
+	pushToTimesheet(values) {
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
 		});
 		return this.http
 			.post(
@@ -196,7 +199,8 @@ export class AppService {
 
 	updateToTimeSheet(values) {
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
 		});
 		return this.http
 			.put(
@@ -218,7 +222,8 @@ export class AppService {
 
 	updateToTimeSlot(values) {
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
 		});
 		return this.http
 			.put(
@@ -240,7 +245,8 @@ export class AppService {
 
 	pushToActivity(values) {
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
 		});
 		return this.http
 			.post(
@@ -258,7 +264,8 @@ export class AppService {
 
 	updateToActivity(values) {
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
 		});
 		return this.http
 			.put(
@@ -276,7 +283,8 @@ export class AppService {
 
 	setTimeLog(values) {
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
 		});
 		return this.http
 			.post(
@@ -302,7 +310,8 @@ export class AppService {
 
 	updateTimeLog(values) {
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
 		});
 		return this.http
 			.put(
@@ -321,9 +330,9 @@ export class AppService {
 
 	toggleApi(values) {
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
 		});
-
 		return this.http
 			.post(
 				`${values.apiHost}/api/timesheet/timer/toggle`,
@@ -349,14 +358,17 @@ export class AppService {
 
 	uploadScreenCapture(values) {
 		const headers = new HttpHeaders({
-			Authorization: `Bearer ${values.token}`
+			Authorization: `Bearer ${values.token}`,
+			'Tenant-Id': values.tenantId
 		});
+
 		const formData = new FormData();
 		const fileUpload: File = values.fileStream;
+
 		formData.append('file', fileUpload);
 		formData.append('timeSlotId', values.timeSlotId);
 		formData.append('organizationContactId', values.organizationContactId);
-		console.log(values);
+
 		return this.http
 			.post(`${values.apiHost}/api/timesheet/screenshot`, formData, {
 				headers: headers
