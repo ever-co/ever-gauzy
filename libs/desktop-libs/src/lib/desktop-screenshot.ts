@@ -77,9 +77,13 @@ const uploadScreenShot = async (
 	timeTrackerWindow
 ) => {
 	/* start upload */
-	const fileName = `screenshot-${moment().format(
+	let fileName = `screenshot-${moment().format(
 		'YYYYMMDDHHmmss'
 	)}-${name}.png`;
+
+	fileName = convertToSlug(fileName);
+
+	console.log('Screenshot Name', fileName);
 
 	writeScreenshotLocally(img, fileName);
 
@@ -343,4 +347,14 @@ export async function captureScreen(
 	} catch (error) {
 		console.log('error', error);
 	}
+}
+
+export function convertToSlug(text: string) {
+	return text
+		.toString()
+		.toLowerCase()
+		.replace(/\s+/g, '-') // Replace spaces with -
+		.replace(/\-\-+/g, '-') // Replace multiple - with single -
+		.replace(/^-+/, '') // Trim - from start of text
+		.replace(/-+$/, ''); // Trim - from end of text
 }
