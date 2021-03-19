@@ -1,5 +1,4 @@
 import { BrowserWindow } from 'electron';
-import * as path from 'path';
 import * as url from 'url';
 
 export function createUpdaterWindow(updaterWindow, filePath) {
@@ -42,6 +41,7 @@ const windowSetting = () => {
 		},
 		width: 700,
 		height: 600,
+		title: 'Gauzy Updater',
 		maximizable: false
 	};
 

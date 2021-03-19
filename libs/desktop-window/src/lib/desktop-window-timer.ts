@@ -1,5 +1,4 @@
 import { BrowserWindow } from 'electron';
-import * as path from 'path';
 import * as url from 'url';
 
 export function createTimeTrackerWindow(timeTrackerWindow, filePath) {
@@ -38,6 +37,7 @@ const windowSetting = () => {
 		},
 		width: 400,
 		height: 900,
+		title: 'Time Tracker',
 		maximizable: false
 	};
 

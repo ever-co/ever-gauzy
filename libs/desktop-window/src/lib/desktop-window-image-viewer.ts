@@ -1,5 +1,4 @@
 import { BrowserWindow } from 'electron';
-import * as path from 'path';
 import * as url from 'url';
 
 export function createImageViewerWindow(imageViewWindow, filePath) {
@@ -42,6 +41,7 @@ const windowSetting = () => {
 		},
 		width: 1000,
 		height: 728,
+		title: '',
 		maximizable: false
 	};
 
