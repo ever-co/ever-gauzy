@@ -1,5 +1,4 @@
 import { BrowserWindow, Menu, app } from 'electron';
-import * as path from 'path';
 import * as url from 'url';
 
 export function createSetupWindow(setupWindow, value, filePath) {
@@ -51,6 +50,7 @@ const windowSetting = () => {
 		},
 		width: 960,
 		height: 680,
+		title: 'Setup',
 		autoHideMenuBar: true,
 		maximizable: false
 	};

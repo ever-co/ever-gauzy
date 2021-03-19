@@ -8,6 +8,7 @@ import { StorageEngine } from 'multer';
 import { Provider } from './provider';
 import { RequestContext } from '../../context';
 import * as _ from 'underscore';
+import { v4 as uuid } from 'uuid';
 
 export interface S3Config {
 	rootPath: string;
@@ -103,6 +104,9 @@ export class S3Provider extends Provider<S3Provider> {
 						fileNameString = filename(file, ext);
 					}
 				} else {
+					if (!prefix) {
+						prefix = 'file';
+					}
 					fileNameString = `gauzy-${prefix}-${moment().unix()}-${parseInt(
 						'' + Math.random() * 1000,
 						10
@@ -119,8 +123,8 @@ export class S3Provider extends Provider<S3Provider> {
 					null,
 					join(
 						this.config.rootPath,
-						user ? user.tenantId : '',
 						dir,
+						user ? user.tenantId : uuid(),
 						fileNameString
 					)
 				);

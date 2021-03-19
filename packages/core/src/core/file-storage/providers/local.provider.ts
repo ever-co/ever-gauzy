@@ -6,6 +6,7 @@ import { environment, getConfig } from '@gauzy/config';
 import { Provider } from './provider';
 import { basename, join, resolve } from 'path';
 import { RequestContext } from '../../context';
+import { v4 as uuid } from 'uuid';
 
 const config = getConfig();
 
@@ -56,8 +57,8 @@ export class LocalProvider extends Provider<LocalProvider> {
 				const user = RequestContext.currentUser();
 				const fullPath = join(
 					this.config.rootPath,
-					user ? user.tenantId : '',
-					dir
+					dir,
+					user ? user.tenantId : uuid()
 				);
 
 				fs.mkdirSync(fullPath, {
