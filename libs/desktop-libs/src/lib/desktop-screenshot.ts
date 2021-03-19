@@ -20,7 +20,7 @@ const captureOnlyActiveWindow = async (
 	timeSlotId,
 	activeScreen,
 	quitApp,
-	NotificationWindow,
+	notificationWindow,
 	timeTrackerWindow
 ) => {
 	const display = displays.find((x) => x.id === activeScreen.id.toString());
@@ -30,7 +30,7 @@ const captureOnlyActiveWindow = async (
 		timeSlotId,
 		false,
 		quitApp,
-		NotificationWindow,
+		notificationWindow,
 		timeTrackerWindow
 	);
 	return [result];
@@ -41,7 +41,7 @@ const captureAllWindow = async (
 	timeSlotId,
 	activeScreen,
 	quitApp,
-	NotificationWindow,
+	notificationWindow,
 	timeTrackerWindow
 ) => {
 	const result = [];
@@ -53,7 +53,7 @@ const captureAllWindow = async (
 				timeSlotId,
 				i === 0,
 				quitApp,
-				NotificationWindow,
+				notificationWindow,
 				timeTrackerWindow
 			);
 			if (display.id === activeScreen.id.toString()) {
@@ -73,23 +73,17 @@ const uploadScreenShot = async (
 	timeSlotId,
 	show = false,
 	quitApp,
-	NotificationWindow,
+	notificationWindow,
 	timeTrackerWindow
 ) => {
 	/* start upload */
 	const fileName = `screenshot-${moment().format(
 		'YYYYMMDDHHmmss'
 	)}-${name}.png`;
+
 	writeScreenshotLocally(img, fileName);
 
 	const appSetting = LocalStore.getStore('appSetting');
-	if (show && appSetting && appSetting.screenshotNotification) {
-		showCapturedToRenderer(
-			NotificationWindow,
-			path.join(app.getPath('userData'), `/public/temp/${fileName}`),
-			quitApp
-		);
-	}
 
 	showCapture(
 		timeTrackerWindow,
@@ -121,23 +115,33 @@ const uploadScreenShot = async (
 		);
 
 		console.log(`Send Screenshot to API: ${moment().format()}`);
-		const res = await response.json();
+
+		const screenshot = await response.json();
+
 		console.log(
 			`Get Screenshot Response From API: ${moment().format()}`,
-			res
+			screenshot
 		);
 
-		setTimeout(() => {
-			removeScreenshotLocally(fileName);
-		}, 4000);
-		return res;
+		console.log('Screenshot Thumb Url:', screenshot.thumbUrl);
+
+		if (show && appSetting && appSetting.screenshotNotification) {
+			showCapturedToRenderer(
+				notificationWindow,
+				screenshot.thumbUrl,
+				quitApp
+			);
+		}
+
+		return screenshot;
 	} catch (e) {
-		console.log('upload screenshot error', e.message);
-		// remove file on local directory if upload got error
-		setTimeout(() => {
-			removeScreenshotLocally(fileName);
-		}, 4000);
+		console.log('Upload Screenshot Error:', e.message);
 	}
+
+	// remove file on local directory after successful upload or any error
+	setTimeout(() => {
+		removeScreenshotLocally(fileName);
+	}, 4000);
 };
 
 const writeScreenshotLocally = (img, fileName) => {
@@ -202,7 +206,7 @@ const showCapture = (timeTrackerWindow, url) => {
 	timeTrackerWindow.webContents.send('last_capture_local', { fullUrl: url });
 };
 
-const showCapturedToRenderer = (NotificationWindow, thumbUrl, quitApp) => {
+const showCapturedToRenderer = (notificationWindow, thumbUrl, quitApp) => {
 	const soundCamera = path.join(
 		__dirname,
 		'..',
@@ -226,7 +230,7 @@ const showCapturedToRenderer = (NotificationWindow, thumbUrl, quitApp) => {
 		}
 	};
 
-	NotificationWindow = new BrowserWindow({
+	notificationWindow = new BrowserWindow({
 		...screenCaptureWindow,
 		x: sizes.width - (screenCaptureWindow.width + 15),
 		y: 0 + 15
@@ -242,13 +246,13 @@ const showCapturedToRenderer = (NotificationWindow, thumbUrl, quitApp) => {
 		slashes: true,
 		hash: '/screen-capture'
 	});
-	NotificationWindow.loadURL(urlpath);
-	NotificationWindow.setMenu(null);
-	NotificationWindow.hide();
+	notificationWindow.loadURL(urlpath);
+	notificationWindow.setMenu(null);
+	notificationWindow.hide();
 
 	setTimeout(() => {
-		NotificationWindow.show();
-		NotificationWindow.webContents.send('show_popup_screen_capture', {
+		notificationWindow.show();
+		notificationWindow.webContents.send('show_popup_screen_capture', {
 			imgUrl: thumbUrl,
 			note: LocalStore.beforeRequestParams().note
 		});
@@ -261,12 +265,12 @@ const showCapturedToRenderer = (NotificationWindow, thumbUrl, quitApp) => {
 		}
 	}, 1000);
 	setTimeout(() => {
-		NotificationWindow.close();
+		notificationWindow.close();
 		if (quitApp) app.quit();
 	}, 4000);
 };
 
-export async function takeshot(timeTrackerWindow, arg, NotificationWindow) {
+export async function takeshot(timeTrackerWindow, arg, notificationWindow) {
 	try {
 		const displays = arg.screens;
 		const appSetting = LocalStore.getStore('appSetting');
@@ -278,7 +282,7 @@ export async function takeshot(timeTrackerWindow, arg, NotificationWindow) {
 					arg.timeSlotId,
 					activeWindow,
 					arg.quitApp,
-					NotificationWindow,
+					notificationWindow,
 					timeTrackerWindow
 				);
 				break;
@@ -288,7 +292,7 @@ export async function takeshot(timeTrackerWindow, arg, NotificationWindow) {
 					arg.timeSlotId,
 					activeWindow,
 					arg.quitApp,
-					NotificationWindow,
+					notificationWindow,
 					timeTrackerWindow
 				);
 				break;
