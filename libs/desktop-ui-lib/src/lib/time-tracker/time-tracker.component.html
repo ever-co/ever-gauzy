@@ -42,8 +42,7 @@
 									[items]="organizationContacts"
 									bindValue="id"
 									bindLabel="name"
-									(ngModelChange)="setClient($event)"
-									[disabled]="start"
+									(ngModelChange)="setClient($event, dialog)"
 								>
 								</ng-select>
 							</div>
@@ -216,7 +215,11 @@
 																		status="danger"
 																		(click)="
 																			open(
-																				dialog
+																				dialog,
+																				{
+																					type:
+																						'deleteLog'
+																				}
 																			)
 																		"
 																	>

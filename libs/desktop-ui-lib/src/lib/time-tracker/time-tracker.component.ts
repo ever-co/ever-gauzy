@@ -75,6 +75,17 @@ export class TimeTrackerComponent implements AfterViewInit {
 	lastTimeSlot = null;
 	invalidTimeLog = null;
 	loading = false;
+	dialogType = {
+		deleteLog: {
+			name: 'deleteLog',
+			message:
+				'Do you really want to remove this screenshot and activities log ?'
+		},
+		changeClient: {
+			name: 'changeClient',
+			message: 'Are you sure you want to change Client ?'
+		}
+	};
 
 	constructor(
 		private electronService: ElectronService,
@@ -329,12 +340,28 @@ export class TimeTrackerComponent implements AfterViewInit {
 		);
 	}
 
-	async setClient(item) {
+	async setClient(item, dialog) {
+		if (this.start) {
+			this.open(dialog, {
+				type: this.dialogType.changeClient.name,
+				val: item
+			});
+		} else {
+			this.selectClient(item);
+		}
+	}
+
+	async selectClient(item) {
 		this.organizationContactId = item;
+		this.electronService.ipcRenderer.send('update_project_on', {
+			organizationContactId: this.organizationContactId
+		});
 		if (item) {
-			this.projects = this.projects.filter(
-				(p) => p.organizationContactId === item
-			);
+			this.projects = await this.timeTrackerService.getProjects({
+				...this.argFromMain,
+				organizationContactId: this.organizationContactId
+			});
+			this.tasks = [];
 			this.projectSelect = null;
 			this.taskSelect = null;
 			this.errors.client = false;
@@ -351,13 +378,16 @@ export class TimeTrackerComponent implements AfterViewInit {
 			projectId: this.projectSelect
 		});
 		if (item) {
-			this.tasks = this.tasks.filter((t) => t.projectId === item);
-			this.taskSelect = null;
-			this.errors.project = false;
-		} else {
 			this.tasks = await this.timeTrackerService.getTasks(
 				this.argFromMain
 			);
+			this.taskSelect = null;
+			this.errors.project = false;
+		} else {
+			this.tasks = await this.timeTrackerService.getTasks({
+				...this.argFromMain,
+				projectId: this.projectSelect
+			});
 		}
 		this.errorBind();
 		this._cdr.detectChanges();
@@ -564,16 +594,24 @@ export class TimeTrackerComponent implements AfterViewInit {
 		this.electronService.ipcRenderer.send('show_image', this.screenshots);
 	}
 
-	open(dialog: TemplateRef<any>) {
+	open(dialog: TemplateRef<any>, option) {
 		this.selectedTimeSlot = this.lastTimeSlot;
 		this.dialogService
 			.open(dialog, {
-				context:
-					'Do you really want to remove this screenshot and activities log ?'
+				context: this.dialogType[option.type].message
 			})
 			.onClose.subscribe((selectedOption) => {
 				if (selectedOption) {
-					this.deleteTimeSlot();
+					switch (option.type) {
+						case this.dialogType[option.type].name:
+							this.selectClient(option.val);
+							break;
+						case this.dialogType[option.type].name:
+							this.deleteTimeSlot();
+							break;
+						default:
+							break;
+					}
 				}
 			});
 	}
