@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { AuthService, UsersService } from '../../@core/services';
+import { UsersService } from '../../@core/services';
 import { AuthStrategy } from '../../@core/auth/auth-strategy.service';
 import { IUser } from '@gauzy/contracts';
 import { Router } from '@angular/router';
@@ -13,8 +13,7 @@ export class AppInitService {
 		private usersService: UsersService,
 		private authStrategy: AuthStrategy,
 		private router: Router,
-		private store: Store,
-		private authService: AuthService
+		private store: Store
 	) {}
 
 	async init() {
