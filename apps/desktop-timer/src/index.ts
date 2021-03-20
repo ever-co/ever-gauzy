@@ -44,6 +44,8 @@ log.catchErrors({
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
 
+console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
+
 const Store = require('electron-store');
 import {
 	ipcMainHandler,

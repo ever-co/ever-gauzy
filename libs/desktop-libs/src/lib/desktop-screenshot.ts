@@ -127,6 +127,11 @@ const uploadScreenShot = async (
 			screenshot
 		);
 
+		// remove file on local directory after successful upload
+		setTimeout(() => {
+			removeScreenshotLocally(fileName);
+		}, 4000);
+
 		console.log('Screenshot Thumb Url:', screenshot.thumbUrl);
 
 		if (show && appSetting && appSetting.screenshotNotification) {
@@ -140,12 +145,11 @@ const uploadScreenShot = async (
 		return screenshot;
 	} catch (e) {
 		console.log('Upload Screenshot Error:', e.message);
+		// remove file on local directory if any error
+		setTimeout(() => {
+			removeScreenshotLocally(fileName);
+		}, 4000);
 	}
-
-	// remove file on local directory after successful upload or any error
-	setTimeout(() => {
-		removeScreenshotLocally(fileName);
-	}, 4000);
 };
 
 const writeScreenshotLocally = (img, fileName) => {
@@ -163,10 +167,11 @@ const removeScreenshotLocally = (fileName) => {
 		app.getPath('userData'),
 		`/public/temp/${fileName}`
 	);
+	console.log('Local Image Temp Path', imgLocation);
 	try {
 		unlinkSync(imgLocation);
 	} catch (error) {
-		console.log('error remove temp', error.message);
+		console.log('Error remove temp', error.message);
 	}
 };
 
