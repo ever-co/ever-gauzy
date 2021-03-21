@@ -30,7 +30,16 @@ export class TimeTrackerService {
 		});
 		return this.http
 			.get(`${values.apiHost}/api/tasks/employee/${values.employeeId}`, {
-				headers: headers
+				headers: headers,
+				params: values.projectId
+					? this.toParams({
+							data: JSON.stringify({
+								findInput: {
+									projectId: values.projectId
+								}
+							})
+					  })
+					: this.toParams({})
 			})
 			.pipe()
 			.toPromise();
@@ -45,7 +54,17 @@ export class TimeTrackerService {
 			.get(
 				`${values.apiHost}/api/organization-projects/employee/${values.employeeId}`,
 				{
-					headers: headers
+					headers: headers,
+					params: values.organizationContactId
+						? this.toParams({
+								data: JSON.stringify({
+									findInput: {
+										organizationContactId:
+											values.organizationContactId
+									}
+								})
+						  })
+						: this.toParams({})
 				}
 			)
 			.pipe()
