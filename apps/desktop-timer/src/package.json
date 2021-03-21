@@ -7,7 +7,7 @@
 	"homepage": "https://gauzy.co",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/ever-co/gauzy"
+		"url": "https://github.com/ever-co/gauzy.git"
 	},
 	"bugs": {
 		"url": "https://github.com/ever-co/gauzy/issues"
