@@ -44,6 +44,8 @@ log.catchErrors({
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
 
+console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
+
 const Store = require('electron-store');
 import {
 	ipcMainHandler,
@@ -62,6 +64,7 @@ import {
 } from '../../../libs/desktop-window/src';
 import { fork } from 'child_process';
 import { autoUpdater, CancellationToken } from 'electron-updater';
+import fetch from 'node-fetch';
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
 // C:\Users\USERNAME\AppData\Roaming\gauzy-desktop-timer
@@ -109,7 +112,7 @@ const serve: boolean = args.some((val) => val === '--serve');
 let gauzyWindow: BrowserWindow = null;
 let setupWindow: BrowserWindow = null;
 let timeTrackerWindow: BrowserWindow = null;
-let NotificationWindow: BrowserWindow = null;
+let notificationWindow: BrowserWindow = null;
 let settingsWindow: BrowserWindow = null;
 let updaterWindow: BrowserWindow = null;
 let imageView: BrowserWindow = null;
@@ -316,7 +319,7 @@ ipcMain.on('server_is_ready', () => {
 			knex,
 			setupWindow,
 			timeTrackerWindow,
-			NotificationWindow,
+			notificationWindow,
 			settingsWindow,
 			imageView,
 			{ ...environment }
@@ -373,11 +376,38 @@ ipcMain.on('open_browser', (event, arg) => {
 	shell.openExternal(arg.url);
 });
 
-ipcMain.on('check_for_update', (event, arg) => {
-	autoUpdater.checkForUpdatesAndNotify().then((downloadPromise) => {
-		if (cancellationToken)
-			cancellationToken = downloadPromise.cancellationToken;
-	});
+ipcMain.on('check_for_update', async (event, arg) => {
+	const updaterConfig = {
+		repo: 'gauzy',
+		owner: 'ever-co',
+		typeRelase: 'releases'
+	};
+	let latestReleaseTag = null;
+	try {
+		latestReleaseTag = await fetch(
+			`https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelase}/latest`,
+			{
+				method: 'GET',
+				headers: {
+					Accept: 'application/json'
+				}
+			}
+		).then((res) => res.json());
+	} catch (error) {}
+
+	if (latestReleaseTag) {
+		autoUpdater.setFeedURL({
+			channel: 'desktop-timer-latest',
+			provider: 'generic',
+			url: `https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelase}/download/${latestReleaseTag.tag_name}`
+		});
+		autoUpdater.checkForUpdatesAndNotify().then((downloadPromise) => {
+			if (cancellationToken)
+				cancellationToken = downloadPromise.cancellationToken;
+		});
+	} else {
+		settingsWindow.webContents.send('error_update');
+	}
 });
 
 autoUpdater.on('update-available', () => {

@@ -160,8 +160,8 @@ export function ipcTimer(
 	knex,
 	setupWindow,
 	timeTrackerWindow,
-	NotificationWindow,
-	SettingWindow,
+	notificationWindow,
+	settingWindow,
 	imageView,
 	config
 ) {
@@ -184,7 +184,7 @@ export function ipcTimer(
 			arg.timeLog
 		);
 		timerHandler.updateTime(setupWindow, knex, timeTrackerWindow);
-		SettingWindow.webContents.send('app_setting_update', {
+		settingWindow.webContents.send('app_setting_update', {
 			setting: LocalStore.getStore('appSetting')
 		});
 	});
@@ -197,7 +197,7 @@ export function ipcTimer(
 			knex,
 			arg.quitApp
 		);
-		SettingWindow.webContents.send('app_setting_update', {
+		settingWindow.webContents.send('app_setting_update', {
 			setting: LocalStore.getStore('appSetting')
 		});
 	});
@@ -230,7 +230,7 @@ export function ipcTimer(
 			case 'ScreenshotDesktopLib':
 				captureScreen(
 					timeTrackerWindow,
-					NotificationWindow,
+					notificationWindow,
 					arg.timeSlotId,
 					arg.quitApp
 				);
@@ -241,7 +241,7 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('save_screen_shoot', (event, arg) => {
-		takeshot(timeTrackerWindow, arg, NotificationWindow);
+		takeshot(timeTrackerWindow, arg, notificationWindow);
 	});
 
 	ipcMain.on('show_image', (event, arg) => {

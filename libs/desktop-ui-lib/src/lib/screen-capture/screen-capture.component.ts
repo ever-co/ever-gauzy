@@ -6,8 +6,9 @@ import { ElectronService } from 'ngx-electron';
 	styleUrls: ['./screen-capture.component.scss']
 })
 export class ScreenCaptureComponent implements OnInit {
-	screenCaptureUrl: string = '';
-	note: string = '';
+	screenCaptureUrl: string;
+	note: string;
+
 	constructor(
 		private readonly electronService: ElectronService,
 		private _cdr: ChangeDetectorRef

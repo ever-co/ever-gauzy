@@ -6,8 +6,9 @@ import { ElectronService } from 'ngx-electron';
 	styleUrls: ['./splash-screen.component.scss']
 })
 export class SplashScreenComponent implements OnInit {
-	screenCaptureUrl: string = '';
-	note: string = '';
+	screenCaptureUrl: string;
+	note: string;
+
 	constructor(
 		private readonly electronService: ElectronService,
 		private _cdr: ChangeDetectorRef

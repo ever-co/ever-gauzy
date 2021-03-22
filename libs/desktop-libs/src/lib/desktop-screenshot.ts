@@ -20,7 +20,7 @@ const captureOnlyActiveWindow = async (
 	timeSlotId,
 	activeScreen,
 	quitApp,
-	NotificationWindow,
+	notificationWindow,
 	timeTrackerWindow
 ) => {
 	const display = displays.find((x) => x.id === activeScreen.id.toString());
@@ -30,7 +30,7 @@ const captureOnlyActiveWindow = async (
 		timeSlotId,
 		false,
 		quitApp,
-		NotificationWindow,
+		notificationWindow,
 		timeTrackerWindow
 	);
 	return [result];
@@ -41,7 +41,7 @@ const captureAllWindow = async (
 	timeSlotId,
 	activeScreen,
 	quitApp,
-	NotificationWindow,
+	notificationWindow,
 	timeTrackerWindow
 ) => {
 	const result = [];
@@ -53,7 +53,7 @@ const captureAllWindow = async (
 				timeSlotId,
 				i === 0,
 				quitApp,
-				NotificationWindow,
+				notificationWindow,
 				timeTrackerWindow
 			);
 			if (display.id === activeScreen.id.toString()) {
@@ -73,28 +73,21 @@ const uploadScreenShot = async (
 	timeSlotId,
 	show = false,
 	quitApp,
-	NotificationWindow,
+	notificationWindow,
 	timeTrackerWindow
 ) => {
 	/* start upload */
-	const fileName = `screenshot-${moment().format(
+	let fileName = `screenshot-${moment().format(
 		'YYYYMMDDHHmmss'
 	)}-${name}.png`;
+
+	fileName = convertToSlug(fileName);
+
+	console.log('Screenshot Name', fileName);
+
 	writeScreenshotLocally(img, fileName);
 
 	const appSetting = LocalStore.getStore('appSetting');
-	if (show && appSetting && appSetting.screenshotNotification) {
-		showCapturedToRenderer(
-			NotificationWindow,
-			path.join(app.getPath('userData'), `/public/temp/${fileName}`),
-			quitApp
-		);
-	}
-
-	showCapture(
-		timeTrackerWindow,
-		path.join(app.getPath('userData'), `/public/temp/${fileName}`)
-	);
 
 	try {
 		const appInfo = LocalStore.beforeRequestParams();
@@ -121,19 +114,40 @@ const uploadScreenShot = async (
 		);
 
 		console.log(`Send Screenshot to API: ${moment().format()}`);
-		const res = await response.json();
+
+		const screenshot = await response.json();
+
 		console.log(
 			`Get Screenshot Response From API: ${moment().format()}`,
-			res
+			screenshot
 		);
 
+		// remove file on local directory after successful upload
 		setTimeout(() => {
 			removeScreenshotLocally(fileName);
 		}, 4000);
-		return res;
+
+		console.log('Screenshot Thumb Url:', screenshot.thumbUrl);
+
+		console.log(
+			'Screenshot Location Path:',
+			path.join(app.getPath('userData'), `/public/temp/${fileName}`)
+		);
+
+		showCapture(timeTrackerWindow, screenshot.thumbUrl);
+
+		if (show && appSetting && appSetting.screenshotNotification) {
+			showCapturedToRenderer(
+				notificationWindow,
+				screenshot.thumbUrl,
+				quitApp
+			);
+		}
+
+		return screenshot;
 	} catch (e) {
-		console.log('upload screenshot error', e.message);
-		// remove file on local directory if upload got error
+		console.log('Upload Screenshot Error:', e.message);
+		// remove file on local directory if any error
 		setTimeout(() => {
 			removeScreenshotLocally(fileName);
 		}, 4000);
@@ -155,10 +169,11 @@ const removeScreenshotLocally = (fileName) => {
 		app.getPath('userData'),
 		`/public/temp/${fileName}`
 	);
+	console.log('Local Image Temp Path', imgLocation);
 	try {
 		unlinkSync(imgLocation);
 	} catch (error) {
-		console.log('error remove temp', error.message);
+		console.log('Error remove temp', error.message);
 	}
 };
 
@@ -202,7 +217,7 @@ const showCapture = (timeTrackerWindow, url) => {
 	timeTrackerWindow.webContents.send('last_capture_local', { fullUrl: url });
 };
 
-const showCapturedToRenderer = (NotificationWindow, thumbUrl, quitApp) => {
+const showCapturedToRenderer = (notificationWindow, thumbUrl, quitApp) => {
 	const soundCamera = path.join(
 		__dirname,
 		'..',
@@ -226,11 +241,14 @@ const showCapturedToRenderer = (NotificationWindow, thumbUrl, quitApp) => {
 		}
 	};
 
-	NotificationWindow = new BrowserWindow({
+	notificationWindow = new BrowserWindow({
 		...screenCaptureWindow,
 		x: sizes.width - (screenCaptureWindow.width + 15),
 		y: 0 + 15
 	});
+
+	console.log('App Name:', app.getName());
+
 	const urlpath = url.format({
 		pathname: path.join(
 			__dirname,
@@ -242,13 +260,13 @@ const showCapturedToRenderer = (NotificationWindow, thumbUrl, quitApp) => {
 		slashes: true,
 		hash: '/screen-capture'
 	});
-	NotificationWindow.loadURL(urlpath);
-	NotificationWindow.setMenu(null);
-	NotificationWindow.hide();
+	notificationWindow.loadURL(urlpath);
+	notificationWindow.setMenu(null);
+	notificationWindow.hide();
 
 	setTimeout(() => {
-		NotificationWindow.show();
-		NotificationWindow.webContents.send('show_popup_screen_capture', {
+		notificationWindow.show();
+		notificationWindow.webContents.send('show_popup_screen_capture', {
 			imgUrl: thumbUrl,
 			note: LocalStore.beforeRequestParams().note
 		});
@@ -261,12 +279,12 @@ const showCapturedToRenderer = (NotificationWindow, thumbUrl, quitApp) => {
 		}
 	}, 1000);
 	setTimeout(() => {
-		NotificationWindow.close();
+		notificationWindow.close();
 		if (quitApp) app.quit();
 	}, 4000);
 };
 
-export async function takeshot(timeTrackerWindow, arg, NotificationWindow) {
+export async function takeshot(timeTrackerWindow, arg, notificationWindow) {
 	try {
 		const displays = arg.screens;
 		const appSetting = LocalStore.getStore('appSetting');
@@ -278,7 +296,7 @@ export async function takeshot(timeTrackerWindow, arg, NotificationWindow) {
 					arg.timeSlotId,
 					activeWindow,
 					arg.quitApp,
-					NotificationWindow,
+					notificationWindow,
 					timeTrackerWindow
 				);
 				break;
@@ -288,7 +306,7 @@ export async function takeshot(timeTrackerWindow, arg, NotificationWindow) {
 					arg.timeSlotId,
 					activeWindow,
 					arg.quitApp,
-					NotificationWindow,
+					notificationWindow,
 					timeTrackerWindow
 				);
 				break;
@@ -339,4 +357,14 @@ export async function captureScreen(
 	} catch (error) {
 		console.log('error', error);
 	}
+}
+
+export function convertToSlug(text: string) {
+	return text
+		.toString()
+		.toLowerCase()
+		.replace(/\s+/g, '-') // Replace spaces with -
+		.replace(/\-\-+/g, '-') // Replace multiple - with single -
+		.replace(/^-+/, '') // Trim - from start of text
+		.replace(/-+$/, ''); // Trim - from end of text
 }
