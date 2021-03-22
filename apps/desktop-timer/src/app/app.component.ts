@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
 import { ElectronService } from 'ngx-electron';
 import { AppService } from './app.service';
 
@@ -10,12 +9,11 @@ import { AppService } from './app.service';
 })
 export class AppComponent implements OnInit {
 	constructor(
-		private router: Router,
 		private electronService: ElectronService,
 		private appService: AppService
 	) {
 		this.electronService.ipcRenderer.on('collect_data', (event, arg) => {
-			appService
+			this.appService
 				.collectevents(arg.tpURL, arg.tp, arg.start, arg.end)
 				.then((res) => {
 					event.sender.send('data_push_activity', {
@@ -27,7 +25,7 @@ export class AppComponent implements OnInit {
 		});
 
 		this.electronService.ipcRenderer.on('collect_afk', (event, arg) => {
-			appService
+			this.appService
 				.collectAfk(arg.tpURL, arg.tp, arg.start, arg.end)
 				.then((res) => {
 					event.sender.send('data_push_afk', {
@@ -41,7 +39,7 @@ export class AppComponent implements OnInit {
 		this.electronService.ipcRenderer.on(
 			'collect_chrome_activities',
 			(event, arg) => {
-				appService
+				this.appService
 					.collectChromeActivityFromAW(arg.tpURL, arg.start, arg.end)
 					.then((res) => {
 						event.sender.send('data_push_activity', {
@@ -56,7 +54,7 @@ export class AppComponent implements OnInit {
 		this.electronService.ipcRenderer.on(
 			'collect_firefox_activities',
 			(event, arg) => {
-				appService
+				this.appService
 					.collectFirefoxActivityFromAw(arg.tpURL, arg.start, arg.end)
 					.then((res) => {
 						event.sender.send('data_push_activity', {
@@ -69,9 +67,9 @@ export class AppComponent implements OnInit {
 		);
 
 		this.electronService.ipcRenderer.on('set_time_sheet', (event, arg) => {
-			appService.pushToTimesheet(arg).then((res: any) => {
+			this.appService.pushToTimesheet(arg).then((res: any) => {
 				arg.timesheetId = res.id;
-				appService.setTimeLog(arg).then((result: any) => {
+				this.appService.setTimeLog(arg).then((result: any) => {
 					event.sender.send('return_time_sheet', {
 						timerId: arg.timerId,
 						timeSheetId: res.id,
@@ -84,8 +82,8 @@ export class AppComponent implements OnInit {
 		this.electronService.ipcRenderer.on(
 			'update_time_sheet',
 			(event, arg) => {
-				appService.updateToTimeSheet(arg).then((res: any) => {
-					appService.updateTimeLog(arg);
+				this.appService.updateToTimeSheet(arg).then((res: any) => {
+					this.appService.updateTimeLog(arg);
 				});
 			}
 		);
@@ -96,7 +94,7 @@ export class AppComponent implements OnInit {
 		);
 
 		this.electronService.ipcRenderer.on('set_time_slot', (event, arg) => {
-			appService.pushToTimeslot(arg).then((res: any) => {
+			this.appService.pushToTimeslot(arg).then((res: any) => {
 				event.sender.send('remove_aw_local_data', {
 					idsAw: arg.idsAw
 				});
@@ -119,12 +117,12 @@ export class AppComponent implements OnInit {
 		this.electronService.ipcRenderer.on(
 			'update_time_slot',
 			(event, arg) => {
-				appService.updateToTimeSlot(arg);
+				this.appService.updateToTimeSlot(arg);
 			}
 		);
 
 		this.electronService.ipcRenderer.on('set_activity', (event, arg) => {
-			appService.pushToActivity(arg).then((res: any) => {
+			this.appService.pushToActivity(arg).then((res: any) => {
 				event.sender.send('return_activity', {
 					activityIds: arg.sourceIds
 				});
@@ -134,12 +132,12 @@ export class AppComponent implements OnInit {
 		this.electronService.ipcRenderer.on(
 			'update_to_activity',
 			(event, arg) => {
-				appService.updateToActivity(arg);
+				this.appService.updateToActivity(arg);
 			}
 		);
 
 		this.electronService.ipcRenderer.on('set_time_log', (event, arg) => {
-			appService.setTimeLog(arg).then((res: any) => {
+			this.appService.setTimeLog(arg).then((res: any) => {
 				event.sender.send('return_time_log', {
 					timerId: arg.timerId,
 					timeLogId: res.id
@@ -151,12 +149,12 @@ export class AppComponent implements OnInit {
 			'update_time_log_stop',
 			(event, arg) => {
 				console.log('time log stop');
-				appService.updateTimeLog(arg);
+				this.appService.updateTimeLog(arg);
 			}
 		);
 
 		this.electronService.ipcRenderer.on('time_toggle', (event, arg) => {
-			appService.toggleApi(arg).then((res) => {
+			this.appService.toggleApi(arg).then((res) => {
 				event.sender.send('return_toggle_api', {
 					result: res,
 					timerId: arg.timerId
@@ -167,13 +165,13 @@ export class AppComponent implements OnInit {
 		this.electronService.ipcRenderer.on(
 			'update_toggle_timer',
 			(event, arg) => {
-				appService.toggleApi(arg);
+				this.appService.toggleApi(arg);
 			}
 		);
 
 		this.electronService.ipcRenderer.on('server_ping', (event, arg) => {
 			const pinghost = setInterval(() => {
-				appService
+				this.appService
 					.pingServer(arg)
 					.then((res) => {
 						console.log('server found');
@@ -193,7 +191,7 @@ export class AppComponent implements OnInit {
 		this.electronService.ipcRenderer.on(
 			'upload_screen_shot',
 			(event, arg) => {
-				appService.uploadScreenCapture(arg).then((res) => {
+				this.appService.uploadScreenCapture(arg).then((res) => {
 					console.log('screen upload', res);
 				});
 			}
@@ -203,7 +201,7 @@ export class AppComponent implements OnInit {
 			'server_ping_restart',
 			(event, arg) => {
 				const pinghost = setInterval(() => {
-					appService
+					this.appService
 						.pingServer(arg)
 						.then((res) => {
 							console.log('server found');
@@ -223,7 +221,7 @@ export class AppComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
-		console.log('on init');
+		console.log('On Init');
 		this.electronService.ipcRenderer.send('app_is_init');
 	}
 }

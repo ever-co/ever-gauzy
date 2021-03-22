@@ -197,6 +197,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 		this.electronService.ipcRenderer.on(
 			'last_capture_local',
 			(event, arg) => {
+				console.log('Last Capture Screenshot:', arg.fullUrl);
 				this.lastScreenCapture = {
 					fullUrl: arg.fullUrl,
 					textTime: moment().fromNow(),
@@ -552,10 +553,10 @@ export class TimeTrackerComponent implements AfterViewInit {
 	}
 
 	getLastTimeSlotImage(arg) {
-		console.log('get last timeslot image');
 		this.timeTrackerService
 			.getTimeSlot(arg)
 			.then((res: any) => {
+				console.log('Get Last Timeslot Image Response:', res);
 				if (res.screenshots && res.screenshots.length > 0) {
 					this.lastScreenCapture = res.screenshots[0];
 					this.screenshots = res.screenshots;

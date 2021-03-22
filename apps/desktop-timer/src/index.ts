@@ -44,6 +44,8 @@ log.catchErrors({
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
 
+console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
+
 const Store = require('electron-store');
 import {
 	ipcMainHandler,
@@ -110,7 +112,7 @@ const serve: boolean = args.some((val) => val === '--serve');
 let gauzyWindow: BrowserWindow = null;
 let setupWindow: BrowserWindow = null;
 let timeTrackerWindow: BrowserWindow = null;
-let NotificationWindow: BrowserWindow = null;
+let notificationWindow: BrowserWindow = null;
 let settingsWindow: BrowserWindow = null;
 let updaterWindow: BrowserWindow = null;
 let imageView: BrowserWindow = null;
@@ -317,7 +319,7 @@ ipcMain.on('server_is_ready', () => {
 			knex,
 			setupWindow,
 			timeTrackerWindow,
-			NotificationWindow,
+			notificationWindow,
 			settingsWindow,
 			imageView,
 			{ ...environment }
