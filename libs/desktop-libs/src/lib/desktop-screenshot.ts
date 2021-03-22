@@ -89,11 +89,6 @@ const uploadScreenShot = async (
 
 	const appSetting = LocalStore.getStore('appSetting');
 
-	showCapture(
-		timeTrackerWindow,
-		path.join(app.getPath('userData'), `/public/temp/${fileName}`)
-	);
-
 	try {
 		const appInfo = LocalStore.beforeRequestParams();
 		const form = new Form();
@@ -133,6 +128,13 @@ const uploadScreenShot = async (
 		}, 4000);
 
 		console.log('Screenshot Thumb Url:', screenshot.thumbUrl);
+
+		console.log(
+			'Screenshot Location Path:',
+			path.join(app.getPath('userData'), `/public/temp/${fileName}`)
+		);
+
+		showCapture(timeTrackerWindow, screenshot.thumbUrl);
 
 		if (show && appSetting && appSetting.screenshotNotification) {
 			showCapturedToRenderer(
@@ -244,6 +246,9 @@ const showCapturedToRenderer = (notificationWindow, thumbUrl, quitApp) => {
 		x: sizes.width - (screenCaptureWindow.width + 15),
 		y: 0 + 15
 	});
+
+	console.log('App Name:', app.getName());
+
 	const urlpath = url.format({
 		pathname: path.join(
 			__dirname,
