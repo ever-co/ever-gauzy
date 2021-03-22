@@ -9,7 +9,7 @@ import {
 	MicrosoftStrategy,
 	MicrosoftController,
 	MicrosoftAuthGuard
-} from './micorsoft';
+} from './microsoft';
 import { TwitterStrategy, TwitterController } from './twitter';
 
 export const Strategies = [
