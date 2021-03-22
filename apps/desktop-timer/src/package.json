@@ -7,7 +7,7 @@
 	"homepage": "https://gauzy.co",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/ever-co/gauzy.git"
+		"url": "https://github.com/ever-co/gauzy.git"
 	},
 	"bugs": {
 		"url": "https://github.com/ever-co/gauzy/issues"
@@ -31,7 +31,8 @@
 		},
 		"publish": {
 			"provider": "github",
-			"releaseType": "release"
+			"releaseType": "release",
+			"channel": "desktop-timer-latest"
 		},
 		"mac": {
 			"category": "public.app-category.developer-tools",
