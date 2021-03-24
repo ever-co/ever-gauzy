@@ -144,6 +144,7 @@ export default class Timerhandler {
 	async getSetActivity(knex, setupWindow, lastTimeSlot, quitApp) {
 		const now = moment();
 		const userInfo = LocalStore.beforeRequestParams();
+		const appSetting = LocalStore.getStore('appSetting');
 		const { id: lastTimerId, timeLogId } = this.lastTimer;
 
 		// get aw activity
@@ -157,7 +158,10 @@ export default class Timerhandler {
 
 		//get aw afk
 		const awAfk = await TimerData.getAfk(knex, lastTimerId);
-		const duration = awAfk.length > 0 ? awAfk[0].durations : 0;
+		let duration = awAfk.length > 0 ? awAfk[0].durations : 0;
+
+		//calculate mouse and keyboard activity as per selected period
+		duration = duration / appSetting.timer.updatePeriode;
 
 		const idsAw = [];
 		const idsWakatime = [];
