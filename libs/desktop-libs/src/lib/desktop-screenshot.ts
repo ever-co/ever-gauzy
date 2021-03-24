@@ -83,8 +83,6 @@ const uploadScreenShot = async (
 
 	fileName = convertToSlug(fileName);
 
-	console.log('Screenshot Name', fileName);
-
 	writeScreenshotLocally(img, fileName);
 
 	const appSetting = LocalStore.getStore('appSetting');
@@ -137,13 +135,6 @@ const uploadScreenShot = async (
 		console.log(
 			'Screenshot Location Path:',
 			path.join(app.getPath('userData'), `/public/temp/${fileName}`)
-		);
-
-		console.log(
-			'pathToFileURL:',
-			url.pathToFileURL(
-				path.join(app.getPath('userData'), `/public/temp/${fileName}`)
-			)
 		);
 
 		showCapture(

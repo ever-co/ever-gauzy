@@ -202,13 +202,6 @@ export class AppService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
-		console.log('Update To TimeSheet:', {
-			duration: values.duration,
-			keyboard: values.keyboard,
-			mouse: values.mouse,
-			overall: values.overall,
-			stoppedAt: values.stoppedAt
-		});
 		return this.http
 			.put(
 				`${values.apiHost}/api/timesheet/${values.timeSheetId}`,
@@ -231,13 +224,6 @@ export class AppService {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
-		});
-		console.log('Update To TimeSlot:', {
-			duration: values.duration,
-			keyboard: values.keyboard,
-			mouse: values.mouse,
-			overall: values.overall,
-			activities: values.activities
 		});
 		return this.http
 			.put(

@@ -23,7 +23,7 @@ export const TimerData = {
 		} else {
 			delete query.updated_at;
 			delete query.activityId;
-			delete query.timerId;
+			// delete query.timerId;
 			knex('window-events')
 				.where({
 					eventId: query.eventId
@@ -101,7 +101,7 @@ export const TimerData = {
 		} else {
 			delete query.updated_at;
 			delete query.timeSlotId;
-			delete query.timerId;
+			// delete query.timerId;
 			knex('afk-events')
 				.where({
 					eventId: query.eventId
