@@ -77,8 +77,8 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 			organizationId: this.organization.id,
 			tenantId: this.organization.tenantId,
 			...this.request,
-			startDate: moment(startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: moment(endDate).format('YYYY-MM-DD HH:mm'),
+			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
 			...(employeeIds ? { employeeIds } : {}),
 			relations: ['screenshots', 'timeLogs']
 		};
