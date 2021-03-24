@@ -101,6 +101,11 @@ const uploadScreenShot = async (
 		form.append('tenantId', appInfo.tenantId);
 		form.append('organizationId', appInfo.organizationId);
 
+		console.log('Tenant Organization', {
+			tenantId: appInfo.tenantId,
+			organizationId: appInfo.organizationId
+		});
+
 		const response = await fetch(
 			`${appInfo.apiHost}/api/timesheet/screenshot`,
 			{
@@ -134,7 +139,20 @@ const uploadScreenShot = async (
 			path.join(app.getPath('userData'), `/public/temp/${fileName}`)
 		);
 
-		showCapture(timeTrackerWindow, screenshot.thumbUrl);
+		console.log(
+			'pathToFileURL:',
+			url.pathToFileURL(
+				path.join(app.getPath('userData'), `/public/temp/${fileName}`)
+			)
+		);
+
+		showCapture(
+			timeTrackerWindow,
+			// screenshot.thumbUrl,
+			url.pathToFileURL(
+				path.join(app.getPath('userData'), `/public/temp/${fileName}`)
+			)
+		);
 
 		if (show && appSetting && appSetting.screenshotNotification) {
 			showCapturedToRenderer(

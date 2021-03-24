@@ -30,7 +30,7 @@ export default class Timerhandler {
 		this.notificationDesktop.startTimeNotification(true);
 		this.configs = LocalStore.getStore('configs');
 
-		const ProjectInfo = LocalStore.getStore('project');
+		const projectInfo = LocalStore.getStore('project');
 		const appInfo = LocalStore.beforeRequestParams();
 
 		this.timeStart = moment();
@@ -41,50 +41,54 @@ export default class Timerhandler {
 			updated_at: moment(),
 			created_at: moment(),
 			durations: 0,
-			projectid: ProjectInfo.projectId,
+			projectid: projectInfo.projectId,
 			userId: appInfo.employeeId,
 			timeLogId: timeLog.id
 		});
+
+		console.log('LastTimer:', this.lastTimer);
+
+		const [lastTimer] = this.lastTimer;
 
 		this.intevalTimer = setInterval(() => {
 			try {
 				const now = moment();
 				TimerData.updateDurationOfTimer(knex, {
-					id: this.lastTimer[0],
+					id: lastTimer,
 					durations: now.diff(moment(this.timeStart), 'milliseconds')
 				});
 
-				if (ProjectInfo && ProjectInfo.aw && ProjectInfo.aw.isAw) {
+				if (projectInfo && projectInfo.aw && projectInfo.aw.isAw) {
 					setupWindow.webContents.send('collect_data', {
 						start: this.timeStart.utc().format(),
 						end: moment().utc().format(),
-						tpURL: ProjectInfo.aw.host,
+						tpURL: projectInfo.aw.host,
 						tp: 'aw',
-						timerId: this.lastTimer[0]
+						timerId: lastTimer
 					});
 
 					setupWindow.webContents.send('collect_afk', {
 						start: this.timeStart.utc().format(),
 						end: moment().utc().format(),
-						tpURL: ProjectInfo.aw.host,
+						tpURL: projectInfo.aw.host,
 						tp: 'aw',
-						timerId: this.lastTimer[0]
+						timerId: lastTimer
 					});
 
 					setupWindow.webContents.send('collect_chrome_activities', {
 						start: this.timeStart.utc().format(),
 						end: moment().utc().format(),
-						tpURL: ProjectInfo.aw.host,
+						tpURL: projectInfo.aw.host,
 						tp: 'aw',
-						timerId: this.lastTimer[0]
+						timerId: lastTimer
 					});
 
 					setupWindow.webContents.send('collect_firefox_activities', {
 						start: this.timeStart.utc().format(),
 						end: moment().utc().format(),
-						tpURL: ProjectInfo.aw.host,
+						tpURL: projectInfo.aw.host,
 						tp: 'aw',
-						timerId: this.lastTimer[0]
+						timerId: lastTimer
 					});
 				}
 
@@ -109,10 +113,21 @@ export default class Timerhandler {
 
 	updateTime(setupWindow, knex, timeTrackerWindow) {
 		const appSetting = LocalStore.getStore('appSetting');
-		this.intervalUpdateTime = setInterval(() => {
-			this.getSetActivity(knex, setupWindow, this.timeSlotStart, false);
+		const updatePeriode = appSetting.timer.updatePeriode;
+
+		this.intervalUpdateTime = setInterval(async () => {
+			await this.getSetActivity(
+				knex,
+				setupWindow,
+				this.timeSlotStart,
+				false
+			);
+			console.log(
+				'Timeslot Start Time',
+				moment().format('YYYY/MM/DD HH:ss')
+			);
 			this.timeSlotStart = moment();
-		}, 60 * 1000 * appSetting.timer.updatePeriode);
+		}, 60 * 1000 * updatePeriode);
 	}
 
 	updateToggle(setupWindow, knex, isStop) {
@@ -125,8 +140,9 @@ export default class Timerhandler {
 	}
 
 	getSetTimeSlot(setupWindow, knex) {
-		TimerData.getTimer(knex, this.lastTimer[0]).then((timerD) => {
-			TimerData.getAfk(knex, this.lastTimer[0]).then((afk) => {});
+		const [lastTimer] = this.lastTimer;
+		TimerData.getTimer(knex, lastTimer).then((timerD) => {
+			TimerData.getAfk(knex, lastTimer).then((afk) => {});
 		});
 	}
 
@@ -134,19 +150,22 @@ export default class Timerhandler {
 		const now = moment();
 		const userInfo = LocalStore.beforeRequestParams();
 		const lastSavedTime = await TimerData.getLastTimer(knex, userInfo);
+		const [lastTimer] = this.lastTimer;
+
 		// get aw activity
-		let awActivities = await TimerData.getWindowEvent(
-			knex,
-			this.lastTimer[0]
-		);
+		let awActivities = await TimerData.getWindowEvent(knex, lastTimer);
+
 		// get waktime heartbeats
 		let wakatimeHeartbeats = await metaData.getActivity(knex, {
 			start: lastTimeSlot.utc().format('YYYY-MM-DD HH:mm:ss'),
 			end: moment().utc().format('YYYY-MM-DD HH:mm:ss')
 		});
+
 		//get aw afk
-		const awAfk = await TimerData.getAfk(knex, this.lastTimer[0]);
+		const awAfk = await TimerData.getAfk(knex, lastTimer);
 		const duration = awAfk.length > 0 ? awAfk[0].durations : 0;
+
+		console.log('Activity Duration', duration);
 
 		const idsAw = [];
 		const idsWakatime = [];
@@ -215,7 +234,7 @@ export default class Timerhandler {
 			idsAw: idsAw,
 			idsWakatime: idsWakatime,
 			idAfk: idAfk,
-			timerId: this.lastTimer[0],
+			timerId: lastTimer,
 			timeLogId: lastSavedTime[0].timeLogId,
 			quitApp: quitApp
 		});
