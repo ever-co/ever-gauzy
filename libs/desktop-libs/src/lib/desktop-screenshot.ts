@@ -83,8 +83,6 @@ const uploadScreenShot = async (
 
 	fileName = convertToSlug(fileName);
 
-	console.log('Screenshot Name', fileName);
-
 	writeScreenshotLocally(img, fileName);
 
 	const appSetting = LocalStore.getStore('appSetting');
@@ -100,6 +98,11 @@ const uploadScreenShot = async (
 		form.append('timeSlotId', timeSlotId);
 		form.append('tenantId', appInfo.tenantId);
 		form.append('organizationId', appInfo.organizationId);
+
+		console.log('Tenant Organization', {
+			tenantId: appInfo.tenantId,
+			organizationId: appInfo.organizationId
+		});
 
 		const response = await fetch(
 			`${appInfo.apiHost}/api/timesheet/screenshot`,

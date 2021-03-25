@@ -95,21 +95,27 @@ export class AppComponent implements OnInit {
 
 		this.electronService.ipcRenderer.on('set_time_slot', (event, arg) => {
 			this.appService.pushToTimeslot(arg).then((res: any) => {
-				event.sender.send('remove_aw_local_data', {
-					idsAw: arg.idsAw
-				});
-				event.sender.send('remove_wakatime_local_data', {
-					idsWakatime: arg.idsWakatime
-				});
+				if (arg.idsAw) {
+					event.sender.send('remove_aw_local_data', {
+						idsAw: arg.idsAw
+					});
+				}
+				if (arg.idsWakatime) {
+					event.sender.send('remove_wakatime_local_data', {
+						idsWakatime: arg.idsWakatime
+					});
+				}
 				if (arg.idAfk) {
 					event.sender.send('remove_afk_local_Data', {
 						idAfk: arg.idAfk
 					});
 				}
+				const timeLogs = res.timeLogs;
 				event.sender.send('return_time_slot', {
 					timerId: arg.timerId,
 					timeSlotId: res.id,
-					quitApp: arg.quitApp
+					quitApp: arg.quitApp,
+					timeLogs: timeLogs
 				});
 			});
 		});
@@ -174,7 +180,7 @@ export class AppComponent implements OnInit {
 				this.appService
 					.pingServer(arg)
 					.then((res) => {
-						console.log('server found');
+						console.log('Server Found');
 						event.sender.send('server_is_ready');
 						clearInterval(pinghost);
 					})

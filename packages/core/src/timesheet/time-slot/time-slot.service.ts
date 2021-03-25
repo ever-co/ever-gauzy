@@ -46,10 +46,10 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 
 		const logs = await this.timeSlotRepository.find({
 			join: {
-				alias: 'time_slots',
+				alias: 'time_slot',
 				leftJoin: {
-					employee: 'time_slots.employee',
-					timeLog: 'time_slots.timeLogs'
+					employee: 'time_slot.employee',
+					timeLog: 'time_slot.timeLogs'
 				}
 			},
 			relations: [
