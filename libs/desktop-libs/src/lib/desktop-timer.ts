@@ -108,6 +108,8 @@ export default class Timerhandler {
 		const appSetting = LocalStore.getStore('appSetting');
 		const updatePeriod = appSetting.timer.updatePeriod;
 
+		console.log('Update Period:', updatePeriod, 60 * 1000 * updatePeriod);
+
 		this.timeSlotStart = moment();
 
 		this.intervalUpdateTime = setInterval(async () => {

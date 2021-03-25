@@ -137,13 +137,7 @@ const uploadScreenShot = async (
 			path.join(app.getPath('userData'), `/public/temp/${fileName}`)
 		);
 
-		showCapture(
-			timeTrackerWindow,
-			// screenshot.thumbUrl,
-			url.pathToFileURL(
-				path.join(app.getPath('userData'), `/public/temp/${fileName}`)
-			)
-		);
+		showCapture(timeTrackerWindow, screenshot.thumbUrl);
 
 		if (show && appSetting && appSetting.screenshotNotification) {
 			showCapturedToRenderer(

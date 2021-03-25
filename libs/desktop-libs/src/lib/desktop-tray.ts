@@ -326,6 +326,8 @@ export class TrayIcon {
 		});
 
 		ipcMain.on('auth_success', (event, arg) => {
+			console.log('Auth Success:', arg);
+
 			const appConfig = LocalStore.getStore('configs');
 			//check last auth
 			const lastUser = store.get('auth');
