@@ -219,6 +219,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 
 	async toggleStart(val) {
 		this.loading = true;
+
 		if (this.validationField()) {
 			if (val) {
 				await this.removeInvalidTimeLog({
@@ -556,7 +557,10 @@ export class TimeTrackerComponent implements AfterViewInit {
 		this.timeTrackerService
 			.getTimeSlot(arg)
 			.then((res: any) => {
-				console.log('Get Last Timeslot Image Response:', res);
+				console.log(
+					'Get Last Timeslot Image Response:',
+					res.screenshots
+				);
 				if (res.screenshots && res.screenshots.length > 0) {
 					this.lastScreenCapture = res.screenshots[0];
 					this.screenshots = res.screenshots;

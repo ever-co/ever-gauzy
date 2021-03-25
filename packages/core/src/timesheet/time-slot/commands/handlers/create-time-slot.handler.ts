@@ -10,6 +10,7 @@ import { TimeSlot } from '../../../time-slot.entity';
 import { TimeLog } from '../../../time-log.entity';
 import { Employee } from '../../../../employee/employee.entity';
 import { BulkActivitiesSaveCommand } from '../../../activity/commands/bulk-activities-save.command';
+import { TimeSlotMergeCommand } from '../time-slot-merge.command';
 
 @CommandHandler(CreateTimeSlotCommand)
 export class CreateTimeSlotHandler
@@ -17,15 +18,19 @@ export class CreateTimeSlotHandler
 	constructor(
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
+
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
+
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
+
 		private readonly commandBus: CommandBus
 	) {}
 
 	public async execute(command: CreateTimeSlotCommand): Promise<TimeSlot> {
 		const { input } = command;
+		const { startedAt } = input;
 
 		if (
 			!RequestContext.hasPermission(
@@ -35,10 +40,7 @@ export class CreateTimeSlotHandler
 			const user = RequestContext.currentUser();
 			input.employeeId = user.employeeId;
 		}
-		input.startedAt = moment(input.startedAt)
-			//.set('minute', 0)
-			.set('millisecond', 0)
-			.toDate();
+		input.startedAt = moment(startedAt).set('millisecond', 0).toDate();
 
 		let timeSlot = await this.timeSlotRepository.findOne({
 			where: {
@@ -49,7 +51,6 @@ export class CreateTimeSlotHandler
 
 		if (!timeSlot) {
 			timeSlot = new TimeSlot(_.omit(input, ['timeLogId']));
-			// await this.timeSlotRepository.update(timeSlot.id, input);
 		}
 
 		if (input.timeLogId) {
@@ -86,6 +87,7 @@ export class CreateTimeSlotHandler
 				})
 			);
 		}
+
 		timeSlot.tenantId = RequestContext.currentTenantId();
 		if (!timeSlot.organizationId) {
 			const employee = await this.employeeRepository.findOne(
@@ -94,13 +96,30 @@ export class CreateTimeSlotHandler
 			timeSlot.organizationId = employee.organizationId;
 		}
 
-		console.log('Create Time Slot', { timeSlot });
-
 		await this.timeSlotRepository.save(timeSlot);
 
-		timeSlot = await this.timeSlotRepository.findOne(timeSlot.id, {
-			relations: ['timeLogs', 'screenshots']
+		const slots = [timeSlot];
+		const dates = slots.map((slot) => moment.utc(slot.startedAt).toDate());
+
+		const minDate = dates.reduce(function (a, b) {
+			return a < b ? a : b;
 		});
-		return timeSlot;
+		const maxDate = dates.reduce(function (a, b) {
+			return a > b ? a : b;
+		});
+
+		let [createdTimeSlot] = await this.commandBus.execute(
+			new TimeSlotMergeCommand(timeSlot.employeeId, minDate, maxDate)
+		);
+
+		console.log('Create Time Slot:', { timeSlot: createdTimeSlot });
+
+		createdTimeSlot = await this.timeSlotRepository.findOne(
+			createdTimeSlot.id,
+			{
+				relations: ['timeLogs', 'screenshots']
+			}
+		);
+		return createdTimeSlot;
 	}
 }

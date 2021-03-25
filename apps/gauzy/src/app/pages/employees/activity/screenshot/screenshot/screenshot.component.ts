@@ -69,13 +69,9 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 	}
 
 	async getLogs() {
-		if (!this.organization) {
+		if (!this.organization || !this.request) {
 			return;
 		}
-		if (!this.request) {
-			return;
-		}
-
 		const { employeeIds = [], startDate, endDate } = this.request;
 		const request: IGetTimeSlotInput = {
 			organizationId: this.organization.id,

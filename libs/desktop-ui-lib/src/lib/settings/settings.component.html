@@ -23,11 +23,11 @@
 				<h4>Monitor</h4>
 			</div>
 			<div class="col-12">
-				<h6>Automactically capturing screen</h6>
+				<h6>Automatically capturing screen</h6>
 			</div>
 			<div class="col-12">
 				<div class="row">
-					<div class="col-4" *ngFor="let item of montorsOption">
+					<div class="col-4" *ngFor="let item of monitorsOption">
 						<nb-card accent="{{ item.accent }}" status="primary">
 							<nb-card-body
 								class="center-card"
@@ -100,11 +100,11 @@
 			</div>
 			<div class="col-12 form-group">
 				<nb-select
-					placeholder="Select Periode"
+					placeholder="Select Period"
 					[(ngModel)]="selectedPeriod"
 					(ngModelChange)="selectPeriod($event)"
 				>
-					<nb-option *ngFor="let item of periodeOption" [value]="item"
+					<nb-option *ngFor="let item of periodOption" [value]="item"
 						>{{ item }} Minute</nb-option
 					>
 				</nb-select>

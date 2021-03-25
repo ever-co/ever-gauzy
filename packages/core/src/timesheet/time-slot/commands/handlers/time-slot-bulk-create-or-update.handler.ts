@@ -16,10 +16,13 @@ export class TimeSlotBulkCreateOrUpdateHandler
 	constructor(
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
+
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
+
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
+
 		private readonly commandBus: CommandBus
 	) {}
 
@@ -36,6 +39,7 @@ export class TimeSlotBulkCreateOrUpdateHandler
 			slot.startedAt = moment.utc(slot.startedAt).toDate();
 			return slot;
 		});
+
 		const insertedSlots = await this.timeSlotRepository.find({
 			where: {
 				startedAt: In(_.pluck(slots, 'startedAt'))
@@ -61,7 +65,6 @@ export class TimeSlotBulkCreateOrUpdateHandler
 			.map((slot) => _.pluck(slot.timeLogs, 'id'))
 			.flatten()
 			.value();
-
 		const timeLogIds = _.chain(oldSlotsTimeLogIds)
 			.concat(newSlotsTimeLogIds)
 			.uniq()
@@ -109,14 +112,15 @@ export class TimeSlotBulkCreateOrUpdateHandler
 		await this.timeSlotRepository.save(slots);
 
 		const dates = slots.map((slot) => moment.utc(slot.startedAt).toDate());
-		const mnDate = dates.reduce(function (a, b) {
+		const minDate = dates.reduce(function (a, b) {
 			return a < b ? a : b;
 		});
-		const mxDate = dates.reduce(function (a, b) {
+		const maxDate = dates.reduce(function (a, b) {
 			return a > b ? a : b;
 		});
+
 		return await this.commandBus.execute(
-			new TimeSlotMergeCommand(slots[0].employeeId, mnDate, mxDate)
+			new TimeSlotMergeCommand(slots[0].employeeId, minDate, maxDate)
 		);
 	}
 }

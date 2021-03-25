@@ -62,7 +62,6 @@ export function ipcMainHandler(store, startServer, knex, config) {
 				timeSlotId: null,
 				timeSheetId: null
 			};
-
 			TimerData.insertAfkEvent(knex, afk_new);
 		});
 	});
@@ -202,11 +201,12 @@ export function ipcTimer(
 		});
 	});
 
-	ipcMain.on('return_time_slot', (event, arg) => {
+	ipcMain.on('return_time_slot', async (event, arg) => {
 		TimerData.updateTimerUpload(knex, {
 			id: arg.timerId,
 			timeSlotId: arg.timeSlotId
 		});
+
 		timeTrackerWindow.webContents.send(
 			'refresh_time_log',
 			LocalStore.beforeRequestParams()
@@ -238,6 +238,10 @@ export function ipcTimer(
 			default:
 				break;
 		}
+
+		// create new timer entry after create timeslot
+		const [timeLog] = arg.timeLogs;
+		await timerHandler.createTimer(knex, timeLog);
 	});
 
 	ipcMain.on('save_screen_shoot', (event, arg) => {

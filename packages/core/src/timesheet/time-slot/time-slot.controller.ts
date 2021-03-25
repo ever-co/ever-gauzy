@@ -52,7 +52,7 @@ export class TimeSlotController extends CrudController<TimeSlot> {
 		return this.timeSlotService.findOne(id, option);
 	}
 
-	@ApiOperation({ summary: 'Create or Update Time Slot' })
+	@ApiOperation({ summary: 'Create Time Slot' })
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
@@ -63,6 +63,12 @@ export class TimeSlotController extends CrudController<TimeSlot> {
 		return this.timeSlotService.create(entity);
 	}
 
+	@ApiOperation({ summary: 'Update Time Slot' })
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
 	@Put('/:id')
 	async update(@Param() params, @Body() entity: TimeSlot): Promise<TimeSlot> {
 		return this.timeSlotService.update(params.id, entity);
