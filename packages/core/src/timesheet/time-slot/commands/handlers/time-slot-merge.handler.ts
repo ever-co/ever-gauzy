@@ -48,6 +48,7 @@ export class TimeSlotMergeHandler
 			relations: ['timeLogs', 'screenshots']
 		});
 
+		const createdTimeslots: any = [];
 		if (timerSlots.length > 0) {
 			const savePromises = _.chain(timerSlots)
 				.groupBy((timeSlots) => {
@@ -70,6 +71,7 @@ export class TimeSlotMergeHandler
 						screenshots = screenshots.concat(timeSlot.screenshots);
 						timeLogs = timeLogs.concat(timeSlot.timeLogs);
 					}
+
 					screenshots = screenshots.map(
 						(screenshot) =>
 							new Screenshot(_.omit(screenshot, ['timeSlotId']))
@@ -80,10 +82,11 @@ export class TimeSlotMergeHandler
 						duration,
 						screenshots,
 						timeLogs,
-						startedAt: moment.utc(slotStart).toDate()
+						startedAt: moment(slotStart).toDate()
 					});
-					// await this.screenshotRepository.save(screenshots);
 					await this.timeSlotRepository.save(newTimeSlot);
+					createdTimeslots.push(newTimeSlot);
+
 					const ids = _.pluck(timeSlots, 'id');
 					ids.splice(0, 1);
 					if (ids.length > 0) {
@@ -96,5 +99,6 @@ export class TimeSlotMergeHandler
 				.value();
 			await Promise.all(savePromises);
 		}
+		return createdTimeslots;
 	}
 }

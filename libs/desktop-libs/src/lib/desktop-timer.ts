@@ -107,10 +107,10 @@ export default class Timerhandler {
 	updateTime(setupWindow, knex, timeTrackerWindow) {
 		const appSetting = LocalStore.getStore('appSetting');
 		const updatePeriod = appSetting.timer.updatePeriod;
-
 		console.log('Update Period:', updatePeriod, 60 * 1000 * updatePeriod);
 
 		this.timeSlotStart = moment();
+		console.log('Timeslot Start Time', this.timeSlotStart);
 
 		this.intervalUpdateTime = setInterval(async () => {
 			await this.getSetActivity(
@@ -119,10 +119,7 @@ export default class Timerhandler {
 				this.timeSlotStart,
 				false
 			);
-			console.log(
-				'Timeslot Start Time',
-				moment().format('YYYY/MM/DD HH:ss')
-			);
+			console.log('Timeslot Start Time', this.timeSlotStart);
 			this.timeSlotStart = moment();
 		}, 60 * 1000 * updatePeriod);
 	}
@@ -175,7 +172,7 @@ export default class Timerhandler {
 			const dataParse = JSON.parse(item.data);
 			return {
 				title: dataParse.title || dataParse.app,
-				date: moment().format('YYYY-MM-DD'),
+				date: moment().utc().format('YYYY-MM-DD'),
 				time: moment().utc().format('HH:mm:ss'),
 				duration: Math.floor(item.durations),
 				type: item.type,
@@ -219,6 +216,8 @@ export default class Timerhandler {
 		});
 
 		const allActivities = [...awActivities, ...wakatimeHeartbeats];
+
+		console.log('LastTimeSlot', lastTimeSlot);
 
 		// send Activity to gauzy
 		setupWindow.webContents.send('set_time_slot', {
