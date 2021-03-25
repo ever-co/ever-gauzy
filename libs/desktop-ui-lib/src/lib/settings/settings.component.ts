@@ -22,7 +22,7 @@ export class SettingsComponent implements OnInit {
 			? './assets/images/logos/logo_Gauzy.svg'
 			: '../assets/images/logos/logo_Gauzy.svg';
 
-	montorsOption = [
+	monitorsOption = [
 		{
 			value: 'all',
 			title: 'Capture All Monitors',
@@ -44,8 +44,8 @@ export class SettingsComponent implements OnInit {
 
 	monitorOptionSelected = null;
 	appSetting = null;
-	periodeOption = [1, 5, 10];
-	selectedPeriod = null;
+	periodOption = [1, 5, 10];
+	selectedPeriod = 10;
 	screenshotNotification = null;
 	config = null;
 	restartDisable = false;
@@ -56,6 +56,7 @@ export class SettingsComponent implements OnInit {
 	downloadFinish = false;
 	progressDownload = 0;
 	showProgressBar = false;
+
 	constructor(
 		private electronService: ElectronService,
 		private _cdr: ChangeDetectorRef
@@ -72,7 +73,7 @@ export class SettingsComponent implements OnInit {
 				value: setting.monitor.captured
 			});
 			this.screenshotNotification = setting.screenshotNotification;
-			this.selectPeriod(setting.timer.updatePeriode);
+			this.selectPeriod(setting.timer.updatePeriod);
 			this._cdr.detectChanges();
 		});
 
@@ -137,7 +138,7 @@ export class SettingsComponent implements OnInit {
 	selectMonitorOption(item) {
 		this.monitorOptionSelected = item.value;
 		this.updateSetting({ captured: item.value }, 'monitor');
-		this.montorsOption = this.montorsOption.map((x) => {
+		this.monitorsOption = this.monitorsOption.map((x) => {
 			if (x.value === item.value) {
 				x.accent = 'success';
 				x.status = 'success';
@@ -163,7 +164,7 @@ export class SettingsComponent implements OnInit {
 
 	selectPeriod(value) {
 		this.selectedPeriod = value;
-		this.updateSetting({ updatePeriode: value }, 'timer');
+		this.updateSetting({ updatePeriod: value }, 'timer');
 	}
 
 	toggleNotificationChange(value) {

@@ -106,7 +106,7 @@ export default class Timerhandler {
 
 	updateTime(setupWindow, knex, timeTrackerWindow) {
 		const appSetting = LocalStore.getStore('appSetting');
-		const updatePeriode = appSetting.timer.updatePeriode;
+		const updatePeriod = appSetting.timer.updatePeriod;
 
 		this.timeSlotStart = moment();
 
@@ -122,7 +122,7 @@ export default class Timerhandler {
 				moment().format('YYYY/MM/DD HH:ss')
 			);
 			this.timeSlotStart = moment();
-		}, 60 * 1000 * updatePeriode);
+		}, 60 * 1000 * updatePeriod);
 	}
 
 	updateToggle(setupWindow, knex, isStop) {
@@ -161,7 +161,7 @@ export default class Timerhandler {
 		let duration = awAfk.length > 0 ? awAfk[0].durations : 0;
 
 		//calculate mouse and keyboard activity as per selected period
-		duration = duration / appSetting.timer.updatePeriode;
+		duration = duration / appSetting.timer.updatePeriod;
 
 		const idsAw = [];
 		const idsWakatime = [];
