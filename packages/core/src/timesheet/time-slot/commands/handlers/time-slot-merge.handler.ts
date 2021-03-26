@@ -22,31 +22,43 @@ export class TimeSlotMergeHandler
 	public async execute(command: TimeSlotMergeCommand) {
 		let { employeeId, start, end } = command;
 
-		let startMinute = moment(start).get('minute');
+		let startMinute = moment(start).utc().get('minute');
 		startMinute = startMinute - (startMinute % 10);
-		start = moment(start)
+
+		const startDate = moment(start)
+			.utc()
 			.set('minute', startMinute)
+			.set('second', 0)
 			.set('millisecond', 0)
 			.toDate();
 
-		let endMinute = moment(end).get('minute');
+		let endMinute = moment(end).utc().get('minute');
 		endMinute = endMinute - (endMinute % 10);
-		end = moment(end)
+
+		const endDate = moment(end)
+			.utc()
 			.set('minute', endMinute + 10)
+			.set('second', 0)
 			.set('millisecond', 0)
 			.toDate();
+
+		console.log(
+			`Timeslot merge startDate=${startDate} and endDate=${endDate}`
+		);
 
 		const timerSlots = await this.timeSlotRepository.find({
 			where: (qb: SelectQueryBuilder<TimeSlot>) => {
 				qb.where(
-					`"${qb.alias}"."startedAt" >= :start AND "${qb.alias}"."startedAt" <= :end`,
-					{ start, end }
-				).andWhere(`"${qb.alias}"."employeeId" >= :employeeId`, {
+					`"${qb.alias}"."startedAt" >= :startDate AND "${qb.alias}"."startedAt" <= :endDate`,
+					{ startDate, endDate }
+				).andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
 					employeeId
 				});
 			},
 			relations: ['timeLogs', 'screenshots']
 		});
+
+		console.log('Previous inserted timeslots:', timerSlots);
 
 		const createdTimeslots: any = [];
 		if (timerSlots.length > 0) {

@@ -46,6 +46,8 @@ export class TimeLogCreateHandler
 			source: input.source || TimeLogSourceEnum.BROWSER
 		});
 
+		console.log('New Time Log:', newTimeLog);
+
 		let timeSlots = [];
 		if (input.stoppedAt) {
 			timeSlots = this.timeSlotService.generateTimeSlots(
