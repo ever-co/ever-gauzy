@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, SelectQueryBuilder, Brackets } from 'typeorm';
+import { Repository, In, SelectQueryBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { TimeSlot } from '../../../time-slot.entity';
 import * as _ from 'underscore';
@@ -29,6 +29,7 @@ export class TimeSlotMergeHandler
 			.utc()
 			.set('minute', startMinute)
 			.set('second', 0)
+			.set('millisecond', 0)
 			.toDate();
 
 		let endMinute = moment(end).utc().get('minute');
@@ -38,6 +39,7 @@ export class TimeSlotMergeHandler
 			.utc()
 			.set('minute', endMinute + 10)
 			.set('second', 0)
+			.set('millisecond', 0)
 			.toDate();
 
 		console.log(

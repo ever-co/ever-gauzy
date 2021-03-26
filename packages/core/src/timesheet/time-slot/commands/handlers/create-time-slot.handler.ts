@@ -158,13 +158,8 @@ export class CreateTimeSlotHandler
 		}
 
 		console.log('Created Time Slot:', { timeSlot: createdTimeSlot });
-
-		createdTimeSlot = await this.timeSlotRepository.findOne(
-			createdTimeSlot.id,
-			{
-				relations: ['timeLogs', 'screenshots']
-			}
-		);
-		return createdTimeSlot;
+		return await this.timeSlotRepository.findOne(createdTimeSlot.id, {
+			relations: ['timeLogs', 'screenshots']
+		});
 	}
 }
