@@ -1,6 +1,6 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { Brackets, In, Repository } from 'typeorm';
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import { PermissionsEnum } from '@gauzy/contracts';
@@ -30,27 +30,67 @@ export class CreateTimeSlotHandler
 
 	public async execute(command: CreateTimeSlotCommand): Promise<TimeSlot> {
 		const { input } = command;
-		const { startedAt } = input;
+		let { organizationId } = input;
 
+		const user = RequestContext.currentUser();
+		const tenantId = RequestContext.currentTenantId();
+
+		/**
+		 * Check logged user has employee permission
+		 */
 		if (
 			!RequestContext.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 			)
 		) {
-			const user = RequestContext.currentUser();
 			input.employeeId = user.employeeId;
 		}
-		input.startedAt = moment(startedAt).set('millisecond', 0).toDate();
 
+		/*
+		 * If employeeId not send from desktop timer request payload
+		 */
+		if (!input.employeeId && user.employeeId) {
+			input.employeeId = user.employeeId;
+		}
+
+		/*
+		 * If organization not found in request then assign current logged user organization
+		 */
+		const { employeeId } = input;
+		if (!organizationId) {
+			const employee = await this.employeeRepository.findOne(employeeId);
+			organizationId = employee ? employee.organizationId : null;
+		}
+
+		input.startedAt = moment(input.startedAt)
+			.utc()
+			.set('millisecond', 0)
+			.toDate();
 		let timeSlot = await this.timeSlotRepository.findOne({
 			where: {
-				employeeId: input.employeeId,
+				organizationId,
+				tenantId,
+				employeeId,
 				startedAt: input.startedAt
 			}
 		});
 
+		console.log(
+			`Attempt to get timeSlot from DB with Parameters`,
+			{
+				organizationId,
+				tenantId,
+				employeeId,
+				startedAt: input.startedAt
+			},
+			{
+				timeSlot
+			}
+		);
+
 		if (!timeSlot) {
 			timeSlot = new TimeSlot(_.omit(input, ['timeLogId']));
+			console.log('Omit New Timeslot:', timeSlot);
 		}
 
 		if (input.timeLogId) {
@@ -58,20 +98,34 @@ export class CreateTimeSlotHandler
 			if (input.timeLogId instanceof Array) {
 				timeLogIds = input.timeLogId;
 			} else {
-				timeLogIds = [input.timeLogId];
+				timeLogIds.push(input.timeLogId);
 			}
 			timeSlot.timeLogs = await this.timeLogRepository.find({
-				id: In(timeLogIds)
+				id: In(timeLogIds),
+				tenantId,
+				organizationId
 			});
 		} else {
-			timeSlot.timeLogs = await this.timeLogRepository
-				.createQueryBuilder()
-				.where(`:startedAt BETWEEN "startedAt" AND "stoppedAt"`, {
-					startedAt: timeSlot.startedAt
-				})
-				.orWhere('"startedAt" <= :startedAt AND "stoppedAt" IS NULL', {
-					startedAt: timeSlot.startedAt
-				})
+			const query = this.timeLogRepository.createQueryBuilder('time_log');
+			timeSlot.timeLogs = await query
+				.andWhere(`${query.alias}.tenantId = ${tenantId}`)
+				.andWhere(`${query.alias}.organizationId = ${organizationId}`)
+				.andWhere(
+					new Brackets((qb: any) => {
+						qb.orWhere(
+							'"startedAt" <= :startedAt AND "stoppedAt" > :startedAt',
+							{
+								startedAt: timeSlot.startedAt
+							}
+						);
+						qb.orWhere(
+							'"startedAt" <= :startedAt AND "stoppedAt" IS NULL',
+							{
+								startedAt: timeSlot.startedAt
+							}
+						);
+					})
+				)
 				.getMany();
 		}
 
@@ -79,40 +133,31 @@ export class CreateTimeSlotHandler
 			timeSlot.activities = await this.commandBus.execute(
 				new BulkActivitiesSaveCommand({
 					employeeId: timeSlot.employeeId,
-					projectId:
-						timeSlot.timeLogs && timeSlot.timeLogs.length > 0
-							? timeSlot.timeLogs[0].projectId
-							: null,
+					projectId: input.projectId,
 					activities: input.activities
 				})
 			);
 		}
 
-		timeSlot.tenantId = RequestContext.currentTenantId();
-		if (!timeSlot.organizationId) {
-			const employee = await this.employeeRepository.findOne(
-				input.employeeId
-			);
-			timeSlot.organizationId = employee.organizationId;
-		}
-
+		console.log('Timeslot Before Create:', timeSlot);
 		await this.timeSlotRepository.save(timeSlot);
 
-		const slots = [timeSlot];
-		const dates = slots.map((slot) => moment.utc(slot.startedAt).toDate());
+		const minDate = input.startedAt;
+		const maxDate = input.startedAt;
 
-		const minDate = dates.reduce(function (a, b) {
-			return a < b ? a : b;
-		});
-		const maxDate = dates.reduce(function (a, b) {
-			return a > b ? a : b;
-		});
-
+		/*
+		 * Merge timeslots into 10 minutes slots
+		 */
 		let [createdTimeSlot] = await this.commandBus.execute(
 			new TimeSlotMergeCommand(timeSlot.employeeId, minDate, maxDate)
 		);
 
-		console.log('Create Time Slot:', { timeSlot: createdTimeSlot });
+		// If merge timeslots not found then pass created timeslot
+		if (!createdTimeSlot) {
+			createdTimeSlot = timeSlot;
+		}
+
+		console.log('Created Time Slot:', { timeSlot: createdTimeSlot });
 
 		createdTimeSlot = await this.timeSlotRepository.findOne(
 			createdTimeSlot.id,
