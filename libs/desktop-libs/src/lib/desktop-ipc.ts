@@ -209,12 +209,6 @@ export function ipcTimer(
 			timeSlotId: arg.timeSlotId
 		});
 
-		if (!arg.quitApp) {
-			// create new timer entry after create timeslot
-			const [timeLog] = arg.timeLogs;
-			await timerHandler.createTimer(knex, timeLog);
-		}
-
 		timeTrackerWindow.webContents.send(
 			'refresh_time_log',
 			LocalStore.beforeRequestParams()
@@ -245,6 +239,12 @@ export function ipcTimer(
 				break;
 			default:
 				break;
+		}
+
+		if (!arg.quitApp) {
+			// create new timer entry after create timeslot
+			const [timeLog] = arg.timeLogs;
+			await timerHandler.createTimer(knex, timeLog);
 		}
 	});
 
