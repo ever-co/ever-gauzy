@@ -1,7 +1,8 @@
 import { Notification, nativeImage } from 'electron';
 import * as path from 'path';
+
 export default class NotificationDesktop {
-	startTimeNotification(isStart) {
+	timerActionNotification(isStart) {
 		const iconPath = path.join(__dirname, '..', 'icons', 'icon.png');
 		console.log(iconPath);
 		const iconNativePath = nativeImage.createFromPath(iconPath);
