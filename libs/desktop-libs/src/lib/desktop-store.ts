@@ -49,7 +49,8 @@ export const LocalStore = {
 						updatePeriod: 10 // [1, 5, 10]
 					},
 					SCREENSHOTS_ENGINE_METHOD: 'ElectronDesktopCapturer',
-					screenshotNotification: true
+					screenshotNotification: true,
+					autoLaunch: true
 				};
 				store.set({
 					appSetting: defaultAppSetting

@@ -62,23 +62,6 @@ import {
 } from '../../../libs/desktop-window/src';
 import { fork } from 'child_process';
 import { autoUpdater, CancellationToken } from 'electron-updater';
-const AutoLaunch = require('auto-launch');
-
-let gauzyAPP: any;
-
-if (process.platform === 'darwin') {
-	gauzyAPP = new AutoLaunch({
-		name: 'Gauzy Desktop',
-		path: '/Applications/gauzy-desktop.app'
-	});
-}
-
-if (process.platform === 'win32') {
-	gauzyAPP = new AutoLaunch({
-		name: 'Gauzy Desktop',
-		path: app.getPath('exe')
-	});
-}
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
 // C:\Users\USERNAME\AppData\Roaming\gauzy-desktop
@@ -94,6 +77,8 @@ const knex = require('knex')({
 		filename: sqlite3filename
 	}
 });
+
+const exeName = path.basename(process.execPath);
 
 const dataModel = new DataModel();
 dataModel.createNewTable(knex);
@@ -285,10 +270,9 @@ const getApiBaseUrl = (configs) => {
 app.on('ready', async () => {
 	// require(path.join(__dirname, 'desktop-api/main.js'));
 	/* set menu */
-	if (process.platform === 'win32' || process.platform === 'darwin') {
-		gauzyAPP.isEnabled().then((isEnabled) => {
-			if (!isEnabled) gauzyAPP.enable();
-		});
+	const configs: any = store.get('configs');
+	if (configs && typeof configs.autoLaunch === 'undefined') {
+		launchAtStartup(true, false);
 	}
 	Menu.setApplicationMenu(
 		Menu.buildFromTemplate([
@@ -328,7 +312,6 @@ app.on('ready', async () => {
 		pathWindow
 	);
 
-	const configs: any = store.get('configs');
 	if (configs && configs.isSetup) {
 		if (!configs.serverConfigConnected) {
 			setupWindow = createSetupWindow(
@@ -576,5 +559,26 @@ app.on('before-quit', (e) => {
 function quit() {
 	if (process.platform !== 'darwin') {
 		app.quit();
+	}
+}
+
+function launchAtStartup(autoLaunch, hidden) {
+	if (process.platform === 'darwin') {
+		app.setLoginItemSettings({
+			openAtLogin: autoLaunch,
+			openAsHidden: hidden
+		});
+	} else {
+		app.setLoginItemSettings({
+			openAtLogin: autoLaunch,
+			openAsHidden: hidden,
+			path: app.getPath('exe'),
+			args: [
+				'--processStart',
+				`"${exeName}"`,
+				'--process-start-args',
+				`"--hidden"`
+			]
+		});
 	}
 }
