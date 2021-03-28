@@ -43,6 +43,7 @@ jobs:
               env:
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
                   EP_GH_IGNORE_TIME: true
+                  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
 
     release-mac:
         runs-on: ${{ matrix.os }}
@@ -71,6 +72,7 @@ jobs:
               env:
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
                   EP_GH_IGNORE_TIME: true
+                  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
 
     release-windows:
         runs-on: ${{ matrix.os }}
@@ -99,3 +101,4 @@ jobs:
               env:
                   GH_TOKEN: ${{ secrets.GH_TOKEN }}
                   EP_GH_IGNORE_TIME: true
+                  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}

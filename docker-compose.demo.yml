@@ -99,6 +99,7 @@ services:
             NODE_ENV: ${NODE_ENV:-development}
             DB_HOST: db
             API_BASE_URL: ${API_BASE_URL:-http://localhost:3000}
+            SENTRY_DSN: ${SENTRY_DSN:-}
         env_file:
             - .env
         restart: on-failure
@@ -106,7 +107,7 @@ services:
             - db
         links:
             - db:${DB_HOST:-db}
-        entrypoint: './entrypoint.sh'
+        entrypoint: './entrypoint.compose.sh'
         command: ['node', 'main.js']
         # volumes:
         # - webapp_node_modules:/srv/gauzy/node_modules
