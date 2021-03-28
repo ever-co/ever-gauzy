@@ -4,7 +4,8 @@ Copyright © 2019-present, Ever Co. LTD. All rights reserved.
 
 This software is available under an Open Source Licenses ("Community Edition"). It is suitable if your business can comply with the requirements of corresponding open-source licenses, see more information below (e.g. requirements to release your modifications under the same open-source licenses for the benefits of our community).
 
-Alternatively, commercial versions of the software must be used in accordance with the terms and conditions of separate written agreement between you and Ever Co. LTD.
+Alternatively, commercial versions of the software must be used in accordance with the terms and conditions of separate written license agreement between you and Ever Co. LTD.  
+With commercial license, your source code (including your changes) is kept proprietary. You can purchase a commercial licenses at <https://gauzy.co/pricing>.
 
 In addition, Ever Co. LTD holds copyright and/or sufficient licenses to all components of the Gauzy Platform, and therefore can grant, at its sole discretion, the ability for companies, individuals, or organizations to create proprietary modules which may be dynamically linked at runtime with the portions of Ever Platform which fall under our copyright/license umbrella.
 
@@ -35,12 +36,12 @@ Feel free to [Contact Us](https://github.com/ever-co/gauzy#contact-us) for an ad
 ### _Gauzy Platform Small Business_ License
 
 Gauzy™ Platform Small Business License can be purchased by small businesses with annual revenues do not exceed \$1 million and used for single owned Company.
-For more information, please see https://ever.co/pricing or contact us at <mailto:ever@ever.co>.
+For more information, please see https://gauzy.co/pricing or contact us at <mailto:gauzy@ever.co>.
 
 ### _Gauzy Platform Enterprise_ License
 
 Gauzy™ Platform Enterprise License can be purchased by businesses with more than \$1 million in annual revenue and used for unlimited amount of owned companies.
-For more information, please see https://ever.co/pricing or contact us at <mailto:ever@ever.co>.
+For more information, please see https://gauzy.co/pricing or contact us at <mailto:gauzy@ever.co>.
 
 ## Credits
 
