@@ -315,6 +315,33 @@
 					</nb-card-body>
 				</nb-card>
 			</div>
+			<div class="col-12" *ngIf="config.timeTrackerWindow">
+				<nb-card>
+					<nb-card-body>
+						<div class="row">
+							<div class="col-12">
+								<nb-toggle
+									[(ngModel)]="autoLaunch"
+									(ngModelChange)="toggleAutoLaunch($event)"
+									status="basic"
+									>Automatic Launch
+								</nb-toggle>
+							</div>
+							<div class="col-12">
+								<nb-toggle
+									[(ngModel)]="minimizeOnStartup"
+									(ngModelChange)="
+										toggleMinimizeOnStartup($event)
+									"
+									status="basic"
+									[disabled]="!autoLaunch"
+									>Minimize On Startup
+								</nb-toggle>
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
 			<div class="col-12">
 				<button
 					nbButton
@@ -322,7 +349,7 @@
 					(click)="restartApp()"
 					[disabled]="restartDisable"
 				>
-					Save & Restart App
+					Restart App
 				</button>
 			</div>
 		</div>

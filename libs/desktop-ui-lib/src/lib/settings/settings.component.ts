@@ -56,6 +56,8 @@ export class SettingsComponent implements OnInit {
 	downloadFinish = false;
 	progressDownload = 0;
 	showProgressBar = false;
+	autoLaunch = null;
+	minimizeOnStartup = null;
 
 	constructor(
 		private electronService: ElectronService,
@@ -73,6 +75,8 @@ export class SettingsComponent implements OnInit {
 				value: setting.monitor.captured
 			});
 			this.screenshotNotification = setting.screenshotNotification;
+			this.autoLaunch = setting.autoLaunch;
+			this.minimizeOnStartup = setting.minimizeOnStartup;
 			this.selectPeriod(setting.timer.updatePeriod);
 			this._cdr.detectChanges();
 		});
@@ -169,6 +173,22 @@ export class SettingsComponent implements OnInit {
 
 	toggleNotificationChange(value) {
 		this.updateSetting(value, 'screenshotNotification');
+	}
+
+	toggleAutoLaunch(value) {
+		this.updateSetting(value, 'autoLaunch');
+		this.electronService.ipcRenderer.send('launch_on_startup', {
+			autoLaunch: value,
+			hidden: this.minimizeOnStartup
+		});
+	}
+
+	toggleMinimizeOnStartup(value) {
+		this.updateSetting(value, 'minimizeOnStartup');
+		this.electronService.ipcRenderer.send('minimize_on_startup', {
+			autoLaunch: this.autoLaunch,
+			hidden: value
+		});
 	}
 
 	restartApp() {
