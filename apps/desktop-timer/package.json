@@ -29,6 +29,7 @@
 	"dependencies": {
 		"moment": "^2.29.0",
 		"sound-play": "1.1.0",
-		"auto-launch": "5.0.5"
+		"auto-launch": "5.0.5",
+		"@sentry/electron": "2.4.0"
 	}
 }
