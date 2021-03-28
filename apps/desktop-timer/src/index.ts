@@ -36,13 +36,16 @@ log.catchErrors({
 
 				if (result.response === 2) {
 					app.quit();
+					return;
 				}
+				return;
 			});
 	}
 });
 
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
+app.setName('gauzy-desktop-timer');
 
 console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
 
@@ -65,6 +68,9 @@ import {
 import { fork } from 'child_process';
 import { autoUpdater, CancellationToken } from 'electron-updater';
 import fetch from 'node-fetch';
+import { initSentry } from './sentry';
+
+initSentry();
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
 // C:\Users\USERNAME\AppData\Roaming\gauzy-desktop-timer
@@ -524,22 +530,35 @@ function quit() {
 }
 
 function launchAtStartup(autoLaunch, hidden) {
-	if (process.platform === 'darwin') {
-		app.setLoginItemSettings({
-			openAtLogin: autoLaunch,
-			openAsHidden: hidden
-		});
-	} else {
-		app.setLoginItemSettings({
-			openAtLogin: autoLaunch,
-			openAsHidden: hidden,
-			path: app.getPath('exe'),
-			args: [
-				'--processStart',
-				`"${exeName}"`,
-				'--process-start-args',
-				`"--hidden"`
-			]
-		});
+	switch (process.platform) {
+		case 'darwin':
+			app.setLoginItemSettings({
+				openAtLogin: autoLaunch,
+				openAsHidden: hidden
+			});
+			break;
+		case 'win32':
+			app.setLoginItemSettings({
+				openAtLogin: autoLaunch,
+				openAsHidden: hidden,
+				path: app.getPath('exe'),
+				args: hidden
+					? [
+							'--processStart',
+							`"${exeName}"`,
+							'--process-start-args',
+							`"--hidden"`
+					  ]
+					: ['--processStart', `"${exeName}"`, '--process-start-args']
+			});
+			break;
+		case 'linux':
+			app.setLoginItemSettings({
+				openAtLogin: autoLaunch,
+				openAsHidden: hidden
+			});
+			break;
+		default:
+			break;
 	}
 }
