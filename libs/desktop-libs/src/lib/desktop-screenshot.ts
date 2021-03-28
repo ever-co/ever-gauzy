@@ -99,9 +99,10 @@ const uploadScreenShot = async (
 		form.append('tenantId', appInfo.tenantId);
 		form.append('organizationId', appInfo.organizationId);
 
-		console.log('Tenant Organization', {
+		console.log('Screenshot Form Request:', {
 			tenantId: appInfo.tenantId,
-			organizationId: appInfo.organizationId
+			organizationId: appInfo.organizationId,
+			timeSlotId: timeSlotId
 		});
 
 		const response = await fetch(

@@ -182,7 +182,6 @@ export function ipcTimer(
 			timeTrackerWindow,
 			arg.timeLog
 		);
-		timerHandler.updateTime(setupWindow, knex, timeTrackerWindow);
 		settingWindow.webContents.send('app_setting_update', {
 			setting: LocalStore.getStore('appSetting')
 		});
@@ -202,6 +201,9 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('return_time_slot', async (event, arg) => {
+		console.log(
+			`Return To Timeslot Last Timeslot ID: ${arg.timeSlotId} and Timer ID: ${arg.timerId}`
+		);
 		TimerData.updateTimerUpload(knex, {
 			id: arg.timerId,
 			timeSlotId: arg.timeSlotId
@@ -239,9 +241,11 @@ export function ipcTimer(
 				break;
 		}
 
-		// create new timer entry after create timeslot
-		const [timeLog] = arg.timeLogs;
-		await timerHandler.createTimer(knex, timeLog);
+		if (!arg.quitApp) {
+			// create new timer entry after create timeslot
+			const [timeLog] = arg.timeLogs;
+			await timerHandler.createTimer(knex, timeLog);
+		}
 	});
 
 	ipcMain.on('save_screen_shoot', (event, arg) => {
