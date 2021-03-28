@@ -3,6 +3,7 @@ ARG NODE_ENV
 ARG API_BASE_URL
 ARG API_HOST
 ARG API_PORT
+ARG SENTRY_DSN
 ARG DB_HOST
 ARG DB_NAME
 ARG DB_PORT
@@ -24,8 +25,8 @@ RUN apk --update add bash && \
     apk add --no-cache dos2unix g++ git make python vips-dev && \
     mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
-COPY wait .deploy/api/entrypoint.sh /
-RUN chmod +x /wait /entrypoint.sh && dos2unix /entrypoint.sh
+COPY wait .deploy/api/entrypoint.prod.sh .deploy/api/entrypoint.compose.sh /
+RUN chmod +x /wait /entrypoint.compose.sh /entrypoint.prod.sh && dos2unix /entrypoint.prod.sh && dos2unix /entrypoint.compose.sh
 
 USER node:node
 
@@ -89,7 +90,7 @@ USER node:node
 
 WORKDIR /srv/gauzy
 
-COPY --chown=node:node --from=dependencies /wait /entrypoint.sh /
+COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint.compose.sh /
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
@@ -114,8 +115,7 @@ FROM node:alpine AS production
 
 WORKDIR /srv/gauzy
 
-COPY --chown=node:node --from=dependencies /wait ./wait
-COPY --chown=node:node --from=dependencies /entrypoint.sh .
+COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint.compose.sh ./
 COPY --chown=node:node --from=prodDependencies /srv/gauzy/node_modules/ ./node_modules/
 COPY --chown=node:node --from=build /srv/gauzy/packages/ ./packages/
 
@@ -139,6 +139,7 @@ ENV NODE_ENV=${NODE_ENV:-production}
 ENV API_HOST=${API_HOST:-api}
 ENV API_PORT=${API_PORT:-3000}
 ENV API_BASE_URL=${API_BASE_URL:-http://localhost:3000}
+ENV SENTRY_DSN=${SENTRY_DSN}
 ENV DB_HOST=${DB_HOST:-db}
 ENV DB_NAME=${DB_NAME:-postgres}
 ENV DB_PORT=${DB_PORT:-5432}
