@@ -69,7 +69,6 @@ import fetch from 'node-fetch';
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
 // C:\Users\USERNAME\AppData\Roaming\gauzy-desktop-timer
 
-app.setName('gauzy-desktop-timer');
 process.env.GAUZY_USER_PATH = app.getPath('userData');
 log.info(`GAUZY_USER_PATH: ${process.env.GAUZY_USER_PATH}`);
 
@@ -83,23 +82,7 @@ const knex = require('knex')({
 	}
 });
 
-const AutoLaunch = require('auto-launch');
-
-let gauzyTimer: any;
-
-if (process.platform === 'darwin') {
-	gauzyTimer = new AutoLaunch({
-		name: 'Gauzy Desktop Timer',
-		path: '/Applications/gauzy-desktop-timer.app'
-	});
-}
-
-if (process.platform === 'win32') {
-	gauzyTimer = new AutoLaunch({
-		name: 'Gauzy Desktop Timer',
-		path: app.getPath('exe')
-	});
-}
+const exeName = path.basename(process.execPath);
 
 const dataModel = new DataModel();
 dataModel.createNewTable(knex);
@@ -234,10 +217,9 @@ const getApiBaseUrl = (configs) => {
 app.on('ready', async () => {
 	// require(path.join(__dirname, 'desktop-api/main.js'));
 	/* set menu */
-	if (process.platform === 'win32' || process.platform === 'darwin') {
-		gauzyTimer.isEnabled().then((isEnabled) => {
-			if (!isEnabled) gauzyTimer.enable();
-		});
+	const configs: any = store.get('configs');
+	if (configs && typeof configs.autoLaunch === 'undefined') {
+		launchAtStartup(true, false);
 	}
 	Menu.setApplicationMenu(
 		Menu.buildFromTemplate([
@@ -277,7 +259,6 @@ app.on('ready', async () => {
 		pathWindow
 	);
 
-	const configs: any = store.get('configs');
 	if (configs && configs.isSetup) {
 		global.variableGlobal = {
 			API_BASE_URL: getApiBaseUrl(configs),
@@ -380,12 +361,12 @@ ipcMain.on('check_for_update', async (event, arg) => {
 	const updaterConfig = {
 		repo: 'gauzy',
 		owner: 'ever-co',
-		typeRelase: 'releases'
+		typeRelease: 'releases'
 	};
 	let latestReleaseTag = null;
 	try {
 		latestReleaseTag = await fetch(
-			`https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelase}/latest`,
+			`https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/latest`,
 			{
 				method: 'GET',
 				headers: {
@@ -399,7 +380,7 @@ ipcMain.on('check_for_update', async (event, arg) => {
 		autoUpdater.setFeedURL({
 			channel: 'desktop-timer-latest',
 			provider: 'generic',
-			url: `https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelase}/download/${latestReleaseTag.tag_name}`
+			url: `https://github.com/${updaterConfig.owner}/${updaterConfig.repo}/${updaterConfig.typeRelease}/download/${latestReleaseTag.tag_name}`
 		});
 		autoUpdater.checkForUpdatesAndNotify().then((downloadPromise) => {
 			if (cancellationToken)
@@ -481,6 +462,14 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 	}
 });
 
+ipcMain.on('launch_on_startup', (event, arg) => {
+	launchAtStartup(arg.autoLaunch, arg.hidden);
+});
+
+ipcMain.on('minimize_on_startup', (event, arg) => {
+	launchAtStartup(arg.autoLaunch, arg.hidden);
+});
+
 autoUpdater.on('error', () => {
 	console.log('eroro');
 });
@@ -531,5 +520,26 @@ app.on('before-quit', (e) => {
 function quit() {
 	if (process.platform !== 'darwin') {
 		app.quit();
+	}
+}
+
+function launchAtStartup(autoLaunch, hidden) {
+	if (process.platform === 'darwin') {
+		app.setLoginItemSettings({
+			openAtLogin: autoLaunch,
+			openAsHidden: hidden
+		});
+	} else {
+		app.setLoginItemSettings({
+			openAtLogin: autoLaunch,
+			openAsHidden: hidden,
+			path: app.getPath('exe'),
+			args: [
+				'--processStart',
+				`"${exeName}"`,
+				'--process-start-args',
+				`"--hidden"`
+			]
+		});
 	}
 }

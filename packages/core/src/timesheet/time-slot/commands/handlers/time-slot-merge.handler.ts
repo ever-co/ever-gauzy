@@ -7,6 +7,9 @@ import * as _ from 'underscore';
 import { TimeSlotMergeCommand } from '../time-slot-merge.command';
 import { Screenshot } from '../../../screenshot.entity';
 import { TimeLog } from '../../../time-log.entity';
+import { getConfig } from '@gauzy/config';
+import { Query } from 'typeorm/driver/Query';
+const config = getConfig();
 
 @CommandHandler(TimeSlotMergeCommand)
 export class TimeSlotMergeHandler
@@ -29,8 +32,7 @@ export class TimeSlotMergeHandler
 			.utc()
 			.set('minute', startMinute)
 			.set('second', 0)
-			.set('millisecond', 0)
-			.toDate();
+			.set('millisecond', 0);
 
 		let endMinute = moment(end).utc().get('minute');
 		endMinute = endMinute - (endMinute % 10);
@@ -39,19 +41,32 @@ export class TimeSlotMergeHandler
 			.utc()
 			.set('minute', endMinute + 10)
 			.set('second', 0)
-			.set('millisecond', 0)
-			.toDate();
+			.set('millisecond', 0);
 
 		console.log(
 			`Timeslot merge startDate=${startDate} and endDate=${endDate}`
 		);
 
 		const timerSlots = await this.timeSlotRepository.find({
-			where: (qb: SelectQueryBuilder<TimeSlot>) => {
-				qb.where(
-					`"${qb.alias}"."startedAt" >= :startDate AND "${qb.alias}"."startedAt" <= :endDate`,
-					{ startDate, endDate }
-				).andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
+			where: (query: SelectQueryBuilder<TimeSlot>) => {
+				if (config.dbConnectionOptions.type === 'sqlite') {
+					query.where(
+						`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" <= :endDate`,
+						{
+							startDate: startDate.format('YYYY-MM-DD HH:mm:ss'),
+							endDate: endDate.format('YYYY-MM-DD HH:mm:ss')
+						}
+					);
+				} else {
+					query.where(
+						`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" <= :endDate`,
+						{
+							startDate: startDate.toDate(),
+							endDate: endDate.toDate()
+						}
+					);
+				}
+				query.andWhere(`"${query.alias}"."employeeId" = :employeeId`, {
 					employeeId
 				});
 			},

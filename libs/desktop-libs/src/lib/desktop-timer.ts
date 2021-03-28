@@ -21,19 +21,33 @@ export default class Timerhandler {
 	notificationDesktop = new NotificationDesktop();
 	timeSlotStart = null;
 
-	async startTimer(setupWindow, knex, timeTrackerWindow, timeLog) {
+	startTimer(setupWindow, knex, timeTrackerWindow, timeLog) {
 		// store timer is start to electron-store
 		const appSetting = LocalStore.getStore('appSetting');
 		appSetting.timerStarted = true;
 		LocalStore.updateApplicationSetting(appSetting);
 
-		this.notificationDesktop.startTimeNotification(true);
+		this.notificationDesktop.timerActionNotification(true);
 		this.configs = LocalStore.getStore('configs');
 
 		this.timeStart = moment();
-		await this.createTimer(knex, timeLog);
 
-		this.collectActivities(setupWindow, knex, timeTrackerWindow);
+		(async () => {
+			await this.createTimer(knex, timeLog);
+			this.collectActivities(setupWindow, knex, timeTrackerWindow);
+
+			/*
+			 * Start time interval for get set activities and screenshots
+			 */
+			this.startTimerIntervalPeriod(setupWindow, knex);
+
+			/*
+			 * Create screenshots at begining of timer
+			 */
+			(async () => {
+				await this.makeScreenshot(setupWindow, knex, false);
+			})();
+		})();
 	}
 
 	/*
@@ -104,7 +118,7 @@ export default class Timerhandler {
 		this.timeRecordMinute = now.diff(moment(this.timeStart), 'minutes');
 	}
 
-	updateTime(setupWindow, knex, timeTrackerWindow) {
+	startTimerIntervalPeriod(setupWindow, knex) {
 		const appSetting = LocalStore.getStore('appSetting');
 		const updatePeriod = appSetting.timer.updatePeriod;
 		console.log('Update Period:', updatePeriod, 60 * 1000 * updatePeriod);
@@ -113,6 +127,8 @@ export default class Timerhandler {
 		console.log('Timeslot Start Time', this.timeSlotStart);
 
 		this.intervalUpdateTime = setInterval(async () => {
+			console.log('Last Time Id:', this.lastTimer.id);
+
 			await this.getSetActivity(
 				knex,
 				setupWindow,
@@ -122,6 +138,24 @@ export default class Timerhandler {
 			console.log('Timeslot Start Time', this.timeSlotStart);
 			this.timeSlotStart = moment();
 		}, 60 * 1000 * updatePeriod);
+	}
+
+	/*
+	 * Stop timer interval period after stop timer
+	 */
+	stopTimerIntervalPeriod() {
+		if (this.timeSlotStart) {
+			this.timeSlotStart = null;
+		}
+
+		if (this.intevalTimer) {
+			clearInterval(this.intevalTimer);
+			this.intevalTimer = null;
+		}
+		if (this.intervalUpdateTime) {
+			clearInterval(this.intervalUpdateTime);
+			this.intervalUpdateTime = null;
+		}
 	}
 
 	updateToggle(setupWindow, knex, isStop) {
@@ -217,8 +251,6 @@ export default class Timerhandler {
 
 		const allActivities = [...awActivities, ...wakatimeHeartbeats];
 
-		console.log('LastTimeSlot', lastTimeSlot);
-
 		// send Activity to gauzy
 		setupWindow.webContents.send('set_time_slot', {
 			...userInfo,
@@ -242,23 +274,21 @@ export default class Timerhandler {
 		appSetting.timerStarted = false;
 
 		LocalStore.updateApplicationSetting(appSetting);
-		this.notificationDesktop.startTimeNotification(false);
+		this.notificationDesktop.timerActionNotification(false);
 
 		this.updateToggle(setupWindow, knex, true);
 
-		if (this.timeSlotStart) {
-			this.getSetActivity(knex, setupWindow, this.timeSlotStart, quitApp);
-			this.timeSlotStart = null;
-		}
+		/*
+		 * Create screenshots at end of timer
+		 */
+		(async () => {
+			await this.makeScreenshot(setupWindow, knex, true);
 
-		if (this.intevalTimer) {
-			clearInterval(this.intevalTimer);
-			this.intevalTimer = null;
-		}
-		if (this.intervalUpdateTime) {
-			clearInterval(this.intervalUpdateTime);
-			this.intervalUpdateTime = null;
-		}
+			/*
+			 * Stop time interval after stop timer
+			 */
+			this.stopTimerIntervalPeriod();
+		})();
 	}
 
 	async createTimer(knex, timeLog) {
@@ -278,6 +308,24 @@ export default class Timerhandler {
 		const [lastSavedTimer] = await TimerData.getLastTimer(knex, info);
 		if (lastSavedTimer) {
 			this.lastTimer = lastSavedTimer;
+		}
+	}
+
+	/*
+	 * Make screenshots and activities after start and stop timer
+	 */
+	async makeScreenshot(setupWindow, knex, quitApp) {
+		console.log(
+			`Time Slot Start/End At ${quitApp ? 'End' : 'Begining'}`,
+			this.timeSlotStart
+		);
+		if (this.timeSlotStart) {
+			await this.getSetActivity(
+				knex,
+				setupWindow,
+				this.timeSlotStart,
+				quitApp
+			);
 		}
 	}
 }

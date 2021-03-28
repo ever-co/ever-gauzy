@@ -83,13 +83,16 @@ export class TimeLogUpdateHandler
 				});
 			}
 
-			updateTimeSlots = updateTimeSlots.map((slot) => ({
-				...slot,
-				employeeId: timeLog.employeeId,
-				keyboard: 0,
-				mouse: 0,
-				overall: 0
-			}));
+			updateTimeSlots = updateTimeSlots
+				.map((slot) => ({
+					...slot,
+					employeeId: timeLog.employeeId,
+					keyboard: 0,
+					mouse: 0,
+					overall: 0
+				}))
+				.filter((slot) => slot.tenantId && slot.organizationId);
+
 			if (!manualTimeSlot) {
 				updateTimeSlots = await this.timeSlotService.bulkCreate(
 					updateTimeSlots
