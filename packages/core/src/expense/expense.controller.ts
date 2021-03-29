@@ -130,7 +130,7 @@ export class ExpenseController extends CrudController<Expense> {
 	async getExpanseReport(
 		@Query() request: IGetExpenseInput
 	): Promise<IExpenseReportData[]> {
-		const expenses = await this.expenseService.getExpanse(request);
+		const expenses = await this.expenseService.getExpense(request);
 
 		let response: IExpenseReportData[] = [];
 		if (request.groupBy === 'date') {

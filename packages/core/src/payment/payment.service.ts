@@ -1,6 +1,6 @@
 import { CrudService } from '../core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { Payment } from './payment.entity';
 import { RequestContext } from '../core/context';
@@ -8,6 +8,8 @@ import { IGetPaymentInput } from '@gauzy/contracts';
 import { chain } from 'underscore';
 import * as moment from 'moment';
 import { EmailService } from '../email';
+import { getConfig } from '@gauzy/config';
+const config = getConfig();
 
 @Injectable()
 export class PaymentService extends CrudService<Payment> {
@@ -40,7 +42,6 @@ export class PaymentService extends CrudService<Payment> {
 		// }
 
 		const payments = await query.getMany();
-
 		return payments;
 	}
 
@@ -94,7 +95,6 @@ export class PaymentService extends CrudService<Payment> {
 
 	private filterQuery(request: IGetPaymentInput) {
 		// let employeeIds: string[];
-
 		const query = this.paymentRepository.createQueryBuilder();
 		if (request && request.limit > 0) {
 			query.take(request.limit);
@@ -116,15 +116,20 @@ export class PaymentService extends CrudService<Payment> {
 		// query.innerJoin(`${query.alias}.employee`, 'employee');
 		query.where((qb) => {
 			if (request.startDate && request.endDate) {
-				const startDate = moment.utc(request.startDate).toDate();
-				const endDate = moment.utc(request.endDate).toDate();
-				qb.andWhere(
-					`"${query.alias}"."paymentDate" Between :startDate AND :endDate`,
-					{
-						startDate,
-						endDate
-					}
-				);
+				let startDate: any = moment.utc(request.startDate);
+				let endDate: any = moment.utc(request.endDate);
+
+				if (config.dbConnectionOptions.type === 'sqlite') {
+					startDate = startDate.format('YYYY-MM-DD HH:mm:ss');
+					endDate = endDate.format('YYYY-MM-DD HH:mm:ss');
+				} else {
+					startDate = startDate.toDate();
+					endDate = endDate.toDate();
+				}
+
+				qb.where({
+					paymentDate: Between(startDate, endDate)
+				});
 			}
 			// if (employeeIds) {
 			// 	qb.andWhere(

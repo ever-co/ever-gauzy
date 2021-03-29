@@ -8,7 +8,6 @@ import { TimeSlotMergeCommand } from '../time-slot-merge.command';
 import { Screenshot } from '../../../screenshot.entity';
 import { TimeLog } from '../../../time-log.entity';
 import { getConfig } from '@gauzy/config';
-import { Query } from 'typeorm/driver/Query';
 const config = getConfig();
 
 @CommandHandler(TimeSlotMergeCommand)
@@ -16,10 +15,7 @@ export class TimeSlotMergeHandler
 	implements ICommandHandler<TimeSlotMergeCommand> {
 	constructor(
 		@InjectRepository(TimeSlot)
-		private readonly timeSlotRepository: Repository<TimeSlot>,
-
-		@InjectRepository(Screenshot)
-		private readonly screenshotRepository: Repository<Screenshot>
+		private readonly timeSlotRepository: Repository<TimeSlot>
 	) {}
 
 	public async execute(command: TimeSlotMergeCommand) {

@@ -174,7 +174,6 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 			const project = await this.organizationProjects.create(request);
 
 			this.projects = this.projects.concat([project]);
-
 			this.projectId = project.id;
 
 			this.toastrService.success(
@@ -213,10 +212,10 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	 * After created new organization project pushed on dropdown
 	 */
 	createOrganizationProject(project: IOrganizationProject) {
-		const projects: IOrganizationProject[] = this.projects;
-
-		projects.push(project);
-
+		const projects: IOrganizationProject[] = this.projects || [];
+		if (Array.isArray(projects)) {
+			projects.push(project);
+		}
 		this.projects = [...projects].filter(isNotEmpty);
 	}
 
@@ -224,15 +223,15 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	 * After updated existing organization project changed in the dropdown
 	 */
 	updateOrganizationProject(project: IOrganizationProject) {
-		let projects: IOrganizationProject[] = this.projects;
-
-		projects = projects.map((item: IOrganizationProject) => {
-			if (item.id === project.id) {
-				return Object.assign({}, item, project);
-			}
-			return item;
-		});
-
+		let projects: IOrganizationProject[] = this.projects || [];
+		if (Array.isArray(projects) && projects.length) {
+			projects = projects.map((item: IOrganizationProject) => {
+				if (item.id === project.id) {
+					return Object.assign({}, item, project);
+				}
+				return item;
+			});
+		}
 		this.projects = [...projects].filter(isNotEmpty);
 	}
 
@@ -240,12 +239,12 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	 * After deleted organization project removed on dropdown
 	 */
 	deleteOrganizationProject(project: IOrganizationProject) {
-		let projects: IOrganizationProject[] = this.projects;
-
-		projects = projects.filter(
-			(item: IOrganizationProject) => item.id !== project.id
-		);
-
+		let projects: IOrganizationProject[] = this.projects || [];
+		if (Array.isArray(projects) && projects.length) {
+			projects = projects.filter(
+				(item: IOrganizationProject) => item.id !== project.id
+			);
+		}
 		this.projects = [...projects].filter(isNotEmpty);
 	}
 

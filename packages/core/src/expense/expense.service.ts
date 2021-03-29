@@ -8,6 +8,8 @@ import { RequestContext } from '../core/context';
 import { IGetExpenseInput, PermissionsEnum } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { chain } from 'underscore';
+import { getConfig } from '@gauzy/config';
+const config = getConfig();
 
 @Injectable()
 export class ExpenseService extends TenantAwareCrudService<Expense> {
@@ -53,7 +55,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 			: 0;
 	}
 
-	async getExpanse(request: IGetExpenseInput) {
+	async getExpense(request: IGetExpenseInput) {
 		const query = this.filterQuery(request);
 		query.orderBy(`"${query.alias}"."valueDate"`, 'ASC');
 
@@ -130,7 +132,6 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 
 	private filterQuery(request: IGetExpenseInput) {
 		let employeeIds: string[];
-
 		const query = this.expenseRepository.createQueryBuilder();
 		if (request && request.limit > 0) {
 			query.take(request.limit);
@@ -152,15 +153,20 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		query.innerJoin(`${query.alias}.employee`, 'employee');
 		query.where((qb) => {
 			if (request.startDate && request.endDate) {
-				const startDate = moment.utc(request.startDate).toDate();
-				const endDate = moment.utc(request.endDate).toDate();
-				qb.andWhere(
-					`"${query.alias}"."valueDate" Between :startDate AND :endDate`,
-					{
-						startDate,
-						endDate
-					}
-				);
+				let startDate: any = moment.utc(request.startDate);
+				let endDate: any = moment.utc(request.endDate);
+
+				if (config.dbConnectionOptions.type === 'sqlite') {
+					startDate = startDate.format('YYYY-MM-DD HH:mm:ss');
+					endDate = endDate.format('YYYY-MM-DD HH:mm:ss');
+				} else {
+					startDate = startDate.toDate();
+					endDate = endDate.toDate();
+				}
+
+				qb.where({
+					valueDate: Between(startDate, endDate)
+				});
 			}
 			if (employeeIds) {
 				qb.andWhere(
@@ -170,13 +176,11 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 					}
 				);
 			}
-
 			if (request.projectIds) {
 				qb.andWhere(`"${query.alias}"."projectId" IN (:...projectId)`, {
 					projectId: request.projectIds
 				});
 			}
-
 			if (request.organizationId) {
 				qb.andWhere(
 					`"${query.alias}"."organizationId" = :organizationId`,
@@ -185,7 +189,6 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 					}
 				);
 			}
-
 			qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
 				tenantId: RequestContext.currentTenantId()
 			});

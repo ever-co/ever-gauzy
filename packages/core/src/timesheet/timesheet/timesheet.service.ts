@@ -15,6 +15,8 @@ import { CommandBus } from '@nestjs/cqrs';
 import { TimesheetFirstOrCreateCommand } from './commands/timesheet-first-or-create.command';
 import { TimesheetUpdateStatusCommand } from './commands/timesheet-update-status.command';
 import { TimesheetSubmitCommand } from './commands/timesheet-submit.command';
+import { getConfig } from '@gauzy/config';
+const config = getConfig();
 
 @Injectable()
 export class TimeSheetService extends CrudService<Timesheet> {
@@ -46,12 +48,19 @@ export class TimeSheetService extends CrudService<Timesheet> {
 		const timesheets = await this.getTimeSheets(request);
 		return timesheets.length;
 	}
+
 	async getTimeSheets(request: IGetTimesheetInput) {
 		let employeeIds: string[];
-		const startDate = moment(request.startDate).format(
-			'YYYY-MM-DD HH:mm:ss'
-		);
-		const endDate = moment(request.endDate).format('YYYY-MM-DD HH:mm:ss');
+		let startDate: any = moment.utc(request.startDate);
+		let endDate: any = moment.utc(request.endDate);
+
+		if (config.dbConnectionOptions.type === 'sqlite') {
+			startDate = startDate.format('YYYY-MM-DD HH:mm:ss');
+			endDate = endDate.format('YYYY-MM-DD HH:mm:ss');
+		} else {
+			startDate = startDate.toDate();
+			endDate = endDate.toDate();
+		}
 
 		if (
 			RequestContext.hasPermission(
@@ -86,13 +95,6 @@ export class TimeSheetService extends CrudService<Timesheet> {
 					startedAt: Between(startDate, endDate),
 					...(employeeIds ? { employeeId: In(employeeIds) } : {})
 				});
-				qb.andWhere(
-					`"${qb.alias}"."startedAt" Between :startDate AND :endDate`,
-					{
-						startDate,
-						endDate
-					}
-				);
 				qb.andWhere(`"${qb.alias}"."deletedAt" IS NULL`);
 				//check organization and tenant for timelogs
 				const { organizationId = null } = request;
@@ -102,7 +104,6 @@ export class TimeSheetService extends CrudService<Timesheet> {
 						{ organizationId: request.organizationId }
 					);
 				}
-
 				//check organization and tenant for timelogs
 				let { tenantId = null } = request;
 				//if not found tenantId then get from current user session

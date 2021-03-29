@@ -14,12 +14,12 @@ import { isNotEmpty } from '@gauzy/common-angular';
 	styleUrls: ['./organization.component.scss']
 })
 export class OrganizationSelectorComponent implements OnInit, OnDestroy {
-	organizations: IOrganization[];
+	organizations: IOrganization[] = [];
 	selectedOrganization: IOrganization;
 
 	constructor(
-		private store: Store,
-		private userOrganizationService: UsersOrganizationsService,
+		private readonly store: Store,
+		private readonly userOrganizationService: UsersOrganizationsService,
 		private readonly _organizationEditStore: OrganizationEditStore
 	) {}
 
@@ -107,22 +107,25 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
 	 */
 	createOrganization(organization: IOrganization) {
 		const organizations: IOrganization[] = this.organizations || [];
-		organizations.push(organization);
-
-		this.organizations = [...organizations].filter(isNotEmpty);
+		if (Array.isArray(organizations)) {
+			organizations.push(organization);
+			this.organizations = [...organizations].filter(isNotEmpty);
+		}
 	}
 
 	/*
 	 * After updated existing organization changed in the dropdown
 	 */
 	updateOrganization(organization: IOrganization) {
-		let organizations: IOrganization[] = this.organizations;
-		organizations = organizations.map((item: IOrganization) => {
-			if (item.id === organization.id) {
-				return Object.assign({}, item, organization);
-			}
-			return item;
-		});
+		let organizations: IOrganization[] = this.organizations || [];
+		if (Array.isArray(organizations) && organizations.length) {
+			organizations = organizations.map((item: IOrganization) => {
+				if (item.id === organization.id) {
+					return Object.assign({}, item, organization);
+				}
+				return item;
+			});
+		}
 
 		this.store.selectedOrganization = organization;
 		this.organizations = [...organizations].filter(isNotEmpty);
@@ -132,10 +135,12 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
 	 * After deleted organization removed on dropdown
 	 */
 	deleteOrganization(organization: IOrganization) {
-		let organizations: IOrganization[] = this.organizations;
-		organizations = organizations.filter(
-			(item: IOrganization) => item.id !== organization.id
-		);
+		let organizations: IOrganization[] = this.organizations || [];
+		if (Array.isArray(organizations) && organizations.length) {
+			organizations = organizations.filter(
+				(item: IOrganization) => item.id !== organization.id
+			);
+		}
 
 		this.organizations = [...organizations].filter(isNotEmpty);
 	}
