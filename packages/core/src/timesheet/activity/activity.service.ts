@@ -181,23 +181,26 @@ export class ActivityService extends CrudService<Activity> {
 		query.innerJoin(`${query.alias}.employee`, 'employee');
 		query.where((qb) => {
 			if (request.startDate && request.endDate) {
-				const startDate = moment.utc(request.startDate).toDate();
-				const endDate = moment.utc(request.endDate).toDate();
+				let startDate: any = moment.utc(request.startDate);
+				let endDate: any = moment.utc(request.endDate);
+
+				if (config.dbConnectionOptions.type === 'sqlite') {
+					startDate = startDate.format('YYYY-MM-DD HH:mm:ss');
+					endDate = endDate.format('YYYY-MM-DD HH:mm:ss');
+				} else {
+					startDate = startDate.toDate();
+					endDate = endDate.toDate();
+				}
+
 				if (config.dbConnectionOptions.type === 'sqlite') {
 					qb.andWhere(
 						`datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :startDate AND :endDate`,
-						{
-							startDate,
-							endDate
-						}
+						{ startDate, endDate }
 					);
 				} else {
 					qb.andWhere(
 						`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :startDate AND :endDate`,
-						{
-							startDate,
-							endDate
-						}
+						{ startDate, endDate }
 					);
 				}
 			}
@@ -209,13 +212,11 @@ export class ActivityService extends CrudService<Activity> {
 					}
 				);
 			}
-
 			if (request.projectIds) {
 				qb.andWhere(`"${query.alias}"."projectId" IN (:...projectId)`, {
 					projectId: request.projectIds
 				});
 			}
-
 			if (request.titles) {
 				qb.andWhere(`"${query.alias}"."title" IN (:...title)`, {
 					title: request.titles
@@ -234,22 +235,12 @@ export class ActivityService extends CrudService<Activity> {
 				tenantId: RequestContext.currentTenantId()
 			});
 
-			const sq = qb
-				.subQuery()
-				.select(
-					`("${qb.alias}".duration * 100 ) / SUM("AvgActivity".duration)`,
-					'per'
-				)
-				.from(Activity, 'AvgActivity')
-				.getQuery();
-
 			if (request.activityLevel) {
 				qb.andWhere(
-					`(${sq} BETWEEN :start AND :end)`,
+					`"${query.alias}"."duration" BETWEEN :start AND :end`,
 					request.activityLevel
 				);
 			}
-
 			if (request.source) {
 				if (request.source instanceof Array) {
 					qb.andWhere(`"${query.alias}"."source" IN (:...source)`, {
