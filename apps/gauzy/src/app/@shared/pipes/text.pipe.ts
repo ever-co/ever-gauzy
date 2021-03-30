@@ -5,8 +5,16 @@ import { DomSanitizer } from '@angular/platform-browser';
 	name: 'truncate'
 })
 export class TruncatePipe implements PipeTransform {
-	transform(value: string, limit: any = 25, trail: any = '...'): string {
-		return value.length > limit ? value.substring(0, limit) + trail : value;
+	transform(
+		value: string,
+		limit = 25,
+		completeWords = false,
+		ellipsis = '...'
+	) {
+		if (completeWords) {
+			limit = value.substr(0, limit).lastIndexOf(' ');
+		}
+		return value.length > limit ? value.substr(0, limit) + ellipsis : value;
 	}
 }
 

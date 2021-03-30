@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
 import {
 	NbIconModule,
 	NbProgressBarModule,
-	NbButtonModule
+	NbButtonModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { ActivityItemComponent } from './activity-item.component';
 import { SharedModule } from '../../../shared.module';
@@ -18,6 +18,7 @@ import { MomentModule } from 'ngx-moment';
 		CommonModule,
 		SharedModule,
 		NbIconModule,
+		NbTooltipModule,
 		TranslateModule,
 		NbProgressBarModule,
 		MomentModule,
