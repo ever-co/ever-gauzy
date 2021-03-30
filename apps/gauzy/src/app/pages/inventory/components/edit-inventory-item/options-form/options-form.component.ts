@@ -114,6 +114,9 @@ export class OptionsFormComponent implements OnInit {
 			.subscribe((activeProduct) => {
 				this.optionGroups = activeProduct.optionGroups || [];
 
+				//tstodo
+				console.log(activeProduct, 'active product');
+
 				if (activeProduct.optionGroups) {
 					this.optionGroups = activeProduct.optionGroups.map(
 						(optionGroup, i) => {
@@ -124,7 +127,11 @@ export class OptionsFormComponent implements OnInit {
 									(option, k) => {
 										return {
 											...option,
-											formOptionId: k
+											formOptionId:
+												option.code +
+												this.generateOptionId(
+													optionGroup
+												)
 										};
 									}
 								)
@@ -468,7 +475,9 @@ export class OptionsFormComponent implements OnInit {
 			(option1, option2) => option2.formOptionId - option1.formOptionId
 		)[0];
 
-		return lastEl ? lastEl.formOptionId + 1 : 1;
+		return lastEl
+			? optionGroup.name.toString() + lastEl.formOptionId + 1
+			: optionGroup.name.toString() + 1;
 	}
 
 	private generateOptionIdsForGroup(

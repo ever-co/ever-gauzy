@@ -71,8 +71,9 @@ export interface IProductCreateInput
 	type?: IProductTypeTranslatable;
 	category?: IProductCategoryTranslatable;
 	tags?: ITag[];
+	optionGroupUpdateInputs?: IProductOptionGroupTranslatable[];
 	optionGroupCreateInputs?: IProductOptionGroupTranslatable[];
-	optionDeleteInputs?: IProductOption[];
+	optionDeleteInputs?: IProductOptionTranslatable[];
 	language?: string;
 }
 

@@ -246,6 +246,7 @@ export class ProductFormComponent
 			productTypeId: this.form.get('productTypeId').value,
 			productCategoryId: this.form.get('productCategoryId').value,
 			enabled: this.form.get('enabled').value,
+			optionGroupUpdateInputs: this.inventoryStore.updateOptionGroups,
 			optionGroupCreateInputs: this.inventoryStore.createOptionGroups,
 			optionDeleteInputs: this.inventoryStore.deleteOptions,
 			gallery: this.inventoryStore.gallery || [],
@@ -258,6 +259,9 @@ export class ProductFormComponent
 			tenantId: tenantId,
 			organizationId: organizationId
 		};
+
+		//tstodo
+		console.log(productRequest, 'product request');
 
 		if (this.inventoryItem) {
 			productRequest['id'] = this.inventoryItem.id;
