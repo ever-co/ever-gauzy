@@ -218,8 +218,15 @@ export class StatisticService {
 
 	async getMembers(request: IGetMembersStatistics) {
 		const date = request.date || new Date();
-		const start = moment.utc(date).startOf('week').format();
-		const end = moment.utc(date).endOf('week').format();
+		const start = moment(date)
+			.utc()
+			.startOf('week')
+			.format('YYYY-MM-DD HH:mm:ss');
+		const end = moment(date)
+			.utc()
+			.endOf('week')
+			.format('YYYY-MM-DD HH:mm:ss');
+
 		const tenantId = RequestContext.currentTenantId();
 
 		const query = this.employeeRepository.createQueryBuilder();

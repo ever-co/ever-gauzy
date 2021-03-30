@@ -649,6 +649,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 			.then(async (res: any) => {
 				if (res && res.length > 0) {
 					this.invalidTimeLog = res.filter((x) => !x.stoppedAt);
+					console.log('Invalid Timelog:', this.invalidTimeLog);
 					if (this.invalidTimeLog && this.invalidTimeLog.length > 0) {
 						await Promise.all(
 							this.invalidTimeLog.map(async (x) => {
