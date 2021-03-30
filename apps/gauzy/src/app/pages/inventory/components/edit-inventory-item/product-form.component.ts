@@ -260,9 +260,6 @@ export class ProductFormComponent
 			organizationId: organizationId
 		};
 
-		//tstodo
-		console.log(productRequest, 'product request');
-
 		if (this.inventoryItem) {
 			productRequest['id'] = this.inventoryItem.id;
 		}

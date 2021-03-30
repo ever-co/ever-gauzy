@@ -39,7 +39,9 @@ export class ProductUpdateHandler
 			{ relations: ['optionGroups'] }
 		);
 
-		// delete options
+		/**
+		 * delete options
+		 */
 		for await (const option of optionDeleteInputs) {
 			await this.productOptionService.deleteOptionTranslationsBulk(
 				option.translations
@@ -48,7 +50,9 @@ export class ProductUpdateHandler
 
 		await this.productOptionService.deleteBulk(optionDeleteInputs);
 
-		// create new option group
+		/**
+		 * create new option group
+		 */
 		const optionsGroupsCreate: IProductOptionGroupTranslatable[] = await Promise.all(
 			optionGroupCreateInputs.map(
 				async (group: IProductOptionGroupTranslatable) => {
@@ -57,7 +61,9 @@ export class ProductUpdateHandler
 					newGroup.translations = [];
 					newGroup.options = [];
 
-					// save group options with their translations
+					/**
+					 * save group options with their translations
+					 */
 					for await (const optionInput of group.options) {
 						const option = Object.assign(new ProductOption(), {
 							...optionInput
@@ -85,7 +91,9 @@ export class ProductUpdateHandler
 						}
 					}
 
-					//save group translations
+					/**
+					 * save group translations.
+					 */
 					const groupTranslationsEntites = Promise.all(
 						group.translations.map((groupTranslation) => {
 							let groupTranslationObj = Object.assign(
@@ -104,7 +112,9 @@ export class ProductUpdateHandler
 			)
 		);
 
-		//update product option groups
+		/**
+		 * update product option groups
+		 */
 		const optionGroupsUpdate:
 			| IProductOptionGroupTranslatable[]
 			| any = await Promise.all(

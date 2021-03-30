@@ -114,9 +114,6 @@ export class OptionsFormComponent implements OnInit {
 			.subscribe((activeProduct) => {
 				this.optionGroups = activeProduct.optionGroups || [];
 
-				//tstodo
-				console.log(activeProduct, 'active product');
-
 				if (activeProduct.optionGroups) {
 					this.optionGroups = activeProduct.optionGroups.map(
 						(optionGroup, i) => {
