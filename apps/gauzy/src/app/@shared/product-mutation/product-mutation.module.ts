@@ -25,11 +25,13 @@ import { ProductCategoryMutationComponent } from './product-category-mutation/pr
 import { ImageUploaderModule } from '../image-uploader/image-uploader.module';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
 import { TranslateModule } from '../translate/translate.module';
+import { ProductOptionGroupTranslationsComponent } from './product-option-group-translation/product-option-group-translation.component';
 
 @NgModule({
 	declarations: [
 		ProductTypeMutationComponent,
-		ProductCategoryMutationComponent
+		ProductCategoryMutationComponent,
+		ProductOptionGroupTranslationsComponent
 	],
 	imports: [
 		TagsColorInputModule,

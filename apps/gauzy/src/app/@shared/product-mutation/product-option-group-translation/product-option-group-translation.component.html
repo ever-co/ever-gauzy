@@ -1,0 +1,74 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h5>
+			{{ 'INVENTORY_PAGE.OPTION_TRANSLATIONS' | translate }}
+		</h5>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="dialogRef.close()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body>
+		<form [formGroup]="form" *ngIf="form">
+			<!-- group title -->
+			<div class="row option-row">
+				<div class="col-md-3 col-sm-12" *ngFor="let ln of languages">
+					<div
+						(click)="setActiveGroupValueLngCode(ln.value)"
+						*ngIf="!isOptionGroupValueActive(ln.value)"
+						class="option-line"
+					>
+						<span class="language-span">{{ ln.value }}</span
+						>{{ getGroupTitleTranslation(ln.value) || '' }}
+					</div>
+					<input
+						*ngIf="isOptionGroupValueActive(ln.value)"
+						fullWidth
+						id="nameInput"
+						type="text"
+						nbInput
+						[formControlName]="ln.value"
+					/>
+				</div>
+			</div>
+			<!-- as many rows as the options -->
+			<div
+				class="row option-row"
+				*ngFor="let option of productOptionGroup.options"
+			>
+				<div class="col-md-3 col-sm-12" *ngFor="let ln of languages">
+					<div
+						*ngIf="!isOptionActive(option, ln.value)"
+						(click)="setActiveOptionLngCode(option, ln.value)"
+						class="option-line"
+					>
+						<span class="language-span">{{ ln.value }}</span
+						>{{ getOptionNameTranslation(option, ln.value) || '' }}
+					</div>
+					<input
+						*ngIf="isOptionActive(option, ln.value)"
+						fullWidth
+						id="nameInput"
+						type="text"
+						nbInput
+						[formControlName]="ln.value"
+					/>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button
+			(click)="dialogRef.close()"
+			status="danger"
+			class="mr-2"
+			nbButton
+		>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button status="success" nbButton (click)="onSaveRequest()">
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

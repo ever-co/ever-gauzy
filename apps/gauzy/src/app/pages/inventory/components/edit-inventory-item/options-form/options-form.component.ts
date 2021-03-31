@@ -11,6 +11,8 @@ import { FormGroup, FormBuilder } from '@angular/forms';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
+import { NbDialogService } from '@nebular/theme';
+import { ProductOptionGroupTranslationsComponent } from 'apps/gauzy/src/app/@shared/product-mutation/product-option-group-translation/product-option-group-translation.component';
 
 export interface OptionCreateInput {
 	name: string;
@@ -69,6 +71,7 @@ export class OptionsFormComponent implements OnInit {
 	}
 
 	constructor(
+		private dialogService: NbDialogService,
 		private inventoryStore: InventoryStore,
 		private fb: FormBuilder,
 		private store: Store,
@@ -154,6 +157,19 @@ export class OptionsFormComponent implements OnInit {
 	}
 
 	onSaveOption() {}
+
+	onTranslateOptionClick(optionGroupData: IProductOptionGroupTranslatable) {
+		//tstodo
+
+		const dialog = this.dialogService.open(
+			ProductOptionGroupTranslationsComponent,
+			{
+				context: {
+					productOptionGroup: optionGroupData
+				}
+			}
+		);
+	}
 
 	onCreateOptionGroupClick() {
 		let newOptionGroup = this.getEmptyOptionGroup();
