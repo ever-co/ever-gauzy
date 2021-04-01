@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { CrudService, ProductOptionTranslation } from '../core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IProductOption } from '@gauzy/contracts';
+import {
+	IProductOptionTranslatable,
+	IProductOptionTranslation
+} from '@gauzy/contracts';
 import { ProductOption } from './product-option.entity';
 
 @Injectable()
@@ -28,7 +31,9 @@ export class ProductOptionService extends CrudService<ProductOption> {
 		return this.productOptionTranslationRepository.save(translationInput);
 	}
 
-	async save(productOptionInput: ProductOption): Promise<ProductOption> {
+	async save(
+		productOptionInput: IProductOptionTranslatable
+	): Promise<ProductOption> {
 		return this.productOptionRepository.save(productOptionInput);
 	}
 
@@ -38,7 +43,15 @@ export class ProductOptionService extends CrudService<ProductOption> {
 		return this.productOptionRepository.save(productOptionsInput);
 	}
 
-	async deleteBulk(productOptionsInput: IProductOption[]) {
+	async deleteBulk(productOptionsInput: IProductOptionTranslatable[]) {
 		return this.productOptionRepository.remove(productOptionsInput as any);
+	}
+
+	async deleteOptionTranslationsBulk(
+		productOptionTranslationsInput: IProductOptionTranslation[]
+	) {
+		return this.productOptionTranslationRepository.remove(
+			productOptionTranslationsInput as any
+		);
 	}
 }
