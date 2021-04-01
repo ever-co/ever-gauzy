@@ -129,9 +129,7 @@ export class OptionsFormComponent implements OnInit {
 											...option,
 											formOptionId:
 												option.code +
-												this.generateOptionId(
-													optionGroup
-												)
+												this.generateUniqueId()
 										};
 									}
 								)
@@ -171,6 +169,7 @@ export class OptionsFormComponent implements OnInit {
 		);
 
 		let result = await dialog.onClose.pipe(first()).toPromise();
+
 		if (result) {
 			this.activeOptionGroup = result;
 			this.updateOptionGroupInStore();
@@ -208,7 +207,7 @@ export class OptionsFormComponent implements OnInit {
 		if (!formValue.activeOptionName || !formValue.activeOptionCode) return;
 
 		let newOption = {
-			formOptionId: this.generateOptionId(),
+			formOptionId: this.generateUniqueId(),
 			name: formValue['activeOptionName'],
 			code: formValue['activeOptionCode'],
 			translations: [
@@ -468,6 +467,28 @@ export class OptionsFormComponent implements OnInit {
 		};
 	}
 
+	private generateUniqueId() {
+		let S4 = () => {
+			return (((1 + Math.random()) * 0x10000) | 0)
+				.toString(16)
+				.substring(1);
+		};
+		return (
+			S4() +
+			S4() +
+			'-' +
+			S4() +
+			'-' +
+			S4() +
+			'-' +
+			S4() +
+			'-' +
+			S4() +
+			S4() +
+			S4()
+		);
+	}
+
 	/**
 	 * unique id for generated/stored option groups
 	 */
@@ -505,7 +526,7 @@ export class OptionsFormComponent implements OnInit {
 		optionGroup.options = optionGroup.options.map((option) => {
 			return {
 				...option,
-				formOptionId: this.generateOptionId()
+				formOptionId: this.generateUniqueId()
 			};
 		});
 	}
@@ -515,7 +536,7 @@ export class OptionsFormComponent implements OnInit {
 			name: 'new option group',
 			options: [],
 			translations: [],
-			formOptionGroupId: this.generateOptionGroupFormId()
+			formOptionGroupId: this.generateUniqueId()
 		};
 	};
 }

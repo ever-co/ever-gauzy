@@ -184,20 +184,18 @@ export class ProductUpdateHandler
 					const groupTranslationsEntites = Promise.all(
 						group.translations.map((groupTranslation) => {
 							if (
-								!this.productOptionGroupTranslationUpdated(
+								this.productOptionGroupTranslationUpdated(
 									existingGroup,
 									groupTranslation
 								)
-							)
-								return null;
-
-							let groupTranslationObj = Object.assign(
-								new ProductOptionGroupTranslation(),
-								{ ...groupTranslation }
-							);
-							return this.productOptionsGroupService.createTranslation(
-								groupTranslationObj
-							);
+							) {
+								return this.productOptionsGroupService.createTranslation(
+									{
+										reference: group.id || null,
+										...groupTranslation
+									} as any
+								);
+							}
 						})
 					);
 
