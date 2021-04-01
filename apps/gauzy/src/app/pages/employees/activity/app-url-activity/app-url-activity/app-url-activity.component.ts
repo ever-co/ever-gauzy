@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { Store } from './../../../../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subject } from 'rxjs';
 import {
@@ -8,15 +8,16 @@ import {
 	IGetActivitiesInput,
 	ActivityType,
 	IDailyActivity,
-	IActivity
+	IActivity,
+	ISelectedEmployee
 } from '@gauzy/contracts';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, filter, tap, withLatestFrom } from 'rxjs/operators';
 import { toUTC, toLocal } from '@gauzy/common-angular';
-import { ActivityService } from 'apps/gauzy/src/app/@shared/timesheet/activity.service';
 import { ActivatedRoute } from '@angular/router';
 import * as _ from 'underscore';
 import * as moment from 'moment';
-import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-filter.service';
+import { ActivityService } from './../../../../../@shared/timesheet/activity.service';
+import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,6 +35,7 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 	updateLogs$: Subject<any> = new Subject();
 	organization: IOrganization;
 	type: 'apps' | 'urls';
+	selectedEmployeeId = null;
 
 	constructor(
 		private store: Store,
@@ -51,19 +53,42 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 					this.updateLogs$.next();
 				}
 			});
-
-		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe((organization: IOrganization) => {
-				this.organization = organization;
-				this.updateLogs$.next();
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeOrganization$ = this.store.selectedOrganization$;
+		storeEmployee$
+			.pipe(
+				filter((employee: ISelectedEmployee) => !!employee),
+				debounceTime(200),
+				withLatestFrom(storeOrganization$),
+				untilDestroyed(this)
+			)
+			.subscribe(([employee]) => {
+				if (employee && this.organization) {
+					this.selectedEmployeeId = employee.id;
+					this.updateLogs$.next();
+				}
 			});
-
+		storeOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				debounceTime(200),
+				withLatestFrom(storeEmployee$),
+				untilDestroyed(this)
+			)
+			.subscribe(([organization, employee]) => {
+				this.selectedEmployeeId = employee ? employee.id : null;
+				if (organization) {
+					this.organization = organization;
+					this.updateLogs$.next();
+				}
+			});
 		this.updateLogs$
-			.pipe(untilDestroyed(this), debounceTime(500))
-			.subscribe(() => {
-				this.getLogs();
-			});
+			.pipe(
+				untilDestroyed(this),
+				debounceTime(500),
+				tap(() => this.getLogs())
+			)
+			.subscribe();
 	}
 
 	progressStatus(value) {
@@ -113,19 +138,26 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 	}
 
 	async getLogs() {
-		if (!this.organization) {
+		if (!this.organization || !this.request) {
 			return;
 		}
 
-		const { employeeId, startDate, endDate } = this.request;
+		const { startDate, endDate } = this.request;
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+
+		const employeeIds: string[] = [];
+		if (this.selectedEmployeeId) {
+			employeeIds.push(this.selectedEmployeeId);
+		}
 
 		const request: IGetActivitiesInput = {
-			organizationId: this.organization.id,
-			tenantId: this.organization.tenantId,
+			organizationId,
+			tenantId,
 			...this.request,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
-			...(employeeId ? { employeeId } : {}),
+			...(employeeIds.length > 0 ? { employeeIds } : {}),
 			types: [this.type === 'apps' ? ActivityType.APP : ActivityType.URL]
 		};
 

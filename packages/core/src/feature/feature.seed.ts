@@ -143,9 +143,9 @@ async function cleanFeature(connection, config) {
 			);
 		}
 
-		// delete old generated report image
+		// delete old generated feature image
 		rimraf(
-			dir,
+			`${dir}/!(rimraf|.gitkeep)`,
 			() => {
 				console.log(chalk.green(`CLEANED UP FEATURE IMAGES`));
 				resolve(null);

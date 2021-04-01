@@ -8,18 +8,19 @@ import {
 	ITimeLog,
 	IOrganizationProject,
 	ITimeLogFilters,
-	OrganizationPermissionsEnum
+	OrganizationPermissionsEnum,
+	ISelectedEmployee
 } from '@gauzy/contracts';
 import { toUTC } from '@gauzy/common-angular';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { Store } from './../../../../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
+import { debounceTime, filter, tap, withLatestFrom } from 'rxjs/operators';
+import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
 import { NbDialogService } from '@nebular/theme';
-import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
-import { ViewTimeLogComponent } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log/view-time-log.component';
+import { EditTimeLogModalComponent } from './../../../../../@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
+import { ViewTimeLogComponent } from './../../../../../@shared/timesheet/view-time-log/view-time-log.component';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-filter.service';
+import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
 
 interface WeeklyDayData {
 	project?: IOrganizationProject;
@@ -44,8 +45,8 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 	loading: boolean;
 	viewTimeLogComponent = ViewTimeLogComponent;
 
-	private _selectedDate: Date = new Date();
 	futureDateAllowed: boolean;
+	private _selectedDate: Date = new Date();
 	public get selectedDate(): Date {
 		return this._selectedDate;
 	}
@@ -53,12 +54,14 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 		this._selectedDate = value;
 	}
 
+	selectedEmployeeId = null;
+
 	constructor(
-		private timesheetService: TimesheetService,
-		private nbDialogService: NbDialogService,
-		private timesheetFilterService: TimesheetFilterService,
-		private ngxPermissionsService: NgxPermissionsService,
-		private store: Store
+		private readonly timesheetService: TimesheetService,
+		private readonly nbDialogService: NbDialogService,
+		private readonly timesheetFilterService: TimesheetFilterService,
+		private readonly ngxPermissionsService: NgxPermissionsService,
+		private readonly store: Store
 	) {}
 
 	addTimeCallback = (data) => {
@@ -72,19 +75,42 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 		this.logRequest.endDate = moment(this.today).endOf('week').toDate();
 		this.updateWeekDayList();
 
-		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe((organization: IOrganization) => {
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeOrganization$ = this.store.selectedOrganization$;
+		storeEmployee$
+			.pipe(
+				filter((employee: ISelectedEmployee) => !!employee),
+				debounceTime(200),
+				withLatestFrom(storeOrganization$),
+				untilDestroyed(this)
+			)
+			.subscribe(([employee]) => {
+				if (employee && this.organization) {
+					this.selectedEmployeeId = employee.id;
+					this.updateLogs$.next();
+				}
+			});
+		storeOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				debounceTime(200),
+				withLatestFrom(storeEmployee$),
+				untilDestroyed(this)
+			)
+			.subscribe(([organization, employee]) => {
+				this.selectedEmployeeId = employee ? employee.id : null;
 				if (organization) {
 					this.organization = organization;
 					this.updateLogs$.next();
 				}
 			});
 		this.updateLogs$
-			.pipe(untilDestroyed(this), debounceTime(500))
-			.subscribe(() => {
-				this.getLogs();
-			});
+			.pipe(
+				debounceTime(500),
+				tap(() => this.getLogs()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.timesheetService.updateLog$
 			.pipe(
 				filter((val) => val === true),
@@ -122,21 +148,34 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 	}
 
 	async getLogs() {
+		if (!this.organization || !this.logRequest) {
+			return;
+		}
+
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
 		const { startDate, endDate } = this.logRequest;
+
 		const appliedFilter = _.pick(
 			this.logRequest,
-			'employeeIds',
 			'projectIds',
 			'source',
 			'activityLevel',
 			'logType'
 		);
+
+		const employeeIds: string[] = [];
+		if (this.selectedEmployeeId) {
+			employeeIds.push(this.selectedEmployeeId);
+		}
+
 		const request: IGetTimeLogInput = {
 			...appliedFilter,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
-			organizationId: this.organization ? this.organization.id : null,
-			tenantId: this.organization ? this.organization.tenantId : null
+			...(employeeIds.length > 0 ? { employeeIds } : {}),
+			organizationId,
+			tenantId
 		};
 
 		this.loading = true;

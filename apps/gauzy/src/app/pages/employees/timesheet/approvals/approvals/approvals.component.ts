@@ -5,7 +5,8 @@ import {
 	ITimeLogFilters,
 	ITimesheet,
 	TimesheetStatus,
-	IGetTimesheetInput
+	IGetTimesheetInput,
+	ISelectedEmployee
 } from '@gauzy/contracts';
 import { toUTC } from '@gauzy/common-angular';
 import {
@@ -15,7 +16,7 @@ import {
 } from '@nebular/theme';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { debounceTime, filter, map } from 'rxjs/operators';
+import { debounceTime, filter, map, tap, withLatestFrom } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Router } from '@angular/router';
@@ -60,6 +61,8 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 	updateLogs$: Subject<any> = new Subject();
 	loading: boolean;
 
+	selectedEmployeeId = null;
+
 	constructor(
 		private timesheetService: TimesheetService,
 		private store: Store,
@@ -79,20 +82,42 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 			)
 			.subscribe((title) => this.bulkAction(title));
 
-		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe((organization: IOrganization) => {
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeOrganization$ = this.store.selectedOrganization$;
+		storeEmployee$
+			.pipe(
+				filter((employee: ISelectedEmployee) => !!employee),
+				debounceTime(200),
+				withLatestFrom(storeOrganization$),
+				untilDestroyed(this)
+			)
+			.subscribe(([employee]) => {
+				if (employee && this.organization) {
+					this.selectedEmployeeId = employee.id;
+					this.updateLogs$.next();
+				}
+			});
+		storeOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				debounceTime(200),
+				withLatestFrom(storeEmployee$),
+				untilDestroyed(this)
+			)
+			.subscribe(([organization, employee]) => {
+				this.selectedEmployeeId = employee ? employee.id : null;
 				if (organization) {
 					this.organization = organization;
 					this.updateLogs$.next();
 				}
 			});
-
 		this.updateLogs$
-			.pipe(untilDestroyed(this), debounceTime(500))
-			.subscribe(() => {
-				this.getTimeSheets();
-			});
+			.pipe(
+				debounceTime(500),
+				tap(() => this.getTimeSheets()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	filtersChange($event) {
@@ -102,17 +127,27 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 	}
 
 	async getTimeSheets() {
-		if (!this.organization) {
+		if (!this.organization || !this.logRequest) {
 			return;
 		}
-		const { startDate, endDate, employeeIds } = this.logRequest;
+
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+		const { startDate, endDate } = this.logRequest;
+
+		const employeeIds: string[] = [];
+		if (this.selectedEmployeeId) {
+			employeeIds.push(this.selectedEmployeeId);
+		}
+
 		const request: IGetTimesheetInput = {
-			organizationId: this.organization.id,
-			tenantId: this.organization.tenantId,
-			employeeIds,
+			organizationId,
+			tenantId,
+			...(employeeIds.length > 0 ? { employeeIds } : {}),
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
 		};
+
 		this.loading = true;
 		this.timeSheets = await this.timesheetService
 			.getTimeSheets(request)

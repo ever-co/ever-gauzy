@@ -1919,7 +1919,7 @@ export class SeedDataService {
 				: path.join(assetOptions.assetPublicPath, 'screenshots');
 
 			// delete old generated screenshots
-			rimraf(dir, () => {
+			rimraf(`${dir}/!(rimraf|.gitkeep)`, () => {
 				this.log(chalk.green(`CLEANED UP`));
 				resolve(true);
 			});

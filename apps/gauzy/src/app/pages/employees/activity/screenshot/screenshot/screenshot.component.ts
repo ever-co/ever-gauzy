@@ -1,22 +1,23 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
 	ITimeLogFilters,
-	IOrganization,
 	ITimeSlot,
 	IGetTimeSlotInput,
-	IScreenshotMap
+	IScreenshotMap,
+	IOrganization,
+	ISelectedEmployee
 } from '@gauzy/contracts';
-import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
-import { debounceTime, filter } from 'rxjs/operators';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
+import { debounceTime, filter, withLatestFrom } from 'rxjs/operators';
+import { Store } from './../../../../../@core/services/store.service';
 import { Subject } from 'rxjs';
 import { toUTC, toLocal } from '@gauzy/common-angular';
 import * as _ from 'underscore';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
-import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-filter.service';
+import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -36,6 +37,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 	selectedIdsCount = 0;
 	allSelected = false;
 	orignalTimeSlots: ITimeSlot[];
+	selectedEmployeeId = null;
 
 	constructor(
 		private timesheetService: TimesheetService,
@@ -45,16 +47,35 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit(): void {
-		this.store.selectedOrganization$
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeOrganization$ = this.store.selectedOrganization$;
+		storeEmployee$
 			.pipe(
-				filter((organization) => !!organization),
+				filter((employee: ISelectedEmployee) => !!employee),
+				debounceTime(200),
+				withLatestFrom(storeOrganization$),
 				untilDestroyed(this)
 			)
-			.subscribe((organization: IOrganization) => {
-				this.organization = organization;
-				this.updateLogs$.next();
+			.subscribe(([employee]) => {
+				if (employee && this.organization) {
+					this.selectedEmployeeId = employee.id;
+					this.updateLogs$.next();
+				}
 			});
-
+		storeOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				debounceTime(200),
+				withLatestFrom(storeEmployee$),
+				untilDestroyed(this)
+			)
+			.subscribe(([organization, employee]) => {
+				this.selectedEmployeeId = employee ? employee.id : null;
+				if (organization) {
+					this.organization = organization;
+					this.updateLogs$.next();
+				}
+			});
 		this.updateLogs$
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(() => {
@@ -72,14 +93,23 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 		if (!this.organization || !this.request) {
 			return;
 		}
-		const { employeeIds = [], startDate, endDate } = this.request;
+
+		const { startDate, endDate } = this.request;
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+
+		const employeeIds: string[] = [];
+		if (this.selectedEmployeeId) {
+			employeeIds.push(this.selectedEmployeeId);
+		}
+
 		const request: IGetTimeSlotInput = {
-			organizationId: this.organization.id,
-			tenantId: this.organization.tenantId,
+			organizationId,
+			tenantId,
 			...this.request,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
-			...(employeeIds ? { employeeIds } : {}),
+			...(employeeIds.length > 0 ? { employeeIds } : {}),
 			relations: ['screenshots', 'timeLogs']
 		};
 

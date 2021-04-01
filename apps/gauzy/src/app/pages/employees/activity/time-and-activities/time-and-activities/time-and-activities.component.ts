@@ -8,18 +8,15 @@ import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/tim
 	styleUrls: ['./time-and-activities.component.scss']
 })
 export class TimeAndActivitiesComponent implements OnInit {
-	// logRequest: ITimeLogFilters = {
-	//   startDate: moment().startOf('week').toDate(),
-	//   endDate: moment().endOf('week').toDate()
-	// };
 	filters: ITimeLogFilters;
 
-	constructor(private timesheetFilterService: TimesheetFilterService) {}
+	constructor(
+		private readonly timesheetFilterService: TimesheetFilterService
+	) {}
 
 	async filtersChange($event: ITimeLogFilters) {
 		this.timesheetFilterService.filter = $event;
 		this.filters = Object.assign({}, $event);
-		// this.updateLogs$.next();
 	}
 
 	ngOnInit(): void {}
