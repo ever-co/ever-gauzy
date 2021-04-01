@@ -211,7 +211,7 @@ export interface IProductOptionTranslation
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	description: string;
-	reference: IProductOptionTranslatable;
+	reference?: IProductOptionTranslatable;
 	languageCode: string;
 }
 
@@ -227,7 +227,7 @@ export interface IProductOptionGroupTranslatable
 export interface IProductOptionGroupTranslation
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	reference: IProductOptionGroupTranslatable;
+	reference?: IProductOptionGroupTranslatable;
 	languageCode: string;
 }
 

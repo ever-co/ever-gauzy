@@ -13,7 +13,8 @@ import {
 import {
 	IProductOptionGroupTranslatable,
 	IProductOptionTranslatable,
-	IProductOptionTranslation
+	IProductOptionTranslation,
+	IProductOptionGroupTranslation
 } from '@gauzy/contracts';
 
 @CommandHandler(ProductUpdateCommand)
@@ -130,14 +131,20 @@ export class ProductUpdateHandler
 							isNewOption = true;
 						}
 
+						let existingOption = isNewOption
+							? null
+							: await this.productOptionService.findOne(
+									option.id
+							  );
+
 						const optionsTranslationEntites = await Promise.all(
 							option.translations.map(
-								(
+								async (
 									optionTranslation: IProductOptionTranslation
 								) => {
 									if (
 										this.productOptionTranslationUpdated(
-											option,
+											existingOption,
 											optionTranslation
 										) ||
 										!optionTranslation.id
@@ -166,6 +173,38 @@ export class ProductUpdateHandler
 							group.options.push(optionEntity);
 						}
 					}
+
+					/**
+					 * save group translations.
+					 */
+					let existingGroup = await this.productOptionsGroupService.findOne(
+						group.id
+					);
+
+					const groupTranslationsEntites = Promise.all(
+						group.translations.map((groupTranslation) => {
+							if (
+								!this.productOptionGroupTranslationUpdated(
+									existingGroup,
+									groupTranslation
+								)
+							)
+								return null;
+
+							let groupTranslationObj = Object.assign(
+								new ProductOptionGroupTranslation(),
+								{ ...groupTranslation }
+							);
+							return this.productOptionsGroupService.createTranslation(
+								groupTranslationObj
+							);
+						})
+					);
+
+					group.translations = (
+						await groupTranslationsEntites
+					).filter((tr) => !!tr) as any;
+
 					return group;
 				}
 			)
@@ -187,23 +226,53 @@ export class ProductUpdateHandler
 		return updatedProduct;
 	}
 
+	/**
+	 * check if product option translation has been changed and needs updating
+	 */
 	public productOptionTranslationUpdated(
 		productOption: IProductOptionTranslatable,
 		productOptionTranslation: IProductOptionTranslation
 	) {
+		if (!productOption) return true;
+
 		let currentTranslation: IProductOptionTranslation = productOption.translations.find(
 			(translation) =>
 				translation.languageCode ==
 				productOptionTranslation.languageCode
 		);
+
 		if (!currentTranslation) return true;
 
 		if (
 			currentTranslation.name !== productOptionTranslation.name ||
 			currentTranslation.description !==
 				productOptionTranslation.description
-		)
+		) {
 			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * check if product option group translation has been changed and needs updating
+	 */
+	public productOptionGroupTranslationUpdated(
+		optionGroup: IProductOptionGroupTranslatable,
+		optionGroupTranslation: IProductOptionGroupTranslation
+	) {
+		if (!optionGroup) return false;
+
+		let currentTranslation: IProductOptionGroupTranslation = optionGroup.translations.find(
+			(translation) =>
+				translation.languageCode == optionGroupTranslation.languageCode
+		);
+
+		if (!currentTranslation) return true;
+
+		if (currentTranslation.name !== optionGroupTranslation.name) {
+			return true;
+		}
 
 		return false;
 	}

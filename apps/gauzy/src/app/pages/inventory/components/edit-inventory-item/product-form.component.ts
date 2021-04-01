@@ -264,9 +264,6 @@ export class ProductFormComponent
 			productRequest['id'] = this.inventoryItem.id;
 		}
 
-		//tstodo
-		console.log(productRequest, 'product request');
-
 		try {
 			let productResult: IProductTranslatable;
 

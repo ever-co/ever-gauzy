@@ -1,5 +1,5 @@
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { Component, Input, OnDestroy } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import {
 	IProductCategoryTranslatable,
@@ -13,8 +13,6 @@ import { Store } from '../../../@core/services/store.service';
 import { ToastrService } from '../../../@core/services/toastr.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-
-export enum RowType {}
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -97,8 +95,7 @@ export class ProductOptionGroupTranslationsComponent extends TranslationBaseComp
 		} else {
 			this.productOptionGroup.translations.push({
 				languageCode: languageCodeInput,
-				name: '',
-				reference: this.productOptionGroup
+				name: ''
 			});
 		}
 	}
@@ -113,8 +110,7 @@ export class ProductOptionGroupTranslationsComponent extends TranslationBaseComp
 		} else {
 			option.translations.push({
 				languageCode: languageCodeInput,
-				name: '',
-				reference: option
+				name: ''
 			});
 		}
 	}
@@ -161,17 +157,12 @@ export class ProductOptionGroupTranslationsComponent extends TranslationBaseComp
 	}
 
 	isOptionActive(option, languageCode: string) {
-		if (
-			!option ||
-			!option.id ||
-			!this.activeOption ||
-			!this.activeOption.id
-		)
-			return;
+		if (!option || !this.activeOption) return;
 
 		return (
-			this.activeOption.id == option.id &&
-			languageCode == this.activeOptionValueLng
+			(this.activeOption.id == option.id ||
+				this.activeOption.formOptionId == option.formOptionId) &&
+			this.activeOptionValueLng == languageCode
 		);
 	}
 
