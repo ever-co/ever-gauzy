@@ -246,6 +246,7 @@ export class ProductFormComponent
 			productTypeId: this.form.get('productTypeId').value,
 			productCategoryId: this.form.get('productCategoryId').value,
 			enabled: this.form.get('enabled').value,
+			optionGroupUpdateInputs: this.inventoryStore.updateOptionGroups,
 			optionGroupCreateInputs: this.inventoryStore.createOptionGroups,
 			optionDeleteInputs: this.inventoryStore.deleteOptions,
 			gallery: this.inventoryStore.gallery || [],

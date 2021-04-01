@@ -95,6 +95,10 @@ export class InventoryStore {
 		return this._optionGroups.filter((optionGroup) => !optionGroup.id);
 	}
 
+	get updateOptionGroups() {
+		return this._optionGroups.filter((optionGroup) => optionGroup.id);
+	}
+
 	get activeTab() {
 		return this._activeTab;
 	}

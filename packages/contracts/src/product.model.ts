@@ -71,8 +71,9 @@ export interface IProductCreateInput
 	type?: IProductTypeTranslatable;
 	category?: IProductCategoryTranslatable;
 	tags?: ITag[];
+	optionGroupUpdateInputs?: IProductOptionGroupTranslatable[];
 	optionGroupCreateInputs?: IProductOptionGroupTranslatable[];
-	optionDeleteInputs?: IProductOption[];
+	optionDeleteInputs?: IProductOptionTranslatable[];
 	language?: string;
 }
 
@@ -210,7 +211,7 @@ export interface IProductOptionTranslation
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	description: string;
-	reference: IProductOptionTranslatable;
+	reference?: IProductOptionTranslatable;
 	languageCode: string;
 }
 
@@ -226,7 +227,7 @@ export interface IProductOptionGroupTranslatable
 export interface IProductOptionGroupTranslation
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
-	reference: IProductOptionGroupTranslatable;
+	reference?: IProductOptionGroupTranslatable;
 	languageCode: string;
 }
 

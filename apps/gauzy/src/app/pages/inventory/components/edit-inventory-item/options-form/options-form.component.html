@@ -105,7 +105,14 @@
 							/>
 						</div>
 						<div class="col-md-2 d-flex">
-							<button class="mr-1" nbButton status="success">
+							<button
+								class="mr-1"
+								nbButton
+								status="success"
+								(click)="
+									onTranslateOptionClick(optionGroupData)
+								"
+							>
 								<nb-icon icon="globe-outline"></nb-icon>
 							</button>
 							<button

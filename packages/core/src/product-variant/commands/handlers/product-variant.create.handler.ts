@@ -38,7 +38,6 @@ export class ProductVariantCreateHandler
 				return optionCombination.options.includes(option.name);
 			});
 
-			//tstodo
 			newProductVariant.options = [];
 			newProductVariant.internalReference = variantOptions
 				.map((option) => option.name)

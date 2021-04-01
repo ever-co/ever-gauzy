@@ -8,9 +8,11 @@ import {
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
 import { FormGroup, FormBuilder } from '@angular/forms';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, first } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
+import { NbDialogService } from '@nebular/theme';
+import { ProductOptionGroupTranslationsComponent } from 'apps/gauzy/src/app/@shared/product-mutation/product-option-group-translation/product-option-group-translation.component';
 
 export interface OptionCreateInput {
 	name: string;
@@ -69,6 +71,7 @@ export class OptionsFormComponent implements OnInit {
 	}
 
 	constructor(
+		private dialogService: NbDialogService,
 		private inventoryStore: InventoryStore,
 		private fb: FormBuilder,
 		private store: Store,
@@ -124,7 +127,9 @@ export class OptionsFormComponent implements OnInit {
 									(option, k) => {
 										return {
 											...option,
-											formOptionId: k
+											formOptionId:
+												option.code +
+												this.generateUniqueId()
 										};
 									}
 								)
@@ -150,6 +155,26 @@ export class OptionsFormComponent implements OnInit {
 	}
 
 	onSaveOption() {}
+
+	async onTranslateOptionClick(
+		optionGroupData: IProductOptionGroupTranslatable
+	) {
+		const dialog = this.dialogService.open(
+			ProductOptionGroupTranslationsComponent,
+			{
+				context: {
+					productOptionGroup: optionGroupData
+				}
+			}
+		);
+
+		let result = await dialog.onClose.pipe(first()).toPromise();
+
+		if (result) {
+			this.activeOptionGroup = result;
+			this.updateOptionGroupInStore();
+		}
+	}
 
 	onCreateOptionGroupClick() {
 		let newOptionGroup = this.getEmptyOptionGroup();
@@ -182,7 +207,7 @@ export class OptionsFormComponent implements OnInit {
 		if (!formValue.activeOptionName || !formValue.activeOptionCode) return;
 
 		let newOption = {
-			formOptionId: this.generateOptionId(),
+			formOptionId: this.generateUniqueId(),
 			name: formValue['activeOptionName'],
 			code: formValue['activeOptionCode'],
 			translations: [
@@ -442,6 +467,28 @@ export class OptionsFormComponent implements OnInit {
 		};
 	}
 
+	private generateUniqueId() {
+		let S4 = () => {
+			return (((1 + Math.random()) * 0x10000) | 0)
+				.toString(16)
+				.substring(1);
+		};
+		return (
+			S4() +
+			S4() +
+			'-' +
+			S4() +
+			'-' +
+			S4() +
+			'-' +
+			S4() +
+			'-' +
+			S4() +
+			S4() +
+			S4()
+		);
+	}
+
 	/**
 	 * unique id for generated/stored option groups
 	 */
@@ -468,7 +515,9 @@ export class OptionsFormComponent implements OnInit {
 			(option1, option2) => option2.formOptionId - option1.formOptionId
 		)[0];
 
-		return lastEl ? lastEl.formOptionId + 1 : 1;
+		return lastEl
+			? optionGroup.name.toString() + lastEl.formOptionId + 1
+			: optionGroup.name.toString() + 1;
 	}
 
 	private generateOptionIdsForGroup(
@@ -477,7 +526,7 @@ export class OptionsFormComponent implements OnInit {
 		optionGroup.options = optionGroup.options.map((option) => {
 			return {
 				...option,
-				formOptionId: this.generateOptionId()
+				formOptionId: this.generateUniqueId()
 			};
 		});
 	}
@@ -487,7 +536,7 @@ export class OptionsFormComponent implements OnInit {
 			name: 'new option group',
 			options: [],
 			translations: [],
-			formOptionGroupId: this.generateOptionGroupFormId()
+			formOptionGroupId: this.generateUniqueId()
 		};
 	};
 }
