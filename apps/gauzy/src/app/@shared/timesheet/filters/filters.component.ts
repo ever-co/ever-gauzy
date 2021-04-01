@@ -179,7 +179,6 @@ export class FiltersComponent implements OnInit, OnDestroy, AfterViewInit {
 					this.employeeIds = filters.employeeIds;
 				});
 		}
-
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
@@ -268,14 +267,21 @@ export class FiltersComponent implements OnInit, OnDestroy, AfterViewInit {
 	}
 
 	private async loadEmployees(): Promise<void> {
-		const { items = [] } = await this.employeesService.getWorking(
-			this.organization.id,
-			this.organization.tenantId,
-			this.selectedDate,
-			true
-		);
-		this.employees = items;
-		this.setDefaultEmployee();
+		if (!this.hasEmployeeFilter) {
+			return;
+		}
+
+		this.employeesService
+			.getWorking(
+				this.organization.id,
+				this.organization.tenantId,
+				this.selectedDate,
+				true
+			)
+			.then(({ items }) => {
+				this.employees = items;
+				this.setDefaultEmployee();
+			});
 	}
 
 	setDefaultEmployee() {

@@ -17,7 +17,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import * as moment from 'moment';
 import { Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, filter, tap, withLatestFrom } from 'rxjs/operators';
 import { pick } from 'underscore';
 import { TimesheetStatisticsService } from '../../../timesheet/timesheet-statistics.service';
 
@@ -38,9 +38,9 @@ export class DailyStatisticsComponent implements OnInit, AfterViewInit {
 	counts: ICountsStatistics;
 
 	countsLoading: boolean;
+	selectedEmployeeId = null;
 
 	private _selectedDate: Date = new Date();
-
 	public get selectedDate(): Date {
 		return this._selectedDate;
 	}
@@ -61,31 +61,42 @@ export class DailyStatisticsComponent implements OnInit, AfterViewInit {
 	) {}
 
 	ngOnInit() {
-		this.updateLogs$
-			.pipe(untilDestroyed(this), debounceTime(500))
-			.subscribe(() => {
-				this.getCounts();
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeOrganization$ = this.store.selectedOrganization$;
+		storeEmployee$
+			.pipe(
+				filter((employee: ISelectedEmployee) => !!employee),
+				debounceTime(200),
+				withLatestFrom(storeOrganization$),
+				untilDestroyed(this)
+			)
+			.subscribe(([employee]) => {
+				if (employee && this.organization) {
+					this.selectedEmployeeId = employee.id;
+					this.updateLogs$.next();
+				}
 			});
-
-		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe((organization: IOrganization) => {
+		storeOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				debounceTime(200),
+				withLatestFrom(storeEmployee$),
+				untilDestroyed(this)
+			)
+			.subscribe(([organization, employee]) => {
+				this.selectedEmployeeId = employee ? employee.id : null;
 				if (organization) {
 					this.organization = organization;
 					this.updateLogs$.next();
 				}
 			});
-
-		this.store.selectedEmployee$
-			.pipe(untilDestroyed(this))
-			.subscribe((employee: ISelectedEmployee) => {
-				if (employee && employee.id) {
-					this.logRequest.employeeIds = [employee.id];
-				} else {
-					delete this.logRequest.employeeIds;
-				}
-				this.updateLogs$.next();
-			});
+		this.updateLogs$
+			.pipe(
+				untilDestroyed(this),
+				debounceTime(500),
+				tap(() => this.getCounts())
+			)
+			.subscribe();
 	}
 
 	ngAfterViewInit() {
@@ -99,9 +110,16 @@ export class DailyStatisticsComponent implements OnInit, AfterViewInit {
 
 	getCounts() {
 		const { startDate, endDate } = this.logRequest;
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+
+		const employeeIds: string[] = [];
+		if (this.selectedEmployeeId) {
+			employeeIds.push(this.selectedEmployeeId);
+		}
+
 		const appliedFilter = pick(
 			this.logRequest,
-			'employeeIds',
 			'projectIds',
 			'source',
 			'activityLevel',
@@ -111,8 +129,9 @@ export class DailyStatisticsComponent implements OnInit, AfterViewInit {
 			...appliedFilter,
 			startDate: moment(startDate).toDate(),
 			endDate: moment(endDate).toDate(),
-			organizationId: this.organization ? this.organization.id : null,
-			tenantId: this.organization ? this.organization.tenantId : null
+			...(employeeIds.length > 0 ? { employeeIds } : {}),
+			organizationId,
+			tenantId
 		};
 		this.countsLoading = true;
 		this.timesheetStatisticsService
