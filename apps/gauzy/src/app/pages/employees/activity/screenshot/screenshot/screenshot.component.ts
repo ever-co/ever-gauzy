@@ -183,6 +183,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 			.map((timeSlot) => {
 				this.selectedIds[timeSlot.id] = false;
 				timeSlot.localStartedAt = toLocal(timeSlot.startedAt).toDate();
+
 				// timeSlot.localStoppedAt = toLocal(timeSlot.stoppedAt).toDate();
 				this.screenshotsUrls = this.screenshotsUrls.concat(
 					timeSlot.screenshots.map((screenshot) => ({
@@ -190,6 +191,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 						fullUrl: screenshot.fullUrl
 					}))
 				);
+				timeSlot.screenshots = _.sortBy(timeSlot.screenshots, 'createdAt').reverse();
 				return timeSlot;
 			})
 			.groupBy((timeSlot) => moment(timeSlot.localStartedAt).format('HH'))
