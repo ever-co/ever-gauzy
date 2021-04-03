@@ -1,13 +1,19 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, SelectQueryBuilder } from 'typeorm';
+import { Repository, In, SelectQueryBuilder, Brackets, MoreThanOrEqual, Between, LessThanOrEqual } from 'typeorm';
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import { TimeSlotMergeCommand } from '../time-slot-merge.command';
-import { getConfig } from '@gauzy/config';
 import { IActivity, IScreenshot, ITimeLog } from '@gauzy/contracts';
 import { Activity, Screenshot, TimeSlot } from './../../../../core/entities/internal';
-const config = getConfig();
+import { format } from 'date-fns';
+
+/*
+* Convert ISO format to DB date format 
+*/
+export function isoToDbFormat(isoDate: string) {
+	return format(new Date(isoDate), 'yyyy-MM-dd kk:mm:ss.SSS');
+}
 
 @CommandHandler(TimeSlotMergeCommand)
 export class TimeSlotMergeHandler
@@ -23,7 +29,7 @@ export class TimeSlotMergeHandler
 		let startMinute = moment(start).utc().get('minute');
 		startMinute = startMinute - (startMinute % 10);
 
-		const startDate = moment(start)
+		let startDate: any = moment(start)
 			.utc()
 			.set('minute', startMinute)
 			.set('second', 0)
@@ -32,34 +38,34 @@ export class TimeSlotMergeHandler
 		let endMinute = moment(end).utc().get('minute');
 		endMinute = endMinute - (endMinute % 10);
 
-		const endDate = moment(end)
+		let endDate: any = moment(end)
 			.utc()
 			.set('minute', endMinute + 10)
 			.set('second', 0)
 			.set('millisecond', 0);
 
+		startDate = isoToDbFormat(startDate);
+		endDate = isoToDbFormat(endDate);
+
 		const timerSlots = await this.timeSlotRepository.find({
 			where: (query: SelectQueryBuilder<TimeSlot>) => {
-				if (config.dbConnectionOptions.type === 'sqlite') {
-					query.where(
-						`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" <= :endDate`,
-						{
-							startDate: startDate.format('YYYY-MM-DD HH:mm:ss'),
-							endDate: endDate.format('YYYY-MM-DD HH:mm:ss')
-						}
-					);
-				} else {
-					query.where(
-						`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" <= :endDate`,
-						{
-							startDate: startDate.toDate(),
-							endDate: endDate.toDate()
-						}
-					);
-				}
+				query.andWhere(
+					new Brackets((query: any) => {
+						query.orWhere({
+							startedAt: MoreThanOrEqual(startDate)
+						});
+						query.orWhere({
+							startedAt: Between(startDate, endDate)
+						});
+						query.orWhere({
+							startedAt: LessThanOrEqual(endDate)
+						});
+					})
+				);
 				query.andWhere(`"${query.alias}"."employeeId" = :employeeId`, {
 					employeeId
 				});
+				query.addOrderBy(`"${query.alias}"."createdAt"`, 'ASC');
 				console.log(query.getQueryAndParameters());
 			},
 			relations: ['timeLogs', 'screenshots', 'activities']
