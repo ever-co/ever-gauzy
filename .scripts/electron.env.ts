@@ -23,16 +23,32 @@ if (isProd) {
 	try {
 		if (desktop === 'desktop') {
 			unlinkSync(`./apps/desktop/src/environments/environment.prod.ts`);
+			unlinkSync(`./apps/desktop/src/environments/environment.ts`);
 		} else {
 			unlinkSync(
 				`./apps/desktop-timer/src/environments/environment.prod.ts`
 			);
+			unlinkSync(`./apps/desktop-timer/src/environments/environment.ts`);
 		}
 	} catch {}
 
-	const envFileDest: string = 'environment.prod.ts';
+	const envFileDestProd: string = 'environment.prod.ts';
+	const envFileDest: string = 'environment.ts';
 
 	if (desktop === 'desktop') {
+		writeFile(
+			`./apps/desktop/src/environments/${envFileDestProd}`,
+			envFileContent,
+			function (err) {
+				if (err) {
+					console.log(err);
+				} else {
+					console.log(
+						`Generated desktop production environment file: ${envFileDestProd}`
+					);
+				}
+			}
+		);
 		writeFile(
 			`./apps/desktop/src/environments/${envFileDest}`,
 			envFileContent,
@@ -47,6 +63,19 @@ if (isProd) {
 			}
 		);
 	} else {
+		writeFile(
+			`./apps/desktop-timer/src/environments/${envFileDestProd}`,
+			envFileContent,
+			function (err) {
+				if (err) {
+					console.log(err);
+				} else {
+					console.log(
+						`Generated desktop production environment file: ${envFileDestProd}`
+					);
+				}
+			}
+		);
 		writeFile(
 			`./apps/desktop-timer/src/environments/${envFileDest}`,
 			envFileContent,

@@ -85,7 +85,8 @@ const knex = require('knex')({
 	client: 'sqlite3',
 	connection: {
 		filename: sqlite3filename
-	}
+	},
+	useNullAsDefault: true
 });
 
 const exeName = path.basename(process.execPath);
@@ -147,6 +148,13 @@ function startServer(value, restart = false) {
 		gauzyWindow.show();
 	}
 	const auth = store.get('auth');
+	appMenu = new AppMenu(
+		timeTrackerWindow,
+		settingsWindow,
+		updaterWindow,
+		knex,
+		pathWindow
+	);
 	tray = new TrayIcon(
 		setupWindow,
 		knex,
@@ -257,13 +265,6 @@ app.on('ready', async () => {
 	imageView = createImageViewerWindow(imageView, pathWindow.timeTrackerUi);
 
 	/* Set Menu */
-	appMenu = new AppMenu(
-		timeTrackerWindow,
-		settingsWindow,
-		updaterWindow,
-		knex,
-		pathWindow
-	);
 
 	if (configs && configs.isSetup) {
 		global.variableGlobal = {

@@ -172,11 +172,19 @@ export class TimeTrackerComponent implements AfterViewInit {
 							id: source.display_id
 						});
 					});
-					event.sender.send('save_screen_shoot', {
-						screens: screens,
-						timeSlotId: arg.timeSlotId,
-						quitApp: this.quitApp
-					});
+					if (!arg.isTemp) {
+						event.sender.send('save_screen_shoot', {
+							screens: screens,
+							timeSlotId: arg.timeSlotId,
+							quitApp: this.quitApp
+						});
+					} else {
+						event.sender.send('save_temp_screenshot', {
+							screens: screens,
+							timeSlotId: arg.timeSlotId,
+							quitApp: this.quitApp
+						});
+					}
 				});
 		});
 
@@ -210,6 +218,10 @@ export class TimeTrackerComponent implements AfterViewInit {
 			this.timeTrackerService.getUserDetail(arg).then((res) => {
 				event.sender.send('user_detail', res);
 			});
+		});
+
+		this.electronService.ipcRenderer.on('save_temp_img', (event, arg) => {
+			event.sender.send('save_temp_img', arg);
 		});
 	}
 

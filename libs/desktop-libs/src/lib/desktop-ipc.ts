@@ -260,4 +260,27 @@ export function ipcTimer(
 	ipcMain.on('close_image_view', () => {
 		imageView.hide();
 	});
+
+	ipcMain.on('failed_save_time_slot', async (event, arg) => {
+		/* save failed request time slot */
+		const [id] = await TimerData.saveFailedRequest(knex, {
+			type: 'timeslot',
+			params: arg.params,
+			message: arg.message
+		});
+		/* create temp screenshot */
+		timeTrackerWindow.webContents.send('take_screenshot', {
+			timeSlotId: id,
+			screensize: screen.getPrimaryDisplay().workAreaSize,
+			isTemp: true
+		});
+	});
+
+	ipcMain.on('save_temp_screenshot', async (event, arg) => {
+		takeshot(timeTrackerWindow, arg, notificationWindow, true);
+	});
+
+	ipcMain.on('save_temp_img', (event, arg) => {
+		TimerData.saveFailedRequest(knex, arg);
+	});
 }
