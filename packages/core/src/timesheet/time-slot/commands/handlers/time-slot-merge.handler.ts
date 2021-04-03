@@ -1,14 +1,19 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, SelectQueryBuilder } from 'typeorm';
+import { Repository, In, SelectQueryBuilder, Brackets, MoreThanOrEqual, Between, LessThanOrEqual } from 'typeorm';
 import * as moment from 'moment';
-import { TimeSlot } from '../../../time-slot.entity';
 import * as _ from 'underscore';
 import { TimeSlotMergeCommand } from '../time-slot-merge.command';
-import { Screenshot } from '../../../screenshot.entity';
-import { TimeLog } from '../../../time-log.entity';
-import { getConfig } from '@gauzy/config';
-const config = getConfig();
+import { IActivity, IScreenshot, ITimeLog } from '@gauzy/contracts';
+import { Activity, Screenshot, TimeSlot } from './../../../../core/entities/internal';
+import { format } from 'date-fns';
+
+/*
+* Convert ISO format to DB date format 
+*/
+export function isoToDbFormat(isoDate: string) {
+	return format(new Date(isoDate), 'yyyy-MM-dd kk:mm:ss.SSS');
+}
 
 @CommandHandler(TimeSlotMergeCommand)
 export class TimeSlotMergeHandler
@@ -24,7 +29,7 @@ export class TimeSlotMergeHandler
 		let startMinute = moment(start).utc().get('minute');
 		startMinute = startMinute - (startMinute % 10);
 
-		const startDate = moment(start)
+		let startDate: any = moment(start)
 			.utc()
 			.set('minute', startMinute)
 			.set('second', 0)
@@ -33,40 +38,37 @@ export class TimeSlotMergeHandler
 		let endMinute = moment(end).utc().get('minute');
 		endMinute = endMinute - (endMinute % 10);
 
-		const endDate = moment(end)
+		let endDate: any = moment(end)
 			.utc()
 			.set('minute', endMinute + 10)
 			.set('second', 0)
 			.set('millisecond', 0);
 
-		console.log(
-			`Timeslot merge startDate=${startDate} and endDate=${endDate}`
-		);
+		startDate = isoToDbFormat(startDate);
+		endDate = isoToDbFormat(endDate);
 
 		const timerSlots = await this.timeSlotRepository.find({
 			where: (query: SelectQueryBuilder<TimeSlot>) => {
-				if (config.dbConnectionOptions.type === 'sqlite') {
-					query.where(
-						`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" <= :endDate`,
-						{
-							startDate: startDate.format('YYYY-MM-DD HH:mm:ss'),
-							endDate: endDate.format('YYYY-MM-DD HH:mm:ss')
-						}
-					);
-				} else {
-					query.where(
-						`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" <= :endDate`,
-						{
-							startDate: startDate.toDate(),
-							endDate: endDate.toDate()
-						}
-					);
-				}
+				query.andWhere(
+					new Brackets((query: any) => {
+						query.orWhere({
+							startedAt: MoreThanOrEqual(startDate)
+						});
+						query.orWhere({
+							startedAt: Between(startDate, endDate)
+						});
+						query.orWhere({
+							startedAt: LessThanOrEqual(endDate)
+						});
+					})
+				);
 				query.andWhere(`"${query.alias}"."employeeId" = :employeeId`, {
 					employeeId
 				});
+				query.addOrderBy(`"${query.alias}"."createdAt"`, 'ASC');
+				console.log(query.getQueryAndParameters());
 			},
-			relations: ['timeLogs', 'screenshots']
+			relations: ['timeLogs', 'screenshots', 'activities']
 		});
 
 		console.log('Previous inserted timeslots:', timerSlots);
@@ -74,8 +76,8 @@ export class TimeSlotMergeHandler
 		const createdTimeslots: any = [];
 		if (timerSlots.length > 0) {
 			const savePromises = _.chain(timerSlots)
-				.groupBy((timeSlots) => {
-					let date = moment.utc(timeSlots.startedAt);
+				.groupBy((timeSlot) => {
+					let date = moment(timeSlot.startedAt);
 					const minutes = date.get('minute');
 					date = date
 						.set('minute', minutes - (minutes % 10))
@@ -84,34 +86,68 @@ export class TimeSlotMergeHandler
 					return date.format('YYYY-MM-DD HH:mm:ss');
 				})
 				.mapObject(async (timeSlots, slotStart) => {
-					let timeLogs: TimeLog[] = [];
-					let screenshots: Screenshot[] = [];
+					const oldTimeslots = JSON.parse(JSON.stringify(timeSlots));
+					const [ oldTimeslot ] = oldTimeslots;
+
+					let timeLogs: ITimeLog[] = [];
+					let screenshots: IScreenshot[] = [];
+					let activities: IActivity[] = [];
+
 					let duration = 0;
-					for (let index = 0; index < timeSlots.length; index++) {
-						const timeSlot = timeSlots[index];
-						duration =
-							duration + parseInt(timeSlot.duration + '', 10);
+					let keyboard = 0;
+					let mouse = 0;
+					let overall = 0;
+
+					for (let index = 0; index < oldTimeslots.length; index++) {
+						const timeSlot = oldTimeslots[index];
+
+						duration = duration + parseInt(timeSlot.duration + '', 10);
+						keyboard = (keyboard + parseInt(timeSlot.keyboard + '', 10));
+						mouse = mouse + parseInt(timeSlot.mouse + '', 10);
+						overall = overall + parseInt(timeSlot.overall + '', 10);
+
 						screenshots = screenshots.concat(timeSlot.screenshots);
 						timeLogs = timeLogs.concat(timeSlot.timeLogs);
+						activities = activities.concat(timeSlot.activities);
 					}
 
+					const timeSlotslength = oldTimeslots.length;
+					const activity = {
+						duration,
+						keyboard: Math.round(keyboard / timeSlotslength),
+						mouse: Math.round(mouse / timeSlotslength),
+						overall: Math.round(overall / timeSlotslength),
+					}
+
+					/*
+					* Map old screenshots newely created timeslot 
+					*/
 					screenshots = screenshots.map(
-						(screenshot) =>
-							new Screenshot(_.omit(screenshot, ['timeSlotId']))
+						(item) => new Screenshot(_.omit(item, ['timeSlotId']))
 					);
 
+					/*
+					* Map old activities newely created timeslot 
+					*/
+					activities = activities.map(
+						(item) => new Activity(_.omit(item, ['timeSlotId']))
+					);
+ 
 					const newTimeSlot = new TimeSlot({
-						..._.omit(timeSlots[0]),
-						duration,
+						..._.omit(oldTimeslot),
+						...activity,
 						screenshots,
+						activities,
 						timeLogs,
 						startedAt: moment(slotStart).toDate()
 					});
 					await this.timeSlotRepository.save(newTimeSlot);
 					createdTimeslots.push(newTimeSlot);
 
-					const ids = _.pluck(timeSlots, 'id');
+					const ids = _.pluck(oldTimeslots, 'id');
 					ids.splice(0, 1);
+					console.log('Timeslots Ids Will Be Deleted:', ids);
+
 					if (ids.length > 0) {
 						await this.timeSlotRepository.delete({
 							id: In(ids)
