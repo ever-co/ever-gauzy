@@ -226,6 +226,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 					token: this.token,
 					organizationId: this.userOrganization.id,
 					tenantId: this.userData.tenantId,
+					employeeId: this.userData.employeeId,
 					apiHost: this.apiHost
 				});
 				this.timeTrackerService

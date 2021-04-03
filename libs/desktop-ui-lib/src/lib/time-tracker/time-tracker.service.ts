@@ -242,6 +242,7 @@ export class TimeTrackerService {
 				params: {
 					tenantId: values.tenantId,
 					organizationId: values.organizationId,
+					employeeId: values.employeeId,
 					source: 'DESKTOP'
 				}
 			})
