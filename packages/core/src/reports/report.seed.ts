@@ -161,10 +161,16 @@ async function cleanReport(connection, config) {
 			: path.join(config.assetOptions.assetPublicPath, destDir);
 
 		// delete old generated report image
-		rimraf(dir, () => {
-			console.log(chalk.green(`CLEANED UP REPORT IMAGES`));
-			resolve(null);
-		});
+		rimraf(
+			`${dir}/!(rimraf|.gitkeep)`,
+			() => {
+				console.log(chalk.green(`CLEANED UP REPORT IMAGES`));
+				resolve(null);
+			},
+			() => {
+				reject(null);
+			}
+		);
 	});
 }
 

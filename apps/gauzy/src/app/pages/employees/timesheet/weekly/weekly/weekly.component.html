@@ -17,6 +17,7 @@
 	<div class="col">
 		<ngx-filters
 			dateRange="week"
+			[hasEmployeeFilter]="false"
 			(filtersChange)="filtersChange($event)"
 		></ngx-filters>
 	</div>
@@ -85,9 +86,7 @@
 							<nb-icon icon="plus-outline"></nb-icon>
 						</button>
 					</ng-template>
-					<ng-template #notAllowAddTimeBlock>
-						-
-					</ng-template>
+					<ng-template #notAllowAddTimeBlock> - </ng-template>
 				</ng-template>
 			</div>
 		</div>

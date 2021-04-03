@@ -17,21 +17,22 @@ import * as moment from 'moment';
 import {
 	IGetTimeLogInput,
 	IOrganization,
+	ISelectedEmployee,
 	ITimeLog,
 	ITimeLogFilters,
 	OrganizationPermissionsEnum
 } from '@gauzy/contracts';
 import { toUTC, toLocal } from '@gauzy/common-angular';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { Store } from './../../../../../@core/services/store.service';
 import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, filter, withLatestFrom } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
-import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
-import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
-import { ViewTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log-modal/view-time-log-modal/view-time-log-modal.component';
+import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
+import { EditTimeLogModalComponent } from './../../../../../@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
+import { ViewTimeLogModalComponent } from './../../../../../@shared/timesheet/view-time-log-modal/view-time-log-modal/view-time-log-modal.component';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { TimesheetFilterService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-filter.service';
+import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
 import * as _ from 'underscore';
 
 @UntilDestroy({ checkProperties: true })
@@ -52,6 +53,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	loading: boolean;
 	futureDateAllowed: boolean;
 	logRequest: ITimeLogFilters = {};
+	selectedEmployeeId = null;
 
 	constructor(
 		private timesheetService: TimesheetService,
@@ -91,9 +93,30 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	ngOnInit() {
-		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this), debounceTime(500))
-			.subscribe(async (organization) => {
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeOrganization$ = this.store.selectedOrganization$;
+		storeEmployee$
+			.pipe(
+				filter((employee: ISelectedEmployee) => !!employee),
+				debounceTime(200),
+				withLatestFrom(storeOrganization$),
+				untilDestroyed(this)
+			)
+			.subscribe(([employee]) => {
+				if (employee && this.organization) {
+					this.selectedEmployeeId = employee.id;
+					this.updateLogs$.next();
+				}
+			});
+		storeOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				debounceTime(200),
+				withLatestFrom(storeEmployee$),
+				untilDestroyed(this)
+			)
+			.subscribe(([organization, employee]) => {
+				this.selectedEmployeeId = employee ? employee.id : null;
 				if (organization) {
 					this.organization = organization;
 					this.updateLogs$.next();
@@ -136,6 +159,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 		if (this.logRequest.date && this.calendar.getApi()) {
 			this.calendar.getApi().gotoDate(this.logRequest.date);
 		}
+
 		this.timesheetFilterService.filter = $event;
 		this.updateLogs$.next();
 	}
@@ -151,26 +175,35 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	getEvents(arg, callback) {
-		if (!this.organization) {
+		if (!this.organization || !this.logRequest) {
 			return null;
 		}
+
 		const _startDate = moment(arg.start).format('YYYY-MM-DD') + ' 00:00:00';
 		const _endDate = moment(arg.end).format('YYYY-MM-DD') + ' 23:59:59';
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+
 		const appliedFilter = _.pick(
 			this.logRequest,
-			'employeeIds',
 			'projectIds',
 			'source',
 			'activityLevel',
 			'logType'
 		);
 
+		const employeeIds: string[] = [];
+		if (this.selectedEmployeeId) {
+			employeeIds.push(this.selectedEmployeeId);
+		}
+
 		const request: IGetTimeLogInput = {
-			organizationId: this.organization.id,
-			tenantId: this.organization.tenantId,
+			organizationId,
+			tenantId,
 			...appliedFilter,
 			startDate: toUTC(_startDate).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: toUTC(_endDate).format('YYYY-MM-DD HH:mm:ss')
+			endDate: toUTC(_endDate).format('YYYY-MM-DD HH:mm:ss'),
+			...(employeeIds.length > 0 ? { employeeIds } : {})
 		};
 
 		this.loading = true;

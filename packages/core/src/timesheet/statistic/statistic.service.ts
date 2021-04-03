@@ -35,31 +35,51 @@ export class StatisticService {
 	constructor(
 		@InjectRepository(OrganizationProject)
 		private readonly organizationProjectsRepository: Repository<OrganizationProject>,
+
 		@InjectRepository(Task)
 		private readonly taskRepository: Repository<Task>,
+
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
+
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
+
 		@InjectRepository(Activity)
 		private readonly activityRepository: Repository<Activity>,
+
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>
 	) {}
 
 	async getCounts(request: IGetCountsStatistics): Promise<ICountsStatistics> {
-		let start;
-		let end;
-		if (request.startDate) {
-			start = moment(request.startDate).utc().format();
-			end = moment(request.endDate).utc().format();
+		const {
+			organizationId,
+			startDate,
+			endDate,
+			date = new Date()
+		} = request;
+
+		let start: any;
+		let end: any;
+
+		if (startDate) {
+			start = moment(startDate).utc().format('YYYY-MM-DD HH:mm:ss');
+			end = moment(endDate).utc().format('YYYY-MM-DD HH:mm:ss');
 		} else {
-			const date = request.date || new Date();
-			start = moment.utc(date).startOf('week').format();
-			end = moment.utc(date).endOf('week').format();
+			start = moment(date)
+				.utc()
+				.startOf('week')
+				.format('YYYY-MM-DD HH:mm:ss');
+			end = moment(date)
+				.utc()
+				.endOf('week')
+				.format('YYYY-MM-DD HH:mm:ss');
 		}
+
 		const user = RequestContext.currentUser();
 		const tenantId = user.tenantId;
+
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
@@ -72,10 +92,7 @@ export class StatisticService {
 		) {
 			employeeIds = [user.employeeId];
 		} else {
-			employeeIds = await this.getEmployeesIds(
-				request.organizationId,
-				tenantId
-			);
+			employeeIds = await this.getEmployeesIds(organizationId, tenantId);
 		}
 
 		/*
@@ -96,10 +113,17 @@ export class StatisticService {
 					end
 				});
 		}
+
 		const employeesCount = await employeesCountQuery
 			.andWhere(`"${employeesCountQuery.alias}"."tenantId" = :tenantId`, {
 				tenantId
 			})
+			.andWhere(
+				`"${employeesCountQuery.alias}"."organizationId" = :organizationId`,
+				{
+					organizationId
+				}
+			)
 			.getCount();
 
 		/*
@@ -124,6 +148,12 @@ export class StatisticService {
 			.andWhere(`"${projectsCountQuery.alias}"."tenantId" = :tenantId`, {
 				tenantId
 			})
+			.andWhere(
+				`"${projectsCountQuery.alias}"."organizationId" = :organizationId`,
+				{
+					organizationId
+				}
+			)
 			.getCount();
 
 		/*
@@ -141,7 +171,8 @@ export class StatisticService {
 				.where({
 					employeeId: In(employeeIds),
 					startedAt: Between(start, end),
-					tenantId
+					tenantId,
+					organizationId
 				});
 			weekActivities = await activitiesQuery.getRawOne();
 		}
@@ -153,18 +184,20 @@ export class StatisticService {
 			overall: 0,
 			duration: 0
 		};
+
 		if (employeeIds.length > 0) {
-			const activitiesQuery = await this.timeSlotRepository
+			const activitiesQuery = this.timeSlotRepository
 				.createQueryBuilder()
 				.select('AVG(overall)', 'overall')
 				.addSelect('SUM(duration)', 'duration')
 				.where({
 					employeeId: In(employeeIds),
 					startedAt: Between(
-						moment().startOf('day').format(),
-						moment().endOf('day').format()
+						moment().startOf('day').format('YYYY-MM-DD HH:mm:ss'),
+						moment().endOf('day').format('YYYY-MM-DD HH:mm:ss')
 					),
-					tenantId
+					tenantId,
+					organizationId
 				});
 			todayActivities = await activitiesQuery.getRawOne();
 		}
@@ -185,8 +218,15 @@ export class StatisticService {
 
 	async getMembers(request: IGetMembersStatistics) {
 		const date = request.date || new Date();
-		const start = moment.utc(date).startOf('week').format();
-		const end = moment.utc(date).endOf('week').format();
+		const start = moment(date)
+			.utc()
+			.startOf('week')
+			.format('YYYY-MM-DD HH:mm:ss');
+		const end = moment(date)
+			.utc()
+			.endOf('week')
+			.format('YYYY-MM-DD HH:mm:ss');
+
 		const tenantId = RequestContext.currentTenantId();
 
 		const query = this.employeeRepository.createQueryBuilder();

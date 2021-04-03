@@ -11,6 +11,7 @@ import { ElectronService } from 'ngx-electron';
 import { TimeTrackerService } from './time-tracker.service';
 import * as moment from 'moment';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import * as _ from 'underscore';
 
 // Import logging for electron and override default console logging
 import log from 'electron-log';
@@ -226,6 +227,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 					token: this.token,
 					organizationId: this.userOrganization.id,
 					tenantId: this.userData.tenantId,
+					employeeId: this.userData.employeeId,
 					apiHost: this.apiHost
 				});
 				this.timeTrackerService
@@ -557,13 +559,17 @@ export class TimeTrackerComponent implements AfterViewInit {
 		this.timeTrackerService
 			.getTimeSlot(arg)
 			.then((res: any) => {
+				let { screenshots } = res;
 				console.log(
 					'Get Last Timeslot Image Response:',
-					res.screenshots
+					screenshots
 				);
-				if (res.screenshots && res.screenshots.length > 0) {
-					this.lastScreenCapture = res.screenshots[0];
-					this.screenshots = res.screenshots;
+				if (screenshots && screenshots.length > 0) {
+					screenshots = _.sortBy(screenshots, 'createdAt').reverse();
+					const [ lastCaptureScreen ] = screenshots;
+					console.log('Last Capture Screen:', lastCaptureScreen);
+					this.lastScreenCapture = lastCaptureScreen;
+					this.screenshots = screenshots;
 					this.lastTimeSlot = res;
 				} else {
 					this.lastScreenCapture = {};
@@ -649,6 +655,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 			.then(async (res: any) => {
 				if (res && res.length > 0) {
 					this.invalidTimeLog = res.filter((x) => !x.stoppedAt);
+					console.log('Invalid Timelog:', this.invalidTimeLog);
 					if (this.invalidTimeLog && this.invalidTimeLog.length > 0) {
 						await Promise.all(
 							this.invalidTimeLog.map(async (x) => {

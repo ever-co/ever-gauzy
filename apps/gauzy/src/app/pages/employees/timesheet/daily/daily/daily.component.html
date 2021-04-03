@@ -15,7 +15,10 @@
 
 <div class="filters row mb-3">
 	<div class="col">
-		<ngx-filters (filtersChange)="filtersChange($event)"></ngx-filters>
+		<ngx-filters
+			[hasEmployeeFilter]="false"
+			(filtersChange)="filtersChange($event)"
+		></ngx-filters>
 	</div>
 </div>
 <div
@@ -83,7 +86,6 @@
 				]"
 			>
 				<nb-checkbox
-					[value]="log.id"
 					[(ngModel)]="selectedIds[log.id]"
 					(change)="toggleCheckbox($event)"
 					status="primary"

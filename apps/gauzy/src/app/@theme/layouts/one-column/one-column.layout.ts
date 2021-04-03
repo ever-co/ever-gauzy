@@ -63,5 +63,6 @@ export class OneColumnLayoutComponent
 
 	ngOnDestroy() {
 		this.navigationBuilderService.clearSidebars();
+		this.navigationBuilderService.clearActionbars();
 	}
 }
