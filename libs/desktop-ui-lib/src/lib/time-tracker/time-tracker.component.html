@@ -90,7 +90,13 @@
 							</div>
 							<div class="col-12 form-group tp-padding">
 								<div class="row">
-									<div class="col-12">
+									<div
+										class="col-12"
+										*ngIf="
+											appSetting &&
+											appSetting.visibleAwOption
+										"
+									>
 										<div class="row">
 											<div class="col-8">
 												<nb-checkbox
@@ -110,7 +116,7 @@
 										</div>
 									</div>
 
-									<div class="col-12">
+									<!-- <div class="col-12">
 										<div class="row">
 											<div class="col-8">
 												<nb-checkbox [disabled]="true"
@@ -118,7 +124,7 @@
 												>
 											</div>
 										</div>
-									</div>
+									</div> -->
 								</div>
 							</div>
 							<div class="col-12">
@@ -271,4 +277,17 @@
 			</div>
 		</div>
 	</nb-layout-column>
+	<nb-layout-footer>
+		<button
+			class="footer-button"
+			nbButton
+			ghost
+			*ngIf="userData && userData.firstName"
+			size="small"
+			(click)="openSetting()"
+		>
+			<nb-icon icon="settings-2-outline"></nb-icon>
+			{{ userData.firstName }} {{ userData.lastName }}
+		</button>
+	</nb-layout-footer>
 </nb-layout>

@@ -109,15 +109,16 @@
 
 .img-button {
   position: relative;
-  transform: translateY(100%);
+  transform: translateY(156%);
   margin: auto;
 }
 
 .overlay-img {
-  position: relative;
+  position: absolute;
   background-color: rgba(0, 0, 0, 0.4);
-  top: -150px;
-  height: 150px;
+  top: 15px;
+  height: 176px;
+  width: 280px;
   display: none;
 }
 
@@ -129,4 +130,9 @@
 .overlay-img:hover {
   display: block;
   margin: auto;
+}
+
+.footer-button {
+  position: relative;
+  top: -8px;
 }

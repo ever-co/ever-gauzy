@@ -182,8 +182,19 @@ function startServer(value, restart = false) {
 			...value,
 			isSetup: true
 		};
+		const aw = {
+			host: value.awHost,
+			isAw: value.aw
+		};
 		store.set({
-			configs: config
+			configs: config,
+			project: {
+				projectId: null,
+				taskId: null,
+				note: null,
+				aw,
+				organizationContactId: null
+			}
 		});
 	} catch (error) {}
 
@@ -374,7 +385,9 @@ ipcMain.on('server_is_ready', () => {
 			NotificationWindow,
 			settingsWindow,
 			imageView,
-			{ ...environment }
+			{ ...environment },
+			createSettingsWindow,
+			pathWindow
 		);
 		isAlreadyRun = true;
 	}

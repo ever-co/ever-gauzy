@@ -16,6 +16,7 @@ export const LocalStore = {
 			const configs = store.get('configs');
 			const auth = store.get('auth');
 			const projectInfo = store.get('project');
+			const settings = store.get('appSetting');
 			return {
 				apiHost: configs.isLocalServer
 					? `http://localhost:${configs.port}`
@@ -30,7 +31,8 @@ export const LocalStore = {
 				aw: projectInfo ? projectInfo.aw : null,
 				organizationContactId: projectInfo
 					? projectInfo.organizationContactId
-					: null
+					: null,
+				settings
 			};
 		} catch (error) {
 			console.log(error);
@@ -50,7 +52,9 @@ export const LocalStore = {
 					},
 					SCREENSHOTS_ENGINE_METHOD: 'ElectronDesktopCapturer',
 					screenshotNotification: true,
-					autoLaunch: true
+					autoLaunch: true,
+					visibleAwOption: true,
+					randomScreenshotTime: false
 				};
 				store.set({
 					appSetting: defaultAppSetting
