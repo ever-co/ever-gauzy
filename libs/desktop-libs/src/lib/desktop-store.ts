@@ -54,7 +54,8 @@ export const LocalStore = {
 					screenshotNotification: true,
 					autoLaunch: true,
 					visibleAwOption: true,
-					randomScreenshotTime: false
+					randomScreenshotTime: false,
+					visibleWakatimeOption: false
 				};
 				store.set({
 					appSetting: defaultAppSetting

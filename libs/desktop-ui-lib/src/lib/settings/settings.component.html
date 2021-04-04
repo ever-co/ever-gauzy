@@ -327,6 +327,16 @@
 									>Visible Activity Watch option on window
 								</nb-toggle>
 							</div>
+							<div class="col-12">
+								<nb-toggle
+									[(ngModel)]="
+										appSetting.visibleWakatimeOption
+									"
+									(ngModelChange)="toggleWakatimeView($event)"
+									status="basic"
+									>Visible Activity Watch option on window
+								</nb-toggle>
+							</div>
 						</div>
 					</nb-card-body>
 				</nb-card>

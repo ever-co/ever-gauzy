@@ -116,7 +116,13 @@
 										</div>
 									</div>
 
-									<!-- <div class="col-12">
+									<div
+										class="col-12"
+										*ngIf="
+											appSetting &&
+											appSetting.visibleWakatimeOption
+										"
+									>
 										<div class="row">
 											<div class="col-8">
 												<nb-checkbox [disabled]="true"
@@ -124,7 +130,7 @@
 												>
 											</div>
 										</div>
-									</div> -->
+									</div>
 								</div>
 							</div>
 							<div class="col-12">

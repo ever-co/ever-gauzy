@@ -250,4 +250,9 @@ export class SettingsComponent implements OnInit {
 	toggleRandomScreenshot(value) {
 		this.updateSetting(value, 'randomScreenshotTime');
 	}
+
+	toggleWakatimeView(value) {
+		this.updateSetting(value, 'visibleWakatimeOption');
+		this.electronService.ipcRenderer.send('switch_aw_option', value);
+	}
 }
