@@ -108,7 +108,6 @@ const pathWindow = {
 };
 
 let tray = null;
-let appMenu = null;
 let isAlreadyRun = false;
 let willQuit = false;
 let onWaitingServer = false;
@@ -309,7 +308,7 @@ app.on('ready', async () => {
 	imageView = createImageViewerWindow(imageView, pathWindow.timeTrackerUi);
 
 	/* Set Menu */
-	appMenu = new AppMenu(
+	new AppMenu(
 		timeTrackerWindow,
 		settingsWindow,
 		updaterWindow,

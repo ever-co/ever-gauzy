@@ -107,7 +107,6 @@ let settingsWindow: BrowserWindow = null;
 let updaterWindow: BrowserWindow = null;
 let imageView: BrowserWindow = null;
 let tray = null;
-let appMenu = null;
 let isAlreadyRun = false;
 let willQuit = false;
 let onWaitingServer = false;
@@ -148,7 +147,7 @@ function startServer(value, restart = false) {
 		gauzyWindow.show();
 	}
 	const auth = store.get('auth');
-	appMenu = new AppMenu(
+	new AppMenu(
 		timeTrackerWindow,
 		settingsWindow,
 		updaterWindow,
