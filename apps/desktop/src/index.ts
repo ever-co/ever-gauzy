@@ -79,7 +79,8 @@ const knex = require('knex')({
 	client: 'sqlite3',
 	connection: {
 		filename: sqlite3filename
-	}
+	},
+	useNullAsDefault: true
 });
 
 const exeName = path.basename(process.execPath);
