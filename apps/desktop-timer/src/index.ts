@@ -85,7 +85,8 @@ const knex = require('knex')({
 	client: 'sqlite3',
 	connection: {
 		filename: sqlite3filename
-	}
+	},
+	useNullAsDefault: true
 });
 
 const exeName = path.basename(process.execPath);
@@ -106,7 +107,6 @@ let settingsWindow: BrowserWindow = null;
 let updaterWindow: BrowserWindow = null;
 let imageView: BrowserWindow = null;
 let tray = null;
-let appMenu = null;
 let isAlreadyRun = false;
 let willQuit = false;
 let onWaitingServer = false;
@@ -130,8 +130,19 @@ function startServer(value, restart = false) {
 			...value,
 			isSetup: true
 		};
+		const aw = {
+			host: value.awHost,
+			isAw: value.aw
+		};
 		store.set({
-			configs: config
+			configs: config,
+			project: {
+				projectId: null,
+				taskId: null,
+				note: null,
+				aw,
+				organizationContactId: null
+			}
 		});
 	} catch (error) {}
 
@@ -147,6 +158,13 @@ function startServer(value, restart = false) {
 		gauzyWindow.show();
 	}
 	const auth = store.get('auth');
+	new AppMenu(
+		timeTrackerWindow,
+		settingsWindow,
+		updaterWindow,
+		knex,
+		pathWindow
+	);
 	tray = new TrayIcon(
 		setupWindow,
 		knex,
@@ -257,13 +275,6 @@ app.on('ready', async () => {
 	imageView = createImageViewerWindow(imageView, pathWindow.timeTrackerUi);
 
 	/* Set Menu */
-	appMenu = new AppMenu(
-		timeTrackerWindow,
-		settingsWindow,
-		updaterWindow,
-		knex,
-		pathWindow
-	);
 
 	if (configs && configs.isSetup) {
 		global.variableGlobal = {
@@ -309,7 +320,9 @@ ipcMain.on('server_is_ready', () => {
 			notificationWindow,
 			settingsWindow,
 			imageView,
-			{ ...environment }
+			{ ...environment },
+			createSettingsWindow,
+			pathWindow
 		);
 		isAlreadyRun = true;
 	}

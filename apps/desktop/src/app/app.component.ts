@@ -95,24 +95,36 @@ export class AppComponent implements OnInit {
 		);
 
 		this.electronService.ipcRenderer.on('set_time_slot', (event, arg) => {
-			appService.pushTotimeslot(arg).then((res: any) => {
-				event.sender.send('remove_aw_local_data', {
-					idsAw: arg.idsAw
-				});
-				event.sender.send('remove_wakatime_local_data', {
-					idsWakatime: arg.idsWakatime
-				});
-				if (arg.idAfk) {
-					event.sender.send('remove_afk_local_Data', {
-						idAfk: arg.idAfk
+			appService
+				.pushTotimeslot(arg)
+				.then((res: any) => {
+					if (res.id) {
+						event.sender.send('remove_aw_local_data', {
+							idsAw: arg.idsAw
+						});
+						event.sender.send('remove_wakatime_local_data', {
+							idsWakatime: arg.idsWakatime
+						});
+						if (arg.idAfk) {
+							event.sender.send('remove_afk_local_Data', {
+								idAfk: arg.idAfk
+							});
+						}
+						const timeLogs = res.timeLogs;
+						event.sender.send('return_time_slot', {
+							timerId: arg.timerId,
+							timeSlotId: res.id,
+							quitApp: arg.quitApp,
+							timeLogs: timeLogs
+						});
+					}
+				})
+				.catch((e) => {
+					event.sender.send('failed_save_time_slot', {
+						params: e.error.params,
+						message: e.message
 					});
-				}
-				event.sender.send('return_time_slot', {
-					timerId: arg.timerId,
-					timeSlotId: res.id,
-					quitApp: arg.quitApp
 				});
-			});
 		});
 
 		this.electronService.ipcRenderer.on(

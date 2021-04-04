@@ -109,6 +109,14 @@
 					>
 				</nb-select>
 			</div>
+			<div class="col-12">
+				<nb-toggle
+					[(ngModel)]="appSetting.randomScreenshotTime"
+					(ngModelChange)="toggleRandomScreenshot($event)"
+					status="basic"
+					>Random Screenshot Time
+				</nb-toggle>
+			</div>
 		</div>
 		<div class="row" *ngIf="selectedMenu === 'Update'">
 			<div class="col-12">
@@ -310,6 +318,24 @@
 									status="basic"
 									[disabled]="true"
 								/>
+							</div>
+							<div class="col-12">
+								<nb-toggle
+									[(ngModel)]="appSetting.visibleAwOption"
+									(ngModelChange)="toggleAwView($event)"
+									status="basic"
+									>Visible Activity Watch option on window
+								</nb-toggle>
+							</div>
+							<div class="col-12">
+								<nb-toggle
+									[(ngModel)]="
+										appSetting.visibleWakatimeOption
+									"
+									(ngModelChange)="toggleWakatimeView($event)"
+									status="basic"
+									>Visible Activity Watch option on window
+								</nb-toggle>
 							</div>
 						</div>
 					</nb-card-body>

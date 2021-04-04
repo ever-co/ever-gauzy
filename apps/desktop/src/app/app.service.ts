@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../environments/environment';
+import { catchError } from 'rxjs/operators';
+import { throwError } from 'rxjs';
 
 @Injectable({
 	providedIn: 'root'
@@ -140,28 +142,33 @@ export class AppService {
 		const headers = new HttpHeaders({
 			Authorization: `Bearer ${values.token}`
 		});
+		const params = {
+			employeeId: values.employeeId,
+			projectId: values.projectId,
+			duration: values.duration,
+			keyboard: values.keyboard,
+			mouse: values.mouse,
+			overall: values.overall,
+			startedAt: values.startedAt,
+			activities: values.activities,
+			timeLogId: values.timeLogId,
+			organizationId: values.organizationId,
+			tenantId: values.tenantId,
+			organizationContactId: values.organizationContactId
+		};
 		return this.http
-			.post(
-				`${values.apiHost}/api/timesheet/time-slot`,
-				{
-					employeeId: values.employeeId,
-					projectId: values.projectId,
-					duration: values.duration,
-					keyboard: values.keyboard,
-					mouse: values.mouse,
-					overall: values.overall,
-					startedAt: values.startedAt,
-					activities: values.activities,
-					timeLogId: values.timeLogId,
-					organizationId: values.organizationId,
-					tenantId: values.tenantId,
-					organizationContactId: values.organizationContactId
-				},
-				{
-					headers: headers
-				}
+			.post(`${values.apiHost}/api/timesheet/time-slot`, params, {
+				headers: headers
+			})
+			.pipe(
+				catchError((error) => {
+					error.error = {
+						...error.error,
+						params: JSON.stringify(params)
+					};
+					return throwError(error);
+				})
 			)
-			.pipe()
 			.toPromise();
 	}
 

@@ -302,7 +302,7 @@ export default class Timerhandler {
 			durations: 0,
 			projectid: project.projectId,
 			userId: info.employeeId,
-			timeLogId: timeLog.id
+			timeLogId: timeLog ? timeLog.id : null
 		});
 
 		const [lastSavedTimer] = await TimerData.getLastTimer(knex, info);

@@ -1,3 +1,4 @@
+import moment from 'moment';
 export const TimerData = {
 	createTimer: (knex, query) => {
 		return knex('timer')
@@ -119,6 +120,22 @@ export const TimerData = {
 			})
 			.orderBy('created_at', 'desc')
 			.limit(1);
+		return result;
+	},
+
+	saveFailedRequest: async (knex, value) => {
+		const result = await knex('failed-request')
+			.insert(
+				{
+					type: value.type,
+					params: value.params,
+					errorMessage: value.message,
+					created_at: moment(),
+					updated_at: moment()
+				},
+				['id']
+			)
+			.then((res) => res);
 		return result;
 	}
 };

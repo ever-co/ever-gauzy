@@ -76,6 +76,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 	lastTimeSlot = null;
 	invalidTimeLog = null;
 	loading = false;
+	appSetting = null;
 	dialogType = {
 		deleteLog: {
 			name: 'deleteLog',
@@ -110,6 +111,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 				this.token = arg.token;
 				this.note = arg.note;
 				this.aw = arg.aw && arg.aw.isAw ? arg.aw.isAw : false;
+				this.appSetting = arg.settings;
 				this.getClient(arg);
 				this.getProjects(arg);
 				this.getTask(arg);
@@ -173,11 +175,19 @@ export class TimeTrackerComponent implements AfterViewInit {
 							id: source.display_id
 						});
 					});
-					event.sender.send('save_screen_shoot', {
-						screens: screens,
-						timeSlotId: arg.timeSlotId,
-						quitApp: this.quitApp
-					});
+					if (!arg.isTemp) {
+						event.sender.send('save_screen_shoot', {
+							screens: screens,
+							timeSlotId: arg.timeSlotId,
+							quitApp: this.quitApp
+						});
+					} else {
+						event.sender.send('save_temp_screenshot', {
+							screens: screens,
+							timeSlotId: arg.timeSlotId,
+							quitApp: this.quitApp
+						});
+					}
 				});
 		});
 
@@ -212,6 +222,18 @@ export class TimeTrackerComponent implements AfterViewInit {
 				event.sender.send('user_detail', res);
 			});
 		});
+
+		this.electronService.ipcRenderer.on('save_temp_img', (event, arg) => {
+			event.sender.send('save_temp_img', arg);
+		});
+
+		this.electronService.ipcRenderer.on(
+			'update_setting_value',
+			(event, arg) => {
+				this.appSetting = arg;
+				_cdr.detectChanges();
+			}
+		);
 	}
 
 	ngAfterViewInit(): void {
@@ -560,13 +582,10 @@ export class TimeTrackerComponent implements AfterViewInit {
 			.getTimeSlot(arg)
 			.then((res: any) => {
 				let { screenshots } = res;
-				console.log(
-					'Get Last Timeslot Image Response:',
-					screenshots
-				);
+				console.log('Get Last Timeslot Image Response:', screenshots);
 				if (screenshots && screenshots.length > 0) {
 					screenshots = _.sortBy(screenshots, 'createdAt').reverse();
-					const [ lastCaptureScreen ] = screenshots;
+					const [lastCaptureScreen] = screenshots;
 					console.log('Last Capture Screen:', lastCaptureScreen);
 					this.lastScreenCapture = lastCaptureScreen;
 					this.screenshots = screenshots;
@@ -671,5 +690,9 @@ export class TimeTrackerComponent implements AfterViewInit {
 				}
 				return res;
 			});
+	}
+
+	openSetting() {
+		this.electronService.ipcRenderer.send('open_setting_window');
 	}
 }
