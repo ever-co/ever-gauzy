@@ -110,10 +110,12 @@ export class AppComponent implements OnInit {
 								idAfk: arg.idAfk
 							});
 						}
+						const timeLogs = res.timeLogs;
 						event.sender.send('return_time_slot', {
 							timerId: arg.timerId,
 							timeSlotId: res.id,
-							quitApp: arg.quitApp
+							quitApp: arg.quitApp,
+							timeLogs: timeLogs
 						});
 					}
 				})
