@@ -21,19 +21,25 @@ const captureOnlyActiveWindow = async (
 	activeScreen,
 	quitApp,
 	notificationWindow,
-	timeTrackerWindow
+	timeTrackerWindow,
+	isTemp?
 ) => {
 	const display = displays.find((x) => x.id === activeScreen.id.toString());
-	const result = await uploadScreenShot(
-		display.img,
-		display.name,
-		timeSlotId,
-		false,
-		quitApp,
-		notificationWindow,
-		timeTrackerWindow
-	);
-	return [result];
+	if (!isTemp) {
+		const result = await uploadScreenShot(
+			display.img,
+			display.name,
+			timeSlotId,
+			false,
+			quitApp,
+			notificationWindow,
+			timeTrackerWindow
+		);
+		return [result];
+	} else {
+		saveTempImage(display.img, display.name, timeSlotId, timeTrackerWindow);
+		return [];
+	}
 };
 
 const captureAllWindow = async (
@@ -42,25 +48,35 @@ const captureAllWindow = async (
 	activeScreen,
 	quitApp,
 	notificationWindow,
-	timeTrackerWindow
+	timeTrackerWindow,
+	isTemp?
 ) => {
 	const result = [];
 	await Promise.all(
 		displays.map(async (display, i) => {
-			const res = await uploadScreenShot(
-				display.img,
-				display.name,
-				timeSlotId,
-				i === 0,
-				quitApp,
-				notificationWindow,
-				timeTrackerWindow
-			);
-			if (display.id === activeScreen.id.toString()) {
-				result.push({
-					...res,
-					name: display.name
-				});
+			if (!isTemp) {
+				const res = await uploadScreenShot(
+					display.img,
+					display.name,
+					timeSlotId,
+					i === 0,
+					quitApp,
+					notificationWindow,
+					timeTrackerWindow
+				);
+				if (display.id === activeScreen.id.toString()) {
+					result.push({
+						...res,
+						name: display.name
+					});
+				}
+			} else {
+				saveTempImage(
+					display.img,
+					display.name,
+					timeSlotId,
+					timeTrackerWindow
+				);
 			}
 		})
 	);
@@ -152,9 +168,21 @@ const uploadScreenShot = async (
 	} catch (e) {
 		console.log('Upload Screenshot Error:', e.message);
 		// remove file on local directory if any error
-		setTimeout(() => {
-			removeScreenshotLocally(fileName);
-		}, 4000);
+		// setTimeout(() => {
+		// 	removeScreenshotLocally(fileName);
+		// }, 4000);
+		const imgLocation = path.join(
+			app.getPath('userData'),
+			`/public/temp/${fileName}`
+		);
+		timeTrackerWindow.webContents.send('save_temp_img', {
+			type: 'screenshot',
+			params: JSON.stringify({
+				path: imgLocation,
+				timeSlotTempId: timeSlotId,
+				message: e.message
+			})
+		});
 	}
 };
 
@@ -288,7 +316,12 @@ const showCapturedToRenderer = (notificationWindow, thumbUrl, quitApp) => {
 	}, 4000);
 };
 
-export async function takeshot(timeTrackerWindow, arg, notificationWindow) {
+export async function takeshot(
+	timeTrackerWindow,
+	arg,
+	notificationWindow,
+	isTemp?
+) {
 	try {
 		const displays = arg.screens;
 		const appSetting = LocalStore.getStore('appSetting');
@@ -301,7 +334,8 @@ export async function takeshot(timeTrackerWindow, arg, notificationWindow) {
 					activeWindow,
 					arg.quitApp,
 					notificationWindow,
-					timeTrackerWindow
+					timeTrackerWindow,
+					isTemp
 				);
 				break;
 			case 'active-only':
@@ -311,7 +345,8 @@ export async function takeshot(timeTrackerWindow, arg, notificationWindow) {
 					activeWindow,
 					arg.quitApp,
 					notificationWindow,
-					timeTrackerWindow
+					timeTrackerWindow,
+					isTemp
 				);
 				break;
 			default:
@@ -319,7 +354,9 @@ export async function takeshot(timeTrackerWindow, arg, notificationWindow) {
 		}
 
 		// show to render
-		updateLastCapture(timeTrackerWindow, arg.timeSlotId);
+		if (!isTemp) {
+			updateLastCapture(timeTrackerWindow, arg.timeSlotId);
+		}
 	} catch (error) {
 		console.log('error upload', error);
 	}
@@ -371,4 +408,25 @@ export function convertToSlug(text: string) {
 		.replace(/\-\-+/g, '-') // Replace multiple - with single -
 		.replace(/^-+/, '') // Trim - from start of text
 		.replace(/-+$/, ''); // Trim - from end of text
+}
+
+export function saveTempImage(img, name, timeSlotId, timeTrackerWindow) {
+	let fileName = `screenshot-${moment().format(
+		'YYYYMMDDHHmmss'
+	)}-${name}.png`;
+
+	fileName = convertToSlug(fileName);
+
+	writeScreenshotLocally(img, fileName);
+	const imgLocation = path.join(
+		app.getPath('userData'),
+		`/public/temp/${fileName}`
+	);
+	timeTrackerWindow.webContents.send('save_temp_img', {
+		type: 'screenshot',
+		params: JSON.stringify({
+			path: imgLocation,
+			timeSlotTempId: timeSlotId
+		})
+	});
 }

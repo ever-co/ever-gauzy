@@ -241,4 +241,18 @@ export class SettingsComponent implements OnInit {
 	restartAndUpdate() {
 		this.electronService.ipcRenderer.send('restart_and_update');
 	}
+
+	toggleAwView(value) {
+		this.updateSetting(value, 'visibleAwOption');
+		this.electronService.ipcRenderer.send('switch_aw_option', value);
+	}
+
+	toggleRandomScreenshot(value) {
+		this.updateSetting(value, 'randomScreenshotTime');
+	}
+
+	toggleWakatimeView(value) {
+		this.updateSetting(value, 'visibleWakatimeOption');
+		this.electronService.ipcRenderer.send('switch_aw_option', value);
+	}
 }

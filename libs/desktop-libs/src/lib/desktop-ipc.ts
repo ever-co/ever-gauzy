@@ -162,7 +162,9 @@ export function ipcTimer(
 	notificationWindow,
 	settingWindow,
 	imageView,
-	config
+	config,
+	createSettingsWindow,
+	windowPath
 ) {
 	const timerHandler = new TimerHandler();
 	ipcMain.on('start_timer', (event, arg) => {
@@ -259,5 +261,52 @@ export function ipcTimer(
 
 	ipcMain.on('close_image_view', () => {
 		imageView.hide();
+	});
+
+	ipcMain.on('failed_save_time_slot', async (event, arg) => {
+		/* save failed request time slot */
+		const [id] = await TimerData.saveFailedRequest(knex, {
+			type: 'timeslot',
+			params: arg.params,
+			message: arg.message
+		});
+		/* create temp screenshot */
+		timeTrackerWindow.webContents.send('take_screenshot', {
+			timeSlotId: id,
+			screensize: screen.getPrimaryDisplay().workAreaSize,
+			isTemp: true
+		});
+	});
+
+	ipcMain.on('save_temp_screenshot', async (event, arg) => {
+		takeshot(timeTrackerWindow, arg, notificationWindow, true);
+	});
+
+	ipcMain.on('save_temp_img', (event, arg) => {
+		TimerData.saveFailedRequest(knex, arg);
+	});
+
+	ipcMain.on('open_setting_window', (event, arg) => {
+		const appSetting = LocalStore.getStore('appSetting');
+		const config = LocalStore.getStore('configs');
+		if (!settingWindow) {
+			settingWindow = createSettingsWindow(
+				settingWindow,
+				windowPath.timeTrackerUi
+			);
+		}
+		settingWindow.show();
+		setTimeout(() => {
+			settingWindow.webContents.send('app_setting', {
+				setting: appSetting,
+				config: config
+			});
+			settingWindow.webContents.send('goto_top_menu');
+		}, 500);
+	});
+
+	ipcMain.on('switch_aw_option', (event, arg) => {
+		const settings = LocalStore.getStore('appSetting');
+		timeTrackerWindow.webContents.send('update_setting_value', settings);
 	});
 }

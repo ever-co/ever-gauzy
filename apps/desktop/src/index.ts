@@ -79,7 +79,8 @@ const knex = require('knex')({
 	client: 'sqlite3',
 	connection: {
 		filename: sqlite3filename
-	}
+	},
+	useNullAsDefault: true
 });
 
 const exeName = path.basename(process.execPath);
@@ -107,7 +108,6 @@ const pathWindow = {
 };
 
 let tray = null;
-let appMenu = null;
 let isAlreadyRun = false;
 let willQuit = false;
 let onWaitingServer = false;
@@ -182,8 +182,19 @@ function startServer(value, restart = false) {
 			...value,
 			isSetup: true
 		};
+		const aw = {
+			host: value.awHost,
+			isAw: value.aw
+		};
 		store.set({
-			configs: config
+			configs: config,
+			project: {
+				projectId: null,
+				taskId: null,
+				note: null,
+				aw,
+				organizationContactId: null
+			}
 		});
 	} catch (error) {}
 
@@ -308,7 +319,7 @@ app.on('ready', async () => {
 	imageView = createImageViewerWindow(imageView, pathWindow.timeTrackerUi);
 
 	/* Set Menu */
-	appMenu = new AppMenu(
+	new AppMenu(
 		timeTrackerWindow,
 		settingsWindow,
 		updaterWindow,
@@ -374,7 +385,9 @@ ipcMain.on('server_is_ready', () => {
 			NotificationWindow,
 			settingsWindow,
 			imageView,
-			{ ...environment }
+			{ ...environment },
+			createSettingsWindow,
+			pathWindow
 		);
 		isAlreadyRun = true;
 	}

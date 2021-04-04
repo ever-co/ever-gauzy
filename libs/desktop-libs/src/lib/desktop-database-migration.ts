@@ -57,5 +57,18 @@ export class DataModel {
 					.then((res) => res);
 			}
 		});
+		knex.schema.hasTable('failed-request').then((exists) => {
+			if (!exists) {
+				knex.schema
+					.createTable('failed-request', (table) => {
+						table.increments();
+						table.string('type');
+						table.json('params');
+						table.timestamps('createdDate');
+						table.text('errorMessage');
+					})
+					.then((res) => res);
+			}
+		});
 	}
 }
