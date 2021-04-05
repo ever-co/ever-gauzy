@@ -376,12 +376,16 @@ export class TrayIcon {
 			this.tray.setContextMenu(Menu.buildFromTemplate(unAuthMenu));
 			menuWindowSetting.enabled = false;
 			menuWindowTime.enabled = false;
+
 			const appSetting = store.get('appSetting');
 			if (appSetting && appSetting.timerStarted) {
 				setTimeout(() => {
 					timeTrackerWindow.webContents.send('stop_from_tray');
 				}, 1000);
 			}
+
+			if (settingsWindow) settingsWindow.hide();
+
 			if (LocalStore.getStore('configs').gauzyWindow) {
 				timeTrackerWindow.hide();
 			} else {
@@ -407,7 +411,6 @@ export class TrayIcon {
 					loginPageAlreadyShow = true;
 				}
 			}
-			if (settingsWindow) settingsWindow.hide();
 		});
 
 		ipcMain.on('user_detail', (event, arg) => {

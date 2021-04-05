@@ -334,7 +334,7 @@
 									"
 									(ngModelChange)="toggleWakatimeView($event)"
 									status="basic"
-									>Visible Activity Watch option on window
+									>Visible Wakatime option on window
 								</nb-toggle>
 							</div>
 						</div>
@@ -380,4 +380,9 @@
 			</div>
 		</div>
 	</nb-layout-column>
+	<nb-layout-footer fixed>
+		<span class="created-by" *ngIf="currentUser">
+			<p> Signed in as {{ currentUser?.name }} - <a href="javascript:void(0);" (click)="logout()"> Sign Out </a></p>
+		</span>
+	</nb-layout-footer>
 </nb-layout>

@@ -120,6 +120,7 @@ try {
 	cancellationToken = new CancellationToken();
 } catch (error) {}
 
+console.log('Time Tracker UI Render Path:', path.join(__dirname, '../../../index.html'));
 const pathWindow = {
 	timeTrackerUi: path.join(__dirname, '../../../index.html')
 };

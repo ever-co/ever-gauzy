@@ -24,22 +24,23 @@ export class AuthGuard implements CanActivate {
 		state: RouterStateSnapshot
 	) {
 		const isAuthenticated = await this.authService.isAuthenticated();
-
+		console.log('Token Authenticated:', `${isAuthenticated ? 'true' : 'false' }`);
 		if (isAuthenticated) {
 			// logged in so return true
 			return true;
 		}
 
-		// not logged in so redirect to login page with the return url
+		// not logged in so logout from desktop timer
 		if (this.electronService.isElectronApp) {
 			try {
 				this.electronService.ipcRenderer.send('logout');
 			} catch (error) {}
 		}
 
-		// logout and clear local store before redirect to login page
+		// logout and clear local store
         this.authStrategy.logout();
-
+		
+		// not logged in so redirect to login page with the return url
 		this.router.navigate(['/auth/login'], {
 			queryParams: { returnUrl: state.url }
 		});
