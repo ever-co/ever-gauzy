@@ -15,7 +15,7 @@ import { Store } from '../services/store.service';
 export class NoAuthGuard implements CanActivate {
 	constructor(
 		private readonly router: Router,
-		private authService: AuthService,
+		private readonly authService: AuthService,
 		private readonly store: Store
 	) {}
 

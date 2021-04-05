@@ -1,6 +1,5 @@
 import log from 'electron-log';
 import { screen, BrowserWindow, ipcMain } from 'electron';
-import * as path from 'path';
 import * as url from 'url';
 import { LocalStore } from '../../../desktop-libs/src';
 

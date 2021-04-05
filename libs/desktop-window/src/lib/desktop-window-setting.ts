@@ -1,5 +1,4 @@
 import { BrowserWindow } from 'electron';
-import * as path from 'path';
 import * as url from 'url';
 
 export function createSettingsWindow(settingsWindow, filePath) {

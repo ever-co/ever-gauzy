@@ -6,14 +6,17 @@ import {
 	RouterStateSnapshot
 } from '@angular/router';
 import { AuthService } from './services/auth.service';
+import { AuthStrategy } from './auth-strategy.service';
 import { ElectronService } from 'ngx-electron';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
+	
 	constructor(
 		private readonly router: Router,
-		private authService: AuthService,
-		private electronService: ElectronService
+		private readonly authService: AuthService,
+		private readonly electronService: ElectronService,
+		private readonly authStrategy: AuthStrategy,
 	) {}
 
 	async canActivate(
@@ -33,10 +36,13 @@ export class AuthGuard implements CanActivate {
 				this.electronService.ipcRenderer.send('logout');
 			} catch (error) {}
 		}
+
+		// logout and clear local store before redirect to login page
+        this.authStrategy.logout();
+
 		this.router.navigate(['/auth/login'], {
 			queryParams: { returnUrl: state.url }
 		});
-
 		return false;
 	}
 }
