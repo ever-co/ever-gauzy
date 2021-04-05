@@ -3095,6 +3095,7 @@
 		"VIEW_INFO": "Просмотр информации",
 		"MINUTES": "Минут",
 		"NO_SCREENSHOTS": "Нет скриншотов",
+		"NO_EMPLOYEES_SELECTED": "Please select Employee",
 		"DELETE_CONFIRM": "Вы уверены, что хотите удалить эти скриншоты и активности?"
 	},
 	"ONBOARDING": {

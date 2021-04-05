@@ -381,7 +381,7 @@
 		</div>
 	</nb-layout-column>
 	<nb-layout-footer fixed>
-		<span class="created-by" *ngIf="currentUser">
+		<span *ngIf="currentUser">
 			<p> Signed in as {{ currentUser?.name }} - <a href="javascript:void(0);" (click)="logout()"> Sign Out </a></p>
 		</span>
 	</nb-layout-footer>

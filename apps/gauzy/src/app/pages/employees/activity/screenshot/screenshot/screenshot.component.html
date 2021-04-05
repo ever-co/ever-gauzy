@@ -46,7 +46,7 @@
 	</ng-template>
 	<ng-template #notFound>
 		<div class="py-5 text-center">
-			<h6>{{ 'ACTIVITY.NO_SCREENSHOTS' | translate }}</h6>
+			<h6>{{ 'ACTIVITY.NO_EMPLOYEES_SELECTED' | translate }}</h6>
 		</div>
 	</ng-template>
 </div>
@@ -60,7 +60,7 @@
 					status="info"
 					nbButton
 					size="small"
-					(click)="toggleAllSelecte()"
+					(click)="toggleAllSelect()"
 				>
 					{{ this.allSelected ? 'Unselect All' : 'Select All' }}
 				</button>

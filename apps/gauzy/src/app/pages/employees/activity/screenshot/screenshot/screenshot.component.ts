@@ -132,7 +132,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 		this.updateSelections();
 	}
 
-	toggleAllSelecte() {
+	toggleAllSelect() {
 		for (const key in this.selectedIds) {
 			if (this.selectedIds.hasOwnProperty(key)) {
 				this.selectedIds[key] = !this.allSelected;
