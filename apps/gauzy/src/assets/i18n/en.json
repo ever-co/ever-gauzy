@@ -3095,6 +3095,7 @@
 		"VIEW_INFO": "View Info",
 		"MINUTES": "Minutes",
 		"NO_SCREENSHOTS": "No Screenshots",
+		"NO_EMPLOYEES_SELECTED": "Please select Employee",
 		"DELETE_CONFIRM": "Are you sure you want to delete this screenshots and activities?"
 	},
 	"ONBOARDING": {

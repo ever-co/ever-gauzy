@@ -234,6 +234,10 @@ export class AppComponent implements OnInit {
 				}, 3000);
 			}
 		);
+
+		this.electronService.ipcRenderer.on('logout_timer', (event, arg) => {
+			console.log(event, arg);
+		});
 	}
 
 	ngOnInit(): void {

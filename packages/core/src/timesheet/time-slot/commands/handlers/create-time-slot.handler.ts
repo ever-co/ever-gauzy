@@ -93,6 +93,8 @@ export class CreateTimeSlotHandler
 			console.log('Omit New Timeslot:', timeSlot);
 		}
 
+		console.log('Timelog ID:', input.timeLogId);
+
 		if (input.timeLogId) {
 			let timeLogIds = [];
 			if (input.timeLogId instanceof Array) {
@@ -146,10 +148,14 @@ export class CreateTimeSlotHandler
 		const maxDate = input.startedAt;
 
 		/*
-		 * Merge timeslots into 10 minutes slots
-		 */
+		* Merge timeslots into 10 minutes slots
+		*/
 		let [createdTimeSlot] = await this.commandBus.execute(
-			new TimeSlotMergeCommand(timeSlot.employeeId, minDate, maxDate)
+			new TimeSlotMergeCommand(
+				employeeId,
+				minDate, 
+				maxDate
+			)
 		);
 
 		// If merge timeslots not found then pass created timeslot

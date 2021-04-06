@@ -48,14 +48,8 @@
 					</button>
 				</div>
 			</div>
-			<ng-template
-				[ngIf]="timeSlot?.screenshots?.length > 0"
-				[ngIfElse]="noImageEl"
-			>
-				<img
-					draggable="false"
-					[src]="timeSlot.screenshots[0]?.thumbUrl"
-				/>
+			<ng-template [ngIf]="lastScreenshot" [ngIfElse]="noImageEl">
+				<img draggable="false" [src]="lastScreenshot?.thumbUrl" />
 			</ng-template>
 			<ng-template #noImageEl>
 				<img draggable="false" />

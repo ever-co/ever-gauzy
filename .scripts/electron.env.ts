@@ -4,6 +4,7 @@
 
 import { writeFile, unlinkSync } from 'fs';
 import { argv } from 'yargs';
+import { env } from './env';
 
 const environment = argv.environment;
 const desktop = argv.desktop;
@@ -17,7 +18,7 @@ if (isProd) {
         API_DEFAULT_PORT: 5620,
         GAUZY_UI_DEFAULT_PORT: 5621,
         SCREENSHOTS_ENGINE_METHOD: 'ScreenshotDesktopLib', // ElectronDesktopCapturer || ScreenshotDesktopLib
-        SENTRY_DSN: '${process.env.SENTRY_DSN}'
+        SENTRY_DSN: '${env.SENTRY_DSN}'
     }
     `;
 	try {

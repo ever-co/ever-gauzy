@@ -6,7 +6,8 @@ import {
 	JoinColumn,
 	AfterLoad,
 	OneToMany,
-	ManyToMany
+	ManyToMany,
+	JoinTable
 } from 'typeorm';
 import {
 	ITimeSlot,
@@ -72,6 +73,9 @@ export class TimeSlot
 	timeSlotMinutes?: ITimeSlotMinute[];
 
 	@ManyToMany(() => TimeLog, (timeLogs) => timeLogs.timeSlots)
+	@JoinTable({
+		name: 'time_slot_time_logs'
+	})
 	timeLogs?: ITimeLog[];
 
 	@ApiProperty({ type: () => Number })

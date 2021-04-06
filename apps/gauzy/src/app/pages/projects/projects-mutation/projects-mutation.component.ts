@@ -262,4 +262,11 @@ export class ProjectsMutationComponent
 	 * On Changed Currency Event Emitter
 	 */
 	currencyChanged($event: ICurrency) {}
+
+	isInvalidControl(control: string) {
+		if (!this.form.contains(control)) {
+			return true;
+		}
+		return this.form.get(control).touched && this.form.get(control).invalid;
+	}
 }

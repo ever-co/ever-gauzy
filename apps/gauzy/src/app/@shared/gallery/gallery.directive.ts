@@ -10,6 +10,7 @@ import {
 import { GalleryComponent } from './gallery.component';
 import { NbDialogService } from '@nebular/theme';
 import { GalleryService } from './gallery.service';
+import * as _ from 'underscore';
 
 export interface GalleryItem {
 	thumbUrl: string;
@@ -48,7 +49,11 @@ export class GalleryDirective implements OnDestroy, OnInit {
 		if (this.disableClick) {
 			return;
 		}
-		const item = this.item instanceof Array ? this.item[0] : this.item;
+
+		let items = JSON.parse(JSON.stringify(this.item));
+		items = _.sortBy(items, 'createdAt').reverse();
+
+		const item = items instanceof Array ? items[0] : items;
 		this.nbDialogService.open(GalleryComponent, {
 			context: {
 				items: this.items,
@@ -59,6 +64,8 @@ export class GalleryDirective implements OnDestroy, OnInit {
 	}
 
 	ngOnInit() {
+		const item = this.item instanceof Array ? this.item : [this.item];
+		this.item = _.sortBy(item, 'createdAt');
 		this.galleryService.appendItems(this.item);
 	}
 
