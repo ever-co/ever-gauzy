@@ -1,26 +1,22 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, SelectQueryBuilder, Brackets, MoreThanOrEqual, Between, LessThanOrEqual } from 'typeorm';
+import { Repository, In, SelectQueryBuilder } from 'typeorm';
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import { IActivity, IScreenshot, ITimeLog } from '@gauzy/contracts';
-import { format } from 'date-fns';
+import { ConfigService } from '@gauzy/config';
 import { TimeSlotMergeCommand } from '../time-slot-merge.command';
 import { Activity, Screenshot, TimeSlot } from './../../../../core/entities/internal';
 
-/*
-* Convert ISO format to DB date format 
-*/
-export function isoToDbFormat(isoDate: string) {
-	return format(new Date(isoDate), 'yyyy-MM-dd kk:mm:ss.SSS');
-}
 
 @CommandHandler(TimeSlotMergeCommand)
 export class TimeSlotMergeHandler
 	implements ICommandHandler<TimeSlotMergeCommand> {
 	constructor(
 		@InjectRepository(TimeSlot)
-		private readonly timeSlotRepository: Repository<TimeSlot>
+		private readonly timeSlotRepository: Repository<TimeSlot>,
+
+		private readonly configService: ConfigService
 	) {}
 
 	public async execute(command: TimeSlotMergeCommand) {
@@ -44,23 +40,23 @@ export class TimeSlotMergeHandler
 			.set('second', 0)
 			.set('millisecond', 0);
 
-		startDate = isoToDbFormat(startDate);
-		endDate = isoToDbFormat(endDate);
+		console.log(
+			`Timeslot merge startDate=${startDate} and endDate=${endDate}`
+		);
+
+		if (this.configService.dbConnectionOptions.type === 'sqlite') {
+			startDate = startDate.format('YYYY-MM-DD HH:mm:ss');
+			endDate = endDate.format('YYYY-MM-DD HH:mm:ss');
+		} else {
+			startDate = startDate.toDate();
+			endDate = endDate.toDate();
+		}
 
 		const timerSlots = await this.timeSlotRepository.find({
 			where: (query: SelectQueryBuilder<TimeSlot>) => {
 				query.andWhere(
-					new Brackets((query: any) => {
-						query.orWhere({
-							startedAt: MoreThanOrEqual(startDate)
-						});
-						query.orWhere({
-							startedAt: Between(startDate, endDate)
-						});
-						query.orWhere({
-							startedAt: LessThanOrEqual(endDate)
-						});
-					})
+					`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" < :endDate`,
+					{ startDate, endDate }
 				);
 				query.andWhere(`"${query.alias}"."employeeId" = :employeeId`, {
 					employeeId
@@ -71,7 +67,7 @@ export class TimeSlotMergeHandler
 			relations: ['timeLogs', 'screenshots', 'activities']
 		});
 
-		console.log('Previous inserted timeslots:', timerSlots);
+		console.log('Previous Inserted Timeslots:', timerSlots);
 
 		const createdTimeslots: any = [];
 		if (timerSlots.length > 0) {
@@ -111,12 +107,13 @@ export class TimeSlotMergeHandler
 						activities = activities.concat(timeSlot.activities);
 					}
 
-					const timeSlotslength = oldTimeslots.length;
+					const timeSlotslength = oldTimeslots.filter((item) => item.keyboard !== 0).length;
+					console.log('Valid TimeSlots length:', timeSlotslength);
 					const activity = {
 						duration,
-						keyboard: Math.round(keyboard / timeSlotslength),
-						mouse: Math.round(mouse / timeSlotslength),
-						overall: Math.round(overall / timeSlotslength),
+						keyboard: Math.round(keyboard / timeSlotslength || 0),
+						mouse: Math.round(mouse / timeSlotslength || 0),
+						overall: Math.round(overall / timeSlotslength || 0),
 					}
 
 					/*

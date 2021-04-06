@@ -93,6 +93,8 @@ export class CreateTimeSlotHandler
 			console.log('Omit New Timeslot:', timeSlot);
 		}
 
+		console.log('Timelog ID:', input.timeLogId);
+
 		if (input.timeLogId) {
 			let timeLogIds = [];
 			if (input.timeLogId instanceof Array) {
