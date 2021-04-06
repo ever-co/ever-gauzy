@@ -65,7 +65,7 @@ export class TimeSlotMergeHandler
 				query.andWhere(`"${query.alias}"."employeeId" = :employeeId`, {
 					employeeId
 				});
-				query.addOrderBy(`"${query.alias}"."createdAt"`, 'ASC');
+				query.addOrderBy(`"${query.alias}"."createdAt"`, 'DESC');
 				console.log(query.getQueryAndParameters());
 			},
 			relations: ['timeLogs', 'screenshots', 'activities']
@@ -132,7 +132,7 @@ export class TimeSlotMergeHandler
 					activities = activities.map(
 						(item) => new Activity(_.omit(item, ['timeSlotId']))
 					);
- 
+
 					const newTimeSlot = new TimeSlot({
 						..._.omit(oldTimeslot),
 						...activity,
