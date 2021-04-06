@@ -15,9 +15,7 @@ export class TokenInterceptor implements HttpInterceptor {
 		request: HttpRequest<any>,
 		next: HttpHandler
 	): Observable<HttpEvent<any>> {
-		const token = this.store.token;
-		console.log('Akita Store Token:', token);
-		
+		const token = this.store.token;		
 		if (token) {
 			request = request.clone({
 				setHeaders: {
