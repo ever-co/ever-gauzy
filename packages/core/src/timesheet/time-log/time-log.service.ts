@@ -23,23 +23,21 @@ import {
 	IClientBudgetLimitReport
 } from '@gauzy/contracts';
 import * as moment from 'moment';
-import { CrudService } from '../../core';
-import { Organization } from '../../organization/organization.entity';
-import { Employee } from '../../employee/employee.entity';
 import { CommandBus } from '@nestjs/cqrs';
+import * as _ from 'underscore';
+import { chain, pluck } from 'underscore';
+import { ConfigService } from '@gauzy/config';
+import { CrudService } from '../../core';
+import { Employee, Organization, OrganizationContact, OrganizationProject } from '../../core/entities/internal';
 import { TimeLogCreateCommand } from './commands/time-log-create.command';
 import { TimeLogUpdateCommand } from './commands/time-log-update.command';
 import { TimeLogDeleteCommand } from './commands/time-log-delete.command';
 import { DeleteTimeSpanCommand } from './commands/delete-time-span.command';
 import { IGetConflictTimeLogCommand } from './commands/get-conflict-time-log.command';
-import * as _ from 'underscore';
 import { GetTimeLogGroupByDateCommand } from './commands/get-time-log-group-by-date.command';
 import { GetTimeLogGroupByEmployeeCommand } from './commands/get-time-log-group-by-employee.command';
 import { GetTimeLogGroupByProjectCommand } from './commands/get-time-log-group-by-project.command';
 import { GetTimeLogGroupByClientCommand } from './commands/get-time-log-group-by-client.command';
-import { chain, pluck } from 'underscore';
-import { OrganizationContact } from '../../organization-contact/organization-contact.entity';
-import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
 
 @Injectable()
 export class TimeLogService extends CrudService<TimeLog> {
@@ -56,7 +54,9 @@ export class TimeLogService extends CrudService<TimeLog> {
 		private readonly organizationContactsRepository: Repository<OrganizationContact>,
 
 		@InjectRepository(OrganizationProject)
-		private readonly organizationProjectRepository: Repository<OrganizationProject>
+		private readonly organizationProjectRepository: Repository<OrganizationProject>,
+
+		private readonly configService: ConfigService
 	) {
 		super(timeLogRepository);
 	}
@@ -655,27 +655,31 @@ export class TimeLogService extends CrudService<TimeLog> {
 			employeeIds = [user.employeeId];
 		}
 
-		qb.where({
-			deletedAt: null
-		});
+		qb.where({ deletedAt: null });
+
 		if (request.timesheetId) {
 			qb.andWhere('"timesheetId" = :timesheetId', {
 				timesheetId: request.timesheetId
 			});
 		}
+
 		if (request.startDate && request.endDate) {
-			const startDate = moment(request.startDate)
-				.utc()
-				.format('YYYY-MM-DD HH:mm:ss');
-			const endDate = moment(request.endDate)
-				.utc()
-				.format('YYYY-MM-DD HH:mm:ss');
+			let startDate: any = moment(request.startDate).utc();
+			let endDate: any = moment(request.endDate).utc();
+
+			if (this.configService.dbConnectionOptions.type === 'sqlite') {
+				startDate = startDate.format('YYYY-MM-DD HH:mm:ss');
+				endDate = endDate.format('YYYY-MM-DD HH:mm:ss');
+			} else {
+				startDate = startDate.toDate();
+				endDate = endDate.toDate();
+			}
+
+			console.log({ startDate, endDate });
+			
 			qb.andWhere(
 				`"${qb.alias}"."startedAt" Between :startDate AND :endDate`,
-				{
-					startDate,
-					endDate
-				}
+				{ startDate, endDate }
 			);
 		}
 
@@ -690,9 +694,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 				projectIds: request.projectIds
 			});
 		}
-		if (request.activityLevel) {
-			// qb.andWhere('"overall" BETWEEN :start AND :end', request.activityLevel);
-		}
+
 		if (request.source) {
 			if (request.source instanceof Array) {
 				qb.andWhere(`"${qb.alias}"."source" IN (:...source)`, {
@@ -704,6 +706,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 				});
 			}
 		}
+		
 		if (request.logType) {
 			if (request.logType instanceof Array) {
 				qb.andWhere(`"${qb.alias}"."logType" IN (:...logType)`, {

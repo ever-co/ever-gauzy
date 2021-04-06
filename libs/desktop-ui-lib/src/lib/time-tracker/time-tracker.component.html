@@ -283,17 +283,18 @@
 			</div>
 		</div>
 	</nb-layout-column>
-	<nb-layout-footer>
+	<nb-layout-footer fixed>
 		<button
 			class="footer-button"
 			nbButton
 			ghost
-			*ngIf="userData && userData.firstName"
+			*ngIf="userData && userData.name"
 			size="small"
 			(click)="openSetting()"
 		>
 			<nb-icon icon="settings-2-outline"></nb-icon>
-			{{ userData.firstName }} {{ userData.lastName }}
+			{{ userData.name }}
+			<nb-icon icon="nb-arrow-up"></nb-icon>
 		</button>
 	</nb-layout-footer>
 </nb-layout>

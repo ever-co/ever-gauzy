@@ -6,7 +6,9 @@ import {
 	ElementRef,
 	ChangeDetectorRef
 } from '@angular/core';
+import { Router } from '@angular/router';
 import { ElectronService } from 'ngx-electron';
+import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 @Component({
 	selector: 'ngx-settings',
 	templateUrl: './settings.component.html',
@@ -58,15 +60,21 @@ export class SettingsComponent implements OnInit {
 	showProgressBar = false;
 	autoLaunch = null;
 	minimizeOnStartup = null;
+	authSetting = null;
+	currentUser = null;
 
 	constructor(
 		private electronService: ElectronService,
-		private _cdr: ChangeDetectorRef
+		private _cdr: ChangeDetectorRef,
+		private readonly router: Router,
+		private readonly timeTrackerService: TimeTrackerService
 	) {
 		this.electronService.ipcRenderer.on('app_setting', (event, arg) => {
-			const { setting, config } = arg;
+			const { setting, config, auth } = arg;
 			this.appSetting = setting;
 			this.config = config;
+			this.authSetting = auth;
+
 			this.config.awPort = this.config.timeTrackerWindow
 				? this.config.awHost.split('t:')[1]
 				: null;
@@ -77,7 +85,10 @@ export class SettingsComponent implements OnInit {
 			this.screenshotNotification = setting.screenshotNotification;
 			this.autoLaunch = setting.autoLaunch;
 			this.minimizeOnStartup = setting.minimizeOnStartup;
+
 			this.selectPeriod(setting.timer.updatePeriod);
+			this.getUserDetails();
+			
 			this._cdr.detectChanges();
 		});
 
@@ -254,5 +265,28 @@ export class SettingsComponent implements OnInit {
 	toggleWakatimeView(value) {
 		this.updateSetting(value, 'visibleWakatimeOption');
 		this.electronService.ipcRenderer.send('switch_aw_option', value);
+	}
+
+	/*
+	* Get logged in user details 
+	*/
+	getUserDetails() {
+		const request = {
+			...this.authSetting,
+			...this.config,
+			apiHost: this.config.serverUrl
+		};
+		this.timeTrackerService.getUserDetail(request).then((res) => {
+			this.currentUser = res;
+			this._cdr.detectChanges();
+		});
+	}
+
+	/*
+	* Logout desktop timer 
+	*/
+	logout() {
+		console.log('On Logout');
+		this.electronService.ipcRenderer.send('logout');
 	}
 }

@@ -132,7 +132,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 		this.updateSelections();
 	}
 
-	toggleAllSelecte() {
+	toggleAllSelect() {
 		for (const key in this.selectedIds) {
 			if (this.selectedIds.hasOwnProperty(key)) {
 				this.selectedIds[key] = !this.allSelected;
@@ -191,7 +191,6 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 						fullUrl: screenshot.fullUrl
 					}))
 				);
-				timeSlot.screenshots = _.sortBy(timeSlot.screenshots, 'createdAt').reverse();
 				return timeSlot;
 			})
 			.groupBy((timeSlot) => moment(timeSlot.localStartedAt).format('HH'))

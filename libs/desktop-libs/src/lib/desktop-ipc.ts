@@ -289,6 +289,8 @@ export function ipcTimer(
 	ipcMain.on('open_setting_window', (event, arg) => {
 		const appSetting = LocalStore.getStore('appSetting');
 		const config = LocalStore.getStore('configs');
+		const auth = LocalStore.getStore('auth');
+
 		if (!settingWindow) {
 			settingWindow = createSettingsWindow(
 				settingWindow,
@@ -299,7 +301,8 @@ export function ipcTimer(
 		setTimeout(() => {
 			settingWindow.webContents.send('app_setting', {
 				setting: appSetting,
-				config: config
+				config: config,
+				auth
 			});
 			settingWindow.webContents.send('goto_top_menu');
 		}, 500);

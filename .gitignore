@@ -57,5 +57,11 @@ ormlogs.log
 /apps/gauzy/src/environments/environment.prod.ts
 /apps/gauzy/src/environments/environment.ts
 
+/apps/desktop-timer/src/environments/environment.prod.ts
+/apps/desktop-timer/src/environments/environment.ts
+
+/apps/desktop/src/environments/environment.prod.ts
+/apps/desktop/src/environments/environment.ts
+
 /export
 /import

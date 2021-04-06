@@ -93,5 +93,13 @@ export const LocalStore = {
 		store.set({
 			project: { ...projects, ...values }
 		});
+	},
+
+	updateAuthSetting: (values) => {
+		store.set({
+			auth: { 
+				...values 
+			}
+		});
 	}
 };
