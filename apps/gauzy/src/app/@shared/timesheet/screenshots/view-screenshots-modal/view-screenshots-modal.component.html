@@ -38,16 +38,11 @@
 			</div>
 		</div>
 
-		<ng-template [ngIf]="timeSlot.screenshots?.length > 0">
+		<ng-template [ngIf]="screenshots.length > 0">
 			<h6>{{ 'TIMESHEET.SCREENSHOTS.SCREENSHOTS' | translate }}</h6>
 			<div class="row mb-3 justify-content-center">
-				<div
-					class="col-sm-4"
-					*ngFor="let image of timeSlot.screenshots"
-				>
+				<div class="col-sm-4" *ngFor="let image of screenshots">
 					<img
-						ngxGallery
-						[item]="image"
 						nb-card-image
 						draggable="false"
 						class="screenshots-image"
@@ -85,8 +80,8 @@
 				</div>
 				<div class="col-auto">
 					<ngx-label
-						[status]="TimeLogsLable[timeLog?.logType].status"
-						[text]="TimeLogsLable[timeLog?.logType].text"
+						[status]="TimeLogsLabel[timeLog?.logType].status"
+						[text]="TimeLogsLabel[timeLog?.logType].text"
 					>
 					</ngx-label>
 				</div>

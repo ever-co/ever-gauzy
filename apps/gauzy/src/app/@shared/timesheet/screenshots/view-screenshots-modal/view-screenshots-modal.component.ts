@@ -1,10 +1,11 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
-import { ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
+import { IScreenshot, ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
 import { progressStatus } from '@gauzy/common-angular';
-import { TimeLogsLable } from 'apps/gauzy/src/app/@core/constants/timesheet.constants';
+import { TimeLogsLabel } from './../../../../@core/constants/timesheet.constants';
 import { TimesheetService } from '../../timesheet.service';
 import { ViewTimeLogModalComponent } from '../../view-time-log-modal/view-time-log-modal/view-time-log-modal.component';
+import * as _ from 'underscore';
 
 @Component({
 	selector: 'ngx-view-screenshots-modal',
@@ -13,9 +14,17 @@ import { ViewTimeLogModalComponent } from '../../view-time-log-modal/view-time-l
 })
 export class ViewScreenshotsModalComponent implements OnInit {
 	progressStatus = progressStatus;
-	TimeLogsLable = TimeLogsLable;
+	TimeLogsLabel = TimeLogsLabel;
 	PermissionsEnum = PermissionsEnum;
 	@Input() timeSlot: ITimeSlot;
+
+	private _screenshots: IScreenshot[] = [];
+	public get screenshots(): IScreenshot[] {
+		return this._screenshots;
+	}
+	public set screenshots(screenshots: IScreenshot[]) {
+		this._screenshots = screenshots;
+	}
 
 	constructor(
 		private dialogRef: NbDialogRef<ViewScreenshotsModalComponent>,
@@ -42,7 +51,10 @@ export class ViewScreenshotsModalComponent implements OnInit {
 			})
 			.then((timeSlot) => {
 				this.timeSlot = timeSlot;
-				console.log(this.timeSlot);
+				const screenshots = JSON.parse(
+					JSON.stringify(timeSlot.screenshots)
+				);
+				this.screenshots = _.sortBy(screenshots, 'createdAt').reverse();
 			});
 	}
 

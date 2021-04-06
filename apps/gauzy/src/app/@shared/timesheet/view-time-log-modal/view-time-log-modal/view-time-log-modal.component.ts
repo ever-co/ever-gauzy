@@ -8,7 +8,7 @@ import {
 import { EditTimeLogModalComponent } from '../../edit-time-log-modal/edit-time-log-modal.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TimesheetService } from '../../timesheet.service';
-import { TimeLogsLable } from 'apps/gauzy/src/app/@core/constants/timesheet.constants';
+import { TimeLogsLabel } from 'apps/gauzy/src/app/@core/constants/timesheet.constants';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -19,7 +19,7 @@ import { TimeLogsLable } from 'apps/gauzy/src/app/@core/constants/timesheet.cons
 export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 	PermissionsEnum = PermissionsEnum;
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
-	TimeLogsLable = TimeLogsLable;
+	TimeLogsLabel = TimeLogsLabel;
 	@Input() timeLog: ITimeLog;
 
 	constructor(

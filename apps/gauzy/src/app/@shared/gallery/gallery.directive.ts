@@ -64,7 +64,8 @@ export class GalleryDirective implements OnDestroy, OnInit {
 	}
 
 	ngOnInit() {
-		this.item = _.sortBy(this.item, 'createdAt');
+		const item = this.item instanceof Array ? this.item : [this.item];
+		this.item = _.sortBy(item, 'createdAt');
 		this.galleryService.appendItems(this.item);
 	}
 
