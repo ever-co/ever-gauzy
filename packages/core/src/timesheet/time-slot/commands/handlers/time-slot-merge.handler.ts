@@ -3,10 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, SelectQueryBuilder, Brackets, MoreThanOrEqual, Between, LessThanOrEqual } from 'typeorm';
 import * as moment from 'moment';
 import * as _ from 'underscore';
-import { TimeSlotMergeCommand } from '../time-slot-merge.command';
 import { IActivity, IScreenshot, ITimeLog } from '@gauzy/contracts';
-import { Activity, Screenshot, TimeSlot } from './../../../../core/entities/internal';
 import { format } from 'date-fns';
+import { TimeSlotMergeCommand } from '../time-slot-merge.command';
+import { Activity, Screenshot, TimeSlot } from './../../../../core/entities/internal';
 
 /*
 * Convert ISO format to DB date format 
@@ -133,6 +133,10 @@ export class TimeSlotMergeHandler
 						(item) => new Activity(_.omit(item, ['timeSlotId']))
 					);
 
+
+					timeLogs = _.uniq(timeLogs, x => x.id);
+					console.log('Created Timelogs:',  timeLogs);
+
 					const newTimeSlot = new TimeSlot({
 						..._.omit(oldTimeslot),
 						...activity,
@@ -158,6 +162,7 @@ export class TimeSlotMergeHandler
 				.value();
 			await Promise.all(savePromises);
 		}
+		console.log('Created Timeslots Merge Handler:',  createdTimeslots);
 		return createdTimeslots;
 	}
 }

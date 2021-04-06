@@ -146,10 +146,14 @@ export class CreateTimeSlotHandler
 		const maxDate = input.startedAt;
 
 		/*
-		 * Merge timeslots into 10 minutes slots
-		 */
+		* Merge timeslots into 10 minutes slots
+		*/
 		let [createdTimeSlot] = await this.commandBus.execute(
-			new TimeSlotMergeCommand(timeSlot.employeeId, minDate, maxDate)
+			new TimeSlotMergeCommand(
+				employeeId,
+				minDate, 
+				maxDate
+			)
 		);
 
 		// If merge timeslots not found then pass created timeslot
