@@ -191,7 +191,6 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 						fullUrl: screenshot.fullUrl
 					}))
 				);
-				timeSlot.screenshots = _.sortBy(timeSlot.screenshots, 'createdAt').reverse();
 				return timeSlot;
 			})
 			.groupBy((timeSlot) => moment(timeSlot.localStartedAt).format('HH'))

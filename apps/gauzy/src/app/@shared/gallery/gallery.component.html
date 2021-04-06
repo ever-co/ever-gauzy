@@ -45,7 +45,7 @@
 				[ngClass]="{ 'thumb-item-active': item == thumb }"
 				(click)="setFocus(thumb)"
 			>
-				<img *ngIf="thumb" [src]="thumb.thumbUrl" />
+				<img *ngIf="thumb" [src]="thumb?.thumbUrl" />
 			</div>
 		</div>
 	</div>
