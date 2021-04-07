@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import * as moment from 'moment';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../../../core/context';
-import { Activity } from '../../../activity.entity';
+import { Activity } from '../../../activity/activity.entity';
 import { UpdateTimeSlotCommand } from '../update-time-slot.command';
 import { TimeSlot } from '../../../time-slot.entity';
 

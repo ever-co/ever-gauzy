@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BulkActivitiesSaveCommand } from '../bulk-activities-save.command';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Activity } from '../../../activity.entity';
+import { Activity } from '../../activity.entity';
 import { Repository } from 'typeorm';
 import { RequestContext } from '../../../../core/context';
 import { Employee } from '../../../../employee/employee.entity';

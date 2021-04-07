@@ -1,14 +1,7 @@
 import { Module } from '@nestjs/common';
-import { Timesheet } from './timesheet.entity';
-import { TimeSlot } from './time-slot.entity';
-import { Activity } from './activity.entity';
-import { Screenshot } from './screenshot.entity';
-import { TimeLog } from './time-log.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TimerController } from './timer/timer.controller';
 import { TimerService } from './timer/timer.service';
-import { Employee } from '../employee/employee.entity';
-import { TimeSlotMinute } from './time-slot-minute.entity';
 import { TimeSheetService } from './timesheet/timesheet.service';
 import { ActivityService } from './activity/activity.service';
 import { ScreenshotService } from './screenshot/screenshot.service';
@@ -25,19 +18,14 @@ import { TimesheetCommandHandlers } from './timesheet/commands/handlers';
 import { TimeLogCommandHandlers } from './time-log/commands/handlers';
 import { StatisticService } from './statistic/statistic.service';
 import { StatisticController } from './statistic/statistic.controller';
-import { OrganizationProject } from '../organization-projects/organization-projects.entity';
-import { Task } from '../tasks/task.entity';
-import { EmailTemplate } from '../email-template/email-template.entity';
-import { Organization } from '../organization/organization.entity';
-import { Email } from '../email/email.entity';
 import { EmailService } from '../email/email.service';
 import { EmailModule } from '../email';
 import { TimeSlotCommandHandlers } from './time-slot/commands/handlers';
 import { ActivityCommandHandlers } from './activity/commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
 import { ActivityMapService } from './activity/activity.map.service';
-import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { RouterModule } from 'nest-router';
+import { Activity, Email, EmailTemplate, Employee, Organization, OrganizationContact, OrganizationProject, Screenshot, Task, TimeLog, Timesheet, TimeSlot, TimeSlotMinute } from './../core/entities/internal';
 
 @Module({
 	controllers: [

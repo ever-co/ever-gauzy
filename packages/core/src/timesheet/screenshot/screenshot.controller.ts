@@ -6,7 +6,7 @@ import {
 	Body,
 	UseInterceptors
 } from '@nestjs/common';
-import { Screenshot } from '../screenshot.entity';
+import { Screenshot } from './screenshot.entity';
 import { CrudController } from '../../core/crud/crud.controller';
 import { ScreenshotService } from './screenshot.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';

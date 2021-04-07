@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { CrudService } from '../../core/crud/crud.service';
-import { Activity } from '../activity.entity';
+import { Activity } from './activity.entity';
 import * as moment from 'moment';
 import { RequestContext } from '../../core/context';
 import {

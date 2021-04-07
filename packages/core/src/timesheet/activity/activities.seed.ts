@@ -2,7 +2,7 @@ import * as faker from 'faker';
 import * as _ from 'underscore';
 import * as moment from 'moment';
 import { ActivityType } from '@gauzy/contracts';
-import { Activity } from '../activity.entity';
+import { Activity } from './activity.entity';
 import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
 import { Connection } from 'typeorm';
 import { Employee } from '../../employee/employee.entity';

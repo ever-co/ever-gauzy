@@ -1,8 +1,8 @@
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, DeleteResult } from 'typeorm';
+import { Repository, In, DeleteResult, UpdateResult } from 'typeorm';
 import * as _ from 'underscore';
-import { TimeLog } from '../../../time-log.entity';
+import { TimeLog } from './../../../time-log.entity';
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { TimesheetRecalculateCommand } from '../../../timesheet/commands/timesheet-recalculate.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
@@ -18,7 +18,7 @@ export class TimeLogDeleteHandler
 		private readonly timeSlotService: TimeSlotService
 	) {}
 
-	public async execute(command: TimeLogDeleteCommand): Promise<DeleteResult> {
+	public async execute(command: TimeLogDeleteCommand): Promise<DeleteResult | UpdateResult> {
 		const { ids, forceDelete } = command;
 
 		let timeLogs: TimeLog[];
@@ -33,15 +33,18 @@ export class TimeLogDeleteHandler
 		} else {
 			timeLogs = ids as TimeLog[];
 		}
+
 		for (let index = 0; index < timeLogs.length; index++) {
 			const timeLog = timeLogs[index];
+			const { employeeId, startedAt, stoppedAt } = timeLog;
 			await this.timeSlotService.rangeDelete(
-				timeLog.employeeId,
-				timeLog.startedAt,
-				timeLog.stoppedAt
+				employeeId,
+				startedAt,
+				stoppedAt
 			);
 		}
-		let deleteResult;
+
+		let deleteResult: DeleteResult | UpdateResult;
 		if (forceDelete) {
 			deleteResult = await this.timeLogRepository.delete({
 				id: In(_.pluck(timeLogs, 'id'))
