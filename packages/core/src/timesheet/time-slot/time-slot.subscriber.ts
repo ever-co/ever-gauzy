@@ -25,8 +25,8 @@ export class TimeSlotSubscriber implements EntitySubscriberInterface<TimeSlot> {
     */
     beforeRemove(event: RemoveEvent<TimeSlot>) {
         console.log(`BEFORE ENTITY WITH ID ${event.entityId} REMOVED: `, event.entity);
-        if (event.entity) {
-            const screenshots = event.entity.screenshots;
+        if (event.entityId && event.entity.screenshots) {
+            const { screenshots } = event.entity;
             if (screenshots instanceof Array && screenshots.length > 0) {
                 screenshots.forEach((screenshot: IScreenshot) => {
                     (async () => {
