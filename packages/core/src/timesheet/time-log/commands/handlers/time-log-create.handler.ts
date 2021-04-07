@@ -46,8 +46,6 @@ export class TimeLogCreateHandler
 			source: input.source || TimeLogSourceEnum.BROWSER
 		});
 
-		console.log('New Time Log:', newTimeLog);
-
 		let timeSlots = [];
 		if (input.stoppedAt) {
 			timeSlots = this.timeSlotService.generateTimeSlots(
@@ -100,6 +98,8 @@ export class TimeLogCreateHandler
 		newTimeLog.tenantId = RequestContext.currentTenantId();
 
 		await this.timeLogRepository.save(newTimeLog);
+		
+		console.log('New Time Log:', newTimeLog);
 
 		await this.commandBus.execute(
 			new TimesheetRecalculateCommand(timesheet.id)
