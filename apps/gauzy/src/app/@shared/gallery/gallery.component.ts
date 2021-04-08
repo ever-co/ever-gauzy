@@ -34,13 +34,11 @@ export const fadeInOutAnimation = trigger('fadeInOut', [
 export class GalleryComponent implements OnInit, OnDestroy {
 	active_index: any;
 
-	@ViewChild('customScroll', { static: true }) customScroll: ElementRef<
-		HTMLElement
-	>;
+	@ViewChild('customScroll', { static: true })
+	customScroll: ElementRef<HTMLElement>;
 
-	// @Input() items: GalleryItem[] = [];
 	@Input() item: GalleryItem;
-	items: GalleryItem[];
+	items: GalleryItem[] = [];
 
 	constructor(
 		private dialogRef: NbDialogRef<GalleryComponent>,

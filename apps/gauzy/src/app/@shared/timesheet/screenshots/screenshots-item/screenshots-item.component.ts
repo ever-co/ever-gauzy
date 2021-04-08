@@ -18,6 +18,7 @@ import { GalleryItem } from '../../../gallery/gallery.directive';
 import { toLocal } from '@gauzy/common-angular';
 import { ViewScreenshotsModalComponent } from '../view-screenshots-modal/view-screenshots-modal.component';
 import * as _ from 'underscore';
+import { GalleryService } from '../../../gallery/gallery.service';
 
 @Component({
 	selector: 'ngx-screenshots-item',
@@ -68,8 +69,9 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	}
 
 	constructor(
-		private nbDialogService: NbDialogService,
-		private timesheetService: TimesheetService
+		private readonly nbDialogService: NbDialogService,
+		private readonly timesheetService: TimesheetService,
+		private readonly galleryService: GalleryService
 	) {}
 
 	ngOnInit(): void {}
@@ -95,6 +97,16 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 
 	deleteSlot(timeSlot) {
 		this.timesheetService.deleteTimeSlots([timeSlot.id]).then(() => {
+			const screenshots = this._screenshots.map(
+				(screenshot: IScreenshot) => {
+					return {
+						thumbUrl: screenshot.thumbUrl,
+						fullUrl: screenshot.fullUrl,
+						...screenshot
+					};
+				}
+			);
+			this.galleryService.removeGalleryItems(screenshots);
 			this.delete.emit();
 		});
 	}

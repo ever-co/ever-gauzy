@@ -5,10 +5,11 @@ import {
 	IGetTimeSlotInput,
 	IScreenshotMap,
 	IOrganization,
-	ISelectedEmployee
+	ISelectedEmployee,
+	IScreenshot
 } from '@gauzy/contracts';
 import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
-import { debounceTime, filter, withLatestFrom } from 'rxjs/operators';
+import { debounceTime, filter, tap, withLatestFrom } from 'rxjs/operators';
 import { Store } from './../../../../../@core/services/store.service';
 import { Subject } from 'rxjs';
 import { toUTC, toLocal } from '@gauzy/common-angular';
@@ -18,6 +19,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
+import { GalleryService } from 'apps/gauzy/src/app/@shared/gallery/gallery.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -40,10 +42,11 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 	selectedEmployeeId = null;
 
 	constructor(
-		private timesheetService: TimesheetService,
-		private timesheetFilterService: TimesheetFilterService,
-		private nbDialogService: NbDialogService,
-		private store: Store
+		private readonly timesheetService: TimesheetService,
+		private readonly timesheetFilterService: TimesheetFilterService,
+		private readonly nbDialogService: NbDialogService,
+		private readonly store: Store,
+		private readonly galleryService: GalleryService
 	) {}
 
 	ngOnInit(): void {
@@ -77,10 +80,13 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 				}
 			});
 		this.updateLogs$
-			.pipe(untilDestroyed(this), debounceTime(500))
-			.subscribe(() => {
-				this.getLogs();
-			});
+			.pipe(
+				debounceTime(500),
+				tap(() => this.galleryService.clearGallery()),
+				tap(() => this.getLogs()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	async filtersChange($event: ITimeLogFilters) {
@@ -165,13 +171,16 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 						.values()
 						.value();
 					this.timesheetService.deleteTimeSlots(ids).then(() => {
+						this._deleteScreenshotGallery(ids);
 						this.updateLogs$.next();
 					});
 				}
 			});
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		this.galleryService.clearGallery();
+	}
 
 	private groupTimeSlots(timeSlots: ITimeSlot[]) {
 		this.selectedIds = {};
@@ -217,5 +226,24 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 			.value();
 		this.updateSelections();
 		return groupTimeSlots;
+	}
+
+	private _deleteScreenshotGallery(timeSlotIds: string[]) {
+		if (this.orignalTimeSlots.length) {
+			this.orignalTimeSlots.forEach((timeSlot: ITimeSlot) => {
+				if (timeSlotIds.includes(timeSlot.id)) {
+					const gallaryItems = timeSlot.screenshots.map(
+						(screenshot: IScreenshot) => {
+							return {
+								thumbUrl: screenshot.thumbUrl,
+								fullUrl: screenshot.fullUrl,
+								...screenshot
+							};
+						}
+					);
+					this.galleryService.removeGalleryItems(gallaryItems);
+				}
+			});
+		}
 	}
 }
