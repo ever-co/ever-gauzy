@@ -66,13 +66,15 @@ export class TimeLogService extends CrudService<TimeLog> {
 			join: {
 				alias: 'timeLogs',
 				innerJoin: {
-					employee: 'timeLogs.employee'
+					employee: 'timeLogs.employee',
+					timeSlots: 'timeLogs.timeSlots'
 				}
 			},
 			relations: [
 				'project',
 				'task',
 				'organizationContact',
+				'timeSlots',
 				...(RequestContext.hasPermission(
 					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 				)
@@ -664,8 +666,8 @@ export class TimeLogService extends CrudService<TimeLog> {
 		}
 
 		if (request.startDate && request.endDate) {
-			let startDate: any = moment(request.startDate).utc();
-			let endDate: any = moment(request.endDate).utc();
+			let startDate: any = moment.utc(request.startDate);
+			let endDate: any = moment.utc(request.endDate);
 
 			if (this.configService.dbConnectionOptions.type === 'sqlite') {
 				startDate = startDate.format('YYYY-MM-DD HH:mm:ss');
@@ -674,7 +676,9 @@ export class TimeLogService extends CrudService<TimeLog> {
 				startDate = startDate.toDate();
 				endDate = endDate.toDate();
 			}
+
 			console.log(`Timelog Date Range startDate=${startDate} and endDate=${endDate}`);
+
 			qb.andWhere(
 				`"${qb.alias}"."startedAt" >= :startDate AND "${qb.alias}"."startedAt" < :endDate`,
 				{ startDate, endDate }
@@ -730,7 +734,6 @@ export class TimeLogService extends CrudService<TimeLog> {
 				tenantId
 			});
 		}
-		console.log('Timelogs Query:', qb.getQueryAndParameters());
 		return qb;
 	}
 

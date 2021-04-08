@@ -141,7 +141,6 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 					}
 				}
 				qb.addOrderBy(`"${qb.alias}"."createdAt"`, 'ASC');
-				console.log('Timeslots Query:', qb.getQueryAndParameters());
 			}
 		});
 		return logs;

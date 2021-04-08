@@ -43,23 +43,24 @@ export class DeleteTimeSlotHandler
 			return true;
 		}
 
-		await this.timeSlotRepository.remove(timeSlots);
-		/* timeSlots.forEach(async (timeSlot: ITimeSlot) => {
+		timeSlots.forEach(async (timeSlot: ITimeSlot) => {
 			if (timeSlot && timeSlot.timeLogs.length > 0) {
-				const deleteSlotPromise = timeSlot.timeLogs.map(
-					async (timeLog) => {
-						await this.commandBus.execute(
-							new DeleteTimeSpanCommand(
-								{ start: timeSlot.startedAt, end: timeSlot.stoppedAt },
-								timeLog
-							)
-						);
-						return;
-					}
-				);
+				const deleteSlotPromise = timeSlot.timeLogs
+					.filter((timeLog) => timeLog.stoppedAt)
+					.map(
+						async (timeLog) => {
+							await this.commandBus.execute(
+								new DeleteTimeSpanCommand(
+									{ start: timeSlot.startedAt, end: timeSlot.stoppedAt },
+									timeLog
+								)
+							);
+							return;
+						}
+					);
 				await Promise.all(deleteSlotPromise);
 			}
-		}); */
+		});
 		return true;
 	}
 }
