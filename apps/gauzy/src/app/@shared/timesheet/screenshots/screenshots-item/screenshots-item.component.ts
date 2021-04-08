@@ -9,7 +9,8 @@ import {
 import {
 	OrganizationPermissionsEnum,
 	ITimeSlot,
-	IScreenshot
+	IScreenshot,
+	ITimeLog
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TimesheetService } from '../../timesheet.service';
@@ -43,6 +44,7 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 		if (timeSlot) {
 			timeSlot.localStartedAt = toLocal(timeSlot.startedAt).toDate();
 			timeSlot.localStoppedAt = toLocal(timeSlot.stoppedAt).toDate();
+			timeSlot.isAllowDelete = this.isEnableDelete(timeSlot);
 
 			this._timeSlot = timeSlot;
 
@@ -72,8 +74,11 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 
 	ngOnInit(): void {}
 
-	toggleSelect(slotId): void {
-		this.toggle.emit(slotId);
+	toggleSelect(timeSlot: ITimeSlot): void {
+		if (timeSlot.isAllowDelete) {
+			const slotId = timeSlot.id;
+			this.toggle.emit(slotId);
+		}
 	}
 
 	progressStatus(value) {
@@ -98,6 +103,16 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 		this.nbDialogService.open(ViewScreenshotsModalComponent, {
 			context: { timeSlot }
 		});
+	}
+
+	isEnableDelete(timeSlot: ITimeSlot): boolean {
+		let isAllow: boolean = true;
+		if (timeSlot.timeLogs.length > 0) {
+			isAllow = !!timeSlot.timeLogs.find(
+				(log: ITimeLog) => log.stoppedAt
+			);
+		}
+		return isAllow;
 	}
 
 	ngOnDestroy(): void {}
