@@ -108,27 +108,20 @@ export class CreateTimeSlotHandler
 				organizationId
 			});
 		} else {
-			const query = this.timeLogRepository.createQueryBuilder('time_log');
-			timeSlot.timeLogs = await query
+			let query = this.timeLogRepository.createQueryBuilder('time_log');
+			query = query
 				.andWhere(`${query.alias}.tenantId = ${tenantId}`)
 				.andWhere(`${query.alias}.organizationId = ${organizationId}`)
+				.andWhere(`${query.alias}.employeeId = ${employeeId}`)
 				.andWhere(
 					new Brackets((qb: any) => {
-						qb.orWhere(
-							'"startedAt" <= :startedAt AND "stoppedAt" > :startedAt',
-							{
-								startedAt: timeSlot.startedAt
-							}
-						);
-						qb.orWhere(
-							'"startedAt" <= :startedAt AND "stoppedAt" IS NULL',
-							{
-								startedAt: timeSlot.startedAt
-							}
-						);
+						const { startedAt } = timeSlot;
+						qb.orWhere('"startedAt" <= :startedAt AND "stoppedAt" > :startedAt', { startedAt });
+						qb.orWhere('"startedAt" <= :startedAt AND "stoppedAt" IS NULL', { startedAt });
 					})
-				)
-				.getMany();
+				);
+			console.log('Else Timelog Timeslot:', query.getQueryAndParameters());
+			timeSlot.timeLogs = await query.getMany();
 		}
 
 		if (input.activities) {

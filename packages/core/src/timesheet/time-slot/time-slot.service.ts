@@ -64,7 +64,6 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 			],
 			where: (qb: SelectQueryBuilder<TimeSlot>) => {
 				if (request.startDate && request.endDate) {
-
 					let startDate: any = moment.utc(request.startDate);
 					let endDate: any = moment.utc(request.endDate);
 
@@ -76,14 +75,11 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 						endDate = endDate.toDate();
 					}
 
-					console.log({ startDate, endDate });
+					console.log(`Timeslot Date Range startDate=${startDate} and endDate=${endDate}`);
 
 					qb.andWhere(
-						`"${qb.alias}"."startedAt" Between :startDate AND :endDate`,
-						{
-							startDate,
-							endDate
-						}
+						`"${qb.alias}"."startedAt" >= :startDate AND "${qb.alias}"."startedAt" < :endDate`,
+						{ startDate, endDate }
 					);
 				}
 				if (employeeIds) {
@@ -145,6 +141,7 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 					}
 				}
 				qb.addOrderBy(`"${qb.alias}"."createdAt"`, 'ASC');
+				console.log('Timeslots Query:', qb.getQueryAndParameters());
 			}
 		});
 		return logs;

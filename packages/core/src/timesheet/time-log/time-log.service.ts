@@ -674,11 +674,9 @@ export class TimeLogService extends CrudService<TimeLog> {
 				startDate = startDate.toDate();
 				endDate = endDate.toDate();
 			}
-
-			console.log({ startDate, endDate });
-			
+			console.log(`Timelog Date Range startDate=${startDate} and endDate=${endDate}`);
 			qb.andWhere(
-				`"${qb.alias}"."startedAt" Between :startDate AND :endDate`,
+				`"${qb.alias}"."startedAt" >= :startDate AND "${qb.alias}"."startedAt" < :endDate`,
 				{ startDate, endDate }
 			);
 		}
@@ -732,7 +730,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 				tenantId
 			});
 		}
-
+		console.log('Timelogs Query:', qb.getQueryAndParameters());
 		return qb;
 	}
 
