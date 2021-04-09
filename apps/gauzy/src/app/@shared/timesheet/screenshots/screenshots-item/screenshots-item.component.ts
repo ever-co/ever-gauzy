@@ -15,7 +15,7 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { TimesheetService } from '../../timesheet.service';
 import { GalleryItem } from '../../../gallery/gallery.directive';
-import { toLocal } from '@gauzy/common-angular';
+import { isEmpty, toLocal } from '@gauzy/common-angular';
 import { ViewScreenshotsModalComponent } from '../view-screenshots-modal/view-screenshots-modal.component';
 import * as _ from 'underscore';
 import { GalleryService } from '../../../gallery/gallery.service';
@@ -120,8 +120,8 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	isEnableDelete(timeSlot: ITimeSlot): boolean {
 		let isAllow: boolean = true;
 		if (timeSlot.timeLogs.length > 0) {
-			isAllow = !!timeSlot.timeLogs.find(
-				(log: ITimeLog) => log.stoppedAt
+			isAllow = !timeSlot.timeLogs.find((log: ITimeLog) =>
+				isEmpty(log.stoppedAt)
 			);
 		}
 		return isAllow;
