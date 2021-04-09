@@ -28,7 +28,7 @@ export class DeleteTimeSlotHandler
 		const query = this.timeSlotRepository.createQueryBuilder();
 		query.innerJoin(`${query.alias}.employee`, 'employee');
 		query.innerJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs');
-		query.innerJoinAndSelect(`${query.alias}.screenshots`, 'screenshots');
+		query.leftJoinAndSelect(`${query.alias}.screenshots`, 'screenshots');
 		query.andWhere(`"${query.alias}"."id" IN (:...ids)`, { ids });
 
 		if (employeeIds.length) {
