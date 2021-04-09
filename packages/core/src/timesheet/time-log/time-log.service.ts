@@ -851,7 +851,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 		});
 
 		return await this.commandBus.execute(
-			new TimeLogDeleteCommand(timeLogs)
+			new TimeLogDeleteCommand(timeLogs, true)
 		);
 	}
 

@@ -105,7 +105,8 @@ export class CreateTimeSlotHandler
 			timeSlot.timeLogs = await this.timeLogRepository.find({
 				id: In(timeLogIds),
 				tenantId,
-				organizationId
+				organizationId,
+				employeeId
 			});
 		} else {
 			let query = this.timeLogRepository.createQueryBuilder('time_log');
