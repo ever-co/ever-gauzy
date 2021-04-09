@@ -167,10 +167,14 @@ export class DeleteTimeSpanHandler
 
 				if (remainingDuration > 0) {
 					timeLog.stoppedAt = start;
+
+					const startDate: any = moment(timeLog.startedAt).set('second', 0).set('millisecond', 0);
+					const endDate: any = moment(timeLog.stoppedAt).set('second', 0).set('millisecond', 0);
+
 					timeLog.timeSlots = await this.timeSlotService.getTimeSlots(
 						{
-							startDate: startedAt,
-							endDate: moment(stoppedAt).subtract(1, 'second').toDate(),
+							startDate: moment(startDate).toDate(),
+							endDate: moment(endDate).subtract(1, 'second').toDate(),
 							organizationId,
 							tenantId,
 							employeeIds: [employeeId]
@@ -195,9 +199,13 @@ export class DeleteTimeSpanHandler
 
 				const newLog = timeLogClone;
 				newLog.startedAt = end;
+
+				const startDate: any = moment(newLog.startedAt).set('second', 0).set('millisecond', 0);
+				const endDate: any = moment(newLog.stoppedAt).set('second', 0).set('millisecond', 0);
+
 				newLog.timeSlots = await this.timeSlotService.getTimeSlots({
-					startDate: newLog.startedAt,
-					endDate: moment(newLog.stoppedAt).subtract(1, 'second').toDate(),
+					startDate: moment(startDate).toDate(),
+					endDate: moment(endDate).subtract(1, 'second').toDate(),
 					organizationId,
 					tenantId,
 					employeeIds: [employeeId]
