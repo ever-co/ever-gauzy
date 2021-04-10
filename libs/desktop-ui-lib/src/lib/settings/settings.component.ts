@@ -62,6 +62,17 @@ export class SettingsComponent implements OnInit {
 	minimizeOnStartup = null;
 	authSetting = null;
 	currentUser = null;
+	serverTypes = {
+		integrated: 'Integrated',
+		localNetwork: 'Local Network',
+		live: 'Live'
+	};
+
+	serverOptions = [
+		this.serverTypes.integrated,
+		this.serverTypes.localNetwork,
+		this.serverTypes.live
+	];
 
 	constructor(
 		private electronService: ElectronService,
@@ -88,7 +99,7 @@ export class SettingsComponent implements OnInit {
 
 			this.selectPeriod(setting.timer.updatePeriod);
 			this.getUserDetails();
-			
+
 			this._cdr.detectChanges();
 		});
 
@@ -268,8 +279,8 @@ export class SettingsComponent implements OnInit {
 	}
 
 	/*
-	* Get logged in user details 
-	*/
+	 * Get logged in user details
+	 */
 	getUserDetails() {
 		const request = {
 			...this.authSetting,
@@ -283,10 +294,29 @@ export class SettingsComponent implements OnInit {
 	}
 
 	/*
-	* Logout desktop timer 
-	*/
+	 * Logout desktop timer
+	 */
 	logout() {
 		console.log('On Logout');
 		this.electronService.ipcRenderer.send('logout');
+	}
+
+	onServerChange(val) {
+		switch (val) {
+			case this.serverTypes.integrated:
+				this.config.isLocalServer = true;
+				this.config.port = 5620;
+				break;
+			case this.serverTypes.localNetwork:
+				this.config.isLocalServer = false;
+				this.config.serverUrl = 'http://localhost:3000';
+				break;
+			case this.serverTypes.live:
+				this.config.isLocalServer = false;
+				this.config.serverUrl = 'https://api.gauzy.co';
+				break;
+			default:
+				break;
+		}
 	}
 }
