@@ -202,23 +202,11 @@ export class SetupComponent implements OnInit {
 	}
 
 	getThirdPartyConfig() {
-		if (
-			this.desktopFeatures.timeTracking &&
-			this.thirdParty.activitywatch
-		) {
-			return {
-				aw: this.thirdParty.activitywatch,
-				awHost: this.awAPI
-			};
-		}
-
-		if (this.desktopFeatures.timeTracking && this.thirdParty.wakatime) {
-			return {
-				wakatime: this.thirdParty.wakatime
-			};
-		}
-
-		return {};
+		return {
+			aw: this.thirdParty.activitywatch,
+			awHost: this.awAPI,
+			wakatime: this.thirdParty.wakatime
+		};
 	}
 
 	getServerConfig() {
