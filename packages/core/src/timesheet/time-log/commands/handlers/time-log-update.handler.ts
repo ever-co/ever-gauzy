@@ -8,6 +8,7 @@ import { TimesheetFirstOrCreateCommand } from '../../../timesheet/commands/times
 import { TimesheetRecalculateCommand } from '../../../timesheet/commands/timesheet-recalculate.command';
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../../employee/commands';
+import { TimeLogSourceEnum } from '@gauzy/contracts';
 
 @CommandHandler(TimeLogUpdateCommand)
 export class TimeLogUpdateHandler
@@ -28,13 +29,6 @@ export class TimeLogUpdateHandler
 			timeLog = await this.timeLogRepository.findOne(id);
 		}
 
-		const updatedTimeLog = Object.assign({}, timeLog, input);
-
-		const timeSlots = this.timeSlotService.generateTimeSlots(
-			timeLog.startedAt,
-			timeLog.stoppedAt
-		);
-
 		let timesheet: Timesheet;
 		let updateTimeSlots = [];
 		let needToUpdateTimeSlots = false;
@@ -42,6 +36,7 @@ export class TimeLogUpdateHandler
 			needToUpdateTimeSlots = true;
 		}
 
+		const updatedTimeLog = Object.assign({}, timeLog, input);
 		if (needToUpdateTimeSlots) {
 			timesheet = await this.commandBus.execute(
 				new TimesheetFirstOrCreateCommand(
@@ -62,7 +57,13 @@ export class TimeLogUpdateHandler
 		});
 
 		timeLog = await this.timeLogRepository.findOne(timeLog.id);
+		const { timesheetId, organizationId, tenantId, employeeId } = timeLog;
 
+		const timeSlots = this.timeSlotService.generateTimeSlots(
+			timeLog.startedAt,
+			timeLog.stoppedAt
+		);
+		
 		if (needToUpdateTimeSlots) {
 			const startTimes = timeSlots
 				.filter((timeslot) => {
@@ -83,34 +84,36 @@ export class TimeLogUpdateHandler
 				});
 			}
 
-			updateTimeSlots = updateTimeSlots
-				.map((slot) => ({
-					...slot,
-					employeeId: timeLog.employeeId,
-					keyboard: 0,
-					mouse: 0,
-					overall: 0
-				}))
-				.filter((slot) => slot.tenantId && slot.organizationId);
+			if (!manualTimeSlot && timeLog.source === TimeLogSourceEnum.BROWSER) {
+				updateTimeSlots = updateTimeSlots
+					.map((slot) => ({
+						...slot,
+						employeeId,
+						organizationId,
+						tenantId,
+						keyboard: 0,
+						mouse: 0,
+						overall: 0
+					}))
+					.filter((slot) => slot.tenantId && slot.organizationId);
 
-			if (!manualTimeSlot) {
 				updateTimeSlots = await this.timeSlotService.bulkCreate(
 					updateTimeSlots
 				);
+
+				timeLog.timeSlots = updateTimeSlots;
 			}
 
-			timeLog.timeSlots = updateTimeSlots;
 			this.timeLogRepository.save(timeLog);
 
 			await this.commandBus.execute(
-				new TimesheetRecalculateCommand(timeLog.timesheetId)
+				new TimesheetRecalculateCommand(timesheetId)
 			);
 
 			await this.commandBus.execute(
-				new UpdateEmployeeTotalWorkedHoursCommand(timeLog.employeeId)
+				new UpdateEmployeeTotalWorkedHoursCommand(employeeId)
 			);
 		}
-
 		return timeLog;
 	}
 }

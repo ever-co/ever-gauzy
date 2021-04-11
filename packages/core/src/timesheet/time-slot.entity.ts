@@ -4,7 +4,6 @@ import {
 	RelationId,
 	ManyToOne,
 	JoinColumn,
-	AfterLoad,
 	OneToMany,
 	ManyToMany,
 	JoinTable
@@ -19,7 +18,6 @@ import {
 } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsDateString } from 'class-validator';
-import * as moment from 'moment';
 import {
 	Activity,
 	Employee,
@@ -27,10 +25,9 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeLog,
 	TimeSlotMinute
-} from '../core/entities/internal';
+} from './../core/entities/internal';
 
 @Entity('time_slot')
-// @Unique(['employeeId', 'startedAt'])
 export class TimeSlot
 	extends TenantOrganizationBaseEntity
 	implements ITimeSlot {
@@ -45,30 +42,17 @@ export class TimeSlot
 	employeeId: string;
 
 	@ApiProperty({ type: () => Screenshot })
-	@OneToMany(() => Screenshot, (screenshot) => screenshot.timeSlot, {
-		cascade: true,
-		onDelete: 'CASCADE'
-	})
+	@OneToMany(() => Screenshot, (screenshot) => screenshot.timeSlot)
 	@JoinColumn()
 	screenshots?: IScreenshot[];
 
 	@ApiProperty({ type: () => Activity })
-	@OneToMany(() => Activity, (activities) => activities.timeSlot, {
-		cascade: true,
-		onDelete: 'CASCADE'
-	})
+	@OneToMany(() => Activity, (activities) => activities.timeSlot)
 	@JoinColumn()
 	activities?: IActivity[];
 
 	@ApiProperty({ type: () => TimeSlotMinute })
-	@OneToMany(
-		() => TimeSlotMinute,
-		(timeSlotMinute) => timeSlotMinute.timeSlot,
-		{
-			cascade: true,
-			onDelete: 'CASCADE'
-		}
-	)
+	@OneToMany(() => TimeSlotMinute, (timeSlotMinute) => timeSlotMinute.timeSlot)
 	@JoinColumn()
 	timeSlotMinutes?: ITimeSlotMinute[];
 
@@ -104,8 +88,4 @@ export class TimeSlot
 	startedAt: Date;
 
 	stoppedAt?: Date;
-	@AfterLoad()
-	getStoppedAt?() {
-		this.stoppedAt = moment(this.startedAt).add(10, 'minutes').toDate();
-	}
 }

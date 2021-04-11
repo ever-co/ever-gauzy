@@ -25,20 +25,13 @@ import {
 	IsNumber,
 	IsDateString
 } from 'class-validator';
-import {
-	Employee,
-	OrganizationProject,
-	Task,
-	TenantOrganizationBaseEntity,
-	TimeSlot
-} from '../core/entities/internal';
+import { Employee, OrganizationProject, Task, TenantOrganizationBaseEntity, TimeSlot } from './../../core/entities/internal';
 import { getConfig } from '@gauzy/config';
 const config = getConfig();
 
 @Entity('activity')
-export class Activity
-	extends TenantOrganizationBaseEntity
-	implements IActivity {
+export class Activity extends TenantOrganizationBaseEntity implements IActivity {
+
 	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee)
 	@JoinColumn()
@@ -51,7 +44,6 @@ export class Activity
 
 	@ApiProperty({ type: () => OrganizationProject })
 	@ManyToOne(() => OrganizationProject, { nullable: true })
-	@JoinColumn()
 	project?: IOrganizationProject;
 
 	@ApiProperty({ type: () => String, readOnly: true })
@@ -60,14 +52,17 @@ export class Activity
 	projectId?: string;
 
 	@ApiProperty({ type: () => TimeSlot })
-	@ManyToOne(() => TimeSlot, { nullable: true })
-	@JoinColumn()
+	@ManyToOne(() => TimeSlot, (timeSlot) => timeSlot.activities, {
+		nullable: true,
+		cascade: true,
+		onDelete: 'CASCADE'
+	})
 	timeSlot?: ITimeSlot;
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((activity: Activity) => activity.timeSlot)
 	@Column({ nullable: true })
-	timeSlotId?: string;
+	readonly timeSlotId?: string;
 
 	@ApiProperty({ type: () => Task })
 	@ManyToOne(() => Task, { nullable: true })

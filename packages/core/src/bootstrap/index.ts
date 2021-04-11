@@ -6,11 +6,14 @@ import { SentryService } from '@ntegral/nestjs-sentry';
 import * as expressSession from 'express-session';
 import * as helmet from 'helmet';
 import * as chalk from 'chalk';
+import { urlencoded, json } from 'express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { EntitySubscriberInterface } from 'typeorm';
 import { IPluginConfig } from '@gauzy/common';
 import { getConfig, setConfig, environment as env } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
 import { coreEntities } from '../core/entities';
+import { coreSubscribers } from './../core/entities/subscribers';
 import { AppService } from '../app.service';
 import { AppModule } from '../app.module';
 
@@ -18,7 +21,7 @@ export async function bootstrap(
 	pluginConfig?: Partial<IPluginConfig>
 ): Promise<INestApplication> {
 	const config = await registerPluginConfig(pluginConfig);
-
+	
 	const bootstrapModule = await import('./bootstrap.module');
 	const [classname] = Object.keys(bootstrapModule);
 
@@ -30,7 +33,9 @@ export async function bootstrap(
 	);
 
 	app.useLogger(app.get(SentryService));
-
+	app.use(json({ limit: '50mb' }));
+	app.use(urlencoded({ extended: true, limit: '50mb' }));
+  
 	app.enableCors({
 		origin: '*',
 		methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
@@ -108,10 +113,11 @@ export async function registerPluginConfig(
 	const entities = await registerAllEntities(pluginConfig);
 	setConfig({
 		dbConnectionOptions: {
-			entities
+			entities,
+			subscribers: coreSubscribers as Array<Type<EntitySubscriberInterface>>,
 		}
 	});
-
+	
 	let registeredConfig = getConfig();
 	return registeredConfig;
 }

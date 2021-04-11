@@ -144,10 +144,6 @@ export default class Timerhandler {
 	 * Stop timer interval period after stop timer
 	 */
 	stopTimerIntervalPeriod() {
-		if (this.timeSlotStart) {
-			this.timeSlotStart = null;
-		}
-
 		if (this.intevalTimer) {
 			clearInterval(this.intevalTimer);
 			this.intevalTimer = null;
@@ -156,6 +152,8 @@ export default class Timerhandler {
 			clearInterval(this.intervalUpdateTime);
 			this.intervalUpdateTime = null;
 		}
+
+		console.log('Stop Timer Interval Period:', this.timeSlotStart, this.intevalTimer, this.intervalUpdateTime);
 	}
 
 	updateToggle(setupWindow, knex, isStop) {

@@ -15,7 +15,7 @@ export interface GalleryItem {
 	providedIn: 'root'
 })
 export class GalleryService implements OnInit, OnDestroy {
-	dataStore: GalleryItem[] = [];
+	public dataStore: GalleryItem[] = [];
 
 	@Input()
 	items: GalleryItem[] = [];
@@ -37,9 +37,7 @@ export class GalleryService implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe(() => {
-				//if (!this.items) {
 				this.dataStore = [];
-				//}
 			});
 	}
 
@@ -50,12 +48,46 @@ export class GalleryService implements OnInit, OnDestroy {
 			} else {
 				this.dataStore.push(galleryItems);
 			}
-			this.dataStore = _.uniq(
-				this.dataStore,
-				(galleryItem) => galleryItem.fullUrl
-			);
-			this._items.next(this.dataStore);
+			this.pushToGallery();
 		}
+	}
+
+	/*
+	 * Remove gallery images after delete timeslot/timelog
+	 */
+	removeGalleryItems(galleryItems: GalleryItem | GalleryItem[]) {
+		let items: GalleryItem[] = [];
+		if (galleryItems) {
+			if (galleryItems instanceof Array) {
+				items = items.concat(galleryItems);
+			} else {
+				items.push(galleryItems);
+			}
+
+			const ids = items.map((e: any) => e.id);
+			const screenshots = this.dataStore.filter(
+				(e: any) => !ids.includes(e.id)
+			);
+
+			this.dataStore = screenshots;
+			this.pushToGallery();
+		}
+	}
+
+	pushToGallery() {
+		this.dataStore = _.uniq(
+			this.dataStore,
+			(galleryItem) => galleryItem.fullUrl
+		);
+		this._items.next(this.dataStore);
+	}
+
+	/*
+	 * Clear all screenshots after destroy component
+	 */
+	clearGallery() {
+		this.dataStore = [];
+		this._items.next(this.dataStore);
 	}
 
 	ngOnDestroy(): void {}

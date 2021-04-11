@@ -3,27 +3,29 @@
 		<div
 			class="image-contaer curser-pointer"
 			[ngClass]="{ 'select-mode': selectionMode }"
-			(click)="toggleSelect(timeSlot.id)"
+			(click)="toggleSelect(timeSlot)"
 		>
 			<div class="hover">
 				<div class="actions d-flex align-items-center w-100">
-					<nb-checkbox
-						[(ngModel)]="isSelected"
-						(click)="$event.stopPropagation()"
-						(ngModelChange)="toggleSelect(timeSlot.id)"
-					></nb-checkbox>
-					<button
-						class="ml-auto select-hidden"
-						status="danger"
-						nbButton
-						size="tiny"
-						(click)="$event.stopPropagation()"
-						ngxConfirmDialog
-						[message]="'ACTIVITY.DELETE_CONFIRM' | translate"
-						(confirm)="deleteSlot(timeSlot)"
-					>
-						<nb-icon icon="trash-2-outline"></nb-icon>
-					</button>
+					<ng-container *ngIf="timeSlot?.isAllowDelete">
+						<nb-checkbox
+							[(ngModel)]="isSelected"
+							(click)="$event.stopPropagation()"
+							(ngModelChange)="toggleSelect(timeSlot)"
+						></nb-checkbox>
+						<button
+							class="ml-auto select-hidden"
+							status="danger"
+							nbButton
+							size="tiny"
+							(click)="$event.stopPropagation()"
+							ngxConfirmDialog
+							[message]="'ACTIVITY.DELETE_CONFIRM' | translate"
+							(confirm)="deleteSlot(timeSlot)"
+						>
+							<nb-icon icon="trash-2-outline"></nb-icon>
+						</button>
+					</ng-container>
 				</div>
 				<div class="view-button select-hidden">
 					<button

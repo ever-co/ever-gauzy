@@ -7,7 +7,7 @@ import {
 	Post,
 	Body
 } from '@nestjs/common';
-import { Activity } from '../activity.entity';
+import { Activity } from './activity.entity';
 import { CrudController } from '../../core/crud/crud.controller';
 import { ActivityService } from './activity.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';

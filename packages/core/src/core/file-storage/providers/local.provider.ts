@@ -95,7 +95,9 @@ export class LocalProvider extends Provider<LocalProvider> {
 	}
 
 	async deleteFile(file: string): Promise<void> {
-		return await fs.promises.unlink(this.path(file));
+		if (fs.existsSync(this.path(file))) {
+			return await fs.promises.unlink(this.path(file));
+		}
 	}
 
 	async putFile(fileContent: any, path: string = ''): Promise<UploadedFile> {
