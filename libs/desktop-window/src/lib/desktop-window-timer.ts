@@ -36,7 +36,7 @@ const windowSetting = () => {
 			enableRemoteModule: true
 		},
 		width: 400,
-		height: 900,
+		height: 940,
 		title: 'Time Tracker',
 		maximizable: false
 	};

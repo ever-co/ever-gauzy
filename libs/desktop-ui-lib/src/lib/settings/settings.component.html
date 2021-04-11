@@ -207,6 +207,7 @@
 									fullWidth
 									[(ngModel)]="config.serverType"
 									(ngModelChange)="onServerChange($event)"
+									[disabled]="appSetting.timerStarted"
 								>
 									<nb-option
 										*ngFor="let item of serverOptions"
@@ -272,13 +273,77 @@
 								<p>DB Driver</p>
 							</div>
 							<div class="col-7 form-group">
-								<input
+								<nb-select
+									fullWidth
 									[(ngModel)]="config.db"
+									(ngModelChange)="onDriverChange($event)"
+									[disabled]="appSetting.timerStarted"
+								>
+									<nb-option
+										*ngFor="let item of driverOptions"
+										[value]="item"
+										>{{ item }}</nb-option
+									>
+								</nb-select>
+							</div>
+							<div
+								class="col-5 centered-text"
+								*ngIf="config.db === 'postgres'"
+							>
+								<p>DB Host</p>
+							</div>
+							<div
+								class="col-7 form-group"
+								*ngIf="config.db === 'postgres'"
+							>
+								<input
+									[(ngModel)]="config.dbHost"
 									type="text"
 									nbInput
 									fullWidth
-									disabled="true"
 									status="basic"
+									[disabled]="appSetting.timerStarted"
+									(ngModelChange)="portChange($event, 'db')"
+								/>
+							</div>
+							<div
+								class="col-5 centered-text"
+								*ngIf="config.db === 'postgres'"
+							>
+								<p>DB UserName</p>
+							</div>
+							<div
+								class="col-7 form-group"
+								*ngIf="config.db === 'postgres'"
+							>
+								<input
+									[(ngModel)]="config.dbUsername"
+									type="text"
+									nbInput
+									fullWidth
+									status="basic"
+									[disabled]="appSetting.timerStarted"
+									(ngModelChange)="portChange($event, 'db')"
+								/>
+							</div>
+							<div
+								class="col-5 centered-text"
+								*ngIf="config.db === 'postgres'"
+							>
+								<p>DB Password</p>
+							</div>
+							<div
+								class="col-7 form-group"
+								*ngIf="config.db === 'postgres'"
+							>
+								<input
+									[(ngModel)]="config.dbPassword"
+									type="password"
+									nbInput
+									fullWidth
+									status="basic"
+									[disabled]="appSetting.timerStarted"
+									(ngModelChange)="portChange($event, 'db')"
 								/>
 							</div>
 							<div
@@ -379,7 +444,7 @@
 					nbButton
 					status="primary"
 					(click)="restartApp()"
-					[disabled]="restartDisable"
+					[disabled]="restartDisable || appSetting.timerStarted"
 				>
 					Restart App
 				</button>

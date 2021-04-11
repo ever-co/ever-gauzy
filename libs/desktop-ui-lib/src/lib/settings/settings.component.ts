@@ -68,11 +68,16 @@ export class SettingsComponent implements OnInit {
 		live: 'Live'
 	};
 
-	serverOptions = [
-		this.serverTypes.integrated,
-		this.serverTypes.localNetwork,
-		this.serverTypes.live
-	];
+	serverOptions =
+		this.appName === 'gauzy-desktop-timer'
+			? [this.serverTypes.localNetwork, this.serverTypes.live]
+			: [
+					this.serverTypes.integrated,
+					this.serverTypes.localNetwork,
+					this.serverTypes.live
+			  ];
+
+	driverOptions = ['sqlite', 'postgres'];
 
 	constructor(
 		private electronService: ElectronService,
@@ -215,8 +220,7 @@ export class SettingsComponent implements OnInit {
 
 	restartApp() {
 		const newConfig: any = {
-			port: this.config.port,
-			dbPort: this.config.dbPort
+			...this.config
 		};
 		if (this.config.timeTrackerWindow)
 			newConfig.awHost = `http://localhost:${this.config.awPort}`;
@@ -306,6 +310,7 @@ export class SettingsComponent implements OnInit {
 			case this.serverTypes.integrated:
 				this.config.isLocalServer = true;
 				this.config.port = 5620;
+				this.config.serverUrl = null;
 				break;
 			case this.serverTypes.localNetwork:
 				this.config.isLocalServer = false;
@@ -314,6 +319,19 @@ export class SettingsComponent implements OnInit {
 			case this.serverTypes.live:
 				this.config.isLocalServer = false;
 				this.config.serverUrl = 'https://api.gauzy.co';
+				break;
+			default:
+				break;
+		}
+	}
+
+	onDriverChange(val) {
+		switch (val) {
+			case 'sqlite':
+				this.config.db = 'sqlite';
+				break;
+			case 'postgres':
+				this.config.db = 'postgres';
 				break;
 			default:
 				break;
