@@ -187,6 +187,7 @@ export interface ITimeSlot extends IBasePerTenantAndOrganizationEntityModel {
 	startedAt: Date;
 	stoppedAt?: Date;
 	tags?: ITag[];
+	isAllowDelete?: boolean;
 }
 
 export interface ITimeSlotTimeLogs

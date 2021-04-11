@@ -117,8 +117,8 @@ export * from '../../tenant/tenant-setting/tenant-setting.entity';
 export * from '../../tenant/tenant.entity';
 export * from '../../time-off-policy/time-off-policy.entity';
 export * from '../../time-off-request/time-off-request.entity';
-export * from '../../timesheet/activity.entity';
-export * from '../../timesheet/screenshot.entity';
+export * from '../../timesheet/activity/activity.entity';
+export * from '../../timesheet/screenshot/screenshot.entity';
 export * from '../../timesheet/time-log.entity';
 export * from '../../timesheet/time-slot-minute.entity';
 export * from '../../timesheet/time-slot.entity';
@@ -129,3 +129,8 @@ export * from '../../warehouse/warehouse.entity';
 export * from '../../product-option/product-option-group.entity';
 export * from '../../product-option/product-option-group-translation.entity';
 export * from '../../product-option/product-option-translation.entity';
+
+
+//core subscribers
+export * from './../../timesheet/screenshot/screenshot.subscriber';
+export * from './../../timesheet/time-slot/time-slot.subscriber';

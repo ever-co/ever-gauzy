@@ -203,14 +203,18 @@
 								<p>Server Type</p>
 							</div>
 							<div class="col-7 form-group">
-								<input
-									[(ngModel)]="config.serverType"
-									type="text"
-									nbInput
+								<nb-select
 									fullWidth
-									disabled="true"
-									status="basic"
-								/>
+									[(ngModel)]="config.serverType"
+									(ngModelChange)="onServerChange($event)"
+									[disabled]="appSetting.timerStarted"
+								>
+									<nb-option
+										*ngFor="let item of serverOptions"
+										[value]="item"
+										>{{ item }}</nb-option
+									>
+								</nb-select>
 							</div>
 							<div
 								class="col-5 centered-text"
@@ -247,7 +251,10 @@
 									type="text"
 									nbInput
 									fullWidth
-									[disabled]="appSetting.timerStarted"
+									[disabled]="
+										appSetting.timerStarted ||
+										config.serverType === serverTypes.live
+									"
 									status="basic"
 								/>
 							</div>
@@ -266,13 +273,77 @@
 								<p>DB Driver</p>
 							</div>
 							<div class="col-7 form-group">
-								<input
+								<nb-select
+									fullWidth
 									[(ngModel)]="config.db"
+									(ngModelChange)="onDriverChange($event)"
+									[disabled]="appSetting.timerStarted"
+								>
+									<nb-option
+										*ngFor="let item of driverOptions"
+										[value]="item"
+										>{{ item }}</nb-option
+									>
+								</nb-select>
+							</div>
+							<div
+								class="col-5 centered-text"
+								*ngIf="config.db === 'postgres'"
+							>
+								<p>DB Host</p>
+							</div>
+							<div
+								class="col-7 form-group"
+								*ngIf="config.db === 'postgres'"
+							>
+								<input
+									[(ngModel)]="config.dbHost"
 									type="text"
 									nbInput
 									fullWidth
-									disabled="true"
 									status="basic"
+									[disabled]="appSetting.timerStarted"
+									(ngModelChange)="portChange($event, 'db')"
+								/>
+							</div>
+							<div
+								class="col-5 centered-text"
+								*ngIf="config.db === 'postgres'"
+							>
+								<p>DB UserName</p>
+							</div>
+							<div
+								class="col-7 form-group"
+								*ngIf="config.db === 'postgres'"
+							>
+								<input
+									[(ngModel)]="config.dbUsername"
+									type="text"
+									nbInput
+									fullWidth
+									status="basic"
+									[disabled]="appSetting.timerStarted"
+									(ngModelChange)="portChange($event, 'db')"
+								/>
+							</div>
+							<div
+								class="col-5 centered-text"
+								*ngIf="config.db === 'postgres'"
+							>
+								<p>DB Password</p>
+							</div>
+							<div
+								class="col-7 form-group"
+								*ngIf="config.db === 'postgres'"
+							>
+								<input
+									[(ngModel)]="config.dbPassword"
+									type="password"
+									nbInput
+									fullWidth
+									status="basic"
+									[disabled]="appSetting.timerStarted"
+									(ngModelChange)="portChange($event, 'db')"
 								/>
 							</div>
 							<div
@@ -373,7 +444,7 @@
 					nbButton
 					status="primary"
 					(click)="restartApp()"
-					[disabled]="restartDisable"
+					[disabled]="restartDisable || appSetting.timerStarted"
 				>
 					Restart App
 				</button>
@@ -382,7 +453,10 @@
 	</nb-layout-column>
 	<nb-layout-footer fixed>
 		<span *ngIf="currentUser">
-			<p> Signed in as {{ currentUser?.name }} - <a href="javascript:void(0);" (click)="logout()"> Sign Out </a></p>
+			<p>
+				Signed in as {{ currentUser?.name }} -
+				<a href="javascript:void(0);" (click)="logout()"> Sign Out </a>
+			</p>
 		</span>
 	</nb-layout-footer>
 </nb-layout>

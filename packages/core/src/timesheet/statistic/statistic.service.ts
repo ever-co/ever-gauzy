@@ -24,7 +24,7 @@ import { Employee } from '../../employee/employee.entity';
 import { RequestContext } from '../../core/context';
 import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
 import { Task } from '../../tasks/task.entity';
-import { Activity } from '../activity.entity';
+import { Activity } from './../activity/activity.entity';
 import * as moment from 'moment';
 import { TimeLog } from '../time-log.entity';
 import { getConfig } from '@gauzy/config';
@@ -773,7 +773,7 @@ export class StatisticService {
 			delete employee.user_name;
 
 			employee.timeSlots = await this.timeSlotRepository.find({
-				relations: ['screenshots'],
+				relations: ['screenshots', 'timeLogs'],
 				where: {
 					employeeId: employee.id,
 					tenantId

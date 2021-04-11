@@ -209,15 +209,18 @@ function startServer(value, restart = false) {
 		);
 	}
 	const auth = store.get('auth');
-	tray = new TrayIcon(
-		setupWindow,
-		knex,
-		timeTrackerWindow,
-		auth,
-		settingsWindow,
-		{ ...environment },
-		pathWindow
-	);
+
+	if (!tray) {
+		tray = new TrayIcon(
+			setupWindow,
+			knex,
+			timeTrackerWindow,
+			auth,
+			settingsWindow,
+			{ ...environment },
+			pathWindow
+		);
+	}
 
 	/* ping server before launch the ui */
 	ipcMain.on('app_is_init', () => {

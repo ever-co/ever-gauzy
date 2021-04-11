@@ -25,6 +25,7 @@ import { filter } from 'rxjs/operators';
 import _ from 'underscore';
 import { progressStatus } from '@gauzy/common-angular';
 import * as moment from 'moment';
+import { GalleryService } from '../../../@shared/gallery/gallery.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -56,8 +57,9 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	endDate: Date;
 
 	constructor(
-		private timesheetStatisticsService: TimesheetStatisticsService,
-		private store: Store
+		private readonly timesheetStatisticsService: TimesheetStatisticsService,
+		private readonly store: Store,
+		private readonly galleryService: GalleryService
 	) {
 		this.startDate = moment().startOf('week').toDate();
 		this.endDate = moment().endOf('week').toDate();
@@ -238,5 +240,7 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 
 	getMembChartData(member) {}
 
-	ngOnDestroy() {}
+	ngOnDestroy() {
+		this.galleryService.clearGallery();
+	}
 }

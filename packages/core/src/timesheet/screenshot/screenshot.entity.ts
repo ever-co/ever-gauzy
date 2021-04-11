@@ -3,17 +3,17 @@ import {
 	Column,
 	RelationId,
 	ManyToOne,
-	JoinColumn,
-	AfterLoad
+	AfterLoad,
+	BeforeRemove
 } from 'typeorm';
 import { IScreenshot, ITimeSlot } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber, IsDateString } from 'class-validator';
-import { FileStorage } from '../core/file-storage';
+import { FileStorage } from './../../core/file-storage';
 import {
 	TenantOrganizationBaseEntity,
 	TimeSlot
-} from '../core/entities/internal';
+} from './../../core/entities/internal';
 
 @Entity('screenshot')
 export class Screenshot
@@ -21,9 +21,9 @@ export class Screenshot
 	implements IScreenshot {
 	@ApiProperty({ type: () => TimeSlot })
 	@ManyToOne(() => TimeSlot, (timeSlot) => timeSlot.screenshots, {
+		cascade: true,
 		onDelete: 'CASCADE'
 	})
-	@JoinColumn()
 	timeSlot?: ITimeSlot;
 
 	@ApiProperty({ type: () => String, readOnly: true })
@@ -61,4 +61,9 @@ export class Screenshot
 		this.fullUrl = new FileStorage().getProvider().url(this.file);
 		this.thumbUrl = new FileStorage().getProvider().url(this.thumb);
 	}
+
+	@BeforeRemove()
+    beforeRemove() {
+		console.log('Screenshot will be deleted:', this.id);
+    }
 }

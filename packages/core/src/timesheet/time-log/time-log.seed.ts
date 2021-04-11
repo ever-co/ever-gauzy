@@ -13,9 +13,9 @@ import { Timesheet } from '../timesheet.entity';
 import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
 import { createRandomScreenshot } from '../screenshot/screenshot.seed';
 import { createTimeSlots } from '../time-slot/time-slot.seed';
-import { Screenshot } from '../screenshot.entity';
 import { Tenant } from '../../tenant/tenant.entity';
 import { IPluginConfig } from '@gauzy/common';
+import { Screenshot } from './../screenshot/screenshot.entity';
 
 export const createRandomTimeLogs = async (
 	connection: Connection,

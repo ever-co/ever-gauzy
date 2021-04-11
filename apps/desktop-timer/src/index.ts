@@ -120,7 +120,10 @@ try {
 	cancellationToken = new CancellationToken();
 } catch (error) {}
 
-console.log('Time Tracker UI Render Path:', path.join(__dirname, '../../../index.html'));
+console.log(
+	'Time Tracker UI Render Path:',
+	path.join(__dirname, '../../../index.html')
+);
 const pathWindow = {
 	timeTrackerUi: path.join(__dirname, '../../../index.html')
 };
@@ -166,15 +169,18 @@ function startServer(value, restart = false) {
 		knex,
 		pathWindow
 	);
-	tray = new TrayIcon(
-		setupWindow,
-		knex,
-		timeTrackerWindow,
-		auth,
-		settingsWindow,
-		{ ...environment },
-		pathWindow
-	);
+
+	if (!tray) {
+		tray = new TrayIcon(
+			setupWindow,
+			knex,
+			timeTrackerWindow,
+			auth,
+			settingsWindow,
+			{ ...environment },
+			pathWindow
+		);
+	}
 
 	/* ping server before launch the ui */
 	ipcMain.on('app_is_init', () => {

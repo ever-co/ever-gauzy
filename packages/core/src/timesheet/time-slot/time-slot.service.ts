@@ -6,6 +6,7 @@ import { TimeSlot } from '../time-slot.entity';
 import { moment } from '../../core/moment-extend';
 import { RequestContext } from '../../core/context/request-context';
 import { PermissionsEnum, IGetTimeSlotInput } from '@gauzy/contracts';
+import { ConfigService } from '@gauzy/config';
 import { TimeSlotMinute } from '../time-slot-minute.entity';
 import { generateTimeSlots } from './utils';
 import { CommandBus } from '@nestjs/cqrs';
@@ -23,7 +24,8 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 	constructor(
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
-		private readonly commandBus: CommandBus
+		private readonly commandBus: CommandBus,
+		private readonly configService: ConfigService
 	) {
 		super(timeSlotRepository);
 	}
@@ -62,18 +64,22 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 			],
 			where: (qb: SelectQueryBuilder<TimeSlot>) => {
 				if (request.startDate && request.endDate) {
-					const startDate = moment
-						.utc(request.startDate)
-						.format('YYYY-MM-DD HH:mm:ss');
-					const endDate = moment
-						.utc(request.endDate)
-						.format('YYYY-MM-DD HH:mm:ss');
+					let startDate: any = moment.utc(request.startDate);
+					let endDate: any = moment.utc(request.endDate);
+
+					if (this.configService.dbConnectionOptions.type === 'sqlite') {
+						startDate = startDate.format('YYYY-MM-DD HH:mm:ss');
+						endDate = endDate.format('YYYY-MM-DD HH:mm:ss');
+					} else {
+						startDate = startDate.toDate();
+						endDate = endDate.toDate();
+					}
+
+					console.log(`Timeslot Date Range startDate=${startDate} and endDate=${endDate}`);
+
 					qb.andWhere(
-						`"${qb.alias}"."startedAt" Between :startDate AND :endDate`,
-						{
-							startDate,
-							endDate
-						}
+						`"${qb.alias}"."startedAt" >= :startDate AND "${qb.alias}"."startedAt" < :endDate`,
+						{ startDate, endDate }
 					);
 				}
 				if (employeeIds) {
