@@ -8,7 +8,7 @@ import { Store } from '../../../@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import * as _ from 'lodash';
+import * as _ from 'underscore';
 
 export interface IEntityModel {
 	name: string;
@@ -29,6 +29,7 @@ export class ExportComponent
 	implements OnInit {
 	entities: Array<IEntityModel> = [];
 	selectedEntities: string[] = [];
+	selectedModels: Array<IEntityModel> = [];
 	checkedAll = true;
 	organization: IOrganization;
 
@@ -90,24 +91,24 @@ export class ExportComponent
 			)
 		);
 
-		this.selectedEntities = [];
-		this.selectedEntities.push(...singleArray);
+		this.selectedModels = [];
+		this.selectedModels.push(...singleArray);
 
 		multipleArray.forEach((item: any) => {
-			this.selectedEntities.push(...item.entities);
+			this.selectedModels.push(...item.entities);
 			if (item.hasOwnProperty('entities')) {
 				delete item.entities;
 			}
 
-			this.selectedEntities.push(item);
+			this.selectedModels.push(item);
 		});
 
 		this.selectedEntities = _.map(
 			_.filter(
-				this.selectedEntities,
+				this.selectedModels,
 				(checkbox: IEntityModel) => checkbox.checked
 			),
-			(checkbox, i) => {
+			(checkbox: any, i) => {
 				return checkbox.value;
 			}
 		);

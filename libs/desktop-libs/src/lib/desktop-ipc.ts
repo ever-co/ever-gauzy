@@ -246,7 +246,7 @@ export function ipcTimer(
 
 		if (!arg.quitApp) {
 			console.log('TimeLogs:', arg.timeLogs);
-			
+
 			// create new timer entry after create timeslot
 			let timeLogs = arg.timeLogs;
 			timeLogs = _.sortBy(timeLogs, 'createdAt').reverse();

@@ -1,4 +1,4 @@
-import { sample } from 'lodash';
+import { sample } from 'underscore';
 import { IUser } from '@gauzy/contracts';
 import * as moment from 'moment';
 import * as path from 'path';
