@@ -6,7 +6,7 @@ This software is available under an Open Source Licenses ("Community Edition"). 
 
 Alternatively, commercial versions of the software must be used in accordance with the terms and conditions of separate written license agreement between you and Ever Co. LTD. With commercial license, your source code (including your changes) is kept proprietary. You can purchase a commercial licenses at <https://gauzy.co/pricing>.
 
-In addition, Ever Co. LTD holds copyright and/or sufficient licenses to all components of the Gauzy Platform, and therefore can grant, at its sole discretion, the ability for companies, individuals, or organizations to create proprietary modules which may be dynamically linked at runtime with the portions of Ever Platform which fall under our copyright/license umbrella.
+In addition, Ever Co. LTD holds copyright and/or sufficient licenses to all components of the Gauzy Platform, and therefore can grant, at its sole discretion, the ability for companies, individuals, or organizations to create proprietary modules which may be dynamically linked at runtime with the portions of Gauzy Platform which fall under our copyright/license umbrella.
 
 **The default Gauzy™ Platform license, without a valid Gauzy™ Platform Small Business or Gauzy™ Platform Enterprise License agreement, is the Gauzy™ Platform Community Edition License.**
 
