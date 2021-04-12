@@ -17,14 +17,16 @@ export class DeleteTimeSlotHandler
 	) {}
 
 	public async execute(command: DeleteTimeSlotCommand): Promise<boolean> {
-		const { ids } = command;		
+		const { ids } = command;
 		let employeeIds: string[] = [];
 		if (
-			!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+			!RequestContext.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			)
 		) {
 			const user = RequestContext.currentUser();
 			employeeIds = [user.employeeId];
-		} 
+		}
 		const query = this.timeSlotRepository.createQueryBuilder();
 		query.innerJoin(`${query.alias}.employee`, 'employee');
 		query.innerJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs');
@@ -47,17 +49,18 @@ export class DeleteTimeSlotHandler
 			if (timeSlot && timeSlot.timeLogs.length > 0) {
 				const deleteSlotPromise = timeSlot.timeLogs
 					.filter((timeLog) => timeLog.stoppedAt)
-					.map(
-						async (timeLog) => {
-							await this.commandBus.execute(
-								new DeleteTimeSpanCommand(
-									{ start: timeSlot.startedAt, end: timeSlot.stoppedAt },
-									timeLog
-								)
-							);
-							return;
-						}
-					);
+					.map(async (timeLog) => {
+						await this.commandBus.execute(
+							new DeleteTimeSpanCommand(
+								{
+									start: timeSlot.startedAt,
+									end: timeSlot.stoppedAt
+								},
+								timeLog
+							)
+						);
+						return;
+					});
 				await Promise.all(deleteSlotPromise);
 			}
 		});
