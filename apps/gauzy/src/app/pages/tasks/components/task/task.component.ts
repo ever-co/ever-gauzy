@@ -6,7 +6,7 @@ import {
 	RouterEvent,
 	ActivatedRoute
 } from '@angular/router';
-import { uniqBy } from 'lodash';
+import * as _ from 'underscore';
 import { Observable } from 'rxjs';
 import { first, map, tap, filter, debounceTime } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -168,13 +168,16 @@ export class TaskComponent
 		);
 		this.projects$ = this.availableTasks$.pipe(
 			map((tasks: ITask[]): IOrganizationProject[] => {
-				return uniqBy(
+				return _.uniq(
 					tasks
 						.filter((t) => t.project)
 						.map(
 							(task: ITask): IOrganizationProject => task.project
 						),
-					'id'
+					false,
+					function (p) {
+						return p.id;
+					}
 				);
 			})
 		);

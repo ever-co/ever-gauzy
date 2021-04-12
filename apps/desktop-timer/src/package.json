@@ -101,6 +101,7 @@
 		"pg": "^8.3.3",
 		"sound-play": "1.1.0",
 		"auto-launch": "5.0.5",
-		"@sentry/electron": "2.4.0"
+		"@sentry/electron": "2.4.0",
+		"underscore": "^1.13.0"
 	}
 }

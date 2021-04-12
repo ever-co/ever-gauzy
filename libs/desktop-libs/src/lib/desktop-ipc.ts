@@ -10,7 +10,7 @@ import {
 	hasScreenCapturePermission,
 	openSystemPreferences
 } from 'mac-screen-capture-permissions';
-import * as _ from 'lodash';
+import * as _ from 'underscore';
 
 // Import logging for electron and override default console logging
 import log from 'electron-log';
@@ -250,8 +250,6 @@ export function ipcTimer(
 			// create new timer entry after create timeslot
 			let timeLogs = arg.timeLogs;
 			timeLogs = _.sortBy(timeLogs, 'createdAt').reverse();
-
-			console.log('TimeLogs Sort By:', timeLogs);
 
 			const [timeLog] = timeLogs;
 			await timerHandler.createTimer(knex, timeLog);
