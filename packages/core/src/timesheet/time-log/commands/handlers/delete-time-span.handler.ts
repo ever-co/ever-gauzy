@@ -1,14 +1,15 @@
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { TimeLog } from './../../../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { getRepository, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import * as _ from 'underscore';
 import { DeleteTimeSpanCommand } from '../delete-time-span.command';
 import { TimeLogUpdateCommand } from '../time-log-update.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
 import { moment } from '../../../../core/moment-extend';
-import { ITimeLog } from '@gauzy/contracts';
+import { ITimeLog, ITimeSlot } from '@gauzy/contracts';
+import { TimeSlot } from './../../../../core';
 
 @CommandHandler(DeleteTimeSpanCommand)
 export class DeleteTimeSpanHandler
@@ -16,6 +17,9 @@ export class DeleteTimeSpanHandler
 	constructor(
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
+
+		@InjectRepository(TimeSlot)
+		private readonly timeSlotRepository: Repository<TimeSlot>,
 		private readonly commandBus: CommandBus,
 		private readonly timeSlotService: TimeSlotService
 	) {}
@@ -23,18 +27,13 @@ export class DeleteTimeSpanHandler
 	public async execute(command: DeleteTimeSpanCommand) {
 		const { newTime, timeLog } = command;
 		const { start, end } = newTime;
-		const {
-			startedAt,
-			stoppedAt,
-			employeeId,
-			organizationId,
-			tenantId
-		} = timeLog;
+		const { startedAt, stoppedAt, employeeId } = timeLog;
 
 		const newTimeRange = moment.range(start, end);
 		const dbTimeRange = moment.range(startedAt, stoppedAt);
 
 		console.log({ start, end });
+		console.log({ startedAt, stoppedAt });
 		/*
 		 * Check is overlaping time or not.
 		 */
@@ -155,7 +154,6 @@ export class DeleteTimeSpanHandler
 				 * 		DB Start Time (startedAt)	DB Stop Time (stoppedAt)
 				 *  		|--------------------------------------------------|
 				 */
-
 				console.log('Split database time logs in two entries');
 				const remainingDuration = moment(start).diff(
 					moment(startedAt),
@@ -173,34 +171,14 @@ export class DeleteTimeSpanHandler
 
 				if (remainingDuration > 0) {
 					timeLog.stoppedAt = start;
-
-					let startDate: any = moment(startedAt);
-					startDate.set(
-						'minute',
-						startDate.get('minute') - (startDate.get('minute') % 10)
-					);
-					startDate.set('second', 0);
-					startDate.set('millisecond', 0);
-
-					let endDate: any = moment(start);
-					endDate.set(
-						'minute',
-						endDate.get('minute') + (endDate.get('minute') % 10) - 1
-					);
-					endDate.set('second', 59);
-					endDate.set('millisecond', 0);
-
-					timeLog.timeSlots = await this.timeSlotService.getTimeSlots(
-						{
-							startDate: startDate,
-							endDate: endDate,
-							organizationId,
-							tenantId,
-							employeeIds: [employeeId]
-						}
-					);
-					console.log('Existed Timelog Split Entry:', timeLog);
 					await this.timeLogRepository.save(timeLog);
+					await this.syncTimeSlots(timeLog).then((timeSlots) => {
+						console.log(
+							'Existed Timelog Split Entry:',
+							timeLog,
+							timeSlots
+						);
+					});
 				} else {
 					/*
 					 * Delete if remaining duration 0 seconds
@@ -215,53 +193,71 @@ export class DeleteTimeSpanHandler
 				const newLog = timeLogClone;
 				newLog.startedAt = end;
 
-				let startDate: any = moment(end);
-				startDate.set(
-					'minute',
-					startDate.get('minute') - (startDate.get('minute') % 10)
-				);
-				startDate.set('second', 0);
-				startDate.set('millisecond', 0);
-
-				let endDate: any = moment(stoppedAt);
-				endDate.set(
-					'minute',
-					endDate.get('minute') + (endDate.get('minute') % 10) - 1
-				);
-				endDate.set('second', 59);
-				endDate.set('millisecond', 0);
-
-				console.log(
-					'New Time Log:',
-					{
-						startedAt: newLog.startedAt,
-						stoppedAt: newLog.stoppedAt
-					},
-					{ startDate, endDate }
-				);
-
-				newLog.timeSlots = await this.timeSlotService.getTimeSlots({
-					startDate: moment(startDate).toDate(),
-					endDate: moment(endDate).subtract(1, 'second').toDate(),
-					organizationId,
-					tenantId,
-					employeeIds: [employeeId]
-				});
-
 				const newLogRemainingDuration = moment(newLog.stoppedAt).diff(
 					moment(newLog.startedAt),
 					'seconds'
 				);
 
-				console.log('New Timelog Split Entry:', newLog);
 				/*
 				 * Insert if remaining duration is more 0 seconds
 				 */
 				if (newLogRemainingDuration > 0) {
 					await this.timeLogRepository.save(newLog);
+					await this.syncTimeSlots(newLog).then((timeSlots) => {
+						console.log(
+							'New Timelog Split Entry:',
+							newLog,
+							timeSlots
+						);
+						(async () => {
+							if (timeSlots.length) {
+								let timeLogs: ITimeLog[] = [];
+								timeLogs = timeLogs.concat(newLog);
+
+								timeSlots.forEach((timeSlot: ITimeSlot) => {
+									timeSlot.timeLogs = timeLogs;
+								});
+								await this.timeSlotRepository.save(timeSlots);
+							}
+						})();
+					});
 				}
 			}
 		}
 		return true;
+	}
+
+	private async syncTimeSlots(timeLog: ITimeLog) {
+		const {
+			startedAt,
+			stoppedAt,
+			employeeId,
+			organizationId,
+			tenantId
+		} = timeLog;
+
+		let startDate: any = moment(startedAt);
+		startDate.set(
+			'minute',
+			startDate.get('minute') - (startDate.get('minute') % 10)
+		);
+		startDate.set('second', 0);
+		startDate.set('millisecond', 0);
+
+		let endDate: any = moment(stoppedAt);
+		endDate.set(
+			'minute',
+			endDate.get('minute') + (endDate.get('minute') % 10) - 1
+		);
+		endDate.set('second', 59);
+		endDate.set('millisecond', 0);
+
+		return await this.timeSlotService.getTimeSlots({
+			startDate: moment(startDate).toDate(),
+			endDate: moment(endDate).subtract(1, 'second').toDate(),
+			organizationId,
+			tenantId,
+			employeeIds: [employeeId]
+		});
 	}
 }
