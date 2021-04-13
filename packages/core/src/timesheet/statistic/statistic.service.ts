@@ -27,6 +27,7 @@ import { Task } from '../../tasks/task.entity';
 import { Activity } from './../activity/activity.entity';
 import * as moment from 'moment';
 import { TimeLog } from '../time-log.entity';
+import { isNotEmpty } from '@gauzy/common';
 import { getConfig } from '@gauzy/config';
 const config = getConfig();
 
@@ -54,6 +55,7 @@ export class StatisticService {
 
 	async getCounts(request: IGetCountsStatistics): Promise<ICountsStatistics> {
 		const {
+			employeeId,
 			organizationId,
 			startDate,
 			endDate,
@@ -92,7 +94,11 @@ export class StatisticService {
 		) {
 			employeeIds = [user.employeeId];
 		} else {
-			employeeIds = await this.getEmployeesIds(organizationId, tenantId);
+			employeeIds = await this.getEmployeesIds(
+				organizationId,
+				tenantId,
+				employeeId
+			);
 		}
 
 		/*
@@ -217,6 +223,7 @@ export class StatisticService {
 	}
 
 	async getMembers(request: IGetMembersStatistics) {
+		const { employeeId, organizationId } = request;
 		const date = request.date || new Date();
 		const start = moment(date)
 			.utc()
@@ -228,9 +235,29 @@ export class StatisticService {
 			.format('YYYY-MM-DD HH:mm:ss');
 
 		const tenantId = RequestContext.currentTenantId();
+		const user = RequestContext.currentUser();
+
+		/*
+		 *  Get employees id of the organization or get current employee id
+		 */
+		let employeeIds = [];
+		if (
+			user.employeeId ||
+			!RequestContext.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			)
+		) {
+			employeeIds = [user.employeeId];
+		} else {
+			employeeIds = await this.getEmployeesIds(
+				organizationId,
+				tenantId,
+				employeeId
+			);
+		}
 
 		const query = this.employeeRepository.createQueryBuilder();
-		const employees: IMembersStatistics[] = await query
+		query
 			.select(`"${query.alias}".id`)
 			.addSelect(
 				`("user"."firstName" || ' ' ||  "user"."lastName")`,
@@ -247,14 +274,26 @@ export class StatisticService {
 			)
 			.innerJoin(`${query.alias}.user`, 'user')
 			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
-			.where(`"${query.alias}"."organizationId" = :organizationId`, {
-				organizationId: request.organizationId
+			.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+				organizationId
 			})
 			.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId })
 			.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
 				start,
 				end
-			})
+			});
+
+		if (isNotEmpty(employeeIds)) {
+			query
+				.andWhere(`"${query.alias}"."id" IN(:...employeeIds)`, {
+					employeeIds
+				})
+				.andWhere(`"timeLogs"."employeeId" IN(:...employeeIds)`, {
+					employeeIds
+				});
+		}
+
+		let employees: IMembersStatistics[] = await query
 			.addGroupBy(`"${query.alias}"."id"`)
 			.addGroupBy(`"user"."id"`)
 			.orderBy('duration', 'DESC')
@@ -491,6 +530,7 @@ export class StatisticService {
 		const end = moment.utc(date).endOf('week').format();
 		const user = RequestContext.currentUser();
 		const tenantId = user.tenantId;
+		const { employeeId, organizationId } = request;
 		/*
 		 *  Get employees id of the orginization or get current employe id
 		 */
@@ -504,8 +544,9 @@ export class StatisticService {
 			employeeIds = [user.employeeId];
 		} else {
 			employeeIds = await this.getEmployeesIds(
-				request.organizationId,
-				tenantId
+				organizationId,
+				tenantId,
+				employeeId
 			);
 		}
 
@@ -575,6 +616,8 @@ export class StatisticService {
 		const end = moment.utc(date).endOf('week').format();
 		const user = RequestContext.currentUser();
 		const tenantId = user.tenantId;
+		const { employeeId, organizationId } = request;
+
 		/*
 		 *  Get employees id of the orginization or get current employe id
 		 */
@@ -588,8 +631,9 @@ export class StatisticService {
 			employeeIds = [user.employeeId];
 		} else {
 			employeeIds = await this.getEmployeesIds(
-				request.organizationId,
-				tenantId
+				organizationId,
+				tenantId,
+				employeeId
 			);
 		}
 
@@ -634,6 +678,7 @@ export class StatisticService {
 		const end = moment.utc(date).endOf('week').format();
 		const user = RequestContext.currentUser();
 		const tenantId = user.tenantId;
+		const { employeeId, organizationId } = request;
 
 		/*
 		 *  Get employees id of the orginization or get current employe id
@@ -648,8 +693,9 @@ export class StatisticService {
 			employeeIds = [user.employeeId];
 		} else {
 			employeeIds = await this.getEmployeesIds(
-				request.organizationId,
-				tenantId
+				organizationId,
+				tenantId,
+				employeeId
 			);
 		}
 
@@ -719,6 +765,7 @@ export class StatisticService {
 		const end = moment.utc(date).endOf('week').format();
 		const user = RequestContext.currentUser();
 		const tenantId = user.tenantId;
+		const { employeeId, organizationId } = request;
 
 		const query = this.employeeRepository.createQueryBuilder();
 		query
@@ -749,12 +796,16 @@ export class StatisticService {
 			const employeeId = user.employeeId;
 			query.andWhere(`"${query.alias}".id = :employeeId`, { employeeId });
 		} else {
-			query.andWhere(
-				`"${query.alias}"."organizationId" = :organizationId`,
-				{
-					organizationId: request.organizationId
-				}
-			);
+			if (isNotEmpty(employeeId)) {
+				query.andWhere(`"${query.alias}"."id" = :employeeId`, {
+					employeeId
+				});
+			} else {
+				query.andWhere(
+					`"${query.alias}"."organizationId" = :organizationId`,
+					{ organizationId }
+				);
+			}
 		}
 
 		employees = await query
@@ -776,6 +827,7 @@ export class StatisticService {
 				relations: ['screenshots', 'timeLogs'],
 				where: {
 					employeeId: employee.id,
+					organizationId,
 					tenantId
 				},
 				take: 3,
@@ -787,13 +839,25 @@ export class StatisticService {
 		return employees;
 	}
 
-	private async getEmployeesIds(organizationId: string, tenantId: string) {
-		const employees = await this.employeeRepository
-			.createQueryBuilder()
-			.select(['id'])
-			.andWhere('"organizationId" = :organizationId', { organizationId })
-			.andWhere('"tenantId" = :tenantId', { tenantId })
-			.getRawMany();
+	private async getEmployeesIds(
+		organizationId: string,
+		tenantId: string,
+		employeeId?: string
+	) {
+		const query = this.employeeRepository.createQueryBuilder('employee');
+		query.select(['id']);
+
+		if (isNotEmpty(employeeId)) {
+			query.andWhere('"id" = :employeeId', { employeeId });
+		} else {
+			query
+				.andWhere('"organizationId" = :organizationId', {
+					organizationId
+				})
+				.andWhere('"tenantId" = :tenantId', { tenantId });
+		}
+
+		const employees = await query.getRawMany();
 		return _.pluck(employees, 'id');
 	}
 }
