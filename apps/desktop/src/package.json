@@ -102,6 +102,7 @@
 		"@gauzy/core": "file:../../../node_modules/@gauzy",
 		"@gauzy/auth": "file:../../../node_modules/@gauzy",
 		"sound-play": "1.1.0",
-		"@sentry/electron": "2.4.0"
+		"@sentry/electron": "2.4.0",
+		"underscore": "^1.13.0"
 	}
 }
