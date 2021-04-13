@@ -109,6 +109,8 @@ export class StatisticService {
 			`${employeesCountQuery.alias}.timeLogs`,
 			'timeLogs'
 		);
+		employeesCountQuery.innerJoin(`timeLogs.timeSlots`, 'timeSlots');
+
 		if (employeeIds.length) {
 			employeesCountQuery
 				.where({
@@ -140,6 +142,8 @@ export class StatisticService {
 			`${projectsCountQuery.alias}.timeLogs`,
 			'timeLogs'
 		);
+		projectsCountQuery.innerJoin(`timeLogs.timeSlots`, 'timeSlots');
+
 		if (employeeIds.length) {
 			projectsCountQuery
 				.where(`"timeLogs"."employeeId" IN (:...employeeId)`, {
@@ -170,8 +174,9 @@ export class StatisticService {
 			duration: 0
 		};
 		if (employeeIds.length > 0) {
-			const activitiesQuery = await this.timeSlotRepository
-				.createQueryBuilder()
+			const activitiesQuery = this.timeSlotRepository.createQueryBuilder();
+			activitiesQuery
+				.innerJoin(`${activitiesQuery.alias}.timeLogs`, 'timeLogs')
 				.select('AVG(overall)', 'overall')
 				.addSelect('SUM(duration)', 'duration')
 				.where({
@@ -192,8 +197,9 @@ export class StatisticService {
 		};
 
 		if (employeeIds.length > 0) {
-			const activitiesQuery = this.timeSlotRepository
-				.createQueryBuilder()
+			const activitiesQuery = this.timeSlotRepository.createQueryBuilder();
+			activitiesQuery
+				.innerJoin(`${activitiesQuery.alias}.timeLogs`, 'timeLogs')
 				.select('AVG(overall)', 'overall')
 				.addSelect('SUM(duration)', 'duration')
 				.where({
@@ -274,6 +280,7 @@ export class StatisticService {
 			)
 			.innerJoin(`${query.alias}.user`, 'user')
 			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
+			.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
 			.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
 				organizationId
 			})
@@ -302,16 +309,17 @@ export class StatisticService {
 
 		if (employees.length > 0) {
 			let weekTimeSlots: any = await this.timeSlotRepository
-				.createQueryBuilder()
+				.createQueryBuilder('time_slot')
+				.innerJoin('time_slot.timeLogs', 'timeLogs')
 				.select('SUM(duration)', 'duration')
 				.addSelect('AVG(overall)', 'overall')
-				.addSelect('"employeeId"', 'employeeId')
+				.addSelect('time_slot.employeeId', 'employeeId')
 				.where({
 					employeeId: In(_.pluck(employees, 'id')),
 					startedAt: Between(start, end),
 					tenantId
 				})
-				.groupBy('"employeeId"')
+				.groupBy('time_slot.employeeId')
 				.getRawMany();
 
 			weekTimeSlots = _.chain(weekTimeSlots)
@@ -327,10 +335,11 @@ export class StatisticService {
 				.value();
 
 			let dayTimeSlots: any = await this.timeSlotRepository
-				.createQueryBuilder()
+				.createQueryBuilder('time_slot')
+				.innerJoin('time_slot.timeLogs', 'timeLogs')
 				.select('AVG(overall)', 'overall')
 				.addSelect('SUM(duration)', 'duration')
-				.addSelect('"employeeId"', 'employeeId')
+				.addSelect('time_slot.employeeId', 'employeeId')
 				.where({
 					employeeId: In(_.pluck(employees, 'id')),
 					startedAt: Between(
@@ -339,7 +348,7 @@ export class StatisticService {
 					),
 					tenantId
 				})
-				.groupBy('"employeeId"')
+				.groupBy('time_slot.employeeId')
 				.getRawMany();
 
 			dayTimeSlots = _.chain(dayTimeSlots)
@@ -389,16 +398,14 @@ export class StatisticService {
 					.where({ id: member.id })
 					.andWhere(
 						`"timeLogs"."startedAt" BETWEEN :start AND :end`,
-						{
-							start,
-							end
-						}
+						{ start, end }
 					)
 					.andWhere(
 						`"${weekHoursQuery.alias}"."tenantId" = :tenantId`,
 						{ tenantId }
 					)
 					.innerJoin(`${weekHoursQuery.alias}.timeLogs`, 'timeLogs')
+					.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
 					.addGroupBy(
 						`${
 							config.dbConnectionOptions.type === 'sqlite'
@@ -431,7 +438,8 @@ export class StatisticService {
 				}`,
 				`duration`
 			)
-			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs');
+			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
+			.innerJoin(`timeLogs.timeSlots`, 'timeSlots');
 
 		if (
 			(user.employeeId && request.onlyMe) ||
@@ -473,6 +481,7 @@ export class StatisticService {
 				`duration`
 			)
 			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
+			.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
 			.where(
 				`"${totalDurationQuery.alias}"."organizationId" = :organizationId`,
 				{
@@ -513,11 +522,11 @@ export class StatisticService {
 				end
 			}
 		);
-		const totalDueration = await totalDurationQuery.getRawOne();
+		const totalDuration = await totalDurationQuery.getRawOne();
 
 		projects = projects.map((project) => {
 			project.durationPercentage =
-				(project.duration * 100) / totalDueration.duration;
+				(project.duration * 100) / totalDuration.duration;
 			return project;
 		});
 
@@ -564,6 +573,7 @@ export class StatisticService {
 					`duration`
 				)
 				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
+				.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
 				.andWhere(`"timeLogs"."employeeId" IN(:...employeeId)`, {
 					employeeId: employeeIds
 				})
@@ -590,6 +600,7 @@ export class StatisticService {
 					`duration`
 				)
 				.innerJoin(`${totalDurationQuery.alias}.timeLogs`, 'timeLogs')
+				.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
 				.andWhere(`"timeLogs"."employeeId" IN(:...employeeId)`, {
 					employeeId: employeeIds
 				})
@@ -639,7 +650,18 @@ export class StatisticService {
 
 		if (employeeIds.length > 0) {
 			const timeLogs = await this.timeLogRepository.find({
-				relations: ['project', 'employee', 'employee.user'],
+				join: {
+					alias: 'time_log',
+					innerJoin: {
+						timeSlots: 'time_log.timeSlots'
+					}
+				},
+				relations: [
+					'project',
+					'employee',
+					'employee.user',
+					'timeSlots'
+				],
 				where: {
 					employeeId: In(employeeIds),
 					logType: TimeLogType.MANUAL,
@@ -702,6 +724,8 @@ export class StatisticService {
 		if (employeeIds.length > 0) {
 			const query = this.activityRepository.createQueryBuilder();
 			query
+				.innerJoin(`${query.alias}.timeSlot`, 'timeSlot')
+				.innerJoin(`timeSlot.timeLogs`, 'timeLogs')
 				.select(`COUNT("${query.alias}"."id")`, `sessions`)
 				.addSelect(`SUM("${query.alias}"."duration")`, `duration`)
 				.addSelect(`"${query.alias}"."title"`, `title`)
@@ -725,7 +749,9 @@ export class StatisticService {
 			 * Fetch total duration of the week for calculate duration percentage
 			 */
 			const totalDurationQuery = this.activityRepository.createQueryBuilder();
-			const totalDueration = await totalDurationQuery
+			const totalDuration = await totalDurationQuery
+				.innerJoin(`${totalDurationQuery.alias}.timeSlot`, 'timeSlot')
+				.innerJoin(`timeSlot.timeLogs`, 'timeLogs')
 				.select(
 					`SUM("${totalDurationQuery.alias}"."duration")`,
 					`duration`
@@ -747,7 +773,7 @@ export class StatisticService {
 
 			activities = activities.map((activity) => {
 				activity.durationPercentage =
-					(activity.duration * 100) / totalDueration.duration;
+					(activity.duration * 100) / totalDuration.duration;
 				return activity;
 			});
 
@@ -777,6 +803,7 @@ export class StatisticService {
 			)
 			.addSelect(`"user"."imageUrl"`, 'user_image_url')
 			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
+			.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
 			.innerJoin(`${query.alias}.user`, 'user')
 			.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
 				start,
@@ -824,6 +851,12 @@ export class StatisticService {
 			delete employee.user_name;
 
 			employee.timeSlots = await this.timeSlotRepository.find({
+				join: {
+					alias: 'time_slot',
+					innerJoin: {
+						timeLogs: 'time_slot.timeLogs'
+					}
+				},
 				relations: ['screenshots', 'timeLogs'],
 				where: {
 					employeeId: employee.id,

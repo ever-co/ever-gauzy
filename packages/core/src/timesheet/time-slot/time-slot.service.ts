@@ -53,7 +53,7 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 					employee: 'time_slot.employee'
 				},
 				innerJoin: {
-					timeLogs: 'time_slot.timeLogs'
+					timeLog: 'time_slot.timeLogs'
 				}
 			},
 			relations: [
