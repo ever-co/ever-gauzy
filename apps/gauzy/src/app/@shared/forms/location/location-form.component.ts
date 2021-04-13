@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
 import { FormHelpers } from '../helpers';
-import { pick, isEmpty } from 'lodash';
+import { pick, isEmpty } from 'underscore';
 import { ICountry, IGeoLocationCreateObject } from '@gauzy/contracts';
 import { environment as env } from '../../../../environments/environment';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';

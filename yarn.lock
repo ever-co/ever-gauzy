@@ -6217,10 +6217,17 @@
   dependencies:
     source-map "^0.6.1"
 
-"@types/underscore@^1.9.4":
-  version "1.10.24"
-  resolved "https://registry.yarnpkg.com/@types/underscore/-/underscore-1.10.24.tgz#dede004deed3b3f99c4db0bdb9ee21cae25befdd"
-  integrity sha512-T3NQD8hXNW2sRsSbLNjF/aBo18MyJlbw0lSpQHB/eZZtScPdexN4HSa8cByYwTw9Wy7KuOFr81mlDQcQQaZ79w==
+"@types/underscore.string@^0.0.38":
+  version "0.0.38"
+  resolved "https://registry.yarnpkg.com/@types/underscore.string/-/underscore.string-0.0.38.tgz#4081755f005f5691fb7fbd4eff3aabe6066a6c63"
+  integrity sha512-QPMttDInBYkulH/3nON0KnYpEd/RlyE5kUrhuts5d76B/stpjXpDticq+iTluoAsVnVXuGECFhPtuX+aDJdx+A==
+  dependencies:
+    "@types/underscore" "*"
+
+"@types/underscore@*", "@types/underscore@^1.11.1":
+  version "1.11.1"
+  resolved "https://registry.yarnpkg.com/@types/underscore/-/underscore-1.11.1.tgz#5b773d04c44897137485615dbef56a2919b9fa5a"
+  integrity sha512-mW23Xkp9HYgdMV7gnwuzqnPx6aG0J7xg/b7erQszOcyOizWylwCr9cgYM/BVVJHezUDxwyigG6+wCFQwCvyMBw==
 
 "@types/ungap__global-this@^0.3.1":
   version "0.3.1"
@@ -29351,7 +29358,7 @@ split@^1.0.0:
   dependencies:
     through "2"
 
-sprintf-js@1.1.2, sprintf-js@^1.1.2:
+sprintf-js@1.1.2, sprintf-js@^1.0.3, sprintf-js@^1.1.2:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/sprintf-js/-/sprintf-js-1.1.2.tgz#da1765262bf8c0f571749f2ad6c26300207ae673"
   integrity sha512-VE0SOVEHCk7Qc8ulkWw3ntAzXuqf7S2lvwQaDLRnUeIEaKNQJzV6BwmLKhOqT61aGhfUMrXeaBk+oDGCzvhcug==
@@ -31380,10 +31387,23 @@ underscore.deep@~0.5.1:
   resolved "https://registry.yarnpkg.com/underscore.deep/-/underscore.deep-0.5.1.tgz#072671f48d68735c34223fcfef63e69e5276cc2b"
   integrity sha1-ByZx9I1oc1w0Ij/P72PmnlJ2zCs=
 
+underscore.string@^3.3.5:
+  version "3.3.5"
+  resolved "https://registry.yarnpkg.com/underscore.string/-/underscore.string-3.3.5.tgz#fc2ad255b8bd309e239cbc5816fd23a9b7ea4023"
+  integrity sha512-g+dpmgn+XBneLmXXo+sGlW5xQEt4ErkS3mgeN2GFbremYeMBSJKr9Wf2KJplQVaiPY/f7FN6atosWYNm9ovrYg==
+  dependencies:
+    sprintf-js "^1.0.3"
+    util-deprecate "^1.0.2"
+
 underscore@1.x.x, underscore@^1.12.0, underscore@^1.9.1:
   version "1.12.0"
   resolved "https://registry.yarnpkg.com/underscore/-/underscore-1.12.0.tgz#4814940551fc80587cef7840d1ebb0f16453be97"
   integrity sha512-21rQzss/XPMjolTiIezSu3JAjgagXKROtNrYFEOWK109qY1Uv2tVjPTZ1ci2HgvQDA16gHYSthQIJfB+XId/rQ==
+
+underscore@^1.13.0:
+  version "1.13.0"
+  resolved "https://registry.yarnpkg.com/underscore/-/underscore-1.13.0.tgz#3ccdcbb824230fc6bf234ad0ddcd83dff4eafe5f"
+  integrity sha512-sCs4H3pCytsb5K7i072FAEC9YlSYFIbosvM0tAKAlpSSUgD7yC1iXSEGdl5XrDKQ1YUB+p/HDzYrSG2H2Vl36g==
 
 underscore@~1.7.0:
   version "1.7.0"

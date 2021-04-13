@@ -16,7 +16,7 @@ import { v4 as uuid } from 'uuid';
 import { Store } from './store.service';
 import { switchMap, tap } from 'rxjs/operators';
 import { environment } from 'apps/gauzy/src/environments/environment';
-import { cloneDeep } from 'lodash';
+import { clone } from 'underscore';
 import * as moment from 'moment';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -78,7 +78,7 @@ export class HubstaffService {
 		const settingsData = this._entitiesToSync$.getValue();
 		const revertData = {
 			...settingsData,
-			currentValue: cloneDeep(settingsData.previousValue)
+			currentValue: clone(settingsData.previousValue)
 		};
 
 		this._entitiesToSync$.next(revertData);
@@ -86,7 +86,7 @@ export class HubstaffService {
 
 	private _setSettingsValue(items) {
 		this._entitiesToSync$.next({
-			previousValue: cloneDeep(items),
+			previousValue: clone(items),
 			currentValue: items
 		});
 	}
