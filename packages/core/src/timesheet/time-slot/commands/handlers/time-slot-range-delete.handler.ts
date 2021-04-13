@@ -34,8 +34,8 @@ export class TimeSlotRangeDeleteHandler
 		mEnd.set('millisecond', 0);
 
 		if (this.configService.dbConnectionOptions.type === 'sqlite') {
-			mStart = mStart.format('YYYY-MM-DD HH:mm:ss');
-			mEnd = mEnd.format('YYYY-MM-DD HH:mm:ss');
+			mStart = mStart.utc().format('YYYY-MM-DD HH:mm:ss');
+			mEnd = mEnd.utc().format('YYYY-MM-DD HH:mm:ss');
 		} else {
 			mStart = mStart.toDate();
 			mEnd = mEnd.toDate();

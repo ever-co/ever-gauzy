@@ -17,6 +17,10 @@ export class LayoutComponent
 	title: any;
 	tabs: any[] = [
 		{
+			title: this.getTranslation('ACTIVITY.TIME_AND_ACTIVITIES'),
+			route: '/pages/employees/activity/time-activities'
+		},
+		{
 			title: this.getTranslation('ACTIVITY.SCREENSHOTS'),
 			route: '/pages/employees/activity/screenshots'
 		},
@@ -27,10 +31,6 @@ export class LayoutComponent
 		{
 			title: this.getTranslation('ACTIVITY.VISITED_SITES'),
 			route: '/pages/employees/activity/urls'
-		},
-		{
-			title: this.getTranslation('ACTIVITY.TIME_AND_ACTIVITIES'),
-			route: '/pages/employees/activity/time-activities'
 		}
 	];
 
