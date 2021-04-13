@@ -18,14 +18,16 @@ import {
 	IProjectsStatistics,
 	ITasksStatistics,
 	IGetManualTimesStatistics,
-	IManualTimesStatistics
+	IManualTimesStatistics,
+	ISelectedEmployee
 } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { debounceTime, filter, tap, withLatestFrom } from 'rxjs/operators';
 import _ from 'underscore';
 import { progressStatus } from '@gauzy/common-angular';
 import * as moment from 'moment';
 import { GalleryService } from '../../../@shared/gallery/gallery.service';
+import { NgxPermissionsService } from 'ngx-permissions';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -50,36 +52,69 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	memberLoading = true;
 	countsLoading = true;
 	manualTimeLoading = true;
-
 	PermissionsEnum = PermissionsEnum;
 	progressStatus = progressStatus;
 	startDate: Date;
 	endDate: Date;
+	employeeId = null;
+	tenantId: string;
+	organizationId: string;
+	isAllowedMembers: boolean;
 
 	constructor(
 		private readonly timesheetStatisticsService: TimesheetStatisticsService,
 		private readonly store: Store,
-		private readonly galleryService: GalleryService
+		private readonly galleryService: GalleryService,
+		private readonly ngxPermissionsService: NgxPermissionsService
 	) {
 		this.startDate = moment().startOf('week').toDate();
 		this.endDate = moment().endOf('week').toDate();
 	}
 
 	ngOnInit() {
-		this.updateLogs$.pipe(untilDestroyed(this)).subscribe(() => {
-			this.getStatistics();
-		});
-		this.store.selectedOrganization$
+		this.ngxPermissionsService
+			.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+			.then((value: boolean) => {
+				this.isAllowedMembers = value;
+			});
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeOrganization$ = this.store.selectedOrganization$;
+		storeEmployee$
 			.pipe(
-				filter((organization) => !!organization),
+				filter((employee: ISelectedEmployee) => !!employee),
+				debounceTime(200),
+				withLatestFrom(storeOrganization$),
 				untilDestroyed(this)
 			)
-			.subscribe((organization: IOrganization) => {
-				if (organization) {
-					this.organization = organization;
+			.subscribe(([employee]) => {
+				if (employee && this.organization) {
+					this.employeeId = employee.id;
 					this.updateLogs$.next();
 				}
 			});
+		storeOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				debounceTime(200),
+				withLatestFrom(storeEmployee$),
+				untilDestroyed(this)
+			)
+			.subscribe(([organization, employee]) => {
+				this.employeeId = employee ? employee.id : null;
+				if (organization) {
+					this.organization = organization;
+					this.tenantId = this.store.user.tenantId;
+					this.organizationId = organization.id;
+					this.updateLogs$.next();
+				}
+			});
+		this.updateLogs$
+			.pipe(
+				debounceTime(200),
+				tap(() => this.getStatistics()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	getStatistics() {
@@ -88,14 +123,19 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 		this.getActivities();
 		this.getProjects();
 		this.getTasks();
-		this.getMembers();
 		this.getManualTimes();
+
+		if (this.isAllowedMembers) {
+			this.getMembers();
+		}
 	}
 
 	getTimeSlots() {
+		const { tenantId, organizationId, employeeId } = this;
 		const timeSlotRequest: IGetTimeSlotStatistics = {
-			organizationId: this.organization.id,
-			tenantId: this.organization.tenantId
+			tenantId,
+			organizationId,
+			employeeId
 		};
 
 		this.timeSlotLoading = true;
@@ -110,13 +150,15 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	}
 
 	onDelete() {
-		this.getTimeSlots();
+		this.updateLogs$.next();
 	}
 
 	getCounts() {
+		const { tenantId, organizationId, employeeId } = this;
 		const request: IGetCountsStatistics = {
-			organizationId: this.organization.id,
-			tenantId: this.organization.tenantId
+			tenantId,
+			organizationId,
+			employeeId
 		};
 		this.countsLoading = true;
 		this.timesheetStatisticsService
@@ -130,9 +172,11 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	}
 
 	getActivities() {
+		const { tenantId, organizationId, employeeId } = this;
 		const activityRequest: IGetActivitiesStatistics = {
-			organizationId: this.organization.id,
-			tenantId: this.organization.tenantId
+			tenantId,
+			organizationId,
+			employeeId
 		};
 		this.activitiesLoading = true;
 		this.timesheetStatisticsService
@@ -155,9 +199,11 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 			});
 	}
 	getProjects() {
+		const { tenantId, organizationId, employeeId } = this;
 		const projectRequest: IGetProjectsStatistics = {
-			organizationId: this.organization.id,
-			tenantId: this.organization.tenantId
+			tenantId,
+			organizationId,
+			employeeId
 		};
 		this.projectsLoading = true;
 		this.timesheetStatisticsService
@@ -171,9 +217,11 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	}
 
 	getTasks() {
+		const { tenantId, organizationId, employeeId } = this;
 		const taskRequest: IGetTasksStatistics = {
-			organizationId: this.organization.id,
-			tenantId: this.organization.tenantId
+			tenantId,
+			organizationId,
+			employeeId
 		};
 		this.tasksLoading = true;
 		this.timesheetStatisticsService
@@ -187,9 +235,11 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	}
 
 	getManualTimes() {
+		const { tenantId, organizationId, employeeId } = this;
 		const request: IGetManualTimesStatistics = {
-			organizationId: this.organization.id,
-			tenantId: this.organization.tenantId
+			tenantId,
+			organizationId,
+			employeeId
 		};
 		this.manualTimeLoading = true;
 		this.timesheetStatisticsService
@@ -203,9 +253,11 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	}
 
 	getMembers() {
+		const { tenantId, organizationId, employeeId } = this;
 		const memberRequest: IGetMembersStatistics = {
-			organizationId: this.organization.id,
-			tenantId: this.organization.tenantId
+			tenantId,
+			organizationId,
+			employeeId
 		};
 		this.memberLoading = true;
 		this.timesheetStatisticsService

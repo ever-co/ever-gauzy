@@ -84,6 +84,7 @@ export interface IManualTimesStatistics
 export interface IGetMembersStatistics
 	extends IBasePerTenantAndOrganizationEntityModel {
 	date?: Date;
+	employeeId?: string;
 }
 
 export interface IMembersStatistics {
@@ -110,6 +111,7 @@ export interface IGetCountsStatistics
 	onlyMe?: boolean;
 	startDate?: Date;
 	endDate?: Date;
+	employeeId?: string;
 }
 
 export interface ICountsStatistics {
