@@ -52,11 +52,17 @@ export class TimeSlot
 	activities?: IActivity[];
 
 	@ApiProperty({ type: () => TimeSlotMinute })
-	@OneToMany(() => TimeSlotMinute, (timeSlotMinute) => timeSlotMinute.timeSlot)
+	@OneToMany(
+		() => TimeSlotMinute,
+		(timeSlotMinute) => timeSlotMinute.timeSlot
+	)
 	@JoinColumn()
 	timeSlotMinutes?: ITimeSlotMinute[];
 
-	@ManyToMany(() => TimeLog, (timeLogs) => timeLogs.timeSlots)
+	@ManyToMany(() => TimeLog, (timeLogs) => timeLogs.timeSlots, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
 	@JoinTable({
 		name: 'time_slot_time_logs'
 	})

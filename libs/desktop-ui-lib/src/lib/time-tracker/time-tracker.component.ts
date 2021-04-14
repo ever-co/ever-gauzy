@@ -118,15 +118,14 @@ export class TimeTrackerComponent implements AfterViewInit {
 				this.getTodayTime(arg);
 				this.getUserInfo(arg, false);
 
-				if (arg.timeSlotId) {
-					this.getLastTimeSlotImage(arg);
-				}
-
-				setTimeout(() => {
+				(async () => {
 					if (!this.start) {
-						this.removeInvalidTimeLog(arg);
+						await this.removeInvalidTimeLog(arg);
 					}
-				}, 2000);
+					if (arg.timeSlotId) {
+						this.getLastTimeSlotImage(arg);
+					}
+				})();
 			}
 		);
 
@@ -676,17 +675,14 @@ export class TimeTrackerComponent implements AfterViewInit {
 					this.invalidTimeLog = res.filter((x) => !x.stoppedAt);
 					console.log('Invalid Timelog:', this.invalidTimeLog);
 					if (this.invalidTimeLog && this.invalidTimeLog.length > 0) {
-						await Promise.all(
-							this.invalidTimeLog.map(async (x) => {
-								await this.timeTrackerService.deleteInvalidTimeLog(
-									{ ...arg, timeLogId: x.id }
-								);
-								return x;
-							})
+						const timeLogIds = this.invalidTimeLog.map(
+							(timeLog: any) => timeLog.id
 						);
-						return res;
+						await this.timeTrackerService.deleteInvalidTimeLog({
+							...arg,
+							timeLogIds: timeLogIds
+						});
 					}
-					return res;
 				}
 				return res;
 			});

@@ -14,8 +14,9 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { Store } from './../../../../@core/services/store.service';
 import * as moment from 'moment';
+import { toUTC } from '@gauzy/common-angular';
 import { Subject } from 'rxjs';
 import { debounceTime, filter, tap, withLatestFrom } from 'rxjs/operators';
 import { pick } from 'underscore';
@@ -109,6 +110,10 @@ export class DailyStatisticsComponent implements OnInit, AfterViewInit {
 	}
 
 	getCounts() {
+		if (!this.organization || !this.logRequest) {
+			return;
+		}
+
 		const { startDate, endDate } = this.logRequest;
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
@@ -127,8 +132,8 @@ export class DailyStatisticsComponent implements OnInit, AfterViewInit {
 		);
 		const request: IGetCountsStatistics = {
 			...appliedFilter,
-			startDate: moment(startDate).toDate(),
-			endDate: moment(endDate).toDate(),
+			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
 			...(employeeIds.length > 0 ? { employeeIds } : {}),
 			organizationId,
 			tenantId

@@ -55,7 +55,8 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	readonly timesheetId?: string;
 
 	@ManyToMany(() => TimeSlot, (timeLogs) => timeLogs.timeLogs, {
-		cascade: true
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	@JoinTable({
 		name: 'time_slot_time_logs'

@@ -19,10 +19,10 @@ import { TenantPermissionGuard } from '../../shared/guards/auth/tenant-permissio
 export class StatisticController {
 	constructor(private readonly statisticService: StatisticService) {}
 
-	@ApiOperation({ summary: 'Statistics - members' })
+	@ApiOperation({ summary: 'Statistics - counts' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Statistics - members'
+		description: 'Statistics - counts'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
