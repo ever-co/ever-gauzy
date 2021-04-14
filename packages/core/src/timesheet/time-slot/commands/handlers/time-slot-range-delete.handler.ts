@@ -41,6 +41,7 @@ export class TimeSlotRangeDeleteHandler
 			mEnd = mEnd.toDate();
 		}
 
+		console.log('TimeSlot Delete Range:', { mStart, mEnd });
 		const timeslots = await this.timeSlotRepository.find({
 			where: (qb: SelectQueryBuilder<TimeSlot>) => {
 				qb.andWhere(

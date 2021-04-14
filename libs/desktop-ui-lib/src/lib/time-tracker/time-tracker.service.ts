@@ -92,13 +92,15 @@ export class TimeTrackerService {
 			Authorization: `Bearer ${values.token}`,
 			'Tenant-Id': values.tenantId
 		});
+
+		const params = this.toParams({
+			data: JSON.stringify({
+				relations: ['employee', 'tenant', 'employee.organization']
+			})
+		});
+
 		return this.http
-			.get(
-				`${values.apiHost}/api/user/me?data={"relations":  ["employee", "tenant", "employee.organization"]}`,
-				{
-					headers: headers
-				}
-			)
+			.get(`${values.apiHost}/api/user/me`, { params, headers: headers })
 			.pipe()
 			.toPromise();
 	}
@@ -256,13 +258,15 @@ export class TimeTrackerService {
 			'Tenant-Id': values.tenantId
 		});
 
+		const params = this.toParams({
+			logIds: values.timeLogIds
+		});
+
 		return this.http
-			.delete(
-				`${values.apiHost}/api/timesheet/time-log/${values.timeLogId}`,
-				{
-					headers: headers
-				}
-			)
+			.delete(`${values.apiHost}/api/timesheet/time-log`, {
+				params,
+				headers: headers
+			})
 			.pipe()
 			.toPromise();
 	}

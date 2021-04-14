@@ -7,6 +7,7 @@ import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { TimesheetRecalculateCommand } from '../../../timesheet/commands/timesheet-recalculate.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../../employee/commands';
+import { isEmpty } from '@gauzy/common';
 
 @CommandHandler(TimeLogDeleteCommand)
 export class TimeLogDeleteHandler
@@ -18,7 +19,9 @@ export class TimeLogDeleteHandler
 		private readonly timeSlotService: TimeSlotService
 	) {}
 
-	public async execute(command: TimeLogDeleteCommand): Promise<DeleteResult | UpdateResult> {
+	public async execute(
+		command: TimeLogDeleteCommand
+	): Promise<DeleteResult | UpdateResult> {
 		const { ids, forceDelete } = command;
 
 		let timeLogs: TimeLog[];
@@ -36,7 +39,12 @@ export class TimeLogDeleteHandler
 
 		for (let index = 0; index < timeLogs.length; index++) {
 			const timeLog = timeLogs[index];
-			const { employeeId, startedAt, stoppedAt } = timeLog;
+			const { employeeId, startedAt } = timeLog;
+			let { stoppedAt } = timeLog;
+			if (isEmpty(stoppedAt)) {
+				stoppedAt = new Date();
+			}
+
 			await this.timeSlotService.rangeDelete(
 				employeeId,
 				startedAt,
