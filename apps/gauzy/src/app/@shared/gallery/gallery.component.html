@@ -40,12 +40,13 @@
 	<div class="gallery-footer">
 		<div class="thumb-items custom-scroll" #customScroll>
 			<div
-				class="thumb-item"
+				class="thumb-item text-center"
 				*ngFor="let thumb of items; let index = index"
 				[ngClass]="{ 'thumb-item-active': item == thumb }"
 				(click)="setFocus(thumb)"
 			>
 				<img *ngIf="thumb" [src]="thumb?.thumbUrl" />
+				<span>{{ thumb?.recordedAt | dateTimeFormat }}</span>
 			</div>
 		</div>
 	</div>
