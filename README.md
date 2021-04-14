@@ -1,19 +1,19 @@
-# Gauzy Platform
+# Ever Gauzy Platform
 
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/ever-co/ever-gauzy)
 [![Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/gauzy)
 [![Gitter](https://badges.gitter.im/JoinChat.svg)](https://gitter.im/ever-co/ever-gauzy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Get help on Codementor](https://cdn.codementor.io/badges/get_help_github.svg)](https://www.codementor.io/evereq?utm_source=github&utm_medium=button&utm_term=evereq&utm_campaign=github)
 
-Gauzy™ Platform - **Open-Source Business Management Platform** focused on **Fairness** and **Transparency**.
+Ever® Gauzy™ - **Open-Source Business Management Platform** for On-Demand and Sharing Economies.
 
-Gauzy Platform is an Enterprise Resource Planning (ERP), Customer Relationship Management (CRM) and Human Resource Management (HRM) software.
+Ever® Gauzy™ Platform is an Enterprise Resource Planning (ERP), Customer Relationship Management (CRM) and Human Resource Management (HRM) software.
 
 You are welcome to check more information about the platform at our official websites - **<https://gauzy.co>** and **<https://ever.co>**.
 
 ![overview](https://gauzy.co/wp-content/themes/gauzy/assets/img/home/home-1.png)
 
-Gauzy Platform main features:
+Platform main features:
 
 -   Human Resources Management (HRM) with Time Management / Tracking and Employees Performance Monitoring
 -   Customer Relationship Management (CRM)
@@ -23,7 +23,7 @@ Gauzy Platform main features:
 -   Financial and Cost Management (including _Accounting_, _Invoicing_, etc)
 -   Inventory, Supply Chain Management and Production Management
 
-More detailed list of the features available in the Gauzy Platform:
+More detailed list of the features available in the platform:
 
 -   Dashboard (provides overview of different metrics, such as company income / expenses, employees bonuses, etc.)
 -   Time Management / Time Tracking / Activity Tracking / Timesheets
@@ -71,11 +71,11 @@ Read more [About Gauzy](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) 
 
 ### Production (SaaS, WIP)
 
--   Gauzy Platform SaaS at <https://app.gauzy.co> (not used yet in production, it's same as <https://demo.gauzy.co> for now and may be not available yet)
+-   Ever® Gauzy™ Platform SaaS at <https://app.gauzy.co> (not used yet in production, it's same as <https://demo.gauzy.co> for now and may be not available yet)
 
 ### Desktop App
 
--   Download Gauzy Desktop App for your OS from <https://github.com/ever-co/ever-gauzy/releases/tag/v0.1.0>.
+-   Download Ever® Gauzy™ Desktop App for your OS from <https://github.com/ever-co/ever-gauzy/releases/tag/v0.1.0>.
 -   Setup Gauzy Desktop App with default choices in Setup Wizard and run it
 -   Gauzy Desktop App is ready to use.
 -   You can login with `admin@ever.co` and password `admin` to check Admin functionality. Note: such Admin user is not an employee, so you will not be able to track time.
@@ -186,11 +186,11 @@ In a production setup, all client-side to server-side (backend, APIs) communicat
 
 This software is available under following licenses:
 
--   [Gauzy™ Platform Community Edition](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-community-edition-license)
--   [Gauzy™ Platform Small Business](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-small-business-license)
--   [Gauzy™ Platform Enterprise](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-enterprise-license)
+-   [Ever® Gauzy™ Platform Community Edition](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-community-edition-license)
+-   [Ever® Gauzy™ Platform Small Business](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-small-business-license)
+-   [Ever® Gauzy™ Platform Enterprise](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-enterprise-license)
 
-#### The default Gauzy™ Platform license, without a valid Gauzy™ Platform Enterprise or Gauzy™ Platform Small Business License agreement, is the Gauzy™ Platform Community Edition License.
+#### The default Ever® Gauzy™ Platform license, without a valid Ever® Gauzy™ Platform Enterprise or Ever® Gauzy™ Platform Small Business License agreement, is the Ever® Gauzy™ Platform Community Edition License.
 
 #### Please see [LICENSE.md](LICENSE.md) for more information on licenses. You can also [compare our offering](https://ever.co/compare-gauzy/#compare).
 
@@ -198,7 +198,11 @@ This software is available under following licenses:
 
 ## Trademarks
 
-Gauzy™ is a trademark of Ever Co. LTD.  
+**Ever**® is a registered trademark of [Ever Co. LTD](https://ever.co).  
+**Ever® Demand™**, **Ever® Gauzy™** and **Ever® OpenSaaS™**  are all trademarks of [Ever Co. LTD](https://ever.co).
+
+The trademarks may only be used with the written permission of Ever Co. LTD. and may not be used to promote or otherwise market competitive products or services.
+
 All other brand and product names are trademarks, registered trademarks or service marks of their respective holders.
 
 ## Copyright
@@ -218,5 +222,5 @@ All other brand and product names are trademarks, registered trademarks or servi
 
 ## P.S.
 
--   If you interested to run on-demand (delivery) or digital marketplace business, check open-source [Ever Platform](https://github.com/ever-co/ever)
+-   If you interested to run on-demand (delivery) or digital marketplace business, check open-source [Ever Demand Platform](https://github.com/ever-co/ever-demand)
 -   [We are Hiring: remote TypeScript / NestJS / Angular developers](https://github.com/ever-co/jobs#available-positions)
