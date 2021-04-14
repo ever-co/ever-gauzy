@@ -253,8 +253,8 @@ export class DeleteTimeSpanHandler
 		endDate.set('millisecond', 0);
 
 		return await this.timeSlotService.getTimeSlots({
-			startDate,
-			endDate,
+			startDate: moment(startDate).toDate(),
+			endDate: moment(endDate).toDate(),
 			organizationId,
 			tenantId,
 			employeeIds: [employeeId]
