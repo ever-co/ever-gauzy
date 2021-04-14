@@ -28,7 +28,7 @@ import { Activity } from './../activity/activity.entity';
 import * as moment from 'moment';
 import { TimeLog } from '../time-log.entity';
 import { isNotEmpty } from '@gauzy/common';
-import { getConfig } from '@gauzy/config';
+import { ConfigService, getConfig } from '@gauzy/config';
 const config = getConfig();
 
 @Injectable()
@@ -50,7 +50,9 @@ export class StatisticService {
 		private readonly activityRepository: Repository<Activity>,
 
 		@InjectRepository(TimeLog)
-		private readonly timeLogRepository: Repository<TimeLog>
+		private readonly timeLogRepository: Repository<TimeLog>,
+
+		private readonly configService: ConfigService
 	) {}
 
 	async getCounts(request: IGetCountsStatistics): Promise<ICountsStatistics> {
@@ -65,18 +67,20 @@ export class StatisticService {
 		let start: any;
 		let end: any;
 
-		if (startDate) {
-			start = moment(startDate).utc().format('YYYY-MM-DD HH:mm:ss');
-			end = moment(endDate).utc().format('YYYY-MM-DD HH:mm:ss');
+		if (startDate && endDate) {
+			start = moment.utc(startDate);
+			end = moment.utc(endDate);
 		} else {
-			start = moment(date)
-				.utc()
-				.startOf('week')
-				.format('YYYY-MM-DD HH:mm:ss');
-			end = moment(date)
-				.utc()
-				.endOf('week')
-				.format('YYYY-MM-DD HH:mm:ss');
+			start = moment.utc(date).startOf('week');
+			end = moment.utc(date).endOf('week');
+		}
+
+		if (this.configService.dbConnectionOptions.type === 'sqlite') {
+			start = start.format('YYYY-MM-DD HH:mm:ss');
+			end = end.format('YYYY-MM-DD HH:mm:ss');
+		} else {
+			start = start.toDate();
+			end = end.toDate();
 		}
 
 		const user = RequestContext.currentUser();
@@ -174,18 +178,23 @@ export class StatisticService {
 			duration: 0
 		};
 		if (employeeIds.length > 0) {
-			const activitiesQuery = this.timeSlotRepository.createQueryBuilder();
-			activitiesQuery
-				.innerJoin(`${activitiesQuery.alias}.timeLogs`, 'timeLogs')
-				.select('AVG(overall)', 'overall')
-				.addSelect('SUM(duration)', 'duration')
+			const query = this.timeSlotRepository.createQueryBuilder(
+				'time_slot'
+			);
+			query
+				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
+				.select(`AVG(${query.alias}.overall)`, 'overall')
+				.addSelect(`SUM(${query.alias}.duration)`, 'duration')
 				.where({
 					employeeId: In(employeeIds),
-					startedAt: Between(start, end),
 					tenantId,
 					organizationId
-				});
-			weekActivities = await activitiesQuery.getRawOne();
+				})
+				.andWhere(
+					`"${query.alias}"."startedAt" >= :start AND "${query.alias}"."startedAt" < :end`,
+					{ start, end }
+				);
+			weekActivities = await query.getRawOne();
 		}
 
 		/*
@@ -197,21 +206,29 @@ export class StatisticService {
 		};
 
 		if (employeeIds.length > 0) {
-			const activitiesQuery = this.timeSlotRepository.createQueryBuilder();
-			activitiesQuery
-				.innerJoin(`${activitiesQuery.alias}.timeLogs`, 'timeLogs')
-				.select('AVG(overall)', 'overall')
-				.addSelect('SUM(duration)', 'duration')
+			start = moment
+				.utc(date)
+				.startOf('day')
+				.format('YYYY-MM-DD HH:mm:ss');
+			end = moment.utc(date).endOf('day').format('YYYY-MM-DD HH:mm:ss');
+
+			const query = this.timeSlotRepository.createQueryBuilder(
+				'time_slot'
+			);
+			query
+				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
+				.select(`AVG(${query.alias}.overall)`, 'overall')
+				.addSelect(`SUM(${query.alias}.duration)`, 'duration')
 				.where({
 					employeeId: In(employeeIds),
-					startedAt: Between(
-						moment().startOf('day').format('YYYY-MM-DD HH:mm:ss'),
-						moment().endOf('day').format('YYYY-MM-DD HH:mm:ss')
-					),
 					tenantId,
 					organizationId
-				});
-			todayActivities = await activitiesQuery.getRawOne();
+				})
+				.andWhere(
+					`"${query.alias}"."startedAt" >= :start AND "${query.alias}"."startedAt" < :end`,
+					{ start, end }
+				);
+			todayActivities = await query.getRawOne();
 		}
 
 		return {

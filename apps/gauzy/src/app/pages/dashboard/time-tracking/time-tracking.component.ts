@@ -24,7 +24,7 @@ import {
 import { Subject } from 'rxjs';
 import { debounceTime, filter, tap, withLatestFrom } from 'rxjs/operators';
 import _ from 'underscore';
-import { progressStatus } from '@gauzy/common-angular';
+import { progressStatus, toUTC } from '@gauzy/common-angular';
 import * as moment from 'moment';
 import { GalleryService } from '../../../@shared/gallery/gallery.service';
 import { NgxPermissionsService } from 'ngx-permissions';
@@ -154,11 +154,19 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 	}
 
 	getCounts() {
-		const { tenantId, organizationId, employeeId } = this;
+		const {
+			tenantId,
+			organizationId,
+			employeeId,
+			startDate,
+			endDate
+		} = this;
 		const request: IGetCountsStatistics = {
 			tenantId,
 			organizationId,
-			employeeId
+			employeeId,
+			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
 		};
 		this.countsLoading = true;
 		this.timesheetStatisticsService
