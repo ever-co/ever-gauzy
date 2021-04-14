@@ -5,7 +5,7 @@ import { LayoutComponent } from './layout/layout.component';
 const routes: Routes = [
 	{
 		path: '',
-		redirectTo: 'screenshots',
+		redirectTo: 'time-activities',
 		pathMatch: 'full'
 	},
 	{

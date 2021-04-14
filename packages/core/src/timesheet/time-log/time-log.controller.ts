@@ -278,7 +278,7 @@ export class TimeLogController extends CrudController<ITimeLog> {
 	@Delete('/')
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(OrganizationPermissionsEnum.ALLOW_DELETE_TIME)
-	async deleteTimeTime(@Query() query): Promise<any> {
+	async deleteTimeLog(@Query() query): Promise<any> {
 		return this.timeLogService.deleteTimeLog(query.logIds);
 	}
 }

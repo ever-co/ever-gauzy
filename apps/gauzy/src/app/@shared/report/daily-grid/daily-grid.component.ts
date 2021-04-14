@@ -17,6 +17,7 @@ import {
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
+import { toUTC } from '@gauzy/common-angular';
 import { Subject } from 'rxjs';
 import { debounceTime, filter, tap, withLatestFrom } from 'rxjs/operators';
 import { pick } from 'underscore';
@@ -130,6 +131,10 @@ export class DailyGridComponent implements OnInit, AfterViewInit {
 	}
 
 	async getLogs() {
+		if (!this.organization || !this.logRequest) {
+			return;
+		}
+
 		const { startDate, endDate } = this.logRequest;
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
@@ -149,8 +154,8 @@ export class DailyGridComponent implements OnInit, AfterViewInit {
 
 		const request: IGetTimeLogReportInput = {
 			...appliedFilter,
-			startDate: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: moment(endDate).format('YYYY-MM-DD HH:mm:ss'),
+			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
 			...(employeeIds.length > 0 ? { employeeIds } : {}),
 			organizationId,
 			tenantId,

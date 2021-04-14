@@ -249,6 +249,22 @@
 									</div>
 								</div>
 							</div>
+							<div
+								class="col-12"
+								*ngIf="lastScreenCapture.textTime"
+							>
+								<div class="last-screenshot-time">
+									<div class="col-12 center-text">
+										<span
+											>Last screenshot taken at
+											{{
+												lastScreenCapture?.recordedAt
+													| date: 'H:mm'
+											}}</span
+										>
+									</div>
+								</div>
+							</div>
 							<ng-template #dialog let-data let-ref="dialogRef">
 								<nb-card accent="warning">
 									<nb-card-header>Warning</nb-card-header>
@@ -294,7 +310,6 @@
 		>
 			<nb-icon icon="settings-2-outline"></nb-icon>
 			{{ userData.name }}
-			<nb-icon icon="nb-arrow-up"></nb-icon>
 		</button>
 	</nb-layout-footer>
 </nb-layout>

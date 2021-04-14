@@ -28,7 +28,12 @@ import * as _ from 'underscore';
 import { chain, pluck } from 'underscore';
 import { ConfigService } from '@gauzy/config';
 import { CrudService } from '../../core';
-import { Employee, Organization, OrganizationContact, OrganizationProject } from '../../core/entities/internal';
+import {
+	Employee,
+	Organization,
+	OrganizationContact,
+	OrganizationProject
+} from '../../core/entities/internal';
 import { TimeLogCreateCommand } from './commands/time-log-create.command';
 import { TimeLogUpdateCommand } from './commands/time-log-update.command';
 import { TimeLogDeleteCommand } from './commands/time-log-delete.command';
@@ -234,7 +239,8 @@ export class TimeLogService extends CrudService<TimeLog> {
 			join: {
 				alias: 'timeLogs',
 				innerJoin: {
-					employee: 'timeLogs.employee'
+					employee: 'timeLogs.employee',
+					timeSlot: 'timeLogs.timeSlots'
 				}
 			},
 			relations: [
@@ -268,13 +274,11 @@ export class TimeLogService extends CrudService<TimeLog> {
 					new GetTimeLogGroupByProjectCommand(logs)
 				);
 				break;
-
 			case 'client':
 				dailyLogs = await this.commandBus.execute(
 					new GetTimeLogGroupByClientCommand(logs)
 				);
 				break;
-
 			default:
 				dailyLogs = await this.commandBus.execute(
 					new GetTimeLogGroupByDateCommand(logs)
@@ -677,7 +681,9 @@ export class TimeLogService extends CrudService<TimeLog> {
 				endDate = endDate.toDate();
 			}
 
-			console.log(`Timelog Date Range startDate=${startDate} and endDate=${endDate}`);
+			console.log(
+				`Timelog Date Range startDate=${startDate} and endDate=${endDate}`
+			);
 
 			qb.andWhere(
 				`"${qb.alias}"."startedAt" >= :startDate AND "${qb.alias}"."startedAt" < :endDate`,
@@ -708,7 +714,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 				});
 			}
 		}
-		
+
 		if (request.logType) {
 			if (request.logType instanceof Array) {
 				qb.andWhere(`"${qb.alias}"."logType" IN (:...logType)`, {

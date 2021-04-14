@@ -3,6 +3,7 @@ import { Store } from '../../@core/services/store.service';
 import { IOrganization } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { filter } from 'rxjs/operators';
 
 @UntilDestroy({ checkProperties: true })
 @Pipe({
@@ -14,7 +15,10 @@ export class TimeFormatPipe implements PipeTransform, OnDestroy {
 
 	constructor(private store: Store) {
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((org: IOrganization) => {
 				this.format = org ? org.timeFormat : 12;
 			});

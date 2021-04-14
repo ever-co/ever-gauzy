@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { TimeSlot } from '../../../time-slot.entity';
 import { TimeSlotRangeDeleteCommand } from '../time-slot-range-delete.command';
 import * as moment from 'moment';
@@ -34,20 +34,27 @@ export class TimeSlotRangeDeleteHandler
 		mEnd.set('millisecond', 0);
 
 		if (this.configService.dbConnectionOptions.type === 'sqlite') {
-			mStart = mStart.format('YYYY-MM-DD HH:mm:ss');
-			mEnd = mEnd.format('YYYY-MM-DD HH:mm:ss');
+			mStart = mStart.utc().format('YYYY-MM-DD HH:mm:ss');
+			mEnd = mEnd.utc().format('YYYY-MM-DD HH:mm:ss');
 		} else {
 			mStart = mStart.toDate();
 			mEnd = mEnd.toDate();
 		}
 
+		console.log('TimeSlot Delete Range:', { mStart, mEnd });
 		const timeslots = await this.timeSlotRepository.find({
-			where : {
-				employeeId: employeeId,
-				startedAt: Between(mStart, mEnd)
+			where: (qb: SelectQueryBuilder<TimeSlot>) => {
+				qb.andWhere(
+					`"${qb.alias}"."startedAt" >= :startDate AND "${qb.alias}"."startedAt" < :endDate`,
+					{ startDate: mStart, endDate: mEnd }
+				);
+				qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
+					employeeId
+				});
 			},
 			relations: ['screenshots']
 		});
+		console.log('Delete TimeSlot Range:', timeslots);
 		await this.timeSlotRepository.remove(timeslots);
 		return true;
 	}

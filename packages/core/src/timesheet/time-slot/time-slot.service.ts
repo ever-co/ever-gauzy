@@ -46,11 +46,13 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 			employeeIds = [user.employeeId];
 		}
 
-		const logs = await this.timeSlotRepository.find({
+		const slots = await this.timeSlotRepository.find({
 			join: {
 				alias: 'time_slot',
 				leftJoin: {
-					employee: 'time_slot.employee',
+					employee: 'time_slot.employee'
+				},
+				innerJoin: {
 					timeLog: 'time_slot.timeLogs'
 				}
 			},
@@ -64,10 +66,16 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 			],
 			where: (qb: SelectQueryBuilder<TimeSlot>) => {
 				if (request.startDate && request.endDate) {
+					console.log(
+						`Timeslot Date Range Before startDate=${request.startDate} and endDate=${request.endDate}`
+					);
+
 					let startDate: any = moment.utc(request.startDate);
 					let endDate: any = moment.utc(request.endDate);
 
-					if (this.configService.dbConnectionOptions.type === 'sqlite') {
+					if (
+						this.configService.dbConnectionOptions.type === 'sqlite'
+					) {
 						startDate = startDate.format('YYYY-MM-DD HH:mm:ss');
 						endDate = endDate.format('YYYY-MM-DD HH:mm:ss');
 					} else {
@@ -75,7 +83,9 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 						endDate = endDate.toDate();
 					}
 
-					console.log(`Timeslot Date Range startDate=${startDate} and endDate=${endDate}`);
+					console.log(
+						`Timeslot Date Range After startDate=${startDate} and endDate=${endDate}`
+					);
 
 					qb.andWhere(
 						`"${qb.alias}"."startedAt" >= :startDate AND "${qb.alias}"."startedAt" < :endDate`,
@@ -143,7 +153,7 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 				qb.addOrderBy(`"${qb.alias}"."createdAt"`, 'ASC');
 			}
 		});
-		return logs;
+		return slots;
 	}
 
 	async bulkCreateOrUpdate(slots) {
