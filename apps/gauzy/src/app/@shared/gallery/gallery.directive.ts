@@ -15,6 +15,7 @@ import * as _ from 'underscore';
 export interface GalleryItem {
 	thumbUrl: string;
 	fullUrl: string;
+	recordedAt?: Date;
 }
 
 @Directive({
