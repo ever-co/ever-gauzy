@@ -41,6 +41,7 @@ export class ActivityService extends CrudService<Activity> {
 		query.addSelect(`SUM("${query.alias}"."duration")`, `duration`);
 		query.addSelect(`"${query.alias}"."employeeId"`, `employeeId`);
 		query.addSelect(`"${query.alias}"."date"`, `date`);
+
 		if (config.dbConnectionOptions.type === 'sqlite') {
 			query.addSelect(`time("${query.alias}"."time")`, `time`);
 		} else {
@@ -179,6 +180,7 @@ export class ActivityService extends CrudService<Activity> {
 		}
 
 		query.innerJoin(`${query.alias}.employee`, 'employee');
+		query.innerJoin(`${query.alias}.timeSlot`, 'timeSlot');
 		query.where((qb) => {
 			if (request.startDate && request.endDate) {
 				let startDate: any = moment.utc(request.startDate);
