@@ -13,7 +13,7 @@ import {
 	OrganizationAction
 } from '@gauzy/contracts';
 import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
-import { filter, first } from 'rxjs/operators';
+import { filter, first, tap } from 'rxjs/operators';
 import { EmployeesService } from '../../../../../@core/services';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
 import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
@@ -43,16 +43,16 @@ export class EditOrganizationMainComponent
 	currency: string;
 
 	constructor(
-		private router: Router,
-		private fb: FormBuilder,
-		private employeesService: EmployeesService,
-		private organizationService: OrganizationsService,
-		private toastrService: ToastrService,
-		private organizationEditStore: OrganizationEditStore,
+		private readonly router: Router,
+		private readonly fb: FormBuilder,
+		private readonly employeesService: EmployeesService,
+		private readonly organizationService: OrganizationsService,
+		private readonly toastrService: ToastrService,
+		private readonly organizationEditStore: OrganizationEditStore,
 		readonly translateService: TranslateService,
-		private store: Store,
-		private cdr: ChangeDetectorRef,
-		private errorHandler: ErrorHandlingService
+		private readonly store: Store,
+		private readonly cdr: ChangeDetectorRef,
+		private readonly errorHandler: ErrorHandlingService
 	) {
 		super(translateService);
 	}
@@ -67,10 +67,14 @@ export class EditOrganizationMainComponent
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
+				tap((organization) => (this.imageUrl = organization.imageUrl)),
 				untilDestroyed(this)
 			)
 			.subscribe((organization) => {
-				this.imageUrl = organization.imageUrl;
 				this._loadOrganizationData(organization);
 			});
 	}
@@ -103,10 +107,14 @@ export class EditOrganizationMainComponent
 					...this.form.getRawValue()
 				})
 				.then((organization: IOrganization) => {
-					this.organizationEditStore.organizationAction = {
-						organization,
-						action: OrganizationAction.UPDATED
-					};
+					if (organization) {
+						this.organizationEditStore.organizationAction = {
+							organization,
+							action: OrganizationAction.UPDATED
+						};
+						this.store.selectedOrganization = organization;
+					}
+
 					this.toastrService.success(
 						`TOASTR.MESSAGE.MAIN_ORGANIZATION_UPDATED`,
 						{
@@ -168,15 +176,13 @@ export class EditOrganizationMainComponent
 		if (!organization) {
 			return;
 		}
-		const id = organization.id;
+		const { id } = organization;
 		const { tenantId } = this.store.user;
 		const { items } = await this.organizationService.getAll(
 			['contact', 'tags'],
-			{
-				id,
-				tenantId
-			}
+			{ id, tenantId }
 		);
+
 		this.organization = items[0];
 		this.organizationEditStore.selectedOrganization = this.organization;
 

@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { IOrganization } from '@gauzy/contracts';
+import { IOrganization, OrganizationAction } from '@gauzy/contracts';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
 import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
 import { filter, tap } from 'rxjs/operators';
@@ -34,12 +34,12 @@ export class EditOrganizationLocationComponent
 	leafletTemplate: LeafletMapComponent;
 
 	constructor(
-		private router: Router,
-		private fb: FormBuilder,
-		private organizationService: OrganizationsService,
-		private toastrService: ToastrService,
-		private organizationEditStore: OrganizationEditStore,
-		private store: Store,
+		private readonly router: Router,
+		private readonly fb: FormBuilder,
+		private readonly organizationService: OrganizationsService,
+		private readonly toastrService: ToastrService,
+		private readonly organizationEditStore: OrganizationEditStore,
+		private readonly store: Store,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -77,7 +77,17 @@ export class EditOrganizationLocationComponent
 			contact
 		};
 
-		this.organizationService.update(this.organization.id, contactData);
+		this.organizationService
+			.update(this.organization.id, contactData)
+			.then((organization: IOrganization) => {
+				if (organization) {
+					this.organizationEditStore.organizationAction = {
+						organization,
+						action: OrganizationAction.UPDATED
+					};
+					this.store.selectedOrganization = organization;
+				}
+			});
 		this.toastrService.success(
 			`TOASTR.MESSAGE.ORGANIZATION_LOCATION_UPDATED`,
 			{
@@ -125,7 +135,7 @@ export class EditOrganizationLocationComponent
 		if (!organization) {
 			return;
 		}
-		const id = organization.id;
+		const { id } = organization;
 		const { tenantId } = this.store.user;
 		const { items } = await this.organizationService.getAll(
 			['contact', 'tags'],
