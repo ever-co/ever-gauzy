@@ -178,6 +178,7 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 					})
 					.groupBy('hours')
 					.mapObject((value, key) => {
+						value = value.slice(0, 6);
 						const sum = _.reduce(
 							value,
 							(memo, activity) =>

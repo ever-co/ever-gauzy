@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { IOrganization } from '@gauzy/contracts';
+import { IOrganization, RegionsEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter } from 'rxjs/operators';
 import * as moment from 'moment';
@@ -14,6 +14,7 @@ import { isEmpty } from '@gauzy/common-angular';
 export class DateTimeFormatPipe implements PipeTransform {
 	timeFormat: number;
 	dateFormat: string;
+	regionCode: string;
 
 	constructor(private store: Store) {
 		this.store.selectedOrganization$
@@ -22,6 +23,8 @@ export class DateTimeFormatPipe implements PipeTransform {
 				untilDestroyed(this)
 			)
 			.subscribe((organization: IOrganization) => {
+				let [regionCode] = Object.keys(RegionsEnum);
+				this.regionCode = organization.regionCode || regionCode;
 				this.dateFormat = organization.dateFormat || 'd MMMM, y H:mm';
 				this.timeFormat = organization.timeFormat || 12;
 			});
@@ -30,7 +33,6 @@ export class DateTimeFormatPipe implements PipeTransform {
 	transform(
 		value: Date | string | number | null | undefined,
 		format?: string,
-		timezone?: string,
 		locale?: string
 	) {
 		let date = moment(value);
@@ -38,10 +40,18 @@ export class DateTimeFormatPipe implements PipeTransform {
 			date = moment.utc(value);
 		}
 
-		if (!isEmpty(format)) {
-			this.dateFormat = format;
+		if (isEmpty(format)) {
+			let timeFormat = 'HH:mm:ss';
+			if (this.timeFormat === 12) {
+				timeFormat = 'hh:mm:ss A';
+			}
+			format = `${this.dateFormat} ${timeFormat}`;
 		}
 
-		return date.format(this.dateFormat);
+		if (isEmpty(locale)) {
+			locale = this.regionCode;
+		}
+
+		return date.locale(locale).format(format);
 	}
 }
