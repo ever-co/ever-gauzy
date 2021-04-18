@@ -241,7 +241,12 @@ export class TimeTrackerComponent implements AfterViewInit {
 			}
 		);
 
+		this.electronService.ipcRenderer.on('device_sleep', () => {
+			this.toggleStart(false);
+		});
+
 		this.electronService.ipcRenderer.on('device_wakeup', () => {
+			_cdr.detectChanges();
 			let elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
 			elBtn.click();
 		});
@@ -651,18 +656,7 @@ export class TimeTrackerComponent implements AfterViewInit {
 							this.deleteTimeSlot();
 							break;
 						case this.dialogType.timeTrackingOption.name:
-							this.electronService.ipcRenderer.send(
-								'time_tracking_status',
-								false
-							);
-							break;
-						default:
-							break;
-					}
-				} else {
-					switch (option.type) {
-						case this.dialogType[option.type].name:
-							this.toggleStart(false);
+							this.toggleStart(true);
 							break;
 						default:
 							break;

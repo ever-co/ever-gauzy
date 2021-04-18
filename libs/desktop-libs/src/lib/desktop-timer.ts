@@ -22,26 +22,25 @@ export default class Timerhandler {
 	notificationDesktop = new NotificationDesktop();
 	timeSlotStart = null;
 	isPaused = false;
-	totalSeconds = 0;
-	timeSlotDuration = 0;
 	listener = false;
 
 	startTimer(setupWindow, knex, timeTrackerWindow, timeLog) {
 		// store timer is start to electron-store
-		this.totalSeconds = 0;
-		this.timeSlotDuration = 0;
 		if (!this.listener) {
 			this.listener = true;
 			powerMonitor.on('lock-screen', () => {
 				const appSetting = LocalStore.getStore('appSetting');
 				if (this.intevalTimer && !appSetting.trackOnPcSleep) {
 					this.isPaused = true;
+					timeTrackerWindow.webContents.send('device_sleep');
 				}
 			});
 
 			powerMonitor.on('unlock-screen', () => {
+				// this.isPaused = false;
 				const appSetting = LocalStore.getStore('appSetting');
-				if (this.intevalTimer && !appSetting.trackOnPcSleep) {
+				if (this.isPaused && !appSetting.trackOnPcSleep) {
+					this.isPaused = false;
 					timeTrackerWindow.webContents.send('device_wakeup');
 				}
 			});
@@ -67,7 +66,7 @@ export default class Timerhandler {
 			/*
 			 * Start time interval for get set activities and screenshots
 			 */
-			// this.startTimerIntervalPeriod(setupWindow, knex);
+			this.startTimerIntervalPeriod(setupWindow, knex);
 
 			/*
 			 * Create screenshots at begining of timer
@@ -83,83 +82,57 @@ export default class Timerhandler {
 	 */
 	collectActivities(setupWindow, knex, timeTrackerWindow) {
 		const projectInfo = LocalStore.getStore('project');
-		const appSetting = LocalStore.getStore('appSetting');
-		const updatePeriod =
-			appSetting.timer.updatePeriod * 60; /* Minutes to Seconds*/
-		const timeSlotStartAt = this.timeSlotStart || this.timeStart;
-		this.timeSlotStart = moment();
 		this.intevalTimer = setInterval(() => {
 			try {
-				if (!this.isPaused) {
-					this.totalSeconds = this.totalSeconds + 1;
-					this.timeSlotDuration = this.timeSlotDuration + 1;
-					TimerData.updateDurationOfTimer(knex, {
-						id: this.lastTimer.id,
-						durations: this.totalSeconds * 1000
+				console.log('paused status', this.isPaused);
+				TimerData.updateDurationOfTimer(knex, {
+					id: this.lastTimer.id,
+					durations: moment().diff(
+						moment(this.timeSlotStart),
+						'milliseconds'
+					)
+				});
+
+				if (projectInfo && projectInfo.aw && projectInfo.aw.isAw) {
+					setupWindow.webContents.send('collect_data', {
+						start: this.timeSlotStart.utc().format(),
+						end: moment().utc().format(),
+						tpURL: projectInfo.aw.host,
+						tp: 'aw',
+						timerId: this.lastTimer.id
 					});
 
-					if (projectInfo && projectInfo.aw && projectInfo.aw.isAw) {
-						setupWindow.webContents.send('collect_data', {
-							start: this.timeSlotStart.utc().format(),
-							end: moment().utc().format(),
-							tpURL: projectInfo.aw.host,
-							tp: 'aw',
-							timerId: this.lastTimer.id
-						});
-
-						setupWindow.webContents.send('collect_afk', {
-							start: this.timeSlotStart.utc().format(),
-							end: moment().utc().format(),
-							tpURL: projectInfo.aw.host,
-							tp: 'aw',
-							timerId: this.lastTimer.id
-						});
-
-						setupWindow.webContents.send(
-							'collect_chrome_activities',
-							{
-								start: this.timeSlotStart.utc().format(),
-								end: moment().utc().format(),
-								tpURL: projectInfo.aw.host,
-								tp: 'aw',
-								timerId: this.lastTimer.id
-							}
-						);
-
-						setupWindow.webContents.send(
-							'collect_firefox_activities',
-							{
-								start: this.timeSlotStart.utc().format(),
-								end: moment().utc().format(),
-								tpURL: projectInfo.aw.host,
-								tp: 'aw',
-								timerId: this.lastTimer.id
-							}
-						);
-					}
-
-					this.calculateTimeRecord();
-					timeTrackerWindow.webContents.send('timer_push', {
-						second: this.timeRecordSecond,
-						minute: this.timeRecordMinute,
-						hours: this.timeRecordHours
+					setupWindow.webContents.send('collect_afk', {
+						start: this.timeSlotStart.utc().format(),
+						end: moment().utc().format(),
+						tpURL: projectInfo.aw.host,
+						tp: 'aw',
+						timerId: this.lastTimer.id
 					});
 
-					/* upload recorded timer and activity to server */
-					if (
-						this.totalSeconds > 0 &&
-						this.totalSeconds % updatePeriod === 0
-					) {
-						const capturedDuration = this.timeSlotDuration;
-						this.uploadTimerToHost(
-							setupWindow,
-							knex,
-							timeSlotStartAt,
-							capturedDuration
-						);
-						this.timeSlotDuration = 0;
-					}
+					setupWindow.webContents.send('collect_chrome_activities', {
+						start: this.timeSlotStart.utc().format(),
+						end: moment().utc().format(),
+						tpURL: projectInfo.aw.host,
+						tp: 'aw',
+						timerId: this.lastTimer.id
+					});
+
+					setupWindow.webContents.send('collect_firefox_activities', {
+						start: this.timeSlotStart.utc().format(),
+						end: moment().utc().format(),
+						tpURL: projectInfo.aw.host,
+						tp: 'aw',
+						timerId: this.lastTimer.id
+					});
 				}
+
+				this.calculateTimeRecord();
+				timeTrackerWindow.webContents.send('timer_push', {
+					second: this.timeRecordSecond,
+					minute: this.timeRecordMinute,
+					hours: this.timeRecordHours
+				});
 			} catch (error) {
 				console.log('errr', error);
 			}
@@ -167,25 +140,32 @@ export default class Timerhandler {
 	}
 
 	calculateTimeRecord() {
-		this.timeRecordHours = Math.floor(this.totalSeconds / 3600);
-		this.totalSeconds %= 3600;
-		this.timeRecordMinute = Math.floor(this.totalSeconds / 60);
-		this.timeRecordSecond = this.totalSeconds % 60;
+		const now = moment();
+		this.timeRecordSecond = now.diff(moment(this.timeStart), 'seconds');
+		this.timeRecordHours = now.diff(moment(this.timeStart), 'hours');
+		this.timeRecordMinute = now.diff(moment(this.timeStart), 'minutes');
 	}
 
-	async uploadTimerToHost(
-		setupWindow,
-		knex,
-		timeSlotStartAt,
-		capturedDuration
-	) {
-		await this.getSetActivity(
-			knex,
-			setupWindow,
-			timeSlotStartAt,
-			false,
-			capturedDuration
-		);
+	startTimerIntervalPeriod(setupWindow, knex) {
+		const appSetting = LocalStore.getStore('appSetting');
+		const updatePeriod = appSetting.timer.updatePeriod;
+		console.log('Update Period:', updatePeriod, 60 * 1000 * updatePeriod);
+
+		this.timeSlotStart = moment();
+		console.log('Timeslot Start Time', this.timeSlotStart);
+
+		this.intervalUpdateTime = setInterval(async () => {
+			console.log('Last Time Id:', this.lastTimer.id);
+
+			await this.getSetActivity(
+				knex,
+				setupWindow,
+				this.timeSlotStart,
+				false
+			);
+			console.log('Timeslot Start Time', this.timeSlotStart);
+			this.timeSlotStart = moment();
+		}, 60 * 1000 * updatePeriod);
 	}
 
 	/*
@@ -225,13 +205,7 @@ export default class Timerhandler {
 		});
 	}
 
-	async getSetActivity(
-		knex,
-		setupWindow,
-		lastTimeSlot,
-		quitApp,
-		capturedDuration
-	) {
+	async getSetActivity(knex, setupWindow, lastTimeSlot, quitApp) {
 		const now = moment();
 		const userInfo = LocalStore.beforeRequestParams();
 		const appSetting = LocalStore.getStore('appSetting');
@@ -311,7 +285,7 @@ export default class Timerhandler {
 		// send Activity to gauzy
 		setupWindow.webContents.send('set_time_slot', {
 			...userInfo,
-			duration: capturedDuration,
+			duration: now.diff(moment(lastTimeSlot), 'seconds'),
 			keyboard: Math.round(duration),
 			mouse: Math.round(duration),
 			overall: Math.round(duration),
@@ -327,7 +301,6 @@ export default class Timerhandler {
 	}
 
 	stopTime(setupWindow, timeTrackerWindow, knex, quitApp) {
-		this.isPaused = false;
 		const appSetting = LocalStore.getStore('appSetting');
 		appSetting.timerStarted = false;
 
@@ -382,8 +355,7 @@ export default class Timerhandler {
 				knex,
 				setupWindow,
 				this.timeSlotStart,
-				quitApp,
-				this.timeSlotDuration
+				quitApp
 			);
 		}
 	}
