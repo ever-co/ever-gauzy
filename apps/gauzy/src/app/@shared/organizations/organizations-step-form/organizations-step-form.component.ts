@@ -27,7 +27,8 @@ import {
 	ITag,
 	ICurrency,
 	IUser,
-	CurrenciesEnum
+	CurrenciesEnum,
+	DEFAULT_DATE_FORMATS
 } from '@gauzy/contracts';
 import { LocationFormComponent } from '../../forms/location';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -68,8 +69,7 @@ export class OrganizationsStepFormComponent
 	regionCodes = Object.keys(RegionsEnum);
 	regionCode: string;
 	numberFormats = ['USD', 'BGN', 'ILS'];
-	listOfDateFormats = ['L', 'L hh:mm', 'LL', 'LLL', 'LLLL'];
-
+	listOfDateFormats = DEFAULT_DATE_FORMATS;
 	orgMainForm: FormGroup;
 	orgBonusForm: FormGroup;
 	orgSettingsForm: FormGroup;
@@ -205,13 +205,13 @@ export class OrganizationsStepFormComponent
 		const number = 12345.67;
 		let code: string;
 		switch (format) {
-			case 'BGN':
+			case CurrenciesEnum.BGN:
 				code = 'bg';
 				break;
-			case 'USD':
+			case CurrenciesEnum.USD:
 				code = 'en';
 				break;
-			case 'ILS':
+			case CurrenciesEnum.ILS:
 				code = 'he';
 				break;
 		}

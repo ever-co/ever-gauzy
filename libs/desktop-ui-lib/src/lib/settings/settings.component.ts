@@ -282,6 +282,10 @@ export class SettingsComponent implements OnInit {
 		this.electronService.ipcRenderer.send('switch_aw_option', value);
 	}
 
+	toggleTrackOnPcSleep(value) {
+		this.updateSetting(value, 'trackOnPcSleep');
+	}
+
 	/*
 	 * Get logged in user details
 	 */

@@ -246,3 +246,5 @@ export enum OrganizationAction {
 	UPDATED = 'UPDATED',
 	DELETED = 'DELETED'
 }
+
+export const DEFAULT_DATE_FORMATS = ['L', 'LL', 'dddd, LL'];

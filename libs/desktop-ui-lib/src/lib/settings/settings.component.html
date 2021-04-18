@@ -117,6 +117,14 @@
 					>Random Screenshot Time
 				</nb-toggle>
 			</div>
+			<div class="col-12">
+				<nb-toggle
+					[(ngModel)]="appSetting.trackOnPcSleep"
+					(ngModelChange)="toggleTrackOnPcSleep($event)"
+					status="basic"
+					>Track Time when PC locked
+				</nb-toggle>
+			</div>
 		</div>
 		<div class="row" *ngIf="selectedMenu === 'Update'">
 			<div class="col-12">

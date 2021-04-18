@@ -325,18 +325,37 @@ export class StatisticService {
 			.getRawMany();
 
 		if (employees.length > 0) {
-			let weekTimeSlots: any = await this.timeSlotRepository
-				.createQueryBuilder('time_slot')
-				.innerJoin('time_slot.timeLogs', 'timeLogs')
-				.select('SUM(duration)', 'duration')
-				.addSelect('AVG(overall)', 'overall')
-				.addSelect('time_slot.employeeId', 'employeeId')
-				.where({
-					employeeId: In(_.pluck(employees, 'id')),
-					startedAt: Between(start, end),
+			const employeeIds = _.pluck(employees, 'id');
+
+			let weekTimeQuery = this.timeSlotRepository.createQueryBuilder(
+				'time_slot'
+			);
+			let weekTimeSlots: any = await weekTimeQuery
+				.innerJoin(`${weekTimeQuery.alias}.timeLogs`, 'timeLogs')
+				.select(`SUM("${weekTimeQuery.alias}"."duration")`, `duration`)
+				.addSelect(`AVG("${weekTimeQuery.alias}"."overall")`, `overall`)
+				.addSelect(`${weekTimeQuery.alias}.employeeId`, 'employeeId')
+				.andWhere(
+					`"${weekTimeQuery.alias}"."employeeId" IN(:...employeeIds)`,
+					{
+						employeeIds
+					}
+				)
+				.andWhere(
+					`"${weekTimeQuery.alias}"."startedAt" BETWEEN :start AND :end`,
+					{
+						start,
+						end
+					}
+				)
+				.andWhere(
+					`"${weekTimeQuery.alias}"."organizationId" = :organizationId`,
+					{ organizationId }
+				)
+				.andWhere(`"${weekTimeQuery.alias}"."tenantId" = :tenantId`, {
 					tenantId
 				})
-				.groupBy('time_slot.employeeId')
+				.groupBy(`${weekTimeQuery.alias}.employeeId`)
 				.getRawMany();
 
 			weekTimeSlots = _.chain(weekTimeSlots)
@@ -351,21 +370,35 @@ export class StatisticService {
 				.indexBy('employeeId')
 				.value();
 
-			let dayTimeSlots: any = await this.timeSlotRepository
-				.createQueryBuilder('time_slot')
-				.innerJoin('time_slot.timeLogs', 'timeLogs')
-				.select('AVG(overall)', 'overall')
-				.addSelect('SUM(duration)', 'duration')
-				.addSelect('time_slot.employeeId', 'employeeId')
-				.where({
-					employeeId: In(_.pluck(employees, 'id')),
-					startedAt: Between(
-						moment().startOf('day').format(),
-						moment().endOf('day').format()
-					),
+			let dayTimeQuery = this.timeSlotRepository.createQueryBuilder(
+				'time_slot'
+			);
+			let dayTimeSlots: any = await dayTimeQuery
+				.innerJoin(`${dayTimeQuery.alias}.timeLogs`, 'timeLogs')
+				.select(`SUM("${dayTimeQuery.alias}"."duration")`, `duration`)
+				.addSelect(`AVG("${dayTimeQuery.alias}"."overall")`, `overall`)
+				.addSelect(`${dayTimeQuery.alias}.employeeId`, 'employeeId')
+				.andWhere(
+					`"${dayTimeQuery.alias}"."employeeId" IN(:...employeeIds)`,
+					{
+						employeeIds
+					}
+				)
+				.andWhere(
+					`"${dayTimeQuery.alias}"."startedAt" BETWEEN :start AND :end`,
+					{
+						start: moment().utc().startOf('day').format(),
+						end: moment().utc().endOf('day').format()
+					}
+				)
+				.andWhere(
+					`"${dayTimeQuery.alias}"."organizationId" = :organizationId`,
+					{ organizationId }
+				)
+				.andWhere(`"${dayTimeQuery.alias}"."tenantId" = :tenantId`, {
 					tenantId
 				})
-				.groupBy('time_slot.employeeId')
+				.groupBy(`${dayTimeQuery.alias}.employeeId`)
 				.getRawMany();
 
 			dayTimeSlots = _.chain(dayTimeSlots)

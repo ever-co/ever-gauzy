@@ -11,7 +11,10 @@ import {
 	BonusTypeEnum,
 	CurrencyPosition,
 	AccountingTemplateTypeEnum,
-	IAccountingTemplate
+	IAccountingTemplate,
+	CurrenciesEnum,
+	DEFAULT_DATE_FORMATS,
+	OrganizationAction
 } from '@gauzy/contracts';
 import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
@@ -24,6 +27,7 @@ import { Router } from '@angular/router';
 import { Store } from '../../../../../@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { AccountingTemplateService } from 'apps/gauzy/src/app/@core/services/accounting-template.service';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-org-other-settings',
@@ -52,8 +56,7 @@ export class EditOrganizationOtherSettingsComponent
 	selectedReceiptTemplate: IAccountingTemplate;
 
 	listOfZones = timezone.tz.names().filter((zone) => zone.includes('/'));
-	// todo: maybe its better to place listOfDateFormats somewhere more global for the app?
-	listOfDateFormats = ['L', 'L hh:mm', 'LL', 'LLL', 'LLLL'];
+	listOfDateFormats = DEFAULT_DATE_FORMATS;
 	numberFormats = ['USD', 'BGN', 'ILS'];
 	numberFormat: string;
 	weekdays: string[] = Object.values(WeekDaysEnum);
@@ -98,13 +101,13 @@ export class EditOrganizationOtherSettingsComponent
 		const number = 12345.67;
 		let code: string;
 		switch (format) {
-			case 'BGN':
+			case CurrenciesEnum.BGN:
 				code = 'bg';
 				break;
-			case 'USD':
+			case CurrenciesEnum.USD:
 				code = 'en';
 				break;
-			case 'ILS':
+			case CurrenciesEnum.ILS:
 				code = 'he';
 				break;
 		}
@@ -128,13 +131,22 @@ export class EditOrganizationOtherSettingsComponent
 	}
 
 	async updateOrganizationSettings() {
-		this.organizationService.update(
-			this.organization.id,
-			this.form.getRawValue()
-		);
+		this.organizationService
+			.update(this.organization.id, this.form.getRawValue())
+			.then((organization: IOrganization) => {
+				if (organization) {
+					this.organizationEditStore.organizationAction = {
+						organization,
+						action: OrganizationAction.UPDATED
+					};
+					this.store.selectedOrganization = organization;
+				}
+			});
+
 		await this.saveTemplate(this.selectedInvoiceTemplate);
 		await this.saveTemplate(this.selectedEstimateTemplate);
 		await this.saveTemplate(this.selectedReceiptTemplate);
+
 		this.toastrService.success(
 			`TOASTR.MESSAGE.ORGANIZATION_SETTINGS_UPDATED`,
 			{

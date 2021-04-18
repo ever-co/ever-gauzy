@@ -7,6 +7,7 @@ import { TimerData } from './desktop-timer-activity';
 import { metaData } from './desktop-wakatime';
 import { LocalStore } from './desktop-store';
 import NotificationDesktop from './desktop-notifier';
+import { powerMonitor, ipcMain } from 'electron';
 
 export default class Timerhandler {
 	timeRecordMinute = 0;
@@ -20,9 +21,35 @@ export default class Timerhandler {
 	configs: any;
 	notificationDesktop = new NotificationDesktop();
 	timeSlotStart = null;
+	isPaused = false;
+	listener = false;
 
 	startTimer(setupWindow, knex, timeTrackerWindow, timeLog) {
 		// store timer is start to electron-store
+		if (!this.listener) {
+			this.listener = true;
+			powerMonitor.on('lock-screen', () => {
+				const appSetting = LocalStore.getStore('appSetting');
+				if (this.intevalTimer && !appSetting.trackOnPcSleep) {
+					this.isPaused = true;
+					timeTrackerWindow.webContents.send('device_sleep');
+				}
+			});
+
+			powerMonitor.on('unlock-screen', () => {
+				// this.isPaused = false;
+				const appSetting = LocalStore.getStore('appSetting');
+				if (this.isPaused && !appSetting.trackOnPcSleep) {
+					this.isPaused = false;
+					timeTrackerWindow.webContents.send('device_wakeup');
+				}
+			});
+
+			ipcMain.on('time_tracking_status', (event, arg) => {
+				this.isPaused = arg;
+			});
+		}
+
 		const appSetting = LocalStore.getStore('appSetting');
 		appSetting.timerStarted = true;
 		LocalStore.updateApplicationSetting(appSetting);
@@ -121,21 +148,16 @@ export default class Timerhandler {
 	startTimerIntervalPeriod(setupWindow, knex) {
 		const appSetting = LocalStore.getStore('appSetting');
 		const updatePeriod = appSetting.timer.updatePeriod;
-		console.log('Update Period:', updatePeriod, 60 * 1000 * updatePeriod);
 
 		this.timeSlotStart = moment();
-		console.log('Timeslot Start Time', this.timeSlotStart);
 
 		this.intervalUpdateTime = setInterval(async () => {
-			console.log('Last Time Id:', this.lastTimer.id);
-
 			await this.getSetActivity(
 				knex,
 				setupWindow,
 				this.timeSlotStart,
 				false
 			);
-			console.log('Timeslot Start Time', this.timeSlotStart);
 			this.timeSlotStart = moment();
 		}, 60 * 1000 * updatePeriod);
 	}
@@ -152,8 +174,6 @@ export default class Timerhandler {
 			clearInterval(this.intervalUpdateTime);
 			this.intervalUpdateTime = null;
 		}
-
-		console.log('Stop Timer Interval Period:', this.timeSlotStart, this.intevalTimer, this.intervalUpdateTime);
 	}
 
 	updateToggle(setupWindow, knex, isStop) {
