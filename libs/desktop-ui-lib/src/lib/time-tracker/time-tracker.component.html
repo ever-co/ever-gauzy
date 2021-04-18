@@ -277,7 +277,7 @@
 													nbButton
 													(click)="ref.close(false)"
 												>
-													Cancel
+													No
 												</button>
 											</div>
 											<div class="col-3">
@@ -286,7 +286,7 @@
 													nbButton
 													(click)="ref.close(true)"
 												>
-													Ok
+													Yes
 												</button>
 											</div>
 										</div>
@@ -311,5 +311,14 @@
 			<nb-icon icon="settings-2-outline"></nb-icon>
 			{{ userData.name }}
 		</button>
+		<button
+			#dialogOpenBtn
+			(click)="
+				open(dialog, {
+					type: 'timeTrackingOption'
+				})
+			"
+			style="display: none"
+		></button>
 	</nb-layout-footer>
 </nb-layout>
