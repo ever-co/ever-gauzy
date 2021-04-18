@@ -182,6 +182,8 @@ See more details in the [LICENSE](LICENSE).
 
 In a production setup, all client-side to server-side (backend, APIs) communications should be encrypted using HTTPS/WSS/SSL (REST APIs, GraphQL endpoint, Socket.io WebSockets, etc.).
 
+If you discover any issue regarding security, please disclose the information responsibly by sending an email to <security@ever.co> and not by creating a GitHub issue.
+
 ## License
 
 This software is available under following licenses:
