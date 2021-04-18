@@ -55,7 +55,8 @@ export const LocalStore = {
 					autoLaunch: true,
 					visibleAwOption: true,
 					randomScreenshotTime: false,
-					visibleWakatimeOption: false
+					visibleWakatimeOption: false,
+					trackOnPcSleep: false
 				};
 				store.set({
 					appSetting: defaultAppSetting
@@ -97,8 +98,8 @@ export const LocalStore = {
 
 	updateAuthSetting: (values) => {
 		store.set({
-			auth: { 
-				...values 
+			auth: {
+				...values
 			}
 		});
 	}

@@ -4,7 +4,9 @@ import {
 	ChangeDetectorRef,
 	AfterViewInit,
 	forwardRef,
-	TemplateRef
+	TemplateRef,
+	ElementRef,
+	ViewChild
 } from '@angular/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ElectronService } from 'ngx-electron';
@@ -32,6 +34,7 @@ Object.assign(console, log.functions);
 	]
 })
 export class TimeTrackerComponent implements AfterViewInit {
+	@ViewChild('dialogOpenBtn') btnDialogOpen: ElementRef<HTMLElement>;
 	start: Boolean = false;
 	timeRun: any = {
 		second: '00',
@@ -86,6 +89,10 @@ export class TimeTrackerComponent implements AfterViewInit {
 		changeClient: {
 			name: 'changeClient',
 			message: 'Are you sure you want to change Client ?'
+		},
+		timeTrackingOption: {
+			name: 'timeTrackingOption',
+			message: 'Your timer was running when PC was locked. Resume timer?'
 		}
 	};
 
@@ -233,6 +240,16 @@ export class TimeTrackerComponent implements AfterViewInit {
 				_cdr.detectChanges();
 			}
 		);
+
+		this.electronService.ipcRenderer.on('device_sleep', () => {
+			this.toggleStart(false);
+		});
+
+		this.electronService.ipcRenderer.on('device_wakeup', () => {
+			_cdr.detectChanges();
+			let elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
+			elBtn.click();
+		});
 	}
 
 	ngAfterViewInit(): void {
@@ -632,11 +649,14 @@ export class TimeTrackerComponent implements AfterViewInit {
 			.onClose.subscribe((selectedOption) => {
 				if (selectedOption) {
 					switch (option.type) {
-						case this.dialogType[option.type].name:
+						case this.dialogType.changeClient.name:
 							this.selectClient(option.val);
 							break;
-						case this.dialogType[option.type].name:
+						case this.dialogType.deleteLog.name:
 							this.deleteTimeSlot();
+							break;
+						case this.dialogType.timeTrackingOption.name:
+							this.toggleStart(true);
 							break;
 						default:
 							break;
