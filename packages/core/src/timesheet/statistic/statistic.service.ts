@@ -171,7 +171,6 @@ export class StatisticService {
 				'time_slot'
 			);
 			query
-				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
 				.select(`AVG(${query.alias}.overall)`, 'overall')
 				.addSelect(`SUM(${query.alias}.duration)`, 'duration')
 				.where({
@@ -200,7 +199,6 @@ export class StatisticService {
 				'time_slot'
 			);
 			query
-				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
 				.select(`AVG(${query.alias}.overall)`, 'overall')
 				.addSelect(`SUM(${query.alias}.duration)`, 'duration')
 				.where({
@@ -771,7 +769,7 @@ export class StatisticService {
 							);
 						} else {
 							qb.andWhere(
-								`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :startDate AND :endDate`,
+								`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :start AND :start`,
 								{ start, end }
 							);
 						}
