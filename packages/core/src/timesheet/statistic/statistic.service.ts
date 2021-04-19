@@ -304,7 +304,6 @@ export class StatisticService {
 				'time_slot'
 			);
 			let weekTimeSlots: any = await weekTimeQuery
-				.innerJoin(`${weekTimeQuery.alias}.timeLogs`, 'timeLogs')
 				.select(`SUM("${weekTimeQuery.alias}"."duration")`, `duration`)
 				.addSelect(`AVG("${weekTimeQuery.alias}"."overall")`, `overall`)
 				.addSelect(`${weekTimeQuery.alias}.employeeId`, 'employeeId')
@@ -347,7 +346,6 @@ export class StatisticService {
 				'time_slot'
 			);
 			let dayTimeSlots: any = await dayTimeQuery
-				.innerJoin(`${dayTimeQuery.alias}.timeLogs`, 'timeLogs')
 				.select(`SUM("${dayTimeQuery.alias}"."duration")`, `duration`)
 				.addSelect(`AVG("${dayTimeQuery.alias}"."overall")`, `overall`)
 				.addSelect(`${dayTimeQuery.alias}.employeeId`, 'employeeId')
