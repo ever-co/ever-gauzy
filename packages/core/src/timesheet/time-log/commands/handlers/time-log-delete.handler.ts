@@ -37,12 +37,17 @@ export class TimeLogDeleteHandler
 			timeLogs = ids as TimeLog[];
 		}
 
+		console.log('TimeLog will be delete:', timeLogs);
+
 		for (let index = 0; index < timeLogs.length; index++) {
 			const timeLog = timeLogs[index];
 			const { employeeId, startedAt } = timeLog;
 			let { stoppedAt } = timeLog;
-			if (isEmpty(stoppedAt)) {
+			if (stoppedAt === null || typeof stoppedAt === 'undefined') {
 				stoppedAt = new Date();
+				console.log(
+					`TimeLog startedAt=${startedAt} & stoppedAt=${stoppedAt}`
+				);
 			}
 
 			await this.timeSlotService.rangeDelete(

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, Between } from 'typeorm';
+import { Repository, In, Between, Brackets } from 'typeorm';
 import * as _ from 'underscore';
 import {
 	PermissionsEnum,
@@ -19,17 +19,18 @@ import {
 	IManualTimesStatistics,
 	TimeLogType
 } from '@gauzy/contracts';
-import { TimeSlot } from '../time-slot.entity';
-import { Employee } from '../../employee/employee.entity';
 import { RequestContext } from '../../core/context';
 import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
-import { Task } from '../../tasks/task.entity';
-import { Activity } from './../activity/activity.entity';
-import * as moment from 'moment';
-import { TimeLog } from '../time-log.entity';
 import { isNotEmpty } from '@gauzy/common';
-import { ConfigService, getConfig } from '@gauzy/config';
-const config = getConfig();
+import { ConfigService } from '@gauzy/config';
+import {
+	Activity,
+	Employee,
+	Task,
+	TimeLog,
+	TimeSlot
+} from './../../core/entities/internal';
+import { getDateRange } from './../../core/utils';
 
 @Injectable()
 export class StatisticService {
@@ -64,23 +65,11 @@ export class StatisticService {
 			date = new Date()
 		} = request;
 
-		let start: any;
-		let end: any;
-
+		let { start, end } = getDateRange(date, 'week');
 		if (startDate && endDate) {
-			start = moment.utc(startDate);
-			end = moment.utc(endDate);
-		} else {
-			start = moment.utc(date).startOf('week');
-			end = moment.utc(date).endOf('week');
-		}
-
-		if (this.configService.dbConnectionOptions.type === 'sqlite') {
-			start = start.format('YYYY-MM-DD HH:mm:ss');
-			end = end.format('YYYY-MM-DD HH:mm:ss');
-		} else {
-			start = start.toDate();
-			end = end.toDate();
+			const range = getDateRange(startDate, endDate, 'week');
+			start = range['start'];
+			end = range['end'];
 		}
 
 		const user = RequestContext.currentUser();
@@ -206,12 +195,7 @@ export class StatisticService {
 		};
 
 		if (employeeIds.length > 0) {
-			start = moment
-				.utc(date)
-				.startOf('day')
-				.format('YYYY-MM-DD HH:mm:ss');
-			end = moment.utc(date).endOf('day').format('YYYY-MM-DD HH:mm:ss');
-
+			let { start, end } = getDateRange();
 			const query = this.timeSlotRepository.createQueryBuilder(
 				'time_slot'
 			);
@@ -246,19 +230,10 @@ export class StatisticService {
 	}
 
 	async getMembers(request: IGetMembersStatistics) {
-		const { employeeId, organizationId } = request;
-		const date = request.date || new Date();
-		const start = moment(date)
-			.utc()
-			.startOf('week')
-			.format('YYYY-MM-DD HH:mm:ss');
-		const end = moment(date)
-			.utc()
-			.endOf('week')
-			.format('YYYY-MM-DD HH:mm:ss');
-
+		const { employeeId, organizationId, date = new Date() } = request;
 		const tenantId = RequestContext.currentTenantId();
 		const user = RequestContext.currentUser();
+		const { start, end } = getDateRange(date, 'week');
 
 		/*
 		 *  Get employees id of the organization or get current employee id
@@ -289,7 +264,7 @@ export class StatisticService {
 			.addSelect(`"user"."imageUrl"`, 'user_image_url')
 			.addSelect(
 				`${
-					config.dbConnectionOptions.type === 'sqlite'
+					this.configService.dbConnectionOptions.type === 'sqlite'
 						? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
 						: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
 				}`,
@@ -385,11 +360,16 @@ export class StatisticService {
 					}
 				)
 				.andWhere(
-					`"${dayTimeQuery.alias}"."startedAt" BETWEEN :start AND :end`,
-					{
-						start: moment().utc().startOf('day').format(),
-						end: moment().utc().endOf('day').format()
-					}
+					new Brackets((qb) => {
+						const { start, end } = getDateRange();
+						qb.where(
+							`"${dayTimeQuery.alias}"."startedAt" BETWEEN :start AND :end`,
+							{
+								start,
+								end
+							}
+						);
+					})
 				)
 				.andWhere(
 					`"${dayTimeQuery.alias}"."organizationId" = :organizationId`,
@@ -431,7 +411,8 @@ export class StatisticService {
 				member.weekHours = await weekHoursQuery
 					.select(
 						`${
-							config.dbConnectionOptions.type === 'sqlite'
+							this.configService.dbConnectionOptions.type ===
+							'sqlite'
 								? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
 								: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
 						}`,
@@ -439,7 +420,8 @@ export class StatisticService {
 					)
 					.addSelect(
 						`${
-							config.dbConnectionOptions.type === 'sqlite'
+							this.configService.dbConnectionOptions.type ===
+							'sqlite'
 								? `(strftime('%w', timeLogs.startedAt))`
 								: 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
 						}`,
@@ -458,7 +440,8 @@ export class StatisticService {
 					.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
 					.addGroupBy(
 						`${
-							config.dbConnectionOptions.type === 'sqlite'
+							this.configService.dbConnectionOptions.type ===
+							'sqlite'
 								? `(strftime('%w', timeLogs.startedAt))`
 								: 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
 						}`
@@ -473,16 +456,15 @@ export class StatisticService {
 	async getProjects(request: IGetProjectsStatistics) {
 		const query = this.organizationProjectsRepository.createQueryBuilder();
 		const date = request.date || new Date();
-		const start = moment.utc(date).startOf('week').format();
-		const end = moment.utc(date).endOf('week').format();
 		const user = RequestContext.currentUser();
 		const tenantId = user.tenantId;
+		const { start, end } = getDateRange(date, 'week');
 
 		query
 			.select(`"${query.alias}".*`)
 			.addSelect(
 				`${
-					config.dbConnectionOptions.type === 'sqlite'
+					this.configService.dbConnectionOptions.type === 'sqlite'
 						? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
 						: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
 				}`,
@@ -524,7 +506,7 @@ export class StatisticService {
 		totalDurationQuery
 			.select(
 				`${
-					config.dbConnectionOptions.type === 'sqlite'
+					this.configService.dbConnectionOptions.type === 'sqlite'
 						? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
 						: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
 				}`,
@@ -585,11 +567,11 @@ export class StatisticService {
 
 	async getTasks(request: IGetTasksStatistics) {
 		const date = request.date || new Date();
-		const start = moment.utc(date).startOf('week').format();
-		const end = moment.utc(date).endOf('week').format();
 		const user = RequestContext.currentUser();
 		const tenantId = user.tenantId;
 		const { employeeId, organizationId } = request;
+		const { start, end } = getDateRange(date, 'week');
+
 		/*
 		 *  Get employees id of the orginization or get current employe id
 		 */
@@ -616,7 +598,7 @@ export class StatisticService {
 				.select(`"${query.alias}".*`)
 				.addSelect(
 					`${
-						config.dbConnectionOptions.type === 'sqlite'
+						this.configService.dbConnectionOptions.type === 'sqlite'
 							? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
 							: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
 					}`,
@@ -643,7 +625,7 @@ export class StatisticService {
 			const totalDuration = await totalDurationQuery
 				.select(
 					`${
-						config.dbConnectionOptions.type === 'sqlite'
+						this.configService.dbConnectionOptions.type === 'sqlite'
 							? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
 							: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
 					}`,
@@ -673,11 +655,10 @@ export class StatisticService {
 
 	async manualTimes(request: IGetManualTimesStatistics) {
 		const date = request.date || new Date();
-		const start = moment.utc(date).startOf('week').format();
-		const end = moment.utc(date).endOf('week').format();
 		const user = RequestContext.currentUser();
 		const tenantId = user.tenantId;
 		const { employeeId, organizationId } = request;
+		const { start, end } = getDateRange(date, 'week');
 
 		/*
 		 *  Get employees id of the orginization or get current employe id
@@ -746,12 +727,10 @@ export class StatisticService {
 
 	async getActivites(request: IGetActivitiesStatistics) {
 		const date = request.date || new Date();
-		const start = moment.utc(date).startOf('week').format();
-		const end = moment.utc(date).endOf('week').format();
 		const user = RequestContext.currentUser();
 		const tenantId = user.tenantId;
 		const { employeeId, organizationId } = request;
-
+		const { start, end } = getDateRange(date, 'week');
 		/*
 		 *  Get employees id of the orginization or get current employe id
 		 */
@@ -780,10 +759,24 @@ export class StatisticService {
 				.addSelect(`SUM("${query.alias}"."duration")`, `duration`)
 				.addSelect(`"${query.alias}"."title"`, `title`)
 				.addGroupBy(`"${query.alias}"."title"`)
-				.andWhere(`"${query.alias}"."date" BETWEEN :start AND :end`, {
-					start,
-					end
-				})
+				.andWhere(
+					new Brackets((qb) => {
+						if (
+							this.configService.dbConnectionOptions.type ===
+							'sqlite'
+						) {
+							qb.andWhere(
+								`datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :start AND :end`,
+								{ start, end }
+							);
+						} else {
+							qb.andWhere(
+								`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :startDate AND :endDate`,
+								{ start, end }
+							);
+						}
+					})
+				)
 				.andWhere(`"${query.alias}"."employeeId" IN(:...employeeId)`, {
 					employeeId: employeeIds
 				})
@@ -835,13 +828,11 @@ export class StatisticService {
 
 	async getEmployeeTimeSlots(request: IGetTimeSlotStatistics) {
 		let employees: ITimeSlotStatistics[] = [];
-
 		const date = request.date || new Date();
-		const start = moment.utc(date).startOf('week').format();
-		const end = moment.utc(date).endOf('week').format();
 		const user = RequestContext.currentUser();
 		const tenantId = user.tenantId;
 		const { employeeId, organizationId } = request;
+		const { start, end } = getDateRange(date, 'week');
 
 		const query = this.employeeRepository.createQueryBuilder();
 		query
