@@ -170,9 +170,6 @@ export class OptionsFormComponent implements OnInit {
 
 		let result = await dialog.onClose.pipe(first()).toPromise();
 
-		//tstodo
-		console.log(result, 'after closing modal');
-
 		if (result) {
 			this.activeOptionGroup = result;
 			this.updateOptionGroupInStore();

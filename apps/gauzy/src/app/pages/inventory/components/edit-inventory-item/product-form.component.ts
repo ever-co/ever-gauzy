@@ -277,11 +277,11 @@ export class ProductFormComponent
 				);
 			}
 
-			// await this.productVariantService.createProductVariants({
-			// 	product: productResult,
-			// 	optionCombinations: this.inventoryStore
-			// 		.createoOptionCombinations
-			// });
+			await this.productVariantService.createProductVariants({
+				product: productResult,
+				optionCombinations: this.inventoryStore
+					.createoOptionCombinations
+			});
 
 			this.inventoryStore.resetDeletedOptions();
 			this.inventoryStore.resetCreateVariants();
