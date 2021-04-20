@@ -98,11 +98,9 @@ export class StatisticService {
 		 *  Get employees count who worked in this week.
 		 */
 		const employeesCountQuery = this.employeeRepository.createQueryBuilder();
-		employeesCountQuery.innerJoin(
-			`${employeesCountQuery.alias}.timeLogs`,
-			'timeLogs'
-		);
-		employeesCountQuery.innerJoin(`timeLogs.timeSlots`, 'timeSlots');
+		employeesCountQuery
+			.innerJoin(`${employeesCountQuery.alias}.timeLogs`, 'timeLogs')
+			.innerJoin(`timeLogs.timeSlots`, 'timeSlots');
 
 		if (employeeIds.length) {
 			employeesCountQuery
@@ -131,11 +129,9 @@ export class StatisticService {
 		 *  Get projects count who worked in this week.
 		 */
 		const projectsCountQuery = this.organizationProjectsRepository.createQueryBuilder();
-		projectsCountQuery.innerJoin(
-			`${projectsCountQuery.alias}.timeLogs`,
-			'timeLogs'
-		);
-		projectsCountQuery.innerJoin(`timeLogs.timeSlots`, 'timeSlots');
+		projectsCountQuery
+			.innerJoin(`${projectsCountQuery.alias}.timeLogs`, 'timeLogs')
+			.innerJoin(`timeLogs.timeSlots`, 'timeSlots');
 
 		if (employeeIds.length) {
 			projectsCountQuery
@@ -450,12 +446,12 @@ export class StatisticService {
 	}
 
 	async getProjects(request: IGetProjectsStatistics) {
-		const query = this.organizationProjectsRepository.createQueryBuilder();
-		const date = request.date || new Date();
 		const user = RequestContext.currentUser();
 		const tenantId = user.tenantId;
+		const { employeeId, organizationId, date = new Date() } = request;
 		const { start, end } = getDateRange(date, 'week');
 
+		const query = this.organizationProjectsRepository.createQueryBuilder();
 		query
 			.select(`"${query.alias}".*`)
 			.addSelect(
@@ -466,9 +462,12 @@ export class StatisticService {
 				}`,
 				`duration`
 			)
-			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
-			.innerJoin(`timeLogs.timeSlots`, 'timeSlots');
+			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs');
 
+		/*
+		 *  Get employees id of the orginization or get current employe id
+		 */
+		let employeeIds = [];
 		if (
 			(user.employeeId && request.onlyMe) ||
 			!RequestContext.hasPermission(
@@ -478,16 +477,25 @@ export class StatisticService {
 			const employeeId = user.employeeId;
 			query.leftJoin(`${query.alias}.members`, 'members');
 			query.where(`members.id = :employeeId`, { employeeId });
+			employeeIds = [employeeId];
 		} else {
-			query.where(`"${query.alias}"."organizationId" = :organizationId`, {
-				organizationId: request.organizationId
-			});
+			employeeIds = await this.getEmployeesIds(
+				organizationId,
+				tenantId,
+				employeeId
+			);
 		}
 
 		query
+			.andWhere(`"timeLogs"."employeeId" IN(:...employeeId)`, {
+				employeeId: employeeIds
+			})
 			.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
 				start,
 				end
+			})
+			.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+				organizationId: request.organizationId
 			})
 			.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
 				tenantId
@@ -509,7 +517,6 @@ export class StatisticService {
 				`duration`
 			)
 			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
-			.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
 			.where(
 				`"${totalDurationQuery.alias}"."organizationId" = :organizationId`,
 				{
@@ -562,10 +569,9 @@ export class StatisticService {
 	}
 
 	async getTasks(request: IGetTasksStatistics) {
-		const date = request.date || new Date();
 		const user = RequestContext.currentUser();
 		const tenantId = user.tenantId;
-		const { employeeId, organizationId } = request;
+		const { employeeId, organizationId, date = new Date() } = request;
 		const { start, end } = getDateRange(date, 'week');
 
 		/*
@@ -601,7 +607,6 @@ export class StatisticService {
 					`duration`
 				)
 				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
-				.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
 				.andWhere(`"timeLogs"."employeeId" IN(:...employeeId)`, {
 					employeeId: employeeIds
 				})
@@ -628,7 +633,6 @@ export class StatisticService {
 					`duration`
 				)
 				.innerJoin(`${totalDurationQuery.alias}.timeLogs`, 'timeLogs')
-				.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
 				.andWhere(`"timeLogs"."employeeId" IN(:...employeeId)`, {
 					employeeId: employeeIds
 				})
@@ -637,12 +641,12 @@ export class StatisticService {
 					end
 				})
 				.getRawOne();
+
 			tasks = tasks.map((task) => {
 				task.durationPercentage =
 					(task.duration * 100) / totalDuration.duration;
 				return task;
 			});
-
 			return tasks;
 		} else {
 			return [];
@@ -726,7 +730,6 @@ export class StatisticService {
 		const user = RequestContext.currentUser();
 		const tenantId = user.tenantId;
 		const { employeeId, organizationId } = request;
-		const { start, end } = getDateRange(date, 'week');
 		/*
 		 *  Get employees id of the orginization or get current employe id
 		 */
@@ -750,13 +753,13 @@ export class StatisticService {
 			const query = this.activityRepository.createQueryBuilder();
 			query
 				.innerJoin(`${query.alias}.timeSlot`, 'timeSlot')
-				.innerJoin(`timeSlot.timeLogs`, 'timeLogs')
 				.select(`COUNT("${query.alias}"."id")`, `sessions`)
 				.addSelect(`SUM("${query.alias}"."duration")`, `duration`)
 				.addSelect(`"${query.alias}"."title"`, `title`)
 				.addGroupBy(`"${query.alias}"."title"`)
 				.andWhere(
 					new Brackets((qb) => {
+						const { start, end } = getDateRange(date, 'week');
 						if (
 							this.configService.dbConnectionOptions.type ===
 							'sqlite'
@@ -767,7 +770,7 @@ export class StatisticService {
 							);
 						} else {
 							qb.andWhere(
-								`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :start AND :start`,
+								`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :start AND :end`,
 								{ start, end }
 							);
 						}
@@ -790,7 +793,6 @@ export class StatisticService {
 			const totalDurationQuery = this.activityRepository.createQueryBuilder();
 			const totalDuration = await totalDurationQuery
 				.innerJoin(`${totalDurationQuery.alias}.timeSlot`, 'timeSlot')
-				.innerJoin(`timeSlot.timeLogs`, 'timeLogs')
 				.select(
 					`SUM("${totalDurationQuery.alias}"."duration")`,
 					`duration`
@@ -801,10 +803,25 @@ export class StatisticService {
 						employeeId: employeeIds
 					}
 				)
-				.andWhere(`"${query.alias}"."date" BETWEEN :start AND :end`, {
-					start,
-					end
-				})
+				.andWhere(
+					new Brackets((qb) => {
+						const { start, end } = getDateRange(date, 'week');
+						if (
+							this.configService.dbConnectionOptions.type ===
+							'sqlite'
+						) {
+							qb.andWhere(
+								`datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :start AND :end`,
+								{ start, end }
+							);
+						} else {
+							qb.andWhere(
+								`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :start AND :end`,
+								{ start, end }
+							);
+						}
+					})
+				)
 				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
 					tenantId
 				})
@@ -840,7 +857,6 @@ export class StatisticService {
 			)
 			.addSelect(`"user"."imageUrl"`, 'user_image_url')
 			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
-			.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
 			.innerJoin(`${query.alias}.user`, 'user')
 			.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
 				start,
