@@ -486,86 +486,93 @@ export class StatisticService {
 			);
 		}
 
-		query
-			.andWhere(`"timeLogs"."employeeId" IN(:...employeeId)`, {
-				employeeId: employeeIds
-			})
-			.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
-				start,
-				end
-			})
-			.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
-				organizationId: request.organizationId
-			})
-			.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-				tenantId
-			})
-			.orderBy('duration', 'DESC')
-			.addGroupBy(`"${query.alias}"."id"`)
-			.limit(5);
+		if (isNotEmpty(employeeIds)) {
+			query
+				.andWhere(`"timeLogs"."employeeId" IN(:...employeeId)`, {
+					employeeId: employeeIds
+				})
+				.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+					start,
+					end
+				})
+				.andWhere(
+					`"${query.alias}"."organizationId" = :organizationId`,
+					{
+						organizationId
+					}
+				)
+				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+					tenantId
+				})
+				.orderBy('duration', 'DESC')
+				.addGroupBy(`"${query.alias}"."id"`)
+				.limit(5);
 
-		let projects: IProjectsStatistics[] = await query.getRawMany();
+			let projects: IProjectsStatistics[] = await query.getRawMany();
 
-		const totalDurationQuery = this.organizationProjectsRepository.createQueryBuilder();
-		totalDurationQuery
-			.select(
-				`${
-					this.configService.dbConnectionOptions.type === 'sqlite'
-						? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
-						: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
-				}`,
-				`duration`
-			)
-			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
-			.where(
-				`"${totalDurationQuery.alias}"."organizationId" = :organizationId`,
-				{
-					organizationId: request.organizationId
-				}
-			)
-			.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-				tenantId
+			const totalDurationQuery = this.organizationProjectsRepository.createQueryBuilder();
+			totalDurationQuery
+				.select(
+					`${
+						this.configService.dbConnectionOptions.type === 'sqlite'
+							? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
+							: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
+					}`,
+					`duration`
+				)
+				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
+				.where(
+					`"${totalDurationQuery.alias}"."organizationId" = :organizationId`,
+					{
+						organizationId
+					}
+				)
+				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+					tenantId
+				});
+
+			if (
+				(user.employeeId && request.onlyMe) ||
+				!RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				)
+			) {
+				const employeeId = user.employeeId;
+				totalDurationQuery.leftJoin(
+					`${totalDurationQuery.alias}.members`,
+					'members'
+				);
+				totalDurationQuery.where(`members.id = :employeeId`, {
+					employeeId
+				});
+				employeeIds = [employeeId];
+			} else {
+				employeeIds = await this.getEmployeesIds(
+					organizationId,
+					tenantId,
+					employeeId
+				);
+			}
+
+			totalDurationQuery
+				.andWhere(`"timeLogs"."employeeId" IN(:...employeeId)`, {
+					employeeId: employeeIds
+				})
+				.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+					start,
+					end
+				});
+			const totalDuration = await totalDurationQuery.getRawOne();
+
+			projects = projects.map((project) => {
+				project.durationPercentage =
+					(project.duration * 100) / totalDuration.duration;
+				return project;
 			});
-
-		if (
-			(user.employeeId && request.onlyMe) ||
-			!RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
-			const employeeId = user.employeeId;
-			totalDurationQuery.leftJoin(
-				`${totalDurationQuery.alias}.members`,
-				'members'
-			);
-			totalDurationQuery.where(`members.id = :employeeId`, {
-				employeeId
-			});
-		} else {
-			totalDurationQuery.where(
-				`"${totalDurationQuery.alias}"."organizationId" = :organizationId`,
-				{
-					organizationId: request.organizationId
-				}
-			);
+			return projects;
 		}
 
-		totalDurationQuery.andWhere(
-			`"timeLogs"."startedAt" BETWEEN :start AND :end`,
-			{
-				start,
-				end
-			}
-		);
-		const totalDuration = await totalDurationQuery.getRawOne();
-
-		projects = projects.map((project) => {
-			project.durationPercentage =
-				(project.duration * 100) / totalDuration.duration;
-			return project;
-		});
-
-		return projects;
+		return [];
 	}
 
 	async getTasks(request: IGetTasksStatistics) {
