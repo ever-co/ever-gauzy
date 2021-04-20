@@ -7,7 +7,6 @@ import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { TimesheetRecalculateCommand } from '../../../timesheet/commands/timesheet-recalculate.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../../employee/commands';
-import { isEmpty } from '@gauzy/common';
 
 @CommandHandler(TimeLogDeleteCommand)
 export class TimeLogDeleteHandler
