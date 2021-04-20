@@ -60,7 +60,7 @@ export class ProductOptionGroupTranslationsComponent extends TranslationBaseComp
 			this.form.controls[lg.value].valueChanges
 				.pipe(
 					untilDestroyed(this),
-					debounceTime(500),
+					debounceTime(100),
 					distinctUntilChanged()
 				)
 				.subscribe((value) => {
@@ -160,8 +160,7 @@ export class ProductOptionGroupTranslationsComponent extends TranslationBaseComp
 		if (!option || !this.activeOption) return;
 
 		return (
-			(this.activeOption.id == option.id ||
-				this.activeOption.formOptionId == option.formOptionId) &&
+			this.activeOption.formOptionId == option.formOptionId &&
 			this.activeOptionValueLng == languageCode
 		);
 	}

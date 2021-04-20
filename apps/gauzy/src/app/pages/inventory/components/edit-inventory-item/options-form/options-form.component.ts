@@ -122,7 +122,7 @@ export class OptionsFormComponent implements OnInit {
 						(optionGroup, i) => {
 							return {
 								...optionGroup,
-								formOptionGroupId: i,
+								formOptionGroupId: this.generateUniqueId(),
 								options: optionGroup.options.map(
 									(option, k) => {
 										return {
@@ -169,6 +169,9 @@ export class OptionsFormComponent implements OnInit {
 		);
 
 		let result = await dialog.onClose.pipe(first()).toPromise();
+
+		//tstodo
+		console.log(result, 'after closing modal');
 
 		if (result) {
 			this.activeOptionGroup = result;

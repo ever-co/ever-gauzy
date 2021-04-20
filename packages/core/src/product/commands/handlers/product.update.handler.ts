@@ -199,9 +199,11 @@ export class ProductUpdateHandler
 						})
 					);
 
-					group.translations = (
-						await groupTranslationsEntites
-					).filter((tr) => !!tr) as any;
+					group.translations = existingGroup.translations.concat(
+						(await groupTranslationsEntites).filter(
+							(tr) => !!tr
+						) as any
+					);
 
 					return group;
 				}
