@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import {
 	FormGroup,
 	FormBuilder,
@@ -38,7 +38,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 })
 export class ProductFormComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit {
 	form: FormGroup;
 	inventoryItem: IProductTranslatable;
 
@@ -80,14 +80,11 @@ export class ProductFormComponent
 	}
 
 	ngOnInit() {
+		this.inventoryStore.clearCurrentProduct();
 		this.setRouteSubscription();
 		this.setOrganizationSubscription();
 		this.setLanguageSubsctiption();
 		this.setTranslationSettings();
-	}
-
-	ngOnDestroy(): void {
-		this.inventoryStore.clearCurrentProduct();
 	}
 
 	private setRouteSubscription() {
@@ -277,11 +274,11 @@ export class ProductFormComponent
 				);
 			}
 
-			// await this.productVariantService.createProductVariants({
-			// 	product: productResult,
-			// 	optionCombinations: this.inventoryStore
-			// 		.createoOptionCombinations
-			// });
+			await this.productVariantService.createProductVariants({
+				product: productResult,
+				optionCombinations: this.inventoryStore
+					.createoOptionCombinations
+			});
 
 			this.inventoryStore.resetDeletedOptions();
 			this.inventoryStore.resetCreateVariants();

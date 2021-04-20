@@ -31,7 +31,7 @@ export class TranslatableService {
 		translatable: ITranslatable<any>,
 		translateProperty: string
 	): string {
-		return this.getTranslated(translatable, [translateProperty])[
+		return this.getTranslated({ ...translatable }, [translateProperty])[
 			translateProperty
 		];
 	}
