@@ -118,9 +118,9 @@ export class DailyStatisticsComponent implements OnInit, AfterViewInit {
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 
-		const employeeIds: string[] = [];
+		let employeeId: string;
 		if (this.selectedEmployeeId) {
-			employeeIds.push(this.selectedEmployeeId);
+			employeeId = this.selectedEmployeeId;
 		}
 
 		const appliedFilter = pick(
@@ -134,7 +134,7 @@ export class DailyStatisticsComponent implements OnInit, AfterViewInit {
 			...appliedFilter,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
-			...(employeeIds.length > 0 ? { employeeIds } : {}),
+			...(employeeId ? { employeeId } : {}),
 			organizationId,
 			tenantId
 		};

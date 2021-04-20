@@ -315,7 +315,9 @@
 					nbSpinnerSize="giant"
 					nbSpinnerStatus="primary"
 				>
-					<nb-card-header>Projects</nb-card-header>
+					<nb-card-header>{{
+						'TIMESHEET.PROJECTS' | translate
+					}}</nb-card-header>
 					<ng-template
 						[ngIf]="projects?.length > 0"
 						[ngIfElse]="noProjects"

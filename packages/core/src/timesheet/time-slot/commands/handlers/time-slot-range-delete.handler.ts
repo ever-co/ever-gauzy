@@ -20,7 +20,7 @@ export class TimeSlotRangeDeleteHandler
 	): Promise<boolean> {
 		const { employeeId, start, stop } = command;
 
-		let mStart: any = moment(start);
+		let mStart: any = moment.utc(start);
 		mStart.set(
 			'minute',
 			mStart.get('minute') - (mStart.get('minute') % 10)
@@ -28,14 +28,14 @@ export class TimeSlotRangeDeleteHandler
 		mStart.set('second', 0);
 		mStart.set('millisecond', 0);
 
-		let mEnd: any = moment(stop);
+		let mEnd: any = moment.utc(stop);
 		mEnd.set('minute', mEnd.get('minute') + (mEnd.get('minute') % 10) - 1);
 		mEnd.set('second', 59);
 		mEnd.set('millisecond', 0);
 
 		if (this.configService.dbConnectionOptions.type === 'sqlite') {
-			mStart = mStart.utc().format('YYYY-MM-DD HH:mm:ss');
-			mEnd = mEnd.utc().format('YYYY-MM-DD HH:mm:ss');
+			mStart = mStart.format('YYYY-MM-DD HH:mm:ss');
+			mEnd = mEnd.format('YYYY-MM-DD HH:mm:ss');
 		} else {
 			mStart = mStart.toDate();
 			mEnd = mEnd.toDate();
