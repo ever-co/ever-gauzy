@@ -71,7 +71,7 @@
 									>{{
 										'INVENTORY_PAGE.NAME' | translate
 									}}:</span
-								>{{ inventoryItem.name }}
+								>{{ getTranslatedProp(inventoryItem, 'name') }}
 							</p>
 							<p>
 								<span class="key-description mr-2"
@@ -79,21 +79,36 @@
 										'INVENTORY_PAGE.DESCRIPTION'
 											| translate
 									}}:</span
-								>{{ inventoryItem.description }}
+								>{{
+									getTranslatedProp(
+										inventoryItem,
+										'description'
+									)
+								}}
 							</p>
 							<p>
 								<span class="key-description mr-2"
 									>{{
 										'INVENTORY_PAGE.TYPE' | translate
 									}}:</span
-								>{{ inventoryItem.type }}
+								>{{
+									getTranslatedProp(
+										inventoryItem.type,
+										'name'
+									)
+								}}
 							</p>
 							<p>
 								<span class="key-description mr-2"
 									>{{
 										'INVENTORY_PAGE.CATEGORY' | translate
 									}}:</span
-								>{{ inventoryItem.category }}
+								>{{
+									getTranslatedProp(
+										inventoryItem.category,
+										'name'
+									)
+								}}
 							</p>
 							<p>
 								<span class="key-description mr-2"
@@ -116,9 +131,7 @@
 								</div>
 								<div class="options" *ngIf="inventoryItem">
 									<div
-										*ngFor="
-											let option of inventoryItem.options
-										"
+										*ngFor="let option of options"
 										class="option-item"
 									>
 										{{ option.name }}
