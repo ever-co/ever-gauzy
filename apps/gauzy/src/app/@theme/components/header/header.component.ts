@@ -16,7 +16,12 @@ import { Router, NavigationEnd } from '@angular/router';
 import { filter, first, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
-import { PermissionsEnum, TimeLogType } from '@gauzy/contracts';
+import {
+	IOrganization,
+	OrganizationAction,
+	PermissionsEnum,
+	TimeLogType
+} from '@gauzy/contracts';
 import { IUser } from '@gauzy/contracts';
 import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.service';
 import * as moment from 'moment';
@@ -29,7 +34,8 @@ import { NO_EMPLOYEE_SELECTED } from './selectors/employee/employee.component';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import {
 	ISidebarActionConfig,
-	NavigationBuilderService
+	NavigationBuilderService,
+	OrganizationEditStore
 } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
@@ -90,7 +96,8 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		private readonly organizationsService: OrganizationsService,
 		private readonly employeesService: EmployeesService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
-		public readonly navigationBuilderService: NavigationBuilderService
+		public readonly navigationBuilderService: NavigationBuilderService,
+		private readonly organizationEditStore: OrganizationEditStore
 	) {}
 
 	ngOnInit() {
@@ -139,6 +146,9 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			.pipe(
 				filter((organization) => !!organization),
 				untilDestroyed(this),
+				tap((organization) =>
+					this.checkProjectSelectorPermission(organization)
+				),
 				tap(() => this.loadItems())
 			)
 			.subscribe();
@@ -163,14 +173,40 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			.subscribe((t) => {
 				this.theme = t.name;
 			});
+		this.organizationEditStore.organizationAction$
+			.pipe(
+				filter(({ organization }) => !!organization),
+				untilDestroyed(this)
+			)
+			.subscribe(({ action }) => {
+				switch (action) {
+					case OrganizationAction.CREATED:
+					case OrganizationAction.UPDATED:
+					case OrganizationAction.DELETED:
+						this.checkSelectorsPermission();
+						break;
+				}
+			});
 		this._applyTranslationOnSmartTable();
 		this.loadItems();
+	}
+
+	async checkProjectSelectorPermission(organization: IOrganization) {
+		const { id: organizationId } = organization;
+		const { tenantId } = this.store.user;
+		this.organizationProjectsService
+			.getCount([], {
+				organizationId,
+				tenantId
+			})
+			.then((count) => {
+				this.showProjectsSelector = count > 1;
+			});
 	}
 
 	async checkSelectorsPermission() {
 		const { userId } = this.store;
 		const { tenantId } = this.store.user;
-
 		const { items: userOrg } = await this.usersOrganizationsService.getAll(
 			[],
 			{
@@ -178,16 +214,6 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				tenantId
 			}
 		);
-
-		if (userOrg.length > 1) {
-			const count = await this.organizationProjectsService.getCount([], {
-				organizationId: userOrg[0].organizationId,
-				tenantId: this.user.tenantId
-			});
-			if (count > 1) {
-				this.showProjectsSelector = true;
-			}
-		}
 
 		if (
 			this.store.hasPermission(
