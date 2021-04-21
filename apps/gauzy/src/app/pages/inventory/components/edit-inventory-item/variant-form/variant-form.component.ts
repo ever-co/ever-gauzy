@@ -53,6 +53,10 @@ export class VariantFormComponent implements OnInit {
 					this.options.push(...optionGroup.options);
 				});
 				this.optionsSelect = this.options.map((opt) => opt.name);
+				this.editVariantCreateInput = {
+					...this.editVariantCreateInput,
+					optionsFull: this.options
+				};
 			});
 
 		this.inventoryStore.variantCreateInputs$
@@ -74,6 +78,10 @@ export class VariantFormComponent implements OnInit {
 					})
 				);
 				this.optionsSelect = this.options.map((opt) => opt.name);
+				this.editVariantCreateInput = {
+					...this.editVariantCreateInput,
+					optionsFull: this.options
+				};
 			});
 	}
 
@@ -110,7 +118,7 @@ export class VariantFormComponent implements OnInit {
 		this.mode = 'create';
 		this.editVariantCreateInput = {
 			options: [],
-			optionsFull: [],
+			optionsFull: this.options,
 			isStored: false
 		};
 	}
@@ -136,20 +144,8 @@ export class VariantFormComponent implements OnInit {
 	}
 
 	getVariantDisplayName(variantCreateInput: VariantCreateInput) {
-		let options = variantCreateInput.optionsFull.map((option) => {
-			let translation = option.translations.find(
-				(tr) => tr.languageCode == this.languageCode
-			);
-
-			if (translation) {
-				return translation.name;
-			} else {
-				return '';
-			}
-		});
-
-		if (!options.length) return '-';
-		return options.filter((opt) => !!opt).join(' ');
+		if (!variantCreateInput.options.length) return '-';
+		return variantCreateInput.optionsFull.map((opt) => opt.name).join(' ');
 	}
 
 	onVariantBtnClick(variantCreateInput: VariantCreateInput) {
