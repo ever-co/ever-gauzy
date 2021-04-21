@@ -148,16 +148,21 @@ export default class Timerhandler {
 	startTimerIntervalPeriod(setupWindow, knex) {
 		const appSetting = LocalStore.getStore('appSetting');
 		const updatePeriod = appSetting.timer.updatePeriod;
+		console.log('Update Period:', updatePeriod, 60 * 1000 * updatePeriod);
 
 		this.timeSlotStart = moment();
+		console.log('Timeslot Start Time', this.timeSlotStart);
 
 		this.intervalUpdateTime = setInterval(async () => {
+			console.log('Last Time Id:', this.lastTimer.id);
+
 			await this.getSetActivity(
 				knex,
 				setupWindow,
 				this.timeSlotStart,
 				false
 			);
+			console.log('Timeslot Start Time', this.timeSlotStart);
 			this.timeSlotStart = moment();
 		}, 60 * 1000 * updatePeriod);
 	}
@@ -174,6 +179,12 @@ export default class Timerhandler {
 			clearInterval(this.intervalUpdateTime);
 			this.intervalUpdateTime = null;
 		}
+		console.log(
+			'Stop Timer Interval Period:',
+			this.timeSlotStart,
+			this.intevalTimer,
+			this.intervalUpdateTime
+		);
 	}
 
 	updateToggle(setupWindow, knex, isStop) {
