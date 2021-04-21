@@ -14,7 +14,6 @@ import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import {
 	ITask,
-	ITag,
 	IOrganizationProject,
 	ComponentLayoutStyleEnum,
 	TaskListTypeEnum,
@@ -22,25 +21,30 @@ import {
 	IOrganizationTeam,
 	ISelectedEmployee
 } from '@gauzy/contracts';
-import { TasksStoreService } from '../../../../@core/services/tasks-store.service';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { NotesWithTagsComponent } from '../../../../@shared/table-components/notes-with-tags/notes-with-tags.component';
-import { DateViewComponent } from '../../../../@shared/table-components/date-view/date-view.component';
-import { TaskEstimateComponent } from '../../../../@shared/table-components/task-estimate/task-estimate.component';
-import { EmployeeWithLinksComponent } from '../../../../@shared/table-components/employee-with-links/employee-with-links.component';
-import { TaskTeamsComponent } from '../../../../@shared/table-components/task-teams/task-teams.component';
-import { MyTasksStoreService } from '../../../../@core/services/my-tasks-store.service';
-import { AssignedToComponent } from '../../../../@shared/table-components/assigned-to/assigned-to.component';
 import { MyTaskDialogComponent } from './../my-task-dialog/my-task-dialog.component';
-import { TeamTasksStoreService } from '../../../../@core/services/team-tasks-store.service';
-import { Store } from '../../../../@core/services/store.service';
-import { OrganizationTeamsService } from '../../../../@core/services/organization-teams.service';
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
 import { ComponentEnum } from '../../../../@core/constants/layout.constants';
-import { StatusViewComponent } from '../../../../@shared/table-components/status-view/status-view.component';
 import { AddTaskDialogComponent } from '../../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import {
+	MyTasksStoreService,
+	OrganizationTeamsService,
+	Store,
+	TasksStoreService,
+	TeamTasksStoreService
+} from './../../../../@core/services';
+import {
+	AssignedToComponent,
+	DateViewComponent,
+	EmployeeWithLinksComponent,
+	NotesWithTagsComponent,
+	StatusViewComponent,
+	TaskEstimateComponent,
+	TaskTeamsComponent
+} from './../../../../@shared/table-components';
+import { ALL_PROJECT_SELECTED } from './../../../../@shared/project-select/project/default-project';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -56,13 +60,11 @@ export class TaskComponent
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
 	disableButton = true;
-	projects$: Observable<IOrganizationProject[]>;
 	availableTasks$: Observable<ITask[]>;
 	tasks$: Observable<ITask[]>;
 	myTasks$: Observable<ITask[]>;
 	teamTasks$: Observable<ITask[]>;
 	selectedTask: ITask;
-	tags: ITag[];
 	view: string;
 	viewComponentName: ComponentEnum;
 	teams: IOrganizationTeam[] = [];
@@ -70,6 +72,7 @@ export class TaskComponent
 	organization: IOrganization;
 	selectedProject$: Observable<IOrganizationProject>;
 	viewMode: TaskListTypeEnum = TaskListTypeEnum.GRID;
+	defaultProject = ALL_PROJECT_SELECTED;
 
 	tasksTable: Ng2SmartTableComponent;
 	@ViewChild('tasksTable') set content(content: Ng2SmartTableComponent) {
@@ -80,18 +83,18 @@ export class TaskComponent
 	}
 
 	constructor(
-		private dialogService: NbDialogService,
-		private _store: TasksStoreService,
-		private _myTaskStore: MyTasksStoreService,
-		private _teamTaskStore: TeamTasksStoreService,
+		private readonly dialogService: NbDialogService,
+		private readonly _taskStore: TasksStoreService,
+		private readonly _myTaskStore: MyTasksStoreService,
+		private readonly _teamTaskStore: TeamTasksStoreService,
 		readonly translateService: TranslateService,
 		private readonly router: Router,
-		private _organizationsStore: Store,
-		private route: ActivatedRoute,
-		private organizationTeamsService: OrganizationTeamsService
+		private readonly _store: Store,
+		private readonly route: ActivatedRoute,
+		private readonly organizationTeamsService: OrganizationTeamsService
 	) {
 		super(translateService);
-		this.tasks$ = this._store.tasks$;
+		this.tasks$ = this._taskStore.tasks$;
 		this.myTasks$ = this._myTaskStore.myTasks$;
 		this.teamTasks$ = this._teamTaskStore.tasks$;
 		this.setView();
@@ -101,8 +104,7 @@ export class TaskComponent
 		this._loadTableSettings();
 		this._applyTranslationOnSmartTable();
 
-		this.initProjectFilter();
-		this._organizationsStore.selectedEmployee$
+		this._store.selectedEmployee$
 			.pipe(
 				filter((employee) => !!employee),
 				untilDestroyed(this)
@@ -116,7 +118,7 @@ export class TaskComponent
 					);
 				}
 			});
-		this._organizationsStore.selectedOrganization$
+		this._store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
 				untilDestroyed(this)
@@ -146,45 +148,19 @@ export class TaskComponent
 					this.setView();
 				}
 			});
-	}
-
-	initProjectFilter(): void {
-		this.selectedProject$ = this._organizationsStore.selectedProject$.pipe(
+		this.selectedProject$ = this._store.selectedProject$.pipe(
+			tap((project) => this.selectProject(project)),
 			tap((selectedProject: IOrganizationProject) => {
 				if (!!selectedProject) {
 					this.viewMode = selectedProject.taskListType as TaskListTypeEnum;
-					this.availableTasks$ = this.availableTasks$.pipe(
-						map((tasks: ITask[]) =>
-							tasks.filter(
-								(task: ITask) =>
-									task?.project?.id === selectedProject.id
-							)
-						)
-					);
 				} else {
 					this.viewMode = TaskListTypeEnum.GRID;
 				}
 			})
 		);
-		this.projects$ = this.availableTasks$.pipe(
-			map((tasks: ITask[]): IOrganizationProject[] => {
-				return _.uniq(
-					tasks
-						.filter((t) => t.project)
-						.map(
-							(task: ITask): IOrganizationProject => task.project
-						),
-					false,
-					function (p) {
-						return p.id;
-					}
-				);
-			})
-		);
 	}
 
 	selectProject(project: IOrganizationProject | null): void {
-		this._organizationsStore.selectedProject = project;
 		this.initTasks();
 		this.viewMode = !!project
 			? (project.taskListType as TaskListTypeEnum)
@@ -194,7 +170,9 @@ export class TaskComponent
 			this.availableTasks$ = this.availableTasks$.pipe(
 				map((tasks: ITask[]) =>
 					tasks.filter(
-						(task: ITask) => task?.project?.id === project.id
+						(task: ITask) =>
+							task?.project?.id === project.id ||
+							project.id === ALL_PROJECT_SELECTED.id
 					)
 				)
 			);
@@ -221,17 +199,14 @@ export class TaskComponent
 			this._myTaskStore.fetchTasks();
 			this.view = 'my-tasks';
 			this.viewComponentName = ComponentEnum.MY_TASKS;
-			// this.availableTasks$ = this.myTasks$;
 		} else if (pathName.indexOf('tasks/team') !== -1) {
 			this.view = 'team-tasks';
 			this.viewComponentName = ComponentEnum.TEAM_TASKS;
-			// this.availableTasks$ = this.teamTasks$;
 		} else {
 			this.view = 'tasks';
 			this.viewComponentName = ComponentEnum.ALL_TASKS;
-			// this.availableTasks$ = this.tasks$;
 		}
-		this._organizationsStore
+		this._store
 			.componentLayout$(this.viewComponentName)
 			.pipe(untilDestroyed(this))
 			.subscribe(
@@ -535,7 +510,8 @@ export class TaskComponent
 		if (!this.organization) {
 			return;
 		}
-		const { id: organizationId, tenantId } = this.organization;
+		const { tenantId } = this._store.user;
+		const { id: organizationId } = this.organization;
 		this.teams = (
 			await this.organizationTeamsService.getMyTeams(
 				['members'],
@@ -559,6 +535,10 @@ export class TaskComponent
 	}
 
 	openTasksSettings(selectedProject: IOrganizationProject): void {
+		if (selectedProject.id == this.defaultProject.id) {
+			return;
+		}
+
 		this.router.navigate(['/pages/tasks/settings', selectedProject.id], {
 			state: selectedProject
 		});
@@ -569,7 +549,7 @@ export class TaskComponent
 	 */
 	get storeInstance() {
 		if (this.isTasksPage()) {
-			return this._store;
+			return this._taskStore;
 		} else if (this.isMyTasksPage()) {
 			return this._myTaskStore;
 		} else if (this.isTeamTaskPage()) {

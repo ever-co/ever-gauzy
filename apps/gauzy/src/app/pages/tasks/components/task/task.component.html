@@ -19,34 +19,10 @@
 			</h4>
 		</div>
 		<div class="tasks-component__settings">
-			<div class="project-selector mr-2">
-				<ng-select
-					[items]="projects$ | async"
-					bindName="id"
-					(change)="selectProject($event)"
-					[ngModel]="selectedProject$ | async"
-					placeholder="{{
-						'FORM.PLACEHOLDERS.ALL_PROJECTS' | translate
-					}}"
-				>
-					<ng-template
-						ng-option-tmp
-						let-item="item"
-						let-index="index"
-					>
-						{{ item.name }}
-					</ng-template>
-					<ng-template ng-label-tmp let-item="item">
-						<div class="selector-template">
-							<span>{{ item.name }}</span>
-						</div>
-					</ng-template>
-				</ng-select>
-			</div>
 			<ng-container *ngIf="selectedProject$ | async as selectedProject">
 				<button
 					class="project-settings"
-					*ngIf="!!selectedProject"
+					*ngIf="selectedProject.id !== defaultProject.id"
 					nbButton
 					class="tasks-component__setup-btn mr-2"
 				>
@@ -58,7 +34,7 @@
 			</ng-container>
 			<ga-layout-selector
 				class="layout-selector"
-				componentName="{{ viewComponentName }}"
+				[componentName]="viewComponentName"
 			></ga-layout-selector>
 		</div>
 	</nb-card-header>

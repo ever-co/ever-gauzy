@@ -1,4 +1,11 @@
-import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	OnDestroy,
+	Input,
+	forwardRef,
+	AfterViewInit
+} from '@angular/core';
 import {
 	IOrganization,
 	IOrganizationProject,
@@ -8,7 +15,7 @@ import {
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { debounceTime, filter } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '../../../@core/services/store.service';
 import { ToastrService } from '../../../@core/services/toastr.service';
@@ -29,12 +36,15 @@ import { ALL_PROJECT_SELECTED } from './default-project';
 		}
 	]
 })
-export class ProjectSelectorComponent implements OnInit, OnDestroy {
+export class ProjectSelectorComponent
+	implements OnInit, OnDestroy, AfterViewInit {
 	private _projectId: string | string[];
 	private _employeeId: string;
 	private _organizationContactId: string;
 	projects: IOrganizationProject[] = [];
 	organization: IOrganization;
+
+	selectedProject: IOrganizationProject;
 
 	@Input() disabled = false;
 	@Input() multiple = false;
@@ -62,14 +72,17 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	@Input() placeholder: string;
+	@Input() skipGlobalChange: boolean;
+
 	loadProjects$: Subject<any> = new Subject();
 	onChange: any = () => {};
 	onTouched: any = () => {};
 
 	constructor(
-		private organizationProjects: OrganizationProjectsService,
-		private store: Store,
-		private toastrService: ToastrService,
+		private readonly organizationProjects: OrganizationProjectsService,
+		private readonly store: Store,
+		private readonly toastrService: ToastrService,
 		private readonly _organizationProjectStore: OrganizationProjectStore
 	) {}
 
@@ -91,51 +104,68 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 					PermissionsEnum.ORG_PROJECT_EDIT
 				);
 			});
-
 		this.loadProjects$
-			.pipe(untilDestroyed(this), debounceTime(500))
-			.subscribe(async () => {
-				const { tenantId } = this.store.user;
-				const { id: organizationId } = this.organization;
-
-				if (this.employeeId) {
-					this.projects = await this.organizationProjects.getAllByEmployee(
-						this.employeeId,
-						{
-							organizationContactId: this.organizationContactId,
-							...(this.organizationId
-								? { organizationId, tenantId }
-								: {})
-						}
-					);
-				} else {
-					const {
-						items = []
-					} = await this.organizationProjects.getAll([], {
-						organizationContactId: this.organizationContactId,
-						...(this.organizationId
-							? { organizationId, tenantId }
-							: {})
-					});
-					this.projects = items;
-				}
-				this.projects.unshift(ALL_PROJECT_SELECTED);
-			});
-
+			.pipe(
+				debounceTime(500),
+				tap(() => this.getProjects()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
+				tap((organization) => (this.organization = organization)),
+				tap(({ id }) => (this.organizationId = id)),
+				tap(() => this.loadProjects$.next()),
 				untilDestroyed(this)
 			)
-			.subscribe((organization) => {
-				if (organization) {
-					this.organization = organization;
-					this.organizationId = organization.id;
-					this.loadProjects$.next();
+			.subscribe();
+	}
+
+	ngAfterViewInit() {
+		this._organizationProjectStore.organizationProjectAction$
+			.pipe(
+				filter(({ project }) => !!project),
+				untilDestroyed(this)
+			)
+			.subscribe(({ project, action }) => {
+				switch (action) {
+					case OrganizationProjectAction.CREATED:
+						this.createOrganizationProject(project);
+						break;
+					case OrganizationProjectAction.UPDATED:
+						this.updateOrganizationProject(project);
+						break;
+					case OrganizationProjectAction.DELETED:
+						this.deleteOrganizationProject(project);
+						break;
+					default:
+						break;
 				}
 			});
+	}
 
-		this.organizationProjectAction();
+	async getProjects() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		if (this.employeeId) {
+			this.projects = await this.organizationProjects.getAllByEmployee(
+				this.employeeId,
+				{
+					organizationContactId: this.organizationContactId,
+					...(this.organizationId ? { organizationId, tenantId } : {})
+				}
+			);
+		} else {
+			const { items = [] } = await this.organizationProjects.getAll([], {
+				organizationContactId: this.organizationContactId,
+				...(this.organizationId ? { organizationId, tenantId } : {})
+			});
+			this.projects = items;
+		}
+
+		this.projects.unshift(ALL_PROJECT_SELECTED);
+		this.selectProject(ALL_PROJECT_SELECTED);
 	}
 
 	writeValue(value: string | string[]) {
@@ -187,29 +217,6 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 		}
 	};
 
-	private organizationProjectAction() {
-		this._organizationProjectStore.organizationProjectAction$
-			.pipe(
-				filter(({ project }) => !!project),
-				untilDestroyed(this)
-			)
-			.subscribe(({ project, action }) => {
-				switch (action) {
-					case OrganizationProjectAction.CREATED:
-						this.createOrganizationProject(project);
-						break;
-					case OrganizationProjectAction.UPDATED:
-						this.updateOrganizationProject(project);
-						break;
-					case OrganizationProjectAction.DELETED:
-						this.deleteOrganizationProject(project);
-						break;
-					default:
-						break;
-				}
-			});
-	}
-
 	/*
 	 * After created new organization project pushed on dropdown
 	 */
@@ -248,6 +255,14 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 			);
 		}
 		this.projects = [...projects].filter(isNotEmpty);
+	}
+
+	selectProject(project: IOrganizationProject): void {
+		if (!this.skipGlobalChange) {
+			this.store.selectedProject = project || ALL_PROJECT_SELECTED;
+		}
+		this.selectedProject = project || ALL_PROJECT_SELECTED;
+		this.projectId = this.selectedProject.id;
 	}
 
 	ngOnDestroy() {}

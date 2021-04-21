@@ -115,10 +115,17 @@ export class EmployeeSelectorComponent
 			.subscribe((query) => {
 				this.selectEmployeeById(query.employeeId);
 			});
-		this.employeeActionAction();
 	}
 
 	ngAfterViewInit(): void {
+		this._employeeStore.employeeAction$
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.getEmployees(
+					this.store.selectedOrganization,
+					this.store.selectedDate
+				);
+			});
 		this.cdRef.detectChanges();
 	}
 
@@ -271,17 +278,6 @@ export class EmployeeSelectorComponent
 				this.people[0] || ALL_EMPLOYEES_SELECTED;
 		}
 	};
-
-	private employeeActionAction() {
-		this._employeeStore.employeeAction$
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.getEmployees(
-					this.store.selectedOrganization,
-					this.store.selectedDate
-				);
-			});
-	}
 
 	ngOnDestroy() {}
 }
