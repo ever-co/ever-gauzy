@@ -2972,6 +2972,7 @@
 		"MANUAL": "Manual",
 		"MANUAL_NOT_ALLOW": "Manual time not allowed",
 		"SELECT_PROJECT": "Select Project",
+		"SELECT_All_PROJECT": "All Projects",
 		"SELECT_TASK": "Select Task",
 		"SELECT_CLIENT": "Select Client",
 		"DATE": "תאריך",
