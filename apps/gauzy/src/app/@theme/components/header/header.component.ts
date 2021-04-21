@@ -19,6 +19,7 @@ import { Store } from '../../../@core/services/store.service';
 import {
 	IOrganization,
 	OrganizationAction,
+	OrganizationProjectAction,
 	PermissionsEnum,
 	TimeLogType
 } from '@gauzy/contracts';
@@ -35,7 +36,8 @@ import { OrganizationProjectsService } from '../../../@core/services/organizatio
 import {
 	ISidebarActionConfig,
 	NavigationBuilderService,
-	OrganizationEditStore
+	OrganizationEditStore,
+	OrganizationProjectStore
 } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
@@ -73,7 +75,6 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	showProjectsSelector: boolean;
 
 	showDateSelector = true;
-	organizationSelected = false;
 	theme: string;
 	createContextMenu: NbMenuItem[];
 	supportContextMenu: NbMenuItem[];
@@ -82,6 +83,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		START_TIMER: 'START_TIMER'
 	};
 	timerDuration: string;
+	organization: IOrganization;
 
 	constructor(
 		private readonly sidebarService: NbSidebarService,
@@ -97,7 +99,8 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		private readonly employeesService: EmployeesService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		public readonly navigationBuilderService: NavigationBuilderService,
-		private readonly organizationEditStore: OrganizationEditStore
+		private readonly organizationEditStore: OrganizationEditStore,
+		private readonly organizationProjectStore: OrganizationProjectStore
 	) {}
 
 	ngOnInit() {
@@ -145,11 +148,12 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
-				untilDestroyed(this),
-				tap((organization) =>
-					this.checkProjectSelectorPermission(organization)
-				),
-				tap(() => this.loadItems())
+				tap((organization) => {
+					this.organization = organization;
+					this.checkProjectSelectorPermission();
+				}),
+				tap(() => this.loadItems()),
+				untilDestroyed(this)
 			)
 			.subscribe();
 		this.store.user$
@@ -173,26 +177,17 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			.subscribe((t) => {
 				this.theme = t.name;
 			});
-		this.organizationEditStore.organizationAction$
-			.pipe(
-				filter(({ organization }) => !!organization),
-				untilDestroyed(this)
-			)
-			.subscribe(({ action }) => {
-				switch (action) {
-					case OrganizationAction.CREATED:
-					case OrganizationAction.UPDATED:
-					case OrganizationAction.DELETED:
-						this.checkSelectorsPermission();
-						break;
-				}
-			});
+
 		this._applyTranslationOnSmartTable();
 		this.loadItems();
 	}
 
-	async checkProjectSelectorPermission(organization: IOrganization) {
-		const { id: organizationId } = organization;
+	async checkProjectSelectorPermission() {
+		if (!this.organization) {
+			return;
+		}
+
+		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 		this.organizationProjectsService
 			.getCount([], {
@@ -207,13 +202,12 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	async checkSelectorsPermission() {
 		const { userId } = this.store;
 		const { tenantId } = this.store.user;
-		const { items: userOrg } = await this.usersOrganizationsService.getAll(
-			[],
-			{
-				userId,
-				tenantId
-			}
-		);
+		const {
+			items: userOrg
+		} = await this.usersOrganizationsService.getAll([], {
+			userId,
+			tenantId
+		});
 
 		if (
 			this.store.hasPermission(
@@ -224,8 +218,9 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			this.showOrganizationsSelector = true;
 		} else {
 			if (userOrg.length > 0) {
+				const [firstUserOrg] = userOrg;
 				const org = await this.organizationsService
-					.getById(userOrg[0].organizationId)
+					.getById(firstUserOrg.organizationId)
 					.pipe(first())
 					.toPromise();
 				this.store.selectedOrganization = org;
@@ -254,7 +249,36 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		}
 	}
 
-	ngAfterViewInit(): void {}
+	ngAfterViewInit(): void {
+		this.organizationEditStore.organizationAction$
+			.pipe(
+				filter(({ organization }) => !!organization),
+				untilDestroyed(this)
+			)
+			.subscribe(({ action }) => {
+				switch (action) {
+					case OrganizationAction.CREATED:
+					case OrganizationAction.UPDATED:
+					case OrganizationAction.DELETED:
+						this.checkSelectorsPermission();
+						break;
+				}
+			});
+		this.organizationProjectStore.organizationProjectAction$
+			.pipe(
+				filter(({ project }) => !!project),
+				untilDestroyed(this)
+			)
+			.subscribe(({ action }) => {
+				switch (action) {
+					case OrganizationProjectAction.CREATED:
+					case OrganizationProjectAction.UPDATED:
+					case OrganizationProjectAction.DELETED:
+						this.checkProjectSelectorPermission();
+						break;
+				}
+			});
+	}
 
 	toggleTimerWindow() {
 		this.timeTrackerService.showTimerWindow = !this.timeTrackerService

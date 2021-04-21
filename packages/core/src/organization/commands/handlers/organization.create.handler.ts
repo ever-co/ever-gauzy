@@ -61,13 +61,13 @@ export class OrganizationCreateHandler
 		);
 
 		// 4. Take each super admin user and add him/her to created organization
-		superAdminUsers.forEach((superAdmin) => {
+		for (const superAdmin of superAdminUsers) {
 			const userOrganization = new UserOrganization();
 			userOrganization.organizationId = createdOrganization.id;
 			userOrganization.tenantId = tenantId;
 			userOrganization.userId = superAdmin.id;
-			this.userOrganizationService.create(userOrganization);
-		});
+			await this.userOrganizationService.create(userOrganization);
+		}
 
 		//5. Create contact details of created organization
 		const { id } = createdOrganization;
@@ -80,7 +80,6 @@ export class OrganizationCreateHandler
 			contact,
 			...createdOrganization
 		});
-
 		return await this.organizationService.findOne(id);
 	}
 }

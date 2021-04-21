@@ -7,7 +7,7 @@
 			[disabled]="disabled"
 			[items]="projects"
 			[(ngModel)]="projectId"
-			[placeholder]="'TIMER_TRACKER.SELECT_PROJECT' | translate"
+			[placeholder]="'TIMER_TRACKER.SELECT_All_PROJECT' | translate"
 			bindValue="id"
 			bindLabel="name"
 		>
@@ -19,7 +19,7 @@
 		class="multiple-select"
 		[disabled]="disabled"
 		[multiple]="multiple"
-		[placeholder]="'TIMER_TRACKER.SELECT_PROJECT' | translate"
+		[placeholder]="'TIMER_TRACKER.SELECT_All_PROJECT' | translate"
 		[(selected)]="projectId"
 	>
 		<nb-option *ngFor="let project of projects" [value]="project.id">

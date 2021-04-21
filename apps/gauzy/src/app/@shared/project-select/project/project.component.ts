@@ -14,6 +14,7 @@ import { Store } from '../../../@core/services/store.service';
 import { ToastrService } from '../../../@core/services/toastr.service';
 import { OrganizationProjectStore } from '../../../@core/services/organization-projects-store.service';
 import { isNotEmpty } from '@gauzy/common-angular';
+import { ALL_PROJECT_SELECTED } from './default-project';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -118,6 +119,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 					});
 					this.projects = items;
 				}
+				this.projects.unshift(ALL_PROJECT_SELECTED);
 			});
 
 		this.store.selectedOrganization$
