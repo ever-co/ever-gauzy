@@ -1,7 +1,7 @@
 import { IOrganizationProject, TaskListTypeEnum } from '@gauzy/contracts';
 
 export const ALL_PROJECT_SELECTED: IOrganizationProject = {
-	id: 'all',
+	id: '',
 	currency: null,
 	billing: null,
 	public: true,

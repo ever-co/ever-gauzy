@@ -5,9 +5,11 @@ import {
 	IGetSprintsOptions,
 	ITask
 } from '@gauzy/contracts';
-import { SprintService } from 'apps/gauzy/src/app/@core/services/organization-sprint.service';
+import { SprintService } from './../../@core/services/organization-sprint.service';
 import { tap, take, map, switchMap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy()
 @Injectable({
 	providedIn: 'root'
 })
@@ -26,7 +28,10 @@ export class SprintStoreService {
 	fetchSprints(findInput: IGetSprintsOptions = {}) {
 		this.sprintService
 			.getAllSprints(findInput)
-			.pipe(tap(({ items }) => this.loadAllSprints(items)))
+			.pipe(
+				tap(({ items }) => this.loadAllSprints(items)),
+				untilDestroyed(this)
+			)
 			.subscribe();
 	}
 

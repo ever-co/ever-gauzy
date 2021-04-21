@@ -1,21 +1,19 @@
 <ng-template [ngIf]="!multiple" [ngIfElse]="multipleSelect">
-	<div (click)="$event.stopPropagation()">
-		<ng-select
-			[addTag]="hasPermissionProjEdit ? createNew : null"
-			[multiple]="multiple"
-			[clearable]="true"
-			[disabled]="disabled"
-			[items]="projects"
-			(change)="selectProject($event)"
-			[(ngModel)]="projectId"
-			[placeholder]="
-				placeholder || 'FORM.PLACEHOLDERS.ALL_PROJECTS' | translate
-			"
-			bindValue="id"
-			bindLabel="name"
-		>
-		</ng-select>
-	</div>
+	<ng-select
+		[addTag]="hasPermissionProjEdit ? createNew : null"
+		[multiple]="multiple"
+		[clearable]="true"
+		[disabled]="disabled"
+		[items]="projects"
+		(change)="selectProject($event)"
+		[(ngModel)]="projectId"
+		[placeholder]="
+			placeholder || 'FORM.PLACEHOLDERS.ALL_PROJECTS' | translate
+		"
+		bindValue="id"
+		bindLabel="name"
+	>
+	</ng-select>
 </ng-template>
 <ng-template #multipleSelect>
 	<nb-select
