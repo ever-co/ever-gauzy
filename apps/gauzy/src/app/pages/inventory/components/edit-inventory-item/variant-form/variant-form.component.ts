@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { IProductOption } from '@gauzy/contracts';
+import { IProductOptionTranslatable } from '@gauzy/contracts';
 import { Router } from '@angular/router';
 import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -22,7 +22,7 @@ export interface VariantCreateInput {
 	styleUrls: ['./variant-form.component.scss']
 })
 export class VariantFormComponent implements OnInit {
-	options: IProductOption[];
+	options: IProductOptionTranslatable[];
 
 	variantCreateInputs: VariantCreateInput[] = [];
 	editVariantCreateInput: VariantCreateInput = {
@@ -37,11 +37,13 @@ export class VariantFormComponent implements OnInit {
 	) {}
 
 	ngOnInit(): void {
-		this.inventoryStore.activeProduct$
+		this.inventoryStore.optionGroups$
 			.pipe(untilDestroyed(this))
-			.subscribe((activeProduct) => {
-				//tstodo
-				// this.options = activeProduct.options;
+			.subscribe((optionGroups) => {
+				this.options = [];
+				optionGroups.forEach((optionGroup) => {
+					this.options = this.options.concat(optionGroup.options);
+				});
 			});
 
 		this.inventoryStore.variantCreateInputs$

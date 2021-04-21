@@ -4,6 +4,7 @@ import * as moment from 'moment';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
+import { getConfig } from '@gauzy/config';
 
 namespace Utils {
 	export function generatedLogoColor() {
@@ -85,4 +86,56 @@ export async function tempFile(prefix) {
 	const tempPath = path.join(os.tmpdir(), prefix);
 	const folder = await fs.promises.mkdtemp(tempPath);
 	return path.join(folder, prefix + moment().unix() + Math.random() * 10000);
+}
+
+/*
+ * Get date range according for diffrent unitOfTimes
+ */
+export function getDateRange(
+	startDate?: string | Date,
+	endDate?: string | Date,
+	type: 'day' | 'week' = 'day'
+) {
+	if (endDate === 'day' || endDate === 'week') {
+		type = endDate;
+	}
+
+	let start: any = moment.utc().startOf(type);
+	let end: any = moment.utc().endOf(type);
+
+	if (startDate instanceof Date && endDate instanceof Date) {
+		start = moment.utc(startDate).startOf(type);
+		end = moment.utc(endDate).endOf(type);
+	} else {
+		if (
+			(startDate && endDate === 'day') ||
+			endDate === 'week' ||
+			(startDate && !endDate)
+		) {
+			start = moment.utc(startDate).startOf(type);
+			end = moment.utc(startDate).endOf(type);
+		}
+	}
+
+	if (!start.isValid() || !end.isValid()) {
+		return;
+	}
+
+	if (end.isBefore(start)) {
+		throw 'End date must be greated than start date.';
+	}
+
+	const dbType = getConfig().dbConnectionOptions.type || 'sqlite';
+	if (dbType === 'sqlite') {
+		start = start.format('YYYY-MM-DD HH:mm:ss');
+		end = end.format('YYYY-MM-DD HH:mm:ss');
+	} else {
+		start = start.toDate();
+		end = end.toDate();
+	}
+
+	return {
+		start,
+		end
+	};
 }

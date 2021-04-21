@@ -22,11 +22,19 @@ export class ProductVariantCreateHandler
 	): Promise<ProductVariant[]> {
 		const variantCreateInput: IVariantCreateInput = command.productInput;
 
-		await this.productService.findById(variantCreateInput.product.id, {
-			relations: []
+		const product = await this.productService.findById(
+			variantCreateInput.product.id,
+			{
+				relations: ['optionGroups']
+			}
+		);
+
+		let productOptions = [];
+
+		product.optionGroups.forEach((optionGroup) => {
+			productOptions = productOptions.concat(optionGroup.options);
 		});
 
-		const productOptions = [];
 		const optionCombinations = variantCreateInput.optionCombinations;
 		const { organizationId, tenantId } = variantCreateInput.product;
 
@@ -34,11 +42,22 @@ export class ProductVariantCreateHandler
 
 		for await (const optionCombination of optionCombinations) {
 			const newProductVariant = new ProductVariant();
-			const variantOptions = productOptions.filter((option) => {
-				return optionCombination.options.includes(option.name);
+
+			let variantOptions = [];
+
+			await productOptions.forEach((dbOption, i) => {
+				return optionCombination.options.forEach((option) => {
+					if (
+						!!dbOption.translations.find(
+							(translation) => translation.name == option
+						)
+					) {
+						variantOptions.push(dbOption);
+					}
+				});
 			});
 
-			newProductVariant.options = [];
+			newProductVariant.options = variantOptions;
 			newProductVariant.internalReference = variantOptions
 				.map((option) => option.name)
 				.join('-');

@@ -9,10 +9,16 @@ import { GalleryComponent } from 'apps/gauzy/src/app/@shared/gallery/gallery.com
 import { GalleryService } from 'apps/gauzy/src/app/@shared/gallery/gallery.service';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { LocalDataSource } from 'ng2-smart-table';
-import { IImageAsset, IProductTranslated } from 'packages/contracts/dist';
+import {
+	IImageAsset,
+	IProductOptionTranslatable,
+	IProductTranslatable,
+	LanguagesEnum
+} from 'packages/contracts/dist';
 import { combineLatest } from 'rxjs';
 import { EnabledStatusComponent } from '../table-components/enabled-row.component';
 import { ImageRowComponent } from '../table-components/image-row.component';
+import { TranslatableService } from 'apps/gauzy/src/app/@core';
 
 @UntilDestroy()
 @Component({
@@ -23,8 +29,9 @@ import { ImageRowComponent } from '../table-components/image-row.component';
 export class InventoryItemViewComponent
 	extends TranslationBaseComponent
 	implements OnInit {
-	inventoryItem: IProductTranslated;
+	inventoryItem: IProductTranslatable;
 	loading = true;
+	options: IProductOptionTranslatable[] = [];
 
 	@ViewChild('variantTable') variantTable;
 
@@ -33,6 +40,7 @@ export class InventoryItemViewComponent
 
 	constructor(
 		readonly translateService: TranslateService,
+		private translatableService: TranslatableService,
 		private productService: ProductService,
 		private route: ActivatedRoute,
 		private readonly store: Store,
@@ -46,7 +54,7 @@ export class InventoryItemViewComponent
 		combineLatest([this.route.params, this.store.preferredLanguage$])
 			.pipe(untilDestroyed(this))
 			.subscribe(async ([params, languageCode]) => {
-				this.inventoryItem = await this.productService.getOneTranslated(
+				this.inventoryItem = await this.productService.getById(
 					params.id,
 					[
 						'category',
@@ -56,16 +64,44 @@ export class InventoryItemViewComponent
 						'tags',
 						'gallery',
 						'featuredImage'
-					],
-					languageCode
+					]
 				);
 
-				let variants = this.inventoryItem.variants.map((variant) => {
-					return {
-						...variant,
-						...variant.settings,
-						...variant.price
-					};
+				let variants = [];
+
+				if (this.inventoryItem && this.inventoryItem.variants) {
+					variants = this.inventoryItem.variants.map((variant) => {
+						return {
+							...variant,
+							...variant.settings,
+							...variant.price
+						};
+					});
+				}
+
+				if (this.inventoryItem && this.inventoryItem.optionGroups) {
+					this.options = [];
+					this.inventoryItem.optionGroups.forEach((optionGroup) => {
+						this.options.push(...optionGroup.options);
+					});
+				}
+
+				this.options.map((option) => {
+					let currentTranslation = option.translations.find(
+						(translation) => {
+							return (
+								translation.languageCode == languageCode ||
+								translation.languageCode ==
+									LanguagesEnum.ENGLISH
+							);
+						}
+					);
+
+					if (currentTranslation) {
+						option.name = currentTranslation.name;
+					} else {
+						option.name = '-';
+					}
 				});
 
 				this.loading = false;
@@ -93,6 +129,10 @@ export class InventoryItemViewComponent
 			},
 			dialogClass: 'fullscreen'
 		});
+	}
+
+	getTranslatedProp(item: any, prop: string) {
+		return this.translatableService.getTranslatedProperty(item, prop);
 	}
 
 	async loadSmartTable() {
