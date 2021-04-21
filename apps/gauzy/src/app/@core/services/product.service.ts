@@ -83,7 +83,9 @@ export class ProductService {
 			.toPromise();
 	}
 
-	update(product: IProductTranslatable): Promise<IProductTranslatable> {
+	update(
+		product: IProductTranslatableCreateInput
+	): Promise<IProductTranslatable> {
 		return this.http
 			.put<IProductTranslatable>(
 				`${this.PRODUCTS_URL}/${product.id}`,

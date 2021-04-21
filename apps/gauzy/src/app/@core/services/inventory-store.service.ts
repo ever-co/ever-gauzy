@@ -153,8 +153,9 @@ export class InventoryStore {
 			(variant: IProductVariant) => {
 				return {
 					options: variant.options.map(
-						(option: IProductOption) => option.name
+						(option: IProductOptionTranslatable) => option.name
 					),
+					optionsFull: variant.options,
 					isStored: true,
 					id: variant.id,
 					productId: this.activeProduct.id
