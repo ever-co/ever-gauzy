@@ -232,6 +232,18 @@ export class ProductUpdateHandler
 		);
 
 		product.optionGroups = product.optionGroups.concat(newProductOptions);
+		product.category = <any>productUpdateRequest.category;
+		product.productTypeId = <any>productUpdateRequest.type;
+
+		const productTranslations = <any>await Promise.all(
+			productUpdateRequest.translations.map((optionTranslation) => {
+				return this.productService.saveProductTranslation(
+					<any>optionTranslation
+				);
+			})
+		);
+
+		product.translations = productTranslations;
 
 		const updatedProduct = await this.productService.saveProduct(
 			product as any
