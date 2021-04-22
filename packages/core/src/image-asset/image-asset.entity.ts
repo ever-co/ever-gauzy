@@ -4,7 +4,8 @@ import { IsNumber, IsString } from 'class-validator';
 import { Column, Entity, ManyToMany, OneToMany } from 'typeorm';
 import {
 	Product,
-	TenantOrganizationBaseEntity
+	TenantOrganizationBaseEntity,
+	Equipment
 } from '../core/entities/internal';
 
 @Entity('image_asset')
@@ -38,6 +39,10 @@ export class ImageAsset
 	@ApiProperty({ type: () => Product })
 	@OneToMany(() => Product, (product) => product.featuredImage)
 	productFeaturedImage?: Product[];
+
+	@ApiProperty({ type: () => Equipment })
+	@OneToMany(() => Equipment, (equipment) => equipment.image)
+	equipmentImage?: Equipment[];
 
 	@ManyToMany(() => Product, (product) => product.gallery)
 	productGallery?: Product[];

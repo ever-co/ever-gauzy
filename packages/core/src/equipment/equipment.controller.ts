@@ -9,7 +9,8 @@ import {
 	Put,
 	Param,
 	Body,
-	Query
+	Query,
+	Post
 } from '@nestjs/common';
 import { EquipmentService } from './equipment.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -53,9 +54,11 @@ export class EquipmentController extends CrudController<Equipment> {
 		@Body() entity: Equipment,
 		...options: any[]
 	): Promise<any> {
-		return this.equipmentService.create({
-			id,
-			...entity
-		});
+		return this.equipmentService.save(entity);
+	}
+
+	@Post()
+	async create(@Body() entity: Equipment, ...options: any[]): Promise<any> {
+		return this.equipmentService.save(entity);
 	}
 }
