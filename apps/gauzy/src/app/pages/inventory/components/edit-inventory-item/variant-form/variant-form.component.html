@@ -13,8 +13,8 @@
 			[(ngModel)]="editVariantCreateInput.options"
 			(change)="onSelectOption($event)"
 		>
-			<ng-option *ngFor="let option of options" [value]="option.name">{{
-				option.name
+			<ng-option *ngFor="let option of optionsSelect" [value]="option">{{
+				option
 			}}</ng-option>
 		</ng-select>
 	</div>

@@ -4,7 +4,15 @@ import {
 	IEquipmentSharing,
 	ITag
 } from '@gauzy/contracts';
-import { Entity, Column, OneToMany, ManyToMany, JoinTable } from 'typeorm';
+import {
+	Entity,
+	Column,
+	OneToMany,
+	ManyToMany,
+	JoinTable,
+	ManyToOne,
+	JoinColumn
+} from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsString,
@@ -17,7 +25,8 @@ import {
 import {
 	EquipmentSharing,
 	Tag,
-	TenantOrganizationBaseEntity
+	TenantOrganizationBaseEntity,
+	ImageAsset
 } from '../core/entities/internal';
 
 @Entity('equipment')
@@ -40,6 +49,11 @@ export class Equipment
 	@IsOptional()
 	@Column()
 	type: string;
+
+	@ApiProperty({ type: () => ImageAsset })
+	@ManyToOne(() => ImageAsset, (imageAsset) => imageAsset.equipmentImage)
+	@JoinColumn()
+	image: ImageAsset;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

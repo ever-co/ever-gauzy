@@ -73,7 +73,9 @@ export interface IProductCreateInput
 	tags?: ITag[];
 	optionGroupUpdateInputs?: IProductOptionGroupTranslatable[];
 	optionGroupCreateInputs?: IProductOptionGroupTranslatable[];
+	optionGroupDeleteInputs?: IProductOptionGroupTranslatable[];
 	optionDeleteInputs?: IProductOptionTranslatable[];
+	translations: IProductTranslation[];
 	language?: string;
 }
 
@@ -146,7 +148,7 @@ export interface IProductVariant
 	billingInvoicingPolicy: string;
 	internalReference: string;
 	image: IImageAsset;
-	options: IProductOption[];
+	options: IProductOptionTranslatable[];
 	settings: IProductVariantSetting;
 	product?: IProductTranslatable;
 }

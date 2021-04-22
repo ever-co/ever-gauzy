@@ -1,5 +1,5 @@
 import { Repository } from 'typeorm';
-import { IPagination } from '../core';
+import { IPagination, ProductTranslation } from '../core';
 import {
 	BadRequestException,
 	HttpException,
@@ -40,7 +40,9 @@ export class ProductService extends TenantAwareCrudService<Product> {
 
 	constructor(
 		@InjectRepository(Product)
-		private readonly productRepository: Repository<Product>
+		private readonly productRepository: Repository<Product>,
+		@InjectRepository(ProductTranslation)
+		private readonly productTranslationRepository: Repository<ProductTranslation>
 	) {
 		super(productRepository);
 	}
@@ -195,5 +197,11 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		} catch (err) {
 			throw new BadRequestException(err);
 		}
+	}
+
+	async saveProductTranslation(
+		productTranslation: ProductTranslation
+	): Promise<ProductTranslation> {
+		return await this.productTranslationRepository.save(productTranslation);
 	}
 }

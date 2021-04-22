@@ -82,13 +82,17 @@ export abstract class TranslatableBase
 				).propAsArr;
 
 				if (prop == 'root') {
-					elementPropTranslations = element.translations;
+					elementPropTranslations = element
+						? element.translations
+						: [];
 				} else if (inputKeys.length == 1) {
-					elementPropTranslations =
-						element[inputKeys[0]].translations;
+					elementPropTranslations = element[inputKeys[0]]
+						? element[inputKeys[0]].translations
+						: [];
 				} else if (inputKeys.length == 2) {
-					elementPropTranslations =
-						element[inputKeys[0]][inputKeys[1]].translations;
+					elementPropTranslations = element[inputKeys[0]]
+						? element[inputKeys[0]][inputKeys[1]].translations
+						: [];
 				}
 
 				let elementPropTranslation =
