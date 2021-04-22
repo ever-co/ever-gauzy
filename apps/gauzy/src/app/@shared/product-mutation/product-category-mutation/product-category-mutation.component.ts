@@ -63,12 +63,14 @@ export class ProductCategoryMutationComponent
 
 		this._initializeForm();
 
-		this.languages = this.store.systemLanguages.map((item) => {
-			return {
-				value: item.code,
-				name: item.name
-			};
-		});
+		this.languages = this.store.systemLanguages
+			? this.store.systemLanguages.map((item) => {
+					return {
+						value: item.code,
+						name: item.name
+					};
+			  })
+			: [];
 
 		this.form.valueChanges
 			.pipe(takeUntil(this._ngDestroy$))

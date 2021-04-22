@@ -114,13 +114,16 @@ export class ProductGalleryComponent
 
 		let selectedImages = await dialog.onClose.pipe(first()).toPromise();
 
-		selectedImages = selectedImages.filter((image) => {
-			return !this.inventoryStore.gallery.find((galleryImg) => {
-				return (
-					galleryImg.id == image.id || galleryImg.name == image.name
-				);
-			});
-		});
+		selectedImages = selectedImages.length
+			? selectedImages.filter((image) => {
+					return !this.inventoryStore.gallery.find((galleryImg) => {
+						return (
+							galleryImg.id == image.id ||
+							galleryImg.name == image.name
+						);
+					});
+			  })
+			: [];
 
 		try {
 			if (selectedImages.length && this.inventoryStore.activeProduct.id) {
