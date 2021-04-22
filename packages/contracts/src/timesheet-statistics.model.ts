@@ -118,6 +118,7 @@ export interface IGetCountsStatistics
 	startDate?: Date | string;
 	endDate?: Date | string;
 	employeeId?: string;
+	projectId?: string;
 }
 
 export interface ICountsStatistics {

@@ -151,12 +151,14 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 			organizationId,
 			employeeId,
 			startDate,
-			endDate
+			endDate,
+			projectId
 		} = this;
 		const request: IGetCountsStatistics = {
 			tenantId,
 			organizationId,
 			employeeId,
+			projectId,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
 		};
@@ -242,7 +244,8 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 		const request: IGetManualTimesStatistics = {
 			tenantId,
 			organizationId,
-			employeeId
+			employeeId,
+			projectId
 		};
 		this.manualTimeLoading = true;
 		this.timesheetStatisticsService

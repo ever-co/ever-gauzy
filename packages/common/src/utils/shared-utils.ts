@@ -99,3 +99,7 @@ export function average(items: any, column: string) {
 	}
 	return sum / items.length;
 }
+
+export const ArraySum = function (t, n) {
+	return parseFloat(t) + parseFloat(n);
+};
