@@ -3,7 +3,6 @@ import { CrudService, ProductOptionGroupTranslation } from '../core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
-	IProductOption,
 	IProductOptionGroupTranslation,
 	IProductOptionGroupTranslatable
 } from '@gauzy/contracts';
