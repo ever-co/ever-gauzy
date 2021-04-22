@@ -234,6 +234,7 @@ export class ProductUpdateHandler
 		product.optionGroups = product.optionGroups.concat(newProductOptions);
 		product.category = <any>productUpdateRequest.category;
 		product.productTypeId = <any>productUpdateRequest.type;
+		product.tags = productUpdateRequest.tags;
 
 		const productTranslations = <any>await Promise.all(
 			productUpdateRequest.translations.map((optionTranslation) => {
