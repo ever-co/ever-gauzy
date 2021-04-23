@@ -9,7 +9,6 @@ import {
 	IGetTimeLogReportInput,
 	IOrganization,
 	IReportDayData,
-	ISelectedEmployee,
 	ITimeLogFilters,
 	OrganizationPermissionsEnum,
 	PermissionsEnum
@@ -18,8 +17,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { toUTC } from '@gauzy/common-angular';
-import { Subject } from 'rxjs';
-import { debounceTime, filter, tap, withLatestFrom } from 'rxjs/operators';
+import { combineLatest, Subject } from 'rxjs';
+import { debounceTime, tap } from 'rxjs/operators';
 import { pick } from 'underscore';
 import { Store } from '../../../@core/services/store.service';
 import { TimesheetService } from '../../timesheet/timesheet.service';
@@ -45,8 +44,8 @@ export class DailyGridComponent implements OnInit, AfterViewInit {
 	weekDayList: string[] = [];
 	loading: boolean;
 
-	selectedEmployeeId = null;
-
+	selectedEmployeeId: string | null = null;
+	projectId: string | null = null;
 	futureDateAllowed: boolean;
 	groupBy: 'date' | 'employee' | 'project' | 'client' = 'date';
 
@@ -72,40 +71,27 @@ export class DailyGridComponent implements OnInit, AfterViewInit {
 	) {}
 
 	ngOnInit() {
-		const storeEmployee$ = this.store.selectedEmployee$;
-		const storeOrganization$ = this.store.selectedOrganization$;
-		storeEmployee$
-			.pipe(
-				filter((employee: ISelectedEmployee) => !!employee),
-				debounceTime(200),
-				withLatestFrom(storeOrganization$),
-				untilDestroyed(this)
-			)
-			.subscribe(([employee]) => {
-				if (employee && this.organization) {
-					this.selectedEmployeeId = employee.id;
-					this.updateLogs$.next();
-				}
-			});
-		storeOrganization$
-			.pipe(
-				filter((organization) => !!organization),
-				debounceTime(200),
-				withLatestFrom(storeEmployee$),
-				untilDestroyed(this)
-			)
-			.subscribe(([organization, employee]) => {
-				this.selectedEmployeeId = employee ? employee.id : null;
-				if (organization) {
-					this.organization = organization;
-					this.updateLogs$.next();
-				}
-			});
 		this.updateLogs$
 			.pipe(
 				untilDestroyed(this),
 				debounceTime(500),
 				tap(() => this.getLogs())
+			)
+			.subscribe();
+		const storeProject$ = this.store.selectedProject$;
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeOrganization$ = this.store.selectedOrganization$;
+		combineLatest([storeProject$, storeEmployee$, storeOrganization$])
+			.pipe(
+				tap(([project, employee, organization]) => {
+					if (organization) {
+						this.organization = organization;
+						this.selectedEmployeeId = employee ? employee.id : null;
+						this.projectId = project.id || null;
+						this.updateLogs$.next();
+					}
+				}),
+				untilDestroyed(this)
 			)
 			.subscribe();
 		this.ngxPermissionsService.permissions$
@@ -144,9 +130,13 @@ export class DailyGridComponent implements OnInit, AfterViewInit {
 			employeeIds.push(this.selectedEmployeeId);
 		}
 
+		const projectIds: string[] = [];
+		if (this.projectId) {
+			projectIds.push(this.projectId);
+		}
+
 		const appliedFilter = pick(
 			this.logRequest,
-			'projectIds',
 			'source',
 			'activityLevel',
 			'logType'
@@ -157,6 +147,7 @@ export class DailyGridComponent implements OnInit, AfterViewInit {
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
 			...(employeeIds.length > 0 ? { employeeIds } : {}),
+			...(projectIds.length > 0 ? { projectIds } : {}),
 			organizationId,
 			tenantId,
 			groupBy: this.groupBy

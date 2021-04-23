@@ -9,7 +9,6 @@ import {
 	ICountsStatistics,
 	IGetCountsStatistics,
 	IOrganization,
-	ISelectedEmployee,
 	ITimeLogFilters,
 	PermissionsEnum
 } from '@gauzy/contracts';
@@ -17,8 +16,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from './../../../../@core/services/store.service';
 import * as moment from 'moment';
 import { toUTC } from '@gauzy/common-angular';
-import { Subject } from 'rxjs';
-import { debounceTime, filter, tap, withLatestFrom } from 'rxjs/operators';
+import { combineLatest, Subject } from 'rxjs';
+import { debounceTime, tap } from 'rxjs/operators';
 import { pick } from 'underscore';
 import { TimesheetStatisticsService } from '../../../timesheet/timesheet-statistics.service';
 
@@ -39,7 +38,8 @@ export class DailyStatisticsComponent implements OnInit, AfterViewInit {
 	counts: ICountsStatistics;
 
 	countsLoading: boolean;
-	selectedEmployeeId = null;
+	selectedEmployeeId: string | null = null;
+	projectId: string | null = null;
 
 	private _selectedDate: Date = new Date();
 	public get selectedDate(): Date {
@@ -62,40 +62,27 @@ export class DailyStatisticsComponent implements OnInit, AfterViewInit {
 	) {}
 
 	ngOnInit() {
-		const storeEmployee$ = this.store.selectedEmployee$;
-		const storeOrganization$ = this.store.selectedOrganization$;
-		storeEmployee$
-			.pipe(
-				filter((employee: ISelectedEmployee) => !!employee),
-				debounceTime(200),
-				withLatestFrom(storeOrganization$),
-				untilDestroyed(this)
-			)
-			.subscribe(([employee]) => {
-				if (employee && this.organization) {
-					this.selectedEmployeeId = employee.id;
-					this.updateLogs$.next();
-				}
-			});
-		storeOrganization$
-			.pipe(
-				filter((organization) => !!organization),
-				debounceTime(200),
-				withLatestFrom(storeEmployee$),
-				untilDestroyed(this)
-			)
-			.subscribe(([organization, employee]) => {
-				this.selectedEmployeeId = employee ? employee.id : null;
-				if (organization) {
-					this.organization = organization;
-					this.updateLogs$.next();
-				}
-			});
 		this.updateLogs$
 			.pipe(
-				untilDestroyed(this),
-				debounceTime(500),
-				tap(() => this.getCounts())
+				debounceTime(800),
+				tap(() => this.getCounts()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		const storeProject$ = this.store.selectedProject$;
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeOrganization$ = this.store.selectedOrganization$;
+		combineLatest([storeProject$, storeEmployee$, storeOrganization$])
+			.pipe(
+				tap(([project, employee, organization]) => {
+					if (organization) {
+						this.organization = organization;
+						this.selectedEmployeeId = employee ? employee.id : null;
+						this.projectId = project.id || null;
+						this.updateLogs$.next();
+					}
+				}),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
@@ -123,9 +110,13 @@ export class DailyStatisticsComponent implements OnInit, AfterViewInit {
 			employeeId = this.selectedEmployeeId;
 		}
 
+		let projectId: string;
+		if (this.projectId) {
+			projectId = this.projectId;
+		}
+
 		const appliedFilter = pick(
 			this.logRequest,
-			'projectIds',
 			'source',
 			'activityLevel',
 			'logType'
@@ -135,6 +126,7 @@ export class DailyStatisticsComponent implements OnInit, AfterViewInit {
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
 			...(employeeId ? { employeeId } : {}),
+			...(projectId ? { projectId } : {}),
 			organizationId,
 			tenantId
 		};

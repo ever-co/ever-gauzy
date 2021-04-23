@@ -209,10 +209,13 @@
 							<nb-list-item *ngFor="let task of tasks">
 								<div class="w-100">
 									<div class="row align-items-center">
-										<div class="col">
+										<div class="col text-left">
 											{{ task.title }}
 										</div>
-										<div class="col-sm-3">
+										<div class="col text-center">
+											{{ task.durationPercentage }}%
+										</div>
+										<div class="col text-center">
 											<nb-progress-bar
 												class="mb-1"
 												[value]="
@@ -228,7 +231,7 @@
 											>
 											</nb-progress-bar>
 										</div>
-										<div class="col-auto">
+										<div class="col text-right">
 											{{ task.duration | durationFormat }}
 										</div>
 									</div>
@@ -334,10 +337,13 @@
 							<nb-list-item *ngFor="let project of projects">
 								<div class="w-100">
 									<div class="row align-items-center">
-										<div class="col">
+										<div class="col text-left">
 											{{ project.name }}
 										</div>
-										<div class="col-sm-3">
+										<div class="col text-center">
+											{{ project.durationPercentage }}%
+										</div>
+										<div class="col text-center">
 											<nb-progress-bar
 												class="mb-1"
 												[value]="
@@ -353,7 +359,7 @@
 											>
 											</nb-progress-bar>
 										</div>
-										<div class="col-auto">
+										<div class="col text-right">
 											{{
 												project.duration
 													| durationFormat

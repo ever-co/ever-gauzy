@@ -95,6 +95,14 @@ export class StatisticService {
 			);
 		}
 
+		// convert projectId String to Array
+		let projectIds: string[] = [];
+		if (typeof projectId === 'string') {
+			projectIds.push(projectId);
+		} else {
+			projectIds = projectId;
+		}
+
 		/*
 		 *  Get employees count who worked in this week.
 		 */
@@ -115,11 +123,11 @@ export class StatisticService {
 		}
 
 		// project filter query
-		if (isNotEmpty(projectId)) {
+		if (isNotEmpty(projectIds)) {
 			employeesCountQuery.andWhere(
-				`"timeLogs"."projectId" = :projectId`,
+				`"timeLogs"."projectId" IN (:...projectIds)`,
 				{
-					projectId
+					projectIds
 				}
 			);
 		}
@@ -156,10 +164,13 @@ export class StatisticService {
 		}
 
 		// project filter query
-		if (isNotEmpty(projectId)) {
-			projectsCountQuery.andWhere(`"timeLogs"."projectId" = :projectId`, {
-				projectId
-			});
+		if (isNotEmpty(projectIds)) {
+			projectsCountQuery.andWhere(
+				`"timeLogs"."projectId" IN (:...projectIds)`,
+				{
+					projectIds
+				}
+			);
 		}
 
 		const projectsCount = await projectsCountQuery
@@ -186,13 +197,17 @@ export class StatisticService {
 				'time_slot'
 			);
 			query
-				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
+				.innerJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs')
 				.select(
-					`(SUM("${query.alias}"."duration") / COUNT("${query.alias}"."id"))`,
+					`${
+						this.configService.dbConnectionOptions.type === 'sqlite'
+							? `COALESCE((SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${query.alias}"."id")), 0)`
+							: `COALESCE((SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt"))) / COUNT("${query.alias}"."id")), 0)`
+					}`,
 					`duration`
 				)
 				.addSelect(`AVG("${query.alias}"."overall")`, `overall`)
-				.addSelect(`COUNT("${query.alias}"."id")`, `id`)
+				.addSelect(`COUNT("${query.alias}"."id")`, `count`)
 				.andWhere(`"${query.alias}"."employeeId" IN(:...employeeIds)`, {
 					employeeIds
 				})
@@ -203,21 +218,20 @@ export class StatisticService {
 					`"${query.alias}"."organizationId" = :organizationId`,
 					{ organizationId }
 				)
-				.andWhere(
-					`"${query.alias}"."startedAt" >= :start AND "${query.alias}"."startedAt" < :end`,
-					{ start, end }
-				)
-				.groupBy(`${query.alias}.id`);
+				.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+					start,
+					end
+				})
+				.groupBy(`"timeLogs"."id"`);
 
 			// project filter query
-			if (isNotEmpty(projectId)) {
-				query.andWhere(`"timeLogs"."projectId" = :projectId`, {
-					projectId
+			if (isNotEmpty(projectIds)) {
+				query.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+					projectIds
 				});
 			}
 
 			const weekTimeStatistics = await query.getRawMany();
-
 			const duration = _.reduce(
 				_.pluck(weekTimeStatistics, 'duration'),
 				ArraySum,
@@ -245,11 +259,15 @@ export class StatisticService {
 			query
 				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
 				.select(
-					`(SUM("${query.alias}"."duration") / COUNT("${query.alias}"."id"))`,
+					`${
+						this.configService.dbConnectionOptions.type === 'sqlite'
+							? `COALESCE((SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${query.alias}"."id")), 0)`
+							: `COALESCE((SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt"))) / COUNT("${query.alias}"."id")), 0)`
+					}`,
 					`duration`
 				)
 				.addSelect(`AVG("${query.alias}"."overall")`, `overall`)
-				.addSelect(`COUNT("${query.alias}"."id")`, `id`)
+				.addSelect(`COUNT("${query.alias}"."id")`, `count`)
 				.andWhere(`"${query.alias}"."employeeId" IN(:...employeeIds)`, {
 					employeeIds
 				})
@@ -260,21 +278,20 @@ export class StatisticService {
 					`"${query.alias}"."organizationId" = :organizationId`,
 					{ organizationId }
 				)
-				.andWhere(
-					`"${query.alias}"."startedAt" >= :start AND "${query.alias}"."startedAt" < :end`,
-					{ start, end }
-				)
-				.groupBy(`${query.alias}.id`);
+				.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+					start,
+					end
+				})
+				.groupBy(`"timeLogs"."id"`);
 
 			// project filter query
-			if (isNotEmpty(projectId)) {
-				query.andWhere(`"timeLogs"."projectId" = :projectId`, {
-					projectId
+			if (isNotEmpty(projectIds)) {
+				query.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+					projectIds
 				});
 			}
 
 			const todayTimeStatistics = await query.getRawMany();
-
 			const duration = _.reduce(
 				_.pluck(todayTimeStatistics, 'duration'),
 				ArraySum,
@@ -330,6 +347,14 @@ export class StatisticService {
 			);
 		}
 
+		// convert projectId String to Array
+		let projectIds: string[] = [];
+		if (typeof projectId === 'string') {
+			projectIds.push(projectId);
+		} else {
+			projectIds = projectId;
+		}
+
 		const query = this.employeeRepository.createQueryBuilder();
 		query
 			.select(`"${query.alias}".id`)
@@ -341,8 +366,8 @@ export class StatisticService {
 			.addSelect(
 				`${
 					this.configService.dbConnectionOptions.type === 'sqlite'
-						? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
-						: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
+						? 'COALESCE(SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400), 0)'
+						: 'COALESCE(SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt"))), 0)'
 				}`,
 				`duration`
 			)
@@ -369,9 +394,9 @@ export class StatisticService {
 		}
 
 		// project filter query
-		if (isNotEmpty(projectId)) {
-			query.andWhere(`"timeLogs"."projectId" = :projectId`, {
-				projectId
+		if (isNotEmpty(projectIds)) {
+			query.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+				projectIds
 			});
 		}
 
@@ -391,10 +416,15 @@ export class StatisticService {
 			weekTimeQuery
 				.innerJoin(`${weekTimeQuery.alias}.timeLogs`, 'timeLogs')
 				.select(
-					`(SUM("${weekTimeQuery.alias}"."duration") / COUNT("${weekTimeQuery.alias}"."id"))`,
+					`${
+						this.configService.dbConnectionOptions.type === 'sqlite'
+							? `COALESCE((SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${weekTimeQuery.alias}"."id")), 0)`
+							: `COALESCE((SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt"))) / COUNT("${weekTimeQuery.alias}"."id")), 0)`
+					}`,
 					`duration`
 				)
 				.addSelect(`AVG("${weekTimeQuery.alias}"."overall")`, `overall`)
+				.addSelect(`COUNT("${weekTimeQuery.alias}"."id")`, `count`)
 				.addSelect(`${weekTimeQuery.alias}.employeeId`, 'employeeId')
 				.andWhere(
 					`"${weekTimeQuery.alias}"."employeeId" IN(:...employeeIds)`,
@@ -402,13 +432,10 @@ export class StatisticService {
 						employeeIds
 					}
 				)
-				.andWhere(
-					`"${weekTimeQuery.alias}"."startedAt" BETWEEN :start AND :end`,
-					{
-						start,
-						end
-					}
-				)
+				.andWhere(`"timeLogs"."startedAt" BETWEEN :start AND :end`, {
+					start,
+					end
+				})
 				.andWhere(
 					`"${weekTimeQuery.alias}"."organizationId" = :organizationId`,
 					{ organizationId }
@@ -416,14 +443,17 @@ export class StatisticService {
 				.andWhere(`"${weekTimeQuery.alias}"."tenantId" = :tenantId`, {
 					tenantId
 				})
-				.groupBy(`${weekTimeQuery.alias}.id`)
+				.groupBy(`timeLogs.id`)
 				.addGroupBy(`${weekTimeQuery.alias}.employeeId`);
 
 			// project filter query
-			if (isNotEmpty(projectId)) {
-				weekTimeQuery.andWhere(`"timeLogs"."projectId" = :projectId`, {
-					projectId
-				});
+			if (isNotEmpty(projectIds)) {
+				weekTimeQuery.andWhere(
+					`"timeLogs"."projectId" IN (:...projectIds)`,
+					{
+						projectIds
+					}
+				);
 			}
 
 			let weekTimeSlots: any = await weekTimeQuery.getRawMany();
@@ -461,10 +491,15 @@ export class StatisticService {
 			dayTimeQuery
 				.innerJoin(`${dayTimeQuery.alias}.timeLogs`, 'timeLogs')
 				.select(
-					`(SUM("${dayTimeQuery.alias}"."duration") / COUNT("${dayTimeQuery.alias}"."id"))`,
+					`${
+						this.configService.dbConnectionOptions.type === 'sqlite'
+							? `COALESCE((SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${dayTimeQuery.alias}"."id")), 0)`
+							: `COALESCE((SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt"))) / COUNT("${dayTimeQuery.alias}"."id")), 0)`
+					}`,
 					`duration`
 				)
 				.addSelect(`AVG("${dayTimeQuery.alias}"."overall")`, `overall`)
+				.addSelect(`COUNT("${dayTimeQuery.alias}"."id")`, `count`)
 				.addSelect(`${dayTimeQuery.alias}.employeeId`, 'employeeId')
 				.andWhere(
 					`"${dayTimeQuery.alias}"."employeeId" IN(:...employeeIds)`,
@@ -476,7 +511,7 @@ export class StatisticService {
 					new Brackets((qb) => {
 						const { start, end } = getDateRange();
 						qb.where(
-							`"${dayTimeQuery.alias}"."startedAt" BETWEEN :start AND :end`,
+							`"timeLogs"."startedAt" BETWEEN :start AND :end`,
 							{
 								start,
 								end
@@ -491,14 +526,17 @@ export class StatisticService {
 				.andWhere(`"${dayTimeQuery.alias}"."tenantId" = :tenantId`, {
 					tenantId
 				})
-				.groupBy(`${dayTimeQuery.alias}.id`)
+				.groupBy(`timeLogs.id`)
 				.addGroupBy(`${dayTimeQuery.alias}.employeeId`);
 
 			// project filter query
-			if (isNotEmpty(projectId)) {
-				dayTimeQuery.andWhere(`"timeLogs"."projectId" = :projectId`, {
-					projectId
-				});
+			if (isNotEmpty(projectIds)) {
+				dayTimeQuery.andWhere(
+					`"timeLogs"."projectId" IN (:...projectIds)`,
+					{
+						projectIds
+					}
+				);
 			}
 
 			let dayTimeSlots: any = await weekTimeQuery.getRawMany();
@@ -545,13 +583,15 @@ export class StatisticService {
 				delete member.user_image_url;
 
 				const weekHoursQuery = this.employeeRepository.createQueryBuilder();
-				member.weekHours = await weekHoursQuery
+				weekHoursQuery
+					.innerJoin(`${weekHoursQuery.alias}.timeLogs`, 'timeLogs')
+					.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
 					.select(
 						`${
 							this.configService.dbConnectionOptions.type ===
 							'sqlite'
-								? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
-								: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
+								? 'COALESCE(SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400), 0)'
+								: 'COALESCE(SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt"))), 0)'
 						}`,
 						`duration`
 					)
@@ -572,9 +612,19 @@ export class StatisticService {
 					.andWhere(
 						`"${weekHoursQuery.alias}"."tenantId" = :tenantId`,
 						{ tenantId }
-					)
-					.innerJoin(`${weekHoursQuery.alias}.timeLogs`, 'timeLogs')
-					.innerJoin(`timeLogs.timeSlots`, 'timeSlots')
+					);
+
+				// project filter query
+				if (isNotEmpty(projectIds)) {
+					weekHoursQuery.andWhere(
+						`"timeLogs"."projectId" IN (:...projectIds)`,
+						{
+							projectIds
+						}
+					);
+				}
+
+				member.weekHours = await weekHoursQuery
 					.addGroupBy(
 						`${
 							this.configService.dbConnectionOptions.type ===
@@ -592,7 +642,7 @@ export class StatisticService {
 
 	async getProjects(request: IGetProjectsStatistics) {
 		const user = RequestContext.currentUser();
-		const tenantId = user.tenantId;
+		const tenantId = RequestContext.currentTenantId();
 		const {
 			employeeId,
 			organizationId,
@@ -607,8 +657,8 @@ export class StatisticService {
 			.addSelect(
 				`${
 					this.configService.dbConnectionOptions.type === 'sqlite'
-						? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
-						: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
+						? 'COALESCE(SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400), 0)'
+						: 'COALESCE(SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt"))), 0)'
 				}`,
 				`duration`
 			)
@@ -624,8 +674,6 @@ export class StatisticService {
 			)
 		) {
 			const employeeId = user.employeeId;
-			query.leftJoin(`${query.alias}.members`, 'members');
-			query.where(`members.id = :employeeId`, { employeeId });
 			employeeIds = [employeeId];
 		} else {
 			employeeIds = await this.getEmployeesIds(
@@ -633,6 +681,14 @@ export class StatisticService {
 				tenantId,
 				employeeId
 			);
+		}
+
+		// convert projectId String to Array
+		let projectIds: string[] = [];
+		if (typeof projectId === 'string') {
+			projectIds.push(projectId);
+		} else {
+			projectIds = projectId;
 		}
 
 		if (isNotEmpty(employeeIds)) {
@@ -650,69 +706,50 @@ export class StatisticService {
 				)
 				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
 					tenantId
-				})
-				.orderBy('duration', 'DESC')
-				.addGroupBy(`"${query.alias}"."id"`)
-				.limit(5);
+				});
 
 			// project filter query
-			if (isNotEmpty(projectId)) {
-				query.andWhere(`"timeLogs"."projectId" = :projectId`, {
-					projectId
+			if (isNotEmpty(projectIds)) {
+				query.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+					projectIds
 				});
 			}
 
-			let projects: IProjectsStatistics[] = await query.getRawMany();
+			let projects: IProjectsStatistics[] = await query
+				.orderBy('duration', 'DESC')
+				.addGroupBy(`"${query.alias}"."id"`)
+				.limit(5)
+				.getRawMany();
 
 			const totalDurationQuery = this.organizationProjectsRepository.createQueryBuilder();
 			totalDurationQuery
 				.select(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
-							? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
-							: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
+							? 'COALESCE(SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400), 0)'
+							: 'COALESCE(SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt"))), 0)'
 					}`,
 					`duration`
 				)
-				.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
+				.innerJoin(`${totalDurationQuery.alias}.timeLogs`, 'timeLogs')
 				.where(
 					`"${totalDurationQuery.alias}"."organizationId" = :organizationId`,
 					{ organizationId }
 				)
-				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				});
-
-			// project filter query
-			if (isNotEmpty(projectId)) {
-				totalDurationQuery.andWhere(
-					`"timeLogs"."projectId" = :projectId`,
+				.andWhere(
+					`"${totalDurationQuery.alias}"."tenantId" = :tenantId`,
 					{
-						projectId
+						tenantId
 					}
 				);
-			}
 
-			if (
-				(user.employeeId && request.onlyMe) ||
-				!RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-			) {
-				const employeeId = user.employeeId;
-				totalDurationQuery.leftJoin(
-					`${totalDurationQuery.alias}.members`,
-					'members'
-				);
-				totalDurationQuery.where(`members.id = :employeeId`, {
-					employeeId
-				});
-				employeeIds = [employeeId];
-			} else {
-				employeeIds = await this.getEmployeesIds(
-					organizationId,
-					tenantId,
-					employeeId
+			// project filter query
+			if (isNotEmpty(projectIds)) {
+				totalDurationQuery.andWhere(
+					`"timeLogs"."projectId" IN (:...projectIds)`,
+					{
+						projectIds
+					}
 				);
 			}
 
@@ -725,14 +762,17 @@ export class StatisticService {
 					end
 				});
 			const totalDuration = await totalDurationQuery.getRawOne();
+
 			projects = projects.map((project) => {
-				project.durationPercentage =
-					(project.duration * 100) / totalDuration.duration;
+				project.durationPercentage = parseFloat(
+					parseFloat(
+						(project.duration * 100) / totalDuration.duration + ''
+					).toFixed(2)
+				);
 				return project;
 			});
 			return projects;
 		}
-
 		return [];
 	}
 
@@ -766,6 +806,14 @@ export class StatisticService {
 			);
 		}
 
+		// convert projectId String to Array
+		let projectIds: string[] = [];
+		if (typeof projectId === 'string') {
+			projectIds.push(projectId);
+		} else {
+			projectIds = projectId;
+		}
+
 		if (employeeIds.length > 0) {
 			const query = this.taskRepository.createQueryBuilder();
 			query
@@ -774,8 +822,8 @@ export class StatisticService {
 				.addSelect(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
-							? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
-							: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
+							? 'COALESCE(SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400), 0)'
+							: 'COALESCE(SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt"))), 0)'
 					}`,
 					`duration`
 				)
@@ -801,9 +849,9 @@ export class StatisticService {
 				.limit(5);
 
 			// project filter query
-			if (isNotEmpty(projectId)) {
-				query.andWhere(`"timeLogs"."projectId" = :projectId`, {
-					projectId
+			if (isNotEmpty(projectIds)) {
+				query.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+					projectIds
 				});
 			}
 
@@ -814,8 +862,8 @@ export class StatisticService {
 				.select(
 					`${
 						this.configService.dbConnectionOptions.type === 'sqlite'
-							? 'SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400)'
-							: 'SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt")))'
+							? 'COALESCE(SUM((julianday("timeLogs"."stoppedAt") - julianday("timeLogs"."startedAt")) * 86400), 0)'
+							: 'COALESCE(SUM(extract(epoch from ("timeLogs"."stoppedAt" - "timeLogs"."startedAt"))), 0)'
 					}`,
 					`duration`
 				)
@@ -836,19 +884,21 @@ export class StatisticService {
 				);
 
 			// project filter query
-			if (isNotEmpty(projectId)) {
+			if (isNotEmpty(projectIds)) {
 				totalDurationQuery.andWhere(
-					`"timeLogs"."projectId" = :projectId`,
+					`"timeLogs"."projectId" IN (:...projectIds)`,
 					{
-						projectId
+						projectIds
 					}
 				);
 			}
 			const totalDuration = await totalDurationQuery.getRawOne();
-
 			tasks = tasks.map((task) => {
-				task.durationPercentage =
-					(task.duration * 100) / totalDuration.duration;
+				task.durationPercentage = parseFloat(
+					parseFloat(
+						(task.duration * 100) / totalDuration.duration + ''
+					).toFixed(2)
+				);
 				return task;
 			});
 			return tasks;
@@ -883,6 +933,14 @@ export class StatisticService {
 			);
 		}
 
+		// convert projectId String to Array
+		let projectIds: string[] = [];
+		if (typeof projectId === 'string') {
+			projectIds.push(projectId);
+		} else {
+			projectIds = projectId;
+		}
+
 		if (employeeIds.length > 0) {
 			const timeLogs = await this.timeLogRepository.find({
 				join: {
@@ -915,10 +973,13 @@ export class StatisticService {
 					});
 
 					// project filter query
-					if (isNotEmpty(projectId)) {
-						qb.andWhere(`"${qb.alias}"."projectId" = :projectId`, {
-							projectId
-						});
+					if (isNotEmpty(projectIds)) {
+						qb.andWhere(
+							`"${qb.alias}"."projectId" IN (:...projectIds)`,
+							{
+								projectIds
+							}
+						);
 					}
 				},
 				take: 5,
@@ -971,6 +1032,14 @@ export class StatisticService {
 			);
 		}
 
+		// convert projectId String to Array
+		let projectIds: string[] = [];
+		if (typeof projectId === 'string') {
+			projectIds.push(projectId);
+		} else {
+			projectIds = projectId;
+		}
+
 		if (employeeIds.length > 0) {
 			const query = this.activityRepository.createQueryBuilder();
 			query
@@ -1013,10 +1082,14 @@ export class StatisticService {
 				.orderBy(`"duration"`, 'DESC')
 				.limit(5);
 
-			if (isNotEmpty(projectId)) {
-				query.andWhere(`"${query.alias}"."projectId" = :projectId`, {
-					projectId
-				});
+			// project filter query
+			if (isNotEmpty(projectIds)) {
+				query.andWhere(
+					`"${query.alias}"."projectId" IN (:...projectIds)`,
+					{
+						projectIds
+					}
+				);
 			}
 
 			let activities: IActivitiesStatistics[] = await query.getRawMany();
@@ -1043,30 +1116,35 @@ export class StatisticService {
 							'sqlite'
 						) {
 							qb.andWhere(
-								`datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :start AND :end`,
+								`datetime("${totalDurationQuery.alias}"."date" || ' ' || "${totalDurationQuery.alias}"."time") Between :start AND :end`,
 								{ start, end }
 							);
 						} else {
 							qb.andWhere(
-								`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :start AND :end`,
+								`concat("${totalDurationQuery.alias}"."date", ' ', "${totalDurationQuery.alias}"."time")::timestamp Between :start AND :end`,
 								{ start, end }
 							);
 						}
 					})
 				)
-				.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				})
 				.andWhere(
-					`"${query.alias}"."organizationId" = :organizationId`,
+					`"${totalDurationQuery.alias}"."tenantId" = :tenantId`,
+					{
+						tenantId
+					}
+				)
+				.andWhere(
+					`"${totalDurationQuery.alias}"."organizationId" = :organizationId`,
 					{ organizationId }
 				);
 
 			// project filter query
-			if (isNotEmpty(projectId)) {
+			if (isNotEmpty(projectIds)) {
 				totalDurationQuery.andWhere(
-					`"${query.alias}"."projectId" = :projectId`,
-					{ projectId }
+					`"${totalDurationQuery.alias}"."projectId" IN (:...projectIds)`,
+					{
+						projectIds
+					}
 				);
 			}
 
@@ -1127,10 +1205,18 @@ export class StatisticService {
 			}
 		}
 
+		// convert projectId String to Array
+		let projectIds: string[] = [];
+		if (typeof projectId === 'string') {
+			projectIds.push(projectId);
+		} else {
+			projectIds = projectId;
+		}
+
 		// project filter query
-		if (isNotEmpty(projectId)) {
-			query.andWhere(`"timeLogs"."projectId" = :projectId`, {
-				projectId
+		if (isNotEmpty(projectIds)) {
+			query.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+				projectIds
 			});
 		}
 
@@ -1173,10 +1259,13 @@ export class StatisticService {
 						tenantId
 					});
 					// project filter query
-					if (isNotEmpty(projectId)) {
-						qb.andWhere(`"timeLogs"."projectId" = :projectId`, {
-							projectId
-						});
+					if (isNotEmpty(projectIds)) {
+						qb.andWhere(
+							`"timeLogs"."projectId" IN (:...projectIds)`,
+							{
+								projectIds
+							}
+						);
 					}
 				},
 				take: 3,
