@@ -18,7 +18,7 @@ import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { toUTC } from '@gauzy/common-angular';
 import { combineLatest, Subject } from 'rxjs';
-import { debounceTime, tap } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { pick } from 'underscore';
 import { Store } from '../../../@core/services/store.service';
 import { TimesheetService } from '../../timesheet/timesheet.service';
@@ -71,27 +71,28 @@ export class DailyGridComponent implements OnInit, AfterViewInit {
 	) {}
 
 	ngOnInit() {
-		this.updateLogs$
-			.pipe(
-				untilDestroyed(this),
-				debounceTime(500),
-				tap(() => this.getLogs())
-			)
-			.subscribe();
 		const storeProject$ = this.store.selectedProject$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		const storeOrganization$ = this.store.selectedOrganization$;
 		combineLatest([storeProject$, storeEmployee$, storeOrganization$])
 			.pipe(
+				filter(([organization]) => !!organization),
 				tap(([project, employee, organization]) => {
 					if (organization) {
 						this.organization = organization;
 						this.selectedEmployeeId = employee ? employee.id : null;
-						this.projectId = project.id || null;
+						this.projectId = project ? project.id : null;
 						this.updateLogs$.next();
 					}
 				}),
 				untilDestroyed(this)
+			)
+			.subscribe();
+		this.updateLogs$
+			.pipe(
+				untilDestroyed(this),
+				debounceTime(500),
+				tap(() => this.getLogs())
 			)
 			.subscribe();
 		this.ngxPermissionsService.permissions$

@@ -17,7 +17,7 @@ import { Store } from './../../../../@core/services/store.service';
 import * as moment from 'moment';
 import { toUTC } from '@gauzy/common-angular';
 import { combineLatest, Subject } from 'rxjs';
-import { debounceTime, tap } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { pick } from 'underscore';
 import { TimesheetStatisticsService } from '../../../timesheet/timesheet-statistics.service';
 
@@ -62,18 +62,12 @@ export class DailyStatisticsComponent implements OnInit, AfterViewInit {
 	) {}
 
 	ngOnInit() {
-		this.updateLogs$
-			.pipe(
-				debounceTime(800),
-				tap(() => this.getCounts()),
-				untilDestroyed(this)
-			)
-			.subscribe();
 		const storeProject$ = this.store.selectedProject$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		const storeOrganization$ = this.store.selectedOrganization$;
 		combineLatest([storeProject$, storeEmployee$, storeOrganization$])
 			.pipe(
+				filter(([organization]) => !!organization),
 				tap(([project, employee, organization]) => {
 					if (organization) {
 						this.organization = organization;
@@ -82,6 +76,13 @@ export class DailyStatisticsComponent implements OnInit, AfterViewInit {
 						this.updateLogs$.next();
 					}
 				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.updateLogs$
+			.pipe(
+				debounceTime(800),
+				tap(() => this.getCounts()),
 				untilDestroyed(this)
 			)
 			.subscribe();

@@ -21,7 +21,7 @@ import {
 	IManualTimesStatistics
 } from '@gauzy/contracts';
 import { combineLatest, Subject } from 'rxjs';
-import { debounceTime, tap } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import _ from 'underscore';
 import { progressStatus, toUTC } from '@gauzy/common-angular';
 import * as moment from 'moment';
@@ -77,32 +77,29 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 			.then((value: boolean) => {
 				this.isAllowedMembers = value;
 			});
-		this.updateLogs$
-			.pipe(
-				debounceTime(800),
-				tap(() => this.getStatistics()),
-				untilDestroyed(this)
-			)
-			.subscribe();
 		const storeProject$ = this.store.selectedProject$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		const storeOrganization$ = this.store.selectedOrganization$;
 		combineLatest([storeProject$, storeEmployee$, storeOrganization$])
 			.pipe(
+				filter(([organization]) => !!organization),
 				tap(([project, employee, organization]) => {
 					if (organization) {
 						this.organization = organization;
 						this.organizationId = organization.id;
 						this.tenantId = this.store.user.tenantId;
-						if (employee) {
-							this.employeeId = employee.id;
-						}
-						if (project) {
-							this.projectId = project.id || null;
-						}
+						this.employeeId = employee ? employee.id : null;
+						this.projectId = project ? project.id : null;
 						this.updateLogs$.next();
 					}
 				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.updateLogs$
+			.pipe(
+				debounceTime(800),
+				tap(() => this.getStatistics()),
 				untilDestroyed(this)
 			)
 			.subscribe();
