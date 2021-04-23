@@ -321,8 +321,16 @@ export class EquipmentSharingComponent
 			}
 		}
 		this.loading = false;
-		this.equipmentsData = equipmentItems;
-		this.smartTableSource.load(equipmentItems);
+		this.equipmentsData = equipmentItems.map((equipmentSharing) => {
+			return {
+				...equipmentSharing,
+				name: equipmentSharing.equipment
+					? equipmentSharing.equipment.name
+					: ''
+			};
+		});
+
+		this.smartTableSource.load(this.equipmentsData);
 	}
 
 	_formatDate(date): string {
