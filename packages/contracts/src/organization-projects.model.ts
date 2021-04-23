@@ -102,8 +102,3 @@ export enum OrganizationProjectAction {
 	UPDATED = 'UPDATED',
 	DELETED = 'DELETED'
 }
-
-export declare enum SelectedProjectTypeEnum {
-	ALL_PROJECT = 'ALL_PROJECT',
-	NO_PROJECT = 'NO_PROJECT'
-}
