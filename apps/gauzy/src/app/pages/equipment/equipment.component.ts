@@ -20,6 +20,8 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { Store } from '../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../@core/services/toastr.service';
+import { ImageRowComponent } from '../inventory/components/table-components/image-row.component';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './equipment.component.html',
@@ -112,6 +114,13 @@ export class EquipmentComponent
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
+				image: {
+					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
+					width: '10%',
+					filter: false,
+					type: 'custom',
+					renderComponent: ImageRowComponent
+				},
 				name: {
 					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_NAME'),
 					type: 'custom',
@@ -225,7 +234,7 @@ export class EquipmentComponent
 	async loadSettings() {
 		const { tenantId } = this.store.user;
 		const { items } = await this.equipmentService.getAll(
-			['equipmentSharings', 'tags'],
+			['equipmentSharings', 'tags', 'image'],
 			{ organizationId: this.selectedOrganization.id, tenantId }
 		);
 

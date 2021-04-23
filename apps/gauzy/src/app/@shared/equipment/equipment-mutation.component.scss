@@ -1,0 +1,13 @@
+.equipment-img {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  width: 145px;
+
+  svg {
+    position: absolute;
+  }
+}

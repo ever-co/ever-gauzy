@@ -20,10 +20,7 @@ export class ProductOptionGroupTranslation
 	name: string;
 
 	@ApiProperty({ type: () => ProductOptionGroup })
-	@ManyToOne(() => ProductOptionGroup, (group) => group.translations, {
-		onDelete: 'CASCADE',
-		onUpdate: 'CASCADE'
-	})
+	@ManyToOne(() => ProductOptionGroup, (group) => group.translations)
 	@JoinColumn()
 	reference: ProductOptionGroup;
 

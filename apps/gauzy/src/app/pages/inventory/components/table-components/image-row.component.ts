@@ -38,6 +38,8 @@ export class ImageRowComponent implements ViewCell {
 	rowData: any;
 
 	get imageUrl() {
+		if (typeof this.value == 'string') return this.value;
+
 		if (!this.value) return false;
 
 		if (this.value.imageUrl) return this.value.imageUrl;
