@@ -77,29 +77,31 @@ export class TimeTrackingComponent implements OnInit, OnDestroy {
 			.then((value: boolean) => {
 				this.isAllowedMembers = value;
 			});
-		const storeProject$ = this.store.selectedProject$;
-		const storeEmployee$ = this.store.selectedEmployee$;
-		const storeOrganization$ = this.store.selectedOrganization$;
-		combineLatest([storeProject$, storeEmployee$, storeOrganization$])
-			.pipe(
-				filter(([organization]) => !!organization),
-				tap(([project, employee, organization]) => {
-					if (organization) {
-						this.organization = organization;
-						this.organizationId = organization.id;
-						this.tenantId = this.store.user.tenantId;
-						this.employeeId = employee ? employee.id : null;
-						this.projectId = project ? project.id : null;
-						this.updateLogs$.next();
-					}
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
 		this.updateLogs$
 			.pipe(
 				debounceTime(800),
 				tap(() => this.getStatistics()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeProject$ = this.store.selectedProject$;
+		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
+			.pipe(
+				filter(([organization]) => !!organization),
+				tap(([organization, employee, project]) => {
+					if (organization) {
+						this.organization = organization;
+
+						this.organizationId = organization.id;
+						this.tenantId = this.store.user.tenantId;
+						this.employeeId = employee ? employee.id : null;
+						this.projectId = project ? project.id : null;
+
+						this.updateLogs$.next();
+					}
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();

@@ -62,13 +62,13 @@ export class DailyStatisticsComponent implements OnInit, AfterViewInit {
 	) {}
 
 	ngOnInit() {
-		const storeProject$ = this.store.selectedProject$;
-		const storeEmployee$ = this.store.selectedEmployee$;
 		const storeOrganization$ = this.store.selectedOrganization$;
-		combineLatest([storeProject$, storeEmployee$, storeOrganization$])
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeProject$ = this.store.selectedProject$;
+		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
 			.pipe(
 				filter(([organization]) => !!organization),
-				tap(([project, employee, organization]) => {
+				tap(([organization, employee, project]) => {
 					if (organization) {
 						this.organization = organization;
 						this.selectedEmployeeId = employee ? employee.id : null;

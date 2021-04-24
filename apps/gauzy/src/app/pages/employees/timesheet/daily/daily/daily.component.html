@@ -93,7 +93,7 @@
 				></nb-checkbox>
 			</div>
 			<div class="col project-name">
-				<span *ngIf="log?.task; else noProject">
+				<span *ngIf="log?.project; else noProject">
 					{{ log?.project?.name }}
 				</span>
 				<ng-template #noProject>
