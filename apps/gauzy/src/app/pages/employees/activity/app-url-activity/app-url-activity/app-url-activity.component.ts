@@ -1,17 +1,16 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Store } from './../../../../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Subject } from 'rxjs';
+import { combineLatest, Subject } from 'rxjs';
 import {
 	IOrganization,
 	ITimeLogFilters,
 	IGetActivitiesInput,
 	ActivityType,
 	IDailyActivity,
-	IActivity,
-	ISelectedEmployee
+	IActivity
 } from '@gauzy/contracts';
-import { debounceTime, filter, tap, withLatestFrom } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { toUTC, toLocal } from '@gauzy/common-angular';
 import { ActivatedRoute } from '@angular/router';
 import * as _ from 'underscore';
@@ -35,13 +34,14 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 	updateLogs$: Subject<any> = new Subject();
 	organization: IOrganization;
 	type: 'apps' | 'urls';
-	selectedEmployeeId = null;
+	selectedEmployeeId: string | null = null;
+	projectId: string | null = null;
 
 	constructor(
-		private store: Store,
-		private activatedRoute: ActivatedRoute,
-		private timesheetFilterService: TimesheetFilterService,
-		private activityService: ActivityService
+		private readonly store: Store,
+		private readonly activatedRoute: ActivatedRoute,
+		private readonly timesheetFilterService: TimesheetFilterService,
+		private readonly activityService: ActivityService
 	) {}
 
 	ngOnInit(): void {
@@ -53,35 +53,23 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 					this.updateLogs$.next();
 				}
 			});
-		const storeEmployee$ = this.store.selectedEmployee$;
 		const storeOrganization$ = this.store.selectedOrganization$;
-		storeEmployee$
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeProject$ = this.store.selectedProject$;
+		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
 			.pipe(
-				filter((employee: ISelectedEmployee) => !!employee),
-				debounceTime(200),
-				withLatestFrom(storeOrganization$),
+				filter(([organization]) => !!organization),
+				tap(([organization, employee, project]) => {
+					if (organization) {
+						this.organization = organization;
+						this.selectedEmployeeId = employee ? employee.id : null;
+						this.projectId = project ? project.id : null;
+						this.updateLogs$.next();
+					}
+				}),
 				untilDestroyed(this)
 			)
-			.subscribe(([employee]) => {
-				if (employee && this.organization) {
-					this.selectedEmployeeId = employee.id;
-					this.updateLogs$.next();
-				}
-			});
-		storeOrganization$
-			.pipe(
-				filter((organization) => !!organization),
-				debounceTime(200),
-				withLatestFrom(storeEmployee$),
-				untilDestroyed(this)
-			)
-			.subscribe(([organization, employee]) => {
-				this.selectedEmployeeId = employee ? employee.id : null;
-				if (organization) {
-					this.organization = organization;
-					this.updateLogs$.next();
-				}
-			});
+			.subscribe();
 		this.updateLogs$
 			.pipe(
 				untilDestroyed(this),
@@ -151,6 +139,11 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 			employeeIds.push(this.selectedEmployeeId);
 		}
 
+		const projectIds: string[] = [];
+		if (this.projectId) {
+			projectIds.push(this.projectId);
+		}
+
 		const request: IGetActivitiesInput = {
 			organizationId,
 			tenantId,
@@ -158,6 +151,7 @@ export class AppUrlActivityComponent implements OnInit, OnDestroy {
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
 			...(employeeIds.length > 0 ? { employeeIds } : {}),
+			...(projectIds.length > 0 ? { projectIds } : {}),
 			types: [this.type === 'apps' ? ActivityType.APP : ActivityType.URL]
 		};
 

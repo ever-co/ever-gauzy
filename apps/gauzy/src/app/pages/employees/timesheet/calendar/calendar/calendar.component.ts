@@ -5,7 +5,8 @@ import {
 	ViewChild,
 	AfterViewInit,
 	OnDestroy,
-	TemplateRef
+	TemplateRef,
+	ChangeDetectorRef
 } from '@angular/core';
 import { CalendarOptions, EventInput } from '@fullcalendar/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
@@ -17,16 +18,15 @@ import * as moment from 'moment';
 import {
 	IGetTimeLogInput,
 	IOrganization,
-	ISelectedEmployee,
 	ITimeLog,
 	ITimeLogFilters,
 	OrganizationPermissionsEnum
 } from '@gauzy/contracts';
 import { toUTC, toLocal } from '@gauzy/common-angular';
 import { Store } from './../../../../../@core/services/store.service';
-import { Subject } from 'rxjs';
+import { combineLatest, Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounceTime, filter, withLatestFrom } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
 import { EditTimeLogModalComponent } from './../../../../../@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
@@ -53,14 +53,16 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	loading: boolean;
 	futureDateAllowed: boolean;
 	logRequest: ITimeLogFilters = {};
-	selectedEmployeeId = null;
+	selectedEmployeeId: string | null = null;
+	projectId: string | null = null;
 
 	constructor(
-		private timesheetService: TimesheetService,
-		private store: Store,
-		private nbDialogService: NbDialogService,
-		private timesheetFilterService: TimesheetFilterService,
-		private ngxPermissionsService: NgxPermissionsService
+		private readonly timesheetService: TimesheetService,
+		private readonly store: Store,
+		private readonly nbDialogService: NbDialogService,
+		private readonly timesheetFilterService: TimesheetFilterService,
+		private readonly ngxPermissionsService: NgxPermissionsService,
+		private readonly cdr: ChangeDetectorRef
 	) {
 		this.calendarOptions = {
 			initialView: 'timeGridWeek',
@@ -93,36 +95,24 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	ngOnInit() {
-		const storeEmployee$ = this.store.selectedEmployee$;
 		const storeOrganization$ = this.store.selectedOrganization$;
-		storeEmployee$
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeProject$ = this.store.selectedProject$;
+		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
 			.pipe(
-				filter((employee: ISelectedEmployee) => !!employee),
-				debounceTime(200),
-				withLatestFrom(storeOrganization$),
+				filter(([organization]) => !!organization),
+				tap(([organization, employee, project]) => {
+					if (organization) {
+						this.organization = organization;
+						this.selectedEmployeeId = employee ? employee.id : null;
+						this.projectId = project ? project.id : null;
+						this.updateLogs$.next();
+						console.log('combine latest');
+					}
+				}),
 				untilDestroyed(this)
 			)
-			.subscribe(([employee]) => {
-				if (employee && this.organization) {
-					this.selectedEmployeeId = employee.id;
-					this.updateLogs$.next();
-				}
-			});
-		storeOrganization$
-			.pipe(
-				filter((organization) => !!organization),
-				debounceTime(200),
-				withLatestFrom(storeEmployee$),
-				untilDestroyed(this)
-			)
-			.subscribe(([organization, employee]) => {
-				this.selectedEmployeeId = employee ? employee.id : null;
-				if (organization) {
-					this.organization = organization;
-					this.updateLogs$.next();
-				}
-			});
-
+			.subscribe();
 		this.ngxPermissionsService.permissions$
 			.pipe(untilDestroyed(this))
 			.subscribe(async () => {
@@ -165,8 +155,9 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	ngAfterViewInit() {
+		this.cdr.detectChanges();
 		this.updateLogs$
-			.pipe(untilDestroyed(this), debounceTime(500))
+			.pipe(debounceTime(800), untilDestroyed(this))
 			.subscribe(() => {
 				if (this.calendar.getApi()) {
 					this.calendar.getApi().refetchEvents();
@@ -179,14 +170,16 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 			return null;
 		}
 
-		const _startDate = moment(arg.start).format('YYYY-MM-DD') + ' 00:00:00';
-		const _endDate = moment(arg.end).format('YYYY-MM-DD') + ' 23:59:59';
+		const _startDate = moment(arg.start)
+			.startOf('day')
+			.format('YYYY-MM-DD HH:mm:ss');
+		const _endDate = moment(arg.end)
+			.endOf('day')
+			.format('YYYY-MM-DD HH:mm:ss');
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
-
 		const appliedFilter = _.pick(
 			this.logRequest,
-			'projectIds',
 			'source',
 			'activityLevel',
 			'logType'
@@ -197,13 +190,19 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 			employeeIds.push(this.selectedEmployeeId);
 		}
 
+		const projectIds: string[] = [];
+		if (this.projectId) {
+			projectIds.push(this.projectId);
+		}
+
 		const request: IGetTimeLogInput = {
 			organizationId,
 			tenantId,
 			...appliedFilter,
 			startDate: toUTC(_startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(_endDate).format('YYYY-MM-DD HH:mm:ss'),
-			...(employeeIds.length > 0 ? { employeeIds } : {})
+			...(employeeIds.length > 0 ? { employeeIds } : {}),
+			...(projectIds.length > 0 ? { projectIds } : {})
 		};
 
 		this.loading = true;

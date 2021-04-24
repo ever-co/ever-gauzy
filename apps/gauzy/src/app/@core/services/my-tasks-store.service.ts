@@ -3,7 +3,9 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { IOrganization, ITask } from '@gauzy/contracts';
 import { map, tap } from 'rxjs/operators';
 import { TasksService } from './tasks.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy()
 @Injectable({
 	providedIn: 'root'
 })
@@ -31,7 +33,10 @@ export class MyTasksStoreService {
 		}
 		this._taskService
 			.getMyTasks(findObj)
-			.pipe(tap(({ items }) => this.loadAllTasks(items)))
+			.pipe(
+				tap(({ items }) => this.loadAllTasks(items)),
+				untilDestroyed(this)
+			)
 			.subscribe();
 	}
 
@@ -57,7 +62,8 @@ export class MyTasksStoreService {
 				tap((createdTask) => {
 					const tasks = [...this.myTasks, createdTask];
 					this._myTasks$.next(tasks);
-				})
+				}),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
@@ -72,7 +78,8 @@ export class MyTasksStoreService {
 						t.id === task.id ? task : t
 					);
 					this._myTasks$.next(newState);
-				})
+				}),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
@@ -85,7 +92,8 @@ export class MyTasksStoreService {
 					const tasks = [...this.myTasks];
 					const newState = tasks.filter((t) => t.id !== id);
 					this._myTasks$.next(newState);
-				})
+				}),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}

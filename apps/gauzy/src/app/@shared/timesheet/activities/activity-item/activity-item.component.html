@@ -13,7 +13,7 @@
 	<div class="col-sm py-1">
 		<div class="row align-items-center">
 			<div class="col-auto percentage-col">
-				{{ item.durationPercentage }}%
+				{{ item.durationPercentage || 0 }}%
 			</div>
 			<div class="col">
 				<nb-progress-bar

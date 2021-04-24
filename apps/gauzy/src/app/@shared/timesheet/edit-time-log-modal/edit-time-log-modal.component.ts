@@ -26,7 +26,7 @@ import { EmployeesService } from '../../../@core/services';
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { debounceTime, tap } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { merge, Subject } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
@@ -53,14 +53,13 @@ export class EditTimeLogModalComponent
 	loadEmployees$: Subject<any> = new Subject();
 
 	form: FormGroup;
+	changeSelectedEmployee: boolean;
 
 	private _timeLog: ITimeLog | Partial<ITimeLog>;
-	changeSelectedEmployee: boolean;
-	@Input()
-	public get timeLog(): ITimeLog | Partial<ITimeLog> {
-		return this._timeLog || {};
+	get timeLog(): ITimeLog | Partial<ITimeLog> {
+		return this._timeLog;
 	}
-	public set timeLog(value: ITimeLog | Partial<ITimeLog>) {
+	@Input() set timeLog(value: ITimeLog | Partial<ITimeLog>) {
 		this._timeLog = Object.assign({}, value);
 		this.mode = this._timeLog && this._timeLog.id ? 'update' : 'create';
 	}
@@ -108,25 +107,25 @@ export class EditTimeLogModalComponent
 
 	ngOnInit() {
 		this.loadEmployees$
-			.pipe(untilDestroyed(this), debounceTime(500))
+			.pipe(debounceTime(500), untilDestroyed(this))
 			.subscribe(async () => {
 				if (
 					this.changeSelectedEmployee &&
 					this.selectedRange &&
 					this.selectedRange.start
 				) {
-					const {
-						items = []
-					} = await this.employeesService.getWorking(
-						this.organization.id,
-						this.organization.tenantId,
-						this.selectedRange.start,
-						true
-					);
-					this.employees = items;
+					this.employeesService
+						.getWorking(
+							this.organization.id,
+							this.organization.tenantId,
+							this.selectedRange.start,
+							true
+						)
+						.then(({ items }) => {
+							this.employees = items;
+						});
 				}
 			});
-
 		this.ngxPermissionsService.permissions$
 			.pipe(untilDestroyed(this))
 			.subscribe(async () => {
@@ -137,7 +136,6 @@ export class EditTimeLogModalComponent
 					OrganizationPermissionsEnum.ALLOW_FUTURE_DATE
 				);
 			});
-
 		merge(
 			this.form.get('employeeId').valueChanges.pipe(
 				tap((employeeId) => {
@@ -164,12 +162,16 @@ export class EditTimeLogModalComponent
 					this.checkOverlaps();
 				}
 			});
-
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe((organization: IOrganization) => {
-				this.organization = organization;
-			});
+			.pipe(
+				filter((organization) => !!organization),
+				tap(
+					(organization: IOrganization) =>
+						(this.organization = organization)
+				),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	private _initializeForm() {
@@ -190,10 +192,11 @@ export class EditTimeLogModalComponent
 	}
 
 	checkOverlaps() {
-		const employeeId = this.form.get('employeeId').value;
+		const { employeeId } = this.form.value;
 		if (this.selectedRange && employeeId) {
-			const startDate = toUTC(this.selectedRange.start).toISOString();
-			const endDate = toUTC(this.selectedRange.end).toISOString();
+			const { start, end } = this.selectedRange;
+			const startDate = toUTC(start).toISOString();
+			const endDate = toUTC(end).toISOString();
 			const request: IGetTimeLogConflictInput = {
 				...(this.timeLog.id ? { ignoreId: [this.timeLog.id] } : {}),
 				startDate,
@@ -205,7 +208,7 @@ export class EditTimeLogModalComponent
 				this.overlaps = timeLogs.map((timeLog) => {
 					const timeLogStartedAt = toLocal(timeLog.startedAt);
 					const timeLogStoppedAt = toLocal(timeLog.stoppedAt);
-					let overlapDueration = 0;
+					let overlapDuration = 0;
 					if (
 						moment(timeLogStartedAt).isBetween(
 							moment(startDate),
@@ -218,12 +221,12 @@ export class EditTimeLogModalComponent
 								moment(endDate)
 							)
 						) {
-							overlapDueration = moment(timeLogStoppedAt).diff(
+							overlapDuration = moment(timeLogStoppedAt).diff(
 								moment(timeLogStartedAt),
 								'seconds'
 							);
 						} else {
-							overlapDueration = moment(endDate).diff(
+							overlapDuration = moment(endDate).diff(
 								moment(timeLogStartedAt),
 								'seconds'
 							);
@@ -235,18 +238,18 @@ export class EditTimeLogModalComponent
 								moment(endDate)
 							)
 						) {
-							overlapDueration = moment(timeLogStoppedAt).diff(
+							overlapDuration = moment(timeLogStoppedAt).diff(
 								moment(startDate),
 								'seconds'
 							);
 						} else {
-							overlapDueration = moment(endDate).diff(
+							overlapDuration = moment(endDate).diff(
 								moment(startDate),
 								'seconds'
 							);
 						}
 					}
-					timeLog.overlapDueration = overlapDueration;
+					timeLog.overlapDuration = overlapDuration;
 					return timeLog;
 				});
 			});
@@ -257,20 +260,24 @@ export class EditTimeLogModalComponent
 		if (!this.form.valid) {
 			return;
 		}
-		const startedAt = toUTC(this.selectedRange.start).toDate();
-		const stoppedAt = toUTC(this.selectedRange.end).toDate();
+
+		const { id: organizationId } = this.organization;
+		const { start, end } = this.selectedRange;
+		const startedAt = toUTC(start).toDate();
+		const stoppedAt = toUTC(end).toDate();
 
 		const requestData = {
 			..._.omit(this.form.value, ['selectedRange']),
 			startedAt,
 			stoppedAt,
-			organizationId: this.organization.id
+			organizationId
 		};
 		if (!requestData.employeeId) {
 			requestData.employeeId = this.store.user.employeeId;
 		}
+
 		this.loading = true;
-		let request;
+		let request: Promise<any>;
 		if (this.mode === 'create') {
 			request = this.timesheetService.addTime(requestData);
 		} else {
@@ -297,6 +304,10 @@ export class EditTimeLogModalComponent
 		this.timesheetService.deleteLogs(log.id).then((res) => {
 			this.dialogRef.close(res);
 		});
+	}
+
+	getControlValue(control: string): string {
+		return this.form.get(control).value;
 	}
 
 	ngOnDestroy(): void {}

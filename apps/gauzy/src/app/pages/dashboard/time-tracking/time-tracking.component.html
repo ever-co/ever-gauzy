@@ -7,45 +7,53 @@
 		<div class="row">
 			<div class="col-sm-12">
 				<div class="row">
-					<div
-						class="col-sm-4 col-md-3 col-lg"
-						*ngxPermissionsOnly="
-							PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-						"
-					>
-						<nb-card
-							[nbSpinner]="countsLoading"
-							nbSpinnerSize="giant"
-							nbSpinnerStatus="primary"
+					<ng-container *ngIf="!employeeId">
+						<div
+							class="col-sm-4 col-md-3 col-lg"
+							*ngxPermissionsOnly="
+								PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+							"
 						>
-							<nb-card-body>
-								<p>
-									{{ 'TIMESHEET.MEMBERS_WORKED' | translate }}
-								</p>
-								<div class="h1">
-									{{ counts?.employeesCount || 0 }}
-								</div>
-							</nb-card-body>
-						</nb-card>
-					</div>
-					<div class="col-sm-4 col-md-3 col-lg">
-						<nb-card
-							[nbSpinner]="countsLoading"
-							nbSpinnerSize="giant"
-							nbSpinnerStatus="primary"
-						>
-							<nb-card-body>
-								<p>
-									{{
-										'TIMESHEET.PROJECTS_WORKED' | translate
-									}}
-								</p>
-								<div class="h1">
-									{{ counts?.projectsCount || 0 }}
-								</div>
-							</nb-card-body>
-						</nb-card>
-					</div>
+							<nb-card
+								[nbSpinner]="countsLoading"
+								nbSpinnerSize="giant"
+								nbSpinnerStatus="primary"
+							>
+								<nb-card-body>
+									<p>
+										{{
+											'TIMESHEET.MEMBERS_WORKED'
+												| translate
+										}}
+									</p>
+									<div class="h1">
+										{{ counts?.employeesCount || 0 }}
+									</div>
+								</nb-card-body>
+							</nb-card>
+						</div>
+					</ng-container>
+					<ng-container *ngIf="!projectId">
+						<div class="col-sm-4 col-md-3 col-lg">
+							<nb-card
+								[nbSpinner]="countsLoading"
+								nbSpinnerSize="giant"
+								nbSpinnerStatus="primary"
+							>
+								<nb-card-body>
+									<p>
+										{{
+											'TIMESHEET.PROJECTS_WORKED'
+												| translate
+										}}
+									</p>
+									<div class="h1">
+										{{ counts?.projectsCount || 0 }}
+									</div>
+								</nb-card-body>
+							</nb-card>
+						</div>
+					</ng-container>
 					<div class="col-sm-4 col-md-3 col-lg">
 						<nb-card
 							[nbSpinner]="countsLoading"
@@ -201,10 +209,13 @@
 							<nb-list-item *ngFor="let task of tasks">
 								<div class="w-100">
 									<div class="row align-items-center">
-										<div class="col">
+										<div class="col text-left">
 											{{ task.title }}
 										</div>
-										<div class="col-sm-3">
+										<div class="col text-center">
+											{{ task.durationPercentage }}%
+										</div>
+										<div class="col text-center">
 											<nb-progress-bar
 												class="mb-1"
 												[value]="
@@ -220,7 +231,7 @@
 											>
 											</nb-progress-bar>
 										</div>
-										<div class="col-auto">
+										<div class="col text-right">
 											{{ task.duration | durationFormat }}
 										</div>
 									</div>
@@ -326,10 +337,13 @@
 							<nb-list-item *ngFor="let project of projects">
 								<div class="w-100">
 									<div class="row align-items-center">
-										<div class="col">
+										<div class="col text-left">
 											{{ project.name }}
 										</div>
-										<div class="col-sm-3">
+										<div class="col text-center">
+											{{ project.durationPercentage }}%
+										</div>
+										<div class="col text-center">
 											<nb-progress-bar
 												class="mb-1"
 												[value]="
@@ -345,7 +359,7 @@
 											>
 											</nb-progress-bar>
 										</div>
-										<div class="col-auto">
+										<div class="col text-right">
 											{{
 												project.duration
 													| durationFormat

@@ -18,6 +18,7 @@
 		<ngx-filters
 			dateRange="week"
 			[hasEmployeeFilter]="false"
+			[hasProjectFilter]="false"
 			(filtersChange)="filtersChange($event)"
 		></ngx-filters>
 	</div>
@@ -45,10 +46,10 @@
 			*ngFor="let day of weekData"
 		>
 			<div class="col-sm-3 project-name">
-				<span *ngIf="day?.project; else noProfject">{{
+				<span *ngIf="day?.project; else noProject">{{
 					day?.project?.name
 				}}</span>
-				<ng-template #noProfject>
+				<ng-template #noProject>
 					<span>{{ 'TIMESHEET.NO_PROJECT' | translate }}</span>
 				</ng-template>
 			</div>

@@ -67,7 +67,7 @@ export class TasksSprintViewComponent
 		translateService: TranslateService,
 		dialogService: NbDialogService,
 		private taskStore: TasksStoreService,
-		private storeSerive: Store
+		private storeService: Store
 	) {
 		super(translateService, dialogService);
 	}
@@ -81,15 +81,18 @@ export class TasksSprintViewComponent
 	}
 
 	initOrganization(project: IOrganizationProject) {
-		this.storeSerive.selectedOrganization$
+		this.storeService.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
-				tap((organization: IOrganization) =>
+				tap((organization: IOrganization) => {
+					const { tenantId } = this.storeService.user;
+					const { id: organizationId } = organization;
 					this.store$.fetchSprints({
-						organizationId: organization.id,
-						projectId: project.id
-					})
-				),
+						organizationId,
+						projectId: project.id,
+						tenantId
+					});
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
