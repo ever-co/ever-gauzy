@@ -6,7 +6,6 @@ import {
 	RouterEvent,
 	ActivatedRoute
 } from '@angular/router';
-import * as _ from 'underscore';
 import { Observable } from 'rxjs';
 import { first, map, tap, filter, debounceTime } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
