@@ -1,6 +1,10 @@
 import { IEmployee } from './employee.model';
 import { IOrganizationContact } from './organization-contact.model';
-import { ProjectBillingEnum, ProjectOwnerEnum } from './organization.model';
+import {
+	CrudActionEnum,
+	ProjectBillingEnum,
+	ProjectOwnerEnum
+} from './organization.model';
 import { IBaseEntityWithMembers } from './entity-with-members.model';
 import { ITag } from './tag-entity.model';
 import { ITask } from './task-entity.model';
@@ -94,11 +98,5 @@ export interface IOrganizationProjectsUpdateInput
 
 export interface IOrganizationProjectStoreState {
 	project: IOrganizationProject;
-	action: OrganizationProjectAction;
-}
-
-export enum OrganizationProjectAction {
-	CREATED = 'CREATED',
-	UPDATED = 'UPDATED',
-	DELETED = 'DELETED'
+	action: CrudActionEnum;
 }

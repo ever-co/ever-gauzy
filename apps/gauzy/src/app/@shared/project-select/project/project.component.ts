@@ -9,7 +9,7 @@ import {
 import {
 	IOrganization,
 	IOrganizationProject,
-	OrganizationProjectAction,
+	CrudActionEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
@@ -125,18 +125,19 @@ export class ProjectSelectorComponent
 	ngAfterViewInit() {
 		this._organizationProjectStore.organizationProjectAction$
 			.pipe(
-				filter(({ project }) => !!project),
+				filter(({ action, project }) => !!action && !!project),
+				tap(() => this._organizationProjectStore.destroy()),
 				untilDestroyed(this)
 			)
 			.subscribe(({ project, action }) => {
 				switch (action) {
-					case OrganizationProjectAction.CREATED:
+					case CrudActionEnum.CREATED:
 						this.createOrganizationProject(project);
 						break;
-					case OrganizationProjectAction.UPDATED:
+					case CrudActionEnum.UPDATED:
 						this.updateOrganizationProject(project);
 						break;
-					case OrganizationProjectAction.DELETED:
+					case CrudActionEnum.DELETED:
 						this.deleteOrganizationProject(project);
 						break;
 					default:

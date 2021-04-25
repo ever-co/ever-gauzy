@@ -1,9 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { IOrganization, OrganizationAction } from '@gauzy/contracts';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { IOrganization, CrudActionEnum } from '@gauzy/contracts';
+import { Store } from './../../../../../@core/services/store.service';
 import { filter, tap } from 'rxjs/operators';
-import { UsersOrganizationsService } from 'apps/gauzy/src/app/@core/services/users-organizations.service';
-import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
+import { UsersOrganizationsService } from './../../../../../@core/services/users-organizations.service';
+import { OrganizationEditStore } from './../../../../../@core/services/organization-edit-store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { isNotEmpty } from '@gauzy/common-angular';
 
@@ -82,18 +82,21 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
 	private organizationAction() {
 		this._organizationEditStore.organizationAction$
 			.pipe(
-				filter(({ organization }) => !!organization),
+				filter(
+					({ action, organization }) => !!action && !!organization
+				),
+				tap(() => this._organizationEditStore.destroy()),
 				untilDestroyed(this)
 			)
 			.subscribe(({ organization, action }) => {
 				switch (action) {
-					case OrganizationAction.CREATED:
+					case CrudActionEnum.CREATED:
 						this.createOrganization(organization);
 						break;
-					case OrganizationAction.UPDATED:
+					case CrudActionEnum.UPDATED:
 						this.updateOrganization(organization);
 						break;
-					case OrganizationAction.DELETED:
+					case CrudActionEnum.DELETED:
 						this.deleteOrganization(organization);
 						break;
 					default:

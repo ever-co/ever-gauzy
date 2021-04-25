@@ -24,7 +24,7 @@ import { Store } from '../../../@core/services/store.service';
 import {
 	EmployeeSelectorComponent,
 	ALL_EMPLOYEES_SELECTED
-} from '../../../@theme/components/header/selectors/employee/employee.component';
+} from '../../../@theme/components/header/selectors/employee';
 import { OrganizationVendorsService } from '../../../@core/services/organization-vendors.service';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';

@@ -9,41 +9,21 @@ import {
 	ChangeDetectorRef,
 	ChangeDetectionStrategy
 } from '@angular/core';
-import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
-import { filter, debounceTime } from 'rxjs/operators';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { EmployeesService } from './../../../../../@core/services/employees.service';
+import { filter, debounceTime, tap, switchMap } from 'rxjs/operators';
+import { Store } from './../../../../../@core/services/store.service';
 import {
+	CrudActionEnum,
+	IEmployee,
 	IOrganization,
-	ISelectedEmployee,
-	DEFAULT_TYPE
+	ISelectedEmployee
 } from '@gauzy/contracts';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
-
-//TODO: Currently the whole application assumes that if employee or id is null then you need to get data for All Employees
-//That should not be the case, sometimes due to permissions like CHANGE_SELECTED_EMPLOYEE not being available
-//we need to handle cases where No Employee is selected too
-
-export const ALL_EMPLOYEES_SELECTED: ISelectedEmployee = {
-	id: null,
-	firstName: 'All Employees',
-	lastName: '',
-	imageUrl: 'https://i.imgur.com/XwA2T62.jpg',
-	defaultType: DEFAULT_TYPE.ALL_EMPLOYEE,
-	tags: [],
-	skills: []
-};
-
-export const NO_EMPLOYEE_SELECTED: ISelectedEmployee = {
-	id: null,
-	firstName: '',
-	lastName: '',
-	imageUrl: '',
-	defaultType: DEFAULT_TYPE.NO_EMPLOYEE,
-	tags: [],
-	skills: []
-};
+import { EmployeeStore } from './../../../../../@core/services/employee-store.service';
+import { combineLatest, Subject } from 'rxjs';
+import { ALL_EMPLOYEES_SELECTED } from './default-employee';
+import { isNotEmpty } from '@gauzy/common-angular';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -56,17 +36,34 @@ export class EmployeeSelectorComponent
 	implements OnInit, OnDestroy, AfterViewInit {
 	@Input()
 	skipGlobalChange: boolean;
+
 	@Input()
 	disabled: boolean;
-	@Input()
-	defaultSelected: boolean;
-	@Input()
-	showAllEmployeesOption: boolean;
+
 	@Input()
 	placeholder: string;
 
-	@Input()
-	set selectedDate(value: Date) {
+	private _defaultSelected: boolean = true;
+	get defaultSelected(): boolean {
+		return this._defaultSelected;
+	}
+	@Input() set defaultSelected(value: boolean) {
+		this._defaultSelected = value;
+	}
+
+	private _showAllEmployeesOption: boolean = true;
+	get showAllEmployeesOption(): boolean {
+		return this._showAllEmployeesOption;
+	}
+	@Input() set showAllEmployeesOption(value: boolean) {
+		this._showAllEmployeesOption = value;
+	}
+
+	private _selectedDate?: Date;
+	get selectedDate(): Date {
+		return this._selectedDate;
+	}
+	@Input() set selectedDate(value: Date) {
 		//This will set _selectDate too
 		this.loadWorkingEmployeesIfRequired(
 			this.store.selectedOrganization,
@@ -74,38 +71,30 @@ export class EmployeeSelectorComponent
 		);
 	}
 
-	get selectedDate() {
-		return this._selectedDate;
-	}
-
 	private _selectedOrganization?: IOrganization;
-	private _selectedDate?: Date;
 
 	@Output()
 	selectionChanged: EventEmitter<ISelectedEmployee> = new EventEmitter();
 
 	people: ISelectedEmployee[] = [];
 	selectedEmployee: ISelectedEmployee;
+	subject$: Subject<any> = new Subject();
 
 	constructor(
-		private employeesService: EmployeesService,
-		private store: Store,
-		private activatedRoute: ActivatedRoute,
-		private cdRef: ChangeDetectorRef,
+		private readonly employeesService: EmployeesService,
+		private readonly store: Store,
+		private readonly activatedRoute: ActivatedRoute,
+		private readonly cdRef: ChangeDetectorRef,
 		private readonly _employeeStore: EmployeeStore
 	) {}
 
 	ngOnInit() {
-		this.defaultSelected =
-			this.defaultSelected === undefined ? true : this.defaultSelected;
-		this.showAllEmployeesOption =
-			this.showAllEmployeesOption === undefined
-				? true
-				: this.showAllEmployeesOption;
-
-		this._loadEmployees();
-		this._loadEmployeeId();
-
+		this._selectedEmployee();
+		this.store.selectedEmployee$
+			.pipe(untilDestroyed(this))
+			.subscribe((emp) => {
+				this.selectedEmployee = emp;
+			});
 		this.activatedRoute.queryParams
 			.pipe(
 				debounceTime(500),
@@ -115,18 +104,68 @@ export class EmployeeSelectorComponent
 			.subscribe((query) => {
 				this.selectEmployeeById(query.employeeId);
 			});
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const selectedDate$ = this.store.selectedDate$;
+		combineLatest([storeOrganization$, selectedDate$])
+			.pipe(
+				filter(([organization]) => !!organization),
+				tap(([organization, date]) =>
+					this.subject$.next([organization, date])
+				),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.subject$
+			.pipe(
+				debounceTime(800),
+				switchMap(async ([organization, date]) => {
+					await this.loadWorkingEmployeesIfRequired(
+						organization,
+						date
+					);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngAfterViewInit(): void {
 		this._employeeStore.employeeAction$
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.getEmployees(
-					this.store.selectedOrganization,
-					this.store.selectedDate
-				);
+			.pipe(
+				filter(({ action, employee }) => !!action && !!employee),
+				tap(() => this._employeeStore.destroy()),
+				untilDestroyed(this)
+			)
+			.subscribe(({ action, employee }) => {
+				switch (action) {
+					case CrudActionEnum.CREATED:
+						this.createEmployee(employee);
+						break;
+					default:
+						break;
+				}
 			});
 		this.cdRef.detectChanges();
+	}
+
+	/*
+	 * After created new organization pushed on dropdown
+	 */
+	createEmployee(employees: IEmployee | IEmployee[]) {
+		const people: ISelectedEmployee[] = this.people || [];
+		if (Array.isArray(people)) {
+			people.push(
+				...employees.map((e) => {
+					return {
+						id: e.id,
+						firstName: e.user.firstName,
+						lastName: e.user.lastName,
+						imageUrl: e.user.imageUrl
+					};
+				})
+			);
+			this.people = [...people].filter(isNotEmpty);
+		}
 	}
 
 	searchEmployee(term: string, item: any) {
@@ -159,6 +198,7 @@ export class EmployeeSelectorComponent
 			this.selectEmployee(employees[0]);
 		}
 	}
+
 	getShortenedName(firstName: string, lastName: string) {
 		if (firstName && lastName) {
 			return firstName + ' ' + lastName[0] + '.';
@@ -173,38 +213,7 @@ export class EmployeeSelectorComponent
 			: firstName || lastName;
 	}
 
-	private _loadEmployeeId() {
-		this.store.selectedEmployee$
-			.pipe(untilDestroyed(this))
-			.subscribe((emp) => {
-				this.selectedEmployee = emp;
-			});
-	}
-
-	private async _loadEmployees() {
-		this.store.selectedOrganization$
-			.pipe(
-				filter((organization) => !!organization),
-				untilDestroyed(this)
-			)
-			.subscribe(async (org) => {
-				if (org) {
-					await this.loadWorkingEmployeesIfRequired(
-						org,
-						this.store.selectedDate
-					);
-				}
-			});
-
-		this.store.selectedDate$
-			.pipe(untilDestroyed(this))
-			.subscribe((date) => {
-				this.loadWorkingEmployeesIfRequired(
-					this.store.selectedOrganization,
-					date
-				);
-			});
-
+	private _selectedEmployee() {
 		if (!this.selectedEmployee) {
 			// This is so selected employee doesn't get reset when it's already set from somewhere else
 			this.selectEmployee(this.people[0]);
@@ -213,8 +222,9 @@ export class EmployeeSelectorComponent
 		if (
 			!this.defaultSelected &&
 			this.selectedEmployee === ALL_EMPLOYEES_SELECTED
-		)
+		) {
 			this.selectedEmployee = null;
+		}
 	}
 
 	loadWorkingEmployeesIfRequired = async (
@@ -248,7 +258,7 @@ export class EmployeeSelectorComponent
 			this.people = [];
 			return;
 		}
-
+		console.log('run working employees');
 		const { items } = await this.employeesService.getWorking(
 			org.id,
 			org.tenantId,

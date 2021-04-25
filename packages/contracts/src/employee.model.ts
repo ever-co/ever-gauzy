@@ -3,7 +3,7 @@ import { IContact } from './contact.model';
 import { IEmployeeJobsStatistics } from './employee-job.model';
 import { IOrganizationDepartment } from './organization-department.model';
 import { IOrganizationEmploymentType } from './organization-employment-type.model';
-import { IOrganizationFindInput } from './organization.model';
+import { CrudActionEnum, IOrganizationFindInput } from './organization.model';
 import { IOrganizationPosition } from './organization-positions.model';
 import { IOrganizationTeam } from './organization-team-model';
 import { IRequestApprovalEmployee } from './request-approval-employee.model';
@@ -182,12 +182,6 @@ export interface EmployeeViewModel {
 }
 
 export interface IEmployeeStoreState {
-	employee?: IEmployee;
-	action: EmployeeAction;
-}
-
-export enum EmployeeAction {
-	CREATED = 'CREATED',
-	UPDATED = 'UPDATED',
-	DELETED = 'DELETED'
+	employee: IEmployee | IEmployee[];
+	action: CrudActionEnum;
 }

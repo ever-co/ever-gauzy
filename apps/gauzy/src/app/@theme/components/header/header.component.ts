@@ -17,9 +17,8 @@ import { filter, first, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
 import {
+	CrudActionEnum,
 	IOrganization,
-	OrganizationAction,
-	OrganizationProjectAction,
 	PermissionsEnum,
 	TimeLogType
 } from '@gauzy/contracts';
@@ -31,7 +30,7 @@ import { environment } from '../../../../environments/environment';
 import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { EmployeesService } from '../../../@core/services/employees.service';
-import { NO_EMPLOYEE_SELECTED } from './selectors/employee/employee.component';
+import { NO_EMPLOYEE_SELECTED } from './selectors/employee';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import {
 	ISidebarActionConfig,
@@ -202,12 +201,13 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	async checkSelectorsPermission() {
 		const { userId } = this.store;
 		const { tenantId } = this.store.user;
-		const {
-			items: userOrg
-		} = await this.usersOrganizationsService.getAll([], {
-			userId,
-			tenantId
-		});
+		const { items: userOrg } = await this.usersOrganizationsService.getAll(
+			[],
+			{
+				userId,
+				tenantId
+			}
+		);
 
 		if (
 			this.store.hasPermission(
@@ -257,9 +257,9 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			)
 			.subscribe(({ action }) => {
 				switch (action) {
-					case OrganizationAction.CREATED:
-					case OrganizationAction.UPDATED:
-					case OrganizationAction.DELETED:
+					case CrudActionEnum.CREATED:
+					case CrudActionEnum.UPDATED:
+					case CrudActionEnum.DELETED:
 						this.checkSelectorsPermission();
 						break;
 				}
@@ -271,9 +271,9 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			)
 			.subscribe(({ action }) => {
 				switch (action) {
-					case OrganizationProjectAction.CREATED:
-					case OrganizationProjectAction.UPDATED:
-					case OrganizationProjectAction.DELETED:
+					case CrudActionEnum.CREATED:
+					case CrudActionEnum.UPDATED:
+					case CrudActionEnum.DELETED:
 						this.checkProjectSelectorPermission();
 						break;
 				}

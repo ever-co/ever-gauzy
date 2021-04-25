@@ -238,10 +238,10 @@ export const DEFAULT_REVENUE_BASED_BONUS = 10;
 
 export interface IOrganizationStoreState {
 	organization: IOrganization;
-	action: OrganizationAction;
+	action: CrudActionEnum;
 }
 
-export enum OrganizationAction {
+export enum CrudActionEnum {
 	CREATED = 'CREATED',
 	UPDATED = 'UPDATED',
 	DELETED = 'DELETED'
