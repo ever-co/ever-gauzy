@@ -13,7 +13,7 @@ import {
 } from '@nebular/theme';
 import { LayoutService } from '../../../@core/utils';
 import { Router, NavigationEnd } from '@angular/router';
-import { filter, first, tap } from 'rxjs/operators';
+import { debounceTime, filter, first } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
 import {
@@ -38,6 +38,7 @@ import {
 	OrganizationEditStore,
 	OrganizationProjectStore
 } from '../../../@core/services';
+import { combineLatest, Subject } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -83,6 +84,9 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	};
 	timerDuration: string;
 	organization: IOrganization;
+	selectedDate: Date;
+
+	subject$: Subject<any> = new Subject();
 
 	constructor(
 		private readonly sidebarService: NbSidebarService,
@@ -144,31 +148,39 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 					}
 				});
 			});
-		this.store.selectedOrganization$
-			.pipe(
-				filter((organization) => !!organization),
-				tap((organization) => {
-					this.organization = organization;
-					this.checkProjectSelectorPermission();
-				}),
-				tap(() => this.loadItems()),
-				untilDestroyed(this)
-			)
-			.subscribe();
 		this.store.user$
 			.pipe(
 				filter((user) => !!user),
 				untilDestroyed(this)
 			)
-			.subscribe((user) => {
+			.subscribe(async (user) => {
 				this.user = user;
 				this.isEmployee = !!user && !!user.employeeId;
 				//check header selectors dropdown permissions
-				this.checkSelectorsPermission();
+				await this.checkOrganizationSelectorVisibility();
 				//check timer status for employee
 				if (this.isEmployee) {
 					this._checkTimerStatus();
 				}
+			});
+		this.subject$
+			.pipe(debounceTime(1300), untilDestroyed(this))
+			.subscribe(() => {
+				this.checkEmployeeSelectorVisibility();
+				this.checkProjectSelectorVisibility();
+				this.loadItems();
+			});
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const selectedDate$ = this.store.selectedDate$;
+		combineLatest([storeOrganization$, selectedDate$])
+			.pipe(
+				filter(([organization, date]) => !!organization && !!date),
+				untilDestroyed(this)
+			)
+			.subscribe(([organization, date]) => {
+				this.organization = organization;
+				this.selectedDate = date;
+				this.subject$.next();
 			});
 		this.themeService
 			.onThemeChange()
@@ -176,12 +188,11 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			.subscribe((t) => {
 				this.theme = t.name;
 			});
-
 		this._applyTranslationOnSmartTable();
 		this.loadItems();
 	}
 
-	async checkProjectSelectorPermission() {
+	checkProjectSelectorVisibility() {
 		if (!this.organization) {
 			return;
 		}
@@ -194,11 +205,47 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				tenantId
 			})
 			.then((count) => {
-				this.showProjectsSelector = count > 1;
+				this.showProjectsSelector = count > 0;
 			});
 	}
 
-	async checkSelectorsPermission() {
+	checkEmployeeSelectorVisibility() {
+		if (!this.organization) {
+			return;
+		}
+
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+		this.employeesService
+			.getWorkingCount(organizationId, tenantId, this.selectedDate, true)
+			.then(async ({ total: employeeCount }) => {
+				if (
+					this.store.hasPermission(
+						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+					)
+				) {
+					this.showEmployeesSelector = employeeCount > 0;
+					this.store.selectedEmployee = null;
+				} else {
+					const emp = await this.employeesService.getEmployeeById(
+						this.user.employeeId,
+						[]
+					);
+					if (emp) {
+						this.store.selectedEmployee = {
+							id: emp.id,
+							firstName: this.user.firstName,
+							lastName: this.user.lastName,
+							imageUrl: this.user.imageUrl
+						};
+					} else {
+						this.store.selectedEmployee = NO_EMPLOYEE_SELECTED;
+					}
+				}
+			});
+	}
+
+	async checkOrganizationSelectorVisibility() {
 		const { userId } = this.store;
 		const { tenantId } = this.store.user;
 		const { items: userOrg } = await this.usersOrganizationsService.getAll(
@@ -212,10 +259,9 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		if (
 			this.store.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_ORGANIZATION
-			) &&
-			userOrg.length > 1
+			)
 		) {
-			this.showOrganizationsSelector = true;
+			this.showOrganizationsSelector = userOrg.length > 1;
 		} else {
 			if (userOrg.length > 0) {
 				const [firstUserOrg] = userOrg;
@@ -224,27 +270,6 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 					.pipe(first())
 					.toPromise();
 				this.store.selectedOrganization = org;
-			}
-		}
-		if (
-			this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
-		) {
-			this.showEmployeesSelector = true;
-			this.store.selectedEmployee = null;
-		} else {
-			const emp = await this.employeesService.getEmployeeById(
-				this.user.employeeId,
-				[]
-			);
-			if (emp) {
-				this.store.selectedEmployee = {
-					id: emp.id,
-					firstName: this.user.firstName,
-					lastName: this.user.lastName,
-					imageUrl: this.user.imageUrl
-				};
-			} else {
-				this.store.selectedEmployee = NO_EMPLOYEE_SELECTED;
 			}
 		}
 	}
@@ -260,13 +285,13 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 					case CrudActionEnum.CREATED:
 					case CrudActionEnum.UPDATED:
 					case CrudActionEnum.DELETED:
-						this.checkSelectorsPermission();
+						this.checkOrganizationSelectorVisibility();
 						break;
 				}
 			});
 		this.organizationProjectStore.organizationProjectAction$
 			.pipe(
-				filter(({ project }) => !!project),
+				filter(({ project, action }) => !!project && !!action),
 				untilDestroyed(this)
 			)
 			.subscribe(({ action }) => {
@@ -274,7 +299,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 					case CrudActionEnum.CREATED:
 					case CrudActionEnum.UPDATED:
 					case CrudActionEnum.DELETED:
-						this.checkProjectSelectorPermission();
+						this.checkProjectSelectorVisibility();
 						break;
 				}
 			});

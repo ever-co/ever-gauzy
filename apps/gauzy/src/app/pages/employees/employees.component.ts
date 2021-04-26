@@ -9,7 +9,9 @@ import {
 	InvitationTypeEnum,
 	ComponentLayoutStyleEnum,
 	IOrganization,
-	EmployeeViewModel
+	EmployeeViewModel,
+	CrudActionEnum,
+	IEmployee
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -32,6 +34,7 @@ import { PictureNameTagsComponent } from '../../@shared/table-components/picture
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../@core/services/toastr.service';
+import { EmployeeStore } from '../../@core/services';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './employees.component.html',
@@ -85,7 +88,8 @@ export class EmployeesComponent
 		private toastrService: ToastrService,
 		private route: ActivatedRoute,
 		private translate: TranslateService,
-		private errorHandler: ErrorHandlingService
+		private errorHandler: ErrorHandlingService,
+		private readonly _employeeStore: EmployeeStore
 	) {
 		super(translate);
 		this.setView();
@@ -233,6 +237,12 @@ export class EmployeesComponent
 						await this.employeesService.setEmployeeAsInactive(
 							this.selectedEmployee.id
 						);
+
+						const employee: any = this.selectedEmployee;
+						this._employeeStore.employeeAction = {
+							action: CrudActionEnum.DELETED,
+							employee
+						};
 
 						this.toastrService.success(
 							'TOASTR.MESSAGE.EMPLOYEE_INACTIVE',

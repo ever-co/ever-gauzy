@@ -65,10 +65,7 @@ export class EmployeeSelectorComponent
 	}
 	@Input() set selectedDate(value: Date) {
 		//This will set _selectDate too
-		this.loadWorkingEmployeesIfRequired(
-			this.store.selectedOrganization,
-			value
-		);
+		this.subject$.next([this.store.selectedOrganization, value]);
 	}
 
 	private _selectedOrganization?: IOrganization;
@@ -90,6 +87,18 @@ export class EmployeeSelectorComponent
 
 	ngOnInit() {
 		this._selectedEmployee();
+		this.subject$
+			.pipe(
+				debounceTime(800),
+				switchMap(async ([organization, date]) => {
+					await this.loadWorkingEmployeesIfRequired(
+						organization,
+						date
+					);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.selectedEmployee$
 			.pipe(untilDestroyed(this))
 			.subscribe((emp) => {
@@ -115,18 +124,6 @@ export class EmployeeSelectorComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.subject$
-			.pipe(
-				debounceTime(800),
-				switchMap(async ([organization, date]) => {
-					await this.loadWorkingEmployeesIfRequired(
-						organization,
-						date
-					);
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
 	}
 
 	ngAfterViewInit(): void {
@@ -141,6 +138,9 @@ export class EmployeeSelectorComponent
 					case CrudActionEnum.CREATED:
 						this.createEmployee(employee);
 						break;
+					case CrudActionEnum.DELETED:
+						this.deleteEmployee(employee as IEmployee);
+						break;
 					default:
 						break;
 				}
@@ -149,7 +149,7 @@ export class EmployeeSelectorComponent
 	}
 
 	/*
-	 * After created new organization pushed on dropdown
+	 * After create new employee pushed on header selector
 	 */
 	createEmployee(employees: IEmployee | IEmployee[]) {
 		const people: ISelectedEmployee[] = this.people || [];
@@ -166,6 +166,19 @@ export class EmployeeSelectorComponent
 			);
 			this.people = [...people].filter(isNotEmpty);
 		}
+	}
+
+	/*
+	 * After delete remove employee from header selector
+	 */
+	deleteEmployee(employee: IEmployee) {
+		let people: ISelectedEmployee[] = this.people || [];
+		if (Array.isArray(people) && people.length) {
+			people = people.filter(
+				(item: ISelectedEmployee) => item.id !== employee.id
+			);
+		}
+		this.people = [...people].filter(isNotEmpty);
 	}
 
 	searchEmployee(term: string, item: any) {
@@ -258,7 +271,6 @@ export class EmployeeSelectorComponent
 			this.people = [];
 			return;
 		}
-		console.log('run working employees');
 		const { items } = await this.employeesService.getWorking(
 			org.id,
 			org.tenantId,

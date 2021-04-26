@@ -75,6 +75,22 @@ export class ProjectSelectorComponent
 	@Input() placeholder: string;
 	@Input() skipGlobalChange: boolean;
 
+	private _defaultSelected: boolean = true;
+	get defaultSelected(): boolean {
+		return this._defaultSelected;
+	}
+	@Input() set defaultSelected(value: boolean) {
+		this._defaultSelected = value;
+	}
+
+	private _showAllOption: boolean = true;
+	get showAllOption(): boolean {
+		return this._showAllOption;
+	}
+	@Input() set showAllOption(value: boolean) {
+		this._showAllOption = value;
+	}
+
 	loadProjects$: Subject<any> = new Subject();
 	onChange: any = () => {};
 	onTouched: any = () => {};
@@ -165,7 +181,11 @@ export class ProjectSelectorComponent
 			this.projects = items;
 		}
 
-		this.projects.unshift(ALL_PROJECT_SELECTED);
+		//Insert All Employees Option
+		if (this.showAllOption) {
+			this.projects.unshift(ALL_PROJECT_SELECTED);
+		}
+
 		this.selectProject(ALL_PROJECT_SELECTED);
 	}
 
