@@ -102,7 +102,9 @@ export class EmployeeSelectorComponent
 		this.store.selectedEmployee$
 			.pipe(untilDestroyed(this))
 			.subscribe((emp) => {
-				this.selectedEmployee = emp;
+				if (emp) {
+					this.selectedEmployee = emp;
+				}
 			});
 		this.activatedRoute.queryParams
 			.pipe(
@@ -301,5 +303,7 @@ export class EmployeeSelectorComponent
 		}
 	};
 
-	ngOnDestroy() {}
+	ngOnDestroy() {
+		this.store.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
+	}
 }

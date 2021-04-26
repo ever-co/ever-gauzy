@@ -12,8 +12,8 @@ import {
 	NbMenuItem
 } from '@nebular/theme';
 import { LayoutService } from '../../../@core/utils';
-import { Router, NavigationEnd } from '@angular/router';
-import { debounceTime, filter, first } from 'rxjs/operators';
+import { Router, NavigationEnd, ActivatedRoute } from '@angular/router';
+import { debounceTime, filter, first, map, mergeMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
 import {
@@ -33,12 +33,17 @@ import { EmployeesService } from '../../../@core/services/employees.service';
 import { NO_EMPLOYEE_SELECTED } from './selectors/employee';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import {
+	EmployeeStore,
 	ISidebarActionConfig,
 	NavigationBuilderService,
 	OrganizationEditStore,
 	OrganizationProjectStore
 } from '../../../@core/services';
 import { combineLatest, Subject } from 'rxjs';
+import {
+	DEFAULT_SELECTOR_VISIBILITY,
+	ISelectorVisibility
+} from './default-selector';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -87,6 +92,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	selectedDate: Date;
 
 	subject$: Subject<any> = new Subject();
+	selectorsVisibility: ISelectorVisibility = DEFAULT_SELECTOR_VISIBILITY;
 
 	constructor(
 		private readonly sidebarService: NbSidebarService,
@@ -94,6 +100,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		private readonly layoutService: LayoutService,
 		private readonly themeService: NbThemeService,
 		private readonly router: Router,
+		private readonly _activatedRoute: ActivatedRoute,
 		private readonly translate: TranslateService,
 		private readonly store: Store,
 		private readonly timeTrackerService: TimeTrackerService,
@@ -103,8 +110,28 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		public readonly navigationBuilderService: NavigationBuilderService,
 		private readonly organizationEditStore: OrganizationEditStore,
-		private readonly organizationProjectStore: OrganizationProjectStore
-	) {}
+		private readonly organizationProjectStore: OrganizationProjectStore,
+		private readonly employeeStore: EmployeeStore
+	) {
+		this.router.events
+			.pipe(
+				filter((event) => event instanceof NavigationEnd),
+				map(() => this._activatedRoute),
+				map((route) => {
+					while (route.firstChild) route = route.firstChild;
+					return route;
+				}),
+				filter((route) => route.outlet === 'primary'),
+				mergeMap((route) => route.data)
+			)
+			.subscribe(({ selectors }: any) => {
+				this.selectorsVisibility = Object.assign(
+					{},
+					DEFAULT_SELECTOR_VISIBILITY,
+					selectors
+				);
+			});
+	}
 
 	ngOnInit() {
 		this.router.events
@@ -300,6 +327,20 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 					case CrudActionEnum.UPDATED:
 					case CrudActionEnum.DELETED:
 						this.checkProjectSelectorVisibility();
+						break;
+				}
+			});
+		this.employeeStore.employeeAction$
+			.pipe(
+				filter(({ employee }) => !!employee),
+				untilDestroyed(this)
+			)
+			.subscribe(({ action }) => {
+				switch (action) {
+					case CrudActionEnum.CREATED:
+					case CrudActionEnum.UPDATED:
+					case CrudActionEnum.DELETED:
+						this.checkEmployeeSelectorVisibility();
 						break;
 				}
 			});
