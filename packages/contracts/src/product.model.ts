@@ -253,6 +253,17 @@ export interface IWarehouse extends IBasePerTenantEntityModel {
 	tags?: ITag[];
 }
 
+export interface IWarehouseProduct extends IBasePerTenantEntityModel {
+	quantity: number;
+	product: IProductTranslatable;
+	variants: IWarehouseProductVariant[];
+}
+
+export interface IWarehouseProductVariant extends IBasePerTenantEntityModel {
+	quantity: number;
+	variant: IProductVariant;
+}
+
 export enum BillingInvoicingPolicyEnum {
 	QUANTITY_ORDERED = 'Quantity ordered',
 	QUANTITY_DELIVERED = 'Quantity Delivered'

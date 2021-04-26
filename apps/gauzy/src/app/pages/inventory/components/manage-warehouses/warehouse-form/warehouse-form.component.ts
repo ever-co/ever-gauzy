@@ -58,7 +58,7 @@ export class WarehouseFormComponent
 						params.id
 					);
 
-					this.tags = this.warehouse?.tags || [];
+					this.tags = this.warehouse.tags || [];
 
 					this._initializeLocationForm();
 					this._initializeForm();
