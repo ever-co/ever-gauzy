@@ -12,8 +12,8 @@ import {
 	NbMenuItem
 } from '@nebular/theme';
 import { LayoutService } from '../../../@core/utils';
-import { Router, NavigationEnd, ActivatedRoute } from '@angular/router';
-import { debounceTime, filter, first, map, mergeMap } from 'rxjs/operators';
+import { Router, NavigationEnd } from '@angular/router';
+import { debounceTime, filter, first } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
 import {
@@ -39,11 +39,12 @@ import {
 	OrganizationEditStore,
 	OrganizationProjectStore
 } from '../../../@core/services';
-import { combineLatest, Subject } from 'rxjs';
 import {
 	DEFAULT_SELECTOR_VISIBILITY,
-	ISelectorVisibility
-} from './default-selector';
+	ISelectorVisibility,
+	SelectorBuilderService
+} from '../../../@core/services';
+import { combineLatest, Subject } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -92,7 +93,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	selectedDate: Date;
 
 	subject$: Subject<any> = new Subject();
-	selectorsVisibility: ISelectorVisibility = DEFAULT_SELECTOR_VISIBILITY;
+	selectorsVisibility: ISelectorVisibility;
 
 	constructor(
 		private readonly sidebarService: NbSidebarService,
@@ -100,7 +101,6 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		private readonly layoutService: LayoutService,
 		private readonly themeService: NbThemeService,
 		private readonly router: Router,
-		private readonly _activatedRoute: ActivatedRoute,
 		private readonly translate: TranslateService,
 		private readonly store: Store,
 		private readonly timeTrackerService: TimeTrackerService,
@@ -111,29 +111,20 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		public readonly navigationBuilderService: NavigationBuilderService,
 		private readonly organizationEditStore: OrganizationEditStore,
 		private readonly organizationProjectStore: OrganizationProjectStore,
-		private readonly employeeStore: EmployeeStore
-	) {
-		this.router.events
-			.pipe(
-				filter((event) => event instanceof NavigationEnd),
-				map(() => this._activatedRoute),
-				map((route) => {
-					while (route.firstChild) route = route.firstChild;
-					return route;
-				}),
-				filter((route) => route.outlet === 'primary'),
-				mergeMap((route) => route.data)
-			)
-			.subscribe(({ selectors }: any) => {
+		private readonly employeeStore: EmployeeStore,
+		public readonly selectorBuilderService: SelectorBuilderService
+	) {}
+
+	ngOnInit() {
+		this.selectorBuilderService.selectors$
+			.pipe(untilDestroyed(this))
+			.subscribe((selectors) => {
 				this.selectorsVisibility = Object.assign(
 					{},
 					DEFAULT_SELECTOR_VISIBILITY,
 					selectors
 				);
 			});
-	}
-
-	ngOnInit() {
 		this.router.events
 			.pipe(
 				filter((event) => event instanceof NavigationEnd),

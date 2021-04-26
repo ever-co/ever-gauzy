@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import {
 	FeatureEnum,
 	IOrganization,
@@ -8,10 +8,15 @@ import {
 } from '@gauzy/contracts';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { filter } from 'rxjs/operators';
+import { filter, map, mergeMap } from 'rxjs/operators';
 import { Store } from '../@core/services/store.service';
 import { SelectorService } from '../@core/utils/selector.service';
 import { EmployeesService, UsersService } from '../@core/services';
+import {
+	DEFAULT_SELECTOR_VISIBILITY,
+	ISelectorVisibility,
+	SelectorBuilderService
+} from '../@core/services/selector-builder';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { ReportService } from './reports/all-report/report.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -47,6 +52,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 	user: IUser;
 	menu: NbMenuItem[] = [];
 	reportMenuItems: NbMenuItem[];
+	headerSelectors: ISelectorVisibility;
 
 	constructor(
 		private employeeService: EmployeesService,
@@ -55,10 +61,35 @@ export class PagesComponent implements OnInit, OnDestroy {
 		private reportService: ReportService,
 		private selectorService: SelectorService,
 		private router: Router,
+		private readonly _activatedRoute: ActivatedRoute,
 		private ngxPermissionsService: NgxPermissionsService,
 		private readonly usersService: UsersService,
-		private readonly authStrategy: AuthStrategy
-	) {}
+		private readonly authStrategy: AuthStrategy,
+		public readonly selectorBuilderService: SelectorBuilderService
+	) {
+		this.router.events
+			.pipe(
+				filter((event) => event instanceof NavigationEnd),
+				map(() => this._activatedRoute),
+				map((route) => {
+					while (route.firstChild) route = route.firstChild;
+					return route;
+				}),
+				filter((route) => route.outlet === 'primary'),
+				mergeMap((route) => route.data)
+			)
+			.subscribe(({ selectors }: any) => {
+				this.headerSelectors = Object.assign(
+					{},
+					DEFAULT_SELECTOR_VISIBILITY,
+					selectors
+				);
+				Object.entries(this.headerSelectors).forEach(([id, value]) => {
+					selectorBuilderService.setSelectorsVisibility(id, value);
+				});
+				selectorBuilderService.getSelectorsVisibility();
+			});
+	}
 
 	getMenuItems(): GaMenuItem[] {
 		return [
