@@ -72,7 +72,7 @@
 		"bcrypt": "^5.0.0",
 		"cache-manager": "^3.4.0",
 		"class-transformer": "0.3.1",
-		"class-validator": "^0.12.2",
+		"class-validator": "^0.13.0",
 		"cli-ux": "^5.5.0",
 		"cls-hooked": "^4.2.2",
 		"cross-fetch": "^3.0.6",
