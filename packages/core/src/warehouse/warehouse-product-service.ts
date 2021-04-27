@@ -28,7 +28,8 @@ export class WarehouseProductService extends CrudService<WarehouseProduct> {
 
 	async getAllWarehouseProducts(warehouseId: String) {
 		return await this.warehouseProductRepository.find({
-			where: { 'warehouse.id': warehouseId }
+			where: { warehouse: { id: warehouseId } },
+			relations: ['product']
 		});
 	}
 

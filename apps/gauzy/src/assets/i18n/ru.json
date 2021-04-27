@@ -2098,7 +2098,8 @@
 		"COUNTRY": "Страна",
 		"NEW_OPTION_GROUP": "Новая группа опций",
 		"OPTION_GROUP_NAME": "Название группы опций",
-		"OPTION_TRANSLATIONS": "Переводы параметров"
+		"OPTION_TRANSLATIONS": "Переводы параметров",
+		"ADD_PRODUCTS": "Add products"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",

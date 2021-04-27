@@ -19,6 +19,7 @@ import { ProductService } from 'apps/gauzy/src/app/@core';
 import { NbDialogService } from '@nebular/theme';
 import { SelectProductComponent } from '../select-product-form/select-product-form.component';
 import { first } from 'rxjs/operators';
+import { ImageRowComponent } from '../../table-components/image-row.component';
 
 @UntilDestroy()
 @Component({
@@ -100,7 +101,8 @@ export class WarehouseProductsTableComponent
 			columns: {
 				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
-					type: 'string'
+					type: 'custom',
+					renderComponent: ImageRowComponent
 				},
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
@@ -127,32 +129,18 @@ export class WarehouseProductsTableComponent
 		this.loading = false;
 		this.stockData = items;
 
-		//tstodo
-		console.log(items, 'items');
+		let mappedItems = items
+			? items.map((item) => {
+					return {
+						...item,
+						name: item.product.translations[0]['name'],
+						featuredImage: item.product.featuredImage,
+						quantity: 0
+					};
+			  })
+			: [];
 
-		// let mappedItems = items
-		// 	? items.map((item) => {
-		// 			let result: any = { options: [] };
-
-		// 			item.optionGroups.forEach((group) => {
-		// 				result.options.push(...group.options);
-		// 			});
-
-		// 			result = {
-		// 				...result,
-		// 				name: 'name',
-		// 				category: item.category ? item.category.name : '',
-		// 				type: item.type ? item.type.name : '',
-		// 				featuredImage: item.featuredImage,
-		// 				optionsName: result.options.join('-'),
-		// 				quantity: 0
-		// 			};
-
-		// 			return result;
-		// 	  })
-		// 	: [];
-
-		this.smartTableSource.load([]);
+		this.smartTableSource.load(mappedItems);
 	}
 
 	async onAddProduct() {
@@ -173,6 +161,10 @@ export class WarehouseProductsTableComponent
 			createWarehouseProductsInput,
 			this.warehouseId
 		);
+
+		if (result) {
+			this.toastrService.success('Successfully added products');
+		}
 
 		this.loadItems();
 	}
