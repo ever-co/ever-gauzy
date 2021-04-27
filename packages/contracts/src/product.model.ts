@@ -247,7 +247,7 @@ export interface IWarehouse extends IBasePerTenantEntityModel {
 	active: boolean;
 	contact: IContact;
 	code: string;
-	products?: IProductTranslatable[];
+	products?: IWarehouseProduct[];
 	name: string;
 	logo?: string;
 	email: string;
@@ -263,6 +263,11 @@ export interface IWarehouseProduct extends IBasePerTenantEntityModel {
 export interface IWarehouseProductVariant extends IBasePerTenantEntityModel {
 	quantity: number;
 	variant: IProductVariant;
+}
+
+export interface IWarehouseProductCreateInput {
+	productId: String;
+	variantIds: String[];
 }
 
 export enum BillingInvoicingPolicyEnum {

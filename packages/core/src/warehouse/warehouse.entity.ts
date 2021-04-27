@@ -14,7 +14,8 @@ import {
 	Contact,
 	Product,
 	Tag,
-	TenantBaseEntity
+	TenantBaseEntity,
+	WarehouseProduct
 } from '../core/entities/internal';
 
 @Entity('warehouse')
@@ -43,9 +44,9 @@ export class Warehouse extends TenantBaseEntity implements IWarehouse {
 	@Column()
 	code: string;
 
-	@ManyToOne(() => Product, { onDelete: 'SET NULL' })
+	@ManyToOne(() => WarehouseProduct, { onDelete: 'SET NULL' })
 	@JoinColumn()
-	products: Product[];
+	products: WarehouseProduct[];
 
 	@ApiProperty({ type: () => String })
 	@IsString()
