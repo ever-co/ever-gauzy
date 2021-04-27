@@ -1,0 +1,32 @@
+<nb-card>
+	<nb-card-header class="d-flex">
+		<h5>
+			{{ 'INVENTORY_PAGE.ADD_PRODUCTS' | translate }}
+		</h5>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="dialogRef.close()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body>
+		<ng2-smart-table
+			class="tags-table"
+			[settings]="settingsSmartTable"
+			[source]="smartTableSource"
+			style="cursor: pointer"
+			#productsTable
+			(userRowSelect)="onUserRowSelect($event)"
+		></ng2-smart-table>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button
+			(click)="dialogRef.close(selectedRows)"
+			status="primary"
+			class="mr-2"
+			nbButton
+		>
+			{{ 'BUTTONS.OK' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

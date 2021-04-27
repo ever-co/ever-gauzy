@@ -37,7 +37,8 @@ export interface IProductTranslatable
 	gallery?: IImageAsset[];
 }
 
-export interface IProductTranslated {
+export interface IProductTranslated
+	extends IBasePerTenantAndOrganizationEntityModel {
 	imageUrl: string;
 	productType: string;
 	productCategory: string;
@@ -246,11 +247,28 @@ export interface IWarehouse extends IBasePerTenantEntityModel {
 	active: boolean;
 	contact: IContact;
 	code: string;
-	products?: IProductTranslatable[];
+	products?: IWarehouseProduct[];
 	name: string;
 	logo?: string;
 	email: string;
 	tags?: ITag[];
+}
+
+export interface IWarehouseProduct extends IBasePerTenantEntityModel {
+	warehouse: IWarehouse;
+	quantity: number;
+	product: IProductTranslatable;
+	variants: IWarehouseProductVariant[];
+}
+
+export interface IWarehouseProductVariant extends IBasePerTenantEntityModel {
+	quantity: number;
+	variant: IProductVariant;
+}
+
+export interface IWarehouseProductCreateInput {
+	productId: String;
+	variantIds: String[];
 }
 
 export enum BillingInvoicingPolicyEnum {

@@ -2098,7 +2098,8 @@
 		"COUNTRY": "מדינה",
 		"NEW_OPTION_GROUP": "New option group",
 		"OPTION_GROUP_NAME": "Option group name",
-		"OPTION_TRANSLATIONS": "Option translations"
+		"OPTION_TRANSLATIONS": "Option translations",
+		"ADD_PRODUCTS": "Add products"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
