@@ -6,7 +6,11 @@ import {
 	ManyToMany,
 	JoinTable
 } from 'typeorm';
-import { TenantBaseEntity, Product } from '../core/entities/internal';
+import {
+	TenantBaseEntity,
+	Product,
+	Warehouse
+} from '../core/entities/internal';
 import { IWarehouseProduct } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { WarehouseProductVariant } from './warehouse-product-variant.entity';
@@ -15,6 +19,10 @@ import { WarehouseProductVariant } from './warehouse-product-variant.entity';
 export class WarehouseProduct
 	extends TenantBaseEntity
 	implements IWarehouseProduct {
+	@ManyToOne(() => Warehouse, (warehouse) => warehouse.products)
+	@JoinColumn()
+	warehouse: Warehouse;
+
 	@ManyToOne(() => Product)
 	@JoinColumn()
 	product: Product;

@@ -1,14 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
-import { IProductFindInput, IWarehouse } from '@gauzy/contracts';
+import { IProductFindInput, IWarehouse, IWarehouseProductCreateInput, IWarehouseProduct } from '@gauzy/contracts';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class WarehouseService {
 	WAREHOUSES_URL = `${API_PREFIX}/warehouses`;
 
-	constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient) { }
 
 	getAll(
 		relations?: string[],
@@ -48,10 +48,25 @@ export class WarehouseService {
 	}
 
 	deleteFeaturedImage(id: string): Promise<{ raw: any; affected: number }> {
+		debugger;
 		return this.http
 			.delete<{ raw: any; affected: number }>(
 				`${this.WAREHOUSES_URL}/${id}`
 			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	addWarehouseProducts(warehouseProductCreateInput: IWarehouseProductCreateInput[], warehouseId: String): Promise<IWarehouseProduct[]> {
+		return this.http
+			.post<IWarehouseProduct[]>(`${this.WAREHOUSES_URL}/inventory/${warehouseId}`, warehouseProductCreateInput)
+			.pipe(first())
+			.toPromise();
+	}
+
+	getWarehouseProducts(warehouseId: String) {
+		return this.http
+			.get<IWarehouseProduct[]>(`${this.WAREHOUSES_URL}/inventory/${warehouseId}`)
 			.pipe(first())
 			.toPromise();
 	}

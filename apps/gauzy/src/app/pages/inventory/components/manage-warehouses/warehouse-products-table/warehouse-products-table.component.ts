@@ -34,6 +34,7 @@ export class WarehouseProductsTableComponent
 	loading: boolean = true;
 
 	warehouse: IWarehouse;
+	warehouseId: String = '';
 	smartTableSource = new LocalDataSource();
 	warehouseProducts: IProductTranslatable[] = [];
 	organization: IOrganization;
@@ -70,9 +71,7 @@ export class WarehouseProductsTableComponent
 	ngOnInit(): void {
 		this.loadSmartTable();
 
-		this.route.params
-			.pipe(untilDestroyed(this))
-			.subscribe(async (params) => {});
+		this.setRouteSubscription();
 
 		this.loadItems();
 
@@ -83,6 +82,15 @@ export class WarehouseProductsTableComponent
 					this.organization = organization;
 					this.loadItems();
 				}
+			});
+	}
+
+	private setRouteSubscription() {
+		this.route.params
+			.pipe(untilDestroyed(this))
+			.subscribe(async (params) => {
+				this.warehouseId = params.id;
+				this.warehouse = await this.warehouseService.getById(params.id);
 			});
 	}
 
@@ -112,43 +120,61 @@ export class WarehouseProductsTableComponent
 		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		this.productService.getAll();
-		const { items } = await this.productService.getAll(
-			['type', 'category', 'featuredImage', 'optionGroups', 'variants'],
-			{ organizationId, tenantId }
+
+		const items = await this.warehouseService.getWarehouseProducts(
+			this.warehouseId
 		);
 		this.loading = false;
 		this.stockData = items;
 
-		let mappedItems = items
-			? items.map((item) => {
-					let result: any = { options: [] };
+		//tstodo
+		console.log(items, 'items');
 
-					item.optionGroups.forEach((group) => {
-						result.options.push(...group.options);
-					});
+		// let mappedItems = items
+		// 	? items.map((item) => {
+		// 			let result: any = { options: [] };
 
-					result = {
-						...result,
-						name: 'name',
-						category: item.category ? item.category.name : '',
-						type: item.type ? item.type.name : '',
-						featuredImage: item.featuredImage,
-						optionsName: result.options.join('-'),
-						quantity: 0
-					};
+		// 			item.optionGroups.forEach((group) => {
+		// 				result.options.push(...group.options);
+		// 			});
 
-					return result;
-			  })
-			: [];
+		// 			result = {
+		// 				...result,
+		// 				name: 'name',
+		// 				category: item.category ? item.category.name : '',
+		// 				type: item.type ? item.type.name : '',
+		// 				featuredImage: item.featuredImage,
+		// 				optionsName: result.options.join('-'),
+		// 				quantity: 0
+		// 			};
 
-		this.smartTableSource.load(mappedItems);
+		// 			return result;
+		// 	  })
+		// 	: [];
+
+		this.smartTableSource.load([]);
 	}
 
 	async onAddProduct() {
 		const dialog = this.dialogService.open(SelectProductComponent, {});
 
 		const selectedProducts = await dialog.onClose.pipe(first()).toPromise();
+
+		let createWarehouseProductsInput = selectedProducts
+			? selectedProducts.map((pr) => {
+					return {
+						productId: pr.id,
+						variants: pr.variants.map((variant) => variant.id)
+					};
+			  })
+			: [];
+
+		let result = await this.warehouseService.addWarehouseProducts(
+			createWarehouseProductsInput,
+			this.warehouseId
+		);
+
+		this.loadItems();
 	}
 
 	async onSaveRequest() {}

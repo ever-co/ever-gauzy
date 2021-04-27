@@ -255,6 +255,7 @@ export interface IWarehouse extends IBasePerTenantEntityModel {
 }
 
 export interface IWarehouseProduct extends IBasePerTenantEntityModel {
+	warehouse: IWarehouse;
 	quantity: number;
 	product: IProductTranslatable;
 	variants: IWarehouseProductVariant[];

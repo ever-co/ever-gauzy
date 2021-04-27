@@ -85,6 +85,7 @@ export class SelectProductComponent
 
 		let mappedItems = items.map((item) => {
 			return {
+				...item,
 				id: item.id,
 				name: item.name,
 				category: item.category,

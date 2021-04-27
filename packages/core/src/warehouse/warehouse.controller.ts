@@ -112,4 +112,25 @@ export class WarehouseController extends CrudController<Warehouse> {
 			warehouseId
 		);
 	}
+
+	@ApiOperation({
+		summary: 'Find all warehouse products.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found warehouse products.',
+		type: Warehouse
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('/inventory/:warehouseId')
+	async findAllWarehouseProducts(
+		@Param('warehouseId') warehouseId: string
+	): Promise<IWarehouseProduct[]> {
+		return this.warehouseProductsService.getAllWarehouseProducts(
+			warehouseId
+		);
+	}
 }

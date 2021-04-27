@@ -1,13 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { CrudService } from '../core/crud/crud.service';
-import { WarehouseProduct, WarehouseProductVariant, Product } from 'core';
+import {
+	WarehouseProduct,
+	WarehouseProductVariant,
+	Product,
+	Warehouse
+} from 'core';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IWarehouseProductCreateInput } from '@gauzy/contracts';
+import { AnyLengthString } from 'aws-sdk/clients/comprehendmedical';
 
 @Injectable()
 export class WarehouseProductService extends CrudService<WarehouseProduct> {
 	constructor(
+		@InjectRepository(Warehouse)
+		private readonly warehouseRepository: Repository<Warehouse>,
 		@InjectRepository(WarehouseProduct)
 		private readonly warehouseProductRepository: Repository<WarehouseProduct>,
 		@InjectRepository(WarehouseProductVariant)
@@ -18,13 +26,20 @@ export class WarehouseProductService extends CrudService<WarehouseProduct> {
 		super(warehouseProductRepository);
 	}
 
-	async getAllWarehouseProducts() {}
+	async getAllWarehouseProducts(warehouseId: String) {
+		return await this.warehouseProductRepository.find({
+			where: { 'warehouse.id': warehouseId }
+		});
+	}
 
 	async createWarehouseProductBulk(
 		warehouseProductCreateInput: IWarehouseProductCreateInput[],
 		warehouseId: String
 	) {
 		let productIds = warehouseProductCreateInput.map((pr) => pr.productId);
+		let warehouse = await this.warehouseRepository.findOne(
+			warehouseId as AnyLengthString
+		);
 
 		let products = await this.productRespository.findByIds(productIds, {
 			relations: ['variants']
@@ -32,8 +47,9 @@ export class WarehouseProductService extends CrudService<WarehouseProduct> {
 
 		let warehouseProductArr = [];
 
-		let warehouseProducts = products.forEach((product) => {
+		products.forEach((product) => {
 			let newWarehouseProduct = new WarehouseProduct();
+			newWarehouseProduct.warehouse = warehouse;
 			newWarehouseProduct.product = product;
 
 			let warehouseVariants = product.variants.map((variant) => {
@@ -44,7 +60,6 @@ export class WarehouseProductService extends CrudService<WarehouseProduct> {
 			});
 
 			newWarehouseProduct.variants = warehouseVariants;
-
 			warehouseProductArr.push(newWarehouseProduct);
 		});
 

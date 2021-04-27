@@ -44,7 +44,11 @@ export class Warehouse extends TenantBaseEntity implements IWarehouse {
 	@Column()
 	code: string;
 
-	@ManyToOne(() => WarehouseProduct, { onDelete: 'SET NULL' })
+	@ManyToOne(
+		() => WarehouseProduct,
+		(warehouseProduct) => warehouseProduct.warehouse,
+		{ onDelete: 'SET NULL' }
+	)
 	@JoinColumn()
 	products: WarehouseProduct[];
 
