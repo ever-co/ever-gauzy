@@ -120,7 +120,9 @@ import {
 	TimeSlotMinute,
 	User,
 	UserOrganization,
-	Warehouse
+	Warehouse,
+	WarehouseProduct,
+	WarehouseProductVariant
 } from './internal';
 
 export const coreEntities = [
@@ -245,5 +247,7 @@ export const coreEntities = [
 	TimeSlotMinute,
 	User,
 	UserOrganization,
-	Warehouse
+	Warehouse,
+	WarehouseProduct,
+	WarehouseProductVariant
 ];

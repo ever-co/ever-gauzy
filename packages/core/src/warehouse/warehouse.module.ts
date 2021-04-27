@@ -7,13 +7,20 @@ import { WarehouseController } from './warehouse.controller';
 import { Warehouse } from './warehouse.entity';
 import { UserService } from 'user/user.service';
 import { User } from 'core';
+import { WarehouseProductVariant } from './warehouse-product-variant.entity';
+import { WarehouseProduct } from './warehouse-product.entity';
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([
 			{ path: '/warehouses', module: WarehouseModule }
 		]),
-		TypeOrmModule.forFeature([Warehouse, User]),
+		TypeOrmModule.forFeature([
+			Warehouse,
+			User,
+			WarehouseProduct,
+			WarehouseProductVariant
+		]),
 		TenantModule
 	],
 	controllers: [WarehouseController],
