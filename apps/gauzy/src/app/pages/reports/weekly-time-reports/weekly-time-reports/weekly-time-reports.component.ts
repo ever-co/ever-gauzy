@@ -10,7 +10,6 @@ import {
 	IGetCountsStatistics,
 	IGetTimeLogReportInput,
 	IOrganization,
-	ISelectedEmployee,
 	ITimeLogFilters,
 	OrganizationPermissionsEnum,
 	PermissionsEnum
@@ -20,9 +19,10 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { TimesheetStatisticsService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-statistics.service';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import * as moment from 'moment';
+import { toUTC } from '@gauzy/common-angular';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { combineLatest, Subject } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import * as _ from 'underscore';
 
 interface ReportDayData {
@@ -84,36 +84,38 @@ export class WeeklyTimeReportsComponent implements OnInit, AfterViewInit {
 	}
 
 	ngOnInit() {
-		this.updateWeekDayList();
-
 		this.updateLogs$
-			.pipe(untilDestroyed(this), debounceTime(500))
+			.pipe(debounceTime(500), untilDestroyed(this))
 			.subscribe(() => {
 				this.getCounts();
 				this.getLogs();
 				this.updateWeekDayList();
 			});
-
-		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe((organization: IOrganization) => {
-				if (organization) {
-					this.organization = organization;
-					this.updateLogs$.next();
-				}
-			});
-
-		this.store.selectedEmployee$
-			.pipe(untilDestroyed(this))
-			.subscribe((employee: ISelectedEmployee) => {
-				if (employee && employee.id) {
-					this.logRequest.employeeIds = [employee.id];
-				} else {
-					delete this.logRequest.employeeIds;
-				}
-				this.updateLogs$.next();
-			});
-
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeProject$ = this.store.selectedProject$;
+		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
+			.pipe(
+				filter(([organization]) => !!organization),
+				tap(([organization, employee, project]) => {
+					if (organization) {
+						this.organization = organization;
+						if (employee && employee.id) {
+							this.logRequest.employeeIds = [employee.id];
+						} else {
+							delete this.logRequest.employeeIds;
+						}
+						if (project && project.id) {
+							this.logRequest.projectIds = [project.id];
+						} else {
+							delete this.logRequest.projectIds;
+						}
+						this.updateLogs$.next();
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.ngxPermissionsService.permissions$
 			.pipe(untilDestroyed(this))
 			.subscribe(async () => {
@@ -122,9 +124,11 @@ export class WeeklyTimeReportsComponent implements OnInit, AfterViewInit {
 				);
 			});
 	}
+
 	ngAfterViewInit() {
 		this.cd.detectChanges();
 	}
+
 	updateWeekDayList() {
 		const range = {};
 		let i = 0;
@@ -140,28 +144,11 @@ export class WeeklyTimeReportsComponent implements OnInit, AfterViewInit {
 
 	filtersChange($event: ITimeLogFilters) {
 		this.logRequest = $event;
-		// this.timesheetFilterService.filter = $event;
 		this.updateLogs$.next();
 	}
 
 	async getLogs() {
-		const { startDate, endDate } = this.logRequest;
-		const appliedFilter = _.pick(
-			this.logRequest,
-			'employeeIds',
-			'projectIds',
-			'source',
-			'activityLevel',
-			'logType'
-		);
-		const request: IGetTimeLogReportInput = {
-			...appliedFilter,
-			startDate: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: moment(endDate).format('YYYY-MM-DD HH:mm:ss'),
-			organizationId: this.organization ? this.organization.id : null,
-			tenantId: this.organization ? this.organization.tenantId : null
-		};
-
+		const request: IGetTimeLogReportInput = this.makeFilterRequest();
 		this.loading = true;
 		this.timesheetService
 			.getWeeklyReport(request)
@@ -189,23 +176,7 @@ export class WeeklyTimeReportsComponent implements OnInit, AfterViewInit {
 	}
 
 	getCounts() {
-		const { startDate, endDate } = this.logRequest;
-		const appliedFilter = _.pick(
-			this.logRequest,
-			'employeeIds',
-			'projectIds',
-			'source',
-			'activityLevel',
-			'logType'
-		);
-		const request: IGetCountsStatistics = {
-			...appliedFilter,
-			startDate: moment(startDate).toDate(),
-			endDate: moment(endDate).toDate(),
-			organizationId: this.organization ? this.organization.id : null,
-			tenantId: this.organization ? this.organization.tenantId : null
-		};
-
+		const request: IGetCountsStatistics = this.makeFilterRequest();
 		this.countsLoading = true;
 		this.timesheetStatisticsService
 			.getCounts(request)
@@ -215,5 +186,26 @@ export class WeeklyTimeReportsComponent implements OnInit, AfterViewInit {
 			.finally(() => {
 				this.countsLoading = false;
 			});
+	}
+
+	makeFilterRequest() {
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+		const { startDate, endDate } = this.logRequest;
+		const appliedFilter = _.pick(
+			this.logRequest,
+			'employeeIds',
+			'projectIds',
+			'source',
+			'activityLevel',
+			'logType'
+		);
+		return {
+			...appliedFilter,
+			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
+			organizationId,
+			tenantId
+		};
 	}
 }

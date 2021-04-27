@@ -4,20 +4,17 @@ import {
 	Component,
 	OnInit
 } from '@angular/core';
-import {
-	IGetExpenseInput,
-	IOrganization,
-	ISelectedEmployee
-} from '@gauzy/contracts';
+import { IGetExpenseInput, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { ExpensesService } from 'apps/gauzy/src/app/@core/services/expenses.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import * as moment from 'moment';
-import { Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
-import { pluck } from 'underscore';
+import { combineLatest, Subject } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { pick, pluck } from 'underscore';
+import { toUTC } from '@gauzy/common-angular';
 
 @UntilDestroy()
 @Component({
@@ -60,32 +57,36 @@ export class ExpensesReportComponent
 
 	ngOnInit() {
 		this.updateLogs$
-			.pipe(untilDestroyed(this), debounceTime(500))
+			.pipe(debounceTime(500), untilDestroyed(this))
 			.subscribe(() => {
 				this.updateChartData();
 			});
 
-		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe((organization: IOrganization) => {
-				if (organization) {
-					this.organization = organization;
-					this.updateLogs$.next();
-				}
-			});
-
-		this.store.selectedEmployee$
-			.pipe(untilDestroyed(this))
-			.subscribe((employee: ISelectedEmployee) => {
-				if (employee && employee.id) {
-					this.logRequest.employeeIds = [employee.id];
-				} else {
-					delete this.logRequest.employeeIds;
-				}
-				this.updateLogs$.next();
-			});
-
-		this.updateLogs$.next();
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeProject$ = this.store.selectedProject$;
+		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
+			.pipe(
+				filter(([organization]) => !!organization),
+				tap(([organization, employee, project]) => {
+					if (organization) {
+						this.organization = organization;
+						if (employee && employee.id) {
+							this.logRequest.employeeIds = [employee.id];
+						} else {
+							delete this.logRequest.employeeIds;
+						}
+						if (project && project.id) {
+							this.logRequest.projectIds = [project.id];
+						} else {
+							delete this.logRequest.projectIds;
+						}
+						this.updateLogs$.next();
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngAfterViewInit() {
@@ -100,11 +101,20 @@ export class ExpensesReportComponent
 
 	updateChartData() {
 		const { startDate, endDate } = this.logRequest;
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+		const appliedFilter = pick(
+			this.logRequest,
+			'projectIds',
+			'employeeIds'
+		);
+
 		const request: IGetExpenseInput = {
-			startDate: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: moment(endDate).endOf('day').format('YYYY-MM-DD HH:mm:ss'),
-			organizationId: this.organization ? this.organization.id : null,
-			tenantId: this.organization ? this.organization.tenantId : null,
+			...appliedFilter,
+			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
+			organizationId,
+			tenantId,
 			groupBy: this.groupBy
 		};
 

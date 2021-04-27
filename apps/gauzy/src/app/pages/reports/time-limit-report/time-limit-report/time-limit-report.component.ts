@@ -7,7 +7,6 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import {
 	IGetTimeLimitReportInput,
-	IOrganization,
 	ISelectedEmployee,
 	ITimeLimitReport,
 	ITimeLogFilters
@@ -16,8 +15,9 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import * as moment from 'moment';
-import { Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { combineLatest, Subject } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { toUTC } from '@gauzy/common-angular';
 
 @UntilDestroy()
 @Component({
@@ -38,6 +38,7 @@ export class TimeLimitReportComponent implements OnInit, AfterViewInit {
 	loading: boolean;
 	dailyData: any;
 	title: string;
+	projectId: string | null = null;
 
 	constructor(
 		private cd: ChangeDetectorRef,
@@ -48,36 +49,34 @@ export class TimeLimitReportComponent implements OnInit, AfterViewInit {
 
 	ngOnInit(): void {
 		this.updateLogs$
-			.pipe(untilDestroyed(this), debounceTime(500))
-			.subscribe(() => {
-				this.getLogs();
-			});
-
-		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe((organization: IOrganization) => {
-				if (organization) {
-					this.organization = organization;
-					this.updateLogs$.next();
-				}
-			});
-
+			.pipe(
+				debounceTime(1350),
+				tap(() => this.getLogs()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeProject$ = this.store.selectedProject$;
+		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
+			.pipe(
+				filter(([organization]) => !!organization),
+				tap(([organization, employee, project]) => {
+					if (organization) {
+						this.organization = organization;
+						this.selectedEmployee = employee;
+						this.projectId = project ? project.id : null;
+						this.updateLogs$.next();
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.activatedRoute.data
 			.pipe(untilDestroyed(this))
 			.subscribe((data) => {
 				this.logRequest.duration = data.duration || 'day';
 				this.title = data.title;
-			});
-
-		this.store.selectedEmployee$
-			.pipe(untilDestroyed(this))
-			.subscribe((employee: ISelectedEmployee) => {
-				if (employee && employee.id) {
-					this.selectedEmployee = employee;
-				} else {
-					this.selectedEmployee = null;
-				}
-				this.updateLogs$.next();
 			});
 	}
 
@@ -93,15 +92,19 @@ export class TimeLimitReportComponent implements OnInit, AfterViewInit {
 
 	async getLogs() {
 		const { startDate, endDate, duration } = this.logRequest;
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
 		const request: IGetTimeLimitReportInput = {
 			duration,
-			startDate: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: moment(endDate).format('YYYY-MM-DD HH:mm:ss'),
-			organizationId: this.organization ? this.organization.id : null,
+			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
+			organizationId,
+			tenantId,
 			relations: ['task', 'project', 'employee', 'employee.user'],
 			...(this.selectedEmployee && this.selectedEmployee.id
 				? { employeeIds: [this.selectedEmployee.id] }
-				: {})
+				: {}),
+			...(this.projectId ? { projectIds: [this.projectId] } : {})
 		};
 
 		this.loading = true;

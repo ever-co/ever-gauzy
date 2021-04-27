@@ -16,6 +16,13 @@ const routes: Routes = [
 					PermissionsEnum.ORG_EQUIPMENT_VIEW
 				],
 				redirectTo: '/pages/dashboard'
+			},
+			data: {
+				selectors: {
+					project: false,
+					employee: false,
+					date: false
+				}
 			}
 		}
 	}

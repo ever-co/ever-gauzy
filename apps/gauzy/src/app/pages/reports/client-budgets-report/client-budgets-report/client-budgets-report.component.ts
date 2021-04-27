@@ -9,15 +9,15 @@ import {
 	IGetTimeLogReportInput,
 	IOrganization,
 	IClientBudgetLimitReport,
-	OrganizationContactBudgetTypeEnum,
-	ISelectedEmployee
+	OrganizationContactBudgetTypeEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import * as moment from 'moment';
-import { Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { toUTC } from '@gauzy/common-angular';
+import { combineLatest, Subject } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { pick } from 'underscore';
 
 @UntilDestroy()
@@ -39,7 +39,6 @@ export class ClientBudgetsReportComponent implements OnInit, AfterViewInit {
 	private _selectedDate: Date = new Date();
 	groupBy: 'date' | 'employee' | 'client' | 'client' = 'date';
 	filters: IGetPaymentInput;
-	selectedEmployee: any;
 
 	clients: IClientBudgetLimitReport[];
 
@@ -58,32 +57,37 @@ export class ClientBudgetsReportComponent implements OnInit, AfterViewInit {
 
 	ngOnInit() {
 		this.updateLogs$
-			.pipe(untilDestroyed(this), debounceTime(500))
-			.subscribe(() => {
-				this.getReportData();
-			});
-
-		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe((organization: IOrganization) => {
-				if (organization) {
-					this.organization = organization;
-					this.updateLogs$.next();
-				}
-			});
-
-		this.store.selectedEmployee$
-			.pipe(untilDestroyed(this))
-			.subscribe((employee: ISelectedEmployee) => {
-				if (employee && employee.id) {
-					this.selectedEmployee = employee;
-				} else {
-					this.selectedEmployee = null;
-				}
-				this.updateLogs$.next();
-			});
-
-		this.updateLogs$.next();
+			.pipe(
+				debounceTime(1350),
+				tap(() => this.getReportData()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeProject$ = this.store.selectedProject$;
+		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
+			.pipe(
+				filter(([organization]) => !!organization),
+				tap(([organization, employee, project]) => {
+					if (organization) {
+						this.organization = organization;
+						if (employee && employee.id) {
+							this.logRequest.employeeIds = [employee.id];
+						} else {
+							delete this.logRequest.employeeIds;
+						}
+						if (project && project.id) {
+							this.logRequest.projectIds = [project.id];
+						} else {
+							delete this.logRequest.projectIds;
+						}
+						this.updateLogs$.next();
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngAfterViewInit() {
@@ -98,19 +102,22 @@ export class ClientBudgetsReportComponent implements OnInit, AfterViewInit {
 
 	async getReportData() {
 		const { startDate, endDate } = this.logRequest;
-
-		const appliedFilter = pick(this.logRequest, 'clientIds');
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+		const appliedFilter = pick(
+			this.logRequest,
+			'clientIds',
+			'projectIds',
+			'employeeIds'
+		);
 
 		const request: IGetTimeLogReportInput = {
 			...appliedFilter,
-			startDate: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: moment(endDate).format('YYYY-MM-DD HH:mm:ss'),
-			organizationId: this.organization ? this.organization.id : null,
-			tenantId: this.organization ? this.organization.tenantId : null,
-			groupBy: this.groupBy,
-			...(this.selectedEmployee && this.selectedEmployee.id
-				? { employeeIds: [this.selectedEmployee.id] }
-				: {})
+			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
+			organizationId,
+			tenantId,
+			groupBy: this.groupBy
 		};
 
 		this.loading = true;

@@ -352,7 +352,14 @@ const routes: Routes = [
 						loadChildren: () =>
 							import(
 								'./expense-recurring/expense-recurring.module'
-							).then((m) => m.ExpenseRecurringModule)
+							).then((m) => m.ExpenseRecurringModule),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					},
 
 					{
@@ -435,7 +442,12 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./goals/goals.module').then(
 								(m) => m.GoalsModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false
+							}
+						}
 					},
 					{
 						path: 'reports',
@@ -449,7 +461,14 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./goal-settings/goal-settings.module').then(
 								(m) => m.GoalSettingsModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					}
 				]
 			},
