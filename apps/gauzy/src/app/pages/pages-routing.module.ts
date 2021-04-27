@@ -34,28 +34,49 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./income/income.module').then(
 								(m) => m.IncomeModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false
+							}
+						}
 					},
 					{
 						path: 'expenses',
 						loadChildren: () =>
 							import('./expenses/expenses.module').then(
 								(m) => m.ExpensesModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false
+							}
+						}
 					},
 					{
 						path: 'invoices',
 						loadChildren: () =>
 							import('./invoices/invoices.module').then(
 								(m) => m.InvoicesModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false,
+								employee: false
+							}
+						}
 					},
 					{
 						path: 'payments',
 						loadChildren: () =>
 							import('./payments/payments.module').then(
 								(m) => m.PaymentsModule
-							)
+							),
+						data: {
+							selectors: {
+								employee: false
+							}
+						}
 					}
 				]
 			},
