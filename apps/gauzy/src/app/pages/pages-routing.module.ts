@@ -466,7 +466,14 @@ const routes: Routes = [
 						loadChildren: () =>
 							import(
 								'./reports/all-report/all-report.module'
-							).then((m) => m.AllReportModule)
+							).then((m) => m.AllReportModule),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					},
 					{
 						path: 'time-activity',
@@ -595,7 +602,14 @@ const routes: Routes = [
 			{
 				path: 'users',
 				loadChildren: () =>
-					import('./users/users.module').then((m) => m.UsersModule)
+					import('./users/users.module').then((m) => m.UsersModule),
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'organizations',

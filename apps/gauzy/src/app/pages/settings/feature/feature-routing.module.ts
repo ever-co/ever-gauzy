@@ -16,12 +16,26 @@ const routes: Routes = [
 			{
 				path: 'tenant',
 				component: FeatureToggleComponent,
-				data: { isOrganization: false }
+				data: {
+					isOrganization: false,
+					selectors: {
+						project: false,
+						employee: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'organization',
 				component: FeatureToggleComponent,
-				data: { isOrganization: true }
+				data: {
+					isOrganization: true,
+					selectors: {
+						project: false,
+						employee: false,
+						date: false
+					}
+				}
 			}
 		]
 	}

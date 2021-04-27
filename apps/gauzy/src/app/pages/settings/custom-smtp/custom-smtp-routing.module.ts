@@ -25,12 +25,26 @@ const routes: Routes = [
 			{
 				path: 'tenant',
 				component: SMTPComponent,
-				data: { isOrganization: false }
+				data: {
+					isOrganization: false,
+					selectors: {
+						project: false,
+						employee: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'organization',
 				component: SMTPComponent,
-				data: { isOrganization: true }
+				data: {
+					isOrganization: true,
+					selectors: {
+						project: false,
+						employee: false,
+						date: false
+					}
+				}
 			}
 		]
 	}
