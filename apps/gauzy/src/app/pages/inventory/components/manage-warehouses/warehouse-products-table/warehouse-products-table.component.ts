@@ -120,8 +120,8 @@ export class WarehouseProductsTableComponent
 
 	async loadItems() {
 		this.loading = true;
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		// const { tenantId } = this.store.user;
+		// const { id: organizationId } = this.organization;
 
 		const items = await this.warehouseService.getWarehouseProducts(
 			this.warehouseId

@@ -12,7 +12,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import {
 	Contact,
-	Product,
 	Tag,
 	TenantBaseEntity,
 	WarehouseProduct
