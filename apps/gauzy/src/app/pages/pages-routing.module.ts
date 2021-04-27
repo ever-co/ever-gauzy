@@ -131,35 +131,64 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./proposals/proposals.module').then(
 								(m) => m.ProposalsModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false
+							}
+						}
 					},
 					{
 						path: 'estimates',
 						loadChildren: () =>
 							import(
 								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
+							).then((m) => m.WorkInProgressModule),
+						data: {
+							selectors: {
+								project: false,
+								employee: false
+							}
+						}
 					},
 					{
 						path: 'invoices',
 						loadChildren: () =>
 							import('./invoices/invoices.module').then(
 								(m) => m.InvoicesModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false,
+								employee: false
+							}
+						}
 					},
 					{
 						path: 'payments',
 						loadChildren: () =>
 							import('./payments/payments.module').then(
 								(m) => m.PaymentsModule
-							)
+							),
+						data: {
+							selectors: {
+								employee: false
+							}
+						}
 					},
 					{
 						path: 'pipelines',
 						loadChildren: () =>
 							import('./pipelines/pipelines.module').then(
 								(m) => m.PipelinesModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					}
 				]
 			},
@@ -192,56 +221,98 @@ const routes: Routes = [
 						loadChildren: () =>
 							import(
 								'./employees/schedules/schedule.module'
-							).then((m) => m.ScheduleModule)
+							).then((m) => m.ScheduleModule),
+						data: {
+							selectors: {
+								project: false
+							}
+						}
 					},
 					{
 						path: 'appointments',
 						loadChildren: () =>
 							import(
 								'./employees/appointment/appointment.module'
-							).then((m) => m.AppointmentModule)
+							).then((m) => m.AppointmentModule),
+						data: {
+							selectors: {
+								project: false
+							}
+						}
 					},
 					{
 						path: 'event-types',
 						loadChildren: () =>
 							import(
 								'./employees/event-types/event-type.module'
-							).then((m) => m.EventTypeModule)
+							).then((m) => m.EventTypeModule),
+						data: {
+							selectors: {
+								project: false
+							}
+						}
 					},
 					{
 						path: 'time-off',
 						loadChildren: () =>
 							import('./time-off/time-off.module').then(
 								(m) => m.TimeOffModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false
+							}
+						}
 					},
 					{
 						path: 'approvals',
 						loadChildren: () =>
 							import('./approvals/approvals.module').then(
 								(m) => m.ApprovalsModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false
+							}
+						}
 					},
 					{
 						path: 'positions',
 						loadChildren: () =>
 							import('./positions/positions.module').then(
 								(m) => m.PositionsModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false,
+								employee: false
+							}
+						}
 					},
 					{
 						path: 'employee-level',
 						loadChildren: () =>
 							import(
 								'./employee-levels/employee-level.module'
-							).then((m) => m.EmployeeLevelModule)
+							).then((m) => m.EmployeeLevelModule),
+						data: {
+							selectors: {
+								project: false,
+								employee: false
+							}
+						}
 					},
 					{
 						path: 'recurring-expenses',
 						loadChildren: () =>
 							import(
 								'./recurring-expense-employee/recurring-expense-employee.module'
-							).then((m) => m.RecurringExpensesEmployeeModule)
+							).then((m) => m.RecurringExpensesEmployeeModule),
+						data: {
+							selectors: {
+								project: false
+							}
+						}
 					},
 					{
 						path: 'candidates',
