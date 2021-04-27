@@ -10,8 +10,10 @@ import { Store } from '../services/store.service';
 import { ElectronService } from 'ngx-electron';
 import { TimeTrackerService } from '../../@shared/time-tracker/time-tracker.service';
 import { TimesheetFilterService } from '../../@shared/timesheet/timesheet-filter.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 // tslint:disable-next-line: nx-enforce-module-boundaries
 
+@UntilDestroy()
 @Injectable()
 export class AuthStrategy extends NbAuthStrategy {
 	private static config = {
@@ -61,9 +63,10 @@ export class AuthStrategy extends NbAuthStrategy {
 			defaultMessages: ['Your password has been successfully changed.']
 		}
 	};
+	returnUrl: any;
 
 	constructor(
-		private route: ActivatedRoute,
+		private activatedRoute: ActivatedRoute,
 		private router: Router,
 		private authService: AuthService,
 		private store: Store,
@@ -72,6 +75,12 @@ export class AuthStrategy extends NbAuthStrategy {
 		private electronService: ElectronService
 	) {
 		super();
+		this.activatedRoute.queryParams
+			.pipe(untilDestroyed(this))
+			.subscribe((param) => {
+				this.returnUrl = param.returnUrl
+			})
+
 	}
 
 	static setup(options: { name: string }): [NbAuthStrategyClass, any] {
@@ -293,7 +302,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		if (this.electronService.isElectronApp) {
 			try {
 				this.electronService.ipcRenderer.send('logout');
-			} catch (error) {}
+			} catch (error) { }
 		}
 
 		return new NbAuthResult(
@@ -339,11 +348,12 @@ export class AuthStrategy extends NbAuthStrategy {
 				this.store.token = token;
 
 				this.electronAuthentication({ user, token });
+				const returnUrl = this.returnUrl ? this.returnUrl : AuthStrategy.config.login.redirect.success;
 
 				return new NbAuthResult(
 					true,
 					res,
-					AuthStrategy.config.login.redirect.success,
+					returnUrl,
 					[],
 					AuthStrategy.config.login.defaultMessages
 				);
