@@ -1,12 +1,8 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { IProductTranslatable, IOrganization } from '@gauzy/contracts';
+import { IProductTranslated, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	Store,
-	ProductService,
-	TranslatableService
-} from 'apps/gauzy/src/app/@core';
+import { Store, ProductService } from 'apps/gauzy/src/app/@core';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { ImageRowComponent } from '../../table-components/image-row.component';
@@ -21,7 +17,7 @@ import { NbDialogRef } from '@nebular/theme';
 export class SelectProductComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	products: IProductTranslatable[] = [];
+	products: IProductTranslated[] = [];
 	settingsSmartTable: object;
 	organization: IOrganization;
 	loading: boolean = true;
@@ -34,8 +30,6 @@ export class SelectProductComponent
 	@ViewChild('productsTable') set content(content: Ng2SmartTableComponent) {
 		if (content) {
 			this.productsTable = content;
-			//tstodo
-			// this.onChangedSource();
 		}
 	}
 
@@ -43,8 +37,7 @@ export class SelectProductComponent
 		public dialogRef: NbDialogRef<any>,
 		private store: Store,
 		readonly translateService: TranslateService,
-		private productService: ProductService,
-		private translatableService: TranslatableService
+		private productService: ProductService
 	) {
 		super(translateService);
 	}
@@ -81,24 +74,23 @@ export class SelectProductComponent
 		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const { items } = await this.productService.getAll(
+		const { items } = await this.productService.getAllTranslated(
 			['type', 'category', 'featuredImage', 'variants'],
-			{ organizationId, tenantId }
+			{ organizationId, tenantId },
+			this.store.preferredLanguage
 		);
 
 		this.loading = false;
 		this.products = items;
 
-		//tstodo
 		let mappedItems = items.map((item) => {
-			let result = {
+			return {
 				id: item.id,
-				name: '',
-				category: '-',
-				type: '-',
+				name: item.name,
+				category: item.category,
+				type: item.type,
 				featuredImage: item.featuredImage
 			};
-			return result;
 		});
 
 		this.smartTableSource.load(mappedItems);

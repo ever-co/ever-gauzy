@@ -37,7 +37,8 @@ export interface IProductTranslatable
 	gallery?: IImageAsset[];
 }
 
-export interface IProductTranslated {
+export interface IProductTranslated
+	extends IBasePerTenantAndOrganizationEntityModel {
 	imageUrl: string;
 	productType: string;
 	productCategory: string;
