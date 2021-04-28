@@ -53,10 +53,6 @@ export class VariantFormComponent implements OnInit {
 					this.options.push(...optionGroup.options);
 				});
 				this.optionsSelect = this.options.map((opt) => opt.name);
-				this.editVariantCreateInput = {
-					...this.editVariantCreateInput,
-					optionsFull: this.options
-				};
 			});
 
 		this.inventoryStore.variantCreateInputs$
@@ -106,9 +102,14 @@ export class VariantFormComponent implements OnInit {
 			this.mode === 'create' &&
 			!this.optionCombinationAlreadySelected()
 		) {
-			this.inventoryStore.addVariantCreateInput(
-				this.editVariantCreateInput
-			);
+			let opts = this.options.filter((opt) => {
+				return this.editVariantCreateInput.options.includes(opt.name);
+			});
+
+			this.inventoryStore.addVariantCreateInput({
+				...this.editVariantCreateInput,
+				optionsFull: opts
+			});
 		}
 
 		this.resetCreateVariantInputForm();
@@ -118,7 +119,7 @@ export class VariantFormComponent implements OnInit {
 		this.mode = 'create';
 		this.editVariantCreateInput = {
 			options: [],
-			optionsFull: this.options,
+			optionsFull: this.editVariantCreateInput.optionsFull,
 			isStored: false
 		};
 	}
@@ -145,6 +146,7 @@ export class VariantFormComponent implements OnInit {
 
 	getVariantDisplayName(variantCreateInput: VariantCreateInput) {
 		if (!variantCreateInput.options.length) return '-';
+
 		return variantCreateInput.optionsFull.map((opt) => opt.name).join(' ');
 	}
 

@@ -17,8 +17,6 @@ export class ManageQuantityComponent implements ViewCell, AfterViewInit {
 	constructor(private warehouseService: WarehouseService) {}
 
 	ngAfterViewInit() {
-		// this.quantityInput.nativeElement.value = this.value;
-
 		fromEvent(this.quantityInput.nativeElement, 'change')
 			.pipe(debounceTime(100))
 			.subscribe(async (ev: any) => {
