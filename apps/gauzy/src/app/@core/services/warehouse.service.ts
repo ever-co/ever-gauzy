@@ -82,4 +82,17 @@ export class WarehouseService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	updateWarehouseProductCount(
+		warehouseProductId: String,
+		count: number
+	): Promise<IWarehouseProduct> {
+		return this.http
+			.post<IWarehouseProduct>(
+				`${this.WAREHOUSES_URL}/inventory-quantity/${warehouseProductId}`,
+				{ count: count }
+			)
+			.pipe(first())
+			.toPromise();
+	}
 }

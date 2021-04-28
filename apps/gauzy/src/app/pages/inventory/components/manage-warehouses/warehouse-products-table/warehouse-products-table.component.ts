@@ -20,6 +20,7 @@ import { NbDialogService } from '@nebular/theme';
 import { SelectProductComponent } from '../select-product-form/select-product-form.component';
 import { first } from 'rxjs/operators';
 import { ImageRowComponent } from '../../table-components/image-row.component';
+import { ManageQuantityComponent } from '../manage-quantity/manage-quantity.component';
 
 @UntilDestroy()
 @Component({
@@ -97,7 +98,7 @@ export class WarehouseProductsTableComponent
 
 	async loadSmartTable() {
 		this.settingsSmartTable = {
-			actions: true,
+			actions: false,
 			columns: {
 				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
@@ -110,7 +111,8 @@ export class WarehouseProductsTableComponent
 				},
 				quantity: {
 					title: this.getTranslation('INVENTORY_PAGE.QUANTITY'),
-					type: 'number'
+					type: 'custom',
+					renderComponent: ManageQuantityComponent
 				}
 			}
 		};
