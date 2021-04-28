@@ -15,15 +15,17 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { TimesheetStatisticsService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet-statistics.service';
-import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
+import { Store } from './../../../../@core/services/store.service';
+import { TimesheetStatisticsService } from './../../../../@shared/timesheet/timesheet-statistics.service';
+import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import * as moment from 'moment';
 import { toUTC } from '@gauzy/common-angular';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { combineLatest, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import * as _ from 'underscore';
+import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 interface ReportDayData {
 	employee?: IEmployee;
@@ -36,12 +38,12 @@ interface ReportDayData {
 	templateUrl: './weekly-time-reports.component.html',
 	styleUrls: ['./weekly-time-reports.component.scss']
 })
-export class WeeklyTimeReportsComponent implements OnInit, AfterViewInit {
+export class WeeklyTimeReportsComponent
+	extends ReportBaseComponent
+	implements OnInit, AfterViewInit {
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	PermissionsEnum = PermissionsEnum;
-	today: Date = new Date();
-	logRequest: ITimeLogFilters = {};
-	updateLogs$: Subject<any> = new Subject();
+	logRequest: ITimeLogFilters = this.request;
 	organization: IOrganization;
 	counts: ICountsStatistics;
 
@@ -50,7 +52,6 @@ export class WeeklyTimeReportsComponent implements OnInit, AfterViewInit {
 	loading: boolean;
 	countsLoading: boolean;
 
-	private _selectedDate: Date = new Date();
 	futureDateAllowed: boolean;
 	chartData: {
 		labels: any[];
@@ -61,61 +62,26 @@ export class WeeklyTimeReportsComponent implements OnInit, AfterViewInit {
 			data: any;
 		}[];
 	};
-	public get selectedDate(): Date {
-		return this._selectedDate;
-	}
-	public set selectedDate(value: Date) {
-		this._selectedDate = value;
-	}
 
 	constructor(
 		private timesheetService: TimesheetService,
 		private ngxPermissionsService: NgxPermissionsService,
 		private timesheetStatisticsService: TimesheetStatisticsService,
 		private cd: ChangeDetectorRef,
-		private store: Store
+		protected store: Store,
+		readonly translateService: TranslateService
 	) {
-		this.logRequest.startDate = moment(this.today)
-			.startOf('week')
-			.format('YYYY-MM-DD');
-		this.logRequest.endDate = moment(this.today)
-			.endOf('week')
-			.format('YYYY-MM-DD');
+		super(store, translateService);
 	}
 
 	ngOnInit() {
-		this.updateLogs$
+		this.subject$
 			.pipe(debounceTime(500), untilDestroyed(this))
 			.subscribe(() => {
 				this.getCounts();
 				this.getLogs();
 				this.updateWeekDayList();
 			});
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeEmployee$ = this.store.selectedEmployee$;
-		const storeProject$ = this.store.selectedProject$;
-		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
-			.pipe(
-				filter(([organization]) => !!organization),
-				tap(([organization, employee, project]) => {
-					if (organization) {
-						this.organization = organization;
-						if (employee && employee.id) {
-							this.logRequest.employeeIds = [employee.id];
-						} else {
-							delete this.logRequest.employeeIds;
-						}
-						if (project && project.id) {
-							this.logRequest.projectIds = [project.id];
-						} else {
-							delete this.logRequest.projectIds;
-						}
-						this.updateLogs$.next();
-					}
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
 		this.ngxPermissionsService.permissions$
 			.pipe(untilDestroyed(this))
 			.subscribe(async () => {
@@ -144,11 +110,12 @@ export class WeeklyTimeReportsComponent implements OnInit, AfterViewInit {
 
 	filtersChange($event: ITimeLogFilters) {
 		this.logRequest = $event;
-		this.updateLogs$.next();
+		this.subject$.next();
 	}
 
 	async getLogs() {
 		const request: IGetTimeLogReportInput = this.makeFilterRequest();
+
 		this.loading = true;
 		this.timesheetService
 			.getWeeklyReport(request)
@@ -189,23 +156,15 @@ export class WeeklyTimeReportsComponent implements OnInit, AfterViewInit {
 	}
 
 	makeFilterRequest() {
-		const { id: organizationId } = this.organization;
-		const { tenantId } = this.store.user;
-		const { startDate, endDate } = this.logRequest;
 		const appliedFilter = _.pick(
 			this.logRequest,
-			'employeeIds',
-			'projectIds',
 			'source',
 			'activityLevel',
 			'logType'
 		);
 		return {
 			...appliedFilter,
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
-			organizationId,
-			tenantId
+			...this.getFilterRequest(this.logRequest)
 		};
 	}
 }

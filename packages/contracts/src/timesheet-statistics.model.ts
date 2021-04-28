@@ -12,7 +12,7 @@ export interface IGetTimeSlotStatistics {
 	projectId?: string | string[];
 	organizationId: string;
 	tenantId: string;
-	date?: Date;
+	date?: Date | string;
 	onlyMe?: boolean;
 }
 
@@ -29,7 +29,7 @@ export interface IGetActivitiesStatistics {
 	projectId?: string | string[];
 	organizationId: string;
 	tenantId: string;
-	date?: Date;
+	date?: Date | string;
 	onlyMe?: boolean;
 }
 
@@ -45,7 +45,7 @@ export interface IGetProjectsStatistics {
 	tenantId: string;
 	employeeId?: string;
 	projectId?: string | string[];
-	date?: Date;
+	date?: Date | string;
 	onlyMe?: boolean;
 }
 
@@ -63,7 +63,7 @@ export interface IGetTasksStatistics
 	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
 	projectId?: string | string[];
-	date?: Date;
+	date?: Date | string;
 	onlyMe?: boolean;
 }
 
@@ -76,7 +76,7 @@ export interface IGetManualTimesStatistics
 	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
 	projectId?: string | string[];
-	date?: Date;
+	date?: Date | string;
 	onlyMe?: boolean;
 }
 
@@ -88,7 +88,7 @@ export interface IManualTimesStatistics
 
 export interface IGetMembersStatistics
 	extends IBasePerTenantAndOrganizationEntityModel {
-	date?: Date;
+	date?: Date | string;
 	employeeId?: string;
 	projectId?: string | string[];
 }
@@ -113,7 +113,7 @@ export interface IMembersStatistics {
 
 export interface IGetCountsStatistics
 	extends IBasePerTenantAndOrganizationEntityModel {
-	date?: Date;
+	date?: Date | string;
 	onlyMe?: boolean;
 	startDate?: Date | string;
 	endDate?: Date | string;
