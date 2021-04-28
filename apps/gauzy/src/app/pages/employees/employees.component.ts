@@ -10,8 +10,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	EmployeeViewModel,
-	CrudActionEnum,
-	IEmployee
+	CrudActionEnum
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
