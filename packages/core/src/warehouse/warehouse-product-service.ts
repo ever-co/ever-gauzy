@@ -9,7 +9,6 @@ import {
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IWarehouseProductCreateInput } from '@gauzy/contracts';
-import { AnyLengthString } from 'aws-sdk/clients/comprehendmedical';
 
 @Injectable()
 export class WarehouseProductService extends CrudService<WarehouseProduct> {
@@ -39,30 +38,34 @@ export class WarehouseProductService extends CrudService<WarehouseProduct> {
 	) {
 		let productIds = warehouseProductCreateInput.map((pr) => pr.productId);
 		let warehouse = await this.warehouseRepository.findOne(
-			warehouseId as AnyLengthString
+			warehouseId as any
 		);
 
 		let products = await this.productRespository.findByIds(productIds, {
 			relations: ['variants']
 		});
 
-		let warehouseProductArr = [];
+		let warehouseProductArr = await Promise.all(
+			products.map(async (product) => {
+				let newWarehouseProduct = new WarehouseProduct();
+				newWarehouseProduct.warehouse = warehouse;
+				newWarehouseProduct.product = product;
 
-		products.forEach((product) => {
-			let newWarehouseProduct = new WarehouseProduct();
-			newWarehouseProduct.warehouse = warehouse;
-			newWarehouseProduct.product = product;
+				let warehouseVariants = await Promise.all(
+					product.variants.map(async (variant) => {
+						let warehouseVariant = new WarehouseProductVariant();
+						warehouseVariant.variant = variant;
 
-			let warehouseVariants = product.variants.map((variant) => {
-				let warehouseVariant = new WarehouseProductVariant();
-				warehouseVariant.variant = variant;
+						return this.warehouseProductVariantRepository.save(
+							warehouseVariant
+						);
+					})
+				);
 
-				return warehouseVariant;
-			});
-
-			newWarehouseProduct.variants = warehouseVariants;
-			warehouseProductArr.push(newWarehouseProduct);
-		});
+				newWarehouseProduct.variants = warehouseVariants;
+				return newWarehouseProduct;
+			})
+		);
 
 		let result: any = await this.warehouseProductRepository.save(
 			warehouseProductArr
