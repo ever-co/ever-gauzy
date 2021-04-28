@@ -56,7 +56,7 @@ export class EquipmentMutationComponent
 
 		this.initializeForm();
 
-		this.image = this.equipment.image || null;
+		this.image = this.equipment?.image || null;
 
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
