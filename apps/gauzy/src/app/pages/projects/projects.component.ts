@@ -292,9 +292,7 @@ export class ProjectsComponent
 			actions: false,
 			columns: {
 				name: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.ORGANIZATIONS'
-					),
+					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
 					type: 'custom',
 					renderComponent: PictureNameTagsComponent
 				},

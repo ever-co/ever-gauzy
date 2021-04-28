@@ -13,6 +13,11 @@ const routes: Routes = [
 			permissions: {
 				only: [PermissionsEnum.ALL_ORG_VIEW],
 				redirectTo: '/pages/dashboard'
+			},
+			selectors: {
+				project: false,
+				employee: false,
+				date: false
 			}
 		}
 	}

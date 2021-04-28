@@ -331,7 +331,42 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./equipment/equipment.module').then(
 								(m) => m.EquipmentModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
+					},
+					{
+						path: 'equipment-sharing',
+						loadChildren: () =>
+							import(
+								'./equipment-sharing/equipment-sharing.module'
+							).then((m) => m.EquipmentSharingModule),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
+					},
+					{
+						path: 'equipment-sharing-policy',
+						loadChildren: () =>
+							import(
+								'./equipment-sharing-policy/equipment-sharing-policy.module'
+							).then((m) => m.EquipmentSharingPolicyModule),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					},
 					{
 						path: 'inventory',
@@ -345,7 +380,14 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./tags/tags.module').then(
 								(m) => m.TagsModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					},
 					{
 						path: 'expense-recurring',
@@ -361,41 +403,48 @@ const routes: Routes = [
 							}
 						}
 					},
-
 					{
 						path: 'help-center',
 						loadChildren: () =>
 							import('./help-center/help-center.module').then(
 								(m) => m.HelpCenterModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					},
 					{
 						path: 'approval-policy',
 						loadChildren: () =>
 							import(
 								'./approval-policy/approval-policy.module'
-							).then((m) => m.ApprovalPolicyModule)
+							).then((m) => m.ApprovalPolicyModule),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					},
-					{
-						path: 'equipment-sharing',
-						loadChildren: () =>
-							import(
-								'./equipment-sharing/equipment-sharing.module'
-							).then((m) => m.EquipmentSharingModule)
-					},
-					{
-						path: 'equipment-sharing-policy',
-						loadChildren: () =>
-							import(
-								'./equipment-sharing-policy/equipment-sharing-policy.module'
-							).then((m) => m.EquipmentSharingPolicyModule)
-					},
+
 					{
 						path: 'documents',
 						loadChildren: () =>
 							import('./documents/documents.module').then(
 								(m) => m.DocumentsModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					},
 					{
 						path: 'employment-types',
@@ -409,14 +458,28 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./vendors/vendors.module').then(
 								(m) => m.VendorsModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					},
 					{
 						path: 'departments',
 						loadChildren: () =>
 							import('./departments/departments.module').then(
 								(m) => m.DepartmentsModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					},
 					{
 						path: 'projects',
@@ -430,7 +493,14 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./teams/teams.module').then(
 								(m) => m.TeamsModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					}
 				]
 			},
