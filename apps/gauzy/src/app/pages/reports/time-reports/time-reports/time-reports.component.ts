@@ -6,19 +6,16 @@ import {
 } from '@angular/core';
 import {
 	IGetTimeLogReportInput,
-	IOrganization,
 	ITimeLogFilters,
 	TimeLogType
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
-import * as moment from 'moment';
-import { toUTC } from '@gauzy/common-angular';
-import { combineLatest, Subject } from 'rxjs';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+import { Store } from './../../../../@core/services/store.service';
+import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
+import { debounceTime, tap } from 'rxjs/operators';
 import * as _ from 'underscore';
-import { pick } from 'underscore';
+import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @UntilDestroy()
 @Component({
@@ -26,65 +23,29 @@ import { pick } from 'underscore';
 	templateUrl: './time-reports.component.html',
 	styleUrls: ['./time-reports.component.scss']
 })
-export class TimeReportsComponent implements OnInit, AfterViewInit {
-	logRequest: ITimeLogFilters = {
-		startDate: moment().startOf('week').toDate(),
-		endDate: moment().endOf('week').toDate()
-	};
-	updateLogs$: Subject<any> = new Subject();
-	organization: IOrganization;
-
+export class TimeReportsComponent
+	extends ReportBaseComponent
+	implements OnInit, AfterViewInit {
+	logRequest: ITimeLogFilters = this.request;
 	filters: ITimeLogFilters;
-
 	loading: boolean;
 	chartData: any;
-
-	private _selectedDate: Date = new Date();
 	groupBy: 'date' | 'employee' | 'project' | 'client' = 'date';
-
-	public get selectedDate(): Date {
-		return this._selectedDate;
-	}
-	public set selectedDate(value: Date) {
-		this._selectedDate = value;
-	}
 
 	constructor(
 		private timesheetService: TimesheetService,
-		private store: Store,
+		protected store: Store,
+		readonly translateService: TranslateService,
 		private cd: ChangeDetectorRef
-	) {}
+	) {
+		super(store, translateService);
+	}
 
 	ngOnInit() {
-		this.updateLogs$
+		this.subject$
 			.pipe(
 				debounceTime(1350),
 				tap(() => this.updateChartData()),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeEmployee$ = this.store.selectedEmployee$;
-		const storeProject$ = this.store.selectedProject$;
-		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
-			.pipe(
-				filter(([organization]) => !!organization),
-				tap(([organization, employee, project]) => {
-					if (organization) {
-						this.organization = organization;
-						if (employee && employee.id) {
-							this.logRequest.employeeIds = [employee.id];
-						} else {
-							delete this.logRequest.employeeIds;
-						}
-						if (project && project.id) {
-							this.logRequest.projectIds = [project.id];
-						} else {
-							delete this.logRequest.projectIds;
-						}
-						this.updateLogs$.next();
-					}
-				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -97,27 +58,15 @@ export class TimeReportsComponent implements OnInit, AfterViewInit {
 	filtersChange($event) {
 		this.logRequest = $event;
 		this.filters = Object.assign({}, this.logRequest);
-		this.updateLogs$.next();
+		this.subject$.next();
 	}
 
 	updateChartData() {
-		const { startDate, endDate } = this.logRequest;
-		const { id: organizationId } = this.organization;
-		const { tenantId } = this.store.user;
-		const appliedFilter = pick(
-			this.logRequest,
-			'employeeIds',
-			'projectIds'
-		);
-
 		const request: IGetTimeLogReportInput = {
-			...appliedFilter,
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
-			organizationId,
-			tenantId,
+			...this.getFilterRequest(this.logRequest),
 			groupBy: this.groupBy
 		};
+
 		this.loading = true;
 		this.timesheetService
 			.getDailyReportChartData(request)

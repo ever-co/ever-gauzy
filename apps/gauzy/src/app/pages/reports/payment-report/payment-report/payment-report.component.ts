@@ -4,21 +4,14 @@ import {
 	Component,
 	OnInit
 } from '@angular/core';
-import {
-	IGetPaymentInput,
-	IOrganization,
-	IPaymentReportChartData
-} from '@gauzy/contracts';
+import { IGetPaymentInput, IPaymentReportChartData } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { PaymentService } from 'apps/gauzy/src/app/@core/services/payment.service';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import * as moment from 'moment';
-import { combineLatest, Subject } from 'rxjs';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import { pick, pluck } from 'underscore';
-import { toUTC } from '@gauzy/common-angular';
+import { PaymentService } from './../../../../@core/services/payment.service';
+import { Store } from './../../../../@core/services/store.service';
+import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
+import { debounceTime } from 'rxjs/operators';
+import { pluck } from 'underscore';
 
 @UntilDestroy()
 @Component({
@@ -27,69 +20,29 @@ import { toUTC } from '@gauzy/common-angular';
 	styleUrls: ['./payment-report.component.scss']
 })
 export class PaymentReportComponent
-	extends TranslationBaseComponent
+	extends ReportBaseComponent
 	implements OnInit, AfterViewInit {
-	logRequest: IGetPaymentInput = {
-		startDate: moment().startOf('week').toDate(),
-		endDate: moment().endOf('week').toDate()
-	};
-	updateLogs$: Subject<any> = new Subject();
-	organization: IOrganization;
-
+	logRequest: IGetPaymentInput = this.request;
 	loading: boolean;
 	chartData: any;
-
-	private _selectedDate: Date = new Date();
 	groupBy: 'date' | 'employee' | 'project' | 'client' = 'date';
 	filters: IGetPaymentInput;
-
-	public get selectedDate(): Date {
-		return this._selectedDate;
-	}
-	public set selectedDate(value: Date) {
-		this._selectedDate = value;
-	}
 
 	constructor(
 		private paymentService: PaymentService,
 		private cd: ChangeDetectorRef,
-		private store: Store,
+		protected store: Store,
 		readonly translateService: TranslateService
 	) {
-		super(translateService);
+		super(store, translateService);
 	}
 
 	ngOnInit() {
-		this.updateLogs$
+		this.subject$
 			.pipe(debounceTime(500), untilDestroyed(this))
 			.subscribe(() => {
 				this.updateChartData();
 			});
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeEmployee$ = this.store.selectedEmployee$;
-		const storeProject$ = this.store.selectedProject$;
-		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
-			.pipe(
-				filter(([organization]) => !!organization),
-				tap(([organization, employee, project]) => {
-					if (organization) {
-						this.organization = organization;
-						if (employee && employee.id) {
-							this.logRequest.employeeIds = [employee.id];
-						} else {
-							delete this.logRequest.employeeIds;
-						}
-						if (project && project.id) {
-							this.logRequest.projectIds = [project.id];
-						} else {
-							delete this.logRequest.projectIds;
-						}
-						this.updateLogs$.next();
-					}
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
 	}
 
 	ngAfterViewInit() {
@@ -99,28 +52,17 @@ export class PaymentReportComponent
 	filtersChange($event) {
 		this.logRequest = $event;
 		this.filters = Object.assign({}, this.logRequest);
-		this.updateLogs$.next();
+		this.subject$.next();
 	}
 
 	updateChartData() {
-		const { startDate, endDate } = this.logRequest;
-		const { id: organizationId } = this.organization;
-		const { tenantId } = this.store.user;
-		const appliedFilter = pick(
-			this.logRequest,
-			'projectIds',
-			'employeeIds'
-		);
-
+		if (!this.organization || !this.logRequest) {
+			return;
+		}
 		const request: IGetPaymentInput = {
-			...appliedFilter,
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
-			organizationId,
-			tenantId,
+			...this.getFilterRequest(this.logRequest),
 			groupBy: this.groupBy
 		};
-
 		this.loading = true;
 		this.paymentService
 			.getReportChartData(request)

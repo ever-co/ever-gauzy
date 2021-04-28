@@ -7,18 +7,15 @@ import {
 import {
 	IGetPaymentInput,
 	IGetTimeLogReportInput,
-	IOrganization,
 	IProjectBudgetLimitReport,
 	OrganizationProjectBudgetTypeEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
-import * as moment from 'moment';
-import { combineLatest, Subject } from 'rxjs';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import { pick } from 'underscore';
-import { toUTC } from '@gauzy/common-angular';
+import { debounceTime, tap } from 'rxjs/operators';
+import { ReportBaseComponent } from 'apps/gauzy/src/app/@shared/report/report-base/report-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @UntilDestroy()
 @Component({
@@ -26,67 +23,30 @@ import { toUTC } from '@gauzy/common-angular';
 	templateUrl: './project-budgets-report.component.html',
 	styleUrls: ['./project-budgets-report.component.scss']
 })
-export class ProjectBudgetsReportComponent implements OnInit, AfterViewInit {
-	logRequest: IGetPaymentInput = {
-		startDate: moment().startOf('week').toDate(),
-		endDate: moment().endOf('week').toDate()
-	};
-	updateLogs$: Subject<any> = new Subject();
-	organization: IOrganization;
-
+export class ProjectBudgetsReportComponent
+	extends ReportBaseComponent
+	implements OnInit, AfterViewInit {
+	logRequest: IGetPaymentInput = this.request;
 	loading: boolean;
-	private _selectedDate: Date = new Date();
 	groupBy: 'date' | 'employee' | 'project' | 'client' = 'date';
 	filters: IGetPaymentInput;
-	selectedEmployee: any;
-
 	OrganizationProjectBudgetTypeEnum = OrganizationProjectBudgetTypeEnum;
-
 	projects: IProjectBudgetLimitReport[];
-
-	public get selectedDate(): Date {
-		return this._selectedDate;
-	}
-	public set selectedDate(value: Date) {
-		this._selectedDate = value;
-	}
 
 	constructor(
 		private timesheetService: TimesheetService,
-		private store: Store,
+		protected store: Store,
+		readonly translateService: TranslateService,
 		private cd: ChangeDetectorRef
-	) {}
+	) {
+		super(store, translateService);
+	}
 
 	ngOnInit() {
-		this.updateLogs$
+		this.subject$
 			.pipe(
 				debounceTime(500),
 				tap(() => this.getReportData()),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeEmployee$ = this.store.selectedEmployee$;
-		const storeProject$ = this.store.selectedProject$;
-		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
-			.pipe(
-				filter(([organization]) => !!organization),
-				tap(([organization, employee, project]) => {
-					if (organization) {
-						this.organization = organization;
-						if (employee && employee.id) {
-							this.logRequest.employeeIds = [employee.id];
-						} else {
-							delete this.logRequest.employeeIds;
-						}
-						if (project && project.id) {
-							this.logRequest.projectIds = [project.id];
-						} else {
-							delete this.logRequest.projectIds;
-						}
-						this.updateLogs$.next();
-					}
-				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -99,28 +59,17 @@ export class ProjectBudgetsReportComponent implements OnInit, AfterViewInit {
 	filtersChange($event) {
 		this.logRequest = $event;
 		this.filters = Object.assign({}, this.logRequest);
-		this.updateLogs$.next();
+		this.subject$.next();
 	}
 
 	async getReportData() {
-		const { startDate, endDate } = this.logRequest;
-		const { id: organizationId } = this.organization;
-		const { tenantId } = this.store.user;
-		const appliedFilter = pick(
-			this.logRequest,
-			'employeeIds',
-			'projectIds'
-		);
-
+		if (!this.organization || !this.logRequest) {
+			return;
+		}
 		const request: IGetTimeLogReportInput = {
-			...appliedFilter,
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
-			organizationId,
-			tenantId,
+			...this.getFilterRequest(this.logRequest),
 			groupBy: this.groupBy
 		};
-
 		this.loading = true;
 		this.timesheetService
 			.getProjectBudgetLimit(request)
