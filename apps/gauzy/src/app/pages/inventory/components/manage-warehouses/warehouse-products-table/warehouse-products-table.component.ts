@@ -14,7 +14,11 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Location } from '@angular/common';
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import {
+	LocalDataSource,
+	Ng2SmartTableComponent,
+	ServerDataSource
+} from 'ng2-smart-table';
 import { ProductService } from 'apps/gauzy/src/app/@core';
 import { NbDialogService } from '@nebular/theme';
 import { SelectProductComponent } from '../select-product-form/select-product-form.component';
@@ -137,7 +141,7 @@ export class WarehouseProductsTableComponent
 						...item,
 						name: item.product.translations[0]['name'],
 						featuredImage: item.product.featuredImage,
-						quantity: 0
+						quantity: item.quantity
 					};
 			  })
 			: [];

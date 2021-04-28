@@ -5,7 +5,8 @@ import { debounceTime } from 'rxjs/operators';
 import { WarehouseService } from 'apps/gauzy/src/app/@core';
 
 @Component({
-	templateUrl: './manage-quantity.component.html'
+	templateUrl: './manage-quantity.component.html',
+	styles: ['input { width: 80px }']
 })
 export class ManageQuantityComponent implements ViewCell, AfterViewInit {
 	value: any;
@@ -16,7 +17,7 @@ export class ManageQuantityComponent implements ViewCell, AfterViewInit {
 	constructor(private warehouseService: WarehouseService) {}
 
 	ngAfterViewInit() {
-		this.quantityInput.nativeElement.value = this.value;
+		// this.quantityInput.nativeElement.value = this.value;
 
 		fromEvent(this.quantityInput.nativeElement, 'change')
 			.pipe(debounceTime(100))
