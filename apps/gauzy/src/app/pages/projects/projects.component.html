@@ -159,7 +159,7 @@
 		</ng-container>
 		<ng2-smart-table
 			*ngIf="
-				projects?.length && dataLayoutStyle === 'TABLE' && !showAddCard
+				dataLayoutStyle === 'TABLE' && !showAddCard
 			"
 			class="tags-table w-100"
 			(userRowSelect)="selectProject($event)"

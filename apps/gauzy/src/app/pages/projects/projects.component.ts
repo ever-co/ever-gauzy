@@ -288,6 +288,7 @@ export class ProjectsComponent
 
 	async loadSmartTable() {
 		this.settingsSmartTable = {
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
 			actions: false,
 			columns: {
 				name: {

@@ -1,0 +1,16 @@
+<nb-card-body>
+	<div class="mb-3">
+		<!-- tstodo -->
+		<button nbButton status="success" class="mr-2" (click)="onAddProduct()">
+			Add product
+		</button>
+	</div>
+
+	<ng2-smart-table
+		class="tags-table"
+		[settings]="settingsSmartTable"
+		[source]="smartTableSource"
+		style="cursor: pointer"
+		#warehouseStockTable
+	></ng2-smart-table>
+</nb-card-body>

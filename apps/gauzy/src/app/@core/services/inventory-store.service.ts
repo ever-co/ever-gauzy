@@ -242,6 +242,7 @@ export class InventoryStore {
 			languageCode: this.translateService.currentLang,
 			variants: [],
 			options: [],
+			optionGroups: [],
 			featuredImage: null,
 			gallery: [],
 			id: null

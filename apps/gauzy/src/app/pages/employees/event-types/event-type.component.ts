@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import {
 	IEventType,
@@ -96,6 +96,7 @@ export class EventTypeComponent
 		private dialogService: NbDialogService,
 		private toastrService: ToastrService,
 		readonly translateService: TranslateService,
+		private cd: ChangeDetectorRef,
 		private router: Router
 	) {
 		super(translateService);
@@ -105,6 +106,7 @@ export class EventTypeComponent
 	ngOnInit(): void {
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
+		this.canShowTable();
 
 		this.store.selectedEmployee$
 			.pipe(
@@ -186,6 +188,7 @@ export class EventTypeComponent
 	) {
 		let findObj;
 		this.showTable = false;
+		this.cd.detectChanges();
 		this.selectedEventType = null;
 
 		if (organizationId) {
@@ -251,6 +254,7 @@ export class EventTypeComponent
 			this.eventTypeData = eventTypeVM;
 			this.sourceSmartTable.load(eventTypeVM);
 			this.showTable = true;
+			this.cd.detectChanges();
 		} catch (error) {
 			this.toastrService.danger(
 				this.getTranslation('NOTES.EVENT_TYPES.ERROR', {
@@ -327,7 +331,7 @@ export class EventTypeComponent
 		if (this.eventTypesTable) {
 			this.eventTypesTable.grid.dataSet.willSelect = 'false';
 		}
-		return this.showTable;
+		this.cd.detectChanges();
 	}
 
 	openEditEventTypeDialog(selectedItem?: IEventTypeViewModel) {
