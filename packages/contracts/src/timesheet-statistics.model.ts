@@ -1,7 +1,7 @@
 import { IUser } from './user.model';
 import { IEmployee } from './employee.model';
 import { ITask } from './task-entity.model';
-import { ITimeSlot, ITimeLog } from './timesheet.model';
+import { ITimeSlot, ITimeLog, ITimeLogFilters } from './timesheet.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IOrganization } from './organization.model';
 import { ITenant } from './tenant.model';
@@ -111,12 +111,8 @@ export interface IMembersStatistics {
 	user?: Pick<IUser, 'name' | 'imageUrl'>;
 }
 
-export interface IGetCountsStatistics
-	extends IBasePerTenantAndOrganizationEntityModel {
-	date?: Date | string;
+export interface IGetCountsStatistics extends ITimeLogFilters {
 	onlyMe?: boolean;
-	startDate?: Date | string;
-	endDate?: Date | string;
 	employeeId?: string;
 	projectId?: string | string[];
 }

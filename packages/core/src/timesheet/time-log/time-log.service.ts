@@ -167,7 +167,8 @@ export class TimeLogService extends CrudService<TimeLog> {
 			join: {
 				alias: 'timeLogs',
 				innerJoin: {
-					employee: 'timeLogs.employee'
+					employee: 'timeLogs.employee',
+					timeSlot: 'timeLogs.timeSlots'
 				}
 			},
 			order: {
@@ -203,6 +204,16 @@ export class TimeLogService extends CrudService<TimeLog> {
 					.reduce((iteratee: any, log: any) => {
 						return iteratee + log.duration;
 					}, 0);
+				const ideal = logs
+					.filter((log) => log.logType === TimeLogType.IDEAL)
+					.reduce((iteratee: any, log: any) => {
+						return iteratee + log.duration;
+					}, 0);
+				const resumed = logs
+					.filter((log) => log.logType === TimeLogType.RESUMED)
+					.reduce((iteratee: any, log: any) => {
+						return iteratee + log.duration;
+					}, 0);
 				return {
 					date,
 					value: {
@@ -211,6 +222,12 @@ export class TimeLogService extends CrudService<TimeLog> {
 						),
 						[TimeLogType.MANUAL]: parseFloat(
 							(manual / 3600).toFixed(1)
+						),
+						[TimeLogType.IDEAL]: parseFloat(
+							(ideal / 3600).toFixed(1)
+						),
+						[TimeLogType.RESUMED]: parseFloat(
+							(resumed / 3600).toFixed(1)
 						)
 					}
 				};
@@ -225,7 +242,9 @@ export class TimeLogService extends CrudService<TimeLog> {
 					date: date,
 					value: {
 						[TimeLogType.TRACKED]: 0,
-						[TimeLogType.MANUAL]: 0
+						[TimeLogType.MANUAL]: 0,
+						[TimeLogType.IDEAL]: 0,
+						[TimeLogType.RESUMED]: 0
 					}
 				};
 			}
@@ -680,10 +699,6 @@ export class TimeLogService extends CrudService<TimeLog> {
 				startDate = startDate.toDate();
 				endDate = endDate.toDate();
 			}
-
-			console.log(
-				`Timelog Date Range startDate=${startDate} and endDate=${endDate}`
-			);
 
 			qb.andWhere(
 				`"${qb.alias}"."startedAt" >= :startDate AND "${qb.alias}"."startedAt" < :endDate`,

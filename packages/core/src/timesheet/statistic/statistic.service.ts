@@ -63,12 +63,14 @@ export class StatisticService {
 			startDate,
 			endDate,
 			date = new Date(),
-			projectId
+			projectId,
+			logType = [],
+			source = []
 		} = request;
 
 		let { start, end } = getDateRange(date, 'week');
 		if (startDate && endDate) {
-			const range = getDateRange(startDate, endDate, 'week');
+			const range = getDateRange(startDate, endDate);
 			start = range['start'];
 			end = range['end'];
 		}
@@ -132,6 +134,24 @@ export class StatisticService {
 			);
 		}
 
+		if (isNotEmpty(logType)) {
+			employeesCountQuery.andWhere(
+				`"timeLogs"."logType" IN (:...logType)`,
+				{
+					logType
+				}
+			);
+		}
+
+		if (isNotEmpty(source)) {
+			employeesCountQuery.andWhere(
+				`"timeLogs"."source" IN (:...source)`,
+				{
+					source
+				}
+			);
+		}
+
 		const employeesCount = await employeesCountQuery
 			.andWhere(`"${employeesCountQuery.alias}"."tenantId" = :tenantId`, {
 				tenantId
@@ -171,6 +191,21 @@ export class StatisticService {
 					projectIds
 				}
 			);
+		}
+
+		if (isNotEmpty(logType)) {
+			projectsCountQuery.andWhere(
+				`"timeLogs"."logType" IN (:...logType)`,
+				{
+					logType
+				}
+			);
+		}
+
+		if (isNotEmpty(source)) {
+			projectsCountQuery.andWhere(`"timeLogs"."source" IN (:...source)`, {
+				source
+			});
 		}
 
 		const projectsCount = await projectsCountQuery
@@ -231,6 +266,18 @@ export class StatisticService {
 				});
 			}
 
+			if (isNotEmpty(logType)) {
+				query.andWhere(`"timeLogs"."logType" IN (:...logType)`, {
+					logType
+				});
+			}
+
+			if (isNotEmpty(source)) {
+				query.andWhere(`"timeLogs"."source" IN (:...source)`, {
+					source
+				});
+			}
+
 			const weekTimeStatistics = await query.getRawMany();
 			const duration = _.reduce(
 				_.pluck(weekTimeStatistics, 'duration'),
@@ -288,6 +335,18 @@ export class StatisticService {
 			if (isNotEmpty(projectIds)) {
 				query.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
 					projectIds
+				});
+			}
+
+			if (isNotEmpty(logType)) {
+				query.andWhere(`"timeLogs"."logType" IN (:...logType)`, {
+					logType
+				});
+			}
+
+			if (isNotEmpty(source)) {
+				query.andWhere(`"timeLogs"."source" IN (:...source)`, {
+					source
 				});
 			}
 

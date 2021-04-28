@@ -103,7 +103,7 @@ export function getDateRange(
 	let start: any = moment.utc().startOf(type);
 	let end: any = moment.utc().endOf(type);
 
-	if (startDate instanceof Date && endDate instanceof Date) {
+	if (startDate && endDate !== 'day' && endDate !== 'week') {
 		start = moment.utc(startDate).startOf(type);
 		end = moment.utc(endDate).endOf(type);
 	} else {

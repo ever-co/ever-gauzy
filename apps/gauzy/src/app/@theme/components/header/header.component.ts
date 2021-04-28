@@ -211,7 +211,8 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	}
 
 	checkProjectSelectorVisibility() {
-		if (!this.organization) {
+		// hidden project selector if not activate for current page
+		if (!this.organization || !this.selectorsVisibility.project) {
 			return;
 		}
 
@@ -228,7 +229,8 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	}
 
 	checkEmployeeSelectorVisibility() {
-		if (!this.organization) {
+		// hidden employee selector if not activate for current page
+		if (!this.organization || !this.selectorsVisibility.employee) {
 			return;
 		}
 
@@ -264,6 +266,11 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	}
 
 	async checkOrganizationSelectorVisibility() {
+		// hidden organization selector if not activate for current page
+		if (!this.selectorsVisibility.organization) {
+			return;
+		}
+
 		const { userId } = this.store;
 		const { tenantId } = this.store.user;
 		const { items: userOrg } = await this.usersOrganizationsService.getAll(

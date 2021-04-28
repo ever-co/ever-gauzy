@@ -16,6 +16,7 @@ import { debounceTime, tap } from 'rxjs/operators';
 import * as _ from 'underscore';
 import { ReportBaseComponent } from './../../../../@shared/report/report-base/report-base.component';
 import { TranslateService } from '@ngx-translate/core';
+import { pick } from 'underscore';
 
 @UntilDestroy()
 @Component({
@@ -62,7 +63,14 @@ export class TimeReportsComponent
 	}
 
 	updateChartData() {
+		const appliedFilter = pick(
+			this.logRequest,
+			'source',
+			'activityLevel',
+			'logType'
+		);
 		const request: IGetTimeLogReportInput = {
+			...appliedFilter,
 			...this.getFilterRequest(this.logRequest),
 			groupBy: this.groupBy
 		};
@@ -79,6 +87,14 @@ export class TimeReportsComponent
 					{
 						label: TimeLogType.TRACKED,
 						data: logs.map((log) => log.value[TimeLogType.TRACKED])
+					},
+					{
+						label: TimeLogType.IDEAL,
+						data: logs.map((log) => log.value[TimeLogType.IDEAL])
+					},
+					{
+						label: TimeLogType.RESUMED,
+						data: logs.map((log) => log.value[TimeLogType.RESUMED])
 					}
 				];
 				this.chartData = {
