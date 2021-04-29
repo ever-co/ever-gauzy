@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
 import { Router } from '@angular/router';
 import { ISelectedEmployee } from '@gauzy/contracts';
-import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee/employee.component';
+import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 import { Store } from '../../../@core/services/store.service';
 
 @Component({

@@ -38,6 +38,9 @@ const routes: Routes = [
 					permissions: {
 						only: [PermissionsEnum.CAN_APPROVE_TIMESHEET],
 						redirectTo: '/pages/employees/timesheets/daily'
+					},
+					selectors: {
+						project: false
 					}
 				},
 				loadChildren: () =>

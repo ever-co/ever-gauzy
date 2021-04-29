@@ -28,6 +28,9 @@ const routes: Routes = [
 			permissions: {
 				only: [PermissionsEnum.ORG_EMPLOYEES_VIEW],
 				redirectTo
+			},
+			selectors: {
+				project: false
 			}
 		}
 	},
@@ -49,35 +52,91 @@ const routes: Routes = [
 			},
 			{
 				path: 'account',
-				component: EditEmployeeMainComponent
+				component: EditEmployeeMainComponent,
+				data: {
+					selectors: {
+						project: false,
+						organization: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'networks',
-				component: EditEmployeeNetworksComponent
+				component: EditEmployeeNetworksComponent,
+				data: {
+					selectors: {
+						project: false,
+						organization: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'rates',
-				component: EditEmployeeRatesComponent
+				component: EditEmployeeRatesComponent,
+				data: {
+					selectors: {
+						project: false,
+						organization: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'projects',
-				component: EditEmployeeProjectsComponent
+				component: EditEmployeeProjectsComponent,
+				data: {
+					selectors: {
+						project: false,
+						organization: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'contacts',
-				component: EditEmployeeContactComponent
+				component: EditEmployeeContactComponent,
+				data: {
+					selectors: {
+						project: false,
+						organization: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'location',
-				component: EditEmployeeLocationComponent
+				component: EditEmployeeLocationComponent,
+				data: {
+					selectors: {
+						project: false,
+						organization: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'hiring',
-				component: EditEmployeeHiringComponent
+				component: EditEmployeeHiringComponent,
+				data: {
+					selectors: {
+						project: false,
+						organization: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'employment',
-				component: EditEmployeeEmploymentComponent
+				component: EditEmployeeEmploymentComponent,
+				data: {
+					selectors: {
+						project: false,
+						organization: false,
+						date: false
+					}
+				}
 			}
 		]
 	},

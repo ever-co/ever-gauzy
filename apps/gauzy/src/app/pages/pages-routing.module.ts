@@ -34,28 +34,49 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./income/income.module').then(
 								(m) => m.IncomeModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false
+							}
+						}
 					},
 					{
 						path: 'expenses',
 						loadChildren: () =>
 							import('./expenses/expenses.module').then(
 								(m) => m.ExpensesModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false
+							}
+						}
 					},
 					{
 						path: 'invoices',
 						loadChildren: () =>
 							import('./invoices/invoices.module').then(
 								(m) => m.InvoicesModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false,
+								employee: false
+							}
+						}
 					},
 					{
 						path: 'payments',
 						loadChildren: () =>
 							import('./payments/payments.module').then(
 								(m) => m.PaymentsModule
-							)
+							),
+						data: {
+							selectors: {
+								employee: false
+							}
+						}
 					}
 				]
 			},
@@ -110,35 +131,64 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./proposals/proposals.module').then(
 								(m) => m.ProposalsModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false
+							}
+						}
 					},
 					{
 						path: 'estimates',
 						loadChildren: () =>
 							import(
 								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
+							).then((m) => m.WorkInProgressModule),
+						data: {
+							selectors: {
+								project: false,
+								employee: false
+							}
+						}
 					},
 					{
 						path: 'invoices',
 						loadChildren: () =>
 							import('./invoices/invoices.module').then(
 								(m) => m.InvoicesModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false,
+								employee: false
+							}
+						}
 					},
 					{
 						path: 'payments',
 						loadChildren: () =>
 							import('./payments/payments.module').then(
 								(m) => m.PaymentsModule
-							)
+							),
+						data: {
+							selectors: {
+								employee: false
+							}
+						}
 					},
 					{
 						path: 'pipelines',
 						loadChildren: () =>
 							import('./pipelines/pipelines.module').then(
 								(m) => m.PipelinesModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					}
 				]
 			},
@@ -171,56 +221,98 @@ const routes: Routes = [
 						loadChildren: () =>
 							import(
 								'./employees/schedules/schedule.module'
-							).then((m) => m.ScheduleModule)
+							).then((m) => m.ScheduleModule),
+						data: {
+							selectors: {
+								project: false
+							}
+						}
 					},
 					{
 						path: 'appointments',
 						loadChildren: () =>
 							import(
 								'./employees/appointment/appointment.module'
-							).then((m) => m.AppointmentModule)
+							).then((m) => m.AppointmentModule),
+						data: {
+							selectors: {
+								project: false
+							}
+						}
 					},
 					{
 						path: 'event-types',
 						loadChildren: () =>
 							import(
 								'./employees/event-types/event-type.module'
-							).then((m) => m.EventTypeModule)
+							).then((m) => m.EventTypeModule),
+						data: {
+							selectors: {
+								project: false
+							}
+						}
 					},
 					{
 						path: 'time-off',
 						loadChildren: () =>
 							import('./time-off/time-off.module').then(
 								(m) => m.TimeOffModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false
+							}
+						}
 					},
 					{
 						path: 'approvals',
 						loadChildren: () =>
 							import('./approvals/approvals.module').then(
 								(m) => m.ApprovalsModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false
+							}
+						}
 					},
 					{
 						path: 'positions',
 						loadChildren: () =>
 							import('./positions/positions.module').then(
 								(m) => m.PositionsModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false,
+								employee: false
+							}
+						}
 					},
 					{
 						path: 'employee-level',
 						loadChildren: () =>
 							import(
 								'./employee-levels/employee-level.module'
-							).then((m) => m.EmployeeLevelModule)
+							).then((m) => m.EmployeeLevelModule),
+						data: {
+							selectors: {
+								project: false,
+								employee: false
+							}
+						}
 					},
 					{
 						path: 'recurring-expenses',
 						loadChildren: () =>
 							import(
 								'./recurring-expense-employee/recurring-expense-employee.module'
-							).then((m) => m.RecurringExpensesEmployeeModule)
+							).then((m) => m.RecurringExpensesEmployeeModule),
+						data: {
+							selectors: {
+								project: false
+							}
+						}
 					},
 					{
 						path: 'candidates',
@@ -239,7 +331,42 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./equipment/equipment.module').then(
 								(m) => m.EquipmentModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
+					},
+					{
+						path: 'equipment-sharing',
+						loadChildren: () =>
+							import(
+								'./equipment-sharing/equipment-sharing.module'
+							).then((m) => m.EquipmentSharingModule),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
+					},
+					{
+						path: 'equipment-sharing-policy',
+						loadChildren: () =>
+							import(
+								'./equipment-sharing-policy/equipment-sharing-policy.module'
+							).then((m) => m.EquipmentSharingPolicyModule),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					},
 					{
 						path: 'inventory',
@@ -253,50 +380,71 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./tags/tags.module').then(
 								(m) => m.TagsModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					},
 					{
 						path: 'expense-recurring',
 						loadChildren: () =>
 							import(
 								'./expense-recurring/expense-recurring.module'
-							).then((m) => m.ExpenseRecurringModule)
+							).then((m) => m.ExpenseRecurringModule),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					},
-
 					{
 						path: 'help-center',
 						loadChildren: () =>
 							import('./help-center/help-center.module').then(
 								(m) => m.HelpCenterModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					},
 					{
 						path: 'approval-policy',
 						loadChildren: () =>
 							import(
 								'./approval-policy/approval-policy.module'
-							).then((m) => m.ApprovalPolicyModule)
+							).then((m) => m.ApprovalPolicyModule),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					},
-					{
-						path: 'equipment-sharing',
-						loadChildren: () =>
-							import(
-								'./equipment-sharing/equipment-sharing.module'
-							).then((m) => m.EquipmentSharingModule)
-					},
-					{
-						path: 'equipment-sharing-policy',
-						loadChildren: () =>
-							import(
-								'./equipment-sharing-policy/equipment-sharing-policy.module'
-							).then((m) => m.EquipmentSharingPolicyModule)
-					},
+
 					{
 						path: 'documents',
 						loadChildren: () =>
 							import('./documents/documents.module').then(
 								(m) => m.DocumentsModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					},
 					{
 						path: 'employment-types',
@@ -310,14 +458,28 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./vendors/vendors.module').then(
 								(m) => m.VendorsModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					},
 					{
 						path: 'departments',
 						loadChildren: () =>
 							import('./departments/departments.module').then(
 								(m) => m.DepartmentsModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					},
 					{
 						path: 'projects',
@@ -331,7 +493,14 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./teams/teams.module').then(
 								(m) => m.TeamsModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					}
 				]
 			},
@@ -343,7 +512,12 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./goals/goals.module').then(
 								(m) => m.GoalsModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false
+							}
+						}
 					},
 					{
 						path: 'reports',
@@ -357,7 +531,14 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./goal-settings/goal-settings.module').then(
 								(m) => m.GoalSettingsModule
-							)
+							),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					}
 				]
 			},
@@ -374,7 +555,14 @@ const routes: Routes = [
 						loadChildren: () =>
 							import(
 								'./reports/all-report/all-report.module'
-							).then((m) => m.AllReportModule)
+							).then((m) => m.AllReportModule),
+						data: {
+							selectors: {
+								project: false,
+								employee: false,
+								date: false
+							}
+						}
 					},
 					{
 						path: 'time-activity',
@@ -503,7 +691,14 @@ const routes: Routes = [
 			{
 				path: 'users',
 				loadChildren: () =>
-					import('./users/users.module').then((m) => m.UsersModule)
+					import('./users/users.module').then((m) => m.UsersModule),
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'organizations',

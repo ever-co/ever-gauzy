@@ -2,21 +2,17 @@ import {
 	IEmployee,
 	IEmployeeUpdateInput,
 	IUserFindInput,
-	IEmployeeStoreState,
-	EmployeeAction
+	IEmployeeStoreState
 } from '@gauzy/contracts';
 import { BehaviorSubject } from 'rxjs';
 import { Injectable } from '@angular/core';
 import { Query, Store as AkitaStore, StoreConfig } from '@datorama/akita';
 
-export function createInitialEmployeeState(): IEmployeeStoreState {
-	return {} as IEmployeeStoreState;
-}
 @Injectable({ providedIn: 'root' })
-@StoreConfig({ name: 'app' })
+@StoreConfig({ name: 'employee', resettable: true })
 export class EmployeeAkitaStore extends AkitaStore<IEmployeeStoreState> {
 	constructor() {
-		super(createInitialEmployeeState());
+		super({} as IEmployeeStoreState);
 	}
 }
 
@@ -62,13 +58,14 @@ export class EmployeeStore {
 		return this._selectedEmployee;
 	}
 
-	employeeAction$ = this.employeeAkitaQuery.select(({ action }) => {
-		return { action };
+	employeeAction$ = this.employeeAkitaQuery.select(({ action, employee }) => {
+		return { action, employee };
 	});
 
-	set employeeAction({ action }: { action: EmployeeAction }) {
+	set employeeAction({ action, employee }: IEmployeeStoreState) {
 		this.employeeAkitaStore.update({
-			action
+			action,
+			employee
 		});
 	}
 
@@ -90,7 +87,7 @@ export class EmployeeStore {
 		return this._employeeForm;
 	}
 
-	clear() {
-		localStorage.clear();
+	destroy() {
+		this.employeeAkitaStore.reset();
 	}
 }

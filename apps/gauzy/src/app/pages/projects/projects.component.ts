@@ -7,7 +7,7 @@ import {
 	IOrganizationProjectsCreateInput,
 	PermissionsEnum,
 	ComponentLayoutStyleEnum,
-	OrganizationProjectAction
+	CrudActionEnum
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -173,7 +173,7 @@ export class ProjectsComponent
 				.then(() => {
 					this.organizationProjectStore.organizationProjectAction = {
 						project: this.selectedProject,
-						action: OrganizationProjectAction.DELETED
+						action: CrudActionEnum.DELETED
 					};
 				});
 
@@ -215,7 +215,7 @@ export class ProjectsComponent
 						.then((project: IOrganizationProject) => {
 							this.organizationProjectStore.organizationProjectAction = {
 								project,
-								action: OrganizationProjectAction.CREATED
+								action: CrudActionEnum.CREATED
 							};
 						});
 				} else {
@@ -236,7 +236,7 @@ export class ProjectsComponent
 					.then((project: IOrganizationProject) => {
 						this.organizationProjectStore.organizationProjectAction = {
 							project,
-							action: OrganizationProjectAction.UPDATED
+							action: CrudActionEnum.UPDATED
 						};
 					});
 				break;
@@ -292,9 +292,7 @@ export class ProjectsComponent
 			actions: false,
 			columns: {
 				name: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.ORGANIZATIONS'
-					),
+					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
 					type: 'custom',
 					renderComponent: PictureNameTagsComponent
 				},

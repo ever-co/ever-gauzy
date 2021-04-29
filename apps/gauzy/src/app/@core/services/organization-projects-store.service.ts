@@ -1,13 +1,9 @@
-import {
-	IOrganizationProject,
-	IOrganizationProjectStoreState,
-	OrganizationProjectAction
-} from '@gauzy/contracts';
+import { IOrganizationProjectStoreState } from '@gauzy/contracts';
 import { Injectable } from '@angular/core';
 import { Query, Store as AkitaStore, StoreConfig } from '@datorama/akita';
 
 @Injectable({ providedIn: 'root' })
-@StoreConfig({ name: 'app' })
+@StoreConfig({ name: 'project', resettable: true })
 export class OrganizationProjectAkitaStore extends AkitaStore<IOrganizationProjectStoreState> {
 	constructor() {
 		super({} as IOrganizationProjectStoreState);
@@ -40,17 +36,14 @@ export class OrganizationProjectStore {
 	set organizationProjectAction({
 		project,
 		action
-	}: {
-		project: IOrganizationProject;
-		action: OrganizationProjectAction;
-	}) {
+	}: IOrganizationProjectStoreState) {
 		this.organizationProjectAkitaStore.update({
-			project: project,
+			project,
 			action
 		});
 	}
 
-	clear() {
-		localStorage.clear();
+	destroy() {
+		this.organizationProjectAkitaStore.reset();
 	}
 }

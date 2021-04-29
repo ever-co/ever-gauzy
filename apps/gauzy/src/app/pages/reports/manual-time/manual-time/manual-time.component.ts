@@ -6,8 +6,6 @@ import {
 } from '@angular/core';
 import {
 	IGetTimeLogReportInput,
-	IOrganization,
-	ISelectedEmployee,
 	ITimeLog,
 	ITimeLogFilters,
 	TimeLogType
@@ -16,9 +14,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import * as moment from 'moment';
-import { Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, tap } from 'rxjs/operators';
 import { chain, pick } from 'underscore';
+import { ReportBaseComponent } from 'apps/gauzy/src/app/@shared/report/report-base/report-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @UntilDestroy()
 @Component({
@@ -26,51 +25,31 @@ import { chain, pick } from 'underscore';
 	templateUrl: './manual-time.component.html',
 	styleUrls: ['./manual-time.component.scss']
 })
-export class ManualTimeComponent implements OnInit, AfterViewInit {
-	logRequest: ITimeLogFilters = {
-		startDate: moment().startOf('week').toDate(),
-		endDate: moment().endOf('week').toDate()
-	};
-	updateLogs$: Subject<any> = new Subject();
+export class ManualTimeComponent
+	extends ReportBaseComponent
+	implements OnInit, AfterViewInit {
+	logRequest: ITimeLogFilters = this.request;
 	filters: ITimeLogFilters;
-	organization: any;
-	selectedEmployee: ISelectedEmployee;
 	loading: boolean;
 	dailyData: any;
 
 	constructor(
 		private cd: ChangeDetectorRef,
 		private timesheetService: TimesheetService,
-		private store: Store
-	) {}
+		protected store: Store,
+		readonly translateService: TranslateService
+	) {
+		super(store, translateService);
+	}
 
 	ngOnInit(): void {
-		this.updateLogs$
-			.pipe(untilDestroyed(this), debounceTime(500))
-			.subscribe(() => {
-				this.getLogs();
-			});
-
-		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe((organization: IOrganization) => {
-				if (organization) {
-					this.organization = organization;
-					this.updateLogs$.next();
-				}
-			});
-
-		this.store.selectedEmployee$
-			.pipe(untilDestroyed(this))
-			.subscribe((employee: ISelectedEmployee) => {
-				if (employee && employee.id) {
-					this.selectedEmployee = employee;
-				} else {
-					this.selectedEmployee = null;
-				}
-				this.filters = Object.assign({}, this.logRequest);
-				this.updateLogs$.next();
-			});
+		this.subject$
+			.pipe(
+				debounceTime(1350),
+				tap(() => this.getLogs()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngAfterViewInit() {
@@ -80,26 +59,22 @@ export class ManualTimeComponent implements OnInit, AfterViewInit {
 	filtersChange($event) {
 		this.logRequest = $event;
 		this.filters = Object.assign({}, this.logRequest);
-		this.updateLogs$.next();
+		this.subject$.next();
 	}
 
 	async getLogs() {
-		const { startDate, endDate } = this.logRequest;
+		if (!this.organization || !this.logRequest) {
+			return;
+		}
 		const appliedFilter = pick(
 			this.logRequest,
-			'employeeIds',
-			'projectIds',
 			'source',
 			'activityLevel',
 			'logType'
 		);
-
 		const request: IGetTimeLogReportInput = {
 			...appliedFilter,
-			startDate: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: moment(endDate).format('YYYY-MM-DD HH:mm:ss'),
-			organizationId: this.organization ? this.organization.id : null,
-			tenantId: this.organization ? this.organization.tenantId : null,
+			...this.getFilterRequest(this.logRequest),
 			logType: [TimeLogType.MANUAL],
 			relations: ['task', 'project', 'employee', 'employee.user']
 		};

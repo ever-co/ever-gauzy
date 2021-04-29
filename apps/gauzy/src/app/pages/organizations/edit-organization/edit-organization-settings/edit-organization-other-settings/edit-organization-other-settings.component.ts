@@ -14,7 +14,7 @@ import {
 	IAccountingTemplate,
 	CurrenciesEnum,
 	DEFAULT_DATE_FORMATS,
-	OrganizationAction
+	CrudActionEnum
 } from '@gauzy/contracts';
 import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
@@ -137,7 +137,7 @@ export class EditOrganizationOtherSettingsComponent
 				if (organization) {
 					this.organizationEditStore.organizationAction = {
 						organization,
-						action: OrganizationAction.UPDATED
+						action: CrudActionEnum.UPDATED
 					};
 					this.store.selectedOrganization = organization;
 				}

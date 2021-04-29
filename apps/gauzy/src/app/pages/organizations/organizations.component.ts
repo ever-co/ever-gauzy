@@ -4,7 +4,7 @@ import {
 	IOrganization,
 	ComponentLayoutStyleEnum,
 	IUser,
-	OrganizationAction
+	CrudActionEnum
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -166,7 +166,7 @@ export class OrganizationsComponent
 						if (organization) {
 							this._organizationEditStore.organizationAction = {
 								organization,
-								action: OrganizationAction.CREATED
+								action: CrudActionEnum.CREATED
 							};
 						}
 						this.toastrService.success(
@@ -223,7 +223,7 @@ export class OrganizationsComponent
 					.then(() => {
 						this._organizationEditStore.organizationAction = {
 							organization: this.selectedOrganization,
-							action: OrganizationAction.DELETED
+							action: CrudActionEnum.DELETED
 						};
 						this.toastrService.success(
 							'NOTES.ORGANIZATIONS.DELETE_ORGANIZATION',

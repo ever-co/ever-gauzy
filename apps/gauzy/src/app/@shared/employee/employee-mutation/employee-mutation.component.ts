@@ -7,7 +7,7 @@ import {
 	IUser,
 	IRole,
 	IEmployeeCreateInput,
-	EmployeeAction
+	CrudActionEnum
 } from '@gauzy/contracts';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { EmployeesService } from '../../../@core/services/employees.service';
@@ -101,7 +101,8 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 				.toPromise();
 
 			this._employeeStore.employeeAction = {
-				action: EmployeeAction.CREATED
+				action: CrudActionEnum.CREATED,
+				employee
 			};
 			this.closeDialog(employee);
 		} catch (error) {

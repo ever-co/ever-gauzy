@@ -35,6 +35,11 @@ const routes: Routes = [
 					permissions: {
 						only: [PermissionsEnum.VIEW_ALL_EMAILS],
 						redirectTo: '/pages/settings'
+					},
+					selectors: {
+						project: false,
+						employee: false,
+						date: false
 					}
 				}
 			},
@@ -46,6 +51,11 @@ const routes: Routes = [
 					permissions: {
 						only: [PermissionsEnum.VIEW_ALL_EMAIL_TEMPLATES],
 						redirectTo: '/pages/settings'
+					},
+					selectors: {
+						project: false,
+						employee: false,
+						date: false
 					}
 				}
 			},
@@ -57,6 +67,11 @@ const routes: Routes = [
 					permissions: {
 						only: [PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES],
 						redirectTo: '/pages/settings'
+					},
+					selectors: {
+						project: false,
+						employee: false,
+						date: false
 					}
 				}
 			},
@@ -68,6 +83,12 @@ const routes: Routes = [
 					permissions: {
 						only: [PermissionsEnum.CHANGE_ROLES_PERMISSIONS],
 						redirectTo: '/pages/settings'
+					},
+					selectors: {
+						project: false,
+						employee: false,
+						organization: false,
+						date: false
 					}
 				}
 			},
@@ -86,6 +107,12 @@ const routes: Routes = [
 					permissions: {
 						only: [PermissionsEnum.SMS_GATEWAY_VIEW],
 						redirectTo: '/pages/settings'
+					},
+					selectors: {
+						project: false,
+						employee: false,
+						date: false,
+						organization: false
 					}
 				}
 			},
@@ -104,12 +131,26 @@ const routes: Routes = [
 					permissions: {
 						only: [PermissionsEnum.FILE_STORAGE_VIEW],
 						redirectTo: '/pages/settings'
+					},
+					selectors: {
+						project: false,
+						employee: false,
+						organization: false,
+						date: false
 					}
 				}
 			},
 			{
 				path: 'danger-zone',
-				component: DangerZoneComponent
+				component: DangerZoneComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						organization: false,
+						date: false
+					}
+				}
 			}
 		]
 	}

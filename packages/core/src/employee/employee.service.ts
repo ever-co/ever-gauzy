@@ -44,6 +44,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * 1. The startedWorkOn date is (not null and) less than the last day forMonth
 	 * 2. The endWork date is either null or greater than the first day forMonth
 	 * @param organizationId  The organization id of the employees to find
+	 * @param tenantId  The tenant id of the employees to find
 	 * @param forMonth  Only the month & year is considered
 	 */
 	async findWorkingEmployees(
@@ -60,6 +61,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			.andWhere(`${query.alias}."tenantId" = :tenantId`, {
 				tenantId
 			})
+			.andWhere(`${query.alias}."isActive" = true`)
 			.andWhere(
 				`${query.alias}."startedWorkOn" <= :startedWorkOnCondition`,
 				{
@@ -91,6 +93,32 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		return {
 			total,
 			items
+		};
+	}
+
+	/**
+	 * Find the counts of employees working in the organization for a particular month.
+	 * An employee is considered to be 'working' if:
+	 * 1. The startedWorkOn date is (not null and) less than the last day forMonth
+	 * 2. The endWork date is either null or greater than the first day forMonth
+	 * @param organizationId  The organization id of the employees to find
+	 * @param tenantId  The tenant id of the employees to find
+	 * @param forMonth  Only the month & year is considered
+	 */
+	async findWorkingEmployeesCount(
+		organizationId: string,
+		tenantId: string,
+		forMonth: Date,
+		withUser: boolean
+	): Promise<{ total: number }> {
+		const { total } = await this.findWorkingEmployees(
+			organizationId,
+			tenantId,
+			forMonth,
+			withUser
+		);
+		return {
+			total
 		};
 	}
 

@@ -37,23 +37,58 @@ const routes: Routes = [
 			},
 			{
 				path: 'all',
-				component: TableInventoryComponent
+				component: TableInventoryComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'create',
-				component: ProductFormComponent
+				component: ProductFormComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'edit/:id',
-				component: ProductFormComponent
+				component: ProductFormComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'view/:id',
-				component: InventoryItemViewComponent
+				component: InventoryItemViewComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: ':itemId/variants/:itemVariantId',
-				component: InventoryVariantFormComponent
+				component: InventoryVariantFormComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						date: false
+					}
+				}
 			}
 		]
 	},
@@ -68,6 +103,11 @@ const routes: Routes = [
 					PermissionsEnum.ORG_PRODUCT_TYPES_VIEW
 				],
 				redirectTo: '/pages/dashboard'
+			},
+			selectors: {
+				project: false,
+				employee: false,
+				date: false
 			}
 		}
 	},
@@ -82,6 +122,11 @@ const routes: Routes = [
 					PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW
 				],
 				redirectTo: '/pages/dashboard'
+			},
+			selectors: {
+				project: false,
+				employee: false,
+				date: false
 			}
 		}
 	},

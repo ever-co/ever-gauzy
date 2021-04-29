@@ -47,9 +47,8 @@ export class GetTimeLogGroupByEmployeeHandler
 									.pluck('timeSlots')
 									.flatten(true)
 									.value();
-
 								const activitiesSum =
-									byProjectLogs.reduce(
+									timeSlots.reduce(
 										(iteratee: any, timeSlot: any) => {
 											return iteratee + timeSlot.overall;
 										},

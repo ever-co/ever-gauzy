@@ -9,7 +9,7 @@ import {
 import {
 	IOrganization,
 	IOrganizationProject,
-	OrganizationProjectAction,
+	CrudActionEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
@@ -75,6 +75,22 @@ export class ProjectSelectorComponent
 	@Input() placeholder: string;
 	@Input() skipGlobalChange: boolean;
 
+	private _defaultSelected: boolean = true;
+	get defaultSelected(): boolean {
+		return this._defaultSelected;
+	}
+	@Input() set defaultSelected(value: boolean) {
+		this._defaultSelected = value;
+	}
+
+	private _showAllOption: boolean = true;
+	get showAllOption(): boolean {
+		return this._showAllOption;
+	}
+	@Input() set showAllOption(value: boolean) {
+		this._showAllOption = value;
+	}
+
 	loadProjects$: Subject<any> = new Subject();
 	onChange: any = () => {};
 	onTouched: any = () => {};
@@ -125,18 +141,19 @@ export class ProjectSelectorComponent
 	ngAfterViewInit() {
 		this._organizationProjectStore.organizationProjectAction$
 			.pipe(
-				filter(({ project }) => !!project),
+				filter(({ action, project }) => !!action && !!project),
+				tap(() => this._organizationProjectStore.destroy()),
 				untilDestroyed(this)
 			)
 			.subscribe(({ project, action }) => {
 				switch (action) {
-					case OrganizationProjectAction.CREATED:
+					case CrudActionEnum.CREATED:
 						this.createOrganizationProject(project);
 						break;
-					case OrganizationProjectAction.UPDATED:
+					case CrudActionEnum.UPDATED:
 						this.updateOrganizationProject(project);
 						break;
-					case OrganizationProjectAction.DELETED:
+					case CrudActionEnum.DELETED:
 						this.deleteOrganizationProject(project);
 						break;
 					default:
@@ -164,7 +181,11 @@ export class ProjectSelectorComponent
 			this.projects = items;
 		}
 
-		this.projects.unshift(ALL_PROJECT_SELECTED);
+		//Insert All Employees Option
+		if (this.showAllOption) {
+			this.projects.unshift(ALL_PROJECT_SELECTED);
+		}
+
 		this.selectProject(ALL_PROJECT_SELECTED);
 	}
 

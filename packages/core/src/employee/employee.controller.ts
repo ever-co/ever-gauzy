@@ -198,6 +198,33 @@ export class EmployeeController extends CrudController<Employee> {
 		);
 	}
 
+	@ApiOperation({ summary: 'Find all working employees count.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found working employees count',
+		type: Employee
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Count not found'
+	})
+	@Get('/working/count')
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+	async findAllWorkingEmployeesCount(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<{ total: number }> {
+		const { findInput } = data;
+		const { organizationId, forMonth = new Date(), withUser } = findInput;
+		const tenantId = RequestContext.currentTenantId();
+
+		return this.employeeService.findWorkingEmployeesCount(
+			organizationId,
+			tenantId,
+			new Date(forMonth),
+			withUser
+		);
+	}
+
 	@ApiOperation({ summary: 'Find employee by id in the same tenant.' })
 	@ApiResponse({
 		status: HttpStatus.OK,

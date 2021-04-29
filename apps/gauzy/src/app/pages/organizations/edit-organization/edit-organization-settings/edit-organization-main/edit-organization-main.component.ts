@@ -10,7 +10,7 @@ import {
 	ICurrency,
 	IOrganization,
 	ITag,
-	OrganizationAction
+	CrudActionEnum
 } from '@gauzy/contracts';
 import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
 import { filter, first, tap } from 'rxjs/operators';
@@ -110,7 +110,7 @@ export class EditOrganizationMainComponent
 					if (organization) {
 						this.organizationEditStore.organizationAction = {
 							organization,
-							action: OrganizationAction.UPDATED
+							action: CrudActionEnum.UPDATED
 						};
 						this.store.selectedOrganization = organization;
 					}
