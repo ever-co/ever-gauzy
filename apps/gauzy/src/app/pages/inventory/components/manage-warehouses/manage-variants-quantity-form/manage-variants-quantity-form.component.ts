@@ -82,4 +82,8 @@ export class ManageVariantsQuantityFormComponent
 			}
 		};
 	}
+
+	onClose() {
+		this.dialogRef.close();
+	}
 }

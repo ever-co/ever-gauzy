@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { ManageVariantsQuantityFormComponent } from '../manage-variants-quantity-form/manage-variants-quantity-form.component';
+import { InventoryStore } from 'apps/gauzy/src/app/@core';
+import { first } from 'rxjs/operators';
 
 @Component({
 	templateUrl: './manage-variants-quantity.component.html',
@@ -11,20 +13,16 @@ import { ManageVariantsQuantityFormComponent } from '../manage-variants-quantity
 })
 export class ManageVariantsQuantityComponent
 	extends TranslationBaseComponent
-	implements ViewCell, OnInit {
+	implements ViewCell {
 	value: any;
 	rowData: any;
 
 	constructor(
 		readonly translateService: TranslateService,
-		private dialogService: NbDialogService
+		private dialogService: NbDialogService,
+		private inventoryStore: InventoryStore
 	) {
 		super(translateService);
-	}
-
-	ngOnInit() {
-		//tstodo
-		console.log(this.rowData, 'row data');
 	}
 
 	onManageVariantsClick() {
@@ -36,5 +34,12 @@ export class ManageVariantsQuantityComponent
 				}
 			}
 		);
+
+		dialog.onClose
+			.pipe(first())
+			.toPromise()
+			.then((res) => {
+				this.inventoryStore.warehouseProductsCountUpdate$.next();
+			});
 	}
 }
