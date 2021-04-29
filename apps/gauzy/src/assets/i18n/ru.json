@@ -2101,7 +2101,8 @@
 		"NEW_OPTION_GROUP": "Новая группа опций",
 		"OPTION_GROUP_NAME": "Название группы опций",
 		"OPTION_TRANSLATIONS": "Переводы параметров",
-		"ADD_PRODUCTS": "Добавить товары"
+		"ADD_PRODUCTS": "Добавить товары",
+		"MANAGE_VARIANTS_QUANTITY": "Управление вариантами"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",

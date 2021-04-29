@@ -5,7 +5,8 @@ import {
 	IProductFindInput,
 	IWarehouse,
 	IWarehouseProductCreateInput,
-	IWarehouseProduct
+	IWarehouseProduct,
+	IWarehouseProductVariant
 } from '@gauzy/contracts';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -78,6 +79,32 @@ export class WarehouseService {
 		return this.http
 			.get<IWarehouseProduct[]>(
 				`${this.WAREHOUSES_URL}/inventory/${warehouseId}`
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	updateWarehouseProductCount(
+		warehouseProductId: String,
+		count: number
+	): Promise<IWarehouseProduct> {
+		return this.http
+			.post<IWarehouseProduct>(
+				`${this.WAREHOUSES_URL}/inventory-quantity/${warehouseProductId}`,
+				{ count: count }
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	updateWarehouseProductVariantCount(
+		warehouseProductVariantId: String,
+		count: number
+	): Promise<IWarehouseProductVariant> {
+		return this.http
+			.post<IWarehouseProductVariant>(
+				`${this.WAREHOUSES_URL}/inventory-quantity/variants/${warehouseProductVariantId}`,
+				{ count: count }
 			)
 			.pipe(first())
 			.toPromise();

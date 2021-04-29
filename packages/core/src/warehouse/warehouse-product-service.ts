@@ -9,7 +9,6 @@ import {
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IWarehouseProductCreateInput } from '@gauzy/contracts';
-import { AnyLengthString } from 'aws-sdk/clients/comprehendmedical';
 
 @Injectable()
 export class WarehouseProductService extends CrudService<WarehouseProduct> {
@@ -29,7 +28,7 @@ export class WarehouseProductService extends CrudService<WarehouseProduct> {
 	async getAllWarehouseProducts(warehouseId: String) {
 		return await this.warehouseProductRepository.find({
 			where: { warehouse: { id: warehouseId } },
-			relations: ['product']
+			relations: ['product', 'variants', 'variants.variant']
 		});
 	}
 
@@ -39,30 +38,34 @@ export class WarehouseProductService extends CrudService<WarehouseProduct> {
 	) {
 		let productIds = warehouseProductCreateInput.map((pr) => pr.productId);
 		let warehouse = await this.warehouseRepository.findOne(
-			warehouseId as AnyLengthString
+			warehouseId as any
 		);
 
 		let products = await this.productRespository.findByIds(productIds, {
 			relations: ['variants']
 		});
 
-		let warehouseProductArr = [];
+		let warehouseProductArr = await Promise.all(
+			products.map(async (product) => {
+				let newWarehouseProduct = new WarehouseProduct();
+				newWarehouseProduct.warehouse = warehouse;
+				newWarehouseProduct.product = product;
 
-		products.forEach((product) => {
-			let newWarehouseProduct = new WarehouseProduct();
-			newWarehouseProduct.warehouse = warehouse;
-			newWarehouseProduct.product = product;
+				let warehouseVariants = await Promise.all(
+					product.variants.map(async (variant) => {
+						let warehouseVariant = new WarehouseProductVariant();
+						warehouseVariant.variant = variant;
 
-			let warehouseVariants = product.variants.map((variant) => {
-				let warehouseVariant = new WarehouseProductVariant();
-				warehouseVariant.variant = variant;
+						return this.warehouseProductVariantRepository.save(
+							warehouseVariant
+						);
+					})
+				);
 
-				return warehouseVariant;
-			});
-
-			newWarehouseProduct.variants = warehouseVariants;
-			warehouseProductArr.push(newWarehouseProduct);
-		});
+				newWarehouseProduct.variants = warehouseVariants;
+				return newWarehouseProduct;
+			})
+		);
 
 		let result: any = await this.warehouseProductRepository.save(
 			warehouseProductArr
@@ -71,5 +74,53 @@ export class WarehouseProductService extends CrudService<WarehouseProduct> {
 		return { items: result, total: result ? result.length : 0 };
 	}
 
-	async updateWarehouseProductQuantity(quantity: number) {}
+	async updateWarehouseProductQuantity(
+		warehouseProductId: String,
+		quantity: number
+	) {
+		let warehouseProduct = await this.warehouseProductRepository.findOne(
+			warehouseProductId as any
+		);
+
+		warehouseProduct.quantity = quantity;
+		return this.warehouseProductRepository.save(warehouseProduct);
+	}
+
+	async updateWarehouseProductVariantQuantity(
+		warehouseProductVariantId: String,
+		quantity: number
+	) {
+		let warehouseProductVariant = await this.warehouseProductVariantRepository.findOne(
+			warehouseProductVariantId as any,
+			{ relations: ['warehouseProduct'] }
+		);
+
+		warehouseProductVariant.quantity = quantity;
+
+		let updatedVariant = await this.warehouseProductVariantRepository.save(
+			warehouseProductVariant
+		);
+
+		let warehouseProduct = await this.warehouseProductRepository.findOne(
+			warehouseProductVariant.warehouseProduct.id,
+			{
+				relations: ['variants']
+			}
+		);
+
+		let sumQuantity = warehouseProduct.variants
+			.map((v) => +v.quantity)
+			.reduce((prev, current) => prev + current);
+
+		if (warehouseProduct.quantity < sumQuantity) {
+			warehouseProduct.quantity =
+				+warehouseProduct.quantity +
+				sumQuantity -
+				warehouseProduct.quantity;
+		}
+
+		await this.warehouseProductRepository.save(warehouseProduct);
+
+		return updatedVariant;
+	}
 }

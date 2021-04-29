@@ -1,4 +1,4 @@
-import { Entity, ManyToOne, JoinColumn, Column, ManyToMany } from 'typeorm';
+import { Entity, ManyToOne, JoinColumn, Column } from 'typeorm';
 import { TenantBaseEntity, ProductVariant } from '../core/entities/internal';
 import { IWarehouseProductVariant } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
@@ -16,9 +16,9 @@ export class WarehouseProductVariant
 	@Column({ nullable: true, type: 'numeric', default: 0 })
 	quantity: number;
 
-	@ManyToMany(
+	@ManyToOne(
 		() => WarehouseProduct,
 		(warehouseProduct) => warehouseProduct.variants
 	)
-	warehouseProducts: WarehouseProduct[];
+	warehouseProduct: WarehouseProduct;
 }

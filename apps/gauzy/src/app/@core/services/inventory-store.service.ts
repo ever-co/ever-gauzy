@@ -10,7 +10,7 @@ import {
 } from '@gauzy/contracts';
 import { NbTabComponent } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { VariantCreateInput } from '../../pages/inventory/components/edit-inventory-item/variant-form/variant-form.component';
 
 @Injectable()
@@ -50,6 +50,8 @@ export class InventoryStore {
 	activeTab$: BehaviorSubject<NbTabComponent> = new BehaviorSubject(
 		this.activeTab
 	);
+
+	warehouseProductsCountUpdate$: Subject<void> = new Subject();
 
 	constructor(private translateService: TranslateService) {}
 

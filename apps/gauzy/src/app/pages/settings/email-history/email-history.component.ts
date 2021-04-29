@@ -48,6 +48,9 @@ export class EmailHistoryComponent
 	imageUrl: string;
 
 	filters = [];
+	disableLoadMore: boolean = false;
+	totalNoPage: number;
+	nextDataLoading: boolean = false;
 
 	get selectedEmailHTML() {
 		return this.sanitizer.bypassSecurityTrustHtml(
@@ -162,6 +165,16 @@ export class EmailHistoryComponent
 				.then((data) => {
 					this.emails = data.items;
 					this.selectedEmail = this.emails ? this.emails[0] : null;
+					const totalNoPage = Math.ceil(data.total / this.pageSize)
+
+					if (this.threshholdHitCount >= totalNoPage) {
+						this.disableLoadMore = true
+					}
+					else {
+						this.disableLoadMore = false
+					}
+				}).finally(() => {
+					this.nextDataLoading = false;
 				});
 		} catch (error) {
 			this.toastrService.danger(
@@ -208,6 +221,10 @@ export class EmailHistoryComponent
 	}
 
 	loadNext() {
+		if (this.disableLoadMore || this.nextDataLoading) {
+			return
+		}
+		this.nextDataLoading = true;
 		this.threshholdHitCount++;
 		this._getSelectedOrganizationEmails(
 			this._selectedOrganization.id,

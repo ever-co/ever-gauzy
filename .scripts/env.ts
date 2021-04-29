@@ -29,6 +29,7 @@ export type Env = Readonly<{
 	DEFAULT_LATITUDE: number;
 	DEFAULT_LONGITUDE: number;
 	DEFAULT_CURRENCY: string;
+	DEFAULT_COUNTRY?: string;
 
 	DEMO: boolean;
 
@@ -59,6 +60,7 @@ export const env: Env = cleanEnv(
 		DEFAULT_LATITUDE: num({ default: 42.6459136 }),
 		DEFAULT_LONGITUDE: num({ default: 23.3332736 }),
 		DEFAULT_CURRENCY: str({ default: 'USD' }),
+		DEFAULT_COUNTRY: str({ default: 'US' }),
 
 		DEMO: bool({ default: false }),
 
