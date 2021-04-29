@@ -1,7 +1,7 @@
 {
 	"name": "@gauzy/changelog",
 	"version": "0.1.0",
-	"description": "",
+	"description": "Ever Gauzy Platform ChangeLog plugin",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
