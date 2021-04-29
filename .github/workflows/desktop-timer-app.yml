@@ -14,12 +14,12 @@ jobs:
 
         steps:
             - name: Check out Git repository
-              uses: actions/checkout@v1
+              uses: actions/checkout@v2
 
             - name: Install Node.js, NPM and Yarn
-              uses: actions/setup-node@v1
+              uses: actions/setup-node@v2
               with:
-                  node-version: 14.5
+                  node-version: 16
 
             - name: Change permissions
               run: 'sudo chown -R $(whoami) ./*'
@@ -54,12 +54,12 @@ jobs:
 
         steps:
             - name: Check out Git repository
-              uses: actions/checkout@v1
+              uses: actions/checkout@v2
 
             - name: Install Node.js, NPM and Yarn
-              uses: actions/setup-node@v1
+              uses: actions/setup-node@v2
               with:
-                  node-version: 14.5
+                  node-version: 16
 
             - name: Install Yarn dependencies
               run: 'yarn install --network-timeout 1000000'
@@ -83,12 +83,12 @@ jobs:
 
         steps:
             - name: Check out Git repository
-              uses: actions/checkout@v1
+              uses: actions/checkout@v2
 
             - name: Install Node.js, NPM and Yarn
-              uses: actions/setup-node@v1
+              uses: actions/setup-node@v2
               with:
-                  node-version: 14.5
+                  node-version: 16
 
             - name: Install Yarn dependencies
               run: 'yarn install --network-timeout 1000000'
