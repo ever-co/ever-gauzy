@@ -42,9 +42,9 @@ export class WeeklyTimeReportsComponent
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	PermissionsEnum = PermissionsEnum;
 	logRequest: ITimeLogFilters = this.request;
+	filters: ITimeLogFilters;
 	organization: IOrganization;
 	counts: ICountsStatistics;
-
 	weekData: ReportDayData[] = [];
 	weekDayList: string[] = [];
 	loading: boolean;
@@ -108,12 +108,12 @@ export class WeeklyTimeReportsComponent
 
 	filtersChange($event: ITimeLogFilters) {
 		this.logRequest = $event;
+		this.filters = Object.assign({}, this.logRequest);
 		this.subject$.next();
 	}
 
 	async getLogs() {
 		const request: IGetTimeLogReportInput = this.makeFilterRequest();
-
 		this.loading = true;
 		this.timesheetService
 			.getWeeklyReport(request)

@@ -61,7 +61,7 @@ export class GetTimeLogGroupByClientHandler
 											.value();
 
 										const activitiesSum =
-											byEmployeeLogs.reduce(
+											timeSlots.reduce(
 												(
 													iteratee: any,
 													timeSlot: any

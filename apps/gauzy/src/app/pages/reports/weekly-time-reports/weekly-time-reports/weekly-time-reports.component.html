@@ -6,7 +6,7 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="filters mt-4">
+		<div class="filters mt-4 mb-4">
 			<ngx-filters
 				dateRange="week"
 				[hasEmployeeFilter]="false"
@@ -16,77 +16,12 @@
 				(filtersChange)="filtersChange($event)"
 			></ngx-filters>
 		</div>
-		<div class="row mt-4">
-			<div
-				class="col-sm-4 col-md-3 col-lg"
-				*ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE"
-			>
-				<nb-card
-					[nbSpinner]="countsLoading"
-					nbSpinnerSize="giant"
-					nbSpinnerStatus="primary"
-					class="mb-0"
-				>
-					<nb-card-body>
-						<p>
-							{{ 'REPORT_PAGE.MEMBERS_WORKED' | translate }}
-						</p>
-						<div class="h1">
-							{{ counts?.employeesCount || 0 }}
-						</div>
-					</nb-card-body>
-				</nb-card>
-			</div>
-			<div class="col-sm-4 col-md-3 col-lg">
-				<nb-card
-					[nbSpinner]="countsLoading"
-					nbSpinnerSize="giant"
-					nbSpinnerStatus="primary"
-					class="mb-0"
-				>
-					<nb-card-body>
-						<p>
-							{{ 'REPORT_PAGE.PROJECTS_WORKED' | translate }}
-						</p>
-						<div class="h1">
-							{{ counts?.projectsCount || 0 }}
-						</div>
-					</nb-card-body>
-				</nb-card>
-			</div>
-			<div class="col-sm-4 col-md-3 col-lg">
-				<nb-card
-					[nbSpinner]="countsLoading"
-					nbSpinnerSize="giant"
-					nbSpinnerStatus="primary"
-					class="mb-0"
-				>
-					<nb-card-body>
-						<p>
-							{{ 'REPORT_PAGE.ACTIVITY' | translate }}
-						</p>
-						<div class="h1">{{ counts?.weekActivities || 0 }}%</div>
-					</nb-card-body>
-				</nb-card>
-			</div>
-			<div class="col-sm-4 col-md-3 col-lg">
-				<nb-card
-					[nbSpinner]="countsLoading"
-					nbSpinnerSize="giant"
-					nbSpinnerStatus="primary"
-					class="mb-0"
-				>
-					<nb-card-body>
-						<p>
-							{{ 'REPORT_PAGE.TOTAL_HOURS' | translate }}
-						</p>
-						<div class="h1">
-							{{ counts?.weekDuration || 0 | durationFormat }}
-						</div>
-					</nb-card-body>
-				</nb-card>
-			</div>
-		</div>
+
+		<ga-daily-statistics
+			class="mb-4"
+			[filters]="filters"
+		></ga-daily-statistics>
+
 		<div class="daily-time-report mt-4">
 			<div class="daily-time-report">
 				<nb-card>

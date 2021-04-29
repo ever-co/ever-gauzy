@@ -194,7 +194,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 		const byDate = chain(logs)
 			.groupBy((log) => moment(log.startedAt).format('YYYY-MM-DD'))
 			.mapObject((logs: ITimeLog[], date) => {
-				const tacked = logs
+				const tracked = logs
 					.filter((log) => log.logType === TimeLogType.TRACKED)
 					.reduce((iteratee: any, log: any) => {
 						return iteratee + log.duration;
@@ -218,7 +218,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 					date,
 					value: {
 						[TimeLogType.TRACKED]: parseFloat(
-							(tacked / 3600).toFixed(1)
+							(tracked / 3600).toFixed(1)
 						),
 						[TimeLogType.MANUAL]: parseFloat(
 							(manual / 3600).toFixed(1)
