@@ -22,7 +22,7 @@ LABEL maintainer="ever@ever.co"
 ENV CI=true
 
 RUN apk --update add bash && \
-    apk add --no-cache dos2unix g++ git make python vips-dev && \
+    apk add --no-cache dos2unix g++ git make python3 vips-dev && \
     mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 COPY wait .deploy/api/entrypoint.prod.sh .deploy/api/entrypoint.compose.sh /
@@ -56,7 +56,7 @@ RUN yarn install --frozen-lockfile && yarn cache clean
 FROM node:alpine AS prodDependencies
 
 RUN apk --update add bash && \
-    apk add --no-cache dos2unix g++ git make python vips-dev && \
+    apk add --no-cache dos2unix g++ git make python3 vips-dev && \
     mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 USER node:node

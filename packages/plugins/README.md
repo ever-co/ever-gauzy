@@ -1,1 +1,1 @@
-# Gauzy Plugins
+# Ever Gauzy Plugins
