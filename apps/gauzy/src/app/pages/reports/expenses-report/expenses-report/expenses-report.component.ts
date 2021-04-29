@@ -39,7 +39,7 @@ export class ExpensesReportComponent
 
 	ngOnInit() {
 		this.subject$
-			.pipe(debounceTime(500), untilDestroyed(this))
+			.pipe(debounceTime(1350), untilDestroyed(this))
 			.subscribe(() => {
 				this.updateChartData();
 			});
@@ -70,7 +70,7 @@ export class ExpensesReportComponent
 				const datasets = [
 					{
 						label: this.getTranslation('REPORT_PAGE.EXPANSE'),
-						data: logs.map((log) => log.value['expanse'])
+						data: logs.map((log) => log.value['expense'])
 					}
 				];
 				this.chartData = {

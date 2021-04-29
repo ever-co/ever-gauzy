@@ -58,7 +58,7 @@ export class ExpensesReportGridComponent
 
 	ngOnInit() {
 		this.subject$
-			.pipe(debounceTime(500), untilDestroyed(this))
+			.pipe(debounceTime(1350), untilDestroyed(this))
 			.subscribe(() => {
 				this.getExpenses();
 			});

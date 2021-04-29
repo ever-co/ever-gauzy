@@ -39,7 +39,7 @@ export class PaymentReportComponent
 
 	ngOnInit() {
 		this.subject$
-			.pipe(debounceTime(500), untilDestroyed(this))
+			.pipe(debounceTime(1350), untilDestroyed(this))
 			.subscribe(() => {
 				this.updateChartData();
 			});
@@ -69,8 +69,8 @@ export class PaymentReportComponent
 			.then((logs: IPaymentReportChartData[]) => {
 				const datasets = [
 					{
-						label: this.getTranslation('REPORT_PAGE.EXPANSE'),
-						data: logs.map((log) => log.value)
+						label: this.getTranslation('REPORT_PAGE.PAYMENT'),
+						data: logs.map((log) => log.value['payment'])
 					}
 				];
 				this.chartData = {
