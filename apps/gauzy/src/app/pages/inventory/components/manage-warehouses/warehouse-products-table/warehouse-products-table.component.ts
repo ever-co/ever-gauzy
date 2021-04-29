@@ -4,7 +4,7 @@ import {
 	IProductTranslatable,
 	IOrganization
 } from '@gauzy/contracts';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
@@ -15,11 +15,13 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Location } from '@angular/common';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { ProductService } from 'apps/gauzy/src/app/@core';
+import { InventoryStore } from 'apps/gauzy/src/app/@core';
 import { NbDialogService } from '@nebular/theme';
 import { SelectProductComponent } from '../select-product-form/select-product-form.component';
 import { first } from 'rxjs/operators';
 import { ImageRowComponent } from '../../table-components/image-row.component';
+import { ManageQuantityComponent } from '../manage-quantity/manage-quantity.component';
+import { ManageVariantsQuantityComponent } from '../manage-variants-quantity/manage-variants-quantity.component';
 
 @UntilDestroy()
 @Component({
@@ -50,8 +52,6 @@ export class WarehouseProductsTableComponent
 	) {
 		if (content) {
 			this.warehoutProductTable = content;
-			//tstodo
-			// this.onChangedSource();
 		}
 	}
 
@@ -61,10 +61,9 @@ export class WarehouseProductsTableComponent
 		private warehouseService: WarehouseService,
 		readonly translateService: TranslateService,
 		private route: ActivatedRoute,
-		private fb: FormBuilder,
 		private store: Store,
 		private location: Location,
-		private productService: ProductService
+		private inventoryStore: InventoryStore
 	) {
 		super(translateService);
 	}
@@ -84,6 +83,12 @@ export class WarehouseProductsTableComponent
 					this.loadItems();
 				}
 			});
+
+		this.inventoryStore.warehouseProductsCountUpdate$
+			.pipe(untilDestroyed(this))
+			.subscribe(() => {
+				this.loadItems();
+			});
 	}
 
 	private setRouteSubscription() {
@@ -97,7 +102,7 @@ export class WarehouseProductsTableComponent
 
 	async loadSmartTable() {
 		this.settingsSmartTable = {
-			actions: true,
+			actions: false,
 			columns: {
 				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
@@ -110,7 +115,15 @@ export class WarehouseProductsTableComponent
 				},
 				quantity: {
 					title: this.getTranslation('INVENTORY_PAGE.QUANTITY'),
-					type: 'number'
+					type: 'custom',
+					renderComponent: ManageQuantityComponent
+				},
+				variants: {
+					title: this.getTranslation(
+						'INVENTORY_PAGE.MANAGE_VARIANTS_QUANTITY'
+					),
+					type: 'custom',
+					renderComponent: ManageVariantsQuantityComponent
 				}
 			}
 		};
@@ -126,6 +139,7 @@ export class WarehouseProductsTableComponent
 		const items = await this.warehouseService.getWarehouseProducts(
 			this.warehouseId
 		);
+
 		this.loading = false;
 		this.stockData = items;
 
@@ -135,7 +149,7 @@ export class WarehouseProductsTableComponent
 						...item,
 						name: item.product.translations[0]['name'],
 						featuredImage: item.product.featuredImage,
-						quantity: 0
+						quantity: item.quantity
 					};
 			  })
 			: [];

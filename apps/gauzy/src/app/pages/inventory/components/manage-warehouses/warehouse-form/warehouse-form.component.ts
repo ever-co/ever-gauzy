@@ -196,4 +196,8 @@ export class WarehouseFormComponent
 			setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
 		}
 	}
+
+	isActiveInventoryTab() {
+		return this.warehouse && this.warehouse.id;
+	}
 }
