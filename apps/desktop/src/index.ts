@@ -61,8 +61,8 @@ import {
 	createImageViewerWindow
 } from '../../../libs/desktop-window/src';
 import { fork } from 'child_process';
-import { autoUpdater, CancellationToken } from 'electron-updater';
-
+import { autoUpdater} from 'electron-updater';
+import { CancellationToken } from "builder-util-runtime";
 import { initSentry } from './sentry';
 
 initSentry();
