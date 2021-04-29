@@ -38,6 +38,7 @@ export interface Environment {
 	DEFAULT_LATITUDE: number;
 	DEFAULT_LONGITUDE: number;
 	DEFAULT_CURRENCY: string;
+	DEFAULT_COUNTRY?: string;
 
 	IS_INTEGRATED_DESKTOP: boolean;
 
