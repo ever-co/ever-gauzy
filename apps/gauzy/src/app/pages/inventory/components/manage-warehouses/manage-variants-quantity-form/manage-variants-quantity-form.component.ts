@@ -44,11 +44,13 @@ export class ManageVariantsQuantityFormComponent
 				this.variants
 					.map((variant) => {
 						return {
+							id: variant.id,
 							image: variant.variant.image,
 							options: variant.variant.options
 								.map((opt) => opt.name)
 								.join(', '),
-							quantity: variant.quantity
+							quantity: variant.quantity,
+							type: 'variant'
 						};
 					})
 					.slice()

@@ -1,4 +1,10 @@
-import { Component, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import {
+	Component,
+	ViewChild,
+	ElementRef,
+	AfterViewInit,
+	OnInit
+} from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
 import { fromEvent } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -21,10 +27,18 @@ export class ManageQuantityComponent implements ViewCell, AfterViewInit {
 			.pipe(debounceTime(100))
 			.subscribe(async (ev: any) => {
 				if (+ev.target.value < 0) return;
-				await this.warehouseService.updateWarehouseProductCount(
-					this.rowData.id,
-					+ev.target.value
-				);
+
+				if (this.rowData.type == 'variant') {
+					await this.warehouseService.updateWarehouseProductVariantCount(
+						this.rowData.id,
+						+ev.target.value
+					);
+				} else {
+					await this.warehouseService.updateWarehouseProductCount(
+						this.rowData.id,
+						+ev.target.value
+					);
+				}
 			});
 	}
 }

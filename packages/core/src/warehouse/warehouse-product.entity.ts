@@ -3,8 +3,8 @@ import {
 	ManyToOne,
 	JoinColumn,
 	Column,
-	ManyToMany,
-	JoinTable
+	JoinTable,
+	OneToMany
 } from 'typeorm';
 import {
 	TenantBaseEntity,
@@ -31,10 +31,10 @@ export class WarehouseProduct
 	@Column({ nullable: true, type: 'numeric', default: 0 })
 	quantity: number;
 
-	@ManyToMany(
+	@OneToMany(
 		() => WarehouseProductVariant,
-		(warehouseProductVariant) => warehouseProductVariant.warehouseProducts
+		(warehouseProductVariant) => warehouseProductVariant.warehouseProduct
 	)
-	@JoinTable({ name: 'warehouse_product_warehouse_variant' })
+	@JoinColumn()
 	variants: WarehouseProductVariant[];
 }

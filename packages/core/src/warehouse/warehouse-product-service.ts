@@ -85,4 +85,21 @@ export class WarehouseProductService extends CrudService<WarehouseProduct> {
 		warehouseProduct.quantity = quantity;
 		return this.warehouseProductRepository.save(warehouseProduct);
 	}
+
+	async updateWarehouseProductVariantQuantity(
+		warehouseProductVariantId: String,
+		quantity: number
+	) {
+		let warehouseProductVariant = await this.warehouseProductVariantRepository.findOne(
+			warehouseProductVariantId as any,
+			{ relations: ['warehouseProduct'] }
+		);
+
+		let warehouseProduct = await this.warehouseProductRepository.findOne;
+
+		warehouseProductVariant.quantity = quantity;
+		return this.warehouseProductVariantRepository.save(
+			warehouseProductVariant
+		);
+	}
 }

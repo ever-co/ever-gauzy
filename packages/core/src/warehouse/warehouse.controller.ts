@@ -24,7 +24,8 @@ import {
 	IWarehouse,
 	PermissionsEnum,
 	IWarehouseProduct,
-	IWarehouseProductCreateInput
+	IWarehouseProductCreateInput,
+	IWarehouseProductVariant
 } from '@gauzy/contracts';
 import { ParseJsonPipe } from 'index';
 import { WarehouseProductService } from './warehouse-product-service';
@@ -153,6 +154,29 @@ export class WarehouseController extends CrudController<Warehouse> {
 	): Promise<IWarehouseProduct> {
 		return this.warehouseProductsService.updateWarehouseProductQuantity(
 			warehouseProductId,
+			value.count
+		);
+	}
+
+	@ApiOperation({
+		summary: 'Update warehouse product variant count.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Warehouse product variant count updated.',
+		type: Warehouse
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Post('/inventory-quantity/variants/:warehouseProductVariantId')
+	async updateWarehouseProductVariantCount(
+		@Param('warehouseProductVariantId') warehouseProductVariantId: string,
+		@Body() value: { count: number }
+	): Promise<IWarehouseProductVariant> {
+		return this.warehouseProductsService.updateWarehouseProductVariantQuantity(
+			warehouseProductVariantId,
 			value.count
 		);
 	}
