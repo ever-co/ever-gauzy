@@ -21,6 +21,7 @@ import { SelectProductComponent } from '../select-product-form/select-product-fo
 import { first } from 'rxjs/operators';
 import { ImageRowComponent } from '../../table-components/image-row.component';
 import { ManageQuantityComponent } from '../manage-quantity/manage-quantity.component';
+import { ManageVariantsQuantityComponent } from '../manage-variants-quantity/manage-variants-quantity.component';
 
 @UntilDestroy()
 @Component({
@@ -111,6 +112,13 @@ export class WarehouseProductsTableComponent
 					title: this.getTranslation('INVENTORY_PAGE.QUANTITY'),
 					type: 'custom',
 					renderComponent: ManageQuantityComponent
+				},
+				variants: {
+					title: this.getTranslation(
+						'INVENTORY_PAGE.MANAGE_VARIANTS_QUANTITY'
+					),
+					type: 'custom',
+					renderComponent: ManageVariantsQuantityComponent
 				}
 			}
 		};
@@ -126,6 +134,9 @@ export class WarehouseProductsTableComponent
 		const items = await this.warehouseService.getWarehouseProducts(
 			this.warehouseId
 		);
+
+		//tstodo
+		console.log(items, 'items');
 		this.loading = false;
 		this.stockData = items;
 

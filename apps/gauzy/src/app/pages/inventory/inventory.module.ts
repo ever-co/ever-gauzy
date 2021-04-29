@@ -68,6 +68,7 @@ import { WarehousesTableComponent } from './components/manage-warehouses/warehou
 import { WarehouseProductsTableComponent } from './components/manage-warehouses/warehouse-products-table/warehouse-products-table.component';
 import { SelectProductComponent } from './components/manage-warehouses/select-product-form/select-product-form.component';
 import { ManageQuantityComponent } from './components/manage-warehouses/manage-quantity/manage-quantity.component';
+import { ManageVariantsQuantityComponent } from './components/manage-warehouses/manage-variants-quantity/manage-variants-quantity.component';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -103,7 +104,8 @@ const NB_MODULES = [
 		WarehousesComponent,
 		WarehouseProductsTableComponent,
 		SelectProductComponent,
-		ManageQuantityComponent
+		ManageQuantityComponent,
+		ManageVariantsQuantityComponent
 	],
 	imports: [
 		UserFormsModule,
