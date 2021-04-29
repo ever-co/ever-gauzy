@@ -135,8 +135,6 @@ export class WarehouseProductsTableComponent
 			this.warehouseId
 		);
 
-		//tstodo
-		console.log(items, 'items');
 		this.loading = false;
 		this.stockData = items;
 

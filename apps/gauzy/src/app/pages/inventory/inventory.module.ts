@@ -68,6 +68,7 @@ import { WarehousesTableComponent } from './components/manage-warehouses/warehou
 import { WarehouseProductsTableComponent } from './components/manage-warehouses/warehouse-products-table/warehouse-products-table.component';
 import { SelectProductComponent } from './components/manage-warehouses/select-product-form/select-product-form.component';
 import { ManageQuantityComponent } from './components/manage-warehouses/manage-quantity/manage-quantity.component';
+import { ManageVariantsQuantityFormComponent } from './components/manage-warehouses/manage-variants-quantity-form/manage-variants-quantity-form.component';
 import { ManageVariantsQuantityComponent } from './components/manage-warehouses/manage-variants-quantity/manage-variants-quantity.component';
 
 const NB_MODULES = [
@@ -105,7 +106,8 @@ const NB_MODULES = [
 		WarehouseProductsTableComponent,
 		SelectProductComponent,
 		ManageQuantityComponent,
-		ManageVariantsQuantityComponent
+		ManageVariantsQuantityComponent,
+		ManageVariantsQuantityFormComponent
 	],
 	imports: [
 		UserFormsModule,

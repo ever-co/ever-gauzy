@@ -1,4 +1,10 @@
-<button (click)="" shape="round" size="small" nbButton status="info">
+<button
+	(click)="onManageVariantsClick()"
+	shape="round"
+	size="small"
+	nbButton
+	status="info"
+>
 	<nb-icon status="primary" icon="list-outline"></nb-icon>
 	{{ 'INVENTORY_PAGE.MANAGE_VARIANTS_QUANTITY' | translate }}
 </button>
