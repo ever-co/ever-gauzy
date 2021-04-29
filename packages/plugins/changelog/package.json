@@ -36,7 +36,9 @@
 		"@nestjs/typeorm": "^7.1.5",
 		"faker": "^5.1.0",
 		"nest-router": "^1.0.9",
-		"typeorm": "^0.2.29"
+		"typeorm": "^0.2.32",
+		"typeorm-express-query-builder": "^1.2.0",
+		"typeorm-aurora-data-api-driver": "^2.1.0"
 	},
 	"devDependencies": {
 		"@types/node": "^14.14.22",
