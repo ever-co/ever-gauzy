@@ -15,14 +15,14 @@ ARG DEMO
 ARG HOST
 ARG PORT
 
-FROM node:alpine AS dependencies
+FROM node:16-alpine3.11 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 
 ENV CI=true
 
 RUN apk --update add bash && \
-    apk add --no-cache dos2unix g++ git make python3 vips-dev && \
+    apk add --no-cache --virtual build-dependencies dos2unix gcc g++ git make python2 py2-setuptools vips-dev && \
     mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 COPY wait .deploy/api/entrypoint.prod.sh .deploy/api/entrypoint.compose.sh /
@@ -52,11 +52,12 @@ COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugin
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 
 RUN yarn install --frozen-lockfile && yarn cache clean
+# RUN apk del build-dependencies make gcc g++ python2 py2-setuptools vips-dev
 
-FROM node:alpine AS prodDependencies
+FROM node:16-alpine3.11 AS prodDependencies
 
 RUN apk --update add bash && \
-    apk add --no-cache dos2unix g++ git make python3 vips-dev && \
+    apk add --no-cache --virtual build-dependencies dos2unix gcc g++ git make python2 py2-setuptools vips-dev && \
     mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 USER node:node
@@ -80,11 +81,12 @@ COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugin
 
 COPY --chown=node:node package.json yarn.lock ./
 
-RUN yarn install --frozen-lockfile --production && yarn cache clean
+RUN yarn install --frozen-lockfile --production && yarn cache clean 
+# RUN apk del build-dependencies make gcc g++ python2 py2-setuptools vips-dev
 
 RUN rm -r node_modules/@angular
 
-FROM node:alpine AS development
+FROM node:16-alpine3.11 AS development
 
 USER node:node
 
@@ -94,7 +96,7 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:alpine AS build
+FROM node:16-alpine3.11 AS build
 
 WORKDIR /srv/gauzy
 
@@ -111,7 +113,7 @@ ENV IS_DOCKER=true
 RUN yarn build:package:api
 RUN yarn build:api:prod
 
-FROM node:alpine AS production
+FROM node:16-alpine3.11 AS production
 
 WORKDIR /srv/gauzy
 
