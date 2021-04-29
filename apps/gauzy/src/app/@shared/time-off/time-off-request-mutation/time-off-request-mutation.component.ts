@@ -17,6 +17,7 @@ import { OrganizationDocumentsService } from '../../../@core/services/organizati
 import * as moment from 'moment';
 import { ToastrService } from '../../../@core/services/toastr.service';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
+import { environment as ENV } from 'apps/gauzy/src/environments/environment';
 @Component({
 	selector: 'ngx-time-off-request-mutation',
 	templateUrl: './time-off-request-mutation.component.html',
@@ -73,9 +74,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	private async _getAllHolidays() {
 		const holidays = new Holidays();
 		const currentMoment = new Date();
-		const countryCode = this.currentUserCountryCode
-			? this.currentUserCountryCode
-			: this.organizationCountryCode;
+		const countryCode = this.currentUserCountryCode || this.organizationCountryCode || ENV.DEFAULT_COUNTRY;
 
 		if (countryCode) {
 			holidays.init(countryCode);
