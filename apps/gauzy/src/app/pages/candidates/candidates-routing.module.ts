@@ -33,6 +33,9 @@ const routes: Routes = [
 			permissions: {
 				only: [PermissionsEnum.ORG_CANDIDATES_VIEW],
 				redirectTo: '/pages/dashboard'
+			},
+			selectors: {
+				project: false
 			}
 		}
 	},
@@ -65,47 +68,135 @@ const routes: Routes = [
 			},
 			{
 				path: 'account',
-				component: EditCandidateMainComponent
+				component: EditCandidateMainComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						organization: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'rates',
-				component: EditCandidateRatesComponent
+				component: EditCandidateRatesComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						organization: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'tasks',
-				component: EditCandidateTasksComponent
+				component: EditCandidateTasksComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						organization: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'experience',
-				component: EditCandidateExperienceComponent
+				component: EditCandidateExperienceComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						organization: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'documents',
-				component: EditCandidateDocumentsComponent
+				component: EditCandidateDocumentsComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						organization: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'feedbacks',
-				component: EditCandidateFeedbacksComponent
+				component: EditCandidateFeedbacksComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						organization: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'history',
-				component: EditCandidateHistoryComponent
+				component: EditCandidateHistoryComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						organization: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'location',
-				component: EditCandidateLocationComponent
+				component: EditCandidateLocationComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						organization: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'hiring',
-				component: EditCandidateHiringComponent
+				component: EditCandidateHiringComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						organization: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'employment',
-				component: EditCandidateEmploymentComponent
+				component: EditCandidateEmploymentComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						organization: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'interview',
-				component: EditCandidateInterviewComponent
+				component: EditCandidateInterviewComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						organization: false,
+						date: false
+					}
+				}
 			}
 		]
 	},
@@ -117,7 +208,12 @@ const routes: Routes = [
 			expectedPermissions: [
 				PermissionsEnum.ORG_INVITE_EDIT,
 				PermissionsEnum.ORG_INVITE_VIEW
-			]
+			],
+			selectors: {
+				project: false,
+				employee: false,
+				date: false
+			}
 		}
 	},
 	{
@@ -138,15 +234,36 @@ const routes: Routes = [
 			},
 			{
 				path: 'calendar',
-				component: InterviewCalendarComponent
+				component: InterviewCalendarComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'interview_panel',
-				component: InterviewPanelComponent
+				component: InterviewPanelComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'criterion',
-				component: InterviewCriterionsComponent
+				component: InterviewCriterionsComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						date: false
+					}
+				}
 			}
 		]
 	},
@@ -158,6 +275,11 @@ const routes: Routes = [
 			permissions: {
 				only: [PermissionsEnum.ORG_CANDIDATES_VIEW],
 				redirectTo: '/pages/dashboard'
+			},
+			selectors: {
+				project: false,
+				employee: false,
+				date: false
 			}
 		}
 	}

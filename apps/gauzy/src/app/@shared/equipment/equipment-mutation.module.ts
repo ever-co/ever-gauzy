@@ -15,6 +15,7 @@ import { Store } from '../../@core/services/store.service';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
 import { CurrencyModule } from '../currency/currency.module';
 import { TranslateModule } from '../translate/translate.module';
+import { ImageAssetService } from '../../@core';
 
 @NgModule({
 	imports: [
@@ -33,6 +34,6 @@ import { TranslateModule } from '../translate/translate.module';
 	],
 	declarations: [EquipmentMutationComponent],
 	entryComponents: [],
-	providers: [EquipmentService, Store]
+	providers: [EquipmentService, ImageAssetService, Store]
 })
 export class EquipmentMutationModule {}

@@ -32,7 +32,12 @@ const routes: Routes = [
 			},
 			{
 				path: 'reports',
-				component: ReportsComponent
+				component: ReportsComponent,
+				data: {
+					selectors: {
+						project: false
+					}
+				}
 			},
 			{
 				path: 'transactions',

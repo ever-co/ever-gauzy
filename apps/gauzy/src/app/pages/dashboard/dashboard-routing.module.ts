@@ -18,11 +18,21 @@ const routes: Routes = [
 			},
 			{
 				path: 'accounting',
-				component: AccountingComponent
+				component: AccountingComponent,
+				data: {
+					selectors: {
+						project: false
+					}
+				}
 			},
 			{
 				path: 'hr',
-				component: HumanResourcesComponent
+				component: HumanResourcesComponent,
+				data: {
+					selectors: {
+						project: false
+					}
+				}
 			},
 			{
 				path: 'time-tracking',

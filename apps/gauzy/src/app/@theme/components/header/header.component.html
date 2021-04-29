@@ -39,14 +39,22 @@
 		</nb-action>
 
 		<nb-action
-			*ngIf="showProjectsSelector && !showExtraActions"
+			*ngIf="
+				showProjectsSelector &&
+				!showExtraActions &&
+				selectorsVisibility?.project
+			"
 			class="show-large-up"
 		>
 			<ga-project-selector> </ga-project-selector>
 		</nb-action>
 
 		<nb-action
-			*ngIf="showEmployeesSelector && !showExtraActions"
+			*ngIf="
+				showEmployeesSelector &&
+				!showExtraActions &&
+				selectorsVisibility?.employee
+			"
 			class="show-large-up"
 		>
 			<ga-employee-selector
@@ -55,14 +63,20 @@
 		</nb-action>
 
 		<nb-action
-			*ngIf="showDateSelector && !showExtraActions"
+			*ngIf="
+				showDateSelector &&
+				!showExtraActions &&
+				selectorsVisibility?.date
+			"
 			class="show-large-up"
 		>
 			<ga-date-selector class="date-selector"></ga-date-selector>
 		</nb-action>
 
 		<nb-action
-			*ngIf="showOrganizationsSelector"
+			*ngIf="
+				showOrganizationsSelector && selectorsVisibility?.organization
+			"
 			class="show-large-up organization-selector-container"
 		>
 			<ga-organization-selector

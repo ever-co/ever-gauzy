@@ -1,7 +1,7 @@
 import { IUser } from './user.model';
 import { IEmployee } from './employee.model';
 import { ITask } from './task-entity.model';
-import { ITimeSlot, ITimeLog } from './timesheet.model';
+import { ITimeSlot, ITimeLog, ITimeLogFilters } from './timesheet.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IOrganization } from './organization.model';
 import { ITenant } from './tenant.model';
@@ -9,9 +9,10 @@ import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
 export interface IGetTimeSlotStatistics {
 	employeeId?: string;
+	projectId?: string | string[];
 	organizationId: string;
 	tenantId: string;
-	date?: Date;
+	date?: Date | string;
 	onlyMe?: boolean;
 }
 
@@ -25,9 +26,10 @@ export interface ITimeSlotStatistics extends IEmployee {
 
 export interface IGetActivitiesStatistics {
 	employeeId?: string;
+	projectId?: string | string[];
 	organizationId: string;
 	tenantId: string;
-	date?: Date;
+	date?: Date | string;
 	onlyMe?: boolean;
 }
 
@@ -42,7 +44,8 @@ export interface IGetProjectsStatistics {
 	organizationId: string;
 	tenantId: string;
 	employeeId?: string;
-	date?: Date;
+	projectId?: string | string[];
+	date?: Date | string;
 	onlyMe?: boolean;
 }
 
@@ -59,7 +62,8 @@ export interface IProjectsStatistics extends IOrganizationProject {
 export interface IGetTasksStatistics
 	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
-	date?: Date;
+	projectId?: string | string[];
+	date?: Date | string;
 	onlyMe?: boolean;
 }
 
@@ -71,7 +75,8 @@ export interface ITasksStatistics extends ITask {
 export interface IGetManualTimesStatistics
 	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
-	date?: Date;
+	projectId?: string | string[];
+	date?: Date | string;
 	onlyMe?: boolean;
 }
 
@@ -83,8 +88,9 @@ export interface IManualTimesStatistics
 
 export interface IGetMembersStatistics
 	extends IBasePerTenantAndOrganizationEntityModel {
-	date?: Date;
+	date?: Date | string;
 	employeeId?: string;
+	projectId?: string | string[];
 }
 
 export interface IMembersStatistics {
@@ -105,13 +111,10 @@ export interface IMembersStatistics {
 	user?: Pick<IUser, 'name' | 'imageUrl'>;
 }
 
-export interface IGetCountsStatistics
-	extends IBasePerTenantAndOrganizationEntityModel {
-	date?: Date;
+export interface IGetCountsStatistics extends ITimeLogFilters {
 	onlyMe?: boolean;
-	startDate?: Date | string;
-	endDate?: Date | string;
 	employeeId?: string;
+	projectId?: string | string[];
 }
 
 export interface ICountsStatistics {

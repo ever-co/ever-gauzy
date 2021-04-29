@@ -2098,7 +2098,8 @@
 		"COUNTRY": "crwdns10224:0crwdne10224:0",
 		"NEW_OPTION_GROUP": "crwdns10250:0crwdne10250:0",
 		"OPTION_GROUP_NAME": "crwdns10252:0crwdne10252:0",
-		"OPTION_TRANSLATIONS": "crwdns10254:0crwdne10254:0"
+		"OPTION_TRANSLATIONS": "crwdns10254:0crwdne10254:0",
+		"ADD_PRODUCTS": "crwdns10258:0crwdne10258:0"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "crwdns3029:0crwdne3029:0",

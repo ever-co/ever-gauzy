@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { IProductOptionTranslatable } from '@gauzy/contracts';
+import { IProductOptionTranslatable, LanguagesEnum } from '@gauzy/contracts';
 import { Router } from '@angular/router';
 import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Store, TranslatableService } from 'apps/gauzy/src/app/@core';
+
 export interface OptionCreateInput {
 	name: string;
 	code: string;
@@ -10,6 +12,7 @@ export interface OptionCreateInput {
 
 export interface VariantCreateInput {
 	options: string[];
+	optionsFull: IProductOptionTranslatable[];
 	isStored: boolean;
 	id?: string;
 	productId?: string;
@@ -22,18 +25,23 @@ export interface VariantCreateInput {
 	styleUrls: ['./variant-form.component.scss']
 })
 export class VariantFormComponent implements OnInit {
-	options: IProductOptionTranslatable[];
+	options: IProductOptionTranslatable[] = [];
+	optionsSelect: String[] = [];
 
 	variantCreateInputs: VariantCreateInput[] = [];
 	editVariantCreateInput: VariantCreateInput = {
+		optionsFull: [],
 		options: [],
 		isStored: false
 	};
 	mode = 'create';
+	languageCode: string = LanguagesEnum.ENGLISH;
 
 	constructor(
+		private translatableService: TranslatableService,
 		private router: Router,
-		private inventoryStore: InventoryStore
+		private inventoryStore: InventoryStore,
+		private store: Store
 	) {}
 
 	ngOnInit(): void {
@@ -42,14 +50,34 @@ export class VariantFormComponent implements OnInit {
 			.subscribe((optionGroups) => {
 				this.options = [];
 				optionGroups.forEach((optionGroup) => {
-					this.options = this.options.concat(optionGroup.options);
+					this.options.push(...optionGroup.options);
 				});
+				this.optionsSelect = this.options.map((opt) => opt.name);
 			});
 
 		this.inventoryStore.variantCreateInputs$
 			.pipe(untilDestroyed(this))
 			.subscribe((variantCreateInputs) => {
 				this.variantCreateInputs = variantCreateInputs;
+			});
+
+		this.store.preferredLanguage$
+			.pipe(untilDestroyed(this))
+			.subscribe(async () => {
+				this.options = await Promise.all(
+					this.options.map(async (option) => {
+						return Promise.resolve(
+							this.translatableService.getTranslated(option, [
+								'name'
+							])
+						);
+					})
+				);
+				this.optionsSelect = this.options.map((opt) => opt.name);
+				this.editVariantCreateInput = {
+					...this.editVariantCreateInput,
+					optionsFull: this.options
+				};
 			});
 	}
 
@@ -74,9 +102,14 @@ export class VariantFormComponent implements OnInit {
 			this.mode === 'create' &&
 			!this.optionCombinationAlreadySelected()
 		) {
-			this.inventoryStore.addVariantCreateInput(
-				this.editVariantCreateInput
-			);
+			let opts = this.options.filter((opt) => {
+				return this.editVariantCreateInput.options.includes(opt.name);
+			});
+
+			this.inventoryStore.addVariantCreateInput({
+				...this.editVariantCreateInput,
+				optionsFull: opts
+			});
 		}
 
 		this.resetCreateVariantInputForm();
@@ -84,7 +117,11 @@ export class VariantFormComponent implements OnInit {
 
 	resetCreateVariantInputForm() {
 		this.mode = 'create';
-		this.editVariantCreateInput = { options: [], isStored: false };
+		this.editVariantCreateInput = {
+			options: [],
+			optionsFull: this.editVariantCreateInput.optionsFull,
+			isStored: false
+		};
 	}
 
 	optionCombinationAlreadySelected() {
@@ -109,7 +146,8 @@ export class VariantFormComponent implements OnInit {
 
 	getVariantDisplayName(variantCreateInput: VariantCreateInput) {
 		if (!variantCreateInput.options.length) return '-';
-		return variantCreateInput.options.join(' ');
+
+		return variantCreateInput.optionsFull.map((opt) => opt.name).join(' ');
 	}
 
 	onVariantBtnClick(variantCreateInput: VariantCreateInput) {

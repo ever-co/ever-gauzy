@@ -14,6 +14,7 @@ import { ProductService } from '../product/product.service';
 import { Product } from '../product/product.entity';
 import { ProductVariantDeleteHandler } from './commands/handlers/product-variant.delete.handler';
 import { TenantModule } from '../tenant/tenant.module';
+import { ProductTranslation } from 'core';
 
 @Module({
 	imports: [
@@ -24,7 +25,8 @@ import { TenantModule } from '../tenant/tenant.module';
 			ProductVariant,
 			ProductVariantPrice,
 			ProductVariantSettings,
-			Product
+			Product,
+			ProductTranslation
 		]),
 		CqrsModule,
 		TenantModule

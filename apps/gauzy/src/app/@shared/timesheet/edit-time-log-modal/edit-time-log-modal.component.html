@@ -64,7 +64,6 @@
 				>
 				</ngx-timer-range-picker>
 			</div>
-
 			<nb-card status="danger" *ngIf="overlaps.length > 0">
 				<nb-card-header>
 					<div class="d-flex align-items-center">
@@ -90,23 +89,25 @@
 					</div>
 					<div
 						class="row border-top py-2"
-						*ngFor="let timelog of overlaps"
+						*ngFor="let overlapTimeLog of overlaps"
 					>
 						<div class="col">
-							<span *ngIf="timelog?.task; else noProfject">
-								{{ timelog?.project?.name }}
+							<span
+								*ngIf="overlapTimeLog?.project; else noProject"
+							>
+								{{ overlapTimeLog?.project?.name }}
 							</span>
-							<ng-template #noProfject>
+							<ng-template #noProject>
 								<span>{{
 									'TIMESHEET.NO_PROJECT' | translate
 								}}</span>
 							</ng-template>
 							<div class="mt-2 small">
-								<span *ngIf="timelog?.task; else noToDo">
+								<span *ngIf="overlapTimeLog?.task; else noToDo">
 									<strong
 										>{{ 'TIMESHEET.TODO' | translate }} :
 									</strong>
-									{{ timelog?.task?.title }}
+									{{ overlapTimeLog?.task?.title }}
 								</span>
 								<ng-template #noToDo>
 									<span>{{
@@ -116,12 +117,13 @@
 							</div>
 						</div>
 						<div class="col text-center">
-							{{ timelog.overlapDueration | durationFormat }}
+							{{
+								overlapTimeLog.overlapDuration | durationFormat
+							}}
 						</div>
 					</div>
 				</nb-card-body>
 			</nb-card>
-
 			<div class="form-group">
 				<nb-checkbox
 					formControlName="isBillable"
@@ -131,7 +133,6 @@
 					{{ 'TIMER_TRACKER.IS_BILLABLE' | translate }}
 				</nb-checkbox>
 			</div>
-
 			<div class="form-group">
 				<label>{{ 'TIMER_TRACKER.SELECT_CLIENT' | translate }}</label>
 				<ga-contact-selector
@@ -180,19 +181,16 @@
 					</div>
 				</div>
 			</div>
-
-			<div class="form-group">
+			<div class="form-group" *ngIf="getControlValue('projectId')">
 				<label>{{ 'TIMER_TRACKER.SELECT_TASK' | translate }}</label>
-
 				<ga-task-selector
 					name="taskId"
-					[employeeId]="form.get('employeeId')?.value"
-					[projectId]="form.get('projectId')?.value"
+					[employeeId]="getControlValue('employeeId')"
+					[projectId]="getControlValue('projectId')"
 					formControlName="taskId"
 					[required]="organization?.requireTask"
 				>
 				</ga-task-selector>
-
 				<div
 					*ngIf="form.get('taskId')?.invalid && f.submitted"
 					class="invalid-feedback d-block"
@@ -202,7 +200,6 @@
 					</div>
 				</div>
 			</div>
-
 			<div class="form-group">
 				<label>{{ 'TIMER_TRACKER.DESCRIPTION' | translate }}</label>
 				<textarea
@@ -213,7 +210,6 @@
 					formControlName="description"
 					[required]="organization?.requireDescription"
 				></textarea>
-
 				<div
 					*ngIf="form.get('description')?.invalid && f.submitted"
 					class="invalid-feedback d-block"
@@ -243,7 +239,6 @@
 					</div>
 				</div>
 			</div>
-
 			<div class="form-group"></div>
 		</nb-card-body>
 		<nb-card-footer>

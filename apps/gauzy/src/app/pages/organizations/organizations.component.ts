@@ -4,7 +4,7 @@ import {
 	IOrganization,
 	ComponentLayoutStyleEnum,
 	IUser,
-	OrganizationAction
+	CrudActionEnum
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -160,26 +160,27 @@ export class OrganizationsComponent
 			.toPromise();
 		if (result) {
 			try {
-				await this.organizationsService
+				this.organizationsService
 					.create(result)
 					.then((organization: IOrganization) => {
-						this._organizationEditStore.organizationAction = {
-							organization,
-							action: OrganizationAction.CREATED
-						};
-
+						if (organization) {
+							this._organizationEditStore.organizationAction = {
+								organization,
+								action: CrudActionEnum.CREATED
+							};
+						}
 						this.toastrService.success(
 							'NOTES.ORGANIZATIONS.ADD_NEW_ORGANIZATION',
 							{
 								name: result.name
 							}
 						);
-						setTimeout(() => {
-							this._loadSmartTable();
-						}, 200);
 					})
 					.catch((error) => {
 						this.errorHandler.handleError(error);
+					})
+					.finally(() => {
+						this._loadSmartTable();
 					});
 			} catch (error) {
 				this.errorHandler.handleError(error);
@@ -222,7 +223,7 @@ export class OrganizationsComponent
 					.then(() => {
 						this._organizationEditStore.organizationAction = {
 							organization: this.selectedOrganization,
-							action: OrganizationAction.DELETED
+							action: CrudActionEnum.DELETED
 						};
 						this.toastrService.success(
 							'NOTES.ORGANIZATIONS.DELETE_ORGANIZATION',
@@ -233,9 +234,11 @@ export class OrganizationsComponent
 					})
 					.catch((error) => {
 						this.errorHandler.handleError(error);
+					})
+					.finally(() => {
+						this.clearItem();
+						this._loadSmartTable();
 					});
-				this.clearItem();
-				this._loadSmartTable();
 			} catch (error) {
 				this.errorHandler.handleError(error);
 			}

@@ -58,7 +58,7 @@ export class WarehouseFormComponent
 						params.id
 					);
 
-					this.tags = this.warehouse?.tags || [];
+					this.tags = this.warehouse.tags || [];
 
 					this._initializeLocationForm();
 					this._initializeForm();
@@ -195,5 +195,9 @@ export class WarehouseFormComponent
 		if (tab['tabTitle'] == 'Location') {
 			setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
 		}
+	}
+
+	isActiveInventoryTab() {
+		return this.warehouse && this.warehouse.id;
 	}
 }

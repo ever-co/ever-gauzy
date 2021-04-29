@@ -1,0 +1,15 @@
+:host ::ng-deep input[type='checkbox'] {
+  width: 15px !important;
+}
+
+:host ::ng-deep .ng2-smart-action-multiple-select {
+  display: flex;
+  justify-content: center;
+  align-content: center;
+}
+
+:host ::ng-deep td.ng2-smart-action-multiple-select {
+  display: flex;
+  height: 79px;
+  align-items: center;
+}

@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Subject } from 'rxjs';
+import { combineLatest, Subject } from 'rxjs';
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import {
@@ -8,13 +8,12 @@ import {
 	ITimeLog,
 	IOrganizationProject,
 	ITimeLogFilters,
-	OrganizationPermissionsEnum,
-	ISelectedEmployee
+	OrganizationPermissionsEnum
 } from '@gauzy/contracts';
 import { toUTC } from '@gauzy/common-angular';
 import { Store } from './../../../../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounceTime, filter, tap, withLatestFrom } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
 import { NbDialogService } from '@nebular/theme';
 import { EditTimeLogModalComponent } from './../../../../../@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
@@ -54,7 +53,8 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 		this._selectedDate = value;
 	}
 
-	selectedEmployeeId = null;
+	selectedEmployeeId: string | null = null;
+	projectId: string | null = null;
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -75,38 +75,26 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 		this.logRequest.endDate = moment(this.today).endOf('week').toDate();
 		this.updateWeekDayList();
 
-		const storeEmployee$ = this.store.selectedEmployee$;
 		const storeOrganization$ = this.store.selectedOrganization$;
-		storeEmployee$
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeProject$ = this.store.selectedProject$;
+		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
 			.pipe(
-				filter((employee: ISelectedEmployee) => !!employee),
-				debounceTime(200),
-				withLatestFrom(storeOrganization$),
+				filter(([organization]) => !!organization),
+				tap(([organization, employee, project]) => {
+					if (organization) {
+						this.organization = organization;
+						this.selectedEmployeeId = employee ? employee.id : null;
+						this.projectId = project ? project.id : null;
+						this.updateLogs$.next();
+					}
+				}),
 				untilDestroyed(this)
 			)
-			.subscribe(([employee]) => {
-				if (employee && this.organization) {
-					this.selectedEmployeeId = employee.id;
-					this.updateLogs$.next();
-				}
-			});
-		storeOrganization$
-			.pipe(
-				filter((organization) => !!organization),
-				debounceTime(200),
-				withLatestFrom(storeEmployee$),
-				untilDestroyed(this)
-			)
-			.subscribe(([organization, employee]) => {
-				this.selectedEmployeeId = employee ? employee.id : null;
-				if (organization) {
-					this.organization = organization;
-					this.updateLogs$.next();
-				}
-			});
+			.subscribe();
 		this.updateLogs$
 			.pipe(
-				debounceTime(500),
+				debounceTime(800),
 				tap(() => this.getLogs()),
 				untilDestroyed(this)
 			)
@@ -158,7 +146,6 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 
 		const appliedFilter = _.pick(
 			this.logRequest,
-			'projectIds',
 			'source',
 			'activityLevel',
 			'logType'
@@ -169,11 +156,17 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 			employeeIds.push(this.selectedEmployeeId);
 		}
 
+		const projectIds: string[] = [];
+		if (this.projectId) {
+			projectIds.push(this.projectId);
+		}
+
 		const request: IGetTimeLogInput = {
 			...appliedFilter,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
 			...(employeeIds.length > 0 ? { employeeIds } : {}),
+			...(projectIds.length > 0 ? { projectIds } : {}),
 			organizationId,
 			tenantId
 		};

@@ -7,8 +7,7 @@ import {
 	IDateRange,
 	PermissionsEnum,
 	ITimeLogFilters,
-	OrganizationPermissionsEnum,
-	ISelectedEmployee
+	OrganizationPermissionsEnum
 } from '@gauzy/contracts';
 import { toUTC } from '@gauzy/common-angular';
 import {
@@ -17,7 +16,7 @@ import {
 	NbMenuService
 } from '@nebular/theme';
 import { Store } from './../../../../../@core/services/store.service';
-import { filter, map, debounceTime, tap, withLatestFrom } from 'rxjs/operators';
+import { filter, map, debounceTime, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
 import { EditTimeLogModalComponent } from './../../../../../@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
@@ -28,6 +27,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
 import * as _ from 'underscore';
 import { ActivatedRoute } from '@angular/router';
+import { combineLatest } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -64,7 +64,8 @@ export class DailyComponent implements OnInit, OnDestroy {
 	updateLogs$: Subject<any> = new Subject();
 	loading: boolean;
 
-	selectedEmployeeId = null;
+	selectedEmployeeId: string | null = null;
+	projectId: string | null = null;
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -85,39 +86,27 @@ export class DailyComponent implements OnInit, OnDestroy {
 				map(({ item: { title } }) => title)
 			)
 			.subscribe((title) => this.bulkAction(title));
-		const storeEmployee$ = this.store.selectedEmployee$;
 		const storeOrganization$ = this.store.selectedOrganization$;
-		storeEmployee$
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeProject$ = this.store.selectedProject$;
+		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
 			.pipe(
-				filter((employee: ISelectedEmployee) => !!employee),
-				debounceTime(200),
-				withLatestFrom(storeOrganization$),
+				filter(([organization]) => !!organization),
+				tap(([organization, employee, project]) => {
+					if (organization) {
+						this.organization = organization;
+						this.selectedEmployeeId = employee ? employee.id : null;
+						this.projectId = project ? project.id : null;
+						this.updateLogs$.next();
+					}
+				}),
 				untilDestroyed(this)
 			)
-			.subscribe(([employee]) => {
-				if (employee && this.organization) {
-					this.selectedEmployeeId = employee.id;
-					this.updateLogs$.next();
-				}
-			});
-		storeOrganization$
-			.pipe(
-				filter((organization) => !!organization),
-				debounceTime(200),
-				withLatestFrom(storeEmployee$),
-				untilDestroyed(this)
-			)
-			.subscribe(([organization, employee]) => {
-				this.selectedEmployeeId = employee ? employee.id : null;
-				if (organization) {
-					this.organization = organization;
-					this.updateLogs$.next();
-				}
-			});
+			.subscribe();
 		this.updateLogs$
 			.pipe(
 				untilDestroyed(this),
-				debounceTime(500),
+				debounceTime(800),
 				tap(() => this.getLogs())
 			)
 			.subscribe();
@@ -158,7 +147,6 @@ export class DailyComponent implements OnInit, OnDestroy {
 
 		const appliedFilter = _.pick(
 			this.logRequest,
-			'projectIds',
 			'source',
 			'activityLevel',
 			'logType'
@@ -169,13 +157,19 @@ export class DailyComponent implements OnInit, OnDestroy {
 			employeeIds.push(this.selectedEmployeeId);
 		}
 
+		const projectIds: string[] = [];
+		if (this.projectId) {
+			projectIds.push(this.projectId);
+		}
+
 		const request: IGetTimeLogInput = {
 			organizationId,
 			tenantId,
 			...appliedFilter,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
-			...(employeeIds.length > 0 ? { employeeIds } : {})
+			...(employeeIds.length > 0 ? { employeeIds } : {}),
+			...(projectIds.length > 0 ? { projectIds } : {})
 		};
 
 		this.loading = true;

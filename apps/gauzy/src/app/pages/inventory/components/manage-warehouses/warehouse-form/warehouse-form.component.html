@@ -192,6 +192,12 @@
 							>
 							</ga-leaflet-map>
 						</nb-tab>
+						<nb-tab
+							tabTitle="Inventory "
+							[disabled]="!isActiveInventoryTab()"
+						>
+							<ga-warehouse-products-table></ga-warehouse-products-table>
+						</nb-tab>
 					</nb-tabset>
 				</div>
 			</div>

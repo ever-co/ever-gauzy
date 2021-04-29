@@ -4,6 +4,7 @@ import { IOrganization, ITask, TaskListTypeEnum } from '@gauzy/contracts';
 import { map, tap } from 'rxjs/operators';
 import { TasksService } from './tasks.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+
 @UntilDestroy()
 @Injectable({
 	providedIn: 'root'

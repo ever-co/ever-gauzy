@@ -4,14 +4,12 @@ import {
 	ITimeSlot,
 	IGetTimeSlotInput,
 	IScreenshotMap,
-	IOrganization,
-	ISelectedEmployee,
 	IScreenshot
 } from '@gauzy/contracts';
 import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
-import { debounceTime, filter, tap, withLatestFrom } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Store } from './../../../../../@core/services/store.service';
-import { Subject } from 'rxjs';
+import { combineLatest, Subject } from 'rxjs';
 import { toUTC, toLocal } from '@gauzy/common-angular';
 import * as _ from 'underscore';
 import * as moment from 'moment';
@@ -39,7 +37,8 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 	selectedIdsCount = 0;
 	allSelected = false;
 	orignalTimeSlots: ITimeSlot[];
-	selectedEmployeeId = null;
+	selectedEmployeeId: string | null = null;
+	projectId: string | null = null;
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -50,38 +49,26 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit(): void {
-		const storeEmployee$ = this.store.selectedEmployee$;
 		const storeOrganization$ = this.store.selectedOrganization$;
-		storeEmployee$
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeProject$ = this.store.selectedProject$;
+		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
 			.pipe(
-				filter((employee: ISelectedEmployee) => !!employee),
-				debounceTime(200),
-				withLatestFrom(storeOrganization$),
+				filter(([organization]) => !!organization),
+				tap(([organization, employee, project]) => {
+					if (organization) {
+						this.organization = organization;
+						this.selectedEmployeeId = employee ? employee.id : null;
+						this.projectId = project ? project.id : null;
+						this.updateLogs$.next();
+					}
+				}),
 				untilDestroyed(this)
 			)
-			.subscribe(([employee]) => {
-				if (employee && this.organization) {
-					this.selectedEmployeeId = employee.id;
-					this.updateLogs$.next();
-				}
-			});
-		storeOrganization$
-			.pipe(
-				filter((organization: IOrganization) => !!organization),
-				debounceTime(200),
-				withLatestFrom(storeEmployee$),
-				untilDestroyed(this)
-			)
-			.subscribe(([organization, employee]) => {
-				this.selectedEmployeeId = employee ? employee.id : null;
-				if (organization) {
-					this.organization = organization;
-					this.updateLogs$.next();
-				}
-			});
+			.subscribe();
 		this.updateLogs$
 			.pipe(
-				debounceTime(500),
+				debounceTime(800),
 				tap(() => this.galleryService.clearGallery()),
 				tap(() => this.getLogs()),
 				untilDestroyed(this)
@@ -109,6 +96,11 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 			employeeIds.push(this.selectedEmployeeId);
 		}
 
+		const projectIds: string[] = [];
+		if (this.projectId) {
+			projectIds.push(this.projectId);
+		}
+
 		const request: IGetTimeSlotInput = {
 			organizationId,
 			tenantId,
@@ -116,6 +108,7 @@ export class ScreenshotComponent implements OnInit, OnDestroy {
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
 			...(employeeIds.length > 0 ? { employeeIds } : {}),
+			...(projectIds.length > 0 ? { projectIds } : {}),
 			relations: ['screenshots', 'timeLogs']
 		};
 

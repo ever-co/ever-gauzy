@@ -21,6 +21,12 @@ const routes: Routes = [
 			permissions: {
 				only: [PermissionsEnum.ALL_ORG_VIEW],
 				redirectTo
+			},
+			selectors: {
+				project: false,
+				employee: false,
+				organization: false,
+				date: false
 			}
 		}
 	},
@@ -42,15 +48,36 @@ const routes: Routes = [
 			},
 			{
 				path: 'main',
-				component: EditOrganizationMainComponent
+				component: EditOrganizationMainComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'location',
-				component: EditOrganizationLocationComponent
+				component: EditOrganizationLocationComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						date: false
+					}
+				}
 			},
 			{
 				path: 'settings',
-				component: EditOrganizationOtherSettingsComponent
+				component: EditOrganizationOtherSettingsComponent,
+				data: {
+					selectors: {
+						project: false,
+						employee: false,
+						date: false
+					}
+				}
 			}
 		]
 	}

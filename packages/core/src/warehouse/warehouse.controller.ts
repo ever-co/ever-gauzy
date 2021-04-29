@@ -19,14 +19,25 @@ import { WarehouseService } from './warehouse.service';
 import { Warehouse } from './warehouse.entity';
 import { PermissionGuard } from 'shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
-import { IPagination, IWarehouse, PermissionsEnum } from '@gauzy/contracts';
+import {
+	IPagination,
+	IWarehouse,
+	PermissionsEnum,
+	IWarehouseProduct,
+	IWarehouseProductCreateInput,
+	IWarehouseProductVariant
+} from '@gauzy/contracts';
 import { ParseJsonPipe } from 'index';
+import { WarehouseProductService } from './warehouse-product-service';
 
 @ApiTags('Warehouses')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 @Controller()
 export class WarehouseController extends CrudController<Warehouse> {
-	constructor(private readonly warehouseService: WarehouseService) {
+	constructor(
+		private readonly warehouseService: WarehouseService,
+		private readonly warehouseProductsService: WarehouseProductService
+	) {
 		super(warehouseService);
 	}
 
@@ -78,5 +89,95 @@ export class WarehouseController extends CrudController<Warehouse> {
 		@Body() entity: Warehouse
 	): Promise<any> {
 		return this.warehouseService.updateWarehouse(id, entity);
+	}
+
+	@ApiOperation({
+		summary: 'Find all warehouse products.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found warehouse products.',
+		type: Warehouse
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Post('/inventory/:warehouseId')
+	async addWarehouseProducts(
+		@Body() entity: IWarehouseProductCreateInput[],
+		@Param('warehouseId') warehouseId: string
+	): Promise<IPagination<IWarehouseProduct[]>> {
+		return await this.warehouseProductsService.createWarehouseProductBulk(
+			entity,
+			warehouseId
+		);
+	}
+
+	@ApiOperation({
+		summary: 'Find all warehouse products.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found warehouse products.',
+		type: Warehouse
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('/inventory/:warehouseId')
+	async findAllWarehouseProducts(
+		@Param('warehouseId') warehouseId: string
+	): Promise<IWarehouseProduct[]> {
+		return this.warehouseProductsService.getAllWarehouseProducts(
+			warehouseId
+		);
+	}
+
+	@ApiOperation({
+		summary: 'Update warehouse product count.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Warehouse product count updated.',
+		type: Warehouse
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Post('/inventory-quantity/:warehouseProductId')
+	async updateWarehouseProductCount(
+		@Param('warehouseProductId') warehouseProductId: string,
+		@Body() value: { count: number }
+	): Promise<IWarehouseProduct> {
+		return this.warehouseProductsService.updateWarehouseProductQuantity(
+			warehouseProductId,
+			value.count
+		);
+	}
+
+	@ApiOperation({
+		summary: 'Update warehouse product variant count.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Warehouse product variant count updated.',
+		type: Warehouse
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Post('/inventory-quantity/variants/:warehouseProductVariantId')
+	async updateWarehouseProductVariantCount(
+		@Param('warehouseProductVariantId') warehouseProductVariantId: string,
+		@Body() value: { count: number }
+	): Promise<IWarehouseProductVariant> {
+		return this.warehouseProductsService.updateWarehouseProductVariantQuantity(
+			warehouseProductVariantId,
+			value.count
+		);
 	}
 }

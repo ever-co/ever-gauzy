@@ -13,10 +13,15 @@ import {
 } from '@nebular/theme';
 import { LayoutService } from '../../../@core/utils';
 import { Router, NavigationEnd } from '@angular/router';
-import { filter, first, tap } from 'rxjs/operators';
+import { debounceTime, filter, first } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
-import { PermissionsEnum, TimeLogType } from '@gauzy/contracts';
+import {
+	CrudActionEnum,
+	IOrganization,
+	PermissionsEnum,
+	TimeLogType
+} from '@gauzy/contracts';
 import { IUser } from '@gauzy/contracts';
 import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.service';
 import * as moment from 'moment';
@@ -25,12 +30,21 @@ import { environment } from '../../../../environments/environment';
 import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { EmployeesService } from '../../../@core/services/employees.service';
-import { NO_EMPLOYEE_SELECTED } from './selectors/employee/employee.component';
+import { NO_EMPLOYEE_SELECTED } from './selectors/employee';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import {
+	EmployeeStore,
 	ISidebarActionConfig,
-	NavigationBuilderService
+	NavigationBuilderService,
+	OrganizationEditStore,
+	OrganizationProjectStore
 } from '../../../@core/services';
+import {
+	DEFAULT_SELECTOR_VISIBILITY,
+	ISelectorVisibility,
+	SelectorBuilderService
+} from '../../../@core/services';
+import { combineLatest, Subject } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -67,7 +81,6 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	showProjectsSelector: boolean;
 
 	showDateSelector = true;
-	organizationSelected = false;
 	theme: string;
 	createContextMenu: NbMenuItem[];
 	supportContextMenu: NbMenuItem[];
@@ -76,6 +89,11 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		START_TIMER: 'START_TIMER'
 	};
 	timerDuration: string;
+	organization: IOrganization;
+	selectedDate: Date;
+
+	subject$: Subject<any> = new Subject();
+	selectorsVisibility: ISelectorVisibility;
 
 	constructor(
 		private readonly sidebarService: NbSidebarService,
@@ -90,10 +108,23 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		private readonly organizationsService: OrganizationsService,
 		private readonly employeesService: EmployeesService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
-		public readonly navigationBuilderService: NavigationBuilderService
+		public readonly navigationBuilderService: NavigationBuilderService,
+		private readonly organizationEditStore: OrganizationEditStore,
+		private readonly organizationProjectStore: OrganizationProjectStore,
+		private readonly employeeStore: EmployeeStore,
+		public readonly selectorBuilderService: SelectorBuilderService
 	) {}
 
 	ngOnInit() {
+		this.selectorBuilderService.selectors$
+			.pipe(untilDestroyed(this))
+			.subscribe((selectors) => {
+				this.selectorsVisibility = Object.assign(
+					{},
+					DEFAULT_SELECTOR_VISIBILITY,
+					selectors
+				);
+			});
 		this.router.events
 			.pipe(
 				filter((event) => event instanceof NavigationEnd),
@@ -135,27 +166,39 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 					}
 				});
 			});
-		this.store.selectedOrganization$
-			.pipe(
-				filter((organization) => !!organization),
-				untilDestroyed(this),
-				tap(() => this.loadItems())
-			)
-			.subscribe();
 		this.store.user$
 			.pipe(
 				filter((user) => !!user),
 				untilDestroyed(this)
 			)
-			.subscribe((user) => {
+			.subscribe(async (user) => {
 				this.user = user;
 				this.isEmployee = !!user && !!user.employeeId;
 				//check header selectors dropdown permissions
-				this.checkSelectorsPermission();
+				await this.checkOrganizationSelectorVisibility();
 				//check timer status for employee
 				if (this.isEmployee) {
 					this._checkTimerStatus();
 				}
+			});
+		this.subject$
+			.pipe(debounceTime(1300), untilDestroyed(this))
+			.subscribe(() => {
+				this.checkEmployeeSelectorVisibility();
+				this.checkProjectSelectorVisibility();
+				this.loadItems();
+			});
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const selectedDate$ = this.store.selectedDate$;
+		combineLatest([storeOrganization$, selectedDate$])
+			.pipe(
+				filter(([organization, date]) => !!organization && !!date),
+				untilDestroyed(this)
+			)
+			.subscribe(([organization, date]) => {
+				this.organization = organization;
+				this.selectedDate = date;
+				this.subject$.next();
 			});
 		this.themeService
 			.onThemeChange()
@@ -167,10 +210,69 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		this.loadItems();
 	}
 
-	async checkSelectorsPermission() {
+	checkProjectSelectorVisibility() {
+		// hidden project selector if not activate for current page
+		if (!this.organization || !this.selectorsVisibility.project) {
+			return;
+		}
+
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+		this.organizationProjectsService
+			.getCount([], {
+				organizationId,
+				tenantId
+			})
+			.then((count) => {
+				this.showProjectsSelector = count > 0;
+			});
+	}
+
+	checkEmployeeSelectorVisibility() {
+		// hidden employee selector if not activate for current page
+		if (!this.organization || !this.selectorsVisibility.employee) {
+			return;
+		}
+
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
+		this.employeesService
+			.getWorkingCount(organizationId, tenantId, this.selectedDate, true)
+			.then(async ({ total: employeeCount }) => {
+				if (
+					this.store.hasPermission(
+						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+					)
+				) {
+					this.showEmployeesSelector = employeeCount > 0;
+					this.store.selectedEmployee = null;
+				} else {
+					const emp = await this.employeesService.getEmployeeById(
+						this.user.employeeId,
+						[]
+					);
+					if (emp) {
+						this.store.selectedEmployee = {
+							id: emp.id,
+							firstName: this.user.firstName,
+							lastName: this.user.lastName,
+							imageUrl: this.user.imageUrl
+						};
+					} else {
+						this.store.selectedEmployee = NO_EMPLOYEE_SELECTED;
+					}
+				}
+			});
+	}
+
+	async checkOrganizationSelectorVisibility() {
+		// hidden organization selector if not activate for current page
+		if (!this.selectorsVisibility.organization) {
+			return;
+		}
+
 		const { userId } = this.store;
 		const { tenantId } = this.store.user;
-
 		const { items: userOrg } = await this.usersOrganizationsService.getAll(
 			[],
 			{
@@ -179,56 +281,68 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			}
 		);
 
-		if (userOrg.length > 1) {
-			const count = await this.organizationProjectsService.getCount([], {
-				organizationId: userOrg[0].organizationId,
-				tenantId: this.user.tenantId
-			});
-			if (count > 1) {
-				this.showProjectsSelector = true;
-			}
-		}
-
 		if (
 			this.store.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_ORGANIZATION
-			) &&
-			userOrg.length > 1
+			)
 		) {
-			this.showOrganizationsSelector = true;
+			this.showOrganizationsSelector = userOrg.length > 1;
 		} else {
 			if (userOrg.length > 0) {
+				const [firstUserOrg] = userOrg;
 				const org = await this.organizationsService
-					.getById(userOrg[0].organizationId)
+					.getById(firstUserOrg.organizationId)
 					.pipe(first())
 					.toPromise();
 				this.store.selectedOrganization = org;
 			}
 		}
-		if (
-			this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
-		) {
-			this.showEmployeesSelector = true;
-			this.store.selectedEmployee = null;
-		} else {
-			const emp = await this.employeesService.getEmployeeById(
-				this.user.employeeId,
-				[]
-			);
-			if (emp) {
-				this.store.selectedEmployee = {
-					id: emp.id,
-					firstName: this.user.firstName,
-					lastName: this.user.lastName,
-					imageUrl: this.user.imageUrl
-				};
-			} else {
-				this.store.selectedEmployee = NO_EMPLOYEE_SELECTED;
-			}
-		}
 	}
 
-	ngAfterViewInit(): void {}
+	ngAfterViewInit(): void {
+		this.organizationEditStore.organizationAction$
+			.pipe(
+				filter(({ organization }) => !!organization),
+				untilDestroyed(this)
+			)
+			.subscribe(({ action }) => {
+				switch (action) {
+					case CrudActionEnum.CREATED:
+					case CrudActionEnum.UPDATED:
+					case CrudActionEnum.DELETED:
+						this.checkOrganizationSelectorVisibility();
+						break;
+				}
+			});
+		this.organizationProjectStore.organizationProjectAction$
+			.pipe(
+				filter(({ project, action }) => !!project && !!action),
+				untilDestroyed(this)
+			)
+			.subscribe(({ action }) => {
+				switch (action) {
+					case CrudActionEnum.CREATED:
+					case CrudActionEnum.UPDATED:
+					case CrudActionEnum.DELETED:
+						this.checkProjectSelectorVisibility();
+						break;
+				}
+			});
+		this.employeeStore.employeeAction$
+			.pipe(
+				filter(({ employee }) => !!employee),
+				untilDestroyed(this)
+			)
+			.subscribe(({ action }) => {
+				switch (action) {
+					case CrudActionEnum.CREATED:
+					case CrudActionEnum.UPDATED:
+					case CrudActionEnum.DELETED:
+						this.checkEmployeeSelectorVisibility();
+						break;
+				}
+			});
+	}
 
 	toggleTimerWindow() {
 		this.timeTrackerService.showTimerWindow = !this.timeTrackerService

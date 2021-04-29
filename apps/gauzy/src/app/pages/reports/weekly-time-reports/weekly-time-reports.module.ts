@@ -8,6 +8,7 @@ import { NbIconModule, NbSpinnerModule, NbCardModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
+import { DailyStatisticsModule } from '../../../@shared/report/daily-statistics/daily-statistics.module';
 
 @NgModule({
 	declarations: [WeeklyTimeReportsComponent],
@@ -16,6 +17,7 @@ import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-
 		SharedModule,
 		WeeklyTimeReportsRoutingModule,
 		LineChartModule,
+		DailyStatisticsModule,
 		TranslateModule,
 		NbIconModule,
 		NbSpinnerModule,

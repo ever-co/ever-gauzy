@@ -65,6 +65,11 @@ import { LeafletMapModule } from '../../@shared/forms/maps/leaflet/leaflet.modul
 import { WarehousesComponent } from './components/manage-warehouses/warehouses.component';
 import { WarehouseFormComponent } from './components/manage-warehouses/warehouse-form/warehouse-form.component';
 import { WarehousesTableComponent } from './components/manage-warehouses/warehouses-table/warehouses-table.component';
+import { WarehouseProductsTableComponent } from './components/manage-warehouses/warehouse-products-table/warehouse-products-table.component';
+import { SelectProductComponent } from './components/manage-warehouses/select-product-form/select-product-form.component';
+import { ManageQuantityComponent } from './components/manage-warehouses/manage-quantity/manage-quantity.component';
+import { ManageVariantsQuantityFormComponent } from './components/manage-warehouses/manage-variants-quantity-form/manage-variants-quantity-form.component';
+import { ManageVariantsQuantityComponent } from './components/manage-warehouses/manage-variants-quantity/manage-variants-quantity.component';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -97,7 +102,12 @@ const NB_MODULES = [
 		InventoryItemViewComponent,
 		WarehousesTableComponent,
 		WarehouseFormComponent,
-		WarehousesComponent
+		WarehousesComponent,
+		WarehouseProductsTableComponent,
+		SelectProductComponent,
+		ManageQuantityComponent,
+		ManageVariantsQuantityComponent,
+		ManageVariantsQuantityFormComponent
 	],
 	imports: [
 		UserFormsModule,
@@ -134,7 +144,8 @@ const NB_MODULES = [
 		IconRowComponent,
 		EnabledStatusComponent,
 		SelectAssetComponent,
-		ImageAssetComponent
+		ImageAssetComponent,
+		SelectProductComponent
 	],
 	providers: [
 		ProductTypeService,

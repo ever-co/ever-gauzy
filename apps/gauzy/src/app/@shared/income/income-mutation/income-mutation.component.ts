@@ -108,11 +108,10 @@ export class IncomeMutationComponent
 	}
 
 	private async _getOrganizationContacts() {
-		this.selectedOrganization = this.store.selectedOrganization;
+		const { id: organizationId } = this.selectedOrganization;
 		const { tenantId } = this.store.user;
-
 		const { items } = await this.organizationContactService.getAll([], {
-			organizationId: this.selectedOrganization.id,
+			organizationId,
 			tenantId
 		});
 

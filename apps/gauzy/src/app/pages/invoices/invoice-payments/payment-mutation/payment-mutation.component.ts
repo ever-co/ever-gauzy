@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -14,7 +14,12 @@ import {
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { Store } from '../../../../@core/services/store.service';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { ToastrService } from './../../../../@core/services/toastr.service';
+import {
+	InvoicesService,
+	OrganizationContactService,
+	OrganizationProjectsService
+} from './../../../../@core/services';
 
 @Component({
 	selector: 'ga-payment-add',
@@ -23,13 +28,16 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 })
 export class PaymentMutationComponent
 	extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit, AfterViewInit {
 	constructor(
 		readonly translateService: TranslateService,
 		private fb: FormBuilder,
 		protected dialogRef: NbDialogRef<PaymentMutationComponent>,
 		private store: Store,
-		private toastrService: ToastrService
+		private toastrService: ToastrService,
+		private readonly organizationProjectsService: OrganizationProjectsService,
+		private readonly organizationContactService: OrganizationContactService,
+		private readonly invoicesService: InvoicesService
 	) {
 		super(translateService);
 	}
@@ -61,6 +69,27 @@ export class PaymentMutationComponent
 			}
 			this.currency.updateValueAndValidity();
 		}
+	}
+
+	ngAfterViewInit() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization;
+
+		this.invoicesService
+			.getAll([], { organizationId, tenantId, isEstimate: false })
+			.then(({ items }) => {
+				this.invoices = items;
+			});
+		this.organizationProjectsService
+			.getAll([], { organizationId, tenantId })
+			.then(({ items }) => {
+				this.projects = items;
+			});
+		this.organizationContactService
+			.getAll([], { organizationId, tenantId })
+			.then(({ items }) => {
+				this.organizationContacts = items;
+			});
 	}
 
 	initializeForm() {

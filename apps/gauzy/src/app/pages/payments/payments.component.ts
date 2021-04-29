@@ -8,13 +8,9 @@ import { first, filter, tap, debounceTime } from 'rxjs/operators';
 import {
 	IPayment,
 	ComponentLayoutStyleEnum,
-	IInvoice,
 	IOrganization,
-	IOrganizationContact,
-	IOrganizationProject,
 	ISelectedPayment
 } from '@gauzy/contracts';
-import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import {
 	Router,
@@ -24,15 +20,14 @@ import {
 } from '@angular/router';
 import { PaymentMutationComponent } from '../invoices/invoice-payments/payment-mutation/payment-mutation.component';
 import { NbDialogService } from '@nebular/theme';
-import { InvoicesService } from '../../@core/services/invoices.service';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-estimate-history.service';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../@core/services/toastr.service';
+import { combineLatest, Subject } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -49,13 +44,13 @@ export class PaymentsComponent
 	payments: IPayment[];
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	invoices: IInvoice[];
 	organization: IOrganization;
 	disableButton = true;
 	currency: string;
-	organizationContacts: IOrganizationContact[];
-	projects: IOrganizationProject[];
 	loading = true;
+
+	projectId: string | null;
+	subject$: Subject<any> = new Subject();
 
 	paymentsTable: Ng2SmartTableComponent;
 	@ViewChild('paymentsTable') set content(content: Ng2SmartTableComponent) {
@@ -69,11 +64,8 @@ export class PaymentsComponent
 		readonly translateService: TranslateService,
 		private paymentService: PaymentService,
 		private store: Store,
-		private organizationContactService: OrganizationContactService,
 		private dialogService: NbDialogService,
 		private router: Router,
-		private invoicesService: InvoicesService,
-		private organizationProjectsService: OrganizationProjectsService,
 		private toastrService: ToastrService,
 		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
 		private _errorHandlingService: ErrorHandlingService,
@@ -86,11 +78,27 @@ export class PaymentsComponent
 	ngOnInit() {
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
-		this.store.selectedOrganization$
+		this.subject$
 			.pipe(
-				filter((organization) => !!organization),
-				tap((organization) => (this.organization = organization)),
-				tap(() => this.loadSettings()),
+				debounceTime(800),
+				tap(() => this.getPayments()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeProject$ = this.store.selectedProject$;
+		combineLatest([storeOrganization$, storeProject$])
+			.pipe(
+				filter(
+					([organization, project]) => !!organization && !!project
+				),
+				tap(([organization, project]) => {
+					if (organization) {
+						this.organization = organization;
+						this.projectId = project ? project.id : null;
+						this.subject$.next();
+					}
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -136,19 +144,13 @@ export class PaymentsComponent
 			.subscribe();
 	}
 
-	async loadSettings() {
+	async getPayments() {
 		try {
 			this.loading = true;
 			this.currency = this.organization.currency;
 
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
-
-			this.invoicesService
-				.getAll([], { organizationId, tenantId, isEstimate: false })
-				.then(({ items }) => {
-					this.invoices = items;
-				});
 
 			this.paymentService
 				.getAll(
@@ -160,26 +162,19 @@ export class PaymentsComponent
 						'project',
 						'tags'
 					],
-					{ organizationId, tenantId }
+					{
+						organizationId,
+						tenantId,
+						...(this.projectId ? { projectId: this.projectId } : {})
+					}
 				)
 				.then(({ items }) => {
 					this.payments = items;
 					this.smartTableSource.load(items);
+				})
+				.finally(() => {
+					this.loading = false;
 				});
-
-			this.organizationContactService
-				.getAll([], { organizationId, tenantId })
-				.then(({ items }) => {
-					this.organizationContacts = items;
-				});
-
-			this.organizationProjectsService
-				.getAll([], { organizationId, tenantId })
-				.then(({ items }) => {
-					this.projects = items;
-				});
-
-			this.loading = false;
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
 		}
@@ -189,11 +184,8 @@ export class PaymentsComponent
 		const result = await this.dialogService
 			.open(PaymentMutationComponent, {
 				context: {
-					invoices: this.invoices,
 					organization: this.organization,
-					currencyString: this.currency,
-					organizationContacts: this.organizationContacts,
-					projects: this.projects
+					currencyString: this.currency
 				}
 			})
 			.onClose.pipe(first())
@@ -205,7 +197,7 @@ export class PaymentsComponent
 			result['tenantId'] = tenantId;
 
 			await this.paymentService.add(result);
-			await this.loadSettings();
+			await this.getPayments();
 			if (result.invoice) {
 				await this.invoiceEstimateHistoryService.add({
 					action: this.getTranslation(
@@ -237,11 +229,8 @@ export class PaymentsComponent
 		const result = await this.dialogService
 			.open(PaymentMutationComponent, {
 				context: {
-					invoices: this.invoices,
 					organization: this.organization,
 					payment: this.selectedPayment,
-					organizationContacts: this.organizationContacts,
-					projects: this.projects,
 					tags: this.selectedPayment.tags
 				}
 			})
@@ -250,7 +239,7 @@ export class PaymentsComponent
 
 		if (result) {
 			await this.paymentService.update(result.id, result);
-			await this.loadSettings();
+			await this.getPayments();
 
 			const { tenantId } = this.store.user;
 			await this.invoiceEstimateHistoryService.add({
@@ -284,7 +273,7 @@ export class PaymentsComponent
 
 		if (result) {
 			await this.paymentService.delete(this.selectedPayment.id);
-			this.loadSettings();
+			this.getPayments();
 
 			const { tenantId } = this.store.user;
 			await this.invoiceEstimateHistoryService.add({

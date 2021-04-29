@@ -23,6 +23,12 @@ const routes: Routes = [
 					permissions: {
 						only: [PermissionsEnum.INTEGRATION_VIEW],
 						redirectTo: '/pages/dashboard'
+					},
+					selectors: {
+						project: false,
+						employee: false,
+						organization: false,
+						date: false
 					}
 				}
 			},

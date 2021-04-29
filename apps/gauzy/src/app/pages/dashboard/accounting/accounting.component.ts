@@ -8,7 +8,7 @@ import {
 	IOrganization,
 	ISelectedEmployee
 } from '@gauzy/contracts';
-import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee/employee.component';
+import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 import { Router } from '@angular/router';
 @UntilDestroy({ checkProperties: true })
 @Component({

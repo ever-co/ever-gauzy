@@ -10,6 +10,7 @@ import {
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import * as moment from 'moment';
+import { filter } from 'rxjs/operators';
 import { chain } from 'underscore';
 import { ReportService } from '../report.service';
 
@@ -34,7 +35,10 @@ export class AllReportComponent implements OnInit {
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((organization) => {
 				if (organization) {
 					this.organization = organization;

@@ -1,7 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
-import { IProductFindInput, IWarehouse } from '@gauzy/contracts';
+import {
+	IProductFindInput,
+	IWarehouse,
+	IWarehouseProductCreateInput,
+	IWarehouseProduct,
+	IWarehouseProductVariant
+} from '@gauzy/contracts';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
@@ -51,6 +57,54 @@ export class WarehouseService {
 		return this.http
 			.delete<{ raw: any; affected: number }>(
 				`${this.WAREHOUSES_URL}/${id}`
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	addWarehouseProducts(
+		warehouseProductCreateInput: IWarehouseProductCreateInput[],
+		warehouseId: String
+	): Promise<IWarehouseProduct[]> {
+		return this.http
+			.post<IWarehouseProduct[]>(
+				`${this.WAREHOUSES_URL}/inventory/${warehouseId}`,
+				warehouseProductCreateInput
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	getWarehouseProducts(warehouseId: String) {
+		return this.http
+			.get<IWarehouseProduct[]>(
+				`${this.WAREHOUSES_URL}/inventory/${warehouseId}`
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	updateWarehouseProductCount(
+		warehouseProductId: String,
+		count: number
+	): Promise<IWarehouseProduct> {
+		return this.http
+			.post<IWarehouseProduct>(
+				`${this.WAREHOUSES_URL}/inventory-quantity/${warehouseProductId}`,
+				{ count: count }
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	updateWarehouseProductVariantCount(
+		warehouseProductVariantId: String,
+		count: number
+	): Promise<IWarehouseProductVariant> {
+		return this.http
+			.post<IWarehouseProductVariant>(
+				`${this.WAREHOUSES_URL}/inventory-quantity/variants/${warehouseProductVariantId}`,
+				{ count: count }
 			)
 			.pipe(first())
 			.toPromise();

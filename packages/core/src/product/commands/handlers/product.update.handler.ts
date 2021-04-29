@@ -34,6 +34,8 @@ export class ProductUpdateHandler
 			productUpdateRequest.optionGroupCreateInputs;
 		const optionGroupUpdateInputs =
 			productUpdateRequest.optionGroupUpdateInputs;
+		const optionGroupDeleteInputs =
+			productUpdateRequest.optionGroupDeleteInputs;
 
 		const product = await this.productService.findById(
 			productUpdateRequest.id,
@@ -48,8 +50,20 @@ export class ProductUpdateHandler
 				option.translations
 			);
 		}
-
 		await this.productOptionService.deleteBulk(optionDeleteInputs);
+
+		/**
+		 * delete option groups
+		 */
+		for await (const group of optionGroupDeleteInputs) {
+			await this.productOptionsGroupService.deleteGroupTranslationsBulk(
+				group.translations
+			);
+		}
+
+		await this.productOptionsGroupService.deleteBulk(
+			optionGroupDeleteInputs
+		);
 
 		/**
 		 * create new option group
@@ -218,6 +232,19 @@ export class ProductUpdateHandler
 		);
 
 		product.optionGroups = product.optionGroups.concat(newProductOptions);
+		product.category = <any>productUpdateRequest.category;
+		product.productTypeId = <any>productUpdateRequest.type;
+		product.tags = productUpdateRequest.tags;
+
+		const productTranslations = <any>await Promise.all(
+			productUpdateRequest.translations.map((optionTranslation) => {
+				return this.productService.saveProductTranslation(
+					<any>optionTranslation
+				);
+			})
+		);
+
+		product.translations = productTranslations;
 
 		const updatedProduct = await this.productService.saveProduct(
 			product as any

@@ -21,6 +21,7 @@ import { OrganizationContactService } from '../../../@core/services/organization
 import { patterns } from '../../../@shared/regex/regex-patterns.const';
 import { environment as ENV } from 'apps/gauzy/src/environments/environment';
 import { ToastrService } from '../../../@core/services/toastr.service';
+import { uniq } from 'underscore';
 
 @Component({
 	selector: 'ga-projects-mutation',
@@ -87,10 +88,10 @@ export class ProjectsMutationComponent
 			tenantId
 		});
 		items.forEach((i) => {
-			this.organizationContacts = [
+			this.organizationContacts = uniq([
 				...this.organizationContacts,
-				{ name: i.name, organizationContactId: i.id }
-			];
+				{ name: i.name, organizationContactId: i.id, id: i.id }
+			], 'id');
 		});
 	}
 
@@ -209,7 +210,7 @@ export class ProjectsMutationComponent
 					description: this.form.value['description'],
 					billingFlat:
 						this.form.value['billing'] === 'RATE' ||
-						this.form.value['billing'] === 'FLAT_FEE'
+							this.form.value['billing'] === 'FLAT_FEE'
 							? true
 							: false,
 					code: this.form.value['code'],
@@ -261,7 +262,7 @@ export class ProjectsMutationComponent
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) {}
+	currencyChanged($event: ICurrency) { }
 
 	isInvalidControl(control: string) {
 		if (!this.form.contains(control)) {

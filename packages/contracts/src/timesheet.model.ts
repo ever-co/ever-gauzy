@@ -456,11 +456,12 @@ export type IReportDayData =
 	| IReportDayGroupByProject
 	| IReportDayGroupByClient;
 
-export interface IGetTimeLimitReportInput {
-	organizationId?: string;
+export interface IGetTimeLimitReportInput
+	extends IBasePerTenantAndOrganizationEntityModel {
 	startDate?: string | Date;
 	endDate?: string | Date;
-	employeeId?: string;
+	projectIds?: string[];
+	employeeIds?: string[];
 	relations?: string[];
 	duration?: 'day' | 'week' | 'month';
 }

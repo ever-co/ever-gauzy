@@ -292,9 +292,7 @@ export class TimeTrackerService implements OnDestroy {
 	 * Clear time tracker local store
 	 */
 	clearTimeTracker() {
-		const obj = createInitialTimerState();
-		this.timerStore.update(obj);
-		return obj;
+		this.timerStore.reset();
 	}
 
 	ngOnDestroy(): void {}

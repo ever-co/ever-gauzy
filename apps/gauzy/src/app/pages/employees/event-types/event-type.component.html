@@ -27,7 +27,7 @@
 		</div>
 		<ng2-smart-table
 			class="employees-table"
-			*ngIf="canShowTable() && dataLayoutStyle === 'TABLE'"
+			*ngIf="showTable && dataLayoutStyle === 'TABLE'"
 			style="cursor: pointer;"
 			[settings]="settingsSmartTable"
 			[source]="sourceSmartTable"

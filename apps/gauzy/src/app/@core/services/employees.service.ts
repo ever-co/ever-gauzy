@@ -75,6 +75,28 @@ export class EmployeesService {
 			.toPromise();
 	}
 
+	getWorkingCount(
+		organizationId: string,
+		tenantId: string,
+		forMonth: Date,
+		withUser: boolean
+	): Promise<{ total: number }> {
+		const query = {
+			organizationId,
+			tenantId,
+			forMonth,
+			withUser
+		};
+		const data = JSON.stringify({ findInput: query });
+		return this.http
+			.get<{ items: IEmployee[]; total: number }>(
+				`${API_PREFIX}/employee/working/count`,
+				{ params: { data } }
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
 	getEmployeeByUserId(
 		userId: string,
 		relations?: string[],
