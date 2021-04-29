@@ -24,7 +24,7 @@ LABEL maintainer="ever@ever.co"
 ENV CI=true
 
 RUN apk --update add bash && \
-    apk add --no-cache dos2unix g++ git make python && \
+    apk add --no-cache dos2unix g++ git make python3 && \
     mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 COPY wait .deploy/webapp/entrypoint.compose.sh .deploy/webapp/entrypoint.prod.sh /
