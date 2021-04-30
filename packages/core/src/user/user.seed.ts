@@ -19,7 +19,7 @@ import { getUserDummyImage } from '../core';
 import { Tenant } from '../tenant/tenant.entity';
 import { DEFAULT_EMPLOYEES } from '../employee/default-employees';
 import { DEFAULT_CANDIDATES } from '../candidate/default-candidates';
-import { DEFAULT_SUPER_ADMINS, DEFAULT_ADMINS } from './default-users';
+import { DEFAULT_SUPER_ADMINS, DEFAULT_ADMINS, BASIC_SUPER_ADMINS } from './default-users';
 
 export const createDefaultSuperAdminUsers = async (
 	connection: Connection,
@@ -33,6 +33,29 @@ export const createDefaultSuperAdminUsers = async (
 
 	// Generate default super admins
 	for (const superAdmin of DEFAULT_SUPER_ADMINS) {
+		const superAdminUser: User = await generateDefaultUser(
+			superAdmin,
+			superAdminRole,
+			tenant
+		);
+		superAdmins.push(superAdminUser);
+	}
+
+	return await insertUsers(connection, superAdmins);
+};
+
+export const createBasicSuperAdminUsers = async (
+	connection: Connection,
+	roles: Role[],
+	tenant: Tenant
+): Promise<User[]> => {
+	const superAdmins: User[] = [];
+	const superAdminRole = roles.find(
+		(role) => role.name === RolesEnum.SUPER_ADMIN
+	);
+
+	// Generate default super admins
+	for (const superAdmin of BASIC_SUPER_ADMINS) {
 		const superAdminUser: User = await generateDefaultUser(
 			superAdmin,
 			superAdminRole,

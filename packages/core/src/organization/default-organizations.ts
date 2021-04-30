@@ -14,3 +14,13 @@ export const DEFAULT_ORGANIZATIONS = [
 		imageUrl: 'assets/images/logos/ever-large.jpg'
 	}
 ];
+
+export const BASIC_ORGANIZATIONS = [
+	{
+		name: 'Default Company',
+		currency: CurrenciesEnum.BGN,
+		defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
+		imageUrl: 'assets/images/logos/logo_Gauzy.svg'
+	},
+
+];

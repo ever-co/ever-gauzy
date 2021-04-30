@@ -931,6 +931,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 	}
 
 	async ngOnInit() {
+		console.log(this.store)
 		await this._createEntryPoint();
 		this._applyTranslationOnSmartTable();
 

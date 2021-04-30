@@ -11,6 +11,17 @@ export const DEFAULT_SUPER_ADMINS = [
 	}
 ];
 
+export const BASIC_SUPER_ADMINS = [
+	{
+		email: 'admin@company.com',
+		password: 'admin',
+		firstName: 'Admin',
+		lastName: 'Super',
+		imageUrl: 'assets/images/avatar-default.svg',
+		preferredLanguage: LanguagesEnum.ENGLISH
+	}
+];
+
 export const DEFAULT_ADMINS = [
 	{
 		email: 'local.admin@ever.co',
