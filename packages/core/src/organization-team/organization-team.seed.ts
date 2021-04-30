@@ -82,7 +82,7 @@ export const createRandomTeam = async (
 
 				const emps = _.chain(employees)
 					.shuffle()
-					.take(faker.random.number({ min: 1, max: 5 }))
+					.take(faker.datatype.number({ min: 1, max: 5 }))
 					.values()
 					.value();
 
@@ -96,7 +96,7 @@ export const createRandomTeam = async (
 
 				const managers = _.chain(employees)
 					.shuffle()
-					.take(faker.random.number({ min: 1, max: 2 }))
+					.take(faker.datatype.number({ min: 1, max: 2 }))
 					.values()
 					.value();
 

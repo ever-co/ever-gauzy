@@ -329,7 +329,7 @@ const generateRandomUser = async (
 	role: Role,
 	tenant: Tenant
 ): Promise<User> => {
-	const gender = faker.random.number(1);
+	const gender = faker.datatype.number(1);
 	const firstName = faker.name.firstName(gender);
 	const lastName = faker.name.lastName(gender);
 	const username = faker.internet.userName(firstName, lastName);

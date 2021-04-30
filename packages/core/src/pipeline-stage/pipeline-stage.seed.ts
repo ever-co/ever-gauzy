@@ -30,7 +30,7 @@ export const createRandomPipelineStage = async (
 			);
 
 			for (const pipeline of organizationPipeline) {
-				for (let i = 0; i <= faker.random.number(10); i++) {
+				for (let i = 0; i <= faker.datatype.number(10); i++) {
 					//todo Need to update with real values
 					const pipelineStage = new PipelineStage();
 
