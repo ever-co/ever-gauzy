@@ -476,7 +476,6 @@ export class SeedDataService {
 	 * @param isDefault
 	 */
 	private async seedJobsData() {
-		// TODO: implement for isDefault = false (i.e for other tenants with random data too)
 
 		try {
 			this.log(
@@ -570,15 +569,13 @@ export class SeedDataService {
 			this.tenant = await this.tryExecute(
 				'Tenant',
 				createBasicTenants(this.connection)
-			) as ITenant;
-			//this.tenant = await createBasicTenants(this.connection);
+			) as ITenant;		
 		}
 		else {
 			this.tenant = await this.tryExecute(
 				'Tenant',
 				createDefaultTenants(this.connection)
 			) as ITenant;
-			//this.tenant = await createDefaultTenants(this.connection);
 		}
 
 		await this.tryExecute('Languages', createLanguages(this.connection));
@@ -649,7 +646,6 @@ export class SeedDataService {
 			);
 		}
 
-
 		if (this.seedType === 'basic') {
 			this.superAdminUsers = await this.tryExecute(
 				'Users',
@@ -671,9 +667,6 @@ export class SeedDataService {
 				)
 			) as IUser[];
 		}
-
-
-
 
 		if (this.seedType === 'basic') {
 			await createDefaultUsersOrganizations(this.connection, {
@@ -698,8 +691,6 @@ export class SeedDataService {
 					...this.superAdminUsers
 				]
 			});
-
-
 
 			this.defaultCandidateUsers = defaultCandidateUsers;
 
@@ -748,9 +739,6 @@ export class SeedDataService {
 			)
 		);
 
-
-
-
 		await this.tryExecute(
 			'Default Key Result Template',
 			createDefaultKeyResultTemplates(this.connection, this.tenant)
@@ -764,7 +752,7 @@ export class SeedDataService {
 			})
 		);
 
-		//seed default integrations with types
+		// seed default integrations with types
 		const integrationTypes = await this.tryExecute(
 			'Default Integration Types',
 			createDefaultIntegrationTypes(this.connection)
@@ -784,7 +772,7 @@ export class SeedDataService {
 			)
 		);
 
-		//run all plugins random seed method
+		// run all plugins random seed method
 		await this.bootstrapPluginSeedMethods(
 			'onBasicPluginSeed',
 			(instance: any) => {
@@ -799,7 +787,7 @@ export class SeedDataService {
 	 * Populate default data from env files
 	 */
 	private async seedDefaultData() {
-		//Organization level inserts which need connection, tenant, role, organizations
+		// Organization level inserts which need connection, tenant, role, organizations
 		const categories = await this.tryExecute(
 			'Default Expense Categories',
 			createExpenseCategories(
@@ -814,7 +802,7 @@ export class SeedDataService {
 			createEmployeeLevels(this.connection, this.organizations)
 		);
 
-		//todo :  Need to fix error of seeding Product Category
+		// TODO: needs to fix error of seeding Product Category
 		await this.tryExecute(
 			'Default Categories',
 			createCategories(this.connection, this.organizations)
@@ -830,7 +818,7 @@ export class SeedDataService {
 			createDefaultOrganizationContact(this.connection)
 		);
 
-		//Employee level data that need connection, tenant, organization, role, users, employee
+		// Employee level data that need connection, tenant, organization, role, users, employee
 		await this.tryExecute(
 			'Default Teams',
 			createDefaultTeams(
@@ -1271,7 +1259,7 @@ export class SeedDataService {
 			)
 		);
 
-		//run all plugins default seed method
+		// run all plugins default seed method
 		await this.bootstrapPluginSeedMethods(
 			'onDefaultPluginSeed',
 			(instance: any) => {
@@ -1288,7 +1276,7 @@ export class SeedDataService {
 	 * Populate database with random generated data
 	 */
 	private async seedRandomData() {
-		//Platform level data which only need database connection
+		// Platform level data which only need database connection
 		const tenants = await createRandomTenants(
 			this.connection,
 			randomSeedConfig.tenants || 1
@@ -1304,7 +1292,7 @@ export class SeedDataService {
 
 		await createRolePermissions(this.connection, roles, tenants);
 
-		//Tenant level inserts which only need connection, tenant, role
+		// Tenant level inserts which only need connection, tenant, role
 		const tenantOrganizationsMap = await createRandomOrganizations(
 			this.connection,
 			tenants,
@@ -1330,7 +1318,7 @@ export class SeedDataService {
 			randomSeedConfig.viewersPerOrganization || 1
 		);
 
-		//Organization level inserts which need connection, tenant, organizations, users
+		// Organization level inserts which need connection, tenant, organizations, users
 		await createRandomUsersOrganizations(
 			this.connection,
 			tenants,
