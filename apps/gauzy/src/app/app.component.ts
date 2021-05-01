@@ -64,11 +64,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	ngAfterViewInit() {
-		this.loadLanguages();
+	async ngAfterViewInit() {
+		await this.loadLanguages();
 	}
 
-	private loadLanguages() {
+	private async loadLanguages() {
 		this.languagesService.getSystemLanguages().then(({ items }) => {
 			this.store.systemLanguages = items;
 		});
