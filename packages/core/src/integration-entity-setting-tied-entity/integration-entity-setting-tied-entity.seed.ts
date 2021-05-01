@@ -42,7 +42,7 @@ export const createRandomIntegrationEntitySettingTiedEntity = async (
 				const integrationEntitySettingTiedEntity = new IntegrationEntitySettingTiedEntity();
 
 				integrationEntitySettingTiedEntity.integrationEntitySetting = integrationEntitySetting;
-				integrationEntitySettingTiedEntity.sync = faker.random.boolean();
+				integrationEntitySettingTiedEntity.sync = faker.datatype.boolean();
 				integrationEntitySettingTiedEntity.organization = faker.random.arrayElement(
 					organizations
 				);

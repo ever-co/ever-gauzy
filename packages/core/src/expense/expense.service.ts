@@ -76,7 +76,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		}
 
 		query.leftJoinAndSelect(`${query.alias}.category`, 'category');
-
+		query.leftJoinAndSelect(`${query.alias}.project`, 'project');
 		return await query.getMany();
 	}
 
@@ -108,7 +108,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 				return {
 					date,
 					value: {
-						expanse: sum.toFixed(1)
+						expense: sum.toFixed(1)
 					}
 				};
 			})
@@ -121,7 +121,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 				return {
 					date: date,
 					value: {
-						expanse: 0
+						expense: 0
 					}
 				};
 			}

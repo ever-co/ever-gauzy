@@ -34,7 +34,7 @@
 		"@gauzy/plugin": "^0.1.0",
 		"@nestjs/cqrs": "^7.0.1",
 		"@nestjs/typeorm": "^7.1.5",
-		"faker": "^5.1.0",
+		"faker": "^5.5.3",
 		"nest-router": "^1.0.9",
 		"typeorm": "^0.2.32",
 		"typeorm-express-query-builder": "^1.2.0",
@@ -42,7 +42,7 @@
 	},
 	"devDependencies": {
 		"@types/node": "^14.14.22",
-		"@types/faker": "^4.1.12",
+		"@types/faker": "5.5.3",
 		"rimraf": "^3.0.2",
 		"typescript": "~4.1.3"
 	}

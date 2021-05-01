@@ -56,7 +56,7 @@ export const createRandomTimeLogs = async (
 
 			const randomDays = _.chain([0, 1, 2, 3, 4, 5, 6])
 				.shuffle()
-				.take(faker.random.number({ min: 3, max: 5 }))
+				.take(faker.datatype.number({ min: 3, max: 5 }))
 				.values()
 				.value();
 
@@ -117,7 +117,7 @@ export const createRandomTimeLogs = async (
 					timeLog.logType = logType;
 					timeLog.source = source;
 					timeLog.description = faker.lorem.sentence(
-						faker.random.number(10)
+						faker.datatype.number(10)
 					);
 					timeLog.isBillable = faker.random.arrayElement([
 						true,

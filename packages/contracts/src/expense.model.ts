@@ -151,6 +151,7 @@ export interface IExpenseViewModel {
 	organizationContactName: string;
 	projectId: string;
 	projectName: string;
+	project: IOrganizationProject;
 	currency: string;
 	amount: number;
 	notes: string;

@@ -36,7 +36,7 @@ export const createRandomIntegrationEntitySetting = async (
 
 			integrationEntitySetting.integration = integrationTenant;
 			integrationEntitySetting.tiedEntities = integrationEntitySettingTiedEntities;
-			integrationEntitySetting.sync = faker.random.boolean();
+			integrationEntitySetting.sync = faker.datatype.boolean();
 			(integrationEntitySetting.organization = faker.random.arrayElement(
 				organizations
 			)),

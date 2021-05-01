@@ -46,12 +46,12 @@ export const createRandomProductVariantPrice = async (
 						const productVariantPrice = new ProductVariantPrice();
 
 						productVariantPrice.productVariant = productVariant;
-						productVariantPrice.unitCost = faker.random.number(
+						productVariantPrice.unitCost = faker.datatype.number(
 							10000
 						);
 						productVariantPrice.unitCostCurrency =
 							tenantOrg.currency || env.defaultCurrency;
-						productVariantPrice.retailPrice = faker.random.number(
+						productVariantPrice.retailPrice = faker.datatype.number(
 							productVariantPrice.unitCost
 						);
 						productVariantPrice.retailPriceCurrency =

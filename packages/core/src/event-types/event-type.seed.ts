@@ -35,11 +35,11 @@ export const createRandomEventType = async (
 				});
 
 				const event = new EventType();
-				event.isActive = faker.random.boolean();
+				event.isActive = faker.datatype.boolean();
 				event.description = faker.name.jobDescriptor();
 				event.title = faker.name.jobTitle();
 				event.durationUnit = 'minutes';
-				event.duration = faker.random.number(50);
+				event.duration = faker.datatype.number(50);
 				event.organization = tenantOrg;
 				event.employee = tenantEmployee;
 				event.tags = tags;

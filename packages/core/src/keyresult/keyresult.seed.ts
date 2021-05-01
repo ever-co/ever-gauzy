@@ -177,8 +177,8 @@ export const createRandomKeyResult = async (
 				keyResult.initialValue = 0;
 				keyResult.targetValue = 1;
 			} else {
-				keyResult.targetValue = faker.random.number(5000);
-				keyResult.initialValue = faker.random.number(
+				keyResult.targetValue = faker.datatype.number(5000);
+				keyResult.initialValue = faker.datatype.number(
 					keyResult.targetValue
 				);
 			}

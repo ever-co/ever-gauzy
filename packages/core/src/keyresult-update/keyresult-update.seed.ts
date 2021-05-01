@@ -30,7 +30,7 @@ export const createDefaultKeyResultUpdates = async (
 		return;
 	}
 	keyResults.forEach(async (keyResult) => {
-		const numberOfUpdates = faker.random.number({ min: 2, max: 10 });
+		const numberOfUpdates = faker.datatype.number({ min: 2, max: 10 });
 		for (let i = 0; i < numberOfUpdates; i++) {
 			const startDate = goalTimeFrames.find(
 				(element) => element.name === keyResult.goal.deadline
@@ -47,7 +47,7 @@ export const createDefaultKeyResultUpdates = async (
 				keyResultUpdate.status = faker.random.arrayElement(
 					Object.values(KeyResultUpdateStatusEnum)
 				);
-				keyResultUpdate.update = faker.random.number({
+				keyResultUpdate.update = faker.datatype.number({
 					min: keyResult.initialValue + 1,
 					max: keyResult.targetValue
 				});
