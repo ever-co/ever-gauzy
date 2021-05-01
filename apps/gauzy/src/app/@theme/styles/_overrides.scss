@@ -1,9 +1,19 @@
 @import './themes';
 
 ::-webkit-scrollbar {
-  display: none;
+  width: nb-theme(scrollbar-width)
+}
+::-webkit-scrollbar-track {
+  background: nb-theme(scrollbar-background-color);
+}
+::-webkit-scrollbar-thumb {
+  background: nb-theme(scrollbar-color);
+  border-radius: 0.15625rem;
 }
 
+nb-sidebar .scrollable::-webkit-scrollbar {
+  display: none;
+}
 body {
   -ms-overflow-style: none;
 }

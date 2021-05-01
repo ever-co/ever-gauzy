@@ -45,6 +45,7 @@ import {
 	SelectorBuilderService
 } from '../../../@core/services';
 import { combineLatest, Subject } from 'rxjs';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -52,7 +53,7 @@ import { combineLatest, Subject } from 'rxjs';
 	styleUrls: ['./header.component.scss'],
 	templateUrl: './header.component.html'
 })
-export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
+export class HeaderComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
 	hasPermissionE = false;
 	hasPermissionI = false;
 	hasPermissionP = false;
@@ -101,7 +102,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		private readonly layoutService: LayoutService,
 		private readonly themeService: NbThemeService,
 		private readonly router: Router,
-		private readonly translate: TranslateService,
+		public readonly translate: TranslateService,
 		private readonly store: Store,
 		private readonly timeTrackerService: TimeTrackerService,
 		private readonly usersOrganizationsService: UsersOrganizationsService,
@@ -113,7 +114,9 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		private readonly organizationProjectStore: OrganizationProjectStore,
 		private readonly employeeStore: EmployeeStore,
 		public readonly selectorBuilderService: SelectorBuilderService
-	) {}
+	) {
+		super(translate);
+	}
 
 	ngOnInit() {
 		this.selectorBuilderService.selectors$
@@ -571,14 +574,6 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				link: 'pages/about'
 			}
 		];
-	}
-
-	getTranslation(prefix: string) {
-		let result = '';
-		this.translate.get(prefix).subscribe((res) => {
-			result = res;
-		});
-		return result;
 	}
 
 	private _applyTranslationOnSmartTable() {

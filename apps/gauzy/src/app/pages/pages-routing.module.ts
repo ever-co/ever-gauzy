@@ -46,12 +46,7 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./expenses/expenses.module').then(
 								(m) => m.ExpensesModule
-							),
-						data: {
-							selectors: {
-								project: false
-							}
-						}
+							)
 					},
 					{
 						path: 'invoices',

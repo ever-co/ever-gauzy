@@ -185,7 +185,7 @@ export class ExpensesComponent
 					type: 'string'
 				},
 				employee: {
-					title: 'Employee',
+					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 					type: 'string',
 					valuePrepareFunction: (_, expense: IExpenseViewModel) => {
 						const user = expense.employee
@@ -193,6 +193,16 @@ export class ExpensesComponent
 							: null;
 						if (user) {
 							return `${user.firstName} ${user.lastName}`;
+						}
+					}
+				},
+				projectName: {
+					title: this.getTranslation('SM_TABLE.PROJECT'),
+					type: 'string',
+					valuePrepareFunction: (_, expense: IExpenseViewModel) => {
+						const project = expense.project;
+						if (project) {
+							return `${project.name}`;
 						}
 					}
 				},
@@ -431,7 +441,14 @@ export class ExpensesComponent
 
 		try {
 			const { items } = await this.expenseService.getAll(
-				['employee', 'employee.user', 'category', 'vendor', 'tags'],
+				[
+					'employee',
+					'employee.user',
+					'category',
+					'vendor',
+					'tags',
+					'project'
+				],
 				findObj,
 				this.selectedDate
 			);
@@ -450,6 +467,7 @@ export class ExpensesComponent
 					organizationContactName: i.organizationContactName,
 					projectId: i.projectId,
 					projectName: i.projectName,
+					project: i.project,
 					amount: i.amount,
 					notes: i.notes,
 					currency: i.currency,
