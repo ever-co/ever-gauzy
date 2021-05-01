@@ -32,8 +32,7 @@ import {
 import { createRoles } from '../../role/role.seed';
 import { createDefaultSkills } from '../../skills/skill.seed';
 import { createLanguages } from '../../language/language.seed';
-import {
-	createBasicSuperAdminUsers,
+import {	
 	createDefaultSuperAdminUsers,
 	createDefaultUsers,
 	createRandomSuperAdminUsers,
@@ -533,7 +532,7 @@ export class SeedDataService {
 				)
 			);
 
-			//Seed data which only needs connection
+			// Seed data which only needs connection
 			await this.tryExecute(
 				'Countries',
 				createCountries(this.connection)
@@ -645,20 +644,8 @@ export class SeedDataService {
 				)
 			);
 		}
-
-		if (this.seedType === 'basic') {
-			this.superAdminUsers = await this.tryExecute(
-				'Users',
-				createBasicSuperAdminUsers(
-					this.connection,
-					this.roles,
-					this.tenant
-				)
-			) as IUser[];
-
-		}
-		else {
-			this.superAdminUsers = await this.tryExecute(
+		
+		this.superAdminUsers = await this.tryExecute(
 				'Users',
 				createDefaultSuperAdminUsers(
 					this.connection,
@@ -666,7 +653,6 @@ export class SeedDataService {
 					this.tenant
 				)
 			) as IUser[];
-		}
 
 		if (this.seedType === 'basic') {
 			await createDefaultUsersOrganizations(this.connection, {
@@ -677,6 +663,7 @@ export class SeedDataService {
 			});
 		}
 		else {
+
 			const {
 				adminUsers,
 				defaultEmployeeUsers,
