@@ -4,19 +4,20 @@ export const DEFAULT_SUPER_ADMINS = [
 	{
 		email: 'admin@ever.co',
 		password: 'admin',
-		firstName: 'Admin',
-		lastName: 'Super',
-		imageUrl: 'assets/images/avatars/ruslan.jpg',
+		firstName: 'Super',
+		lastName: 'Admin',
+		imageUrl: 'assets/images/avatar-default.svg',
 		preferredLanguage: LanguagesEnum.ENGLISH
 	}
 ];
 
+// TODO: just remove this one and use DEFAULT_SUPER_ADMINS instead
 export const BASIC_SUPER_ADMINS = [
 	{
-		email: 'admin@company.com',
+		email: 'admin@ever.co',
 		password: 'admin',
-		firstName: 'Admin',
-		lastName: 'Super',
+		firstName: 'Super',
+		lastName: 'Admin',
 		imageUrl: 'assets/images/avatar-default.svg',
 		preferredLanguage: LanguagesEnum.ENGLISH
 	}
@@ -26,9 +27,9 @@ export const DEFAULT_ADMINS = [
 	{
 		email: 'local.admin@ever.co',
 		password: 'admin',
-		firstName: 'Admin',
-		lastName: 'Local',
-		imageUrl: 'assets/images/avatars/ruslan.jpg',
+		firstName: 'Super',
+		lastName: 'Admin',
+		imageUrl: 'assets/images/avatar-default.svg',
 		preferredLanguage: LanguagesEnum.ENGLISH
 	}
 ];
