@@ -148,8 +148,6 @@ export const createDefaultOrganizations = async (
 	return organizations;
 };
 
-let basicOrganizationsInserted = [];
-
 export const createBasicOrganizations = async (
 	connection: Connection,
 	tenant: Tenant
@@ -238,7 +236,7 @@ export const createBasicOrganizations = async (
 	});
 
 	const organizations = await connection.manager.save(basicOrganizations);
-	basicOrganizationsInserted = [...basicOrganizations];
+	defaultOrganizationsInserted = [...basicOrganizations];
 	return organizations;
 };
 
