@@ -18,7 +18,7 @@ import {
 	IOrganizationCreateInput,
 	IOrganization
 } from '@gauzy/contracts';
-import { DEFAULT_ORGANIZATIONS } from './default-organizations';
+import { BASIC_ORGANIZATIONS, DEFAULT_ORGANIZATIONS } from './default-organizations';
 import { environment as env } from '@gauzy/config';
 
 export const getDefaultBulgarianOrganization = async (
@@ -28,6 +28,17 @@ export const getDefaultBulgarianOrganization = async (
 	const repo = connection.getRepository(Organization);
 	const existedOrganization = await repo.findOne({
 		where: { tenantId: tenant.id, name: 'Ever Technologies LTD' }
+	});
+	return existedOrganization;
+};
+
+export const getBasicBulgarianOrganization = async (
+	connection: Connection,
+	tenant: Tenant
+): Promise<IOrganization> => {
+	const repo = connection.getRepository(Organization);
+	const existedOrganization = await repo.findOne({
+		where: { tenantId: tenant.id, name: 'Default Company' }
 	});
 	return existedOrganization;
 };
@@ -134,6 +145,98 @@ export const createDefaultOrganizations = async (
 
 	const organizations = await connection.manager.save(defaultOrganizations);
 	defaultOrganizationsInserted = [...defaultOrganizations];
+	return organizations;
+};
+
+export const createBasicOrganizations = async (
+	connection: Connection,
+	tenant: Tenant
+): Promise<Organization[]> => {
+	const basicOrganizations: Organization[] = [];
+	const skills = await getSkills(connection);
+	const contacts = await getContacts(connection);
+
+	BASIC_ORGANIZATIONS.forEach((organization: IOrganizationCreateInput) => {
+		const organizationSkills = _.chain(skills)
+			.shuffle()
+			.take(faker.random.number({ min: 1, max: 4 }))
+			.values()
+			.value();
+		const defaultOrganization: Organization = new Organization();
+		const { name, currency, defaultValueDateType, imageUrl } = organization;
+		defaultOrganization.name = name;
+		defaultOrganization.profile_link = generateLink(name);
+		defaultOrganization.currency = currency;
+		defaultOrganization.defaultValueDateType = defaultValueDateType;
+		defaultOrganization.imageUrl = imageUrl;
+		defaultOrganization.invitesAllowed = true;
+		defaultOrganization.bonusType = BonusTypeEnum.REVENUE_BASED_BONUS;
+		defaultOrganization.bonusPercentage = 10;
+		defaultOrganization.registrationDate = faker.date.past(5);
+		defaultOrganization.overview = faker.name.jobDescriptor();
+		defaultOrganization.short_description = faker.name.jobDescriptor();
+		defaultOrganization.client_focus = faker.name.jobDescriptor();
+		defaultOrganization.show_profits = false;
+		defaultOrganization.show_bonuses_paid = false;
+		defaultOrganization.show_income = false;
+		defaultOrganization.show_total_hours = false;
+		defaultOrganization.show_projects_count = true;
+		defaultOrganization.show_minimum_project_size = true;
+		defaultOrganization.show_clients_count = true;
+		defaultOrganization.show_clients = true;
+		defaultOrganization.show_employees_count = true;
+		defaultOrganization.banner = faker.name.jobDescriptor();
+		defaultOrganization.skills = organizationSkills;
+		defaultOrganization.brandColor = faker.random.arrayElement([
+			'red',
+			'green',
+			'blue',
+			'orange',
+			'yellow'
+		]);
+		defaultOrganization.contact = faker.random.arrayElement(contacts);
+		defaultOrganization.timeZone = faker.random.arrayElement(
+			timezone.tz.names().filter((zone) => zone.includes('/'))
+		);
+		defaultOrganization.dateFormat = faker.random.arrayElement([
+			'L',
+			'L hh:mm',
+			'LL',
+			'LLL',
+			'LLLL'
+		]);
+		defaultOrganization.defaultAlignmentType = faker.random.arrayElement(
+			Object.keys(AlignmentOptions)
+		);
+		defaultOrganization.fiscalStartDate = moment(new Date())
+			.add(faker.random.number(10), 'days')
+			.toDate();
+		defaultOrganization.fiscalEndDate = moment(
+			defaultOrganization.fiscalStartDate
+		)
+			.add(faker.random.number(10), 'days')
+			.toDate();
+		defaultOrganization.futureDateAllowed = faker.random.boolean();
+		defaultOrganization.inviteExpiryPeriod = faker.random.number(50);
+		defaultOrganization.numberFormat = faker.random.arrayElement([
+			'USD',
+			'BGN',
+			'ILS'
+		]);
+		defaultOrganization.officialName = faker.company.companyName();
+		defaultOrganization.separateInvoiceItemTaxAndDiscount = faker.random.boolean();
+		defaultOrganization.startWeekOn = WeekDaysEnum.MONDAY;
+		defaultOrganization.totalEmployees = faker.random.number(4);
+		defaultOrganization.tenant = tenant;
+		defaultOrganization.valueDate = moment(new Date())
+			.add(faker.random.number(10), 'days')
+			.toDate();
+
+		basicOrganizations.push(defaultOrganization);
+	});
+
+	const organizations = await connection.manager.save(basicOrganizations);
+	defaultOrganizationsInserted = [...basicOrganizations];
 	return organizations;
 };
 

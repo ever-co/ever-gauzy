@@ -20,6 +20,16 @@ export const createDefaultTenants = async (
 	return tenant;
 };
 
+export const createBasicTenants = async (
+	connection: Connection
+): Promise<Tenant> => {
+	const tenant: Tenant = {
+		name: 'Default Tenant'
+	};
+	await insertTenant(connection, tenant);
+	return tenant;
+};
+
 export const createRandomTenants = async (
 	connection: Connection,
 	noOfTenants: number = 0

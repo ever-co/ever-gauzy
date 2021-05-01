@@ -32,7 +32,7 @@ import {
 import { createRoles } from '../../role/role.seed';
 import { createDefaultSkills } from '../../skills/skill.seed';
 import { createLanguages } from '../../language/language.seed';
-import {
+import {	
 	createDefaultSuperAdminUsers,
 	createDefaultUsers,
 	createRandomSuperAdminUsers,
@@ -43,6 +43,7 @@ import {
 	createRandomEmployees
 } from '../../employee/employee.seed';
 import {
+	createBasicOrganizations,
 	createDefaultOrganizations,
 	createRandomOrganizations,
 	getDefaultBulgarianOrganization
@@ -66,6 +67,7 @@ import {
 } from '../../organization-team/organization-team.seed';
 import { createRolePermissions } from '../../role-permissions/role-permissions.seed';
 import {
+	createBasicTenants,
 	createDefaultTenants,
 	createRandomTenants,
 	getDefaultTenant
@@ -313,8 +315,9 @@ export class SeedDataService {
 	defaultEmployees: IEmployee[];
 
 	config: IPluginConfig = getConfig();
+	seedType: 'all' | 'basic' | 'default';
 
-	constructor(private readonly moduleRef: ModuleRef) {}
+	constructor(private readonly moduleRef: ModuleRef) { }
 
 	/**
 	 * This config is applied only for `yarn seed:*` type calls because
@@ -330,7 +333,7 @@ export class SeedDataService {
 	 * Seed All Data
 	 */
 	public async runAllSeed() {
-		const isDefault = false;
+		this.seedType = 'all'
 
 		try {
 			await this.cleanUpPreviousRuns();
@@ -342,10 +345,10 @@ export class SeedDataService {
 			await this.resetDatabase();
 
 			// Seed data with mock / fake data
-			await this.seedData(isDefault);
+			await this.seedData();
 
 			// Seed jobs related data
-			await this.seedJobsData(isDefault);
+			await this.seedJobsData();
 
 			// Seed reports related data
 			await this.seedReportsData();
@@ -359,8 +362,8 @@ export class SeedDataService {
 	/**
 	 * Seed Default Data
 	 */
-	public async runDefaultSeed() {
-		const isDefault = true;
+	public async runBasicSeed() {
+		this.seedType = 'basic';
 
 		try {
 			await this.cleanUpPreviousRuns();
@@ -372,7 +375,30 @@ export class SeedDataService {
 			await this.resetDatabase();
 
 			// Seed data with mock / fake data
-			await this.seedData(isDefault);
+			await this.seedData();
+
+			console.log('Database Default Seed Completed');
+		} catch (error) {
+			this.handleError(error);
+		}
+	}
+	/**
+	 * Seed Default Data
+	 */
+	public async runDefaultSeed() {
+		this.seedType = 'default';
+
+		try {
+			await this.cleanUpPreviousRuns();
+
+			// Connect to database
+			await this.createConnection();
+
+			// Reset database to start with new, fresh data
+			await this.resetDatabase();
+
+			// Seed data with mock / fake data
+			await this.seedData();
 
 			// Seed reports related data
 			await this.seedReportsData();
@@ -408,21 +434,22 @@ export class SeedDataService {
 		try {
 			this.log(
 				chalk.green(
-					`🌱 SEEDING ${
-						env.production ? 'PRODUCTION' : ''
+					`🌱 SEEDING ${env.production ? 'PRODUCTION' : ''
 					} REPORTS DATABASE...`
 				)
 			);
 
-			await this.tryExecute(
-				'Default Report Category & Report',
-				createDefaultReport(this.connection, this.config)
-			);
-		
+      // TODO: if createDefaultReport only seed basic reports info, we should run it in all seed types, i.e. remove condition below
+			if (this.seedType === 'all') {
+				await this.tryExecute(
+					'Default Report Category & Report',
+					createDefaultReport(this.connection, this.config)
+				);
+			}
+
 			this.log(
 				chalk.green(
-					`✅ SEEDED ${
-						env.production ? 'PRODUCTION' : ''
+					`✅ SEEDED ${env.production ? 'PRODUCTION' : ''
 					} REPORTS DATABASE`
 				)
 			);
@@ -435,12 +462,12 @@ export class SeedDataService {
 	 * Seed Default Data
 	 */
 	public async runJobsSeed() {
-		const isDefault = true;
+		this.seedType = 'all';
 		try {
 			// Connect to database
 			await this.createConnection();
 
-			await this.seedJobsData(isDefault);
+			await this.seedJobsData();
 
 			console.log('Database Jobs Seed completed');
 		} catch (error) {
@@ -451,14 +478,12 @@ export class SeedDataService {
 	 * Populate database with jobs related data
 	 * @param isDefault
 	 */
-	private async seedJobsData(isDefault: boolean) {
-		// TODO: implement for isDefault = false (i.e for other tenants with random data too)
+	private async seedJobsData() {
 
 		try {
 			this.log(
 				chalk.green(
-					`🌱 SEEDING ${
-						env.production ? 'PRODUCTION' : ''
+					`🌱 SEEDING ${env.production ? 'PRODUCTION' : ''
 					} JOBS DATABASE...`
 				)
 			);
@@ -490,8 +515,7 @@ export class SeedDataService {
 
 			this.log(
 				chalk.green(
-					`✅ SEEDED ${
-						env.production ? 'PRODUCTION' : ''
+					`✅ SEEDED ${env.production ? 'PRODUCTION' : ''
 					} JOBS DATABASE`
 				)
 			);
@@ -503,17 +527,16 @@ export class SeedDataService {
 	/**
 	 * Populate database with mock data
 	 */
-	private async seedData(isDefault: boolean) {
+	private async seedData() {
 		try {
 			this.log(
 				chalk.green(
-					`🌱 SEEDING ${
-						env.production ? 'PRODUCTION' : ''
+					`🌱 SEEDING ${env.production ? 'PRODUCTION' : ''
 					} DATABASE...`
 				)
 			);
 
-			//Seed data which only needs connection
+			// Seed data which only needs connection
 			await this.tryExecute(
 				'Countries',
 				createCountries(this.connection)
@@ -526,7 +549,7 @@ export class SeedDataService {
 
 			await this.seedBasicDefaultData();
 
-			if (!isDefault) {
+			if (this.seedType === 'all') {
 				await this.seedDefaultData();
 				await this.seedRandomData();
 			}
@@ -545,21 +568,46 @@ export class SeedDataService {
 	private async seedBasicDefaultData() {
 		// Platform level data
 
+		if (this.seedType === 'basic') {
+			this.tenant = await this.tryExecute(
+				'Tenant',
+				createBasicTenants(this.connection)
+			) as ITenant;		
+		}
+		else {
+			this.tenant = await this.tryExecute(
+				'Tenant',
+				createDefaultTenants(this.connection)
+			) as ITenant;
+		}
+
 		await this.tryExecute('Languages', createLanguages(this.connection));
 
-		this.tenant = await createDefaultTenants(this.connection);
-
 		this.roles = await createRoles(this.connection, [this.tenant]);
+
+		await this.runReportsSeed();
 
 		await createRolePermissions(this.connection, this.roles, [this.tenant]);
 
 		// Tenant level inserts which only need connection, tenant, roles
-		const defaultOrganizations = await createDefaultOrganizations(
-			this.connection,
-			this.tenant
-		);
-
-		this.organizations = defaultOrganizations;
+		if (this.seedType === 'basic') {
+			this.organizations = await this.tryExecute(
+				'Organizations',
+				createBasicOrganizations(
+					this.connection,
+					this.tenant
+				)
+			) as IOrganization[];
+		}
+		else {
+			this.organizations = await this.tryExecute(
+				'Organizations',
+				createDefaultOrganizations(
+					this.connection,
+					this.tenant
+				)
+			) as IOrganization[];
+		}
 
 		await this.tryExecute(
 			'Default Feature Toggle',
@@ -589,54 +637,71 @@ export class SeedDataService {
 			)
 		);
 
-		await this.tryExecute(
-			'Contacts',
-			createRandomContacts(
-				this.connection,
-				this.tenant,
-				this.organizations,
-				randomSeedConfig.noOfRandomContacts || 5
-			)
-		);
+		if (this.seedType !== 'basic') {
+			await this.tryExecute(
+				'Contacts',
+				createRandomContacts(
+					this.connection,
+					this.tenant,
+					this.organizations,
+					randomSeedConfig.noOfRandomContacts || 5
+				)
+			);
+		}
+		
+		this.superAdminUsers = await this.tryExecute(
+				'Users',
+				createDefaultSuperAdminUsers(
+					this.connection,
+					this.roles,
+					this.tenant
+				)
+			) as IUser[];
 
-		this.superAdminUsers = await createDefaultSuperAdminUsers(
-			this.connection,
-			this.roles,
-			this.tenant
-		);
-		const {
-			adminUsers,
-			defaultEmployeeUsers,
-			defaultCandidateUsers
-		} = await createDefaultUsers(this.connection, this.roles, this.tenant);
+		if (this.seedType === 'basic') {
+			await createDefaultUsersOrganizations(this.connection, {
+				organizations: this.organizations,
+				users: [
+					...this.superAdminUsers
+				]
+			});
+		}
+		else {
 
-		await createDefaultUsersOrganizations(this.connection, {
-			organizations: this.organizations,
-			users: [
-				...defaultEmployeeUsers,
-				...adminUsers,
-				...this.superAdminUsers
-			]
-		});
+			const {
+				adminUsers,
+				defaultEmployeeUsers,
+				defaultCandidateUsers
+			} = await createDefaultUsers(this.connection, this.roles, this.tenant);
 
-		this.defaultCandidateUsers = defaultCandidateUsers;
+			await createDefaultUsersOrganizations(this.connection, {
+				organizations: this.organizations,
+				users: [
+					...defaultEmployeeUsers,
+					...adminUsers,
+					...this.superAdminUsers
+				]
+			});
 
-		//User level data that needs connection, tenant, organization, role, users
-		this.defaultEmployees = await createDefaultEmployees(this.connection, {
-			tenant: this.tenant,
-			org: this.organizations[0],
-			users: defaultEmployeeUsers
-		});
+			this.defaultCandidateUsers = defaultCandidateUsers;
 
-		await this.tryExecute(
-			'Default Employee Invite',
-			createDefaultEmployeeInviteSent(
-				this.connection,
-				this.tenant,
-				this.organizations,
-				this.superAdminUsers
-			)
-		);
+			//User level data that needs connection, tenant, organization, role, users
+			this.defaultEmployees = await createDefaultEmployees(this.connection, {
+				tenant: this.tenant,
+				org: this.organizations[0],
+				users: defaultEmployeeUsers
+			});
+
+			await this.tryExecute(
+				'Default Employee Invite',
+				createDefaultEmployeeInviteSent(
+					this.connection,
+					this.tenant,
+					this.organizations,
+					this.superAdminUsers
+				)
+			);
+		}
 
 		await this.tryExecute(
 			'Default General Goal Setting',
@@ -678,7 +743,7 @@ export class SeedDataService {
 			})
 		);
 
-		//seed default integrations with types
+		// seed default integrations with types
 		const integrationTypes = await this.tryExecute(
 			'Default Integration Types',
 			createDefaultIntegrationTypes(this.connection)
@@ -698,7 +763,7 @@ export class SeedDataService {
 			)
 		);
 
-		//run all plugins random seed method
+		// run all plugins random seed method
 		await this.bootstrapPluginSeedMethods(
 			'onBasicPluginSeed',
 			(instance: any) => {
@@ -713,7 +778,7 @@ export class SeedDataService {
 	 * Populate default data from env files
 	 */
 	private async seedDefaultData() {
-		//Organization level inserts which need connection, tenant, role, organizations
+		// Organization level inserts which need connection, tenant, role, organizations
 		const categories = await this.tryExecute(
 			'Default Expense Categories',
 			createExpenseCategories(
@@ -728,7 +793,7 @@ export class SeedDataService {
 			createEmployeeLevels(this.connection, this.organizations)
 		);
 
-		//todo :  Need to fix error of seeding Product Category
+		// TODO: needs to fix error of seeding Product Category
 		await this.tryExecute(
 			'Default Categories',
 			createCategories(this.connection, this.organizations)
@@ -744,7 +809,7 @@ export class SeedDataService {
 			createDefaultOrganizationContact(this.connection)
 		);
 
-		//Employee level data that need connection, tenant, organization, role, users, employee
+		// Employee level data that need connection, tenant, organization, role, users, employee
 		await this.tryExecute(
 			'Default Teams',
 			createDefaultTeams(
@@ -1185,7 +1250,7 @@ export class SeedDataService {
 			)
 		);
 
-		//run all plugins default seed method
+		// run all plugins default seed method
 		await this.bootstrapPluginSeedMethods(
 			'onDefaultPluginSeed',
 			(instance: any) => {
@@ -1202,7 +1267,7 @@ export class SeedDataService {
 	 * Populate database with random generated data
 	 */
 	private async seedRandomData() {
-		//Platform level data which only need database connection
+		// Platform level data which only need database connection
 		const tenants = await createRandomTenants(
 			this.connection,
 			randomSeedConfig.tenants || 1
@@ -1218,7 +1283,7 @@ export class SeedDataService {
 
 		await createRolePermissions(this.connection, roles, tenants);
 
-		//Tenant level inserts which only need connection, tenant, role
+		// Tenant level inserts which only need connection, tenant, role
 		const tenantOrganizationsMap = await createRandomOrganizations(
 			this.connection,
 			tenants,
@@ -1244,7 +1309,7 @@ export class SeedDataService {
 			randomSeedConfig.viewersPerOrganization || 1
 		);
 
-		//Organization level inserts which need connection, tenant, organizations, users
+		// Organization level inserts which need connection, tenant, organizations, users
 		await createRandomUsersOrganizations(
 			this.connection,
 			tenants,
@@ -1308,7 +1373,14 @@ export class SeedDataService {
 			)
 		);
 
-		await this.tryExecute(
+		await createRandomProductVariant(
+			this.connection,
+			tenants,
+			tenantOrganizationsMap,
+			randomSeedConfig.numberOfVariantPerProduct || 5
+		)
+
+		/* await this.tryExecute(
 			'Random Product Variants',
 			createRandomProductVariant(
 				this.connection,
@@ -1316,7 +1388,7 @@ export class SeedDataService {
 				tenantOrganizationsMap,
 				randomSeedConfig.numberOfVariantPerProduct || 5
 			)
-		);
+		); */
 
 		await this.tryExecute(
 			'Random Product Variant Prices',
@@ -1912,9 +1984,9 @@ export class SeedDataService {
 			const assetOptions = this.config.assetOptions;
 			const dir = env.isElectron
 				? path.join(
-						path.resolve(env.gauzyUserPath, ...['public']),
-						'screenshots'
-				  )
+					path.resolve(env.gauzyUserPath, ...['public']),
+					'screenshots'
+				)
 				: path.join(assetOptions.assetPublicPath, 'screenshots');
 
 			// delete old generated screenshots
@@ -1934,6 +2006,7 @@ export class SeedDataService {
 			);
 		}
 		const database = this.config.dbConnectionOptions;
+
 		if (!this.connection || !this.connection.isConnected) {
 			try {
 				this.log(chalk.green(`CONNECTING TO DATABASE...`));
@@ -2043,8 +2116,7 @@ export class SeedDataService {
 	private handleError(error: Error, message?: string): void {
 		this.log(
 			chalk.bgRed(
-				`🛑 ERROR: ${message ? message + '-> ' : ''} ${
-					error ? error.message : ''
+				`🛑 ERROR: ${message ? message + '-> ' : ''} ${error ? error.message : ''
 				}`
 			)
 		);
