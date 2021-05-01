@@ -157,7 +157,7 @@
 		"MONTHLY": "Ежемесячно",
 		"ROLE": "Роль",
 		"PROJECTS": "Проекты",
-		"PROJECT": "Project",
+		"PROJECT": "Проект",
 		"INVITED_BY": "Приглашен",
 		"EXPIRE_DATE": "Истекает",
 		"CLIENTS": "Клиенты",
@@ -940,7 +940,7 @@
 		"CLIENT_BUDGET_REPORTS": "Бюджетные отчеты клиента",
 		"NO_CLIENTS": "Нет клиентов",
 		"EXPANSE": "Expanse",
-		"PAYMENT": "Payment",
+		"PAYMENT": "Оплата",
 		"NO_EMPLOYEES_WORKED": "Сотрудники не работали"
 	},
 	"INTEGRATIONS": {
