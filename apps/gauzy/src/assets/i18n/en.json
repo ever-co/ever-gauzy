@@ -157,6 +157,7 @@
 		"MONTHLY": "Monthly",
 		"ROLE": "Role",
 		"PROJECTS": "Projects",
+		"PROJECT": "Project",
 		"INVITED_BY": "Invited By",
 		"EXPIRE_DATE": "Expires",
 		"CLIENTS": "Clients",
@@ -939,6 +940,7 @@
 		"CLIENT_BUDGET_REPORTS": "Client Budget Reports",
 		"NO_CLIENTS": "No Clients",
 		"EXPANSE": "Expanse",
+		"PAYMENT": "Payment",
 		"NO_EMPLOYEES_WORKED": "No employees worked"
 	},
 	"INTEGRATIONS": {

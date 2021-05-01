@@ -41,6 +41,7 @@ export class PaymentService extends CrudService<Payment> {
 		// 	);
 		// }
 
+		query.leftJoinAndSelect(`${query.alias}.project`, 'project');
 		const payments = await query.getMany();
 		return payments;
 	}
@@ -72,7 +73,9 @@ export class PaymentService extends CrudService<Payment> {
 				}, 0);
 				return {
 					date,
-					value: sum.toFixed(1)
+					value: {
+						payment: sum.toFixed(1)
+					}
 				};
 			})
 			.value();
@@ -84,7 +87,7 @@ export class PaymentService extends CrudService<Payment> {
 				return {
 					date: date,
 					value: {
-						expanse: 0
+						payment: 0
 					}
 				};
 			}

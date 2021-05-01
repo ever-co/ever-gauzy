@@ -22,6 +22,7 @@ import { ReportService } from './reports/all-report/report.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { chain } from 'underscore';
 import { AuthStrategy } from '../@core/auth/auth-strategy.service';
+import { TranslationBaseComponent } from '../@shared/language-base/translation-base.component';
 
 interface GaMenuItem extends NbMenuItem {
 	data: {
@@ -43,7 +44,7 @@ interface GaMenuItem extends NbMenuItem {
 		</ngx-one-column-layout>
 	`
 })
-export class PagesComponent implements OnInit, OnDestroy {
+export class PagesComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	basicMenu: GaMenuItem[];
 	adminMenu: GaMenuItem[];
 	isAdmin: boolean;
@@ -67,6 +68,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 		private readonly authStrategy: AuthStrategy,
 		public readonly selectorBuilderService: SelectorBuilderService
 	) {
+		super(translate);
 		this.router.events
 			.pipe(
 				filter((event) => event instanceof NavigationEnd),
@@ -1112,14 +1114,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 			.then(({ success }) => {
 				this.isEmployee = success;
 			});
-	}
-
-	getTranslation(prefix: string) {
-		let result = prefix;
-		this.translate.get(prefix).subscribe((res) => {
-			result = res;
-		});
-		return result;
 	}
 
 	private _applyTranslationOnSmartTable() {

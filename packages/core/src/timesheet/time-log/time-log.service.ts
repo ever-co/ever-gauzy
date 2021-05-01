@@ -590,13 +590,13 @@ export class TimeLogService extends CrudService<TimeLog> {
 	}
 
 	async clientBudgetLimit(request: IClientBudgetLimitReportInput) {
-		const organizationContacts = await this.organizationContactsRepository.find(
-			{
-				where: {
-					organizationId: request.organizationId
-				}
-			}
-		);
+		const { organizationId } = request;
+		const tenantId = RequestContext.currentTenantId();
+
+		const organizationContacts = await this.organizationContactsRepository.find({
+			organizationId,
+			tenantId
+		});
 
 		const clientProjects = await this.organizationProjectRepository.find({
 			relations: ['timeLogs', 'timeLogs.employee'],
