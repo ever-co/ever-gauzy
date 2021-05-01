@@ -1106,7 +1106,7 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
-		"HEADER": "Manage Employees for ",
+		"HEADER": "Manage Employees",
 		"ADD_EMPLOYEE": "Add Employee",
 		"ACTIVE": "Active",
 		"END_WORK": "End Work",

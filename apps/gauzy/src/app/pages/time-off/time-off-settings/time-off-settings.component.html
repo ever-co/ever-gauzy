@@ -1,14 +1,14 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="main-header">
-		<div class="main-header">
-			<ngx-back-navigation></ngx-back-navigation>
-			<h4>{{ 'TIME_OFF_PAGE.POLICY.HEADER' | translate }}</h4>
-		</div>
-		<div>
-			<ga-layout-selector
-				componentName="{{ viewComponentName }}"
-			></ga-layout-selector>
-		</div>
+		<h4>
+			<ngx-organization-title>
+				<ngx-back-navigation></ngx-back-navigation>
+				{{ 'TIME_OFF_PAGE.POLICY.HEADER' | translate }}
+			</ngx-organization-title>
+		</h4>
+		<ga-layout-selector
+			[componentName]="viewComponentName"
+		></ga-layout-selector>
 	</nb-card-header>
 	<nb-card-body>
 		<ng-template ngxPermissionsOnly="POLICY_EDIT">

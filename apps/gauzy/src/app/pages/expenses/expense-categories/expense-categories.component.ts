@@ -21,7 +21,7 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 @Component({
 	selector: 'ga-expense-categories',
 	templateUrl: './expense-categories.component.html',
-	styles: [':host > nb-card { min-height: 47.50rem; }']
+	styleUrls: ['./expense-categories.component.scss']
 })
 export class ExpenseCategoriesComponent
 	extends TranslationBaseComponent

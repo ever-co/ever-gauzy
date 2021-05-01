@@ -162,6 +162,7 @@ export class EmployeeSelectorComponent
 						id: e.id,
 						firstName: e.user.firstName,
 						lastName: e.user.lastName,
+						fullName: e.user.name,
 						imageUrl: e.user.imageUrl
 					};
 				})
@@ -286,6 +287,7 @@ export class EmployeeSelectorComponent
 					id: e.id,
 					firstName: e.user.firstName,
 					lastName: e.user.lastName,
+					fullName: e.user.name,
 					imageUrl: e.user.imageUrl
 				};
 			})

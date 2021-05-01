@@ -1,13 +1,13 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="header-selector-wrapper">
-		<div>
-			<h4>{{ 'PAYMENTS_PAGE.HEADER' | translate }}</h4>
-		</div>
-		<div>
-			<ga-layout-selector
-				componentName="{{ viewComponentName }}"
-			></ga-layout-selector>
-		</div>
+		<h4>
+			<ngx-organization-title>
+				{{ 'PAYMENTS_PAGE.HEADER' | translate }}
+			</ngx-organization-title>
+		</h4>
+		<ga-layout-selector
+			[componentName]="viewComponentName"
+		></ga-layout-selector>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="mb-3">

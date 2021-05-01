@@ -1,23 +1,18 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="header-selector-wrapper">
-		<div>
-			<h4 *ngIf="!isEstimate">
-				{{ 'INVOICES_PAGE.HEADER' | translate }}
-			</h4>
-			<h4 *ngIf="isEstimate">
-				{{ 'INVOICES_PAGE.ESTIMATES.HEADER' | translate }}
-			</h4>
-		</div>
-		<div>
-			<ga-layout-selector
-				componentName="{{ viewComponentName }}"
-			></ga-layout-selector>
-		</div>
+		<h4>
+			<ngx-organization-title>
+				{{ (!isEstimate ? 'INVOICES_PAGE.HEADER' : 'INVOICES_PAGE.ESTIMATES.HEADER') | translate }}
+			</ngx-organization-title>
+		</h4>
+		<ga-layout-selector
+			[componentName]="viewComponentName"
+		></ga-layout-selector>
 	</nb-card-header>
 	<nb-card-body>
 		<nb-tabset (changeTab)="onChangeTab($event)">
 			<nb-tab
-				tabTitle="{{ 'INVOICES_PAGE.ACTIONS' | translate }}"
+				[tabTitle]="'INVOICES_PAGE.ACTIONS' | translate"
 				tabId="actions"
 			>
 				<ng-template

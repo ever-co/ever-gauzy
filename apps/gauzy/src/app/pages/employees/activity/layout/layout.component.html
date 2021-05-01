@@ -1,6 +1,10 @@
 <nb-card class="employee-edit">
 	<nb-card-header class="header">
-		<h4>{{ title | translate }}</h4>
+		<h4>
+			<ngx-employee-title> 
+				{{ title | translate }} 
+			</ngx-employee-title>
+		</h4>
 	</nb-card-header>
 	<nb-card-body>
 		<nb-route-tabset [tabs]="tabs"></nb-route-tabset>

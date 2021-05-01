@@ -1,8 +1,12 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="main-header">
-		<h4>{{ 'TIME_OFF_PAGE.HEADER' | translate }}</h4>
+		<h4>
+			<ngx-employee-title>
+				{{ 'TIME_OFF_PAGE.HEADER' | translate }}
+			</ngx-employee-title>
+		</h4>
 		<ga-layout-selector
-			componentName="{{ viewComponentName }}"
+			[componentName]="viewComponentName"
 		></ga-layout-selector>
 	</nb-card-header>
 	<nb-card-body>

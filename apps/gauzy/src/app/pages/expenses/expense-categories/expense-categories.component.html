@@ -1,30 +1,14 @@
 <nb-card>
-	<nb-card-header>
-		<div
-			style="
-				display: flex;
-				align-items: center;
-				justify-content: space-between;
-			"
-		>
-			<h4>
+	<nb-card-header class="header-selector-wrapper">
+		<h4>
+			<ngx-organization-title>
 				<ngx-back-navigation></ngx-back-navigation>
-				<span>{{
-					'ORGANIZATIONS_PAGE.EXPENSE_CATEGORIES' | translate
-				}}</span>
-			</h4>
-			<div
-				style="
-					display: flex;
-					align-items: center;
-					justify-content: space-between;
-				"
-			>
-				<ga-layout-selector
-					componentName="{{ viewComponentName }}"
-				></ga-layout-selector>
-			</div>
-		</div>
+				{{ 'ORGANIZATIONS_PAGE.EXPENSE_CATEGORIES' | translate }}
+			</ngx-organization-title>
+		</h4>
+		<ga-layout-selector
+			[componentName]="viewComponentName"
+		></ga-layout-selector>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="mb-3">

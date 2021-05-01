@@ -5,14 +5,14 @@
 	nbSpinnerSize="large"
 >
 	<nb-card-header class="header-selector-wrapper">
-		<div>
-			<h4>{{ 'INCOME_PAGE.INCOME' | translate }}</h4>
-		</div>
-		<div>
-			<ga-layout-selector
-				componentName="{{ viewComponentName }}"
-			></ga-layout-selector>
-		</div>
+		<h4>
+			<ngx-organization-title>
+				{{ 'INCOME_PAGE.INCOME' | translate }}
+			</ngx-organization-title>
+		</h4>
+		<ga-layout-selector
+			[componentName]="viewComponentName"
+		></ga-layout-selector>
 	</nb-card-header>
 	<nb-card-body>
 		<ng-template ngxPermissionsOnly="ORG_INCOMES_EDIT">

@@ -5,9 +5,7 @@
 
 			<div class="col">
 				<ga-single-statistic
-					title="{{
-						'DASHBOARD_PAGE.TITLE.TOTAL_INCOME' | translate
-					}}"
+					[title]="'DASHBOARD_PAGE.TITLE.TOTAL_INCOME' | translate"
 					[value]="aggregatedEmployeeStatistics?.total?.income"
 					[prefix]="selectedOrganization?.currency"
 				></ga-single-statistic>
@@ -15,9 +13,7 @@
 
 			<div class="col">
 				<ga-single-statistic
-					title="{{
-						'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES' | translate
-					}}"
+					[title]="'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES' | translate"
 					[value]="aggregatedEmployeeStatistics?.total?.expense"
 					[prefix]="selectedOrganization?.currency"
 				></ga-single-statistic>
@@ -25,7 +21,7 @@
 
 			<div class="col">
 				<ga-single-statistic
-					title="{{ 'DASHBOARD_PAGE.TITLE.PROFIT' | translate }}"
+					[title]="'DASHBOARD_PAGE.TITLE.PROFIT' | translate"
 					[value]="aggregatedEmployeeStatistics?.total?.profit"
 					[prefix]="selectedOrganization?.currency"
 				></ga-single-statistic>
@@ -33,7 +29,7 @@
 
 			<div *ngIf="selectedOrganization?.bonusType" class="col">
 				<ga-single-statistic
-					title="{{ 'DASHBOARD_PAGE.TITLE.TOTAL_BONUS' | translate }}"
+					[title]="'DASHBOARD_PAGE.TITLE.TOTAL_BONUS' | translate"
 					[value]="aggregatedEmployeeStatistics?.total?.bonus"
 					[prefix]="selectedOrganization?.currency"
 					type="highlight"
@@ -43,11 +39,11 @@
 	</nb-card-header>
 	<nb-card-body class="settings-body">
 		<div class="body-header">
-			<div>
-				<span class="setting-name">
+			<h4>
+				<ngx-organization-title>
 					{{ 'DASHBOARD_PAGE.EMPLOYEE_STATISTICS' | translate }}
-				</span>
-			</div>
+				</ngx-organization-title>
+			</h4>
 		</div>
 
 		<div class="sub-header block-content">

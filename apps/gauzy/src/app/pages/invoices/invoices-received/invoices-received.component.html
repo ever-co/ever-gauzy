@@ -1,13 +1,12 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="header-selector-wrapper">
-		<h4 *ngIf="!isEstimate">
-			{{ 'INVOICES_PAGE.RECEIVED_INVOICES' | translate }}
-		</h4>
-		<h4 *ngIf="isEstimate">
-			{{ 'INVOICES_PAGE.RECEIVED_ESTIMATES' | translate }}
+		<h4>
+			<ngx-organization-title>
+				{{ (!isEstimate ? 'INVOICES_PAGE.RECEIVED_INVOICES' : 'INVOICES_PAGE.RECEIVED_ESTIMATES') | translate }}
+			</ngx-organization-title>
 		</h4>
 		<ga-layout-selector
-			componentName="{{ viewComponentName }}"
+			[componentName]="viewComponentName"
 		></ga-layout-selector>
 	</nb-card-header>
 	<nb-card-body>
