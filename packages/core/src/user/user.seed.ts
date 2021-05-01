@@ -44,30 +44,6 @@ export const createDefaultSuperAdminUsers = async (
 	return await insertUsers(connection, superAdmins);
 };
 
-// TODO: just remove this one and use Default Super Admin
-export const createBasicSuperAdminUsers = async (
-	connection: Connection,
-	roles: Role[],
-	tenant: Tenant
-): Promise<User[]> => {
-	const superAdmins: User[] = [];
-	const superAdminRole = roles.find(
-		(role) => role.name === RolesEnum.SUPER_ADMIN
-	);
-
-	// Generate default super admins
-	for (const superAdmin of DEFAULT_SUPER_ADMINS) {
-		const superAdminUser: User = await generateDefaultUser(
-			superAdmin,
-			superAdminRole,
-			tenant
-		);
-		superAdmins.push(superAdminUser);
-	}
-
-	return await insertUsers(connection, superAdmins);
-};
-
 export const createRandomSuperAdminUsers = async (
 	connection: Connection,
 	roles: Role[],
