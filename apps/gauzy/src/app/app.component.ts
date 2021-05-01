@@ -67,11 +67,10 @@ export class AppComponent implements OnInit, AfterViewInit {
 	async ngAfterViewInit() {
 		await this.loadLanguages();
 	}
-
+	
 	private async loadLanguages() {
-		this.languagesService.getSystemLanguages().then(({ items }) => {
-			this.store.systemLanguages = items;
-		});
+		const { items } = await this.languagesService.getSystemLanguages();
+		this.store.systemLanguages = items;
 	}
 
 	private loadChatwoot(d, t) {
