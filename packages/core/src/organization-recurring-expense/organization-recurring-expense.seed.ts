@@ -98,7 +98,7 @@ const dataOperation = async (
 		organization.endDate = endDate;
 
 		organization.categoryName = expenseCategory;
-		organization.value = faker.random.number(9999);
+		organization.value = faker.datatype.number(9999);
 
 		organization.currency = tenantOrg.currency || env.defaultCurrency;
 

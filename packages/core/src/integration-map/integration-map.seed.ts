@@ -40,8 +40,8 @@ export const createRandomIntegrationMap = async (
 			integrationMap.entity = faker.random.arrayElement(
 				Object.values(IntegrationEntity)
 			);
-			integrationMap.sourceId = 'sourceId-' + faker.random.number(40);
-			integrationMap.gauzyId = 'gauzyId-' + faker.random.number(40);
+			integrationMap.sourceId = 'sourceId-' + faker.datatype.number(40);
+			integrationMap.gauzyId = 'gauzyId-' + faker.datatype.number(40);
 			integrationMaps.push(integrationMap);
 		}
 	}

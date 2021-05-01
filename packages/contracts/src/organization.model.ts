@@ -1,4 +1,4 @@
-import { IAccountingTemplate } from 'index';
+import { IAccountingTemplate } from './accounting-template.model';
 import { IBasePerTenantEntityModel } from './base-entity.model';
 import { IContact } from './contact.model';
 import { CurrenciesEnum } from './currency.model';
@@ -10,6 +10,7 @@ import { IOrganizationSprint } from './organization-sprint.model';
 import { ISkill } from './skill-entity.model';
 import { ITag } from './tag-entity.model';
 import { ITenant } from './tenant.model';
+import { IReportOrganization } from './report.model';
 
 export enum OrganizationPermissionsEnum {
 	ALLOW_MANUAL_TIME = 'allowManualTime',
@@ -94,7 +95,8 @@ export interface IOrganization extends IBasePerTenantEntityModel {
 	defaultInvoiceEstimateTerms?: string;
 	convertAcceptedEstimates?: boolean;
 	daysUntilDue?: number;
-	accountingTemplates?: IAccountingTemplate;
+	accountingTemplates?: IAccountingTemplate[];
+	reportOrganizations?: IReportOrganization[];
 }
 
 export interface IOrganizationFindInput {
@@ -147,7 +149,7 @@ export interface IOrganizationCreateInput extends IContact {
 	defaultInvoiceEstimateTerms?: string;
 	convertAcceptedEstimates?: boolean;
 	daysUntilDue?: number;
-	accountingTemplates?: IAccountingTemplate;
+	accountingTemplates?: IAccountingTemplate[];
 }
 
 export interface IOrganizationUpdateInput extends IOrganizationCreateInput {

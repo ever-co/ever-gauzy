@@ -34,17 +34,17 @@ export const createRandomOrganizationSprint = async (
 			const tasks = await connection.manager.find(Task, {
 				where: [{ project: project }]
 			});
-			for (let i = 0; i <= faker.random.number(10); i++) {
+			for (let i = 0; i <= faker.datatype.number(10); i++) {
 				const sprint = new OrganizationSprint();
 
 				sprint.name = faker.company.companyName();
 				sprint.projectId = project.id;
-				sprint.length = faker.random.number({ min: 1, max: 9 });
+				sprint.length = faker.datatype.number({ min: 1, max: 9 });
 				sprint.startDate = faker.date.past();
 				sprint.endDate = moment(sprint.startDate)
 					.add(1, 'months')
 					.toDate();
-				sprint.isActive = faker.random.boolean();
+				sprint.isActive = faker.datatype.boolean();
 				sprint.dayStart = SprintStartDayEnum.MONDAY;
 				sprint.organizationId = org.id;
 				sprint.organization = org;
