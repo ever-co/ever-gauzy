@@ -41,7 +41,8 @@ import {
 	IOrganizationAwards,
 	IOrganizationLanguages,
 	IFeatureOrganization,
-	IAccountingTemplate
+	IAccountingTemplate,
+	IReportOrganization
 } from '@gauzy/contracts';
 import {
 	AccountingTemplate,
@@ -55,6 +56,7 @@ import {
 	OrganizationLanguages,
 	OrganizationSprint,
 	Payment,
+	ReportOrganization,
 	Skill,
 	Tag,
 	TenantBaseEntity
@@ -478,4 +480,9 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	)
 	@JoinColumn()
 	accountingTemplates?: IAccountingTemplate[];
+
+	@ApiProperty({ type: () => ReportOrganization })
+	@OneToMany(() => ReportOrganization, (reportOrganization) => reportOrganization.organization)
+	@JoinColumn()
+	reportOrganizations?: IReportOrganization[];
 }

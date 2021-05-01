@@ -139,7 +139,7 @@ export const createRandomExpenses = async (
 			for (let index = 0; index < 100; index++) {
 				const expense = new Expense();
 
-				const currentIndex = faker.random.number({
+				const currentIndex = faker.datatype.number({
 					min: 0,
 					max: index % 5
 				});
@@ -147,7 +147,7 @@ export const createRandomExpenses = async (
 				expense.organization = employee.organization;
 				expense.tenant = tenant;
 				expense.employee = employee;
-				expense.amount = faker.random.number({ min: 10, max: 999 });
+				expense.amount = faker.datatype.number({ min: 10, max: 999 });
 				expense.vendor =
 					organizationVendors[
 						currentIndex % organizationVendors.length

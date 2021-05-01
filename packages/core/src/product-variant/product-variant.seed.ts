@@ -47,11 +47,11 @@ export const createRandomProductVariant = async (
 						const productVariant = new ProductVariant();
 						productVariant.notes = faker.name.jobDescriptor();
 						productVariant.productId = product.id;
-						productVariant.quantity = faker.random.number(20);
+						productVariant.quantity = faker.datatype.number(20);
 						productVariant.billingInvoicingPolicy = faker.random.arrayElement(
 							Object.keys(BillingInvoicingPolicyEnum)
 						);
-						productVariant.enabled = faker.random.boolean();
+						productVariant.enabled = faker.datatype.boolean();
 						productVariant.options = productOptions;
 						productVariant.settings = new ProductVariantSettings();
 						productVariant.price = new ProductVariantPrice();

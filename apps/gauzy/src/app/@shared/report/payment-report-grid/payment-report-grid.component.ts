@@ -8,20 +8,18 @@ import {
 import {
 	IGetPaymentInput,
 	IGetTimeLogReportInput,
-	IOrganization,
 	IPaymentReportData,
 	ISelectedEmployee,
 	OrganizationPermissionsEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import * as moment from 'moment';
+import { TranslateService } from '@ngx-translate/core';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
-import { pick } from 'underscore';
 import { PaymentService } from '../../../@core/services/payment.service';
 import { Store } from '../../../@core/services/store.service';
+import { ReportBaseComponent } from '../report-base/report-base.component';
 
 @UntilDestroy()
 @Component({
@@ -29,73 +27,42 @@ import { Store } from '../../../@core/services/store.service';
 	templateUrl: './payment-report-grid.component.html',
 	styleUrls: ['./payment-report-grid.component.scss']
 })
-export class PaymentReportGridComponent implements OnInit, AfterViewInit {
+export class PaymentReportGridComponent
+	extends ReportBaseComponent
+	implements OnInit, AfterViewInit {
 	OrganizationPermissionsEnum = OrganizationPermissionsEnum;
 	PermissionsEnum = PermissionsEnum;
-	today: Date = new Date();
-	logRequest: IGetPaymentInput = {
-		startDate: moment().startOf('week').toDate(),
-		endDate: moment().endOf('week').toDate()
-	};
-	updateLogs$: Subject<any> = new Subject();
-	organization: IOrganization;
-
+	logRequest: IGetPaymentInput = this.request;
 	dailyData: IPaymentReportData[] = [];
 	weekDayList: string[] = [];
 	loading: boolean;
 
-	private _selectedDate: Date = new Date();
 	futureDateAllowed: boolean;
 	groupBy: 'date' | 'employee' | 'project' = 'date';
 	selectedEmployee: ISelectedEmployee;
 
-	public get selectedDate(): Date {
-		return this._selectedDate;
-	}
-	public set selectedDate(value: Date) {
-		this._selectedDate = value;
-	}
-
 	@Input()
 	set filters(value) {
 		this.logRequest = value || {};
-		this.updateLogs$.next();
+		this.subject$.next();
 	}
 
 	constructor(
 		private paymentService: PaymentService,
 		private ngxPermissionsService: NgxPermissionsService,
-		private store: Store,
+		protected store: Store,
+		readonly translateService: TranslateService,
 		private cd: ChangeDetectorRef
-	) {}
+	) {
+		super(store, translateService);
+	}
 
 	ngOnInit() {
-		this.updateLogs$
-			.pipe(untilDestroyed(this), debounceTime(500))
+		this.subject$
+			.pipe(debounceTime(1350), untilDestroyed(this))
 			.subscribe(() => {
 				this.getPayment();
 			});
-
-		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe((organization: IOrganization) => {
-				if (organization) {
-					this.organization = organization;
-					this.updateLogs$.next();
-				}
-			});
-
-		this.store.selectedEmployee$
-			.pipe(untilDestroyed(this))
-			.subscribe((employee: ISelectedEmployee) => {
-				if (employee && employee.id) {
-					this.selectedEmployee = employee;
-				} else {
-					this.selectedEmployee = null;
-				}
-				this.updateLogs$.next();
-			});
-
 		this.ngxPermissionsService.permissions$
 			.pipe(untilDestroyed(this))
 			.subscribe(async () => {
@@ -103,8 +70,6 @@ export class PaymentReportGridComponent implements OnInit, AfterViewInit {
 					OrganizationPermissionsEnum.ALLOW_FUTURE_DATE
 				);
 			});
-
-		this.updateLogs$.next();
 	}
 
 	ngAfterViewInit() {
@@ -113,28 +78,21 @@ export class PaymentReportGridComponent implements OnInit, AfterViewInit {
 
 	filtersChange($event) {
 		this.logRequest = $event;
-		this.updateLogs$.next();
+		this.subject$.next();
 	}
 
 	groupByChange() {
-		this.updateLogs$.next();
+		this.subject$.next();
 	}
 
 	async getPayment() {
-		const { startDate, endDate } = this.logRequest;
-
-		const appliedFilter = pick(this.logRequest, 'projectIds');
+		if (!this.organization || !this.logRequest) {
+			return;
+		}
 
 		const request: IGetTimeLogReportInput = {
-			...appliedFilter,
-			startDate: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: moment(endDate).format('YYYY-MM-DD HH:mm:ss'),
-			organizationId: this.organization ? this.organization.id : null,
-			tenantId: this.organization ? this.organization.tenantId : null,
-			groupBy: this.groupBy,
-			...(this.selectedEmployee && this.selectedEmployee.id
-				? { employeeIds: [this.selectedEmployee.id] }
-				: {})
+			...this.getFilterRequest(this.logRequest),
+			groupBy: this.groupBy
 		};
 
 		this.loading = true;

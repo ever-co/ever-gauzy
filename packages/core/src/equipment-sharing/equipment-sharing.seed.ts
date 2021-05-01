@@ -73,9 +73,9 @@ const dataOperation = async (
 		sharing.shareStartDay = faker.date.future(0.5);
 		sharing.shareEndDay = addDays(
 			sharing.shareStartDay,
-			faker.random.number(15)
+			faker.datatype.number(15)
 		);
-		sharing.status = faker.random.number({ min: 1, max: 3 });
+		sharing.status = faker.datatype.number({ min: 1, max: 3 });
 		// sharing.teams =[faker.random.arrayElement(teams)];
 		sharing.employees = [faker.random.arrayElement(employees)];
 		sharing.organization = organization;

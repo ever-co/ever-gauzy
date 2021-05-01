@@ -43,14 +43,14 @@ export const createRandomProductVariantSettings = async (
 					for (const productVariant of productVariants) {
 						const productVariantSetting = new ProductVariantSettings();
 						productVariantSetting.productVariant = productVariant;
-						productVariantSetting.isSubscription = faker.random.boolean();
-						productVariantSetting.isPurchaseAutomatically = faker.random.boolean();
-						productVariantSetting.canBeSold = faker.random.boolean();
-						productVariantSetting.canBePurchased = faker.random.boolean();
-						productVariantSetting.canBeCharged = faker.random.boolean();
-						productVariantSetting.canBeRented = faker.random.boolean();
-						productVariantSetting.isEquipment = faker.random.boolean();
-						productVariantSetting.trackInventory = faker.random.boolean();
+						productVariantSetting.isSubscription = faker.datatype.boolean();
+						productVariantSetting.isPurchaseAutomatically = faker.datatype.boolean();
+						productVariantSetting.canBeSold = faker.datatype.boolean();
+						productVariantSetting.canBePurchased = faker.datatype.boolean();
+						productVariantSetting.canBeCharged = faker.datatype.boolean();
+						productVariantSetting.canBeRented = faker.datatype.boolean();
+						productVariantSetting.isEquipment = faker.datatype.boolean();
+						productVariantSetting.trackInventory = faker.datatype.boolean();
 						productVariantSetting.tenant = tenant;
 						productVariantSetting.organization = tenantOrg;
 

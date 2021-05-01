@@ -49,11 +49,11 @@ export const createRandomRequestApproval = async (
 
 			const requestApproval = new RequestApproval();
 			requestApproval.name = faker.random.arrayElement(approvalTypes);
-			requestApproval.status = faker.random.number({ min: 1, max: 3 });
+			requestApproval.status = faker.datatype.number({ min: 1, max: 3 });
 
 			// requestApproval.approvalPolicyId = tenantPolicy.id;
 			requestApproval.approvalPolicy = tenantPolicy;
-			requestApproval.min_count = faker.random.number({
+			requestApproval.min_count = faker.datatype.number({
 				min: 1,
 				max: 100
 			});

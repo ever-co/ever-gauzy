@@ -47,7 +47,7 @@ export const createDefaultIncomes = async (
 					income.organization = organization;
 					income.tenant = organization.tenant;
 					income.amount = seedIncome.amount;
-					income.clientId = faker.random
+					income.clientId = faker.datatype
 						.number({ min: 10, max: 9999 })
 						.toString();
 					income.currency =
@@ -87,7 +87,7 @@ export const createRandomIncomes = async (
 		(employees || []).forEach((employee) => {
 			for (let index = 0; index < 100; index++) {
 				const income = new Income();
-				const currentIndex = faker.random.number({
+				const currentIndex = faker.datatype.number({
 					min: 0,
 					max: index % 5
 				});
@@ -95,8 +95,8 @@ export const createRandomIncomes = async (
 				income.tenant = tenant;
 				income.employee = employee;
 				income.clientName = clientsArray[currentIndex];
-				income.amount = faker.random.number({ min: 10, max: 9999 });
-				income.clientId = faker.random
+				income.amount = faker.datatype.number({ min: 10, max: 9999 });
+				income.clientId = faker.datatype
 					.number({ min: 10, max: 9999 })
 					.toString();
 				income.currency =

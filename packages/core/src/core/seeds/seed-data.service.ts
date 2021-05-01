@@ -350,7 +350,7 @@ export class SeedDataService {
 			// Seed jobs related data
 			await this.seedJobsData();
 
-			// Seed jobs related data
+			// Seed reports related data
 			await this.seedReportsData();
 
 			console.log('Database All Seed Completed');
@@ -400,6 +400,9 @@ export class SeedDataService {
 			// Seed data with mock / fake data
 			await this.seedData();
 
+			// Seed reports related data
+			await this.seedReportsData();
+
 			console.log('Database Default Seed Completed');
 		} catch (error) {
 			this.handleError(error);
@@ -436,6 +439,7 @@ export class SeedDataService {
 				)
 			);
 
+      // TODO: if createDefaultReport only seed basic reports info, we should run it in all seed types, i.e. remove condition below
 			if (this.seedType === 'all') {
 				await this.tryExecute(
 					'Default Report Category & Report',

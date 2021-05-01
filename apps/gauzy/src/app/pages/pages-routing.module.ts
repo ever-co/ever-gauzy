@@ -46,12 +46,7 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./expenses/expenses.module').then(
 								(m) => m.ExpensesModule
-							),
-						data: {
-							selectors: {
-								project: false
-							}
-						}
+							)
 					},
 					{
 						path: 'invoices',
@@ -398,8 +393,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
-								employee: false,
-								date: false
+								employee: false
 							}
 						}
 					},
