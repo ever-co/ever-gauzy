@@ -1,7 +1,5 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { IOrganization } from './organization.model';
-
-export interface IReport extends IBasePerTenantAndOrganizationEntityModel {
+import { IBaseEntityModel, IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+export interface IReport extends IBaseEntityModel {
 	categoryId?: string;
 	category?: IReportCategory;
 	name?: string;
@@ -15,7 +13,7 @@ export interface IReport extends IBasePerTenantAndOrganizationEntityModel {
 }
 
 export interface IReportCategory
-	extends IBasePerTenantAndOrganizationEntityModel {
+	extends IBaseEntityModel {
 	name?: string;
 	iconClass?: string;
 	reports?: IReport[];
@@ -24,27 +22,25 @@ export interface IReportOrganization
 	extends IBasePerTenantAndOrganizationEntityModel {
 	report?: IReport;
 	reportId?: string;
-	organization?: IOrganization;
-	organizationId?: string;
 	isEnabled?: boolean;
 }
 
-export interface IGetReportCategory {
+export interface IGetReportCategory 
+	extends IBasePerTenantAndOrganizationEntityModel {
 	relations?: string[];
 	where?: IReport;
-	organizationId?: string;
 }
 
-export interface IGetReport {
+export interface IGetReport extends IBasePerTenantAndOrganizationEntityModel {
 	relations?: string[];
-	organizationId?: string;
 	where?: IReport;
 }
-export interface UpdateReportMenuInput {
-	organizationId?: string;
+export interface UpdateReportMenuInput 
+	extends IBasePerTenantAndOrganizationEntityModel {
 	reportId?: string;
 	isEnabled?: boolean;
 }
-export interface GetReportMenuItemsInput {
+export interface GetReportMenuItemsInput 
+	extends IBasePerTenantAndOrganizationEntityModel {
 	organizationId?: string;
 }

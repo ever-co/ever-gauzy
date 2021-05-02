@@ -63,7 +63,7 @@ const dataOperation = async (
 ) => {
 	for (let i = 0; i < noOfAvailabilitySlotsPerOrganization; i++) {
 		const slot = new AvailabilitySlot();
-		slot.allDay = faker.random.boolean();
+		slot.allDay = faker.datatype.boolean();
 		slot.employee = faker.random.arrayElement([
 			faker.random.arrayElement(employees),
 			null

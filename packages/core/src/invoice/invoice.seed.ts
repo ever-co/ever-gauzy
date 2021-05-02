@@ -31,11 +31,11 @@ export const createDefaultInvoice = async (
 			const invoice = new Invoice();
 			invoice.tags = _.chain(tags)
 				.shuffle()
-				.take(faker.random.number({ min: 1, max: 3 }))
+				.take(faker.datatype.number({ min: 1, max: 3 }))
 				.values()
 				.value();
 			invoice.invoiceDate = faker.date.past(0.2);
-			invoice.invoiceNumber = faker.random.number({
+			invoice.invoiceNumber = faker.datatype.number({
 				min: 1,
 				max: 9999999
 			});
@@ -49,17 +49,17 @@ export const createDefaultInvoice = async (
 			invoice.fromOrganization = organization;
 			invoice.toContact = faker.random.arrayElement(organizationContacts);
 			invoice.currency = organization.currency;
-			invoice.discountValue = faker.random.number({
+			invoice.discountValue = faker.datatype.number({
 				min: 1,
 				max: 10
 			});
-			invoice.paid = faker.random.boolean();
-			invoice.tax = faker.random.number({ min: 1, max: 10 });
-			invoice.tax2 = faker.random.number({ min: 1, max: 10 });
+			invoice.paid = faker.datatype.boolean();
+			invoice.tax = faker.datatype.number({ min: 1, max: 10 });
+			invoice.tax2 = faker.datatype.number({ min: 1, max: 10 });
 			invoice.terms = 'Term and Setting Applied';
-			invoice.isEstimate = faker.random.boolean();
+			invoice.isEstimate = faker.datatype.boolean();
 			if (invoice.isEstimate) {
-				invoice.isAccepted = faker.random.boolean();
+				invoice.isAccepted = faker.datatype.boolean();
 			}
 			invoice.discountType = faker.random.arrayElement(
 				Object.values(DiscountTaxTypeEnum)
@@ -77,7 +77,7 @@ export const createDefaultInvoice = async (
 			invoice.status = faker.random.arrayElement(
 				Object.values(InvoiceStatusTypesEnum)
 			);
-			invoice.totalValue = faker.random.number(99999);
+			invoice.totalValue = faker.datatype.number(99999);
 			invoice.tenant = tenant;
 			invoice.isArchived = false;
 			invoices.push(invoice);
@@ -108,11 +108,11 @@ export const createRandomInvoice = async (
 				// let invoiceItem = faker.random.arrayElement(invoiceItems);
 				invoice.tags = _.chain(tags)
 					.shuffle()
-					.take(faker.random.number({ min: 1, max: 3 }))
+					.take(faker.datatype.number({ min: 1, max: 3 }))
 					.values()
 					.value();
 				invoice.invoiceDate = faker.date.past(0.2);
-				invoice.invoiceNumber = faker.random.number({
+				invoice.invoiceNumber = faker.datatype.number({
 					min: 1,
 					max: 9999999
 				});
@@ -128,17 +128,17 @@ export const createRandomInvoice = async (
 					organizationContacts
 				);
 				invoice.currency = organization.currency;
-				invoice.discountValue = faker.random.number({
+				invoice.discountValue = faker.datatype.number({
 					min: 1,
 					max: 10
 				});
-				invoice.paid = faker.random.boolean();
-				invoice.tax = faker.random.number({ min: 1, max: 10 });
-				invoice.tax2 = faker.random.number({ min: 1, max: 10 });
+				invoice.paid = faker.datatype.boolean();
+				invoice.tax = faker.datatype.number({ min: 1, max: 10 });
+				invoice.tax2 = faker.datatype.number({ min: 1, max: 10 });
 				invoice.terms = 'Term and Setting Applied';
-				invoice.isEstimate = faker.random.boolean();
+				invoice.isEstimate = faker.datatype.boolean();
 				if (invoice.isEstimate) {
-					invoice.isAccepted = faker.random.boolean();
+					invoice.isAccepted = faker.datatype.boolean();
 				}
 				invoice.discountType = faker.random.arrayElement(
 					Object.values(DiscountTaxTypeEnum)
@@ -156,7 +156,7 @@ export const createRandomInvoice = async (
 				invoice.status = faker.random.arrayElement(
 					Object.values(InvoiceStatusTypesEnum)
 				);
-				invoice.totalValue = faker.random.number(99999);
+				invoice.totalValue = faker.datatype.number(99999);
 				invoice.tenant = tenant;
 				invoices.push(invoice);
 			}

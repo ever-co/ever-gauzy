@@ -347,8 +347,8 @@ export class SeedDataService {
 			// Seed jobs related data
 			await this.seedJobsData(isDefault);
 
-			// Seed jobs related data
-			await this.seedReportsData(isDefault);
+			// Seed reports related data
+			await this.seedReportsData();
 
 			console.log('Database All Seed Completed');
 		} catch (error) {
@@ -374,6 +374,9 @@ export class SeedDataService {
 			// Seed data with mock / fake data
 			await this.seedData(isDefault);
 
+			// Seed reports related data
+			await this.seedReportsData();
+
 			console.log('Database Default Seed Completed');
 		} catch (error) {
 			this.handleError(error);
@@ -383,12 +386,12 @@ export class SeedDataService {
 	/**
 	 * Seed Default Data
 	 */
-	public async runReportsSeed(isDefault = true) {
+	public async runReportsSeed() {
 		try {
 			// Connect to database
 			await this.createConnection();
 
-			await this.seedReportsData(isDefault);
+			await this.seedReportsData();
 
 			console.log('Database Reports Seed completed');
 		} catch (error) {
@@ -401,7 +404,7 @@ export class SeedDataService {
 	 * Populate database with report related data
 	 * @param isDefault
 	 */
-	private async seedReportsData(isDefault: boolean) {
+	private async seedReportsData() {
 		try {
 			this.log(
 				chalk.green(
@@ -411,13 +414,11 @@ export class SeedDataService {
 				)
 			);
 
-			if (isDefault) {
-				await this.tryExecute(
-					'Default Report Category & Report',
-					createDefaultReport(this.connection, this.config)
-				);
-			}
-
+			await this.tryExecute(
+				'Default Report Category & Report',
+				createDefaultReport(this.connection, this.config)
+			);
+		
 			this.log(
 				chalk.green(
 					`✅ SEEDED ${
@@ -549,8 +550,6 @@ export class SeedDataService {
 		this.tenant = await createDefaultTenants(this.connection);
 
 		this.roles = await createRoles(this.connection, [this.tenant]);
-
-		await this.runReportsSeed(true);
 
 		await createRolePermissions(this.connection, this.roles, [this.tenant]);
 

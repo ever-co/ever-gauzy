@@ -78,13 +78,13 @@ const dataOperation = async (
 		request.tenant = tenant;
 		request.employees = _.chain(employees)
 			.shuffle()
-			.take(faker.random.number({ min: 1, max: 3 }))
+			.take(faker.datatype.number({ min: 1, max: 3 }))
 			.values()
 			.value();
 		request.description = 'Time off';
 		request.isHoliday = faker.random.arrayElement([true, false]);
 		request.start = faker.date.future(0.5);
-		request.end = addDays(request.start, faker.random.number(7));
+		request.end = addDays(request.start, faker.datatype.number(7));
 		request.policy = faker.random.arrayElement(policies);
 		request.requestDate = faker.date.recent();
 		request.status = faker.random.arrayElement(status);

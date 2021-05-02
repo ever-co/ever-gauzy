@@ -49,9 +49,9 @@ export const createDefaultEmployees = async (
 		employee.payPeriod = faker.random.arrayElement(
 			Object.keys(PayPeriodEnum)
 		);
-		employee.billRateValue = faker.random.number(100);
+		employee.billRateValue = faker.datatype.number(100);
 		employee.billRateCurrency = defaultOrg.currency || env.defaultCurrency;
-		employee.reWeeklyLimit = faker.random.number(40);
+		employee.reWeeklyLimit = faker.datatype.number(40);
 		employee.tenant = defaultTenant;
 		employees.push(employee);
 	}
@@ -90,10 +90,10 @@ export const createRandomEmployees = async (
 					employee.payPeriod = faker.random.arrayElement(
 						Object.keys(PayPeriodEnum)
 					);
-					employee.billRateValue = faker.random.number(100);
+					employee.billRateValue = faker.datatype.number(100);
 					employee.billRateCurrency =
 						organization.currency || env.defaultCurrency;
-					employee.reWeeklyLimit = faker.random.number(40);
+					employee.reWeeklyLimit = faker.datatype.number(40);
 					employee.tenant = tenant;
 
 					if (employee.user) {

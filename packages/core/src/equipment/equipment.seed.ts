@@ -67,22 +67,22 @@ export const createRandomEquipments = async (
 			);
 			equipment.type = randomElement.key;
 			equipment.name = faker.random.arrayElement(randomElement.value);
-			equipment.serialNumber = faker.random.uuid();
-			equipment.manufacturedYear = faker.random.number({
+			equipment.serialNumber = faker.datatype.uuid();
+			equipment.manufacturedYear = faker.datatype.number({
 				min: 2000,
 				max: 2020
 			});
-			equipment.initialCost = faker.random.number({
+			equipment.initialCost = faker.datatype.number({
 				min: 10000,
 				max: 50000
 			});
 
 			equipment.currency = env.defaultCurrency;
-			equipment.maxSharePeriod = faker.random.number({ min: 1, max: 15 });
+			equipment.maxSharePeriod = faker.datatype.number({ min: 1, max: 15 });
 			equipment.tags = [faker.random.arrayElement(tags)];
 			equipment.tenant = tenant;
 			(equipment.organization = faker.random.arrayElement(organizations)),
-				(equipment.autoApproveShare = faker.random.boolean());
+				(equipment.autoApproveShare = faker.datatype.boolean());
 			equipments.push(equipment);
 		}
 	}

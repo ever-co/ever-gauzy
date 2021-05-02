@@ -8,14 +8,18 @@ import * as rimraf from 'rimraf';
 import * as chalk from 'chalk';
 import { environment as env } from '@gauzy/config';
 import { IPluginConfig } from '@gauzy/common';
+import { getDefaultTenant } from './../tenant/tenant.seed';
+import { getDefaultOrganizations } from './../organization/organization.seed';
+import { IReport, IReportCategory, IReportOrganization } from '@gauzy/contracts';
+import { ReportOrganization } from './report-organization.entity';
 
 export const createDefaultReport = async (
 	connection: Connection,
 	config: IPluginConfig
-): Promise<Report[]> => {
+): Promise<IReport[]> => {
 	await cleanReport(connection, config);
 
-	const defaultCategories: ReportCategory[] = [
+	const defaultCategories: IReportCategory[] = [
 		new ReportCategory({
 			name: 'Time Tracking',
 			iconClass: 'fa-clock'
@@ -38,7 +42,7 @@ export const createDefaultReport = async (
 
 	const categoryByName = indexBy(defaultCategories, 'name');
 
-	const reports: Report[] = [
+	const reports: IReport[] = [
 		new Report({
 			name: 'Time & Activity',
 			slug: 'time-activity',
@@ -136,7 +140,12 @@ export const createDefaultReport = async (
 		})
 	];
 
-	return await connection.manager.save(reports);
+	await connection.manager.save(reports);
+	await createDefaultOrganizationsReport(
+		connection, 
+		reports
+	);
+	return reports;
 };
 
 async function cleanReport(connection, config) {
@@ -144,12 +153,7 @@ async function cleanReport(connection, config) {
 		await connection.query('DELETE FROM report_category');
 		await connection.query('DELETE FROM report');
 	} else {
-		await connection.query(
-			'TRUNCATE TABLE report_category RESTART IDENTITY CASCADE'
-		);
-		await connection.query(
-			'TRUNCATE TABLE report RESTART IDENTITY CASCADE'
-		);
+		await connection.query('TRUNCATE TABLE report, report_category RESTART IDENTITY CASCADE');
 	}
 
 	console.log(chalk.green(`CLEANING UP REPORT IMAGES...`));
@@ -212,3 +216,29 @@ function copyImage(fileName: string, config: IPluginConfig) {
 		console.log(err);
 	}
 }
+
+async function createDefaultOrganizationsReport(
+	connection: Connection,
+	reports: IReport[]
+) {
+	const tenant = await getDefaultTenant(connection);
+	const organizations = await getDefaultOrganizations(
+		connection,
+		tenant
+	);
+	const reportOrganizations: IReportOrganization[] = [];
+	for (const organization of organizations) {
+		for (const report of reports) {
+			reportOrganizations.push(
+				new ReportOrganization({
+					report,
+					organization,
+					tenant
+				})
+			);
+		}
+	}
+	return await connection.manager.save(reportOrganizations);
+}
+
+
