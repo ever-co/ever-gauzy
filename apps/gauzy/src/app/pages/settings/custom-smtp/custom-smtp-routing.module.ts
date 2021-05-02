@@ -30,7 +30,8 @@ const routes: Routes = [
 					selectors: {
 						project: false,
 						employee: false,
-						date: false
+						date: false,
+						organization: false
 					}
 				}
 			},
@@ -42,7 +43,8 @@ const routes: Routes = [
 					selectors: {
 						project: false,
 						employee: false,
-						date: false
+						date: false,
+						organization: true
 					}
 				}
 			}

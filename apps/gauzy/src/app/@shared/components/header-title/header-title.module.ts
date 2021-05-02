@@ -1,19 +1,16 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { OrganizationTitleComponent } from './organization/organization-title.component';
-import { EmployeeTitleComponent } from './employee/employee-title.component';
+import { HeaderTitleComponent } from './header-title.component';
 
 @NgModule({
 	imports: [
 		CommonModule
 	],
 	declarations: [
-		OrganizationTitleComponent,
-		EmployeeTitleComponent
+		HeaderTitleComponent
 	],
 	exports: [
-		OrganizationTitleComponent,
-		EmployeeTitleComponent
+		HeaderTitleComponent
 	]
 })
 export class HeaderTitleModule {}

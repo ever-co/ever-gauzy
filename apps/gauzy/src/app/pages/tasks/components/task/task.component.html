@@ -7,7 +7,7 @@
 	<nb-card-header class="tasks-component__header">
 		<div class="tasks-component__title">
 			<h4>
-				<ngx-organization-title>
+				<ngx-header-title>
 					<ng-container *ngIf="isTasksPage()">
 						{{ 'TASKS_PAGE.HEADER' | translate }}
 					</ng-container>
@@ -17,7 +17,7 @@
 					<ng-container *ngIf="isTeamTaskPage()">
 						{{ 'TASKS_PAGE.TEAM_TASKS_HEADER' | translate }}
 					</ng-container>
-				</ngx-organization-title>
+				</ngx-header-title>
 			</h4>
 		</div>
 		<div class="tasks-component__settings">

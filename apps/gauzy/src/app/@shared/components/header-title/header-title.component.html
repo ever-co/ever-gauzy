@@ -1,0 +1,10 @@
+<ng-content></ng-content>
+
+<ng-template [ngIf]="employee?.id && allowEmployee">
+    <span> {{ ' for ' + employee?.fullName }} </span>
+</ng-template>
+
+<ng-template [ngIf]="organization?.id">
+    <span> {{ ((employee?.id && allowEmployee) ? ' from ' : ' for ') + organization?.name }}</span>
+</ng-template>
+

@@ -23,7 +23,14 @@ const routes: Routes = [
 	},
 	{
 		path: 'categories',
-		component: ExpenseCategoriesComponent
+		component: ExpenseCategoriesComponent,
+		data : {
+			selectors : {
+				project: false,
+				employee: false,
+				date: false
+			}
+		}
 	}
 ];
 
