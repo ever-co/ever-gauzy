@@ -46,7 +46,8 @@ const windowSetting = () => {
 		webPreferences: {
 			nodeIntegration: true,
 			webSecurity: false,
-			enableRemoteModule: true
+			enableRemoteModule: true,
+			contextIsolation: false
 		},
 		width: 960,
 		height: 680,

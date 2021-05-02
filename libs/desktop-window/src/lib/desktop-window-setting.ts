@@ -37,7 +37,8 @@ const windowSetting = () => {
 			nodeIntegration: true,
 			webSecurity: false,
 			devTools: true,
-			enableRemoteModule: true
+			enableRemoteModule: true,
+			contextIsolation: false
 		},
 		width: 1000,
 		height: 800,
