@@ -252,12 +252,7 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./time-off/time-off.module').then(
 								(m) => m.TimeOffModule
-							),
-						data: {
-							selectors: {
-								project: false
-							}
-						}
+							)
 					},
 					{
 						path: 'approvals',

@@ -249,7 +249,7 @@ export class AppointmentComponent
 				employeeId:
 					this._selectedEmployeeId ||
 					(this.employee && this.employee.id) ||
-					''
+					null
 			})
 			.pipe(first())
 			.toPromise();
@@ -330,19 +330,10 @@ export class AppointmentComponent
 		const { tenantId } = this.store.user;
 		const findObj = {
 			organizationId: this._selectedOrganizationId,
-			tenantId
+			tenantId,
+			employeeId: employeeId || null
 		};
-
-		if (employeeId) {
-			findObj['employee'] = {
-				id: employeeId
-			};
-		} else {
-			findObj['employee'] = {
-				id: null
-			};
-		}
-
+		
 		try {
 			const slots = await this.availabilitySlotsService.getAll(
 				[],

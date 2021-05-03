@@ -1,10 +1,11 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="header-selector-wrapper">
-		<ngx-header-title>
-			<ngx-back-navigation></ngx-back-navigation>
-			<h4>{{ 'EVENT_TYPE_PAGE.EVENT_TYPE' | translate }}</h4>
-		</ngx-header-title>
-	
+		<h4>
+			<ngx-header-title>
+				<ngx-back-navigation></ngx-back-navigation>
+				{{ 'EVENT_TYPE_PAGE.EVENT_TYPE' | translate }}
+			</ngx-header-title>
+		</h4>
 		<ga-layout-selector
 			[componentName]="viewComponentName"
 		></ga-layout-selector>

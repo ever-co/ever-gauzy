@@ -14,13 +14,13 @@ import { TranslateModule } from '@ngx-translate/core';
 import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
 import { ExpensesReportGridModule } from '../../../@shared/report/expenses-report-grid/expenses-report-grid.module';
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
+import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	declarations: [ExpensesReportComponent],
 	imports: [
 		CommonModule,
 		ExpensesReportRoutingModule,
-
 		TranslateModule,
 		NbIconModule,
 		NbSpinnerModule,
@@ -29,7 +29,8 @@ import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-
 		NbSelectModule,
 		FormsModule,
 		ExpensesReportGridModule,
-		LineChartModule
+		LineChartModule,
+		HeaderTitleModule
 	]
 })
 export class ExpensesReportModule {}

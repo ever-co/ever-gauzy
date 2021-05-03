@@ -2,12 +2,13 @@
 	<nb-card-header>
 		<div class="main-header">
 			<h4>
-				{{ 'CANDIDATES_PAGE.HEADER' | translate }}
-				{{ organizationName }}
+				<ngx-header-title [allowEmployee]="false">
+					{{ 'CANDIDATES_PAGE.HEADER' | translate }}
+				</ngx-header-title>
 			</h4>
 			<div class="header-selector-wrapper">
 				<ga-layout-selector
-					componentName="{{ viewComponentName }}"
+					[componentName]="viewComponentName"
 				></ga-layout-selector>
 			</div>
 		</div>

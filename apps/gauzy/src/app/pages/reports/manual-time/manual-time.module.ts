@@ -14,6 +14,7 @@ import {
 	NbBadgeModule
 } from '@nebular/theme';
 import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
+import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	declarations: [ManualTimeComponent],
@@ -28,7 +29,8 @@ import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module
 		FiltersModule,
 		NbSelectModule,
 		FormsModule,
-		NbBadgeModule
+		NbBadgeModule,
+		HeaderTitleModule
 	]
 })
 export class ManualTimeModule {}

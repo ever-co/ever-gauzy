@@ -2,7 +2,9 @@
 	<nb-card-header>
 		<div class="main-header">
 			<h4>
-				{{ 'USERS_PAGE.HEADER' | translate }} {{ organizationName }}
+				<ngx-header-title [allowEmployee]="false">
+					{{ 'USERS_PAGE.HEADER' | translate }}
+				</ngx-header-title>
 			</h4>
 			<div class="header-selector-wrapper">
 				<ng-template ngxPermissionsOnly="ORG_USERS_EDIT">

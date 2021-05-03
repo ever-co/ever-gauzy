@@ -26,7 +26,6 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
-import { NgxPermissionsService } from 'ngx-permissions';
 import { ToastrService } from '../../../@core/services/toastr.service';
 
 @UntilDestroy({ checkProperties: true })
@@ -46,8 +45,7 @@ export class TimeOffSettingsComponent
 		private store: Store,
 		private errorHandler: ErrorHandler,
 		readonly translateService: TranslateService,
-		private router: Router,
-		private readonly ngxPermissionsService: NgxPermissionsService
+		private router: Router
 	) {
 		super(translateService);
 		this.setView();

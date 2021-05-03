@@ -7,7 +7,7 @@
 	<nb-card-header class="tasks-component__header">
 		<div class="tasks-component__title">
 			<h4>
-				<ngx-header-title>
+				<ngx-header-title [allowEmployee]="false">
 					<ng-container *ngIf="isTasksPage()">
 						{{ 'TASKS_PAGE.HEADER' | translate }}
 					</ng-container>

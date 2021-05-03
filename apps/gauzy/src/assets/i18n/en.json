@@ -893,7 +893,7 @@
 		"PROJECT": "Project",
 		"CLIENT": "Client",
 		"PROJECTS_WORKED": "Projects Worked",
-		"APPS_AND_URLS_REPORT": "APPS & URLS REPORT",
+		"APPS_AND_URLS_REPORT": "Apps & URLs Report",
 		"NO_ACTIVITIES": "No Activities",
 		"ACTIVITY": "Activity",
 		"TOTAL_HOURS": "Total Hours",
@@ -1161,7 +1161,7 @@
 		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
 	},
 	"GOALS_PAGE": {
-		"HEADER": "All Objectives for ",
+		"HEADER": "All Objectives",
 		"GOAL": "Goal",
 		"GOALS_EMPTY": "You haven't created any Objectives yet. Click Add New to create one",
 		"ADD_NEW_KEY_RESULT": "Add new key result",
@@ -1356,7 +1356,7 @@
 		}
 	},
 	"CANDIDATES_PAGE": {
-		"HEADER": "Manage Candidates for ",
+		"HEADER": "Manage Candidates",
 		"ADD_CANDIDATE": "Add Candidates",
 		"APPLIED": "Applied",
 		"HIRED": "Hired",
@@ -1924,7 +1924,8 @@
 		"TAGS_SELECT_COLOR": "Tag color",
 		"TAGS_SELECT_DESCRIPTION": "Tag description",
 		"ADD_NEW_TAG": "Add new Tag",
-		"TENANT_LEVEL": "Tenant level"
+		"TENANT_LEVEL": "Tenant level",
+		"TAGS_TYPE": "Tags type"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Skills"
@@ -2227,7 +2228,7 @@
 		"ADD_SPRINT_NAME": "Add sprint name"
 	},
 	"USERS_PAGE": {
-		"HEADER": "Manage Users for ",
+		"HEADER": "Manage Users",
 		"ADD_USER": "Add User",
 		"ADD_EXISTING_USER": "Add Existing User",
 		"ADD_EXISTING_ORGANIZATION": "Add Existing Organization",
@@ -2287,17 +2288,17 @@
 	},
 	"INVITE_PAGE": {
 		"USER": {
-			"MANAGE": "Manage User Invites for",
+			"MANAGE": "Manage User Invites",
 			"HEADER": "Invite Users",
 			"ACTION": "Invite Users"
 		},
 		"EMPLOYEE": {
-			"MANAGE": "Manage Employee Invites for",
+			"MANAGE": "Manage Employee Invites",
 			"HEADER": "Invite Employees",
 			"ACTION": "Invite Employees"
 		},
 		"CANDIDATE": {
-			"MANAGE": "Manage Candidate Invites for",
+			"MANAGE": "Manage Candidate Invites",
 			"HEADER": "Invite Candidates",
 			"ACTION": "Invite Candidates"
 		},
@@ -2567,6 +2568,10 @@
 		"SELECT_A_DATE": "Select A date",
 		"SELECT_AN_ORGANIZATION": "Select An Organization",
 		"SELECT_PROJECT": "Select Project"
+	},
+	"HEADER_TITLE": {
+		"FOR": "for",
+		"FROM": "from"
 	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "404 Page Not Found",

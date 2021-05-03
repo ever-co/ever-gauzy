@@ -1,16 +1,15 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="header-selector-wrapper">
-		<div class="header-selector-wrapper">
-			<ngx-back-navigation></ngx-back-navigation>
-			<h4>{{ 'APPROVAL_POLICY_PAGE.HEADER' | translate }}</h4>
-		</div>
-		<div>
-			<ga-layout-selector
-				componentName="{{ viewComponentName }}"
-			></ga-layout-selector>
-		</div>
+		<h4>
+			<ngx-header-title [allowEmployee]="false">
+				<ngx-back-navigation></ngx-back-navigation>
+				{{ 'APPROVAL_POLICY_PAGE.HEADER' | translate }}
+			</ngx-header-title>
+		</h4>
+		<ga-layout-selector
+			componentName="{{ viewComponentName }}"
+		></ga-layout-selector>
 	</nb-card-header>
-
 	<nb-card-body>
 		<div class="mb-3">
 			<ng-template ngxPermissionsOnly="APPROVALS_POLICY_EDIT">
@@ -23,7 +22,6 @@
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
 		</div>
-
 		<ng2-smart-table
 			class="tags-table"
 			(userRowSelect)="selectApprovalPolicy($event)"

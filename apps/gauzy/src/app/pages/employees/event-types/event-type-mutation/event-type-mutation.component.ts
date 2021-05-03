@@ -29,7 +29,7 @@ export class EventTypeMutationComponent
 	constructor(
 		private fb: FormBuilder,
 		public dialogRef: NbDialogRef<EventTypeMutationComponent>,
-		private translate: TranslateService
+		public readonly translate: TranslateService
 	) {
 		super(translate);
 	}

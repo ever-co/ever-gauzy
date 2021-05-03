@@ -70,6 +70,7 @@ import { SelectProductComponent } from './components/manage-warehouses/select-pr
 import { ManageQuantityComponent } from './components/manage-warehouses/manage-quantity/manage-quantity.component';
 import { ManageVariantsQuantityFormComponent } from './components/manage-warehouses/manage-variants-quantity-form/manage-variants-quantity-form.component';
 import { ManageVariantsQuantityComponent } from './components/manage-warehouses/manage-variants-quantity/manage-variants-quantity.component';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -135,7 +136,8 @@ const NB_MODULES = [
 		ImageAssetModule,
 		ImageUploaderModule,
 		LocationFormModule,
-		LeafletMapModule
+		LeafletMapModule,
+		HeaderTitleModule
 	],
 	entryComponents: [
 		ProductTypeMutationComponent,

@@ -2,7 +2,7 @@
 	<div class="col-2">
 		<nb-card class="filter">
 			<nb-card-header>
-				Tags type
+				{{ 'TAGS_PAGE.TAGS_TYPE' | translate }}
 			</nb-card-header>
 			<nb-list>
 				<nb-list-item
@@ -25,10 +25,12 @@
 		>
 			<nb-card-header class="header-selector-wrapper">
 				<h4>
-					{{ 'TAGS_PAGE.HEADER' | translate }}
+					<ngx-header-title>
+						{{ 'TAGS_PAGE.HEADER' | translate }}
+					</ngx-header-title>
 				</h4>
 				<ga-layout-selector
-					componentName="{{ viewComponentName }}"
+					[componentName]="viewComponentName"
 				></ga-layout-selector>
 			</nb-card-header>
 			<nb-card-body>

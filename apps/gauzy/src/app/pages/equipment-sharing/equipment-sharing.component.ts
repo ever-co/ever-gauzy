@@ -371,7 +371,7 @@ export class EquipmentSharingComponent
 
 	ngOnDestroy() {}
 
-	manageAppropvalPolicy() {
+	manageApprovalPolicy() {
 		this.router.navigate(['/pages/organization/equipment-sharing-policy']);
 	}
 

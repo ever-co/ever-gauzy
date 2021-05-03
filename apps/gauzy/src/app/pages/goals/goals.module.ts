@@ -45,6 +45,7 @@ import { KeyresultTypeSelectModule } from '../../@shared/goal/keyresult-type-sel
 import { GoalLevelSelectModule } from '../../@shared/goal/goal-level-select/goal-level-select.module';
 import { GoalTemplateSelectModule } from '../../@shared/goal/goal-template-select/goal-template-select.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	declarations: [
@@ -93,7 +94,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		NbDialogModule.forChild(),
 		TranslateModule,
 		EmployeeSelectorsModule,
-		EmployeeMultiSelectModule
+		EmployeeMultiSelectModule,
+		HeaderTitleModule
 	]
 })
 export class GoalsModule {}

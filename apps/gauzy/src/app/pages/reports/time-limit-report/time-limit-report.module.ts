@@ -15,6 +15,7 @@ import { ProgressStatusModule } from '../../../@shared/progress-status/progress-
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
 import { SharedModule } from '../../../@shared/shared.module';
 import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
+import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	declarations: [TimeLimitReportComponent],
@@ -30,7 +31,8 @@ import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module
 		NbSelectModule,
 		FormsModule,
 		LineChartModule,
-		ProgressStatusModule
+		ProgressStatusModule,
+		HeaderTitleModule
 	]
 })
 export class TimeLimitReportModule {}

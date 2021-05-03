@@ -1,10 +1,16 @@
 <ng-content></ng-content>
 
 <ng-template [ngIf]="employee?.id && allowEmployee">
-    <span> {{ ' for ' + employee?.fullName }} </span>
+    <span> {{ 'HEADER_TITLE.FOR' | translate }} </span>
+    <span>
+        {{ employee?.fullName }}
+    </span>
 </ng-template>
 
 <ng-template [ngIf]="organization?.id">
-    <span> {{ ((employee?.id && allowEmployee) ? ' from ' : ' for ') + organization?.name }}</span>
+    <span> {{ ((employee?.id && allowEmployee) ? ('HEADER_TITLE.FROM' | translate) : ('HEADER_TITLE.FOR' | translate)) }}</span>
+    <span>
+        {{ organization?.name }}
+    </span>
 </ng-template>
 

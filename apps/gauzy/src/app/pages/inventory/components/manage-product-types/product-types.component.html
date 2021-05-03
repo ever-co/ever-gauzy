@@ -2,12 +2,16 @@
 	<nb-card-header>
 		<div class="main-header">
 			<div class="top-nav">
-				<ngx-back-navigation></ngx-back-navigation>
-				<h4>{{ 'INVENTORY_PAGE.PRODUCT_TYPES' | translate }}</h4>
+				<h4>
+					<ngx-header-title>
+						<ngx-back-navigation></ngx-back-navigation>
+						{{ 'INVENTORY_PAGE.PRODUCT_TYPES' | translate }}
+					</ngx-header-title>
+				</h4>
 			</div>
 			<div>
 				<ga-layout-selector
-					componentName="{{ viewComponentName }}"
+					[componentName]="viewComponentName"
 				></ga-layout-selector>
 			</div>
 		</div>

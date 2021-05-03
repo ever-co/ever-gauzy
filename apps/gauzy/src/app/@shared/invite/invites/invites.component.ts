@@ -37,7 +37,6 @@ export class InvitesComponent
 	@Input()
 	invitationType: InvitationTypeEnum;
 
-	organizationName: string;
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
 	selectedInvite: IInviteViewModel;
@@ -184,7 +183,6 @@ export class InvitesComponent
 			this.toastrService.danger('TOASTR.MESSAGE.INVITES_LOAD');
 		}
 
-		const { name } = this.store.selectedOrganization;
 		const invitesVm: IInviteViewModel[] = [];
 
 		for (const invite of invites) {
@@ -216,7 +214,6 @@ export class InvitesComponent
 		}
 		this.manageInvites = invitesVm;
 		this.sourceSmartTable.load(invitesVm);
-		this.organizationName = name;
 		this.loading = false;
 	}
 
