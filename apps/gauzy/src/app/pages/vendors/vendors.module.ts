@@ -19,6 +19,7 @@ import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { SharedModule } from '../../@shared/shared.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
@@ -39,7 +40,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		SharedModule,
 		Ng2SmartTableModule,
 		NbDialogModule.forChild(),
-		TranslateModule
+		TranslateModule,
+		HeaderTitleModule
 	],
 	declarations: [VendorsComponent],
 	entryComponents: [],

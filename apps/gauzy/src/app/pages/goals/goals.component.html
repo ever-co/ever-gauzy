@@ -1,9 +1,7 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header *ngIf="!loading">
 		<div class="main-header">
-			<h4>
-				{{ 'GOALS_PAGE.HEADER' | translate }} {{ organizationName }}
-			</h4>
+			<h4> <ngx-header-title> {{ 'GOALS_PAGE.HEADER' | translate }} </ngx-header-title> </h4>
 		</div>
 		<div class="main-header mt-3">
 			<div>

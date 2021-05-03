@@ -23,6 +23,7 @@ import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sh
 import { EquipmentSharingPolicyRoutingModule } from './equipment-sharing-policy.routing.module';
 import { EquipmentSharingPolicyMutationModule } from '../../@shared/equipment-sharing-policy/equipment-sharing-policy-mutation.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
@@ -45,7 +46,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		EquipmentSharingPolicyMutationModule,
 		BackNavigationModule,
 		EquipmentSharingPolicyRoutingModule,
-		TranslateModule
+		TranslateModule,
+		HeaderTitleModule
 	],
 	declarations: [EquipmentSharingPolicyComponent],
 	entryComponents: [],

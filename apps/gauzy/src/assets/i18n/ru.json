@@ -893,7 +893,7 @@
 		"PROJECT": "Проект",
 		"CLIENT": "Kлиент",
 		"PROJECTS_WORKED": "Обработанные проекты",
-		"APPS_AND_URLS_REPORT": "Отчет по APPS и URL-адресам",
+		"APPS_AND_URLS_REPORT": "Отчет по Apps и URL-адресам",
 		"NO_ACTIVITIES": "Нет действий",
 		"ACTIVITY": "Активность",
 		"TOTAL_HOURS": "Всего часов",
@@ -1924,7 +1924,8 @@
 		"TAGS_SELECT_COLOR": "Цвет тега",
 		"TAGS_SELECT_DESCRIPTION": "Описание метки",
 		"ADD_NEW_TAG": "Добавить новый тег",
-		"TENANT_LEVEL": "Уровень владельца"
+		"TENANT_LEVEL": "Уровень владельца",
+		"TAGS_TYPE": "Tags type"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Навыки"
@@ -2567,6 +2568,10 @@
 		"SELECT_A_DATE": "Выберите дату",
 		"SELECT_AN_ORGANIZATION": "Выберите организацию",
 		"SELECT_PROJECT": "Выбрать проект"
+	},
+	"HEADER_TITLE": {
+		"FOR": "for",
+		"FROM": "from"
 	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "404 страница не найдена",

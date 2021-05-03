@@ -2,7 +2,7 @@
 	<nb-card-body>
 		<nb-stepper #stepper>
 			<!-- Step 1 Organization Main Form -->
-			<nb-step [stepControl]="orgMainForm" label="main">
+			<nb-step [stepControl]="orgMainForm" [label]="main">
 				<ng-template #main>
 					{{ 'ORGANIZATIONS_PAGE.MAIN' | translate }}
 				</ng-template>

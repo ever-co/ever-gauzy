@@ -26,6 +26,7 @@ import { ColorPickerModule } from 'ngx-color-picker';
 import { TagsColorComponent } from './tags-color/tags-color.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
@@ -52,7 +53,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		ColorPickerModule,
 		CardGridModule,
 		TranslateModule,
-		NbSpinnerModule
+		NbSpinnerModule,
+		HeaderTitleModule
 	],
 
 	entryComponents: [TagsComponent, TagsColorComponent],

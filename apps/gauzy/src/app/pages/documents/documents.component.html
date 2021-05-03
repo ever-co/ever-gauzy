@@ -1,24 +1,12 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary">
-	<nb-card-header>
-		<div
-			style="
-				display: flex;
-				align-items: center;
-				justify-content: space-between;
-			"
-		>
-			<h4>{{ 'ORGANIZATIONS_PAGE.DOCUMENTS' | translate }}</h4>
-			<div
-				style="
-					display: flex;
-					align-items: center;
-					justify-content: space-between;
-				"
-			>
-				<ga-layout-selector
-					componentName="{{ viewComponentName }}"
-				></ga-layout-selector>
-			</div>
+	<nb-card-header class="card-header-title">
+		<div class="card-header-title">
+			<h4><ngx-header-title>{{ 'ORGANIZATIONS_PAGE.DOCUMENTS' | translate }}</ngx-header-title></h4>
+		</div>
+		<div>
+			<ga-layout-selector
+				[componentName]="viewComponentName"
+			></ga-layout-selector>
 		</div>
 	</nb-card-header>
 	<nb-card-body>

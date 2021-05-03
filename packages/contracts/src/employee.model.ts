@@ -128,6 +128,7 @@ export interface ISelectedEmployee {
 	id: string;
 	firstName: string;
 	lastName: string;
+	fullName?: string;
 	imageUrl: string;
 	defaultType?: DEFAULT_TYPE;
 	tags?: ITag[];

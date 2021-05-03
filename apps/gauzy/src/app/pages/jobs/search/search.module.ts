@@ -21,6 +21,7 @@ import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-mu
 import { StatusBadgeModule } from '../../../@shared/status-badge/status-badge.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { DialogsModule } from '../../../@shared/dialogs';
+import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	declarations: [SearchComponent],
@@ -42,7 +43,8 @@ import { DialogsModule } from '../../../@shared/dialogs';
 		EmployeeMultiSelectModule,
 		Ng2SmartTableModule,
 		StatusBadgeModule,
-		NbToggleModule
+		NbToggleModule,
+		HeaderTitleModule
 	]
 })
 export class SearchModule {}

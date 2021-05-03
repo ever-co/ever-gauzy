@@ -58,6 +58,7 @@ import { SkillsService } from '../../@core/services/skills.service';
 import { CKEditorModule } from 'ng2-ckeditor';
 import { EditEmployeeNetworksComponent } from './edit-employee/edit-employee-profile/edit-employee-networks/edit-employee-networks.component';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 const COMPONENTS = [
 	EmployeesComponent,
@@ -116,7 +117,8 @@ const COMPONENTS = [
 		SkillsInputModule,
 		EmployeeLocationModule,
 		EmployeeRatesModule,
-		CKEditorModule
+		CKEditorModule,
+		HeaderTitleModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [

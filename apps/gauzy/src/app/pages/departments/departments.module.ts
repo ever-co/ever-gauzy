@@ -24,6 +24,7 @@ import { OrganizationDepartmentsService } from '../../@core/services/organizatio
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 
@@ -50,7 +51,8 @@ const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 		TagsColorInputModule,
 		EmployeeMultiSelectModule,
 		NbSpinnerModule,
-		TranslateModule
+		TranslateModule,
+		HeaderTitleModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [],

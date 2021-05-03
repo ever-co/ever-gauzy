@@ -14,6 +14,9 @@ const routes: Routes = [
 			permissions: {
 				only: [PermissionsEnum.ORG_TIME_OFF_VIEW],
 				redirectTo: '/pages/dashboard'
+			},
+			selectors: {
+				project: false
 			}
 		}
 	},
@@ -25,6 +28,11 @@ const routes: Routes = [
 			permissions: {
 				only: [PermissionsEnum.POLICY_VIEW],
 				redirectTo: '/pages/dashboard'
+			},
+			selectors: {
+				project: false,
+				employee: false,
+				date: false
 			}
 		}
 	}

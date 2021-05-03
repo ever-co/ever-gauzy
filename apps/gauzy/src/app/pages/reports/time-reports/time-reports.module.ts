@@ -16,6 +16,7 @@ import { FormsModule } from '@angular/forms';
 import { DailyGridModule } from '../../../@shared/report/daily-grid/daily-grid.module';
 import { DailyStatisticsModule } from '../../../@shared/report/daily-statistics/daily-statistics.module';
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
+import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	declarations: [TimeReportsComponent],
@@ -33,7 +34,8 @@ import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-
 		NbCardModule,
 		FiltersModule,
 		NbSelectModule,
-		FormsModule
+		FormsModule,
+		HeaderTitleModule
 	]
 })
 export class TimeReportsModule {}

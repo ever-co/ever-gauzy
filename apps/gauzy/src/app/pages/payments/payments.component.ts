@@ -90,7 +90,7 @@ export class PaymentsComponent
 		combineLatest([storeOrganization$, storeProject$])
 			.pipe(
 				filter(
-					([organization, project]) => !!organization && !!project
+					([organization]) => !!organization
 				),
 				tap(([organization, project]) => {
 					if (organization) {
@@ -319,7 +319,10 @@ export class PaymentsComponent
 				paymentMethod: {
 					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_METHOD'),
 					type: 'text',
-					width: '10%'
+					width: '10%',
+					valuePrepareFunction: (cell, row) => {
+						return this.getTranslation(`INVOICES_PAGE.PAYMENTS.${cell}`);
+					}
 				},
 				recordedBy: {
 					title: this.getTranslation('PAYMENTS_PAGE.RECORDED_BY'),
