@@ -2,11 +2,7 @@
 	<nb-card-header class="main-header">
 		<div class="main-header">
 			<ngx-back-navigation></ngx-back-navigation>
-			<h4>
-				<ngx-header-title>
-					{{ 'EQUIPMENT_SHARING_PAGE.HEADER' | translate }}
-				</ngx-header-title>
-			</h4>
+			<h4> <ngx-header-title [allowEmployee]="false"> {{ 'EQUIPMENT_SHARING_PAGE.HEADER' | translate }} </ngx-header-title> </h4>
 		</div>
 		<div class="main-header">
 			<button

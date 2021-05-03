@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IOrganization, ISelectedEmployee } from 'packages/contracts/dist';
 import { combineLatest } from 'rxjs';
@@ -11,7 +11,7 @@ import { Store } from './../../../@core';
 	templateUrl: './header-title.component.html',
 	styleUrls: []
 })
-export class HeaderTitleComponent implements OnInit {
+export class HeaderTitleComponent implements OnInit, AfterViewInit {
 	
 	organization: IOrganization;
 	employee: ISelectedEmployee;
@@ -25,10 +25,13 @@ export class HeaderTitleComponent implements OnInit {
 	}
 	
 	constructor(
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly crd: ChangeDetectorRef
 	) {}
 
-	ngOnInit() {
+	ngOnInit() {}
+
+	ngAfterViewInit() {
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		combineLatest([storeOrganization$, storeEmployee$])
@@ -37,6 +40,7 @@ export class HeaderTitleComponent implements OnInit {
 				tap(([organization, employee]) => {
 					this.organization = organization;
 					this.employee = employee;
+					this.crd.detectChanges();
 				}),
 				untilDestroyed(this)
 			)

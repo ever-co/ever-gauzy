@@ -2,7 +2,7 @@
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
 			<h4>
-				<ngx-header-title>
+				<ngx-header-title [allowEmployee]="false">
 					{{ (!isEstimate ? 'INVOICES_PAGE.RECEIVED_INVOICES' : 'INVOICES_PAGE.RECEIVED_ESTIMATES') | translate }}
 				</ngx-header-title>
 			</h4>
