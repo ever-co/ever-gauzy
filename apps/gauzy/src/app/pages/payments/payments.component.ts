@@ -33,7 +33,7 @@ import { combineLatest, Subject } from 'rxjs';
 @Component({
 	selector: 'ngx-payments',
 	templateUrl: './payments.component.html',
-	styleUrls: []
+	styleUrls: ['./payments.component.scss']
 })
 export class PaymentsComponent
 	extends TranslationBaseComponent

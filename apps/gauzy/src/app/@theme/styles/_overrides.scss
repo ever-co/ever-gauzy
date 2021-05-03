@@ -185,8 +185,8 @@ ng2-smart-table tbody tr {
 }
 
 nb-card-header {
-    &.title-wrapper,
-    .title-wrapper {
+    &.card-header-title,
+    .card-header-title {
         display: flex;
         flex-direction: row;
         align-items: center;
