@@ -1108,7 +1108,7 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
-		"HEADER": "נהל עובדים עבור ",
+		"HEADER": "Manage Employees",
 		"ADD_EMPLOYEE": "הוסף עובד",
 		"ACTIVE": "פעיל",
 		"END_WORK": "סיום עבודה",
