@@ -12,6 +12,7 @@ import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { SharedModule } from '../shared';
 import { TenantModule } from '../tenant/tenant.module';
+import { DeleteAllDataModule } from './delete-all-data/delete-all-data.module';
 
 @Module({
 	imports: [
@@ -19,7 +20,8 @@ import { TenantModule } from '../tenant/tenant.module';
 		forwardRef(() => TypeOrmModule.forFeature([User])),
 		forwardRef(() => TenantModule),
 		SharedModule,
-		CqrsModule
+		CqrsModule,
+		DeleteAllDataModule,
 	],
 	controllers: [UserController],
 	providers: [UserService, ...CommandHandlers],

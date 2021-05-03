@@ -19,6 +19,9 @@ export class DangerZoneComponent
 	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 
+	loading: boolean
+	process: number = 0;
+
 	constructor(
 		readonly translate: TranslateService,
 		private dialogService: NbDialogService,
@@ -29,6 +32,8 @@ export class DangerZoneComponent
 	) {
 		super(translate);
 	}
+
+	ngOnInit() { }
 
 	async deleteAccount() {
 		this.dialogService
@@ -80,7 +85,36 @@ export class DangerZoneComponent
 			});
 	}
 
-	ngOnInit() {}
+	deleteAllData() {
+		this.loading = true;
+		this.process = 0;
+		setTimeout(() => {
+			this.process = 20;
+		}, 500);
+		setTimeout(() => {
+			this.process = 50;
+		}, 500);
+		this.userService.deleteAllData(this.store.userId).then((organization: any) => {
+			if (organization) {
+				this.store.selectedOrganization = organization;
+				this.store.organizationId = organization.id;
+				this.store.selectedEmployee = null;
+			}
+		}).finally(() => {
+			this.toastrService.success(
+				this.getTranslation(
+					'NOTES.DANGER_ZONE.USER_ALL_DATA_DELETED',
+				)
+			);
+			this.process = 80
+			setTimeout(() => {
+				this.process = 100
+			}, 500);
+			this.loading = false;
+		});
 
-	ngOnDestroy() {}
+	}
+
+
+	ngOnDestroy() { }
 }
