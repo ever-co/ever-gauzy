@@ -1108,7 +1108,7 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
-		"HEADER": "Управление на служителите в ",
+		"HEADER": "Manage Employees",
 		"ADD_EMPLOYEE": "Добавяне на служител",
 		"ACTIVE": "Активен",
 		"END_WORK": "Край на работа",
