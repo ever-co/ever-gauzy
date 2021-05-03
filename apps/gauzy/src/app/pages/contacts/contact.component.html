@@ -1,11 +1,7 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header>
 		<div class="main-header">
-			<h4>
-				<ngx-header-title>
-					{{ contactType + 's'| titlecase }}
-				</ngx-header-title>
-			</h4>
+			<h4> <ngx-header-title> {{ contactType + 's'| titlecase }} </ngx-header-title> </h4>
 			<ga-layout-selector
 				[componentName]="viewComponentName"
 			></ga-layout-selector>

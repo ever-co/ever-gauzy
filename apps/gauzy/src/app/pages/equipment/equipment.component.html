@@ -6,9 +6,11 @@
 					{{ 'EQUIPMENT_PAGE.HEADER' | translate }}
 				</ngx-header-title>
 			</h4>
-			<ga-layout-selector
-				componentName="{{ viewComponentName }}"
-			></ga-layout-selector>
+			<div class="main-header">
+				<ga-layout-selector
+					[componentName]="viewComponentName"
+				></ga-layout-selector>
+			</div>
 		</div>
 	</nb-card-header>
 

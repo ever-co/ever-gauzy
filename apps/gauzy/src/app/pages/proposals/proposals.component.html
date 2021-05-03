@@ -1,13 +1,17 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="header-selector-wrapper">
-		<h4>
-			<ngx-header-title>
-				{{ 'PROPOSALS_PAGE.HEADER' | translate }}
-			</ngx-header-title>
-		</h4>
-		<ga-layout-selector
-			[componentName]="viewComponentName"
-		></ga-layout-selector>
+		<div>
+			<h4>
+				<ngx-header-title>
+					{{ 'PROPOSALS_PAGE.HEADER' | translate }}
+				</ngx-header-title>
+			</h4>
+		</div>
+		<div>
+			<ga-layout-selector
+				[componentName]="viewComponentName"
+			></ga-layout-selector>
+		</div>
 	</nb-card-header>
 	<nb-card-body>
 		<nb-card class="p-3">
