@@ -23,8 +23,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-documents',
-	templateUrl: './documents.component.html',
-	styleUrls: ['./documents.component.scss']
+	templateUrl: './documents.component.html'
 })
 export class DocumentsComponent
 	extends TranslationBaseComponent

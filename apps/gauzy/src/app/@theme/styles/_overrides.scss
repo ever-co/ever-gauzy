@@ -183,3 +183,13 @@ ng2-smart-table tbody tr {
     background-color: nb-theme(background-basic-color-3) !important;
   }
 }
+
+nb-card-header {
+    &.title-wrapper,
+    .title-wrapper {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}

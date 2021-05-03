@@ -19,7 +19,7 @@ import { ToastrService } from '../../@core/services/toastr.service';
 @Component({
 	templateUrl: './pipelines.component.html',
 	selector: 'ga-pipelines',
-	styleUrls: ['./pipelines.component.scss']
+	styleUrls: []
 })
 export class PipelinesComponent
 	extends TranslationBaseComponent

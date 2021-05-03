@@ -21,7 +21,7 @@ import { ProposalTemplateService } from '../proposal-template.service';
 @Component({
 	selector: 'ga-proposal-template',
 	templateUrl: './proposal-template.component.html',
-	styleUrls: ['./proposal-template.component.scss']
+	styleUrls: []
 })
 export class ProposalTemplateComponent
 	extends TranslationBaseComponent

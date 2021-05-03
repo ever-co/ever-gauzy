@@ -20,7 +20,7 @@ import { ToastrService } from '../../@core/services/toastr.service';
 @Component({
 	selector: 'ga-positions',
 	templateUrl: './positions.component.html',
-	styleUrls: ['./positions.component.scss']
+	styles: [':host > nb-card { min-height: 47.50rem; }']
 })
 export class PositionsComponent
 	extends TranslationBaseComponent

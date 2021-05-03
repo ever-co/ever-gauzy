@@ -22,7 +22,7 @@ import { ToastrService } from '../../@core/services/toastr.service';
 @Component({
 	selector: 'ga-employee-level',
 	templateUrl: './employee-level.component.html',
-	styleUrls: ['./employee-level.component.scss']
+	styles: [':host > nb-card { min-height: 47.50rem; }']
 })
 export class EmployeeLevelComponent
 	extends TranslationBaseComponent
