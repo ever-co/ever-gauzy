@@ -198,20 +198,6 @@ const routes: Routes = [
 							)
 					},
 					{
-						path: 'activity',
-						loadChildren: () =>
-							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
-					},
-					{
-						path: 'timesheets',
-						loadChildren: () =>
-							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
-					},
-					{
 						path: 'schedules',
 						loadChildren: () =>
 							import(

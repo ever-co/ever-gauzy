@@ -1,5 +1,12 @@
 ::ng-deep {
-  .route-tabset {
-    margin-bottom: 16px !important;
-  }
+	.route-tabset {
+		margin-bottom: 16px !important;
+	}
+}
+
+.title-wrapper {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
 }
