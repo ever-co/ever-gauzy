@@ -1,16 +1,16 @@
 <nb-card>
-	<nb-card-header>
-		<div class="header">
+	<nb-card-header class="card-header-title">
+		<div class="card-header-title">
 			<h4>
 				<ngx-header-title>
 					{{ 'ORGANIZATIONS_PAGE.VENDORS' | translate }}
 				</ngx-header-title>
 			</h4>
-			<div class="header">
-				<ga-layout-selector
-					[componentName]="viewComponentName"
-				></ga-layout-selector>
-			</div>
+		</div>
+		<div>
+			<ga-layout-selector
+				[componentName]="viewComponentName"
+			></ga-layout-selector>
 		</div>
 	</nb-card-header>
 	<nb-card-body>

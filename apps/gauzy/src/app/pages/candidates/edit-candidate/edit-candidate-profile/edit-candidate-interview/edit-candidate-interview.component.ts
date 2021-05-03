@@ -31,6 +31,7 @@ import { CandidateFeedbacksService } from '../../../../../@core/services/candida
 import { CandidatesService } from '../../../../../@core/services/candidates.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { isNotEmpty } from '@gauzy/common-angular';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-candidate-interview',
@@ -259,36 +260,39 @@ export class EditCandidateInterviewComponent
 			this.interviewList = interviews.items;
 			this.allInterviews = interviews.items;
 			this.tableInterviewList = [];
-			this.interviewList.forEach((interview) => {
-				const employees = [];
-				interview.interviewers.forEach(
-					(interviewer: ICandidateInterviewers) => {
-						this.employeeList.forEach((employee: IEmployee) => {
-							if (interviewer.employeeId === employee.id) {
-								interviewer.employeeImageUrl =
-									employee.user.imageUrl;
-								interviewer.employeeName = employee.user.name;
-								employees.push(employee);
-							}
-						});
-					}
-				);
-				this.candidates.forEach((item) => {
-					if (item.id === interview.candidate.id) {
-						interview.candidate.user = item.user;
-					}
-				});
 
-				interview.employees = employees;
-				this.tableInterviewList.push({
-					...interview,
-					fullName: this.selectedCandidate.user.name,
-					imageUrl: this.selectedCandidate.user.imageUrl,
-					showArchive: false,
-					employees: employees,
-					allFeedbacks: this.allFeedbacks
+			if (isNotEmpty(this.interviewList)) {
+				this.interviewList.forEach((interview) => {
+					const employees = [];
+					interview.interviewers.forEach(
+						(interviewer: ICandidateInterviewers) => {
+							this.employeeList.forEach((employee: IEmployee) => {
+								if (interviewer.employeeId === employee.id) {
+									interviewer.employeeImageUrl =
+										employee.user.imageUrl;
+									interviewer.employeeName = employee.user.name;
+									employees.push(employee);
+								}
+							});
+						}
+					);
+					this.candidates.forEach((item) => {
+						if (item.id === interview.candidate.id) {
+							interview.candidate.user = item.user;
+						}
+					});
+	
+					interview.employees = employees;
+					this.tableInterviewList.push({
+						...interview,
+						fullName: this.selectedCandidate.user.name,
+						imageUrl: this.selectedCandidate.user.imageUrl,
+						showArchive: false,
+						employees: employees,
+						allFeedbacks: this.allFeedbacks
+					});
 				});
-			});
+			}
 		}
 		this.interviewList = this.onlyPast
 			? this.filterInterviewByTime(this.interviewList, true)
