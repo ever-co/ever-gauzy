@@ -6,6 +6,7 @@ import { LayoutComponent } from './layout/layout.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { NbCardModule, NbRouteTabsetModule } from '@nebular/theme';
 import { ShareModule } from '../../../share/share.module';
+import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	declarations: [LayoutComponent],
@@ -15,7 +16,8 @@ import { ShareModule } from '../../../share/share.module';
 		NbCardModule,
 		TranslateModule,
 		ShareModule,
-		NbRouteTabsetModule
+		NbRouteTabsetModule,
+		HeaderTitleModule
 	]
 })
 export class ActivityModule {}

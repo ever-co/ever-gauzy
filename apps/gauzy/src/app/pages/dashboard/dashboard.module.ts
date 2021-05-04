@@ -31,6 +31,7 @@ import { ProjectManagementComponent } from './project-management/project-managem
 import { EmployeeChartsModule } from './human-resources/employee-charts/employee-charts.module';
 import { TimeTrackingModule } from './time-tracking/time-tracking.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
@@ -56,7 +57,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		SingleStatisticModule,
 		InfoBlockModule,
 		NbRouteTabsetModule,
-		TimeTrackingModule
+		TimeTrackingModule,
+		HeaderTitleModule
 	],
 	declarations: [
 		DashboardComponent,

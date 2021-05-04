@@ -6,6 +6,7 @@ import { NbRouteTabsetModule, NbCardModule } from '@nebular/theme';
 import { LayoutComponent } from './layout/layout.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { AvailabilitySlotsService } from '../../../@core/services/availability-slots.service';
+import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	declarations: [LayoutComponent],
@@ -17,7 +18,8 @@ import { AvailabilitySlotsService } from '../../../@core/services/availability-s
 		SharedModule,
 		NbRouteTabsetModule,
 		NbCardModule,
-		TranslateModule
+		TranslateModule,
+		HeaderTitleModule
 	],
 	providers: [AvailabilitySlotsService]
 })

@@ -30,6 +30,7 @@ import { BackNavigationModule } from '../../@shared/back-navigation/back-navigat
 import { PipelineDealExcerptComponent } from './table-components/pipeline-deal-excerpt/pipeline-deal-excerpt.component';
 import { PipelineDealProbabilityComponent } from './table-components/pipeline-deal-probability/pipeline-deal-probability.component';
 import { NgxPermissionsModule } from 'ngx-permissions';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	declarations: [
@@ -71,7 +72,8 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 		CardGridModule,
 		ThemeModule,
 		BackNavigationModule,
-		NgxPermissionsModule.forChild()
+		NgxPermissionsModule.forChild(),
+		HeaderTitleModule
 	]
 })
 export class PipelinesModule {}

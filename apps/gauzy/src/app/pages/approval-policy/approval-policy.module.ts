@@ -24,6 +24,7 @@ import { ApprovalPolicyMutationModule } from '../../@shared/approval-policy/appr
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
@@ -47,7 +48,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		ApprovalPolicyRoutingModule,
 		BackNavigationModule,
 		TranslateModule,
-		NgxPermissionsModule.forChild()
+		NgxPermissionsModule.forChild(),
+		HeaderTitleModule
 	],
 	declarations: [ApprovalPolicyComponent],
 	entryComponents: [],

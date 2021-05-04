@@ -14,6 +14,7 @@ import { ActivityItemModule } from '../../../@shared/timesheet/activities/activi
 import { ChartModule } from 'angular2-chartjs';
 import { TranslateModule } from '@ngx-translate/core';
 import { GalleryModule } from '../../../@shared/gallery/gallery.module';
+import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
@@ -28,7 +29,8 @@ import { GalleryModule } from '../../../@shared/gallery/gallery.module';
 		ChartModule,
 		NbBadgeModule,
 		TranslateModule,
-		GalleryModule
+		GalleryModule,
+		HeaderTitleModule
 	],
 	declarations: [TimeTrackingComponent],
 	exports: [TimeTrackingComponent],

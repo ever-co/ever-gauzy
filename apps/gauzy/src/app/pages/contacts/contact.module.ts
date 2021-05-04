@@ -36,6 +36,7 @@ import { ContactActionComponent } from './table-components/contact-action/contac
 import { LocationFormModule } from '../../@shared/forms/location';
 import { LeafletMapModule } from '../../@shared/forms/maps/leaflet/leaflet.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 const COMPONENTS = [
 	ContactComponent,
@@ -76,7 +77,8 @@ const COMPONENTS = [
 		TranslateModule,
 		NbToggleModule,
 		LocationFormModule,
-		LeafletMapModule
+		LeafletMapModule,
+		HeaderTitleModule
 	],
 
 	declarations: [...COMPONENTS],

@@ -6,17 +6,17 @@
 >
 	<nb-card-header>
 		<div
-			class="header-selector-wrapper"
+			class="card-header-title"
 			*ngIf="duplicate; else headerTemplate"
 		>
-			<div class="header-selector-wrapper">
+			<div class="card-header-title">
 				<ngx-back-navigation></ngx-back-navigation>
 				<h4>{{ 'POP_UPS.DUPLICATE' | translate }}</h4>
 			</div>
 		</div>
 		<ng-template #headerTemplate>
-			<div class="header-selector-wrapper">
-				<div class="header-selector-wrapper">
+			<div class="card-header-title">
+				<div class="card-header-title">
 					<ngx-back-navigation></ngx-back-navigation>
 					<h4>
 						{{

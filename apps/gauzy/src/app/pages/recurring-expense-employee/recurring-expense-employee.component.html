@@ -3,7 +3,9 @@
 		<div class="body-header">
 			<div>
 				<span class="setting-name">
-					{{ 'DASHBOARD_PAGE.RECURRING_EXPENSES' | translate }}
+					<ngx-header-title [allowEmployee]="false">
+						{{ 'DASHBOARD_PAGE.RECURRING_EXPENSES' | translate }}
+					</ngx-header-title>
 				</span>
 			</div>
 			<ng-template ngxPermissionsOnly="EMPLOYEE_EXPENSES_EDIT">

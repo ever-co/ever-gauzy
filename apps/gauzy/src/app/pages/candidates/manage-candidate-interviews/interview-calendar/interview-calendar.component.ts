@@ -1,5 +1,4 @@
 import { Component, OnDestroy, ViewChild, OnInit } from '@angular/core';
-import { Subject } from 'rxjs';
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import { CalendarOptions, EventInput, disableCursor } from '@fullcalendar/core';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,7 +7,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { NbDialogService } from '@nebular/theme';
-import { first, takeUntil } from 'rxjs/operators';
+import { filter, first } from 'rxjs/operators';
 import {
 	ICandidate,
 	IEmployee,
@@ -17,17 +16,20 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import * as moment from 'moment';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
-import { CandidateInterviewersService } from 'apps/gauzy/src/app/@core/services/candidate-interviewers.service';
-import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
-import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
-import { CandidateInterviewInfoComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-info/candidate-interview-info.component';
-import { CandidateInterviewMutationComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
-import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { TranslationBaseComponent } from './../../../../@shared/language-base/translation-base.component';
+import { CandidateInterviewService } from './../../../../@core/services/candidate-interview.service';
+import { CandidateInterviewersService } from './../../../../@core/services/candidate-interviewers.service';
+import { CandidatesService } from './../../../../@core/services/candidates.service';
+import { EmployeesService } from './../../../../@core/services';
+import { CandidateInterviewInfoComponent } from './../../../../@shared/candidate/candidate-interview-info/candidate-interview-info.component';
+import { CandidateInterviewMutationComponent } from './../../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
+import { CandidateStore } from './../../../../@core/services/candidate-store.service';
+import { Store } from './../../../../@core/services/store.service';
 import * as _ from 'underscore';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { ToastrService } from './../../../../@core/services/toastr.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-interview-calendar',
 	templateUrl: './interview-calendar.component.html',
@@ -36,7 +38,6 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 export class InterviewCalendarComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
 	@ViewChild('calendar', { static: true })
 	calendarComponent: FullCalendarComponent;
 	calendarOptions: CalendarOptions;
@@ -66,25 +67,29 @@ export class InterviewCalendarComponent
 
 	ngOnInit() {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
 			.subscribe((organization: IOrganization) => {
 				if (organization) {
-					const { id: organizationId, tenantId } = organization;
+					const { tenantId } = this.store.user;
+					const { id: organizationId } = organization;
 					this.organization = organization;
 					this.candidatesService
 						.getAll(['user'], { organizationId, tenantId })
-						.pipe(takeUntil(this._ngDestroy$))
+						.pipe(untilDestroyed(this))
 						.subscribe((candidates) => {
 							this.candidates = candidates.items;
 						});
 					this.employeesService
 						.getAll(['user'], { organizationId, tenantId })
-						.pipe(takeUntil(this._ngDestroy$))
+						.pipe(untilDestroyed(this))
 						.subscribe((employees) => {
 							this.employees = employees.items;
 						});
 					this.candidateStore.interviewList$
-						.pipe(takeUntil(this._ngDestroy$))
+						.pipe(untilDestroyed(this))
 						.subscribe(() => {
 							this.loadInterviews();
 						});
@@ -276,8 +281,5 @@ export class InterviewCalendarComponent
 
 		return isOverflowing;
 	}
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

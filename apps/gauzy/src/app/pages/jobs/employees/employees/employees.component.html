@@ -5,7 +5,7 @@
 	nbSpinnerSize="large"
 >
 	<nb-card-header class="header">
-		<h4>{{ 'JOB_EMPLOYEE.EMPLOYEES' | translate }}</h4>
+		<h4> <ngx-header-title [allowEmployee]="false"> {{ 'JOB_EMPLOYEE.EMPLOYEES' | translate }} </ngx-header-title> </h4>
 	</nb-card-header>
 	<nb-card-body>
 		<ng2-smart-table

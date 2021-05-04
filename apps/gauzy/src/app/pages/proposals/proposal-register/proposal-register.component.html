@@ -1,11 +1,12 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex">
 		<ngx-back-navigation></ngx-back-navigation>
-		<h3>
-			{{ 'PROPOSALS_PAGE.REGISTER.REGISTER_PROPOSALS' | translate }}
-		</h3>
+		<h4>
+			<ngx-header-title>
+				{{ 'PROPOSALS_PAGE.REGISTER.REGISTER_PROPOSALS' | translate }}
+			</ngx-header-title>
+		</h4>
 	</nb-card-header>
-
 	<nb-card-body>
 		<form [formGroup]="form" *ngIf="form">
 			<div class="row">
@@ -35,7 +36,6 @@
 								'PROPOSALS_PAGE.REGISTER.TEMPLATE' | translate
 							}}</label
 						>
-
 						<ngx-proposal-template-select
 							(selectedChange)="onProposalTemplateChange($event)"
 							[ngModelOptions]="{ standalone: true }"

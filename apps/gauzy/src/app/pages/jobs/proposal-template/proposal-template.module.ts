@@ -22,6 +22,7 @@ import { StatusBadgeModule } from '../../../@shared/status-badge/status-badge.mo
 import { DialogsModule } from '../../../@shared/dialogs';
 import { AddEditProposalTemplateComponent } from './add-edit-proposal-template/add-edit-proposal-template.component';
 import { CKEditorModule } from 'ng2-ckeditor';
+import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	declarations: [ProposalTemplateComponent, AddEditProposalTemplateComponent],
@@ -47,7 +48,8 @@ import { CKEditorModule } from 'ng2-ckeditor';
 		StatusBadgeModule,
 		NbToggleModule,
 		DialogsModule,
-		CKEditorModule
+		CKEditorModule,
+		HeaderTitleModule
 	]
 })
 export class ProposalTemplateModule {}

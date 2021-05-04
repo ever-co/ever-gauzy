@@ -1,8 +1,22 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-header>
-		<div class="header-selector-wrapper">
-			<h4>{{ 'APPROVAL_REQUEST_PAGE.HEADER' | translate }}</h4>
-			<div class="header-selector-wrapper">
+	<nb-card-header class="card-header-title">
+		<div class="card-header-title">
+			<h4> <ngx-header-title> {{ 'APPROVAL_REQUEST_PAGE.HEADER' | translate }} </ngx-header-title> </h4>
+		</div>
+		<div class="card-header-title">
+			<div class="mr-2">
+				<ng-template ngxPermissionsOnly="APPROVALS_POLICY_VIEW">
+					<button
+						class="float-right"
+						nbButton
+						status="primary"
+						(click)="manageApprovalPolicy()"
+					>
+						{{ 'APPROVAL_REQUEST_PAGE.APPROVAL_POLICY' | translate }}
+					</button>
+				</ng-template>
+			</div>
+			<div>
 				<ga-layout-selector
 					componentName="{{ viewComponentName }}"
 				></ga-layout-selector>
@@ -25,16 +39,6 @@
 			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
-			<ng-template ngxPermissionsOnly="APPROVALS_POLICY_VIEW">
-				<button
-					class="float-right"
-					nbButton
-					status="primary"
-					(click)="manageApprovalPolicy()"
-				>
-					{{ 'APPROVAL_REQUEST_PAGE.APPROVAL_POLICY' | translate }}
-				</button>
-			</ng-template>
 		</div>
 
 		<ng2-smart-table

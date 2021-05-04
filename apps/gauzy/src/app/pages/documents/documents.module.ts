@@ -22,6 +22,7 @@ import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 
@@ -46,7 +47,8 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 		FileUploaderModule,
 		NgSelectModule,
 		NbSpinnerModule,
-		TranslateModule
+		TranslateModule,
+		HeaderTitleModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [],

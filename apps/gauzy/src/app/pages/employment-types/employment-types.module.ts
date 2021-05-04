@@ -18,6 +18,7 @@ import { EmploymentTypesComponent } from './employment-types.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
@@ -38,7 +39,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		Ng2SmartTableModule,
 		NbActionsModule,
 		NbDialogModule.forChild(),
-		TranslateModule
+		TranslateModule,
+		HeaderTitleModule
 	],
 	declarations: [EmploymentTypesComponent],
 	entryComponents: [],

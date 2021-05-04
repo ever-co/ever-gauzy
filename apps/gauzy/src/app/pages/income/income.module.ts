@@ -22,6 +22,7 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
@@ -44,7 +45,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		CardGridModule,
 		TranslateModule,
 		NbSpinnerModule,
-		NgxPermissionsModule.forChild()
+		NgxPermissionsModule.forChild(),
+		HeaderTitleModule
 	],
 	entryComponents: [],
 	declarations: [IncomeComponent],
