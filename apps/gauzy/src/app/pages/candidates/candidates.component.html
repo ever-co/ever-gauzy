@@ -1,15 +1,16 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-header>
-		<div class="main-header">
+	<nb-card-header class="card-header-title">
+		<div class="card-header-title">
 			<h4>
-				{{ 'CANDIDATES_PAGE.HEADER' | translate }}
-				{{ organizationName }}
+				<ngx-header-title [allowEmployee]="false">
+					{{ 'CANDIDATES_PAGE.HEADER' | translate }}
+				</ngx-header-title>
 			</h4>
-			<div class="header-selector-wrapper">
-				<ga-layout-selector
-					componentName="{{ viewComponentName }}"
-				></ga-layout-selector>
-			</div>
+		</div>
+		<div>
+			<ga-layout-selector
+				[componentName]="viewComponentName"
+			></ga-layout-selector>
 		</div>
 	</nb-card-header>
 	<nb-card-body>

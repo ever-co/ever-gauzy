@@ -162,6 +162,7 @@ export class EmployeeSelectorComponent
 						id: e.id,
 						firstName: e.user.firstName,
 						lastName: e.user.lastName,
+						fullName: e.user.name,
 						imageUrl: e.user.imageUrl
 					};
 				})
@@ -286,6 +287,7 @@ export class EmployeeSelectorComponent
 					id: e.id,
 					firstName: e.user.firstName,
 					lastName: e.user.lastName,
+					fullName: e.user.name,
 					imageUrl: e.user.imageUrl
 				};
 			})
@@ -304,6 +306,8 @@ export class EmployeeSelectorComponent
 	};
 
 	ngOnDestroy() {
-		this.store.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
+		if (this.people.length > 0 && !this.store.selectedEmployee) { 
+			this.store.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
+		}
 	}
 }

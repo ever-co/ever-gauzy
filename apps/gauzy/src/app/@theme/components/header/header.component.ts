@@ -287,9 +287,10 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		if (
 			this.store.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_ORGANIZATION
-			)
+			) && 
+			userOrg.length > 1
 		) {
-			this.showOrganizationsSelector = userOrg.length > 1;
+			this.showOrganizationsSelector = true;
 		} else {
 			if (userOrg.length > 0) {
 				const [firstUserOrg] = userOrg;

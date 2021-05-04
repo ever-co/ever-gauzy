@@ -4,7 +4,7 @@
 
 import { IPluginConfig } from '@gauzy/common';
 import { NestFactory } from '@nestjs/core';
-import { registerPluginConfig } from './../../bootstrap';
+import { registerPluginConfig } from '../../bootstrap';
 import { SeedDataService } from './seed-data.service';
 import { SeederModule } from './seeder.module';
 
@@ -17,7 +17,7 @@ import { SeederModule } from './seeder.module';
  * If environment.production config is set to true, then the seeding process will only generate default roles and 2 default users.
  *
  */
-export async function seedDefault(devConfig: Partial<IPluginConfig>) {
+export async function seedEver(devConfig: Partial<IPluginConfig>) {
 	await registerPluginConfig(devConfig);
 
 	NestFactory.createApplicationContext(SeederModule.forPluings(), {
@@ -26,7 +26,7 @@ export async function seedDefault(devConfig: Partial<IPluginConfig>) {
 		.then((app) => {
 			const seeder = app.get(SeedDataService);
 			seeder
-				.runDefaultSeed()
+				.runEverSeed()
 				.then(() => {})
 				.catch((error) => {
 					throw error;

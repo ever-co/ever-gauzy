@@ -1,11 +1,15 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header>
 		<div class="main-header">
-			<h4>{{ 'INVENTORY_PAGE.HEADER' | translate }}</h4>
-			<div class="header-selector-wrapper">
+			<h4>
+				<ngx-header-title>
+					{{ 'INVENTORY_PAGE.HEADER' | translate }}
+				</ngx-header-title>
+			</h4>
+			<div class="card-header-title">
 				<div style="margin-right: 9px"></div>
 				<ga-layout-selector
-					componentName="{{ viewComponentName }}"
+					[componentName]="viewComponentName"
 				></ga-layout-selector>
 			</div>
 		</div>

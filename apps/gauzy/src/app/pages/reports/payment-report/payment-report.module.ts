@@ -15,6 +15,7 @@ import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module
 import { SharedModule } from '../../../@shared/shared.module';
 import { PaymentReportGridModule } from '../../../@shared/report/payment-report-grid/payment-report-grid.module';
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
+import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	declarations: [PaymentReportComponent],
@@ -30,7 +31,8 @@ import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-
 		NbSelectModule,
 		FormsModule,
 		LineChartModule,
-		PaymentReportGridModule
+		PaymentReportGridModule,
+		HeaderTitleModule
 	]
 })
 export class PaymentReportModule {}

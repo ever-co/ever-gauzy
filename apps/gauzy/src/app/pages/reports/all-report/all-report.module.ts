@@ -13,6 +13,7 @@ import {
 	NbToggleModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
+import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	declarations: [AllReportComponent],
@@ -26,7 +27,8 @@ import { TranslateModule } from '@ngx-translate/core';
 		NbCardModule,
 		NbSelectModule,
 		FormsModule,
-		NbToggleModule
+		NbToggleModule,
+		HeaderTitleModule
 	]
 })
 export class AllReportModule {}

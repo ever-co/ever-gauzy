@@ -13,13 +13,13 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
 import { ActivitiesReportGridModule } from '../../../@shared/report/activities-report-grid/activities-report-grid.module';
+import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	declarations: [AppsUrlsReportComponent],
 	imports: [
 		CommonModule,
 		AppsUrlsReportRoutingModule,
-
 		TranslateModule,
 		NbIconModule,
 		NbSpinnerModule,
@@ -27,7 +27,8 @@ import { ActivitiesReportGridModule } from '../../../@shared/report/activities-r
 		FiltersModule,
 		NbSelectModule,
 		FormsModule,
-		ActivitiesReportGridModule
+		ActivitiesReportGridModule,
+		HeaderTitleModule
 	]
 })
 export class AppsUrlsReportModule {}

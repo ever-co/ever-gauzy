@@ -21,6 +21,7 @@ import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-mu
 import { SharedModule } from '../../../@shared/shared.module';
 import { StatusBadgeModule } from '../../../@shared/status-badge/status-badge.module';
 import { SmartTableToggleModule } from '../../../@shared/smart-table/smart-table-toggle/smart-table-toggle.module';
+import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	declarations: [EmployeesComponent],
@@ -43,7 +44,8 @@ import { SmartTableToggleModule } from '../../../@shared/smart-table/smart-table
 		Ng2SmartTableModule,
 		StatusBadgeModule,
 		NbToggleModule,
-		SmartTableToggleModule
+		SmartTableToggleModule,
+		HeaderTitleModule
 	]
 })
 export class EmployeesModule {}

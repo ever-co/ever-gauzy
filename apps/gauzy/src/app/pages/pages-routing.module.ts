@@ -198,20 +198,6 @@ const routes: Routes = [
 							)
 					},
 					{
-						path: 'activity',
-						loadChildren: () =>
-							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
-					},
-					{
-						path: 'timesheets',
-						loadChildren: () =>
-							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
-					},
-					{
 						path: 'schedules',
 						loadChildren: () =>
 							import(
@@ -252,12 +238,7 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./time-off/time-off.module').then(
 								(m) => m.TimeOffModule
-							),
-						data: {
-							selectors: {
-								project: false
-							}
-						}
+							)
 					},
 					{
 						path: 'approvals',
@@ -393,8 +374,7 @@ const routes: Routes = [
 						data: {
 							selectors: {
 								project: false,
-								employee: false,
-								date: false
+								employee: false
 							}
 						}
 					},
@@ -555,7 +535,8 @@ const routes: Routes = [
 							selectors: {
 								project: false,
 								employee: false,
-								date: false
+								date: false,
+								organization: true
 							}
 						}
 					},

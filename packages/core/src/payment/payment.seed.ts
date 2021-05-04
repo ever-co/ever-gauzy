@@ -36,7 +36,7 @@ export const createDefaultPayment = async (
 				new Date(),
 				moment(new Date()).add(1, 'month').toDate()
 			);
-			payment.amount = faker.random.number({
+			payment.amount = faker.datatype.number({
 				min: 1000,
 				max: 100000
 			});
@@ -45,7 +45,7 @@ export const createDefaultPayment = async (
 			payment.paymentMethod = faker.random.arrayElement(
 				Object.keys(PaymentMethodEnum)
 			);
-			payment.overdue = faker.random.boolean();
+			payment.overdue = faker.datatype.boolean();
 			payment.tenant = tenant;
 			payment.tags = invoice.tags;
 			payment.employeeId = faker.random.arrayElement(employees).id;
@@ -96,7 +96,7 @@ export const createRandomPayment = async (
 					2019,
 					faker.date.recent()
 				);
-				payment.amount = faker.random.number({
+				payment.amount = faker.datatype.number({
 					min: 1000,
 					max: 100000
 				});
@@ -105,7 +105,7 @@ export const createRandomPayment = async (
 				payment.paymentMethod = faker.random.arrayElement(
 					Object.keys(PaymentMethodEnum)
 				);
-				payment.overdue = faker.random.boolean();
+				payment.overdue = faker.datatype.boolean();
 				payment.tenant = tenant;
 				payment.tags = tags;
 				payment.employeeId = faker.random.arrayElement(

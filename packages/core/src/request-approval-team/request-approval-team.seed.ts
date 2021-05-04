@@ -65,7 +65,7 @@ export const createRandomRequestApprovalTeam = async (
 						requestApprovalEmployee.team = organizationTeam;
 						requestApprovalEmployee.tenant = tenant;
 						requestApprovalEmployee.organization = tenantOrg;
-						requestApprovalEmployee.status = faker.random.number(3);
+						requestApprovalEmployee.status = faker.datatype.number(3);
 
 						requestApprovalEmployees.push(requestApprovalEmployee);
 					}

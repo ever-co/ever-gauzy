@@ -72,7 +72,7 @@ export class DailyStatisticsComponent implements OnInit, AfterViewInit {
 					if (organization) {
 						this.organization = organization;
 						this.selectedEmployeeId = employee ? employee.id : null;
-						this.projectId = project.id || null;
+						this.projectId = (project) ? project.id : null;
 						this.updateLogs$.next();
 					}
 				}),

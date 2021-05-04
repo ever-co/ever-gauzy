@@ -4,18 +4,20 @@
 	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
 >
-	<nb-card-header class="tasks-component__header">
-		<div class="tasks-component__title">
+	<nb-card-header class="card-header-title">
+		<div class="card-header-title">
 			<h4>
-				<ng-container *ngIf="isTasksPage()">
-					{{ 'TASKS_PAGE.HEADER' | translate }}
-				</ng-container>
-				<ng-container *ngIf="isMyTasksPage()">
-					{{ 'TASKS_PAGE.MY_TASK_HEADER' | translate }}
-				</ng-container>
-				<ng-container *ngIf="isTeamTaskPage()">
-					{{ 'TASKS_PAGE.TEAM_TASKS_HEADER' | translate }}
-				</ng-container>
+				<ngx-header-title [allowEmployee]="false">
+					<ng-container *ngIf="isTasksPage()">
+						{{ 'TASKS_PAGE.HEADER' | translate }}
+					</ng-container>
+					<ng-container *ngIf="isMyTasksPage()">
+						{{ 'TASKS_PAGE.MY_TASK_HEADER' | translate }}
+					</ng-container>
+					<ng-container *ngIf="isTeamTaskPage()">
+						{{ 'TASKS_PAGE.TEAM_TASKS_HEADER' | translate }}
+					</ng-container>
+				</ngx-header-title>
 			</h4>
 		</div>
 		<div class="tasks-component__settings">

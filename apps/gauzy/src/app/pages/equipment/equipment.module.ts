@@ -20,6 +20,7 @@ import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mu
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
@@ -37,7 +38,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		TableComponentsModule,
 		CardGridModule,
 		TranslateModule,
-		NbSpinnerModule
+		NbSpinnerModule,
+		HeaderTitleModule
 	],
 	providers: [EquipmentService],
 	entryComponents: [EquipmentMutationComponent, AutoApproveComponent],

@@ -12,10 +12,11 @@ import { SeederModule } from './seeder.module';
 
 /**
  * Usage:
- * yarn db:seed All
- * yarn db:seed Default
- * yarn db:seed Jobs
- * yarn db:seed Reports
+ * yarn seed:module All
+ * yarn seed:module Default
+ * yarn seed:module Jobs
+ * yarn seed:module Reports
+ * yarn seed:module Ever
  *
  */
 export async function seedModule(devConfig: Partial<IPluginConfig>) {

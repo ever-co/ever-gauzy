@@ -63,7 +63,7 @@ const dataOperation = async (
 	pipelines,
 	organization
 ) => {
-	for (let i = 0; i <= faker.random.number(10); i++) {
+	for (let i = 0; i <= faker.datatype.number(10); i++) {
 		const pipeline = new Pipeline();
 
 		pipeline.organization = organization;
@@ -71,7 +71,7 @@ const dataOperation = async (
 		pipeline.organizationId = organization.id;
 		pipeline.name = faker.company.companyName();
 		pipeline.description = faker.name.jobDescriptor();
-		pipeline.isActive = faker.random.boolean();
+		pipeline.isActive = faker.datatype.boolean();
 
 		pipelines.push(pipeline);
 	}

@@ -28,14 +28,14 @@ export class AppointmentEmployeesController extends CrudController<AppointmentEm
 		description: 'Record not found'
 	})
 	@UseGuards(AuthGuard('jwt'))
-	@Get(':appointmentid')
+	@Get(':appointmentId')
 	async findOneById(
-		@Param('appointmentid', UUIDValidationPipe) appointmentid: string
+		@Param('appointmentId', UUIDValidationPipe) appointmentId: string
 	): Promise<AppointmentEmployee[]> {
 		return (
 			await this.appointmentEmployeesService.findAll({
 				where: {
-					appointmentId: appointmentid
+					appointmentId
 				}
 			})
 		).items;
@@ -52,7 +52,7 @@ export class AppointmentEmployeesController extends CrudController<AppointmentEm
 		description: 'Records not found'
 	})
 	@UseGuards(AuthGuard('jwt'))
-	@Get('findEmployeeAppointments/:employeeId')
+	@Get('find-employee-appointments/:employeeId')
 	async findEmployeeAppointments(
 		@Param('employeeId', UUIDValidationPipe) employeeId: string
 	): Promise<AppointmentEmployee[]> {

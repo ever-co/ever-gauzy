@@ -1,8 +1,8 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<nb-card-header class="header-selector-wrapper">
-		<div class="header-selector-wrapper">
+	<nb-card-header class="card-header-title">
+		<div class="card-header-title">
 			<ngx-back-navigation></ngx-back-navigation>
-			<h4>{{ 'EQUIPMENT_SHARING_POLICY_PAGE.HEADER' | translate }}</h4>
+			<h4> <ngx-header-title [allowEmployee]="false"> {{ 'EQUIPMENT_SHARING_POLICY_PAGE.HEADER' | translate }} </ngx-header-title> </h4>
 		</div>
 		<div>
 			<ga-layout-selector

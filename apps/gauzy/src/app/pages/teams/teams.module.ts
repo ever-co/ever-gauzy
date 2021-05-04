@@ -23,6 +23,7 @@ import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-c
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
@@ -44,10 +45,10 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		Ng2SmartTableModule,
 		TeamsRoutingModule,
 		NbDialogModule.forChild(),
-		TranslateModule
+		TranslateModule,
+		HeaderTitleModule
 	],
 	declarations: [TeamsComponent, TeamsMutationComponent],
-	entryComponents: [],
 	providers: [OrganizationTeamsService]
 })
 export class TeamsModule {}

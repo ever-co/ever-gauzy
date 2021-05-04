@@ -49,8 +49,8 @@ export const createDefaultOrganizationProjects = async (
 		);
 		project.budget =
 			project.budgetType == OrganizationProjectBudgetTypeEnum.COST
-				? faker.random.number({ min: 2000, max: 40000 })
-				: faker.random.number({ min: 20, max: 40 });
+				? faker.datatype.number({ min: 2000, max: 40000 })
+				: faker.datatype.number({ min: 20, max: 40 });
 		project.taskListType = faker.random.arrayElement(
 			Object.values(TaskListTypeEnum)
 		);
@@ -75,21 +75,28 @@ export const createRandomOrganizationProjects = async (
 	}
 
 	const projects: OrganizationProject[] = [];
+
 	for (const tenant of tenants) {
+
 		const projectsPerOrganization =
 			Math.floor(Math.random() * (maxProjectsPerOrganization - 5)) + 5;
+
 		const orgs = tenantOrganizationsMap.get(tenant);
 
 		for (const org of orgs) {
+
 			const organizationContacts = await connection
 				.getRepository(OrganizationContact)
 				.find({
 					where: { organizationId: org.id, tenantId: org.tenantId }
 				});
+
 			const organizationContact = faker.random.arrayElement(
 				organizationContacts
 			);
-			 tags.filter((x) => (x.organization = org));
+
+			// tags.filter((x) => (x.organization = org));
+      
 			for (let i = 0; i < projectsPerOrganization; i++) {
 				const project = new OrganizationProject();
 				project.tags = [tags[Math.floor(Math.random() * tags.length)]];
@@ -102,8 +109,8 @@ export const createRandomOrganizationProjects = async (
 				);
 				project.budget =
 					project.budgetType == OrganizationProjectBudgetTypeEnum.COST
-						? faker.random.number({ min: 2000, max: 40000 })
-						: faker.random.number({ min: 20, max: 40 });
+						? faker.datatype.number({ min: 2000, max: 40000 })
+						: faker.datatype.number({ min: 20, max: 40 });
 
 				project.startDate = faker.date.past(5);
 				project.endDate = faker.date.past(2);
@@ -111,5 +118,6 @@ export const createRandomOrganizationProjects = async (
 			}
 		}
 	}
+
 	await connection.manager.save(projects);
 };

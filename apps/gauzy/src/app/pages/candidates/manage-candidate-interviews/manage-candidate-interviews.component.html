@@ -3,10 +3,9 @@
 		<div class="header">
 			<ngx-back-navigation></ngx-back-navigation>
 			<h4>
-				{{
-					'CANDIDATES_PAGE.MANAGE_INTERVIEWS.MANAGE_INTERVIEWS'
-						| translate
-				}}
+				<ngx-header-title [allowEmployee]="false">
+					{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.MANAGE_INTERVIEWS' | translate }}
+				</ngx-header-title>
 			</h4>
 		</div>
 		<div>

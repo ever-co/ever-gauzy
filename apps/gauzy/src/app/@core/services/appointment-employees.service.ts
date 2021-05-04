@@ -26,7 +26,7 @@ export class AppointmentEmployeesService {
 		id: string = ''
 	): Observable<IAppointmentEmployee[]> {
 		return this.http.get<IAppointmentEmployee[]>(
-			this.URI + '/findEmployeeAppointments/' + id
+			this.URI + '/find-employee-appointments/' + id
 		);
 	}
 

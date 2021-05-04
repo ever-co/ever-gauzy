@@ -278,6 +278,32 @@
 							]
 						}
 					}
+				},
+				"seed-default": {
+					"builder": "@nrwl/node:build",
+					"options": {
+						"maxWorkers": 4,
+						"memoryLimit": 4000,
+						"outputPath": "dist/apps/api",
+						"main": "apps/api/src/seed-default.ts",
+						"showCircularDependencies": false,
+						"sourceMap": true,
+						"tsConfig": "apps/api/tsconfig.app.json"
+					},
+					"configurations": {
+						"production": {
+							"optimization": true,
+							"extractLicenses": true,
+							"inspect": false,
+							"sourceMap": false,
+							"fileReplacements": [
+								{
+									"replace": "packages/config/src/environments/environment.ts",
+									"with": "packages/config/src/environments/environment.prod.ts"
+								}
+							]
+						}
+					}
 				}
 			}
 		},

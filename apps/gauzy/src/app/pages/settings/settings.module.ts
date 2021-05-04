@@ -31,6 +31,7 @@ import { FileStorageComponent } from './file-storage/file-storage.component';
 import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { AccountingTemplatesModule } from '../accounting-templates/accounting-templates.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
@@ -55,7 +56,8 @@ import { AccountingTemplatesModule } from '../accounting-templates/accounting-te
 		NbBadgeModule,
 		TranslateModule,
 		NgSelectModule,
-		BackNavigationModule
+		BackNavigationModule,
+		HeaderTitleModule
 	],
 	entryComponents: [EditRolesPermissionsComponent, DangerZoneComponent],
 	declarations: [

@@ -33,7 +33,7 @@ export const createDefaultOrganizationContact = async (
 
 			const tags = org.tags;
 
-			for (let i = 0; i < faker.random.number({ min: 5, max: 6 }); i++) {
+			for (let i = 0; i < faker.datatype.number({ min: 5, max: 6 }); i++) {
 				const orgContact = new OrganizationContact();
 
 				const contact = faker.random.arrayElement(contacts);
@@ -57,7 +57,7 @@ export const createDefaultOrganizationContact = async (
 
 				orgContact.members = _.chain(employees)
 					.shuffle()
-					.take(faker.random.number({ min: 1, max: 3 }))
+					.take(faker.datatype.number({ min: 1, max: 3 }))
 					.values()
 					.value();
 
@@ -75,7 +75,7 @@ export const createDefaultOrganizationContact = async (
 
 				orgContact.tags = _.chain(tags)
 					.shuffle()
-					.take(faker.random.number({ min: 1, max: 2 }))
+					.take(faker.datatype.number({ min: 1, max: 2 }))
 					.values()
 					.value();
 
@@ -134,7 +134,7 @@ export const createRandomOrganizationContact = async (
 
 				orgContact.members = _.chain(employees)
 					.shuffle()
-					.take(faker.random.number({ min: 1, max: 3 }))
+					.take(faker.datatype.number({ min: 1, max: 3 }))
 					.values()
 					.value();
 
@@ -152,7 +152,7 @@ export const createRandomOrganizationContact = async (
 
 				orgContact.tags = _.chain(tags)
 					.shuffle()
-					.take(faker.random.number({ min: 1, max: 2 }))
+					.take(faker.datatype.number({ min: 1, max: 2 }))
 					.values()
 					.value();
 

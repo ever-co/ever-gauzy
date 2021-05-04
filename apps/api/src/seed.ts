@@ -1,7 +1,10 @@
-import { seedDefault } from '@gauzy/core';
+import { seedEver } from '@gauzy/core';
 import { pluginConfig } from './plugin-config';
 
-seedDefault(pluginConfig).catch((error) => {
+/*
+* Ever seeder  
+*/
+seedEver(pluginConfig).catch((error: any) => {
 	console.log(error);
 	process.exit(1);
 });

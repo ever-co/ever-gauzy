@@ -155,7 +155,7 @@
 						>
 							<nb-option
 								*ngFor="let paymentMethod of paymentMethods"
-								value="{{ paymentMethod }}"
+								[value]="paymentMethod"
 							>
 								{{
 									'INVOICES_PAGE.PAYMENTS.' + paymentMethod

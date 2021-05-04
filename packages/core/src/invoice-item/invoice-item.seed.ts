@@ -82,9 +82,9 @@ async function invoiceItemForInvoiceType(
 		const invoiceItem = new InvoiceItem();
 		invoiceItem.name = faker.company.companyName();
 		invoiceItem.description = faker.random.words();
-		invoiceItem.price = faker.random.number({ min: 1000, max: 10000 });
-		invoiceItem.quantity = faker.random.number({ min: 10, max: 150 });
-		invoiceItem.totalValue = faker.random.number({
+		invoiceItem.price = faker.datatype.number({ min: 1000, max: 10000 });
+		invoiceItem.quantity = faker.datatype.number({ min: 10, max: 150 });
+		invoiceItem.totalValue = faker.datatype.number({
 			min: 10000,
 			max: 100000
 		});
@@ -110,8 +110,8 @@ async function invoiceItemForInvoiceType(
 				break;
 		}
 
-		invoiceItem.applyDiscount = faker.random.boolean();
-		invoiceItem.applyTax = faker.random.boolean();
+		invoiceItem.applyDiscount = faker.datatype.boolean();
+		invoiceItem.applyTax = faker.datatype.boolean();
 		invoiceItem.tenant = tenant;
 		invoiceItem.organization = organization;
 

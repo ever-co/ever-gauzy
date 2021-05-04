@@ -5,14 +5,14 @@ import {
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { AvatarComponent } from 'apps/gauzy/src/app/@shared/components/avatar/avatar.component';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { Store } from './../../../../@core/services/store.service';
+import { AvatarComponent } from './../../../../@shared/components/avatar/avatar.component';
+import { TranslationBaseComponent } from './../../../../@shared/language-base/translation-base.component';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
-import { debounceTime, filter } from 'rxjs/operators';
-import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
-import { SmartTableToggleComponent } from 'apps/gauzy/src/app/@shared/smart-table/smart-table-toggle/smart-table-toggle.component';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { EmployeesService } from './../../../../@core/services';
+import { SmartTableToggleComponent } from './../../../../@shared/smart-table/smart-table-toggle/smart-table-toggle.component';
 
 @UntilDestroy()
 @Component({
@@ -44,22 +44,20 @@ export class EmployeesComponent
 
 	ngOnInit(): void {
 		this.updateJobs$
-			.pipe(untilDestroyed(this), debounceTime(500))
+			.pipe(
+				untilDestroyed(this), 
+				debounceTime(500)
+			)
 			.subscribe(() => {
 				this.getEmployees();
 			});
-
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
+				tap((organization) => this.organization = organization),
 				untilDestroyed(this)
 			)
-			.subscribe((organization) => {
-				if (organization && organization.id) {
-					this.organization = organization;
-				} else {
-					this.organization = null;
-				}
+			.subscribe(() => {
 				this.loadSmartTable();
 				this.updateJobs$.next();
 			});
@@ -77,6 +75,7 @@ export class EmployeesComponent
 			})
 			.then((data) => {
 				this.smartTableSource.load(data.items);
+			}).finally(() => {
 				this.loading = false;
 			});
 	}

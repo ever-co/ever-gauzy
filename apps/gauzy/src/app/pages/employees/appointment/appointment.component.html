@@ -1,7 +1,9 @@
 <nb-card>
 	<nb-card-header>
 		<div class="main-header" *ngIf="showHeader">
-			<h4>{{ 'MENU.APPOINTMENTS' | translate }}</h4>
+			<h4>
+				<ngx-header-title> {{ 'MENU.APPOINTMENTS' | translate }} </ngx-header-title>
+			</h4>
 			<div style="float: right">
 				<button
 					class="mr-2"

@@ -11,7 +11,6 @@ import {
 import * as faker from 'faker';
 import { environment as env } from '@gauzy/config';
 import * as moment from 'moment';
-import { DEFAULT_EMPLOYEES } from './default-employees';
 import { Employee, Organization, Tenant } from './../core/entities/internal';
 import { getDefaultTenant } from './../tenant/tenant.seed';
 import { getDefaultBulgarianOrganization } from './../organization/organization.seed';
@@ -22,9 +21,9 @@ export const createDefaultEmployees = async (
 		tenant: ITenant;
 		org: IOrganization;
 		users: IUser[];
-	}
+	},
+	defaultEmployees: any
 ): Promise<Employee[]> => {
-	const defaultEmployees = DEFAULT_EMPLOYEES;
 	const defaultUsers = defaultData.users;
 	const defaultOrg = defaultData.org;
 	const defaultTenant = defaultData.tenant;
@@ -49,9 +48,9 @@ export const createDefaultEmployees = async (
 		employee.payPeriod = faker.random.arrayElement(
 			Object.keys(PayPeriodEnum)
 		);
-		employee.billRateValue = faker.random.number(100);
+		employee.billRateValue = faker.datatype.number(100);
 		employee.billRateCurrency = defaultOrg.currency || env.defaultCurrency;
-		employee.reWeeklyLimit = faker.random.number(40);
+		employee.reWeeklyLimit = faker.datatype.number(40);
 		employee.tenant = defaultTenant;
 		employees.push(employee);
 	}
@@ -90,10 +89,10 @@ export const createRandomEmployees = async (
 					employee.payPeriod = faker.random.arrayElement(
 						Object.keys(PayPeriodEnum)
 					);
-					employee.billRateValue = faker.random.number(100);
+					employee.billRateValue = faker.datatype.number(100);
 					employee.billRateCurrency =
 						organization.currency || env.defaultCurrency;
-					employee.reWeeklyLimit = faker.random.number(40);
+					employee.reWeeklyLimit = faker.datatype.number(40);
 					employee.tenant = tenant;
 
 					if (employee.user) {

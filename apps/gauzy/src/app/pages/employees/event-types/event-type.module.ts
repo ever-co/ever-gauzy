@@ -23,6 +23,7 @@ import { TableComponentsModule } from '../../../@shared/table-components/table-c
 import { CardGridModule } from '../../../@shared/card-grid/card-grid.module';
 import { BackNavigationModule } from '../../../@shared/back-navigation/back-navigation.module';
 import { TranslateModule } from '../../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
@@ -45,7 +46,8 @@ import { TranslateModule } from '../../../@shared/translate/translate.module';
 		CardGridModule,
 		BackNavigationModule,
 		NbDialogModule.forChild(),
-		TranslateModule
+		TranslateModule,
+		HeaderTitleModule
 	],
 	declarations: [EventTypeComponent],
 	providers: [EventTypeService]

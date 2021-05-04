@@ -13,6 +13,7 @@ import { RecurringExpensesEmployeeComponent } from './recurring-expense-employee
 import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
@@ -26,7 +27,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		RecurringExpenseBlockModule,
 		NbDialogModule.forChild(),
 		TranslateModule,
-		NgxPermissionsModule.forChild()
+		NgxPermissionsModule.forChild(),
+		HeaderTitleModule
 	],
 	declarations: [RecurringExpensesEmployeeComponent],
 	entryComponents: []

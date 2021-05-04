@@ -1,0 +1,12 @@
+<ng-content></ng-content>
+
+<ng-template [ngIf]="allowEmployee && employee">
+    <span> {{ 'HEADER_TITLE.FOR' | translate }} </span>
+    <span> {{ employee?.fullName }} </span>
+</ng-template>
+
+<ng-template [ngIf]="organization?.id">
+    <span> {{ ((allowEmployee && employee) ? ('HEADER_TITLE.FROM' | translate) : ('HEADER_TITLE.FOR' | translate)) }}</span>
+    <span> {{ organization?.name }} </span>
+</ng-template>
+

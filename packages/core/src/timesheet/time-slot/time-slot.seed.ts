@@ -5,8 +5,8 @@ import { generateTimeSlots } from './utils';
 export function createTimeSlots(start, end) {
 	const timeSlots: TimeSlot[] = generateTimeSlots(start, end).map(
 		(timeSlot) => {
-			const keyboard = faker.random.number(100);
-			const mouse = faker.random.number(100);
+			const keyboard = faker.datatype.number(100);
+			const mouse = faker.datatype.number(100);
 			const overall = (keyboard + mouse) / 2;
 
 			const slot = new TimeSlot();

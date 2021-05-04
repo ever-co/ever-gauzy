@@ -43,6 +43,7 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 const COMPONENTS = [
 	UsersComponent,
@@ -87,7 +88,8 @@ const COMPONENTS = [
 		InviteMutationModule,
 		InviteTableModule,
 		EditEmployeeMembershipFormModule,
-		NgxPermissionsModule.forChild()
+		NgxPermissionsModule.forChild(),
+		HeaderTitleModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [],
