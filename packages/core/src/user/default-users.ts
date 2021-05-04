@@ -15,7 +15,7 @@ export const DEFAULT_ADMINS = [
 	{
 		email: 'local.admin@ever.co',
 		password: 'admin',
-		firstName: 'Super',
+		firstName: 'Local',
 		lastName: 'Admin',
 		imageUrl: 'assets/images/avatar-default.svg',
 		preferredLanguage: LanguagesEnum.ENGLISH
