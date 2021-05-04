@@ -11,7 +11,6 @@ import {
 import * as faker from 'faker';
 import { environment as env } from '@gauzy/config';
 import * as moment from 'moment';
-import { DEFAULT_EVER_EMPLOYEES } from './default-employees';
 import { Employee, Organization, Tenant } from './../core/entities/internal';
 import { getDefaultTenant } from './../tenant/tenant.seed';
 import { getDefaultBulgarianOrganization } from './../organization/organization.seed';
@@ -22,9 +21,9 @@ export const createDefaultEmployees = async (
 		tenant: ITenant;
 		org: IOrganization;
 		users: IUser[];
-	}
+	},
+	defaultEmployees: any
 ): Promise<Employee[]> => {
-	const defaultEmployees = DEFAULT_EVER_EMPLOYEES;
 	const defaultUsers = defaultData.users;
 	const defaultOrg = defaultData.org;
 	const defaultTenant = defaultData.tenant;

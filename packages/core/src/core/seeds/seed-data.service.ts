@@ -34,6 +34,7 @@ import { createDefaultSkills } from '../../skills/skill.seed';
 import { createLanguages } from '../../language/language.seed';
 import {	
 	createDefaultAdminUsers,
+	createDefaultEmployeesUsers,
 	createDefaultUsers,
 	createRandomSuperAdminUsers,
 	createRandomUsers
@@ -302,6 +303,7 @@ import {
 	createRandomFeatureToggle
 } from '../../feature/feature.seed';
 import { createDefaultAccountingTemplates } from 'accounting-template/accounting-template.seed';
+import { DEFAULT_EMPLOYEES, DEFAULT_EVER_EMPLOYEES } from './../../employee';
 
 export enum SeederTypeEnum {
 	ALL = 'all',
@@ -664,8 +666,28 @@ export class SeedDataService {
 			this.roles, 
 			this.tenant
 		);
-		
 		this.superAdminUsers = defaultSuperAdminUsers as IUser[];
+
+		const { 
+			defaultEmployeeUsers 
+		} = await createDefaultEmployeesUsers(
+			this.connection, 
+			this.roles, 
+			this.tenant
+		);
+
+		if (this.seedType !== SeederTypeEnum.DEFAULT) {
+			const { 
+				defaultEverEmployeeUsers, 
+				defaultCandidateUsers 
+			} = await createDefaultUsers(
+				this.connection, 
+				this.roles, 
+				this.tenant
+			);
+			this.defaultCandidateUsers = defaultCandidateUsers;
+			defaultEmployeeUsers.push(...defaultEverEmployeeUsers);
+		}
 
 		await this.tryExecute(
 			'Users',
@@ -673,47 +695,33 @@ export class SeedDataService {
 				organizations: this.organizations,
 				users: [ 
 					...this.superAdminUsers,
-					...defaultAdminUsers
+					...defaultAdminUsers,
+					...defaultEmployeeUsers
 				]
 			})
 		);
 
-		if (this.seedType !== SeederTypeEnum.DEFAULT) {
-			const {
-				defaultEmployeeUsers,
-				defaultCandidateUsers
-			} = await createDefaultUsers(
-				this.connection, 
-				this.roles, 
-				this.tenant
-			);
-
-			await createDefaultUsersOrganizations(this.connection, {
-				organizations: this.organizations,
-				users: [
-					...defaultEmployeeUsers
-				]
-			});
-
-			this.defaultCandidateUsers = defaultCandidateUsers;
-
-			//User level data that needs connection, tenant, organization, role, users
-			this.defaultEmployees = await createDefaultEmployees(this.connection, {
+		const allDefaultEmployees = DEFAULT_EMPLOYEES.concat(DEFAULT_EVER_EMPLOYEES);
+		//User level data that needs connection, tenant, organization, role, users
+		this.defaultEmployees = await createDefaultEmployees(
+			this.connection,  
+			{
 				tenant: this.tenant,
 				org: this.organizations[0],
 				users: defaultEmployeeUsers
-			});
+			}, 
+			allDefaultEmployees
+		);
 
-			await this.tryExecute(
-				'Default Employee Invite',
-				createDefaultEmployeeInviteSent(
-					this.connection,
-					this.tenant,
-					this.organizations,
-					this.superAdminUsers
-				)
-			);
-		}
+		await this.tryExecute(
+			'Default Employee Invite',
+			createDefaultEmployeeInviteSent(
+				this.connection,
+				this.tenant,
+				this.organizations,
+				this.superAdminUsers
+			)
+		);
 
 		await this.tryExecute(
 			'Default General Goal Setting',
