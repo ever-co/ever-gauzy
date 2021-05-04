@@ -16,6 +16,7 @@ import { SeederModule } from './seeder.module';
  * yarn db:seed Default
  * yarn db:seed Jobs
  * yarn db:seed Reports
+ * yarn db:seed Ever
  *
  */
 export async function seedModule(devConfig: Partial<IPluginConfig>) {

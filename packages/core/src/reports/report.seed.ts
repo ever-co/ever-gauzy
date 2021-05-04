@@ -8,14 +8,14 @@ import * as rimraf from 'rimraf';
 import * as chalk from 'chalk';
 import { environment as env } from '@gauzy/config';
 import { IPluginConfig } from '@gauzy/common';
-import { getDefaultTenant } from './../tenant/tenant.seed';
 import { getDefaultOrganizations } from './../organization/organization.seed';
-import { IReport, IReportCategory, IReportOrganization } from '@gauzy/contracts';
+import { IReport, IReportCategory, IReportOrganization, ITenant } from '@gauzy/contracts';
 import { ReportOrganization } from './report-organization.entity';
 
 export const createDefaultReport = async (
 	connection: Connection,
-	config: IPluginConfig
+	config: IPluginConfig,
+	tenant: ITenant
 ): Promise<IReport[]> => {
 	await cleanReport(connection, config);
 
@@ -143,7 +143,8 @@ export const createDefaultReport = async (
 	await connection.manager.save(reports);
 	await createDefaultOrganizationsReport(
 		connection, 
-		reports
+		reports,
+		tenant
 	);
 	return reports;
 };
@@ -219,9 +220,9 @@ function copyImage(fileName: string, config: IPluginConfig) {
 
 async function createDefaultOrganizationsReport(
 	connection: Connection,
-	reports: IReport[]
+	reports: IReport[],
+	tenant: ITenant
 ) {
-	const tenant = await getDefaultTenant(connection);
 	const organizations = await getDefaultOrganizations(
 		connection,
 		tenant

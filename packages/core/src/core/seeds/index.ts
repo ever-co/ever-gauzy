@@ -1,5 +1,5 @@
 export * from './seed';
-export * from './seed-basic';
+export * from './seed-default';
 export * from './seed-all';
 export * from './seed-module';
 export * from './seed-jobs';

@@ -21,27 +21,34 @@ import { DEFAULT_EMPLOYEES } from '../employee/default-employees';
 import { DEFAULT_CANDIDATES } from '../candidate/default-candidates';
 import { DEFAULT_SUPER_ADMINS, DEFAULT_ADMINS } from './default-users';
 
-export const createDefaultSuperAdminUsers = async (
+export const createDefaultAdminUsers = async (
 	connection: Connection,
 	roles: Role[],
 	tenant: Tenant
-): Promise<User[]> => {
-	const superAdmins: User[] = [];
-	const superAdminRole = roles.find(
-		(role) => role.name === RolesEnum.SUPER_ADMIN
-	);
+): Promise<{
+	defaultSuperAdminUsers: User[];
+	defaultAdminUsers: User[];
+}> => {
+	const _defaultSuperAdminUsers: Promise<User[]> = seedSuperAdminUsers(roles, tenant);
+	const _defaultAdminUsers: Promise<User[]> = seedAdminUsers(roles, tenant);
 
-	// Generate default super admins
-	for (const superAdmin of DEFAULT_SUPER_ADMINS) {
-		const superAdminUser: User = await generateDefaultUser(
-			superAdmin,
-			superAdminRole,
-			tenant
-		);
-		superAdmins.push(superAdminUser);
-	}
+	const [
+		defaultSuperAdminUsers,
+		defaultAdminUsers
+	] = await Promise.all([
+		_defaultSuperAdminUsers,
+		_defaultAdminUsers
+	]);
 
-	return await insertUsers(connection, superAdmins);
+	await insertUsers(connection, [
+		...defaultSuperAdminUsers,
+		...defaultAdminUsers
+	]);
+
+	return {
+		defaultSuperAdminUsers,
+		defaultAdminUsers
+	};
 };
 
 export const createRandomSuperAdminUsers = async (
@@ -81,12 +88,9 @@ export const createDefaultUsers = async (
 	roles: Role[],
 	tenant: Tenant
 ): Promise<{
-	adminUsers: User[];
 	defaultEmployeeUsers: User[];
 	defaultCandidateUsers: User[];
 }> => {
-	const _adminUsers: Promise<User[]> = seedAdminUsers(roles, tenant);
-
 	const _defaultEmployeeUsers: Promise<User[]> = seedDefaultEmployeeUsers(
 		roles,
 		tenant
@@ -98,23 +102,19 @@ export const createDefaultUsers = async (
 	);
 
 	const [
-		adminUsers,
 		defaultEmployeeUsers,
 		defaultCandidateUsers
 	] = await Promise.all([
-		_adminUsers,
 		_defaultEmployeeUsers,
 		_defaultCandidateUsers
 	]);
 
 	await insertUsers(connection, [
-		...adminUsers,
 		...defaultEmployeeUsers,
 		...defaultCandidateUsers
 	]);
 
 	return {
-		adminUsers,
 		defaultEmployeeUsers,
 		defaultCandidateUsers
 	};
@@ -218,21 +218,45 @@ export const createRandomUsers = async (
 	return randomTenantUsers;
 };
 
+const seedSuperAdminUsers = async (
+	roles: Role[],
+	tenant: Tenant
+): Promise<User[]> => {
+	const superAdmins: Promise<User>[] = [];
+	const superAdminRole = roles.find(
+		(role) => role.name === RolesEnum.SUPER_ADMIN
+	);
+	
+	// Generate default super admins
+	for (const superAdmin of DEFAULT_SUPER_ADMINS) {
+		const superAdminUser: Promise<User> = generateDefaultUser(
+			superAdmin,
+			superAdminRole,
+			tenant
+		);
+		superAdmins.push(superAdminUser);
+	}
+	return Promise.all(superAdmins);
+};
+
 const seedAdminUsers = async (
 	roles: Role[],
 	tenant: Tenant
 ): Promise<User[]> => {
+	const admins: Promise<User>[] = [];
 	const adminRole = roles.find(
 		(role: IRole) => role.name === RolesEnum.ADMIN
 	);
-	const admins: Promise<User>[] = [];
-	let adminUser: Promise<User>;
+
 	// Generate default admins
 	for (const admin of DEFAULT_ADMINS) {
-		adminUser = generateDefaultUser(admin, adminRole, tenant);
+		const adminUser: Promise<User> = generateDefaultUser(
+			admin, 
+			adminRole, 
+			tenant
+		);
 		admins.push(adminUser);
 	}
-
 	return Promise.all(admins);
 };
 
