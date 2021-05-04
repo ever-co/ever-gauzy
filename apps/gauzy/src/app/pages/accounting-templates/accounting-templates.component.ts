@@ -9,7 +9,6 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
 	AccountingTemplateNameEnum,
-	IOrganization,
 	LanguagesEnum
 } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
@@ -30,10 +29,10 @@ export class AccountingTemplatesComponent
 	previewTemplate: SafeHtml;
 	languageCodes: string[] = Object.values(LanguagesEnum);
 	templateNames: string[] = Object.values(AccountingTemplateNameEnum);
-
-	@ViewChild('templateEditor') templateEditor;
 	organizationName: string;
 
+	@ViewChild('templateEditor') templateEditor;
+	
 	constructor(
 		private accountingTemplateService: AccountingTemplateService,
 		private fb: FormBuilder,
