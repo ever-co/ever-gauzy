@@ -38,6 +38,7 @@ import {
     EventType,
     Expense,
     ExpenseCategory,
+    FeatureOrganization,
     Goal,
     GoalKPI,
     GoalKPITemplate,
@@ -193,6 +194,8 @@ export class DeleteAllDataService {
 
         @InjectRepository(ExpenseCategory)
         private readonly expenseCategoryRepository: Repository<ExpenseCategory>,
+        @InjectRepository(FeatureOrganization)
+        private readonly featureOrganizationRepository: Repository<FeatureOrganization>,
 
         @InjectRepository(Goal)
         private readonly goalRepository: Repository<Goal>,
@@ -419,14 +422,6 @@ export class DeleteAllDataService {
 
         await this.deleteSpecificTables(findInput)
         if (deleteOrganizationIds?.length > 0) {
-            await this.contactRepository.delete({
-                organizationId: In(deleteOrganizationIds),
-                tenantId: user.tenantId
-            });
-            await this.organizationRecurringExpenseRepository.delete({
-                organizationId: In(deleteOrganizationIds),
-                tenantId: user.tenantId
-            });
             await this.userOrganizationRepository.delete({
                 userId: id,
                 organizationId: In(deleteOrganizationIds),
@@ -474,7 +469,6 @@ export class DeleteAllDataService {
         })
 
         if (tenantId && organizationId) {
-
             conditions = {
                 tenantId: findInput['tenantId'],
                 organizationId: In(findInput['organizationIds'])
@@ -490,6 +484,7 @@ export class DeleteAllDataService {
 
     private registerCoreRepositories() {
         this.repositories = [
+            this.tagRepository,
             this.activityRepository,
             this.approvalPolicyRepository,
             this.appointmentEmployeesRepository,
@@ -520,9 +515,10 @@ export class DeleteAllDataService {
             this.timeOffRequestRepository,
             this.timeSheetRepository,
             this.timeSlotRepository,
-            this.invoiceEstimateHistoryRepository,
             this.invoiceItemRepository,
+            this.invoiceEstimateHistoryRepository,
             this.invoiceRepository,
+            this.featureOrganizationRepository,
             this.jobPresetRepository,
             this.jobSearchCategoryRepository,
             this.jobSearchOccupationRepository,
@@ -548,33 +544,33 @@ export class DeleteAllDataService {
             this.integrationTenantRepository,
             this.inviteRepository,
             this.organizationAwardsRepository,
-            this.organizationContactRepository,
             this.organizationDepartmentRepository,
             this.organizationDocumentRepository,
             this.organizationEmploymentTypeRepository,
             this.organizationLanguagesRepository,
             this.organizationPositionsRepository,
-            this.organizationProjectsRepository,
             this.organizationSprintRepository,
             this.organizationTeamEmployeeRepository,
             this.organizationTeamRepository,
             this.organizationVendorsRepository,
-            this.paymentRepository,
-            this.pipelineRepository,
+            this.organizationRecurringExpenseRepository,
+            this.organizationProjectsRepository,
+            this.organizationContactRepository,
             this.productCategoryRepository,
             this.productOptionRepository,
             this.productRepository,
             this.productVariantPriceRepository,
             this.productVariantRepository,
             this.productVariantSettingsRepository,
+            this.paymentRepository,
+            this.pipelineRepository,
             this.proposalRepository,
             this.requestApprovalRepository,
             this.screenShotRepository,
             this.skillRepository,
             this.stageRepository,
-            this.tagRepository,
+            this.contactRepository,
             this.taskRepository,
-            
             this.tenantSettingRepository,
         ];
     }

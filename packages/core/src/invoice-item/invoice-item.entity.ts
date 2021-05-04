@@ -101,7 +101,9 @@ export class InvoiceItem
 	invoice?: IInvoice;
 
 	@ApiPropertyOptional({ type: () => Task })
-	@ManyToOne(() => Task, (task) => task.invoiceItems)
+	@ManyToOne(() => Task, (task) => task.invoiceItems, {
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	task?: ITask;
 
