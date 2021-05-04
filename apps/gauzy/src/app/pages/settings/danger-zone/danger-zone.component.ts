@@ -18,6 +18,8 @@ export class DangerZoneComponent
 	extends TranslationBaseComponent
 	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
+	loading: boolean;
+	process: number = 0;
 
 	constructor(
 		readonly translate: TranslateService,
@@ -80,7 +82,39 @@ export class DangerZoneComponent
 			});
 	}
 
-	ngOnInit() {}
+	ngOnInit() { }
+	deleteAllData() {
+		this.loading = true;
+		this.process = 0;
+		setTimeout(() => {
+			this.process = 20;
+		}, 500);
+		setTimeout(() => {
+			this.process = 50;
+		}, 500);
+		this.userService.deleteAllData(this.store.userId).then((organization: any) => {
+			if (organization) {
+				this.store.selectedOrganization = organization;
+				this.store.organizationId = organization.id;
+				this.store.selectedEmployee = null;
+				this.toastrService.success(
+					this.getTranslation(
+						'NOTES.DANGER_ZONE.USER_ALL_DATA_DELETED',
+					)
+				);
+			}
 
-	ngOnDestroy() {}
+		}).finally(() => {
+
+			this.process = 80
+			setTimeout(() => {
+				this.process = 100
+			}, 500);
+			this.loading = false;
+		});
+
+	}
+
+
+	ngOnDestroy() { }
 }

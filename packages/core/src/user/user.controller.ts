@@ -12,7 +12,8 @@ import {
 	HttpCode,
 	Post,
 	Body,
-	Put
+	Put,
+	Delete
 } from '@nestjs/common';
 import {
 	ApiOperation,
@@ -34,6 +35,7 @@ import { UserCreateCommand } from './commands';
 import { IUserCreateInput, IUserUpdateInput } from '@gauzy/contracts';
 import { AuthGuard } from '@nestjs/passport';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { DeleteAllDataService } from './delete-all-data/delete-all-data.service';
 
 @ApiTags('User')
 @ApiBearerAuth()
@@ -42,6 +44,7 @@ import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.g
 export class UserController extends CrudController<User> {
 	constructor(
 		private readonly userService: UserService,
+		private readonly deleteAllDataService: DeleteAllDataService,
 		private readonly commandBus: CommandBus
 	) {
 		super(userService);
@@ -158,5 +161,22 @@ export class UserController extends CrudController<User> {
 			id,
 			...entity
 		});
+	}
+
+	@ApiOperation({ summary: 'Delete all user data.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found user by email address',
+		type: User
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Delete('/delete-all-data/:id')
+	async deleteAllData(
+		@Param('id') id: string
+	){
+		return this.deleteAllDataService.deleteAllData(id);
 	}
 }

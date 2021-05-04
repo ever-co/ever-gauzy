@@ -1,4 +1,23 @@
+<div>
+
+</div>
 <button type="button" class="btn btn-danger" (click)="deleteAccount()">
 	<nb-icon class="mr-1" icon="trash-2-outline"> </nb-icon>
 	{{ 'BUTTONS.DELETE_ACCOUNT' | translate }}
 </button>
+
+
+<button type="button" class="btn btn-danger ml-3" [disabled]="loading" (click)="deleteAllData()">
+	<nb-icon class="mr-1" icon="trash-2-outline"> </nb-icon>
+	{{ 'BUTTONS.DELETE_ALL_DATA' | translate }}
+</button>
+
+<div class="mt-4" *ngIf="process != 0">
+	<span style="display: block;">{{
+		'MENU.IMPORT_EXPORT.QUEUE_PROGRESS' | translate
+		}}</span><br />
+
+	<div class="progress">
+		<div class="progress-bar" role="progressbar" [ngStyle]="{width: process + '%'}"></div>
+	</div>
+</div>

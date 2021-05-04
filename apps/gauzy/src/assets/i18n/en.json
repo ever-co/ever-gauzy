@@ -89,6 +89,7 @@
 		"SKIP_CONTINUE": "Skip {{ label }} and Continue",
 		"BUY": "Buy",
 		"DELETE_ACCOUNT": "Delete your account",
+		"DELETE_ALL_DATA": "Delete All Data",
 		"SELECT_AND_CONTINUE": "Select and Continue",
 		"ADD_KPI": "Add KPI",
 		"PAID_DAYS_OFF": "Paid days off",
@@ -2960,6 +2961,7 @@
 		"DANGER_ZONE": {
 			"DELETE_ACCOUNT_WRONG_DATA": "Wrong input! Please try again.",
 			"ACCOUNT_DELETED": "Your account was deleted successfully!",
+			"USER_ALL_DATA_DELETED": "Your data was deleted successfully!",
 			"RECORD_TYPE": "If Yes, please type 'REMOVE ALL DATA' to confirm."
 		},
 		"EVENT_TYPES": {
