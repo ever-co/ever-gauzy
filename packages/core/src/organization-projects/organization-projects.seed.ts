@@ -89,8 +89,7 @@ export const createRandomOrganizationProjects = async (
 			const organizationContact = faker.random.arrayElement(
 				organizationContacts
 			);
-			let orgTags: Tag[] = [];
-			orgTags = tags.filter((x) => (x.organization = org));
+			 tags.filter((x) => (x.organization = org));
 			for (let i = 0; i < projectsPerOrganization; i++) {
 				const project = new OrganizationProject();
 				project.tags = [tags[Math.floor(Math.random() * tags.length)]];
