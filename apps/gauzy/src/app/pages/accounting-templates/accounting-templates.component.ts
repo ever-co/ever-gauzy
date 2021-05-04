@@ -9,13 +9,14 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
 	AccountingTemplateNameEnum,
-	IOrganization,
 	LanguagesEnum
 } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { AccountingTemplateService } from '../../@core/services/accounting-template.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbThemeService } from '@nebular/theme';
+import { Store } from '../../@core/services/store.service';
+import { filter } from 'rxjs/operators';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './accounting-templates.component.html',
@@ -26,21 +27,32 @@ export class AccountingTemplatesComponent
 	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;
 	previewTemplate: SafeHtml;
-	organization: IOrganization;
 	languageCodes: string[] = Object.values(LanguagesEnum);
 	templateNames: string[] = Object.values(AccountingTemplateNameEnum);
+	organizationName: string;
 
 	@ViewChild('templateEditor') templateEditor;
-
+	
 	constructor(
 		private accountingTemplateService: AccountingTemplateService,
 		private fb: FormBuilder,
+		private store: Store,
 		private sanitizer: DomSanitizer,
 		private themeService: NbThemeService
 	) {}
 
 	ngOnInit() {
-		this.getTemplate();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				untilDestroyed(this)
+			)
+			.subscribe(async (organization) => {
+				if (organization) {
+					this.organizationName = organization.name;
+					await this.getTemplate();
+				}
+			});
 		this._initializeForm();
 	}
 
@@ -80,17 +92,21 @@ export class AccountingTemplatesComponent
 	async getTemplate() {
 		const result = this.form
 			? await this.accountingTemplateService.getTemplate({
-					languageCode: this.form.get('languageCode').value,
-					name: this.form.get('name').value
-			  })
+				languageCode: this.form.get('languageCode').value,
+				name: this.form.get('name').value,
+			})
 			: await this.accountingTemplateService.getTemplate({
-					languageCode: LanguagesEnum.ENGLISH,
-					name: AccountingTemplateNameEnum.INVOICE
-			  });
+				languageCode: LanguagesEnum.ENGLISH,
+				name: AccountingTemplateNameEnum.INVOICE,
+			});
 		this.templateEditor.value = result.mjml;
 
 		const html = await this.accountingTemplateService.generateTemplatePreview(
-			result.mjml
+			{
+				organization: this.organizationName,
+				data: result.mjml,
+			}
+
 		);
 
 		this.previewTemplate = this.sanitizer.bypassSecurityTrustHtml(

@@ -16,7 +16,7 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 	}
 
 	generatePreview(input) {
-		const { data } = input;
+		const { data, organization } = input.request;
 		let textToHtml = data;
 		try {
 			const mjmlTohtml = mjml2html(data);
@@ -35,7 +35,7 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 
 		const html = handlebarsTemplate({
 			invoiceNumber: '1',
-			from: 'Ever Technologies LTD',
+			from: organization,
 			to: 'Sample Client',
 			invoiceDate: '2021-02-23',
 			dueDate: '2021-03-23',
