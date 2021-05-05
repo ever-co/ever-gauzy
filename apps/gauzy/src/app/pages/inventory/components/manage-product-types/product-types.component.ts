@@ -2,11 +2,10 @@ import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import {
 	IOrganization,
 	IProductTypeTranslated,
-	LanguagesEnum,
 	ComponentLayoutStyleEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Ng2SmartTableComponent, ServerDataSource } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { ProductTypeService } from '../../../../@core/services/product-type.service';
@@ -21,6 +20,10 @@ import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../../../@core/services/toastr.service';
 import { NgxPermissionsService } from 'ngx-permissions';
+import { API_PREFIX } from 'apps/gauzy/src/app/@core';
+import { HttpClient } from '@angular/common/http';
+
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-product-type',
@@ -35,11 +38,13 @@ export class ProductTypesComponent
 	selectedProductType: IProductTypeTranslated;
 	productData: IProductTypeTranslated[];
 	selectedOrganization: IOrganization;
-	smartTableSource = new LocalDataSource();
 	disableButton = true;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	editTypesAllowed = false;
+
+	source: ServerDataSource;
+	TYPES_URL = `${API_PREFIX}/product-types?`;
 
 	productTypesTable: Ng2SmartTableComponent;
 	@ViewChild('productTypesTable') set content(
@@ -53,6 +58,7 @@ export class ProductTypesComponent
 
 	constructor(
 		readonly translateService: TranslateService,
+		private http: HttpClient, 
 		private dialogService: NbDialogService,
 		private productTypeService: ProductTypeService,
 		private toastrService: ToastrService,
@@ -118,6 +124,9 @@ export class ProductTypesComponent
 	async loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
+			pager: {
+				perPage: 10
+			},
 			columns: {
 				icon: {
 					title: this.getTranslation('INVENTORY_PAGE.ICON'),
@@ -141,22 +150,25 @@ export class ProductTypesComponent
 	}
 
 	async loadSettings() {
-		this.loading = true;
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.selectedOrganization;
-		const searchCriteria = {
-			organizationId,
-			tenantId
-		};
-		const { items } = await this.productTypeService.getAllTranslated(
-			this.store.preferredLanguage || LanguagesEnum.ENGLISH,
-			['organization'],
-			searchCriteria
-		);
+		this.selectProductType = null;
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 
+		const data = "data=" + JSON.stringify({
+			relations: ['organization'],
+			findInput: {
+				organization: { id: organizationId },
+				tenantId
+			},
+		});
+
+		this.source = new ServerDataSource(this.http, {
+			endPoint: this.TYPES_URL + data,
+			dataKey: 'items',
+			totalKey: 'total',
+			perPage: 'per_page',
+			pagerPageKey: 'page'
+		});
 		this.loading = false;
-		this.productData = items;
-		this.smartTableSource.load(items);
 	}
 
 	_applyTranslationOnSmartTable() {
