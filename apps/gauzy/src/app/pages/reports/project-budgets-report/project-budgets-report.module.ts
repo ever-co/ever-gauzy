@@ -15,6 +15,7 @@ import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-
 import { SharedModule } from '../../../@shared/shared.module';
 import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
 import { ProgressStatusModule } from '../../../@shared/progress-status/progress-status.module';
+import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	declarations: [ProjectBudgetsReportComponent],
@@ -30,7 +31,8 @@ import { ProgressStatusModule } from '../../../@shared/progress-status/progress-
 		NbSelectModule,
 		FormsModule,
 		LineChartModule,
-		ProgressStatusModule
+		ProgressStatusModule,
+		HeaderTitleModule
 	]
 })
 export class ProjectBudgetsReportModule {}

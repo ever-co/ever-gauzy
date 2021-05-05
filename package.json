@@ -35,6 +35,7 @@
 		"start:api:ci": "yarn --frozen-lockfile --cache-folder ~/.cache/yarn ng:ci serve api -c=production --prod",
 		"start:api:pm2": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn run build:api && yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json ./apps/api/src/pm2bootstrap.ts",
 		"seed": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=7000 yarn build:package:all && yarn run config:dev && yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json ./apps/api/src/seed.ts",
+		"seed:ever": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=7000 yarn build:package:all && yarn run config:dev && yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json ./apps/api/src/seed-ever.ts",
 		"seed:all": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=7000 yarn build:package:all && yarn run config:dev && yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json ./apps/api/src/seed-all.ts",
 		"seed:jobs": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=7000 yarn build:package:all && yarn run config:dev && yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json ./apps/api/src/seed-jobs.ts",
 		"seed:module": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=7000 yarn build:package:all && yarn run config:dev && yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json ./apps/api/src/seed-module.ts --name",

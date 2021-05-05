@@ -1,20 +1,24 @@
 import { Connection } from 'typeorm';
 import { Tenant } from './tenant.entity';
 import * as faker from 'faker';
+import { DEFAULT_EVER_TENANT } from './default-tenants';
+import { ITenant } from '@gauzy/contracts';
 
 export const getDefaultTenant = async (
-	connection: Connection
+	connection: Connection,
+	tenantName: string = DEFAULT_EVER_TENANT
 ): Promise<Tenant> => {
 	const repo = connection.getRepository(Tenant);
-	const existedTenant = await repo.findOne({ where: { name: 'Ever' } });
+	const existedTenant = await repo.findOne({ where: { name: tenantName } });
 	return existedTenant;
 };
 
 export const createDefaultTenants = async (
-	connection: Connection
+	connection: Connection,
+	tenantName: string
 ): Promise<Tenant> => {
-	const tenant: Tenant = {
-		name: 'Ever'
+	const tenant: ITenant = {
+		name: tenantName
 	};
 	await insertTenant(connection, tenant);
 	return tenant;

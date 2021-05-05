@@ -89,6 +89,7 @@
 		"SKIP_CONTINUE": "crwdns8760:0{{ label }}crwdne8760:0",
 		"BUY": "crwdns8762:0crwdne8762:0",
 		"DELETE_ACCOUNT": "crwdns9186:0crwdne9186:0",
+		"DELETE_ALL_DATA": "crwdns10316:0crwdne10316:0",
 		"SELECT_AND_CONTINUE": "crwdns9188:0crwdne9188:0",
 		"ADD_KPI": "crwdns9190:0crwdne9190:0",
 		"PAID_DAYS_OFF": "crwdns9918:0crwdne9918:0",
@@ -527,7 +528,7 @@
 			"REJECT": "crwdns4348:0crwdne4348:0"
 		},
 		"DELETE_CONFIRMATION": {
-			"REMOVE_ALL_DATA": "crwdns2765:0crwdne2765:0",
+			"REMOVE_ALL_DATA": "crwdns10318:0crwdne10318:0",
 			"DELETE_ACCOUNT": "crwdns2767:0crwdne2767:0",
 			"REMOVE_USER": "crwdns3786:0crwdne3786:0",
 			"SURE": "crwdns130:0crwdne130:0",
@@ -893,7 +894,7 @@
 		"PROJECT": "crwdns8476:0crwdne8476:0",
 		"CLIENT": "crwdns8478:0crwdne8478:0",
 		"PROJECTS_WORKED": "crwdns8274:0crwdne8274:0",
-		"APPS_AND_URLS_REPORT": "crwdns8480:0crwdne8480:0",
+		"APPS_AND_URLS_REPORT": "crwdns10266:0crwdne10266:0",
 		"NO_ACTIVITIES": "crwdns8482:0crwdne8482:0",
 		"ACTIVITY": "crwdns8246:0crwdne8246:0",
 		"TOTAL_HOURS": "crwdns8248:0crwdne8248:0",
@@ -1108,7 +1109,7 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
-		"HEADER": "crwdns218:0crwdne218:0",
+		"HEADER": "crwdns10268:0crwdne10268:0",
 		"ADD_EMPLOYEE": "crwdns220:0crwdne220:0",
 		"ACTIVE": "crwdns222:0crwdne222:0",
 		"END_WORK": "crwdns224:0crwdne224:0",
@@ -1161,7 +1162,7 @@
 		"NOT_STARTED_HELP": "crwdns3566:0crwdne3566:0"
 	},
 	"GOALS_PAGE": {
-		"HEADER": "crwdns4686:0crwdne4686:0",
+		"HEADER": "crwdns10270:0crwdne10270:0",
 		"GOAL": "crwdns4976:0crwdne4976:0",
 		"GOALS_EMPTY": "crwdns4924:0crwdne4924:0",
 		"ADD_NEW_KEY_RESULT": "crwdns4926:0crwdne4926:0",
@@ -1356,7 +1357,7 @@
 		}
 	},
 	"CANDIDATES_PAGE": {
-		"HEADER": "crwdns3330:0crwdne3330:0",
+		"HEADER": "crwdns10272:0crwdne10272:0",
 		"ADD_CANDIDATE": "crwdns4120:0crwdne4120:0",
 		"APPLIED": "crwdns3334:0crwdne3334:0",
 		"HIRED": "crwdns3336:0crwdne3336:0",
@@ -1695,6 +1696,20 @@
 			"CAN_APPROVE_TIMESHEET": "crwdns4812:0crwdne4812:0",
 			"EVENT_TYPES_VIEW": "crwdns7996:0crwdne7996:0",
 			"TIME_OFF_EDIT": "crwdns7998:0crwdne7998:0",
+			"ORG_INVENTORY_VIEW": "crwdns10288:0crwdne10288:0",
+			"INVENTORY_GALLERY_VIEW": "crwdns10290:0crwdne10290:0",
+			"INVENTORY_GALLERY_EDIT": "crwdns10292:0crwdne10292:0",
+			"ORG_EQUIPMENT_VIEW": "crwdns10294:0crwdne10294:0",
+			"ORG_EQUIPMENT_EDIT": "crwdns10296:0crwdne10296:0",
+			"ORG_EQUIPMENT_SHARING_VIEW": "crwdns10298:0crwdne10298:0",
+			"ORG_EQUIPMENT_SHARING_EDIT": "crwdns10300:0crwdne10300:0",
+			"EQUIPMENT_MAKE_REQUEST": "crwdns10302:0crwdne10302:0",
+			"EQUIPMENT_APPROVE_REQUEST": "crwdns10304:0crwdne10304:0",
+			"ORG_PRODUCT_TYPES_VIEW": "crwdns10306:0crwdne10306:0",
+			"ORG_PRODUCT_TYPES_EDIT": "crwdns10308:0crwdne10308:0",
+			"ORG_PRODUCT_CATEGORIES_VIEW": "crwdns10310:0crwdne10310:0",
+			"ORG_PRODUCT_CATEOGIES_EDIT": "crwdns10312:0crwdne10312:0",
+			"VIEW_ALL_ACCOUNTING_TEMPLATES": "crwdns10314:0crwdne10314:0",
 			"GROUPS": {
 				"GENERAL": "crwdns2679:0crwdne2679:0",
 				"ADMINISTRATION": "crwdns2681:0crwdne2681:0"
@@ -1924,7 +1939,8 @@
 		"TAGS_SELECT_COLOR": "crwdns3164:0crwdne3164:0",
 		"TAGS_SELECT_DESCRIPTION": "crwdns3166:0crwdne3166:0",
 		"ADD_NEW_TAG": "crwdns4306:0crwdne4306:0",
-		"TENANT_LEVEL": "crwdns4726:0crwdne4726:0"
+		"TENANT_LEVEL": "crwdns4726:0crwdne4726:0",
+		"TAGS_TYPE": "crwdns10274:0crwdne10274:0"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "crwdns3920:0crwdne3920:0"
@@ -2227,7 +2243,7 @@
 		"ADD_SPRINT_NAME": "crwdns9970:0crwdne9970:0"
 	},
 	"USERS_PAGE": {
-		"HEADER": "crwdns2313:0crwdne2313:0",
+		"HEADER": "crwdns10276:0crwdne10276:0",
 		"ADD_USER": "crwdns2315:0crwdne2315:0",
 		"ADD_EXISTING_USER": "crwdns3158:0crwdne3158:0",
 		"ADD_EXISTING_ORGANIZATION": "crwdns8336:0crwdne8336:0",
@@ -2287,17 +2303,17 @@
 	},
 	"INVITE_PAGE": {
 		"USER": {
-			"MANAGE": "crwdns2367:0crwdne2367:0",
+			"MANAGE": "crwdns10278:0crwdne10278:0",
 			"HEADER": "crwdns2369:0crwdne2369:0",
 			"ACTION": "crwdns2371:0crwdne2371:0"
 		},
 		"EMPLOYEE": {
-			"MANAGE": "crwdns2373:0crwdne2373:0",
+			"MANAGE": "crwdns10280:0crwdne10280:0",
 			"HEADER": "crwdns2375:0crwdne2375:0",
 			"ACTION": "crwdns2377:0crwdne2377:0"
 		},
 		"CANDIDATE": {
-			"MANAGE": "crwdns3442:0crwdne3442:0",
+			"MANAGE": "crwdns10282:0crwdne10282:0",
 			"HEADER": "crwdns3444:0crwdne3444:0",
 			"ACTION": "crwdns3446:0crwdne3446:0"
 		},
@@ -2567,6 +2583,10 @@
 		"SELECT_A_DATE": "crwdns2641:0crwdne2641:0",
 		"SELECT_AN_ORGANIZATION": "crwdns2643:0crwdne2643:0",
 		"SELECT_PROJECT": "crwdns8704:0crwdne8704:0"
+	},
+	"HEADER_TITLE": {
+		"FOR": "crwdns10284:0crwdne10284:0",
+		"FROM": "crwdns10286:0crwdne10286:0"
 	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "crwdns2249:0crwdne2249:0",
@@ -2953,9 +2973,14 @@
 			}
 		},
 		"DANGER_ZONE": {
-			"DELETE_ACCOUNT_WRONG_DATA": "crwdns8430:0crwdne8430:0",
+			"WRONG_INPUT_DATA": "crwdns10320:0crwdne10320:0",
 			"ACCOUNT_DELETED": "crwdns2841:0crwdne2841:0",
-			"RECORD_TYPE": "crwdns2843:0crwdne2843:0"
+			"ALL_DATA_DELETED": "crwdns10322:0crwdne10322:0",
+			"RECORD_TYPE": "crwdns10324:0{{ type }}crwdne10324:0",
+			"TITLES": {
+				"ACCOUNT": "crwdns10326:0crwdne10326:0",
+				"ALL_DATA": "crwdns10328:0crwdne10328:0"
+			}
 		},
 		"EVENT_TYPES": {
 			"ADD_EVENT_TYPE": "crwdns9002:0{{ name }}crwdne9002:0",

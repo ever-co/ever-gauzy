@@ -1,11 +1,14 @@
 nb-sidebar nb-menu {
 	height: 93%;
+	.scrollable::-webkit-scrollbar {
+		display: none;
+	}
 
 	.menu-items {
 		height: 100%;
 		display: flex;
 		flex-direction: column;
-		overflow-y: scroll !important;
+		overflow-y: auto !important;
 
 		.menu-item.menu-group {
 			margin-top: auto;

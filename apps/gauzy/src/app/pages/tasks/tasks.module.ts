@@ -40,6 +40,7 @@ import { BackNavigationModule } from '../../@shared/back-navigation/back-navigat
 import { AddTaskDialogModule } from '../../@shared/tasks/add-task-dialog/add-task-dialog.module';
 import { TasksSprintSettingsViewModule } from '../../@shared/tasks-sprint-settings-view/tasks-sprint-settings-view.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	declarations: [
@@ -84,7 +85,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		GauzyEditableGridModule,
 		DragDropModule,
 		BackNavigationModule,
-		TasksSprintSettingsViewModule
+		TasksSprintSettingsViewModule,
+		HeaderTitleModule
 	],
 	entryComponents: [MyTaskDialogComponent, TeamTaskDialogComponent]
 })

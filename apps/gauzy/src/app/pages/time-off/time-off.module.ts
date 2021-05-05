@@ -30,6 +30,7 @@ import { SharedModule } from '../../@shared/shared.module';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
@@ -56,7 +57,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		TranslateModule,
 		NbSpinnerModule,
 		TimeOffMutationModule,
-		NgxPermissionsModule.forChild()
+		NgxPermissionsModule.forChild(),
+		HeaderTitleModule
 	],
 	declarations: [
 		TimeOffComponent,

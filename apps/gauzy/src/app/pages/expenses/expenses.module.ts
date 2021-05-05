@@ -25,6 +25,7 @@ import { OrganizationExpenseCategoriesService } from '../../@core/services/organ
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
@@ -47,7 +48,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		NbSpinnerModule,
 		NbActionsModule,
 		TagsColorInputModule,
-		NgxPermissionsModule.forChild()
+		NgxPermissionsModule.forChild(),
+		HeaderTitleModule
 	],
 	declarations: [ExpensesComponent, ExpenseCategoriesComponent],
 	entryComponents: [],

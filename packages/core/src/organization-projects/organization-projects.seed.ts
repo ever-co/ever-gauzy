@@ -75,20 +75,28 @@ export const createRandomOrganizationProjects = async (
 	}
 
 	const projects: OrganizationProject[] = [];
+
 	for (const tenant of tenants) {
+
 		const projectsPerOrganization =
 			Math.floor(Math.random() * (maxProjectsPerOrganization - 5)) + 5;
+
 		const orgs = tenantOrganizationsMap.get(tenant);
 
 		for (const org of orgs) {
+
 			const organizationContacts = await connection
 				.getRepository(OrganizationContact)
 				.find({
 					where: { organizationId: org.id, tenantId: org.tenantId }
 				});
+
 			const organizationContact = faker.random.arrayElement(
 				organizationContacts
 			);
+
+			// tags.filter((x) => (x.organization = org));
+      
 			for (let i = 0; i < projectsPerOrganization; i++) {
 				const project = new OrganizationProject();
 				project.tags = [tags[Math.floor(Math.random() * tags.length)]];
@@ -110,5 +118,6 @@ export const createRandomOrganizationProjects = async (
 			}
 		}
 	}
+
 	await connection.manager.save(projects);
 };

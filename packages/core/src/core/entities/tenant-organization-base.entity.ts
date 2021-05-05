@@ -13,7 +13,8 @@ export abstract class TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => Organization, readOnly: true })
 	@ManyToOne(() => Organization, {
 		nullable: true,
-		onUpdate: 'CASCADE'
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	@IsOptional()

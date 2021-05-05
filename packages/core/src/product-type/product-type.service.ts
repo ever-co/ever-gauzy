@@ -28,16 +28,21 @@ export class ProductTypeService extends CrudService<ProductType> {
 	async findAllProductTypes(
 		relations?: string[],
 		findInput?: any,
-		langCode?: string
+		langCode?: string,
+		options = {page: 1, limit: 10}
 	): Promise<IPagination<ProductType>> {
+		const total = await this.productTypeRepository.count(findInput);
+
 		const allProductTypes = await this.productTypeRepository.find({
 			where: findInput,
-			relations
+			relations,
+			skip: (options.page - 1) * options.limit,
+			take: options.limit
 		});
 
 		return {
 			items: allProductTypes.map((type) => type.translate(langCode)),
-			total: allProductTypes.length
+			total
 		};
 	}
 }

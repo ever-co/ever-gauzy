@@ -42,7 +42,7 @@ import { ToastrService } from '../../@core/services/toastr.service';
 export class UsersComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	organizationName: string;
+
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
 	selectedUser: IUserViewModel;
@@ -322,7 +322,7 @@ export class UsersComponent
 
 	private async loadPage() {
 		this.selectedUser = null;
-		const { id: organizationId, tenantId, name } = this.organization;
+		const { id: organizationId, tenantId } = this.organization;
 		const { items } = await this.userOrganizationsService.getAll(
 			['user', 'user.role', 'user.tags'],
 			{ organizationId, tenantId }
@@ -359,7 +359,6 @@ export class UsersComponent
 		}
 		this.userData = usersVm;
 		this.sourceSmartTable.load(usersVm);
-		this.organizationName = name;
 		this.loading = false;
 	}
 

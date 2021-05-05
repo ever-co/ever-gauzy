@@ -26,6 +26,7 @@ import { DepartmentNamesComponent } from './department-names/department-names.co
 import { SharedModule } from '../../shared.module';
 import { CardGridModule } from '../../card-grid/card-grid.module';
 import { TranslateModule } from '../../translate/translate.module';
+import { HeaderTitleModule } from '../../components/header-title/header-title.module';
 
 const COMPONENTS = [
 	InvitesComponent,
@@ -57,7 +58,8 @@ const COMPONENTS = [
 		NbSpinnerModule,
 		InviteMutationModule,
 		UserFormsModule,
-		CardGridModule
+		CardGridModule,
+		HeaderTitleModule
 	],
 	declarations: [...COMPONENTS],
 	exports: [...COMPONENTS],

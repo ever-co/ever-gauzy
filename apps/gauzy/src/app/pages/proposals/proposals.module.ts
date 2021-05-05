@@ -33,6 +33,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { ProposalTemplateSelectModule } from '../../@shared/proposal-template-select/proposal-template-select.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
@@ -61,7 +62,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		CardGridModule,
 		TranslateModule,
 		NgxPermissionsModule.forChild(),
-		ProposalTemplateSelectModule
+		ProposalTemplateSelectModule,
+		HeaderTitleModule
 	],
 	entryComponents: [
 		ProposalRegisterComponent,

@@ -2,7 +2,9 @@
 	<nb-card-header style="display: flex;">
 		<ngx-back-navigation></ngx-back-navigation>
 		<h4>
-			{{ 'CANDIDATES_PAGE.STATISTIC.STATISTICS' | translate }}
+			<ngx-header-title [allowEmployee]="false">
+				{{ 'CANDIDATES_PAGE.STATISTIC.STATISTICS' | translate }}
+			</ngx-header-title>
 		</h4>
 	</nb-card-header>
 	<nb-card-body>

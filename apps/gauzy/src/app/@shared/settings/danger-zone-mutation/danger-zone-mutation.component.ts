@@ -11,15 +11,16 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 })
 export class DangerZoneMutationComponent extends TranslationBaseComponent {
 	recordType: string;
+	title: string;
 
 	@Output() emitData: EventEmitter<string> = new EventEmitter<string>();
 
 	data: string;
 
 	constructor(
-		protected dialogRef: NbDialogRef<DangerZoneMutationComponent>,
-		private translate: TranslateService,
-		private toastrService: ToastrService
+		protected readonly dialogRef: NbDialogRef<DangerZoneMutationComponent>,
+		private readonly translate: TranslateService,
+		private readonly toastrService: ToastrService
 	) {
 		super(translate);
 	}
@@ -33,11 +34,11 @@ export class DangerZoneMutationComponent extends TranslationBaseComponent {
 	}
 
 	delete() {
-		if (this.data === 'REMOVE ALL DATA') {
+		if (this.data === this.recordType) {
 			this.dialogRef.close('ok');
 		} else {
 			this.toastrService.danger(
-				'NOTES.DANGER_ZONE.DELETE_ACCOUNT_WRONG_DATA'
+				'NOTES.DANGER_ZONE.WRONG_INPUT_DATA'
 			);
 		}
 	}

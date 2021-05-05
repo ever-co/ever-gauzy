@@ -42,7 +42,6 @@ import { EmployeeStore } from '../../@core/services';
 export class EmployeesComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	organizationName: string;
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
 	selectedEmployee: EmployeeViewModel;
@@ -94,7 +93,7 @@ export class EmployeesComponent
 		this.setView();
 	}
 
-	async ngOnInit() {
+	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
@@ -329,7 +328,6 @@ export class EmployeesComponent
 			.getAll(['user', 'tags'], { organizationId, tenantId })
 			.pipe(first())
 			.toPromise();
-		const { name } = this.store.selectedOrganization;
 
 		let employeesVm = [];
 		const result = [];
@@ -369,7 +367,6 @@ export class EmployeesComponent
 		}
 		this.employeeData = employeesVm;
 		this.sourceSmartTable.load(employeesVm);
-		this.organizationName = name;
 		this.loading = false;
 	}
 

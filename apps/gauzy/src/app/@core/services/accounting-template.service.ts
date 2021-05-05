@@ -55,10 +55,10 @@ export class AccountingTemplateService {
 			.toPromise();
 	}
 
-	generateTemplatePreview(data: string): Promise<any> {
+	generateTemplatePreview(request?: any): Promise<any> {
 		return this.http
 			.post<any>(`${API_PREFIX}/accounting-template/template/preview`, {
-				data
+				request
 			})
 			.pipe(first())
 			.toPromise();

@@ -25,6 +25,7 @@ import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { EmployeesService } from '../../@core/services';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
@@ -44,7 +45,8 @@ import { EmployeesService } from '../../@core/services';
 		CardGridModule,
 		BackNavigationModule,
 		TranslateModule,
-		NbSpinnerModule
+		NbSpinnerModule,
+		HeaderTitleModule
 	],
 	providers: [
 		EquipmentSharingService,

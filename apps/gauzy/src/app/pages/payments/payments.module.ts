@@ -17,6 +17,7 @@ import { InvoicesService } from '../../@core/services/invoices.service';
 import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-estimate-history.service';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
@@ -30,7 +31,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		NbSpinnerModule,
 		NbButtonModule,
 		NbDialogModule.forChild(),
-		NgxPermissionsModule.forChild()
+		NgxPermissionsModule.forChild(),
+		HeaderTitleModule
 	],
 	providers: [
 		PaymentService,

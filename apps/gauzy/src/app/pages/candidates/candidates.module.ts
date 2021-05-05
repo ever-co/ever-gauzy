@@ -93,6 +93,7 @@ import { FeedbackStatusTableComponent } from './edit-candidate/edit-candidate-pr
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 const COMPONENTS = [
 	CandidatesComponent,
@@ -185,7 +186,8 @@ const COMPONENTS = [
 		CandidateInterviewFeedbackModule,
 		DeleteInterviewModule,
 		DeleteFeedbackModule,
-		NgxPermissionsModule.forChild()
+		NgxPermissionsModule.forChild(),
+		HeaderTitleModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [

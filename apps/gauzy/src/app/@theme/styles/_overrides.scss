@@ -1,7 +1,7 @@
 @import './themes';
 
 ::-webkit-scrollbar {
-  width: nb-theme(scrollbar-width)
+  width: nb-theme(scrollbar-width);
 }
 ::-webkit-scrollbar-track {
   background: nb-theme(scrollbar-background-color);
@@ -9,10 +9,6 @@
 ::-webkit-scrollbar-thumb {
   background: nb-theme(scrollbar-color);
   border-radius: 0.15625rem;
-}
-
-nb-sidebar .scrollable::-webkit-scrollbar {
-  display: none;
 }
 body {
   -ms-overflow-style: none;
@@ -56,7 +52,7 @@ body {
 
   nb-layout {
     .scrollable-container {
-      overflow-y: scroll !important;
+      overflow-y: auto !important;
     }
   }
 
@@ -70,6 +66,38 @@ body {
   //Override padding from 1.25rem to 0.5rem
   nb-layout .layout .layout-container .content nb-layout-footer nav {
     padding: 0.5rem;
+  }
+
+  nb-sidebar {
+    nb-menu {
+      .menu-items {
+        &::-webkit-scrollbar {
+          width: nb-theme(scrollbar-width);
+        }
+        &::-webkit-scrollbar-track {
+          background: nb-theme(scrollbar-background-color);
+        }
+        &::-webkit-scrollbar-thumb {
+          background: nb-theme(scrollbar-color);
+          border-radius: 0.15625rem;
+        }
+      }
+    }
+  }
+  
+  .ng-dropdown-panel {
+    .scroll-host {
+      &::-webkit-scrollbar {
+        width: nb-theme(scrollbar-width);
+      }
+      &::-webkit-scrollbar-track {
+        background: nb-theme(scrollbar-background-color);
+      }
+      &::-webkit-scrollbar-thumb {
+        background: nb-theme(scrollbar-color);
+        border-radius: 0.15625rem;
+      }
+    }
   }
 
   @media screen and (min-width: nb-theme(layout-window-mode-max-width) + 20px) {
@@ -170,9 +198,7 @@ body {
   }
 
   nb-sidebar .main-container-fixed {
-    height: calc(
-      100vh - #{nb-theme(header-height)} - #{$padding-top}
-    ) !important;
+    height: calc(100vh - #{nb-theme(header-height)} - #{$padding-top}) !important;
     top: calc(#{nb-theme(header-height)} + #{$padding-top}) !important;
   }
 }
@@ -181,5 +207,15 @@ ng2-smart-table tbody tr {
   &:hover,
   &.selected {
     background-color: nb-theme(background-basic-color-3) !important;
+  }
+}
+
+nb-card-header {
+  &.card-header-title,
+  .card-header-title {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
   }
 }

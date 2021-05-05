@@ -25,6 +25,7 @@ import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { CommonModule } from '@angular/common';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
@@ -48,7 +49,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		ApprovalsRoutingModule,
 		RequestApprovalMutationModule,
 		TranslateModule,
-		NgxPermissionsModule.forChild()
+		NgxPermissionsModule.forChild(),
+		HeaderTitleModule
 	],
 	declarations: [ApprovalsComponent, RequestApprovalActionComponent],
 	entryComponents: [],

@@ -1,10 +1,10 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header>
-		<div class="main-header">
-			<h4>{{ 'ORGANIZATIONS_PAGE.TEAMS' | translate }}</h4>
-			<div class="main-header" *ngIf="!showAddCard">
+		<div class="card-header-title">
+			<h4><ngx-header-title>{{ 'ORGANIZATIONS_PAGE.TEAMS' | translate }}</ngx-header-title></h4>
+			<div class="card-header-title" *ngIf="!showAddCard">
 				<ga-layout-selector
-					componentName="{{ viewComponentName }}"
+					[componentName]="viewComponentName"
 				></ga-layout-selector>
 			</div>
 		</div>

@@ -146,7 +146,6 @@ export class EventTypeComponent
 					}
 				}
 			});
-
 		this.route.queryParamMap
 			.pipe(untilDestroyed(this))
 			.subscribe((params) => {
@@ -154,15 +153,6 @@ export class EventTypeComponent
 					this.openAddEventTypeDialog();
 				}
 			});
-
-		this.route.queryParamMap
-			.pipe(untilDestroyed(this))
-			.subscribe((params) => {
-				if (params.get('openAddDialog')) {
-					this.openAddEventTypeDialog();
-				}
-			});
-
 		this.router.events
 			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {

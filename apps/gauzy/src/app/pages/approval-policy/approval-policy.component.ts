@@ -13,6 +13,7 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../@core/services/toastr.service';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-approval-policy',

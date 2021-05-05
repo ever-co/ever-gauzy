@@ -38,6 +38,7 @@ import { CommonModule } from '@angular/common';
 import { CKEditorModule } from 'ng2-ckeditor';
 import { CurrencyModule } from '../../@shared/currency/currency.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
@@ -75,7 +76,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		TasksSprintSettingsViewModule,
 		NbTabsetModule,
 		CKEditorModule,
-		CurrencyModule
+		CurrencyModule,
+		HeaderTitleModule
 	],
 	declarations: [ProjectsComponent, ProjectsMutationComponent],
 	entryComponents: [],

@@ -4,12 +4,10 @@ import {
 	IOrganization,
 	IReport,
 	IReportCategory,
-	ITimeLogFilters,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import * as moment from 'moment';
 import { filter } from 'rxjs/operators';
 import { chain } from 'underscore';
 import { ReportService } from '../report.service';
@@ -23,11 +21,6 @@ import { ReportService } from '../report.service';
 export class AllReportComponent implements OnInit {
 	PermissionsEnum = PermissionsEnum;
 	organization: IOrganization;
-
-	logRequest: ITimeLogFilters = {
-		startDate: moment().startOf('week').toDate(),
-		endDate: moment().endOf('week').toDate()
-	};
 	loading: boolean;
 	reportCategories: IReportCategory[];
 
@@ -48,15 +41,19 @@ export class AllReportComponent implements OnInit {
 	}
 
 	updateShowInMenu(isEnabled: boolean, report): void {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 		this.reportService
 			.updateReport({
 				reportId: report.id,
-				organizationId: this.organization.id,
+				organizationId,
+				tenantId,
 				isEnabled
 			})
 			.then(() => {
 				this.reportService.getReportMenuItems({
-					organizationId: this.organization.id
+					organizationId,
+					tenantId
 				});
 			});
 	}

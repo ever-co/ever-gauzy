@@ -12,6 +12,7 @@ import { ExpenseRecurringRoutingModule } from './expense-recurring-routing.modul
 import { ExpenseRecurringComponent } from './expense-recurring.component';
 import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
@@ -24,7 +25,8 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		NbIconModule,
 		NbDialogModule.forChild(),
 		TranslateModule,
-		RecurringExpenseBlockModule
+		RecurringExpenseBlockModule,
+		HeaderTitleModule
 	],
 	declarations: [ExpenseRecurringComponent],
 	entryComponents: []
