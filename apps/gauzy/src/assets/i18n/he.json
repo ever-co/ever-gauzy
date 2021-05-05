@@ -89,6 +89,7 @@
 		"SKIP_CONTINUE": "Skip {{ label }} and Continue",
 		"BUY": "Buy",
 		"DELETE_ACCOUNT": "Delete your account",
+		"DELETE_ALL_DATA": "Delete all data",
 		"SELECT_AND_CONTINUE": "Select and Continue",
 		"ADD_KPI": "Add KPI",
 		"PAID_DAYS_OFF": "Paid days off",
@@ -527,7 +528,7 @@
 			"REJECT": "reject"
 		},
 		"DELETE_CONFIRMATION": {
-			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
+			"REMOVE_ALL_DATA": "Are you sure you want to remove all data?",
 			"DELETE_ACCOUNT": "Are you sure you want to delete your account?",
 			"REMOVE_USER": " from your organization",
 			"SURE": "אתה בטוח שאתה רוצה למחוק",
@@ -2958,9 +2959,14 @@
 			}
 		},
 		"DANGER_ZONE": {
-			"DELETE_ACCOUNT_WRONG_DATA": "Wrong input! Please try again.",
+			"WRONG_INPUT_DATA": "Wrong input! Please try again.",
 			"ACCOUNT_DELETED": "Your account was deleted successfully!",
-			"RECORD_TYPE": "If Yes, please type 'REMOVE ALL DATA' to confirm."
+			"ALL_DATA_DELETED": "Your data was deleted successfully!",
+			"RECORD_TYPE": "If Yes, please type '{{ type }}' to confirm.",
+			"TITLES": {
+				"ACCOUNT": "REMOVE ACCOUNT",
+				"ALL_DATA": "REMOVE ALL DATA"
+			}
 		},
 		"EVENT_TYPES": {
 			"ADD_EVENT_TYPE": "Event type '{{ name }}' was added",
