@@ -279,13 +279,13 @@
 						}
 					}
 				},
-				"seed-default": {
+				"seed-ever": {
 					"builder": "@nrwl/node:build",
 					"options": {
 						"maxWorkers": 4,
 						"memoryLimit": 4000,
 						"outputPath": "dist/apps/api",
-						"main": "apps/api/src/seed-default.ts",
+						"main": "apps/api/src/seed-ever.ts",
 						"showCircularDependencies": false,
 						"sourceMap": true,
 						"tsConfig": "apps/api/tsconfig.app.json"

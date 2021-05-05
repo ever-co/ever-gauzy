@@ -11,14 +11,14 @@ import { SeedDataService } from './seed-data.service';
 import { SeederModule } from './seeder.module';
 
 /**
- * Usage:
- * yarn seed:module All
- * yarn seed:module Default
- * yarn seed:module Jobs
- * yarn seed:module Reports
- * yarn seed:module Ever
- *
- */
+* Usage:
+* yarn seed:module All
+* yarn seed:module Default
+* yarn seed:module Jobs
+* yarn seed:module Reports
+* yarn seed:module Ever
+*
+*/
 export async function seedModule(devConfig: Partial<IPluginConfig>) {
 	await registerPluginConfig(devConfig);
 
