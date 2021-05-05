@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -8,18 +8,20 @@ import {
 	ITag,
 	ComponentLayoutStyleEnum
 } from '@gauzy/contracts';
-import { first, takeUntil } from 'rxjs/operators';
+import { first, takeUntil, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { Store } from '../../@core/services/store.service';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { Subject } from 'rxjs/internal/Subject';
 import { ToastrService } from '../../@core/services/toastr.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-employment-types',
 	templateUrl: './employment-types.component.html',
@@ -38,9 +40,19 @@ export class EmploymentTypesComponent
 	selectedOrgEmpType: IOrganizationEmploymentType;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+
+	employeeTypeTable: Ng2SmartTableComponent
+	@ViewChild('employeeTypeTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.employeeTypeTable = content;
+			this.onChangedSource();
+		}
+	}
+
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
 	private _ngDestroy$ = new Subject<void>();
+	disableButton: boolean;
 	constructor(
 		private fb: FormBuilder,
 		private readonly toastrService: ToastrService,
@@ -216,6 +228,11 @@ export class EmploymentTypesComponent
 		this.tags = [];
 	}
 
+	selectTeam({ isSelected, data }) {
+		this.disableButton = !isSelected;
+		this.selectedOrgEmpType = isSelected ? data : null;
+	}
+
 	async editOrgEmpType(id: string, name: string) {
 		const orgEmpTypeForEdit = {
 			name: name,
@@ -247,6 +264,39 @@ export class EmploymentTypesComponent
 		if (this.organizationEmploymentTypes.length === 0) {
 			this.showAddCard = false;
 			this.selectedOrgEmpType = null;
+		}
+	}
+
+
+	/*
+ * Table on changed source event
+ */
+	onChangedSource() {
+		this.employeeTypeTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.clearItem())
+			)
+			.subscribe();
+	}
+
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectTeam({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
+	}
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.employeeTypeTable && this.employeeTypeTable.grid) {
+			this.employeeTypeTable.grid.dataSet['willSelect'] = 'false';
+			this.employeeTypeTable.grid.dataSet.deselectAll();
 		}
 	}
 }

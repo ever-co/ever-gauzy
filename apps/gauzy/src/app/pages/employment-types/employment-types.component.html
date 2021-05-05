@@ -75,14 +75,31 @@
 				</form>
 			</ng-template>
 			<ng-template #buttonTemplate>
-				<button (click)="add()" nbButton status="success">
+				<button (click)="add()" class="mb-0 mr-2" nbButton status="success">
 					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
 					{{ 'BUTTONS.ADD' | translate }}
 				</button>
+				<ng-container *ngIf="dataLayoutStyle === 'TABLE' && !showAddCard">
+					<ng-container *ngTemplateOutlet="actionTableButtons"></ng-container>
+				</ng-container>
 			</ng-template>
 		</div>
 
-		<div
+
+		<div class="mt-4">
+			<ng2-smart-table
+			 	*ngIf="
+				organizationEmploymentTypes?.length && dataLayoutStyle === 'TABLE' && !showAddCard
+				" class="tags-table w-100" 
+				(userRowSelect)="selectTeam($event)" 
+				[settings]="settingsSmartTable"
+				[source]="smartTableSource" 
+				style="cursor: pointer" #employeeTypeTable
+				>
+			</ng2-smart-table>
+		</div>
+
+	<!-- 	<div
 			*ngIf="
 				organizationEmploymentTypes?.length &&
 				dataLayoutStyle === 'TABLE'
@@ -188,14 +205,14 @@
 					</nb-actions>
 				</nb-card-body>
 			</nb-card>
-		</div>
+		</div> -->
 		<ga-card-grid
 			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
 			[settings]="settingsSmartTable"
 			[source]="organizationEmploymentTypes"
 			[buttonTemplate]="actionButtons"
 		></ga-card-grid>
-		<ng-template
+		<!-- <ng-template
 			#actionButtons
 			let-buttonSize="buttonSize"
 			let-selectedItem="selectedItem"
@@ -224,6 +241,84 @@
 				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
 				{{ 'BUTTONS.DELETE' | translate }}
 			</button>
-		</ng-template>
+		</ng-template> -->
 	</nb-card-body>
 </nb-card>
+
+
+<!-- <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
+	<button nbButton status="info" class="mr-2" [disabled]="!selectedItem && disableButton"
+		(click)="editTeam(selectedItem)" [size]="buttonSize || 'medium'">
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>{{ 'BUTTONS.EDIT' | translate }}
+	</button>
+
+	<button nbButton status="danger" class="mr-2" [disabled]="!selectedItem && disableButton"
+		(click)="removeTeam(selectedItem?.id, selectedItem?.name)" [size]="buttonSize || 'medium'">
+		<nb-icon class="mr-1" icon="archive-outline"></nb-icon>{{ 'BUTTONS.DELETE' | translate }}
+	</button>
+</ng-template> -->
+
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<button
+		(click)="gridEdit(selectedItem)"
+		nbButton
+		status="info"
+		class="mr-2"
+		(click)="editTeam(selectedItem)"
+		[disabled]="!selectedItem "
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+		{{ 'BUTTONS.EDIT' | translate }}
+	</button>
+	<button
+		(click)="
+			deleteEmploymentType(selectedItem.id, selectedItem.name)
+		"
+		nbButton
+		status="danger"
+		class="mr-2"
+		(click)="editTeam(selectedItem)"
+		[disabled]="!selectedItem"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+		{{ 'BUTTONS.DELETE' | translate }}
+	</button>
+</ng-template>
+
+<ng-template
+	#actionTableButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<button
+		(click)="gridEdit(selectedItem)"
+		nbButton
+		status="info"
+		class="mr-2"
+		[disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+		{{ 'BUTTONS.EDIT' | translate }}
+	</button>
+	<button
+		(click)="
+			deleteEmploymentType(selectedItem.id, selectedItem.name)
+		"
+		nbButton
+		status="danger"
+		class="mr-2"
+		[disabled]="!selectedItem &&  disableButton"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+		{{ 'BUTTONS.DELETE' | translate }}
+	</button>
+</ng-template> 
+
