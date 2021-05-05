@@ -277,7 +277,10 @@ import {
 	createDefaultEquipmentSharingPolicyForOrg,
 	createRandomEquipmentSharingPolicyForOrg
 } from '../../equipment-sharing-policy/equipment-sharing-policy.seed';
-import { createRandomProductOption } from '../../product-option/product-option.seed';
+import { 
+	createRandomProductOption, 
+	createRandomProductOptionGroups 
+} from '../../product-option/product-option.seed';
 import { createRandomProductVariantSettings } from '../../product-settings/product-settings.seed';
 import { createRandomProductVariant } from '../../product-variant/product-variant.seed';
 import { createRandomProductVariantPrice } from '../../product-variant-price/product-variant-price.seed';
@@ -1384,6 +1387,16 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
+			'Random Product Option Groups',
+			createRandomProductOptionGroups(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap,
+				randomSeedConfig.numberOfOptionGroupPerProduct || 5
+			)
+		);
+
+		await this.tryExecute(
 			'Random Product Options',
 			createRandomProductOption(
 				this.connection,
@@ -1392,13 +1405,6 @@ export class SeedDataService {
 				randomSeedConfig.numberOfOptionPerProduct || 5
 			)
 		);
-
-		await createRandomProductVariant(
-			this.connection,
-			tenants,
-			tenantOrganizationsMap,
-			randomSeedConfig.numberOfVariantPerProduct || 5
-		)
 
 		await this.tryExecute(
 			'Random Product Variants',
