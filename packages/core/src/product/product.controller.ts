@@ -100,13 +100,16 @@ export class ProductController extends CrudController<Product> {
 	@Get('local/:langCode')
 	async findAllProductsTranslated(
 		@Param('langCode') langCode: string,
-		@Query('data', ParseJsonPipe) data: any
+		@Query('data', ParseJsonPipe) data: any,
+		@Query('page') page: any,
+		@Query('_limit') limit: any
 	): Promise<IPagination<Product | IProductTranslated>> {
 		const { relations = [], findInput = null } = data;
 		return this.productService.findAllProducts(
 			langCode,
 			relations,
-			findInput
+			findInput,
+			{page, limit}
 		);
 	}
 

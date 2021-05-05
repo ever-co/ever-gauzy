@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
@@ -10,7 +10,8 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	IProductTranslated,
-	PermissionsEnum
+	PermissionsEnum,
+	LanguagesEnum
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -21,6 +22,11 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { ItemImgTagsComponent } from '../table-components/item-img-tags-row.component';
 import { NgxPermissionsService } from 'ngx-permissions';
+import { ServerDataSource } from 'ng2-smart-table';
+import { HttpClient } from '@angular/common/http';
+import { API_PREFIX } from 'apps/gauzy/src/app/@core';
+
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-table-inventory',
@@ -33,9 +39,8 @@ export class TableInventoryComponent
 	settingsSmartTable: object;
 	loading: boolean;
 	selectedProduct: IProduct;
-	smartTableSource = new LocalDataSource();
 	form: FormGroup;
-	selectedLanguage: string;
+	selectedLanguage: string = LanguagesEnum.ENGLISH;
 	inventoryData: IProductTranslated[];
 	disableButton = true;
 	viewComponentName: ComponentEnum;
@@ -46,6 +51,9 @@ export class TableInventoryComponent
 	viewCategoriesAllowed = false;
 	viewTypesAllowed = false;
 
+	source: ServerDataSource;
+	PRODUCTS_URL = `${API_PREFIX}/products/local/${this.selectedLanguage}?`;
+
 	inventoryTable: Ng2SmartTableComponent;
 	@ViewChild('inventoryTable') set content(content: Ng2SmartTableComponent) {
 		if (content) {
@@ -55,6 +63,7 @@ export class TableInventoryComponent
 	}
 
 	constructor(
+		private http: HttpClient,
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
 		private toastrService: ToastrService,
@@ -121,6 +130,9 @@ export class TableInventoryComponent
 	async loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
+			pager: {
+				perPage: 10
+			},
 			columns: {
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
@@ -159,7 +171,8 @@ export class TableInventoryComponent
 							? description.slice(0, 15) + '...'
 							: '';
 					}
-				}
+				},
+
 			}
 		};
 	}
@@ -245,14 +258,21 @@ export class TableInventoryComponent
 		this.loading = true;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const { items } = await this.productService.getAllTranslated(
-			['type', 'category', 'tags', 'featuredImage'],
-			{ organizationId, tenantId },
-			this.selectedLanguage
-		);
+
+		const data = "data=" + JSON.stringify({
+			relations: ['type', 'category', 'tags', 'featuredImage'],
+			findInput: { organizationId, tenantId },
+		});
+
+		this.source = new ServerDataSource(this.http, {
+			endPoint: this.PRODUCTS_URL + data,
+			dataKey: 'items',
+			totalKey: 'total',
+			perPage: 'per_page',
+			pagerPageKey: 'page'
+		});
+
 		this.loading = false;
-		this.inventoryData = items;
-		this.smartTableSource.load(items);
 	}
 
 	async selectProduct({ isSelected, data }) {
