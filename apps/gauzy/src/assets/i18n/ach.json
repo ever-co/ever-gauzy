@@ -2958,7 +2958,7 @@
 			}
 		},
 		"DANGER_ZONE": {
-			"DELETE_ACCOUNT_WRONG_DATA": "crwdns8430:0crwdne8430:0",
+			"WRONG_INPUT_DATA": "crwdns8430:0crwdne8430:0",
 			"ACCOUNT_DELETED": "crwdns2841:0crwdne2841:0",
 			"RECORD_TYPE": "crwdns2843:0crwdne2843:0"
 		},

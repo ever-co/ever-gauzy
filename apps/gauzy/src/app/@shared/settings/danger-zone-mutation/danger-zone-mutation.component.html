@@ -4,9 +4,9 @@
 	</nb-card-header>
 	<nb-card-body>
 		<span>
-			{{ 'FORM.DELETE_CONFIRMATION.DELETE_ACCOUNT' | translate }}
+			{{ title }}
 			<br />
-			{{ recordType }}
+			{{ 'NOTES.DANGER_ZONE.RECORD_TYPE' | translate : { type: recordType } }}
 		</span>
 		<br /><br />
 		<input

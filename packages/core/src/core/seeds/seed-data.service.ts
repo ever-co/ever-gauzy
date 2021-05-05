@@ -32,8 +32,9 @@ import {
 import { createRoles } from '../../role/role.seed';
 import { createDefaultSkills } from '../../skills/skill.seed';
 import { createLanguages } from '../../language/language.seed';
-import {
-	createDefaultSuperAdminUsers,
+import {	
+	createDefaultAdminUsers,
+	createDefaultEmployeesUsers,
 	createDefaultUsers,
 	createRandomSuperAdminUsers,
 	createRandomUsers
@@ -45,8 +46,10 @@ import {
 import {
 	createDefaultOrganizations,
 	createRandomOrganizations,
-	getDefaultBulgarianOrganization
-} from '../../organization/organization.seed';
+	getDefaultBulgarianOrganization,
+	DEFAULT_EVER_ORGANIZATIONS, 
+	DEFAULT_ORGANIZATIONS
+} from '../../organization';
 import {
 	createDefaultIncomes,
 	createRandomIncomes
@@ -68,8 +71,10 @@ import { createRolePermissions } from '../../role-permissions/role-permissions.s
 import {
 	createDefaultTenants,
 	createRandomTenants,
-	getDefaultTenant
-} from '../../tenant/tenant.seed';
+	getDefaultTenant,
+	DEFAULT_EVER_TENANT,
+	DEFAULT_TENANT
+} from '../../tenant';
 import { createDefaultEmailTemplates } from '../../email-template/email-template.seed';
 import {
 	seedDefaultEmploymentTypes,
@@ -272,7 +277,10 @@ import {
 	createDefaultEquipmentSharingPolicyForOrg,
 	createRandomEquipmentSharingPolicyForOrg
 } from '../../equipment-sharing-policy/equipment-sharing-policy.seed';
-import { createRandomProductOption } from '../../product-option/product-option.seed';
+import { 
+	createRandomProductOption, 
+	createRandomProductOptionGroups 
+} from '../../product-option/product-option.seed';
 import { createRandomProductVariantSettings } from '../../product-settings/product-settings.seed';
 import { createRandomProductVariant } from '../../product-variant/product-variant.seed';
 import { createRandomProductVariantPrice } from '../../product-variant-price/product-variant-price.seed';
@@ -298,6 +306,13 @@ import {
 	createRandomFeatureToggle
 } from '../../feature/feature.seed';
 import { createDefaultAccountingTemplates } from 'accounting-template/accounting-template.seed';
+import { DEFAULT_EMPLOYEES, DEFAULT_EVER_EMPLOYEES } from './../../employee';
+
+export enum SeederTypeEnum {
+	ALL = 'all',
+	EVER = 'ever',
+	DEFAULT = 'default'
+}
 
 @Injectable()
 export class SeedDataService {
@@ -313,8 +328,9 @@ export class SeedDataService {
 	defaultEmployees: IEmployee[];
 
 	config: IPluginConfig = getConfig();
+	seedType: SeederTypeEnum;
 
-	constructor(private readonly moduleRef: ModuleRef) {}
+	constructor(private readonly moduleRef: ModuleRef) { }
 
 	/**
 	 * This config is applied only for `yarn seed:*` type calls because
@@ -327,11 +343,10 @@ export class SeedDataService {
 	};
 
 	/**
-	 * Seed All Data
-	 */
+	* Seed All Data
+	*/
 	public async runAllSeed() {
-		const isDefault = false;
-
+		this.seedType = SeederTypeEnum.ALL;
 		try {
 			await this.cleanUpPreviousRuns();
 
@@ -342,10 +357,10 @@ export class SeedDataService {
 			await this.resetDatabase();
 
 			// Seed data with mock / fake data
-			await this.seedData(isDefault);
+			await this.seedData();
 
 			// Seed jobs related data
-			await this.seedJobsData(isDefault);
+			await this.seedJobsData();
 
 			// Seed reports related data
 			await this.seedReportsData();
@@ -357,11 +372,10 @@ export class SeedDataService {
 	}
 
 	/**
-	 * Seed Default Data
-	 */
+	* Seed Default Data
+	*/
 	public async runDefaultSeed() {
-		const isDefault = true;
-
+		this.seedType = SeederTypeEnum.DEFAULT;
 		try {
 			await this.cleanUpPreviousRuns();
 
@@ -372,7 +386,33 @@ export class SeedDataService {
 			await this.resetDatabase();
 
 			// Seed data with mock / fake data
-			await this.seedData(isDefault);
+			await this.seedData();
+
+			// Seed reports related data
+			await this.seedReportsData();
+
+			console.log('Database Default Seed Completed');
+		} catch (error) {
+			this.handleError(error);
+		}
+	}
+
+	/**
+	* Seed Default Ever Data
+	*/
+	public async runEverSeed() {
+		this.seedType = SeederTypeEnum.EVER;
+		try {
+			await this.cleanUpPreviousRuns();
+
+			// Connect to database
+			await this.createConnection();
+
+			// Reset database to start with new, fresh data
+			await this.resetDatabase();
+
+			// Seed data with mock / fake data
+			await this.seedData();
 
 			// Seed reports related data
 			await this.seedReportsData();
@@ -393,7 +433,7 @@ export class SeedDataService {
 
 			await this.seedReportsData();
 
-			console.log('Database Reports Seed completed');
+			console.log('Database Reports Seed Completed');
 		} catch (error) {
 			this.handleError(error);
 		}
@@ -404,7 +444,7 @@ export class SeedDataService {
 	 * Populate database with report related data
 	 * @param isDefault
 	 */
-	private async seedReportsData() {
+	 private async seedReportsData() {
 		try {
 			this.log(
 				chalk.green(
@@ -416,7 +456,11 @@ export class SeedDataService {
 
 			await this.tryExecute(
 				'Default Report Category & Report',
-				createDefaultReport(this.connection, this.config)
+				createDefaultReport(
+					this.connection, 
+					this.config,
+					this.tenant
+				)
 			);
 		
 			this.log(
@@ -435,14 +479,14 @@ export class SeedDataService {
 	 * Seed Default Data
 	 */
 	public async runJobsSeed() {
-		const isDefault = true;
+		this.seedType = SeederTypeEnum.ALL;
 		try {
 			// Connect to database
 			await this.createConnection();
 
-			await this.seedJobsData(isDefault);
+			await this.seedJobsData();
 
-			console.log('Database Jobs Seed completed');
+			console.log('Database Jobs Seed Completed');
 		} catch (error) {
 			this.handleError(error);
 		}
@@ -451,14 +495,12 @@ export class SeedDataService {
 	 * Populate database with jobs related data
 	 * @param isDefault
 	 */
-	private async seedJobsData(isDefault: boolean) {
-		// TODO: implement for isDefault = false (i.e for other tenants with random data too)
+	private async seedJobsData() {
 
 		try {
 			this.log(
 				chalk.green(
-					`🌱 SEEDING ${
-						env.production ? 'PRODUCTION' : ''
+					`🌱 SEEDING ${env.production ? 'PRODUCTION' : ''
 					} JOBS DATABASE...`
 				)
 			);
@@ -490,8 +532,7 @@ export class SeedDataService {
 
 			this.log(
 				chalk.green(
-					`✅ SEEDED ${
-						env.production ? 'PRODUCTION' : ''
+					`✅ SEEDED ${env.production ? 'PRODUCTION' : ''
 					} JOBS DATABASE`
 				)
 			);
@@ -503,17 +544,16 @@ export class SeedDataService {
 	/**
 	 * Populate database with mock data
 	 */
-	private async seedData(isDefault: boolean) {
+	private async seedData() {
 		try {
 			this.log(
 				chalk.green(
-					`🌱 SEEDING ${
-						env.production ? 'PRODUCTION' : ''
+					`🌱 SEEDING ${env.production ? 'PRODUCTION' : ''
 					} DATABASE...`
 				)
 			);
 
-			//Seed data which only needs connection
+			// Seed data which only needs connection
 			await this.tryExecute(
 				'Countries',
 				createCountries(this.connection)
@@ -524,9 +564,14 @@ export class SeedDataService {
 				createCurrencies(this.connection)
 			);
 
+			await this.tryExecute(
+				'Languages', 
+				createLanguages(this.connection)
+			);
+
 			await this.seedBasicDefaultData();
 
-			if (!isDefault) {
+			if (this.seedType === SeederTypeEnum.ALL) {
 				await this.seedDefaultData();
 				await this.seedRandomData();
 			}
@@ -543,23 +588,38 @@ export class SeedDataService {
 
 	/** Populate Database with Basic Default Data **/
 	private async seedBasicDefaultData() {
-		// Platform level data
 
-		await this.tryExecute('Languages', createLanguages(this.connection));
+		// default and internal tenant
+		const tenantName = (this.seedType !== SeederTypeEnum.DEFAULT) ? DEFAULT_EVER_TENANT : DEFAULT_TENANT;
+		this.tenant = await this.tryExecute(
+			'Tenant',
+			createDefaultTenants(
+				this.connection,
+				tenantName
+			) 
+		) as ITenant;
 
-		this.tenant = await createDefaultTenants(this.connection);
-
-		this.roles = await createRoles(this.connection, [this.tenant]);
-
-		await createRolePermissions(this.connection, this.roles, [this.tenant]);
-
-		// Tenant level inserts which only need connection, tenant, roles
-		const defaultOrganizations = await createDefaultOrganizations(
-			this.connection,
-			this.tenant
+		this.roles = await createRoles(
+			this.connection, 
+			[this.tenant]
 		);
 
-		this.organizations = defaultOrganizations;
+		await createRolePermissions(
+			this.connection, 
+			this.roles, 
+			[this.tenant]
+		);
+
+		// Tenant level inserts which only need connection, tenant, roles
+		const organizations = (this.seedType !== SeederTypeEnum.DEFAULT) ? DEFAULT_EVER_ORGANIZATIONS : DEFAULT_ORGANIZATIONS;
+		this.organizations = await this.tryExecute(
+			'Organizations',
+			createDefaultOrganizations(
+				this.connection,
+				this.tenant,
+				organizations
+			)
+		) as IOrganization[];
 
 		await this.tryExecute(
 			'Default Feature Toggle',
@@ -589,44 +649,72 @@ export class SeedDataService {
 			)
 		);
 
-		await this.tryExecute(
-			'Contacts',
-			createRandomContacts(
-				this.connection,
-				this.tenant,
-				this.organizations,
-				randomSeedConfig.noOfRandomContacts || 5
-			)
-		);
+		if (this.seedType !== SeederTypeEnum.DEFAULT) {
+			await this.tryExecute(
+				'Contacts',
+				createRandomContacts(
+					this.connection,
+					this.tenant,
+					this.organizations,
+					randomSeedConfig.noOfRandomContacts || 5
+				)
+			);
+		}
 
-		this.superAdminUsers = await createDefaultSuperAdminUsers(
-			this.connection,
-			this.roles,
+		const {
+			defaultSuperAdminUsers,
+			defaultAdminUsers
+		} = await createDefaultAdminUsers(
+			this.connection, 
+			this.roles, 
 			this.tenant
 		);
-		const {
-			adminUsers,
-			defaultEmployeeUsers,
-			defaultCandidateUsers
-		} = await createDefaultUsers(this.connection, this.roles, this.tenant);
+		this.superAdminUsers = defaultSuperAdminUsers as IUser[];
 
-		await createDefaultUsersOrganizations(this.connection, {
-			organizations: this.organizations,
-			users: [
-				...defaultEmployeeUsers,
-				...adminUsers,
-				...this.superAdminUsers
-			]
-		});
+		const { 
+			defaultEmployeeUsers 
+		} = await createDefaultEmployeesUsers(
+			this.connection, 
+			this.roles, 
+			this.tenant
+		);
 
-		this.defaultCandidateUsers = defaultCandidateUsers;
+		if (this.seedType !== SeederTypeEnum.DEFAULT) {
+			const { 
+				defaultEverEmployeeUsers, 
+				defaultCandidateUsers 
+			} = await createDefaultUsers(
+				this.connection, 
+				this.roles, 
+				this.tenant
+			);
+			this.defaultCandidateUsers = defaultCandidateUsers;
+			defaultEmployeeUsers.push(...defaultEverEmployeeUsers);
+		}
 
+		await this.tryExecute(
+			'Users',
+			createDefaultUsersOrganizations(this.connection, {
+				organizations: this.organizations,
+				users: [ 
+					...this.superAdminUsers,
+					...defaultAdminUsers,
+					...defaultEmployeeUsers
+				]
+			})
+		);
+
+		const allDefaultEmployees = DEFAULT_EMPLOYEES.concat(DEFAULT_EVER_EMPLOYEES);
 		//User level data that needs connection, tenant, organization, role, users
-		this.defaultEmployees = await createDefaultEmployees(this.connection, {
-			tenant: this.tenant,
-			org: this.organizations[0],
-			users: defaultEmployeeUsers
-		});
+		this.defaultEmployees = await createDefaultEmployees(
+			this.connection,  
+			{
+				tenant: this.tenant,
+				org: this.organizations[0],
+				users: defaultEmployeeUsers
+			}, 
+			allDefaultEmployees
+		);
 
 		await this.tryExecute(
 			'Default Employee Invite',
@@ -678,7 +766,7 @@ export class SeedDataService {
 			})
 		);
 
-		//seed default integrations with types
+		// seed default integrations with types
 		const integrationTypes = await this.tryExecute(
 			'Default Integration Types',
 			createDefaultIntegrationTypes(this.connection)
@@ -698,7 +786,7 @@ export class SeedDataService {
 			)
 		);
 
-		//run all plugins random seed method
+		// run all plugins random seed method
 		await this.bootstrapPluginSeedMethods(
 			'onBasicPluginSeed',
 			(instance: any) => {
@@ -713,7 +801,7 @@ export class SeedDataService {
 	 * Populate default data from env files
 	 */
 	private async seedDefaultData() {
-		//Organization level inserts which need connection, tenant, role, organizations
+		// Organization level inserts which need connection, tenant, role, organizations
 		const categories = await this.tryExecute(
 			'Default Expense Categories',
 			createExpenseCategories(
@@ -728,7 +816,7 @@ export class SeedDataService {
 			createEmployeeLevels(this.connection, this.organizations)
 		);
 
-		//todo :  Need to fix error of seeding Product Category
+		// TODO: needs to fix error of seeding Product Category
 		await this.tryExecute(
 			'Default Categories',
 			createCategories(this.connection, this.organizations)
@@ -744,7 +832,7 @@ export class SeedDataService {
 			createDefaultOrganizationContact(this.connection)
 		);
 
-		//Employee level data that need connection, tenant, organization, role, users, employee
+		// Employee level data that need connection, tenant, organization, role, users, employee
 		await this.tryExecute(
 			'Default Teams',
 			createDefaultTeams(
@@ -1185,7 +1273,7 @@ export class SeedDataService {
 			)
 		);
 
-		//run all plugins default seed method
+		// run all plugins default seed method
 		await this.bootstrapPluginSeedMethods(
 			'onDefaultPluginSeed',
 			(instance: any) => {
@@ -1202,7 +1290,7 @@ export class SeedDataService {
 	 * Populate database with random generated data
 	 */
 	private async seedRandomData() {
-		//Platform level data which only need database connection
+		// Platform level data which only need database connection
 		const tenants = await createRandomTenants(
 			this.connection,
 			randomSeedConfig.tenants || 1
@@ -1218,7 +1306,7 @@ export class SeedDataService {
 
 		await createRolePermissions(this.connection, roles, tenants);
 
-		//Tenant level inserts which only need connection, tenant, role
+		// Tenant level inserts which only need connection, tenant, role
 		const tenantOrganizationsMap = await createRandomOrganizations(
 			this.connection,
 			tenants,
@@ -1244,7 +1332,7 @@ export class SeedDataService {
 			randomSeedConfig.viewersPerOrganization || 1
 		);
 
-		//Organization level inserts which need connection, tenant, organizations, users
+		// Organization level inserts which need connection, tenant, organizations, users
 		await createRandomUsersOrganizations(
 			this.connection,
 			tenants,
@@ -1295,6 +1383,16 @@ export class SeedDataService {
 				this.connection,
 				tenants,
 				tenantOrganizationsMap
+			)
+		);
+
+		await this.tryExecute(
+			'Random Product Option Groups',
+			createRandomProductOptionGroups(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap,
+				randomSeedConfig.numberOfOptionGroupPerProduct || 5
 			)
 		);
 
@@ -1912,9 +2010,9 @@ export class SeedDataService {
 			const assetOptions = this.config.assetOptions;
 			const dir = env.isElectron
 				? path.join(
-						path.resolve(env.gauzyUserPath, ...['public']),
-						'screenshots'
-				  )
+					path.resolve(env.gauzyUserPath, ...['public']),
+					'screenshots'
+				)
 				: path.join(assetOptions.assetPublicPath, 'screenshots');
 
 			// delete old generated screenshots
@@ -1934,6 +2032,7 @@ export class SeedDataService {
 			);
 		}
 		const database = this.config.dbConnectionOptions;
+
 		if (!this.connection || !this.connection.isConnected) {
 			try {
 				this.log(chalk.green(`CONNECTING TO DATABASE...`));
@@ -2043,8 +2142,7 @@ export class SeedDataService {
 	private handleError(error: Error, message?: string): void {
 		this.log(
 			chalk.bgRed(
-				`🛑 ERROR: ${message ? message + '-> ' : ''} ${
-					error ? error.message : ''
+				`🛑 ERROR: ${message ? message + '-> ' : ''} ${error ? error.message : ''
 				}`
 			)
 		);

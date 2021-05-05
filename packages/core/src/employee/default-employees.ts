@@ -2,6 +2,18 @@ import { LanguagesEnum } from '@gauzy/contracts';
 
 export const DEFAULT_EMPLOYEES = [
 	{
+		email: 'employee@ever.co',
+		password: '123456',
+		firstName: 'Default',
+		lastName: 'Employee',
+		imageUrl: 'assets/images/avatar-default.svg',
+		employeeLevel: 'A',
+		preferredLanguage: LanguagesEnum.ENGLISH
+	}
+];
+
+export const DEFAULT_EVER_EMPLOYEES = [
+	{
 		email: 'ruslan@ever.co',
 		password: '123456',
 		firstName: 'Ruslan',

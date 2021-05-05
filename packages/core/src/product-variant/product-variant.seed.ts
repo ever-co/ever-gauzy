@@ -1,13 +1,14 @@
-import { Connection } from 'typeorm';
+import { Connection, In } from 'typeorm';
 import { Tenant } from '../tenant/tenant.entity';
 import { BillingInvoicingPolicyEnum, IOrganization } from '@gauzy/contracts';
 import { ProductVariant } from './product-variant.entity';
 import * as faker from 'faker';
+import * as _ from 'underscore';
 import { ProductCategory } from '../product-category/product-category.entity';
 import { Product } from '../product/product.entity';
-import { ProductOption } from '../product-option/product-option.entity';
 import { ProductVariantSettings } from '../product-settings/product-settings.entity';
 import { ProductVariantPrice } from '../product-variant-price/product-variant-price.entity';
+import { ProductOption, ProductOptionGroup } from './../core/entities/internal';
 
 export const createRandomProductVariant = async (
 	connection: Connection,
@@ -37,10 +38,15 @@ export const createRandomProductVariant = async (
 					where: { category: productCategory }
 				});
 				for (const product of products) {
-					const productOptions = await connection.manager.find(
-						ProductOption,
-						{
+					const productOptionGroups = await connection.manager.find(ProductOptionGroup, {
 							where: { product: product }
+						}
+					);
+					const productOptionGroupsIds = _.pluck(productOptionGroups, 'id');
+					const productOptions = await connection.manager.find(ProductOption, {
+							where: { 
+								group: In(productOptionGroupsIds),
+							}
 						}
 					);
 					for (let i = 0; i < numberOfVariantPerProduct; i++) {

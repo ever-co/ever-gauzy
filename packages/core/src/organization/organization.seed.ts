@@ -18,7 +18,6 @@ import {
 	IOrganizationCreateInput,
 	IOrganization
 } from '@gauzy/contracts';
-import { DEFAULT_ORGANIZATIONS } from './default-organizations';
 import { environment as env } from '@gauzy/config';
 
 export const getDefaultBulgarianOrganization = async (
@@ -47,13 +46,14 @@ let defaultOrganizationsInserted = [];
 
 export const createDefaultOrganizations = async (
 	connection: Connection,
-	tenant: Tenant
+	tenant: Tenant,
+	organizations: any
 ): Promise<Organization[]> => {
-	const defaultOrganizations: Organization[] = [];
+	const defaultOrganizations: IOrganization[] = [];
 	const skills = await getSkills(connection);
 	const contacts = await getContacts(connection);
 
-	DEFAULT_ORGANIZATIONS.forEach((organization: IOrganizationCreateInput) => {
+	organizations.forEach((organization: IOrganizationCreateInput) => {
 		const organizationSkills = _.chain(skills)
 			.shuffle()
 			.take(faker.datatype.number({ min: 1, max: 4 }))
@@ -132,9 +132,9 @@ export const createDefaultOrganizations = async (
 		defaultOrganizations.push(defaultOrganization);
 	});
 
-	const organizations = await connection.manager.save(defaultOrganizations);
+	await connection.manager.save(defaultOrganizations);
 	defaultOrganizationsInserted = [...defaultOrganizations];
-	return organizations;
+	return defaultOrganizationsInserted;
 };
 
 export const createRandomOrganizations = async (

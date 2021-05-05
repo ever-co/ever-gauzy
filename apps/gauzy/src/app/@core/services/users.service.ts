@@ -6,7 +6,7 @@ import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class UsersService {
-	constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient) { }
 
 	API_URL = `${API_PREFIX}/user`;
 
@@ -61,6 +61,13 @@ export class UsersService {
 	delete(userId, user) {
 		return this.http
 			.delete(`${this.API_URL}/${userId}`, user)
+			.pipe(first())
+			.toPromise();
+	}
+
+	deleteAllData(userId) {
+		return this.http
+			.delete(`${this.API_URL}/all-data/${userId}`)
 			.pipe(first())
 			.toPromise();
 	}

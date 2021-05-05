@@ -10,14 +10,14 @@ import { SeederModule } from './seeder.module';
 
 /**
 * WARNING: Running this file will DELETE all data in your database
-* and generate and insert new, system default minimal data into your database.
+* and generate and insert new, ever organization related data into your database.
 *
 * BE CAREFUL running this file in production env. It's possible to delete all production data.
 * SeedData checks if environment is in production or not by checking src/environments/environment.ts file configs.
 * If environment.production config is set to true, then the seeding process will only generate default roles and 2 default users.
 *
 */
-export async function seedDefault(devConfig: Partial<IPluginConfig>) {
+export async function seedEver(devConfig: Partial<IPluginConfig>) {
 	await registerPluginConfig(devConfig);
 
 	NestFactory.createApplicationContext(SeederModule.forPluings(), {
@@ -26,7 +26,7 @@ export async function seedDefault(devConfig: Partial<IPluginConfig>) {
 		.then((app) => {
 			const seeder = app.get(SeedDataService);
 			seeder
-				.runDefaultSeed()
+				.runEverSeed()
 				.then(() => {})
 				.catch((error) => {
 					throw error;
