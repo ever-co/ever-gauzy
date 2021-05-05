@@ -150,7 +150,6 @@ export class ProductTypesComponent
 	}
 
 	async loadSettings() {
-		this.selectProductType = null;
 		const { id: organizationId, tenantId } = this.selectedOrganization;
 
 		const data = "data=" + JSON.stringify({
