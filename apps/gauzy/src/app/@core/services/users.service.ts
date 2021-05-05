@@ -67,7 +67,7 @@ export class UsersService {
 
 	deleteAllData(userId) {
 		return this.http
-			.delete(`${this.API_URL}/delete-all-data/${userId}`)
+			.delete(`${this.API_URL}/all-data/${userId}`)
 			.pipe(first())
 			.toPromise();
 	}

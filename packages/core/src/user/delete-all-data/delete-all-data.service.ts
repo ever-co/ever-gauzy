@@ -386,7 +386,6 @@ export class DeleteAllDataService {
 
         const user = await this.userRepository.findOne(id);
         user.thirdPartyId = null;
-        user.imageUrl = null;
         user.preferredLanguage = null;
         user.preferredComponentLayout = null;
         user.employeeId = null;

@@ -173,7 +173,7 @@ export class UserController extends CrudController<User> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Delete('/delete-all-data/:id')
+	@Delete('/all-data/:id')
 	async deleteAllData(
 		@Param('id') id: string
 	){
