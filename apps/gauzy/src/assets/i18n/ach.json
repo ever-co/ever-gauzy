@@ -89,6 +89,7 @@
 		"SKIP_CONTINUE": "crwdns8760:0{{ label }}crwdne8760:0",
 		"BUY": "crwdns8762:0crwdne8762:0",
 		"DELETE_ACCOUNT": "crwdns9186:0crwdne9186:0",
+		"DELETE_ALL_DATA": "crwdns10316:0crwdne10316:0",
 		"SELECT_AND_CONTINUE": "crwdns9188:0crwdne9188:0",
 		"ADD_KPI": "crwdns9190:0crwdne9190:0",
 		"PAID_DAYS_OFF": "crwdns9918:0crwdne9918:0",
@@ -527,7 +528,7 @@
 			"REJECT": "crwdns4348:0crwdne4348:0"
 		},
 		"DELETE_CONFIRMATION": {
-			"REMOVE_ALL_DATA": "crwdns2765:0crwdne2765:0",
+			"REMOVE_ALL_DATA": "crwdns10318:0crwdne10318:0",
 			"DELETE_ACCOUNT": "crwdns2767:0crwdne2767:0",
 			"REMOVE_USER": "crwdns3786:0crwdne3786:0",
 			"SURE": "crwdns130:0crwdne130:0",
@@ -2972,9 +2973,14 @@
 			}
 		},
 		"DANGER_ZONE": {
-			"WRONG_INPUT_DATA": "crwdns8430:0crwdne8430:0",
+			"WRONG_INPUT_DATA": "crwdns10320:0crwdne10320:0",
 			"ACCOUNT_DELETED": "crwdns2841:0crwdne2841:0",
-			"RECORD_TYPE": "crwdns2843:0crwdne2843:0"
+			"ALL_DATA_DELETED": "crwdns10322:0crwdne10322:0",
+			"RECORD_TYPE": "crwdns10324:0{{ type }}crwdne10324:0",
+			"TITLES": {
+				"ACCOUNT": "crwdns10326:0crwdne10326:0",
+				"ALL_DATA": "crwdns10328:0crwdne10328:0"
+			}
 		},
 		"EVENT_TYPES": {
 			"ADD_EVENT_TYPE": "crwdns9002:0{{ name }}crwdne9002:0",
