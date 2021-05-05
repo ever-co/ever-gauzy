@@ -1,13 +1,12 @@
 import {
 	IProductCategoryTranslated,
 	IOrganization,
-	LanguagesEnum,
 	ComponentLayoutStyleEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Ng2SmartTableComponent, ServerDataSource } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { ProductCategoryService } from '../../../../@core/services/product-category.service';
@@ -21,6 +20,10 @@ import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { NgxPermissionsService } from 'ngx-permissions';
+import { API_PREFIX } from 'apps/gauzy/src/app/@core';
+import { HttpClient } from '@angular/common/http';
+
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-product-categories',
@@ -35,11 +38,13 @@ export class ProductCategoriesComponent
 	selectedProductCategory: IProductCategoryTranslated;
 	productData: IProductCategoryTranslated[];
 	selectedOrganization: IOrganization;
-	smartTableSource = new LocalDataSource();
 	disableButton = true;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	editCategoriesAllowed = false;
+
+	source: ServerDataSource;
+	CATEGORIES_URL = `${API_PREFIX}/product-categories?`;
 
 	productCategoriesTable: Ng2SmartTableComponent;
 	@ViewChild('productCategoriesTable') set content(
@@ -52,6 +57,7 @@ export class ProductCategoriesComponent
 	}
 
 	constructor(
+		private http: HttpClient, 
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
 		private productCategoryService: ProductCategoryService,
@@ -117,6 +123,9 @@ export class ProductCategoriesComponent
 	async loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
+			pager: {
+				perPage: 10
+			},
 			columns: {
 				imageUrl: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
@@ -142,19 +151,23 @@ export class ProductCategoriesComponent
 	async loadSettings() {
 		this.selectedProductCategory = null;
 		const { id: organizationId, tenantId } = this.selectedOrganization;
-		const searchCriteria = {
-			organization: { id: organizationId },
-			tenantId
-		};
-		const { items } = await this.productCategoryService.getAllTranslated(
-			this.store.preferredLanguage || LanguagesEnum.ENGLISH,
-			['organization'],
-			searchCriteria
-		);
 
+		const data = "data=" + JSON.stringify({
+			relations: ['organization'],
+			findInput: {
+				organization: { id: organizationId },
+				tenantId
+			},
+		});
+
+		this.source = new ServerDataSource(this.http, {
+			endPoint: this.CATEGORIES_URL + data,
+			dataKey: 'items',
+			totalKey: 'total',
+			perPage: 'per_page',
+			pagerPageKey: 'page'
+		});
 		this.loading = false;
-		this.productData = items;
-		this.smartTableSource.load(items);
 	}
 
 	_applyTranslationOnSmartTable() {

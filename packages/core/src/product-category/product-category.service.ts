@@ -29,18 +29,23 @@ export class ProductCategoryService extends CrudService<ProductCategory> {
 	async findAllProductCategories(
 		relations?: string[],
 		findInput?: any,
-		langCode?: string
+		langCode?: string,
+		options = {page: 1, limit: 10}
 	): Promise<IPagination<ProductCategory | IProductCategoryTranslated>> {
+		const total = await this.productCategoryRepository.count(findInput);
+
 		const allProductCategories = await this.productCategoryRepository.find({
 			where: findInput,
-			relations
+			relations,
+			skip: (options.page - 1) * options.limit,
+			take: options.limit
 		});
 
 		return {
 			items: allProductCategories.map((category) =>
 				category.translate(langCode)
 			),
-			total: allProductCategories.length
+			total
 		};
 	}
 }

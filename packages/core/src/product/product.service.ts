@@ -57,7 +57,7 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		const items = await this.productRepository.find({
 			relations: relations,
 			where: findInput,
-			skip: options.page * options.limit,
+			skip: (options.page - 1) * options.limit,
 			take: options.limit
 		});
 

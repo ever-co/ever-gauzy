@@ -42,7 +42,9 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 	})
 	@Get()
 	async findAllProductCategories(
-		@Query('data', ParseJsonPipe) data: any
+		@Query('data', ParseJsonPipe) data: any,
+		@Query('page') page: any,
+		@Query('_limit') limit: any
 	): Promise<IPagination<ProductCategory | IProductCategoryTranslated>> {
 		const {
 			relations = [],
@@ -52,7 +54,8 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 		return this.productCategoriesService.findAllProductCategories(
 			relations,
 			findInput,
-			langCode
+			langCode,
+			{page, limit}
 		);
 	}
 
