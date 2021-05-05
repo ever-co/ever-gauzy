@@ -50,12 +50,15 @@ export class ProductService extends TenantAwareCrudService<Product> {
 	async findAllProducts(
 		langCode?: string,
 		relations?: string[],
-		findInput?: IProductFindInput
+		findInput?: IProductFindInput,
+		options = {page: 1, limit: 10}
 	): Promise<IPagination<Product | IProductTranslated>> {
 		const total = await this.productRepository.count(findInput);
 		const items = await this.productRepository.find({
 			relations: relations,
-			where: findInput
+			where: findInput,
+			skip: (options.page - 1) * options.limit,
+			take: options.limit
 		});
 
 		const mapData = async () => {
