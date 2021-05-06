@@ -4,7 +4,7 @@
 		<nb-icon icon="close-outline" (click)="closeDialog()"></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="card-body">
-		<form [formGroup]="form" (ngSubmit)="submit()" #baseForm="ngForm">
+		<form [formGroup]="form" (ngSubmit)="submit()" #knowledgeBaseForm="ngForm">
 			<div class="row">
 				<div class="col-12">
 					<div class="form-group">
@@ -26,7 +26,7 @@
 							status="primary"
 							labelPosition="start"
 							[checked]="privacy"
-							(checkedChange)="toggleStatus($event)"
+							(checkedChange)="togglePrivacy($event)"
 						>
 							<span> {{ 'HELP_PAGE.PUBLISH_STATUS' | translate }} </span>
 						</nb-toggle>
@@ -68,7 +68,7 @@
 							[placeholder]="'HELP_PAGE.COLOR' | translate"
 							[colorPicker]="color"
 							[value]="color"
-							(colorPickerChange)="changedColor($event)"
+							(colorPickerChange)="selectedColor($event)"
 							[style.background]="color"
 							fullWidth
 							nbInput
@@ -90,6 +90,9 @@
 							fullWidth
 							nbInput
 							id="name"
+							[status]="
+								isInvalidControl('name') ? 'danger' : 'basic'
+							"
 						/>
 					</div>
 				</div>
@@ -116,7 +119,7 @@
 	<nb-card-footer class="text-right">
 		<button
 			status="success"
-			(click)="baseForm.ngSubmit.emit()"
+			(click)="knowledgeBaseForm.ngSubmit.emit()"
 			[disabled]="form.invalid"
 			nbButton
 		>

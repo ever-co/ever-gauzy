@@ -8,7 +8,8 @@ import {
 	getDefaultEmployees,
 	SeedDataService,
 	Tenant,
-	Employee
+	Employee,
+	DEFAULT_EVER_TENANT
 } from '@gauzy/core';
 import { createHelpCenter } from './help-center';
 import { createHelpCenterArticle } from './help-center-article/help-center-article.seed';
@@ -101,7 +102,7 @@ export class HelpCenterSeederService {
 			.getRepository(Tenant)
 			.find({
 				where: {
-					name: Not('Ever')
+					name: Not(DEFAULT_EVER_TENANT)
 				}
 			});
 

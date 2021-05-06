@@ -296,7 +296,8 @@ export class SidebarComponent
 	}
 
 	async loadMenu() {
-		const { id: organizationId, tenantId } = this.organization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 		const result = await this.helpService.getAll(
 			['parent', 'children', 'organization'],
 			{ organizationId, tenantId }

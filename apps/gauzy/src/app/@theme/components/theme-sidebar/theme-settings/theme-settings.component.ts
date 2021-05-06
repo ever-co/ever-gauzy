@@ -53,7 +53,7 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 	async ngOnInit() {
 		this.store.systemLanguages$
 			.pipe(
-				filter((systemLanguages) => systemLanguages.length > 0),
+				filter((systemLanguages) => !!systemLanguages),
 				untilDestroyed(this)
 			)
 			.subscribe((systemLanguages) => {

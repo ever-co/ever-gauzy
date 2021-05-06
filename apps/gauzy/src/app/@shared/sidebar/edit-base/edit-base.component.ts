@@ -2,7 +2,7 @@ import { Component, OnDestroy, Input, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { IHelpCenter, LanguagesEnum } from '@gauzy/contracts';
+import { IHelpCenter } from '@gauzy/contracts';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { HelpCenterService, Store } from '../../../@core';
 
@@ -21,7 +21,7 @@ export class EditBaseComponent
 	static buildForm(formBuilder: FormBuilder): FormGroup {
 		const form = formBuilder.group({
 			name: ['', Validators.required],
-			color: ['#000000'],
+			color: ['#d53636'],
 			description: [],
 			language: ['', Validators.required],
 			icon: [],
@@ -40,22 +40,21 @@ export class EditBaseComponent
 		super(translateService);
 	}
 
+	public form: FormGroup = EditBaseComponent.buildForm(this.formBuilder);
 	public icons = [
 		'book-open-outline',
 		'archive-outline',
 		'alert-circle-outline',
 		'attach-outline'
 	];
-	public form: FormGroup;
 
 	ngOnInit() {
-		this.form = EditBaseComponent.buildForm(this.formBuilder);
 		if (this.editType === 'edit') {
 			this.patchValue();
 		}
 	}
 
-	toggleStatus(event: boolean) {
+	togglePrivacy(event: boolean) {
 		this.form.patchValue({ 
 			privacy: event 
 		});
@@ -67,20 +66,21 @@ export class EditBaseComponent
 		});
 	}
 
-	changedColor(event) {
+	selectedColor(event) {
 		this.form.patchValue({ 
 			color: event 
 		});
 	}
 
 	patchValue() {
-		this.form.setValue({
-			name: this.base.name,
-			description: this.base.description,
-			color: this.base.color,
-			language: this.base.language,
-			icon: this.base.icon,
-			privacy: (this.base.privacy === 'eye-outline') ? true : false
+ 		const { name, description, color, language, icon, privacy } = this.base;
+		this.form.setValue({ 
+			name, 
+			description, 
+			color, 
+			language, 
+			icon,
+			privacy: (privacy === 'eye-outline') ? true : false
 		});
 		this.form.updateValueAndValidity();	
 	}
@@ -141,6 +141,13 @@ export class EditBaseComponent
 	*/
 	get icon() {
 		return this.form.get('icon').value;
+	}
+
+	isInvalidControl(control: string) {
+		if (!this.form.contains(control)) {
+			return true;
+		}
+		return this.form.get(control).touched && this.form.get(control).invalid;
 	}
 
 	ngOnDestroy() {}

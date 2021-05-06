@@ -97,10 +97,23 @@ export class LanguageInputComponent extends TranslationBaseComponent implements 
 
 	async ngOnInit() {
 		await this.getAllLanguages();
+		this.checkPreFilledLanguage();
 	}
 
 	async getAllLanguages() {
 		const { items } = await this.languagesService.getAllLanguages();
 		this.languages = items;
+	}
+
+	checkPreFilledLanguage() {
+		if (!this.selectedLanguageCode) {
+			return;
+		}
+		if (this.languages.length > 0) {
+			const selectedLanguage = this.languages.find(
+				(language: ILanguage) => this.selectedLanguageCode === language.code
+			);
+			this.onChange(selectedLanguage);
+		}
 	}
 }
