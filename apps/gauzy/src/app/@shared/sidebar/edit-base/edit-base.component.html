@@ -1,114 +1,126 @@
-<nb-card class="main">
-	<nb-card-header>
-		<div class="header">
-			<h6 *ngIf="editType === 'edit'">
-				{{ 'HELP_PAGE.MANAGE_BASE' | translate }}
-			</h6>
-			<h6 *ngIf="editType === 'add'">
-				{{ 'HELP_PAGE.ADD_BASE' | translate }}
-			</h6>
-			<nb-icon icon="close-outline" (click)="closeDialog()"></nb-icon>
-		</div>
+<nb-card class="card">
+	<nb-card-header class="card-header-title">
+		<h6> {{ ((editType === 'edit') ? 'HELP_PAGE.MANAGE_BASE' : 'HELP_PAGE.ADD_BASE') | translate }} </h6>
+		<nb-icon icon="close-outline" (click)="closeDialog()"></nb-icon>
 	</nb-card-header>
-	<nb-card-body>
-		<div class="select-wrap">
-			<div class="select">
-				<p class="select-label">
-					{{ 'HELP_PAGE.LANGUAGE' | translate }}:
-				</p>
-				<nb-select
-					class="ml-3"
-					placeholder="{{ 'FORM.PLACEHOLDERS.SELECT' | translate }}"
-					[(selected)]="selectedLang"
-				>
-					<nb-option *ngFor="let lang of languages" [value]="lang">{{
-						lang
-					}}</nb-option>
-				</nb-select>
-			</div>
-			<nb-toggle
-				class="select"
-				status="primary"
-				labelPosition="start"
-				[(ngModel)]="isToggled"
-				(checkedChange)="toggleStatus($event)"
-			>
-				<p class="select-label ml-3">
-					{{ 'HELP_PAGE.PUBLISH_STATUS' | translate }}:
-				</p>
-			</nb-toggle>
-		</div>
-		<div class="mb-1">
-			<p class="label">{{ 'HELP_PAGE.CHOSE_ICON' | translate }}:</p>
-			<nb-select
-				class="main-buttons"
-				placeholder="{{ 'FORM.PLACEHOLDERS.SELECT_ICON' | translate }}"
-				[(selected)]="selectedIcon"
-			>
-				<nb-select-label *ngIf="selectedIcon">
-					<nb-icon
-						[ngStyle]="{ color: 'black' }"
-						class="mr-1"
-						icon="{{ selectedIcon }}"
-					></nb-icon
-					>{{ selectedIcon | slice: 0:selectedIcon.length - 8 }}
-				</nb-select-label>
-				<nb-option *ngFor="let icon of icons" [value]="icon"
-					><nb-icon class="mr-1" icon="{{ icon }}"></nb-icon
-					>{{ icon | slice: 0:icon.length - 8 }}</nb-option
-				>
-			</nb-select>
-		</div>
-		<form [formGroup]="form" (ngSubmit)="submit()">
-			<p class="label">{{ 'HELP_PAGE.COLOR' | translate }}:</p>
-			<input
-				class="select-color"
-				nbInput
-				placeholder="{{ 'FORM.PLACEHOLDERS.COUNT' | translate }}"
-				formControlName="color"
-				[(colorPicker)]="color"
-				[value]="color"
-				[style.background]="color"
-				id="inputColor"
-				fullWidth
-			/>
-			<div class="edit-field">
-				<div>
-					<p class="label">
-						{{ 'HELP_PAGE.NAME_OF_THE_BASE' | translate }}:
-					</p>
-					<input
-						formControlName="name"
-						class="main-buttons"
-						type="text"
-						size="24"
-						maxlength="18"
-						nbInput
-					/>
+	<nb-card-body class="card-body">
+		<form [formGroup]="form" (ngSubmit)="submit()" #baseForm="ngForm">
+			<div class="row">
+				<div class="col-12">
+					<div class="form-group">
+						<label id="language" class="label">{{ 
+							'HELP_PAGE.LANGUAGE' | translate 
+						}}</label>
+						<ngx-language-selector
+							[placeholder]="'FORM.PLACEHOLDERS.SELECT' | translate"
+							[clearable]="false"
+							[addTag]="false"
+							[selectedLanguageCode]="language"
+							(selectedLanguageEvent)="selectedLanguage($event)"
+						></ngx-language-selector>
+					</div>
 				</div>
-				<div>
-					<p class="label">
-						{{ 'HELP_PAGE.DESCRIPTION' | translate }}:
-					</p>
-					<input
-						formControlName="desc"
-						class="main-buttons"
-						type="text"
-						size="30"
-						maxlength="26"
-						nbInput
-					/>
+				<div class="col-12">
+					<div class="form-group mt-2 mb-2">
+						<nb-toggle
+							status="primary"
+							labelPosition="start"
+							[checked]="privacy"
+							(checkedChange)="toggleStatus($event)"
+						>
+							<span> {{ 'HELP_PAGE.PUBLISH_STATUS' | translate }} </span>
+						</nb-toggle>
+					</div>
 				</div>
-			</div>
-			<div class="save-button">
-				<button
-					status="success"
-					[disabled]="selectedIcon && selectedLang && form.invalid"
-					nbButton
-				>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button>
+				<div class="col-12">
+					<div class="form-group">
+						<label id="icon" class="label">{{ 
+							'HELP_PAGE.CHOSE_ICON' | translate 
+						}}</label>
+						<nb-select
+							[placeholder]="'FORM.PLACEHOLDERS.SELECT_ICON' | translate"
+							formControlName="icon"
+							fullWidth
+							id="icon"
+						>
+							<nb-select-label *ngIf="icon">
+								<nb-icon
+									[ngStyle]="{ color: 'black' }"
+									class="mr-1"
+									[icon]="icon"
+								></nb-icon
+								>{{ icon | slice: 0:icon.length - 8 }}
+							</nb-select-label>
+							<nb-option *ngFor="let icon of icons" [value]="icon" >
+								<nb-icon class="mr-1" [icon]="icon"></nb-icon>
+								{{ icon | slice: 0:icon.length - 8 }}
+							</nb-option>
+						</nb-select>
+					</div>
+				</div>
+				<div class="col-12">
+					<div class="form-group">
+						<label id="color" class="label">{{ 
+							'HELP_PAGE.COLOR' | translate 
+						}}</label>
+						<input
+							formControlName="color"
+							[placeholder]="'HELP_PAGE.COLOR' | translate"
+							[colorPicker]="color"
+							[value]="color"
+							(colorPickerChange)="changedColor($event)"
+							[style.background]="color"
+							fullWidth
+							nbInput
+							id="color"
+						/>
+					</div>
+				</div>
+				<div class="col-12">
+					<div class="form-group">
+						<label id="name" class="label">
+							{{ 'HELP_PAGE.NAME_OF_THE_BASE' | translate }}
+						</label>
+						<input
+							formControlName="name"
+							[placeholder]="'HELP_PAGE.NAME_OF_THE_BASE' | translate"
+							type="text"
+							size="24"
+							maxlength="18"
+							fullWidth
+							nbInput
+							id="name"
+						/>
+					</div>
+				</div>
+				<div class="col-12">
+					<div class="form-group">
+						<label id="description" class="label">
+							{{ 'HELP_PAGE.DESCRIPTION' | translate }}
+						</label>
+						<input
+							formControlName="description"
+							[placeholder]="'HELP_PAGE.DESCRIPTION' | translate"
+							type="text"
+							size="30"
+							maxlength="26"
+							fullWidth
+							nbInput
+							id="description"
+						/>
+					</div>
+				</div>
 			</div>
 		</form>
 	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button
+			status="success"
+			(click)="baseForm.ngSubmit.emit()"
+			[disabled]="form.invalid"
+			nbButton
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
 </nb-card>

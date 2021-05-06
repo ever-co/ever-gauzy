@@ -5,14 +5,15 @@ import {
 	OnInit,
 	OnDestroy,
 	Output,
-	EventEmitter
+	EventEmitter,
+	AfterViewInit
 } from '@angular/core';
 import { TreeComponent, ITreeOptions } from '@circlon/angular-tree-component';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { AddIconComponent } from './add-icon/add-icon.component';
-import { filter, first } from 'rxjs/operators';
+import { filter, first, tap } from 'rxjs/operators';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { EditBaseComponent } from './edit-base/edit-base.component';
 import { EditCategoryComponent } from './edit-category/edit-category.component';
@@ -31,7 +32,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 })
 export class SidebarComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit, OnDestroy, AfterViewInit {
 	@Output() clickedNode = new EventEmitter<IHelpCenter>();
 	@Output() deletedNode = new EventEmitter<any>();
 
@@ -51,7 +52,6 @@ export class SidebarComponent
 	public nodeId = '';
 	public isChosenNode = false;
 	public nodes: IHelpCenter[] = [];
-	selectedOrganizationId: string;
 	settingsContextMenu: NbMenuItem[];
 	options: ITreeOptions = {
 		getChildren: async (node: IHelpCenter) => {
@@ -72,44 +72,38 @@ export class SidebarComponent
 	organization: IOrganization;
 
 	ngOnInit() {
-		this.store.selectedOrganization$
-			.pipe(
-				filter((organization) => !!organization),
-				untilDestroyed(this)
-			)
-			.subscribe((organization) => {
-				if (organization) {
-					this.organization = organization;
-					this.selectedOrganizationId = organization.id;
-					this.loadMenu();
-				}
-			});
 		this.settingsContextMenu = [
 			{
 				title: this.getTranslation('HELP_PAGE.ADD_CATEGORY')
 			},
 			{
-				title: this.getTranslation('HELP_PAGE.EDIT_KNOWLAGE_BASE')
+				title: this.getTranslation('HELP_PAGE.EDIT_BASE')
 			},
 			{
 				title: this.getTranslation('HELP_PAGE.DELETE_BASE')
 			}
 		];
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				tap((organization) => this.organization = organization),
+				tap(() => this.loadMenu()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	ngAfterViewInit() {
 		this.nbMenuService.onItemClick().subscribe((elem) => {
-			if (
-				elem.item.title ===
-				this.getTranslation('HELP_PAGE.EDIT_KNOWLAGE_BASE')
-			)
-				this.editBase();
-			if (
-				elem.item.title ===
-				this.getTranslation('HELP_PAGE.ADD_CATEGORY')
-			)
+			if (elem.item.title === this.getTranslation('HELP_PAGE.EDIT_BASE')) {
+				this.addEditBase('edit');
+			}
+			if (elem.item.title === this.getTranslation('HELP_PAGE.ADD_CATEGORY')) { 
 				this.addCategory();
-			if (
-				elem.item.title === this.getTranslation('HELP_PAGE.DELETE_BASE')
-			)
+			}
+			if (elem.item.title === this.getTranslation('HELP_PAGE.DELETE_BASE')) {
 				this.deleteBase();
+			}
 		});
 	}
 
@@ -124,46 +118,36 @@ export class SidebarComponent
 		return classes;
 	}
 
-	async addNode() {
-		const chosenType = 'add';
-		const dialog = this.dialogService.open(EditBaseComponent, {
-			context: {
-				base: null,
-				editType: chosenType,
-				organization: this.organization
-			}
-		});
-		const data = await dialog.onClose.pipe(first()).toPromise();
-		if (data) {
-			this.toastrService.success('TOASTR.MESSAGE.CREATED_BASE', {
-				name: data.name
-			});
-			this.loadMenu();
-			this.tree.treeModel.update();
+	async addEditBase(editType: string) {
+		const context = {
+			base: null,
+			editType
 		}
-	}
-
-	async editBase() {
-		const chosenType = 'edit';
-		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
+		if (editType === 'edit') {
+			const { data } = this.tree.treeModel.getNodeById(this.nodeId);
+			context['base'] = data;
+		}
 		const dialog = this.dialogService.open(EditBaseComponent, {
-			context: {
-				base: someNode.data,
-				editType: chosenType,
-				organization: this.organization
-			}
+			context
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
-			this.toastrService.success('TOASTR.MESSAGE.EDITED_BASE', {
-				name: someNode.data.name
-			});
+			if (editType === 'edit') {
+				this.toastrService.success('TOASTR.MESSAGE.EDITED_BASE', {
+					name: context.base.name
+				});
+			} else {
+				this.toastrService.success('TOASTR.MESSAGE.CREATED_BASE', {
+					name: data.name
+				});
+			}
 			this.loadMenu();
 			this.tree.treeModel.update();
 		}
 	}
 
 	async addCategory() {
+		const { id: organizationId } = this.organization;
 		const chosenType = 'add';
 		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
 		const dialog = this.dialogService.open(EditCategoryComponent, {
@@ -171,7 +155,7 @@ export class SidebarComponent
 				category: null,
 				base: someNode.data,
 				editType: chosenType,
-				organizationId: this.selectedOrganizationId
+				organizationId
 			}
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -185,6 +169,7 @@ export class SidebarComponent
 	}
 
 	async editCategory(node) {
+		const { id: organizationId } = this.organization;
 		const chosenType = 'edit';
 		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
 		this.isChosenNode = true;
@@ -193,7 +178,7 @@ export class SidebarComponent
 				base: someNode.data,
 				category: node,
 				editType: chosenType,
-				organizationId: this.selectedOrganizationId
+				organizationId
 			}
 		});
 		const data = await dialog.onClose.pipe(first()).toPromise();

@@ -16,6 +16,7 @@ import {
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store, UsersService } from './../../../../@core/services';
+import { filter } from 'rxjs/operators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -51,7 +52,10 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 
 	async ngOnInit() {
 		this.store.systemLanguages$
-			.pipe(untilDestroyed(this))
+			.pipe(
+				filter((systemLanguages) => systemLanguages.length > 0),
+				untilDestroyed(this)
+			)
 			.subscribe((systemLanguages) => {
 				if (systemLanguages && systemLanguages.length > 0) {
 					this.languages = systemLanguages.map((item) => {

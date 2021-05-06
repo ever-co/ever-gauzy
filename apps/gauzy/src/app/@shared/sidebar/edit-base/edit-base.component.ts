@@ -1,11 +1,10 @@
 import { Component, OnDestroy, Input, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
-import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { IHelpCenter, IOrganization } from '@gauzy/contracts';
+import { IHelpCenter, LanguagesEnum } from '@gauzy/contracts';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { HelpCenterService } from '../../../@core/services/help-center.service';
+import { HelpCenterService, Store } from '../../../@core';
 
 @Component({
 	selector: 'ga-edit-base',
@@ -15,91 +14,100 @@ import { HelpCenterService } from '../../../@core/services/help-center.service';
 export class EditBaseComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+
 	@Input() base?: IHelpCenter;
 	@Input() editType: string;
-	@Input() organization: IOrganization;
-	private _ngDestroy$ = new Subject<void>();
+
+	static buildForm(formBuilder: FormBuilder): FormGroup {
+		const form = formBuilder.group({
+			name: ['', Validators.required],
+			color: ['#000000'],
+			description: [],
+			language: ['', Validators.required],
+			icon: [],
+			privacy: [false]
+		});
+		return form;
+	}
+
 	constructor(
 		protected dialogRef: NbDialogRef<EditBaseComponent>,
 		readonly translateService: TranslateService,
 		private helpCenterService: HelpCenterService,
-		private readonly fb: FormBuilder
+		private readonly formBuilder: FormBuilder,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
-	public color: string;
-	public selectedLang = '';
-	public selectedIcon = '';
-	public isToggled = false;
+
 	public icons = [
 		'book-open-outline',
 		'archive-outline',
 		'alert-circle-outline',
 		'attach-outline'
 	];
-	public languages = ['en', 'ru', 'he', 'bg'];
 	public form: FormGroup;
 
 	ngOnInit() {
+		this.form = EditBaseComponent.buildForm(this.formBuilder);
 		if (this.editType === 'edit') {
-			this.selectedLang = this.base.language;
-			this.selectedIcon = this.base.icon;
-			this.isToggled = this.base.privacy === 'eye-outline' ? true : false;
+			this.patchValue();
 		}
-		this.form = this.fb.group({
-			name: ['', Validators.required],
-			color: [''],
-			desc: ['', Validators.required]
-		});
-		this.loadFormData();
 	}
 
 	toggleStatus(event: boolean) {
-		this.isToggled = event;
+		this.form.patchValue({ 
+			privacy: event 
+		});
 	}
 
-	loadFormData() {
-		if (this.editType === 'edit')
-			this.form.patchValue({
-				name: this.base.name,
-				desc: this.base.description,
-				color: this.base.color
-			});
-		if (this.editType === 'add')
-			this.form.patchValue({
-				name: '',
-				desc: '',
-				color: '#000000'
-			});
+	selectedLanguage(event) {
+		this.form.patchValue({ 
+			language: event.code 
+		});
+	}
+
+	changedColor(event) {
+		this.form.patchValue({ 
+			color: event 
+		});
+	}
+
+	patchValue() {
+		this.form.setValue({
+			name: this.base.name,
+			description: this.base.description,
+			color: this.base.color,
+			language: this.base.language,
+			icon: this.base.icon,
+			privacy: (this.base.privacy === 'eye-outline') ? true : false
+		});
+		this.form.updateValueAndValidity();	
 	}
 
 	async submit() {
-		if (this.editType === 'edit')
-			this.base = await this.helpCenterService.update(this.base.id, {
-				name: `${this.form.value.name}`,
-				description: `${this.form.value.desc}`,
-				language: `${this.selectedLang}`,
-				color: `${this.color}`,
-				icon: `${this.selectedIcon}`,
-				privacy:
-					this.isToggled === true ? 'eye-outline' : 'eye-off-outline'
-			});
-		if (this.editType === 'add')
-			this.base = await this.helpCenterService.create({
-				name: `${this.form.value.name}`,
-				privacy:
-					this.isToggled === true ? 'eye-outline' : 'eye-off-outline',
-				icon: `${this.selectedIcon}`,
-				flag: 'base',
-				index: 0,
-				organizationId: this.organization.id,
-				tenantId: this.organization.tenantId,
-				description: `${this.form.value.desc}`,
-				language: `${this.selectedLang}`,
-				color: `${this.form.value.color}`,
-				children: []
-			});
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization;
+		const { name, description, language, privacy, icon, color } = this.form.value;
+		const contextRequest = {
+			name,
+			description,
+			language,
+			color,
+			icon,
+			organizationId,
+			tenantId,
+			privacy: privacy === true ? 'eye-outline' : 'eye-off-outline',
+		}
 
+		if (this.editType === 'edit') {
+			this.base = await this.helpCenterService.update(this.base.id, { ...contextRequest });
+		} else {
+			this.base = await this.helpCenterService.create({
+				...{ flag: 'base', index: 0, children: [] },
+				...contextRequest
+			});
+		}
 		this.dialogRef.close(this.base);
 	}
 
@@ -107,8 +115,33 @@ export class EditBaseComponent
 		this.dialogRef.close();
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
+	/**
+	* Getter for privacy form control value
+	*/
+	get language() {
+		return this.form.get('language').value;
 	}
+
+	/**
+	* Getter for privacy form control value
+	*/
+	get privacy() {
+		return this.form.get('privacy').value;
+	}
+
+	/**
+	* Getter for color form control value
+	*/
+	get color() {
+		return this.form.get('color').value;
+	}
+
+	/**
+	* Getter for icon form control value
+	*/
+	get icon() {
+		return this.form.get('icon').value;
+	}
+
+	ngOnDestroy() {}
 }
