@@ -103,14 +103,16 @@ export class EmploymentTypesComponent
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
-				tags: {
+				name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
 					type: 'custom',
+					filter: true,
 					class: 'align-row',
 					renderComponent: NotesWithTagsComponent
 				}
 			}
 		};
+		console.log(this.settingsSmartTable)
 	}
 
 	public async onKeyEnter($event) {
@@ -126,7 +128,10 @@ export class EmploymentTypesComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
-				this.selectedOrgEmpType = null;
+				this.selectedOrgEmpType =
+					this.dataLayoutStyle === 'CARDS_GRID'
+						? null
+						: this.selectedOrgEmpType;;
 
 				//when layout selector change then hide edit showcard
 				this.showAddCard = false;
@@ -153,6 +158,7 @@ export class EmploymentTypesComponent
 					name: this.form.get('name').value
 				}
 			);
+			this._initializeForm()
 			this.showAddCard = !this.showAddCard;
 		} else {
 			this.toastrService.success(
@@ -195,8 +201,9 @@ export class EmploymentTypesComponent
 				}
 			);
 			this.organizationEmploymentTypes = this.organizationEmploymentTypes.filter(
-				(t) => t['id'] !== id
+				(t) => t.id !== id
 			);
+			this._initializeForm()
 
 			this.emptyListInvoke();
 		}
@@ -218,6 +225,7 @@ export class EmploymentTypesComponent
 	add() {
 		this.showAddCard = true;
 		this.form.reset();
+		this.selectedOrgEmpType = null;
 		this.tags = [];
 	}
 	cancel() {
@@ -248,6 +256,7 @@ export class EmploymentTypesComponent
 				name: name
 			}
 		);
+		this._initializeForm()
 		this.cancel();
 	}
 	_applyTranslationOnSmartTable() {
