@@ -22,6 +22,16 @@ export class ProductVariantService extends CrudService<ProductVariant> {
 		return { items, total };
 	}
 
+	async findAllVariantsByProductId(productId: string): Promise<IPagination<ProductVariant>> {
+		const total = await this.productVariantRepository.count();
+		const items = await this.productVariantRepository.find({
+			relations: ['image'],
+			where: {'productId' : productId}
+		});
+
+		return { items, total };
+	}
+
 	async findOne(id: string): Promise<ProductVariant> {
 		return this.productVariantRepository.findOne(id, {
 			relations: ['settings', 'price', 'image']

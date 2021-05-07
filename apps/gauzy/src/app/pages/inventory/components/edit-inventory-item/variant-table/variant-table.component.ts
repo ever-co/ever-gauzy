@@ -48,13 +48,16 @@ export class VariantTableComponent
 		super(translateService);
 	}
 
-	ngOnInit(): void {
+	async ngOnInit() {
 		this.loadSmartTable();
 
 		this.inventoryStore.activeProduct$
 			.pipe(untilDestroyed(this))
-			.subscribe((activeProduct) => {
-				this.variants = activeProduct.variants;
+			.subscribe(async (activeProduct) => {
+
+				let res = await this.productVariantService.getVariantsByProductId(activeProduct.id);
+
+				this.variants = res.items;
 				this.smartTableSource.load(this.variants);
 			});
 
@@ -77,11 +80,11 @@ export class VariantTableComponent
 					valuePrepareFunction: (_, variant) => {
 						return variant.options && variant.options.length > 0
 							? variant.options
-									.map((option) => option.name)
-									.join(', ')
+								.map((option) => option.name)
+								.join(', ')
 							: this.getTranslation(
-									'INVENTORY_PAGE.NO_OPTIONS_LABEL'
-							  );
+								'INVENTORY_PAGE.NO_OPTIONS_LABEL'
+							);
 					}
 				},
 				internalReference: {
