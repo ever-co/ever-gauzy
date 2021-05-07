@@ -17,8 +17,7 @@ import { SidebarComponent } from './sidebar.component';
 import { TreeModule } from '@circlon/angular-tree-component';
 import { CKEditorModule } from 'ng2-ckeditor';
 import { HelpCenterService } from '../../@core/services/help-center.service';
-import { EditBaseModule } from './edit-base/edit-base.module';
-import { EditCategoryModule } from './edit-category/edit-category.module';
+import { KnowledgeBaseModule } from './knowledeg-base/knowledeg-base.module';
 import { DeleteCategoryModule } from './delete-category/delete-category.module';
 import { DeleteBaseModule } from './delete-base/delete-base.module';
 import { TranslateModule } from '../translate/translate.module';
@@ -26,9 +25,8 @@ import { TranslateModule } from '../translate/translate.module';
 @NgModule({
 	imports: [
 		AddIconModule,
-		EditBaseModule,
+		KnowledgeBaseModule,
 		DeleteBaseModule,
-		EditCategoryModule,
 		DeleteCategoryModule,
 		CKEditorModule,
 		NbActionsModule,

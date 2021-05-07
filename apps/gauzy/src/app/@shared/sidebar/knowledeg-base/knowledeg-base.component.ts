@@ -6,17 +6,52 @@ import { IHelpCenter } from '@gauzy/contracts';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { HelpCenterService, Store } from '../../../@core';
 
+export enum ActionEnum {
+	ADD = 'add',
+	EDIT = 'edit'
+}
+
+export enum FlagEnum {
+	BASE = 'base',
+	CATEGORY = 'category'
+}
+
 @Component({
-	selector: 'ga-edit-base',
-	templateUrl: 'edit-base.component.html',
-	styleUrls: ['edit-base.component.scss']
+	selector: 'ga-knowledeg-base-mutation',
+	templateUrl: 'knowledeg-base.component.html',
+	styleUrls: ['knowledeg-base.component.scss']
 })
-export class EditBaseComponent
+export class KnowledgeBaseComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 
 	@Input() base?: IHelpCenter;
 	@Input() editType: string;
+
+	flagEnum = FlagEnum;
+	actionEnum = ActionEnum;
+
+	/*
+	* Getter & Setter for flag (Base, Category)
+	*/
+	private _flag: string;
+	get flag(): string {
+		return this._flag;
+	}
+	@Input() set flag(value: string) {
+		this._flag = value;
+	}
+
+	/*
+	* Getter & Setter for parentId
+	*/
+	private _parentId: string;
+	get parentId(): string {
+		return this._parentId;
+	}
+	@Input() set parentId(value: string) {
+		this._parentId = value;
+	}
 
 	static buildForm(formBuilder: FormBuilder): FormGroup {
 		const form = formBuilder.group({
@@ -24,14 +59,14 @@ export class EditBaseComponent
 			color: ['#d53636'],
 			description: [],
 			language: ['', Validators.required],
-			icon: [],
+			icon: ['', Validators.required],
 			privacy: [false]
 		});
 		return form;
 	}
 
 	constructor(
-		protected dialogRef: NbDialogRef<EditBaseComponent>,
+		protected dialogRef: NbDialogRef<KnowledgeBaseComponent>,
 		readonly translateService: TranslateService,
 		private helpCenterService: HelpCenterService,
 		private readonly formBuilder: FormBuilder,
@@ -40,17 +75,29 @@ export class EditBaseComponent
 		super(translateService);
 	}
 
-	public form: FormGroup = EditBaseComponent.buildForm(this.formBuilder);
+	public form: FormGroup = KnowledgeBaseComponent.buildForm(this.formBuilder);
 	public icons = [
-		'book-open-outline',
-		'archive-outline',
-		'alert-circle-outline',
-		'attach-outline'
+		{
+			label: 'Book Open',
+			value: 'book-open-outline'
+		},
+		{
+			label: 'Archive',
+			value: 'archive-outline'
+		},
+		{
+			label: 'Alert Circle',
+			value: 'alert-circle-outline'
+		},
+		{
+			label: 'Attach',
+			value: 'attach-outline'
+		},
 	];
 
 	ngOnInit() {
-		if (this.editType === 'edit') {
-			this.patchValue();
+		if (this.editType === ActionEnum.EDIT) {
+			this.patchValue(this.base);
 		}
 	}
 
@@ -72,14 +119,15 @@ export class EditBaseComponent
 		});
 	}
 
-	patchValue() {
- 		const { name, description, color, language, icon, privacy } = this.base;
+	patchValue(data: any) {
+ 		const { name, description, color, language, icon, privacy } = data;
+		const selectedIcon = this.icons.find((item) => item.value === icon);
 		this.form.setValue({ 
 			name, 
 			description, 
 			color, 
 			language, 
-			icon,
+			icon: selectedIcon,
 			privacy: (privacy === 'eye-outline') ? true : false
 		});
 		this.form.updateValueAndValidity();	
@@ -94,17 +142,20 @@ export class EditBaseComponent
 			description,
 			language,
 			color,
-			icon,
+			icon: icon.value,
 			organizationId,
 			tenantId,
 			privacy: privacy === true ? 'eye-outline' : 'eye-off-outline',
 		}
 
-		if (this.editType === 'edit') {
-			this.base = await this.helpCenterService.update(this.base.id, { ...contextRequest });
+		if (this.editType === ActionEnum.EDIT) {
+			this.base = await this.helpCenterService.update(
+				this.base.id, 
+				{ ...contextRequest }
+			);
 		} else {
 			this.base = await this.helpCenterService.create({
-				...{ flag: 'base', index: 0, children: [] },
+				...{ flag: this.flag, index: 0, children: [], parentId: this.parentId },
 				...contextRequest
 			});
 		}

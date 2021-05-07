@@ -9,20 +9,19 @@ import {
 	AfterViewInit
 } from '@angular/core';
 import { TreeComponent, ITreeOptions } from '@circlon/angular-tree-component';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from './../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { AddIconComponent } from './add-icon/add-icon.component';
 import { filter, first, tap } from 'rxjs/operators';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
-import { EditBaseComponent } from './edit-base/edit-base.component';
-import { EditCategoryComponent } from './edit-category/edit-category.component';
 import { DeleteCategoryComponent } from './delete-category/delete-category.component';
 import { DeleteBaseComponent } from './delete-base/delete-base.component';
 import { HelpCenterService } from '../../@core/services/help-center.service';
 import { Store } from '../../@core/services/store.service';
 import { ToastrService } from '../../@core/services/toastr.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ActionEnum, KnowledgeBaseComponent } from './knowledeg-base/knowledeg-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -70,6 +69,7 @@ export class SidebarComponent
 	};
 	@ViewChild(TreeComponent) private tree: TreeComponent;
 	organization: IOrganization;
+	actionEnum = ActionEnum;
 
 	ngOnInit() {
 		this.settingsContextMenu = [
@@ -96,10 +96,10 @@ export class SidebarComponent
 	ngAfterViewInit() {
 		this.nbMenuService.onItemClick().subscribe((elem) => {
 			if (elem.item.title === this.getTranslation('HELP_PAGE.EDIT_BASE')) {
-				this.addEditBase('edit');
+				this.addEditBase(ActionEnum.EDIT);
 			}
 			if (elem.item.title === this.getTranslation('HELP_PAGE.ADD_CATEGORY')) { 
-				this.addCategory();
+				this.addEditCategory(ActionEnum.ADD);
 			}
 			if (elem.item.title === this.getTranslation('HELP_PAGE.DELETE_BASE')) {
 				this.deleteBase();
@@ -121,74 +121,70 @@ export class SidebarComponent
 	async addEditBase(editType: string) {
 		const context = {
 			base: null,
-			editType
+			editType,
+			flag: 'base',
+			parentId: null
 		}
-		if (editType === 'edit') {
+		if (editType === ActionEnum.EDIT) {
 			const { data } = this.tree.treeModel.getNodeById(this.nodeId);
 			context['base'] = data;
 		}
-		const dialog = this.dialogService.open(EditBaseComponent, {
-			context
-		});
-		const data = await dialog.onClose.pipe(first()).toPromise();
-		if (data) {
-			if (editType === 'edit') {
-				this.toastrService.success('TOASTR.MESSAGE.EDITED_BASE', {
-					name: context.base.name
-				});
-			} else {
-				this.toastrService.success('TOASTR.MESSAGE.CREATED_BASE', {
-					name: data.name
-				});
-			}
-			this.loadMenu();
-			this.tree.treeModel.update();
-		}
+		this.dialogService
+			.open(KnowledgeBaseComponent, {
+				context
+			})
+			.onClose
+			.pipe(untilDestroyed(this))
+			.subscribe(async (data) => {
+				if (data) {
+					if (editType === ActionEnum.EDIT) {
+						this.toastrService.success('TOASTR.MESSAGE.EDITED_BASE', {
+							name: context.base.name
+						});
+					} else {
+						this.toastrService.success('TOASTR.MESSAGE.CREATED_BASE', {
+							name: data.name
+						});
+					}
+				}
+				this.loadMenu();
+				this.tree.treeModel.update();
+			});
 	}
 
-	async addCategory() {
-		const { id: organizationId } = this.organization;
-		const chosenType = 'add';
-		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
-		const dialog = this.dialogService.open(EditCategoryComponent, {
-			context: {
-				category: null,
-				base: someNode.data,
-				editType: chosenType,
-				organizationId
-			}
-		});
-		const data = await dialog.onClose.pipe(first()).toPromise();
-		if (data) {
-			this.toastrService.success('TOASTR.MESSAGE.EDIT_ADD_CATEGORY', {
-				name: data.name
-			});
-			this.loadMenu();
-			this.tree.treeModel.update();
+	async addEditCategory(editType: string, node?: IHelpCenter) {
+		const { data } = this.tree.treeModel.getNodeById(this.nodeId);
+		const context = {
+			base: null,
+			parentId: data.id,
+			editType,
+			flag:'category'
 		}
-	}
-
-	async editCategory(node) {
-		const { id: organizationId } = this.organization;
-		const chosenType = 'edit';
-		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
-		this.isChosenNode = true;
-		const dialog = this.dialogService.open(EditCategoryComponent, {
-			context: {
-				base: someNode.data,
-				category: node,
-				editType: chosenType,
-				organizationId
-			}
-		});
-		const data = await dialog.onClose.pipe(first()).toPromise();
-		if (data) {
-			this.toastrService.success('TOASTR.MESSAGE.EDITED_CATEGORY', {
-				name: someNode.data.name
-			});
-			this.loadMenu();
-			this.tree.treeModel.update();
+		if (editType === ActionEnum.EDIT) {
+			context['base'] = node;
+			this.isChosenNode = true;
 		}
+		this.dialogService
+			.open(KnowledgeBaseComponent, {
+				context
+			})
+			.onClose
+			.pipe(untilDestroyed(this))
+			.subscribe(async (data) => {
+				if (data) {
+					if (editType === ActionEnum.EDIT) {
+						this.toastrService.success('TOASTR.MESSAGE.EDITED_CATEGORY', {
+							name: context.base.name
+						});
+					} else {
+						this.toastrService.success('TOASTR.MESSAGE.EDIT_ADD_CATEGORY', {
+							name: data.name
+						});
+					}
+				}
+				this.loadMenu();
+				this.tree.treeModel.update();
+			});
 	}
 
 	async deleteCategory(node) {

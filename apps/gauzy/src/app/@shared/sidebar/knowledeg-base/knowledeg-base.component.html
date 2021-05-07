@@ -1,6 +1,13 @@
 <nb-card class="card">
 	<nb-card-header class="card-header-title">
-		<h6> {{ ((editType === 'edit') ? 'HELP_PAGE.MANAGE_BASE' : 'HELP_PAGE.ADD_BASE') | translate }} </h6>
+		<h6> 
+			<ng-template [ngIf]="flag === flagEnum.BASE" [ngIfElse]="categoryTitle">
+				{{ ((editType === actionEnum.EDIT) ? 'HELP_PAGE.MANAGE_BASE' : 'HELP_PAGE.ADD_BASE') | translate }} 
+			</ng-template>
+			<ng-template #categoryTitle>
+				{{ ((editType === actionEnum.EDIT) ? 'HELP_PAGE.MANAGE_CATEGORY' : 'HELP_PAGE.ADD_CATEGORY') | translate }} 
+			</ng-template>
+		</h6>
 		<nb-icon icon="close-outline" (click)="closeDialog()"></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="card-body">
@@ -42,18 +49,21 @@
 							formControlName="icon"
 							fullWidth
 							id="icon"
+							[status]="
+								isInvalidControl('icon') ? 'danger' : 'basic'
+							"
 						>
 							<nb-select-label *ngIf="icon">
 								<nb-icon
 									[ngStyle]="{ color: 'black' }"
 									class="mr-1"
-									[icon]="icon"
+									[icon]="icon.value"
 								></nb-icon
-								>{{ icon | slice: 0:icon.length - 8 }}
+								>{{ icon.label }}
 							</nb-select-label>
-							<nb-option *ngFor="let icon of icons" [value]="icon" >
-								<nb-icon class="mr-1" [icon]="icon"></nb-icon>
-								{{ icon | slice: 0:icon.length - 8 }}
+							<nb-option *ngFor="let icon of icons" [value]="icon">
+								<nb-icon class="mr-1" [icon]="icon.value"></nb-icon>
+								{{ icon.label }}
 							</nb-option>
 						</nb-select>
 					</div>
@@ -78,12 +88,15 @@
 				</div>
 				<div class="col-12">
 					<div class="form-group">
-						<label id="name" class="label">
-							{{ 'HELP_PAGE.NAME_OF_THE_BASE' | translate }}
+						<label id="name" class="label">{{ 
+							((flag === 'base') ? 'HELP_PAGE.NAME_OF_THE_BASE' : 'HELP_PAGE.NAME_CATEGORY') | translate 
+						}}
 						</label>
 						<input
 							formControlName="name"
-							[placeholder]="'HELP_PAGE.NAME_OF_THE_BASE' | translate"
+							[placeholder]="
+								((flag === 'base') ? 'HELP_PAGE.NAME_OF_THE_BASE' : 'HELP_PAGE.NAME_CATEGORY') | translate
+							"
 							type="text"
 							size="24"
 							maxlength="18"

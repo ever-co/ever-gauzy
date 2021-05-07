@@ -4,14 +4,16 @@ import {
 	NbCardModule,
 	NbIconModule,
 	NbButtonModule,
-	NbInputModule,
 	NbSelectModule,
+	NbInputModule,
 	NbToggleModule
 } from '@nebular/theme';
-import { EditCategoryComponent } from './edit-category.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ColorPickerModule, ColorPickerService } from 'ngx-color-picker';
 import { TranslateModule } from '../../translate/translate.module';
+import { LanguageInputModule } from '../../language/language-input/language-input.module';
+import { KnowledgeBaseComponent } from './knowledeg-base.component';
+import { SharedModule } from '../../shared.module';
 
 @NgModule({
 	imports: [
@@ -25,11 +27,12 @@ import { TranslateModule } from '../../translate/translate.module';
 		FormsModule,
 		ReactiveFormsModule,
 		ColorPickerModule,
-		TranslateModule
+		TranslateModule,
+		LanguageInputModule,
+		SharedModule
 	],
-	entryComponents: [EditCategoryComponent],
-	declarations: [EditCategoryComponent],
-	exports: [EditCategoryComponent],
+	declarations: [KnowledgeBaseComponent],
+	exports: [KnowledgeBaseComponent],
 	providers: [ColorPickerService]
 })
-export class EditCategoryModule {}
+export class KnowledgeBaseModule {}
