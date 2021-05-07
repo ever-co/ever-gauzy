@@ -8,7 +8,8 @@ import {
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
-	AccountingTemplateNameEnum,
+	AccountingTemplateTypeEnum,
+	IOrganization,
 	LanguagesEnum
 } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
@@ -28,11 +29,13 @@ export class AccountingTemplatesComponent
 	form: FormGroup;
 	previewTemplate: SafeHtml;
 	languageCodes: string[] = Object.values(LanguagesEnum);
-	templateNames: string[] = Object.values(AccountingTemplateNameEnum);
+	templateTypes: string[] = Object.values(AccountingTemplateTypeEnum);
 	organizationName: string;
 
 	@ViewChild('templateEditor') templateEditor;
-	
+	selectedLanguage: LanguagesEnum;
+	organization: IOrganization;
+
 	constructor(
 		private accountingTemplateService: AccountingTemplateService,
 		private fb: FormBuilder,
@@ -50,10 +53,13 @@ export class AccountingTemplatesComponent
 			.subscribe(async (organization) => {
 				if (organization) {
 					this.organizationName = organization.name;
+					this.organization = organization;
 					await this.getTemplate();
 				}
 			});
+
 		this._initializeForm();
+
 	}
 
 	ngAfterViewInit() {
@@ -93,11 +99,15 @@ export class AccountingTemplatesComponent
 		const result = this.form
 			? await this.accountingTemplateService.getTemplate({
 				languageCode: this.form.get('languageCode').value,
-				name: this.form.get('name').value,
+				templateType: this.form.get('templateType').value,
+				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId
 			})
 			: await this.accountingTemplateService.getTemplate({
 				languageCode: LanguagesEnum.ENGLISH,
-				name: AccountingTemplateNameEnum.INVOICE,
+				templateType: AccountingTemplateTypeEnum.INVOICE,
+				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId
 			});
 		this.templateEditor.value = result.mjml;
 
@@ -117,7 +127,10 @@ export class AccountingTemplatesComponent
 	async onTemplateChange(code: string) {
 		this.form.get('mjml').setValue(code);
 		const html = await this.accountingTemplateService.generateTemplatePreview(
-			code
+			{
+				organization: this.organizationName,
+				data: code,
+			}
 		);
 		this.previewTemplate = this.sanitizer.bypassSecurityTrustHtml(
 			html.html
@@ -126,13 +139,15 @@ export class AccountingTemplatesComponent
 
 	async onSave() {
 		await this.accountingTemplateService.saveTemplate({
-			...this.form.value
+			...this.form.value,
+			organizationId: this.organization.id,
+			tenantId: this.organization.tenantId,
 		});
 	}
 
 	private _initializeForm() {
 		this.form = this.fb.group({
-			name: [AccountingTemplateNameEnum.INVOICE],
+			templateType: [AccountingTemplateTypeEnum.INVOICE],
 			languageCode: [LanguagesEnum.ENGLISH],
 			mjml: ['']
 		});

@@ -137,7 +137,9 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 
 		const { success, record } = await this.findOneOrFail({
 			languageCode: data.languageCode,
-			name: data.name
+			templateType: data.templateType,
+			organizationId: data.organizationId,
+			tenantId: data.tenantId
 		});
 
 		let entity: AccountingTemplate;
@@ -145,16 +147,41 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 		if (success) {
 			entity = {
 				...record,
-				hbs: mjml2html(record.mjml).html
+				hbs: mjml2html(record.mjml).html,
+				mjml: data.mjml
 			};
 			await this.update(record.id, entity);
 		} else {
 			entity = new AccountingTemplate();
 			entity.languageCode = data.languageCode;
-			entity.name = data.name;
+			entity.templateType = data.templateType;
+			entity.name = data.templateType;
 			entity.mjml = data.mjml;
 			entity.hbs = mjml2html(data.mjml).html;
+			entity.organizationId = data.organizationId;
+			entity.tenantId = data.tenantId;
 			await this.create(entity);
+		}
+	}
+
+
+	async getAccountTemplate(input) {
+
+		const { success, record } = await this.findOneOrFail({
+			languageCode: input.languageCode,
+			templateType: input.templateType,
+			organizationId: input.organizationId,
+			tenantId: input.tenantId
+		});
+
+
+		if (success) {
+			return record
+		} else {
+			return this.findOne({
+				languageCode: input.languageCode,
+				templateType: input.templateType,
+			});
 		}
 	}
 }
