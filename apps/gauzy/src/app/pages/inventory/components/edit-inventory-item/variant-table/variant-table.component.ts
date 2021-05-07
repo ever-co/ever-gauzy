@@ -29,7 +29,7 @@ export class VariantTableComponent
 	implements OnInit {
 	@ViewChild('variantTable') variantTable;
 
-	variants: IProductVariant[];
+	variants: IProductVariant[] = [];
 
 	selectedItem: IProductVariant;
 	settingsSmartTable: object;
@@ -55,13 +55,15 @@ export class VariantTableComponent
 			.pipe(untilDestroyed(this))
 			.subscribe(async (activeProduct) => {
 
-				let res = await this.productVariantService.getVariantsByProductId(activeProduct.id);
+				if(activeProduct.id) {				
+					let res = await this.productVariantService.getVariantsByProductId(activeProduct.id);
 
-				this.variants = res.items;
+					this.variants = res.items;
+				}
+				this.loading = false;
 				this.smartTableSource.load(this.variants);
 			});
 
-		this.loading = false;
 		this._applyTranslationOnSmartTable();
 	}
 
