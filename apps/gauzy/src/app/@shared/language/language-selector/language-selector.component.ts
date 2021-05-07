@@ -5,7 +5,10 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core';
 import { filter, tap } from 'rxjs/operators';
+import { NbComponentSize } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-language-selector',
 	templateUrl: './language-selector.component.html',
@@ -61,6 +64,36 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 		}
 	}
 
+	/*
+	* Getter & Setter for dynamic template
+	*/
+	_template: string;
+	get template(): string {
+		return this._template;
+	}
+	@Input() set template(value: string) {
+		this._template = value;
+	}
+
+	/*
+	* Getter & Setter for dynamic template
+	*/
+	_size: NbComponentSize = 'medium';
+	get size(): NbComponentSize {
+		return this._size;
+	}
+	@Input() set size(value: NbComponentSize) {
+		this._size = value;
+	}
+
+	_isSystemLanguage: boolean = false;
+	get isSystemLanguage(): boolean {
+		return this._isSystemLanguage;
+	}
+	@Input() set isSystemLanguage(value: boolean) {
+		this._isSystemLanguage = value;
+	}
+
 	@Output() selectedLanguageEvent = new EventEmitter<ILanguage>();
 
 	constructor(
@@ -72,13 +105,19 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 		this.store.preferredLanguage$
 			.pipe(
 				filter((preferredLanguage: string) => !!preferredLanguage),
-				tap((preferredLanguage: string) => this.selectedLanguageCode = preferredLanguage)
+				tap((preferredLanguage: string) => this.selectedLanguageCode = preferredLanguage),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	async onChange(currentSelection: ILanguage) {
+	onChange(currentSelection: ILanguage) {
 		this.selectedLanguageEvent.emit(currentSelection);
+	}
+
+	onSelectedChange(code: ILanguage['code']) {
+		const selectedLanguage = this.getLanguageByCode(code);
+		this.selectedLanguageEvent.emit(selectedLanguage);
 	}
 
 	addLanguage = async (languageName: string) => {
@@ -96,7 +135,11 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 	};
 
 	async ngOnInit() {
-		await this.getAllLanguages();
+		if (!this.isSystemLanguage) {
+			await this.getAllLanguages();
+		} else {
+			await this.getSystemLanguages();
+		}
 		this.checkPreFilledLanguage();
 	}
 
@@ -105,15 +148,24 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 		this.languages = items;
 	}
 
+	async getSystemLanguages() {
+		const { items } = await this.languagesService.getSystemLanguages();
+		this.languages = items;
+	}
+
 	checkPreFilledLanguage() {
 		if (!this.selectedLanguageCode) {
 			return;
 		}
 		if (this.languages.length > 0) {
-			const selectedLanguage = this.languages.find(
-				(language: ILanguage) => this.selectedLanguageCode === language.code
-			);
+			const selectedLanguage = this.getLanguageByCode(this.selectedLanguageCode);
 			this.onChange(selectedLanguage);
 		}
+	}
+
+	getLanguageByCode(code: ILanguage['code']) {
+		return this.languages.find(
+			(language: ILanguage) => code === language.code
+		);
 	}
 }

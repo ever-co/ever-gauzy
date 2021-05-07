@@ -3,13 +3,7 @@
 		<nb-card-header>
 			<div class="row">
 				<div class="col-6">
-					<h4>
-						{{
-							'EMAIL_TEMPLATES_PAGE.HEADER'
-								| translate
-									: { organizationName: organizationName }
-						}}
-					</h4>
+					<h4> <ngx-header-title [allowEmployee]="false"> {{ 'EMAIL_TEMPLATES_PAGE.HEADER' | translate }} </ngx-header-title> </h4>
 				</div>
 
 				<div class="col-2 select-block">

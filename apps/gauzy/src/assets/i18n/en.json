@@ -3200,7 +3200,7 @@
 		"NO_ACTIVE_EVENT_TYpES": "There are no active event types"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
-		"HEADER": "Email Templates for {{ organizationName }}",
+		"HEADER": "Email Templates",
 		"SAVE": "Save",
 		"LABELS": {
 			"LANGUAGE": "Language",

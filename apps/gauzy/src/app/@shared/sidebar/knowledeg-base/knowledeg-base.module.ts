@@ -13,7 +13,6 @@ import { ColorPickerModule, ColorPickerService } from 'ngx-color-picker';
 import { TranslateModule } from '../../translate/translate.module';
 import { LanguageSelectorModule } from '../../language/language-selector/language-selector.module';
 import { KnowledgeBaseComponent } from './knowledeg-base.component';
-import { SharedModule } from '../../shared.module';
 
 @NgModule({
 	imports: [

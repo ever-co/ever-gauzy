@@ -3200,7 +3200,7 @@
 		"NO_ACTIVE_EVENT_TYpES": "Нет активных типов событий"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
-		"HEADER": "Шаблоны писем для {{ organizationName }}",
+		"HEADER": "Шаблоны писем",
 		"SAVE": "Сохранить",
 		"LABELS": {
 			"LANGUAGE": "Язык",
