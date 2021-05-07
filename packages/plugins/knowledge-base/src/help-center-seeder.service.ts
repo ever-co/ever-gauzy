@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { Connection, getConnection, Not } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import {
-	getDefaultBulgarianOrganization,
 	getDefaultOrganizations,
 	getDefaultTenant,
 	getDefaultEmployees,
@@ -26,10 +25,6 @@ import {
 @Injectable()
 export class HelpCenterSeederService {
 	connection: Connection;
-	tenant: ITenant;
-	organization: IOrganization;
-	organizations: IOrganization[];
-	defaultEmployees: IEmployee[];
 
 	/**
 	 * Create an instance of class.
@@ -46,38 +41,38 @@ export class HelpCenterSeederService {
 	 */
 	async createDefault() {
 		this.connection = getConnection();
-		this.tenant = await getDefaultTenant(this.connection);
-		this.organization = await getDefaultBulgarianOrganization(
-			this.connection,
-			this.tenant
-		);
-		this.organizations = await getDefaultOrganizations(
-			this.connection,
-			this.tenant
-		);
+		const tenant = await getDefaultTenant(this.connection);
+		const organizations = await getDefaultOrganizations(this.connection, tenant);
+		
+		const tenantOrganizationsMap: Map<ITenant, IOrganization[]> = new Map();
+		tenantOrganizationsMap.set(tenant, organizations);
 
 		await this.seeder.tryExecute(
 			'Default Help Centers',
-			createHelpCenter(this.connection, this.tenant, this.organization)
+			createHelpCenter(
+				this.connection,
+				[tenant],
+				tenantOrganizationsMap
+			)
 		);
 
-		const noOfHelpCenterArticle = 5;
+		const noOfHelpCenterArticle = 20;
 		await this.seeder.tryExecute(
 			'Default Help Center Articles',
 			createHelpCenterArticle(
 				this.connection,
-				this.organizations,
+				[tenant],
+				tenantOrganizationsMap,
 				noOfHelpCenterArticle
 			)
 		);
 
-		this.defaultEmployees = await getDefaultEmployees(this.connection);
-
+		const defaultEmployees = await getDefaultEmployees(this.connection);
 		await this.seeder.tryExecute(
 			'Default Help Center Author',
 			createDefaultHelpCenterAuthor(
 				this.connection,
-				this.defaultEmployees
+				defaultEmployees
 			)
 		);
 	}
@@ -88,35 +83,47 @@ export class HelpCenterSeederService {
 	 * @function
 	 */
 	async createRandom() {
-		const noOfHelpCenterArticle = 10;
+		const rendomTenants: ITenant[] = await this.connection.getRepository(Tenant).find({
+			where: {
+				name: Not(DEFAULT_EVER_TENANT)
+			},
+			relations: ['organizations']
+		});
+
+		const tenantOrganizationsMap: Map<ITenant, IOrganization[]> = new Map();
+		const employeeMap: Map<ITenant, IEmployee[]> = new Map();
+
+		for await (const tenant of rendomTenants) {
+			const { organizations } = tenant;
+			tenantOrganizationsMap.set(tenant, organizations);
+
+			const employees: Employee[] = await this.connection.getRepository(Employee).find({ 
+				where: { 
+					tenantId: tenant.id 
+				}
+			});
+			employeeMap.set(tenant, employees);
+		}
+
+		await this.seeder.tryExecute(
+			'Random Help Centers',
+			createHelpCenter(
+				this.connection,
+				rendomTenants,
+				tenantOrganizationsMap
+			)
+		);
+
+		const noOfHelpCenterArticle = 40;
 		await this.seeder.tryExecute(
 			'Random Help Center Articles',
 			createHelpCenterArticle(
 				this.connection,
-				this.organizations,
+				rendomTenants,
+				tenantOrganizationsMap,
 				noOfHelpCenterArticle
 			)
 		);
-
-		const rendomTenants: Tenant[] = await this.connection
-			.getRepository(Tenant)
-			.find({
-				where: {
-					name: Not(DEFAULT_EVER_TENANT)
-				}
-			});
-
-		const employeeMap: Map<ITenant, IEmployee[]> = new Map();
-		for await (const tenant of rendomTenants) {
-			const employees: Employee[] = await this.connection
-				.getRepository(Employee)
-				.find({
-					where: {
-						tenantId: tenant.id
-					}
-				});
-			employeeMap.set(tenant, employees);
-		}
 
 		await this.seeder.tryExecute(
 			'Random Help Center Authors',
