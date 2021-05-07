@@ -25,6 +25,7 @@ export class SelectProductComponent
 	smartTableSource: LocalDataSource;
 
 	selectedRows: any[] = [];
+	tableData: any[] = [];
 
 	productsTable: Ng2SmartTableComponent;
 
@@ -99,12 +100,12 @@ export class SelectProductComponent
 			};
 		});
 
+		this.tableData = mappedItems;
 		this.smartTableSource.load(mappedItems);
 	}
 
 	async loadSmartTable() {
 		this.settingsSmartTable = {
-			actions: true,
 			pager: {
 				perPage: 5
 			},
@@ -136,6 +137,6 @@ export class SelectProductComponent
 	}
 
 	onUserRowSelect(event) {
-		this.selectedRows.push(event.data);
+		this.selectedRows = this.tableData.filter(item => item.selected);
 	}
 }
