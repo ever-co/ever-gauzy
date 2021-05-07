@@ -2,19 +2,9 @@ import { Component, OnDestroy, Input, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { IHelpCenter } from '@gauzy/contracts';
+import { HelpCenterActionEnum, HelpCenterFlagEnum, IHelpCenter } from '@gauzy/contracts';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { HelpCenterService, Store } from '../../../@core';
-
-export enum ActionEnum {
-	ADD = 'add',
-	EDIT = 'edit'
-}
-
-export enum FlagEnum {
-	BASE = 'base',
-	CATEGORY = 'category'
-}
 
 @Component({
 	selector: 'ga-knowledeg-base-mutation',
@@ -28,8 +18,8 @@ export class KnowledgeBaseComponent
 	@Input() base?: IHelpCenter;
 	@Input() editType: string;
 
-	flagEnum = FlagEnum;
-	actionEnum = ActionEnum;
+	flagEnum = HelpCenterFlagEnum;
+	actionEnum = HelpCenterActionEnum;
 
 	/*
 	* Getter & Setter for flag (Base, Category)
@@ -96,7 +86,7 @@ export class KnowledgeBaseComponent
 	];
 
 	ngOnInit() {
-		if (this.editType === ActionEnum.EDIT) {
+		if (this.editType === HelpCenterActionEnum.EDIT) {
 			this.patchValue(this.base);
 		}
 	}
@@ -148,7 +138,7 @@ export class KnowledgeBaseComponent
 			privacy: privacy === true ? 'eye-outline' : 'eye-off-outline',
 		}
 
-		if (this.editType === ActionEnum.EDIT) {
+		if (this.editType === HelpCenterActionEnum.EDIT) {
 			this.base = await this.helpCenterService.update(
 				this.base.id, 
 				{ ...contextRequest }

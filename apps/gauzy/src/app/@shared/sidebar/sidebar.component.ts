@@ -1,4 +1,4 @@
-import { IHelpCenter, IOrganization } from '@gauzy/contracts';
+import { HelpCenterActionEnum, HelpCenterFlagEnum, IHelpCenter, IOrganization } from '@gauzy/contracts';
 import {
 	Component,
 	ViewChild,
@@ -21,7 +21,7 @@ import { HelpCenterService } from '../../@core/services/help-center.service';
 import { Store } from '../../@core/services/store.service';
 import { ToastrService } from '../../@core/services/toastr.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ActionEnum, KnowledgeBaseComponent } from './knowledeg-base/knowledeg-base.component';
+import { KnowledgeBaseComponent } from './knowledeg-base/knowledeg-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -59,7 +59,7 @@ export class SidebarComponent
 		},
 		allowDrag: true,
 		allowDrop: (el, { parent }) => {
-			if (parent.data.flag === 'category') {
+			if (parent.data.flag === HelpCenterFlagEnum.CATEGORY) {
 				return false;
 			} else {
 				return true;
@@ -69,7 +69,7 @@ export class SidebarComponent
 	};
 	@ViewChild(TreeComponent) private tree: TreeComponent;
 	organization: IOrganization;
-	actionEnum = ActionEnum;
+	actionEnum = HelpCenterActionEnum;
 
 	ngOnInit() {
 		this.settingsContextMenu = [
@@ -96,10 +96,10 @@ export class SidebarComponent
 	ngAfterViewInit() {
 		this.nbMenuService.onItemClick().subscribe((elem) => {
 			if (elem.item.title === this.getTranslation('HELP_PAGE.EDIT_BASE')) {
-				this.addEditBase(ActionEnum.EDIT);
+				this.addEditBase(HelpCenterActionEnum.EDIT);
 			}
 			if (elem.item.title === this.getTranslation('HELP_PAGE.ADD_CATEGORY')) { 
-				this.addEditCategory(ActionEnum.ADD);
+				this.addEditCategory(HelpCenterActionEnum.ADD);
 			}
 			if (elem.item.title === this.getTranslation('HELP_PAGE.DELETE_BASE')) {
 				this.deleteBase();
@@ -109,11 +109,11 @@ export class SidebarComponent
 
 	setClasses(node) {
 		const classes = {
-			child: node.data.flag === 'category' && node.data.parentId !== null,
+			child: node.data.flag === HelpCenterFlagEnum.CATEGORY && node.data.parentId !== null,
 			childout:
-				node.data.flag === 'category' && node.data.parentId === null,
-			parent: node.data.flag === 'base' && node.data.parentId === null,
-			parentin: node.data.flag === 'base' && node.data.parentId !== null
+				node.data.flag === HelpCenterFlagEnum.CATEGORY && node.data.parentId === null,
+			parent: node.data.flag === HelpCenterFlagEnum.BASE && node.data.parentId === null,
+			parentin: node.data.flag === HelpCenterFlagEnum.BASE && node.data.parentId !== null
 		};
 		return classes;
 	}
@@ -122,10 +122,10 @@ export class SidebarComponent
 		const context = {
 			base: null,
 			editType,
-			flag: 'base',
+			flag: HelpCenterFlagEnum.BASE,
 			parentId: null
 		}
-		if (editType === ActionEnum.EDIT) {
+		if (editType === HelpCenterActionEnum.EDIT) {
 			const { data } = this.tree.treeModel.getNodeById(this.nodeId);
 			context['base'] = data;
 		}
@@ -137,7 +137,7 @@ export class SidebarComponent
 			.pipe(untilDestroyed(this))
 			.subscribe(async (data) => {
 				if (data) {
-					if (editType === ActionEnum.EDIT) {
+					if (editType === HelpCenterActionEnum.EDIT) {
 						this.toastrService.success('TOASTR.MESSAGE.EDITED_BASE', {
 							name: context.base.name
 						});
@@ -158,9 +158,9 @@ export class SidebarComponent
 			base: null,
 			parentId: data.id,
 			editType,
-			flag:'category'
+			flag: HelpCenterFlagEnum.CATEGORY
 		}
-		if (editType === ActionEnum.EDIT) {
+		if (editType === HelpCenterActionEnum.EDIT) {
 			context['base'] = node;
 			this.isChosenNode = true;
 		}
@@ -172,7 +172,7 @@ export class SidebarComponent
 			.pipe(untilDestroyed(this))
 			.subscribe(async (data) => {
 				if (data) {
-					if (editType === ActionEnum.EDIT) {
+					if (editType === HelpCenterActionEnum.EDIT) {
 						this.toastrService.success('TOASTR.MESSAGE.EDITED_CATEGORY', {
 							name: context.base.name
 						});

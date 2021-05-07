@@ -21,3 +21,13 @@ export interface IHelpCenterFind
 	extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 }
+
+export enum HelpCenterActionEnum {
+	ADD = 'add',
+	EDIT = 'edit'
+}
+
+export enum HelpCenterFlagEnum {
+	BASE = 'base',
+	CATEGORY = 'category'
+}
