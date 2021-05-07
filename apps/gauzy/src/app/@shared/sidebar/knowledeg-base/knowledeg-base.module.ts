@@ -11,7 +11,7 @@ import {
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ColorPickerModule, ColorPickerService } from 'ngx-color-picker';
 import { TranslateModule } from '../../translate/translate.module';
-import { LanguageInputModule } from '../../language/language-input/language-input.module';
+import { LanguageSelectorModule } from '../../language/language-selector/language-selector.module';
 import { KnowledgeBaseComponent } from './knowledeg-base.component';
 import { SharedModule } from '../../shared.module';
 
@@ -28,8 +28,7 @@ import { SharedModule } from '../../shared.module';
 		ReactiveFormsModule,
 		ColorPickerModule,
 		TranslateModule,
-		LanguageInputModule,
-		SharedModule
+		LanguageSelectorModule
 	],
 	declarations: [KnowledgeBaseComponent],
 	exports: [KnowledgeBaseComponent],

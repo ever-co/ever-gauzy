@@ -8,10 +8,10 @@ import { filter, tap } from 'rxjs/operators';
 
 @Component({
 	selector: 'ngx-language-selector',
-	templateUrl: './language-input.component.html',
-	styleUrls: ['./language-input.component.scss']
+	templateUrl: './language-selector.component.html',
+	styleUrls: ['./language-selector.component.scss']
 })
-export class LanguageInputComponent extends TranslationBaseComponent implements OnInit {
+export class LanguageSelectorComponent extends TranslationBaseComponent implements OnInit {
 	languages: ILanguage[];
 	loading: boolean;
 

@@ -18,8 +18,8 @@ export enum FlagEnum {
 
 @Component({
 	selector: 'ga-knowledeg-base-mutation',
-	templateUrl: 'knowledeg-base.component.html',
-	styleUrls: ['knowledeg-base.component.scss']
+	templateUrl: './knowledeg-base.component.html',
+	styleUrls: ['./knowledeg-base.component.scss']
 })
 export class KnowledgeBaseComponent
 	extends TranslationBaseComponent
