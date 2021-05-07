@@ -71,6 +71,8 @@ import { ManageQuantityComponent } from './components/manage-warehouses/manage-q
 import { ManageVariantsQuantityFormComponent } from './components/manage-warehouses/manage-variants-quantity-form/manage-variants-quantity-form.component';
 import { ManageVariantsQuantityComponent } from './components/manage-warehouses/manage-variants-quantity/manage-variants-quantity.component';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { SelectedRowComponent } from './components/table-components/selected-row.component';
+
 
 const NB_MODULES = [
 	NbCardModule,
@@ -108,7 +110,8 @@ const NB_MODULES = [
 		SelectProductComponent,
 		ManageQuantityComponent,
 		ManageVariantsQuantityComponent,
-		ManageVariantsQuantityFormComponent
+		ManageVariantsQuantityFormComponent,
+		SelectedRowComponent
 	],
 	imports: [
 		UserFormsModule,
