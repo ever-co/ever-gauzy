@@ -184,6 +184,12 @@ export class EmailTemplatesComponent
 		this.previewEmail = this.sanitizer.bypassSecurityTrustHtml(html);
 	}
 
+	selectedLanguage(event) {
+		this.form.patchValue({ 
+			languageCode: event.code 
+		});
+	}
+
 	async submitForm() {
 		try {
 			const { id: organizationId, tenantId } = this.organization;

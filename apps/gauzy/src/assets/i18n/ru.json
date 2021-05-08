@@ -2118,7 +2118,8 @@
 		"OPTION_GROUP_NAME": "Название группы опций",
 		"OPTION_TRANSLATIONS": "Переводы параметров",
 		"ADD_PRODUCTS": "Добавить товары",
-		"MANAGE_VARIANTS_QUANTITY": "Управление вариантами"
+		"MANAGE_VARIANTS_QUANTITY": "Управление вариантами",
+		"ADD_PRODUCT": "Add product"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
@@ -2612,7 +2613,7 @@
 		"EDIT_ARTICLE": "Изменить статью",
 		"MANAGE_CATEGORY": "Управление категорией",
 		"ADD_CATEGORY": "Добавить категорию",
-		"EDIT_KNOWLAGE_BASE": "Редактировать базу знаний",
+		"EDIT_BASE": "Редактировать базу знаний",
 		"DELETE_BASE": "Удалить базу",
 		"LANGUAGE": "Язык",
 		"PUBLISH_STATUS": "Статус публикации",
@@ -3200,7 +3201,7 @@
 		"NO_ACTIVE_EVENT_TYpES": "Нет активных типов событий"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
-		"HEADER": "Шаблоны писем для {{ organizationName }}",
+		"HEADER": "Шаблоны писем",
 		"SAVE": "Сохранить",
 		"LABELS": {
 			"LANGUAGE": "Язык",

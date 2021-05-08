@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { IProductVariant, IVariantCreateInput } from '@gauzy/contracts';
+import { IProductVariant, IVariantCreateInput, IPagination } from '@gauzy/contracts';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import { API_PREFIX } from '../constants/app.constants';
@@ -9,6 +9,13 @@ export class ProductVariantService {
 	PRODUCT_VARIANTS_URL = `${API_PREFIX}/product-variants`;
 
 	constructor(private http: HttpClient) {}
+
+	getVariantsByProductId(productId: string): Promise<IPagination<IProductVariant>> {
+		return this.http
+			.get<IPagination<IProductVariant>>(`${this.PRODUCT_VARIANTS_URL}/all/${productId}`)
+			.pipe(first())
+			.toPromise();
+	}
 
 	getProductVariant(id: string): Promise<IProductVariant> {
 		return this.http

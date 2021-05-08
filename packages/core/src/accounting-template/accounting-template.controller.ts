@@ -72,7 +72,7 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IAccountingTemplate> {
 		const { findInput } = data;
-		return await this.accountingTemplateService.findOne(findInput);
+		return await this.accountingTemplateService.getAccountTemplate(findInput)
 	}
 
 	@ApiOperation({

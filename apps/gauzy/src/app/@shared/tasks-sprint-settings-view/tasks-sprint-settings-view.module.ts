@@ -10,7 +10,6 @@ import {
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { GauzyEditableGridModule } from '../components/editable-grid/gauzy-editable-grid.module';
-import { EditBaseModule } from '../sidebar/edit-base/edit-base.module';
 import { SprintDialogComponent } from './sprint-dialog/sprint-dialog.component';
 import { TasksSprintSettingsViewComponent } from './tasks-sprint-settings-view.component';
 
@@ -26,7 +25,6 @@ import { TasksSprintSettingsViewComponent } from './tasks-sprint-settings-view.c
 		ReactiveFormsModule,
 		NbDatepickerModule,
 		TranslateModule,
-		EditBaseModule,
 		GauzyEditableGridModule,
 		TranslateModule,
 		NbInputModule

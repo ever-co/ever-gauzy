@@ -8,10 +8,11 @@ import {
 	NbInputModule,
 	NbToggleModule
 } from '@nebular/theme';
-import { EditBaseComponent } from './edit-base.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ColorPickerModule, ColorPickerService } from 'ngx-color-picker';
 import { TranslateModule } from '../../translate/translate.module';
+import { LanguageSelectorModule } from '../../language/language-selector/language-selector.module';
+import { KnowledgeBaseComponent } from './knowledeg-base.component';
 
 @NgModule({
 	imports: [
@@ -25,11 +26,11 @@ import { TranslateModule } from '../../translate/translate.module';
 		FormsModule,
 		ReactiveFormsModule,
 		ColorPickerModule,
-		TranslateModule
+		TranslateModule,
+		LanguageSelectorModule
 	],
-	entryComponents: [EditBaseComponent],
-	declarations: [EditBaseComponent],
-	exports: [EditBaseComponent],
+	declarations: [KnowledgeBaseComponent],
+	exports: [KnowledgeBaseComponent],
 	providers: [ColorPickerService]
 })
-export class EditBaseModule {}
+export class KnowledgeBaseModule {}
