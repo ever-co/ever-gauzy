@@ -1,14 +1,13 @@
 <nb-card>
+	<nb-card-header>
+		<h4>
+			<ngx-header-title [allowEmployee]="false">
+				{{ 'DASHBOARD_PAGE.RECURRING_EXPENSES' | translate }}
+			</ngx-header-title>
+		</h4>
+	</nb-card-header>
 	<nb-card-body class="settings-body">
-		<div class="body-header">
-			<div>
-				<span class="setting-name">
-					<ngx-header-title [allowEmployee]="false">
-						{{ 'DASHBOARD_PAGE.RECURRING_EXPENSES' | translate }}
-					</ngx-header-title>
-				</span>
-			</div>
-			<ng-template ngxPermissionsOnly="EMPLOYEE_EXPENSES_EDIT">
+		<ng-template ngxPermissionsOnly="EMPLOYEE_EXPENSES_EDIT">
 				<button
 					(click)="addEmployeeRecurringExpense()"
 					nbButton
@@ -18,10 +17,9 @@
 					>{{ 'BUTTONS.ADD' | translate }}
 				</button>
 			</ng-template>
-		</div>
 
 		<div
-			class="sub-header header-content"
+			class="sub-header header-content mt-4"
 			*ngIf="selectedEmployeeRecurringExpense?.length"
 		>
 			<div class="block header-info">

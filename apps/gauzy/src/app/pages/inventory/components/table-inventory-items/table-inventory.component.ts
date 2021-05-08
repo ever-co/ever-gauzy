@@ -80,12 +80,12 @@ export class TableInventoryComponent
 		this.setPermissions();
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
-		this.selectedLanguage = this.translateService.currentLang;
+		this.selectedLanguage = this.store.preferredLanguage;
 
-		this.translateService.onLangChange
+		this.store.preferredLanguage$
 			.pipe(untilDestroyed(this))
-			.subscribe((languageEvent) => {
-				this.selectedLanguage = languageEvent.lang;
+			.subscribe((lang) => {
+				this.selectedLanguage = lang;
 				this.loadSettings();
 			});
 		this.store.selectedOrganization$

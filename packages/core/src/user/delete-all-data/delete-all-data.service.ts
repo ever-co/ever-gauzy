@@ -45,7 +45,6 @@ import {
     GoalTemplate,
     GoalTimeFrame,
     Income,
-    Integration,
     IntegrationEntitySetting,
     IntegrationEntitySettingTiedEntity,
     IntegrationMap,
@@ -98,7 +97,7 @@ import {
     TimeSlot,
     User,
     UserOrganization
-} from 'core/entities/internal';
+} from './../../core/entities/internal';
 
 @Injectable()
 export class DeleteAllDataService {
@@ -214,9 +213,6 @@ export class DeleteAllDataService {
 
         @InjectRepository(Income)
         private readonly incomeRepository: Repository<Income>,
-
-        @InjectRepository(Integration)
-        private readonly integrationRepository: Repository<Integration>,
 
         @InjectRepository(IntegrationEntitySetting)
         private readonly integrationEntitySettingRepository: Repository<IntegrationEntitySetting>,
@@ -374,9 +370,8 @@ export class DeleteAllDataService {
         private readonly userRepository: Repository<User>,
 
         @InjectRepository(UserOrganization)
-        private readonly userOrganizationRepository: Repository<UserOrganization>,
-    ) {
-    }
+        private readonly userOrganizationRepository: Repository<UserOrganization>
+    ) { }
 
     async onModuleInit() {
         this.registerCoreRepositories();
@@ -538,7 +533,6 @@ export class DeleteAllDataService {
             this.integrationEntitySettingRepository,
             this.integrationEntitySettingTiedEntityRepository,
             this.integrationMapRepository,
-            this.integrationRepository,
             this.integrationSettingRepository,
             this.integrationTenantRepository,
             this.inviteRepository,

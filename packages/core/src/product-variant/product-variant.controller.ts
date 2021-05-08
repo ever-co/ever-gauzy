@@ -74,6 +74,24 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 	}
 
 	@ApiOperation({
+		summary: 'Find all variants by product id'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found product variants',
+		type: Product
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('all/:productId')
+	async findAllVariantsByProduct(@Param('productId') productId: string): Promise<IPagination<ProductVariant>> {
+		return this.productVariantService.findAllVariantsByProductId(productId);
+	}
+
+
+	@ApiOperation({
 		summary: 'Find all product variants'
 	})
 	@ApiResponse({

@@ -138,7 +138,8 @@ export class WarehouseFormComponent
 						{ name: request.name }
 					);
 
-					this.location.back();
+					this.warehouse = res;
+
 				})
 				.catch((err) => {
 					this.toastrService.danger(
@@ -156,7 +157,8 @@ export class WarehouseFormComponent
 						{ name: request.name }
 					);
 
-					this.location.back();
+					this.warehouse = res;
+
 				});
 		}
 	}

@@ -5,3 +5,5 @@ export const DEFAULT_ORGANIZATION_LANGUAGES = {
 	English: 'Fluent',
 	Hebrew: 'Conversational'
 };
+
+export const DEFAULT_LANGUAGE_LEVEL = 'intermediate';

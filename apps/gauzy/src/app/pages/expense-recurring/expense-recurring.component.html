@@ -1,42 +1,32 @@
-<nb-card>
-	<div class="settings-body" *ngIf="selectedDate && selectedOrgFromHeader">
-		<div class="body-header">
-			<div>
-				<span class="setting-name">
-					<ngx-header-title>
-						{{ 'DASHBOARD_PAGE.RECURRING_EXPENSES' | translate }}
-					</ngx-header-title>
-				</span>
-			</div>
-			<div>
-				<span>
-					<button
-						*ngIf="hasEditExpensePermission"
-						(click)="addOrganizationRecurringExpense()"
-						nbButton
-						status="success"
-					>
-						<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-						>{{ 'BUTTONS.ADD' | translate }}
-					</button>
-				</span>
-			</div>
-		</div>
+<nb-card nbSpinnerStatus="primary" nbSpinnerSize="large" *ngIf="selectedDate && selectedOrgFromHeader">
+	<nb-card-header>
+		<div class="card-header-title">
+			<h4>
+				<ngx-header-title>{{ 'DASHBOARD_PAGE.RECURRING_EXPENSES' | translate }}</ngx-header-title>
+			</h4>
 
-		<div
-			*ngIf="
-				selectedOrgRecurringExpense &&
-				selectedOrgRecurringExpense.length > 0
-			"
-			class="sub-header block-content"
-		>
-			<div class="row block-info pl-4">
-				<div class="col-3">
-					{{ 'POP_UPS.CATEGORY_NAME' | translate }}
-				</div>
-				<div class="col-3">{{ 'POP_UPS.DATE' | translate }}</div>
-				<div class="col-3">
-					{{ 'POP_UPS.EXPENSE_VALUE' | translate }}
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div>
+			<button *ngIf="hasEditExpensePermission" (click)="addOrganizationRecurringExpense()" nbButton
+				status="success">
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>{{ 'BUTTONS.ADD' | translate }}
+			</button>
+		</div>
+		<div class="mt-4">
+			<div *ngIf="
+							selectedOrgRecurringExpense &&
+							selectedOrgRecurringExpense.length > 0
+						" class="sub-header block-content">
+				<div class="row block-info pl-4">
+					<div class="col-3">
+						{{ 'POP_UPS.CATEGORY_NAME' | translate }}
+					</div>
+					<div class="col-3">{{ 'POP_UPS.DATE' | translate }}</div>
+					<div class="col-3">
+						{{ 'POP_UPS.EXPENSE_VALUE' | translate }}
+					</div>
 				</div>
 			</div>
 		</div>
@@ -52,5 +42,6 @@
 			[selectedOrganization]="selectedOrg"
 		>
 		</ga-recurring-expense-block>
-	</div>
+		
+	</nb-card-body>
 </nb-card>

@@ -1,0 +1,37 @@
+<ng-container
+  	*ngIf="_template === 'ng-select'; then ngSelectTemplate; else nbSelectTemplate">
+</ng-container>
+<ng-template #ngSelectTemplate>
+	<ng-select
+		[items]="languages"
+		bindLabel="name"
+		bindValue="code" 
+		[loading]="loading"
+		[addTag]="(addTag) ? addLanguage : null"
+		(change)="onChange($event)"
+		[closeOnSelect]="true"
+		[clearable]="clearable"
+		id="addLanguages"
+		[placeholder]="placeholder"
+		[(ngModel)]="selectedLanguageCode"
+	>
+		<ng-template ng-tag-tmp let-newLanguageName="searchTerm">
+			<b>{{ 'LANGUAGE_PAGE.ADD_NEW_LANGUAGE' | translate }}</b
+			>: {{ newLanguageName }}
+		</ng-template>
+	</ng-select>
+</ng-template>
+<ng-template #nbSelectTemplate>
+	<nb-select
+		id="addLanguages"
+		fullWidth
+		(selectedChange)="onSelectedChange($event)"
+		[size]="size"
+		[placeholder]="placeholder"
+		[(ngModel)]="selectedLanguageCode"
+	>
+		<nb-option *ngFor="let language of languages" [value]="language.code">
+			{{ language.name }}
+		</nb-option >
+	</nb-select>
+</ng-template>

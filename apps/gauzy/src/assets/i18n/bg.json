@@ -2118,7 +2118,8 @@
 		"OPTION_GROUP_NAME": "Option group name",
 		"OPTION_TRANSLATIONS": "Option translations",
 		"ADD_PRODUCTS": "Add products",
-		"MANAGE_VARIANTS_QUANTITY": "Manage variants"
+		"MANAGE_VARIANTS_QUANTITY": "Manage variants",
+		"ADD_PRODUCT": "Add product"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
@@ -2612,7 +2613,7 @@
 		"EDIT_ARTICLE": "Edit Article",
 		"MANAGE_CATEGORY": "Manage Category",
 		"ADD_CATEGORY": "Add Category",
-		"EDIT_KNOWLAGE_BASE": "Edit Knowledge Base",
+		"EDIT_BASE": "Edit Knowledge Base",
 		"DELETE_BASE": "Delete Base",
 		"LANGUAGE": "Език (Language)",
 		"PUBLISH_STATUS": "Publish Status",
@@ -3200,7 +3201,7 @@
 		"NO_ACTIVE_EVENT_TYpES": "There are no active event types"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
-		"HEADER": "Email Templates for {{ organizationName }}",
+		"HEADER": "Email Templates",
 		"SAVE": "Запази",
 		"LABELS": {
 			"LANGUAGE": "Език (Language)",

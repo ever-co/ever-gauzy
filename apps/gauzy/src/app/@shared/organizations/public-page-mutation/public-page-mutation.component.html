@@ -444,11 +444,14 @@
 									<label class="label">{{
 										'POP_UPS.NAME' | translate
 									}}</label>
-									<ngx-language-input
+									<ngx-language-selector
+										[clearable]="true"
+										[addTag]="true"
+										[template]="'ng-select'"
 										(selectedLanguageEvent)="
 											selectedLanguageHandler($event)
 										"
-									></ngx-language-input>
+									></ngx-language-selector>
 								</div>
 								<div
 									class="col d-flex flex-column justify-content-end"

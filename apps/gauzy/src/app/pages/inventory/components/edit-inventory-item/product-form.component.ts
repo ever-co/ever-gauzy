@@ -108,8 +108,8 @@ export class ProductFormComponent
 				if (organization) {
 					this.organization = organization;
 					this.selectedOrganizationId = organization.id;
-					this.loadProductTypes();
-					this.loadProductCategories();
+					this.loadProductTypes(true);
+					this.loadProductCategories(true);
 					this.loadProduct(this.productId);
 				}
 			});
@@ -202,34 +202,44 @@ export class ProductFormComponent
 		});
 	}
 
-	async loadProductTypes() {
-		const { id: organizationId, tenantId } = this.organization;
-		const searchCriteria = {
-			organization: { id: organizationId },
-			tenantId
-		};
-		const { items = [] } = await this.productTypeService.getAllTranslated(
-			this.store.preferredLanguage || LanguagesEnum.ENGLISH,
-			[],
-			searchCriteria
-		);
-		this.productTypes = items;
+	async loadProductTypes(newOrg = false) {
+		if(!this.inventoryStore.productTypesLoaded && newOrg) {
+			const { id: organizationId, tenantId } = this.organization;
+			const searchCriteria = {
+				organization: { id: organizationId },
+				tenantId
+			};
+			const { items = [] } = await this.productTypeService.getAllTranslated(
+				this.store.preferredLanguage || LanguagesEnum.ENGLISH,
+				[],
+				searchCriteria
+			);
+
+			this.inventoryStore.productTypes = items;
+		}
+
+		this.productTypes = this.inventoryStore.productTypes;
 	}
 
-	async loadProductCategories() {
-		const { id: organizationId, tenantId } = this.organization;
-		const searchCriteria = {
-			organization: { id: organizationId },
-			tenantId
-		};
-		const {
-			items = []
-		} = await this.productCategoryService.getAllTranslated(
-			this.store.preferredLanguage || LanguagesEnum.ENGLISH,
-			[],
-			searchCriteria
-		);
-		this.productCategories = items;
+	async loadProductCategories(newOrg = false) {
+		if(!this.inventoryStore.productCategoriesLoaded && newOrg) {
+			const { id: organizationId, tenantId } = this.organization;
+			const searchCriteria = {
+				organization: { id: organizationId },
+				tenantId
+			};
+			const {
+				items = []
+			} = await this.productCategoryService.getAllTranslated(
+				this.store.preferredLanguage || LanguagesEnum.ENGLISH,
+				[],
+				searchCriteria
+			);
+
+			this.inventoryStore.productCategories = items;
+		}
+
+		this.productCategories = this.inventoryStore.productCategories;
 	}
 
 	async onSaveRequest() {

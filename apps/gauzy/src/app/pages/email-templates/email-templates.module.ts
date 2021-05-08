@@ -20,6 +20,8 @@ import { EmailTemplateService } from '../../@core/services/email-template.servic
 import { AceEditorModule } from 'ng2-ace-editor';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '../../@shared/translate/translate.module';
+import { LanguageSelectorModule } from '../../@shared/language/language-selector/language-selector.module';
+import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
@@ -40,10 +42,11 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		TableComponentsModule,
 		TranslateModule,
 		NbSpinnerModule,
-		AceEditorModule
+		AceEditorModule,
+		LanguageSelectorModule,
+		HeaderTitleModule
 	],
 	providers: [EmailTemplateService],
-	entryComponents: [EmailTemplatesComponent],
 	declarations: [EmailTemplatesComponent]
 })
 export class EmailTemplatesModule {}

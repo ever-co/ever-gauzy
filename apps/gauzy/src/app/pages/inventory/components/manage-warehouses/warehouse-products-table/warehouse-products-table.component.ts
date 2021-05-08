@@ -176,7 +176,7 @@ export class WarehouseProductsTableComponent
 			this.warehouseId
 		);
 
-		if (result) {
+		if (createWarehouseProductsInput.length && result) {
 			this.toastrService.success('Successfully added products');
 		}
 
