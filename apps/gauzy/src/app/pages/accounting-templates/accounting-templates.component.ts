@@ -12,12 +12,13 @@ import {
 	IOrganization,
 	LanguagesEnum
 } from '@gauzy/contracts';
-import { Subject } from 'rxjs';
 import { AccountingTemplateService } from '../../@core/services/accounting-template.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbThemeService } from '@nebular/theme';
 import { Store } from '../../@core/services/store.service';
-import { filter } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './accounting-templates.component.html',
@@ -25,16 +26,16 @@ import { filter } from 'rxjs/operators';
 })
 export class AccountingTemplatesComponent
 	implements OnInit, AfterViewInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
+
 	form: FormGroup;
 	previewTemplate: SafeHtml;
 	languageCodes: string[] = Object.values(LanguagesEnum);
 	templateTypes: string[] = Object.values(AccountingTemplateTypeEnum);
 	organizationName: string;
+	organization: IOrganization;
+	subject$: Subject<any> = new Subject();
 
 	@ViewChild('templateEditor') templateEditor;
-	selectedLanguage: LanguagesEnum;
-	organization: IOrganization;
 
 	constructor(
 		private accountingTemplateService: AccountingTemplateService,
@@ -45,21 +46,33 @@ export class AccountingTemplatesComponent
 	) {}
 
 	ngOnInit() {
+		this._initializeForm();
+		this.store.preferredLanguage$
+			.pipe(
+				untilDestroyed(this)
+			)
+			.subscribe((language) => {
+				this.form.patchValue({ languageCode: language });
+				this.subject$.next();
+			});
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
+				tap((organization) => {
+					this.organization = organization;
+					this.organizationName = organization.name;
+				}),
+				tap(() => this.subject$.next()),
 				untilDestroyed(this)
 			)
-			.subscribe(async (organization) => {
-				if (organization) {
-					this.organizationName = organization.name;
-					this.organization = organization;
-					await this.getTemplate();
-				}
-			});
-
-		this._initializeForm();
-
+			.subscribe();
+		this.subject$
+			.pipe(
+				debounceTime(200),
+				tap(() => this.getTemplate()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngAfterViewInit() {
@@ -96,28 +109,24 @@ export class AccountingTemplatesComponent
 	}
 
 	async getTemplate() {
-		const result = this.form
-			? await this.accountingTemplateService.getTemplate({
-				languageCode: this.form.get('languageCode').value,
-				templateType: this.form.get('templateType').value,
-				organizationId: this.organization.id,
-				tenantId: this.organization.tenantId
-			})
-			: await this.accountingTemplateService.getTemplate({
-				languageCode: LanguagesEnum.ENGLISH,
-				templateType: AccountingTemplateTypeEnum.INVOICE,
-				organizationId: this.organization.id,
-				tenantId: this.organization.tenantId
-			});
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		const { 
+			languageCode = LanguagesEnum.ENGLISH, 
+			templateType = AccountingTemplateTypeEnum.INVOICE 
+		} = this.form.value;
+		
+		const result = await this.accountingTemplateService.getTemplate({
+			languageCode,
+			templateType,
+			organizationId,
+			tenantId
+		})
 		this.templateEditor.value = result.mjml;
-
-		const html = await this.accountingTemplateService.generateTemplatePreview(
-			{
-				organization: this.organizationName,
-				data: result.mjml,
-			}
-
-		);
+		const html = await this.accountingTemplateService.generateTemplatePreview({
+			organization: this.organizationName,
+			data: result.mjml,
+		});
 
 		this.previewTemplate = this.sanitizer.bypassSecurityTrustHtml(
 			html.html
@@ -126,22 +135,22 @@ export class AccountingTemplatesComponent
 
 	async onTemplateChange(code: string) {
 		this.form.get('mjml').setValue(code);
-		const html = await this.accountingTemplateService.generateTemplatePreview(
-			{
-				organization: this.organizationName,
-				data: code,
-			}
-		);
+		const html = await this.accountingTemplateService.generateTemplatePreview({
+			organization: this.organizationName,
+			data: code,
+		});
 		this.previewTemplate = this.sanitizer.bypassSecurityTrustHtml(
 			html.html
 		);
 	}
 
 	async onSave() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 		await this.accountingTemplateService.saveTemplate({
 			...this.form.value,
-			organizationId: this.organization.id,
-			tenantId: this.organization.tenantId,
+			organizationId,
+			tenantId
 		});
 	}
 
@@ -153,8 +162,5 @@ export class AccountingTemplatesComponent
 		});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

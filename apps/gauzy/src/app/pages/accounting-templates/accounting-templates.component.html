@@ -18,7 +18,7 @@
 						class="d-block"
 						size="small"
 						formControlName="languageCode"
-						(selectedChange)="getTemplate()"
+						(selectedChange)="subject$.next()"
 					>
 						<nb-option
 							*ngFor="let language of languageCodes"
@@ -43,7 +43,7 @@
 							'FORM.LABELS.TEMPLATE_NAME' | translate
 						}}"
 						formControlName="templateType"
-						(selectedChange)="getTemplate()"
+						(selectedChange)="subject$.next()"
 					>
 						<nb-option
 							*ngFor="let name of templateTypes"
