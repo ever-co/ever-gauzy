@@ -166,21 +166,19 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 
 
 	async getAccountTemplate(input) {
-
+		const { languageCode, templateType, organizationId, tenantId } = input;
 		const { success, record } = await this.findOneOrFail({
-			languageCode: input.languageCode,
-			templateType: input.templateType,
-			organizationId: input.organizationId,
-			tenantId: input.tenantId
+			languageCode,
+			templateType,
+			organizationId,
+			tenantId
 		});
-
-
 		if (success) {
 			return record
 		} else {
-			return this.findOne({
-				languageCode: input.languageCode,
-				templateType: input.templateType,
+			return await this.findOne({
+				languageCode,
+				templateType,
 			});
 		}
 	}
