@@ -23,7 +23,8 @@ export const fadeInOutAnimation = trigger('fadeInOut', [
 @Component({
 	selector: 'ngx-image-viewer',
 	templateUrl: './image-viewer.component.html',
-	styleUrls: ['./image-viewer.component.scss']
+	styleUrls: ['./image-viewer.component.scss'],
+	animations: [fadeInOutAnimation]
 })
 export class ImageViewerComponent implements OnInit {
 	active_index: any;
@@ -46,7 +47,9 @@ export class ImageViewerComponent implements OnInit {
 		});
 	}
 
-	ngOnInit(): void {}
+	ngOnInit(): void {
+		this.active_index = 0;
+	}
 
 	close() {
 		// this.dialogRef.close();

@@ -160,6 +160,7 @@ function startServer(value, restart = false) {
 						{ ...environment },
 						pathWindow.gauzyWindow
 					);
+					gauzyWindow.show();
 				}
 			}
 			if (
@@ -207,6 +208,7 @@ function startServer(value, restart = false) {
 			{ ...environment },
 			pathWindow.gauzyWindow
 		);
+		gauzyWindow.show();
 	}
 	const auth = store.get('auth');
 
@@ -337,6 +339,7 @@ app.on('ready', async () => {
 				false,
 				pathWindow.timeTrackerUi
 			);
+			setupWindow.show();
 			setTimeout(() => {
 				setupWindow.webContents.send('setup-data', {
 					...configs
@@ -360,6 +363,7 @@ app.on('ready', async () => {
 			false,
 			pathWindow.timeTrackerUi
 		);
+		setupWindow.show();
 	}
 
 	ipcMainHandler(store, startServer, knex, { ...environment });
