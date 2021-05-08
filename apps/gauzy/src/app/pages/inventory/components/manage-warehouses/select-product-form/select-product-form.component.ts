@@ -7,6 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { ImageRowComponent } from '../../table-components/image-row.component';
 import { NbDialogRef } from '@nebular/theme';
+import { SelectedRowComponent } from '../../table-components/selected-row.component';
 
 @UntilDestroy()
 @Component({
@@ -21,9 +22,10 @@ export class SelectProductComponent
 	settingsSmartTable: object;
 	organization: IOrganization;
 	loading: boolean = true;
-	smartTableSource = new LocalDataSource();
+	smartTableSource: LocalDataSource;
 
-	selectedRows: any[];
+	selectedRows: any[] = [];
+	tableData: any[] = [];
 
 	productsTable: Ng2SmartTableComponent;
 
@@ -43,6 +45,9 @@ export class SelectProductComponent
 	}
 
 	ngOnInit() {
+
+		this.smartTableSource = new LocalDataSource();
+
 		this.loadSmartTable();
 
 		this.loadItems();
@@ -90,21 +95,26 @@ export class SelectProductComponent
 				name: item.name,
 				category: item.category,
 				type: item.type,
-				featuredImage: item.featuredImage
+				featuredImage: item.featuredImage,
+				selected: false
 			};
 		});
 
+		this.tableData = mappedItems;
 		this.smartTableSource.load(mappedItems);
 	}
 
 	async loadSmartTable() {
 		this.settingsSmartTable = {
-			selectMode: 'multi',
-			actions: true,
 			pager: {
 				perPage: 5
 			},
 			columns: {
+				selected: {
+					title: this.getTranslation('INVENTORY_PAGE.SELECTED'),
+					type: 'custom',
+					renderComponent: SelectedRowComponent
+				},
 				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
 					type: 'custom',
@@ -126,7 +136,7 @@ export class SelectProductComponent
 		};
 	}
 
-	onUserRowSelect(data) {
-		this.selectedRows = data.selected;
+	onUserRowSelect(event) {
+		this.selectedRows = this.tableData.filter(item => item.selected);
 	}
 }

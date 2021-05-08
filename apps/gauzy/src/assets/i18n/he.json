@@ -2118,7 +2118,8 @@
 		"OPTION_GROUP_NAME": "Option group name",
 		"OPTION_TRANSLATIONS": "Option translations",
 		"ADD_PRODUCTS": "Add products",
-		"MANAGE_VARIANTS_QUANTITY": "Manage variants"
+		"MANAGE_VARIANTS_QUANTITY": "Manage variants",
+		"ADD_PRODUCT": "Add product"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

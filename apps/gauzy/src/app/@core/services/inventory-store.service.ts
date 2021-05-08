@@ -6,7 +6,9 @@ import {
 	IProductTranslatable,
 	IProductVariant,
 	IProductOptionGroupTranslatable,
-	IProductOptionTranslatable
+	IProductOptionTranslatable,
+	IProductTypeTranslated,
+	IProductCategoryTranslated
 } from '@gauzy/contracts';
 import { NbTabComponent } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -15,6 +17,10 @@ import { VariantCreateInput } from '../../pages/inventory/components/edit-invent
 
 @Injectable()
 export class InventoryStore {
+
+	productTypesLoaded = false;
+	productCategoriesLoaded = false;
+
 	private _activeProduct: IProductTranslatable = this.inventoryItemBlank;
 
 	private _variantCreateInputs: VariantCreateInput[] = [];
@@ -24,6 +30,10 @@ export class InventoryStore {
 	private _deletedOptionGrous: IProductOptionGroupTranslatable[] = [];
 
 	private _optionGroups: IProductOptionGroupTranslatable[] = [];
+
+	private _productCategories: IProductCategoryTranslated[] = [];
+
+	private _productTypes: IProductTypeTranslated[] = [];
 
 	private _activeTab: NbTabComponent = null;
 
@@ -105,6 +115,14 @@ export class InventoryStore {
 		return this._activeTab;
 	}
 
+	get productTypes() {
+		return this._productTypes;
+	}
+
+	get productCategories() {
+		return this._productCategories;
+	}
+
 	set activeProduct(product: IProductTranslatable) {
 		this._activeProduct = { ...this.activeProduct, ...product };
 		this.activeProduct$.next(this._activeProduct);
@@ -123,6 +141,16 @@ export class InventoryStore {
 	set activeTab(tab: NbTabComponent) {
 		this._activeTab = tab;
 		this.activeTab$.next(this._activeTab);
+	}
+
+	set productCategories(productCategoriesInput: IProductCategoryTranslated[]) {
+		this._productCategories = productCategoriesInput;
+		this.productTypesLoaded = true;
+	}
+
+	set productTypes(productTypesInput: IProductTypeTranslated[]) {
+		this._productTypes = productTypesInput;
+		this.productCategoriesLoaded = true;
 	}
 
 	updateGallery(gallery: IImageAsset[]) {
