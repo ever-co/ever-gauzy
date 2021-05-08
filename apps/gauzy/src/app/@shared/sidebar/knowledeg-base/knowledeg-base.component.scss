@@ -1,0 +1,20 @@
+.card {
+	display: flex;
+	flex-direction: column;
+	width: 500px;
+	nb-card-body {
+		&.card-body {
+			nb-toggle {
+				span {
+					color: #8f9bb3;
+					font-family: Open Sans, sans-serif;
+					font-size: 0.75rem;
+					font-weight: 700;
+					line-height: 1rem;
+					margin: 0;
+				}
+			}
+		}
+	}
+}
+

@@ -46,7 +46,7 @@ export * from './geo-location.model';
 export * from './goal-settings.model';
 export * from './goals.model';
 export * from './help-center-article.model';
-export * from './help-center-menu.model';
+export * from './help-center.model';
 export * from './http-status.enum';
 export * from './hubstaff.model';
 export * from './income.model';

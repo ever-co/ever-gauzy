@@ -2613,7 +2613,7 @@
 		"EDIT_ARTICLE": "Изменить статью",
 		"MANAGE_CATEGORY": "Управление категорией",
 		"ADD_CATEGORY": "Добавить категорию",
-		"EDIT_KNOWLAGE_BASE": "Редактировать базу знаний",
+		"EDIT_BASE": "Редактировать базу знаний",
 		"DELETE_BASE": "Удалить базу",
 		"LANGUAGE": "Язык",
 		"PUBLISH_STATUS": "Статус публикации",
@@ -3201,7 +3201,7 @@
 		"NO_ACTIVE_EVENT_TYpES": "Нет активных типов событий"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
-		"HEADER": "Шаблоны писем для {{ organizationName }}",
+		"HEADER": "Шаблоны писем",
 		"SAVE": "Сохранить",
 		"LABELS": {
 			"LANGUAGE": "Язык",

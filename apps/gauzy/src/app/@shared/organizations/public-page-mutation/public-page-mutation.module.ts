@@ -19,7 +19,7 @@ import {
 import { PublicPageMutationComponent } from './public-page-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { SkillsInputModule } from '../../skills/skills-input/skills-input.module';
-import { LanguageInputModule } from '../../language/language-input/language-input.module';
+import { LanguageSelectorModule } from '../../language/language-selector/language-selector.module';
 import { SkillsService } from '../../../@core/services/skills.service';
 import { LanguagesService } from '../../../@core/services/languages.service';
 import { CKEditorModule } from 'ng2-ckeditor';
@@ -28,7 +28,7 @@ import { TranslateModule } from '../../translate/translate.module';
 @NgModule({
 	imports: [
 		SkillsInputModule,
-		LanguageInputModule,
+		LanguageSelectorModule,
 		ThemeModule,
 		FormsModule,
 		NbCardModule,
