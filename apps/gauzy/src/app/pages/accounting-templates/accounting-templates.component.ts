@@ -47,6 +47,13 @@ export class AccountingTemplatesComponent
 
 	ngOnInit() {
 		this._initializeForm();
+		this.subject$
+			.pipe(
+				debounceTime(200),
+				tap(() => this.getTemplate()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.preferredLanguage$
 			.pipe(
 				untilDestroyed(this)
@@ -63,13 +70,6 @@ export class AccountingTemplatesComponent
 					this.organizationName = organization.name;
 				}),
 				tap(() => this.subject$.next()),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		this.subject$
-			.pipe(
-				debounceTime(200),
-				tap(() => this.getTemplate()),
 				untilDestroyed(this)
 			)
 			.subscribe();
