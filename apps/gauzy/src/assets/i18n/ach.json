@@ -2118,7 +2118,8 @@
 		"OPTION_GROUP_NAME": "crwdns10252:0crwdne10252:0",
 		"OPTION_TRANSLATIONS": "crwdns10254:0crwdne10254:0",
 		"ADD_PRODUCTS": "crwdns10258:0crwdne10258:0",
-		"MANAGE_VARIANTS_QUANTITY": "crwdns10260:0crwdne10260:0"
+		"MANAGE_VARIANTS_QUANTITY": "crwdns10260:0crwdne10260:0",
+		"ADD_PRODUCT": "crwdns10330:0crwdne10330:0"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "crwdns3029:0crwdne3029:0",
@@ -2612,7 +2613,7 @@
 		"EDIT_ARTICLE": "crwdns6986:0crwdne6986:0",
 		"MANAGE_CATEGORY": "crwdns6988:0crwdne6988:0",
 		"ADD_CATEGORY": "crwdns6990:0crwdne6990:0",
-		"EDIT_BASE": "crwdns9980:0crwdne9980:0",
+		"EDIT_BASE": "crwdns10332:0crwdne10332:0",
 		"DELETE_BASE": "crwdns9982:0crwdne9982:0",
 		"LANGUAGE": "crwdns6992:0crwdne6992:0",
 		"PUBLISH_STATUS": "crwdns6994:0crwdne6994:0",
@@ -3200,7 +3201,7 @@
 		"NO_ACTIVE_EVENT_TYpES": "crwdns9052:0crwdne9052:0"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
-		"HEADER": "crwdns4522:0{{ organizationName }}crwdne4522:0",
+		"HEADER": "crwdns10334:0crwdne10334:0",
 		"SAVE": "crwdns4524:0crwdne4524:0",
 		"LABELS": {
 			"LANGUAGE": "crwdns4526:0crwdne4526:0",
