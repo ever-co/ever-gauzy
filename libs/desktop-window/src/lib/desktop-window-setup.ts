@@ -53,7 +53,8 @@ const windowSetting = () => {
 		height: 680,
 		title: 'Setup',
 		autoHideMenuBar: true,
-		maximizable: false
+		maximizable: false,
+		show: false
 	};
 
 	return mainWindowSettings;

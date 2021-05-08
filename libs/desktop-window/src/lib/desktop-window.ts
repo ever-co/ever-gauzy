@@ -68,7 +68,8 @@ const windowSetting = () => {
 		height: sizes.height,
 		x: 0,
 		y: 0,
-		title: 'Gauzy Desktop'
+		title: 'Gauzy Desktop',
+		show: false
 	};
 	return mainWindowSettings;
 };
