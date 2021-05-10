@@ -554,11 +554,10 @@ export class ExportAllService implements OnModuleInit {
 		return false;
 	}
 
-	async DownloadAsCsvFormate(
-		service_count: number,
-		
+	async downloadAsCsvFormat(
+		index: number
 	): Promise<any> {
-		const columns = await this.repositories[service_count].repository.metadata.ownColumns.map(column => column.propertyName);
+		const columns = await this.repositories[index].repository.metadata.ownColumns.map(column => column.propertyName);
 
 		if (columns) {
 			return new Promise((resolve) => {
@@ -576,7 +575,7 @@ export class ExportAllService implements OnModuleInit {
 				});
 
 				const csvWriter = createCsvWriter({
-					path: `./export/${id$}/csv/${this.repositories[service_count].nameFile}.csv`,
+					path: `./export/${id$}/csv/${this.repositories[index].nameFile}.csv`,
 					header: dataIn
 				});
 
@@ -668,12 +667,10 @@ export class ExportAllService implements OnModuleInit {
 		});
 	}
 	
-	async downloadSpecificTables(
-
-	) {
+	async downloadSpecificTables() {
 		return new Promise(async (resolve) => {
 			for (const [i] of this.repositories.entries()) {
-				await this.DownloadAsCsvFormate(i);
+				await this.downloadAsCsvFormat(i);
 			}
 			resolve('');
 		});
