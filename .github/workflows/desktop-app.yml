@@ -38,6 +38,13 @@ jobs:
               with:
                   github_token: ${{ secrets.GITHUB_TOKEN }}
 
+            - name: Bump version desktop app
+              uses: actions/github-script@v4
+              with:
+                script: |
+                  const script = require('./.scripts/bump-version-electron.js')
+                  console.log(script.desktop())
+
             - name: Build Desktop App
               run: 'yarn build:desktop:linux:release'
               env:
@@ -67,6 +74,13 @@ jobs:
             - name: Bootstrap Yarn
               run: 'yarn bootstrap'
 
+            - name: Bump version desktop app
+              uses: actions/github-script@v4
+              with:
+                script: |
+                  const script = require('./.scripts/bump-version-electron.js')
+                  console.log(script.desktop())
+
             - name: Build Desktop App
               run: 'yarn build:desktop:mac:release'
               env:
@@ -95,6 +109,13 @@ jobs:
 
             - name: Bootstrap Yarn
               run: 'yarn bootstrap'
+
+            - name: Bump version desktop app
+              uses: actions/github-script@v4
+              with:
+                script: |
+                  const script = require('./.scripts/bump-version-electron.js')
+                  console.log(script.desktop())
 
             - name: Build Desktop App
               run: 'yarn build:desktop:windows:release'
