@@ -19,17 +19,12 @@ import {
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IPagination } from '../core';
-import { CrudController } from '../core/crud/crud.controller';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
-import { OrganizationRecurringExpenseCreateCommand } from './commands/organization-recurring-expense.create.command';
-import { OrganizationRecurringExpenseDeleteCommand } from './commands/organization-recurring-expense.delete.command';
-import { OrganizationRecurringExpenseEditCommand } from './commands/organization-recurring-expense.edit.command';
+import { CrudController, IPagination } from '../core';
+import { ParseJsonPipe, TenantPermissionGuard, UUIDValidationPipe } from '../shared';
 import { OrganizationRecurringExpense } from './organization-recurring-expense.entity';
 import { OrganizationRecurringExpenseService } from './organization-recurring-expense.service';
-import { OrganizationRecurringExpenseByMonthQuery } from './queries/organization-recurring-expense.by-month.query';
-import { OrganizationRecurringExpenseFindSplitExpenseQuery } from './queries/organization-recurring-expense.find-split-expense.query';
-import { OrganizationRecurringExpenseStartDateUpdateTypeQuery } from './queries/organization-recurring-expense.update-type.query';
+import { OrganizationRecurringExpenseCreateCommand, OrganizationRecurringExpenseDeleteCommand, OrganizationRecurringExpenseEditCommand } from './commands';
+import { OrganizationRecurringExpenseByMonthQuery, OrganizationRecurringExpenseFindSplitExpenseQuery, OrganizationRecurringExpenseStartDateUpdateTypeQuery } from './queries';
 
 @ApiTags('OrganizationRecurringExpense')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -75,11 +70,10 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
 	async delete(
-		@Param('id') id: string,
-		@Query('data') data: string
+		@Param('id', UUIDValidationPipe) id: string,
+		@Query('data', ParseJsonPipe) data: any,
 	): Promise<any> {
-		const { deleteInput } = JSON.parse(data);
-
+		const { deleteInput } = data;
 		return this.commandBus.execute(
 			new OrganizationRecurringExpenseDeleteCommand(id, deleteInput)
 		);
@@ -99,10 +93,9 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 	})
 	@Get()
 	async findAllRecurringExpenses(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any,
 	): Promise<IPagination<OrganizationRecurringExpense>> {
-		const { findInput, order = {} } = JSON.parse(data);
-
+		const { findInput, order = {} } = data;
 		return this.organizationRecurringExpenseService.findAll({
 			where: findInput,
 			order: order
@@ -123,11 +116,10 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 	})
 	@Get('/employee/:orgId')
 	async getSplitExpensesForEmployee(
-		@Query('data') data: string,
-		@Param('orgId') orgId: string
+		@Query('data', ParseJsonPipe) data: any,
+		@Param('orgId', UUIDValidationPipe) orgId: string
 	): Promise<IPagination<IOrganizationRecurringExpenseForEmployeeOutput>> {
-		const { findInput } = JSON.parse(data);
-
+		const { findInput } = data;
 		return this.queryBus.execute(
 			new OrganizationRecurringExpenseFindSplitExpenseQuery(
 				orgId,
@@ -153,7 +145,7 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
-		@Param('id') id: string,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IRecurringExpenseEditInput
 	): Promise<any> {
 		return this.commandBus.execute(
@@ -175,10 +167,9 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 	})
 	@Get('/month')
 	async findAllExpenses(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any,
 	): Promise<IPagination<OrganizationRecurringExpense>> {
-		const { findInput } = JSON.parse(data);
-
+		const { findInput } = data;
 		return this.queryBus.execute(
 			new OrganizationRecurringExpenseByMonthQuery(findInput)
 		);
@@ -198,10 +189,9 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 	})
 	@Get('/date-update-type')
 	async findStartDateUpdateType(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any,
 	): Promise<IStartUpdateTypeInfo> {
-		const { findInput } = JSON.parse(data);
-
+		const { findInput } = data;
 		return this.queryBus.execute(
 			new OrganizationRecurringExpenseStartDateUpdateTypeQuery(findInput)
 		);
