@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
 	<nb-card-header class="card-header-title">
 		<div>
 			<h4>
@@ -41,7 +41,7 @@
 			<div class="mb-3">
 				<button nbButton status="success" (click)="add()" class="mr-2">
 					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
-					{{ 'BUTTONS.REGISTER' | translate }}
+					{{ 'BUTTONS.ADD' | translate }}
 				</button>
 				<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
 					<ng-container
