@@ -554,6 +554,40 @@ export class ExportAllService implements OnModuleInit {
 		return false;
 	}
 
+	async DownloadAsCsvFormate(
+		service_count: number,
+		
+	): Promise<any> {
+		const columns = await this.repositories[service_count].repository.metadata.ownColumns.map(column => column.propertyName);
+
+		if (columns) {
+			return new Promise((resolve) => {
+				const createCsvWriter = csv.createObjectCsvWriter;
+				const dataIn = [];
+				const dataKeys = columns;
+
+				for (const count of dataKeys) {
+					dataIn.push({ id: count, title: count });
+				}
+
+				let id$ = '';
+				this.idCsv.subscribe((id) => {
+					id$ = id;
+				});
+
+				const csvWriter = createCsvWriter({
+					path: `./export/${id$}/csv/${this.repositories[service_count].nameFile}.csv`,
+					header: dataIn
+				});
+
+				csvWriter.writeRecords([]).then(() => {
+					resolve('');
+				});
+			});
+		}
+		return false;
+	}
+
 	async downloadToUser(res): Promise<any> {
 		return new Promise((resolve) => {
 			let fileName = '';
@@ -563,20 +597,6 @@ export class ExportAllService implements OnModuleInit {
 			});
 			res.download(`./export/${fileName}`);
 			resolve('');
-		});
-	}
-
-	async downloadTemplate(res) {
-		return new Promise((resolve, reject) => {
-			const path = './export/template.zip';
-			try {
-				if (fs.existsSync(path)) {
-					res.download(path);
-				}
-				resolve('');
-			} catch (err) {
-				reject(err);
-			}
 		});
 	}
 
@@ -643,6 +663,17 @@ export class ExportAllService implements OnModuleInit {
 				if (name) {
 					await this.getAsCsv(i, findInput);
 				}
+			}
+			resolve('');
+		});
+	}
+	
+	async downloadSpecificTables(
+
+	) {
+		return new Promise(async (resolve) => {
+			for (const [i] of this.repositories.entries()) {
+				await this.DownloadAsCsvFormate(i);
 			}
 			resolve('');
 		});

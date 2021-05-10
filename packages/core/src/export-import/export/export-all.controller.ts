@@ -42,9 +42,17 @@ export class ExportAllController {
 
 		this.exportService.deleteArchive();
 	}
+
 	@Get('template')
-	async downloadTemplate(@Res() res) {
-		await this.exportService.downloadTemplate(res);
+	async downloadTemplate(
+		@Res() res
+	): Promise<any> {
+		await this.exportService.createFolders();
+		await this.exportService.downloadSpecificTables();
+		await this.exportService.archiveAndDownload();
+		await this.exportService.downloadToUser(res);
+		await this.exportService.deleteCsvFiles();
+		this.exportService.deleteArchive();
 	}
 
 	@ApiOperation({ summary: 'Find exports by name' })
