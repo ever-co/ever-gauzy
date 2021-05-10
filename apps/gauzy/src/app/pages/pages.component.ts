@@ -143,6 +143,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 						title: 'Invoices',
 						icon: 'file-text-outline',
 						link: '/pages/accounting/invoices',
+						pathMatch: 'full',
 						data: {
 							translationKey: 'MENU.INVOICES',
 							permissionKeys: [
@@ -156,6 +157,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 						title: 'Invoices Recurring',
 						icon: 'flip-outline',
 						link: '/pages/accounting/invoices/recurring',
+						pathMatch: 'prefix',
 						data: {
 							translationKey: 'MENU.RECURRING_INVOICES',
 							permissionKeys: [
@@ -169,6 +171,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 						title: 'Invoices Received',
 						icon: 'archive',
 						link: '/pages/accounting/invoices/received-invoices',
+						pathMatch: 'prefix',
 						data: {
 							translationKey: 'MENU.INVOICES_RECEIVED',
 							permissionKeys: [
@@ -395,6 +398,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 						title: 'Manage',
 						icon: 'list-outline',
 						link: '/pages/employees',
+						pathMatch: 'full',
 						data: {
 							translationKey: 'MENU.MANAGE',
 							permissionKeys: [
@@ -697,6 +701,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 					{
 						title: 'Manage',
 						link: '/pages/goals',
+						pathMatch: 'full',
 						icon: 'list-outline',
 						data: {
 							translationKey: 'MENU.MANAGE',
