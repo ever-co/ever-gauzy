@@ -1,5 +1,4 @@
 import {
-	AfterLoad,
 	Column,
 	Entity,
 	Index,
@@ -10,14 +9,10 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IFeature,
-	IFeatureOrganization,
-	FeatureStatusEnum
+	IFeatureOrganization
 } from '@gauzy/contracts';
 import { IsNotEmpty, IsString } from 'class-validator';
-import * as _ from 'underscore';
 import { BaseEntity, FeatureOrganization } from '../core/entities/internal';
-import { FileStorage } from '../core/file-storage';
-import { gauzyToggleFeatures } from '@gauzy/config';
 
 @Entity('feature')
 export class Feature extends BaseEntity implements IFeature {
@@ -34,7 +29,7 @@ export class Feature extends BaseEntity implements IFeature {
 	featureOrganizations?: IFeatureOrganization[];
 
 	@ApiProperty({ type: () => Feature })
-	@ManyToOne((type) => Feature, (feature) => feature.children)
+	@ManyToOne(() => Feature, (feature) => feature.children)
 	parent: Feature;
 
 	@ApiProperty({ type: () => String })
@@ -43,7 +38,7 @@ export class Feature extends BaseEntity implements IFeature {
 	parentId?: string;
 
 	@ApiProperty({ type: () => Feature })
-	@OneToMany((type) => Feature, (feature) => feature.parent, {
+	@OneToMany(() => Feature, (feature) => feature.parent, {
 		cascade: true,
 		onDelete: 'CASCADE'
 	})
@@ -88,34 +83,11 @@ export class Feature extends BaseEntity implements IFeature {
 	@Column({ nullable: true })
 	status: string;
 
-	@AfterLoad()
-	afterLoadStatus() {
-		if (!this.status) {
-			this.status = _.shuffle(Object.values(FeatureStatusEnum))[0];
-		}
-	}
-
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column({ nullable: true })
 	icon: string;
 
 	isEnabled?: boolean;
-	@AfterLoad()
-	afterLoadEnabled?() {
-		if (gauzyToggleFeatures.hasOwnProperty(this.code)) {
-			const feature = gauzyToggleFeatures[this.code];
-			this.isEnabled = feature;
-		} else {
-			this.isEnabled = true;
-		}
-	}
-
 	imageUrl?: string;
-	@AfterLoad()
-	afterLoad?() {
-		if (this.image) {
-			this.imageUrl = new FileStorage().getProvider().url(this.image);
-		}
-	}
 }
