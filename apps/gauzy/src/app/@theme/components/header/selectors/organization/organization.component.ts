@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { IOrganization, CrudActionEnum } from '@gauzy/contracts';
 import { Store } from './../../../../../@core/services/store.service';
 import { filter, tap } from 'rxjs/operators';
@@ -13,7 +13,7 @@ import { isNotEmpty } from '@gauzy/common-angular';
 	templateUrl: './organization.component.html',
 	styleUrls: ['./organization.component.scss']
 })
-export class OrganizationSelectorComponent implements OnInit, OnDestroy {
+export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnDestroy {
 	organizations: IOrganization[] = [];
 	selectedOrganization: IOrganization;
 
@@ -26,7 +26,6 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.loadSelectedOrganization();
 		this.loadOrganizations();
-		this.organizationAction();
 	}
 
 	selectOrganization(organization: IOrganization) {
@@ -79,7 +78,7 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
 			.subscribe();
 	}
 
-	private organizationAction() {
+	ngAfterViewInit() {
 		this._organizationEditStore.organizationAction$
 			.pipe(
 				filter(
