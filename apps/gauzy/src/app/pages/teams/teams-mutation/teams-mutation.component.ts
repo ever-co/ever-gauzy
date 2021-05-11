@@ -53,7 +53,6 @@ export class TeamsMutationComponent implements OnInit {
 			tenantId,
 			tags: this.tags
 		});
-		this.name = '';
 	}
 
 	onMembersSelected(members: string[]) {

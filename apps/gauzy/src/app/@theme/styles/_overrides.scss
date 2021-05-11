@@ -100,6 +100,31 @@ body {
     }
   }
 
+  .card-scroll {
+    height: calc(100vh - 220px);
+    min-height: auto !important;
+    nb-card {
+      height: auto !important;
+      min-height: auto !important;
+      nb-card-body {
+        overflow: unset !important;
+        height: 100%;
+      }
+    }
+  }
+  .dashboard-card-scroll {
+    height: calc(100vh - 270px);
+    min-height: auto !important;
+    nb-card {
+      height: auto !important;
+      min-height: auto !important;
+      nb-card-body {
+        overflow: unset !important;
+        height: 100%;
+      }
+    }
+  }
+
   @media screen and (min-width: nb-theme(layout-window-mode-max-width) + 20px) {
     @include f-window-mode(nb-theme(layout-window-mode-padding-top) / 4);
   }

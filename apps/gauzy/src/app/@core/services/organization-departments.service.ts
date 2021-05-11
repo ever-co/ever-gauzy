@@ -38,9 +38,10 @@ export class OrganizationDepartmentsService {
 
 	getAll(
 		relations?: string[],
-		findInput?: IOrganizationDepartmentFindInput
+		findInput?: IOrganizationDepartmentFindInput,
+		order?: {}
 	): Promise<{ items: any[]; total: number }> {
-		const data = JSON.stringify({ relations, findInput });
+		const data = JSON.stringify({ relations, findInput, order });
 
 		return this.http
 			.get<{ items: IOrganizationDepartment[]; total: number }>(
