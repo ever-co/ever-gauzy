@@ -2120,14 +2120,14 @@
 		"ADD_PRODUCTS": "Добавить товары",
 		"MANAGE_VARIANTS_QUANTITY": "Управление вариантами",
 		"ADD_PRODUCT": "Добавить товар",
-		"STORES": "Магазины",
+		"STORES": "Магазин",
 		"ADD_STORE": "Добавить магазин",
 		"EDIT_STORE": "Изменить магазин",
 		"CREATE_STORE": "Создать магазин",
 		"PHONE": "Телефон",
 		"FAX": "Факс",
-		"FISCAL_INFORMATION": "Фискальная информация",
-		"WEBSITE": "Веб-сайт"
+		"FISCAL_INFORMATION": "Финансовая информация",
+		"WEBSITE": "Сайт"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
