@@ -191,6 +191,11 @@ export class TableInventoryComponent
 		this.router.navigate(['/pages/organization/inventory/warehouses/all']);
 	}
 
+	
+	manageStores() {
+		this.router.navigate(['/pages/organization/inventory/stores/all']);
+	}
+
 	onAddInventoryItem() {
 		this.router.navigate([`/pages/organization/inventory/create`]);
 	}

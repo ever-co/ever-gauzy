@@ -82,7 +82,7 @@ export class WarehouseFormComponent
 			],
 			email: [
 				this.warehouse ? this.warehouse.email : '',
-				Validators.required
+				Validators.email
 			],
 			active: [this.warehouse ? this.warehouse.active : false],
 			logo: [this.warehouse ? this.warehouse.logo : ''],

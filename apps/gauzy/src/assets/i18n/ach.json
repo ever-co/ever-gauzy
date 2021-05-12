@@ -2119,7 +2119,15 @@
 		"OPTION_TRANSLATIONS": "crwdns10254:0crwdne10254:0",
 		"ADD_PRODUCTS": "crwdns10258:0crwdne10258:0",
 		"MANAGE_VARIANTS_QUANTITY": "crwdns10260:0crwdne10260:0",
-		"ADD_PRODUCT": "crwdns10330:0crwdne10330:0"
+		"ADD_PRODUCT": "crwdns10330:0crwdne10330:0",
+		"STORES": "crwdns10336:0crwdne10336:0",
+		"ADD_STORE": "crwdns10338:0crwdne10338:0",
+		"EDIT_STORE": "crwdns10340:0crwdne10340:0",
+		"CREATE_STORE": "crwdns10342:0crwdne10342:0",
+		"PHONE": "crwdns10344:0crwdne10344:0",
+		"FAX": "crwdns10346:0crwdne10346:0",
+		"FISCAL_INFORMATION": "crwdns10348:0crwdne10348:0",
+		"WEBSITE": "crwdns10350:0crwdne10350:0"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "crwdns3029:0crwdne3029:0",
