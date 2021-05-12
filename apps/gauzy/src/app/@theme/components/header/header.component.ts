@@ -13,7 +13,7 @@ import {
 } from '@nebular/theme';
 import { LayoutService } from '../../../@core/utils';
 import { Router, NavigationEnd } from '@angular/router';
-import { debounceTime, filter, first } from 'rxjs/operators';
+import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
 import {
@@ -270,9 +270,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 
 	async checkOrganizationSelectorVisibility() {
 		// hidden organization selector if not activate for current page
-		if (!this.selectorsVisibility.organization) {
-			return;
-		}
 
 		const { userId } = this.store;
 		const { tenantId } = this.store.user;
@@ -283,7 +280,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 				tenantId
 			}
 		);
-
 		if (
 			this.store.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_ORGANIZATION
@@ -299,6 +295,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 					.pipe(first())
 					.toPromise();
 				this.store.selectedOrganization = org;
+				this.showOrganizationsSelector = false;
 			}
 		}
 	}
@@ -306,7 +303,8 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	ngAfterViewInit(): void {
 		this.organizationEditStore.organizationAction$
 			.pipe(
-				filter(({ organization }) => !!organization),
+				filter(({ action, organization }) => !!action && !!organization),
+				tap(() => this.organizationEditStore.destroy()),
 				untilDestroyed(this)
 			)
 			.subscribe(({ action }) => {
@@ -320,7 +318,8 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 			});
 		this.organizationProjectStore.organizationProjectAction$
 			.pipe(
-				filter(({ project, action }) => !!project && !!action),
+				filter(({ action, project }) => !!action && !!project),
+				tap(() => this.organizationProjectStore.destroy()),
 				untilDestroyed(this)
 			)
 			.subscribe(({ action }) => {
@@ -334,7 +333,8 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 			});
 		this.employeeStore.employeeAction$
 			.pipe(
-				filter(({ employee }) => !!employee),
+				filter(({ action, employee }) => !!action && !!employee),
+				tap(() => this.employeeStore.destroy()),
 				untilDestroyed(this)
 			)
 			.subscribe(({ action }) => {
