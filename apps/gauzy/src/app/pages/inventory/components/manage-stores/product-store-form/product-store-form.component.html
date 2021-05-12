@@ -15,40 +15,9 @@
 			</div>
 		</div>
 	</nb-card-header>
-	<!-- name
-	description
-	currency
-	shipping zone
-	geo location
-	warehouse
-	delivery areas
-	logo
-	email
-	phone
-	isActive -->
-
-	<!-- id?: string;
-	name?: string;
-	firstName?: string;
-	lastName?: string;
-	country?: string;
-	city?: string;
-	address?: string;
-	address2?: string;
-	postcode?: number;
-	latitude?: number;
-	longitude?: number;
-	regionCode?: string;
-	fax?: string;
-	fiscalInformation?: string;
-	website?: string;
-	organization_contacts?: IOrganizationContact[];
-	employees?: IEmployee[];
-	candidates?: ICandidate[]; -->
-
 
 	<nb-card-body>
-		<form>
+		<form [formGroup]="form" *ngIf="form">
 			<div class="row">
 				<nb-stepper>
 					<nb-step label="Main">
@@ -63,7 +32,8 @@
 											<label class="label" for="name">{{
 																				'INVENTORY_PAGE.NAME' | translate
 																			}}</label>
-											<input fullWidth id="name" type="text" nbInput [placeholder]="
+											<input formControlName="name" fullWidth id="name" type="text" nbInput
+												[placeholder]="
 																					'INVENTORY_PAGE.NAME'
 																						| translate
 																				" />
@@ -83,7 +53,8 @@
 											<label class="label" for="email">{{
 																					'INVENTORY_PAGE.EMAIL' | translate
 																				}}</label>
-											<input fullWidth id="email" type="text" nbInput [placeholder]="
+											<input formControlName="email" fullWidth id="email" type="text" nbInput
+												[placeholder]="
 																						'INVENTORY_PAGE.EMAIL'
 																							| translate
 																					" />
@@ -94,7 +65,8 @@
 											<label class="label" for="phone">{{
 																						'INVENTORY_PAGE.PHONE' | translate
 																					}}</label>
-											<input fullWidth id="phone" type="text" nbInput [placeholder]="
+											<input formControlName="phone" fullWidth id="phone" type="text" nbInput
+												[placeholder]="
 																							'INVENTORY_PAGE.PHONE'
 																								| translate
 																						" />
@@ -114,7 +86,8 @@
 										<label class="label">{{
 													'INVENTORY_PAGE.FAX' | translate
 												}}</label>
-										<input type="text" nbInput fullWidth  [placeholder]="
+										<input formControlName="fax" type="text" id="fax" nbInput fullWidth
+											[placeholder]="
 														'INVENTORY_PAGE.FAX'
 															| translate
 													" />
@@ -124,11 +97,12 @@
 								<div class="row">
 									<div class="col-md-6 col-sm-12">
 										<div class="form-group">
-											<label class="label">{{
+											<label for="fiscalInformation" class="label">{{
 														'INVENTORY_PAGE.FISCAL_INFORMATION'
 															| translate
 													}}</label>
-											<input type="text" nbInput fullWidth [placeholder]="
+											<input formControlName="fiscalInformation" type="text" nbInput fullWidth
+												[placeholder]="
 															'INVENTORY_PAGE.FISCAL_INFORMATION'
 																| translate
 														" />
@@ -136,11 +110,12 @@
 									</div>
 									<div class="col-md-6 col-sm-12">
 										<div class="form-group">
-											<label class="label">{{
+											<label for="website" class="label">{{
 														'INVENTORY_PAGE.WEBSITE'
 															| translate
 													}}</label>
-											<input type="text" nbInput fullWidth [placeholder]="
+											<input formControlName="fiscalInformation" id="website" type="text" nbInput
+												fullWidth [placeholder]="
 															'INVENTORY_PAGE.WEBSITE'
 																| translate
 														" />
@@ -152,7 +127,7 @@
 									<div class="col-md-12 col-sm-12">
 										<div class="form-group">
 
-											<textarea class="notes col-5" nbInput>
+											<textarea formControlName="description" class="notes col-5" nbInput>
 													</textarea>
 										</div>
 									</div>
@@ -178,19 +153,59 @@
 							</div>
 						</div>
 					</nb-step>
-					<nb-step label="Contact">
+					<nb-step label="Location">
+						<div class="row">
+							<div class="col-md-4 col-sm-12">
+								<img src="" />
+							</div>
+							<div class="col-md-8 col-sm-12">
+								<ga-location-form #locationFormDirective [form]="locationForm"
+									[showAutocompleteSearch]="true" (mapCoordinatesEmitter)="
+												onCoordinatesChanges($event)
+											">
+								</ga-location-form>
+								<ga-leaflet-map #leafletTemplate (mapClicked)="onMapClicked($event)">
+								</ga-leaflet-map>
+							</div>
+						</div>
+					</nb-step>
+					<nb-step label="Warehouses">
+						<div class="row">
+							<div class="col-md-4 col-sm-12">
+								<img src="" />
+							</div>
+							<div class="col-md-8 col-sm-12">
+								<div class="form-group">
+									<label class="label">{{
+																'INVENTORY_PAGE.WAREHOUSES' | translate
+															}}
+									</label>
+									<nb-select multiple [selected]="selectedWarehouses"
+										(selectedChange)="onWarehouseSelect($event)" fullWidth placeholder="{{
+																	'INVENTORY_PAGE.WAREHOUSES' | translate
+																}}">
+										<nb-option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
+											<img src="{{ warehouse.logo?.url }}" alt="warehouse image" height="40"
+												width="40" style="margin-right: 10px" />
+											{{ warehouse.name }}</nb-option>
+									</nb-select>
+								</div>
+
+							</div>
+
+						</div>
 
 					</nb-step>
 				</nb-stepper>
 			</div>
 		</form>
 	</nb-card-body>
-	<!-- <nb-card-footer class="text-right">
+	<nb-card-footer class="text-right">
 		<button (click)="cancel()" status="danger" class="mr-2" nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button status="success" nbButton (click)="onSaveRequest()">
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
-	</nb-card-footer> -->
+	</nb-card-footer>
 </nb-card>
