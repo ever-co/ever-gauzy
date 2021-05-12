@@ -1,0 +1,196 @@
+<nb-card>
+	<nb-card-header>
+		<div class="main-header">
+			<div class="top-nav">
+				<h4>
+					<ngx-back-navigation></ngx-back-navigation>
+					{{ 'INVENTORY_PAGE.CREATE_STORE' | translate }}
+				</h4>
+				<!-- //tstodo -->
+				<!-- <h4 *ngIf="warehouse">
+					<ngx-back-navigation></ngx-back-navigation>
+
+					{{ 'INVENTORY_PAGE.EDIT_STORE' | translate }}
+				</h4> -->
+			</div>
+		</div>
+	</nb-card-header>
+	<!-- name
+	description
+	currency
+	shipping zone
+	geo location
+	warehouse
+	delivery areas
+	logo
+	email
+	phone
+	isActive -->
+
+	<!-- id?: string;
+	name?: string;
+	firstName?: string;
+	lastName?: string;
+	country?: string;
+	city?: string;
+	address?: string;
+	address2?: string;
+	postcode?: number;
+	latitude?: number;
+	longitude?: number;
+	regionCode?: string;
+	fax?: string;
+	fiscalInformation?: string;
+	website?: string;
+	organization_contacts?: IOrganizationContact[];
+	employees?: IEmployee[];
+	candidates?: ICandidate[]; -->
+
+
+	<nb-card-body>
+		<form>
+			<div class="row">
+				<nb-stepper>
+					<nb-step label="Main">
+						<div class="row">
+							<div class="col-md-4 col-sm-12">
+								<img src="" />
+							</div>
+							<div class="col-md-8 col-sm-12">
+								<div class="row">
+									<div class="col-md-6 col-sm-12">
+										<div class="form-group">
+											<label class="label" for="name">{{
+																				'INVENTORY_PAGE.NAME' | translate
+																			}}</label>
+											<input fullWidth id="name" type="text" nbInput [placeholder]="
+																					'INVENTORY_PAGE.NAME'
+																						| translate
+																				" />
+										</div>
+
+									</div>
+									<div class="col-md-6 col-sm-12">
+										<ga-tags-color-input [selectedTags]="tags" (selectedTagsEvent)="
+												selectedTagsEvent($event)
+											" [isOrgLevel]="true">
+										</ga-tags-color-input>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-6 col-sm-12">
+										<div class="form-group">
+											<label class="label" for="email">{{
+																					'INVENTORY_PAGE.EMAIL' | translate
+																				}}</label>
+											<input fullWidth id="email" type="text" nbInput [placeholder]="
+																						'INVENTORY_PAGE.EMAIL'
+																							| translate
+																					" />
+										</div>
+									</div>
+									<div class="col-md-6 col-sm-12">
+										<div class="form-group">
+											<label class="label" for="phone">{{
+																						'INVENTORY_PAGE.PHONE' | translate
+																					}}</label>
+											<input fullWidth id="phone" type="text" nbInput [placeholder]="
+																							'INVENTORY_PAGE.PHONE'
+																								| translate
+																						" />
+										</div>
+									</div>
+								</div>
+
+								<div class="row">
+									<div class="col-md-6 col-sm-12">
+										<ga-currency [placeholder]="
+												'INVENTORY_PAGE.RETAIL_PRICE_CURRENCY'
+													| translate
+											">
+										</ga-currency>
+									</div>
+									<div class="col-md-6 col-sm-12">
+										<label class="label">{{
+													'INVENTORY_PAGE.FAX' | translate
+												}}</label>
+										<input type="text" nbInput fullWidth  [placeholder]="
+														'INVENTORY_PAGE.FAX'
+															| translate
+													" />
+									</div>
+								</div>
+
+								<div class="row">
+									<div class="col-md-6 col-sm-12">
+										<div class="form-group">
+											<label class="label">{{
+														'INVENTORY_PAGE.FISCAL_INFORMATION'
+															| translate
+													}}</label>
+											<input type="text" nbInput fullWidth [placeholder]="
+															'INVENTORY_PAGE.FISCAL_INFORMATION'
+																| translate
+														" />
+										</div>
+									</div>
+									<div class="col-md-6 col-sm-12">
+										<div class="form-group">
+											<label class="label">{{
+														'INVENTORY_PAGE.WEBSITE'
+															| translate
+													}}</label>
+											<input type="text" nbInput fullWidth [placeholder]="
+															'INVENTORY_PAGE.WEBSITE'
+																| translate
+														" />
+										</div>
+									</div>
+								</div>
+
+								<div class="row">
+									<div class="col-md-12 col-sm-12">
+										<div class="form-group">
+
+											<textarea class="notes col-5" nbInput>
+													</textarea>
+										</div>
+									</div>
+								</div>
+
+								<div class="row">
+									<nb-checkbox status="basic">{{
+												'INVENTORY_PAGE.ACTIVE' | translate
+											}}</nb-checkbox>
+								</div>
+
+							</div>
+						</div>
+
+						<div class="row">
+							<div class="form-group col-4">
+								<button nbButton class="mr-2" status="success">
+									{{ 'BUTTONS.NEXT' | translate }}
+								</button>
+								<button nbButton (click)="cancel()" status="danger">
+									{{ 'BUTTONS.CANCEL' | translate }}
+								</button>
+							</div>
+						</div>
+					</nb-step>
+					<nb-step label="Contact">
+
+					</nb-step>
+				</nb-stepper>
+			</div>
+		</form>
+	</nb-card-body>
+	<!-- <nb-card-footer class="text-right">
+		<button (click)="cancel()" status="danger" class="mr-2" nbButton>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button status="success" nbButton (click)="onSaveRequest()">
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer> -->
+</nb-card>

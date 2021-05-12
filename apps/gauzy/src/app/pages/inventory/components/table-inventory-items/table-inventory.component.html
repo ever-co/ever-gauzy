@@ -62,6 +62,17 @@
 				<nb-icon icon="home-outline"></nb-icon>
 				{{ 'INVENTORY_PAGE.WAREHOUSES' | translate }}
 			</button>
+			<button
+				*ngIf="editProductAllowed"
+				class="float-right"
+				style="margin-right: 9px"
+				nbButton
+				status="warning"
+				(click)="manageStores()"
+			>
+				<nb-icon icon="home-outline"></nb-icon>
+				{{ 'INVENTORY_PAGE.STORES' | translate }}
+			</button>
 		</div>
 
 		<ng2-smart-table

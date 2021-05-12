@@ -129,7 +129,12 @@ export class WarehouseProductsTableComponent
 		};
 	}
 
-	handleImageUploadError(error) {}
+	handleImageUploadError(error) {
+		this.toastrService.danger(
+			error.error.message || error.message,
+			'TOASTR.TITLE.ERROR'
+		);
+	}
 
 	async loadItems() {
 		this.loading = true;
@@ -177,13 +182,12 @@ export class WarehouseProductsTableComponent
 		);
 
 		if (createWarehouseProductsInput.length && result) {
+			//tstodo
 			this.toastrService.success('Successfully added products');
 		}
 
 		this.loadItems();
 	}
-
-	async onSaveRequest() {}
 
 	cancel() {
 		this.location.back();
