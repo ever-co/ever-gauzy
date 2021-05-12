@@ -37,7 +37,8 @@ export class ProductStoreFormComponent
 	image: IImageAsset;
 	private newImageUploadedEvent$ = new Subject<any>();
 
-
+	@ViewChild('stepper')
+	stepper: NbStepperComponent;
 
 	@ViewChild('locatioFormDirective')
 	locationFormDirective: LocationFormComponent;
@@ -61,10 +62,10 @@ export class ProductStoreFormComponent
 		super(translateService);
 	}
 
+
 	ngOnInit(): void {
 		this._initializeForm();
 		this._loadWarehouses();
-
 	}
 
 	onWarehouseSelect($event) {
@@ -132,6 +133,12 @@ export class ProductStoreFormComponent
 
 		if (selectedImage) {
 			this.image = selectedImage;
+		}
+	}
+
+	onChangeTab(tab) {
+		if (tab['tabTitle'] == 'Location') {
+			setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
 		}
 	}
 

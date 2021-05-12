@@ -17,15 +17,13 @@
 
 	<nb-card-body>
 		<form [formGroup]="form" *ngIf="form">
-			<nb-stepper>
+			<nb-stepper #stepper>
 				<nb-step label="Main">
 					<div class="row">
 						<div class="col-md-3 col-sm-12 image-container">
-
 							<ng-container *ngTemplateOutlet="storeImage"></ng-container>
-
 						</div>
-						<div class="col-md-9 col-sm-12">
+						<div class="col-md-9 col-sm-12 pl-5">
 							<div class="row">
 								<div class="col-md-6 col-sm-12">
 									<div class="form-group">
@@ -125,25 +123,26 @@
 							<div class="row">
 								<div class="col-md-12 col-sm-12">
 									<div class="form-group">
-
-										<textarea formControlName="description" class="notes col-5" nbInput>
-													</textarea>
+										<textarea fullWidth formControlName="description" nbInput></textarea>
 									</div>
 								</div>
 							</div>
 
 							<div class="row">
-								<nb-checkbox status="basic">{{
-												'INVENTORY_PAGE.ACTIVE' | translate
-											}}</nb-checkbox>
+								<div class="col-md-12 col-sm-12">
+									<nb-checkbox status="basic">{{
+													'INVENTORY_PAGE.ACTIVE' | translate
+												}}</nb-checkbox>
+								</div>
+
 							</div>
 
 						</div>
 					</div>
 
-					<div class="row">
+					<div class="row mt-5">
 						<div class="form-group col-4">
-							<button nbButton class="mr-2" status="success">
+							<button nbButton class="mr-2" status="success" >
 								{{ 'BUTTONS.NEXT' | translate }}
 							</button>
 							<button nbButton (click)="cancel()" status="danger">
@@ -157,7 +156,7 @@
 						<div class="col-md-3 col-sm-12 image-container">
 							<ng-container *ngTemplateOutlet="storeImage"></ng-container>
 						</div>
-						<div class="col-md-9 col-sm-12">
+						<div class="col-md-9 col-sm-12 pl-5">
 							<ga-location-form #locationFormDirective [form]="locationForm"
 								[showAutocompleteSearch]="true" (mapCoordinatesEmitter)="
 												onCoordinatesChanges($event)
@@ -167,13 +166,23 @@
 							</ga-leaflet-map>
 						</div>
 					</div>
+					<div class="row  mt-5">
+						<div class="form-group col-4">
+							<button nbButton class="mr-2" status="success">
+								{{ 'BUTTONS.NEXT' | translate }}
+							</button>
+							<button nbButton (click)="cancel()" status="danger">
+								{{ 'BUTTONS.CANCEL' | translate }}
+							</button>
+						</div>
+					</div>
 				</nb-step>
 				<nb-step label="Warehouses">
 					<div class="row">
 						<div class="col-md-3 col-sm-12 image-container">
 							<ng-container *ngTemplateOutlet="storeImage"></ng-container>
 						</div>
-						<div class="col-md-9 col-sm-12">
+						<div class="col-md-9 col-sm-12 pl-5">
 							<div class="form-group">
 								<label class="label">{{
 																'INVENTORY_PAGE.WAREHOUSES' | translate
@@ -193,19 +202,25 @@
 						</div>
 
 					</div>
+					<div class="row mt-5">
+						<div class="form-group col-4">
+							<button (click)="cancel()" status="danger" class="mr-2" nbButton>
+								{{ 'BUTTONS.CANCEL' | translate }}
+							</button>
+							<button status="success" nbButton (click)="onSaveRequest()">
+								{{ 'BUTTONS.SAVE' | translate }}
+							</button>
 
+						</div>
+					</div>
 				</nb-step>
 			</nb-stepper>
 		</form>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
-		<button (click)="cancel()" status="danger" class="mr-2" nbButton>
-			{{ 'BUTTONS.CANCEL' | translate }}
-		</button>
-		<button status="success" nbButton (click)="onSaveRequest()">
-			{{ 'BUTTONS.SAVE' | translate }}
-		</button>
+
 	</nb-card-footer>
+
 </nb-card>
 
 <ng-template #storeImage>
