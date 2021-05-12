@@ -6,11 +6,17 @@ import {
 	ITag,
 	IProductStore,
 	IWarehouse,
+	IImageAsset,
 } from '@gauzy/contracts';
 import { NbStepperComponent } from '@nebular/theme';
 import { FormGroup, FormBuilder, Validators } from '@nebular/auth/node_modules/@angular/forms';
 import { LocationFormComponent, LeafletMapComponent } from 'apps/gauzy/src/app/@shared/forms';
 import { ToastrService, Store, WarehouseService } from 'apps/gauzy/src/app/@core';
+import { NbDialogService } from '@nebular/theme';
+import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
+import { Subject } from 'rxjs';
+import { first } from 'rxjs/operators';
+
 
 
 @UntilDestroy()
@@ -24,9 +30,13 @@ export class ProductStoreFormComponent
 	implements OnInit {
 
 	form: FormGroup;
+	hoverState: boolean;
 	tags: ITag[] = [];
 	warehouses: IWarehouse[] = [];
 	selectedWarehouses: string[] = [];
+	image: IImageAsset;
+	private newImageUploadedEvent$ = new Subject<any>();
+
 
 
 	@ViewChild('locatioFormDirective')
@@ -44,7 +54,8 @@ export class ProductStoreFormComponent
 		private toastrService: ToastrService,
 		private fb: FormBuilder,
 		private store: Store,
-		private warehouseService: WarehouseService
+		private warehouseService: WarehouseService,
+		private dialogService: NbDialogService
 
 	) {
 		super(translateService);
@@ -102,6 +113,26 @@ export class ProductStoreFormComponent
 			active: [this.productStore ? this.productStore.active : true],
 			description: [this.productStore ? this.productStore.description : '']
 		})
+	}
+
+	async onImageSelect() {
+		const dialog = this.dialogService.open(SelectAssetComponent, {
+			context: {
+				newImageUploadedEvent: this.newImageUploadedEvent$,
+				galleryInput: [],
+				settings: {
+					uploadImageEnabled: false,
+					deleteImageEnabled: false,
+					selectMultiple: false
+				}
+			}
+		});
+
+		let selectedImage = await dialog.onClose.pipe(first()).toPromise();
+
+		if (selectedImage) {
+			this.image = selectedImage;
+		}
 	}
 
 	cancel() {
