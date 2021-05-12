@@ -251,7 +251,13 @@ export class VendorsComponent
 		const { id: organizationId } = this.selectedOrganization;
 
 		this.organizationVendorsService
-			.getAll({ organizationId, tenantId }, ['tags'])
+			.getAll(
+				{ organizationId, tenantId },
+				  ['tags'],
+				  {
+					  createdAt:'DESC'
+				  }
+			)
 			.then(({ items }) => {
 				this.vendors = items;
 				this.smartTableSource.load(this.vendors);
