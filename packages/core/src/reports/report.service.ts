@@ -1,10 +1,13 @@
 import {
 	GetReportMenuItemsInput,
 	IGetReport,
+	IOrganization,
 	IPagination,
+	IReport,
+	IReportOrganization,
 	UpdateReportMenuInput
 } from '@gauzy/contracts';
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { indexBy } from 'underscore';
@@ -84,5 +87,30 @@ export class ReportService extends CrudService<Report> {
 
 		this.reportOrganizationRepository.save(reportOrganization);
 		return reportOrganization;
+	}
+
+	/*
+	* Bulk Create Organization Default Reports Menu 
+	*/
+	async bulkCreateOrganizationReport(input: IOrganization) {
+		try {
+			const { id: organizationId } = input;
+			const { items } = await super.findAll();
+			
+			const reportOrganizations: IReportOrganization[] = [];
+			items.forEach((report: IReport) => {
+				reportOrganizations.push(
+					new ReportOrganization({
+						report,
+						organizationId
+					})
+				)
+			});
+
+			this.reportOrganizationRepository.save(reportOrganizations);
+			return reportOrganizations;
+		} catch (error) {
+			throw new InternalServerErrorException(error);
+		}
 	}
 }

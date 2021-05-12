@@ -168,13 +168,13 @@ export class OrganizationsComponent
 								organization,
 								action: CrudActionEnum.CREATED
 							};
+							this.toastrService.success(
+								'NOTES.ORGANIZATIONS.ADD_NEW_ORGANIZATION',
+								{
+									name: result.name
+								}
+							);
 						}
-						this.toastrService.success(
-							'NOTES.ORGANIZATIONS.ADD_NEW_ORGANIZATION',
-							{
-								name: result.name
-							}
-						);
 					})
 					.catch((error) => {
 						this.errorHandler.handleError(error);

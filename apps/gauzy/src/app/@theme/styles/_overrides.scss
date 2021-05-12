@@ -1,4 +1,4 @@
-@import './themes';
+@import "./themes";
 
 ::-webkit-scrollbar {
   width: nb-theme(scrollbar-width);
@@ -84,7 +84,7 @@ body {
       }
     }
   }
-  
+
   .ng-dropdown-panel {
     .scroll-host {
       &::-webkit-scrollbar {
@@ -107,7 +107,7 @@ body {
       height: auto !important;
       min-height: auto !important;
       nb-card-body {
-        overflow: unset !important;
+        overflow: hidden;
         height: 100%;
       }
     }
@@ -119,7 +119,7 @@ body {
       height: auto !important;
       min-height: auto !important;
       nb-card-body {
-        overflow: unset !important;
+        overflow: hidden;
         height: 100%;
       }
     }

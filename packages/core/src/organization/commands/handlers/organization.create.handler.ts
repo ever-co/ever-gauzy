@@ -1,5 +1,5 @@
 import { IOrganization, RolesEnum } from '@gauzy/contracts';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { RoleService } from '../../../role/role.service';
 import { UserService } from '../../../user/user.service';
 import { UserOrganization } from '../../../user-organization/user-organization.entity';
@@ -7,15 +7,17 @@ import { UserOrganizationService } from '../../../user-organization/user-organiz
 import { OrganizationService } from '../../organization.service';
 import { OrganizationCreateCommand } from '../organization.create.command';
 import { RequestContext } from '../../../core/context';
+import { ReportOrganizationCreateCommand } from './../../../reports/commands';
 
 @CommandHandler(OrganizationCreateCommand)
 export class OrganizationCreateHandler
 	implements ICommandHandler<OrganizationCreateCommand> {
 	constructor(
+		private readonly commandBus: CommandBus,
 		private readonly organizationService: OrganizationService,
 		private readonly userOrganizationService: UserOrganizationService,
 		private readonly userService: UserService,
-		private readonly roleService: RoleService
+		private readonly roleService: RoleService,
 	) {}
 
 	public async execute(
@@ -61,7 +63,7 @@ export class OrganizationCreateHandler
 		);
 
 		// 4. Take each super admin user and add him/her to created organization
-		for (const superAdmin of superAdminUsers) {
+		for await (const superAdmin of superAdminUsers) {
 			const userOrganization = new UserOrganization();
 			userOrganization.organizationId = createdOrganization.id;
 			userOrganization.tenantId = tenantId;
@@ -76,10 +78,16 @@ export class OrganizationCreateHandler
 			tenantId
 		});
 
-		await this.organizationService.create({
+		const organization = await this.organizationService.create({
 			contact,
 			...createdOrganization
 		});
+
+		//6. Create Enabled/Disabled reports for relative organization.
+		this.commandBus.execute(
+			new ReportOrganizationCreateCommand(organization)
+		);
+
 		return await this.organizationService.findOne(id);
 	}
 }

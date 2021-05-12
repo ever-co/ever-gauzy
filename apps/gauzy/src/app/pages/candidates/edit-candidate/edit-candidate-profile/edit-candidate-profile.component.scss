@@ -48,10 +48,6 @@ nb-tabset {
   height: 100%;
 }
 
-nb-card-body {
-  overflow-y: hidden; //prevent extra scroll bar
-}
-
 :host ::ng-deep {
   nb-route-tabset {
     ul.route-tabset {
