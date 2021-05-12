@@ -2120,14 +2120,14 @@
 		"ADD_PRODUCTS": "Add products",
 		"MANAGE_VARIANTS_QUANTITY": "Manage variants",
 		"ADD_PRODUCT": "Add product",
-		"STORES": "Магазини",
-		"ADD_STORE": "Добави магазин",
-		"EDIT_STORE": "Редактирай магазин",
-		"CREATE_STORE": "Създай магазин",
-		"PHONE": "Телефон",
-		"FAX": "Факс",
-		"FISCAL_INFORMATION": "Фискална информация",
-		"WEBSITE": "Уебсайт"
+		"STORES": "Stores",
+		"ADD_STORE": "Add store",
+		"EDIT_STORE": "Edit store",
+		"CREATE_STORE": "Create store",
+		"PHONE": "Phone",
+		"FAX": "Fax",
+		"FISCAL_INFORMATION": "Fiscal information",
+		"WEBSITE": "Website"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
