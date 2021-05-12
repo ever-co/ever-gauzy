@@ -28,11 +28,10 @@ export function createImageViewerWindow(imageViewWindow, filePath) {
 
 const windowSetting = () => {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
-		frame: false,
-		resizable: false,
+		frame: true,
+		resizable: true,
 		focusable: true,
-		fullscreenable: false,
-		transparent: true,
+		fullscreenable: true,
 		webPreferences: {
 			nodeIntegration: true,
 			webSecurity: false,
@@ -43,7 +42,8 @@ const windowSetting = () => {
 		width: 1000,
 		height: 728,
 		title: '',
-		maximizable: false
+		maximizable: true,
+		show: false
 	};
 
 	return mainWindowSettings;

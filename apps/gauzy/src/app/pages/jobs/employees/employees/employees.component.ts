@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
 	IEmployeeJobsStatisticsResponse,
 	IOrganization
@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from './../../../../@core/services/store.service';
 import { AvatarComponent } from './../../../../@shared/components/avatar/avatar.component';
 import { TranslationBaseComponent } from './../../../../@shared/language-base/translation-base.component';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { EmployeesService } from './../../../../@core/services';
@@ -27,12 +27,21 @@ export class EmployeesComponent
 
 	settingsSmartTable: any = {
 		editable: false,
-		actions: false
+		actions: false,
+		hideSubHeader: true
 	};
 
 	updateJobs$: Subject<any> = new Subject();
 	smartTableSource: LocalDataSource = new LocalDataSource();
 	organization: IOrganization;
+
+	jobEmployeesTable: Ng2SmartTableComponent;
+	@ViewChild('jobEmployeesTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.jobEmployeesTable = content;
+			this.onChangedSource();
+		}
+	}
 
 	constructor(
 		private store: Store,
@@ -86,7 +95,6 @@ export class EmployeesComponent
 			columns: {
 				employeeId: {
 					title: this.getTranslation('JOB_EMPLOYEE.EMPLOYEE'),
-					filter: false,
 					width: '40%',
 					type: 'custom',
 					sort: false,
@@ -105,7 +113,6 @@ export class EmployeesComponent
 					title: this.getTranslation('JOB_EMPLOYEE.AVAILABLE_JOBS'),
 					type: 'text',
 					width: '20%',
-					filter: false,
 					sort: false,
 					valuePrepareFunction: (
 						cell,
@@ -118,7 +125,6 @@ export class EmployeesComponent
 					title: this.getTranslation('JOB_EMPLOYEE.APPLIED_JOBS'),
 					type: 'html',
 					width: '20%',
-					filter: false,
 					sort: false,
 					valuePrepareFunction: (
 						cell,
@@ -133,7 +139,6 @@ export class EmployeesComponent
 					),
 					type: 'custom',
 					width: '20%',
-					filter: false,
 					renderComponent: SmartTableToggleComponent,
 					valuePrepareFunction: (
 						cell,
@@ -155,6 +160,28 @@ export class EmployeesComponent
 
 	updateJobSearchAvailability(employee, toggleValue): void {
 		this.employeesService.updateJobSearchStatus(employee.id, toggleValue);
+	}
+
+	/*
+	 * Table on changed source event
+	 */
+	onChangedSource() {
+		this.jobEmployeesTable.source.onChangedSource
+			.pipe(
+				untilDestroyed(this),
+				tap(() => this.deselectAll())
+			)
+			.subscribe();
+	}
+
+	/*
+	 * Deselect all table rows
+	 */
+	deselectAll() {
+		if (this.jobEmployeesTable && this.jobEmployeesTable.grid) {
+			this.jobEmployeesTable.grid.dataSet['willSelect'] = 'false';
+			this.jobEmployeesTable.grid.dataSet.deselectAll();
+		}
 	}
 
 	ngOnDestroy(): void {}

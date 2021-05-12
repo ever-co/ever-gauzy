@@ -19,9 +19,9 @@ export interface IRecurringExpenseModel
 	employee?: IEmployee;
 }
 
-export interface IRecurringExpenseByMonthFindInput {
+export interface IRecurringExpenseByMonthFindInput 
+	extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
-	organizationId?: string;
 	month?: number;
 	year?: number;
 }

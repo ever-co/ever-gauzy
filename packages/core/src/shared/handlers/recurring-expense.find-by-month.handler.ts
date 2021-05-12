@@ -2,8 +2,8 @@ import {
 	IRecurringExpenseByMonthFindInput,
 	IRecurringExpenseModel
 } from '@gauzy/contracts';
-import { IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
-import { CrudService, getLastDayOfMonth, IPagination } from '../../core';
+import { Between, IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { CrudService, getDateRange, getLastDayOfMonth, IPagination, RequestContext } from '../../core';
 
 /**
  * Finds income, expense, profit and bonus for all organizations for the given month.
@@ -23,25 +23,19 @@ export abstract class FindRecurringExpenseByMonthHandler<
 		input: IRecurringExpenseByMonthFindInput | any,
 		relations?: string[]
 	): Promise<IPagination<T>> {
-		const lastDayOfMonth = getLastDayOfMonth(input.year, input.month);
-		const inputStartDate = new Date(
-			input.year,
-			input.month,
-			lastDayOfMonth
-		);
-		const inputEndDate = new Date(input.year, input.month, 1);
+		const { organizationId, year, month, employeeId } = input;
+		const tenantId = RequestContext.currentTenantId();
 
-		let whereId: Object = input.employeeId
-			? {
-					employeeId: input.employeeId,
-					organizationId: input.organizationId,
-					tenantId: input.tenantId
-			  }
-			: {
-					organizationId: input.organizationId,
-					tenantId: input.tenantId
-			  };
+		const lastDayOfMonth = getLastDayOfMonth(year, month);
+		const inputStartDate = new Date(year, month, 1);
+		const inputEndDate = new Date(year, month, lastDayOfMonth);
 
+		const where: Object = {
+			organizationId,
+			tenantId
+		}
+
+		let whereId: Object = employeeId ? { employeeId, ...where } : { ...where };
 		if (input.parentRecurringExpenseId) {
 			whereId = {
 				...whereId,
@@ -49,17 +43,18 @@ export abstract class FindRecurringExpenseByMonthHandler<
 			};
 		}
 
+		const { start, end } = getDateRange(inputStartDate, inputEndDate);
 		const expenses = await this.crudService.findAll({
 			where: [
 				{
 					...whereId,
-					startDate: LessThanOrEqual(inputStartDate),
+					startDate: Between(start, end),
 					endDate: IsNull()
 				},
 				{
 					...whereId,
-					startDate: LessThanOrEqual(inputStartDate),
-					endDate: MoreThanOrEqual(inputEndDate)
+					startDate: LessThanOrEqual(start),
+					endDate: MoreThanOrEqual(end)
 				}
 			],
 			relations

@@ -39,7 +39,8 @@ const windowSetting = () => {
 		width: 400,
 		height: 940,
 		title: 'Time Tracker',
-		maximizable: false
+		maximizable: false,
+		show: false
 	};
 
 	return mainWindowSettings;

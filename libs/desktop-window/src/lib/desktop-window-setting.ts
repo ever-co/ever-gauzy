@@ -43,7 +43,8 @@ const windowSetting = () => {
 		width: 1000,
 		height: 800,
 		title: 'Settings',
-		maximizable: false
+		maximizable: false,
+		show: false
 	};
 
 	return mainWindowSettings;

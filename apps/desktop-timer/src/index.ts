@@ -301,6 +301,7 @@ app.on('ready', async () => {
 			false,
 			pathWindow.timeTrackerUi
 		);
+		setupWindow.show();
 	}
 
 	ipcMainHandler(store, startServer, knex, { ...environment });

@@ -28,7 +28,8 @@ export class ProposalTemplateComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: any = {
 		editable: false,
-		actions: false
+		actions: false,
+		hideSubHeader: true
 	};
 
 	disableButton = true;

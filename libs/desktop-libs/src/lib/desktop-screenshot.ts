@@ -269,7 +269,9 @@ const showCapturedToRenderer = (notificationWindow, thumbUrl, quitApp) => {
 		frame: false,
 		webPreferences: {
 			nodeIntegration: true,
-			webSecurity: false
+			webSecurity: false,
+			contextIsolation: false,
+			enableRemoteModule: true
 		}
 	};
 
