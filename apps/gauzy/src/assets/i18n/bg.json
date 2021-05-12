@@ -2119,7 +2119,15 @@
 		"OPTION_TRANSLATIONS": "Option translations",
 		"ADD_PRODUCTS": "Add products",
 		"MANAGE_VARIANTS_QUANTITY": "Manage variants",
-		"ADD_PRODUCT": "Add product"
+		"ADD_PRODUCT": "Add product",
+		"STORES": "Магазини",
+		"ADD_STORE": "Добави магазин",
+		"EDIT_STORE": "Редактирай магазин",
+		"CREATE_STORE": "Създай магазин",
+		"PHONE": "Телефон",
+		"FAX": "Факс",
+		"FISCAL_INFORMATION": "Фискална информация",
+		"WEBSITE": "Уебсайт"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
