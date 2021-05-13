@@ -9,13 +9,15 @@ import { API_PREFIX } from 'apps/gauzy/src/app/@core';
 import {
 	IProductStore,
 	IOrganization,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	IContact
 } from '@gauzy/contracts';
 import { first, tap } from 'rxjs/operators';
 import { ComponentEnum } from '../../../../../@core/constants/layout.constants';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 import { ProductStoreService } from '../../../../../@core/services/product-store.service';
 import { Store } from '../../../../../@core/services/store.service';
+import { EnabledStatusComponent } from '../../table-components/enabled-row.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -84,6 +86,28 @@ export class ProductStoreTableComponent
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
 					type: 'string',
 				},
+				code: {
+					title: this.getTranslation('INVENTORY_PAGE.CODE'),
+					type: 'string',
+				},
+				contact: {
+					title: this.getTranslation('INVENTORY_PAGE.CONTACT'),
+					type: 'string',
+					valuePrepareFunction: (contact: IContact, row) => {
+
+						if(!contact) return '-';
+
+						return `${this.getTranslation(
+							'INVENTORY_PAGE.COUNTRY'
+						)}: ${contact.country || '-'}, ${this.getTranslation(
+							'INVENTORY_PAGE.CITY'
+						)}:${contact.city || '-'}, ${this.getTranslation(
+							'INVENTORY_PAGE.ADDRESS'
+						)}: ${contact.address || '-'}, ${this.getTranslation(
+							'INVENTORY_PAGE.ADDRESS'
+						)} 2: ${contact.address2 || '-'}`;
+					}
+				},
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
 					type: 'string',
@@ -94,6 +118,11 @@ export class ProductStoreTableComponent
 							: '';
 					}
 				},
+				active: {
+					title: this.getTranslation('INVENTORY_PAGE.ACTIVE'),
+					type: 'custom',
+					renderComponent: EnabledStatusComponent
+				}
 			},
 
 		}
