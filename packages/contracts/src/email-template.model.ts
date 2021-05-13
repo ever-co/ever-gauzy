@@ -41,7 +41,7 @@ export interface ICustomizeEmailTemplateFindInput
 	extends IBasePerTenantAndOrganizationEntityModel {
 	name: EmailTemplateNameEnum;
 	languageCode: LanguagesEnum;
-	originalUrl: string;
+	originalUrl?: string;
 }
 
 export interface ICustomizableEmailTemplate {
