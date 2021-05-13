@@ -267,6 +267,19 @@ export interface IProductStore extends IBasePerTenantAndOrganizationEntityModel 
 	active: boolean;
 }
 
+export interface IProductStoreCreateInput {
+	name: string;
+	code: string;
+	contact: IContact;
+	description: string;
+	logo: IImageAsset;
+	email: string;
+	tags: ITag[];
+	currency: string;
+	warehouses: IWarehouse[];
+	active: boolean;
+}
+
 export interface IWarehouseProduct extends IBasePerTenantEntityModel {
 	warehouse: IWarehouse;
 	quantity: number;

@@ -39,10 +39,17 @@
 
 								</div>
 								<div class="col-md-6 col-sm-12">
-									<ga-tags-color-input [selectedTags]="tags" (selectedTagsEvent)="
-												selectedTagsEvent($event)
-											" [isOrgLevel]="true">
-									</ga-tags-color-input>
+									<div class="form-group">
+										<label class="label" for="code">{{
+																					'INVENTORY_PAGE.NAME' | translate
+																				}}</label>
+										<input formControlName="code" fullWidth id="code" type="text" nbInput
+											[placeholder]="
+																						'INVENTORY_PAGE.CODE'
+																							| translate
+																					" />
+									</div>
+
 								</div>
 							</div>
 							<div class="row">
@@ -74,7 +81,7 @@
 
 							<div class="row">
 								<div class="col-md-6 col-sm-12">
-									<ga-currency [placeholder]="
+									<ga-currency formControlName="currency"  [placeholder]="
 												'INVENTORY_PAGE.RETAIL_PRICE_CURRENCY'
 													| translate
 											">
@@ -111,7 +118,7 @@
 														'INVENTORY_PAGE.WEBSITE'
 															| translate
 													}}</label>
-										<input formControlName="fiscalInformation" id="website" type="text" nbInput
+										<input formControlName="website" id="website" type="text" nbInput
 											fullWidth [placeholder]="
 															'INVENTORY_PAGE.WEBSITE'
 																| translate
@@ -121,8 +128,19 @@
 							</div>
 
 							<div class="row">
-								<div class="col-md-12 col-sm-12">
+								<div class="col-md-6 col-sm-12">
+									<ga-tags-color-input class="mb-4" [selectedTags]="tags" (selectedTagsEvent)="
+														selectedTagsEvent($event)
+													" [isOrgLevel]="true">
+									</ga-tags-color-input>
+
+								</div>
+								<div class="col-md-6 col-sm-12">
 									<div class="form-group">
+										<label for="description" class="label">{{
+													'INVENTORY_PAGE.DESCRIPTION'
+														| translate
+												}}</label>
 										<textarea fullWidth formControlName="description" nbInput></textarea>
 									</div>
 								</div>
@@ -130,11 +148,10 @@
 
 							<div class="row">
 								<div class="col-md-12 col-sm-12">
-									<nb-checkbox status="basic">{{
-													'INVENTORY_PAGE.ACTIVE' | translate
-												}}</nb-checkbox>
+										<nb-checkbox  status="basic">{{
+												'INVENTORY_PAGE.ACTIVE' | translate
+											}}</nb-checkbox>
 								</div>
-
 							</div>
 
 						</div>
@@ -142,7 +159,7 @@
 
 					<div class="row mt-5">
 						<div class="form-group col-4">
-							<button nbButton class="mr-2" status="success" >
+							<button nbButton class="mr-2" status="success">
 								{{ 'BUTTONS.NEXT' | translate }}
 							</button>
 							<button nbButton (click)="cancel()" status="danger">

@@ -11,24 +11,24 @@ import { IsEnum, IsString } from 'class-validator';
 @Entity('product_store')
 export class ProductStore extends TenantOrganizationBaseEntity implements IProductStore {
 
-    
-    @ApiProperty()
-    @IsString()
-	@Column()
-    name: string;
-    
-    
-    @ApiProperty()
-    @IsString()
-	@Column()
-    code: string;
 
-    @ApiProperty()
-    @IsString()
+	@ApiProperty()
+	@IsString()
 	@Column()
-    email: string;
+	name: string;
 
-    @ApiProperty()
+
+	@ApiProperty()
+	@IsString()
+	@Column()
+	code: string;
+
+	@ApiProperty()
+	@IsString()
+	@Column()
+	email: string;
+
+	@ApiProperty()
 	@OneToOne(() => Contact, {
 		eager: true,
 		cascade: true,
@@ -36,13 +36,13 @@ export class ProductStore extends TenantOrganizationBaseEntity implements IProdu
 	})
 	@JoinColumn()
 	contact: Contact;
-    
-    @ApiProperty()
-    @IsString()
+
+	@ApiProperty()
+	@IsString()
 	@Column()
-    description: string;
-    
-    @ApiProperty()
+	description: string;
+
+	@ApiProperty()
 	@ManyToOne(
 		() => ImageAsset
 	)
@@ -52,24 +52,24 @@ export class ProductStore extends TenantOrganizationBaseEntity implements IProdu
 
 	@ApiProperty()
 	@Column({ default: true })
-    active: boolean;
-    
-    @ManyToMany(() => Tag)
+	active: boolean;
+
+	@ManyToMany(() => Tag)
 	@JoinTable({
 		name: 'tag_product_store'
 	})
-    tags: Tag[];
-    
-    @ApiProperty()
+	tags: Tag[];
+
+	@ApiProperty()
 	@IsEnum(CurrenciesEnum)
 	@Column({ default: CurrenciesEnum.USD })
-    currency: string;
-    
+	currency: string;
 
-    @ManyToMany(() => Warehouse)
+
+	@ManyToMany(() => Warehouse)
 	@JoinTable({
 		name: 'warehouse_store'
 	})
-    warehouses: Warehouse[];
+	warehouses: Warehouse[];
 
 }

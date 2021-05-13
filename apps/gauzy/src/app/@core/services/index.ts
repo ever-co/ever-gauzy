@@ -92,6 +92,7 @@ export * from './organizations.service';
 export * from './payment.service';
 export * from './pipelines.service';
 export * from './product-category.service';
+export * from './product-store.service';
 export * from './product-type.service';
 export * from './product-variant-price.service';
 export * from './product-variant-settings.service';

@@ -4,13 +4,17 @@ import {
 	HttpStatus,
 	Get,
 	Query,
-	UseGuards
+	UseGuards,
+	Body,
+	HttpCode,
+	Post
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CrudController, IPagination, ProductStore } from 'core';
 import { ProductStoreService } from './product-store.service';
 import { ApiResponse, ApiOperation } from '@nestjs/swagger';
 import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
+import { IProductStore } from '@gauzy/contracts';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 
@@ -51,6 +55,30 @@ export class ProductStoreController extends CrudController<ProductStore> {
 				{page, limit}
 			);
 		}
+
+
+		@ApiOperation({ summary: 'Create record' })
+		@ApiResponse({
+			status: HttpStatus.CREATED,
+			description: 'The record has been successfully created.'
+		})
+		@ApiResponse({
+			status: HttpStatus.NOT_FOUND,
+			description: 'Record not found'
+		})
+		@ApiResponse({
+			status: HttpStatus.BAD_REQUEST,
+			description:
+				'Invalid input, The response body may contain clues as to what went wrong'
+		})
+		@HttpCode(HttpStatus.ACCEPTED)
+		@Post()
+		async create(
+			@Body() productStoreInput: IProductStore
+		): Promise<ProductStore> {
+			return this.productStoreService.createStore(productStoreInput);
+		}
+
 	
 
 

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { RouterModule } from 'nest-router';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ProductStore } from 'core';
+import { ProductStore, Warehouse, ImageAsset } from 'core';
 import { ProductStoreController } from './product-store.controller';
 import { ProductStoreService } from './product-store.service';
 import { TenantModule } from '../tenant/tenant.module';
@@ -12,7 +12,7 @@ import { TenantModule } from '../tenant/tenant.module';
 		RouterModule.forRoutes([
 			{ path: '/product-stores', module: ProductStoreModule }
 		]),
-		TypeOrmModule.forFeature([ProductStore]),
+		TypeOrmModule.forFeature([ProductStore, Warehouse, ImageAsset]),
 		TenantModule
 	],
 	controllers: [ProductStoreController],

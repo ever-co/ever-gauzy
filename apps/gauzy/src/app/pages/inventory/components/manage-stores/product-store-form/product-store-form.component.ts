@@ -11,11 +11,18 @@ import {
 import { NbStepperComponent } from '@nebular/theme';
 import { FormGroup, FormBuilder, Validators } from '@nebular/auth/node_modules/@angular/forms';
 import { LocationFormComponent, LeafletMapComponent } from 'apps/gauzy/src/app/@shared/forms';
-import { ToastrService, Store, WarehouseService, ImageAssetService } from 'apps/gauzy/src/app/@core';
+import {
+	ToastrService,
+	Store,
+	WarehouseService,
+	ImageAssetService,
+	ProductStoreService
+} from 'apps/gauzy/src/app/@core';
 import { NbDialogService } from '@nebular/theme';
 import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
 import { Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
+import { LatLng } from 'leaflet';
 
 
 
@@ -34,13 +41,13 @@ export class ProductStoreFormComponent
 	tags: ITag[] = [];
 	warehouses: IWarehouse[] = [];
 	selectedWarehouses: string[] = [];
-	image: IImageAsset;
+	image: IImageAsset = null;
 	private newImageUploadedEvent$ = new Subject<any>();
 
 	@ViewChild('stepper')
 	stepper: NbStepperComponent;
 
-	@ViewChild('locatioFormDirective')
+	@ViewChild('locationFormDirective')
 	locationFormDirective: LocationFormComponent;
 
 	@ViewChild('leafletTemplate')
@@ -59,7 +66,8 @@ export class ProductStoreFormComponent
 		private store: Store,
 		private warehouseService: WarehouseService,
 		private dialogService: NbDialogService,
-		private imageAssetService: ImageAssetService
+		private imageAssetService: ImageAssetService,
+		private productStoreService: ProductStoreService
 
 	) {
 		super(translateService);
@@ -160,17 +168,41 @@ export class ProductStoreFormComponent
 
 	}
 
-	onSaveRequest() {
+	async onSaveRequest() {
 
+		const locationFormValue = this.locationFormDirective.getValue();
+		const { coordinates } = locationFormValue['loc'];
+
+		delete locationFormValue['loc'];
+
+		let request = {
+			...this.form.value,
+			warehouses: this.selectedWarehouses,
+			logo: this.image,
+			contact: {
+				...locationFormValue,
+				latitude: coordinates[0],
+				longitude: coordinates[1]
+			}
+		}
+
+		if (!this.productStore) {
+			const res = await this.productStoreService.create(request);
+		}
 	}
 
-	selectedTagsEvent(ev) {
-		this.tags = ev;
+	selectedTagsEvent(currentSelection: ITag[]) {
+		this.form.get('tags').setValue(currentSelection);
 	}
 
 	onCoordinatesChanges($event) {
-
+		const {
+			loc: { coordinates }
+		} = this.locationFormDirective.getValue();
+		const [lat, lng] = coordinates;
+		this.leafletTemplate.addMarker(new LatLng(lat, lng));
 	}
+
 
 	onMapClicked($event) {
 
