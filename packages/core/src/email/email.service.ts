@@ -1,4 +1,3 @@
-import { environment } from '@gauzy/config';
 import {
 	IInviteEmployeeModel,
 	IInviteUserModel,
@@ -124,7 +123,7 @@ export class EmailService extends CrudService<IEmail> {
 				},
 				locals: {
 					locale: languageCode,
-					host: originUrl || environment.host,
+					host: originUrl || env.host,
 					contactName,
 					invoiceNumber,
 					amount,
@@ -174,7 +173,7 @@ export class EmailService extends CrudService<IEmail> {
 					tenantId,
 					organizationId,
 					locale: languageCode,
-					host: originUrl || environment.host,
+					host: originUrl || env.host,
 					acceptUrl:
 						originUrl +
 						`#/auth/estimate/?token=${token}&id=${invoiceId}&action=accept&email=${email}`,
@@ -212,7 +211,7 @@ export class EmailService extends CrudService<IEmail> {
 			locals: {
 				locale: languageCode,
 				name: organizationContact.name,
-				host: originUrl || environment.host,
+				host: originUrl || env.host,
 				id: organizationContact.id,
 				inviterName: inviterUser
 					? (inviterUser.firstName || '') +
@@ -262,7 +261,7 @@ export class EmailService extends CrudService<IEmail> {
 				organizationName: organization.name,
 				organizationId: organization.id,
 				generatedUrl: registerUrl,
-				host: originUrl || environment.host
+				host: originUrl || env.host
 			}
 		};
 
@@ -303,7 +302,7 @@ export class EmailService extends CrudService<IEmail> {
 				organizationName: organization.name,
 				organizationId: organization.id,
 				generatedUrl: registerUrl,
-				host: originUrl || environment.host
+				host: originUrl || env.host
 			}
 		};
 
@@ -336,7 +335,7 @@ export class EmailService extends CrudService<IEmail> {
 			locals: {
 				locale: languageCode,
 				email: user.email,
-				host: originUrl || environment.host,
+				host: originUrl || env.host,
 				organizationId: organizationId ? organizationId : IsNull()
 			}
 		};
@@ -379,7 +378,7 @@ export class EmailService extends CrudService<IEmail> {
 			locals: {
 				locale: languageCode,
 				generatedUrl: url,
-				host: originUrl || environment.host,
+				host: originUrl || env.host,
 				organizationId: organizationId
 			}
 		};
@@ -416,7 +415,7 @@ export class EmailService extends CrudService<IEmail> {
 			locals: {
 				locale: languageCode,
 				email: email,
-				host: originUrl || environment.host,
+				host: originUrl || env.host,
 				organizationId: organizationId ? organizationId : IsNull()
 			}
 		};
@@ -454,7 +453,7 @@ export class EmailService extends CrudService<IEmail> {
 			locals: {
 				locale: languageCode,
 				email: email,
-				host: environment.host,
+				host: env.host,
 				timesheet: timesheet,
 				timesheet_action: timesheet.status
 			}
@@ -490,7 +489,7 @@ export class EmailService extends CrudService<IEmail> {
 			locals: {
 				locale: languageCode,
 				email: email,
-				host: environment.host,
+				host: env.host,
 				timesheet: timesheet,
 				timesheet_action: timesheet.status
 			}

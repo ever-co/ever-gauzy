@@ -4,7 +4,7 @@
 			<mj-column>
 				<mj-image
 					width="100px"
-					src="assets/images/logos/logo_Gauzy.svg"
+					src="{{host}}/assets/images/logos/logo_Gauzy.svg"
 				></mj-image>
 				<mj-divider
 					border-color="#1B005D"
