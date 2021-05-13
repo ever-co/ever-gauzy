@@ -12,9 +12,9 @@ import {
 	ComponentLayoutStyleEnum,
 	IContact
 } from '@gauzy/contracts';
-import { first, tap } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 import { ComponentEnum } from '../../../../../@core/constants/layout.constants';
-import { Router, RouterEvent, NavigationEnd } from '@angular/router';
+import { Router } from '@angular/router';
 import { ProductStoreService } from '../../../../../@core/services/product-store.service';
 import { Store } from '../../../../../@core/services/store.service';
 import { EnabledStatusComponent } from '../../table-components/enabled-row.component';

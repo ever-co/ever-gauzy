@@ -4,18 +4,13 @@ import {
 	HttpStatus,
 	Get,
 	Query,
-	UseGuards,
-	Body,
-	HttpCode,
-	Put,
-	Param
+	UseGuards
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CrudController, IPagination, ProductStore } from 'core';
 import { ProductStoreService } from './product-store.service';
 import { ApiResponse, ApiOperation } from '@nestjs/swagger';
 import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
-import { LanguagesEnum } from '@gauzy/contracts';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 
 
