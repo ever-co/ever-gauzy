@@ -3,17 +3,19 @@ import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-ba
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Ng2SmartTableComponent, ServerDataSource } from 'ng2-smart-table';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { API_PREFIX } from 'apps/gauzy/src/app/@core';
-import { ServerDataSource } from 'ng2-smart-table';
 import {
 	IProductStore,
+	IOrganization,
 	ComponentLayoutStyleEnum
 } from '@gauzy/contracts';
 import { first, tap } from 'rxjs/operators';
 import { ComponentEnum } from '../../../../../@core/constants/layout.constants';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
+import { ProductStoreService } from '../../../../../@core/services/product-store.service';
+import { Store } from '../../../../../@core/services/store.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -28,15 +30,16 @@ export class ProductStoreTableComponent
 	settingsSmartTable: object;
 	loading: boolean;
 	selectedStore: IProductStore;
-	source = ServerDataSource;
-	STORES_URL = `${API_PREFIX}/product-stores/`;
+	source: ServerDataSource;
+	STORES_URL = `${API_PREFIX}/product-stores?`;
 	viewComponentName: ComponentEnum;
 
 	disableButton = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-
+	selectedOrganization: IOrganization;
 
 	storesTable: Ng2SmartTableComponent;
+
 	@ViewChild('productStore') set content(content: Ng2SmartTableComponent) {
 		if (content) {
 			this.storesTable = content;
@@ -48,13 +51,26 @@ export class ProductStoreTableComponent
 		readonly translateService: TranslateService,
 		private router: Router,
 		private http: HttpClient,
-		private toastrService: ToastrService
+		private toastrService: ToastrService,
+		private productStoreService: ProductStoreService,
+		private store: Store
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
+		this.loadSettings();
 		this.loadSmartTable();
+
+		this.store.selectedOrganization$
+			.pipe(untilDestroyed(this))
+			.subscribe((org) => {
+				this.selectedOrganization = org;
+				if (this.selectedOrganization) {
+					this.loadSettings();
+				}
+			});
+
 	}
 
 	async loadSmartTable() {
@@ -89,6 +105,28 @@ export class ProductStoreTableComponent
 
 	onEditStore(selectedItem) {
 
+	}
+
+	async loadSettings() {
+		const { id: organizationId, tenantId } = this.selectedOrganization;
+
+		
+		const data = "data=" + JSON.stringify({
+			relations: ['logo', 'contact', 'tags', 'warehouses'],
+			findInput: {
+				organization: { id: organizationId },
+				tenantId
+			},
+		});
+
+		this.source = new ServerDataSource(this.http, {
+			endPoint: this.STORES_URL + data,
+			dataKey: 'items',
+			totalKey: 'total',
+			perPage: 'per_page',
+			pagerPageKey: 'page'
+		});
+		this.loading = false;
 	}
 
 	/*

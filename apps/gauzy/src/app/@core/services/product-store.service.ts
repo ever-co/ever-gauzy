@@ -11,17 +11,17 @@ import { HttpClient } from '@angular/common/http';
 export class ProductStoreService {
 	PRODUCT_STORES_URL = `${API_PREFIX}/product-stores`;
 
-    constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient) { }
 
-    getById(id: string): Promise<IProductStore> {
+	getById(id: string): Promise<IProductStore> {
 		return this.http
 			.get<IProductStore>(
 				`${this.PRODUCT_STORES_URL}/${id}`
 			)
 			.pipe(first())
 			.toPromise();
-    }
-    
+	}
+
 	create(
 		productStore: IProductStore
 	): Promise<IProductStore> {
@@ -54,5 +54,5 @@ export class ProductStoreService {
 			.pipe(first())
 			.toPromise();
 	}
-    
+
 }
