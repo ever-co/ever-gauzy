@@ -1,12 +1,12 @@
-import { CrudService, IPagination, ProductStore, Warehouse, ImageAsset, Contact } from 'core';
+import { CrudService, IPagination, Merchant, Warehouse, ImageAsset, Contact } from 'core';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
 
-export class ProductStoreService extends CrudService<ProductStore> {
+export class MerchantService extends CrudService<Merchant> {
 
-    constructor(@InjectRepository(ProductStore)
-    private readonly productStoreRepository: Repository<ProductStore>,
+    constructor(@InjectRepository(Merchant)
+    private readonly productStoreRepository: Repository<Merchant>,
         @InjectRepository(Warehouse)
         private readonly warehouseRepository: Repository<Warehouse>,
         @InjectRepository(ImageAsset)
@@ -16,11 +16,11 @@ export class ProductStoreService extends CrudService<ProductStore> {
 
     async findAllProductTypes(relations?: string[],
         findInput?: any,
-        options = { page: 1, limit: 10 }): Promise<IPagination<ProductStore>> {
+        options = { page: 1, limit: 10 }): Promise<IPagination<Merchant>> {
 
         const total = await this.productStoreRepository.count(findInput);
 
-        const allProductStores = await this.productStoreRepository.find({
+        const allMerchants = await this.productStoreRepository.find({
             where: findInput,
             relations,
             skip: (options.page - 1) * options.limit,
@@ -28,7 +28,7 @@ export class ProductStoreService extends CrudService<ProductStore> {
         });
 
         return {
-            items: allProductStores,
+            items: allMerchants,
             total
         }
 
@@ -50,7 +50,7 @@ export class ProductStoreService extends CrudService<ProductStore> {
         console.log(productStoreInput, 'product store input')
 
         const contact = Object.assign(new Contact(), productStoreInput.contact);
-        const productStore = Object.assign(new ProductStore(), { ...productStoreInput, contact });
+        const productStore = Object.assign(new Merchant(), { ...productStoreInput, contact });
 
         return await this.productStoreRepository.save(productStore);
 

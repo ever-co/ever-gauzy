@@ -254,7 +254,7 @@ export interface IWarehouse extends IBasePerTenantEntityModel {
 	tags?: ITag[];
 }
 
-export interface IProductStore extends IBasePerTenantAndOrganizationEntityModel {
+export interface IMerchant extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	code: string;
 	contact: IContact;
@@ -267,7 +267,7 @@ export interface IProductStore extends IBasePerTenantAndOrganizationEntityModel 
 	active: boolean;
 }
 
-export interface IProductStoreCreateInput {
+export interface IMerchantCreateInput {
 	name: string;
 	code: string;
 	contact: IContact;

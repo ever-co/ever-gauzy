@@ -1,4 +1,4 @@
-import { IProductStore, CurrenciesEnum } from '@gauzy/contracts';
+import { IMerchant, CurrenciesEnum } from '@gauzy/contracts';
 import {
 	TenantOrganizationBaseEntity, ImageAsset, Tag, Contact, Warehouse,
 } from '../core/entities/internal';
@@ -8,8 +8,8 @@ import { IsEnum, IsString } from 'class-validator';
 
 
 
-@Entity('product_store')
-export class ProductStore extends TenantOrganizationBaseEntity implements IProductStore {
+@Entity('merchant')
+export class Merchant extends TenantOrganizationBaseEntity implements IMerchant {
 
 
 	@ApiProperty()
@@ -56,7 +56,7 @@ export class ProductStore extends TenantOrganizationBaseEntity implements IProdu
 
 	@ManyToMany(() => Tag)
 	@JoinTable({
-		name: 'tag_product_store'
+		name: 'tag_merchant'
 	})
 	tags: Tag[];
 
@@ -68,7 +68,7 @@ export class ProductStore extends TenantOrganizationBaseEntity implements IProdu
 
 	@ManyToMany(() => Warehouse)
 	@JoinTable({
-		name: 'warehouse_store'
+		name: 'warehouse_merchant'
 	})
 	warehouses: Warehouse[];
 

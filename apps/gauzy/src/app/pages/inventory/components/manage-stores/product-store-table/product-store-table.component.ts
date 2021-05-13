@@ -7,7 +7,7 @@ import { Ng2SmartTableComponent, ServerDataSource } from 'ng2-smart-table';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { API_PREFIX } from 'apps/gauzy/src/app/@core';
 import {
-	IProductStore,
+	IMerchant,
 	IOrganization,
 	ComponentLayoutStyleEnum,
 	IContact
@@ -15,7 +15,7 @@ import {
 import { tap } from 'rxjs/operators';
 import { ComponentEnum } from '../../../../../@core/constants/layout.constants';
 import { Router } from '@angular/router';
-import { ProductStoreService } from '../../../../../@core/services/product-store.service';
+import { MerchantService } from '../../../../../@core/services/product-store.service';
 import { Store } from '../../../../../@core/services/store.service';
 import { EnabledStatusComponent } from '../../table-components/enabled-row.component';
 
@@ -25,13 +25,13 @@ import { EnabledStatusComponent } from '../../table-components/enabled-row.compo
 	templateUrl: './product-store-table.component.html',
 	styleUrls: ['./product-store-table.component.scss']
 })
-export class ProductStoreTableComponent
+export class MerchantTableComponent
 	extends TranslationBaseComponent
 	implements OnInit {
 
 	settingsSmartTable: object;
 	loading: boolean;
-	selectedStore: IProductStore;
+	selectedMerchant: IMerchant;
 	source: ServerDataSource;
 	STORES_URL = `${API_PREFIX}/product-stores?`;
 	viewComponentName: ComponentEnum;
@@ -54,7 +54,7 @@ export class ProductStoreTableComponent
 		private router: Router,
 		private http: HttpClient,
 		private toastrService: ToastrService,
-		private productStoreService: ProductStoreService,
+		private productStoreService: MerchantService,
 		private store: Store
 	) {
 		super(translateService);
@@ -193,7 +193,7 @@ export class ProductStoreTableComponent
 
 	async selectStore({ isSelected, data }) {
 		this.disableButton = !isSelected;
-		this.selectedStore = isSelected ? data : null;
+		this.selectedMerchant = isSelected ? data : null;
 	}
 
 

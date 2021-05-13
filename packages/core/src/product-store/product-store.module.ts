@@ -1,21 +1,21 @@
 import { Module } from '@nestjs/common';
 import { RouterModule } from 'nest-router';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ProductStore, Warehouse, ImageAsset } from 'core';
-import { ProductStoreController } from './product-store.controller';
-import { ProductStoreService } from './product-store.service';
+import { Merchant, Warehouse, ImageAsset } from 'core';
+import { MerchantController } from './product-store.controller';
+import { MerchantService } from './product-store.service';
 import { TenantModule } from '../tenant/tenant.module';
 
 
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/product-stores', module: ProductStoreModule }
+			{ path: '/merchants', module: MerchantModule }
 		]),
-		TypeOrmModule.forFeature([ProductStore, Warehouse, ImageAsset]),
+		TypeOrmModule.forFeature([Merchant, Warehouse, ImageAsset]),
 		TenantModule
 	],
-	controllers: [ProductStoreController],
-	providers: [ProductStoreService]
+	controllers: [MerchantController],
+	providers: [MerchantService]
 })
-export class ProductStoreModule {}
+export class MerchantModule {}

@@ -4,7 +4,7 @@ import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-ba
 import { TranslateService } from '@ngx-translate/core';
 import {
 	ITag,
-	IProductStore,
+	IMerchant,
 	IWarehouse,
 	IImageAsset,
 } from '@gauzy/contracts';
@@ -16,7 +16,7 @@ import {
 	Store,
 	WarehouseService,
 	ImageAssetService,
-	ProductStoreService
+	MerchantService
 } from 'apps/gauzy/src/app/@core';
 import { NbDialogService } from '@nebular/theme';
 import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
@@ -32,7 +32,7 @@ import { LatLng } from 'leaflet';
 	templateUrl: './product-store-form.component.html',
 	styleUrls: ['./product-store-form.component.scss']
 })
-export class ProductStoreFormComponent
+export class MerchantFormComponent
 	extends TranslationBaseComponent
 	implements OnInit {
 
@@ -55,7 +55,7 @@ export class ProductStoreFormComponent
 
 	images: IImageAsset[] = [];
 
-	productStore: IProductStore;
+	productStore: IMerchant;
 
 	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
 
@@ -67,7 +67,7 @@ export class ProductStoreFormComponent
 		private warehouseService: WarehouseService,
 		private dialogService: NbDialogService,
 		private imageAssetService: ImageAssetService,
-		private productStoreService: ProductStoreService
+		private productStoreService: MerchantService
 
 	) {
 		super(translateService);

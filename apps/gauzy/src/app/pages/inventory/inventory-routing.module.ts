@@ -12,9 +12,9 @@ import { InventoryItemViewComponent } from './components/view-inventory-item/vie
 import { WarehousesComponent } from './components/manage-warehouses/warehouses.component';
 import { WarehouseFormComponent } from './components/manage-warehouses/warehouse-form/warehouse-form.component';
 import { WarehousesTableComponent } from './components/manage-warehouses/warehouses-table/warehouses-table.component';
-import { ProductStoreTableComponent } from './components/manage-stores/product-store-table/product-store-table.component';
-import { ProductStoreComponent } from './components/manage-stores/product-store.component';
-import { ProductStoreFormComponent } from './components/manage-stores/product-store-form/product-store-form.component';
+import { MerchantTableComponent } from './components/manage-stores/product-store-table/product-store-table.component';
+import { MerchantComponent } from './components/manage-stores/product-store.component';
+import { MerchantFormComponent } from './components/manage-stores/product-store-form/product-store-form.component';
 
 const ORG_PERMISSIONS = [
 	PermissionsEnum.ALL_ORG_VIEW,
@@ -160,7 +160,7 @@ const routes: Routes = [
 	},
 	{
 		path: 'stores',
-		component: ProductStoreComponent,
+		component: MerchantComponent,
 		canActivate: [NgxPermissionsGuard],
 		data: {
 			permissions: {
@@ -171,11 +171,11 @@ const routes: Routes = [
 		children: [
 			{
 				path: 'all',
-				component: ProductStoreTableComponent
+				component: MerchantTableComponent
 			},
 			{
 				path: 'create',
-				component: ProductStoreFormComponent
+				component: MerchantFormComponent
 			},
 		]
 	}
