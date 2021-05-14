@@ -14,7 +14,7 @@
 					>Отправить расписание</mj-text
 				>
 				<mj-text font-size="16px" font-family="helvetica">
-					<p>Dear {{host}},</p>
+					<p>Dear {{email}},</p>
 					<p>
 						пользователь {{candidateName}} пользователь {{project}},
 						отправить расписание проекта..!!

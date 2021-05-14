@@ -4,11 +4,15 @@ import * as mjml2html from 'mjml';
 import { EmailTemplateService } from '../../email-template.service';
 import { EmailTemplateGeneratePreviewQuery } from '../email-template.generate-preview.query';
 import { moment } from '../../../core/moment-extend';
+import { ConfigService } from '@gauzy/config';
 
 @QueryHandler(EmailTemplateGeneratePreviewQuery)
 export class EmailTemplateGeneratePreviewHandler
 	implements IQueryHandler<EmailTemplateGeneratePreviewQuery> {
-	constructor(private readonly emailTemplateService: EmailTemplateService) {}
+	constructor(
+		private readonly emailTemplateService: EmailTemplateService,
+		private readonly configService: ConfigService
+	) {}
 
 	public async execute(
 		command: EmailTemplateGeneratePreviewQuery
@@ -23,13 +27,16 @@ export class EmailTemplateGeneratePreviewHandler
 			// ignore mjml conversion errors for non-mjml text such as subject
 		}
 
+		const clientBaseUrl = this.configService.get('clientBaseUrl');
+		const host = this.configService.get('host');
+
 		const handlebarsTemplate = Handlebars.compile(textToHtml);
 		const html = handlebarsTemplate({
 			organizationName: 'Organization',
 			email: 'user@domain.com',
 			name: 'John Doe',
 			role: 'USER_ROLE',
-			host: 'Alish Meklyov',
+			host: clientBaseUrl || host,
 			hostEmail: '(alish@ever.com)',
 			agenda: 'This booking is for gauzy call',
 			description: 'This is a test appointment booking',

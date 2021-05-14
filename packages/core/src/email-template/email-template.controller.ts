@@ -23,7 +23,7 @@ import {
 } from './queries';
 import { EmailTemplateSaveCommand } from './commands';
 import { AuthGuard } from '@nestjs/passport';
-import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
+import { ParseJsonPipe, TenantPermissionGuard } from '../shared';
 
 @ApiTags('EmailTemplate')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -52,11 +52,9 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 	})
 	@Get('findTemplate')
 	async findEmailTemplate(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<ICustomizableEmailTemplate> {
-		const {
-			findInput
-		}: { findInput: ICustomizeEmailTemplateFindInput } = JSON.parse(data);
+		const { findInput }: { findInput: ICustomizeEmailTemplateFindInput } = data;
 		return this.queryBus.execute(new FindEmailTemplateQuery(findInput));
 	}
 

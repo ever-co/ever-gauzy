@@ -11,7 +11,7 @@ import {
 import { NbStepperComponent } from '@nebular/theme';
 import { FormGroup, FormBuilder, Validators } from '@nebular/auth/node_modules/@angular/forms';
 import { LocationFormComponent, LeafletMapComponent } from 'apps/gauzy/src/app/@shared/forms';
-import { ToastrService, Store, WarehouseService } from 'apps/gauzy/src/app/@core';
+import { ToastrService, Store, WarehouseService, ImageAssetService } from 'apps/gauzy/src/app/@core';
 import { NbDialogService } from '@nebular/theme';
 import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
 import { Subject } from 'rxjs';
@@ -46,6 +46,8 @@ export class ProductStoreFormComponent
 	@ViewChild('leafletTemplate')
 	leafletTemplate: LeafletMapComponent;
 
+	images: IImageAsset[] = [];
+
 	productStore: IProductStore;
 
 	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
@@ -56,7 +58,8 @@ export class ProductStoreFormComponent
 		private fb: FormBuilder,
 		private store: Store,
 		private warehouseService: WarehouseService,
-		private dialogService: NbDialogService
+		private dialogService: NbDialogService,
+		private imageAssetService: ImageAssetService
 
 	) {
 		super(translateService);
@@ -64,12 +67,23 @@ export class ProductStoreFormComponent
 
 
 	ngOnInit(): void {
+		this._loadImages();
 		this._initializeForm();
 		this._loadWarehouses();
+
 	}
 
 	onWarehouseSelect($event) {
 
+	}
+
+	private async _loadImages() {
+		const { items } = await this.imageAssetService.getAll({
+			organizationId: this.store.selectedOrganization ? this.store.selectedOrganization.id : null
+		});
+
+
+		this.images = items;
 	}
 
 	private async _loadWarehouses() {
@@ -120,7 +134,7 @@ export class ProductStoreFormComponent
 		const dialog = this.dialogService.open(SelectAssetComponent, {
 			context: {
 				newImageUploadedEvent: this.newImageUploadedEvent$,
-				galleryInput: [],
+				galleryInput: this.images,
 				settings: {
 					uploadImageEnabled: false,
 					deleteImageEnabled: false,

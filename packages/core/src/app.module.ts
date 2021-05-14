@@ -129,6 +129,7 @@ import { resolveServeStaticPath } from './helper';
 import { AccountingTemplateModule } from './accounting-template/accounting-template.module';
 import { SeederModule } from './core/seeds/seeder.module';
 import { WarehouseModule } from './warehouse/warehouse.module';
+import { ProductStoreModule } from 'product-store/product-store.module';
 
 const { unleashConfig } = environment;
 if (unleashConfig.url) {
@@ -307,7 +308,8 @@ if (process.env.DB_TYPE === 'postgres') {
 		GoalKpiTemplateModule,
 		AccountingTemplateModule,
 		SeederModule,
-		WarehouseModule
+		WarehouseModule,
+		ProductStoreModule
 	],
 	controllers: [AppController],
 	providers: [AppService],

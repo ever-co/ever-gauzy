@@ -76,7 +76,7 @@ import { SelectedRowComponent } from './components/table-components/selected-row
 import { ProductStoreTableComponent } from './components/manage-stores/product-store-table/product-store-table.component';
 import { ProductStoreComponent } from './components/manage-stores/product-store.component';
 import { ProductStoreFormComponent } from './components/manage-stores/product-store-form/product-store-form.component';
-
+import { ProductStoreService } from '../../@core/services/product-store.service';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -171,7 +171,8 @@ const NB_MODULES = [
 		ImageAssetService,
 		InventoryStore,
 		TranslatableService,
-		WarehouseService
+		WarehouseService,
+		ProductStoreService
 	]
 })
 export class InventoryModule {}

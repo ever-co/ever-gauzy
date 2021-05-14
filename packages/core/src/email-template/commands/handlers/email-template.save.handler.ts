@@ -2,7 +2,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { EmailTemplateSaveCommand } from '../email-template.save.command';
 import { EmailTemplateService } from '../../email-template.service';
 import { EmailTemplate } from '../../email-template.entity';
-import { LanguagesEnum, EmailTemplateNameEnum } from '@gauzy/contracts';
+import { LanguagesEnum, EmailTemplateNameEnum, IEmailTemplate } from '@gauzy/contracts';
 import * as mjml2html from 'mjml';
 import { BadRequestException } from '@nestjs/common';
 
@@ -13,7 +13,7 @@ export class EmailTemplateSaveHandler
 
 	public async execute(
 		command: EmailTemplateSaveCommand
-	): Promise<EmailTemplate> {
+	): Promise<IEmailTemplate> {
 		const {
 			input: {
 				languageCode,
@@ -56,7 +56,7 @@ export class EmailTemplateSaveHandler
 		tenantId: string,
 		content: string,
 		type: 'html' | 'subject'
-	): Promise<EmailTemplate> {
+	): Promise<IEmailTemplate> {
 		const {
 			success: found,
 			record
@@ -70,7 +70,7 @@ export class EmailTemplateSaveHandler
 			tenantId
 		});
 
-		let entity: EmailTemplate;
+		let entity: IEmailTemplate;
 		if (found) {
 			switch (type) {
 				case 'subject':

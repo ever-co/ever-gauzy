@@ -26,14 +26,14 @@ export class FindEmailTemplateHandler
 		};
 
 		[emailTemplate.subject, emailTemplate.template] = await Promise.all([
-			this._fetchTemplate(
+			await this._fetchTemplate(
 				languageCode,
 				name,
 				organizationId,
 				tenantId,
 				'subject'
 			),
-			this._fetchTemplate(
+			await this._fetchTemplate(
 				languageCode,
 				name,
 				organizationId,
@@ -54,6 +54,7 @@ export class FindEmailTemplateHandler
 	): Promise<string> {
 		let subject = '';
 		let template = '';
+
 		try {
 			// Find customized email template for given organization
 			const { hbs, mjml } = await this.emailTemplateService.findOne({
