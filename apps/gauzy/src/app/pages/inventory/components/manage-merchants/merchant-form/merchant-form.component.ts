@@ -230,8 +230,18 @@ export class MerchantFormComponent
 	}
 
 
-	onMapClicked($event) {
+	onMapClicked(latlng: LatLng) {
+		const { lat, lng } = latlng;
+		const location = this.locationFormDirective.getValue();
 
+		this.locationFormDirective.setValue({
+			...location,
+			country: '',
+			loc: {
+				type: 'Point',
+				coordinates: [lat, lng]
+			}
+		});
 	}
 
 

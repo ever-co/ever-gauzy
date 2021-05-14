@@ -27,9 +27,6 @@ export class MerchantService extends CrudService<Merchant> {
             take: options.limit
         });
 
-        //tstodo
-        console.log(findInput, 'find input');
-
         return {
             items: allMerchants,
             total
