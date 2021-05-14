@@ -129,7 +129,7 @@ import { resolveServeStaticPath } from './helper';
 import { AccountingTemplateModule } from './accounting-template/accounting-template.module';
 import { SeederModule } from './core/seeds/seeder.module';
 import { WarehouseModule } from './warehouse/warehouse.module';
-import { ProductStoreModule } from 'product-store/product-store.module';
+import { MerchantModule } from 'merchant/merchant.module';
 
 const { unleashConfig } = environment;
 if (unleashConfig.url) {
@@ -309,7 +309,7 @@ if (process.env.DB_TYPE === 'postgres') {
 		AccountingTemplateModule,
 		SeederModule,
 		WarehouseModule,
-		ProductStoreModule
+		MerchantModule
 	],
 	controllers: [AppController],
 	providers: [AppService],

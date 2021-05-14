@@ -7,7 +7,7 @@ import { Ng2SmartTableComponent, ServerDataSource } from 'ng2-smart-table';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { API_PREFIX } from 'apps/gauzy/src/app/@core';
 import {
-	IProductStore,
+	IMerchant,
 	IOrganization,
 	ComponentLayoutStyleEnum,
 	IContact
@@ -15,36 +15,37 @@ import {
 import { tap } from 'rxjs/operators';
 import { ComponentEnum } from '../../../../../@core/constants/layout.constants';
 import { Router } from '@angular/router';
-import { ProductStoreService } from '../../../../../@core/services/product-store.service';
+import { MerchantService } from '../../../../../@core/services/merchant.service';
 import { Store } from '../../../../../@core/services/store.service';
 import { EnabledStatusComponent } from '../../table-components/enabled-row.component';
+import { ItemImgTagsComponent } from '../../table-components/item-img-tags-row.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-product-store-table',
-	templateUrl: './product-store-table.component.html',
-	styleUrls: ['./product-store-table.component.scss']
+	selector: 'ga-merchant-table',
+	templateUrl: './merchant-table.component.html',
+	styleUrls: ['./merchant-table.component.scss']
 })
-export class ProductStoreTableComponent
+export class MerchantTableComponent
 	extends TranslationBaseComponent
 	implements OnInit {
 
 	settingsSmartTable: object;
 	loading: boolean;
-	selectedStore: IProductStore;
+	selectedMerchant: IMerchant;
 	source: ServerDataSource;
-	STORES_URL = `${API_PREFIX}/product-stores?`;
+	STORES_URL = `${API_PREFIX}/merchants?`;
 	viewComponentName: ComponentEnum;
 
 	disableButton = true;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	selectedOrganization: IOrganization;
 
-	storesTable: Ng2SmartTableComponent;
+	merchantsTable: Ng2SmartTableComponent;
 
 	@ViewChild('productStore') set content(content: Ng2SmartTableComponent) {
 		if (content) {
-			this.storesTable = content;
+			this.merchantsTable = content;
 			this.onChangedSource();
 		}
 	}
@@ -54,7 +55,7 @@ export class ProductStoreTableComponent
 		private router: Router,
 		private http: HttpClient,
 		private toastrService: ToastrService,
-		private productStoreService: ProductStoreService,
+		private productStoreService: MerchantService,
 		private store: Store
 	) {
 		super(translateService);
@@ -84,7 +85,8 @@ export class ProductStoreTableComponent
 			columns: {
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
-					type: 'string',
+					type: 'custom',
+					renderComponent: ItemImgTagsComponent
 				},
 				code: {
 					title: this.getTranslation('INVENTORY_PAGE.CODE'),
@@ -129,7 +131,7 @@ export class ProductStoreTableComponent
 	}
 
 	onAddStoreClick() {
-		this.router.navigate(['/pages/organization/inventory/stores/create']);
+		this.router.navigate(['/pages/organization/inventory/merchants/create']);
 	}
 
 	onEditStore(selectedItem) {
@@ -162,7 +164,7 @@ export class ProductStoreTableComponent
 	 * Table on changed source event
 	 */
 	onChangedSource() {
-		this.storesTable.source.onChangedSource
+		this.merchantsTable.source.onChangedSource
 			.pipe(
 				untilDestroyed(this),
 				tap(() => this.clearItem())
@@ -185,15 +187,15 @@ export class ProductStoreTableComponent
 	 * Deselect all table rows
 	 */
 	deselectAll() {
-		if (this.storesTable && this.storesTable.grid) {
-			this.storesTable.grid.dataSet['willSelect'] = 'false';
-			this.storesTable.grid.dataSet.deselectAll();
+		if (this.merchantsTable && this.merchantsTable.grid) {
+			this.merchantsTable.grid.dataSet['willSelect'] = 'false';
+			this.merchantsTable.grid.dataSet.deselectAll();
 		}
 	}
 
 	async selectStore({ isSelected, data }) {
 		this.disableButton = !isSelected;
-		this.selectedStore = isSelected ? data : null;
+		this.selectedMerchant = isSelected ? data : null;
 	}
 
 

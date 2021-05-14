@@ -1,21 +1,21 @@
 import { Injectable } from '@angular/core';
 import { API_PREFIX } from '../constants/app.constants';
 import {
-	IProductStore,
+	IMerchant,
 } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 
 
 @Injectable()
-export class ProductStoreService {
-	PRODUCT_STORES_URL = `${API_PREFIX}/product-stores`;
+export class MerchantService {
+	PRODUCT_STORES_URL = `${API_PREFIX}/merchants`;
 
 	constructor(private http: HttpClient) { }
 
-	getById(id: string): Promise<IProductStore> {
+	getById(id: string): Promise<IMerchant> {
 		return this.http
-			.get<IProductStore>(
+			.get<IMerchant>(
 				`${this.PRODUCT_STORES_URL}/${id}`
 			)
 			.pipe(first())
@@ -23,10 +23,10 @@ export class ProductStoreService {
 	}
 
 	create(
-		productStore: IProductStore
-	): Promise<IProductStore> {
+		productStore: IMerchant
+	): Promise<IMerchant> {
 		return this.http
-			.post<IProductStore>(
+			.post<IMerchant>(
 				`${this.PRODUCT_STORES_URL}`,
 				productStore
 			)
@@ -35,10 +35,10 @@ export class ProductStoreService {
 	}
 
 	update(
-		productStore: IProductStore
-	): Promise<IProductStore> {
+		productStore: IMerchant
+	): Promise<IMerchant> {
 		return this.http
-			.put<IProductStore>(
+			.put<IMerchant>(
 				`${this.PRODUCT_STORES_URL}/${productStore.id}`,
 				productStore
 			)
@@ -46,9 +46,9 @@ export class ProductStoreService {
 			.toPromise();
 	}
 
-	delete(id: string): Promise<IProductStore> {
+	delete(id: string): Promise<IMerchant> {
 		return this.http
-			.delete<IProductStore>(
+			.delete<IMerchant>(
 				`${this.PRODUCT_STORES_URL}/${id}`
 			)
 			.pipe(first())

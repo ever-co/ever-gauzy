@@ -90,7 +90,7 @@ export class ItemImgTagsComponent implements ViewCell {
 
 	get imageUrl() {
 		if (this.rowData.logo) {
-			return this.rowData.logo;
+			return this.rowData.logo.url || this.rowData.logo;
 		} else if (
 			this.rowData.featuredImage &&
 			this.rowData.featuredImage.url
