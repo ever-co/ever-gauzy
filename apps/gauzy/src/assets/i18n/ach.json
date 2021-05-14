@@ -2127,7 +2127,14 @@
 		"PHONE": "crwdns10344:0crwdne10344:0",
 		"FAX": "crwdns10346:0crwdne10346:0",
 		"FISCAL_INFORMATION": "crwdns10348:0crwdne10348:0",
-		"WEBSITE": "crwdns10350:0crwdne10350:0"
+		"WEBSITE": "crwdns10350:0crwdne10350:0",
+		"MERCHANTS": "crwdns10352:0crwdne10352:0",
+		"CREATE_MERCHANT": "crwdns10354:0crwdne10354:0",
+		"DELETE_MERCHANT": "crwdns10356:0crwdne10356:0",
+		"EDIT_MERCHANT": "crwdns10358:0crwdne10358:0",
+		"MERCHANT_CREATED_SUCCESSFULLY": "crwdns10360:0{{ name }}crwdne10360:0",
+		"MERCHANT_DELETED_SUCCESSFULLY": "crwdns10362:0{{ name }}crwdne10362:0",
+		"MERCHANT_UPDATED_SUCCESSFULLY": "crwdns10364:0{{ name }}crwdne10364:0"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "crwdns3029:0crwdne3029:0",

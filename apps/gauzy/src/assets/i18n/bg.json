@@ -2128,13 +2128,13 @@
 		"FAX": "Fax",
 		"FISCAL_INFORMATION": "Fiscal information",
 		"WEBSITE": "Website",
-		"MERCHANTS": "Търговци",
-		"CREATE_MERCHANT": "Нов търговец",
-		"DELETE_MERCHANT": "Изтрий търговец",
-		"EDIT_MERCHANT": "Редактирай търговец",
-		"MERCHANT_CREATED_SUCCESSFULLY": "Търговец '{{ name }}' е създаден успешно!",
-		"MERCHANT_DELETED_SUCCESSFULLY": "Търговец '{{ name }}' е изтрит!",
-		"MERCHANT_UPDATED_SUCCESSFULLY": "Търговец '{{ name }}' е редактиран успешно!"
+		"MERCHANTS": "Merchants",
+		"CREATE_MERCHANT": "New Merchant",
+		"DELETE_MERCHANT": "Delete Merchant",
+		"EDIT_MERCHANT": "Edit Merchant",
+		"MERCHANT_CREATED_SUCCESSFULLY": "Merchant '{{ name }}' created sucessfully!",
+		"MERCHANT_DELETED_SUCCESSFULLY": "Merchant '{{ name }}' deleted!",
+		"MERCHANT_UPDATED_SUCCESSFULLY": "Merchant '{{ name }}' updated sucessfully!"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
