@@ -54,15 +54,10 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 	})
 	@Get('findTemplate')
 	async findEmailTemplate(
-		@Req() request: Request,
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<ICustomizableEmailTemplate> {
-		const originalUrl = request.get('Origin');
 		const { findInput }: { findInput: ICustomizeEmailTemplateFindInput } = data;
-		return this.queryBus.execute(new FindEmailTemplateQuery({
-			...findInput,
-			originalUrl
-		}));
+		return this.queryBus.execute(new FindEmailTemplateQuery(findInput));
 	}
 
 	@ApiOperation({

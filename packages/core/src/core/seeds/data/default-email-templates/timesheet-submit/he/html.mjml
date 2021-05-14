@@ -14,7 +14,7 @@
 					>הגשת גיליון זמנים</mj-text
 				>
 				<mj-text font-size="16px" font-family="helvetica">
-					<p>Dear {{host}},</p>
+					<p>Dear {{email}},</p>
 					<p>
 						מִשׁתַמֵשׁ {{candidateName}} שֶׁל {{project}}, הגש
 						גיליון זמן לפרויקט..!!

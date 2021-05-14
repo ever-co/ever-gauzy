@@ -7,7 +7,6 @@ import {
 	EmailTemplateNameEnum
 } from '@gauzy/contracts';
 import { IsNull } from 'typeorm';
-import * as Handlebars from 'handlebars';
 
 @QueryHandler(FindEmailTemplateQuery)
 export class FindEmailTemplateHandler
@@ -18,7 +17,7 @@ export class FindEmailTemplateHandler
 		command: FindEmailTemplateQuery
 	): Promise<ICustomizableEmailTemplate> {
 		const {
-			input: { languageCode, name, originalUrl, organizationId, tenantId }
+			input: { languageCode, name, organizationId, tenantId }
 		} = command;
 
 		const emailTemplate: ICustomizableEmailTemplate = {
@@ -32,16 +31,14 @@ export class FindEmailTemplateHandler
 				name,
 				organizationId,
 				tenantId,
-				'subject',
-				originalUrl
+				'subject'
 			),
 			await this._fetchTemplate(
 				languageCode,
 				name,
 				organizationId,
 				tenantId,
-				'html',
-				originalUrl
+				'html'
 			)
 		]);
 
@@ -53,8 +50,7 @@ export class FindEmailTemplateHandler
 		name: EmailTemplateNameEnum,
 		organizationId: string,
 		tenantId: string,
-		type: 'html' | 'subject',
-		originalUrl: string
+		type: 'html' | 'subject'
 	): Promise<string> {
 		let subject = '';
 		let template = '';
@@ -81,12 +77,6 @@ export class FindEmailTemplateHandler
 			template = mjml;
 		}
 
-		if (template) {
-			template = Handlebars.compile(template)({
-				host: originalUrl
-			});
-		}
-	
 		switch (type) {
 			case 'subject':
 				return subject;

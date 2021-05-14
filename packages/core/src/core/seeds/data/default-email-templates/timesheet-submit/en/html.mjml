@@ -14,7 +14,7 @@
 					>Time sheet Submit</mj-text
 				>
 				<mj-text font-size="16px" font-family="helvetica">
-					<p>Dear {{host}},</p>
+					<p>Dear {{email}},</p>
 					<p>
 						User {{candidateName}} of {{project}}, submit project
 						time sheet..!!
