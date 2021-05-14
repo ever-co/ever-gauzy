@@ -76,7 +76,7 @@ import { SelectedRowComponent } from './components/table-components/selected-row
 import { MerchantTableComponent } from './components/manage-merchants/merchant-table/merchant-table.component';
 import { MerchantComponent } from './components/manage-merchants/merchant.component';
 import { MerchantFormComponent } from './components/manage-merchants/merchant-form/merchant-form.component';
-import { MerchantService } from 'apps/gauzy/src/app/@core';
+import { MerchantService } from './../../@core';
 
 const NB_MODULES = [
 	NbCardModule,
