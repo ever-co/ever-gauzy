@@ -119,7 +119,7 @@ export class EmailService extends CrudService<IEmail> {
 			},
 			locals: {
 				locale: languageCode,
-				host: originUrl || env.host,
+				host: originUrl || env.clientBaseUrl,
 				contactName,
 				invoiceNumber,
 				amount,
@@ -156,7 +156,7 @@ export class EmailService extends CrudService<IEmail> {
 	) {
 		const tenantId = RequestContext.currentTenantId();
 		const { id: organizationId } = organization;
-		const baseUrl = originUrl || env.host;
+		const baseUrl = originUrl || env.clientBaseUrl;
 		const sendOptions = {
 			template: isEstimate ? 'email-estimate' : 'email-invoice',
 			message: {
@@ -203,7 +203,7 @@ export class EmailService extends CrudService<IEmail> {
 	) {
 		const tenantId = RequestContext.currentTenantId();
 		const { id: organizationId } = organization;
-		const baseUrl = originUrl || env.host;
+		const baseUrl = originUrl || env.clientBaseUrl;
 		const sendOptions = {
 			template: 'invite-organization-client',
 			message: {
@@ -260,7 +260,7 @@ export class EmailService extends CrudService<IEmail> {
 				organizationId,
 				tenantId,
 				generatedUrl: registerUrl,
-				host: originUrl || env.host
+				host: originUrl || env.clientBaseUrl
 			}
 		};
 		this.email
@@ -295,7 +295,7 @@ export class EmailService extends CrudService<IEmail> {
 				organizationId,
 				tenantId,
 				generatedUrl: registerUrl,
-				host: originUrl || env.host
+				host: originUrl || env.clientBaseUrl
 			}
 		};
 		this.email
@@ -328,7 +328,7 @@ export class EmailService extends CrudService<IEmail> {
 			locals: {
 				locale: languageCode,
 				email: user.email,
-				host: originUrl || env.host,
+				host: originUrl || env.clientBaseUrl,
 				organizationId: organizationId || IsNull(),
 				tenantId: tenantId || IsNull()
 			}
@@ -371,7 +371,7 @@ export class EmailService extends CrudService<IEmail> {
 			locals: {
 				locale: languageCode,
 				generatedUrl: url,
-				host: originUrl || env.host,
+				host: originUrl || env.clientBaseUrl,
 				organizationId,
 				tenantId
 			}
@@ -409,7 +409,7 @@ export class EmailService extends CrudService<IEmail> {
 			locals: {
 				locale: languageCode,
 				email: email,
-				host: originUrl || env.host,
+				host: originUrl || env.clientBaseUrl,
 				organizationId: organizationId || IsNull(),
 				tenantId: tenantId || IsNull()
 			}
@@ -448,7 +448,7 @@ export class EmailService extends CrudService<IEmail> {
 			locals: {
 				locale: languageCode,
 				email: email,
-				host: env.host,
+				host: env.clientBaseUrl,
 				timesheet: timesheet,
 				timesheet_action: timesheet.status,
 				organizationId,
@@ -486,7 +486,7 @@ export class EmailService extends CrudService<IEmail> {
 			locals: {
 				locale: languageCode,
 				email: email,
-				host: env.host,
+				host: env.clientBaseUrl,
 				timesheet: timesheet,
 				timesheet_action: timesheet.status,
 				organizationId,
