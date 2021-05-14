@@ -24,6 +24,7 @@ export enum ListsInputTypeEnum {
 	POSITIONS = 'POSITIONS',
 	VENDORS = 'VENDORS'
 }
+
 export interface IOrganization extends IBasePerTenantEntityModel {
 	name: string;
 	profile_link: string;
@@ -237,7 +238,7 @@ export enum MinimumProjectSizeEnum {
 
 export const DEFAULT_PROFIT_BASED_BONUS = 75;
 export const DEFAULT_REVENUE_BASED_BONUS = 10;
-export const DEFAULT_INVITE_EXPIRY_PERIOD = 7
+export const DEFAULT_INVITE_EXPIRY_PERIOD = 7;
 
 export interface IOrganizationStoreState {
 	organization: IOrganization;
