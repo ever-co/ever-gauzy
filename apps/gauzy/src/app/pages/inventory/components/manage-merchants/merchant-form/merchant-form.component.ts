@@ -23,6 +23,7 @@ import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-mo
 import { Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { LatLng } from 'leaflet';
+import { Router } from '@angular/router';
 
 
 
@@ -67,7 +68,8 @@ export class MerchantFormComponent
 		private warehouseService: WarehouseService,
 		private dialogService: NbDialogService,
 		private imageAssetService: ImageAssetService,
-		private merchantService: MerchantService
+		private merchantService: MerchantService,
+		private router: Router,
 
 	) {
 		super(translateService);
@@ -175,10 +177,6 @@ export class MerchantFormComponent
 
 		delete locationFormValue['loc'];
 
-		//tstodo
-		console.log(this.selectedWarehouses, 'selected warehouses');
-
-
 		let request = {
 			...this.form.value,
 			warehouses: this.selectedWarehouses.map(id => { return { id } }),
@@ -191,7 +189,25 @@ export class MerchantFormComponent
 		}
 
 		if (!this.merchant) {
-			const res = await this.merchantService.create(request);
+			await this.merchantService.create(request)
+				.then(res => {
+					this.toastrService.success(
+						'INVENTORY_PAGE.MERCHANT_CREATED_SUCCESSFULLY',
+						{ name: request.name }
+					);
+
+					this.merchant = res;
+					this.router.navigate(['/pages/organization/inventory/merchants/all']);
+
+				}).catch((err) => {
+					this.toastrService.danger(
+						'INVENTORY_PAGE.COULD_NOT_CREATE_MERCHANT',
+						null,
+						{ name: request.name }
+					);
+					this.router.navigate(['/pages/organization/inventory/merchants/all']);
+
+				});
 		}
 	}
 

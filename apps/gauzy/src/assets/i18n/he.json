@@ -2131,7 +2131,10 @@
 		"MERCHANTS": "Merchants",
 		"CREATE_MERCHANT": "New merchant",
 		"DELETE_MERCHANT": "Delete merchant",
-		"EDIT_MERCHANT": "Edit merchant"
+		"EDIT_MERCHANT": "Edit merchant",
+		"MERCHANT_CREATED_SUCCESSFULLY": "Merchant '{{ name }}' created sucessfully!",
+		"MERCHANT_DELETED_SUCCESSFULLY": "Merchant '{{ name }}' deleted!",
+		"MERCHANT_UPDATED_SUCCESSFULLY": "Merchant '{{ name }}' updated sucessfully!"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

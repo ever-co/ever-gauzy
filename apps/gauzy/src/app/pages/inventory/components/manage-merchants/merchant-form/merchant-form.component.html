@@ -4,12 +4,12 @@
 			<div class="top-nav">
 				<h4 *ngIf="!merchant">
 					<ngx-back-navigation></ngx-back-navigation>
-					{{ 'INVENTORY_PAGE.CREATE_STORE' | translate }}
+					{{ 'INVENTORY_PAGE.CREATE_MERCHANT' | translate }}
 				</h4>
 				<h4 *ngIf="merchant">
 					<ngx-back-navigation></ngx-back-navigation>
 
-					{{ 'INVENTORY_PAGE.EDIT_STORE' | translate }}
+					{{ 'INVENTORY_PAGE.EDIT_MERCHANT' | translate }}
 				</h4>
 			</div>
 		</div>
@@ -17,9 +17,7 @@
 
 	<nb-card-body>
 		<form [formGroup]="form" *ngIf="form">
-			<!-- //tstodo -->
-			<!-- <nb-stepper #stepper [disableStepNavigation]="!merchant"> -->
-				<nb-stepper #stepper >
+			<nb-stepper #stepper [disableStepNavigation]="!merchant">
 				<nb-step label="Main">
 					<div class="row">
 						<div class="col-md-3 col-sm-12 image-container">
@@ -83,7 +81,7 @@
 
 							<div class="row">
 								<div class="col-md-6 col-sm-12">
-									<ga-currency formControlName="currency"  [placeholder]="
+									<ga-currency formControlName="currency" [placeholder]="
 												'INVENTORY_PAGE.RETAIL_PRICE_CURRENCY'
 													| translate
 											">
@@ -120,8 +118,8 @@
 														'INVENTORY_PAGE.WEBSITE'
 															| translate
 													}}</label>
-										<input formControlName="website" id="website" type="text" nbInput
-											fullWidth [placeholder]="
+										<input formControlName="website" id="website" type="text" nbInput fullWidth
+											[placeholder]="
 															'INVENTORY_PAGE.WEBSITE'
 																| translate
 														" />
@@ -150,7 +148,7 @@
 
 							<div class="row">
 								<div class="col-md-12 col-sm-12">
-										<nb-checkbox  status="basic">{{
+									<nb-checkbox status="basic">{{
 												'INVENTORY_PAGE.ACTIVE' | translate
 											}}</nb-checkbox>
 								</div>
@@ -161,11 +159,8 @@
 
 					<div class="row mt-5">
 						<div class="form-group col-4">
-							<button nbButton class="mr-2" status="success">
+							<button [disabled]="form.invalid" nbStepperNext nbButton status="primary">
 								{{ 'BUTTONS.NEXT' | translate }}
-							</button>
-							<button nbButton (click)="cancel()" status="danger">
-								{{ 'BUTTONS.CANCEL' | translate }}
 							</button>
 						</div>
 					</div>
@@ -187,11 +182,11 @@
 					</div>
 					<div class="row  mt-5">
 						<div class="form-group col-4">
-							<button nbButton class="mr-2" status="success">
-								{{ 'BUTTONS.NEXT' | translate }}
+							<button nbButton class="mr-2" status="primary" nbStepperPrevious>
+								{{ 'BUTTONS.PREVIOUS' | translate }}
 							</button>
-							<button nbButton (click)="cancel()" status="danger">
-								{{ 'BUTTONS.CANCEL' | translate }}
+							<button nbButton status="primary" nbStepperNext>
+								{{ 'BUTTONS.NEXT' | translate }}
 							</button>
 						</div>
 					</div>
@@ -223,8 +218,8 @@
 					</div>
 					<div class="row mt-5">
 						<div class="form-group col-4">
-							<button (click)="cancel()" status="danger" class="mr-2" nbButton>
-								{{ 'BUTTONS.CANCEL' | translate }}
+							<button status="primary" class="mr-2" nbButton nbStepperPrevious>
+								{{ 'BUTTONS.PREVIOUS' | translate }}
 							</button>
 							<button status="success" nbButton (click)="onSaveRequest()">
 								{{ 'BUTTONS.SAVE' | translate }}

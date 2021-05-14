@@ -2129,9 +2129,12 @@
 		"FISCAL_INFORMATION": "Fiscal information",
 		"WEBSITE": "Website",
 		"MERCHANTS": "Merchants",
-		"CREATE_MERCHANT": "New merchant",
-		"DELETE_MERCHANT": "Delete merchant",
-		"EDIT_MERCHANT": "Edit merchant"
+		"CREATE_MERCHANT": "New Merchant",
+		"DELETE_MERCHANT": "Delete Merchant",
+		"EDIT_MERCHANT": "Edit Merchant",
+		"MERCHANT_CREATED_SUCCESSFULLY": "Merchant '{{ name }}' created sucessfully!",
+		"MERCHANT_DELETED_SUCCESSFULLY": "Merchant '{{ name }}' deleted!",
+		"MERCHANT_UPDATED_SUCCESSFULLY": "Merchant '{{ name }}' updated sucessfully!"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

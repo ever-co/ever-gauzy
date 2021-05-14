@@ -2131,7 +2131,10 @@
 		"MERCHANTS": "Търговци",
 		"CREATE_MERCHANT": "Нов търговец",
 		"DELETE_MERCHANT": "Изтрий търговец",
-		"EDIT_MERCHANT": "Редактирай търговец"
+		"EDIT_MERCHANT": "Редактирай търговец",
+		"MERCHANT_CREATED_SUCCESSFULLY": "Търговец '{{ name }}' е създаден успешно!",
+		"MERCHANT_DELETED_SUCCESSFULLY": "Търговец '{{ name }}' е изтрит!",
+		"MERCHANT_UPDATED_SUCCESSFULLY": "Търговец '{{ name }}' е редактиран успешно!"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
