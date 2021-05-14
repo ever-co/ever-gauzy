@@ -47,10 +47,6 @@ export class DepartmentsMutationComponent implements OnInit {
 				.filter((e) => !!e),
 			organizationId: this.organizationId
 		});
-
-		this.name = '';
-		this.selectedEmployeeIds = [];
-		this.members = [];
 	}
 
 	onMembersSelected(members: string[]) {

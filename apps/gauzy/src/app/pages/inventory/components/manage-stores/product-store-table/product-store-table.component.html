@@ -1,0 +1,53 @@
+
+
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+
+	<nb-card-header>
+		<div class="main-header">
+			<h4>
+				<ngx-header-title>
+					{{ 'INVENTORY_PAGE.HEADER' | translate }}
+				</ngx-header-title>
+			</h4>
+			<div class="card-header-title">
+				<div style="margin-right: 9px"></div>
+				<ga-layout-selector [componentName]="viewComponentName"></ga-layout-selector>
+			</div>
+		</div>
+	</nb-card-header>
+
+	<nb-card-body>
+		<div class="mb-3">
+			<button nbButton status="success" class="mr-2" (click)="onAddStoreClick()">
+				{{ 'INVENTORY_PAGE.ADD_STORE' | translate }}
+			</button>
+
+			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+					<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+			</ng-container>
+		</div>
+
+		<ng2-smart-table [settings]="settingsSmartTable" (userRowSelect)="selectStore($event)" [source]="source"
+			style="cursor: pointer"></ng2-smart-table>
+	</nb-card-body>
+
+</nb-card>
+
+
+<ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
+	<button (click)="onEditStore(selectedItem)" nbButton status="info" class="mr-2"
+		[disabled]="!selectedItem && disableButton" [size]="buttonSize || 'medium'">
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+		{{ 'BUTTONS.EDIT' | translate }}
+	</button>
+	<button (click)="onViewInventoryItem(selectedItem)" nbButton status="warning" class="mr-2"
+		[disabled]="!selectedItem && disableButton" [size]="buttonSize || 'medium'">
+		<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
+		{{ 'BUTTONS.VIEW' | translate }}
+	</button>
+	<button *ngIf="editProductAllowed" (click)="delete(selectedItem)" nbButton status="danger" class="mr-2"
+		[disabled]="!selectedItem && disableButton" [size]="buttonSize || 'medium'">
+		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+		{{ 'BUTTONS.DELETE' | translate }}
+	</button>
+</ng-template>

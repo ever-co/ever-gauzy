@@ -73,10 +73,11 @@ export class OrganizationDepartmentController extends CrudController<Organizatio
 	async findAllOrganizationDepartments(
 		@Query('data') data: string
 	): Promise<IPagination<OrganizationDepartment>> {
-		const { findInput, relations } = JSON.parse(data);
+		const { findInput, relations, order} = JSON.parse(data);
 
 		return this.organizationDepartmentService.findAll({
 			where: findInput,
+			order,
 			relations
 		});
 	}

@@ -86,7 +86,7 @@ export class DepartmentsComponent
 				}
 			});
 	}
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 	cancel() {
 		this.departmentToEdit = null;
 		this.showAddCard = false;
@@ -194,9 +194,9 @@ export class DepartmentsComponent
 		if (input.name) {
 			this.departmentToEdit
 				? await this.organizationDepartmentsService.update(
-						this.departmentToEdit.id,
-						input
-				  )
+					this.departmentToEdit.id,
+					input
+				)
 				: await this.organizationDepartmentsService.create(input);
 
 			this.cancel();
@@ -230,7 +230,11 @@ export class DepartmentsComponent
 			['members', 'members.user', 'tags'],
 			{
 				organizationId: this.organizationId,
-				tenantId: this.tenantId
+				tenantId: this.tenantId,
+
+			},
+			{
+				createdAt: 'DESC',
 			}
 		);
 		if (res) {

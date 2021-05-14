@@ -98,6 +98,7 @@ export * from '../../product-option/product-option-group.entity';
 export * from '../../product-option/product-option-group-translation.entity';
 export * from '../../product-option/product-option-translation.entity';
 export * from '../../product-settings/product-settings.entity';
+export * from '../../product-store/product.store.entity';
 export * from '../../product-type/product-type-translation.entity';
 export * from '../../product-type/product-type.entity';
 export * from '../../product-variant-price/product-variant-price.entity';
@@ -133,5 +134,6 @@ export * from '../../warehouse/warehouse-product.entity';
 export * from '../../warehouse/warehouse-product-variant.entity';
 
 //core subscribers
+export * from './../../feature/feature.subscriber';
 export * from './../../timesheet/screenshot/screenshot.subscriber';
 export * from './../../timesheet/time-slot/time-slot.subscriber';

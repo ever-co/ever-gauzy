@@ -12,7 +12,8 @@ import {
 	NbTabsetModule,
 	NbInputModule,
 	NbBadgeModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbStepperModule
 } from '@nebular/theme';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
@@ -72,7 +73,10 @@ import { ManageVariantsQuantityFormComponent } from './components/manage-warehou
 import { ManageVariantsQuantityComponent } from './components/manage-warehouses/manage-variants-quantity/manage-variants-quantity.component';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { SelectedRowComponent } from './components/table-components/selected-row.component';
-
+import { ProductStoreTableComponent } from './components/manage-stores/product-store-table/product-store-table.component';
+import { ProductStoreComponent } from './components/manage-stores/product-store.component';
+import { ProductStoreFormComponent } from './components/manage-stores/product-store-form/product-store-form.component';
+import { ProductStoreService } from '../../@core/services/product-store.service';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -83,7 +87,8 @@ const NB_MODULES = [
 	NbCheckboxModule,
 	NbSelectModule,
 	NbTabsetModule,
-	NbInputModule
+	NbInputModule,
+	NbStepperModule
 ];
 
 @NgModule({
@@ -111,7 +116,10 @@ const NB_MODULES = [
 		ManageQuantityComponent,
 		ManageVariantsQuantityComponent,
 		ManageVariantsQuantityFormComponent,
-		SelectedRowComponent
+		SelectedRowComponent,
+		ProductStoreComponent,
+		ProductStoreTableComponent,
+		ProductStoreFormComponent
 	],
 	imports: [
 		UserFormsModule,
@@ -163,7 +171,8 @@ const NB_MODULES = [
 		ImageAssetService,
 		InventoryStore,
 		TranslatableService,
-		WarehouseService
+		WarehouseService,
+		ProductStoreService
 	]
 })
 export class InventoryModule {}

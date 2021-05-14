@@ -9,14 +9,28 @@ import { TenantModule } from '../tenant/tenant.module';
 import { ReportCategoryController } from './report-category.controller';
 import { ReportCategoryService } from './report-category.service';
 import { ReportOrganization } from './report-organization.entity';
+import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([{ path: '/report', module: ReportModule }]),
-		TypeOrmModule.forFeature([Report, ReportCategory, ReportOrganization]),
+		RouterModule.forRoutes([
+			{ 
+				path: '/report', 
+				module: ReportModule 
+			}
+		]),
+		TypeOrmModule.forFeature([
+			Report, 
+			ReportCategory, 
+			ReportOrganization
+		]),
 		TenantModule
 	],
 	controllers: [ReportCategoryController, ReportController],
-	providers: [ReportService, ReportCategoryService]
+	providers: [
+		ReportService, 
+		ReportCategoryService,
+		...CommandHandlers
+	]
 })
 export class ReportModule {}

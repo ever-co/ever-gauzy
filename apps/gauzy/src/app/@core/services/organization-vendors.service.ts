@@ -28,9 +28,10 @@ export class OrganizationVendorsService {
 
 	getAll(
 		findInput?: IOrganizationVendorFindInput,
-		relations?: string[]
+		relations?: string[],
+		order?:{}
 	): Promise<{ items: any[]; total: number }> {
-		const data = JSON.stringify({ relations, findInput });
+		const data = JSON.stringify({ relations, findInput, order });
 
 		return this.http
 			.get<{ items: IOrganizationVendor[]; total: number }>(

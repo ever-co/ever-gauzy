@@ -1,4 +1,4 @@
-@import './themes';
+@import "./themes";
 
 ::-webkit-scrollbar {
   width: nb-theme(scrollbar-width);
@@ -84,7 +84,7 @@ body {
       }
     }
   }
-  
+
   .ng-dropdown-panel {
     .scroll-host {
       &::-webkit-scrollbar {
@@ -96,6 +96,31 @@ body {
       &::-webkit-scrollbar-thumb {
         background: nb-theme(scrollbar-color);
         border-radius: 0.15625rem;
+      }
+    }
+  }
+
+  .card-scroll {
+    height: calc(100vh - 220px);
+    min-height: auto !important;
+    nb-card {
+      height: auto !important;
+      min-height: auto !important;
+      nb-card-body {
+        overflow: hidden;
+        height: 100%;
+      }
+    }
+  }
+  .dashboard-card-scroll {
+    height: calc(100vh - 270px);
+    min-height: auto !important;
+    nb-card {
+      height: auto !important;
+      min-height: auto !important;
+      nb-card-body {
+        overflow: hidden;
+        height: 100%;
       }
     }
   }

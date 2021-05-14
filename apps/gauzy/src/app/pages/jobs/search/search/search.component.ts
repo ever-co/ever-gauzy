@@ -43,6 +43,7 @@ export class SearchComponent
 	autoRefresh = false;
 	settingsSmartTable: any = {
 		editable: false,
+		hideSubHeader: true,
 		actions: {
 			columnTitle: this.getTranslation('JOBS.ACTIONS'),
 			add: false,
@@ -413,7 +414,7 @@ export class SearchComponent
 		this.jobSearchTable.source.onChangedSource
 			.pipe(
 				untilDestroyed(this),
-				tap(() => this.clearItem())
+				tap(() => this.deselectAll())
 			)
 			.subscribe();
 	}
@@ -434,12 +435,6 @@ export class SearchComponent
 		});
 	}
 
-	/*
-	 * Clear selected item
-	 */
-	clearItem() {
-		this.deselectAll();
-	}
 	/*
 	 * Deselect all table rows
 	 */

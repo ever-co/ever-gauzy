@@ -44,10 +44,11 @@ export class OrganizationVendorsController extends CrudController<OrganizationVe
 	async findAllOrganizations(
 		@Query('data') data: string
 	): Promise<IPagination<OrganizationVendor>> {
-		const { relations, findInput } = JSON.parse(data);
+		const { relations, findInput, order } = JSON.parse(data);
 
 		return this.organizationVendorsService.findAll({
 			where: findInput,
+			order,
 			relations
 		});
 	}

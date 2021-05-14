@@ -2119,7 +2119,15 @@
 		"OPTION_TRANSLATIONS": "Переводы параметров",
 		"ADD_PRODUCTS": "Добавить товары",
 		"MANAGE_VARIANTS_QUANTITY": "Управление вариантами",
-		"ADD_PRODUCT": "Добавить товар"
+		"ADD_PRODUCT": "Добавить товар",
+		"STORES": "Магазин",
+		"ADD_STORE": "Добавить магазин",
+		"EDIT_STORE": "Изменить магазин",
+		"CREATE_STORE": "Создать магазин",
+		"PHONE": "Телефон",
+		"FAX": "Факс",
+		"FISCAL_INFORMATION": "Финансовая информация",
+		"WEBSITE": "Сайт"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
