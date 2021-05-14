@@ -176,7 +176,7 @@ export class PaymentService extends CrudService<Payment> {
 			invoice.invoiceNumber,
 			payment.amount,
 			payment.currency,
-			invoice.fromOrganization.name,
+			invoice.fromOrganization,
 			origin
 		);
 	}

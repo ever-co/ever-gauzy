@@ -1,6 +1,8 @@
 import {
+	IEmailTemplate,
 	IInviteEmployeeModel,
 	IInviteUserModel,
+	IOrganization,
 	IOrganizationContact,
 	LanguagesEnum
 } from '@gauzy/contracts';
@@ -23,16 +25,20 @@ import { RequestContext } from '../core/context';
 
 @Injectable()
 export class EmailService extends CrudService<IEmail> {
+
+	private readonly email: Email;
+
 	constructor(
 		@InjectRepository(IEmail)
 		private readonly emailRepository: Repository<IEmail>,
+
 		@InjectRepository(EmailTemplate)
 		private readonly emailTemplateRepository: Repository<EmailTemplate>,
+
 		@InjectRepository(Organization)
 		private readonly organizationRepository: Repository<Organization>
 	) {
 		super(emailRepository);
-
 		const config: Email.EmailConfig<any> = {
 			message: {
 				from: env.smtpConfig.from || 'gauzy@ever.co'
@@ -67,43 +73,32 @@ export class EmailService extends CrudService<IEmail> {
 			view = view.replace('\\', '/');
 
 			// Find email template for customized for given organization
-			const customEmailTemplate = await this.emailTemplateRepository.find(
-				{
-					name: view,
-					languageCode: locals.locale || 'en',
-					organizationId: locals.organizationId,
-					tenantId: locals.tenantId
-				}
-			);
-
-			let emailTemplate: EmailTemplate[] = customEmailTemplate;
+			let emailTemplate: IEmailTemplate = await this.emailTemplateRepository.findOne({
+				name: view,
+				languageCode: locals.locale || LanguagesEnum.ENGLISH,
+				organizationId: locals.organizationId,
+				tenantId: locals.tenantId
+			});
 
 			// if no email template present for given organization, use default email template
-			if (!customEmailTemplate || customEmailTemplate.length < 1) {
-				const defaultEmailTemplate = await this.emailTemplateRepository.find(
-					{
-						name: view,
-						languageCode: locals.locale || 'en',
-						organizationId: IsNull(),
-						tenantId: IsNull()
-					}
-				);
-				emailTemplate = defaultEmailTemplate;
+			if (!emailTemplate) {
+				emailTemplate = await this.emailTemplateRepository.findOne({
+					name: view,
+					languageCode: locals.locale || LanguagesEnum.ENGLISH,
+					organizationId: IsNull(),
+					tenantId: IsNull()
+				});
 			}
 
-			if (!emailTemplate || emailTemplate.length < 1) {
+			if (!emailTemplate) {
 				return resolve('');
 			}
 
-			const template = Handlebars.compile(emailTemplate[0].hbs);
-
+			const template = Handlebars.compile(emailTemplate.hbs);
 			const html = template(locals);
-
 			return resolve(html);
 		});
 	};
-
-	private readonly email: Email;
 
 	async sendPaymentReceipt(
 		languageCode: LanguagesEnum,
@@ -112,30 +107,36 @@ export class EmailService extends CrudService<IEmail> {
 		invoiceNumber: number,
 		amount: number,
 		currency: string,
-		organizationName: string,
+		organization: IOrganization,
 		originUrl: string
 	) {
+		const tenantId = RequestContext.currentTenantId();
+		const { id: organizationId, name: organizationName } = organization;
+		const sendOptions = {
+			template: 'payment-receipt',
+			message: {
+				to: `${email}`
+			},
+			locals: {
+				locale: languageCode,
+				host: originUrl || env.host,
+				contactName,
+				invoiceNumber,
+				amount,
+				currency,
+				organizationId,
+				tenantId,
+				organizationName
+			}
+		}
 		this.email
-			.send({
-				template: 'payment-receipt',
-				message: {
-					to: `${email}`
-				},
-				locals: {
-					locale: languageCode,
-					host: originUrl || env.host,
-					contactName,
-					invoiceNumber,
-					amount,
-					currency,
-					organizationName
-				}
-			})
+			.send(sendOptions)
 			.then((res) => {
 				this.createEmailRecord({
-					templateName: 'payment-receipt',
+					templateName: sendOptions.template,
 					email,
 					languageCode,
+					organization,
 					message: res.originalMessage
 				});
 			})
@@ -150,45 +151,42 @@ export class EmailService extends CrudService<IEmail> {
 		invoiceId: string,
 		isEstimate: boolean,
 		token: any,
-		originUrl?: string,
-		tenantId?: string,
-		organizationId?: string
+		originUrl: string,
+		organization: IOrganization
 	) {
+		const tenantId = RequestContext.currentTenantId();
+		const { id: organizationId } = organization;
+		const baseUrl = originUrl || env.host;
+		const sendOptions = {
+			template: isEstimate ? 'email-estimate' : 'email-invoice',
+			message: {
+				to: `${email}`,
+				attachments: [
+					{
+						filename: `${ isEstimate ? 'Estimate' : 'Invoice' }-${invoiceNumber}.pdf`,
+						content: base64,
+						encoding: 'base64'
+					}
+				]
+			},
+			locals: {
+				tenantId,
+				organizationId,
+				locale: languageCode,
+				host: baseUrl,
+				acceptUrl: `${baseUrl}#/auth/estimate/?token=${token}&id=${invoiceId}&action=accept&email=${email}`, 
+				rejectUrl: `${baseUrl}#/auth/estimate/?token=${token}&id=${invoiceId}&action=reject&email=${email}`
+			}
+		};
+		
 		this.email
-			.send({
-				template: isEstimate ? 'email-estimate' : 'email-invoice',
-				message: {
-					to: `${email}`,
-					attachments: [
-						{
-							filename: `${
-								isEstimate ? 'Estimate' : 'Invoice'
-							}-${invoiceNumber}.pdf`,
-							content: base64,
-							encoding: 'base64'
-						}
-					]
-				},
-				locals: {
-					tenantId,
-					organizationId,
-					locale: languageCode,
-					host: originUrl || env.host,
-					acceptUrl:
-						originUrl +
-						`#/auth/estimate/?token=${token}&id=${invoiceId}&action=accept&email=${email}`,
-					rejectUrl:
-						originUrl +
-						`#/auth/estimate/?token=${token}&id=${invoiceId}&action=reject&email=${email}`
-				}
-			})
+			.send(sendOptions)
 			.then((res) => {
 				this.createEmailRecord({
-					templateName: isEstimate
-						? 'email-estimate'
-						: 'email-invoice',
+					templateName: sendOptions.template,
 					email,
 					languageCode,
+					organization,
 					message: res.originalMessage
 				});
 			})
@@ -203,6 +201,9 @@ export class EmailService extends CrudService<IEmail> {
 		languageCode: LanguagesEnum,
 		originUrl?: string
 	) {
+		const tenantId = RequestContext.currentTenantId();
+		const { id: organizationId } = organization;
+		const baseUrl = originUrl || env.host;
 		const sendOptions = {
 			template: 'invite-organization-client',
 			message: {
@@ -211,17 +212,13 @@ export class EmailService extends CrudService<IEmail> {
 			locals: {
 				locale: languageCode,
 				name: organizationContact.name,
-				host: originUrl || env.host,
+				host: baseUrl,
 				id: organizationContact.id,
-				inviterName: inviterUser
-					? (inviterUser.firstName || '') +
-					  (inviterUser.lastName || '')
-					: '',
+				inviterName: inviterUser ? (inviterUser.name || '') : '',
 				organizationName: organization.name,
-				organizationId: organization.id,
-				generatedUrl:
-					originUrl +
-					`#/auth/accept-client-invite?email=${organizationContact.primaryEmail}&token=${invite.token}`
+				organizationId,
+				tenantId,
+				generatedUrl: `${baseUrl}#/auth/accept-client-invite?email=${organizationContact.primaryEmail}&token=${invite.token}`
 			}
 		};
 
@@ -249,7 +246,8 @@ export class EmailService extends CrudService<IEmail> {
 			languageCode,
 			invitedBy
 		} = inviteUserModel;
-
+		const tenantId = RequestContext.currentTenantId();
+		const { id: organizationId } = organization;
 		const sendOptions = {
 			template: 'invite-user',
 			message: {
@@ -259,12 +257,12 @@ export class EmailService extends CrudService<IEmail> {
 				locale: languageCode,
 				role: role,
 				organizationName: organization.name,
-				organizationId: organization.id,
+				organizationId,
+				tenantId,
 				generatedUrl: registerUrl,
 				host: originUrl || env.host
 			}
 		};
-
 		this.email
 			.send(sendOptions)
 			.then((res) => {
@@ -281,15 +279,9 @@ export class EmailService extends CrudService<IEmail> {
 	}
 
 	inviteEmployee(inviteEmployeeModel: IInviteEmployeeModel) {
-		const {
-			email,
-			registerUrl,
-			projects,
-			organization,
-			originUrl,
-			languageCode,
-			invitedBy
-		} = inviteEmployeeModel;
+		const { email, registerUrl, projects, organization, originUrl, languageCode, invitedBy } = inviteEmployeeModel;
+		const tenantId = RequestContext.currentTenantId();
+		const { id: organizationId } = organization;
 
 		const sendOptions = {
 			template: 'invite-employee',
@@ -300,12 +292,12 @@ export class EmailService extends CrudService<IEmail> {
 				locale: languageCode,
 				role: projects,
 				organizationName: organization.name,
-				organizationId: organization.id,
+				organizationId,
+				tenantId,
 				generatedUrl: registerUrl,
 				host: originUrl || env.host
 			}
 		};
-
 		this.email
 			.send(sendOptions)
 			.then((res) => {
@@ -327,6 +319,7 @@ export class EmailService extends CrudService<IEmail> {
 		organizationId?: string,
 		originUrl?: string
 	) {
+		const tenantId = RequestContext.currentTenantId();
 		const sendOptions = {
 			template: 'welcome-user',
 			message: {
@@ -336,18 +329,17 @@ export class EmailService extends CrudService<IEmail> {
 				locale: languageCode,
 				email: user.email,
 				host: originUrl || env.host,
-				organizationId: organizationId ? organizationId : IsNull()
+				organizationId: organizationId || IsNull(),
+				tenantId: tenantId || IsNull()
 			}
 		};
 
 		let organization: Organization;
-
 		if (organizationId) {
 			organization = await this.organizationRepository.findOne(
 				organizationId
 			);
 		}
-
 		this.email
 			.send(sendOptions)
 			.then((res) => {
@@ -355,8 +347,8 @@ export class EmailService extends CrudService<IEmail> {
 					templateName: sendOptions.template,
 					email: user.email,
 					languageCode,
+					organization,
 					message: res.originalMessage,
-					organization
 				});
 			})
 			.catch(console.error);
@@ -369,6 +361,7 @@ export class EmailService extends CrudService<IEmail> {
 		organizationId: string,
 		originUrl?: string
 	) {
+		const tenantId = RequestContext.currentTenantId();
 		const sendOptions = {
 			template: 'password',
 			message: {
@@ -379,14 +372,14 @@ export class EmailService extends CrudService<IEmail> {
 				locale: languageCode,
 				generatedUrl: url,
 				host: originUrl || env.host,
-				organizationId: organizationId
+				organizationId,
+				tenantId
 			}
 		};
 
 		const organization = await this.organizationRepository.findOne(
 			organizationId
 		);
-
 		this.email
 			.send(sendOptions)
 			.then((res) => {
@@ -394,8 +387,8 @@ export class EmailService extends CrudService<IEmail> {
 					templateName: sendOptions.template,
 					email: user.email,
 					languageCode,
-					message: res.originalMessage,
-					organization
+					organization,
+					message: res.originalMessage
 				});
 			})
 			.catch(console.error);
@@ -407,6 +400,7 @@ export class EmailService extends CrudService<IEmail> {
 		organizationId?: string,
 		originUrl?: string
 	) {
+		const tenantId = RequestContext.currentTenantId();
 		const sendOptions = {
 			template: 'email-appointment',
 			message: {
@@ -416,12 +410,12 @@ export class EmailService extends CrudService<IEmail> {
 				locale: languageCode,
 				email: email,
 				host: originUrl || env.host,
-				organizationId: organizationId ? organizationId : IsNull()
+				organizationId: organizationId || IsNull(),
+				tenantId: tenantId || IsNull()
 			}
 		};
 
 		let organization: Organization;
-
 		if (organizationId) {
 			organization = await this.organizationRepository.findOne(
 				organizationId
@@ -435,8 +429,8 @@ export class EmailService extends CrudService<IEmail> {
 					templateName: sendOptions.template,
 					email: email,
 					languageCode,
-					message: res.originalMessage,
-					organization
+					organization,
+					message: res.originalMessage
 				});
 			})
 			.catch(console.error);
@@ -444,7 +438,8 @@ export class EmailService extends CrudService<IEmail> {
 
 	async setTimesheetAction(email: string, timesheet: Timesheet) {
 		const languageCode = RequestContext.getLanguageCode();
-
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = timesheet.employee.organizationId;
 		const sendOptions = {
 			template: 'timesheet-action',
 			message: {
@@ -455,14 +450,15 @@ export class EmailService extends CrudService<IEmail> {
 				email: email,
 				host: env.host,
 				timesheet: timesheet,
-				timesheet_action: timesheet.status
+				timesheet_action: timesheet.status,
+				organizationId,
+				tenantId
 			}
 		};
 
 		const organization = await this.organizationRepository.findOne(
 			timesheet.employee.organizationId
 		);
-
 		this.email
 			.send(sendOptions)
 			.then((res) => {
@@ -480,7 +476,8 @@ export class EmailService extends CrudService<IEmail> {
 
 	async timesheetSubmit(email: string, timesheet: Timesheet) {
 		const languageCode = RequestContext.getLanguageCode();
-
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = timesheet.employee.organizationId;
 		const sendOptions = {
 			template: 'timesheet-submit',
 			message: {
@@ -491,7 +488,9 @@ export class EmailService extends CrudService<IEmail> {
 				email: email,
 				host: env.host,
 				timesheet: timesheet,
-				timesheet_action: timesheet.status
+				timesheet_action: timesheet.status,
+				organizationId,
+				tenantId
 			}
 		};
 
@@ -523,7 +522,7 @@ export class EmailService extends CrudService<IEmail> {
 		user?: User;
 	}): Promise<IEmail> {
 		const emailEntity = new IEmail();
-
+		const tenantId = RequestContext.currentTenantId();
 		const {
 			templateName: template,
 			email,
@@ -537,15 +536,12 @@ export class EmailService extends CrudService<IEmail> {
 			name: template + '/html',
 			languageCode
 		});
-
 		emailEntity.name = message.subject;
 		emailEntity.email = email;
 		emailEntity.content = message.html;
 		emailEntity.emailTemplate = emailTemplate;
-
-		if (organization) {
-			emailEntity.organizationId = organization.id;
-		}
+		emailEntity.tenantId = tenantId;
+		emailEntity.organizationId = (organization) ? organization.id : null;
 
 		if (user) {
 			emailEntity.user = user;

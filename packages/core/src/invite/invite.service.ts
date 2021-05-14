@@ -9,7 +9,8 @@ import {
 	IUser,
 	ICreateOrganizationContactInviteInput,
 	RolesEnum,
-	LanguagesEnum
+	LanguagesEnum,
+	DEFAULT_INVITE_EXPIRY_PERIOD
 } from '@gauzy/contracts';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -25,11 +26,14 @@ import { EmailService } from '../email/email.service';
 import { Role } from '../role/role.entity';
 import { addDays } from 'date-fns';
 import { UserService } from '../user/user.service';
+import { RequestContext } from './../core';
 
 @Injectable()
 export class InviteService extends CrudService<Invite> {
 	constructor(
-		@InjectRepository(Invite) inviteRepository: Repository<Invite>,
+		@InjectRepository(Invite) 
+		private readonly inviteRepository: Repository<Invite>,
+
 		@InjectRepository(OrganizationProject)
 		private readonly organizationProjectsRepository: Repository<OrganizationProject>,
 
@@ -38,10 +42,13 @@ export class InviteService extends CrudService<Invite> {
 
 		@InjectRepository(OrganizationDepartment)
 		private readonly organizationDepartmentRepository: Repository<OrganizationDepartment>,
+
 		@InjectRepository(Organization)
 		private readonly organizationRepository: Repository<Organization>,
+
 		@InjectRepository(Role)
 		private readonly roleRepository: Repository<Role>,
+
 		private readonly emailService: EmailService,
 		private readonly userService: UserService
 	) {
@@ -90,7 +97,6 @@ export class InviteService extends CrudService<Invite> {
 		languageCode: LanguagesEnum
 	): Promise<ICreateEmailInvitesOutput> {
 		const invites: Invite[] = [];
-
 		const {
 			emailIds,
 			roleId,
@@ -98,7 +104,6 @@ export class InviteService extends CrudService<Invite> {
 			organizationContactIds,
 			departmentIds,
 			organizationId,
-			tenantId,
 			invitedById
 		} = emailInvites;
 
@@ -117,12 +122,12 @@ export class InviteService extends CrudService<Invite> {
 		const organization: Organization = await this.organizationRepository.findOne(
 			organizationId
 		);
-
 		const role: Role = await this.roleRepository.findOne(roleId);
 
 		const user = await this.userService.findOne(invitedById, {
 			relations: ['role']
 		});
+		const tenantId = RequestContext.currentTenantId();
 
 		if (role.name === RolesEnum.SUPER_ADMIN) {
 			const { role: inviterRole } = user;
@@ -134,7 +139,7 @@ export class InviteService extends CrudService<Invite> {
 		const inviteExpiryPeriod =
 			organization && organization.inviteExpiryPeriod
 				? organization.inviteExpiryPeriod
-				: 7;
+				: DEFAULT_INVITE_EXPIRY_PERIOD;
 
 		const expireDate = addDays(new Date(), inviteExpiryPeriod);
 
@@ -231,7 +236,7 @@ export class InviteService extends CrudService<Invite> {
 		const inviteExpiryPeriod =
 			organization && organization.inviteExpiryPeriod
 				? organization.inviteExpiryPeriod
-				: 7;
+				: DEFAULT_INVITE_EXPIRY_PERIOD;
 
 		const expireDate = addDays(new Date(), inviteExpiryPeriod);
 

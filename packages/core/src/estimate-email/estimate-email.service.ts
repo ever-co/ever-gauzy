@@ -1,4 +1,4 @@
-import { CrudService } from '../core';
+import { CrudService, RequestContext } from '../core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MoreThanOrEqual, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
@@ -22,7 +22,6 @@ export class EstimateEmailService extends CrudService<EstimateEmail> {
 
 	async createEstimateEmail(id: string, email: string, token: string) {
 		const invoice: Invoice = await this.invoiceRepository.findOne(id);
-
 		const organization: Organization = await this.organizationRepository.findOne(
 			invoice.organizationId
 		);
@@ -36,6 +35,8 @@ export class EstimateEmailService extends CrudService<EstimateEmail> {
 
 		const estimateEmail = new EstimateEmail();
 
+		estimateEmail.organizationId = organization ? organization.id : null;
+		estimateEmail.tenantId = RequestContext.currentTenantId();
 		estimateEmail.email = email;
 		estimateEmail.token = token;
 		estimateEmail.expireDate = expireDate;

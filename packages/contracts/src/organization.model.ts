@@ -237,6 +237,7 @@ export enum MinimumProjectSizeEnum {
 
 export const DEFAULT_PROFIT_BASED_BONUS = 75;
 export const DEFAULT_REVENUE_BASED_BONUS = 10;
+export const DEFAULT_INVITE_EXPIRY_PERIOD = 7
 
 export interface IOrganizationStoreState {
 	organization: IOrganization;
