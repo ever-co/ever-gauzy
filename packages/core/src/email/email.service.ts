@@ -279,7 +279,15 @@ export class EmailService extends CrudService<IEmail> {
 	}
 
 	inviteEmployee(inviteEmployeeModel: IInviteEmployeeModel) {
-		const { email, registerUrl, projects, organization, originUrl, languageCode, invitedBy } = inviteEmployeeModel;
+		const { 
+			email, 
+			registerUrl, 
+			projects, 
+			organization, 
+			originUrl, 
+			languageCode, 
+			invitedBy 
+		} = inviteEmployeeModel;
 		const tenantId = RequestContext.currentTenantId();
 		const { id: organizationId } = organization;
 
