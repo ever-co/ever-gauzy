@@ -98,7 +98,7 @@ export * from '../../product-option/product-option-group.entity';
 export * from '../../product-option/product-option-group-translation.entity';
 export * from '../../product-option/product-option-translation.entity';
 export * from '../../product-settings/product-settings.entity';
-export * from '../../product-store/product.store.entity';
+export * from '../../merchant/merchant.entity';
 export * from '../../product-type/product-type-translation.entity';
 export * from '../../product-type/product-type.entity';
 export * from '../../product-variant-price/product-variant-price.entity';

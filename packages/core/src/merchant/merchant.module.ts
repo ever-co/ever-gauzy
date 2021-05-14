@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { RouterModule } from 'nest-router';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Merchant, Warehouse, ImageAsset } from 'core';
-import { MerchantController } from './product-store.controller';
-import { MerchantService } from './product-store.service';
+import { MerchantController } from './merchant.controller';
+import { MerchantService } from './merchant.service';
 import { TenantModule } from '../tenant/tenant.module';
 
 

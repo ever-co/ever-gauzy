@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CrudController, IPagination, Merchant } from 'core';
-import { MerchantService } from './product-store.service';
+import { MerchantService } from './merchant.service';
 import { ApiResponse, ApiOperation } from '@nestjs/swagger';
 import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
 import { IMerchant } from '@gauzy/contracts';

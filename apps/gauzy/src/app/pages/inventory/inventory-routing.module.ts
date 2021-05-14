@@ -159,7 +159,7 @@ const routes: Routes = [
 		]
 	},
 	{
-		path: 'stores',
+		path: 'merchants',
 		component: MerchantComponent,
 		canActivate: [NgxPermissionsGuard],
 		data: {

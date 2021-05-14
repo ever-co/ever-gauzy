@@ -15,7 +15,7 @@ import {
 import { tap } from 'rxjs/operators';
 import { ComponentEnum } from '../../../../../@core/constants/layout.constants';
 import { Router } from '@angular/router';
-import { MerchantService } from '../../../../../@core/services/product-store.service';
+import { MerchantService } from '../../../../../@core/services/merchant.service';
 import { Store } from '../../../../../@core/services/store.service';
 import { EnabledStatusComponent } from '../../table-components/enabled-row.component';
 
@@ -33,7 +33,7 @@ export class MerchantTableComponent
 	loading: boolean;
 	selectedMerchant: IMerchant;
 	source: ServerDataSource;
-	STORES_URL = `${API_PREFIX}/product-stores?`;
+	STORES_URL = `${API_PREFIX}/merchants?`;
 	viewComponentName: ComponentEnum;
 
 	disableButton = true;
@@ -129,7 +129,7 @@ export class MerchantTableComponent
 	}
 
 	onAddStoreClick() {
-		this.router.navigate(['/pages/organization/inventory/stores/create']);
+		this.router.navigate(['/pages/organization/inventory/merchants/create']);
 	}
 
 	onEditStore(selectedItem) {
