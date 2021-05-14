@@ -15,6 +15,7 @@ import { EstimateEmail } from '../estimate-email/estimate-email.entity';
 import { TenantModule } from '../tenant/tenant.module';
 import { CommandHandlers } from './commands';
 import { PdfmakerService } from './pdfmaker.service';
+import { OrganizationModule } from './../organization';
 
 @Module({
 	imports: [
@@ -23,6 +24,7 @@ import { PdfmakerService } from './pdfmaker.service';
 		EmailModule,
 		EstimateEmailModule,
 		TenantModule,
+		OrganizationModule,
 		CqrsModule
 	],
 	controllers: [InvoiceController, EstimateEmailController],

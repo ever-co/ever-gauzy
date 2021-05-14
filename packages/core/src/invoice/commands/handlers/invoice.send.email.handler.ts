@@ -16,7 +16,6 @@ export class InvoiceSendEmailHandler
 			params.invoiceId,
 			params.isEstimate,
 			origin,
-			params.tenantId,
 			params.organizationId
 		);
 	}

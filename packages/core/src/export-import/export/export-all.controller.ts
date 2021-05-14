@@ -17,7 +17,6 @@ import { ParseJsonPipe } from './../../shared/pipes/parse-json.pipe';
 export class ExportAllController {
 	constructor(private readonly exportService: ExportAllService) {}
 
-	@ApiTags('Download')
 	@ApiOperation({ summary: 'Find all exports.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -43,6 +42,15 @@ export class ExportAllController {
 		this.exportService.deleteArchive();
 	}
 
+	@ApiOperation({ summary: 'Exports all tables schemas.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found tables schemas'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
 	@Get('template')
 	async downloadTemplate(
 		@Res() res

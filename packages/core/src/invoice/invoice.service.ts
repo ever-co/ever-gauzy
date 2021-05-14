@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { getConnection } from 'typeorm';
 import { EmailService } from '../email';
-import { IInvoice, LanguagesEnum } from '@gauzy/contracts';
+import { IInvoice, IOrganization, LanguagesEnum } from '@gauzy/contracts';
 import { sign } from 'jsonwebtoken';
 import { ConfigService, IEnvironment } from '@gauzy/config';
 import { I18nService } from 'nestjs-i18n';
@@ -16,6 +16,7 @@ import {
 	generateInvoicePdfDefinition,
 	generateInvoicePaymentPdfDefinition
 } from './index';
+import { OrganizationService } from 'organization';
 
 @Injectable()
 export class InvoiceService extends CrudService<Invoice> {
@@ -26,7 +27,8 @@ export class InvoiceService extends CrudService<Invoice> {
 		private readonly estimateEmailService: EstimateEmailService,
 		private readonly configService: ConfigService,
 		private readonly pdfmakerServier: PdfmakerService,
-		private readonly i18n: I18nService
+		private readonly i18n: I18nService,
+		private readonly organizationService: OrganizationService
 	) {
 		super(invoiceRepository);
 	}
@@ -47,7 +49,6 @@ export class InvoiceService extends CrudService<Invoice> {
 		invoiceId: string,
 		isEstimate: boolean,
 		originUrl: string,
-		tenantId: string,
 		organizationId: string
 	) {
 		const token = this.createToken(email);
@@ -64,6 +65,7 @@ export class InvoiceService extends CrudService<Invoice> {
 		);
 		const base64 = buffer.toString('base64');
 
+		const organization: IOrganization = await this.organizationService.findOne(organizationId);
 		this.emailService.emailInvoice(
 			languageCode,
 			email,
@@ -73,8 +75,7 @@ export class InvoiceService extends CrudService<Invoice> {
 			isEstimate,
 			token,
 			originUrl,
-			tenantId,
-			organizationId
+			organization
 		);
 	}
 
@@ -219,7 +220,6 @@ export class InvoiceService extends CrudService<Invoice> {
 			translatedText,
 			langulage
 		);
-
 		return await this.pdfmakerServier.generatePdf(docDefinition);
 	}
 

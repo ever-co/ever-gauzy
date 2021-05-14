@@ -14,7 +14,7 @@
 					>Изпращане на график</mj-text
 				>
 				<mj-text font-size="16px" font-family="helvetica">
-					<p>Dear {{host}},</p>
+					<p>Dear {{email}},</p>
 					<p>
 						потребител {{candidateName}} на {{project}}, представете
 						график за време на проекта..!!

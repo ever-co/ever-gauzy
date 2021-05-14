@@ -92,7 +92,7 @@ export class InviteAcceptEmployeeHandler
 
 	updateEmployeeMemberships = (invite: IInvite, employee: Employee) => {
 		//Update project members
-		if (invite.projects)
+		if (invite.projects) {
 			invite.projects.forEach((project) => {
 				let members = project.members || [];
 				members = [...members, employee];
@@ -102,27 +102,32 @@ export class InviteAcceptEmployeeHandler
 					members
 				});
 			});
-
+		}
+			
 		//Update organization Contacts members
-		invite.organizationContacts.forEach((organizationContact) => {
-			let members = organizationContact.members || [];
-			members = [...members, employee];
-			//This will call save() on the organizationContacts (and not really create a new organization Contacts)
-			this.organizationContactService.create({
-				...organizationContact,
-				members
+		if (invite.organizationContacts) {
+			invite.organizationContacts.forEach((organizationContact) => {
+				let members = organizationContact.members || [];
+				members = [...members, employee];
+				//This will call save() on the organizationContacts (and not really create a new organization Contacts)
+				this.organizationContactService.create({
+					...organizationContact,
+					members
+				});
 			});
-		});
+		}
 
 		//Update department members
-		invite.departments.forEach((department) => {
-			let members = department.members || [];
-			members = [...members, employee];
-			//This will call save() on the department (and not really create a new organization department)
-			this.organizationDepartmentsService.create({
-				...department,
-				members
+		if (invite.departments) {
+			invite.departments.forEach((department) => {
+				let members = department.members || [];
+				members = [...members, employee];
+				//This will call save() on the department (and not really create a new organization department)
+				this.organizationDepartmentsService.create({
+					...department,
+					members
+				});
 			});
-		});
+		}
 	};
 }
