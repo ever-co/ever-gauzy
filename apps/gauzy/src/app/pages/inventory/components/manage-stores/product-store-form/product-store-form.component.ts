@@ -82,7 +82,7 @@ export class MerchantFormComponent
 	}
 
 	onWarehouseSelect($event) {
-
+		this.selectedWarehouses = $event;
 	}
 
 	private async _loadImages() {
@@ -175,9 +175,13 @@ export class MerchantFormComponent
 
 		delete locationFormValue['loc'];
 
+		//tstodo
+		console.log(this.selectedWarehouses, 'selected warehouses');
+
+
 		let request = {
 			...this.form.value,
-			warehouses: this.selectedWarehouses,
+			warehouses: this.selectedWarehouses.map(id => { return { id } }),
 			logo: this.image,
 			contact: {
 				...locationFormValue,

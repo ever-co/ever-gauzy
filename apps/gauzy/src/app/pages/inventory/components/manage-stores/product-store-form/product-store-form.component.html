@@ -257,10 +257,10 @@
 		</svg>
 		<div class="image-overlay" [ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"></div>
 
-		<img *ngIf="!image || !image.url" [src]="
+		<img class="store-image" *ngIf="!image || !image.url" [src]="
 											'https://afostats.imagead.net/uploads/afo/no_img.png'
 										" alt="Product Item Photo" />
 
-		<img *ngIf="image && image.url" [src]="image.url" alt="Product Item Photo" />
+		<img class="store-image" *ngIf="image && image.url" [src]="image.url" alt="Product Item Photo" />
 	</div>
 </ng-template>

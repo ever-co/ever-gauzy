@@ -2127,7 +2127,11 @@
 		"PHONE": "Phone",
 		"FAX": "Fax",
 		"FISCAL_INFORMATION": "Fiscal information",
-		"WEBSITE": "Website"
+		"WEBSITE": "Website",
+		"MERCHANTS": "Merchants",
+		"CREATE_MERCHANT": "New merchant",
+		"DELETE_MERCHANT": "Delete merchant",
+		"EDIT_MERCHANT": "Edit merchant"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

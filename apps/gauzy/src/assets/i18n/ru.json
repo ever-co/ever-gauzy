@@ -2127,7 +2127,11 @@
 		"PHONE": "Телефон",
 		"FAX": "Факс",
 		"FISCAL_INFORMATION": "Финансовая информация",
-		"WEBSITE": "Сайт"
+		"WEBSITE": "Сайт",
+		"MERCHANTS": "Торговцы",
+		"CREATE_MERCHANT": "Новый торговец",
+		"DELETE_MERCHANT": "Удалить продавца",
+		"EDIT_MERCHANT": "Изменить продавца"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
