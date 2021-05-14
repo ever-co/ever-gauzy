@@ -4,28 +4,36 @@ import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-ba
 import { TranslateService } from '@ngx-translate/core';
 import {
 	ITag,
-	IProductStore,
+	IMerchant,
 	IWarehouse,
 	IImageAsset,
 } from '@gauzy/contracts';
 import { NbStepperComponent } from '@nebular/theme';
 import { FormGroup, FormBuilder, Validators } from '@nebular/auth/node_modules/@angular/forms';
 import { LocationFormComponent, LeafletMapComponent } from 'apps/gauzy/src/app/@shared/forms';
-import { ToastrService, Store, WarehouseService, ImageAssetService } from 'apps/gauzy/src/app/@core';
+import {
+	ToastrService,
+	Store,
+	WarehouseService,
+	ImageAssetService,
+	MerchantService
+} from 'apps/gauzy/src/app/@core';
 import { NbDialogService } from '@nebular/theme';
 import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
 import { Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
+import { LatLng } from 'leaflet';
+import { Router } from '@angular/router';
 
 
 
 @UntilDestroy()
 @Component({
-	selector: 'ga-product-store-form',
-	templateUrl: './product-store-form.component.html',
-	styleUrls: ['./product-store-form.component.scss']
+	selector: 'ga-merchant-form',
+	templateUrl: './merchant-form.component.html',
+	styleUrls: ['./merchant-form.component.scss']
 })
-export class ProductStoreFormComponent
+export class MerchantFormComponent
 	extends TranslationBaseComponent
 	implements OnInit {
 
@@ -34,13 +42,13 @@ export class ProductStoreFormComponent
 	tags: ITag[] = [];
 	warehouses: IWarehouse[] = [];
 	selectedWarehouses: string[] = [];
-	image: IImageAsset;
+	image: IImageAsset = null;
 	private newImageUploadedEvent$ = new Subject<any>();
 
 	@ViewChild('stepper')
 	stepper: NbStepperComponent;
 
-	@ViewChild('locatioFormDirective')
+	@ViewChild('locationFormDirective')
 	locationFormDirective: LocationFormComponent;
 
 	@ViewChild('leafletTemplate')
@@ -48,7 +56,7 @@ export class ProductStoreFormComponent
 
 	images: IImageAsset[] = [];
 
-	productStore: IProductStore;
+	merchant: IMerchant;
 
 	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
 
@@ -59,7 +67,9 @@ export class ProductStoreFormComponent
 		private store: Store,
 		private warehouseService: WarehouseService,
 		private dialogService: NbDialogService,
-		private imageAssetService: ImageAssetService
+		private imageAssetService: ImageAssetService,
+		private merchantService: MerchantService,
+		private router: Router,
 
 	) {
 		super(translateService);
@@ -74,7 +84,7 @@ export class ProductStoreFormComponent
 	}
 
 	onWarehouseSelect($event) {
-
+		this.selectedWarehouses = $event;
 	}
 
 	private async _loadImages() {
@@ -95,38 +105,38 @@ export class ProductStoreFormComponent
 	private _initializeForm() {
 		this.form = this.fb.group({
 			name: [
-				this.productStore ? this.productStore.name : '',
+				this.merchant ? this.merchant.name : '',
 				Validators.required
 			],
-			logo: [this.productStore ? this.productStore.logo.url : ''],
+			logo: [this.merchant ? this.merchant.logo.url : ''],
 			tags: this.tags,
 			code: [
-				this.productStore ? this.productStore.code : '',
+				this.merchant ? this.merchant.code : '',
 				Validators.required
 			],
 			currency: [
-				this.productStore ? this.productStore.code : '',
+				this.merchant ? this.merchant.code : '',
 				Validators.required
 			],
 			email: [
-				this.productStore ? this.productStore.email : '',
+				this.merchant ? this.merchant.email : '',
 				Validators.email
 			],
 			phone: [
-				this.productStore ? this.productStore.contact.phone : '',
+				this.merchant ? this.merchant.contact.phone : '',
 				Validators.pattern('^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$')
 			],
 			fax: [
-				this.productStore ? this.productStore.contact.fax : '',
+				this.merchant ? this.merchant.contact.fax : '',
 			],
 			fiscalInformation: [
-				this.productStore ? this.productStore.contact.fax : '',
+				this.merchant ? this.merchant.contact.fax : '',
 			],
 			website: [
-				this.productStore ? this.productStore.contact.fax : '',
+				this.merchant ? this.merchant.contact.fax : '',
 			],
-			active: [this.productStore ? this.productStore.active : true],
-			description: [this.productStore ? this.productStore.description : '']
+			active: [this.merchant ? this.merchant.active : true],
+			description: [this.merchant ? this.merchant.description : '']
 		})
 	}
 
@@ -150,30 +160,88 @@ export class ProductStoreFormComponent
 		}
 	}
 
-	onChangeTab(tab) {
-		if (tab['tabTitle'] == 'Location') {
-			setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
-		}
+	toMapStep() {
+		setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
 	}
 
 	cancel() {
 
 	}
 
-	onSaveRequest() {
+	async onSaveRequest() {
 
+		const locationFormValue = this.locationFormDirective.getValue();
+		const { coordinates } = locationFormValue['loc'];
+
+		delete locationFormValue['loc'];
+
+		let request = {
+			...this.form.value,
+			warehouses: this.selectedWarehouses.map(id => { return { id } }),
+			logo: this.image,
+			organization: {
+				id: this.store.selectedOrganization
+					? this.store.selectedOrganization.id : null
+			},
+			tenant: {
+				id: this.store.selectedOrganization && this.store.selectedOrganization.tenantId ?
+					this.store.selectedOrganization.tenantId: null
+			},
+			contact: {
+				...locationFormValue,
+				latitude: coordinates[0],
+				longitude: coordinates[1]
+			}
+		}
+
+		if (!this.merchant) {
+			await this.merchantService.create(request)
+				.then(res => {
+					this.toastrService.success(
+						'INVENTORY_PAGE.MERCHANT_CREATED_SUCCESSFULLY',
+						{ name: request.name }
+					);
+
+					this.merchant = res;
+					this.router.navigate(['/pages/organization/inventory/merchants/all']);
+
+				}).catch((err) => {
+					this.toastrService.danger(
+						'INVENTORY_PAGE.COULD_NOT_CREATE_MERCHANT',
+						null,
+						{ name: request.name }
+					);
+					this.router.navigate(['/pages/organization/inventory/merchants/all']);
+
+				});
+		}
 	}
 
-	selectedTagsEvent(ev) {
-		this.tags = ev;
+	selectedTagsEvent(currentSelection: ITag[]) {
+		this.form.get('tags').setValue(currentSelection);
 	}
 
 	onCoordinatesChanges($event) {
-
+		const {
+			loc: { coordinates }
+		} = this.locationFormDirective.getValue();
+		const [lat, lng] = coordinates;
+		this.leafletTemplate.addMarker(new LatLng(lat, lng));
 	}
 
-	onMapClicked($event) {
 
+	onMapClicked(latlng: LatLng) {
+		const { lat, lng } = latlng;
+		const location = this.locationFormDirective.getValue();
+
+		this.locationFormDirective.setValue({
+			...location,
+			country: '',
+			loc: {
+				type: 'Point',
+				coordinates: [lat, lng]
+			}
+		});
 	}
 
 

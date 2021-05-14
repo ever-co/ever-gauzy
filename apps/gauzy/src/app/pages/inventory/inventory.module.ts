@@ -73,10 +73,10 @@ import { ManageVariantsQuantityFormComponent } from './components/manage-warehou
 import { ManageVariantsQuantityComponent } from './components/manage-warehouses/manage-variants-quantity/manage-variants-quantity.component';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { SelectedRowComponent } from './components/table-components/selected-row.component';
-import { ProductStoreTableComponent } from './components/manage-stores/product-store-table/product-store-table.component';
-import { ProductStoreComponent } from './components/manage-stores/product-store.component';
-import { ProductStoreFormComponent } from './components/manage-stores/product-store-form/product-store-form.component';
-import { ProductStoreService } from '../../@core/services/product-store.service';
+import { MerchantTableComponent } from './components/manage-merchants/merchant-table/merchant-table.component';
+import { MerchantComponent } from './components/manage-merchants/merchant.component';
+import { MerchantFormComponent } from './components/manage-merchants/merchant-form/merchant-form.component';
+import { MerchantService } from 'apps/gauzy/src/app/@core';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -117,9 +117,9 @@ const NB_MODULES = [
 		ManageVariantsQuantityComponent,
 		ManageVariantsQuantityFormComponent,
 		SelectedRowComponent,
-		ProductStoreComponent,
-		ProductStoreTableComponent,
-		ProductStoreFormComponent
+		MerchantComponent,
+		MerchantTableComponent,
+		MerchantFormComponent
 	],
 	imports: [
 		UserFormsModule,
@@ -172,7 +172,7 @@ const NB_MODULES = [
 		InventoryStore,
 		TranslatableService,
 		WarehouseService,
-		ProductStoreService
+		MerchantService
 	]
 })
 export class InventoryModule {}
