@@ -7,7 +7,7 @@ module.exports.desktop = () => {
         let package = require('../apps/desktop/src/package.json');
         let currentVersion = package.version;
     
-        exec('git fetch --tags && git describe --tags `git rev-list --tags --max-count=1`', (error, stdout) => {
+        exec('git fetch --tags && git tag --sort=committerdate | tail -1', (error, stdout) => {
             if (error) {
                 console.error(`exec error: ${error}`);
                 return;
@@ -35,7 +35,7 @@ module.exports.desktoptimer = () => {
         let package = require('../apps/desktop-timer/src/package.json');
         let currentVersion = package.version;
     
-        exec('git fetch --tags && git describe --tags `git rev-list --tags --max-count=1`', (error, stdout) => {
+        exec('git fetch --tags && git tag --sort=committerdate | tail -1', (error, stdout) => {
         if (error) {
             console.error(`exec error: ${error}`);
             return;
