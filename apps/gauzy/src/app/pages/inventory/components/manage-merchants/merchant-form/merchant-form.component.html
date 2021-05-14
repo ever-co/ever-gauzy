@@ -159,7 +159,7 @@
 
 					<div class="row mt-5">
 						<div class="form-group col-4">
-							<button [disabled]="form.invalid" nbStepperNext nbButton status="primary">
+							<button (click)="toMapStep()" [disabled]="form.invalid" nbStepperNext nbButton status="primary">
 								{{ 'BUTTONS.NEXT' | translate }}
 							</button>
 						</div>

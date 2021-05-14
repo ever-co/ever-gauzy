@@ -18,6 +18,7 @@ import { Router } from '@angular/router';
 import { MerchantService } from '../../../../../@core/services/merchant.service';
 import { Store } from '../../../../../@core/services/store.service';
 import { EnabledStatusComponent } from '../../table-components/enabled-row.component';
+import { ItemImgTagsComponent } from '../../table-components/item-img-tags-row.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -84,7 +85,8 @@ export class MerchantTableComponent
 			columns: {
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
-					type: 'string',
+					type: 'custom',
+					renderComponent: ItemImgTagsComponent
 				},
 				code: {
 					title: this.getTranslation('INVENTORY_PAGE.CODE'),

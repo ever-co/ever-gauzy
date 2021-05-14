@@ -1,5 +1,5 @@
 import { UntilDestroy } from '@ngneat/until-destroy';
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, OnChanges } from '@angular/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -160,10 +160,8 @@ export class MerchantFormComponent
 		}
 	}
 
-	onChangeTab(tab) {
-		if (tab['tabTitle'] == 'Location') {
-			setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
-		}
+	toMapStep() {
+		setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
 	}
 
 	cancel() {
@@ -181,6 +179,14 @@ export class MerchantFormComponent
 			...this.form.value,
 			warehouses: this.selectedWarehouses.map(id => { return { id } }),
 			logo: this.image,
+			organization: {
+				id: this.store.selectedOrganization
+					? this.store.selectedOrganization.id : null
+			},
+			tenant: {
+				id: this.store.selectedOrganization && this.store.selectedOrganization.tenantId ?
+					this.store.selectedOrganization.tenantId: null
+			},
 			contact: {
 				...locationFormValue,
 				latitude: coordinates[0],

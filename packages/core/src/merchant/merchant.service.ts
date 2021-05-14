@@ -27,6 +27,9 @@ export class MerchantService extends CrudService<Merchant> {
             take: options.limit
         });
 
+        //tstodo
+        console.log(findInput, 'find input');
+
         return {
             items: allMerchants,
             total
@@ -35,19 +38,6 @@ export class MerchantService extends CrudService<Merchant> {
     }
 
     async createStore(productStoreInput: any) {
-
-        // const warehouses = await this.warehouseRepository.find({
-        //     where: {
-        //         id: {
-        //             $in: [productStoreInput.warehouseIds]
-        //         }
-        //     }
-        // });
-
-        // const imageAsset = await this.imageAssetRepository.findOne(productStoreInput.imageAssetId);
-
-        //tstodo
-        console.log(productStoreInput, 'product store input')
 
         const contact = Object.assign(new Contact(), productStoreInput.contact);
         const productStore = Object.assign(new Merchant(), { ...productStoreInput, contact });

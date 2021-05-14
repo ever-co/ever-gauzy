@@ -1,14 +1,16 @@
-
-
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 
 	<nb-card-header>
 		<div class="main-header">
-			<h4>
-				<ngx-header-title>
-					{{ 'INVENTORY_PAGE.HEADER' | translate }}
-				</ngx-header-title>
-			</h4>
+			<div class="top-header">
+				<ngx-back-navigation></ngx-back-navigation>
+				<h4>
+					<ngx-header-title>
+						{{ 'INVENTORY_PAGE.HEADER' | translate }}
+					</ngx-header-title>
+				</h4>
+			</div>
+
 			<div class="card-header-title">
 				<div style="margin-right: 9px"></div>
 				<ga-layout-selector [componentName]="viewComponentName"></ga-layout-selector>
@@ -19,11 +21,11 @@
 	<nb-card-body>
 		<div class="mb-3">
 			<button nbButton status="success" class="mr-2" (click)="onAddStoreClick()">
-				{{ 'INVENTORY_PAGE.ADD_STORE' | translate }}
+				{{ 'INVENTORY_PAGE.CREATE_MERCHANT' | translate }}
 			</button>
 
 			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
-					<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
+				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
 		</div>
 
