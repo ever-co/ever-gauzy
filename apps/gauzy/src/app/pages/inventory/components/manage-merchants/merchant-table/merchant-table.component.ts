@@ -21,9 +21,9 @@ import { EnabledStatusComponent } from '../../table-components/enabled-row.compo
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-product-store-table',
-	templateUrl: './product-store-table.component.html',
-	styleUrls: ['./product-store-table.component.scss']
+	selector: 'ga-merchant-table',
+	templateUrl: './merchant-table.component.html',
+	styleUrls: ['./merchant-table.component.scss']
 })
 export class MerchantTableComponent
 	extends TranslationBaseComponent
@@ -40,11 +40,11 @@ export class MerchantTableComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	selectedOrganization: IOrganization;
 
-	storesTable: Ng2SmartTableComponent;
+	merchantsTable: Ng2SmartTableComponent;
 
 	@ViewChild('productStore') set content(content: Ng2SmartTableComponent) {
 		if (content) {
-			this.storesTable = content;
+			this.merchantsTable = content;
 			this.onChangedSource();
 		}
 	}
@@ -162,7 +162,7 @@ export class MerchantTableComponent
 	 * Table on changed source event
 	 */
 	onChangedSource() {
-		this.storesTable.source.onChangedSource
+		this.merchantsTable.source.onChangedSource
 			.pipe(
 				untilDestroyed(this),
 				tap(() => this.clearItem())
@@ -185,9 +185,9 @@ export class MerchantTableComponent
 	 * Deselect all table rows
 	 */
 	deselectAll() {
-		if (this.storesTable && this.storesTable.grid) {
-			this.storesTable.grid.dataSet['willSelect'] = 'false';
-			this.storesTable.grid.dataSet.deselectAll();
+		if (this.merchantsTable && this.merchantsTable.grid) {
+			this.merchantsTable.grid.dataSet['willSelect'] = 'false';
+			this.merchantsTable.grid.dataSet.deselectAll();
 		}
 	}
 

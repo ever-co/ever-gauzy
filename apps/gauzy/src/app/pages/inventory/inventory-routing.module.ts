@@ -12,9 +12,9 @@ import { InventoryItemViewComponent } from './components/view-inventory-item/vie
 import { WarehousesComponent } from './components/manage-warehouses/warehouses.component';
 import { WarehouseFormComponent } from './components/manage-warehouses/warehouse-form/warehouse-form.component';
 import { WarehousesTableComponent } from './components/manage-warehouses/warehouses-table/warehouses-table.component';
-import { MerchantTableComponent } from './components/manage-stores/product-store-table/product-store-table.component';
-import { MerchantComponent } from './components/manage-stores/product-store.component';
-import { MerchantFormComponent } from './components/manage-stores/product-store-form/product-store-form.component';
+import { MerchantTableComponent } from './components/manage-merchants/merchant-table/merchant-table.component';
+import { MerchantComponent } from './components/manage-merchants/merchant.component';
+import { MerchantFormComponent } from './components/manage-merchants/merchant-form/merchant-form.component';
 
 const ORG_PERMISSIONS = [
 	PermissionsEnum.ALL_ORG_VIEW,

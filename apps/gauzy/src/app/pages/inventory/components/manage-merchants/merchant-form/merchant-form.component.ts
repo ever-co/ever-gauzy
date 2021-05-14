@@ -28,9 +28,9 @@ import { LatLng } from 'leaflet';
 
 @UntilDestroy()
 @Component({
-	selector: 'ga-product-store-form',
-	templateUrl: './product-store-form.component.html',
-	styleUrls: ['./product-store-form.component.scss']
+	selector: 'ga-merchant-form',
+	templateUrl: './merchant-form.component.html',
+	styleUrls: ['./merchant-form.component.scss']
 })
 export class MerchantFormComponent
 	extends TranslationBaseComponent
@@ -55,7 +55,7 @@ export class MerchantFormComponent
 
 	images: IImageAsset[] = [];
 
-	productStore: IMerchant;
+	merchant: IMerchant;
 
 	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
 
@@ -67,7 +67,7 @@ export class MerchantFormComponent
 		private warehouseService: WarehouseService,
 		private dialogService: NbDialogService,
 		private imageAssetService: ImageAssetService,
-		private productStoreService: MerchantService
+		private merchantService: MerchantService
 
 	) {
 		super(translateService);
@@ -103,38 +103,38 @@ export class MerchantFormComponent
 	private _initializeForm() {
 		this.form = this.fb.group({
 			name: [
-				this.productStore ? this.productStore.name : '',
+				this.merchant ? this.merchant.name : '',
 				Validators.required
 			],
-			logo: [this.productStore ? this.productStore.logo.url : ''],
+			logo: [this.merchant ? this.merchant.logo.url : ''],
 			tags: this.tags,
 			code: [
-				this.productStore ? this.productStore.code : '',
+				this.merchant ? this.merchant.code : '',
 				Validators.required
 			],
 			currency: [
-				this.productStore ? this.productStore.code : '',
+				this.merchant ? this.merchant.code : '',
 				Validators.required
 			],
 			email: [
-				this.productStore ? this.productStore.email : '',
+				this.merchant ? this.merchant.email : '',
 				Validators.email
 			],
 			phone: [
-				this.productStore ? this.productStore.contact.phone : '',
+				this.merchant ? this.merchant.contact.phone : '',
 				Validators.pattern('^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$')
 			],
 			fax: [
-				this.productStore ? this.productStore.contact.fax : '',
+				this.merchant ? this.merchant.contact.fax : '',
 			],
 			fiscalInformation: [
-				this.productStore ? this.productStore.contact.fax : '',
+				this.merchant ? this.merchant.contact.fax : '',
 			],
 			website: [
-				this.productStore ? this.productStore.contact.fax : '',
+				this.merchant ? this.merchant.contact.fax : '',
 			],
-			active: [this.productStore ? this.productStore.active : true],
-			description: [this.productStore ? this.productStore.description : '']
+			active: [this.merchant ? this.merchant.active : true],
+			description: [this.merchant ? this.merchant.description : '']
 		})
 	}
 
@@ -190,8 +190,8 @@ export class MerchantFormComponent
 			}
 		}
 
-		if (!this.productStore) {
-			const res = await this.productStoreService.create(request);
+		if (!this.merchant) {
+			const res = await this.merchantService.create(request);
 		}
 	}
 

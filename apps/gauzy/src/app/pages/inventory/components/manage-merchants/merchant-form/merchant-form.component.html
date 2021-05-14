@@ -2,11 +2,11 @@
 	<nb-card-header>
 		<div class="main-header">
 			<div class="top-nav">
-				<h4 *ngIf="!productStore">
+				<h4 *ngIf="!merchant">
 					<ngx-back-navigation></ngx-back-navigation>
 					{{ 'INVENTORY_PAGE.CREATE_STORE' | translate }}
 				</h4>
-				<h4 *ngIf="productStore">
+				<h4 *ngIf="merchant">
 					<ngx-back-navigation></ngx-back-navigation>
 
 					{{ 'INVENTORY_PAGE.EDIT_STORE' | translate }}
@@ -17,7 +17,7 @@
 
 	<nb-card-body>
 		<form [formGroup]="form" *ngIf="form">
-			<nb-stepper #stepper>
+			<nb-stepper #stepper [disableStepNavigation]="!merchant">
 				<nb-step label="Main">
 					<div class="row">
 						<div class="col-md-3 col-sm-12 image-container">
