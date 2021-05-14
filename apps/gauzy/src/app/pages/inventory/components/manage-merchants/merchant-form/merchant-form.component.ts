@@ -1,6 +1,5 @@
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	ITag,
@@ -9,23 +8,22 @@ import {
 	IImageAsset,
 } from '@gauzy/contracts';
 import { NbStepperComponent } from '@nebular/theme';
-import { FormGroup, FormBuilder, Validators } from '@nebular/auth/node_modules/@angular/forms';
-import { LocationFormComponent, LeafletMapComponent } from 'apps/gauzy/src/app/@shared/forms';
+import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { first } from 'rxjs/operators';
+import { LatLng } from 'leaflet';
+import { Router } from '@angular/router';
+import { LocationFormComponent, LeafletMapComponent } from './../../../../../@shared/forms';
 import {
 	ToastrService,
 	Store,
 	WarehouseService,
 	ImageAssetService,
 	MerchantService
-} from 'apps/gauzy/src/app/@core';
+} from './../../../../../@core';
 import { NbDialogService } from '@nebular/theme';
-import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
-import { Subject } from 'rxjs';
-import { first } from 'rxjs/operators';
-import { LatLng } from 'leaflet';
-import { Router } from '@angular/router';
-
-
+import { SelectAssetComponent } from './../../../../../@shared/select-asset-modal/select-asset.component';
+import { TranslationBaseComponent } from './../../../../../@shared/language-base/translation-base.component';
 
 @UntilDestroy()
 @Component({
@@ -80,7 +78,6 @@ export class MerchantFormComponent
 		this._loadImages();
 		this._initializeForm();
 		this._loadWarehouses();
-
 	}
 
 	onWarehouseSelect($event) {
@@ -91,14 +88,11 @@ export class MerchantFormComponent
 		const { items } = await this.imageAssetService.getAll({
 			organizationId: this.store.selectedOrganization ? this.store.selectedOrganization.id : null
 		});
-
-
 		this.images = items;
 	}
 
 	private async _loadWarehouses() {
 		const { items } = await this.warehouseService.getAll();
-
 		this.warehouses = items;
 	}
 
@@ -154,7 +148,6 @@ export class MerchantFormComponent
 		});
 
 		let selectedImage = await dialog.onClose.pipe(first()).toPromise();
-
 		if (selectedImage) {
 			this.image = selectedImage;
 		}
@@ -164,12 +157,7 @@ export class MerchantFormComponent
 		setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
 	}
 
-	cancel() {
-
-	}
-
 	async onSaveRequest() {
-
 		const locationFormValue = this.locationFormDirective.getValue();
 		const { coordinates } = locationFormValue['loc'];
 
@@ -243,6 +231,4 @@ export class MerchantFormComponent
 			}
 		});
 	}
-
-
 }
