@@ -10,7 +10,6 @@ import {
 	HttpStatus,
 	Post,
 	Query,
-	Req,
 	UseGuards
 } from '@nestjs/common';
 import { QueryBus, CommandBus } from '@nestjs/cqrs';
@@ -25,7 +24,6 @@ import {
 import { EmailTemplateSaveCommand } from './commands';
 import { AuthGuard } from '@nestjs/passport';
 import { ParseJsonPipe, TenantPermissionGuard } from '../shared';
-import { Request } from 'express';
 
 @ApiTags('EmailTemplate')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
