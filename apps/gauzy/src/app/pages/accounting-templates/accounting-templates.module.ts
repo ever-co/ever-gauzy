@@ -9,6 +9,7 @@ import {
 } from '@nebular/theme';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { LanguageSelectorModule } from '../../@shared/language/language-selector/language-selector.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { ThemeModule } from '../../@theme/theme.module';
 import { AccountingTemplatesComponent } from './accounting-templates.component';
@@ -25,7 +26,8 @@ import { AccountingTemplatesComponent } from './accounting-templates.component';
 		TranslateModule,
 		NbButtonModule,
 		AceEditorModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		LanguageSelectorModule,
 	],
 	providers: [],
 	entryComponents: [AccountingTemplatesComponent],

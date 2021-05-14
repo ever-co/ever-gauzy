@@ -26,6 +26,7 @@ import { ImageUploaderModule } from '../image-uploader/image-uploader.module';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
 import { TranslateModule } from '../translate/translate.module';
 import { ProductOptionGroupTranslationsComponent } from './product-option-group-translation/product-option-group-translation.component';
+import { LanguageSelectorModule } from '../language/language-selector/language-selector.module';
 
 @NgModule({
 	declarations: [
@@ -49,7 +50,8 @@ import { ProductOptionGroupTranslationsComponent } from './product-option-group-
 		NbToastrModule,
 		UserFormsModule,
 		ImageUploaderModule,
-		TranslateModule
+		TranslateModule,
+		LanguageSelectorModule,
 	],
 	providers: [
 		ProductTypeService,

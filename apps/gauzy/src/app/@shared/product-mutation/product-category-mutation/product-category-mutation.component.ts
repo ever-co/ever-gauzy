@@ -65,11 +65,11 @@ export class ProductCategoryMutationComponent
 
 		this.languages = this.store.systemLanguages
 			? this.store.systemLanguages.map((item) => {
-					return {
-						value: item.code,
-						name: item.name
-					};
-			  })
+				return {
+					value: item.code,
+					name: item.name
+				};
+			})
 			: [];
 
 		this.form.valueChanges
@@ -77,6 +77,8 @@ export class ProductCategoryMutationComponent
 			.subscribe((formValue) => {
 				this.updateTranslations();
 			});
+
+		console.log({ selectedLanguage: this.selectedLanguage })
 	}
 
 	async onSaveRequest() {
@@ -135,6 +137,8 @@ export class ProductCategoryMutationComponent
 			return tr.languageCode === this.selectedLanguage;
 		});
 
+		console.log({ bfjkdfhjkd: this.activeTranslation })
+
 		if (!this.activeTranslation) {
 			const { id: organizationId, tenantId } = this.organization;
 			this.activeTranslation = {
@@ -149,9 +153,10 @@ export class ProductCategoryMutationComponent
 		}
 	}
 
-	onLangChange(langCode: string) {
+	async onLangChange(langCode: string) {
 		this.selectedLanguage = langCode;
-		this.setActiveTranslation();
+		console.log({ langCode })
+		await this.setActiveTranslation();
 
 		this.form.patchValue({
 			name: this.activeTranslation.name,

@@ -10,7 +10,8 @@ import {
 	Body,
 	Param,
 	HttpStatus,
-	HttpCode
+	HttpCode,
+	Query
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { BaseEntity } from '../entities/internal';
@@ -32,7 +33,7 @@ export abstract class CrudController<T extends BaseEntity> {
 		description: 'Found records' /* type: IPagination<T> */
 	})
 	@Get()
-	async findAll(filter?: PaginationParams<T>): Promise<IPagination<T>> {
+	async findAll(@Query() filter?: PaginationParams<T>): Promise<IPagination<T>> {
 		return this.crudService.findAll(filter);
 	}
 

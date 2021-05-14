@@ -143,7 +143,6 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 		});
 
 		let entity: AccountingTemplate;
-
 		if (success) {
 			entity = {
 				...record,
@@ -177,7 +176,6 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 			return record
 		} else {
 			return await this.findOne({
-				languageCode,
 				templateType,
 			});
 		}

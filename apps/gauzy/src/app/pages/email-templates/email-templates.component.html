@@ -10,23 +10,13 @@
 					<label class="label" for="languageCode">
 						{{ 'EMAIL_TEMPLATES_PAGE.LABELS.LANGUAGE' | translate }}
 					</label>
-					<nb-select
-						id="languageCode"
+					<ngx-language-selector
 						class="d-block"
 						size="small"
+						[isSystemLanguage]="true"
 						formControlName="languageCode"
-						(selectedChange)="getTemplate()"
-					>
-						<nb-option
-							*ngFor="let language of languageCodes"
-							[value]="language"
-						>
-							{{
-								'EMAIL_TEMPLATES_PAGE.LANGUAGE_CODES.' +
-									language | translate
-							}}
-						</nb-option>
-					</nb-select>
+						(selectedLanguageEvent)="getTemplate()"
+					></ngx-language-selector>
 				</div>
 				<div class="col-2 select-block">
 					<label class="label" for="templateName">

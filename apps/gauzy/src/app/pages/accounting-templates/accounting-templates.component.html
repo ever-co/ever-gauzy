@@ -13,23 +13,14 @@
 					<label class="label" for="languageCode">
 						{{ 'FORM.LABELS.LANGUAGE' | translate }}
 					</label>
-					<nb-select
-						id="languageCode"
+					<ngx-language-selector
 						class="d-block"
 						size="small"
+						[template]="'ng-select'"
 						formControlName="languageCode"
-						(selectedChange)="subject$.next()"
+						(selectedLanguageEvent)="subject$.next()"
 					>
-						<nb-option
-							*ngFor="let language of languageCodes"
-							[value]="language"
-						>
-							{{
-								'ACCOUNTING_TEMPLATES_PAGE.LANGUAGE_CODES.' +
-									language | translate
-							}}
-						</nb-option>
-					</nb-select>
+					</ngx-language-selector>
 				</div>
 				<div class="col-2 select-block">
 					<label class="label" for="templateName">

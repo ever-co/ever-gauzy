@@ -99,25 +99,13 @@
 								<label for="preferredLanguage" class="label">{{
 									'FORM.LABELS.PREFERRED_LANGUAGE' | translate
 								}}</label>
-								<nb-select
+								<ngx-language-selector
+									[placeholder]="'FORM.PLACEHOLDERS.PREFERRED_LANGUAGE'| translate"
 									class="d-block"
-									fullWidth
-									placeholder="{{
-										'FORM.PLACEHOLDERS.PREFERRED_LANGUAGE'
-											| translate
-									}}"
+									selectBy="object"
+									template="ng-select"
 									formControlName="preferredLanguage"
-									id="preferredLanguage"
-								>
-									<nb-option
-										*ngFor="let language of languages"
-										value="{{ language }}"
-										>{{
-											'USERS_PAGE.EDIT_USER.PREFERRED_LANGUAGE.' +
-												language | translate
-										}}</nb-option
-									>
-								</nb-select>
+								></ngx-language-selector>
 							</div>
 						</div>
 					</div>

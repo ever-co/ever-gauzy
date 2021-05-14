@@ -3,10 +3,11 @@ import { HttpClient } from '@angular/common/http';
 import { ILanguage } from '@gauzy/contracts';
 import { first } from 'rxjs/operators';
 import { API_PREFIX } from '../constants/app.constants';
+import { toParams } from '@gauzy/common-angular';
 
 @Injectable()
 export class LanguagesService {
-	constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient) { }
 
 	insertLanguage(createLanguage: ILanguage): Promise<ILanguage> {
 		return this.http
@@ -23,10 +24,10 @@ export class LanguagesService {
 	}
 
 	getSystemLanguages(): Promise<{ items: ILanguage[] }> {
-		const option = JSON.stringify({ is_system: true });
+		const findInput = { is_system: true };
 		return this.http
 			.get<{ items: ILanguage[] }>(`${API_PREFIX}/languages`, {
-				params: { option }
+				params: toParams(findInput)
 			})
 			.pipe(first())
 			.toPromise();
