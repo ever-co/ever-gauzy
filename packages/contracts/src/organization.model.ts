@@ -27,6 +27,7 @@ export enum ListsInputTypeEnum {
 
 export interface IOrganization extends IBasePerTenantEntityModel {
 	name: string;
+	isDefault: boolean;
 	profile_link: string;
 	valueDate?: Date;
 	totalEmployees: number;
@@ -100,10 +101,10 @@ export interface IOrganization extends IBasePerTenantEntityModel {
 	reportOrganizations?: IReportOrganization[];
 }
 
-export interface IOrganizationFindInput {
+export interface IOrganizationFindInput extends IBasePerTenantEntityModel {
 	id?: string;
-	tenantId?: string;
 	name?: string;
+	isDefault?: boolean;
 	profile_link?: string;
 	valueDate?: Date;
 	imageUrl?: string;
@@ -115,6 +116,7 @@ export interface IOrganizationFindInput {
 
 export interface IOrganizationCreateInput extends IContact {
 	name: string;
+	isDefault: boolean;
 	profile_link: string;
 	valueDate?: Date;
 	imageUrl: string;

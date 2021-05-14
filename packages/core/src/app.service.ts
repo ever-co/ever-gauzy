@@ -1,4 +1,5 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { ConfigService } from '@gauzy/config';
 import { SeedDataService } from './core/seeds/seed-data.service';
 import { UserService } from './user/user.service';
 
@@ -13,6 +14,10 @@ export class AppService {
 		console.log(`Found ${count} users in DB`);
 		if (count === 0) {
 			await this.seedDataService.runDefaultSeed();
+			
+			if (this.configService.get('demo') === true) {
+				this.seedDataService.runDemoSeed();
+			}
 		}
 	}
 
@@ -21,6 +26,9 @@ export class AppService {
 		private readonly seedDataService: SeedDataService,
 
 		@Inject(forwardRef(() => UserService))
-		private readonly userService: UserService
+		private readonly userService: UserService,
+
+		@Inject(forwardRef(() => ConfigService))
+		private readonly configService: ConfigService
 	) {}
 }

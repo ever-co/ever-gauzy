@@ -46,7 +46,6 @@ import {
 import {
 	createDefaultOrganizations,
 	createRandomOrganizations,
-	getDefaultBulgarianOrganization,
 	DEFAULT_EVER_ORGANIZATIONS, 
 	DEFAULT_ORGANIZATIONS
 } from '../../organization';
@@ -71,7 +70,6 @@ import { createRolePermissions } from '../../role-permissions/role-permissions.s
 import {
 	createDefaultTenants,
 	createRandomTenants,
-	getDefaultTenant,
 	DEFAULT_EVER_TENANT,
 	DEFAULT_TENANT
 } from '../../tenant';
@@ -319,13 +317,13 @@ export class SeedDataService {
 	connection: Connection;
 	log = console.log;
 
-	organizations: IOrganization[];
-	defaultProjects: IOrganizationProject[] | void;
+	organizations: IOrganization[] = [];
+	defaultProjects: IOrganizationProject[] | void = []; 
 	tenant: ITenant;
-	roles: IRole[];
-	superAdminUsers: IUser[];
-	defaultCandidateUsers: IUser[];
-	defaultEmployees: IEmployee[];
+	roles: IRole[] = [];
+	superAdminUsers: IUser[] = [];
+	defaultCandidateUsers: IUser[] = [];
+	defaultEmployees: IEmployee[] = [];
 
 	config: IPluginConfig = getConfig();
 	seedType: SeederTypeEnum;
@@ -417,7 +415,7 @@ export class SeedDataService {
 			// Seed reports related data
 			await this.seedReportsData();
 
-			console.log('Database Default Seed Completed');
+			console.log('Database Ever Seed Completed');
 		} catch (error) {
 			this.handleError(error);
 		}
@@ -438,6 +436,28 @@ export class SeedDataService {
 			this.handleError(error);
 		}
 		return;
+	}
+
+	public async runDemoSeed() {
+		try {
+			console.log('Database Demo Seed Started');
+			this.seedType = SeederTypeEnum.ALL;
+		
+			if (this.seedType === SeederTypeEnum.ALL) {
+				await this.seedDefaultData();
+				await this.seedRandomData();
+			}
+
+			// Seed jobs related data
+			await this.seedJobsData();
+
+			// Seed reports related data
+			await this.seedReportsData();
+
+			console.log('Database Demo Seed Completed');
+		} catch (error) {
+			this.handleError(error);
+		}
 	}
 
 	/**
@@ -496,7 +516,6 @@ export class SeedDataService {
 	 * @param isDefault
 	 */
 	private async seedJobsData() {
-
 		try {
 			this.log(
 				chalk.green(
@@ -505,19 +524,12 @@ export class SeedDataService {
 				)
 			);
 
-			const defaultTenant = await getDefaultTenant(this.connection);
-
-			const defaultBulgarianOrganization = await getDefaultBulgarianOrganization(
-				this.connection,
-				defaultTenant
-			);
-
 			await this.tryExecute(
 				'Default Job Search Categories',
 				createDefaultJobSearchCategories(
 					this.connection,
-					defaultTenant,
-					defaultBulgarianOrganization
+					this.tenant,
+					this.organizations[0]
 				)
 			);
 
@@ -525,8 +537,8 @@ export class SeedDataService {
 				'Default Job Search Occupations',
 				createDefaultJobSearchOccupations(
 					this.connection,
-					defaultTenant,
-					defaultBulgarianOrganization
+					this.tenant,
+					this.organizations[0]
 				)
 			);
 
@@ -606,7 +618,7 @@ export class SeedDataService {
 
 		await createRolePermissions(
 			this.connection, 
-			this.roles, 
+			this.roles,
 			[this.tenant]
 		);
 
@@ -649,18 +661,6 @@ export class SeedDataService {
 			)
 		);
 
-		if (this.seedType !== SeederTypeEnum.DEFAULT) {
-			await this.tryExecute(
-				'Contacts',
-				createRandomContacts(
-					this.connection,
-					this.tenant,
-					this.organizations,
-					randomSeedConfig.noOfRandomContacts || 5
-				)
-			);
-		}
-
 		const {
 			defaultSuperAdminUsers,
 			defaultAdminUsers
@@ -669,7 +669,7 @@ export class SeedDataService {
 			this.roles, 
 			this.tenant
 		);
-		this.superAdminUsers = defaultSuperAdminUsers as IUser[];
+		this.superAdminUsers.push(...defaultSuperAdminUsers as IUser[]);
 
 		const { 
 			defaultEmployeeUsers 
@@ -688,7 +688,7 @@ export class SeedDataService {
 				this.roles, 
 				this.tenant
 			);
-			this.defaultCandidateUsers = defaultCandidateUsers;
+			this.defaultCandidateUsers.push(...defaultCandidateUsers);
 			defaultEmployeeUsers.push(...defaultEverEmployeeUsers);
 		}
 
@@ -824,7 +824,20 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Product Types',
-			createDefaultProductType(this.connection, this.organizations)
+			createDefaultProductType(
+				this.connection, 
+				this.organizations
+			)
+		);
+
+		await this.tryExecute(
+			'Default Contacts',
+			createRandomContacts(
+				this.connection,
+				this.tenant,
+				this.organizations,
+				randomSeedConfig.noOfRandomContacts || 5
+			)
 		);
 
 		await this.tryExecute(

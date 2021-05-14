@@ -47,6 +47,7 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 			{ userId: this.store.userId, tenantId }
 		);
 		this.organizations = items.map((userOrg) => userOrg.organization);
+		console.log(this.organizations);
 
 		if (this.organizations.length > 0) {
 			const [defaultOrganization] = this.organizations;
