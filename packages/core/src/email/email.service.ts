@@ -327,7 +327,13 @@ export class EmailService extends CrudService<IEmail> {
 		organizationId?: string,
 		originUrl?: string
 	) {
-		const tenantId = RequestContext.currentTenantId();
+		let organization: Organization;
+		if (organizationId) {
+			organization = await this.organizationRepository.findOne(
+				organizationId
+			);
+		}
+		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
 		const sendOptions = {
 			template: 'welcome-user',
 			message: {
@@ -338,16 +344,9 @@ export class EmailService extends CrudService<IEmail> {
 				email: user.email,
 				host: originUrl || env.clientBaseUrl,
 				organizationId: organizationId || IsNull(),
-				tenantId: tenantId || IsNull()
+				tenantId
 			}
 		};
-
-		let organization: Organization;
-		if (organizationId) {
-			organization = await this.organizationRepository.findOne(
-				organizationId
-			);
-		}
 		this.email
 			.send(sendOptions)
 			.then((res) => {
@@ -369,7 +368,13 @@ export class EmailService extends CrudService<IEmail> {
 		organizationId: string,
 		originUrl?: string
 	) {
-		const tenantId = RequestContext.currentTenantId();
+		let organization: Organization;
+		if (organizationId) {
+			organization = await this.organizationRepository.findOne(
+				organizationId
+			);
+		}
+		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
 		const sendOptions = {
 			template: 'password',
 			message: {
@@ -384,10 +389,6 @@ export class EmailService extends CrudService<IEmail> {
 				tenantId
 			}
 		};
-
-		const organization = await this.organizationRepository.findOne(
-			organizationId
-		);
 		this.email
 			.send(sendOptions)
 			.then((res) => {
@@ -408,7 +409,13 @@ export class EmailService extends CrudService<IEmail> {
 		organizationId?: string,
 		originUrl?: string
 	) {
-		const tenantId = RequestContext.currentTenantId();
+		let organization: Organization;
+		if (organizationId) {
+			organization = await this.organizationRepository.findOne(
+				organizationId
+			);
+		}
+		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
 		const sendOptions = {
 			template: 'email-appointment',
 			message: {
@@ -422,14 +429,6 @@ export class EmailService extends CrudService<IEmail> {
 				tenantId: tenantId || IsNull()
 			}
 		};
-
-		let organization: Organization;
-		if (organizationId) {
-			organization = await this.organizationRepository.findOne(
-				organizationId
-			);
-		}
-
 		this.email
 			.send(sendOptions)
 			.then((res) => {
@@ -446,8 +445,11 @@ export class EmailService extends CrudService<IEmail> {
 
 	async setTimesheetAction(email: string, timesheet: Timesheet) {
 		const languageCode = RequestContext.getLanguageCode();
-		const tenantId = RequestContext.currentTenantId();
 		const organizationId = timesheet.employee.organizationId;
+		const organization = await this.organizationRepository.findOne(
+			timesheet.employee.organizationId
+		);
+		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
 		const sendOptions = {
 			template: 'timesheet-action',
 			message: {
@@ -464,9 +466,6 @@ export class EmailService extends CrudService<IEmail> {
 			}
 		};
 
-		const organization = await this.organizationRepository.findOne(
-			timesheet.employee.organizationId
-		);
 		this.email
 			.send(sendOptions)
 			.then((res) => {
@@ -484,8 +483,11 @@ export class EmailService extends CrudService<IEmail> {
 
 	async timesheetSubmit(email: string, timesheet: Timesheet) {
 		const languageCode = RequestContext.getLanguageCode();
-		const tenantId = RequestContext.currentTenantId();
 		const organizationId = timesheet.employee.organizationId;
+		const organization = await this.organizationRepository.findOne(
+			timesheet.employee.organizationId
+		);
+		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
 		const sendOptions = {
 			template: 'timesheet-submit',
 			message: {
@@ -501,11 +503,6 @@ export class EmailService extends CrudService<IEmail> {
 				tenantId
 			}
 		};
-
-		const organization = await this.organizationRepository.findOne(
-			timesheet.employee.organizationId
-		);
-
 		this.email
 			.send(sendOptions)
 			.then((res) => {
@@ -530,7 +527,6 @@ export class EmailService extends CrudService<IEmail> {
 		user?: User;
 	}): Promise<IEmail> {
 		const emailEntity = new IEmail();
-		const tenantId = RequestContext.currentTenantId();
 		const {
 			templateName: template,
 			email,
@@ -539,7 +535,7 @@ export class EmailService extends CrudService<IEmail> {
 			organization,
 			user
 		} = createEmailOptions;
-
+		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
 		const emailTemplate = await this.emailTemplateRepository.findOne({
 			name: template + '/html',
 			languageCode
@@ -550,11 +546,9 @@ export class EmailService extends CrudService<IEmail> {
 		emailEntity.emailTemplate = emailTemplate;
 		emailEntity.tenantId = tenantId;
 		emailEntity.organizationId = (organization) ? organization.id : null;
-
 		if (user) {
 			emailEntity.user = user;
 		}
-
 		return this.emailRepository.save(emailEntity);
 	}
 
@@ -577,7 +571,6 @@ export class EmailService extends CrudService<IEmail> {
 	// tested e-mail send functionality
 	private async nodemailerSendEmail(user: User, url: string) {
 		const testAccount = await nodemailer.createTestAccount();
-
 		const transporter = nodemailer.createTransport({
 			host: 'smtp.ethereal.email',
 			port: 587,
@@ -587,9 +580,7 @@ export class EmailService extends CrudService<IEmail> {
 				pass: testAccount.pass
 			}
 		});
-
 		// Gmail example:
-
 		// const transporter = nodemailer.createTransport({
 		// 	service: 'gmail',
 		// 	auth: {
@@ -597,7 +588,6 @@ export class EmailService extends CrudService<IEmail> {
 		// 		pass: 'password'
 		// 	}
 		// });
-
 		const info = await transporter.sendMail({
 			from: 'Gauzy',
 			to: user.email,
