@@ -153,7 +153,7 @@ export class ProductCategoryMutationComponent
 		}
 	}
 
-	async onLangChange(langCode: string) {
+	 onLangChange(langCode: string) {
 		this.selectedLanguage = langCode;
 		this.setActiveTranslation();
 
