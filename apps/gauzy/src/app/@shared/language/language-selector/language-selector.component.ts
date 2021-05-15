@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter, forwardRef } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, forwardRef, ChangeDetectorRef } from '@angular/core';
 import { LanguagesService } from '../../../@core/services/languages.service';
 import { ILanguage } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
@@ -122,6 +122,7 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 		private readonly languagesService: LanguagesService,
 		readonly translate: TranslateService,
 		private readonly store: Store,
+		private  cd: ChangeDetectorRef,
 	) {
 		super(translate);
 		this.store.preferredLanguage$
@@ -145,6 +146,7 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 	}
 
 	onSelectedChange(code: ILanguage['code']) {
+		this.cd.detectChanges()
 		let selectedLanguage;
 		if (this.selectBy === 'object') {
 			selectedLanguage = this.getLanguageByCode(code);

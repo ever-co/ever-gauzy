@@ -13,10 +13,11 @@
 					<ngx-language-selector
 						class="d-block"
 						size="small"
-						[isSystemLanguage]="true"
+						template="ng-select"
 						formControlName="languageCode"
 						(selectedLanguageEvent)="getTemplate()"
-					></ngx-language-selector>
+					>
+					</ngx-language-selector>
 				</div>
 				<div class="col-2 select-block">
 					<label class="label" for="templateName">

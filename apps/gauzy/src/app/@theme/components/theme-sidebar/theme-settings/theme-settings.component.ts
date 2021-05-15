@@ -112,11 +112,7 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 		this.themeService.changeTheme(this.currentTheme);
 	}
 
-	switchLanguage(event?: string) {
-		if (event) {
-			this.currentLang = event;
-		}
-
+	switchLanguage() {
 
 		if (this.currentLang === LanguagesEnum['HEBREW']) {
 			this.directionService.setDirection(NbLayoutDirection.RTL);

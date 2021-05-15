@@ -16,24 +16,9 @@
 
 <div class="theme-settings">
 	<h6 class="title-uppercase">{{ 'SETTINGS_MENU.LANGUAGE' | translate }}</h6>
-
-	<!-- <ngx-language-selector
-		[clearable]="true"
-		[addTag]="true"
-		[template]="'ng-select'"
-	></ngx-language-selector> -->
-	<!-- -->
 	
 	<div class="settings-row theme-button">
-		 <ngx-language-selector
-			[placeholder]="languages[1].name | translate"
-			[isSystemLanguage]="true"
-			[selectedLanguageCode]="currentLang"
-			(selectedLanguageEvent)="switchLanguage($event)"
-			
-		></ngx-language-selector>
-
-		<!-- <nb-select
+		<nb-select
 			*ngIf="languages.length"
 			[(selected)]="currentLang"
 			placeholder="{{ languages[0].name | translate }}"
@@ -43,7 +28,7 @@
 			<nb-option *ngFor="let lang of languages" [value]="lang.value">
 				{{ lang.name | translate }}</nb-option
 			>
-		</nb-select> -->
+		</nb-select>
 	</div>
 </div>
 
