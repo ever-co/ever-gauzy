@@ -54,6 +54,7 @@ export class FindEmailTemplateHandler
 	): Promise<string> {
 		let subject = '';
 		let template = '';
+
 		try {
 			// Find customized email template for given organization
 			const { hbs, mjml } = await this.emailTemplateService.findOne({
@@ -65,29 +66,27 @@ export class FindEmailTemplateHandler
 			subject = hbs;
 			template = mjml;
 		} catch (error) {
-			try {
-				// If language code can't find use organization english template as a default template
-				const { hbs, mjml } = await this.emailTemplateService.findOne({
-					languageCode: LanguagesEnum.ENGLISH,
-					name: `${name}/${type}`,
-					organizationId,
-					tenantId
-				});
-				subject = hbs;
-				template = mjml;
-			} catch (error) {
-				// Find customized email template from system
-				const { success, record } = await this.emailTemplateService.findOneOrFail({
-					languageCode,
-					name: `${name}/${type}`,
-					organizationId: IsNull(),
-					tenantId: IsNull()
-				});
-				if (success) {
-					subject = record.hbs;
-					template = record.mjml;
-				} else {
-					// If language code can't find use system english template as a default template
+			// If no email template present for given organization, use default email template
+			const { success, record } = await this.emailTemplateService.findOneOrFail({
+				languageCode,
+				name: `${name}/${type}`,
+				organizationId: IsNull(),
+				tenantId: IsNull()
+			});
+			if (success) {
+				subject = record.hbs;
+				template = record.mjml;
+			} else {
+				try {
+					const { hbs, mjml } = await this.emailTemplateService.findOne({
+						languageCode: LanguagesEnum.ENGLISH,
+						name: `${name}/${type}`,
+						organizationId,
+						tenantId
+					});
+					subject = hbs;
+					template = mjml;
+				} catch (error) {
 					const { hbs, mjml } = await this.emailTemplateService.findOne({
 						languageCode: LanguagesEnum.ENGLISH,
 						name: `${name}/${type}`,
