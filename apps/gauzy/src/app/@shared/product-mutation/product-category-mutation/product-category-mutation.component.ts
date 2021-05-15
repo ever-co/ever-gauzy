@@ -155,8 +155,7 @@ export class ProductCategoryMutationComponent
 
 	async onLangChange(langCode: string) {
 		this.selectedLanguage = langCode;
-		console.log({ langCode })
-		await this.setActiveTranslation();
+		this.setActiveTranslation();
 
 		this.form.patchValue({
 			name: this.activeTranslation.name,
