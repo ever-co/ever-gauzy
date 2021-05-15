@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
+import { LanguagesEnum } from '@gauzy/contracts';
 import { CrudService } from '../core';
 import { AccountingTemplate } from './accounting-template.entity';
 import * as mjml2html from 'mjml';
@@ -165,7 +166,11 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 
 
 	async getAccountTemplate(input) {
-		const { languageCode, templateType, organizationId, tenantId } = input;
+		const { templateType, organizationId, tenantId } = input;
+		let { languageCode } = input;
+		const systemLanguages: string[] = Object.values(LanguagesEnum);
+		languageCode = systemLanguages.includes(languageCode) ? languageCode : LanguagesEnum.ENGLISH;
+
 		const { success, record } = await this.findOneOrFail({
 			languageCode,
 			templateType,
@@ -176,7 +181,10 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 			return record
 		} else {
 			return await this.findOne({
+				languageCode,
 				templateType,
+				organizationId: IsNull(),
+				tenantId: IsNull()
 			});
 		}
 	}

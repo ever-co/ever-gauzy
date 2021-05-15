@@ -10,8 +10,7 @@ import {
 	Body,
 	Param,
 	HttpStatus,
-	HttpCode,
-	Query
+	HttpCode
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { BaseEntity } from '../entities/internal';

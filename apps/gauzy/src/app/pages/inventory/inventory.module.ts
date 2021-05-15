@@ -77,7 +77,7 @@ import { MerchantTableComponent } from './components/manage-merchants/merchant-t
 import { MerchantComponent } from './components/manage-merchants/merchant.component';
 import { MerchantFormComponent } from './components/manage-merchants/merchant-form/merchant-form.component';
 import { MerchantService } from './../../@core';
-import { LanguageSelectorModule } from '../../@shared/language/language-selector/language-selector.module';
+import { LanguageSelectorModule } from '../../@shared/language/language-selector';
 
 
 const NB_MODULES = [
