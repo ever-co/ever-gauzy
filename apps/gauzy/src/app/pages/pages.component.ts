@@ -1083,12 +1083,10 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 				  }, false)
 				: true;
 
-			item.hidden =
-				!anyPermission || (item.data.hide && item.data.hide());
+			item.hidden = !anyPermission || (item.data.hide && item.data.hide());
 
 			if (anyPermission && item.data.organizationShortcut) {
-				item.hidden =
-					!withOrganizationShortcuts || !this._selectedOrganization;
+				item.hidden = !withOrganizationShortcuts || !this._selectedOrganization;
 				if (!item.hidden) {
 					item.link =
 						item.data.urlPrefix +
@@ -1099,7 +1097,7 @@ export class PagesComponent extends TranslationBaseComponent implements OnInit, 
 		}
 
 		// enabled/disabled features from here
-		if (item.data.hasOwnProperty('featureKey')) {
+		if (item.data.hasOwnProperty('featureKey') && item.hidden !== true) {
 			const { featureKey } = item.data;
 			const enabled = !this.store.hasFeatureEnabled(featureKey);
 			item.hidden = enabled || (item.data.hide && item.data.hide());

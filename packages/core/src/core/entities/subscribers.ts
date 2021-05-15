@@ -1,7 +1,8 @@
 import { 
 	FeatureSubscriber, 
 	ScreenshotSubscriber, 
-	TimeSlotSubscriber 
+	TimeSlotSubscriber,
+	UserSubscriber
 } from "./internal";
 
 /**
@@ -10,5 +11,6 @@ import {
 export const coreSubscribers = [
 	FeatureSubscriber,
 	ScreenshotSubscriber,
-	TimeSlotSubscriber
+	TimeSlotSubscriber,
+	UserSubscriber
 ];

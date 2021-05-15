@@ -14,7 +14,9 @@ import { IUser } from '@gauzy/contracts';
 import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
 import { NavigationBuilderService, Store } from '../../../@core/services';
 import { DEFAULT_SIDEBARS } from '../../components/theme-sidebar/default-sidebars';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-one-column-layout',
 	styleUrls: ['./one-column.layout.scss'],
@@ -49,7 +51,8 @@ export class OneColumnLayoutComponent
 		this.store.user$
 			.pipe(
 				filter((user) => !!user),
-				tap((user: IUser) => (this.user = user))
+				tap((user: IUser) => (this.user = user)),
+				untilDestroyed(this)
 			)
 			.subscribe();
 		this.loading = false;
