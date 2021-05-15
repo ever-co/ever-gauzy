@@ -54,11 +54,12 @@ export class FindEmailTemplateHandler
 	): Promise<string> {
 		let subject = '';
 		let template = '';
-
 		try {
 			// Find customized email template for given organization
+			// If language code can't find use English as a default language
+			const systemLanguages: string[] = Object.values(LanguagesEnum);
 			const { hbs, mjml } = await this.emailTemplateService.findOne({
-				languageCode,
+				languageCode: systemLanguages.includes(languageCode) ? languageCode : LanguagesEnum.ENGLISH,
 				name: `${name}/${type}`,
 				organizationId,
 				tenantId
@@ -67,30 +68,15 @@ export class FindEmailTemplateHandler
 			template = mjml;
 		} catch (error) {
 			// If no email template present for given organization, use default email template
-			const { success, record } = await this.emailTemplateService.findOneOrFail({
-				languageCode,
+			const { hbs, mjml } = await this.emailTemplateService.findOne({
+				languageCode: LanguagesEnum.ENGLISH,
 				name: `${name}/${type}`,
 				organizationId: IsNull(),
 				tenantId: IsNull()
 			});
-			if (success) {
-				subject = record.hbs;
-				template = record.mjml;
-			}
-			else {
-				const { hbs, mjml } = await this.emailTemplateService.findOne({
-					languageCode: LanguagesEnum.ENGLISH,
-					name: `${name}/${type}`,
-					organizationId: IsNull(),
-					tenantId: IsNull()
-				});
-				subject = hbs;
-				template = mjml;
-
-			}
-
+			subject = hbs;
+			template = mjml;
 		}
-
 		switch (type) {
 			case 'subject':
 				return subject;
