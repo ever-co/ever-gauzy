@@ -52,14 +52,10 @@ export class FindEmailTemplateHandler
 		tenantId: string,
 		type: 'html' | 'subject'
 	): Promise<string> {
-		const systemLanguages: string[] = Object.values(LanguagesEnum);
-		languageCode = systemLanguages.includes(languageCode) ? languageCode : LanguagesEnum.ENGLISH;
-
 		let subject = '';
 		let template = '';
 		try {
 			// Find customized email template for given organization
-			// If language code can't find use English as a default language
 			const { hbs, mjml } = await this.emailTemplateService.findOne({
 				languageCode,
 				name: `${name}/${type}`,
@@ -69,16 +65,41 @@ export class FindEmailTemplateHandler
 			subject = hbs;
 			template = mjml;
 		} catch (error) {
-			// If no email template present for given organization, use default email template
-			const { hbs, mjml } = await this.emailTemplateService.findOne({
-				languageCode,
-				name: `${name}/${type}`,
-				organizationId: IsNull(),
-				tenantId: IsNull()
-			});
-			subject = hbs;
-			template = mjml;
+			try {
+				// If language code can't find use organization english template as a default template
+				const { hbs, mjml } = await this.emailTemplateService.findOne({
+					languageCode: LanguagesEnum.ENGLISH,
+					name: `${name}/${type}`,
+					organizationId,
+					tenantId
+				});
+				subject = hbs;
+				template = mjml;
+			} catch (error) {
+				// Find customized email template from system
+				const { success, record } = await this.emailTemplateService.findOneOrFail({
+					languageCode,
+					name: `${name}/${type}`,
+					organizationId: IsNull(),
+					tenantId: IsNull()
+				});
+				if (success) {
+					subject = record.hbs;
+					template = record.mjml;
+				} else {
+					// If language code can't find use system english template as a default template
+					const { hbs, mjml } = await this.emailTemplateService.findOne({
+						languageCode: LanguagesEnum.ENGLISH,
+						name: `${name}/${type}`,
+						organizationId: IsNull(),
+						tenantId: IsNull()
+					});
+					subject = hbs;
+					template = mjml;
+				}
+			}
 		}
+
 		switch (type) {
 			case 'subject':
 				return subject;

@@ -5,7 +5,6 @@
 				<div class="col-6">
 					<h4> <ngx-header-title [allowEmployee]="false"> {{ 'EMAIL_TEMPLATES_PAGE.HEADER' | translate }} </ngx-header-title> </h4>
 				</div>
-
 				<div class="col-2 select-block">
 					<label class="label" for="languageCode">
 						{{ 'EMAIL_TEMPLATES_PAGE.LABELS.LANGUAGE' | translate }}
@@ -15,7 +14,7 @@
 						size="small"
 						template="ng-select"
 						formControlName="languageCode"
-						(selectedLanguageEvent)="getTemplate()"
+						(selectedLanguageEvent)="subject$.next()"
 					>
 					</ngx-language-selector>
 				</div>
@@ -35,7 +34,7 @@
 							'EMAIL_TEMPLATES_PAGE.TEMPLATE_NAMES.TEMPLATE_NAMES'
 								| translate
 						}}"
-						(selectedChange)="getTemplate()"
+						(selectedChange)="subject$.next()"
 					>
 						<nb-option
 							*ngFor="let name of templateNames"
