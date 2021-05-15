@@ -66,7 +66,7 @@ import { GoogleMapsLoaderService } from './@core/services/google-maps-loader.ser
 import { Router } from '@angular/router';
 import { FeatureToggleModule } from 'ngx-feature-toggle';
 import { FeatureService } from './@core/services/feature/feature.service';
-import { IFeatureToggle } from '@gauzy/contracts';
+import { IFeatureToggle, LanguagesEnum } from '@gauzy/contracts';
 import { HttpLoaderFactory } from './@shared/translate/translate.module';
 import { AppInitService } from './@core/services/app-init-service';
 
@@ -210,12 +210,12 @@ if (environment.SENTRY_DSN) {
 export class AppModule {
 	constructor() {
 		// Set Monday as start of the week
-		moment.locale('en', {
+		moment.locale(LanguagesEnum.ENGLISH, {
 			week: {
 				dow: 1
 			}
 		});
-		moment.locale('en');
+		moment.locale(LanguagesEnum.ENGLISH);
 	}
 }
 

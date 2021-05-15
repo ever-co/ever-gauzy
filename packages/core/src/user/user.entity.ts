@@ -29,8 +29,7 @@ import {
 	RelationId,
 	ManyToMany,
 	JoinTable,
-	OneToOne,
-	AfterLoad
+	OneToOne
 } from 'typeorm';
 import {
 	Employee,
@@ -120,13 +119,5 @@ export class User extends TenantBaseEntity implements IUser {
 	preferredComponentLayout?: string;
 
 	name?: string;
-
 	employeeId?: string;
-
-	@AfterLoad()
-	afterLoad?() {
-		const name = this.firstName + ' ' + this.lastName;
-		this.name = name;
-		this.employeeId = this.employee ? this.employee.id : null;
-	}
 }

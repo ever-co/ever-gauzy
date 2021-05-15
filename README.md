@@ -7,13 +7,19 @@
 
 Ever® Gauzy™ - **Open-Source Business Management Platform** for On-Demand and Sharing Economies.
 
-Ever® Gauzy™ Platform is an Enterprise Resource Planning (ERP), Customer Relationship Management (CRM) and Human Resource Management (HRM) software.
-
-You are welcome to check more information about the platform at our official websites - **<https://gauzy.co>** and **<https://ever.co>**.
+Ever® Gauzy™ Platform is an: 
+- **Enterprise Resource Planning** (ERP) software
+- **Customer Relationship Management** (CRM) software
+- **Human Resource Management** (HRM) software with employee **Time and Activity Tracking** functionality
 
 ![overview](https://gauzy.co/wp-content/themes/gauzy/assets/img/home/home-1.png)
 
-Platform main features:
+You are welcome to check more information about the platform at our official website - **<https://gauzy.co>**. 
+
+Ever® Gauzy™ Platform is a part of our larger Open Platform for **On-Demand and Sharing Economies**.  
+You can get more information about our products at **<https://ever.co>**.
+
+Ever® Gauzy™ Platform main features:
 
 -   Human Resources Management (HRM) with Time Management / Tracking and Employees Performance Monitoring
 -   Customer Relationship Management (CRM)
@@ -63,24 +69,32 @@ Read more [About Gauzy](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) 
 
 ### Demo
 
--   Gauzy Platform Demo at <https://demo.gauzy.co> (login `admin@ever.co` and password: `admin`)
+-   Gauzy Platform Demo at <https://demo.gauzy.co> (login `admin@ever.co` and password: `admin`).
+-   You can also download and try our Desktop Apps (Windows/Mac/Linux) from <https://github.com/ever-co/ever-gauzy/releases> (see more information about Desktop Apps below).
+
+### Production (SaaS, WIP)
+
+-   Ever® Gauzy™ Platform SaaS at <https://app.gauzy.co> (not used yet in production / in testing mode and it's the same as <https://demo.gauzy.co> for now)
 
 ### Dev Builds
 
 -   Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) will be available later at <https://app.gauzy.dev>
 
-### Production (SaaS, WIP)
+### Desktop Apps
 
--   Ever® Gauzy™ Platform SaaS at <https://app.gauzy.co> (not used yet in production, it's same as <https://demo.gauzy.co> for now and may be not available yet)
+We have 2 Desktop Apps (for Windows/Mac/Linux): 
 
-### Desktop App
+-   Ever® Gauzy™ Desktop App - includes Gauzy frontend (UI), Gauzy API, SQLite DB, etc., all-in-one! It allows to quickly run the whole Gauzy solution locally, both UI and Timer (for time tracking, optionally of course). In addition, it allows to connect to the external database (e.g. PostgreSQL) or external API (if you have Gauzy API / DB installed on different computer or if you want to connect to our live API). 
+ 
+-   Ever® Gauzy™ Desktop Timer App - allows to run Time & Activity Tracking for employees (agent) with screenshots and activity monitoring.
 
--   Download Ever® Gauzy™ Desktop App for your OS from <https://github.com/ever-co/ever-gauzy/releases/tag/v0.1.0>.
--   Setup Gauzy Desktop App with default choices in Setup Wizard and run it
--   Gauzy Desktop App is ready to use.
--   You can login with `admin@ever.co` and password `admin` to check Admin functionality. Note: such Admin user is not an employee, so you will not be able to track time.
--   You can login with `ruslan@ever.co` and password `admin` to check Desktop Timer and other functionality from "Employee" perspective (such user is an Employee).
--   You can read more information about Desktop App in our [Wiki](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Desktop-App)
+More information about our Desktop Apps:
+
+-   Download for your OS from <https://github.com/ever-co/ever-gauzy/releases>.
+-   Setup Gauzy Desktop App or Gauzy Desktop Timer app with default choices in Setup Wizard and run it-   
+-   You can login with `admin@ever.co` and password `admin` to check Admin functionality if you installed Gauzy Desktop App. Note: such Admin user is not an employee, so you will not be able to track time.
+-   You can login with `employee@ever.co` and password `123456` to check Employee related functionality in Gauzy UI or to run Desktop Timer from "Employee" perspective (such user is an Employee and can track time).
+-   You can read more information about our Desktop Apps in the [Wiki](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Desktop-Apps)
 
 ## Technology Stack and Requirements
 
