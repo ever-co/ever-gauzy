@@ -58,12 +58,14 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 			)
 			.subscribe((systemLanguages) => {
 				if (systemLanguages && systemLanguages.length > 0) {
-					this.languages = systemLanguages.map((item) => {
-						return {
-							value: item.code,
-							name: 'SETTINGS_MENU.' + item.name.toUpperCase()
-						};
-					});
+					this.languages = systemLanguages
+						.filter((item) => !!item.is_system)
+						.map((item) => {
+							return {
+								value: item.code,
+								name: 'SETTINGS_MENU.' + item.name.toUpperCase()
+							};
+						});
 				}
 			});
 

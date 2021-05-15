@@ -24,7 +24,6 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 })
 export class LanguageSelectorComponent extends TranslationBaseComponent implements OnInit {
 	languages: ILanguage[];
-	systemLanguages: any[];
 	loading: boolean;
 	onChange: any = () => { }
 	onTouch: any = () => { }
@@ -105,17 +104,6 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 		this._size = value;
 	}
 
-	_isSystemLanguage: boolean = false;
-	get isSystemLanguage(): boolean {
-		return this._isSystemLanguage;
-	}
-	@Input() set isSystemLanguage(value: boolean) {
-		this._isSystemLanguage = value;
-
-	}
-
-
-
 	@Output() selectedLanguageEvent = new EventEmitter<ILanguage>();
 
 	constructor(
@@ -135,11 +123,10 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 	}
 
 	onChangeLanguage(currentSelection: ILanguage) {
-		let selectedLanguage;
+		let selectedLanguage: any;
 		if (this.selectBy === 'object') {
 			selectedLanguage = currentSelection;
-		}
-		else {
+		} else {
 			selectedLanguage = currentSelection?.code || this.selectedLanguageCode;
 		}
 		this.selectedLanguageEvent.emit(selectedLanguage);
@@ -147,14 +134,12 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 
 	onSelectedChange(code: ILanguage['code']) {
 		this.cd.detectChanges()
-		let selectedLanguage;
+		let selectedLanguage: any;
 		if (this.selectBy === 'object') {
 			selectedLanguage = this.getLanguageByCode(code);
-		}
-		else {
+		} else {
 			selectedLanguage = code || this.selectedLanguageCode;
 		}
-
 		this.selectedLanguageEvent.emit(selectedLanguage);
 	}
 
@@ -169,10 +154,6 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 	registerOnTouched(fn: any) {
 		this.onTouch = fn
 	}
-
-
-
-
 
 	addLanguage = async (languageName: string) => {
 		const newLanguage: ILanguage = {
@@ -189,12 +170,7 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 	};
 
 	async ngOnInit() {
-		if (!this._isSystemLanguage) {
-			this.getAllLanguages();
-		} else {
-			this.getSystemLanguages();
-		}
-
+		await this.getAllLanguages();
 		if (this.selectBy === 'object') {
 			this.checkPreFilledLanguage()
 		}
@@ -203,11 +179,6 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 	async getAllLanguages() {
 		const { items } = await this.languagesService.getAllLanguages();
 		this.languages = items;
-	}
-
-	async getSystemLanguages() {
-		const { items } = await this.languagesService.getSystemLanguages();
-		this.systemLanguages = items;
 	}
 
 	checkPreFilledLanguage() {

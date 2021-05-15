@@ -24,10 +24,9 @@ export class LanguagesService {
 	}
 
 	getSystemLanguages(): Promise<{ items: ILanguage[] }> {
-		const findInput = { is_system: true };
 		return this.http
 			.get<{ items: ILanguage[] }>(`${API_PREFIX}/languages`, {
-				params: toParams(findInput)
+				params: toParams({ is_system: true })
 			})
 			.pipe(first())
 			.toPromise();

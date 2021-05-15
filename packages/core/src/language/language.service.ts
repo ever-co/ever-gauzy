@@ -15,8 +15,8 @@ export class LanguageService extends CrudService<Language> {
 
 	async findOneByName(name: string): Promise<Language> {
 		const query = this.repository
-			.createQueryBuilder('tag')
-			.where('"tag"."name" = :name', {
+			.createQueryBuilder('language')
+			.where('"language"."name" = :name', {
 				name
 			});
 		const item = await query.getOne();

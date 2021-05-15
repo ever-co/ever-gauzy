@@ -31,7 +31,7 @@
 		[placeholder]="placeholder"
 		[(ngModel)]="selectedLanguageCode"
 	>
-		<nb-option *ngFor="let language of systemLanguages" [value]="language.code">
+		<nb-option *ngFor="let language of languages" [value]="language.code">
 			{{ language.name }}
 		</nb-option >
 	</nb-select>

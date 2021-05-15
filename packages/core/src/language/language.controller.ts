@@ -1,11 +1,11 @@
 import { Controller, Get, Param, Post, Body, UseGuards, HttpStatus, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController } from '../core';
 import { Language } from './language.entity';
 import { LanguageService } from './language.service';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { ParseJsonPipe, Permissions } from '../shared';
+import { Permissions, PermissionGuard } from '../shared';
+
 @ApiTags('Languages')
 @Controller()
 export class LanguageController extends CrudController<Language> {
@@ -25,9 +25,9 @@ export class LanguageController extends CrudController<Language> {
 	})
 	@Get()
 	async findAllLanguages(
-		@Query(ParseJsonPipe) data: any
+		@Query() query: any
 	): Promise<IPagination<Language>> {
-		return this.languageService.findAll(data);
+		return this.languageService.findAll(query);
 	}
 
 	@Get('getByName/:name')
