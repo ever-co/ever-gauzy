@@ -73,7 +73,6 @@ export class FindEmailTemplateHandler
 				organizationId: IsNull(),
 				tenantId: IsNull()
 			});
-			console.log({success})
 			if (success) {
 				subject = record.hbs;
 				template = record.mjml;

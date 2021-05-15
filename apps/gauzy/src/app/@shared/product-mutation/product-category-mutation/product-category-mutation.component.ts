@@ -78,7 +78,6 @@ export class ProductCategoryMutationComponent
 				this.updateTranslations();
 			});
 
-		console.log({ selectedLanguage: this.selectedLanguage })
 	}
 
 	async onSaveRequest() {
@@ -137,7 +136,6 @@ export class ProductCategoryMutationComponent
 			return tr.languageCode === this.selectedLanguage;
 		});
 
-		console.log({ bfjkdfhjkd: this.activeTranslation })
 
 		if (!this.activeTranslation) {
 			const { id: organizationId, tenantId } = this.organization;
