@@ -1,6 +1,6 @@
-import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, Input } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IOrganization, ISelectedEmployee } from 'packages/contracts/dist';
+import { IOrganization, ISelectedEmployee, IUser } from '@gauzy/contracts';
 import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { Store } from './../../../@core';
@@ -11,8 +11,9 @@ import { Store } from './../../../@core';
 	templateUrl: './header-title.component.html',
 	styleUrls: []
 })
-export class HeaderTitleComponent implements OnInit, AfterViewInit {
+export class HeaderTitleComponent implements AfterViewInit {
 	
+	user: IUser;
 	organization: IOrganization;
 	employee: ISelectedEmployee;
 
@@ -27,9 +28,15 @@ export class HeaderTitleComponent implements OnInit, AfterViewInit {
 	constructor(
 		private readonly store: Store,
 		private readonly crd: ChangeDetectorRef
-	) {}
-
-	ngOnInit() {}
+	) {
+		this.store.user$
+			.pipe(
+				filter((user) => !!user),
+				tap((user: IUser) => (this.user = user)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 
 	ngAfterViewInit() {
 		const storeOrganization$ = this.store.selectedOrganization$;

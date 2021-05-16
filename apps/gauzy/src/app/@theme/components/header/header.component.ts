@@ -259,6 +259,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							id: emp.id,
 							firstName: this.user.firstName,
 							lastName: this.user.lastName,
+							fullName: this.user.name,
 							imageUrl: this.user.imageUrl
 						};
 					} else {
