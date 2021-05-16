@@ -37,7 +37,7 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 	}
 
 	private async loadOrganizations(): Promise<void> {
-		const tenantId = this.store.user.tenantId;
+		const { tenantId } = this.store.user;
 		const { items = [] } = await this.userOrganizationService.getAll(
 			[
 				'organization',
@@ -47,19 +47,15 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 			{ userId: this.store.userId, tenantId }
 		);
 		this.organizations = items.map((userOrg) => userOrg.organization);
-		console.log(this.organizations);
-
 		if (this.organizations.length > 0) {
-			const [defaultOrganization] = this.organizations;
+			const defaultOrganization = this.organizations.find((organization: IOrganization) => organization.isDefault);
 			if (this.store.organizationId) {
 				const organization = this.organizations.find(
-					(organization: IOrganization) =>
-						organization.id === this.store.organizationId
+					(organization: IOrganization) => organization.id === this.store.organizationId
 				);
-				this.store.selectedOrganization =
-					organization || defaultOrganization;
+				this.store.selectedOrganization = organization || defaultOrganization;
 			} else {
-				// set first organizations as default
+				// set default organization as selected
 				this.store.selectedOrganization = defaultOrganization;
 			}
 		}

@@ -44,7 +44,7 @@ export class OrganizationVendorsService {
 			.toPromise();
 	}
 
-	update(id: string, updateInput: any): Promise<any> {
+	update(id: string, updateInput: IOrganizationVendorCreateInput): Promise<any> {
 		return this.http
 			.put(`${API_PREFIX}/organization-vendors/${id}`, updateInput)
 			.pipe(first())
