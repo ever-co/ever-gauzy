@@ -52,7 +52,8 @@
 					]
 				}
 			],
-			"icon": "icon.ico"
+			"icon": "icon.ico",
+			"verifyUpdateCodeSignature": false
 		},
 		"linux": {
 			"icon": "icon.png",
@@ -83,7 +84,7 @@
 		]
 	},
 	"dependencies": {
-		"sqlite3": "https://github.com/ever-co/node-sqlite3",
+		"sqlite3": "^5.0.2",
 		"electron-store": "^8.0.0",
 		"electron-log": "^4.3.5",
 		"node-notifier": "^8.0.0",
