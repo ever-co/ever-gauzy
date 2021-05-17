@@ -20,7 +20,6 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { ProductMutationModule } from '../../@shared/product-mutation/product-mutation.module';
 import { ThemeModule } from '../../@theme/theme.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
-import { ProductTypesComponent } from './components/manage-product-types/product-types.component';
 import { ProductTypeMutationComponent } from '../../@shared/product-mutation/product-type-mutation/product-type-mutation.component';
 import { ProductCategoriesComponent } from './components/manage-product-categories/product-categories.component';
 import { ProductCategoryMutationComponent } from '../../@shared/product-mutation/product-category-mutation/product-category-mutation.component';
@@ -73,10 +72,8 @@ import { ManageVariantsQuantityFormComponent } from './components/manage-warehou
 import { ManageVariantsQuantityComponent } from './components/manage-warehouses/manage-variants-quantity/manage-variants-quantity.component';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { SelectedRowComponent } from './components/table-components/selected-row.component';
-import { MerchantTableComponent } from './components/manage-merchants/merchant-table/merchant-table.component';
-import { MerchantComponent } from './components/manage-merchants/merchant.component';
-import { MerchantFormComponent } from './components/manage-merchants/merchant-form/merchant-form.component';
 import { MerchantService } from './../../@core';
+import { MerchantModule } from './components/manage-merchants/merchant.module';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -94,7 +91,6 @@ const NB_MODULES = [
 @NgModule({
 	declarations: [
 		TableInventoryComponent,
-		ProductTypesComponent,
 		ProductCategoriesComponent,
 		ImageRowComponent,
 		IconRowComponent,
@@ -117,9 +113,6 @@ const NB_MODULES = [
 		ManageVariantsQuantityComponent,
 		ManageVariantsQuantityFormComponent,
 		SelectedRowComponent,
-		MerchantComponent,
-		MerchantTableComponent,
-		MerchantFormComponent
 	],
 	imports: [
 		UserFormsModule,
@@ -148,11 +141,10 @@ const NB_MODULES = [
 		ImageUploaderModule,
 		LocationFormModule,
 		LeafletMapModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		MerchantModule
 	],
 	entryComponents: [
-		ProductTypeMutationComponent,
-		ProductCategoryMutationComponent,
 		ImageRowComponent,
 		IconRowComponent,
 		EnabledStatusComponent,
@@ -161,8 +153,8 @@ const NB_MODULES = [
 		SelectProductComponent
 	],
 	providers: [
-		ProductTypeService,
-		ProductCategoryService,
+		// ProductTypeService,
+		// ProductCategoryService,
 		ProductService,
 		ProductVariantService,
 		ProductVariantSettingsService,
