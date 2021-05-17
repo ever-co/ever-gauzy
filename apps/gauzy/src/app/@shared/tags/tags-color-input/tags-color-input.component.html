@@ -6,6 +6,7 @@
 		[items]="tags"
 		multiple="true"
 		bindLabel="name"
+		appendTo="body"
 		[loading]="loading"
 		[addTag]="addTag"
 		(change)="selectedTagsEvent.emit(this.selectedTags)"

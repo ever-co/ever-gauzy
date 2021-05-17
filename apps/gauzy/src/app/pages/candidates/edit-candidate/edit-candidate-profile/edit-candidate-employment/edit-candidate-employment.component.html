@@ -19,6 +19,7 @@
 									| translate
 							}}"
 							multiple="true"
+							appendTo="body"
 						>
 						</ng-select>
 					</div>
@@ -31,7 +32,7 @@
 									| translate
 							}}
 						</label>
-						<ng-select formControlName="candidateLevel">							
+						<ng-select appendTo="body" formControlName="candidateLevel">							
 						</ng-select>						
 					</div>
 				</div>
@@ -55,6 +56,7 @@
 								'FORM.PLACEHOLDERS.ALL_DEPARTMENTS' | translate
 							}}"
 							multiple="true"
+							appendTo="body"
 						>
 						</ng-select>
 					</div>
@@ -74,6 +76,7 @@
 							placeholder="{{
 								'FORM.PLACEHOLDERS.ALL_POSITIONS' | translate
 							}}"
+							appendTo="body"
 						>
 						</ng-select>
 					</div>

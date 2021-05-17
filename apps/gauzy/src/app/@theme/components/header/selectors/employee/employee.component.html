@@ -6,6 +6,7 @@
 	[(ngModel)]="selectedEmployee"
 	[placeholder]="placeholder || 'All Employees'"
 	[searchFn]="searchEmployee"
+	appendTo="body"
 >
 	<ng-template ng-option-tmp let-item="item" let-index="index">
 		<img
