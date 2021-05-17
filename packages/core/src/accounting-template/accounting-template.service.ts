@@ -166,26 +166,45 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 
 
 	async getAccountTemplate(input) {
-		const { templateType, organizationId, tenantId } = input;
-		let { languageCode } = input;
-		const systemLanguages: string[] = Object.values(LanguagesEnum);
-		languageCode = systemLanguages.includes(languageCode) ? languageCode : LanguagesEnum.ENGLISH;
+		let template: any;
+		const { languageCode, templateType, organizationId, tenantId } = input;
 
-		const { success, record } = await this.findOneOrFail({
-			languageCode,
-			templateType,
-			organizationId,
-			tenantId
-		});
-		if (success) {
-			return record
-		} else {
-			return await this.findOne({
+		try {
+			template = await this.findOne({
+				languageCode,
+				templateType,
+				organizationId,
+				tenantId
+			});
+		} catch (error) {
+			const { success, record } = await this.findOneOrFail({
 				languageCode,
 				templateType,
 				organizationId: IsNull(),
 				tenantId: IsNull()
 			});
+			if (success) {
+				template = record
+			} else {
+				try {
+					template = await this.findOne({
+						languageCode: LanguagesEnum.ENGLISH,
+						templateType,
+						organizationId,
+						tenantId
+					});
+				} catch (error) {
+					template = await this.findOne({
+						languageCode: LanguagesEnum.ENGLISH,
+						templateType,
+						organizationId: IsNull(),
+						tenantId: IsNull()
+					});
+				}
+
+			}
 		}
+		return template;
+
 	}
 }
