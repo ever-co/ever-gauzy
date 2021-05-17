@@ -20,13 +20,13 @@ import {
 } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
 
-export const getDefaultBulgarianOrganization = async (
+export const getDefaultOrganization = async (
 	connection: Connection,
 	tenant: Tenant
 ): Promise<IOrganization> => {
 	const repo = connection.getRepository(Organization);
 	const existedOrganization = await repo.findOne({
-		where: { tenantId: tenant.id, name: 'Ever Technologies LTD' }
+		where: { tenantId: tenant.id, isDefault: true }
 	});
 	return existedOrganization;
 };

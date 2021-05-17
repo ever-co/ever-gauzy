@@ -163,20 +163,12 @@
 							<label class="label">{{
 								'FORM.LABELS.TIME_FORMAT' | translate
 							}}</label>
-							<nb-select
-								class="d-block"
-								size="medium"
-								[placeholder]="'FORM.PLACEHOLDERS.CHOOSE_FORMAT' | translate"
+							<ng-select
+								[items]="[12, 24]"
+								[clearable]="false"
+								[searchable]="false"
 								formControlName="timeFormat"
-								fullWidth
-							>
-								<nb-option
-									*ngFor="let format of listOfTimeFormats"
-									[value]="format"
-								>
-									{{ format }}
-								</nb-option>
-							</nb-select>
+							></ng-select>
 						</div>
 					</div>
 					<div class="col-6">

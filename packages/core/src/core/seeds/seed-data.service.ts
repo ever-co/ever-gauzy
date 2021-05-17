@@ -68,7 +68,7 @@ import {
 } from '../../organization-team/organization-team.seed';
 import { createRolePermissions } from '../../role-permissions/role-permissions.seed';
 import {
-	createDefaultTenants,
+	createDefaultTenant,
 	createRandomTenants,
 	DEFAULT_EVER_TENANT,
 	DEFAULT_TENANT
@@ -439,16 +439,13 @@ export class SeedDataService {
 		return;
 	}
 
-	public async runDemoSeed() {
+	public async excuteDemoSeed() {
 		try {
 			console.log('Database Demo Seed Started');
-			this.seedType = SeederTypeEnum.ALL;
-		
-			if (this.seedType === SeederTypeEnum.ALL) {
-				await this.seedDefaultData();
-				await this.seedRandomData();
-			}
 
+			await this.seedDefaultData();
+			await this.seedRandomData();
+			
 			// Seed jobs related data
 			await this.seedJobsData();
 
@@ -606,7 +603,7 @@ export class SeedDataService {
 		const tenantName = (this.seedType !== SeederTypeEnum.DEFAULT) ? DEFAULT_EVER_TENANT : DEFAULT_TENANT;
 		this.tenant = await this.tryExecute(
 			'Tenant',
-			createDefaultTenants(
+			createDefaultTenant(
 				this.connection,
 				tenantName
 			) 

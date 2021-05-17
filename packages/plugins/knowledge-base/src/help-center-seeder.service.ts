@@ -3,12 +3,10 @@ import { Connection, getConnection, Not } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import {
 	getDefaultOrganizations,
-	getDefaultTenant,
 	getDefaultEmployees,
 	SeedDataService,
 	Tenant,
-	Employee,
-	DEFAULT_EVER_TENANT
+	Employee
 } from '@gauzy/core';
 import { createHelpCenter } from './help-center';
 import { createHelpCenterArticle } from './help-center-article/help-center-article.seed';
@@ -25,6 +23,7 @@ import {
 @Injectable()
 export class HelpCenterSeederService {
 	connection: Connection;
+	tenant: ITenant;
 
 	/**
 	 * Create an instance of class.
@@ -41,33 +40,39 @@ export class HelpCenterSeederService {
 	 */
 	async createDefault() {
 		this.connection = getConnection();
-		const tenant = await getDefaultTenant(this.connection);
-		const organizations = await getDefaultOrganizations(this.connection, tenant);
-		
+		this.tenant = this.seeder.tenant;
+
+		const organizations = await getDefaultOrganizations(
+			this.connection, 
+			this.tenant
+		);
 		const tenantOrganizationsMap: Map<ITenant, IOrganization[]> = new Map();
-		tenantOrganizationsMap.set(tenant, organizations);
+		tenantOrganizationsMap.set(this.tenant, organizations);
 
 		await this.seeder.tryExecute(
 			'Default Help Centers',
 			createHelpCenter(
 				this.connection,
-				[tenant],
+				[this.tenant],
 				tenantOrganizationsMap
 			)
 		);
 
-		const noOfHelpCenterArticle = 20;
+		const noOfHelpCenterArticle = 40;
 		await this.seeder.tryExecute(
 			'Default Help Center Articles',
 			createHelpCenterArticle(
 				this.connection,
-				[tenant],
+				[this.tenant],
 				tenantOrganizationsMap,
 				noOfHelpCenterArticle
 			)
 		);
 
-		const defaultEmployees = await getDefaultEmployees(this.connection);
+		const defaultEmployees = await getDefaultEmployees(
+			this.connection, 
+			this.tenant
+		);
 		await this.seeder.tryExecute(
 			'Default Help Center Author',
 			createDefaultHelpCenterAuthor(
@@ -83,9 +88,10 @@ export class HelpCenterSeederService {
 	 * @function
 	 */
 	async createRandom() {
+		const { name } = this.tenant;
 		const rendomTenants: ITenant[] = await this.connection.getRepository(Tenant).find({
 			where: {
-				name: Not(DEFAULT_EVER_TENANT)
+				name: Not(name)
 			},
 			relations: ['organizations']
 		});

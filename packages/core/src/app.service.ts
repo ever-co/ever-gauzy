@@ -16,7 +16,7 @@ export class AppService {
 			await this.seedDataService.runDefaultSeed();
 			
 			if (this.configService.get('demo') === true) {
-				this.seedDataService.runDemoSeed();
+				this.seedDataService.excuteDemoSeed();
 			}
 		}
 	}
