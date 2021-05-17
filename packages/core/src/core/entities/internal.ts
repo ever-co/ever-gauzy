@@ -135,6 +135,7 @@ export * from '../../warehouse/warehouse-product-variant.entity';
 
 //core subscribers
 export * from './../../feature/feature.subscriber';
+export * from './../../organization/organization.subscriber';
 export * from './../../timesheet/screenshot/screenshot.subscriber';
 export * from './../../timesheet/time-slot/time-slot.subscriber';
 export * from './../../user/user.subscriber';

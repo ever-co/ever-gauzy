@@ -48,7 +48,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 				position="centered"
 				[style.background]="tag?.color"
 				[style.color]="backgroundContrast(tag?.color)"
-				text="{{ tag?.name }}"
+				[text]="tag?.name"
 			>
 			</nb-badge>
 		</div>

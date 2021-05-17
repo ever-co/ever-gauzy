@@ -1,5 +1,6 @@
 import { IOrganization, RolesEnum } from '@gauzy/contracts';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import * as faker from 'faker';
 import { RoleService } from '../../../role/role.service';
 import { UserService } from '../../../user/user.service';
 import { UserOrganization } from '../../../user-organization/user-organization.entity';
@@ -57,7 +58,8 @@ export class OrganizationCreateHandler
 			show_minimum_project_size: input.show_minimum_project_size || true,
 			show_clients_count: input.show_clients_count || true,
 			show_clients: input.show_clients || true,
-			show_employees_count: input.show_employees_count || true
+			show_employees_count: input.show_employees_count || true,
+			brandColor: faker.internet.color()
 		});
 
 		// 4. Take each super admin user and add him/her to created organization
