@@ -177,6 +177,10 @@ const routes: Routes = [
 				path: 'create',
 				component: MerchantFormComponent
 			},
+			{
+				path: 'edit/:id',
+				component: MerchantFormComponent
+			},
 		]
 	}
 ];

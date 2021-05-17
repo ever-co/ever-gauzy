@@ -29,6 +29,11 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	email: string;
 
 	@ApiProperty()
+	@IsString()
+	@Column({nullable: true})
+	phone: string;
+
+	@ApiProperty()
 	@OneToOne(() => Contact, {
 		eager: true,
 		cascade: true,

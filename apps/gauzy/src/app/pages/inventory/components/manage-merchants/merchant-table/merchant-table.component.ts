@@ -135,11 +135,11 @@ export class MerchantTableComponent
 	}
 
 	onEditStore(selectedItem) {
-
+		this.router.navigate([`/pages/organization/inventory/merchants/edit/${this.selectedMerchant.id}`]);
 	}
 
 	async loadSettings() {
-		const { id: organizationId, tenantId } = this.selectedOrganization;
+		const { id: organizationId, tenantId } = this.selectedOrganization || {id: null, tenantId: null};
 
 		
 		const data = "data=" + JSON.stringify({

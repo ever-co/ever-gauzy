@@ -6,10 +6,10 @@
 		) | translate
 	}}</nb-card-header>
 	<nb-card-body>
-		<nb-stepper #stepper disableStepNavigation>
+		<nb-stepper #stepper disableStepNavigation="false">
 			<!-- Step 1 Contact Main Form -->
 			<nb-step
-				[stepControl]="contMainForm"
+				
 				label="{{ 'CONTACTS_PAGE.MAIN' | translate }}"
 			>
 				<ng-template #mainStep>
