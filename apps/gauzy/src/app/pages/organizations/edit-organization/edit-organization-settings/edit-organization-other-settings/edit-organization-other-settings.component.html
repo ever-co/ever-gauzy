@@ -13,10 +13,7 @@
 							}}</label>
 							<ng-select
 								[(items)]="listOfZones"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.CHOOSE_TIME_ZONE'
-										| translate
-								}}"
+								[placeholder]="'FORM.PLACEHOLDERS.CHOOSE_TIME_ZONE' | translate"
 								[searchable]="true"
 								formControlName="timeZone"
 							>
@@ -43,10 +40,7 @@
 								size="medium"
 								formControlName="startWeekOn"
 								id="startWeekOnSelect"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.START_WEEK_ON'
-										| translate
-								}}"
+								[placeholder]="'FORM.PLACEHOLDERS.START_WEEK_ON' | translate"
 								fullWidth="true"
 							>
 								<nb-option
@@ -89,9 +83,7 @@
 								class="d-block"
 								size="medium"
 								formControlName="defaultValueDateType"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.DATE_TYPE' | translate
-								}}"
+								[placeholder]="'FORM.PLACEHOLDERS.DATE_TYPE' | translate"
 								fullWidth
 							>
 								<nb-option
@@ -111,9 +103,7 @@
 							<nb-select
 								class="d-block"
 								size="medium"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.REGIONS' | translate
-								}}"
+								[placeholder]="'FORM.PLACEHOLDERS.REGIONS' | translate"
 								formControlName="regionCode"
 								fullWidth
 							>
@@ -134,10 +124,7 @@
 							<nb-select
 								class="d-block"
 								size="medium"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.NUMBER_FORMAT'
-										| translate
-								}}"
+								[placeholder]="'FORM.PLACEHOLDERS.NUMBER_FORMAT' | translate"
 								formControlName="numberFormat"
 								fullWidth
 							>
@@ -159,10 +146,7 @@
 								class="d-block"
 								size="medium"
 								formControlName="dateFormat"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.CHOOSE_FORMAT'
-										| translate
-								}}"
+								[placeholder]="'FORM.PLACEHOLDERS.CHOOSE_FORMAT' | translate"
 								fullWidth
 							>
 								<nb-option
@@ -179,12 +163,53 @@
 							<label class="label">{{
 								'FORM.LABELS.TIME_FORMAT' | translate
 							}}</label>
-							<ng-select
-								[items]="[12, 24]"
-								[clearable]="false"
-								[searchable]="false"
+							<nb-select
+								class="d-block"
+								size="medium"
+								[placeholder]="'FORM.PLACEHOLDERS.CHOOSE_FORMAT' | translate"
 								formControlName="timeFormat"
-							></ng-select>
+								fullWidth
+							>
+								<nb-option
+									*ngFor="let format of listOfTimeFormats"
+									[value]="format"
+								>
+									{{ format }}
+								</nb-option>
+							</nb-select>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">{{
+								'FORM.LABELS.DEFAULT' | translate
+							}}</label>
+							<button
+								nbButton
+								status="info"
+								size="small"
+								ghost
+								[nbTooltip]="
+									'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_TO_SET_DEFAULT_ORGANIZATION'
+										| translate
+								"
+							>
+								<nb-icon icon="info"></nb-icon>
+							</button>
+							<nb-select
+								class="d-block"
+								size="medium"
+								[placeholder]="'FORM.PLACEHOLDERS.DEFAULT' | translate"
+								formControlName="isDefault"
+								fullWidth
+							>
+								<nb-option
+									*ngFor="let item of defaultOrganizationSelection"
+									[value]="item.value"
+								>
+									{{ item?.key }}
+								</nb-option>
+							</nb-select>
 						</div>
 					</div>
 				</div>
@@ -209,9 +234,7 @@
 								id="brandColorInput"
 								nbInput
 								formControlName="brandColor"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.ADD_COLOR' | translate
-								}}"
+								[placeholder]="'FORM.PLACEHOLDERS.ADD_COLOR' | translate"
 								[colorPicker]="form.get('brandColor').value"
 								[style.background]="
 									form.get('brandColor').value
@@ -232,10 +255,7 @@
 								class="d-block"
 								size="medium"
 								formControlName="defaultAlignmentType"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.ALIGN_LOGO_TO'
-										| translate
-								}}"
+								[placeholder]="'FORM.PLACEHOLDERS.ALIGN_LOGO_TO' | translate"
 								fullWidth
 							>
 								<nb-option
@@ -261,10 +281,7 @@
 								class="d-block"
 								size="medium"
 								formControlName="currencyPosition"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.CURRENCY_POSITION'
-										| translate
-								}}"
+								[placeholder]="'FORM.PLACEHOLDERS.CURRENCY_POSITION' | translate"
 								fullWidth
 							>
 								<nb-option
@@ -356,10 +373,7 @@
 								}}
 							</label>
 							<input
-								placeholder="{{
-									'FORM.PLACEHOLDERS.FISCAL_INFORMATION'
-										| translate
-								}}"
+								[placeholder]="'FORM.PLACEHOLDERS.FISCAL_INFORMATION' | translate"
 								fullWidth
 								type="text"
 								id="fiscalInformation"
@@ -416,10 +430,7 @@
 							</label>
 							<textarea
 								nbInput
-								placeholder="{{
-									'INVOICES_PAGE.INVOICES_SELECT_TERMS'
-										| translate
-								}}"
+								[placeholder]="'INVOICES_PAGE.INVOICES_SELECT_TERMS' | translate"
 								formControlName="defaultInvoiceEstimateTerms"
 								id="inputTerms"
 								fullWidth
@@ -436,10 +447,7 @@
 								{{ 'FORM.LABELS.DEFAULT_DAYS' | translate }}
 							</label>
 							<input
-								placeholder="{{
-									'FORM.PLACEHOLDERS.DAYS_UNTIL_DUE'
-										| translate
-								}}"
+								[placeholder]="'FORM.PLACEHOLDERS.DAYS_UNTIL_DUE' | translate"
 								formControlName="daysUntilDue"
 								fullWidth
 								type="number"
@@ -450,15 +458,13 @@
 					<div *ngIf="invoiceTemplates" class="col-6">
 						<label class="label">
 							{{
-								'FORM.LABELS.DEFAULT_INVOICE_TEMLPATE'
+								'FORM.LABELS.DEFAULT_INVOICE_TEMPLATE'
 									| translate
 							}}
 						</label>
 						<nb-select
 							size="medium"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.INVOICE_TEMPLATE' | translate
-							}}"
+							[placeholder]="'FORM.PLACEHOLDERS.INVOICE_TEMPLATE' | translate"
 							fullWidth
 							(selectedChange)="selectTemplate($event)"
 							formControlName="invoiceTemplate"
@@ -479,16 +485,13 @@
 					<div class="col-6">
 						<label class="label">
 							{{
-								'FORM.LABELS.DEFAULT_ESTIMATE_TEMLPATE'
+								'FORM.LABELS.DEFAULT_ESTIMATE_TEMPLATE'
 									| translate
 							}}
 						</label>
 						<nb-select
 							size="medium"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.ESTIMATE_TEMPLATE'
-									| translate
-							}}"
+							[placeholder]="'FORM.PLACEHOLDERS.ESTIMATE_TEMPLATE' | translate"
 							formControlName="estimateTemplate"
 							fullWidth
 							(selectedChange)="selectTemplate($event)"
@@ -507,15 +510,13 @@
 					<div class="col-6">
 						<label class="label">
 							{{
-								'FORM.LABELS.DEFAULT_RECEIPT_TEMLPATE'
+								'FORM.LABELS.DEFAULT_RECEIPT_TEMPLATE'
 									| translate
 							}}
 						</label>
 						<nb-select
 							size="medium"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.RECEIPT_TEMPLATE' | translate
-							}}"
+							[placeholder]="'FORM.PLACEHOLDERS.RECEIPT_TEMPLATE' | translate" 
 							formControlName="receiptTemplate"
 							fullWidth
 							(selectedChange)="selectTemplate($event)"
@@ -552,10 +553,7 @@
 								class="d-block"
 								size="medium"
 								formControlName="bonusType"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.TYPE_OF_BONUS'
-										| translate
-								}}"
+								[placeholder]="'FORM.PLACEHOLDERS.TYPE_OF_BONUS' | translate"
 								(selectedChange)="
 									loadDefaultBonusPercentage($event)
 								"
@@ -582,10 +580,7 @@
 								nbInput
 								type="number"
 								formControlName="bonusPercentage"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.BONUS_PERCENTAGE'
-										| translate
-								}}"
+								[placeholder]="'FORM.PLACEHOLDERS.BONUS_PERCENTAGE' | translate"
 								fullWidth
 								class="d-block"
 								[ngClass]="{
@@ -640,10 +635,7 @@
 								nbInput
 								type="number"
 								formControlName="inviteExpiryPeriod"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.INVITE_EXPIRY_PERIOD'
-										| translate
-								}}"
+								[placeholder]="'FORM.PLACEHOLDERS.INVITE_EXPIRY_PERIOD' | translate"
 								fullWidth
 								class="d-block"
 								[ngClass]="{

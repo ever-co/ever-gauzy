@@ -14,19 +14,17 @@ import {
 	IAccountingTemplate,
 	CurrenciesEnum,
 	DEFAULT_DATE_FORMATS,
-	CrudActionEnum
+	CrudActionEnum,
+	IKeyValuePair,
+	DEFAULT_TIME_FORMATS
 } from '@gauzy/contracts';
-import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
-import { OrganizationsService } from '../../../../../@core/services/organizations.service';
 import { formatDate } from '@angular/common';
-import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter } from 'rxjs/operators';
 import { Router } from '@angular/router';
-import { Store } from '../../../../../@core/services/store.service';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { AccountingTemplateService } from 'apps/gauzy/src/app/@core/services/accounting-template.service';
+import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
+import { AccountingTemplateService, OrganizationEditStore, OrganizationsService, Store, ToastrService } from './../../../../../../app/@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -37,9 +35,13 @@ import { AccountingTemplateService } from 'apps/gauzy/src/app/@core/services/acc
 export class EditOrganizationOtherSettingsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+
 	organization: IOrganization;
 	form: FormGroup;
-
+	defaultOrganizationSelection: IKeyValuePair[] = [
+		{ key: 'Yes', value: true }, 
+		{ key: 'No', value: false }
+	];
 	defaultValueDateTypes: string[] = Object.values(DefaultValueDateTypeEnum);
 	defaultAlignmentTypes: string[] = Object.values(AlignmentOptions).map(
 		(type) => {
@@ -57,6 +59,7 @@ export class EditOrganizationOtherSettingsComponent
 
 	listOfZones = timezone.tz.names().filter((zone) => zone.includes('/'));
 	listOfDateFormats = DEFAULT_DATE_FORMATS;
+	listOfTimeFormats = DEFAULT_TIME_FORMATS;
 	numberFormats = ['USD', 'BGN', 'ILS'];
 	numberFormat: string;
 	weekdays: string[] = Object.values(WeekDaysEnum);
@@ -65,14 +68,14 @@ export class EditOrganizationOtherSettingsComponent
 	regions = Object.values(RegionsEnum);
 
 	constructor(
-		private router: Router,
-		private fb: FormBuilder,
-		private organizationService: OrganizationsService,
-		private toastrService: ToastrService,
+		private readonly router: Router,
+		private readonly fb: FormBuilder,
+		private readonly organizationService: OrganizationsService,
+		private readonly toastrService: ToastrService,
 		private readonly organizationEditStore: OrganizationEditStore,
-		readonly translateService: TranslateService,
-		private store: Store,
-		private accountingTemlateService: AccountingTemplateService
+		public readonly translateService: TranslateService,
+		private readonly store: Store,
+		private readonly accountingTemlateService: AccountingTemplateService
 	) {
 		super(translateService);
 	}
@@ -266,7 +269,8 @@ export class EditOrganizationOtherSettingsComponent
 				this.selectedReceiptTemplate
 					? this.selectedReceiptTemplate.id
 					: null
-			]
+			],
+			isDefault: [this.organization.isDefault]
 		});
 	}
 

@@ -329,12 +329,14 @@
 			"TEMPLATE_BODY": "Тело шаблона",
 			"TEMPLATE_PREVIEW": "Предпросмотр шаблона",
 			"LANGUAGE": "Язык",
-			"DEFAULT_INVOICE_TEMLPATE": "Шаблон счета по умолчанию",
-			"DEFAULT_ESTIMATE_TEMLPATE": "Стандартный шаблон оценки",
-			"DEFAULT_RECEIPT_TEMLPATE": "Шаблон чека по умолчанию"
+			"DEFAULT_INVOICE_TEMPLATE": "Шаблон счета по умолчанию",
+			"DEFAULT_ESTIMATE_TEMPLATE": "Стандартный шаблон оценки",
+			"DEFAULT_RECEIPT_TEMPLATE": "Шаблон чека по умолчанию",
+			"DEFAULT": "Default Organization"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
+			"DEFAULT": "Select Default",
 			"FIRST_NAME": "Имя",
 			"LAST_NAME": "Фамилия",
 			"COMPANY_NAME": "Название компании",
@@ -1631,7 +1633,8 @@
 				"REQUIRE_TASK": "Требовать задание",
 				"REQUIRE_TASK_INFO": "Задача отслеживаемого времени будет требоваться при запуске таймера и альто для добавления или редактирования журнала времени вручную.",
 				"REQUIRE_CLIENT": "Требовать клиента",
-				"REQUIRE_CLIENT_INFO": "Клиент отслеживаемого времени будет необходимо при запуске таймера и альте для добавления или редактирования журнала времени вручную."
+				"REQUIRE_CLIENT_INFO": "Клиент отслеживаемого времени будет необходимо при запуске таймера и альте для добавления или редактирования журнала времени вручную.",
+				"ALLOW_TO_SET_DEFAULT_ORGANIZATION": "Allow user to set default organization"
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Менеджеры",

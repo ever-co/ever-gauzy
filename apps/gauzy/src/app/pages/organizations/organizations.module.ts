@@ -25,15 +25,11 @@ import { EditOrganizationSettingsModule } from './edit-organization/edit-organiz
 import { EditOrganizationComponent } from './edit-organization/edit-organization.component';
 import { OrganizationsRoutingModule } from './organizations-routing.module';
 import { OrganizationsComponent } from './organizations.component';
-import { OrganizationsCurrencyComponent } from './table-components/organizations-currency/organizations-currency.component';
-import { OrganizationsEmployeesComponent } from './table-components/organizations-employees/organizations-employees.component';
-import { OrganizationsFullnameComponent } from './table-components/organizations-fullname/organizations-fullname.component';
-import { OrganizationsStatusComponent } from './table-components/organizations-status/organizations-status.component';
+import { OrganizationsCurrencyComponent, OrganizationsEmployeesComponent, OrganizationsFullnameComponent, OrganizationsStatusComponent } from './table-components';
 import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
-
 import { RecurringExpenseHistoryModule } from '../../@shared/expenses/recurring-expense-history/recurring-expense-history.module';
 import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '../../@shared/table-components';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 
@@ -67,13 +63,6 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		RecurringExpenseHistoryModule,
 		RecurringExpenseBlockModule,
 		NgxPermissionsModule.forChild()
-	],
-	entryComponents: [
-		OrganizationsFullnameComponent,
-		OrganizationsStatusComponent,
-		EditOrganizationComponent,
-		OrganizationsEmployeesComponent,
-		OrganizationsCurrencyComponent
 	],
 	declarations: [
 		OrganizationsComponent,
