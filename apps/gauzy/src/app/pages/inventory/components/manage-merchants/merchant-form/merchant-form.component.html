@@ -34,20 +34,42 @@
 											[placeholder]="
 																					'INVENTORY_PAGE.NAME'
 																						| translate
-																				" />
+																				" [ngClass]="{
+																					'status-danger':
+																						form.controls['name'].invalid &&
+																						form.controls['name'].touched
+																				}" />
+										<div class="text-danger" *ngIf="
+										form.controls['name'].dirty &&
+										form.controls['name'].errors &&
+										form.controls['name'].errors.required
+							">
+											{{ 'INVENTORY_PAGE.THIS_FIELD_IS_REQUIRED' | translate }}
+										</div>
 									</div>
 
 								</div>
 								<div class="col-md-6 col-sm-12">
 									<div class="form-group">
 										<label class="label" for="code">{{
-																					'INVENTORY_PAGE.NAME' | translate
+																					'INVENTORY_PAGE.CODE' | translate
 																				}}</label>
 										<input formControlName="code" fullWidth id="code" type="text" nbInput
 											[placeholder]="
 																						'INVENTORY_PAGE.CODE'
 																							| translate
-																					" />
+																					" [ngClass]="{
+																						'status-danger':
+																							form.controls['code'].invalid &&
+																							form.controls['code'].touched
+																					}" />
+										<div class="text-danger" *ngIf="
+										form.controls['code'].dirty &&
+										form.controls['code'].errors &&
+										form.controls['code'].errors.required
+							">
+											{{ 'INVENTORY_PAGE.THIS_FIELD_IS_REQUIRED' | translate }}
+										</div>
 									</div>
 
 								</div>
@@ -62,7 +84,18 @@
 											[placeholder]="
 																						'INVENTORY_PAGE.EMAIL'
 																							| translate
-																					" />
+																					" [ngClass]="{
+																						'status-danger':
+																							form.controls['email'].invalid &&
+																							form.controls['email'].touched
+																					}" />
+										<div class="text-danger" *ngIf="
+										form.controls['email'].dirty &&
+										form.controls['email'].errors &&
+										form.controls['email'].errors.email
+							">
+											{{ 'INVENTORY_PAGE.EMAIL_WRONG_FORMAT' | translate }}
+										</div>
 									</div>
 								</div>
 								<div class="col-md-6 col-sm-12">
@@ -74,7 +107,18 @@
 											[placeholder]="
 																							'INVENTORY_PAGE.PHONE'
 																								| translate
-																						" />
+																						" [ngClass]="{
+																							'status-danger':
+																								form.controls['phone'].invalid &&
+																								form.controls['phone'].touched
+																						}" />
+										<div class="text-danger" *ngIf="
+										form.controls['phone'].dirty &&
+										form.controls['phone'].errors &&
+										form.controls['phone'].errors.pattern
+							">
+											{{ 'INVENTORY_PAGE.PHONE_WRONG_FORMAT' | translate }}
+										</div>
 									</div>
 								</div>
 							</div>
@@ -94,7 +138,11 @@
 									<input formControlName="fax" type="text" id="fax" nbInput fullWidth [placeholder]="
 														'INVENTORY_PAGE.FAX'
 															| translate
-													" />
+													" [ngClass]="{
+														'status-danger':
+															form.controls['fax'].invalid &&
+															form.controls['fax'].touched
+													}" />
 								</div>
 							</div>
 
@@ -109,7 +157,11 @@
 											[placeholder]="
 															'INVENTORY_PAGE.FISCAL_INFORMATION'
 																| translate
-														" />
+														" [ngClass]="{
+															'status-danger':
+																form.controls['fiscalInformation'].invalid &&
+																form.controls['fiscalInformation'].touched
+														}" />
 									</div>
 								</div>
 								<div class="col-md-6 col-sm-12">
@@ -122,7 +174,11 @@
 											[placeholder]="
 															'INVENTORY_PAGE.WEBSITE'
 																| translate
-														" />
+														" [ngClass]="{
+															'status-danger':
+																form.controls['website'].invalid &&
+																form.controls['website'].touched
+														}" />
 									</div>
 								</div>
 							</div>
@@ -159,7 +215,8 @@
 
 					<div class="row mt-5">
 						<div class="form-group col-4">
-							<button (click)="toMapStep()" [disabled]="form.invalid" nbStepperNext nbButton status="primary">
+							<button (click)="toMapStep()" [disabled]="form.invalid" nbStepperNext nbButton
+								status="primary">
 								{{ 'BUTTONS.NEXT' | translate }}
 							</button>
 						</div>
