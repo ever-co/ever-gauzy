@@ -8,7 +8,7 @@ import {
 import { Observable } from 'rxjs';
 import { map, tap, switchMap, take } from 'rxjs/operators';
 import { TasksStoreService } from '../../../../../@core/services/tasks-store.service';
-import { ActivatedRoute, Params } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { TasksService } from 'apps/gauzy/src/app/@core/services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
