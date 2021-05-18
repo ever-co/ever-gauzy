@@ -2135,9 +2135,9 @@
 		"MERCHANT_CREATED_SUCCESSFULLY": "Merchant '{{ name }}' created sucessfully!",
 		"MERCHANT_DELETED_SUCCESSFULLY": "Merchant '{{ name }}' deleted!",
 		"MERCHANT_UPDATED_SUCCESSFULLY": "Merchant '{{ name }}' updated sucessfully!",
-		"THIS_FIELD_IS_REQUIRED": "Това поле е задължително",
-		"EMAIL_WRONG_FORMAT": "Невалиден имейл",
-		"PHONE_WRONG_FORMAT": "Невалиден формат"
+		"THIS_FIELD_IS_REQUIRED": "This field is required",
+		"EMAIL_WRONG_FORMAT": "Email is in wrong format",
+		"PHONE_WRONG_FORMAT": "Phone is in wrong format"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
