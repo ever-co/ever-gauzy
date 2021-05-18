@@ -11,7 +11,6 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { SharedModule } from '../../../../@shared/shared.module';
 
 
-
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -25,8 +24,6 @@ import {
 	NbBadgeModule,
 	NbTooltipModule,
     NbStepperModule,
-    
-
 
 } from '@nebular/theme';
 import { CommonModule } from '@angular/common';
@@ -34,6 +31,7 @@ import { HeaderTitleModule } from 'apps/gauzy/src/app/@shared/components/header-
 import { ThemeModule } from 'apps/gauzy/src/app/@theme';
 import { MerchantRoutingModule } from './merchant-routing.module';
 import { MerchantComponent } from './merchant.component';
+import { LocationFormModule, LeafletMapModule } from 'apps/gauzy/src/app/@shared/forms';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -66,7 +64,10 @@ const NB_MODULES = [
         ...NB_MODULES,
         SharedModule,
         HeaderTitleModule,
-        ThemeModule
+        ThemeModule,
+
+        LocationFormModule,
+		LeafletMapModule,
 
     ],
     providers: [MerchantService]

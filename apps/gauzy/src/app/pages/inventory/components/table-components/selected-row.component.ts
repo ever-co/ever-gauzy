@@ -12,6 +12,6 @@ export class SelectedRowComponent implements ViewCell {
 
     onValueChange(e) {
         this.rowData.selected = e.target.checked;  
-    }
-    
+    } 
+     
 }

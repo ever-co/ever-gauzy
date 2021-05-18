@@ -16,13 +16,9 @@ import {
 	NbStepperModule
 } from '@nebular/theme';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { ProductMutationModule } from '../../@shared/product-mutation/product-mutation.module';
 import { ThemeModule } from '../../@theme/theme.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
-import { ProductTypeMutationComponent } from '../../@shared/product-mutation/product-type-mutation/product-type-mutation.component';
-import { ProductCategoriesComponent } from './components/manage-product-categories/product-categories.component';
-import { ProductCategoryMutationComponent } from '../../@shared/product-mutation/product-category-mutation/product-category-mutation.component';
 import { ImageRowComponent } from './components/table-components/image-row.component';
 import { IconRowComponent } from './components/table-components/icon-row.component';
 import { ProductFormComponent } from './components/edit-inventory-item/product-form.component';
@@ -36,8 +32,6 @@ import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader
 import { VariantTableComponent } from './components/edit-inventory-item/variant-table/variant-table.component';
 import { OptionsFormComponent } from './components/edit-inventory-item/options-form/options-form.component';
 import { VariantFormComponent } from './components/edit-inventory-item/variant-form/variant-form.component';
-import { ProductCategoryService } from '../../@core/services/product-category.service';
-import { ProductTypeService } from '../../@core/services/product-type.service';
 import { ProductService } from '../../@core/services/product.service';
 import { ProductVariantService } from '../../@core/services/product-variant.service';
 import { ProductVariantSettingsService } from '../../@core/services/product-variant-settings.service';
@@ -48,7 +42,6 @@ import { EnabledStatusComponent } from './components/table-components/enabled-ro
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { CurrencyModule } from '../../@shared/currency/currency.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
-import { ItemImgTagsComponent } from './components/table-components/item-img-tags-row.component';
 import { SelectAssetModule } from '../../@shared/select-asset-modal/select-asset.module';
 import { SelectAssetComponent } from '../../@shared/select-asset-modal/select-asset.component';
 import { ProductGalleryComponent } from './components/edit-inventory-item/product-gallery/product-gallery.component';
@@ -59,21 +52,16 @@ import { InventoryItemViewComponent } from './components/view-inventory-item/vie
 import { TranslatableService } from '../../@core/services/translatable.service';
 import { ImageAssetComponent } from '../../@shared/select-asset-modal/img-asset/img-asset.component';
 import { ImageAssetModule } from '../../@shared/image-asset/image-asset.module';
-import { WarehouseService } from '../../@core/services/warehouse.service';
 import { LocationFormModule } from '../../@shared/forms/location';
 import { LeafletMapModule } from '../../@shared/forms/maps/leaflet/leaflet.module';
-import { WarehousesComponent } from './components/manage-warehouses/warehouses.component';
-import { WarehouseFormComponent } from './components/manage-warehouses/warehouse-form/warehouse-form.component';
-import { WarehousesTableComponent } from './components/manage-warehouses/warehouses-table/warehouses-table.component';
-import { WarehouseProductsTableComponent } from './components/manage-warehouses/warehouse-products-table/warehouse-products-table.component';
 import { SelectProductComponent } from './components/manage-warehouses/select-product-form/select-product-form.component';
-import { ManageQuantityComponent } from './components/manage-warehouses/manage-quantity/manage-quantity.component';
-import { ManageVariantsQuantityFormComponent } from './components/manage-warehouses/manage-variants-quantity-form/manage-variants-quantity-form.component';
-import { ManageVariantsQuantityComponent } from './components/manage-warehouses/manage-variants-quantity/manage-variants-quantity.component';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { SelectedRowComponent } from './components/table-components/selected-row.component';
-import { MerchantService } from './../../@core';
 import { MerchantModule } from './components/manage-merchants/merchant.module';
+import { ProductTypesModule } from './components/manage-product-types/product-types.module';
+import { ProductCategoriesModule } from './components/manage-product-categories/product-categories.module';
+import { WarehousesModule } from './components/manage-warehouses/warehouses.module';
+import { TableComponentsModule } from './components/table-components/table-components.module';
+
 
 const NB_MODULES = [
 	NbCardModule,
@@ -85,76 +73,63 @@ const NB_MODULES = [
 	NbSelectModule,
 	NbTabsetModule,
 	NbInputModule,
-	NbStepperModule
+	NbStepperModule,
+	NbTooltipModule,
+	NbBadgeModule,
+	NbDialogModule.forChild(),
 ];
 
 @NgModule({
 	declarations: [
-		TableInventoryComponent,
-		ProductCategoriesComponent,
-		ImageRowComponent,
-		IconRowComponent,
-		ItemImgTagsComponent,
-		ProductFormComponent,
-		VariantFormComponent,
 		InventoryComponent,
-		VariantTableComponent,
-		OptionsFormComponent,
-		InventoryVariantFormComponent,
-		EnabledStatusComponent,
-		ProductGalleryComponent,
 		InventoryItemViewComponent,
-		WarehousesTableComponent,
-		WarehouseFormComponent,
-		WarehousesComponent,
-		WarehouseProductsTableComponent,
-		SelectProductComponent,
-		ManageQuantityComponent,
-		ManageVariantsQuantityComponent,
-		ManageVariantsQuantityFormComponent,
-		SelectedRowComponent,
+		InventoryVariantFormComponent,
+		OptionsFormComponent,
+		ProductGalleryComponent,
+		ProductFormComponent,
+		TableInventoryComponent,
+		VariantFormComponent,
+		VariantTableComponent,
 	],
 	imports: [
-		UserFormsModule,
-		InventoryRoutingModule,
-		ThemeModule,
-		CommonModule,
-		Ng2SmartTableModule,
-		TableComponentsModule,
-		ProductMutationModule,
-		TagsColorInputModule,
-		ReactiveFormsModule,
-		NgSelectModule,
-		FormsModule,
-		SharedModule,
-		ImageUploaderModule,
-		GalleryModule,
+		// UserFormsModule,
+		// TableComponentsModule,
+		// ProductMutationModule,
+		// ImageUploaderModule,
+		// GalleryModule,
+		// SelectAssetModule,
+		// ImageAssetModule,
+		// ImageUploaderModule,
+
 		CardGridModule,
-		NbBadgeModule,
-		NbTooltipModule,
-		NbDialogModule.forChild(),
-		TranslateModule,
-		...NB_MODULES,
+		CommonModule,
 		CurrencyModule,
-		SelectAssetModule,
-		ImageAssetModule,
-		ImageUploaderModule,
-		LocationFormModule,
-		LeafletMapModule,
+		FormsModule,
 		HeaderTitleModule,
-		MerchantModule
+		InventoryRoutingModule,
+		MerchantModule,
+		...NB_MODULES,
+		NgSelectModule,
+		Ng2SmartTableModule,
+		ProductTypesModule,
+		ProductCategoriesModule,
+		ReactiveFormsModule,
+		SharedModule,
+		TableComponentsModule,
+		TagsColorInputModule,
+		ThemeModule,
+		TranslateModule,
+		WarehousesModule
 	],
 	entryComponents: [
-		ImageRowComponent,
-		IconRowComponent,
-		EnabledStatusComponent,
-		SelectAssetComponent,
-		ImageAssetComponent,
-		SelectProductComponent
+		// ImageRowComponent,
+		// IconRowComponent,
+		// EnabledStatusComponent,
+		// SelectAssetComponent,
+		// ImageAssetComponent,
+		// SelectProductComponent
 	],
 	providers: [
-		// ProductTypeService,
-		// ProductCategoryService,
 		ProductService,
 		ProductVariantService,
 		ProductVariantSettingsService,
@@ -162,9 +137,7 @@ const NB_MODULES = [
 		OrganizationsService,
 		ImageAssetService,
 		InventoryStore,
-		TranslatableService,
-		WarehouseService,
-		MerchantService
+		TranslatableService
 	]
 })
-export class InventoryModule {}
+export class InventoryModule { }
