@@ -16,7 +16,7 @@ export class Language extends BaseEntity implements ILanguage {
 	@IsOptional()
 	code?: string;
 
-	@ApiProperty({ type: () => Boolean, default: false })
+	@ApiProperty({ type: () => Boolean, default: true })
 	@Column({ default: true, nullable: true })
 	@IsOptional()
 	is_system?: boolean;
