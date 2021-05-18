@@ -5,6 +5,7 @@ import { ImageRowComponent } from './image-row.component';
 import { ItemImgTagsComponent } from './item-img-tags-row.component';
 import { SelectedRowComponent } from './selected-row.component';
 import { NbCheckboxModule } from '@nebular/theme';
+import { CommonModule } from '@angular/common';
  
 @NgModule({
     declarations: [
@@ -15,7 +16,8 @@ import { NbCheckboxModule } from '@nebular/theme';
         SelectedRowComponent
     ],
     imports: [
-        NbCheckboxModule
+        NbCheckboxModule,
+        CommonModule
     ]
 })
 export class TableComponentsModule { }

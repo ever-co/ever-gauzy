@@ -19,6 +19,7 @@ import { ThemeModule } from 'apps/gauzy/src/app/@theme';
 import { ProductTypesComponent } from './product-types.component';
 import { ProductTypesRoutingModule } from './product-types-routing.module';
 import { CardGridModule } from 'apps/gauzy/src/app/@shared/card-grid/card-grid.module';
+import { ProductMutationModule } from 'apps/gauzy/src/app/@shared/product-mutation/product-mutation.module';
 
 
 const NB_MODULES = [
@@ -42,7 +43,8 @@ const NB_MODULES = [
         SharedModule,
         HeaderTitleModule,
         ThemeModule,
-        CardGridModule
+        CardGridModule,
+        ProductMutationModule
     ],
     providers: [ProductTypeService]
 })

@@ -15,6 +15,7 @@ import { HeaderTitleModule } from 'apps/gauzy/src/app/@shared/components/header-
 import { ThemeModule } from 'apps/gauzy/src/app/@theme';
 import { ProductCategoriesComponent } from './product-categories.component';
 import { ProductCategoriesRoutingModule } from './product-categories-routing.module';
+import { ProductMutationModule } from 'apps/gauzy/src/app/@shared/product-mutation/product-mutation.module';
 
 
 const NB_MODULES = [
@@ -37,7 +38,8 @@ const NB_MODULES = [
         ...NB_MODULES,
         SharedModule,
         HeaderTitleModule,
-        ThemeModule
+        ThemeModule,
+        ProductMutationModule
     ],
     providers: [ProductCategoryService]
 })

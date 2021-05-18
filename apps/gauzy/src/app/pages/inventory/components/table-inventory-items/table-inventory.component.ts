@@ -262,7 +262,7 @@ export class TableInventoryComponent
 	async loadSettings() {
 		this.loading = true;
 		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		const { id: organizationId } = this.organization || { id: '' };
 
 		const data = "data=" + JSON.stringify({
 			relations: ['type', 'category', 'tags', 'featuredImage'],
