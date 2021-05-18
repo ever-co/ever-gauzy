@@ -77,6 +77,7 @@
 						<ng-select
 							[items]="expenseCategories"
 							[searchable]="true"
+							appendTo="body"
 							[addTag]="addNewCategory"
 							bindLabel="name"
 							formControlName="category"
@@ -112,6 +113,7 @@
 						<ng-select
 							[addTag]="addNewVendor"
 							bindLabel="name"
+							appendTo="body"
 							[items]="vendors"
 							[searchable]="true"
 							placeholder="{{
@@ -200,6 +202,7 @@
 								bindLabel="name"
 								[searchable]="true"
 								autocomplete="on"
+								appendTo="body"
 								formControlName="organizationContact"
 								(change)="selectOrganizationContact($event)"
 								placeholder="{{
@@ -229,6 +232,7 @@
 								bindLabel="name"
 								[searchable]="true"
 								autocomplete="on"
+								appendTo="body"
 								formControlName="project"
 								(change)="selectProject($event)"
 								placeholder="{{
@@ -339,6 +343,7 @@
 								[items]="translatedTaxTypes"
 								bindLabel="label"
 								bindValue="value"
+								appendTo="body"
 								formControlName="taxType"
 								fullWidth
 								[clearable]="false"

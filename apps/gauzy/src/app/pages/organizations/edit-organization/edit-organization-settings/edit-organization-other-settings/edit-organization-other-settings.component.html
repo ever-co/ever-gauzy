@@ -18,6 +18,7 @@
 										| translate
 								}}"
 								[searchable]="true"
+								appendTo="body"
 								formControlName="timeZone"
 							>
 								<ng-template
@@ -182,6 +183,7 @@
 							<ng-select
 								[items]="[12, 24]"
 								[clearable]="false"
+								appendTo="body"
 								[searchable]="false"
 								formControlName="timeFormat"
 							></ng-select>

@@ -207,6 +207,7 @@
 											| translate
 									}}"
 									multiple="true"
+									appendTo="body"
 								>
 								</ng-select>
 							</div>
@@ -218,7 +219,7 @@
 										'FORM.LABELS.EMPLOYEE_LEVEL' | translate
 									}}
 								</label>
-								<ng-select formControlName="employeeLevel">
+								<ng-select appendTo="body" formControlName="employeeLevel">
 									<ng-option
 										*ngFor="let empL of employeeLevels"
 										[value]="empL.level"

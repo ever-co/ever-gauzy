@@ -136,6 +136,7 @@
 								id="inputOrganizationContact"
 								(change)="selectOrganizationContact($event)"
 								[searchFn]="searchOrganizationContact"
+								appendTo="body"
 							>
 								<ng-template
 									ng-option-tmp
@@ -237,6 +238,7 @@
 									id="inputProject"
 									(change)="selectProject($event)"
 									[multiple]="true"
+									appendTo="body"
 								>
 									<ng-template
 										ng-option-tmp
@@ -272,6 +274,7 @@
 									id="inputTask"
 									(change)="selectTask($event)"
 									[multiple]="true"
+									appendTo="body"
 								>
 									<ng-template
 										ng-option-tmp
@@ -307,6 +310,7 @@
 									id="inputProduct"
 									(change)="selectProduct($event)"
 									[multiple]="true"
+									appendTo="body"
 								>
 									<ng-template
 										ng-option-tmp
@@ -342,6 +346,7 @@
 									id="inputExpense"
 									(change)="selectExpense($event)"
 									[multiple]="true"
+									appendTo="body"
 								>
 									<ng-template
 										ng-option-tmp

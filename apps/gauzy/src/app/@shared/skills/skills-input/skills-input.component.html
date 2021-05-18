@@ -10,6 +10,7 @@
 		[(ngModel)]="selectedSkills"
 		multiple="true"
 		(change)="onChange()"
+		appendTo="body"
 	>
 		<ng-template ng-label-tmp let-item="item" let-clear="clear">
 			<span class="ng-value-label"
@@ -51,6 +52,7 @@
 		multiple="true"
 		(change)="onChange()"
 		[ngModelOptions]="{ standalone: true }"
+		appendTo="body"
 	>
 		<ng-template ng-label-tmp let-item="item" let-clear="clear">
 			<span class="ng-value-label"
