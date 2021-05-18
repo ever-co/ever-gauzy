@@ -55,7 +55,7 @@ export class ProductTypesComponent
 			this.onChangedSource();
 		}
 	}
-
+ 
 	constructor(
 		readonly translateService: TranslateService,
 		private http: HttpClient, 

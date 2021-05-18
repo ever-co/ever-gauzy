@@ -43,7 +43,7 @@ export class TableInventoryComponent
 	selectedLanguage: string = LanguagesEnum.ENGLISH;
 	inventoryData: IProductTranslated[];
 	disableButton = true;
-	viewComponentName: ComponentEnum;
+	viewComponentName: ComponentEnum.INVENTORY;
 	dataLayoutStyle = ComponentLayoutStyleEnum.CARDS_GRID;
 	organization: IOrganization;
 
@@ -262,7 +262,7 @@ export class TableInventoryComponent
 	async loadSettings() {
 		this.loading = true;
 		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		const { id: organizationId } = this.organization || { id: '' };
 
 		const data = "data=" + JSON.stringify({
 			relations: ['type', 'category', 'tags', 'featuredImage'],

@@ -2134,7 +2134,10 @@
 		"EDIT_MERCHANT": "Изменить продавца",
 		"MERCHANT_CREATED_SUCCESSFULLY": "Торговец '{{ name }}' успешно создан!",
 		"MERCHANT_DELETED_SUCCESSFULLY": "Торговец '{{ name }}' ' удален!",
-		"MERCHANT_UPDATED_SUCCESSFULLY": "Торговец '{{ name }}' успешно обновлен!"
+		"MERCHANT_UPDATED_SUCCESSFULLY": "Торговец '{{ name }}' успешно обновлен!",
+		"THIS_FIELD_IS_REQUIRED": "This field is required",
+		"EMAIL_WRONG_FORMAT": "Email is in wrong format",
+		"PHONE_WRONG_FORMAT": "Phone is in wrong format"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
