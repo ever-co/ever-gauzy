@@ -10,7 +10,7 @@ import { ThemeSidebarComponent } from './theme-sidebar.component';
 import { TranslateModule } from '../../../@shared/translate/translate.module';
 import { ThemeSettingsComponent } from './theme-settings/theme-settings.component';
 import { ChangelogComponent } from './changelog/changelog.component';
-import { LanguageSelectorModule } from '../../../@shared/language/language-selector/language-selector.module';
+import { LanguageSelectorModule } from '../../../@shared/language/language-selector';
 
 @NgModule({
 	imports: [

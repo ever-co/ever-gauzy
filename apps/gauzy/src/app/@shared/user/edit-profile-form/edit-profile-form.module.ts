@@ -17,7 +17,7 @@ import { ImageUploaderModule } from '../../image-uploader/image-uploader.module'
 import { RoleService } from '../../../@core/services/role.service';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { TranslateModule } from '../../translate/translate.module';
-import { LanguageSelectorModule } from '../../language/language-selector/language-selector.module';
+import { LanguageSelectorModule } from '../../language/language-selector';
 
 @NgModule({
 	imports: [
