@@ -12,7 +12,6 @@ import * as faker from 'faker';
 import { environment as env } from '@gauzy/config';
 import * as moment from 'moment';
 import { Employee, Organization, Tenant } from './../core/entities/internal';
-import { getDefaultTenant } from './../tenant/tenant.seed';
 import { getDefaultOrganization } from './../organization/organization.seed';
 
 export const createDefaultEmployees = async (
