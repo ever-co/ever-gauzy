@@ -43,7 +43,7 @@ export class TableInventoryComponent
 	selectedLanguage: string = LanguagesEnum.ENGLISH;
 	inventoryData: IProductTranslated[];
 	disableButton = true;
-	viewComponentName: ComponentEnum;
+	viewComponentName: ComponentEnum.INVENTORY;
 	dataLayoutStyle = ComponentLayoutStyleEnum.CARDS_GRID;
 	organization: IOrganization;
 

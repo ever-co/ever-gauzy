@@ -103,7 +103,6 @@ const NB_MODULES = [
 		TranslateModule,
 		WarehousesModule
 	],
-
 	providers: [
 		ProductService,
 		ProductVariantService,
