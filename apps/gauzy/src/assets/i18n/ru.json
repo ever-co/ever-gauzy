@@ -2135,9 +2135,9 @@
 		"MERCHANT_CREATED_SUCCESSFULLY": "Торговец '{{ name }}' успешно создан!",
 		"MERCHANT_DELETED_SUCCESSFULLY": "Торговец '{{ name }}' ' удален!",
 		"MERCHANT_UPDATED_SUCCESSFULLY": "Торговец '{{ name }}' успешно обновлен!",
-		"THIS_FIELD_IS_REQUIRED": "This field is required",
-		"EMAIL_WRONG_FORMAT": "Email is in wrong format",
-		"PHONE_WRONG_FORMAT": "Phone is in wrong format"
+		"THIS_FIELD_IS_REQUIRED": "Это поле является обязательным",
+		"EMAIL_WRONG_FORMAT": "Адрес электронной почты в неправильном формате",
+		"PHONE_WRONG_FORMAT": "Телефон в неправильном формате"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
