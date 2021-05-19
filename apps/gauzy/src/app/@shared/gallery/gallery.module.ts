@@ -4,6 +4,7 @@ import { NbButtonModule, NbDialogModule, NbIconModule } from '@nebular/theme';
 import { GalleryComponent } from './gallery.component';
 import { GalleryDirective } from './gallery.directive';
 import { SharedModule } from '../shared.module';
+import { TranslateModule } from '../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -11,7 +12,8 @@ import { SharedModule } from '../shared.module';
 		NbButtonModule,
 		NbDialogModule,
 		NbIconModule,
-		SharedModule
+		SharedModule,
+		TranslateModule
 	],
 	exports: [GalleryDirective, GalleryComponent],
 	declarations: [GalleryDirective, GalleryComponent]

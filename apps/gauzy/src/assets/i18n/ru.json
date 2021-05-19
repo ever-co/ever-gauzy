@@ -2137,7 +2137,10 @@
 		"EDIT_MERCHANT": "Изменить продавца",
 		"MERCHANT_CREATED_SUCCESSFULLY": "Торговец '{{ name }}' успешно создан!",
 		"MERCHANT_DELETED_SUCCESSFULLY": "Торговец '{{ name }}' ' удален!",
-		"MERCHANT_UPDATED_SUCCESSFULLY": "Торговец '{{ name }}' успешно обновлен!"
+		"MERCHANT_UPDATED_SUCCESSFULLY": "Торговец '{{ name }}' успешно обновлен!",
+		"THIS_FIELD_IS_REQUIRED": "Это поле является обязательным",
+		"EMAIL_WRONG_FORMAT": "Адрес электронной почты в неправильном формате",
+		"PHONE_WRONG_FORMAT": "Телефон в неправильном формате"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
@@ -2178,7 +2181,8 @@
 		"DELETE_SPRINT": "Удалить спринт",
 		"SELECT": "Выбрать",
 		"SPRINTS_SETTINGS": "Настройки спринта",
-		"ARE_YOU_SURE": "Вы уверены, что хотите удалить спринт"
+		"ARE_YOU_SURE": "Вы уверены, что хотите удалить спринт",
+		"SETTINGS": "Настройки"
 	},
 	"JOBS": {
 		"EMPLOYEE": "Сотрудник",

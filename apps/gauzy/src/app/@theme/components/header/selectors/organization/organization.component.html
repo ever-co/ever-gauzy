@@ -6,6 +6,7 @@
 		(change)="selectOrganization($event)"
 		[(ngModel)]="selectedOrganization"
 		placeholder="{{ 'FORM.PLACEHOLDERS.SELECT_COMPANY' | translate }}"
+		appendTo="body"
 	>
 		<ng-template ng-option-tmp let-item="item" let-index="index">
 			<img

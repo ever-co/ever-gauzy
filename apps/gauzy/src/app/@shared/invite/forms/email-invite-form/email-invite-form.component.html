@@ -11,6 +11,7 @@
 					[items]="[]"
 					[addTag]="addTagFn"
 					[hideSelected]="true"
+					appendTo="body"
 					multiple="true"
 					bindLabel="emailAddress"
 					formControlName="emails"
@@ -95,6 +96,7 @@
 					[hideSelected]="true"
 					multiple="true"
 					bindLabel="name"
+					appendTo="body"
 					formControlName="projects"
 					placeholder="{{ 'FORM.PLACEHOLDERS.PROJECTS' | translate }}"
 				>
@@ -127,6 +129,7 @@
 					[hideSelected]="true"
 					multiple="true"
 					bindLabel="name"
+					appendTo="body"
 					formControlName="organizationContacts"
 					placeholder="{{ 'FORM.PLACEHOLDERS.CONTACTS' | translate }}"
 				>
@@ -162,6 +165,7 @@
 					[hideSelected]="true"
 					multiple="true"
 					bindLabel="name"
+					appendTo="body"
 					formControlName="departments"
 					placeholder="{{
 						'FORM.PLACEHOLDERS.DEPARTMENTS' | translate

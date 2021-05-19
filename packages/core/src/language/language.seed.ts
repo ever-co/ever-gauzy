@@ -1,33 +1,30 @@
 import { Connection } from 'typeorm';
+import { LanguagesEnum } from '@gauzy/contracts';
+import * as faker from 'faker';
 import { Language } from './language.entity';
+import  allLanguages from './all-languages';
 
 export const createLanguages = async (
 	connection: Connection
 ): Promise<Language[]> => {
+	const systemLanguages: string[] = Object.values(LanguagesEnum);
 	const languages: Language[] = [];
-	const languageItems = [
-		{ name: 'English', code: 'en', is_system: true },
-		{ name: 'Bulgarian', code: 'bg', is_system: true },
-		{ name: 'Hebrew', code: 'he', is_system: true },
-		{ name: 'Russian', code: 'ru', is_system: true }
-	];
-
-	for (const item of languageItems) {
-		const language = new Language();
-		language.name = item.name;
-		language.code = item.code;
-		language.is_system = item.is_system || false;
-		language.description = '';
-		language.color = '#479bfa';
-		languages.push(language);
+	for (const key in allLanguages) {
+		if (Object.prototype.hasOwnProperty.call(allLanguages, key)) {
+			const { name } = allLanguages[key];
+			const language = new Language();
+			language.name = name;
+			language.code = key;
+			language.is_system = systemLanguages.indexOf(key) >= 0;
+			language.description = '';
+			language.color = faker.internet.color();
+			languages.push(language);
+		}
 	}
-
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(Language)
-		.values(languages)
-		.execute();
-
+	try {
+		await connection.getRepository(Language).save(languages)
+	} catch (error) {
+		console.log({error})
+	}
 	return languages;
 };

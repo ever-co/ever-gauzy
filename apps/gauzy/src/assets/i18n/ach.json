@@ -2134,7 +2134,10 @@
 		"EDIT_MERCHANT": "crwdns10358:0crwdne10358:0",
 		"MERCHANT_CREATED_SUCCESSFULLY": "crwdns10360:0{{ name }}crwdne10360:0",
 		"MERCHANT_DELETED_SUCCESSFULLY": "crwdns10362:0{{ name }}crwdne10362:0",
-		"MERCHANT_UPDATED_SUCCESSFULLY": "crwdns10364:0{{ name }}crwdne10364:0"
+		"MERCHANT_UPDATED_SUCCESSFULLY": "crwdns10364:0{{ name }}crwdne10364:0",
+		"THIS_FIELD_IS_REQUIRED": "crwdns10366:0crwdne10366:0",
+		"EMAIL_WRONG_FORMAT": "crwdns10368:0crwdne10368:0",
+		"PHONE_WRONG_FORMAT": "crwdns10370:0crwdne10370:0"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "crwdns3029:0crwdne3029:0",
@@ -2175,7 +2178,8 @@
 		"DELETE_SPRINT": "crwdns9658:0crwdne9658:0",
 		"SELECT": "crwdns9660:0crwdne9660:0",
 		"SPRINTS_SETTINGS": "crwdns9956:0crwdne9956:0",
-		"ARE_YOU_SURE": "crwdns9958:0crwdne9958:0"
+		"ARE_YOU_SURE": "crwdns9958:0crwdne9958:0",
+		"SETTINGS": "crwdns10372:0crwdne10372:0"
 	},
 	"JOBS": {
 		"EMPLOYEE": "crwdns8162:0crwdne8162:0",

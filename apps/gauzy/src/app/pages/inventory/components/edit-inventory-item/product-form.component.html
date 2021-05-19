@@ -50,30 +50,15 @@
 														| translate
 												}}
 											</label>
-											<nb-select
-												id="lang"
-												[placeholder]="
-													'INVENTORY_PAGE.LANGUAGE'
-														| translate
-												"
+											<ngx-language-selector
 												class="d-block"
+												[placeholder]="'INVENTORY_PAGE.LANGUAGE'| translate"
 												size="medium"
-												fullWidth="true"
+												template="ng-select"
 												formControlName="languageCode"
-												[selected]="selectedLanguage"
-												(selectedChange)="
-													onLangChange($event)
-												"
+												(selectedLanguageEvent)="onLangChange($event)"
 											>
-												<nb-option
-													*ngFor="
-														let lang of languages
-													"
-													[value]="lang.value"
-												>
-													{{ lang.name }}
-												</nb-option>
-											</nb-select>
+											</ngx-language-selector>
 										</div>
 										<div class="row">
 											<div class="col-sm-6 mb-4">

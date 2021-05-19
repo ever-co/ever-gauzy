@@ -99,7 +99,7 @@ export class KnowledgeBaseComponent
 
 	selectedLanguage(event) {
 		this.form.patchValue({ 
-			language: event.code 
+			language: event 
 		});
 	}
 

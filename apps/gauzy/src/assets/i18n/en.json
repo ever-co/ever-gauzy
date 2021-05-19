@@ -2137,7 +2137,10 @@
 		"EDIT_MERCHANT": "Edit Merchant",
 		"MERCHANT_CREATED_SUCCESSFULLY": "Merchant '{{ name }}' created sucessfully!",
 		"MERCHANT_DELETED_SUCCESSFULLY": "Merchant '{{ name }}' deleted!",
-		"MERCHANT_UPDATED_SUCCESSFULLY": "Merchant '{{ name }}' updated sucessfully!"
+		"MERCHANT_UPDATED_SUCCESSFULLY": "Merchant '{{ name }}' updated sucessfully!",
+		"THIS_FIELD_IS_REQUIRED": "This field is required",
+		"EMAIL_WRONG_FORMAT": "Email is in wrong format",
+		"PHONE_WRONG_FORMAT": "Phone is in wrong format"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
@@ -2178,7 +2181,8 @@
 		"DELETE_SPRINT": "Delete Sprint",
 		"SELECT": "Select",
 		"SPRINTS_SETTINGS": "Sprints Settings",
-		"ARE_YOU_SURE": "Are you shure you want delete sprint"
+		"ARE_YOU_SURE": "Are you shure you want delete sprint",
+		"SETTINGS": "Settings"
 	},
 	"JOBS": {
 		"EMPLOYEE": "Employee",

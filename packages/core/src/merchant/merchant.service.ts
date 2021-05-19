@@ -6,21 +6,25 @@ import { InjectRepository } from '@nestjs/typeorm';
 export class MerchantService extends CrudService<Merchant> {
 
     constructor(@InjectRepository(Merchant)
-    private readonly productStoreRepository: Repository<Merchant>,
+    private readonly merchantRepository: Repository<Merchant>,
         @InjectRepository(Warehouse)
         private readonly warehouseRepository: Repository<Warehouse>,
         @InjectRepository(ImageAsset)
         private readonly imageAssetRepository: Repository<ImageAsset>) {
-        super(productStoreRepository);
+        super(merchantRepository);
     }
 
-    async findAllProductTypes(relations?: string[],
+    async findMerchantById(id: string, relations: string[]): Promise<Merchant> {
+        return await this.merchantRepository.findOne(id, { relations });
+    }
+
+    async findAllMechants(relations?: string[],
         findInput?: any,
         options = { page: 1, limit: 10 }): Promise<IPagination<Merchant>> {
 
-        const total = await this.productStoreRepository.count(findInput);
+        const total = await this.merchantRepository.count(findInput);
 
-        const allMerchants = await this.productStoreRepository.find({
+        const allMerchants = await this.merchantRepository.find({
             where: findInput,
             relations,
             skip: (options.page - 1) * options.limit,
@@ -34,13 +38,15 @@ export class MerchantService extends CrudService<Merchant> {
 
     }
 
-    async createStore(productStoreInput: any) {
+    async createMerchant(merchantInput: any): Promise<Merchant> {
 
-        const contact = Object.assign(new Contact(), productStoreInput.contact);
-        const productStore = Object.assign(new Merchant(), { ...productStoreInput, contact });
+        const contact = Object.assign(new Contact(), merchantInput.contact);
+        const merchant = Object.assign(new Merchant(), { ...merchantInput, contact });
 
-        return await this.productStoreRepository.save(productStore);
+        return await this.merchantRepository.save(merchant);
+    }
 
-
+    async updateMerchant(merchantInput: any): Promise<Merchant> {
+        return await this.merchantRepository.save(merchantInput);
     }
 }

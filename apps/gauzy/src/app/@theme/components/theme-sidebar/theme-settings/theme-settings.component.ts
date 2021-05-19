@@ -48,7 +48,7 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 		private readonly directionService: NbLayoutDirectionService,
 		private readonly store: Store,
 		private readonly userService: UsersService
-	) {}
+	) { }
 
 	async ngOnInit() {
 		this.store.systemLanguages$
@@ -58,12 +58,14 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 			)
 			.subscribe((systemLanguages) => {
 				if (systemLanguages && systemLanguages.length > 0) {
-					this.languages = systemLanguages.map((item) => {
-						return {
-							value: item.code,
-							name: 'SETTINGS_MENU.' + item.name.toUpperCase()
-						};
-					});
+					this.languages = systemLanguages
+						.filter((item) => !!item.is_system)
+						.map((item) => {
+							return {
+								value: item.code,
+								name: 'SETTINGS_MENU.' + item.name.toUpperCase()
+							};
+						});
 				}
 			});
 
@@ -113,6 +115,7 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 	}
 
 	switchLanguage() {
+
 		if (this.currentLang === LanguagesEnum['HEBREW']) {
 			this.directionService.setDirection(NbLayoutDirection.RTL);
 		} else {
@@ -150,8 +153,8 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 	private async updateUser(updatedUserData: any) {
 		try {
 			await this.userService.update(this.currentUser.id, updatedUserData);
-		} catch (error) {}
+		} catch (error) { }
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

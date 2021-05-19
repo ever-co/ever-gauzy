@@ -99,25 +99,13 @@
 								<label for="preferredLanguage" class="label">{{
 									'FORM.LABELS.PREFERRED_LANGUAGE' | translate
 								}}</label>
-								<nb-select
+								<ngx-language-selector
+									[placeholder]="'FORM.PLACEHOLDERS.PREFERRED_LANGUAGE'| translate"
 									class="d-block"
-									fullWidth
-									placeholder="{{
-										'FORM.PLACEHOLDERS.PREFERRED_LANGUAGE'
-											| translate
-									}}"
+									selectBy="object"
+									template="ng-select"
 									formControlName="preferredLanguage"
-									id="preferredLanguage"
-								>
-									<nb-option
-										*ngFor="let language of languages"
-										value="{{ language }}"
-										>{{
-											'USERS_PAGE.EDIT_USER.PREFERRED_LANGUAGE.' +
-												language | translate
-										}}</nb-option
-									>
-								</nb-select>
+								></ngx-language-selector>
 							</div>
 						</div>
 					</div>
@@ -207,6 +195,7 @@
 											| translate
 									}}"
 									multiple="true"
+									appendTo="body"
 								>
 								</ng-select>
 							</div>
@@ -218,7 +207,7 @@
 										'FORM.LABELS.EMPLOYEE_LEVEL' | translate
 									}}
 								</label>
-								<ng-select formControlName="employeeLevel">
+								<ng-select appendTo="body" formControlName="employeeLevel">
 									<ng-option
 										*ngFor="let empL of employeeLevels"
 										[value]="empL.level"

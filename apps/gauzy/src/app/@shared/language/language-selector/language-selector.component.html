@@ -4,26 +4,27 @@
 <ng-template #ngSelectTemplate>
 	<ng-select
 		[items]="languages"
+		appendTo="body"
 		bindLabel="name"
 		bindValue="code" 
 		[loading]="loading"
 		[addTag]="(addTag) ? addLanguage : null"
-		(change)="onChange($event)"
+		(change)="onChangeLanguage($event)"
 		[closeOnSelect]="true"
+		[size]="size"
 		[clearable]="clearable"
-		id="addLanguages"
 		[placeholder]="placeholder"
 		[(ngModel)]="selectedLanguageCode"
 	>
 		<ng-template ng-tag-tmp let-newLanguageName="searchTerm">
-			<b>{{ 'LANGUAGE_PAGE.ADD_NEW_LANGUAGE' | translate }}</b
+				<b>{{ 'LANGUAGE_PAGE.ADD_NEW_LANGUAGE' | translate }}</b
 			>: {{ newLanguageName }}
 		</ng-template>
 	</ng-select>
 </ng-template>
+
 <ng-template #nbSelectTemplate>
 	<nb-select
-		id="addLanguages"
 		fullWidth
 		(selectedChange)="onSelectedChange($event)"
 		[size]="size"
