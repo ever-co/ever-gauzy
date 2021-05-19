@@ -8,7 +8,7 @@ import {
 	ViewChildren
 } from '@angular/core';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -59,7 +59,6 @@ import {
 } from '../../@core/services';
 import { HttpClient } from '@angular/common/http';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
-import { AnyARecord } from 'node:dns';
 import * as moment from 'moment';
 
 @UntilDestroy({ checkProperties: true })
@@ -693,45 +692,7 @@ export class InvoicesComponent
 
 			this.invoices = this.smartTableSource.getData();
 			this.loading = false;
-			/* this.invoicesService
-				.getAll(
-					[
-						'invoiceItems',
-						'invoiceItems.employee',
-						'invoiceItems.employee.user',
-						'invoiceItems.project',
-						'invoiceItems.product',
-						'invoiceItems.invoice',
-						'invoiceItems.expense',
-						'invoiceItems.task',
-						'tags',
-						'payments',
-						'fromOrganization',
-						'toContact',
-						'historyRecords',
-						'historyRecords.user'
-					],
-					{
-						organizationId,
-						tenantId,
-						isEstimate: this.isEstimate,
-						isArchived: this.includeArchived
-					}
-				)
-				.then(({ items }) => {
-					const invoiceVM: IInvoice[] = items.map((i) => {
-						return Object.assign({}, i, {
-							organizationContactName: i.toContact?.name
-						});
-					});
-					this.invoices = invoiceVM;
-					this.smartTableSource.load(invoiceVM);
 
-					this.closeActionsPopover();
-				})
-				.finally(() => {
-					this.loading = false;
-				}); */
 		} catch (error) {
 			this.toastrService.danger(
 				this.getTranslation('NOTES.INVOICE.INVOICE_ERROR', {
@@ -1076,47 +1037,6 @@ export class InvoicesComponent
 		console.log({ filterData })
 		this.getAllInvoiceEstimate(filterData)
 
-		// const searchObj = this.form.value;
-		// const result = [];
-		// const filteredInvoices = this.invoices.filter(
-		// 	(invoice) =>
-		// 		(searchObj.invoiceNumber === null ||
-		// 			searchObj.invoiceNumber === +invoice.invoiceNumber) &&
-		// 		(searchObj.organizationContact === null ||
-		// 			searchObj.organizationContact.id ===
-		// 			invoice.toContact.id) &&
-		// 		(searchObj.invoiceDate === null ||
-		// 			searchObj.invoiceDate.toString().slice(0, 15) ===
-		// 			new Date(invoice.invoiceDate)
-		// 				.toString()
-		// 				.slice(0, 15)) &&
-		// 		(searchObj.dueDate === null ||
-		// 			searchObj.dueDate.toString().slice(0, 15) ===
-		// 			new Date(invoice.dueDate).toString().slice(0, 15)) &&
-		// 		(searchObj.totalValue === null ||
-		// 			searchObj.totalValue === +invoice.totalValue) &&
-		// 		(searchObj.currency === null ||
-		// 			searchObj.currency === invoice.currency) &&
-		// 		(searchObj.status === null ||
-		// 			searchObj.status === invoice.status)
-		// );
-
-		// for (const invoice of filteredInvoices) {
-		// 	let contains = 0;
-		// 	for (const tag of invoice.tags) {
-		// 		for (const t of this.tags) {
-		// 			if (t.id === tag.id) {
-		// 				contains++;
-		// 				break;
-		// 			}
-		// 		}
-		// 	}
-		// 	if (contains === this.tags.length) {
-		// 		result.push(invoice);
-		// 	}
-		// }
-
-		// this.smartTableSource.load(result);
 	}
 
 	toggleIncludeArchived(event) {
@@ -1128,7 +1048,7 @@ export class InvoicesComponent
 		this.initializeForm();
 		this.tags = [];
 		this.currency = '';
-		this.getAllInvoiceEstimate
+		this.getAllInvoiceEstimate()
 	}
 
 	searchContact(term: string, item: any) {
