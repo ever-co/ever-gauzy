@@ -100,7 +100,8 @@ const NB_MODULES = [
 		TagsColorInputModule,
 		ThemeModule,
 		TranslateModule,
-		WarehousesModule
+		WarehousesModule,
+		LanguageSelectorModule
 	],
 	providers: [
 		ProductService,

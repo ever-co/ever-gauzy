@@ -25,7 +25,8 @@ import { LanguageSelectorModule } from '../language/language-selector';
 	imports: [
 		NbCardModule,
 		NbIconModule,
-		TranslateModule
+		TranslateModule,
+		LanguageSelectorModule
 	],
 	providers: [
 		ProductTypeService,

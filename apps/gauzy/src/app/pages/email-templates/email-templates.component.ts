@@ -130,12 +130,6 @@ export class EmailTemplatesComponent
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
 			const { languageCode = LanguagesEnum.ENGLISH, name = EmailTemplateNameEnum.WELCOME_USER } = this.form.value;
-			console.log({
-				languageCode,
-				name,
-				organizationId,
-				tenantId
-			});
 			const result = await this.emailTemplateService.getTemplate({
 				languageCode,
 				name,
