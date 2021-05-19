@@ -2178,7 +2178,8 @@
 		"DELETE_SPRINT": "Delete Sprint",
 		"SELECT": "Select",
 		"SPRINTS_SETTINGS": "Sprints Settings",
-		"ARE_YOU_SURE": "Are you shure you want delete sprint"
+		"ARE_YOU_SURE": "Are you shure you want delete sprint",
+		"SETTINGS": "Настройки"
 	},
 	"JOBS": {
 		"EMPLOYEE": "Служител",
