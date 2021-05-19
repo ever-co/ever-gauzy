@@ -14,24 +14,22 @@
 				<div class="employee-info">
 					<img
 						class="employee-image"
-						[src]="selectedEmployee.user.imageUrl"
+						[src]="selectedEmployee?.user?.imageUrl"
 						alt="Employee Avatar"
 					/>
 
 					<div class="employee-details flex-row align-items-center">
 						<nb-icon
-							*ngIf="selectedEmployee.isVerified"
+							*ngIf="selectedEmployee?.isVerified"
 							class="icon-verified"
 							icon="checkmark-circle-2"
 							status="primary"
 						>
 						</nb-icon>
-						<span class="employee-name"
-							>{{ selectedEmployee.user.firstName }}
-							{{ selectedEmployee.user.lastName }}</span
+						<span class="employee-name">{{ selectedEmployee?.user?.name }}</span
 						>
 						<div class="employee-position">
-							{{ selectedEmployee.organizationPosition?.name }}
+							{{ selectedEmployee?.organizationPosition?.name }}
 						</div>
 					</div>
 				</div>
@@ -39,20 +37,19 @@
 			<div class="employee-info">
 				<div class="employee-details">
 					<div
-						*ngIf="selectedEmployee.user.username"
+						*ngIf="selectedEmployee?.user.username"
 						class="transparent"
 					>
 						{{ 'FORM.USERNAME' | translate }}:
-						<strong>{{ selectedEmployee.user.username }}</strong>
+						<strong>{{ selectedEmployee?.user?.username }}</strong>
 					</div>
 					<div class="transparent">
 						{{ 'FORM.EMAIL' | translate }}:
-						<strong>{{ selectedEmployee.user.email }}</strong>
+						<strong>{{ selectedEmployee?.user?.email }}</strong>
 					</div>
 				</div>
 			</div>
 		</div>
-
 		<ng-template #noName>
 			<h6>{{ 'EMPLOYEES_PAGE.SELECT_EMPLOYEE_MSG' | translate }}</h6>
 		</ng-template>
