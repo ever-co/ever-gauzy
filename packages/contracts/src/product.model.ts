@@ -261,6 +261,7 @@ export interface IMerchant extends IBasePerTenantAndOrganizationEntityModel {
 	description: string;
 	logo: IImageAsset;
 	email: string;
+	phone: string;
 	tags: ITag[];
 	currency: string;
 	warehouses: IWarehouse[];
@@ -274,6 +275,7 @@ export interface IMerchantCreateInput {
 	description: string;
 	logo: IImageAsset;
 	email: string;
+	phone: string;
 	tags: ITag[];
 	currency: string;
 	warehouses: IWarehouse[];

@@ -55,7 +55,7 @@ export class MerchantTableComponent
 		private router: Router,
 		private http: HttpClient,
 		private toastrService: ToastrService,
-		private productStoreService: MerchantService,
+		private merchantService: MerchantService,
 		private store: Store
 	) {
 		super(translateService);
@@ -97,7 +97,7 @@ export class MerchantTableComponent
 					type: 'string',
 					valuePrepareFunction: (contact: IContact, row) => {
 
-						if(!contact) return '-';
+						if (!contact) return '-';
 
 						return `${this.getTranslation(
 							'INVENTORY_PAGE.COUNTRY'
@@ -135,13 +135,13 @@ export class MerchantTableComponent
 	}
 
 	onEditStore(selectedItem) {
-
+		this.router.navigate([`/pages/organization/inventory/merchants/edit/${this.selectedMerchant.id}`]);
 	}
 
 	async loadSettings() {
-		const { id: organizationId, tenantId } = this.selectedOrganization;
+		const { id: organizationId, tenantId } = this.selectedOrganization || { id: null, tenantId: null };
 
-		
+
 		const data = "data=" + JSON.stringify({
 			relations: ['logo', 'contact', 'tags', 'warehouses'],
 			findInput: {
@@ -198,6 +198,19 @@ export class MerchantTableComponent
 		this.selectedMerchant = isSelected ? data : null;
 	}
 
+	async delete() {
+		this.merchantService.delete(this.selectedMerchant.id)
+			.then(res => {
+				if (res && res['affected'] == 1) {
+					this.toastrService.success(
+						'INVENTORY_PAGE.MERCHANT_DELETED_SUCCESSFULLY',
+						{ name: this.selectedMerchant.name }
+					);
+
+				}
+				this.loadSettings();
+			});
+	}
 
 
 }
