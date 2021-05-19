@@ -117,7 +117,7 @@
 		"rxjs": "^6.6.3",
 		"sharp": "^0.27.1",
 		"sql.js": "^1.5.0",
-		"sqlite3": "https://github.com/ever-co/node-sqlite3",
+		"sqlite3": "^5.0.2",
 		"swagger-ui-express": "^4.1.4",
 		"typeorm": "^0.2.32",
 		"typeorm-aurora-data-api-driver": "^2.1.0",
