@@ -2178,7 +2178,8 @@
 		"DELETE_SPRINT": "crwdns9658:0crwdne9658:0",
 		"SELECT": "crwdns9660:0crwdne9660:0",
 		"SPRINTS_SETTINGS": "crwdns9956:0crwdne9956:0",
-		"ARE_YOU_SURE": "crwdns9958:0crwdne9958:0"
+		"ARE_YOU_SURE": "crwdns9958:0crwdne9958:0",
+		"SETTINGS": "crwdns10372:0crwdne10372:0"
 	},
 	"JOBS": {
 		"EMPLOYEE": "crwdns8162:0crwdne8162:0",
