@@ -2,7 +2,7 @@ import { Component, OnDestroy, Input, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { HelpCenterActionEnum, HelpCenterFlagEnum, IHelpCenter } from '@gauzy/contracts';
+import { HelpCenterActionEnum, HelpCenterFlagEnum, IHelpCenter, ILanguage } from '@gauzy/contracts';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { HelpCenterService, Store } from '../../../@core';
 
@@ -97,9 +97,9 @@ export class KnowledgeBaseComponent
 		});
 	}
 
-	selectedLanguage(event) {
+	selectedLanguage(event: ILanguage) {
 		this.form.patchValue({ 
-			language: event 
+			language: event.code
 		});
 	}
 

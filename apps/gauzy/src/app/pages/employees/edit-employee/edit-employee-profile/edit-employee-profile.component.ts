@@ -7,15 +7,13 @@ import {
 	IUserUpdateInput
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { EmployeeStore } from '../../../../@core/services/employee-store.service';
-import { EmployeesService } from '../../../../@core/services/employees.service';
-import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
-import { UsersService } from '../../../../@core/services/users.service';
+import { Subscription } from 'rxjs';
+import { tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
-import { Subject, Subscription } from 'rxjs';
-import { first, takeUntil } from 'rxjs/operators';
-import { ToastrService } from '../../../../@core/services/toastr.service';
+import { EmployeesService, EmployeeStore, ErrorHandlingService, ToastrService, UsersService } from './../../../../@core/services';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-edit-employee-profile',
 	templateUrl: './edit-employee-profile.component.html',
@@ -27,16 +25,13 @@ import { ToastrService } from '../../../../@core/services/toastr.service';
 export class EditEmployeeProfileComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
+
 	form: FormGroup;
 	paramSubscription: Subscription;
 	hoverState: boolean;
-	fakeDepartments: { departmentName: string; departmentId: string }[] = [];
-	fakePositions: { positionName: string; positionId: string }[] = [];
 	routeParams: Params;
 	selectedEmployee: IEmployee;
 	employeeName = 'Employee';
-
 	tabs: any[];
 
 	constructor(
@@ -53,25 +48,22 @@ export class EditEmployeeProfileComponent
 
 	ngOnInit() {
 		this.route.params
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((params) => {
+			.pipe(untilDestroyed(this))
+			.subscribe(async (params) => {
 				this.routeParams = params;
-				this._loadEmployeeData();
+				await this._loadEmployeeData();
 				this.loadTabs();
 			});
-
 		this.employeeStore.userForm$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((value) => {
 				this.submitUserForm(value);
 			});
-
 		this.employeeStore.employeeForm$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((value) => {
 				this.submitEmployeeForm(value);
 			});
-
 		this._applyTranslationOnTabs();
 	}
 
@@ -159,7 +151,7 @@ export class EditEmployeeProfileComponent
 					'TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE',
 					{ name: this.employeeName }
 				);
-				this._loadEmployeeData();
+				await this._loadEmployeeData();
 			} catch (error) {
 				this.errorHandler.handleError(error);
 			}
@@ -183,7 +175,7 @@ export class EditEmployeeProfileComponent
 					{ name: this.employeeName }
 				);
 
-				this._loadEmployeeData();
+				await this._loadEmployeeData();
 			} catch (error) {
 				this.errorHandler.handleError(error);
 			}
@@ -192,39 +184,30 @@ export class EditEmployeeProfileComponent
 
 	private async _loadEmployeeData() {
 		const { id } = this.routeParams;
-		const { items } = await this.employeeService
-			.getAll(
-				[
-					'user',
-					'organizationDepartments',
-					'organizationPosition',
-					'organizationEmploymentTypes',
-					'tags',
-					'skills',
-					'contact'
-				],
-				{ id }
-			)
-			.pipe(first())
-			.toPromise();
+		const employee = await this.employeeService.getEmployeeById(id, [
+			'user',
+			'organizationDepartments',
+			'organizationPosition',
+			'organizationEmploymentTypes',
+			'tags',
+			'skills',
+			'contact'
+		]);
 
-		this.selectedEmployee = items[0];
+		this.selectedEmployee = employee;
 		const checkUsername = this.selectedEmployee.user.username;
 		this.employeeName = checkUsername ? checkUsername : 'Employee';
-
 		this.employeeStore.selectedEmployee = this.selectedEmployee;
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 
 	private _applyTranslationOnTabs() {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this.loadTabs();
-			});
+			.pipe(
+				tap(() => this.loadTabs()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 }

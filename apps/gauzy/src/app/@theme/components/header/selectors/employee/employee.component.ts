@@ -100,35 +100,39 @@ export class EmployeeSelectorComponent
 			)
 			.subscribe();
 		this.store.selectedEmployee$
-			.pipe(untilDestroyed(this))
-			.subscribe((emp) => {
-				if (emp) {
-					this.selectedEmployee = emp;
-				}
-			});
+			.pipe(
+				filter((employee) => !!employee),
+				tap((employee) => {
+					this.selectedEmployee = employee;
+					this.cdRef.detectChanges();
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.activatedRoute.queryParams
 			.pipe(
 				debounceTime(500),
 				filter((query) => !!query.employeeId),
+				tap(({ employeeId }) => this.selectEmployeeById(employeeId)),
 				untilDestroyed(this)
 			)
-			.subscribe((query) => {
-				this.selectEmployeeById(query.employeeId);
-			});
+			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const selectedDate$ = this.store.selectedDate$;
 		combineLatest([storeOrganization$, selectedDate$])
 			.pipe(
 				filter(([organization]) => !!organization),
-				tap(([organization, date]) =>
+				tap(([organization, date]) => {
+					this._selectedDate = date;
 					this.subject$.next([organization, date])
-				),
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
 	ngAfterViewInit(): void {
+		this.cdRef.detectChanges();
 		this._employeeStore.employeeAction$
 			.pipe(
 				filter(({ action, employee }) => !!action && !!employee),
@@ -147,7 +151,6 @@ export class EmployeeSelectorComponent
 						break;
 				}
 			});
-		this.cdRef.detectChanges();
 	}
 
 	/*
@@ -297,7 +300,7 @@ export class EmployeeSelectorComponent
 		if (this.showAllEmployeesOption) {
 			this.people.unshift(ALL_EMPLOYEES_SELECTED);
 		}
-
+		
 		//Set selected employee if no employee selected
 		if (items.length > 0 && !this.store.selectedEmployee) {
 			this.store.selectedEmployee =

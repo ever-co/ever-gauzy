@@ -155,7 +155,7 @@ export class EditOrganizationMainComponent
 		if (!this.organization) {
 			return;
 		}
-		this.form.setValue({
+		this.form.patchValue({
 			tags: this.organization.tags,
 			currency: this.organization.currency,
 			name: this.organization.name,
@@ -167,7 +167,6 @@ export class EditOrganizationMainComponent
 				: null,
 			website: this.organization.website
 		});
-		this.form.updateValueAndValidity();
 		this.currency = this.organization.currency;
 		this.tags = this.form.get('tags').value || [];
 	}
