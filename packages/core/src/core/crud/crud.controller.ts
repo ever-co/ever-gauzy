@@ -10,7 +10,8 @@ import {
 	Body,
 	Param,
 	HttpStatus,
-	HttpCode
+	HttpCode,
+	Query
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { BaseEntity } from '../entities/internal';
@@ -35,6 +36,8 @@ export abstract class CrudController<T extends BaseEntity> {
 	async findAll(filter?: PaginationParams<T>): Promise<IPagination<T>> {
 		return this.crudService.findAll(filter);
 	}
+	
+	
 
 	@ApiOperation({ summary: 'Find by id' })
 	@ApiResponse({
@@ -48,6 +51,16 @@ export abstract class CrudController<T extends BaseEntity> {
 	@Get(':id')
 	async findById(@Param('id') id: string): Promise<T> {
 		return this.crudService.findOne(id);
+	}
+
+	@ApiOperation({ summary: 'find all with filter' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found records' /* type: IPagination<T> */
+	})
+	@Get('smart-table/filter')
+	async smartTable(@Query() filter?: any): Promise<IPagination<T>> {
+		return this.crudService.smartTable(filter);
 	}
 
 	@ApiOperation({ summary: 'Create new record' })

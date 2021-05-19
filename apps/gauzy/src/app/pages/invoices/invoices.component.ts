@@ -57,6 +57,10 @@ import {
 	OrganizationContactService,
 	ToastrService
 } from '../../@core/services';
+import { HttpClient } from '@angular/common/http';
+import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
+import { AnyARecord } from 'node:dns';
+import * as moment from 'moment';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -68,7 +72,7 @@ export class InvoicesComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
-	smartTableSource = new LocalDataSource();
+	smartTableSource: ServerDataSource;
 	selectedInvoice: IInvoice;
 	loading = true;
 	disableButton = true;
@@ -122,7 +126,8 @@ export class InvoicesComponent
 		private readonly nbMenuService: NbMenuService,
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
-		private readonly ngxPermissionsService: NgxPermissionsService
+		private readonly ngxPermissionsService: NgxPermissionsService,
+		private httpClient: HttpClient,
 	) {
 		super(translateService);
 	}
@@ -403,11 +408,11 @@ export class InvoicesComponent
 		await this.invoiceEstimateHistoryService.add({
 			action: this.isEstimate
 				? this.getTranslation(
-						'INVOICES_PAGE.INVOICES_DUPLICATE_ESTIMATE'
-				  )
+					'INVOICES_PAGE.INVOICES_DUPLICATE_ESTIMATE'
+				)
 				: this.getTranslation(
-						'INVOICES_PAGE.INVOICES_DUPLICATE_INVOICE'
-				  ),
+					'INVOICES_PAGE.INVOICES_DUPLICATE_INVOICE'
+				),
 			invoice: this.selectedInvoice,
 			invoiceId: this.selectedInvoice.id,
 			user: this.store.user,
@@ -606,13 +611,11 @@ export class InvoicesComponent
 		let fileName;
 
 		if (this.selectedInvoice.isEstimate) {
-			fileName = `${this.getTranslation('INVOICES_PAGE.ESTIMATE')}-${
-				this.selectedInvoice.invoiceNumber
-			}`;
+			fileName = `${this.getTranslation('INVOICES_PAGE.ESTIMATE')}-${this.selectedInvoice.invoiceNumber
+				}`;
 		} else {
-			fileName = `${this.getTranslation('INVOICES_PAGE.INVOICE')}-${
-				this.selectedInvoice.invoiceNumber
-			}`;
+			fileName = `${this.getTranslation('INVOICES_PAGE.INVOICE')}-${this.selectedInvoice.invoiceNumber
+				}`;
 		}
 
 		const data = [
@@ -650,12 +653,47 @@ export class InvoicesComponent
 		generateCsv(data, headers, fileName);
 	}
 
-	async getAllInvoiceEstimate() {
+	async getAllInvoiceEstimate(filterData: any = {}) {
 		try {
 			this.loading = true;
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
-			this.invoicesService
+			this.smartTableSource = new ServerDataSource(this.httpClient, {
+				endPoint: 'http://localhost:3000/api/invoices/smart-table/filter',
+				relations: [
+					'invoiceItems',
+					'invoiceItems.employee',
+					'invoiceItems.employee.user',
+					'invoiceItems.project',
+					'invoiceItems.product',
+					'invoiceItems.invoice',
+					'invoiceItems.expense',
+					'invoiceItems.task',
+					'tags',
+					'payments',
+					'fromOrganization',
+					'toContact',
+					'historyRecords',
+					'historyRecords.user'
+				],
+				join: filterData.join,
+				where: {
+					organizationId,
+					tenantId,
+					isEstimate: this.isEstimate,
+					isArchived: this.includeArchived,
+					...filterData.where
+				},
+				resultMap: (i) => {
+					return Object.assign({}, i, {
+						organizationContactName: i.toContact?.name
+					});
+				}
+			});
+
+			this.invoices = this.smartTableSource.getData();
+			this.loading = false;
+			/* this.invoicesService
 				.getAll(
 					[
 						'invoiceItems',
@@ -693,7 +731,7 @@ export class InvoicesComponent
 				})
 				.finally(() => {
 					this.loading = false;
-				});
+				}); */
 		} catch (error) {
 			this.toastrService.danger(
 				this.getTranslation('NOTES.INVOICE.INVOICE_ERROR', {
@@ -814,8 +852,8 @@ export class InvoicesComponent
 				invoiceNumber: {
 					title: this.isEstimate
 						? this.getTranslation(
-								'INVOICES_PAGE.ESTIMATES.ESTIMATE_NUMBER'
-						  )
+							'INVOICES_PAGE.ESTIMATES.ESTIMATE_NUMBER'
+						)
 						: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'custom',
 					sortDirection: 'asc',
@@ -873,10 +911,10 @@ export class InvoicesComponent
 						].includes(cell.toLowerCase())
 							? 'success'
 							: ['void', 'draft', 'partially paid'].includes(
-									cell.toLowerCase()
-							  )
-							? 'warning'
-							: 'danger';
+								cell.toLowerCase()
+							)
+								? 'warning'
+								: 'danger';
 					}
 					return {
 						text: this.getTranslation(
@@ -907,12 +945,11 @@ export class InvoicesComponent
 				width: '5%',
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
-					return `${cell} ${
-						row.taxType ===
+					return `${cell} ${row.taxType ===
 						this.getTranslation('INVOICES_PAGE.PERCENT')
-							? '%'
-							: ''
-					}`;
+						? '%'
+						: ''
+						}`;
 				}
 			};
 		}
@@ -924,12 +961,11 @@ export class InvoicesComponent
 				width: '5%',
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
-					return `${cell} ${
-						row.tax2Type ===
+					return `${cell} ${row.tax2Type ===
 						this.getTranslation('INVOICES_PAGE.PERCENT')
-							? '%'
-							: ''
-					}`;
+						? '%'
+						: ''
+						}`;
 				}
 			};
 		}
@@ -943,12 +979,11 @@ export class InvoicesComponent
 				width: '5%',
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
-					return `${cell} ${
-						row.discountType ===
+					return `${cell} ${row.discountType ===
 						this.getTranslation('INVOICES_PAGE.PERCENT')
-							? '%'
-							: ''
-					}`;
+						? '%'
+						: ''
+						}`;
 				}
 			};
 		}
@@ -993,47 +1028,95 @@ export class InvoicesComponent
 	}
 
 	search() {
-		const searchObj = this.form.value;
-		const result = [];
-		const filteredInvoices = this.invoices.filter(
-			(invoice) =>
-				(searchObj.invoiceNumber === null ||
-					searchObj.invoiceNumber === +invoice.invoiceNumber) &&
-				(searchObj.organizationContact === null ||
-					searchObj.organizationContact.id ===
-						invoice.toContact.id) &&
-				(searchObj.invoiceDate === null ||
-					searchObj.invoiceDate.toString().slice(0, 15) ===
-						new Date(invoice.invoiceDate)
-							.toString()
-							.slice(0, 15)) &&
-				(searchObj.dueDate === null ||
-					searchObj.dueDate.toString().slice(0, 15) ===
-						new Date(invoice.dueDate).toString().slice(0, 15)) &&
-				(searchObj.totalValue === null ||
-					searchObj.totalValue === +invoice.totalValue) &&
-				(searchObj.currency === null ||
-					searchObj.currency === invoice.currency) &&
-				(searchObj.status === null ||
-					searchObj.status === invoice.status)
-		);
 
-		for (const invoice of filteredInvoices) {
-			let contains = 0;
-			for (const tag of invoice.tags) {
-				for (const t of this.tags) {
-					if (t.id === tag.id) {
-						contains++;
-						break;
-					}
-				}
-			}
-			if (contains === this.tags.length) {
-				result.push(invoice);
-			}
+		const filterData: any = {
+			where: {},
+			join: {
+				alias: "Invoice",
+				leftJoin: {}
+			},
 		}
 
-		this.smartTableSource.load(result);
+		const searchObj = this.form.value
+		console.log(searchObj)
+		if (searchObj.invoiceNumber) {
+			filterData.where.invoiceNumber = searchObj.invoiceNumber
+		}
+		if (searchObj.invoiceDate) {
+			filterData.where.invoiceDate = moment(searchObj.invoiceDate).format('YYYY-MM-DD')
+		}
+		if (searchObj.dueDate) {
+			filterData.where.dueDate = moment(searchObj.dueDate).format('YYYY-MM-DD')
+		}
+		if (searchObj.totalValue) {
+			filterData.where.totalValue = searchObj.totalValue
+		}
+		if (searchObj.currency) {
+			filterData.where.currency = searchObj.currency
+		}
+		if (searchObj.status) {
+			filterData.where.status = searchObj.status
+		}
+
+		if (searchObj.organizationContact) {
+			filterData.join.leftJoin.toContact = "Invoice.toContact"
+			filterData.where['toContact'] = { id: searchObj.organizationContact.id }
+		}
+
+		if (this.tags.length > 0) {
+			filterData.join.leftJoin.tags = "Invoice.tags"
+			const tagId = []
+			for (const tag of this.tags) {
+				tagId.push(tag.id)
+			}
+			filterData.where['tags'] = { id: tagId[0] }
+		}
+
+
+		console.log({ filterData })
+		this.getAllInvoiceEstimate(filterData)
+
+		// const searchObj = this.form.value;
+		// const result = [];
+		// const filteredInvoices = this.invoices.filter(
+		// 	(invoice) =>
+		// 		(searchObj.invoiceNumber === null ||
+		// 			searchObj.invoiceNumber === +invoice.invoiceNumber) &&
+		// 		(searchObj.organizationContact === null ||
+		// 			searchObj.organizationContact.id ===
+		// 			invoice.toContact.id) &&
+		// 		(searchObj.invoiceDate === null ||
+		// 			searchObj.invoiceDate.toString().slice(0, 15) ===
+		// 			new Date(invoice.invoiceDate)
+		// 				.toString()
+		// 				.slice(0, 15)) &&
+		// 		(searchObj.dueDate === null ||
+		// 			searchObj.dueDate.toString().slice(0, 15) ===
+		// 			new Date(invoice.dueDate).toString().slice(0, 15)) &&
+		// 		(searchObj.totalValue === null ||
+		// 			searchObj.totalValue === +invoice.totalValue) &&
+		// 		(searchObj.currency === null ||
+		// 			searchObj.currency === invoice.currency) &&
+		// 		(searchObj.status === null ||
+		// 			searchObj.status === invoice.status)
+		// );
+
+		// for (const invoice of filteredInvoices) {
+		// 	let contains = 0;
+		// 	for (const tag of invoice.tags) {
+		// 		for (const t of this.tags) {
+		// 			if (t.id === tag.id) {
+		// 				contains++;
+		// 				break;
+		// 			}
+		// 		}
+		// 	}
+		// 	if (contains === this.tags.length) {
+		// 		result.push(invoice);
+		// 	}
+		// }
+
+		// this.smartTableSource.load(result);
 	}
 
 	toggleIncludeArchived(event) {
@@ -1042,10 +1125,10 @@ export class InvoicesComponent
 	}
 
 	reset() {
-		this.smartTableSource.load(this.invoices);
 		this.initializeForm();
 		this.tags = [];
 		this.currency = '';
+		this.getAllInvoiceEstimate
 	}
 
 	searchContact(term: string, item: any) {
@@ -1144,7 +1227,7 @@ export class InvoicesComponent
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) {}
+	currencyChanged($event: ICurrency) { }
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }
