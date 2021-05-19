@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import {
-	ITask,
 	IOrganizationProject,
 	TaskListTypeEnum,
 	ITaskResponse
@@ -12,24 +11,21 @@ import { ActivatedRoute } from '@angular/router';
 import { TasksService } from 'apps/gauzy/src/app/@core/services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-task-settings',
 	templateUrl: './task-settings.component.html',
 	styleUrls: ['./task-settings.component.scss']
 })
 export class TaskSettingsComponent {
-	tasks$: Observable<ITask[]>;
 	projects$: Observable<IOrganizationProject[]>;
 	project$: Observable<IOrganizationProject>;
 
 	constructor(
-		private _store: TasksStoreService,
-		private route: ActivatedRoute,
-		private taskService: TasksService
+		private readonly _store: TasksStoreService,
+		private readonly route: ActivatedRoute,
+		private readonly taskService: TasksService
 	) {
-		this.tasks$ = this._store.tasks$;
-
 		this.project$ = this.route.params.pipe(
 			switchMap(({ id: currentProjectId }: { id: string }) => {
 				const findObj = {
