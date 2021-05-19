@@ -1,16 +1,33 @@
-import { Controller, Get, Param, Post, Body, UseGuards } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Param, Post, Body, UseGuards, HttpStatus, Query } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController } from '../core';
 import { Language } from './language.entity';
 import { LanguageService } from './language.service';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { PermissionsEnum } from '@gauzy/contracts';
-import { Permissions } from '../shared/decorators/permissions';
+import { Permissions, PermissionGuard } from '../shared';
+
 @ApiTags('Languages')
 @Controller()
 export class LanguageController extends CrudController<Language> {
 	constructor(private readonly languageService: LanguageService) {
 		super(languageService);
+	}
+
+	@ApiOperation({ summary: 'Find all language.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found language',
+		type: Language
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get()
+	async findAllLanguages(
+		@Query() query: any
+	): Promise<IPagination<Language>> {
+		return this.languageService.findAll(query);
 	}
 
 	@Get('getByName/:name')

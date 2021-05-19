@@ -42,6 +42,7 @@ import { InventoryStore } from '../../@core/services/inventory-store.service';
 import { InventoryItemViewComponent } from './components/view-inventory-item/view-inventory-item.component';
 import { TranslatableService } from '../../@core/services/translatable.service';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { LanguageSelectorModule } from '../../@shared/language/language-selector';
 import { MerchantModule } from './components/manage-merchants/merchant.module';
 import { ProductTypesModule } from './components/manage-product-types/product-types.module';
 import { ProductCategoriesModule } from './components/manage-product-categories/product-categories.module';
@@ -49,8 +50,6 @@ import { WarehousesModule } from './components/manage-warehouses/warehouses.modu
 import { TableComponentsModule } from './components/table-components/table-components.module';
 import { SelectAssetModule } from '../../@shared/select-asset-modal/select-asset.module';
 import { ImageAssetModule } from '../../@shared/image-asset/image-asset.module';
-
-
 
 const NB_MODULES = [
 	NbCardModule,
@@ -101,7 +100,8 @@ const NB_MODULES = [
 		TagsColorInputModule,
 		ThemeModule,
 		TranslateModule,
-		WarehousesModule
+		WarehousesModule,
+		LanguageSelectorModule
 	],
 	providers: [
 		ProductService,

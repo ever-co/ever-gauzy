@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
+import { LanguagesEnum } from '@gauzy/contracts';
 import { CrudService } from '../core';
 import { AccountingTemplate } from './accounting-template.entity';
 import * as mjml2html from 'mjml';
@@ -143,7 +144,6 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 		});
 
 		let entity: AccountingTemplate;
-
 		if (success) {
 			entity = {
 				...record,
@@ -166,20 +166,45 @@ export class AccountingTemplateService extends CrudService<AccountingTemplate> {
 
 
 	async getAccountTemplate(input) {
+		let template: any;
 		const { languageCode, templateType, organizationId, tenantId } = input;
-		const { success, record } = await this.findOneOrFail({
-			languageCode,
-			templateType,
-			organizationId,
-			tenantId
-		});
-		if (success) {
-			return record
-		} else {
-			return await this.findOne({
+
+		try {
+			template = await this.findOne({
 				languageCode,
 				templateType,
+				organizationId,
+				tenantId
 			});
+		} catch (error) {
+			const { success, record } = await this.findOneOrFail({
+				languageCode,
+				templateType,
+				organizationId: IsNull(),
+				tenantId: IsNull()
+			});
+			if (success) {
+				template = record
+			} else {
+				try {
+					template = await this.findOne({
+						languageCode: LanguagesEnum.ENGLISH,
+						templateType,
+						organizationId,
+						tenantId
+					});
+				} catch (error) {
+					template = await this.findOne({
+						languageCode: LanguagesEnum.ENGLISH,
+						templateType,
+						organizationId: IsNull(),
+						tenantId: IsNull()
+					});
+				}
+
+			}
 		}
+		return template;
+
 	}
 }

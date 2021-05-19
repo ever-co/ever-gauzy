@@ -23,6 +23,7 @@ import { CKEditorModule } from 'ng2-ckeditor';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { CurrencyModule } from '../../currency/currency.module';
 import { TranslateModule } from '../../translate/translate.module';
+import { LanguageSelectorModule } from '../../language/language-selector';
 
 @NgModule({
 	imports: [
@@ -48,7 +49,8 @@ import { TranslateModule } from '../../translate/translate.module';
 		NbTabsetModule,
 		CKEditorModule,
 		TagsColorInputModule,
-		CurrencyModule
+		CurrencyModule,
+		LanguageSelectorModule,
 	],
 	declarations: [PublicPageEmployeeMutationComponent],
 	entryComponents: [PublicPageEmployeeMutationComponent],
