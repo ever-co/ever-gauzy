@@ -13,10 +13,15 @@ export class MerchantService {
 
 	constructor(private http: HttpClient) { }
 
-	getById(id: string): Promise<IMerchant> {
+	getById(id: string, relations?: string[]): Promise<IMerchant> {
+		const data = JSON.stringify({ relations });
+
 		return this.http
 			.get<IMerchant>(
-				`${this.PRODUCT_STORES_URL}/${id}`
+				`${this.PRODUCT_STORES_URL}/${id}`,
+				{
+					params: { data }
+				}
 			)
 			.pipe(first())
 			.toPromise();

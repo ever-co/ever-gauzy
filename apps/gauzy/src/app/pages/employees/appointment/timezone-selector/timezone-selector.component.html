@@ -10,6 +10,7 @@
 			placeholder="{{ 'FORM.PLACEHOLDERS.CHOOSE_TIME_ZONE' | translate }}"
 			[(ngModel)]="selectedTimezone"
 			[searchable]="true"
+			appendTo="body"
 		>
 			<ng-template ng-option-tmp let-item="item" let-index="index">
 				{{ getTimeWithOffset(item) }}

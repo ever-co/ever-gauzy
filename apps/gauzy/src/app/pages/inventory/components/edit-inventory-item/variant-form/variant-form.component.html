@@ -12,6 +12,7 @@
 			[placeholder]="'INVENTORY_PAGE.ADD_VARIANT' | translate"
 			[(ngModel)]="editVariantCreateInput.options"
 			(change)="onSelectOption($event)"
+			appendTo="body"
 		>
 			<ng-option *ngFor="let option of optionsSelect" [value]="option">{{
 				option
