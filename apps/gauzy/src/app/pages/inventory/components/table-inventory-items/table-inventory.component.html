@@ -21,22 +21,22 @@
 			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
-			<button *ngIf="viewTypesAllowed" class="float-right" nbButton status="primary"
+			<button *ngIf="viewTypesAllowed" class="float-right" nbButton status="primary" [size]="'medium'"
 				(click)="manageProductTypes()">
 				<nb-icon icon="edit-outline"></nb-icon>
 				{{ 'INVENTORY_PAGE.PRODUCT_TYPES' | translate }}
 			</button>
-			<button *ngIf="viewCategoriesAllowed" class="float-right" style="margin-right: 9px" nbButton
+			<button *ngIf="viewCategoriesAllowed" class="float-right" style="margin-right: 9px" nbButton [size]="'medium'"
 				status="primary" (click)="manageProductCategories()">
 				<nb-icon icon="edit-outline"></nb-icon>
 				{{ 'INVENTORY_PAGE.PRODUCT_CATEGORIES' | translate }}
 			</button>
-			<button *ngIf="editProductAllowed" class="float-right" style="margin-right: 9px" nbButton status="warning"
+			<button *ngIf="editProductAllowed" class="float-right" style="margin-right: 9px" nbButton status="warning" [size]="'medium'"
 				(click)="manageWarehouses()">
 				<nb-icon icon="home-outline"></nb-icon>
 				{{ 'INVENTORY_PAGE.WAREHOUSES' | translate }}
 			</button>
-			<button *ngIf="editProductAllowed" class="float-right" style="margin-right: 9px" nbButton status="warning"
+			<button *ngIf="editProductAllowed" class="float-right" style="margin-right: 9px" nbButton status="warning" [size]="'medium'"
 				(click)="manageStores()">
 				<nb-icon icon="home-outline"></nb-icon>
 				{{ 'INVENTORY_PAGE.MERCHANTS' | translate }}
