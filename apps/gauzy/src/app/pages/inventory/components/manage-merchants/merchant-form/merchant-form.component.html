@@ -125,7 +125,7 @@
 
 							<div class="row">
 								<div class="col-md-6 col-sm-12">
-									<ga-currency formControlName="currency" >
+									<ga-currency [formControl]="form.get('currency')" >
 									</ga-currency>
 								</div>
 								<div class="col-md-6 col-sm-12">
@@ -230,7 +230,7 @@
 												onCoordinatesChanges($event)
 											">
 							</ga-location-form>
-							<ga-leaflet-map #leafletTemplate (mapClicked)="onMapClicked($event)">
+							<ga-leaflet-map #leafletTemplate (mapClicked)="onMapClicked($event)" [zoom]="4">
 							</ga-leaflet-map>
 						</div>
 					</div>

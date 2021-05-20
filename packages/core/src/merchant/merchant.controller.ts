@@ -30,6 +30,21 @@ export class MerchantController extends CrudController<Merchant> {
 		super(merchantService);
 		}
 
+		@ApiOperation({ summary: 'Find Merchants Count ' })
+		@ApiResponse({
+			status: HttpStatus.OK,
+			description: 'Count Products',
+			type: Number
+		})
+		@Get('count')
+		async count(
+			@Query('data', ParseJsonPipe) data?: any
+		): Promise<Number> {
+			const { findInput = null } = data;
+	
+			return this.merchantService.count(findInput);
+		}
+
 		@ApiOperation({
 			summary: 'Get merchant by id.'
 		})

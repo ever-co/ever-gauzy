@@ -1,3 +1,4 @@
+
 .main-header {
   display: flex;
   align-items: center;
@@ -6,6 +7,11 @@
   button:first-child {
     margin-right: 10px;
   }
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: center;
 }
 
 /* Card grid */

@@ -46,7 +46,8 @@ export enum ComponentEnum {
 	FEEDBACKS = 'FEEDBACKS',
 	INTERVIEWS = 'INTERVIEWS',
 	EXPERIENCE = 'EXPERIENCE',
-	SKILLS = 'SKILLS'
+	SKILLS = 'SKILLS',
+	MERCHANTS = 'MERCHANTS'
 }
 
 export const SYSTEM_DEFAULT_LAYOUT = ComponentLayoutStyleEnum.TABLE;

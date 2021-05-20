@@ -15,7 +15,7 @@ import { API_PREFIX } from '../constants/app.constants';
 export class ProductService {
 	PRODUCTS_URL = `${API_PREFIX}/products`;
 
-	constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient) { }
 
 	getAll(
 		relations?: string[],
@@ -34,16 +34,33 @@ export class ProductService {
 			.toPromise();
 	}
 
+	count(findInput): Promise<Number> {
+		const data = JSON.stringify(findInput);
+		return this.http
+			.get<number>(
+				`${this.PRODUCTS_URL}/count`,
+				{
+					params: { data }
+				}
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
 	getAllTranslated(
-		relations?: string[],
-		findInput?: IProductFindInput,
+		options,
+		params,
 		languageCode?: string
 	) {
-		const data = JSON.stringify({ relations, findInput });
+		const data = JSON.stringify({
+			relations: options.relations,
+			options: options.findInput
+		});
+
 		return this.http
 			.get<{ items: IProductTranslated[] }>(
 				`${this.PRODUCTS_URL}/local/${languageCode}`,
-				{ params: { data } }
+				{ params: { data, ...params } }
 			)
 			.pipe(first())
 			.toPromise();

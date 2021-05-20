@@ -1,0 +1,24 @@
+<nav class=" mt-5">
+    <ul class="pagination">
+        <li (click)="onChangePage(1)">
+            <a href="#" aria-label="First"><span aria-hidden="true">«</span><span
+                    class="sr-only">First</span></a>
+        </li>
+        <li (click)="onPrevPageClick()" [ngClass]="{disabled: activePage == 1}">
+            <a href="#" aria-label="Prev"><span aria-hidden="true">&lt;</span><span class="sr-only">Prev</span></a>
+        </li>
+
+        <li *ngFor="let page of getPages()" (click)="onChangePage(page)" [ngClass]="{active: activePage == page}">
+            <span>{{ page }} <span class="sr-only">(current)</span></span>
+        </li>
+
+        <li (click)="onNextPageClick()" [ngClass]="{disabled: activePage == getPages().length}">
+            <a href="#" aria-label="Next">
+                <span aria-hidden="true">&gt;</span><span class="sr-only">Next</span></a></li>
+        <li (click)="onChangePage(getPages().length)">
+            <a href="#" aria-label="Last">
+                <span aria-hidden="true">»</span>
+                <span class="sr-only">Last</span></a>
+        </li>
+    </ul>
+</nav>
