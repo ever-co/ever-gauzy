@@ -14,6 +14,7 @@ import {
 	createDefaultHelpCenterAuthor,
 	createRandomHelpCenterAuthor
 } from './help-center-author';
+import { SEEDER_DB_CONNECTION } from '@gauzy/common';
 
 /**
  * Service dealing with help center based operations.
@@ -39,7 +40,7 @@ export class HelpCenterSeederService {
 	 * @function
 	 */
 	async createDefault() {
-		this.connection = getConnection();
+		this.connection = getConnection(SEEDER_DB_CONNECTION);
 		this.tenant = this.seeder.tenant;
 
 		const organizations = await getDefaultOrganizations(

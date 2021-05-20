@@ -3,7 +3,6 @@ import { Invoice } from './invoice.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
-import { getConnection } from 'typeorm';
 import { EmailService } from '../email';
 import { IInvoice, IOrganization, LanguagesEnum } from '@gauzy/contracts';
 import { sign } from 'jsonwebtoken';
@@ -34,11 +33,10 @@ export class InvoiceService extends CrudService<Invoice> {
 	}
 
 	async getHighestInvoiceNumber() {
-		const invoice = await getConnection()
-			.createQueryBuilder(Invoice, 'invoice')
+		const invoice = await this.invoiceRepository
+			.createQueryBuilder('invoice')
 			.select('MAX(invoice.invoiceNumber)', 'max')
 			.getRawOne();
-
 		return invoice;
 	}
 

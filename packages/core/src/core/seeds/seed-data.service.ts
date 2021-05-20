@@ -14,7 +14,7 @@ import {
 	getManager
 } from 'typeorm';
 import * as chalk from 'chalk';
-import { IPluginConfig } from '@gauzy/common';
+import { IPluginConfig, SEEDER_DB_CONNECTION } from '@gauzy/common';
 import { environment as env, getConfig } from '@gauzy/config';
 import {
 	IEmployee,
@@ -364,6 +364,9 @@ export class SeedDataService {
 			// Seed reports related data
 			await this.seedReportsData();
 
+			// Disconnect to database
+			await this.closeConnection();
+
 			console.log('Database All Seed Completed');
 		} catch (error) {
 			this.handleError(error);
@@ -389,6 +392,9 @@ export class SeedDataService {
 
 			// Seed reports related data
 			await this.seedReportsData();
+
+			// Disconnect to database
+			await this.closeConnection();
 
 			console.log('Database Default Seed Completed');
 		} catch (error) {
@@ -416,6 +422,9 @@ export class SeedDataService {
 			// Seed reports related data
 			await this.seedReportsData();
 
+			// Disconnect to database
+			await this.closeConnection();
+
 			console.log('Database Ever Seed Completed');
 		} catch (error) {
 			this.handleError(error);
@@ -432,6 +441,9 @@ export class SeedDataService {
 
 			await this.seedReportsData();
 
+			// Disconnect to database
+			await this.closeConnection();
+
 			console.log('Database Reports Seed Completed');
 		} catch (error) {
 			this.handleError(error);
@@ -443,7 +455,13 @@ export class SeedDataService {
 		try {
 			console.log('Database Demo Seed Started');
 
+			// Connect to database
+			await this.createConnection();
+
+			// Seed default data
 			await this.seedDefaultData();
+
+			// Seed random data
 			await this.seedRandomData();
 			
 			// Seed jobs related data
@@ -451,6 +469,9 @@ export class SeedDataService {
 
 			// Seed reports related data
 			await this.seedReportsData();
+
+			// Disconnect to database
+			await this.closeConnection();
 
 			console.log('Database Demo Seed Completed');
 		} catch (error) {
@@ -503,6 +524,9 @@ export class SeedDataService {
 			await this.createConnection();
 
 			await this.seedJobsData();
+
+			// Disconnect to database
+			await this.closeConnection();
 
 			console.log('Database Jobs Seed Completed');
 		} catch (error) {
@@ -2033,7 +2057,7 @@ export class SeedDataService {
 
 			// delete old generated screenshots
 			rimraf(`${dir}/!(rimraf|.gitkeep)`, () => {
-				this.log(chalk.green(`CLEANED UP`));
+				this.log(chalk.green(`✅ CLEANED UP`));
 				resolve(true);
 			});
 		});
@@ -2041,32 +2065,37 @@ export class SeedDataService {
 
 	private async createConnection() {
 		try {
-			this.connection = getConnection();
+			this.connection = getConnection(SEEDER_DB_CONNECTION);
 		} catch (error) {
 			this.log(
 				'NOTE: DATABASE CONNECTION DOES NOT EXIST YET. NEW ONE WILL BE CREATED!'
 			);
 		}
-		const database = this.config.dbConnectionOptions;
+		const { dbConnectionOptions } = this.config;
 		if (!this.connection || !this.connection.isConnected) {
 			try {
 				this.log(chalk.green(`CONNECTING TO DATABASE...`));
-				this.connection = await createConnection({
-					...database,
-					...this.overrideDbConfig,
-					entities: [
-						path.resolve(
-							__dirname,
-							'../../**',
-							'**.entity{.ts,.js}'
-						)
-					]
+				this.connection = await createConnection({ 
+					name: SEEDER_DB_CONNECTION, 
+					...dbConnectionOptions, 
+					...this.overrideDbConfig 
 				} as ConnectionOptions);
-
-				this.log(chalk.green(`CONNECTED TO DATABASE`));
+				this.log(chalk.green(`✅ CONNECTED TO DATABASE!`));
 			} catch (error) {
 				this.handleError(error, 'Unable to connect to database');
 			}
+		}
+	}
+
+	private async closeConnection() {
+		try {
+			this.connection = getConnection(SEEDER_DB_CONNECTION);
+			if (this.connection && this.connection.isConnected) {
+				await this.connection.close();
+				this.log(chalk.green(`✅ DISCONNECTED TO DATABASE!`));
+			}
+		} catch (error) {
+			this.log('NOTE: DATABASE CONNECTION DOES NOT EXIST YET. CANT CLOSE CONNECTION!');
 		}
 	}
 
@@ -2114,11 +2143,11 @@ export class SeedDataService {
 	 * Cleans all the entities
 	 * Removes all data from database
 	 */
-	private async cleanAll(entities) {
+	private async cleanAll(entities: Array<any>) {
 		try {
-			const manager = getManager();
-
+			const manager = getManager(SEEDER_DB_CONNECTION);
 			const database = this.config.dbConnectionOptions;
+
 			switch (database.type) {
 				case 'postgres':
 					const tables = entities.map(

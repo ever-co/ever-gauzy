@@ -10,6 +10,7 @@ node_modules/
 
 # sqlite3 database
 *.sqlite3
+*.sqlite3-journal
 
 # IDEs and editors
 /.idea
