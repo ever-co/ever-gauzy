@@ -49,6 +49,7 @@ import { WarehousesModule } from './components/manage-warehouses/warehouses.modu
 import { TableComponentsModule } from './components/table-components/table-components.module';
 import { SelectAssetModule } from '../../@shared/select-asset-modal/select-asset.module';
 import { ImageAssetModule } from '../../@shared/image-asset/image-asset.module';
+import { PaginationModule } from '../../@shared/pagination/pagination.module';
 
 
 
@@ -92,6 +93,7 @@ const NB_MODULES = [
 		...NB_MODULES,
 		NgSelectModule,
 		Ng2SmartTableModule,
+		PaginationModule,
 		ProductTypesModule,
 		ProductCategoriesModule,
 		ReactiveFormsModule,

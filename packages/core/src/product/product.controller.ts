@@ -43,6 +43,25 @@ export class ProductController extends CrudController<Product> {
 		super(productService);
 	}
 
+	@ApiOperation({ summary: 'Find Products Count ' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Count Products',
+		type: Product
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('count')
+	async count(
+		@Query('data', ParseJsonPipe) data?: any
+	): Promise<Number> {
+		const { findInput = null } = data;
+
+		return this.productService.count(findInput);
+	}
+
 	@ApiOperation({ summary: 'Find Product by id ' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -109,7 +128,7 @@ export class ProductController extends CrudController<Product> {
 			langCode,
 			relations,
 			findInput,
-			{page, limit}
+			{ page, limit }
 		);
 	}
 
