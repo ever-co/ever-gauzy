@@ -1,0 +1,45 @@
+@import 'themes';
+
+:host {
+
+    a,
+    span {
+        display: block;
+    }
+
+    a {
+        pointer-events: none;        
+    }
+
+    li {
+      cursor: pointer;  
+      overflow: hidden;
+      line-height: 1.25rem;
+
+      &.active span{
+        color: #ffffff;
+        background-color: nb-theme(color-primary-500);
+      }
+
+      span {
+        font-size: 0.875rem;
+        line-height: 1rem;
+        background-color: transparent;
+        color: nb-theme(color-primary-500);
+        padding: 0.75rem 1.25rem;
+        border: none;
+      }
+    }
+
+
+    .pagination {
+        font-size: 0.875rem;
+        line-height: 1rem;
+        border: #edf1f7 solid 1px;
+        border-radius: 0.25rem;
+    }
+
+    li:not(:last-child) {
+        border-right: 1px solid #edf1f7;
+    }
+}

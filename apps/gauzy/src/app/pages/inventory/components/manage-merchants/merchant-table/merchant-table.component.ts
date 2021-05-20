@@ -35,13 +35,17 @@ export class MerchantTableComponent
 	selectedMerchant: IMerchant;
 	source: ServerDataSource;
 	STORES_URL = `${API_PREFIX}/merchants?`;
-	viewComponentName: ComponentEnum;
 
 	disableButton = true;
+	viewComponentName: ComponentEnum.MERCHANTS;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	selectedOrganization: IOrganization;
 
 	merchantsTable: Ng2SmartTableComponent;
+	merchantData: IMerchant[] = [];
+	totalItems = 0;
+	currentPage = 1;
+	itemsPerPage = 10;
 
 	@ViewChild('productStore') set content(content: Ng2SmartTableComponent) {
 		if (content) {
@@ -55,15 +59,23 @@ export class MerchantTableComponent
 		private router: Router,
 		private http: HttpClient,
 		private toastrService: ToastrService,
-		private productStoreService: MerchantService,
+		private merchantService: MerchantService,
 		private store: Store
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
+		this.setView();
 		this.loadSettings();
 		this.loadSmartTable();
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization || { id: null };
+
+		this.merchantService.count({ findInput: { organizationId, tenantId } }).then(res => {
+			this.totalItems = res as any;
+		});
 
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
@@ -76,11 +88,25 @@ export class MerchantTableComponent
 
 	}
 
+	setView() {
+		this.viewComponentName = ComponentEnum.MERCHANTS;
+		this.store
+			.componentLayout$(ComponentEnum.MERCHANTS)
+			.pipe(untilDestroyed(this))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+
+				if (componentLayout == ComponentLayoutStyleEnum.CARDS_GRID) {
+					this.onPageChange(this.currentPage);
+				}
+			});
+	}
+
 	async loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
 			pager: {
-				perPage: 10
+				perPage: this.itemsPerPage
 			},
 			columns: {
 				name: {
@@ -97,7 +123,7 @@ export class MerchantTableComponent
 					type: 'string',
 					valuePrepareFunction: (contact: IContact, row) => {
 
-						if(!contact) return '-';
+						if (!contact) return '-';
 
 						return `${this.getTranslation(
 							'INVENTORY_PAGE.COUNTRY'
@@ -130,18 +156,37 @@ export class MerchantTableComponent
 		}
 	}
 
+	onPageChange(pageNum) {
+		this.currentPage = pageNum;
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization || { id: null };
+
+		const options = {
+			relations: ['logo', 'contact', 'tags', 'warehouses'],
+			findInput: { organizationId, tenantId }
+		};
+
+		this.merchantService.getAll(options,
+			{ page: pageNum, _limit: this.itemsPerPage }).then(res => {
+				if (res && res.items) {
+					this.merchantData = res.items;
+				}
+			});
+	}
+
 	onAddStoreClick() {
 		this.router.navigate(['/pages/organization/inventory/merchants/create']);
 	}
 
 	onEditStore(selectedItem) {
-
+		this.router.navigate([`/pages/organization/inventory/merchants/edit/${this.selectedMerchant.id}`]);
 	}
 
 	async loadSettings() {
-		const { id: organizationId, tenantId } = this.selectedOrganization;
+		const { id: organizationId, tenantId } = this.selectedOrganization || { id: null, tenantId: null };
 
-		
+
 		const data = "data=" + JSON.stringify({
 			relations: ['logo', 'contact', 'tags', 'warehouses'],
 			findInput: {
@@ -198,6 +243,19 @@ export class MerchantTableComponent
 		this.selectedMerchant = isSelected ? data : null;
 	}
 
+	async delete() {
+		this.merchantService.delete(this.selectedMerchant.id)
+			.then(res => {
+				if (res && res['affected'] == 1) {
+					this.toastrService.success(
+						'INVENTORY_PAGE.MERCHANT_DELETED_SUCCESSFULLY',
+						{ name: this.selectedMerchant.name }
+					);
+
+				}
+				this.loadSettings();
+			});
+	}
 
 
 }

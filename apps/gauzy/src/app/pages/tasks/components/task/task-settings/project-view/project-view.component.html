@@ -10,6 +10,7 @@
 			(change)="setTaskViewMode($event)"
 			[(ngModel)]="selectedTaskViewMode"
 			placeholder="{{ 'TASKS_PAGE.TASK_VIEW_MODE' | translate }}"
+			appendTo="body"
 		>
 			<ng-template ng-option-tmp let-item="item" let-index="index">
 				<nb-icon

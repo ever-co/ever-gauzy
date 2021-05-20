@@ -30,7 +30,86 @@
 		</div>
 
 		<ng2-smart-table [settings]="settingsSmartTable" (userRowSelect)="selectStore($event)" [source]="source"
-			style="cursor: pointer"></ng2-smart-table>
+			style="cursor: pointer" *ngIf="dataLayoutStyle === 'TABLE'">
+		</ng2-smart-table>
+
+
+		<ul class="flex-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
+			<li class="flex-item" *ngFor="let x of merchantData">
+				<div class="info-line">
+					<span class="info-meta">{{
+								'INVENTORY_PAGE.IMAGE' | translate
+							}}
+					</span>
+					<div class="card-image">
+						<div class="card-image" *ngIf="!x.logo || !x.logo.url" [ngStyle]="{
+										backgroundImage:
+											'url(https://afostats.imagead.net/uploads/afo/no_img.png)'
+									}" alt="Product Item Photo"></div>
+						<div class="card-image" *ngIf="x.logo && x.logo.url" [ngStyle]="{
+										backgroundImage:
+											'url(' + x.logo.url + ')'
+									}" alt="Product Item Photo"></div>
+					</div>
+				</div>
+
+				<div class="info-line">
+					<span class="info-meta">{{
+								'INVENTORY_PAGE.NAME' | translate
+							}}</span>
+					<span class="info-value">{{ x.name }}</span>
+				</div>
+
+				<div class="info-line">
+					<span class="info-meta">{{
+								'INVENTORY_PAGE.CODE' | translate
+							}}</span>
+					<span class="info-value">{{ x.code }}</span>
+				</div>
+
+				<div class="info-line">
+					<span class="info-meta">{{
+								'INVENTORY_PAGE.PHONE' | translate
+							}}</span>
+					<span class="info-value">{{ x.phone }}</span>
+				</div>
+
+
+				<div class="info-line">
+					<span class="info-meta">{{
+								'INVENTORY_PAGE.EMAIL' | translate
+							}}</span>
+					<span class="info-value">{{ x.email }}</span>
+				</div>
+
+
+				<div class="info-line">
+					<span class="info-meta">{{
+								'INVENTORY_PAGE.DESCRIPTION' | translate
+							}}</span>
+					<span class="info-value">{{ x.description }}</span>
+				</div>
+
+
+				<nb-card-footer class="card-footer">
+					<ng-container *ngTemplateOutlet="
+									actionButtons;
+									context: {
+										buttonSize: 'tiny',
+										selectedItem: x
+									}
+								">
+					</ng-container>
+				</nb-card-footer>
+			</li>
+		</ul>
+
+		<div class="pagination-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
+			<ga-pagination *ngIf="totalItems > itemsPerPage" (selectedPage)="onPageChange($event)"
+				[totalItems]="totalItems" [itemsPerPage]="itemsPerPage" [activePage]="activePage"></ga-pagination>
+		</div>
+
+
 	</nb-card-body>
 
 </nb-card>
@@ -42,8 +121,8 @@
 		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
 		{{ 'BUTTONS.EDIT' | translate }}
 	</button>
-	<button  (click)="delete(selectedItem)" nbButton status="danger" class="mr-2"
-		[disabled]="!selectedItem && disableButton" [size]="buttonSize || 'medium'">
+	<button (click)="delete()" nbButton status="danger" class="mr-2" [disabled]="!selectedItem && disableButton"
+		[size]="buttonSize || 'medium'">
 		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
 		{{ 'BUTTONS.DELETE' | translate }}
 	</button>

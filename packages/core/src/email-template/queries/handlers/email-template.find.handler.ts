@@ -67,14 +67,36 @@ export class FindEmailTemplateHandler
 			template = mjml;
 		} catch (error) {
 			// If no email template present for given organization, use default email template
-			const { hbs, mjml } = await this.emailTemplateService.findOne({
+			const { success, record } = await this.emailTemplateService.findOneOrFail({
 				languageCode,
 				name: `${name}/${type}`,
 				organizationId: IsNull(),
 				tenantId: IsNull()
 			});
-			subject = hbs;
-			template = mjml;
+			if (success) {
+				subject = record.hbs;
+				template = record.mjml;
+			} else {
+				try {
+					const { hbs, mjml } = await this.emailTemplateService.findOne({
+						languageCode: LanguagesEnum.ENGLISH,
+						name: `${name}/${type}`,
+						organizationId,
+						tenantId
+					});
+					subject = hbs;
+					template = mjml;
+				} catch (error) {
+					const { hbs, mjml } = await this.emailTemplateService.findOne({
+						languageCode: LanguagesEnum.ENGLISH,
+						name: `${name}/${type}`,
+						organizationId: IsNull(),
+						tenantId: IsNull()
+					});
+					subject = hbs;
+					template = mjml;
+				}
+			}
 		}
 
 		switch (type) {

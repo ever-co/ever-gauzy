@@ -1,4 +1,4 @@
-import { UntilDestroy } from '@ngneat/until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -12,7 +12,6 @@ import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { LatLng } from 'leaflet';
-import { Router } from '@angular/router';
 import { LocationFormComponent, LeafletMapComponent } from './../../../../../@shared/forms';
 import {
 	ToastrService,
@@ -24,6 +23,9 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { SelectAssetComponent } from './../../../../../@shared/select-asset-modal/select-asset.component';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base/translation-base.component';
+import { Router, ActivatedRoute } from '@angular/router';
+
+
 
 @UntilDestroy()
 @Component({
@@ -68,6 +70,7 @@ export class MerchantFormComponent
 		private imageAssetService: ImageAssetService,
 		private merchantService: MerchantService,
 		private router: Router,
+		private route: ActivatedRoute
 
 	) {
 		super(translateService);
@@ -75,6 +78,26 @@ export class MerchantFormComponent
 
 
 	ngOnInit(): void {
+
+		this.route.params
+		.pipe(untilDestroyed(this))
+		.subscribe(async (params) => {
+			if (params.id) {
+				this.merchant = await this.merchantService.getById(
+					params.id,
+					['logo', 'warehouses', 'tags']
+				);
+
+				this.image = this.merchant.logo;
+				this.tags = this.merchant.tags || [];
+				this.selectedWarehouses = this.merchant.warehouses.map(
+					warehouse => warehouse.id
+				);
+				this._initializeForm();
+				this._initializeLocationForm();
+			}
+		});
+
 		this._loadImages();
 		this._initializeForm();
 		this._loadWarehouses();
@@ -109,7 +132,7 @@ export class MerchantFormComponent
 				Validators.required
 			],
 			currency: [
-				this.merchant ? this.merchant.code : '',
+				this.merchant ? this.merchant.currency : '',
 				Validators.required
 			],
 			email: [
@@ -117,21 +140,43 @@ export class MerchantFormComponent
 				Validators.email
 			],
 			phone: [
-				this.merchant ? this.merchant.contact.phone : '',
+				this.merchant ? this.merchant.phone : '',
 				Validators.pattern('^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$')
 			],
 			fax: [
 				this.merchant ? this.merchant.contact.fax : '',
 			],
 			fiscalInformation: [
-				this.merchant ? this.merchant.contact.fax : '',
+				this.merchant ? this.merchant.contact.fiscalInformation : '',
 			],
 			website: [
-				this.merchant ? this.merchant.contact.fax : '',
+				this.merchant ? this.merchant.contact.website : '',
 			],
 			active: [this.merchant ? this.merchant.active : true],
 			description: [this.merchant ? this.merchant.description : '']
 		})
+	};
+
+	private _initializeLocationForm() {
+		if (!this.merchant || !this.merchant.contact) return;
+
+		setTimeout(() => {
+			const { contact } = this.merchant;
+	
+			this.locationFormDirective.setValue({
+				country: contact.country,
+				city: contact.city,
+				postcode: contact.postcode,
+				address: contact.address,
+				address2: contact.address2,
+				loc: {
+					type: 'Point',
+					coordinates: [contact.latitude, contact.longitude]
+				}
+			});
+		}, 200);
+
+
 	}
 
 	async onImageSelect() {
@@ -173,10 +218,15 @@ export class MerchantFormComponent
 			},
 			tenant: {
 				id: this.store.selectedOrganization && this.store.selectedOrganization.tenantId ?
-					this.store.selectedOrganization.tenantId: null
+					this.store.selectedOrganization.tenantId : null
 			},
 			contact: {
 				...locationFormValue,
+				fax: this.form.get('fax').value,
+				email: this.form.get('email').value,
+				fiscalInformation: this.form.get('fiscalInformation').value,
+				website: this.form.get('website').value,
+				phone: this.form.get('phone').value,
 				latitude: coordinates[0],
 				longitude: coordinates[1]
 			}
@@ -196,6 +246,26 @@ export class MerchantFormComponent
 				}).catch((err) => {
 					this.toastrService.danger(
 						'INVENTORY_PAGE.COULD_NOT_CREATE_MERCHANT',
+						null,
+						{ name: request.name }
+					);
+					this.router.navigate(['/pages/organization/inventory/merchants/all']);
+
+				});
+		} else {
+			await this.merchantService.update({...request, id: this.merchant.id})
+				.then(res => {
+					this.toastrService.success(
+						'INVENTORY_PAGE.MERCHANT_UPDATED_SUCCESSFULLY',
+						{ name: request.name }
+					);
+
+					this.merchant = res;
+					this.router.navigate(['/pages/organization/inventory/merchants/all']);
+
+				}).catch((err) => {
+					this.toastrService.danger(
+						'INVENTORY_PAGE.COULD_NOT_UPDATE_MERCHANT',
 						null,
 						{ name: request.name }
 					);

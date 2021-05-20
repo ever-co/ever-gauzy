@@ -7,7 +7,7 @@ import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { AnalyticsService } from './@core/utils/analytics.service';
 import { Store } from './@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
-import { LanguagesEnum } from '@gauzy/contracts';
+import { ILanguage, LanguagesEnum } from '@gauzy/contracts';
 import { LanguagesService } from './@core/services/languages.service';
 import { environment } from '../environments/environment';
 import * as _ from 'underscore';
@@ -69,8 +69,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 	}
 	
 	private async loadLanguages() {
-		const { items } = await this.languagesService.getSystemLanguages();
-		this.store.systemLanguages = items;
+		const { items = [] } = await this.languagesService.getSystemLanguages();
+		this.store.systemLanguages = items.filter((item: ILanguage) => item.is_system);
 	}
 
 	private loadChatwoot(d, t) {

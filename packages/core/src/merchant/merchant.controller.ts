@@ -7,7 +7,9 @@ import {
 	UseGuards,
 	Body,
 	HttpCode,
-	Post
+	Post,
+	Put,
+	Param
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CrudController, IPagination, Merchant } from 'core';
@@ -23,9 +25,48 @@ import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.g
 @Controller()
 export class MerchantController extends CrudController<Merchant> {
 	constructor(
-		private readonly productStoreService: MerchantService
+		private readonly merchantService: MerchantService
 	) {
-		super(productStoreService);
+		super(merchantService);
+		}
+
+		@ApiOperation({ summary: 'Find Merchants Count ' })
+		@ApiResponse({
+			status: HttpStatus.OK,
+			description: 'Count Products',
+			type: Number
+		})
+		@Get('count')
+		async count(
+			@Query('data', ParseJsonPipe) data?: any
+		): Promise<Number> {
+			const { findInput = null } = data;
+	
+			return this.merchantService.count(findInput);
+		}
+
+		@ApiOperation({
+			summary: 'Get merchant by id.'
+		})
+		@ApiResponse({
+			status: HttpStatus.OK,
+			description: 'Found merchant.',
+			type: Merchant
+		})
+		@ApiResponse({
+			status: HttpStatus.NOT_FOUND,
+			description: 'Record not found'
+		})
+		@Get(':id')
+		async findMerchantById(
+			@Param('id') id: string,
+			@Query('data', ParseJsonPipe) data: any
+		): Promise<Merchant> {
+			const {relations = []} = data;
+			return this.merchantService.findMerchantById(
+				id,
+				relations
+			);
 		}
 		
 		@ApiOperation({
@@ -49,7 +90,7 @@ export class MerchantController extends CrudController<Merchant> {
 			const {
 				relations = [],
 				findInput = null} = data;
-			return this.productStoreService.findAllProductTypes(
+			return this.merchantService.findAllMechants(
 				relations,
 				findInput,
 				{page, limit}
@@ -74,12 +115,33 @@ export class MerchantController extends CrudController<Merchant> {
 		@HttpCode(HttpStatus.ACCEPTED)
 		@Post()
 		async create(
-			@Body() productStoreInput: IMerchant
+			@Body() merchantInput: IMerchant
 		): Promise<Merchant> {
-			return this.productStoreService.createStore(productStoreInput);
+			return this.merchantService.createMerchant(merchantInput);
 		}
 
 	
+		@ApiOperation({ summary: 'Update record' })
+		@ApiResponse({
+			status: HttpStatus.CREATED,
+			description: 'The record has been successfully updated.'
+		})
+		@ApiResponse({
+			status: HttpStatus.NOT_FOUND,
+			description: 'Record not found'
+		})
+		@ApiResponse({
+			status: HttpStatus.BAD_REQUEST,
+			description:
+				'Invalid input, The response body may contain clues as to what went wrong'
+		})
+		@HttpCode(HttpStatus.ACCEPTED)
+		@Put(':id')
+		async updateMerchant(
+			@Body() productStoreInput: IMerchant
+		): Promise<Merchant> {
+			return this.merchantService.updateMerchant(productStoreInput);
+		}
 
 
     

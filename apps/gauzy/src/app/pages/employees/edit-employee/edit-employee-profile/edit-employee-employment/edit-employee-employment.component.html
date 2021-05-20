@@ -90,6 +90,7 @@
 								'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT_TYPE'
 									| translate
 							}}"
+							appendTo="body"
 							multiple="true"
 						>
 						</ng-select>
@@ -103,7 +104,7 @@
 									| translate
 							}}
 						</label>
-						<ng-select formControlName="employeeLevel">
+						<ng-select appendTo="body" formControlName="employeeLevel">
 							<ng-option
 								*ngFor="let empL of employeeLevels"
 								[value]="empL.level"
@@ -132,6 +133,7 @@
 								'FORM.PLACEHOLDERS.ALL_DEPARTMENTS' | translate
 							}}"
 							multiple="true"
+							appendTo="body"
 						>
 						</ng-select>
 					</div>
@@ -150,6 +152,7 @@
 							placeholder="{{
 								'FORM.PLACEHOLDERS.ALL_POSITIONS' | translate
 							}}"
+							appendTo="body"
 						>
 						</ng-select>
 					</div>
