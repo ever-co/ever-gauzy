@@ -29,6 +29,7 @@ import { MerchantComponent } from './merchant.component';
 import { LocationFormModule, LeafletMapModule } from 'apps/gauzy/src/app/@shared/forms';
 import { CurrencyModule } from 'apps/gauzy/src/app/@shared';
 import { PaginationModule } from 'apps/gauzy/src/app/@shared/pagination/pagination.module';
+import { TagsColorInputModule } from 'apps/gauzy/src/app/@shared/tags/tags-color-input/tags-color-input.module';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -63,7 +64,8 @@ const NB_MODULES = [
         CurrencyModule,
         LocationFormModule,
         LeafletMapModule,
-        PaginationModule
+        PaginationModule,
+        TagsColorInputModule
     ],
     providers: [MerchantService]
 })
