@@ -2138,7 +2138,7 @@
 		"THIS_FIELD_IS_REQUIRED": "Это поле является обязательным",
 		"EMAIL_WRONG_FORMAT": "Адрес электронной почты в неправильном формате",
 		"PHONE_WRONG_FORMAT": "Телефон в неправильном формате",
-		"SELECTED": "Selected"
+		"SELECTED": "Выбрано"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
