@@ -48,7 +48,7 @@ export abstract class CrudService<T extends BaseEntity>
 		return { items, total };
 	}
 
-	public async smartTable(filter?: any): Promise<IPagination<T>> {
+	public async search(filter?: any): Promise<IPagination<T>> {
 		let option: FindManyOptions = {}
 
 		if (filter.page && filter.limit) {
@@ -72,9 +72,9 @@ export abstract class CrudService<T extends BaseEntity>
 			option.join = filter.join
 		}
 
-		if (filter.filter || filter.where) {
+		if (filter.filters || filter.where) {
 			option.where = new Brackets(qb => {
-				if (filter.filter) {
+				if (filter.filters) {
 					qb.where(new Brackets(qb => {
 
 						const where: any[] = [];
@@ -113,13 +113,24 @@ export abstract class CrudService<T extends BaseEntity>
 					}));
 				}
 				if (filter.where) {
+					const where: any = {}
+					for (const field in filter.where) {
+						if (Object.prototype.hasOwnProperty.call(filter.where, field)) {
+							if(filter.where[field] instanceof Array){
+								where[field] = In(filter.where[field]);
+							}else{
+								where[field] = filter.where[field];
+							}
+						}
+					}
+					
 					qb.andWhere(new Brackets(qb => {
-						qb.where(filter.where);
+						qb.where(where);
 					}))
 				}
+				
 			})
 		}
-
 		const [items, total] = await this.repository.findAndCount(option);
 		return { items, total };
 	}

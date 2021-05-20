@@ -60,6 +60,7 @@ import {
 import { HttpClient } from '@angular/common/http';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
 import * as moment from 'moment';
+import { API_PREFIX } from '../../@core/constants/app.constants';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -658,7 +659,7 @@ export class InvoicesComponent
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
 			this.smartTableSource = new ServerDataSource(this.httpClient, {
-				endPoint: 'http://localhost:3000/api/invoices/smart-table/filter',
+				endPoint: `${API_PREFIX}/invoices/search/filter`,
 				relations: [
 					'invoiceItems',
 					'invoiceItems.employee',
@@ -999,7 +1000,6 @@ export class InvoicesComponent
 		}
 
 		const searchObj = this.form.value
-		console.log(searchObj)
 		if (searchObj.invoiceNumber) {
 			filterData.where.invoiceNumber = searchObj.invoiceNumber
 		}
@@ -1025,16 +1025,14 @@ export class InvoicesComponent
 		}
 
 		if (this.tags.length > 0) {
-			filterData.join.leftJoin.tags = "Invoice.tags"
+			filterData.join.leftJoin.tags = 'Invoice.tags'
 			const tagId = []
 			for (const tag of this.tags) {
 				tagId.push(tag.id)
 			}
-			filterData.where['tags'] = { id: tagId[0] }
+			filterData.where.tags = tagId
 		}
 
-
-		console.log({ filterData })
 		this.getAllInvoiceEstimate(filterData)
 
 	}

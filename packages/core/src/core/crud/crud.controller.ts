@@ -58,9 +58,9 @@ export abstract class CrudController<T extends BaseEntity> {
 		status: HttpStatus.OK,
 		description: 'Found records' /* type: IPagination<T> */
 	})
-	@Get('smart-table/filter')
-	async smartTable(@Query() filter?: any): Promise<IPagination<T>> {
-		return this.crudService.smartTable(filter);
+	@Get('search/filter')
+	async search(@Query() filter?: any): Promise<IPagination<T>> {
+		return this.crudService.search(filter);
 	}
 
 	@ApiOperation({ summary: 'Create new record' })

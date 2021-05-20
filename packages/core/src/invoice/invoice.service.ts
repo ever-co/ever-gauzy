@@ -1,7 +1,7 @@
 import { CrudService } from '../core';
 import { Invoice } from './invoice.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Between, In, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { getConnection } from 'typeorm';
 import { EmailService } from '../email';
@@ -17,6 +17,7 @@ import {
 	generateInvoicePaymentPdfDefinition
 } from './index';
 import { OrganizationService } from 'organization';
+import * as moment from 'moment';
 
 @Injectable()
 export class InvoiceService extends CrudService<Invoice> {
@@ -309,5 +310,24 @@ export class InvoiceService extends CrudService<Invoice> {
 		stream.push(null);
 
 		return stream;
+	}
+
+	public search(filter?: any) {
+		if (filter?.where?.tags) {
+			filter.where.tags = {
+				id: In(filter.where.tags)
+			}
+		}
+		if (filter?.where?.dueDate) {
+			const date = moment.utc(filter.where.dueDate);
+			filter.where.dueDate = Between(date.startOf('day').toDate(), date.endOf('day').toDate());
+
+		}
+		if (filter?.where?.invoiceDate) {
+			const date = moment.utc(filter.where.invoiceDate);
+			filter.where.invoiceDate = Between(date.startOf('day').toDate(), date.endOf('day').toDate());
+
+		}
+		return super.search(filter);
 	}
 }
