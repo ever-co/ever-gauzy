@@ -34,7 +34,7 @@ export class ProductService {
 			.toPromise();
 	}
 
-	count(findInput?): Promise<Number> {
+	count(findInput): Promise<Number> {
 		const data = JSON.stringify(findInput);
 		return this.http
 			.get<number>(
