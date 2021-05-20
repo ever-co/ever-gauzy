@@ -43,6 +43,7 @@ export class LeafletMapComponent implements AfterViewInit {
 	@Input()
 	set zoom(val: number) {
 		this._zoom = val;
+		this.options.zoom = val;
 	}
 	get zoom() {
 		return this._zoom || 12;
