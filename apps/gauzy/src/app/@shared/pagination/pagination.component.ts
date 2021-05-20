@@ -15,7 +15,6 @@ import { UntilDestroy } from '@ngneat/until-destroy';
 	styleUrls: ['./pagination.component.scss'],
 })
 export class PaginationComponent implements OnInit {
-	active_index: any;
 
 	@Input() totalItems: number = 1;
 	@Input() activePage: number = 1;

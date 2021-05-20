@@ -117,14 +117,6 @@ export class TableInventoryComponent
 				}
 			});
 
-		this.source.onChanged()
-			.pipe(untilDestroyed(this))
-			.subscribe(e => {
-				if (e && e.paging && e.paging.page > this.currentPage) {
-					this.currentPage = e.paging.page;
-					this.inventoryData.push(...e.elements as any);
-				}
-			});
 	}
 
 	setView() {

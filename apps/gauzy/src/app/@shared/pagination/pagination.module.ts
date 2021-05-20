@@ -7,10 +7,6 @@ import { PaginationComponent } from './pagination.component';
 	declarations: [PaginationComponent],
 	imports: [
 		CommonModule,
-		// NbButtonModule,
-		// NbDialogModule,
-		// NbIconModule,
-		// SharedModule,
 		TranslateModule
 	],
 	exports: [PaginationComponent]
