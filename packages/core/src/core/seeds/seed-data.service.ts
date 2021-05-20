@@ -887,6 +887,7 @@ export class SeedDataService {
 			'Default Organization Projects',
 			createDefaultOrganizationProjects(
 				this.connection,
+				this.tenant,
 				this.organizations
 			)
 		);
