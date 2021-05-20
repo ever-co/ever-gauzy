@@ -18,8 +18,7 @@ import {
 	IUser,
 	IUserFindInput,
 	RolesEnum,
-	ITag,
-	LanguagesEnum
+	ITag
 } from '@gauzy/contracts';
 import { RoleService } from '../../../@core/services/role.service';
 import { Subject } from 'rxjs';
@@ -62,8 +61,6 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	allRoles: string[] = Object.values(RolesEnum).filter(
 		(r) => r !== RolesEnum.EMPLOYEE
 	);
-
-	languages: string[] = Object.values(LanguagesEnum);
 
 	constructor(
 		private fb: FormBuilder,

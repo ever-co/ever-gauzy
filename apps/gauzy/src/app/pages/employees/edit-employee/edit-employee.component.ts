@@ -1,17 +1,13 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
 	IEmployee,
-	IEmployeeRecurringExpense,
-	IOrganization,
-	ISelectedEmployee,
-	PermissionsEnum
+	ISelectedEmployee
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { first } from 'rxjs/operators';
-import { EmployeesService } from '../../../@core/services/employees.service';
-import { Store } from '../../../@core/services/store.service';
+import { filter, tap } from 'rxjs/operators';
+import { EmployeesService, Store } from '../../../@core/services';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -25,85 +21,66 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 })
 export class EditEmployeeComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit, OnDestroy, AfterViewInit {
+
 	selectedEmployee: IEmployee;
 	selectedDate: Date;
 	selectedEmployeeFromHeader: ISelectedEmployee;
-	selectedEmployeeRecurringExpense: IEmployeeRecurringExpense[];
-	selectedRowIndexToShow: number;
 	employeeName = 'Employee';
-	hasEditPermission = false;
-	fetchedHistories: Object = {};
-	selectedOrganization: IOrganization;
 
 	constructor(
-		private route: ActivatedRoute,
-		private router: Router,
-		private employeeService: EmployeesService,
-		private store: Store,
-		readonly translateService: TranslateService
+		private readonly route: ActivatedRoute,
+		private readonly router: Router,
+		private readonly employeeService: EmployeesService,
+		private readonly store: Store,
+		readonly translateService: TranslateService,
+		private readonly cdr: ChangeDetectorRef
 	) {
 		super(translateService);
 	}
 
-	async ngOnInit() {
+	ngOnInit() {
 		this.store.selectedDate$
-			.pipe(untilDestroyed(this))
-			.subscribe((date) => {
-				this.selectedDate = date;
+			.pipe(
+				tap((date) => this.selectedDate = date),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.store.selectedEmployee$
+			.pipe(
+				filter((employee: ISelectedEmployee) => !!employee && !!employee.id),
+				untilDestroyed(this)
+			)
+			.subscribe((employee) => {
+				this.selectedEmployeeFromHeader = employee;
+				this.cdr.detectChanges();		
+				if (employee.id) {
+					this.router.navigate([
+						'/pages/employees/edit/' + employee.id
+					]);
+				}
 			});
+	}
 
-		this.store.userRolePermissions$
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.hasEditPermission = this.store.hasPermission(
-					PermissionsEnum.ORG_EMPLOYEES_EDIT
-				);
-			});
-
+	ngAfterViewInit() {
 		this.route.params
-			.pipe(untilDestroyed(this))
-			.subscribe(async (params) => {
-				const id = params.id;
-
-				const { items } = await this.employeeService
-					.getAll(
-						['user', 'organizationPosition', 'tags', 'skills'],
-						{ id }
-					)
-					.pipe(first())
-					.toPromise();
-
-				this.selectedEmployee = items[0];
-
-				this.store.selectedEmployee = {
-					id: items[0].id,
-					firstName: items[0].user.firstName,
-					lastName: items[0].user.lastName,
-					imageUrl: items[0].user.imageUrl,
-					tags: items[0].user.tags,
-					skills: items[0].skills
-				};
-
-				const checkUsername = this.selectedEmployee.user.username;
+			.pipe(
+				filter((params) => !!params.id)
+			)
+			.subscribe(async ({ id }) => {
+				const employee = await this.employeeService.getEmployeeById(id, ['user', 'organizationPosition', 'tags', 'skills']);
+				const checkUsername = employee.user.username;
 				this.employeeName = checkUsername ? checkUsername : 'Employee';
-
-				this.store.selectedEmployee$
-					.pipe(untilDestroyed(this))
-					.subscribe((employee) => {
-						this.selectedEmployeeFromHeader = employee;
-						if (employee.id) {
-							this.router.navigate([
-								'/pages/employees/edit/' + employee.id
-							]);
-						}
-					});
-
-				this.store.selectedOrganization$
-					.pipe(untilDestroyed(this))
-					.subscribe((organization) => {
-						this.selectedOrganization = organization;
-					});
+				this.selectedEmployee = employee;
+				this.store.selectedEmployee = {
+					id: employee.id,
+					firstName: employee.user.firstName,
+					lastName: employee.user.lastName,
+					fullName: employee.user.name,
+					imageUrl: employee.user.imageUrl,
+					tags: employee.user.tags,
+					skills: employee.skills
+				};
 			});
 	}
 
