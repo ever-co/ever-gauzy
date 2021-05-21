@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
-import { ReactiveFormsModule } from '@nebular/auth/node_modules/@angular/forms';
-import { TranslateModule } from 'apps/gauzy/src/app/@shared/translate/translate.module';
-import { ProductCategoryService } from 'apps/gauzy/src/app/@core';
+import { ReactiveFormsModule } from '@angular/forms';
+import { TranslateModule } from '../../../../@shared/translate/translate.module';
+import { ProductCategoryService } from '../../../../@core/services/product-category.service';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { SharedModule } from '../../../../@shared/shared.module';
 import {
@@ -11,11 +11,11 @@ import {
 	NbSpinnerModule,
 } from '@nebular/theme';
 import { CommonModule } from '@angular/common';
-import { HeaderTitleModule } from 'apps/gauzy/src/app/@shared/components/header-title/header-title.module';
-import { ThemeModule } from 'apps/gauzy/src/app/@theme';
+import { HeaderTitleModule } from '../../../../@shared/components/header-title/header-title.module';
+import { ThemeModule } from '../../../../@theme/theme.module';
 import { ProductCategoriesComponent } from './product-categories.component';
 import { ProductCategoriesRoutingModule } from './product-categories-routing.module';
-import { ProductMutationModule } from 'apps/gauzy/src/app/@shared/product-mutation/product-mutation.module';
+import { ProductMutationModule } from '../../../../@shared/product-mutation/product-mutation.module';
 
 
 const NB_MODULES = [

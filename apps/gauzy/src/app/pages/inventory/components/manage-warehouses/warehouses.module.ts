@@ -1,10 +1,7 @@
 import { NgModule } from '@angular/core';
-import {
-    FormsModule,
-    ReactiveFormsModule
-} from '@nebular/auth/node_modules/@angular/forms';
-import { TranslateModule } from 'apps/gauzy/src/app/@shared/translate/translate.module';
-import { WarehouseService } from 'apps/gauzy/src/app/@core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { TranslateModule } from './../../../../@shared/translate/translate.module';
+import { WarehouseService } from '../../../../@core/services/warehouse.service';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { SharedModule } from '../../../../@shared/shared.module';
 import {
@@ -19,8 +16,8 @@ import {
     NbInputModule,
 } from '@nebular/theme';
 import { CommonModule } from '@angular/common';
-import { HeaderTitleModule } from 'apps/gauzy/src/app/@shared/components/header-title/header-title.module';
-import { ThemeModule } from 'apps/gauzy/src/app/@theme';
+import { HeaderTitleModule } from './../../../../@shared/components/header-title/header-title.module';
+import { ThemeModule } from './../../../../@theme/theme.module';
 import { ProductTypeMutationComponent } from '../../../../@shared/product-mutation/product-type-mutation/product-type-mutation.component';
 import { WarehousesTableComponent } from './warehouses-table/warehouses-table.component';
 import { WarehouseFormComponent } from './warehouse-form/warehouse-form.component';
@@ -31,8 +28,8 @@ import { SelectProductComponent } from './select-product-form/select-product-for
 import { ManageQuantityComponent } from './manage-quantity/manage-quantity.component';
 import { ManageVariantsQuantityComponent } from './manage-variants-quantity/manage-variants-quantity.component';
 import { ManageVariantsQuantityFormComponent } from './manage-variants-quantity-form/manage-variants-quantity-form.component';
-import { LeafletMapModule, LocationFormModule } from 'apps/gauzy/src/app/@shared/forms';
-import { TagsColorInputModule } from 'apps/gauzy/src/app/@shared/tags/tags-color-input/tags-color-input.module';
+import { LeafletMapModule, LocationFormModule } from './../../../../@shared/forms';
+import { TagsColorInputModule } from './../../../../@shared/tags/tags-color-input/tags-color-input.module';
 
 
 const NB_MODULES = [
