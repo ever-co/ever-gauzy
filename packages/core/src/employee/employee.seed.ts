@@ -12,8 +12,7 @@ import * as faker from 'faker';
 import { environment as env } from '@gauzy/config';
 import * as moment from 'moment';
 import { Employee, Organization, Tenant } from './../core/entities/internal';
-import { getDefaultTenant } from './../tenant/tenant.seed';
-import { getDefaultBulgarianOrganization } from './../organization/organization.seed';
+import { getDefaultOrganization } from './../organization/organization.seed';
 
 export const createDefaultEmployees = async (
 	connection: Connection,
@@ -127,10 +126,10 @@ const getDate = (dateString: string): Date => {
  * Default employees
  */
 export const getDefaultEmployees = async (
-	connection: Connection
+	connection: Connection,
+	tenant: ITenant
 ): Promise<IEmployee[]> => {
-	const tenant = await getDefaultTenant(connection);
-	const organization = await getDefaultBulgarianOrganization(
+	const organization = await getDefaultOrganization(
 		connection,
 		tenant
 	);

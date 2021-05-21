@@ -20,13 +20,13 @@ import {
 } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
 
-export const getDefaultBulgarianOrganization = async (
+export const getDefaultOrganization = async (
 	connection: Connection,
 	tenant: Tenant
 ): Promise<IOrganization> => {
 	const repo = connection.getRepository(Organization);
 	const existedOrganization = await repo.findOne({
-		where: { tenantId: tenant.id, name: 'Ever Technologies LTD' }
+		where: { tenantId: tenant.id, isDefault: true }
 	});
 	return existedOrganization;
 };
@@ -60,8 +60,9 @@ export const createDefaultOrganizations = async (
 			.values()
 			.value();
 		const defaultOrganization: Organization = new Organization();
-		const { name, currency, defaultValueDateType, imageUrl } = organization;
+		const { name, currency, defaultValueDateType, imageUrl, isDefault } = organization;
 		defaultOrganization.name = name;
+		defaultOrganization.isDefault = isDefault;
 		defaultOrganization.profile_link = generateLink(name);
 		defaultOrganization.currency = currency;
 		defaultOrganization.defaultValueDateType = defaultValueDateType;
@@ -165,6 +166,7 @@ export const createRandomOrganizations = async (
 				const logoAbbreviation = _extractLogoAbbreviation(companyName);
 
 				organization.name = companyName;
+				organization.isDefault = (index === 0) || false;
 				organization.profile_link = generateLink(companyName);
 				organization.currency = env.defaultCurrency;
 				organization.defaultValueDateType =

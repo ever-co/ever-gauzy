@@ -10,21 +10,14 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { filter, first, tap } from 'rxjs/operators';
-import { ErrorHandlingService } from '../../@core/services/error-handling.service';
-import { OrganizationsService } from '../../@core/services/organizations.service';
-import { Store } from '../../@core/services/store.service';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ErrorHandlingService, OrganizationsService, OrganizationEditStore, Store, ToastrService, UsersOrganizationsService } from '../../@core/services';
 import { OrganizationsMutationComponent } from '../../@shared/organizations/organizations-mutation/organizations-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { OrganizationsCurrencyComponent } from './table-components/organizations-currency/organizations-currency.component';
-import { OrganizationsEmployeesComponent } from './table-components/organizations-employees/organizations-employees.component';
-import { OrganizationsStatusComponent } from './table-components/organizations-status/organizations-status.component';
+import { OrganizationsCurrencyComponent, OrganizationsEmployeesComponent, OrganizationsStatusComponent } from './table-components';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
-import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { OrganizationEditStore } from '../../@core/services/organization-edit-store.service';
-import { ToastrService } from '../../@core/services/toastr.service';
+import { PictureNameTagsComponent } from '../../@shared/table-components';
+import { ComponentEnum } from '../../@core/constants';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,30 +27,7 @@ import { ToastrService } from '../../@core/services/toastr.service';
 export class OrganizationsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	constructor(
-		private organizationsService: OrganizationsService,
-		private toastrService: ToastrService,
-		private dialogService: NbDialogService,
-		private router: Router,
-		readonly translateService: TranslateService,
-		private errorHandler: ErrorHandlingService,
-		private store: Store,
-		private userOrganizationService: UsersOrganizationsService,
-		private readonly _organizationEditStore: OrganizationEditStore
-	) {
-		super(translateService);
-		this.setView();
-	}
-
-	organizationsTable: Ng2SmartTableComponent;
-	@ViewChild('organizationsTable') set content(
-		content: Ng2SmartTableComponent
-	) {
-		if (content) {
-			this.organizationsTable = content;
-			this.onChangedSource();
-		}
-	}
+	
 	settingsSmartTable: object;
 	selectedOrganization: IOrganization;
 	smartTableSource = new LocalDataSource();
@@ -67,6 +37,29 @@ export class OrganizationsComponent
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	loading = true;
 	user: IUser;
+
+	organizationsTable: Ng2SmartTableComponent;
+	@ViewChild('organizationsTable') set content(content: Ng2SmartTableComponent) {
+		if (content) {
+			this.organizationsTable = content;
+			this.onChangedSource();
+		}
+	}
+		
+	constructor(
+		private readonly organizationsService: OrganizationsService,
+		private readonly toastrService: ToastrService,
+		private readonly dialogService: NbDialogService,
+		private readonly router: Router,
+		public readonly translateService: TranslateService,
+		private readonly errorHandler: ErrorHandlingService,
+		private readonly store: Store,
+		private readonly userOrganizationService: UsersOrganizationsService,
+		private readonly _organizationEditStore: OrganizationEditStore
+	) {
+		super(translateService);
+		this.setView();
+	}
 
 	loadSettingsSmartTable() {
 		this.settingsSmartTable = {
@@ -113,13 +106,11 @@ export class OrganizationsComponent
 		this.store.user$
 			.pipe(
 				filter((user) => !!user),
+				tap((user: IUser) => this.user = user),
 				untilDestroyed(this)
 			)
-			.subscribe((user: IUser) => {
-				if (user) {
-					this.user = user;
-					this._loadSmartTable();
-				}
+			.subscribe(() => {
+				this._loadSmartTable();
 			});
 		this.router.events
 			.pipe(untilDestroyed(this))

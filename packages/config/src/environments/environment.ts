@@ -157,7 +157,9 @@ export const environment: IEnvironment = {
 		instanceId: process.env.UNLEASH_INSTANCE_ID,
 		refreshInterval: parseInt(process.env.UNLEASH_REFRESH_INTERVAL) || 1000,
 		metricsInterval: parseInt(process.env.UNLEASH_METRICS_INTERVAL) || 1000
-	}
+	},
+
+	demo: process.env.DEMO === 'true' ? true : false
 };
 
 export const gauzyToggleFeatures: IGauzyFeatures = {

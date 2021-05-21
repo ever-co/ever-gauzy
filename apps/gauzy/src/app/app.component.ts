@@ -19,14 +19,15 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	template: '<router-outlet *ngIf="!loading"></router-outlet>'
 })
 export class AppComponent implements OnInit, AfterViewInit {
+
+	loading: boolean = true;
+
 	constructor(
 		private analytics: AnalyticsService,
 		private store: Store,
 		private languagesService: LanguagesService,
 		public translate: TranslateService
 	) {}
-
-	loading = true;
 
 	async ngOnInit() {
 		if (environment.CHATWOOT_SDK_TOKEN) {

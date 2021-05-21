@@ -123,6 +123,13 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@Column()
 	name: string;
 
+	@ApiProperty({ type: () => Boolean })
+	@IsString()
+	@IsNotEmpty()
+	@Index()
+	@Column('boolean', { default: false })
+	isDefault: boolean;
+
 	@ApiProperty({ type: () => String, minLength: 3, maxLength: 100 })
 	@IsString()
 	@Index({ unique: true })

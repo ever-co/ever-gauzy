@@ -87,4 +87,6 @@ export interface IEnvironment {
 	defaultCurrency: string;
 
 	unleashConfig?: IUnleashConfig;
+	
+	demo: boolean;
 }

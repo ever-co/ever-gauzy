@@ -27,6 +27,7 @@ export enum ListsInputTypeEnum {
 
 export interface IOrganization extends IBasePerTenantEntityModel {
 	name: string;
+	isDefault: boolean;
 	profile_link: string;
 	valueDate?: Date;
 	totalEmployees: number;
@@ -100,10 +101,10 @@ export interface IOrganization extends IBasePerTenantEntityModel {
 	reportOrganizations?: IReportOrganization[];
 }
 
-export interface IOrganizationFindInput {
+export interface IOrganizationFindInput extends IBasePerTenantEntityModel {
 	id?: string;
-	tenantId?: string;
 	name?: string;
+	isDefault?: boolean;
 	profile_link?: string;
 	valueDate?: Date;
 	imageUrl?: string;
@@ -115,6 +116,7 @@ export interface IOrganizationFindInput {
 
 export interface IOrganizationCreateInput extends IContact {
 	name: string;
+	isDefault: boolean;
 	profile_link: string;
 	valueDate?: Date;
 	imageUrl: string;
@@ -154,7 +156,7 @@ export interface IOrganizationCreateInput extends IContact {
 }
 
 export interface IOrganizationUpdateInput extends IOrganizationCreateInput {
-	gauzyId?: string;
+	id?: string;
 }
 
 export enum OrganizationSelectInput {
@@ -251,4 +253,9 @@ export enum CrudActionEnum {
 	DELETED = 'DELETED'
 }
 
-export const DEFAULT_DATE_FORMATS = ['L', 'LL', 'dddd, LL'];
+export const DEFAULT_DATE_FORMATS: string[] = ['L', 'LL', 'dddd, LL'];
+export const DEFAULT_TIME_FORMATS: number[] = [12, 24];
+export interface IKeyValuePair {
+    key: string;
+    value: boolean | string;
+}

@@ -5,21 +5,18 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { NbDialogService } from '@nebular/theme';
-import { OrganizationVendorsService } from 'apps/gauzy/src/app/@core/services/organization-vendors.service';
-import { TranslateService } from '@ngx-translate/core';
-import { first } from 'rxjs/operators';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
-import { Store } from '../../@core/services/store.service';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { LocalDataSource } from 'ng2-smart-table';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
-import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { ToastrService } from '../../@core/services/toastr.service';
+import { NbDialogService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
+import { filter, first, tap } from 'rxjs/operators';
+import { LocalDataSource } from 'ng2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslationBaseComponent } from './../../@shared/language-base/translation-base.component';
+import { ComponentEnum } from './../../@core/constants';
+import { NotesWithTagsComponent } from './../../@shared/table-components';
+import { DeleteConfirmationComponent } from './../../@shared/user/forms';
+import { ErrorHandlingService, OrganizationVendorsService, Store, ToastrService } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -30,7 +27,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 export class VendorsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	selectedOrganization: IOrganization;
+		
+	organization: IOrganization;
 	showAddCard: boolean;
 	vendors: IOrganizationVendor[];
 	viewComponentName: ComponentEnum;
@@ -40,17 +38,16 @@ export class VendorsComponent
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
-	currentVendor: IOrganizationVendor;
 
 	constructor(
 		private readonly organizationVendorsService: OrganizationVendorsService,
 		private readonly toastrService: ToastrService,
 		private readonly fb: FormBuilder,
-		readonly translateService: TranslateService,
-		private dialogService: NbDialogService,
-		private errorHandlingService: ErrorHandlingService,
-		private store: Store,
-		private router: Router
+		public readonly translateService: TranslateService,
+		private readonly dialogService: NbDialogService,
+		private readonly errorHandlingService: ErrorHandlingService,
+		private readonly store: Store,
+		private readonly router: Router
 	) {
 		super(translateService);
 		this.setView();
@@ -61,13 +58,13 @@ export class VendorsComponent
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe((organization) => {
-				if (organization) {
-					this.selectedOrganization = organization;
-					this.loadVendors();
-				}
-			});
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization) => this.organization = organization),
+				tap(() => this.loadVendors()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.router.events
 			.pipe(untilDestroyed(this))
 			.subscribe((event: RouterEvent) => {
@@ -131,27 +128,26 @@ export class VendorsComponent
 	}
 
 	add() {
-		this.form.reset();
 		this.showAddCard = true;
-		this.tags = [];
 	}
 
 	edit(vendor: IOrganizationVendor) {
 		this.showAddCard = true;
-		this.form.patchValue(vendor);
 		this.tags = vendor.tags;
-		this.currentVendor = vendor;
+		this.selectedVendor = vendor;
+		this.form.patchValue(vendor);
 	}
 
 	cancel() {
 		this.form.reset();
+		this.selectedVendor = null;
+		this.tags = [];
 		this.showAddCard = false;
-		this.currentVendor = null;
 	}
 
 	save() {
-		if (this.currentVendor) {
-			this.updateVendor(this.currentVendor);
+		if (this.selectedVendor) {
+			this.updateVendor(this.selectedVendor);
 		} else {
 			this.createVendor();
 		}
@@ -161,7 +157,7 @@ export class VendorsComponent
 		if (!this.form.invalid) {
 			const { name, phone, email, website } = this.form.value;
 			const { tenantId } = this.store.user;
-			const { id: organizationId } = this.selectedOrganization;
+			const { id: organizationId } = this.organization;
 
 			this.organizationVendorsService
 				.create({
@@ -178,9 +174,10 @@ export class VendorsComponent
 						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.ADD_VENDOR',
 						{ name }
 					);
+				}).finally(() => {
+					this.loadVendors();
+					this.cancel();
 				});
-			this.cancel();
-			this.loadVendors();
 		} else {
 			// TODO translate
 			this.toastrService.danger(
@@ -218,7 +215,7 @@ export class VendorsComponent
 
 	async updateVendor(vendor: IOrganizationVendor) {
 		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.selectedOrganization;
+		const { id: organizationId } = this.organization;
 		const { name, phone, email, website } = this.form.value;
 
 		this.organizationVendorsService
@@ -236,27 +233,25 @@ export class VendorsComponent
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.UPDATE_VENDOR',
 					{ name }
 				);
+			})
+			.finally(() => {
+				this.loadVendors();
+				this.cancel();
 			});
-
-		this.loadVendors();
-		this.showAddCard = !this.showAddCard;
-		this.tags = [];
 	}
 
 	private loadVendors() {
-		if (!this.selectedOrganization) {
+		if (!this.organization) {
 			return;
 		}
 		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.selectedOrganization;
+		const { id: organizationId } = this.organization;
 
 		this.organizationVendorsService
 			.getAll(
 				{ organizationId, tenantId },
-				  ['tags'],
-				  {
-					  createdAt:'DESC'
-				  }
+				['tags'],
+				{ createdAt:'DESC' }
 			)
 			.then(({ items }) => {
 				this.vendors = items;

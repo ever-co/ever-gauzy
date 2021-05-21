@@ -366,10 +366,11 @@ export class HubstaffService {
 				if (record) {
 					//unset sourceId before update organization
 					delete organization['sourceId'];
+					const { gauzyId } = record;
 					await this.commandBus.execute(
 						new OrganizationUpdateCommand(
 							Object.assign(organization, {
-								gauzyId: record.gauzyId,
+								id: gauzyId,
 								imageUrl:
 									organization.imageUrl ||
 									getDummyImage(
