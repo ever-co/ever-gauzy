@@ -329,12 +329,14 @@
 			"TEMPLATE_BODY": "crwdns10228:0crwdne10228:0",
 			"TEMPLATE_PREVIEW": "crwdns10230:0crwdne10230:0",
 			"LANGUAGE": "crwdns10232:0crwdne10232:0",
-			"DEFAULT_INVOICE_TEMPLATE": "crwdns10238:0crwdne10238:0",
-			"DEFAULT_ESTIMATE_TEMPLATE": "crwdns10240:0crwdne10240:0",
-			"DEFAULT_RECEIPT_TEMPLATE": "crwdns10242:0crwdne10242:0"
+			"DEFAULT_INVOICE_TEMPLATE": "crwdns10376:0crwdne10376:0",
+			"DEFAULT_ESTIMATE_TEMPLATE": "crwdns10378:0crwdne10378:0",
+			"DEFAULT_RECEIPT_TEMPLATE": "crwdns10380:0crwdne10380:0",
+			"DEFAULT": "crwdns10382:0crwdne10382:0"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "crwdns90:0crwdne90:0",
+			"DEFAULT": "crwdns10384:0crwdne10384:0",
 			"FIRST_NAME": "crwdns92:0crwdne92:0",
 			"LAST_NAME": "crwdns94:0crwdne94:0",
 			"COMPANY_NAME": "crwdns96:0crwdne96:0",
@@ -1625,13 +1627,14 @@
 				"REQUIRE_REASON": "crwdns3258:0crwdne3258:0",
 				"REQUIRE_REASON_INFO": "crwdns7544:0crwdne7544:0",
 				"REQUIRE_DESCRIPTION": "crwdns3260:0crwdne3260:0",
-				"REQUIRE_DESCRIPTION_INFO": "crwdns7546:0crwdne7546:0",
+				"REQUIRE_DESCRIPTION_INFO": "crwdns10386:0crwdne10386:0",
 				"REQUIRE_PROJECT": "crwdns3262:0crwdne3262:0",
-				"REQUIRE_PROJECT_INFO": "crwdns7548:0crwdne7548:0",
+				"REQUIRE_PROJECT_INFO": "crwdns10388:0crwdne10388:0",
 				"REQUIRE_TASK": "crwdns3264:0crwdne3264:0",
-				"REQUIRE_TASK_INFO": "crwdns7550:0crwdne7550:0",
+				"REQUIRE_TASK_INFO": "crwdns10390:0crwdne10390:0",
 				"REQUIRE_CLIENT": "crwdns3266:0crwdne3266:0",
-				"REQUIRE_CLIENT_INFO": "crwdns7552:0crwdne7552:0"
+				"REQUIRE_CLIENT_INFO": "crwdns10392:0crwdne10392:0",
+				"ALLOW_TO_SET_DEFAULT_ORGANIZATION": "crwdns10394:0crwdne10394:0"
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "crwdns4764:0crwdne4764:0",

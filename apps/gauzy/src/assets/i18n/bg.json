@@ -1633,7 +1633,7 @@
 				"REQUIRE_TASK": "Require Task",
 				"REQUIRE_TASK_INFO": "Task of the tracked time will be required when timer starting and also for the time logs adding or editing manual time.",
 				"REQUIRE_CLIENT": "Require Client",
-				"REQUIRE_CLIENT_INFO": "Client of the tracked time will be required when timer starting and also for the time logs adding or editing manual time.",,
+				"REQUIRE_CLIENT_INFO": "Client of the tracked time will be required when timer starting and also for the time logs adding or editing manual time.",
 				"ALLOW_TO_SET_DEFAULT_ORGANIZATION": "Allow user to set default organization"
 			},
 			"TEAMS_PAGE": {
