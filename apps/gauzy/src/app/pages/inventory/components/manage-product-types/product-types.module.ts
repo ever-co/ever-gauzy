@@ -1,8 +1,6 @@
 import { NgModule } from '@angular/core';
-import {
-    ReactiveFormsModule
-} from '@nebular/auth/node_modules/@angular/forms';
-import { TranslateModule } from 'apps/gauzy/src/app/@shared/translate/translate.module';
+import { ReactiveFormsModule } from '@angular/forms';
+import { TranslateModule } from './../../../../@shared/translate/translate.module';
 import { ProductTypeService } from 'apps/gauzy/src/app/@core';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { SharedModule } from '../../../../@shared/shared.module';
@@ -14,12 +12,12 @@ import {
 
 } from '@nebular/theme';
 import { CommonModule } from '@angular/common';
-import { HeaderTitleModule } from 'apps/gauzy/src/app/@shared/components/header-title/header-title.module';
-import { ThemeModule } from 'apps/gauzy/src/app/@theme';
+import { HeaderTitleModule } from './../../../../@shared/components/header-title/header-title.module';
+import { ThemeModule } from './../../../../@theme/theme.module';
 import { ProductTypesComponent } from './product-types.component';
 import { ProductTypesRoutingModule } from './product-types-routing.module';
-import { CardGridModule } from 'apps/gauzy/src/app/@shared/card-grid/card-grid.module';
-import { ProductMutationModule } from 'apps/gauzy/src/app/@shared/product-mutation/product-mutation.module';
+import { CardGridModule } from './../../../../@shared/card-grid/card-grid.module';
+import { ProductMutationModule } from './../../../../@shared/product-mutation/product-mutation.module';
 
 
 const NB_MODULES = [
