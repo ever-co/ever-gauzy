@@ -1,27 +1,25 @@
-import { Connection, In } from 'typeorm';
+import { Connection, In, IsNull } from 'typeorm';
 import * as faker from 'faker';
 import * as _ from 'underscore';
 import {
 	TimeLogSourceEnum,
 	TimeLogType,
 	ITimeSlot,
-	IOrganizationProject
+	IOrganizationProject,
+	ITenant,
+	ITimesheet
 } from '@gauzy/contracts';
 import * as moment from 'moment';
-import { TimeLog } from '../time-log.entity';
-import { Timesheet } from '../timesheet.entity';
-import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
+import { IPluginConfig } from '@gauzy/common';
 import { createRandomScreenshot } from '../screenshot/screenshot.seed';
 import { createTimeSlots } from '../time-slot/time-slot.seed';
-import { Tenant } from '../../tenant/tenant.entity';
-import { IPluginConfig } from '@gauzy/common';
-import { Screenshot } from './../screenshot/screenshot.entity';
+import { OrganizationProject, Screenshot, TimeLog, Timesheet } from './../../core/entities/internal';
 
 export const createRandomTimeLogs = async (
 	connection: Connection,
 	config: IPluginConfig,
-	tenant: Tenant,
-	timeSheets: Timesheet[],
+	tenant: ITenant,
+	timeSheets: ITimesheet[],
 	defaultProjects: IOrganizationProject[],
 	noOfTimeLogsPerTimeSheet
 ) => {
@@ -106,7 +104,7 @@ export const createRandomTimeLogs = async (
 					timeLog.isBillable = faker.random.arrayElement([true, false]);
 					timeLog.deletedAt = null;
 					timeLog.organizationId = timesheet.organizationId,
-					timeLog.tenantId = timesheet.tenantId;
+					timeLog.tenant = tenant;
 
 					const newTimeSlots = createTimeSlots(
 						startedAt,
@@ -114,7 +112,7 @@ export const createRandomTimeLogs = async (
 					).map((timeSlot) => {
 						timeSlot.employeeId = timesheet.employeeId;
 						timeSlot.organizationId = timesheet.organizationId;
-						timeSlot.tenantId = timesheet.tenantId;
+						timeSlot.tenant = tenant;
 						timeSlot.timeLogs = [timeLog];
 						return timeSlot;
 					});
@@ -151,6 +149,12 @@ export const createRandomTimeLogs = async (
 					screenshots.push(...row);
 				});
 				await connection.manager.save(screenshots);
+
+				/*
+				* Need to delete screenshots which don't have timeslot
+				*/
+				const repository = connection.manager.getRepository(Screenshot);
+				await repository.delete({ timeSlotId: IsNull(), tenant });
 			})
 			.catch((err) => {
 				console.log({ err });

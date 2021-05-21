@@ -4,8 +4,7 @@ import {
 	RelationId,
 	ManyToOne,
 	JoinColumn,
-	CreateDateColumn,
-	AfterLoad
+	CreateDateColumn
 } from 'typeorm';
 import {
 	IActivity,
@@ -124,15 +123,4 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@IsDateString()
 	@Column({ nullable: true, default: null })
 	deletedAt?: Date;
-
-	@AfterLoad()
-	getStoppedAt?() {
-		if (typeof this.metaData === 'string') {
-			try {
-				this.metaData = JSON.parse(this.metaData);
-			} catch (error) {
-				this.metaData = {};
-			}
-		}
-	}
 }
