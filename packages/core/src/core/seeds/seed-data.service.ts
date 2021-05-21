@@ -307,6 +307,8 @@ import {
 } from '../../feature/feature.seed';
 import { createDefaultAccountingTemplates } from 'accounting-template/accounting-template.seed';
 import { DEFAULT_EMPLOYEES, DEFAULT_EVER_EMPLOYEES } from './../../employee';
+import { createRandomMerchants, createDefaultMerchants } from './../../merchant/merchant.seed';
+
 
 export enum SeederTypeEnum {
 	ALL = 'all',
@@ -878,6 +880,15 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
+			'Default Merchants',
+			createDefaultMerchants(
+				this.connection,
+				this.tenant,
+				this.organizations
+			)
+		);
+
+		await this.tryExecute(
 			'Default Time Frames',
 			createDefaultTimeFrames(
 				this.connection,
@@ -1419,6 +1430,15 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Random Product Variant Prices',
 			createRandomProductVariantPrice(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap
+			)
+		);
+
+		await this.tryExecute(
+			'Random Merchants',
+			createRandomMerchants(
 				this.connection,
 				tenants,
 				tenantOrganizationsMap
