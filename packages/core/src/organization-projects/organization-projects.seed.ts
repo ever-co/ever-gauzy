@@ -4,6 +4,7 @@ import { Tag } from '../tags/tag.entity';
 import { OrganizationProject } from './organization-projects.entity';
 import {
 	IOrganization,
+	ITenant,
 	OrganizationProjectBudgetTypeEnum,
 	TaskListTypeEnum
 } from '@gauzy/contracts';
@@ -13,6 +14,7 @@ import { DEFAULT_ORGANIZATION_PROJECTS } from './default-organization-projects';
 
 export const createDefaultOrganizationProjects = async (
 	connection: Connection,
+	tenant: ITenant,
 	defaultOrganizations: IOrganization[]
 ) => {
 	const tag = await connection.getRepository(Tag).create({
@@ -31,7 +33,7 @@ export const createDefaultOrganizationProjects = async (
 			.find({
 				where: {
 					organizationId: organization.id,
-					tenantId: organization.tenantId
+					tenantId: tenant.id
 				}
 			});
 		const organizationContact = faker.random.arrayElement(
@@ -43,7 +45,7 @@ export const createDefaultOrganizationProjects = async (
 		project.name = name;
 		project.organizationContact = organizationContact;
 		project.organizationId = organization.id;
-		project.tenant = organization.tenant;
+		project.tenant = tenant;
 		project.budgetType = faker.random.arrayElement(
 			Object.values(OrganizationProjectBudgetTypeEnum)
 		);

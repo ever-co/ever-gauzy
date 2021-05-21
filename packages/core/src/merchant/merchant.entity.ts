@@ -49,7 +49,8 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 
 	@ApiProperty()
 	@ManyToOne(
-		() => ImageAsset
+		() => ImageAsset,
+		{ cascade: true }
 	)
 	@JoinColumn()
 	logo: ImageAsset;

@@ -45,7 +45,7 @@ export class TenantDetailsComponent implements OnInit, OnDestroy {
 				this.user = await this.usersService.getMe(['tenant']);
 				this.store.user = this.user;
 				this.organizationsService
-					.create({ ...formData, tenant })
+					.create({ ...formData, tenant, isDefault: true })
 					.then(() => {
 						this.router.navigate(['/onboarding/complete']);
 					})

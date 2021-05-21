@@ -329,12 +329,14 @@
 			"TEMPLATE_BODY": "Template Body",
 			"TEMPLATE_PREVIEW": "Template Preview",
 			"LANGUAGE": "Език (Language)",
-			"DEFAULT_INVOICE_TEMLPATE": "Default Invoice Template",
-			"DEFAULT_ESTIMATE_TEMLPATE": "Default Estimate Template",
-			"DEFAULT_RECEIPT_TEMLPATE": "Default Receipt Template"
+			"DEFAULT_INVOICE_TEMPLATE": "Default Invoice Template",
+			"DEFAULT_ESTIMATE_TEMPLATE": "Default Estimate Template",
+			"DEFAULT_RECEIPT_TEMPLATE": "Default Receipt Template",
+			"DEFAULT": "Default Organization"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
+			"DEFAULT": "Select Default",
 			"FIRST_NAME": "Име",
 			"LAST_NAME": "Фамилия",
 			"COMPANY_NAME": "Име на компания",
@@ -1625,13 +1627,14 @@
 				"REQUIRE_REASON": "Require Reason",
 				"REQUIRE_REASON_INFO": "Reason of the add manual time or edit time logs.",
 				"REQUIRE_DESCRIPTION": "Require Description",
-				"REQUIRE_DESCRIPTION_INFO": "Description of the tracked time will be required when timer starting and alos for the time logs adding or editing manual time.",
+				"REQUIRE_DESCRIPTION_INFO": "Description of the tracked time will be required when timer starting and also for the time logs adding or editing manual time.",
 				"REQUIRE_PROJECT": "Require Project",
-				"REQUIRE_PROJECT_INFO": "Project of the tracked time will be required when timer starting and alos for the time logs adding or editing manual time.",
+				"REQUIRE_PROJECT_INFO": "Project of the tracked time will be required when timer starting and also for the time logs adding or editing manual time.",
 				"REQUIRE_TASK": "Require Task",
-				"REQUIRE_TASK_INFO": "Task of the tracked time will be required when timer starting and alos for the time logs adding or editing manual time.",
+				"REQUIRE_TASK_INFO": "Task of the tracked time will be required when timer starting and also for the time logs adding or editing manual time.",
 				"REQUIRE_CLIENT": "Require Client",
-				"REQUIRE_CLIENT_INFO": "Client of the tracked time will be required when timer starting and alos for the time logs adding or editing manual time."
+				"REQUIRE_CLIENT_INFO": "Client of the tracked time will be required when timer starting and also for the time logs adding or editing manual time.",
+				"ALLOW_TO_SET_DEFAULT_ORGANIZATION": "Allow user to set default organization"
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",

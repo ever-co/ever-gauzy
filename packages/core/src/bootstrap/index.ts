@@ -71,15 +71,12 @@ export async function bootstrap(
 		.build();
 
 	const document = SwaggerModule.createDocument(app, options);
-
 	SwaggerModule.setup('swg', app, document);
 
 	let { port, host } = config.apiConfigOptions;
-
 	if (!port) {
 		port = 3000;
 	}
-
 	if (!host) {
 		host = '0.0.0.0';
 	}
@@ -88,7 +85,9 @@ export async function bootstrap(
 	console.log(chalk.green(`Configured Port: ${port}`));
 
 	await app.listen(port, host, () => {
-		console.log(`Listening at http://${host}:${port}/${globalPrefix}`);
+		console.log(chalk.magenta(`Listening at http://${host}:${port}/${globalPrefix}`));
+		//Seed Demo Server
+		service.excuteDemoSeed();
 	});
 
 	return app;

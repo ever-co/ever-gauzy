@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@nebular/auth/node_modules/@angular/router';
+import { RouterModule, Routes } from '@angular/router';
 import { MerchantComponent } from './merchant.component';
 import { NgxPermissionsGuard } from 'ngx-permissions';
 import { PermissionsEnum } from '@gauzy/contracts';

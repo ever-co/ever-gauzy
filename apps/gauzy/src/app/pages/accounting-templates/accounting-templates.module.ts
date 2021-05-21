@@ -7,7 +7,7 @@ import {
 	NbSelectModule,
 	NbButtonModule
 } from '@nebular/theme';
-import { AceEditorModule } from 'ng2-ace-editor';
+import { AceEditorModule } from 'ngx-ace-editor-wrapper';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { LanguageSelectorModule } from '../../@shared/language/language-selector/language-selector.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
