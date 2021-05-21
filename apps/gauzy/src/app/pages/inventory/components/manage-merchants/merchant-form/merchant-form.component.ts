@@ -125,7 +125,7 @@ export class MerchantFormComponent
 				this.merchant ? this.merchant.name : '',
 				Validators.required
 			],
-			logo: [this.merchant ? this.merchant.logo.url : ''],
+			logo: [this.merchant && this.merchant.logo ? this.merchant.logo.url : ''],
 			tags: this.tags,
 			code: [
 				this.merchant ? this.merchant.code : '',
@@ -144,10 +144,10 @@ export class MerchantFormComponent
 				Validators.pattern('^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$')
 			],
 			fax: [
-				this.merchant ? this.merchant.contact.fax : '',
+				this.merchant && this.merchant.contact ? this.merchant.contact.fax : '',
 			],
 			fiscalInformation: [
-				this.merchant ? this.merchant.contact.fiscalInformation : '',
+				this.merchant && this.merchant.contact ? this.merchant.contact.fiscalInformation : '',
 			],
 			website: [
 				this.merchant ? this.merchant.contact.website : '',
