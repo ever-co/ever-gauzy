@@ -1,12 +1,9 @@
 import { NgModule } from '@angular/core';
 import { MerchantTableComponent } from './merchant-table/merchant-table.component';
 import { MerchantFormComponent } from './merchant-form/merchant-form.component';
-import {
-    FormsModule,
-    ReactiveFormsModule
-} from '@nebular/auth/node_modules/@angular/forms';
-import { TranslateModule } from 'apps/gauzy/src/app/@shared/translate/translate.module';
-import { MerchantService } from 'apps/gauzy/src/app/@core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { TranslateModule } from '../../../../@shared/translate/translate.module';
+import { MerchantService } from '../../../../@core';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { SharedModule } from '../../../../@shared/shared.module';
 import {
@@ -22,14 +19,14 @@ import {
     NbStepperModule
 } from '@nebular/theme';
 import { CommonModule } from '@angular/common';
-import { HeaderTitleModule } from 'apps/gauzy/src/app/@shared/components/header-title/header-title.module';
-import { ThemeModule } from 'apps/gauzy/src/app/@theme';
+import { HeaderTitleModule } from '../../../../@shared/components/header-title/header-title.module';
+import { ThemeModule } from '../../../../@theme/theme.module';
 import { MerchantRoutingModule } from './merchant-routing.module';
 import { MerchantComponent } from './merchant.component';
-import { LocationFormModule, LeafletMapModule } from 'apps/gauzy/src/app/@shared/forms';
-import { CurrencyModule } from 'apps/gauzy/src/app/@shared';
-import { PaginationModule } from 'apps/gauzy/src/app/@shared/pagination/pagination.module';
-import { TagsColorInputModule } from 'apps/gauzy/src/app/@shared/tags/tags-color-input/tags-color-input.module';
+import { LocationFormModule, LeafletMapModule } from '../../../../@shared/forms';
+import { CurrencyModule } from '../../../../@shared/currency/currency.module';
+import { PaginationModule } from '../../../../@shared/pagination/pagination.module';
+import { TagsColorInputModule } from '../../../../@shared/tags/tags-color-input/tags-color-input.module';
 
 const NB_MODULES = [
 	NbCardModule,
