@@ -32,6 +32,7 @@ import { ManageQuantityComponent } from './manage-quantity/manage-quantity.compo
 import { ManageVariantsQuantityComponent } from './manage-variants-quantity/manage-variants-quantity.component';
 import { ManageVariantsQuantityFormComponent } from './manage-variants-quantity-form/manage-variants-quantity-form.component';
 import { LeafletMapModule, LocationFormModule } from 'apps/gauzy/src/app/@shared/forms';
+import { TagsColorInputModule } from 'apps/gauzy/src/app/@shared/tags/tags-color-input/tags-color-input.module';
 
 
 const NB_MODULES = [
@@ -71,7 +72,8 @@ const NB_MODULES = [
         HeaderTitleModule,
         ThemeModule,
         LocationFormModule,
-		LeafletMapModule,
+        LeafletMapModule,
+        TagsColorInputModule
     ],
     entryComponents: [
         ProductTypeMutationComponent,
