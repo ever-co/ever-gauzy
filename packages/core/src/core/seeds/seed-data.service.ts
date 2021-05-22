@@ -15,7 +15,7 @@ import {
 } from 'typeorm';
 import * as chalk from 'chalk';
 import { IPluginConfig, SEEDER_DB_CONNECTION } from '@gauzy/common';
-import { environment as env, getConfig } from '@gauzy/config';
+import { environment as env, getConfig, ConfigService } from '@gauzy/config';
 import {
 	IEmployee,
 	IOrganization,
@@ -200,8 +200,8 @@ import {
 } from '../../candidate-education/candidate-education.seed';
 import { createRandomContacts } from '../../contact/contact.seed';
 import {
-	createRandomOrganizationContact,
-	createDefaultOrganizationContact
+	createDefaultOrganizationContact,
+	createRandomOrganizationContact
 } from '../../organization-contact/organization-contact.seed';
 import {
 	createDefaultAvailabilitySlots,
@@ -331,7 +331,10 @@ export class SeedDataService {
 	config: IPluginConfig = getConfig();
 	seedType: SeederTypeEnum;
 
-	constructor(private readonly moduleRef: ModuleRef) { }
+	constructor(
+		private readonly moduleRef: ModuleRef,
+		private readonly configService: ConfigService
+	) { }
 
 	/**
 	 * This config is applied only for `yarn seed:*` type calls because
@@ -379,8 +382,13 @@ export class SeedDataService {
 	* Seed Default Data
 	*/
 	public async runDefaultSeed() {
-		this.seedType = SeederTypeEnum.DEFAULT;
 		try {
+
+			this.seedType = SeederTypeEnum.DEFAULT;
+			if (this.configService.get('demo') === true) {
+				this.seedType = SeederTypeEnum.ALL;
+			}
+
 			await this.cleanUpPreviousRuns();
 
 			// Connect to database
@@ -871,7 +879,10 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Organization Contacts',
-			createDefaultOrganizationContact(this.connection)
+			createDefaultOrganizationContact(
+				this.connection,
+				this.tenant
+			)
 		);
 
 		// Employee level data that need connection, tenant, organization, role, users, employee
@@ -1034,21 +1045,23 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Incomes',
-			createDefaultIncomes(this.connection, {
-				organizations: this.organizations,
-				employees: this.defaultEmployees
-			})
+			createDefaultIncomes(
+				this.connection, 
+				this.organizations,
+				this.defaultEmployees
+			)
 		);
 
 		await this.tryExecute(
 			'Default Expenses',
-			createDefaultExpenses(this.connection, {
-				organizations: this.organizations,
-				tenant: this.tenant,
-				employees: this.defaultEmployees,
+			createDefaultExpenses(
+				this.connection, 
+				this.organizations,
+				this.tenant,
+				this.defaultEmployees,
 				categories,
 				organizationVendors
-			})
+			)
 		);
 
 		await this.tryExecute(
@@ -1780,7 +1793,6 @@ export class SeedDataService {
 			createRandomOrganizationContact(
 				this.connection,
 				tenants,
-				tenantEmployeeMap,
 				tenantOrganizationsMap,
 				noOfContactsPerOrganization
 			)

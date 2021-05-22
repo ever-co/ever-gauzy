@@ -1,39 +1,35 @@
 import { Connection } from 'typeorm';
-import { Expense } from './expense.entity';
 import * as faker from 'faker';
 import {
 	IOrganization,
 	IEmployee,
 	IExpenseCategory,
-	IOrganizationVendor
+	IOrganizationVendor,
+	ITenant
 } from '@gauzy/contracts';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as csv from 'csv-parser';
-import { Tenant } from '../tenant/tenant.entity';
-import { OrganizationVendor } from '../organization-vendors/organization-vendors.entity';
-import { ExpenseCategory } from '../expense-categories/expense-category.entity';
 import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
+import { Expense, Tenant } from './../core/entities/internal';
 
 export const createDefaultExpenses = async (
 	connection: Connection,
-	defaultData: {
-		organizations: IOrganization[];
-		tenant: Tenant;
-		employees: IEmployee[];
-		categories: IExpenseCategory[] | void;
-		organizationVendors: IOrganizationVendor[] | void;
-	}
+	organizations: IOrganization[],
+	tenant: ITenant,
+	employees: IEmployee[],
+	categories: IExpenseCategory[] | void,
+	organizationVendors: IOrganizationVendor[] | void,
 ): Promise<Expense[]> => {
-	if (!defaultData.categories) {
+	if (!categories) {
 		console.warn(
 			'Warning: Categories not found, default expenses would not be created'
 		);
 		return;
 	}
 
-	if (!defaultData.organizationVendors) {
+	if (!organizationVendors) {
 		console.warn(
 			'Warning: organizationVendors not found, default expenses would not be created'
 		);
@@ -55,46 +51,37 @@ export const createDefaultExpenses = async (
 	const expensesFromFile = [];
 	let defaultExpenses: Expense[] = [];
 
-	for (const organization of defaultData.organizations) {
+	for (const organization of organizations) {
 		fs.createReadStream(filePath)
 			.pipe(csv())
 			.on('data', (data) => expensesFromFile.push(data))
 			.on('end', async () => {
 				defaultExpenses = expensesFromFile.map((seedExpense) => {
 					const expense = new Expense();
-					const foundEmployee = defaultData.employees.find(
+					const foundEmployee = employees.find(
 						(emp) => emp.user.email === seedExpense.email
 					);
-
-					const foundCategory = (defaultData.categories || []).find(
+					const foundCategory = (categories || []).find(
 						(category) => seedExpense.categoryName === category.name
 					);
-
-					const foundVendor = (
-						defaultData.organizationVendors || []
-					).find((vendor) => seedExpense.vendorName === vendor.name);
-
+					const foundVendor = (organizationVendors || []).find((vendor) => seedExpense.vendorName === vendor.name);
 					expense.employee = foundEmployee;
 					expense.organization = organization;
-					expense.tenant = organization.tenant;
+					expense.tenant = tenant;
 					expense.amount = Math.abs(seedExpense.amount);
 					expense.vendor = foundVendor;
 					expense.category = foundCategory;
-					expense.currency =
-						seedExpense.currency || env.defaultCurrency;
+					expense.currency = seedExpense.currency || env.defaultCurrency;
 					expense.valueDate = faker.date.between(
 						new Date(),
 						moment(new Date()).add(10, 'days').toDate()
 					);
 					expense.notes = seedExpense.notes;
-
 					return expense;
 				});
-
 				await insertExpense(connection, defaultExpenses);
 			});
 	}
-
 	return expensesFromFile;
 };
 
@@ -102,8 +89,8 @@ export const createRandomExpenses = async (
 	connection: Connection,
 	tenants: Tenant[],
 	tenantEmployeeMap: Map<Tenant, IEmployee[]>,
-	organizationVendorsMap: Map<IOrganization, OrganizationVendor[]> | void,
-	categoriesMap: Map<IOrganization, ExpenseCategory[]> | void
+	organizationVendorsMap: Map<IOrganization, IOrganizationVendor[]> | void,
+	categoriesMap: Map<IOrganization, IExpenseCategory[]> | void
 ): Promise<void> => {
 	if (!categoriesMap) {
 		console.warn(
@@ -111,7 +98,6 @@ export const createRandomExpenses = async (
 		);
 		return;
 	}
-
 	if (!organizationVendorsMap) {
 		console.warn(
 			'Warning: organizationVendorsMap not found, RandomExpenses will not be created'
@@ -130,20 +116,15 @@ export const createRandomExpenses = async (
 	for (const tenant of tenants) {
 		const employees = tenantEmployeeMap.get(tenant);
 		for (const employee of employees) {
-			const organizationVendors = organizationVendorsMap.get(
-				employee.organization
-			);
+			const organizationVendors = organizationVendorsMap.get(employee.organization);
 			const categories = categoriesMap.get(employee.organization);
 			const randomExpenses: Expense[] = [];
-
 			for (let index = 0; index < 100; index++) {
 				const expense = new Expense();
-
 				const currentIndex = faker.datatype.number({
 					min: 0,
 					max: index % 5
 				});
-
 				expense.organization = employee.organization;
 				expense.tenant = tenant;
 				expense.employee = employee;
@@ -153,14 +134,12 @@ export const createRandomExpenses = async (
 						currentIndex % organizationVendors.length
 					];
 				expense.category = categories[currentIndex % categories.length];
-				expense.currency =
-					employee.organization.currency || env.defaultCurrency;
+				expense.currency = employee.organization.currency || env.defaultCurrency;
 				expense.valueDate = faker.date.between(
 					new Date(),
 					moment(new Date()).add(10, 'days').toDate()
 				);
 				expense.notes = notesArray[currentIndex];
-
 				randomExpenses.push(expense);
 			}
 			await insertExpense(connection, randomExpenses);
