@@ -16,6 +16,7 @@ import { IPagination } from './pagination';
 export interface ICrudService<T> {
 	count(filter?: FindManyOptions<T>): Promise<number>;
 	findAll(filter?: FindManyOptions<T>): Promise<IPagination<T>>;
+	search(filter?: FindManyOptions<T>): Promise<IPagination<T>>;
 	findOne(
 		id: string | number | FindOneOptions<T> | FindConditions<T>,
 		options?: FindOneOptions<T>
