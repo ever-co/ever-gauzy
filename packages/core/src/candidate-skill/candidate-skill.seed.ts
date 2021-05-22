@@ -12,24 +12,22 @@ export const createCandidateSkills = async (
 	candidates: ICandidate[] | void,
 	organization: Organization
 ): Promise<CandidateSkill[]> => {
-	let defaultCandidateSkills = [];
 	if (!candidates) {
 		console.warn(
 			'Warning: candidates not found, CandidateSkills will not be created'
 		);
 		return;
 	}
-
-	candidates.forEach((candidate) => {
+	let defaultCandidateSkills = [];
+	for (const candidate of candidates) {
 		const skills = DEFAULT_CANDIDATE_SKILLS.map((skill: ISkill) => ({
 			name: skill.name,
 			candidateId: candidate.id,
 			...{ organization, tenant }
 		}));
 		defaultCandidateSkills = [...defaultCandidateSkills, ...skills];
-	});
-
-	insertCandidateSkills(connection, defaultCandidateSkills);
+	}
+	await insertCandidateSkills(connection, defaultCandidateSkills);
 	return defaultCandidateSkills;
 };
 
@@ -47,25 +45,22 @@ export const createRandomCandidateSkills = async (
 
 	let candidateSkills = [];
 	const candidateSkillsMap: Map<ICandidate, any[]> = new Map();
-
 	for await (const tenant of tenants || []) {
 		const organizations = await connection.manager.find(Organization, {
 			where: [{ tenant: tenant }]
 		});
 		const candidates = tenantCandidatesMap.get(tenant);
-		(candidates || []).forEach((candidate) => {
+		for (const candidate of candidates) {
 			const skills = DEFAULT_CANDIDATE_SKILLS.map((skill) => ({
 				name: skill.name,
 				candidateId: candidate.id,
 				organization: faker.random.arrayElement(organizations),
 				tenant: tenant
 			}));
-
 			candidateSkillsMap.set(candidate, skills);
 			candidateSkills = [...candidateSkills, ...skills];
-		});
+		}
 	}
-
 	await insertCandidateSkills(connection, candidateSkills);
 	return candidateSkillsMap;
 };

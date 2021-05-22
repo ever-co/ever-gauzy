@@ -928,6 +928,7 @@ export class SeedDataService {
 			'Default Organization Departments',
 			createDefaultOrganizationDepartments(
 				this.connection,
+				this.tenant,
 				this.organizations
 			)
 		);
@@ -961,7 +962,11 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Tags',
-			createDefaultTags(this.connection, this.tenant, this.organizations)
+			createDefaultTags(
+				this.connection, 
+				this.tenant, 
+				this.organizations
+			)
 		);
 
 		await this.tryExecute(
@@ -975,16 +980,21 @@ export class SeedDataService {
 
 		const organizationVendors = await this.tryExecute(
 			'Default Organization Vendors',
-			createOrganizationVendors(this.connection, this.organizations)
+			createOrganizationVendors(
+				this.connection, 
+				this.tenant,
+				this.organizations
+			)
 		);
 
 		const defaultCandidates = await this.tryExecute(
 			'Default Candidates',
-			createDefaultCandidates(this.connection, {
-				tenant: this.tenant,
-				org: this.defaultOrganization,
-				users: [...this.defaultCandidateUsers]
-			})
+			createDefaultCandidates(
+				this.connection,
+				this.tenant,
+				this.defaultOrganization,
+				this.defaultCandidateUsers
+			)
 		);
 
 		await this.tryExecute(
@@ -1040,7 +1050,11 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Candidate Educations',
-			createCandidateEducations(this.connection, defaultCandidates)
+			createCandidateEducations(
+				this.connection,
+				this.tenant,
+				defaultCandidates
+			)
 		);
 
 		await this.tryExecute(

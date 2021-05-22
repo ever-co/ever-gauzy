@@ -1,42 +1,32 @@
 import { Connection } from 'typeorm';
 import { Tenant, Merchant, Contact, ImageAsset } from 'core';
 import * as faker from 'faker';
-import { IOrganization } from '@gauzy/contracts';
-
+import { IOrganization, ITenant } from '@gauzy/contracts';
 
 export const createRandomMerchants = async (
     connection: Connection,
-    tenants: Tenant[],
-    tenantOrganizationsMap: Map<Tenant, IOrganization[]>
+    tenants: ITenant[],
+    tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ) => {
-
     if (!tenantOrganizationsMap) {
         console.warn(
             'Warning: tenantOrganizationsMap not found, Product Merchants not be created'
         );
         return;
     }
-
-
     let merchants: Merchant[] = [];
-
     for (const tenant of tenants) {
         const tenantOrgs = tenantOrganizationsMap.get(tenant);
         for (const tenantOrg of tenantOrgs) {
-
             for (let i = 0; i <= Math.floor(Math.random() * 3) + 1; i++) {
                 const merchant = applyRandomProperties(new Merchant());
-
                 merchant.organization = tenantOrg;
                 merchant.tenant = tenant;
-
                 merchants.push(merchant);
             }
         }
     }
-
     await connection.manager.save(merchants);
-
 }
 
 
@@ -44,20 +34,14 @@ export const createDefaultMerchants = async (connection: Connection,
     tenant: Tenant,
     organizations: IOrganization[]
 ) => {
-
     let merchants: Merchant[] = [];
-
     for (const organization of organizations) {
         const merchant = applyRandomProperties(new Merchant());
-
         merchant.organization = organization;
         merchant.tenant = tenant;
-
         merchants.push(merchant);
     } 
-
     await connection.manager.save(merchants);
-
 }
 
 const applyRandomProperties = (merchant: Merchant) => {

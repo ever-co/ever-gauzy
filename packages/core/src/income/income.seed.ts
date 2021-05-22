@@ -75,7 +75,7 @@ export const createRandomIncomes = async (
 	const randomIncomes: Income[] = []
 	for (const tenant of tenants || []) {
 		const employees = tenantEmployeeMap.get(tenant);
-		(employees || []).forEach((employee) => {
+		for (const employee of employees || []) {
 			for (let index = 0; index < 100; index++) {
 				const income = new Income();
 				const currentIndex = faker.datatype.number({
@@ -99,7 +99,7 @@ export const createRandomIncomes = async (
 				income.notes = notesArray[currentIndex];
 				randomIncomes.push(income);
 			}
-		});
+		}
 	}
 	await insertIncome(connection, randomIncomes);
 	return;

@@ -10,7 +10,7 @@ export const createDefaultTimeFrames = async (
 	organizations: Organization[]
 ): Promise<GoalTimeFrame[]> => {
 	const defaultTimeFrames = [];
-	organizations.forEach((organization) => {
+	for (const organization of organizations) {
 		// Annual time frame current year
 		defaultTimeFrames.push({
 			name: `Annual-${moment().year()}`,
@@ -33,10 +33,9 @@ export const createDefaultTimeFrames = async (
 				organization: organization
 			});
 		}
-	});
+	}
 
 	await insertDefaultTimeFrames(connection, defaultTimeFrames);
-
 	return defaultTimeFrames;
 };
 
