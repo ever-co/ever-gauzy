@@ -19,7 +19,7 @@ import { IPluginConfig } from '@gauzy/common';
 export const createDefaultFeatureToggle = async (
 	connection: Connection,
 	config: IPluginConfig,
-	tenant: Tenant
+	tenant: ITenant
 ) => {
 	await cleanFeature(connection, config);
 
@@ -48,7 +48,7 @@ export const createDefaultFeatureToggle = async (
 
 export const createRandomFeatureToggle = async (
 	connection: Connection,
-	tenants: Tenant[]
+	tenants: ITenant[]
 ) => {
 	const features: IFeature[] = await connection.getRepository(Feature).find();
 

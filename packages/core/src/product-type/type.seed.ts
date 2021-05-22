@@ -4,34 +4,21 @@ import { ProductType } from './product-type.entity';
 import * as seed from './product-type.seed.json';
 import { ProductTypeTranslation } from './product-type-translation.entity';
 import { Tenant } from '../tenant/tenant.entity';
+import { IOrganization, ITenant } from '@gauzy/contracts';
 
 export const createDefaultProductType = async (
 	connection: Connection,
-	organizations: Organization[]
+	tenant: ITenant,
+	organizations: IOrganization[]
 ): Promise<ProductType[]> => {
 	const seedProductTypes: ProductType[] = [];
-
-	organizations.forEach(async (organization) => {
-		seed.forEach((seedProductType) => {
-			const newType = new ProductType();
-
-			newType.icon = seedProductType.icon;
-			newType.organization = organization;
-			newType.tenant = organization.tenant;
-			newType.translations = [];
-
-			seedProductType.translations.forEach((translation) => {
-				const newTranslation = new ProductTypeTranslation();
-				newTranslation.tenant = organization;
-				newTranslation.tenant = organization.tenant;
-				Object.assign(newTranslation, translation);
-				newType.translations.push(newTranslation);
-			});
-
-			seedProductTypes.push(newType);
-		});
-	});
-
+	for (const organization of organizations) {
+		const productTypes = await generateProductType(
+			tenant,
+			organization
+		);
+		seedProductTypes.push(...productTypes);
+	}
 	return await insertProductTypes(connection, seedProductTypes);
 };
 
@@ -53,32 +40,39 @@ export const createRandomProductType = async (
 		);
 		return;
 	}
-
-	const productTypes: ProductType[] = [];
-
+	const seedProductTypes: ProductType[] = [];
 	for (const tenant of tenants) {
-		const tenantOrgs = tenantOrganizationsMap.get(tenant);
-		for (const tenantOrg of tenantOrgs) {
-			for (const seedProductType of seed) {
-				const productType = new ProductType();
-
-				productType.icon = seedProductType.icon;
-				productType.organization = tenantOrg;
-				productType.tenant = tenantOrg.tenant;
-				productType.translations = [];
-
-				seedProductType.translations.forEach((translation) => {
-					const newTranslation = new ProductTypeTranslation();
-					newTranslation.organization = tenantOrg;
-					newTranslation.tenant = tenantOrg.tenant;
-					Object.assign(newTranslation, translation);
-					productType.translations.push(newTranslation);
-				});
-
-				productTypes.push(productType);
-			}
+		const organizations = tenantOrganizationsMap.get(tenant);
+		for (const organization of organizations) {
+			const productTypes = await generateProductType(
+				tenant,
+				organization
+			);
+			seedProductTypes.push(...productTypes);
 		}
 	}
+	return await insertProductTypes(connection, seedProductTypes);
+};
 
-	return await insertProductTypes(connection, productTypes);
+const generateProductType = async (
+	tenant: ITenant,
+	organization: IOrganization
+): Promise<ProductType[]> => {
+	const productTypes: ProductType[] = [];
+	for (const seedProductType of seed) {
+		const productType = new ProductType();
+		productType.icon = seedProductType.icon;
+		productType.organization = organization;
+		productType.tenant = tenant;
+		productType.translations = [];
+		seedProductType.translations.forEach((translation) => {
+			const newTranslation = new ProductTypeTranslation();
+			newTranslation.organization = organization;
+			newTranslation.tenant = tenant;
+			Object.assign(newTranslation, translation);
+			productType.translations.push(newTranslation);
+		});
+		productTypes.push(productType);
+	}
+	return productTypes;
 };

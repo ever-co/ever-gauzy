@@ -1,20 +1,16 @@
 import { Connection } from 'typeorm';
-import { Invite } from './invite.entity';
-import { Tenant } from '../tenant/tenant.entity';
-import { Organization } from '../organization/organization.entity';
 import * as faker from 'faker';
-import { InviteStatusEnum, RolesEnum } from '@gauzy/contracts';
-import { Role } from '../role/role.entity';
+import { InviteStatusEnum, IOrganization, ITenant, IUser, RolesEnum } from '@gauzy/contracts';
 import { sign } from 'jsonwebtoken';
 import { environment as env } from '@gauzy/config';
-import { User } from '../user/user.entity';
 import * as moment from 'moment';
+import { Invite, Role } from './../core/entities/internal';
 
 export const createDefaultEmployeeInviteSent = async (
 	connection: Connection,
-	tenant: Tenant,
-	organizations: Organization[],
-	SuperAdmin: User[]
+	tenant: ITenant,
+	organizations: IOrganization[],
+	SuperAdmin: IUser[]
 ): Promise<any> => {
 	const totalInvites: Invite[] = [];
 	const invitationStatus = Object.values(InviteStatusEnum);
@@ -51,9 +47,9 @@ export const createDefaultEmployeeInviteSent = async (
 
 export const createRandomEmployeeInviteSent = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>,
-	tenantSuperAdminMap: Map<Tenant, User[]>,
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	tenantSuperAdminMap: Map<ITenant, IUser[]>,
 	noOfInvitesPerOrganization: number
 ): Promise<any> => {
 	const totalInvites: Invite[] = [];

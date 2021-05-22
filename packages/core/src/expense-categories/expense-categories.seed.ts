@@ -1,15 +1,14 @@
-import { ExpenseCategoriesEnum, IOrganization } from '@gauzy/contracts';
+import { ExpenseCategoriesEnum, IExpenseCategory, IOrganization, ITenant } from '@gauzy/contracts';
 import { Connection } from 'typeorm';
 import { ExpenseCategory } from './expense-category.entity';
-import { Tenant } from '../tenant/tenant.entity';
 
 export const createExpenseCategories = async (
 	connection: Connection,
-	tenant: Tenant,
+	tenant: ITenant,
 	organizations: IOrganization[]
 ): Promise<ExpenseCategory[]> => {
 	let defaultExpenseCategories: ExpenseCategory[] = [];
-	organizations.forEach((organization) => {
+	for (const organization of organizations) {
 		const categories = Object.values(ExpenseCategoriesEnum).map((name) => {
 			const category = new ExpenseCategory();
 			category.name = name;
@@ -18,20 +17,18 @@ export const createExpenseCategories = async (
 			return category;
 		});
 		defaultExpenseCategories = [...defaultExpenseCategories, ...categories];
-	});
-
+	}
 	return insertExpenseCategories(connection, defaultExpenseCategories);
 };
 
 export const createRandomExpenseCategories = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationMap: Map<Tenant, IOrganization[]>
-): Promise<Map<IOrganization, ExpenseCategory[]>> => {
+	tenants: ITenant[],
+	tenantOrganizationMap: Map<ITenant, IOrganization[]>
+): Promise<Map<IOrganization, IExpenseCategory[]>> => {
 	let expenseCategories: ExpenseCategory[] = [];
-	const expenseCategoryMap: Map<IOrganization, ExpenseCategory[]> = new Map();
-
-	(tenants || []).forEach((tenant) => {
+	const expenseCategoryMap: Map<IOrganization, IExpenseCategory[]> = new Map();
+	for (const tenant of tenants) {
 		const organizations = tenantOrganizationMap.get(tenant);
 		(organizations || []).forEach((organization) => {
 			const categories = Object.values(ExpenseCategoriesEnum).map(
@@ -46,8 +43,7 @@ export const createRandomExpenseCategories = async (
 			expenseCategoryMap.set(organization, categories);
 			expenseCategories = [...expenseCategories, ...categories];
 		});
-	});
-
+	}
 	await insertExpenseCategories(connection, expenseCategories);
 	return expenseCategoryMap;
 };

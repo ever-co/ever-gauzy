@@ -13,12 +13,10 @@ export const createRolePermissions = async (
 	tenants: ITenant[]
 ): Promise<IRolePermission[]> => {
 	const rolePermissions: IRolePermission[] = [];
-
-	tenants.forEach((t) => {
+	for (const tenant of tenants) {
 		DEFAULT_ROLE_PERMISSIONS.forEach((r) => {
 			const role = roles.find(
-				(dbRole) =>
-					dbRole.name === r.role && dbRole.tenant.name === t.name
+				(dbRole) => dbRole.name === r.role && dbRole.tenant.name === tenant.name
 			);
 			if (role) {
 				r.defaultEnabledPermissions.forEach((p) => {
@@ -26,12 +24,11 @@ export const createRolePermissions = async (
 					rolePermission.roleId = role.id;
 					rolePermission.permission = p;
 					rolePermission.enabled = true;
-					rolePermission.tenant = role.tenant;
+					rolePermission.tenant = tenant;
 					rolePermissions.push(rolePermission);
 				});
 			}
 		});
-	});
-
+	}
 	return await connection.manager.save(rolePermissions);
 };

@@ -10,7 +10,7 @@ export const createDefaultGeneralGoalSetting = async (
 	organizations: Organization[]
 ): Promise<GoalGeneralSetting[]> => {
 	const defaultGeneralGoalSetting = [];
-	organizations.forEach((organization) => {
+	for (const organization of organizations) {
 		defaultGeneralGoalSetting.push({
 			maxObjectives: 5,
 			maxKeyResults: 5,
@@ -22,7 +22,7 @@ export const createDefaultGeneralGoalSetting = async (
 			organization: organization,
 			tenant: tenant
 		});
-	});
+	}
 	await insertDefaultGeneralGoalSetting(
 		connection,
 		defaultGeneralGoalSetting

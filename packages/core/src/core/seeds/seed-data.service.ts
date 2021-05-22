@@ -792,7 +792,10 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Key Result Template',
-			createDefaultKeyResultTemplates(this.connection, this.tenant)
+			createDefaultKeyResultTemplates(
+				this.connection, 
+				this.tenant
+			)
 		);
 
 		await this.tryExecute(
@@ -850,19 +853,26 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Employee Levels',
-			createEmployeeLevels(this.connection, this.organizations)
+			createEmployeeLevels(
+				this.connection, 
+				this.organizations
+			)
 		);
 
 		// TODO: needs to fix error of seeding Product Category
 		await this.tryExecute(
 			'Default Categories',
-			createCategories(this.connection, this.organizations)
+			createCategories(
+				this.connection, 
+				this.organizations
+			)
 		);
 
 		await this.tryExecute(
 			'Default Product Types',
 			createDefaultProductType(
-				this.connection, 
+				this.connection,
+				this.tenant,
 				this.organizations
 			)
 		);
@@ -1776,16 +1786,16 @@ export class SeedDataService {
 			)
 		);
 
-		await this.tryExecute(
-			'Random TimeSheets',
-			createRandomTimesheet(
-				this.connection,
-				this.config,
-				tenants,
-				this.defaultProjects,
-				randomSeedConfig.noOfTimeLogsPerTimeSheet
-			)
-		);
+		// await this.tryExecute(
+		// 	'Random TimeSheets',
+		// 	createRandomTimesheet(
+		// 		this.connection,
+		// 		this.config,
+		// 		tenants,
+		// 		this.defaultProjects,
+		// 		randomSeedConfig.noOfTimeLogsPerTimeSheet
+		// 	)
+		// );
 
 		const noOfContactsPerOrganization = 10;
 		await this.tryExecute(

@@ -12,13 +12,10 @@ export const createCategories = async (
 ): Promise<ProductCategory[]> => {
 	const seedProductCategories = [];
 
-	organizations.forEach(async (organization) => {
-		let image = faker.image.abstract();
-		seed.forEach(async (seedProductCategory) => {
+	for (const organization of organizations) {
+		for (const seedProductCategory of seed) {
 			const newCategory = new ProductCategory();
-			image =
-				faker.image[seedProductCategory.fakerImageCategory]() ||
-				faker.image.abstract();
+			const image = faker.image[seedProductCategory.fakerImageCategory]() || faker.image.abstract();
 
 			newCategory.imageUrl = image;
 			newCategory.organization = organization;
@@ -33,9 +30,8 @@ export const createCategories = async (
 				newCategory.translations.push(newTranslation);
 			});
 			seedProductCategories.push(newCategory);
-		});
-	});
-
+		}
+	}
 	return await insertProductCategories(connection, seedProductCategories);
 };
 

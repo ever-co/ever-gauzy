@@ -1,11 +1,10 @@
 import { Connection } from 'typeorm';
-import { IIntegration, DEFAULT_INTEGRATIONS } from '@gauzy/contracts';
-import { IntegrationType } from './integration-type.entity';
+import { IIntegration, DEFAULT_INTEGRATIONS, IIntegrationType } from '@gauzy/contracts';
 import { Integration } from './integration.entity';
 
 export const createDefaultIntegrations = async (
 	connection: Connection,
-	integrationTypes: IntegrationType[] | void
+	integrationTypes: IIntegrationType[] | void
 ): Promise<IIntegration[]> => {
 	if (!integrationTypes) {
 		console.warn(
