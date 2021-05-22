@@ -10,7 +10,8 @@ import {
 	Body,
 	Param,
 	HttpStatus,
-	HttpCode
+	HttpCode,
+	Query
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { BaseEntity } from '../entities/internal';
@@ -37,7 +38,7 @@ export abstract class CrudController<T extends BaseEntity> {
 	): Promise<IPagination<T>> {
 		return this.crudService.findAll(filter);
 	}
-
+	
 	@ApiOperation({ summary: 'Find by id' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -50,6 +51,16 @@ export abstract class CrudController<T extends BaseEntity> {
 	@Get(':id')
 	async findById(@Param('id') id: string): Promise<T> {
 		return this.crudService.findOne(id);
+	}
+
+	@ApiOperation({ summary: 'find all with search filter' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found records' /* type: IPagination<T> */
+	})
+	@Get('search/filter')
+	async search(@Query() filter?: any): Promise<IPagination<T>> {
+		return this.crudService.search(filter);
 	}
 
 	@ApiOperation({ summary: 'Create new record' })

@@ -4,11 +4,19 @@
 
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import {
+	Between,
+	Brackets,
 	DeepPartial,
 	DeleteResult,
 	FindConditions,
 	FindManyOptions,
 	FindOneOptions,
+	ILike,
+	In,
+	LessThan,
+	Like,
+	MoreThan,
+	Not,
 	Repository,
 	UpdateResult
 } from 'typeorm';
@@ -37,6 +45,93 @@ export abstract class CrudService<T extends BaseEntity>
 	public async findAll(filter?: FindManyOptions<T>): Promise<IPagination<T>> {
 		const total = await this.repository.count(filter);
 		const items = await this.repository.find(filter);
+		return { items, total };
+	}
+
+	public async search(filter?: any): Promise<IPagination<T>> {
+		let option: FindManyOptions = {}
+
+		if (filter.page && filter.limit) {
+			option.skip = filter.limit * (filter.page - 1)
+			option.take = filter.limit
+		}
+		if (filter.orderBy && filter.order) {
+			option.order = {
+				[filter.orderBy]: filter.order
+			}
+		}
+		else if (filter.orderBy) {
+			option.order = filter.orderBy
+		}
+
+		if (filter.relations) {
+			option.relations = filter.relations
+		}
+
+		if (filter.join) {
+			option.join = filter.join
+		}
+
+		if (filter.filters || filter.where) {
+			option.where = new Brackets(qb => {
+				if (filter.filters) {
+					qb.where(new Brackets(qb => {
+
+						const where: any[] = [];
+						for (const field in filter.filters) {
+							if (Object.prototype.hasOwnProperty.call(filter.filters, field)) {
+								const condition = filter.filters[field];
+								switch (condition.condition) {
+									case 'Like':
+										where.push({ [field]: Like(condition.search) });
+										break;
+									case 'Between':
+										where.push({ [field]: Between(condition.search[0], condition.search[1]) });
+										break;
+									case 'In':
+										where.push({ [field]: In(condition.search) });
+										break;
+									case 'NotIn':
+										where.push({ [field]: Not(In(condition.search)) });
+										break;
+									case 'ILike':
+										where.push({ [field]: ILike(condition.search) });
+										break;
+									case 'MoreThan':
+										where.push({ [field]: MoreThan(condition.search) });
+										break;
+									case 'LessThan':
+										where.push({ [field]: LessThan(condition.search) });
+										break;
+									default:
+										where.push({ [field]: condition.search });
+										break;
+								}
+							}
+						}
+						qb.where(where);
+					}));
+				}
+				if (filter.where) {
+					const where: any = {}
+					for (const field in filter.where) {
+						if (Object.prototype.hasOwnProperty.call(filter.where, field)) {
+							if(filter.where[field] instanceof Array){
+								where[field] = In(filter.where[field]);
+							}else{
+								where[field] = filter.where[field];
+							}
+						}
+					}
+					
+					qb.andWhere(new Brackets(qb => {
+						qb.where(where);
+					}))
+				}
+				
+			})
+		}
+		const [items, total] = await this.repository.findAndCount(option);
 		return { items, total };
 	}
 
