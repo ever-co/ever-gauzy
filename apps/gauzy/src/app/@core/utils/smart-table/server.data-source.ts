@@ -4,7 +4,7 @@ import { ServerSourceConf } from './server-source.conf';
 import { LocalDataSource } from 'ng2-smart-table';
 
 import { map } from 'rxjs/operators';
-import { toParams } from 'packages/common-angular/dist';
+import { toParams } from '@gauzy/common-angular';
 
 export class ServerDataSource extends LocalDataSource {
 
