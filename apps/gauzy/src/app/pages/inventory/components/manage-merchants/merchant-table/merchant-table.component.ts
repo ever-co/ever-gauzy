@@ -35,13 +35,17 @@ export class MerchantTableComponent
 	selectedMerchant: IMerchant;
 	source: ServerDataSource;
 	STORES_URL = `${API_PREFIX}/merchants?`;
-	viewComponentName: ComponentEnum;
 
 	disableButton = true;
+	viewComponentName: ComponentEnum.MERCHANTS;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	selectedOrganization: IOrganization;
 
 	merchantsTable: Ng2SmartTableComponent;
+	merchantData: IMerchant[] = [];
+	totalItems = 0;
+	currentPage = 1;
+	itemsPerPage = 10;
 
 	@ViewChild('productStore') set content(content: Ng2SmartTableComponent) {
 		if (content) {
@@ -62,8 +66,16 @@ export class MerchantTableComponent
 	}
 
 	ngOnInit(): void {
+		this.setView();
 		this.loadSettings();
 		this.loadSmartTable();
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization || { id: null };
+
+		this.merchantService.count({ findInput: { organizationId, tenantId } }).then(res => {
+			this.totalItems = res as any;
+		});
 
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
@@ -76,11 +88,25 @@ export class MerchantTableComponent
 
 	}
 
+	setView() {
+		this.viewComponentName = ComponentEnum.MERCHANTS;
+		this.store
+			.componentLayout$(ComponentEnum.MERCHANTS)
+			.pipe(untilDestroyed(this))
+			.subscribe((componentLayout) => {
+				this.dataLayoutStyle = componentLayout;
+
+				if (componentLayout == ComponentLayoutStyleEnum.CARDS_GRID) {
+					this.onPageChange(this.currentPage);
+				}
+			});
+	}
+
 	async loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
 			pager: {
-				perPage: 10
+				perPage: this.itemsPerPage
 			},
 			columns: {
 				name: {
@@ -128,6 +154,25 @@ export class MerchantTableComponent
 			},
 
 		}
+	}
+
+	onPageChange(pageNum) {
+		this.currentPage = pageNum;
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization || { id: null };
+
+		const options = {
+			relations: ['logo', 'contact', 'tags', 'warehouses'],
+			findInput: { organizationId, tenantId }
+		};
+
+		this.merchantService.getAll(options,
+			{ page: pageNum, _limit: this.itemsPerPage }).then(res => {
+				if (res && res.items) {
+					this.merchantData = res.items;
+				}
+			});
 	}
 
 	onAddStoreClick() {

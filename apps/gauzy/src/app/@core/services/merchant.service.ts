@@ -9,7 +9,7 @@ import { HttpClient } from '@angular/common/http';
 
 @Injectable()
 export class MerchantService {
-	PRODUCT_STORES_URL = `${API_PREFIX}/merchants`;
+	MERCHANTS_URL = `${API_PREFIX}/merchants`;
 
 	constructor(private http: HttpClient) { }
 
@@ -18,7 +18,35 @@ export class MerchantService {
 
 		return this.http
 			.get<IMerchant>(
-				`${this.PRODUCT_STORES_URL}/${id}`,
+				`${this.MERCHANTS_URL}/${id}`,
+				{
+					params: { data }
+				}
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	getAll(options, params) {
+		const data = JSON.stringify({
+			relations: options.relations,
+			options: options.findInput
+		});
+
+		return this.http
+			.get<{ items: IMerchant[] }>(
+				`${this.MERCHANTS_URL}`,
+				{ params: { data, ...params } }
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	count(findInput): Promise<Number> {
+		const data = JSON.stringify(findInput);
+		return this.http
+			.get<number>(
+				`${this.MERCHANTS_URL}/count`,
 				{
 					params: { data }
 				}
@@ -32,7 +60,7 @@ export class MerchantService {
 	): Promise<IMerchant> {
 		return this.http
 			.post<IMerchant>(
-				`${this.PRODUCT_STORES_URL}`,
+				`${this.MERCHANTS_URL}`,
 				productStore
 			)
 			.pipe(first())
@@ -44,7 +72,7 @@ export class MerchantService {
 	): Promise<IMerchant> {
 		return this.http
 			.put<IMerchant>(
-				`${this.PRODUCT_STORES_URL}/${productStore.id}`,
+				`${this.MERCHANTS_URL}/${productStore.id}`,
 				productStore
 			)
 			.pipe(first())
@@ -54,7 +82,7 @@ export class MerchantService {
 	delete(id: string): Promise<IMerchant> {
 		return this.http
 			.delete<IMerchant>(
-				`${this.PRODUCT_STORES_URL}/${id}`
+				`${this.MERCHANTS_URL}/${id}`
 			)
 			.pipe(first())
 			.toPromise();

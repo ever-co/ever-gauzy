@@ -18,7 +18,7 @@ import { CrudController } from '../core/crud/crud.controller';
 import { UUIDValidationPipe } from '../shared';
 import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { OrganizationCreateCommand } from './commands';
+import { OrganizationCreateCommand, OrganizationUpdateCommand } from './commands';
 import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -134,10 +134,6 @@ export class OrganizationController extends CrudController<Organization> {
 		@Body() entity: IOrganizationCreateInput,
 		...options: any[]
 	): Promise<Organization> {
-		await this.organizationService.create({
-			id,
-			...entity
-		});
-		return await this.organizationService.findOne(id);
+		return this.commandBus.execute(new OrganizationUpdateCommand({ id, ...entity }));
 	}
 }

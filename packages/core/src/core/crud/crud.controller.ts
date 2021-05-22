@@ -33,7 +33,9 @@ export abstract class CrudController<T extends BaseEntity> {
 		description: 'Found records' /* type: IPagination<T> */
 	})
 	@Get()
-	async findAll(filter?: PaginationParams<T>): Promise<IPagination<T>> {
+	async findAll(
+		filter?: PaginationParams<T>
+	): Promise<IPagination<T>> {
 		return this.crudService.findAll(filter);
 	}
 	

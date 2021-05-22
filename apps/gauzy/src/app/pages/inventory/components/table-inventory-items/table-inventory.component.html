@@ -8,82 +8,43 @@
 			</h4>
 			<div class="card-header-title">
 				<div style="margin-right: 9px"></div>
-				<ga-layout-selector
-					[componentName]="viewComponentName"
-				></ga-layout-selector>
+				<ga-layout-selector [componentName]="viewComponentName"></ga-layout-selector>
 			</div>
 		</div>
 	</nb-card-header>
 
 	<nb-card-body>
 		<div class="mb-3">
-			<button
-				*ngIf="editProductAllowed"
-				(click)="onAddInventoryItem()"
-				nbButton
-				status="success"
-				class="mr-2"
-			>
-				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-				>{{ 'BUTTONS.ADD' | translate }}
+			<button *ngIf="editProductAllowed" (click)="onAddInventoryItem()" nbButton status="success" class="mr-2">
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>{{ 'BUTTONS.ADD' | translate }}
 			</button>
 			<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
 				<ng-container *ngTemplateOutlet="actionButtons"></ng-container>
 			</ng-container>
-			<button
-				*ngIf="viewTypesAllowed"
-				class="float-right"
-				nbButton
-				status="primary"
-				(click)="manageProductTypes()"
-			>
+			<button *ngIf="viewTypesAllowed" class="float-right" nbButton status="primary" [size]="'medium'"
+				(click)="manageProductTypes()">
 				<nb-icon icon="edit-outline"></nb-icon>
 				{{ 'INVENTORY_PAGE.PRODUCT_TYPES' | translate }}
 			</button>
-			<button
-				*ngIf="viewCategoriesAllowed"
-				class="float-right"
-				style="margin-right: 9px"
-				nbButton
-				status="primary"
-				(click)="manageProductCategories()"
-			>
+			<button *ngIf="viewCategoriesAllowed" class="float-right" style="margin-right: 9px" nbButton [size]="'medium'"
+				status="primary" (click)="manageProductCategories()">
 				<nb-icon icon="edit-outline"></nb-icon>
 				{{ 'INVENTORY_PAGE.PRODUCT_CATEGORIES' | translate }}
 			</button>
-			<button
-				*ngIf="editProductAllowed"
-				class="float-right"
-				style="margin-right: 9px"
-				nbButton
-				status="warning"
-				(click)="manageWarehouses()"
-			>
+			<button *ngIf="editProductAllowed" class="float-right" style="margin-right: 9px" nbButton status="warning" [size]="'medium'"
+				(click)="manageWarehouses()">
 				<nb-icon icon="home-outline"></nb-icon>
 				{{ 'INVENTORY_PAGE.WAREHOUSES' | translate }}
 			</button>
-			<button
-				*ngIf="editProductAllowed"
-				class="float-right"
-				style="margin-right: 9px"
-				nbButton
-				status="warning"
-				(click)="manageStores()"
-			>
+			<button *ngIf="editProductAllowed" class="float-right" style="margin-right: 9px" nbButton status="warning" [size]="'medium'"
+				(click)="manageStores()">
 				<nb-icon icon="home-outline"></nb-icon>
 				{{ 'INVENTORY_PAGE.MERCHANTS' | translate }}
 			</button>
 		</div>
 
-		<ng2-smart-table
-			class="tags-table"
-			[settings]="settingsSmartTable"
-			(userRowSelect)="selectProduct($event)"
-			[source]="source"
-			style="cursor: pointer"
-			*ngIf="dataLayoutStyle === 'TABLE'"
-			#inventoryTable
-		>
+		<ng2-smart-table class="tags-table" [settings]="settingsSmartTable" (userRowSelect)="selectProduct($event)"
+			[source]="source" style="cursor: pointer" *ngIf="dataLayoutStyle === 'TABLE'" #inventoryTable>
 		</ng2-smart-table>
 		<ul class="flex-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
 			<li class="flex-item" *ngFor="let x of inventoryData">
@@ -92,24 +53,14 @@
 						'INVENTORY_PAGE.IMAGE' | translate
 					}}</span>
 					<div class="card-image">
-						<div
-							class="card-image"
-							*ngIf="!x.featuredImage || !x.featuredImage.url"
-							[ngStyle]="{
+						<div class="card-image" *ngIf="!x.featuredImage || !x.featuredImage.url" [ngStyle]="{
 								backgroundImage:
 									'url(https://afostats.imagead.net/uploads/afo/no_img.png)'
-							}"
-							alt="Product Item Photo"
-						></div>
-						<div
-							class="card-image"
-							*ngIf="x.featuredImage && x.featuredImage.url"
-							[ngStyle]="{
+							}" alt="Product Item Photo"></div>
+						<div class="card-image" *ngIf="x.featuredImage && x.featuredImage.url" [ngStyle]="{
 								backgroundImage:
 									'url(' + x.featuredImage.url + ')'
-							}"
-							alt="Product Item Photo"
-						></div>
+							}" alt="Product Item Photo"></div>
 					</div>
 				</div>
 				<div class="info-line">
@@ -143,58 +94,39 @@
 					<span class="info-value">{{ x.description }}</span>
 				</div>
 				<nb-card-footer class="card-footer">
-					<ng-container
-						*ngTemplateOutlet="
+					<ng-container *ngTemplateOutlet="
 							actionButtons;
 							context: {
 								buttonSize: 'tiny',
 								selectedItem: x
 							}
-						"
-					>
+						">
 					</ng-container>
 				</nb-card-footer>
 			</li>
 		</ul>
+
+		<div class="pagination-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
+				<ga-pagination (selectedPage)="onPageChange($event)" [totalItems]="totalItems" [itemsPerPage]="10"
+				[activePage]="1"></ga-pagination>
+		</div>
+
+		
 	</nb-card-body>
 </nb-card>
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
-	<button
-		*ngIf="editProductAllowed"
-		(click)="onEditInventoryItem(selectedItem)"
-		nbButton
-		status="info"
-		class="mr-2"
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-	>
+<ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
+	<button *ngIf="editProductAllowed" (click)="onEditInventoryItem(selectedItem)" nbButton status="info" class="mr-2"
+		[disabled]="!selectedItem && disableButton" [size]="buttonSize || 'medium'">
 		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
 		{{ 'BUTTONS.EDIT' | translate }}
 	</button>
-	<button
-		(click)="onViewInventoryItem(selectedItem)"
-		nbButton
-		status="warning"
-		class="mr-2"
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-	>
+	<button (click)="onViewInventoryItem(selectedItem)" nbButton status="warning" class="mr-2"
+		[disabled]="!selectedItem && disableButton" [size]="buttonSize || 'medium'">
 		<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
 		{{ 'BUTTONS.VIEW' | translate }}
 	</button>
-	<button
-		*ngIf="editProductAllowed"
-		(click)="delete(selectedItem)"
-		nbButton
-		status="danger"
-		class="mr-2"
-		[disabled]="!selectedItem && disableButton"
-		[size]="buttonSize || 'medium'"
-	>
+	<button *ngIf="editProductAllowed" (click)="delete(selectedItem)" nbButton status="danger" class="mr-2"
+		[disabled]="!selectedItem && disableButton" [size]="buttonSize || 'medium'">
 		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
 		{{ 'BUTTONS.DELETE' | translate }}
 	</button>

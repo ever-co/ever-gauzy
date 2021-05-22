@@ -22,8 +22,9 @@
 							[placeholder]="'FORM.PLACEHOLDERS.SELECT' | translate"
 							[clearable]="false"
 							[addTag]="false"
-							[isSystemLanguage]="true"
 							[selectedLanguageCode]="language"
+							template="ng-select"
+							selectBy="object"
 							(selectedLanguageEvent)="selectedLanguage($event)"
 						></ngx-language-selector>
 					</div>

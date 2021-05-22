@@ -22,11 +22,12 @@ import 'brace/mode/handlebars';
 import 'brace/theme/sqlserver';
 import 'brace/theme/tomorrow_night';
 import { Subject } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { EmailTemplateService } from '../../@core/services/email-template.service';
 import { Store } from '../../@core/services/store.service';
 import { ToastrService } from '../../@core/services/toastr.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './email-templates.component.html',
@@ -35,20 +36,17 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 export class EmailTemplatesComponent
 	extends TranslationBaseComponent
 	implements OnInit, AfterViewInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
 
 	previewEmail: SafeHtml;
 	previewSubject: SafeHtml;
-	organizationName: string;
-	organizationId: string;
 	organization: IOrganization;
 	form: FormGroup;
 
 	@ViewChild('subjectEditor') subjectEditor;
 	@ViewChild('emailEditor') emailEditor;
 
-	languageCodes: string[] = Object.values(LanguagesEnum);
 	templateNames: string[] = Object.values(EmailTemplateNameEnum);
+	subject$: Subject<any> = new Subject();
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -63,21 +61,30 @@ export class EmailTemplatesComponent
 	}
 
 	async ngOnInit() {
+		this._initializeForm();
+		this.subject$
+			.pipe(
+				debounceTime(500),
+				tap(() => this.getTemplate()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.store.preferredLanguage$
+			.pipe(
+				untilDestroyed(this)
+			)
+			.subscribe((language) => {
+				this.form.patchValue({ languageCode: language });
+				this.subject$.next();
+			});
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
+				tap((organization) => this.organization = organization),
+				tap(() => this.subject$.next()),
 				untilDestroyed(this)
 			)
-			.subscribe(async (organization) => {
-				if (organization) {
-					this.organization = organization;
-					this.organizationName = organization.name;
-					this.organizationId = organization.id;
-					await this.getTemplate();
-				}
-			});
-
-		this._initializeForm();
+			.subscribe();
 	}
 
 	ngAfterViewInit() {
@@ -122,19 +129,19 @@ export class EmailTemplatesComponent
 		try {
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
-			const result = this.form
-				? await this.emailTemplateService.getTemplate({
-						languageCode: this.form.get('languageCode').value,
-						name: this.form.get('name').value,
-						organizationId,
-						tenantId
-				  })
-				: await this.emailTemplateService.getTemplate({
-						languageCode: LanguagesEnum.ENGLISH,
-						name: EmailTemplateNameEnum.WELCOME_USER,
-						organizationId,
-						tenantId
-				  });
+			const { languageCode = LanguagesEnum.ENGLISH, name = EmailTemplateNameEnum.WELCOME_USER } = this.form.value;
+			console.log({
+				languageCode,
+				name,
+				organizationId,
+				tenantId
+			});
+			const result = await this.emailTemplateService.getTemplate({
+				languageCode,
+				name,
+				organizationId,
+				tenantId
+			})
 			this.emailEditor.value = result.template;
 			this.subjectEditor.value = result.subject;
 
@@ -161,7 +168,7 @@ export class EmailTemplatesComponent
 
 	private _initializeForm() {
 		this.form = this.fb.group({
-			name: [EmailTemplateNameEnum.PASSWORD_RESET],
+			name: [EmailTemplateNameEnum.WELCOME_USER],
 			languageCode: [LanguagesEnum.ENGLISH],
 			subject: ['', [Validators.required, Validators.maxLength(60)]],
 			mjml: ['', Validators.required]
@@ -192,7 +199,8 @@ export class EmailTemplatesComponent
 
 	async submitForm() {
 		try {
-			const { id: organizationId, tenantId } = this.organization;
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
 			await this.emailTemplateService.saveEmailTemplate({
 				...this.form.value,
 				organizationId,
@@ -208,8 +216,6 @@ export class EmailTemplatesComponent
 			this.toastrService.danger(error);
 		}
 	}
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+
+	ngOnDestroy() {}
 }

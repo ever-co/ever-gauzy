@@ -109,7 +109,7 @@ export class SelectProductComponent
 			pager: {
 				perPage: 5
 			},
-			actios: false,
+			actions: false,
 			columns: {
 				selected: {
 					title: this.getTranslation('INVENTORY_PAGE.SELECTED'),

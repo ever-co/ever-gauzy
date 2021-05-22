@@ -41,7 +41,7 @@ export class TableInventoryComponent
 	selectedProduct: IProduct;
 	form: FormGroup;
 	selectedLanguage: string = LanguagesEnum.ENGLISH;
-	inventoryData: IProductTranslated[];
+	inventoryData: IProductTranslated[] = [];
 	disableButton = true;
 	viewComponentName: ComponentEnum.INVENTORY;
 	dataLayoutStyle = ComponentLayoutStyleEnum.CARDS_GRID;
@@ -53,6 +53,9 @@ export class TableInventoryComponent
 
 	source: ServerDataSource;
 	PRODUCTS_URL = `${API_PREFIX}/products/local/${this.selectedLanguage}?`;
+
+	currentPage = 0;
+	totalItems = 0;
 
 	inventoryTable: Ng2SmartTableComponent;
 	@ViewChild('inventoryTable') set content(content: Ng2SmartTableComponent) {
@@ -82,12 +85,22 @@ export class TableInventoryComponent
 		this._applyTranslationOnSmartTable();
 		this.selectedLanguage = this.store.preferredLanguage;
 
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization || { id: '' };
+
+		this.productService.count({ findInput: { organizationId, tenantId } }).then(res => {
+			this.totalItems = res as any;
+		});
+
+
 		this.store.preferredLanguage$
 			.pipe(untilDestroyed(this))
 			.subscribe((lang) => {
 				this.selectedLanguage = lang;
 				this.loadSettings();
 			});
+
+
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
 			.subscribe((organization: IOrganization) => {
@@ -103,6 +116,7 @@ export class TableInventoryComponent
 					this.setView();
 				}
 			});
+
 	}
 
 	setView() {
@@ -177,6 +191,27 @@ export class TableInventoryComponent
 		};
 	}
 
+	onPageChange(pageNum) {
+		this.currentPage = pageNum;
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization || { id: '' };
+
+		const options = {
+			relations: ['type', 'category', 'tags', 'featuredImage'],
+			findInput: { organizationId, tenantId }
+		};
+
+		this.productService.getAllTranslated(options,
+			{ page: pageNum, _limit: 10 },
+			this.store.preferredLanguage
+		).then(res => {
+			if (res && res.items) {
+				this.inventoryData = res.items;
+			}
+		});
+	}
+
 	manageProductTypes() {
 		this.router.navigate(['/pages/organization/inventory/product-types']);
 	}
@@ -191,7 +226,7 @@ export class TableInventoryComponent
 		this.router.navigate(['/pages/organization/inventory/warehouses/all']);
 	}
 
-	
+
 	manageStores() {
 		this.router.navigate(['/pages/organization/inventory/merchants/all']);
 	}
@@ -268,6 +303,11 @@ export class TableInventoryComponent
 			relations: ['type', 'category', 'tags', 'featuredImage'],
 			findInput: { organizationId, tenantId },
 		});
+
+		this.productService.count({ findInput: { organizationId, tenantId } }).then(res => {
+			this.totalItems = res as any;
+		});
+
 
 		this.source = new ServerDataSource(this.http, {
 			endPoint: this.PRODUCTS_URL + data,

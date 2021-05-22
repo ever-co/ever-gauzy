@@ -1,6 +1,10 @@
+import { CandidateSubscriber } from "candidate/candidate.subscriber";
 import { 
-	FeatureSubscriber, 
-	ScreenshotSubscriber, 
+	ActivitySubscriber,
+	FeatureSubscriber,
+	OrganizationSubscriber,
+	ReportSubscriber,
+	ScreenshotSubscriber,
 	TimeSlotSubscriber,
 	UserSubscriber
 } from "./internal";
@@ -9,7 +13,11 @@ import {
 * A map of the core TypeORM Subscribers.
 */
 export const coreSubscribers = [
+	ActivitySubscriber,
+	CandidateSubscriber,
 	FeatureSubscriber,
+	OrganizationSubscriber,
+	ReportSubscriber,
 	ScreenshotSubscriber,
 	TimeSlotSubscriber,
 	UserSubscriber

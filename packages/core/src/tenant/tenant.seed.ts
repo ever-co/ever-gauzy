@@ -13,7 +13,7 @@ export const getDefaultTenant = async (
 	return existedTenant;
 };
 
-export const createDefaultTenants = async (
+export const createDefaultTenant = async (
 	connection: Connection,
 	tenantName: string
 ): Promise<Tenant> => {

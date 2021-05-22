@@ -5,13 +5,11 @@ import {
 	RelationId,
 	ManyToOne,
 	JoinColumn,
-	OneToMany,
-	AfterLoad
+	OneToMany
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { IReport, IReportCategory } from '@gauzy/contracts';
-import { FileStorage } from '../core/file-storage';
 import {
 	BaseEntity,
 	ReportCategory,
@@ -73,11 +71,4 @@ export class Report extends BaseEntity implements IReport {
 	showInMenu?: boolean;
 
 	imageUrl?: string;
-
-	@AfterLoad()
-	afterLoad?() {
-		if (this.image) {
-			this.imageUrl = new FileStorage().getProvider().url(this.image);
-		}
-	}
 }

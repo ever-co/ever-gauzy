@@ -12,7 +12,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 		>
 			<div *ngIf="rowData?.imageUrl" class="image-container">
 				<img [src]="rowData?.imageUrl" />
-			</div>
+			</div>				
 			<div
 				*ngIf="rowData?.fullName"
 				class="d-block"
@@ -26,11 +26,21 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 				style="margin-left:15px;"
 			>
 				{{ rowData?.name }}
+				<ng-template [ngIf]="rowData?.isDefault">
+					<nb-badge
+						class="color"
+						position="centered"
+						[style.background]="rowData?.brandColor"
+						[style.color]="backgroundContrast(rowData?.brandColor)"
+						text="Default"
+					>
+					</nb-badge>
+				</ng-template>
 			</div>
 		</div>
 		<div
 			*ngIf="isTags"
-			class="tags {{ layout === 'CARDS_GRID' ? 'tags-right' : '' }}"
+			class="tags {{ layout === 'CARDS_GRID' ? 'tags-right' : '' }} mt-2"
 		>
 			<nb-badge
 				*ngFor="let tag of rowData?.tags"
@@ -38,7 +48,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 				position="centered"
 				[style.background]="tag?.color"
 				[style.color]="backgroundContrast(tag?.color)"
-				text="{{ tag?.name }}"
+				[text]="tag?.name"
 			>
 			</nb-badge>
 		</div>

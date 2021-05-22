@@ -3,23 +3,23 @@ import * as faker from 'faker';
 import {
 	TimesheetStatus,
 	IOrganizationProject,
-	ITimeSlot
+	ITimeSlot,
+	ITenant,
+	IEmployee
 } from '@gauzy/contracts';
-import { Timesheet } from '../timesheet.entity';
-import { Employee } from '../../employee/employee.entity';
 import * as moment from 'moment';
 import * as _ from 'underscore';
+import * as chalk from 'chalk';
+import { IPluginConfig } from '@gauzy/common';
 import { createRandomTimeLogs } from '../time-log/time-log.seed';
 import { createRandomActivities } from '../activity/activities.seed';
-import * as chalk from 'chalk';
-import { Tenant } from '../../tenant/tenant.entity';
-import { IPluginConfig } from '@gauzy/common';
+import { Employee, Timesheet } from './../../core/entities/internal';
 
 export const createDefaultTimeSheet = async (
 	connection: Connection,
 	config: IPluginConfig,
-	tenant: Tenant,
-	employees: Employee[],
+	tenant: ITenant,
+	employees: IEmployee[],
 	defaultProjects: IOrganizationProject[] | void,
 	noOfTimeLogsPerTimeSheet
 ) => {
@@ -31,7 +31,6 @@ export const createDefaultTimeSheet = async (
 	}
 
 	const timesheets: Timesheet[] = [];
-
 	for (let index = 0; index < 2; index++) {
 		const date = moment().subtract(index, 'week').toDate();
 		const startedAt = moment(date).startOf('week').toDate();
@@ -79,11 +78,15 @@ export const createDefaultTimeSheet = async (
 	}
 
 	await connection.getRepository(Timesheet).save(timesheets);
-
-	const createdTimesheets = await connection.getRepository(Timesheet).find();
-	let timeSlots: ITimeSlot[];
+	const createdTimesheets = await connection.getRepository(Timesheet).find({
+		where: {
+			tenant
+		}
+	});
+	
 	try {
-		console.log(chalk.green(`SEEDING Default TimeLogs`));
+		console.log(chalk.green(`SEEDING Default TimeLogs & Activities`));
+		let timeSlots: ITimeSlot[];
 		timeSlots = await createRandomTimeLogs(
 			connection,
 			config,
@@ -92,24 +95,20 @@ export const createDefaultTimeSheet = async (
 			defaultProjects,
 			noOfTimeLogsPerTimeSheet
 		);
+		await createRandomActivities(
+			connection, 
+			tenant, 
+			timeSlots
+		);
 	} catch (error) {
-		console.log(chalk.red(`SEEDING Default TimeLogs`, error));
+		console.log(chalk.red(`SEEDING Default TimeLogs & Activities`, error));
 	}
-
-	try {
-		console.log(chalk.green(`SEEDING Default Activities`));
-		await createRandomActivities(connection, tenant, timeSlots);
-	} catch (error) {
-		console.log(chalk.red(`SEEDING Default Activities`, error));
-	}
-
-	return createdTimesheets;
 };
 
 export const createRandomTimesheet = async (
 	connection: Connection,
 	config: IPluginConfig,
-	tenant: Tenant,
+	tenants: ITenant[],
 	defaultProjects: IOrganizationProject[] | void,
 	noOfTimeLogsPerTimeSheet
 ) => {
@@ -120,89 +119,96 @@ export const createRandomTimesheet = async (
 		return;
 	}
 
-	const timesheets: Timesheet[] = [];
-	const employees = await connection.getRepository(Employee).find({
-		relations: ['organization']
-	});
+	for (const tenant of tenants) {
+		const timesheets: Timesheet[] = [];
+		const employees = await connection.getRepository(Employee).find({
+			where: {
+				tenant
+			},
+			relations: ['organization']
+		});
 
-	for (let index = 0; index < 2; index++) {
-		const date = moment().subtract(index, 'week').toDate();
-		const startedAt = moment(date).startOf('week').toDate();
-		const stoppedAt = moment(date).endOf('week').toDate();
+		for (let index = 0; index < 2; index++) {
+			const date = moment().subtract(index, 'week').toDate();
+			const startedAt = moment(date).startOf('week').toDate();
+			const stoppedAt = moment(date).endOf('week').toDate();
 
-		_.chain(employees)
-			.shuffle()
-			.take(faker.datatype.number(employees.length))
-			.each((employee) => {
-				const status = faker.random.arrayElement(
-					Object.keys(TimesheetStatus)
-				);
+			_.chain(employees)
+				.shuffle()
+				.take(faker.datatype.number(employees.length))
+				.each((employee) => {
+					const status = faker.random.arrayElement(
+						Object.keys(TimesheetStatus)
+					);
 
-				let isBilled = false;
-				let approvedAt: Date = null;
-				let submittedAt: Date = null;
+					let isBilled = false;
+					let approvedAt: Date = null;
+					let submittedAt: Date = null;
 
-				if (TimesheetStatus[status] === TimesheetStatus.PENDING) {
-					approvedAt = null;
-					submittedAt = faker.date.past();
-				} else if (
-					TimesheetStatus[status] === TimesheetStatus.IN_REVIEW
-				) {
-					approvedAt = null;
-					submittedAt = faker.date.between(startedAt, new Date());
-				} else if (
-					TimesheetStatus[status] === TimesheetStatus.APPROVED
-				) {
-					isBilled = faker.random.arrayElement([true, false]);
-					approvedAt = faker.date.between(startedAt, new Date());
-					submittedAt = faker.date.between(startedAt, approvedAt);
+					if (TimesheetStatus[status] === TimesheetStatus.PENDING) {
+						approvedAt = null;
+						submittedAt = faker.date.past();
+					} else if (
+						TimesheetStatus[status] === TimesheetStatus.IN_REVIEW
+					) {
+						approvedAt = null;
+						submittedAt = faker.date.between(startedAt, new Date());
+					} else if (
+						TimesheetStatus[status] === TimesheetStatus.APPROVED
+					) {
+						isBilled = faker.random.arrayElement([true, false]);
+						approvedAt = faker.date.between(startedAt, new Date());
+						submittedAt = faker.date.between(startedAt, approvedAt);
+					}
+
+					const timesheet = new Timesheet();
+					timesheet.employee = employee;
+					timesheet.organization = employee.organization;
+					timesheet.tenant = tenant;
+					timesheet.approvedBy = null;
+					timesheet.startedAt = startedAt;
+					timesheet.stoppedAt = stoppedAt;
+					timesheet.duration = 0;
+					timesheet.keyboard = 0;
+					timesheet.mouse = 0;
+					timesheet.overall = 0;
+					timesheet.approvedAt = approvedAt;
+					timesheet.submittedAt = submittedAt;
+					timesheet.lockedAt = null;
+					timesheet.isBilled = isBilled;
+					timesheet.status = TimesheetStatus[status];
+					timesheet.deletedAt = null;
+					timesheets.push(timesheet);
+				});
+		}
+
+		await connection.getRepository(Timesheet).save(timesheets);
+	}
+
+	try {
+		console.log(chalk.green(`SEEDING Random TimeLogs & Activities`));
+		for (const tenant of tenants) {
+			const createdTimesheets = await connection.getRepository(Timesheet).find({
+				where: {
+					tenant
 				}
-
-				const timesheet = new Timesheet();
-				timesheet.employee = employee;
-				timesheet.organization = employee.organization;
-				timesheet.tenant = tenant;
-				timesheet.approvedBy = null;
-				timesheet.startedAt = startedAt;
-				timesheet.stoppedAt = stoppedAt;
-				timesheet.duration = 0;
-				timesheet.keyboard = 0;
-				timesheet.mouse = 0;
-				timesheet.overall = 0;
-				timesheet.approvedAt = approvedAt;
-				timesheet.submittedAt = submittedAt;
-				timesheet.lockedAt = null;
-				timesheet.isBilled = isBilled;
-				timesheet.status = TimesheetStatus[status];
-				timesheet.deletedAt = null;
-				timesheets.push(timesheet);
 			});
-	}
-
-	await connection.getRepository(Timesheet).save(timesheets);
-
-	const createdTimesheets = await connection.getRepository(Timesheet).find();
-	let timeSlots: ITimeSlot[];
-	try {
-		console.log(chalk.green(`SEEDING Random TimeLogs`));
-		timeSlots = await createRandomTimeLogs(
-			connection,
-			config,
-			tenant,
-			createdTimesheets,
-			defaultProjects,
-			noOfTimeLogsPerTimeSheet
-		);
+			let timeSlots: ITimeSlot[];
+			timeSlots = await createRandomTimeLogs(
+				connection,
+				config,
+				tenant,
+				createdTimesheets,
+				defaultProjects,
+				noOfTimeLogsPerTimeSheet
+			);
+			await createRandomActivities(
+				connection,
+				tenant, 
+				timeSlots
+			);
+		}
 	} catch (error) {
-		console.log(chalk.red(`SEEDING Random TimeLogs`, error));
+		console.log(chalk.red(`SEEDING Random TimeLogs & Activities`, error));
 	}
-
-	try {
-		console.log(chalk.green(`SEEDING Random Activities`));
-		await createRandomActivities(connection, tenant, timeSlots);
-	} catch (error) {
-		console.log(chalk.red(`SEEDING Random Activities`, error));
-	}
-
-	return createdTimesheets;
 };

@@ -15,7 +15,6 @@ import {
 	IContact,
 	ITag
 } from '@gauzy/contracts';
-import { average } from '@gauzy/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsOptional, IsEnum } from 'class-validator';
 import {
@@ -27,8 +26,7 @@ import {
 	ManyToOne,
 	OneToOne,
 	RelationId,
-	OneToMany,
-	AfterLoad
+	OneToMany
 } from 'typeorm';
 import {
 	CandidateDocument,
@@ -235,10 +233,4 @@ export class Candidate
 	isArchived?: boolean;
 
 	ratings?: number;
-	@AfterLoad()
-	calculateRatings() {
-		if (Array.isArray(this.feedbacks)) {
-			this.ratings = average(this.feedbacks, 'rating');
-		}
-	}
 }

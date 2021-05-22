@@ -12,9 +12,8 @@ export class OrganizationUpdateHandler
 		command: OrganizationUpdateCommand
 	): Promise<IOrganization> {
 		const { input } = command;
-		const { gauzyId } = input;
-
-		return this.updateOrganization(gauzyId, input);
+		const { id } = input;
+		return this.updateOrganization(id, input);
 	}
 
 	private async updateOrganization(
@@ -25,23 +24,32 @@ export class OrganizationUpdateHandler
 			id
 		);
 		if (organization) {
-			delete input.gauzyId;
+			//if any organization set as default
+			const { tenantId } = organization;
+			if (input.isDefault === true) {
+				await this.organizationService.update({ tenantId }, {
+					isDefault: false
+				});
+			}
 
 			const request = {
 				...input,
-				show_profits: false,
-				show_bonuses_paid: false,
-				show_income: false,
-				show_total_hours: false,
-				show_projects_count: true,
-				show_minimum_project_size: true,
-				show_clients_count: true,
-				show_clients: true,
-				show_employees_count: true
+				show_profits: input.show_profits || false,
+				show_bonuses_paid: input.show_bonuses_paid || false,
+				show_income: input.show_income || false,
+				show_total_hours: input.show_total_hours || false,
+				show_projects_count: input.show_projects_count || true,
+				show_minimum_project_size: input.show_minimum_project_size || true,
+				show_clients_count: input.show_clients_count || true,
+				show_clients: input.show_clients || true,
+				show_employees_count: input.show_employees_count || true
 			};
-
-			await this.organizationService.update(id, request);
-			return await this.organizationService.findOne(id);
+			await this.organizationService.create({
+				id,
+				...request
+			});
 		}
+		
+		return await this.organizationService.findOne(id);
 	}
 }

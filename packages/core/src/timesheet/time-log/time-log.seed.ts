@@ -1,27 +1,25 @@
-import { Connection, In } from 'typeorm';
+import { Connection, In, IsNull } from 'typeorm';
 import * as faker from 'faker';
 import * as _ from 'underscore';
 import {
 	TimeLogSourceEnum,
 	TimeLogType,
 	ITimeSlot,
-	IOrganizationProject
+	IOrganizationProject,
+	ITenant,
+	ITimesheet
 } from '@gauzy/contracts';
 import * as moment from 'moment';
-import { TimeLog } from '../time-log.entity';
-import { Timesheet } from '../timesheet.entity';
-import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
+import { IPluginConfig } from '@gauzy/common';
 import { createRandomScreenshot } from '../screenshot/screenshot.seed';
 import { createTimeSlots } from '../time-slot/time-slot.seed';
-import { Tenant } from '../../tenant/tenant.entity';
-import { IPluginConfig } from '@gauzy/common';
-import { Screenshot } from './../screenshot/screenshot.entity';
+import { OrganizationProject, Screenshot, TimeLog, Timesheet } from './../../core/entities/internal';
 
 export const createRandomTimeLogs = async (
 	connection: Connection,
 	config: IPluginConfig,
-	tenant: Tenant,
-	timeSheets: Timesheet[],
+	tenant: ITenant,
+	timeSheets: ITimesheet[],
 	defaultProjects: IOrganizationProject[],
 	noOfTimeLogsPerTimeSheet
 ) => {
@@ -42,7 +40,7 @@ export const createRandomTimeLogs = async (
 		timeSheetChunkIndex < timeSheetChunk.length;
 		timeSheetChunkIndex++
 	) {
-		let timeSlots: ITimeSlot[] = [];
+		const timeSlots: ITimeSlot[] = [];
 		const timeLogs: TimeLog[] = [];
 		const screenshotsPromise: Promise<Screenshot[]>[] = [];
 
@@ -51,9 +49,7 @@ export const createRandomTimeLogs = async (
 			timeSheetIndex < timeSheetChunk[timeSheetChunkIndex].length;
 			timeSheetIndex++
 		) {
-			const timesheet =
-				timeSheetChunk[timeSheetChunkIndex][timeSheetIndex];
-
+			const timesheet = timeSheetChunk[timeSheetChunkIndex][timeSheetIndex];
 			const randomDays = _.chain([0, 1, 2, 3, 4, 5, 6])
 				.shuffle()
 				.take(faker.datatype.number({ min: 3, max: 5 }))
@@ -77,7 +73,6 @@ export const createRandomTimeLogs = async (
 					rangeIndex++
 				) {
 					const { startedAt, stoppedAt } = range[rangeIndex];
-
 					const project = faker.random.arrayElement(projects);
 					const task = faker.random.arrayElement(project.tasks);
 
@@ -85,10 +80,7 @@ export const createRandomTimeLogs = async (
 						Object.keys(TimeLogSourceEnum)
 					) as TimeLogSourceEnum;
 
-					const timeLog = new TimeLog({
-						employeeId: timesheet.employeeId
-					});
-
+				
 					let logType: TimeLogType = TimeLogType.TRACKED;
 					if (
 						source === TimeLogSourceEnum.WEB_TIMER ||
@@ -96,19 +88,11 @@ export const createRandomTimeLogs = async (
 					) {
 						logType = TimeLogType.MANUAL;
 					}
-					const newTimeSlot = createTimeSlots(
-						startedAt,
-						stoppedAt
-					).map((timeSlot) => {
-						timeSlot.employeeId = timesheet.employeeId;
-						timeSlot.organizationId = timesheet.organizationId;
-						timeSlot.tenant = tenant;
-						return timeSlot;
-					});
-					timeSlots = timeSlots.concat(newTimeSlot);
 
+					const timeLog = new TimeLog({
+						employeeId: timesheet.employeeId
+					});
 					timeLog.timesheet = timesheet;
-					timeLog.timeSlots = newTimeSlot;
 					timeLog.project = project;
 					timeLog.task = task;
 					timeLog.organizationContact = project.organizationContact;
@@ -116,24 +100,30 @@ export const createRandomTimeLogs = async (
 					timeLog.stoppedAt = stoppedAt;
 					timeLog.logType = logType;
 					timeLog.source = source;
-					timeLog.description = faker.lorem.sentence(
-						faker.datatype.number(10)
-					);
-					timeLog.isBillable = faker.random.arrayElement([
-						true,
-						true,
-						false
-					]);
+					timeLog.description = faker.lorem.sentence(faker.datatype.number(10));
+					timeLog.isBillable = faker.random.arrayElement([true, false]);
 					timeLog.deletedAt = null;
-					(timeLog.organizationId = timesheet.organizationId),
-						(timeLog.tenantId = timesheet.tenantId);
+					timeLog.organizationId = timesheet.organizationId,
+					timeLog.tenant = tenant;
+
+					const newTimeSlots = createTimeSlots(
+						startedAt,
+						stoppedAt
+					).map((timeSlot) => {
+						timeSlot.employeeId = timesheet.employeeId;
+						timeSlot.organizationId = timesheet.organizationId;
+						timeSlot.tenant = tenant;
+						timeSlot.timeLogs = [timeLog];
+						return timeSlot;
+					});
+					timeSlots.push(...newTimeSlots);
 					timeLogs.push(timeLog);
 				}
 			}
 		}
 
-		const savedTimeSlots = await connection.manager.save(timeSlots);
 		const savedTimeLogs = await connection.manager.save(timeLogs);
+		const savedTimeSlots = await connection.manager.save(timeSlots);
 
 		allTimeSlots.push(...savedTimeSlots);
 
@@ -159,6 +149,12 @@ export const createRandomTimeLogs = async (
 					screenshots.push(...row);
 				});
 				await connection.manager.save(screenshots);
+
+				/*
+				* Need to delete screenshots which don't have timeslot
+				*/
+				const repository = connection.manager.getRepository(Screenshot);
+				await repository.delete({ timeSlotId: IsNull(), tenant });
 			})
 			.catch((err) => {
 				console.log({ err });

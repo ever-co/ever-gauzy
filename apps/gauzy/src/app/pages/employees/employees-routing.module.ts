@@ -1,19 +1,21 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { EmployeesComponent } from './employees.component';
-import { EditEmployeeComponent } from './edit-employee/edit-employee.component';
-import { EditEmployeeMainComponent } from './edit-employee/edit-employee-profile/edit-employee-main/edit-employee-main.component';
-import { EditEmployeeRatesComponent } from './edit-employee/edit-employee-profile/edit-employee-rate/edit-employee-rate.component';
-import { ManageEmployeeInviteComponent } from './manage-employee-invite/manage-employee-invite.component';
-import { EditEmployeeProjectsComponent } from './edit-employee/edit-employee-profile/edit-employee-projects/edit-employee-projects.component';
-import { EditEmployeeContactComponent } from './edit-employee/edit-employee-profile/edit-employee-contact/edit-employee-contact.component';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { InviteGuard } from '../../@core/guards';
-import { EditEmployeeHiringComponent } from './edit-employee/edit-employee-profile/edit-employee-hiring/edit-employee-hiring.component';
-import { EditEmployeeLocationComponent } from './edit-employee/edit-employee-profile/edit-employee-location/edit-employee-location.component';
-import { EditEmployeeEmploymentComponent } from './edit-employee/edit-employee-profile/edit-employee-employment/edit-employee-employment.component';
 import { NgxPermissionsGuard } from 'ngx-permissions';
-import { EditEmployeeNetworksComponent } from './edit-employee/edit-employee-profile/edit-employee-networks/edit-employee-networks.component';
+import { EmployeesComponent } from './employees.component';
+import { ManageEmployeeInviteComponent } from './manage-employee-invite/manage-employee-invite.component';
+import { EditEmployeeComponent } from './edit-employee/edit-employee.component';
+import { 
+	EditEmployeeContactComponent,
+	EditEmployeeEmploymentComponent,
+	EditEmployeeHiringComponent,
+	EditEmployeeLocationComponent,
+	EditEmployeeMainComponent,
+	EditEmployeeNetworksComponent,
+	EditEmployeeProjectsComponent, 
+	EditEmployeeRatesComponent 
+} from './edit-employee/edit-employee-profile';
 
 export function redirectTo() {
 	return '/pages/dashboard';

@@ -3,8 +3,7 @@ import {
 	Column,
 	RelationId,
 	ManyToOne,
-	AfterLoad,
-	BeforeRemove
+	AfterLoad
 } from 'typeorm';
 import { IScreenshot, ITimeSlot } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
@@ -61,9 +60,4 @@ export class Screenshot
 		this.fullUrl = new FileStorage().getProvider().url(this.file);
 		this.thumbUrl = new FileStorage().getProvider().url(this.thumb);
 	}
-
-	@BeforeRemove()
-    beforeRemove() {
-		console.log('Screenshot will be deleted:', this.id);
-    }
 }
