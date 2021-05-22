@@ -659,7 +659,7 @@ export class InvoicesComponent
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
 			this.smartTableSource = new ServerDataSource(this.httpClient, {
-				endPoint: `${API_PREFIX}/invoices/search`,
+				endPoint: `${API_PREFIX}/invoices/search/filter`,
 				relations: [
 					'invoiceItems',
 					'invoiceItems.employee',
@@ -990,51 +990,54 @@ export class InvoicesComponent
 	}
 
 	search() {
-
-		const filterData: any = {
+		const { 
+			dueDate, 
+			invoiceNumber, 
+			invoiceDate, 
+			totalValue, 
+			currency, 
+			status, 
+			organizationContact 
+		} = this.form.value;
+		const filters: any = {
 			where: {},
 			join: {
 				alias: "Invoice",
 				leftJoin: {}
 			},
 		}
-
-		const searchObj = this.form.value
-		if (searchObj.invoiceNumber) {
-			filterData.where.invoiceNumber = searchObj.invoiceNumber
+		if (invoiceNumber) {
+			filters.where.invoiceNumber = invoiceNumber
 		}
-		if (searchObj.invoiceDate) {
-			filterData.where.invoiceDate = moment(searchObj.invoiceDate).format('YYYY-MM-DD')
+		if (invoiceDate) {
+			filters.where.invoiceDate = moment(invoiceDate).format('YYYY-MM-DD')
 		}
-		if (searchObj.dueDate) {
-			filterData.where.dueDate = moment(searchObj.dueDate).format('YYYY-MM-DD')
+		if (dueDate) {
+			filters.where.dueDate = moment(dueDate).format('YYYY-MM-DD')
 		}
-		if (searchObj.totalValue) {
-			filterData.where.totalValue = searchObj.totalValue
+		if (totalValue) {
+			filters.where.totalValue = totalValue
 		}
-		if (searchObj.currency) {
-			filterData.where.currency = searchObj.currency
+		if (currency) {
+			filters.where.currency = currency
 		}
-		if (searchObj.status) {
-			filterData.where.status = searchObj.status
+		if (status) {
+			filters.where.status = status
 		}
-
-		if (searchObj.organizationContact) {
-			filterData.join.leftJoin.toContact = "Invoice.toContact"
-			filterData.where['toContact'] = { id: searchObj.organizationContact.id }
+		if (organizationContact) {
+			filters.join.leftJoin.toContact = "Invoice.toContact"
+			filters.where['toContact'] = { id: organizationContact.id }
 		}
 
 		if (this.tags.length > 0) {
-			filterData.join.leftJoin.tags = 'Invoice.tags'
+			filters.join.leftJoin.tags = 'Invoice.tags'
 			const tagId = []
 			for (const tag of this.tags) {
 				tagId.push(tag.id)
 			}
-			filterData.where.tags = tagId
+			filters.where.tags = tagId
 		}
-
-		this.getAllInvoiceEstimate(filterData)
-
+		this.getAllInvoiceEstimate(filters)
 	}
 
 	toggleIncludeArchived(event) {
