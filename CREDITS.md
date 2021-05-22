@@ -16,6 +16,8 @@ We acknowledge and are grateful to these developers for their contributions to o
 
 - [date-holidays](https://github.com/commenthol/date-holidays), which allows us to get world-wide holidays in gregorian calender. Copyright (c) 2016 - commenthol ([ISC License](http://opensource.org/licenses/ISC)). Note: The data contained in library `holidays.json` and `./data/countries/*.yaml` is available under [CC BY-SA 3.0](http://creativecommons.org/licenses/by-sa/3.0/) as the majority of data obtained relies on wikipedia articles. The required attribution can be found inside the files `./data/countries/*.yaml` of the library.
 
+- [docker-compose-wait](https://github.com/ufoscout/docker-compose-wait), A small command-line utility to wait for other docker images to be started while using docker-compose. Released under [Apache-2.0 License](https://github.com/ufoscout/docker-compose-wait/blob/master/LICENSE).
+
 ## Fonts
 
 - https://fonts.google.com/specimen/Crimson+Text ([OFL web license](https://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL_web))
