@@ -39,8 +39,6 @@ export abstract class CrudController<T extends BaseEntity> {
 		return this.crudService.findAll(filter);
 	}
 	
-	
-
 	@ApiOperation({ summary: 'Find by id' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -60,7 +58,7 @@ export abstract class CrudController<T extends BaseEntity> {
 		status: HttpStatus.OK,
 		description: 'Found records' /* type: IPagination<T> */
 	})
-	@Get('search/filter')
+	@Get('search')
 	async search(@Query() filter?: any): Promise<IPagination<T>> {
 		return this.crudService.search(filter);
 	}
