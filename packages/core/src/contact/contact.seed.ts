@@ -16,11 +16,14 @@ export const createRandomContacts = async (
 			const contact = new Contact();
 			contact.firstName = faker.name.firstName();
 			contact.lastName = faker.name.lastName();
+			contact.website = faker.internet.url();
 			contact.address = faker.address.streetAddress();
 			contact.address2 = faker.address.secondaryAddress();
 			contact.city = faker.address.city();
 			contact.country = faker.random.arrayElement(countries).isoCode;
 			contact.name = contact.firstName + ' ' + contact.lastName;
+			contact.longitude = +faker.address.longitude();
+			contact.latitude = +faker.address.latitude();
 			contact.organization = organization;
 			contact.tenant = tenant;
 			contacts.push(contact);
