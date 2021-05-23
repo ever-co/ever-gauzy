@@ -4,6 +4,7 @@ import { Tag } from '../tags/tag.entity';
 import { OrganizationProject } from './organization-projects.entity';
 import {
 	IOrganization,
+	ITag,
 	ITenant,
 	OrganizationProjectBudgetTypeEnum,
 	TaskListTypeEnum
