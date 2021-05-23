@@ -263,8 +263,6 @@ const showCapture = (timeTrackerWindow, url) => {
 
 const showCapturedToRenderer = (notificationWindow, thumbUrl, quitApp, windowPath, soundPath) => {
 	const soundCamera = soundPath;
-	console.log('path sound', soundCamera);
-	console.log('path win', windowPath);
 	const sizes = screen.getPrimaryDisplay().size;
 	// preparing window screenshot
 	const screenCaptureWindow = {
