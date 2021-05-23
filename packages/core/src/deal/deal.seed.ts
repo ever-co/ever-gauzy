@@ -1,16 +1,14 @@
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
-import { IEmployee, IOrganization } from '@gauzy/contracts';
+import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { Deal } from './deal.entity';
 import * as faker from 'faker';
-import { Pipeline } from '../pipeline/pipeline.entity';
-import { PipelineStage } from '../pipeline-stage/pipeline-stage.entity';
+import { Pipeline, PipelineStage } from './../core/entities/internal';
 
 export const createRandomDeal = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, IEmployee[]>,
-	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
+	tenants: ITenant[],
+	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<Deal[]> => {
 	if (!tenantEmployeeMap) {
 		console.warn(

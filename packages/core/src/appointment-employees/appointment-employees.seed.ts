@@ -1,13 +1,12 @@
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
-import { IEmployee } from '@gauzy/contracts';
+import { IEmployee, ITenant } from '@gauzy/contracts';
 import { AppointmentEmployee } from './appointment-employees.entity';
 import * as faker from 'faker';
 
 export const createRandomAppointmentEmployees = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, IEmployee[]>
+	tenants: ITenant[],
+	tenantEmployeeMap: Map<ITenant, IEmployee[]>
 ): Promise<AppointmentEmployee[]> => {
 	if (!tenantEmployeeMap) {
 		console.warn(

@@ -1,21 +1,20 @@
 import { Connection } from 'typeorm';
 import { Invoice } from './invoice.entity';
 import * as faker from 'faker';
-import { Tenant } from '../tenant/tenant.entity';
-import { Organization } from '../organization/organization.entity';
-import { Tag } from '../tags/tag.entity';
 import {
 	DiscountTaxTypeEnum,
 	InvoiceStatusTypesEnum,
-	InvoiceTypeEnum
+	InvoiceTypeEnum,
+	IOrganization,
+	ITenant
 } from '@gauzy/contracts';
-import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import * as _ from 'underscore';
+import { OrganizationContact, Tag } from './../core/entities/internal';
 
 export const createDefaultInvoice = async (
 	connection: Connection,
-	tenant: Tenant,
-	defaultOrganizations: Organization[],
+	tenant: ITenant,
+	defaultOrganizations: IOrganization[],
 	noOfInvoicePerOrganization: number
 ) => {
 	for (const organization of defaultOrganizations) {
@@ -88,8 +87,8 @@ export const createDefaultInvoice = async (
 
 export const createRandomInvoice = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>,
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	noOfInvoicePerOrganization: number
 ) => {
 	for (const tenant of tenants) {

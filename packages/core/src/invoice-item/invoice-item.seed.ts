@@ -2,12 +2,10 @@ import { Connection } from 'typeorm';
 import { InvoiceItem } from './invoice-item.entity';
 import * as faker from 'faker';
 import { Task } from '../tasks/task.entity';
-import { Tenant } from '../tenant/tenant.entity';
-import { Organization } from '../organization/organization.entity';
 import { Employee } from '../employee/employee.entity';
 import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { Invoice } from '../invoice/invoice.entity';
-import { InvoiceTypeEnum } from '@gauzy/contracts';
+import { InvoiceTypeEnum, IOrganization, ITenant } from '@gauzy/contracts';
 import { Expense } from '../expense/expense.entity';
 import { Product } from '../product/product.entity';
 
@@ -15,8 +13,8 @@ const invoiceItems: InvoiceItem[] = [];
 
 export const createDefaultInvoiceItem = async (
 	connection: Connection,
-	tenant: Tenant,
-	organizations: Organization[],
+	tenant: ITenant,
+	organizations: IOrganization[],
 	numberOfInvoiceItemPerInvoice: number
 ) => {
 	for (const organization of organizations) {
@@ -32,8 +30,8 @@ export const createDefaultInvoiceItem = async (
 
 export const createRandomInvoiceItem = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>,
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	numberOfInvoiceItemPerInvoice: number
 ) => {
 	for (const tenant of tenants) {
@@ -52,8 +50,8 @@ export const createRandomInvoiceItem = async (
 
 async function invoiceItemForInvoiceType(
 	connection: Connection,
-	tenant: Tenant,
-	organization: Organization,
+	tenant: ITenant,
+	organization: IOrganization,
 	numberOfInvoiceItemPerInvoice: number
 ) {
 	const where = {

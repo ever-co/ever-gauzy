@@ -1,9 +1,7 @@
 import { Connection } from 'typeorm';
-import { Organization } from '../organization/organization.entity';
 import { ProductType } from './product-type.entity';
 import * as seed from './product-type.seed.json';
 import { ProductTypeTranslation } from './product-type-translation.entity';
-import { Tenant } from '../tenant/tenant.entity';
 import { IOrganization, ITenant } from '@gauzy/contracts';
 
 export const createDefaultProductType = async (
@@ -31,8 +29,8 @@ const insertProductTypes = async (
 
 export const createRandomProductType = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<ProductType[]> => {
 	if (!tenantOrganizationsMap) {
 		console.warn(

@@ -4,7 +4,7 @@ import { ProductCategory } from './product-category.entity';
 import * as faker from 'faker';
 import * as seed from './product-category.seed.json';
 import { ProductCategoryTranslation } from './product-category-translation.entity';
-import { Tenant } from '../tenant/tenant.entity';
+import { IOrganization, ITenant } from '@gauzy/contracts';
 
 export const createCategories = async (
 	connection: Connection,
@@ -44,8 +44,8 @@ const insertProductCategories = async (
 
 export const createRandomCategories = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<ProductCategory[]> => {
 	const seedProductCategories: ProductCategory[] = [];
 

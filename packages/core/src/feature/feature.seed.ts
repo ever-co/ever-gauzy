@@ -132,7 +132,7 @@ async function cleanFeature(connection, config) {
 		console.log('FEATURE SEED -> __dirname: ' + __dirname);
 		*/
 
-		let dir;
+		let dir: string;
 
 		if (env.isElectron) {
 			dir = path.resolve(env.gauzyUserPath, ...['public', destDir]);
@@ -161,8 +161,8 @@ function copyImage(fileName: string, config: IPluginConfig) {
 	try {
 		const destDir = 'features';
 
-		let dir;
-		let baseDir;
+		let dir: string;
+		let baseDir: string;
 
 		if (env.isElectron) {
 			dir = path.resolve(

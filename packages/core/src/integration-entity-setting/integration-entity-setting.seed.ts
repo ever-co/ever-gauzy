@@ -1,15 +1,13 @@
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
-import { IntegrationEntitySetting } from './integration-entity-setting.entity';
 import * as faker from 'faker';
-import { IntegrationTenant } from '../integration-tenant/integration-tenant.entity';
-import { IntegrationEntitySettingTiedEntity } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entity.entity';
-import { Organization } from '../organization/organization.entity';
 import { DEFAULT_ENTITY_SETTINGS } from '@gauzy/integration-hubstaff';
+import { IIntegrationEntitySetting, IIntegrationEntitySettingTied, ITenant } from '@gauzy/contracts';
+import { IntegrationEntitySetting } from './integration-entity-setting.entity';
+import { IntegrationTenant, Organization } from './../core/entities/internal';
 
 export const createRandomIntegrationEntitySetting = async (
 	connection: Connection,
-	tenants: Tenant[]
+	tenants: ITenant[]
 ): Promise<IntegrationEntitySetting[]> => {
 	if (!tenants) {
 		console.warn(
@@ -18,8 +16,8 @@ export const createRandomIntegrationEntitySetting = async (
 		return;
 	}
 
-	const integrationEntitySettings: IntegrationEntitySetting[] = [];
-	const integrationEntitySettingTiedEntities: IntegrationEntitySettingTiedEntity[] = [];
+	const integrationEntitySettings: IIntegrationEntitySetting[] = [];
+	const integrationEntitySettingTiedEntities: IIntegrationEntitySettingTied[] = [];
 
 	for (const tenant of tenants) {
 		const organizations = await connection.manager.find(Organization, {

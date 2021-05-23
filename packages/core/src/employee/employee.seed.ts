@@ -11,7 +11,7 @@ import {
 import * as faker from 'faker';
 import { environment as env } from '@gauzy/config';
 import * as moment from 'moment';
-import { Employee, Organization, Tenant } from './../core/entities/internal';
+import { Employee, Organization } from './../core/entities/internal';
 import { getDefaultOrganization } from './../organization/organization.seed';
 
 export const createDefaultEmployees = async (
@@ -60,15 +60,15 @@ export const createDefaultEmployees = async (
 
 export const createRandomEmployees = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>,
-	tenantUsersMap: Map<Tenant, ISeedUsers>,
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, Organization[]>,
+	tenantUsersMap: Map<ITenant, ISeedUsers>,
 	employeesPerOrganization: number
-): Promise<Map<Tenant, Employee[]>> => {
-	const employeeMap: Map<Tenant, Employee[]> = new Map();
+): Promise<Map<ITenant, IEmployee[]>> => {
+	const employeeMap: Map<ITenant, IEmployee[]> = new Map();
 
 	for (const tenant of tenants) {
-		const employees: Employee[] = [];
+		const employees: IEmployee[] = [];
 		const randomUsers = tenantUsersMap.get(tenant).employeeUsers;
 		const randomOrgs = tenantOrganizationsMap.get(tenant);
 
@@ -109,8 +109,8 @@ export const createRandomEmployees = async (
 
 const insertEmployees = async (
 	connection: Connection,
-	employees: Employee[]
-): Promise<Employee[]> => {
+	employees: IEmployee[]
+): Promise<IEmployee[]> => {
 	return await connection.manager.save(employees);
 };
 

@@ -1,7 +1,7 @@
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
 import {
 	IEmployee,
+	ITenant,
 	RecurringExpenseDefaultCategoriesEnum
 } from '@gauzy/contracts';
 import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
@@ -12,8 +12,8 @@ import { environment as env } from '@gauzy/config';
 
 export const createRandomEmployeeRecurringExpense = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, IEmployee[]>
+	tenants: ITenant[],
+	tenantEmployeeMap: Map<ITenant, IEmployee[]>
 ): Promise<EmployeeRecurringExpense[]> => {
 	if (!tenantEmployeeMap) {
 		console.warn(

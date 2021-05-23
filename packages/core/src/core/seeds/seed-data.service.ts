@@ -1387,11 +1387,17 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Random Feature Toggle',
-			createRandomFeatureToggle(this.connection, tenants)
+			createRandomFeatureToggle(
+				this.connection, 
+				tenants
+			)
 		);
 
 		// Independent roles and role permissions for each tenant
-		const roles: IRole[] = await createRoles(this.connection, tenants);
+		const roles: IRole[] = await createRoles(
+			this.connection, 
+			tenants
+		);
 
 		await createRolePermissions(this.connection, roles, tenants);
 
@@ -1800,16 +1806,16 @@ export class SeedDataService {
 			)
 		);
 
-		// await this.tryExecute(
-		// 	'Random TimeSheets',
-		// 	createRandomTimesheet(
-		// 		this.connection,
-		// 		this.config,
-		// 		tenants,
-		// 		this.defaultProjects,
-		// 		randomSeedConfig.noOfTimeLogsPerTimeSheet
-		// 	)
-		// );
+		await this.tryExecute(
+			'Random TimeSheets',
+			createRandomTimesheet(
+				this.connection,
+				this.config,
+				tenants,
+				this.defaultProjects,
+				randomSeedConfig.noOfTimeLogsPerTimeSheet
+			)
+		);
 
 		const noOfContactsPerOrganization = 10;
 		await this.tryExecute(
@@ -2104,6 +2110,9 @@ export class SeedDataService {
 		);
 	}
 
+	/**
+	* Cleans all the previous generate screenshots, reports etc
+	*/
 	private async cleanUpPreviousRuns() {
 		this.log(chalk.green(`CLEANING UP FROM PREVIOUS RUNS...`));
 
@@ -2124,6 +2133,9 @@ export class SeedDataService {
 		});
 	}
 
+	/**
+	* Create connection from database
+	*/
 	private async createConnection() {
 		try {
 			this.connection = getConnection(SEEDER_DB_CONNECTION);
@@ -2148,6 +2160,9 @@ export class SeedDataService {
 		}
 	}
 
+	/**
+	* Close connection from database
+	*/
 	private async closeConnection() {
 		try {
 			this.connection = getConnection(SEEDER_DB_CONNECTION);

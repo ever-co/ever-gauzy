@@ -3,10 +3,10 @@ import {
 	IOrganization,
 	IUser,
 	IUserOrganization,
-	ISeedUsers
+	ISeedUsers,
+	ITenant
 } from '@gauzy/contracts';
 import { UserOrganization } from './user-organization.entity';
-import { Tenant } from '../tenant/tenant.entity';
 
 export const createDefaultUsersOrganizations = async (
 	connection: Connection,
@@ -35,10 +35,10 @@ export const createDefaultUsersOrganizations = async (
 
 export const createRandomUsersOrganizations = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, IOrganization[]>,
-	tenantSuperAdminsMap: Map<Tenant, IUser[]>,
-	tenantUsersMap: Map<Tenant, ISeedUsers>,
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	tenantSuperAdminsMap: Map<ITenant, IUser[]>,
+	tenantUsersMap: Map<ITenant, ISeedUsers>,
 	employeesPerOrganization: number
 ): Promise<IUserOrganization[]> => {
 	const usersOrganizations: IUserOrganization[] = [];

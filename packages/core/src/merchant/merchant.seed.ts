@@ -1,5 +1,5 @@
 import { Connection } from 'typeorm';
-import { Tenant, Merchant, Contact, ImageAsset } from 'core';
+import { Merchant, Contact, ImageAsset } from 'core';
 import * as faker from 'faker';
 import { IOrganization, ITenant } from '@gauzy/contracts';
 
@@ -31,7 +31,7 @@ export const createRandomMerchants = async (
 
 
 export const createDefaultMerchants = async (connection: Connection,
-    tenant: Tenant,
+    tenant: ITenant,
     organizations: IOrganization[]
 ) => {
     let merchants: Merchant[] = [];
