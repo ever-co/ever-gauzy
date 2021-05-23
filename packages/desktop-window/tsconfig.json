@@ -1,0 +1,15 @@
+{
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"declaration": true,
+		"sourceMap": true,
+		"baseUrl": "./src",
+		"rootDir": "./src",
+		"outDir": "./dist",
+		"module": "commonjs",
+		"types": ["node"]
+	},
+	"files": ["global.d.ts"],
+	"include": ["./src/**/*.ts"],
+	"exclude": ["node_modules", "dist"]
+}

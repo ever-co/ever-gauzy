@@ -1,7 +1,6 @@
 import log from 'electron-log';
 import { screen, BrowserWindow, ipcMain } from 'electron';
 import * as url from 'url';
-import { LocalStore } from '../../../desktop-libs/src';
 
 export function createGauzyWindow(gauzyWindow, serve, config, filePath) {
 	log.info('createGauzyWindow started');
@@ -10,10 +9,10 @@ export function createGauzyWindow(gauzyWindow, serve, config, filePath) {
 	mainWindowSettings = windowSetting();
 	gauzyWindow = new BrowserWindow(mainWindowSettings);
 	let launchPath;
-	const appConfig = LocalStore.getStore('configs');
-	if (!appConfig.gauzyWindow) {
-		gauzyWindow.hide();
-	}
+	// const appConfig = LocalStore.getStore('configs');
+	// if (!appConfig.gauzyWindow) {
+	// 	gauzyWindow.hide();
+	// }
 
 	if (serve) {
 		require('electron-reload')(__dirname, {

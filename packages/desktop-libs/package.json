@@ -1,0 +1,44 @@
+{
+	"name": "@gauzy/desktop-libs",
+	"version": "0.1.0",
+	"description": "Ever Gauzy Platform desktop libs",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"license": "AGPL-3.0",
+	"private": true,
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"files": [
+		"dist"
+	],
+	"directories": {
+		"lib": "dist"
+	},
+	"publishConfig": {
+		"access": "restricted"
+	},
+	"scripts": {
+		"build": "rimraf dist && yarn run compile",
+		"compile": "tsc -p tsconfig.build.json"
+	},
+	"keywords": [],
+	"dependencies": {
+        "electron": "12.0.5",
+        "electron-store": "^8.0.0",
+        "node-notifier": "^8.0.0",
+		"moment": "^2.29.0",
+        "mac-screen-capture-permissions": "https://github.com/ever-co/mac-screen-capture-permissions.git",
+		"form-data": "^3.0.0",
+		"node-fetch": "^2.6.1",
+		"screenshot-desktop": "^1.12.2",
+        "sound-play": "1.1.0",
+        "underscore": "^1.13.0"
+	},
+    "devDependencies": {
+        "@gauzy/desktop-window": "^0.1.0",
+		"@types/node": "^14.14.22"
+    }
+}

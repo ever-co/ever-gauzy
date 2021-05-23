@@ -18,7 +18,7 @@
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
-	"main": "apps/desktop/src/index.js",
+	"main": "index.js",
 	"build": {
 		"appId": "com.company.gauzydesktop",
 		"productName": "Gauzy Desktop",
@@ -108,6 +108,10 @@
 		"underscore": "^1.13.0",
 		"@gauzy/knowledge-base": "file:../../../node_modules/@gauzy",
 		"@gauzy/changelog": "file:../../../node_modules/@gauzy",
-		"tslib": "2.1.0"
+		"tslib": "2.1.0",
+		"@gauzy/desktop-window": "file:../../../node_modules/@gauzy",
+		"@gauzy/desktop-libs": "file:../../../node_modules/@gauzy",
+		"@sentry/node": "^5.30.0",
+		"@sentry/tracing": "^5.30.0"
 	}
 }
