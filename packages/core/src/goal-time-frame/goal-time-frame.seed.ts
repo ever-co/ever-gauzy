@@ -1,13 +1,12 @@
 import { GoalTimeFrame } from './goal-time-frame.entity';
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
-import { Organization } from '../organization/organization.entity';
 import * as moment from 'moment';
+import { IOrganization, ITenant } from '@gauzy/contracts';
 
 export const createDefaultTimeFrames = async (
 	connection: Connection,
-	tenant: Tenant,
-	organizations: Organization[]
+	tenant: ITenant,
+	organizations: IOrganization[]
 ): Promise<GoalTimeFrame[]> => {
 	const defaultTimeFrames = [];
 	for (const organization of organizations) {

@@ -1,13 +1,11 @@
-import { GoalOwnershipEnum } from '@gauzy/contracts';
+import { GoalOwnershipEnum, IOrganization, ITenant } from '@gauzy/contracts';
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
-import { Organization } from '../organization/organization.entity';
 import { GoalGeneralSetting } from './goal-general-setting.entity';
 
 export const createDefaultGeneralGoalSetting = async (
 	connection: Connection,
-	tenant: Tenant,
-	organizations: Organization[]
+	tenant: ITenant,
+	organizations: IOrganization[]
 ): Promise<GoalGeneralSetting[]> => {
 	const defaultGeneralGoalSetting = [];
 	for (const organization of organizations) {

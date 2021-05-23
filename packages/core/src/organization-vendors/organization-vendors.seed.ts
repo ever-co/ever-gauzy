@@ -13,7 +13,7 @@ export const createOrganizationVendors = async (
 			name,
 			organizationId: organization.id,
 			organization,
-			tenant: organization.tenant
+			tenant: tenant
 		}));
 
 		defaultOrganizationVendors = [

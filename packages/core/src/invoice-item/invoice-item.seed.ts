@@ -1,13 +1,8 @@
 import { Connection } from 'typeorm';
 import { InvoiceItem } from './invoice-item.entity';
 import * as faker from 'faker';
-import { Task } from '../tasks/task.entity';
-import { Employee } from '../employee/employee.entity';
-import { OrganizationProject } from '../organization-projects/organization-projects.entity';
-import { Invoice } from '../invoice/invoice.entity';
 import { InvoiceTypeEnum, IOrganization, ITenant } from '@gauzy/contracts';
-import { Expense } from '../expense/expense.entity';
-import { Product } from '../product/product.entity';
+import { Employee, Expense, Invoice, OrganizationProject, Product, Task } from './../core/entities/internal';
 
 const invoiceItems: InvoiceItem[] = [];
 

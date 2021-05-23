@@ -729,27 +729,28 @@ export class SeedDataService {
 			defaultEmployeeUsers.push(...defaultEverEmployeeUsers);
 		}
 
+		const defaultUsers = [ 
+			...this.superAdminUsers,
+			...defaultAdminUsers,
+			...defaultEmployeeUsers
+		];
 		await this.tryExecute(
 			'Users',
-			createDefaultUsersOrganizations(this.connection, {
-				organizations: this.organizations,
-				users: [ 
-					...this.superAdminUsers,
-					...defaultAdminUsers,
-					...defaultEmployeeUsers
-				]
-			})
+			createDefaultUsersOrganizations(
+				this.connection,
+				this.tenant,
+				this.organizations,
+				defaultUsers
+			)
 		);
 
 		const allDefaultEmployees = DEFAULT_EMPLOYEES.concat(DEFAULT_EVER_EMPLOYEES);
 		//User level data that needs connection, tenant, organization, role, users
 		this.defaultEmployees = await createDefaultEmployees(
-			this.connection,  
-			{
-				tenant: this.tenant,
-				org: this.defaultOrganization,
-				users: defaultEmployeeUsers
-			}, 
+			this.connection, 
+			this.tenant,
+			this.defaultOrganization,
+			defaultEmployeeUsers,
 			allDefaultEmployees
 		);
 
@@ -800,10 +801,12 @@ export class SeedDataService {
 
 		await this.tryExecute(
 			'Default Time Off Policy',
-			createDefaultTimeOffPolicy(this.connection, {
-				org: this.defaultOrganization,
-				employees: this.defaultEmployees
-			})
+			createDefaultTimeOffPolicy(
+				this.connection, 
+				this.tenant,
+				this.defaultOrganization,
+				this.defaultEmployees
+			)
 		);
 
 		// seed default integrations with types
@@ -854,7 +857,8 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Default Employee Levels',
 			createEmployeeLevels(
-				this.connection, 
+				this.connection,
+				this.tenant,
 				this.organizations
 			)
 		);
@@ -863,7 +867,8 @@ export class SeedDataService {
 		await this.tryExecute(
 			'Default Categories',
 			createCategories(
-				this.connection, 
+				this.connection,
+				this.tenant,
 				this.organizations
 			)
 		);

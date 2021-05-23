@@ -1,8 +1,6 @@
 import { Connection } from 'typeorm';
 import { OrganizationDepartment } from './organization-department.entity';
 import * as faker from 'faker';
-import { Tenant } from '../tenant/tenant.entity';
-import { Organization } from '../organization/organization.entity';
 import { Tag } from '../tags/tag.entity';
 import { DEFAULT_ORGANIZATION_DEPARTMENTS } from './default-organization-departments';
 import { IOrganization, ITenant } from '@gauzy/contracts';
@@ -33,8 +31,8 @@ export const createDefaultOrganizationDepartments = async (
 
 export const seedRandomOrganizationDepartments = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<void> => {
 	let departments: OrganizationDepartment[] = [];
 	for (const tenant of tenants) {

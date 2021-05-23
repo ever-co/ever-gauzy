@@ -11,7 +11,6 @@ import {
 	ITenant
 } from '@gauzy/contracts';
 import { DEFAULT_FEATURES } from './default-features';
-import { Tenant } from '../tenant/tenant.entity';
 import { Feature } from './feature.entity';
 import { FeatureOrganization } from './feature_organization.entity';
 import { IPluginConfig } from '@gauzy/common';
@@ -71,7 +70,7 @@ export const createRandomFeatureToggle = async (
 	return features;
 };
 
-function createFeature(item: IFeature, tenant: Tenant, config: IPluginConfig) {
+function createFeature(item: IFeature, tenant: ITenant, config: IPluginConfig) {
 	const {
 		name,
 		code,

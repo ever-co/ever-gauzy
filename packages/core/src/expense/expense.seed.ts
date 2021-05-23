@@ -12,7 +12,7 @@ import * as path from 'path';
 import * as csv from 'csv-parser';
 import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
-import { Expense, Tenant } from './../core/entities/internal';
+import { Expense } from './../core/entities/internal';
 
 export const createDefaultExpenses = async (
 	connection: Connection,
@@ -87,8 +87,8 @@ export const createDefaultExpenses = async (
 
 export const createRandomExpenses = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, IEmployee[]>,
+	tenants: ITenant[],
+	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	organizationVendorsMap: Map<IOrganization, IOrganizationVendor[]> | void,
 	categoriesMap: Map<IOrganization, IExpenseCategory[]> | void
 ): Promise<void> => {

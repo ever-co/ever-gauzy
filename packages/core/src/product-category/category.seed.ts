@@ -1,5 +1,4 @@
 import { Connection } from 'typeorm';
-import { Organization } from '../organization/organization.entity';
 import { ProductCategory } from './product-category.entity';
 import * as faker from 'faker';
 import * as seed from './product-category.seed.json';
@@ -8,7 +7,8 @@ import { IOrganization, ITenant } from '@gauzy/contracts';
 
 export const createCategories = async (
 	connection: Connection,
-	organizations: Organization[]
+	tenant: ITenant,
+	organizations: IOrganization[]
 ): Promise<ProductCategory[]> => {
 	const seedProductCategories = [];
 
@@ -19,13 +19,13 @@ export const createCategories = async (
 
 			newCategory.imageUrl = image;
 			newCategory.organization = organization;
-			newCategory.tenant = organization.tenant;
+			newCategory.tenant = tenant;
 			newCategory.translations = [];
 
 			seedProductCategory.translations.forEach((translation) => {
 				const newTranslation = new ProductCategoryTranslation();
 				newTranslation.organization = organization;
-				newTranslation.tenant = organization.tenant;
+				newTranslation.tenant = tenant;
 				Object.assign(newTranslation, translation);
 				newCategory.translations.push(newTranslation);
 			});

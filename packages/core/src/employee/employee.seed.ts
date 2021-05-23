@@ -16,21 +16,15 @@ import { getDefaultOrganization } from './../organization/organization.seed';
 
 export const createDefaultEmployees = async (
 	connection: Connection,
-	defaultData: {
-		tenant: ITenant;
-		org: IOrganization;
-		users: IUser[];
-	},
+	tenant: ITenant,
+	organization: IOrganization,
+	users: IUser[],
 	defaultEmployees: any
 ): Promise<Employee[]> => {
-	const defaultUsers = defaultData.users;
-	const defaultOrg = defaultData.org;
-	const defaultTenant = defaultData.tenant;
-
 	const employees: IEmployee[] = [];
-	for (const user of defaultUsers) {
+	for (const user of users) {
 		const employee = new Employee();
-		employee.organization = defaultOrg;
+		employee.organization = organization;
 		employee.user = user;
 		employee.employeeLevel = defaultEmployees.find(
 			(e) => e.email === employee.user.email
@@ -48,9 +42,9 @@ export const createDefaultEmployees = async (
 			Object.keys(PayPeriodEnum)
 		);
 		employee.billRateValue = faker.datatype.number(100);
-		employee.billRateCurrency = defaultOrg.currency || env.defaultCurrency;
+		employee.billRateCurrency = organization.currency || env.defaultCurrency;
 		employee.reWeeklyLimit = faker.datatype.number(40);
-		employee.tenant = defaultTenant;
+		employee.tenant = tenant;
 		employees.push(employee);
 	}
 

@@ -15,10 +15,8 @@ import {
 	ITenant,
 	IUser
 } from '@gauzy/contracts';
-import { Role } from '../role/role.entity';
 import { User } from './user.entity';
 import { getUserDummyImage } from '../core';
-import { Tenant } from '../tenant/tenant.entity';
 import { DEFAULT_EMPLOYEES, DEFAULT_EVER_EMPLOYEES } from '../employee/default-employees';
 import { DEFAULT_CANDIDATES } from '../candidate/default-candidates';
 import { DEFAULT_SUPER_ADMINS, DEFAULT_ADMINS } from './default-users';
@@ -338,8 +336,8 @@ const seedDefaultCandidateUsers = async (
 
 const generateDefaultUser = async (
 	defaultUser: IDefaultUser,
-	role: Role,
-	tenant: Tenant
+	role: IRole,
+	tenant: ITenant
 ): Promise<IUser> => {
 	const user = new User();
 	const {

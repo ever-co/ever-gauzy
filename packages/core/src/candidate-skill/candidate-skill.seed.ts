@@ -1,16 +1,15 @@
-import { ISkill, ICandidate } from '@gauzy/contracts';
+import { ISkill, ICandidate, IOrganization, ITenant } from '@gauzy/contracts';
 import { Connection } from 'typeorm';
 import * as faker from 'faker';
 import { CandidateSkill } from './candidate-skill.entity';
-import { Tenant } from '../tenant/tenant.entity';
 import { Organization } from '../organization/organization.entity';
 import { DEFAULT_CANDIDATE_SKILLS } from './default-candidate-skills';
 
 export const createCandidateSkills = async (
 	connection: Connection,
-	tenant: Tenant,
+	tenant: ITenant,
 	candidates: ICandidate[] | void,
-	organization: Organization
+	organization: IOrganization
 ): Promise<CandidateSkill[]> => {
 	if (!candidates) {
 		console.warn(
@@ -33,8 +32,8 @@ export const createCandidateSkills = async (
 
 export const createRandomCandidateSkills = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantCandidatesMap: Map<Tenant, ICandidate[]> | void
+	tenants: ITenant[],
+	tenantCandidatesMap: Map<ITenant, ICandidate[]> | void
 ): Promise<Map<ICandidate, CandidateSkill[]>> => {
 	if (!tenantCandidatesMap) {
 		console.warn(
