@@ -680,8 +680,8 @@ export class InvoicesComponent
 				where: {
 					organizationId,
 					tenantId,
-					isEstimate: this.isEstimate,
-					isArchived: this.includeArchived,
+					isEstimate: (this.isEstimate === true) ? 1 : 0,
+					isArchived: (this.includeArchived === true) ? 1 : 0,
 					...filterData.where
 				},
 				resultMap: (i) => {
