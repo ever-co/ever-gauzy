@@ -1,12 +1,11 @@
 import { Connection } from 'typeorm';
 import { OrganizationPositions } from './organization-positions.entity';
-import { Tenant } from '../tenant/tenant.entity';
-import { Organization } from '../organization/organization.entity';
 import { DEFAULT_ORGANIZATION_POSITIONS } from './default-organization-positions';
+import { IOrganization, ITenant } from '@gauzy/contracts';
 
 export const seedDefaultOrganizationPosition = async (
 	connection: Connection,
-	tenant: Tenant,
+	tenant: ITenant,
 	organizations
 ): Promise<void> => {
 	let positions: OrganizationPositions[] = [];
@@ -26,8 +25,8 @@ export const seedDefaultOrganizationPosition = async (
 
 export const seedRandomOrganizationPosition = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<void> => {
 	let positions: OrganizationPositions[] = [];
 

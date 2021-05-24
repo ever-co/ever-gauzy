@@ -11,26 +11,20 @@ import {
 import * as faker from 'faker';
 import { environment as env } from '@gauzy/config';
 import * as moment from 'moment';
-import { Employee, Organization, Tenant } from './../core/entities/internal';
+import { Employee, Organization } from './../core/entities/internal';
 import { getDefaultOrganization } from './../organization/organization.seed';
 
 export const createDefaultEmployees = async (
 	connection: Connection,
-	defaultData: {
-		tenant: ITenant;
-		org: IOrganization;
-		users: IUser[];
-	},
+	tenant: ITenant,
+	organization: IOrganization,
+	users: IUser[],
 	defaultEmployees: any
 ): Promise<Employee[]> => {
-	const defaultUsers = defaultData.users;
-	const defaultOrg = defaultData.org;
-	const defaultTenant = defaultData.tenant;
-
 	const employees: IEmployee[] = [];
-	for (const user of defaultUsers) {
+	for (const user of users) {
 		const employee = new Employee();
-		employee.organization = defaultOrg;
+		employee.organization = organization;
 		employee.user = user;
 		employee.employeeLevel = defaultEmployees.find(
 			(e) => e.email === employee.user.email
@@ -48,9 +42,9 @@ export const createDefaultEmployees = async (
 			Object.keys(PayPeriodEnum)
 		);
 		employee.billRateValue = faker.datatype.number(100);
-		employee.billRateCurrency = defaultOrg.currency || env.defaultCurrency;
+		employee.billRateCurrency = organization.currency || env.defaultCurrency;
 		employee.reWeeklyLimit = faker.datatype.number(40);
-		employee.tenant = defaultTenant;
+		employee.tenant = tenant;
 		employees.push(employee);
 	}
 
@@ -60,15 +54,15 @@ export const createDefaultEmployees = async (
 
 export const createRandomEmployees = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>,
-	tenantUsersMap: Map<Tenant, ISeedUsers>,
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, Organization[]>,
+	tenantUsersMap: Map<ITenant, ISeedUsers>,
 	employeesPerOrganization: number
-): Promise<Map<Tenant, Employee[]>> => {
-	const employeeMap: Map<Tenant, Employee[]> = new Map();
+): Promise<Map<ITenant, IEmployee[]>> => {
+	const employeeMap: Map<ITenant, IEmployee[]> = new Map();
 
 	for (const tenant of tenants) {
-		const employees: Employee[] = [];
+		const employees: IEmployee[] = [];
 		const randomUsers = tenantUsersMap.get(tenant).employeeUsers;
 		const randomOrgs = tenantOrganizationsMap.get(tenant);
 
@@ -109,8 +103,8 @@ export const createRandomEmployees = async (
 
 const insertEmployees = async (
 	connection: Connection,
-	employees: Employee[]
-): Promise<Employee[]> => {
+	employees: IEmployee[]
+): Promise<IEmployee[]> => {
 	return await connection.manager.save(employees);
 };
 

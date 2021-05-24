@@ -4,24 +4,24 @@
 
 import { Connection } from 'typeorm';
 import { Role } from './role.entity';
-import { RolesEnum } from '@gauzy/contracts';
-import { Tenant } from '../tenant/tenant.entity';
+import { ITenant, RolesEnum } from '@gauzy/contracts';
 
 export const createRoles = async (
 	connection: Connection,
-	tenants: Tenant[]
+	tenants: ITenant[]
 ): Promise<Role[]> => {
-	const roles: Role[] = [];
-	const rolesNames = Object.values(RolesEnum);
-
-	tenants.forEach((tenant) => {
-		for (const name of rolesNames) {
-			const role = new Role();
-			role.name = name;
-			role.tenant = tenant;
-			roles.push(role);
+	try {
+		const roles: Role[] = [];
+		for (const tenant of tenants) {
+			for (const name of Object.values(RolesEnum)) {
+				const role = new Role();
+				role.name = name;
+				role.tenant = tenant;
+				roles.push(role);
+			}
 		}
-	});
-
-	return await connection.manager.save(roles);
+		return await connection.manager.save(roles);
+	} catch (error) {
+		console.log({error})
+	}
 };

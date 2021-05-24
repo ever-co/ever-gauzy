@@ -3,42 +3,37 @@ import {
 	IOrganization,
 	IUser,
 	IUserOrganization,
-	ISeedUsers
+	ISeedUsers,
+	ITenant
 } from '@gauzy/contracts';
 import { UserOrganization } from './user-organization.entity';
-import { Tenant } from '../tenant/tenant.entity';
 
 export const createDefaultUsersOrganizations = async (
 	connection: Connection,
-	defaultData: {
-		organizations: IOrganization[];
-		users: IUser[];
-	}
+	tenant: ITenant,
+	organizations: IOrganization[],
+	users: IUser[]
 ): Promise<IUserOrganization[]> => {
 	let userOrganization: IUserOrganization;
-
 	const usersOrganizations: IUserOrganization[] = [];
-	const defaultUsers = defaultData.users;
-	const defaultOrgs = defaultData.organizations;
-
-	defaultOrgs.forEach((org) => {
-		for (const user of defaultUsers) {
+	for (const organization of organizations) {
+		for (const user of users) {
 			userOrganization = new UserOrganization();
-			userOrganization.organizationId = org.id;
-			userOrganization.tenant = org.tenant;
-			userOrganization.userId = user.id;
+			userOrganization.organization = organization;
+			userOrganization.tenant = tenant;
+			userOrganization.user = user;
 			usersOrganizations.push(userOrganization);
 		}
-	});
+	}
 	return await insertUserOrganization(connection, usersOrganizations);
 };
 
 export const createRandomUsersOrganizations = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, IOrganization[]>,
-	tenantSuperAdminsMap: Map<Tenant, IUser[]>,
-	tenantUsersMap: Map<Tenant, ISeedUsers>,
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	tenantSuperAdminsMap: Map<ITenant, IUser[]>,
+	tenantUsersMap: Map<ITenant, ISeedUsers>,
 	employeesPerOrganization: number
 ): Promise<IUserOrganization[]> => {
 	const usersOrganizations: IUserOrganization[] = [];

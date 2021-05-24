@@ -1,13 +1,12 @@
 import { Connection } from 'typeorm';
-import { IOrganization } from '@gauzy/contracts';
+import { IOrganization, ITenant } from '@gauzy/contracts';
 import { EquipmentSharingPolicy } from './equipment-sharing-policy.entity';
-import { Tenant } from '../tenant/tenant.entity';
 
 export const createDefaultEquipmentSharingPolicyForOrg = async (
 	connection: Connection,
 	defaultData: {
 		orgs: IOrganization[];
-		tenant: Tenant;
+		tenant: ITenant;
 	}
 ): Promise<void> => {
 	const promises = [];
@@ -40,8 +39,8 @@ const insertDefaultPolicy = async (
 
 export const createRandomEquipmentSharingPolicyForOrg = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<EquipmentSharingPolicy[]> => {
 	const policies: EquipmentSharingPolicy[] = [];
 	const policyArray = ['Equipment Sharing Policy'];

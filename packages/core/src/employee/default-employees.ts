@@ -1,4 +1,4 @@
-import { LanguagesEnum } from '@gauzy/contracts';
+import { ComponentLayoutStyleEnum, LanguagesEnum } from '@gauzy/contracts';
 
 export const DEFAULT_EMPLOYEES = [
 	{
@@ -8,7 +8,8 @@ export const DEFAULT_EMPLOYEES = [
 		lastName: 'Employee',
 		imageUrl: 'assets/images/avatar-default.svg',
 		employeeLevel: 'A',
-		preferredLanguage: LanguagesEnum.ENGLISH
+		preferredLanguage: LanguagesEnum.ENGLISH,
+		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	}
 ];
 
@@ -20,7 +21,8 @@ export const DEFAULT_EVER_EMPLOYEES = [
 		lastName: 'Konviser',
 		imageUrl: 'assets/images/avatars/ruslan.jpg',
 		employeeLevel: 'A',
-		preferredLanguage: LanguagesEnum.ENGLISH
+		preferredLanguage: LanguagesEnum.ENGLISH,
+		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
 		email: 'alish@ever.co',
@@ -31,7 +33,8 @@ export const DEFAULT_EVER_EMPLOYEES = [
 		startedWorkOn: '2018-03-20',
 		endWork: null,
 		employeeLevel: 'D',
-		preferredLanguage: LanguagesEnum.ENGLISH
+		preferredLanguage: LanguagesEnum.ENGLISH,
+		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
 		email: 'blagovest@ever.co',
@@ -42,7 +45,8 @@ export const DEFAULT_EVER_EMPLOYEES = [
 		startedWorkOn: '2018-03-19',
 		endWork: null,
 		employeeLevel: 'C',
-		preferredLanguage: LanguagesEnum.ENGLISH
+		preferredLanguage: LanguagesEnum.ENGLISH,
+		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
 		email: 'elvis@ever.co',
@@ -53,7 +57,8 @@ export const DEFAULT_EVER_EMPLOYEES = [
 		startedWorkOn: '2018-05-25',
 		endWork: null,
 		employeeLevel: 'C',
-		preferredLanguage: LanguagesEnum.ENGLISH
+		preferredLanguage: LanguagesEnum.ENGLISH,
+		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
 		email: 'hristo@ever.co',
@@ -64,7 +69,8 @@ export const DEFAULT_EVER_EMPLOYEES = [
 		startedWorkOn: '2019-06-17',
 		endWork: null,
 		employeeLevel: 'B',
-		preferredLanguage: LanguagesEnum.ENGLISH
+		preferredLanguage: LanguagesEnum.ENGLISH,
+		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
 		email: 'alex@ever.co',
@@ -75,7 +81,8 @@ export const DEFAULT_EVER_EMPLOYEES = [
 		startedWorkOn: '2019-08-01',
 		endWork: null,
 		employeeLevel: 'B',
-		preferredLanguage: LanguagesEnum.ENGLISH
+		preferredLanguage: LanguagesEnum.ENGLISH,
+		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
 		email: 'rachit@ever.co',
@@ -86,7 +93,8 @@ export const DEFAULT_EVER_EMPLOYEES = [
 		startedWorkOn: '2019-11-27',
 		endWork: null,
 		employeeLevel: null,
-		preferredLanguage: LanguagesEnum.ENGLISH
+		preferredLanguage: LanguagesEnum.ENGLISH,
+		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
 		email: 'dimana@ever.co',
@@ -97,7 +105,8 @@ export const DEFAULT_EVER_EMPLOYEES = [
 		startedWorkOn: '2019-11-26',
 		endWork: null,
 		employeeLevel: null,
-		preferredLanguage: LanguagesEnum.ENGLISH
+		preferredLanguage: LanguagesEnum.ENGLISH,
+		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
 		email: 'pavel@ever.co',
@@ -108,7 +117,8 @@ export const DEFAULT_EVER_EMPLOYEES = [
 		startedWorkOn: '2020-03-16',
 		endWork: null,
 		employeeLevel: 'A',
-		preferredLanguage: LanguagesEnum.ENGLISH
+		preferredLanguage: LanguagesEnum.ENGLISH,
+		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
 		email: 'yavor@ever.co',
@@ -119,7 +129,8 @@ export const DEFAULT_EVER_EMPLOYEES = [
 		startedWorkOn: '2020-02-05',
 		endWork: null,
 		employeeLevel: 'A',
-		preferredLanguage: LanguagesEnum.ENGLISH
+		preferredLanguage: LanguagesEnum.ENGLISH,
+		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
 		email: 'tsvetelina@ever.co',
@@ -130,7 +141,8 @@ export const DEFAULT_EVER_EMPLOYEES = [
 		startedWorkOn: '2020-03-02',
 		endWork: null,
 		employeeLevel: 'A',
-		preferredLanguage: LanguagesEnum.ENGLISH
+		preferredLanguage: LanguagesEnum.ENGLISH,
+		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
 		email: 'muiz@smooper.xyz',
@@ -141,7 +153,8 @@ export const DEFAULT_EVER_EMPLOYEES = [
 		startedWorkOn: '2019-11-27',
 		endWork: null,
 		employeeLevel: null,
-		preferredLanguage: LanguagesEnum.ENGLISH
+		preferredLanguage: LanguagesEnum.ENGLISH,
+		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
 		email: 'deko898@hotmail.com',
@@ -152,7 +165,8 @@ export const DEFAULT_EVER_EMPLOYEES = [
 		startedWorkOn: '2020-03-07',
 		endWork: null,
 		employeeLevel: null,
-		preferredLanguage: LanguagesEnum.ENGLISH
+		preferredLanguage: LanguagesEnum.ENGLISH,
+		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
 		email: 'ckhandla94@gmail.com',
@@ -163,7 +177,8 @@ export const DEFAULT_EVER_EMPLOYEES = [
 		startedWorkOn: '2020-03-07',
 		endWork: null,
 		employeeLevel: null,
-		preferredLanguage: LanguagesEnum.ENGLISH
+		preferredLanguage: LanguagesEnum.ENGLISH,
+		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
 		email: 'julia@ever.co',
@@ -174,7 +189,8 @@ export const DEFAULT_EVER_EMPLOYEES = [
 		startedWorkOn: '2018-08-01',
 		endWork: null,
 		employeeLevel: 'C',
-		preferredLanguage: LanguagesEnum.ENGLISH
+		preferredLanguage: LanguagesEnum.ENGLISH,
+		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	},
 	{
 		email: 'yordan@ever.co',
@@ -185,6 +201,7 @@ export const DEFAULT_EVER_EMPLOYEES = [
 		startedWorkOn: '2018-08-01',
 		endWork: null,
 		employeeLevel: 'C',
-		preferredLanguage: LanguagesEnum.ENGLISH
+		preferredLanguage: LanguagesEnum.ENGLISH,
+		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	}
 ];

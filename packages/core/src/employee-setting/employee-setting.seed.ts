@@ -1,14 +1,14 @@
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
-import { IEmployee } from '@gauzy/contracts';
-import { EmployeeSetting } from './employee-setting.entity';
+import { IEmployee, ITenant } from '@gauzy/contracts';
 import * as faker from 'faker';
+import { environment as env } from '@gauzy/config';
 import { Organization } from '../organization/organization.entity';
+import { EmployeeSetting } from './employee-setting.entity';
 
 export const createRandomEmployeeSetting = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, IEmployee[]>
+	tenants: ITenant[],
+	tenantEmployeeMap: Map<ITenant, IEmployee[]>
 ): Promise<EmployeeSetting[]> => {
 	if (!tenantEmployeeMap) {
 		console.warn(
@@ -18,7 +18,6 @@ export const createRandomEmployeeSetting = async (
 	}
 
 	const employees: EmployeeSetting[] = [];
-	const currency = ['USD', 'BGN', 'ILS'];
 	const setting = ['Normal', 'Custom'];
 
 	for (const tenant of tenants) {
@@ -35,7 +34,7 @@ export const createRandomEmployeeSetting = async (
 			employee.year = startDate.getFullYear();
 			employee.settingType = setting[Math.random() > 0.5 ? 1 : 0];
 			employee.value = Math.floor(Math.random() * 999) + 1;
-			employee.currency = currency[Math.floor(Math.random() * 2)];
+			employee.currency = env.defaultCurrency ;
 			employee.employee = tenantEmployee;
 			employee.organization = faker.random.arrayElement(organizations);
 			employee.tenant = tenant;

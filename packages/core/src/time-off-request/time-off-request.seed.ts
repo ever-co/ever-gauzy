@@ -1,21 +1,18 @@
 import { Connection } from 'typeorm';
 import * as faker from 'faker';
 import { TimeOffRequest } from './time-off-request.entity';
-import { Tenant } from '../tenant/tenant.entity';
-import { Organization } from '../organization/organization.entity';
-import { Employee } from '../employee/employee.entity';
 import { TimeOffPolicy } from '../time-off-policy/time-off-policy.entity';
 import { addDays } from 'date-fns';
-import { StatusTypesEnum } from '@gauzy/contracts';
+import { IEmployee, IOrganization, ITenant, StatusTypesEnum } from '@gauzy/contracts';
 import * as _ from 'underscore';
 
 const status = Object.values(StatusTypesEnum);
 
 export const createDefaultEmployeeTimeOff = async (
 	connection: Connection,
-	tenant: Tenant,
-	organization: Organization,
-	employees: Employee[],
+	tenant: ITenant,
+	organization: IOrganization,
+	employees: IEmployee[],
 	noOfEmployeeTimeOffRequest: number
 ): Promise<TimeOffRequest[]> => {
 	let requests: TimeOffRequest[] = [];
@@ -36,9 +33,9 @@ export const createDefaultEmployeeTimeOff = async (
 
 export const createRandomEmployeeTimeOff = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>,
-	tenantEmployeeMap: Map<Tenant, Employee[]>,
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	noOfEmployeeTimeOffRequest: number
 ): Promise<TimeOffRequest[]> => {
 	let requests: TimeOffRequest[] = [];
@@ -65,7 +62,7 @@ export const createRandomEmployeeTimeOff = async (
 
 const dataOperation = async (
 	connection: Connection,
-	tenant: Tenant,
+	tenant: ITenant,
 	requests,
 	noOfEmployeeTimeOffRequest,
 	organization,

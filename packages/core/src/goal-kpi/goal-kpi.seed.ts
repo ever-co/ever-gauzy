@@ -1,13 +1,12 @@
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
-import { IEmployee, IOrganization } from '@gauzy/contracts';
+import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { GoalKPI } from './goal-kpi.entity';
 import * as faker from 'faker';
 import { DEFAULT_GOAL_KPIS } from './default-goal-kpis';
 
 export const createDefaultGoalKpi = async (
 	connection: Connection,
-	tenant: Tenant,
+	tenant: ITenant,
 	organizations: IOrganization[],
 	employees: IEmployee[]
 ): Promise<GoalKPI[]> => {

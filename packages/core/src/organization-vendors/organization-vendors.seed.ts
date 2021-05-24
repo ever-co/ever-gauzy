@@ -1,48 +1,43 @@
-import { OrganizationVendorEnum, IOrganization } from '@gauzy/contracts';
+import { OrganizationVendorEnum, IOrganization, IOrganizationVendor, ITenant } from '@gauzy/contracts';
 import { Connection } from 'typeorm';
-import { OrganizationVendor } from './organization-vendors.entity';
-import { Tenant } from '../tenant/tenant.entity';
+import { OrganizationVendor } from './../core/entities/internal';
 
 export const createOrganizationVendors = async (
 	connection: Connection,
+	tenant: ITenant,
 	organizations: IOrganization[]
 ): Promise<OrganizationVendor[]> => {
 	let defaultOrganizationVendors: OrganizationVendor[] = [];
-
-	organizations.forEach((organization) => {
+	for (const organization of organizations) {
 		const vendors = Object.values(OrganizationVendorEnum).map((name) => ({
 			name,
 			organizationId: organization.id,
 			organization,
-			tenant: organization.tenant
+			tenant: tenant
 		}));
 
 		defaultOrganizationVendors = [
 			...defaultOrganizationVendors,
 			...vendors
 		];
-	});
-
-	insertOrganizationVendors(connection, defaultOrganizationVendors);
-
+	}
+	await insertOrganizationVendors(connection, defaultOrganizationVendors);
 	return defaultOrganizationVendors;
 };
 
 export const createRandomOrganizationVendors = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
-): Promise<Map<IOrganization, OrganizationVendor[]>> => {
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
+): Promise<Map<IOrganization, IOrganizationVendor[]>> => {
 	let organizationVendors: OrganizationVendor[] = [];
 	const organizationVendorsMap: Map<
 		IOrganization,
-		OrganizationVendor[]
+		IOrganizationVendor[]
 	> = new Map();
-
-	(tenants || []).forEach((tenant) => {
+	for (const tenant of tenants) {
 		const organizations = tenantOrganizationsMap.get(tenant);
-
-		(organizations || []).forEach((organization) => {
+		for (const organization of organizations) {
 			const vendors = Object.values(OrganizationVendorEnum).map(
 				(name) => ({
 					name,
@@ -51,14 +46,11 @@ export const createRandomOrganizationVendors = async (
 					tenant: organization.tenant
 				})
 			);
-
 			organizationVendorsMap.set(organization, vendors);
 			organizationVendors = [...organizationVendors, ...vendors];
-		});
-	});
-
+		}
+	}
 	await insertOrganizationVendors(connection, organizationVendors);
-
 	return organizationVendorsMap;
 };
 

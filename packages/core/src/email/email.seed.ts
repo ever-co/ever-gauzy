@@ -1,15 +1,13 @@
 import { Connection } from 'typeorm';
 import { Email } from './email.entity';
 import * as faker from 'faker';
-import { EmailTemplate } from '../email-template/email-template.entity';
-import { Tenant } from '../tenant/tenant.entity';
-import { IOrganization } from '@gauzy/contracts';
-import { Organization } from '../organization/organization.entity';
+import { IOrganization, ITenant } from '@gauzy/contracts';
+import { EmailTemplate } from './../core/entities/internal';
 
 export const createDefaultEmailSent = async (
 	connection: Connection,
-	tenant: Tenant,
-	organization: Organization,
+	tenant: ITenant,
+	organization: IOrganization,
 	noOfEmailsPerOrganization: number
 ): Promise<any> => {
 	const emailTemplates = await connection.getRepository(EmailTemplate).find();
@@ -28,8 +26,8 @@ export const createDefaultEmailSent = async (
 
 export const createRandomEmailSent = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, IOrganization[]>,
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	noOfEmailsPerOrganization: number
 ): Promise<any> => {
 	const emailTemplates = await connection.getRepository(EmailTemplate).find();

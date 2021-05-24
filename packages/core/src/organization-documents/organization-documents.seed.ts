@@ -1,13 +1,12 @@
 import { Connection } from 'typeorm';
 import { OrganizationDocuments } from './organization-documents.entity';
-import { Organization } from '../organization/organization.entity';
-import { Tenant } from '../tenant/tenant.entity';
 import * as faker from 'faker';
+import { IOrganization, ITenant } from '@gauzy/contracts';
 
 export const createOrganizationDocuments = async (
 	connection: Connection,
-	tenant: Tenant,
-	organizations: Organization[]
+	tenant: ITenant,
+	organizations: IOrganization[]
 ): Promise<OrganizationDocuments[]> => {
 	const documents: OrganizationDocuments[] = [];
 
@@ -36,8 +35,8 @@ export const createOrganizationDocuments = async (
 
 export const createRandomOrganizationDocuments = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<OrganizationDocuments[]> => {
 	if (!tenantOrganizationsMap) {
 		console.warn(

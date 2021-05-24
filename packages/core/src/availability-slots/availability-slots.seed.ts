@@ -1,16 +1,13 @@
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
-import { Organization } from '../organization/organization.entity';
-import { Employee } from '../employee/employee.entity';
-import { AvailabilitySlot } from './availability-slots.entity';
 import * as faker from 'faker';
 import * as moment from 'moment';
-import { AvailabilitySlotType } from '@gauzy/contracts';
+import { AvailabilitySlotType, IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
+import { AvailabilitySlot } from './availability-slots.entity';
 
 export const createDefaultAvailabilitySlots = async (
 	connection: Connection,
-	tenants: Tenant[],
-	organizations,
+	tenants: ITenant[],
+	organization: IOrganization,
 	employees,
 	noOfAvailabilitySlotsPerOrganization: number
 ): Promise<AvailabilitySlot[]> => {
@@ -21,7 +18,7 @@ export const createDefaultAvailabilitySlots = async (
 			slots,
 			noOfAvailabilitySlotsPerOrganization,
 			employees,
-			organizations,
+			organization,
 			tenant
 		);
 	}
@@ -30,22 +27,22 @@ export const createDefaultAvailabilitySlots = async (
 
 export const createRandomAvailabilitySlots = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>,
-	tenantEmployeeMap: Map<Tenant, Employee[]>,
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	noOfAvailabilitySlotsPerOrganization: number
 ): Promise<AvailabilitySlot[]> => {
 	let slots: AvailabilitySlot[] = [];
 	for (const tenant of tenants) {
 		const organizations = tenantOrganizationsMap.get(tenant);
 		const employees = tenantEmployeeMap.get(tenant);
-		for (const org of organizations) {
+		for (const organization of organizations) {
 			slots = await dataOperation(
 				connection,
 				slots,
 				noOfAvailabilitySlotsPerOrganization,
 				employees,
-				org,
+				organization,
 				tenant
 			);
 		}
@@ -58,7 +55,7 @@ const dataOperation = async (
 	slots,
 	noOfAvailabilitySlotsPerOrganization,
 	employees,
-	org,
+	organization,
 	tenant
 ) => {
 	for (let i = 0; i < noOfAvailabilitySlotsPerOrganization; i++) {
@@ -68,7 +65,7 @@ const dataOperation = async (
 			faker.random.arrayElement(employees),
 			null
 		]);
-		slot.organization = org;
+		slot.organization = organization;
 		slot.tenant = tenant;
 		slot.startTime = faker.date.between(
 			new Date(),

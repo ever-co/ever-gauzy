@@ -2,15 +2,13 @@ import { Connection } from 'typeorm';
 import { Proposal } from './proposal.entity';
 import * as faker from 'faker';
 import { Tag } from '../tags/tag.entity';
-import { Tenant } from '../tenant/tenant.entity';
-import { Employee } from '../employee/employee.entity';
-import { Organization } from '../organization/organization.entity';
+import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 
 export const createDefaultProposals = async (
 	connection: Connection,
-	tenant: Tenant,
-	employees: Employee[],
-	organizations: Organization[],
+	tenant: ITenant,
+	employees: IEmployee[],
+	organizations: IOrganization[],
 	noOfProposalsPerOrganization: number
 ): Promise<Proposal[]> => {
 	const proposals: Proposal[] = [];
@@ -38,9 +36,9 @@ export const createDefaultProposals = async (
 
 export const createRandomProposals = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, Employee[]>,
-	tenantOrganizationsMap: Map<Tenant, Organization[]>,
+	tenants: ITenant[],
+	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	noOfProposalsPerOrganization: number
 ): Promise<Proposal[]> => {
 	const proposals: Proposal[] = [];

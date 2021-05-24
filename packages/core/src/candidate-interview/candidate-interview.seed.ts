@@ -1,14 +1,12 @@
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
-import { ICandidate } from '@gauzy/contracts';
+import { ICandidate, IOrganization, ITenant } from '@gauzy/contracts';
 import * as faker from 'faker';
-import { CandidateInterview } from './candidate-interview.entity';
-import { Organization } from '../organization/organization.entity';
+import { CandidateInterview, Organization } from './../core/entities/internal';
 
 export const createDefaultCandidateInterview = async (
 	connection: Connection,
-	tenant: Tenant,
-	organization: Organization,
+	tenant: ITenant,
+	organization: IOrganization,
 	candidates
 ): Promise<CandidateInterview[]> => {
 	if (!candidates) {
@@ -17,7 +15,6 @@ export const createDefaultCandidateInterview = async (
 		);
 		return;
 	}
-
 	let candidateInterviewes: CandidateInterview[] = [];
 	for (const tenantCandidate of candidates) {
 		candidateInterviewes = await dataOperation(
@@ -28,14 +25,13 @@ export const createDefaultCandidateInterview = async (
 			organization
 		);
 	}
-
 	return candidateInterviewes;
 };
 
 export const createRandomCandidateInterview = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantCandidatesMap: Map<Tenant, ICandidate[]> | void
+	tenants: ITenant[],
+	tenantCandidatesMap: Map<ITenant, ICandidate[]> | void
 ): Promise<CandidateInterview[]> => {
 	if (!tenantCandidatesMap) {
 		console.warn(
@@ -43,11 +39,12 @@ export const createRandomCandidateInterview = async (
 		);
 		return;
 	}
-
 	let candidates: CandidateInterview[] = [];
 	for (const tenant of tenants) {
 		const organizations = await connection.manager.find(Organization, {
-			where: [{ tenant: tenant }]
+			where: { 
+				tenant: tenant 
+			}
 		});
 		const organization = faker.random.arrayElement(organizations);
 		const tenantCandidates = tenantCandidatesMap.get(tenant);
@@ -68,8 +65,8 @@ const dataOperation = async (
 	connection: Connection,
 	candidates,
 	tenantCandidate,
-	tenant: Tenant,
-	organization: Organization
+	tenant: ITenant,
+	organization: IOrganization
 ) => {
 	for (let i = 0; i <= Math.floor(Math.random() * 3) + 1; i++) {
 		const candidate = new CandidateInterview();

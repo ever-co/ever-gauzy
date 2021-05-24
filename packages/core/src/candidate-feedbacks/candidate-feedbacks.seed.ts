@@ -1,20 +1,16 @@
-import { ICandidate, CandidateStatus } from '@gauzy/contracts';
+import { ICandidate, CandidateStatus, ICandidateFeedback, IOrganization, ITenant } from '@gauzy/contracts';
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
-import { CandidateFeedback } from './candidate-feedbacks.entity';
-import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
 import * as faker from 'faker';
-import { Organization } from '../organization/organization.entity';
 import { DEFAULT_CANDIDATE_FEEDBACKS } from './default-candidate-feedbacks';
+import { CandidateFeedback, CandidateInterview, Organization } from './../core/entities/internal';
 
 export const createCandidateFeedbacks = async (
 	connection: Connection,
-	tenant: Tenant,
-	organization: Organization,
+	tenant: ITenant,
+	organization: IOrganization,
 	candidates: ICandidate[] | void
-): Promise<Map<ICandidate, CandidateFeedback[]>> => {
+): Promise<Map<ICandidate, ICandidateFeedback[]>> => {
 	let candidateFeedbacksMap: Map<ICandidate, any[]> = new Map();
-
 	if (!candidates) {
 		console.warn(
 			'Warning: candidates not found, CandidateFeedbacks will not be created'
@@ -29,28 +25,27 @@ export const createCandidateFeedbacks = async (
 		candidateFeedbacksMap,
 		candidates
 	);
-
 	return candidateFeedbacksMap;
 };
 
 export const createRandomCandidateFeedbacks = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantCandidatesMap: Map<Tenant, ICandidate[]> | void
-): Promise<Map<ICandidate, CandidateFeedback[]>> => {
+	tenants: ITenant[],
+	tenantCandidatesMap: Map<ITenant, ICandidate[]> | void
+): Promise<Map<ICandidate, ICandidateFeedback[]>> => {
 	if (!tenantCandidatesMap) {
 		console.warn(
 			'Warning: tenantCandidatesMap not found, CandidateFeedbacks will not be created'
 		);
 		return;
 	}
-
 	const candidateFeedbacks = [];
 	let candidateFeedbacksMap: Map<ICandidate, any[]> = new Map();
-
 	for (const tenant of tenants) {
 		const organizations = await connection.manager.find(Organization, {
-			where: [{ tenant: tenant }]
+			where: { 
+				tenant: tenant 
+			}
 		});
 		const organization = faker.random.arrayElement(organizations);
 		const candidates = tenantCandidatesMap.get(tenant);
@@ -80,17 +75,18 @@ const insertCandidateFeedbacks = async (
 
 const dataOperation = async (
 	connection: Connection,
-	tenant: Tenant,
-	organization: Organization,
+	tenant: ITenant,
+	organization: IOrganization,
 	candidateFeedbacks,
 	candidateFeedbacksMap,
 	candidates
 ) => {
 	for (const candidate of candidates) {
-		const candidateInterviews = await connection.manager.find(
-			CandidateInterview,
-			{ where: [{ candidate: candidate }] }
-		);
+		const candidateInterviews = await connection.manager.find(CandidateInterview, { 
+			where: { 
+				candidate: candidate 
+			}
+		});
 		const interview = faker.random.arrayElement(candidateInterviews);
 		const feedbacks = DEFAULT_CANDIDATE_FEEDBACKS.map((feedback) => ({
 			description: feedback.description,
@@ -101,7 +97,6 @@ const dataOperation = async (
 			organization: organization,
 			status: faker.random.arrayElement(Object.keys(CandidateStatus))
 		}));
-
 		candidateFeedbacksMap.set(candidate, feedbacks);
 		candidateFeedbacks = [...candidateFeedbacks, ...feedbacks];
 	}

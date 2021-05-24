@@ -71,7 +71,7 @@ export class GetTimeLogGroupByProjectHandler
 									task,
 									employee,
 									sum,
-									activity
+									activity: activity.toFixed(2)
 								};
 							})
 							.value();
