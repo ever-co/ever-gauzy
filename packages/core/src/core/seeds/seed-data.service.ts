@@ -117,7 +117,6 @@ import {
 	createCandidateFeedbacks,
 	createRandomCandidateFeedbacks
 } from '../../candidate-feedbacks/candidate-feedbacks.seed';
-
 import {
 	createDefaultTimeSheet,
 	createRandomTimesheet
@@ -1173,18 +1172,6 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute(
-			'Default TimeSheets',
-			createDefaultTimeSheet(
-				this.connection,
-				this.config,
-				this.tenant,
-				this.defaultEmployees,
-				this.defaultProjects,
-				randomSeedConfig.noOfTimeLogsPerTimeSheet
-			)
-		);
-
-		await this.tryExecute(
 			'Default Proposals',
 			createDefaultProposals(
 				this.connection,
@@ -1368,6 +1355,18 @@ export class SeedDataService {
 				this.tenant,
 				this.defaultOrganization,
 				randomSeedConfig.emailsPerOrganization || 20
+			)
+		);
+
+		await this.tryExecute(
+			'Default TimeSheets',
+			createDefaultTimeSheet(
+				this.connection,
+				this.config,
+				this.tenant,
+				this.defaultEmployees,
+				this.defaultProjects,
+				randomSeedConfig.noOfTimeLogsPerTimeSheet
 			)
 		);
 
@@ -1828,16 +1827,7 @@ export class SeedDataService {
 			)
 		);
 
-		await this.tryExecute(
-			'Random TimeSheets',
-			createRandomTimesheet(
-				this.connection,
-				this.config,
-				tenants,
-				this.defaultProjects,
-				randomSeedConfig.noOfTimeLogsPerTimeSheet
-			)
-		);
+		
 
 		const noOfContactsPerOrganization = 10;
 		await this.tryExecute(
@@ -2116,6 +2106,17 @@ export class SeedDataService {
 				tenants,
 				tenantEmployeeMap,
 				tenantOrganizationsMap
+			)
+		);
+
+		await this.tryExecute(
+			'Random TimeSheets',
+			createRandomTimesheet(
+				this.connection,
+				this.config,
+				tenants,
+				this.defaultProjects,
+				randomSeedConfig.noOfTimeLogsPerTimeSheet
 			)
 		);
 
