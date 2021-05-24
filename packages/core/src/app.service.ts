@@ -16,7 +16,7 @@ export class AppService {
 		this.count = await this.userService.count();
 		console.log(chalk.magenta(`Found ${this.count} users in DB`));
 		if (this.count === 0) {
-			await this.seedDataService.runDefaultSeed();
+			await this.seedDataService.runDefaultSeed(true);
 		}
 	}
 

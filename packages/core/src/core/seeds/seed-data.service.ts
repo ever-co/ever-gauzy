@@ -350,8 +350,9 @@ export class SeedDataService {
 	* Seed All Data
 	*/
 	public async runAllSeed() {
-		this.seedType = SeederTypeEnum.ALL;
 		try {
+			this.seedType = SeederTypeEnum.ALL;
+
 			await this.cleanUpPreviousRuns();
 
 			// Connect to database
@@ -360,9 +361,15 @@ export class SeedDataService {
 			// Reset database to start with new, fresh data
 			await this.resetDatabase();
 
-			// Seed data with mock / fake data
-			await this.seedData();
+			// Seed basic default data for default tenant
+			await this.seedBasicDefaultData();
 
+			// Seed data with mock / fake data for default tenant
+			await this.seedDefaultData();
+
+			// Seed data with mock / fake data for random tenants
+			await this.seedRandomData();
+			
 			// Seed jobs related data
 			await this.seedJobsData();
 
@@ -381,12 +388,12 @@ export class SeedDataService {
 	/**
 	* Seed Default Data
 	*/
-	public async runDefaultSeed() {
+	public async runDefaultSeed(fromAPI: boolean) {
 		try {
-
-			this.seedType = SeederTypeEnum.DEFAULT;
-			if (this.configService.get('demo') === true) {
+			if (this.configService.get('demo') === true && fromAPI === true) {
 				this.seedType = SeederTypeEnum.ALL;
+			} else {
+				this.seedType = SeederTypeEnum.DEFAULT;
 			}
 
 			await this.cleanUpPreviousRuns();
@@ -397,8 +404,8 @@ export class SeedDataService {
 			// Reset database to start with new, fresh data
 			await this.resetDatabase();
 
-			// Seed data with mock / fake data
-			await this.seedData();
+			// Seed basic default data for default tenant
+			await this.seedBasicDefaultData();
 
 			// Seed reports related data
 			await this.seedReportsData();
@@ -416,8 +423,9 @@ export class SeedDataService {
 	* Seed Default Ever Data
 	*/
 	public async runEverSeed() {
-		this.seedType = SeederTypeEnum.EVER;
 		try {
+			this.seedType = SeederTypeEnum.EVER;
+			
 			await this.cleanUpPreviousRuns();
 
 			// Connect to database
@@ -426,8 +434,8 @@ export class SeedDataService {
 			// Reset database to start with new, fresh data
 			await this.resetDatabase();
 
-			// Seed data with mock / fake data
-			await this.seedData();
+			// Seed basic default data for default tenant
+			await this.seedBasicDefaultData();
 
 			// Seed reports related data
 			await this.seedReportsData();
@@ -442,13 +450,14 @@ export class SeedDataService {
 	}
 
 	/**
-	 * Seed Default Data
-	 */
+	* Seed Default Report Data
+	*/
 	public async runReportsSeed() {
 		try {
 			// Connect to database
 			await this.createConnection();
 
+			// Seed reports related data
 			await this.seedReportsData();
 
 			// Disconnect to database
@@ -461,6 +470,9 @@ export class SeedDataService {
 		return;
 	}
 
+	/**
+	* Seed Default & Random Data
+	*/
 	public async excuteDemoSeed() {
 		try {
 			console.log('Database Demo Seed Started');
@@ -490,9 +502,8 @@ export class SeedDataService {
 	}
 
 	/**
-	 * Populate database with report related data
-	 * @param isDefault
-	 */
+	* Populate database with report related data
+	*/
 	 private async seedReportsData() {
 		try {
 			this.log(
@@ -525,14 +536,15 @@ export class SeedDataService {
 	}
 
 	/**
-	 * Seed Default Data
-	 */
+	* Seed Default Job Data
+	*/
 	public async runJobsSeed() {
 		this.seedType = SeederTypeEnum.ALL;
 		try {
 			// Connect to database
 			await this.createConnection();
 
+			// Seed jobs related data
 			await this.seedJobsData();
 
 			// Disconnect to database
@@ -543,10 +555,10 @@ export class SeedDataService {
 			this.handleError(error);
 		}
 	}
+
 	/**
-	 * Populate database with jobs related data
-	 * @param isDefault
-	 */
+	* Populate database with jobs related data
+	*/
 	private async seedJobsData() {
 		try {
 			this.log(
@@ -586,52 +598,31 @@ export class SeedDataService {
 	}
 
 	/**
-	 * Populate database with mock data
-	 */
-	private async seedData() {
-		try {
-			this.log(
-				chalk.green(
-					`🌱 SEEDING ${env.production ? 'PRODUCTION' : ''
-					} DATABASE...`
-				)
-			);
-
-			// Seed data which only needs connection
-			await this.tryExecute(
-				'Countries',
-				createCountries(this.connection)
-			);
-
-			await this.tryExecute(
-				'Currencies',
-				createCurrencies(this.connection)
-			);
-
-			await this.tryExecute(
-				'Languages', 
-				createLanguages(this.connection)
-			);
-
-			await this.seedBasicDefaultData();
-
-			if (this.seedType === SeederTypeEnum.ALL) {
-				await this.seedDefaultData();
-				await this.seedRandomData();
-			}
-
-			this.log(
-				chalk.green(
-					`✅ SEEDED ${env.production ? 'PRODUCTION' : ''} DATABASE`
-				)
-			);
-		} catch (error) {
-			this.handleError(error);
-		}
-	}
-
-	/** Populate Database with Basic Default Data **/
+	* Populate Database with Basic Default Data
+	*/
 	private async seedBasicDefaultData() {
+		this.log(
+			chalk.magenta(
+				`🌱 SEEDING BASIC ${env.production ? 'PRODUCTION' : ''
+				} DATABASE...`
+			)
+		);
+
+		// Seed data which only needs connection
+		await this.tryExecute(
+			'Countries',
+			createCountries(this.connection)
+		);
+
+		await this.tryExecute(
+			'Currencies',
+			createCurrencies(this.connection)
+		);
+
+		await this.tryExecute(
+			'Languages', 
+			createLanguages(this.connection)
+		);
 
 		// default and internal tenant
 		const tenantName = (this.seedType !== SeederTypeEnum.DEFAULT) ? DEFAULT_EVER_TENANT : DEFAULT_TENANT;
@@ -838,12 +829,25 @@ export class SeedDataService {
 				console.log(chalk.green(`SEEDED Basic Plugin [${pluginName}]`));
 			}
 		);
+
+		this.log(
+			chalk.magenta(
+				`✅ SEEDED BASIC ${env.production ? 'PRODUCTION' : ''} DATABASE`
+			)
+		);
 	}
 
 	/**
-	 * Populate default data from env files
-	 */
+	* Populate default data for default tenant
+	*/
 	private async seedDefaultData() {
+		this.log(
+			chalk.magenta(
+				`🌱 SEEDING DEFAULT ${env.production ? 'PRODUCTION' : ''
+				} DATABASE...`
+			)
+		);
+
 		// Organization level inserts which need connection, tenant, role, organizations
 		const categories = await this.tryExecute(
 			'Default Expense Categories',
@@ -1378,12 +1382,25 @@ export class SeedDataService {
 				);
 			}
 		);
+
+		this.log(
+			chalk.magenta(
+				`✅ SEEDED DEFAULT ${env.production ? 'PRODUCTION' : ''} DATABASE`
+			)
+		);
 	}
 
 	/**
 	 * Populate database with random generated data
 	 */
 	private async seedRandomData() {
+		this.log(
+			chalk.magenta(
+				`🌱 SEEDING RANDOM ${env.production ? 'PRODUCTION' : ''
+				} DATABASE...`
+			)
+		);
+
 		// Platform level data which only need database connection
 		const tenants = await createRandomTenants(
 			this.connection,
@@ -2112,6 +2129,12 @@ export class SeedDataService {
 					chalk.green(`SEEDED Random Plugin [${pluginName}]`)
 				);
 			}
+		);
+
+		this.log(
+			chalk.magenta(
+				`✅ SEEDED RANDOM ${env.production ? 'PRODUCTION' : ''} DATABASE`
+			)
 		);
 	}
 
