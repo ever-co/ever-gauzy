@@ -1,13 +1,12 @@
 import { Connection } from 'typeorm';
-import { Employee } from '../employee/employee.entity';
 import { EmployeeAward } from './employee-award.entity';
-import { Tenant } from '../tenant/tenant.entity';
 import { DEFAULT_EMPLOYEE_AWARDS } from './default-employee-awards';
+import { IEmployee, ITenant } from '@gauzy/contracts';
 
 export const createDefaultEmployeeAwards = async (
 	connection: Connection,
-	tenant: Tenant,
-	employee: Employee
+	tenant: ITenant,
+	employee: IEmployee
 ): Promise<EmployeeAward[]> => {
 	const awards: EmployeeAward[] = DEFAULT_EMPLOYEE_AWARDS.map(
 		({ name, year }) => {

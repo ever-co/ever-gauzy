@@ -1,15 +1,14 @@
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
-import { IEmployee, IOrganization } from '@gauzy/contracts';
-import { EmployeeAppointment } from './employee-appointment.entity';
+import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import * as faker from 'faker';
 import * as moment from 'moment';
-import { AppointmentEmployee } from '../appointment-employees/appointment-employees.entity';
+import { EmployeeAppointment } from './employee-appointment.entity';
 import { AGENDAS } from './default-employee-appointment';
+import { AppointmentEmployee } from './../core/entities/internal';
 
 export const createDefaultEmployeeAppointment = async (
 	connection: Connection,
-	tenant: Tenant,
+	tenant: ITenant,
 	employees: IEmployee[],
 	organizations
 ): Promise<EmployeeAppointment[]> => {
@@ -41,9 +40,9 @@ export const createDefaultEmployeeAppointment = async (
 
 export const createRandomEmployeeAppointment = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, IEmployee[]>,
-	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
+	tenants: ITenant[],
+	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<EmployeeAppointment[]> => {
 	if (!tenantEmployeeMap) {
 		console.warn(
@@ -80,8 +79,8 @@ const dataOperation = async (
 	connection: Connection,
 	employeesAppointments,
 	tenantEmployee,
-	organizations,
-	tenant
+	organizations: IOrganization[],
+	tenant: ITenant
 ) => {
 	for (const organization of organizations) {
 		const employeesAppointment = new EmployeeAppointment();

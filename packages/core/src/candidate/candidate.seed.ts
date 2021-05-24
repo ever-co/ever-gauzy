@@ -1,27 +1,20 @@
 import { Connection } from 'typeorm';
-import { Candidate } from './candidate.entity';
-import { Organization } from '../organization/organization.entity';
-import { Tenant } from '../tenant/tenant.entity';
-import { IUser, ISeedUsers } from '@gauzy/contracts';
+import { IUser, ISeedUsers, IOrganization, ITenant, ICandidate } from '@gauzy/contracts';
+import { Candidate } from './../core/entities/internal';
 
 export const createDefaultCandidates = async (
 	connection: Connection,
-	defaultData: {
-		tenant: Tenant;
-		org: Organization;
-		users: IUser[];
-	}
+	tenant: ITenant,
+	organization: IOrganization,
+	users: IUser[]
 ): Promise<Candidate[]> => {
-	const defaultUsers = defaultData.users;
-	const defaultOrg = defaultData.org;
-	const defaultTenant = defaultData.tenant;
 	const candidates: Candidate[] = [];
-	for (const user of defaultUsers) {
+	for (const user of users) {
 		const candidate = new Candidate();
-		candidate.organization = defaultOrg;
+		candidate.organization = organization;
 		candidate.user = user;
 		candidate.isArchived = false;
-		candidate.tenant = defaultTenant;
+		candidate.tenant = tenant;
 		candidates.push(candidate);
 	}
 	return await insertCandidates(connection, candidates);
@@ -29,19 +22,19 @@ export const createDefaultCandidates = async (
 
 export const createRandomCandidates = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>,
-	tenantUsersMap: Map<Tenant, ISeedUsers>,
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	tenantUsersMap: Map<ITenant, ISeedUsers>,
 	candidatesPerOrganization: number
-): Promise<Map<Tenant, Candidate[]>> => {
-	const candidateMap: Map<Tenant, Candidate[]> = new Map();
+): Promise<Map<ITenant, ICandidate[]>> => {
+	const candidateMap: Map<ITenant, ICandidate[]> = new Map();
 	for (const tenant of tenants) {
 		const candidates: Candidate[] = [];
 		const randomUsers = tenantUsersMap.get(tenant).candidateUsers;
 		const randomOrgs = tenantOrganizationsMap.get(tenant);
 		const insertCandidatesInToOrganization = async (
 			quantity: number,
-			organization: Organization
+			organization: IOrganization
 		) => {
 			for (let index = 0; index < quantity; index++) {
 				const candidate = new Candidate();
@@ -55,7 +48,6 @@ export const createRandomCandidates = async (
 			}
 			await insertCandidates(connection, candidates);
 		};
-
 		for (const org of randomOrgs) {
 			if (randomUsers.length) {
 				await insertCandidatesInToOrganization(

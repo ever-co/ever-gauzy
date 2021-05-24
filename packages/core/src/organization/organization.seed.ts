@@ -7,8 +7,7 @@ import { getDummyImage } from '../core';
 import {
 	Contact,
 	Organization,
-	Skill,
-	Tenant
+	Skill
 } from '../core/entities/internal';
 import {
 	DefaultValueDateTypeEnum,
@@ -16,13 +15,14 @@ import {
 	WeekDaysEnum,
 	AlignmentOptions,
 	IOrganizationCreateInput,
-	IOrganization
+	IOrganization,
+	ITenant
 } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
 
 export const getDefaultOrganization = async (
 	connection: Connection,
-	tenant: Tenant
+	tenant: ITenant
 ): Promise<IOrganization> => {
 	const repo = connection.getRepository(Organization);
 	const existedOrganization = await repo.findOne({
@@ -33,7 +33,7 @@ export const getDefaultOrganization = async (
 
 export const getDefaultOrganizations = async (
 	connection: Connection,
-	tenant: Tenant
+	tenant: ITenant
 ): Promise<IOrganization[]> => {
 	const repo = connection.getRepository(Organization);
 	const orgnaizations = await repo.find({
@@ -46,7 +46,7 @@ let defaultOrganizationsInserted = [];
 
 export const createDefaultOrganizations = async (
 	connection: Connection,
-	tenant: Tenant,
+	tenant: ITenant,
 	organizations: any
 ): Promise<Organization[]> => {
 	const defaultOrganizations: IOrganization[] = [];
@@ -59,7 +59,7 @@ export const createDefaultOrganizations = async (
 			.take(faker.datatype.number({ min: 1, max: 4 }))
 			.values()
 			.value();
-		const defaultOrganization: Organization = new Organization();
+		const defaultOrganization: IOrganization = new Organization();
 		const { name, currency, defaultValueDateType, imageUrl, isDefault } = organization;
 		defaultOrganization.name = name;
 		defaultOrganization.isDefault = isDefault;
@@ -140,17 +140,17 @@ export const createDefaultOrganizations = async (
 
 export const createRandomOrganizations = async (
 	connection: Connection,
-	tenants: Tenant[],
+	tenants: ITenant[],
 	noOfOrganizations: number
-): Promise<Map<Tenant, Organization[]>> => {
+): Promise<Map<ITenant, IOrganization[]>> => {
 	const defaultDateTypes = Object.values(DefaultValueDateTypeEnum);
 	const skills = await getSkills(connection);
 	const contacts = await getContacts(connection);
-	const tenantOrganizations: Map<Tenant, Organization[]> = new Map();
-	let allOrganizations: Organization[] = [];
+	const tenantOrganizations: Map<ITenant, IOrganization[]> = new Map();
+	let allOrganizations: IOrganization[] = [];
 
 	tenants.forEach((tenant) => {
-		const randomOrganizations: Organization[] = [];
+		const randomOrganizations: IOrganization[] = [];
 		if (tenant.name === 'Ever') {
 			tenantOrganizations.set(tenant, defaultOrganizationsInserted);
 		} else {
@@ -160,7 +160,7 @@ export const createRandomOrganizations = async (
 					.take(faker.datatype.number({ min: 1, max: 4 }))
 					.values()
 					.value();
-				const organization = new Organization();
+				const organization: IOrganization = new Organization();
 				const companyName = faker.company.companyName();
 
 				const logoAbbreviation = _extractLogoAbbreviation(companyName);
@@ -258,7 +258,7 @@ export const createRandomOrganizations = async (
 
 const insertOrganizations = async (
 	connection: Connection,
-	organizations: Organization[]
+	organizations: IOrganization[]
 ): Promise<void> => {
 	await connection.manager.save(organizations);
 };

@@ -1,167 +1,104 @@
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
-import { Employee } from '../employee/employee.entity';
-import { Organization } from '../organization/organization.entity';
-import { OrganizationContact } from './organization-contact.entity';
-import { Contact } from '../contact/contact.entity';
 import * as faker from 'faker';
-import { ContactOrganizationInviteStatus, ContactType } from '@gauzy/contracts';
-import { Tag } from '../tags/tag.entity';
+import { ContactOrganizationInviteStatus, ContactType, IContact, IEmployee, IOrganization, ITag, ITenant } from '@gauzy/contracts';
 import * as _ from 'underscore';
 import { getDummyImage } from '../core';
+import { Contact, Employee, Organization, OrganizationContact, Tag } from './../core/entities/internal';
 
 export const createDefaultOrganizationContact = async (
-	connection: Connection
+	connection: Connection,
+	tenant: ITenant
 ) => {
-	const tenants = await connection.getRepository(Tenant).find();
 	const organizationContacts: OrganizationContact[] = [];
-	const contactTypes = Object.values(ContactType);
-	const contactInvitationTypes = Object.values(
-		ContactOrganizationInviteStatus
-	);
 	const contacts = await connection.manager.find(Contact);
-
-	for (const tenant of tenants) {
-		const organizations = await connection
-			.getRepository(Organization)
-			.find({
-				where: { tenant: tenant },
-				relations: ['employees', 'tags']
-			});
-		for (const org of organizations) {
-			const employees = org.employees;
-
-			const tags = org.tags;
-
-			for (let i = 0; i < faker.datatype.number({ min: 5, max: 6 }); i++) {
-				const orgContact = new OrganizationContact();
-
-				const contact = faker.random.arrayElement(contacts);
-
-				orgContact.contact = contact;
-
-				orgContact.organizationId = org.id;
-				orgContact.organization = org;
-
-				orgContact.contactType = faker.random.arrayElement(
-					contactTypes
-				);
-
-				orgContact.emailAddresses = [
-					faker.internet.email(contact.firstName, contact.lastName)
-				];
-
-				orgContact.inviteStatus = faker.random.arrayElement(
-					contactInvitationTypes
-				);
-
-				orgContact.members = _.chain(employees)
-					.shuffle()
-					.take(faker.datatype.number({ min: 1, max: 3 }))
-					.values()
-					.value();
-
-				orgContact.name = contact.name;
-				orgContact.phones = [faker.phone.phoneNumber()];
-				orgContact.primaryEmail = orgContact.emailAddresses[0];
-				orgContact.primaryPhone = orgContact.phones[0];
-				orgContact.tenant = tenant;
-
-				orgContact.imageUrl = getDummyImage(
-					330,
-					300,
-					orgContact.name.charAt(0).toUpperCase()
-				);
-
-				orgContact.tags = _.chain(tags)
-					.shuffle()
-					.take(faker.datatype.number({ min: 1, max: 2 }))
-					.values()
-					.value();
-
-				organizationContacts.push(orgContact);
-			}
+	const organizations = await connection.getRepository(Organization).find({ 
+		where: { 
+			tenant: tenant 
+		}, 
+		relations: ['employees', 'tags'] 
+	});
+	for (const organization of organizations) {
+		for (let i = 0; i < faker.datatype.number({ min: 5, max: 6 }); i++) {
+			const contact = faker.random.arrayElement(contacts);
+			const { employees, tags } = organization;
+			const orgContact = await generateOrganizationContact(
+				tenant,
+				organization,
+				contact,
+				employees,
+				tags
+			)
+			organizationContacts.push(orgContact);
 		}
 	}
-
 	return await connection.manager.save(organizationContacts);
 };
 
 export const createRandomOrganizationContact = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, Employee[]>,
-	tenantOrganizationsMap: Map<Tenant, Organization[]>,
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	noOfContactsPerOrganization: number
 ): Promise<OrganizationContact[]> => {
 	const organizationContacts: OrganizationContact[] = [];
-
-	const contactTypes = Object.values(ContactType);
-
-	const contactInvitationTypes = Object.values(
-		ContactOrganizationInviteStatus
-	);
-
 	const contacts = await connection.manager.find(Contact);
-
 	for (const tenant of tenants) {
 		const organizations = tenantOrganizationsMap.get(tenant);
-
-		const employees = tenantEmployeeMap.get(tenant);
-
-		for (const org of organizations) {
+		for (const organization of organizations) {
 			const tags = await connection.manager.find(Tag, {
-				where: [{ organization: org }]
-			});
-
+				where: [{ organization: organization }]
+			});			
+			const employees = await connection.manager.find(Employee, {
+				where: [{ organization: organization }]
+			});			
 			for (let i = 0; i < noOfContactsPerOrganization; i++) {
-				const orgContact = new OrganizationContact();
-
-				orgContact.contact = faker.random.arrayElement(contacts);
-				orgContact.organization = org;
-				orgContact.contactType = faker.random.arrayElement(
-					contactTypes
-				);
-				orgContact.emailAddresses = [
-					faker.internet.email(
-						orgContact.contact.firstName,
-						orgContact.contact.lastName
-					)
-				];
-				orgContact.inviteStatus = faker.random.arrayElement(
-					contactInvitationTypes
-				);
-
-				orgContact.members = _.chain(employees)
-					.shuffle()
-					.take(faker.datatype.number({ min: 1, max: 3 }))
-					.values()
-					.value();
-
-				orgContact.name = orgContact.contact.name;
-				orgContact.phones = [faker.phone.phoneNumber()];
-				orgContact.primaryEmail = orgContact.emailAddresses[0];
-				orgContact.primaryPhone = orgContact.phones[0];
-				orgContact.tenant = tenant;
-
-				orgContact.imageUrl = getDummyImage(
-					330,
-					300,
-					orgContact.name.charAt(0).toUpperCase()
-				);
-
-				orgContact.tags = _.chain(tags)
-					.shuffle()
-					.take(faker.datatype.number({ min: 1, max: 2 }))
-					.values()
-					.value();
-
+				const contact = faker.random.arrayElement(contacts);
+				const orgContact = await generateOrganizationContact(
+					tenant,
+					organization,
+					contact,
+					employees,
+					tags
+				)
 				organizationContacts.push(orgContact);
 			}
 		}
 	}
-
 	await connection.manager.save(organizationContacts);
-
 	return organizationContacts;
+};
+
+const generateOrganizationContact = async (
+	tenant: ITenant,
+	organization: IOrganization,
+	contact: IContact,
+	employees: IEmployee[],
+	tags: ITag[]
+): Promise<OrganizationContact> => {
+	const orgContact = new OrganizationContact();
+	orgContact.name = contact.name;
+	orgContact.organization = organization;
+	orgContact.tenant = tenant;
+	orgContact.contact = contact;
+	orgContact.contactType = faker.random.arrayElement(Object.values(ContactType));
+
+	const email = faker.internet.email(contact.firstName, contact.lastName);
+	orgContact.emailAddresses = [email];
+	orgContact.inviteStatus = faker.random.arrayElement(Object.values(ContactOrganizationInviteStatus));
+	orgContact.members = _.chain(employees)
+		.shuffle()
+		.take(faker.datatype.number({ min: 1, max: 3 }))
+		.values()
+		.value();
+	const phone = faker.phone.phoneNumber();
+	orgContact.phones = [phone];
+	orgContact.primaryEmail = email;
+	orgContact.primaryPhone = phone;
+	orgContact.imageUrl = getDummyImage(330, 300, (orgContact.name || faker.name.firstName()).charAt(0).toUpperCase());
+	orgContact.tags = _.chain(tags)
+		.shuffle()
+		.take(faker.datatype.number({ min: 1, max: 2 }))
+		.values()
+		.value();
+	return orgContact;
 };

@@ -1,17 +1,14 @@
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
-import { IEmployee, IOrganization } from '@gauzy/contracts';
+import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { RequestApprovalTeam } from './request-approval-team.entity';
 import * as faker from 'faker';
-import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
-import { RequestApproval } from '../request-approval/request-approval.entity';
-import { OrganizationTeam } from '../organization-team/organization-team.entity';
+import { ApprovalPolicy, OrganizationTeam, RequestApproval } from './../core/entities/internal';
 
 export const createRandomRequestApprovalTeam = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, IEmployee[]>,
-	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
+	tenants: ITenant[],
+	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<RequestApprovalTeam[]> => {
 	if (!tenantOrganizationsMap) {
 		console.warn(

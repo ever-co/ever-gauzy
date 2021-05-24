@@ -1,24 +1,23 @@
 import { Connection } from 'typeorm';
-import { IEmployeeLevelInput } from '@gauzy/contracts';
+import { IEmployeeLevelInput, IOrganization, ITenant } from '@gauzy/contracts';
 import { EmployeeLevel } from './organization-employee-level.entity';
-import { Organization } from '../organization/organization.entity';
 import { DEFAULT_EMPLOYEE_LEVELS } from './default-organization-employee-levels';
 
 export const createEmployeeLevels = async (
 	connection: Connection,
-	organizations: Organization[]
+	tenant: ITenant,
+	organizations: IOrganization[]
 ): Promise<IEmployeeLevelInput[]> => {
 	const employeeLevels: EmployeeLevel[] = [];
 	DEFAULT_EMPLOYEE_LEVELS.forEach(({ level }) => {
-		organizations.forEach((organization: Organization) => {
+		for (const organization of organizations) {
 			const entity = new EmployeeLevel();
 			entity.level = level;
 			entity.organization = organization;
-			entity.tenant = organization.tenant;
+			entity.tenant = tenant;
 			employeeLevels.push(entity);
-		});
+		}
 	});
-
 	return insertLevels(connection, employeeLevels);
 };
 

@@ -1,9 +1,9 @@
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
-import { Employee } from '../employee/employee.entity';
 import * as faker from 'faker';
 import { KeyResult } from './keyresult.entity';
 import {
+	IEmployee,
+	ITenant,
 	KeyResultDeadlineEnum,
 	KeyResultTypeEnum,
 	KeyResultWeightEnum
@@ -16,8 +16,8 @@ import { DEFAULT_KEY_RESULTS } from './default-keyresults';
 
 export const createDefaultKeyResults = async (
 	connection: Connection,
-	tenant: Tenant,
-	employees: Employee[],
+	tenant: ITenant,
+	employees: IEmployee[],
 	goals
 ): Promise<KeyResult[]> => {
 	const defaultKeyResults = [];
@@ -127,8 +127,8 @@ const insertDefaultKeyResults = async (
 
 export const createRandomKeyResult = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, Employee[]>,
+	tenants: ITenant[],
+	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	goals
 ): Promise<KeyResult[]> => {
 	if (!tenantEmployeeMap) {

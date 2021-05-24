@@ -86,7 +86,7 @@ export class GetTimeLogGroupByClientHandler
 											task,
 											employee,
 											sum,
-											activity: activity
+											activity: activity.toFixed(2)
 										};
 									})
 									.value();

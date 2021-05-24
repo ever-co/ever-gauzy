@@ -1,16 +1,14 @@
 import { Connection } from 'typeorm';
-import { Equipment } from '../equipment/equipment.entity';
-import { EquipmentSharing } from './equipment-sharing.entity';
 import * as faker from 'faker';
-import { Tenant } from '../tenant/tenant.entity';
 import { addDays } from 'date-fns';
-import { IEmployee } from '@gauzy/contracts';
-import { Organization } from '../organization/organization.entity';
+import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
+import { EquipmentSharing } from './equipment-sharing.entity';
+import { Equipment } from './../core/entities/internal';
 
 export const createDefaultEquipmentSharing = async (
 	connection: Connection,
-	tenant: Tenant,
-	organization: Organization,
+	tenant: ITenant,
+	organization: IOrganization,
 	defaultEmployees,
 	noOfEquipmentSharingPerTenant: number
 ): Promise<EquipmentSharing[]> => {
@@ -33,8 +31,8 @@ export const createDefaultEquipmentSharing = async (
 
 export const createRandomEquipmentSharing = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, IEmployee[]>,
+	tenants: ITenant[],
+	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
 	noOfEquipmentSharingPerTenant: number
 ): Promise<EquipmentSharing[]> => {
 	let equipmentSharings: EquipmentSharing[] = [];

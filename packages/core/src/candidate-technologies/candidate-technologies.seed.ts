@@ -1,14 +1,13 @@
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
-import { ICandidate } from '@gauzy/contracts';
+import { ICandidate, IOrganization, ITenant } from '@gauzy/contracts';
 import * as faker from 'faker';
 import { CandidateTechnologies } from './candidate-technologies.entity';
-import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
-import { Organization } from '../organization/organization.entity';
+import { CandidateInterview } from './../core/entities/internal';
+
 export const createDefaultCandidateTechnologies = async (
 	connection: Connection,
-	tenant: Tenant,
-	organization: Organization,
+	tenant: ITenant,
+	organization: IOrganization,
 	defaultCandidates
 ): Promise<CandidateTechnologies[]> => {
 	if (!defaultCandidates) {
@@ -40,8 +39,8 @@ export const createDefaultCandidateTechnologies = async (
 
 export const createRandomCandidateTechnologies = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantCandidatesMap: Map<Tenant, ICandidate[]> | void
+	tenants: ITenant[],
+	tenantCandidatesMap: Map<ITenant, ICandidate[]> | void
 ): Promise<CandidateTechnologies[]> => {
 	if (!tenantCandidatesMap) {
 		console.warn(
@@ -74,8 +73,8 @@ export const createRandomCandidateTechnologies = async (
 
 const dataOperation = async (
 	connection: Connection,
-	tenant: Tenant,
-	organization: Organization,
+	tenant: ITenant,
+	organization: IOrganization,
 	candidates,
 	CandidateInterviews
 ) => {

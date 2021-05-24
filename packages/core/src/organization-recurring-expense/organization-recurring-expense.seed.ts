@@ -1,23 +1,22 @@
 import { Connection } from 'typeorm';
 import { OrganizationRecurringExpense } from './organization-recurring-expense.entity';
 import * as faker from 'faker';
-import { Tenant } from '../tenant/tenant.entity';
 import {
 	IOrganization,
+	ITenant,
 	RecurringExpenseDefaultCategoriesEnum
 } from '@gauzy/contracts';
 import * as moment from 'moment';
-import { Organization } from '../organization/organization.entity';
 import { environment as env } from '@gauzy/config';
 
 export const createDefaultOrganizationRecurringExpense = async (
 	connection: Connection,
-	tenant: Tenant,
-	defaultOrganizations: Organization
+	tenant: ITenant,
+	defaultOrganization: IOrganization
 ): Promise<OrganizationRecurringExpense[]> => {
-	if (!defaultOrganizations) {
+	if (!defaultOrganization) {
 		console.warn(
-			'Warning: defaultOrganizations not found, default organization recurring expense not be created'
+			'Warning: defaultOrganization not found, default organization recurring expense not be created'
 		);
 		return;
 	}
@@ -32,15 +31,15 @@ export const createDefaultOrganizationRecurringExpense = async (
 		tenant,
 		mapOrganizationRecurringExpense,
 		expenseCategories,
-		defaultOrganizations
+		defaultOrganization
 	);
 	return mapOrganizationRecurringExpense;
 };
 
 export const createRandomOrganizationRecurringExpense = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<OrganizationRecurringExpense[]> => {
 	if (!tenantOrganizationsMap) {
 		console.warn(
@@ -72,10 +71,10 @@ export const createRandomOrganizationRecurringExpense = async (
 
 const dataOperation = async (
 	connection: Connection,
-	tenant: Tenant,
+	tenant: ITenant,
 	mapOrganizationRecurringExpense,
 	expenseCategories,
-	tenantOrg: Organization
+	tenantOrg: IOrganization
 ) => {
 	for (const expenseCategory of expenseCategories) {
 		const organization = new OrganizationRecurringExpense();

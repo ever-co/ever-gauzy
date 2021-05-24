@@ -26,7 +26,7 @@ export async function seedDefault(devConfig: Partial<IPluginConfig>) {
 		.then((app) => {
 			const seeder = app.get(SeedDataService);
 			seeder
-				.runDefaultSeed()
+				.runDefaultSeed(false)
 				.then(() => {})
 				.catch((error) => {
 					throw error;

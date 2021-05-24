@@ -4,11 +4,11 @@ import { Tag } from '../tags/tag.entity';
 import { OrganizationProject } from './organization-projects.entity';
 import {
 	IOrganization,
+	ITag,
 	ITenant,
 	OrganizationProjectBudgetTypeEnum,
 	TaskListTypeEnum
 } from '@gauzy/contracts';
-import { Tenant } from '../tenant/tenant.entity';
 import { OrganizationContact } from '../organization-contact/organization-contact.entity';
 import { DEFAULT_ORGANIZATION_PROJECTS } from './default-organization-projects';
 
@@ -64,9 +64,9 @@ export const createDefaultOrganizationProjects = async (
 
 export const createRandomOrganizationProjects = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, IOrganization[]>,
-	tags: Tag[] | void,
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	tags: ITag[] | void,
 	maxProjectsPerOrganization
 ) => {
 	if (!tags) {

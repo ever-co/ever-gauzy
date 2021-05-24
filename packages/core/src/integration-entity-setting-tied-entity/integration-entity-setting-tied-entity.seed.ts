@@ -1,16 +1,13 @@
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
 import * as faker from 'faker';
-import { IntegrationTenant } from '../integration-tenant/integration-tenant.entity';
-import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
-import { IntegrationEntitySettingTiedEntity } from './integration-entity-setting-tied-entity.entity';
-import { Organization } from '../organization/organization.entity';
-import { IntegrationEntity } from '@gauzy/contracts';
+import { IntegrationEntity, ITenant } from '@gauzy/contracts';
 import { PROJECT_TIED_ENTITIES } from '@gauzy/integration-hubstaff';
+import { IntegrationEntitySettingTiedEntity } from './integration-entity-setting-tied-entity.entity';
+import { IntegrationEntitySetting, IntegrationTenant, Organization } from './../core/entities/internal';
 
 export const createRandomIntegrationEntitySettingTiedEntity = async (
 	connection: Connection,
-	tenants: Tenant[]
+	tenants: ITenant[]
 ): Promise<IntegrationEntitySettingTiedEntity[]> => {
 	if (!tenants) {
 		console.warn(

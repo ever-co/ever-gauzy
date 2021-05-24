@@ -1,6 +1,5 @@
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
-import { IEmployee, IOrganization, PaymentMethodEnum } from '@gauzy/contracts';
+import { IEmployee, IOrganization, ITenant, PaymentMethodEnum } from '@gauzy/contracts';
 import { Payment } from './payment.entity';
 import * as faker from 'faker';
 import { Invoice } from '../invoice/invoice.entity';
@@ -11,7 +10,7 @@ import { environment as env } from '@gauzy/config';
 
 export const createDefaultPayment = async (
 	connection: Connection,
-	tenant: Tenant,
+	tenant: ITenant,
 	employees: IEmployee[],
 	defaultOrganizations: IOrganization[]
 ): Promise<Payment[]> => {
@@ -60,9 +59,9 @@ export const createDefaultPayment = async (
 
 export const createRandomPayment = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, IEmployee[]>,
-	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
+	tenants: ITenant[],
+	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<Payment[]> => {
 	if (!tenantOrganizationsMap) {
 		console.warn(

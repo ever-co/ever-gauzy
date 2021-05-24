@@ -1,21 +1,21 @@
 import { KeyResultUpdate } from './keyresult-update.entity';
 import { Connection } from 'typeorm';
 import { KeyResult } from '../keyresult/keyresult.entity';
-import { Tenant } from '../tenant/tenant.entity';
 import * as faker from 'faker';
 import {
 	KeyResultUpdateStatusEnum,
 	KeyResultTypeEnum,
-	KeyResultDeadlineEnum
+	KeyResultDeadlineEnum,
+	IOrganization,
+	ITenant
 } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
-import { Organization } from '../organization/organization.entity';
 
 export const createDefaultKeyResultUpdates = async (
 	connection: Connection,
-	tenant: Tenant,
-	organization: Organization,
+	tenant: ITenant,
+	organization: IOrganization,
 	keyResults: KeyResult[] | void
 ): Promise<KeyResultUpdate[]> => {
 	const defaultKeyResultUpdates = [];
