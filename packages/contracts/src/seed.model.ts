@@ -1,7 +1,7 @@
 import { CurrenciesEnum } from './currency.model';
 import { DefaultValueDateTypeEnum } from './organization.model';
 import { ICandidateSource } from './candidate-source.model';
-import { IUser, LanguagesEnum } from './user.model';
+import { ComponentLayoutStyleEnum, IUser, LanguagesEnum } from './user.model';
 
 export interface IDefaultUser {
 	email: string;
@@ -10,6 +10,7 @@ export interface IDefaultUser {
 	firstName?: string;
 	lastName?: string;
 	preferredLanguage: LanguagesEnum;
+	preferredComponentLayout: ComponentLayoutStyleEnum
 }
 
 export interface IDefaultEmployee extends IDefaultUser {

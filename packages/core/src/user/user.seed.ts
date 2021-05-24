@@ -13,7 +13,8 @@ import {
 	LanguagesEnum,
 	IRole,
 	ITenant,
-	IUser
+	IUser,
+	ComponentLayoutStyleEnum
 } from '@gauzy/contracts';
 import { User } from './user.entity';
 import { getUserDummyImage } from '../core';
@@ -345,7 +346,8 @@ const generateDefaultUser = async (
 		lastName,
 		email,
 		imageUrl,
-		preferredLanguage
+		preferredLanguage,
+		preferredComponentLayout = ComponentLayoutStyleEnum.TABLE
 	} = defaultUser;
 
 	user.email = email;
@@ -356,6 +358,7 @@ const generateDefaultUser = async (
 	user.imageUrl = imageUrl;
 	user.tenant = tenant;
 	user.preferredLanguage = preferredLanguage;
+	user.preferredComponentLayout = preferredComponentLayout;
 
 	user.hash = await bcrypt.hash(
 		defaultUser.password,
