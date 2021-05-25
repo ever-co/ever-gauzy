@@ -6,13 +6,18 @@ export function createGauzyWindow(gauzyWindow, serve, config, filePath) {
 	log.info('createGauzyWindow started');
 
 	let mainWindowSettings: Electron.BrowserWindowConstructorOptions = null;
-	mainWindowSettings = windowSetting();
-	gauzyWindow = new BrowserWindow(mainWindowSettings);
-	let launchPath;
-	// const appConfig = LocalStore.getStore('configs');
-	// if (!appConfig.gauzyWindow) {
-	// 	gauzyWindow.hide();
-	// }
+
+  mainWindowSettings = windowSetting();
+
+  gauzyWindow = new BrowserWindow(mainWindowSettings);
+
+  let launchPath;
+
+  const appConfig = LocalStore.getStore('configs');
+
+	if (!appConfig.gauzyWindow) {
+	 	gauzyWindow.hide();
+	}
 
 	if (serve) {
 		require('electron-reload')(__dirname, {
@@ -32,7 +37,7 @@ export function createGauzyWindow(gauzyWindow, serve, config, filePath) {
 		gauzyWindow.loadURL(launchPath);
 	}
 
-	// console.log('launched electron with:', launchPath);
+	console.log('launched electron with:', launchPath);
 	// gauzyWindow.webContents.toggleDevTools();
 
 	gauzyWindow.on('close', (e) => {
