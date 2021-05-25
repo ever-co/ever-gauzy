@@ -26,6 +26,21 @@ export class ProductTypeController extends CrudController<ProductType> {
 		super(productTypesService);
 	}
 
+	@ApiOperation({ summary: 'Find Types Count ' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Count Types',
+		type: Number
+	})
+	@Get('count')
+	async count(
+		@Query('data', ParseJsonPipe) data?: any
+	): Promise<Number> {
+		const { findInput = null } = data;
+
+		return this.productTypesService.count(findInput);
+	}
+
 	@ApiOperation({
 		summary: 'Find all product types.'
 	})

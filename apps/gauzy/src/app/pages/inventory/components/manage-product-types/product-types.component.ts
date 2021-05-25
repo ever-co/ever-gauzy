@@ -3,7 +3,8 @@ import {
 	IOrganization,
 	IProductTypeTranslated,
 	ComponentLayoutStyleEnum,
-	PermissionsEnum
+	PermissionsEnum,
+	IProductTypeTranslatable
 } from '@gauzy/contracts';
 import { Ng2SmartTableComponent, ServerDataSource } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
@@ -39,12 +40,16 @@ export class ProductTypesComponent
 	productData: IProductTypeTranslated[];
 	selectedOrganization: IOrganization;
 	disableButton = true;
-	viewComponentName: ComponentEnum;
+	viewComponentName: ComponentEnum.PRODUCT_TYPE;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	editTypesAllowed = false;
 
 	source: ServerDataSource;
 	TYPES_URL = `${API_PREFIX}/product-types?`;
+	tableData: IProductTypeTranslated[] | IProductTypeTranslatable[] = [];
+	totalItems = 0;
+	currentPage = 1;
+	itemsPerPage = 10;
 
 	productTypesTable: Ng2SmartTableComponent;
 	@ViewChild('productTypesTable') set content(
@@ -72,6 +77,14 @@ export class ProductTypesComponent
 
 	ngOnInit(): void {
 		this.setPermissions();
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization || { id: null };
+
+		this.productTypeService.count({ findInput: { organizationId, tenantId } }).then(res => {
+			this.totalItems = res as any;
+		});
+
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
 			.subscribe((org) => {
@@ -106,6 +119,30 @@ export class ProductTypesComponent
 			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
+
+				if (componentLayout == ComponentLayoutStyleEnum.CARDS_GRID) {
+					this.onPageChange(this.currentPage);
+				}
+			});
+	}
+
+	onPageChange(pageNum) {
+		this.currentPage = pageNum;
+
+		const { id: organizationId, tenantId } = this.selectedOrganization;
+		const options = "data=" + JSON.stringify({
+			relations: ['organization'],
+			findInput: {
+				organization: { id: organizationId },
+				tenantId
+			},
+		});
+
+		this.productTypeService.getAll(options,
+			{ page: pageNum, _limit: this.itemsPerPage }).then(res => {
+				if (res && res.items) {
+					this.tableData = res.items;
+				}
 			});
 	}
 
