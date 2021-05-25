@@ -1364,9 +1364,9 @@ export class SeedDataService {
 				this.connection,
 				this.config,
 				this.tenant,
+				this.defaultOrganization,
 				this.defaultEmployees,
-				this.defaultProjects,
-				randomSeedConfig.noOfTimeLogsPerTimeSheet
+				this.defaultProjects
 			)
 		);
 
@@ -2115,8 +2115,7 @@ export class SeedDataService {
 				this.connection,
 				this.config,
 				tenants,
-				this.defaultProjects,
-				randomSeedConfig.noOfTimeLogsPerTimeSheet
+				this.defaultProjects
 			)
 		);
 

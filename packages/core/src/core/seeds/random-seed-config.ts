@@ -17,7 +17,9 @@ export const randomSeedConfig = {
 	contacts: 50, // The number of random contacts to be seeded.
 	noOfHelpCenterArticle: 10, // The number of random Help Center Articles.
 	availabilitySlotsPerOrganization: 50, // No of availability slots request to approve seeded will be  (availabilitySlotsPerOrganization * organizationsPerTenant * tenants)
+	noOfTimesheetPerEmployee: 10, // No of timesheet entry per employee
 	noOfTimeLogsPerTimeSheet: 5, // No of time logs entry per time sheets
+	noOfScreenshotPerTimeSlot: 2, // No of screenshot entry per timeslots
 	numberOfOptionPerProduct: 5, // number of product options per product
 	numberOfOptionGroupPerProduct: 5, // number of product options group per product
 	numberOfVariantPerProduct: 5, // number of product variant per product

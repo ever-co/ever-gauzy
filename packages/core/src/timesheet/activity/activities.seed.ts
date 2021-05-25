@@ -1,7 +1,7 @@
 import * as faker from 'faker';
 import * as _ from 'underscore';
 import * as moment from 'moment';
-import { ActivityType } from '@gauzy/contracts';
+import { ActivityType, ITenant, ITimeSlot } from '@gauzy/contracts';
 import { Activity } from './activity.entity';
 import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
 import { Connection } from 'typeorm';
@@ -22,8 +22,8 @@ const AppsNames: string[] = [
 
 export const createRandomActivities = async (
 	connection: Connection,
-	tenant: Tenant,
-	timeSlots: TimeSlot[]
+	tenant: ITenant,
+	timeSlots: ITimeSlot[]
 ): Promise<Activity[]> => {
 	const employees = await connection.getRepository(Employee).find();
 	const allActivities: Activity[] = [];
