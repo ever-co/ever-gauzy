@@ -6,8 +6,6 @@ import { Activity } from './activity.entity';
 import { OrganizationProject } from '../../organization-projects/organization-projects.entity';
 import { Connection } from 'typeorm';
 import { Employee } from '../../employee/employee.entity';
-import { Tenant } from '../../tenant/tenant.entity';
-import { TimeSlot } from '../time-slot.entity';
 
 const AppsNames: string[] = [
 	'Sublime Text',
