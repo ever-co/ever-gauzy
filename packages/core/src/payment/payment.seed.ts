@@ -2,35 +2,32 @@ import { Connection } from 'typeorm';
 import { IEmployee, IOrganization, ITenant, PaymentMethodEnum } from '@gauzy/contracts';
 import { Payment } from './payment.entity';
 import * as faker from 'faker';
-import { Invoice } from '../invoice/invoice.entity';
-import { Tag } from '../tags/tag.entity';
-import { User } from '../user/user.entity';
 import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
+import { Invoice, User } from './../core/entities/internal';
 
 export const createDefaultPayment = async (
 	connection: Connection,
 	tenant: ITenant,
 	employees: IEmployee[],
-	defaultOrganizations: IOrganization[]
+	organizations: IOrganization[]
 ): Promise<Payment[]> => {
 	const payments: Payment[] = [];
-
 	const users = await connection.manager.find(User, {
-		where: [{ tenant: tenant.id }]
+		where: { 
+			tenant 
+		}
 	});
-
-	for (const tenantOrg of defaultOrganizations) {
+	for (const organization of organizations) {
 		const invoices = await connection.manager.find(Invoice, {
-			where: [{ organizationId: tenantOrg.id }]
+			where: { 
+				organization,
+				tenant
+			}
 		});
 		for (const invoice of invoices) {
 			const payment = new Payment();
-
 			payment.invoiceId = invoice.id;
-			payment.invoice = invoice;
-			payment.organization = tenantOrg;
-			payment.organizationId = tenantOrg.id;
 			payment.paymentDate = faker.date.between(
 				new Date(),
 				moment(new Date()).add(1, 'month').toDate()
@@ -40,11 +37,12 @@ export const createDefaultPayment = async (
 				max: 100000
 			});
 			payment.note = faker.name.jobDescriptor();
-			payment.currency = tenantOrg.currency || env.defaultCurrency;
+			payment.currency = organization.currency || env.defaultCurrency;
 			payment.paymentMethod = faker.random.arrayElement(
 				Object.keys(PaymentMethodEnum)
 			);
 			payment.overdue = faker.datatype.boolean();
+			payment.organization = organization;
 			payment.tenant = tenant;
 			payment.tags = invoice.tags;
 			payment.employeeId = faker.random.arrayElement(employees).id;
@@ -74,25 +72,25 @@ export const createRandomPayment = async (
 		const tenantOrgs = tenantOrganizationsMap.get(tenant);
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
 		const users = await connection.manager.find(User, {
-			where: [{ tenant: tenant.id }]
+			where: { 
+				tenant: tenant 
+			}
 		});
-
-		for (const tenantOrg of tenantOrgs) {
-			const payments1: Payment[] = [];
-			const payments2: Payment[] = [];
+		const payments1: Payment[] = [];
+		const payments2: Payment[] = [];
+		for (const organization of tenantOrgs) {
 			const invoices = await connection.manager.find(Invoice, {
-				where: { organizationId: tenantOrg.id }
+				where: { 
+					organization,
+					tenant
+				}
 			});
 			let count = 0;
 			for (const invoice of invoices) {
-				const tags = await connection.manager.find(Tag, {
-					where: [{ organization: tenantOrg }]
-				});
 				const payment = new Payment();
 				payment.invoice = invoice;
-				payment.organizationId = tenantOrg.id;
 				payment.paymentDate = faker.date.between(
-					2019,
+					new Date(),
 					faker.date.recent()
 				);
 				payment.amount = faker.datatype.number({
@@ -100,17 +98,17 @@ export const createRandomPayment = async (
 					max: 100000
 				});
 				payment.note = faker.name.jobDescriptor();
-				payment.currency = tenantOrg.currency || env.defaultCurrency;
+				payment.currency = organization.currency || env.defaultCurrency;
 				payment.paymentMethod = faker.random.arrayElement(
 					Object.keys(PaymentMethodEnum)
 				);
 				payment.overdue = faker.datatype.boolean();
+				payment.organization = organization;
 				payment.tenant = tenant;
-				payment.tags = tags;
-				payment.employeeId = faker.random.arrayElement(
-					tenantEmployees
-				).id;
+				payment.tags = invoice.tags;
+				payment.employeeId = faker.random.arrayElement(tenantEmployees).id;
 				payment.recordedBy = faker.random.arrayElement(users);
+				
 				if (count % 2 === 0) {
 					payments1.push(payment);
 				} else {
@@ -118,8 +116,8 @@ export const createRandomPayment = async (
 				}
 				count++;
 			}
-			await connection.manager.save(payments1);
-			await connection.manager.save(payments2);
 		}
+		await connection.manager.save(payments1);
+		await connection.manager.save(payments2);
 	}
 };
