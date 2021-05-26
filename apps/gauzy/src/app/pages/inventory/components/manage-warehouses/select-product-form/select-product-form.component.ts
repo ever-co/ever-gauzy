@@ -1,13 +1,20 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { IProductTranslated, IOrganization } from '@gauzy/contracts';
+import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
+import { IProductTranslated, IOrganization, LanguagesEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store, ProductService } from 'apps/gauzy/src/app/@core';
+import { Store, ProductService, API_PREFIX } from 'apps/gauzy/src/app/@core';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Ng2SmartTableComponent, ServerDataSource } from 'ng2-smart-table';
 import { ImageRowComponent } from '../../table-components/image-row.component';
 import { NbDialogRef } from '@nebular/theme';
 import { SelectedRowComponent } from '../../table-components/selected-row.component';
+import { HttpClient } from '@angular/common/http';
+
+export interface selectedRowEvent {
+	data: IProductTranslated,
+	isSelected: boolean,
+	selected: IProductTranslated[]
+}
 
 @UntilDestroy()
 @Component({
@@ -21,7 +28,9 @@ export class SelectProductComponent
 	settingsSmartTable: object;
 	organization: IOrganization;
 	loading: boolean = true;
-	smartTableSource: LocalDataSource;
+	smartTableSource: ServerDataSource;
+	selectedLanguage: string = LanguagesEnum.ENGLISH;
+
 
 	selectedRows: any[] = [];
 	tableData: any[] = [];
@@ -33,31 +42,31 @@ export class SelectProductComponent
 			this.productsTable = content;
 		}
 	}
+	PRODUCTS_URL = `${API_PREFIX}/products/local/${this.selectedLanguage}?`;
+
 
 	constructor(
 		public dialogRef: NbDialogRef<any>,
 		private store: Store,
 		readonly translateService: TranslateService,
-		private productService: ProductService
+		private productService: ProductService,
+		private http: HttpClient
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
-
-		this.smartTableSource = new LocalDataSource();
-
+		this.loadSettings();
 		this.loadSmartTable();
+		this.selectedLanguage = this.store.preferredLanguage;
 
-		this.loadItems();
-		this.smartTableSource.setPaging(5, 5, false);
 
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
 			.subscribe((organization: IOrganization) => {
 				if (organization) {
 					this.organization = organization;
-					this.loadItems();
+					this.loadSettings();
 				}
 			});
 	}
@@ -72,34 +81,26 @@ export class SelectProductComponent
 		)[prop];
 	}
 
-	async loadItems() {
+	async loadSettings() {
 		this.loading = true;
 		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization || { id: null};
-		const { items } = await this.productService.getAllTranslated(
-			{relations: ['type', 'category', 'featuredImage', 'variants'],
-			findInput: { organizationId, tenantId }},
-			null,
-			this.store.preferredLanguage
-		);
+		const { id: organizationId } = this.organization || { id: '' };
 
-		this.loading = false;
-		this.products = items;
-
-		let mappedItems = items.map((item) => {
-			return {
-				...item,
-				id: item.id,
-				name: item.name,
-				category: item.category,
-				type: item.type,
-				featuredImage: item.featuredImage,
-				selected: false
-			};
+		const data = "data=" + JSON.stringify({
+			relations: ['type', 'category', 'featuredImage', 'variants'],
+			findInput: { organizationId, tenantId },
 		});
 
-		this.tableData = mappedItems;
-		this.smartTableSource.load(mappedItems);
+
+		this.smartTableSource = new ServerDataSource(this.http, {
+			endPoint: this.PRODUCTS_URL + data,
+			dataKey: 'items',
+			totalKey: 'total',
+			perPage: 'per_page',
+			pagerPageKey: 'page'
+		});
+
+		this.loading = false;
 	}
 
 	async loadSmartTable() {
@@ -112,6 +113,9 @@ export class SelectProductComponent
 				selected: {
 					title: this.getTranslation('INVENTORY_PAGE.SELECTED'),
 					type: 'custom',
+					valuePrepareFunction: (cell, row) => {
+						row.selected = !!this.selectedRows.find(p => p.id == row.id);
+					}, 
 					renderComponent: SelectedRowComponent
 				},
 				image: {
@@ -135,7 +139,9 @@ export class SelectProductComponent
 		};
 	}
 
-	onUserRowSelect(event) {
-		this.selectedRows = this.tableData.filter(item => item.selected);
+	onUserRowSelect(event: selectedRowEvent) {
+		if(event.isSelected && !this.selectedRows.find(p => p.id == event.data.id)) {
+			this.selectedRows.push(event.data)
+		}
 	}
 }
