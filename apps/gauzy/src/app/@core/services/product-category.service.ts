@@ -23,14 +23,26 @@ export class ProductCategoryService {
 	}
 
 	getAllTranslated(
-		langCode: string,
-		relations?: string[],
-		findInput?: any
+		options,
+		params?
 	): Promise<{ items: IProductCategoryTranslated[] }> {
-		const data = JSON.stringify({ relations, findInput, langCode });
+		const data = JSON.stringify(options);
 		return this.http
 			.get<{ items: IProductCategoryTranslated[] }>(
 				this.PRODUCT_CATEGORY_URL,
+				{
+					params: { data, ...params }
+				}
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	count(findInput): Promise<Number> {
+		const data = JSON.stringify(findInput);
+		return this.http
+			.get<number>(
+				`${this.PRODUCT_CATEGORY_URL}/count`,
 				{
 					params: { data }
 				}
