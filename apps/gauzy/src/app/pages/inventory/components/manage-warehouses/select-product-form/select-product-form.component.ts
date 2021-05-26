@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { IProductTranslated, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -16,8 +16,7 @@ import { SelectedRowComponent } from '../../table-components/selected-row.compon
 	styleUrls: ['./select-product-form.component.scss']
 })
 export class SelectProductComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	extends TranslationBaseComponent implements OnInit {
 	products: IProductTranslated[] = [];
 	settingsSmartTable: object;
 	organization: IOrganization;
@@ -63,8 +62,6 @@ export class SelectProductComponent
 			});
 	}
 
-	ngOnDestroy() {}
-
 	translateProp(elem, prop) {
 		let translations = elem.translations;
 
@@ -78,10 +75,11 @@ export class SelectProductComponent
 	async loadItems() {
 		this.loading = true;
 		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		const { id: organizationId } = this.organization || { id: null};
 		const { items } = await this.productService.getAllTranslated(
-			['type', 'category', 'featuredImage', 'variants'],
-			{ organizationId, tenantId },
+			{relations: ['type', 'category', 'featuredImage', 'variants'],
+			findInput: { organizationId, tenantId }},
+			null,
 			this.store.preferredLanguage
 		);
 
