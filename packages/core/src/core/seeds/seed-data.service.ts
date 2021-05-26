@@ -305,6 +305,7 @@ import {
 import { createDefaultAccountingTemplates } from 'accounting-template/accounting-template.seed';
 import { DEFAULT_EMPLOYEES, DEFAULT_EVER_EMPLOYEES } from './../../employee';
 import { createRandomMerchants, createDefaultMerchants } from './../../merchant/merchant.seed';
+import { createRandomWarehouses } from 'warehouse/warehouse.seed';
 
 
 export enum SeederTypeEnum {
@@ -1540,6 +1541,15 @@ export class SeedDataService {
 				tenantOrganizationsMap
 			)
 		);
+
+		await this.tryExecute(
+			'Random Warehouses',
+			createRandomWarehouses(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap
+			)
+		)
 
 		await this.tryExecute(
 			'Random Merchants',
