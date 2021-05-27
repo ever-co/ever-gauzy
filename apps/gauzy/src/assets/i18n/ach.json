@@ -2141,7 +2141,10 @@
 		"THIS_FIELD_IS_REQUIRED": "crwdns10366:0crwdne10366:0",
 		"EMAIL_WRONG_FORMAT": "crwdns10368:0crwdne10368:0",
 		"PHONE_WRONG_FORMAT": "crwdns10370:0crwdne10370:0",
-		"SELECTED": "crwdns10374:0crwdne10374:0"
+		"SELECTED": "crwdns10374:0crwdne10374:0",
+		"SUCCESFULLY_ADDED_PRODUCTS": "crwdns10396:0crwdne10396:0",
+		"MAIN": "crwdns10398:0crwdne10398:0",
+		"INVENTORY": "crwdns10400:0crwdne10400:0"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "crwdns3029:0crwdne3029:0",
