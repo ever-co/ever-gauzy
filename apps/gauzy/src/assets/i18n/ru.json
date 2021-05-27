@@ -2141,7 +2141,10 @@
 		"THIS_FIELD_IS_REQUIRED": "Это поле является обязательным",
 		"EMAIL_WRONG_FORMAT": "Адрес электронной почты в неправильном формате",
 		"PHONE_WRONG_FORMAT": "Телефон в неправильном формате",
-		"SELECTED": "Выбрано"
+		"SELECTED": "Выбрано",
+		"SUCCESFULLY_ADDED_PRODUCTS": "Товары успешно добавлены!",
+		"MAIN": "Главная",
+		"INVENTORY": "Инвентаризация"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
