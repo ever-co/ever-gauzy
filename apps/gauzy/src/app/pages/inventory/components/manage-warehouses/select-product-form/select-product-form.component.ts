@@ -10,7 +10,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { SelectedRowComponent } from '../../table-components/selected-row.component';
 import { HttpClient } from '@angular/common/http';
 
-export interface selectedRowEvent {
+export interface SelectedRowEvent {
 	data: IProductTranslated,
 	isSelected: boolean,
 	selected: IProductTranslated[]
@@ -139,7 +139,7 @@ export class SelectProductComponent
 		};
 	}
 
-	onUserRowSelect(event: selectedRowEvent) {
+	onUserRowSelect(event: SelectedRowEvent) {
 		if(event.isSelected && !this.selectedRows.find(p => p.id == event.data.id)) {
 			this.selectedRows.push(event.data)
 		}
