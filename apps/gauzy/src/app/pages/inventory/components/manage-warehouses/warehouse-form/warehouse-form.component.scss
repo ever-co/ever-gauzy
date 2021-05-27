@@ -1,17 +1,13 @@
-img {
-  width: 100%;
-}
 
-.warehouse-image {
-  width: fit-content;
-  height: fit-content;
+.warehouse-photo {
+  width: 100%;
+  background-color: white;
+  overflow: hidden;
   position: relative;
-  margin-top: 20px;
-  margin-right: 30px;
-  min-width: 150px;
-  min-height: 150px;
-  background: rgb(226, 224, 224);
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+  height: auto;
   border-radius: 13px;
+
 
   div {
     pointer-events: none;
@@ -19,13 +15,11 @@ img {
     position: absolute;
     height: 100%;
     width: 100%;
-    border-radius: 13px;
   }
 
   img {
-    height: auto;
-    border-radius: 13px;
     width: 100%;
+    height: auto;
   }
 
   input {
@@ -44,10 +38,5 @@ img {
     position: absolute;
     top: calc(50% - 68px / 2);
     left: calc(50% - 68px / 2);
-  }
-
-  .uploadimage {
-    min-width: 150px;
-    min-height: 150px;
   }
 }

@@ -138,8 +138,6 @@ export class WarehouseProductsTableComponent
 
 	async loadItems() {
 		this.loading = true;
-		// const { tenantId } = this.store.user;
-		// const { id: organizationId } = this.organization;
 
 		const items = await this.warehouseService.getWarehouseProducts(
 			this.warehouseId
@@ -167,11 +165,17 @@ export class WarehouseProductsTableComponent
 
 		const selectedProducts = await dialog.onClose.pipe(first()).toPromise();
 
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization || { id: null };
+
+
 		let createWarehouseProductsInput = selectedProducts
 			? selectedProducts.map((pr) => {
 					return {
 						productId: pr.id,
-						variants: pr.variants.map((variant) => variant.id)
+						variants: pr.variants.map((variant) => variant.id),
+						tenant: { id: tenantId },
+						organization: { id: organizationId }
 					};
 			  })
 			: [];
@@ -182,8 +186,7 @@ export class WarehouseProductsTableComponent
 		);
 
 		if (createWarehouseProductsInput.length && result) {
-			//tstodo
-			this.toastrService.success('Successfully added products');
+			this.toastrService.success('INVENTORY_PAGE.SUCCESFULLY_ADDED_PRODUCTS');
 		}
 
 		this.loadItems();

@@ -19,68 +19,11 @@
 		<form [formGroup]="form" *ngIf="form">
 			<div class="row">
 				<div class="col-md-2 col-sm-12">
-					<div class="warehouse-image">
-						<ngx-image-uploader
-							(changeHoverState)="hoverState = $event"
-							(uploadedImageUrl)="
-								form.get('logo').setValue($event)
-							"
-							(uploadImageError)="handleImageUploadError($event)"
-						></ngx-image-uploader>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							xmlns:xlink="http://www.w3.org/1999/xlink"
-							width="68"
-							height="68"
-							viewBox="0 0 68 68"
-							[ngStyle]="{ opacity: hoverState ? '1' : '0.3' }"
-						>
-							<defs>
-								<path
-									id="a"
-									d="M28.667 31.333a2 2 0 1 0-.002-4.001 2 2 0 0 0 .002 4.001m13.333 12H26.748l9.34-7.793c.328-.279.923-.277 1.244-.001l6.001 5.12V42c0 .736-.597 1.333-1.333 1.333M26 24.667h16c.736 0 1.333.597 1.333 1.333v11.152l-4.27-3.643c-1.32-1.122-3.386-1.122-4.694-.008l-9.702 8.096V26c0-.736.597-1.333 1.333-1.333M42 22H26c-2.205 0-4 1.795-4 4v16c0 2.205 1.795 4 4 4h16c2.205 0 4-1.795 4-4V26c0-2.205-1.795-4-4-4"
-								/>
-							</defs>
-							<g fill="none" fill-rule="evenodd">
-								<circle
-									cx="34"
-									cy="34"
-									r="34"
-									fill="#0091FF"
-									opacity=".3"
-								/>
-								<circle
-									cx="34"
-									cy="34"
-									r="26"
-									fill="#0091FF"
-									opacity=".9"
-								/>
-								<use
-									fill="#FFF"
-									fill-rule="nonzero"
-									xlink:href="#a"
-								/>
-							</g>
-						</svg>
-						<div
-							class="image-overlay"
-							[ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"
-						></div>
-
-						<img
-							*ngIf="form && form.get('logo').value"
-							[src]="form.get('logo').value"
-							alt="Warehouse Image"
-							class="uploadimage"
-							(mouseenter)="hoverState = true"
-							(mouseleave)="hoverState = false"
-						/>
-					</div>
+						<ng-container *ngTemplateOutlet="warehouseImage"></ng-container>
 				</div>
 				<div class="col-md-10 col-sm-12">
 					<nb-tabset (changeTab)="onChangeTab($event)">
-						<nb-tab tabTitle="Main">
+						<nb-tab [tabTitle]="'INVENTORY_PAGE.MAIN' | translate">
 							<div class="row">
 								<div class="col-md-6 col-sm-12">
 									<div class="form-group">
@@ -176,7 +119,7 @@
 								></textarea>
 							</div>
 						</nb-tab>
-						<nb-tab tabTitle="Location">
+						<nb-tab [tabTitle]="'INVENTORY_PAGE.LOCATION' | translate">
 							<ga-location-form
 								#locationFormDirective
 								[form]="locationForm"
@@ -194,7 +137,7 @@
 							</ga-leaflet-map>
 						</nb-tab>
 						<nb-tab
-							tabTitle="Inventory "
+							[tabTitle]="'INVENTORY_PAGE.INVENTORY' | translate "
 							[disabled]="!isActiveInventoryTab()"
 						>
 							<ga-warehouse-products-table></ga-warehouse-products-table>
@@ -213,3 +156,28 @@
 		</button>
 	</nb-card-footer>
 </nb-card>
+
+<ng-template #warehouseImage>
+	<div class="warehouse-photo" (mouseenter)="hoverState = true" (mouseleave)="hoverState = false"
+		(click)="onImageSelect()">
+		<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="68" height="68"
+			viewBox="0 0 68 68" [ngStyle]="{ opacity: hoverState ? '1' : '0.3' }">
+			<defs>
+				<path id="a"
+					d="M28.667 31.333a2 2 0 1 0-.002-4.001 2 2 0 0 0 .002 4.001m13.333 12H26.748l9.34-7.793c.328-.279.923-.277 1.244-.001l6.001 5.12V42c0 .736-.597 1.333-1.333 1.333M26 24.667h16c.736 0 1.333.597 1.333 1.333v11.152l-4.27-3.643c-1.32-1.122-3.386-1.122-4.694-.008l-9.702 8.096V26c0-.736.597-1.333 1.333-1.333M42 22H26c-2.205 0-4 1.795-4 4v16c0 2.205 1.795 4 4 4h16c2.205 0 4-1.795 4-4V26c0-2.205-1.795-4-4-4" />
+			</defs>
+			<g fill="none" fill-rule="evenodd">
+				<circle cx="34" cy="34" r="34" fill="#0091FF" opacity=".3" />
+				<circle cx="34" cy="34" r="26" fill="#0091FF" opacity=".9" />
+				<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
+			</g>
+		</svg>
+		<div class="image-overlay" [ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"></div>
+
+		<img class="store-image" *ngIf="!logo || !logo.url" [src]="
+											'https://afostats.imagead.net/uploads/afo/no_img.png'
+										" alt="Warehouse Photo" />
+
+		<img class="store-image" *ngIf="logo && logo.url" [src]="logo.url" alt="Warehouse Photo" />
+	</div>
+</ng-template>

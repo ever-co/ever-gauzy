@@ -14,7 +14,8 @@ import {
 	Contact,
 	Tag,
 	WarehouseProduct,
-	TenantOrganizationBaseEntity
+	TenantOrganizationBaseEntity,
+	ImageAsset
 } from '../core/entities/internal';
 
 @Entity('warehouse')
@@ -24,10 +25,13 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: () => String })
-	@IsString()
-	@Column()
-	logo: string;
+	@ApiProperty()
+	@ManyToOne(
+		() => ImageAsset,
+		{ cascade: true }
+	)
+	@JoinColumn()
+	logo: ImageAsset;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
