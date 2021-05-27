@@ -2142,7 +2142,9 @@
 		"EMAIL_WRONG_FORMAT": "Email is in wrong format",
 		"PHONE_WRONG_FORMAT": "Phone is in wrong format",
 		"SELECTED": "Selected",
-		"SUCCESFULLY_ADDED_PRODUCTS": "Продуктите са добавени успешно!"
+		"SUCCESFULLY_ADDED_PRODUCTS": "Продуктите са добавени успешно!",
+		"MAIN": "Main",
+		"INVENTORY":"Inventory"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

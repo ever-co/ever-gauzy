@@ -138,9 +138,6 @@ export class WarehouseProductsTableComponent
 
 	async loadItems() {
 		this.loading = true;
-		//tstodo
-		// const { tenantId } = this.store.user;
-		// const { id: organizationId } = this.organization;
 
 		const items = await this.warehouseService.getWarehouseProducts(
 			this.warehouseId
@@ -168,14 +165,17 @@ export class WarehouseProductsTableComponent
 
 		const selectedProducts = await dialog.onClose.pipe(first()).toPromise();
 
-		//tstodo
-		console.log(selectedProducts, 'warehouse products selected')
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization || { id: null };
+
 
 		let createWarehouseProductsInput = selectedProducts
 			? selectedProducts.map((pr) => {
 					return {
 						productId: pr.id,
-						variants: pr.variants.map((variant) => variant.id)
+						variants: pr.variants.map((variant) => variant.id),
+						tenant: { id: tenantId },
+						organization: { id: organizationId }
 					};
 			  })
 			: [];

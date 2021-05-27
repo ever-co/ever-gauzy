@@ -23,8 +23,7 @@
 				</div>
 				<div class="col-md-10 col-sm-12">
 					<nb-tabset (changeTab)="onChangeTab($event)">
-						<!-- //tstodo -->
-						<nb-tab tabTitle="Main">
+						<nb-tab [tabTitle]="'INVENTORY_PAGE.MAIN' | translate">
 							<div class="row">
 								<div class="col-md-6 col-sm-12">
 									<div class="form-group">
@@ -120,7 +119,7 @@
 								></textarea>
 							</div>
 						</nb-tab>
-						<nb-tab tabTitle="Location">
+						<nb-tab [tabTitle]="'INVENTORY_PAGE.LOCATION' | translate">
 							<ga-location-form
 								#locationFormDirective
 								[form]="locationForm"
@@ -138,7 +137,7 @@
 							</ga-leaflet-map>
 						</nb-tab>
 						<nb-tab
-							tabTitle="Inventory "
+							[tabTitle]="'INVENTORY_PAGE.INVENTORY' | translate "
 							[disabled]="!isActiveInventoryTab()"
 						>
 							<ga-warehouse-products-table></ga-warehouse-products-table>
