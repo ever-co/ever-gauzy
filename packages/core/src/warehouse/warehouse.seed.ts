@@ -1,6 +1,6 @@
 import { Connection } from 'typeorm';
 import { ICountry, IOrganization, ITenant } from '@gauzy/contracts';
-import { Country, Warehouse, Contact, Product, WarehouseProduct, WarehouseProductVariant } from './../core/entities/internal';
+import { Country, Warehouse, Contact, Product, WarehouseProduct, WarehouseProductVariant, ImageAsset } from './../core/entities/internal';
 import * as faker from 'faker';
 
 
@@ -92,8 +92,15 @@ const applyRandomProperties = (
     contact.organization = organization;
     contact.tenant = tenant;
 
+    
+    const logo = new ImageAsset();
+    logo.name = faker.name.title();
+    logo.url = faker.image.imageUrl();
+    logo.organization = organization;
+    logo.tenant = tenant;
+
     warehouse.contact = contact;
-    warehouse.logo = faker.image.imageUrl();
+    warehouse.logo = logo;
 
     return warehouse;
 }

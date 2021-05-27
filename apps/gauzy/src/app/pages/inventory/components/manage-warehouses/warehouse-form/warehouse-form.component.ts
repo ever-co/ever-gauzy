@@ -1,4 +1,4 @@
-import { ITag, IWarehouse } from '@gauzy/contracts';
+import { ITag, IWarehouse, IImageAsset } from '@gauzy/contracts';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
@@ -12,6 +12,11 @@ import { LatLng } from 'leaflet';
 import { Location } from '@angular/common';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { LocationFormComponent } from 'apps/gauzy/src/app/@shared/forms/location';
+import { NbDialogService } from '@nebular/theme';
+import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
+import { Subject } from 'rxjs';
+import { first } from 'rxjs/operators';
+import { ImageAssetService } from 'apps/gauzy/src/app/@core';
 
 @UntilDestroy()
 @Component({
@@ -34,6 +39,10 @@ export class WarehouseFormComponent
 	leafletTemplate: LeafletMapComponent;
 
 	hoverState: boolean;
+	private newImageUploadedEvent$ = new Subject<any>();
+
+	logo: IImageAsset = null;
+	images: IImageAsset[] = [];
 
 	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
 
@@ -44,7 +53,9 @@ export class WarehouseFormComponent
 		private route: ActivatedRoute,
 		private fb: FormBuilder,
 		private store: Store,
-		private location: Location
+		private location: Location,
+		private dialogService: NbDialogService,
+		private imageAssetService: ImageAssetService
 	) {
 		super(translateService);
 	}
@@ -59,15 +70,46 @@ export class WarehouseFormComponent
 					);
 
 					this.tags = this.warehouse.tags || [];
+					this.logo = this.warehouse.logo || null;
 
 					this._initializeLocationForm();
 					this._initializeForm();
 				}
 			});
 
+		this._loadImages(); 
 		this._initializeForm();
 		this._initializeLocationForm();
 	}
+
+	async onImageSelect() {
+		const dialog = this.dialogService.open(SelectAssetComponent, {
+			context: {
+				newImageUploadedEvent: this.newImageUploadedEvent$,
+				galleryInput: this.images,
+				settings: {
+					uploadImageEnabled: true,
+					deleteImageEnabled: true,
+					selectMultiple: false
+				}
+			}
+		});
+
+		let selectedImage = await dialog.onClose.pipe(first()).toPromise();
+		if(selectedImage) {
+			this.logo = selectedImage;
+		}
+	}
+
+	
+	private async _loadImages() {
+		const { items } = await this.imageAssetService.getAll({
+			organizationId: this.store.selectedOrganization ? this.store.selectedOrganization.id : null
+		});
+		this.images = items;
+	}
+
+
 
 	private _initializeForm() {
 		this.form = this.fb.group({
@@ -89,6 +131,7 @@ export class WarehouseFormComponent
 			description: [this.warehouse ? this.warehouse.description : '']
 		});
 	}
+
 
 	private _initializeLocationForm() {
 		if (!this.warehouse || !this.warehouse.contact) return;
@@ -122,6 +165,7 @@ export class WarehouseFormComponent
 
 		let request = {
 			...this.form.value,
+			logo: this.logo,
 			contact: {
 				...locationFormValue,
 				latitude: coordinates[0],

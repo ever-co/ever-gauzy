@@ -121,7 +121,7 @@ export class WarehousesTableComponent
 	}
 
 	async loadSettings() {
-		const warehousesResult = await this.warehouseService.getAll();
+		const warehousesResult = await this.warehouseService.getAll(['logo']);
 
 		if (!warehousesResult || !warehousesResult.items) return;
 
