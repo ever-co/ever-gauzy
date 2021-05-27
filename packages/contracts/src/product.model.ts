@@ -249,7 +249,7 @@ export interface IWarehouse extends IBasePerTenantEntityModel {
 	code: string;
 	products?: IWarehouseProduct[];
 	name: string;
-	logo?: string;
+	logo?: IImageAsset;
 	email: string;
 	tags?: ITag[];
 }

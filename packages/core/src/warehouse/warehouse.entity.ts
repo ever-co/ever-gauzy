@@ -13,21 +13,25 @@ import { IsString } from 'class-validator';
 import {
 	Contact,
 	Tag,
-	TenantBaseEntity,
-	WarehouseProduct
+	WarehouseProduct,
+	TenantOrganizationBaseEntity,
+	ImageAsset
 } from '../core/entities/internal';
 
 @Entity('warehouse')
-export class Warehouse extends TenantBaseEntity implements IWarehouse {
+export class Warehouse extends TenantOrganizationBaseEntity implements IWarehouse {
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()
 	name: string;
 
-	@ApiProperty({ type: () => String })
-	@IsString()
-	@Column()
-	logo: string;
+	@ApiProperty()
+	@ManyToOne(
+		() => ImageAsset,
+		{ cascade: true }
+	)
+	@JoinColumn()
+	logo: ImageAsset;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
@@ -46,7 +50,8 @@ export class Warehouse extends TenantBaseEntity implements IWarehouse {
 	@ManyToOne(
 		() => WarehouseProduct,
 		(warehouseProduct) => warehouseProduct.warehouse,
-		{ onDelete: 'SET NULL' }
+		{ onDelete: 'SET NULL',
+			cascade: true }
 	)
 	@JoinColumn()
 	products: WarehouseProduct[];

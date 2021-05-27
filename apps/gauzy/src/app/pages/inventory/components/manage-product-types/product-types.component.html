@@ -41,9 +41,14 @@
 		<ga-card-grid
 			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
 			[settings]="settingsSmartTable"
-			[source]="productData"
+			[source]="tableData"
 			[buttonTemplate]="actionButtons"
 		></ga-card-grid>
+
+		<div class="pagination-container" *ngIf="dataLayoutStyle === 'CARDS_GRID'">
+			<ga-pagination *ngIf="totalItems > itemsPerPage" (selectedPage)="onPageChange($event)"
+				[totalItems]="totalItems" [itemsPerPage]="itemsPerPage" [activePage]="activePage"></ga-pagination>
+		</div>
 	</nb-card-body>
 </nb-card>
 <ng-template

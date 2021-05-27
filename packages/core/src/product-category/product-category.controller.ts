@@ -28,6 +28,21 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 		super(productCategoriesService);
 	}
 
+	@ApiOperation({ summary: 'Find Categories Count ' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Count Categories',
+		type: Number
+	})
+	@Get('count')
+	async count(
+		@Query('data', ParseJsonPipe) data?: any
+	): Promise<Number> {
+		const { findInput = null } = data;
+
+		return this.productCategoriesService.count(findInput);
+	}
+
 	@ApiOperation({
 		summary: 'Find all product categories.'
 	})
@@ -55,7 +70,7 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 			relations,
 			findInput,
 			langCode,
-			{page, limit}
+			{ page, limit }
 		);
 	}
 

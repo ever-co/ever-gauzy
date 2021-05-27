@@ -1,5 +1,5 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { ComponentLayoutStyleEnum, IContact } from '@gauzy/contracts';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { ComponentLayoutStyleEnum, IContact, IWarehouse } from '@gauzy/contracts';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
@@ -22,13 +22,13 @@ import { EnabledStatusComponent } from '../../table-components/enabled-row.compo
 })
 export class WarehousesTableComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit {
 	settingsSmartTable: object;
 	loading: boolean;
-	selectedWarehouse: any;
+	selectedWarehouse: IWarehouse;
 	smartTableSource = new LocalDataSource();
-	warehousesList = [];
-	disableButton = true;
+	warehousesList: IWarehouse[] = [];
+	disableButton: boolean = true;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 
@@ -121,7 +121,15 @@ export class WarehousesTableComponent
 	}
 
 	async loadSettings() {
-		const warehousesResult = await this.warehouseService.getAll();
+
+				
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization || { id: null };
+
+		const warehousesResult = await this.warehouseService.getAll(['logo'], 
+			{ tenantId, organizationId}
+		);
+
 
 		if (!warehousesResult || !warehousesResult.items) return;
 
@@ -201,5 +209,4 @@ export class WarehousesTableComponent
 		}
 	}
 
-	ngOnDestroy() {}
 }

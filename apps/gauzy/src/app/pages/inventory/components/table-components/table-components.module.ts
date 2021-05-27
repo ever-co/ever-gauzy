@@ -4,7 +4,7 @@ import { IconRowComponent } from './icon-row.component';
 import { ImageRowComponent } from './image-row.component';
 import { ItemImgTagsComponent } from './item-img-tags-row.component';
 import { SelectedRowComponent } from './selected-row.component';
-import { NbCheckboxModule, NbBadgeModule } from '@nebular/theme';
+import { NbCheckboxModule, NbBadgeModule, NbIconModule } from '@nebular/theme';
 import { CommonModule } from '@angular/common';
  
 @NgModule({
@@ -18,6 +18,7 @@ import { CommonModule } from '@angular/common';
     imports: [
         NbCheckboxModule,
         NbBadgeModule,
+        NbIconModule,
         CommonModule
     ]
 })
