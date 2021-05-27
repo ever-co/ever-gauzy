@@ -2141,7 +2141,10 @@
 		"THIS_FIELD_IS_REQUIRED": "This field is required",
 		"EMAIL_WRONG_FORMAT": "Email is in wrong format",
 		"PHONE_WRONG_FORMAT": "Phone is in wrong format",
-		"SELECTED": "Selected"
+		"SELECTED": "Selected",
+		"SUCCESFULLY_ADDED_PRODUCTS": "Products were added successfully!",
+		"MAIN": "Основни",
+		"INVENTORY": "Inventory"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
