@@ -30,6 +30,8 @@ import { ManageVariantsQuantityComponent } from './manage-variants-quantity/mana
 import { ManageVariantsQuantityFormComponent } from './manage-variants-quantity-form/manage-variants-quantity-form.component';
 import { LeafletMapModule, LocationFormModule } from './../../../../@shared/forms';
 import { TagsColorInputModule } from './../../../../@shared/tags/tags-color-input/tags-color-input.module';
+import { PaginationModule } from '../../../../@shared/pagination/pagination.module';
+import { CardGridModule } from '../../../../@shared/card-grid/card-grid.module';
 
 
 const NB_MODULES = [
@@ -70,7 +72,9 @@ const NB_MODULES = [
         ThemeModule,
         LocationFormModule,
         LeafletMapModule,
-        TagsColorInputModule
+        TagsColorInputModule,
+        PaginationModule,
+        CardGridModule
     ],
     entryComponents: [
         ProductTypeMutationComponent,
