@@ -19,7 +19,7 @@
 		<form [formGroup]="form" *ngIf="form">
 			<div class="row">
 				<div class="col-md-2 col-sm-12">
-						<ng-container *ngTemplateOutlet="warehouseImage"></ng-container>
+					<ng-container *ngTemplateOutlet="warehouseImage"></ng-container>
 				</div>
 				<div class="col-md-10 col-sm-12">
 					<nb-tabset (changeTab)="onChangeTab($event)">
@@ -30,28 +30,29 @@
 										<label class="label" for="name">{{
 											'INVENTORY_PAGE.NAME' | translate
 										}}</label>
-										<input
-											fullWidth
-											id="name"
-											type="text"
-											formControlName="name"
-											nbInput
+										<input fullWidth id="name" type="text" formControlName="name" nbInput
 											[placeholder]="
 												'INVENTORY_PAGE.NAME'
 													| translate
-											"
-										/>
+											" [ngClass]="{
+												'status-danger':
+													form.controls['name'].invalid &&
+													form.controls['name'].touched
+											}" />
+										<div class="text-danger" *ngIf="
+										form.controls['name'].dirty &&
+										form.controls['name'].errors &&
+										form.controls['name'].errors.required
+							">
+											{{ 'INVENTORY_PAGE.THIS_FIELD_IS_REQUIRED' | translate }}
+										</div>
 									</div>
 								</div>
 								<div class="col-md-6 col-sm-12">
 									<div class="form-group">
-										<ga-tags-color-input
-											[selectedTags]="tags"
-											(selectedTagsEvent)="
+										<ga-tags-color-input [selectedTags]="tags" (selectedTagsEvent)="
 												selectedTagsEvent($event)
-											"
-											[isOrgLevel]="true"
-										>
+											" [isOrgLevel]="true">
 										</ga-tags-color-input>
 									</div>
 								</div>
@@ -62,17 +63,22 @@
 										<label class="label" for="code">{{
 											'INVENTORY_PAGE.CODE' | translate
 										}}</label>
-										<input
-											fullWidth
-											id="code"
-											type="text"
-											formControlName="code"
-											nbInput
+										<input fullWidth id="code" type="text" formControlName="code" nbInput
 											[placeholder]="
 												'INVENTORY_PAGE.CODE'
 													| translate
-											"
-										/>
+											" [ngClass]="{
+												'status-danger':
+													form.controls['code'].invalid &&
+													form.controls['code'].touched
+											}" />
+										<div class="text-danger" *ngIf="
+										form.controls['code'].dirty &&
+										form.controls['code'].errors &&
+										form.controls['code'].errors.required
+							">
+											{{ 'INVENTORY_PAGE.THIS_FIELD_IS_REQUIRED' | translate }}
+										</div>
 									</div>
 								</div>
 								<div class="col-md-6 col-sm-12">
@@ -80,17 +86,22 @@
 										<label class="label" for="email">{{
 											'INVENTORY_PAGE.EMAIL' | translate
 										}}</label>
-										<input
-											fullWidth
-											id="email"
-											type="text"
-											formControlName="email"
-											nbInput
+										<input fullWidth id="email" type="text" formControlName="email" nbInput
 											[placeholder]="
 												'INVENTORY_PAGE.EMAIL'
 													| translate
-											"
-										/>
+											" [ngClass]="{
+												'status-danger':
+													form.controls['email'].invalid &&
+													form.controls['email'].touched
+											}" />
+										<div class="text-danger" *ngIf="
+										form.controls['email'].dirty &&
+										form.controls['email'].errors &&
+										form.controls['email'].errors.email
+							">
+											{{ 'INVENTORY_PAGE.EMAIL_WRONG_FORMAT' | translate }}
+										</div>
 									</div>
 								</div>
 							</div>
@@ -107,39 +118,23 @@
 								<label class="label" for="email">{{
 									'INVENTORY_PAGE.DESCRIPTION' | translate
 								}}</label>
-								<textarea
-									fullWidth
-									id="description"
-									type="text"
-									formControlName="description"
-									nbInput
+								<textarea fullWidth id="description" type="text" formControlName="description" nbInput
 									[placeholder]="
 										'INVENTORY_PAGE.DESCRIPTION' | translate
-									"
-								></textarea>
+									"></textarea>
 							</div>
 						</nb-tab>
 						<nb-tab [tabTitle]="'INVENTORY_PAGE.LOCATION' | translate">
-							<ga-location-form
-								#locationFormDirective
-								[form]="locationForm"
-								[showAutocompleteSearch]="true"
-								(mapCoordinatesEmitter)="
+							<ga-location-form #locationFormDirective [form]="locationForm"
+								[showAutocompleteSearch]="true" (mapCoordinatesEmitter)="
 									onCoordinatesChanges($event)
-								"
-							>
+								">
 							</ga-location-form>
-							<ga-leaflet-map
-								[zoom]="4"
-								#leafletTemplate
-								(mapClicked)="onMapClicked($event)"
-							>
+							<ga-leaflet-map [zoom]="4" #leafletTemplate (mapClicked)="onMapClicked($event)">
 							</ga-leaflet-map>
 						</nb-tab>
-						<nb-tab
-							[tabTitle]="'INVENTORY_PAGE.INVENTORY' | translate "
-							[disabled]="!isActiveInventoryTab()"
-						>
+						<nb-tab [tabTitle]="'INVENTORY_PAGE.INVENTORY' | translate "
+							[disabled]="!isActiveInventoryTab()">
 							<ga-warehouse-products-table></ga-warehouse-products-table>
 						</nb-tab>
 					</nb-tabset>
