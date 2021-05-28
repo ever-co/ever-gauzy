@@ -27,7 +27,12 @@
 		"build": "rimraf dist && yarn run compile",
 		"compile": "tsc -p tsconfig.build.json"
 	},
-	"dependencies": {},
+	"dependencies": {
+		"moment": "^2.29.0",
+		"moment-timezone": "^0.5.31",
+		"rxjs": "^6.6.3",
+		"rxjs-compat": "^6.6.3"
+	},
 	"devDependencies": {
 		"@types/node": "^14.14.22",
 		"rimraf": "^3.0.2",

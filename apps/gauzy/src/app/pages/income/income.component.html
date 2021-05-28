@@ -26,7 +26,7 @@
 					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 					>{{ 'BUTTONS.ADD' | translate }}
 				</button>
-				<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+				<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
 					<ng-container
 						*ngTemplateOutlet="actionButtons"
 					></ng-container>
@@ -34,7 +34,7 @@
 			</div>
 		</ng-template>
 		<ng2-smart-table
-			*ngIf="dataLayoutStyle === 'TABLE'"
+			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			class="income-table"
 			(userRowSelect)="selectIncome($event)"
 			[settings]="smartTableSettings"
@@ -44,7 +44,7 @@
 		>
 		</ng2-smart-table>
 		<ga-card-grid
-			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
 			[settings]="smartTableSettings"
 			[source]="incomes"
 			[buttonTemplate]="actionButtons"

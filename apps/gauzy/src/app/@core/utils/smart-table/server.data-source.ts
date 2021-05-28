@@ -2,9 +2,8 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ServerSourceConf } from './server-source.conf';
 import { LocalDataSource } from 'ng2-smart-table';
-
 import { map } from 'rxjs/operators';
-import { toParams } from '@gauzy/common-angular';
+import { isNotEmpty, toParams } from '@gauzy/common-angular';
 
 export class ServerDataSource extends LocalDataSource {
 
@@ -29,11 +28,13 @@ export class ServerDataSource extends LocalDataSource {
 
     getElements(): Promise<any> {
         return this.requestElements()
-            .pipe(map(res => {
-                this.lastRequestCount = this.extractTotalFromResponse(res);
-                this.data = this.extractDataFromResponse(res);
-                return this.data;
-            })).toPromise();
+            .pipe(
+                map((res) => {
+                    this.lastRequestCount = this.extractTotalFromResponse(res);
+                    this.data = this.extractDataFromResponse(res);
+                    return this.data;
+                })
+            ).toPromise();
     }
 
     /**
@@ -72,9 +73,9 @@ export class ServerDataSource extends LocalDataSource {
 
     protected createRequestParams(): HttpParams {
         const requestParams = {
-            ...(this.conf.where ? {where: this.conf.where} : {}),
-            ...(this.conf.join ? {join: this.conf.join} : {}),
-            ...(this.conf.relations ? {relations: this.conf.relations} : {}),
+            ...(this.conf.where ? { where: this.conf.where } : {}),
+            ...(this.conf.join ? { join: this.conf.join } : {}),
+            ...(this.conf.relations ? { relations: this.conf.relations } : {}),
             ...this.addSortRequestParams(),
             ...this.addFilterRequestParams(),
             ...this.addPagerRequestParams(),
@@ -84,7 +85,7 @@ export class ServerDataSource extends LocalDataSource {
 
     protected addSortRequestParams() {
         if (this.sortConf) {
-            const orders:any = {}
+            const orders: any = {}
             this.sortConf.forEach((fieldConf) => {
                 orders[fieldConf.field] = fieldConf.direction.toUpperCase();
             });
@@ -99,16 +100,30 @@ export class ServerDataSource extends LocalDataSource {
     protected addFilterRequestParams() {
         if (this.filterConf.filters) {
             const filters: any = {}
-            this.filterConf.filters.forEach((fieldConf) => {
-                filters[fieldConf['field']] = {
-                    dataType:  fieldConf['dataType'] || 'string',
-                    condition: fieldConf['condition'] || 'ILike',
-                    search: fieldConf['search'] || '',
+            try {
+                this.filterConf.filters.forEach((fieldConf: any) => {
+                    let condition = 'default';
+                    const dataType = fieldConf.filter.dataType || 'string';
+
+                    if (fieldConf.filter.condition) {
+                        condition = fieldConf.filter.condition;
+                    } else if (dataType == 'string') {
+                        condition = 'ILike';
+                    }
+                    if (isNotEmpty(fieldConf['search'])) {
+                        const { field, search } = fieldConf;
+                        filters[field] = {
+                            dataType,
+                            condition: condition,
+                            search,
+                        };
+                    }
+                });
+                return {
+                    [this.conf.filterFieldKey]: filters
                 }
-                filters[fieldConf.field] = fieldConf.direction.toUpperCase();
-            });
-            return {
-                [this.conf.filterFieldKey]: filters
+            } catch (error) {
+                console.log({ error });
             }
         } else {
             return {}

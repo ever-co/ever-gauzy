@@ -17,7 +17,9 @@ import {
 	Like,
 	MoreThan,
 	Not,
+	ObjectLiteral,
 	Repository,
+	SelectQueryBuilder,
 	UpdateResult
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
@@ -52,31 +54,30 @@ export abstract class CrudService<T extends BaseEntity>
 		let option: FindManyOptions = {}
 
 		if (filter.page && filter.limit) {
-			option.skip = filter.limit * (filter.page - 1)
-			option.take = filter.limit
+			option.skip = filter.limit * (filter.page - 1);
+			option.take = filter.limit;
 		}
+
 		if (filter.orderBy && filter.order) {
 			option.order = {
 				[filter.orderBy]: filter.order
 			}
-		}
-		else if (filter.orderBy) {
-			option.order = filter.orderBy
+		} else if (filter.orderBy) {
+			option.order = filter.orderBy;
 		}
 
 		if (filter.relations) {
-			option.relations = filter.relations
+			option.relations = filter.relations;
 		}
 
 		if (filter.join) {
-			option.join = filter.join
+			option.join = filter.join;
 		}
 
 		if (filter.filters || filter.where) {
-			option.where = new Brackets(qb => {
-				if (filter.filters) {
+			option.where = (qb: SelectQueryBuilder<T>) => {
+				if (filter.filters && Object.values(filter.filters).length > 0) {
 					qb.where(new Brackets(qb => {
-
 						const where: any[] = [];
 						for (const field in filter.filters) {
 							if (Object.prototype.hasOwnProperty.call(filter.filters, field)) {
@@ -116,20 +117,19 @@ export abstract class CrudService<T extends BaseEntity>
 					const where: any = {}
 					for (const field in filter.where) {
 						if (Object.prototype.hasOwnProperty.call(filter.where, field)) {
-							if(filter.where[field] instanceof Array){
+							if (filter.where[field] instanceof Array) {
 								where[field] = In(filter.where[field]);
-							}else{
+							} else {
 								where[field] = filter.where[field];
 							}
 						}
 					}
-					
 					qb.andWhere(new Brackets(qb => {
 						qb.where(where);
 					}))
 				}
-				
-			})
+				console.log(qb.getQueryAndParameters());
+			}
 		}
 		const [items, total] = await this.repository.findAndCount(option);
 		return { items, total };
