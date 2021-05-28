@@ -317,6 +317,11 @@ export class InvoiceService extends CrudService<Invoice> {
 					id: In(filter.where.tags)
 				}
 			}
+			if (filter.where.toContact) {
+				filter.where.toContact = {
+					id: In(filter.where.toContact)
+				}
+			}
 			if (filter.where.dueDate) {
 				const date = moment.utc(filter.where.dueDate);
 				filter.where.dueDate = Between(date.startOf('day').toDate(), date.endOf('day').toDate());
