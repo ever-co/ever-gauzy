@@ -4,16 +4,11 @@
 			placeholder || 'FORM.LABELS.CURRENCY' | translate
 		}}</label>
 		<nb-select
-			id="currencySelect"
 			class="d-block"
-			size="medium"
-			[placeholder]="
-				placeholder || 'FORM.PLACEHOLDERS.ALL_CURRENCIES' | translate
-			"
-			fullWidth="true"
-			[status]="
-				formControl.invalid && formControl.touched ? 'danger' : 'basic'
-			"
+			[size]="size"
+			[placeholder]=" placeholder || 'FORM.PLACEHOLDERS.ALL_CURRENCIES' | translate" 
+			fullWidth
+			[status]="formControl.invalid && formControl.touched ? 'danger' : 'basic'"
 			[(ngModel)]="currency"
 			[formControl]="formControl"
 			(selectedChange)="onSelectChange($event)"

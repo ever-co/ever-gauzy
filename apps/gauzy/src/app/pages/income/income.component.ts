@@ -1,8 +1,7 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
-	ActivatedRoute,
-	Router
+	ActivatedRoute
 } from '@angular/router';
 import {
 	IIncome,

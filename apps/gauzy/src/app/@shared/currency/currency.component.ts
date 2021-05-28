@@ -14,6 +14,7 @@ import {
 	NG_VALUE_ACCESSOR
 } from '@angular/forms';
 import { ICurrency } from '@gauzy/contracts';
+import { NbComponentSize } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable } from 'rxjs/Observable';
@@ -67,6 +68,17 @@ export class CurrencyComponent
 	}
 	get placeholder() {
 		return this._placeholder;
+	}
+
+	/*
+	* Getter & Setter for dynamic template
+	*/
+	_size: NbComponentSize = 'medium';
+	get size(): NbComponentSize {
+		return this._size;
+	}
+	@Input() set size(value: NbComponentSize) {
+		this._size = value;
 	}
 
 	constructor(

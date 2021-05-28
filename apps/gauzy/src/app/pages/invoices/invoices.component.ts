@@ -708,6 +708,9 @@ export class InvoicesComponent
 				return Object.assign({}, i, {
 					organizationContactName: i.toContact?.name
 				});
+			},
+			finalize: () => {
+				this.loading = false;
 			}
 		});
 	}
@@ -722,7 +725,6 @@ export class InvoicesComponent
 				await this.smartTableSource.getElements();
 				this.invoices = this.smartTableSource.getData();
 			}
-			this.loading = false;
 		} catch (error) {
 			this.toastrService.danger(
 				this.getTranslation('NOTES.INVOICE.INVOICE_ERROR', {
