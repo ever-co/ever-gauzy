@@ -70,7 +70,6 @@ export class IncomeComponent
 		private readonly route: ActivatedRoute,
 		private readonly errorHandler: ErrorHandlingService,
 		public readonly translateService: TranslateService,
-		private readonly router: Router,
 		private readonly httpClient: HttpClient,
 		private readonly cdr: ChangeDetectorRef
 	) {

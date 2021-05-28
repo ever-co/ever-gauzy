@@ -2,7 +2,7 @@
 	<nb-card
 		*ngFor="let item of source"
 		class="card-item"
-		[ngClass]="{ big: cardSize === 'big' }"
+		[ngClass]="{ 'big': cardSize === 'big' }"
 	>
 		<nb-card-body>
 			<div class="info-line" *ngFor="let key of getKeys()">
