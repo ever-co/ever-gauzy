@@ -1049,7 +1049,7 @@ export class InvoicesComponent
 		}
 		if (organizationContact) {
 			filters.join.leftJoin.toContact = "invoice.toContact"
-			filters.where['toContact'] = { id: organizationContact.id }
+			filters.where['toContact'] = [organizationContact.id]
 		}
 		if (isNotEmpty(tags)) {
 			filters.join.leftJoin.tags = 'invoice.tags'

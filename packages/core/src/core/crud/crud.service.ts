@@ -11,6 +11,7 @@ import {
 	FindConditions,
 	FindManyOptions,
 	FindOneOptions,
+	FindOperator,
 	ILike,
 	In,
 	LessThan,
@@ -19,7 +20,8 @@ import {
 	Not,
 	Repository,
 	SelectQueryBuilder,
-	UpdateResult
+	UpdateResult,
+	WhereExpression
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { mergeMap } from 'rxjs/operators';
@@ -50,33 +52,32 @@ export abstract class CrudService<T extends BaseEntity>
 	}
 
 	public async search(filter?: any): Promise<IPagination<T>> {
-		let option: FindManyOptions = {}
-
+		let options: FindManyOptions = {}
 		if (filter.page && filter.limit) {
-			option.skip = filter.limit * (filter.page - 1);
-			option.take = filter.limit;
+			options.skip = filter.limit * (filter.page - 1);
+			options.take = filter.limit;
 		}
 
 		if (filter.orderBy && filter.order) {
-			option.order = {
+			options.order = {
 				[filter.orderBy]: filter.order
 			}
 		} else if (filter.orderBy) {
-			option.order = filter.orderBy;
+			options.order = filter.orderBy;
 		}
 
 		if (filter.relations) {
-			option.relations = filter.relations;
+			options.relations = filter.relations;
 		}
 
 		if (filter.join) {
-			option.join = filter.join;
+			options.join = filter.join;
 		}
 
 		if (filter.filters || filter.where) {
-			option.where = (qb: SelectQueryBuilder<T>) => {
+			options.where = (qb: SelectQueryBuilder<T>) => {
 				if (filter.filters && Object.values(filter.filters).length > 0) {
-					qb.where(new Brackets(qb => {
+					qb.andWhere(new Brackets((bck: WhereExpression) => {
 						const where: any[] = [];
 						for (const field in filter.filters) {
 							if (Object.prototype.hasOwnProperty.call(filter.filters, field)) {
@@ -109,30 +110,62 @@ export abstract class CrudService<T extends BaseEntity>
 								}
 							}
 						}
-						qb.where(where);
+						bck.where(where);
 					}));
 				}
 				if (filter.where) {
-					const where: any = {}
+					const wheres: any = {}
 					for (const field in filter.where) {
 						if (Object.prototype.hasOwnProperty.call(filter.where, field)) {
-							if (filter.where[field] instanceof Array) {
-								where[field] = In(filter.where[field]);
-							} else {
-								where[field] = filter.where[field];
-							}
+							wheres[field] = filter.where[field];
 						}
 					}
-					qb.andWhere(new Brackets(qb => {
-						qb.where(where);
-					}))
+					qb.andWhere(new Brackets((bck: WhereExpression) => { 
+						for (let [column, value] of Object.entries(wheres)) {
+							// query using find operator
+							if (value instanceof FindOperator) {
+								bck.andWhere(
+									new Brackets(
+										(bck: WhereExpression) => { 
+											bck.where({ [column]: value }); 
+										}
+									)
+								);
+							} else if (value instanceof Object) {
+								const entries =  value;
+								const alias = column;
+
+								// relational tables query
+								for (let [column, entry] of Object.entries(entries)) {
+									if (entry instanceof FindOperator) {
+										const operator = entry;
+										const { type, value } = operator;
+										switch (type) {
+											default:
+												bck.andWhere(`"${alias}"."${column}" ${type} (:...${column})`, { 
+													[column]: value
+												});
+												break;
+										}
+									}
+								}
+							} else if (value instanceof Array) {
+								bck.andWhere(`"${qb.alias}"."${column}" IN (:...${column})`, { 
+									[column]: value 
+								});
+							} else {
+								bck.andWhere(`"${qb.alias}"."${column}" = :${column}`, { 
+									[column]: value 
+								});
+							}
+						}
+					}));
 				}
+				console.log(options, 'options');
 				console.log(qb.getQueryAndParameters());
 			}
 		}
-
-		console.log(option);
-		const [items, total] = await this.repository.findAndCount(option);
+		const [items, total] = await this.repository.findAndCount(options);
 		return { items, total };
 	}
 
