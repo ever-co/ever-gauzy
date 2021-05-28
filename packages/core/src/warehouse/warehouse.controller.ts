@@ -41,6 +41,21 @@ export class WarehouseController extends CrudController<Warehouse> {
 		super(warehouseService);
 	}
 
+	@ApiOperation({ summary: 'Find Warehouses Count ' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Count Warehouses',
+		type: Number
+	})
+	@Get('count')
+	async count(
+		@Query('data', ParseJsonPipe) data?: any
+	): Promise<Number> {
+		const { findInput = null } = data;
+
+		return this.warehouseService.count(findInput);
+	}
+
 	@ApiOperation({
 		summary: 'Find all warehouses.'
 	})
@@ -55,10 +70,12 @@ export class WarehouseController extends CrudController<Warehouse> {
 	})
 	@Get()
 	async findAllWarehouses(
-		@Query('data', ParseJsonPipe) data: any
+		@Query('data', ParseJsonPipe) data: any,
+		@Query('page') page: any,
+		@Query('_limit') limit: any
 	): Promise<IPagination<Warehouse>> {
 		const { relations = [], findInput = null } = data;
-		return this.warehouseService.findAllWarehouses(relations, findInput);
+		return this.warehouseService.findAllWarehouses(relations, findInput, {page, limit});
 	}
 
 	@UseGuards(PermissionGuard)

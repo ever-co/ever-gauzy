@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import {
-	IProductFindInput,
 	IWarehouse,
 	IWarehouseProductCreateInput,
 	IWarehouseProduct,
@@ -14,16 +13,29 @@ import { API_PREFIX } from '../constants/app.constants';
 export class WarehouseService {
 	WAREHOUSES_URL = `${API_PREFIX}/warehouses`;
 
-	constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient) { }
 
-	getAll(
-		relations?: string[],
-		findInput?: IProductFindInput
-	): Promise<{ items: IWarehouse[] }> {
-		const data = JSON.stringify({ relations, findInput });
+	count(findInput): Promise<Number> {
+		const data = JSON.stringify(findInput);
+		return this.http
+			.get<number>(
+				`${this.WAREHOUSES_URL}/count`,
+				{
+					params: { data }
+				}
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	getAll(options?, params?): Promise<{ items: IWarehouse[] }> {
+		const data = JSON.stringify({
+			relations: options.relations, findInput: options.findInput
+		});
+
 		return this.http
 			.get<{ items: IWarehouse[] }>(`${this.WAREHOUSES_URL}`, {
-				params: { data }
+				params: { data, ...params }
 			})
 			.pipe(first())
 			.toPromise();
