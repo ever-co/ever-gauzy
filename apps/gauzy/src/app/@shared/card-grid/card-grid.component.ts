@@ -6,10 +6,7 @@ import {
 	TemplateRef
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
-import './card-grid.component.scss';
-import { ActivatedRoute } from '@angular/router';
 
 @Component({
 	selector: 'ga-card-grid',
@@ -23,11 +20,8 @@ export class CardGridComponent extends TranslationBaseComponent
 	@Input() buttonTemplate: TemplateRef<any>;
 	@Input() cardSize: undefined | 'big';
 
-	private _ngDestroy$ = new Subject<void>();
-
 	constructor(
-		readonly translationService: TranslateService,
-		readonly route: ActivatedRoute
+		readonly translationService: TranslateService
 	) {
 		super(translationService);
 	}
@@ -38,8 +32,5 @@ export class CardGridComponent extends TranslationBaseComponent
 		return Object.keys(this.settings.columns);
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

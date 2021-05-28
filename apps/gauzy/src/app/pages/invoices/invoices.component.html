@@ -30,7 +30,7 @@
 									<nb-icon icon="plus-outline"> </nb-icon>
 								</button>
 								<ng-container
-									*ngIf="dataLayoutStyle === 'TABLE'"
+									*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 								>
 									<ng-container
 										*ngTemplateOutlet="actionButtons"
@@ -49,8 +49,8 @@
 									{{ 'BUTTONS.VIEW' | translate }}
 								</button>
 							</ng-template>
-							<div>
-								<button
+							<div *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
+									<button
 									nbButton
 									nbPopoverPlacement="bottom"
 									[nbPopover]="actionsPopover"
@@ -81,43 +81,22 @@
 			</nb-tab>
 			<nb-tab
 				class="remove-scroll"
-				tabTitle="{{ 'INVOICES_PAGE.SEARCH' | translate }}"
+				[tabTitle]="'INVOICES_PAGE.SEARCH' | translate"
 				tabId="search"
 			>
-				<form [formGroup]="form">
+				<form [formGroup]="searchForm" (ngSubmit)="search()">
 					<div class="row">
 						<div class="col-sm-4">
 							<div class="form-group">
 								<label for="inputInvoiceNumber" class="label">
-									<span *ngIf="!isEstimate">{{
-										'INVOICES_PAGE.INVOICE_NUMBER'
-											| translate
-									}}</span>
-									<span *ngIf="isEstimate">{{
-										'INVOICES_PAGE.ESTIMATE_NUMBER'
-											| translate
-									}}</span>
+									<span>
+										{{ ((!isEstimate) ? 'INVOICES_PAGE.INVOICE_NUMBER' : 'INVOICES_PAGE.ESTIMATE_NUMBER') | translate }}
+									</span>
 								</label>
 								<input
-									*ngIf="!isEstimate"
 									type="number"
 									nbInput
-									placeholder="{{
-										'INVOICES_PAGE.INVOICE_NUMBER'
-											| translate
-									}}"
-									formControlName="invoiceNumber"
-									id="inputInvoiceNumber"
-									fullWidth
-								/>
-								<input
-									*ngIf="isEstimate"
-									type="number"
-									nbInput
-									placeholder="{{
-										'INVOICES_PAGE.ESTIMATE_NUMBER'
-											| translate
-									}}"
+									[placeholder]="((!isEstimate) ? 'INVOICES_PAGE.INVOICE_NUMBER' : 'INVOICES_PAGE.ESTIMATE_NUMBER') | translate"
 									formControlName="invoiceNumber"
 									id="inputInvoiceNumber"
 									fullWidth
@@ -137,9 +116,7 @@
 								<ng-select
 									[items]="organizationContacts"
 									bindName="name"
-									placeholder="{{
-										'POP_UPS.ALL_CONTACTS' | translate
-									}}"
+									[placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
 									formControlName="organizationContact"
 									id="inputOrganizationContact"
 									[searchFn]="searchContact"
@@ -165,36 +142,13 @@
 						<div class="col-sm-4">
 							<div class="form-group">
 								<label for="inputInvoiceDate" class="label">
-									<span *ngIf="!isEstimate">{{
-										'INVOICES_PAGE.INVOICE_DATE' | translate
-									}}</span>
-									<span *ngIf="isEstimate">{{
-										'INVOICES_PAGE.ESTIMATE_DATE'
-											| translate
-									}}</span>
+									<span> {{ ((!isEstimate) ? 'INVOICES_PAGE.INVOICE_DATE' : 'INVOICES_PAGE.ESTIMATE_DATE') | translate }} </span>
 								</label>
 								<input
-									*ngIf="!isEstimate"
 									formControlName="invoiceDate"
 									type="text"
 									nbInput
-									placeholder="{{
-										'INVOICES_PAGE.INVOICE_DATE' | translate
-									}}"
-									[nbDatepicker]="invoiceDatePicker"
-									id="inputInvoiceDate"
-									fullWidth
-									required
-								/>
-								<input
-									*ngIf="isEstimate"
-									formControlName="invoiceDate"
-									type="text"
-									nbInput
-									placeholder="{{
-										'INVOICES_PAGE.ESTIMATE_DATE'
-											| translate
-									}}"
+									[placeholder]="((!isEstimate) ? 'INVOICES_PAGE.INVOICE_DATE' : 'INVOICES_PAGE.ESTIMATE_DATE') | translate"
 									[nbDatepicker]="invoiceDatePicker"
 									id="inputInvoiceDate"
 									fullWidth
@@ -212,9 +166,7 @@
 								}}</label>
 								<input
 									nbInput
-									placeholder="{{
-										'INVOICES_PAGE.DUE_DATE' | translate
-									}}"
+									[placeholder]="'INVOICES_PAGE.DUE_DATE' | translate"
 									[nbDatepicker]="dueDatePicker"
 									formControlName="dueDate"
 									id="inputDueDate"
@@ -235,9 +187,7 @@
 								<input
 									type="number"
 									nbInput
-									placeholder="{{
-										'INVOICES_PAGE.TOTAL_VALUE' | translate
-									}}"
+									[placeholder]="'INVOICES_PAGE.TOTAL_VALUE' | translate"
 									formControlName="totalValue"
 									id="inputTotalValue"
 									fullWidth
@@ -247,8 +197,8 @@
 						<div class="col-sm-4">
 							<div class="form-group">
 								<ga-currency
-									[(ngModel)]="currency"
-									[formControl]="form.get('currency')"
+									formControlName="currency"
+									[formControl]="searchForm.get('currency')"
 									(optionChange)="currencyChanged($event)"
 								>
 								</ga-currency>
@@ -266,9 +216,7 @@
 									*ngIf="!isEstimate"
 									formControlName="status"
 									fullWidth
-									placeholder="{{
-										'FORM.PLACEHOLDERS.STATUS' | translate
-									}}"
+									[placeholder]="'FORM.PLACEHOLDERS.STATUS' | translate"
 								>
 									<nb-option
 										*ngFor="
@@ -287,9 +235,7 @@
 									*ngIf="isEstimate"
 									formControlName="status"
 									fullWidth
-									placeholder="{{
-										'FORM.PLACEHOLDERS.STATUS' | translate
-									}}"
+									[placeholder]="'FORM.PLACEHOLDERS.STATUS' | translate"
 								>
 									<nb-option
 										*ngFor="
@@ -307,7 +253,7 @@
 						</div>
 						<div class="col-sm-4">
 							<ga-tags-color-input
-								[selectedTags]="tags"
+								[selectedTags]="searchForm.get('tags').value"
 								(selectedTagsEvent)="selectedTagsEvent($event)"
 								[isOrgLevel]="true"
 							>
@@ -317,8 +263,8 @@
 					<div class="row">
 						<div class="col-sm-4">
 							<button
+								type="submit"
 								class="mr-3"
-								(click)="search()"
 								status="success"
 								nbButton
 							>
@@ -327,10 +273,11 @@
 						</div>
 						<div class="col-sm-4">
 							<button
+								type="reset"
 								class="mr-3"
-								(click)="reset()"
 								status="info"
 								nbButton
+								(click)="reset()"
 							>
 								{{ 'BUTTONS.RESET' | translate }}
 							</button>
@@ -339,10 +286,10 @@
 				</form>
 			</nb-tab>
 			<nb-tab
-				tabTitle="{{ 'INVOICES_PAGE.HISTORY' | translate }}"
+				[tabTitle]="'INVOICES_PAGE.HISTORY' | translate"
 				tabId="history"
 			>
-				<form [formGroup]="form" *ngIf="selectedInvoice">
+				<form [formGroup]="historyForm" *ngIf="selectedInvoice">
 					<div class="col-3 px-0">
 						<textarea
 							nbInput
@@ -363,22 +310,9 @@
 						</button>
 					</div>
 				</form>
-				<nb-list-item
-					*ngIf="disableButton && !isEstimate"
-					class="history-list-select"
-					>{{
-						'INVOICES_PAGE.SELECT_INVOICE_TO_VIEW_HISTORY'
-							| translate
-					}}</nb-list-item
-				>
-				<nb-list-item
-					*ngIf="disableButton && isEstimate"
-					class="history-list-select"
-					>{{
-						'INVOICES_PAGE.ESTIMATES.SELECT_ESTIMATE_TO_VIEW_HISTORY'
-							| translate
-					}}</nb-list-item
-				>
+				<nb-list-item *ngIf="disableButton" class="history-list-select">
+					{{ ((!isEstimate) ? 'INVOICES_PAGE.SELECT_INVOICE_TO_VIEW_HISTORY' : 'INVOICES_PAGE.ESTIMATES.SELECT_ESTIMATE_TO_VIEW_HISTORY') | translate }}
+				</nb-list-item>
 				<nb-list *ngIf="!disableButton" class="history-list">
 					<nb-list-item
 						*ngFor="let history of histories"
@@ -403,23 +337,30 @@
 				</nb-list>
 			</nb-tab>
 		</nb-tabset>
-		<ng2-smart-table
-			class="tags-table"
-			[settings]="settingsSmartTable"
-			[source]="smartTableSource"
-			*ngIf="dataLayoutStyle === 'TABLE'"
-			(userRowSelect)="selectInvoice($event)"
-			style="cursor: pointer"
-			#invoicesTable
+		
+		<ng-template 
+			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" 
+			[ngIfElse]="gridLayout"
 		>
-		</ng2-smart-table>
-		<ga-card-grid
-			[settings]="settingsSmartTable"
-			[source]="invoices"
-			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
-			[buttonTemplate]="actionButtons"
-			cardSize="big"
-		></ga-card-grid>
+			<ng2-smart-table
+				class="tags-table"
+				[settings]="settingsSmartTable"
+				[source]="smartTableSource"
+				(userRowSelect)="selectInvoice($event)"
+				style="cursor: pointer"
+				#invoicesTable
+			>
+			</ng2-smart-table>
+		</ng-template>
+		<ng-template #gridLayout>
+			<ga-card-grid
+				[settings]="settingsSmartTable"
+				[source]="invoices"
+				[buttonTemplate]="actionButtons"
+				[model]="model"
+				[cardSize]="'big'"
+			></ga-card-grid>
+		</ng-template>
 	</nb-card-body>
 </nb-card>
 
@@ -500,7 +441,7 @@
 	</div>
 
 	<button
-		*ngIf="!isEstimate && dataLayoutStyle === 'TABLE'"
+		*ngIf="!isEstimate && dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 		nbButton
 		status="info"
 		(click)="payments()"
@@ -512,7 +453,7 @@
 		{{ 'BUTTONS.PAYMENTS' | translate }}
 	</button>
 	<button
-		*ngIf="isEstimate && dataLayoutStyle === 'TABLE'"
+		*ngIf="isEstimate && dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 		nbButton
 		status="info"
 		(click)="convert(selectedItem)"
@@ -586,7 +527,7 @@
 <ng-template #actionsPopover>
 	<div class="popover-container d-flex flex-column">
 		<button
-			*ngIf="dataLayoutStyle === 'TABLE'"
+			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			nbButton
 			status="info"
 			(click)="addInternalNote()"
@@ -596,7 +537,7 @@
 			<span class="icon-text">{{ 'BUTTONS.NOTE' | translate }}</span>
 		</button>
 		<button
-			*ngIf="dataLayoutStyle === 'TABLE'"
+			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			nbButton
 			status="info"
 			(click)="duplicated()"
@@ -606,7 +547,7 @@
 			<span class="icon-text">{{ 'BUTTONS.DUPLICATE' | translate }}</span>
 		</button>
 		<button
-			*ngIf="dataLayoutStyle === 'TABLE'"
+			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			nbButton
 			status="info"
 			(click)="send()"
@@ -616,7 +557,7 @@
 			<span class="icon-text">{{ 'BUTTONS.SEND' | translate }}</span>
 		</button>
 		<button
-			*ngIf="dataLayoutStyle === 'TABLE'"
+			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			nbButton
 			status="info"
 			(click)="generatePublicLink()"
@@ -628,7 +569,7 @@
 			}}</span>
 		</button>
 		<button
-			*ngIf="dataLayoutStyle === 'TABLE'"
+			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			nbButton
 			status="info"
 			(click)="email()"
@@ -638,7 +579,7 @@
 			<span class="icon-text">{{ 'BUTTONS.EMAIL' | translate }}</span>
 		</button>
 		<button
-			*ngIf="dataLayoutStyle === 'TABLE'"
+			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			nbButton
 			status="info"
 			(click)="exportToCsv()"
@@ -650,7 +591,7 @@
 			}}</span>
 		</button>
 		<button
-			*ngIf="dataLayoutStyle === 'TABLE'"
+			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			nbButton
 			status="info"
 			(click)="archive()"
@@ -660,7 +601,7 @@
 			<span class="icon-text">{{ 'BUTTONS.ARCHIVE' | translate }}</span>
 		</button>
 		<button
-			*ngIf="dataLayoutStyle === 'TABLE'"
+			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			nbButton
 			status="danger"
 			(click)="delete()"
