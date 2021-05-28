@@ -5,11 +5,14 @@ import {
 	OnDestroy,
 	Input,
 	QueryList,
-	ViewChildren
+	ViewChildren,
+	TemplateRef,
+	AfterViewInit,
+	ChangeDetectorRef
 } from '@angular/core';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { HttpClient } from '@angular/common/http';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	NbDialogService,
@@ -33,34 +36,34 @@ import {
 	ICurrency,
 	IInvoiceItemCreateInput
 } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common-angular';
-import { Router, RouterEvent, NavigationEnd } from '@angular/router';
-import { first, map, filter, tap } from 'rxjs/operators';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { Router } from '@angular/router';
+import { first, map, filter, tap, debounceTime } from 'rxjs/operators';
+import { Subject } from 'rxjs/internal/Subject';
+import * as moment from 'moment';
+import { NgxPermissionsService } from 'ngx-permissions';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import { InvoicePaidComponent } from './table-components/invoice-paid.component';
-import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
+import { NotesWithTagsComponent } from '../../@shared/table-components';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { NgxPermissionsService } from 'ngx-permissions';
 import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
 import { PublicLinkComponent } from './public-link/public-link.component';
 import { generateCsv } from '../../@shared/invoice/generate-csv';
-import { Store } from '../../@core/services/store.service';
 import {
 	InvoiceEstimateHistoryService,
 	InvoiceItemService,
 	InvoicesService,
 	OrganizationContactService,
+	Store,
 	ToastrService
 } from '../../@core/services';
-import { HttpClient } from '@angular/common/http';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
-import * as moment from 'moment';
-import { API_PREFIX } from '../../@core/constants/app.constants';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -70,37 +73,50 @@ import { API_PREFIX } from '../../@core/constants/app.constants';
 })
 export class InvoicesComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements AfterViewInit, OnInit, OnDestroy {
+
 	settingsSmartTable: object;
 	smartTableSource: ServerDataSource;
 	selectedInvoice: IInvoice;
-	loading = true;
+	loading: boolean = false;
 	disableButton = true;
-	invoices: IInvoice[];
-	tags: ITag[] = [];
+	invoices: IInvoice[] = [];
 	organization: IOrganization;
 	viewComponentName: ComponentEnum;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	invoiceStatusTypes = Object.values(InvoiceStatusTypesEnum);
 	estimateStatusTypes = Object.values(EstimateStatusTypesEnum);
-	status: string;
 	settingsContextMenu: NbMenuItem[];
-	menuArray = [];
+	contextMenus = [];
 	columns: any;
-	form: FormGroup;
 	organizationContacts: IOrganizationContact[];
 	duplicate: boolean;
 	perPage = 10;
 	histories: IInvoiceEstimateHistory[] = [];
-	currency: string = '';
 	includeArchived = false;
+	subject$: Subject<any> = new Subject();
 
+	/*
+	* getter setter for check esitmate or invoice
+	*/
 	private _isEstimate: boolean = false;
 	@Input() set isEstimate(val: boolean) {
 		this._isEstimate = val;
 	}
 	get isEstimate() {
 		return this._isEstimate;
+	}
+
+	/*
+	* getter setter for search tab filters 
+	*/
+	private _filters: any = {};
+	set filters(val: any) {
+		this._filters = val;
+	}
+	get filters() {
+		return this._filters;
 	}
 
 	invoicesTable: Ng2SmartTableComponent;
@@ -113,6 +129,38 @@ export class InvoicesComponent
 
 	@ViewChildren(NbPopoverDirective)
 	public popups: QueryList<NbPopoverDirective>;
+
+	/*
+	* Search Tab Form 
+	*/
+	public searchForm: FormGroup = InvoicesComponent.searchBuildForm(this.fb);
+	static searchBuildForm(fb: FormBuilder): FormGroup {
+		return fb.group({
+			invoiceNumber: [],
+			organizationContact: [],
+			invoiceDate: [],
+			dueDate: [],
+			totalValue: [],
+			currency: [],
+			status: [],
+			tags: []
+		});
+	}
+
+	/*
+	* History Tab Form 
+	*/
+	public historyForm: FormGroup = InvoicesComponent.historyBuildForm(this.fb);
+	static historyBuildForm(fb: FormBuilder): FormGroup {
+		return fb.group({
+			comment: []
+		});
+	}
+
+	/*
+	* Actions Buttons directive 
+	*/
+	@ViewChild('actionButtons', { static : true }) actionButtons : TemplateRef<any>;
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -127,32 +175,38 @@ export class InvoicesComponent
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
 		private readonly ngxPermissionsService: NgxPermissionsService,
-		private httpClient: HttpClient,
+		private readonly httpClient: HttpClient,
+		private readonly cdr: ChangeDetectorRef
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
 		this.columns = this.getColumns();
-
-		this.setView();
 		this._applyTranslationOnSmartTable();
-		this.loadSettingsSmartTable();
-		this.initializeForm();
+		this._loadSmartTableSettings();
 		this.loadMenu();
+		this.setView();
+	}
 
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
+	ngAfterViewInit() {
+		this.subject$
+			.pipe(
+				tap(() => this.loading = true),
+				debounceTime(200),
+				tap(() => this.cdr.detectChanges()),
+				tap(() => this.getInvoices()),
+				tap(() => this.clearItem()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
+				debounceTime(100),
 				filter((organization) => !!organization),
+				distinctUntilChange(),
 				tap((organization) => (this.organization = organization)),
-				tap(() => this.getAllInvoiceEstimate()),
+				tap(() => this.subject$.next()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -170,33 +224,22 @@ export class InvoicesComponent
 			.subscribe();
 	}
 
-	initializeForm() {
-		this.form = this.fb.group({
-			invoiceNumber: [],
-			organizationContact: [],
-			invoiceDate: [],
-			dueDate: [],
-			totalValue: [],
-			currency: [],
-			status: [],
-			comment: []
-		});
-	}
-
 	setView() {
-		this.viewComponentName = this.isEstimate
-			? ComponentEnum.ESTIMATES
-			: ComponentEnum.INVOICES;
+		this.viewComponentName = this.isEstimate ? ComponentEnum.ESTIMATES : ComponentEnum.INVOICES;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-			});
+			.pipe(
+				distinctUntilChange(),
+				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.subject$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	loadMenu() {
-		this.menuArray = [
+		this.contextMenus = [
 			{
 				title: this.getTranslation('INVOICES_PAGE.ACTION.DUPLICATE'),
 				icon: 'copy-outline',
@@ -232,35 +275,18 @@ export class InvoicesComponent
 		];
 
 		if (!this.isEstimate) {
-			const paymentsObj = {
+			this.contextMenus.push({
 				title: this.getTranslation('INVOICES_PAGE.ACTION.PAYMENTS'),
 				icon: 'clipboard-outline',
 				permission: PermissionsEnum.INVOICES_EDIT
-			};
-			this.menuArray.push(paymentsObj);
+			});
 		}
 
+		const contextMenus = this.contextMenus.filter((item) => this.ngxPermissionsService.getPermission(item.permission) != null)
 		if (this.isEstimate) {
-			this.settingsContextMenu = this.menuArray.filter(
-				(item) =>
-					this.ngxPermissionsService.getPermission(item.permission) !=
-					null
-			);
+			this.settingsContextMenu = contextMenus;
 		} else {
-			this.settingsContextMenu = this.menuArray
-				.filter(
-					(item) =>
-						item.title !==
-						this.getTranslation(
-							'INVOICES_PAGE.ACTION.CONVERT_TO_INVOICE'
-						)
-				)
-				.filter(
-					(item) =>
-						this.ngxPermissionsService.getPermission(
-							item.permission
-						) != null
-				);
+			this.settingsContextMenu = contextMenus.filter((item) => item.title !== this.getTranslation('INVOICES_PAGE.ACTION.CONVERT_TO_INVOICE'));
 		}
 		this.nbMenuService.onItemClick().pipe(first());
 	}
@@ -454,7 +480,7 @@ export class InvoicesComponent
 		});
 	}
 
-	async send(selectedItem?: IInvoice) {
+	send(selectedItem?: IInvoice) {
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
@@ -469,11 +495,12 @@ export class InvoicesComponent
 						isEstimate: this.isEstimate
 					}
 				})
-				.onClose.pipe(untilDestroyed(this))
-				.subscribe(() => {
-					this.getAllInvoiceEstimate();
-				});
-			this.clearItem();
+				.onClose
+				.pipe(
+					tap(() => this.subject$.next()),
+					untilDestroyed(this)
+				)
+				.subscribe();
 		} else {
 			this.toastrService.warning('INVOICES_PAGE.SEND.NOT_LINKED');
 		}
@@ -503,8 +530,7 @@ export class InvoicesComponent
 			tenantId: this.organization.tenantId
 		});
 		this.toastrService.success('INVOICES_PAGE.ESTIMATES.ESTIMATE_CONVERT');
-		this.clearItem();
-		this.getAllInvoiceEstimate();
+		this.subject$.next();
 	}
 
 	async delete(selectedItem?: IInvoice) {
@@ -526,25 +552,16 @@ export class InvoicesComponent
 			for (const item of itemsToDelete) {
 				await this.invoiceItemService.delete(item.id);
 			}
-
 			for (const history of this.histories) {
 				await this.invoiceEstimateHistoryService.delete(history.id);
 			}
-
-			this.clearItem();
-			this.getAllInvoiceEstimate();
-
 			if (this.isEstimate) {
-				this.toastrService.success(
-					'INVOICES_PAGE.INVOICES_DELETE_ESTIMATE'
-				);
+				this.toastrService.success('INVOICES_PAGE.INVOICES_DELETE_ESTIMATE');
 			} else {
-				this.toastrService.success(
-					'INVOICES_PAGE.INVOICES_DELETE_INVOICE'
-				);
+				this.toastrService.success('INVOICES_PAGE.INVOICES_DELETE_INVOICE');
 			}
+			this.subject$.next();
 		}
-		this.disableButton = true;
 	}
 
 	view() {
@@ -573,11 +590,12 @@ export class InvoicesComponent
 					isEstimate: this.isEstimate
 				}
 			})
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.clearItem();
-				this.getAllInvoiceEstimate();
-			});
+			.onClose
+			.pipe(
+				tap(() => this.subject$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	payments() {
@@ -593,11 +611,12 @@ export class InvoicesComponent
 					invoice: this.selectedInvoice
 				}
 			})
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.clearItem();
-				this.getAllInvoiceEstimate();
-			});
+			.onClose
+			.pipe(
+				tap(() => this.subject$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	exportToCsv(selectedItem) {
@@ -653,47 +672,57 @@ export class InvoicesComponent
 		generateCsv(data, headers, fileName);
 	}
 
-	async getAllInvoiceEstimate(filterData: any = {}) {
+	/*
+	* Register Smart Table Source Config 
+	*/
+	setSmartTableSource() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		this.smartTableSource = new ServerDataSource(this.httpClient, {
+			endPoint: `${API_PREFIX}/invoices/search/filter`,
+			relations: [
+				'invoiceItems',
+				'invoiceItems.employee',
+				'invoiceItems.employee.user',
+				'invoiceItems.project',
+				'invoiceItems.product',
+				'invoiceItems.invoice',
+				'invoiceItems.expense',
+				'invoiceItems.task',
+				'tags',
+				'payments',
+				'fromOrganization',
+				'toContact',
+				'historyRecords',
+				'historyRecords.user'
+			],
+			join: this.filters.join,
+			where: {
+				organizationId,
+				tenantId,
+				isEstimate: (this.isEstimate === true) ? 1 : 0,
+				isArchived: (this.includeArchived === true) ? 1 : 0,
+				...this.filters.where
+			},
+			resultMap: (i) => {
+				return Object.assign({}, i, {
+					organizationContactName: i.toContact?.name
+				});
+			}
+		});
+	}
+
+	async getInvoices() {
+		if (!this.organization) {
+			return;
+		}
 		try {
-			this.loading = true;
-			const { tenantId } = this.store.user;
-			const { id: organizationId } = this.organization;
-			this.smartTableSource = new ServerDataSource(this.httpClient, {
-				endPoint: `${API_PREFIX}/invoices/search/filter`,
-				relations: [
-					'invoiceItems',
-					'invoiceItems.employee',
-					'invoiceItems.employee.user',
-					'invoiceItems.project',
-					'invoiceItems.product',
-					'invoiceItems.invoice',
-					'invoiceItems.expense',
-					'invoiceItems.task',
-					'tags',
-					'payments',
-					'fromOrganization',
-					'toContact',
-					'historyRecords',
-					'historyRecords.user'
-				],
-				join: filterData.join,
-				where: {
-					organizationId,
-					tenantId,
-					isEstimate: (this.isEstimate === true) ? 1 : 0,
-					isArchived: (this.includeArchived === true) ? 1 : 0,
-					...filterData.where
-				},
-				resultMap: (i) => {
-					return Object.assign({}, i, {
-						organizationContactName: i.toContact?.name
-					});
-				}
-			});
-
-			this.invoices = this.smartTableSource.getData();
+			this.setSmartTableSource();
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+				await this.smartTableSource.getElements();
+				this.invoices = this.smartTableSource.getData();
+			}
 			this.loading = false;
-
 		} catch (error) {
 			this.toastrService.danger(
 				this.getTranslation('NOTES.INVOICE.INVOICE_ERROR', {
@@ -705,7 +734,7 @@ export class InvoicesComponent
 	}
 
 	async addComment() {
-		const { comment } = this.form.value;
+		const { comment } = this.historyForm.value;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
@@ -720,7 +749,7 @@ export class InvoicesComponent
 				organizationId,
 				tenantId
 			});
-			this.form.reset();
+			this.historyForm.reset();
 
 			const selectedInvoiceId = this.selectedInvoice.id;
 			const invoice = await this.invoicesService.getById(
@@ -772,11 +801,10 @@ export class InvoicesComponent
 		await this.invoicesService.update(this.selectedInvoice.id, {
 			isArchived: true
 		});
-		this.getAllInvoiceEstimate();
+		this.subject$.next();
 	}
 
 	async selectInvoice({ isSelected, data }) {
-		this.status = null;
 		this.disableButton = !isSelected;
 		this.selectedInvoice = isSelected ? data : null;
 
@@ -799,7 +827,7 @@ export class InvoicesComponent
 		}
 	}
 
-	loadSettingsSmartTable() {
+	private _loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			pager: {
 				display: true,
@@ -841,7 +869,6 @@ export class InvoicesComponent
 				}
 			};
 		}
-
 		if (this.columns.includes(InvoiceColumnsEnum.DUE_DATE)) {
 			this.settingsSmartTable['columns']['dueDate'] = {
 				title: this.getTranslation('INVOICES_PAGE.DUE_DATE'),
@@ -853,7 +880,6 @@ export class InvoicesComponent
 				}
 			};
 		}
-
 		if (this.columns.includes(InvoiceColumnsEnum.STATUS)) {
 			this.settingsSmartTable['columns']['status'] = {
 				title: this.getTranslation('INVOICES_PAGE.STATUS'),
@@ -887,7 +913,6 @@ export class InvoicesComponent
 				}
 			};
 		}
-
 		if (this.columns.includes(InvoiceColumnsEnum.TOTAL_VALUE)) {
 			this.settingsSmartTable['columns']['totalValue'] = {
 				title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
@@ -899,7 +924,6 @@ export class InvoicesComponent
 				}
 			};
 		}
-
 		if (this.columns.includes(InvoiceColumnsEnum.TAX)) {
 			this.settingsSmartTable['columns']['tax'] = {
 				title: this.getTranslation('INVOICES_PAGE.TAX'),
@@ -915,7 +939,6 @@ export class InvoicesComponent
 				}
 			};
 		}
-
 		if (this.columns.includes(InvoiceColumnsEnum.TAX_2)) {
 			this.settingsSmartTable['columns']['tax2'] = {
 				title: this.getTranslation('INVOICES_PAGE.TAX_2'),
@@ -931,7 +954,6 @@ export class InvoicesComponent
 				}
 			};
 		}
-
 		if (this.columns.includes(InvoiceColumnsEnum.DISCOUNT)) {
 			this.settingsSmartTable['columns']['discountValue'] = {
 				title: this.getTranslation(
@@ -949,7 +971,6 @@ export class InvoicesComponent
 				}
 			};
 		}
-
 		if (this.columns.includes(InvoiceColumnsEnum.CONTACT)) {
 			this.settingsSmartTable['columns']['organizationContactName'] = {
 				title: this.getTranslation('INVOICES_PAGE.CONTACT'),
@@ -964,7 +985,6 @@ export class InvoicesComponent
 				}
 			};
 		}
-
 		if (!this.isEstimate) {
 			if (this.columns.includes(InvoiceColumnsEnum.PAID_STATUS)) {
 				this.settingsSmartTable['columns']['paid'] = {
@@ -978,31 +998,32 @@ export class InvoicesComponent
 		}
 	}
 
-	async showPerPage() {
+	showPerPage() {
 		if (
 			this.perPage &&
 			Number.isInteger(this.perPage) &&
 			this.perPage > 0
 		) {
 			this.smartTableSource.getPaging().perPage = this.perPage;
-			this.loadSettingsSmartTable();
+			this._loadSmartTableSettings();
 		}
 	}
 
 	search() {
 		const { 
-			dueDate, 
-			invoiceNumber, 
-			invoiceDate, 
-			totalValue, 
-			currency, 
-			status, 
-			organizationContact 
-		} = this.form.value;
+			dueDate,
+			invoiceNumber,
+			invoiceDate,
+			totalValue,
+			currency,
+			status,
+			organizationContact,
+			tags = [] 
+		} = this.searchForm.value;
 		const filters: any = {
 			where: {},
 			join: {
-				alias: "Invoice",
+				alias: "invoice",
 				leftJoin: {}
 			},
 		}
@@ -1025,31 +1046,32 @@ export class InvoicesComponent
 			filters.where.status = status
 		}
 		if (organizationContact) {
-			filters.join.leftJoin.toContact = "Invoice.toContact"
+			filters.join.leftJoin.toContact = "invoice.toContact"
 			filters.where['toContact'] = { id: organizationContact.id }
 		}
-
-		if (this.tags.length > 0) {
-			filters.join.leftJoin.tags = 'Invoice.tags'
+		if (isNotEmpty(tags)) {
+			filters.join.leftJoin.tags = 'invoice.tags'
 			const tagId = []
-			for (const tag of this.tags) {
+			for (const tag of tags) {
 				tagId.push(tag.id)
 			}
 			filters.where.tags = tagId
 		}
-		this.getAllInvoiceEstimate(filters)
+		if (isNotEmpty(filters)) {
+			this._filters = filters;
+			this.subject$.next();
+		}
 	}
 
 	toggleIncludeArchived(event) {
 		this.includeArchived = event;
-		this.getAllInvoiceEstimate();
+		this.subject$.next();
 	}
 
 	reset() {
-		this.initializeForm();
-		this.tags = [];
-		this.currency = '';
-		this.getAllInvoiceEstimate()
+		this.searchForm.reset();
+		this._filters = {};
+		this.subject$.next();
 	}
 
 	searchContact(term: string, item: any) {
@@ -1059,24 +1081,21 @@ export class InvoicesComponent
 	}
 
 	selectedTagsEvent(currentTagSelection: ITag[]) {
-		this.tags = currentTagSelection;
+		this.searchForm.patchValue({
+			tags: currentTagSelection
+		});
 	}
 
 	async selectStatus($event) {
 		await this.invoicesService.update(this.selectedInvoice.id, {
 			status: $event
 		});
-		await this.smartTableSource.update(this.selectedInvoice, {
-			...this.selectedInvoice,
-			status: $event
-		});
-		this.smartTableSource.refresh();
-		this.clearItem();
+		this.subject$.next();
 	}
 
-	selectColumn($event) {
+	selectColumn($event: string[]) {
 		this.columns = $event;
-		this.loadSettingsSmartTable();
+		this._loadSmartTableSettings();
 	}
 
 	toggleActionsPopover() {
@@ -1086,37 +1105,36 @@ export class InvoicesComponent
 
 	toggleTableSettingsPopover() {
 		this.popups.last.toggle();
-		this.popups.first.hide();
+		if (this.popups.length > 1) {
+			this.popups.first.hide();
+		}
 	}
 
 	closeActionsPopover() {
 		const actionsPopup = this.popups.first;
-
 		if (actionsPopup.isShown) {
 			actionsPopup.hide();
 		}
 	}
 
-	_applyTranslationOnSmartTable() {
+	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadSettingsSmartTable();
-			});
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	async onChangeTab(event) {
 		if (event.tabId === 'search') {
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
-			const res = await this.organizationContactService.getAll([], {
+			const { items = [] } = await this.organizationContactService.getAll([], {
 				organizationId,
 				tenantId
 			});
-
-			if (res) {
-				this.organizationContacts = res.items;
-			}
+			this.organizationContacts = items;
 		}
 	}
 

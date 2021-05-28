@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ServerSourceConf } from './server-source.conf';
 import { LocalDataSource } from 'ng2-smart-table';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { isNotEmpty, toParams } from '@gauzy/common-angular';
 
 export class ServerDataSource extends LocalDataSource {
@@ -33,6 +33,11 @@ export class ServerDataSource extends LocalDataSource {
                     this.lastRequestCount = this.extractTotalFromResponse(res);
                     this.data = this.extractDataFromResponse(res);
                     return this.data;
+                }),
+                tap(() => {
+                    if (this.conf.finalize) {
+                        this.conf.finalize();
+                    }
                 })
             ).toPromise();
     }

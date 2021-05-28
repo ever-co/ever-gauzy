@@ -51,11 +51,9 @@ export class CurrencyComponent
 
 	@Input()
 	set currency(val: string) {
-		if (val) {
-			this._currency = val;
-			this.onChange(val);
-			this.onTouched();
-		}
+		this._currency = val;
+		this.onChange(val);
+		this.onTouched();
 	}
 	get currency() {
 		return this._currency;

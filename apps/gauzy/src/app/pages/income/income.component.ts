@@ -1,10 +1,8 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
 	ActivatedRoute,
-	Router,
-	RouterEvent,
-	NavigationEnd
+	Router
 } from '@angular/router';
 import {
 	IIncome,
@@ -35,21 +33,6 @@ import { ErrorHandlingService, IncomeService, Store, ToastrService } from '../..
 export class IncomeComponent
 	extends TranslationBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
-	constructor(
-		private readonly store: Store,
-		private readonly incomeService: IncomeService,
-		private readonly dialogService: NbDialogService,
-		private readonly toastrService: ToastrService,
-		private readonly route: ActivatedRoute,
-		private readonly errorHandler: ErrorHandlingService,
-		public readonly translateService: TranslateService,
-		private readonly router: Router,
-		private readonly httpClient: HttpClient,
-		private readonly cdr: ChangeDetectorRef
-	) {
-		super(translateService);
-		this.setView();
-	}
 
 	smartTableSettings: object;
 	selectedEmployeeId: string;
@@ -74,6 +57,27 @@ export class IncomeComponent
 		}
 	}
 
+	/*
+	* Actions Buttons directive 
+	*/
+	@ViewChild('actionButtons', { static : true }) actionButtons : TemplateRef<any>;
+
+	constructor(
+		private readonly store: Store,
+		private readonly incomeService: IncomeService,
+		private readonly dialogService: NbDialogService,
+		private readonly toastrService: ToastrService,
+		private readonly route: ActivatedRoute,
+		private readonly errorHandler: ErrorHandlingService,
+		public readonly translateService: TranslateService,
+		private readonly router: Router,
+		private readonly httpClient: HttpClient,
+		private readonly cdr: ChangeDetectorRef
+	) {
+		super(translateService);
+		this.setView();
+	}
+
 	ngOnInit() {
 		this._applyTranslationOnSmartTable();
 		this._loadSmartTableSettings();
@@ -91,6 +95,7 @@ export class IncomeComponent
 		const selectedDate$ = this.store.selectedDate$;
 		combineLatest([storeOrganization$, storeEmployee$, selectedDate$])
 			.pipe(
+				debounceTime(100),
 				filter(([organization, employee]) => !!organization && !!employee),
 				distinctUntilChange(),
 				tap(([organization]) => (this.organization = organization)),
@@ -112,13 +117,7 @@ export class IncomeComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.router.events
-			.pipe(
-				filter((event: RouterEvent) => event instanceof NavigationEnd),
-				tap(() => this.setView()),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		this.cdr.detectChanges();
 	}
 
 	ngAfterViewInit() {
@@ -375,6 +374,9 @@ export class IncomeComponent
 					employeeName: i.employee ? i.employee.user.name : null,
 					orgId: this.store.selectedOrganization.id
 				});
+			},
+			finalize: () => {
+				this.loading = false;
 			}
 		});
 	}
@@ -389,7 +391,6 @@ export class IncomeComponent
 				await this.smartTableSource.getElements();
 				this.incomes = this.smartTableSource.getData();
 			}
-			this.loading = false;
 		} catch (error) {
 			this.toastrService.danger(error);
 		}

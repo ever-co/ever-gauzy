@@ -177,5 +177,9 @@ export function toUTC(data: string | Date | moment.Moment): moment.Moment {
 }
 
 export function distinctUntilChange<T>() {
-	return distinctUntilChanged<T>((a, b) => JSON.stringify(a) === JSON.stringify(b));
+	try {
+		return distinctUntilChanged<T>((a, b) => JSON.stringify(a) === JSON.stringify(b));	
+	} catch (error) {
+		console.log({ error });
+	}
 }

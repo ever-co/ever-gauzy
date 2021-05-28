@@ -33,23 +33,25 @@
 				</ng-container>
 			</div>
 		</ng-template>
-		<ng2-smart-table
-			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			class="income-table"
-			(userRowSelect)="selectIncome($event)"
-			[settings]="smartTableSettings"
-			[source]="smartTableSource"
-			style="cursor: pointer"
-			#incomeTable
-		>
-		</ng2-smart-table>
-		<ga-card-grid
-			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
-			[settings]="smartTableSettings"
-			[source]="incomes"
-			[buttonTemplate]="actionButtons"
-		>
-		</ga-card-grid>
+		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="gridLayout">
+			<ng2-smart-table
+				class="income-table"
+				(userRowSelect)="selectIncome($event)"
+				[settings]="smartTableSettings"
+				[source]="smartTableSource"
+				style="cursor: pointer"
+				#incomeTable
+			>
+			</ng2-smart-table>
+		</ng-template>
+		<ng-template #gridLayout>
+			<ga-card-grid
+				[settings]="smartTableSettings"
+				[source]="incomes"
+				[buttonTemplate]="actionButtons"
+			>
+			</ga-card-grid>
+		</ng-template>
 	</nb-card-body>
 </nb-card>
 
