@@ -31,16 +31,23 @@ export class WarehouseService extends CrudService<Warehouse> {
 
 	async findAllWarehouses(
 		relations?: string[],
-		findInput?: any
+		findInput?: any,
+		pageOptions?
 	): Promise<IPagination<Warehouse>> {
-		const warehouses = await this.warehouseRepository.find({
-			where: findInput,
-			relations
-		});
+
+		const total = await this.warehouseRepository.count(findInput);
+		const searchInput: any =  {where: findInput, relations};
+
+		if(pageOptions) {
+			searchInput.skip = (pageOptions.page - 1) * pageOptions.limit,
+			searchInput.take = pageOptions.limit
+		}
+
+		const allWarehouses = await this.warehouseRepository.find(searchInput);
 
 		return {
-			items: warehouses,
-			total: warehouses.length
+			items: allWarehouses,
+			total: total
 		};
 	}
 }
