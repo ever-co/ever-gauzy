@@ -17,7 +17,6 @@ import {
 	Like,
 	MoreThan,
 	Not,
-	ObjectLiteral,
 	Repository,
 	SelectQueryBuilder,
 	UpdateResult
@@ -131,6 +130,8 @@ export abstract class CrudService<T extends BaseEntity>
 				console.log(qb.getQueryAndParameters());
 			}
 		}
+
+		console.log(option);
 		const [items, total] = await this.repository.findAndCount(option);
 		return { items, total };
 	}
