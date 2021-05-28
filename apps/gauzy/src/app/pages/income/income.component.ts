@@ -93,8 +93,8 @@ export class IncomeComponent
 		const selectedDate$ = this.store.selectedDate$;
 		combineLatest([storeOrganization$, storeEmployee$, selectedDate$])
 			.pipe(
-				debounceTime(100),
-				filter(([organization]) => !!organization),
+				debounceTime(300),
+				filter(([organization, employee]) => !!organization && !!employee),
 				distinctUntilChange(),
 				tap(([organization]) => (this.organization = organization)),
 				tap(([organization, employee, date]) => {
