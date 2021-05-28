@@ -94,7 +94,7 @@ export class IncomeComponent
 		combineLatest([storeOrganization$, storeEmployee$, selectedDate$])
 			.pipe(
 				debounceTime(100),
-				filter(([organization, employee]) => !!organization && !!employee),
+				filter(([organization]) => !!organization),
 				distinctUntilChange(),
 				tap(([organization]) => (this.organization = organization)),
 				tap(([organization, employee, date]) => {
