@@ -1,5 +1,4 @@
 import { app, Menu, nativeImage, Tray } from 'electron';
-import * as path from 'path';
 const Store = require('electron-store');
 import { LocalStore } from './desktop-store';
 import { ipcMain } from 'electron';

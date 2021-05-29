@@ -1,4 +1,4 @@
-import { app, Menu, shell } from 'electron';
+import { Menu, shell } from 'electron';
 import { LocalStore } from './desktop-store';
 import { TimerData } from './desktop-timer-activity';
 import { createSettingsWindow } from '@gauzy/desktop-window';
