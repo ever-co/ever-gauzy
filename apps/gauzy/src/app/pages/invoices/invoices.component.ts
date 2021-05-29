@@ -34,7 +34,8 @@ import {
 	IInvoiceEstimateHistory,
 	PermissionsEnum,
 	ICurrency,
-	IInvoiceItemCreateInput
+	IInvoiceItemCreateInput,
+	InvoiceTabsEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { Router } from '@angular/router';
@@ -65,6 +66,7 @@ import {
 } from '../../@core/services';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
 
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-invoices',
@@ -91,11 +93,16 @@ export class InvoicesComponent
 	contextMenus = [];
 	columns: any;
 	organizationContacts: IOrganizationContact[];
-	duplicate: boolean;
 	perPage = 10;
 	histories: IInvoiceEstimateHistory[] = [];
 	includeArchived = false;
 	subject$: Subject<any> = new Subject();
+	invoiceTabsEnum = InvoiceTabsEnum;
+	pagination: any = {
+		totalItems: 0,
+		activePage: 1,
+		itemsPerPage: this.perPage
+	};
 
 	/*
 	* getter setter for check esitmate or invoice
@@ -192,8 +199,8 @@ export class InvoicesComponent
 	ngAfterViewInit() {
 		this.subject$
 			.pipe(
-				tap(() => this.loading = true),
 				debounceTime(200),
+				tap(() => this.loading = true),
 				tap(() => this.cdr.detectChanges()),
 				tap(() => this.getInvoices()),
 				tap(() => this.clearItem()),
@@ -719,11 +726,20 @@ export class InvoicesComponent
 		if (!this.organization) {
 			return;
 		}
+
 		try {
 			this.setSmartTableSource();
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+				console.log(this.pagination);
+
+				// Initiate GRID view pagination
+				const { activePage, itemsPerPage } = this.pagination;
+				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+
 				await this.smartTableSource.getElements();
 				this.invoices = this.smartTableSource.getData();
+
+				this.pagination['totalItems'] =  this.smartTableSource.count();
 			}
 		} catch (error) {
 			this.toastrService.danger(
@@ -1005,9 +1021,19 @@ export class InvoicesComponent
 			this.perPage &&
 			Number.isInteger(this.perPage) &&
 			this.perPage > 0
-		) {
-			this.smartTableSource.getPaging().perPage = this.perPage;
-			this._loadSmartTableSettings();
+		) {			
+			const { page } = this.smartTableSource.getPaging();
+			this.pagination = Object.assign({}, this.pagination, { 
+				activePage: page,
+				itemsPerPage: this.perPage
+			});
+			
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+				this.subject$.next();
+			} else {
+				this.smartTableSource.setPaging(page, this.perPage, false);
+				this._loadSmartTableSettings();
+			}			
 		}
 	}
 
@@ -1048,7 +1074,7 @@ export class InvoicesComponent
 			filters.where.status = status
 		}
 		if (organizationContact) {
-			filters.join.leftJoin.toContact = "invoice.toContact"
+			filters.join.leftJoin.toContact = 'invoice.toContact'
 			filters.where['toContact'] = [organizationContact.id]
 		}
 		if (isNotEmpty(tags)) {
@@ -1063,6 +1089,11 @@ export class InvoicesComponent
 			this._filters = filters;
 			this.subject$.next();
 		}
+	}
+
+	onPageChange(selectedPage: number) {
+		this.pagination['activePage'] = selectedPage;
+		this.subject$.next();
 	}
 
 	toggleIncludeArchived(event) {
@@ -1129,7 +1160,7 @@ export class InvoicesComponent
 	}
 
 	async onChangeTab(event) {
-		if (event.tabId === 'search') {
+		if (event.tabId === InvoiceTabsEnum.SEARCH) {
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
 			const { items = [] } = await this.organizationContactService.getAll([], {
