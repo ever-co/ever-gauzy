@@ -1,4 +1,4 @@
-import { LanguagesEnum } from '@gauzy/contracts';
+import { ComponentLayoutStyleEnum, LanguagesEnum } from '@gauzy/contracts';
 
 export const DEFAULT_SUPER_ADMINS = [
 	{
@@ -7,7 +7,8 @@ export const DEFAULT_SUPER_ADMINS = [
 		firstName: 'Super',
 		lastName: 'Admin',
 		imageUrl: 'assets/images/avatar-default.svg',
-		preferredLanguage: LanguagesEnum.ENGLISH
+		preferredLanguage: LanguagesEnum.ENGLISH,
+		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	}
 ];
 
@@ -18,6 +19,7 @@ export const DEFAULT_ADMINS = [
 		firstName: 'Local',
 		lastName: 'Admin',
 		imageUrl: 'assets/images/avatar-default.svg',
-		preferredLanguage: LanguagesEnum.ENGLISH
+		preferredLanguage: LanguagesEnum.ENGLISH,
+		preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 	}
 ];

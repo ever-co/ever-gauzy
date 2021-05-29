@@ -18,6 +18,8 @@ import { ProductCategoriesComponent } from './product-categories.component';
 import { ProductCategoriesRoutingModule } from './product-categories-routing.module';
 import { ProductMutationModule } from '../../../../@shared/product-mutation/product-mutation.module';
 import { ProductCategoryMutationComponent } from '../../../../@shared/product-mutation/product-category-mutation/product-category-mutation.component';
+import { CardGridModule } from '../../../../@shared/card-grid/card-grid.module';
+import { PaginationModule } from '../../../../@shared/pagination/pagination.module';
 
 
 const NB_MODULES = [
@@ -43,7 +45,9 @@ const NB_MODULES = [
         SharedModule,
         HeaderTitleModule,
         ThemeModule,
-        ProductMutationModule
+        ProductMutationModule,
+        CardGridModule,
+        PaginationModule
     ],
     providers: [ProductCategoryService],
     entryComponents: [ProductCategoryMutationComponent]

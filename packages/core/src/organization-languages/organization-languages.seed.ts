@@ -1,14 +1,13 @@
 import { Connection } from 'typeorm';
 import { OrganizationLanguages } from './organization-languages.entity';
 import * as faker from 'faker';
-import { Tenant } from '../tenant/tenant.entity';
-import { IOrganization, IOrganizationLanguages } from '@gauzy/contracts';
+import { IOrganization, IOrganizationLanguages, ITenant } from '@gauzy/contracts';
 import { Language } from '../language/language.entity';
 import { DEFAULT_LANGUAGE_LEVEL, DEFAULT_ORGANIZATION_LANGUAGES } from './default-organization-languages';
 
 export const createDefaultOrganizationLanguage = async (
 	connection: Connection,
-	tenant: Tenant,
+	tenant: ITenant,
 	defaultOrganizations: IOrganization[]
 ): Promise<IOrganizationLanguages[]> => {
 	const mapOrganizationLanguage: IOrganizationLanguages[] = [];
@@ -32,8 +31,8 @@ export const createDefaultOrganizationLanguage = async (
 
 export const createRandomOrganizationLanguage = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<IOrganizationLanguages[]> => {
 	if (!tenantOrganizationsMap) {
 		console.warn(

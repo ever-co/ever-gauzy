@@ -98,8 +98,7 @@ export enum LanguagesEnum {
 
 export enum ComponentLayoutStyleEnum {
 	CARDS_GRID = 'CARDS_GRID',
-	TABLE = 'TABLE',
-	SPRINT_VIEW = 'SPRINT_VIEW'
+	TABLE = 'TABLE'
 }
 
 export enum ProviderEnum {

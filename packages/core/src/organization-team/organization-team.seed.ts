@@ -1,20 +1,16 @@
 import { Connection } from 'typeorm';
-import { Employee } from '../employee/employee.entity';
 import { OrganizationTeam } from './organization-team.entity';
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
-import { Organization } from '../organization/organization.entity';
-import { Role } from '../role/role.entity';
-import { RolesEnum } from '@gauzy/contracts';
-import { Tenant } from '../tenant/tenant.entity';
+import { IEmployee, IOrganization, IRole, ITenant, RolesEnum } from '@gauzy/contracts';
 import * as _ from 'underscore';
 import * as faker from 'faker';
 import { DEFAULT_ORGANIZATION_TEAMS } from './default-organization-teams';
 
 export const createDefaultTeams = async (
 	connection: Connection,
-	organization: Organization,
-	employees: Employee[],
-	roles: Role[]
+	organization: IOrganization,
+	employees: IEmployee[],
+	roles: IRole[]
 ): Promise<OrganizationTeam[]> => {
 	const teams = DEFAULT_ORGANIZATION_TEAMS;
 
@@ -62,9 +58,9 @@ export const createDefaultTeams = async (
 
 export const createRandomTeam = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>,
-	roles: Role[]
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	roles: IRole[]
 ): Promise<OrganizationTeam[]> => {
 	const teamNames = ['QA', 'Designers', 'Developers', 'Employees'];
 	const organizationTeams: OrganizationTeam[] = [];

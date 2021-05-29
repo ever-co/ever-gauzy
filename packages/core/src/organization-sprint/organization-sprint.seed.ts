@@ -1,16 +1,15 @@
 import { Connection } from 'typeorm';
 import * as faker from 'faker';
 import { OrganizationSprint } from './organization-sprint.entity';
-import { IOrganization, SprintStartDayEnum } from '@gauzy/contracts';
-import { Tenant } from '../tenant/tenant.entity';
+import { IOrganization, ITenant, SprintStartDayEnum } from '@gauzy/contracts';
 import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import * as moment from 'moment';
 import { Task } from '../tasks/task.entity';
 
 export const createRandomOrganizationSprint = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ) => {
 	if (!tenantOrganizationsMap) {
 		console.warn(

@@ -1,11 +1,10 @@
 import { Connection } from 'typeorm';
-import { IOrganization, JobPostSourceEnum } from '@gauzy/contracts';
-import { Tenant } from '../../tenant/tenant.entity';
+import { IOrganization, ITenant, JobPostSourceEnum } from '@gauzy/contracts';
 import { JobSearchOccupation } from './job-search-occupation.entity';
 
 export const createDefaultJobSearchOccupations = async (
 	connection: Connection,
-	tenant: Tenant,
+	tenant: ITenant,
 	organization: IOrganization
 ): Promise<JobSearchOccupation[]> => {
 	const occupations: JobSearchOccupation[] = [];

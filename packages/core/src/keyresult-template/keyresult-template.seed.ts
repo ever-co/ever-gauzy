@@ -1,6 +1,5 @@
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
-import { KeyResultTypeEnum } from '@gauzy/contracts';
+import { ITenant, KeyResultTypeEnum } from '@gauzy/contracts';
 import { KeyResultTemplate } from './keyresult-template.entity';
 import { GoalTemplate } from '../goal-template/goal-template.entity';
 import { GoalKPITemplate } from '../goal-kpi-template/goal-kpi-template.entity';
@@ -9,7 +8,7 @@ import { DEFAULT_KEY_RESULT_TEMPLATES } from './default-keyresult-templates';
 
 export const createDefaultKeyResultTemplates = async (
 	connection: Connection,
-	tenant: Tenant
+	tenant: ITenant
 ): Promise<KeyResultTemplate[]> => {
 	const defaultKeyResultTemplates = [];
 	const goalTemplates: GoalTemplate[] = await connection.manager.find(

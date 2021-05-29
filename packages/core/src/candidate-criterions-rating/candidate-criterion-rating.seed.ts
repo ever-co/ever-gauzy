@@ -1,17 +1,12 @@
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
-import { ICandidate } from '@gauzy/contracts';
+import { ICandidate, IOrganization, ITenant } from '@gauzy/contracts';
 import { CandidateCriterionsRating } from './candidate-criterion-rating.entity';
-import { CandidateFeedback } from '../candidate-feedbacks/candidate-feedbacks.entity';
-import { CandidatePersonalQualities } from '../candidate-personal-qualities/candidate-personal-qualities.entity';
-import { CandidateTechnologies } from '../candidate-technologies/candidate-technologies.entity';
-import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
-import { Organization } from '../organization/organization.entity';
+import { CandidateFeedback, CandidateInterview, CandidatePersonalQualities, CandidateTechnologies } from './../core/entities/internal';
 
 export const createDefaultCandidateCriterionRating = async (
 	connection: Connection,
-	tenant: Tenant,
-	organization: Organization,
+	tenant: ITenant,
+	organization: IOrganization,
 	defaultCandidates
 ): Promise<CandidateCriterionsRating[]> => {
 	if (!defaultCandidates) {
@@ -67,8 +62,8 @@ export const createDefaultCandidateCriterionRating = async (
 
 export const createRandomCandidateCriterionRating = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantCandidatesMap: Map<Tenant, ICandidate[]> | void
+	tenants: ITenant[],
+	tenantCandidatesMap: Map<ITenant, ICandidate[]> | void
 ): Promise<CandidateCriterionsRating[]> => {
 	if (!tenantCandidatesMap) {
 		console.warn(
@@ -126,8 +121,8 @@ export const createRandomCandidateCriterionRating = async (
 
 const dataOperation = async (
 	connection: Connection,
-	tenant: Tenant,
-	organization: Organization,
+	tenant: ITenant,
+	organization: IOrganization,
 	candidates,
 	candidatesFeedback,
 	candidatesTechnologies,

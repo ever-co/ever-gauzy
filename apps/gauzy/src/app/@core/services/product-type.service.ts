@@ -11,7 +11,7 @@ import { API_PREFIX } from '../constants/app.constants';
 export class ProductTypeService {
 	PRODUCT_TYPES_URL = `${API_PREFIX}/product-types`;
 
-	constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient) { }
 
 	getById(id: string = ''): Promise<IProductTypeTranslatable> {
 		return this.http
@@ -20,17 +20,29 @@ export class ProductTypeService {
 			.toPromise();
 	}
 
-	getAll(
-		relations?: string[],
-		findInput?: any
-	): Promise<{ items: IProductTypeTranslatable[] }> {
-		const data = JSON.stringify({ relations, findInput });
+	count(findInput): Promise<Number> {
+		const data = JSON.stringify(findInput);
 		return this.http
-			.get<{ items: IProductTypeTranslatable[] }>(
-				this.PRODUCT_TYPES_URL,
+			.get<number>(
+				`${this.PRODUCT_TYPES_URL}/count`,
 				{
 					params: { data }
 				}
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	getAll(
+		options,
+		params
+	): Promise<{ items: IProductTypeTranslatable[] }> {
+		const data = JSON.stringify(options);
+
+		return this.http
+			.get<{ items: IProductTypeTranslatable[] }>(
+				this.PRODUCT_TYPES_URL,
+				{ params: { data, ...params } }
 			)
 			.pipe(first())
 			.toPromise();

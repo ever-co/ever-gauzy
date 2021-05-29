@@ -54,37 +54,46 @@ export class PdfmakerService {
 			let filename = `${this.filename}.pdf`;
 			const filePath = path.join(this._dirname, filename);
 
-			const pdfDoc = printer.createPdfKitDocument(pdfDefinition, {});
-			pdfDoc.pipe(fs.createWriteStream(filePath));
+			return await new Promise<Buffer>((resolve, reject) => {
+				const pdfDoc = printer.createPdfKitDocument(pdfDefinition, {});
+				pdfDoc.pipe(fs.createWriteStream(filePath));
 
-			const chunks = [];
-			pdfDoc.on('readable', function () {
-				var chunk;
-				while ((chunk = pdfDoc.read()) !== null) {
-					chunks.push(chunk);
-				}
-			});
-			pdfDoc.on('end', function () {
-				Buffer.concat(chunks);
-			});
-			pdfDoc.end();
-
-			//convert pdf to Buffer
-			const pdf = await new Promise<Buffer>((resolve, reject) => {
-				fs.readFile(filePath, {}, (err, data) => {
-					if (err) {
-						reject(err);
-					} else {
-						resolve(data);
+				const chunks = [];
+				pdfDoc.on('readable', () => {
+					let chunk: string;
+					while ((chunk = pdfDoc.read()) !== null) {
+						chunks.push(chunk);
 					}
 				});
-			});
 
-			//unlink after read pdf into Buffer form
-			if (fs.existsSync(filePath)) {
-				fs.unlinkSync(filePath);
-			}
-			return pdf;
+				pdfDoc.on('end', async () => {
+					Buffer.concat(chunks);
+					try {
+						//convert pdf to Buffer
+						const pdf = await new Promise<Buffer>((resolve, reject) => {
+							try {
+								fs.readFile(filePath, {}, (err, data) => {
+									if (err) {
+										reject(err);
+									} else {
+										//unlink after read pdf into Buffer form
+										if (fs.existsSync(filePath)) {
+											fs.unlinkSync(filePath);
+										}
+										resolve(data);
+									}
+								});
+							} catch (err) {
+								reject(err);
+							}
+						});
+						resolve(pdf);	
+					} catch (err) {
+						reject(err);
+					}
+				});
+				pdfDoc.end();
+			});
 		} catch (e) {
 			console.log(e);
 		}

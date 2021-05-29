@@ -143,12 +143,14 @@ export class IncomeMutationComponent
 		name: string
 	): Promise<IOrganizationContact> => {
 		try {
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.selectedOrganization;
 			return this.organizationContactService
 				.create({
 					name,
 					contactType: ContactType.CLIENT,
-					organizationId: this.selectedOrganization.id,
-					tenantId: this.selectedOrganization.id
+					organizationId,
+					tenantId
 				})
 				.then((contact) => {
 					this.toastrService.success(

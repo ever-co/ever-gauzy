@@ -1,14 +1,14 @@
 import { Connection } from 'typeorm';
-import { LanguagesEnum } from '@gauzy/contracts';
+import { ILanguage, LanguagesEnum } from '@gauzy/contracts';
 import * as faker from 'faker';
 import { Language } from './language.entity';
 import  allLanguages from './all-languages';
 
 export const createLanguages = async (
 	connection: Connection
-): Promise<Language[]> => {
+): Promise<ILanguage[]> => {
 	const systemLanguages: string[] = Object.values(LanguagesEnum);
-	const languages: Language[] = [];
+	const languages: ILanguage[] = [];
 	for (const key in allLanguages) {
 		if (Object.prototype.hasOwnProperty.call(allLanguages, key)) {
 			const { name } = allLanguages[key];

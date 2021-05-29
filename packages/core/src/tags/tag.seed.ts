@@ -1,18 +1,16 @@
 import { Connection } from 'typeorm';
 import * as faker from 'faker';
-import { Tag } from './tag.entity';
-import { Tenant } from '../tenant/tenant.entity';
-import { Organization } from '../organization/organization.entity';
 import { DEFAULT_GLOBAL_TAGS, DEFAULT_ORGANIZATION_TAGS } from './default-tags';
+import { IOrganization, ITenant } from '@gauzy/contracts';
+import { Tag } from './../core/entities/internal';
 
 export const createDefaultTags = async (
 	connection: Connection,
-	tenant: Tenant,
-	organizations: Organization[]
+	tenant: ITenant,
+	organizations: IOrganization[]
 ): Promise<Tag[]> => {
 	let tags: Tag[] = [];
-
-	organizations.forEach((org) => {
+	for (const organization of organizations) {
 		const organizationTags: Tag[] = Object.values(DEFAULT_GLOBAL_TAGS).map(
 			(name) => {
 				const orgTags = new Tag();
@@ -20,15 +18,15 @@ export const createDefaultTags = async (
 				orgTags.description = '';
 				orgTags.color = faker.commerce.color();
 				if (orgTags.color === 'white') {
-					orgTags.color = 'Red';
+					orgTags.color = 'red';
 				}
-				orgTags.organization = org;
+				orgTags.organization = organization;
 				orgTags.tenant = tenant;
 				return orgTags;
 			}
 		);
 		tags = [...tags, ...organizationTags];
-	});
+	}
 	return await connection.manager.save(tags);
 };
 
@@ -57,8 +55,8 @@ export const createTags = async (connection: Connection): Promise<Tag[]> => {
 
 export const createRandomOrganizationTags = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<Tag[]> => {
 	let tags: Tag[] = [];
 
@@ -74,11 +72,9 @@ export const createRandomOrganizationTags = async (
 				orgTags.color = faker.commerce.color();
 				orgTags.organization = org;
 				orgTags.tenant = tenant;
-
 				if (orgTags.color === 'white') {
 					orgTags.color = 'red';
 				}
-
 				return orgTags;
 			});
 			tags = [...tags, ...organizationTags];

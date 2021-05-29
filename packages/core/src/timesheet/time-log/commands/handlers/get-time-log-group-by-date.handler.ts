@@ -67,7 +67,7 @@ export class GetTimeLogGroupByDateHandler
 									employee,
 									sum: sum,
 									task,
-									activity
+									activity: activity.toFixed(2)
 								};
 							})
 							.value();

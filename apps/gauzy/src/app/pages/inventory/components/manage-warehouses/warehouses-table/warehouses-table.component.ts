@@ -1,6 +1,6 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { ComponentLayoutStyleEnum, IContact } from '@gauzy/contracts';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { ComponentLayoutStyleEnum, IWarehouse } from '@gauzy/contracts';
+import { Ng2SmartTableComponent, ServerDataSource } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { first, tap } from 'rxjs/operators';
@@ -14,6 +14,10 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { ItemImgTagsComponent } from '../../table-components/item-img-tags-row.component';
 import { EnabledStatusComponent } from '../../table-components/enabled-row.component';
+import { HttpClient } from '@angular/common/http';
+import { API_PREFIX } from '../../../../../@core';
+import { ContactRowComponent } from '../../table-components/contact-row.component';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-warehouses',
@@ -22,15 +26,20 @@ import { EnabledStatusComponent } from '../../table-components/enabled-row.compo
 })
 export class WarehousesTableComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit {
 	settingsSmartTable: object;
 	loading: boolean;
-	selectedWarehouse: any;
-	smartTableSource = new LocalDataSource();
-	warehousesList = [];
-	disableButton = true;
+	selectedWarehouse: IWarehouse;
+	smartTableSource: ServerDataSource;
+	warehousesList: IWarehouse[] = [];
+	disableButton: boolean = true;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	STORES_URL = `${API_PREFIX}/warehouses?`;
+
+	totalItems = 0;
+	currentPage = 1;
+	itemsPerPage = 10;
 
 	warehousesTable: Ng2SmartTableComponent;
 	@ViewChild('warehousesTable') set content(content: Ng2SmartTableComponent) {
@@ -46,7 +55,8 @@ export class WarehousesTableComponent
 		private warehouseService: WarehouseService,
 		private toastrService: ToastrService,
 		private router: Router,
-		private store: Store
+		private store: Store,
+		private http: HttpClient
 	) {
 		super(translateService);
 		this.setView();
@@ -55,6 +65,14 @@ export class WarehousesTableComponent
 	ngOnInit(): void {
 		this.loadSmartTable();
 		this.loadSettings();
+
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization || { id: null };
+
+		this.warehouseService.count({ findInput: { organizationId, tenantId } }).then(res => {
+			this.totalItems = res as any;
+		});
 	}
 
 	setView() {
@@ -64,6 +82,12 @@ export class WarehousesTableComponent
 			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
+
+				
+				if (componentLayout == ComponentLayoutStyleEnum.CARDS_GRID) {
+					this.onPageChange(this.currentPage);
+				}
+
 			});
 	}
 
@@ -79,9 +103,12 @@ export class WarehousesTableComponent
 			.subscribe();
 	}
 
-	async loadSmartTable() {
+	async loadSettings() {
 		this.settingsSmartTable = {
 			actions: false,
+			pager: {
+				perPage: this.itemsPerPage
+			},
 			columns: {
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.LOGO'),
@@ -94,18 +121,8 @@ export class WarehousesTableComponent
 				},
 				contact: {
 					title: this.getTranslation('INVENTORY_PAGE.CONTACT'),
-					type: 'string',
-					valuePrepareFunction: (contact: IContact, row) => {
-						return `${this.getTranslation(
-							'INVENTORY_PAGE.COUNTRY'
-						)}: ${contact?.country || '-'}, ${this.getTranslation(
-							'INVENTORY_PAGE.CITY'
-						)}:${contact?.city || '-'}, ${this.getTranslation(
-							'INVENTORY_PAGE.ADDRESS'
-						)}: ${contact?.address || '-'}, ${this.getTranslation(
-							'INVENTORY_PAGE.ADDRESS'
-						)} 2: ${contact?.address2 || '-'}`;
-					}
+					type: 'custom',
+					renderComponent: ContactRowComponent
 				},
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
@@ -120,13 +137,46 @@ export class WarehousesTableComponent
 		};
 	}
 
-	async loadSettings() {
-		const warehousesResult = await this.warehouseService.getAll();
 
-		if (!warehousesResult || !warehousesResult.items) return;
+	async loadSmartTable() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization || { id: null };
 
-		this.warehousesList = warehousesResult.items;
-		this.smartTableSource.load(warehousesResult.items);
+		const data = "data=" + JSON.stringify({
+			relations: ['logo'],
+			findInput: {
+				organization: { id: organizationId },
+				tenantId
+			},
+		});
+
+		this.smartTableSource = new ServerDataSource(this.http, {
+			endPoint: this.STORES_URL + data,
+			dataKey: 'items',
+			totalKey: 'total',
+			perPage: 'per_page',
+			pagerPageKey: 'page'
+		});
+		this.loading = false;
+	}
+
+	onPageChange(pageNum: number) {
+		this.currentPage = pageNum;
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization || { id: null };
+
+		const options = {
+			relations: ['logo'],
+			findInput: { organizationId, tenantId }
+		};
+
+		this.warehouseService.getAll(options,
+			{ page: pageNum, _limit: this.itemsPerPage }).then(res => {
+				if (res && res.items) {
+					this.warehousesList = res.items;
+				}
+			});
 	}
 
 	_applyTranslationOnSmartTable() {
@@ -201,5 +251,4 @@ export class WarehousesTableComponent
 		}
 	}
 
-	ngOnDestroy() {}
 }

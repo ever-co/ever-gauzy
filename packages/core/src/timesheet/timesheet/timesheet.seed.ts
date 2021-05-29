@@ -5,7 +5,9 @@ import {
 	IOrganizationProject,
 	ITimeSlot,
 	ITenant,
-	IEmployee
+	IEmployee,
+	ITimesheet,
+	IOrganization
 } from '@gauzy/contracts';
 import * as moment from 'moment';
 import * as _ from 'underscore';
@@ -14,14 +16,15 @@ import { IPluginConfig } from '@gauzy/common';
 import { createRandomTimeLogs } from '../time-log/time-log.seed';
 import { createRandomActivities } from '../activity/activities.seed';
 import { Employee, Timesheet } from './../../core/entities/internal';
+import { randomSeedConfig } from './../../core/seeds/random-seed-config';
 
 export const createDefaultTimeSheet = async (
 	connection: Connection,
 	config: IPluginConfig,
 	tenant: ITenant,
+	organization: IOrganization,
 	employees: IEmployee[],
-	defaultProjects: IOrganizationProject[] | void,
-	noOfTimeLogsPerTimeSheet
+	defaultProjects: IOrganizationProject[] | void
 ) => {
 	if (!defaultProjects) {
 		console.warn(
@@ -30,8 +33,8 @@ export const createDefaultTimeSheet = async (
 		return;
 	}
 
-	const timesheets: Timesheet[] = [];
-	for (let index = 0; index < 2; index++) {
+	const timesheets: ITimesheet[] = [];
+	for (let index = 0; index < 5; index++) {
 		const date = moment().subtract(index, 'week').toDate();
 		const startedAt = moment(date).startOf('week').toDate();
 		const stoppedAt = moment(date).endOf('week').toDate();
@@ -58,7 +61,7 @@ export const createDefaultTimeSheet = async (
 			}
 			const timesheet = new Timesheet();
 			timesheet.employee = employee;
-			timesheet.organization = employee.organization;
+			timesheet.organization = organization;
 			timesheet.tenant = tenant;
 			timesheet.approvedBy = null;
 			timesheet.startedAt = startedAt;
@@ -86,14 +89,12 @@ export const createDefaultTimeSheet = async (
 	
 	try {
 		console.log(chalk.green(`SEEDING Default TimeLogs & Activities`));
-		let timeSlots: ITimeSlot[];
-		timeSlots = await createRandomTimeLogs(
+		const timeSlots: ITimeSlot[] = await createRandomTimeLogs(
 			connection,
 			config,
 			tenant,
 			createdTimesheets,
-			defaultProjects,
-			noOfTimeLogsPerTimeSheet
+			defaultProjects
 		);
 		await createRandomActivities(
 			connection, 
@@ -109,8 +110,7 @@ export const createRandomTimesheet = async (
 	connection: Connection,
 	config: IPluginConfig,
 	tenants: ITenant[],
-	defaultProjects: IOrganizationProject[] | void,
-	noOfTimeLogsPerTimeSheet
+	defaultProjects: IOrganizationProject[] | void
 ) => {
 	if (!defaultProjects) {
 		console.warn(
@@ -128,7 +128,7 @@ export const createRandomTimesheet = async (
 			relations: ['organization']
 		});
 
-		for (let index = 0; index < 2; index++) {
+		for (let index = 0; index < randomSeedConfig.noOfTimesheetPerEmployee; index++) {
 			const date = moment().subtract(index, 'week').toDate();
 			const startedAt = moment(date).startOf('week').toDate();
 			const stoppedAt = moment(date).endOf('week').toDate();
@@ -193,14 +193,12 @@ export const createRandomTimesheet = async (
 					tenant
 				}
 			});
-			let timeSlots: ITimeSlot[];
-			timeSlots = await createRandomTimeLogs(
+			const timeSlots: ITimeSlot[] = await createRandomTimeLogs(
 				connection,
 				config,
 				tenant,
 				createdTimesheets,
-				defaultProjects,
-				noOfTimeLogsPerTimeSheet
+				defaultProjects
 			);
 			await createRandomActivities(
 				connection,

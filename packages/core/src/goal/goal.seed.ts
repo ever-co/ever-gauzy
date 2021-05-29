@@ -1,19 +1,16 @@
 import { Goal } from './goal.entity';
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
-import { Organization } from '../organization/organization.entity';
 import * as faker from 'faker';
-import { Employee } from '../employee/employee.entity';
 import { GoalTimeFrame } from '../goal-time-frame/goal-time-frame.entity';
-import { GoalLevelEnum } from '@gauzy/contracts';
+import { GoalLevelEnum, IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 import { DEFAULT_GOALS } from './default-goals';
 
 export const createDefaultGoals = async (
 	connection: Connection,
-	tenant: Tenant,
-	organizations: Organization[],
-	employees: Employee[]
+	tenant: ITenant,
+	organizations: IOrganization[],
+	employees: IEmployee[]
 ): Promise<Goal[]> => {
 	const defaultGoals = [];
 	const goalTimeFrames: GoalTimeFrame[] = await connection.manager.find(
@@ -96,9 +93,9 @@ const insertDefaultGoals = async (
 
 export const createRandomGoal = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>,
-	tenantEmployeeMap: Map<Tenant, Employee[]>
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
+	tenantEmployeeMap: Map<ITenant, IEmployee[]>
 ): Promise<Goal[]> => {
 	if (!tenantOrganizationsMap) {
 		console.warn(

@@ -1,29 +1,28 @@
 import { Connection } from 'typeorm';
 import { OrganizationDepartment } from './organization-department.entity';
 import * as faker from 'faker';
-import { Tenant } from '../tenant/tenant.entity';
-import { Organization } from '../organization/organization.entity';
 import { Tag } from '../tags/tag.entity';
 import { DEFAULT_ORGANIZATION_DEPARTMENTS } from './default-organization-departments';
+import { IOrganization, ITenant } from '@gauzy/contracts';
 
 export const createDefaultOrganizationDepartments = async (
 	connection: Connection,
-	defaultOrganizations: Organization[]
+	tenant: ITenant,
+	organizations: IOrganization[]
 ) => {
-	const tag = await connection.getRepository(Tag).create({
+	const tag = connection.getRepository(Tag).create({
 		name: 'API',
 		description: '',
 		color: faker.commerce.color()
 	});
 	const departments: OrganizationDepartment[] = [];
-
-	for (const defaultOrganization of defaultOrganizations) {
+	for (const organization of organizations) {
 		DEFAULT_ORGANIZATION_DEPARTMENTS.forEach((name) => {
 			const department = new OrganizationDepartment();
 			department.tags = [tag];
 			department.name = name;
-			department.organizationId = defaultOrganization.id;
-			department.tenant = defaultOrganization.tenant;
+			department.organization = organization;
+			department.tenant = tenant;
 			departments.push(department);
 		});
 	}
@@ -32,11 +31,10 @@ export const createDefaultOrganizationDepartments = async (
 
 export const seedRandomOrganizationDepartments = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, Organization[]>
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<void> => {
 	let departments: OrganizationDepartment[] = [];
-
 	for (const tenant of tenants) {
 		const organizations = tenantOrganizationsMap.get(tenant);
 		organizations.forEach(({ id: organizationId }) => {

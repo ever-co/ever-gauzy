@@ -11,7 +11,6 @@ import {
 	ITenant
 } from '@gauzy/contracts';
 import { DEFAULT_FEATURES } from './default-features';
-import { Tenant } from '../tenant/tenant.entity';
 import { Feature } from './feature.entity';
 import { FeatureOrganization } from './feature_organization.entity';
 import { IPluginConfig } from '@gauzy/common';
@@ -19,7 +18,7 @@ import { IPluginConfig } from '@gauzy/common';
 export const createDefaultFeatureToggle = async (
 	connection: Connection,
 	config: IPluginConfig,
-	tenant: Tenant
+	tenant: ITenant
 ) => {
 	await cleanFeature(connection, config);
 
@@ -48,7 +47,7 @@ export const createDefaultFeatureToggle = async (
 
 export const createRandomFeatureToggle = async (
 	connection: Connection,
-	tenants: Tenant[]
+	tenants: ITenant[]
 ) => {
 	const features: IFeature[] = await connection.getRepository(Feature).find();
 
@@ -71,7 +70,7 @@ export const createRandomFeatureToggle = async (
 	return features;
 };
 
-function createFeature(item: IFeature, tenant: Tenant, config: IPluginConfig) {
+function createFeature(item: IFeature, tenant: ITenant, config: IPluginConfig) {
 	const {
 		name,
 		code,
@@ -132,7 +131,7 @@ async function cleanFeature(connection, config) {
 		console.log('FEATURE SEED -> __dirname: ' + __dirname);
 		*/
 
-		let dir;
+		let dir: string;
 
 		if (env.isElectron) {
 			dir = path.resolve(env.gauzyUserPath, ...['public', destDir]);
@@ -161,8 +160,8 @@ function copyImage(fileName: string, config: IPluginConfig) {
 	try {
 		const destDir = 'features';
 
-		let dir;
-		let baseDir;
+		let dir: string;
+		let baseDir: string;
 
 		if (env.isElectron) {
 			dir = path.resolve(

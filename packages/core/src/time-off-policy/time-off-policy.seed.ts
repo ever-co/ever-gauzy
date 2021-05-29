@@ -2,28 +2,27 @@ import { Connection } from 'typeorm';
 import {
 	ITimeOffPolicy as ITimeOfPolicy,
 	IOrganization,
-	IEmployee
+	IEmployee,
+	ITenant
 } from '@gauzy/contracts';
 import { TimeOffPolicy } from './time-off-policy.entity';
-import { Tenant } from '../tenant/tenant.entity';
 import * as faker from 'faker';
 import { DEFAULT_TIMEOFF_POLICIES } from './default-time-off-policies';
 
 export const createDefaultTimeOffPolicy = async (
 	connection: Connection,
-	defaultData: {
-		org: IOrganization;
-		employees: IEmployee[];
-	}
+	tenant: ITenant,
+	organization: IOrganization,
+	employees: IEmployee[]
 ): Promise<ITimeOfPolicy> => {
 	const defaultTimeOffPolicy = new TimeOffPolicy();
 
 	defaultTimeOffPolicy.name = 'Default Policy';
-	defaultTimeOffPolicy.organization = defaultData.org;
-	defaultTimeOffPolicy.tenant = defaultData.org.tenant;
+	defaultTimeOffPolicy.organization = organization;
+	defaultTimeOffPolicy.tenant = tenant;
 	defaultTimeOffPolicy.requiresApproval = false;
 	defaultTimeOffPolicy.paid = true;
-	defaultTimeOffPolicy.employees = defaultData.employees;
+	defaultTimeOffPolicy.employees = employees;
 
 	await insertDefaultPolicy(connection, defaultTimeOffPolicy);
 	return defaultTimeOffPolicy;
@@ -43,8 +42,8 @@ const insertDefaultPolicy = async (
 
 export const createRandomTimeOffPolicies = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
+	tenants: ITenant[],
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<TimeOffPolicy[]> => {
 	const policies: TimeOffPolicy[] = [];
 	(tenants || []).forEach((tenant) => {

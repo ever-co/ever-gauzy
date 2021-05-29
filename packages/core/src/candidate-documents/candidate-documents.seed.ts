@@ -1,26 +1,23 @@
-import { ICandidate } from '@gauzy/contracts';
+import { ICandidate, ICandidateDocument, IOrganization, ITenant } from '@gauzy/contracts';
 import * as faker from 'faker';
 import { Connection } from 'typeorm';
-import { Organization } from '../organization/organization.entity';
-import { Tenant } from '../tenant/tenant.entity';
-import { CandidateDocument } from './candidate-documents.entity';
+import { CandidateDocument, Organization } from './../core/entities/internal';
 import { DEFAULT_CANDIDATE_DOCUMENTS } from './default-candidate-documents';
 
 export const createCandidateDocuments = async (
 	connection: Connection,
-	tenant: Tenant,
+	tenant: ITenant,
 	candidates: ICandidate[] | void,
-	organization: Organization
+	organization: IOrganization
 ): Promise<CandidateDocument[]> => {
-	let defaultCandidateDocuments = [];
-
 	if (!candidates) {
 		console.warn(
 			'Warning: candidates not found, CandidateDocuments will not be created'
 		);
 		return;
 	}
-	candidates.forEach((candidate) => {
+	let defaultCandidateDocuments = [];
+	for (const candidate of candidates) {
 		const documents = DEFAULT_CANDIDATE_DOCUMENTS.map((document) => ({
 			name: document.name,
 			documentUrl: document.documentUrl,
@@ -28,38 +25,36 @@ export const createCandidateDocuments = async (
 			tenant: tenant,
 			organization: organization
 		}));
-
 		defaultCandidateDocuments = [
 			...defaultCandidateDocuments,
 			...documents
 		];
-	});
-
-	insertCandidateDocuments(connection, defaultCandidateDocuments);
+	}
+	await insertCandidateDocuments(connection, defaultCandidateDocuments);
 	return defaultCandidateDocuments;
 };
 
 export const createRandomCandidateDocuments = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantCandidatesMap: Map<Tenant, ICandidate[]> | void
-): Promise<Map<ICandidate, CandidateDocument[]>> => {
+	tenants: ITenant[],
+	tenantCandidatesMap: Map<ITenant, ICandidate[]> | void
+): Promise<Map<ICandidate, ICandidateDocument[]>> => {
 	if (!tenantCandidatesMap) {
 		console.warn(
 			'Warning: tenantCandidatesMap not found, CandidateDocuments will not be created'
 		);
 		return;
 	}
-
 	let candidateDocuments = [];
 	const candidateDocumentsMap: Map<ICandidate, any[]> = new Map();
-
 	for await (const tenant of tenants || []) {
 		const organizations = await connection.manager.find(Organization, {
-			where: [{ tenant: tenant }]
+			where: { 
+				tenant: tenant 
+			}
 		});
 		const candidates = tenantCandidatesMap.get(tenant);
-		(candidates || []).forEach((candidate) => {
+		for (const candidate of candidates || []) {
 			const documents = DEFAULT_CANDIDATE_DOCUMENTS.map((document) => ({
 				name: document.name,
 				documentUrl: document.documentUrl,
@@ -67,12 +62,10 @@ export const createRandomCandidateDocuments = async (
 				organization: faker.random.arrayElement(organizations),
 				tenant: tenant
 			}));
-
 			candidateDocumentsMap.set(candidate, documents);
 			candidateDocuments = [...candidateDocuments, ...documents];
-		});
+		}
 	}
-
 	await insertCandidateDocuments(connection, candidateDocuments);
 	return candidateDocumentsMap;
 };

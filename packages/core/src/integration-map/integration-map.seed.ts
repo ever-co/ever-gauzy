@@ -1,33 +1,31 @@
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
 import { IntegrationMap } from './integration-map.entity';
 import * as faker from 'faker';
 import { IntegrationTenant } from '../integration-tenant/integration-tenant.entity';
 import { Organization } from '../organization/organization.entity';
-import { IntegrationEntity } from '@gauzy/contracts';
+import { IIntegrationMap, IntegrationEntity, ITenant } from '@gauzy/contracts';
 
 export const createRandomIntegrationMap = async (
 	connection: Connection,
-	tenants: Tenant[]
-): Promise<IntegrationMap[]> => {
+	tenants: ITenant[]
+): Promise<IIntegrationMap[]> => {
 	if (!tenants) {
 		console.warn(
 			'Warning: tenants not found, Integration Map  will not be created'
 		);
 		return;
 	}
-
-	const integrationMaps: IntegrationMap[] = [];
-
+	const integrationMaps: IIntegrationMap[] = [];
 	for (const tenant of tenants) {
-		const integrationTenants = await connection.manager.find(
-			IntegrationTenant,
-			{
-				where: [{ tenant: tenant }]
+		const integrationTenants = await connection.manager.find(IntegrationTenant, {
+			where: { 
+				tenant: tenant 
 			}
-		);
+		});
 		const organizations = await connection.manager.find(Organization, {
-			where: [{ tenant: tenant }]
+			where: { 
+				tenant: tenant 
+			}
 		});
 		for (const integrationTenant of integrationTenants) {
 			const integrationMap = new IntegrationMap();
@@ -45,6 +43,5 @@ export const createRandomIntegrationMap = async (
 			integrationMaps.push(integrationMap);
 		}
 	}
-
-	await connection.manager.save(integrationMaps);
+	return await connection.manager.save(integrationMaps);
 };

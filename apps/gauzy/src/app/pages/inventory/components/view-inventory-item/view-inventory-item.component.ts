@@ -30,7 +30,7 @@ export class InventoryItemViewComponent
 	extends TranslationBaseComponent
 	implements OnInit {
 	inventoryItem: IProductTranslatable;
-	loading = true;
+	loading: boolean = true;
 	options: IProductOptionTranslatable[] = [];
 
 	@ViewChild('variantTable') variantTable;

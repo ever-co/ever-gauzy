@@ -3,21 +3,20 @@ import * as faker from 'faker';
 import * as _ from 'underscore';
 import { HttpService } from '@nestjs/common';
 
-import { TaskStatusEnum } from '@gauzy/contracts';
+import { IOrganization, IOrganizationProject, ITenant, TaskStatusEnum } from '@gauzy/contracts';
 import { Task } from './task.entity';
 import { Tag } from '../tags/tag.entity';
 import { OrganizationProject } from '../organization-projects/organization-projects.entity';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 import { User } from '../user/user.entity';
 import { Organization } from '../organization/organization.entity';
-import { Tenant } from '../tenant/tenant.entity';
 
 const GITHUB_API_URL = 'https://api.github.com';
 
 export const createDefaultTask = async (
 	connection: Connection,
-	tenant: Tenant,
-	organization: Organization
+	tenant: ITenant,
+	organization: IOrganization
 ): Promise<Task[]> => {
 	const httpService = new HttpService();
 
@@ -91,8 +90,8 @@ export const createDefaultTask = async (
 
 export const createRandomTask = async (
 	connection: Connection,
-	tenants: Tenant[],
-	projects: OrganizationProject[] | void
+	tenants: ITenant[],
+	projects: IOrganizationProject[] | void
 ) => {
 	if (!projects) {
 		console.warn(

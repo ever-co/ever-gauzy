@@ -1,13 +1,12 @@
+import { IOrganization, ITenant } from '@gauzy/contracts';
 import { Connection } from 'typeorm';
-import { Organization } from '../organization/organization.entity';
-import { Tenant } from '../tenant/tenant.entity';
 import { DEFAULT_GOAL_KPI_TEMPLATES } from './default-goal-kpi-templates';
 import { GoalKPITemplate } from './goal-kpi-template.entity';
 
 export const createDefaultGoalKpiTemplate = async (
 	connection: Connection,
-	tenant: Tenant,
-	organization: Organization
+	tenant: ITenant,
+	organization: IOrganization
 ): Promise<GoalKPITemplate[]> => {
 	const goalKpiTemplates: GoalKPITemplate[] = [];
 	DEFAULT_GOAL_KPI_TEMPLATES.forEach((item) => {

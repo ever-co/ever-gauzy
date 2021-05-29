@@ -311,20 +311,27 @@ export class InvoiceService extends CrudService<Invoice> {
 	}
 
 	public search(filter?: any) {
-		if (filter?.where?.tags) {
-			filter.where.tags = {
-				id: In(filter.where.tags)
+		if (filter.where) {
+			if (filter.where.tags) {
+				filter.where.tags = {
+					id: In(filter.where.tags)
+				}
 			}
-		}
-		if (filter?.where?.dueDate) {
-			const date = moment.utc(filter.where.dueDate);
-			filter.where.dueDate = Between(date.startOf('day').toDate(), date.endOf('day').toDate());
-
-		}
-		if (filter?.where?.invoiceDate) {
-			const date = moment.utc(filter.where.invoiceDate);
-			filter.where.invoiceDate = Between(date.startOf('day').toDate(), date.endOf('day').toDate());
-
+			if (filter.where.toContact) {
+				filter.where.toContact = {
+					id: In(filter.where.toContact)
+				}
+			}
+			if (filter.where.dueDate) {
+				const date = moment.utc(filter.where.dueDate);
+				filter.where.dueDate = Between(date.startOf('day').toDate(), date.endOf('day').toDate());
+	
+			}
+			if (filter.where.invoiceDate) {
+				const date = moment.utc(filter.where.invoiceDate);
+				filter.where.invoiceDate = Between(date.startOf('day').toDate(), date.endOf('day').toDate());
+	
+			}
 		}
 		return super.search(filter);
 	}

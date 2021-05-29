@@ -1,15 +1,13 @@
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
-import { IEmployee, IOrganization } from '@gauzy/contracts';
-import { EventType } from './event-type.entity';
+import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import * as faker from 'faker';
-import { Tag } from '../tags/tag.entity';
+import { EventType, Tag } from './../core/entities/internal';
 
 export const createRandomEventType = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, IEmployee[]>,
-	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
+	tenants: ITenant[],
+	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ): Promise<EventType[]> => {
 	if (!tenantEmployeeMap) {
 		console.warn(
@@ -26,25 +24,23 @@ export const createRandomEventType = async (
 
 	for (const tenant of tenants) {
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
-		const tenantOrgs = tenantOrganizationsMap.get(tenant);
+		const organizations = tenantOrganizationsMap.get(tenant);
 		for (const tenantEmployee of tenantEmployees) {
 			const eventTypes: EventType[] = [];
-			for (const tenantOrg of tenantOrgs) {
+			for (const organization of organizations) {
 				const tags = await connection.manager.find(Tag, {
-					where: [{ organization: tenantOrg }]
+					where: [{ organization: organization }]
 				});
-
 				const event = new EventType();
 				event.isActive = faker.datatype.boolean();
 				event.description = faker.name.jobDescriptor();
 				event.title = faker.name.jobTitle();
 				event.durationUnit = 'minutes';
 				event.duration = faker.datatype.number(50);
-				event.organization = tenantOrg;
+				event.organization = organization;
 				event.employee = tenantEmployee;
 				event.tags = tags;
 				event.tenant = tenant;
-
 				eventTypes.push(event);
 			}
 			await connection.manager.save(eventTypes);
@@ -54,18 +50,18 @@ export const createRandomEventType = async (
 
 export const createDefaultEventTypes = async (
 	connection: Connection,
-	tenant: Tenant,
-	orgs: IOrganization[]
+	tenant: ITenant,
+	organizations: IOrganization[]
 ): Promise<EventType[]> => {
 	const eventTypes: EventType[] = [];
-	orgs.forEach((org) => {
+	organizations.forEach((organization) => {
 		const eventType = new EventType();
 		eventType.title = '15 Minutes Event';
 		eventType.description = 'This is a default event type.';
 		eventType.duration = 15;
 		eventType.durationUnit = 'Minute(s)';
 		eventType.isActive = true;
-		eventType.organization = org;
+		eventType.organization = organization;
 		eventType.tenant = tenant;
 		eventTypes.push(eventType);
 
@@ -75,7 +71,7 @@ export const createDefaultEventTypes = async (
 		eventTypeOne.duration = 30;
 		eventTypeOne.durationUnit = 'Minute(s)';
 		eventTypeOne.isActive = true;
-		eventTypeOne.organization = org;
+		eventTypeOne.organization = organization;
 		eventTypeOne.tenant = tenant;
 		eventTypes.push(eventTypeOne);
 
@@ -85,7 +81,7 @@ export const createDefaultEventTypes = async (
 		eventTypeTwo.duration = 60;
 		eventTypeTwo.durationUnit = 'Minute(s)';
 		eventTypeTwo.isActive = true;
-		eventTypeTwo.organization = org;
+		eventTypeTwo.organization = organization;
 		eventTypeTwo.tenant = tenant;
 		eventTypes.push(eventTypeTwo);
 	});

@@ -3,15 +3,18 @@ import * as path from 'path';
 import * as faker from 'faker';
 import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
-import { Screenshot, Tenant, TimeSlot } from '../../core/entities/internal';
+import { Screenshot } from '../../core/entities/internal';
 import { IPluginConfig } from '@gauzy/common';
+import { randomSeedConfig } from './../../core/seeds/random-seed-config';
 
 let fileList: string[] = [];
 
 export const createRandomScreenshot = async (
-	timeSlot: TimeSlot,
-	tenant: Tenant,
-	config: IPluginConfig
+	config: IPluginConfig,
+	tenantId: string,
+	organizationId: string,
+	startedAt: Date,
+	stoppedAt: Date
 ): Promise<Screenshot[]> => {
 	const destDirName = 'screenshots';
 
@@ -48,7 +51,7 @@ export const createRandomScreenshot = async (
 	// console.log('SCREENSHOT SEED -> dir: ' + dir);
 	// console.log('SCREENSHOT SEED -> baseDir: ' + baseDir);
 
-	const fileDir = path.join(destDirName, moment().format('YYYY/MM/DD'));
+	const fileDir = path.join(destDirName, moment().format('YYYY/MM/DD'), tenantId);
 	const destDir = path.join('public', fileDir);
 
 	const finalDir = path.join(baseDir, destDir);
@@ -63,40 +66,29 @@ export const createRandomScreenshot = async (
 
 	for (
 		let index = 0;
-		index < faker.datatype.number({ min: 1, max: 2 });
+		index < randomSeedConfig.noOfScreenshotPerTimeSlot;
 		index++
 	) {
 		const sourceFile = faker.random.arrayElement(fileList);
-
-		const sourceName =
-			'screenshot-' + moment().unix() + faker.datatype.number(999) + '.png';
-
+		const sourceName = 'screenshot-' + moment().unix() + faker.datatype.number(999) + '.png';
 		const destFile = path.join(destDir, sourceName);
-
 		const sourceFilePath = path.join(dir, sourceFile);
 		const destFilePath = path.join(baseDir, destFile);
 
 		copyFileSync(sourceFilePath, destFilePath);
-
 		const file = path.join(fileDir, sourceName);
 
 		const screenshot = new Screenshot();
-
-		screenshot.tenant = tenant;
-		screenshot.organizationId = timeSlot.organizationId;
+		screenshot.tenantId = tenantId;
+		screenshot.organizationId = organizationId;
 		screenshot.fullUrl = file;
 		screenshot.file = file;
 		screenshot.thumb = file;
-		screenshot.timeSlot = timeSlot;
 		screenshot.thumbUrl = file;
-		screenshot.recordedAt = faker.date.between(
-			timeSlot.startedAt,
-			timeSlot.stoppedAt
-		);
+		screenshot.recordedAt = faker.date.between(startedAt, stoppedAt);
 		screenshot.deletedAt = null;
 		screenshots.push(screenshot);
 	}
-
 	return screenshots;
 };
 

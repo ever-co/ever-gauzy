@@ -42,20 +42,20 @@ export class TableInventoryComponent
 	form: FormGroup;
 	selectedLanguage: string = LanguagesEnum.ENGLISH;
 	inventoryData: IProductTranslated[] = [];
-	disableButton = true;
-	viewComponentName: ComponentEnum.INVENTORY;
-	dataLayoutStyle = ComponentLayoutStyleEnum.CARDS_GRID;
+	disableButton: boolean = true;
+	viewComponentName: ComponentEnum = ComponentEnum.INVENTORY;
+	dataLayoutStyle: ComponentLayoutStyleEnum = ComponentLayoutStyleEnum.CARDS_GRID;
 	organization: IOrganization;
 
-	editProductAllowed = false;
-	viewCategoriesAllowed = false;
-	viewTypesAllowed = false;
+	editProductAllowed: boolean = false;
+	viewCategoriesAllowed: boolean = false;
+	viewTypesAllowed: boolean = false;
 
 	source: ServerDataSource;
 	PRODUCTS_URL = `${API_PREFIX}/products/local/${this.selectedLanguage}?`;
 
-	currentPage = 0;
-	totalItems = 0;
+	currentPage: number = 0;
+	totalItems: number = 0;
 
 	inventoryTable: Ng2SmartTableComponent;
 	@ViewChild('inventoryTable') set content(content: Ng2SmartTableComponent) {

@@ -1,15 +1,12 @@
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
-import { ICandidate, IEmployee } from '@gauzy/contracts';
+import { ICandidate, IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
 import * as faker from 'faker';
-import { CandidateInterviewers } from './candidate-interviewers.entity';
-import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
-import { Organization } from '../organization/organization.entity';
+import { CandidateInterview, CandidateInterviewers } from './../core/entities/internal';
 
 export const createDefaultCandidateInterviewers = async (
 	connection: Connection,
-	tenant: Tenant,
-	organization: Organization,
+	tenant: ITenant,
+	organization: IOrganization,
 	defaultEmployees,
 	defaultCandidates
 ): Promise<CandidateInterviewers[]> => {
@@ -27,7 +24,6 @@ export const createDefaultCandidateInterviewers = async (
 	}
 
 	let candidates: CandidateInterviewers[] = [];
-
 	for (const defaultCandidate of defaultCandidates) {
 		const CandidateInterviews = await connection.manager.find(
 			CandidateInterview,
@@ -49,9 +45,9 @@ export const createDefaultCandidateInterviewers = async (
 
 export const createRandomCandidateInterviewers = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, IEmployee[]>,
-	tenantCandidatesMap: Map<Tenant, ICandidate[]> | void
+	tenants: ITenant[],
+	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
+	tenantCandidatesMap: Map<ITenant, ICandidate[]> | void
 ): Promise<CandidateInterviewers[]> => {
 	if (!tenantCandidatesMap) {
 		console.warn(
@@ -61,11 +57,9 @@ export const createRandomCandidateInterviewers = async (
 	}
 
 	let candidates: CandidateInterviewers[] = [];
-
 	for (const tenant of tenants) {
 		const tenantCandidates = tenantCandidatesMap.get(tenant);
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
-
 		for (const tenantCandidate of tenantCandidates) {
 			const CandidateInterviews = await connection.manager.find(
 				CandidateInterview,
@@ -88,8 +82,8 @@ export const createRandomCandidateInterviewers = async (
 
 const dataOperation = async (
 	connection: Connection,
-	tenant: Tenant,
-	organization: Organization,
+	tenant: ITenant,
+	organization: IOrganization,
 	candidates,
 	CandidateInterviews,
 	tenantEmployees: IEmployee[]

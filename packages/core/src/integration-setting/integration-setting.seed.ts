@@ -1,13 +1,12 @@
 import { Connection } from 'typeorm';
-import { Tenant } from '../tenant/tenant.entity';
 import { IntegrationSetting } from './integration-setting.entity';
 import * as faker from 'faker';
-import { IntegrationTenant } from '../integration-tenant/integration-tenant.entity';
-import { Organization } from '../organization/organization.entity';
+import { ITenant } from '@gauzy/contracts';
+import { IntegrationTenant, Organization } from './../core/entities/internal';
 
 export const createRandomIntegrationSetting = async (
 	connection: Connection,
-	tenants: Tenant[]
+	tenants: ITenant[]
 ): Promise<IntegrationSetting[]> => {
 	if (!tenants) {
 		console.warn(
@@ -15,18 +14,13 @@ export const createRandomIntegrationSetting = async (
 		);
 		return;
 	}
-
 	const integrationSettings: IntegrationSetting[] = [];
-
 	for (const tenant of tenants) {
-		const integrationTenants = await connection.manager.find(
-			IntegrationTenant,
-			{
-				where: [{ tenant: tenant }]
-			}
-		);
+		const integrationTenants = await connection.manager.find(IntegrationTenant, {
+			where: { tenant: tenant }
+		});
 		const organizations = await connection.manager.find(Organization, {
-			where: [{ tenant: tenant }]
+			where: { tenant: tenant }
 		});
 		for (const integrationTenant of integrationTenants) {
 			const integrationSetting = new IntegrationSetting();

@@ -21,9 +21,11 @@ export class ServerSourceConf {
     join: any;
     relations: string[];
     resultMap: any;
+    finalize: any;
 
     constructor({
         resultMap = null,
+        finalize = null,
         endPoint = '',
         sortFieldKey = '',
         sortDirKey = '',
@@ -50,5 +52,6 @@ export class ServerSourceConf {
         this.join = join;
         this.relations = relations;
         this.resultMap = resultMap;
+        this.finalize = finalize;
     }
 }

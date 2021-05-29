@@ -1,16 +1,14 @@
 import { Connection } from 'typeorm';
 import * as faker from 'faker';
 import { OrganizationTeamEmployee } from './organization-team-employee.entity';
-import { IEmployee, IOrganization } from '@gauzy/contracts';
-import { Tenant } from '../tenant/tenant.entity';
-import { OrganizationTeam } from '../organization-team/organization-team.entity';
-import { Role } from '../role/role.entity';
+import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
+import { OrganizationTeam, Role } from './../core/entities/internal';
 
 export const createRandomOrganizationTeamEmployee = async (
 	connection: Connection,
-	tenants: Tenant[],
-	tenantEmployeeMap: Map<Tenant, IEmployee[]>,
-	tenantOrganizationsMap: Map<Tenant, IOrganization[]>
+	tenants: ITenant[],
+	tenantEmployeeMap: Map<ITenant, IEmployee[]>,
+	tenantOrganizationsMap: Map<ITenant, IOrganization[]>
 ) => {
 	if (!tenantEmployeeMap) {
 		console.warn(
