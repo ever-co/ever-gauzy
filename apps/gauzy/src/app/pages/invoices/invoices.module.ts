@@ -75,6 +75,7 @@ import { TranslatableService } from '../../@core/services/translatable.service';
 import { PublicLinkComponent } from './public-link/public-link.component';
 import { InvoicePaymentReceiptMutatonComponent } from './invoice-payments/payment-receipt-mutation/payment-receipt-mutation.component';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { PaginationModule } from '../../@shared/pagination/pagination.module';
 
 @NgModule({
 	imports: [
@@ -113,7 +114,8 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		TranslateModule,
 		NgxPermissionsModule.forChild(),
 		CurrencyModule,
-		HeaderTitleModule
+		HeaderTitleModule,
+		PaginationModule
 	],
 	providers: [
 		InvoicesService,
