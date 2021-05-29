@@ -730,7 +730,6 @@ export class InvoicesComponent
 		try {
 			this.setSmartTableSource();
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-				console.log(this.pagination);
 
 				// Initiate GRID view pagination
 				const { activePage, itemsPerPage } = this.pagination;
