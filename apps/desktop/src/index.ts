@@ -158,7 +158,7 @@ function startServer(value, restart = false) {
 					gauzyWindow = createGauzyWindow(
 						gauzyWindow,
 						serve,
-						{ ...environment },
+						{ ...environment, gauzyWindow: value.gauzyWindow },
 						pathWindow.gauzyWindow
 					);
 					gauzyWindow.show();
@@ -206,7 +206,7 @@ function startServer(value, restart = false) {
 		gauzyWindow = createGauzyWindow(
 			gauzyWindow,
 			serve,
-			{ ...environment },
+			{ ...environment, gauzyWindow: value.gauzyWindow },
 			pathWindow.gauzyWindow
 		);
 		gauzyWindow.show();
@@ -446,10 +446,11 @@ ipcMain.on('restart_app', (event, arg) => {
 
 ipcMain.on('server_already_start', () => {
 	if (!gauzyWindow && !isAlreadyRun) {
+		const configs: any = store.get('configs');
 		gauzyWindow = createGauzyWindow(
 			gauzyWindow,
 			serve,
-			{ ...environment },
+			{ ...environment, gauzyWindow: configs.gauzyWindow },
 			pathWindow.gauzyWindow
 		);
 		isAlreadyRun = true;

@@ -19,12 +19,19 @@
 		"url": "https://ever.co"
 	},
 	"main": "index.js",
+	"workspaces": {
+		"packages": [
+			"../../../packages/desktop-window",
+			"../../../packages/desktop-libs"
+		]
+	},
 	"build": {
 		"appId": "com.company.gauzydesktoptimer",
 		"productName": "Gauzy Desktop Timer",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
 		"asar": true,
 		"npmRebuild": true,
+		"compression": "maximum",
 		"directories": {
 			"buildResources": "icons",
 			"output": "../desktop-timer-packages"
@@ -105,7 +112,7 @@
 		"auto-launch": "5.0.5",
 		"@sentry/electron": "2.4.0",
 		"underscore": "^1.13.0",
-		"@gauzy/desktop-window": "file:../../../node_modules/@gauzy",
-		"@gauzy/desktop-libs": "file:../../../node_modules/@gauzy"
+		"@gauzy/desktop-window": "^0.1.0",
+		"@gauzy/desktop-libs": "^0.1.0"
 	}
 }

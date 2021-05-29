@@ -19,12 +19,30 @@
 		"url": "https://ever.co"
 	},
 	"main": "index.js",
+	"workspaces": {
+		"packages": [
+			"../../../packages/core",
+			"../../../packages/auth",
+			"../../../packages/desktop-window",
+			"../../../packages/desktop-libs",
+			"../../../packages/plugins/knowledge-base",
+			"../../../packages/plugins/changelog",
+			"../../../packages/common",
+			"../../../packages/plugins/integration-ai",
+			"../../../packages/config",
+			"../../../packages/contracts",
+			"../../../packages/plugins/integration-hubstaff",
+			"../../../packages/plugins/integration-upwork",
+			"../../../packages/plugin"
+		]
+	},
 	"build": {
 		"appId": "com.company.gauzydesktop",
 		"productName": "Gauzy Desktop",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
 		"asar": true,
 		"npmRebuild": true,
+		"compression": "maximum",
 		"directories": {
 			"buildResources": "icons",
 			"output": "../desktop-packages"
@@ -101,16 +119,16 @@
 		"pg": "^8.6.0",
 		"pg-query-stream": "^4.1.0",
 		"@nestjs/platform-express": "^7.6.5",
-		"@gauzy/core": "file:../../../node_modules/@gauzy",
-		"@gauzy/auth": "file:../../../node_modules/@gauzy",
+		"@gauzy/core": "^0.1.0",
+		"@gauzy/auth": "^0.1.0",
 		"sound-play": "1.1.0",
 		"@sentry/electron": "2.4.0",
 		"underscore": "^1.13.0",
-		"@gauzy/knowledge-base": "file:../../../node_modules/@gauzy",
-		"@gauzy/changelog": "file:../../../node_modules/@gauzy",
+		"@gauzy/knowledge-base": "^0.1.0",
+		"@gauzy/changelog": "^0.1.0",
 		"tslib": "2.1.0",
-		"@gauzy/desktop-window": "file:../../../node_modules/@gauzy",
-		"@gauzy/desktop-libs": "file:../../../node_modules/@gauzy",
+		"@gauzy/desktop-window": "^0.1.0",
+		"@gauzy/desktop-libs": "^0.1.0",
 		"@sentry/node": "^5.30.0",
 		"@sentry/tracing": "^5.30.0"
 	}
