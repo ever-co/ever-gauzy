@@ -13782,7 +13782,7 @@ ejs@^3.1.5, ejs@^3.1.6:
   dependencies:
     jake "^10.6.1"
 
-electron-builder@^22.11.4:
+electron-builder@^22.11.5:
   version "22.11.5"
   resolved "https://registry.yarnpkg.com/electron-builder/-/electron-builder-22.11.5.tgz#914d8183e1bab7cda43ef1d67fc3d17314c7e242"
   integrity sha512-QIhzrmSLNteItRvmAjwNpsya08oZeOJIrxFww/Alkjcwnrn5Xgog2qf3Xfa3ocuNUQIwb+mMzZrzqnPu0Mamyg==
