@@ -1,7 +1,7 @@
 {
 	"name": "@gauzy/integration-wakatime",
 	"version": "0.1.0",
-	"description": "Ever Gauzy Platform plugin for integration with Upwork APIs",
+	"description": "Ever Gauzy Platform plugin for integration with Wakatime APIs",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
