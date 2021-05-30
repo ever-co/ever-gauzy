@@ -1,7 +1,5 @@
-# wakatime
+# Ever Gauzy Wakatime integration
 
-This library was generated with [Nx](https://nx.dev).
+See more information about [Wakatime](https://wakatime.com).
 
-## Running unit tests
-
-Run `ng test wakatime` to execute the unit tests via [Jest](https://jestjs.io).
+*Note: this plugin is WIP.*
