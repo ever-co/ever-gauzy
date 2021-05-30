@@ -1,5 +1,5 @@
-# Ever Gauzy Wakatime integration
+# Ever Gauzy WakaTime integration
 
-See more information about [Wakatime](https://wakatime.com).
+See more information about [WakaTime](https://wakatime.com).
 
 *Note: this plugin is WIP.*
