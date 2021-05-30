@@ -57,14 +57,14 @@ import {
 	LocalStore,
 	DataModel,
 	AppMenu
-} from '../../../libs/desktop-libs/src';
+} from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
 	createTimeTrackerWindow,
 	createSettingsWindow,
 	createUpdaterWindow,
 	createImageViewerWindow
-} from '../../../libs/desktop-window/src';
+} from '@gauzy/desktop-window';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
 import { CancellationToken } from "builder-util-runtime";
@@ -123,10 +123,10 @@ try {
 
 console.log(
 	'Time Tracker UI Render Path:',
-	path.join(__dirname, '../../../index.html')
+	path.join(__dirname, './index.html')
 );
 const pathWindow = {
-	timeTrackerUi: path.join(__dirname, '../../../index.html')
+	timeTrackerUi: path.join(__dirname, './index.html')
 };
 
 function startServer(value, restart = false) {
@@ -179,7 +179,13 @@ function startServer(value, restart = false) {
 			auth,
 			settingsWindow,
 			{ ...environment },
-			pathWindow
+			pathWindow,
+			path.join(
+				__dirname,
+				'assets',
+				'icons',
+				'icon_16x16.png'
+			)
 		);
 	}
 
@@ -319,7 +325,7 @@ ipcMain.on('server_is_ready', () => {
 	onWaitingServer = false;
 	if (!isAlreadyRun) {
 		serverDesktop = fork(
-			path.join(__dirname, '../../../desktop-api/main.js')
+			path.join(__dirname, './desktop-api/main.js')
 		);
 		ipcTimer(
 			store,
@@ -331,7 +337,8 @@ ipcMain.on('server_is_ready', () => {
 			imageView,
 			{ ...environment },
 			createSettingsWindow,
-			pathWindow
+			pathWindow,
+			path.join(__dirname, '..', 'data', 'sound', 'snapshot-sound.wav')
 		);
 		isAlreadyRun = true;
 	}

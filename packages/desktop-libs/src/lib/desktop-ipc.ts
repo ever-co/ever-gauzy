@@ -165,7 +165,8 @@ export function ipcTimer(
 	imageView,
 	config,
 	createSettingsWindow,
-	windowPath
+	windowPath,
+	soundPath
 ) {
 	const timerHandler = new TimerHandler();
 	ipcMain.on('start_timer', (event, arg) => {
@@ -237,7 +238,9 @@ export function ipcTimer(
 					timeTrackerWindow,
 					notificationWindow,
 					arg.timeSlotId,
-					arg.quitApp
+					arg.quitApp,
+					windowPath,
+					soundPath
 				);
 				break;
 			default:
@@ -257,7 +260,7 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('save_screen_shoot', (event, arg) => {
-		takeshot(timeTrackerWindow, arg, notificationWindow);
+		takeshot(timeTrackerWindow, arg, notificationWindow, false, windowPath, soundPath);
 	});
 
 	ipcMain.on('show_image', (event, arg) => {
@@ -285,7 +288,7 @@ export function ipcTimer(
 	});
 
 	ipcMain.on('save_temp_screenshot', async (event, arg) => {
-		takeshot(timeTrackerWindow, arg, notificationWindow, true);
+		takeshot(timeTrackerWindow, arg, notificationWindow, true, windowPath, soundPath);
 	});
 
 	ipcMain.on('save_temp_img', (event, arg) => {

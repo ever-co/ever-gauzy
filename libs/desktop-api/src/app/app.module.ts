@@ -3,7 +3,7 @@ import { RouterModule } from 'nest-router';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Wakatime, WakatimeModule } from '@gauzy/wakatime';
+import { Wakatime, WakatimeModule } from '@gauzy/integration-wakatime';
 
 require('app-root-path').setPath(process.env.GAUZY_USER_PATH);
 

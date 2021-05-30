@@ -18,7 +18,13 @@
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
-	"main": "apps/desktop-timer/src/index.js",
+	"main": "index.js",
+	"workspaces": {
+		"packages": [
+			"../../../packages/desktop-window",
+			"../../../packages/desktop-libs"
+		]
+	},
 	"build": {
 		"appId": "com.company.gauzydesktoptimer",
 		"productName": "Gauzy Desktop Timer",
@@ -104,6 +110,8 @@
 		"sound-play": "1.1.0",
 		"auto-launch": "5.0.5",
 		"@sentry/electron": "2.4.0",
-		"underscore": "^1.13.0"
+		"underscore": "^1.13.0",
+		"@gauzy/desktop-window": "^0.1.0",
+		"@gauzy/desktop-libs": "^0.1.0"
 	}
 }
