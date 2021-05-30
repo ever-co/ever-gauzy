@@ -631,29 +631,6 @@
         }
       }
     },
-    "wakatime": {
-      "root": "libs/wakatime",
-      "sourceRoot": "libs/wakatime/src",
-      "projectType": "library",
-      "schematics": {},
-      "architect": {
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": [
-              "libs/wakatime/**/*.ts"
-            ]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "options": {
-            "jestConfig": "libs/wakatime/jest.config.js",
-            "passWithNoTests": true
-          }
-        }
-      }
-    },
     "desktop-ui-lib": {
       "projectType": "library",
       "root": "libs/desktop-ui-lib",
