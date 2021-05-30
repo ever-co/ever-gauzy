@@ -13,7 +13,7 @@
 		<nb-tabset (changeTab)="onChangeTab($event)">
 			<nb-tab
 				[tabTitle]="'INVOICES_PAGE.ACTIONS' | translate"
-				tabId="actions"
+				[tabId]="invoiceTabsEnum.ACTIONS"
 			>
 				<ng-template
 					[ngxPermissionsOnly]="['INVOICES_EDIT', 'INVOICES_VIEW']"
@@ -83,6 +83,7 @@
 				class="remove-scroll"
 				[tabTitle]="'INVOICES_PAGE.SEARCH' | translate"
 				tabId="search"
+				[tabId]="invoiceTabsEnum.SEARCH"
 			>
 				<form [formGroup]="searchForm" (ngSubmit)="search()">
 					<div class="row">
@@ -287,7 +288,7 @@
 			</nb-tab>
 			<nb-tab
 				[tabTitle]="'INVOICES_PAGE.HISTORY' | translate"
-				tabId="history"
+				[tabId]="invoiceTabsEnum.HISTORY"
 			>
 				<form [formGroup]="historyForm" *ngIf="selectedInvoice">
 					<div class="col-3 px-0">
@@ -357,9 +358,21 @@
 				[settings]="settingsSmartTable"
 				[source]="invoices"
 				[buttonTemplate]="actionButtons"
-				[model]="model"
 				[cardSize]="'big'"
 			></ga-card-grid>
+			<div 
+				*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+				class="pagination-container">
+				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+					<ga-pagination 
+						(selectedPage)="onPageChange($event)"
+						[doEmit]="false"
+						[totalItems]="pagination?.totalItems" 
+						[itemsPerPage]="pagination?.itemsPerPage" 
+						[activePage]="pagination?.activePage">
+					</ga-pagination>
+				</ng-container>
+			</div>
 		</ng-template>
 	</nb-card-body>
 </nb-card>

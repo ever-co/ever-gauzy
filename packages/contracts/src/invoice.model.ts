@@ -146,3 +146,9 @@ export enum EstimateColumnsEnum {
 	DISCOUNT = 'DISCOUNT',
 	CONTACT = 'CONTACT'
 }
+
+export enum InvoiceTabsEnum {
+	ACTIONS = 'ACTIONS',
+	SEARCH = 'SEARCH',
+	HISTORY = 'HISTORY'
+}

@@ -47,6 +47,11 @@ export class IncomeComponent
 	selectedIncome: IIncome;
 	public organization: IOrganization;
 	subject$: Subject<any> = new Subject();
+	pagination: any = {
+		totalItems: 0,
+		activePage: 1,
+		itemsPerPage: 10
+	};
 
 	incomeTable: Ng2SmartTableComponent;
 	@ViewChild('incomeTable') set content(content: Ng2SmartTableComponent) {
@@ -81,8 +86,8 @@ export class IncomeComponent
 		this._loadSmartTableSettings();
 		this.subject$
 			.pipe(
-				tap(() => this.loading = true),
 				debounceTime(200),
+				tap(() => this.loading = true),
 				tap(() => this.getIncomes()),
 				tap(() => this.clearItem()),
 				untilDestroyed(this)
@@ -198,7 +203,7 @@ export class IncomeComponent
 			},
 			pager: {
 				display: true,
-				perPage: 10
+				perPage: this.pagination.itemsPerPage
 			}
 		};
 	}
@@ -386,13 +391,25 @@ export class IncomeComponent
 		try { 
 			this.setSmartTableSource();
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+
+				// Initiate GRID view pagination
+				const { activePage, itemsPerPage } = this.pagination;
+				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+
 				await this.smartTableSource.getElements();
 				this.incomes = this.smartTableSource.getData();
+
+				this.pagination['totalItems'] =  this.smartTableSource.count();
 			}
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
 		this.employeeName = this.store.selectedEmployee ? (this.store.selectedEmployee.fullName).trim() : '';
+	}
+
+	onPageChange(selectedPage: number) {
+		this.pagination['activePage'] = selectedPage;
+		this.subject$.next();
 	}
 
 	/*
