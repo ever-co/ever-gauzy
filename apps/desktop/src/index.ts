@@ -50,7 +50,7 @@ import {
 	LocalStore,
 	DataModel,
 	AppMenu
-} from '../../../libs/desktop-libs/src';
+} from '@gauzy/desktop-libs';
 import {
 	createGauzyWindow,
 	gauzyPage,
@@ -59,7 +59,7 @@ import {
 	createSettingsWindow,
 	createUpdaterWindow,
 	createImageViewerWindow
-} from '../../../libs/desktop-window/src';
+} from '@gauzy/desktop-window';
 import { fork } from 'child_process';
 import { autoUpdater} from 'electron-updater';
 import { CancellationToken } from "builder-util-runtime";
@@ -103,8 +103,9 @@ let updaterWindow: BrowserWindow = null;
 let imageView: BrowserWindow = null;
 
 const pathWindow = {
-	gauzyWindow: path.join(__dirname, '../../../index.html'),
-	timeTrackerUi: path.join(__dirname, '../../../ui/index.html')
+	gauzyWindow: path.join(__dirname, './index.html'),
+	timeTrackerUi: path.join(__dirname, './ui/index.html'),
+	screenshotWindow: path.join(__dirname, './ui/index.html')
 };
 
 let tray = null;
@@ -141,7 +142,7 @@ function startServer(value, restart = false) {
 			value.port || environment.API_DEFAULT_PORT
 		}`;
 		// require(path.join(__dirname, 'api/main.js'));
-		serverGauzy = fork(path.join(__dirname, '../../../api/main.js'), {
+		serverGauzy = fork(path.join(__dirname, './api/main.js'), {
 			silent: true
 		});
 		serverGauzy.stdout.on('data', (data) => {
@@ -157,7 +158,7 @@ function startServer(value, restart = false) {
 					gauzyWindow = createGauzyWindow(
 						gauzyWindow,
 						serve,
-						{ ...environment },
+						{ ...environment, gauzyWindow: value.gauzyWindow },
 						pathWindow.gauzyWindow
 					);
 					gauzyWindow.show();
@@ -205,7 +206,7 @@ function startServer(value, restart = false) {
 		gauzyWindow = createGauzyWindow(
 			gauzyWindow,
 			serve,
-			{ ...environment },
+			{ ...environment, gauzyWindow: value.gauzyWindow },
 			pathWindow.gauzyWindow
 		);
 		gauzyWindow.show();
@@ -220,7 +221,13 @@ function startServer(value, restart = false) {
 			auth,
 			settingsWindow,
 			{ ...environment },
-			pathWindow
+			pathWindow,
+			path.join(
+				__dirname,
+				'assets',
+				'icons',
+				'icon_16x16.png'
+			)
 		);
 	}
 
@@ -381,7 +388,7 @@ ipcMain.on('server_is_ready', () => {
 	onWaitingServer = false;
 	if (!isAlreadyRun) {
 		serverDesktop = fork(
-			path.join(__dirname, '../../../desktop-api/main.js')
+			path.join(__dirname, './desktop-api/main.js')
 		);
 		gauzyWindow.loadURL(gauzyPage(pathWindow.gauzyWindow));
 		ipcTimer(
@@ -394,7 +401,8 @@ ipcMain.on('server_is_ready', () => {
 			imageView,
 			{ ...environment },
 			createSettingsWindow,
-			pathWindow
+			pathWindow,
+			path.join(__dirname, '..', 'data', 'sound', 'snapshot-sound.wav')
 		);
 		isAlreadyRun = true;
 	}
@@ -438,10 +446,11 @@ ipcMain.on('restart_app', (event, arg) => {
 
 ipcMain.on('server_already_start', () => {
 	if (!gauzyWindow && !isAlreadyRun) {
+		const configs: any = store.get('configs');
 		gauzyWindow = createGauzyWindow(
 			gauzyWindow,
 			serve,
-			{ ...environment },
+			{ ...environment, gauzyWindow: configs.gauzyWindow },
 			pathWindow.gauzyWindow
 		);
 		isAlreadyRun = true;

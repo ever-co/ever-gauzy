@@ -1,5 +1,4 @@
 import { app, Menu, nativeImage, Tray } from 'electron';
-import * as path from 'path';
 const Store = require('electron-store');
 import { LocalStore } from './desktop-store';
 import { ipcMain } from 'electron';
@@ -9,7 +8,7 @@ import {
 	loginPage,
 	timeTrackerPage,
 	getApiBaseUrl
-} from '../../../desktop-window/src';
+} from '@gauzy/desktop-window';
 
 export class TrayIcon {
 	tray: Tray;
@@ -20,21 +19,13 @@ export class TrayIcon {
 		auth,
 		settingsWindow,
 		config,
-		windowPath
+		windowPath,
+		iconPath
 	) {
 		let loginPageAlreadyShow = false;
 		const appConfig = LocalStore.getStore('configs');
 		const store = new Store();
-		const iconPath = path.join(
-			__dirname,
-			'..',
-			'..',
-			'..',
-			'..',
-			'assets',
-			'icons',
-			'icon_16x16.png'
-		);
+		console.log('icon path', iconPath);
 		const iconNativePath = nativeImage.createFromPath(iconPath);
 		iconNativePath.resize({ width: 16, height: 16 });
 		this.tray = new Tray(iconNativePath);
