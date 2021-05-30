@@ -42,7 +42,6 @@
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
 		"asar": true,
 		"npmRebuild": true,
-		"compression": "maximum",
 		"directories": {
 			"buildResources": "icons",
 			"output": "../desktop-packages"
