@@ -15,7 +15,7 @@ ARG DEMO
 ARG HOST
 ARG PORT
 
-FROM node:16-alpine3.13 AS dependencies
+FROM node:16-alpine3.11 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 
@@ -54,7 +54,7 @@ COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock
 RUN yarn install --frozen-lockfile && yarn cache clean
 # RUN apk del build-dependencies make gcc g++ python2 py2-setuptools vips-dev
 
-FROM node:16-alpine3.13 AS prodDependencies
+FROM node:16-alpine3.11 AS prodDependencies
 
 RUN apk --update add bash && \
     apk add --no-cache --virtual build-dependencies dos2unix gcc g++ git make python2 py2-setuptools vips-dev && \
@@ -86,7 +86,7 @@ RUN yarn install --frozen-lockfile --production && yarn cache clean
 
 RUN rm -r node_modules/@angular
 
-FROM node:16-alpine3.13 AS development
+FROM node:16-alpine3.11 AS development
 
 USER node:node
 
@@ -96,7 +96,7 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:16-alpine3.13 AS build
+FROM node:16-alpine3.11 AS build
 
 WORKDIR /srv/gauzy
 
@@ -113,7 +113,7 @@ ENV IS_DOCKER=true
 RUN yarn build:package:api
 RUN yarn build:api:prod
 
-FROM node:16-alpine3.13 AS production
+FROM node:16-alpine3.11 AS production
 
 WORKDIR /srv/gauzy
 
