@@ -34,14 +34,30 @@ import { isNotEmpty } from '@gauzy/common-angular';
 })
 export class EmployeeSelectorComponent
 	implements OnInit, OnDestroy, AfterViewInit {
-	@Input()
-	skipGlobalChange: boolean;
 
-	@Input()
-	disabled: boolean;
+	private _skipGlobalChange: boolean = false;
+	get skipGlobalChange(): boolean {
+		return this._skipGlobalChange;
+	}
+	@Input() set skipGlobalChange(value: boolean) {
+		this._skipGlobalChange = value;
+	}
 
-	@Input()
-	placeholder: string;
+	private _disabled: boolean = false;
+	get disabled(): boolean {
+		return this._disabled;
+	}
+	@Input() set disabled(value: boolean) {
+		this._disabled = value;
+	}
+
+	private _placeholder: string;
+	get placeholder(): string {
+		return this._placeholder;
+	}
+	@Input() set placeholder(value: string) {
+		this._placeholder = value;
+	}
 
 	private _defaultSelected: boolean = true;
 	get defaultSelected(): boolean {
@@ -68,8 +84,6 @@ export class EmployeeSelectorComponent
 		this.subject$.next([this.store.selectedOrganization, value]);
 	}
 
-	private _selectedOrganization?: IOrganization;
-
 	@Output()
 	selectionChanged: EventEmitter<ISelectedEmployee> = new EventEmitter();
 
@@ -89,7 +103,7 @@ export class EmployeeSelectorComponent
 		this._selectedEmployee();
 		this.subject$
 			.pipe(
-				debounceTime(800),
+				debounceTime(200),
 				switchMap(async ([organization, date]) => {
 					await this.loadWorkingEmployeesIfRequired(
 						organization,
@@ -204,17 +218,17 @@ export class EmployeeSelectorComponent
 		if (!this.skipGlobalChange) {
 			this.store.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
 		} else {
-			this.selectedEmployee = employee;
+			this.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
 		}
 		this.selectionChanged.emit(employee);
 	}
 
 	selectEmployeeById(employeeId: string) {
-		const employees = this.people.filter(
+		const employee = this.people.find(
 			(employee: ISelectedEmployee) => employeeId === employee.id
 		);
-		if (employees.length > 0) {
-			this.selectEmployee(employees[0]);
+		if (employee) {
+			this.selectEmployee(employee);
 		}
 	}
 
@@ -247,39 +261,28 @@ export class EmployeeSelectorComponent
 	}
 
 	loadWorkingEmployeesIfRequired = async (
-		org: IOrganization,
+		organization: IOrganization,
 		selectedDate: Date
 	) => {
 		//If no organization, then something is wrong
-		if (!org) {
+		if (!organization) {
 			this.people = [];
 			return;
 		}
-
-		//Save repeated API calls for the same organization & date
-		if (
-			this._selectedOrganization &&
-			this._selectedDate &&
-			selectedDate &&
-			org.id === this._selectedOrganization.id &&
-			selectedDate.getTime() === this._selectedDate.getTime()
-		) {
-			return;
-		}
-
-		this._selectedOrganization = org;
 		this._selectedDate = selectedDate;
-		await this.getEmployees(org, selectedDate);
+		await this.getEmployees(organization, selectedDate);
 	};
 
-	private getEmployees = async (org: IOrganization, selectedDate: Date) => {
-		if (!org) {
+	private getEmployees = async (organization: IOrganization, selectedDate: Date) => {
+		if (!organization) {
 			this.people = [];
 			return;
 		}
+		const { tenantId } = this.store.user;
+		const { id } = organization;
 		const { items } = await this.employeesService.getWorking(
-			org.id,
-			org.tenantId,
+			id,
+			tenantId,
 			selectedDate,
 			true
 		);
@@ -303,8 +306,7 @@ export class EmployeeSelectorComponent
 		
 		//Set selected employee if no employee selected
 		if (items.length > 0 && !this.store.selectedEmployee) {
-			this.store.selectedEmployee =
-				this.people[0] || ALL_EMPLOYEES_SELECTED;
+			this.store.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
 		}
 	};
 

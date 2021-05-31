@@ -16,6 +16,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import * as moment from 'moment';
 import { IncomeMutationComponent } from '../../@shared/income/income-mutation/income-mutation.component';
 import { DateViewComponent, IncomeExpenseAmountComponent, NotesWithTagsComponent } from '../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -93,6 +94,7 @@ export class IncomeComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		const selectedDate$ = this.store.selectedDate$;
@@ -100,8 +102,8 @@ export class IncomeComponent
 			.pipe(
 				debounceTime(300),
 				filter(([organization, employee]) => !!organization && !!employee),
-				distinctUntilChange(),
 				tap(([organization]) => (this.organization = organization)),
+				distinctUntilChange(),
 				tap(([organization, employee, date]) => {
 					if (organization) {
 						this.selectedDate = date;
@@ -177,15 +179,7 @@ export class IncomeComponent
 				},
 				employeeName: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
-					type: 'string',
-					valuePrepareFunction: (_, income: IIncome) => {
-						const user = income.employee
-							? income.employee.user
-							: null;
-						if (user) {
-							return `${user.name}`;
-						}
-					}
+					type: 'string'
 				},
 				amount: {
 					title: this.getTranslation('SM_TABLE.VALUE'),
@@ -354,7 +348,9 @@ export class IncomeComponent
 		if (this.selectedEmployeeId) {
 			request['employeeId'] = this.selectedEmployeeId;
 		}
-
+		if (moment(this.selectedDate).isValid()) {
+			request['valueDate'] = moment(this.selectedDate).format('YYYY-MM-DD HH:mm:ss');
+		}
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/income/search/filter`,
 			relations: ['employee', 'employee.user', 'tags', 'organization'],
@@ -367,15 +363,11 @@ export class IncomeComponent
 			},
 			where: {
 				...{ organizationId, tenantId },
-				...request,
-				selectedDate: this.selectedDate,
+				...request
 			},
-			resultMap: (i: IIncome) => {
-				return Object.assign({}, i, {
-					organizationId: i.organization.id,
-					employeeId: i.employee ? i.employee.id : null,
-					employeeName: i.employee ? i.employee.user.name : null,
-					orgId: this.store.selectedOrganization.id
+			resultMap: (income: IIncome) => {
+				return Object.assign({}, income, {
+					employeeName: income.employee ? income.employee.user.name : null,
 				});
 			},
 			finalize: () => {

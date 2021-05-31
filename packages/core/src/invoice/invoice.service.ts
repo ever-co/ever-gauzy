@@ -330,7 +330,6 @@ export class InvoiceService extends CrudService<Invoice> {
 			if (filter.where.invoiceDate) {
 				const date = moment.utc(filter.where.invoiceDate);
 				filter.where.invoiceDate = Between(date.startOf('day').toDate(), date.endOf('day').toDate());
-	
 			}
 		}
 		return super.search(filter);

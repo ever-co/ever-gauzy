@@ -93,7 +93,7 @@ export class InvoicesComponent
 	contextMenus = [];
 	columns: any;
 	organizationContacts: IOrganizationContact[];
-	perPage = 10;
+	perPage: number = 10;
 	histories: IInvoiceEstimateHistory[] = [];
 	includeArchived = false;
 	subject$: Subject<any> = new Subject();
@@ -289,11 +289,15 @@ export class InvoicesComponent
 			});
 		}
 
-		const contextMenus = this.contextMenus.filter((item) => this.ngxPermissionsService.getPermission(item.permission) != null)
+		const contextMenus = this.contextMenus.filter(
+			(item) => this.ngxPermissionsService.getPermission(item.permission) != null
+		)
 		if (this.isEstimate) {
 			this.settingsContextMenu = contextMenus;
 		} else {
-			this.settingsContextMenu = contextMenus.filter((item) => item.title !== this.getTranslation('INVOICES_PAGE.ACTION.CONVERT_TO_INVOICE'));
+			this.settingsContextMenu = contextMenus.filter(
+				(item) => item.title !== this.getTranslation('INVOICES_PAGE.ACTION.CONVERT_TO_INVOICE')
+			);
 		}
 		this.nbMenuService.onItemClick().pipe(first());
 	}
@@ -711,9 +715,10 @@ export class InvoicesComponent
 				isArchived: (this.includeArchived === true) ? 1 : 0,
 				...this.filters.where
 			},
-			resultMap: (i) => {
-				return Object.assign({}, i, {
-					organizationContactName: i.toContact?.name
+			resultMap: (invoice: IInvoice) => {
+				return Object.assign({}, invoice, {
+					organizationContactName: (invoice.toContact) ? invoice.toContact.name : null,
+					totalValue: `${invoice.currency} ${invoice.totalValue}`
 				});
 			},
 			finalize: () => {
@@ -935,10 +940,7 @@ export class InvoicesComponent
 				title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
 				type: 'text',
 				filter: false,
-				width: '10%',
-				valuePrepareFunction: (cell, row) => {
-					return `${row.currency} ${parseFloat(cell).toFixed(2)}`;
-				}
+				width: '10%'
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.TAX)) {

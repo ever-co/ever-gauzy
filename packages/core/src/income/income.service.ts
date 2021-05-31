@@ -46,19 +46,45 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 			: 0;
 	}
 
-	public search(filter?: any) {
-		if (filter?.filters?.employeeName) {
-			filter.where = {
-				...filter.where,
-				employee: {
-					user: {
-						firstName: ILike('%' + filter.filters.employeeName.search + '%')
+	public search(filter: any) {
+		if ('filters' in filter) {
+			const { filters } = filter;
+			if ('employeeName' in filters) {
+				const { search } = filters.employeeName;
+				filter.where = {
+					...filter.where,
+					employee: {
+						user: {
+							firstName: ILike(`%${search}%`)
+						}
 					}
 				}
 			}
-
-			delete filter.filters.employeeName
+			if ('clientName' in filters) {
+				const { search } = filters.clientName;
+				filter.where = {
+					...filter.where,
+					clientName: ILike(`%${search}%`)
+				}
+			}
+			if ('notes' in filters) {
+				const { search } = filters.notes;
+				filter.where = {
+					...filter.where,
+					notes: ILike(`%${search}%`)
+				}
+			}
+			delete filter['filters'];
 		}
+
+		if ('valueDate' in filter.where) {
+			const { valueDate } = filter.where;
+			const startOfMonth = moment(valueDate).startOf('month');
+			const endOfMonth = moment(valueDate).endOf('month');
+
+			filter.where.valueDate = Between(startOfMonth, endOfMonth);
+		}
+
 		return super.search(filter);
 	}
 }

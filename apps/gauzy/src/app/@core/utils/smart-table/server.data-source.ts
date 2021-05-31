@@ -108,9 +108,9 @@ export class ServerDataSource extends LocalDataSource {
             try {
                 this.filterConf.filters.forEach((fieldConf: any) => {
                     let condition = 'default';
-                    const dataType = fieldConf.filter.dataType || 'string';
+                    let dataType = 'string';
 
-                    if (fieldConf.filter.condition) {
+                    if (fieldConf.filter && fieldConf.filter.condition) {
                         condition = fieldConf.filter.condition;
                     } else if (dataType == 'string') {
                         condition = 'ILike';
@@ -119,7 +119,7 @@ export class ServerDataSource extends LocalDataSource {
                         const { field, search } = fieldConf;
                         filters[field] = {
                             dataType,
-                            condition: condition,
+                            condition,
                             search,
                         };
                     }
