@@ -19,7 +19,12 @@ export class StatusBadgeComponent implements OnInit {
 	ngOnInit() {
 		if (this.value) {
 			if (this.layout === 'CARDS_GRID') {
-				this.text = this.value;
+				if (typeof this.value === 'object') {
+					this.text = this.value['text'];
+					this.badgeClass = 'badge badge-' + this.value['class'];
+				} else {
+					this.text = this.value;
+				}
 			} else {
 				this.text = this.value['text'];
 				this.badgeClass = 'badge badge-' + this.value['class'];

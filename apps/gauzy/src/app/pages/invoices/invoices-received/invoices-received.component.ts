@@ -21,6 +21,7 @@ import { Subject } from 'rxjs/internal/Subject';
 import { ServerDataSource } from '../../../@core/utils/smart-table/server.data-source';
 import { API_PREFIX } from '../../../@core/constants';
 import { HttpClient } from '@angular/common/http';
+import { InvoiceEstimateTotalValueComponent } from '../table-components/invoice-total-value.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -162,11 +163,6 @@ export class InvoicesReceivedComponent
 				tenantId,
 				isEstimate: (this.isEstimate === true) ? 1 : 0
 			},
-			resultMap: (invoice: IInvoice) => {
-				return Object.assign({}, invoice, {
-					totalValue: `${invoice.currency} ${invoice.totalValue}`				
-				});
-			},
 			finalize: () => {
 				this.loading = false;
 			}
@@ -265,7 +261,8 @@ export class InvoicesReceivedComponent
 				},
 				totalValue: {
 					title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
-					type: 'string'
+					type: 'custom',
+					renderComponent: InvoiceEstimateTotalValueComponent,
 				}
 			}
 		};
