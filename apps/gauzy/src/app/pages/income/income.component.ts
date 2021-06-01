@@ -24,6 +24,7 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
 import { ErrorHandlingService, IncomeService, Store, ToastrService } from '../../@core/services';
+import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -101,7 +102,7 @@ export class IncomeComponent
 		combineLatest([storeOrganization$, storeEmployee$, selectedDate$])
 			.pipe(
 				debounceTime(300),
-				filter(([organization, employee]) => !!organization && !!employee),
+				filter(([organization]) => !!organization),
 				tap(([organization]) => (this.organization = organization)),
 				distinctUntilChange(),
 				tap(([organization, employee, date]) => {
@@ -377,9 +378,6 @@ export class IncomeComponent
 	}
 
 	private async getIncomes() {
-		if (!this.organization) {
-			return;
-		}
 		try { 
 			this.setSmartTableSource();
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
@@ -396,7 +394,7 @@ export class IncomeComponent
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
-		this.employeeName = this.store.selectedEmployee ? (this.store.selectedEmployee.fullName).trim() : '';
+		this.employeeName = this.store.selectedEmployee ? (this.store.selectedEmployee.fullName).trim() : ALL_EMPLOYEES_SELECTED.fullName;
 	}
 
 	onPageChange(selectedPage: number) {

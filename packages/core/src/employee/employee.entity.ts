@@ -354,4 +354,6 @@ export class Employee
 	@IsOptional()
 	@Column({ type: 'numeric', nullable: true })
 	jobSuccess?: number;
+
+	fullName?: string;
 }

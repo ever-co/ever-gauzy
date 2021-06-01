@@ -106,14 +106,6 @@ export class InvoicesReceivedComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					console.log(event);
-					this.setView();
-				}
-			});
 	}
 
 	onPageChange(selectedPage: number) {

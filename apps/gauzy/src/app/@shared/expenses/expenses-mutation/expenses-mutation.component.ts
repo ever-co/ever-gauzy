@@ -18,23 +18,28 @@ import {
 	ContactType,
 	IExpenseViewModel,
 	ICurrency,
-	ISelectedEmployee
+	ISelectedEmployee,
+	IOrganization
 } from '@gauzy/contracts';
-import { Store } from '../../../@core/services/store.service';
+import { isEmpty } from '@gauzy/common-angular';
 import {
 	EmployeeSelectorComponent,
 	ALL_EMPLOYEES_SELECTED
 } from '../../../@theme/components/header/selectors/employee';
-import { OrganizationVendorsService } from '../../../@core/services/organization-vendors.service';
-import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
-import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { AttachReceiptComponent } from './attach-receipt/attach-receipt.component';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-import { OrganizationExpenseCategoriesService } from '../../../@core/services/organization-expense-categories.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import { filter, tap } from 'rxjs/operators';
+import { 
+	ErrorHandlingService,
+	OrganizationContactService,
+	OrganizationExpenseCategoriesService,
+	OrganizationProjectsService,
+	OrganizationVendorsService,
+	Store,
+	ToastrService 
+} from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -45,9 +50,10 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 export class ExpensesMutationComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	@ViewChild('employeeSelector')
+
+	@ViewChild('employeeSelector', { static: false })
 	employeeSelector: EmployeeSelectorComponent;
-	form: FormGroup;
+
 	expense: IExpenseViewModel;
 	organizationId: string;
 	tenantId: string;
@@ -68,7 +74,6 @@ export class ExpensesMutationComponent
 	calculatedValue = '0';
 	duplicate: boolean;
 	showNotes = false;
-	_showTaxesInput = false;
 	showWarning = false;
 	disable = true;
 	loading = false;
@@ -81,7 +86,10 @@ export class ExpensesMutationComponent
 	disableStatuses = false;
 	averageExpense = 0;
 	translatedTaxTypes = [];
+	organization: IOrganization;
+	selectedEmployee: ISelectedEmployee
 
+	_showTaxesInput = false;
 	public get showTaxesInput(): boolean {
 		return this._showTaxesInput;
 	}
@@ -89,54 +97,92 @@ export class ExpensesMutationComponent
 		this._showTaxesInput = value;
 	}
 
+	/*
+	* Search Tab Form 
+	*/
+	public form: FormGroup = ExpensesMutationComponent.buildForm(this.fb, this);
+	static buildForm(
+		fb: FormBuilder,
+		self: ExpensesMutationComponent
+	): FormGroup {
+		return fb.group({
+			amount: ['', Validators.required],
+			vendor: [null, Validators.required],
+			typeOfExpense: [self.expenseTypes[0]],
+			category: [null, Validators.required],
+			notes: [''],
+			currency: [''],
+			valueDate: [ self.store.getDateFromOrganizationSettings(), Validators.required ],
+			purpose: [''],
+			organizationContact: [null],
+			project: [null],
+			taxType: [TaxTypesEnum.PERCENTAGE],
+			taxLabel: [''],
+			rateValue: [0],
+			receipt: [self.defaultImage],
+			splitExpense: [false],
+			tags: [],
+			status: []
+		});
+	}
+
 	constructor(
-		public dialogRef: NbDialogRef<ExpensesMutationComponent>,
-		private dialogService: NbDialogService,
-		private fb: FormBuilder,
-		private organizationVendorsService: OrganizationVendorsService,
-		private store: Store,
+		public readonly dialogRef: NbDialogRef<ExpensesMutationComponent>,
+		private readonly dialogService: NbDialogService,
+		private readonly fb: FormBuilder,
+		private readonly organizationVendorsService: OrganizationVendorsService,
+		private readonly store: Store,
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly expenseCategoriesStore: OrganizationExpenseCategoriesService,
 		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
-		private errorHandler: ErrorHandlingService
+		private readonly errorHandler: ErrorHandlingService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
-		this.getTranslatedTaxTypes();
-		this._initializeForm();
-		this.getDefaultData();
-		this.loadOrganizationContacts();
-		this.loadProjects();
-		this.changeExpenseType(this.form.value.typeOfExpense);
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				tap((organization: IOrganization) => {
+					this.tenantId = this.store.user.tenantId;
+					this.organization = organization;
+					this.organizationId = organization.id;
+				}),
+				tap(() => this.getExpenseCategories()),
+				tap(() => this.getVendors()),
+				tap(() => this.getOrganizationContacts()),
+				tap(() => this.getProjects()),
+				untilDestroyed(this)
+			)
+			.subscribe(() => {
+				this.getTranslatedTaxTypes()
+				this._initializeForm();
+				this.changeExpenseType(this.form.value.typeOfExpense);
+			});
 	}
 
 	get currency() {
 		return this.form.get('currency');
 	}
 
-	private async getDefaultData() {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.store.selectedOrganization;
-
-		this.organizationId = organizationId;
-		this.tenantId = tenantId;
-
+	private async getExpenseCategories() {
+		const { tenantId, organizationId } = this;
 		const { items: category } = await this.expenseCategoriesStore.getAll({
 			organizationId,
 			tenantId
 		});
 		this.expenseCategories = category;
+	}
 
-		const { items: vendors } = await this.organizationVendorsService.getAll(
-			{
-				organizationId,
-				tenantId
-			}
-		);
+	private async getVendors() {
+		const { tenantId, organizationId } = this;
+		const { items: vendors } = await this.organizationVendorsService.getAll({
+			organizationId,
+			tenantId
+		});
 		this.vendors = vendors;
 	}
 
@@ -148,11 +194,8 @@ export class ExpensesMutationComponent
 	}
 
 	async addOrEditExpense() {
-		if (
-			this.form.value.typeOfExpense ===
-				ExpenseTypesEnum.BILLABLE_TO_CONTACT &&
-			!this.form.value.organizationContact
-		) {
+		const { typeOfExpense, organizationContact, project } = this.form.value;
+		if (typeOfExpense === ExpenseTypesEnum.BILLABLE_TO_CONTACT && !organizationContact) {
 			this.showWarning = true;
 			setTimeout(() => {
 				this.closeWarning();
@@ -162,39 +205,35 @@ export class ExpensesMutationComponent
 			this.closeWarning();
 		}
 
-		if (this.form.value.organizationContact === null) {
-			this.form.value.organizationContact = {
+		if (organizationContact === null) {
+			this.form.patchValue({
 				organizationContactName: null,
 				organizationContactId: null
-			};
+			});
 		}
 
-		if (this.form.value.project === null) {
-			this.form.value.project = {
+		if (project === null) {
+			this.form.patchValue({
 				projectName: null,
 				projectId: null
-			};
+			});
 		}
 
-		if (this.employeeSelector.selectedEmployee === ALL_EMPLOYEES_SELECTED)
-			this.form.value.splitExpense = true;
-
-		if (
-			this.form.value.typeOfExpense !==
-			ExpenseTypesEnum.BILLABLE_TO_CONTACT
-		) {
-			this.form.value.status = this.getTranslation(
-				'EXPENSES_PAGE.MUTATION.NOT_BILLABLE'
-			);
+		if ( typeOfExpense !== ExpenseTypesEnum.BILLABLE_TO_CONTACT) {
+			this.form.patchValue({
+				status: this.getTranslation('EXPENSES_PAGE.MUTATION.NOT_BILLABLE')
+			});
 		}
 
 		this.dialogRef.close(
 			Object.assign(
 				{ employee: this.employeeSelector.selectedEmployee },
-				this.form.value
+				this.form.value,
+				{ splitExpense: this.showTooltip }
 			)
 		);
 	}
+
 	addNewCategory = async (
 		name: string
 	): Promise<IOrganizationExpenseCategory> => {
@@ -202,10 +241,11 @@ export class ExpensesMutationComponent
 			this.toastrService.success('EXPENSES_PAGE.ADD_EXPENSE_CATEGORY', {
 				name
 			});
+			const { tenantId, organizationId } = this;
 			return await this.expenseCategoriesStore.create({
 				name,
-				organizationId: this.organizationId,
-				tenantId: this.tenantId
+				organizationId,
+				tenantId
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -214,16 +254,14 @@ export class ExpensesMutationComponent
 
 	addNewVendor = (name: string): Promise<IOrganizationVendor> => {
 		try {
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.ADD_VENDOR',
-				{
-					name
-				}
-			);
+			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.ADD_VENDOR', {
+				name
+			});
+			const { tenantId, organizationId } = this;
 			return this.organizationVendorsService.create({
 				name,
-				organizationId: this.organizationId,
-				tenantId: this.tenantId
+				organizationId,
+				tenantId
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -234,17 +272,15 @@ export class ExpensesMutationComponent
 		name: string
 	): Promise<IOrganizationContact> => {
 		try {
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
-				{
-					name
-				}
-			);
+			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT', {
+				name
+			});
+			const { tenantId, organizationId } = this;
 			return this.organizationContactService.create({
 				name,
 				contactType: ContactType.CLIENT,
-				organizationId: this.organizationId,
-				tenantId: this.tenantId
+				organizationId,
+				tenantId
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -252,18 +288,15 @@ export class ExpensesMutationComponent
 	};
 
 	addNewProject = (name: string): Promise<IOrganizationProject> => {
-		this.organizationId = this.store.selectedOrganization.id;
+		const { tenantId, organizationId } = this;
 		try {
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
-				{
-					name
-				}
-			);
+			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT', {
+				name
+			});
 			return this.organizationProjectsService.create({
 				name,
-				organizationId: this.organizationId,
-				tenantId: this.tenantId
+				organizationId,
+				tenantId
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -284,65 +317,39 @@ export class ExpensesMutationComponent
 
 	private _initializeForm() {
 		if (this.expense) {
-			this.form = this.fb.group({
-				id: [this.expense.id],
-				amount: [this.expense.amount, Validators.required],
-				vendor: [this.expense.vendor, Validators.required],
+			this.form.patchValue({
+				id: this.expense.id,
+				amount: this.expense.amount,
+				vendor: this.expense.vendor,
 				typeOfExpense: this.expense.typeOfExpense,
-				category: [this.expense.category, Validators.required],
-				notes: [this.expense.notes],
-				currency: [this.expense.currency],
-				valueDate: [
-					new Date(this.expense.valueDate),
-					Validators.required
-				],
-				purpose: [this.expense.purpose],
-				organizationContact: [this.expense.organizationContactName],
-				project: [this.expense.projectName],
-				taxType: [this.expense.taxType],
-				taxLabel: [this.expense.taxLabel],
-				rateValue: [this.expense.rateValue],
-				receipt: [this.expense.receipt],
-				splitExpense: [this.expense.splitExpense],
-				tags: [this.expense.tags],
-				status: [this.expense.status]
+				category: this.expense.category,
+				notes: this.expense.notes,
+				currency: this.expense.currency,
+				valueDate: new Date(this.expense.valueDate),
+				purpose: this.expense.purpose,
+				organizationContact: this.expense.organizationContactName,
+				project: this.expense.project,
+				taxType: this.expense.taxType,
+				taxLabel: this.expense.taxLabel,
+				rateValue: this.expense.rateValue,
+				receipt: this.expense.receipt,
+				splitExpense: this.expense.splitExpense,
+				tags: this.expense.tags,
+				status: this.expense.status
 			});
-			if (this.form.value.taxLabel) {
+			if (this.expense.taxLabel) {
 				this.includeTaxes();
 			}
-			if (this.form.value.notes) {
+			if (this.expense.notes) {
 				this.showNotesInput();
 			}
 		} else {
-			this.form = this.fb.group({
-				amount: ['', Validators.required],
-				vendor: [null, Validators.required],
-				typeOfExpense: [this.expenseTypes[0]],
-				category: [null, Validators.required],
-				notes: [''],
-				currency: [''],
-				valueDate: [
-					this.store.getDateFromOrganizationSettings(),
-					Validators.required
-				],
-				purpose: [''],
-				organizationContact: [null],
-				project: [null],
-				taxType: [TaxTypesEnum.PERCENTAGE],
-				taxLabel: [''],
-				rateValue: [0],
-				receipt: [this.defaultImage],
-				splitExpense: [false],
-				tags: [],
-				status: []
-			});
-			const { currency } = this.store.selectedOrganization;
+			const { currency } = this.organization;
 			if (this.currency && !this.currency.value) {
 				this.currency.setValue(currency);
 				this.currency.updateValueAndValidity();
 			}
 		}
-
 		this.valueDate = this.form.get('valueDate');
 		this.amount = this.form.get('amount');
 		this.notes = this.form.get('notes');
@@ -350,14 +357,15 @@ export class ExpensesMutationComponent
 	}
 
 	private calculateTaxes() {
-		this.form.valueChanges.pipe(untilDestroyed(this)).subscribe((val) => {
+		this.form.valueChanges
+			.pipe(untilDestroyed(this))
+			.subscribe((val) => {
 			const amount = val.amount;
 			const rate = val.rateValue;
 			const oldNotes = val.notes;
 
 			if (val.taxType === TaxTypesEnum.PERCENTAGE) {
 				const result = (amount / (rate + 100)) * 100 * (rate / 100);
-
 				this.calculatedValue =
 					`${this.getTranslation(
 						'EXPENSES_PAGE.MUTATION.TAX_AMOUNT'
@@ -374,46 +382,38 @@ export class ExpensesMutationComponent
 					result.toFixed(2) +
 					' %';
 			}
-
 			if (rate !== 0) {
 				val.notes = this.calculatedValue + '. ' + oldNotes;
 			}
 		});
 	}
 
-	private async loadOrganizationContacts() {
-		const res = await this.organizationContactService.getAll(['projects'], {
-			organizationId: this.organizationId,
-			tenantId: this.tenantId
+	private async getOrganizationContacts() {
+		const { tenantId, organizationId } = this;
+		const { items = [] } = await this.organizationContactService.getAll(['projects'], {
+			organizationId,
+			tenantId
 		});
-
-		if (res) {
-			res.items.forEach((organizationContact) => {
-				this.organizationContacts.push({
-					name: organizationContact.name,
-					organizationContactId: organizationContact.id
-				});
-			});
-		}
+		this.organizationContacts = items.map((organizationContact) => {
+			return {
+				name: organizationContact.name,
+				organizationContactId: organizationContact.id
+			}
+		});
 	}
 
-	private async loadProjects() {
-		const res = await this.organizationProjectsService.getAll(
-			['organizationContact'],
-			{
-				organizationId: this.organizationId,
-				tenantId: this.tenantId
+	private async getProjects() {
+		const { tenantId, organizationId } = this;
+		const { items = [] } = await this.organizationProjectsService.getAll(['organizationContact'], {
+			organizationId,
+			tenantId
+		});
+		this.projects = items.map((project) => {
+			return {
+				name: project.name,
+				projectId: project.id
 			}
-		);
-
-		if (res) {
-			res.items.forEach((project) => {
-				this.projects.push({
-					name: project.name,
-					projectId: project.id
-				});
-			});
-		}
+		});
 	}
 
 	closeWarning() {
@@ -427,26 +427,34 @@ export class ExpensesMutationComponent
 					currentReceipt: this.form.value.receipt
 				}
 			})
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe((newReceipt) => {
-				this.form.value.receipt = newReceipt;
-			});
+			.onClose
+			.pipe(
+				tap((newReceipt) => {
+					this.form.patchValue({
+						receipt: newReceipt
+					})
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	selectedTagsHandler(currentSelection: ITag) {
-		this.form.get('tags').setValue(currentSelection);
+		this.form.patchValue({
+			tags: currentSelection
+		});
 	}
 
 	onEmployeeChange(selectedEmployee: ISelectedEmployee) {
-		this.showTooltip = selectedEmployee === ALL_EMPLOYEES_SELECTED;
+		this.selectedEmployee = selectedEmployee;
+		this.showTooltip = (
+			isEmpty(this.employeeSelector) || 
+			this.employeeSelector.selectedEmployee === ALL_EMPLOYEES_SELECTED
+		);
 	}
 
 	changeExpenseType($event) {
-		if ($event !== ExpenseTypesEnum.BILLABLE_TO_CONTACT) {
-			this.disableStatuses = true;
-		} else {
-			this.disableStatuses = false;
-		}
+		this.disableStatuses = $event !== ExpenseTypesEnum.BILLABLE_TO_CONTACT;
 	}
 
 	getTranslatedTaxTypes() {

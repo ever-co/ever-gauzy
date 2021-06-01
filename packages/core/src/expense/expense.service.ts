@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, Between } from 'typeorm';
+import { Repository, FindManyOptions, Between, ILike, In } from 'typeorm';
 import { Expense } from './expense.entity';
 import { IPagination } from '../core';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
@@ -195,5 +195,71 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		});
 
 		return query;
+	}
+
+	public search(filter: any) {
+		if ('valueDate' in filter.where) {
+			const { valueDate } = filter.where;
+			const startOfMonth = moment(valueDate).startOf('month');
+			const endOfMonth = moment(valueDate).endOf('month');
+
+			filter.where.valueDate = Between(startOfMonth, endOfMonth);
+		}
+
+		if ('filters' in filter) {
+			const { filters } = filter;
+			if ('employeeName' in filters) {
+				const { search } = filters.employeeName;
+				filter.where = {
+					...filter.where,
+					employee: {
+						user: {
+							firstName: ILike(`%${search}%`)
+						}
+					}
+				}
+			}
+			if ('vendorName' in filters) {
+				const { search } = filters.vendorName;
+				filter.where = {
+					...filter.where,
+					organization_vendor: {
+						name: ILike(`%${search}%`)
+					}
+				}
+			}
+			if ('categoryName' in filters) {
+				const { search } = filters.categoryName;
+				filter.where = {
+					...filter.where,
+					expense_category: {
+						name: ILike(`%${search}%`)
+					}
+				}
+			}
+			if ('notes' in filters) {
+				const { search } = filters.notes;
+				filter.where = {
+					...filter.where,
+					notes: ILike(`%${search}%`)
+				}
+			}
+			if ('purpose' in filters) {
+				const { search } = filters.purpose;
+				filter.where = {
+					...filter.where,
+					purpose: ILike(`%${search}%`)
+				}
+			}
+			if ('displayStatus' in filters) {
+				const { search } = filters.displayStatus;
+				filter.where = {
+					...filter.where,
+					status: ILike(`%${search}%`)
+				}
+			}
+			delete filter['filters'];
+		}
+		return super.search(filter);
 	}
 }
