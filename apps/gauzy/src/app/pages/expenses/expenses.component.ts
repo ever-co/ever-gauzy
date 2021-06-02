@@ -49,7 +49,7 @@ export class ExpensesComponent
 	smartTableSource: ServerDataSource;
 	expenses: IExpenseViewModel[];
 	selectedExpense: IExpenseViewModel;
-	loading = true;
+	loading: boolean;
 	hasEditPermission = false;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -91,6 +91,7 @@ export class ExpensesComponent
 		this._applyTranslationOnSmartTable();
 		this.subject$
 			.pipe(
+				tap(() => this.loading = true),
 				debounceTime(200),
 				tap(() => this.clearItem()),
 				tap(() => this.getExpenses()),
@@ -160,7 +161,7 @@ export class ExpensesComponent
 			.subscribe();
 	}
 
-	statusMapper = (value: string) => {
+	private statusMapper = (value: string) => {
 		const badgeclass = value
 			? ['paid'].includes(value.toLowerCase())
 				? 'success'

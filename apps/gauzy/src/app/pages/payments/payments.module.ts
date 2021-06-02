@@ -18,6 +18,7 @@ import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-esti
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { PaginationModule } from '../../@shared/pagination/pagination.module';
 
 @NgModule({
 	imports: [
@@ -32,7 +33,8 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		NbButtonModule,
 		NbDialogModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		HeaderTitleModule
+		HeaderTitleModule,
+		PaginationModule
 	],
 	providers: [
 		PaymentService,

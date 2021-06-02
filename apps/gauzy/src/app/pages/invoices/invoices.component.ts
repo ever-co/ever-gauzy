@@ -797,7 +797,7 @@ export class InvoicesComponent
 		}
 	}
 
-	statusMapper = (value: string) => {
+	private statusMapper = (value: string) => {
 		let badgeClass;
 		if (value) {
 			badgeClass = [
