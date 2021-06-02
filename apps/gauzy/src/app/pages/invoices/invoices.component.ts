@@ -724,6 +724,8 @@ export class InvoicesComponent
 			const action = comment;
 			await this.createInvoiceHistory(action);
 
+    		this.historyForm.reset();
+
 			const invoice = await this.invoicesService.getById(invoiceId, [
 				'invoiceItems',
 				'invoiceItems.employee',
@@ -740,21 +742,11 @@ export class InvoicesComponent
 				'historyRecords',
 				'historyRecords.user'
 			]);
-			console.log(this.selectedInvoice);
 
 			await this.smartTableSource.update(this.selectedInvoice, {
 				...invoice
 			});
-
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-				this.invoices = this.invoices.map((item: IInvoice) => {
-					if (item.id === invoice.id) {
-						return invoice;
-					}
-					return item;
-				});
-			}
-
+			
 			this.selectInvoice({
 				isSelected: true,
 				data: invoice
