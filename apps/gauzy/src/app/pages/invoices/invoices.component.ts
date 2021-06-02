@@ -716,7 +716,7 @@ export class InvoicesComponent
 		}
 	}
 
-	async addComment() {
+	async addComment(historyFormDirective) {
 		const { comment } = this.historyForm.value;
 		const { id: invoiceId } = this.selectedInvoice;
 
@@ -724,6 +724,7 @@ export class InvoicesComponent
 			const action = comment;
 			await this.createInvoiceHistory(action);
 
+			historyFormDirective.resetForm();
     		this.historyForm.reset();
 
 			const invoice = await this.invoicesService.getById(invoiceId, [
@@ -743,10 +744,25 @@ export class InvoicesComponent
 				'historyRecords.user'
 			]);
 
-			await this.smartTableSource.update(this.selectedInvoice, {
-				...invoice
-			});
-			
+			if(this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE) {
+				this.invoicesTable.grid.getRows().map((row) => {
+					if (row['data']['id'] === invoice.id) {
+						row['data'] = invoice;
+						row.isSelected = true;
+					} else {
+						row.isSelected = false;
+					}
+					return row;
+				});
+			} else {
+				this.invoices = this.invoices.map((row: IInvoice) => {
+					if (row.id === invoice.id) {
+						return invoice;
+					}
+					return row;
+				});
+			}
+
 			this.selectInvoice({
 				isSelected: true,
 				data: invoice

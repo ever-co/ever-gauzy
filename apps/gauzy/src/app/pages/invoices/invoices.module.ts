@@ -80,6 +80,7 @@ import {
 } from './invoice-estimates';
 import { InvoicePaymentReceiptMutationComponent, InvoicePaymentsComponent, PaymentMutationComponent } from './invoice-payments';
 import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view';
+import { SharedModule } from '../../@shared/shared.module';
 
 @NgModule({
 	imports: [
@@ -119,7 +120,8 @@ import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view'
 		NgxPermissionsModule.forChild(),
 		CurrencyModule,
 		HeaderTitleModule,
-		PaginationModule
+		PaginationModule,
+		SharedModule
 	],
 	providers: [
 		InvoicesService,

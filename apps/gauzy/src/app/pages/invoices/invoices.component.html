@@ -290,27 +290,34 @@
 				[tabTitle]="'INVOICES_PAGE.HISTORY' | translate"
 				[tabId]="invoiceTabsEnum.HISTORY"
 			>
-				<form [formGroup]="historyForm" *ngIf="selectedInvoice">
-					<div class="col-3 px-0">
-						<textarea
-							nbInput
-							placeholder="Comment"
-							fullWidth
-							formControlName="comment"
-						></textarea>
-					</div>
-					<div class="mt-3">
-						<button
-							class="mx-0"
-							nbButton
-							status="info"
-							(click)="addComment()"
-							[disabled]="disableButton"
-						>
-							{{ 'BUTTONS.ADD_COMMENT' | translate }}
-						</button>
-					</div>
-				</form>
+				<ng-container *ngIf="selectedInvoice">
+					<form 
+						[formGroup]="historyForm" 
+						#historyFormDirective="ngForm" 
+						(ngSubmit)="addComment(historyFormDirective)"
+					>
+						<div class="col-3 px-0">
+							<textarea
+								nbInput
+								placeholder="Comment"
+								fullWidth
+								formControlName="comment"
+							></textarea>
+						</div>
+						<div class="mt-3">
+							<button
+								type="submit"
+								class="mx-0"
+								nbButton
+								status="info"
+								[disabled]="disableButton"
+							>
+								{{ 'BUTTONS.ADD_COMMENT' | translate }}
+							</button>
+						</div>
+					</form>
+				</ng-container>
+				
 				<nb-list-item *ngIf="disableButton" class="history-list-select">
 					{{ ((!isEstimate) ? 'INVOICES_PAGE.SELECT_INVOICE_TO_VIEW_HISTORY' : 'INVOICES_PAGE.ESTIMATES.SELECT_ESTIMATE_TO_VIEW_HISTORY') | translate }}
 				</nb-list-item>
