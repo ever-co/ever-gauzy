@@ -323,14 +323,11 @@
 						<div class="d-flex">
 							<div>
 								<div class="history-item">
-									<span class="history-action">{{
-										history.action
-									}}</span>
-									- {{ history.user.firstName }}
-									{{ history.user.lastName }}
+									<span class="history-action">{{ history.action }}</span> 
+									- {{ history.user.name }} 
 								</div>
 								<div class="history-date history-item">
-									{{ history.createdAt }}
+									{{ history.createdAt | dateTimeFormat }}
 								</div>
 							</div>
 						</div>

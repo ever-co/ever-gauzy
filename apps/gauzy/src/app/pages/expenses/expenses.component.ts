@@ -104,7 +104,7 @@ export class ExpensesComponent
 		combineLatest([storeOrganization$, storeEmployee$, selectedDate$])
 			.pipe(
 				debounceTime(300),
-				filter(([organization]) => !!organization),
+				filter(([organization, employee]) => !!organization && !!employee),
 				tap(([organization]) => (this.organization = organization)),
 				distinctUntilChange(),
 				tap(([organization, employee, date]) => {
@@ -455,9 +455,7 @@ export class ExpensesComponent
 				alias: 'expense',
 				leftJoin: {
 					employee: 'expense.employee',
-					user: 'employee.user'
-				},
-				innerJoin: {
+					user: 'employee.user',
 					organization_vendor: 'expense.vendor',
 					expense_category: 'expense.category',
 					tags: 'expense.tags'

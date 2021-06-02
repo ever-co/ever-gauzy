@@ -198,14 +198,6 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 	}
 
 	public search(filter: any) {
-		if ('valueDate' in filter.where) {
-			const { valueDate } = filter.where;
-			const startOfMonth = moment(valueDate).startOf('month');
-			const endOfMonth = moment(valueDate).endOf('month');
-
-			filter.where.valueDate = Between(startOfMonth, endOfMonth);
-		}
-
 		if ('filters' in filter) {
 			const { filters } = filter;
 			if ('employeeName' in filters) {
@@ -259,6 +251,16 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 				}
 			}
 			delete filter['filters'];
+		}
+
+		if ('valueDate' in filter.where) {
+			const { valueDate } = filter.where;
+			const startOfMonth = moment(valueDate).startOf('month');
+			const endOfMonth = moment(valueDate).endOf('month');
+			filter.where = {
+				...filter.where,
+				valueDate: Between(startOfMonth, endOfMonth)
+			}
 		}
 		return super.search(filter);
 	}

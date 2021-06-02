@@ -35,7 +35,8 @@ import {
 	PermissionsEnum,
 	ICurrency,
 	IInvoiceItemCreateInput,
-	InvoiceTabsEnum
+	InvoiceTabsEnum,
+	DiscountTaxTypeEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { Router } from '@angular/router';
@@ -65,6 +66,7 @@ import {
 	ToastrService
 } from '../../@core/services';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
+import { DateFormatPipe } from '../../@shared/pipes';
 
 
 @UntilDestroy({ checkProperties: true })
@@ -183,7 +185,8 @@ export class InvoicesComponent
 		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
 		private readonly ngxPermissionsService: NgxPermissionsService,
 		private readonly httpClient: HttpClient,
-		private readonly cdr: ChangeDetectorRef
+		private readonly cdr: ChangeDetectorRef,
+		private readonly dateFormatPipe: DateFormatPipe
 	) {
 		super(translateService);
 	}
@@ -676,7 +679,12 @@ export class InvoicesComponent
 			resultMap: (invoice: IInvoice) => {
 				return Object.assign({}, invoice, {
 					organizationContactName: (invoice.toContact) ? invoice.toContact.name : null,
-					displayStatus: this.statusMapper(invoice.status)
+					displayStatus: this.statusMapper(invoice.status),
+					invoiceDate: this.dateFormatPipe.transform(invoice.invoiceDate),
+					dueDate: this.dateFormatPipe.transform(invoice.dueDate),
+					tax: (DiscountTaxTypeEnum.PERCENT === invoice.taxType) ? `${invoice.tax}%` : `${invoice.tax}`,
+					tax2: (DiscountTaxTypeEnum.PERCENT === invoice.tax2Type) ? `${invoice.tax2}%` : `${invoice.tax}`,
+					discountValue: (DiscountTaxTypeEnum.PERCENT === invoice.discountType) ? `${invoice.discountValue}%` : `${invoice.discountValue}`,
 				});
 			},
 			finalize: () => {
@@ -854,10 +862,7 @@ export class InvoicesComponent
 					: this.getTranslation('INVOICES_PAGE.INVOICE_DATE'),
 				type: 'date',
 				width: '10%',
-				filter: false,
-				valuePrepareFunction: (cell, row) => {
-					return `${cell.slice(0, 10)}`;
-				}
+				filter: false
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.DUE_DATE)) {
@@ -865,10 +870,7 @@ export class InvoicesComponent
 				title: this.getTranslation('INVOICES_PAGE.DUE_DATE'),
 				type: 'date',
 				width: '10%',
-				filter: false,
-				valuePrepareFunction: (cell, row) => {
-					return `${cell.slice(0, 10)}`;
-				}
+				filter: false
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.STATUS)) {
@@ -894,14 +896,7 @@ export class InvoicesComponent
 				title: this.getTranslation('INVOICES_PAGE.TAX'),
 				type: 'text',
 				width: '5%',
-				filter: false,
-				valuePrepareFunction: (cell, row) => {
-					return `${cell} ${row.taxType ===
-						this.getTranslation('INVOICES_PAGE.PERCENT')
-						? '%'
-						: ''
-						}`;
-				}
+				filter: false
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.TAX_2)) {
@@ -909,14 +904,7 @@ export class InvoicesComponent
 				title: this.getTranslation('INVOICES_PAGE.TAX_2'),
 				type: 'text',
 				width: '5%',
-				filter: false,
-				valuePrepareFunction: (cell, row) => {
-					return `${cell} ${row.tax2Type ===
-						this.getTranslation('INVOICES_PAGE.PERCENT')
-						? '%'
-						: ''
-						}`;
-				}
+				filter: false
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.DISCOUNT)) {
@@ -926,14 +914,7 @@ export class InvoicesComponent
 				),
 				type: 'text',
 				width: '5%',
-				filter: false,
-				valuePrepareFunction: (cell, row) => {
-					return `${cell} ${row.discountType ===
-						this.getTranslation('INVOICES_PAGE.PERCENT')
-						? '%'
-						: ''
-						}`;
-				}
+				filter: false
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.CONTACT)) {
@@ -941,13 +922,7 @@ export class InvoicesComponent
 				title: this.getTranslation('INVOICES_PAGE.CONTACT'),
 				type: 'text',
 				width: '12%',
-				filter: false,
-				valuePrepareFunction: (cell, row) => {
-					if (isNotEmpty(row.toContact)) {
-						return row.toContact.name;
-					}
-					return '';
-				}
+				filter: false
 			};
 		}
 		if (!this.isEstimate) {

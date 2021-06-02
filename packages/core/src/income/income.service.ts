@@ -81,8 +81,10 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 			const { valueDate } = filter.where;
 			const startOfMonth = moment(valueDate).startOf('month');
 			const endOfMonth = moment(valueDate).endOf('month');
-
-			filter.where.valueDate = Between(startOfMonth, endOfMonth);
+			filter.where = {
+				...filter.where,
+				valueDate: Between(startOfMonth, endOfMonth)
+			}
 		}
 
 		return super.search(filter);
