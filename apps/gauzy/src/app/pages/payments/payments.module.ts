@@ -42,7 +42,6 @@ import { PaginationModule } from '../../@shared/pagination/pagination.module';
 		InvoicesService,
 		InvoiceEstimateHistoryService
 	],
-	entryComponents: [PaymentsComponent],
 	declarations: [PaymentsComponent]
 })
 export class PaymentsModule {}

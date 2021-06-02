@@ -11,7 +11,7 @@ import {
 	ChangeDetectorRef
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, FormGroupDirective } from '@angular/forms';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -49,7 +49,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import { InvoiceEstimateTotalValueComponent, InvoicePaidComponent } from './table-components';
-import { NotesWithTagsComponent } from '../../@shared/table-components';
+import { DateViewComponent, NotesWithTagsComponent } from '../../@shared/table-components';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
@@ -66,8 +66,6 @@ import {
 	ToastrService
 } from '../../@core/services';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
-import { DateFormatPipe } from '../../@shared/pipes';
-
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -185,8 +183,7 @@ export class InvoicesComponent
 		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
 		private readonly ngxPermissionsService: NgxPermissionsService,
 		private readonly httpClient: HttpClient,
-		private readonly cdr: ChangeDetectorRef,
-		private readonly dateFormatPipe: DateFormatPipe
+		private readonly cdr: ChangeDetectorRef
 	) {
 		super(translateService);
 	}
@@ -680,10 +677,8 @@ export class InvoicesComponent
 				return Object.assign({}, invoice, {
 					organizationContactName: (invoice.toContact) ? invoice.toContact.name : null,
 					displayStatus: this.statusMapper(invoice.status),
-					invoiceDate: this.dateFormatPipe.transform(invoice.invoiceDate),
-					dueDate: this.dateFormatPipe.transform(invoice.dueDate),
 					tax: (DiscountTaxTypeEnum.PERCENT === invoice.taxType) ? `${invoice.tax}%` : `${invoice.tax}`,
-					tax2: (DiscountTaxTypeEnum.PERCENT === invoice.tax2Type) ? `${invoice.tax2}%` : `${invoice.tax}`,
+					tax2: (DiscountTaxTypeEnum.PERCENT === invoice.tax2Type) ? `${invoice.tax2}%` : `${invoice.tax2}`,
 					discountValue: (DiscountTaxTypeEnum.PERCENT === invoice.discountType) ? `${invoice.discountValue}%` : `${invoice.discountValue}`,
 				});
 			},
@@ -721,43 +716,53 @@ export class InvoicesComponent
 		}
 	}
 
-	async addComment() {
+	async addComment(formDirective: FormGroupDirective) {
 		const { comment } = this.historyForm.value;
 		const { id: invoiceId } = this.selectedInvoice;
 
 		if (comment) {
 			const action = comment;
 			await this.createInvoiceHistory(action);
-			
-			this.historyForm.reset();
 
-			const invoice = await this.invoicesService.getById(invoiceId,
-				[
-					'invoiceItems',
-					'invoiceItems.employee',
-					'invoiceItems.employee.user',
-					'invoiceItems.project',
-					'invoiceItems.product',
-					'invoiceItems.invoice',
-					'invoiceItems.expense',
-					'invoiceItems.task',
-					'tags',
-					'payments',
-					'fromOrganization',
-					'toContact',
-					'historyRecords',
-					'historyRecords.user'
-				]
-			);
+			formDirective.resetForm();
+    		this.historyForm.reset();
 
-			await this.smartTableSource.update(this.selectedInvoice, {
-				...invoice
-			});
+			const invoice = await this.invoicesService.getById(invoiceId, [
+				'invoiceItems',
+				'invoiceItems.employee',
+				'invoiceItems.employee.user',
+				'invoiceItems.project',
+				'invoiceItems.product',
+				'invoiceItems.invoice',
+				'invoiceItems.expense',
+				'invoiceItems.task',
+				'tags',
+				'payments',
+				'fromOrganization',
+				'toContact',
+				'historyRecords',
+				'historyRecords.user'
+			]);
 
-			this.selectInvoice({
-				isSelected: true,
-				data: invoice
-			});
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE) {
+				await this.smartTableSource.update(this.selectedInvoice, {
+					...invoice
+				});
+			} else {
+				this.invoices = this.invoices.map((item: IInvoice) => {
+					if (item.id === invoice.id) {
+						return invoice;
+					}
+					return item;
+				});
+			}
+
+			setTimeout(() => {
+				this.selectInvoice({
+					isSelected: true,
+					data: invoice
+				});
+			}, 500);
 		}
 	}
 
@@ -860,17 +865,19 @@ export class InvoicesComponent
 				title: this.isEstimate
 					? this.getTranslation('INVOICES_PAGE.ESTIMATE_DATE')
 					: this.getTranslation('INVOICES_PAGE.INVOICE_DATE'),
-				type: 'date',
+				type: 'custom',
 				width: '10%',
-				filter: false
+				filter: false,
+				renderComponent: DateViewComponent
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.DUE_DATE)) {
 			this.settingsSmartTable['columns']['dueDate'] = {
 				title: this.getTranslation('INVOICES_PAGE.DUE_DATE'),
-				type: 'date',
+				type: 'custom',
 				width: '10%',
-				filter: false
+				filter: false,
+				renderComponent: DateViewComponent
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.STATUS)) {

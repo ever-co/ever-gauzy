@@ -180,4 +180,15 @@ export class PaymentService extends CrudService<Payment> {
 			origin
 		);
 	}
+
+	public search(filter?: any) {
+		if (filter.where) {
+			console.log(filter);
+		}
+		if ('filters' in filter) {
+			const { filters } = filter;
+			delete filter['filters'];
+		}
+		return super.search(filter);
+	}
 }

@@ -19,12 +19,11 @@ import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { PaymentMutationComponent } from '../invoices/invoice-payments/payment-mutation/payment-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { IncomeExpenseAmountComponent, NotesWithTagsComponent } from '../../@shared/table-components';
+import { DateViewComponent, IncomeExpenseAmountComponent, NotesWithTagsComponent } from '../../@shared/table-components';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { API_PREFIX } from '../../@core/constants';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
 import { ErrorHandlingService, InvoiceEstimateHistoryService, PaymentService, Store, ToastrService } from '../../@core/services';
-import { DateFormatPipe } from '../../@shared/pipes';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -72,8 +71,7 @@ export class PaymentsComponent
 		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly route: ActivatedRoute,
-		private readonly httpClient: HttpClient,
-		private readonly dateFormatPipe: DateFormatPipe
+		private readonly httpClient: HttpClient
 	) {
 		super(translateService);
 		this.setView();
@@ -174,15 +172,14 @@ export class PaymentsComponent
 				...(this.projectId ? { projectId: this.projectId } : {})
 			},
 			resultMap: (payment: IPayment) => {
-				const { invoice, project, contact, recordedBy, paymentMethod, overdue, paymentDate } = payment;
+				const { invoice, project, contact, recordedBy, paymentMethod, overdue } = payment;
 				return Object.assign({}, payment, {
 					displayOverdue: this.statusMapper(overdue),
 					invoiceNumber: invoice ? invoice.invoiceNumber : null,
 					projectName: project ? project.name : null,
 					organizationContactName: invoice ? invoice.toContact.name : contact.name,
 					recordedBy: `${recordedBy.firstName} ${recordedBy.lastName}`,
-					paymentMethod: this.getTranslation(`INVOICES_PAGE.PAYMENTS.${paymentMethod}`),
-					paymentDate: this.dateFormatPipe.transform(paymentDate)
+					paymentMethod: this.getTranslation(`INVOICES_PAGE.PAYMENTS.${paymentMethod}`)
 				});
 			},
 			finalize: () => {
@@ -347,8 +344,9 @@ export class PaymentsComponent
 				},
 				paymentDate: {
 					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_DATE'),
-					type: 'text',
-					width: '10%'
+					type: 'custom',
+					width: '10%',
+					renderComponent: DateViewComponent
 				},
 				paymentMethod: {
 					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_METHOD'),
