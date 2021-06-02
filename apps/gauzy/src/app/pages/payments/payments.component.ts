@@ -8,6 +8,7 @@ import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, Subject } from 'rxjs';
 import { distinctUntilChange } from '@gauzy/common-angular';
+import * as moment from 'moment';
 import {
 	IPayment,
 	ComponentLayoutStyleEnum,
@@ -47,6 +48,7 @@ export class PaymentsComponent
 	currency: string;
 	loading: boolean;
 	projectId: string | null;
+	selectedDate: Date;
 	subject$: Subject<any> = new Subject();
 	pagination: any = {
 		totalItems: 0,
@@ -90,16 +92,18 @@ export class PaymentsComponent
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
+		const selectedDate$ = this.store.selectedDate$;
 		const storeProject$ = this.store.selectedProject$;
-		combineLatest([storeOrganization$, storeProject$])
+		combineLatest([storeOrganization$, selectedDate$, storeProject$])
 			.pipe(
 				debounceTime(300),
 				filter(([organization]) => !!organization),
 				tap(([organization]) => (this.organization = organization)),
 				distinctUntilChange(),
-				tap(([organization, project]) => {
+				tap(([organization, date, project]) => {
 					if (organization) {
 						this.organization = organization;
+						this.selectedDate = date;
 						this.projectId = project ? project.id : null;
 						this.subject$.next();
 					}
@@ -150,6 +154,14 @@ export class PaymentsComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
+		const request = {};
+		if (this.projectId) {
+			request['projectId'] = this.projectId;
+		}
+		if (moment(this.selectedDate).isValid()) {
+			request['paymentDate'] = moment(this.selectedDate).format('YYYY-MM-DD HH:mm:ss');
+		}
+
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/payments/search/filter`,
 			relations: [
@@ -169,7 +181,7 @@ export class PaymentsComponent
 			},
 			where: {
 				...{ organizationId, tenantId },
-				...(this.projectId ? { projectId: this.projectId } : {})
+				...request
 			},
 			resultMap: (payment: IPayment) => {
 				const { invoice, project, contact, recordedBy, paymentMethod, overdue } = payment;
@@ -179,7 +191,7 @@ export class PaymentsComponent
 					projectName: project ? project.name : null,
 					organizationContactName: invoice ? invoice.toContact.name : contact.name,
 					recordedBy: `${recordedBy.firstName} ${recordedBy.lastName}`,
-					paymentMethod: this.getTranslation(`INVOICES_PAGE.PAYMENTS.${paymentMethod}`)
+					displayPaymentMethod: this.getTranslation(`INVOICES_PAGE.PAYMENTS.${paymentMethod}`)
 				});
 			},
 			finalize: () => {
@@ -224,12 +236,6 @@ export class PaymentsComponent
 			.toPromise();
 
 		if (result) {
-			const { tenantId } = this.store.user;
-			const { id: organizationId } = this.organization;
-
-			result['organizationId'] = organizationId;
-			result['tenantId'] = tenantId;
-
 			await this.paymentService.add(result);
 
 			if (result.invoice) {
@@ -256,16 +262,17 @@ export class PaymentsComponent
 		const result = await this.dialogService
 			.open(PaymentMutationComponent, {
 				context: {
-					organization: this.organization,
-					payment: this.selectedPayment,
-					tags: this.selectedPayment.tags
+					payment: this.selectedPayment
 				}
 			})
 			.onClose.pipe(first())
 			.toPromise();
 
 		if (result) {
-			await this.paymentService.update(result.id, result);
+			if (!this.selectedPayment) {
+				return;
+			}
+			await this.paymentService.update(this.selectedPayment.id, result);
 
 			if (result.invoice) {
 				const { invoice } = result;
@@ -296,6 +303,9 @@ export class PaymentsComponent
 			.toPromise();
 
 		if (result) {
+			if (!this.selectedPayment) {
+				return;
+			}
 			await this.paymentService.delete(this.selectedPayment.id);
 			
 			const { invoice } = this.selectedPayment;
@@ -348,7 +358,7 @@ export class PaymentsComponent
 					width: '10%',
 					renderComponent: DateViewComponent
 				},
-				paymentMethod: {
+				displayPaymentMethod: {
 					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_METHOD'),
 					type: 'text',
 					width: '10%'
@@ -372,7 +382,8 @@ export class PaymentsComponent
 				projectName: {
 					title: this.getTranslation('PAYMENTS_PAGE.PROJECT'),
 					type: 'text',
-					width: '10%'
+					width: '10%',
+					filter: false
 				},
 				tags: {
 					title: this.getTranslation('PAYMENTS_PAGE.TAGS'),

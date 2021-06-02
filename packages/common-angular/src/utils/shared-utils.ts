@@ -183,3 +183,14 @@ export function distinctUntilChange<T>() {
 		console.log({ error });
 	}
 }
+
+export const compareDate = (date1: any, date2: any) => {
+	const d1 = new Date(date1);
+	const d2 = new Date(date2);
+
+	const same = d1.getTime() === d2.getTime();
+	if (same) {
+		return false;
+	}
+	return d1 > d2;
+}

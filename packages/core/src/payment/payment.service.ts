@@ -182,12 +182,22 @@ export class PaymentService extends CrudService<Payment> {
 	}
 
 	public search(filter?: any) {
-		if (filter.where) {
-			console.log(filter);
-		}
 		if ('filters' in filter) {
 			const { filters } = filter;
+			if ('displayOverdue' in filters) {
+				const { search } = filters.displayOverdue;
+				console.log(search);	
+			}
 			delete filter['filters'];
+		}
+		if ('paymentDate' in filter.where) {
+			const { paymentDate } = filter.where;
+			const startOfMonth = moment(paymentDate).startOf('month');
+			const endOfMonth = moment(paymentDate).endOf('month');
+			filter.where = {
+				...filter.where,
+				paymentDate: Between(startOfMonth, endOfMonth)
+			}
 		}
 		return super.search(filter);
 	}

@@ -1,4 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
 	IExpense,
 	ComponentLayoutStyleEnum,
@@ -8,31 +10,23 @@ import {
 } from '@gauzy/contracts';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
-import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
-import {
-	ActivatedRoute,
-	Router
-} from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { IncomeExpenseAmountComponent } from '../../@shared/table-components/income-amount/income-amount.component';
-import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subject } from 'rxjs/internal/Subject';
 import { combineLatest } from 'rxjs';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import * as moment from 'moment';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { TranslateService } from '@ngx-translate/core';
+import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { DateViewComponent, IncomeExpenseAmountComponent, NotesWithTagsComponent } from '../../@shared/table-components';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { API_PREFIX } from '../../@core/constants';
-import { HttpClient } from '@angular/common/http';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
 import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';
 import { ErrorHandlingService, ExpensesService, Store, ToastrService } from '../../@core/services';
-
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -44,7 +38,8 @@ export class ExpensesComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
 	smartTableSettings: object;
-	selectedEmployeeId: string;
+	employeeId: string | null;
+	projectId: string | null;
 	selectedDate: Date;
 	smartTableSource: ServerDataSource;
 	expenses: IExpenseViewModel[];
@@ -101,16 +96,18 @@ export class ExpensesComponent
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		const selectedDate$ = this.store.selectedDate$;
-		combineLatest([storeOrganization$, storeEmployee$, selectedDate$])
+		const selectedProject$ = this.store.selectedProject$;
+		combineLatest([storeOrganization$, storeEmployee$, selectedDate$, selectedProject$])
 			.pipe(
 				debounceTime(300),
-				filter(([organization, employee]) => !!organization && !!employee),
+				filter(([organization]) => !!organization),
 				tap(([organization]) => (this.organization = organization)),
 				distinctUntilChange(),
-				tap(([organization, employee, date]) => {
+				tap(([organization, employee, date, project]) => {
 					if (organization) {
 						this.selectedDate = date;
-						this.selectedEmployeeId = employee ? employee.id : null;
+						this.employeeId = employee ? employee.id : null;
+						this.projectId = project ? project.id : null;
 						this.subject$.next();
 					}
 				}),
@@ -198,11 +195,13 @@ export class ExpensesComponent
 				},
 				employeeName: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
-					type: 'string'
+					type: 'string',
+					filter: false
 				},
 				projectName: {
 					title: this.getTranslation('SM_TABLE.PROJECT'),
-					type: 'string'
+					type: 'string',
+					filter: false
 				},
 				amount: {
 					title: this.getTranslation('SM_TABLE.VALUE'),
@@ -435,8 +434,11 @@ export class ExpensesComponent
 		const { id: organizationId } = this.organization;
 
 		const request = {};
-		if (this.selectedEmployeeId) {
-			request['employeeId'] = this.selectedEmployeeId;
+		if (this.employeeId) {
+			request['employeeId'] = this.employeeId;
+		}
+		if (this.projectId) {
+			request['projectId'] = this.projectId;
 		}
 		if (moment(this.selectedDate).isValid()) {
 			request['valueDate'] = moment(this.selectedDate).format('YYYY-MM-DD HH:mm:ss');

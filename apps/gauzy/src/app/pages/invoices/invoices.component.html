@@ -290,12 +290,7 @@
 				[tabTitle]="'INVOICES_PAGE.HISTORY' | translate"
 				[tabId]="invoiceTabsEnum.HISTORY"
 			>
-				<form 
-					[formGroup]="historyForm" 
-					#historyFormDirective="ngForm" 
-					(ngSubmit)="addComment(historyFormDirective)"
-					*ngIf="selectedInvoice"
-				>
+				<form [formGroup]="historyForm" *ngIf="selectedInvoice">
 					<div class="col-3 px-0">
 						<textarea
 							nbInput
@@ -306,10 +301,10 @@
 					</div>
 					<div class="mt-3">
 						<button
-							type="submit"
 							class="mx-0"
 							nbButton
 							status="info"
+							(click)="addComment()"
 							[disabled]="disableButton"
 						>
 							{{ 'BUTTONS.ADD_COMMENT' | translate }}

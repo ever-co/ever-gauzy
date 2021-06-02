@@ -11,7 +11,7 @@ import {
 	ChangeDetectorRef
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { FormBuilder, FormGroup, FormGroupDirective } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -716,16 +716,13 @@ export class InvoicesComponent
 		}
 	}
 
-	async addComment(formDirective: FormGroupDirective) {
+	async addComment() {
 		const { comment } = this.historyForm.value;
 		const { id: invoiceId } = this.selectedInvoice;
 
 		if (comment) {
 			const action = comment;
 			await this.createInvoiceHistory(action);
-
-			formDirective.resetForm();
-    		this.historyForm.reset();
 
 			const invoice = await this.invoicesService.getById(invoiceId, [
 				'invoiceItems',
@@ -743,12 +740,13 @@ export class InvoicesComponent
 				'historyRecords',
 				'historyRecords.user'
 			]);
+			console.log(this.selectedInvoice);
 
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE) {
-				await this.smartTableSource.update(this.selectedInvoice, {
-					...invoice
-				});
-			} else {
+			await this.smartTableSource.update(this.selectedInvoice, {
+				...invoice
+			});
+
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				this.invoices = this.invoices.map((item: IInvoice) => {
 					if (item.id === invoice.id) {
 						return invoice;
@@ -757,12 +755,10 @@ export class InvoicesComponent
 				});
 			}
 
-			setTimeout(() => {
-				this.selectInvoice({
-					isSelected: true,
-					data: invoice
-				});
-			}, 500);
+			this.selectInvoice({
+				isSelected: true,
+				data: invoice
+			});
 		}
 	}
 

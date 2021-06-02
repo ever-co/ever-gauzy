@@ -98,7 +98,7 @@ export class ExpensesMutationComponent
 	}
 
 	/*
-	* Search Tab Form 
+	* Expense Mutation Form 
 	*/
 	public form: FormGroup = ExpensesMutationComponent.buildForm(this.fb, this);
 	static buildForm(
