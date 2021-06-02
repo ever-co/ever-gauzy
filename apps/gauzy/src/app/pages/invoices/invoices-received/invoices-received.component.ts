@@ -10,7 +10,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { Router, RouterEvent, NavigationEnd } from '@angular/router';
+import { Router } from '@angular/router';
 import { InvoicePaidComponent } from '../table-components/invoice-paid.component';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';

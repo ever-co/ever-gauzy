@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, Between, ILike, In } from 'typeorm';
+import { Repository, FindManyOptions, Between, ILike } from 'typeorm';
 import { Expense } from './expense.entity';
 import { IPagination } from '../core';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
