@@ -44,18 +44,15 @@
 					<input
 						formControlName="valueDate"
 						nbInput
-						placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
-						[nbDatepicker]="formpicker"
-						[ngClass]="{
-							'status-danger':
-								valueDate?.invalid &&
-								(valueDate.dirty || valueDate.touched),
-							'status-success':
-								valueDate?.valid &&
-								(valueDate.dirty || valueDate.touched)
-						}"
+						[placeholder]="'POP_UPS.PICK_DATE' | translate"
+						[nbDatepicker]="valueDatePicker"
+						[status]="
+							isInvalidControl('valueDate')
+								? 'danger'
+								: 'basic'
+						"
 					/>
-					<nb-datepicker #formpicker></nb-datepicker>
+					<nb-datepicker #valueDatePicker></nb-datepicker>
 				</div>
 
 				<div class="col-sm-6">
@@ -63,29 +60,14 @@
 						<label class="label">{{
 							'POP_UPS.CONTACT' | translate
 						}}</label>
-						<ng-select
-							[addTag]="addNewOrganizationContact"
-							[items]="organizationContacts"
-							bindLabel="name"
+						<ga-contact-select
+							[addTag]="true"
+							[clearable]="true"
 							[searchable]="true"
+							[placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
 							formControlName="organizationContact"
-							(change)="selectOrganizationContact($event)"
-							placeholder="{{ 'POP_UPS.CONTACT' | translate }}"
-							appendTo="body"
-						>
-							<ng-template
-								ng-option-tmp
-								let-item="item"
-								let-index="index"
-							>
-								{{ item.name }}
-							</ng-template>
-							<ng-template ng-label-tmp let-item="item">
-								<div class="selector-template">
-									<span>{{ item.name }}</span>
-								</div>
-							</ng-template>
-						</ng-select>
+							(onChanged)="selectOrganizationContact($event)"
+						></ga-contact-select>
 					</div>
 				</div>
 			</div>
@@ -108,16 +90,13 @@
 							type="number"
 							step="1"
 							fullWidth
-							placeholder="{{ 'POP_UPS.AMOUNT' | translate }}"
+							[placeholder]="'POP_UPS.AMOUNT' | translate"
 							formControlName="amount"
-							[ngClass]="{
-								'status-danger':
-									amount?.invalid &&
-									(amount.dirty || amount.touched),
-								'status-success':
-									amount?.valid &&
-									(amount.dirty || amount.touched)
-							}"
+							[status]="
+								isInvalidControl('amount')
+									? 'danger'
+									: 'basic'
+							"
 							autocomplete="off"
 						/>
 					</div>
@@ -127,7 +106,7 @@
 				<div class="col-sm-12">
 					<div class="form-group">
 						<ga-tags-color-input
-							[selectedTags]="tags"
+							[selectedTags]="form.get('tags').value"
 							(selectedTagsEvent)="selectedTagsHandler($event)"
 							[isOrgLevel]="true"
 						>
@@ -164,17 +143,9 @@
 						<textarea
 							nbInput
 							fullWidth
-							placeholder="{{ 'POP_UPS.NOTES' | translate }}"
+							[placeholder]="'POP_UPS.NOTES' | translate"
 							formControlName="notes"
 							class="notes"
-							[ngClass]="{
-								'status-danger':
-									notes?.invalid &&
-									(notes.dirty || notes.touched),
-								'status-success':
-									notes?.valid &&
-									(notes.dirty || notes.touched)
-							}"
 						>
 						</textarea>
 					</div>

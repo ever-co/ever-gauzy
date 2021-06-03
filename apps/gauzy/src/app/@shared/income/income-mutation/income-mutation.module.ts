@@ -11,14 +11,14 @@ import {
 	NbCheckboxModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { IncomeService } from '../../../@core/services/income.service';
 import { IncomeMutationComponent } from './income-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { CurrencyModule } from '../../currency/currency.module';
 import { TranslateModule } from '../../translate/translate.module';
+import { ContactSelectModule } from '../../contact-select/contact-select.module';
+import { IncomeService, OrganizationsService } from '../../../@core/services';
 
 @NgModule({
 	imports: [
@@ -37,10 +37,10 @@ import { TranslateModule } from '../../translate/translate.module';
 		NbTooltipModule,
 		EmployeeSelectorsModule,
 		TranslateModule,
-		CurrencyModule
+		CurrencyModule,
+		ContactSelectModule
 	],
 	declarations: [IncomeMutationComponent],
-	entryComponents: [IncomeMutationComponent],
 	providers: [IncomeService, OrganizationsService]
 })
 export class IncomeMutationModule {}
