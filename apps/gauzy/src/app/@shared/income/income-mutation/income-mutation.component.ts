@@ -2,8 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import {
 	Validators,
 	FormBuilder,
-	FormGroup,
-	AbstractControl
+	FormGroup
 } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import {
