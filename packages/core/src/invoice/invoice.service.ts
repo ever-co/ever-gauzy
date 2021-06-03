@@ -1,7 +1,7 @@
 import { CrudService } from '../core';
 import { Invoice } from './invoice.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, In, Repository } from 'typeorm';
+import { Between, ILike, In, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { EmailService } from '../email';
 import { IInvoice, IOrganization, LanguagesEnum } from '@gauzy/contracts';
@@ -311,44 +311,32 @@ export class InvoiceService extends CrudService<Invoice> {
 	}
 
 	public search(filter?: any) {
-		if (filter.where) {
-			if (filter.where.tags) {
+		if ('where' in filter) {
+			const { where } = filter;
+			if (where.tags) {
 				filter.where.tags = {
-					id: In(filter.where.tags)
+					id: In(where.tags)
 				}
 			}
-			if (filter.where.toContact) {
+			if (where.toContact) {
 				filter.where.toContact = {
-					id: In(filter.where.toContact)
+					id: In(where.toContact)
 				}
 			}
-			if (filter.where.dueDate) {
-				const date = moment.utc(filter.where.dueDate);
-				filter.where.dueDate = Between(date.startOf('day').toDate(), date.endOf('day').toDate());
-	
+			if (where.dueDate) {
+				const date = moment.utc(where.dueDate);
+				filter.where.dueDate = Between(
+					date.startOf('day').toDate(), 
+					date.endOf('day').toDate()
+				);
 			}
-			if (filter.where.invoiceDate) {
-				const date = moment.utc(filter.where.invoiceDate);
-				filter.where.invoiceDate = Between(date.startOf('day').toDate(), date.endOf('day').toDate());
+			if (where.invoiceDate) {
+				const date = moment.utc(where.invoiceDate);
+				filter.where.invoiceDate = Between(
+					date.startOf('day').toDate(), 
+					date.endOf('day').toDate()
+				);
 			}
-		}
-		if ('filters' in filter) {
-			const { filters } = filter;
-			if ('invoiceNumber' in filters) {
-				const { search } = filters.invoiceNumber;
-				filter.where = {
-					...filter.where,
-					invoiceNumber: search
-				}
-			}
-			if ('totalValue' in filters) {
-				const { search } = filters.totalValue;
-				filter.where = {
-					...filter.where,
-					totalValue: search
-				}
-			}
-			delete filter['filters'];
 		}
 		return super.search(filter);
 	}

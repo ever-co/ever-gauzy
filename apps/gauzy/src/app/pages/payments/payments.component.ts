@@ -7,7 +7,7 @@ import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, Subject } from 'rxjs';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import * as moment from 'moment';
 import {
 	IPayment,
@@ -25,6 +25,9 @@ import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.co
 import { API_PREFIX } from '../../@core/constants';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
 import { ErrorHandlingService, InvoiceEstimateHistoryService, PaymentService, Store, ToastrService } from '../../@core/services';
+import { OrganizationContactFilterComponent } from '../../@shared/table-filters/organization-contact-filter.component';
+import { PaymentMethodFilterComponent } from '../../@shared/table-filters/payment-method-filter.component';
+import { TagsColorFilterComponent } from '../../@shared/table-filters/tags-color-filter.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -55,6 +58,16 @@ export class PaymentsComponent
 		activePage: 1,
 		itemsPerPage: 10
 	};
+	/*
+	* getter setter for filters 
+	*/
+	private _filters: any = {};
+	set filters(val: any) {
+		this._filters = val;
+	}
+	get filters() {
+		return this._filters;
+	}
 
 	paymentsTable: Ng2SmartTableComponent;
 	@ViewChild('paymentsTable') set content(content: Ng2SmartTableComponent) {
@@ -147,6 +160,22 @@ export class PaymentsComponent
 			.subscribe();
 	}
 
+	searchFilter() {
+		const filters: any = {
+			where: {
+				...this.filters.where
+			},
+			join: {
+				alias: 'payment',
+				...this.filters.join
+			}
+		}
+		if (isNotEmpty(filters)) {
+			this._filters = filters;
+			this.subject$.next();
+		}
+	}
+
 	/*
 	* Register Smart Table Source Config 
 	*/
@@ -173,15 +202,12 @@ export class PaymentsComponent
 				'tags'
 			],
 			join: {
-				alias: 'payment',
-				leftJoin: {
-					invoice: 'payment.invoice',
-					toContact: 'invoice.toContact',
-				}
+				...(this.filters.join) ? this.filters.join : {}
 			},
 			where: {
 				...{ organizationId, tenantId },
-				...request
+				...request,
+				...this.filters.where
 			},
 			resultMap: (payment: IPayment) => {
 				const { invoice, project, contact, recordedBy, paymentMethod, overdue } = payment;
@@ -349,19 +375,36 @@ export class PaymentsComponent
 					title: this.getTranslation('PAYMENTS_PAGE.AMOUNT'),
 					type: 'custom',
 					filter: false,
-					width: '12%',
+					width: '8%',
 					renderComponent: IncomeExpenseAmountComponent
 				},
 				paymentDate: {
 					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_DATE'),
 					type: 'custom',
+					filter: false,
 					width: '10%',
 					renderComponent: DateViewComponent
 				},
 				displayPaymentMethod: {
 					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_METHOD'),
 					type: 'text',
-					width: '10%'
+					width: '10%',
+					filter: {
+						type: 'custom',
+						component: PaymentMethodFilterComponent
+					},
+					filterFunction: (value) => {
+						if (value) {
+							this.filters = {
+								where: { ...this.filters.where, paymentMethod: value }
+							}
+						} else {
+							if ('paymentMethod' in this.filters.where) {
+								delete this.filters.where.paymentMethod;
+							}
+						}
+						this.searchFilter();
+					}
 				},
 				recordedBy: {
 					title: this.getTranslation('PAYMENTS_PAGE.RECORDED_BY'),
@@ -377,19 +420,64 @@ export class PaymentsComponent
 				organizationContactName: {
 					title: this.getTranslation('PAYMENTS_PAGE.CONTACT'),
 					type: 'text',
-					width: '10%'
+					width: '12%',
+					filter: {
+						type: 'custom',
+						component: OrganizationContactFilterComponent
+					},
+					filterFunction: (value) => {
+						if (value) {
+							this.filters = {
+								where: { ...this.filters.where, contactId: value.id }
+							}
+						} else {
+							if ('contactId' in this.filters.where) {
+								delete this.filters.where.contactId;
+							}
+						}
+						this.searchFilter();
+					}
 				},
 				projectName: {
 					title: this.getTranslation('PAYMENTS_PAGE.PROJECT'),
 					type: 'text',
 					width: '10%',
-					filter: false
+					filter: false,
 				},
 				tags: {
 					title: this.getTranslation('PAYMENTS_PAGE.TAGS'),
 					type: 'custom',
-					width: '10%',
-					renderComponent: NotesWithTagsComponent
+					width: '12%',
+					renderComponent: NotesWithTagsComponent,
+					filter: {
+						type: 'custom',
+						component: TagsColorFilterComponent
+					},
+					filterFunction: (tags) => {
+						if (isNotEmpty(tags)) {
+							const tagIds = [];
+							for (const tag of tags) {
+								tagIds.push(tag.id)
+							}
+							this.filters = {
+								where: { 
+									...this.filters.where,
+									tags: tagIds
+								},
+								join: {
+									leftJoin: {
+										tags: 'payment.tags'
+									}
+								}
+							}
+						} else {
+							if ('tags' in this.filters.where) {
+								delete this.filters.where.tags;
+								delete this.filters.join.leftJoin.tags;
+							}
+						}
+						this.searchFilter();
+					}
 				},
 				invoiceNumber: {
 					title: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
@@ -401,7 +489,8 @@ export class PaymentsComponent
 					title: this.getTranslation('PAYMENTS_PAGE.STATUS'),
 					type: 'custom',
 					width: '10%',
-					renderComponent: StatusBadgeComponent
+					renderComponent: StatusBadgeComponent,
+					filter: false
 				}
 			}
 		};

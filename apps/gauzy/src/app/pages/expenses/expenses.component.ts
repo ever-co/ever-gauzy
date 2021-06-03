@@ -6,7 +6,8 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	IExpenseViewModel,
-	IEmployee
+	IEmployee,
+	IOrganizationVendor
 } from '@gauzy/contracts';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
@@ -27,6 +28,7 @@ import { API_PREFIX } from '../../@core/constants';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
 import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';
 import { ErrorHandlingService, ExpensesService, Store, ToastrService } from '../../@core/services';
+import { VendorFilterComponent } from '../../@shared/table-filters/vendor-filter.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -57,6 +59,16 @@ export class ExpensesComponent
 		activePage: 1,
 		itemsPerPage: 10
 	};
+	/*
+	* getter setter for filters 
+	*/
+	private _filters: any = {};
+	set filters(val: any) {
+		this._filters = val;
+	}
+	get filters() {
+		return this._filters;
+	}
 	
 	expensesTable: Ng2SmartTableComponent;
 	@ViewChild('expensesTable') set content(content: Ng2SmartTableComponent) {
@@ -172,6 +184,22 @@ export class ExpensesComponent
 		};
 	}
 
+	searchFilter() {
+		const filters: any = {
+			where: {
+				...this.filters.where
+			},
+			join: {
+				alias: 'expense',
+				...this.filters.join
+			}
+		}
+		if (isNotEmpty(filters)) {
+			this._filters = filters;
+			this.subject$.next();
+		}
+	}
+
 	_loadSettingsSmartTable() {
 		this.smartTableSettings = {
 			actions: false,
@@ -187,7 +215,26 @@ export class ExpensesComponent
 				},
 				vendorName: {
 					title: this.getTranslation('SM_TABLE.VENDOR'),
-					type: 'string'
+					type: 'string',
+					filter: {
+						type: 'custom',
+						component: VendorFilterComponent
+					},
+					filterFunction: (value: IOrganizationVendor) => {
+						if (value) {
+							this.filters = {
+								where: { 
+									...this.filters.where, 
+									vendorId: value.id
+								}
+							}
+						} else {
+							if ('vendorId' in this.filters.where) {
+								delete this.filters.where.vendorId;
+							}
+						}
+						this.searchFilter();
+					}
 				},
 				categoryName: {
 					title: this.getTranslation('SM_TABLE.CATEGORY'),
@@ -454,18 +501,12 @@ export class ExpensesComponent
 				'project'
 			],
 			join: {
-				alias: 'expense',
-				leftJoin: {
-					employee: 'expense.employee',
-					user: 'employee.user',
-					organization_vendor: 'expense.vendor',
-					expense_category: 'expense.category',
-					tags: 'expense.tags'
-				}
+				...(this.filters.join) ? this.filters.join : {}
 			},
 			where: {
 				...{ organizationId, tenantId },
-				...request
+				...request,
+				...this.filters.where
 			},
 			resultMap: (expense: IExpense) => {
 				return Object.assign({}, expense, {

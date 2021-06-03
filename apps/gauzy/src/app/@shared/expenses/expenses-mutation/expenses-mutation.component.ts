@@ -9,7 +9,6 @@ import {
 import {
 	TaxTypesEnum,
 	ExpenseTypesEnum,
-	IOrganizationVendor,
 	ITag,
 	IOrganizationContact,
 	IOrganizationProject,
@@ -36,7 +35,6 @@ import {
 	OrganizationContactService,
 	OrganizationExpenseCategoriesService,
 	OrganizationProjectsService,
-	OrganizationVendorsService,
 	Store,
 	ToastrService 
 } from '../../../@core/services';
@@ -62,7 +60,6 @@ export class ExpensesMutationComponent
 	taxTypes = Object.values(TaxTypesEnum);
 	expenseStatuses = Object.values(ExpenseStatusesEnum);
 	expenseCategories: IOrganizationExpenseCategory[];
-	vendors: IOrganizationVendor[];
 	organizationContact: IOrganizationContact;
 	organizationContacts: {
 		name: string;
@@ -130,7 +127,6 @@ export class ExpensesMutationComponent
 		public readonly dialogRef: NbDialogRef<ExpensesMutationComponent>,
 		private readonly dialogService: NbDialogService,
 		private readonly fb: FormBuilder,
-		private readonly organizationVendorsService: OrganizationVendorsService,
 		private readonly store: Store,
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
@@ -152,7 +148,6 @@ export class ExpensesMutationComponent
 					this.organizationId = organization.id;
 				}),
 				tap(() => this.getExpenseCategories()),
-				tap(() => this.getVendors()),
 				tap(() => this.getOrganizationContacts()),
 				tap(() => this.getProjects()),
 				untilDestroyed(this)
@@ -175,15 +170,6 @@ export class ExpensesMutationComponent
 			tenantId
 		});
 		this.expenseCategories = category;
-	}
-
-	private async getVendors() {
-		const { tenantId, organizationId } = this;
-		const { items: vendors } = await this.organizationVendorsService.getAll({
-			organizationId,
-			tenantId
-		});
-		this.vendors = vendors;
 	}
 
 	selectOrganizationContact($event) {
@@ -243,22 +229,6 @@ export class ExpensesMutationComponent
 			});
 			const { tenantId, organizationId } = this;
 			return await this.expenseCategoriesStore.create({
-				name,
-				organizationId,
-				tenantId
-			});
-		} catch (error) {
-			this.errorHandler.handleError(error);
-		}
-	};
-
-	addNewVendor = (name: string): Promise<IOrganizationVendor> => {
-		try {
-			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.ADD_VENDOR', {
-				name
-			});
-			const { tenantId, organizationId } = this;
-			return this.organizationVendorsService.create({
 				name,
 				organizationId,
 				tenantId

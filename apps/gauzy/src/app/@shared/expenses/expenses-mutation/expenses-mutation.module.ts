@@ -21,6 +21,7 @@ import { ImageUploaderModule } from '../../image-uploader/image-uploader.module'
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { CurrencyModule } from '../../currency/currency.module';
 import { TranslateModule } from '../../translate/translate.module';
+import { VendorSelectModule } from '../../vendor-select/vendor-select.module';
 
 @NgModule({
 	imports: [
@@ -41,11 +42,11 @@ import { TranslateModule } from '../../translate/translate.module';
 		NbCheckboxModule,
 		NbTooltipModule,
 		TranslateModule,
-		CurrencyModule
+		CurrencyModule,
+		VendorSelectModule
 	],
 	exports: [ExpensesMutationComponent],
 	declarations: [ExpensesMutationComponent, AttachReceiptComponent],
-	entryComponents: [ExpensesMutationComponent, AttachReceiptComponent],
 	providers: [OrganizationsService]
 })
 export class ExpensesMutationModule {}

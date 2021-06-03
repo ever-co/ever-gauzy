@@ -1,6 +1,6 @@
 import { CrudService } from '../core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, Repository } from 'typeorm';
+import { Between, ILike, In, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { Payment } from './payment.entity';
 import { RequestContext } from '../core/context';
@@ -181,22 +181,30 @@ export class PaymentService extends CrudService<Payment> {
 		);
 	}
 
-	public search(filter?: any) {
+	public search(filter: any) {
 		if ('filters' in filter) {
 			const { filters } = filter;
-			if ('displayOverdue' in filters) {
-				const { search } = filters.displayOverdue;
-				console.log(search);	
+			if ('note' in filters) {
+				const { search } = filters.note;
+				filter.where.note = ILike(`%${search}%`);
 			}
 			delete filter['filters'];
 		}
-		if ('paymentDate' in filter.where) {
-			const { paymentDate } = filter.where;
-			const startOfMonth = moment(paymentDate).startOf('month');
-			const endOfMonth = moment(paymentDate).endOf('month');
-			filter.where = {
-				...filter.where,
-				paymentDate: Between(startOfMonth, endOfMonth)
+
+		if ('where' in filter) {
+			const { where } = filter;
+			if ('paymentDate' in where) {
+				const { paymentDate } = where;
+				filter.where.paymentDate = Between(
+					moment(paymentDate).startOf('month'), 
+					moment(paymentDate).endOf('month')
+				);
+			}
+			if ('tags' in where) {
+				const { tags } = where; 
+				filter.where.tags = {
+					id: In(tags)
+				}
 			}
 		}
 		return super.search(filter);

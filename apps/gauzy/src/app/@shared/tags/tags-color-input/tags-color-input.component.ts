@@ -11,7 +11,7 @@ import { ITag, IOrganization } from '@gauzy/contracts';
 import { getContrastColor } from '@gauzy/common-angular';
 import { Store } from '../../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { filter } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -37,6 +37,17 @@ export class TagsColorInputComponent implements OnInit, OnDestroy {
 
 	@Output()
 	selectedTagsEvent = new EventEmitter<ITag[]>();
+
+	/*
+	* Getter & Setter for multiple selection
+	*/
+	_multiple: boolean = true;
+	get multiple(): boolean {
+		return this._multiple;
+	}
+	@Input() set multiple(value: boolean) {
+		this._multiple = value;
+	}
 
 	constructor(
 		private readonly tagsService: TagsService,
@@ -68,12 +79,11 @@ export class TagsColorInputComponent implements OnInit, OnDestroy {
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
+				tap((organization) => this.selectedOrganization = organization),
+				tap(() => this.getAllTags()),
 				untilDestroyed(this)
 			)
-			.subscribe((org) => {
-				this.selectedOrganization = org;
-				this.getAllTags();
-			});
+			.subscribe();
 		this.selectedTagIds = this.selectedTags?.map((tag: ITag) => tag.id);
 	}
 

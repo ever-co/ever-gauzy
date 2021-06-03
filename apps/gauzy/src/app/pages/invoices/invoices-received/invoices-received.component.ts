@@ -62,10 +62,10 @@ export class InvoicesReceivedComponent
 		return this._isEstimate;
 	}
 
-	invoicesTable: Ng2SmartTableComponent;
-	@ViewChild('invoicesTable') set content(content: Ng2SmartTableComponent) {
+	invoiceReceivedTable: Ng2SmartTableComponent;
+	@ViewChild('invoiceReceivedTable', { static: false }) set content(content: Ng2SmartTableComponent) {
 		if (content) {
-			this.invoicesTable = content;
+			this.invoiceReceivedTable = content;
 			this.onChangedSource();
 		}
 	}
@@ -117,7 +117,7 @@ export class InvoicesReceivedComponent
 	 * Table on changed source event
 	 */
 	onChangedSource() {
-		this.invoicesTable.source.onChangedSource
+		this.invoiceReceivedTable.source.onChangedSource
 			.pipe(
 				untilDestroyed(this),
 				tap(() => this.clearItem())
@@ -295,8 +295,10 @@ export class InvoicesReceivedComponent
 	 * Deselect all table rows
 	 */
 	deselectAll() {
-		this.invoicesTable.grid.dataSet['willSelect'] = 'false';
-		this.invoicesTable.grid.dataSet.deselectAll();
+		if (this.invoiceReceivedTable && this.invoiceReceivedTable.grid) {
+			this.invoiceReceivedTable.grid.dataSet['willSelect'] = 'false';
+			this.invoiceReceivedTable.grid.dataSet.deselectAll();
+		}
 	}
 
 	ngOnDestroy() {}

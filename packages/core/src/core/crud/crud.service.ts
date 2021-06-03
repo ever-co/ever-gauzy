@@ -48,7 +48,6 @@ export abstract class CrudService<T extends BaseEntity>
 			options.skip = filter.limit * (filter.page - 1);
 			options.take = filter.limit;
 		}
-
 		if (filter.orderBy && filter.order) {
 			options.order = {
 				[filter.orderBy]: filter.order
@@ -56,15 +55,12 @@ export abstract class CrudService<T extends BaseEntity>
 		} else if (filter.orderBy) {
 			options.order = filter.orderBy;
 		}
-
 		if (filter.relations) {
 			options.relations = filter.relations;
 		}
-
 		if (filter.join) {
 			options.join = filter.join;
 		}
-
 		if (filter.filters || filter.where) {
 			options.where = (qb: SelectQueryBuilder<T>) => {
 				if (filter.where) {
@@ -79,6 +75,7 @@ export abstract class CrudService<T extends BaseEntity>
 				console.log(qb.getQueryAndParameters());
 			}
 		}
+		console.log(filter, 'filters');
 		const [items, total] = await this.repository.findAndCount(options);
 		return { items, total };
 	}
