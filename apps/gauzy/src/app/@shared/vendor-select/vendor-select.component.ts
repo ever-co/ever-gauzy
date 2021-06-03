@@ -14,23 +14,23 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from '../../../@core/services/store.service';
-import { ErrorHandlingService, OrganizationVendorsService, ToastrService } from '../../../@core/services';
+import { Store } from '../../@core/services/store.service';
+import { ErrorHandlingService, OrganizationVendorsService, ToastrService } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-vendor-select',
-	templateUrl: './vendor.component.html',
-	styleUrls: ['./vendor.component.scss'],
+	templateUrl: './vendor-select.component.html',
+	styleUrls: ['./vendor-select.component.scss'],
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => VendorSelectorComponent),
+			useExisting: forwardRef(() => VendorSelectComponent),
 			multi: true
 		}
 	]
 })
-export class VendorSelectorComponent implements OnInit, OnDestroy {
+export class VendorSelectComponent implements OnInit, OnDestroy {
 
 	vendors: IOrganizationVendor[] = [];
 	organization: IOrganization;

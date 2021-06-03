@@ -4,14 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { NbSelectModule } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { VendorSelectorComponent } from './vendor/vendor.component';
+import { VendorSelectComponent } from './vendor-select.component';
 
 @NgModule({
 	declarations: [
-		VendorSelectorComponent
+		VendorSelectComponent
 	],
 	exports: [
-		VendorSelectorComponent
+		VendorSelectComponent
 	],
 	imports: [
 		CommonModule,
