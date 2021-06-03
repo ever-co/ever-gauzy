@@ -8,7 +8,6 @@ import { IOrganizationVendor } from '@gauzy/contracts';
             [clearable]="true"
             [searchable]="false"
             [addTag]="false"
-            [multiple]="false"
             [placeholder]="'SM_TABLE.CATEGORY' | translate"
             (onChanged)="selectedVendorEvent($event)"
         >

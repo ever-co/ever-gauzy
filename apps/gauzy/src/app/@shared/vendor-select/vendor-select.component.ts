@@ -37,17 +37,6 @@ export class VendorSelectComponent implements OnInit, OnDestroy {
 	subject$: Subject<any> = new Subject();
 
 	/*
-	* Getter & Setter for multiple selection
-	*/
-	_multiple: boolean = true;
-	get multiple(): boolean {
-		return this._multiple;
-	}
-	@Input() set multiple(value: boolean) {
-		this._multiple = value;
-	}
-
-	/*
 	* Getter & Setter for dynamic enabled/disabled element
 	*/
 	_disabled: boolean = false;
@@ -155,7 +144,9 @@ export class VendorSelectComponent implements OnInit, OnDestroy {
 	}
 
 	writeValue(value: IOrganizationVendor) {
-		this._vendor = value;
+		if (value) {
+			this._vendor = value;
+		}
 	}
 
 	registerOnChange(fn: (rating: number) => void): void {

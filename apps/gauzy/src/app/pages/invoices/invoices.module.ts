@@ -81,6 +81,7 @@ import {
 import { InvoicePaymentReceiptMutationComponent, InvoicePaymentsComponent, PaymentMutationComponent } from './invoice-payments';
 import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view';
 import { SharedModule } from '../../@shared/shared.module';
+import { ContactSelectModule } from '../../@shared/contact-select/contact-select.module';
 
 @NgModule({
 	imports: [
@@ -121,6 +122,7 @@ import { SharedModule } from '../../@shared/shared.module';
 		CurrencyModule,
 		HeaderTitleModule,
 		PaginationModule,
+		ContactSelectModule,
 		SharedModule
 	],
 	providers: [

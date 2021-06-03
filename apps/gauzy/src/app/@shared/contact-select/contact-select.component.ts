@@ -7,33 +7,34 @@ import {
 	EventEmitter,
 	Output} from '@angular/core';
 import {
-	IExpenseCategory,
+	ContactType,
 	IOrganization,
-	IOrganizationExpenseCategory,
-	IOrganizationVendor
+	IOrganizationContact,
 } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ErrorHandlingService, OrganizationExpenseCategoriesService, Store, ToastrService } from '../../../@core/services';
+import { Store } from '../../@core/services/store.service';
+import { ErrorHandlingService, OrganizationContactService, ToastrService } from '../../@core/services';
+import { TranslationBaseComponent } from '../language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-expense-category-select',
-	templateUrl: './expense-category-select.component.html',
-	styleUrls: ['./expense-category-select.component.scss'],
+	selector: 'ga-contact-select',
+	templateUrl: './contact-select.component.html',
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => ExpenseCategorySelectComponent),
+			useExisting: forwardRef(() => ContactSelectComponent),
 			multi: true
 		}
 	]
 })
-export class ExpenseCategorySelectComponent implements OnInit, OnDestroy {
+export class ContactSelectComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 
-	categories: IExpenseCategory[] = [];
+	contacts: IOrganizationContact[] = [];
 	organization: IOrganization;
 	subject$: Subject<any> = new Subject();
 
@@ -95,31 +96,34 @@ export class ExpenseCategorySelectComponent implements OnInit, OnDestroy {
 	onChange: any = () => {};
 	onTouched: any = () => {};
 
-	private _category: IExpenseCategory;
-	set category(val: IExpenseCategory) {
-		this._category = val;
+	private _organizationContact: IOrganizationContact;
+	set organizationContact(val: IOrganizationContact) {
+		this._organizationContact = val;
 		this.onChange(val);
 		this.onTouched(val);
 	}
-	get category(): IExpenseCategory {
-		return this._category;
+	get organizationContact(): IOrganizationContact {
+		return this._organizationContact;
 	}
 
 	@Output()
-	onChanged = new EventEmitter<IOrganizationVendor>();
+	onChanged = new EventEmitter<IOrganizationContact>();
 
 	constructor(
+		public readonly translateService: TranslateService,
 		private readonly store: Store,
 		private readonly toastrService: ToastrService,
 		private readonly errorHandler: ErrorHandlingService,
-		private readonly expenseCategoriesService: OrganizationExpenseCategoriesService,
-	) {}
+		private readonly organizationContactService: OrganizationContactService,
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this.subject$
 		.pipe(
 			debounceTime(100),
-			tap(() => this.getCategories()),
+			tap(() => this.getContacts()),
 			untilDestroyed(this)
 		)
 		.subscribe();
@@ -133,19 +137,21 @@ export class ExpenseCategorySelectComponent implements OnInit, OnDestroy {
 			.subscribe();
 	}
 
- 	async getCategories() {
+	async getContacts() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const { items = [] } = await this.expenseCategoriesService.getAll({
+		const { items = [] } = await this.organizationContactService.getAll([], {
 			organizationId,
 			tenantId
 		});
-		this.categories = items;
+		this.contacts = items;
 	}
 
-	writeValue(value: IOrganizationVendor) {
-		this._category = value;
+	writeValue(value: IOrganizationContact) {
+		if (value) {
+			this._organizationContact = value;
+		}
 	}
 
 	registerOnChange(fn: (rating: number) => void): void {
@@ -160,22 +166,36 @@ export class ExpenseCategorySelectComponent implements OnInit, OnDestroy {
 		this.disabled = isDisabled;
 	}
 
-	selectCategory(category: IExpenseCategory): void {
-		this.category = category;
-		this.onChanged.emit(category);
+	selectContact(contact: IOrganizationContact): void {
+		this.organizationContact = contact;
+		this.onChanged.emit(contact);
 	}
 
-	addCategory = async (
+	searchContact(term: string, item: any) {
+		if (item.name) {
+			return item.name.toLowerCase().includes(term.toLowerCase());
+		}
+	}
+
+	addOrganizationContact = (
 		name: string
-	): Promise<IOrganizationExpenseCategory> => {
+	): Promise<IOrganizationContact> => {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
 		try {
-			this.toastrService.success('EXPENSES_PAGE.ADD_EXPENSE_CATEGORY', {
-				name
-			});
-			const { tenantId } = this.store.user;
-			const { id: organizationId } = this.organization;
-			return await this.expenseCategoriesService.create({
+			this.toastrService.success(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
+					{
+						name: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			return this.organizationContactService.create({
 				name,
+				contactType: ContactType.CLIENT,
 				organizationId,
 				tenantId
 			});

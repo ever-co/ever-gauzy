@@ -19,24 +19,21 @@ import {
 	IProductTranslatable
 } from '@gauzy/contracts';
 import { filter, first, tap } from 'rxjs/operators';
-import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { Observable } from 'rxjs';
 import { LocalDataSource } from 'ng2-smart-table';
-import { InvoiceItemService } from '../../../@core/services/invoice-item.service';
 import { Router, ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
-import { InvoicesService } from '../../../@core/services/invoices.service';
-import { InvoiceEmployeesSelectorComponent } from '../table-components/invoice-employees-selector.component';
-import { InvoiceProjectsSelectorComponent } from '../table-components/invoice-project-selector.component';
-import { InvoiceTasksSelectorComponent } from '../table-components/invoice-tasks-selector.component';
-import { InvoiceProductsSelectorComponent } from '../table-components/invoice-product-selector.component';
-import { InvoiceApplyTaxDiscountComponent } from '../table-components/invoice-apply-tax-discount.component';
-import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
-import { InvoiceExpensesSelectorComponent } from '../table-components/invoice-expense-selector.component';
-import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../../@core/services/toastr.service';
-import { TranslatableService } from '../../../@core/services/translatable.service';
+import { compareDate } from '@gauzy/common-angular';
+import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
+import { 
+	InvoiceEstimateHistoryService,
+	InvoiceItemService,
+	InvoicesService,
+	ToastrService,
+	TranslatableService 
+} from '../../../@core/services';
+import { InvoiceApplyTaxDiscountComponent, InvoiceEmployeesSelectorComponent, InvoiceExpensesSelectorComponent, InvoiceProductsSelectorComponent, InvoiceProjectsSelectorComponent, InvoiceTasksSelectorComponent } from '../table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -60,7 +57,6 @@ export class InvoiceEditComponent
 	itemsToDelete: string[] = [];
 	invoiceItems: IInvoiceItem[];
 	selectedOrganizationContact: IOrganizationContact;
-	organizationContacts: IOrganizationContact[];
 	employees: IEmployee[];
 	projects: IOrganizationProject[];
 	products: IProductTranslatable[];
@@ -101,7 +97,6 @@ export class InvoiceEditComponent
 		private translate: TranslateService,
 		private invoicesService: InvoicesService,
 		private toastrService: ToastrService,
-		private organizationContactService: OrganizationContactService,
 		private route: ActivatedRoute,
 		private dialogService: NbDialogService,
 		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
@@ -472,15 +467,6 @@ export class InvoiceEditComponent
 		if (!this.organization) {
 			return;
 		}
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-
-		this.organizationContactService
-			.getAll([], { organizationId, tenantId })
-			.then(({ items }) => {
-				this.organizationContacts = items;
-			});
-
 		this.loadSmartTable();
 		await this.loadInvoiceItemData();
 		await this.calculateTotal();
@@ -493,7 +479,7 @@ export class InvoiceEditComponent
 			if (
 				!invoiceData.invoiceDate ||
 				!invoiceData.dueDate ||
-				this.compareDate(invoiceData.invoiceDate, invoiceData.dueDate)
+				compareDate(invoiceData.invoiceDate, invoiceData.dueDate)
 			) {
 				this.toastrService.danger('INVOICES_PAGE.INVALID_DATES');
 				return;
@@ -669,7 +655,7 @@ export class InvoiceEditComponent
 			if (
 				!invoiceData.invoiceDate ||
 				!invoiceData.dueDate ||
-				this.compareDate(invoiceData.invoiceDate, invoiceData.dueDate)
+				compareDate(invoiceData.invoiceDate, invoiceData.dueDate)
 			) {
 				this.toastrService.danger('INVOICES_PAGE.INVALID_DATES');
 				return;
@@ -904,34 +890,9 @@ export class InvoiceEditComponent
 		this.amountDue = +this.total - +this.alreadyPaid;
 	}
 
-	compareDate(date1: Date, date2: Date): boolean {
-		const d1 = new Date(date1);
-		const d2 = new Date(date2);
-
-		const same = d1.getTime() === d2.getTime();
-
-		if (same) {
-			return false;
-		}
-
-		if (d1 > d2) {
-			return true;
-		}
-
-		if (d1 < d2) {
-			return false;
-		}
-	}
-
 	async onCurrencyChange($event) {
 		const tableData = await this.smartTableSource.getAll();
 		this.smartTableSource.load(tableData);
-	}
-
-	searchOrganizationContact(term: string, item: any) {
-		if (item.name) {
-			return item.name.toLowerCase().includes(term.toLowerCase());
-		}
 	}
 
 	selectOrganizationContact($event) {

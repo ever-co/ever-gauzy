@@ -106,36 +106,16 @@
 						</div>
 						<div class="col-sm-4">
 							<div class="form-group">
-								<label
-									for="inputOrganizationContact"
-									class="label"
-								>
+								<label for="inputOrganizationContact" class="label">
 									<span>{{
 										'INVOICES_PAGE.CONTACT' | translate
 									}}</span>
 								</label>
-								<ng-select
-									[items]="organizationContacts"
-									bindName="name"
-									[placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
+								<ga-contact-select 
+									[clearable]="true"
 									formControlName="organizationContact"
-									id="inputOrganizationContact"
-									[searchFn]="searchContact"
-									appendTo="body"
-								>
-									<ng-template
-										ng-option-tmp
-										let-item="item"
-										let-index="index"
-									>
-										{{ item.name }}
-									</ng-template>
-									<ng-template ng-label-tmp let-item="item">
-										<div class="selector-template">
-											<span>{{ item.name }}</span>
-										</div>
-									</ng-template>
-								</ng-select>
+									[placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
+								></ga-contact-select>
 							</div>
 						</div>
 					</div>

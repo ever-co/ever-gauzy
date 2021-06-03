@@ -23,6 +23,7 @@ import { CurrencyModule } from '../../currency/currency.module';
 import { TranslateModule } from '../../translate/translate.module';
 import { VendorSelectModule } from '../../vendor-select/vendor-select.module';
 import { ExpenseCategorySelectModule } from '../expense-category-select/expense-category-select.module';
+import { ContactSelectModule } from '../../contact-select/contact-select.module';
 
 @NgModule({
 	imports: [
@@ -45,7 +46,8 @@ import { ExpenseCategorySelectModule } from '../expense-category-select/expense-
 		TranslateModule,
 		CurrencyModule,
 		VendorSelectModule,
-		ExpenseCategorySelectModule
+		ExpenseCategorySelectModule,
+		ContactSelectModule
 	],
 	exports: [ExpensesMutationComponent],
 	declarations: [ExpensesMutationComponent, AttachReceiptComponent],

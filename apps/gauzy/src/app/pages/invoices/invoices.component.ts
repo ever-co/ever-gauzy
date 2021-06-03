@@ -30,7 +30,6 @@ import {
 	EstimateStatusTypesEnum,
 	InvoiceColumnsEnum,
 	EstimateColumnsEnum,
-	IOrganizationContact,
 	IInvoiceEstimateHistory,
 	PermissionsEnum,
 	ICurrency,
@@ -61,7 +60,6 @@ import {
 	InvoiceEstimateHistoryService,
 	InvoiceItemService,
 	InvoicesService,
-	OrganizationContactService,
 	Store,
 	ToastrService
 } from '../../@core/services';
@@ -92,7 +90,6 @@ export class InvoicesComponent
 	settingsContextMenu: NbMenuItem[];
 	contextMenus = [];
 	columns: any;
-	organizationContacts: IOrganizationContact[];
 	perPage: number = 10;
 	histories: IInvoiceEstimateHistory[] = [];
 	includeArchived = false;
@@ -179,7 +176,6 @@ export class InvoicesComponent
 		private readonly invoiceItemService: InvoiceItemService,
 		private readonly router: Router,
 		private readonly nbMenuService: NbMenuService,
-		private readonly organizationContactService: OrganizationContactService,
 		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
 		private readonly ngxPermissionsService: NgxPermissionsService,
 		private readonly httpClient: HttpClient,
@@ -1040,12 +1036,6 @@ export class InvoicesComponent
 		this.subject$.next();
 	}
 
-	searchContact(term: string, item: any) {
-		if (item.name) {
-			return item.name.toLowerCase().includes(term.toLowerCase());
-		}
-	}
-
 	selectedTagsEvent(currentTagSelection: ITag[]) {
 		this.searchForm.patchValue({
 			tags: currentTagSelection
@@ -1092,17 +1082,7 @@ export class InvoicesComponent
 			.subscribe();
 	}
 
-	async onChangeTab(event) {
-		if (event.tabId === InvoiceTabsEnum.SEARCH) {
-			const { tenantId } = this.store.user;
-			const { id: organizationId } = this.organization;
-			const { items = [] } = await this.organizationContactService.getAll([], {
-				organizationId,
-				tenantId
-			});
-			this.organizationContacts = items;
-		}
-	}
+ 	onChangeTab(event) {}
 
 	clearItem() {
 		this.selectInvoice({

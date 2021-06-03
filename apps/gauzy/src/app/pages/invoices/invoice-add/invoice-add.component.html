@@ -124,33 +124,12 @@
 							<label for="inputOrganizationContact" class="label"
 								>{{ 'INVOICES_PAGE.CONTACT' | translate }}
 							</label>
-							<ng-select
-								[addTag]="addNewOrganizationContact"
-								[items]="organizationContacts"
-								bindName="name"
-								placeholder="{{
-									'POP_UPS.ALL_CONTACTS' | translate
-								}}"
-								[(ngModel)]="organizationContact"
+							<ga-contact-select
+								[addTag]="true"
+								[placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
 								formControlName="organizationContact"
-								id="inputOrganizationContact"
-								(change)="selectOrganizationContact($event)"
-								[searchFn]="searchOrganizationContact"
-								appendTo="body"
-							>
-								<ng-template
-									ng-option-tmp
-									let-item="item"
-									let-index="index"
-								>
-									{{ item.name }}
-								</ng-template>
-								<ng-template ng-label-tmp let-item="item">
-									<div class="selector-template">
-										<span>{{ item.name }}</span>
-									</div>
-								</ng-template>
-							</ng-select>
+								(onChanged)="selectOrganizationContact($event)"
+							></ga-contact-select>
 						</div>
 					</div>
 
