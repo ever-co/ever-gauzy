@@ -49,6 +49,17 @@ export class TagsColorInputComponent implements OnInit, OnDestroy {
 		this._multiple = value;
 	}
 
+	/*
+	* Getter & Setter for display label
+	*/
+	_label: boolean = true;
+	get label(): boolean {
+		return this._label;
+	}
+	@Input() set label(value: boolean) {
+		this._label = value;
+	}
+
 	constructor(
 		private readonly tagsService: TagsService,
 		private store: Store

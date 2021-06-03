@@ -12,7 +12,7 @@
 		<span
 			*ngIf="showTooltip"
 			class="help-text"
-			nbTooltip="{{ 'EXPENSES_PAGE.SPLIT_HELP' | translate }}"
+			[nbTooltip]="'EXPENSES_PAGE.SPLIT_HELP' | translate"
 		>
 			<nb-icon icon="alert-triangle-outline"></nb-icon>
 		</span>
@@ -82,14 +82,14 @@
 						nbInput
 						class="datepicker"
 						[placeholder]="'POP_UPS.PICK_DATE' | translate"
-						[nbDatepicker]="formpicker"
+						[nbDatepicker]="valueDatePicker"
 						[status]="
 							isInvalidControl('valueDate')
 								? 'danger'
 								: 'basic'
 						"
 					/>
-					<nb-datepicker #formpicker></nb-datepicker>
+					<nb-datepicker #valueDatePicker></nb-datepicker>
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">

@@ -1,7 +1,7 @@
 import { CrudService } from '../core';
 import { Invoice } from './invoice.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, ILike, In, Repository } from 'typeorm';
+import { Between, In, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { EmailService } from '../email';
 import { IInvoice, IOrganization, LanguagesEnum } from '@gauzy/contracts';

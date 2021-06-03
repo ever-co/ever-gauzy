@@ -16,7 +16,7 @@ import { Subject } from 'rxjs/internal/Subject';
             bindValue="id"
             [clearable]="true"
             [closeOnSelect]="true"
-            [placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
+            [placeholder]="'PAYMENTS_PAGE.CONTACT' | translate"
             (change)="onChange($event)"
         >
             <ng-template

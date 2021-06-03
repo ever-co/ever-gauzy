@@ -8,6 +8,7 @@ import { ITag } from '@gauzy/contracts';
             (selectedTagsEvent)="selectedTagsEvent($event)"
             [multiple]="true"
             [isOrgLevel]="true"
+            [label]="false"
         >
         </ga-tags-color-input>
     `,
