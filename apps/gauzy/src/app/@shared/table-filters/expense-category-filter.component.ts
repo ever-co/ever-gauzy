@@ -4,18 +4,18 @@ import { IOrganizationVendor } from '@gauzy/contracts';
 
 @Component({
     template: `
-        <ga-vendor-select
+        <ga-expense-category-select
             [clearable]="true"
             [searchable]="false"
             [addTag]="false"
             [multiple]="false"
-            [placeholder]="'SM_TABLE.VENDOR' | translate"
+            [placeholder]="'SM_TABLE.CATEGORY' | translate"
             (onChanged)="selectedVendorEvent($event)"
         >
-        </ga-vendor-select>
+        </ga-expense-category-select>
     `,
 })
-export class VendorFilterComponent extends DefaultFilter implements OnChanges {
+export class ExpenseCategoryFilterComponent extends DefaultFilter implements OnChanges {
     
     constructor() {
         super();

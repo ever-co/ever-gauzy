@@ -200,12 +200,6 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 	public search(filter: any) {
 		if ('filters' in filter) {
 			const { filters } = filter;
-			if ('categoryName' in filters) {
-				const { search } = filters.categoryName;
-				filter.where.expense_category = {
-					name: ILike(`%${search}%`)
-				}
-			}
 			if ('notes' in filters) {
 				const { search } = filters.notes;
 				filter.where.notes = ILike(`%${search}%`);

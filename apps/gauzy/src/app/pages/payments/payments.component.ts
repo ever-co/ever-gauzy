@@ -25,9 +25,7 @@ import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.co
 import { API_PREFIX } from '../../@core/constants';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
 import { ErrorHandlingService, InvoiceEstimateHistoryService, PaymentService, Store, ToastrService } from '../../@core/services';
-import { OrganizationContactFilterComponent } from '../../@shared/table-filters/organization-contact-filter.component';
-import { PaymentMethodFilterComponent } from '../../@shared/table-filters/payment-method-filter.component';
-import { TagsColorFilterComponent } from '../../@shared/table-filters/tags-color-filter.component';
+import { OrganizationContactFilterComponent, PaymentMethodFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

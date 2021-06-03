@@ -1,0 +1,29 @@
+<ng-template [ngIf]="!multiple" [ngIfElse]="multipleSelect">
+	<ng-select
+		[addTag]="(addTag) ? addCategory : null"
+		[multiple]="multiple"
+		[clearable]="clearable"
+		[disabled]="disabled"
+		[searchable]="searchable"
+		[items]="categories"
+		(change)="selectCategory($event)"
+		[(ngModel)]="category"
+		[placeholder]="placeholder || 'POP_UPS.ALL_VENDORS' | translate"
+		bindLabel="name"
+		appendTo="body"
+	>
+	</ng-select>
+</ng-template>
+<ng-template #multipleSelect>
+	<nb-select
+		class="multiple-select"
+		[disabled]="disabled"
+		[multiple]="multiple"
+		[placeholder]="placeholder || 'POP_UPS.ALL_VENDORS' | translate"
+		[(selected)]="vendorId"
+	>
+		<nb-option *ngFor="let vendor of vendors" [value]="vendor.id">
+			{{ vendor.name }}
+		</nb-option>
+	</nb-select>
+</ng-template>

@@ -64,16 +64,14 @@
 					[ngClass]="{ 'col-sm-12': expense && !duplicate }"
 				>
 					<div class="form-group">
-						<ng-select
-							[items]="expenseCategories"
-							[searchable]="true"
-							appendTo="body"
-							[addTag]="addNewCategory"
-							bindLabel="name"
+						<ga-expense-category-select
 							formControlName="category"
+							[searchable]="true"
+							[addTag]="true"
+							[multiple]="false"
 							[placeholder]="'POP_UPS.ALL_CATEGORIES' | translate"
 						>
-						</ng-select>
+						</ga-expense-category-select>
 					</div>
 				</div>
 			</div>
@@ -85,14 +83,11 @@
 						class="datepicker"
 						[placeholder]="'POP_UPS.PICK_DATE' | translate"
 						[nbDatepicker]="formpicker"
-						[ngClass]="{
-							'status-danger':
-								valueDate?.invalid &&
-								(valueDate.dirty || valueDate.touched),
-							'status-success':
-								valueDate?.valid &&
-								(valueDate.dirty || valueDate.touched)
-						}"
+						[status]="
+							isInvalidControl('valueDate')
+								? 'danger'
+								: 'basic'
+						"
 					/>
 					<nb-datepicker #formpicker></nb-datepicker>
 				</div>
@@ -130,14 +125,11 @@
 							fullWidth
 							[placeholder]="'POP_UPS.AMOUNT' | translate"
 							formControlName="amount"
-							[ngClass]="{
-								'status-danger':
-									amount?.invalid &&
-									(amount.dirty || amount.touched),
-								'status-success':
-									amount?.valid &&
-									(amount.dirty || amount.touched)
-							}"
+							[status]="
+							isInvalidControl('amount')
+								? 'danger'
+								: 'basic'
+							"
 							autocomplete="off"
 						/>
 					</div>
@@ -283,14 +275,11 @@
 							[placeholder]="'POP_UPS.NOTES' | translate"
 							formControlName="notes"
 							class="notes"
-							[ngClass]="{
-								'status-danger':
-									notes?.invalid &&
-									(notes.dirty || notes.touched),
-								'status-success':
-									notes?.valid &&
-									(notes.dirty || notes.touched)
-							}"
+							[status]="
+							isInvalidControl('notes')
+									? 'danger'
+									: 'basic'
+							"
 						>
 						</textarea>
 					</div>

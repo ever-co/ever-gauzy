@@ -22,6 +22,7 @@ import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-inp
 import { CurrencyModule } from '../../currency/currency.module';
 import { TranslateModule } from '../../translate/translate.module';
 import { VendorSelectModule } from '../../vendor-select/vendor-select.module';
+import { ExpenseCategorySelectModule } from '../expense-category-select/expense-category-select.module';
 
 @NgModule({
 	imports: [
@@ -43,7 +44,8 @@ import { VendorSelectModule } from '../../vendor-select/vendor-select.module';
 		NbTooltipModule,
 		TranslateModule,
 		CurrencyModule,
-		VendorSelectModule
+		VendorSelectModule,
+		ExpenseCategorySelectModule
 	],
 	exports: [ExpensesMutationComponent],
 	declarations: [ExpensesMutationComponent, AttachReceiptComponent],

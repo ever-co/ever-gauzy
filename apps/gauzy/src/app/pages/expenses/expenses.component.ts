@@ -7,7 +7,8 @@ import {
 	IOrganization,
 	IExpenseViewModel,
 	IEmployee,
-	IOrganizationVendor
+	IOrganizationVendor,
+	IExpenseCategory
 } from '@gauzy/contracts';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
@@ -28,7 +29,7 @@ import { API_PREFIX } from '../../@core/constants';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
 import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';
 import { ErrorHandlingService, ExpensesService, Store, ToastrService } from '../../@core/services';
-import { VendorFilterComponent } from '../../@shared/table-filters/vendor-filter.component';
+import { ExpenseCategoryFilterComponent, VendorFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -238,7 +239,26 @@ export class ExpensesComponent
 				},
 				categoryName: {
 					title: this.getTranslation('SM_TABLE.CATEGORY'),
-					type: 'string'
+					type: 'string',
+					filter: {
+						type: 'custom',
+						component: ExpenseCategoryFilterComponent
+					},
+					filterFunction: (value: IExpenseCategory) => {
+						if (value) {
+							this.filters = {
+								where: { 
+									...this.filters.where, 
+									categoryId: value.id
+								}
+							}
+						} else {
+							if ('categoryId' in this.filters.where) {
+								delete this.filters.where.categoryId;
+							}
+						}
+						this.searchFilter();
+					}
 				},
 				employeeName: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),

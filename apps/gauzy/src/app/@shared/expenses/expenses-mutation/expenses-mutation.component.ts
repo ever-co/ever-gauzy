@@ -13,7 +13,6 @@ import {
 	IOrganizationContact,
 	IOrganizationProject,
 	ExpenseStatusesEnum,
-	IOrganizationExpenseCategory,
 	ContactType,
 	IExpenseViewModel,
 	ICurrency,
@@ -33,7 +32,6 @@ import { filter, tap } from 'rxjs/operators';
 import { 
 	ErrorHandlingService,
 	OrganizationContactService,
-	OrganizationExpenseCategoriesService,
 	OrganizationProjectsService,
 	Store,
 	ToastrService 
@@ -59,7 +57,6 @@ export class ExpensesMutationComponent
 	expenseTypes = Object.values(ExpenseTypesEnum);
 	taxTypes = Object.values(TaxTypesEnum);
 	expenseStatuses = Object.values(ExpenseStatusesEnum);
-	expenseCategories: IOrganizationExpenseCategory[];
 	organizationContact: IOrganizationContact;
 	organizationContacts: {
 		name: string;
@@ -130,7 +127,6 @@ export class ExpensesMutationComponent
 		private readonly store: Store,
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
-		private readonly expenseCategoriesStore: OrganizationExpenseCategoriesService,
 		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private readonly errorHandler: ErrorHandlingService
@@ -147,7 +143,6 @@ export class ExpensesMutationComponent
 					this.organization = organization;
 					this.organizationId = organization.id;
 				}),
-				tap(() => this.getExpenseCategories()),
 				tap(() => this.getOrganizationContacts()),
 				tap(() => this.getProjects()),
 				untilDestroyed(this)
@@ -161,15 +156,6 @@ export class ExpensesMutationComponent
 
 	get currency() {
 		return this.form.get('currency');
-	}
-
-	private async getExpenseCategories() {
-		const { tenantId, organizationId } = this;
-		const { items: category } = await this.expenseCategoriesStore.getAll({
-			organizationId,
-			tenantId
-		});
-		this.expenseCategories = category;
 	}
 
 	selectOrganizationContact($event) {
@@ -219,24 +205,6 @@ export class ExpensesMutationComponent
 			)
 		);
 	}
-
-	addNewCategory = async (
-		name: string
-	): Promise<IOrganizationExpenseCategory> => {
-		try {
-			this.toastrService.success('EXPENSES_PAGE.ADD_EXPENSE_CATEGORY', {
-				name
-			});
-			const { tenantId, organizationId } = this;
-			return await this.expenseCategoriesStore.create({
-				name,
-				organizationId,
-				tenantId
-			});
-		} catch (error) {
-			this.errorHandler.handleError(error);
-		}
-	};
 
 	addNewOrganizationContact = (
 		name: string
@@ -438,6 +406,16 @@ export class ExpensesMutationComponent
 
 	close() {
 		this.dialogRef.close();
+	}
+
+	isInvalidControl(control: string) {
+		if (!this.form.contains(control)) {
+			return true;
+		}
+		return (
+			(this.form.get(control).touched || this.form.get(control).dirty)
+			 && this.form.get(control).invalid
+		);
 	}
 
 	/*
