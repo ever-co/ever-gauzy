@@ -23,11 +23,14 @@ export const createDefaultInvoice = async (
 	for (const organization of organizations) {
 		const tags = await connection.manager.find(Tag, {
 			where: { 
-				organization: organization 
+				organization
 			}
 		});
 		const organizationContacts = await connection.manager.find(OrganizationContact, { 
-			where: { organization: organization } 
+			where: { 
+				tenant,
+				organization 
+			} 
 		});
 		for (let i = 0; i < noOfInvoicePerOrganization; i++) {
 			const invoice = await generateInvoice(
@@ -53,12 +56,14 @@ export const createRandomInvoice = async (
 		const invoices: Invoice[] = [];
 		for (const organization of organizations) {
 			const tags = await connection.manager.find(Tag, {
-				where: { organization: organization }
+				where: { organization }
 			});
-			const organizationContacts = await connection.manager.find(
-				OrganizationContact,
-				{ where: { organizationId: organization.id } }
-			);
+			const organizationContacts = await connection.manager.find(OrganizationContact, { 
+				where: { 
+					organization,
+					tenant
+				} 
+			});
 			for (let i = 0; i < noOfInvoicePerOrganization; i++) {
 				const invoice = await generateInvoice(tenant, organization, tags, organizationContacts)
 				invoices.push(invoice);
@@ -82,7 +87,7 @@ const generateInvoice = async (
 		.values()
 		.value();
 	invoice.invoiceDate = faker.date.past(0.2);
-	invoice.invoiceNumber = faker.datatype.number({ min: 1, max: 9999999 });
+	invoice.invoiceNumber = faker.datatype.number({ min: 1111111, max: 9999999 });
 	invoice.dueDate = faker.date.recent(50);
 	
 	if (organizationContacts.length) {
@@ -109,7 +114,7 @@ const generateInvoice = async (
 	invoice.tax2Type = faker.random.arrayElement(Object.values(DiscountTaxTypeEnum));
 	invoice.invoiceType = faker.random.arrayElement(Object.values(InvoiceTypeEnum));
 	invoice.status = faker.random.arrayElement(Object.values(InvoiceStatusTypesEnum));
-	invoice.totalValue = faker.datatype.number(99999);
+	invoice.totalValue = faker.datatype.number({ min: 500, max: 3000 });
 
 	invoice.organization = organization;
 	invoice.tenant = tenant;
