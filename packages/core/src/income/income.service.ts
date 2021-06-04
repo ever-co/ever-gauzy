@@ -49,10 +49,6 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 	public search(filter: any) {
 		if ('filters' in filter) {
 			const { filters } = filter;
-			if ('clientName' in filters) {
-				const { search } = filters.clientName;
-				filter.where.clientName = ILike(`%${search}%`)
-			}
 			if ('notes' in filters) {
 				const { search } = filters.notes;
 				filter.where.notes = ILike(`%${search}%`)

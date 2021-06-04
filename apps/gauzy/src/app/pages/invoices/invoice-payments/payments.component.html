@@ -16,25 +16,21 @@
 			<div class="date-and-value">
 				<div>
 					{{ 'INVOICES_PAGE.DUE_DATE' | translate }}:
-					{{ invoice ? invoice.dueDate.toString().slice(0, 10) : '' }}
+					{{ invoice ? (invoice.dueDate | dateFormat) : '' }}
 				</div>
 				<div>
 					{{ 'INVOICES_PAGE.PAYMENTS.TOTAL_VALUE' | translate }}:
-					{{
-						invoice
-							? invoice.totalValue + ' ' + invoice.currency
-							: ''
-					}}
+					{{ invoice ? invoice.currency + ' ' + invoice.totalValue : '' }}
 				</div>
 				<div>
 					{{ 'INVOICES_PAGE.PAYMENTS.LEFT_TO_PAY' | translate }}:
-					{{ invoice ? leftToPay + ' ' + invoice.currency : '' }}
+					{{ invoice ? invoice.currency + ' ' + leftToPay: '' }}
 				</div>
 			</div>
 			<div class="total-paid-label">
 				{{ 'INVOICES_PAGE.PAYMENTS.TOTAL_PAID' | translate }}:
-				{{ totalPaid ? totalPaid : 0 }}
 				{{ invoice ? invoice.currency : '' }}
+				{{ totalPaid ? totalPaid : 0 }}
 				<span>
 					<div class="progress-bar-container">
 						<div class="progress-bar">

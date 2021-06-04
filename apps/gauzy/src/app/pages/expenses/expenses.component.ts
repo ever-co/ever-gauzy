@@ -279,18 +279,19 @@ export class ExpensesComponent
 				},
 				notes: {
 					title: this.getTranslation('SM_TABLE.NOTES'),
-					type: 'custom',
-					class: 'align-row',
-					renderComponent: NotesWithTagsComponent
+					type: 'string'
 				},
 				purpose: {
 					title: 'Purpose',
-					type: 'string'
+					type: 'custom',
+					class: 'align-row',
+					renderComponent: NotesWithTagsComponent
 				},
 				displayStatus: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
 					width: '5%',
+					filter: false,
 					renderComponent: StatusBadgeComponent
 				}
 			}

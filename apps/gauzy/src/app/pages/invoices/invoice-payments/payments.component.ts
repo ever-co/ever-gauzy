@@ -44,7 +44,6 @@ export class InvoicePaymentsComponent
 	selectedPayment: IPayment;
 	disableButton = true;
 	loading: boolean;
-	translatedText: any;
 	isDisabled: boolean;
 	organization: IOrganization;
 	subject$: Subject<any> = new Subject();
@@ -407,9 +406,18 @@ export class InvoicePaymentsComponent
 		}
 
 		await this.paymentService.add(payment);
-		await this.getInvoice();
+		this.subject$.next();
 
-		this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD');
+		const { amount, currency, invoice } = payment;
+		if (payment.invoice) {
+			const action = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_AMOUNT_ADDED', { amount, currency });
+			await this.createInvoiceHistory(
+				action,
+				invoice
+			);
+		}
+
+		this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD', { amount, currency });
 	}
 
 	async invoiceRemainingAmount() {
@@ -428,17 +436,12 @@ export class InvoicePaymentsComponent
 		this.payments.forEach((payment) => {
 			data.push({
 				invoiceNumber: this.invoice.invoiceNumber,
-				contact: this.invoice.toContact.name,
+				contact: (this.invoice.toContact) ? this.invoice.toContact.name : '',
 				paymentDate: payment.paymentDate.toString().slice(0, 10),
-				amount: payment.amount,
-				recordedBy:
-					payment.recordedBy.firstName + payment.recordedBy.lastName,
+				amount: `${payment.currency + ' ' + payment.amount}`,
+				recordedBy: payment.recordedBy.firstName + payment.recordedBy.lastName,
 				note: payment.note || '',
-				paymentMethod: payment.paymentMethod
-					? this.getTranslation(
-							`INVOICES_PAGE.PAYMENTS.${payment.paymentMethod}`
-					  )
-					: '',
+				paymentMethod: payment.paymentMethod ? this.getTranslation(`INVOICES_PAGE.PAYMENTS.${payment.paymentMethod}`) : '',
 				status: payment.overdue
 					? this.getTranslation('INVOICES_PAGE.PAYMENTS.OVERDUE')
 					: this.getTranslation('INVOICES_PAGE.PAYMENTS.ON_TIME')

@@ -119,23 +119,13 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	}
 
 	ngOnInit() {
-		this.selectorBuilderService.selectors$
-			.pipe(untilDestroyed(this))
-			.subscribe((selectors) => {
-				this.selectorsVisibility = Object.assign(
-					{},
-					DEFAULT_SELECTOR_VISIBILITY,
-					selectors
-				);
-			});
 		this.router.events
 			.pipe(
 				filter((event) => event instanceof NavigationEnd),
+				tap(() => this.timeTrackerService.showTimerWindow = false),
 				untilDestroyed(this)
 			)
-			.subscribe(() => {
-				this.timeTrackerService.showTimerWindow = false;
-			});
+			.subscribe();
 		this.timeTrackerService.duration$
 			.pipe(untilDestroyed(this))
 			.subscribe((time) => {
@@ -185,22 +175,30 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 				}
 			});
 		this.subject$
-			.pipe(debounceTime(1300), untilDestroyed(this))
-			.subscribe(() => {
-				this.checkEmployeeSelectorVisibility();
-				this.checkProjectSelectorVisibility();
-				this.loadItems();
-			});
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const selectedDate$ = this.store.selectedDate$;
-		combineLatest([storeOrganization$, selectedDate$])
 			.pipe(
-				filter(([organization, date]) => !!organization && !!date),
+				debounceTime(1300),
+				tap(() => this.checkEmployeeSelectorVisibility()),
+				tap(() => this.checkProjectSelectorVisibility()),
+				tap(() => this.loadItems()),
 				untilDestroyed(this)
 			)
-			.subscribe(([organization, date]) => {
+			.subscribe();
+		const selectors$ = this.selectorBuilderService.selectors$;
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const selectedDate$ = this.store.selectedDate$;
+		combineLatest([storeOrganization$, selectedDate$, selectors$])
+			.pipe(
+				filter(([organization, date, selectors]) => !!organization && !!date && !!selectors),
+				untilDestroyed(this)
+			)
+			.subscribe(([organization, date, selectors]) => {
 				this.organization = organization;
 				this.selectedDate = date;
+				this.selectorsVisibility = Object.assign(
+					{},
+					DEFAULT_SELECTOR_VISIBILITY,
+					selectors
+				);
 				this.subject$.next();
 			});
 		this.themeService

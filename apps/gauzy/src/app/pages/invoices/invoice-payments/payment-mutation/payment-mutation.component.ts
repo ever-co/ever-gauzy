@@ -140,7 +140,8 @@ export class PaymentMutationComponent
 			});
 		} else {
 			this.form.patchValue({
-				invoice: this.invoice
+				invoice: this.invoice,
+				contact: this.invoice.toContact
 			});
 		}
 	}
