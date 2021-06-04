@@ -98,7 +98,7 @@ export class PaymentsComponent
 		this.subject$
 			.pipe(
 				tap(() => this.loading = true),
-				debounceTime(200),
+				debounceTime(300),
 				tap(() => this.clearItem()),
 				tap(() => this.getPayments()),
 				untilDestroyed(this)
@@ -119,6 +119,8 @@ export class PaymentsComponent
 						this.organization = organization;
 						this.selectedDate = date;
 						this.projectId = project ? project.id : null;
+
+						this.refreshPagination();
 						this.subject$.next();
 					}
 				}),
@@ -143,6 +145,7 @@ export class PaymentsComponent
 				distinctUntilChange(),
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.refreshPagination()),
 				tap(() => this.subject$.next()),
 				untilDestroyed(this)
 			)
@@ -556,6 +559,13 @@ export class PaymentsComponent
 			organizationId,
 			tenantId
 		});
+	}
+
+	/*
+	* refresh pagination
+	*/
+	refreshPagination() {
+		this.pagination['activePage'] = 1;
 	}
 
 	ngOnDestroy() {}

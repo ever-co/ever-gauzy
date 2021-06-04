@@ -196,7 +196,7 @@ export class InvoicesComponent
 		this.subject$
 			.pipe(
 				tap(() => this.loading = true),
-				debounceTime(200),
+				debounceTime(300),
 				tap(() => this.cdr.detectChanges()),
 				tap(() => this.getInvoices()),
 				tap(() => this.clearItem()),
@@ -209,6 +209,7 @@ export class InvoicesComponent
 				filter((organization) => !!organization),
 				distinctUntilChange(),
 				tap((organization) => (this.organization = organization)),
+				tap(() => this.refreshPagination()),
 				tap(() => this.subject$.next()),
 				untilDestroyed(this)
 			)
@@ -235,6 +236,7 @@ export class InvoicesComponent
 				distinctUntilChange(),
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.refreshPagination()),
 				tap(() => this.subject$.next()),
 				untilDestroyed(this)
 			)
@@ -985,37 +987,39 @@ export class InvoicesComponent
 			},
 		}
 		if (invoiceNumber) {
-			filters.where.invoiceNumber = invoiceNumber
+			filters.where.invoiceNumber = invoiceNumber;
 		}
 		if (invoiceDate) {
-			filters.where.invoiceDate = moment(invoiceDate).format('YYYY-MM-DD')
+			filters.where.invoiceDate = moment(invoiceDate).format('YYYY-MM-DD');
 		}
 		if (dueDate) {
-			filters.where.dueDate = moment(dueDate).format('YYYY-MM-DD')
+			filters.where.dueDate = moment(dueDate).format('YYYY-MM-DD');
 		}
 		if (totalValue) {
-			filters.where.totalValue = totalValue
+			filters.where.totalValue = totalValue;
 		}
 		if (currency) {
-			filters.where.currency = currency
+			filters.where.currency = currency;
 		}
 		if (status) {
-			filters.where.status = status
+			filters.where.status = status;
 		}
 		if (organizationContact) {
 			filters.join.leftJoin.toContact = 'invoice.toContact'
 			filters.where['toContact'] = [organizationContact.id]
 		}
 		if (isNotEmpty(tags)) {
-			filters.join.leftJoin.tags = 'invoice.tags'
-			const tagId = []
+			filters.join.leftJoin.tags = 'invoice.tags';
+			const tagId = [];
 			for (const tag of tags) {
-				tagId.push(tag.id)
+				tagId.push(tag.id);
 			}
-			filters.where.tags = tagId
+			filters.where.tags = tagId;
 		}
 		if (isNotEmpty(filters)) {
 			this._filters = filters;
+
+			this.refreshPagination();
 			this.subject$.next();
 		}
 	}
@@ -1127,6 +1131,13 @@ export class InvoicesComponent
 			organizationId,
 			tenantId
 		});
+	}
+
+	/*
+	* refresh pagination
+	*/
+	refreshPagination() {
+		this.pagination['activePage'] = 1;
 	}
 
 	/*

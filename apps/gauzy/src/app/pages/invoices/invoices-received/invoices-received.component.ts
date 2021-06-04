@@ -89,7 +89,7 @@ export class InvoicesReceivedComponent
 
 		this.subject$
 			.pipe(
-				debounceTime(200),
+				debounceTime(300),
 				tap(() => this.loading = true),
 				tap(() => this.getInvoices()),
 				tap(() => this.clearItem()),
@@ -102,6 +102,7 @@ export class InvoicesReceivedComponent
 				filter((organization) => !!organization),
 				distinctUntilChange(),
 				tap((organization) => (this.organization = organization)),
+				tap(() => this.refreshPagination()),
 				tap(() => this.subject$.next()),
 				untilDestroyed(this)
 			)
@@ -133,6 +134,7 @@ export class InvoicesReceivedComponent
 				distinctUntilChange(),
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.refreshPagination()),
 				tap(() => this.subject$.next()),
 				untilDestroyed(this)
 			)
@@ -289,6 +291,13 @@ export class InvoicesReceivedComponent
 			data: null
 		});
 		this.deselectAll();
+	}
+
+	/*
+	* refresh pagination
+	*/
+	refreshPagination() {
+		this.pagination['activePage'] = 1;
 	}
 
 	/*

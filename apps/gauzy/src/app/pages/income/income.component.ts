@@ -100,7 +100,7 @@ export class IncomeComponent
 		this._loadSmartTableSettings();
 		this.subject$
 			.pipe(
-				debounceTime(200),
+				debounceTime(300),
 				tap(() => this.loading = true),
 				tap(() => this.getIncomes()),
 				tap(() => this.clearItem()),
@@ -121,6 +121,8 @@ export class IncomeComponent
 					if (organization) {
 						this.selectedDate = date;
 						this.selectedEmployeeId = employee ? employee.id : null;
+
+						this.refreshPagination();
 						this.subject$.next();
 					}
 				}),
@@ -154,6 +156,7 @@ export class IncomeComponent
 				distinctUntilChange(),
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.refreshPagination()),
 				tap(() => this.subject$.next()),
 				untilDestroyed(this)
 			)
@@ -194,8 +197,6 @@ export class IncomeComponent
 						component: OrganizationContactFilterComponent
 					},
 					filterFunction: (value) => {
-						console.log(value)
-
 						if (value) {
 							this.filters = {
 								where: { 
@@ -514,6 +515,13 @@ export class IncomeComponent
 		return (
 			employee && employee.id
 		) ? (employee.fullName).trim() : ALL_EMPLOYEES_SELECTED.firstName;
+	}
+
+	/*
+	* refresh pagination
+	*/
+	refreshPagination() {
+		this.pagination['activePage'] = 1;
 	}
 
 	ngOnDestroy() { }

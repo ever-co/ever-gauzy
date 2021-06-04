@@ -1,21 +1,24 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { first } from 'rxjs/operators';
+import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-import { OrganizationExpenseCategoriesService } from '../../../@core/services/organization-expense-categories.service';
 import {
 	ITag,
 	IOrganizationExpenseCategory,
-	ComponentLayoutStyleEnum
+	ComponentLayoutStyleEnum,
+	IOrganization
 } from '@gauzy/contracts';
-import { Store } from '../../../@core/services/store.service';
-import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { NotesWithTagsComponent } from '../../../@shared/table-components/notes-with-tags/notes-with-tags.component';
+import { Subject } from 'rxjs/internal/Subject';
+import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
+import { NotesWithTagsComponent } from '../../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import { ErrorHandlingService, OrganizationExpenseCategoriesService, Store, ToastrService } from '../../../@core/services';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { ServerDataSource } from '../../../@core/utils/smart-table/server.data-source';
+import { HttpClient } from '@angular/common/http';
+import { combineLatest } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -26,60 +29,70 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 export class ExpenseCategoriesComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	organizationId: string;
-	tenantId: string;
 
+	smartTableSource: ServerDataSource;
+	organization: IOrganization;
 	showAddCard: boolean;
 	showEditDiv: boolean;
 	settingsSmartTable: object;
 	expenseCategories: IOrganizationExpenseCategory[];
-
 	selectedExpenseCategory: IOrganizationExpenseCategory;
 	tags: ITag[] = [];
 	isGridEdit: boolean;
-	viewComponentName: ComponentEnum;
+	viewComponentName: ComponentEnum = ComponentEnum.EXPENSES_CATEGORY;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+	subject$: Subject<any> = new Subject();
+	pagination: any = {
+		totalItems: 0,
+		activePage: 1,
+		itemsPerPage: 8
+	};
+	loading: boolean;
 
 	constructor(
 		private readonly organizationExpenseCategoryService: OrganizationExpenseCategoriesService,
 		private readonly toastrService: ToastrService,
-		private store: Store,
+		private readonly store: Store,
 		readonly translateService: TranslateService,
-		private errorHandlingService: ErrorHandlingService,
-		private readonly dialogService: NbDialogService
+		private readonly errorHandlingService: ErrorHandlingService,
+		private readonly dialogService: NbDialogService,
+		private readonly httpClient: HttpClient,
 	) {
 		super(translateService);
-		this.setView();
 	}
 
 	ngOnInit(): void {
-		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe((organization) => {
-				if (organization) {
-					this.organizationId = organization.id;
-					this.tenantId = organization.tenantId;
-					this.loadCategories();
-					this.loadSmartTable();
-				}
-			});
+		this._loadSettingsSmartTable();
+		this.subject$
+			.pipe(
+				tap(() => this.loading = true),
+				debounceTime(300),
+				tap(() => this.cancel()),
+				tap(() => this.getCategories()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const componentLayout$ = this.store.componentLayout$(this.viewComponentName);
+		combineLatest([storeOrganization$, componentLayout$])
+			.pipe(
+				debounceTime(300),
+				filter(([ organization, componentLayout ]) => !!organization && !!componentLayout),
+				distinctUntilChange(),
+				tap(([organization, componentLayout]) => {
+					this.organization = organization;
+					this.dataLayoutStyle = componentLayout;
+					this.refreshPagination();
+					this.subject$.next();
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngOnDestroy(): void {}
-
-	setView() {
-		this.viewComponentName = ComponentEnum.EXPENSES_CATEGORY;
-		this.store
-			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-				this.selectedExpenseCategory = null;
-
-				//when layout selector change then hide edit showcard
-				this.showAddCard = false;
-			});
-	}
 
 	showEditCard(expenseCategory: IOrganizationExpenseCategory) {
 		this.showEditDiv = true;
@@ -96,7 +109,7 @@ export class ExpenseCategoriesComponent
 		this.tags = [];
 	}
 
-	async loadSmartTable() {
+	async _loadSettingsSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
@@ -123,11 +136,11 @@ export class ExpenseCategoriesComponent
 
 			if (result) {
 				await this.organizationExpenseCategoryService.delete(id);
+				this.subject$.next();
 				this.toastrService.success(
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.REMOVE_EXPENSE_CATEGORY',
 					{ name }
 				);
-				this.loadCategories();
 			}
 		} catch (error) {
 			this.errorHandlingService.handleError(error);
@@ -151,32 +164,29 @@ export class ExpenseCategoriesComponent
 			id,
 			expenseCategory
 		);
-
+		this.subject$.next();
 		this.toastrService.success(
 			'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.UPDATE_EXPENSE_CATEGORY',
 			{ name }
 		);
-
-		this.loadCategories();
-		this.cancel();
 	}
 
 	public async addCategory(name: string) {
 		if (name) {
+			const { id: organizationId } = this.organization;
+			const { tenantId } = this.store.user;
+
 			await this.organizationExpenseCategoryService.create({
 				name,
-				organizationId: this.organizationId,
-				tenantId: this.tenantId,
+				organizationId,
+				tenantId,
 				tags: this.tags
 			});
-
+			this.subject$.next();
 			this.toastrService.success(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.ADD_EXPENSE_CATEGORY',
 				{ name }
 			);
-
-			this.cancel();
-			this.loadCategories();
 		} else {
 			// TODO translate
 			this.toastrService.danger(
@@ -186,21 +196,47 @@ export class ExpenseCategoriesComponent
 		}
 	}
 
-	private async loadCategories() {
-		if (!this.organizationId) {
+	/*
+	* Register Smart Table Source Config 
+	*/
+	setSmartTableSource() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		this.smartTableSource = new ServerDataSource(this.httpClient, {
+			endPoint: `${API_PREFIX}/expense-categories/search/filter`,
+			relations: [
+				'tags'
+			],
+			where: {
+				organizationId,
+				tenantId
+			},
+			finalize: () => {
+				this.loading = false;
+			}
+		});
+	}
+
+	private async getCategories() {
+		if (!this.organization) {
 			return;
 		}
-		const res = await this.organizationExpenseCategoryService.getAll(
-			{
-				organizationId: this.organizationId,
-				tenantId: this.tenantId
-			},
-			['tags']
-		);
-		if (res) {
-			this.expenseCategories = res.items;
+
+		try {
+			this.setSmartTableSource();
+
+			// Initiate GRID view pagination
+			const { activePage, itemsPerPage } = this.pagination;
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+
+			await this.smartTableSource.getElements();
+			this.expenseCategories = this.smartTableSource.getData();
+			
+			this.pagination['totalItems'] =  this.smartTableSource.count();
+			this.emptyListInvoke();
+		} catch (error) {
+			this.errorHandlingService.handleError(error);
 		}
-		this.emptyListInvoke();
 	}
 
 	selectedTagsEvent(ev) {
@@ -221,5 +257,17 @@ export class ExpenseCategoriesComponent
 		if (this.expenseCategories.length === 0) {
 			this.cancel();
 		}
+	}
+
+	onPageChange(selectedPage: number) {
+		this.pagination['activePage'] = selectedPage;
+		this.subject$.next();
+	}
+
+	/*
+	* refresh pagination
+	*/
+	refreshPagination() {
+		this.pagination['activePage'] = 1;
 	}
 }

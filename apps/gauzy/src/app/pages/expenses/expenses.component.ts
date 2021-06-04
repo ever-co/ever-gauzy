@@ -100,7 +100,7 @@ export class ExpensesComponent
 		this.subject$
 			.pipe(
 				tap(() => this.loading = true),
-				debounceTime(200),
+				debounceTime(300),
 				tap(() => this.clearItem()),
 				tap(() => this.getExpenses()),
 				untilDestroyed(this)
@@ -121,6 +121,8 @@ export class ExpensesComponent
 						this.selectedDate = date;
 						this.employeeId = employee ? employee.id : null;
 						this.projectId = project ? project.id : null;
+						
+						this.refreshPagination();
 						this.subject$.next();
 					}
 				}),
@@ -153,6 +155,7 @@ export class ExpensesComponent
 				distinctUntilChange(),
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.refreshPagination()),
 				tap(() => this.subject$.next()),
 				untilDestroyed(this)
 			)
@@ -603,6 +606,13 @@ export class ExpensesComponent
 		return (
 			employee && employee.id
 		) ? (employee.fullName).trim() : ALL_EMPLOYEES_SELECTED.firstName;
+	}
+
+	/*
+	* refresh pagination
+	*/
+	refreshPagination() {
+		this.pagination['activePage'] = 1;
 	}
 
 	ngOnDestroy() {}
