@@ -22,6 +22,7 @@ import {
 	OrganizationProjectsService,
 	Store
 } from './../../../../@core/services';
+import { environment as ENV } from './../../../../../environments/environment';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -86,6 +87,7 @@ export class PaymentMutationComponent
 			.pipe(
 				filter((organization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
+				tap(({ currency }) => this.currencyString = currency || ENV.DEFAULT_CURRENCY),
 				tap(() => this.initializeForm()),
 				untilDestroyed(this)
 			)
@@ -125,8 +127,7 @@ export class PaymentMutationComponent
 	initializeForm() {
 		if (this.payment) {
 			const { amount, currency, paymentDate, note, paymentMethod, invoice, contact, project, tags } = this.payment;
-			this.invoice = invoice; 
-			this.form.setValue({
+			this.form.patchValue({
 				amount,
 				currency,
 				paymentDate: new Date(paymentDate),
@@ -137,15 +138,17 @@ export class PaymentMutationComponent
 				project: project || null,
 				tags
 			});
-			this.form.updateValueAndValidity();
+		} else {
+			this.form.patchValue({
+				invoice: this.invoice
+			});
 		}
 	}
 
 	async addEditPayment() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const { amount, paymentDate, note, invoice, paymentMethod, contact, project, tags } = this.form.value;
-
+		const { amount, paymentDate, note, paymentMethod, contact, project, tags, invoice } = this.form.value;
 		const payment = {
 			amount,
 			paymentDate,
@@ -164,9 +167,8 @@ export class PaymentMutationComponent
 			projectId: project ? project.id : null,
 			tags
 		};
-
 		if (isNotEmpty(this.invoice)) {
-			const overdue = compareDate( paymentDate, this.invoice.dueDate);
+			const overdue = compareDate(paymentDate, this.invoice.dueDate);
 			payment['overdue'] = overdue;
 		} else if (isNotEmpty(invoice)) {
 			const overdue = compareDate(paymentDate, invoice.dueDate);

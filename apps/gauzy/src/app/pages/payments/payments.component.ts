@@ -26,6 +26,8 @@ import { API_PREFIX } from '../../@core/constants';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
 import { ErrorHandlingService, InvoiceEstimateHistoryService, PaymentService, Store, ToastrService } from '../../@core/services';
 import { OrganizationContactFilterComponent, PaymentMethodFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
+import { environment as ENV } from './../../../environments/environment';
+
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -110,6 +112,7 @@ export class PaymentsComponent
 				debounceTime(300),
 				filter(([organization]) => !!organization),
 				tap(([organization]) => (this.organization = organization)),
+				tap(([organization]) => (this.currency = organization.currency || ENV.DEFAULT_CURRENCY)),
 				distinctUntilChange(),
 				tap(([organization, date, project]) => {
 					if (organization) {
@@ -209,11 +212,17 @@ export class PaymentsComponent
 			},
 			resultMap: (payment: IPayment) => {
 				const { invoice, project, contact, recordedBy, paymentMethod, overdue } = payment;
+				let organizationContactName: string;
+				if (invoice && invoice.toContact) {
+					organizationContactName = invoice.toContact.name;
+				} else if (contact) {
+					organizationContactName = contact.name;
+				}
 				return Object.assign({}, payment, {
 					displayOverdue: this.statusMapper(overdue),
 					invoiceNumber: invoice ? invoice.invoiceNumber : null,
 					projectName: project ? project.name : null,
-					organizationContactName: invoice ? invoice.toContact.name : contact.name,
+					organizationContactName,
 					recordedBy: `${recordedBy.firstName} ${recordedBy.lastName}`,
 					displayPaymentMethod: this.getTranslation(`INVOICES_PAGE.PAYMENTS.${paymentMethod}`)
 				});
@@ -253,7 +262,6 @@ export class PaymentsComponent
 			.open(PaymentMutationComponent, {
 				context: {
 					organization: this.organization,
-					currencyString: this.currency
 				}
 			})
 			.onClose.pipe(first())
@@ -286,7 +294,8 @@ export class PaymentsComponent
 		const result = await this.dialogService
 			.open(PaymentMutationComponent, {
 				context: {
-					payment: this.selectedPayment
+					payment: this.selectedPayment,
+					invoice: this.selectedPayment.invoice
 				}
 			})
 			.onClose.pipe(first())
@@ -300,7 +309,7 @@ export class PaymentsComponent
 
 			if (result.invoice) {
 				const { invoice } = result;
-				const action = this.getTranslation('INVOICES_PAGE.PAYMENT.PAYMENT_EDIT');
+				const action = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_EDIT');
 	
 				await this.createInvoiceHistory(
 					action,
@@ -334,7 +343,7 @@ export class PaymentsComponent
 			
 			const { invoice } = this.selectedPayment;
 			if (invoice) {
-				const action = this.getTranslation('INVOICES_PAGE.PAYMENT.PAYMENT_DELETE');
+				const action = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE');
 				await this.createInvoiceHistory(
 					action,
 					invoice
