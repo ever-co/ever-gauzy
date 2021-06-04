@@ -119,6 +119,24 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	}
 
 	ngOnInit() {
+		this.subject$
+			.pipe(
+				debounceTime(1300),
+				tap(() => this.checkEmployeeSelectorVisibility()),
+				tap(() => this.checkProjectSelectorVisibility()),
+				tap(() => this.loadItems()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.selectorBuilderService.selectors$
+			.pipe(
+				tap((selectors) => {
+					this.selectorsVisibility = Object.assign({}, DEFAULT_SELECTOR_VISIBILITY, selectors);
+				}),
+				tap(() => this.subject$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.router.events
 			.pipe(
 				filter((event) => event instanceof NavigationEnd),
@@ -174,39 +192,25 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 					this._checkTimerStatus();
 				}
 			});
-		this.subject$
-			.pipe(
-				debounceTime(1300),
-				tap(() => this.checkEmployeeSelectorVisibility()),
-				tap(() => this.checkProjectSelectorVisibility()),
-				tap(() => this.loadItems()),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		const selectors$ = this.selectorBuilderService.selectors$;
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const selectedDate$ = this.store.selectedDate$;
-		combineLatest([storeOrganization$, selectedDate$, selectors$])
+		combineLatest([storeOrganization$, selectedDate$])
 			.pipe(
-				filter(([organization, date, selectors]) => !!organization && !!date && !!selectors),
+				filter(([organization, date]) => !!organization && !!date),
 				untilDestroyed(this)
 			)
-			.subscribe(([organization, date, selectors]) => {
+			.subscribe(([organization, date]) => {
 				this.organization = organization;
 				this.selectedDate = date;
-				this.selectorsVisibility = Object.assign(
-					{},
-					DEFAULT_SELECTOR_VISIBILITY,
-					selectors
-				);
 				this.subject$.next();
 			});
 		this.themeService
 			.onThemeChange()
-			.pipe(untilDestroyed(this))
-			.subscribe((t) => {
-				this.theme = t.name;
-			});
+			.pipe(
+				tap((theme) => this.theme = theme.name),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this._applyTranslationOnSmartTable();
 		this.loadItems();
 	}
@@ -577,11 +581,15 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	}
 
 	private _applyTranslationOnSmartTable() {
-		this.translate.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
-			this.createContextMenu = [];
-			this.supportContextMenu = [];
-			this.loadItems();
-		});
+		this.translate.onLangChange
+			.pipe(
+				untilDestroyed(this)
+			)
+			.subscribe(() => {
+				this.createContextMenu = [];
+				this.supportContextMenu = [];
+				this.loadItems();
+			});
 	}
 
 	private _checkTimerStatus() {
