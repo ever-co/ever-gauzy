@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, Between, ILike } from 'typeorm';
+import { Repository, FindManyOptions, Between, ILike, In } from 'typeorm';
 import { Income } from './income.entity';
 import { IPagination } from '../core';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
@@ -49,14 +49,6 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 	public search(filter: any) {
 		if ('filters' in filter) {
 			const { filters } = filter;
-			if ('employeeName' in filters) {
-				const { search } = filters.employeeName;
-				filter.where.employee = {
-					user: {
-						firstName: ILike(`%${search}%`)
-					}
-				}
-			}
 			if ('clientName' in filters) {
 				const { search } = filters.clientName;
 				filter.where.clientName = ILike(`%${search}%`)
@@ -67,13 +59,21 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 			}
 			delete filter['filters'];
 		}
-
-		if ('valueDate' in filter.where) {
-			const { valueDate } = filter.where;
-			filter.where.valueDate = Between(
-				moment(valueDate).startOf('month'), 
-				moment(valueDate).endOf('month')
-			);
+		if ('where' in filter) {
+			const { where } = filter;
+			if ('valueDate' in where) {
+				const { valueDate } = where;
+				filter.where.valueDate = Between(
+					moment(valueDate).startOf('month'), 
+					moment(valueDate).endOf('month')
+				);
+			}
+			if ('tags' in where) {
+				const { tags } = where; 
+				filter.where.tags = {
+					id: In(tags)
+				}
+			}
 		}
 		return super.search(filter);
 	}

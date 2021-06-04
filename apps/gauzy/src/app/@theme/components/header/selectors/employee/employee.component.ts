@@ -117,7 +117,9 @@ export class EmployeeSelectorComponent
 			.pipe(
 				filter((employee) => !!employee),
 				tap((employee) => {
-					this.selectedEmployee = employee;
+					if (this.defaultSelected) {
+						this.selectedEmployee = employee;
+					}
 					this.cdRef.detectChanges();
 				}),
 				untilDestroyed(this)
@@ -218,7 +220,7 @@ export class EmployeeSelectorComponent
 		if (!this.skipGlobalChange) {
 			this.store.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
 		} else {
-			this.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
+			this.selectedEmployee = employee;
 		}
 		this.selectionChanged.emit(employee);
 	}
@@ -311,7 +313,11 @@ export class EmployeeSelectorComponent
 	};
 
 	ngOnDestroy() {
-		if (this.people.length > 0 && !this.store.selectedEmployee) { 
+		if (
+			this.people.length > 0 && 
+			!this.store.selectedEmployee &&
+			!this.skipGlobalChange
+		) { 
 			this.store.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
 		}
 	}

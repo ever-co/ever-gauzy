@@ -1,11 +1,6 @@
-<nb-card class="main" *ngIf="form">
+<nb-card class="main">
 	<nb-card-header class="d-flex">
-		<h5>
-			{{
-				(income ? 'POP_UPS.EDIT_INCOME' : 'POP_UPS.ADD_INCOME')
-					| translate
-			}}
-		</h5>
+		<h5> {{ (income ? 'POP_UPS.EDIT_INCOME' : 'POP_UPS.ADD_INCOME') | translate }} </h5>
 		<nb-icon
 			class="ml-auto mt-1 close"
 			(click)="close()"
@@ -13,21 +8,22 @@
 		></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="body">
-		<form [formGroup]="form">
+		<form 
+			[formGroup]="form"
+			id="incomeMutationForm"
+			#formDirective="ngForm"
+			(ngSubmit)="addOrEditIncome()"
+		>
 			<div class="row employees">
 				<div class="col-sm-12">
-					<label class="label" for="status" [hidden]="income">
-						{{
-							'INCOME_PAGE.EMPLOYEES_GENERATE_INCOME' | translate
-						}}
-					</label>
+					<label class="label" for="status" [hidden]="income">{{ 
+						'INCOME_PAGE.EMPLOYEES_GENERATE_INCOME' | translate 
+					}}</label>
 					<ga-employee-selector
 						#employeeSelector
-						placeholder="{{
-							'INCOME_PAGE.EMPLOYEES_GENERATE_INCOME' | translate
-						}}"
-						[defaultSelected]="false"
-						[showAllEmployeesOption]="false"
+						[placeholder]="'INCOME_PAGE.EMPLOYEES_GENERATE_INCOME' | translate"
+						[defaultSelected]="true"
+						[showAllEmployeesOption]="true"
 						[hidden]="income"
 						[skipGlobalChange]="true"
 						class="employees"
@@ -54,7 +50,6 @@
 					/>
 					<nb-datepicker #valueDatePicker></nb-datepicker>
 				</div>
-
 				<div class="col-sm-6">
 					<div class="form-group">
 						<label class="label">{{
@@ -125,9 +120,7 @@
 
 						<span
 							class="label info-font"
-							nbTooltip="{{
-								'INCOME_PAGE.BONUS_HELP' | translate
-							}}"
+							[nbTooltip]="'INCOME_PAGE.BONUS_HELP' | translate"
 						>
 							&nbsp;<nb-icon icon="info-outline"></nb-icon>
 						</span>
@@ -156,7 +149,7 @@
 	<nb-card-footer class="text-right">
 		<button
 			[disabled]="form.invalid"
-			(click)="addOrEditIncome()"
+			(click)="formDirective.ngSubmit.emit()"
 			status="success"
 			nbButton
 		>

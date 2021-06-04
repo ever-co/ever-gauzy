@@ -82,6 +82,7 @@ export class IncomeMutationComponent
 				filter((organization) => !!organization),
 				debounceTime(200),
 				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this._loadDefaultCurrency()),
 				tap(() => this._initializeForm()),
 				untilDestroyed(this)
 			)
@@ -93,14 +94,15 @@ export class IncomeMutationComponent
 	}
 
 	async addOrEditIncome() {
-		if (this.form.valid) {
-			this.dialogRef.close(
-				Object.assign(
-					{ employee: this.employeeSelector.selectedEmployee },
-					this.form.value
-				)
-			);
+		if (this.form.invalid) {
+			return;
 		}
+		this.dialogRef.close(
+			Object.assign(
+				{ employee: this.employeeSelector.selectedEmployee },
+				this.form.value
+			)
+		);
 	}
 	
 	close() {
@@ -119,12 +121,10 @@ export class IncomeMutationComponent
 				isBonus: isBonus,
 				tags: tags
 			});
-		} else {
-			this._loadDefaultCurrency();
 		}
 	}
 
-	private async _loadDefaultCurrency() {
+	private _loadDefaultCurrency() {
 		const organization = this.organization;
 		if (organization && this.currency && !this.currency.value) {
 			this.currency.setValue(organization.currency);
@@ -143,8 +143,8 @@ export class IncomeMutationComponent
 			return true;
 		}
 		return (
-			(this.form.get(control).touched || this.form.get(control).dirty)
-			 && this.form.get(control).invalid
+			(this.form.get(control).touched || this.form.get(control).dirty) && 
+			this.form.get(control).invalid
 		);
 	}
 
