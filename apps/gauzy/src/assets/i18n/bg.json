@@ -185,7 +185,8 @@
 		"TARGET_VALUE": "Target value",
 		"LAST_UPDATED": "Last Updated",
 		"CREATED_BY": "Created By",
-		"NO_DATA_MESSAGE": "No Data"
+		"NO_DATA_MESSAGE": "No Data",
+		"TAGS": "Тагове"
 	},
 	"FORM": {
 		"USERNAME": "Потребителско име",
@@ -2142,8 +2143,8 @@
 		"EMAIL_WRONG_FORMAT": "Email is in wrong format",
 		"PHONE_WRONG_FORMAT": "Phone is in wrong format",
 		"SELECTED": "Selected",
+		"MAIN": "Основни",
 		"SUCCESFULLY_ADDED_PRODUCTS": "Продуктите са добавени успешно!",
-		"MAIN": "Main",
 		"INVENTORY":"Inventory"
 	},
 	"TASKS_PAGE": {
