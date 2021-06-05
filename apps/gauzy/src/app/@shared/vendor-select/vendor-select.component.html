@@ -1,0 +1,12 @@
+<ng-select
+	[addTag]="(addTag) ? addVendor : null"
+	[clearable]="clearable"
+	[disabled]="disabled"
+	[searchable]="searchable"
+	[items]="vendors"
+	(change)="selectVendor($event)"
+	[(ngModel)]="vendor"
+	[placeholder]="placeholder || 'POP_UPS.ALL_VENDORS' | translate"
+	bindLabel="name"
+	appendTo="body"
+></ng-select>

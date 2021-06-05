@@ -1,5 +1,6 @@
 import {
 	IProductCategoryTranslated,
+	IProductCategoryTranslatable,
 	IOrganization,
 	ComponentLayoutStyleEnum,
 	PermissionsEnum
@@ -39,12 +40,16 @@ export class ProductCategoriesComponent
 	productData: IProductCategoryTranslated[];
 	selectedOrganization: IOrganization;
 	disableButton = true;
-	viewComponentName: ComponentEnum;
+	viewComponentName: ComponentEnum.PRODUCT_CATEGORY;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	editCategoriesAllowed = false;
 
 	source: ServerDataSource;
 	CATEGORIES_URL = `${API_PREFIX}/product-categories?`;
+	tableData: IProductCategoryTranslated[] | IProductCategoryTranslatable[] = [];
+	totalItems = 0;
+	currentPage = 1;
+	itemsPerPage = 10;
 
 	productCategoriesTable: Ng2SmartTableComponent;
 	@ViewChild('productCategoriesTable') set content(
@@ -57,7 +62,7 @@ export class ProductCategoriesComponent
 	}
 
 	constructor(
-		private http: HttpClient, 
+		private http: HttpClient,
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
 		private productCategoryService: ProductCategoryService,
@@ -72,6 +77,15 @@ export class ProductCategoriesComponent
 
 	ngOnInit(): void {
 		this.setPermissions();
+
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization || { id: null };
+
+		this.productCategoryService.count({ findInput: { organizationId, tenantId } }).then(res => {
+			this.totalItems = res as any;
+		});
+
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.store.selectedOrganization$
@@ -110,6 +124,26 @@ export class ProductCategoriesComponent
 			.subscribe();
 	}
 
+	onPageChange(pageNum) {
+		this.currentPage = pageNum;
+
+		const { id: organizationId, tenantId } = this.selectedOrganization || { id: null, tenantId: null };
+		const options = "data=" + JSON.stringify({
+			relations: ['organization'],
+			findInput: {
+				organization: { id: organizationId },
+				tenantId
+			},
+		});
+
+		this.productCategoryService.getAllTranslated(options,
+			{ page: pageNum, _limit: this.itemsPerPage }).then(res => {
+				if (res && res.items) {
+					this.tableData = res.items;
+				}
+			});
+	}
+
 	setView() {
 		this.viewComponentName = ComponentEnum.PRODUCT_CATEGORY;
 		this.store
@@ -117,6 +151,10 @@ export class ProductCategoriesComponent
 			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
+
+				if (componentLayout == ComponentLayoutStyleEnum.CARDS_GRID) {
+					this.onPageChange(this.currentPage);
+				}
 			});
 	}
 
@@ -187,8 +225,8 @@ export class ProductCategoriesComponent
 		}
 		const editProductCategory = this.selectedProductCategory
 			? await this.productCategoryService.getById(
-					this.selectedProductCategory.id
-			  )
+				this.selectedProductCategory.id
+			)
 			: null;
 
 		const dialog = this.dialogService.open(
@@ -208,7 +246,7 @@ export class ProductCategoriesComponent
 			this.toastrService.success(
 				'INVENTORY_PAGE.PRODUCT_CATEGORY_SAVED',
 				{
-					name: productCatTranslaction?.name
+					name: productCatTranslaction ?.name
 				}
 			);
 		}

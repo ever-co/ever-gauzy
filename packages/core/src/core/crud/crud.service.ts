@@ -4,20 +4,13 @@
 
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import {
-	Between,
-	Brackets,
 	DeepPartial,
 	DeleteResult,
 	FindConditions,
 	FindManyOptions,
 	FindOneOptions,
-	ILike,
-	In,
-	LessThan,
-	Like,
-	MoreThan,
-	Not,
 	Repository,
+	SelectQueryBuilder,
 	UpdateResult
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
@@ -29,6 +22,7 @@ import { BaseEntity } from '../entities/internal';
 import { ICrudService } from './icrud.service';
 import { IPagination } from './pagination';
 import { ITryRequest } from './try-request';
+import { filterQuery } from './query-builder';
 
 export abstract class CrudService<T extends BaseEntity>
 	implements ICrudService<T> {
@@ -49,89 +43,40 @@ export abstract class CrudService<T extends BaseEntity>
 	}
 
 	public async search(filter?: any): Promise<IPagination<T>> {
-		let option: FindManyOptions = {}
-
+		let options: FindManyOptions = {}
 		if (filter.page && filter.limit) {
-			option.skip = filter.limit * (filter.page - 1)
-			option.take = filter.limit
+			options.skip = filter.limit * (filter.page - 1);
+			options.take = filter.limit;
 		}
 		if (filter.orderBy && filter.order) {
-			option.order = {
+			options.order = {
 				[filter.orderBy]: filter.order
 			}
+		} else if (filter.orderBy) {
+			options.order = filter.orderBy;
 		}
-		else if (filter.orderBy) {
-			option.order = filter.orderBy
-		}
-
 		if (filter.relations) {
-			option.relations = filter.relations
+			options.relations = filter.relations;
 		}
-
 		if (filter.join) {
-			option.join = filter.join
+			options.join = filter.join;
 		}
-
 		if (filter.filters || filter.where) {
-			option.where = new Brackets(qb => {
-				if (filter.filters) {
-					qb.where(new Brackets(qb => {
-
-						const where: any[] = [];
-						for (const field in filter.filters) {
-							if (Object.prototype.hasOwnProperty.call(filter.filters, field)) {
-								const condition = filter.filters[field];
-								switch (condition.condition) {
-									case 'Like':
-										where.push({ [field]: Like(condition.search) });
-										break;
-									case 'Between':
-										where.push({ [field]: Between(condition.search[0], condition.search[1]) });
-										break;
-									case 'In':
-										where.push({ [field]: In(condition.search) });
-										break;
-									case 'NotIn':
-										where.push({ [field]: Not(In(condition.search)) });
-										break;
-									case 'ILike':
-										where.push({ [field]: ILike(condition.search) });
-										break;
-									case 'MoreThan':
-										where.push({ [field]: MoreThan(condition.search) });
-										break;
-									case 'LessThan':
-										where.push({ [field]: LessThan(condition.search) });
-										break;
-									default:
-										where.push({ [field]: condition.search });
-										break;
-								}
-							}
-						}
-						qb.where(where);
-					}));
-				}
+			options.where = (qb: SelectQueryBuilder<T>) => {
 				if (filter.where) {
-					const where: any = {}
+					const wheres: any = {}
 					for (const field in filter.where) {
 						if (Object.prototype.hasOwnProperty.call(filter.where, field)) {
-							if(filter.where[field] instanceof Array){
-								where[field] = In(filter.where[field]);
-							}else{
-								where[field] = filter.where[field];
-							}
+							wheres[field] = filter.where[field];
 						}
 					}
-					
-					qb.andWhere(new Brackets(qb => {
-						qb.where(where);
-					}))
+					filterQuery(qb, wheres);
 				}
-				
-			})
+				console.log(qb.getQueryAndParameters());
+			}
 		}
-		const [items, total] = await this.repository.findAndCount(option);
+		console.log(filter, 'filters');
+		const [items, total] = await this.repository.findAndCount(options);
 		return { items, total };
 	}
 

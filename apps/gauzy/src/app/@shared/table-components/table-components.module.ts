@@ -14,6 +14,7 @@ import { ValueWithUnitComponent } from './value-with-units/value-with-units.comp
 import { DocumentUrlTableComponent } from './document-url/document-url.component';
 import { DocumentDateTableComponent } from './document-date/document-date.component';
 import { TranslateModule } from '../translate/translate.module';
+import { SharedModule } from '../shared.module';
 
 @NgModule({
 	imports: [
@@ -21,21 +22,8 @@ import { TranslateModule } from '../translate/translate.module';
 		NbIconModule,
 		NbTooltipModule,
 		NbBadgeModule,
-		TranslateModule
-	],
-	entryComponents: [
-		DateViewComponent,
-		IncomeExpenseAmountComponent,
-		NotesWithTagsComponent,
-		PictureNameTagsComponent,
-		TaskEstimateComponent,
-		EmployeeWithLinksComponent,
-		TaskTeamsComponent,
-		AssignedToComponent,
-		StatusViewComponent,
-		ValueWithUnitComponent,
-		DocumentUrlTableComponent,
-		DocumentDateTableComponent
+		TranslateModule,
+		SharedModule
 	],
 	declarations: [
 		DateViewComponent,

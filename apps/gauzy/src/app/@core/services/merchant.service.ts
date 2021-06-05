@@ -30,7 +30,7 @@ export class MerchantService {
 	getAll(options, params) {
 		const data = JSON.stringify({
 			relations: options.relations,
-			options: options.findInput
+			findInput: options.findInput
 		});
 
 		return this.http

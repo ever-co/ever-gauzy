@@ -119,23 +119,31 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	}
 
 	ngOnInit() {
+		this.subject$
+			.pipe(
+				debounceTime(1300),
+				tap(() => this.checkEmployeeSelectorVisibility()),
+				tap(() => this.checkProjectSelectorVisibility()),
+				tap(() => this.loadItems()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.selectorBuilderService.selectors$
-			.pipe(untilDestroyed(this))
-			.subscribe((selectors) => {
-				this.selectorsVisibility = Object.assign(
-					{},
-					DEFAULT_SELECTOR_VISIBILITY,
-					selectors
-				);
-			});
+			.pipe(
+				tap((selectors) => {
+					this.selectorsVisibility = Object.assign({}, DEFAULT_SELECTOR_VISIBILITY, selectors);
+				}),
+				tap(() => this.subject$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.router.events
 			.pipe(
 				filter((event) => event instanceof NavigationEnd),
+				tap(() => this.timeTrackerService.showTimerWindow = false),
 				untilDestroyed(this)
 			)
-			.subscribe(() => {
-				this.timeTrackerService.showTimerWindow = false;
-			});
+			.subscribe();
 		this.timeTrackerService.duration$
 			.pipe(untilDestroyed(this))
 			.subscribe((time) => {
@@ -184,13 +192,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 					this._checkTimerStatus();
 				}
 			});
-		this.subject$
-			.pipe(debounceTime(1300), untilDestroyed(this))
-			.subscribe(() => {
-				this.checkEmployeeSelectorVisibility();
-				this.checkProjectSelectorVisibility();
-				this.loadItems();
-			});
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const selectedDate$ = this.store.selectedDate$;
 		combineLatest([storeOrganization$, selectedDate$])
@@ -205,10 +206,11 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 			});
 		this.themeService
 			.onThemeChange()
-			.pipe(untilDestroyed(this))
-			.subscribe((t) => {
-				this.theme = t.name;
-			});
+			.pipe(
+				tap((theme) => this.theme = theme.name),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this._applyTranslationOnSmartTable();
 		this.loadItems();
 	}
@@ -579,11 +581,15 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	}
 
 	private _applyTranslationOnSmartTable() {
-		this.translate.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
-			this.createContextMenu = [];
-			this.supportContextMenu = [];
-			this.loadItems();
-		});
+		this.translate.onLangChange
+			.pipe(
+				untilDestroyed(this)
+			)
+			.subscribe(() => {
+				this.createContextMenu = [];
+				this.supportContextMenu = [];
+				this.loadItems();
+			});
 	}
 
 	private _checkTimerStatus() {

@@ -51,7 +51,7 @@ export const createDefaultOrganizationProjects = async (
 		);
 		project.budget =
 			project.budgetType == OrganizationProjectBudgetTypeEnum.COST
-				? faker.datatype.number({ min: 2000, max: 40000 })
+				? faker.datatype.number({ min: 200, max: 2000 })
 				: faker.datatype.number({ min: 20, max: 40 });
 		project.taskListType = faker.random.arrayElement(
 			Object.values(TaskListTypeEnum)
@@ -111,8 +111,8 @@ export const createRandomOrganizationProjects = async (
 				);
 				project.budget =
 					project.budgetType == OrganizationProjectBudgetTypeEnum.COST
-						? faker.datatype.number({ min: 2000, max: 40000 })
-						: faker.datatype.number({ min: 20, max: 40 });
+						? faker.datatype.number({ min: 200, max: 2000 })
+						: faker.datatype.number({ min: 10, max: 30 });
 
 				project.startDate = faker.date.past(5);
 				project.endDate = faker.date.past(2);

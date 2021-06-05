@@ -38,22 +38,38 @@
 				</div>
 			</ng-template>
 		</div>
-		<ng2-smart-table
-			*ngIf="dataLayoutStyle === 'TABLE'"
-			class="income-table"
-			[settings]="smartTableSettings"
-			[source]="smartTableSource"
-			(userRowSelect)="selectExpense($event)"
-			style="cursor: pointer"
-			#expensesTable
-		>
-		</ng2-smart-table>
-		<ga-card-grid
-			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
-			[settings]="smartTableSettings"
-			[source]="expenses"
-			[buttonTemplate]="actionButtons"
-		></ga-card-grid>
+		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="gridLayout">
+			<ng2-smart-table
+				class="expense-table"
+				[settings]="smartTableSettings"
+				[source]="smartTableSource"
+				(userRowSelect)="selectExpense($event)"
+				style="cursor: pointer"
+				#expensesTable
+			>
+			</ng2-smart-table>
+		</ng-template>
+		<ng-template #gridLayout>
+			<ga-card-grid
+				[settings]="smartTableSettings"
+				[source]="expenses"
+				[buttonTemplate]="actionButtons"
+				[cardSize]="'big'">
+			</ga-card-grid>
+			<div 
+				*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+				class="pagination-container">
+				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+					<ga-pagination 
+						(selectedPage)="onPageChange($event)"
+						[doEmit]="false"
+						[totalItems]="pagination?.totalItems" 
+						[itemsPerPage]="pagination?.itemsPerPage" 
+						[activePage]="pagination?.activePage">
+					</ga-pagination>
+				</ng-container>
+			</div>
+		</ng-template>
 	</nb-card-body>
 </nb-card>
 <ng-template

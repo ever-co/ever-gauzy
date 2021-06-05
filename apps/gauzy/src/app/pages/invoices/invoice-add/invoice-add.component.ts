@@ -16,37 +16,21 @@ import {
 	IExpense,
 	ExpenseTypesEnum,
 	ExpenseStatusesEnum,
-	ContactType,
 	InvoiceStatusTypesEnum,
 	IInvoiceItemCreateInput,
 	IProductTranslatable
 } from '@gauzy/contracts';
 import { filter, first, tap } from 'rxjs/operators';
-import { isEmpty } from '@gauzy/common-angular';
-import { InvoicesService } from '../../../@core/services/invoices.service';
-import { InvoiceItemService } from '../../../@core/services/invoice-item.service';
+import { compareDate, isEmpty } from '@gauzy/common-angular';
 import { LocalDataSource } from 'ng2-smart-table';
-import { InvoiceTasksSelectorComponent } from '../table-components/invoice-tasks-selector.component';
-import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { Observable } from 'rxjs';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
-import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
-import { InvoiceProjectsSelectorComponent } from '../table-components/invoice-project-selector.component';
-import { InvoiceEmployeesSelectorComponent } from '../table-components/invoice-employees-selector.component';
-import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-import { EmployeesService } from '../../../@core/services';
-import { ProductService } from '../../../@core/services/product.service';
-import { InvoiceProductsSelectorComponent } from '../table-components/invoice-product-selector.component';
-import { TasksStoreService } from '../../../@core/services/tasks-store.service';
-import { InvoiceApplyTaxDiscountComponent } from '../table-components/invoice-apply-tax-discount.component';
-import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
-import { ExpensesService } from '../../../@core/services/expenses.service';
-import { InvoiceExpensesSelectorComponent } from '../table-components/invoice-expense-selector.component';
-import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../../@core/services/toastr.service';
-import { TranslatableService } from '../../../@core/services/translatable.service';
+import { EmployeesService, ExpensesService, InvoiceEstimateHistoryService, InvoiceItemService, InvoicesService, OrganizationProjectsService, ProductService, TasksStoreService, ToastrService, TranslatableService } from '../../../@core/services';
+import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
+import { InvoiceExpensesSelectorComponent } from '../table-components/invoice-expense-selector.component';
+import { InvoiceApplyTaxDiscountComponent, InvoiceEmployeesSelectorComponent, InvoiceProductsSelectorComponent, InvoiceProjectsSelectorComponent, InvoiceTasksSelectorComponent } from '../table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -72,7 +56,6 @@ export class InvoiceAddComponent
 	observableTasks: Observable<ITask[]> = this.tasksStore.tasks$;
 	tasks: ITask[];
 	organizationContact: IOrganizationContact;
-	organizationContacts: IOrganizationContact[];
 	selectedProjects: IOrganizationProject[];
 	projects: IOrganizationProject[];
 	employees: IEmployee[];
@@ -112,7 +95,6 @@ export class InvoiceAddComponent
 
 	constructor(
 		private readonly fb: FormBuilder,
-		private readonly organizationContactService: OrganizationContactService,
 		public readonly translateService: TranslateService,
 		private readonly store: Store,
 		private readonly router: Router,
@@ -121,7 +103,6 @@ export class InvoiceAddComponent
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly invoiceItemService: InvoiceItemService,
 		private readonly tasksStore: TasksStoreService,
-		private readonly errorHandler: ErrorHandlingService,
 		private readonly employeeService: EmployeesService,
 		private readonly productService: ProductService,
 		private readonly dialogService: NbDialogService,
@@ -564,7 +545,7 @@ export class InvoiceAddComponent
 		if (
 			!invoiceDate ||
 			!dueDate ||
-			this.compareDate(invoiceDate, dueDate)
+			compareDate(invoiceDate, dueDate)
 		) {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.INVALID_DATES'),
@@ -657,7 +638,7 @@ export class InvoiceAddComponent
 		if (
 			!invoiceDate ||
 			!dueDate ||
-			this.compareDate(invoiceDate, dueDate)
+			compareDate(invoiceDate, dueDate)
 		) {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.INVALID_DATES'),
@@ -729,7 +710,6 @@ export class InvoiceAddComponent
 		if (!organization) return;
 
 		this._getInvoiceNumber();
-		this._getAllContacts();
 	}
 
 	private getEmployess() {
@@ -752,17 +732,6 @@ export class InvoiceAddComponent
 			.getAll([], { organizationId, tenantId })
 			.then(({ items }) => {
 				this.projects = JSON.parse(JSON.stringify(items));
-			});
-	}
-
-	private _getAllContacts() {
-		const { id: organizationId } = this.organization;
-		const { tenantId } = this.store.user;
-
-		this.organizationContactService
-			.getAll(['projects'], { organizationId, tenantId })
-			.then(({ items }) => {
-				this.organizationContacts = items;
 			});
 	}
 
@@ -990,12 +959,6 @@ export class InvoiceAddComponent
 		this.selectedExpenses = $event;
 	}
 
-	searchOrganizationContact(term: string, item: any) {
-		if (item.name) {
-			return item.name.toLowerCase().includes(term.toLowerCase());
-		}
-	}
-
 	onMembersSelected(event) {
 		this.selectedEmployeeIds = event;
 	}
@@ -1147,46 +1110,6 @@ export class InvoiceAddComponent
 		await event.confirm.resolve(event.data);
 		await this.calculateTotal();
 	}
-
-	compareDate(date1: Date, date2: Date): boolean {
-		const d1 = new Date(date1);
-		const d2 = new Date(date2);
-
-		const same = d1.getTime() === d2.getTime();
-
-		if (same) {
-			return false;
-		}
-
-		return d1 > d2;
-	}
-
-	addNewOrganizationContact = (
-		name: string
-	): Promise<IOrganizationContact> => {
-		const { tenantId } = this.store.user;
-		this.organizationId = this.store.selectedOrganization.id;
-
-		try {
-			this.toastrService.success(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
-					{
-						name: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
-			return this.organizationContactService.create({
-				name,
-				contactType: ContactType.CLIENT,
-				organizationId: this.organizationId,
-				tenantId
-			});
-		} catch (error) {
-			this.errorHandler.handleError(error);
-		}
-	};
 
 	cancel() {
 		if (this.isEstimate) {

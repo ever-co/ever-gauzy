@@ -2,27 +2,23 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import {
 	Validators,
 	FormBuilder,
-	FormGroup,
-	AbstractControl
+	FormGroup
 } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import {
 	IIncome,
 	ITag,
 	IOrganizationContact,
-	ContactType,
 	IOrganization,
 	ICurrency
 } from '@gauzy/contracts';
-import { Store } from '../../../@core/services/store.service';
-import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
-import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
-import { TranslateService } from '@ngx-translate/core';
-import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { debounceTime, filter } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import { TranslateService } from '@ngx-translate/core';
+import { Store } from '../../../@core/services';
+import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
+import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -33,62 +29,49 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 export class IncomeMutationComponent
 	extends TranslationBaseComponent
 	implements OnInit {
+
 	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
 
 	income?: IIncome;
-
-	form: FormGroup;
-	notes: AbstractControl;
-
 	organizationContact: IOrganizationContact;
-	organizationContacts: Object[] = [];
-	tags: ITag[] = [];
-
-	averageIncome = 0;
-	averageBonus = 0;
-	selectedOrganization: IOrganization;
+	organization: IOrganization;
 
 	get valueDate() {
 		return this.form.get('valueDate').value;
 	}
-
 	set valueDate(value) {
 		this.form.get('valueDate').setValue(value);
-	}
-
-	get amount() {
-		return this.form.get('amount').value;
-	}
-
-	set amount(value) {
-		this.form.get('amount').setValue(value);
 	}
 
 	get currency() {
 		return this.form.get('currency');
 	}
 
-	get clientName() {
-		return this.form.get('organizationContact').value.clientName;
-	}
-
-	get clientId() {
-		return this.form.get('organizationContact').value.clientId;
-	}
-
-	get isBonus() {
-		return this.form.get('isBonus').value.isBonus;
+	/*
+	* Search Tab Form 
+	*/
+	public form: FormGroup = IncomeMutationComponent.buildForm(this.fb, this);
+	static buildForm(
+		fb: FormBuilder,
+		self: IncomeMutationComponent
+	): FormGroup {
+		return fb.group({
+			valueDate: [ self.store.getDateFromOrganizationSettings(), Validators.required ],
+			amount: ['', Validators.required],
+			organizationContact: [null, Validators.required],
+			notes: [],
+			currency: [],
+			isBonus: false,
+			tags: []
+		});
 	}
 
 	constructor(
-		private fb: FormBuilder,
-		protected dialogRef: NbDialogRef<IncomeMutationComponent>,
-		private store: Store,
-		private organizationContactService: OrganizationContactService,
-		private readonly toastrService: ToastrService,
+		private readonly fb: FormBuilder,
+		protected readonly dialogRef: NbDialogRef<IncomeMutationComponent>,
+		private readonly store: Store,
 		readonly translateService: TranslateService,
-		private errorHandler: ErrorHandlingService
 	) {
 		super(translateService);
 	}
@@ -98,29 +81,12 @@ export class IncomeMutationComponent
 			.pipe(
 				filter((organization) => !!organization),
 				debounceTime(200),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this._loadDefaultCurrency()),
+				tap(() => this._initializeForm()),
 				untilDestroyed(this)
 			)
-			.subscribe((organization: IOrganization) => {
-				this.selectedOrganization = organization;
-				this._initializeForm();
-				this._getOrganizationContacts();
-			});
-	}
-
-	private async _getOrganizationContacts() {
-		const { id: organizationId } = this.selectedOrganization;
-		const { tenantId } = this.store.user;
-		const { items } = await this.organizationContactService.getAll([], {
-			organizationId,
-			tenantId
-		});
-
-		items.forEach((i) => {
-			this.organizationContacts = [
-				...this.organizationContacts,
-				{ name: i.name, clientId: i.id }
-			];
-		});
+			.subscribe();
 	}
 
 	selectOrganizationContact($event) {
@@ -128,92 +94,58 @@ export class IncomeMutationComponent
 	}
 
 	async addOrEditIncome() {
-		if (this.form.valid) {
-			this.dialogRef.close(
-				Object.assign(
-					{
-						employee: this.employeeSelector.selectedEmployee
-					},
-					this.form.value
-				)
-			);
+		if (this.form.invalid) {
+			return;
 		}
+		this.dialogRef.close(
+			Object.assign(
+				{ employee: this.employeeSelector.selectedEmployee },
+				this.form.value
+			)
+		);
 	}
-	addNewOrganizationContact = (
-		name: string
-	): Promise<IOrganizationContact> => {
-		try {
-			return this.organizationContactService
-				.create({
-					name,
-					contactType: ContactType.CLIENT,
-					organizationId: this.selectedOrganization.id,
-					tenantId: this.selectedOrganization.id
-				})
-				.then((contact) => {
-					this.toastrService.success(
-						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
-						{
-							name
-						}
-					);
-					return contact;
-				});
-		} catch (error) {
-			this.errorHandler.handleError(error);
-		}
-	};
-
+	
 	close() {
 		this.dialogRef.close();
 	}
 
 	private _initializeForm() {
 		if (this.income) {
-			this.form = this.fb.group({
-				valueDate: [
-					new Date(this.income.valueDate),
-					Validators.required
-				],
-				amount: [this.income.amount, Validators.required],
-				organizationContact: [
-					this.income.clientName,
-					Validators.required
-				],
-				notes: this.income.notes,
-				currency: this.income.currency,
-				isBonus: this.income.isBonus,
-				tags: [this.income.tags]
+			const { valueDate, amount, clientName, notes, currency, isBonus, tags } = this.income;
+			this.form.patchValue({
+				valueDate: new Date(valueDate),
+				amount: amount,
+				organizationContact: clientName,
+				notes: notes,
+				currency: currency,
+				isBonus: isBonus,
+				tags: tags
 			});
-		} else {
-			this.form = this.fb.group({
-				valueDate: [
-					this.store.getDateFromOrganizationSettings(),
-					Validators.required
-				],
-				amount: ['', Validators.required],
-				organizationContact: [null, Validators.required],
-				notes: [],
-				currency: [],
-				isBonus: false,
-				tags: []
-			});
-			this._loadDefaultCurrency();
 		}
-		this.notes = this.form.get('notes');
-		this.tags = this.form.get('tags').value || [];
 	}
 
-	private async _loadDefaultCurrency() {
-		const orgData = this.selectedOrganization;
-		if (orgData && this.currency && !this.currency.value) {
-			this.currency.setValue(orgData.currency);
+	private _loadDefaultCurrency() {
+		const organization = this.organization;
+		if (organization && this.currency && !this.currency.value) {
+			this.currency.setValue(organization.currency);
 			this.currency.updateValueAndValidity();
 		}
 	}
 
 	selectedTagsHandler(currentSelection: ITag[]) {
-		this.form.get('tags').setValue(currentSelection);
+		this.form.patchValue({
+			tags: currentSelection
+		});
+	}
+
+	isInvalidControl(control: string) {
+		if (!this.form.contains(control)) {
+			return true;
+		}
+		return (
+			(this.form.get(control).touched || this.form.get(control).dirty) && 
+			this.form.get(control).invalid
+		);
 	}
 
 	/*

@@ -1,32 +1,32 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import {
-	ActivatedRoute,
-	Router,
-	RouterEvent,
-	NavigationEnd
+	ActivatedRoute
 } from '@angular/router';
 import {
 	IIncome,
-	ITag,
 	ComponentLayoutStyleEnum,
-	IOrganization
+	IOrganization,
+	IEmployee
 } from '@gauzy/contracts';
+import { Subject } from 'rxjs/internal/Subject';
+import { combineLatest } from 'rxjs';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { debounceTime, filter, tap, withLatestFrom } from 'rxjs/operators';
-import { ErrorHandlingService } from '../../@core/services/error-handling.service';
-import { IncomeService } from '../../@core/services/income.service';
-import { Store } from '../../@core/services/store.service';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import * as moment from 'moment';
 import { IncomeMutationComponent } from '../../@shared/income/income-mutation/income-mutation.component';
-import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
-import { IncomeExpenseAmountComponent } from '../../@shared/table-components/income-amount/income-amount.component';
+import { DateViewComponent, IncomeExpenseAmountComponent, NotesWithTagsComponent } from '../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../@core/services/toastr.service';
+import { API_PREFIX, ComponentEnum } from '../../@core/constants';
+import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
+import { ErrorHandlingService, IncomeService, Store, ToastrService } from '../../@core/services';
+import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';
+import { OrganizationContactFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -35,36 +35,26 @@ import { ToastrService } from '../../@core/services/toastr.service';
 })
 export class IncomeComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-	constructor(
-		private store: Store,
-		private incomeService: IncomeService,
-		private dialogService: NbDialogService,
-		private toastrService: ToastrService,
-		private route: ActivatedRoute,
-		private errorHandler: ErrorHandlingService,
-		readonly translateService: TranslateService,
-		private readonly router: Router
-	) {
-		super(translateService);
-		this.setView();
-	}
+	implements AfterViewInit, OnInit, OnDestroy {
 
 	smartTableSettings: object;
 	selectedEmployeeId: string;
 	selectedDate: Date;
-	smartTableSource = new LocalDataSource();
+	smartTableSource: ServerDataSource;
 	disableButton = true;
-	employeeName: string;
-	loading = true;
-	hasEditPermission = false;
-	tags: ITag[] = [];
+	loading: boolean;
 	viewComponentName: ComponentEnum;
 	incomes: IIncome[];
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	selectedIncome: IIncome;
-	averageIncome = 0;
-	averageBonus = 0;
+	public organization: IOrganization;
+	subject$: Subject<any> = new Subject();
+	pagination: any = {
+		totalItems: 0,
+		activePage: 1,
+		itemsPerPage: 10
+	};
 
 	incomeTable: Ng2SmartTableComponent;
 	@ViewChild('incomeTable') set content(content: Ng2SmartTableComponent) {
@@ -74,83 +64,103 @@ export class IncomeComponent
 		}
 	}
 
-	private _selectedOrganizationId: string;
-	public organization: IOrganization;
+	/*
+	* getter setter for filters 
+	*/
+	private _filters: any = {};
+	set filters(val: any) {
+		this._filters = val;
+	}
+	get filters() {
+		return this._filters;
+	}
+
+	/*
+	* Actions Buttons directive 
+	*/
+	@ViewChild('actionButtons', { static : true }) actionButtons : TemplateRef<any>;
+
+	constructor(
+		private readonly store: Store,
+		private readonly incomeService: IncomeService,
+		private readonly dialogService: NbDialogService,
+		private readonly toastrService: ToastrService,
+		private readonly route: ActivatedRoute,
+		private readonly errorHandler: ErrorHandlingService,
+		public readonly translateService: TranslateService,
+		private readonly httpClient: HttpClient,
+		private readonly cdr: ChangeDetectorRef
+	) {
+		super(translateService);
+		this.setView();
+	}
 
 	ngOnInit() {
-		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
-		this.store.selectedDate$
-			.pipe(untilDestroyed(this))
-			.subscribe((date) => {
-				this.selectedDate = date;
-				if (this.selectedEmployeeId) {
-					this._loadEmployeeIncomeData();
-				} else {
-					if (this._selectedOrganizationId) {
-						this._loadEmployeeIncomeData();
-					}
-				}
-			});
-		const storeEmployee$ = this.store.selectedEmployee$;
+		this._loadSmartTableSettings();
+		this.subject$
+			.pipe(
+				debounceTime(300),
+				tap(() => this.loading = true),
+				tap(() => this.getIncomes()),
+				tap(() => this.clearItem()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
 		const storeOrganization$ = this.store.selectedOrganization$;
-		storeEmployee$
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const selectedDate$ = this.store.selectedDate$;
+		combineLatest([storeOrganization$, storeEmployee$, selectedDate$])
 			.pipe(
-				filter((value) => !!value),
-				debounceTime(200),
-				withLatestFrom(storeOrganization$),
+				debounceTime(300),
+				filter(([organization]) => !!organization),
+				tap(([organization]) => (this.organization = organization)),
+				distinctUntilChange(),
+				tap(([organization, employee, date]) => {
+					if (organization) {
+						this.selectedDate = date;
+						this.selectedEmployeeId = employee ? employee.id : null;
+
+						this.refreshPagination();
+						this.subject$.next();
+					}
+				}),
 				untilDestroyed(this)
 			)
-			.subscribe(([employee]) => {
-				if (employee && this.organization) {
-					this.selectedEmployeeId = employee.id;
-					this._loadEmployeeIncomeData();
-				}
-			});
-		storeOrganization$
-			.pipe(
-				filter((value) => !!value),
-				debounceTime(200),
-				withLatestFrom(storeEmployee$),
-				untilDestroyed(this)
-			)
-			.subscribe(([organization, employee]) => {
-				if (organization) {
-					this.organization = organization;
-					this._selectedOrganizationId = organization.id;
-					this.selectedEmployeeId = employee ? employee.id : null;
-					this._loadEmployeeIncomeData();
-				}
-			});
+			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params),
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
+				tap(() => this.addIncome()),
 				untilDestroyed(this)
 			)
-			.subscribe((params) => {
-				if (params.get('openAddDialog') === 'true') {
-					this.addIncome();
-				}
-			});
-		this.router.events
-			.pipe(
-				filter((event: RouterEvent) => event instanceof NavigationEnd),
-				untilDestroyed(this)
-			)
-			.subscribe(() => {
-				this.setView();
-			});
+			.subscribe();
+		this.cdr.detectChanges();
+	}
+
+	ngAfterViewInit() {
+		const { employeeId } = this.store.user;
+		if (employeeId) {
+			delete this.smartTableSettings['columns']['employeeName'];
+			this.smartTableSettings = Object.assign({}, this.smartTableSettings);
+		}
 	}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.INCOME;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-			});
+			.pipe(
+				distinctUntilChange(),
+				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.refreshPagination()),
+				tap(() => this.subject$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
@@ -165,7 +175,7 @@ export class IncomeComponent
 			.subscribe();
 	}
 
-	loadSettingsSmartTable() {
+	private _loadSmartTableSettings() {
 		this.smartTableSettings = {
 			actions: false,
 			mode: 'external',
@@ -181,19 +191,31 @@ export class IncomeComponent
 				},
 				clientName: {
 					title: this.getTranslation('SM_TABLE.CONTACT_NAME'),
-					type: 'string'
+					type: 'string',
+					filter: {
+						type: 'custom',
+						component: OrganizationContactFilterComponent
+					},
+					filterFunction: (value) => {
+						if (value) {
+							this.filters = {
+								where: { 
+									...this.filters.where, 
+									clientId: value.id 
+								}
+							}
+						} else {
+							if ('clientId' in this.filters.where) {
+								delete this.filters.where.clientId;
+							}
+						}
+						this.searchFilter();
+					}
 				},
 				employeeName: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 					type: 'string',
-					valuePrepareFunction: (_, income: IIncome) => {
-						const user = income.employee
-							? income.employee.user
-							: null;
-						if (user) {
-							return `${user.firstName} ${user.lastName}`;
-						}
-					}
+					filter: false
 				},
 				amount: {
 					title: this.getTranslation('SM_TABLE.VALUE'),
@@ -204,61 +226,96 @@ export class IncomeComponent
 				},
 				notes: {
 					title: this.getTranslation('SM_TABLE.NOTES'),
+					type: 'text',
+					class: 'align-row'
+				},
+				tags: {
+					title: this.getTranslation('SM_TABLE.TAGS'),
 					type: 'custom',
 					class: 'align-row',
-					renderComponent: NotesWithTagsComponent
+					renderComponent: NotesWithTagsComponent,
+					filter: {
+						type: 'custom',
+						component: TagsColorFilterComponent
+					},
+					filterFunction: (tags) => {
+						if (isNotEmpty(tags)) {
+							const tagIds = [];
+							for (const tag of tags) {
+								tagIds.push(tag.id)
+							}
+							this.filters = {
+								where: { 
+									...this.filters.where,
+									tags: tagIds
+								},
+								join: {
+									leftJoin: {
+										tags: 'income.tags'
+									}
+								}
+							}
+						} else {
+							if ('tags' in this.filters.where) {
+								delete this.filters.where.tags;
+								delete this.filters.join.leftJoin.tags;
+							}
+						}
+						this.searchFilter();
+					}
 				}
 			},
 			pager: {
 				display: true,
-				perPage: 8
+				perPage: this.pagination.itemsPerPage
 			}
 		};
 	}
 
-	_applyTranslationOnSmartTable() {
+	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadSettingsSmartTable();
-			});
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	async addIncome() {
 		if (!this.store.selectedDate) {
 			this.store.selectedDate = this.store.getDateFromOrganizationSettings();
 		}
-
 		this.dialogService
 			.open(IncomeMutationComponent)
-			.onClose.pipe(untilDestroyed(this))
+			.onClose
+			.pipe(untilDestroyed(this))
 			.subscribe(async (result) => {
 				if (result) {
 					try {
 						const { tenantId } = this.store.user;
 						const { id: organizationId } = this.organization;
-
+						const { amount, organizationContact, valueDate, employee, notes, currency, isBonus, tags } = result;
 						await this.incomeService.create({
-							amount: result.amount,
-							clientName: result.organizationContact.name,
-							clientId: result.organizationContact.id,
-							valueDate: result.valueDate,
-							employeeId: result.employee
-								? result.employee.id
-								: null,
+							amount,
+							clientName: organizationContact.name,
+							clientId: organizationContact.id,
+							valueDate,
+							employeeId: employee ? employee.id : null,
 							organizationId,
 							tenantId,
-							notes: result.notes,
-							currency: result.currency,
-							isBonus: result.isBonus,
-							tags: result.tags
+							notes,
+							currency,
+							isBonus,
+							tags
+						})
+						.then(() => {
+							this.toastrService.success('NOTES.INCOME.ADD_INCOME', {
+								name: this.employeeName(employee)
+							});
+						})
+						.finally(() => {
+							this.subject$.next();
 						});
-						this.toastrService.success('NOTES.INCOME.ADD_INCOME', {
-							name: result.employee
-								? `${result.employee.firstName} ${result.employee.lastName}`
-								: this.getTranslation('SM_TABLE.EMPLOYEE')
-						});
-						this._loadEmployeeIncomeData();
 					} catch (error) {
 						this.toastrService.danger(error);
 					}
@@ -270,6 +327,7 @@ export class IncomeComponent
 		this.disableButton = !isSelected;
 		this.selectedIncome = isSelected ? data : null;
 	}
+
 	async editIncome(selectedItem?: IIncome) {
 		if (selectedItem) {
 			this.selectIncome({
@@ -287,28 +345,26 @@ export class IncomeComponent
 			.subscribe(async (result) => {
 				if (result) {
 					try {
-						await this.incomeService.update(
-							this.selectedIncome.id,
-							{
-								amount: result.amount,
-								clientName: result.organizationContact.name,
-								clientId: result.organizationContact.id,
-								valueDate: result.valueDate,
-								notes: result.notes,
-								currency: result.currency,
-								isBonus: result.isBonus,
-								tags: result.tags,
-								employeeId: this.selectedIncome.employee
-									? this.selectedIncome.employee.id
-									: null
-							}
-						);
-
-						this.toastrService.success('NOTES.INCOME.EDIT_INCOME', {
-							name: this.employeeName
+						const { amount, organizationContact, valueDate, notes, currency, isBonus, tags } = result;
+						const { employee } = this.selectedIncome;
+						await this.incomeService.update(this.selectedIncome.id, {
+							amount,
+							clientName: organizationContact.name,
+							clientId: organizationContact.id,
+							valueDate,
+							notes,
+							currency,
+							isBonus,
+							tags,
+							employeeId: employee ? employee.id : null
+						}).then(() => {
+							this.toastrService.success('NOTES.INCOME.EDIT_INCOME', {
+								name: this.employeeName(employee)
+							});
+						})
+						.finally(() => {
+							this.subject$.next();
 						});
-						this._loadEmployeeIncomeData();
-						this.clearItem();
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
@@ -333,20 +389,19 @@ export class IncomeComponent
 			.subscribe(async (result) => {
 				if (result) {
 					try {
+						const { id, employee } = this.selectedIncome;
 						await this.incomeService.delete(
-							this.selectedIncome.id,
-							this.selectedIncome.employee
-								? this.selectedIncome.employee.id
-								: null
-						);
-						this.toastrService.success(
-							'NOTES.INCOME.DELETE_INCOME',
-							{
-								name: this.employeeName
-							}
-						);
-						this._loadEmployeeIncomeData();
-						this.clearItem();
+							id,
+							employee ? employee.id : null
+						)
+						.then(() => { 
+							this.toastrService.success('NOTES.INCOME.DELETE_INCOME', {
+								name: this.employeeName(employee)
+							});
+						})
+						.finally(() => {
+							this.subject$.next();
+						});						
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
@@ -354,54 +409,85 @@ export class IncomeComponent
 			});
 	}
 
-	private async _loadEmployeeIncomeData() {
-		const { tenantId, employeeId } = this.store.user;
-		if (!this._selectedOrganizationId) {
-			return;
+	searchFilter() {
+		const filters: any = {
+			where: {
+				...this.filters.where
+			},
+			join: {
+				alias: 'income',
+				...this.filters.join
+			}
 		}
+		if (isNotEmpty(filters)) {
+			this._filters = filters;
+			this.subject$.next();
+		}
+	}
 
-		const findObj = {
-			organizationId: this._selectedOrganizationId,
-			tenantId
-		};
+	/*
+	* Register Smart Table Source Config 
+	*/
+	setSmartTableSource() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		const request = {};
 		if (this.selectedEmployeeId) {
-			findObj['employeeId'] = this.selectedEmployeeId;
+			request['employeeId'] = this.selectedEmployeeId;
 		}
-		if (employeeId) {
-			delete this.smartTableSettings['columns']['employeeName'];
-			this.smartTableSettings = Object.assign(
-				{},
-				this.smartTableSettings
-			);
+		if (moment(this.selectedDate).isValid()) {
+			request['valueDate'] = moment(this.selectedDate).format('YYYY-MM-DD HH:mm:ss');
 		}
-
-		try {
-			const { items } = await this.incomeService.getAll(
-				['employee', 'employee.user', 'tags', 'organization'],
-				findObj,
-				this.selectedDate
-			);
-			const incomeVM: IIncome[] = items.map((i) => {
-				return Object.assign({}, i, {
-					organizationId: i.organization.id,
-					employeeId: i.employee ? i.employee.id : null,
-					employeeName: i.employee ? i.employee.user.name : null,
-					orgId: this.store.selectedOrganization.id
+		this.smartTableSource = new ServerDataSource(this.httpClient, {
+			endPoint: `${API_PREFIX}/income/search/filter`,
+			relations: [
+				'employee', 
+				'employee.user', 
+				'tags', 
+				'organization'
+			],
+			join: {
+				...(this.filters.join) ? this.filters.join : {}
+			},
+			where: {
+				...{ organizationId, tenantId },
+				...request,
+				...this.filters.where
+			},
+			resultMap: (income: IIncome) => {
+				return Object.assign({}, income, {
+					employeeName: income.employee ? income.employee.fullName : null,
 				});
-			});
-			this.smartTableSource.load(incomeVM);
-			this.incomes = incomeVM;
-			this.loading = false;
+			},
+			finalize: () => {
+				this.loading = false;
+			}
+		});
+	}
+
+	private async getIncomes() {
+		try { 
+			this.setSmartTableSource();
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+
+				// Initiate GRID view pagination
+				const { activePage, itemsPerPage } = this.pagination;
+				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+
+				await this.smartTableSource.getElements();
+				this.incomes = this.smartTableSource.getData();
+
+				this.pagination['totalItems'] =  this.smartTableSource.count();
+			}
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
-		this.employeeName = this.store.selectedEmployee
-			? (
-					this.store.selectedEmployee.firstName +
-					' ' +
-					this.store.selectedEmployee.lastName
-			  ).trim()
-			: '';
+	}
+
+	onPageChange(selectedPage: number) {
+		this.pagination['activePage'] = selectedPage;
+		this.subject$.next();
 	}
 
 	/*
@@ -425,5 +511,18 @@ export class IncomeComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	employeeName(employee: IEmployee) {
+		return (
+			employee && employee.id
+		) ? (employee.fullName).trim() : ALL_EMPLOYEES_SELECTED.firstName;
+	}
+
+	/*
+	* refresh pagination
+	*/
+	refreshPagination() {
+		this.pagination['activePage'] = 1;
+	}
+
+	ngOnDestroy() { }
 }

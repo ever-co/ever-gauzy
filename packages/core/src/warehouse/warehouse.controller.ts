@@ -21,14 +21,14 @@ import { PermissionGuard } from 'shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import {
 	IPagination,
-	IWarehouse,
 	PermissionsEnum,
 	IWarehouseProduct,
 	IWarehouseProductCreateInput,
 	IWarehouseProductVariant
 } from '@gauzy/contracts';
-import { ParseJsonPipe } from 'index';
+import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
 import { WarehouseProductService } from './warehouse-product-service';
+import { WarehouseProduct } from 'core';
 
 @ApiTags('Warehouses')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -39,6 +39,21 @@ export class WarehouseController extends CrudController<Warehouse> {
 		private readonly warehouseProductsService: WarehouseProductService
 	) {
 		super(warehouseService);
+	}
+
+	@ApiOperation({ summary: 'Find Warehouses Count ' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Count Warehouses',
+		type: Number
+	})
+	@Get('count')
+	async count(
+		@Query('data', ParseJsonPipe) data?: any
+	): Promise<Number> {
+		const { findInput = null } = data;
+
+		return this.warehouseService.count(findInput);
 	}
 
 	@ApiOperation({
@@ -54,11 +69,13 @@ export class WarehouseController extends CrudController<Warehouse> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllProductTypes(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IWarehouse>> {
+	async findAllWarehouses(
+		@Query('data', ParseJsonPipe) data: any,
+		@Query('page') page: any,
+		@Query('_limit') limit: any
+	): Promise<IPagination<Warehouse>> {
 		const { relations = [], findInput = null } = data;
-		return this.warehouseService.findAllWarehouses(relations, findInput);
+		return this.warehouseService.findAllWarehouses(relations, findInput, {page, limit});
 	}
 
 	@UseGuards(PermissionGuard)
@@ -129,7 +146,7 @@ export class WarehouseController extends CrudController<Warehouse> {
 	@Get('/inventory/:warehouseId')
 	async findAllWarehouseProducts(
 		@Param('warehouseId') warehouseId: string
-	): Promise<IWarehouseProduct[]> {
+	): Promise<WarehouseProduct[]> {
 		return this.warehouseProductsService.getAllWarehouseProducts(
 			warehouseId
 		);
@@ -151,7 +168,7 @@ export class WarehouseController extends CrudController<Warehouse> {
 	async updateWarehouseProductCount(
 		@Param('warehouseProductId') warehouseProductId: string,
 		@Body() value: { count: number }
-	): Promise<IWarehouseProduct> {
+	): Promise<WarehouseProduct> {
 		return this.warehouseProductsService.updateWarehouseProductQuantity(
 			warehouseProductId,
 			value.count

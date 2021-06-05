@@ -23,6 +23,8 @@ import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
 
 @NgModule({
 	imports: [
@@ -46,9 +48,10 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		TranslateModule,
 		NbSpinnerModule,
 		NgxPermissionsModule.forChild(),
-		HeaderTitleModule
+		HeaderTitleModule,
+		PaginationModule,
+		TableFiltersModule
 	],
-	entryComponents: [],
 	declarations: [IncomeComponent],
 	providers: [IncomeService]
 })

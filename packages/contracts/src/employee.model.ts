@@ -60,6 +60,7 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	isVerified?: boolean;
 	isVetted?: boolean;
 	totalJobs?: number;
+	fullName?: string;
 }
 
 export type IEmployeeJobsStatisticsResponse = IEmployee &

@@ -243,13 +243,12 @@ export class InvoiceController extends CrudController<Invoice> {
 		@I18nLang() locale: LanguagesEnum,
 		@Res() res: Response
 	): Promise<any> {
-		const buffer = await this.commandBus.execute(
+		const buffer: Buffer = await this.commandBus.execute(
 			new InvoiceGeneratePdfCommand(uuid, locale)
 		);
 		if (!buffer) {
 			return;
 		}
-
 		const stream = this.invoiceService.getReadableStream(buffer);
 		res.set({
 			'Content-Type': 'application/pdf',

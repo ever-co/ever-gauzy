@@ -244,3 +244,10 @@ nb-card-header {
     justify-content: space-between;
   }
 }
+
+nb-card-body {
+	.pagination-container {
+		display: flex;
+		justify-content: center;
+	}
+}

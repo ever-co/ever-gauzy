@@ -1,6 +1,7 @@
 import { HttpParams } from '@angular/common/http';
 import * as moment from 'moment';
 import * as timezone from 'moment-timezone';
+import { distinctUntilChanged } from 'rxjs/operators';
 
 // It will use for pass nested object or array in query params in get method.
 export function toParams(query) {
@@ -173,4 +174,23 @@ export function toLocal(data: string | Date | moment.Moment): moment.Moment {
 
 export function toUTC(data: string | Date | moment.Moment): moment.Moment {
 	return moment(data).utc();
+}
+
+export function distinctUntilChange<T>() {
+	try {
+		return distinctUntilChanged<T>((a, b) => JSON.stringify(a) === JSON.stringify(b));	
+	} catch (error) {
+		console.log({ error });
+	}
+}
+
+export const compareDate = (date1: any, date2: any) => {
+	const d1 = new Date(date1);
+	const d2 = new Date(date2);
+
+	const same = d1.getTime() === d2.getTime();
+	if (same) {
+		return false;
+	}
+	return d1 > d2;
 }

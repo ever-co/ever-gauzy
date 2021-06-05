@@ -115,7 +115,11 @@ export class MerchantFormComponent
 	}
 
 	private async _loadWarehouses() {
-		const { items } = await this.warehouseService.getAll();
+
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization || { id: null };
+
+		const { items } = await this.warehouseService.getAll({ findInput: { organizationId, tenantId } });
 		this.warehouses = items;
 	}
 

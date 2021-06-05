@@ -14,6 +14,7 @@ import {
 	getManager
 } from 'typeorm';
 import * as chalk from 'chalk';
+import * as moment from 'moment';
 import { IPluginConfig, SEEDER_DB_CONNECTION } from '@gauzy/common';
 import { environment as env, getConfig, ConfigService } from '@gauzy/config';
 import {
@@ -305,6 +306,7 @@ import {
 import { createDefaultAccountingTemplates } from 'accounting-template/accounting-template.seed';
 import { DEFAULT_EMPLOYEES, DEFAULT_EVER_EMPLOYEES } from './../../employee';
 import { createRandomMerchants, createDefaultMerchants } from './../../merchant/merchant.seed';
+import { createRandomWarehouses } from 'warehouse/warehouse.seed';
 
 
 export enum SeederTypeEnum {
@@ -1364,9 +1366,9 @@ export class SeedDataService {
 				this.connection,
 				this.config,
 				this.tenant,
+				this.defaultOrganization,
 				this.defaultEmployees,
-				this.defaultProjects,
-				randomSeedConfig.noOfTimeLogsPerTimeSheet
+				this.defaultProjects
 			)
 		);
 
@@ -1540,6 +1542,15 @@ export class SeedDataService {
 				tenantOrganizationsMap
 			)
 		);
+
+		await this.tryExecute(
+			'Random Warehouses',
+			createRandomWarehouses(
+				this.connection,
+				tenants,
+				tenantOrganizationsMap
+			)
+		)
 
 		await this.tryExecute(
 			'Random Merchants',
@@ -2115,8 +2126,7 @@ export class SeedDataService {
 				this.connection,
 				this.config,
 				tenants,
-				this.defaultProjects,
-				randomSeedConfig.noOfTimeLogsPerTimeSheet
+				this.defaultProjects
 			)
 		);
 
@@ -2212,7 +2222,7 @@ export class SeedDataService {
 		name: string,
 		p: Promise<T>
 	): Promise<T> | Promise<void> {
-		this.log(chalk.green(`SEEDING ${name}`));
+		this.log(chalk.green(`${moment().format('DD.MM.YYYY HH:mm:ss')} SEEDING ${name}`));
 
 		return (p as any).then(
 			(x: T) => x,

@@ -231,9 +231,9 @@ export class ProductFormComponent
 			const {
 				items = []
 			} = await this.productCategoryService.getAllTranslated(
-				this.store.preferredLanguage || LanguagesEnum.ENGLISH,
-				[],
-				searchCriteria
+				{langCode: this.store.preferredLanguage || LanguagesEnum.ENGLISH,
+				findInput: searchCriteria,
+				relations: []}
 			);
 
 			this.inventoryStore.productCategories = items;
