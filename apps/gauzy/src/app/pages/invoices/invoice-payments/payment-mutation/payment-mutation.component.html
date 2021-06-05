@@ -14,7 +14,7 @@
 			<div class="row" *ngIf="!invoice">
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label for="inputPaymentDate" class="label">
+						<label for="inputInvoiceNumber" class="label">
 							{{
 								'INVOICES_PAGE.PAYMENTS.SELECT_INVOICE'
 									| translate
@@ -22,15 +22,14 @@
 						</label>
 						<nb-select
 							class="d-block"
-							formControlName="invoiceId"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.INVOICE_NUMBER' | translate
-							}}"
+							formControlName="invoice"
+							[placeholder]="'FORM.PLACEHOLDERS.INVOICE_NUMBER' | translate"
 							fullWidth
+							id="inputInvoiceNumber"
 						>
 							<nb-option
 								*ngFor="let invoice of invoices"
-								[value]="invoice.id"
+								[value]="invoice"
 							>
 								{{ invoice.invoiceNumber }}
 							</nb-option>
@@ -39,7 +38,7 @@
 				</div>
 				<div class="col-sm-6">
 					<ga-tags-color-input
-						[selectedTags]="tags"
+						[selectedTags]="form.get('tags').value"
 						(selectedTagsEvent)="selectedTagsEvent($event)"
 						[isOrgLevel]="true"
 					>
@@ -49,15 +48,13 @@
 			<div class="row" *ngIf="!invoice">
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label for="inputInvoiceNumber" class="label">
+						<label for="inputOrganizationContact" class="label">
 							{{ 'INVOICES_PAGE.CONTACT' | translate }}
 						</label>
 						<ng-select
 							[items]="organizationContacts"
 							bindName="name"
-							placeholder="{{
-								'POP_UPS.ALL_CONTACTS' | translate
-							}}"
+							[placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
 							formControlName="contact"
 							id="inputOrganizationContact"
 							(change)="selectOrganizationContact($event)"

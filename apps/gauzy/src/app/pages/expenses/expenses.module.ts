@@ -20,12 +20,12 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { SharedModule } from '../../@shared/shared.module';
 import { ExpenseCategoriesComponent } from './expense-categories/expense-categories.component';
-import { ExpenseCategoriesStoreService } from '../../@core/services/expense-categories-store.service';
-import { OrganizationExpenseCategoriesService } from '../../@core/services/organization-expense-categories.service';
+import { ExpenseCategoriesStoreService, OrganizationExpenseCategoriesService } from '../../@core/services';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { PaginationModule } from '../../@shared/pagination/pagination.module';
 
 @NgModule({
 	imports: [
@@ -49,10 +49,10 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		NbActionsModule,
 		TagsColorInputModule,
 		NgxPermissionsModule.forChild(),
-		HeaderTitleModule
+		HeaderTitleModule,
+		PaginationModule
 	],
 	declarations: [ExpensesComponent, ExpenseCategoriesComponent],
-	entryComponents: [],
 	providers: [
 		ExpenseCategoriesStoreService,
 		OrganizationExpenseCategoriesService

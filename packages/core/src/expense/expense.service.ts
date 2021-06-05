@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, Between } from 'typeorm';
+import { Repository, FindManyOptions, Between, ILike } from 'typeorm';
 import { Expense } from './expense.entity';
 import { IPagination } from '../core';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
@@ -195,5 +195,35 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		});
 
 		return query;
+	}
+
+	public search(filter: any) {
+		if ('filters' in filter) {
+			const { filters } = filter;
+			if ('notes' in filters) {
+				const { search } = filters.notes;
+				filter.where.notes = ILike(`%${search}%`);
+			}
+			if ('purpose' in filters) {
+				const { search } = filters.purpose;
+				filter.where.purpose = ILike(`%${search}%`);
+			}
+			if ('displayStatus' in filters) {
+				const { search } = filters.displayStatus;
+				filter.where.status = ILike(`%${search}%`);
+			}
+			delete filter['filters'];
+		}
+		if ('where' in filter) {
+			const { where } = filter;
+			if ('valueDate' in where) {
+				const { valueDate } = where;
+				filter.where.valueDate = Between(
+					moment(valueDate).startOf('month'), 
+					moment(valueDate).endOf('month')
+				);
+			}
+		}
+		return super.search(filter);
 	}
 }

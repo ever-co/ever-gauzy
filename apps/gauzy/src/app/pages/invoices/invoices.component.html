@@ -106,36 +106,16 @@
 						</div>
 						<div class="col-sm-4">
 							<div class="form-group">
-								<label
-									for="inputOrganizationContact"
-									class="label"
-								>
+								<label for="inputOrganizationContact" class="label">
 									<span>{{
 										'INVOICES_PAGE.CONTACT' | translate
 									}}</span>
 								</label>
-								<ng-select
-									[items]="organizationContacts"
-									bindName="name"
-									[placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
+								<ga-contact-select 
+									[clearable]="true"
 									formControlName="organizationContact"
-									id="inputOrganizationContact"
-									[searchFn]="searchContact"
-									appendTo="body"
-								>
-									<ng-template
-										ng-option-tmp
-										let-item="item"
-										let-index="index"
-									>
-										{{ item.name }}
-									</ng-template>
-									<ng-template ng-label-tmp let-item="item">
-										<div class="selector-template">
-											<span>{{ item.name }}</span>
-										</div>
-									</ng-template>
-								</ng-select>
+									[placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
+								></ga-contact-select>
 							</div>
 						</div>
 					</div>
@@ -290,27 +270,34 @@
 				[tabTitle]="'INVOICES_PAGE.HISTORY' | translate"
 				[tabId]="invoiceTabsEnum.HISTORY"
 			>
-				<form [formGroup]="historyForm" *ngIf="selectedInvoice">
-					<div class="col-3 px-0">
-						<textarea
-							nbInput
-							placeholder="Comment"
-							fullWidth
-							formControlName="comment"
-						></textarea>
-					</div>
-					<div class="mt-3">
-						<button
-							class="mx-0"
-							nbButton
-							status="info"
-							(click)="addComment()"
-							[disabled]="disableButton"
-						>
-							{{ 'BUTTONS.ADD_COMMENT' | translate }}
-						</button>
-					</div>
-				</form>
+				<ng-container *ngIf="selectedInvoice">
+					<form 
+						[formGroup]="historyForm" 
+						#historyFormDirective="ngForm" 
+						(ngSubmit)="addComment(historyFormDirective)"
+					>
+						<div class="col-3 px-0">
+							<textarea
+								nbInput
+								placeholder="Comment"
+								fullWidth
+								formControlName="comment"
+							></textarea>
+						</div>
+						<div class="mt-3">
+							<button
+								type="submit"
+								class="mx-0"
+								nbButton
+								status="info"
+								[disabled]="disableButton"
+							>
+								{{ 'BUTTONS.ADD_COMMENT' | translate }}
+							</button>
+						</div>
+					</form>
+				</ng-container>
+				
 				<nb-list-item *ngIf="disableButton" class="history-list-select">
 					{{ ((!isEstimate) ? 'INVOICES_PAGE.SELECT_INVOICE_TO_VIEW_HISTORY' : 'INVOICES_PAGE.ESTIMATES.SELECT_ESTIMATE_TO_VIEW_HISTORY') | translate }}
 				</nb-list-item>
@@ -323,14 +310,11 @@
 						<div class="d-flex">
 							<div>
 								<div class="history-item">
-									<span class="history-action">{{
-										history.action
-									}}</span>
-									- {{ history.user.firstName }}
-									{{ history.user.lastName }}
+									<span class="history-action">{{ history.action }}</span> 
+									- {{ history.user.name }} 
 								</div>
 								<div class="history-date history-item">
-									{{ history.createdAt }}
+									{{ history.createdAt | dateTimeFormat }}
 								</div>
 							</div>
 						</div>

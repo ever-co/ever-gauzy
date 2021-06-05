@@ -16,7 +16,8 @@ import {
 	AlignmentOptions,
 	IOrganizationCreateInput,
 	IOrganization,
-	ITenant
+	ITenant,
+	DEFAULT_DATE_FORMATS
 } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
 
@@ -96,13 +97,7 @@ export const createDefaultOrganizations = async (
 		defaultOrganization.timeZone = faker.random.arrayElement(
 			timezone.tz.names().filter((zone) => zone.includes('/'))
 		);
-		defaultOrganization.dateFormat = faker.random.arrayElement([
-			'L',
-			'L hh:mm',
-			'LL',
-			'LLL',
-			'LLLL'
-		]);
+		defaultOrganization.dateFormat = faker.random.arrayElement(DEFAULT_DATE_FORMATS);
 		defaultOrganization.defaultAlignmentType = faker.random.arrayElement(
 			Object.keys(AlignmentOptions)
 		);
@@ -209,13 +204,7 @@ export const createRandomOrganizations = async (
 				organization.timeZone = faker.random.arrayElement(
 					timezone.tz.names().filter((zone) => zone.includes('/'))
 				);
-				organization.dateFormat = faker.random.arrayElement([
-					'L',
-					'L hh:mm',
-					'LL',
-					'LLL',
-					'LLLL'
-				]);
+				organization.dateFormat = faker.random.arrayElement(DEFAULT_DATE_FORMATS);
 				organization.defaultAlignmentType = faker.random.arrayElement(
 					Object.keys(AlignmentOptions)
 				);
