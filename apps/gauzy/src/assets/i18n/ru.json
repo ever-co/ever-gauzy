@@ -185,7 +185,8 @@
 		"TARGET_VALUE": "Целевое значение",
 		"LAST_UPDATED": "Последнее обновление",
 		"CREATED_BY": "Создано",
-		"NO_DATA_MESSAGE": "Нет данных"
+		"NO_DATA_MESSAGE": "Нет данных",
+		"TAGS": "Теги"
 	},
 	"FORM": {
 		"USERNAME": "Имя пользователя",
