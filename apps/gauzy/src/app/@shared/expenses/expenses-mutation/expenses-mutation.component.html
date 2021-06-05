@@ -12,7 +12,7 @@
 		<span
 			*ngIf="showTooltip"
 			class="help-text"
-			nbTooltip="{{ 'EXPENSES_PAGE.SPLIT_HELP' | translate }}"
+			[nbTooltip]="'EXPENSES_PAGE.SPLIT_HELP' | translate"
 		>
 			<nb-icon icon="alert-triangle-outline"></nb-icon>
 		</span>
@@ -23,25 +23,18 @@
 		></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="body">
-		<form [formGroup]="form" *ngIf="form">
-			<nb-radio-group formControlName="typeOfExpense">
-				<nb-radio
-					*ngFor="let expenseType of expenseTypes"
-					[value]="expenseType"
-					(valueChange)="changeExpenseType($event)"
-					>{{ 'EXPENSES_PAGE.MUTATION.' + expenseType | translate }}
-				</nb-radio>
-			</nb-radio-group>
-			<div
-				class="row"
-				*ngIf="
-					!(
-						employeeSelector &&
-						employeeSelector.selectedEmployee &&
-						employeeSelector.selectedEmployee.id
-					)
-				"
-			></div>
+		<form [formGroup]="form">
+			<div class="text-center">
+				<nb-radio-group formControlName="typeOfExpense">
+					<nb-radio
+						*ngFor="let expenseType of expenseTypes"
+						[value]="expenseType"
+						(valueChange)="changeExpenseType($event)"
+						>{{ 'EXPENSES_PAGE.MUTATION.' + expenseType | translate }}
+					</nb-radio>
+				</nb-radio-group>
+			</div>
+			<div class="row" *ngIf="selectedEmployee"></div>
 			<div class="row employees">
 				<div class="col-sm-6">
 					<label
@@ -60,10 +53,7 @@
 						[hidden]="expense && !duplicate"
 						[skipGlobalChange]="true"
 						class="employees"
-						placeholder="{{
-							'EXPENSES_PAGE.MUTATION.EMPLOYEES_GENERATE_EXPENSE'
-								| translate
-						}}"
+						[placeholder]="'EXPENSES_PAGE.MUTATION.EMPLOYEES_GENERATE_EXPENSE' | translate"
 						[defaultSelected]="false"
 						(selectionChanged)="onEmployeeChange($event)"
 						[selectedDate]="valueDate.value"
@@ -74,18 +64,12 @@
 					[ngClass]="{ 'col-sm-12': expense && !duplicate }"
 				>
 					<div class="form-group">
-						<ng-select
-							[items]="expenseCategories"
-							[searchable]="true"
-							appendTo="body"
-							[addTag]="addNewCategory"
-							bindLabel="name"
+						<ga-expense-category-select
 							formControlName="category"
-							placeholder="{{
-								'POP_UPS.ALL_CATEGORIES' | translate
-							}}"
+							[addTag]="true"
+							[placeholder]="'POP_UPS.ALL_CATEGORIES' | translate"
 						>
-						</ng-select>
+						</ga-expense-category-select>
 					</div>
 				</div>
 			</div>
@@ -95,33 +79,25 @@
 						formControlName="valueDate"
 						nbInput
 						class="datepicker"
-						placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
-						[nbDatepicker]="formpicker"
-						[ngClass]="{
-							'status-danger':
-								valueDate?.invalid &&
-								(valueDate.dirty || valueDate.touched),
-							'status-success':
-								valueDate?.valid &&
-								(valueDate.dirty || valueDate.touched)
-						}"
+						[placeholder]="'POP_UPS.PICK_DATE' | translate"
+						[nbDatepicker]="valueDatePicker"
+						[status]="
+							isInvalidControl('valueDate')
+								? 'danger'
+								: 'basic'
+						"
 					/>
-					<nb-datepicker #formpicker></nb-datepicker>
+					<nb-datepicker #valueDatePicker></nb-datepicker>
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
-						<ng-select
-							[addTag]="addNewVendor"
-							bindLabel="name"
-							appendTo="body"
-							[items]="vendors"
-							[searchable]="true"
-							placeholder="{{
-								'POP_UPS.ALL_VENDORS' | translate
-							}}"
+						<ga-vendor-select
 							formControlName="vendor"
+							[searchable]="true"
+							[addTag]="true"
+							[placeholder]="'POP_UPS.ALL_VENDORS' | translate"
 						>
-						</ng-select>
+						</ga-vendor-select>
 					</div>
 				</div>
 			</div>
@@ -144,16 +120,13 @@
 							type="number"
 							step="1"
 							fullWidth
-							placeholder="{{ 'POP_UPS.AMOUNT' | translate }}"
+							[placeholder]="'POP_UPS.AMOUNT' | translate"
 							formControlName="amount"
-							[ngClass]="{
-								'status-danger':
-									amount?.invalid &&
-									(amount.dirty || amount.touched),
-								'status-success':
-									amount?.valid &&
-									(amount.dirty || amount.touched)
-							}"
+							[status]="
+							isInvalidControl('amount')
+								? 'danger'
+								: 'basic'
+							"
 							autocomplete="off"
 						/>
 					</div>
@@ -167,7 +140,7 @@
 							class="textarea"
 							type="text"
 							formControlName="purpose"
-							placeholder="{{ 'POP_UPS.PURPOSE' | translate }}"
+							[placeholder]="'POP_UPS.PURPOSE' | translate"
 						></textarea>
 					</div>
 				</div>
@@ -205,9 +178,7 @@
 								appendTo="body"
 								formControlName="organizationContact"
 								(change)="selectOrganizationContact($event)"
-								placeholder="{{
-									'CONTEXT_MENU.CONTACT' | translate
-								}}"
+								[placeholder]="'CONTEXT_MENU.CONTACT' | translate"
 							>
 								<ng-template
 									ng-option-tmp
@@ -235,9 +206,7 @@
 								appendTo="body"
 								formControlName="project"
 								(change)="selectProject($event)"
-								placeholder="{{
-									'CONTEXT_MENU.PROJECT' | translate
-								}}"
+								[placeholder]="'CONTEXT_MENU.PROJECT' | translate"
 							>
 								<ng-template
 									ng-option-tmp
@@ -275,10 +244,7 @@
 						<div>
 							<nb-select
 								id="status"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.SELECT_STATUS'
-										| translate
-								}}"
+								[placeholder]="'FORM.PLACEHOLDERS.SELECT_STATUS' | translate"
 								fullWidth
 								[disabled]="disableStatuses"
 								formControlName="status"
@@ -303,17 +269,14 @@
 						<textarea
 							nbInput
 							fullWidth
-							placeholder="{{ 'POP_UPS.NOTES' | translate }}"
+							[placeholder]="'POP_UPS.NOTES' | translate"
 							formControlName="notes"
 							class="notes"
-							[ngClass]="{
-								'status-danger':
-									notes?.invalid &&
-									(notes.dirty || notes.touched),
-								'status-success':
-									notes?.valid &&
-									(notes.dirty || notes.touched)
-							}"
+							[status]="
+							isInvalidControl('notes')
+									? 'danger'
+									: 'basic'
+							"
 						>
 						</textarea>
 					</div>
@@ -331,9 +294,7 @@
 								type="text"
 								formControlName="taxLabel"
 								fullWidth
-								placeholder="{{
-									'POP_UPS.TAX_LABEL' | translate
-								}}"
+								[placeholder]="'POP_UPS.TAX_LABEL' | translate"
 							/>
 						</div>
 					</div>
@@ -347,9 +308,7 @@
 								formControlName="taxType"
 								fullWidth
 								[clearable]="false"
-								placeholder="{{
-									'POP_UPS.TAX_TYPE' | translate
-								}}"
+								[placeholder]="'POP_UPS.TAX_TYPE' | translate"
 							>
 							</ng-select>
 						</div>
@@ -362,9 +321,7 @@
 								step="1"
 								fullWidth
 								formControlName="rateValue"
-								placeholder="{{
-									'POP_UPS.TAX_RATE' | translate
-								}}"
+								[placeholder]="'POP_UPS.TAX_RATE' | translate"
 							/>
 						</div>
 					</div>

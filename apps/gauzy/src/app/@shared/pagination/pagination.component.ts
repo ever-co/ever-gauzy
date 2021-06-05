@@ -19,12 +19,49 @@ import { debounceTime, tap } from 'rxjs/operators';
 })
 export class PaginationComponent implements OnInit {
 
-	@Input() totalItems: number = 1;
-	@Input() activePage: number = 1;
-	@Input() itemsPerPage: number = 5;
+	/*
+	* Getter & Setter for dynamic totalItems
+	*/
+	_totalItems: number = 1;
+	get totalItems(): number {
+		return this._totalItems;
+	}
+	@Input() set totalItems(value: number) {
+		this._totalItems = value;
+	}
 
-	//OnInit enable/disable emit EventEmitter
-	@Input() doEmit: boolean = true;
+	/*
+	* Getter & Setter for dynamic activePage
+	*/
+	_activePage: number = 1;
+	get activePage(): number {
+		return this._activePage;
+	}
+	@Input() set activePage(value: number) {
+		this._activePage = value;
+	}
+
+	/*
+	* Getter & Setter for dynamic itemsPerPage
+	*/
+	_itemsPerPage: number = 5;
+	get itemsPerPage(): number {
+		return this._itemsPerPage;
+	}
+	@Input() set itemsPerPage(value: number) {
+		this._itemsPerPage = value;
+	}
+
+	/*
+	* Getter & Setter for enable/disable emit EventEmitter
+	*/
+	_doEmit: boolean = true;
+	get doEmit(): boolean {
+		return this._doEmit;
+	}
+	@Input() set doEmit(value: boolean) {
+		this._doEmit = value;
+	}
 
 	subject$: Subject<any> = new Subject();
 

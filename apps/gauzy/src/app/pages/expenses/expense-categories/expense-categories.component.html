@@ -1,4 +1,4 @@
-<nb-card class="card-scroll">
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
 			<ngx-back-navigation></ngx-back-navigation>
@@ -88,7 +88,7 @@
 			</ng-template>
 		</div>
 
-		<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
 			<div *ngIf="expenseCategories?.length">
 				<nb-card *ngFor="let v of expenseCategories">
 					<nb-card-body
@@ -190,7 +190,7 @@
 			</div>
 		</ng-container>
 
-		<ng-container *ngIf="dataLayoutStyle === 'CARDS_GRID'">
+		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID">
 			<ga-card-grid
 				*ngIf="expenseCategories?.length"
 				[settings]="settingsSmartTable"
@@ -199,33 +199,45 @@
 			></ga-card-grid>
 		</ng-container>
 
-		<ng-template
-			#actionButtons
-			let-buttonSize="buttonSize"
-			let-selectedItem="selectedItem"
-		>
-			<button
-				(click)="edit(selectedItem)"
-				nbButton
-				status="info"
-				class="mr-2"
-				[disabled]="!selectedItem"
-				[size]="buttonSize || 'medium'"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-			<button
-				(click)="removeCategory(selectedItem.id, selectedItem.name)"
-				nbButton
-				status="danger"
-				class="mr-2"
-				[disabled]="!selectedItem"
-				[size]="buttonSize || 'medium'"
-			>
-				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
-				{{ 'BUTTONS.DELETE' | translate }}
-			</button>
-		</ng-template>
+		<div class="pagination-container">
+			<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+				<ga-pagination 
+					(selectedPage)="onPageChange($event)"
+					[doEmit]="false"
+					[totalItems]="pagination.totalItems" 
+					[itemsPerPage]="pagination.itemsPerPage" 
+					[activePage]="pagination.activePage">
+				</ga-pagination>
+			</ng-container>
+		</div>
 	</nb-card-body>
 </nb-card>
+
+<ng-template
+	#actionButtons
+	let-buttonSize="buttonSize"
+	let-selectedItem="selectedItem"
+>
+	<button
+		(click)="edit(selectedItem)"
+		nbButton
+		status="info"
+		class="mr-2"
+		[disabled]="!selectedItem"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+		{{ 'BUTTONS.EDIT' | translate }}
+	</button>
+	<button
+		(click)="removeCategory(selectedItem.id, selectedItem.name)"
+		nbButton
+		status="danger"
+		class="mr-2"
+		[disabled]="!selectedItem"
+		[size]="buttonSize || 'medium'"
+	>
+		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+		{{ 'BUTTONS.DELETE' | translate }}
+	</button>
+</ng-template>

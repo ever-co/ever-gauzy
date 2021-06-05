@@ -1,11 +1,6 @@
-<nb-card class="main" *ngIf="form">
+<nb-card class="main">
 	<nb-card-header class="d-flex">
-		<h5>
-			{{
-				(income ? 'POP_UPS.EDIT_INCOME' : 'POP_UPS.ADD_INCOME')
-					| translate
-			}}
-		</h5>
+		<h5> {{ (income ? 'POP_UPS.EDIT_INCOME' : 'POP_UPS.ADD_INCOME') | translate }} </h5>
 		<nb-icon
 			class="ml-auto mt-1 close"
 			(click)="close()"
@@ -13,21 +8,22 @@
 		></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="body">
-		<form [formGroup]="form">
+		<form 
+			[formGroup]="form"
+			id="incomeMutationForm"
+			#formDirective="ngForm"
+			(ngSubmit)="addOrEditIncome()"
+		>
 			<div class="row employees">
 				<div class="col-sm-12">
-					<label class="label" for="status" [hidden]="income">
-						{{
-							'INCOME_PAGE.EMPLOYEES_GENERATE_INCOME' | translate
-						}}
-					</label>
+					<label class="label" for="status" [hidden]="income">{{ 
+						'INCOME_PAGE.EMPLOYEES_GENERATE_INCOME' | translate 
+					}}</label>
 					<ga-employee-selector
 						#employeeSelector
-						placeholder="{{
-							'INCOME_PAGE.EMPLOYEES_GENERATE_INCOME' | translate
-						}}"
-						[defaultSelected]="false"
-						[showAllEmployeesOption]="false"
+						[placeholder]="'INCOME_PAGE.EMPLOYEES_GENERATE_INCOME' | translate"
+						[defaultSelected]="true"
+						[showAllEmployeesOption]="true"
 						[hidden]="income"
 						[skipGlobalChange]="true"
 						class="employees"
@@ -44,48 +40,29 @@
 					<input
 						formControlName="valueDate"
 						nbInput
-						placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
-						[nbDatepicker]="formpicker"
-						[ngClass]="{
-							'status-danger':
-								valueDate?.invalid &&
-								(valueDate.dirty || valueDate.touched),
-							'status-success':
-								valueDate?.valid &&
-								(valueDate.dirty || valueDate.touched)
-						}"
+						[placeholder]="'POP_UPS.PICK_DATE' | translate"
+						[nbDatepicker]="valueDatePicker"
+						[status]="
+							isInvalidControl('valueDate')
+								? 'danger'
+								: 'basic'
+						"
 					/>
-					<nb-datepicker #formpicker></nb-datepicker>
+					<nb-datepicker #valueDatePicker></nb-datepicker>
 				</div>
-
 				<div class="col-sm-6">
 					<div class="form-group">
 						<label class="label">{{
 							'POP_UPS.CONTACT' | translate
 						}}</label>
-						<ng-select
-							[addTag]="addNewOrganizationContact"
-							[items]="organizationContacts"
-							bindLabel="name"
+						<ga-contact-select
+							[addTag]="true"
+							[clearable]="true"
 							[searchable]="true"
+							[placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
 							formControlName="organizationContact"
-							(change)="selectOrganizationContact($event)"
-							placeholder="{{ 'POP_UPS.CONTACT' | translate }}"
-							appendTo="body"
-						>
-							<ng-template
-								ng-option-tmp
-								let-item="item"
-								let-index="index"
-							>
-								{{ item.name }}
-							</ng-template>
-							<ng-template ng-label-tmp let-item="item">
-								<div class="selector-template">
-									<span>{{ item.name }}</span>
-								</div>
-							</ng-template>
-						</ng-select>
+							(onChanged)="selectOrganizationContact($event)"
+						></ga-contact-select>
 					</div>
 				</div>
 			</div>
@@ -108,16 +85,13 @@
 							type="number"
 							step="1"
 							fullWidth
-							placeholder="{{ 'POP_UPS.AMOUNT' | translate }}"
+							[placeholder]="'POP_UPS.AMOUNT' | translate"
 							formControlName="amount"
-							[ngClass]="{
-								'status-danger':
-									amount?.invalid &&
-									(amount.dirty || amount.touched),
-								'status-success':
-									amount?.valid &&
-									(amount.dirty || amount.touched)
-							}"
+							[status]="
+								isInvalidControl('amount')
+									? 'danger'
+									: 'basic'
+							"
 							autocomplete="off"
 						/>
 					</div>
@@ -127,7 +101,7 @@
 				<div class="col-sm-12">
 					<div class="form-group">
 						<ga-tags-color-input
-							[selectedTags]="tags"
+							[selectedTags]="form.get('tags').value"
 							(selectedTagsEvent)="selectedTagsHandler($event)"
 							[isOrgLevel]="true"
 						>
@@ -146,9 +120,7 @@
 
 						<span
 							class="label info-font"
-							nbTooltip="{{
-								'INCOME_PAGE.BONUS_HELP' | translate
-							}}"
+							[nbTooltip]="'INCOME_PAGE.BONUS_HELP' | translate"
 						>
 							&nbsp;<nb-icon icon="info-outline"></nb-icon>
 						</span>
@@ -164,17 +136,9 @@
 						<textarea
 							nbInput
 							fullWidth
-							placeholder="{{ 'POP_UPS.NOTES' | translate }}"
+							[placeholder]="'POP_UPS.NOTES' | translate"
 							formControlName="notes"
 							class="notes"
-							[ngClass]="{
-								'status-danger':
-									notes?.invalid &&
-									(notes.dirty || notes.touched),
-								'status-success':
-									notes?.valid &&
-									(notes.dirty || notes.touched)
-							}"
 						>
 						</textarea>
 					</div>
@@ -185,7 +149,7 @@
 	<nb-card-footer class="text-right">
 		<button
 			[disabled]="form.invalid"
-			(click)="addOrEditIncome()"
+			(click)="formDirective.ngSubmit.emit()"
 			status="success"
 			nbButton
 		>

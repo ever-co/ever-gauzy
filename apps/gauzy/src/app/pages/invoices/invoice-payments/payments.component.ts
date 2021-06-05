@@ -2,27 +2,26 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { InvoicesService } from '../../../@core/services/invoices.service';
 import {
 	IInvoice,
 	IPayment,
 	InvoiceStatusTypesEnum,
-	ISelectedPayment
+	ISelectedPayment,
+	IOrganization
 } from '@gauzy/contracts';
 import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
 import { PaymentMutationComponent } from './payment-mutation/payment-mutation.component';
 import { NbDialogService } from '@nebular/theme';
-import { PaymentService } from '../../../@core/services/payment.service';
-import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { filter, first, tap } from 'rxjs/operators';
+import { Subject } from 'rxjs/internal/Subject';
+import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { saveAs } from 'file-saver';
-import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge.component';
-import { Store } from '../../../@core/services/store.service';
-import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge.component';
 import { generateCsv } from '../../../@shared/invoice/generate-csv';
-import { InvoicePaymentReceiptMutatonComponent } from './payment-receipt-mutation/payment-receipt-mutation.component';
+import { InvoicePaymentReceiptMutationComponent } from './payment-receipt-mutation/payment-receipt-mutation.component';
+import { InvoiceEstimateHistoryService, InvoicesService, PaymentService, Store, ToastrService } from '../../../@core/services';
+import { DateViewComponent, IncomeExpenseAmountComponent } from '../../../@shared/table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -33,19 +32,6 @@ import { InvoicePaymentReceiptMutatonComponent } from './payment-receipt-mutatio
 export class InvoicePaymentsComponent
 	extends TranslationBaseComponent
 	implements OnInit {
-	constructor(
-		private route: ActivatedRoute,
-		readonly translateService: TranslateService,
-		private invoicesService: InvoicesService,
-		private dialogService: NbDialogService,
-		private paymentService: PaymentService,
-		private toastrService: ToastrService,
-		private store: Store,
-		private invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
-		private router: Router
-	) {
-		super(translateService);
-	}
 
 	invoiceId: string;
 	invoice: IInvoice;
@@ -57,10 +43,10 @@ export class InvoicePaymentsComponent
 	smartTableSource = new LocalDataSource();
 	selectedPayment: IPayment;
 	disableButton = true;
-	tenantId: string;
 	loading: boolean;
-	translatedText: any;
 	isDisabled: boolean;
+	organization: IOrganization;
+	subject$: Subject<any> = new Subject();
 
 	paymentsTable: Ng2SmartTableComponent;
 	@ViewChild('paymentsTable') set content(content: Ng2SmartTableComponent) {
@@ -70,27 +56,44 @@ export class InvoicePaymentsComponent
 		}
 	}
 
+	constructor(
+		private readonly route: ActivatedRoute,
+		readonly translateService: TranslateService,
+		private readonly invoicesService: InvoicesService,
+		private readonly dialogService: NbDialogService,
+		private readonly paymentService: PaymentService,
+		private readonly toastrService: ToastrService,
+		private readonly store: Store,
+		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
+		private readonly router: Router
+	) {
+		super(translateService);
+	}
+
 	ngOnInit() {
-		this.loadSmartTable();
+		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
-		this.route.paramMap.pipe(untilDestroyed(this)).subscribe((params) => {
-			this.invoiceId = params.get('id');
-		});
-		this.store.user$
+
+		this.subject$
 			.pipe(
-				filter((user) => !!user),
-				tap((user) => (this.tenantId = user.tenantId)),
+				debounceTime(200),
 				tap(() => this.getInvoice()),
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.route.paramMap
+			.pipe(
+				filter((params) => !!params && !!params.get('id')),
+				tap((params) => this.invoiceId = params.get('id')),
+				tap(() => this.subject$.next()),
+				untilDestroyed(this)
+			).subscribe();
 	}
 
 	async getInvoice() {
 		this.loading = true;
-		if (!this.invoiceId) {
-			return;
-		}
+
+		const { tenantId } = this.store.user;
 		const invoice = await this.invoicesService.getById(
 			this.invoiceId,
 			[
@@ -102,30 +105,37 @@ export class InvoicePaymentsComponent
 				'payments.invoice',
 				'payments.recordedBy'
 			],
-			{ tenantId: this.tenantId }
+			{ tenantId }
 		);
-		this.invoice = invoice;
 
+		this.invoice = invoice;
 		this.payments = invoice.payments;
-		this.smartTableSource.load(invoice.payments);
+
+		this.smartTableSource.load(this.payments);
 		await this.calculateTotalPaid();
+
+		this.loading = false;
 	}
 
 	async calculateTotalPaid() {
 		this.totalPaid = 0;
-		const tableData = await this.smartTableSource.getAll();
-		for (const payment of tableData) {
+		const payments = await this.smartTableSource.getAll();
+		for (const payment of payments) {
 			this.totalPaid += +payment.amount;
 		}
+
 		this.barWidth = +(
 			(this.totalPaid / this.invoice.totalValue) *
 			100
 		).toFixed(2);
+
 		if (this.barWidth > 100) {
 			this.barWidth = 100;
 		}
+
 		const progressBar = document.getElementById('progress-bar-inner');
 		progressBar.style.width = `${this.barWidth}%`;
+
 		if (this.totalPaid >= this.invoice.totalValue) {
 			if (!this.invoice.paid) {
 				await this.invoicesService.update(this.invoice.id, {
@@ -146,18 +156,12 @@ export class InvoicePaymentsComponent
 			this.leftToPay = 0;
 		}
 
-		if (this.leftToPay === 0) {
-			this.isDisabled = true;
-		} else {
-			this.isDisabled = false;
-		}
+		this.isDisabled = (this.leftToPay === 0);
 
 		await this.invoicesService.update(this.invoice.id, {
 			alreadyPaid: this.totalPaid,
 			amountDue: this.leftToPay
 		});
-
-		this.loading = false;
 	}
 
 	async recordPayment() {
@@ -173,26 +177,21 @@ export class InvoicePaymentsComponent
 		if (result) {
 			await this.paymentService.add(result);
 			this.totalPaid = 0;
-			await this.getInvoice();
+			this.subject$.next();
 			await this.updateInvoiceStatus(
 				+this.invoice.totalValue,
 				this.totalPaid
 			);
-			await this.invoiceEstimateHistoryService.add({
-				action: this.getTranslation(
-					'INVOICES_PAGE.PAYMENTS.PAYMENT_AMOUNT_ADDED',
-					{
-						amount: result.amount,
-						currency: result.currency
-					}
-				),
-				invoice: result.invoice,
-				invoiceId: result.invoice.id,
-				user: this.store.user,
-				userId: this.store.userId,
-				organization: this.invoice.fromOrganization,
-				organizationId: this.invoice.fromOrganization.id
-			});
+
+			if (result.invoice) {
+				const { invoice, amount, currency } = result;
+				const action = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_AMOUNT_ADDED', { amount, currency });
+	
+				await this.createInvoiceHistory(
+					action,
+					invoice
+				);
+			}
 		}
 	}
 
@@ -209,22 +208,20 @@ export class InvoicePaymentsComponent
 
 		if (result) {
 			await this.paymentService.update(result.id, result);
-			await this.getInvoice();
+			this.subject$.next();
 			await this.updateInvoiceStatus(
 				+this.invoice.totalValue,
 				this.totalPaid
 			);
-			await this.invoiceEstimateHistoryService.add({
-				action: this.getTranslation(
-					'INVOICES_PAGE.PAYMENT.PAYMENT_EDIT'
-				),
-				invoice: result.invoice,
-				invoiceId: result.invoice.id,
-				user: this.store.user,
-				userId: this.store.userId,
-				organization: this.invoice.fromOrganization,
-				organizationId: this.invoice.fromOrganization.id
-			});
+
+			if (result.invoice) {
+				const { invoice } = result;
+				const action = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_EDIT');
+				await this.createInvoiceHistory(
+					action,
+					invoice
+				);
+			}
 		}
 	}
 
@@ -236,23 +233,20 @@ export class InvoicePaymentsComponent
 
 		if (result) {
 			await this.paymentService.delete(this.selectedPayment.id);
-			await this.getInvoice();
+			this.subject$.next();
 			await this.updateInvoiceStatus(
 				+this.invoice.totalValue,
 				this.totalPaid
 			);
 
-			await this.invoiceEstimateHistoryService.add({
-				action: this.getTranslation(
-					'INVOICES_PAGE.PAYMENT.PAYMENT_DELETE'
-				),
-				invoice: this.invoice,
-				invoiceId: this.invoice.id,
-				user: this.store.user,
-				userId: this.store.userId,
-				organization: this.invoice.fromOrganization,
-				organizationId: this.invoice.fromOrganization.id
-			});
+			const { invoice } = this.selectedPayment;
+			if (invoice) {
+				const action = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE');
+				await this.createInvoiceHistory(
+					action,
+					invoice
+				);
+			}
 
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE');
 		}
@@ -298,22 +292,19 @@ export class InvoicePaymentsComponent
 		}
 	}
 
-	loadSmartTable() {
+	private _loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
 				paymentDate: {
-					title: this.getTranslation(
-						'INVOICES_PAGE.PAYMENTS.PAYMENT_DATE'
-					),
-					type: 'text',
-					valuePrepareFunction: (cell, row) => {
-						return `${cell.slice(0, 10)}`;
-					}
+					title: this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_DATE'),				
+					type: 'custom',
+					renderComponent: DateViewComponent
 				},
 				amount: {
 					title: this.getTranslation('INVOICES_PAGE.PAYMENTS.AMOUNT'),
-					type: 'text'
+					type: 'custom',
+					renderComponent: IncomeExpenseAmountComponent
 				},
 				recordedBy: {
 					title: this.getTranslation(
@@ -321,8 +312,8 @@ export class InvoicePaymentsComponent
 					),
 					type: 'text',
 					valuePrepareFunction: (cell, row) => {
-						if (cell && cell.firstName && cell.lastName) {
-							return `${cell.firstName} ${cell.lastName}`;
+						if (cell && cell.name) {
+							return `${cell.name}`;
 						} else {
 							return ``;
 						}
@@ -415,9 +406,18 @@ export class InvoicePaymentsComponent
 		}
 
 		await this.paymentService.add(payment);
-		await this.getInvoice();
+		this.subject$.next();
 
-		this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD');
+		const { amount, currency, invoice } = payment;
+		if (payment.invoice) {
+			const action = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_AMOUNT_ADDED', { amount, currency });
+			await this.createInvoiceHistory(
+				action,
+				invoice
+			);
+		}
+
+		this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD', { amount, currency });
 	}
 
 	async invoiceRemainingAmount() {
@@ -436,17 +436,12 @@ export class InvoicePaymentsComponent
 		this.payments.forEach((payment) => {
 			data.push({
 				invoiceNumber: this.invoice.invoiceNumber,
-				contact: this.invoice.toContact.name,
+				contact: (this.invoice.toContact) ? this.invoice.toContact.name : '',
 				paymentDate: payment.paymentDate.toString().slice(0, 10),
-				amount: payment.amount,
-				recordedBy:
-					payment.recordedBy.firstName + payment.recordedBy.lastName,
+				amount: `${payment.currency + ' ' + payment.amount}`,
+				recordedBy: payment.recordedBy.firstName + payment.recordedBy.lastName,
 				note: payment.note || '',
-				paymentMethod: payment.paymentMethod
-					? this.getTranslation(
-							`INVOICES_PAGE.PAYMENTS.${payment.paymentMethod}`
-					  )
-					: '',
+				paymentMethod: payment.paymentMethod ? this.getTranslation(`INVOICES_PAGE.PAYMENTS.${payment.paymentMethod}`) : '',
 				status: payment.overdue
 					? this.getTranslation('INVOICES_PAGE.PAYMENTS.OVERDUE')
 					: this.getTranslation('INVOICES_PAGE.PAYMENTS.ON_TIME')
@@ -471,7 +466,7 @@ export class InvoicePaymentsComponent
 
 	async sendReceipt() {
 		await this.dialogService
-			.open(InvoicePaymentReceiptMutatonComponent, {
+			.open(InvoicePaymentReceiptMutationComponent, {
 				context: {
 					invoice: this.invoice,
 					payment: this.selectedPayment
@@ -481,12 +476,13 @@ export class InvoicePaymentsComponent
 			.toPromise();
 	}
 
-	_applyTranslationOnSmartTable() {
+	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadSmartTable();
-			});
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe()
 	}
 
 	/*
@@ -519,5 +515,28 @@ export class InvoicePaymentsComponent
 			this.paymentsTable.grid.dataSet['willSelect'] = 'false';
 			this.paymentsTable.grid.dataSet.deselectAll();
 		}
+	}
+
+	/*
+	* Create Payment Invoice History Event 
+	*/
+	async createInvoiceHistory(
+		action: string,
+		invoice: IInvoice
+	) {
+		const { tenantId, id: userId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization;
+		const { id: invoiceId } = invoice;
+
+		await this.invoiceEstimateHistoryService.add({
+			action,
+			invoice,
+			invoiceId,
+			user: this.store.user,
+			userId,
+			organization: this.organization,
+			organizationId,
+			tenantId
+		});
 	}
 }

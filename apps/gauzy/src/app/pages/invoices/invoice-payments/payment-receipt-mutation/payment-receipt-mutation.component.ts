@@ -9,11 +9,11 @@ import { IInvoice, IPayment } from 'packages/contracts/dist';
 	selector: 'ga-payment-receipt-mutation',
 	templateUrl: './payment-receipt-mutation.component.html'
 })
-export class InvoicePaymentReceiptMutatonComponent extends TranslationBaseComponent {
+export class InvoicePaymentReceiptMutationComponent extends TranslationBaseComponent {
 	constructor(
 		readonly translateService: TranslateService,
 		private paymentService: PaymentService,
-		protected dialogRef: NbDialogRef<InvoicePaymentReceiptMutatonComponent>
+		protected dialogRef: NbDialogRef<InvoicePaymentReceiptMutationComponent>
 	) {
 		super(translateService);
 	}

@@ -4,7 +4,8 @@ import { Payment } from './payment.entity';
 import * as faker from 'faker';
 import * as moment from 'moment';
 import { environment as env } from '@gauzy/config';
-import { Invoice, User } from './../core/entities/internal';
+import { Invoice, OrganizationProject, Tag, User } from './../core/entities/internal';
+import * as _ from 'underscore';
 
 export const createDefaultPayment = async (
 	connection: Connection,
@@ -18,12 +19,26 @@ export const createDefaultPayment = async (
 			tenant 
 		}
 	});
+	
 	for (const organization of organizations) {
-		const invoices = await connection.manager.find(Invoice, {
+		const projects = await connection.manager.find(OrganizationProject, {
 			where: { 
 				organization,
 				tenant
 			}
+		});
+		const tags = await connection.manager.find(Tag, {
+			where: { 
+				organization
+			}
+		});
+		const invoices = await connection.manager.find(Invoice, {
+			where: { 
+				organization,
+				tenant,
+				isEstimate: 0
+			},
+			relations: ['toContact']
 		});
 		for (const invoice of invoices) {
 			const payment = new Payment();
@@ -33,21 +48,28 @@ export const createDefaultPayment = async (
 				moment(new Date()).add(1, 'month').toDate()
 			);
 			payment.amount = faker.datatype.number({
-				min: 1000,
-				max: 100000
+				min: 500,
+				max: 5000
 			});
 			payment.note = faker.name.jobDescriptor();
 			payment.currency = organization.currency || env.defaultCurrency;
-			payment.paymentMethod = faker.random.arrayElement(
-				Object.keys(PaymentMethodEnum)
-			);
+			payment.paymentMethod = faker.random.arrayElement(Object.keys(PaymentMethodEnum));
 			payment.overdue = faker.datatype.boolean();
 			payment.organization = organization;
 			payment.tenant = tenant;
-			payment.tags = invoice.tags;
+			payment.tags = _.chain(tags)
+					.shuffle()
+					.take(faker.datatype.number({ min: 1, max: 3 }))
+					.values()
+					.value();
+			payment.contact = invoice.toContact;
 			payment.employeeId = faker.random.arrayElement(employees).id;
 			payment.recordedBy = faker.random.arrayElement(users);
 
+			const project = faker.random.arrayElement(projects);
+			if (project) {
+				payment.projectId = project.id;
+			}
 			payments.push(payment);
 		}
 	}
@@ -73,17 +95,30 @@ export const createRandomPayment = async (
 		const tenantEmployees = tenantEmployeeMap.get(tenant);
 		const users = await connection.manager.find(User, {
 			where: { 
-				tenant: tenant 
+				tenant
 			}
 		});
 		const payments1: Payment[] = [];
 		const payments2: Payment[] = [];
 		for (const organization of tenantOrgs) {
-			const invoices = await connection.manager.find(Invoice, {
+			const projects = await connection.manager.find(OrganizationProject, {
 				where: { 
 					organization,
 					tenant
 				}
+			});
+			const tags = await connection.manager.find(Tag, {
+				where: { 
+					organization
+				}
+			});
+			const invoices = await connection.manager.find(Invoice, {
+				where: { 
+					organization,
+					tenant,
+					isEstimate: 0
+				},
+				relations: ['toContact']
 			});
 			let count = 0;
 			for (const invoice of invoices) {
@@ -94,8 +129,8 @@ export const createRandomPayment = async (
 					faker.date.recent()
 				);
 				payment.amount = faker.datatype.number({
-					min: 1000,
-					max: 100000
+					min: 500,
+					max: 5000
 				});
 				payment.note = faker.name.jobDescriptor();
 				payment.currency = organization.currency || env.defaultCurrency;
@@ -105,9 +140,19 @@ export const createRandomPayment = async (
 				payment.overdue = faker.datatype.boolean();
 				payment.organization = organization;
 				payment.tenant = tenant;
-				payment.tags = invoice.tags;
+				payment.tags = _.chain(tags)
+					.shuffle()
+					.take(faker.datatype.number({ min: 1, max: 3 }))
+					.values()
+					.value();
+				payment.contact = invoice.toContact;
 				payment.employeeId = faker.random.arrayElement(tenantEmployees).id;
 				payment.recordedBy = faker.random.arrayElement(users);
+
+				const project = faker.random.arrayElement(projects);
+				if (project) {
+					payment.projectId = project.id;
+				}
 				
 				if (count % 2 === 0) {
 					payments1.push(payment);

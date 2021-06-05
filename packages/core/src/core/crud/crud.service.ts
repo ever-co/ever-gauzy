@@ -4,24 +4,14 @@
 
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import {
-	Between,
-	Brackets,
 	DeepPartial,
 	DeleteResult,
 	FindConditions,
 	FindManyOptions,
 	FindOneOptions,
-	FindOperator,
-	ILike,
-	In,
-	LessThan,
-	Like,
-	MoreThan,
-	Not,
 	Repository,
 	SelectQueryBuilder,
-	UpdateResult,
-	WhereExpression
+	UpdateResult
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { mergeMap } from 'rxjs/operators';
@@ -32,6 +22,7 @@ import { BaseEntity } from '../entities/internal';
 import { ICrudService } from './icrud.service';
 import { IPagination } from './pagination';
 import { ITryRequest } from './try-request';
+import { filterQuery } from './query-builder';
 
 export abstract class CrudService<T extends BaseEntity>
 	implements ICrudService<T> {
@@ -57,7 +48,6 @@ export abstract class CrudService<T extends BaseEntity>
 			options.skip = filter.limit * (filter.page - 1);
 			options.take = filter.limit;
 		}
-
 		if (filter.orderBy && filter.order) {
 			options.order = {
 				[filter.orderBy]: filter.order
@@ -65,54 +55,14 @@ export abstract class CrudService<T extends BaseEntity>
 		} else if (filter.orderBy) {
 			options.order = filter.orderBy;
 		}
-
 		if (filter.relations) {
 			options.relations = filter.relations;
 		}
-
 		if (filter.join) {
 			options.join = filter.join;
 		}
-
 		if (filter.filters || filter.where) {
 			options.where = (qb: SelectQueryBuilder<T>) => {
-				if (filter.filters && Object.values(filter.filters).length > 0) {
-					qb.andWhere(new Brackets((bck: WhereExpression) => {
-						const where: any[] = [];
-						for (const field in filter.filters) {
-							if (Object.prototype.hasOwnProperty.call(filter.filters, field)) {
-								const condition = filter.filters[field];
-								switch (condition.condition) {
-									case 'Like':
-										where.push({ [field]: Like(condition.search) });
-										break;
-									case 'Between':
-										where.push({ [field]: Between(condition.search[0], condition.search[1]) });
-										break;
-									case 'In':
-										where.push({ [field]: In(condition.search) });
-										break;
-									case 'NotIn':
-										where.push({ [field]: Not(In(condition.search)) });
-										break;
-									case 'ILike':
-										where.push({ [field]: ILike(condition.search) });
-										break;
-									case 'MoreThan':
-										where.push({ [field]: MoreThan(condition.search) });
-										break;
-									case 'LessThan':
-										where.push({ [field]: LessThan(condition.search) });
-										break;
-									default:
-										where.push({ [field]: condition.search });
-										break;
-								}
-							}
-						}
-						bck.where(where);
-					}));
-				}
 				if (filter.where) {
 					const wheres: any = {}
 					for (const field in filter.where) {
@@ -120,51 +70,12 @@ export abstract class CrudService<T extends BaseEntity>
 							wheres[field] = filter.where[field];
 						}
 					}
-					qb.andWhere(new Brackets((bck: WhereExpression) => { 
-						for (let [column, value] of Object.entries(wheres)) {
-							// query using find operator
-							if (value instanceof FindOperator) {
-								bck.andWhere(
-									new Brackets(
-										(bck: WhereExpression) => { 
-											bck.where({ [column]: value }); 
-										}
-									)
-								);
-							} else if (value instanceof Object) {
-								const entries =  value;
-								const alias = column;
-
-								// relational tables query
-								for (let [column, entry] of Object.entries(entries)) {
-									if (entry instanceof FindOperator) {
-										const operator = entry;
-										const { type, value } = operator;
-										switch (type) {
-											default:
-												bck.andWhere(`"${alias}"."${column}" ${type} (:...${column})`, { 
-													[column]: value
-												});
-												break;
-										}
-									}
-								}
-							} else if (value instanceof Array) {
-								bck.andWhere(`"${qb.alias}"."${column}" IN (:...${column})`, { 
-									[column]: value 
-								});
-							} else {
-								bck.andWhere(`"${qb.alias}"."${column}" = :${column}`, { 
-									[column]: value 
-								});
-							}
-						}
-					}));
+					filterQuery(qb, wheres);
 				}
-				console.log(options, 'options');
 				console.log(qb.getQueryAndParameters());
 			}
 		}
+		console.log(filter, 'filters');
 		const [items, total] = await this.repository.findAndCount(options);
 		return { items, total };
 	}

@@ -1,6 +1,8 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
-import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { filter, tap } from 'rxjs/operators';
+import { compareDate, isNotEmpty } from '@gauzy/common-angular';
 import {
 	IInvoice,
 	IPayment,
@@ -13,14 +15,16 @@ import {
 } from '@gauzy/contracts';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
-import { Store } from '../../../../@core/services/store.service';
-import { ToastrService } from './../../../../@core/services/toastr.service';
+import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import {
 	InvoicesService,
 	OrganizationContactService,
-	OrganizationProjectsService
+	OrganizationProjectsService,
+	Store
 } from './../../../../@core/services';
+import { environment as ENV } from './../../../../../environments/environment';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-payment-add',
 	templateUrl: './payment-mutation.component.html',
@@ -29,51 +33,79 @@ import {
 export class PaymentMutationComponent
 	extends TranslationBaseComponent
 	implements OnInit, AfterViewInit {
-	constructor(
-		readonly translateService: TranslateService,
-		private fb: FormBuilder,
-		protected dialogRef: NbDialogRef<PaymentMutationComponent>,
-		private store: Store,
-		private toastrService: ToastrService,
-		private readonly organizationProjectsService: OrganizationProjectsService,
-		private readonly organizationContactService: OrganizationContactService,
-		private readonly invoicesService: InvoicesService
-	) {
-		super(translateService);
-	}
 
 	invoice: IInvoice;
 	invoices: IInvoice[];
 	organization: IOrganization;
 	payment: IPayment;
-	form: FormGroup;
 	paymentMethods = Object.values(PaymentMethodEnum);
 	currencyString: string;
 	organizationContact: IOrganizationContact;
 	organizationContacts: IOrganizationContact[];
 	project: IOrganizationProject;
 	projects: IOrganizationProject[];
-	tags: ITag[] = [];
 
 	get currency() {
 		return this.form.get('currency');
 	}
 
+	/*
+	* Payment Mutation Form 
+	*/
+	public form: FormGroup = PaymentMutationComponent.buildForm(this.fb);
+	static buildForm( fb: FormBuilder): FormGroup {
+		return fb.group({
+			amount: [ '', Validators.compose([ 
+				Validators.required, 
+				Validators.min(1)
+			])],
+			currency: [],
+			paymentDate: [new Date(), Validators.required],
+			note: [],
+			paymentMethod: ['', Validators.required],
+			invoice: [],
+			contact: [],
+			project: [],
+			tags: []
+		});
+	}
+
+	constructor(
+		public readonly translateService: TranslateService,
+		private readonly fb: FormBuilder,
+		protected readonly dialogRef: NbDialogRef<PaymentMutationComponent>,
+		private readonly store: Store,
+		private readonly organizationProjectsService: OrganizationProjectsService,
+		private readonly organizationContactService: OrganizationContactService,
+		private readonly invoicesService: InvoicesService
+	) {
+		super(translateService);
+	}
+	
 	ngOnInit() {
-		this.initializeForm();
-		if (this.currency && !this.currency.value) {
-			if (this.invoice) {
-				this.currency.setValue(this.invoice.currency);
-			} else if (this.currencyString) {
-				this.currency.setValue(this.currencyString);
-			}
-			this.currency.updateValueAndValidity();
-		}
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(({ currency }) => this.currencyString = currency || ENV.DEFAULT_CURRENCY),
+				tap(() => this.initializeForm()),
+				untilDestroyed(this)
+			)
+			.subscribe(() => {
+				if (this.currency && !this.currency.value) {
+					if (this.invoice) {
+						this.currency.setValue(this.invoice.currency);
+					} else if (this.currencyString) {
+						this.currency.setValue(this.currencyString);
+					}
+					this.currency.updateValueAndValidity();
+				}
+			});
 	}
 
 	ngAfterViewInit() {
 		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.store.selectedOrganization;
+		const { id: organizationId } = this.organization;
 
 		this.invoicesService
 			.getAll([], { organizationId, tenantId, isEstimate: false })
@@ -93,109 +125,68 @@ export class PaymentMutationComponent
 	}
 
 	initializeForm() {
-		this.form = this.fb.group({
-			amount: [
-				'',
-				Validators.compose([Validators.required, Validators.min(1)])
-			],
-			currency: [''],
-			paymentDate: [new Date(), Validators.required],
-			note: [''],
-			paymentMethod: ['', Validators.required],
-			invoiceId: [],
-			contact: [],
-			project: []
-		});
 		if (this.payment) {
-			this.form.setValue({
-				amount: this.payment.amount,
-				currency: this.payment.currency,
-				paymentDate: new Date(this.payment.paymentDate),
-				note: this.payment.note,
-				paymentMethod: this.payment.paymentMethod,
-				invoiceId: this.payment.invoice
-					? this.payment.invoice.id
-					: null,
-				contact: this.payment.contact ? this.payment.contact : null,
-				project: this.payment.project ? this.payment.project : null
+			const { amount, currency, paymentDate, note, paymentMethod, invoice, contact, project, tags } = this.payment;
+			this.form.patchValue({
+				amount,
+				currency,
+				paymentDate: new Date(paymentDate),
+				note,
+				paymentMethod,
+				invoice,
+				contact: contact || null,
+				project: project || null,
+				tags
 			});
-			this.form.updateValueAndValidity();
+		} else {
+			this.form.patchValue({
+				invoice: this.invoice,
+				contact: this.invoice.toContact
+			});
 		}
 	}
 
 	async addEditPayment() {
-		const paymentData = this.form.value;
-		if (this.invoices) {
-			this.invoice = this.invoices.find(
-				(item) => paymentData.invoiceId === item.id
-			);
-		}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		const { amount, paymentDate, note, paymentMethod, contact, project, tags, invoice } = this.form.value;
 		const payment = {
-			amount: paymentData.amount,
-			paymentDate: paymentData.paymentDate,
-			note: paymentData.note,
+			amount,
+			paymentDate,
+			note,
 			currency: this.currency.value,
-			invoice: this.invoice,
-			invoiceId: paymentData.invoiceId,
-			organization: this.invoice
-				? this.invoice.fromOrganization
-				: this.organization
-				? this.organization
-				: null,
-			organizationId: this.invoice
-				? this.invoice.organizationId
-				: this.organization
-				? this.organization.id
-				: null,
+			invoice,
+			invoiceId: invoice ? invoice.id : null,
+			tenantId,
+			organizationId,
 			recordedBy: this.store.user,
 			userId: this.store.userId,
-			paymentMethod: paymentData.paymentMethod,
-			contact: paymentData.contact,
-			contactId: paymentData.contact ? paymentData.contact.id : null,
-			project: paymentData.project,
-			projectId: paymentData.project ? paymentData.project.id : null,
-			tags: this.tags
+			paymentMethod,
+			contact,
+			contactId: contact ? contact.id : null,
+			project,
+			projectId: project ? project.id : null,
+			tags
 		};
-
-		if (this.invoice) {
-			const overdue = this.compareDate(
-				paymentData.paymentDate,
-				this.invoice.dueDate
-			);
+		if (isNotEmpty(this.invoice)) {
+			const overdue = compareDate(paymentDate, this.invoice.dueDate);
 			payment['overdue'] = overdue;
-		} else if (paymentData.invoice) {
-			const overdue = this.compareDate(
-				paymentData.paymentDate,
-				paymentData.invoice.dueDate
-			);
+		} else if (isNotEmpty(invoice)) {
+			const overdue = compareDate(paymentDate, invoice.dueDate);
 			payment['overdue'] = overdue;
 		}
 
 		if (this.payment) {
 			payment['id'] = this.payment.id;
-			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_EDIT');
-		} else {
-			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD');
-		}
+		} 
 
 		this.dialogRef.close(payment);
 	}
 
-	compareDate(date1: any, date2: any) {
-		const d1 = new Date(date1);
-		const d2 = new Date(date2);
-
-		const same = d1.getTime() === d2.getTime();
-
-		if (same) {
-			return false;
-		}
-
-		return d1 > d2;
-	}
-
 	selectedTagsEvent(currentTagSelection: ITag[]) {
-		this.tags = currentTagSelection;
+		this.form.patchValue({
+			tags: currentTagSelection
+		});
 	}
 
 	searchOrganizationContact(term: string, item: any) {
@@ -204,11 +195,11 @@ export class PaymentMutationComponent
 		}
 	}
 
-	selectOrganizationContact($event) {
+	selectOrganizationContact($event: IOrganizationContact) {
 		this.organizationContact = $event;
 	}
 
-	selectProject($event) {
+	selectProject($event: IOrganizationProject) {
 		this.project = $event;
 	}
 

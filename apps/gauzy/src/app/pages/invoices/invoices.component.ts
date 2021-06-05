@@ -30,12 +30,12 @@ import {
 	EstimateStatusTypesEnum,
 	InvoiceColumnsEnum,
 	EstimateColumnsEnum,
-	IOrganizationContact,
 	IInvoiceEstimateHistory,
 	PermissionsEnum,
 	ICurrency,
 	IInvoiceItemCreateInput,
-	InvoiceTabsEnum
+	InvoiceTabsEnum,
+	DiscountTaxTypeEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { Router } from '@angular/router';
@@ -47,8 +47,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
-import { InvoicePaidComponent } from './table-components/invoice-paid.component';
-import { NotesWithTagsComponent } from '../../@shared/table-components';
+import { InvoiceEstimateTotalValueComponent, InvoicePaidComponent } from './table-components';
+import { DateViewComponent, NotesWithTagsComponent } from '../../@shared/table-components';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
@@ -60,12 +60,10 @@ import {
 	InvoiceEstimateHistoryService,
 	InvoiceItemService,
 	InvoicesService,
-	OrganizationContactService,
 	Store,
 	ToastrService
 } from '../../@core/services';
 import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
-
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -92,8 +90,7 @@ export class InvoicesComponent
 	settingsContextMenu: NbMenuItem[];
 	contextMenus = [];
 	columns: any;
-	organizationContacts: IOrganizationContact[];
-	perPage = 10;
+	perPage: number = 10;
 	histories: IInvoiceEstimateHistory[] = [];
 	includeArchived = false;
 	subject$: Subject<any> = new Subject();
@@ -179,7 +176,6 @@ export class InvoicesComponent
 		private readonly invoiceItemService: InvoiceItemService,
 		private readonly router: Router,
 		private readonly nbMenuService: NbMenuService,
-		private readonly organizationContactService: OrganizationContactService,
 		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
 		private readonly ngxPermissionsService: NgxPermissionsService,
 		private readonly httpClient: HttpClient,
@@ -199,8 +195,8 @@ export class InvoicesComponent
 	ngAfterViewInit() {
 		this.subject$
 			.pipe(
-				debounceTime(200),
 				tap(() => this.loading = true),
+				debounceTime(300),
 				tap(() => this.cdr.detectChanges()),
 				tap(() => this.getInvoices()),
 				tap(() => this.clearItem()),
@@ -213,6 +209,7 @@ export class InvoicesComponent
 				filter((organization) => !!organization),
 				distinctUntilChange(),
 				tap((organization) => (this.organization = organization)),
+				tap(() => this.refreshPagination()),
 				tap(() => this.subject$.next()),
 				untilDestroyed(this)
 			)
@@ -239,6 +236,7 @@ export class InvoicesComponent
 				distinctUntilChange(),
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.refreshPagination()),
 				tap(() => this.subject$.next()),
 				untilDestroyed(this)
 			)
@@ -289,11 +287,15 @@ export class InvoicesComponent
 			});
 		}
 
-		const contextMenus = this.contextMenus.filter((item) => this.ngxPermissionsService.getPermission(item.permission) != null)
+		const contextMenus = this.contextMenus.filter(
+			(item) => this.ngxPermissionsService.getPermission(item.permission) != null
+		)
 		if (this.isEstimate) {
 			this.settingsContextMenu = contextMenus;
 		} else {
-			this.settingsContextMenu = contextMenus.filter((item) => item.title !== this.getTranslation('INVOICES_PAGE.ACTION.CONVERT_TO_INVOICE'));
+			this.settingsContextMenu = contextMenus.filter(
+				(item) => item.title !== this.getTranslation('INVOICES_PAGE.ACTION.CONVERT_TO_INVOICE')
+			);
 		}
 		this.nbMenuService.onItemClick().pipe(first());
 	}
@@ -315,7 +317,7 @@ export class InvoicesComponent
 			.subscribe((title) => this.bulkAction(title));
 	}
 
-	bulkAction(action) {
+	bulkAction(action: string) {
 		if (action === this.getTranslation('INVOICES_PAGE.ACTION.DUPLICATE'))
 			this.duplicated(this.selectedInvoice);
 		if (action === this.getTranslation('INVOICES_PAGE.ACTION.SEND'))
@@ -352,14 +354,11 @@ export class InvoicesComponent
 			});
 		}
 
+		const { id } = this.selectedInvoice;
 		if (this.isEstimate) {
-			this.router.navigate([
-				`/pages/accounting/invoices/estimates/edit/${this.selectedInvoice.id}`
-			]);
+			this.router.navigate([ `/pages/accounting/invoices/estimates/edit`, id ]);
 		} else {
-			this.router.navigate([
-				`/pages/accounting/invoices/edit/${this.selectedInvoice.id}`
-			]);
+			this.router.navigate([ `/pages/accounting/invoices/edit`, id ]);
 		}
 	}
 
@@ -372,9 +371,9 @@ export class InvoicesComponent
 			});
 		}
 		const { tenantId } = this.store.user;
-		const invoiceNumber = await this.invoicesService.getHighestInvoiceNumber(
-			tenantId
-		);
+		const { id: organizationId } = this.organization;
+
+		const invoiceNumber = await this.invoicesService.getHighestInvoiceNumber(tenantId);
 		const createdInvoice = await this.invoicesService.add({
 			invoiceNumber: +invoiceNumber['max'] + 1,
 			invoiceDate: this.selectedInvoice.invoiceDate,
@@ -393,7 +392,7 @@ export class InvoicesComponent
 			toContact: this.selectedInvoice.toContact,
 			organizationContactName: this.selectedInvoice.toContact?.name,
 			fromOrganization: this.organization,
-			organizationId: this.selectedInvoice.organizationId,
+			organizationId,
 			tenantId,
 			invoiceType: this.selectedInvoice.invoiceType,
 			tags: this.selectedInvoice.tags,
@@ -404,7 +403,6 @@ export class InvoicesComponent
 		const invoiceItems: IInvoiceItemCreateInput[] = [];
 
 		for (const item of this.selectedInvoice.invoiceItems) {
-			const organizationId = this.organization.id;
 			const itemToAdd = {
 				description: item.description,
 				price: item.price,
@@ -438,37 +436,19 @@ export class InvoicesComponent
 			invoiceItems
 		);
 
-		await this.invoiceEstimateHistoryService.add({
-			action: this.isEstimate
-				? this.getTranslation(
-					'INVOICES_PAGE.INVOICES_DUPLICATE_ESTIMATE'
-				)
-				: this.getTranslation(
-					'INVOICES_PAGE.INVOICES_DUPLICATE_INVOICE'
-				),
-			invoice: this.selectedInvoice,
-			invoiceId: this.selectedInvoice.id,
-			user: this.store.user,
-			userId: this.store.userId,
-			organization: this.organization,
-			organizationId: this.organization.id,
-			tenantId
-		});
+		const action = this.isEstimate ? 
+						this.getTranslation('INVOICES_PAGE.INVOICES_DUPLICATE_ESTIMATE') : 
+						this.getTranslation('INVOICES_PAGE.INVOICES_DUPLICATE_INVOICE');
 
+		await this.createInvoiceHistory(action);
+
+		const { id } = createdInvoice;
 		if (this.isEstimate) {
-			this.toastrService.success(
-				'INVOICES_PAGE.INVOICES_DUPLICATE_ESTIMATE'
-			);
-			this.router.navigate([
-				`/pages/accounting/invoices/estimates/edit/${createdInvoice.id}`
-			]);
+			this.toastrService.success('INVOICES_PAGE.INVOICES_DUPLICATE_ESTIMATE');
+			this.router.navigate([`/pages/accounting/invoices/estimates/edit`, id]);
 		} else {
-			this.toastrService.success(
-				'INVOICES_PAGE.INVOICES_DUPLICATE_INVOICE'
-			);
-			this.router.navigate([
-				`/pages/accounting/invoices/edit/${createdInvoice.id}`
-			]);
+			this.toastrService.success('INVOICES_PAGE.INVOICES_DUPLICATE_INVOICE');
+			this.router.navigate([ `/pages/accounting/invoices/edit`, id ]);
 		}
 	}
 
@@ -520,22 +500,16 @@ export class InvoicesComponent
 				data: selectedItem
 			});
 		}
-		await this.invoicesService.update(this.selectedInvoice.id, {
+		const { id: invoiceId } = this.selectedInvoice;
+
+		await this.invoicesService.update(invoiceId, {
 			isEstimate: false,
 			status: InvoiceStatusTypesEnum.DRAFT
 		});
-		await this.invoiceEstimateHistoryService.add({
-			action: this.getTranslation(
-				'INVOICES_PAGE.ESTIMATES.CONVERTED_TO_INVOICE'
-			),
-			invoice: this.selectedInvoice,
-			invoiceId: this.selectedInvoice.id,
-			user: this.store.user,
-			userId: this.store.userId,
-			organization: this.organization,
-			organizationId: this.organization.id,
-			tenantId: this.organization.tenantId
-		});
+
+		const action = this.getTranslation('INVOICES_PAGE.ESTIMATES.CONVERTED_TO_INVOICE');
+		await this.createInvoiceHistory(action);
+
 		this.toastrService.success('INVOICES_PAGE.ESTIMATES.ESTIMATE_CONVERT');
 		this.subject$.next();
 	}
@@ -553,10 +527,10 @@ export class InvoicesComponent
 			.toPromise();
 
 		if (result) {
-			const itemsToDelete = this.selectedInvoice.invoiceItems;
+			const { invoiceItems } = this.selectedInvoice;
 			await this.invoicesService.delete(this.selectedInvoice.id);
 
-			for (const item of itemsToDelete) {
+			for (const item of invoiceItems) {
 				await this.invoiceItemService.delete(item.id);
 			}
 			for (const history of this.histories) {
@@ -572,14 +546,11 @@ export class InvoicesComponent
 	}
 
 	view() {
+		const { id } = this.selectedInvoice;
 		if (this.isEstimate) {
-			this.router.navigate([
-				`/pages/accounting/invoices/estimates/view/${this.selectedInvoice.id}`
-			]);
+			this.router.navigate([ `/pages/accounting/invoices/estimates/view`, id ]);
 		} else {
-			this.router.navigate([
-				`/pages/accounting/invoices/view/${this.selectedInvoice.id}`
-			]);
+			this.router.navigate([ `/pages/accounting/invoices/view`, id ]);
 		}
 	}
 
@@ -606,9 +577,8 @@ export class InvoicesComponent
 	}
 
 	payments() {
-		this.router.navigate([
-			`/pages/accounting/invoices/payments/${this.selectedInvoice.id}`
-		]);
+		const { id } = this.selectedInvoice;
+		this.router.navigate([ `/pages/accounting/invoices/payments`, id ]);
 	}
 
 	addInternalNote() {
@@ -634,39 +604,29 @@ export class InvoicesComponent
 			});
 		}
 
-		let fileName;
-
-		if (this.selectedInvoice.isEstimate) {
-			fileName = `${this.getTranslation('INVOICES_PAGE.ESTIMATE')}-${this.selectedInvoice.invoiceNumber
-				}`;
+		let fileName: string;
+		const { invoiceNumber, invoiceDate, dueDate, status, totalValue, tax, tax2, discountValue, toContact, isEstimate } = this.selectedInvoice;
+		if (isEstimate) {
+			fileName = `${this.getTranslation('INVOICES_PAGE.ESTIMATE')}-${invoiceNumber}`;
 		} else {
-			fileName = `${this.getTranslation('INVOICES_PAGE.INVOICE')}-${this.selectedInvoice.invoiceNumber
-				}`;
+			fileName = `${this.getTranslation('INVOICES_PAGE.INVOICE')}-${invoiceNumber}`;
 		}
 
-		const data = [
-			{
-				invoiceNumber: this.selectedInvoice.invoiceNumber,
-				invoiceDate: this.selectedInvoice.invoiceDate,
-				dueDate: this.selectedInvoice.dueDate,
-				status: `${this.getTranslation(
-					`INVOICES_PAGE.STATUSES.${this.selectedInvoice.status}`
-				)}`,
-				totalValue: this.selectedInvoice.totalValue,
-				tax: this.selectedInvoice.tax,
-				tax2: this.selectedInvoice.tax2,
-				discountValue: this.selectedInvoice.discountValue,
-				contact: this.selectedInvoice.toContact.name
-			}
-		];
+		const data = [{
+			invoiceNumber,
+			invoiceDate,
+			dueDate,
+			status: `${this.getTranslation(`INVOICES_PAGE.STATUSES.${status}`)}`,
+			totalValue,
+			tax,
+			tax2,
+			discountValue,
+			contact: toContact.name
+		}];
 
 		const headers = [
-			this.selectedInvoice.isEstimate
-				? this.getTranslation('INVOICES_PAGE.ESTIMATE_NUMBER')
-				: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
-			this.selectedInvoice.isEstimate
-				? this.getTranslation('INVOICES_PAGE.ESTIMATE_DATE')
-				: this.getTranslation('INVOICES_PAGE.INVOICE_DATE'),
+			isEstimate ? this.getTranslation('INVOICES_PAGE.ESTIMATE_NUMBER') : this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'), 
+			isEstimate ? this.getTranslation('INVOICES_PAGE.ESTIMATE_DATE') : this.getTranslation('INVOICES_PAGE.INVOICE_DATE'),
 			this.getTranslation('INVOICES_PAGE.DUE_DATE'),
 			this.getTranslation('INVOICES_PAGE.STATUS'),
 			this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
@@ -711,9 +671,13 @@ export class InvoicesComponent
 				isArchived: (this.includeArchived === true) ? 1 : 0,
 				...this.filters.where
 			},
-			resultMap: (i) => {
-				return Object.assign({}, i, {
-					organizationContactName: i.toContact?.name
+			resultMap: (invoice: IInvoice) => {
+				return Object.assign({}, invoice, {
+					organizationContactName: (invoice.toContact) ? invoice.toContact.name : null,
+					displayStatus: this.statusMapper(invoice.status),
+					tax: (DiscountTaxTypeEnum.PERCENT === invoice.taxType) ? `${invoice.tax}%` : `${invoice.tax}`,
+					tax2: (DiscountTaxTypeEnum.PERCENT === invoice.tax2Type) ? `${invoice.tax2}%` : `${invoice.tax2}`,
+					discountValue: (DiscountTaxTypeEnum.PERCENT === invoice.discountType) ? `${invoice.discountValue}%` : `${invoice.discountValue}`,
 				});
 			},
 			finalize: () => {
@@ -750,48 +714,52 @@ export class InvoicesComponent
 		}
 	}
 
-	async addComment() {
+	async addComment(historyFormDirective) {
 		const { comment } = this.historyForm.value;
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		const { id: invoiceId } = this.selectedInvoice;
 
 		if (comment) {
-			await this.invoiceEstimateHistoryService.add({
-				action: comment,
-				invoice: this.selectedInvoice,
-				invoiceId: this.selectedInvoice.id,
-				user: this.store.user,
-				userId: this.store.userId,
-				organization: this.organization,
-				organizationId,
-				tenantId
-			});
-			this.historyForm.reset();
+			const action = comment;
+			await this.createInvoiceHistory(action);
 
-			const selectedInvoiceId = this.selectedInvoice.id;
-			const invoice = await this.invoicesService.getById(
-				selectedInvoiceId,
-				[
-					'invoiceItems',
-					'invoiceItems.employee',
-					'invoiceItems.employee.user',
-					'invoiceItems.project',
-					'invoiceItems.product',
-					'invoiceItems.invoice',
-					'invoiceItems.expense',
-					'invoiceItems.task',
-					'tags',
-					'payments',
-					'fromOrganization',
-					'toContact',
-					'historyRecords',
-					'historyRecords.user'
-				]
-			);
+			historyFormDirective.resetForm();
+    		this.historyForm.reset();
 
-			await this.smartTableSource.update(this.selectedInvoice, {
-				...invoice
-			});
+			const invoice = await this.invoicesService.getById(invoiceId, [
+				'invoiceItems',
+				'invoiceItems.employee',
+				'invoiceItems.employee.user',
+				'invoiceItems.project',
+				'invoiceItems.product',
+				'invoiceItems.invoice',
+				'invoiceItems.expense',
+				'invoiceItems.task',
+				'tags',
+				'payments',
+				'fromOrganization',
+				'toContact',
+				'historyRecords',
+				'historyRecords.user'
+			]);
+
+			if(this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE) {
+				this.invoicesTable.grid.getRows().map((row) => {
+					if (row['data']['id'] === invoice.id) {
+						row['data'] = invoice;
+						row.isSelected = true;
+					} else {
+						row.isSelected = false;
+					}
+					return row;
+				});
+			} else {
+				this.invoices = this.invoices.map((row: IInvoice) => {
+					if (row.id === invoice.id) {
+						return invoice;
+					}
+					return row;
+				});
+			}
 
 			this.selectInvoice({
 				isSelected: true,
@@ -844,6 +812,29 @@ export class InvoicesComponent
 		}
 	}
 
+	private statusMapper = (value: string) => {
+		let badgeClass;
+		if (value) {
+			badgeClass = [
+				'sent',
+				'viewed',
+				'accepted',
+				'active',
+				'fully paid'
+			].includes(value.toLowerCase())
+				? 'success'
+				: ['void', 'draft', 'partially paid'].includes(
+					value.toLowerCase()
+				)
+					? 'warning'
+					: 'danger';
+		}
+		return {
+			text: this.getTranslation(`INVOICES_PAGE.STATUSES.${value.toUpperCase()}`),
+			class: badgeClass
+		};
+	}
+
 	private _loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			pager: {
@@ -858,9 +849,7 @@ export class InvoicesComponent
 			columns: {
 				invoiceNumber: {
 					title: this.isEstimate
-						? this.getTranslation(
-							'INVOICES_PAGE.ESTIMATES.ESTIMATE_NUMBER'
-						)
+						? this.getTranslation('INVOICES_PAGE.ESTIMATES.ESTIMATE_NUMBER')
 						: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'custom',
 					sortDirection: 'asc',
@@ -878,67 +867,37 @@ export class InvoicesComponent
 				title: this.isEstimate
 					? this.getTranslation('INVOICES_PAGE.ESTIMATE_DATE')
 					: this.getTranslation('INVOICES_PAGE.INVOICE_DATE'),
-				type: 'date',
+				type: 'custom',
 				width: '10%',
 				filter: false,
-				valuePrepareFunction: (cell, row) => {
-					return `${cell.slice(0, 10)}`;
-				}
+				renderComponent: DateViewComponent
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.DUE_DATE)) {
 			this.settingsSmartTable['columns']['dueDate'] = {
 				title: this.getTranslation('INVOICES_PAGE.DUE_DATE'),
-				type: 'date',
+				type: 'custom',
 				width: '10%',
 				filter: false,
-				valuePrepareFunction: (cell, row) => {
-					return `${cell.slice(0, 10)}`;
-				}
+				renderComponent: DateViewComponent
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.STATUS)) {
-			this.settingsSmartTable['columns']['status'] = {
+			this.settingsSmartTable['columns']['displayStatus'] = {
 				title: this.getTranslation('INVOICES_PAGE.STATUS'),
 				type: 'custom',
 				width: '5%',
 				renderComponent: StatusBadgeComponent,
-				filter: false,
-				valuePrepareFunction: (cell, row) => {
-					let badgeClass;
-					if (cell) {
-						badgeClass = [
-							'sent',
-							'viewed',
-							'accepted',
-							'active',
-							'fully paid'
-						].includes(cell.toLowerCase())
-							? 'success'
-							: ['void', 'draft', 'partially paid'].includes(
-								cell.toLowerCase()
-							)
-								? 'warning'
-								: 'danger';
-					}
-					return {
-						text: this.getTranslation(
-							`INVOICES_PAGE.STATUSES.${cell.toUpperCase()}`
-						),
-						class: badgeClass
-					};
-				}
+				filter: false
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.TOTAL_VALUE)) {
 			this.settingsSmartTable['columns']['totalValue'] = {
 				title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
-				type: 'text',
+				type: 'custom',
+				renderComponent: InvoiceEstimateTotalValueComponent,
 				filter: false,
-				width: '10%',
-				valuePrepareFunction: (cell, row) => {
-					return `${row.currency} ${parseFloat(cell).toFixed(2)}`;
-				}
+				width: '10%'
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.TAX)) {
@@ -946,14 +905,7 @@ export class InvoicesComponent
 				title: this.getTranslation('INVOICES_PAGE.TAX'),
 				type: 'text',
 				width: '5%',
-				filter: false,
-				valuePrepareFunction: (cell, row) => {
-					return `${cell} ${row.taxType ===
-						this.getTranslation('INVOICES_PAGE.PERCENT')
-						? '%'
-						: ''
-						}`;
-				}
+				filter: false
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.TAX_2)) {
@@ -961,14 +913,7 @@ export class InvoicesComponent
 				title: this.getTranslation('INVOICES_PAGE.TAX_2'),
 				type: 'text',
 				width: '5%',
-				filter: false,
-				valuePrepareFunction: (cell, row) => {
-					return `${cell} ${row.tax2Type ===
-						this.getTranslation('INVOICES_PAGE.PERCENT')
-						? '%'
-						: ''
-						}`;
-				}
+				filter: false
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.DISCOUNT)) {
@@ -978,14 +923,7 @@ export class InvoicesComponent
 				),
 				type: 'text',
 				width: '5%',
-				filter: false,
-				valuePrepareFunction: (cell, row) => {
-					return `${cell} ${row.discountType ===
-						this.getTranslation('INVOICES_PAGE.PERCENT')
-						? '%'
-						: ''
-						}`;
-				}
+				filter: false
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.CONTACT)) {
@@ -993,13 +931,7 @@ export class InvoicesComponent
 				title: this.getTranslation('INVOICES_PAGE.CONTACT'),
 				type: 'text',
 				width: '12%',
-				filter: false,
-				valuePrepareFunction: (cell, row) => {
-					if (isNotEmpty(row.toContact)) {
-						return row.toContact.name;
-					}
-					return '';
-				}
+				filter: false
 			};
 		}
 		if (!this.isEstimate) {
@@ -1055,37 +987,39 @@ export class InvoicesComponent
 			},
 		}
 		if (invoiceNumber) {
-			filters.where.invoiceNumber = invoiceNumber
+			filters.where.invoiceNumber = invoiceNumber;
 		}
 		if (invoiceDate) {
-			filters.where.invoiceDate = moment(invoiceDate).format('YYYY-MM-DD')
+			filters.where.invoiceDate = moment(invoiceDate).format('YYYY-MM-DD');
 		}
 		if (dueDate) {
-			filters.where.dueDate = moment(dueDate).format('YYYY-MM-DD')
+			filters.where.dueDate = moment(dueDate).format('YYYY-MM-DD');
 		}
 		if (totalValue) {
-			filters.where.totalValue = totalValue
+			filters.where.totalValue = totalValue;
 		}
 		if (currency) {
-			filters.where.currency = currency
+			filters.where.currency = currency;
 		}
 		if (status) {
-			filters.where.status = status
+			filters.where.status = status;
 		}
 		if (organizationContact) {
 			filters.join.leftJoin.toContact = 'invoice.toContact'
 			filters.where['toContact'] = [organizationContact.id]
 		}
 		if (isNotEmpty(tags)) {
-			filters.join.leftJoin.tags = 'invoice.tags'
-			const tagId = []
+			filters.join.leftJoin.tags = 'invoice.tags';
+			const tagId = [];
 			for (const tag of tags) {
-				tagId.push(tag.id)
+				tagId.push(tag.id);
 			}
-			filters.where.tags = tagId
+			filters.where.tags = tagId;
 		}
 		if (isNotEmpty(filters)) {
 			this._filters = filters;
+
+			this.refreshPagination();
 			this.subject$.next();
 		}
 	}
@@ -1104,12 +1038,6 @@ export class InvoicesComponent
 		this.searchForm.reset();
 		this._filters = {};
 		this.subject$.next();
-	}
-
-	searchContact(term: string, item: any) {
-		if (item.name) {
-			return item.name.toLowerCase().includes(term.toLowerCase());
-		}
 	}
 
 	selectedTagsEvent(currentTagSelection: ITag[]) {
@@ -1158,17 +1086,7 @@ export class InvoicesComponent
 			.subscribe();
 	}
 
-	async onChangeTab(event) {
-		if (event.tabId === InvoiceTabsEnum.SEARCH) {
-			const { tenantId } = this.store.user;
-			const { id: organizationId } = this.organization;
-			const { items = [] } = await this.organizationContactService.getAll([], {
-				organizationId,
-				tenantId
-			});
-			this.organizationContacts = items;
-		}
-	}
+ 	onChangeTab(event) {}
 
 	clearItem() {
 		this.selectInvoice({
@@ -1193,6 +1111,33 @@ export class InvoicesComponent
 			return Object.values(EstimateColumnsEnum);
 		}
 		return Object.values(InvoiceColumnsEnum);
+	}
+
+	/*
+	* Create Invoice History Event 
+	*/
+	async createInvoiceHistory(action: string) {
+		const { tenantId, id: userId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		const { id: invoiceId } = this.selectedInvoice;
+
+		await this.invoiceEstimateHistoryService.add({
+			action,
+			invoice: this.selectedInvoice,
+			invoiceId,
+			user: this.store.user,
+			userId,
+			organization: this.organization,
+			organizationId,
+			tenantId
+		});
+	}
+
+	/*
+	* refresh pagination
+	*/
+	refreshPagination() {
+		this.pagination['activePage'] = 1;
 	}
 
 	/*

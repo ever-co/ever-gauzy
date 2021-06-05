@@ -14,6 +14,7 @@ import {
 	getManager
 } from 'typeorm';
 import * as chalk from 'chalk';
+import * as moment from 'moment';
 import { IPluginConfig, SEEDER_DB_CONNECTION } from '@gauzy/common';
 import { environment as env, getConfig, ConfigService } from '@gauzy/config';
 import {
@@ -2221,7 +2222,7 @@ export class SeedDataService {
 		name: string,
 		p: Promise<T>
 	): Promise<T> | Promise<void> {
-		this.log(chalk.green(`SEEDING ${name}`));
+		this.log(chalk.green(`${moment().format('DD.MM.YYYY HH:mm:ss')} SEEDING ${name}`));
 
 		return (p as any).then(
 			(x: T) => x,

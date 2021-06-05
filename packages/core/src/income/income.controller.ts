@@ -53,9 +53,9 @@ export class IncomeController extends CrudController<Income> {
 	})
 	@Get('me')
 	async findMyIncome(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Income>> {
-		const { relations, findInput, filterDate } = JSON.parse(data);
+		const { relations, findInput, filterDate } = data;
 
 		//If user is not an employee, then this will return 404
 		const employee = await this.employeeService.findOne({
@@ -82,9 +82,9 @@ export class IncomeController extends CrudController<Income> {
 	@Permissions(PermissionsEnum.ORG_INCOMES_VIEW)
 	@Get()
 	async findAllIncome(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Income>> {
-		const { relations, findInput, filterDate } = JSON.parse(data);
+		const { relations, findInput, filterDate } = data;
 		return this.incomeService.findAllIncomes(
 			{ where: findInput, relations },
 			filterDate

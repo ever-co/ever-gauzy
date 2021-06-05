@@ -24,6 +24,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
 
 @NgModule({
 	imports: [
@@ -48,7 +49,8 @@ import { PaginationModule } from '../../@shared/pagination/pagination.module';
 		NbSpinnerModule,
 		NgxPermissionsModule.forChild(),
 		HeaderTitleModule,
-		PaginationModule
+		PaginationModule,
+		TableFiltersModule
 	],
 	declarations: [IncomeComponent],
 	providers: [IncomeService]

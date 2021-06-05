@@ -29,15 +29,15 @@ export class ServerDataSource extends LocalDataSource {
     getElements(): Promise<any> {
         return this.requestElements()
             .pipe(
-                map((res) => {
-                    this.lastRequestCount = this.extractTotalFromResponse(res);
-                    this.data = this.extractDataFromResponse(res);
-                    return this.data;
-                }),
                 tap(() => {
                     if (this.conf.finalize) {
                         this.conf.finalize();
                     }
+                }),
+                map((res) => {
+                    this.lastRequestCount = this.extractTotalFromResponse(res);
+                    this.data = this.extractDataFromResponse(res);
+                    return this.data;
                 })
             ).toPromise();
     }
@@ -108,9 +108,9 @@ export class ServerDataSource extends LocalDataSource {
             try {
                 this.filterConf.filters.forEach((fieldConf: any) => {
                     let condition = 'default';
-                    const dataType = fieldConf.filter.dataType || 'string';
+                    let dataType = 'string';
 
-                    if (fieldConf.filter.condition) {
+                    if (fieldConf.filter && fieldConf.filter.condition) {
                         condition = fieldConf.filter.condition;
                     } else if (dataType == 'string') {
                         condition = 'ILike';
@@ -119,7 +119,7 @@ export class ServerDataSource extends LocalDataSource {
                         const { field, search } = fieldConf;
                         filters[field] = {
                             dataType,
-                            condition: condition,
+                            condition,
                             search,
                         };
                     }

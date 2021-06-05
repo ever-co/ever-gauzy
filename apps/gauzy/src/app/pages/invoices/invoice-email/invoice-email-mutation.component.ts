@@ -50,7 +50,8 @@ export class InvoiceEmailMutationComponent
 	}
 
 	async sendEmail() {
-		const { id: organizationId, tenantId } = this.invoice.fromOrganization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.invoice.fromOrganization;
 		const { email } = this.form.value;
 
 		await this.invoiceService.sendEmail(
