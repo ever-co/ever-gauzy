@@ -185,7 +185,8 @@
 		"TARGET_VALUE": "crwdns8770:0crwdne8770:0",
 		"LAST_UPDATED": "crwdns8772:0crwdne8772:0",
 		"CREATED_BY": "crwdns9192:0crwdne9192:0",
-		"NO_DATA_MESSAGE": "crwdns9194:0crwdne9194:0"
+		"NO_DATA_MESSAGE": "crwdns9194:0crwdne9194:0",
+		"TAGS": "crwdns10402:0crwdne10402:0"
 	},
 	"FORM": {
 		"USERNAME": "crwdns68:0crwdne68:0",
