@@ -30,10 +30,8 @@ import {
 	TenantInterceptor,
 	TokenInterceptor
 } from './@core/interceptors';
-
 import { HttpClient } from '@angular/common/http';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-
 import { Cloudinary as CloudinaryCore } from 'cloudinary-core';
 import { CloudinaryModule } from '@cloudinary/angular-5.x';
 import {
@@ -115,7 +113,7 @@ if (environment.SENTRY_DSN) {
 		NbWindowModule.forRoot(),
 		NbToastrModule.forRoot(),
 		NbChatModule.forRoot({
-			messageGoogleMapKey: 'AIzaSyA_wNuCzia92MAmdLRzmqitRGvCF7wCZPY'
+			messageGoogleMapKey: environment.CHAT_MESSAGE_GOOGLE_MAP
 		}),
 		CoreModule.forRoot(),
 		TranslateModule.forRoot({
