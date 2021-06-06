@@ -86,9 +86,9 @@ const generateInvoice = async (
 		.take(faker.datatype.number({ min: 1, max: 3 }))
 		.values()
 		.value();
-	invoice.invoiceDate = faker.date.past(0.2);
 	invoice.invoiceNumber = faker.datatype.number({ min: 1111111, max: 9999999 });
-	invoice.dueDate = faker.date.recent(50);
+	invoice.invoiceDate = faker.date.past(0.3);
+	invoice.dueDate = faker.date.future(0.3);
 	
 	if (organizationContacts.length) {
 		invoice.organizationContactId = faker.random.arrayElement(organizationContacts ).id; 

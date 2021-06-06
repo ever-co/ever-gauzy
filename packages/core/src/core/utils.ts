@@ -94,7 +94,8 @@ export async function tempFile(prefix) {
 export function getDateRange(
 	startDate?: string | Date,
 	endDate?: string | Date,
-	type: 'day' | 'week' = 'day'
+	type: 'day' | 'week' = 'day',
+	isFormat: boolean = false
 ) {
 	if (endDate === 'day' || endDate === 'week') {
 		type = endDate;
@@ -130,8 +131,13 @@ export function getDateRange(
 		start = start.format('YYYY-MM-DD HH:mm:ss');
 		end = end.format('YYYY-MM-DD HH:mm:ss');
 	} else {
-		start = start.toDate();
-		end = end.toDate();
+		if (!isFormat) {
+			start = start.toDate();
+			end = end.toDate();
+		} else {
+			start = start.format();
+			end = end.format();
+		}
 	}
 
 	return {

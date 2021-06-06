@@ -8,6 +8,7 @@ import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.
 import { TranslateModule } from '../translate/translate.module';
 import { VendorSelectModule } from '../vendor-select/vendor-select.module';
 import { ExpenseCategoryFilterComponent } from './expense-category-filter.component';
+import { InputFilterComponent } from './input-filter.component';
 import { OrganizationContactFilterComponent } from './organization-contact-filter.component';
 import { PaymentMethodFilterComponent } from './payment-method-filter.component';
 import { TagsColorFilterComponent } from './tags-color-filter.component';
@@ -30,7 +31,8 @@ import { VendorFilterComponent } from './vendor-filter.component';
 		PaymentMethodFilterComponent,
 		TagsColorFilterComponent,
 		VendorFilterComponent,
-		ExpenseCategoryFilterComponent
+		ExpenseCategoryFilterComponent,
+		InputFilterComponent
 	],
 	exports: [],
 	providers: []
