@@ -1,4 +1,4 @@
-import { CrudService } from '../core';
+import { CrudService, getDateRange } from '../core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, ILike, In, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
@@ -195,10 +195,13 @@ export class PaymentService extends CrudService<Payment> {
 			const { where } = filter;
 			if ('paymentDate' in where) {
 				const { paymentDate } = where;
-				filter.where.paymentDate = Between(
-					moment(paymentDate).startOf('month'), 
-					moment(paymentDate).endOf('month')
+				const { start, end } = getDateRange(
+					new Date(moment(paymentDate).startOf('month').toDate()),
+					new Date(moment(paymentDate).endOf('month').toDate()),
+					'day',
+					true
 				);
+				filter.where.paymentDate = Between(start, end); 
 			}
 			if ('tags' in where) {
 				const { tags } = where; 
