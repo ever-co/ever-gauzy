@@ -39,11 +39,16 @@
 
 		<ng-template ngxPermissionsOnly="ORG_PROPOSALS_EDIT">
 			<div class="mb-3">
-				<button nbButton status="success" (click)="add()" class="mr-2">
+				<button 
+					nbButton 
+					status="success" 
+					class="mr-2"
+					[routerLink]="['/pages/sales/proposals/register']"
+				>
 					<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
 					{{ 'BUTTONS.ADD' | translate }}
 				</button>
-				<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+				<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
 					<ng-container
 						*ngTemplateOutlet="actionButtons"
 					></ng-container>
@@ -52,7 +57,7 @@
 					<button
 						nbButton
 						status="info"
-						routerLink="/pages/jobs/proposal-template"
+						[routerLink]="['/pages/jobs/proposal-template']"
 						class="mr-2"
 					>
 						<nb-icon
@@ -65,23 +70,42 @@
 			</div>
 		</ng-template>
 
-		<ng2-smart-table
-			*ngIf="dataLayoutStyle === 'TABLE'"
-			class="income-table"
-			[settings]="smartTableSettings"
-			[source]="smartTableSource"
-			(userRowSelect)="selectProposal($event)"
-			style="cursor: pointer"
-			#proposalsTable
+		<ng-template 
+			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" 
+			[ngIfElse]="gridLayout"
 		>
-		</ng2-smart-table>
-
-		<ga-card-grid
-			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
-			[settings]="smartTableSettings"
-			[source]="proposals"
-			[buttonTemplate]="actionButtons"
-		></ga-card-grid>
+			<ng2-smart-table
+				class="tags-table"
+				[settings]="smartTableSettings"
+				[source]="smartTableSource"
+				(userRowSelect)="selectProposal($event)"
+				style="cursor: pointer"
+				#proposalsTable
+			>
+			</ng2-smart-table>
+		</ng-template>
+		<ng-template #gridLayout>
+			<ga-card-grid
+				[settings]="smartTableSettings"
+				[source]="proposals"
+				[buttonTemplate]="actionButtons"
+				[cardSize]="'big'"
+			></ga-card-grid>
+			<div 
+				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
+				class="pagination-container"
+			>
+				<ng-container *ngIf="pagination.totalItems > pagination.itemsPerPage">
+					<ga-pagination 
+						(selectedPage)="onPageChange($event)"
+						[doEmit]="false"
+						[totalItems]="pagination?.totalItems" 
+						[itemsPerPage]="pagination?.itemsPerPage" 
+						[activePage]="pagination?.activePage">
+					</ga-pagination>
+				</ng-container>
+			</div>
+		</ng-template>
 	</nb-card-body>
 </nb-card>
 <ng-template
@@ -113,10 +137,10 @@
 			>{{ 'BUTTONS.DELETE' | translate }}
 		</button>
 		<button
-			*ngIf="proposalStatus && dataLayoutStyle === 'TABLE'"
+			*ngIf="proposalStatus && dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			nbButton
 			(click)="
-				proposalStatus == 'SENT'
+				proposalStatus == proposalStatusEnum.SENT
 					? switchToAccepted(selectedItem)
 					: switchToSent(selectedItem)
 			"
@@ -126,18 +150,18 @@
 			[disabled]="!selectedItem && disableButton"
 		>
 			<nb-icon class="mr-1" icon="person-delete-outline"> </nb-icon>
-			<span *ngIf="proposalStatus == 'ACCEPTED'">{{
+			<span *ngIf="proposalStatus == proposalStatusEnum.ACCEPTED">{{
 				'BUTTONS.MARK_AS_SENT' | translate
 			}}</span>
-			<span *ngIf="proposalStatus == 'SENT'">{{
+			<span *ngIf="proposalStatus == proposalStatusEnum.SENT">{{
 				'BUTTONS.MARK_AS_ACCEPTED' | translate
 			}}</span>
 		</button>
 		<button
-			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
 			nbButton
 			(click)="
-				selectedItem.status == 'SENT'
+				selectedItem.status == proposalStatusEnum.SENT
 					? switchToAccepted(selectedItem)
 					: switchToSent(selectedItem)
 			"
@@ -147,10 +171,10 @@
 			[disabled]="!selectedItem && disableButton"
 		>
 			<nb-icon class="mr-1" icon="person-delete-outline"> </nb-icon>
-			<span *ngIf="selectedItem.status == 'ACCEPTED'">{{
+			<span *ngIf="selectedItem.status == proposalStatusEnum.ACCEPTED">{{
 				'BUTTONS.MARK_AS_SENT' | translate
 			}}</span>
-			<span *ngIf="selectedItem.status == 'SENT'">{{
+			<span *ngIf="selectedItem.status == proposalStatusEnum.SENT">{{
 				'BUTTONS.MARK_AS_ACCEPTED' | translate
 			}}</span>
 		</button>

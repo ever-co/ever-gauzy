@@ -1,27 +1,30 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { debounceTime, filter, tap, withLatestFrom } from 'rxjs/operators';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import {
 	IProposal,
 	ComponentLayoutStyleEnum,
 	IOrganization,
-	IProposalViewModel
+	IProposalViewModel,
+	ProposalStatusEnum
 } from '@gauzy/contracts';
-import { Store } from '../../@core/services/store.service';
-import { Router, RouterEvent, NavigationEnd } from '@angular/router';
-import { ProposalsService } from '../../@core/services/proposals.service';
+import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { ActionConfirmationComponent } from '../../@shared/user/forms/action-confirmation/action-confirmation.component';
-import { ErrorHandlingService } from '../../@core/services/error-handling.service';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../@core/services/toastr.service';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { combineLatest, Subject } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import * as moment from 'moment';
+import { DateViewComponent, NotesWithTagsComponent } from '../../@shared/table-components';
+import { ActionConfirmationComponent, DeleteConfirmationComponent } from '../../@shared/user/forms';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { API_PREFIX, ComponentEnum } from '../../@core/constants';
+import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
+import { ErrorHandlingService, ProposalsService, Store, ToastrService } from '../../@core/services';
+import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
+import { InputFilterComponent } from '../../@shared/table-filters/input-filter.component';
+import { OrganizationContactFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -32,6 +35,7 @@ import { ToastrService } from '../../@core/services/toastr.service';
 export class ProposalsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+
 	proposalsTable: Ng2SmartTableComponent;
 	@ViewChild('proposalsTable') set content(content: Ng2SmartTableComponent) {
 		if (content) {
@@ -41,94 +45,108 @@ export class ProposalsComponent
 	}
 
 	smartTableSettings: object;
-	selectedEmployeeId = '';
+	employeeId: string | null;
 	selectedDate: Date;
 	proposals: IProposalViewModel[];
-	smartTableSource = new LocalDataSource();
+	smartTableSource: ServerDataSource;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	viewComponentName: ComponentEnum;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+	viewComponentName: ComponentEnum = ComponentEnum.PROPOSALS;
 	selectedProposal: IProposalViewModel;
-	chartData: { value: number; name: string }[] = [];
+	proposalStatusEnum = ProposalStatusEnum;
 	proposalStatus: string;
-	employeeName: string;
 	successRate: string;
 	totalProposals: number;
-	countAccepted = 0;
-	showTable: boolean;
-	loading = false;
+	countAccepted: number = 0;
+	loading: boolean;
 	disableButton = true;
-	selectedOrganization: IOrganization;
+	organization: IOrganization;
+	subject$: Subject<any> = new Subject();
+	pagination: any = {
+		totalItems: 0,
+		activePage: 1,
+		itemsPerPage: 10
+	};
+
+	/*
+	* getter setter for filters 
+	*/
+	private _filters: any = {};
+	set filters(val: any) {
+		this._filters = val;
+	}
+	get filters() {
+		return this._filters;
+	}
 
 	constructor(
-		private store: Store,
-		private router: Router,
-		private proposalsService: ProposalsService,
-		private toastrService: ToastrService,
-		private dialogService: NbDialogService,
-		private errorHandler: ErrorHandlingService,
-		readonly translateService: TranslateService
+		private readonly store: Store,
+		private readonly router: Router,
+		private readonly proposalsService: ProposalsService,
+		private readonly toastrService: ToastrService,
+		private readonly dialogService: NbDialogService,
+		private readonly errorHandler: ErrorHandlingService,
+		readonly translateService: TranslateService,
+		private readonly httpClient: HttpClient,
 	) {
 		super(translateService);
 		this.setView();
 	}
 
 	ngOnInit() {
-		this.loadSettingsSmartTable();
+		this._loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
-		this.store.selectedDate$
-			.pipe(untilDestroyed(this))
-			.subscribe((date) => {
-				this.selectedDate = date;
-				if (this.selectedOrganization) {
-					this._loadTableData();
-				}
-			});
-		const storeEmployee$ = this.store.selectedEmployee$;
+		this.subject$
+			.pipe(
+				debounceTime(300),
+				tap(() => this.loading = true),
+				tap(() => this.clearItem()),
+				tap(() => this.getProposals()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		storeEmployee$
+		const storeEmployee$ = this.store.selectedEmployee$;
+		const selectedDate$ = this.store.selectedDate$;
+		combineLatest([storeOrganization$, storeEmployee$, selectedDate$])
 			.pipe(
-				filter((value) => !!value),
-				debounceTime(200),
-				withLatestFrom(storeOrganization$),
+				debounceTime(300),
+				filter(([organization]) => !!organization),
+				tap(([organization]) => (this.organization = organization)),
+				distinctUntilChange(),
+				tap(([organization, employee, date]) => {
+					if (organization) {
+						this.selectedDate = date;
+						this.employeeId = employee ? employee.id : null;
+						this.refreshPagination();
+						this.subject$.next();
+					}
+				}),
 				untilDestroyed(this)
 			)
-			.subscribe(([employee]) => {
-				if (employee && this.selectedOrganization) {
-					this.selectedEmployeeId = employee.id;
-					this._loadTableData();
-				}
-			});
-		storeOrganization$
-			.pipe(
-				filter((value) => !!value),
-				debounceTime(200),
-				withLatestFrom(storeEmployee$),
-				untilDestroyed(this)
-			)
-			.subscribe(([organization, employee]) => {
-				this.selectedEmployeeId = employee ? employee.id : null;
-				if (organization) {
-					this.selectedOrganization = organization;
-					this._loadTableData();
-				}
-			});
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
+			.subscribe();
+	}
+
+	ngAfterViewInit() {
+		const { employeeId } = this.store.user;
+		if (employeeId) {
+			delete this.smartTableSettings['columns']['author'];
+			this.smartTableSettings = Object.assign({}, this.smartTableSettings);
+		}
 	}
 
 	setView() {
-		this.viewComponentName = ComponentEnum.PROPOSALS;
 		this.store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe((componentLayout) => {
-				this.dataLayoutStyle = componentLayout;
-			});
+			.pipe(
+				distinctUntilChange(),
+				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.refreshPagination()),
+				tap(() => this.subject$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
@@ -143,10 +161,6 @@ export class ProposalsComponent
 			.subscribe();
 	}
 
-	add() {
-		this.router.navigate(['/pages/sales/proposals/register']);
-	}
-
 	details(selectedItem?: IProposal) {
 		if (selectedItem) {
 			this.selectProposal({
@@ -154,9 +168,7 @@ export class ProposalsComponent
 				data: selectedItem
 			});
 		}
-		this.router.navigate([
-			`/pages/sales/proposals/details/${this.selectedProposal.id}`
-		]);
+		this.router.navigate([ `/pages/sales/proposals/details`, this.selectedProposal.id]);
 	}
 
 	delete(selectedItem?: IProposal) {
@@ -179,12 +191,8 @@ export class ProposalsComponent
 						await this.proposalsService.delete(
 							this.selectedProposal.id
 						);
-
-						this.toastrService.success(
-							'NOTES.PROPOSALS.DELETE_PROPOSAL'
-						);
-						this._loadTableData();
-						this.clearItem();
+						this.subject$.next();
+						this.toastrService.success('NOTES.PROPOSALS.DELETE_PROPOSAL');
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
@@ -212,14 +220,13 @@ export class ProposalsComponent
 						const { tenantId } = this.store.user;
 						await this.proposalsService.update(
 							this.selectedProposal.id,
-							{ status: 'ACCEPTED', tenantId }
+							{ status: ProposalStatusEnum.ACCEPTED, tenantId }
 						);
+						this.subject$.next();
 						// TODO translate
 						this.toastrService.success(
 							'NOTES.PROPOSALS.PROPOSAL_ACCEPTED'
 						);
-						this.clearItem();
-						this._loadTableData();
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
@@ -247,14 +254,10 @@ export class ProposalsComponent
 						const { tenantId } = this.store.user;
 						await this.proposalsService.update(
 							this.selectedProposal.id,
-							{ status: 'SENT', tenantId }
+							{ status: ProposalStatusEnum.SENT, tenantId }
 						);
-
-						this.toastrService.success(
-							'NOTES.PROPOSALS.PROPOSAL_SENT'
-						);
-						this.clearItem();
-						this._loadTableData();
+						this.subject$.next();
+						this.toastrService.success('NOTES.PROPOSALS.PROPOSAL_SENT');
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
@@ -262,7 +265,22 @@ export class ProposalsComponent
 			});
 	}
 
-	loadSettingsSmartTable() {
+	private statusMapper = (cell: string) => {
+		let badgeClass: string;
+		if (cell === ProposalStatusEnum.SENT) {
+			badgeClass = 'warning';
+			cell = this.getTranslation('BUTTONS.SENT');
+		} else {
+			badgeClass = 'success';
+			cell = this.getTranslation('BUTTONS.ACCEPTED');
+		}
+		return {
+			text: cell,
+			class: badgeClass
+		};
+	}
+
+	private _loadSettingsSmartTable() {
 		this.smartTableSettings = {
 			actions: false,
 			editable: true,
@@ -273,196 +291,202 @@ export class ProposalsComponent
 					type: 'custom',
 					width: '10%',
 					renderComponent: DateViewComponent,
-					filter: false
+					filter: false,
+					sortDirection: 'desc'
 				},
 				jobTitle: {
 					title: this.getTranslation('SM_TABLE.JOB_TITLE'),
 					type: 'custom',
 					width: '25%',
-					renderComponent: NotesWithTagsComponent
+					renderComponent: NotesWithTagsComponent,
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent,
+					},
+					filterFunction: (value: string) => {
+						if (isNotEmpty(value)) {
+							this.filters = {
+								where: { 
+									...this.filters.where,
+									jobPostContent: value
+								}
+							}
+						} else {
+							delete this.filters.where.jobPostContent;
+						}
+						this.subject$.next();
+					}
 				},
 				jobPostUrl: {
 					title: this.getTranslation('SM_TABLE.JOB_POST_URL'),
 					type: 'html',
+					width: '25%',
 					filter: false
 				},
-				status: {
+				displayStatus: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
-					width: '10rem',
+					width: '10%',
 					class: 'text-center',
 					filter: false,
-					renderComponent: StatusBadgeComponent,
-					valuePrepareFunction: (cell, row) => {
-						let badgeClass;
-						if (cell === 'SENT') {
-							badgeClass = 'warning';
-							cell = this.getTranslation('BUTTONS.SENT');
-						} else {
-							badgeClass = 'success';
-							cell = this.getTranslation('BUTTONS.ACCEPTED');
-						}
-						return {
-							text: cell,
-							class: badgeClass
-						};
-					}
+					renderComponent: StatusBadgeComponent
 				},
 				organizationContactName: {
 					title: this.getTranslation('SM_TABLE.CONTACT_NAME'),
 					type: 'text',
-					valuePrepareFunction: (cell, row) => {
-						return row.organizationContact
-							? row.organizationContact.name
-							: '';
+					width: '20%',
+					filter: {
+						type: 'custom',
+						component: OrganizationContactFilterComponent
+					},
+					filterFunction: (value) => {
+						if (value) {
+							this.filters = {
+								where: { 
+									...this.filters.where, 
+									organizationContactId: value.id 
+								}
+							}
+						} else {
+							if ('organizationContactId' in this.filters.where) {
+								delete this.filters.where.organizationContactId;
+							}
+						}
+						this.subject$.next();
 					}
-				}
-			}
-		};
-
-		if (!this.selectedEmployeeId) {
-			this.smartTableSettings['columns'] = {
-				...this.smartTableSettings['columns'],
+				},
 				author: {
 					title: this.getTranslation('SM_TABLE.AUTHOR'),
 					type: 'string',
-					width: '25%'
+					width: '20%',
+					filter: false
 				}
-			};
-		}
+			}
+		};
 	}
 
 	selectProposal({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedProposal = isSelected ? data : null;
+
 		if (this.selectedProposal) {
 			this.proposalStatus = this.selectedProposal.status;
 		}
 	}
 
-	private async _loadTableData() {
-		if (!this.selectedOrganization) {
-			return;
-		}
-		this.loading = true;
-		this.showTable = false;
-		this.selectedProposal = null;
-		this.disableButton = true;
-
-		let items: IProposal[];
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.selectedOrganization;
-		if (this.selectedEmployeeId) {
-			const response = await this.proposalsService.getAll(
-				['employee', 'organization', 'tags', 'organizationContact'],
-				{
-					employeeId: this.selectedEmployeeId,
-					organizationId,
-					tenantId
-				},
-				this.selectedDate
-			);
-			delete this.smartTableSettings['columns']['author'];
-			items = response.items;
-			this.totalProposals = response.total;
-		} else {
-			const response = await this.proposalsService.getAll(
-				[
-					'organization',
-					'employee',
-					'employee.user',
-					'tags',
-					'organizationContact'
-				],
-				{ organizationId, tenantId },
-				this.selectedDate
-			);
-			items = response.items;
-			this.totalProposals = response.total;
-		}
-
+	/*
+	* Register Smart Table Source Config 
+	*/
+	setSmartTableSource() {
 		this.countAccepted = 0;
 
-		try {
-			const proposalVM: IProposalViewModel[] = [...items]
-				.sort(
-					(a, b) =>
-						new Date(b.valueDate).getTime() -
-						new Date(a.valueDate).getTime()
-				)
-				.map((i) => {
-					if (i.status === 'ACCEPTED') {
-						this.countAccepted++;
-					}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 
-					return {
-						id: i.id,
-						valueDate: i.valueDate,
-						jobPostLink:
-							'<a href="' +
-							i.jobPostUrl +
-							`" target="_blank">${i.jobPostUrl.substr(
-								8,
-								14
-							)}</nb-icon></a>`,
-						jobPostUrl: i.jobPostUrl,
-						jobTitle: i.jobPostContent
-							.toString()
-							.replace(/<[^>]*(>|$)|&nbsp;/g, '')
-							.split(/[\s,\n]+/)
-							.slice(0, 3)
-							.join(' '),
-						jobPostContent: i.jobPostContent,
-						proposalContent: i.proposalContent,
-						tags: i.tags,
-						status: i.status,
-						author: i.employee
-							? i.employee.user
-								? i.employee.user.firstName +
-								  ' ' +
-								  i.employee.user.lastName
-								: ''
-							: '',
-						organizationContact: i.organizationContact
-							? i.organizationContact
-							: null
-					};
-				});
-
-			if (this.totalProposals) {
-				this.successRate =
-					((this.countAccepted / this.totalProposals) * 100).toFixed(
-						0
-					) + ' %';
-			} else {
-				this.successRate = '0 %';
+		const request = {};
+		if (this.employeeId) {
+			request['employeeId'] = this.employeeId;
+			delete this.smartTableSettings['columns']['author'];
+		}
+		if (moment(this.selectedDate).isValid()) {
+			request['valueDate'] = moment(this.selectedDate).format('YYYY-MM-DD HH:mm:ss');
+		}
+		this.smartTableSource = new ServerDataSource(this.httpClient, {
+			endPoint: `${API_PREFIX}/proposal/search/filter`,
+			relations: [
+				'organization',
+				'employee',
+				'employee.user',
+				'tags',
+				'organizationContact'
+			],
+			join: {
+				...(this.filters.join) ? this.filters.join : {}
+			},
+			where: {
+				...{ organizationId, tenantId },
+				...request,
+				...this.filters.where
+			},
+			resultMap: (proposal: IProposal) => {
+				if (proposal.status === ProposalStatusEnum.ACCEPTED) {
+					this.countAccepted++;
+				}
+				return this.proposalMapper(proposal);
+			},
+			finalize: () => {
+				this.loading = false;
+				this.calculateStatistics();
 			}
+		});
+	}
 
-			this.proposals = proposalVM;
-			this.smartTableSource.load(proposalVM);
-			this.showTable = true;
+	private calculateStatistics() {
+		this.totalProposals = this.smartTableSource.count();
+		if (this.totalProposals) {
+			this.successRate = ((this.countAccepted / this.totalProposals) * 100).toFixed(0) + ' %';
+		} else {
+			this.successRate = '0 %';
+		}
+	}
 
-			this.chartData[0] = {
-				name: this.getTranslation('PROPOSALS_PAGE.ACCEPTED_PROPOSALS'),
-				value: this.countAccepted
-			};
+	private proposalMapper = (i: IProposal) => {
+		return {
+			id: i.id,
+			valueDate: i.valueDate,
+			jobPostLink:
+				'<a href="' +
+				i.jobPostUrl +
+				`" target="_blank">${i.jobPostUrl.substr(
+					8,
+					14
+				)}</nb-icon></a>`,
+			jobPostUrl: i.jobPostUrl,
+			jobTitle: i.jobPostContent
+				.toString()
+				.replace(/<[^>]*(>|$)|&nbsp;/g, '')
+				.split(/[\s,\n]+/)
+				.slice(0, 3)
+				.join(' '),
+			jobPostContent: i.jobPostContent,
+			proposalContent: i.proposalContent,
+			tags: i.tags,
+			status: i.status,
+			displayStatus: this.statusMapper(i.status),
+			author: i.employee ? i.employee.user ? i.employee.user.name : '' : '',
+			organizationContact: i.organizationContact ? i.organizationContact : null,
+			organizationContactName: i.organizationContact ? i.organizationContact.name : null
+		};
+	}
 
-			this.chartData[1] = {
-				name: this.getTranslation('PROPOSALS_PAGE.TOTAL_PROPOSALS'),
-				value: this.totalProposals
-			};
+	private async getProposals() {
+		try { 
+			this.setSmartTableSource();
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+
+				// Initiate GRID view pagination
+				const { activePage, itemsPerPage } = this.pagination;
+				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+
+				await this.smartTableSource.getElements();
+
+				this.proposals = this.smartTableSource.getData();
+
+				const count = this.smartTableSource.count();
+				this.pagination['totalItems'] =  count;
+			}
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
-		this.loading = false;
 	}
 
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadSettingsSmartTable();
-			});
+			.pipe(
+				tap(() => this._loadSettingsSmartTable()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
@@ -484,6 +508,13 @@ export class ProposalsComponent
 			this.proposalsTable.grid.dataSet['willSelect'] = 'false';
 			this.proposalsTable.grid.dataSet.deselectAll();
 		}
+	}
+
+	/*
+	* refresh pagination
+	*/
+	refreshPagination() {
+		this.pagination['activePage'] = 1;
 	}
 
 	ngOnDestroy() {

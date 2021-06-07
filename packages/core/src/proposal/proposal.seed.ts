@@ -2,7 +2,7 @@ import { Connection } from 'typeorm';
 import { Proposal } from './proposal.entity';
 import * as faker from 'faker';
 import { Tag } from '../tags/tag.entity';
-import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
+import { IEmployee, IOrganization, ITenant, ProposalStatusEnum } from '@gauzy/contracts';
 
 export const createDefaultProposals = async (
 	connection: Connection,
@@ -22,9 +22,9 @@ export const createDefaultProposals = async (
 			proposal.jobPostUrl = faker.internet.url();
 			proposal.jobPostContent = faker.name.jobTitle();
 			proposal.organization = organization;
-			proposal.status = faker.random.arrayElement(['ACCEPTED', 'SENT']);
+			proposal.status = faker.random.arrayElement(Object.values(ProposalStatusEnum));
 			proposal.tags = [faker.random.arrayElement(tags)];
-			proposal.valueDate = faker.date.recent();
+			proposal.valueDate = faker.date.recent(0.5);
 			proposal.proposalContent = faker.name.jobDescriptor();
 			proposal.tenant = tenant;
 			proposals.push(proposal);
@@ -55,12 +55,9 @@ export const createRandomProposals = async (
 				proposal.jobPostUrl = faker.internet.url();
 				proposal.jobPostContent = faker.name.jobTitle();
 				proposal.organization = organization;
-				proposal.status = faker.random.arrayElement([
-					'ACCEPTED',
-					'SENT'
-				]);
+				proposal.status = faker.random.arrayElement(Object.values(ProposalStatusEnum));
 				proposal.tags = [faker.random.arrayElement(tags)];
-				proposal.valueDate = faker.date.recent();
+				proposal.valueDate = faker.date.recent(0.5);
 				proposal.proposalContent = faker.name.jobDescriptor();
 				proposal.tenant = tenant;
 				proposals.push(proposal);
