@@ -34,6 +34,9 @@ import { ProposalTemplateSelectModule } from '../../@shared/proposal-template-se
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { ContactSelectModule } from '../../@shared/contact-select/contact-select.module';
+import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
 
 @NgModule({
 	imports: [
@@ -63,12 +66,10 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		TranslateModule,
 		NgxPermissionsModule.forChild(),
 		ProposalTemplateSelectModule,
-		HeaderTitleModule
-	],
-	entryComponents: [
-		ProposalRegisterComponent,
-		ProposalStatusComponent,
-		JobTitleComponent
+		HeaderTitleModule,
+		PaginationModule,
+		ContactSelectModule,
+		TableFiltersModule
 	],
 	declarations: [
 		ProposalsComponent,

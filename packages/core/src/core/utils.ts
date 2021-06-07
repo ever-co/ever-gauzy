@@ -145,3 +145,42 @@ export function getDateRange(
 		end
 	};
 }
+
+/*
+* Convert date range to dbType formate for SQLite, PostgresSQL
+*/
+export function getDateRangeFormat(
+	startDate: string | Date,
+	endDate: string | Date,
+	isFormat: boolean = false
+) {
+	let start: any = moment(startDate).startOf('day');
+	let end: any = moment(endDate).endOf('day');
+
+	if (!start.isValid() || !end.isValid()) {
+		return;
+	}
+
+	if (end.isBefore(start)) {
+		throw 'End date must be greated than start date.';
+	}
+
+	const dbType = getConfig().dbConnectionOptions.type || 'sqlite';
+	if (dbType === 'sqlite') {
+		start = start.format('YYYY-MM-DD HH:mm:ss');
+		end = end.format('YYYY-MM-DD HH:mm:ss');
+	} else {
+		if (!isFormat) {
+			start = start.toDate();
+			end = end.toDate();
+		} else {
+			start = start.format();
+			end = end.format();
+		}
+	}
+
+	return {
+		start,
+		end
+	};
+}

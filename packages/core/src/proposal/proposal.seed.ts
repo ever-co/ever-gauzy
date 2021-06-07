@@ -2,7 +2,8 @@ import { Connection } from 'typeorm';
 import { Proposal } from './proposal.entity';
 import * as faker from 'faker';
 import { Tag } from '../tags/tag.entity';
-import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
+import { IEmployee, IOrganization, ITenant, ProposalStatusEnum } from '@gauzy/contracts';
+import { OrganizationContact } from './../core/entities/internal';
 
 export const createDefaultProposals = async (
 	connection: Connection,
@@ -16,17 +17,26 @@ export const createDefaultProposals = async (
 		const tags = await connection.manager.find(Tag, {
 			where: [{ organization: organization }]
 		});
+		const organizationContacts = await connection.manager.find(OrganizationContact, { 
+			where: { 
+				organization,
+				tenant
+			} 
+		});
 		for (let i = 0; i < noOfProposalsPerOrganization; i++) {
 			const proposal = new Proposal();
 			proposal.employee = faker.random.arrayElement(employees);
 			proposal.jobPostUrl = faker.internet.url();
 			proposal.jobPostContent = faker.name.jobTitle();
 			proposal.organization = organization;
-			proposal.status = faker.random.arrayElement(['ACCEPTED', 'SENT']);
+			proposal.status = faker.random.arrayElement(Object.values(ProposalStatusEnum));
 			proposal.tags = [faker.random.arrayElement(tags)];
-			proposal.valueDate = faker.date.recent();
+			proposal.valueDate = faker.date.recent(0.5);
 			proposal.proposalContent = faker.name.jobDescriptor();
 			proposal.tenant = tenant;
+			if (organizationContacts.length) {
+				proposal.organizationContactId = faker.random.arrayElement(organizationContacts).id; 
+			}
 			proposals.push(proposal);
 		}
 	}
@@ -49,20 +59,26 @@ export const createRandomProposals = async (
 			const tags = await connection.manager.find(Tag, {
 				where: [{ organization: organization }]
 			});
+			const organizationContacts = await connection.manager.find(OrganizationContact, { 
+				where: { 
+					organization,
+					tenant
+				} 
+			});
 			for (let i = 0; i < noOfProposalsPerOrganization; i++) {
 				const proposal = new Proposal();
 				proposal.employee = faker.random.arrayElement(employees);
 				proposal.jobPostUrl = faker.internet.url();
 				proposal.jobPostContent = faker.name.jobTitle();
 				proposal.organization = organization;
-				proposal.status = faker.random.arrayElement([
-					'ACCEPTED',
-					'SENT'
-				]);
+				proposal.status = faker.random.arrayElement(Object.values(ProposalStatusEnum));
 				proposal.tags = [faker.random.arrayElement(tags)];
-				proposal.valueDate = faker.date.recent();
+				proposal.valueDate = faker.date.recent(0.5);
 				proposal.proposalContent = faker.name.jobDescriptor();
 				proposal.tenant = tenant;
+				if (organizationContacts.length) {
+					proposal.organizationContactId = faker.random.arrayElement(organizationContacts).id; 
+				}
 				proposals.push(proposal);
 			}
 		}
