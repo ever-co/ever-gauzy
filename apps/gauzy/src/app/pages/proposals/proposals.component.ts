@@ -110,7 +110,7 @@ export class ProposalsComponent
 		const selectedDate$ = this.store.selectedDate$;
 		combineLatest([storeOrganization$, storeEmployee$, selectedDate$])
 			.pipe(
-				debounceTime(300),
+				debounceTime(500),
 				filter(([organization]) => !!organization),
 				tap(([organization]) => (this.organization = organization)),
 				distinctUntilChange(),
@@ -141,7 +141,6 @@ export class ProposalsComponent
 			.pipe(
 				distinctUntilChange(),
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
-				tap(() => this.countAccepted = 0),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => this.subject$.next()),
@@ -379,8 +378,6 @@ export class ProposalsComponent
 	* Register Smart Table Source Config 
 	*/
 	setSmartTableSource() {
-		this.countAccepted = 0;
-
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
@@ -410,9 +407,6 @@ export class ProposalsComponent
 				...this.filters.where
 			},
 			resultMap: (proposal: IProposal) => {
-				if (proposal.status === ProposalStatusEnum.ACCEPTED) {
-					this.countAccepted++;
-				}
 				return this.proposalMapper(proposal);
 			},
 			finalize: () => {
@@ -423,6 +417,14 @@ export class ProposalsComponent
 	}
 
 	private calculateStatistics() {
+		this.countAccepted = 0
+		const proposals = this.smartTableSource.getData();
+		for (const proposal of proposals) {
+			if (proposal.status === ProposalStatusEnum.ACCEPTED) {
+				this.countAccepted++;
+			}
+		}
+
 		this.totalProposals = this.smartTableSource.count();
 		if (this.totalProposals) {
 			this.successRate = ((this.countAccepted / this.totalProposals) * 100).toFixed(0) + ' %';
