@@ -15,7 +15,6 @@ import {
 import { PipelinesRouting } from './pipelines.routing';
 import { TranslateModule } from '@ngx-translate/core';
 import { CommonModule } from '@angular/common';
-import { PipelinesService } from '../../@core/services/pipelines.service';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
@@ -23,7 +22,6 @@ import { StageFormComponent } from './stage-form/stage-form.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { PipelineDealsComponent } from './pipeline-deals/pipeline-deals.component';
 import { PipelineDealFormComponent } from './pipeline-deals/pipeline-deal-form/pipeline-deal-form.component';
-import { DealsService } from '../../@core/services/deals.service';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { ThemeModule } from '../../@theme/theme.module';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
@@ -31,6 +29,8 @@ import { PipelineDealExcerptComponent } from './table-components/pipeline-deal-e
 import { PipelineDealProbabilityComponent } from './table-components/pipeline-deal-probability/pipeline-deal-probability.component';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { DealsService, PipelinesService } from '../../@core/services';
 
 @NgModule({
 	declarations: [
@@ -73,7 +73,8 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		ThemeModule,
 		BackNavigationModule,
 		NgxPermissionsModule.forChild(),
-		HeaderTitleModule
+		HeaderTitleModule,
+		PaginationModule
 	]
 })
 export class PipelinesModule {}

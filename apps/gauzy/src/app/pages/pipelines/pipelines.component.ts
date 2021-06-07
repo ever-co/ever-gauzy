@@ -1,19 +1,23 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { IPipeline, ComponentLayoutStyleEnum } from '@gauzy/contracts';
-import { Store } from '../../@core/services/store.service';
-import { PipelinesService } from '../../@core/services/pipelines.service';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { IPipeline, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { NbDialogService } from '@nebular/theme';
+import { debounceTime, distinctUntilChanged, filter, first, tap } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
-import { filter, first, tap } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { RouterEvent, NavigationEnd, Router } from '@angular/router';
+import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../@core/services/toastr.service';
+import { ErrorHandlingService, PipelinesService, Store, ToastrService } from '../../@core/services';
+import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
+import { Subject } from 'rxjs/internal/Subject';
+import { InputFilterComponent } from '../../@shared/table-filters/input-filter.component';
+import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import { FormControl } from '@angular/forms';
+import { Router } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -21,52 +25,21 @@ import { ToastrService } from '../../@core/services/toastr.service';
 	selector: 'ga-pipelines',
 	styleUrls: ['./pipelines.component.scss']
 })
-export class PipelinesComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-	smartTableSettings = {
-		actions: false,
-		noDataMessage: this.getTranslation('SM_TABLE.NO_RESULT'),
-		columns: {
-			name: {
-				type: 'string',
-				title: this.getTranslation('SM_TABLE.NAME')
-			},
-			description: {
-				type: 'string',
-				title: this.getTranslation('SM_TABLE.DESCRIPTION')
-			},
-			status: {
-				filter: false,
-				editor: false,
-				title: this.getTranslation('SM_TABLE.STATUS'),
-				type: 'custom',
-				width: '15%',
-				renderComponent: StatusBadgeComponent,
-				valuePrepareFunction: (cell, row) => {
-					const badgeClass = row.isActive ? 'success' : 'warning';
-					cell = row.isActive
-						? this.getTranslation('PIPELINES_PAGE.ACTIVE')
-						: this.getTranslation('PIPELINES_PAGE.INACTIVE');
-					return {
-						text: cell,
-						class: badgeClass
-					};
-				}
-			}
-		}
-	};
+export class PipelinesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 
-	pipelineData: IPipeline[];
+	smartTableSettings: object;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	pipelines = new LocalDataSource([] as IPipeline[]);
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+	smartTableSource: ServerDataSource;
+	pipelines: IPipeline[] = [];
 	viewComponentName: ComponentEnum;
 	pipeline: IPipeline;
-	organizationId: string;
-	tenantId: string;
+	organization: IOrganization;
 	name: string;
 	disableButton = true;
 	loading: boolean;
+	subject$: Subject<any> = new Subject();
+    public inputControl = new FormControl();
 
 	pipelineTable: Ng2SmartTableComponent;
 	@ViewChild('pipelineTable') set content(content: Ng2SmartTableComponent) {
@@ -77,37 +50,48 @@ export class PipelinesComponent
 	}
 
 	constructor(
-		private pipelinesService: PipelinesService,
-		private toastrService: ToastrService,
-		private dialogService: NbDialogService,
+		private readonly pipelinesService: PipelinesService,
+		private readonly toastrService: ToastrService,
+		private readonly dialogService: NbDialogService,
 		readonly translateService: TranslateService,
-		private store: Store,
-		private router: Router
+		private readonly store: Store,
+		private readonly httpClient: HttpClient,
+		private readonly errorHandlingService: ErrorHandlingService,
+		private readonly router: Router
 	) {
 		super(translateService);
 		this.setView();
 	}
 
 	ngOnInit() {
+		this._loadSmartTableSettings();
+		this._applyTranslationOnSmartTable();
+
+		this.subject$
+			.pipe(
+				debounceTime(300),
+				tap(() => this.loading = true),
+				tap(() => this.clearItem()),
+				tap(() => this.getPipelines()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.subject$.next()),
 				untilDestroyed(this)
 			)
-			.subscribe(async (organization) => {
-				if (organization) {
-					this.organizationId = organization.id;
-					this.tenantId = this.store.user.tenantId;
-					await this.updatePipelines();
-				}
-			});
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
+			.subscribe();
+		this.inputControl.valueChanges
+            .pipe(
+                debounceTime(500),
+                distinctUntilChanged(),
+				tap((value) => this.setFilter([ { field: 'name', search: value } ])),
+				untilDestroyed(this)
+            )
+            .subscribe();
 	}
 
 	setView() {
@@ -118,6 +102,17 @@ export class PipelinesComponent
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
+		this.store
+			.componentLayout$(this.viewComponentName)
+			.pipe(
+				distinctUntilChange(),
+				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.refreshPagination()),
+				tap(() => this.subject$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
@@ -132,38 +127,119 @@ export class PipelinesComponent
 			.subscribe();
 	}
 
-	async updatePipelines(): Promise<void> {
-		this.loading = true;
-		let { organizationId, tenantId } = this;
-		organizationId = organizationId || void 0;
-		tenantId = tenantId || void 0;
-
-		await this.pipelinesService
-			.getAll(['stages'], { organizationId, tenantId })
-			.then(({ items }) => {
-				this.pipelineData = items;
-				this.pipelines.load(items);
-				this.filterPipelines();
-			})
-			.finally(() => {
-				this.loading = false;
-			});
+	private _loadSmartTableSettings() {
+		this.smartTableSettings = {
+			actions: false,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_RESULT'),
+			columns: {
+				name: {
+					type: 'string',
+					title: this.getTranslation('SM_TABLE.NAME'),
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (value) => {
+						this.setFilter([ { field: 'name', search: value } ]);
+					}
+				},
+				description: {
+					type: 'string',
+					title: this.getTranslation('SM_TABLE.DESCRIPTION'),
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (value) => {
+						this.setFilter([ { field: 'description', search: value } ]);
+					}
+				},
+				displayStatus: {
+					filter: false,
+					editor: false,
+					title: this.getTranslation('SM_TABLE.STATUS'),
+					type: 'custom',
+					width: '15%',
+					renderComponent: StatusBadgeComponent
+				}
+			}
+		};
 	}
 
-	filterPipelines(): void {
-		setTimeout(() => {
-			const { name: search = '' } = this;
+	private _applyTranslationOnSmartTable() {
+		this.translateService.onLangChange
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 
-			this.pipelines.setFilter([
-				{
-					field: 'name',
-					search
-				}
-			]);
+	/*
+	* Register Smart Table Source Config 
+	*/
+	setSmartTableSource() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		const request = {};
+		this.smartTableSource = new ServerDataSource(this.httpClient, {
+			endPoint: `${API_PREFIX}/pipelines/search/filter`,
+			relations: [ 'stages' ],
+			where: {
+				...{ organizationId, tenantId },
+				...request,
+				...this.filters.where
+			},
+			resultMap: (pipeline: IPipeline) => {
+				return Object.assign({}, pipeline, {
+					displayStatus: this.statusMapper(pipeline.isActive)
+				});
+			},
+			finalize: () => {
+				this.loading = false;
+			}
 		});
 	}
 
-	async deletePipeline(): Promise<void> {
+	private statusMapper = (value: string | boolean) => {
+		const badgeClass = value ? 'success' : 'warning';
+		value = value
+			? this.getTranslation('PIPELINES_PAGE.ACTIVE')
+			: this.getTranslation('PIPELINES_PAGE.INACTIVE');
+		return {
+			text: value,
+			class: badgeClass
+		};
+	}
+
+	async getPipelines() {
+		try {
+			this.setSmartTableSource();
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+
+				// Initiate GRID view pagination
+				const { activePage, itemsPerPage } = this.pagination;
+				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+
+				await this.smartTableSource.getElements();
+				this.pipelines = this.smartTableSource.getData();
+
+				this.pagination['totalItems'] =  this.smartTableSource.count();
+			}
+		} catch (error) {
+			this.errorHandlingService.handleError(error);
+		}
+	}
+
+	async deletePipeline(selectedItem?: IPipeline): Promise<void> {
+		if (selectedItem) {
+			this.selectPipeline({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+
 		const canProceed: 'ok' = await this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
@@ -180,20 +256,28 @@ export class PipelinesComponent
 			this.toastrService.success('TOASTR.MESSAGE.PIPELINE_DELETED', {
 				name: this.pipeline.name
 			});
-			await this.updatePipelines();
+			this.subject$.next();
 		}
 	}
 
 	async createPipeline(): Promise<void> {
-		const { name, organizationId, tenantId } = this;
+		const { name } = this;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
 
 		await this.goto({ pipeline: { name, organizationId, tenantId } });
 		delete this.name;
 	}
 
-	async editPipeline(): Promise<void> {
-		const { pipeline } = this;
+	async editPipeline(selectedItem?: IPipeline): Promise<void> {
+		if (selectedItem) {
+			this.selectPipeline({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
 
+		const { pipeline } = this;
 		await this.goto({ pipeline });
 		delete this.name;
 	}
@@ -221,8 +305,18 @@ export class PipelinesComponent
 							name: data.name
 						}
 				  );
-			await this.updatePipelines();
+			this.subject$.next();
 		}
+	}
+
+	viewDeals(selectedItem?: IPipeline) {
+		if (selectedItem) {
+			this.selectPipeline({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+		this.router.navigate([`/pages/sales/pipelines/${this.pipeline.id}/deals`]);
 	}
 
 	selectPipeline({ isSelected, data }) {
