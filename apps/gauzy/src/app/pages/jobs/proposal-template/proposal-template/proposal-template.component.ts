@@ -1,23 +1,26 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { IEmployeeProposalTemplate, ISelectedEmployee } from '@gauzy/contracts';
+import { IEmployeeProposalTemplate, IOrganization, ISelectedEmployee } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { AvatarComponent } from 'apps/gauzy/src/app/@shared/components/avatar/avatar.component';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { combineLatest, Subject } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { AvatarComponent } from './../../../../@shared/components/avatar/avatar.component';
+import { TranslationBaseComponent } from './../../../../@shared/language-base/translation-base.component';
 import {
 	Nl2BrPipe,
 	TruncatePipe
-} from 'apps/gauzy/src/app/@shared/pipes/text.pipe';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { Subject } from 'rxjs';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+} from './../../../../@shared/pipes';
 import { AddEditProposalTemplateComponent } from '../add-edit-proposal-template/add-edit-proposal-template.component';
+import { Store, ToastrService } from './../../../../@core/services';
 import { ProposalTemplateService } from '../proposal-template.service';
+import { API_PREFIX } from './../../../../@core/constants';
+import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
+import { HttpClient } from '@angular/common/http';
 
-@UntilDestroy()
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-proposal-template',
 	templateUrl: './proposal-template.component.html',
@@ -26,21 +29,15 @@ import { ProposalTemplateService } from '../proposal-template.service';
 export class ProposalTemplateComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	settingsSmartTable: any = {
-		editable: false,
-		actions: false,
-		hideSubHeader: true
-	};
 
+	smartTableSettings: object;
 	disableButton = true;
-	smartTableSource: LocalDataSource = new LocalDataSource();
+	smartTableSource: ServerDataSource;
 	selectedEmployee: ISelectedEmployee;
-	proposalTemplateRequest: any = {
-		relations: ['employee', 'employee.user']
-	};
-	updateJobs$: Subject<any> = new Subject();
+	subject$: Subject<any> = new Subject();
 	selectedItem: any;
 	loading: boolean;
+	organization: IOrganization;
 
 	proposalTemplateTable: Ng2SmartTableComponent;
 	@ViewChild('proposalTemplateTable') set content(
@@ -48,61 +45,96 @@ export class ProposalTemplateComponent
 	) {
 		if (content) {
 			this.proposalTemplateTable = content;
+			console.log(this.proposalTemplateTable);
 			this.onChangedSource();
 		}
 	}
 
 	constructor(
 		public translateService: TranslateService,
-		private store: Store,
-		private toastrService: ToastrService,
-		private proposalTemplateService: ProposalTemplateService,
-		private dialogService: NbDialogService,
-		private nl2BrPipe: Nl2BrPipe,
-		private truncatePipe: TruncatePipe
+		private readonly store: Store,
+		private readonly toastrService: ToastrService,
+		private readonly proposalTemplateService: ProposalTemplateService,
+		private readonly dialogService: NbDialogService,
+		private readonly nl2BrPipe: Nl2BrPipe,
+		private readonly truncatePipe: TruncatePipe,
+		private readonly httpClient: HttpClient,
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
-		this.updateJobs$
-			.pipe(untilDestroyed(this), debounceTime(500))
-			.subscribe(() => {
-				this.getProposalTemplates();
-			});
-
-		this.store.selectedEmployee$
+		this._applyTranslationOnSmartTable();
+		this._loadSmartTableSettings();
+		this.subject$
 			.pipe(
-				filter((employee) => !!employee),
+				debounceTime(500),
+				tap(() => this.loading = true),
+				tap(() => this.clearItem()),
+				tap(() => this.getProposalTemplates()),
+				untilDestroyed(this), 
+			)
+			.subscribe();
+		const storeOrganization$ = this.store.selectedOrganization$;
+		const storeEmployee$ = this.store.selectedEmployee$;
+		combineLatest([storeOrganization$, storeEmployee$])
+			.pipe(
+				debounceTime(500),
+				filter(([organization]) => !!organization),
+				tap(([organization]) => (this.organization = organization)),
+				distinctUntilChange(),
+				tap(([organization, employee]) => {
+					if (organization) {
+						this.selectedEmployee = (employee && employee.id) ? employee : null;
+						this.subject$.next();
+					}
+				}),
 				untilDestroyed(this)
 			)
-			.subscribe((employee) => {
-				if (employee && employee.id) {
-					this.selectedEmployee = employee;
-				} else {
-					this.selectedEmployee = null;
-				}
-				this.loadSmartTable();
-				this.updateJobs$.next();
-			});
-		this.updateJobs$.next();
+			.subscribe();
+	}
+
+	ngAfterViewInit() {
+		const { employeeId } = this.store.user;
+		if (employeeId) {
+			delete this.smartTableSettings['columns']['employeeId'];
+			this.smartTableSettings = Object.assign({}, this.smartTableSettings);
+		}
+	}
+
+	/*
+	* Register Smart Table Source Config 
+	*/
+	setSmartTableSource() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		const request = {};
+		if (this.selectedEmployee) {
+			request['employeeId'] = this.selectedEmployee.id;
+		}
+		this.smartTableSource = new ServerDataSource(this.httpClient, {
+			endPoint: `${API_PREFIX}/employee-proposal-template/search/filter`,
+			relations: [
+				'employee', 
+				'employee.user'
+			],
+			where: {
+				...{ organizationId, tenantId },
+				...request,
+			},
+			finalize: () => {
+				this.loading = false;
+			}
+		});
 	}
 
 	getProposalTemplates() {
-		this.loading = true;
-		const request = {
-			...this.proposalTemplateRequest,
-			where: {
-				...(this.selectedEmployee && this.selectedEmployee.id
-					? { employeeId: this.selectedEmployee.id }
-					: {})
-			}
-		};
-
-		this.proposalTemplateService.getAll(request).then((data) => {
-			this.smartTableSource.load(data.items);
-			this.loading = false;
-		});
+		try { 
+			this.setSmartTableSource();
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
 	}
 
 	selectItem({ isSelected, data }) {
@@ -110,39 +142,31 @@ export class ProposalTemplateComponent
 		this.selectedItem = isSelected ? data : null;
 	}
 
-	loadSmartTable() {
-		this.settingsSmartTable = {
-			...this.settingsSmartTable,
+	_loadSmartTableSettings() {
+		this.smartTableSettings = {
+			editable: false,
+			actions: false,
+			hideSubHeader: true,
 			columns: {
-				...(!this.selectedEmployee
-					? {
-							employeeIds: {
-								title: this.getTranslation(
-									'PROPOSAL_TEMPLATE.EMPLOYEE'
-								),
-								filter: false,
-								width: '20%',
-								type: 'custom',
-								sort: false,
-								renderComponent: AvatarComponent,
-								valuePrepareFunction: (
-									cell,
-									row: IEmployeeProposalTemplate
-								) => {
-									return {
-										name:
-											row.employee && row.employee.user
-												? row.employee.user.name
-												: null,
-										src:
-											row.employee && row.employee.user
-												? row.employee.user.imageUrl
-												: null
-									};
-								}
-							}
-					  }
-					: {}),
+				employeeId: {
+					title: this.getTranslation(
+						'PROPOSAL_TEMPLATE.EMPLOYEE'
+					),
+					filter: false,
+					width: '20%',
+					type: 'custom',
+					sort: false,
+					renderComponent: AvatarComponent,
+					valuePrepareFunction: (
+						cell,
+						row: IEmployeeProposalTemplate
+					) => {
+						return {
+							name: row.employee && row.employee.user ? row.employee.fullName : null,
+							src: row.employee && row.employee.user ? row.employee.user.imageUrl : null
+						};
+					}
+				},
 				name: {
 					title: this.getTranslation('PROPOSAL_TEMPLATE.NAME'),
 					type: 'text',
@@ -197,12 +221,12 @@ export class ProposalTemplateComponent
 					selectedEmployee: this.selectedEmployee
 				}
 			})
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe((resp) => {
-				if (resp) {
-					this.getProposalTemplates();
-				}
-			});
+			.onClose
+			.pipe(
+				tap(() => this.subject$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	editProposal(): void {
@@ -213,37 +237,35 @@ export class ProposalTemplateComponent
 					selectedEmployee: this.selectedEmployee
 				}
 			})
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe((resp) => {
-				if (resp) {
-					this.getProposalTemplates();
-				}
-			});
+			.onClose
+			.pipe(
+				tap(() => this.subject$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	deleteProposal(): void {
-		this.proposalTemplateService.delete(this.selectedItem.id).then(() => {
-			this.toastrService.success(
-				'PROPOSAL_TEMPLATE.PROPOSAL_DELETE_MESSAGE',
-				{
+		this.proposalTemplateService.delete(this.selectedItem.id)
+			.then(() => {
+				this.toastrService.success('PROPOSAL_TEMPLATE.PROPOSAL_DELETE_MESSAGE', {
 					name: this.selectedItem.name
-				}
-			);
-			this.getProposalTemplates();
-		});
+				});
+			}).finally(() => {
+				this.subject$.next();
+			});
 	}
 
 	makeDefault(): void {
 		this.proposalTemplateService
 			.makeDefault(this.selectedItem.id)
 			.then(() => {
-				this.toastrService.success(
-					'PROPOSAL_TEMPLATE.PROPOSAL_MAKE_DEFAULT_MESSAGE',
-					{
-						name: this.selectedItem.name
-					}
-				);
-				this.getProposalTemplates();
+				this.toastrService.success('PROPOSAL_TEMPLATE.PROPOSAL_MAKE_DEFAULT_MESSAGE', { 
+					name: this.selectedItem.name 
+				});
+			})
+			.finally(() => {
+				this.subject$.next();
 			});
 	}
 
@@ -254,9 +276,20 @@ export class ProposalTemplateComponent
 		this.proposalTemplateTable.source.onChangedSource
 			.pipe(
 				untilDestroyed(this),
-				tap(() => this.deselectAll())
+				tap(() => this.clearItem())
 			)
 			.subscribe();
+	}
+
+	/*
+	 * Clear selected item
+	 */
+	clearItem() {
+		this.selectItem({
+			isSelected: false,
+			data: null
+		});
+		this.deselectAll();
 	}
 
 	/*
@@ -267,6 +300,15 @@ export class ProposalTemplateComponent
 			this.proposalTemplateTable.grid.dataSet['willSelect'] = 'false';
 			this.proposalTemplateTable.grid.dataSet.deselectAll();
 		}
+	}
+
+	private _applyTranslationOnSmartTable() {
+		this.translateService.onLangChange
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngOnDestroy(): void {}

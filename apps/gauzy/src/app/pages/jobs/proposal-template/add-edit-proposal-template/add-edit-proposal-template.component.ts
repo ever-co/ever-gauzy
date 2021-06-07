@@ -8,10 +8,9 @@ import {
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { filter } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
+import { Store, ToastrService } from './../../../../@core/services';
+import { TranslationBaseComponent } from './../../../../@shared/language-base/translation-base.component';
 import { ProposalTemplateService } from '../proposal-template.service';
 
 @UntilDestroy()
@@ -27,12 +26,21 @@ export class AddEditProposalTemplateComponent
 
 	@Input() selectedEmployee: ISelectedEmployee;
 	@Input() proposalTemplate: IEmployeeProposalTemplate = {};
-	form: FormGroup;
+	
 	organization: IOrganization;
 	public ckConfig: any = {
 		width: '100%',
 		height: '320'
 	};
+
+	public form: FormGroup = AddEditProposalTemplateComponent.buildForm(this.fb);
+	static buildForm(fb: FormBuilder): FormGroup {
+		return fb.group({
+			employeeId: [],
+			name: [],
+			content: []
+		});
+	}
 
 	constructor(
 		private dialogRef: NbDialogRef<AddEditProposalTemplateComponent>,
@@ -46,29 +54,30 @@ export class AddEditProposalTemplateComponent
 	}
 
 	ngOnInit(): void {
-		if (this.proposalTemplate && this.proposalTemplate.id) {
+		if (this.proposalTemplate.id) {
 			this.mode = 'update';
 		} else {
 			this.mode = 'create';
 		}
-		this.form = this.fb.group({
-			employeeId: [this.proposalTemplate.employeeId || ''],
-			name: [this.proposalTemplate.name || ''],
-			content: [this.proposalTemplate.content || '']
-		});
-
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization) => !!(organization && organization.id)),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this._initializeForm()),
 				untilDestroyed(this)
 			)
-			.subscribe((organization) => {
-				if (organization.id) {
-					this.organization = organization;
-				} else {
-					this.organization = null;
-				}
+			.subscribe();
+	}
+
+	private _initializeForm() {
+		if (this.proposalTemplate) {
+			const { employeeId, name, content } = this.proposalTemplate;
+			this.form.patchValue({
+				employeeId,
+				name,
+				content
 			});
+		}
 	}
 
 	close() {
@@ -76,48 +85,52 @@ export class AddEditProposalTemplateComponent
 	}
 
 	onSave(): void {
-		if (this.form.valid) {
-			let resp: Promise<IEmployeeProposalTemplate>;
-			const request = {
-				...this.form.value,
-				organizationId: this.organization.id,
-				tenantId: this.organization.tenantId
-			};
-			if (this.selectedEmployee && this.selectedEmployee.id) {
-				request.employeeId = this.selectedEmployee.id;
-			}
+		if (this.form.invalid) {
+			return;
+		}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		let resp: Promise<IEmployeeProposalTemplate>;
+		const request = {
+			...this.form.value,
+			organizationId,
+			tenantId
+		};
+		if (this.selectedEmployee && this.selectedEmployee.id) {
+			request.employeeId = this.selectedEmployee.id;
+		}
+		if (this.mode === 'create') {
+			resp = this.proposalTemplateService.create(request);
+		} else {
+			resp = this.proposalTemplateService.update(
+				this.proposalTemplate.id,
+				{
+					...request,
+					employeeId: this.proposalTemplate.employeeId
+				}
+			);
+		}
+
+		resp.then((data) => {
+			this.dialogRef.close(data);
 			if (this.mode === 'create') {
-				resp = this.proposalTemplateService.create(request);
-			} else {
-				resp = this.proposalTemplateService.update(
-					this.proposalTemplate.id,
+				this.toastrService.success(
+					'PROPOSAL_TEMPLATE.PROPOSAL_CREATE_MESSAGE',
 					{
-						...request,
-						employeeId: this.proposalTemplate.employeeId
+						name: request.name
+					}
+				);
+			} else {
+				this.toastrService.success(
+					'PROPOSAL_TEMPLATE.PROPOSAL_EDIT_MESSAGE',
+					{
+						name: request.name
 					}
 				);
 			}
-
-			resp.then((data) => {
-				this.dialogRef.close(data);
-				if (this.mode === 'create') {
-					this.toastrService.success(
-						'PROPOSAL_TEMPLATE.PROPOSAL_CREATE_MESSAGE',
-						{
-							name: request.name
-						}
-					);
-				} else {
-					this.toastrService.success(
-						'PROPOSAL_TEMPLATE.PROPOSAL_EDIT_MESSAGE',
-						{
-							name: request.name
-						}
-					);
-				}
-			}).catch((error) => {
-				this.toastrService.error(error);
-			});
-		}
+		}).catch((error) => {
+			this.toastrService.error(error);
+		});
 	}
 }
