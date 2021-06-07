@@ -141,6 +141,7 @@ export class ProposalsComponent
 			.pipe(
 				distinctUntilChange(),
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap(() => this.countAccepted = 0),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => this.subject$.next()),
@@ -467,6 +468,10 @@ export class ProposalsComponent
 				// Initiate GRID view pagination
 				const { activePage, itemsPerPage } = this.pagination;
 				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+				this.smartTableSource.setSort(
+					[{ field: 'valueDate', direction: 'desc' }], 
+					false
+				);
 
 				await this.smartTableSource.getElements();
 
@@ -478,6 +483,11 @@ export class ProposalsComponent
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
+	}
+
+	onPageChange(selectedPage: number) {
+		this.pagination['activePage'] = selectedPage;
+		this.subject$.next();
 	}
 
 	private _applyTranslationOnSmartTable() {
@@ -517,7 +527,5 @@ export class ProposalsComponent
 		this.pagination['activePage'] = 1;
 	}
 
-	ngOnDestroy() {
-		delete this.smartTableSettings['columns']['author'];
-	}
+	ngOnDestroy() {}
 }
