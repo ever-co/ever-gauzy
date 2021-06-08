@@ -30,7 +30,7 @@ import { environment } from '../../../../environments/environment';
 import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { EmployeesService } from '../../../@core/services/employees.service';
-import { NO_EMPLOYEE_SELECTED } from './selectors/employee';
+import { ALL_EMPLOYEES_SELECTED, NO_EMPLOYEE_SELECTED } from './selectors/employee';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import {
 	EmployeeStore,
@@ -250,7 +250,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 					)
 				) {
 					this.showEmployeesSelector = employeeCount > 0;
-					this.store.selectedEmployee = null;
+					this.store.selectedEmployee = this.showEmployeesSelector ? ALL_EMPLOYEES_SELECTED : null; 
 				} else {
 					const emp = await this.employeesService.getEmployeeById(
 						this.user.employeeId,

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { IOrganization, ITask, TaskListTypeEnum } from '@gauzy/contracts';
+import { ITask, TaskListTypeEnum } from '@gauzy/contracts';
 import { map, tap } from 'rxjs/operators';
 import { TasksService } from './tasks.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -22,17 +22,19 @@ export class TasksStoreService {
 		return this._tasks$.getValue();
 	}
 
-	constructor(private _taskService: TasksService) {}
+	constructor(
+		private readonly _taskService: TasksService
+	) {}
 
-	fetchTasks(organization?: IOrganization) {
-		const findObj = {};
-		if (organization) {
-			const { id: organizationId, tenantId } = organization;
-			findObj['organizationId'] = organizationId;
-			findObj['tenantId'] = tenantId;
-		}
+	fetchTasks(
+		tenantId: string,
+		organizationId: string
+	) {
 		this._taskService
-			.getAllTasks(findObj)
+			.getAllTasks({
+				tenantId,
+				organizationId
+			})
 			.pipe(
 				tap(({ items }) => this.loadAllTasks(items)),
 				untilDestroyed(this)
@@ -43,11 +45,9 @@ export class TasksStoreService {
 	private _mapToViewModel(tasks) {
 		return tasks.map((task) => ({
 			...task,
-			projectName: task.project ? task.project.name : undefined,
-			employees: task.members ? task.members : undefined,
-			creator: task.creator
-				? `${task.creator.firstName} ${task.creator.lastName}`
-				: null
+			projectName: task.project ? task.project.name : null,
+			employees: task.members ? task.members : null,
+			creator: task.creator ? `${task.creator.name}` : null
 		}));
 	}
 
@@ -76,15 +76,10 @@ export class TasksStoreService {
 	}
 
 	createTask(task: ITask): void {
-		console.log('createdTask[0] in store service: ', task);
 		this._taskService
 			.createTask(task)
 			.pipe(
 				tap((createdTask) => {
-					console.log(
-						'createdTask[1] in store service: ',
-						createdTask
-					);
 					const tasks = [...this.tasks, createdTask];
 					this._tasks$.next(tasks);
 				}),

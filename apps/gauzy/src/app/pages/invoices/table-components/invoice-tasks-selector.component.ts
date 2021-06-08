@@ -25,12 +25,16 @@ import { filter, tap } from 'rxjs/operators';
 export class InvoiceTasksSelectorComponent
 	extends DefaultEditor
 	implements OnInit, OnDestroy {
+		
 	tasks: ITask[] = [];
 	task: ITask;
-	observableTasks: Observable<ITask[]> = this.tasksStore.tasks$;
+	tasks$: Observable<ITask[]> = this.tasksStore.tasks$;
 	organization: IOrganization;
 
-	constructor(private tasksStore: TasksStoreService, private store: Store) {
+	constructor(
+		private readonly tasksStore: TasksStoreService, 
+		private readonly store: Store
+	) {
 		super();
 	}
 
@@ -43,14 +47,21 @@ export class InvoiceTasksSelectorComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.observableTasks.pipe(untilDestroyed(this)).subscribe((data) => {
-			this.tasks = data;
-			this.task = this.tasks.find((t) => t.id === this.cell.newValue.id);
-		});
+		this.tasks$
+			.pipe(
+				tap((tasks) => this.tasks = tasks),
+				tap(() => this.task = this.tasks.find((t) => t.id === this.cell.newValue.id)),
+				untilDestroyed(this)
+			).subscribe();
 	}
 
 	private _loadTasks() {
-		this.tasksStore.fetchTasks(this.organization);
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		this.tasksStore.fetchTasks(
+			tenantId, 
+			organizationId
+		);
 	}
 
 	selectTask($event) {

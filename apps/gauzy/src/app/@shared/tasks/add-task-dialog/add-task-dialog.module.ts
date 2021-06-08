@@ -17,11 +17,12 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
+import { ProjectSelectModule } from '../../project-select/project-select.module';
+import { TaskStatusSelectModule } from '../task-status-select/task-status-select.module';
 
 @NgModule({
 	declarations: [AddTaskDialogComponent],
 	exports: [AddTaskDialogComponent],
-	entryComponents: [AddTaskDialogComponent],
 	imports: [
 		CommonModule,
 		FormsModule,
@@ -39,7 +40,9 @@ import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/
 		TagsColorInputModule,
 		NbDatepickerModule,
 		NbInputModule,
-		NbButtonModule
+		NbButtonModule,
+		ProjectSelectModule,
+		TaskStatusSelectModule
 	]
 })
 export class AddTaskDialogModule {}

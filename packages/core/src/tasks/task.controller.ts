@@ -73,14 +73,10 @@ export class TaskController extends CrudController<Task> {
 		description: 'Records not found'
 	})
 	@Get('me')
-	async findMyTasks(): Promise<IPagination<Task>> {
-		//If user is not an employee, then this will return 404
-		const employee = await this.employeeService.findOne({
-			where: {
-				user: { id: RequestContext.currentUser().id }
-			}
-		});
-		return this.taskService.getMyTasks(employee.id);
+	async findMyTasks(
+		@Query() data: any
+	): Promise<IPagination<Task>> {
+		return this.taskService.getMyTasks(data);
 	}
 
 	@ApiOperation({ summary: 'Find my team tasks.' })
@@ -95,10 +91,9 @@ export class TaskController extends CrudController<Task> {
 	})
 	@Get('team')
 	async findTeamTasks(
-		@Query('data', ParseJsonPipe) data: any
+		@Query() data: any
 	): Promise<IPagination<Task>> {
-		const { employeeId } = data;
-		return this.taskService.findTeamTasks(employeeId);
+		return this.taskService.findTeamTasks(data);
 	}
 
 	@ApiOperation({

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { IOrganization, ITask } from '@gauzy/contracts';
+import { ITask } from '@gauzy/contracts';
 import { map, tap } from 'rxjs/operators';
 import { TasksService } from './tasks.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -22,17 +22,17 @@ export class MyTasksStoreService {
 		return this._myTasks$.getValue();
 	}
 
-	constructor(private _taskService: TasksService) {}
+	constructor(private readonly _taskService: TasksService) {}
 
-	fetchTasks(organization?: IOrganization) {
-		const findObj = {};
-		if (organization) {
-			const { id: organizationId, tenantId } = organization;
-			findObj['organizationId'] = organizationId;
-			findObj['tenantId'] = tenantId;
-		}
+	fetchTasks(
+		tenantId: string,
+		organizationId: string
+	) {
 		this._taskService
-			.getMyTasks(findObj)
+			.getMyTasks({
+				tenantId,
+				organizationId
+			})
 			.pipe(
 				tap(({ items }) => this.loadAllTasks(items)),
 				untilDestroyed(this)

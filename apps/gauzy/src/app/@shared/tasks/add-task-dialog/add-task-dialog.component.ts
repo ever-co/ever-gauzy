@@ -8,17 +8,11 @@ import {
 } from '@gauzy/contracts';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
-import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
-import { Store } from '../../../@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import * as moment from 'moment';
-import { EmployeesService } from '../../../@core/services';
 import { first } from 'rxjs/operators';
-import { OrganizationTeamsService } from '../../../@core/services/organization-teams.service';
-import { TasksService } from '../../../@core/services/tasks.service';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { EmployeesService, OrganizationTeamsService, Store, TasksService } from '../../../@core/services';
 
 @Component({
 	selector: 'ngx-add-task-dialog',
@@ -28,15 +22,9 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 export class AddTaskDialogComponent
 	extends TranslationBaseComponent
 	implements OnInit {
+		
 	form: FormGroup;
 	selectedTaskId: string;
-	projects: IOrganizationProject[];
-	statuses: string[] = [
-		this.getTranslation('TASKS_PAGE.TODO'),
-		this.getTranslation('TASKS_PAGE.IN_PROGRESS'),
-		this.getTranslation('TASKS_PAGE.FOR_TESTING'),
-		this.getTranslation('TASKS_PAGE.COMPLETED')
-	];
 	employees: IEmployee[] = [];
 	teams: IOrganizationTeam[] = [];
 	selectedMembers: string[];
@@ -62,16 +50,13 @@ export class AddTaskDialogComponent
 	@Input() task: Partial<ITask> = {};
 
 	constructor(
-		public dialogRef: NbDialogRef<AddTaskDialogComponent>,
-		private fb: FormBuilder,
-		private store: Store,
-		private organizationProjectsService: OrganizationProjectsService,
+		public readonly dialogRef: NbDialogRef<AddTaskDialogComponent>,
+		private readonly fb: FormBuilder,
+		private readonly store: Store,
 		readonly translateService: TranslateService,
-		private readonly toastrService: ToastrService,
-		private errorHandler: ErrorHandlingService,
-		private employeesService: EmployeesService,
-		private tasksService: TasksService,
-		private organizationTeamsService: OrganizationTeamsService
+		private readonly employeesService: EmployeesService,
+		private readonly tasksService: TasksService,
+		private readonly organizationTeamsService: OrganizationTeamsService
 	) {
 		super(translateService);
 	}
@@ -80,7 +65,6 @@ export class AddTaskDialogComponent
 		this.organizationId = this.store.selectedOrganization.id;
 		this.tenantId = this.store.user.tenantId;
 
-		this.loadProjects();
 		this.loadEmployees();
 		this.loadTeams();
 
@@ -91,14 +75,6 @@ export class AddTaskDialogComponent
 				this.selectedTask || this.task
 			)
 		);
-	}
-
-	private async loadProjects() {
-		const { items } = await this.organizationProjectsService.getAll(
-			['organization'],
-			{ organizationId: this.organizationId, tenantId: this.tenantId }
-		);
-		if (items) this.projects = items;
 	}
 
 	initializeForm({
@@ -142,26 +118,6 @@ export class AddTaskDialogComponent
 
 		this.tags = this.form.get('tags').value || [];
 	}
-
-	addNewProject = (name: string): Promise<IOrganizationProject> => {
-		this.organizationId = this.store.selectedOrganization.id;
-		this.tenantId = this.store.user.tenantId;
-		try {
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
-				{
-					name: name
-				}
-			);
-			return this.organizationProjectsService.create({
-				name,
-				organizationId: this.organizationId,
-				tenantId: this.tenantId
-			});
-		} catch (error) {
-			this.errorHandler.handleError(error);
-		}
-	};
 
 	onSave() {
 		if (this.form.valid) {
@@ -212,6 +168,12 @@ export class AddTaskDialogComponent
 
 	selectedTagsHandler(currentSelection: ITag[]) {
 		this.form.get('tags').setValue(currentSelection);
+	}
+
+	selectedProject(project: IOrganizationProject) {
+		this.form.patchValue({
+			project
+		})
 	}
 
 	private async loadEmployees() {

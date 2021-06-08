@@ -4,7 +4,9 @@ import {
 	OnDestroy,
 	Input,
 	forwardRef,
-	AfterViewInit
+	AfterViewInit,
+	Output,
+	EventEmitter
 } from '@angular/core';
 import {
 	IOrganization,
@@ -12,16 +14,13 @@ import {
 	CrudActionEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from '../../../@core/services/store.service';
-import { ToastrService } from '../../../@core/services/toastr.service';
-import { OrganizationProjectStore } from '../../../@core/services/organization-projects-store.service';
 import { isNotEmpty } from '@gauzy/common-angular';
 import { ALL_PROJECT_SELECTED } from './default-project';
+import { OrganizationProjectsService, OrganizationProjectStore, Store, ToastrService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -57,7 +56,7 @@ export class ProjectSelectorComponent
 	}
 	public set employeeId(value) {
 		this._employeeId = value;
-		this.loadProjects$.next();
+		this.subject$.next();
 	}
 
 	@Input()
@@ -68,12 +67,31 @@ export class ProjectSelectorComponent
 	public set organizationContactId(value: string) {
 		this._organizationContactId = value;
 		if (this._organizationContactId) {
-			this.loadProjects$.next();
+			this.subject$.next();
 		}
 	}
 
-	@Input() placeholder: string;
-	@Input() skipGlobalChange: boolean;
+	/*
+	* Getter & Setter for dynamic placeholder
+	*/
+	private _placeholder: string;
+	get placeholder(): string {
+		return this._placeholder;
+	}
+	@Input() set placeholder(value: string) {
+		this._placeholder = value;
+	}
+
+	/*
+	* Getter & Setter for skip global change
+	*/
+	private _skipGlobalChange: boolean = false;
+	get skipGlobalChange(): boolean {
+		return this._skipGlobalChange;
+	}
+	@Input() set skipGlobalChange(value: boolean) {
+		this._skipGlobalChange = value;
+	}
 
 	private _defaultSelected: boolean = true;
 	get defaultSelected(): boolean {
@@ -91,9 +109,12 @@ export class ProjectSelectorComponent
 		this._showAllOption = value;
 	}
 
-	loadProjects$: Subject<any> = new Subject();
+	subject$: Subject<any> = new Subject();
 	onChange: any = () => {};
 	onTouched: any = () => {};
+
+	@Output()
+	onChanged = new EventEmitter<IOrganizationProject>();
 
 	constructor(
 		private readonly organizationProjects: OrganizationProjectsService,
@@ -120,7 +141,7 @@ export class ProjectSelectorComponent
 					PermissionsEnum.ORG_PROJECT_EDIT
 				);
 			});
-		this.loadProjects$
+		this.subject$
 			.pipe(
 				debounceTime(500),
 				tap(() => this.getProjects()),
@@ -132,7 +153,7 @@ export class ProjectSelectorComponent
 				filter((organization: IOrganization) => !!organization),
 				tap((organization) => (this.organization = organization)),
 				tap(({ id }) => (this.organizationId = id)),
-				tap(() => this.loadProjects$.next()),
+				tap(() => this.subject$.next()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -164,7 +185,7 @@ export class ProjectSelectorComponent
 
 	async getProjects() {
 		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		const { id: organizationId } = this.organization;		
 		if (this.employeeId) {
 			this.projects = await this.organizationProjects.getAllByEmployee(
 				this.employeeId,
@@ -184,9 +205,8 @@ export class ProjectSelectorComponent
 		//Insert All Employees Option
 		if (this.showAllOption) {
 			this.projects.unshift(ALL_PROJECT_SELECTED);
+			this.selectProject(ALL_PROJECT_SELECTED);
 		}
-
-		this.selectProject(ALL_PROJECT_SELECTED);
 	}
 
 	writeValue(value: string | string[]) {
@@ -284,6 +304,7 @@ export class ProjectSelectorComponent
 		}
 		this.selectedProject = project || ALL_PROJECT_SELECTED;
 		this.projectId = this.selectedProject.id;
+		this.onChanged.emit(project);
 	}
 
 	ngOnDestroy() {}

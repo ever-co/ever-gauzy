@@ -702,7 +702,9 @@ export class InvoiceAddComponent
 	}
 
 	private getAllTasks() {
-		this.tasksStore.fetchTasks(this.organization);
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		this.tasksStore.fetchTasks(tenantId, organizationId);
 	}
 
 	private async _initializeMethods() {

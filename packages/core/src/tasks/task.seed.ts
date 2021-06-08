@@ -2,14 +2,8 @@ import { Connection } from 'typeorm';
 import * as faker from 'faker';
 import * as _ from 'underscore';
 import { HttpService } from '@nestjs/common';
-
-import { IOrganization, IOrganizationProject, ITenant, TaskStatusEnum } from '@gauzy/contracts';
-import { Task } from './task.entity';
-import { Tag } from '../tags/tag.entity';
-import { OrganizationProject } from '../organization-projects/organization-projects.entity';
-import { OrganizationTeam } from '../organization-team/organization-team.entity';
-import { User } from '../user/user.entity';
-import { Organization } from '../organization/organization.entity';
+import { IOrganization, IOrganizationProject, ITag, ITask, ITenant, TaskStatusEnum } from '@gauzy/contracts';
+import { Organization, OrganizationProject, OrganizationTeam, Tag, Task, User } from './../core/entities/internal';
 
 const GITHUB_API_URL = 'https://api.github.com';
 
@@ -17,10 +11,10 @@ export const createDefaultTask = async (
 	connection: Connection,
 	tenant: ITenant,
 	organization: IOrganization
-): Promise<Task[]> => {
+): Promise<ITask[]> => {
 	const httpService = new HttpService();
 
-	const tasks: Task[] = [];
+	const tasks: ITask[] = [];
 
 	const teams = await connection
 		.getRepository(OrganizationTeam)
@@ -46,7 +40,7 @@ export const createDefaultTask = async (
 	});
 
 	labels = _.uniq(labels, (label) => label.name);
-	const tags: Tag[] = await createTags(connection, labels);
+	const tags: ITag[] = await createTags(connection, labels);
 
 	const defaultProjects = await connection
 		.getRepository(OrganizationProject)
@@ -64,7 +58,7 @@ export const createDefaultTask = async (
 		const task = new Task();
 		task.tags = _.filter(
 			tags,
-			(tag: Tag) =>
+			(tag: ITag) =>
 				!!issue.labels.find((label: any) => label.name === tag.name)
 		);
 
@@ -74,7 +68,7 @@ export const createDefaultTask = async (
 		task.description = issue.body;
 		task.status = status;
 		task.estimate = null;
-		task.dueDate = null;
+		task.dueDate = faker.date.future(0.3);
 		task.project = project;
 		task.teams = [faker.random.arrayElement(teams)];
 		task.creator = faker.random.arrayElement(users);
@@ -101,7 +95,7 @@ export const createRandomTask = async (
 	}
 
 	const httpService = new HttpService();
-	const tasks: Task[] = [];
+	const tasks: ITask[] = [];
 	const teams = await connection
 		.getRepository(OrganizationTeam)
 		.createQueryBuilder()
@@ -126,7 +120,7 @@ export const createRandomTask = async (
 	});
 
 	labels = _.uniq(labels, (label) => label.name);
-	const tags: Tag[] = await createTags(connection, labels);
+	const tags: ITag[] = await createTags(connection, labels);
 
 	for await (const tenant of tenants || []) {
 		const organizations = await connection.manager.find(Organization, {
@@ -141,7 +135,7 @@ export const createRandomTask = async (
 			const task = new Task();
 			task.tags = _.filter(
 				tags,
-				(tag: Tag) =>
+				(tag: ITag) =>
 					!!issue.labels.find((label: any) => label.name === tag.name)
 			);
 			task.title = issue.title;
@@ -166,7 +160,7 @@ export async function createTags(connection: Connection, labels) {
 		return [];
 	}
 
-	const tags: Tag[] = labels.map(
+	const tags: ITag[] = labels.map(
 		(label) =>
 			new Tag({
 				name: label.name,

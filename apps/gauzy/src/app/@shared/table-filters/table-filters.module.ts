@@ -12,7 +12,10 @@ import { InputFilterComponent } from './input-filter.component';
 import { OrganizationContactFilterComponent } from './organization-contact-filter.component';
 import { PaymentMethodFilterComponent } from './payment-method-filter.component';
 import { TagsColorFilterComponent } from './tags-color-filter.component';
+import { OrganizationTeamFilterComponent } from './organization-team-filter.component';
 import { VendorFilterComponent } from './vendor-filter.component';
+import { TaskStatusFilterComponent } from './task-status-filter.component';
+import { TaskStatusSelectModule } from '../tasks/task-status-select/task-status-select.module';
 
 @NgModule({
 	imports: [
@@ -24,7 +27,8 @@ import { VendorFilterComponent } from './vendor-filter.component';
 		TagsColorInputModule,
 		VendorSelectModule,
 		ExpenseCategorySelectModule,
-		ContactSelectModule
+		ContactSelectModule,
+		TaskStatusSelectModule
 	],
 	declarations: [
 		OrganizationContactFilterComponent,
@@ -32,7 +36,9 @@ import { VendorFilterComponent } from './vendor-filter.component';
 		TagsColorFilterComponent,
 		VendorFilterComponent,
 		ExpenseCategoryFilterComponent,
-		InputFilterComponent
+		InputFilterComponent,
+		OrganizationTeamFilterComponent,
+		TaskStatusFilterComponent
 	],
 	exports: [],
 	providers: []
