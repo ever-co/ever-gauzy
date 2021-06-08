@@ -14,7 +14,7 @@ import { Subscription } from 'rxjs/internal/Subscription';
     `,
 })
 export class InputFilterComponent extends DefaultFilter implements OnInit, OnDestroy, OnChanges {
-    private inputControl = new FormControl();
+    public inputControl = new FormControl();
     protected subscription: Subscription;
 
     constructor() {
