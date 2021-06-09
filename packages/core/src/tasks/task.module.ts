@@ -13,6 +13,7 @@ import { EmployeeService } from '../employee/employee.service';
 import { RoleService } from '../role/role.service';
 import { Role } from '../role/role.entity';
 import { TenantModule } from '../tenant/tenant.module';
+import { CqrsModule } from '@nestjs/cqrs';
 
 @Module({
 	imports: [
@@ -24,7 +25,8 @@ import { TenantModule } from '../tenant/tenant.module';
 			Employee,
 			Role
 		]),
-		TenantModule
+		TenantModule,
+		CqrsModule
 	],
 	controllers: [TaskController],
 	providers: [

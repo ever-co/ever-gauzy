@@ -1,0 +1,10 @@
+<ng-select
+	[addTag]="false"
+	[clearable]="true"
+	[items]="statuses"
+	(change)="selectStatus($event)"
+	[(ngModel)]="status"
+	[placeholder]="placeholder || 'TASKS_PAGE.TASKS_STATUS' | translate"
+	bindLabel="name"
+	appendTo="body"
+></ng-select>

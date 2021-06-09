@@ -41,6 +41,8 @@ import { AddTaskDialogModule } from '../../@shared/tasks/add-task-dialog/add-tas
 import { TasksSprintSettingsViewModule } from '../../@shared/tasks-sprint-settings-view/tasks-sprint-settings-view.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
+import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
+import { PaginationModule } from '../../@shared/pagination/pagination.module';
 
 @NgModule({
 	declarations: [
@@ -86,8 +88,9 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		DragDropModule,
 		BackNavigationModule,
 		TasksSprintSettingsViewModule,
-		HeaderTitleModule
-	],
-	entryComponents: [MyTaskDialogComponent, TeamTaskDialogComponent]
+		HeaderTitleModule,
+		TableFiltersModule,
+		PaginationModule
+	]
 })
 export class TasksModule {}

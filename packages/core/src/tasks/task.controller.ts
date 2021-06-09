@@ -20,10 +20,11 @@ import { AuthGuard } from '@nestjs/passport';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import { PermissionsEnum, IGetTaskByEmployeeOptions } from '@gauzy/contracts';
-import { EmployeeService } from '../employee/employee.service';
 import { RequestContext } from '../core/context';
 import { TenantPermissionGuard } from '../shared/guards/auth/tenant-permission.guard';
 import { ParseJsonPipe } from '../shared';
+import { CommandBus } from '@nestjs/cqrs';
+import { TaskCreateCommand } from './commands';
 
 @ApiTags('Tasks')
 @UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
@@ -31,7 +32,7 @@ import { ParseJsonPipe } from '../shared';
 export class TaskController extends CrudController<Task> {
 	constructor(
 		private readonly taskService: TaskService,
-		private readonly employeeService: EmployeeService
+		private readonly commandBus: CommandBus
 	) {
 		super(taskService);
 	}
@@ -73,14 +74,10 @@ export class TaskController extends CrudController<Task> {
 		description: 'Records not found'
 	})
 	@Get('me')
-	async findMyTasks(): Promise<IPagination<Task>> {
-		//If user is not an employee, then this will return 404
-		const employee = await this.employeeService.findOne({
-			where: {
-				user: { id: RequestContext.currentUser().id }
-			}
-		});
-		return this.taskService.getMyTasks(employee.id);
+	async findMyTasks(
+		@Query() data: any
+	): Promise<IPagination<Task>> {
+		return this.taskService.getMyTasks(data);
 	}
 
 	@ApiOperation({ summary: 'Find my team tasks.' })
@@ -95,10 +92,9 @@ export class TaskController extends CrudController<Task> {
 	})
 	@Get('team')
 	async findTeamTasks(
-		@Query('data', ParseJsonPipe) data: any
+		@Query() data: any
 	): Promise<IPagination<Task>> {
-		const { employeeId } = data;
-		return this.taskService.findTeamTasks(employeeId);
+		return this.taskService.findTeamTasks(data);
 	}
 
 	@ApiOperation({
@@ -136,7 +132,13 @@ export class TaskController extends CrudController<Task> {
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
 	@Post()
 	async createTask(@Body() entity: Task): Promise<Task> {
-		return this.taskService.createTask(entity);
+		const user = RequestContext.currentUser();
+		return await this.commandBus.execute(
+			new TaskCreateCommand({
+				...entity,
+				creator: user
+			})
+		);
 	}
 
 	@ApiOperation({ summary: 'Update an existing task' })
@@ -157,7 +159,10 @@ export class TaskController extends CrudController<Task> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
 	@Put(':id')
-	async update(@Param('id') id: string, @Body() entity: Task): Promise<any> {
+	async update(
+		@Param('id') id: string,
+		@Body() entity: Task
+	): Promise<any> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
 		try {

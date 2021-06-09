@@ -21,12 +21,10 @@
 			</h4>
 		</div>
 		<div class="tasks-component__settings">
-			<ng-container *ngIf="selectedProject$ | async as selectedProject">
+			<ng-container *ngIf="selectedProject">
 				<button
-					class="project-settings"
 					*ngIf="selectedProject.id !== defaultProject.id"
 					nbButton
-					class="tasks-component__setup-btn mr-2"
 				>
 					<nb-icon
 						icon="settings"
@@ -42,7 +40,7 @@
 	</nb-card-header>
 	<nb-card-body>
 		<ng-container [ngSwitch]="viewMode">
-			<ng-template [ngSwitchCase]="'GRID'">
+			<ng-template [ngSwitchCase]="taskListTypeEnum.GRID">
 				<div class="mb-3">
 					<button
 						nbButton
@@ -53,37 +51,51 @@
 						<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 						>{{ 'BUTTONS.ADD' | translate }}
 					</button>
-					<ng-container *ngIf="dataLayoutStyle === 'TABLE'">
+					<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
 						<ng-container
 							*ngTemplateOutlet="actionButtons"
 						></ng-container>
 					</ng-container>
 				</div>
-				<ng-container>
+				<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="gridLayout">
 					<ng2-smart-table
 						[settings]="settingsSmartTable"
-						[source]="availableTasks$ | async"
+						[source]="smartTableSource"
 						(userRowSelect)="selectTask($event)"
 						style="cursor: pointer"
 						#tasksTable
-						*ngIf="dataLayoutStyle === 'TABLE'"
 					>
 					</ng2-smart-table>
+				</ng-template>
+				<ng-template #gridLayout>
 					<ga-card-grid
 						[settings]="settingsSmartTable"
 						[source]="availableTasks$ | async"
-						*ngIf="dataLayoutStyle === 'CARDS_GRID'"
+						[cardSize]="'big'"
 						[buttonTemplate]="actionButtons"
 					></ga-card-grid>
-				</ng-container>
+					<div class="pagination-container">
+						<ng-container 
+							*ngIf="pagination.totalItems > pagination.itemsPerPage"
+						>
+							<ga-pagination 
+								(selectedPage)="onPageChange($event)"
+								[doEmit]="false"
+								[totalItems]="pagination?.totalItems" 
+								[itemsPerPage]="pagination?.itemsPerPage" 
+								[activePage]="pagination?.activePage">
+							</ga-pagination>
+						</ng-container>
+					</div>
+				</ng-template>
 			</ng-template>
 
-			<ng-template [ngSwitchCase]="'SPRINT'">
+			<ng-template [ngSwitchCase]="taskListTypeEnum.SPRINT">
 				<ga-tasks-sprint-view
 					(createTaskEvent)="createTaskDialog()"
 					(editTaskEvent)="editTaskDialog($event)"
 					(deleteTaskEvent)="deleteTask($event)"
-					[project]="selectedProject$ | async"
+					[project]="selectedProject"
 					[tasks]="availableTasks$ | async"
 				></ga-tasks-sprint-view>
 			</ng-template>
