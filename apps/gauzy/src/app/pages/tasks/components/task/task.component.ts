@@ -130,6 +130,7 @@ export class TaskComponent
 					this.selectedProject = project;
 					this.viewMode = !!project ? (project.taskListType as TaskListTypeEnum) : TaskListTypeEnum.GRID;
 				}),
+				tap(() => this.refreshPagination()),
 				tap(() => this.subject$.next()),
 				untilDestroyed(this)
 			)
@@ -168,6 +169,7 @@ export class TaskComponent
 				distinctUntilChange(),
 				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.refreshPagination()),
 				tap(() => this.subject$.next()),
 				untilDestroyed(this)
 			)
@@ -320,7 +322,7 @@ export class TaskComponent
 				status: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_STATUS'),
 					type: 'custom',
-					width: '15%',
+					width: '12%',
 					renderComponent: StatusViewComponent,
 					filter: {
 						type: 'custom',
@@ -347,23 +349,12 @@ export class TaskComponent
 					renderComponent: TaskTeamsComponent
 				}
 			};
-		} else if (this.isMyTasksPage()) {
+		} else if (this.isMyTasksPage() || this.isTeamTaskPage()) {
 			return {
 				assignTo: {
 					title: this.getTranslation('TASKS_PAGE.TASK_ASSIGNED_TO'),
 					type: 'custom',
-					filter: {
-						type: 'custom',
-						component: OrganizationTeamFilterComponent
-					},
-					renderComponent: AssignedToComponent
-				}
-			};
-		} else if (this.isTeamTaskPage()) {
-			return {
-				assignTo: {
-					title: this.getTranslation('TASKS_PAGE.TASK_ASSIGNED_TO'),
-					type: 'custom',
+					width: '12%',
 					filter: {
 						type: 'custom',
 						component: OrganizationTeamFilterComponent
