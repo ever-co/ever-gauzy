@@ -24,12 +24,11 @@
 			<ng-container *ngIf="selectedProject">
 				<button
 					*ngIf="selectedProject.id !== defaultProject.id"
+					class="mr-2"
 					nbButton
+					(click)="openTasksSettings(selectedProject)"
 				>
-					<nb-icon
-						icon="settings"
-						(click)="openTasksSettings(selectedProject)"
-					></nb-icon>
+					<nb-icon icon="settings"></nb-icon>
 				</button>
 			</ng-container>
 			<ga-layout-selector
@@ -74,22 +73,13 @@
 						[cardSize]="'big'"
 						[buttonTemplate]="actionButtons"
 					></ga-card-grid>
-					<div class="pagination-container">
-						<ng-container 
-							*ngIf="pagination.totalItems > pagination.itemsPerPage"
-						>
-							<ga-pagination 
-								(selectedPage)="onPageChange($event)"
-								[doEmit]="false"
-								[totalItems]="pagination?.totalItems" 
-								[itemsPerPage]="pagination?.itemsPerPage" 
-								[activePage]="pagination?.activePage">
-							</ga-pagination>
-						</ng-container>
-					</div>
+					<ng-container 
+						*ngTemplateOutlet="paginationTemplate; context: { 
+							pagination: pagination 
+						}">
+					</ng-container>
 				</ng-template>
 			</ng-template>
-
 			<ng-template [ngSwitchCase]="taskListTypeEnum.SPRINT">
 				<ga-tasks-sprint-view
 					(createTaskEvent)="createTaskDialog()"
@@ -98,6 +88,11 @@
 					[project]="selectedProject"
 					[tasks]="availableTasks$ | async"
 				></ga-tasks-sprint-view>
+				<ng-container 
+					*ngTemplateOutlet="paginationTemplate; context: { 
+						pagination: pagination 
+					}">
+				</ng-container>
 			</ng-template>
 		</ng-container>
 	</nb-card-body>
@@ -141,4 +136,23 @@
 		<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
 		{{ 'BUTTONS.DELETE' | translate }}
 	</button>
+</ng-template>
+
+
+<ng-template 
+	#paginationTemplate
+	let-pagination="pagination">
+	<div class="pagination-container">
+		<ng-container 
+			*ngIf="pagination.totalItems > pagination.itemsPerPage"
+		>
+			<ga-pagination 
+				(selectedPage)="onPageChange($event)"
+				[doEmit]="false"
+				[totalItems]="pagination?.totalItems" 
+				[itemsPerPage]="pagination?.itemsPerPage" 
+				[activePage]="pagination?.activePage">
+			</ga-pagination>
+		</ng-container>
+	</div>
 </ng-template>
