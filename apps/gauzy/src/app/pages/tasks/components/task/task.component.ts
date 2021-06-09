@@ -19,7 +19,6 @@ import {
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { MyTaskDialogComponent } from './../my-task-dialog/my-task-dialog.component';
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
@@ -44,6 +43,8 @@ import {
 import { ALL_PROJECT_SELECTED } from './../../../../@shared/project-select/project/default-project';
 import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
 import { OrganizationTeamFilterComponent, TaskStatusFilterComponent } from './../../../../@shared/table-filters';
+import { PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
+import { InputFilterComponent } from './../../../../@shared/table-filters/input-filter.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -51,9 +52,7 @@ import { OrganizationTeamFilterComponent, TaskStatusFilterComponent } from './..
 	templateUrl: './task.component.html',
 	styleUrls: ['task.component.scss']
 })
-export class TaskComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class TaskComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 
 	settingsSmartTable: object;
 	loading: boolean;
@@ -74,11 +73,6 @@ export class TaskComponent
 	subject$: Subject<any> = new Subject();
 	selectedEmployee: ISelectedEmployee;
 	selectedProject: IOrganizationProject;
-	pagination: any = {
-		totalItems: 0,
-		activePage: 1,
-		itemsPerPage: 10
-	};
 
 	tasksTable: Ng2SmartTableComponent;
 	@ViewChild('tasksTable') set content(content: Ng2SmartTableComponent) {
@@ -109,7 +103,7 @@ export class TaskComponent
 		this._applyTranslationOnSmartTable();
 		this.subject$
 			.pipe(
-				debounceTime(300),
+				debounceTime(400),
 				tap(() => this.loading = true),
 				tap(() => this.clearItem()),
 				tap(() => this.getTasks()),
@@ -207,8 +201,11 @@ export class TaskComponent
 		const request = {};
 		if (this.selectedProject && this.selectedProject.id) {
 			request['projectId'] = this.selectedProject.id;
+			if (this.viewMode === TaskListTypeEnum.SPRINT) {
+				request['organizationSprintId'] = null;
+			}
 		}
-
+	
 		const relations = [];
 		let endPoint: string; 
 
@@ -242,7 +239,8 @@ export class TaskComponent
 			relations,
 			where: {
 				...{ organizationId, tenantId },
-				...request
+				...request,
+				...this.filters.where
 			},
 			resultMap: (task: ITask) => {
 				return Object.assign({}, task, {
@@ -253,6 +251,8 @@ export class TaskComponent
 				});
 			},
 			finalize: () => {
+				const tasks = this.smartTableSource.getData();
+				this.storeInstance.loadAllTasks(tasks);
 				this.loading = false;
 			}
 		});
@@ -261,8 +261,10 @@ export class TaskComponent
 	async getTasks() {
 		try {
 			this.setSmartTableSource();
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-
+			if (
+				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID ||
+				this.viewMode === TaskListTypeEnum.SPRINT
+			) {
 				// Initiate GRID view pagination
 				const { activePage, itemsPerPage } = this.pagination;
 				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
@@ -274,15 +276,12 @@ export class TaskComponent
 				this.storeInstance.loadAllTasks(tasks);
 
 				this.pagination['totalItems'] =  this.smartTableSource.count();
+
+				this.loading = false;
 			}
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
 		}
-	}
-
-	onPageChange(selectedPage: number) {
-		this.pagination['activePage'] = selectedPage;
-		this.subject$.next();
 	}
 
 	private _loadTableSettings() {
@@ -292,9 +291,15 @@ export class TaskComponent
 				description: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_TITLE'),
 					type: 'custom',
-					filter: true,
 					class: 'align-row',
-					renderComponent: NotesWithTagsComponent
+					renderComponent: NotesWithTagsComponent,
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent
+					},
+					filterFunction: (value) => {
+						this.setFilter([ { field: 'title', search: value } ]);
+					}
 				},
 				projectName: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_PROJECT'),
@@ -327,6 +332,9 @@ export class TaskComponent
 					filter: {
 						type: 'custom',
 						component: TaskStatusFilterComponent
+					},
+					filterFunction: (value) => {
+						this.setFilter([ { field: 'status', search: value } ]);
 					}
 				}
 			}
@@ -349,17 +357,29 @@ export class TaskComponent
 					renderComponent: TaskTeamsComponent
 				}
 			};
-		} else if (this.isMyTasksPage() || this.isTeamTaskPage()) {
+		} else if (this.isMyTasksPage()) {
+			return {
+				assignTo: {
+					title: this.getTranslation('TASKS_PAGE.TASK_ASSIGNED_TO'),
+					type: 'custom',
+					filter: false,
+					renderComponent: AssignedToComponent
+				}
+			};
+		} else if(this.isTeamTaskPage()) {
 			return {
 				assignTo: {
 					title: this.getTranslation('TASKS_PAGE.TASK_ASSIGNED_TO'),
 					type: 'custom',
 					width: '12%',
+					renderComponent: AssignedToComponent,
 					filter: {
 						type: 'custom',
 						component: OrganizationTeamFilterComponent
 					},
-					renderComponent: AssignedToComponent
+					filterFunction: (value) => {
+						this.setFilter([ { field: 'members', search: value ? [value.id] : [] } ]);
+					}
 				}
 			};
 		} else {
@@ -418,7 +438,6 @@ export class TaskComponent
 			});
 		}
 		let dialog;
-		console.log(this.selectedTask);
 		if (this.isTasksPage()) {
 			dialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {
@@ -608,13 +627,6 @@ export class TaskComponent
 			this.tasksTable.grid.dataSet['willSelect'] = 'false';
 			this.tasksTable.grid.dataSet.deselectAll();
 		}
-	}
-
-	/*
-	* refresh pagination
-	*/
-	refreshPagination() {
-		this.pagination['activePage'] = 1;
 	}
 
 	ngOnDestroy(): void {}

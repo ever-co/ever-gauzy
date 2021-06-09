@@ -5,12 +5,13 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Task } from './task.entity';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { ILike, IsNull, Repository, SelectQueryBuilder } from 'typeorm';
 import { CrudService } from '../core';
 import { EmployeeService } from '../employee/employee.service';
 import { RoleService } from '../role/role.service';
 import { RequestContext } from '../core/context';
 import { IEmployee, IGetTaskByEmployeeOptions, RolesEnum } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 
 @Injectable()
 export class TaskService extends CrudService<Task> {
@@ -24,7 +25,7 @@ export class TaskService extends CrudService<Task> {
 	}
 
 	async getMyTasks(filter: any) {
-		const { where : { organizationId, employeeId, projectId } } = filter;
+		const { where : { organizationId, employeeId, projectId, status, title, organizationSprintId = null } } = filter;
 
 		//If user is not an employee, then this will return 404
 		const employee = await this.employeeService.findOne({
@@ -74,6 +75,15 @@ export class TaskService extends CrudService<Task> {
 				if (projectId) {
 					query.andWhere(`"${qb.alias}"."projectId" = :projectId`, { projectId });
 				}
+				if (status) {
+					query.andWhere(`"${qb.alias}"."status" = :status`, { status });
+				}
+				if (title) {
+					query.andWhere(`"${qb.alias}"."title" ILIKE :title`, { title: `%${title}%` });
+				}
+				if (organizationSprintId) {
+					query.andWhere(`"${qb.alias}"."organizationSprintId" IS NULL`);
+				}
 			})
 			.getManyAndCount()
 		return { items, total };
@@ -108,7 +118,7 @@ export class TaskService extends CrudService<Task> {
 	}
 
 	async getTeamTasks(filter: any) {
-		const { where : { organizationId, employeeId, projectId } } = filter;
+		const { where : { organizationId, employeeId, projectId, status, title, members = [], organizationSprintId = null } } = filter;
 		const query = this.taskRepository.createQueryBuilder('task');
 
 		if (filter.page && filter.limit) {
@@ -134,19 +144,31 @@ export class TaskService extends CrudService<Task> {
 							'organization_team_employee_sub', 
 							'"organization_team_employee_sub"."organizationTeamId" = "task_team_sub"."organizationTeamId"'
 						);
-						
 						if (employeeId) {
 							subQuery.andWhere('"organization_team_employee_sub"."employeeId" = :employeeId', {
 								employeeId
+							});
+						}
+						if (isNotEmpty(members)) {
+							subQuery.andWhere('"task_team_sub"."organizationTeamId" IN (:...members)', {
+								members
 							});
 						}
 					return '"task_teams"."taskId" IN ' + subQuery.distinct(true).getQuery();
 				})
 				.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId })
 				.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId: RequestContext.currentTenantId() });
-
 				if (projectId) {
 					query.andWhere(`"${qb.alias}"."projectId" = :projectId`, { projectId });
+				}
+				if (status) {
+					query.andWhere(`"${qb.alias}"."status" = :status`, { status });
+				}
+				if (title) {
+					query.andWhere(`"${qb.alias}"."title" ILIKE :title`, { title: `%${title}%` });
+				}
+				if (organizationSprintId) {
+					query.andWhere(`"${qb.alias}"."organizationSprintId" IS NULL`);
 				}
 			})
 			.getManyAndCount();
@@ -191,5 +213,19 @@ export class TaskService extends CrudService<Task> {
 		} else {
 			return this.getTeamTasks(filter);
 		}
+	}
+
+	public search(filter: any) {
+		if ('where' in filter) {
+			const { where } = filter;
+			if ('title' in where) {
+				const { title } = where;
+				filter.where.title = ILike(`%${title}%`)	
+			}
+			if ('organizationSprintId' in where) {
+				filter.where.organizationSprintId = IsNull();	
+			}
+		}
+		return super.search(filter);
 	}
 }

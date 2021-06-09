@@ -28,15 +28,7 @@ export class SprintService extends TranslationBaseComponent {
 
 	getAllSprints(findInput: IGetSprintsOptions = {}): Observable<any> {
 		const data = JSON.stringify({
-			relations: [
-				// 'tasks'
-				// 'project',
-				// 'tags',
-				// 'members',
-				// 'members.user',
-				// 'teams',
-				// 'creator'
-			],
+			relations: ['tasks'],
 			findInput
 		});
 		return this._http
