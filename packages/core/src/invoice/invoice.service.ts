@@ -1,4 +1,4 @@
-import { CrudService } from '../core';
+import { CrudService, getDateRangeFormat } from '../core';
 import { Invoice } from './invoice.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, In, Repository } from 'typeorm';
@@ -16,7 +16,6 @@ import {
 	generateInvoicePaymentPdfDefinition
 } from './index';
 import { OrganizationService } from 'organization';
-import * as moment from 'moment';
 
 @Injectable()
 export class InvoiceService extends CrudService<Invoice> {
@@ -323,18 +322,23 @@ export class InvoiceService extends CrudService<Invoice> {
 					id: In(where.toContact)
 				}
 			}
-			if (where.dueDate) {
-				const date = moment.utc(where.dueDate);
-				filter.where.dueDate = Between(
-					date.startOf('day').toDate(), 
-					date.endOf('day').toDate()
-				);
-			}
 			if (where.invoiceDate) {
-				const date = moment.utc(where.invoiceDate);
-				filter.where.invoiceDate = Between(
-					date.startOf('day').toDate(), 
-					date.endOf('day').toDate()
+				const { start, end } = getDateRangeFormat(
+					new Date(where.invoiceDate), 
+					new Date(where.invoiceDate),
+					true
+				);
+				filter.where.invoiceDate = Between(start, end);
+			}
+			if (where.dueDate) {
+				const { start, end } = getDateRangeFormat(
+					new Date(where.dueDate), 
+					new Date(where.dueDate),
+					true
+				);
+				filter.where.dueDate = Between(
+					start,
+					end
 				);
 			}
 		}

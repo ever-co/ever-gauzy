@@ -185,7 +185,8 @@
 		"TARGET_VALUE": "Целевое значение",
 		"LAST_UPDATED": "Последнее обновление",
 		"CREATED_BY": "Создано",
-		"NO_DATA_MESSAGE": "Нет данных"
+		"NO_DATA_MESSAGE": "Нет данных",
+		"TAGS": "Теги"
 	},
 	"FORM": {
 		"USERNAME": "Имя пользователя",
@@ -2142,9 +2143,9 @@
 		"EMAIL_WRONG_FORMAT": "Адрес электронной почты в неправильном формате",
 		"PHONE_WRONG_FORMAT": "Телефон в неправильном формате",
 		"SELECTED": "Выбрано",
-		"SUCCESFULLY_ADDED_PRODUCTS": "Успешно добавленные товары",
-		"MAIN": "Main",
-		"INVENTORY":"Inventory"
+		"SUCCESFULLY_ADDED_PRODUCTS": "Товары успешно добавлены!",
+		"MAIN": "Главная",
+		"INVENTORY": "Инвентаризация"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",

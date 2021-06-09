@@ -16,12 +16,13 @@ import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../../@core/services/toastr.service';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { Subject } from 'rxjs/internal/Subject';
 import { ServerDataSource } from '../../../@core/utils/smart-table/server.data-source';
 import { API_PREFIX } from '../../../@core/constants';
 import { HttpClient } from '@angular/common/http';
 import { InvoiceEstimateTotalValueComponent } from '../table-components/invoice-total-value.component';
+import { InputFilterComponent } from '../../../@shared/table-filters/input-filter.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -60,6 +61,17 @@ export class InvoicesReceivedComponent
 	}
 	get isEstimate() {
 		return this._isEstimate;
+	}
+
+	/*
+	* getter setter for filters 
+	*/
+	private _filters: any = {};
+	set filters(val: any) {
+		this._filters = val;
+	}
+	get filters() {
+		return this._filters;
 	}
 
 	invoiceReceivedTable: Ng2SmartTableComponent;
@@ -155,7 +167,8 @@ export class InvoicesReceivedComponent
 			where: {
 				sentTo: organizationId,
 				tenantId,
-				isEstimate: (this.isEstimate === true) ? 1 : 0
+				isEstimate: (this.isEstimate === true) ? 1 : 0,
+				...(this.filters.where) ? this.filters.where : {}
 			},
 			finalize: () => {
 				this.loading = false;
@@ -251,12 +264,46 @@ export class InvoicesReceivedComponent
 						? this.getTranslation('INVOICES_PAGE.ESTIMATE_NUMBER')
 						: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'string',
-					sortDirection: 'asc'
+					sortDirection: 'asc',
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent,
+					},
+					filterFunction: (value) => {
+						if (isNotEmpty(value)) {
+							this.filters = {
+								where: { 
+									...this.filters.where,
+									invoiceNumber: value
+								}
+							}
+						} else {
+							delete this.filters.where.invoiceNumber;
+						}
+						this.subject$.next();
+					}
 				},
 				totalValue: {
 					title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
 					type: 'custom',
 					renderComponent: InvoiceEstimateTotalValueComponent,
+					filter: {
+						type: 'custom',
+						component: InputFilterComponent,
+					},
+					filterFunction: (value) => {
+						if (isNotEmpty(value)) {
+							this.filters = {
+								where: { 
+									...this.filters.where,
+									totalValue: value
+								}
+							}
+						} else {
+							delete this.filters.where.totalValue;
+						}
+						this.subject$.next();
+					}
 				}
 			}
 		};

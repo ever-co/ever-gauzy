@@ -1,13 +1,6 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex">
-		<h5>
-			{{
-				(selectedTask
-					? 'TASKS_PAGE.EDIT_TASKS'
-					: 'TASKS_PAGE.ADD_TASKS'
-				) | translate
-			}}
-		</h5>
+		<h5> {{ (selectedTask ? 'TASKS_PAGE.EDIT_TASKS' : 'TASKS_PAGE.ADD_TASKS' ) | translate }} </h5>
 		<nb-icon
 			class="ml-auto mt-1 close"
 			icon="close-outline"
@@ -22,20 +15,14 @@
 						<label class="label">{{
 							'CONTEXT_MENU.PROJECT' | translate
 						}}</label>
-						<ng-select
-							[addTag]="addNewProject"
-							[items]="projects"
-							nbInput
-							bindLabel="name"
-							[searchable]="true"
-							autocomplete="on"
-							formControlName="project"
-							placeholder="{{
-								'CONTEXT_MENU.PROJECT' | translate
-							}}"
-							appendTo="body"
-						>
-						</ng-select>
+						<ga-project-selector
+							formControlName="projectId"
+							[placeholder]="'CONTEXT_MENU.PROJECT' | translate"
+							[skipGlobalChange]="true"
+							[defaultSelected]="false"
+							[showAllOption]="false"
+							(onChanged)="selectedProject($event)"
+						></ga-project-selector>
 					</div>
 				</div>
 				<div class="col-sm-6">
@@ -43,36 +30,30 @@
 						<label class="label">{{
 							'TASKS_PAGE.TASKS_STATUS' | translate
 						}}</label>
-						<ng-select
-							[items]="statuses"
-							nbInput
-							bindLabel="name"
-							autocomplete="on"
+						<ga-task-status-select
 							formControlName="status"
-							placeholder="{{
-								'TASKS_PAGE.TASKS_STATUS' | translate
-							}}"
-							appendTo="body"
-						>
-						</ng-select>
+							[placeholder]="'TASKS_PAGE.TASKS_STATUS' | translate"
+						></ga-task-status-select>
 					</div>
 				</div>
+			</div>
+			<div class="row">
 				<div class="col-sm-12">
 					<nb-radio-group
 						(valueChange)="onParticipantsChange($event)"
 						[value]="participants"
 					>
-						<nb-radio class="nb-radio" [value]="'employees'"
+						<nb-radio class="nb-radio" [value]="taskParticipantEnum.EMPLOYEES"
 							>{{ 'TASKS_PAGE.TASK_MEMBERS' | translate }}
 						</nb-radio>
-						<nb-radio class="nb-radio" [value]="'teams'"
+						<nb-radio class="nb-radio" [value]="taskParticipantEnum.TEAMS"
 							>{{ 'TASKS_PAGE.TASK_TEAMS' | translate }}
 						</nb-radio>
 					</nb-radio-group>
 				</div>
 				<div class="col-sm-12">
 					<div class="form-group">
-						<ng-container *ngIf="participants === 'employees'">
+						<ng-container *ngIf="participants === taskParticipantEnum.EMPLOYEES">
 							<ga-employee-multi-select
 								[selectedEmployeeIds]="selectedMembers"
 								[allEmployees]="employees"
@@ -80,7 +61,7 @@
 							>
 							</ga-employee-multi-select>
 						</ng-container>
-						<ng-container *ngIf="participants === 'teams'">
+						<ng-container *ngIf="participants === taskParticipantEnum.TEAMS">
 							<label class="label">{{
 								'TASKS_PAGE.TASK_TEAMS' | translate
 							}}</label>
@@ -90,9 +71,7 @@
 								[selected]="selectedTeams"
 								(selectedChange)="onTeamsSelected($event)"
 								fullWidth
-								placeholder="{{
-									'FORM.PLACEHOLDERS.CHOOSE_TEAMS' | translate
-								}}"
+								[placeholder]="'FORM.PLACEHOLDERS.CHOOSE_TEAMS' | translate"
 							>
 								<nb-option
 									*ngFor="let team of teams"
@@ -104,30 +83,34 @@
 						</ng-container>
 					</div>
 				</div>
+			</div>
+			<div class="row">
 				<div class="col-sm-12">
-					<label class="label">{{
-						'TASKS_PAGE.TASKS_TITLE' | translate
-					}}</label>
-					<input
-						class="name-input"
-						formControlName="title"
-						type="text"
-						nbInput
-						placeholder="{{
-							'FORM.PLACEHOLDERS.ADD_TITLE' | translate
-						}}"
-					/>
+					<div class="form-group">
+						<label class="label">{{
+							'TASKS_PAGE.TASKS_TITLE' | translate
+						}}</label>
+						<input
+							class="name-input"
+							formControlName="title"
+							type="text"
+							nbInput
+							[placeholder]="'FORM.PLACEHOLDERS.ADD_TITLE' | translate"
+						/>
+					</div>
 				</div>
 				<div class="col-sm-12">
-					<div class="formGroup">
+					<div class="form-group">
 						<ga-tags-color-input
-							[selectedTags]="tags"
+							[selectedTags]="form.get('tags').value"
 							(selectedTagsEvent)="selectedTagsHandler($event)"
 							[isOrgLevel]="true"
 						>
 						</ga-tags-color-input>
 					</div>
 				</div>
+			</div>
+			<div class="row">
 				<div class="col-sm-6">
 					<div class="form-group">
 						<label for="dueDate" class="label">{{
@@ -137,9 +120,7 @@
 							formControlName="dueDate"
 							type="text"
 							nbInput
-							placeholder="{{
-								'TASKS_PAGE.DUE_DATE' | translate
-							}}"
+							[placeholder]="'TASKS_PAGE.DUE_DATE' | translate"
 							[nbDatepicker]="taskDueDatePicker"
 							id="dueDate"
 							fullWidth
@@ -157,11 +138,8 @@
 								formControlName="estimateDays"
 								type="number"
 								nbInput
-								placeholder="{{
-									'TASKS_PAGE.ESTIMATE_DAYS' | translate
-								}}"
+								[placeholder]="'TASKS_PAGE.ESTIMATE_DAYS' | translate"
 							/>
-
 							<input
 								formControlName="estimateHours"
 								type="number"
@@ -173,11 +151,8 @@
 								min="0"
 								max="23"
 								nbInput
-								placeholder="{{
-									'TASKS_PAGE.ESTIMATE_HOURS' | translate
-								}}"
+								[placeholder]="'TASKS_PAGE.ESTIMATE_HOURS' | translate"
 							/>
-
 							<input
 								formControlName="estimateMinutes"
 								type="number"
@@ -189,27 +164,26 @@
 								min="0"
 								max="59"
 								nbInput
-								placeholder="{{
-									'TASKS_PAGE.ESTIMATE_MINUTES' | translate
-								}}"
+								[placeholder]="'TASKS_PAGE.ESTIMATE_MINUTES' | translate"
 							/>
 						</div>
 					</div>
 				</div>
-
+			</div>
+			<div class="row">
 				<div class="col-sm-12">
-					<label class="label">{{
-						'TASKS_PAGE.TASKS_DESCRIPTION' | translate
-					}}</label>
-					<textarea
-						formControlName="description"
-						nbInput
-						fullWidth
-						class="description"
-						placeholder="{{
-							'FORM.PLACEHOLDERS.DESCRIPTION' | translate
-						}}"
-					></textarea>
+					<div class="form-group">
+						<label class="label">{{
+							'TASKS_PAGE.TASKS_DESCRIPTION' | translate
+						}}</label>
+						<textarea
+							formControlName="description"
+							nbInput
+							fullWidth
+							class="description"
+							[placeholder]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"
+						></textarea>
+					</div>
 				</div>
 			</div>
 		</form>

@@ -211,7 +211,9 @@ export class KeyResultDetailsComponent
 				this._store.editTask({
 					...taskResponse,
 					id: this.task.id
-				});
+				})
+				.pipe(takeUntil(this._ngDestroy$))
+				.subscribe();
 				try {
 					this.keyResult.update =
 						taskResponse.status === TaskStatusEnum.COMPLETED

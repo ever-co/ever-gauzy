@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
-import { ITask, TaskStatusEnum } from '@gauzy/contracts';
+import { ITask, IUser, TaskStatusEnum } from '@gauzy/contracts';
 import {
 	Employee,
 	InvoiceItem,
@@ -93,7 +93,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	creator?: User;
+	creator?: IUser;
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((task: Task) => task.creator)

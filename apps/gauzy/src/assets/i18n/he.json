@@ -185,7 +185,8 @@
 		"TARGET_VALUE": "Target value",
 		"LAST_UPDATED": "Last Updated",
 		"CREATED_BY": "Created By",
-		"NO_DATA_MESSAGE": "No Data"
+		"NO_DATA_MESSAGE": "No Data",
+		"TAGS": "Tags"
 	},
 	"FORM": {
 		"USERNAME": "שם משתמש",
@@ -2142,9 +2143,9 @@
 		"EMAIL_WRONG_FORMAT": "Email is in wrong format",
 		"PHONE_WRONG_FORMAT": "Phone is in wrong format",
 		"SELECTED": "Selected",
-		"SUCCESFULLY_ADDED_PRODUCTS": "Successfully added products",
-		"MAIN": "Main",
-		"INVENTORY":"Inventory"
+		"SUCCESFULLY_ADDED_PRODUCTS": "Products were added successfully!",
+		"MAIN": "עיקרי",
+		"INVENTORY": "Inventory"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

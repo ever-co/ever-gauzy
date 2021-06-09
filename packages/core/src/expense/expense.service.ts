@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions, Between, ILike } from 'typeorm';
 import { Expense } from './expense.entity';
-import { IPagination } from '../core';
+import { getDateRangeFormat, IPagination } from '../core';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { RequestContext } from '../core/context';
 import { IGetExpenseInput, PermissionsEnum } from '@gauzy/contracts';
@@ -208,20 +208,18 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 				const { search } = filters.purpose;
 				filter.where.purpose = ILike(`%${search}%`);
 			}
-			if ('displayStatus' in filters) {
-				const { search } = filters.displayStatus;
-				filter.where.status = ILike(`%${search}%`);
-			}
 			delete filter['filters'];
 		}
 		if ('where' in filter) {
 			const { where } = filter;
 			if ('valueDate' in where) {
 				const { valueDate } = where;
-				filter.where.valueDate = Between(
-					moment(valueDate).startOf('month'), 
-					moment(valueDate).endOf('month')
+				const { start, end } = getDateRangeFormat(
+					new Date(moment(valueDate).startOf('month').format()),
+					new Date(moment(valueDate).endOf('month').format()),
+					true
 				);
+				filter.where.valueDate = Between(start, end); 
 			}
 		}
 		return super.search(filter);

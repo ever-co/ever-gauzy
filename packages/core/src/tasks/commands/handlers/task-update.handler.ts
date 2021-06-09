@@ -10,7 +10,6 @@ export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 	public async execute(command: TaskUpdateCommand): Promise<ITask> {
 		const { input } = command;
 		const { id } = input;
-
 		return await this.updateTask(id, input);
 	}
 

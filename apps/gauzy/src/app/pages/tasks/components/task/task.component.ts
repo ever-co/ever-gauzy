@@ -1,15 +1,13 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { FormGroup } from '@angular/forms';
 import {
 	Router,
-	NavigationEnd,
-	RouterEvent,
 	ActivatedRoute
 } from '@angular/router';
-import { Observable } from 'rxjs';
-import { first, map, tap, filter, debounceTime } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+import { combineLatest, Observable, Subject } from 'rxjs';
+import { first, tap, filter, debounceTime } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import {
 	ITask,
@@ -17,19 +15,19 @@ import {
 	ComponentLayoutStyleEnum,
 	TaskListTypeEnum,
 	IOrganization,
-	IOrganizationTeam,
 	ISelectedEmployee
 } from '@gauzy/contracts';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { MyTaskDialogComponent } from './../my-task-dialog/my-task-dialog.component';
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
-import { ComponentEnum } from '../../../../@core/constants/layout.constants';
 import { AddTaskDialogComponent } from '../../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
 import {
+	ErrorHandlingService,
 	MyTasksStoreService,
-	OrganizationTeamsService,
 	Store,
 	TasksStoreService,
 	TeamTasksStoreService
@@ -44,34 +42,43 @@ import {
 	TaskTeamsComponent
 } from './../../../../@shared/table-components';
 import { ALL_PROJECT_SELECTED } from './../../../../@shared/project-select/project/default-project';
+import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
+import { OrganizationTeamFilterComponent, TaskStatusFilterComponent } from './../../../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-task',
+	selector: 'ngx-tasks',
 	templateUrl: './task.component.html',
 	styleUrls: ['task.component.scss']
 })
 export class TaskComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
+
 	settingsSmartTable: object;
-	loading = false;
-	smartTableSource = new LocalDataSource();
-	form: FormGroup;
-	disableButton = true;
+	loading: boolean;
+	smartTableSource: ServerDataSource;
+	disableButton: boolean;
 	availableTasks$: Observable<ITask[]>;
-	tasks$: Observable<ITask[]>;
-	myTasks$: Observable<ITask[]>;
-	teamTasks$: Observable<ITask[]>;
+	tasks$: Observable<ITask[]> = this._taskStore.tasks$;
+	myTasks$: Observable<ITask[]> = this._myTaskStore.myTasks$;
+	teamTasks$: Observable<ITask[]> = this._teamTaskStore.tasks$;
 	selectedTask: ITask;
-	view: string;
 	viewComponentName: ComponentEnum;
-	teams: IOrganizationTeam[] = [];
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	organization: IOrganization;
-	selectedProject$: Observable<IOrganizationProject>;
 	viewMode: TaskListTypeEnum = TaskListTypeEnum.GRID;
+	taskListTypeEnum = TaskListTypeEnum;
 	defaultProject = ALL_PROJECT_SELECTED;
+	subject$: Subject<any> = new Subject();
+	selectedEmployee: ISelectedEmployee;
+	selectedProject: IOrganizationProject;
+	pagination: any = {
+		totalItems: 0,
+		activePage: 1,
+		itemsPerPage: 10
+	};
 
 	tasksTable: Ng2SmartTableComponent;
 	@ViewChild('tasksTable') set content(content: Ng2SmartTableComponent) {
@@ -90,127 +97,83 @@ export class TaskComponent
 		private readonly router: Router,
 		private readonly _store: Store,
 		private readonly route: ActivatedRoute,
-		private readonly organizationTeamsService: OrganizationTeamsService
+		private readonly httpClient: HttpClient,
+		private readonly _errorHandlingService: ErrorHandlingService,
 	) {
 		super(translateService);
-		this.tasks$ = this._taskStore.tasks$;
-		this.myTasks$ = this._myTaskStore.myTasks$;
-		this.teamTasks$ = this._teamTaskStore.tasks$;
 		this.setView();
 	}
 
 	ngOnInit() {
 		this._loadTableSettings();
 		this._applyTranslationOnSmartTable();
-
-		this._store.selectedEmployee$
+		this.subject$
 			.pipe(
-				filter((employee) => !!employee),
+				debounceTime(300),
+				tap(() => this.loading = true),
+				tap(() => this.clearItem()),
+				tap(() => this.getTasks()),
 				untilDestroyed(this)
 			)
-			.subscribe((selectedEmployee: ISelectedEmployee) => {
-				if (selectedEmployee.id && this.organization) {
-					this.loadTeams(selectedEmployee.id);
-					this.storeInstance.fetchTasks(
-						this.organization,
-						selectedEmployee.id
-					);
-				}
-			});
-		this._store.selectedOrganization$
+			.subscribe();
+		const storeOrganization$ = this._store.selectedOrganization$;
+		const storeEmployee$ = this._store.selectedEmployee$;
+		const storeProject$ = this._store.selectedProject$;
+		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
 			.pipe(
-				filter((organization) => !!organization),
-				untilDestroyed(this)
-			)
-			.subscribe((organization) => {
-				if (organization) {
+				debounceTime(300),
+				filter(([organization, employee, project]) => !!organization && !!employee && !!project),
+				distinctUntilChange(),
+				tap(([organization, employee, project]) => {
 					this.organization = organization;
-					this.loadTeams();
-					this.storeInstance.fetchTasks(this.organization);
-				}
-			});
+					this.selectedEmployee = employee;
+					this.selectedProject = project;
+					this.viewMode = !!project ? (project.taskListType as TaskListTypeEnum) : TaskListTypeEnum.GRID;
+				}),
+				tap(() => this.refreshPagination()),
+				tap(() => this.subject$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter((params) => !!params),
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
+				tap(() => this.createTaskDialog()),
 				untilDestroyed(this)
 			)
-			.subscribe((params) => {
-				if (params.get('openAddDialog') === 'true') {
-					this.createTaskDialog();
-				}
-			});
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
-		this.selectedProject$ = this._store.selectedProject$.pipe(
-			tap((project) => this.selectProject(project)),
-			tap((selectedProject: IOrganizationProject) => {
-				if (!!selectedProject) {
-					this.viewMode = selectedProject.taskListType as TaskListTypeEnum;
-				} else {
-					this.viewMode = TaskListTypeEnum.GRID;
-				}
-			})
-		);
-	}
-
-	selectProject(project: IOrganizationProject | null): void {
-		this.initTasks();
-		this.viewMode = !!project
-			? (project.taskListType as TaskListTypeEnum)
-			: TaskListTypeEnum.GRID;
-
-		if (!!project) {
-			this.availableTasks$ = this.availableTasks$.pipe(
-				map((tasks: ITask[]) =>
-					tasks.filter(
-						(task: ITask) =>
-							task?.project?.id === project.id ||
-							project.id === ALL_PROJECT_SELECTED.id
-					)
-				)
-			);
-		}
+			.subscribe();
 	}
 
 	private initTasks(): void {
 		const pathName = window.location.href;
 		if (pathName.indexOf('tasks/me') !== -1) {
+			this.viewComponentName = ComponentEnum.MY_TASKS;
 			this.availableTasks$ = this.myTasks$;
 			return;
 		}
 		if (pathName.indexOf('tasks/team') !== -1) {
+			this.viewComponentName = ComponentEnum.TEAM_TASKS;
 			this.availableTasks$ = this.teamTasks$;
 			return;
 		}
+		this.viewComponentName = ComponentEnum.ALL_TASKS;
 		this.availableTasks$ = this.tasks$;
 	}
 
 	setView() {
 		this.initTasks();
-		const pathName = window.location.href;
-		if (pathName.indexOf('tasks/me') !== -1) {
-			this._myTaskStore.fetchTasks();
-			this.view = 'my-tasks';
-			this.viewComponentName = ComponentEnum.MY_TASKS;
-		} else if (pathName.indexOf('tasks/team') !== -1) {
-			this.view = 'team-tasks';
-			this.viewComponentName = ComponentEnum.TEAM_TASKS;
-		} else {
-			this.view = 'tasks';
-			this.viewComponentName = ComponentEnum.ALL_TASKS;
-		}
 		this._store
 			.componentLayout$(this.viewComponentName)
-			.pipe(untilDestroyed(this))
-			.subscribe(
-				(componentLayout) => (this.dataLayoutStyle = componentLayout)
-			);
+			.pipe(
+				distinctUntilChange(),
+				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => this.refreshPagination()),
+				tap(() => this.subject$.next()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
@@ -227,10 +190,99 @@ export class TaskComponent
 
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this._loadTableSettings();
-			});
+			.pipe(
+				tap(() => this._loadTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	/*
+	* Register Smart Table Source Config 
+	*/
+	setSmartTableSource() {
+		const { tenantId } = this._store.user;
+		const { id: organizationId } = this.organization;
+
+		const request = {};
+		if (this.selectedProject && this.selectedProject.id) {
+			request['projectId'] = this.selectedProject.id;
+		}
+
+		const relations = [];
+		let endPoint: string; 
+
+		if (this.viewComponentName == ComponentEnum.ALL_TASKS) {
+			endPoint = `${API_PREFIX}/tasks/search/filter`;
+			relations.push(...[
+				'project', 
+				'tags', 
+				'members', 
+				'members.user', 
+				'teams', 
+				'creator', 
+				'organizationSprint'
+			]);
+		}
+		if (this.viewComponentName == ComponentEnum.TEAM_TASKS) {
+			if (this.selectedEmployee && this.selectedEmployee.id) {
+				request['employeeId'] = this.selectedEmployee.id;
+			}
+			endPoint = `${API_PREFIX}/tasks/team`;
+		}
+		if (this.viewComponentName == ComponentEnum.MY_TASKS) {
+			if (this.selectedEmployee && this.selectedEmployee.id) {
+				request['employeeId'] = this.selectedEmployee.id;
+			}
+			endPoint = `${API_PREFIX}/tasks/me`;
+		}
+
+		this.smartTableSource = new ServerDataSource(this.httpClient, {
+			endPoint,
+			relations,
+			where: {
+				...{ organizationId, tenantId },
+				...request
+			},
+			resultMap: (task: ITask) => {
+				return Object.assign({}, task, {
+					projectName: task.project ? task.project.name : undefined,
+					employees: task.members ? task.members : undefined,
+					assignTo: this._teamTaskStore._getTeamNames(task),
+					creator: task.creator ? `${task.creator.name}` : null
+				});
+			},
+			finalize: () => {
+				this.loading = false;
+			}
+		});
+	}
+
+	async getTasks() {
+		try {
+			this.setSmartTableSource();
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+
+				// Initiate GRID view pagination
+				const { activePage, itemsPerPage } = this.pagination;
+				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+
+				await this.smartTableSource.getElements();
+
+				const tasks = this.smartTableSource.getData();
+
+				this.storeInstance.loadAllTasks(tasks);
+
+				this.pagination['totalItems'] =  this.smartTableSource.count();
+			}
+		} catch (error) {
+			this._errorHandlingService.handleError(error);
+		}
+	}
+
+	onPageChange(selectedPage: number) {
+		this.pagination['activePage'] = selectedPage;
+		this.subject$.next();
 	}
 
 	private _loadTableSettings() {
@@ -270,9 +322,12 @@ export class TaskComponent
 				status: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_STATUS'),
 					type: 'custom',
-					width: '15%',
-					filter: false,
-					renderComponent: StatusViewComponent
+					width: '12%',
+					renderComponent: StatusViewComponent,
+					filter: {
+						type: 'custom',
+						component: TaskStatusFilterComponent
+					}
 				}
 			}
 		};
@@ -294,35 +349,15 @@ export class TaskComponent
 					renderComponent: TaskTeamsComponent
 				}
 			};
-		} else if (this.isMyTasksPage()) {
+		} else if (this.isMyTasksPage() || this.isTeamTaskPage()) {
 			return {
 				assignTo: {
 					title: this.getTranslation('TASKS_PAGE.TASK_ASSIGNED_TO'),
 					type: 'custom',
-					filter: false,
-					renderComponent: AssignedToComponent
-				}
-			};
-		} else if (this.isTeamTaskPage()) {
-			return {
-				assignTo: {
-					title: this.getTranslation('TASKS_PAGE.TASK_ASSIGNED_TO'),
-					type: 'custom',
+					width: '12%',
 					filter: {
-						type: 'list',
-						config: {
-							selectText: this.getTranslation(
-								'TASKS_PAGE.SELECT'
-							),
-							list: (this.teams || []).map((team) => {
-								if (team) {
-									return {
-										title: team.name,
-										value: team.name
-									};
-								}
-							})
-						}
+						type: 'custom',
+						component: OrganizationTeamFilterComponent
 					},
 					renderComponent: AssignedToComponent
 				}
@@ -349,10 +384,8 @@ export class TaskComponent
 		}
 		if (dialog) {
 			const data = await dialog.onClose.pipe(first()).toPromise();
-
 			if (data) {
 				const { estimateDays, estimateHours, estimateMinutes } = data;
-
 				const estimate =
 					estimateDays * 24 * 60 * 60 +
 					estimateHours * 60 * 60 +
@@ -360,14 +393,19 @@ export class TaskComponent
 
 				estimate ? (data.estimate = estimate) : (data.estimate = null);
 
-				const { id: organizationId, tenantId } = this.organization;
+				const { tenantId } = this._store.user;
+				const { id: organizationId } = this.organization;
 				const payload = Object.assign(data, {
 					organizationId,
 					tenantId
 				});
-
-				this.storeInstance.createTask(payload);
-				this.clearItem();
+				this.storeInstance
+					.createTask(payload)
+					.pipe(
+						tap(() => this.subject$.next()),
+						untilDestroyed(this)
+					)
+					.subscribe();
 			}
 		}
 	}
@@ -380,6 +418,7 @@ export class TaskComponent
 			});
 		}
 		let dialog;
+		console.log(this.selectedTask);
 		if (this.isTasksPage()) {
 			dialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {
@@ -412,17 +451,19 @@ export class TaskComponent
 
 				estimate ? (data.estimate = estimate) : (data.estimate = null);
 
-				const { id: organizationId, tenantId } = this.organization;
+				const { tenantId } = this._store.user;
+				const { id: organizationId } = this.organization;				
 				const payload = Object.assign(data, {
 					organizationId,
 					tenantId
 				});
 
-				this.storeInstance.editTask({
-					...payload,
-					id: this.selectedTask.id
-				});
-				this.clearItem();
+				this.storeInstance.editTask({ ...payload, id: this.selectedTask.id })
+					.pipe(
+						tap(() => this.subject$.next()),
+						untilDestroyed(this)
+					)
+					.subscribe();
 			}
 		}
 	}
@@ -438,7 +479,7 @@ export class TaskComponent
 		if (this.isTasksPage()) {
 			dialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {
-					task: this.selectedTask
+					selectedTask: this.selectedTask
 				}
 			});
 		} else if (this.isMyTasksPage()) {
@@ -447,13 +488,13 @@ export class TaskComponent
 			selectedTask.members = null;
 			dialog = this.dialogService.open(MyTaskDialogComponent, {
 				context: {
-					task: selectedTask
+					selectedTask: selectedTask
 				}
 			});
 		} else if (this.isTeamTaskPage()) {
 			dialog = this.dialogService.open(TeamTaskDialogComponent, {
 				context: {
-					task: this.selectedTask
+					selectedTask: this.selectedTask
 				}
 			});
 		}
@@ -462,7 +503,6 @@ export class TaskComponent
 
 			if (data) {
 				const { estimateDays, estimateHours, estimateMinutes } = data;
-
 				const estimate =
 					estimateDays * 24 * 60 * 60 +
 					estimateHours * 60 * 60 +
@@ -470,14 +510,19 @@ export class TaskComponent
 
 				estimate ? (data.estimate = estimate) : (data.estimate = null);
 
-				const { id: organizationId, tenantId } = this.organization;
+				const { tenantId } = this._store.user;
+				const { id: organizationId } = this.organization;
 				const payload = Object.assign(data, {
 					organizationId,
 					tenantId
 				});
-
-				this.storeInstance.createTask(payload);
-				this.clearItem();
+				this.storeInstance
+					.createTask(payload)
+					.pipe(
+						tap(() => this.subject$.next()),
+						untilDestroyed(this)
+					)
+					.subscribe();
 			}
 		}
 	}
@@ -495,8 +540,12 @@ export class TaskComponent
 			.toPromise();
 
 		if (result) {
-			this.storeInstance.delete(this.selectedTask.id);
-			this.clearItem();
+			this.storeInstance.delete(this.selectedTask.id)
+				.pipe(
+					tap(() => this.subject$.next()),
+					untilDestroyed(this)
+				)
+				.subscribe();
 		}
 	}
 
@@ -505,32 +554,16 @@ export class TaskComponent
 		this.selectedTask = isSelected ? data : null;
 	}
 
-	async loadTeams(employeeId?: string) {
-		if (!this.organization) {
-			return;
-		}
-		const { tenantId } = this._store.user;
-		const { id: organizationId } = this.organization;
-		this.teams = (
-			await this.organizationTeamsService.getMyTeams(
-				['members'],
-				{ organizationId, tenantId },
-				employeeId
-			)
-		).items;
-		this._loadTableSettings();
-	}
-
 	isTasksPage() {
-		return this.view === 'tasks';
+		return this.viewComponentName === ComponentEnum.ALL_TASKS;
 	}
 
 	isMyTasksPage() {
-		return this.view === 'my-tasks';
+		return this.viewComponentName === ComponentEnum.MY_TASKS;
 	}
 
 	isTeamTaskPage() {
-		return this.view === 'team-tasks';
+		return this.viewComponentName === ComponentEnum.TEAM_TASKS;
 	}
 
 	openTasksSettings(selectedProject: IOrganizationProject): void {
@@ -544,7 +577,7 @@ export class TaskComponent
 	}
 
 	/**
-	 * return store instace as per page
+	 * return store instance as per page
 	 */
 	get storeInstance() {
 		if (this.isTasksPage()) {
@@ -575,6 +608,13 @@ export class TaskComponent
 			this.tasksTable.grid.dataSet['willSelect'] = 'false';
 			this.tasksTable.grid.dataSet.deselectAll();
 		}
+	}
+
+	/*
+	* refresh pagination
+	*/
+	refreshPagination() {
+		this.pagination['activePage'] = 1;
 	}
 
 	ngOnDestroy(): void {}

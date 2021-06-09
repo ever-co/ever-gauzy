@@ -4,22 +4,20 @@ import {
 	IOrganizationProject,
 	IEmployee,
 	IOrganizationTeam,
-	ITag
+	ITag,
+	TaskParticipantEnum,
+	IOrganization
 } from '@gauzy/contracts';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
-import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
-import { Store } from '../../../@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import * as moment from 'moment';
-import { EmployeesService } from '../../../@core/services';
-import { first } from 'rxjs/operators';
-import { OrganizationTeamsService } from '../../../@core/services/organization-teams.service';
-import { TasksService } from '../../../@core/services/tasks.service';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import { filter, first, tap } from 'rxjs/operators';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { EmployeesService, OrganizationTeamsService, Store, TasksService } from '../../../@core/services';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-add-task-dialog',
 	templateUrl: './add-task-dialog.component.html',
@@ -28,205 +26,160 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 export class AddTaskDialogComponent
 	extends TranslationBaseComponent
 	implements OnInit {
-	form: FormGroup;
-	selectedTaskId: string;
-	projects: IOrganizationProject[];
-	statuses: string[] = [
-		this.getTranslation('TASKS_PAGE.TODO'),
-		this.getTranslation('TASKS_PAGE.IN_PROGRESS'),
-		this.getTranslation('TASKS_PAGE.FOR_TESTING'),
-		this.getTranslation('TASKS_PAGE.COMPLETED')
-	];
+		
 	employees: IEmployee[] = [];
 	teams: IOrganizationTeam[] = [];
 	selectedMembers: string[];
 	selectedTeams: string[];
 	selectedTask: ITask;
-	organizationId: string;
-	tenantId: string;
-	tags: ITag[] = [];
-	participants = 'employees';
-	initialTaskValue = {
-		title: '',
-		project: null,
-		status: this.getTranslation('TASKS_PAGE.TODO'),
-		members: null,
-		teams: null,
-		estimate: null,
-		dueDate: null,
-		description: '',
-		tags: null
-	};
-
+	organization: IOrganization;
+	taskParticipantEnum = TaskParticipantEnum;
+	participants = TaskParticipantEnum.EMPLOYEES;
+	
 	@Input() createTask = false;
-	@Input() task: Partial<ITask> = {};
+
+	/*
+	* Getter & Setter for task
+	*/
+	_task: ITask;
+	get task(): ITask {
+		return this._task;
+	}
+	@Input() set task(value: ITask) {
+		this.selectedTask = value;
+		this._task = value;
+	}
+
+	/*
+	* Payment Mutation Form 
+	*/
+	public form: FormGroup = AddTaskDialogComponent.buildForm(this.fb, this);
+	static buildForm(
+		fb: FormBuilder,
+		self: AddTaskDialogComponent
+	): FormGroup {
+		return fb.group({
+			title: ['', Validators.required],
+			project: [],
+			projectId: [],
+			status: [self.getTranslation('TASKS_PAGE.TODO')],
+			members: [],
+			estimateDays: [],
+			estimateHours: [ '', [Validators.min(0), Validators.max(23)]],
+			estimateMinutes: ['', [Validators.min(0), Validators.max(59)]],
+			dueDate: [],
+			description: [],
+			tags: [],
+			teams: []
+		});
+	}
 
 	constructor(
-		public dialogRef: NbDialogRef<AddTaskDialogComponent>,
-		private fb: FormBuilder,
-		private store: Store,
-		private organizationProjectsService: OrganizationProjectsService,
+		public readonly dialogRef: NbDialogRef<AddTaskDialogComponent>,
+		private readonly fb: FormBuilder,
+		private readonly store: Store,
 		readonly translateService: TranslateService,
-		private readonly toastrService: ToastrService,
-		private errorHandler: ErrorHandlingService,
-		private employeesService: EmployeesService,
-		private tasksService: TasksService,
-		private organizationTeamsService: OrganizationTeamsService
+		private readonly employeesService: EmployeesService,
+		private readonly tasksService: TasksService,
+		private readonly organizationTeamsService: OrganizationTeamsService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
-		this.organizationId = this.store.selectedOrganization.id;
-		this.tenantId = this.store.user.tenantId;
-
-		this.loadProjects();
-		this.loadEmployees();
-		this.loadTeams();
-
-		this.initializeForm(
-			Object.assign(
-				{},
-				this.initialTaskValue,
-				this.selectedTask || this.task
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this.loadEmployees()),
+				tap(() => this.loadTeams()),
+				tap(() => this.initializeForm()),
+				untilDestroyed(this)
 			)
-		);
+			.subscribe();		
 	}
 
-	private async loadProjects() {
-		const { items } = await this.organizationProjectsService.getAll(
-			['organization'],
-			{ organizationId: this.organizationId, tenantId: this.tenantId }
-		);
-		if (items) this.projects = items;
-	}
+	initializeForm() {
+		if (this.selectedTask) {
+			const { description, dueDate, estimate, members, project, status, tags, teams, title } = this.selectedTask;
+			const duration = moment.duration(estimate, 'seconds');
 
-	initializeForm({
-		title,
-		description,
-		project,
-		status,
-		members,
-		teams,
-		estimate,
-		dueDate,
-		tags
-	}: ITask) {
-		const duration = moment.duration(estimate, 'seconds');
-		this.selectedMembers = (members || []).map((member) => member.id);
-		this.selectedTeams = (teams || []).map((team) => team.id);
-		if (teams && teams.length > 0) {
-			this.participants = 'teams';
-		}
-		this.form = this.fb.group({
-			title: [title, Validators.required],
-			project: [project],
-			status: [status],
-			members: [members],
-			estimateDays: [duration.days() || ''],
-			estimateHours: [
-				duration.hours() || '',
-				[Validators.min(0), Validators.max(23)]
-			],
-			estimateMinutes: [
-				duration.minutes() || '',
-				[Validators.min(0), Validators.max(59)]
-			],
-			dueDate: [dueDate],
-			description: [description],
-			tags: [tags],
-			teams: [this.selectedTeams],
-			organizationId: [this.organizationId],
-			tenantId: [this.tenantId]
-		});
+			this.selectedMembers = (members || []).map((member) => member.id);
+			this.selectedTeams = (teams || []).map((team) => team.id);
 
-		this.tags = this.form.get('tags').value || [];
-	}
+			if (teams && teams.length > 0) {
+				this.participants = TaskParticipantEnum.TEAMS;
+			}
 
-	addNewProject = (name: string): Promise<IOrganizationProject> => {
-		this.organizationId = this.store.selectedOrganization.id;
-		this.tenantId = this.store.user.tenantId;
-		try {
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
-				{
-					name: name
-				}
-			);
-			return this.organizationProjectsService.create({
-				name,
-				organizationId: this.organizationId,
-				tenantId: this.tenantId
+			this.form.patchValue({
+				title,
+				project,
+				projectId: (project) ? project.id : null,
+				status,
+				estimateDays: duration.days(),
+				estimateHours: duration.hours(),
+				estimateMinutes: duration.minutes(),
+				dueDate: moment(dueDate).toDate(),
+				description,
+				tags,
+				teams: this.selectedTeams
 			});
-		} catch (error) {
-			this.errorHandler.handleError(error);
 		}
-	};
+	}
 
 	onSave() {
 		if (this.form.valid) {
 			this.form
 				.get('members')
-				.setValue(
-					(this.selectedMembers || [])
-						.map((id) => this.employees.find((e) => e.id === id))
-						.filter((e) => !!e)
-				);
+				.setValue((this.selectedMembers || []).map((id) => this.employees.find((e) => e.id === id)).filter((e) => !!e));
 			this.form
 				.get('teams')
-				.setValue(
-					(this.selectedTeams || [])
-						.map((id) => this.teams.find((e) => e.id === id))
-						.filter((e) => !!e)
-				);
+				.setValue((this.selectedTeams || []).map((id) => this.teams.find((e) => e.id === id)) .filter((e) => !!e));
 
-			if (this.form.valid) {
-				const {
-					estimateDays,
-					estimateHours,
-					estimateMinutes
-				} = this.form.value;
+			const {
+				estimateDays,
+				estimateHours,
+				estimateMinutes
+			} = this.form.value;
 
-				const estimate =
-					estimateDays * 24 * 60 * 60 +
-					estimateHours * 60 * 60 +
-					estimateMinutes * 60;
+			const estimate =
+				estimateDays * 24 * 60 * 60 +
+				estimateHours * 60 * 60 +
+				estimateMinutes * 60;
 
-				estimate
-					? (this.form.value.estimate = estimate)
-					: (this.form.value.estimate = null);
-				if (this.createTask) {
-					this.tasksService
-						.createTask(this.form.value)
-						.toPromise()
-						.then((task) => {
-							this.dialogRef.close(task);
-						});
-				}
-			}
-			if (!this.createTask) {
+			estimate
+				? (this.form.value.estimate = estimate)
+				: (this.form.value.estimate = null);
+
+			if (this.createTask) {
+				this.tasksService
+					.createTask(this.form.value)
+					.toPromise()
+					.then((task) => {
+						this.dialogRef.close(task);
+					});
+			} else {
 				this.dialogRef.close(this.form.value);
 			}
 		}
 	}
 
 	selectedTagsHandler(currentSelection: ITag[]) {
-		this.form.get('tags').setValue(currentSelection);
+		this.form.patchValue({ tags: currentSelection });
 	}
 
-	private async loadEmployees() {
-		if (!this.organizationId) {
-			return;
-		}
-		const { items } = await this.employeesService
-			.getAll(['user'], {
-				organizationId: this.organizationId,
-				tenantId: this.tenantId
-			})
-			.pipe(first())
-			.toPromise();
+	selectedProject(project: IOrganizationProject) {
+		this.form.patchValue({ project });
+	}
 
-		if (items) this.employees = items;
+	async loadEmployees() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		const { items = [] } = await this.employeesService.getAll(['user'], {
+			organizationId,
+			tenantId
+		}).pipe(first()).toPromise();
+		this.employees = items;
 	}
 
 	onMembersSelected(members: string[]) {
@@ -234,17 +187,16 @@ export class AddTaskDialogComponent
 	}
 
 	async loadTeams() {
-		if (!this.organizationId) {
-			return;
-		}
-		const { items } = await this.organizationTeamsService.getAll(
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		const { items = [] } = await this.organizationTeamsService.getAll(
 			['members'],
-			{ organizationId: this.organizationId, tenantId: this.tenantId }
+			{ organizationId, tenantId }
 		);
-		if (items) this.teams = items;
+		this.teams = items;
 	}
 
-	onParticipantsChange(participants: string) {
+	onParticipantsChange(participants: TaskParticipantEnum) {
 		this.selectedMembers = [];
 		this.selectedTeams = [];
 		this.form.get('members').setValue([]);

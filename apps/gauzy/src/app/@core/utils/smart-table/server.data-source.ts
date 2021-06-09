@@ -29,16 +29,16 @@ export class ServerDataSource extends LocalDataSource {
     getElements(): Promise<any> {
         return this.requestElements()
             .pipe(
+                map((res) => {
+                    this.lastRequestCount = this.extractTotalFromResponse(res);
+                    this.data = this.extractDataFromResponse(res);
+                    return this.data;
+                }),
                 tap(() => {
                     if (this.conf.finalize) {
                         this.conf.finalize();
                     }
                 }),
-                map((res) => {
-                    this.lastRequestCount = this.extractTotalFromResponse(res);
-                    this.data = this.extractDataFromResponse(res);
-                    return this.data;
-                })
             ).toPromise();
     }
 

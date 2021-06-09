@@ -5,6 +5,7 @@ import { IOrganizationProject } from './organization-projects.model';
 import { IOrganizationSprint } from './organization-sprint.model';
 import { IOrganizationTeam } from './organization-team-model';
 import { ITag } from './tag-entity.model';
+import { IUser } from './user.model';
 
 export interface ITask extends IBasePerTenantAndOrganizationEntityModel {
 	title: string;
@@ -20,6 +21,7 @@ export interface ITask extends IBasePerTenantAndOrganizationEntityModel {
 	teams?: IOrganizationTeam[];
 	organizationSprint?: IOrganizationSprint;
 	organizationSprintId?: string;
+	creator?: IUser
 }
 
 export interface IGetTaskOptions
@@ -41,6 +43,11 @@ export enum TaskStatusEnum {
 	IN_PROGRESS = 'In Progress',
 	FOR_TESTING = 'For Testing',
 	COMPLETED = 'Completed'
+}
+
+export enum TaskParticipantEnum {
+	EMPLOYEES = 'employees',
+	TEAMS = 'teams',
 }
 
 export interface ITaskCreateInput extends ITask {

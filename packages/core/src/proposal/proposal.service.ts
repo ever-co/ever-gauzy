@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions } from 'typeorm';
+import { Repository, FindManyOptions, Between, ILike } from 'typeorm';
+import * as moment from 'moment';
 import { Proposal } from './proposal.entity';
-import { IPagination } from '../core';
+import { getDateRangeFormat, IPagination } from '../core';
 import { IProposalCreateInput, IProposal } from '@gauzy/contracts';
 import { Employee } from '../employee/employee.entity';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
@@ -51,5 +52,25 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 		await this.employeeRepository.findOneOrFail(entity.employeeId);
 
 		return this.proposalRepository.save(proposal);
+	}
+
+	public search(filter: any) {
+		if ('where' in filter) {
+			const { where } = filter;
+			if ('valueDate' in where) {
+				const { valueDate } = where;
+				const { start, end } = getDateRangeFormat(
+					new Date(moment(valueDate).startOf('month').format()),
+					new Date(moment(valueDate).endOf('month').format()),
+					true
+				);
+				filter.where.valueDate = Between(start, end); 
+			}
+			if ('jobPostContent' in where) {
+				const { jobPostContent } = where;
+				filter.where.jobPostContent = ILike(`%${jobPostContent}%`);
+			}
+		}
+		return super.search(filter);
 	}
 }

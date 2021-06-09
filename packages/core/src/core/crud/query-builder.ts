@@ -7,20 +7,44 @@ export const filterQuery = <T>(
     qb.andWhere(new Brackets((bck: WhereExpression) => { 
         const args = Object.entries(wheres);
         args.forEach((arg) => {
-            const [column, value] = arg;
+            const [column, entry] = arg;
 
             // query using find operator
-            if (value instanceof FindOperator) {
-                bck.andWhere(new Brackets((bck: WhereExpression) => { bck.where({ [column]: value }); } ));
-            } else if (value instanceof Object) {
-                objectQueryMapper(bck, value, column);
-            } else if (value instanceof Array) {
+            if (entry instanceof FindOperator) {
+                const operator = entry;
+                const { type, value } = operator;
+                bck.andWhere(
+                    new Brackets((bck: WhereExpression) => { 
+                        switch (type) {
+                            case 'between':
+                                const [start, end ] = value;
+                                bck.andWhere(`"${qb.alias}"."${column}" ${type} '${start}' AND '${end}'`);
+                                break;
+                            case 'ilike':
+                                bck.andWhere(`"${qb.alias}"."${column}" ${type} :${column}`, { 
+                                    [column]: value
+                                });
+                                break;
+                            case 'in':
+                                bck.andWhere(`"${qb.alias}"."${column}" ${type} (:...${column})`, { 
+                                    [column]: value
+                                });
+                                break;
+                            default: 
+                                bck.where({ [column]: value });
+                                break;
+                        }
+                    } 
+                ));
+            } else if (entry instanceof Object) {
+                objectQueryMapper(bck, entry, column);
+            } else if (entry instanceof Array) {
                 bck.andWhere(`"${qb.alias}"."${column}" IN (:...${column})`, { 
-                    [column]: value 
+                    [column]: entry 
                 });
             } else {
                 bck.andWhere(`"${qb.alias}"."${column}" = :${column}`, { 
-                    [column]: value 
+                    [column]: entry 
                 });
             }
         })
@@ -41,6 +65,10 @@ export const objectQueryMapper = (
                     const operator = entry;
                     const { type, value } = operator;
                     switch (type) {
+                        case 'between':
+                            const [start, end ] = value;
+                            bck.andWhere(`"${alias}"."${column}" ${type} '${start}' AND '${end}'`);
+                            break;
                         case 'ilike':
                             bck.andWhere(`"${alias}"."${column}" ${type} :${column}`, { 
                                 [column]: value
