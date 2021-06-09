@@ -104,6 +104,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		this.subject$
 			.pipe(
 				debounceTime(400),
+				tap(() => this.loading = true),
 				tap(() => this.clearItem()),
 				tap(() => this.getTasks()),
 				untilDestroyed(this)
@@ -252,6 +253,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 			finalize: () => {
 				const tasks = this.smartTableSource.getData();
 				this.storeInstance.loadAllTasks(tasks);
+				this.loading = false;
 			}
 		});
 	}
@@ -263,8 +265,6 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID ||
 				this.viewMode === TaskListTypeEnum.SPRINT
 			) {
-				this.loading = true;
-
 				// Initiate GRID view pagination
 				const { activePage, itemsPerPage } = this.pagination;
 				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
