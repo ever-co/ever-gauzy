@@ -7,7 +7,6 @@ import {
 	SimpleChanges,
 	OnChanges
 } from '@angular/core';
-import { SprintStoreService } from '../../../../../../@core/services/organization-sprint-store.service';
 import {
 	ITask,
 	IOrganizationSprint,
@@ -21,12 +20,12 @@ import {
 	moveItemInArray,
 	transferArrayItem
 } from '@angular/cdk/drag-drop';
-import { GauzyEditableGridComponent } from '../../../../../../@shared/components/editable-grid/gauzy-editable-grid.component';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { TasksStoreService } from '../../../../../../@core/services/tasks-store.service';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { GauzyEditableGridComponent } from '../../../../../../@shared/components/editable-grid/gauzy-editable-grid.component';
+import { SprintStoreService, Store, TasksStoreService } from './../../../../../../@core/services';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-tasks-sprint-view',
@@ -36,20 +35,20 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 export class TasksSprintViewComponent
 	extends GauzyEditableGridComponent<ITask>
 	implements OnInit, OnChanges {
-	@Input() tasks: ITask[] = [];
+
 	sprints: IOrganizationSprint[] = [];
-	@Input() project: IOrganizationProject;
 	backlogTasks: ITask[] = [];
+
+	@Input() tasks: ITask[] = [];
+	@Input() project: IOrganizationProject;
+
 	@Output() createTaskEvent: EventEmitter<any> = new EventEmitter();
 	@Output() editTaskEvent: EventEmitter<any> = new EventEmitter();
 	@Output() deleteTaskEvent: EventEmitter<any> = new EventEmitter();
+
 	sprints$: Observable<IOrganizationSprint[]> = this.store$.sprints$.pipe(
-		filter((sprints: IOrganizationSprint[]) => Boolean(sprints.length)),
 		map((sprints: IOrganizationSprint[]): IOrganizationSprint[] =>
-			sprints.filter(
-				(sprint: IOrganizationSprint) =>
-					sprint.projectId === this.project.id
-			)
+			sprints.filter((sprint: IOrganizationSprint) => sprint.projectId === this.project.id)
 		),
 		tap((sprints: IOrganizationSprint[]) => {
 			this.sprintIds = [
@@ -63,11 +62,11 @@ export class TasksSprintViewComponent
 	sprintActions: { title: string }[] = [];
 
 	constructor(
-		private store$: SprintStoreService,
+		private readonly store$: SprintStoreService,
 		translateService: TranslateService,
 		dialogService: NbDialogService,
-		private taskStore: TasksStoreService,
-		private storeService: Store
+		private readonly taskStore: TasksStoreService,
+		private readonly storeService: Store
 	) {
 		super(translateService, dialogService);
 	}
@@ -107,20 +106,19 @@ export class TasksSprintViewComponent
 						acc: { [key: string]: IOrganizationSprint },
 						sprint: IOrganizationSprint
 					) => {
-						acc[sprint.id] = { ...sprint, tasks: [] };
+						acc[sprint.id] = { ...sprint, tasks: sprint.tasks || [] };
 						return acc;
 					},
 					{}
 				);
+				this.sprints = Object.values(sprints);
+
 				const backlog = [];
 				tasks.forEach((task) => {
-					if (!!task.organizationSprint) {
-						sprints[task.organizationSprint.id].tasks.push(task);
-					} else {
+					if (!task.organizationSprint) {
 						backlog.push(task);
 					}
 				});
-				this.sprints = Object.values(sprints);
 				this.backlogTasks = backlog;
 			});
 	}

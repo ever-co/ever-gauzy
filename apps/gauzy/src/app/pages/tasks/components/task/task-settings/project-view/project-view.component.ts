@@ -1,7 +1,6 @@
 import { Component, OnInit, Input, EventEmitter, Output } from '@angular/core';
-import { IOrganizationProject, TaskListTypeEnum } from '@gauzy/contracts';
-import { OrganizationProjectsService } from '../../../../../../@core/services/organization-projects.service';
-import { Store } from '../../../../../../@core/services/store.service';
+import { CrudActionEnum, IOrganizationProject, TaskListTypeEnum } from '@gauzy/contracts';
+import { OrganizationProjectsService, OrganizationProjectStore, Store } from '../../../../../../@core/services';
 
 export interface TaskViewMode {
 	type: TaskListTypeEnum;
@@ -35,8 +34,9 @@ export class ProjectViewComponent implements OnInit {
 	selectedTaskViewMode: TaskViewMode;
 
 	constructor(
-		private projectStore: Store,
-		private projectService: OrganizationProjectsService
+		private readonly store: Store,
+		private readonly projectService: OrganizationProjectsService,
+		private readonly organizationProjectStore: OrganizationProjectStore
 	) {}
 
 	ngOnInit(): void {
@@ -47,10 +47,14 @@ export class ProjectViewComponent implements OnInit {
 	}
 
 	async setTaskViewMode(evt: TaskViewMode): Promise<void> {
-		await this.projectService.updateTaskViewMode(this.project.id, evt.type);
-		this.projectStore.selectedProject = {
+		const project = await this.projectService.updateTaskViewMode(this.project.id, evt.type);
+		this.store.selectedProject = {
 			...this.project,
 			taskListType: evt.type
+		};
+		this.organizationProjectStore.organizationProjectAction = {
+			project,
+			action: CrudActionEnum.UPDATED
 		};
 		this.changeEvent.emit({ taskListType: evt.type });
 	}

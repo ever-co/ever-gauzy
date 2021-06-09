@@ -30,6 +30,9 @@ export const filterQuery = <T>(
                                     [column]: value
                                 });
                                 break;
+                            case 'isNull':
+                                bck.andWhere(`"${qb.alias}"."${column}" IS NULL`);
+                                break;
                             default: 
                                 bck.where({ [column]: value });
                                 break;
