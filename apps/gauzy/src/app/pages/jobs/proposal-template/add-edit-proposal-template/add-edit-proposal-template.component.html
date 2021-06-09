@@ -1,21 +1,21 @@
-<form [formGroup]="form">
-	<nb-card class="main">
-		<nb-card-header class="d-flex">
-			<h5>
-				{{
-					(mode == 'update'
-						? 'PROPOSAL_TEMPLATE.EDIT_PROPOSAL_TEMPLATE'
-						: 'PROPOSAL_TEMPLATE.ADD_PROPOSAL_TEMPLATE'
-					) | translate
-				}}
-			</h5>
-			<nb-icon
-				class="ml-auto mt-1 close"
-				icon="close-outline"
-				(click)="close()"
-			></nb-icon>
-		</nb-card-header>
-		<nb-card-body class="body">
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h5>
+			{{
+				(mode == 'update'
+					? 'PROPOSAL_TEMPLATE.EDIT_PROPOSAL_TEMPLATE'
+					: 'PROPOSAL_TEMPLATE.ADD_PROPOSAL_TEMPLATE'
+				) | translate
+			}}
+		</h5>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="close()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body class="body">
+		<form [formGroup]="form">
 			<div
 				class="form-group"
 				*ngIf="
@@ -69,22 +69,21 @@
 				<label class="d-block">{{
 					'PROPOSAL_TEMPLATE.CONTENT' | translate
 				}}</label>
-				<ckeditor formControlName="content" [config]="ckConfig">
-				</ckeditor>
+				<ckeditor formControlName="content" [config]="ckConfig"></ckeditor>
 			</div>
-		</nb-card-body>
-		<nb-card-footer class="text-right">
-			<button (click)="close()" status="danger" class="mr-3" nbButton>
-				{{ 'BUTTONS.CANCEL' | translate }}
-			</button>
-			<button
-				(click)="onSave()"
-				[disabled]="form.invalid"
-				status="success"
-				nbButton
-			>
-				{{ 'BUTTONS.SAVE' | translate }}
-			</button>
-		</nb-card-footer>
-	</nb-card>
-</form>
+		</form>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button (click)="close()" status="danger" class="mr-3" nbButton>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			(click)="onSave()"
+			[disabled]="form.invalid"
+			status="success"
+			nbButton
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>
