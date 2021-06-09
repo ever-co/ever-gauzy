@@ -4,6 +4,7 @@ import {
 	DeepPartial,
 	EntityManager,
 	FindConditions,
+	ILike,
 	Repository,
 	Transaction,
 	TransactionManager,
@@ -115,5 +116,20 @@ export class PipelineService extends CrudService<Pipeline> {
 		);
 
 		return await manager.update(Pipeline, id, pipeline);
+	}
+
+	public search(filter: any) {
+		if ('where' in filter) {
+			const { where } = filter;
+			if ('name' in where) {
+				const { name } = where;
+				filter.where.name = ILike(`%${name}%`)
+			}
+			if ('description' in where) {
+				const { description } = where;
+				filter.where.description = ILike(`%${description}%`)
+			}
+		}
+		return super.search(filter);
 	}
 }
