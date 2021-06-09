@@ -45,6 +45,11 @@ export enum TaskStatusEnum {
 	COMPLETED = 'Completed'
 }
 
+export enum TaskParticipantEnum {
+	EMPLOYEES = 'employees',
+	TEAMS = 'teams',
+}
+
 export interface ITaskCreateInput extends ITask {
 	creatorId?: string;
 }

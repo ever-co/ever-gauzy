@@ -16,6 +16,7 @@
 							'CONTEXT_MENU.PROJECT' | translate
 						}}</label>
 						<ga-project-selector
+							formControlName="projectId"
 							[placeholder]="'CONTEXT_MENU.PROJECT' | translate"
 							[skipGlobalChange]="true"
 							[defaultSelected]="false"
@@ -42,17 +43,17 @@
 						(valueChange)="onParticipantsChange($event)"
 						[value]="participants"
 					>
-						<nb-radio class="nb-radio" [value]="'employees'"
+						<nb-radio class="nb-radio" [value]="taskParticipantEnum.EMPLOYEES"
 							>{{ 'TASKS_PAGE.TASK_MEMBERS' | translate }}
 						</nb-radio>
-						<nb-radio class="nb-radio" [value]="'teams'"
+						<nb-radio class="nb-radio" [value]="taskParticipantEnum.TEAMS"
 							>{{ 'TASKS_PAGE.TASK_TEAMS' | translate }}
 						</nb-radio>
 					</nb-radio-group>
 				</div>
 				<div class="col-sm-12">
 					<div class="form-group">
-						<ng-container *ngIf="participants === 'employees'">
+						<ng-container *ngIf="participants === taskParticipantEnum.EMPLOYEES">
 							<ga-employee-multi-select
 								[selectedEmployeeIds]="selectedMembers"
 								[allEmployees]="employees"
@@ -60,7 +61,7 @@
 							>
 							</ga-employee-multi-select>
 						</ng-container>
-						<ng-container *ngIf="participants === 'teams'">
+						<ng-container *ngIf="participants === taskParticipantEnum.TEAMS">
 							<label class="label">{{
 								'TASKS_PAGE.TASK_TEAMS' | translate
 							}}</label>
@@ -101,7 +102,7 @@
 				<div class="col-sm-12">
 					<div class="form-group">
 						<ga-tags-color-input
-							[selectedTags]="tags"
+							[selectedTags]="form.get('tags').value"
 							(selectedTagsEvent)="selectedTagsHandler($event)"
 							[isOrgLevel]="true"
 						>

@@ -203,9 +203,6 @@ export class TaskComponent
 		const { id: organizationId } = this.organization;
 
 		const request = {};
-		if (this.selectedEmployee && this.selectedEmployee.id) {
-			request['employeeId'] = this.selectedEmployee.id;
-		}
 		if (this.selectedProject && this.selectedProject.id) {
 			request['projectId'] = this.selectedProject.id;
 		}
@@ -226,9 +223,15 @@ export class TaskComponent
 			]);
 		}
 		if (this.viewComponentName == ComponentEnum.TEAM_TASKS) {
+			if (this.selectedEmployee && this.selectedEmployee.id) {
+				request['employeeId'] = this.selectedEmployee.id;
+			}
 			endPoint = `${API_PREFIX}/tasks/team`;
 		}
 		if (this.viewComponentName == ComponentEnum.MY_TASKS) {
+			if (this.selectedEmployee && this.selectedEmployee.id) {
+				request['employeeId'] = this.selectedEmployee.id;
+			}
 			endPoint = `${API_PREFIX}/tasks/me`;
 		}
 
@@ -485,7 +488,7 @@ export class TaskComponent
 		if (this.isTasksPage()) {
 			dialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {
-					task: this.selectedTask
+					selectedTask: this.selectedTask
 				}
 			});
 		} else if (this.isMyTasksPage()) {
@@ -494,13 +497,13 @@ export class TaskComponent
 			selectedTask.members = null;
 			dialog = this.dialogService.open(MyTaskDialogComponent, {
 				context: {
-					task: selectedTask
+					selectedTask: selectedTask
 				}
 			});
 		} else if (this.isTeamTaskPage()) {
 			dialog = this.dialogService.open(TeamTaskDialogComponent, {
 				context: {
-					task: this.selectedTask
+					selectedTask: this.selectedTask
 				}
 			});
 		}
