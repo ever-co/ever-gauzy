@@ -1,18 +1,16 @@
 import {
 	Injectable,
 	HttpException,
-	HttpStatus,
-	BadRequestException
+	HttpStatus
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Task } from './task.entity';
-import { Brackets, FindManyOptions, Repository, SelectQueryBuilder, WhereExpression } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { CrudService } from '../core';
 import { EmployeeService } from '../employee/employee.service';
 import { RoleService } from '../role/role.service';
 import { RequestContext } from '../core/context';
 import { IEmployee, IGetTaskByEmployeeOptions, RolesEnum } from '@gauzy/contracts';
-import { option } from 'yargs';
 
 @Injectable()
 export class TaskService extends CrudService<Task> {
@@ -23,24 +21,6 @@ export class TaskService extends CrudService<Task> {
 		private readonly roleService: RoleService
 	) {
 		super(taskRepository);
-	}
-
-	async createTask(task: Task) {
-		const user = RequestContext.currentUser();
-		const obj = this.repository.create({
-			...task,
-			creator: user
-		});
-		try {
-			// https://github.com/Microsoft/TypeScript/issues/21592
-			return await this.repository.save(obj as any);
-		} catch (err /*: WriteError*/) {
-			throw new BadRequestException(err);
-		}
-		// return await this.repository.insert({
-		// 	...task,
-		// 	creatorId: user.id
-		// });
 	}
 
 	async getMyTasks(filter: any) {

@@ -6,6 +6,7 @@ import { TasksStoreService } from '../../../@core/services/tasks-store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '../../../@core/services/store.service';
 import { filter, tap } from 'rxjs/operators';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	template: `
@@ -58,10 +59,10 @@ export class InvoiceTasksSelectorComponent
 	private _loadTasks() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		this.tasksStore.fetchTasks(
-			tenantId, 
-			organizationId
-		);
+		this.tasksStore
+			.fetchTasks(tenantId, organizationId)
+			.pipe(untilDestroyed(this))
+			.subscribe();
 	}
 
 	selectTask($event) {

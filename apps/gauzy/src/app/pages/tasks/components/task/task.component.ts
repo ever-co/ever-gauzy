@@ -47,7 +47,7 @@ import { OrganizationTeamFilterComponent, TaskStatusFilterComponent } from './..
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-task',
+	selector: 'ngx-tasks',
 	templateUrl: './task.component.html',
 	styleUrls: ['task.component.scss']
 })
@@ -107,7 +107,6 @@ export class TaskComponent
 	ngOnInit() {
 		this._loadTableSettings();
 		this._applyTranslationOnSmartTable();
-
 		this.subject$
 			.pipe(
 				debounceTime(300),
@@ -242,8 +241,10 @@ export class TaskComponent
 			},
 			resultMap: (task: ITask) => {
 				return Object.assign({}, task, {
-					projectName: (task.project) ? task.project.name : null,
-					creatorName: (task.creator) ? task.creator.name : null,
+					projectName: task.project ? task.project.name : undefined,
+					employees: task.members ? task.members : undefined,
+					assignTo: this._teamTaskStore._getTeamNames(task),
+					creator: task.creator ? `${task.creator.name}` : null
 				});
 			},
 			finalize: () => {
@@ -295,7 +296,7 @@ export class TaskComponent
 					type: 'string',
 					filter: false
 				},
-				creatorName: {
+				creator: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_CREATOR'),
 					type: 'string',
 					filter: false
@@ -348,7 +349,10 @@ export class TaskComponent
 				assignTo: {
 					title: this.getTranslation('TASKS_PAGE.TASK_ASSIGNED_TO'),
 					type: 'custom',
-					filter: false,
+					filter: {
+						type: 'custom',
+						component: OrganizationTeamFilterComponent
+					},
 					renderComponent: AssignedToComponent
 				}
 			};
@@ -401,8 +405,13 @@ export class TaskComponent
 					organizationId,
 					tenantId
 				});
-				this.storeInstance.createTask(payload);
-				this.subject$.next();
+				this.storeInstance
+					.createTask(payload)
+					.pipe(
+						tap(() => this.subject$.next()),
+						untilDestroyed(this)
+					)
+					.subscribe();
 			}
 		}
 	}
@@ -415,6 +424,7 @@ export class TaskComponent
 			});
 		}
 		let dialog;
+		console.log(this.selectedTask);
 		if (this.isTasksPage()) {
 			dialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {
@@ -454,11 +464,12 @@ export class TaskComponent
 					tenantId
 				});
 
-				this.storeInstance.editTask({
-					...payload,
-					id: this.selectedTask.id
-				});
-				this.subject$.next();
+				this.storeInstance.editTask({ ...payload, id: this.selectedTask.id })
+					.pipe(
+						tap(() => this.subject$.next()),
+						untilDestroyed(this)
+					)
+					.subscribe();
 			}
 		}
 	}
@@ -511,8 +522,13 @@ export class TaskComponent
 					organizationId,
 					tenantId
 				});
-				this.storeInstance.createTask(payload);
-				this.subject$.next();
+				this.storeInstance
+					.createTask(payload)
+					.pipe(
+						tap(() => this.subject$.next()),
+						untilDestroyed(this)
+					)
+					.subscribe();
 			}
 		}
 	}
@@ -530,8 +546,12 @@ export class TaskComponent
 			.toPromise();
 
 		if (result) {
-			this.storeInstance.delete(this.selectedTask.id);
-			this.subject$.next();
+			this.storeInstance.delete(this.selectedTask.id)
+				.pipe(
+					tap(() => this.subject$.next()),
+					untilDestroyed(this)
+				)
+				.subscribe();
 		}
 	}
 

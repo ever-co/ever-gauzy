@@ -704,7 +704,11 @@ export class InvoiceAddComponent
 	private getAllTasks() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		this.tasksStore.fetchTasks(tenantId, organizationId);
+		this.tasksStore
+			.fetchTasks(tenantId, organizationId)
+			.pipe(
+				untilDestroyed(this)
+			).subscribe();
 	}
 
 	private async _initializeMethods() {

@@ -1,19 +1,15 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { ITask } from '@gauzy/contracts';
+import { ITask, ITaskResponse } from '@gauzy/contracts';
 import { map, tap } from 'rxjs/operators';
 import { TasksService } from './tasks.service';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
-@UntilDestroy()
 @Injectable({
 	providedIn: 'root'
 })
 export class MyTasksStoreService {
 	private _myTasks$: BehaviorSubject<ITask[]> = new BehaviorSubject([]);
-	public myTasks$: Observable<ITask[]> = this._myTasks$
-		.asObservable()
-		.pipe(map(this._mapToViewModel));
+	public myTasks$: Observable<ITask[]> = this._myTasks$.asObservable().pipe(map(this._mapToViewModel));
 
 	private _selectedTask$: BehaviorSubject<ITask> = new BehaviorSubject(null);
 	public selectedTask$: Observable<ITask> = this._selectedTask$.asObservable();
@@ -27,17 +23,10 @@ export class MyTasksStoreService {
 	fetchTasks(
 		tenantId: string,
 		organizationId: string
-	) {
-		this._taskService
-			.getMyTasks({
-				tenantId,
-				organizationId
-			})
-			.pipe(
-				tap(({ items }) => this.loadAllTasks(items)),
-				untilDestroyed(this)
-			)
-			.subscribe();
+	): Observable<ITaskResponse> {
+		return this._taskService
+			.getMyTasks({ tenantId, organizationId })
+			.pipe(tap(({ items }) => this.loadAllTasks(items)));
 	}
 
 	private _mapToViewModel(tasks) {
@@ -45,9 +34,7 @@ export class MyTasksStoreService {
 			...task,
 			projectName: task.project ? task.project.name : undefined,
 			employees: task.members ? task.members : undefined,
-			creator: task.creator
-				? `${task.creator.firstName} ${task.creator.lastName}`
-				: null
+			creator: task.creator ? `${task.creator.name}` : null
 		}));
 	}
 
@@ -55,21 +42,19 @@ export class MyTasksStoreService {
 		this._myTasks$.next(tasks);
 	}
 
-	createTask(task: ITask): void {
-		this._taskService
+	createTask(task: ITask): Observable<ITask> {
+		return this._taskService
 			.createTask(task)
 			.pipe(
 				tap((createdTask) => {
 					const tasks = [...this.myTasks, createdTask];
 					this._myTasks$.next(tasks);
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+				})
+			);
 	}
 
-	editTask(task: ITask): void {
-		this._taskService
+	editTask(task: ITask): Observable<ITask> {
+		return this._taskService
 			.editTask(task)
 			.pipe(
 				tap(() => {
@@ -78,24 +63,20 @@ export class MyTasksStoreService {
 						t.id === task.id ? task : t
 					);
 					this._myTasks$.next(newState);
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+				})
+			);
 	}
 
-	delete(id: string): void {
-		this._taskService
+	delete(id: string): Observable<void> {
+		return this._taskService
 			.deleteTask(id)
 			.pipe(
 				tap(() => {
 					const tasks = [...this.myTasks];
 					const newState = tasks.filter((t) => t.id !== id);
 					this._myTasks$.next(newState);
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+				})
+			);
 	}
 
 	selectTask(task: ITask) {

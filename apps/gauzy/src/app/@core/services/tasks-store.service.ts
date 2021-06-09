@@ -1,19 +1,15 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { ITask, TaskListTypeEnum } from '@gauzy/contracts';
+import { ITask, ITaskResponse, TaskListTypeEnum } from '@gauzy/contracts';
 import { map, tap } from 'rxjs/operators';
 import { TasksService } from './tasks.service';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
-@UntilDestroy()
 @Injectable({
 	providedIn: 'root'
 })
 export class TasksStoreService {
 	private _tasks$: BehaviorSubject<ITask[]> = new BehaviorSubject([]);
-	public tasks$: Observable<ITask[]> = this._tasks$
-		.asObservable()
-		.pipe(map(this._mapToViewModel));
+	public tasks$: Observable<ITask[]> = this._tasks$.asObservable().pipe(map(this._mapToViewModel));
 
 	private _selectedTask$: BehaviorSubject<ITask> = new BehaviorSubject(null);
 	public selectedTask$: Observable<ITask> = this._selectedTask$.asObservable();
@@ -29,17 +25,15 @@ export class TasksStoreService {
 	fetchTasks(
 		tenantId: string,
 		organizationId: string
-	) {
-		this._taskService
+	): Observable<ITaskResponse> {
+		return this._taskService
 			.getAllTasks({
 				tenantId,
 				organizationId
 			})
 			.pipe(
 				tap(({ items }) => this.loadAllTasks(items)),
-				untilDestroyed(this)
-			)
-			.subscribe();
+			);
 	}
 
 	private _mapToViewModel(tasks) {
@@ -75,21 +69,19 @@ export class TasksStoreService {
 		]);
 	}
 
-	createTask(task: ITask): void {
-		this._taskService
+	createTask(task: ITask): Observable<ITask> {
+		return this._taskService
 			.createTask(task)
 			.pipe(
 				tap((createdTask) => {
 					const tasks = [...this.tasks, createdTask];
 					this._tasks$.next(tasks);
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+				})
+			);
 	}
 
-	editTask(task: ITask): void {
-		this._taskService
+	editTask(task: ITask): Observable<ITask> {
+		return this._taskService
 			.editTask(task)
 			.pipe(
 				tap(() => {
@@ -98,24 +90,20 @@ export class TasksStoreService {
 						t.id === task.id ? { ...t, ...task } : t
 					);
 					this._tasks$.next(newState);
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+				})
+			);
 	}
 
-	delete(id: string): void {
-		this._taskService
+	delete(id: string): Observable<void> {
+		return this._taskService
 			.deleteTask(id)
 			.pipe(
 				tap(() => {
 					const tasks = [...this.tasks];
 					const newState = tasks.filter((t) => t.id !== id);
 					this._tasks$.next(newState);
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+				})
+			);
 	}
 
 	selectTask(task: ITask) {

@@ -162,7 +162,9 @@ export class TasksSprintViewComponent
 					this.sprints.find(
 						(sprint) => sprint.id === event.container.id
 					) || null
-			});
+			})
+			.pipe(untilDestroyed(this))
+			.subscribe();
 			transferArrayItem(
 				event.previousContainer.data,
 				event.container.data,
@@ -189,7 +191,9 @@ export class TasksSprintViewComponent
 			id,
 			status,
 			title
-		});
+		})
+		.pipe(untilDestroyed(this))
+		.subscribe();
 	}
 
 	completeSprint(sprint: IOrganizationSprint, evt: any): void {
