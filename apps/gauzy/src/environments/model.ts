@@ -45,4 +45,5 @@ export interface Environment {
 	DEMO: boolean;
 
 	CHATWOOT_SDK_TOKEN: string;
+	CHAT_MESSAGE_GOOGLE_MAP: string;
 }

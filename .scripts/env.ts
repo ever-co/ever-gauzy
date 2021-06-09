@@ -34,6 +34,8 @@ export type Env = Readonly<{
 	DEMO: boolean;
 
 	CHATWOOT_SDK_TOKEN: string;
+	//nebular chat map API key
+	CHAT_MESSAGE_GOOGLE_MAP: string;
 }>;
 
 export const env: Env = cleanEnv(
@@ -64,7 +66,8 @@ export const env: Env = cleanEnv(
 
 		DEMO: bool({ default: false }),
 
-		CHATWOOT_SDK_TOKEN: str({ default: '' })
+		CHATWOOT_SDK_TOKEN: str({ default: '' }),
+		CHAT_MESSAGE_GOOGLE_MAP: str({ default: '' })
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
 );
