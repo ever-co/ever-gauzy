@@ -310,7 +310,7 @@ export class ProductCategoriesComponent
 
 	async setPermissions() {
 		this.editCategoriesAllowed = await this.ngxPermissionsService.hasPermission(
-			PermissionsEnum.ORG_PRODUCT_CATEOGIES_EDIT
+			PermissionsEnum.ORG_PRODUCT_CATEGORIES_EDIT
 		);
 	}
 }

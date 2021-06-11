@@ -682,9 +682,11 @@
 			"WRONG_FILE_NAME": "Wrong file name!!!",
 			"CORRECT_FILE_NAME": "The file name should be: \"import.zip\"",
 			"DOWNLOAD_TEMPLATES": "Download templates",
+			"MIGRATE_TO_CLOUD": "Migrate to Ever Gauzy Cloud",
 			"IMPORT_INFO": "Click \"Import\" to import your data into Gauzy DB.",
 			"EXPORT_INFO": "Click \"Export\" to export data from Gauzy DB.",
 			"DOWNLOAD_TEMPLATES_INFO": "Click \"Download Templates\" to download Zip archive with CSV templates for the format of Gauzy data.",
+			"MIGRATE_TO_CLOUD_INFO": "Click \"Migrate to Ever Gauzy Cloud\" to migrate from self-hosted to cloud edition.",
 			"ACTIVITY": "Activity",
 			"APPROVAL_POLICY": "Approval Policy",
 			"AVAILABILITY_SLOT": "Availability Slot",
@@ -1712,7 +1714,7 @@
 			"ORG_PRODUCT_TYPES_VIEW": "View Organization Product Types",
 			"ORG_PRODUCT_TYPES_EDIT": "Edit Organization Product Types",
 			"ORG_PRODUCT_CATEGORIES_VIEW": "View Organization Product Categories",
-			"ORG_PRODUCT_CATEOGIES_EDIT": "Edit Organization Product Categories",
+			"ORG_PRODUCT_CATEGORIES_EDIT": "Edit Organization Product Categories",
 			"VIEW_ALL_ACCOUNTING_TEMPLATES": "View All Accounting Templates",
 			"GROUPS": {
 				"GENERAL": "כללי",
@@ -1736,7 +1738,8 @@
 			"CUSTOM_SMTP_VIEW": "View Custom SMTP",
 			"IMPORT_EXPORT_VIEW": "View Import/Export",
 			"ORG_JOB_EMPLOYEE_VIEW": "View Job Employees",
-			"ORG_JOB_MATCHING_VIEW": "View Job Matching"
+			"ORG_JOB_MATCHING_VIEW": "View Job Matching",
+			"MIGRATE_GAUZY_CLOUD": "Migrate Into Gauzy Cloud"
 		}
 	},
 	"CONTACTS_PAGE": {

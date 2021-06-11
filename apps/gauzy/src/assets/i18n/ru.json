@@ -1712,7 +1712,7 @@
 			"ORG_PRODUCT_TYPES_VIEW": "Просмотр типов товаров организации",
 			"ORG_PRODUCT_TYPES_EDIT": "Редактировать типы продуктов организации",
 			"ORG_PRODUCT_CATEGORIES_VIEW": "Просмотр категорий продуктов организации",
-			"ORG_PRODUCT_CATEOGIES_EDIT": "Редактировать категории товаров организации",
+			"ORG_PRODUCT_CATEGORIES_EDIT": "Редактировать категории товаров организации",
 			"VIEW_ALL_ACCOUNTING_TEMPLATES": "Просмотреть все шаблоны бухгалтерского учета",
 			"GROUPS": {
 				"GENERAL": "Генеральная",
@@ -1736,7 +1736,8 @@
 			"CUSTOM_SMTP_VIEW": "Просмотр SMTP пользовательских",
 			"IMPORT_EXPORT_VIEW": "Просмотр импорта/экспорта",
 			"ORG_JOB_EMPLOYEE_VIEW": "Сотрудники по работе",
-			"ORG_JOB_MATCHING_VIEW": "Просмотр соответствия Вакансии"
+			"ORG_JOB_MATCHING_VIEW": "Просмотр соответствия Вакансии",
+			"MIGRATE_GAUZY_CLOUD": "Migrate Into Gauzy Cloud"
 		}
 	},
 	"CONTACTS_PAGE": {

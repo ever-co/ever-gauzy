@@ -82,6 +82,7 @@ export interface IEnvironment {
 	 * Endpoint for Gauzy AI API (optional), e.g.: http://localhost:3005/graphql
 	 */
 	gauzyAIGraphQLEndpoint?: string;
+	gauzyCloudEndpoint?: string;
 
 	smtpConfig?: ISMTPConfig;
 	defaultCurrency: string;
