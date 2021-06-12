@@ -1,12 +1,27 @@
 import { HttpService, Injectable } from "@nestjs/common";
-import { Observable } from "rxjs/internal/Observable";
+import { IUserRegistrationInput } from "@gauzy/contracts";
+import { map } from "rxjs/operators";
 
 @Injectable()
 export class GauzyCloudService {
 
-    constructor(private readonly httpService: HttpService) {}
+    constructor(
+        private readonly _http: HttpService
+    ) {}
+    
+    migrateUser(payload: IUserRegistrationInput) {
+        console.log(payload);
 
-    findAll(): Observable<any> {
-        return this.httpService.get('http://localhost:3000/cats');
+        const params = JSON.stringify(payload);
+        return this._http.post('/api/auth/register', params, {
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            }).pipe(
+                map((response) => {
+                    console.log(response);
+                    return response.data;
+                }),
+            );
     }
 }

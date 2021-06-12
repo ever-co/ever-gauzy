@@ -123,7 +123,7 @@ export class AuthService extends SocialAuthService {
 			tenant = creatingUser.tenant;
 		}
 
-		const user = this.userService.create({
+		const user = await this.userService.create({
 			...input.user,
 			tenant,
 			...(input.password
@@ -135,7 +135,7 @@ export class AuthService extends SocialAuthService {
 
 		if (input.organizationId) {
 			await this.userOrganizationService.addUserToOrganization(
-				await user,
+				user,
 				input.organizationId
 			);
 		}

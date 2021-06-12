@@ -4,6 +4,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IUserRegistrationInput } from '@gauzy/contracts';
 import { TenantPermissionGuard } from './../shared/guards';
+import { GauzyCloudMigrateCommand } from './commands/gauzy-cloud.migrate.command';
 
 @Controller()
 export class GauzyCloudController {
@@ -25,6 +26,8 @@ export class GauzyCloudController {
 	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
 	@Post('migrate')
 	async migrateToCloud(@Body() body: IUserRegistrationInput) {
-		console.log(body);
+		return this.commandBus.execute(
+			new GauzyCloudMigrateCommand(body)
+		);
 	}
 }

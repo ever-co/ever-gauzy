@@ -5,6 +5,7 @@ import { GauzyCloudController } from './gauzy-cloud.controller';
 import { GauzyCloudService } from './gauzy-cloud.service';
 import { RouterModule } from 'nest-router';
 import { TenantModule } from './../tenant';
+import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
@@ -24,7 +25,10 @@ import { TenantModule } from './../tenant';
 		TenantModule
 	],
 	controllers: [GauzyCloudController],
-	providers: [GauzyCloudService],
+	providers: [
+		GauzyCloudService, 
+		...CommandHandlers
+	],
 	exports: []
 })
 export class GauzyCloudModule {}
