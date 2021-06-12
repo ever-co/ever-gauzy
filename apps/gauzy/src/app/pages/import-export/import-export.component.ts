@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { saveAs } from 'file-saver';
 import { Router } from '@angular/router';
-import { filter, mergeMap, tap } from 'rxjs/operators';
+import { filter, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ITenantCreateInput, IUser, IUserRegistrationInput, PermissionsEnum } from '@gauzy/contracts';
@@ -61,22 +61,35 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 	* Migrate Self Hosted to Gauzy Cloud Hosted
 	*/
 	onMigrateIntoCloud(password: string) {
-		const { firstName, lastName, email, tenant: { name } } = this.user;
+		const { 
+			firstName,
+			lastName,
+			email,
+			imageUrl,
+			preferredComponentLayout,
+			preferredLanguage,
+			tenant: { name } 
+		} = this.user;
 		const register: IUserRegistrationInput = {
 			user: { 
 				firstName, 
 				lastName, 
-				email 
+				email,
+				preferredComponentLayout,
+				preferredLanguage,
+				imageUrl
 			},
 			password
 		}
 
-		const tenant: ITenantCreateInput = {
-			name
-		}
-
+		
 		this.gauzyCloudService.migrateIntoCloud(register)
 			.pipe(
+				switchMap((response: any) => {
+					const tenant: ITenantCreateInput = { name }
+					const token = response.token;
+					return this.gauzyCloudService.migrateTenant(tenant, token);
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();

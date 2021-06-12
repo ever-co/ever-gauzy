@@ -16,7 +16,9 @@ export class GauzyCloudService {
 		return this._http.post(`${API_PREFIX}/cloud/migrate`, payload);
 	}
 
-	migrateTenant(payload: ITenantCreateInput) {
-		return this._http.post(`${API_PREFIX}/cloud/migrate/tenant`, payload);
+	migrateTenant(payload: ITenantCreateInput, token: string) {
+		return this._http.post(`${API_PREFIX}/cloud/migrate/tenant/${token}`, {
+			...payload
+		});
 	}
 }

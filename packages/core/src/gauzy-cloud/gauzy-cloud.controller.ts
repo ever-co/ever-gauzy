@@ -1,10 +1,12 @@
-import { Body, Controller, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpStatus, Param, Post, UseGuards, UseInterceptors } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ITenantCreateInput, IUserRegistrationInput } from '@gauzy/contracts';
 import { TenantPermissionGuard } from './../shared/guards';
-import { GauzyCloudMigrateCommand } from './commands/gauzy-cloud.migrate.command';
+import { GauzyCloudUserMigrateCommand } from './commands/gauzy-cloud-user.migrate.command';
+import { TransformInterceptor } from './../core/interceptors/transform.interceptor';
+import { GauzyCloudTenantMigrateCommand } from './commands/gauzy-cloud-tenant.migrate.command';
 
 @Controller()
 export class GauzyCloudController {
@@ -24,10 +26,11 @@ export class GauzyCloudController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
-	@Post('migrate')
+	@UseInterceptors(TransformInterceptor)
+	@Post()
 	async migrateToCloud(@Body() body: IUserRegistrationInput) {
 		return this.commandBus.execute(
-			new GauzyCloudMigrateCommand(body)
+			new GauzyCloudUserMigrateCommand(body)
 		);
 	}
 
@@ -42,8 +45,13 @@ export class GauzyCloudController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
-	@Post('migrate/tenant')
-	async migrateTenant(@Body() body: ITenantCreateInput) {
-		console.log(body);
+	@Post('tenant/:token')
+	async migrateTenant(
+		@Body() body: ITenantCreateInput,
+		@Param('token') token: string
+	) {
+		return this.commandBus.execute(
+			new GauzyCloudTenantMigrateCommand(body, token)
+		);
 	}
 }

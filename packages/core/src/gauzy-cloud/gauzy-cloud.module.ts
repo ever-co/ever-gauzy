@@ -10,7 +10,7 @@ import { CommandHandlers } from './commands/handlers';
 @Module({
 	imports: [
 		RouterModule.forRoutes([
-			{ path: '/cloud', module: GauzyCloudModule }
+			{ path: '/cloud/migrate', module: GauzyCloudModule }
 		]),
 		HttpModule.registerAsync({
 			imports: [ConfigModule],
@@ -19,7 +19,7 @@ import { CommandHandlers } from './commands/handlers';
 				timeout: 60 * 1000,
 				maxRedirects: 5,
 				headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 }
 			}),
 			inject: [ConfigService],
