@@ -283,7 +283,7 @@ export class ExportComponent
 				entities: this.getKeyResultEntities()
 			},
 			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.KNOWLAGE_BASE'),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.KNOWLADGE_BASE'),
 				value: 'knowledge_base',
 				checked: true,
 				isGroup: true,
@@ -1189,7 +1189,7 @@ export class ExportComponent
 		return [
 			{
 				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.KNOWLAGE_BASE_ARTICLE'
+					'MENU.IMPORT_EXPORT.KNOWLADGE_BASE_ARTICLE'
 				),
 				value: 'knowledge_base_article',
 				checked: true,
@@ -1198,7 +1198,7 @@ export class ExportComponent
 			},
 			{
 				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.KNOWLAGE_BASE_AUTHOR'
+					'MENU.IMPORT_EXPORT.KNOWLADGE_BASE_AUTHOR'
 				),
 				value: 'knowledge_base_author',
 				checked: true,

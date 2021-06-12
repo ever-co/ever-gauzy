@@ -186,7 +186,7 @@ export class WarehouseProductsTableComponent
 		);
 
 		if (createWarehouseProductsInput.length && result) {
-			this.toastrService.success('INVENTORY_PAGE.SUCCESFULLY_ADDED_PRODUCTS');
+			this.toastrService.success('INVENTORY_PAGE.SUCCESSFULLY_ADDED_PRODUCTS');
 		}
 
 		this.loadItems();

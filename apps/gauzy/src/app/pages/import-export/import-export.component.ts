@@ -8,7 +8,7 @@ import { IUser, IUserRegistrationInput, PermissionsEnum } from '@gauzy/contracts
 import { ExportAllService } from '../../@core/services/export-all.service';
 import { environment } from './../../../environments/environment';
 import { Environment } from './../../../environments/model';
-import { GauzyCloudService, Store } from '../../@core/services';
+import { GauzyCloudService, Store, ToastrService } from '../../@core/services';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -28,7 +28,8 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 		private readonly gauzyCloudService: GauzyCloudService,
 		private readonly router: Router,
 		private readonly store: Store,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private readonly toastrService: ToastrService
 	) {
 		super(translateService);
 	}
@@ -83,15 +84,25 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 			},
 			password
 		}
-		this.gauzyCloudService.migrateIntoCloud(register)
+
+		try {
+			this.gauzyCloudService.migrateIntoCloud(register)
 			.pipe(
 				switchMap((response: any) => {
 					const token = response.token;
 					return this.gauzyCloudService.migrateTenant({ name }, token);
 				}),
-				finalize(() => this.loading = false),
+				finalize(() => {
+					this.toastrService.success('MENU.IMPORT_EXPORT.MIGRATE_SUCCESSFULLY', {
+						tenant: name
+					});
+					this.loading = false;
+				}),
 				untilDestroyed(this),
 			)
 			.subscribe();
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
 	}
 }
