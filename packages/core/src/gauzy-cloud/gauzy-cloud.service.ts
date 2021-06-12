@@ -9,17 +9,13 @@ export class GauzyCloudService {
         private readonly _http: HttpService
     ) {}
     
-    migrateUser(payload: IUserRegistrationInput) {
-        console.log(payload);
-
+    migrateUser(
+        payload: IUserRegistrationInput
+    ) {        
         const params = JSON.stringify(payload);
-        return this._http.post('/api/auth/register', params, {
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            }).pipe(
+        return this._http.post('/api/auth/register', params).pipe(
                 map((response) => {
-                    console.log(response);
+                    console.log(response, 'response');
                     return response.data;
                 }),
             );

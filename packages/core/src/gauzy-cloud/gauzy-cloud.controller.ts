@@ -2,7 +2,7 @@ import { Body, Controller, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { IUserRegistrationInput } from '@gauzy/contracts';
+import { ITenantCreateInput, IUserRegistrationInput } from '@gauzy/contracts';
 import { TenantPermissionGuard } from './../shared/guards';
 import { GauzyCloudMigrateCommand } from './commands/gauzy-cloud.migrate.command';
 
@@ -29,5 +29,21 @@ export class GauzyCloudController {
 		return this.commandBus.execute(
 			new GauzyCloudMigrateCommand(body)
 		);
+	}
+
+	@ApiOperation({ summary: 'Migrate self hosted tenant into the gauzy cloud tenant' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The tenant has been successfully created in the Gauzy cloud.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
+	@Post('migrate/tenant')
+	async migrateTenant(@Body() body: ITenantCreateInput) {
+		console.log(body);
 	}
 }

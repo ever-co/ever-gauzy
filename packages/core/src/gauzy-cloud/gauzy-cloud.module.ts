@@ -16,8 +16,11 @@ import { CommandHandlers } from './commands/handlers';
 			imports: [ConfigModule],
 			useFactory: async (configService: ConfigService) => ({
 				baseURL: configService.get('gauzyCloudEndpoint') as string,
-				timeout: 5000,
-				maxRedirects: 5
+				timeout: 60 * 1000,
+				maxRedirects: 5,
+				headers: {
+                    'Content-Type': 'application/json',
+                }
 			}),
 			inject: [ConfigService],
 		}),

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IUserRegistrationInput } from '@gauzy/contracts';
+import { ITenantCreateInput, IUserRegistrationInput } from '@gauzy/contracts';
 import { API_PREFIX } from '../constants';
 
 @Injectable({
@@ -14,5 +14,9 @@ export class GauzyCloudService {
 
 	migrateIntoCloud(payload: IUserRegistrationInput) {
 		return this._http.post(`${API_PREFIX}/cloud/migrate`, payload);
+	}
+
+	migrateTenant(payload: ITenantCreateInput) {
+		return this._http.post(`${API_PREFIX}/cloud/migrate/tenant`, payload);
 	}
 }
