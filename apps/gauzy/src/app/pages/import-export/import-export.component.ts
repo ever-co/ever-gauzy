@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { saveAs } from 'file-saver';
 import { Router } from '@angular/router';
-import { filter, switchMap, tap } from 'rxjs/operators';
+import { filter, finalize, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ITenantCreateInput, IUser, IUserRegistrationInput, PermissionsEnum } from '@gauzy/contracts';
+import { IUser, IUserRegistrationInput, PermissionsEnum } from '@gauzy/contracts';
 import { ExportAllService } from '../../@core/services/export-all.service';
 import { environment } from './../../../environments/environment';
 import { Environment } from './../../../environments/model';
@@ -21,6 +21,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 	user: IUser;
 	environment: Environment = environment;
 	permissionsEnum = PermissionsEnum;
+	loading: boolean;
 	
 	constructor(
 		private readonly exportAll: ExportAllService,
@@ -61,6 +62,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 	* Migrate Self Hosted to Gauzy Cloud Hosted
 	*/
 	onMigrateIntoCloud(password: string) {
+		this.loading = true;
 		const { 
 			firstName,
 			lastName,
@@ -81,16 +83,14 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 			},
 			password
 		}
-
-		
 		this.gauzyCloudService.migrateIntoCloud(register)
 			.pipe(
 				switchMap((response: any) => {
-					const tenant: ITenantCreateInput = { name }
 					const token = response.token;
-					return this.gauzyCloudService.migrateTenant(tenant, token);
+					return this.gauzyCloudService.migrateTenant({ name }, token);
 				}),
-				untilDestroyed(this)
+				finalize(() => this.loading = false),
+				untilDestroyed(this),
 			)
 			.subscribe();
 	}

@@ -8,6 +8,7 @@ import { GauzyCloudUserMigrateCommand } from './commands/gauzy-cloud-user.migrat
 import { TransformInterceptor } from './../core/interceptors/transform.interceptor';
 import { GauzyCloudTenantMigrateCommand } from './commands/gauzy-cloud-tenant.migrate.command';
 
+@UseInterceptors(TransformInterceptor)
 @Controller()
 export class GauzyCloudController {
 	
@@ -26,10 +27,9 @@ export class GauzyCloudController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(AuthGuard('jwt'), TenantPermissionGuard)
-	@UseInterceptors(TransformInterceptor)
 	@Post()
 	async migrateToCloud(@Body() body: IUserRegistrationInput) {
-		return this.commandBus.execute(
+		return await this.commandBus.execute(
 			new GauzyCloudUserMigrateCommand(body)
 		);
 	}
@@ -50,7 +50,7 @@ export class GauzyCloudController {
 		@Body() body: ITenantCreateInput,
 		@Param('token') token: string
 	) {
-		return this.commandBus.execute(
+		return await this.commandBus.execute(
 			new GauzyCloudTenantMigrateCommand(body, token)
 		);
 	}

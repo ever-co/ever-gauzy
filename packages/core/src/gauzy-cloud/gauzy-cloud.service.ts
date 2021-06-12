@@ -2,7 +2,6 @@ import { HttpService, Injectable } from "@nestjs/common";
 import { IAuthLoginInput, ITenantCreateInput, IUserRegistrationInput } from "@gauzy/contracts";
 import { AxiosResponse } from 'axios';
 import { Observable } from "rxjs/internal/Observable";
-import { tap } from "rxjs/operators";
 
 @Injectable()
 export class GauzyCloudService {
@@ -30,10 +29,6 @@ export class GauzyCloudService {
             headers: { 
                 'Authorization': `Bearer ${token}` 
             }
-        }).pipe(
-            tap((response) => {
-                console.log(response);
-            })
-        );
+        });
     }
 }
