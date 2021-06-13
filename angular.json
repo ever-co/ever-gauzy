@@ -633,10 +633,17 @@
     },
     "desktop-ui-lib": {
       "projectType": "library",
-      "root": "libs/desktop-ui-lib",
-      "sourceRoot": "libs/desktop-ui-lib/src",
+      "root": "packages/desktop-ui-lib",
+      "sourceRoot": "packages/desktop-ui-lib/src",
       "prefix": "gauzy",
       "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "tsConfig": "packages/desktop-ui-lib/tsconfig.lib.json",
+            "project": "packages/desktop-ui-lib/ng-package.json"
+          }
+        },
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {

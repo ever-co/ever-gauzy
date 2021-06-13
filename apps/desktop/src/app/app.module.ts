@@ -14,18 +14,18 @@ import { NgxElectronModule } from 'ngx-electron';
 import { AppService } from './app.service';
 import { HttpClientModule } from '@angular/common/http';
 import {
-	AlertComponent,
 	ImageViewerModule,
 	UpdaterModule,
 	SettingsModule,
 	ScreenCaptureModule,
 	TimeTrackerModule,
 	SetupModule
-} from '../../../../libs/desktop-ui-lib/src';
+} from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
+import { RouterModule } from '@angular/router';
 
 @NgModule({
-	declarations: [AppComponent, AlertComponent],
+	declarations: [AppComponent],
 	imports: [
 		NbLayoutModule,
 		NbDialogModule.forRoot(),
@@ -34,6 +34,7 @@ import { NbCardModule, NbButtonModule } from '@nebular/theme';
 		NbButtonModule,
 		BrowserModule,
 		BrowserAnimationsModule,
+		RouterModule,
 		AppRoutingModule,
 		NbThemeModule.forRoot({ name: 'default' }),
 		SetupModule,
