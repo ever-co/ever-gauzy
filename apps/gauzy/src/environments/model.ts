@@ -46,4 +46,6 @@ export interface Environment {
 
 	CHATWOOT_SDK_TOKEN: string;
 	CHAT_MESSAGE_GOOGLE_MAP: string;
+
+	GAUZY_CLOUD_APP: string;
 }

@@ -22,6 +22,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 	environment: Environment = environment;
 	permissionsEnum = PermissionsEnum;
 	loading: boolean;
+	token: string;
 	
 	constructor(
 		private readonly exportAll: ExportAllService,
@@ -87,20 +88,31 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 
 		try {
 			this.gauzyCloudService.migrateIntoCloud(register)
-			.pipe(
-				switchMap((response: any) => {
-					const token = response.token;
-					return this.gauzyCloudService.migrateTenant({ name }, token);
-				}),
-				finalize(() => {
-					this.toastrService.success('MENU.IMPORT_EXPORT.MIGRATE_SUCCESSFULLY', {
-						tenant: name
-					});
-					this.loading = false;
-				}),
-				untilDestroyed(this),
-			)
-			.subscribe();
+				.pipe(
+					switchMap((response: any) => {
+						const token = response.token;
+						this.token = token;
+						return this.gauzyCloudService.migrateTenant({ name }, token);
+					}),
+					tap(() => {
+						this.toastrService.success('MENU.IMPORT_EXPORT.MIGRATE_SUCCESSFULLY', {
+							tenant: name
+						});
+					}),
+					finalize(() => {
+						this.loading = false;
+						const externalUrl = environment.GAUZY_CLOUD_APP;
+						setTimeout(() => {
+							this.router.navigate(['/pages/settings/import-export/externalRedirect', { redirect: externalUrl }], { 
+								queryParams: {
+									token: this.token
+								} 
+							});
+						}, 3000)
+					}),
+					untilDestroyed(this),
+				)
+				.subscribe();
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
