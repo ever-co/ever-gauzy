@@ -7,7 +7,7 @@ import {
 	TimeTrackerComponent,
 	SetupComponent,
 	UpdaterComponent
-} from '../../../../libs/desktop-ui-lib/src/index';
+} from '@gauzy/desktop-ui-lib';
 
 const routes: Routes = [
 	{

@@ -1,13 +1,14 @@
 {
-	"extends": "./tsconfig.json",
+	"extends": "../../tsconfig.json",
 	"compilerOptions": {
 		"outDir": "../../dist/out-tsc",
 		"target": "es2016",
 		"declaration": true,
 		"experimentalDecorators": true,
 		"declarationMap": true,
+		"sourceMap": true,
 		"inlineSources": true,
-		"types": [],
+		"types": ["node"],
 		"lib": ["dom", "es2018"]
 	},
 	"angularCompilerOptions": {
@@ -15,6 +16,7 @@
 		"strictMetadataEmit": true,
 		"enableResourceInlining": true
 	},
+	"moduleResolution": "node",
 	"exclude": ["src/test-setup.ts", "**/*.spec.ts"],
 	"include": ["**/*.ts"]
 }
