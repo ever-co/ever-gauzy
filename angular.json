@@ -569,8 +569,8 @@
       }
     },
     "api-desktop": {
-      "root": "libs/desktop-api",
-      "sourceRoot": "libs/desktop-api/src",
+      "root": "packages/desktop-api",
+      "sourceRoot": "packages/desktop-api/src",
       "projectType": "application",
       "prefix": "api-desktop",
       "schematics": {},
@@ -582,10 +582,10 @@
             "memoryLimit": 4000,
             "webpackConfig": "tools/build/webpack.config.js",
             "outputPath": "dist/apps/desktop/desktop-api",
-            "main": "libs/desktop-api/src/main.ts",
-            "tsConfig": "libs/desktop-api/tsconfig.app.json",
+            "main": "packages/desktop-api/src/main.ts",
+            "tsConfig": "packages/desktop-api/tsconfig.app.json",
             "assets": [
-              "libs/desktop-api/src/assets"
+              "packages/desktop-api/src/assets"
             ]
           },
           "configurations": {
@@ -595,8 +595,8 @@
               "inspect": false,
               "fileReplacements": [
                 {
-                  "replace": "libs/desktop-api/src/environments/environment.ts",
-                  "with": "libs/desktop-api/src/environments/environment.prod.ts"
+                  "replace": "packages/desktop-api/src/environments/environment.ts",
+                  "with": "packages/desktop-api/src/environments/environment.prod.ts"
                 }
               ]
             }
@@ -612,20 +612,20 @@
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {
             "tsConfig": [
-              "libs/desktop-api/tsconfig.app.json",
-              "libs/desktop-api/tsconfig.spec.json"
+              "packages/desktop-api/tsconfig.app.json",
+              "packages/desktop-api/tsconfig.spec.json"
             ],
             "exclude": [
               "**/node_modules/**",
-              "!libs/desktop-api/**"
+              "!packages/desktop-api/**"
             ]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
           "options": {
-            "jestConfig": "libs/desktop-api/jest.config.js",
-            "tsConfig": "libs/desktop-api/tsconfig.spec.json",
+            "jestConfig": "packages/desktop-api/jest.config.js",
+            "tsConfig": "packages/desktop-api/tsconfig.spec.json",
             "passWithNoTests": true
           }
         }
@@ -633,10 +633,17 @@
     },
     "desktop-ui-lib": {
       "projectType": "library",
-      "root": "libs/desktop-ui-lib",
-      "sourceRoot": "libs/desktop-ui-lib/src",
+      "root": "packages/desktop-ui-lib",
+      "sourceRoot": "packages/desktop-ui-lib/src",
       "prefix": "gauzy",
       "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "tsConfig": "packages/desktop-ui-lib/tsconfig.lib.json",
+            "project": "packages/desktop-ui-lib/ng-package.json"
+          }
+        },
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {

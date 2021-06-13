@@ -22,7 +22,7 @@ import {
 	TimeTrackerModule,
 	SetupModule,
 	SplashScreenModule
-} from '../../../../libs/desktop-ui-lib/src';
+} from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { NgxAuthModule } from '../../../gauzy/src/app/auth/auth.module';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -41,7 +41,7 @@ import { environment } from '../../../gauzy/src/environments/environment';
 import { Router } from '@angular/router';
 
 @NgModule({
-	declarations: [AppComponent, AlertComponent],
+	declarations: [AppComponent],
 	imports: [
 		NgxAuthModule,
 		NbLayoutModule,
