@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { saveAs } from 'file-saver';
-import { Router } from '@angular/router';
+import { Router, UrlSerializer } from '@angular/router';
 import { filter, finalize, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -30,7 +30,8 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 		private readonly router: Router,
 		private readonly store: Store,
 		readonly translateService: TranslateService,
-		private readonly toastrService: ToastrService
+		private readonly toastrService: ToastrService,
+		private readonly serializer: UrlSerializer
 	) {
 		super(translateService);
 	}
@@ -102,13 +103,23 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 					finalize(() => {
 						this.loading = false;
 						const externalUrl = environment.GAUZY_CLOUD_APP;
+						const tree = this.router.createUrlTree([], { 
+							queryParams: { 
+								email, 
+								password,
+								token: this.token
+							} 
+						});
+
+						let redirect: string;
+						if (externalUrl.indexOf('#') !== -1) {
+							redirect = externalUrl + '/' + this.serializer.serialize(tree);
+						} else {
+							redirect = externalUrl + '/#' + this.serializer.serialize(tree);
+						}
 						setTimeout(() => {
-							this.router.navigate(['/pages/settings/import-export/externalRedirect', { redirect: externalUrl }], { 
-								queryParams: {
-									token: this.token
-								} 
-							});
-						}, 3000)
+							this.router.navigate(['/pages/settings/import-export/external-redirect', { redirect }]);
+						}, 1000);	
 					}),
 					untilDestroyed(this),
 				)
