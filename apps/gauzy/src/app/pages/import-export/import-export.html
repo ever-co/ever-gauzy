@@ -57,7 +57,7 @@
 					<nb-icon icon="file-text-outline"></nb-icon>
 					{{ 'MENU.IMPORT_EXPORT.DOWNLOAD_TEMPLATES' | translate }}
 				</button>
-				<ng-container *ngIf="!environment.DEMO" >
+				<ng-container *ngIf="!environment.DEMO">
 					<button
 						*ngxPermissionsOnly="[permissionsEnum.MIGRATE_GAUZY_CLOUD]"
 						class="m-1"

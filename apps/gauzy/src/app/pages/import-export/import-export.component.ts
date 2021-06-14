@@ -4,7 +4,7 @@ import { Router, UrlSerializer } from '@angular/router';
 import { filter, finalize, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IUser, IUserRegistrationInput, PermissionsEnum } from '@gauzy/contracts';
+import { IAuthResponse, IUser, IUserRegistrationInput, PermissionsEnum } from '@gauzy/contracts';
 import { ExportAllService } from '../../@core/services/export-all.service';
 import { environment } from './../../../environments/environment';
 import { Environment } from './../../../environments/model';
@@ -23,6 +23,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 	permissionsEnum = PermissionsEnum;
 	loading: boolean;
 	token: string;
+	gauzyUser: IUser;
 	
 	constructor(
 		private readonly exportAll: ExportAllService,
@@ -90,9 +91,10 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 		try {
 			this.gauzyCloudService.migrateIntoCloud(register)
 				.pipe(
-					switchMap((response: any) => {
-						const token = response.token;
+					switchMap((response: IAuthResponse) => {
+						const { token, user } = response;
 						this.token = token;
+						this.gauzyUser = user;
 						return this.gauzyCloudService.migrateTenant({ name }, token);
 					}),
 					tap(() => {
@@ -105,21 +107,20 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 						const externalUrl = environment.GAUZY_CLOUD_APP;
 						const tree = this.router.createUrlTree([], { 
 							queryParams: { 
-								email, 
-								password,
-								token: this.token
+								token: this.token,
+								userId: this.gauzyUser.id
 							} 
 						});
 
 						let redirect: string;
 						if (externalUrl.indexOf('#') !== -1) {
-							redirect = externalUrl + '/' + this.serializer.serialize(tree);
+							redirect = externalUrl + '' + this.serializer.serialize(tree);
 						} else {
 							redirect = externalUrl + '/#' + this.serializer.serialize(tree);
 						}
 						setTimeout(() => {
 							this.router.navigate(['/pages/settings/import-export/external-redirect', { redirect }]);
-						}, 1000);	
+						}, 50000);	
 					}),
 					untilDestroyed(this),
 				)

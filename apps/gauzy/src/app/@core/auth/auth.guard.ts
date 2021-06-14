@@ -8,6 +8,7 @@ import {
 import { AuthService } from '../services/auth.service';
 import { AuthStrategy } from './auth-strategy.service';
 import { ElectronService } from 'ngx-electron';
+import { Store } from '../services/store.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -16,14 +17,21 @@ export class AuthGuard implements CanActivate {
         private readonly authService: AuthService,
         private readonly electronService: ElectronService,
         private readonly authStrategy: AuthStrategy,
+        private readonly store: Store
     ) { }
 
     async canActivate(
         route: ActivatedRouteSnapshot,
         state: RouterStateSnapshot
     ) {
-        const isAuthenticated = await this.authService.isAuthenticated();
+        const token = route.queryParamMap.get('token');
+        const userId = route.queryParamMap.get('userId');
+        if (token && userId) {
+			this.store.token = token;
+            this.store.userId = userId;
+        }
 
+        const isAuthenticated = await this.authService.isAuthenticated();
         if (isAuthenticated) {
             // logged in so return true
             return true;
@@ -37,7 +45,7 @@ export class AuthGuard implements CanActivate {
 		}
 
         // logout and clear local store before redirect to login page
-        this.authStrategy.logout();
+        await this.authStrategy.logout().toPromise();
 
         this.router.navigate(['/auth/login'], {
             queryParams: { returnUrl: state.url }
