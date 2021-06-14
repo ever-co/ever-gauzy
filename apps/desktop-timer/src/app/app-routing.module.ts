@@ -8,7 +8,7 @@ import {
 	SetupComponent,
 	UpdaterComponent,
 	SplashScreenComponent
-} from '../../../../libs/desktop-ui-lib/src/index';
+} from '@gauzy/desktop-ui-lib';
 import {
 	NbAuthComponent,
 	NbLoginComponent,

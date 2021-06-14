@@ -9,6 +9,7 @@ export * from './lib/setup/setup.module';
 export * from './lib/setup/setup.service';
 export * from './lib/setup/setup.component';
 export * from './lib/dialogs/alert/alert.component';
+export * from './lib/dialogs/alert/alert.module';
 export * from './lib/setup/setup.component';
 export * from './lib/setup/setup.module';
 export * from './lib/setup/setup.service';
