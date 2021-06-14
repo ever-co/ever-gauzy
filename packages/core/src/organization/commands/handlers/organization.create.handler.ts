@@ -84,7 +84,7 @@ export class OrganizationCreateHandler
 		});
 
 		//6. Create Enabled/Disabled reports for relative organization.
-		this.commandBus.execute(
+		await this.commandBus.execute(
 			new ReportOrganizationCreateCommand(organization)
 		);
 

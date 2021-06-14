@@ -125,7 +125,7 @@ export class OrganizationController extends CrudController<Organization> {
 	async create(
 		@Body() entity: IOrganizationCreateInput
 	): Promise<Organization> {
-		return this.commandBus.execute(new OrganizationCreateCommand(entity));
+		return await this.commandBus.execute(new OrganizationCreateCommand(entity));
 	}
 
 	@Put(':id')
@@ -134,6 +134,6 @@ export class OrganizationController extends CrudController<Organization> {
 		@Body() entity: IOrganizationCreateInput,
 		...options: any[]
 	): Promise<Organization> {
-		return this.commandBus.execute(new OrganizationUpdateCommand({ id, ...entity }));
+		return await this.commandBus.execute(new OrganizationUpdateCommand({ id, ...entity }));
 	}
 }

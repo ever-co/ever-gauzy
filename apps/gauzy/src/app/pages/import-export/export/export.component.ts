@@ -1,7 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { ExportAllService } from '../../../@core/services/export-all.service';
-import { filter } from 'rxjs/operators';
-import { IOrganization } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common-angular';
 import { saveAs } from 'file-saver';
 import { Store } from '../../../@core/services/store.service';
@@ -27,15 +25,15 @@ export interface IEntityModel {
 export class ExportComponent
 	extends TranslationBaseComponent
 	implements OnInit {
+
 	entities: Array<IEntityModel> = [];
 	selectedEntities: string[] = [];
 	selectedModels: Array<IEntityModel> = [];
 	checkedAll = true;
-	organization: IOrganization;
 
 	constructor(
-		private exportAll: ExportAllService,
-		private store: Store,
+		private readonly exportAll: ExportAllService,
+		private readonly store: Store,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -44,15 +42,6 @@ export class ExportComponent
 	ngOnInit() {
 		this.getEntities();
 		this.onCheckboxChangeAll(this.checkedAll);
-
-		this.store.selectedOrganization$
-			.pipe(
-				filter((organization) => !!organization),
-				untilDestroyed(this)
-			)
-			.subscribe((organization) => {
-				this.organization = organization;
-			});
 	}
 
 	onCheckboxChangeAll(checked: boolean) {
@@ -116,30 +105,30 @@ export class ExportComponent
 
 	onSubmit() {
 		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-
 		const entities = this.selectedEntities.filter(isNotEmpty);
 		this.exportAll
-			.downloadSpecificData(entities, {
-				organizationId,
-				tenantId
-			})
+			.downloadSpecificData(entities, { tenantId })
 			.pipe(untilDestroyed(this))
 			.subscribe((data) => saveAs(data, `export.zip`));
 	}
 
 	onDownloadAll() {
 		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-
 		this.exportAll
-			.downloadAllData({ organizationId, tenantId })
+			.downloadAllData({ tenantId })
 			.pipe(untilDestroyed(this))
 			.subscribe((data) => saveAs(data, `export.zip`));
 	}
 
 	getEntities() {
 		this.entities = [
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ACCOUNTING_TEMPLATE'),
+				value: 'accounting_template',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.ACTIVITY'),
 				value: 'activity',
@@ -173,20 +162,6 @@ export class ExportComponent
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.CONTACT'),
 				value: 'contact',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.COUNTRY'),
-				value: 'country',
-				checked: true,
-				isGroup: false,
-				entities: []
-			},
-			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.CURRENCY'),
-				value: 'currency',
 				checked: true,
 				isGroup: false,
 				entities: []
@@ -283,7 +258,7 @@ export class ExportComponent
 				entities: this.getKeyResultEntities()
 			},
 			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.KNOWLADGE_BASE'),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.KNOWLEDGE_BASE'),
 				value: 'knowledge_base',
 				checked: true,
 				isGroup: true,
@@ -851,6 +826,24 @@ export class ExportComponent
 				checked: true,
 				isGroup: false,
 				entities: []
+			},
+			{
+				name: this.getTranslation(
+					'MENU.IMPORT_EXPORT.WAREHOUSE'
+				),
+				value: 'warehouse',
+				checked: true,
+				isGroup: false,
+				entities: []
+			},
+			{
+				name: this.getTranslation(
+					'MENU.IMPORT_EXPORT.WAREHOUSE_PRODUCT'
+				),
+				value: 'warehouse_product',
+				checked: true,
+				isGroup: false,
+				entities: []
 			}
 		];
 	}
@@ -958,7 +951,7 @@ export class ExportComponent
 				entities: []
 			},
 			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.TAG_ICNOME'),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.TAG_INCOME'),
 				value: 'tag_income',
 				checked: true,
 				isGroup: false,
@@ -1189,7 +1182,7 @@ export class ExportComponent
 		return [
 			{
 				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.KNOWLADGE_BASE_ARTICLE'
+					'MENU.IMPORT_EXPORT.KNOWLEDGE_BASE_ARTICLE'
 				),
 				value: 'knowledge_base_article',
 				checked: true,
@@ -1198,7 +1191,7 @@ export class ExportComponent
 			},
 			{
 				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.KNOWLADGE_BASE_AUTHOR'
+					'MENU.IMPORT_EXPORT.KNOWLEDGE_BASE_AUTHOR'
 				),
 				value: 'knowledge_base_author',
 				checked: true,
@@ -1285,7 +1278,7 @@ export class ExportComponent
 	getRoleEntities(): IEntityModel[] {
 		return [
 			{
-				name: this.getTranslation('MENU.IMPORT_EXPORT.ROLE_PREMISSION'),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ROLE_PERMISSION'),
 				value: 'role_permission',
 				checked: true,
 				isGroup: false,
@@ -1374,7 +1367,7 @@ export class ExportComponent
 		return [
 			{
 				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.USER_ORGANIIZATION'
+					'MENU.IMPORT_EXPORT.USER_ORGANIZATION'
 				),
 				value: 'user_organization',
 				checked: true,

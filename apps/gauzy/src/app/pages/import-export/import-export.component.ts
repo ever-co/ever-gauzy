@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { saveAs } from 'file-saver';
 import { Router, UrlSerializer } from '@angular/router';
-import { filter, finalize, switchMap, tap } from 'rxjs/operators';
+import { concatMap, filter, finalize, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IAuthResponse, IUser, IUserRegistrationInput, PermissionsEnum } from '@gauzy/contracts';
+import { ITenant, IAuthResponse, IOrganization, IOrganizationCreateInput, IUser, IUserRegistrationInput, PermissionsEnum, BonusTypeEnum, CurrenciesEnum, DefaultValueDateTypeEnum } from '@gauzy/contracts';
 import { ExportAllService } from '../../@core/services/export-all.service';
 import { environment } from './../../../environments/environment';
 import { Environment } from './../../../environments/model';
@@ -18,13 +18,14 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 })
 export class ImportExportComponent extends TranslationBaseComponent implements OnInit {
 
+	organization: IOrganization;
 	user: IUser;
 	environment: Environment = environment;
 	permissionsEnum = PermissionsEnum;
 	loading: boolean;
 	token: string;
 	gauzyUser: IUser;
-	
+
 	constructor(
 		private readonly exportAll: ExportAllService,
 		private readonly gauzyCloudService: GauzyCloudService,
@@ -42,6 +43,13 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 			.pipe(
 				filter((user) => !!user),
 				tap((user: IUser) => (this.user = user)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -97,6 +105,12 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 						this.gauzyUser = user;
 						return this.gauzyCloudService.migrateTenant({ name }, token);
 					}),
+					concatMap((tenant: ITenant) => {
+						return this.gauzyCloudService.migrateOrganization(
+							{ ...this.mapOrganization(this.organization, tenant) }, 
+							this.token
+						);
+					}),
 					tap(() => {
 						this.toastrService.success('MENU.IMPORT_EXPORT.MIGRATE_SUCCESSFULLY', {
 							tenant: name
@@ -120,13 +134,29 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 						}
 						setTimeout(() => {
 							this.router.navigate(['/pages/settings/import-export/external-redirect', { redirect }]);
-						}, 50000);	
+						}, 1000);	
 					}),
 					untilDestroyed(this),
 				)
 				.subscribe();
 		} catch (error) {
 			this.toastrService.danger(error);
+		}
+	}
+
+	mapOrganization(
+		organization: IOrganization,
+		tenant: ITenant
+	): IOrganizationCreateInput {
+		const { currency, defaultValueDateType, bonusType, imageUrl } = organization;
+		return {
+			...organization,
+			imageUrl,
+			tenant,
+			tenantId: tenant.id,
+			currency: currency as CurrenciesEnum, 
+			defaultValueDateType: defaultValueDateType as DefaultValueDateTypeEnum, 
+			bonusType: bonusType as BonusTypeEnum,
 		}
 	}
 }

@@ -12,6 +12,7 @@ import { ConfigService } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
 import { isFunction } from '@gauzy/common';
 import {
+	AccountingTemplate,
 	Activity,
 	AppointmentEmployee,
 	ApprovalPolicy,
@@ -29,8 +30,6 @@ import {
 	CandidateSource,
 	CandidateTechnologies,
 	Contact,
-	Country,
-	Currency,
 	Deal,
 	Email,
 	EmailTemplate,
@@ -111,14 +110,15 @@ import {
 	Timesheet,
 	TimeSlot,
 	User,
-	UserOrganization
+	UserOrganization,
+	Warehouse,
+	WarehouseProduct
 } from './../../core/entities/internal';
 
-export interface IRepositoryModel {
-	repository: any;
+export interface IRepositoryModel<T> {
+	repository: Repository<T>;
 	nameFile: string;
-	tenantOrganizationBase?: boolean;
-	tenantBase?: boolean;
+	tenantBase?: boolean
 }
 
 @Injectable()
@@ -126,10 +126,13 @@ export class ExportAllService implements OnModuleInit {
 	public idZip = new BehaviorSubject<string>('');
 	public idCsv = new BehaviorSubject<string>('');
 
-	private dynamicEntitiesClassMap: IRepositoryModel[] = [];
-	private repositories: IRepositoryModel[] = [];
+	private dynamicEntitiesClassMap: IRepositoryModel<any>[] = [];
+	private repositories: IRepositoryModel<any>[] = [];
 
 	constructor(
+		@InjectRepository(AccountingTemplate)
+		private readonly accountingTemplateRepository: Repository<AccountingTemplate>,
+
 		@InjectRepository(Activity)
 		private readonly activityRepository: Repository<Activity>,
 
@@ -179,12 +182,6 @@ export class ExportAllService implements OnModuleInit {
 
 		@InjectRepository(Contact)
 		private readonly contactRepository: Repository<Contact>,
-
-		@InjectRepository(Country)
-		private readonly countryRepository: Repository<Country>,
-
-		@InjectRepository(Currency)
-		private readonly currencyRepository: Repository<Currency>,
 
 		@InjectRepository(Deal)
 		private readonly dealRepository: Repository<Deal>,
@@ -375,6 +372,12 @@ export class ExportAllService implements OnModuleInit {
 		@InjectRepository(ProductVariantPrice)
 		private readonly productVariantPriceRepository: Repository<ProductVariantPrice>,
 
+		@InjectRepository(Warehouse)
+		private readonly warehouseRepository: Repository<Warehouse>,
+
+		@InjectRepository(WarehouseProduct)
+		private readonly warehouseProductRepository: Repository<WarehouseProduct>,
+
 		@InjectRepository(Proposal)
 		private readonly proposalRepository: Repository<Proposal>,
 
@@ -428,12 +431,13 @@ export class ExportAllService implements OnModuleInit {
 
 		@InjectRepository(UserOrganization)
 		private readonly userOrganizationRepository: Repository<UserOrganization>,
+
 		private readonly configService: ConfigService
 	) {}
 
 	async onModuleInit() {
-		this.createDynamicInstanceForPluginEntities();
-		this.registerCoreRepositories();
+		await this.createDynamicInstanceForPluginEntities();
+		await this.registerCoreRepositories();
 	}
 
 	async createFolders(): Promise<any> {
@@ -502,28 +506,17 @@ export class ExportAllService implements OnModuleInit {
 		});
 	}
 
-	async getAsCsv(
-		service_count: number,
-		findInput: {
-			organizationId: string;
-			tenantId: string;
-		}
-	): Promise<any> {
+	async getAsCsv(item: IRepositoryModel<any>, findInput: { tenantId: string; }): Promise<any> {
 		const conditions = {};
-		if (
-			this.repositories[service_count]['tenantOrganizationBase'] !== false
-		) {
-			conditions['where'] = findInput;
-		}
-		if (this.repositories[service_count]['tenantBase'] === true) {
+		if (item.tenantBase !== false) {
 			conditions['where'] = {
 				tenantId: findInput['tenantId']
-			};
+			}
 		}
+	
+		const { repository } = item;
+		const [incomingData, count] = await repository.findAndCount(conditions);
 
-		const [incomingData, count] = await this.repositories[
-			service_count
-		].repository.findAndCount(conditions);
 		if (count > 0) {
 			return new Promise((resolve) => {
 				const createCsvWriter = csv.createObjectCsvWriter;
@@ -540,7 +533,7 @@ export class ExportAllService implements OnModuleInit {
 				});
 
 				const csvWriter = createCsvWriter({
-					path: `./export/${id$}/csv/${this.repositories[service_count].nameFile}.csv`,
+					path: `./export/${id$}/csv/${item.nameFile}.csv`,
 					header: dataIn
 				});
 
@@ -635,35 +628,38 @@ export class ExportAllService implements OnModuleInit {
 		});
 	}
 
-	async exportTables(findInput: {
-		organizationId: string;
-		tenantId: string;
-	}) {
-		return new Promise(async (resolve) => {
-			for (const [i] of this.repositories.entries()) {
-				await this.getAsCsv(i, findInput);
+	async exportTables(findInput: { tenantId: string; }) {
+		return new Promise(async (resolve, reject) => {
+			try {
+				for await (const item of this.repositories) {
+					await this.getAsCsv(item, findInput);
+				}
+				resolve(true);
+			} catch (error) {
+				reject(error)
 			}
-			resolve('');
 		});
 	}
 
 	async exportSpecificTables(
 		names: string[],
-		findInput: {
-			organizationId: string;
-			tenantId: string;
-		}
+		findInput: { tenantId: string; }
 	) {
-		return new Promise(async (resolve) => {
-			for (let i = 0; i < this.repositories.length; i++) {
-				const name = names.find(
-					(n) => this.repositories[i].nameFile === n
-				);
-				if (name) {
-					await this.getAsCsv(i, findInput);
+		return new Promise(async (resolve, reject) => {
+			try {
+				for await (const item of this.repositories) {
+					const { nameFile } = item;
+					const name = names.find(
+						(n) => nameFile === n
+					);
+					if (name) {
+						await this.getAsCsv(item, findInput);
+					}
 				}
+				resolve(true);
+			} catch (error) {
+				reject(error)
 			}
-			resolve('');
 		});
 	}
 	
@@ -679,8 +675,8 @@ export class ExportAllService implements OnModuleInit {
 	/*
 	 * Load all plugins entities for export data
 	 */
-	private createDynamicInstanceForPluginEntities() {
-		for (const entity of getEntitiesFromPlugins(
+	private async createDynamicInstanceForPluginEntities() {
+		for await (const entity of getEntitiesFromPlugins(
 			this.configService.plugins
 		)) {
 			if (!isFunction(entity)) {
@@ -702,9 +698,16 @@ export class ExportAllService implements OnModuleInit {
 	/*
 	 * Load all entities repository after create instance
 	 */
-	private registerCoreRepositories() {
+	private async registerCoreRepositories() {
 		this.repositories = [
-			{ repository: this.activityRepository, nameFile: 'activity' },
+			{
+				repository: this.accountingTemplateRepository,
+				nameFile: 'accounting_template'
+			},
+			{
+				repository: this.activityRepository,
+				nameFile: 'activity'
+			},
 			{
 				repository: this.appointmentEmployeesRepository,
 				nameFile: 'appointment_employee'
@@ -716,6 +719,10 @@ export class ExportAllService implements OnModuleInit {
 			{
 				repository: this.availabilitySlotsRepository,
 				nameFile: 'availability_slot'
+			},
+			{
+				repository: this.candidateRepository,
+				nameFile: 'candidate'
 			},
 			{
 				repository: this.candidateCriterionsRatingRepository,
@@ -749,7 +756,6 @@ export class ExportAllService implements OnModuleInit {
 				repository: this.candidatePersonalQualitiesRepository,
 				nameFile: 'candidate_personal_quality'
 			},
-			{ repository: this.candidateRepository, nameFile: 'candidate' },
 			{
 				repository: this.candidateSkillRepository,
 				nameFile: 'candidate_skill'
@@ -762,19 +768,18 @@ export class ExportAllService implements OnModuleInit {
 				repository: this.candidateTechnologiesRepository,
 				nameFile: 'candidate_technology'
 			},
-			{ repository: this.contactRepository, nameFile: 'contact' },
-			{
-				repository: this.countryRepository,
-				nameFile: 'country',
-				tenantOrganizationBase: false
+			{ 
+				repository: this.contactRepository,
+				nameFile: 'contact',
 			},
-			{
-				repository: this.currencyRepository,
-				nameFile: 'currency',
-				tenantOrganizationBase: false
+			{ 
+				repository: this.dealRepository,
+				nameFile: 'deal'
 			},
-			{ repository: this.dealRepository, nameFile: 'deal' },
-			{ repository: this.emailRepository, nameFile: 'email' },
+			{ 
+				repository: this.emailRepository,
+				nameFile: 'email'
+			},
 			{
 				repository: this.emailTemplateRepository,
 				nameFile: 'email_template'
@@ -799,12 +804,18 @@ export class ExportAllService implements OnModuleInit {
 				repository: this.employeeRecurringExpenseRepository,
 				nameFile: 'employee_recurring_expense'
 			},
-			{ repository: this.employeeRepository, nameFile: 'employee' },
+			{ 
+				repository: this.employeeRepository,
+				nameFile: 'employee'
+			},
 			{
 				repository: this.employeeSettingRepository,
 				nameFile: 'employee_setting'
 			},
-			{ repository: this.equipmentRepository, nameFile: 'equipment' },
+			{ 
+				repository: this.equipmentRepository,
+				nameFile: 'equipment'
+			},
 			{
 				repository: this.equipmentSharingRepository,
 				nameFile: 'equipment_sharing'
@@ -813,18 +824,30 @@ export class ExportAllService implements OnModuleInit {
 				repository: this.estimateEmailRepository,
 				nameFile: 'estimate_email'
 			},
-			{ repository: this.eventTypeRepository, nameFile: 'event_types' },
+			{ 
+				repository: this.eventTypeRepository,
+				nameFile: 'event_types'
+			},
 			{
 				repository: this.expenseCategoryRepository,
 				nameFile: 'expense_category'
 			},
-			{ repository: this.expenseRepository, nameFile: 'expense' },
-			{ repository: this.goalKpiRepository, nameFile: 'goal_kpi' },
+			{ 
+				repository: this.expenseRepository,
+				nameFile: 'expense'
+			},
+			{ 
+				repository: this.goalKpiRepository,
+				nameFile: 'goal_kpi'
+			},
 			{
 				repository: this.goalKpiTemplateRepository,
 				nameFile: 'goal_kpi_template'
 			},
-			{ repository: this.goalRepository, nameFile: 'goal' },
+			{ 
+				repository: this.goalRepository,
+				nameFile: 'goal'
+			},
 			{
 				repository: this.goalTemplateRepository,
 				nameFile: 'goal_template'
@@ -833,7 +856,10 @@ export class ExportAllService implements OnModuleInit {
 				repository: this.goalTimeFrameRepository,
 				nameFile: 'goal_time_frame'
 			},
-			{ repository: this.incomeRepository, nameFile: 'income' },
+			{ 
+				repository: this.incomeRepository,
+				nameFile: 'income'
+			},
 			{
 				repository: this.integrationEntitySettingRepository,
 				nameFile: 'integration_entity_setting'
@@ -849,7 +875,7 @@ export class ExportAllService implements OnModuleInit {
 			{
 				repository: this.integrationRepository,
 				nameFile: 'integration',
-				tenantOrganizationBase: false
+				tenantBase: false
 			},
 			{
 				repository: this.integrationSettingRepository,
@@ -859,7 +885,10 @@ export class ExportAllService implements OnModuleInit {
 				repository: this.integrationTenantRepository,
 				nameFile: 'integration_tenant'
 			},
-			{ repository: this.inviteRepository, nameFile: 'invite' },
+			{ 
+				repository: this.inviteRepository,
+				nameFile: 'invite'
+			},
 			{
 				repository: this.invoiceEstimateHistoryRepository,
 				nameFile: 'invoice_estimate_history'
@@ -868,8 +897,14 @@ export class ExportAllService implements OnModuleInit {
 				repository: this.invoiceItemRepository,
 				nameFile: 'invoice_item'
 			},
-			{ repository: this.invoiceRepository, nameFile: 'invoice' },
-			{ repository: this.jobPresetRepository, nameFile: 'job_preset' },
+			{ 
+				repository: this.invoiceRepository,
+				nameFile: 'invoice'
+			},
+			{ 
+				repository: this.jobPresetRepository,
+				nameFile: 'job_preset'
+			},
 			{
 				repository: this.jobSearchCategoryRepository,
 				nameFile: 'job_search_category'
@@ -878,7 +913,10 @@ export class ExportAllService implements OnModuleInit {
 				repository: this.jobSearchOccupationRepository,
 				nameFile: 'job_search_occupation'
 			},
-			{ repository: this.keyResultRepository, nameFile: 'key_result' },
+			{ 
+				repository: this.keyResultRepository,
+				nameFile: 'key_result'
+			},
 			{
 				repository: this.keyResultTemplateRepository,
 				nameFile: 'key_result_template'
@@ -890,7 +928,7 @@ export class ExportAllService implements OnModuleInit {
 			{
 				repository: this.languageRepository,
 				nameFile: 'language',
-				tenantOrganizationBase: false
+				tenantBase: false
 			},
 			{
 				repository: this.organizationAwardsRepository,
@@ -930,9 +968,7 @@ export class ExportAllService implements OnModuleInit {
 			},
 			{
 				repository: this.organizationRepository,
-				nameFile: 'organization',
-				tenantOrganizationBase: false,
-				tenantBase: true
+				nameFile: 'organization'
 			},
 			{
 				repository: this.organizationSprintRepository,
@@ -950,8 +986,14 @@ export class ExportAllService implements OnModuleInit {
 				repository: this.organizationVendorsRepository,
 				nameFile: 'organization_vendor'
 			},
-			{ repository: this.paymentRepository, nameFile: 'payment' },
-			{ repository: this.pipelineRepository, nameFile: 'pipeline' },
+			{ 
+				repository: this.paymentRepository,
+				nameFile: 'payment'
+			},
+			{ 
+				repository: this.pipelineRepository,
+				nameFile: 'pipeline'
+			},
 			{
 				repository: this.productCategoryRepository,
 				nameFile: 'product_category'
@@ -960,7 +1002,10 @@ export class ExportAllService implements OnModuleInit {
 				repository: this.productOptionRepository,
 				nameFile: 'product_option'
 			},
-			{ repository: this.productRepository, nameFile: 'product' },
+			{ 
+				repository: this.productRepository,
+				nameFile: 'product'
+			},
 			{
 				repository: this.productTypeRepository,
 				nameFile: 'product_type'
@@ -977,16 +1022,27 @@ export class ExportAllService implements OnModuleInit {
 				repository: this.productVariantSettingsRepository,
 				nameFile: 'product_variant_setting'
 			},
-			{ repository: this.proposalRepository, nameFile: 'proposal' },
+			{
+				repository: this.warehouseRepository,
+				nameFile: 'warehouse'
+			},
+			{
+				repository: this.warehouseProductRepository,
+				nameFile: 'warehouse_product'
+			},
+			{ 
+				repository: this.proposalRepository,
+				nameFile: 'proposal'
+			},
 			{
 				repository: this.reportCategoryRepository,
 				nameFile: 'report_category',
-				tenantOrganizationBase: false
+				tenantBase: false
 			},
 			{
 				repository: this.reportRepository,
 				nameFile: 'report',
-				tenantOrganizationBase: false
+				tenantBase: false
 			},
 			{
 				repository: this.requestApprovalRepository,
@@ -994,29 +1050,41 @@ export class ExportAllService implements OnModuleInit {
 			},
 			{
 				repository: this.rolePermissionsRepository,
-				nameFile: 'role_permission',
-				tenantOrganizationBase: false
+				nameFile: 'role_permission'
 			},
 			{
 				repository: this.roleRepository,
-				nameFile: 'role',
-				tenantOrganizationBase: false
+				nameFile: 'role'
 			},
-			{ repository: this.screenShotRepository, nameFile: 'screenshot' },
+			{
+				repository: this.screenShotRepository,
+				nameFile: 'screenshot'
+			},
 			{
 				repository: this.skillRepository,
-				nameFile: 'skill',
-				tenantOrganizationBase: false
+				nameFile: 'skill'
 			},
-			{ repository: this.stageRepository, nameFile: 'pipeline_stage' },
-			{ repository: this.tagRepository, nameFile: 'tag' },
-			{ repository: this.taskRepository, nameFile: 'task' },
+			{ 
+				repository: this.stageRepository,
+				nameFile: 'pipeline_stage'
+			},
+			{
+				repository: this.tagRepository,
+				nameFile: 'tag'
+			},
+			{
+				repository: this.taskRepository,
+				nameFile: 'task'
+			},
 			{
 				repository: this.tenantRepository,
 				nameFile: 'tenant',
-				tenantOrganizationBase: false
+				tenantBase: false
 			},
-			{ repository: this.timeLogRepository, nameFile: 'time_log' },
+			{
+				repository: this.timeLogRepository,
+				nameFile: 'time_log'
+			},
 			{
 				repository: this.timeOffPolicyRepository,
 				nameFile: 'time_off_policy'
@@ -1025,19 +1093,23 @@ export class ExportAllService implements OnModuleInit {
 				repository: this.timeOffRequestRepository,
 				nameFile: 'time_off_request'
 			},
-			{ repository: this.timeSheetRepository, nameFile: 'timesheet' },
-			{ repository: this.timeSlotRepository, nameFile: 'time_slot' },
+			{
+				repository: this.timeSheetRepository,
+				nameFile: 'timesheet'
+			},
+			{
+				repository: this.timeSlotRepository,
+				nameFile: 'time_slot'
+			},
 			{
 				repository: this.userOrganizationRepository,
 				nameFile: 'user_organization'
 			},
 			{
 				repository: this.userRepository,
-				nameFile: 'user',
-				tenantOrganizationBase: false,
-				tenantBase: true
+				nameFile: 'user'
 			},
 			...this.dynamicEntitiesClassMap
-		] as IRepositoryModel[];
+		] as IRepositoryModel<any>[];
 	}
 }
