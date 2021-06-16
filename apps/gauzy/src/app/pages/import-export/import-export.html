@@ -1,4 +1,8 @@
-<nb-card>
+<nb-card 
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<nb-card-header>
 		<div class="h4">
 			{{ 'MENU.IMPORT_EXPORT.IMPORT_EXPORT_DATA' | translate }}
@@ -12,6 +16,11 @@
 		<div class="info">
 			{{ 'MENU.IMPORT_EXPORT.DOWNLOAD_TEMPLATES_INFO' | translate }}
 		</div>
+		<ng-container *ngIf="!environment.DEMO">
+			<div class="info">
+				{{ 'MENU.IMPORT_EXPORT.MIGRATE_TO_CLOUD_INFO' | translate }}
+			</div>
+		</ng-container>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="row">
@@ -38,7 +47,6 @@
 					<nb-icon icon="download-outline"></nb-icon>
 					{{ 'MENU.IMPORT_EXPORT.EXPORT' | translate }}
 				</button>
-
 				<button
 					class="m-1"
 					nbButton
@@ -49,6 +57,25 @@
 					<nb-icon icon="file-text-outline"></nb-icon>
 					{{ 'MENU.IMPORT_EXPORT.DOWNLOAD_TEMPLATES' | translate }}
 				</button>
+				<ng-container *ngIf="!environment.DEMO">
+					<button
+						*ngxPermissionsOnly="[permissionsEnum.MIGRATE_GAUZY_CLOUD]"
+						class="m-1"
+						nbButton
+						shape="round"
+						size="large"
+						status="warning"
+						ngxPromptDialog
+						[inputType]="'password'"
+						[title]="'MENU.IMPORT_EXPORT.MIGRATE_TO_CLOUD' | translate"
+						[placeholder]="'FORM.PASSWORD' | translate"
+						[label]="'FORM.PASSWORD' | translate"
+						(callback)="onMigrateIntoCloud($event)"
+					>
+						<nb-icon icon="upload-outline"></nb-icon>
+						{{ 'MENU.IMPORT_EXPORT.MIGRATE_TO_CLOUD' | translate }}
+					</button>
+				</ng-container>
 			</div>
 		</div>
 	</nb-card-body>

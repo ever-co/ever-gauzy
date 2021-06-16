@@ -8,7 +8,7 @@ export interface InputOptions {
 }
 
 export interface PromptDialogOptions {
-	inputType:
+	inputType?:
 		| 'text'
 		| 'email'
 		| 'number'
@@ -17,12 +17,12 @@ export interface PromptDialogOptions {
 		| 'password'
 		| 'textarea'
 		| 'select';
-	title: string;
-	message: string;
-	okText: string;
-	cancelText: string;
-	placeholder: string;
-	options: InputOptions[];
+	title?: string;
+	label?: string;
+	okText?: string;
+	cancelText?: string;
+	placeholder?: string;
+	options?: InputOptions[];
 }
 
 @Component({
@@ -34,6 +34,7 @@ export class PromptComponent implements OnInit {
 	@Input() data: PromptDialogOptions;
 
 	form: FormGroup;
+	showPassword = false;
 
 	constructor(
 		private dialogRef: NbDialogRef<PromptComponent>,
@@ -54,5 +55,23 @@ export class PromptComponent implements OnInit {
 		if (this.form.valid) {
 			this.dialogRef.close(this.form.get('input').value);
 		}
+	}
+
+	getInputType() {
+		if (this.showPassword) {
+		  	return 'text';
+		}
+		return 'password';
+	}
+	
+	toggleShowPassword() {
+		this.showPassword = !this.showPassword;
+	}
+
+	isInvalidControl(control: string) {
+		if (!this.form.contains(control)) {
+			return true;
+		}
+		return this.form.get(control).touched && this.form.get(control).invalid;
 	}
 }

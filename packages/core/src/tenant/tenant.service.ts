@@ -34,7 +34,7 @@ export class TenantService extends CrudService<Tenant> {
 		const tenant = await this.create(entity);
 
 		//2. Create Enabled/Disabled features for relative tenants.
-		this.commandBus.execute(
+		await this.commandBus.execute(
 			new TenantFeatureOrganizationCreateCommand([tenant])
 		);
 
@@ -43,7 +43,7 @@ export class TenantService extends CrudService<Tenant> {
 			new TenantRoleBulkCreateCommand([tenant])
 		);
 
-		const role = await roles.find(
+		const role = roles.find(
 			(defaultRole: IRole) => defaultRole.name === RolesEnum.SUPER_ADMIN
 		);
 

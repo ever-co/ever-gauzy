@@ -137,6 +137,7 @@ export const environment: IEnvironment = {
 	 * Endpoint for Gauzy AI API (optional), e.g.: http://localhost:3005/graphql
 	 */
 	gauzyAIGraphQLEndpoint: process.env.GAUZY_AI_GRAPHQL_ENDPOINT,
+	gauzyCloudEndpoint: process.env.GAUZY_CLOUD_ENDPOINT,
 
 	smtpConfig: {
 		host: process.env.MAIL_HOST,

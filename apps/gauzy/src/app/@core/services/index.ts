@@ -121,3 +121,4 @@ export * from './users-organizations.service';
 export * from './users.service';
 export * from './validation.service';
 export * from './warehouse.service';
+export * from './gauzy-cloud.service';

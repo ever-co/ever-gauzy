@@ -36,6 +36,8 @@ export type Env = Readonly<{
 	CHATWOOT_SDK_TOKEN: string;
 	//nebular chat map API key
 	CHAT_MESSAGE_GOOGLE_MAP: string;
+
+	GAUZY_CLOUD_APP: string;
 }>;
 
 export const env: Env = cleanEnv(
@@ -67,7 +69,8 @@ export const env: Env = cleanEnv(
 		DEMO: bool({ default: false }),
 
 		CHATWOOT_SDK_TOKEN: str({ default: '' }),
-		CHAT_MESSAGE_GOOGLE_MAP: str({ default: '' })
+		CHAT_MESSAGE_GOOGLE_MAP: str({ default: '' }),
+		GAUZY_CLOUD_APP: str({ default: 'https://app.gauzy.co/#' })
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
 );
