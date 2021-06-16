@@ -209,7 +209,7 @@ export class ExportComponent
 			},
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.EVENT_TYPES'),
-				value: 'event_types',
+				value: 'event_type',
 				checked: true,
 				isGroup: false,
 				entities: []

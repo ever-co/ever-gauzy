@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { getConnection, Repository } from 'typeorm';
+import { getConnection, getManager, Repository } from 'typeorm';
 import { BehaviorSubject } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import * as _ from 'lodash';
@@ -10,7 +10,7 @@ import * as fs from 'fs';
 import * as fse from 'fs-extra';
 import { ConfigService } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
-import { isFunction } from '@gauzy/common';
+import { isFunction, isNotEmpty } from '@gauzy/common';
 import {
 	AccountingTemplate,
 	Activity,
@@ -41,8 +41,10 @@ import {
 	EmployeeProposalTemplate,
 	EmployeeRecurringExpense,
 	EmployeeSetting,
+	EmployeeUpworkJobsSearchCriterion,
 	Equipment,
 	EquipmentSharing,
+	EquipmentSharingPolicy,
 	EstimateEmail,
 	EventType,
 	Expense,
@@ -63,11 +65,13 @@ import {
 	IntegrationMap,
 	IntegrationSetting,
 	IntegrationTenant,
+	IntegrationType,
 	Invite,
 	Invoice,
 	InvoiceEstimateHistory,
 	InvoiceItem,
 	JobPreset,
+	JobPresetUpworkJobSearchCriterion,
 	JobSearchCategory,
 	JobSearchOccupation,
 	KeyResult,
@@ -94,15 +98,24 @@ import {
 	PipelineStage,
 	Product,
 	ProductCategory,
+	ProductCategoryTranslation,
 	ProductOption,
+	ProductOptionGroup,
+	ProductOptionGroupTranslation,
+	ProductOptionTranslation,
+	ProductTranslation,
 	ProductType,
+	ProductTypeTranslation,
 	ProductVariant,
 	ProductVariantPrice,
 	ProductVariantSettings,
 	Proposal,
 	Report,
 	ReportCategory,
+	ReportOrganization,
 	RequestApproval,
+	RequestApprovalEmployee,
+	RequestApprovalTeam,
 	Role,
 	RolePermissions,
 	Screenshot,
@@ -110,6 +123,7 @@ import {
 	Tag,
 	Task,
 	Tenant,
+	TenantSetting,
 	TimeLog,
 	TimeOffPolicy,
 	TimeOffRequest,
@@ -119,18 +133,21 @@ import {
 	User,
 	UserOrganization,
 	Warehouse,
-	WarehouseProduct
+	WarehouseProduct,
+	WarehouseProductVariant
 } from './../../core/entities/internal';
+import { RequestContext } from './../../core/context/request-context';
+import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 
-export interface IRelation {
-	table: string;
-	relation: string;
+export interface IColumnRelationMetadata {
+	joinTableName: string;
 }
 export interface IRepositoryModel<T> {
 	repository: Repository<T>;
 	nameFile: string;
 	tenantBase?: boolean;
-	relations?: IRelation[];
+	relations?: IColumnRelationMetadata[];
+	condition?: any;
 }
 
 @Injectable()
@@ -226,11 +243,17 @@ export class ExportAllService implements OnModuleInit {
 		@InjectRepository(EmployeeSetting)
 		private readonly employeeSettingRepository: Repository<EmployeeSetting>,
 
+		@InjectRepository(EmployeeUpworkJobsSearchCriterion)
+		private readonly employeeUpworkJobsSearchCriterionRepository: Repository<EmployeeUpworkJobsSearchCriterion>,
+
 		@InjectRepository(Equipment)
 		private readonly equipmentRepository: Repository<Equipment>,
 
 		@InjectRepository(EquipmentSharing)
 		private readonly equipmentSharingRepository: Repository<EquipmentSharing>,
+
+		@InjectRepository(EquipmentSharingPolicy)
+		private readonly equipmentSharingPolicyRepository: Repository<EquipmentSharingPolicy>,
 
 		@InjectRepository(EstimateEmail)
 		private readonly estimateEmailRepository: Repository<EstimateEmail>,
@@ -274,6 +297,9 @@ export class ExportAllService implements OnModuleInit {
 		@InjectRepository(Integration)
 		private readonly integrationRepository: Repository<Integration>,
 
+		@InjectRepository(IntegrationType)
+		private readonly integrationTypeRepository: Repository<IntegrationType>,
+
 		@InjectRepository(IntegrationEntitySetting)
 		private readonly integrationEntitySettingRepository: Repository<IntegrationEntitySetting>,
 
@@ -303,6 +329,9 @@ export class ExportAllService implements OnModuleInit {
 
 		@InjectRepository(JobPreset)
 		private readonly jobPresetRepository: Repository<JobPreset>,
+
+		@InjectRepository(JobPresetUpworkJobSearchCriterion)
+		private readonly jobPresetUpworkJobSearchCriterionRepository: Repository<JobPresetUpworkJobSearchCriterion>,
 
 		@InjectRepository(JobSearchCategory)
 		private readonly jobSearchCategoryRepository: Repository<JobSearchCategory>,
@@ -374,22 +403,40 @@ export class ExportAllService implements OnModuleInit {
 		private readonly pipelineRepository: Repository<Pipeline>,
 
 		@InjectRepository(PipelineStage)
-		private readonly stageRepository: Repository<PipelineStage>,
+		private readonly pipelineStageRepository: Repository<PipelineStage>,
 
 		@InjectRepository(Product)
 		private readonly productRepository: Repository<Product>,
 
+		@InjectRepository(ProductTranslation)
+		private readonly productTranslationRepository: Repository<ProductTranslation>,
+
 		@InjectRepository(ProductCategory)
 		private readonly productCategoryRepository: Repository<ProductCategory>,
 
+		@InjectRepository(ProductCategoryTranslation)
+		private readonly productCategoryTranslationRepository: Repository<ProductCategoryTranslation>,
+
 		@InjectRepository(ProductOption)
 		private readonly productOptionRepository: Repository<ProductOption>,
+
+		@InjectRepository(ProductOptionTranslation)
+		private readonly productOptionTranslationRepository: Repository<ProductOptionTranslation>,
+
+		@InjectRepository(ProductOptionGroup)
+		private readonly productOptionGroupRepository: Repository<ProductOptionGroup>,
+
+		@InjectRepository(ProductOptionGroupTranslation)
+		private readonly productOptionGroupTranslationRepository: Repository<ProductOptionGroupTranslation>,
 
 		@InjectRepository(ProductVariantSettings)
 		private readonly productVariantSettingsRepository: Repository<ProductVariantSettings>,
 
 		@InjectRepository(ProductType)
 		private readonly productTypeRepository: Repository<ProductType>,
+
+		@InjectRepository(ProductTypeTranslation)
+		private readonly productTypeTranslationRepository: Repository<ProductTypeTranslation>,
 
 		@InjectRepository(ProductVariant)
 		private readonly productVariantRepository: Repository<ProductVariant>,
@@ -409,6 +456,9 @@ export class ExportAllService implements OnModuleInit {
 		@InjectRepository(WarehouseProduct)
 		private readonly warehouseProductRepository: Repository<WarehouseProduct>,
 
+		@InjectRepository(WarehouseProductVariant)
+		private readonly warehouseProductVariantRepository: Repository<WarehouseProductVariant>,
+
 		@InjectRepository(Proposal)
 		private readonly proposalRepository: Repository<Proposal>,
 
@@ -420,6 +470,12 @@ export class ExportAllService implements OnModuleInit {
 
 		@InjectRepository(RequestApproval)
 		private readonly requestApprovalRepository: Repository<RequestApproval>,
+
+		@InjectRepository(RequestApprovalEmployee)
+		private readonly requestApprovalEmployeeRepository: Repository<RequestApprovalEmployee>,
+
+		@InjectRepository(RequestApprovalTeam)
+		private readonly requestApprovalTeamRepository: Repository<RequestApprovalTeam>,
 
 		@InjectRepository(Role)
 		private readonly roleRepository: Repository<Role>,
@@ -433,6 +489,9 @@ export class ExportAllService implements OnModuleInit {
 		@InjectRepository(ReportCategory)
 		private readonly reportCategoryRepository: Repository<ReportCategory>,
 
+		@InjectRepository(ReportOrganization)
+		private readonly reportOrganizationRepository: Repository<ReportOrganization>,
+
 		@InjectRepository(Tag)
 		private readonly tagRepository: Repository<Tag>,
 
@@ -441,6 +500,9 @@ export class ExportAllService implements OnModuleInit {
 
 		@InjectRepository(Tenant)
 		private readonly tenantRepository: Repository<Tenant>,
+
+		@InjectRepository(TenantSetting)
+		private readonly tenantSettingRepository: Repository<TenantSetting>,
 
 		@InjectRepository(Timesheet)
 		private readonly timeSheetRepository: Repository<Timesheet>,
@@ -547,16 +609,27 @@ export class ExportAllService implements OnModuleInit {
 		const conditions = {};
 		if (item.tenantBase !== false) {
 			conditions['where'] = {
-				tenantId: findInput['tenantId']
+				tenantId: findInput['tenantId'] || RequestContext.currentTenantId()
+			}
+		}
+
+		/*
+		* Replace condition with default condition 
+		*/
+		if (isNotEmpty(item.condition) && isNotEmpty(conditions['where'])) {
+			const { condition : { replace = 'tenantId', column = 'id' } } = item;
+			if (`${replace}` in conditions['where']) {
+				delete conditions['where'][replace];
+				conditions['where'][column] = findInput[replace];
 			}
 		}
 
 		const { repository } = item;
 		const [ items, count ] = await repository.findAndCount(conditions);
-
 		if (count > 0) {
 			return await this.csvWriter(item.nameFile, items);
 		}
+
 		return false;
 	}
 
@@ -697,6 +770,11 @@ export class ExportAllService implements OnModuleInit {
 					const { nameFile } = repository;
 					if (names.includes(nameFile)) {
 						await this.getAsCsv(repository, findInput);
+
+						// export pivot relational tables
+						if (isNotEmpty(repository.relations)) {
+							await this.exportRelationalTables(repository, findInput);
+						}
 					}
 				}
 				resolve(true);
@@ -704,6 +782,46 @@ export class ExportAllService implements OnModuleInit {
 				reject(error)
 			}
 		});
+	}
+
+	/*
+	* Export Many To Many Pivot Table Using TypeORM Relations 
+	*/
+	async exportRelationalTables(
+		entity: IRepositoryModel<any>, 
+		where: { tenantId: string; }
+	) {
+		const { repository, relations } = entity;
+		const masterTable = repository.metadata.givenTableName as string;
+
+		for await (const item of repository.metadata.manyToManyRelations) {
+			const relation = relations.find((relation: IColumnRelationMetadata) => relation.joinTableName === item.joinTableName);
+			if (relation) {
+				const [ joinColumn ] = item.joinColumns as ColumnMetadata[];
+				if (joinColumn) {
+					const { entityMetadata, propertyName, referencedColumn } = joinColumn;
+					
+					const referencColumn = referencedColumn.propertyName;
+					const referencTableName = entityMetadata.givenTableName;
+					let sql = `
+						SELECT 
+							${referencTableName}.* 
+						FROM 
+							${referencTableName} 
+						INNER JOIN ${masterTable} 
+							ON "${referencTableName}"."${propertyName}" = "${masterTable}"."${referencColumn}"
+					`;
+					if (entity.tenantBase !== false) {
+						sql += ` WHERE "${masterTable}"."tenantId" = '${where['tenantId']}'`;
+					}
+
+					const items = await getManager().query(sql);
+					if (items.length > 0) {
+						await this.csvWriter(referencTableName, items);
+					}
+				}
+			}
+		}
 	}
 	
 	async downloadSpecificTables() {
@@ -735,6 +853,7 @@ export class ExportAllService implements OnModuleInit {
 				repository,
 				nameFile: tableName
 			});
+
 		}
 	}
 
@@ -765,7 +884,12 @@ export class ExportAllService implements OnModuleInit {
 			},
 			{
 				repository: this.candidateRepository,
-				nameFile: 'candidate'
+				nameFile: 'candidate',
+				relations: [
+					{ joinTableName: 'candidate_department' },
+					{ joinTableName: 'candidate_employment_type' },
+					{ joinTableName: 'tag_candidate' },
+				]
 			},
 			{
 				repository: this.candidateCriterionsRatingRepository,
@@ -841,7 +965,10 @@ export class ExportAllService implements OnModuleInit {
 			},
 			{
 				repository: this.employeeLevelRepository,
-				nameFile: 'organization_employee_level'
+				nameFile: 'organization_employee_level',
+				relations: [
+					{ joinTableName: 'tag_organization_employee_level' }
+				]
 			},
 			{
 				repository: this.employeeProposalTemplateRepository,
@@ -853,19 +980,38 @@ export class ExportAllService implements OnModuleInit {
 			},
 			{ 
 				repository: this.employeeRepository,
-				nameFile: 'employee'
+				nameFile: 'employee',
+				relations: [
+					{ joinTableName: 'employee_job_preset' },
+					{ joinTableName: 'tag_employee' }
+				]
 			},
 			{
 				repository: this.employeeSettingRepository,
 				nameFile: 'employee_setting'
 			},
+			{
+				repository: this.employeeUpworkJobsSearchCriterionRepository,
+				nameFile: 'employee_upwork_job_search_criterion'
+			},
 			{ 
 				repository: this.equipmentRepository,
-				nameFile: 'equipment'
+				nameFile: 'equipment',
+				relations: [
+					{ joinTableName: 'tag_equipment' }
+				]
 			},
 			{
 				repository: this.equipmentSharingRepository,
-				nameFile: 'equipment_sharing'
+				nameFile: 'equipment_sharing',
+				relations: [
+					{ joinTableName: 'equipment_shares_employees' },
+					{ joinTableName: 'equipment_shares_teams' }
+				]
+			},
+			{
+				repository: this.equipmentSharingPolicyRepository,
+				nameFile: 'equipment_sharing_policy'
 			},
 			{
 				repository: this.estimateEmailRepository,
@@ -873,15 +1019,24 @@ export class ExportAllService implements OnModuleInit {
 			},
 			{ 
 				repository: this.eventTypeRepository,
-				nameFile: 'event_types'
+				nameFile: 'event_type',
+				relations: [
+					{ joinTableName: 'tag_event_type' }
+				]
 			},
 			{
 				repository: this.expenseCategoryRepository,
-				nameFile: 'expense_category'
+				nameFile: 'expense_category',
+				relations: [
+					{ joinTableName: 'tag_organization_expense_category' }
+				]
 			},
 			{ 
 				repository: this.expenseRepository,
-				nameFile: 'expense'
+				nameFile: 'expense',
+				relations: [
+					{ joinTableName: 'tag_expense' }
+				]
 			},
 			{ 
 				repository: this.featureRepository,
@@ -918,7 +1073,10 @@ export class ExportAllService implements OnModuleInit {
 			},
 			{ 
 				repository: this.incomeRepository,
-				nameFile: 'income'
+				nameFile: 'income',
+				relations: [
+					{ joinTableName: 'tag_income' }
+				]
 			},
 			{
 				repository: this.integrationEntitySettingRepository,
@@ -935,11 +1093,19 @@ export class ExportAllService implements OnModuleInit {
 			{
 				repository: this.integrationRepository,
 				nameFile: 'integration',
-				tenantBase: false
+				tenantBase: false,
+				relations: [
+					{ joinTableName: 'integration_integration_type' },
+					{ joinTableName: 'tag_integration' }
+				]
 			},
 			{
 				repository: this.integrationSettingRepository,
 				nameFile: 'integration_setting'
+			},
+			{
+				repository: this.integrationTypeRepository,
+				nameFile: 'integration_type'
 			},
 			{
 				repository: this.integrationTenantRepository,
@@ -947,7 +1113,12 @@ export class ExportAllService implements OnModuleInit {
 			},
 			{ 
 				repository: this.inviteRepository,
-				nameFile: 'invite'
+				nameFile: 'invite',
+				relations: [
+					{ joinTableName: 'invite_organization_contact' },
+					{ joinTableName: 'invite_organization_department' },
+					{ joinTableName: 'invite_organization_project' }
+				]
 			},
 			{
 				repository: this.invoiceEstimateHistoryRepository,
@@ -959,11 +1130,18 @@ export class ExportAllService implements OnModuleInit {
 			},
 			{ 
 				repository: this.invoiceRepository,
-				nameFile: 'invoice'
+				nameFile: 'invoice',
+				relations: [
+					{ joinTableName: 'tag_invoice' }
+				]
 			},
 			{ 
 				repository: this.jobPresetRepository,
 				nameFile: 'job_preset'
+			},
+			{ 
+				repository: this.jobPresetUpworkJobSearchCriterionRepository,
+				nameFile: 'job_preset_upwork_job_search_criterion'
 			},
 			{
 				repository: this.jobSearchCategoryRepository,
@@ -996,11 +1174,19 @@ export class ExportAllService implements OnModuleInit {
 			},
 			{
 				repository: this.organizationContactRepository,
-				nameFile: 'organization_contact'
+				nameFile: 'organization_contact',
+				relations: [
+					{ joinTableName: 'organization_contact_employee' },
+					{ joinTableName: 'tag_organization_contact' }
+				]
 			},
 			{
 				repository: this.organizationDepartmentRepository,
-				nameFile: 'organization_department'
+				nameFile: 'organization_department',
+				relations: [
+					{ joinTableName: 'organization_department_employee' },
+					{ joinTableName: 'tag_organization_department' }
+				]
 			},
 			{
 				repository: this.organizationDocumentRepository,
@@ -1008,7 +1194,11 @@ export class ExportAllService implements OnModuleInit {
 			},
 			{
 				repository: this.organizationEmploymentTypeRepository,
-				nameFile: 'organization_employment_type'
+				nameFile: 'organization_employment_type',
+				relations: [
+					{ joinTableName: 'organization_employment_type_employee' },
+					{ joinTableName: 'tag_organization_employment_type' }
+				]
 			},
 			{
 				repository: this.organizationLanguagesRepository,
@@ -1016,11 +1206,18 @@ export class ExportAllService implements OnModuleInit {
 			},
 			{
 				repository: this.organizationPositionsRepository,
-				nameFile: 'organization_position'
+				nameFile: 'organization_position',
+				relations: [
+					{ joinTableName: 'tag_organization_position' }
+				]
 			},
 			{
 				repository: this.organizationProjectsRepository,
-				nameFile: 'organization_project'
+				nameFile: 'organization_project',
+				relations: [
+					{ joinTableName: 'organization_project_employee' },
+					{ joinTableName: 'tag_organization_project' }
+				]
 			},
 			{
 				repository: this.organizationRecurringExpenseRepository,
@@ -1028,7 +1225,10 @@ export class ExportAllService implements OnModuleInit {
 			},
 			{
 				repository: this.organizationRepository,
-				nameFile: 'organization'
+				nameFile: 'organization',
+				relations: [
+					{ joinTableName: 'tag_organization' }
+				]
 			},
 			{
 				repository: this.organizationSprintRepository,
@@ -1040,15 +1240,24 @@ export class ExportAllService implements OnModuleInit {
 			},
 			{
 				repository: this.organizationTeamRepository,
-				nameFile: 'organization_team'
+				nameFile: 'organization_team',
+				relations: [
+					{ joinTableName: 'tag_organization_team' }
+				]
 			},
 			{
 				repository: this.organizationVendorsRepository,
-				nameFile: 'organization_vendor'
+				nameFile: 'organization_vendor',
+				relations: [
+					{ joinTableName: 'tag_organization_vendor' }
+				]
 			},
 			{ 
 				repository: this.paymentRepository,
-				nameFile: 'payment'
+				nameFile: 'payment',
+				relations: [
+					{ joinTableName: 'tag_payment' }
+				]
 			},
 			{ 
 				repository: this.pipelineRepository,
@@ -1059,16 +1268,44 @@ export class ExportAllService implements OnModuleInit {
 				nameFile: 'product_category'
 			},
 			{
+				repository: this.productCategoryTranslationRepository,
+				nameFile: 'product_category_translation'
+			},
+			{
 				repository: this.productOptionRepository,
 				nameFile: 'product_option'
 			},
+			{
+				repository: this.productOptionGroupRepository,
+				nameFile: 'product_option_group'
+			},
+			{
+				repository: this.productOptionGroupTranslationRepository,
+				nameFile: 'product_option_group_translation'
+			},
+			{
+				repository: this.productOptionTranslationRepository,
+				nameFile: 'product_option_translation'
+			},
 			{ 
 				repository: this.productRepository,
-				nameFile: 'product'
+				nameFile: 'product',
+				relations: [
+					{ joinTableName: 'product_gallery_item' },
+					{ joinTableName: 'tag_product' }
+				]
+			},
+			{
+				repository: this.productTranslationRepository,
+				nameFile: 'product_translation'
 			},
 			{
 				repository: this.productTypeRepository,
 				nameFile: 'product_type'
+			},
+			{
+				repository: this.productTypeTranslationRepository,
+				nameFile: 'product_type_translation'
 			},
 			{
 				repository: this.productVariantPriceRepository,
@@ -1076,7 +1313,10 @@ export class ExportAllService implements OnModuleInit {
 			},
 			{
 				repository: this.productVariantRepository,
-				nameFile: 'product_variant'
+				nameFile: 'product_variant',
+				relations: [
+					{ joinTableName: 'product_variant_options_product_option' }
+				]
 			},
 			{
 				repository: this.productVariantSettingsRepository,
@@ -1088,24 +1328,42 @@ export class ExportAllService implements OnModuleInit {
 			},
 			{
 				repository: this.warehouseRepository,
-				nameFile: 'warehouse'
+				nameFile: 'warehouse',
+				relations: [
+					{ joinTableName: 'tag_warehouse' }
+				]
 			},
 			{
 				repository: this.merchantRepository,
-				nameFile: 'merchant'
+				nameFile: 'merchant',
+				relations: [
+					{ joinTableName: 'warehouse_merchant' },
+					{ joinTableName: 'tag_merchant' }
+				]
 			},
 			{
 				repository: this.warehouseProductRepository,
 				nameFile: 'warehouse_product'
 			},
+			{
+				repository: this.warehouseProductVariantRepository,
+				nameFile: 'warehouse_product_variant'
+			},
 			{ 
 				repository: this.proposalRepository,
-				nameFile: 'proposal'
+				nameFile: 'proposal',
+				relations: [
+					{ joinTableName: 'tag_proposal' }
+				]
 			},
 			{
 				repository: this.reportCategoryRepository,
 				nameFile: 'report_category',
 				tenantBase: false
+			},
+			{
+				repository: this.reportOrganizationRepository,
+				nameFile: 'report_organization'
 			},
 			{
 				repository: this.reportRepository,
@@ -1114,7 +1372,18 @@ export class ExportAllService implements OnModuleInit {
 			},
 			{
 				repository: this.requestApprovalRepository,
-				nameFile: 'request_approval'
+				nameFile: 'request_approval',
+				relations: [
+					{ joinTableName: 'tag_request_approval' }
+				]
+			},
+			{
+				repository: this.requestApprovalEmployeeRepository,
+				nameFile: 'request_approval_employee'
+			},
+			{
+				repository: this.requestApprovalTeamRepository,
+				nameFile: 'request_approval_team'
 			},
 			{
 				repository: this.rolePermissionsRepository,
@@ -1130,10 +1399,14 @@ export class ExportAllService implements OnModuleInit {
 			},
 			{
 				repository: this.skillRepository,
-				nameFile: 'skill'
+				nameFile: 'skill',
+				relations: [
+					{ joinTableName: 'skill_employee' },
+					{ joinTableName: 'skill_organization' }
+				]
 			},
 			{ 
-				repository: this.stageRepository,
+				repository: this.pipelineStageRepository,
 				nameFile: 'pipeline_stage'
 			},
 			{
@@ -1142,24 +1415,45 @@ export class ExportAllService implements OnModuleInit {
 			},
 			{
 				repository: this.taskRepository,
-				nameFile: 'task'
+				nameFile: 'task',
+				relations: [
+					{ joinTableName: 'task_employee' },
+					{ joinTableName: 'task_team' },
+					{ joinTableName: 'tag_task' },
+				]
 			},
 			{
 				repository: this.tenantRepository,
 				nameFile: 'tenant',
-				tenantBase: false
+				condition: {
+					column: 'id',
+					replace: 'tenantId'
+				}
+			},
+			{
+				repository: this.tenantSettingRepository,
+				nameFile: 'tenant_setting'
 			},
 			{
 				repository: this.timeLogRepository,
-				nameFile: 'time_log'
+				nameFile: 'time_log',
+				relations: [
+					{ joinTableName: 'time_slot_time_logs' }
+				]
 			},
 			{
 				repository: this.timeOffPolicyRepository,
-				nameFile: 'time_off_policy'
+				nameFile: 'time_off_policy',
+				relations: [
+					{ joinTableName: 'time_off_policy_employee' }
+				]
 			},
 			{
 				repository: this.timeOffRequestRepository,
-				nameFile: 'time_off_request'
+				nameFile: 'time_off_request',
+				relations: [
+					{ joinTableName: 'time_off_request_employee' }
+				]
 			},
 			{
 				repository: this.timeSheetRepository,
