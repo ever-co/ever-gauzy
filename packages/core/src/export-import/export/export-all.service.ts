@@ -30,6 +30,7 @@ import {
 	CandidateSource,
 	CandidateTechnologies,
 	Contact,
+	CustomSmtp,
 	Deal,
 	Email,
 	EmailTemplate,
@@ -46,11 +47,15 @@ import {
 	EventType,
 	Expense,
 	ExpenseCategory,
+	Feature,
+	FeatureOrganization,
 	Goal,
+	GoalGeneralSetting,
 	GoalKPI,
 	GoalKPITemplate,
 	GoalTemplate,
 	GoalTimeFrame,
+	ImageAsset,
 	Income,
 	Integration,
 	IntegrationEntitySetting,
@@ -69,6 +74,7 @@ import {
 	KeyResultTemplate,
 	KeyResultUpdate,
 	Language,
+	Merchant,
 	Organization,
 	OrganizationAwards,
 	OrganizationContact,
@@ -109,16 +115,22 @@ import {
 	TimeOffRequest,
 	Timesheet,
 	TimeSlot,
+	TimeSlotMinute,
 	User,
 	UserOrganization,
 	Warehouse,
 	WarehouseProduct
 } from './../../core/entities/internal';
 
+export interface IRelation {
+	table: string;
+	relation: string;
+}
 export interface IRepositoryModel<T> {
 	repository: Repository<T>;
 	nameFile: string;
-	tenantBase?: boolean
+	tenantBase?: boolean;
+	relations?: IRelation[];
 }
 
 @Injectable()
@@ -165,6 +177,7 @@ export class ExportAllService implements OnModuleInit {
 
 		@InjectRepository(CandidateInterview)
 		private readonly candidateInterviewRepository: Repository<CandidateInterview>,
+
 		@InjectRepository(CandidateInterviewers)
 		private readonly candidateInterviewersRepository: Repository<CandidateInterviewers>,
 
@@ -182,6 +195,9 @@ export class ExportAllService implements OnModuleInit {
 
 		@InjectRepository(Contact)
 		private readonly contactRepository: Repository<Contact>,
+
+		@InjectRepository(CustomSmtp)
+		private readonly customSmtpRepository: Repository<CustomSmtp>,
 
 		@InjectRepository(Deal)
 		private readonly dealRepository: Repository<Deal>,
@@ -228,6 +244,12 @@ export class ExportAllService implements OnModuleInit {
 		@InjectRepository(ExpenseCategory)
 		private readonly expenseCategoryRepository: Repository<ExpenseCategory>,
 
+		@InjectRepository(Feature)
+		private readonly featureRepository: Repository<Feature>,
+
+		@InjectRepository(FeatureOrganization)
+		private readonly featureOrganizationRepository: Repository<FeatureOrganization>,
+
 		@InjectRepository(Goal)
 		private readonly goalRepository: Repository<Goal>,
 
@@ -242,6 +264,9 @@ export class ExportAllService implements OnModuleInit {
 
 		@InjectRepository(GoalTimeFrame)
 		private readonly goalTimeFrameRepository: Repository<GoalTimeFrame>,
+
+		@InjectRepository(GoalGeneralSetting)
+		private readonly goalGeneralSettingRepository: Repository<GoalGeneralSetting>,
 
 		@InjectRepository(Income)
 		private readonly incomeRepository: Repository<Income>,
@@ -372,8 +397,14 @@ export class ExportAllService implements OnModuleInit {
 		@InjectRepository(ProductVariantPrice)
 		private readonly productVariantPriceRepository: Repository<ProductVariantPrice>,
 
+		@InjectRepository(ImageAsset)
+		private readonly imageAssetRepository: Repository<ImageAsset>,
+
 		@InjectRepository(Warehouse)
 		private readonly warehouseRepository: Repository<Warehouse>,
+
+		@InjectRepository(Merchant)
+		private readonly merchantRepository: Repository<Merchant>,
 
 		@InjectRepository(WarehouseProduct)
 		private readonly warehouseProductRepository: Repository<WarehouseProduct>,
@@ -419,6 +450,9 @@ export class ExportAllService implements OnModuleInit {
 
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
+
+		@InjectRepository(TimeSlotMinute)
+		private readonly timeSlotMinuteRepository: Repository<TimeSlotMinute>,
 
 		@InjectRepository(TimeOffRequest)
 		private readonly timeOffRequestRepository: Repository<TimeOffRequest>,
@@ -506,22 +540,35 @@ export class ExportAllService implements OnModuleInit {
 		});
 	}
 
-	async getAsCsv(item: IRepositoryModel<any>, findInput: { tenantId: string; }): Promise<any> {
+	async getAsCsv(
+		item: IRepositoryModel<any>, 
+		findInput: { tenantId: string; }
+	): Promise<any> {
 		const conditions = {};
 		if (item.tenantBase !== false) {
 			conditions['where'] = {
 				tenantId: findInput['tenantId']
 			}
 		}
-	
+
 		const { repository } = item;
-		const [incomingData, count] = await repository.findAndCount(conditions);
+		const [ items, count ] = await repository.findAndCount(conditions);
 
 		if (count > 0) {
-			return new Promise((resolve) => {
+			return await this.csvWriter(item.nameFile, items);
+		}
+		return false;
+	}
+
+	async csvWriter(
+		filename: string,
+		items: any[]
+	): Promise<boolean | any> {
+		return new Promise((resolve, reject) => {
+			try {
 				const createCsvWriter = csv.createObjectCsvWriter;
 				const dataIn = [];
-				const dataKeys = Object.keys(incomingData[0]);
+				const dataKeys = Object.keys(items[0]);
 
 				for (const count of dataKeys) {
 					dataIn.push({ id: count, title: count });
@@ -533,24 +580,23 @@ export class ExportAllService implements OnModuleInit {
 				});
 
 				const csvWriter = createCsvWriter({
-					path: `./export/${id$}/csv/${item.nameFile}.csv`,
+					path: `./export/${id$}/csv/${filename}.csv`,
 					header: dataIn
 				});
 
-				const data = incomingData;
-
-				csvWriter.writeRecords(data).then(() => {
-					resolve('');
+				csvWriter.writeRecords(items).then(() => {
+					resolve(items);
 				});
-			});
-		}
-		return false;
+			} catch (error) {
+				reject(error)
+			}
+		});
 	}
 
 	async downloadAsCsvFormat(
 		index: number
 	): Promise<any> {
-		const columns = await this.repositories[index].repository.metadata.ownColumns.map(column => column.propertyName);
+		const columns = this.repositories[index].repository.metadata.ownColumns.map(column => column.propertyName);
 
 		if (columns) {
 			return new Promise((resolve) => {
@@ -647,13 +693,10 @@ export class ExportAllService implements OnModuleInit {
 	) {
 		return new Promise(async (resolve, reject) => {
 			try {
-				for await (const item of this.repositories) {
-					const { nameFile } = item;
-					const name = names.find(
-						(n) => nameFile === n
-					);
-					if (name) {
-						await this.getAsCsv(item, findInput);
+				for await (const repository of this.repositories) {
+					const { nameFile } = repository;
+					if (names.includes(nameFile)) {
+						await this.getAsCsv(repository, findInput);
 					}
 				}
 				resolve(true);
@@ -726,7 +769,7 @@ export class ExportAllService implements OnModuleInit {
 			},
 			{
 				repository: this.candidateCriterionsRatingRepository,
-				nameFile: 'candidate_creation_rating'
+				nameFile: 'candidate_criterion_rating'
 			},
 			{
 				repository: this.candidateDocumentRepository,
@@ -767,6 +810,10 @@ export class ExportAllService implements OnModuleInit {
 			{
 				repository: this.candidateTechnologiesRepository,
 				nameFile: 'candidate_technology'
+			},
+			{
+				repository: this.customSmtpRepository,
+				nameFile: 'custom_smtp'
 			},
 			{ 
 				repository: this.contactRepository,
@@ -837,6 +884,15 @@ export class ExportAllService implements OnModuleInit {
 				nameFile: 'expense'
 			},
 			{ 
+				repository: this.featureRepository,
+				nameFile: 'feature',
+				tenantBase: false
+			},
+			{ 
+				repository: this.featureOrganizationRepository,
+				nameFile: 'feature_organization'
+			},
+			{ 
 				repository: this.goalKpiRepository,
 				nameFile: 'goal_kpi'
 			},
@@ -855,6 +911,10 @@ export class ExportAllService implements OnModuleInit {
 			{
 				repository: this.goalTimeFrameRepository,
 				nameFile: 'goal_time_frame'
+			},
+			{
+				repository: this.goalGeneralSettingRepository,
+				nameFile: 'goal_general_setting'
 			},
 			{ 
 				repository: this.incomeRepository,
@@ -952,7 +1012,7 @@ export class ExportAllService implements OnModuleInit {
 			},
 			{
 				repository: this.organizationLanguagesRepository,
-				nameFile: 'organization_languages'
+				nameFile: 'organization_language'
 			},
 			{
 				repository: this.organizationPositionsRepository,
@@ -1023,8 +1083,16 @@ export class ExportAllService implements OnModuleInit {
 				nameFile: 'product_variant_setting'
 			},
 			{
+				repository: this.imageAssetRepository,
+				nameFile: 'image_asset'
+			},
+			{
 				repository: this.warehouseRepository,
 				nameFile: 'warehouse'
+			},
+			{
+				repository: this.merchantRepository,
+				nameFile: 'merchant'
 			},
 			{
 				repository: this.warehouseProductRepository,
@@ -1100,6 +1168,10 @@ export class ExportAllService implements OnModuleInit {
 			{
 				repository: this.timeSlotRepository,
 				nameFile: 'time_slot'
+			},
+			{
+				repository: this.timeSlotMinuteRepository,
+				nameFile: 'time_slot_minute'
 			},
 			{
 				repository: this.userOrganizationRepository,

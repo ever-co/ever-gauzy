@@ -266,7 +266,6 @@ export class AuthService extends SocialAuthService {
 		} else {
 			payload.role = null;
 		}
-		console.log(payload);
 		const token: string = sign(payload, env.JWT_SECRET, {});
 		return { token };
 	}

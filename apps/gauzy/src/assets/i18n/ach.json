@@ -723,7 +723,7 @@
 			"TIME_OFF_POLICY": "crwdns9286:0crwdne9286:0",
 			"TIME_SHEET": "crwdns9288:0crwdne9288:0",
 			"USER": "crwdns9290:0crwdne9290:0",
-			"CANDIDATE_CREATION_RATING": "crwdns9292:0crwdne9292:0",
+			"CANDIDATE_CRITERION_RATING": "crwdns9292:0crwdne9292:0",
 			"CANDIDATE_DOCUMENT": "crwdns9294:0crwdne9294:0",
 			"CANDIDATE_EDUCATION": "crwdns9296:0crwdne9296:0",
 			"CANDIDATE_EXPERIENCE": "crwdns9298:0crwdne9298:0",
