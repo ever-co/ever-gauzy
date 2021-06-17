@@ -666,9 +666,10 @@ export class ExportAllService implements OnModuleInit {
 		});
 	}
 
-	async downloadAsCsvFormat(index: number): Promise<any> {
-		const columns = this.repositories[index].repository.metadata.ownColumns.map(column => column.propertyName);
-
+	async csvTemplateWriter(
+		filename: string,
+		columns: any
+	): Promise<any> {
 		if (columns) {
 			return new Promise((resolve) => {
 				const createCsvWriter = csv.createObjectCsvWriter;
@@ -685,7 +686,7 @@ export class ExportAllService implements OnModuleInit {
 				});
 
 				const csvWriter = createCsvWriter({
-					path: `./export/${id$}/csv/${this.repositories[index].nameFile}.csv`,
+					path: `./export/${id$}/csv/${filename}.csv`,
 					header: dataIn
 				});
 
@@ -825,13 +826,38 @@ export class ExportAllService implements OnModuleInit {
 		}
 	}
 	
-	async downloadSpecificTables() {
-		return new Promise(async (resolve) => {
-			for (const [i] of this.repositories.entries()) {
-				await this.downloadAsCsvFormat(i);
+	async exportSpecificTablesSchema() {
+		return new Promise(async (resolve, reject) => {
+			try {
+				for await (const item of this.repositories) {
+					const { repository, nameFile, relations } = item;
+					const columns = repository.metadata.ownColumns.map(column => column.propertyName);
+					await this.csvTemplateWriter(nameFile, columns);
+
+					// export pivot relational tables
+					if (isNotEmpty(relations)) {
+						await this.exportRelationalTablesSchema(item);
+					}
+				}
+				resolve(true);
+			} catch (error) {
+				reject(error)
 			}
-			resolve('');
 		});
+	}
+
+	async exportRelationalTablesSchema(
+		entity: IRepositoryModel<any>, 	
+	) {
+		const { repository, relations } = entity;
+		for await (const item of repository.metadata.manyToManyRelations) {
+			const relation = relations.find((relation: IColumnRelationMetadata) => relation.joinTableName === item.joinTableName);
+			if (relation) {
+				const referencTableName = item.junctionEntityMetadata.givenTableName;
+				const columns = item.junctionEntityMetadata.columns.map((column) => column.propertyName);
+				await this.csvTemplateWriter(referencTableName, columns);
+			}
+		}
 	}
 
 	/*

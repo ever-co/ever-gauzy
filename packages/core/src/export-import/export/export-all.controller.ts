@@ -53,7 +53,7 @@ export class ExportAllController {
 		@Res() res
 	): Promise<any> {
 		await this.exportService.createFolders();
-		await this.exportService.downloadSpecificTables();
+		await this.exportService.exportSpecificTablesSchema();
 		await this.exportService.archiveAndDownload();
 		await this.exportService.downloadToUser(res);
 		await this.exportService.deleteCsvFiles();
