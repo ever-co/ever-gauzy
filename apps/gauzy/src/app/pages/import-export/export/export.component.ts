@@ -122,10 +122,9 @@ export class ExportComponent
 
 	onSubmit() {
 		this.loading = true;
-		const { tenantId } = this.store.user;
 		const entities = this.selectedEntities.filter(isNotEmpty);
 		this.exportAll
-			.downloadSpecificData(entities, { tenantId })
+			.downloadSpecificData(entities)
 			.pipe(
 				finalize(() => this.loading = false),
 				untilDestroyed(this)

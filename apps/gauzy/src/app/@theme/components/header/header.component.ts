@@ -15,7 +15,6 @@ import { LayoutService } from '../../../@core/utils';
 import { Router, NavigationEnd } from '@angular/router';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '../../../@core/services/store.service';
 import {
 	CrudActionEnum,
 	IOrganization,
@@ -27,17 +26,18 @@ import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.s
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment } from '../../../../environments/environment';
-import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
-import { EmployeesService } from '../../../@core/services/employees.service';
 import { ALL_EMPLOYEES_SELECTED, NO_EMPLOYEE_SELECTED } from './selectors/employee';
-import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import {
+	EmployeesService,
 	EmployeeStore,
 	ISidebarActionConfig,
 	NavigationBuilderService,
 	OrganizationEditStore,
-	OrganizationProjectStore
+	OrganizationProjectsService,
+	OrganizationProjectStore,
+	OrganizationsService,
+	Store,
+	UsersOrganizationsService
 } from '../../../@core/services';
 import {
 	DEFAULT_SELECTOR_VISIBILITY,
@@ -46,6 +46,7 @@ import {
 } from '../../../@core/services';
 import { combineLatest, Subject } from 'rxjs';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { distinctUntilChange } from '@gauzy/common-angular';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -130,6 +131,8 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 			.subscribe();
 		this.selectorBuilderService.selectors$
 			.pipe(
+				distinctUntilChange(),
+				debounceTime(200),
 				tap((selectors) => {
 					this.selectorsVisibility = Object.assign({}, DEFAULT_SELECTOR_VISIBILITY, selectors);
 				}),
@@ -250,7 +253,9 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 					)
 				) {
 					this.showEmployeesSelector = employeeCount > 0;
-					this.store.selectedEmployee = this.showEmployeesSelector ? ALL_EMPLOYEES_SELECTED : null; 
+					if (this.showEmployeesSelector && !this.store.selectedEmployee) {
+						this.store.selectedEmployee = ALL_EMPLOYEES_SELECTED; 
+					}
 				} else {
 					const emp = await this.employeesService.getEmployeeById(
 						this.user.employeeId,

@@ -604,12 +604,12 @@ export class ExportAllService implements OnModuleInit {
 
 	async getAsCsv(
 		item: IRepositoryModel<any>, 
-		findInput: { tenantId: string; }
+		where: { tenantId: string; }
 	): Promise<any> {
 		const conditions = {};
 		if (item.tenantBase !== false) {
 			conditions['where'] = {
-				tenantId: findInput['tenantId'] || RequestContext.currentTenantId()
+				tenantId: where['tenantId']
 			}
 		}
 
@@ -620,7 +620,7 @@ export class ExportAllService implements OnModuleInit {
 			const { condition : { replace = 'tenantId', column = 'id' } } = item;
 			if (`${replace}` in conditions['where']) {
 				delete conditions['where'][replace];
-				conditions['where'][column] = findInput[replace];
+				conditions['where'][column] = where[replace];
 			}
 		}
 
@@ -666,9 +666,7 @@ export class ExportAllService implements OnModuleInit {
 		});
 	}
 
-	async downloadAsCsvFormat(
-		index: number
-	): Promise<any> {
+	async downloadAsCsvFormat(index: number): Promise<any> {
 		const columns = this.repositories[index].repository.metadata.ownColumns.map(column => column.propertyName);
 
 		if (columns) {
@@ -747,11 +745,13 @@ export class ExportAllService implements OnModuleInit {
 		});
 	}
 
-	async exportTables(findInput: { tenantId: string; }) {
+	async exportTables() {
 		return new Promise(async (resolve, reject) => {
 			try {
 				for await (const item of this.repositories) {
-					await this.getAsCsv(item, findInput);
+					await this.getAsCsv(item, { 
+						tenantId: RequestContext.currentTenantId() 
+					});
 				}
 				resolve(true);
 			} catch (error) {
@@ -760,20 +760,21 @@ export class ExportAllService implements OnModuleInit {
 		});
 	}
 
-	async exportSpecificTables(
-		names: string[],
-		findInput: { tenantId: string; }
-	) {
+	async exportSpecificTables(names: string[]) {
 		return new Promise(async (resolve, reject) => {
 			try {
 				for await (const repository of this.repositories) {
 					const { nameFile } = repository;
 					if (names.includes(nameFile)) {
-						await this.getAsCsv(repository, findInput);
+						await this.getAsCsv(repository, { 
+							tenantId: RequestContext.currentTenantId() 
+						});
 
 						// export pivot relational tables
 						if (isNotEmpty(repository.relations)) {
-							await this.exportRelationalTables(repository, findInput);
+							await this.exportRelationalTables(repository, { 
+								tenantId: RequestContext.currentTenantId() 
+							});
 						}
 					}
 				}
@@ -853,7 +854,6 @@ export class ExportAllService implements OnModuleInit {
 				repository,
 				nameFile: tableName
 			});
-
 		}
 	}
 
