@@ -35,7 +35,7 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column()
+	@Column({ nullable: true })
 	description: string;
 
 	@ApiPropertyOptional({ type: () => Boolean })

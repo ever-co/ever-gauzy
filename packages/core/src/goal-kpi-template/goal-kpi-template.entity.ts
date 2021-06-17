@@ -20,7 +20,7 @@ export class GoalKPITemplate
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@Column({ nullable: true })
 	description: string;
 
 	@ApiProperty({ type: () => String, enum: KpiMetricEnum })

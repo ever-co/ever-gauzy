@@ -44,7 +44,7 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 
 	@ApiProperty()
 	@IsString()
-	@Column()
+	@Column({ nullable: true })
 	description: string;
 
 	@ApiProperty()

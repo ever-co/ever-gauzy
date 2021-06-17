@@ -22,7 +22,7 @@ export class Language extends BaseEntity implements ILanguage {
 	is_system?: boolean;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@Column({ nullable: true })
 	description?: string;
 
 	@ApiProperty({ type: () => String })

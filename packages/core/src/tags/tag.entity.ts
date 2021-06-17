@@ -60,7 +60,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	name?: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@Column({ nullable: true })
 	description?: string;
 
 	@ApiProperty({ type: () => String })

@@ -14,7 +14,7 @@ export class Skill extends TenantOrganizationBaseEntity implements ISkill {
 	name?: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@Column({ nullable: true })
 	description?: string;
 
 	@ApiProperty({ type: () => String })

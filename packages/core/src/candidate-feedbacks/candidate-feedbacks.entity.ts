@@ -29,7 +29,7 @@ export class CandidateFeedback
 	extends TenantOrganizationBaseEntity
 	implements ICandidateFeedback {
 	@ApiProperty({ type: () => String })
-	@Column()
+	@Column({ nullable: true })
 	description: string;
 
 	@ApiProperty({ type: () => String })
