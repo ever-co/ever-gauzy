@@ -4,13 +4,11 @@
 			{{ 'MENU.IMPORT_EXPORT.IMPORT_MESSAGE' | translate }}</span
 		>
 	</nb-card-header>
-
 	<div class="row">
 		<div class="col-md-3">
 			<h3 style="color: #3366ff;" *ngIf="uploader.queue.length == 0">
 				{{ 'MENU.IMPORT_EXPORT.SELECT_FILE' | translate }}
 			</h3>
-
 			<div
 				ng2FileDrop
 				style="height: 30%;"
@@ -50,10 +48,10 @@
 					[value]="importType"
 					(valueChange)="onImportTypeChange($event)"
 				>
-					<nb-radio value="merge" checked="true">{{
+					<nb-radio [value]="importTypeEnum.MERGE" checked="true">{{
 						'MENU.IMPORT_EXPORT.MERGE' | translate
 					}}</nb-radio>
-					<nb-radio value="clean">{{
+					<nb-radio [value]="importTypeEnum.CLEAN">{{
 						'MENU.IMPORT_EXPORT.CLEAN_UP' | translate
 					}}</nb-radio>
 				</nb-radio-group>
@@ -129,7 +127,7 @@
 						<td nowrap>
 							<button
 								type="button"
-								class="btn btn-success btn-xs"
+								class="btn btn-success btn-xs mr-1"
 								(click)="uploader.uploadAll()"
 								[disabled]="
 									item.isReady ||
@@ -143,7 +141,7 @@
 							</button>
 							<button
 								type="button"
-								class="btn btn-warning btn-xs"
+								class="btn btn-warning btn-xs mr-1"
 								(click)="item.cancel()"
 								[disabled]="!item.isUploading"
 							>
@@ -153,7 +151,7 @@
 							</button>
 							<button
 								type="button"
-								class="btn btn-danger btn-xs"
+								class="btn btn-danger btn-xs mr-1"
 								(click)="uploader.clearQueue()"
 							>
 								<span>{{

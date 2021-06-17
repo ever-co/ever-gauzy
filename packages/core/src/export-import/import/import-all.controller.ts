@@ -4,21 +4,23 @@ import {
 	Get,
 	Post,
 	UseInterceptors,
-	Injectable,
-	Body
+	Body,
+	UseGuards
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as path from 'path';
+import { AuthGuard } from '@nestjs/passport';
 import { ImportAllService } from './import-all.service';
-import { FileStorage } from '../../core/file-storage';
-import { UploadedFileStorage } from 'core/file-storage/uploaded-file-storage';
+import { FileStorage, UploadedFileStorage } from '../../core/file-storage';
 
-@Injectable()
 @ApiTags('Import')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class ImportAllController {
-	constructor(private importAllService: ImportAllService) {}
+	constructor(
+		private readonly importAllService: ImportAllService
+	) {}
 
 	@ApiOperation({ summary: 'Find all imports.' })
 	@ApiResponse({

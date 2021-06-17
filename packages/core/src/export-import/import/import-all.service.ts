@@ -13,6 +13,7 @@ import { isFunction, isNotEmpty } from '@gauzy/common';
 import { convertToDatetime } from './../../core/utils';
 import { FileStorage } from './../../core/file-storage';
 import {
+	AccountingTemplate,
 	Activity,
 	AppointmentEmployee,
 	ApprovalPolicy,
@@ -30,8 +31,7 @@ import {
 	CandidateSource,
 	CandidateTechnologies,
 	Contact,
-	Country,
-	Currency,
+	CustomSmtp,
 	Deal,
 	Email,
 	EmailTemplate,
@@ -50,12 +50,15 @@ import {
 	EventType,
 	Expense,
 	ExpenseCategory,
+	Feature,
+	FeatureOrganization,
 	Goal,
 	GoalGeneralSetting,
 	GoalKPI,
 	GoalKPITemplate,
 	GoalTemplate,
 	GoalTimeFrame,
+	ImageAsset,
 	Income,
 	Integration,
 	IntegrationEntitySetting,
@@ -63,6 +66,7 @@ import {
 	IntegrationMap,
 	IntegrationSetting,
 	IntegrationTenant,
+	IntegrationType,
 	Invite,
 	Invoice,
 	InvoiceEstimateHistory,
@@ -75,6 +79,7 @@ import {
 	KeyResultTemplate,
 	KeyResultUpdate,
 	Language,
+	Merchant,
 	Organization,
 	OrganizationAwards,
 	OrganizationContact,
@@ -94,8 +99,14 @@ import {
 	PipelineStage,
 	Product,
 	ProductCategory,
+	ProductCategoryTranslation,
 	ProductOption,
+	ProductOptionGroup,
+	ProductOptionGroupTranslation,
+	ProductOptionTranslation,
+	ProductTranslation,
 	ProductType,
+	ProductTypeTranslation,
 	ProductVariant,
 	ProductVariantPrice,
 	ProductVariantSettings,
@@ -104,6 +115,8 @@ import {
 	ReportCategory,
 	ReportOrganization,
 	RequestApproval,
+	RequestApprovalEmployee,
+	RequestApprovalTeam,
 	Role,
 	RolePermissions,
 	Screenshot,
@@ -111,14 +124,20 @@ import {
 	Tag,
 	Task,
 	Tenant,
+	TenantSetting,
 	TimeLog,
 	TimeOffPolicy,
 	TimeOffRequest,
 	Timesheet,
 	TimeSlot,
+	TimeSlotMinute,
 	User,
-	UserOrganization
+	UserOrganization,
+	Warehouse,
+	WarehouseProduct,
+	WarehouseProductVariant
 } from './../../core/entities/internal';
+import { RequestContext } from './../../core';
 
 @Injectable()
 export class ImportAllService implements OnModuleInit {
@@ -133,45 +152,44 @@ export class ImportAllService implements OnModuleInit {
 	 */
 	private orderedRepositories = {
 		/**
-		 * These entities do not have any other dependency so need to be imported first
-		 */
-		countries: this.countryRepository,
-		currencies: this.currencyRepository,
+		* These entities do not have any other dependency so need to be imported first
+		*/
 		skill: this.skillRepository, //TODO: This should be organization level but currently does not have any org detail
 		language: this.languageRepository,
 		tenant: this.tenantRepository,
+		tenant_setting: this.tenantSettingRepository,
 		report_category: this.reportCategoryRepository,
 		report: this.reportRepository,
 
 		/**
-		 * These entities need TENANT
-		 */
+		* These entities need TENANT
+		*/
 		role: this.roleRepository,
-		role_permission: this.RolePermissionsRepository,
+		role_permission: this.rolePermissionsRepository,
 		organization: this.organizationRepository,
 
 		/**
-		 * These entities need TENANT and ORGANIZATION
-		 */
+		* These entities need TENANT and ORGANIZATION
+		*/
 		users: this.userRepository,
 		candidate: this.candidateRepository,
 		user_organization: this.userOrganizationRepository,
 		contact: this.contactRepository,
+		custom_smtp: this.customSmtpRepository,
 		report_organization: this.reportOrganizationRepository,
 		job_preset: this.jobPresetRepository,
 		job_search_category: this.jobSearchCategoryRepository,
 		job_search_occupation: this.jobSearchOccupationRepository,
-		job_preset_upwork_job_search_criterion: this
-			.jobPresetUpworkJobSearchCriterionRepository,
+		job_preset_upwork_job_search_criterion: this.jobPresetUpworkJobSearchCriterionRepository,
 
 		/**
-		 * These entities need TENANT, ORGANIZATION & USER
-		 */
+		* These entities need TENANT, ORGANIZATION & USER
+		*/
 		employee: this.employeeRepository,
 
 		/**
-		 * These entities need TENANT, ORGANIZATION & CANDIDATE
-		 */
+		* These entities need TENANT, ORGANIZATION & CANDIDATE
+		*/
 		candidate_documents: this.candidateDocumentRepository,
 		candidate_education: this.candidateEducationRepository,
 		candidate_experience: this.candidateExperienceRepository,
@@ -191,6 +209,7 @@ export class ImportAllService implements OnModuleInit {
 
 		deal: this.dealRepository,
 		email_template: this.emailTemplateRepository,
+		accounting_template: this.accountingTemplateRepository,
 		estimate_email: this.estimateEmailRepository,
 		email: this.emailRepository,
 
@@ -199,13 +218,14 @@ export class ImportAllService implements OnModuleInit {
 		employee_proposal_template: this.employeeProposalTemplateRepository,
 		employee_recurring_expense: this.employeeRecurringExpenseRepository,
 		employee_setting: this.employeeSettingRepository,
-		employee_upwork_job_search_criterion: this
-			.employeeUpworkJobsSearchCriterionRepository,
+		employee_upwork_job_search_criterion: this.employeeUpworkJobsSearchCriterionRepository,
 		equipment: this.equipmentRepository,
 		equipment_sharing: this.equipmentSharingRepository,
 		equipment_sharing_policy: this.equipmentSharingPolicyRepository,
 		event_types: this.eventTypeRepository,
 		expense_category: this.expenseCategoryRepository,
+		feature: this.featureRepository,
+		feature_organization: this.featureOrganizationRepository,
 		expense: this.expenseRepository,
 		goal_kpi: this.goalKpiRepository,
 		gosl_kpi_template: this.goalKpiTemplateRepository,
@@ -216,11 +236,11 @@ export class ImportAllService implements OnModuleInit {
 		income: this.incomeRepository,
 		integration_tenant: this.integrationTenantRepository,
 		integration_entity_setting: this.integrationEntitySettingRepository,
-		integration_entity_setting_tied_entity: this
-			.integrationEntitySettingTiedEntityRepository,
-		integration_map: this.IntegrationMapRepository,
-		integration_setting: this.IntegrationSettingRepository,
+		integration_entity_setting_tied_entity: this.integrationEntitySettingTiedEntityRepository,
+		integration_map: this.integrationMapRepository,
+		integration_setting: this.integrationSettingRepository,
 		integration: this.integrationRepository,
+		integration_type: this.integrationTypeRepository,
 		invite: this.inviteRepository,
 		invoice_item: this.invoiceItemRepository,
 		invoice: this.invoiceRepository,
@@ -238,39 +258,55 @@ export class ImportAllService implements OnModuleInit {
 		organization_language: this.organizationLanguagesRepository,
 		organization_position: this.organizationPositionsRepository,
 		organization_project: this.organizationProjectsRepository,
-		organization_recurring_expense: this
-			.organizationRecurringExpenseRepository,
-		organization_sprint: this.sprintRepository,
-		organization_team_employee: this.OrganizationTeamEmployeeRepository,
+		organization_recurring_expense: this.organizationRecurringExpenseRepository,
+		organization_sprint: this.organizationSprintRepository,
+		organization_team_employee: this.organizationTeamEmployeeRepository,
 		organization_team: this.organizationTeamRepository,
 		organization_vendor: this.organizationVendorsRepository,
 
 		pipeline: this.pipelineRepository,
 		product_category: this.productCategoryRepository,
+		product_category_translation: this.productCategoryTranslationRepository,
 		product_option: this.productOptionRepository,
+		product_option_translation: this.productOptionTranslationRepository,
+		product_option_group: this.productOptionGroupRepository,
+		product_option_group_translation: this.productOptionGroupTranslationRepository,
 		product_settings: this.productVariantSettingsRepository,
 		product_type: this.productTypeRepository,
+		product_type_translation: this.productTypeTranslationRepository,
 		product_variant_price: this.productVariantPriceRepository,
+		image_asset: this.imageAssetRepository,
+		warehouse: this.warehouseRepository,
+		merchant: this.merchantRepository,
+		warehouse_product: this.warehouseProductRepository,
+		warehouse_product_variant: this.warehouseProductVariantRepository,
 		product_variant: this.productVariantRepository,
 		product: this.productRepository,
+		product_translation: this.productTranslationRepository,
 		proposal: this.proposalRepository,
 		payment: this.paymentRepository,
 		request_approval: this.requestApprovalRepository,
+		request_approval_employee: this.requestApprovalEmployeeRepository,
+		request_approval_team: this.requestApprovalTeamRepository,
 
 		screenshot: this.screenShotRepository,
 
-		stage: this.stageRepository,
+		pipeline_stage: this.pipelineStageRepository,
 		tag: this.tagRepository,
 		task: this.taskRepository,
 
 		time_log: this.timeLogRepository,
 		time_slot: this.timeSlotRepository,
+		time_slot_minute: this.timeSlotMinuteRepository,
 		time_off_policy: this.timeOffPolicyRepository,
 		time_off_request: this.timeOffRequestRepository,
 		timesheet: this.timeSheetRepository
 	};
 
 	constructor(
+		@InjectRepository(AccountingTemplate)
+		private readonly accountingTemplateRepository: Repository<AccountingTemplate>,
+
 		@InjectRepository(Activity)
 		private readonly activityRepository: Repository<Activity>,
 
@@ -322,11 +358,8 @@ export class ImportAllService implements OnModuleInit {
 		@InjectRepository(Contact)
 		private readonly contactRepository: Repository<Contact>,
 
-		@InjectRepository(Country)
-		private readonly countryRepository: Repository<Country>,
-
-		@InjectRepository(Currency)
-		private readonly currencyRepository: Repository<Currency>,
+		@InjectRepository(CustomSmtp)
+		private readonly customSmtpRepository: Repository<CustomSmtp>,
 
 		@InjectRepository(Deal)
 		private readonly dealRepository: Repository<Deal>,
@@ -349,14 +382,14 @@ export class ImportAllService implements OnModuleInit {
 		@InjectRepository(EmployeeProposalTemplate)
 		private readonly employeeProposalTemplateRepository: Repository<EmployeeProposalTemplate>,
 
-		@InjectRepository(EmployeeUpworkJobsSearchCriterion)
-		private readonly employeeUpworkJobsSearchCriterionRepository: Repository<EmployeeUpworkJobsSearchCriterion>,
-
 		@InjectRepository(EmployeeRecurringExpense)
 		private readonly employeeRecurringExpenseRepository: Repository<EmployeeRecurringExpense>,
 
 		@InjectRepository(EmployeeSetting)
 		private readonly employeeSettingRepository: Repository<EmployeeSetting>,
+
+		@InjectRepository(EmployeeUpworkJobsSearchCriterion)
+		private readonly employeeUpworkJobsSearchCriterionRepository: Repository<EmployeeUpworkJobsSearchCriterion>,
 
 		@InjectRepository(Equipment)
 		private readonly equipmentRepository: Repository<Equipment>,
@@ -379,14 +412,17 @@ export class ImportAllService implements OnModuleInit {
 		@InjectRepository(ExpenseCategory)
 		private readonly expenseCategoryRepository: Repository<ExpenseCategory>,
 
+		@InjectRepository(Feature)
+		private readonly featureRepository: Repository<Feature>,
+
+		@InjectRepository(FeatureOrganization)
+		private readonly featureOrganizationRepository: Repository<FeatureOrganization>,
+
 		@InjectRepository(Goal)
 		private readonly goalRepository: Repository<Goal>,
 
 		@InjectRepository(GoalTemplate)
 		private readonly goalTemplateRepository: Repository<GoalTemplate>,
-
-		@InjectRepository(GoalGeneralSetting)
-		private readonly goalGeneralSettingRepository: Repository<GoalGeneralSetting>,
 
 		@InjectRepository(GoalKPI)
 		private readonly goalKpiRepository: Repository<GoalKPI>,
@@ -397,11 +433,17 @@ export class ImportAllService implements OnModuleInit {
 		@InjectRepository(GoalTimeFrame)
 		private readonly goalTimeFrameRepository: Repository<GoalTimeFrame>,
 
+		@InjectRepository(GoalGeneralSetting)
+		private readonly goalGeneralSettingRepository: Repository<GoalGeneralSetting>,
+
 		@InjectRepository(Income)
 		private readonly incomeRepository: Repository<Income>,
 
 		@InjectRepository(Integration)
 		private readonly integrationRepository: Repository<Integration>,
+
+		@InjectRepository(IntegrationType)
+		private readonly integrationTypeRepository: Repository<IntegrationType>,
 
 		@InjectRepository(IntegrationEntitySetting)
 		private readonly integrationEntitySettingRepository: Repository<IntegrationEntitySetting>,
@@ -410,10 +452,10 @@ export class ImportAllService implements OnModuleInit {
 		private readonly integrationEntitySettingTiedEntityRepository: Repository<IntegrationEntitySettingTiedEntity>,
 
 		@InjectRepository(IntegrationMap)
-		private readonly IntegrationMapRepository: Repository<IntegrationMap>,
+		private readonly integrationMapRepository: Repository<IntegrationMap>,
 
 		@InjectRepository(IntegrationSetting)
-		private readonly IntegrationSettingRepository: Repository<IntegrationSetting>,
+		private readonly integrationSettingRepository: Repository<IntegrationSetting>,
 
 		@InjectRepository(IntegrationTenant)
 		private readonly integrationTenantRepository: Repository<IntegrationTenant>,
@@ -433,14 +475,14 @@ export class ImportAllService implements OnModuleInit {
 		@InjectRepository(JobPreset)
 		private readonly jobPresetRepository: Repository<JobPreset>,
 
+		@InjectRepository(JobPresetUpworkJobSearchCriterion)
+		private readonly jobPresetUpworkJobSearchCriterionRepository: Repository<JobPresetUpworkJobSearchCriterion>,
+
 		@InjectRepository(JobSearchCategory)
 		private readonly jobSearchCategoryRepository: Repository<JobSearchCategory>,
 
 		@InjectRepository(JobSearchOccupation)
 		private readonly jobSearchOccupationRepository: Repository<JobSearchOccupation>,
-
-		@InjectRepository(JobPresetUpworkJobSearchCriterion)
-		private readonly jobPresetUpworkJobSearchCriterionRepository: Repository<JobPresetUpworkJobSearchCriterion>,
 
 		@InjectRepository(KeyResult)
 		private readonly keyResultRepository: Repository<KeyResult>,
@@ -488,13 +530,13 @@ export class ImportAllService implements OnModuleInit {
 		private readonly organizationRecurringExpenseRepository: Repository<OrganizationRecurringExpense>,
 
 		@InjectRepository(OrganizationSprint)
-		private readonly sprintRepository: Repository<OrganizationSprint>,
+		private readonly organizationSprintRepository: Repository<OrganizationSprint>,
 
 		@InjectRepository(OrganizationTeam)
 		private readonly organizationTeamRepository: Repository<OrganizationTeam>,
 
 		@InjectRepository(OrganizationTeamEmployee)
-		private readonly OrganizationTeamEmployeeRepository: Repository<OrganizationTeamEmployee>,
+		private readonly organizationTeamEmployeeRepository: Repository<OrganizationTeamEmployee>,
 
 		@InjectRepository(OrganizationVendor)
 		private readonly organizationVendorsRepository: Repository<OrganizationVendor>,
@@ -506,16 +548,31 @@ export class ImportAllService implements OnModuleInit {
 		private readonly pipelineRepository: Repository<Pipeline>,
 
 		@InjectRepository(PipelineStage)
-		private readonly stageRepository: Repository<PipelineStage>,
+		private readonly pipelineStageRepository: Repository<PipelineStage>,
 
 		@InjectRepository(Product)
 		private readonly productRepository: Repository<Product>,
 
+		@InjectRepository(ProductTranslation)
+		private readonly productTranslationRepository: Repository<ProductTranslation>,
+
 		@InjectRepository(ProductCategory)
 		private readonly productCategoryRepository: Repository<ProductCategory>,
 
+		@InjectRepository(ProductCategoryTranslation)
+		private readonly productCategoryTranslationRepository: Repository<ProductCategoryTranslation>,
+
 		@InjectRepository(ProductOption)
 		private readonly productOptionRepository: Repository<ProductOption>,
+
+		@InjectRepository(ProductOptionTranslation)
+		private readonly productOptionTranslationRepository: Repository<ProductOptionTranslation>,
+
+		@InjectRepository(ProductOptionGroup)
+		private readonly productOptionGroupRepository: Repository<ProductOptionGroup>,
+
+		@InjectRepository(ProductOptionGroupTranslation)
+		private readonly productOptionGroupTranslationRepository: Repository<ProductOptionGroupTranslation>,
 
 		@InjectRepository(ProductVariantSettings)
 		private readonly productVariantSettingsRepository: Repository<ProductVariantSettings>,
@@ -523,11 +580,29 @@ export class ImportAllService implements OnModuleInit {
 		@InjectRepository(ProductType)
 		private readonly productTypeRepository: Repository<ProductType>,
 
+		@InjectRepository(ProductTypeTranslation)
+		private readonly productTypeTranslationRepository: Repository<ProductTypeTranslation>,
+
 		@InjectRepository(ProductVariant)
 		private readonly productVariantRepository: Repository<ProductVariant>,
 
 		@InjectRepository(ProductVariantPrice)
 		private readonly productVariantPriceRepository: Repository<ProductVariantPrice>,
+
+		@InjectRepository(ImageAsset)
+		private readonly imageAssetRepository: Repository<ImageAsset>,
+
+		@InjectRepository(Warehouse)
+		private readonly warehouseRepository: Repository<Warehouse>,
+
+		@InjectRepository(Merchant)
+		private readonly merchantRepository: Repository<Merchant>,
+
+		@InjectRepository(WarehouseProduct)
+		private readonly warehouseProductRepository: Repository<WarehouseProduct>,
+
+		@InjectRepository(WarehouseProductVariant)
+		private readonly warehouseProductVariantRepository: Repository<WarehouseProductVariant>,
 
 		@InjectRepository(Proposal)
 		private readonly proposalRepository: Repository<Proposal>,
@@ -541,11 +616,17 @@ export class ImportAllService implements OnModuleInit {
 		@InjectRepository(RequestApproval)
 		private readonly requestApprovalRepository: Repository<RequestApproval>,
 
+		@InjectRepository(RequestApprovalEmployee)
+		private readonly requestApprovalEmployeeRepository: Repository<RequestApprovalEmployee>,
+
+		@InjectRepository(RequestApprovalTeam)
+		private readonly requestApprovalTeamRepository: Repository<RequestApprovalTeam>,
+
 		@InjectRepository(Role)
 		private readonly roleRepository: Repository<Role>,
 
 		@InjectRepository(RolePermissions)
-		private readonly RolePermissionsRepository: Repository<RolePermissions>,
+		private readonly rolePermissionsRepository: Repository<RolePermissions>,
 
 		@InjectRepository(Report)
 		private readonly reportRepository: Repository<Report>,
@@ -565,6 +646,9 @@ export class ImportAllService implements OnModuleInit {
 		@InjectRepository(Tenant)
 		private readonly tenantRepository: Repository<Tenant>,
 
+		@InjectRepository(TenantSetting)
+		private readonly tenantSettingRepository: Repository<TenantSetting>,
+
 		@InjectRepository(Timesheet)
 		private readonly timeSheetRepository: Repository<Timesheet>,
 
@@ -573,6 +657,9 @@ export class ImportAllService implements OnModuleInit {
 
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
+
+		@InjectRepository(TimeSlotMinute)
+		private readonly timeSlotMinuteRepository: Repository<TimeSlotMinute>,
 
 		@InjectRepository(TimeOffRequest)
 		private readonly timeOffRequestRepository: Repository<TimeOffRequest>,
@@ -592,8 +679,7 @@ export class ImportAllService implements OnModuleInit {
 	async onModuleInit() {
 		this.createDynamicInstanceForPluginEntities();
 
-		const public_path =
-			this.configService.assetOptions.assetPublicPath || __dirname;
+		const public_path = this.configService.assetOptions.assetPublicPath || __dirname;
 
 		//base import csv directory path
 		this._dirname = path.join(public_path, this._basename);
@@ -630,41 +716,44 @@ export class ImportAllService implements OnModuleInit {
 		await unzipper.Open.buffer(file).then((d) =>
 			d.extract({ path: this._dirname })
 		);
-
-		this.parse(cleanup);
+		await this.parse(cleanup);
 	}
 
-	parse(cleanup: boolean = false) {
+	async parse(cleanup: boolean = false) {
 		/**
-		 * Can only run in a particular order
+	 	 * Can only run in a particular order
 		 */
-		for (const i of Object.keys(this.orderedRepositories)) {
-			if (!fs.existsSync(this._extractPath + i + '.csv')) {
+		const tenantId = RequestContext.currentTenantId();
+		for await (const i of Object.keys(this.orderedRepositories)) {
+			const csvPath = this._extractPath + i + '.csv';
+			
+			if (!fs.existsSync(csvPath)) {
 				console.log('File Does Not Exist, Skipping: ', i);
 				continue;
 			}
 
-			// console.log('File Exists:', this._extractPath + i + '.csv');
+			// console.log('File Exists:', csvPath);
 			let results = [];
 			/**
 			 * This will first collect all the data and then insert
 			 * If cleanup flag is set then it will also truncate the database table with CASCADE
 			 */
-			fs.createReadStream(this._extractPath + i + '.csv')
+			fs.createReadStream(csvPath, 'utf8')
 				.pipe(csv())
 				.on('data', (data) => {
-					data = this.mappedTimestampsFields(data);
+					data = this.mappedFields(data);
 					results.push(data);
 				})
 				.on('end', async () => {
 					results = results.filter(isNotEmpty);
 					if (results.length) {
+						const masterTable = await this.orderedRepositories[i].metadata.tableName;
 						if (cleanup) {
 							await this.orderedRepositories[i].query(
-								`TRUNCATE  "${this.orderedRepositories[i].metadata.tableName}" RESTART IDENTITY CASCADE;`
+								`TRUNCATE "${masterTable}" RESTART IDENTITY CASCADE;`
 							);
 						}
-						this.orderedRepositories[i].insert(results);
+						await this.orderedRepositories[i].insert(results);
 					}
 				});
 		}
@@ -673,17 +762,20 @@ export class ImportAllService implements OnModuleInit {
 	/*
 	 * Add missing timestamps fields here
 	 */
-	mappedTimestampsFields(data) {
-		if (data.hasOwnProperty('createdAt')) {
+	mappedFields(data) {
+		if ('tenantId' in data && isNotEmpty(data['tenantId'])) {
+			data['tenantId'] = RequestContext.currentTenantId();
+		}
+		if ('createdAt' in data && isNotEmpty(data['createdAt'])) {
 			data['createdAt'] = convertToDatetime(data['createdAt']);
 		}
-		if (data.hasOwnProperty('updatedAt')) {
+		if ('updatedAt' in data && isNotEmpty(data['updatedAt'])) {
 			data['updatedAt'] = convertToDatetime(data['updatedAt']);
 		}
-		if (data.hasOwnProperty('recordedAt')) {
+		if ('recordedAt' in data && isNotEmpty(data['recordedAt'])) {
 			data['recordedAt'] = convertToDatetime(data['recordedAt']);
 		}
-		if (data.hasOwnProperty('deletedAt')) {
+		if ('deletedAt' in data && isNotEmpty(data['deletedAt'])) {
 			data['deletedAt'] = convertToDatetime(data['deletedAt']);
 		}
 		return data;

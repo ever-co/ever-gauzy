@@ -2,10 +2,17 @@ import { Component, OnInit } from '@angular/core';
 import { FileUploader } from 'ng2-file-upload';
 import { NbToastrService, NbGlobalPhysicalPosition } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
+import { filter, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { API_PREFIX } from '../../../@core/constants/app.constants';
+import { Store } from '../../../@core/services';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
-const URL = `${API_PREFIX}/import`;
+export enum ImportTypeEnum {
+	MERGE = 'merge',
+	CLEAN = 'clean',
+}
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-download',
 	templateUrl: './import.component.html',
@@ -14,64 +21,78 @@ const URL = `${API_PREFIX}/import`;
 export class ImportComponent
 	extends TranslationBaseComponent
 	implements OnInit {
+
 	uploader: FileUploader;
 	hasBaseDropZoneOver: boolean;
 	hasAnotherDropZoneOver: boolean;
-	response: string;
-	selectedFile: File = null;
-	exportName = false;
 	importDT: Date = new Date();
-	importType = 'merge';
+	importTypeEnum = ImportTypeEnum;
+	importType = ImportTypeEnum.MERGE;
 
 	constructor(
-		private toastrService: NbToastrService,
+		private readonly toastrService: NbToastrService,
+		private readonly store: Store,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
+	}
+
+	ngOnInit() {
+		this.store.user$
+			.pipe(
+				filter((user) => !!user),
+				tap(() => this.initUploader()),
+				tap(() => this.uploader.clearQueue()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	initUploader() {
 		this.uploader = new FileUploader({
-			url: URL,
-			itemAlias: 'file'
+			url: `${API_PREFIX}/import`,
+			itemAlias: 'file',
+			authTokenHeader: 'Authorization',
+			authToken: `Bearer ${this.store.token}`,
+			headers: [{ 
+				name: "Tenant-Id", 
+				value: `${this.store.user.tenantId}` 
+			}]
 		});
 		this.uploader.onBuildItemForm = (item, form) => {
 			form.append('importType', this.importType);
 		};
-
 		this.hasBaseDropZoneOver = false;
 	}
 
-	onImportTypeChange(e) {
+	onImportTypeChange(e: ImportTypeEnum) {
 		this.importType = e;
 	}
 
-	public dropFile(e) {
+	public dropFile(e: any) {
 		if (e[0].name !== 'import.zip' || Object.values(e).length > 1) {
 			this.uploader.clearQueue();
-			this.toastrService.danger(
-				this.getTranslation('MENU.IMPORT_EXPORT.CORRECT_FILE_NAME'),
-				this.getTranslation('MENU.IMPORT_EXPORT.WRONG_FILE_NAME'),
-				{ position: NbGlobalPhysicalPosition.BOTTOM_LEFT }
-			);
+			this.alert();
 		}
 	}
 
-	fileOverBase(e) {
+	fileOverBase(e: any) {
 		this.hasBaseDropZoneOver = e;
 	}
 
-	ngOnInit() {
-		this.uploader.clearQueue();
+	public onFileClick(e: any) {
+		if (e.target.files[0].name !== 'import.zip') {
+			this.uploader.clearQueue();
+			this.alert();
+		}
+		e.target.value = '';
 	}
 
-	onFileClick(event) {
-		this.selectedFile = event.target.files[0];
-		if (event.target.files[0].name !== 'import.zip') {
-			this.uploader.queue[0].remove();
-			this.toastrService.danger(
-				this.getTranslation('MENU.IMPORT_EXPORT.CORRECT_FILE_NAME'),
-				this.getTranslation('MENU.IMPORT_EXPORT.WRONG_FILE_NAME'),
-				{ position: NbGlobalPhysicalPosition.BOTTOM_LEFT }
-			);
-		}
-		event.target.value = '';
+	alert() {
+		this.toastrService.danger(
+			this.getTranslation('MENU.IMPORT_EXPORT.CORRECT_FILE_NAME'), 
+			this.getTranslation('MENU.IMPORT_EXPORT.WRONG_FILE_NAME'),
+			{ position: NbGlobalPhysicalPosition.TOP_RIGHT }
+		);
 	}
 }
