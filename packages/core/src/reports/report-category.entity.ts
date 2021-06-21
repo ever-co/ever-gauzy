@@ -19,6 +19,8 @@ export class ReportCategory extends BaseEntity implements IReportCategory {
 	iconClass?: string;
 
 	@ApiProperty({ type: () => Report })
-	@OneToMany(() => Report, (report) => report.category)
+	@OneToMany(() => Report, (report) => report.category, {
+		cascade: true
+	})
 	reports: IReport[];
 }

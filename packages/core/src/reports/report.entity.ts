@@ -19,15 +19,17 @@ import {
 @Entity('report')
 export class Report extends BaseEntity implements IReport {
 	@ApiProperty({ type: () => ReportOrganization })
-	@OneToMany(
-		() => ReportOrganization,
-		(reportOrganization) => reportOrganization.report
-	)
+	
+	@OneToMany(() => ReportOrganization, (reportOrganization) => reportOrganization.report, {
+		cascade: true
+	})
 	@JoinColumn()
 	reportOrganizations?: ReportOrganization[];
 
 	@ApiProperty({ type: () => ReportCategory })
-	@ManyToOne(() => ReportCategory)
+	@ManyToOne(() => ReportCategory, (category) => category.reports, {
+        onDelete: 'CASCADE',
+    })
 	@JoinColumn()
 	category?: IReportCategory;
 

@@ -7,7 +7,9 @@ import { Report, TenantOrganizationBaseEntity } from '../core/entities/internal'
 export class ReportOrganization extends TenantOrganizationBaseEntity implements IReportOrganization {
 
 	@ApiProperty({ type: () => Report })
-	@ManyToOne(() => Report)
+	@ManyToOne(() => Report, (report) => report.reportOrganizations, {
+        onDelete: 'CASCADE',
+    })
 	@JoinColumn()
 	report?: IReport;
 
