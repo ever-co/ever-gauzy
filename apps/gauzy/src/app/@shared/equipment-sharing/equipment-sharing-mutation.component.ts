@@ -23,7 +23,7 @@ import { EquipmentService } from '../../@core/services/equipment.service';
 import { EmployeesService } from '../../@core/services/employees.service';
 import { OrganizationTeamsService } from '../../@core/services/organization-teams.service';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { filter, takeUntil } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
 import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sharing-policy.service';
 
@@ -87,7 +87,10 @@ export class EquipmentSharingMutationComponent
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				takeUntil(this._ngDestroy$)
+			)
 			.subscribe((organization) => {
 				if (organization) {
 					this.selectedOrganization = organization;

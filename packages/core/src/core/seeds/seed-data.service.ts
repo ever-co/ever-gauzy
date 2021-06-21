@@ -365,6 +365,9 @@ export class SeedDataService {
 			// Seed basic default data for default tenant
 			await this.seedBasicDefaultData();
 
+			// Seed reports related data
+			await this.seedReportsData();
+
 			// Seed data with mock / fake data for default tenant
 			await this.seedDefaultData();
 
@@ -373,9 +376,6 @@ export class SeedDataService {
 			
 			// Seed jobs related data
 			await this.seedJobsData();
-
-			// Seed reports related data
-			await this.seedReportsData();
 
 			// Disconnect to database
 			await this.closeConnection();

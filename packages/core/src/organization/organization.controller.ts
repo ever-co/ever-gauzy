@@ -15,7 +15,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
-import { UUIDValidationPipe } from '../shared';
+import { ParseJsonPipe, UUIDValidationPipe } from '../shared';
 import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { OrganizationCreateCommand, OrganizationUpdateCommand } from './commands';
@@ -48,9 +48,9 @@ export class OrganizationController extends CrudController<Organization> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	@Get()
 	async findAllOrganizations(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Organization>> {
-		const { relations, findInput } = JSON.parse(data);
+		const { relations, findInput } = data;
 		return this.organizationService.findAll({
 			where: findInput,
 			relations

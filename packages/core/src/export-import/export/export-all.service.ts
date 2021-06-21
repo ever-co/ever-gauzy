@@ -7,6 +7,7 @@ import * as _ from 'lodash';
 import * as archiver from 'archiver';
 import * as csv from 'csv-writer';
 import * as fs from 'fs';
+import * as path from 'path';
 import * as fse from 'fs-extra';
 import { ConfigService } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
@@ -30,6 +31,8 @@ import {
 	CandidateSource,
 	CandidateTechnologies,
 	Contact,
+	Country,
+	Currency,
 	CustomSmtp,
 	Deal,
 	Email,
@@ -152,6 +155,9 @@ export interface IRepositoryModel<T> {
 
 @Injectable()
 export class ExportAllService implements OnModuleInit {
+	private _dirname: string;
+	private _basename = '/export';
+
 	public idZip = new BehaviorSubject<string>('');
 	public idCsv = new BehaviorSubject<string>('');
 
@@ -212,6 +218,12 @@ export class ExportAllService implements OnModuleInit {
 
 		@InjectRepository(Contact)
 		private readonly contactRepository: Repository<Contact>,
+
+		@InjectRepository(Country)
+		private readonly countryRepository: Repository<Country>,
+
+		@InjectRepository(Currency)
+		private readonly currencyRepository: Repository<Currency>,
 
 		@InjectRepository(CustomSmtp)
 		private readonly customSmtpRepository: Repository<CustomSmtp>,
@@ -532,6 +544,10 @@ export class ExportAllService implements OnModuleInit {
 	) {}
 
 	async onModuleInit() {
+		const public_path = this.configService.assetOptions.assetPublicPath || __dirname;
+		//base import csv directory path
+		this._dirname = path.join(public_path, this._basename);
+
 		await this.createDynamicInstanceForPluginEntities();
 		await this.registerCoreRepositories();
 	}
@@ -540,12 +556,12 @@ export class ExportAllService implements OnModuleInit {
 		return new Promise((resolve, reject) => {
 			const id = uuidv4();
 			this.idCsv.next(id);
-			fs.access(`./export/${id}/csv`, (error) => {
+			fs.access(`${this._dirname}/${id}/csv`, (error) => {
 				if (!error) {
 					return null;
 				} else {
 					fs.mkdir(
-						`./export/${id}/csv`,
+						`${this._dirname}/${id}/csv`,
 						{ recursive: true },
 						(err) => {
 							if (err) reject(err);
@@ -564,7 +580,7 @@ export class ExportAllService implements OnModuleInit {
 				const fileNameS = id + '_export.zip';
 				this.idZip.next(fileNameS);
 
-				const output = fs.createWriteStream(`./export/${fileNameS}`);
+				const output = fs.createWriteStream(`${this._dirname}/${fileNameS}`);
 
 				const archive = archiver('zip', {
 					zlib: { level: 9 }
@@ -596,7 +612,7 @@ export class ExportAllService implements OnModuleInit {
 				});
 
 				archive.pipe(output);
-				archive.directory(`./export/${id$}/csv`, false);
+				archive.directory(`${this._dirname}/${id$}/csv`, false);
 				archive.finalize();
 			}
 		});
@@ -625,6 +641,7 @@ export class ExportAllService implements OnModuleInit {
 		}
 
 		const { repository } = item;
+		console.log(repository.metadata.tableName);
 		const [ items, count ] = await repository.findAndCount(conditions);
 		if (count > 0) {
 			return await this.csvWriter(item.nameFile, items);
@@ -653,7 +670,7 @@ export class ExportAllService implements OnModuleInit {
 				});
 
 				const csvWriter = createCsvWriter({
-					path: `./export/${id$}/csv/${filename}.csv`,
+					path: `${this._dirname}/${id$}/csv/${filename}.csv`,
 					header: dataIn
 				});
 
@@ -686,7 +703,7 @@ export class ExportAllService implements OnModuleInit {
 				});
 
 				const csvWriter = createCsvWriter({
-					path: `./export/${id$}/csv/${filename}.csv`,
+					path: `${this._dirname}/${id$}/csv/${filename}.csv`,
 					header: dataIn
 				});
 
@@ -705,7 +722,8 @@ export class ExportAllService implements OnModuleInit {
 			this.idZip.subscribe((filename) => {
 				fileName = filename;
 			});
-			res.download(`./export/${fileName}`);
+
+			res.download(`${this._dirname}/${fileName}`);
 			resolve('');
 		});
 	}
@@ -718,9 +736,9 @@ export class ExportAllService implements OnModuleInit {
 				id$ = id;
 			});
 
-			fs.access(`./export/${id$}`, (error) => {
+			fs.access(`${this._dirname}/${id$}`, (error) => {
 				if (!error) {
-					fse.removeSync(`./export/${id$}`);
+					fse.removeSync(`${this._dirname}/${id$}`);
 					resolve('');
 				} else {
 					return null;
@@ -734,10 +752,9 @@ export class ExportAllService implements OnModuleInit {
 			this.idZip.subscribe((fileName$) => {
 				fileName = fileName$;
 			});
-
-			fs.access(`./export/${fileName}`, (error) => {
+			fs.access(`${this._dirname}/${fileName}`, (error) => {
 				if (!error) {
-					fse.removeSync(`./export/${fileName}`);
+					fse.removeSync(`${this._dirname}/${fileName}`);
 					resolve('');
 				} else {
 					return null;
@@ -753,6 +770,13 @@ export class ExportAllService implements OnModuleInit {
 					await this.getAsCsv(item, { 
 						tenantId: RequestContext.currentTenantId() 
 					});
+
+					// export pivot relational tables
+					if (isNotEmpty(item.relations)) {
+						await this.exportRelationalTables(item, { 
+							tenantId: RequestContext.currentTenantId() 
+						});
+					}
 				}
 				resolve(true);
 			} catch (error) {
@@ -764,6 +788,7 @@ export class ExportAllService implements OnModuleInit {
 	async exportSpecificTables(names: string[]) {
 		return new Promise(async (resolve, reject) => {
 			try {
+				let count = this.repositories.length;
 				for await (const repository of this.repositories) {
 					const { nameFile } = repository;
 					if (names.includes(nameFile)) {
@@ -773,12 +798,14 @@ export class ExportAllService implements OnModuleInit {
 
 						// export pivot relational tables
 						if (isNotEmpty(repository.relations)) {
+							count = count + repository.relations.length;
 							await this.exportRelationalTables(repository, { 
 								tenantId: RequestContext.currentTenantId() 
 							});
 						}
 					}
 				}
+				console.log(count);
 				resolve(true);
 			} catch (error) {
 				reject(error)
@@ -968,6 +995,16 @@ export class ExportAllService implements OnModuleInit {
 			{ 
 				repository: this.contactRepository,
 				nameFile: 'contact',
+			},
+			{
+				repository: this.countryRepository,
+				nameFile: 'country',
+				tenantOrganizationBase: false
+			},
+			{
+				repository: this.currencyRepository,
+				nameFile: 'currency',
+				tenantOrganizationBase: false
 			},
 			{ 
 				repository: this.dealRepository,

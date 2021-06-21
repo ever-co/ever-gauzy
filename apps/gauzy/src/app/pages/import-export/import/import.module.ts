@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { ThemeModule } from '../../../@theme/theme.module';
+import { HttpClientModule } from '@angular/common/http';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -9,12 +9,13 @@ import {
 	NbToastrModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
+import { NgxPermissionsModule } from 'ngx-permissions';
 import { ImportComponent } from './import.component';
+import { FileUploadModule } from 'ng2-file-upload';
+import { ThemeModule } from '../../../@theme/theme.module';
 import { ImportRoutingModule } from './import-routing.module';
-import { HttpClientModule } from '@angular/common/http';
 import { ExportAllService } from '../../../@core/services/export-all.service';
 import { FileUploaderModule } from '../../../@shared/file-uploader-input/file-uploader-input.module';
-import { FileUploadModule } from 'ng2-file-upload';
 import { TranslateModule } from '../../../@shared/translate/translate.module';
 
 @NgModule({
@@ -31,7 +32,8 @@ import { TranslateModule } from '../../../@shared/translate/translate.module';
 		FileUploadModule,
 		HttpClientModule,
 		NbToastrModule.forRoot(),
-		TranslateModule
+		TranslateModule,
+		NgxPermissionsModule.forChild()
 	],
 	declarations: [ImportComponent],
 	exports: [ImportComponent],

@@ -7,6 +7,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 import { API_PREFIX } from '../../../@core/constants/app.constants';
 import { Store } from '../../../@core/services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ActivatedRoute } from '@angular/router';
 
 export enum ImportTypeEnum {
 	MERGE = 'merge',
@@ -30,6 +31,7 @@ export class ImportComponent
 	importType = ImportTypeEnum.MERGE;
 
 	constructor(
+		private readonly route: ActivatedRoute,
 		private readonly toastrService: NbToastrService,
 		private readonly store: Store,
 		readonly translateService: TranslateService
@@ -38,6 +40,14 @@ export class ImportComponent
 	}
 
 	ngOnInit() {
+		this.route.queryParamMap
+			.pipe(
+				filter((params) => !!params),
+				tap((params) => this.importType = params.get('importType') as ImportTypeEnum),
+				tap(() => this.initUploader()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.user$
 			.pipe(
 				filter((user) => !!user),
@@ -70,7 +80,7 @@ export class ImportComponent
 	}
 
 	public dropFile(e: any) {
-		if (e[0].name !== 'import.zip' || Object.values(e).length > 1) {
+		if (e[0].name !== 'archive.zip' || Object.values(e).length > 1) {
 			this.uploader.clearQueue();
 			this.alert();
 		}
@@ -81,7 +91,7 @@ export class ImportComponent
 	}
 
 	public onFileClick(e: any) {
-		if (e.target.files[0].name !== 'import.zip') {
+		if (e.target.files[0].name !== 'archive.zip') {
 			this.uploader.clearQueue();
 			this.alert();
 		}
