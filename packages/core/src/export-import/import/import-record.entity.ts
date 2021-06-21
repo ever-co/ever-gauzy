@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Entity, Column, ManyToOne } from 'typeorm';
+import { Entity, Column } from 'typeorm';
 import { IsDate } from 'class-validator';
-import { IImportHistory, IImportRecord } from '@gauzy/contracts';
-import { ImportHistory, TenantBaseEntity } from '../../core/entities/internal';
+import { IImportRecord } from '@gauzy/contracts';
+import { TenantBaseEntity } from '../../core/entities/internal';
 
 @Entity('import-record')
 export class ImportRecord extends TenantBaseEntity implements IImportRecord {
@@ -23,9 +23,4 @@ export class ImportRecord extends TenantBaseEntity implements IImportRecord {
 	@IsDate()
 	@Column({ nullable: true })
 	importDate: Date;
-
-	@ManyToOne(() => ImportHistory, (history) => history.records, {
-        onDelete: 'CASCADE',
-    })
-	history: IImportHistory;
 }

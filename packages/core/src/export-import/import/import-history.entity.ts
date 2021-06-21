@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Entity, Column, OneToMany } from 'typeorm';
+import { Entity, Column } from 'typeorm';
 import { IsDate } from 'class-validator';
-import { IImportHistory, IImportRecord } from '@gauzy/contracts';
-import { ImportRecord, TenantBaseEntity } from '../../core/entities/internal';
+import { IImportHistory } from '@gauzy/contracts';
+import { TenantBaseEntity } from '../../core/entities/internal';
 
 @Entity('import-history')
 export class ImportHistory extends TenantBaseEntity implements IImportHistory {
@@ -23,9 +23,4 @@ export class ImportHistory extends TenantBaseEntity implements IImportHistory {
     @IsDate()
 	@Column({ nullable: true })
 	importDate: Date;
-	
-	@OneToMany(() => ImportRecord, (record) => record.history, {
-		cascade: true
-	})
-	records: IImportRecord[]
 }

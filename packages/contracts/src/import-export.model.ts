@@ -5,7 +5,6 @@ export interface IImportRecord extends IBasePerTenantEntityModel {
 	sourceId: string;
 	destinationId : string;
 	importDate: Date;
-	history: IImportHistory
 }
 
 export interface IImportHistory extends IBasePerTenantEntityModel {
@@ -13,7 +12,6 @@ export interface IImportHistory extends IBasePerTenantEntityModel {
 	size: string;
 	status: string;
 	importDate: Date;
-	records: IImportRecord[]
 }
 
 export interface IEntityModel {

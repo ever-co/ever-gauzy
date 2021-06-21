@@ -365,14 +365,14 @@ export class SeedDataService {
 			// Seed basic default data for default tenant
 			await this.seedBasicDefaultData();
 
-			// Seed reports related data
-			await this.seedReportsData();
-
 			// Seed data with mock / fake data for default tenant
 			await this.seedDefaultData();
 
 			// Seed data with mock / fake data for random tenants
 			await this.seedRandomData();
+
+			// Seed reports related data
+			await this.seedReportsData();
 			
 			// Seed jobs related data
 			await this.seedJobsData();
