@@ -20,5 +20,5 @@ public
 ormlogs.log
 
 .env
-export
-import
+/export
+/import
