@@ -28,13 +28,11 @@ export async function seedAll(devConfig: Partial<IPluginConfig>) {
 				.runAllSeed()
 				.then(() => {})
 				.catch((error) => {
-					console.log(error);
 					throw error;
 				})
 				.finally(() => app.close());
 		})
 		.catch((error) => {
-			console.log(error);
 			throw error;
 		});
 }
